@@ -17,7 +17,7 @@ async def test_connection(alice_ws):
 async def test_bad_cmd(alice_ws):
     await alice_ws.send(packb({"cmd": "dummy"}))
     rep = await alice_ws.receive()
-    assert unpackb(rep) == {"status": "unknown_command", "reason": "Unknown command"}
+    assert unpackb(rep) == {"status": "invalid_msg_format", "reason": "Invalid message format"}
 
 
 @pytest.mark.trio

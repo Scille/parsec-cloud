@@ -4,17 +4,19 @@ from __future__ import annotations
 import pytest
 
 from parsec._parsec import (
-    AuthenticatedPingRepOk,
+    BackendEventDeviceCreated,
     DateTime,
+    UserProfile,
+)
+from parsec.api.data import DeviceCertificate
+from parsec.api.protocol import (
+    AuthenticatedPingRepOk,
     DeviceCreateRepAlreadyExists,
     DeviceCreateRepBadUserId,
     DeviceCreateRepInvalidCertification,
     DeviceCreateRepInvalidData,
     DeviceCreateRepOk,
 )
-from parsec.api.data import DeviceCertificate
-from parsec.api.protocol import UserProfile
-from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import INVITATION_VALIDITY, Device
 from tests.backend.common import authenticated_ping, device_create
 from tests.common import customize_fixtures, freeze_time
@@ -57,19 +59,18 @@ async def test_device_create_ok(
 
         # No guarantees this event occurs before the command's return
         await spy.wait_with_timeout(
-            BackendEvent.DEVICE_CREATED,
-            {
-                "organization_id": alice_nd.organization_id,
-                "device_id": alice_nd.device_id,
-                "device_certificate": device_certificate,
-                "encrypted_answer": b"",
-            },
+            BackendEventDeviceCreated(
+                organization_id=alice_nd.organization_id,
+                device_id=alice_nd.device_id,
+                device_certificate=device_certificate,
+                encrypted_answer=b"",
+            )
         )
 
     # Make sure the new device can connect now
     async with backend_authenticated_ws_factory(backend_asgi_app, alice_nd) as sock:
         rep = await authenticated_ping(sock, ping="Hello world !")
-        assert rep == AuthenticatedPingRepOk("Hello world !")
+        assert rep == AuthenticatedPingRepOk(pong="Hello world !")
 
     # Check the resulting data in the backend
     _, backend_device = await backend_asgi_app.backend.user.get_user_with_device(

@@ -5,6 +5,11 @@ import pytest
 
 from parsec._parsec import (
     DateTime,
+    PrivateKey,
+)
+from parsec.api.protocol import (
+    InvitationDeletedReason,
+    InvitationToken,
     Invite1ClaimerWaitPeerRepNotFound,
     Invite1GreeterWaitPeerRepAlreadyDeleted,
     Invite1GreeterWaitPeerRepNotFound,
@@ -26,9 +31,7 @@ from parsec._parsec import (
     Invite4GreeterCommunicateRepNotFound,
     InviteDeleteRepAlreadyDeleted,
     InviteDeleteRepNotFound,
-    PrivateKey,
 )
-from parsec.api.protocol import InvitationDeletedReason, InvitationToken
 from tests.backend.common import (
     invite_1_greeter_wait_peer,
     invite_2a_greeter_get_hashed_nonce,

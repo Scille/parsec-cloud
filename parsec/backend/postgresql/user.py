@@ -3,8 +3,7 @@ from __future__ import annotations
 
 from typing import Any, List, Tuple
 
-from parsec._parsec import DateTime
-from parsec.api.protocol import DeviceID, OrganizationID, UserID
+from parsec._parsec import DateTime, DeviceID, OrganizationID, UserID
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.user_queries import (
     query_create_device,

@@ -11,10 +11,22 @@ import attr
 from structlog import get_logger
 
 from parsec._parsec import (
+    InvitationToken,
+    InvitationType,
+    OrganizationConfig,
+    OrganizationStats,
+    Regex,
+    RemoteDevicesManagerBackendOfflineError,
+    RemoteDevicesManagerError,
+    RemoteDevicesManagerNotFoundError,
+    UserID,
+    WorkspaceEntry,
+)
+from parsec.api.data import EntryName, RevokedUserCertificate
+from parsec.api.protocol import (
     HumanFindRepOk,
     InvitationDeletedReason,
     InvitationEmailSentStatus,
-    InvitationType,
     InviteDeleteRepAlreadyDeleted,
     InviteDeleteRepNotFound,
     InviteDeleteRepOk,
@@ -22,18 +34,9 @@ from parsec._parsec import (
     InviteListRepOk,
     InviteNewRepAlreadyMember,
     InviteNewRepOk,
-    OrganizationConfig,
-    OrganizationStats,
     OrganizationStatsRepOk,
-    Regex,
-    RemoteDevicesManagerBackendOfflineError,
-    RemoteDevicesManagerError,
-    RemoteDevicesManagerNotFoundError,
     UserRevokeRepOk,
-    WorkspaceEntry,
 )
-from parsec.api.data import EntryName, RevokedUserCertificate
-from parsec.api.protocol import InvitationToken, UserID
 from parsec.core import resources as core_resources
 from parsec.core.backend_connection import (
     BackendAuthenticatedConn,

@@ -3,8 +3,7 @@ from __future__ import annotations
 
 import triopg
 
-from parsec.api.protocol import OrganizationID, RealmRole
-from parsec.backend.backend_events import BackendEvent
+from parsec._parsec import BackendEventRealmRolesUpdated, OrganizationID, RealmRole
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import (
     Q,
@@ -96,10 +95,11 @@ async def query_create(
 
     await send_signal(
         conn,
-        BackendEvent.REALM_ROLES_UPDATED,
-        organization_id=organization_id,
-        author=self_granted_role.granted_by,
-        realm_id=self_granted_role.realm_id,
-        user=self_granted_role.user_id,
-        role=self_granted_role.role,
+        BackendEventRealmRolesUpdated(
+            organization_id=organization_id,
+            author=self_granted_role.granted_by,
+            realm_id=self_granted_role.realm_id,
+            user=self_granted_role.user_id,
+            role=self_granted_role.role,
+        ),
     )

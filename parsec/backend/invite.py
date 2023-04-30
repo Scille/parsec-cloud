@@ -11,123 +11,40 @@ from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, List, Set, Union, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Set, Type, Union, cast
 
 import attr
 import trio
 from structlog import get_logger
 
 from parsec._parsec import (
+    BackendEvent,
+    BackendEventInviteConduitUpdated,
+    BackendEventInviteStatusChanged,
     BackendInvitationAddr,
-    ClientType,
     DateTime,
     HashDigest,
-    InvitationDeletedReason,
-    InvitationEmailSentStatus,
-    InvitationType,
-    Invite1ClaimerWaitPeerRep,
-    Invite1ClaimerWaitPeerRepInvalidState,
-    Invite1ClaimerWaitPeerRepNotFound,
-    Invite1ClaimerWaitPeerRepOk,
-    Invite1ClaimerWaitPeerReq,
-    Invite1GreeterWaitPeerRep,
-    Invite1GreeterWaitPeerRepAlreadyDeleted,
-    Invite1GreeterWaitPeerRepInvalidState,
-    Invite1GreeterWaitPeerRepNotFound,
-    Invite1GreeterWaitPeerRepOk,
-    Invite1GreeterWaitPeerReq,
-    Invite2aClaimerSendHashedNonceRep,
-    Invite2aClaimerSendHashedNonceRepInvalidState,
-    Invite2aClaimerSendHashedNonceRepNotFound,
-    Invite2aClaimerSendHashedNonceRepOk,
-    Invite2aClaimerSendHashedNonceReq,
-    Invite2aGreeterGetHashedNonceRep,
-    Invite2aGreeterGetHashedNonceRepAlreadyDeleted,
-    Invite2aGreeterGetHashedNonceRepInvalidState,
-    Invite2aGreeterGetHashedNonceRepNotFound,
-    Invite2aGreeterGetHashedNonceRepOk,
-    Invite2aGreeterGetHashedNonceReq,
-    Invite2bClaimerSendNonceRep,
-    Invite2bClaimerSendNonceRepInvalidState,
-    Invite2bClaimerSendNonceRepNotFound,
-    Invite2bClaimerSendNonceRepOk,
-    Invite2bClaimerSendNonceReq,
-    Invite2bGreeterSendNonceRep,
-    Invite2bGreeterSendNonceRepAlreadyDeleted,
-    Invite2bGreeterSendNonceRepInvalidState,
-    Invite2bGreeterSendNonceRepNotFound,
-    Invite2bGreeterSendNonceRepOk,
-    Invite2bGreeterSendNonceReq,
-    Invite3aClaimerSignifyTrustRep,
-    Invite3aClaimerSignifyTrustRepInvalidState,
-    Invite3aClaimerSignifyTrustRepNotFound,
-    Invite3aClaimerSignifyTrustRepOk,
-    Invite3aClaimerSignifyTrustReq,
-    Invite3aGreeterWaitPeerTrustRep,
-    Invite3aGreeterWaitPeerTrustRepAlreadyDeleted,
-    Invite3aGreeterWaitPeerTrustRepInvalidState,
-    Invite3aGreeterWaitPeerTrustRepNotFound,
-    Invite3aGreeterWaitPeerTrustRepOk,
-    Invite3aGreeterWaitPeerTrustReq,
-    Invite3bClaimerWaitPeerTrustRep,
-    Invite3bClaimerWaitPeerTrustRepInvalidState,
-    Invite3bClaimerWaitPeerTrustRepNotFound,
-    Invite3bClaimerWaitPeerTrustRepOk,
-    Invite3bClaimerWaitPeerTrustReq,
-    Invite3bGreeterSignifyTrustRep,
-    Invite3bGreeterSignifyTrustRepAlreadyDeleted,
-    Invite3bGreeterSignifyTrustRepInvalidState,
-    Invite3bGreeterSignifyTrustRepNotFound,
-    Invite3bGreeterSignifyTrustRepOk,
-    Invite3bGreeterSignifyTrustReq,
-    Invite4ClaimerCommunicateRep,
-    Invite4ClaimerCommunicateRepInvalidState,
-    Invite4ClaimerCommunicateRepNotFound,
-    Invite4ClaimerCommunicateRepOk,
-    Invite4ClaimerCommunicateReq,
-    Invite4GreeterCommunicateRep,
-    Invite4GreeterCommunicateRepAlreadyDeleted,
-    Invite4GreeterCommunicateRepInvalidState,
-    Invite4GreeterCommunicateRepNotFound,
-    Invite4GreeterCommunicateRepOk,
-    Invite4GreeterCommunicateReq,
-    InviteDeleteRep,
-    InviteDeleteRepAlreadyDeleted,
-    InviteDeleteRepNotFound,
-    InviteDeleteRepOk,
-    InviteDeleteReq,
-    InviteInfoRep,
-    InviteInfoRepOk,
-    InviteInfoReq,
-    InviteListItem,
-    InviteListRep,
-    InviteListRepOk,
-    InviteListReq,
-    InviteNewRep,
-    InviteNewRepAlreadyMember,
-    InviteNewRepNotAllowed,
-    InviteNewRepNotAvailable,
-    InviteNewRepOk,
-    InviteNewReq,
-    PublicKey,
-)
-from parsec.api.protocol import (
     HumanHandle,
     InvitationStatus,
     InvitationToken,
+    InvitationType,
     OrganizationID,
+    PublicKey,
     UserID,
     UserProfile,
+    authenticated_cmds,
+    invited_cmds,
 )
-from parsec.backend.backend_events import BackendEvent
 from parsec.backend.config import BackendConfig, EmailConfig, MockedEmailConfig, SmtpEmailConfig
 from parsec.backend.templates import get_template
-from parsec.backend.utils import api, api_typed_msg_adapter, catch_protocol_errors
-from parsec.event_bus import EventBus, EventCallback, EventFilterCallback
+from parsec.backend.utils import api
+from parsec.event_bus import EventBus, EventFilterCallback
 
 if TYPE_CHECKING:
     from parsec.backend.client_context import AuthenticatedClientContext, InvitedClientContext
 
+
+InvitationDeletedReason = authenticated_cmds.latest.invite_delete.InvitationDeletedReason
 logger = get_logger()
 
 
@@ -360,27 +277,22 @@ class BaseInviteComponent:
         self._claimers_ready: Dict[OrganizationID, Set[InvitationToken]] = defaultdict(set)
 
         def _on_status_changed(
-            event: BackendEvent,
-            organization_id: OrganizationID,
-            greeter: UserID,
-            token: InvitationToken,
-            status: InvitationStatus,
+            event: Type[BackendEvent], payload: BackendEventInviteStatusChanged
         ) -> None:
-            if status == InvitationStatus.READY:
-                self._claimers_ready[organization_id].add(token)
+            if payload.status == InvitationStatus.READY:
+                self._claimers_ready[payload.organization_id].add(payload.token)
             else:  # Invitation deleted or back to idle
-                self._claimers_ready[organization_id].discard(token)
+                self._claimers_ready[payload.organization_id].discard(payload.token)
 
         self._event_bus.connect(
-            BackendEvent.INVITE_STATUS_CHANGED, cast(EventCallback, _on_status_changed)
+            BackendEventInviteStatusChanged,  # type: ignore[arg-type]
+            _on_status_changed,  # type: ignore[arg-type]
         )
 
-    @api("invite_new")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(InviteNewReq, InviteNewRep)
+    @api
     async def api_invite_new(
-        self, client_ctx: AuthenticatedClientContext, req: InviteNewReq
-    ) -> InviteNewRep:
+        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.latest.invite_new.Req
+    ) -> authenticated_cmds.latest.invite_new.Rep:
         # Define helper
         def _to_http_redirection_url(
             client_ctx: AuthenticatedClientContext,
@@ -395,20 +307,26 @@ class BaseInviteComponent:
             ).to_http_redirection_url()
 
         # Create new user / new device
-        if req.type == InvitationType.USER:
+        req_unit = req.unit
+        req_unit_send_email: bool
+        if isinstance(req_unit, authenticated_cmds.latest.invite_new.UserOrDeviceUser):
+            req_unit_send_email = req_unit.send_email
             if client_ctx.profile != UserProfile.ADMIN:
-                return InviteNewRepNotAllowed()
+                return authenticated_cmds.latest.invite_new.RepNotAllowed()
             try:
                 invitation: UserInvitation | DeviceInvitation = await self.new_for_user(
                     organization_id=client_ctx.organization_id,
                     greeter_user_id=client_ctx.user_id,
-                    claimer_email=req.claimer_email,
+                    claimer_email=req_unit.claimer_email,
                 )
             except InvitationAlreadyMemberError:
-                return InviteNewRepAlreadyMember()
+                return authenticated_cmds.latest.invite_new.RepAlreadyMember()
+
         else:  # Device
-            if req.send_email and not client_ctx.human_handle:
-                return InviteNewRepNotAvailable()
+            assert isinstance(req_unit, authenticated_cmds.latest.invite_new.UserOrDeviceDevice)
+            req_unit_send_email = req_unit.send_email
+            if req_unit.send_email and not client_ctx.human_handle:
+                return authenticated_cmds.latest.invite_new.RepNotAvailable()
 
             invitation = await self.new_for_device(
                 organization_id=client_ctx.organization_id,
@@ -416,20 +334,26 @@ class BaseInviteComponent:
             )
 
         # No need to send email, we're done
-        if not req.send_email:
+        if not req_unit_send_email:
             # Note: before parsec v2.13.0, we used to reply with a missing `email_sent` field in this case.
             # However, we'd rather limit the use of missing fields to compatibility use cases (e.g when a
             # field has been added in a new version but does not exist in older versions). In this case, we
             # can replace the missing field with `SUCCESS` without breaking compatibility with older clients
             # since they also choose `SUCCESS` as value when getting an `AttributeError` on the reply.
-            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.SUCCESS)
+            return authenticated_cmds.latest.invite_new.RepOk(
+                invitation.token,
+                authenticated_cmds.latest.invite_new.InvitationEmailSentStatus.SUCCESS,
+            )
 
         # Backend address not configured, we won't be able to send the email
         if not self._config.backend_addr:
-            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.NOT_AVAILABLE)
+            return authenticated_cmds.latest.invite_new.RepOk(
+                invitation.token,
+                authenticated_cmds.latest.invite_new.InvitationEmailSentStatus.NOT_AVAILABLE,
+            )
 
         # Generate email message
-        if req.type == InvitationType.USER:
+        if isinstance(req_unit, authenticated_cmds.latest.invite_new.UserOrDeviceUser):
             assert isinstance(invitation, UserInvitation)
             to_addr = invitation.claimer_email
             if client_ctx.human_handle:
@@ -448,6 +372,7 @@ class BaseInviteComponent:
                 backend_url=self._config.backend_addr.to_http_domain_url(),
             )
         else:  # Device
+            assert isinstance(req_unit, authenticated_cmds.latest.invite_new.UserOrDeviceDevice)
             assert isinstance(invitation, DeviceInvitation)
             assert client_ctx.human_handle is not None
             to_addr = client_ctx.human_handle.email
@@ -469,23 +394,34 @@ class BaseInviteComponent:
                 message=message,
             )
         except InvitationEmailRecipientError:
-            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.BAD_RECIPIENT)
+            return authenticated_cmds.latest.invite_new.RepOk(
+                invitation.token,
+                authenticated_cmds.latest.invite_new.InvitationEmailSentStatus.BAD_RECIPIENT,
+            )
         except InvitationEmailConfigError:
-            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.NOT_AVAILABLE)
+            return authenticated_cmds.latest.invite_new.RepOk(
+                invitation.token,
+                authenticated_cmds.latest.invite_new.InvitationEmailSentStatus.NOT_AVAILABLE,
+            )
         except Exception:
             # Fail-safe: since the device/user has been created, we don't want to fail too hard
             logger.exception("Unexpected exception while sending an email")
-            return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.NOT_AVAILABLE)
+            return authenticated_cmds.latest.invite_new.RepOk(
+                invitation.token,
+                authenticated_cmds.latest.invite_new.InvitationEmailSentStatus.NOT_AVAILABLE,
+            )
 
         # The email has been successfully sent
-        return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.SUCCESS)
+        return authenticated_cmds.latest.invite_new.RepOk(
+            invitation.token, authenticated_cmds.latest.invite_new.InvitationEmailSentStatus.SUCCESS
+        )
 
-    @api("invite_delete")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(InviteDeleteReq, InviteDeleteRep)
+    @api
     async def api_invite_delete(
-        self, client_ctx: AuthenticatedClientContext, req: InviteDeleteReq
-    ) -> InviteDeleteRep:
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.invite_delete.Req,
+    ) -> authenticated_cmds.latest.invite_delete.Rep:
         try:
             await self.delete(
                 organization_id=client_ctx.organization_id,
@@ -496,38 +432,38 @@ class BaseInviteComponent:
             )
 
         except InvitationNotFoundError:
-            return InviteDeleteRepNotFound()
+            return authenticated_cmds.latest.invite_delete.RepNotFound()
 
         except InvitationAlreadyDeletedError:
-            return InviteDeleteRepAlreadyDeleted()
+            return authenticated_cmds.latest.invite_delete.RepAlreadyDeleted()
 
-        return InviteDeleteRepOk()
+        return authenticated_cmds.latest.invite_delete.RepOk()
 
-    @api("invite_list")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(InviteListReq, InviteListRep)
+    @api
     async def api_invite_list(
-        self, client_ctx: AuthenticatedClientContext, req: InviteListReq
-    ) -> InviteListRep:
+        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.latest.invite_list.Req
+    ) -> authenticated_cmds.latest.invite_list.Rep:
         invitations = await self.list(
             organization_id=client_ctx.organization_id, greeter=client_ctx.user_id
         )
 
-        return InviteListRepOk(
+        return authenticated_cmds.latest.invite_list.RepOk(
             [
-                InviteListItem.User(item.token, item.created_on, item.claimer_email, item.status)
+                authenticated_cmds.latest.invite_list.InviteListItemUser(
+                    item.token, item.created_on, item.claimer_email, item.status
+                )
                 if isinstance(item, UserInvitation)
-                else InviteListItem.Device(item.token, item.created_on, item.status)
+                else authenticated_cmds.latest.invite_list.InviteListItemDevice(
+                    item.token, item.created_on, item.status
+                )
                 for item in invitations
             ]
         )
 
-    @api("invite_info", client_types=[ClientType.INVITED])
-    @catch_protocol_errors
-    @api_typed_msg_adapter(InviteInfoReq, InviteInfoRep)
+    @api
     async def api_invite_info(
-        self, client_ctx: InvitedClientContext, req: InviteInfoReq
-    ) -> InviteInfoRep:
+        self, client_ctx: InvitedClientContext, req: invited_cmds.latest.invite_info.Req
+    ) -> invited_cmds.latest.invite_info.Rep:
         # Invitation has already been fetched during handshake, this
         # means we don't have to access the database at all here.
         # Not accessing the database also means we cannot detect if invitation
@@ -535,30 +471,27 @@ class BaseInviteComponent:
         # (and the connection will eventually be closed by backend event anyway)
         invitation = client_ctx.invitation
         if isinstance(invitation, UserInvitation):
-            return InviteInfoRepOk(
-                InvitationType.USER,
-                invitation.claimer_email,
-                invitation.greeter_user_id,
-                invitation.greeter_human_handle,
+            return invited_cmds.latest.invite_info.RepOk(
+                invited_cmds.latest.invite_info.UserOrDeviceUser(
+                    claimer_email=invitation.claimer_email,
+                    greeter_user_id=invitation.greeter_user_id,
+                    greeter_human_handle=invitation.greeter_human_handle,
+                )
             )
         else:  # DeviceInvitation
-            return InviteInfoRepOk(
-                InvitationType.DEVICE,
-                claimer_email=None,
-                greeter_user_id=invitation.greeter_user_id,
-                greeter_human_handle=invitation.greeter_human_handle,
+            return invited_cmds.latest.invite_info.RepOk(
+                invited_cmds.latest.invite_info.UserOrDeviceDevice(
+                    greeter_user_id=invitation.greeter_user_id,
+                    greeter_human_handle=invitation.greeter_human_handle,
+                )
             )
 
-    @api(
-        "invite_1_claimer_wait_peer",
-        cancel_on_client_sending_new_cmd=True,
-        client_types=[ClientType.INVITED],
-    )
-    @catch_protocol_errors
-    @api_typed_msg_adapter(Invite1ClaimerWaitPeerReq, Invite1ClaimerWaitPeerRep)
+    @api
     async def api_invite_1_claimer_wait_peer(
-        self, client_ctx: InvitedClientContext, req: Invite1ClaimerWaitPeerReq
-    ) -> Invite1ClaimerWaitPeerRep:
+        self,
+        client_ctx: InvitedClientContext,
+        req: invited_cmds.latest.invite_1_claimer_wait_peer.Req,
+    ) -> invited_cmds.latest.invite_1_claimer_wait_peer.Rep:
         """
         Raises:
             CloseInviteConnection
@@ -577,19 +510,19 @@ class BaseInviteComponent:
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
-            return Invite1ClaimerWaitPeerRepNotFound()
+            return invited_cmds.latest.invite_1_claimer_wait_peer.RepNotFound()
 
         except InvitationInvalidStateError:
-            return Invite1ClaimerWaitPeerRepInvalidState()
+            return invited_cmds.latest.invite_1_claimer_wait_peer.RepInvalidState()
 
-        return Invite1ClaimerWaitPeerRepOk(PublicKey(greeter_public_key))
+        return invited_cmds.latest.invite_1_claimer_wait_peer.RepOk(PublicKey(greeter_public_key))
 
-    @api("invite_1_greeter_wait_peer")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(Invite1GreeterWaitPeerReq, Invite1GreeterWaitPeerRep)
+    @api
     async def api_invite_1_greeter_wait_peer(
-        self, client_ctx: AuthenticatedClientContext, req: Invite1GreeterWaitPeerReq
-    ) -> Invite1GreeterWaitPeerRep:
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.invite_1_greeter_wait_peer.Req,
+    ) -> authenticated_cmds.latest.invite_1_greeter_wait_peer.Rep:
         try:
             claimer_public_key_raw = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
@@ -600,28 +533,24 @@ class BaseInviteComponent:
             )
 
         except InvitationNotFoundError:
-            return Invite1GreeterWaitPeerRepNotFound()
+            return authenticated_cmds.latest.invite_1_greeter_wait_peer.RepNotFound()
 
         except InvitationAlreadyDeletedError:
-            return Invite1GreeterWaitPeerRepAlreadyDeleted()
+            return authenticated_cmds.latest.invite_1_greeter_wait_peer.RepAlreadyDeleted()
 
         except InvitationInvalidStateError:
-            return Invite1GreeterWaitPeerRepInvalidState()
+            return authenticated_cmds.latest.invite_1_greeter_wait_peer.RepInvalidState()
 
-        return Invite1GreeterWaitPeerRepOk(PublicKey(claimer_public_key_raw))
+        return authenticated_cmds.latest.invite_1_greeter_wait_peer.RepOk(
+            PublicKey(claimer_public_key_raw)
+        )
 
-    @api(
-        "invite_2a_claimer_send_hashed_nonce",
-        client_types=[ClientType.INVITED],
-    )
-    @catch_protocol_errors
-    @api_typed_msg_adapter(
-        Invite2aClaimerSendHashedNonceReq,
-        Invite2aClaimerSendHashedNonceRep,
-    )
+    @api
     async def api_invite_2a_claimer_send_hash_nonce(
-        self, client_ctx: InvitedClientContext, req: Invite2aClaimerSendHashedNonceReq
-    ) -> Invite2aClaimerSendHashedNonceRep:
+        self,
+        client_ctx: InvitedClientContext,
+        req: invited_cmds.latest.invite_2a_claimer_send_hashed_nonce.Req,
+    ) -> invited_cmds.latest.invite_2a_claimer_send_hashed_nonce.Rep:
         """
         Raises:
             CloseInviteConnection
@@ -648,19 +577,19 @@ class BaseInviteComponent:
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
-            return Invite2aClaimerSendHashedNonceRepNotFound()
+            return invited_cmds.latest.invite_2a_claimer_send_hashed_nonce.RepNotFound()
 
         except InvitationInvalidStateError:
-            return Invite2aClaimerSendHashedNonceRepInvalidState()
+            return invited_cmds.latest.invite_2a_claimer_send_hashed_nonce.RepInvalidState()
 
-        return Invite2aClaimerSendHashedNonceRepOk(greeter_nonce)
+        return invited_cmds.latest.invite_2a_claimer_send_hashed_nonce.RepOk(greeter_nonce)
 
-    @api("invite_2a_greeter_get_hashed_nonce")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(Invite2aGreeterGetHashedNonceReq, Invite2aGreeterGetHashedNonceRep)
+    @api
     async def api_invite_2a_greeter_get_hashed_nonce(
-        self, client_ctx: AuthenticatedClientContext, req: Invite2aGreeterGetHashedNonceReq
-    ) -> Invite2aGreeterGetHashedNonceRep:
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.invite_2a_greeter_get_hashed_nonce.Req,
+    ) -> authenticated_cmds.latest.invite_2a_greeter_get_hashed_nonce.Rep:
         try:
             claimer_hashed_nonce_raw = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
@@ -673,22 +602,24 @@ class BaseInviteComponent:
             claimer_hashed_nonce = HashDigest(claimer_hashed_nonce_raw)
 
         except InvitationNotFoundError:
-            return Invite2aGreeterGetHashedNonceRepNotFound()
+            return authenticated_cmds.latest.invite_2a_greeter_get_hashed_nonce.RepNotFound()
 
         except InvitationAlreadyDeletedError:
-            return Invite2aGreeterGetHashedNonceRepAlreadyDeleted()
+            return authenticated_cmds.latest.invite_2a_greeter_get_hashed_nonce.RepAlreadyDeleted()
 
         except InvitationInvalidStateError:
-            return Invite2aGreeterGetHashedNonceRepInvalidState()
+            return authenticated_cmds.latest.invite_2a_greeter_get_hashed_nonce.RepInvalidState()
 
-        return Invite2aGreeterGetHashedNonceRepOk(claimer_hashed_nonce)
+        return authenticated_cmds.latest.invite_2a_greeter_get_hashed_nonce.RepOk(
+            claimer_hashed_nonce
+        )
 
-    @api("invite_2b_greeter_send_nonce")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(Invite2bGreeterSendNonceReq, Invite2bGreeterSendNonceRep)
+    @api
     async def api_invite_2b_greeter_send_nonce(
-        self, client_ctx: AuthenticatedClientContext, req: Invite2bGreeterSendNonceReq
-    ) -> Invite2bGreeterSendNonceRep:
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.invite_2b_greeter_send_nonce.Req,
+    ) -> authenticated_cmds.latest.invite_2b_greeter_send_nonce.Rep:
         try:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
@@ -707,22 +638,22 @@ class BaseInviteComponent:
             )
 
         except InvitationNotFoundError:
-            return Invite2bGreeterSendNonceRepNotFound()
+            return authenticated_cmds.latest.invite_2b_greeter_send_nonce.RepNotFound()
 
         except InvitationAlreadyDeletedError:
-            return Invite2bGreeterSendNonceRepAlreadyDeleted()
+            return authenticated_cmds.latest.invite_2b_greeter_send_nonce.RepAlreadyDeleted()
 
         except InvitationInvalidStateError:
-            return Invite2bGreeterSendNonceRepInvalidState()
+            return authenticated_cmds.latest.invite_2b_greeter_send_nonce.RepInvalidState()
 
-        return Invite2bGreeterSendNonceRepOk(claimer_nonce)
+        return authenticated_cmds.latest.invite_2b_greeter_send_nonce.RepOk(claimer_nonce)
 
-    @api("invite_2b_claimer_send_nonce", client_types=[ClientType.INVITED])
-    @catch_protocol_errors
-    @api_typed_msg_adapter(Invite2bClaimerSendNonceReq, Invite2bClaimerSendNonceRep)
+    @api
     async def api_invite_2b_claimer_send_nonce(
-        self, client_ctx: InvitedClientContext, req: Invite2bClaimerSendNonceReq
-    ) -> Invite2bClaimerSendNonceRep:
+        self,
+        client_ctx: InvitedClientContext,
+        req: invited_cmds.latest.invite_2b_claimer_send_nonce.Req,
+    ) -> invited_cmds.latest.invite_2b_claimer_send_nonce.Rep:
         """
         Raises:
             CloseInviteConnection
@@ -741,19 +672,19 @@ class BaseInviteComponent:
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
-            return Invite2bClaimerSendNonceRepNotFound()
+            return invited_cmds.latest.invite_2b_claimer_send_nonce.RepNotFound()
 
         except InvitationInvalidStateError:
-            return Invite2bClaimerSendNonceRepInvalidState()
+            return invited_cmds.latest.invite_2b_claimer_send_nonce.RepInvalidState()
 
-        return Invite2bClaimerSendNonceRepOk()
+        return invited_cmds.latest.invite_2b_claimer_send_nonce.RepOk()
 
-    @api("invite_3a_greeter_wait_peer_trust")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(Invite3aGreeterWaitPeerTrustReq, Invite3aGreeterWaitPeerTrustRep)
+    @api
     async def api_invite_3a_greeter_wait_peer_trust(
-        self, client_ctx: AuthenticatedClientContext, req: Invite3aGreeterWaitPeerTrustReq
-    ) -> Invite3aGreeterWaitPeerTrustRep:
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.invite_3a_greeter_wait_peer_trust.Req,
+    ) -> authenticated_cmds.latest.invite_3a_greeter_wait_peer_trust.Rep:
         try:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
@@ -764,22 +695,22 @@ class BaseInviteComponent:
             )
 
         except InvitationNotFoundError:
-            return Invite3aGreeterWaitPeerTrustRepNotFound()
+            return authenticated_cmds.latest.invite_3a_greeter_wait_peer_trust.RepNotFound()
 
         except InvitationAlreadyDeletedError:
-            return Invite3aGreeterWaitPeerTrustRepAlreadyDeleted()
+            return authenticated_cmds.latest.invite_3a_greeter_wait_peer_trust.RepAlreadyDeleted()
 
         except InvitationInvalidStateError:
-            return Invite3aGreeterWaitPeerTrustRepInvalidState()
+            return authenticated_cmds.latest.invite_3a_greeter_wait_peer_trust.RepInvalidState()
 
-        return Invite3aGreeterWaitPeerTrustRepOk()
+        return authenticated_cmds.latest.invite_3a_greeter_wait_peer_trust.RepOk()
 
-    @api("invite_3b_claimer_wait_peer_trust", client_types=[ClientType.INVITED])
-    @catch_protocol_errors
-    @api_typed_msg_adapter(Invite3bClaimerWaitPeerTrustReq, Invite3bClaimerWaitPeerTrustRep)
+    @api
     async def api_invite_3b_claimer_wait_peer_trust(
-        self, client_ctx: InvitedClientContext, req: Invite3bClaimerWaitPeerTrustReq
-    ) -> Invite3bClaimerWaitPeerTrustRep:
+        self,
+        client_ctx: InvitedClientContext,
+        req: invited_cmds.latest.invite_3b_claimer_wait_peer_trust.Req,
+    ) -> invited_cmds.latest.invite_3b_claimer_wait_peer_trust.Rep:
         """
         Raises:
             CloseInviteConnection
@@ -798,19 +729,19 @@ class BaseInviteComponent:
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
-            return Invite3bClaimerWaitPeerTrustRepNotFound()
+            return invited_cmds.latest.invite_3b_claimer_wait_peer_trust.RepNotFound()
 
         except InvitationInvalidStateError:
-            return Invite3bClaimerWaitPeerTrustRepInvalidState()
+            return invited_cmds.latest.invite_3b_claimer_wait_peer_trust.RepInvalidState()
 
-        return Invite3bClaimerWaitPeerTrustRepOk()
+        return invited_cmds.latest.invite_3b_claimer_wait_peer_trust.RepOk()
 
-    @api("invite_3b_greeter_signify_trust")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(Invite3bGreeterSignifyTrustReq, Invite3bGreeterSignifyTrustRep)
+    @api
     async def api_invite_3b_greeter_signify_trust(
-        self, client_ctx: AuthenticatedClientContext, req: Invite3bGreeterSignifyTrustReq
-    ) -> Invite3bGreeterSignifyTrustRep:
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.invite_3b_greeter_signify_trust.Req,
+    ) -> authenticated_cmds.latest.invite_3b_greeter_signify_trust.Rep:
         try:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
@@ -821,22 +752,22 @@ class BaseInviteComponent:
             )
 
         except InvitationNotFoundError:
-            return Invite3bGreeterSignifyTrustRepNotFound()
+            return authenticated_cmds.latest.invite_3b_greeter_signify_trust.RepNotFound()
 
         except InvitationAlreadyDeletedError:
-            return Invite3bGreeterSignifyTrustRepAlreadyDeleted()
+            return authenticated_cmds.latest.invite_3b_greeter_signify_trust.RepAlreadyDeleted()
 
         except InvitationInvalidStateError:
-            return Invite3bGreeterSignifyTrustRepInvalidState()
+            return authenticated_cmds.latest.invite_3b_greeter_signify_trust.RepInvalidState()
 
-        return Invite3bGreeterSignifyTrustRepOk()
+        return authenticated_cmds.latest.invite_3b_greeter_signify_trust.RepOk()
 
-    @api("invite_3a_claimer_signify_trust", client_types=[ClientType.INVITED])
-    @catch_protocol_errors
-    @api_typed_msg_adapter(Invite3aClaimerSignifyTrustReq, Invite3aClaimerSignifyTrustRep)
+    @api
     async def api_invite_3a_claimer_signify_trust(
-        self, client_ctx: InvitedClientContext, req: Invite3aClaimerSignifyTrustReq
-    ) -> Invite3aClaimerSignifyTrustRep:
+        self,
+        client_ctx: InvitedClientContext,
+        req: invited_cmds.latest.invite_3a_claimer_signify_trust.Req,
+    ) -> invited_cmds.latest.invite_3a_claimer_signify_trust.Rep:
         """
         Raises:
             CloseInviteConnection
@@ -855,19 +786,19 @@ class BaseInviteComponent:
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
-            return Invite3aClaimerSignifyTrustRepNotFound()
+            return invited_cmds.latest.invite_3a_claimer_signify_trust.RepNotFound()
 
         except InvitationInvalidStateError:
-            return Invite3aClaimerSignifyTrustRepInvalidState()
+            return invited_cmds.latest.invite_3a_claimer_signify_trust.RepInvalidState()
 
-        return Invite3aClaimerSignifyTrustRepOk()
+        return invited_cmds.latest.invite_3a_claimer_signify_trust.RepOk()
 
-    @api("invite_4_greeter_communicate")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(Invite4GreeterCommunicateReq, Invite4GreeterCommunicateRep)
+    @api
     async def api_invite_4_greeter_communicate(
-        self, client_ctx: AuthenticatedClientContext, req: Invite4GreeterCommunicateReq
-    ) -> Invite4GreeterCommunicateRep:
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.invite_4_greeter_communicate.Req,
+    ) -> authenticated_cmds.latest.invite_4_greeter_communicate.Rep:
         try:
             answer_payload = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
@@ -878,22 +809,22 @@ class BaseInviteComponent:
             )
 
         except InvitationNotFoundError:
-            return Invite4GreeterCommunicateRepNotFound()
+            return authenticated_cmds.latest.invite_4_greeter_communicate.RepNotFound()
 
         except InvitationAlreadyDeletedError:
-            return Invite4GreeterCommunicateRepAlreadyDeleted()
+            return authenticated_cmds.latest.invite_4_greeter_communicate.RepAlreadyDeleted()
 
         except InvitationInvalidStateError:
-            return Invite4GreeterCommunicateRepInvalidState()
+            return authenticated_cmds.latest.invite_4_greeter_communicate.RepInvalidState()
 
-        return Invite4GreeterCommunicateRepOk(answer_payload)
+        return authenticated_cmds.latest.invite_4_greeter_communicate.RepOk(answer_payload)
 
-    @api("invite_4_claimer_communicate", client_types=[ClientType.INVITED])
-    @catch_protocol_errors
-    @api_typed_msg_adapter(Invite4ClaimerCommunicateReq, Invite4ClaimerCommunicateRep)
+    @api
     async def api_invite_4_claimer_communicate(
-        self, client_ctx: InvitedClientContext, req: Invite4ClaimerCommunicateReq
-    ) -> Invite4ClaimerCommunicateRep:
+        self,
+        client_ctx: InvitedClientContext,
+        req: invited_cmds.latest.invite_4_claimer_communicate.Req,
+    ) -> invited_cmds.latest.invite_4_claimer_communicate.Rep:
         """
         Raises:
             CloseInviteConnection
@@ -912,12 +843,12 @@ class BaseInviteComponent:
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
-            return Invite4ClaimerCommunicateRepNotFound()
+            return invited_cmds.latest.invite_4_claimer_communicate.RepNotFound()
 
         except InvitationInvalidStateError:
-            return Invite4ClaimerCommunicateRepInvalidState()
+            return invited_cmds.latest.invite_4_claimer_communicate.RepInvalidState()
 
-        return Invite4ClaimerCommunicateRepOk(answer_payload)
+        return invited_cmds.latest.invite_4_claimer_communicate.RepOk(answer_payload)
 
     async def conduit_exchange(
         self,
@@ -937,16 +868,16 @@ class BaseInviteComponent:
         filter_token = token
 
         def _event_filter(
-            event: Enum,
-            organization_id: OrganizationID,
-            token: InvitationToken,
-            **kwargs: Any,
+            event: Type[BackendEvent],
+            payload: BackendEventInviteConduitUpdated | BackendEventInviteStatusChanged,
         ) -> bool:
-            return organization_id == filter_organization_id and token == filter_token
+            return (
+                payload.organization_id == filter_organization_id and payload.token == filter_token
+            )
 
         with self._event_bus.waiter_on_first(
-            BackendEvent.INVITE_CONDUIT_UPDATED,
-            BackendEvent.INVITE_STATUS_CHANGED,
+            cast(Any, BackendEventInviteConduitUpdated),
+            cast(Any, BackendEventInviteStatusChanged),
             filter=cast(EventFilterCallback, _event_filter),
         ) as waiter:
             listen_ctx = await self._conduit_talk(organization_id, greeter, token, state, payload)

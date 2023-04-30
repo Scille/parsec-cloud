@@ -3,10 +3,9 @@ from __future__ import annotations
 
 from typing import List, Tuple
 
-from parsec._parsec import DateTime, Message, MessageGetRep, MessageGetRepOk, MessageGetReq
-from parsec.api.protocol import DeviceID, OrganizationID, UserID
+from parsec._parsec import DateTime, DeviceID, OrganizationID, UserID, authenticated_cmds
 from parsec.backend.client_context import AuthenticatedClientContext
-from parsec.backend.utils import api, api_typed_msg_adapter, catch_protocol_errors
+from parsec.backend.utils import api
 
 
 class MessageError(Exception):
@@ -14,18 +13,18 @@ class MessageError(Exception):
 
 
 class BaseMessageComponent:
-    @api("message_get")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(MessageGetReq, MessageGetRep)
+    @api
     async def api_message_get(
-        self, client_ctx: AuthenticatedClientContext, req: MessageGetReq
-    ) -> MessageGetRep:
+        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.latest.message_get.Req
+    ) -> authenticated_cmds.latest.message_get.Rep:
         offset = req.offset
         messages = await self.get(client_ctx.organization_id, client_ctx.user_id, offset)
 
-        return MessageGetRepOk(
+        return authenticated_cmds.latest.message_get.RepOk(
             messages=[
-                Message(count=i, body=body, timestamp=timestamp, sender=sender)
+                authenticated_cmds.latest.message_get.Message(
+                    count=i, body=body, timestamp=timestamp, sender=sender
+                )
                 for i, (sender, timestamp, body) in enumerate(messages, offset + 1)
             ],
         )

@@ -6,24 +6,32 @@ from unittest.mock import ANY
 import pytest
 
 from parsec._parsec import (
+    BackendEventInviteStatusChanged,
     DateTime,
-    EventsListenRepOkInviteStatusChanged,
+    InvitationType,
+)
+from parsec.api.protocol import (
+    APIEventInviteStatusChanged,
+    EventsListenRepOk,
+    HandshakeBadIdentity,
     InvitationDeletedReason,
     InvitationEmailSentStatus,
-    InvitationType,
+    InvitationStatus,
     InviteDeleteRepAlreadyDeleted,
     InviteDeleteRepNotFound,
     InviteDeleteRepOk,
     InviteInfoRepOk,
-    InviteListItem,
+    InviteListItemDevice,
+    InviteListItemUser,
     InviteListRepOk,
     InviteNewRepAlreadyMember,
     InviteNewRepNotAllowed,
     InviteNewRepNotAvailable,
     InviteNewRepOk,
+    UserOrDeviceDevice,
+    UserOrDeviceUser,
+    UserProfile,
 )
-from parsec.api.protocol import HandshakeBadIdentity, InvitationStatus, UserProfile
-from parsec.backend.backend_events import BackendEvent
 from tests.backend.common import (
     events_listen_wait,
     events_subscribe,
@@ -53,7 +61,7 @@ async def test_user_new_invitation_and_info(
             created_on=DateTime(2000, 1, 3),
         )
         await spy.wait_multiple_with_timeout(
-            [BackendEvent.INVITE_STATUS_CHANGED, BackendEvent.INVITE_STATUS_CHANGED]
+            [BackendEventInviteStatusChanged, BackendEventInviteStatusChanged]
         )
 
     await events_subscribe(alice2_ws)
@@ -66,22 +74,22 @@ async def test_user_new_invitation_and_info(
 
     async with real_clock_timeout():
         rep = await events_listen_wait(alice2_ws)
-    assert rep == EventsListenRepOkInviteStatusChanged(token, InvitationStatus.IDLE)
+    assert rep == EventsListenRepOk(APIEventInviteStatusChanged(token, InvitationStatus.IDLE))
 
     rep = await invite_list(alice_ws)
 
     assert rep == InviteListRepOk(
         [
-            InviteListItem.Device(
+            InviteListItemDevice(
                 other_device_invitation.token, DateTime(2000, 1, 2), InvitationStatus.IDLE
             ),
-            InviteListItem.User(
+            InviteListItemUser(
                 other_user_invitation.token,
                 DateTime(2000, 1, 3),
                 "other@example.com",
                 InvitationStatus.IDLE,
             ),
-            InviteListItem.User(
+            InviteListItemUser(
                 token, DateTime(2000, 1, 4), "zack@example.com", InvitationStatus.IDLE
             ),
         ]
@@ -95,7 +103,7 @@ async def test_user_new_invitation_and_info(
     ) as invited_ws:
         rep = await invite_info(invited_ws)
         assert rep == InviteInfoRepOk(
-            InvitationType.USER, "zack@example.com", alice.user_id, alice.human_handle
+            UserOrDeviceUser("zack@example.com", alice.user_id, alice.human_handle)
         )
 
 
@@ -111,7 +119,7 @@ async def test_device_new_invitation_and_info(
             claimer_email="other@example.com",
             created_on=DateTime(2000, 1, 2),
         )
-        await spy.wait_multiple_with_timeout([BackendEvent.INVITE_STATUS_CHANGED])
+        await spy.wait_multiple_with_timeout([BackendEventInviteStatusChanged])
 
     await events_subscribe(alice2_ws)
 
@@ -122,18 +130,18 @@ async def test_device_new_invitation_and_info(
 
     async with real_clock_timeout():
         rep = await events_listen_wait(alice2_ws)
-    assert rep == EventsListenRepOkInviteStatusChanged(token, InvitationStatus.IDLE)
+    assert rep == EventsListenRepOk(APIEventInviteStatusChanged(token, InvitationStatus.IDLE))
 
     rep = await invite_list(alice_ws)
     assert rep == InviteListRepOk(
         [
-            InviteListItem.User(
+            InviteListItemUser(
                 other_user_invitation.token,
                 DateTime(2000, 1, 2),
                 "other@example.com",
                 InvitationStatus.IDLE,
             ),
-            InviteListItem.Device(token, DateTime(2000, 1, 3), InvitationStatus.IDLE),
+            InviteListItemDevice(token, DateTime(2000, 1, 3), InvitationStatus.IDLE),
         ]
     )
 
@@ -144,9 +152,7 @@ async def test_device_new_invitation_and_info(
         token=token,
     ) as invited_ws:
         rep = await invite_info(invited_ws)
-        assert rep == InviteInfoRepOk(
-            InvitationType.DEVICE, None, alice.user_id, alice.human_handle
-        )
+        assert rep == InviteInfoRepOk(UserOrDeviceDevice(alice.user_id, alice.human_handle))
 
 
 @pytest.mark.trio
@@ -332,7 +338,7 @@ async def test_delete_invitation(
             greeter_user_id=alice.user_id,
             created_on=DateTime(2000, 1, 2),
         )
-        await spy.wait_multiple_with_timeout([BackendEvent.INVITE_STATUS_CHANGED])
+        await spy.wait_multiple_with_timeout([BackendEventInviteStatusChanged])
 
     await events_subscribe(alice2_ws)
 
@@ -343,11 +349,13 @@ async def test_delete_invitation(
             )
 
         assert isinstance(rep, InviteDeleteRepOk)
-        await spy.wait_with_timeout(BackendEvent.INVITE_STATUS_CHANGED)
+        await spy.wait_with_timeout(BackendEventInviteStatusChanged)
 
     async with real_clock_timeout():
         rep = await events_listen_wait(alice2_ws)
-    assert rep == EventsListenRepOkInviteStatusChanged(invitation.token, InvitationStatus.DELETED)
+    assert rep == EventsListenRepOk(
+        APIEventInviteStatusChanged(invitation.token, InvitationStatus.DELETED)
+    )
 
     # Deleted invitation are no longer visible
     rep = await invite_list(alice_ws)
@@ -403,7 +411,7 @@ async def test_idempotent_new_user_invitation(alice, backend, alice_ws):
     rep = await invite_list(alice_ws)
     assert rep == InviteListRepOk(
         [
-            InviteListItem.User(
+            InviteListItemUser(
                 invitation.token, DateTime(2000, 1, 2), claimer_email, InvitationStatus.IDLE
             )
         ]
@@ -430,7 +438,7 @@ async def test_idempotent_new_device_invitation(alice, backend, alice_ws):
 
     rep = await invite_list(alice_ws)
     assert rep == InviteListRepOk(
-        [InviteListItem.Device(invitation.token, DateTime(2000, 1, 2), InvitationStatus.IDLE)]
+        [InviteListItemDevice(invitation.token, DateTime(2000, 1, 2), InvitationStatus.IDLE)]
     )
 
 
@@ -461,7 +469,7 @@ async def test_new_user_invitation_after_invitation_deleted(alice, backend, alic
 
     rep = await invite_list(alice_ws)
     assert rep == InviteListRepOk(
-        [InviteListItem.User(new_token, DateTime(2000, 1, 4), claimer_email, InvitationStatus.IDLE)]
+        [InviteListItemUser(new_token, DateTime(2000, 1, 4), claimer_email, InvitationStatus.IDLE)]
     )
 
 
@@ -490,7 +498,7 @@ async def test_new_device_invitation_after_invitation_deleted(alice, backend, al
 
     rep = await invite_list(alice_ws)
     assert rep == InviteListRepOk(
-        [InviteListItem.Device(new_token, DateTime(2000, 1, 4), InvitationStatus.IDLE)]
+        [InviteListItemDevice(new_token, DateTime(2000, 1, 4), InvitationStatus.IDLE)]
     )
 
 

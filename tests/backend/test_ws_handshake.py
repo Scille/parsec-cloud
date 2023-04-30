@@ -6,6 +6,7 @@ from unittest.mock import ANY
 
 import pytest
 
+from parsec._parsec import BackendEventOrganizationExpired
 from parsec.api.protocol import (
     AuthenticatedClientHandshake,
     HandshakeBadIdentity,
@@ -19,7 +20,6 @@ from parsec.api.protocol import (
 )
 from parsec.api.protocol.handshake import ServerHandshake
 from parsec.api.version import API_VERSION, ApiVersion
-from parsec.backend.backend_events import BackendEvent
 
 
 @pytest.mark.trio
@@ -270,7 +270,7 @@ async def test_handshake_expired_organization(backend_asgi_app, backend, expired
             result_req = await ws.receive()
             with pytest.raises(HandshakeOrganizationExpired):
                 ch.process_result_req(result_req)
-            await spy.wait_with_timeout(BackendEvent.ORGANIZATION_EXPIRED)
+            await spy.wait_with_timeout(BackendEventOrganizationExpired)
 
 
 @pytest.mark.trio

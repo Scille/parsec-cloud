@@ -9,72 +9,14 @@ from structlog import get_logger
 
 from parsec._parsec import (
     DateTime,
+    DeviceID,
+    OrganizationID,
+    RealmID,
     ReencryptionBatchEntry,
-    VlobCreateRep,
-    VlobCreateRepAlreadyExists,
-    VlobCreateRepBadEncryptionRevision,
-    VlobCreateRepBadTimestamp,
-    VlobCreateRepInMaintenance,
-    VlobCreateRepNotAllowed,
-    VlobCreateRepNotASequesteredOrganization,
-    VlobCreateRepOk,
-    VlobCreateRepRejectedBySequesterService,
-    VlobCreateRepRequireGreaterTimestamp,
-    VlobCreateRepSequesterInconsistency,
-    VlobCreateRepTimeout,
-    VlobCreateReq,
-    VlobListVersionsRep,
-    VlobListVersionsRepInMaintenance,
-    VlobListVersionsRepNotAllowed,
-    VlobListVersionsRepNotFound,
-    VlobListVersionsRepOk,
-    VlobListVersionsReq,
-    VlobMaintenanceGetReencryptionBatchRep,
-    VlobMaintenanceGetReencryptionBatchRepBadEncryptionRevision,
-    VlobMaintenanceGetReencryptionBatchRepMaintenanceError,
-    VlobMaintenanceGetReencryptionBatchRepNotAllowed,
-    VlobMaintenanceGetReencryptionBatchRepNotFound,
-    VlobMaintenanceGetReencryptionBatchRepNotInMaintenance,
-    VlobMaintenanceGetReencryptionBatchRepOk,
-    VlobMaintenanceGetReencryptionBatchReq,
-    VlobMaintenanceSaveReencryptionBatchRep,
-    VlobMaintenanceSaveReencryptionBatchRepBadEncryptionRevision,
-    VlobMaintenanceSaveReencryptionBatchRepMaintenanceError,
-    VlobMaintenanceSaveReencryptionBatchRepNotAllowed,
-    VlobMaintenanceSaveReencryptionBatchRepNotFound,
-    VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance,
-    VlobMaintenanceSaveReencryptionBatchRepOk,
-    VlobMaintenanceSaveReencryptionBatchReq,
-    VlobPollChangesRep,
-    VlobPollChangesRepInMaintenance,
-    VlobPollChangesRepNotAllowed,
-    VlobPollChangesRepNotFound,
-    VlobPollChangesRepOk,
-    VlobPollChangesReq,
-    VlobReadRep,
-    VlobReadRepBadEncryptionRevision,
-    VlobReadRepBadVersion,
-    VlobReadRepInMaintenance,
-    VlobReadRepNotAllowed,
-    VlobReadRepNotFound,
-    VlobReadRepOk,
-    VlobReadReq,
-    VlobUpdateRep,
-    VlobUpdateRepBadEncryptionRevision,
-    VlobUpdateRepBadTimestamp,
-    VlobUpdateRepBadVersion,
-    VlobUpdateRepInMaintenance,
-    VlobUpdateRepNotAllowed,
-    VlobUpdateRepNotASequesteredOrganization,
-    VlobUpdateRepNotFound,
-    VlobUpdateRepOk,
-    VlobUpdateRepRejectedBySequesterService,
-    VlobUpdateRepRequireGreaterTimestamp,
-    VlobUpdateRepSequesterInconsistency,
-    VlobUpdateRepTimeout,
-    VlobUpdateReq,
+    SequesterServiceID,
+    VlobID,
+    authenticated_cmds,
 )
-from parsec.api.protocol import DeviceID, OrganizationID, RealmID, SequesterServiceID, VlobID
 from parsec.backend.client_context import AuthenticatedClientContext
 from parsec.backend.http_utils import http_request
 from parsec.backend.sequester import (
@@ -82,7 +24,7 @@ from parsec.backend.sequester import (
     StorageSequesterService,
     WebhookSequesterService,
 )
-from parsec.backend.utils import api, api_typed_msg_adapter, catch_protocol_errors
+from parsec.backend.utils import api
 from parsec.utils import (
     BALLPARK_CLIENT_EARLY_OFFSET,
     BALLPARK_CLIENT_LATE_OFFSET,
@@ -250,12 +192,10 @@ async def extract_sequestered_data_and_proceed_webhook(
 
 
 class BaseVlobComponent:
-    @api("vlob_create")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(VlobCreateReq, VlobCreateRep)
+    @api
     async def api_vlob_create(
-        self, client_ctx: AuthenticatedClientContext, req: VlobCreateReq
-    ) -> VlobCreateRep:
+        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.latest.vlob_create.Req
+    ) -> authenticated_cmds.latest.vlob_create.Rep:
         """
         This API call, when successful, performs the writing of a new vlob version to the database.
         Before adding new entries, extra care should be taken in order to guarantee the consistency in
@@ -266,7 +206,7 @@ class BaseVlobComponent:
         """
         now = DateTime.now()
         if not timestamps_in_the_ballpark(req.timestamp, now):
-            return VlobCreateRepBadTimestamp(
+            return authenticated_cmds.latest.vlob_create.RepBadTimestamp(
                 reason=None,
                 ballpark_client_early_offset=BALLPARK_CLIENT_EARLY_OFFSET,
                 ballpark_client_late_offset=BALLPARK_CLIENT_LATE_OFFSET,
@@ -287,45 +227,45 @@ class BaseVlobComponent:
             )
 
         except VlobAlreadyExistsError:
-            return VlobCreateRepAlreadyExists(None)
+            return authenticated_cmds.latest.vlob_create.RepAlreadyExists(None)
 
         except (VlobAccessError, VlobRealmNotFoundError):
-            return VlobCreateRepNotAllowed()
+            return authenticated_cmds.latest.vlob_create.RepNotAllowed()
 
         except VlobRequireGreaterTimestampError as exc:
-            return VlobCreateRepRequireGreaterTimestamp(exc.strictly_greater_than)
+            return authenticated_cmds.latest.vlob_create.RepRequireGreaterTimestamp(
+                exc.strictly_greater_than
+            )
 
         except VlobEncryptionRevisionError:
-            return VlobCreateRepBadEncryptionRevision()
+            return authenticated_cmds.latest.vlob_create.RepBadEncryptionRevision()
 
         except VlobInMaintenanceError:
-            return VlobCreateRepInMaintenance()
+            return authenticated_cmds.latest.vlob_create.RepInMaintenance()
 
         except VlobSequesterDisabledError:
-            return VlobCreateRepNotASequesteredOrganization()
+            return authenticated_cmds.latest.vlob_create.RepNotASequesteredOrganization()
 
         except VlobSequesterServiceInconsistencyError as exc:
-            return VlobCreateRepSequesterInconsistency(
+            return authenticated_cmds.latest.vlob_create.RepSequesterInconsistency(
                 sequester_authority_certificate=exc.sequester_authority_certificate,
                 sequester_services_certificates=exc.sequester_services_certificates,
             )
 
         except VlobSequesterWebhookRejectionError as exc:
-            return VlobCreateRepRejectedBySequesterService(
+            return authenticated_cmds.latest.vlob_create.RepRejectedBySequesterService(
                 service_id=exc.service_id, service_label=exc.service_label, reason=exc.reason
             )
 
         except VlobSequesterWebhookUnavailableError:
-            return VlobCreateRepTimeout()
+            return authenticated_cmds.latest.vlob_create.RepTimeout()
 
-        return VlobCreateRepOk()
+        return authenticated_cmds.latest.vlob_create.RepOk()
 
-    @api("vlob_read")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(VlobReadReq, VlobReadRep)
+    @api
     async def api_vlob_read(
-        self, client_ctx: AuthenticatedClientContext, req: VlobReadReq
-    ) -> VlobReadRep:
+        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.latest.vlob_read.Req
+    ) -> authenticated_cmds.latest.vlob_read.Rep:
         try:
             (
                 version,
@@ -343,21 +283,21 @@ class BaseVlobComponent:
             )
 
         except VlobNotFoundError:
-            return VlobReadRepNotFound(None)
+            return authenticated_cmds.latest.vlob_read.RepNotFound(None)
 
         except VlobAccessError:
-            return VlobReadRepNotAllowed()
+            return authenticated_cmds.latest.vlob_read.RepNotAllowed()
 
         except VlobVersionError:
-            return VlobReadRepBadVersion()
+            return authenticated_cmds.latest.vlob_read.RepBadVersion()
 
         except VlobEncryptionRevisionError:
-            return VlobReadRepBadEncryptionRevision()
+            return authenticated_cmds.latest.vlob_read.RepBadEncryptionRevision()
 
         except VlobInMaintenanceError:
-            return VlobReadRepInMaintenance()
+            return authenticated_cmds.latest.vlob_read.RepInMaintenance()
 
-        return VlobReadRepOk(
+        return authenticated_cmds.latest.vlob_read.RepOk(
             version,
             blob,
             author,
@@ -365,12 +305,10 @@ class BaseVlobComponent:
             author_last_role_granted_on,
         )
 
-    @api("vlob_update")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(VlobUpdateReq, VlobUpdateRep)
+    @api
     async def api_vlob_update(
-        self, client_ctx: AuthenticatedClientContext, req: VlobUpdateReq
-    ) -> VlobUpdateRep:
+        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.latest.vlob_update.Req
+    ) -> authenticated_cmds.latest.vlob_update.Rep:
         """
         This API call, when successful, performs the writing of a new vlob version to the database.
         Before adding new entries, extra care should be taken in order to guarantee the consistency in
@@ -390,7 +328,7 @@ class BaseVlobComponent:
         """
         now = DateTime.now()
         if not timestamps_in_the_ballpark(req.timestamp, now):
-            return VlobUpdateRepBadTimestamp(
+            return authenticated_cmds.latest.vlob_update.RepBadTimestamp(
                 reason=None,
                 ballpark_client_early_offset=BALLPARK_CLIENT_EARLY_OFFSET,
                 ballpark_client_late_offset=BALLPARK_CLIENT_LATE_OFFSET,
@@ -411,48 +349,50 @@ class BaseVlobComponent:
             )
 
         except VlobNotFoundError:
-            return VlobUpdateRepNotFound(None)
+            return authenticated_cmds.latest.vlob_update.RepNotFound(None)
 
         except VlobAccessError:
-            return VlobUpdateRepNotAllowed()
+            return authenticated_cmds.latest.vlob_update.RepNotAllowed()
 
         except VlobRequireGreaterTimestampError as exc:
-            return VlobUpdateRepRequireGreaterTimestamp(exc.strictly_greater_than)
+            return authenticated_cmds.latest.vlob_update.RepRequireGreaterTimestamp(
+                exc.strictly_greater_than
+            )
 
         except VlobVersionError:
-            return VlobUpdateRepBadVersion()
+            return authenticated_cmds.latest.vlob_update.RepBadVersion()
 
         except VlobEncryptionRevisionError:
-            return VlobUpdateRepBadEncryptionRevision()
+            return authenticated_cmds.latest.vlob_update.RepBadEncryptionRevision()
 
         except VlobInMaintenanceError:
-            return VlobUpdateRepInMaintenance()
+            return authenticated_cmds.latest.vlob_update.RepInMaintenance()
 
         except VlobSequesterDisabledError:
-            return VlobUpdateRepNotASequesteredOrganization()
+            return authenticated_cmds.latest.vlob_update.RepNotASequesteredOrganization()
 
         except VlobSequesterServiceInconsistencyError as exc:
-            return VlobUpdateRepSequesterInconsistency(
+            return authenticated_cmds.latest.vlob_update.RepSequesterInconsistency(
                 sequester_authority_certificate=exc.sequester_authority_certificate,
                 sequester_services_certificates=exc.sequester_services_certificates,
             )
 
         except VlobSequesterWebhookRejectionError as exc:
-            return VlobUpdateRepRejectedBySequesterService(
+            return authenticated_cmds.latest.vlob_update.RepRejectedBySequesterService(
                 service_id=exc.service_id, service_label=exc.service_label, reason=exc.reason
             )
 
         except VlobSequesterWebhookUnavailableError:
-            return VlobUpdateRepTimeout()
+            return authenticated_cmds.latest.vlob_update.RepTimeout()
 
-        return VlobUpdateRepOk()
+        return authenticated_cmds.latest.vlob_update.RepOk()
 
-    @api("vlob_poll_changes")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(VlobPollChangesReq, VlobPollChangesRep)
+    @api
     async def api_vlob_poll_changes(
-        self, client_ctx: AuthenticatedClientContext, req: VlobPollChangesReq
-    ) -> VlobPollChangesRep:
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.vlob_poll_changes.Req,
+    ) -> authenticated_cmds.latest.vlob_poll_changes.Rep:
         # TODO: raise error if too many events since offset ?
         try:
             checkpoint, changes = await self.poll_changes(
@@ -463,46 +403,44 @@ class BaseVlobComponent:
             )
 
         except VlobAccessError:
-            return VlobPollChangesRepNotAllowed()
+            return authenticated_cmds.latest.vlob_poll_changes.RepNotAllowed()
 
         except VlobRealmNotFoundError:
-            return VlobPollChangesRepNotFound(None)
+            return authenticated_cmds.latest.vlob_poll_changes.RepNotFound(None)
 
         except VlobInMaintenanceError:
-            return VlobPollChangesRepInMaintenance()
+            return authenticated_cmds.latest.vlob_poll_changes.RepInMaintenance()
 
-        return VlobPollChangesRepOk(changes, checkpoint)
+        return authenticated_cmds.latest.vlob_poll_changes.RepOk(changes, checkpoint)
 
-    @api("vlob_list_versions")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(VlobListVersionsReq, VlobListVersionsRep)
+    @api
     async def api_vlob_list_versions(
-        self, client_ctx: AuthenticatedClientContext, req: VlobListVersionsReq
-    ) -> VlobListVersionsRep:
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.vlob_list_versions.Req,
+    ) -> authenticated_cmds.latest.vlob_list_versions.Rep:
         try:
             versions_dict = await self.list_versions(
                 client_ctx.organization_id, client_ctx.device_id, vlob_id=req.vlob_id
             )
 
         except VlobAccessError:
-            return VlobListVersionsRepNotAllowed()
+            return authenticated_cmds.latest.vlob_list_versions.RepNotAllowed()
 
         except VlobNotFoundError:
-            return VlobListVersionsRepNotFound(None)
+            return authenticated_cmds.latest.vlob_list_versions.RepNotFound(None)
 
         except VlobInMaintenanceError:
-            return VlobListVersionsRepInMaintenance()
+            return authenticated_cmds.latest.vlob_list_versions.RepInMaintenance()
 
-        return VlobListVersionsRepOk(versions_dict)
+        return authenticated_cmds.latest.vlob_list_versions.RepOk(versions_dict)
 
-    @api("vlob_maintenance_get_reencryption_batch")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(
-        VlobMaintenanceGetReencryptionBatchReq, VlobMaintenanceGetReencryptionBatchRep
-    )
+    @api
     async def api_vlob_maintenance_get_reencryption_batch(
-        self, client_ctx: AuthenticatedClientContext, req: VlobMaintenanceGetReencryptionBatchReq
-    ) -> VlobMaintenanceGetReencryptionBatchRep:
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.vlob_maintenance_get_reencryption_batch.Req,
+    ) -> authenticated_cmds.latest.vlob_maintenance_get_reencryption_batch.Rep:
         try:
             batch = await self.maintenance_get_reencryption_batch(
                 client_ctx.organization_id,
@@ -513,32 +451,38 @@ class BaseVlobComponent:
             )
 
         except VlobAccessError:
-            return VlobMaintenanceGetReencryptionBatchRepNotAllowed()
+            return authenticated_cmds.latest.vlob_maintenance_get_reencryption_batch.RepNotAllowed()
 
         except VlobRealmNotFoundError:
-            return VlobMaintenanceGetReencryptionBatchRepNotFound(None)
+            return authenticated_cmds.latest.vlob_maintenance_get_reencryption_batch.RepNotFound(
+                None
+            )
 
         except VlobNotInMaintenanceError:
-            return VlobMaintenanceGetReencryptionBatchRepNotInMaintenance(None)
+            return authenticated_cmds.latest.vlob_maintenance_get_reencryption_batch.RepNotInMaintenance(
+                None
+            )
 
         except VlobEncryptionRevisionError:
-            return VlobMaintenanceGetReencryptionBatchRepBadEncryptionRevision()
+            return (
+                authenticated_cmds.latest.vlob_maintenance_get_reencryption_batch.RepBadEncryptionRevision()
+            )
 
         except VlobMaintenanceError:
-            return VlobMaintenanceGetReencryptionBatchRepMaintenanceError(None)
+            return authenticated_cmds.latest.vlob_maintenance_get_reencryption_batch.RepMaintenanceError(
+                None
+            )
 
-        return VlobMaintenanceGetReencryptionBatchRepOk(
+        return authenticated_cmds.latest.vlob_maintenance_get_reencryption_batch.RepOk(
             [ReencryptionBatchEntry(vlob_id, version, blob) for vlob_id, version, blob in batch]
         )
 
-    @api("vlob_maintenance_save_reencryption_batch")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(
-        VlobMaintenanceSaveReencryptionBatchReq, VlobMaintenanceSaveReencryptionBatchRep
-    )
+    @api
     async def api_vlob_maintenance_save_reencryption_batch(
-        self, client_ctx: AuthenticatedClientContext, req: VlobMaintenanceSaveReencryptionBatchReq
-    ) -> VlobMaintenanceSaveReencryptionBatchRep:
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.vlob_maintenance_save_reencryption_batch.Req,
+    ) -> authenticated_cmds.latest.vlob_maintenance_save_reencryption_batch.Rep:
         try:
             total, done = await self.maintenance_save_reencryption_batch(
                 client_ctx.organization_id,
@@ -549,22 +493,32 @@ class BaseVlobComponent:
             )
 
         except VlobAccessError:
-            return VlobMaintenanceSaveReencryptionBatchRepNotAllowed()
+            return (
+                authenticated_cmds.latest.vlob_maintenance_save_reencryption_batch.RepNotAllowed()
+            )
 
         # No need to catch VlobNotFoundError given unknown vlob/version in batch are ignored
         except VlobRealmNotFoundError:
-            return VlobMaintenanceSaveReencryptionBatchRepNotFound(None)
+            return authenticated_cmds.latest.vlob_maintenance_save_reencryption_batch.RepNotFound(
+                None
+            )
 
         except VlobNotInMaintenanceError:
-            return VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance(None)
+            return authenticated_cmds.latest.vlob_maintenance_save_reencryption_batch.RepNotInMaintenance(
+                None
+            )
 
         except VlobEncryptionRevisionError:
-            return VlobMaintenanceSaveReencryptionBatchRepBadEncryptionRevision()
+            return (
+                authenticated_cmds.latest.vlob_maintenance_save_reencryption_batch.RepBadEncryptionRevision()
+            )
 
         except VlobMaintenanceError:
-            return VlobMaintenanceSaveReencryptionBatchRepMaintenanceError(None)
+            return authenticated_cmds.latest.vlob_maintenance_save_reencryption_batch.RepMaintenanceError(
+                None
+            )
 
-        return VlobMaintenanceSaveReencryptionBatchRepOk(total, done)
+        return authenticated_cmds.latest.vlob_maintenance_save_reencryption_batch.RepOk(total, done)
 
     async def create(
         self,

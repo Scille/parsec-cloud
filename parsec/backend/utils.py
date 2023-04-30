@@ -2,17 +2,24 @@
 from __future__ import annotations
 
 from enum import Enum
-from functools import wraps
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict, Sequence, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    ForwardRef,
+    Type,
+    TypeVar,
+    Union,
+    get_type_hints,
+)
 
 from quart import Websocket
 from trio import CancelScope
 from typing_extensions import Final, Literal, ParamSpec
 
-from parsec._parsec import AuthenticatedAnyCmdReq, ClientType, InvitedAnyCmdReq, ProtocolError
-from parsec.api.protocol import InvalidMessageError
 from parsec.api.version import API_V3_VERSION
-from parsec.serde.packing import packb, unpackb
 from parsec.utils import open_service_nursery
 
 if TYPE_CHECKING:
@@ -21,7 +28,7 @@ if TYPE_CHECKING:
     Ctx = TypeVar("Ctx", bound=BaseClientContext)
     T = TypeVar("T")
     P = ParamSpec("P")
-    CmdReq = Union[InvitedAnyCmdReq, AuthenticatedAnyCmdReq]
+
 
 PEER_EVENT_MAX_WAIT = 3  # 5mn
 ALLOWED_API_VERSIONS = {
@@ -33,65 +40,55 @@ ALLOWED_API_VERSIONS = {
 OperationKind = Enum("OperationKind", "DATA_READ DATA_WRITE MAINTENANCE")
 
 
-# TODO: temporary hack that should be removed once all cmds are typed, at this point we
-# will be able to do this handling directly into `BackendApp._handle_client_websocket_loop`
-def api_typed_msg_adapter(
-    req_cls: Any, rep_cls: Any
-) -> Callable[
-    [Callable[[T, Ctx, Any], Awaitable[Any]]],
-    Callable[[T, Ctx, dict[str, object]], Awaitable[dict[str, object]]],
-]:
-    def _api_typed_msg_adapter(
-        fn: Callable[[T, Ctx, Any], Awaitable[Any]]
-    ) -> Callable[[T, Ctx, dict[str, object]], Awaitable[dict[str, object]]]:
-        @wraps(fn)
-        async def wrapper(self: T, client_ctx: Ctx, msg: dict[str, object]) -> dict[str, object]:
-            # Here packb&unpackb should never fail given they are only undoing
-            # work we've just done in another layer
-            if client_ctx.TYPE == ClientType.INVITED:
-                from parsec._parsec import InvitedAnyCmdReq
+def api(fn: Callable[P, T]) -> Callable[P, T]:
+    assert not hasattr(fn, "_api_info")
 
-                typed_req = InvitedAnyCmdReq.load(packb(msg))
-            elif client_ctx.TYPE == ClientType.ANONYMOUS:
-                from parsec._parsec import AnonymousAnyCmdReq
+    # Unlike req/rp that have an absolute path, `client_ctx` is only specified in the
+    # signature by it name, hence we must hack `localns` so that it find something
+    # (as we don't really care to find the right element !)
+    types = get_type_hints(
+        fn,
+        localns={
+            "AuthenticatedClientContext": "AuthenticatedClientContext",
+            "InvitedClientContext": "InvitedClientContext",
+            "AnonymousClientContext": "AnonymousClientContext",
+        },
+    )
+    assert types.keys() == {"client_ctx", "req", "return"}
+    cmd_mod = types["req"].__module__
+    _, _, m_family, _, m_cmd = cmd_mod.split(".")
+    assert types["return"].__module__ == cmd_mod
+    assert cmd_mod.startswith("parsec._parsec.")
+    assert types["req"].__name__ == "Req"
+    assert types["return"].__name__ == "Rep"
 
-                typed_req = AnonymousAnyCmdReq.load(packb(msg))
-            else:
-                from parsec._parsec import AuthenticatedAnyCmdReq
+    if m_family == "authenticated_cmds":
+        assert types["client_ctx"] == ForwardRef("AuthenticatedClientContext")
+    elif m_family == "invited_cmds":
+        assert types["client_ctx"] == ForwardRef("InvitedClientContext")
+    else:
+        assert m_family == "anonymous_cmds"
+        assert types["client_ctx"] == ForwardRef("AnonymousClientContext")
 
-                typed_req = AuthenticatedAnyCmdReq.load(packb(msg))
-
-            assert isinstance(typed_req, req_cls)
-            typed_rep = await fn(self, client_ctx, typed_req)
-            return unpackb(typed_rep.dump())
-
-        return wrapper
-
-    return _api_typed_msg_adapter
+    fn._api_info = {  # type: ignore[attr-defined]
+        "cmd": m_cmd,
+        "req_type": types["req"],
+        "cancel_on_client_sending_new_cmd": False,
+    }
+    return fn
 
 
-def api(
-    cmd: str,
-    *,
-    cancel_on_client_sending_new_cmd: bool = False,
-    client_types: Sequence[ClientType] = (ClientType.AUTHENTICATED,),
-) -> Callable[[Callable[P, T]], Callable[P, T]]:
-    def wrapper(fn: Callable[P, T]) -> Callable[P, T]:
-        assert not hasattr(fn, "_api_info")
-        fn._api_info = {  # type: ignore[attr-defined]
-            "cmd": cmd,
-            "client_types": client_types,
-            "cancel_on_client_sending_new_cmd": cancel_on_client_sending_new_cmd,
-        }
-        return fn
-
-    return wrapper
+def api_ws_cancel_on_client_sending_new_cmd(fn: Callable[P, T]) -> Callable[P, T]:
+    # `@api` must be placed first
+    assert hasattr(fn, "_api_info")
+    fn._api_info["cancel_on_client_sending_new_cmd"] = True
+    return fn
 
 
 def collect_apis(
-    *components: object, include_ping: bool
-) -> Dict[ClientType, Dict[str, Callable[..., Any]]]:
-    apis: Dict[ClientType, Dict[str, Callable[..., Any]]] = {}
+    *components: Any, include_ping: bool
+) -> Dict[Type[Any], Callable[[BaseClientContext, Any], Any]]:
+    apis: Dict[Type[Any], Callable[[BaseClientContext, Any], Any]] = {}
     for component in components:
         for methname in dir(component):
             meth = getattr(component, methname)
@@ -99,39 +96,14 @@ def collect_apis(
             if not info:
                 continue
 
-            for client_type in info["client_types"]:
-                if client_type not in apis:
-                    apis[client_type] = {}
+            # Ping command is only needed for tests
+            if info["cmd"] == "ping" and not include_ping:
+                continue
 
-                # Ping command is only needed for tests, so skip provide a way
-                # to skip in when in production
-                if info["cmd"] == "ping" and not include_ping:
-                    continue
+            already_present = apis.setdefault(info["req_type"], meth)
+            assert already_present is meth
 
-                assert info["cmd"] not in apis[client_type]
-                apis[client_type][info["cmd"]] = meth
     return apis
-
-
-def catch_protocol_errors(
-    fn: Callable[P, Awaitable[dict[str, object]]]
-) -> Callable[P, Awaitable[dict[str, object]]]:
-    @wraps(fn)
-    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> dict[str, object]:
-        try:
-            return await fn(*args, **kwargs)
-
-        except InvalidMessageError as exc:
-            return {
-                "status": "bad_message",
-                "errors": exc.errors,
-                "reason": "Invalid message.",
-            }
-
-        except ProtocolError as exc:
-            return {"status": "bad_message", "reason": str(exc)}
-
-    return wrapper
 
 
 class CancelledByNewCmd(Exception):
@@ -141,7 +113,7 @@ class CancelledByNewCmd(Exception):
 
 async def run_with_cancel_on_client_sending_new_cmd(
     websocket: Websocket, fn: Callable[P, Awaitable[T]], *args: P.args, **kwargs: P.kwargs
-) -> dict[str, object]:
+) -> T:
     """
     This is kind of a special case here:
     unlike other requests this one is going to (potentially) take
@@ -168,7 +140,7 @@ async def run_with_cancel_on_client_sending_new_cmd(
         nursery.start_soon(_do_fn, nursery.cancel_scope)
         nursery.start_soon(_keep_websocket_breathing)
 
-    assert isinstance(rep, dict)
+    assert rep is not None
     return rep
 
 

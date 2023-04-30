@@ -5,9 +5,14 @@ import pytest
 import trio
 from quart.testing.connections import WebsocketDisconnectError
 
-from parsec._parsec import AuthenticatedPingRepOk, EventsListenRepNoEvents, EventsListenRepOkPinged
+from parsec._parsec import BackendEventPinged
+from parsec.api.protocol import (
+    APIEventPinged,
+    AuthenticatedPingRepOk,
+    EventsListenRepNoEvents,
+    EventsListenRepOk,
+)
 from parsec.backend.asgi import app_factory
-from parsec.backend.backend_events import BackendEvent
 from tests.backend.common import (
     authenticated_ping,
     events_listen,
@@ -64,10 +69,10 @@ async def test_events_subscribe(backend, alice_ws, alice2_ws):
         await authenticated_ping(alice2_ws, "foo")
 
         # No guarantees those events occur before the commands' return
-        await spy.wait_multiple_with_timeout([BackendEvent.PINGED, BackendEvent.PINGED])
+        await spy.wait_multiple_with_timeout([BackendEventPinged, BackendEventPinged])
 
     rep = await events_listen_nowait(alice_ws)
-    assert rep == EventsListenRepOkPinged("foo")
+    assert rep == EventsListenRepOk(APIEventPinged("foo"))
     rep = await events_listen_nowait(alice_ws)
     assert isinstance(rep, EventsListenRepNoEvents)
 
@@ -80,7 +85,7 @@ async def test_event_resubscribe(backend, alice_ws, alice2_ws):
         await authenticated_ping(alice2_ws, "foo")
 
         # No guarantees those events occur before the commands' return
-        await spy.wait_with_timeout(BackendEvent.PINGED)
+        await spy.wait_with_timeout(BackendEventPinged)
 
     # Resubscribing should have no effect
     await events_subscribe(alice_ws)
@@ -90,14 +95,14 @@ async def test_event_resubscribe(backend, alice_ws, alice2_ws):
         await authenticated_ping(alice2_ws, "spam")
 
         # No guarantees those events occur before the commands' return
-        await spy.wait_multiple_with_timeout([BackendEvent.PINGED, BackendEvent.PINGED])
+        await spy.wait_multiple_with_timeout([BackendEventPinged, BackendEventPinged])
 
     rep = await events_listen_nowait(alice_ws)
-    assert rep == EventsListenRepOkPinged("foo")
+    assert rep == EventsListenRepOk(APIEventPinged("foo"))
     rep = await events_listen_nowait(alice_ws)
-    assert rep == EventsListenRepOkPinged("bar")
+    assert rep == EventsListenRepOk(APIEventPinged("bar"))
     rep = await events_listen_nowait(alice_ws)
-    assert rep == EventsListenRepOkPinged("spam")
+    assert rep == EventsListenRepOk(APIEventPinged("spam"))
     rep = await events_listen_nowait(alice_ws)
     assert isinstance(rep, EventsListenRepNoEvents)
 
@@ -116,7 +121,7 @@ async def test_cross_backend_event(backend_factory, backend_authenticated_ws_fac
 
             async with events_listen(alice_ws) as listen:
                 await authenticated_ping(bob_ws, "foo")
-            assert listen.rep == EventsListenRepOkPinged("foo")
+            assert listen.rep == EventsListenRepOk(APIEventPinged("foo"))
 
             await authenticated_ping(bob_ws, "foo")
 
@@ -128,7 +133,7 @@ async def test_cross_backend_event(backend_factory, backend_authenticated_ws_fac
                     if not isinstance(rep, EventsListenRepNoEvents):
                         break
                     await trio.sleep(0.1)
-            assert rep == EventsListenRepOkPinged("foo")
+            assert rep == EventsListenRepOk(APIEventPinged("foo"))
 
             rep = await events_listen_nowait(alice_ws)
             assert isinstance(rep, EventsListenRepNoEvents)
@@ -183,11 +188,11 @@ async def test_sse_events_subscribe(
                 await authenticated_ping(alice2_rpc, "foo")
 
                 # No guarantees those events occur before the commands' return
-                await spy.wait_multiple_with_timeout([BackendEvent.PINGED, BackendEvent.PINGED])
+                await spy.wait_multiple_with_timeout([BackendEventPinged, BackendEventPinged])
 
             event = await sse_con.get_next_event()
             assert sse_con.status_code == 200
-            assert event == EventsListenRepOkPinged("foo")
+            assert event == EventsListenRepOk(APIEventPinged("foo"))
 
 
 @pytest.mark.trio
@@ -226,19 +231,19 @@ async def test_sse_cross_backend_event(backend_factory, alice, bob):
 
         async with real_clock_timeout():
             async with alice_rpc.connect_sse_events() as sse_con:
-                await bob_rpc.send_ping("1")
+                await authenticated_ping(bob_rpc, ping="1")
 
                 event = await sse_con.get_next_event()
-                assert event == EventsListenRepOkPinged("1")
+                assert event == EventsListenRepOk(APIEventPinged("1"))
                 assert sse_con.status_code == 200
 
-                await bob_rpc.send_ping("2")
-                await bob_rpc.send_ping("3")
+                await authenticated_ping(bob_rpc, ping="2")
+                await authenticated_ping(bob_rpc, ping="3")
 
                 event = await sse_con.get_next_event()
-                assert event == EventsListenRepOkPinged("2")
+                assert event == EventsListenRepOk(APIEventPinged("2"))
                 event = await sse_con.get_next_event()
-                assert event == EventsListenRepOkPinged("3")
+                assert event == EventsListenRepOk(APIEventPinged("3"))
 
 
 @pytest.mark.trio
@@ -263,22 +268,28 @@ async def test_sse_events_close_connection_on_backpressure(
             # concurrency 2 events is not enough (1st event triggers the wakeup for the
             # SSE task, 2nd event gets queued), hence we dispatch 3 events here !
             backend.event_bus.send(
-                BackendEvent.PINGED,
-                organization_id=alice.organization_id,
-                author=bob.device_id,
-                ping="1",
+                BackendEventPinged,
+                payload=BackendEventPinged(
+                    organization_id=alice.organization_id,
+                    author=bob.device_id,
+                    ping="1",
+                ),
             )
             backend.event_bus.send(
-                BackendEvent.PINGED,
-                organization_id=alice.organization_id,
-                author=bob.device_id,
-                ping="2",
+                BackendEventPinged,
+                payload=BackendEventPinged(
+                    organization_id=alice.organization_id,
+                    author=bob.device_id,
+                    ping="2",
+                ),
             )
             backend.event_bus.send(
-                BackendEvent.PINGED,
-                organization_id=alice.organization_id,
-                author=bob.device_id,
-                ping="3",
+                BackendEventPinged,
+                payload=BackendEventPinged(
+                    organization_id=alice.organization_id,
+                    author=bob.device_id,
+                    ping="3",
+                ),
             )
 
             # The connection simply gets closed without error status given nothing wrong

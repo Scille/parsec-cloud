@@ -1,30 +1,29 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+import msgpack
 import pytest
 import trio
 from hypothesis import given
 from hypothesis import strategies as st
 
 from parsec._parsec import (
+    DateTime,
+    authenticated_cmds,
+)
+from parsec.api.protocol import (
     BlockCreateRepAlreadyExists,
     BlockCreateRepInMaintenance,
     BlockCreateRepNotAllowed,
     BlockCreateRepOk,
     BlockCreateRepTimeout,
+    BlockID,
     BlockReadRepNotAllowed,
     BlockReadRepNotFound,
     BlockReadRepOk,
     BlockReadRepTimeout,
-    DateTime,
-)
-from parsec.api.protocol import (
-    BlockID,
     RealmRole,
     VlobID,
-    block_create_serializer,
-    block_read_serializer,
-    packb,
 )
 from parsec.backend.block import BlockStoreError
 from parsec.backend.raid5_blockstore import (
@@ -369,10 +368,11 @@ async def test_raid5_block_read_multiple_failure(
 )
 @pytest.mark.trio
 async def test_block_create_bad_msg(alice_ws, bad_msg):
-    await alice_ws.send(packb({"cmd": "block_create", **bad_msg}))
+    await alice_ws.send(msgpack.packb({"cmd": "block_create", **bad_msg}))
     raw_rep = await alice_ws.receive()
-    rep = block_create_serializer.rep_loads(raw_rep)
-    assert rep.status == "bad_message"
+    rep = authenticated_cmds.latest.block_create.Rep.load(raw_rep)
+    assert isinstance(rep, authenticated_cmds.latest.block_create.RepUnknownStatus)
+    assert rep.status == "invalid_msg_format"
 
 
 @pytest.mark.trio
@@ -393,13 +393,14 @@ async def test_block_read_not_found(alice_ws):
 )
 @pytest.mark.trio
 async def test_block_read_bad_msg(alice_ws, bad_msg):
-    await alice_ws.send(packb({"cmd": "block_read", **bad_msg}))
+    await alice_ws.send(msgpack.packb({"cmd": "block_read", **bad_msg}))
     raw_rep = await alice_ws.receive()
     # Valid ID doesn't exists in database but this is ok given here we test
     # another layer so it's not important as long as we get our
-    # `bad_message` status
-    rep = block_read_serializer.rep_loads(raw_rep)
-    assert rep.status == "bad_message"
+    # `invalid_msg_format` status
+    rep = authenticated_cmds.latest.block_read.Rep.load(raw_rep)
+    assert isinstance(rep, authenticated_cmds.latest.block_read.RepUnknownStatus)
+    assert rep.status == "invalid_msg_format"
 
 
 @pytest.mark.trio

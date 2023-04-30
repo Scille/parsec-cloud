@@ -5,12 +5,16 @@ import pytest
 
 from parsec._parsec import (
     DateTime,
+)
+from parsec.api.protocol import (
+    APIEventInviteStatusChanged,
     EventsListenRepNoEvents,
-    EventsListenRepOkInviteStatusChanged,
-    InviteListItem,
+    EventsListenRepOk,
+    InvitationStatus,
+    InvitationType,
+    InviteListItemDevice,
     InviteListRepOk,
 )
-from parsec.api.protocol import InvitationStatus, InvitationType
 from tests.backend.common import (
     events_listen_nowait,
     events_listen_wait,
@@ -45,9 +49,11 @@ async def test_greeter_event_on_claimer_join_and_leave(
             rep = await events_listen_wait(alice_ws)
             # PostgreSQL event dispatching might be lagging behind and return
             # the IDLE event first
-            if rep.invitation_status == InvitationStatus.IDLE:
+            if rep.unit.invitation_status == InvitationStatus.IDLE:
                 rep = await events_listen_wait(alice_ws)
-        assert rep == EventsListenRepOkInviteStatusChanged(invitation.token, InvitationStatus.READY)
+        assert rep == EventsListenRepOk(
+            APIEventInviteStatusChanged(invitation.token, InvitationStatus.READY)
+        )
 
         # No other authenticated users should be notified
         rep = await events_listen_nowait(bob_ws)
@@ -55,16 +61,18 @@ async def test_greeter_event_on_claimer_join_and_leave(
 
         rep = await invite_list(alice_ws)
         assert rep == InviteListRepOk(
-            [InviteListItem.Device(invitation.token, DateTime(2000, 1, 2), InvitationStatus.READY)]
+            [InviteListItemDevice(invitation.token, DateTime(2000, 1, 2), InvitationStatus.READY)]
         )
 
     # Now claimer has left, greeter should be again notified
     async with real_clock_timeout():
         rep = await events_listen_wait(alice_ws)
 
-    assert rep == EventsListenRepOkInviteStatusChanged(invitation.token, InvitationStatus.IDLE)
+    assert rep == EventsListenRepOk(
+        APIEventInviteStatusChanged(invitation.token, InvitationStatus.IDLE)
+    )
 
     rep = await invite_list(alice_ws)
     assert rep == InviteListRepOk(
-        [InviteListItem.Device(invitation.token, DateTime(2000, 1, 2), InvitationStatus.IDLE)]
+        [InviteListItemDevice(invitation.token, DateTime(2000, 1, 2), InvitationStatus.IDLE)]
     )

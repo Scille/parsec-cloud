@@ -5,15 +5,19 @@ import pytest
 
 from parsec._parsec import (
     DateTime,
+)
+from parsec.api.data import RealmRoleCertificate
+from parsec.api.protocol import (
+    RealmID,
+    RealmRole,
     RealmUpdateRolesRepOk,
+    VlobID,
     VlobPollChangesRepNotAllowed,
     VlobPollChangesRepNotFound,
     VlobPollChangesRepOk,
     VlobUpdateRepNotAllowed,
     VlobUpdateRepOk,
 )
-from parsec.api.data import RealmRoleCertificate
-from parsec.api.protocol import RealmID, RealmRole, VlobID
 from tests.backend.common import realm_update_roles, vlob_poll_changes, vlob_update
 
 NOW = DateTime(2000, 1, 3)

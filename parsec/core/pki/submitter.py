@@ -8,20 +8,25 @@ import attr
 
 from parsec._parsec import (
     DateTime,
+    DeviceLabel,
     EnrollmentID,
+    PrivateKey,
+    SigningKey,
+)
+from parsec.api.data import PkiEnrollmentSubmitPayload
+from parsec.api.protocol import (
     PkiEnrollmentInfoRepNotFound,
     PkiEnrollmentInfoRepOk,
-    PkiEnrollmentStatus,
+    PkiEnrollmentInfoStatusAccepted,
+    PkiEnrollmentInfoStatusCancelled,
+    PkiEnrollmentInfoStatusRejected,
+    PkiEnrollmentInfoStatusSubmitted,
     PkiEnrollmentSubmitRepAlreadyEnrolled,
     PkiEnrollmentSubmitRepAlreadySubmitted,
     PkiEnrollmentSubmitRepEmailAlreadyUsed,
     PkiEnrollmentSubmitRepIdAlreadyUsed,
     PkiEnrollmentSubmitRepOk,
-    PrivateKey,
-    SigningKey,
 )
-from parsec.api.data import PkiEnrollmentSubmitPayload
-from parsec.api.protocol import DeviceLabel
 from parsec.core.backend_connection import pki_enrollment_info as cmd_pki_enrollment_info
 from parsec.core.backend_connection import pki_enrollment_submit as cmd_pki_enrollment_submit
 from parsec.core.pki.exceptions import (
@@ -248,7 +253,7 @@ class PkiEnrollmentSubmitterSubmittedCtx:
             PkiEnrollmentInfoError
             PkiEnrollmentInfoNotFoundError
         """
-        #  Tuple[PkiEnrollmentStatus, DateTime, LocalDevice | None]:
+        #  Tuple[PkiEnrollmentInfoStatus, DateTime, LocalDevice | None]:
         rep = await cmd_pki_enrollment_info(addr=self.addr, enrollment_id=self.enrollment_id)
 
         if isinstance(rep, PkiEnrollmentInfoRepNotFound):
@@ -269,7 +274,7 @@ class PkiEnrollmentSubmitterSubmittedCtx:
 
         enrollment_status = rep.enrollment_status
 
-        if enrollment_status.status == PkiEnrollmentStatus.SUBMITTED:
+        if isinstance(enrollment_status, PkiEnrollmentInfoStatusSubmitted):
             return PkiEnrollmentSubmitterSubmittedStatusCtx(
                 config_dir=self.config_dir,
                 x509_certificate=self.x509_certificate,
@@ -279,7 +284,7 @@ class PkiEnrollmentSubmitterSubmittedCtx:
                 submit_payload=self.submit_payload,
             )
 
-        elif enrollment_status.status == PkiEnrollmentStatus.CANCELLED:
+        elif isinstance(enrollment_status, PkiEnrollmentInfoStatusCancelled):
             cancelled_on = rep.cancelled_on
             return PkiEnrollmentSubmitterCancelledStatusCtx(
                 config_dir=self.config_dir,
@@ -291,7 +296,7 @@ class PkiEnrollmentSubmitterSubmittedCtx:
                 cancelled_on=cancelled_on,
             )
 
-        elif enrollment_status.status == PkiEnrollmentStatus.REJECTED:
+        elif isinstance(enrollment_status, PkiEnrollmentInfoStatusRejected):
             rejected_on = rep.rejected_on
             return PkiEnrollmentSubmitterRejectedStatusCtx(
                 config_dir=self.config_dir,
@@ -304,7 +309,7 @@ class PkiEnrollmentSubmitterSubmittedCtx:
             )
 
         else:
-            assert enrollment_status.status == PkiEnrollmentStatus.ACCEPTED
+            assert isinstance(enrollment_status, PkiEnrollmentInfoStatusAccepted)
             accepter_der_x509_certificate = rep.accepter_der_x509_certificate
             payload_signature = rep.accept_payload_signature
             payload = rep.accept_payload

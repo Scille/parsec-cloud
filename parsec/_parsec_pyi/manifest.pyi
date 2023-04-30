@@ -10,11 +10,11 @@ from parsec._parsec import (
     DeviceID,
     EntryID,
     HashDigest,
+    RealmRole,
     SecretKey,
     SigningKey,
     VerifyKey,
 )
-from parsec.api.protocol import RealmRole
 from parsec.types import FrozenDict
 
 AnyRemoteManifest = Union[

@@ -5,6 +5,11 @@ import pytest
 
 from parsec._parsec import (
     DateTime,
+    authenticated_cmds,
+)
+from parsec.api.protocol import (
+    RealmID,
+    RealmRole,
     RealmUpdateRolesRepOk,
     VlobCreateRepAlreadyExists,
     VlobCreateRepBadEncryptionRevision,
@@ -13,6 +18,7 @@ from parsec._parsec import (
     VlobCreateRepNotAllowed,
     VlobCreateRepOk,
     VlobCreateRepRequireGreaterTimestamp,
+    VlobID,
     VlobListVersionsRepNotAllowed,
     VlobListVersionsRepNotFound,
     VlobListVersionsRepOk,
@@ -30,16 +36,7 @@ from parsec._parsec import (
     VlobUpdateRepNotFound,
     VlobUpdateRepOk,
     VlobUpdateRepRequireGreaterTimestamp,
-)
-from parsec.api.protocol import (
-    RealmID,
-    RealmRole,
-    VlobID,
     packb,
-    vlob_create_serializer,
-    vlob_list_versions_serializer,
-    vlob_read_serializer,
-    vlob_update_serializer,
 )
 from parsec.backend.realm import RealmGrantedRole
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
@@ -99,8 +96,9 @@ async def test_create_bad_timestamp(alice_ws, realm):
 async def test_create_bad_msg(alice_ws, bad_msg):
     await alice_ws.send(packb({"cmd": "vlob_create", **bad_msg}))
     raw_rep = await alice_ws.receive()
-    rep = vlob_create_serializer.rep_loads(raw_rep)
-    assert rep.status == "bad_message"
+    rep = authenticated_cmds.latest.vlob_create.Rep.load(raw_rep)
+    assert isinstance(rep, authenticated_cmds.latest.vlob_create.RepUnknownStatus)
+    assert rep.status == "invalid_msg_format"
 
 
 @pytest.mark.trio
@@ -325,10 +323,11 @@ async def test_read_other_organization(backend_asgi_app, ws_from_other_organizat
 async def test_read_bad_msg(alice_ws, bad_msg):
     await alice_ws.send(packb({"cmd": "vlob_read", **bad_msg}))
     raw_rep = await alice_ws.receive()
-    rep = vlob_read_serializer.rep_loads(raw_rep)
     # Id and trust_seed are invalid anyway, but here we test another layer
     # so it's not important as long as we get our `bad_message` status
-    assert rep.status == "bad_message"
+    rep = authenticated_cmds.latest.vlob_read.Rep.load(raw_rep)
+    assert isinstance(rep, authenticated_cmds.latest.vlob_read.RepUnknownStatus)
+    assert rep.status == "invalid_msg_format"
 
 
 @pytest.mark.trio
@@ -468,10 +467,11 @@ async def test_update_other_organization(
 async def test_update_bad_msg(alice_ws, bad_msg):
     await alice_ws.send(packb({"cmd": "vlob_update", **bad_msg}))
     raw_rep = await alice_ws.receive()
-    rep = vlob_update_serializer.rep_loads(raw_rep)
     # Id and version are invalid anyway, but here we test another layer
     # so it's not important as long as we get our `bad_message` status
-    assert rep.status == "bad_message"
+    rep = authenticated_cmds.latest.vlob_update.Rep.load(raw_rep)
+    assert isinstance(rep, authenticated_cmds.latest.vlob_update.RepUnknownStatus)
+    assert rep.status == "invalid_msg_format"
 
 
 @pytest.mark.trio
@@ -584,10 +584,11 @@ async def test_list_versions_other_organization(
 async def test_list_versions_bad_msg(alice_ws, bad_msg):
     await alice_ws.send(packb({"cmd": "vlob_list_versions", **bad_msg}))
     raw_rep = await alice_ws.receive()
-    rep = vlob_list_versions_serializer.rep_loads(raw_rep)
     # Id and trust_seed are invalid anyway, but here we test another layer
     # so it's not important as long as we get our `bad_message` status
-    assert rep.status == "bad_message"
+    rep = authenticated_cmds.latest.vlob_list_versions.Rep.load(raw_rep)
+    assert isinstance(rep, authenticated_cmds.latest.vlob_list_versions.RepUnknownStatus)
+    assert rep.status == "invalid_msg_format"
 
 
 @pytest.mark.trio

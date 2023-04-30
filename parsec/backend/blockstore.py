@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from parsec.api.protocol import BlockID, OrganizationID
+from parsec._parsec import BlockID, OrganizationID
 from parsec.backend.config import (
     BaseBlockStoreConfig,
     MockedBlockStoreConfig,

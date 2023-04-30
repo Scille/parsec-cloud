@@ -9,13 +9,14 @@ import trio
 
 from parsec._parsec import (
     ActiveUsersLimit,
+    BackendEventOrganizationExpired,
     DateTime,
+    OrganizationID,
     OrganizationStats,
+    UserProfile,
     UsersPerProfileDetailItem,
     VerifyKey,
 )
-from parsec.api.protocol import OrganizationID, UserProfile
-from parsec.backend.events import BackendEvent
 from parsec.backend.organization import (
     BaseOrganizationComponent,
     Organization,
@@ -242,7 +243,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self._organizations[id] = organization
 
         if self._organizations[id].is_expired:
-            await self._send_event(BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)
+            await self._send_event(BackendEventOrganizationExpired(organization_id=id))
 
     def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:
         self._organizations[new_id] = deepcopy(self._organizations[id])

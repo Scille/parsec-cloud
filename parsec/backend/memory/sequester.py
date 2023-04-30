@@ -5,9 +5,15 @@ from collections import defaultdict
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
-from parsec._parsec import CryptoError, DateTime
+from parsec._parsec import (
+    CryptoError,
+    DateTime,
+    OrganizationID,
+    RealmID,
+    SequesterServiceID,
+    VlobID,
+)
 from parsec.api.data import DataError, SequesterServiceCertificate
-from parsec.api.protocol import OrganizationID, RealmID, SequesterServiceID, VlobID
 from parsec.backend.sequester import (
     BaseSequesterComponent,
     BaseSequesterService,

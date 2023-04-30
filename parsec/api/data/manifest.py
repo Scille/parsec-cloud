@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Type
 
 from parsec._parsec import (
     BlockAccess,
+    DeviceID,
     FileManifest,
     FolderManifest,
     UserManifest,
@@ -15,7 +16,6 @@ from parsec._parsec import (
     manifest_unverified_load,
     manifest_verify_and_load,
 )
-from parsec.api.protocol import DeviceID
 
 if TYPE_CHECKING:
     from parsec._parsec import AnyRemoteManifest

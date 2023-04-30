@@ -16,15 +16,15 @@ from hypothesis_trio.stateful import (
     run_state_machine_as_test,
 )
 
-from parsec._parsec import (
+from parsec.api.data import RealmRoleCertificate
+from parsec.api.protocol import (
     RealmGetRoleCertificatesRepOk,
+    RealmRole,
     RealmUpdateRolesRepAlreadyGranted,
     RealmUpdateRolesRepInvalidData,
     RealmUpdateRolesRepNotAllowed,
     RealmUpdateRolesRepOk,
 )
-from parsec.api.data import RealmRoleCertificate
-from parsec.api.protocol import RealmRole
 from parsec.backend.asgi import app_factory
 from tests.backend.common import realm_get_role_certificates, realm_update_roles
 from tests.common import call_with_control

@@ -6,9 +6,15 @@ from typing import Dict
 import triopg
 from triopg import UniqueViolationError
 
-from parsec._parsec import DateTime, SequesterServiceID
-from parsec.api.protocol import DeviceID, OrganizationID, RealmID, VlobID
-from parsec.backend.backend_events import BackendEvent
+from parsec._parsec import (
+    BackendEventRealmVlobsUpdated,
+    DateTime,
+    DeviceID,
+    OrganizationID,
+    RealmID,
+    SequesterServiceID,
+    VlobID,
+)
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import (
     Q,
@@ -98,13 +104,14 @@ async def _set_vlob_updated(
 
     await send_signal(
         conn,
-        BackendEvent.REALM_VLOBS_UPDATED,
-        organization_id=organization_id,
-        author=author,
-        realm_id=realm_id,
-        checkpoint=index,
-        src_id=src_id,
-        src_version=src_version,
+        BackendEventRealmVlobsUpdated(
+            organization_id=organization_id,
+            author=author,
+            realm_id=realm_id,
+            checkpoint=index,
+            src_id=src_id,
+            src_version=src_version,
+        ),
     )
 
 

@@ -5,6 +5,8 @@ import pytest
 
 from parsec._parsec import (
     HashDigest,
+)
+from parsec.api.protocol import (
     Invite1ClaimerWaitPeerRepInvalidState,
     Invite1GreeterWaitPeerRepInvalidState,
     Invite2aClaimerSendHashedNonceRepInvalidState,

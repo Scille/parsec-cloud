@@ -8,28 +8,14 @@ import attr
 
 from parsec._parsec import (
     ActiveUsersLimit,
-    ClientType,
     DateTime,
-    OrganizationBootstrapRep,
-    OrganizationBootstrapRepAlreadyBootstrapped,
-    OrganizationBootstrapRepBadTimestamp,
-    OrganizationBootstrapRepInvalidCertification,
-    OrganizationBootstrapRepInvalidData,
-    OrganizationBootstrapRepNotFound,
-    OrganizationBootstrapRepOk,
-    OrganizationBootstrapReq,
-    OrganizationConfigRep,
-    OrganizationConfigRepNotFound,
-    OrganizationConfigRepOk,
-    OrganizationConfigReq,
+    OrganizationID,
     OrganizationStats,
-    OrganizationStatsRep,
-    OrganizationStatsRepNotAllowed,
-    OrganizationStatsRepNotFound,
-    OrganizationStatsRepOk,
-    OrganizationStatsReq,
     SequesterVerifyKeyDer,
+    UserProfile,
     VerifyKey,
+    anonymous_cmds,
+    authenticated_cmds,
 )
 from parsec.api.data import (
     DataError,
@@ -37,11 +23,10 @@ from parsec.api.data import (
     SequesterAuthorityCertificate,
     UserCertificate,
 )
-from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.backend.client_context import AnonymousClientContext, AuthenticatedClientContext
 from parsec.backend.config import BackendConfig
 from parsec.backend.user import Device, User
-from parsec.backend.utils import Unset, UnsetType, api, api_typed_msg_adapter, catch_protocol_errors
+from parsec.backend.utils import Unset, UnsetType, api
 from parsec.backend.webhooks import WebhooksComponent
 from parsec.utils import (
     BALLPARK_CLIENT_EARLY_OFFSET,
@@ -113,18 +98,18 @@ class BaseOrganizationComponent:
         self.webhooks = webhooks
         self._config = config
 
-    @api("organization_config")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(OrganizationConfigReq, OrganizationConfigRep)
+    @api
     async def api_authenticated_organization_config(
-        self, client_ctx: AuthenticatedClientContext, req: OrganizationConfigReq
-    ) -> OrganizationConfigRep:
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.organization_config.Req,
+    ) -> authenticated_cmds.latest.organization_config.Rep:
         organization_id = client_ctx.organization_id
         try:
             organization = await self.get(organization_id)
 
         except OrganizationNotFoundError:
-            return OrganizationConfigRepNotFound()
+            return authenticated_cmds.latest.organization_config.RepNotFound()
 
         if organization.sequester_authority:
             sequester_authority_certificate: bytes | None = (
@@ -139,30 +124,30 @@ class BaseOrganizationComponent:
             sequester_authority_certificate = None
             sequester_services_certificates = None
 
-        return OrganizationConfigRepOk(
+        return authenticated_cmds.latest.organization_config.RepOk(
             user_profile_outsider_allowed=organization.user_profile_outsider_allowed,
             active_users_limit=organization.active_users_limit,
             sequester_authority_certificate=sequester_authority_certificate,
             sequester_services_certificates=sequester_services_certificates,
         )
 
-    @api("organization_stats")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(OrganizationStatsReq, OrganizationStatsRep)
+    @api
     async def api_authenticated_organization_stats(
-        self, client_ctx: AuthenticatedClientContext, req: OrganizationStatsReq
-    ) -> OrganizationStatsRep:
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.organization_stats.Req,
+    ) -> authenticated_cmds.latest.organization_stats.Rep:
         if client_ctx.profile != UserProfile.ADMIN:
-            return OrganizationStatsRepNotAllowed(None)
+            return authenticated_cmds.latest.organization_stats.RepNotAllowed(None)
         # Get organization of the user
         organization_id = client_ctx.organization_id
         try:
             stats = await self.stats(organization_id)
 
         except OrganizationNotFoundError:
-            return OrganizationStatsRepNotFound()
+            return authenticated_cmds.latest.organization_stats.RepNotFound()
 
-        return OrganizationStatsRepOk(
+        return authenticated_cmds.latest.organization_stats.RepOk(
             data_size=stats.data_size,
             metadata_size=stats.metadata_size,
             realms=stats.realms,
@@ -171,17 +156,12 @@ class BaseOrganizationComponent:
             users_per_profile_detail=list(stats.users_per_profile_detail),
         )
 
-    @api(
-        "organization_bootstrap",
-        client_types=[ClientType.ANONYMOUS],
-    )
-    @catch_protocol_errors
-    @api_typed_msg_adapter(OrganizationBootstrapReq, OrganizationBootstrapRep)
+    @api
     async def api_organization_bootstrap(
         self,
         client_ctx: AnonymousClientContext,
-        req: OrganizationBootstrapReq,
-    ) -> OrganizationBootstrapRep:
+        req: anonymous_cmds.latest.organization_bootstrap.Req,
+    ) -> anonymous_cmds.latest.organization_bootstrap.Rep:
         bootstrap_token = req.bootstrap_token
         root_verify_key = req.root_verify_key
 
@@ -209,19 +189,19 @@ class BaseOrganizationComponent:
             )
 
         except DataError:
-            return OrganizationBootstrapRepInvalidCertification(None)
+            return anonymous_cmds.latest.organization_bootstrap.RepInvalidCertification(None)
         if u_data.profile != UserProfile.ADMIN:
-            return OrganizationBootstrapRepInvalidData(None)
+            return anonymous_cmds.latest.organization_bootstrap.RepInvalidData(None)
 
         if u_data.timestamp != d_data.timestamp:
-            return OrganizationBootstrapRepInvalidData(None)
+            return anonymous_cmds.latest.organization_bootstrap.RepInvalidData(None)
 
         if u_data.user_id != d_data.device_id.user_id:
-            return OrganizationBootstrapRepInvalidData(None)
+            return anonymous_cmds.latest.organization_bootstrap.RepInvalidData(None)
 
         now = DateTime.now()
         if not timestamps_in_the_ballpark(u_data.timestamp, now):
-            return OrganizationBootstrapRepBadTimestamp(
+            return anonymous_cmds.latest.organization_bootstrap.RepBadTimestamp(
                 reason=None,
                 ballpark_client_early_offset=BALLPARK_CLIENT_EARLY_OFFSET,
                 ballpark_client_late_offset=BALLPARK_CLIENT_LATE_OFFSET,
@@ -230,14 +210,14 @@ class BaseOrganizationComponent:
             )
 
         if ru_data.evolve(human_handle=u_data.human_handle) != u_data:
-            return OrganizationBootstrapRepInvalidData(None)
+            return anonymous_cmds.latest.organization_bootstrap.RepInvalidData(None)
         if ru_data.human_handle:
-            return OrganizationBootstrapRepInvalidData(None)
+            return anonymous_cmds.latest.organization_bootstrap.RepInvalidData(None)
 
         if rd_data.evolve(device_label=d_data.device_label) != d_data:
-            return OrganizationBootstrapRepInvalidData(None)
+            return anonymous_cmds.latest.organization_bootstrap.RepInvalidData(None)
         if rd_data.device_label:
-            return OrganizationBootstrapRepInvalidData(None)
+            return anonymous_cmds.latest.organization_bootstrap.RepInvalidData(None)
 
         sequester_authority_certificate = req.sequester_authority_certificate
         if sequester_authority_certificate is None:
@@ -251,10 +231,10 @@ class BaseOrganizationComponent:
                 )
 
             except DataError:
-                return OrganizationBootstrapRepInvalidData(None)
+                return anonymous_cmds.latest.organization_bootstrap.RepInvalidData(None)
 
             if not timestamps_in_the_ballpark(sequester_authority_certif_data.timestamp, now):
-                return OrganizationBootstrapRepBadTimestamp(
+                return anonymous_cmds.latest.organization_bootstrap.RepBadTimestamp(
                     reason=None,
                     ballpark_client_early_offset=BALLPARK_CLIENT_EARLY_OFFSET,
                     ballpark_client_late_offset=BALLPARK_CLIENT_LATE_OFFSET,
@@ -263,7 +243,7 @@ class BaseOrganizationComponent:
                 )
 
             if sequester_authority_certif_data.timestamp != u_data.timestamp:
-                return OrganizationBootstrapRepInvalidData(None)
+                return anonymous_cmds.latest.organization_bootstrap.RepInvalidData(None)
 
             sequester_authority = SequesterAuthority(
                 certificate=sequester_authority_certificate,
@@ -299,10 +279,10 @@ class BaseOrganizationComponent:
             )
 
         except OrganizationAlreadyBootstrappedError:
-            return OrganizationBootstrapRepAlreadyBootstrapped()
+            return anonymous_cmds.latest.organization_bootstrap.RepAlreadyBootstrapped()
 
         except (OrganizationNotFoundError, OrganizationInvalidBootstrapTokenError):
-            return OrganizationBootstrapRepNotFound()
+            return anonymous_cmds.latest.organization_bootstrap.RepNotFound()
 
         # Note: we let OrganizationFirstUserCreationError bubbles up given
         # it should not occurs under normal circumstances
@@ -316,7 +296,7 @@ class BaseOrganizationComponent:
             human_label=user.human_handle.label if user.human_handle else None,
         )
 
-        return OrganizationBootstrapRepOk()
+        return anonymous_cmds.latest.organization_bootstrap.RepOk()
 
     async def create(
         self,

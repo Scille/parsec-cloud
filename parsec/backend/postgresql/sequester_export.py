@@ -9,7 +9,7 @@ from typing import AsyncGenerator, NewType, Tuple, cast
 import trio
 import triopg
 
-from parsec.api.protocol import BlockID, OrganizationID, RealmID, SequesterServiceID, VlobID
+from parsec._parsec import BlockID, OrganizationID, RealmID, SequesterServiceID, VlobID
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.postgresql import PGHandler
 

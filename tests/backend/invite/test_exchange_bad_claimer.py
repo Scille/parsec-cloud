@@ -5,9 +5,8 @@ import pytest
 import trio
 from quart.testing.connections import WebsocketDisconnectError
 
-from parsec._parsec import DateTime
+from parsec._parsec import BackendEventInviteStatusChanged, DateTime
 from parsec.api.protocol import InvitationDeletedReason
-from parsec.backend.events import BackendEvent
 from tests.common import real_clock_timeout
 
 
@@ -26,7 +25,7 @@ async def test_delete_invitation_while_claimer_connected(exchange_testbed, backe
                 on=DateTime(2000, 1, 2),
                 reason=InvitationDeletedReason.ROTTEN,
             )
-            await spy.wait_with_timeout(BackendEvent.INVITE_STATUS_CHANGED)
+            await spy.wait_with_timeout(BackendEventInviteStatusChanged)
 
         with pytest.raises(WebsocketDisconnectError):
             async with real_clock_timeout():
@@ -114,7 +113,7 @@ async def test_delete_invitation_then_claimer_action_before_backend_closes_conne
     # Disable the callback responsible for closing the claimer's connection
     # on invitation deletion. This way we can test connection behavior
     # when the automatic closing takes time to be processed.
-    backend.event_bus.mute(BackendEvent.INVITE_STATUS_CHANGED)
+    backend.event_bus.mute(BackendEventInviteStatusChanged)
 
     await backend.invite.delete(
         organization_id=tb.organization_id,

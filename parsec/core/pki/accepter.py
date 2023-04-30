@@ -7,10 +7,18 @@ from typing import Iterable, cast
 
 import attr
 
-from parsec._parsec import AuthenticatedCmds as RsBackendAuthenticatedCmds
+from parsec._parsec import (
+    AuthenticatedCmds as RsBackendAuthenticatedCmds,
+)
 from parsec._parsec import (
     DateTime,
+    DeviceLabel,
     EnrollmentID,
+    HumanHandle,
+    UserProfile,
+)
+from parsec.api.data import PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload
+from parsec.api.protocol import (
     PkiEnrollmentAcceptRepActiveUsersLimitReached,
     PkiEnrollmentAcceptRepAlreadyExists,
     PkiEnrollmentAcceptRepInvalidCertification,
@@ -28,8 +36,6 @@ from parsec._parsec import (
     PkiEnrollmentRejectRepNotFound,
     PkiEnrollmentRejectRepOk,
 )
-from parsec.api.data import PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload
-from parsec.api.protocol import DeviceLabel, HumanHandle, UserProfile
 from parsec.core.backend_connection.authenticated import BackendAuthenticatedCmds
 from parsec.core.invite.greeter import _create_new_user_certificates
 from parsec.core.pki.exceptions import (

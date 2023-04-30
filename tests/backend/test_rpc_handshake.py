@@ -7,19 +7,21 @@ from unittest.mock import patch
 
 import pytest
 
-from parsec._parsec import DateTime, DeviceID, LocalDevice
+from parsec._parsec import DateTime, DeviceID, LocalDevice, anonymous_cmds
 from parsec.api.version import API_VERSION, ApiVersion
 from parsec.backend import BackendApp
 from parsec.serde import packb
 from tests.common import AnonymousRpcApiClient, AuthenticatedRpcApiClient
 from tests.common.rpc_api import InvitedRpcApiClient
 
+PING_RAW_REQ = packb({"cmd": "ping", "ping": "foo"})
+
 
 async def _test_good_handshake(
     client: AuthenticatedRpcApiClient | AnonymousRpcApiClient | InvitedRpcApiClient,
 ):
     # Sanity check: make sure base query is valid
-    rep = await client.send_ping(check_rep=False)
+    rep = await client.send(PING_RAW_REQ, check_rep=False)
     assert rep.status_code == 200
     assert rep.headers["Api-Version"] == str(API_VERSION)
 
@@ -35,7 +37,8 @@ async def _test_handshake_bad_organization(
         def _before_send_hook(args):
             args["path"] = args["path"].replace("CoolOrg", badorg)
 
-        rep = await client.send_ping(
+        rep = await client.send(
+            PING_RAW_REQ,
             before_send_hook=_before_send_hook,
             check_rep=False,
         )
@@ -47,10 +50,16 @@ async def _test_handshake_api_version_header(
     client: AuthenticatedRpcApiClient | AnonymousRpcApiClient | InvitedRpcApiClient,
 ):
     server_versions = [ApiVersion(2, 1), ApiVersion(3, 1), ApiVersion(4, 1)]
-
-    with patch("parsec.backend.asgi.rpc.SUPPORTED_API_VERSIONS", server_versions):
+    cmds_load_fn = {i: anonymous_cmds.latest.AnyCmdReq.load for i in (2, 3, 4)}
+    with (
+        patch("parsec.backend.asgi.rpc.SUPPORTED_API_VERSIONS", server_versions),
+        patch("parsec.backend.asgi.rpc.AUTHENTICATED_CMDS_LOAD_FN", cmds_load_fn),
+        patch("parsec.backend.asgi.rpc.INVITED_CMDS_LOAD_FN", cmds_load_fn),
+        patch("parsec.backend.asgi.rpc.ANONYMOUS_CMDS_LOAD_FN", cmds_load_fn),
+    ):
         # Plain invalide header value
-        rep = await client.send_ping(
+        rep = await client.send(
+            PING_RAW_REQ,
             extra_headers={"Api-Version": "dummy"},
             check_rep=False,
         )
@@ -58,7 +67,8 @@ async def _test_handshake_api_version_header(
         assert rep.headers["Supported-Api-Versions"] == "2.1;3.1;4.1"
 
         # Missing header, fallback to default value for backward compatibility
-        rep = await client.send_ping(
+        rep = await client.send(
+            PING_RAW_REQ,
             extra_headers={"Api-Version": None},
             check_rep=False,
         )
@@ -70,7 +80,8 @@ async def _test_handshake_api_version_header(
         unknown_major = ApiVersion(version=5, revision=0)
         too_old_major = ApiVersion(version=1, revision=0)
         for bad_version in (too_old_major, unknown_major):
-            rep = await client.send_ping(
+            rep = await client.send(
+                PING_RAW_REQ,
                 extra_headers={"Api-Version": str(bad_version)},
                 check_rep=False,
             )
@@ -79,7 +90,8 @@ async def _test_handshake_api_version_header(
 
         # Client provides a compatible api version
         unknown_minor = ApiVersion(version=4, revision=2)
-        rep = await client.send_ping(
+        rep = await client.send(
+            PING_RAW_REQ,
             extra_headers={"Api-Version": str(unknown_minor)},
             check_rep=False,
         )
@@ -91,7 +103,8 @@ async def _test_handshake_content_type_header(
     client: AuthenticatedRpcApiClient | AnonymousRpcApiClient | InvitedRpcApiClient,
 ):
     # Bad header value
-    rep = await client.send_ping(
+    rep = await client.send(
+        PING_RAW_REQ,
         extra_headers={"Content-Type": "application/json"},
         check_rep=False,
     )
@@ -99,7 +112,8 @@ async def _test_handshake_content_type_header(
     assert rep.headers["Api-Version"] == str(API_VERSION)
 
     # Missing header
-    rep = await client.send_ping(
+    rep = await client.send(
+        PING_RAW_REQ,
         extra_headers={"Content-Type": None},
         check_rep=False,
     )
@@ -107,7 +121,8 @@ async def _test_handshake_content_type_header(
     assert rep.headers["Api-Version"] == str(API_VERSION)
 
     # Incorrect header that was used in Parsec <= 2.11.1
-    rep = await client.send_ping(
+    rep = await client.send(
+        PING_RAW_REQ,
         extra_headers={"Content-Type": "application/x-www-form-urlencoded"},
         check_rep=False,
     )
@@ -128,7 +143,8 @@ async def _test_authenticated_handshake_bad_signature_header(
         (401, {"Author": None}),  # Missing Author header
         (401, {"Author": "dummy"}),  # Bad Author header
     ]:
-        rep = await client.send_ping(
+        rep = await client.send(
+            PING_RAW_REQ,
             extra_headers=extra_headers,
             check_rep=False,
         )
@@ -140,7 +156,8 @@ async def _test_authenticated_handshake_bad_signature_header(
         signature = bob.signing_key.sign_only_signature(args["data"])
         args["headers"]["signature"] = b64encode(signature).decode("ascii")
 
-    rep = await client.send_ping(
+    rep = await client.send(
+        PING_RAW_REQ,
         before_send_hook=_before_send_hook,
         check_rep=False,
     )
@@ -152,7 +169,8 @@ async def _test_authenticated_handshake_bad_signature_header(
         signature = alice.signing_key.sign_only_signature(b"dummy")
         args["headers"]["signature"] = b64encode(signature).decode("ascii")
 
-    rep = await client.send_ping(
+    rep = await client.send(
+        PING_RAW_REQ,
         before_send_hook=_before_send_hook,
         check_rep=False,
     )
@@ -173,7 +191,8 @@ async def _test_handshake_body_not_msgpack(
             signature = alice.signing_key.sign_only_signature(bad_body)
             args["headers"]["signature"] = b64encode(signature).decode("ascii")
 
-    rep = await client.send_ping(
+    rep = await client.send(
+        PING_RAW_REQ,
         before_send_hook=_before_send_hook,
         check_rep=False,
         now=now,
@@ -195,7 +214,8 @@ async def _test_handshake_body_msgpack_bad_unknown_cmd(
             signature = alice.signing_key.sign_only_signature(bad_body)
             args["headers"]["signature"] = b64encode(signature).decode("ascii")
 
-    rep = await client.send_ping(
+    rep = await client.send(
+        PING_RAW_REQ,
         before_send_hook=_before_send_hook,
         check_rep=False,
         now=now,
@@ -207,8 +227,8 @@ async def _test_handshake_body_msgpack_bad_unknown_cmd(
 async def _test_authenticated_handshake_author_not_found(
     alice_http_client: AuthenticatedRpcApiClient,
 ):
-    rep = await alice_http_client.send_ping(
-        extra_headers={"Author": DeviceID("foo@bar")}, check_rep=False
+    rep = await alice_http_client.send(
+        PING_RAW_REQ, extra_headers={"Author": DeviceID("foo@bar")}, check_rep=False
     )
     assert rep.status_code == 401
     assert rep.headers["Api-Version"] == str(API_VERSION)  # This header must always be present !
@@ -217,7 +237,7 @@ async def _test_authenticated_handshake_author_not_found(
 async def _test_handshake_organization_expired(
     client: AuthenticatedRpcApiClient | AnonymousRpcApiClient | InvitedRpcApiClient,
 ):
-    rep = await client.send_ping(check_rep=False)
+    rep = await client.send(PING_RAW_REQ, check_rep=False)
     assert rep.status_code == 460
     assert rep.headers["Api-Version"] == str(API_VERSION)  # This header must always be present !
 
@@ -225,19 +245,21 @@ async def _test_handshake_organization_expired(
 async def _test_authenticated_handshake_user_revoked(
     alice_http_client: AuthenticatedRpcApiClient,
 ):
-    rep = await alice_http_client.send_ping(check_rep=False)
+    rep = await alice_http_client.send(PING_RAW_REQ, check_rep=False)
     assert rep.status_code == 461
     assert rep.headers["Api-Version"] == str(API_VERSION)  # This header must always be present !
 
 
 async def _test_invited_handshake_invitation_token_not_found(client: InvitedRpcApiClient):
-    rep = await client.send_ping(check_rep=False, extra_headers={"Invitation-Token": None})
+    rep = await client.send(PING_RAW_REQ, check_rep=False, extra_headers={"Invitation-Token": None})
     assert rep.status_code == 415
     assert rep.headers["Api-Version"] == str(API_VERSION)  # This header must always be present !
 
 
 async def _test_invited_handshake_invitation_invalid_token(client):
-    rep = await client.send_ping(check_rep=False, extra_headers={"Invitation-Token": "a" * 100})
+    rep = await client.send(
+        PING_RAW_REQ, check_rep=False, extra_headers={"Invitation-Token": "a" * 100}
+    )
     assert rep.status_code == 415
     assert rep.headers["Api-Version"] == str(API_VERSION)  # This header must always be present !
 

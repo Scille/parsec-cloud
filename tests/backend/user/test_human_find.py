@@ -3,8 +3,13 @@ from __future__ import annotations
 
 import pytest
 
-from parsec._parsec import HumanFindRepNotAllowed, HumanFindRepOk, HumanFindResultItem
-from parsec.api.protocol import UserProfile
+from parsec._parsec import authenticated_cmds
+from parsec.api.protocol import (
+    HumanFindRepNotAllowed,
+    HumanFindRepOk,
+    HumanFindResultItem,
+    UserProfile,
+)
 from parsec.backend.asgi import app_factory
 from tests.backend.common import human_find
 from tests.common import customize_fixtures, freeze_time
@@ -321,7 +326,6 @@ async def test_pagination(access_testbed, local_device_factory):
 @pytest.mark.trio
 async def test_bad_args(access_testbed, local_device_factory):
     binder, org, godfrey1, sock = access_testbed
-    cmd = human_find
     # Test bad params
     # We should not be able to build an invalid request
     for raw_req in [
@@ -383,8 +387,10 @@ async def test_bad_args(access_testbed, local_device_factory):
         ),
     ]:
         await sock.send(raw_req)
-        rep = await cmd._do_recv(sock, False)
-        assert rep.status == "bad_message"
+        raw_rep = await sock.receive()
+        rep = authenticated_cmds.latest.human_find.Rep.load(raw_rep)
+        assert isinstance(rep, authenticated_cmds.latest.human_find.RepUnknownStatus)
+        assert rep.status == "invalid_msg_format"
 
 
 @pytest.mark.trio
@@ -481,7 +487,7 @@ async def test_no_query_users_with_and_without_human_label(access_testbed, local
     assert rep.total == 11
 
     # Items with human handle come first in a deterministic order
-    assert rep.results[:8] == (
+    assert rep.results[:8] == [
         HumanFindResultItem(
             user_id=blacky.user_id, revoked=False, human_handle=blacky.human_handle
         ),
@@ -498,7 +504,7 @@ async def test_no_query_users_with_and_without_human_label(access_testbed, local
         ),
         HumanFindResultItem(user_id=roger.user_id, revoked=False, human_handle=roger.human_handle),
         HumanFindResultItem(user_id=zoe.user_id, revoked=False, human_handle=zoe.human_handle),
-    )
+    ]
 
     # Items with no human handle come last with no order guarantee
     assert sorted(rep.results[8:], key=lambda x: x.user_id) == [

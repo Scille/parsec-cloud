@@ -2,14 +2,15 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, Awaitable, Callable, Dict
+from typing import Any, AsyncGenerator, Callable, Dict, Type
 
 import attr
 from structlog import get_logger
 
-from parsec._parsec import ClientType, OrganizationID
+from parsec._parsec import OrganizationID
 from parsec.backend.block import BaseBlockComponent
 from parsec.backend.blockstore import BaseBlockStoreComponent
+from parsec.backend.client_context import BaseClientContext
 from parsec.backend.config import BackendConfig
 from parsec.backend.events import EventsComponent
 from parsec.backend.invite import BaseInviteComponent
@@ -79,9 +80,7 @@ class BackendApp:
     sequester: BaseSequesterComponent
     events: EventsComponent
 
-    apis: Dict[ClientType, Dict[str, Callable[..., Awaitable[dict[str, object]]]]] = attr.field(
-        init=False
-    )
+    apis: Dict[Type[Any], Callable[[BaseClientContext, Any], Any]] = attr.field(init=False)
 
     def __attrs_post_init__(self) -> None:
         self.apis = collect_apis(

@@ -11,11 +11,19 @@ import trio
 from quart import Blueprint, Response, current_app, g, request
 from quart.wrappers.response import ResponseBody
 
-from parsec._parsec import ClientType, CryptoError, DateTime, InvitationToken
-from parsec.api.protocol import (
+from parsec._parsec import (
+    CryptoError,
+    DateTime,
     DeviceID,
-    IncompatibleAPIVersionsError,
+    InvitationToken,
     OrganizationID,
+    ProtocolError,
+    anonymous_cmds,
+    authenticated_cmds,
+    invited_cmds,
+)
+from parsec.api.protocol import (
+    IncompatibleAPIVersionsError,
     settle_compatible_versions,
 )
 from parsec.api.version import API_V2_VERSION, API_V3_VERSION, ApiVersion
@@ -39,7 +47,6 @@ from parsec.backend.organization import (
 )
 from parsec.backend.user import UserNotFoundError
 from parsec.backend.user_type import Device, User
-from parsec.serde import SerdePackingError, packb, unpackb
 
 CONTENT_TYPE_MSGPACK = "application/msgpack"
 ACCEPT_TYPE_SSE = "text/event-stream"
@@ -48,14 +55,33 @@ SUPPORTED_API_VERSIONS = (
     API_V2_VERSION,
     API_V3_VERSION,
 )
-
+AUTHENTICATED_CMDS_LOAD_FN = {
+    int(v_version[1:]): getattr(authenticated_cmds, v_version).AnyCmdReq.load
+    for v_version in dir(authenticated_cmds)
+    if v_version.startswith("v")
+}
+INVITED_CMDS_LOAD_FN = {
+    int(v_version[1:]): getattr(invited_cmds, v_version).AnyCmdReq.load
+    for v_version in dir(invited_cmds)
+    if v_version.startswith("v")
+}
+ANONYMOUS_CMDS_LOAD_FN = {
+    int(v_version[1:]): getattr(anonymous_cmds, v_version).AnyCmdReq.load
+    for v_version in dir(anonymous_cmds)
+    if v_version.startswith("v")
+}
+ANONYMOUS_ORGANIZATION_BOOTSTRAP_CMD_ALL_API_REQS = tuple(
+    getattr(anonymous_cmds, v_version).organization_bootstrap.Req
+    for v_version in dir(anonymous_cmds)
+    if v_version.startswith("v")
+)
 
 rpc_bp = Blueprint("anonymous_api", __name__)
 
 
-def _rpc_msgpack_rep(data: dict[str, object], api_version: ApiVersion) -> Response:
+def _rpc_rep(rep: Any, api_version: ApiVersion) -> Response:
     return Response(
-        response=packb(data),
+        response=rep.dump(),
         # Unlike REST, RPC doesn't use status to encode operational result
         status=200,
         content_type=CONTENT_TYPE_MSGPACK,
@@ -271,17 +297,22 @@ async def anonymous_api(raw_organization_id: str) -> Response:
 
     # Reply to GET
     if request.method == "GET":
-        return _rpc_msgpack_rep({}, api_version)
+        return Response(
+            response=b"",
+            status=200,
+            content_type=CONTENT_TYPE_MSGPACK,
+            headers={"Api-Version": str(api_version)},
+        )
 
     body: bytes = await request.get_data(cache=False)
+
     try:
-        msg = unpackb(body)
-    except SerdePackingError:
+        req = ANONYMOUS_CMDS_LOAD_FN[api_version.version](body)
+    except ProtocolError:
         _handshake_abort_bad_content(api_version=api_version)
 
     # Lazy creation of the organization if necessary
-    cmd = msg.get("cmd")
-    if cmd == "organization_bootstrap" and not organization:
+    if isinstance(req, ANONYMOUS_ORGANIZATION_BOOTSTRAP_CMD_ALL_API_REQS) and not organization:
         assert backend.config.organization_spontaneous_bootstrap
         try:
             await backend.organization.create(
@@ -295,21 +326,17 @@ async def anonymous_api(raw_organization_id: str) -> Response:
     client_ctx.logger.info(
         f"Anonymous client successfully connected (client/server API version: {client_api_version}/{api_version})"
     )
-    if not isinstance(cmd, str):
-        _handshake_abort_bad_content(api_version=api_version)
 
-    try:
-        cmd_func = backend.apis[ClientType.ANONYMOUS][cmd]
-    except KeyError:
-        _handshake_abort_bad_content(api_version=api_version)
+    cmd_func = backend.apis[type(req)]
 
     # Run command
     try:
-        rep = await cmd_func(client_ctx, msg)
+        rep = await cmd_func(client_ctx, req)
     except Exception as exc:
         print("rpc didn't handle this exception:", type(exc))
         raise exc
-    return _rpc_msgpack_rep(rep, api_version)
+
+    return _rpc_rep(rep, api_version)
 
 
 @rpc_bp.route("/invited/<raw_organization_id>", methods=["POST"])
@@ -328,19 +355,13 @@ async def invited_api(raw_organization_id: str) -> Response:
 
     # Unpack verified body
     body: bytes = await request.get_data(cache=False)
-    try:
-        msg = unpackb(body)
-    except SerdePackingError:
-        _handshake_abort_bad_content(api_version=api_version)
-
-    cmd = msg.get("cmd")
-    if not isinstance(cmd, str):
-        _handshake_abort_bad_content(api_version=api_version)
 
     try:
-        cmd_func = backend.apis[ClientType.INVITED][cmd]
-    except KeyError:
+        req = INVITED_CMDS_LOAD_FN[api_version.version](body)
+    except ProtocolError:
         _handshake_abort_bad_content(api_version=api_version)
+
+    cmd_func = backend.apis[type(req)]
 
     assert invitation is not None
     client_ctx = InvitedClientContext(
@@ -354,7 +375,7 @@ async def invited_api(raw_organization_id: str) -> Response:
     )
 
     try:
-        cmd_rep = await cmd_func(client_ctx, msg)
+        rep = await cmd_func(client_ctx, req)
     except CloseInviteConnection:
         _handshake_abort(
             CustomHttpStatus.InvitationAlreadyUsedOrDeleted.value, api_version=api_version
@@ -363,7 +384,7 @@ async def invited_api(raw_organization_id: str) -> Response:
         print("rpc didn't handle this exception:", type(exc))
         raise exc
 
-    return _rpc_msgpack_rep(cmd_rep, api_version)
+    return _rpc_rep(rep, api_version)
 
 
 @rpc_bp.route("/authenticated/<raw_organization_id>", methods=["POST"])
@@ -384,19 +405,13 @@ async def authenticated_api(raw_organization_id: str) -> Response:
 
     # Unpack verified body
     body: bytes = await request.get_data(cache=False)
-    try:
-        msg = unpackb(body)
-    except SerdePackingError:
-        _handshake_abort_bad_content(api_version=api_version)
-
-    cmd = msg.get("cmd")
-    if not isinstance(cmd, str):
-        _handshake_abort_bad_content(api_version=api_version)
 
     try:
-        cmd_func = backend.apis[ClientType.AUTHENTICATED][cmd]
-    except KeyError:
+        req = AUTHENTICATED_CMDS_LOAD_FN[api_version.version](body)
+    except ProtocolError:
         _handshake_abort_bad_content(api_version=api_version)
+
+    cmd_func = backend.apis[type(req)]
 
     client_ctx = AuthenticatedClientContext(
         api_version=api_version,
@@ -414,12 +429,12 @@ async def authenticated_api(raw_organization_id: str) -> Response:
     )
 
     try:
-        cmd_rep = await cmd_func(client_ctx, msg)
+        rep = await cmd_func(client_ctx, req)
     except Exception as exc:
         print("rpc didn't handle this exception:", type(exc))
         raise exc
 
-    return _rpc_msgpack_rep(cmd_rep, api_version)
+    return _rpc_rep(rep, api_version)
 
 
 # SSE in Quart-Trio is a bit more complicated than expected:
@@ -457,6 +472,8 @@ class SSEResponseIterableBody(ResponseBody):
     async def _make_contextmanager(
         self, client_ctx: AuthenticatedClientContext, backend: BackendApp
     ) -> AsyncIterator[None]:
+        req = authenticated_cmds.latest.events_listen.Req(wait=True)
+
         async def _events_into_sse_payloads() -> None:
             # Closing sender end of the channel will cause Quart stop iterating
             # on the receiver end and hence terminate the request
@@ -473,11 +490,9 @@ class SSEResponseIterableBody(ResponseBody):
 
                 while True:
                     with trio.move_on_after(backend.config.sse_keepalive) as scope:
-                        try:
-                            event = await client_ctx.receive_events_channel.receive()
-                        except trio.EndOfChannel:
-                            break
-                        sse_payload = b"data:" + b64encode(event.dump()) + b"\n\n"
+                        cmd_func = backend.apis[type(req)]
+                        rep = await cmd_func(client_ctx, req)
+                        sse_payload = b"data:" + b64encode(rep.dump()) + b"\n\n"
                         await self._sse_payload_sender.send(sse_payload)
 
                     if scope.cancelled_caught:

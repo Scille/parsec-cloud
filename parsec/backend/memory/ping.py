@@ -3,8 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Coroutine
 
-from parsec.api.protocol import DeviceID, OrganizationID
-from parsec.backend.backend_events import BackendEvent
+from parsec._parsec import BackendEventPinged, DeviceID, OrganizationID
 from parsec.backend.ping import BasePingComponent
 
 
@@ -20,7 +19,7 @@ class MemoryPingComponent(BasePingComponent):
     ) -> None:
         if author:
             await self._send_event(
-                BackendEvent.PINGED, organization_id=organization_id, author=author, ping=ping
+                BackendEventPinged(organization_id=organization_id, author=author, ping=ping)
             )
 
     def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:

@@ -6,9 +6,16 @@ from typing import Any, List, Tuple
 
 import triopg
 
-from parsec._parsec import CryptoError, DateTime, SequesterVerifyKeyDer
+from parsec._parsec import (
+    CryptoError,
+    DateTime,
+    OrganizationID,
+    RealmID,
+    SequesterServiceID,
+    SequesterVerifyKeyDer,
+    VlobID,
+)
 from parsec.api.data import DataError, SequesterServiceCertificate
-from parsec.api.protocol import OrganizationID, RealmID, SequesterServiceID, VlobID
 from parsec.backend.organization import SequesterAuthority
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id, q_realm_internal_id

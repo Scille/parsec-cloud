@@ -15,7 +15,7 @@ async def check_forbidden_cmds(ws, cmds):
         else:
             await ws.send(packb({"cmd": cmd}))
         rep = await ws.receive()
-        assert unpackb(rep) == {"status": "unknown_command", "reason": "Unknown command"}
+        assert unpackb(rep) == {"status": "invalid_msg_format", "reason": "Invalid message format"}
 
 
 async def check_allowed_cmds(ws, cmds):

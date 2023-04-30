@@ -9,14 +9,15 @@ from triopg import UniqueViolationError
 
 from parsec._parsec import (
     ActiveUsersLimit,
+    BackendEventOrganizationExpired,
     DateTime,
+    OrganizationID,
     OrganizationStats,
     SequesterVerifyKeyDer,
+    UserProfile,
     UsersPerProfileDetailItem,
     VerifyKey,
 )
-from parsec.api.protocol import OrganizationID, UserProfile
-from parsec.backend.events import BackendEvent
 from parsec.backend.organization import (
     BaseOrganizationComponent,
     Organization,
@@ -462,4 +463,4 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                 raise OrganizationError(f"Update error: {result}")
 
             if with_is_expired and is_expired:
-                await send_signal(conn, BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)
+                await send_signal(conn, BackendEventOrganizationExpired(organization_id=id))

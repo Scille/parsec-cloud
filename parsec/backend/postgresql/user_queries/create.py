@@ -6,9 +6,12 @@ import itertools
 import triopg
 from triopg import UniqueViolationError
 
-from parsec._parsec import DateTime
-from parsec.api.protocol import OrganizationID
-from parsec.backend.backend_events import BackendEvent
+from parsec._parsec import (
+    BackendEventDeviceCreated,
+    BackendEventUserCreated,
+    DateTime,
+    OrganizationID,
+)
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import (
     Q,
@@ -294,12 +297,13 @@ async def q_create_user(
     # TODO: should be no longer needed once APIv1 is removed
     await send_signal(
         conn,
-        BackendEvent.USER_CREATED,
-        organization_id=organization_id,
-        user_id=user.user_id,
-        user_certificate=user.user_certificate,
-        first_device_id=first_device.device_id,
-        first_device_certificate=first_device.device_certificate,
+        BackendEventUserCreated(
+            organization_id=organization_id,
+            user_id=user.user_id,
+            user_certificate=user.user_certificate,
+            first_device_id=first_device.device_id,
+            first_device_certificate=first_device.device_certificate,
+        ),
     )
 
 
@@ -360,9 +364,10 @@ async def query_create_device(
     await _create_device(conn, organization_id, device, bool(encrypted_answer))
     await send_signal(
         conn,
-        BackendEvent.DEVICE_CREATED,
-        organization_id=organization_id,
-        device_id=device.device_id,
-        device_certificate=device.device_certificate,
-        encrypted_answer=encrypted_answer,
+        BackendEventDeviceCreated(
+            organization_id=organization_id,
+            device_id=device.device_id,
+            device_certificate=device.device_certificate,
+            encrypted_answer=encrypted_answer,
+        ),
     )

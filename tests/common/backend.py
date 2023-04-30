@@ -25,11 +25,10 @@ from hypercorn.trio.worker_context import WorkerContext
 from quart.typing import TestClientProtocol
 from quart_trio import QuartTrio
 
-from parsec._parsec import BackendInvitationAddr, InvitationType
+from parsec._parsec import BackendEventOrganizationExpired, BackendInvitationAddr, InvitationType
 from parsec.backend import backend_app_factory
 from parsec.backend.app import BackendApp
 from parsec.backend.asgi import app_factory
-from parsec.backend.backend_events import BackendEvent
 from parsec.backend.config import BackendConfig, MockedBlockStoreConfig, MockedEmailConfig
 from parsec.core.types import BackendAddr, LocalDevice
 from tests.common.binder import OrganizationFullData
@@ -192,7 +191,7 @@ def backend_factory(
                         await backend.organization.update(
                             expiredorg.organization_id, is_expired=True
                         )
-                        await spy.wait_with_timeout(BackendEvent.ORGANIZATION_EXPIRED)
+                        await spy.wait_with_timeout(BackendEventOrganizationExpired)
                     await binder.bind_organization(otherorg, otheralice)
                     await binder.bind_device(alice2, certifier=alice)
                     await binder.bind_device(

@@ -15,8 +15,8 @@ from parsec._parsec import (
     TimeProvider,
     TrustchainContext,
     TrustchainErrorException,
-    UserGetRepNotFound,
-    UserGetRepOk,
+    # UserGetRepNotFound,
+    # UserGetRepOk,
     VerifyKey,
 )
 from parsec.api.data import DeviceCertificate, RevokedUserCertificate, UserCertificate

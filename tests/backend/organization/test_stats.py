@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from parsec._parsec import DateTime, OrganizationStatsRepOk, UsersPerProfileDetailItem
-from parsec.api.protocol import BlockID, UserProfile, VlobID
+from parsec._parsec import DateTime, UsersPerProfileDetailItem
+from parsec.api.protocol import BlockID, OrganizationStatsRepOk, UserProfile, VlobID
 from tests.backend.common import organization_stats
 from tests.common import customize_fixtures
 

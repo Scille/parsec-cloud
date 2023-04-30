@@ -6,6 +6,13 @@ import pytest
 from parsec._parsec import (
     ActiveUsersLimit,
     DateTime,
+    DeviceID,
+    DeviceLabel,
+    UserProfile,
+    authenticated_cmds,
+)
+from parsec.api.data import DeviceCertificate, UserCertificate
+from parsec.api.protocol import (
     UserCreateRepActiveUsersLimitReached,
     UserCreateRepAlreadyExists,
     UserCreateRepInvalidCertification,
@@ -14,8 +21,6 @@ from parsec._parsec import (
     UserCreateRepOk,
     UserGetRepOk,
 )
-from parsec.api.data import DeviceCertificate, UserCertificate
-from parsec.api.protocol import DeviceID, DeviceLabel, UserProfile
 from parsec.backend.user import INVITATION_VALIDITY, Device, User
 from tests.backend.common import user_create, user_get
 from tests.common import customize_fixtures, freeze_time
@@ -299,7 +304,6 @@ async def test_user_create_bad_redacted_device_certificate(alice_ws, alice, mall
 
     # Missing redacted certificate is not allowed as well
     # We should not be able to build an invalid request
-    cmd = user_create
     # Generated from Python implementation (Parsec v2.11.1+dev)
     # Content:
     #   cmd: "user_create"
@@ -315,8 +319,10 @@ async def test_user_create_bad_redacted_device_certificate(alice_ws, alice, mall
         "725f6365727469666963617465c406666f6f626172"
     )
     await alice_ws.send(raw_req)
-    rep = await cmd._do_recv(alice_ws, False)
-    assert rep.status == "bad_message"
+    raw_rep = await alice_ws.receive()
+    rep = authenticated_cmds.latest.user_create.Rep.load(raw_rep)
+    assert isinstance(rep, authenticated_cmds.latest.user_create.RepUnknownStatus)
+    assert rep.status == "invalid_msg_format"
 
     # Finally just make sure good was really good
     rep = await user_create(
@@ -370,7 +376,6 @@ async def test_user_create_bad_redacted_user_certificate(alice_ws, alice, mallor
 
     # Missing redacted certificate is not allowed as well
     # We should not be able to build an invalid request
-    cmd = user_create
     # Generated from Python implementation (Parsec v2.11.1+dev)
     # Content:
     #   cmd: "user_create"
@@ -386,8 +391,10 @@ async def test_user_create_bad_redacted_user_certificate(alice_ws, alice, mallor
         "725f6365727469666963617465c406666f6f626172"
     )
     await alice_ws.send(raw_req)
-    rep = await cmd._do_recv(alice_ws, False)
-    assert rep.status == "bad_message"
+    raw_rep = await alice_ws.receive()
+    rep = authenticated_cmds.latest.user_create.Rep.load(raw_rep)
+    assert isinstance(rep, authenticated_cmds.latest.user_create.RepUnknownStatus)
+    assert rep.status == "invalid_msg_format"
 
     # Finally just make sure good was really good
     rep = await user_create(

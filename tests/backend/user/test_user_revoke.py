@@ -6,16 +6,19 @@ import trio
 from quart.testing.connections import WebsocketDisconnectError
 
 from parsec._parsec import (
+    BackendEventUserRevoked,
     DateTime,
+    UserProfile,
+)
+from parsec.api.data import RevokedUserCertificate
+from parsec.api.protocol import (
+    HandshakeRevokedDevice,
     UserRevokeRepAlreadyRevoked,
     UserRevokeRepInvalidCertification,
     UserRevokeRepNotAllowed,
     UserRevokeRepNotFound,
     UserRevokeRepOk,
 )
-from parsec.api.data import RevokedUserCertificate
-from parsec.api.protocol import HandshakeRevokedDevice, UserProfile
-from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import INVITATION_VALIDITY
 from tests.backend.common import authenticated_ping, user_revoke
 from tests.common import freeze_time
@@ -35,8 +38,10 @@ async def test_backend_close_on_user_revoke(
             rep = await user_revoke(alice_ws, revoked_user_certificate=bob_revocation)
             assert isinstance(rep, UserRevokeRepOk)
             await spy.wait_with_timeout(
-                BackendEvent.USER_REVOKED,
-                {"organization_id": bob.organization_id, "user_id": bob.user_id},
+                BackendEventUserRevoked(
+                    organization_id=bob.organization_id,
+                    user_id=bob.user_id,
+                )
             )
             # `user.revoked` event schedules connection cancellation, so wait
             # for things to settle down to make sure the cancellation is done
@@ -59,8 +64,10 @@ async def test_user_revoke_ok(
         rep = await user_revoke(adam_ws, revoked_user_certificate=alice_revocation)
         assert isinstance(rep, UserRevokeRepOk)
         await spy.wait_with_timeout(
-            BackendEvent.USER_REVOKED,
-            {"organization_id": alice.organization_id, "user_id": alice.user_id},
+            BackendEventUserRevoked(
+                organization_id=alice.organization_id,
+                user_id=alice.user_id,
+            )
         )
 
     # Alice cannot connect from now on...

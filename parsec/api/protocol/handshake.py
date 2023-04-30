@@ -3,19 +3,23 @@ from __future__ import annotations
 
 from enum import Enum
 from secrets import token_bytes
-from typing import Dict, Sequence, TypedDict, cast
+from typing import Dict, Sequence, Type, TypedDict, cast
 
-from parsec._parsec import CryptoError, DateTime, ProtocolError, SigningKey, VerifyKey
+from marshmallow.fields import Field
+
+from parsec._parsec import (
+    CryptoError,
+    DateTime,
+    InvitationToken,
+    InvitationType,
+    ProtocolError,
+    SigningKey,
+    VerifyKey,
+)
 from parsec.api.protocol.base import (
     InvalidMessageError,
     serializer_factory,
     settle_compatible_versions,
-)
-from parsec.api.protocol.invite import (
-    InvitationToken,
-    InvitationTokenField,
-    InvitationType,
-    InvitationTypeField,
 )
 from parsec.api.protocol.types import (
     ApiVersionField,
@@ -32,6 +36,11 @@ from parsec.utils import (
     BALLPARK_CLIENT_TOLERANCE,
     timestamps_in_the_ballpark,
 )
+
+InvitationTokenField: Type[Field[InvitationToken]] = fields.uuid_based_field_factory(
+    InvitationToken
+)
+InvitationTypeField: Type[Field[InvitationType]] = fields.rust_enum_field_factory(InvitationType)
 
 
 class HandshakeError(ProtocolError):

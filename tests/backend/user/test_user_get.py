@@ -3,8 +3,15 @@ from __future__ import annotations
 
 import pytest
 
-from parsec._parsec import DateTime, Trustchain, UserGetRepNotFound, UserGetRepOk
-from parsec.api.protocol import UserID, UserProfile, packb, user_get_serializer
+from parsec._parsec import DateTime, authenticated_cmds
+from parsec.api.protocol import (
+    Trustchain,
+    UserGetRepNotFound,
+    UserGetRepOk,
+    UserID,
+    UserProfile,
+    packb,
+)
 from parsec.backend.asgi import app_factory
 from tests.backend.common import user_get
 from tests.common import customize_fixtures, freeze_time
@@ -68,7 +75,7 @@ async def test_api_user_get_outsider_get_redacted_certifs(
         "device_certificates": ["<bob@dev1 redacted device certif>"],
         "trustchain": {
             "users": ["<adam redacted user certif>", "<alice redacted user certif>"],
-            "revoked_users": (),
+            "revoked_users": [],
             "devices": [
                 "<adam@dev1 redacted device certif>",
                 "<alice@dev1 redacted device certif>",
@@ -148,8 +155,9 @@ async def test_api_user_get_ok_deep_trustchain(
 async def test_api_user_get_bad_msg(alice_ws, bad_msg):
     await alice_ws.send(packb({"cmd": "user_get", **bad_msg}))
     raw_rep = await alice_ws.receive()
-    rep = user_get_serializer.rep_loads(raw_rep)
-    assert rep.status == "bad_message"
+    rep = authenticated_cmds.latest.user_get.Rep.load(raw_rep)
+    assert isinstance(rep, authenticated_cmds.latest.user_get.RepUnknownStatus)
+    assert rep.status == "invalid_msg_format"
 
 
 @pytest.mark.trio

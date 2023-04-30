@@ -4,7 +4,7 @@ from __future__ import annotations
 from base64 import b64decode, b64encode
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import Any, AsyncContextManager, Callable, Dict, Optional
+from typing import AsyncContextManager, Callable, Dict, Optional
 
 import msgpack
 import pytest
@@ -16,11 +16,10 @@ from werkzeug.datastructures import Headers
 from parsec._parsec import (
     BackendInvitationAddr,
     DateTime,
-    EventsListenRep,
     InvitationToken,
     OrganizationID,
 )
-from parsec.api.protocol import authenticated_ping_serializer, invited_ping_serializer
+from parsec.api.protocol import EventsListenRep
 from parsec.api.version import API_VERSION
 from parsec.core.types import LocalDevice
 from tests.common import OrganizationFullData
@@ -30,7 +29,6 @@ class BaseRpcApiClient:
     async def send(
         self,
         req,
-        serializer,
         extra_headers: Dict[str, str] = {},
         before_send_hook: Optional[Callable] = None,
         now: Optional[DateTime] = None,
@@ -84,11 +82,6 @@ class AuthenticatedRpcApiClient(BaseRpcApiClient):
             }
         )
 
-    async def send_ping(self, ping: str = "foo", **kwargs):
-        return await self.send(
-            {"cmd": "ping", "ping": ping}, authenticated_ping_serializer, **kwargs
-        )
-
     @asynccontextmanager
     async def connect_sse_events(
         self,
@@ -125,18 +118,17 @@ class AuthenticatedRpcApiClient(BaseRpcApiClient):
 
     async def send(
         self,
-        req: Dict[str, Any],
-        serializer: Optional[Any] = None,
+        req: bytes | dict,
         extra_headers: Dict[str, str] = {},
         before_send_hook: Optional[Callable] = None,
         now: Optional[DateTime] = None,
         check_rep: bool = True,
     ):
         now = now or DateTime.now()
-        if not serializer:
-            body = msgpack.packb(req)
+        if isinstance(req, bytes):
+            body = req
         else:
-            body = serializer.req_dumps(req)
+            body = msgpack.packb(req)
         headers = self.base_headers.copy()
         signature = self.device.signing_key.sign_only_signature(body)
         headers["Signature"] = b64encode(signature).decode("ascii")
@@ -162,7 +154,10 @@ class AuthenticatedRpcApiClient(BaseRpcApiClient):
         if check_rep:
             assert rep.status_code == 200
             rep_body = await rep.get_data()
-            return serializer.rep_loads(rep_body)
+            if isinstance(req, bytes):
+                return rep_body
+            else:
+                return msgpack.unpackb(rep_body)
 
         else:
             return rep
@@ -184,20 +179,19 @@ class AnonymousRpcApiClient(BaseRpcApiClient):
             }
         )
 
-    async def send_ping(self, ping: str = "foo", **kwargs):
-        return await self.send({"cmd": "ping", "ping": ping}, invited_ping_serializer, **kwargs)
-
     async def send(
         self,
-        req,
-        serializer,
+        req: bytes | dict,
         extra_headers: Dict[str, str] = {},
         before_send_hook: Optional[Callable] = None,
         now: Optional[DateTime] = None,
         check_rep: bool = True,
     ):
         now = now or DateTime.now()
-        body = serializer.req_dumps(req)
+        if isinstance(req, bytes):
+            body = req
+        else:
+            body = msgpack.packb(req)
         headers = self.base_headers.copy()
 
         # Customize headers
@@ -217,7 +211,10 @@ class AnonymousRpcApiClient(BaseRpcApiClient):
         if check_rep:
             assert rep.status_code == 200
             rep_body = await rep.get_data()
-            return serializer.rep_loads(rep_body)
+            if isinstance(req, bytes):
+                return rep_body
+            else:
+                return msgpack.unpackb(rep_body)
 
         else:
             return rep
@@ -246,20 +243,19 @@ class InvitedRpcApiClient(BaseRpcApiClient):
             }
         )
 
-    async def send_ping(self, ping: str = "foo", **kwargs):
-        return await self.send({"cmd": "ping", "ping": ping}, invited_ping_serializer, **kwargs)
-
     async def send(
         self,
-        req,
-        serializer,
+        req: bytes | dict,
         extra_headers: Dict[str, str] = {},
         before_send_hook: Optional[Callable] = None,
         now: Optional[DateTime] = None,
         check_rep: bool = True,
     ):
         now = now or DateTime.now()
-        body = serializer.req_dumps(req)
+        if isinstance(req, bytes):
+            body = req
+        else:
+            body = msgpack.packb(req)
         headers = self.base_headers.copy()
 
         # Customize headers
@@ -279,7 +275,10 @@ class InvitedRpcApiClient(BaseRpcApiClient):
         if check_rep:
             assert rep.status_code == 200
             rep_body = await rep.get_data()
-            return serializer.rep_loads(rep_body)
+            if isinstance(req, bytes):
+                return rep_body
+            else:
+                return msgpack.unpackb(rep_body)
 
         else:
             return rep
@@ -304,9 +303,7 @@ def bob_rpc(bob: LocalDevice, backend_asgi_app: Quart) -> AuthenticatedRpcApiCli
 
 
 @pytest.fixture
-def anonymous_rpc(
-    coolorg: OrganizationFullData, backend_asgi_app: Quart
-) -> AuthenticatedRpcApiClient:
+def anonymous_rpc(coolorg: OrganizationFullData, backend_asgi_app: Quart) -> AnonymousRpcApiClient:
     test_client = backend_asgi_app.test_client()
     return AnonymousRpcApiClient(coolorg.organization_id, test_client)
 

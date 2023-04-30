@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 
 import pytest
 
-from parsec._parsec import DateTime
+from parsec._parsec import BackendEventRealmRolesUpdated, DateTime
 from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import (
     AuthenticatedClientHandshake,
@@ -17,7 +17,6 @@ from parsec.api.protocol import (
     RealmRole,
     VlobID,
 )
-from parsec.backend.backend_events import BackendEvent
 from parsec.backend.realm import RealmGrantedRole
 from parsec.core.types import LocalDevice
 
@@ -159,7 +158,7 @@ def realm_factory(next_timestamp):
                     granted_on=now,
                 ),
             )
-            await spy.wait_with_timeout(BackendEvent.REALM_ROLES_UPDATED)
+            await spy.wait_with_timeout(BackendEventRealmRolesUpdated)
         return realm_id
 
     return _realm_factory

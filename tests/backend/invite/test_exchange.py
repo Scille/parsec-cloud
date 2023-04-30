@@ -5,8 +5,13 @@ import pytest
 import trio
 
 from parsec._parsec import (
+    BackendEventInviteConduitUpdated,
     DateTime,
     HashDigest,
+    PrivateKey,
+)
+from parsec.api.protocol import (
+    InvitationType,
     Invite1ClaimerWaitPeerRepOk,
     Invite1GreeterWaitPeerRepOk,
     Invite2aClaimerSendHashedNonceRepInvalidState,
@@ -33,10 +38,7 @@ from parsec._parsec import (
     InviteInfoRepOk,
     InviteListRepOk,
     InviteNewRepOk,
-    PrivateKey,
 )
-from parsec.api.protocol import InvitationType
-from parsec.backend.backend_events import BackendEvent
 from tests.backend.common import (
     invite_1_claimer_wait_peer,
     invite_1_greeter_wait_peer,
@@ -112,11 +114,8 @@ class PeerControler:
         ]
 
     async def peer_do(self, action, *args, **kwargs):
-        print("START", action.cmd)
         async with action.async_call(*args, **kwargs) as async_rep:
-            print("DONE", action.cmd)
             await self._orders_ack_sender.send(None)
-        print("REP", action.cmd, async_rep.rep)
         await self._results_sender.send(async_rep.rep)
         return True
 
@@ -571,11 +570,10 @@ async def test_claimer_step_1_retry(
                     invited_ws, claimer_public_key=claimer_privkey.public_key
                 ):
                     await spy.wait_with_timeout(
-                        BackendEvent.INVITE_CONDUIT_UPDATED,
-                        kwargs={
-                            "organization_id": alice.organization_id,
-                            "token": invitation.token,
-                        },
+                        BackendEventInviteConduitUpdated(
+                            organization_id=alice.organization_id,
+                            token=invitation.token,
+                        )
                     )
                     # Here greeter is waiting for claimer, that the time we choose to close greeter connection
                     cancel_scope.cancel()
@@ -596,11 +594,10 @@ async def test_claimer_step_1_retry(
                     # before starting the greeter command otherwise it will
                     # also be reseted
                     await spy.wait_with_timeout(
-                        BackendEvent.INVITE_CONDUIT_UPDATED,
-                        kwargs={
-                            "organization_id": alice.organization_id,
-                            "token": invitation.token,
-                        },
+                        BackendEventInviteConduitUpdated(
+                            organization_id=alice.organization_id,
+                            token=invitation.token,
+                        )
                     )
                     greeter_rep = await invite_1_greeter_wait_peer(
                         alice_ws,
@@ -639,8 +636,9 @@ async def test_claimer_step_2_retry(
                 alice_ws, token=invitation.token
             ) as greeter_2a_async_rep:
                 await spy.wait_with_timeout(
-                    BackendEvent.INVITE_CONDUIT_UPDATED,
-                    kwargs={"organization_id": alice.organization_id, "token": invitation.token},
+                    BackendEventInviteConduitUpdated(
+                        organization_id=alice.organization_id, token=invitation.token
+                    )
                 )
 
                 # ...but changes his mind and reset from another connection !

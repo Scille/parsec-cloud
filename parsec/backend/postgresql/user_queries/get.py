@@ -5,7 +5,7 @@ from typing import List, Tuple
 
 import triopg
 
-from parsec.api.protocol import (
+from parsec._parsec import (
     DeviceID,
     DeviceLabel,
     HumanHandle,
@@ -287,9 +287,9 @@ async def _get_trustchain(
         devices[row["_did"]] = row[device_certif_field]
 
     return Trustchain(
-        users=tuple(users.values()),
-        revoked_users=tuple(revoked_users.values()),
-        devices=tuple(devices.values()),
+        users=list(users.values()),
+        revoked_users=list(revoked_users.values()),
+        devices=list(devices.values()),
     )
 
 
@@ -369,9 +369,9 @@ async def query_get_user_with_devices_and_trustchain(
             d.redacted_device_certificate if redacted else d.device_certificate
             for d in user_devices
         ),
-        trustchain_device_certificates=trustchain.devices,
-        trustchain_user_certificates=trustchain.users,
-        trustchain_revoked_user_certificates=trustchain.revoked_users,
+        trustchain_device_certificates=tuple(trustchain.devices),
+        trustchain_user_certificates=tuple(trustchain.users),
+        trustchain_revoked_user_certificates=tuple(trustchain.revoked_users),
     )
 
 

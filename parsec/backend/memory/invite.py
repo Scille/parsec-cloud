@@ -7,9 +7,16 @@ from typing import TYPE_CHECKING, Any, Callable, Coroutine, List, Tuple
 
 import attr
 
-from parsec._parsec import DateTime, InvitationDeletedReason
-from parsec.api.protocol import InvitationStatus, InvitationToken, OrganizationID, UserID
-from parsec.backend.backend_events import BackendEvent
+from parsec._parsec import (
+    BackendEvent,
+    BackendEventInviteConduitUpdated,
+    BackendEventInviteStatusChanged,
+    DateTime,
+    InvitationStatus,
+    InvitationToken,
+    OrganizationID,
+    UserID,
+)
 from parsec.backend.invite import (
     NEXT_CONDUIT_STATE,
     BaseInviteComponent,
@@ -19,6 +26,7 @@ from parsec.backend.invite import (
     Invitation,
     InvitationAlreadyDeletedError,
     InvitationAlreadyMemberError,
+    InvitationDeletedReason,
     InvitationInvalidStateError,
     InvitationNotFoundError,
     UserInvitation,
@@ -46,7 +54,10 @@ class OrganizationStore:
 
 class MemoryInviteComponent(BaseInviteComponent):
     def __init__(
-        self, send_event: Callable[..., Coroutine[Any, Any, None]], *args: Any, **kwargs: Any
+        self,
+        send_event: Callable[[BackendEvent], Coroutine[Any, Any, None]],
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
         self._send_event = send_event
@@ -116,9 +127,10 @@ class MemoryInviteComponent(BaseInviteComponent):
         # Note that in case of conduit reset, this signal will lure the peer into
         # thinking we have answered so he will wakeup and take into account the reset
         await self._send_event(
-            BackendEvent.INVITE_CONDUIT_UPDATED,
-            organization_id=organization_id,
-            token=token,
+            BackendEventInviteConduitUpdated(
+                organization_id=organization_id,
+                token=token,
+            )
         )
 
         return ConduitListenCtx(
@@ -156,9 +168,10 @@ class MemoryInviteComponent(BaseInviteComponent):
                 conduit.greeter_payload = None
                 conduit.claimer_payload = None
                 await self._send_event(
-                    BackendEvent.INVITE_CONDUIT_UPDATED,
-                    organization_id=ctx.organization_id,
-                    token=ctx.token,
+                    BackendEventInviteConduitUpdated(
+                        organization_id=ctx.organization_id,
+                        token=ctx.token,
+                    )
                 )
                 return curr_peer_payload
 
@@ -265,11 +278,12 @@ class MemoryInviteComponent(BaseInviteComponent):
             org.invitations[invitation.token] = invitation
 
         await self._send_event(
-            BackendEvent.INVITE_STATUS_CHANGED,
-            organization_id=organization_id,
-            greeter=invitation.greeter_user_id,
-            token=invitation.token,
-            status=invitation.status,
+            BackendEventInviteStatusChanged(
+                organization_id=organization_id,
+                greeter=invitation.greeter_user_id,
+                token=invitation.token,
+                status=invitation.status,
+            )
         )
         return invitation
 
@@ -285,11 +299,12 @@ class MemoryInviteComponent(BaseInviteComponent):
         org = self._organizations[organization_id]
         org.deleted_invitations[token] = (on, reason)
         await self._send_event(
-            BackendEvent.INVITE_STATUS_CHANGED,
-            organization_id=organization_id,
-            greeter=greeter,
-            token=token,
-            status=InvitationStatus.DELETED,
+            BackendEventInviteStatusChanged(
+                organization_id=organization_id,
+                greeter=greeter,
+                token=token,
+                status=InvitationStatus.DELETED,
+            )
         )
 
     async def list(self, organization_id: OrganizationID, greeter: UserID) -> List[Invitation]:
@@ -313,22 +328,24 @@ class MemoryInviteComponent(BaseInviteComponent):
         self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
     ) -> None:
         await self._send_event(
-            BackendEvent.INVITE_STATUS_CHANGED,
-            organization_id=organization_id,
-            greeter=greeter,
-            token=token,
-            status=InvitationStatus.READY,
+            BackendEventInviteStatusChanged(
+                organization_id=organization_id,
+                greeter=greeter,
+                token=token,
+                status=InvitationStatus.READY,
+            )
         )
 
     async def claimer_left(
         self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
     ) -> None:
         await self._send_event(
-            BackendEvent.INVITE_STATUS_CHANGED,
-            organization_id=organization_id,
-            greeter=greeter,
-            token=token,
-            status=InvitationStatus.IDLE,
+            BackendEventInviteStatusChanged(
+                organization_id=organization_id,
+                greeter=greeter,
+                token=token,
+                status=InvitationStatus.IDLE,
+            )
         )
 
     def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:

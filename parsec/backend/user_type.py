@@ -5,9 +5,18 @@ from typing import Any, Tuple
 
 import attr
 
-from parsec._parsec import DateTime, PublicKey, VerifyKey
+from parsec._parsec import (
+    DateTime,
+    DeviceID,
+    DeviceLabel,
+    DeviceName,
+    HumanHandle,
+    PublicKey,
+    UserID,
+    UserProfile,
+    VerifyKey,
+)
 from parsec.api.data import DataError, DeviceCertificate, UserCertificate
-from parsec.api.protocol import DeviceID, DeviceLabel, DeviceName, HumanHandle, UserID, UserProfile
 from parsec.utils import timestamps_in_the_ballpark
 
 

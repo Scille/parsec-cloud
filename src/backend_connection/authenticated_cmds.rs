@@ -13,7 +13,7 @@ use crate::{
     addrs::BackendOrganizationAddr,
     api_crypto::PublicKey,
     binding_utils::BytesWrapper,
-    enumerate::{InvitationDeletedReason, InvitationType},
+    enumerate::InvitationType,
     ids::{BlockID, EnrollmentID, InvitationToken, RealmID, SequesterServiceID, UserID, VlobID},
     local_device::LocalDevice,
     protocol::{authenticated_cmds::v2 as authenticated_cmds_wrapper, ReencryptionBatchEntry},
@@ -361,7 +361,7 @@ impl AuthenticatedCmds {
     fn invite_delete(
         &self,
         token: InvitationToken,
-        reason: InvitationDeletedReason,
+        reason: authenticated_cmds_wrapper::invite_delete::InvitationDeletedReason,
     ) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 

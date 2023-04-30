@@ -5,9 +5,14 @@ import pytest
 
 from parsec._parsec import (
     DateTime,
+)
+from parsec.api.data import RealmRoleCertificate
+from parsec.api.protocol import (
     RealmGetRoleCertificatesRepNotAllowed,
     RealmGetRoleCertificatesRepNotFound,
     RealmGetRoleCertificatesRepOk,
+    RealmID,
+    RealmRole,
     RealmUpdateRolesRepAlreadyGranted,
     RealmUpdateRolesRepIncompatibleProfile,
     RealmUpdateRolesRepInMaintenance,
@@ -17,10 +22,10 @@ from parsec._parsec import (
     RealmUpdateRolesRepOk,
     RealmUpdateRolesRepRequireGreaterTimestamp,
     RealmUpdateRolesRepUserRevoked,
+    UserProfile,
     VlobCreateRepOk,
+    VlobID,
 )
-from parsec.api.data import RealmRoleCertificate
-from parsec.api.protocol import RealmID, RealmRole, UserProfile, VlobID
 from parsec.backend.realm import RealmGrantedRole
 from tests.backend.common import realm_get_role_certificates, realm_update_roles, vlob_create
 from tests.common import customize_fixtures, freeze_time
@@ -418,7 +423,7 @@ async def test_get_role_certificates_multiple(
 
     rep = await realm_get_role_certificates(bob_ws, realm)
     assert isinstance(rep, RealmGetRoleCertificatesRepOk)
-    assert rep.certificates[1:] == (c3, c4, c5, c6)
+    assert rep.certificates[1:] == [c3, c4, c5, c6]
 
 
 @pytest.mark.trio

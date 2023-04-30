@@ -9,8 +9,13 @@ from typing import TYPE_CHECKING, Any, Awaitable, Callable, NoReturn, TypeVar
 from quart import Blueprint, Response, current_app, g, jsonify, make_response, request
 from typing_extensions import ParamSpec
 
-from parsec._parsec import ActiveUsersLimit, DateTime, OrganizationStats
-from parsec.api.protocol import OrganizationID, UserProfile
+from parsec._parsec import (
+    ActiveUsersLimit,
+    DateTime,
+    OrganizationID,
+    OrganizationStats,
+    UserProfile,
+)
 from parsec.api.rest import (
     organization_config_rep_serializer,
     organization_create_rep_serializer,

@@ -7,96 +7,13 @@ use pyo3::{
     IntoPy, PyObject, PyResult, Python,
 };
 
-use libparsec::{
-    protocol::authenticated_cmds::v2::{invite_delete, invite_new},
-    types,
-};
+use libparsec::types;
 
 use crate::protocol::{ProtocolErrorFields, ProtocolResult};
 
 // #[non_exhaustive] macro must be set for every enum like type,
 // because we would like to call `is` in `python`, then
 // a static reference should be returned instead of a new object
-
-#[pyclass]
-#[derive(Clone)]
-#[non_exhaustive]
-pub(crate) struct ClientType(pub types::ClientType);
-
-crate::binding_utils::gen_proto!(ClientType, __repr__);
-crate::binding_utils::gen_proto!(ClientType, __copy__);
-crate::binding_utils::gen_proto!(ClientType, __deepcopy__);
-crate::binding_utils::gen_proto!(ClientType, __richcmp__, eq);
-crate::binding_utils::gen_proto!(ClientType, __hash__);
-
-crate::binding_utils::impl_enum_field!(
-    ClientType,
-    [
-        "AUTHENTICATED",
-        authenticated,
-        types::ClientType::Authenticated
-    ],
-    ["INVITED", invited, types::ClientType::Invited],
-    ["ANONYMOUS", anonymous, types::ClientType::Anonymous]
-);
-
-#[pyclass]
-#[derive(Clone)]
-#[non_exhaustive]
-pub(crate) struct InvitationDeletedReason(pub invite_delete::InvitationDeletedReason);
-
-crate::binding_utils::gen_proto!(InvitationDeletedReason, __repr__);
-crate::binding_utils::gen_proto!(InvitationDeletedReason, __copy__);
-crate::binding_utils::gen_proto!(InvitationDeletedReason, __deepcopy__);
-crate::binding_utils::gen_proto!(InvitationDeletedReason, __richcmp__, eq);
-
-crate::binding_utils::impl_enum_field!(
-    InvitationDeletedReason,
-    [
-        "FINISHED",
-        finished,
-        invite_delete::InvitationDeletedReason::Finished
-    ],
-    [
-        "CANCELLED",
-        cancelled,
-        invite_delete::InvitationDeletedReason::Cancelled
-    ],
-    [
-        "ROTTEN",
-        rotten,
-        invite_delete::InvitationDeletedReason::Rotten
-    ]
-);
-
-#[pyclass]
-#[derive(Clone)]
-#[non_exhaustive]
-pub(crate) struct InvitationEmailSentStatus(pub invite_new::InvitationEmailSentStatus);
-
-crate::binding_utils::gen_proto!(InvitationEmailSentStatus, __repr__);
-crate::binding_utils::gen_proto!(InvitationEmailSentStatus, __copy__);
-crate::binding_utils::gen_proto!(InvitationEmailSentStatus, __deepcopy__);
-crate::binding_utils::gen_proto!(InvitationEmailSentStatus, __richcmp__, eq);
-
-crate::binding_utils::impl_enum_field!(
-    InvitationEmailSentStatus,
-    [
-        "SUCCESS",
-        success,
-        invite_new::InvitationEmailSentStatus::Success
-    ],
-    [
-        "NOT_AVAILABLE",
-        not_available,
-        invite_new::InvitationEmailSentStatus::NotAvailable
-    ],
-    [
-        "BAD_RECIPIENT",
-        bad_recipient,
-        invite_new::InvitationEmailSentStatus::BadRecipient
-    ]
-);
 
 #[pyclass]
 #[derive(Clone)]
@@ -420,30 +337,3 @@ crate::binding_utils::gen_proto!(DeviceFileType, __repr__);
 crate::binding_utils::gen_proto!(DeviceFileType, __copy__);
 crate::binding_utils::gen_proto!(DeviceFileType, __deepcopy__);
 crate::binding_utils::gen_proto!(DeviceFileType, __richcmp__, eq);
-
-#[pyclass]
-#[derive(Clone)]
-pub(crate) enum PkiEnrollmentStatus {
-    #[pyo3(name = "SUBMITTED")]
-    Submitted,
-    #[pyo3(name = "ACCEPTED")]
-    Accepted,
-    #[pyo3(name = "REJECTED")]
-    Rejected,
-    #[pyo3(name = "CANCELLED")]
-    Cancelled,
-}
-
-#[pymethods]
-impl PkiEnrollmentStatus {
-    /// Behave like python's `value` attribute
-    #[getter]
-    fn value(&self) -> &'static str {
-        match self {
-            PkiEnrollmentStatus::Submitted => "SUBMITTED",
-            PkiEnrollmentStatus::Accepted => "ACCEPTED",
-            PkiEnrollmentStatus::Rejected => "REJECTED",
-            PkiEnrollmentStatus::Cancelled => "CANCELLED",
-        }
-    }
-}

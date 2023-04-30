@@ -5,16 +5,16 @@ from typing import Any, Dict, List
 
 import triopg
 
-from parsec._parsec import DateTime
-from parsec.api.protocol import (
+from parsec._parsec import (
+    BackendEventRealmMaintenanceFinished,
+    BackendEventRealmMaintenanceStarted,
+    DateTime,
     DeviceID,
-    MaintenanceType,
     OrganizationID,
     RealmID,
     RealmRole,
     UserID,
 )
-from parsec.backend.backend_events import BackendEvent
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.message import send_message
 from parsec.backend.postgresql.utils import (
@@ -28,6 +28,7 @@ from parsec.backend.postgresql.utils import (
     query,
 )
 from parsec.backend.realm import (
+    MaintenanceType,
     RealmAccessError,
     RealmEncryptionRevisionError,
     RealmInMaintenanceError,
@@ -214,11 +215,12 @@ async def query_start_reencryption_maintenance(
 
     await send_signal(
         conn,
-        BackendEvent.REALM_MAINTENANCE_STARTED,
-        organization_id=organization_id,
-        author=author,
-        realm_id=realm_id,
-        encryption_revision=encryption_revision,
+        BackendEventRealmMaintenanceStarted(
+            organization_id=organization_id,
+            author=author,
+            realm_id=realm_id,
+            encryption_revision=encryption_revision,
+        ),
     )
 
     for recipient, body in per_participant_message.items():
@@ -304,9 +306,10 @@ async def query_finish_reencryption_maintenance(
 
     await send_signal(
         conn,
-        BackendEvent.REALM_MAINTENANCE_FINISHED,
-        organization_id=organization_id,
-        author=author,
-        realm_id=realm_id,
-        encryption_revision=encryption_revision,
+        BackendEventRealmMaintenanceFinished(
+            organization_id=organization_id,
+            author=author,
+            realm_id=realm_id,
+            encryption_revision=encryption_revision,
+        ),
     )

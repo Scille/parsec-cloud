@@ -7,9 +7,18 @@ from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, Iterable, List
 
 import attr
 
-from parsec._parsec import ActiveUsersLimit, DateTime
-from parsec.api.protocol import DeviceID, DeviceName, HumanHandle, OrganizationID, UserID
-from parsec.backend.backend_events import BackendEvent
+from parsec._parsec import (
+    ActiveUsersLimit,
+    BackendEventDeviceCreated,
+    BackendEventUserCreated,
+    BackendEventUserRevoked,
+    DateTime,
+    DeviceID,
+    DeviceName,
+    HumanHandle,
+    OrganizationID,
+    UserID,
+)
 from parsec.backend.user import (
     BaseUserComponent,
     Device,
@@ -81,12 +90,13 @@ class MemoryUserComponent(BaseUserComponent):
             org.human_handle_to_user_id[user.human_handle] = user.user_id
 
         await self._send_event(
-            BackendEvent.USER_CREATED,
-            organization_id=organization_id,
-            user_id=user.user_id,
-            user_certificate=user.user_certificate,
-            first_device_id=first_device.device_id,
-            first_device_certificate=first_device.device_certificate,
+            BackendEventUserCreated(
+                organization_id=organization_id,
+                user_id=user.user_id,
+                user_certificate=user.user_certificate,
+                first_device_id=first_device.device_id,
+                first_device_certificate=first_device.device_certificate,
+            )
         )
 
     async def create_device(
@@ -103,11 +113,12 @@ class MemoryUserComponent(BaseUserComponent):
 
         user_devices[device.device_name] = device
         await self._send_event(
-            BackendEvent.DEVICE_CREATED,
-            organization_id=organization_id,
-            device_id=device.device_id,
-            device_certificate=device.device_certificate,
-            encrypted_answer=encrypted_answer,
+            BackendEventDeviceCreated(
+                organization_id=organization_id,
+                device_id=device.device_id,
+                device_certificate=device.device_certificate,
+                encrypted_answer=encrypted_answer,
+            )
         )
 
     async def _get_trustchain(
@@ -142,9 +153,9 @@ class MemoryUserComponent(BaseUserComponent):
             await _recursive_extract_creators(device_id)
 
         return Trustchain(
-            devices=tuple(trustchain_devices),
-            users=tuple(trustchain_users),
-            revoked_users=tuple(trustchain_revoked_users),
+            devices=list(trustchain_devices),
+            users=list(trustchain_users),
+            revoked_users=list(trustchain_revoked_users),
         )
 
     def _get_user(self, organization_id: OrganizationID, user_id: UserID) -> User:
@@ -201,9 +212,9 @@ class MemoryUserComponent(BaseUserComponent):
                 d.redacted_device_certificate if redacted else d.device_certificate
                 for d in user_devices.values()
             ),
-            trustchain_device_certificates=trustchain.devices,
-            trustchain_user_certificates=trustchain.users,
-            trustchain_revoked_user_certificates=trustchain.revoked_users,
+            trustchain_device_certificates=tuple(trustchain.devices),
+            trustchain_user_certificates=tuple(trustchain.users),
+            trustchain_revoked_user_certificates=tuple(trustchain.revoked_users),
         )
 
     def _get_device(self, organization_id: OrganizationID, device_id: DeviceID) -> Device:
@@ -340,7 +351,7 @@ class MemoryUserComponent(BaseUserComponent):
             del org.human_handle_to_user_id[user.human_handle]
 
         await self._send_event(
-            BackendEvent.USER_REVOKED, organization_id=organization_id, user_id=user_id
+            BackendEventUserRevoked(organization_id=organization_id, user_id=user_id)
         )
 
     async def dump_users(self, organization_id: OrganizationID) -> Tuple[List[User], List[Device]]:

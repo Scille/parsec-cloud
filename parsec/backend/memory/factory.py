@@ -34,13 +34,13 @@ async def components_factory(  # type: ignore[misc]
         Tuple[Enum, Dict[str, object]]
     ](math.inf)
 
-    async def _send_event(event: Enum, **kwargs: Any) -> None:
-        await send_events_channel.send((event, kwargs))
+    async def _send_event(event) -> None:
+        await send_events_channel.send(event)
 
     async def _dispatch_event() -> None:
-        async for event, kwargs in receive_events_channel:
+        async for event in receive_events_channel:
             await trio.sleep(0)
-            event_bus.send(event, **kwargs)
+            event_bus.send(type(event), payload=event)
 
     webhooks = WebhooksComponent(config)
     organization = MemoryOrganizationComponent(_send_event, webhooks, config)

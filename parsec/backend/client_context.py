@@ -7,16 +7,18 @@ from uuid import uuid4
 import trio
 from structlog import BoundLogger, get_logger
 
-from parsec._parsec import ClientType, EventsListenRep, PublicKey, VerifyKey
-from parsec.api.protocol import (
+from parsec._parsec import (
+    BackendEvent,
     DeviceID,
     DeviceLabel,
     DeviceName,
     HumanHandle,
     OrganizationID,
+    PublicKey,
     RealmID,
     UserID,
     UserProfile,
+    VerifyKey,
 )
 from parsec.api.version import ApiVersion
 from parsec.backend.invite import Invitation
@@ -29,7 +31,6 @@ AUTHENTICATED_CLIENT_CHANNEL_SIZE = 100
 
 class BaseClientContext:
     __slots__ = ("conn_id", "api_version", "client_api_version", "cancel_scope")
-    TYPE: ClientType
     logger: BoundLogger
 
     def __init__(self, api_version: ApiVersion, client_api_version: ApiVersion):
@@ -59,7 +60,6 @@ class AuthenticatedClientContext(BaseClientContext):
         "events_subscribed",
         "logger",
     )
-    TYPE = ClientType.AUTHENTICATED
 
     def __init__(
         self,
@@ -91,7 +91,7 @@ class AuthenticatedClientContext(BaseClientContext):
 
         self.event_bus_ctx: EventBusConnectionContext
         self.send_events_channel, self.receive_events_channel = trio.open_memory_channel[
-            EventsListenRep
+            BackendEvent
         ](AUTHENTICATED_CLIENT_CHANNEL_SIZE)
         self.realms: Set[RealmID] = set()
         self.events_subscribed = False
@@ -118,7 +118,6 @@ class AuthenticatedClientContext(BaseClientContext):
 
 class InvitedClientContext(BaseClientContext):
     __slots__ = ("organization_id", "invitation", "logger")
-    TYPE = ClientType.INVITED
 
     def __init__(
         self,
@@ -144,7 +143,6 @@ class InvitedClientContext(BaseClientContext):
 
 class AnonymousClientContext(BaseClientContext):
     __slots__ = ("organization_id", "logger")
-    TYPE = ClientType.ANONYMOUS
 
     def __init__(
         self,

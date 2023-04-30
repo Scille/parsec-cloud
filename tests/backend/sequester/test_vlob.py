@@ -8,17 +8,19 @@ from urllib.parse import parse_qs, urlsplit
 
 import pytest
 
-from parsec._parsec import (
+from parsec.api.protocol import (
+    OrganizationID,
+    SequesterServiceID,
     VlobCreateRepOk,
     VlobCreateRepRejectedBySequesterService,
     VlobCreateRepSequesterInconsistency,
     VlobCreateRepTimeout,
+    VlobID,
     VlobUpdateRepOk,
     VlobUpdateRepRejectedBySequesterService,
     VlobUpdateRepSequesterInconsistency,
     VlobUpdateRepTimeout,
 )
-from parsec.api.protocol import OrganizationID, SequesterServiceID, VlobID
 from parsec.backend.sequester import (
     SequesterOrganizationNotFoundError,
     SequesterServiceNotFoundError,
@@ -88,7 +90,7 @@ async def test_vlob_create_update_and_sequester_access(
             rep, (VlobCreateRepSequesterInconsistency, VlobUpdateRepSequesterInconsistency)
         )
         assert rep.sequester_authority_certificate == coolorg.sequester_authority.certif
-        assert rep.sequester_services_certificates == (s1.certif, s2.certif, s4.certif)
+        assert rep.sequester_services_certificates == [s1.certif, s2.certif, s4.certif]
 
         # 2) Try with sequester blob missing for one service
         rep = await vlob_cmd(
@@ -99,7 +101,7 @@ async def test_vlob_create_update_and_sequester_access(
             rep, (VlobCreateRepSequesterInconsistency, VlobUpdateRepSequesterInconsistency)
         )
         assert rep.sequester_authority_certificate == coolorg.sequester_authority.certif
-        assert rep.sequester_services_certificates == (s1.certif, s2.certif, s4.certif)
+        assert rep.sequester_services_certificates == [s1.certif, s2.certif, s4.certif]
 
         # 3) Try with unknown additional sequester blob
         rep = await vlob_cmd(
@@ -113,7 +115,7 @@ async def test_vlob_create_update_and_sequester_access(
             rep, (VlobCreateRepSequesterInconsistency, VlobUpdateRepSequesterInconsistency)
         )
         assert rep.sequester_authority_certificate == coolorg.sequester_authority.certif
-        assert rep.sequester_services_certificates == (s1.certif, s2.certif, s4.certif)
+        assert rep.sequester_services_certificates == [s1.certif, s2.certif, s4.certif]
 
         # 4) Try with blob for a removed sequester service
         rep = await vlob_cmd(
@@ -132,7 +134,7 @@ async def test_vlob_create_update_and_sequester_access(
             rep, (VlobCreateRepSequesterInconsistency, VlobUpdateRepSequesterInconsistency)
         )
         assert rep.sequester_authority_certificate == coolorg.sequester_authority.certif
-        assert rep.sequester_services_certificates == (s1.certif, s2.certif, s4.certif)
+        assert rep.sequester_services_certificates == [s1.certif, s2.certif, s4.certif]
 
         # 5) Finally the valid operation
         rep = await vlob_cmd(

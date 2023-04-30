@@ -5,9 +5,13 @@ from collections import defaultdict
 from copy import deepcopy
 from typing import Any, Callable, Coroutine, List, Tuple
 
-from parsec._parsec import DateTime
-from parsec.api.protocol import DeviceID, OrganizationID, UserID
-from parsec.backend.backend_events import BackendEvent
+from parsec._parsec import (
+    BackendEventMessageReceived,
+    DateTime,
+    DeviceID,
+    OrganizationID,
+    UserID,
+)
 from parsec.backend.message import BaseMessageComponent
 
 
@@ -33,11 +37,12 @@ class MemoryMessageComponent(BaseMessageComponent):
         messages[recipient].append((sender, timestamp, body))
         index = len(messages[recipient])
         await self._send_event(
-            BackendEvent.MESSAGE_RECEIVED,
-            organization_id=organization_id,
-            author=sender,
-            recipient=recipient,
-            index=index,
+            BackendEventMessageReceived(
+                organization_id=organization_id,
+                author=sender,
+                recipient=recipient,
+                index=index,
+            )
         )
 
     async def get(

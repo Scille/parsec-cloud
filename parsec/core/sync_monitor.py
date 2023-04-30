@@ -12,13 +12,15 @@ from parsec._parsec import AuthenticatedCmds as RsBackendAuthenticatedCmds
 from parsec._parsec import (
     CoreEvent,
     EntryID,
+    RealmID,
+    WorkspaceEntry,
+)
+from parsec.api.protocol import (
     VlobPollChangesRepInMaintenance,
     VlobPollChangesRepNotAllowed,
     VlobPollChangesRepNotFound,
     VlobPollChangesRepOk,
-    WorkspaceEntry,
 )
-from parsec.api.protocol import RealmID
 from parsec.core.backend_connection import (
     BackendAuthenticatedCmds,
     BackendConnectionError,

@@ -22,24 +22,24 @@ from trio_typing import TaskStatus
 import parsec
 from parsec._parsec import (
     ActiveUsersLimit,
-    CoreEvent,
-    EventsListenRep,
-    EventsListenRepOk,
-    EventsListenRepOkMessageReceived,
-    EventsListenRepOkPinged,
-    EventsListenRepOkPkiEnrollmentUpdated,
-    EventsListenRepOkRealmMaintenanceFinished,
-    EventsListenRepOkRealmMaintenanceStarted,
-    EventsListenRepOkRealmRolesUpdated,
-    EventsListenRepOkRealmVlobsUpdated,
-    EventsSubscribeRepOk,
+    # CoreEvent,
+    # EventsListenRep,
+    # EventsListenRepOk,
+    # EventsListenRepOkMessageReceived,
+    # EventsListenRepOkPinged,
+    # EventsListenRepOkPkiEnrollmentUpdated,
+    # EventsListenRepOkRealmMaintenanceFinished,
+    # EventsListenRepOkRealmMaintenanceStarted,
+    # EventsListenRepOkRealmRolesUpdated,
+    # EventsListenRepOkRealmVlobsUpdated,
+    # EventsSubscribeRepOk,
     OrganizationConfig,
-    OrganizationConfigRepOk,
-    OrganizationConfigRepUnknownStatus,
+    # OrganizationConfigRepOk,
+    # OrganizationConfigRepUnknownStatus,
     SigningKey,
 )
 from parsec._parsec import AuthenticatedCmds as RsBackendAuthenticatedCmds
-from parsec.api.protocol import AUTHENTICATED_CMDS, DeviceID
+from parsec.api.protocol import DeviceID
 from parsec.api.transport import Transport
 from parsec.core.backend_connection import (
     BackendConnectionRefused,
@@ -159,8 +159,8 @@ class BackendAuthenticatedCmds:
     pki_enrollment_accept = expose_cmds_with_retrier(cmds.pki_enrollment_accept)
 
 
-for cmd in AUTHENTICATED_CMDS:
-    assert hasattr(BackendAuthenticatedCmds, cmd)
+# for cmd in AUTHENTICATED_CMDS:
+#     assert hasattr(BackendAuthenticatedCmds, cmd)
 
 
 # TODO: can we avoid the conversions RealmID/VlobID -> EntryID

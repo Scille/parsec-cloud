@@ -5,8 +5,7 @@ from typing import Tuple
 
 import triopg
 
-from parsec._parsec import DateTime
-from parsec.api.protocol import DeviceID, OrganizationID, RealmID, VlobID
+from parsec._parsec import DateTime, DeviceID, OrganizationID, RealmID, VlobID
 from parsec.backend.postgresql.realm_queries.maintenance import RealmNotFoundError, get_realm_status
 from parsec.backend.postgresql.utils import (
     Q,

@@ -5,9 +5,13 @@ from typing import List, Tuple
 
 import triopg
 
-from parsec._parsec import DateTime
-from parsec.api.protocol import DeviceID, OrganizationID, UserID
-from parsec.backend.backend_events import BackendEvent
+from parsec._parsec import (
+    BackendEventMessageReceived,
+    DateTime,
+    DeviceID,
+    OrganizationID,
+    UserID,
+)
 from parsec.backend.message import BaseMessageComponent
 from parsec.backend.postgresql.handler import PGHandler, send_signal
 from parsec.backend.postgresql.utils import (
@@ -74,11 +78,13 @@ async def send_message(
 
     await send_signal(
         conn,
-        BackendEvent.MESSAGE_RECEIVED,
-        organization_id=organization_id,
-        author=sender,
-        recipient=recipient,
-        index=index,
+        BackendEventMessageReceived(
+            organization_id=organization_id,
+            author=sender,
+            recipient=recipient,
+            index=index,
+            message=body,
+        ),
     )
 
 

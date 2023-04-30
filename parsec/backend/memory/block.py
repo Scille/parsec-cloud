@@ -6,8 +6,7 @@ from typing import TYPE_CHECKING, Any, Dict, Tuple
 
 import attr
 
-from parsec._parsec import DateTime
-from parsec.api.protocol import BlockID, DeviceID, OrganizationID, RealmID, RealmRole, UserID
+from parsec._parsec import BlockID, DateTime, DeviceID, OrganizationID, RealmID, RealmRole, UserID
 from parsec.backend.block import (
     BaseBlockComponent,
     BlockAccessError,

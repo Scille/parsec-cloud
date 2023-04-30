@@ -6,7 +6,17 @@ from functools import partial
 
 import pytest
 
-from parsec._parsec import DateTime, OrganizationID, RealmID, RealmRole, SigningKey, UserID, VlobID
+from parsec._parsec import (
+    BackendEventRealmRolesUpdated,
+    BackendEventRealmVlobsUpdated,
+    DateTime,
+    OrganizationID,
+    RealmID,
+    RealmRole,
+    SigningKey,
+    UserID,
+    VlobID,
+)
 from parsec.api.data import (
     DeviceCertificate,
     RealmRoleCertificate,
@@ -14,7 +24,6 @@ from parsec.api.data import (
     UserCertificate,
     UserManifest,
 )
-from parsec.backend.backend_events import BackendEvent
 from parsec.backend.organization import SequesterAuthority
 from parsec.backend.realm import RealmGrantedRole
 from parsec.backend.user import Device as BackendDevice
@@ -71,7 +80,7 @@ class InitialUserManifestState:
                 created=timestamp,
                 updated=timestamp,
                 last_processed_message=0,
-                workspaces=(),
+                workspaces=[],
             )
             local_user_manifest = LocalUserManifest.from_remote(remote_user_manifest)
             self._v1[(device.organization_id, device.user_id)] = (
@@ -329,25 +338,23 @@ def backend_data_binder_factory(initial_user_manifest_state):
                 await spy.wait_multiple(
                     [
                         (
-                            BackendEvent.REALM_ROLES_UPDATED,
-                            {
-                                "organization_id": author.organization_id,
-                                "author": author.device_id,
-                                "realm_id": realm_id,
-                                "user": author.user_id,
-                                "role": RealmRole.OWNER,
-                            },
+                            BackendEventRealmRolesUpdated(
+                                organization_id=author.organization_id,
+                                author=author.device_id,
+                                realm_id=realm_id,
+                                user=author.user_id,
+                                role=RealmRole.OWNER,
+                            )
                         ),
                         (
-                            BackendEvent.REALM_VLOBS_UPDATED,
-                            {
-                                "organization_id": author.organization_id,
-                                "author": author.device_id,
-                                "realm_id": realm_id,
-                                "checkpoint": 1,
-                                "src_id": vlob_id,
-                                "src_version": 1,
-                            },
+                            BackendEventRealmVlobsUpdated(
+                                organization_id=author.organization_id,
+                                author=author.device_id,
+                                realm_id=realm_id,
+                                checkpoint=1,
+                                src_id=vlob_id,
+                                src_version=1,
+                            )
                         ),
                     ]
                 )

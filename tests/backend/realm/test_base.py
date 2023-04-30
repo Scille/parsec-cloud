@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import pytest
 
-from parsec._parsec import DateTime, RealmStatusRepNotAllowed, RealmStatusRepOk
+from parsec._parsec import DateTime
 from parsec.api.data import RealmRoleCertificate
-from parsec.api.protocol import RealmRole
+from parsec.api.protocol import RealmRole, RealmStatusRepNotAllowed, RealmStatusRepOk
 from tests.backend.common import realm_status, realm_update_roles
 
 

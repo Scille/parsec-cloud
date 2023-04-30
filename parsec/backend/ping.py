@@ -1,46 +1,40 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Union
-
 from parsec._parsec import (
-    AuthenticatedPingRep,
-    AuthenticatedPingRepOk,
-    AuthenticatedPingReq,
-    ClientType,
-    InvitedPingRep,
-    InvitedPingRepOk,
-    InvitedPingReq,
+    DeviceID,
+    OrganizationID,
+    anonymous_cmds,
+    authenticated_cmds,
+    invited_cmds,
 )
-from parsec.api.protocol import DeviceID, OrganizationID
-from parsec.backend.client_context import AuthenticatedClientContext, BaseClientContext
-from parsec.backend.utils import api, api_typed_msg_adapter, catch_protocol_errors
+from parsec.backend.client_context import (
+    AnonymousClientContext,
+    AuthenticatedClientContext,
+    InvitedClientContext,
+)
+from parsec.backend.utils import api
 
 
 class BasePingComponent:
-    @api(
-        "ping",
-        client_types=[
-            ClientType.AUTHENTICATED,
-            ClientType.ANONYMOUS,
-            ClientType.INVITED,
-        ],
-    )
-    @catch_protocol_errors
-    @api_typed_msg_adapter(
-        (AuthenticatedPingReq, InvitedPingReq),
-        Union[AuthenticatedPingRep, InvitedPingRep],
-    )
-    async def api_ping(
-        self, client_ctx: BaseClientContext, req: AuthenticatedPingReq | InvitedPingReq
-    ) -> AuthenticatedPingRep | InvitedPingRep:
-        if client_ctx.TYPE == ClientType.AUTHENTICATED:
-            assert isinstance(client_ctx, AuthenticatedClientContext)
+    @api
+    async def authenticated_api_ping(
+        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.latest.ping.Req
+    ) -> authenticated_cmds.latest.ping.Rep:
+        await self.ping(client_ctx.organization_id, client_ctx.device_id, req.ping)
+        return authenticated_cmds.latest.ping.RepOk(pong=req.ping)
 
-            await self.ping(client_ctx.organization_id, client_ctx.device_id, req.ping)
-            return AuthenticatedPingRepOk(pong=req.ping)
-        else:
-            return InvitedPingRepOk(pong=req.ping)
+    @api
+    async def invited_api_ping(
+        self, client_ctx: InvitedClientContext, req: invited_cmds.latest.ping.Req
+    ) -> invited_cmds.latest.ping.Rep:
+        return invited_cmds.latest.ping.RepOk(pong=req.ping)
+
+    @api
+    async def anonymous_api_ping(
+        self, client_ctx: AnonymousClientContext, req: anonymous_cmds.latest.ping.Req
+    ) -> anonymous_cmds.latest.ping.Rep:
+        return authenticated_cmds.latest.ping.RepOk(pong=req.ping)
 
     async def ping(self, organization_id: OrganizationID, author: DeviceID, ping: str) -> None:
         raise NotImplementedError()

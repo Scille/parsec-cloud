@@ -8,6 +8,7 @@ use pyo3::{
 mod addrs;
 mod api_crypto;
 mod backend_connection;
+mod backend_events;
 mod binding_utils;
 mod core_fs;
 mod data;
@@ -50,6 +51,21 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
         <pyo3::panic::PanicException as pyo3::PyTypeInfo>::type_object(py),
     )?;
 
+    m.add_class::<backend_events::BackendEvent>()?;
+    m.add_class::<backend_events::BackendEventDeviceCreated>()?;
+    m.add_class::<backend_events::BackendEventInviteConduitUpdated>()?;
+    m.add_class::<backend_events::BackendEventUserCreated>()?;
+    m.add_class::<backend_events::BackendEventUserRevoked>()?;
+    m.add_class::<backend_events::BackendEventOrganizationExpired>()?;
+    m.add_class::<backend_events::BackendEventPinged>()?;
+    m.add_class::<backend_events::BackendEventMessageReceived>()?;
+    m.add_class::<backend_events::BackendEventInviteStatusChanged>()?;
+    m.add_class::<backend_events::BackendEventRealmMaintenanceFinished>()?;
+    m.add_class::<backend_events::BackendEventRealmMaintenanceStarted>()?;
+    m.add_class::<backend_events::BackendEventRealmVlobsUpdated>()?;
+    m.add_class::<backend_events::BackendEventRealmRolesUpdated>()?;
+    m.add_class::<backend_events::BackendEventPkiEnrollmentUpdated>()?;
+
     m.add_class::<addrs::BackendAddr>()?;
     m.add_class::<addrs::BackendOrganizationAddr>()?;
     m.add_class::<addrs::BackendActionAddr>()?;
@@ -59,16 +75,12 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<addrs::BackendPkiEnrollmentAddr>()?;
     m.add_function(wrap_pyfunction!(addrs::export_root_verify_key, m)?)?;
 
-    m.add_class::<enumerate::ClientType>()?;
     m.add_class::<enumerate::CoreEvent>()?;
     m.add_class::<enumerate::DeviceFileType>()?;
-    m.add_class::<enumerate::InvitationDeletedReason>()?;
-    m.add_class::<enumerate::InvitationEmailSentStatus>()?;
     m.add_class::<enumerate::InvitationStatus>()?;
     m.add_class::<enumerate::InvitationType>()?;
     m.add_class::<enumerate::RealmRole>()?;
     m.add_class::<enumerate::UserProfile>()?;
-    m.add_class::<enumerate::PkiEnrollmentStatus>()?;
 
     m.add_function(wrap_pyfunction!(file_operations::prepare_read, m)?)?;
     m.add_function(wrap_pyfunction!(file_operations::prepare_write, m)?)?;

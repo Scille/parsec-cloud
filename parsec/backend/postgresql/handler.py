@@ -6,8 +6,7 @@ import re
 from base64 import b64decode, b64encode
 from datetime import datetime
 from functools import wraps
-from typing import Any, Awaitable, Callable, Coroutine, Iterable, List, Tuple
-from uuid import uuid4
+from typing import Awaitable, Callable, Coroutine, Iterable, List, Tuple
 
 import attr
 import trio
@@ -17,11 +16,9 @@ from structlog import get_logger
 from triopg import PostgresError, UndefinedTableError, UniqueViolationError
 from typing_extensions import ParamSpec
 
-from parsec._parsec import ActiveUsersLimit, DateTime
-from parsec.backend.backend_events import BackendEvent, backend_event_serializer
+from parsec._parsec import ActiveUsersLimit, BackendEvent, DateTime
 from parsec.backend.postgresql import migrations as migrations_module
 from parsec.event_bus import EventBus
-from parsec.serde import SerdePackingError, SerdeValidationError
 from parsec.utils import TaskStatus, start_task
 
 P = ParamSpec("P")
@@ -264,34 +261,23 @@ class PGHandler:
         self, conn: triopg._triopg.TrioConnectionProxy, pid: int, channel: str, payload: str
     ) -> None:
         try:
-            data = backend_event_serializer.loads(b64decode(payload.encode("ascii")))
-        except (SerdeValidationError, SerdePackingError, ValueError) as exc:
+            event = BackendEvent.load(b64decode(payload.encode("ascii")))
+        except ValueError as exc:
             logger.warning(
                 "Invalid notif received", pid=pid, channel=channel, payload=payload, exc_info=exc
             )
             return
 
-        logger.debug("notif received", pid=pid, channel=channel, payload=payload)
-        data.pop("__id__")  # Simply discard the notification id
-        signal = data.pop("__signal__")
-        self.event_bus.send(signal, **data)
+        self.event_bus.send(type(event), payload=event)
 
     async def teardown(self) -> None:
         if self._task_status:
             await self._task_status.cancel_and_join()
 
 
-async def send_signal(
-    conn: triopg._triopg.TrioConnectionProxy, signal: BackendEvent, **kwargs: Any
-) -> None:
+async def send_signal(conn: triopg._triopg.TrioConnectionProxy, event: BackendEvent) -> None:
     # PostgreSQL's NOTIFY only accept string as payload, hence we must
     # use base64 on our payload...
 
-    # Add UUID to ensure the payload is unique given it seems Postgresql can
-    # drop duplicated NOTIFY (same channel/payload)
-    # see: https://github.com/Scille/parsec-cloud/issues/199
-    kwargs["__id__"] = uuid4().hex
-    kwargs["__signal__"] = signal
-    raw_data = b64encode(backend_event_serializer.dumps(kwargs)).decode("ascii")
-    await conn.execute("SELECT pg_notify($1, $2)", "app_notification", raw_data)
-    logger.debug("notif sent", signal=signal, kwargs=kwargs)
+    payload = b64encode(event.dump()).decode("ascii")
+    await conn.execute("SELECT pg_notify($1, $2)", "app_notification", payload)

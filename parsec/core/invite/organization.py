@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 from parsec._parsec import (
-    OrganizationBootstrapRepAlreadyBootstrapped,
-    OrganizationBootstrapRepNotFound,
-    OrganizationBootstrapRepOk,
+    # OrganizationBootstrapRepAlreadyBootstrapped,
+    # OrganizationBootstrapRepNotFound,
+    # OrganizationBootstrapRepOk,
     SequesterVerifyKeyDer,
     SigningKey,
 )

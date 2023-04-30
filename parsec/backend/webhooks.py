@@ -6,12 +6,12 @@ from urllib.request import Request, urlopen
 import trio
 from structlog import get_logger
 
-from parsec.api.protocol import (
+from parsec._parsec import (
     DeviceID,
     DeviceLabel,
     OrganizationID,
-    organization_bootstrap_webhook_serializer,
 )
+from parsec.api.rest import organization_bootstrap_webhook_serializer
 from parsec.backend.config import BackendConfig
 
 logger = get_logger()

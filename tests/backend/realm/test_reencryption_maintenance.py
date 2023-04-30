@@ -4,13 +4,22 @@ from __future__ import annotations
 import pytest
 
 from parsec._parsec import (
-    BlockCreateRepInMaintenance,
-    BlockReadRepOk,
+    BackendEventMessageReceived,
+    BackendEventRealmMaintenanceFinished,
+    BackendEventRealmMaintenanceStarted,
     DateTime,
+    ReencryptionBatchEntry,
+)
+from parsec.api.protocol import (
+    APIEventMessageReceived,
+    APIEventRealmMaintenanceFinished,
+    APIEventRealmMaintenanceStarted,
+    BlockCreateRepInMaintenance,
+    BlockID,
+    BlockReadRepOk,
     EventsListenRepNoEvents,
-    EventsListenRepOkMessageReceived,
-    EventsListenRepOkRealmMaintenanceFinished,
-    EventsListenRepOkRealmMaintenanceStarted,
+    EventsListenRepOk,
+    MaintenanceType,
     Message,
     MessageGetRepOk,
     RealmFinishReencryptionMaintenanceRepBadEncryptionRevision,
@@ -18,6 +27,7 @@ from parsec._parsec import (
     RealmFinishReencryptionMaintenanceRepNotAllowed,
     RealmFinishReencryptionMaintenanceRepNotInMaintenance,
     RealmFinishReencryptionMaintenanceRepOk,
+    RealmRole,
     RealmStartReencryptionMaintenanceRepBadEncryptionRevision,
     RealmStartReencryptionMaintenanceRepBadTimestamp,
     RealmStartReencryptionMaintenanceRepInMaintenance,
@@ -26,8 +36,9 @@ from parsec._parsec import (
     RealmStartReencryptionMaintenanceRepOk,
     RealmStartReencryptionMaintenanceRepParticipantMismatch,
     RealmStatusRepOk,
-    ReencryptionBatchEntry,
+    UserID,
     VlobCreateRepInMaintenance,
+    VlobID,
     VlobListVersionsRepOk,
     VlobMaintenanceGetReencryptionBatchRepBadEncryptionRevision,
     VlobMaintenanceGetReencryptionBatchRepNotInMaintenance,
@@ -41,8 +52,6 @@ from parsec._parsec import (
     VlobReadRepOk,
     VlobUpdateRepInMaintenance,
 )
-from parsec.api.protocol import BlockID, MaintenanceType, RealmRole, UserID, VlobID
-from parsec.backend.backend_events import BackendEvent
 from parsec.backend.realm import RealmGrantedRole
 from parsec.backend.vlob import VlobNotFoundError, VlobVersionError
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
@@ -694,13 +703,13 @@ async def test_reencryption_events(backend, alice_ws, alice2_ws, realm, alice, v
         async with real_clock_timeout():
             # No guarantees those events occur before the commands' return
             await spy.wait_multiple(
-                [BackendEvent.REALM_MAINTENANCE_STARTED, BackendEvent.MESSAGE_RECEIVED]
+                [BackendEventRealmMaintenanceStarted, BackendEventMessageReceived]
             )
 
         rep = await events_listen_nowait(alice_ws)
-        assert rep == EventsListenRepOkRealmMaintenanceStarted(realm, 2)
+        assert rep == EventsListenRepOk(APIEventRealmMaintenanceStarted(realm, 2))
         rep = await events_listen_nowait(alice_ws)
-        assert rep == EventsListenRepOkMessageReceived(1)
+        assert rep == EventsListenRepOk(APIEventMessageReceived(1))
 
         # Do the reencryption
         rep = await vlob_maintenance_get_reencryption_batch(alice_ws, realm, 2, size=100)
@@ -710,10 +719,10 @@ async def test_reencryption_events(backend, alice_ws, alice2_ws, realm, alice, v
         await realm_finish_reencryption_maintenance(alice2_ws, realm, 2)
 
         # No guarantees those events occur before the commands' return
-        await spy.wait_with_timeout(BackendEvent.REALM_MAINTENANCE_FINISHED)
+        await spy.wait_with_timeout(BackendEventRealmMaintenanceFinished)
 
         rep = await events_listen_nowait(alice_ws)
-        assert rep == EventsListenRepOkRealmMaintenanceFinished(realm, 2)
+        assert rep == EventsListenRepOk(APIEventRealmMaintenanceFinished(realm, 2))
 
     # Sanity check
     rep = await events_listen_nowait(alice_ws)

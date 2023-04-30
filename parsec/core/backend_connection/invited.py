@@ -8,7 +8,8 @@ import trio
 
 from parsec import FEATURE_FLAGS
 from parsec._parsec import InvitedCmds as RsBackendInvitedCmds
-from parsec.api.protocol import INVITED_CMDS
+
+# from parsec.api.protocol import INVITED_CMDS
 from parsec.core.backend_connection import BackendNotAvailable, cmds
 from parsec.core.backend_connection.expose_cmds import Transport, expose_cmds_with_retrier
 from parsec.core.backend_connection.transport import connect_as_invited
@@ -41,8 +42,8 @@ class BackendInvitedCmds:
     invite_4_claimer_communicate = expose_cmds_with_retrier(cmds.invite_4_claimer_communicate)
 
 
-for cmd in INVITED_CMDS:
-    assert hasattr(BackendInvitedCmds, cmd)
+# for cmd in INVITED_CMDS:
+#     assert hasattr(BackendInvitedCmds, cmd)
 
 
 @asynccontextmanager

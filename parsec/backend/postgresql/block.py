@@ -4,8 +4,7 @@ from __future__ import annotations
 import triopg
 from triopg.exceptions import UniqueViolationError
 
-from parsec._parsec import DateTime
-from parsec.api.protocol import BlockID, DeviceID, OrganizationID, RealmID
+from parsec._parsec import BlockID, DateTime, DeviceID, OrganizationID, RealmID
 from parsec.backend.block import (
     BaseBlockComponent,
     BlockAccessError,

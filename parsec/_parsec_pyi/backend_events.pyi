@@ -198,7 +198,7 @@ class BackendEventRealmRolesUpdated(BackendEvent):
         author: DeviceID,
         realm_id: RealmID,
         user: UserID,
-        role: RealmRole,
+        role: RealmRole | None,
     ) -> None: ...
     @property
     def organization_id(self) -> OrganizationID: ...
@@ -209,7 +209,7 @@ class BackendEventRealmRolesUpdated(BackendEvent):
     @property
     def user(self) -> UserID: ...
     @property
-    def role(self) -> RealmRole: ...
+    def role(self) -> RealmRole | None: ...
 
 class BackendEventPkiEnrollmentUpdated(BackendEvent):
     def __init__(

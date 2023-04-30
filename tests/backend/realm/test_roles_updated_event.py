@@ -4,15 +4,19 @@ from __future__ import annotations
 import pytest
 
 from parsec._parsec import (
+    BackendEventRealmRolesUpdated,
     DateTime,
-    EventsListenRepNoEvents,
-    EventsListenRepOkRealmRolesUpdated,
-    RealmCreateRepOk,
-    RealmUpdateRolesRepOk,
 )
 from parsec.api.data import RealmRoleCertificate
-from parsec.api.protocol import RealmID, RealmRole
-from parsec.backend.backend_events import BackendEvent
+from parsec.api.protocol import (
+    APIEventRealmRolesUpdated,
+    EventsListenRepNoEvents,
+    EventsListenRepOk,
+    RealmCreateRepOk,
+    RealmID,
+    RealmRole,
+    RealmUpdateRolesRepOk,
+)
 from tests.backend.common import realm_create, realm_update_roles
 from tests.backend.test_events import events_listen_nowait, events_subscribe
 
@@ -28,7 +32,7 @@ async def test_realm_create(backend, alice, alice_ws):
     with backend.event_bus.listen() as spy:
         rep = await realm_create(alice_ws, certif)
         assert isinstance(rep, RealmCreateRepOk)
-        await spy.wait_with_timeout(BackendEvent.REALM_ROLES_UPDATED)
+        await spy.wait_with_timeout(BackendEventRealmRolesUpdated)
 
 
 @pytest.mark.trio
@@ -48,19 +52,18 @@ async def test_roles_updated_for_participant(
             assert isinstance(rep, RealmUpdateRolesRepOk)
 
             await spy.wait_with_timeout(
-                BackendEvent.REALM_ROLES_UPDATED,
-                {
-                    "organization_id": alice.organization_id,
-                    "author": alice.device_id,
-                    "realm_id": realm,
-                    "user": bob.user_id,
-                    "role": role,
-                },
+                BackendEventRealmRolesUpdated(
+                    organization_id=alice.organization_id,
+                    author=alice.device_id,
+                    realm_id=realm,
+                    user=bob.user_id,
+                    role=role,
+                )
             )
 
         # Check events propagated to the client
         rep = await events_listen_nowait(bob_ws)
-        assert rep == EventsListenRepOkRealmRolesUpdated(realm, role)
+        assert rep == EventsListenRepOk(APIEventRealmRolesUpdated(realm, role))
         rep = await events_listen_nowait(bob_ws)
         assert isinstance(rep, EventsListenRepNoEvents)
 

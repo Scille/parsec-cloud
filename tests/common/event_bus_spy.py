@@ -10,7 +10,8 @@ import attr
 import pytest
 import trio
 
-from parsec._parsec import CoreEvent, DateTime, EventsListenRep
+from parsec._parsec import BackendEvent, CoreEvent, DateTime
+from parsec.api.protocol import EventsListenRep
 from parsec.event_bus import EventBus, MetaEvent
 from tests.common import real_clock_timeout
 
@@ -151,7 +152,11 @@ class EventBusSpy:
             await self.wait(event, kwargs, dt, update_event_func)
 
     async def wait(self, event, kwargs=ANY, dt=ANY, update_event_func=None):
-        expected = SpiedEvent(event, kwargs, dt)
+        if isinstance(event, BackendEvent):
+            assert kwargs is ANY  # Ignored value
+            expected = SpiedEvent(type(event), {"payload": event}, dt)
+        else:
+            expected = SpiedEvent(event, kwargs, dt)
         for occurred_event in reversed(self.events):
             if update_event_func:
                 occurred_event = update_event_func(occurred_event)
@@ -164,13 +169,8 @@ class EventBusSpy:
         send_channel, receive_channel = trio.open_memory_channel(1)
 
         def _waiter(cooked_event):
-            from parsec._parsec import CoreEvent
-
             if update_event_func:
                 cooked_event = update_event_func(cooked_event)
-            if cooked_event.event == CoreEvent.SHARING_UPDATED:
-                print("a", cooked_event)
-                print("b", cooked_expected_event)
             if cooked_expected_event == cooked_event:
                 send_channel.send_nowait(cooked_event)
                 self._waiters.remove(_waiter)
@@ -210,6 +210,10 @@ class EventBusSpy:
     def _cook_event_params(self, event):
         if isinstance(event, (SpiedEvent, EventsListenRep)):
             return event
+        elif isinstance(event, BackendEvent):
+            return SpiedEvent(type(event), {"payload": event}, ANY)
+        elif issubclass(event, BackendEvent):
+            return SpiedEvent(event, ANY, ANY)
         elif event is ANY:
             return event
         elif isinstance(event, (CoreEvent, Enum)):
@@ -224,7 +228,11 @@ class EventBusSpy:
             )
 
     def assert_event_occurred(self, event, kwargs=ANY, dt=ANY):
-        expected = SpiedEvent(event, kwargs, dt)
+        if isinstance(event, BackendEvent):
+            assert kwargs is ANY  # Ignored value
+            expected = SpiedEvent(type(event), {"payload": event}, dt)
+        else:
+            expected = SpiedEvent(event, kwargs, dt)
         for occurred in self.events:
             if occurred == expected:
                 break

@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from parsec._parsec import ActiveUsersLimit, OrganizationConfigRepOk
+from parsec._parsec import ActiveUsersLimit
+from parsec.api.protocol import OrganizationConfigRepOk
 from tests.backend.common import organization_config
 from tests.common import OrganizationFullData, customize_fixtures, sequester_service_factory
 

@@ -7,8 +7,9 @@ from dataclasses import dataclass
 from dataclasses import field as dataclass_field
 from typing import TYPE_CHECKING, AbstractSet, Any, Callable, Coroutine, Dict, List, Tuple
 
-from parsec._parsec import DateTime
-from parsec.api.protocol import (
+from parsec._parsec import (
+    BackendEventRealmVlobsUpdated,
+    DateTime,
     DeviceID,
     OrganizationID,
     RealmID,
@@ -17,7 +18,6 @@ from parsec.api.protocol import (
     UserID,
     VlobID,
 )
-from parsec.backend.backend_events import BackendEvent
 from parsec.backend.realm import RealmNotFoundError
 from parsec.backend.sequester import BaseSequesterService
 from parsec.backend.utils import OperationKind
@@ -406,13 +406,14 @@ class MemoryVlobComponent(BaseVlobComponent):
             timestamp if current_value is None else max(current_value, timestamp)
         )
         await self._send_event(
-            BackendEvent.REALM_VLOBS_UPDATED,
-            organization_id=organization_id,
-            author=author,
-            realm_id=realm_id,
-            checkpoint=changes.checkpoint,
-            src_id=src_id,
-            src_version=src_version,
+            BackendEventRealmVlobsUpdated(
+                organization_id=organization_id,
+                author=author,
+                realm_id=realm_id,
+                checkpoint=changes.checkpoint,
+                src_id=src_id,
+                src_version=src_version,
+            )
         )
 
     async def create(

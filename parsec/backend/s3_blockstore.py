@@ -8,7 +8,7 @@ import trio
 from botocore.exceptions import BotoCoreError, ClientError
 from structlog import get_logger
 
-from parsec.api.protocol import BlockID, OrganizationID
+from parsec._parsec import BlockID, OrganizationID
 from parsec.backend.block import BlockStoreError
 from parsec.backend.blockstore import BaseBlockStoreComponent
 

@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import ContextManager, DefaultDict, Dict, Iterator, List, Tuple, TypeVar, Union
+from typing import ContextManager, DefaultDict, Dict, Iterator, List, Tuple, Type, TypeVar, Union
 
 try:
     # Introduced in Python 3.8
@@ -15,7 +15,7 @@ from enum import Enum
 import trio
 from structlog import get_logger
 
-from parsec._parsec import CoreEvent
+from parsec._parsec import BackendEvent, CoreEvent
 
 logger = get_logger()
 
@@ -27,15 +27,18 @@ class MetaEvent(Enum):
 
 CustomEvent = TypeVar("CustomEvent", bound=Enum)
 AllEvent = Union[MetaEvent, CustomEvent]
+# `CoreEvent` is similar to a regular Enum... but implemented in Rust
+# `BackendEvent` is not an enum but a class with inheritance
+EventTypes = Union[Enum, CoreEvent, Type[BackendEvent]]
 
 
 class EventCallback(Protocol):
-    def __call__(self, event: Enum | CoreEvent, **kwargs: object) -> None:
+    def __call__(self, event: EventTypes, **kwargs: object) -> None:
         ...
 
 
 class EventFilterCallback(Protocol):
-    def __call__(self, event: Enum | CoreEvent, **kwargs: object) -> bool:
+    def __call__(self, event: EventTypes, **kwargs: object) -> bool:
         ...
 
 
@@ -43,9 +46,9 @@ class EventWaiter:
     def __init__(self, filter: EventFilterCallback | None):
         self._filter = filter
         self._event_occurred = trio.Event()
-        self._event_result: Tuple[Enum | CoreEvent, Dict[str, object]] | None = None
+        self._event_result: Tuple[EventTypes, Dict[str, object]] | None = None
 
-    def _cb(self, event: Enum | CoreEvent, **kwargs: object) -> None:
+    def _cb(self, event: EventTypes, **kwargs: object) -> None:
         if self._event_occurred.is_set():
             return
         if self._filter and not self._filter(event, **kwargs):
@@ -53,7 +56,7 @@ class EventWaiter:
         self._event_result = (event, kwargs)
         self._event_occurred.set()
 
-    async def wait(self) -> Tuple[Enum | CoreEvent, Dict[str, object]]:
+    async def wait(self) -> Tuple[EventTypes, Dict[str, object]]:
         await self._event_occurred.wait()
         assert self._event_result is not None
         return self._event_result
@@ -65,15 +68,15 @@ class EventWaiter:
 
 class EventBus:
     def __init__(self) -> None:
-        self._event_handlers: DefaultDict[Enum | CoreEvent, List[EventCallback]] = defaultdict(list)
+        self._event_handlers: DefaultDict[EventTypes, List[EventCallback]] = defaultdict(list)
 
-    def stats(self) -> Dict[Enum | CoreEvent, int]:
+    def stats(self) -> Dict[EventTypes, int]:
         return {event: len(cbs) for event, cbs in self._event_handlers.items() if cbs}
 
     def connection_context(self) -> "EventBusConnectionContext":
         return EventBusConnectionContext(self)
 
-    def send(self, event: CoreEvent | Enum, **kwargs: object) -> None:
+    def send(self, event: EventTypes, **kwargs: object) -> None:
         # Do not log meta events (event.connected and event.disconnected)
         if "event_type" not in kwargs:
             logger.debug("Send event", event_type=event, **kwargs)
@@ -90,7 +93,7 @@ class EventBus:
 
     @contextmanager
     def waiter_on(
-        self, event: Enum | CoreEvent, *, filter: EventFilterCallback | None = None
+        self, event: EventTypes, *, filter: EventFilterCallback | None = None
     ) -> Iterator[EventWaiter]:
         ew = EventWaiter(filter)
         self.connect(event, ew._cb)
@@ -114,12 +117,12 @@ class EventBus:
             for event in events:
                 self.disconnect(event, ew._cb)
 
-    def connect(self, event: Enum | CoreEvent, cb: EventCallback) -> None:
+    def connect(self, event: EventTypes, cb: EventCallback) -> None:
         self._event_handlers[event].append(cb)
         self.send(MetaEvent.EVENT_CONNECTED, event_type=event)
 
     @contextmanager
-    def connect_in_context(self, *events: Tuple[Enum | CoreEvent, EventCallback]) -> Iterator[None]:
+    def connect_in_context(self, *events: Tuple[EventTypes, EventCallback]) -> Iterator[None]:
         for event, cb in events:
             self.connect(event, cb)
         try:
@@ -129,7 +132,7 @@ class EventBus:
             for event, cb in events:
                 self.disconnect(event, cb)
 
-    def disconnect(self, event: Enum | CoreEvent, cb: EventCallback) -> None:
+    def disconnect(self, event: EventTypes, cb: EventCallback) -> None:
         self._event_handlers[event].remove(cb)
         self.send(MetaEvent.EVENT_DISCONNECTED, event_type=event)
 
@@ -137,7 +140,7 @@ class EventBus:
 class EventBusConnectionContext:
     def __init__(self, event_bus: EventBus):
         self.event_bus = event_bus
-        self.to_disconnect: List[Tuple[Enum, EventCallback]] = []
+        self.to_disconnect: List[Tuple[EventTypes, EventCallback]] = []
 
     def __enter__(self) -> "EventBusConnectionContext":
         return self
@@ -150,22 +153,22 @@ class EventBusConnectionContext:
             self.event_bus.disconnect(event, cb)
         self.to_disconnect.clear()
 
-    def send(self, event: Enum, **kwargs: object) -> None:
+    def send(self, event: EventTypes, **kwargs: object) -> None:
         self.event_bus.send(event, **kwargs)
 
-    def waiter_on(self, event: Enum) -> ContextManager[EventWaiter]:
+    def waiter_on(self, event: EventTypes) -> ContextManager[EventWaiter]:
         return self.event_bus.waiter_on(event)
 
-    def waiter_on_first(self, *events: Enum) -> ContextManager[EventWaiter]:
+    def waiter_on_first(self, *events: EventTypes) -> ContextManager[EventWaiter]:
         return self.event_bus.waiter_on_first(*events)
 
-    def connect(self, event: Enum, cb: EventCallback) -> None:
+    def connect(self, event: EventTypes, cb: EventCallback) -> None:
         self.to_disconnect.append((event, cb))
         self.event_bus.connect(event, cb)
 
-    def connect_in_context(self, *events: Tuple[Enum, EventCallback]) -> ContextManager[None]:
+    def connect_in_context(self, *events: Tuple[EventTypes, EventCallback]) -> ContextManager[None]:
         return self.event_bus.connect_in_context(*events)
 
-    def disconnect(self, event: Enum, cb: EventCallback) -> None:
+    def disconnect(self, event: EventTypes, cb: EventCallback) -> None:
         self.event_bus.disconnect(event, cb)
         self.to_disconnect.remove((event, cb))

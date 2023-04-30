@@ -5,8 +5,10 @@ from typing import Any, List
 
 import triopg
 
-from parsec._parsec import DateTime, InvitationDeletedReason
-from parsec.api.protocol import (
+from parsec._parsec import (
+    BackendEventInviteConduitUpdated,
+    BackendEventInviteStatusChanged,
+    DateTime,
     HumanHandle,
     InvitationStatus,
     InvitationToken,
@@ -14,7 +16,6 @@ from parsec.api.protocol import (
     OrganizationID,
     UserID,
 )
-from parsec.backend.backend_events import BackendEvent
 from parsec.backend.invite import (
     NEXT_CONDUIT_STATE,
     BaseInviteComponent,
@@ -24,6 +25,7 @@ from parsec.backend.invite import (
     Invitation,
     InvitationAlreadyDeletedError,
     InvitationAlreadyMemberError,
+    InvitationDeletedReason,
     InvitationInvalidStateError,
     InvitationNotFoundError,
     UserInvitation,
@@ -140,11 +142,12 @@ async def _do_delete_invitation(
     await conn.execute(*_q_delete_invitation(row_id=row_id, on=on, reason=reason.str))
     await send_signal(
         conn,
-        BackendEvent.INVITE_STATUS_CHANGED,
-        organization_id=organization_id,
-        greeter=greeter,
-        token=token,
-        status=InvitationStatus.DELETED,
+        BackendEventInviteStatusChanged(
+            organization_id=organization_id,
+            greeter=greeter,
+            token=token,
+            status=InvitationStatus.DELETED,
+        ),
     )
 
 
@@ -326,7 +329,7 @@ async def _conduit_talk(
         # Note that in case of conduit reset, this signal will lure the peer into
         # thinking we have answered so he will wakeup and take into account the reset
         await send_signal(
-            conn, BackendEvent.INVITE_CONDUIT_UPDATED, organization_id=organization_id, token=token
+            conn, BackendEventInviteConduitUpdated(organization_id=organization_id, token=token)
         )
 
     return ConduitListenCtx(
@@ -393,9 +396,10 @@ async def _conduit_listen(
                 )
                 await send_signal(
                     conn,
-                    BackendEvent.INVITE_CONDUIT_UPDATED,
-                    organization_id=ctx.organization_id,
-                    token=ctx.token,
+                    BackendEventInviteConduitUpdated(
+                        organization_id=ctx.organization_id,
+                        token=ctx.token,
+                    ),
                 )
                 return curr_peer_payload
 
@@ -460,11 +464,12 @@ async def _do_new_user_invitation(
         )
     await send_signal(
         conn,
-        BackendEvent.INVITE_STATUS_CHANGED,
-        organization_id=organization_id,
-        greeter=greeter_user_id,
-        token=token,
-        status=InvitationStatus.IDLE,
+        BackendEventInviteStatusChanged(
+            organization_id=organization_id,
+            greeter=greeter_user_id,
+            token=token,
+            status=InvitationStatus.IDLE,
+        ),
     )
     return token
 
@@ -666,11 +671,12 @@ class PGInviteComponent(BaseInviteComponent):
         async with self.dbh.pool.acquire() as conn:
             await send_signal(
                 conn,
-                BackendEvent.INVITE_STATUS_CHANGED,
-                organization_id=organization_id,
-                greeter=greeter,
-                token=token,
-                status=InvitationStatus.READY,
+                BackendEventInviteStatusChanged(
+                    organization_id=organization_id,
+                    greeter=greeter,
+                    token=token,
+                    status=InvitationStatus.READY,
+                ),
             )
 
     async def claimer_left(
@@ -679,9 +685,10 @@ class PGInviteComponent(BaseInviteComponent):
         async with self.dbh.pool.acquire() as conn:
             await send_signal(
                 conn,
-                BackendEvent.INVITE_STATUS_CHANGED,
-                organization_id=organization_id,
-                greeter=greeter,
-                token=token,
-                status=InvitationStatus.IDLE,
+                BackendEventInviteStatusChanged(
+                    organization_id=organization_id,
+                    greeter=greeter,
+                    token=token,
+                    status=InvitationStatus.IDLE,
+                ),
             )

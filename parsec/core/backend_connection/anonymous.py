@@ -1,31 +1,27 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import cast
-
 from structlog import get_logger
 
 from parsec import FEATURE_FLAGS
 from parsec._parsec import (
     EnrollmentID,
-    OrganizationBootstrapRep,
-    OrganizationBootstrapRepBadTimestamp,
-    OrganizationBootstrapRepUnknownStatus,
-    OrganizationID,
-    PkiEnrollmentInfoRep,
-    PkiEnrollmentInfoRepUnknownStatus,
-    PkiEnrollmentSubmitRep,
-    PkiEnrollmentSubmitRepUnknownStatus,
     ProtocolError,
     VerifyKey,
 )
 from parsec._version import __version__
 from parsec.api.protocol import (
-    organization_bootstrap_serializer,
-    pki_enrollment_info_serializer,
-    pki_enrollment_submit_serializer,
+    OrganizationBootstrapRep,
+    OrganizationBootstrapRepBadTimestamp,
+    OrganizationBootstrapRepUnknownStatus,
+    OrganizationBootstrapReq,
+    PkiEnrollmentInfoRep,
+    PkiEnrollmentInfoRepUnknownStatus,
+    PkiEnrollmentInfoReq,
+    PkiEnrollmentSubmitRep,
+    PkiEnrollmentSubmitRepUnknownStatus,
+    PkiEnrollmentSubmitReq,
 )
-from parsec.api.protocol.base import ApiCommandSerializer
 from parsec.core.backend_connection import (
     BackendNotAvailable,
     BackendOutOfBallparkError,
@@ -48,42 +44,18 @@ REQUEST_HEADERS = {
 
 
 async def _anonymous_cmd(
-    serializer: ApiCommandSerializer,
     addr: BackendPkiEnrollmentAddr | BackendOrganizationBootstrapAddr,
-    organization_id: OrganizationID,
-    **req: object,
-) -> PkiEnrollmentSubmitRep | PkiEnrollmentInfoRep | OrganizationBootstrapRep:
+    raw_req: bytes,
+) -> bytes:
     """
     Raises:
         BackendNotAvailable
-        BackendProtocolError
     """
-    # Be careful, `serializer.req_dumps` pops the `cmd` key
-    cmd = req["cmd"]
-
-    logger.info("Request", cmd=cmd)
+    url = addr.to_http_domain_url(f"/anonymous/{addr.organization_id.str}")
     try:
-        raw_req = serializer.req_dumps(req)
-
-    except ProtocolError as exc:
-        logger.exception("Invalid request data", cmd=cmd, error=exc)
-        raise BackendProtocolError("Invalid request data") from exc
-
-    url = addr.to_http_domain_url(f"/anonymous/{organization_id.str}")
-    try:
-        raw_rep = await http_request(url=url, method="POST", headers=REQUEST_HEADERS, data=raw_req)
+        return await http_request(url=url, method="POST", headers=REQUEST_HEADERS, data=raw_req)
     except OSError as exc:
-        logger.debug("Request failed (backend not available)", cmd=cmd, exc_info=exc)
         raise BackendNotAvailable(exc) from exc
-
-    try:
-        rep = serializer.rep_loads(raw_rep)
-
-    except ProtocolError as exc:
-        logger.exception("Invalid response data", cmd=cmd, error=exc)
-        raise BackendProtocolError("Invalid response data") from exc
-
-    return rep
 
 
 async def pki_enrollment_submit(
@@ -105,21 +77,20 @@ async def pki_enrollment_submit(
             submit_payload=submit_payload,
         )
     else:
-        rep = cast(
-            PkiEnrollmentSubmitRep,
-            await _anonymous_cmd(
-                serializer=pki_enrollment_submit_serializer,
-                cmd="pki_enrollment_submit",
-                addr=addr,
-                organization_id=addr.organization_id,
-                enrollment_id=enrollment_id,
-                force=force,
-                submitter_der_x509_certificate=submitter_der_x509_certificate,
-                submitter_der_x509_certificate_email=submitter_der_x509_certificate_email,
-                submit_payload_signature=submit_payload_signature,
-                submit_payload=submit_payload,
-            ),
+        req = PkiEnrollmentSubmitReq(
+            enrollment_id=enrollment_id,
+            force=force,
+            submitter_der_x509_certificate=submitter_der_x509_certificate,
+            submitter_der_x509_certificate_email=submitter_der_x509_certificate_email,
+            submit_payload_signature=submit_payload_signature,
+            submit_payload=submit_payload,
         )
+        raw_rep = await _anonymous_cmd(addr, req.dump())
+        try:
+            rep = PkiEnrollmentSubmitRep.load(raw_rep)
+
+        except ProtocolError as exc:
+            raise BackendProtocolError("Invalid response data") from exc
 
     # `invalid_msg_format` is a special case (it is returned only in case the request was invalid) so it is
     # not included among the protocol json schema's regular response statuses
@@ -138,16 +109,15 @@ async def pki_enrollment_info(
     if FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
         rep = await AnonymousCmds(addr).pki_enrollment_info(enrollment_id=enrollment_id)
     else:
-        rep = cast(
-            PkiEnrollmentInfoRep,
-            await _anonymous_cmd(
-                serializer=pki_enrollment_info_serializer,
-                cmd="pki_enrollment_info",
-                addr=addr,
-                organization_id=addr.organization_id,
-                enrollment_id=enrollment_id,
-            ),
+        req = PkiEnrollmentInfoReq(
+            enrollment_id=enrollment_id,
         )
+        raw_rep = await _anonymous_cmd(addr, req.dump())
+        try:
+            rep = PkiEnrollmentInfoRep.load(raw_rep)
+
+        except ProtocolError as exc:
+            raise BackendProtocolError("Invalid response data") from exc
 
     # `invalid_msg_format` is a special case (it is returned only in case the request was invalid) so it is
     # not included among the protocol json schema's regular response statuses
@@ -180,22 +150,21 @@ async def organization_bootstrap(
             sequester_authority_certificate=sequester_authority_certificate,
         )
     else:
-        rep = cast(
-            OrganizationBootstrapRep,
-            await _anonymous_cmd(
-                organization_bootstrap_serializer,
-                cmd="organization_bootstrap",
-                addr=addr,
-                organization_id=addr.organization_id,
-                bootstrap_token=addr.token,
-                root_verify_key=root_verify_key,
-                user_certificate=user_certificate,
-                device_certificate=device_certificate,
-                redacted_user_certificate=redacted_user_certificate,
-                redacted_device_certificate=redacted_device_certificate,
-                sequester_authority_certificate=sequester_authority_certificate,
-            ),
+        req = OrganizationBootstrapReq(
+            bootstrap_token=addr.token,
+            root_verify_key=root_verify_key,
+            user_certificate=user_certificate,
+            device_certificate=device_certificate,
+            redacted_user_certificate=redacted_user_certificate,
+            redacted_device_certificate=redacted_device_certificate,
+            sequester_authority_certificate=sequester_authority_certificate,
         )
+        raw_rep = await _anonymous_cmd(addr, req.dump())
+        try:
+            rep = OrganizationBootstrapRep.load(raw_rep)
+
+        except ProtocolError as exc:
+            raise BackendProtocolError("Invalid response data") from exc
 
     # `invalid_msg_format` is a special case (it is returned only in case the request was invalid) so it is
     # not included among the protocol json schema's regular response statuses

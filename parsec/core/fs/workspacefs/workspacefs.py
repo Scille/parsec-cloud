@@ -13,7 +13,7 @@ import trio
 from parsec._parsec import AuthenticatedCmds as RsBackendAuthenticatedCmds
 from parsec._parsec import (
     BlockAccess,
-    CoreEvent,
+    # CoreEvent,
     CryptoError,
     DateTime,
     EntryID,
@@ -22,9 +22,9 @@ from parsec._parsec import (
     LocalFileManifest,
     LocalFolderManifest,
     LocalWorkspaceManifest,
-    MaintenanceType,
+    # MaintenanceType,
     RealmID,
-    RealmStatusRepOk,
+    # RealmStatusRepOk,
     Regex,
     UserID,
     WorkspaceEntry,

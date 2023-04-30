@@ -4,16 +4,20 @@ from __future__ import annotations
 import pytest
 
 from parsec._parsec import (
+    BackendEventRealmRolesUpdated,
     DateTime,
+)
+from parsec.api.data import RealmRoleCertificate
+from parsec.api.protocol import (
     RealmCreateRepAlreadyExists,
     RealmCreateRepBadTimestamp,
     RealmCreateRepInvalidCertification,
     RealmCreateRepInvalidData,
     RealmCreateRepOk,
+    RealmID,
+    RealmRole,
+    UserProfile,
 )
-from parsec.api.data import RealmRoleCertificate
-from parsec.api.protocol import RealmID, RealmRole, UserProfile
-from parsec.backend.backend_events import BackendEvent
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 from tests.backend.common import realm_create
 from tests.backend.test_events import events_subscribe
@@ -30,7 +34,7 @@ async def _test_create_ok(backend, device, ws):
     with backend.event_bus.listen() as spy:
         rep = await realm_create(ws, certif)
         assert isinstance(rep, RealmCreateRepOk)
-        await spy.wait_with_timeout(BackendEvent.REALM_ROLES_UPDATED)
+        await spy.wait_with_timeout(BackendEventRealmRolesUpdated)
 
 
 @pytest.mark.trio

@@ -6,7 +6,7 @@ from typing import Any, AsyncGenerator
 
 import triopg
 
-from parsec.backend.backend_events import BackendEvent
+from parsec._parsec import BackendEvent
 from parsec.backend.blockstore import blockstore_factory
 from parsec.backend.config import BackendConfig
 from parsec.backend.events import EventsComponent
@@ -35,13 +35,12 @@ async def components_factory(  # type: ignore[misc]
     async def _send_event(
         event: BackendEvent,
         conn: triopg._triopg.TrioConnectionProxy | None = None,
-        **kwargs: Any,
     ) -> None:
         if conn is None:
             async with dbh.pool.acquire() as conn:
-                await send_signal(conn, event, **kwargs)
+                await send_signal(conn, event)
         else:
-            await send_signal(conn, event, **kwargs)
+            await send_signal(conn, event)
 
     webhooks = WebhooksComponent(config)
     organization = PGOrganizationComponent(dbh=dbh, webhooks=webhooks, config=config)

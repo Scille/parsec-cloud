@@ -3,9 +3,16 @@ from __future__ import annotations
 
 import secrets
 
-from parsec._parsec import DateTime, DeviceCreateRepOk, SecretKey, SigningKey
+from parsec._parsec import (
+    DateTime,
+    DeviceCreateRepOk,
+    DeviceID,
+    DeviceLabel,
+    DeviceName,
+    SecretKey,
+    SigningKey,
+)
 from parsec.api.data import DeviceCertificate
-from parsec.api.protocol import DeviceID, DeviceLabel, DeviceName
 from parsec.core.backend_connection import (
     BackendConnectionError,
     backend_authenticated_cmds_factory,

@@ -5,15 +5,16 @@ from typing import Tuple, Union, cast
 
 from quart import Websocket
 
-from parsec._parsec import DateTime, ProtocolError, ProtocolErrorFields
-from parsec.api.protocol import (
+from parsec._parsec import (
+    DateTime,
     DeviceID,
-    HandshakeType,
     InvitationToken,
     InvitationType,
     OrganizationID,
-    ServerHandshake,
+    ProtocolError,
+    ProtocolErrorFields,
 )
+from parsec.api.protocol import HandshakeType, ServerHandshake
 from parsec.backend.app import BackendApp
 from parsec.backend.client_context import (
     AuthenticatedClientContext,

@@ -5,9 +5,8 @@ from typing import Dict, List
 
 import triopg
 
-from parsec.api.protocol import (
+from parsec._parsec import (
     DeviceID,
-    MaintenanceType,
     OrganizationID,
     RealmID,
     RealmRole,
@@ -25,6 +24,7 @@ from parsec.backend.postgresql.utils import (
     query,
 )
 from parsec.backend.realm import (
+    MaintenanceType,
     RealmAccessError,
     RealmGrantedRole,
     RealmNotFoundError,

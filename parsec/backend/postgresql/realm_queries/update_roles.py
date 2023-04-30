@@ -5,8 +5,7 @@ from typing import Tuple
 
 import triopg
 
-from parsec.api.protocol import OrganizationID, RealmRole, UserProfile
-from parsec.backend.backend_events import BackendEvent
+from parsec._parsec import BackendEventRealmRolesUpdated, OrganizationID, RealmRole, UserProfile
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.message import send_message
 from parsec.backend.postgresql.utils import (
@@ -249,12 +248,13 @@ async def query_update_roles(
 
     await send_signal(
         conn,
-        BackendEvent.REALM_ROLES_UPDATED,
-        organization_id=organization_id,
-        author=new_role.granted_by,
-        realm_id=new_role.realm_id,
-        user=new_role.user_id,
-        role=new_role.role,
+        BackendEventRealmRolesUpdated(
+            organization_id=organization_id,
+            author=new_role.granted_by,
+            realm_id=new_role.realm_id,
+            user=new_role.user_id,
+            role=new_role.role,
+        ),
     )
 
     if recipient_message:

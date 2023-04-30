@@ -5,7 +5,7 @@ from typing import List, Tuple
 
 import triopg
 
-from parsec.api.protocol import DeviceID, OrganizationID, RealmID, VlobID
+from parsec._parsec import DeviceID, OrganizationID, RealmID, VlobID
 from parsec.backend.postgresql.utils import (
     Q,
     q_organization_internal_id,

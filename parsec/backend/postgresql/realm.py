@@ -3,8 +3,7 @@ from __future__ import annotations
 
 from typing import Dict, List
 
-from parsec._parsec import DateTime
-from parsec.api.protocol import DeviceID, OrganizationID, RealmID, RealmRole, UserID
+from parsec._parsec import DateTime, DeviceID, OrganizationID, RealmID, RealmRole, UserID
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.realm_queries import (
     query_create,

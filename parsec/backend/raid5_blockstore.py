@@ -8,7 +8,7 @@ from typing import List, Union
 from structlog import get_logger
 from trio import Nursery
 
-from parsec.api.protocol import BlockID, OrganizationID
+from parsec._parsec import BlockID, OrganizationID
 from parsec.backend.block import BlockStoreError
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.utils import open_service_nursery

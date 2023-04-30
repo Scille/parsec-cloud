@@ -2,26 +2,27 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import Awaitable, Callable, NoReturn, TypeVar, Union
+from typing import Any, Awaitable, Callable, NoReturn, Type, TypeVar, Union, cast
 
 import trio
 from quart import Blueprint, Websocket, g, websocket
 from structlog import get_logger
 from wsproto.utilities import LocalProtocolError
 
-from parsec._parsec import ProtocolError
-from parsec.api.protocol import (
-    InvalidMessageError,
+from parsec._parsec import (
+    BackendEvent,
+    BackendEventInviteStatusChanged,
+    BackendEventOrganizationExpired,
+    BackendEventUserRevoked,
     InvitationStatus,
-    InvitationToken,
     OrganizationID,
-    UserID,
-    packb,
-    unpackb,
+    ProtocolError,
 )
-from parsec.api.protocol.base import MessageSerializationError
 from parsec.backend.app import BackendApp
-from parsec.backend.backend_events import BackendEvent
+from parsec.backend.asgi.rpc import (
+    AUTHENTICATED_CMDS_LOAD_FN,
+    INVITED_CMDS_LOAD_FN,
+)
 from parsec.backend.client_context import (
     AuthenticatedClientContext,
     BaseClientContext,
@@ -30,6 +31,7 @@ from parsec.backend.client_context import (
 from parsec.backend.handshake import do_handshake
 from parsec.backend.invite import CloseInviteConnection
 from parsec.backend.utils import CancelledByNewCmd, run_with_cancel_on_client_sending_new_cmd
+from parsec.serde import packb
 
 Ctx = TypeVar("Ctx", bound=BaseClientContext)
 R = dict[str, object]
@@ -45,8 +47,6 @@ async def handle_ws() -> None:
     backend: BackendApp = g.backend
     selected_logger = logger
 
-    # TODO: try/except on TransportError & MessageSerializationError ?
-
     # 1) Handshake
 
     client_ctx, error_infos = await do_handshake(backend, websocket)
@@ -55,8 +55,9 @@ async def handle_ws() -> None:
         # TODO Fragile test based on reason, make it more robust
         if error_infos and error_infos.get("reason", "") == "Expired organization":
             organization_id = error_infos["organization_id"]
+            assert isinstance(organization_id, OrganizationID)
             await backend.events.send(
-                BackendEvent.ORGANIZATION_EXPIRED, organization_id=organization_id
+                BackendEventOrganizationExpired(organization_id=organization_id)
             )
         selected_logger.info("Connection dropped: bad handshake", **error_infos)
         return
@@ -68,9 +69,6 @@ async def handle_ws() -> None:
 
     # 2) Setup events listener according to client type
 
-    # Retrieve the allowed commands according to api version and auth type
-    api_cmds = backend.apis[client_ctx.TYPE]
-
     if isinstance(client_ctx, AuthenticatedClientContext):
         with trio.CancelScope() as cancel_scope:
             client_ctx.cancel_scope = cancel_scope
@@ -78,33 +76,35 @@ async def handle_ws() -> None:
 
                 def _on_revoked(
                     client_ctx: AuthenticatedClientContext,
-                    event: BackendEvent,
-                    organization_id: OrganizationID,
-                    user_id: UserID,
+                    event: Type[BackendEvent],
+                    payload: BackendEventUserRevoked,
                 ) -> None:
                     if (
-                        organization_id == client_ctx.organization_id
-                        and user_id == client_ctx.user_id
+                        payload.organization_id == client_ctx.organization_id
+                        and payload.user_id == client_ctx.user_id
                     ):
                         client_ctx.close_connection_asap()
 
                 def _on_expired(
                     client_ctx: AuthenticatedClientContext,
-                    event: BackendEvent,
-                    organization_id: OrganizationID,
+                    event: Type[BackendEvent],
+                    payload: BackendEventOrganizationExpired,
                 ) -> None:
-                    if organization_id == client_ctx.organization_id:
+                    if payload.organization_id == client_ctx.organization_id:
                         client_ctx.close_connection_asap()
 
                 client_ctx.event_bus_ctx.connect(
-                    BackendEvent.USER_REVOKED, partial(_on_revoked, client_ctx)
+                    BackendEventUserRevoked,
+                    partial(_on_revoked, client_ctx),  # type: ignore
                 )
                 client_ctx.event_bus_ctx.connect(
-                    BackendEvent.ORGANIZATION_EXPIRED, partial(_on_expired, client_ctx)
+                    BackendEventOrganizationExpired,
+                    partial(_on_expired, client_ctx),  # type: ignore
                 )
 
                 # 3) Serve commands
-                await _handle_client_websocket_loop(api_cmds, websocket, client_ctx)
+                load_fn = AUTHENTICATED_CMDS_LOAD_FN[client_ctx.api_version.version]
+                await _handle_client_websocket_loop(backend, load_fn, websocket, client_ctx)
 
     else:
         assert isinstance(client_ctx, InvitedClientContext)
@@ -121,26 +121,24 @@ async def handle_ws() -> None:
 
                     def _on_invite_status_changed(
                         client_ctx: InvitedClientContext,
-                        event: BackendEvent,
-                        organization_id: OrganizationID,
-                        greeter: UserID,
-                        token: InvitationToken,
-                        status: InvitationStatus,
+                        event: Type[BackendEvent],
+                        payload: BackendEventInviteStatusChanged,
                     ) -> None:
                         if (
-                            status == InvitationStatus.DELETED
-                            and organization_id == client_ctx.organization_id
-                            and token == client_ctx.invitation.token
+                            payload.status == InvitationStatus.DELETED
+                            and payload.organization_id == client_ctx.organization_id
+                            and payload.token == client_ctx.invitation.token
                         ):
                             client_ctx.close_connection_asap()
 
                     event_bus_ctx.connect(
-                        BackendEvent.INVITE_STATUS_CHANGED,
-                        partial(_on_invite_status_changed, client_ctx),
+                        BackendEventInviteStatusChanged,
+                        partial(_on_invite_status_changed, client_ctx),  # type: ignore
                     )
 
                     # 3) Serve commands
-                    await _handle_client_websocket_loop(api_cmds, websocket, client_ctx)
+                    load_fn = INVITED_CMDS_LOAD_FN[client_ctx.api_version.version]
+                    await _handle_client_websocket_loop(backend, load_fn, websocket, client_ctx)
 
         except CloseInviteConnection:
             # If the invitation has been deleted after the invited handshake,
@@ -164,7 +162,8 @@ async def handle_ws() -> None:
 
 
 async def _handle_client_websocket_loop(
-    api_cmds: dict[str, Callable[[Ctx, R], Awaitable[R]]],
+    backend: BackendApp,
+    load_req_fn: Callable[[bytes], Any],
     websocket: Websocket,
     client_ctx: Ctx,
 ) -> NoReturn:
@@ -173,58 +172,39 @@ async def _handle_client_websocket_loop(
         # raw_req can be already defined if we received a new request
         # while processing a command
         raw_req = raw_req or await websocket.receive()
-        rep: R
         try:
             # `WebSocket` can return both bytes or utf8-string messages, we only accept the former
             if not isinstance(raw_req, bytes):
-                raise MessageSerializationError
-            req = unpackb(raw_req)
+                raise ProtocolError
+            req = load_req_fn(raw_req)
 
-        except MessageSerializationError:
-            rep = {"status": "invalid_msg_format", "reason": "Invalid message format"}
-            cmd = ""  # Dummy placeholder for the log
+        except ProtocolError:
+            raw_rep = packb({"status": "invalid_msg_format", "reason": "Invalid message format"})
 
         else:
+            cmd_func = cast(Callable[[Any, Any], Awaitable[Any]], backend.apis[type(req)])
+
             try:
-                cmd = req.get("cmd", "<missing>")
-                if not isinstance(cmd, str):
-                    raise KeyError()
+                if cmd_func._api_info[  # type: ignore[attr-defined]
+                    "cancel_on_client_sending_new_cmd"
+                ]:
+                    rep = await run_with_cancel_on_client_sending_new_cmd(
+                        websocket, cmd_func, client_ctx, req
+                    )
+                else:
+                    rep = await cmd_func(client_ctx, req)
 
-                cmd_func = api_cmds[cmd]
+                raw_rep = rep.dump()
 
-            except KeyError:
-                rep = {"status": "unknown_command", "reason": "Unknown command"}
+            except CancelledByNewCmd as exc:
+                # Long command handling such as message_get can be cancelled
+                # when the peer send a new request
+                raw_req = exc.new_raw_req
+                continue
 
-            else:
-                try:
-                    if cmd_func._api_info[  # type: ignore[attr-defined]
-                        "cancel_on_client_sending_new_cmd"
-                    ]:
-                        rep = await run_with_cancel_on_client_sending_new_cmd(
-                            websocket, cmd_func, client_ctx, req
-                        )
-                    else:
-                        rep = await cmd_func(client_ctx, req)
+            # TODO: cmd/response status should be in snakecase...
+            client_ctx.logger.info("Request", cmd=type(req).__name__, status=type(rep).__name__)
 
-                except InvalidMessageError as exc:
-                    rep = {
-                        "status": "bad_message",
-                        "errors": exc.errors,
-                        "reason": "Invalid message.",
-                    }
-
-                except ProtocolError as exc:
-                    rep = {"status": "bad_message", "reason": str(exc)}
-
-                except CancelledByNewCmd as exc:
-                    # Long command handling such as message_get can be cancelled
-                    # when the peer send a new request
-                    raw_req = exc.new_raw_req
-                    continue
-
-            client_ctx.logger.info("Request", cmd=cmd, status=rep["status"])
-
-        raw_rep = packb(rep)
         try:
             await websocket.send(raw_rep)
         except LocalProtocolError:

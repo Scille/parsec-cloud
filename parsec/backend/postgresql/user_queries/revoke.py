@@ -3,9 +3,7 @@ from __future__ import annotations
 
 import triopg
 
-from parsec._parsec import DateTime
-from parsec.api.protocol import DeviceID, OrganizationID, UserID
-from parsec.backend.backend_events import BackendEvent
+from parsec._parsec import BackendEventUserRevoked, DateTime, DeviceID, OrganizationID, UserID
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.user_queries.create import q_take_user_device_write_lock
 from parsec.backend.postgresql.utils import (
@@ -71,5 +69,5 @@ async def query_revoke_user(
             raise UserError(f"Update error: {result}")
     else:
         await send_signal(
-            conn, BackendEvent.USER_REVOKED, organization_id=organization_id, user_id=user_id
+            conn, BackendEventUserRevoked(organization_id=organization_id, user_id=user_id)
         )

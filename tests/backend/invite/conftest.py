@@ -7,6 +7,9 @@ import trio
 from parsec._parsec import (
     DateTime,
     HashDigest,
+    PrivateKey,
+)
+from parsec.api.protocol import (
     Invite1ClaimerWaitPeerRepOk,
     Invite1GreeterWaitPeerRepOk,
     Invite2aClaimerSendHashedNonceRepOk,
@@ -24,7 +27,6 @@ from parsec._parsec import (
     InviteInfoRepOk,
     InviteListRepOk,
     InviteNewRepOk,
-    PrivateKey,
 )
 from tests.backend.common import (
     invite_1_claimer_wait_peer,
@@ -91,11 +93,9 @@ class PeerControler:
     # Methods used by the peer
 
     async def peer_do(self, action, *args, **kwargs):
-        print("REQ START", action.cmd)
         req_done = False
         try:
             async with action.async_call(*args, **kwargs) as async_rep:
-                print("REQ DONE", action.cmd)
                 req_done = True
                 await self._orders_ack_sender.send(None)
 
@@ -104,11 +104,9 @@ class PeerControler:
                 # as `1_wait_peer` wait for a peer to finish, on which we
                 # have here no control on)
                 await async_rep.do_recv()
-                print("REP", action.cmd, async_rep.rep)
                 await self._results_sender.send((False, async_rep.rep))
 
         except Exception as exc:
-            print("EXCEPTION RAISED", action.cmd, repr(exc))
             if not req_done:
                 await self._orders_ack_sender.send(None)
             await self._results_sender.send((True, exc))

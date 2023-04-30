@@ -14,13 +14,17 @@ from async_generator import asynccontextmanager
 from parsec._parsec import (
     CryptoError,
     DateTime,
+    HumanHandle,
+    OrganizationID,
+    RealmID,
     SequesterPrivateKeyDer,
     SequesterPublicKeyDer,
+    SequesterServiceID,
     SequesterSigningKeyDer,
     SequesterVerifyKeyDer,
+    UserID,
 )
 from parsec.api.data import DataError, SequesterServiceCertificate
-from parsec.api.protocol import HumanHandle, OrganizationID, RealmID, SequesterServiceID, UserID
 from parsec.backend.blockstore import blockstore_factory
 from parsec.backend.cli.utils import blockstore_backend_options, db_backend_options
 from parsec.backend.config import BaseBlockStoreConfig

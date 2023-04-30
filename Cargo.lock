@@ -1919,6 +1919,8 @@ dependencies = [
  "paste",
  "pyo3",
  "regex",
+ "rmp-serde",
+ "serde",
  "tokio",
  "uuid",
 ]

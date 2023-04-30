@@ -2,112 +2,11 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from functools import partial
-from typing import Callable
 
 import trio
 
-from parsec._parsec import (
-    AuthenticatedPingRepOk,
-    BlockCreateRepOk,
-    BlockReadRepOk,
-    DateTime,
-    DeviceCreateRepOk,
-    HumanFindRepOk,
-    Invite1ClaimerWaitPeerRepOk,
-    Invite1GreeterWaitPeerRepOk,
-    Invite2aClaimerSendHashedNonceRepOk,
-    Invite2aGreeterGetHashedNonceRepOk,
-    Invite2bClaimerSendNonceRepOk,
-    Invite2bGreeterSendNonceRepOk,
-    Invite3aClaimerSignifyTrustRepOk,
-    Invite3aGreeterWaitPeerTrustRepOk,
-    Invite3bClaimerWaitPeerTrustRepOk,
-    Invite3bGreeterSignifyTrustRepOk,
-    Invite4ClaimerCommunicateRepOk,
-    Invite4GreeterCommunicateRepOk,
-    InviteDeleteRepOk,
-    InviteInfoRepOk,
-    InviteNewRepOk,
-    MessageGetRepOk,
-    OrganizationBootstrapRepOk,
-    OrganizationConfigRepOk,
-    OrganizationStatsRepOk,
-    PkiEnrollmentAcceptRepOk,
-    PkiEnrollmentInfoRepOk,
-    PkiEnrollmentListRep,
-    PkiEnrollmentRejectRep,
-    RealmCreateRepOk,
-    RealmFinishReencryptionMaintenanceRepOk,
-    RealmGetRoleCertificatesRepOk,
-    RealmStartReencryptionMaintenanceRepOk,
-    RealmStatsRepOk,
-    RealmStatusRepOk,
-    RealmUpdateRolesRepOk,
-    UserCreateRepOk,
-    UserGetRepOk,
-    UserRevokeRepOk,
-    VlobCreateRepOk,
-    VlobListVersionsRepOk,
-    VlobMaintenanceGetReencryptionBatchRepOk,
-    VlobMaintenanceSaveReencryptionBatchRepOk,
-    VlobPollChangesRepOk,
-    VlobReadRepOk,
-    VlobUpdateRepOk,
-)
-from parsec.api.protocol import (
-    authenticated_ping_serializer,
-    block_create_serializer,
-    block_read_serializer,
-    device_create_serializer,
-    events_listen_serializer,
-    events_subscribe_serializer,
-    human_find_serializer,
-    invite_1_claimer_wait_peer_serializer,
-    invite_1_greeter_wait_peer_serializer,
-    invite_2a_claimer_send_hashed_nonce_serializer,
-    invite_2a_greeter_get_hashed_nonce_serializer,
-    invite_2b_claimer_send_nonce_serializer,
-    invite_2b_greeter_send_nonce_serializer,
-    invite_3a_claimer_signify_trust_serializer,
-    invite_3a_greeter_wait_peer_trust_serializer,
-    invite_3b_claimer_wait_peer_trust_serializer,
-    invite_3b_greeter_signify_trust_serializer,
-    invite_4_claimer_communicate_serializer,
-    invite_4_greeter_communicate_serializer,
-    invite_delete_serializer,
-    invite_info_serializer,
-    invite_list_serializer,
-    invite_new_serializer,
-    invited_ping_serializer,
-    organization_bootstrap_serializer,
-    organization_config_serializer,
-    organization_stats_serializer,
-    pki_enrollment_accept_serializer,
-    pki_enrollment_info_serializer,
-    pki_enrollment_list_serializer,
-    pki_enrollment_reject_serializer,
-    pki_enrollment_submit_serializer,
-    realm_create_serializer,
-    realm_finish_reencryption_maintenance_serializer,
-    realm_get_role_certificates_serializer,
-    realm_start_reencryption_maintenance_serializer,
-    realm_stats_serializer,
-    realm_status_serializer,
-    realm_update_roles_serializer,
-    user_create_serializer,
-    user_get_serializer,
-    user_revoke_serializer,
-    vlob_create_serializer,
-    vlob_list_versions_serializer,
-    vlob_maintenance_get_reencryption_batch_serializer,
-    vlob_maintenance_save_reencryption_batch_serializer,
-    vlob_poll_changes_serializer,
-    vlob_read_serializer,
-    vlob_update_serializer,
-)
-from parsec.api.protocol.base import ApiCommandSerializer
-from parsec.serde import packb
+from parsec._parsec import DateTime, InvitationType
+from parsec.api.protocol import anonymous_cmds, authenticated_cmds, invited_cmds
 from tests.common import BaseRpcApiClient, real_clock_timeout
 
 
@@ -192,94 +91,33 @@ async def do_http_request(
 
 
 class CmdSock:
-    def __init__(self, cmd, serializer, parse_args=lambda self: {}, check_rep_by_default=False):
-        self.cmd = cmd
-        self.serializer = serializer
-        self.parse_args = parse_args
+    def __init__(self, cmd_module, parse_args=None, check_rep_by_default=False):
+        self.cmd_module = cmd_module
         self.check_rep_by_default = check_rep_by_default
+        self.parse_args = parse_args
 
-    async def _do_send(self, ws, req_post_processing, args, kwargs):
-        req = {"cmd": self.cmd, **self.parse_args(self, *args, **kwargs)}
-        if req_post_processing:
-            if not isinstance(self.serializer, ApiCommandSerializer):
-                pre_processed_req = req_post_processing(self.serializer.req_dump(req))
-                raw_req = packb(pre_processed_req)
-            else:
-                raw_req = self.serializer.req_dumps(req_post_processing(req))
+    async def __call__(self, ws_or_rpc, *args, check_rep=None, **kwargs):
+        if self.parse_args:
+            kwargs = self.parse_args(*args, **kwargs)
+            req = self.cmd_module.Req(**kwargs)
         else:
-            raw_req = self.serializer.req_dumps(req)
-        await ws.send(raw_req)
+            req = self.cmd_module.Req(*args, **kwargs)
 
-    async def _do_recv(self, ws, check_rep):
-        raw_rep = await ws.receive()
-        rep = self.serializer.rep_loads(raw_rep)
-
-        if check_rep:
-            assert isinstance(
-                rep,
-                (
-                    AuthenticatedPingRepOk,
-                    BlockCreateRepOk,
-                    BlockReadRepOk,
-                    DeviceCreateRepOk,
-                    HumanFindRepOk,
-                    Invite1ClaimerWaitPeerRepOk,
-                    Invite1GreeterWaitPeerRepOk,
-                    Invite2aClaimerSendHashedNonceRepOk,
-                    Invite2aGreeterGetHashedNonceRepOk,
-                    Invite2bClaimerSendNonceRepOk,
-                    Invite2bGreeterSendNonceRepOk,
-                    Invite3aClaimerSignifyTrustRepOk,
-                    Invite3aGreeterWaitPeerTrustRepOk,
-                    Invite3bClaimerWaitPeerTrustRepOk,
-                    Invite3bGreeterSignifyTrustRepOk,
-                    Invite4ClaimerCommunicateRepOk,
-                    Invite4GreeterCommunicateRepOk,
-                    InviteDeleteRepOk,
-                    InviteInfoRepOk,
-                    InviteNewRepOk,
-                    MessageGetRepOk,
-                    OrganizationBootstrapRepOk,
-                    OrganizationConfigRepOk,
-                    OrganizationStatsRepOk,
-                    PkiEnrollmentAcceptRepOk,
-                    PkiEnrollmentInfoRepOk,
-                    PkiEnrollmentListRep,
-                    PkiEnrollmentRejectRep,
-                    RealmCreateRepOk,
-                    RealmFinishReencryptionMaintenanceRepOk,
-                    RealmGetRoleCertificatesRepOk,
-                    RealmStartReencryptionMaintenanceRepOk,
-                    RealmStatsRepOk,
-                    RealmStatusRepOk,
-                    RealmUpdateRolesRepOk,
-                    UserCreateRepOk,
-                    UserGetRepOk,
-                    UserRevokeRepOk,
-                    VlobCreateRepOk,
-                    VlobListVersionsRepOk,
-                    VlobMaintenanceGetReencryptionBatchRepOk,
-                    VlobMaintenanceSaveReencryptionBatchRepOk,
-                    VlobPollChangesRepOk,
-                    VlobReadRepOk,
-                    VlobUpdateRepOk,
-                ),
-            )  # Rust-based rep schemas
-
-        return rep
-
-    async def __call__(self, ws_or_rpc, *args, req_post_processing: Callable = None, **kwargs):
         if isinstance(ws_or_rpc, BaseRpcApiClient):
-            req = {"cmd": self.cmd, **self.parse_args(self, *args, **kwargs)}
-            assert req_post_processing is None
-            return await ws_or_rpc.send(
-                req=req,
-                serializer=self.serializer,
+            raw_rep = await ws_or_rpc.send(
+                req=req.dump(),
             )
+            return self.cmd_module.Rep.load(raw_rep)
+
         else:
-            check_rep = kwargs.pop("check_rep", self.check_rep_by_default)
-            await self._do_send(ws_or_rpc, req_post_processing, args, kwargs)
-            return await self._do_recv(ws_or_rpc, check_rep)
+            raw_req = req.dump()
+            await ws_or_rpc.send(raw_req)
+            raw_rep = await ws_or_rpc.receive()
+            rep = self.cmd_module.Rep.load(raw_rep)
+            check_rep = check_rep if check_rep is not None else self.check_rep_by_default
+            if check_rep:
+                assert type(rep).__name__ == "RepOk"
+            return rep
 
     class AsyncCallRepBox:
         def __init__(self, do_recv):
@@ -298,11 +136,26 @@ class CmdSock:
             self._rep = await self._do_recv()
 
     @asynccontextmanager
-    async def async_call(self, sock, *args, req_post_processing: Callable = None, **kwargs):
-        check_rep = kwargs.pop("check_rep", self.check_rep_by_default)
-        await self._do_send(sock, req_post_processing, args, kwargs)
+    async def async_call(self, sock, *args, check_rep=None, **kwargs):
+        if self.parse_args:
+            kwargs = self.parse_args(*args, **kwargs)
+            req = self.cmd_module.Req(**kwargs)
+        else:
+            req = self.cmd_module.Req(*args, **kwargs)
 
-        box = self.AsyncCallRepBox(do_recv=partial(self._do_recv, sock, check_rep))
+        raw_req = req.dump()
+        await sock.send(raw_req)
+
+        check_rep = check_rep if check_rep is not None else self.check_rep_by_default
+
+        async def _do_rep():
+            raw_rep = await sock.receive()
+            rep = self.cmd_module.Rep.load(raw_rep)
+            if check_rep:
+                assert type(rep).__name__ == "RepOk"
+            return rep
+
+        box = self.AsyncCallRepBox(do_recv=_do_rep)
         yield box
 
         if not box.rep_done:
@@ -314,16 +167,13 @@ class CmdSock:
 
 
 authenticated_ping = CmdSock(
-    "ping",
-    authenticated_ping_serializer,
-    parse_args=lambda self, ping="foo": {"ping": ping},
+    authenticated_cmds.latest.ping,
+    parse_args=lambda ping="": {"ping": ping},
     check_rep_by_default=True,
 )
 
 invited_ping = CmdSock(
-    "ping",
-    invited_ping_serializer,
-    parse_args=lambda self, ping="foo": {"ping": ping},
+    invited_cmds.latest.ping,
     check_rep_by_default=True,
 )
 
@@ -332,27 +182,17 @@ invited_ping = CmdSock(
 
 
 organization_config = CmdSock(
-    "organization_config", organization_config_serializer, check_rep_by_default=True
+    authenticated_cmds.latest.organization_config, check_rep_by_default=True
 )
 
 
 organization_stats = CmdSock(
-    "organization_stats", organization_stats_serializer, check_rep_by_default=True
+    authenticated_cmds.latest.organization_stats, check_rep_by_default=True
 )
 
 
 organization_bootstrap = CmdSock(
-    "organization_bootstrap",
-    organization_bootstrap_serializer,
-    parse_args=lambda self, bootstrap_token, root_verify_key, user_certificate, device_certificate, redacted_user_certificate, redacted_device_certificate, sequester_authority_certificate=None: {
-        "bootstrap_token": bootstrap_token,
-        "root_verify_key": root_verify_key,
-        "user_certificate": user_certificate,
-        "device_certificate": device_certificate,
-        "redacted_user_certificate": redacted_user_certificate,
-        "redacted_device_certificate": redacted_device_certificate,
-        "sequester_authority_certificate": sequester_authority_certificate,
-    },
+    anonymous_cmds.latest.organization_bootstrap,
     check_rep_by_default=True,
 )
 
@@ -361,17 +201,11 @@ organization_bootstrap = CmdSock(
 
 
 block_create = CmdSock(
-    "block_create",
-    block_create_serializer,
-    parse_args=lambda self, block_id, realm_id, block: {
-        "block_id": block_id,
-        "realm_id": realm_id,
-        "block": block,
-    },
+    authenticated_cmds.latest.block_create,
     check_rep_by_default=True,
 )
 block_read = CmdSock(
-    "block_read", block_read_serializer, parse_args=lambda self, block_id: {"block_id": block_id}
+    authenticated_cmds.latest.block_read, parse_args=lambda block_id: {"block_id": block_id}
 )
 
 
@@ -379,50 +213,31 @@ block_read = CmdSock(
 
 
 realm_create = CmdSock(
-    "realm_create",
-    realm_create_serializer,
-    parse_args=lambda self, role_certificate: {"role_certificate": role_certificate},
+    authenticated_cmds.latest.realm_create,
 )
 realm_status = CmdSock(
-    "realm_status",
-    realm_status_serializer,
-    parse_args=lambda self, realm_id: {"realm_id": realm_id},
+    authenticated_cmds.latest.realm_status,
 )
 realm_stats = CmdSock(
-    "realm_stats", realm_stats_serializer, parse_args=lambda self, realm_id: {"realm_id": realm_id}
+    authenticated_cmds.latest.realm_stats, parse_args=lambda realm_id: {"realm_id": realm_id}
 )
 realm_get_role_certificates = CmdSock(
-    "realm_get_role_certificates",
-    realm_get_role_certificates_serializer,
-    parse_args=lambda self, realm_id: {"realm_id": realm_id},
+    authenticated_cmds.latest.realm_get_role_certificates,
 )
 realm_update_roles = CmdSock(
-    "realm_update_roles",
-    realm_update_roles_serializer,
-    parse_args=lambda self, role_certificate, recipient_message=None: {
+    authenticated_cmds.latest.realm_update_roles,
+    parse_args=lambda role_certificate, recipient_message=None: {
         "role_certificate": role_certificate,
         "recipient_message": recipient_message,
     },
     check_rep_by_default=True,
 )
 realm_start_reencryption_maintenance = CmdSock(
-    "realm_start_reencryption_maintenance",
-    realm_start_reencryption_maintenance_serializer,
-    parse_args=lambda self, realm_id, encryption_revision, timestamp, per_participant_message: {
-        "realm_id": realm_id,
-        "encryption_revision": encryption_revision,
-        "timestamp": timestamp,
-        "per_participant_message": per_participant_message,
-    },
+    authenticated_cmds.latest.realm_start_reencryption_maintenance,
     check_rep_by_default=True,
 )
 realm_finish_reencryption_maintenance = CmdSock(
-    "realm_finish_reencryption_maintenance",
-    realm_finish_reencryption_maintenance_serializer,
-    parse_args=lambda self, realm_id, encryption_revision: {
-        "realm_id": realm_id,
-        "encryption_revision": encryption_revision,
-    },
+    authenticated_cmds.latest.realm_finish_reencryption_maintenance,
     check_rep_by_default=True,
 )
 
@@ -431,9 +246,8 @@ realm_finish_reencryption_maintenance = CmdSock(
 
 
 vlob_create = CmdSock(
-    "vlob_create",
-    vlob_create_serializer,
-    parse_args=lambda self, realm_id, vlob_id, blob, timestamp=None, encryption_revision=1, sequester_blob=None: {
+    authenticated_cmds.latest.vlob_create,
+    parse_args=lambda realm_id, vlob_id, blob, timestamp=None, encryption_revision=1, sequester_blob=None: {
         "realm_id": realm_id,
         "vlob_id": vlob_id,
         "blob": blob,
@@ -444,9 +258,8 @@ vlob_create = CmdSock(
     check_rep_by_default=True,
 )
 vlob_read = CmdSock(
-    "vlob_read",
-    vlob_read_serializer,
-    parse_args=lambda self, vlob_id, version=None, timestamp=None, encryption_revision=1: {
+    authenticated_cmds.latest.vlob_read,
+    parse_args=lambda vlob_id, version=None, timestamp=None, encryption_revision=1: {
         "vlob_id": vlob_id,
         "version": version,
         "timestamp": timestamp,
@@ -454,9 +267,8 @@ vlob_read = CmdSock(
     },
 )
 vlob_update = CmdSock(
-    "vlob_update",
-    vlob_update_serializer,
-    parse_args=lambda self, vlob_id, version, blob, timestamp=None, encryption_revision=1, sequester_blob=None: {
+    authenticated_cmds.latest.vlob_update,
+    parse_args=lambda vlob_id, version, blob, timestamp=None, encryption_revision=1, sequester_blob=None: {
         "vlob_id": vlob_id,
         "version": version,
         "blob": blob,
@@ -467,37 +279,21 @@ vlob_update = CmdSock(
     check_rep_by_default=True,
 )
 vlob_list_versions = CmdSock(
-    "vlob_list_versions",
-    vlob_list_versions_serializer,
-    parse_args=lambda self, vlob_id: {
-        "vlob_id": vlob_id,
-    },
+    authenticated_cmds.latest.vlob_list_versions,
 )
 vlob_poll_changes = CmdSock(
-    "vlob_poll_changes",
-    vlob_poll_changes_serializer,
-    parse_args=lambda self, realm_id, last_checkpoint: {
-        "realm_id": realm_id,
-        "last_checkpoint": last_checkpoint,
-    },
+    authenticated_cmds.latest.vlob_poll_changes,
 )
 vlob_maintenance_get_reencryption_batch = CmdSock(
-    "vlob_maintenance_get_reencryption_batch",
-    vlob_maintenance_get_reencryption_batch_serializer,
-    parse_args=lambda self, realm_id, encryption_revision, size=100: {
+    authenticated_cmds.latest.vlob_maintenance_get_reencryption_batch,
+    parse_args=lambda realm_id, encryption_revision, size=100: {
         "realm_id": realm_id,
         "encryption_revision": encryption_revision,
         "size": size,
     },
 )
 vlob_maintenance_save_reencryption_batch = CmdSock(
-    "vlob_maintenance_save_reencryption_batch",
-    vlob_maintenance_save_reencryption_batch_serializer,
-    parse_args=lambda self, realm_id, encryption_revision, batch: {
-        "realm_id": realm_id,
-        "encryption_revision": encryption_revision,
-        "batch": batch,
-    },
+    authenticated_cmds.latest.vlob_maintenance_save_reencryption_batch,
     check_rep_by_default=True,
 )
 
@@ -505,10 +301,10 @@ vlob_maintenance_save_reencryption_batch = CmdSock(
 ### Events ###
 
 
-events_subscribe = CmdSock("events_subscribe", events_subscribe_serializer)
+events_subscribe = CmdSock(authenticated_cmds.latest.events_subscribe)
 
 _events_listen = CmdSock(
-    "events_listen", events_listen_serializer, parse_args=lambda self, wait: {"wait": wait}
+    authenticated_cmds.latest.events_listen, parse_args=lambda wait: {"wait": wait}
 )
 
 
@@ -526,16 +322,23 @@ async def events_listen(sock):
         yield box
 
 
+### Message ###
+
+
+message_get = CmdSock(
+    authenticated_cmds.latest.message_get, parse_args=lambda offset=0: {"offset": offset}
+)
+
+
 ### User ###
 
 
 user_get = CmdSock(
-    "user_get", user_get_serializer, parse_args=lambda self, user_id: {"user_id": user_id}
+    authenticated_cmds.latest.user_get, parse_args=lambda user_id: {"user_id": user_id}
 )
 human_find = CmdSock(
-    "human_find",
-    human_find_serializer,
-    parse_args=lambda self, query=None, omit_revoked=False, omit_non_human=False, page=1, per_page=100: {
+    authenticated_cmds.latest.human_find,
+    parse_args=lambda query=None, omit_revoked=False, omit_non_human=False, page=1, per_page=100: {
         "query": query,
         "omit_revoked": omit_revoked,
         "omit_non_human": omit_non_human,
@@ -544,9 +347,8 @@ human_find = CmdSock(
     },
 )
 user_create = CmdSock(
-    "user_create",
-    user_create_serializer,
-    parse_args=lambda self, user_certificate, device_certificate, redacted_user_certificate, redacted_device_certificate: {
+    authenticated_cmds.latest.user_create,
+    parse_args=lambda user_certificate, device_certificate, redacted_user_certificate, redacted_device_certificate: {
         k: v
         for k, v in {
             "user_certificate": user_certificate,
@@ -558,19 +360,10 @@ user_create = CmdSock(
     },
 )
 user_revoke = CmdSock(
-    "user_revoke",
-    user_revoke_serializer,
-    parse_args=lambda self, revoked_user_certificate: {
-        "revoked_user_certificate": revoked_user_certificate
-    },
+    authenticated_cmds.latest.user_revoke,
 )
 device_create = CmdSock(
-    "device_create",
-    device_create_serializer,
-    parse_args=lambda self, device_certificate, redacted_device_certificate: {
-        "device_certificate": device_certificate,
-        "redacted_device_certificate": redacted_device_certificate,
-    },
+    authenticated_cmds.latest.device_create,
 )
 
 
@@ -578,79 +371,53 @@ device_create = CmdSock(
 
 
 invite_new = CmdSock(
-    "invite_new",
-    invite_new_serializer,
-    parse_args=lambda self, type, send_email=False, claimer_email=None: {
-        "type": type,
-        "send_email": send_email,
-        "claimer_email": claimer_email,
+    authenticated_cmds.latest.invite_new,
+    parse_args=lambda type, send_email=False, claimer_email=None: {
+        "unit": (
+            authenticated_cmds.latest.invite_new.UserOrDeviceUser(
+                claimer_email=claimer_email, send_email=send_email
+            )
+            if type == InvitationType.USER
+            else authenticated_cmds.latest.invite_new.UserOrDeviceDevice(send_email)
+        )
     },
 )
-invite_list = CmdSock("invite_list", invite_list_serializer)
+invite_list = CmdSock(authenticated_cmds.latest.invite_list)
 invite_delete = CmdSock(
-    "invite_delete",
-    invite_delete_serializer,
-    parse_args=lambda self, token, reason: {"token": token, "reason": reason},
+    authenticated_cmds.latest.invite_delete,
 )
-invite_info = CmdSock("invite_info", invite_info_serializer)
+invite_info = CmdSock(invited_cmds.latest.invite_info)
 invite_1_claimer_wait_peer = CmdSock(
-    "invite_1_claimer_wait_peer",
-    invite_1_claimer_wait_peer_serializer,
-    parse_args=lambda self, claimer_public_key: {"claimer_public_key": claimer_public_key},
+    invited_cmds.latest.invite_1_claimer_wait_peer,
 )
 invite_1_greeter_wait_peer = CmdSock(
-    "invite_1_greeter_wait_peer",
-    invite_1_greeter_wait_peer_serializer,
-    parse_args=lambda self, token, greeter_public_key: {
-        "token": token,
-        "greeter_public_key": greeter_public_key,
-    },
+    authenticated_cmds.latest.invite_1_greeter_wait_peer,
 )
 invite_2a_claimer_send_hashed_nonce = CmdSock(
-    "invite_2a_claimer_send_hashed_nonce",
-    invite_2a_claimer_send_hashed_nonce_serializer,
-    parse_args=lambda self, claimer_hashed_nonce: {"claimer_hashed_nonce": claimer_hashed_nonce},
+    invited_cmds.latest.invite_2a_claimer_send_hashed_nonce,
 )
 invite_2a_greeter_get_hashed_nonce = CmdSock(
-    "invite_2a_greeter_get_hashed_nonce",
-    invite_2a_greeter_get_hashed_nonce_serializer,
-    parse_args=lambda self, token: {"token": token},
+    authenticated_cmds.latest.invite_2a_greeter_get_hashed_nonce,
 )
 invite_2b_greeter_send_nonce = CmdSock(
-    "invite_2b_greeter_send_nonce",
-    invite_2b_greeter_send_nonce_serializer,
-    parse_args=lambda self, token, greeter_nonce: {"token": token, "greeter_nonce": greeter_nonce},
+    authenticated_cmds.latest.invite_2b_greeter_send_nonce,
 )
 invite_2b_claimer_send_nonce = CmdSock(
-    "invite_2b_claimer_send_nonce",
-    invite_2b_claimer_send_nonce_serializer,
-    parse_args=lambda self, claimer_nonce: {"claimer_nonce": claimer_nonce},
+    invited_cmds.latest.invite_2b_claimer_send_nonce,
 )
 invite_3a_greeter_wait_peer_trust = CmdSock(
-    "invite_3a_greeter_wait_peer_trust",
-    invite_3a_greeter_wait_peer_trust_serializer,
-    parse_args=lambda self, token: {"token": token},
+    authenticated_cmds.latest.invite_3a_greeter_wait_peer_trust,
 )
-invite_3a_claimer_signify_trust = CmdSock(
-    "invite_3a_claimer_signify_trust", invite_3a_claimer_signify_trust_serializer
-)
-invite_3b_claimer_wait_peer_trust = CmdSock(
-    "invite_3b_claimer_wait_peer_trust", invite_3b_claimer_wait_peer_trust_serializer
-)
+invite_3a_claimer_signify_trust = CmdSock(invited_cmds.latest.invite_3a_claimer_signify_trust)
+invite_3b_claimer_wait_peer_trust = CmdSock(invited_cmds.latest.invite_3b_claimer_wait_peer_trust)
 invite_3b_greeter_signify_trust = CmdSock(
-    "invite_3b_greeter_signify_trust",
-    invite_3b_greeter_signify_trust_serializer,
-    parse_args=lambda self, token: {"token": token},
+    authenticated_cmds.latest.invite_3b_greeter_signify_trust,
 )
 invite_4_greeter_communicate = CmdSock(
-    "invite_4_greeter_communicate",
-    invite_4_greeter_communicate_serializer,
-    parse_args=lambda self, token, payload: {"token": token, "payload": payload},
+    authenticated_cmds.latest.invite_4_greeter_communicate,
 )
 invite_4_claimer_communicate = CmdSock(
-    "invite_4_claimer_communicate",
-    invite_4_claimer_communicate_serializer,
-    parse_args=lambda self, payload: {"payload": payload},
+    invited_cmds.latest.invite_4_claimer_communicate,
 )
 
 
@@ -658,39 +425,15 @@ invite_4_claimer_communicate = CmdSock(
 
 
 pki_enrollment_submit = CmdSock(
-    "pki_enrollment_submit",
-    pki_enrollment_submit_serializer,
-    parse_args=lambda self, enrollment_id, force, submitter_der_x509_certificate, submitter_der_x509_certificate_email, submit_payload_signature, submit_payload: {
-        "enrollment_id": enrollment_id,
-        "force": force,
-        "submitter_der_x509_certificate": submitter_der_x509_certificate,
-        "submitter_der_x509_certificate_email": submitter_der_x509_certificate_email,
-        "submit_payload_signature": submit_payload_signature,
-        "submit_payload": submit_payload,
-    },
+    anonymous_cmds.latest.pki_enrollment_submit,
 )
 pki_enrollment_info = CmdSock(
-    "pki_enrollment_info",
-    pki_enrollment_info_serializer,
-    parse_args=lambda self, enrollment_id: {"enrollment_id": enrollment_id},
+    anonymous_cmds.latest.pki_enrollment_info,
 )
-pki_enrollment_list = CmdSock("pki_enrollment_list", pki_enrollment_list_serializer)
+pki_enrollment_list = CmdSock(authenticated_cmds.latest.pki_enrollment_list)
 pki_enrollment_reject = CmdSock(
-    "pki_enrollment_reject",
-    pki_enrollment_reject_serializer,
-    parse_args=lambda self, enrollment_id: {"enrollment_id": enrollment_id},
+    authenticated_cmds.latest.pki_enrollment_reject,
 )
 pki_enrollment_accept = CmdSock(
-    "pki_enrollment_accept",
-    pki_enrollment_accept_serializer,
-    parse_args=lambda self, enrollment_id, accepter_der_x509_certificate, accept_payload_signature, accept_payload, user_certificate, device_certificate, redacted_user_certificate, redacted_device_certificate: {
-        "enrollment_id": enrollment_id,
-        "accepter_der_x509_certificate": accepter_der_x509_certificate,
-        "accept_payload_signature": accept_payload_signature,
-        "accept_payload": accept_payload,
-        "user_certificate": user_certificate,
-        "device_certificate": device_certificate,
-        "redacted_user_certificate": redacted_user_certificate,
-        "redacted_device_certificate": redacted_device_certificate,
-    },
+    authenticated_cmds.latest.pki_enrollment_accept,
 )

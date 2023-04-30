@@ -4,23 +4,20 @@ from __future__ import annotations
 import pytest
 
 from parsec._parsec import (
+    BackendEventMessageReceived,
     DateTime,
+)
+from parsec.api.protocol import (
+    APIEventMessageReceived,
     EventsListenRepNoEvents,
-    EventsListenRepOkMessageReceived,
+    EventsListenRepOk,
     Message,
     MessageGetRepOk,
 )
-from parsec.api.protocol import message_get_serializer
 from parsec.backend.asgi import app_factory
-from parsec.backend.backend_events import BackendEvent
 from parsec.backend.config import PostgreSQLBlockStoreConfig
+from tests.backend.common import message_get
 from tests.backend.test_events import events_listen, events_listen_nowait, events_subscribe
-
-
-async def message_get(sock, offset=0):
-    await sock.send(message_get_serializer.req_dumps({"cmd": "message_get", "offset": offset}))
-    raw_rep = await sock.receive()
-    return message_get_serializer.rep_loads(raw_rep)
 
 
 @pytest.mark.trio
@@ -32,7 +29,7 @@ async def test_message_from_bob_to_alice(backend, alice, bob, alice_ws):
             bob.organization_id, bob.device_id, alice.user_id, d1, b"Hello from Bob !"
         )
 
-    assert listen.rep == EventsListenRepOkMessageReceived(1)
+    assert listen.rep == EventsListenRepOk(unit=APIEventMessageReceived(1))
 
     rep = await message_get(alice_ws)
     assert rep == MessageGetRepOk(
@@ -77,7 +74,7 @@ async def test_message_from_bob_to_alice_multi_backends(
                     bob.organization_id, bob.device_id, alice.user_id, d1, b"Hello from Bob !"
                 )
 
-            assert listen.rep == EventsListenRepOkMessageReceived(1)
+            assert listen.rep == EventsListenRepOk(APIEventMessageReceived(1))
 
             rep = await message_get(alice_ws)
             assert rep == MessageGetRepOk(
@@ -108,7 +105,7 @@ async def test_message_received_event(backend, alice_ws, alice, bob):
 
         # No guarantees those events occur before the commands' return
         await spy.wait_multiple_with_timeout(
-            [BackendEvent.MESSAGE_RECEIVED, BackendEvent.MESSAGE_RECEIVED]
+            [BackendEventMessageReceived, BackendEventMessageReceived]
         )
 
     reps = [
@@ -117,8 +114,8 @@ async def test_message_received_event(backend, alice_ws, alice, bob):
         await events_listen_nowait(alice_ws),
     ]
     assert reps == [
-        EventsListenRepOkMessageReceived(1),
-        EventsListenRepOkMessageReceived(2),
+        EventsListenRepOk(APIEventMessageReceived(1)),
+        EventsListenRepOk(APIEventMessageReceived(2)),
         EventsListenRepNoEvents(),
     ]
 
@@ -129,10 +126,10 @@ async def test_message_received_event(backend, alice_ws, alice, bob):
         )
 
         # No guarantees those events occur before the commands' return
-        await spy.wait_multiple_with_timeout([BackendEvent.MESSAGE_RECEIVED])
+        await spy.wait_multiple_with_timeout([BackendEventMessageReceived])
 
     reps = [await events_listen_nowait(alice_ws), await events_listen_nowait(alice_ws)]
     assert reps == [
-        EventsListenRepOkMessageReceived(3),
+        EventsListenRepOk(APIEventMessageReceived(3)),
         EventsListenRepNoEvents(),
     ]

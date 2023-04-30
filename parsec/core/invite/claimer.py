@@ -8,9 +8,29 @@ import attr
 from parsec._parsec import (
     BackendActionAddr,
     BackendAddr,
-    DeviceCreateRepOk,
+    DeviceLabel,
     HashDigest,
+    HumanHandle,
     InvitationType,
+    PrivateKey,
+    SecretKey,
+    SigningKey,
+    UserID,
+    generate_nonce,
+)
+from parsec._parsec import InvitedCmds as RsBackendInvitedCmds
+from parsec.api.data import (
+    DataError,
+    InviteDeviceConfirmation,
+    InviteDeviceData,
+    InviteUserConfirmation,
+    InviteUserData,
+    SASCode,
+    generate_sas_code_candidates,
+    generate_sas_codes,
+)
+from parsec.api.protocol import (
+    DeviceCreateRepOk,
     Invite1ClaimerWaitPeerRepInvalidState,
     Invite1ClaimerWaitPeerRepNotFound,
     Invite1ClaimerWaitPeerRepOk,
@@ -60,25 +80,9 @@ from parsec._parsec import (
     InviteInfoRepOk,
     InviteListRepOk,
     InviteNewRepOk,
-    PrivateKey,
-    SecretKey,
-    SigningKey,
     UserCreateRepActiveUsersLimitReached,
     UserCreateRepOk,
-    generate_nonce,
 )
-from parsec._parsec import InvitedCmds as RsBackendInvitedCmds
-from parsec.api.data import (
-    DataError,
-    InviteDeviceConfirmation,
-    InviteDeviceData,
-    InviteUserConfirmation,
-    InviteUserData,
-    SASCode,
-    generate_sas_code_candidates,
-    generate_sas_codes,
-)
-from parsec.api.protocol import DeviceLabel, HumanHandle, UserID
 from parsec.core.backend_connection import BackendInvitedCmds
 from parsec.core.invite import (
     InviteAlreadyUsedError,

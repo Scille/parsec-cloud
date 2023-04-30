@@ -7,41 +7,13 @@ import attr
 
 from parsec._parsec import (
     DateTime,
-    DeviceCreateRep,
-    DeviceCreateRepAlreadyExists,
-    DeviceCreateRepBadUserId,
-    DeviceCreateRepInvalidCertification,
-    DeviceCreateRepInvalidData,
-    DeviceCreateRepOk,
-    DeviceCreateReq,
-    HumanFindRep,
-    HumanFindRepNotAllowed,
-    HumanFindRepOk,
-    HumanFindReq,
-    HumanFindResultItem,
-    Trustchain,
-    UserCreateRep,
-    UserCreateRepActiveUsersLimitReached,
-    UserCreateRepAlreadyExists,
-    UserCreateRepInvalidCertification,
-    UserCreateRepInvalidData,
-    UserCreateRepNotAllowed,
-    UserCreateRepOk,
-    UserCreateReq,
-    UserGetRep,
-    UserGetRepNotFound,
-    UserGetRepOk,
-    UserGetReq,
-    UserRevokeRep,
-    UserRevokeRepAlreadyRevoked,
-    UserRevokeRepInvalidCertification,
-    UserRevokeRepNotAllowed,
-    UserRevokeRepNotFound,
-    UserRevokeRepOk,
-    UserRevokeReq,
+    DeviceID,
+    OrganizationID,
+    UserID,
+    UserProfile,
+    authenticated_cmds,
 )
 from parsec.api.data import DataError, RevokedUserCertificate
-from parsec.api.protocol import DeviceID, OrganizationID, UserID, UserProfile
 from parsec.backend.client_context import AuthenticatedClientContext
 from parsec.backend.user_type import (
     CertificateValidationError,
@@ -50,7 +22,7 @@ from parsec.backend.user_type import (
     validate_new_device_certificate,
     validate_new_user_certificates,
 )
-from parsec.backend.utils import api, api_typed_msg_adapter, catch_protocol_errors
+from parsec.backend.utils import api
 from parsec.event_bus import EventBus
 from parsec.utils import timestamps_in_the_ballpark
 
@@ -87,6 +59,10 @@ class UserInvalidDataError(UserCertifValidationError):
     status = "invalid_data"
 
 
+HumanFindResultItem = authenticated_cmds.latest.human_find.HumanFindResultItem
+Trustchain = authenticated_cmds.latest.user_get.Trustchain
+
+
 PEER_EVENT_MAX_WAIT = 300
 INVITATION_VALIDITY = 3600
 
@@ -107,12 +83,10 @@ class BaseUserComponent:
 
     #### Access user API ####
 
-    @api("user_get")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(UserGetReq, UserGetRep)
+    @api
     async def api_user_get(
-        self, client_ctx: AuthenticatedClientContext, req: UserGetReq
-    ) -> UserGetRep:
+        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.latest.user_get.Req
+    ) -> authenticated_cmds.latest.user_get.Rep:
         need_redacted = client_ctx.profile == UserProfile.OUTSIDER
 
         try:
@@ -120,27 +94,25 @@ class BaseUserComponent:
                 client_ctx.organization_id, req.user_id, redacted=need_redacted
             )
         except UserNotFoundError:
-            return UserGetRepNotFound()
+            return authenticated_cmds.latest.user_get.RepNotFound()
 
-        return UserGetRepOk(
+        return authenticated_cmds.latest.user_get.RepOk(
             user_certificate=result.user_certificate,
             revoked_user_certificate=result.revoked_user_certificate,
             device_certificates=list(result.device_certificates),
-            trustchain=Trustchain(
+            trustchain=authenticated_cmds.latest.user_get.Trustchain(
                 devices=list(result.trustchain_device_certificates),
                 users=list(result.trustchain_user_certificates),
                 revoked_users=list(result.trustchain_revoked_user_certificates),
             ),
         )
 
-    @api("human_find")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(HumanFindReq, HumanFindRep)
+    @api
     async def api_human_find(
-        self, client_ctx: AuthenticatedClientContext, req: HumanFindReq
-    ) -> HumanFindRep:
+        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.latest.human_find.Req
+    ) -> authenticated_cmds.latest.human_find.Rep:
         if client_ctx.profile == UserProfile.OUTSIDER:
-            return HumanFindRepNotAllowed(None)
+            return authenticated_cmds.latest.human_find.RepNotAllowed(None)
         results, total = await self.find_humans(
             client_ctx.organization_id,
             omit_non_human=req.omit_non_human,
@@ -149,21 +121,19 @@ class BaseUserComponent:
             per_page=req.per_page,
             query=req.query,
         )
-        return HumanFindRepOk(
+        return authenticated_cmds.latest.human_find.RepOk(
             results=results,
             page=req.page,
             per_page=req.per_page,
             total=total,
         )
 
-    @api("user_create")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(UserCreateReq, UserCreateRep)
+    @api
     async def api_user_create(
-        self, client_ctx: AuthenticatedClientContext, req: UserCreateReq
-    ) -> UserCreateRep:
+        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.latest.user_create.Req
+    ) -> authenticated_cmds.latest.user_create.Rep:
         if client_ctx.profile != UserProfile.ADMIN:
-            return UserCreateRepNotAllowed(None)
+            return authenticated_cmds.latest.user_create.RepNotAllowed(None)
 
         try:
             user, first_device = validate_new_user_certificates(
@@ -178,28 +148,26 @@ class BaseUserComponent:
 
         except CertificateValidationError as exc:
             if exc.status == "invalid_certification":
-                return UserCreateRepInvalidCertification(None)
+                return authenticated_cmds.latest.user_create.RepInvalidCertification(None)
             elif exc.status == "invalid_data":
-                return UserCreateRepInvalidData(None)
+                return authenticated_cmds.latest.user_create.RepInvalidData(None)
             elif exc.status == "not_allowed":
-                return UserCreateRepNotAllowed(None)
+                return authenticated_cmds.latest.user_create.RepNotAllowed(None)
 
         except UserAlreadyExistsError:
-            return UserCreateRepAlreadyExists(None)
+            return authenticated_cmds.latest.user_create.RepAlreadyExists(None)
 
         except UserActiveUsersLimitReached:
-            return UserCreateRepActiveUsersLimitReached(None)
+            return authenticated_cmds.latest.user_create.RepActiveUsersLimitReached(None)
 
-        return UserCreateRepOk()
+        return authenticated_cmds.latest.user_create.RepOk()
 
-    @api("user_revoke")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(UserRevokeReq, UserRevokeRep)
+    @api
     async def api_user_revoke(
-        self, client_ctx: AuthenticatedClientContext, req: UserRevokeReq
-    ) -> UserRevokeRep:
+        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.latest.user_revoke.Req
+    ) -> authenticated_cmds.latest.user_revoke.Rep:
         if client_ctx.profile != UserProfile.ADMIN:
-            return UserRevokeRepNotAllowed(None)
+            return authenticated_cmds.latest.user_revoke.RepNotAllowed(None)
 
         try:
             data = RevokedUserCertificate.verify_and_load(
@@ -209,13 +177,13 @@ class BaseUserComponent:
             )
 
         except DataError:
-            return UserRevokeRepInvalidCertification(None)
+            return authenticated_cmds.latest.user_revoke.RepInvalidCertification(None)
 
         if not timestamps_in_the_ballpark(data.timestamp, DateTime.now()):
-            return UserRevokeRepInvalidCertification(None)
+            return authenticated_cmds.latest.user_revoke.RepInvalidCertification(None)
 
         if data.user_id == client_ctx.user_id:
-            return UserRevokeRepNotAllowed(None)
+            return authenticated_cmds.latest.user_revoke.RepNotAllowed(None)
 
         try:
             await self.revoke_user(
@@ -227,19 +195,19 @@ class BaseUserComponent:
             )
 
         except UserNotFoundError:
-            return UserRevokeRepNotFound()
+            return authenticated_cmds.latest.user_revoke.RepNotFound()
 
         except UserAlreadyRevokedError:
-            return UserRevokeRepAlreadyRevoked(None)
+            return authenticated_cmds.latest.user_revoke.RepAlreadyRevoked(None)
 
-        return UserRevokeRepOk()
+        return authenticated_cmds.latest.user_revoke.RepOk()
 
-    @api("device_create")
-    @catch_protocol_errors
-    @api_typed_msg_adapter(DeviceCreateReq, DeviceCreateRep)
+    @api
     async def api_device_create(
-        self, client_ctx: AuthenticatedClientContext, req: DeviceCreateReq
-    ) -> DeviceCreateRep:
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.device_create.Req,
+    ) -> authenticated_cmds.latest.device_create.Rep:
         try:
             device = validate_new_device_certificate(
                 expected_author=client_ctx.device_id,
@@ -251,16 +219,16 @@ class BaseUserComponent:
 
         except CertificateValidationError as exc:
             if exc.status == "bad_user_id":
-                return DeviceCreateRepBadUserId(None)
+                return authenticated_cmds.latest.device_create.RepBadUserId(None)
             elif exc.status == "invalid_certification":
-                return DeviceCreateRepInvalidCertification(None)
+                return authenticated_cmds.latest.device_create.RepInvalidCertification(None)
             elif exc.status == "invalid_data":
-                return DeviceCreateRepInvalidData(None)
+                return authenticated_cmds.latest.device_create.RepInvalidData(None)
 
         except UserAlreadyExistsError:
-            return DeviceCreateRepAlreadyExists(None)
+            return authenticated_cmds.latest.device_create.RepAlreadyExists(None)
 
-        return DeviceCreateRepOk()
+        return authenticated_cmds.latest.device_create.RepOk()
 
     #### Virtual methods ####
 

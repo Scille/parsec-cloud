@@ -73,30 +73,30 @@ def serializer_factory(schema_cls: Type[BaseSchema]) -> MsgpackSerializer:
 
 
 class ApiCommandSerializer:
-    def __init__(self, req_schema: Any, rep_schema: Any) -> None:
-        self.req_schema = req_schema
-        self.rep_schema = rep_schema
+    def __init__(self, req_type: Any, rep_type: Any) -> None:
+        self.req_type = req_type
+        self.rep_type = rep_type
 
     def req_dumps(self, req: dict[str, Any]) -> bytes:
         if "cmd" in req:
             req.pop("cmd")
 
-        return self.req_schema(**req).dump()
+        return self.req_type(**req).dump()
 
     def rep_loads(self, raw: bytes) -> Any:
-        return self.rep_schema.load(raw)
+        return self.rep_type.load(raw)
 
     # Temporary Used for generate_data
     def req_loads(self, raw: bytes) -> Any:
-        from parsec._parsec import AnonymousAnyCmdReq, AuthenticatedAnyCmdReq, InvitedAnyCmdReq
+        from parsec._parsec import anonymous_cmds, authenticated_cmds, invited_cmds
 
         try:
-            return AuthenticatedAnyCmdReq.load(raw)
+            return authenticated_cmds.latest.AnyCmdReq.load(raw)
         except ProtocolError:
             try:
-                return AnonymousAnyCmdReq.load(raw)
+                return anonymous_cmds.latest.AnyCmdReq.load(raw)
             except ProtocolError:
-                return InvitedAnyCmdReq.load(raw)
+                return invited_cmds.latest.AnyCmdReq.load(raw)
 
     def rep_dumps(self, rep: Any) -> bytes:
         return rep.dump()

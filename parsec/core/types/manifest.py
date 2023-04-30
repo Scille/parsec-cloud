@@ -5,6 +5,7 @@ from enum import Enum
 from typing import TypeVar, Union
 
 from parsec._parsec import (
+    BlockID,
     Chunk,
     ChunkID,
     DateTime,
@@ -12,6 +13,7 @@ from parsec._parsec import (
     LocalFolderManifest,
     LocalUserManifest,
     LocalWorkspaceManifest,
+    RealmRole,
     Regex,
     local_manifest_decrypt_and_load,
 )
@@ -20,7 +22,6 @@ from parsec.api.data import FileManifest as RemoteFileManifest
 from parsec.api.data import FolderManifest as RemoteFolderManifest
 from parsec.api.data import UserManifest as RemoteUserManifest
 from parsec.api.data import WorkspaceManifest as RemoteWorkspaceManifest
-from parsec.api.protocol import BlockID, RealmRole
 from parsec.serde import fields
 
 AnyLocalManifest = Union[

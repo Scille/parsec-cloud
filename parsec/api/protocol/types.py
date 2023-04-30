@@ -11,6 +11,8 @@ from parsec._parsec import (
     DeviceID,
     DeviceLabel,
     HumanHandle,
+    InvitationToken,
+    InvitationType,
     OrganizationID,
     UserID,
     UserProfile,
@@ -25,6 +27,10 @@ OrganizationIDField: Type[Field[OrganizationID]] = fields.str_based_field_factor
 UserIDField: Type[Field[UserID]] = fields.str_based_field_factory(UserID)
 DeviceIDField: Type[Field[DeviceID]] = fields.str_based_field_factory(DeviceID)
 DeviceLabelField: Type[Field[DeviceLabel]] = fields.str_based_field_factory(DeviceLabel)
+InvitationTokenField: Type[Field[InvitationToken]] = fields.uuid_based_field_factory(
+    InvitationToken
+)
+InvitationTypeField: Type[Field[InvitationType]] = fields.rust_enum_field_factory(InvitationType)
 
 
 class HumanHandleField(fields.Field[HumanHandle]):

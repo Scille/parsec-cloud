@@ -2,14 +2,19 @@
 from __future__ import annotations
 
 import hashlib
+from enum import Enum
 from typing import Any, List
 
 from triopg import UniqueViolationError
 
-from parsec._parsec import DateTime, EnrollmentID, PkiEnrollmentStatus
-from parsec.api.protocol import OrganizationID
-from parsec.api.protocol.types import UserID, UserProfile
-from parsec.backend.backend_events import BackendEvent
+from parsec._parsec import (
+    BackendEventPkiEnrollmentUpdated,
+    DateTime,
+    EnrollmentID,
+    OrganizationID,
+    UserID,
+    UserProfile,
+)
 from parsec.backend.pki import (
     BasePkiEnrollmentComponent,
     PkiEnrollmentActiveUsersLimitReached,
@@ -36,6 +41,14 @@ from parsec.backend.postgresql.user_queries.create import (
 from parsec.backend.postgresql.utils import Q, q_device_internal_id, q_organization_internal_id
 from parsec.backend.user import UserActiveUsersLimitReached, UserAlreadyExistsError
 from parsec.backend.user_type import Device, User
+
+
+class PkiEnrollmentStatus(Enum):
+    SUBMITTED = "SUBMITTED"
+    ACCEPTED = "ACCEPTED"
+    REJECTED = "REJECTED"
+    CANCELLED = "CANCELLED"
+
 
 _q_get_last_pki_enrollment_from_certificate_sha1_for_update = Q(
     f"""
@@ -303,8 +316,9 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         )
                         await send_signal(
                             conn,
-                            BackendEvent.PKI_ENROLLMENTS_UPDATED,
-                            organization_id=organization_id,
+                            BackendEventPkiEnrollmentUpdated(
+                                organization_id=organization_id,
+                            ),
                         )
 
                     else:
@@ -379,7 +393,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 raise PkiEnrollmentError(f"Insertion error: {result}")
 
             await send_signal(
-                conn, BackendEvent.PKI_ENROLLMENTS_UPDATED, organization_id=organization_id
+                conn, BackendEventPkiEnrollmentUpdated(organization_id=organization_id)
             )
 
     async def info(
@@ -455,7 +469,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 )
             )
             await send_signal(
-                conn, BackendEvent.PKI_ENROLLMENTS_UPDATED, organization_id=organization_id
+                conn, BackendEventPkiEnrollmentUpdated(organization_id=organization_id)
             )
 
     async def accept(
@@ -522,5 +536,5 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 )
             )
             await send_signal(
-                conn, BackendEvent.PKI_ENROLLMENTS_UPDATED, organization_id=organization_id
+                conn, BackendEventPkiEnrollmentUpdated(organization_id=organization_id)
             )

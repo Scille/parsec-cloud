@@ -6,7 +6,7 @@ from unittest.mock import ANY
 import pytest
 import trio
 
-from parsec._parsec import ActiveUsersLimit, DateTime
+from parsec._parsec import ActiveUsersLimit, BackendEventOrganizationExpired, DateTime
 from parsec.api.protocol import (
     BlockID,
     HandshakeOrganizationExpired,
@@ -15,7 +15,6 @@ from parsec.api.protocol import (
     VlobID,
 )
 from parsec.api.rest import organization_stats_rep_serializer
-from parsec.backend.backend_events import BackendEvent
 from parsec.backend.organization import Organization
 from tests.common import customize_fixtures, local_device_to_backend_user
 
@@ -405,7 +404,7 @@ async def test_organization_update_ok(backend_asgi_app, coolorg, bootstrapped):
         assert org.user_profile_outsider_allowed is False
         assert org.active_users_limit is ActiveUsersLimit.NO_LIMIT
 
-    # No BackendEvent.ORGANIZATION_EXPIRED should have occurred
+    # No ORGANIZATION_EXPIRED event should have occurred
     await trio.testing.wait_all_tasks_blocked()
     assert spy.events == []
 
@@ -453,7 +452,7 @@ async def test_organization_update_expired_field(
         assert response.status_code == 200
         assert await response.get_json() == {}
         await spy.wait_with_timeout(
-            BackendEvent.ORGANIZATION_EXPIRED, {"organization_id": organization_id}
+            BackendEventOrganizationExpired(organization_id=organization_id)
         )
 
     org = await backend_asgi_app.backend.organization.get(organization_id)

@@ -6,9 +6,17 @@ from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, List, Tuple
 
 import attr
 
-from parsec._parsec import DateTime
-from parsec.api.protocol import DeviceID, OrganizationID, RealmID, UserID, UserProfile
-from parsec.backend.backend_events import BackendEvent
+from parsec._parsec import (
+    BackendEventRealmMaintenanceFinished,
+    BackendEventRealmMaintenanceStarted,
+    BackendEventRealmRolesUpdated,
+    DateTime,
+    DeviceID,
+    OrganizationID,
+    RealmID,
+    UserID,
+    UserProfile,
+)
 from parsec.backend.realm import (
     BaseRealmComponent,
     MaintenanceType,
@@ -107,12 +115,13 @@ class MemoryRealmComponent(BaseRealmComponent):
             self._realms[key] = Realm(granted_roles=[self_granted_role])
 
             await self._send_event(
-                BackendEvent.REALM_ROLES_UPDATED,
-                organization_id=organization_id,
-                author=self_granted_role.granted_by,
-                realm_id=self_granted_role.realm_id,
-                user=self_granted_role.user_id,
-                role=self_granted_role.role,
+                BackendEventRealmRolesUpdated(
+                    organization_id=organization_id,
+                    author=self_granted_role.granted_by,
+                    realm_id=self_granted_role.realm_id,
+                    user=self_granted_role.user_id,
+                    role=self_granted_role.role,
+                )
             )
 
         else:
@@ -250,12 +259,13 @@ class MemoryRealmComponent(BaseRealmComponent):
         )
 
         await self._send_event(
-            BackendEvent.REALM_ROLES_UPDATED,
-            organization_id=organization_id,
-            author=new_role.granted_by,
-            realm_id=new_role.realm_id,
-            user=new_role.user_id,
-            role=new_role.role,
+            BackendEventRealmRolesUpdated(
+                organization_id=organization_id,
+                author=new_role.granted_by,
+                realm_id=new_role.realm_id,
+                user=new_role.user_id,
+                role=new_role.role,
+            )
         )
 
         if recipient_message is not None:
@@ -311,11 +321,12 @@ class MemoryRealmComponent(BaseRealmComponent):
         # Should first send maintenance event, then message to each participant
 
         await self._send_event(
-            BackendEvent.REALM_MAINTENANCE_STARTED,
-            organization_id=organization_id,
-            author=author,
-            realm_id=realm_id,
-            encryption_revision=encryption_revision,
+            BackendEventRealmMaintenanceStarted(
+                organization_id=organization_id,
+                author=author,
+                realm_id=realm_id,
+                encryption_revision=encryption_revision,
+            )
         )
 
         for recipient, msg in per_participant_message.items():
@@ -350,11 +361,12 @@ class MemoryRealmComponent(BaseRealmComponent):
         )
 
         await self._send_event(
-            BackendEvent.REALM_MAINTENANCE_FINISHED,
-            organization_id=organization_id,
-            author=author,
-            realm_id=realm_id,
-            encryption_revision=encryption_revision,
+            BackendEventRealmMaintenanceFinished(
+                organization_id=organization_id,
+                author=author,
+                realm_id=realm_id,
+                encryption_revision=encryption_revision,
+            )
         )
 
     async def get_realms_for_user(
