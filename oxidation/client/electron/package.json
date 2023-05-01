@@ -29,7 +29,7 @@
         "electron-window-state": "~5.0.3"
     },
     "devDependencies": {
-        "@electron/rebuild": "^3.2.10",
+        "@electron/rebuild": "^3.2.13",
         "electron": "^23.1.1",
         "electron-builder": "~23.6.0",
         "typescript": "~4.9.5"
