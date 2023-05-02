@@ -30,7 +30,7 @@
                 "fields": [
                     {
                         "name": "count",
-                        "type": "Size"
+                        "type": "Index"
                     },
                     {
                         "name": "sender",
