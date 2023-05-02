@@ -92,6 +92,8 @@ const { t } = useI18n();
 }
 
 .container__item:not(:first-child):not(:last-child) {
+  user-select: none;
+  cursor: pointer;
   margin-inline-end: 2px;
   color: var(--parsec-color-light-secondary-text);
   border-radius: 0.25rem;

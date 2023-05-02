@@ -274,7 +274,7 @@ function resizeMenu(newWidth: number): void {
   box-shadow: none;
   margin: 0.5rem;
 
-  &__header{
+  &__header {
     display: flex;
     justify-content: space-between;
     flex-direction: row;
@@ -353,7 +353,7 @@ function resizeMenu(newWidth: number): void {
     color: var(--parsec-color-light-secondary-light);
     border-top: 1px solid var(--parsec-color-light-primary-30-opacity15);
 
-    &:hover{
+    &:hover {
       background: var(--parsec-color-light-primary-30-opacity15);
     }
 
