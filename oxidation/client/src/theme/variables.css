@@ -263,17 +263,17 @@ body.dark {
   --parsec-color-light-secondary-inversed-contrast: hsla(0, 0%, 99.6%, 1);
 
   /* ------ alert light------ */
-  ---parsec-color--success-100: hsla(146, 61.5%, 94.9%, 1);
-  ---parsec-color--success-500: hsla(144, 64.6%, 44.3%, 1);
-  ---parsec-color--success-700: hsla(144, 64.7%, 40%, 1);
+  --parsec-color-light-success-100: hsla(146, 61.5%, 94.9%, 1);
+  --parsec-color-light-success-500: hsla(144, 64.6%, 44.3%, 1);
+  --parsec-color-light-success-700: hsla(144, 64.7%, 40%, 1);
 
-  ---parsec-color--warning-100: hsla(45, 92.3%, 94.9%, 1);
-  ---parsec-color--warning-500: hsla(46, 92.9%, 50%, 1);
-  ---parsec-color--warning-700: hsla(45, 93.1%, 40%, 1);
+  --parsec-color-light-warning-100: hsla(45, 92.3%, 94.9%, 1);
+  --parsec-color-light-warning-500: hsla(46, 92.9%, 50%, 1);
+  --parsec-color-light-warning-700: hsla(45, 93.1%, 40%, 1);
 
-  ---parsec-color--danger-100: hsla(352, 60%, 95.1%, 1);
-  ---parsec-color--danger-500: hsla(352, 60.8%, 50%, 1);
-  ---parsec-color--danger-700: hsla(352, 60.8%, 40%, 1);
+  --parsec-color-light-danger-100: hsla(352, 60%, 95.1%, 1);
+  --parsec-color-light-danger-500: hsla(352, 60.8%, 50%, 1);
+  --parsec-color-light-danger-700: hsla(352, 60.8%, 40%, 1);
 
   /* ------ tags light------ */
   ---parsec-color--tags-blue100: hsla(198, 100%, 92%, 1);
@@ -477,17 +477,13 @@ https: //github.com/ionic-team/ionic-framework/issues/24080 */
   --inner-border-width: 0px;
   --box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
 }
-/* to remove from this file */
+
 ion-popover {
-  --backdrop-opacity: 0.6;
   --width: 300px;
 }
 
-ion-popover ion-content {
-  border-radius: .5rem;
-  overflow: hidden;
-  border: 1px solid var(--parsec-color-light-secondary-light);
-  --background: var(--parsec-color-light-secondary-background);
+.popover-example::part(content) {
+  background: none;
 }
 
 ion-modal.join-by-link-modal::part(content) {

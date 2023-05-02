@@ -26,7 +26,7 @@
           <ion-menu-button />
         </ion-buttons>
         <!-- end of icon menu on mobile -->
-        <!-- voir pour composant -->
+        <!-- (comment to delete • create breadcrumb component -->
         <ion-breadcrumbs class="breadcrumb">
           <ion-breadcrumb href="#home">
             <ion-icon
@@ -181,4 +181,5 @@ const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarM
     color: var(--parsec-color-light-primary-700)
   }
 }
+
 </style>

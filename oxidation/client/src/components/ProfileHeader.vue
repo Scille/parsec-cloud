@@ -21,6 +21,7 @@
         :class="{'popover-is-open': isPopoverOpen}"
         slot="end"
         :icon="chevronDown"
+        ref="chevron"
       />
     </div>
   </ion-item>
@@ -41,6 +42,7 @@ import ProfileHeaderPopover from './ProfileHeaderPopover.vue';
 
 const { t, d } = useI18n();
 const isPopoverOpen = ref(false);
+const chevron = ref();
 
 defineProps<{
   firstname: string,
@@ -53,6 +55,7 @@ function onClickMenu() : void {
 async function openPopover(ev: Event): Promise<void> {
   const popover = await popoverController.create({
     component: ProfileHeaderPopover,
+    cssClass: 'popover-example',
     componentProps: {
       // options: props.options
     },
@@ -61,6 +64,7 @@ async function openPopover(ev: Event): Promise<void> {
   });
   await popover.present();
   popover.onDidDismiss().then(() => {
+    chevron.value.$el.style.setProperty('transition', 'transform ease-out 300ms');
     isPopoverOpen.value = false;
   });
 }
@@ -68,11 +72,15 @@ async function openPopover(ev: Event): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
+
 .container {
   display: flex;
   flex-direction: column;
   --background: none;
   cursor: pointer;
+  &:hover{
+    --background-hover: none;
+  }
 }
 
 .avatar {
@@ -88,7 +96,7 @@ async function openPopover(ev: Event): Promise<void> {
     width: 0.625rem;
     border-radius: 50%;
     border: var(--parsec-color-light-secondary-background) solid 0.125rem;
-    background-color: var(---parsec-color--success-500);
+    background-color: var(--parsec-color-light-success-500);
   }
 }
 
@@ -96,9 +104,11 @@ async function openPopover(ev: Event): Promise<void> {
   display: flex;
   align-items: center;
   gap: .1em;
+  color: var(--parsec-color-light-secondary-text);
 
   ion-icon.popover-is-open {
-    rotate: (180deg);
+    transform: rotate(180deg);
+    transition: transform ease-out 300ms;
   }
 }
 
@@ -107,4 +117,5 @@ async function openPopover(ev: Event): Promise<void> {
   flex-direction: column;
   justify-content: center;
 }
+
 </style>

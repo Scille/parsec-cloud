@@ -1,7 +1,10 @@
 {
     "HomePage": {
         "topbar": {
-            "settings": "Settings"
+            "settings": "Settings",
+            "logout": "Log out",
+            "help": "Help and feedback",
+            "myDevices": "My devices"
         },
         "organizationList": {
             "title": "List of your organizations",
