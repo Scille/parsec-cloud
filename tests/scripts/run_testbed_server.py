@@ -20,7 +20,6 @@ from parsec.backend import backend_app_factory
 from parsec.backend.asgi import app_factory as asgi_app_factory
 from parsec.backend.asgi import serve_backend_with_asgi
 from parsec.backend.config import BackendConfig, MockedBlockStoreConfig, MockedEmailConfig
-from parsec.backend.user import Device, User
 from parsec.logging import configure_logging
 
 DEFAULT_ORGANIZATION_LIFE_LIMIT = 10 * 60  # 10mn
@@ -70,58 +69,7 @@ async def _run_server(
             templates = test_get_testbed_templates()
             template_id_to_org_id_and_crc: dict[str, tuple[OrganizationID, int]] = {}
             for template in templates:
-                org_id = OrganizationID(f"{template.id.capitalize()}OrgTemplate")
-                await backend.organization.create(id=org_id, bootstrap_token="")
-
-                devices = template.devices
-
-                first_devices = set()
-                for user in template.users:
-                    user_id = user.user_id
-                    first_device = next(
-                        d
-                        for d in devices
-                        if d.device_id.user_id == user_id
-                        and d.certif.timestamp == user.certif.timestamp
-                        and d.certif.author == user.certif.author
-                    )
-                    await backend.user.create_user(
-                        organization_id=org_id,
-                        user=User(
-                            user_id=user_id,
-                            human_handle=user.human_handle,
-                            user_certificate=user.raw_certif,
-                            redacted_user_certificate=user.raw_redacted_certif,
-                            user_certifier=user.certif.author,
-                            profile=user.profile,
-                            created_on=user.certif.timestamp,
-                        ),
-                        first_device=Device(
-                            device_id=first_device.device_id,
-                            device_label=first_device.device_label,
-                            device_certificate=first_device.raw_certif,
-                            redacted_device_certificate=first_device.raw_redacted_certif,
-                            device_certifier=first_device.certif.author,
-                            created_on=first_device.certif.timestamp,
-                        ),
-                    )
-                    first_devices.add(first_device.device_id)
-
-                for device in devices:
-                    if device.device_id in first_devices:
-                        continue
-                    await backend.user.create_device(
-                        organization_id=org_id,
-                        device=Device(
-                            device_id=device.device_id,
-                            device_label=device.device_label,
-                            device_certificate=device.raw_certif,
-                            redacted_device_certificate=device.raw_redacted_certif,
-                            device_certifier=device.certif.author,
-                            created_on=device.certif.timestamp,
-                        ),
-                    )
-
+                org_id = await backend.test_load_template(template)
                 template_id_to_org_id_and_crc[template.id] = (org_id, template.crc)
 
             # All set ! Now we can start the server
