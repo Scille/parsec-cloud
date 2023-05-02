@@ -55,7 +55,7 @@ function onClickMenu() : void {
 async function openPopover(ev: Event): Promise<void> {
   const popover = await popoverController.create({
     component: ProfileHeaderPopover,
-    cssClass: 'popover-example',
+    cssClass: 'profile-header-popover',
     componentProps: {
       // options: props.options
     },

@@ -482,7 +482,12 @@ ion-popover {
   --width: 300px;
 }
 
-.popover-example::part(content) {
+.profile-header-popover {
+  --offset-x: -2em;
+  --offset-y: 1em;
+}
+
+.profile-header-popover::part(content) {
   background: none;
 }
 
