@@ -43,11 +43,6 @@
             </ion-card-header>
 
             <div class="organization-card__manageBtn">
-              <ion-icon
-                :icon="cog"
-                slot="start"
-                size="small"
-              />
               <ion-text
                 class="subtitles-sm"
                 button
@@ -348,9 +343,8 @@ function resizeMenu(newWidth: number): void {
 
   &__manageBtn {
     padding:0.625em 1em;
-    display: flex;
+    cursor: pointer;
     align-items: center;
-    gap: 1em;
     color: var(--parsec-color-light-secondary-light);
     border-top: 1px solid var(--parsec-color-light-primary-30-opacity15);
 
@@ -362,10 +356,6 @@ function resizeMenu(newWidth: number): void {
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
-    }
-
-    ion-icon {
-      min-width: 18px;
     }
   }
 }
