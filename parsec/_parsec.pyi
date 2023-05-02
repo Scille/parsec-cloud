@@ -39,7 +39,6 @@ from parsec._parsec_pyi.addrs import (
 from parsec._parsec_pyi.backend_connection import AnonymousCmds, AuthenticatedCmds, InvitedCmds
 from parsec._parsec_pyi.backend_events import (
     BackendEvent,
-    BackendEventDeviceCreated,
     BackendEventInviteConduitUpdated,
     BackendEventInviteStatusChanged,
     BackendEventMessageReceived,
@@ -50,7 +49,6 @@ from parsec._parsec_pyi.backend_events import (
     BackendEventRealmMaintenanceStarted,
     BackendEventRealmRolesUpdated,
     BackendEventRealmVlobsUpdated,
-    BackendEventUserCreated,
     BackendEventUserRevoked,
 )
 from parsec._parsec_pyi.certif import (
@@ -354,9 +352,7 @@ __all__ = [
     "claimer_retrieve_info",
     # Backend internal events
     "BackendEvent",
-    "BackendEventDeviceCreated",
     "BackendEventInviteConduitUpdated",
-    "BackendEventUserCreated",
     "BackendEventUserRevoked",
     "BackendEventOrganizationExpired",
     "BackendEventPinged",

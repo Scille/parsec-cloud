@@ -15,25 +15,10 @@ use crate::{
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "type")]
 enum RawBackendEvent {
-    #[serde(rename = "device.created")]
-    DeviceCreated {
-        organization_id: libparsec::types::OrganizationID,
-        device_id: libparsec::types::DeviceID,
-        device_certificate: Vec<u8>,
-        encrypted_answer: Vec<u8>,
-    },
     #[serde(rename = "invite.conduit_updated")]
     InviteConduitUpdated {
         organization_id: libparsec::types::OrganizationID,
         token: libparsec::types::InvitationToken,
-    },
-    #[serde(rename = "user.created")]
-    UserCreated {
-        organization_id: libparsec::types::OrganizationID,
-        user_id: libparsec::types::UserID,
-        user_certificate: Vec<u8>,
-        first_device_id: libparsec::types::DeviceID,
-        first_device_certificate: Vec<u8>,
     },
     #[serde(rename = "user.revoked")]
     UserRevoked {
@@ -123,19 +108,9 @@ impl BackendEvent {
     fn load(py: Python, raw: &[u8]) -> PyResult<PyObject> {
         match ::rmp_serde::from_slice::<RawBackendEvent>(raw) {
             Ok(obj) => Ok(match &obj {
-                RawBackendEvent::DeviceCreated { .. } => {
-                    let init = PyClassInitializer::from(BackendEvent(obj));
-                    let init = init.add_subclass(BackendEventDeviceCreated);
-                    Py::new(py, init)?.into_py(py)
-                }
                 RawBackendEvent::InviteConduitUpdated { .. } => {
                     let init = PyClassInitializer::from(BackendEvent(obj));
                     let init = init.add_subclass(BackendEventInviteConduitUpdated);
-                    Py::new(py, init)?.into_py(py)
-                }
-                RawBackendEvent::UserCreated { .. } => {
-                    let init = PyClassInitializer::from(BackendEvent(obj));
-                    let init = init.add_subclass(BackendEventUserCreated);
                     Py::new(py, init)?.into_py(py)
                 }
                 RawBackendEvent::UserRevoked { .. } => {
@@ -195,72 +170,6 @@ impl BackendEvent {
 }
 
 #[pyclass(extends=BackendEvent)]
-pub(crate) struct BackendEventDeviceCreated;
-
-#[pymethods]
-impl BackendEventDeviceCreated {
-    #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<(Self, BackendEvent)> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [organization_id: OrganizationID, "organization_id"],
-            [device_id: DeviceID, "device_id"],
-            [device_certificate: Vec<u8>, "device_certificate"],
-            [encrypted_answer: Vec<u8>, "encrypted_answer"],
-        );
-
-        Ok((
-            BackendEventDeviceCreated,
-            BackendEvent(RawBackendEvent::DeviceCreated {
-                organization_id: organization_id.0,
-                device_id: device_id.0,
-                device_certificate,
-                encrypted_answer,
-            }),
-        ))
-    }
-
-    #[getter]
-    fn organization_id(_self: PyRef<Self>) -> PyResult<OrganizationID> {
-        match &_self.into_super().0 {
-            RawBackendEvent::DeviceCreated {
-                organization_id, ..
-            } => Ok(OrganizationID(organization_id.clone())),
-            _ => unreachable!(),
-        }
-    }
-
-    #[getter]
-    fn device_id(_self: PyRef<Self>) -> PyResult<DeviceID> {
-        match &_self.into_super().0 {
-            RawBackendEvent::DeviceCreated { device_id, .. } => Ok(DeviceID(device_id.clone())),
-            _ => unreachable!(),
-        }
-    }
-
-    #[getter]
-    fn device_certificate<'py>(_self: PyRef<Self>, py: Python<'py>) -> PyResult<&'py PyBytes> {
-        match &_self.into_super().0 {
-            RawBackendEvent::DeviceCreated {
-                device_certificate, ..
-            } => Ok(PyBytes::new(py, device_certificate)),
-            _ => unreachable!(),
-        }
-    }
-
-    #[getter]
-    fn encrypted_answer<'py>(_self: PyRef<Self>, py: Python<'py>) -> PyResult<&'py PyBytes> {
-        match &_self.into_super().0 {
-            RawBackendEvent::DeviceCreated {
-                encrypted_answer, ..
-            } => Ok(PyBytes::new(py, encrypted_answer)),
-            _ => unreachable!(),
-        }
-    }
-}
-
-#[pyclass(extends=BackendEvent)]
 pub(crate) struct BackendEventInviteConduitUpdated;
 
 #[pymethods]
@@ -297,95 +206,6 @@ impl BackendEventInviteConduitUpdated {
     fn token(_self: PyRef<Self>) -> PyResult<InvitationToken> {
         match &_self.into_super().0 {
             RawBackendEvent::InviteConduitUpdated { token, .. } => Ok(InvitationToken(*token)),
-            _ => unreachable!(),
-        }
-    }
-}
-
-/*
- * BackendEventUserCreated
- */
-
-#[pyclass(extends=BackendEvent)]
-pub(crate) struct BackendEventUserCreated;
-
-#[pymethods]
-impl BackendEventUserCreated {
-    #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<(Self, BackendEvent)> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [organization_id: OrganizationID, "organization_id"],
-            [user_id: UserID, "user_id"],
-            [user_certificate: Vec<u8>, "user_certificate"],
-            [first_device_id: DeviceID, "first_device_id"],
-            [
-                first_device_certificate: Vec<u8>,
-                "first_device_certificate"
-            ],
-        );
-
-        Ok((
-            BackendEventUserCreated,
-            BackendEvent(RawBackendEvent::UserCreated {
-                organization_id: organization_id.0,
-                user_id: user_id.0,
-                user_certificate,
-                first_device_id: first_device_id.0,
-                first_device_certificate,
-            }),
-        ))
-    }
-
-    #[getter]
-    fn organization_id(_self: PyRef<Self>) -> PyResult<OrganizationID> {
-        match &_self.into_super().0 {
-            RawBackendEvent::UserCreated {
-                organization_id, ..
-            } => Ok(OrganizationID(organization_id.clone())),
-            _ => unreachable!(),
-        }
-    }
-
-    #[getter]
-    fn user_id(_self: PyRef<Self>) -> PyResult<UserID> {
-        match &_self.into_super().0 {
-            RawBackendEvent::UserCreated { user_id, .. } => Ok(UserID(user_id.clone())),
-            _ => unreachable!(),
-        }
-    }
-
-    #[getter]
-    fn user_certificate<'py>(_self: PyRef<Self>, py: Python<'py>) -> PyResult<&'py PyBytes> {
-        match &_self.into_super().0 {
-            RawBackendEvent::UserCreated {
-                user_certificate, ..
-            } => Ok(PyBytes::new(py, user_certificate)),
-            _ => unreachable!(),
-        }
-    }
-
-    #[getter]
-    fn first_device_id(_self: PyRef<Self>) -> PyResult<DeviceID> {
-        match &_self.into_super().0 {
-            RawBackendEvent::UserCreated {
-                first_device_id, ..
-            } => Ok(DeviceID(first_device_id.clone())),
-            _ => unreachable!(),
-        }
-    }
-
-    #[getter]
-    fn first_device_certificate<'py>(
-        _self: PyRef<Self>,
-        py: Python<'py>,
-    ) -> PyResult<&'py PyBytes> {
-        match &_self.into_super().0 {
-            RawBackendEvent::UserCreated {
-                first_device_certificate,
-                ..
-            } => Ok(PyBytes::new(py, first_device_certificate)),
             _ => unreachable!(),
         }
     }

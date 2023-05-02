@@ -7,12 +7,9 @@ import triopg
 from triopg import UniqueViolationError
 
 from parsec._parsec import (
-    BackendEventDeviceCreated,
-    BackendEventUserCreated,
     DateTime,
     OrganizationID,
 )
-from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import (
     Q,
     q_device_internal_id,
@@ -294,18 +291,6 @@ async def q_create_user(
 
     await _create_device(conn, organization_id, first_device, first_device=True)
 
-    # TODO: should be no longer needed once APIv1 is removed
-    await send_signal(
-        conn,
-        BackendEventUserCreated(
-            organization_id=organization_id,
-            user_id=user.user_id,
-            user_certificate=user.user_certificate,
-            first_device_id=first_device.device_id,
-            first_device_certificate=first_device.device_certificate,
-        ),
-    )
-
 
 @query(in_transaction=True)
 async def query_create_user(
@@ -362,12 +347,3 @@ async def query_create_device(
 ) -> None:
     await q_take_user_device_write_lock(conn, organization_id)
     await _create_device(conn, organization_id, device, bool(encrypted_answer))
-    await send_signal(
-        conn,
-        BackendEventDeviceCreated(
-            organization_id=organization_id,
-            device_id=device.device_id,
-            device_certificate=device.device_certificate,
-            encrypted_answer=encrypted_answer,
-        ),
-    )

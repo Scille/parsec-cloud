@@ -4,7 +4,6 @@ from __future__ import annotations
 import pytest
 
 from parsec._parsec import (
-    BackendEventDeviceCreated,
     DateTime,
     UserProfile,
 )
@@ -49,23 +48,13 @@ async def test_device_create_ok(
     device_certificate = device_certificate.dump_and_sign(alice.signing_key)
     redacted_device_certificate = redacted_device_certificate.dump_and_sign(alice.signing_key)
 
-    with backend_asgi_app.backend.event_bus.listen() as spy:
+    with backend_asgi_app.backend.event_bus.listen():
         rep = await device_create(
             alice_ws,
             device_certificate=device_certificate,
             redacted_device_certificate=redacted_device_certificate,
         )
         assert isinstance(rep, DeviceCreateRepOk)
-
-        # No guarantees this event occurs before the command's return
-        await spy.wait_with_timeout(
-            BackendEventDeviceCreated(
-                organization_id=alice_nd.organization_id,
-                device_id=alice_nd.device_id,
-                device_certificate=device_certificate,
-                encrypted_answer=b"",
-            )
-        )
 
     # Make sure the new device can connect now
     async with backend_authenticated_ws_factory(backend_asgi_app, alice_nd) as sock:

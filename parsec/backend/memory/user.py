@@ -9,8 +9,6 @@ import attr
 
 from parsec._parsec import (
     ActiveUsersLimit,
-    BackendEventDeviceCreated,
-    BackendEventUserCreated,
     BackendEventUserRevoked,
     DateTime,
     DeviceID,
@@ -89,16 +87,6 @@ class MemoryUserComponent(BaseUserComponent):
         if user.human_handle:
             org.human_handle_to_user_id[user.human_handle] = user.user_id
 
-        await self._send_event(
-            BackendEventUserCreated(
-                organization_id=organization_id,
-                user_id=user.user_id,
-                user_certificate=user.user_certificate,
-                first_device_id=first_device.device_id,
-                first_device_certificate=first_device.device_certificate,
-            )
-        )
-
     async def create_device(
         self, organization_id: OrganizationID, device: Device, encrypted_answer: bytes = b""
     ) -> None:
@@ -112,14 +100,6 @@ class MemoryUserComponent(BaseUserComponent):
             raise UserAlreadyExistsError(f"Device `{device.device_id.str}` already exists")
 
         user_devices[device.device_name] = device
-        await self._send_event(
-            BackendEventDeviceCreated(
-                organization_id=organization_id,
-                device_id=device.device_id,
-                device_certificate=device.device_certificate,
-                encrypted_answer=encrypted_answer,
-            )
-        )
 
     async def _get_trustchain(
         self,

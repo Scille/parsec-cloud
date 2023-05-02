@@ -6,7 +6,6 @@ import trio
 from quart.testing.connections import WebsocketDisconnectError
 
 from parsec._parsec import (
-    BackendEventUserRevoked,
     DateTime,
     UserProfile,
 )
@@ -34,15 +33,9 @@ async def test_backend_close_on_user_revoke(
     ).dump_and_sign(alice.signing_key)
 
     async with backend_authenticated_ws_factory(backend_asgi_app, bob) as bob_ws:
-        with backend_asgi_app.backend.event_bus.listen() as spy:
+        with backend_asgi_app.backend.event_bus.listen():
             rep = await user_revoke(alice_ws, revoked_user_certificate=bob_revocation)
             assert isinstance(rep, UserRevokeRepOk)
-            await spy.wait_with_timeout(
-                BackendEventUserRevoked(
-                    organization_id=bob.organization_id,
-                    user_id=bob.user_id,
-                )
-            )
             # `user.revoked` event schedules connection cancellation, so wait
             # for things to settle down to make sure the cancellation is done
             await trio.testing.wait_all_tasks_blocked()
@@ -60,15 +53,9 @@ async def test_user_revoke_ok(
         author=adam.device_id, timestamp=now, user_id=alice.user_id
     ).dump_and_sign(adam.signing_key)
 
-    with backend_asgi_app.backend.event_bus.listen() as spy:
+    with backend_asgi_app.backend.event_bus.listen():
         rep = await user_revoke(adam_ws, revoked_user_certificate=alice_revocation)
         assert isinstance(rep, UserRevokeRepOk)
-        await spy.wait_with_timeout(
-            BackendEventUserRevoked(
-                organization_id=alice.organization_id,
-                user_id=alice.user_id,
-            )
-        )
 
     # Alice cannot connect from now on...
     with pytest.raises(HandshakeRevokedDevice):

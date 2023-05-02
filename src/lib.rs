@@ -52,9 +52,7 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     )?;
 
     m.add_class::<backend_events::BackendEvent>()?;
-    m.add_class::<backend_events::BackendEventDeviceCreated>()?;
     m.add_class::<backend_events::BackendEventInviteConduitUpdated>()?;
-    m.add_class::<backend_events::BackendEventUserCreated>()?;
     m.add_class::<backend_events::BackendEventUserRevoked>()?;
     m.add_class::<backend_events::BackendEventOrganizationExpired>()?;
     m.add_class::<backend_events::BackendEventPinged>()?;
