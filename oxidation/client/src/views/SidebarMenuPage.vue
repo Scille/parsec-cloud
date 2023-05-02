@@ -277,6 +277,7 @@ function resizeMenu(newWidth: number): void {
   &__header{
     display: flex;
     justify-content: space-between;
+    flex-direction: row;
   }
 
   &__container {
