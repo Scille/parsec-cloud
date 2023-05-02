@@ -77,6 +77,8 @@ struct JsonCmdRep {
     status: String,
     fields: Option<Vec<JsonCmdField>>,
     unit: Option<String>,
+    #[allow(unused)]
+    introduced_in: Option<String>,
 }
 
 #[derive(Deserialize, Clone)]
