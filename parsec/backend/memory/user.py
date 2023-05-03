@@ -10,7 +10,7 @@ import attr
 from parsec._parsec import (
     ActiveUsersLimit,
     BackendEventCertificatesUpdated,
-    BackendEventUserRevoked,
+    BackendEventUserUpdatedOrRevoked,
     DateTime,
     DeviceID,
     DeviceName,
@@ -367,7 +367,9 @@ class MemoryUserComponent(BaseUserComponent):
             redacted_certificate=None,
         )
         await self._send_event(
-            BackendEventUserRevoked(organization_id=organization_id, user_id=user_id)
+            BackendEventUserUpdatedOrRevoked(
+                organization_id=organization_id, user_id=user_id, profile=None
+            )
         )
 
     async def dump_users(self, organization_id: OrganizationID) -> Tuple[List[User], List[Device]]:

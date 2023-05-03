@@ -13,7 +13,7 @@ from parsec._parsec import (
     BackendEvent,
     BackendEventInviteStatusChanged,
     BackendEventOrganizationExpired,
-    BackendEventUserRevoked,
+    BackendEventUserUpdatedOrRevoked,
     InvitationStatus,
     OrganizationID,
     ProtocolError,
@@ -74,15 +74,17 @@ async def handle_ws() -> None:
             client_ctx.cancel_scope = cancel_scope
             with backend.event_bus.connection_context() as client_ctx.event_bus_ctx:
 
-                def _on_revoked(
+                def _on_updated_or_revoked(
                     client_ctx: AuthenticatedClientContext,
                     event: Type[BackendEvent],
-                    payload: BackendEventUserRevoked,
+                    payload: BackendEventUserUpdatedOrRevoked,
                 ) -> None:
                     if (
                         payload.organization_id == client_ctx.organization_id
                         and payload.user_id == client_ctx.user_id
                     ):
+                        # We close the connection even if the event is about a profile
+                        # change and not a revocation given `client_ctx` is outdated
                         client_ctx.close_connection_asap()
 
                 def _on_expired(
@@ -94,8 +96,8 @@ async def handle_ws() -> None:
                         client_ctx.close_connection_asap()
 
                 client_ctx.event_bus_ctx.connect(
-                    BackendEventUserRevoked,
-                    partial(_on_revoked, client_ctx),  # type: ignore
+                    BackendEventUserUpdatedOrRevoked,
+                    partial(_on_updated_or_revoked, client_ctx),  # type: ignore
                 )
                 client_ctx.event_bus_ctx.connect(
                     BackendEventOrganizationExpired,

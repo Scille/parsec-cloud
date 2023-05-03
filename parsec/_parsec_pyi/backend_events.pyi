@@ -11,6 +11,7 @@ from parsec._parsec import (
     RealmID,
     RealmRole,
     UserID,
+    UserProfile,
     VlobID,
 )
 
@@ -44,16 +45,20 @@ class BackendEventInviteConduitUpdated(BackendEvent):
     @property
     def token(self) -> InvitationToken: ...
 
-class BackendEventUserRevoked(BackendEvent):
+class BackendEventUserUpdatedOrRevoked(BackendEvent):
     def __init__(
         self,
         organization_id: OrganizationID,
         user_id: UserID,
+        # `profile=None` for revoked user
+        profile: UserProfile | None,
     ) -> None: ...
     @property
     def organization_id(self) -> OrganizationID: ...
     @property
     def user_id(self) -> UserID: ...
+    @property
+    def profile(self) -> UserProfile | None: ...
 
 class BackendEventOrganizationExpired(BackendEvent):
     def __init__(

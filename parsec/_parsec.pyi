@@ -50,7 +50,7 @@ from parsec._parsec_pyi.backend_events import (
     BackendEventRealmMaintenanceStarted,
     BackendEventRealmRolesUpdated,
     BackendEventRealmVlobsUpdated,
-    BackendEventUserRevoked,
+    BackendEventUserUpdatedOrRevoked,
 )
 from parsec._parsec_pyi.certif import (
     DeviceCertificate,
@@ -357,7 +357,7 @@ __all__ = [
     "BackendEvent",
     "BackendEventCertificatesUpdated",
     "BackendEventInviteConduitUpdated",
-    "BackendEventUserRevoked",
+    "BackendEventUserUpdatedOrRevoked",
     "BackendEventOrganizationExpired",
     "BackendEventPinged",
     "BackendEventMessageReceived",

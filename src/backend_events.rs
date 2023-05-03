@@ -8,7 +8,7 @@ use pyo3::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    enumerate::{InvitationStatus, RealmRole},
+    enumerate::{InvitationStatus, RealmRole, UserProfile},
     ids::{DeviceID, InvitationToken, OrganizationID, RealmID, UserID, VlobID},
 };
 
@@ -26,10 +26,11 @@ enum RawBackendEvent {
         organization_id: libparsec::types::OrganizationID,
         token: libparsec::types::InvitationToken,
     },
-    #[serde(rename = "user.revoked")]
-    UserRevoked {
+    #[serde(rename = "user.profile_updated_or_revoked")]
+    UserProfileUpdatedOrRevoked {
         organization_id: libparsec::types::OrganizationID,
         user_id: libparsec::types::UserID,
+        profile: Option<libparsec::types::UserProfile>,
     },
     #[serde(rename = "organization.expired")]
     OrganizationExpired {
@@ -125,9 +126,9 @@ impl BackendEvent {
                     let init = init.add_subclass(BackendEventInviteConduitUpdated);
                     Py::new(py, init)?.into_py(py)
                 }
-                RawBackendEvent::UserRevoked { .. } => {
+                RawBackendEvent::UserProfileUpdatedOrRevoked { .. } => {
                     let init = PyClassInitializer::from(BackendEvent(obj));
-                    let init = init.add_subclass(BackendEventUserRevoked);
+                    let init = init.add_subclass(BackendEventUserUpdatedOrRevoked);
                     Py::new(py, init)?.into_py(py)
                 }
                 RawBackendEvent::OrganizationExpired { .. } => {
@@ -295,14 +296,14 @@ impl BackendEventInviteConduitUpdated {
 }
 
 /*
- * BackendEventUserRevoked
+ * BackendEventUserUpdatedOrRevoked
  */
 
 #[pyclass(extends=BackendEvent)]
-pub(crate) struct BackendEventUserRevoked;
+pub(crate) struct BackendEventUserUpdatedOrRevoked;
 
 #[pymethods]
-impl BackendEventUserRevoked {
+impl BackendEventUserUpdatedOrRevoked {
     #[new]
     #[args(py_kwargs = "**")]
     fn new(py_kwargs: Option<&PyDict>) -> PyResult<(Self, BackendEvent)> {
@@ -310,13 +311,15 @@ impl BackendEventUserRevoked {
             py_kwargs,
             [organization_id: OrganizationID, "organization_id"],
             [user_id: UserID, "user_id"],
+            [profile: Option<UserProfile>, "profile"],
         );
 
         Ok((
-            BackendEventUserRevoked,
-            BackendEvent(RawBackendEvent::UserRevoked {
+            BackendEventUserUpdatedOrRevoked,
+            BackendEvent(RawBackendEvent::UserProfileUpdatedOrRevoked {
                 organization_id: organization_id.0,
                 user_id: user_id.0,
+                profile: profile.map(|p| p.0),
             }),
         ))
     }
@@ -324,7 +327,7 @@ impl BackendEventUserRevoked {
     #[getter]
     fn organization_id(_self: PyRef<Self>) -> PyResult<OrganizationID> {
         match &_self.into_super().0 {
-            RawBackendEvent::UserRevoked {
+            RawBackendEvent::UserProfileUpdatedOrRevoked {
                 organization_id, ..
             } => Ok(OrganizationID(organization_id.clone())),
             _ => unreachable!(),
@@ -334,7 +337,15 @@ impl BackendEventUserRevoked {
     #[getter]
     fn user_id(_self: PyRef<Self>) -> PyResult<UserID> {
         match &_self.into_super().0 {
-            RawBackendEvent::UserRevoked { user_id, .. } => Ok(UserID(user_id.clone())),
+            RawBackendEvent::UserProfileUpdatedOrRevoked { user_id, .. } => Ok(UserID(user_id.clone())),
+            _ => unreachable!(),
+        }
+    }
+
+    #[getter]
+    fn profile(_self: PyRef<Self>) -> PyResult<Option<UserProfile>> {
+        match &_self.into_super().0 {
+            RawBackendEvent::UserProfileUpdatedOrRevoked { profile, .. } => Ok(profile.map(|p| UserProfile(p.clone()))),
             _ => unreachable!(),
         }
     }
