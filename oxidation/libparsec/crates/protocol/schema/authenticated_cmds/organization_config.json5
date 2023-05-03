@@ -2,7 +2,8 @@
     {
         "major_versions": [
             2,
-            3
+            3,
+            4
         ],
         "req": {
             "cmd": "organization_config"

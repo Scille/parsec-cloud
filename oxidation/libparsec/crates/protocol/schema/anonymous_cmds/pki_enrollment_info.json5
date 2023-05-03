@@ -1,7 +1,8 @@
 [
     {
         "major_versions": [
-            3
+            3,
+            4
         ],
         "introduced_in": "3.2",
         "req": {
