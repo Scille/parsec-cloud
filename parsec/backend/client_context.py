@@ -91,7 +91,7 @@ class AuthenticatedClientContext(BaseClientContext):
 
         self.event_bus_ctx: EventBusConnectionContext
         self.send_events_channel, self.receive_events_channel = trio.open_memory_channel[
-            BackendEvent
+            tuple[str, BackendEvent]
         ](AUTHENTICATED_CLIENT_CHANNEL_SIZE)
         self.realms: Set[RealmID] = set()
         self.events_subscribed = False

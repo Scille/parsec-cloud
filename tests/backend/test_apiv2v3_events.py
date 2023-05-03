@@ -24,10 +24,6 @@ EventsListenRepNoEvents = authenticated_cmds.v3.events_listen.RepNoEvents
 EventsListenRepOk = authenticated_cmds.v3.events_listen.RepOk
 
 
-def _use_api_v3(args: dict) -> None:
-    args["headers"]["Api-Version"] = str(API_V3_VERSION)
-
-
 @pytest.mark.trio
 @pytest.mark.parametrize("revoked_during", ("idle", "listen_event"))
 async def test_cancel_connection_after_events_subscribe(
@@ -181,147 +177,9 @@ async def test_events_close_connection_on_backpressure(
 
 
 @pytest.mark.trio
-async def test_sse_events_subscribe(
-    backend, alice_rpc: AuthenticatedRpcApiClient, alice2_rpc: AuthenticatedRpcApiClient
-):
-    async with real_clock_timeout():
-        async with alice_rpc.connect_sse_events(before_send_hook=_use_api_v3) as sse_con:
-            # Should ignore our own events
-            with backend.event_bus.listen() as spy:
-                await authenticated_ping(alice_rpc, "bar")
-                await authenticated_ping(alice2_rpc, "foo")
-
-                # No guarantees those events occur before the commands' return
-                await spy.wait_multiple_with_timeout([BackendEventPinged, BackendEventPinged])
-
-            raw_rep = await sse_con.get_next_event(raw=True)
-            event = authenticated_cmds.v3.events_listen.Rep.load(raw_rep)
-            assert sse_con.status_code == 200
-            assert event == EventsListenRepOk(APIEventPinged("foo"))
-
-
-@pytest.mark.trio
-async def test_sse_events_bad_auth(alice_rpc: AuthenticatedRpcApiClient):
-    async with real_clock_timeout():
-
-        def _before_send_hook(args):
-            args["headers"]["Signature"] = "AAAA"
-            _use_api_v3(args)
-
-        async with alice_rpc.connect_sse_events(before_send_hook=_before_send_hook) as sse_con:
-            response = await sse_con.connection.as_response()
-            assert response.status_code == 401
-
-
-@pytest.mark.trio
-async def test_sse_events_bad_accept_type(alice_rpc: AuthenticatedRpcApiClient):
-    async with real_clock_timeout():
-
-        def _before_send_hook(args):
-            args["headers"]["Accept"] = "application/json"
-            _use_api_v3(args)
-
-        async with alice_rpc.connect_sse_events(before_send_hook=_before_send_hook) as sse_con:
-            response = await sse_con.connection.as_response()
-            assert response.status_code == 406
-
-
-@pytest.mark.trio
-@pytest.mark.postgresql
-async def test_sse_cross_backend_event(backend_factory, alice, bob):
-    def _use_api_v3(args: dict):
+async def test_sse_not_support_by_apiv3(backend, alice_rpc: AuthenticatedRpcApiClient):
+    def _use_api_v3(args: dict) -> None:
         args["headers"]["Api-Version"] = str(API_V3_VERSION)
 
-    async with backend_factory() as backend_1, backend_factory(populated=False) as backend_2:
-        app_1 = app_factory(backend_1)
-        app_2 = app_factory(backend_2)
-
-        bob_rpc = AuthenticatedRpcApiClient(app_1.test_client(), bob)
-        alice_rpc = AuthenticatedRpcApiClient(app_2.test_client(), alice)
-
-        async with real_clock_timeout():
-            async with alice_rpc.connect_sse_events(before_send_hook=_use_api_v3) as sse_con:
-                await authenticated_ping(bob_rpc, ping="1")
-
-                raw_rep = await sse_con.get_next_event(raw=True)
-                event = authenticated_cmds.v3.events_listen.Rep.load(raw_rep)
-                assert event == EventsListenRepOk(APIEventPinged("1"))
-                assert sse_con.status_code == 200
-
-                await authenticated_ping(bob_rpc, ping="2")
-                await authenticated_ping(bob_rpc, ping="3")
-
-                raw_rep = await sse_con.get_next_event(raw=True)
-                event = authenticated_cmds.v3.events_listen.Rep.load(raw_rep)
-                assert event == EventsListenRepOk(APIEventPinged("2"))
-                raw_rep = await sse_con.get_next_event(raw=True)
-                event = authenticated_cmds.v3.events_listen.Rep.load(raw_rep)
-                assert event == EventsListenRepOk(APIEventPinged("3"))
-
-
-@pytest.mark.trio
-async def test_sse_events_close_connection_on_backpressure(
-    monkeypatch, backend, alice_rpc: AuthenticatedRpcApiClient, alice, bob
-):
-    # The channel has a queue of size 1, meaning it will be filled after a single command
-    monkeypatch.setattr("parsec.backend.client_context.AUTHENTICATED_CLIENT_CHANNEL_SIZE", 1)
-    # `alice_rpc` fixture lazily intiate connection with the server, hence the
-    # monkeypatch of the queue size will be taken into account when creating client context
-
-    async with real_clock_timeout():
-        async with alice_rpc.connect_sse_events(before_send_hook=_use_api_v3) as sse_con:
-            # In SSE, our code pops the events from the client context without waiting
-            # peer acknowledgement. Hence the TCP layer must saturate first before
-            # the client context has to actually piled up events in it queue.
-            # So here we use directly the event bus to send events synchronously,
-            # hence having the events pile up without a chance for the coroutine running
-            # the SSE handler to pop them.
-            # But there is a trick on top of that ! Trio event queue first looks for
-            # tasks to wakeup before actually queuing the event. So under certain
-            # concurrency 2 events is not enough (1st event triggers the wakeup for the
-            # SSE task, 2nd event gets queued), hence we dispatch 3 events here !
-            backend.event_bus.send(
-                BackendEventPinged,
-                payload=BackendEventPinged(
-                    organization_id=alice.organization_id,
-                    author=bob.device_id,
-                    ping="1",
-                ),
-            )
-            backend.event_bus.send(
-                BackendEventPinged,
-                payload=BackendEventPinged(
-                    organization_id=alice.organization_id,
-                    author=bob.device_id,
-                    ping="2",
-                ),
-            )
-            backend.event_bus.send(
-                BackendEventPinged,
-                payload=BackendEventPinged(
-                    organization_id=alice.organization_id,
-                    author=bob.device_id,
-                    ping="3",
-                ),
-            )
-
-            # The connection simply gets closed without error status given nothing wrong
-            # occurred in practice
-            response = await sse_con.connection.as_response()
-            # Status code is 200 given it was provided with the very first event (and at
-            # that time the server didn't know the client will become non-responsive !)
-            assert response.status_code == 200
-            # Note we don't check the response's body, this is because it is possible we
-            # receive some events before the connection is actually closed, typically the
-            # SSE code was waiting on the event memory channel so it receives one event,
-            # then gets the Cancelled exception next await.
-
-
-@pytest.mark.trio
-async def test_sse_events_keepalive(frozen_clock, alice_rpc: AuthenticatedRpcApiClient):
-    async with real_clock_timeout():
-        async with alice_rpc.connect_sse_events(before_send_hook=_use_api_v3) as sse_con:
-            for _ in range(3):
-                await frozen_clock.sleep_with_autojump(31)
-                raw = await sse_con.connection.receive()
-                assert raw == b":keepalive\n\n"
+    async with alice_rpc.connect_sse_events(before_send_hook=_use_api_v3) as sse_con:
+        assert sse_con.status_code == 415

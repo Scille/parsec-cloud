@@ -3,14 +3,14 @@ from __future__ import annotations
 
 import math
 from contextlib import asynccontextmanager
-from enum import Enum
-from typing import Any, AsyncGenerator, Dict, Tuple
+from typing import Any, AsyncGenerator, Tuple
+from uuid import uuid4
 
 import trio
 
 from parsec.backend.blockstore import blockstore_factory
 from parsec.backend.config import BackendConfig
-from parsec.backend.events import EventsComponent
+from parsec.backend.events import BackendEvent, EventsComponent
 from parsec.backend.memory.block import MemoryBlockComponent
 from parsec.backend.memory.invite import MemoryInviteComponent
 from parsec.backend.memory.message import MemoryMessageComponent
@@ -31,16 +31,12 @@ async def components_factory(  # type: ignore[misc]
     config: BackendConfig, event_bus: EventBus
 ) -> AsyncGenerator[dict[str, Any], None]:
     send_events_channel, receive_events_channel = trio.open_memory_channel[
-        Tuple[Enum, Dict[str, object]]
+        Tuple[str, BackendEvent]
     ](math.inf)
 
-    async def _send_event(event) -> None:
-        await send_events_channel.send(event)
-
-    async def _dispatch_event() -> None:
-        async for event in receive_events_channel:
-            await trio.sleep(0)
-            event_bus.send(type(event), payload=event)
+    async def _send_event(event: BackendEvent) -> None:
+        event_id = uuid4().hex
+        await send_events_channel.send((event_id, event))
 
     webhooks = WebhooksComponent(config)
     organization = MemoryOrganizationComponent(_send_event, webhooks, config)
@@ -75,6 +71,12 @@ async def components_factory(  # type: ignore[misc]
         method = getattr(component, "register_components", None)
         if method is not None:
             method(**components)
+
+    async def _dispatch_event() -> None:
+        async for (event_id, event) in receive_events_channel:
+            await trio.sleep(0)
+            events.add_event_to_cache(event_id, event)
+            event_bus.send(type(event), event_id=event_id, payload=event)
 
     async with open_service_nursery() as nursery:
         nursery.start_soon(_dispatch_event)

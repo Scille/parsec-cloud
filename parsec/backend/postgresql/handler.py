@@ -7,6 +7,7 @@ from base64 import b64decode, b64encode
 from datetime import datetime
 from functools import wraps
 from typing import Awaitable, Callable, Coroutine, Iterable, List, Tuple
+from uuid import uuid4
 
 import attr
 import trio
@@ -17,6 +18,7 @@ from triopg import PostgresError, UndefinedTableError, UniqueViolationError
 from typing_extensions import ParamSpec
 
 from parsec._parsec import ActiveUsersLimit, BackendEvent, DateTime
+from parsec.backend.events import EventsComponent
 from parsec.backend.postgresql import migrations as migrations_module
 from parsec.event_bus import EventBus
 from parsec.utils import TaskStatus, start_task
@@ -209,9 +211,11 @@ class PGHandler:
         self.notification_conn: triopg._triopg.TrioConnectionProxy
         self._task_status: TaskStatus[None] | None = None
         self._connection_lost = False
+        self._events_component: EventsComponent | None = None
 
-    async def init(self, nursery: trio.Nursery) -> None:
+    async def init(self, nursery: trio.Nursery, events_component: EventsComponent) -> None:
         self._task_status = await start_task(nursery, self._run_connections)
+        self._events_component = events_component
 
     async def _run_connections(
         self, task_status: trio_typing.TaskStatus[None] = trio.TASK_STATUS_IGNORED
@@ -261,14 +265,17 @@ class PGHandler:
         self, conn: triopg._triopg.TrioConnectionProxy, pid: int, channel: str, payload: str
     ) -> None:
         try:
-            event = BackendEvent.load(b64decode(payload.encode("ascii")))
+            event_id, raw_event = payload.split(":")
+            event = BackendEvent.load(b64decode(raw_event.encode("ascii")))
         except ValueError as exc:
             logger.warning(
                 "Invalid notif received", pid=pid, channel=channel, payload=payload, exc_info=exc
             )
             return
 
-        self.event_bus.send(type(event), payload=event)
+        if self._events_component:
+            self._events_component.add_event_to_cache(event_id, event)
+        self.event_bus.send(type(event), event_id=event_id, payload=event)
 
     async def teardown(self) -> None:
         if self._task_status:
@@ -278,6 +285,7 @@ class PGHandler:
 async def send_signal(conn: triopg._triopg.TrioConnectionProxy, event: BackendEvent) -> None:
     # PostgreSQL's NOTIFY only accept string as payload, hence we must
     # use base64 on our payload...
-
-    payload = b64encode(event.dump()).decode("ascii")
+    raw_event = b64encode(event.dump()).decode("ascii")
+    event_id = uuid4().hex
+    payload = f"{event_id}:{raw_event}"
     await conn.execute("SELECT pg_notify($1, $2)", "app_notification", payload)

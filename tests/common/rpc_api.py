@@ -4,7 +4,7 @@ from __future__ import annotations
 from base64 import b64decode, b64encode
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import AsyncContextManager, Callable, Dict, Optional
+from typing import AsyncIterator, Callable, Dict, Optional
 
 import msgpack
 import pytest
@@ -40,7 +40,7 @@ class BaseRpcApiClient:
 @dataclass
 class SSEEventSink:
     connection: TestHTTPConnectionProtocol
-    _status_code: int | None = None
+    conn_buff: bytes = b""
 
     @property
     def status_code(self) -> int:
@@ -51,19 +51,40 @@ class SSEEventSink:
     async def get_next_event(
         self, raw: bool = False
     ) -> bytes | authenticated_cmds.latest.events_listen.Rep:
-        data = await self.connection.receive()
-        if self._status_code is None:
-            self._status_code = self.connection.status_code
-        assert data.startswith(b"data:")
-        assert data.endswith(b"\n\n")
-        raw_event = b64decode(data[len("data:") : -2])
-        # According to SSE spec, `data:test` and `data: test` are identical
-        if raw_event.startswith(b" "):
-            raw_event = raw_event[1:]
-        if raw:
-            return raw_event
-        else:
-            return authenticated_cmds.latest.events_listen.Rep.load(raw_event)
+        _, event = await self.get_next_event_and_id(raw)
+        return event
+
+    async def get_next_event_and_id(
+        self, raw: bool = False
+    ) -> tuple[str, bytes | authenticated_cmds.latest.events_listen.Rep]:
+        while True:
+            # Get a message
+            while True:
+                try:
+                    # Did we got multiple messages last time we read the connection ?
+                    msg, self.conn_buff = self.conn_buff.split(b"\n\n", 1)
+                    break
+                except ValueError:
+                    self.conn_buff += await self.connection.receive()
+
+            if msg == b":keepalive":
+                continue
+
+            if msg == b"event:missed_events":
+                raise RuntimeError("missed events !")
+
+            data_line, id_line = msg.split(b"\n")
+            assert data_line.startswith(b"data:")
+            # Strip because, according to SSE spec, `data:test` and `data: test` are identical
+            data = data_line[len(b"data:") :].strip()
+            assert id_line.startswith(b"id:")
+            id = id_line[len(b"id:") :].strip().decode("ascii")
+
+            raw_event = b64decode(data)
+            if raw:
+                return (id, raw_event)
+            else:
+                return (id, authenticated_cmds.latest.events_listen.Rep.load(raw_event))
 
 
 class AuthenticatedRpcApiClient(BaseRpcApiClient):
@@ -86,14 +107,16 @@ class AuthenticatedRpcApiClient(BaseRpcApiClient):
 
     @asynccontextmanager
     async def connect_sse_events(
-        self,
-        before_send_hook: Optional[Callable] = None,
-    ) -> AsyncContextManager[SSEEventSink]:
+        self, before_send_hook: Callable | None = None, last_event_id: str | None = None
+    ) -> AsyncIterator[SSEEventSink]:
         headers = self.base_headers.copy()
         signature = self.device.signing_key.sign_only_signature(b"")
         headers["Signature"] = b64encode(signature).decode("ascii")
         headers["Accept"] = "text/event-stream"
+        if last_event_id:
+            headers["Last-Event-ID"] = last_event_id
         args = {
+            "method": "GET",
             "path": f"/authenticated/{self.device.organization_id.str}/events",
             "headers": headers,
         }

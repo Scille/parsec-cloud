@@ -77,6 +77,7 @@ async def handle_ws() -> None:
                 def _on_updated_or_revoked(
                     client_ctx: AuthenticatedClientContext,
                     event: Type[BackendEvent],
+                    event_id: str,
                     payload: BackendEventUserUpdatedOrRevoked,
                 ) -> None:
                     if (
@@ -90,6 +91,7 @@ async def handle_ws() -> None:
                 def _on_expired(
                     client_ctx: AuthenticatedClientContext,
                     event: Type[BackendEvent],
+                    event_id: str,
                     payload: BackendEventOrganizationExpired,
                 ) -> None:
                     if payload.organization_id == client_ctx.organization_id:
@@ -97,11 +99,11 @@ async def handle_ws() -> None:
 
                 client_ctx.event_bus_ctx.connect(
                     BackendEventUserUpdatedOrRevoked,
-                    partial(_on_updated_or_revoked, client_ctx),  # type: ignore
+                    partial(_on_updated_or_revoked, client_ctx),
                 )
                 client_ctx.event_bus_ctx.connect(
                     BackendEventOrganizationExpired,
-                    partial(_on_expired, client_ctx),  # type: ignore
+                    partial(_on_expired, client_ctx),
                 )
 
                 # 3) Serve commands
@@ -124,6 +126,7 @@ async def handle_ws() -> None:
                     def _on_invite_status_changed(
                         client_ctx: InvitedClientContext,
                         event: Type[BackendEvent],
+                        event_id: str,
                         payload: BackendEventInviteStatusChanged,
                     ) -> None:
                         if (
@@ -135,7 +138,7 @@ async def handle_ws() -> None:
 
                     event_bus_ctx.connect(
                         BackendEventInviteStatusChanged,
-                        partial(_on_invite_status_changed, client_ctx),  # type: ignore
+                        partial(_on_invite_status_changed, client_ctx),
                     )
 
                     # 3) Serve commands

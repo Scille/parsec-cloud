@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
@@ -77,7 +78,7 @@ async def components_factory(  # type: ignore[misc]
             method(**components)
 
     async with open_service_nursery() as nursery:
-        await dbh.init(nursery)
+        await dbh.init(nursery=nursery, events_component=events)
         try:
             yield components
 

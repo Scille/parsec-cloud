@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 from base64 import b64decode, b64encode
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, contextmanager
 from enum import Enum
-from typing import Any, AsyncIterable, AsyncIterator, NoReturn
+from typing import Any, AsyncIterable, AsyncIterator, Iterator, NoReturn, Type
 
 import trio
 from quart import Blueprint, Response, current_app, g, request
 from quart.wrappers.response import ResponseBody
 
 from parsec._parsec import (
+    BackendEvent,
+    BackendEventOrganizationExpired,
+    BackendEventUserUpdatedOrRevoked,
     CryptoError,
     DateTime,
     DeviceID,
@@ -456,7 +459,12 @@ async def authenticated_api(raw_organization_id: str) -> Response:
 
 
 class SSEResponseIterableBody(ResponseBody):
-    def __init__(self, client_ctx: AuthenticatedClientContext, backend: BackendApp) -> None:
+    def __init__(
+        self,
+        backend: BackendApp,
+        client_ctx: AuthenticatedClientContext,
+        last_event_id: str | None,
+    ) -> None:
         super().__init__()
         # Cancel scope will be closed automatically in case of backpressure issue
         # Note we create it here instead of in `_make_contextmanager` to avoid concurrency
@@ -467,48 +475,101 @@ class SSEResponseIterableBody(ResponseBody):
         client_ctx.cancel_scope = trio.CancelScope()
         # Zero-sized channel to avoid backpressure issue: send is blocking until a receive occurs
         self._sse_payload_sender, self._sse_payload_receiver = trio.open_memory_channel[bytes](0)
-        self._contextmanager = self._make_contextmanager(client_ctx, backend)
+        self._contextmanager = self._make_contextmanager(backend, client_ctx, last_event_id)
 
     @asynccontextmanager
     async def _make_contextmanager(
-        self, client_ctx: AuthenticatedClientContext, backend: BackendApp
+        self, backend: BackendApp, client_ctx: AuthenticatedClientContext, last_event_id: str | None
     ) -> AsyncIterator[None]:
-        if client_ctx.api_version.version < 4:
-            req = authenticated_cmds.v3.events_listen.Req(wait=True)
-        else:
-            req = authenticated_cmds.latest.events_listen.Req(wait=True)
+        @contextmanager
+        def _stop_listen_when_peer_becomes_invalid(
+            backend: BackendApp, client_ctx: AuthenticatedClientContext
+        ) -> Iterator[None]:
+            with backend.event_bus.connection_context() as client_ctx.event_bus_ctx:
+
+                def _on_updated_or_revoked(
+                    event: Type[BackendEvent],
+                    event_id: str,
+                    payload: BackendEventUserUpdatedOrRevoked,
+                ) -> None:
+                    if (
+                        payload.organization_id == client_ctx.organization_id
+                        and payload.user_id == client_ctx.user_id
+                    ):
+                        # We close the connection even if the event is about a profile
+                        # change and not a revocation given `client_ctx` is outdated
+                        client_ctx.close_connection_asap()
+
+                def _on_expired(
+                    event: Type[BackendEvent],
+                    event_id: str,
+                    payload: BackendEventOrganizationExpired,
+                ) -> None:
+                    if payload.organization_id == client_ctx.organization_id:
+                        client_ctx.close_connection_asap()
+
+                client_ctx.event_bus_ctx.connect(
+                    BackendEventUserUpdatedOrRevoked,
+                    _on_updated_or_revoked,  # type: ignore
+                )
+                client_ctx.event_bus_ctx.connect(
+                    BackendEventOrganizationExpired,
+                    _on_expired,  # type: ignore
+                )
+
+                yield
 
         async def _events_into_sse_payloads() -> None:
-            # Closing sender end of the channel will cause Quart stop iterating
-            # on the receiver end and hence terminate the request
-            with self._sse_payload_sender:
-                # In SSE, the HTTP status code & headers are sent with the first event.
-                # This means the client has to wait for this first event to know for
-                # sure the connection was successful (in practice the server responds
-                # fast in case of error and potentially up to the keepalive time in case
-                # everything is ok).
-                # While not strictly needed, we send a keepalive event (i.e. an event
-                # with no name and any comment, see https://html.spec.whatwg.org/multipage/server-sent-events.html#authoring-notes
-                # ) right away so that the client knows it is correctly connected without delay.
-                await self._sse_payload_sender.send(b":keepalive\n\n")
+            with _stop_listen_when_peer_becomes_invalid(backend, client_ctx):
+                # Closing sender end of the channel will cause Quart stop iterating
+                # on the receiver end and hence terminate the request
+                with self._sse_payload_sender:
+                    # In SSE, the HTTP status code & headers are sent with the first event.
+                    # This means the client has to wait for this first event to know for
+                    # sure the connection was successful (in practice the server responds
+                    # fast in case of error and potentially up to the keepalive time in case
+                    # everything is ok).
+                    # While not strictly needed, we send a keepalive event (i.e. an event
+                    # with no name and any comment, see https://html.spec.whatwg.org/multipage/server-sent-events.html#authoring-notes
+                    # ) right away so that the client knows it is correctly connected without delay.
+                    await self._sse_payload_sender.send(b":keepalive\n\n")
 
-                while True:
-                    with trio.move_on_after(backend.config.sse_keepalive) as scope:
-                        cmd_func = backend.apis[type(req)]
-                        rep = await cmd_func(client_ctx, req)
-                        sse_payload = b"data:" + b64encode(rep.dump()) + b"\n\n"
-                        await self._sse_payload_sender.send(sse_payload)
+                    next_event_cb = await backend.events.sse_api_events_listen(
+                        client_ctx, last_event_id
+                    )
+                    while True:
+                        next_event = None
+                        with trio.move_on_after(backend.config.sse_keepalive) as scope:
+                            try:
+                                next_event = await next_event_cb()
+                            except StopAsyncIteration:
+                                return
 
-                    if scope.cancelled_caught:
-                        sse_payload = b":keepalive\n\n"
-                        await self._sse_payload_sender.send(sse_payload)
+                        if scope.cancelled_caught:
+                            await self._sse_payload_sender.send(b":keepalive\n\n")
+
+                        else:
+                            if next_event is None:
+                                # We have missed some events, most likely because the last event id
+                                # provided by the client is too old. In this case we have to
+                                # notify the client with a special `missed_events` message
+                                await self._sse_payload_sender.send(b"event:missed_events\n\n")
+
+                            else:
+                                (event_id, rep) = next_event
+                                sse_payload = (
+                                    b"data:"
+                                    + b64encode(rep.dump())
+                                    + b"\nid:"
+                                    + event_id.encode("ascii")
+                                    + b"\n\n"
+                                )
+                                await self._sse_payload_sender.send(sse_payload)
 
         assert client_ctx.cancel_scope is not None
         with client_ctx.cancel_scope:
             async with trio.open_nursery() as nursery:
                 with backend.event_bus.connection_context() as client_ctx.event_bus_ctx:
-                    await backend.events.connect_events(client_ctx)
-
                     nursery.start_soon(_events_into_sse_payloads)
 
                     # Note we don't use `with self._sse_payload_receiver:` context manager
@@ -581,9 +642,10 @@ async def authenticated_events_api(raw_organization_id: str) -> Response:
         public_key=user.public_key,
         verify_key=device.verify_key,
     )
+    last_event_id = request.headers.get("Last-Event-Id")
 
     response = current_app.response_class(
-        response=SSEResponseIterableBody(client_ctx, backend),
+        response=SSEResponseIterableBody(backend, client_ctx, last_event_id),
         headers={
             "Content-Type": ACCEPT_TYPE_SSE,
             "Cache-Control": "no-cache",

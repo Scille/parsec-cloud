@@ -134,7 +134,7 @@ class EventBusSpy:
     async def wait(self, event, kwargs=ANY, dt=ANY, update_event_func=None):
         if isinstance(event, BackendEvent):
             assert kwargs is ANY  # Ignored value
-            expected = SpiedEvent(type(event), {"payload": event}, dt)
+            expected = SpiedEvent(type(event), {"event_id": ANY, "payload": event}, dt)
         else:
             expected = SpiedEvent(event, kwargs, dt)
         for occurred_event in reversed(self.events):
@@ -191,7 +191,7 @@ class EventBusSpy:
         if isinstance(event, SpiedEvent):
             return event
         elif isinstance(event, BackendEvent):
-            return SpiedEvent(type(event), {"payload": event}, ANY)
+            return SpiedEvent(type(event), {"event_id": ANY, "payload": event}, ANY)
         elif issubclass(event, BackendEvent):
             return SpiedEvent(event, ANY, ANY)
         elif event is ANY:
@@ -210,7 +210,7 @@ class EventBusSpy:
     def assert_event_occurred(self, event, kwargs=ANY, dt=ANY):
         if isinstance(event, BackendEvent):
             assert kwargs is ANY  # Ignored value
-            expected = SpiedEvent(type(event), {"payload": event}, dt)
+            expected = SpiedEvent(type(event), {"event_id": ANY, "payload": event}, dt)
         else:
             expected = SpiedEvent(event, kwargs, dt)
         for occurred in self.events:
