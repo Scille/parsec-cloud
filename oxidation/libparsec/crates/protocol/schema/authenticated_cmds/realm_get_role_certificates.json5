@@ -2,8 +2,7 @@
     {
         "major_versions": [
             2,
-            3,
-            4
+            3
         ],
         "req": {
             "cmd": "realm_get_role_certificates",

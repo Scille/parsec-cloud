@@ -66,6 +66,8 @@
                 "status": "in_maintenance"
             },
             {
+                // Returned if another certificate in the server has a creation date
+                // posterior or equal to our current one.
                 "status": "require_greater_timestamp",
                 "fields": [
                     {
@@ -75,6 +77,8 @@
                 ]
             },
             {
+                // Returned if the timestamp in the certificate is too far away compared
+                // to server clock.
                 "status": "bad_timestamp",
                 "fields": [
                     {

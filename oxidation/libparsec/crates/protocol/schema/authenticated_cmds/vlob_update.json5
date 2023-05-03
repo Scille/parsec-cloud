@@ -63,6 +63,10 @@
                 "status": "in_maintenance"
             },
             {
+                // Returned if the user has a realm_role certificate with a creation date
+                // posterior or equal to our current one.
+                // Also returned if the last version of the current vlob has a modification
+                // date posterior or equal to our current one.
                 "status": "require_greater_timestamp",
                 "fields": [
                     {
@@ -72,6 +76,8 @@
                 ]
             },
             {
+                // Returned if the timestamp in the certificate is too far away compared
+                // to server clock.
                 "status": "bad_timestamp",
                 "fields": [
                     {

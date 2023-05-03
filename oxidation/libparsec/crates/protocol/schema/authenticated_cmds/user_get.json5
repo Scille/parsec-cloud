@@ -2,8 +2,7 @@
     {
         "major_versions": [
             2,
-            3,
-            4
+            3
         ],
         "req": {
             "cmd": "user_get",

@@ -67,6 +67,8 @@
                 "status": "in_maintenance"
             },
             {
+                // Returned if the timestamp in the certificate is too far away compared
+                // to server clock.
                 "status": "bad_timestamp",
                 "fields": [
                     {
