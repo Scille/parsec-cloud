@@ -3,7 +3,9 @@
 <template>
   <ion-list class="container">
     <ion-item class="container__item profile-email">
-      <ion-text class="body-sm">thomas.linere@mycompany.fr</ion-text>
+      <ion-text class="body-sm">
+        {{ email }}
+      </ion-text>
     </ion-item>
     <ion-item class="container__item">
       <ion-icon
@@ -64,6 +66,10 @@ import {
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
+
+defineProps<{
+  email: string
+}>();
 
 </script>
 

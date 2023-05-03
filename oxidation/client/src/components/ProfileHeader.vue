@@ -7,7 +7,10 @@
     class="container"
     @click="isPopoverOpen = !isPopoverOpen; openPopover($event)"
   >
-    <ion-avatar slot="start" class="avatar">
+    <ion-avatar
+      slot="start"
+      class="avatar"
+    >
       <img
         alt="Silhouette of a person's head"
         src="https://ionicframework.com/docs/img/demos/avatar.svg"
@@ -48,17 +51,11 @@ defineProps<{
   firstname: string,
   lastname: string
 }>();
-function onClickMenu() : void {
-  console.log('click');
-}
 
 async function openPopover(ev: Event): Promise<void> {
   const popover = await popoverController.create({
     component: ProfileHeaderPopover,
     cssClass: 'profile-header-popover',
-    componentProps: {
-      // options: props.options
-    },
     event: ev,
     showBackdrop: false
   });

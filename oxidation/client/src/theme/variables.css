@@ -4,13 +4,13 @@ http://ionicframework.com/docs/theming/ */
 @font-face {
   font-family: 'montserrat';
   font-style: normal;
-  src: url('../assets/fonts/montserrat-VariableFont_wght.ttf');
+  src: url('../assets/fonts/montserrat-VariableFont.ttf');
 }
 
 @font-face {
   font-family: 'montserrat';
   font-style: italic;
-  src: url('../assets/fonts/montserrat-Italic-VariableFont_wght.ttf');
+  src: url('../assets/fonts/montserrat-Italic-VariableFont.ttf');
 }
 
 /* New colors */
@@ -295,21 +295,25 @@ body.dark {
   font-weight: 600;
   font-size: 1.62rem;
 }
+
 .title-h2 {
   line-height: 120%;
   font-weight: 600;
   font-size: 1.375rem;
 }
+
 .title-h3 {
   line-height: 120%;
   font-weight: 600;
   font-size: 1.25rem;
 }
+
 .title-h4 {
   line-height: 120%;
   font-weight: 500;
   font-size: 1.12rem;
 }
+
 .title-h5 {
   line-height: 120%;
   font-weight: 600;
@@ -323,6 +327,7 @@ body.dark {
   line-height: 156%;
   letter-spacing: 0.15px;
 }
+
 .subtitles-sm{
   font-weight: 500;
   font-size: 0.88rem;
@@ -336,12 +341,14 @@ body.dark {
   letter-spacing: 0.2px;
   font-weight: 500;
 }
+
 .body {
   font-size: 1rem;
   line-height: 156%;
   letter-spacing: 0.15px;
   font-weight: 500;
 }
+
 .body-sm {
   font-size: 0.88rem;
   line-height: 143%;
@@ -357,6 +364,7 @@ body.dark {
   line-height: 22px;
   letter-spacing: 0.02em;
 }
+
 .button-medium {
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -377,13 +385,15 @@ body.dark {
   line-height: 29px;
   letter-spacing: 9px;
   text-transform: uppercase;
-  }
+}
+
 .caption-caption {
   font-size: 0.75rem;
   font-size: 12px;
   line-height: 133%;
   letter-spacing: 0.15px;
 }
+
 .caption-info {
   font-weight: 500;
   font-size: 0.62rem;
@@ -397,6 +407,7 @@ body.dark {
   font-weight: 500;
   line-height: 150%;
 }
+
 .breadcrumb-normal {
   font-size: 1rem;
   font-weight: 500;
@@ -414,6 +425,7 @@ body.dark {
   font-weight: 500;
   line-height: 150%;
 }
+
 .menu-active {
   font-size: 1rem;
   font-weight: 600;
@@ -427,6 +439,7 @@ body.dark {
   font-weight: 500;
   line-height: 125%;
 }
+
 .cell-title {
   letter-spacing: 0.15px;
   font-size: 0.88rem;
@@ -440,6 +453,7 @@ body.dark {
   font-size: 0.88rem;
   line-height: 171%;
 }
+
 .calendar-weeksday {
   font-size: 0.75rem;
   font-weight: 500;
@@ -454,11 +468,13 @@ body.dark {
   line-height: 156%;
   letter-spacing: 0.15px;
 }
+
 .form-input {
   font-weight: 500;
   font-size: 1rem;
   line-height: 150%;
 }
+
 .form-helperText {
   font-weight: 500;
   font-size: 0.75rem;
@@ -473,7 +489,7 @@ body.dark {
 https: //github.com/ionic-team/ionic-framework/issues/24080 */
 
 /* fix issue on global */
-*{
+* {
   --inner-border-width: 0px;
   --box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
 }
@@ -508,7 +524,7 @@ ion-card-title {
   font-weight: bold;
 }
 
-.header-md::after{
+.header-md::after {
   background-image: none;
 }
 
@@ -516,13 +532,13 @@ ion-card {
   --box-shadow: none;
 }
 
-ion-button{
+ion-button {
   text-transform: none;
   --border-radius: 6px;
   --box-shadow: none;
 }
 /* button size */
-ion-button.button-large{
+ion-button.button-large {
   --padding-top: 1rem ;
   --padding-end: 1.25rem;
   --padding-bottom: 1rem ;
@@ -533,7 +549,7 @@ ion-button.button-large{
   height: 54px;
 }
 
-ion-button.button-default{
+ion-button.button-default {
   --padding-top: 0.75rem;
   --padding-end: 1rem;
   --padding-bottom: 0.75rem;
@@ -543,7 +559,7 @@ ion-button.button-default{
   height: 44px;
 }
 
-ion-button.button-small{
+ion-button.button-small {
   --padding-top: 0.625rem;
   --padding-end: 1rem;
   --padding-bottom: 0.625rem;
@@ -583,7 +599,7 @@ ion-button.button-clear {
 }
 
 /* solid */
-ion-button.button-solid{
+ion-button.button-solid {
   --background: var(--parsec-color-light-primary-100);
 }
 

@@ -344,8 +344,8 @@ async function login(workspace: string): Promise<void> {
   }
   console.log(`Log in to ${selectedDevice.organizationId} with password "${password.value}"`);
   await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));
-  // change object to string
-  // name: défini l'endroit ou le code va aller, query: défini les paramètres
+
+  // name: define where the user will be move, query: add parameters
   router.push({ name: 'workspaces', query: { device: JSON.stringify(selectedDevice) } });
 }
 
