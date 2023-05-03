@@ -1,0 +1,29 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "certificate_get",
+            "fields": [
+                {
+                    // If specified, only return certificates which has been created
+                    // strictly after this timestamp
+                    "name": "created_after",
+                    "type": "RequiredOption<DateTime>"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "certificates",
+                        "type": "List<Bytes>"
+                    }
+                ]
+            }
+        ]
+    }
+]
