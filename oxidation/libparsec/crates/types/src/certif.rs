@@ -298,6 +298,64 @@ impl_transparent_data_format_conversion!(
 );
 
 /*
+ * UserUpdateCertificate
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(into = "UserUpdateCertificateData", from = "UserUpdateCertificateData")]
+pub struct UserUpdateCertificate {
+    pub author: DeviceID,
+    pub timestamp: DateTime,
+
+    pub user_id: UserID,
+    pub new_profile: UserProfile,
+}
+
+impl_unsecure_load!(UserUpdateCertificate);
+impl_unsecure_dump!(UserUpdateCertificate);
+impl_dump_and_sign!(UserUpdateCertificate);
+
+impl UserUpdateCertificate {
+    pub fn verify_and_load(
+        signed: &[u8],
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+        expected_user_id: Option<&UserID>,
+    ) -> DataResult<Self> {
+        let r = verify_and_load::<Self>(signed, author_verify_key)?;
+
+        if &r.author != expected_author {
+            return Err(DataError::UnexpectedAuthor {
+                expected: Box::new(expected_author.clone()),
+                got: Some(Box::new(r.author)),
+            });
+        }
+
+        if let Some(expected_user_id) = expected_user_id {
+            if &r.user_id != expected_user_id {
+                return Err(DataError::UnexpectedUserID {
+                    expected: expected_user_id.clone(),
+                    got: r.user_id,
+                });
+            }
+        }
+
+        Ok(r)
+    }
+}
+
+parsec_data!("schema/certif/user_update_certificate.json5");
+
+impl_transparent_data_format_conversion!(
+    UserUpdateCertificate,
+    UserUpdateCertificateData,
+    author,
+    timestamp,
+    user_id,
+    new_profile,
+);
+
+/*
  * DeviceCertificate
  */
 

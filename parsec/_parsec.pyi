@@ -58,6 +58,7 @@ from parsec._parsec_pyi.certif import (
     SequesterAuthorityCertificate,
     SequesterServiceCertificate,
     UserCertificate,
+    UserUpdateCertificate,
 )
 from parsec._parsec_pyi.core_fs import ChangesAfterSync, UserRemoteLoader
 from parsec._parsec_pyi.crypto import (
@@ -254,6 +255,7 @@ __all__ = [
     "UserCertificate",
     "DeviceCertificate",
     "RevokedUserCertificate",
+    "UserUpdateCertificate",
     "RealmRoleCertificate",
     "SequesterAuthorityCertificate",
     "SequesterServiceCertificate",

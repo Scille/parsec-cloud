@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from parsec._parsec import (
     DataError,
-    # Certificate
     DeviceCertificate,
     # Entry
     EntryID,
@@ -15,6 +14,7 @@ from parsec._parsec import (
     # Pki
     PkiEnrollmentSubmitPayload,
     RealmRoleCertificate,
+    # Certificate
     RevokedUserCertificate,
     SequesterAuthorityCertificate,
     SequesterServiceCertificate,
@@ -22,6 +22,7 @@ from parsec._parsec import (
     SharingReencryptedMessageContent,
     SharingRevokedMessageContent,
     UserCertificate,
+    UserUpdateCertificate,
 )
 from parsec.api.data.invite import (
     InviteDeviceConfirmation,
@@ -52,6 +53,7 @@ __all__ = (
     "UserCertificate",
     "DeviceCertificate",
     "RevokedUserCertificate",
+    "UserUpdateCertificate",
     "RealmRoleCertificate",
     "SequesterAuthorityCertificate",
     "SequesterServiceCertificate",

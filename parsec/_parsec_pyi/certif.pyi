@@ -113,6 +113,35 @@ class RevokedUserCertificate:
     @classmethod
     def unsecure_load(cls, signed: bytes) -> RevokedUserCertificate: ...
 
+class UserUpdateCertificate:
+    def __init__(
+        self,
+        author: DeviceID | None,
+        timestamp: DateTime,
+        user_id: UserID,
+        new_profile: UserProfile,
+    ) -> None: ...
+    @property
+    def author(self) -> DeviceID | None: ...
+    @property
+    def timestamp(self) -> DateTime: ...
+    @property
+    def user_id(self) -> UserID: ...
+    @property
+    def new_profile(self) -> UserProfile | None: ...
+    def evolve(self, **kwargs: Any) -> UserUpdateCertificate: ...
+    @classmethod
+    def verify_and_load(
+        cls,
+        signed: bytes,
+        author_verify_key: VerifyKey,
+        expected_author: DeviceID | None = None,
+        expected_user: UserID | None = None,
+    ) -> UserUpdateCertificate: ...
+    def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
+    @classmethod
+    def unsecure_load(cls, signed: bytes) -> UserUpdateCertificate: ...
+
 class RealmRoleCertificate:
     def __init__(
         self,

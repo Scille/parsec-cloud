@@ -53,6 +53,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     // Certif
     m.add_class::<UserCertificate>()?;
     m.add_class::<RevokedUserCertificate>()?;
+    m.add_class::<UserUpdateCertificate>()?;
     m.add_class::<DeviceCertificate>()?;
     m.add_class::<RealmRoleCertificate>()?;
     m.add_class::<SequesterAuthorityCertificate>()?;

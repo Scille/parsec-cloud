@@ -381,6 +381,110 @@ impl RevokedUserCertificate {
 }
 
 #[pyclass]
+pub(crate) struct UserUpdateCertificate(pub libparsec::types::UserUpdateCertificate);
+
+crate::binding_utils::gen_proto!(UserUpdateCertificate, __repr__);
+crate::binding_utils::gen_proto!(UserUpdateCertificate, __copy__);
+crate::binding_utils::gen_proto!(UserUpdateCertificate, __deepcopy__);
+crate::binding_utils::gen_proto!(UserUpdateCertificate, __richcmp__, eq);
+
+#[pymethods]
+impl UserUpdateCertificate {
+    #[new]
+    #[args(py_kwargs = "**")]
+    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+        crate::binding_utils::parse_kwargs!(
+            py_kwargs,
+            [author: DeviceID, "author"],
+            [timestamp: DateTime, "timestamp"],
+            [user_id: UserID, "user_id"],
+            [new_profile: UserProfile, "new_profile"]
+        );
+
+        Ok(Self(libparsec::types::UserUpdateCertificate {
+            author: author.0,
+            timestamp: timestamp.0,
+            user_id: user_id.0,
+            new_profile: new_profile.0,
+        }))
+    }
+
+    #[args(py_kwargs = "**")]
+    fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+        crate::binding_utils::parse_kwargs_optional!(
+            py_kwargs,
+            [author: DeviceID, "author"],
+            [timestamp: DateTime, "timestamp"],
+            [user_id: UserID, "user_id"],
+            [new_profile: UserProfile, "new_profile"]
+        );
+
+        let mut r = self.0.clone();
+
+        if let Some(x) = author {
+            r.author = x.0;
+        }
+        if let Some(x) = timestamp {
+            r.timestamp = x.0;
+        }
+        if let Some(x) = user_id {
+            r.user_id = x.0;
+        }
+        if let Some(x) = new_profile {
+            r.new_profile = x.0;
+        }
+
+        Ok(Self(r))
+    }
+
+    #[classmethod]
+    fn verify_and_load(
+        _cls: &PyType,
+        signed: &[u8],
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+        expected_user: Option<&UserID>,
+    ) -> DataResult<Self> {
+        Ok(libparsec::types::UserUpdateCertificate::verify_and_load(
+            signed,
+            &author_verify_key.0,
+            &expected_author.0,
+            expected_user.map(|x| &x.0),
+        )
+        .map(Self)?)
+    }
+
+    fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
+    }
+
+    #[classmethod]
+    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> DataResult<Self> {
+        Ok(libparsec::types::UserUpdateCertificate::unsecure_load(signed).map(Self)?)
+    }
+
+    #[getter]
+    fn author(&self) -> DeviceID {
+        DeviceID(self.0.author.clone())
+    }
+
+    #[getter]
+    fn timestamp(&self) -> DateTime {
+        DateTime(self.0.timestamp)
+    }
+
+    #[getter]
+    fn user_id(&self) -> UserID {
+        UserID(self.0.user_id.clone())
+    }
+
+    #[getter]
+    fn new_profile(&self) -> &'static PyObject {
+        UserProfile::from_profile(self.0.new_profile)
+    }
+}
+
+#[pyclass]
 pub(crate) struct RealmRoleCertificate(pub libparsec::types::RealmRoleCertificate);
 
 crate::binding_utils::gen_proto!(RealmRoleCertificate, __repr__);
