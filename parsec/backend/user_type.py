@@ -70,16 +70,32 @@ class User:
     def public_key(self) -> PublicKey:
         return UserCertificate.unsecure_load(self.user_certificate).public_key
 
+    @property
+    def profile(self) -> UserProfile:
+        if self.updates:
+            return self.updates[-1].new_profile
+        else:
+            return self.initial_profile
+
     user_id: UserID
     human_handle: HumanHandle | None
     user_certificate: bytes
     redacted_user_certificate: bytes
     user_certifier: DeviceID | None
-    profile: UserProfile = UserProfile.STANDARD
+    initial_profile: UserProfile = UserProfile.STANDARD
     created_on: DateTime = attr.ib(factory=DateTime.now)
     revoked_on: DateTime | None = None
     revoked_user_certificate: bytes | None = None
     revoked_user_certifier: DeviceID | None = None
+    updates: tuple[UserUpdate, ...] = ()
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class UserUpdate:
+    new_profile: UserProfile
+    updated_on: DateTime
+    user_update_certificate: bytes
+    user_update_certifier: DeviceID | None
 
 
 def validate_new_user_certificates(
@@ -164,7 +180,7 @@ def validate_new_user_certificates(
     user = User(
         user_id=u_data.user_id,
         human_handle=u_data.human_handle,
-        profile=u_data.profile,
+        initial_profile=u_data.profile,
         user_certificate=user_certificate,
         redacted_user_certificate=redacted_user_certificate,
         user_certifier=u_data.author,

@@ -150,7 +150,7 @@ class BackendApp:
                     user_certificate=user.raw_certif,
                     redacted_user_certificate=user.raw_redacted_certif,
                     user_certifier=user.certif.author,
-                    profile=user.profile,
+                    initial_profile=user.profile,
                     created_on=user.certif.timestamp,
                 ),
                 first_device=Device(

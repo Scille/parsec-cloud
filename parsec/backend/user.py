@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
 from __future__ import annotations
 
 from typing import List, Tuple
@@ -13,7 +14,7 @@ from parsec._parsec import (
     UserProfile,
     authenticated_cmds,
 )
-from parsec.api.data import DataError, RevokedUserCertificate
+from parsec.api.data import DataError, RevokedUserCertificate, UserUpdateCertificate
 from parsec.backend.client_context import AuthenticatedClientContext
 from parsec.backend.user_type import (
     CertificateValidationError,
@@ -24,7 +25,11 @@ from parsec.backend.user_type import (
 )
 from parsec.backend.utils import api
 from parsec.event_bus import EventBus
-from parsec.utils import timestamps_in_the_ballpark
+from parsec.utils import (
+    BALLPARK_CLIENT_EARLY_OFFSET,
+    BALLPARK_CLIENT_LATE_OFFSET,
+    timestamps_in_the_ballpark,
+)
 
 
 class UserError(Exception):
@@ -45,6 +50,12 @@ class UserAlreadyRevokedError(UserError):
 
 class UserActiveUsersLimitReached(UserError):
     pass
+
+
+class UserRequireGreaterTimestampError(UserError):
+    @property
+    def strictly_greater_than(self) -> DateTime:
+        return self.args[0]
 
 
 class UserCertifValidationError(UserError):
@@ -90,25 +101,64 @@ class BaseUserComponent:
         req: authenticated_cmds.latest.certificate_get.Req,
     ) -> authenticated_cmds.latest.certificate_get.Rep:
         need_redacted = client_ctx.profile == UserProfile.OUTSIDER
-        offset = req.offset
         certifs = await self.get_certificates(
-            client_ctx.organization_id, offset=offset, redacted=need_redacted
+            client_ctx.organization_id, created_after=req.created_after, redacted=need_redacted
         )
 
-        return authenticated_cmds.latest.certificate_get.RepOk(
-            certificates=[
-                authenticated_cmds.latest.certificate_get.Certificate(count=i, body=certif)
-                for i, certif in enumerate(certifs, offset + 1)
-            ]
-        )
+        return authenticated_cmds.latest.certificate_get.RepOk(certificates=certifs)
 
-    # @api
-    # async def api_user_update_profile(
-    #     self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.latest.user_update_profile.Req
-    # ) -> authenticated_cmds.latest.user_update_profile.Rep:
-    #     # TODO: user that get there role update should get disconnected to force update
-    #     # the need_redacted
-    #     raise NotImplementedError
+    @api
+    async def api_user_update(
+        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.latest.user_update.Req
+    ) -> authenticated_cmds.latest.user_update.Rep:
+        if client_ctx.profile != UserProfile.ADMIN:
+            return authenticated_cmds.latest.user_update.RepNotAllowed()
+
+        certif = req.user_update_certificate
+        try:
+            data = UserUpdateCertificate.verify_and_load(
+                signed=certif,
+                author_verify_key=client_ctx.verify_key,
+                expected_author=client_ctx.device_id,
+            )
+
+        except DataError:
+            return authenticated_cmds.latest.user_update.RepInvalidCertification()
+
+        now = DateTime.now()
+        if not timestamps_in_the_ballpark(data.timestamp, now):
+            return authenticated_cmds.latest.user_update.RepBadTimestamp(
+                ballpark_client_early_offset=BALLPARK_CLIENT_EARLY_OFFSET,
+                ballpark_client_late_offset=BALLPARK_CLIENT_LATE_OFFSET,
+                backend_timestamp=now,
+                client_timestamp=data.timestamp,
+            )
+
+        if data.user_id == client_ctx.user_id:
+            return authenticated_cmds.latest.user_update.RepNotAllowed()
+
+        # TODO: user that get there role update should get disconnected to force update
+        # the need_redacted
+
+        try:
+            await self.update_user(
+                organization_id=client_ctx.organization_id,
+                user_id=data.user_id,
+                new_profile=data.new_profile,
+                user_update_certificate=certif,
+                user_update_certifier=client_ctx.device_id,
+                updated_on=data.timestamp,
+            )
+
+        except UserAlreadyExistsError:
+            return authenticated_cmds.latest.user_update.RepAlreadyExists()
+
+        except UserRequireGreaterTimestampError as exc:
+            return authenticated_cmds.latest.user_update.RepRequireGreaterTimestamp(
+                exc.strictly_greater_than
+            )
+
+        return authenticated_cmds.latest.user_update.RepOk()
 
     @api
     async def apiv2v3_user_get(
@@ -292,6 +342,22 @@ class BaseUserComponent:
         Raises:
             UserNotFoundError
             UserAlreadyRevokedError
+        """
+        raise NotImplementedError()
+
+    async def update_user(
+        self,
+        organization_id: OrganizationID,
+        user_id: UserID,
+        new_profile: UserProfile,
+        user_update_certificate: bytes,
+        user_update_certifier: DeviceID,
+        updated_on: DateTime | None = None,
+    ) -> None:
+        """
+        Raises:
+            UserNotFoundError
+            UserAlreadyExistsError
         """
         raise NotImplementedError()
 

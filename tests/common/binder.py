@@ -185,7 +185,7 @@ def local_device_to_backend_user(
     user = BackendUser(
         user_id=device.user_id,
         human_handle=device.human_handle,
-        profile=device.profile,
+        initial_profile=device.profile,
         user_certificate=user_certificate.dump_and_sign(certifier_signing_key),
         redacted_user_certificate=redacted_user_certificate.dump_and_sign(certifier_signing_key),
         user_certifier=certifier_id,

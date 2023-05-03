@@ -89,7 +89,7 @@ async def test_user_create_ok(
     assert backend_user == User(
         user_id=mallory.user_id,
         human_handle=mallory.human_handle if with_labels else None,
-        profile=profile,
+        initial_profile=profile,
         user_certificate=user_certificate,
         redacted_user_certificate=redacted_user_certificate,
         user_certifier=alice.device_id,

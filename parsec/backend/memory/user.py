@@ -17,6 +17,7 @@ from parsec._parsec import (
     HumanHandle,
     OrganizationID,
     UserID,
+    UserProfile,
 )
 from parsec.backend.user import (
     BaseUserComponent,
@@ -24,12 +25,12 @@ from parsec.backend.user import (
     GetUserAndDevicesResult,
     HumanFindResultItem,
     Trustchain,
-    User,
     UserActiveUsersLimitReached,
     UserAlreadyExistsError,
     UserAlreadyRevokedError,
     UserNotFoundError,
 )
+from parsec.backend.user_type import User, UserUpdate
 
 if TYPE_CHECKING:
     from parsec.backend.memory.organization import MemoryOrganizationComponent
@@ -372,6 +373,74 @@ class MemoryUserComponent(BaseUserComponent):
             )
         )
 
+    async def update_user(
+        self,
+        organization_id: OrganizationID,
+        user_id: UserID,
+        new_profile: UserProfile,
+        user_update_certificate: bytes,
+        user_update_certifier: DeviceID,
+        updated_on: DateTime | None = None,
+    ) -> None:
+        """
+        Raises:
+            UserNotFoundError
+            UserAlreadyRevokedError
+        """
+        org = self._organizations[organization_id]
+
+        try:
+            user = org.users[user_id]
+
+        except KeyError:
+            raise UserNotFoundError(user_id)
+
+        if user.revoked_on or user.profile == new_profile:
+            raise UserAlreadyExistsError()
+
+        # TODO: check all user/device/realm roles certifiactes creation date against `updated_on`
+        # and raise `UserRequireGreaterTimestampError`
+
+        # TODO: check the last vlob the updated user has uploaded is not posterior to
+        # `updated_on`, this is not strictly needed (unlike when we revoke) given any
+        # role has the right to write in a realm, however this should be cheap and
+        # can prevent future bug when we introduce more advanced profiles...
+        # (`UserRequireGreaterTimestampError` should be raised in this case)
+
+        # TODO: If the new role is OUTSIDER, check the user is not OWNER/MANAGER in
+        # any shared realm (it is allowed for non-shared realm given the user must
+        # be sole OWNER of the realm containing it own user manifest)
+        # There is no dedicated error status for this behavior, but should we have it ?
+        # This add complexity but allow to provide better error message to the end user
+        # (e.g. "this user cannot be switched to outsider given ")
+
+        org.users[user_id] = user.evolve(
+            updates=tuple(
+                (
+                    *user.updates,
+                    UserUpdate(
+                        new_profile=new_profile,
+                        updated_on=updated_on or DateTime.now(),
+                        user_update_certificate=user_update_certificate,
+                        user_update_certifier=user_update_certifier,
+                    ),
+                )
+            )
+        )
+        if user.human_handle:
+            del org.human_handle_to_user_id[user.human_handle]
+
+        await self.notify_certificates_update(
+            organization_id=organization_id,
+            certificate=user_update_certificate,
+            redacted_certificate=None,
+        )
+        await self._send_event(
+            BackendEventUserUpdatedOrRevoked(
+                organization_id=organization_id, user_id=user_id, profile=new_profile
+            )
+        )
+
     async def dump_users(self, organization_id: OrganizationID) -> Tuple[List[User], List[Device]]:
         org = self._organizations[organization_id]
         devices: List[Device] = []
@@ -392,6 +461,7 @@ class MemoryUserComponent(BaseUserComponent):
             certif = user.redacted_user_certificate if redacted else user.user_certificate
             certificates.append((user.created_on, certif))
             if user.revoked_user_certificate:
+                assert user.revoked_on is not None
                 certificates.append((user.revoked_on, user.revoked_user_certificate))
 
         for devices in org.devices.values():

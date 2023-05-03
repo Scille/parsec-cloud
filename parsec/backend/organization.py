@@ -296,7 +296,7 @@ class BaseOrganizationComponent:
         user = User(
             user_id=u_data.user_id,
             human_handle=u_data.human_handle,
-            profile=u_data.profile,
+            initial_profile=u_data.profile,
             user_certificate=req.user_certificate,
             redacted_user_certificate=req.redacted_user_certificate,
             user_certifier=u_data.author,
