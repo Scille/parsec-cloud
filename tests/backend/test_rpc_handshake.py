@@ -329,7 +329,7 @@ async def test_client_version_in_logs(
     invited_rpc: InvitedRpcApiClient,
     caplog,
 ):
-    client_api_version = ApiVersion(3, 99)
+    client_api_version = ApiVersion(API_VERSION.version, API_VERSION.revision + 1)
     alice_rpc.API_VERSION = client_api_version
     anonymous_rpc.API_VERSION = client_api_version
     invited_rpc.API_VERSION = client_api_version

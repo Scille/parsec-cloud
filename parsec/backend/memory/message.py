@@ -42,6 +42,7 @@ class MemoryMessageComponent(BaseMessageComponent):
                 author=sender,
                 recipient=recipient,
                 index=index,
+                message=body,
             )
         )
 

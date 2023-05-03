@@ -1,6 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 
 from parsec.api.protocol import packb, unpackb
@@ -34,3 +37,28 @@ async def test_bad_msg_format(alice_ws, kind):
         await alice_ws.send(b"\xc1")  # Never used value according to msgpack spec
     rep = await alice_ws.receive()
     assert unpackb(rep) == {"status": "invalid_msg_format", "reason": "Invalid message format"}
+
+
+@pytest.mark.trio
+async def test_all_api_cmds_implemented(backend):
+    from parsec import _parsec
+
+    schema_dir = (Path(__file__) / "../../../oxidation/libparsec/crates/protocol/schema/").resolve()
+    for family_dir in schema_dir.iterdir():
+        family_mod_name = family_dir.name
+        for cmd_file in family_dir.glob("*.json5"):
+            cmd_specs = json.loads(
+                "\n".join(
+                    [
+                        x
+                        for x in cmd_file.read_text(encoding="utf8").splitlines()
+                        if not x.strip().startswith("//")
+                    ]
+                )
+            )
+            for cmd_spec in cmd_specs:
+                family_mod = getattr(_parsec, family_mod_name)
+                for version in cmd_spec["major_versions"]:
+                    version_mod = getattr(family_mod, f"v{version}")
+                    cmd_mod = getattr(version_mod, cmd_spec["req"]["cmd"])
+                    assert cmd_mod.Req in backend.apis

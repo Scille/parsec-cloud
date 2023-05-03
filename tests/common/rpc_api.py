@@ -18,8 +18,8 @@ from parsec._parsec import (
     DateTime,
     InvitationToken,
     OrganizationID,
+    authenticated_cmds,
 )
-from parsec.api.protocol import EventsListenRep
 from parsec.api.version import API_VERSION
 from parsec.core.types import LocalDevice
 from tests.common import OrganizationFullData
@@ -48,7 +48,9 @@ class SSEEventSink:
         assert self.connection.status_code is not None
         return self.connection.status_code
 
-    async def get_next_event(self, raw: bool = False) -> bytes:
+    async def get_next_event(
+        self, raw: bool = False
+    ) -> bytes | authenticated_cmds.latest.events_listen.Rep:
         data = await self.connection.receive()
         if self._status_code is None:
             self._status_code = self.connection.status_code
@@ -61,7 +63,7 @@ class SSEEventSink:
         if raw:
             return raw_event
         else:
-            return EventsListenRep.load(raw_event)
+            return authenticated_cmds.latest.events_listen.Rep.load(raw_event)
 
 
 class AuthenticatedRpcApiClient(BaseRpcApiClient):

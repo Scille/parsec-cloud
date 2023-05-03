@@ -11,8 +11,8 @@ from parsec._parsec import (
     InvitationType,
 )
 from parsec.api.protocol import (
-    APIEventInviteStatusChanged,
-    EventsListenRepOk,
+    ApiV2V3_APIEventInviteStatusChanged,
+    ApiV2V3_EventsListenRepOk,
     HandshakeBadIdentity,
     InvitationDeletedReason,
     InvitationEmailSentStatus,
@@ -33,8 +33,8 @@ from parsec.api.protocol import (
     UserProfile,
 )
 from tests.backend.common import (
-    events_listen_wait,
-    events_subscribe,
+    apiv2v3_events_listen_wait,
+    apiv2v3_events_subscribe,
     invite_delete,
     invite_info,
     invite_list,
@@ -64,7 +64,7 @@ async def test_user_new_invitation_and_info(
             [BackendEventInviteStatusChanged, BackendEventInviteStatusChanged]
         )
 
-    await events_subscribe(alice2_ws)
+    await apiv2v3_events_subscribe(alice2_ws)
 
     with freeze_time("2000-01-04"):
         rep = await invite_new(alice_ws, type=InvitationType.USER, claimer_email="zack@example.com")
@@ -73,8 +73,10 @@ async def test_user_new_invitation_and_info(
     token = rep.token
 
     async with real_clock_timeout():
-        rep = await events_listen_wait(alice2_ws)
-    assert rep == EventsListenRepOk(APIEventInviteStatusChanged(token, InvitationStatus.IDLE))
+        rep = await apiv2v3_events_listen_wait(alice2_ws)
+    assert rep == ApiV2V3_EventsListenRepOk(
+        ApiV2V3_APIEventInviteStatusChanged(token, InvitationStatus.IDLE)
+    )
 
     rep = await invite_list(alice_ws)
 
@@ -121,7 +123,7 @@ async def test_device_new_invitation_and_info(
         )
         await spy.wait_multiple_with_timeout([BackendEventInviteStatusChanged])
 
-    await events_subscribe(alice2_ws)
+    await apiv2v3_events_subscribe(alice2_ws)
 
     with freeze_time("2000-01-03"):
         rep = await invite_new(alice_ws, type=InvitationType.DEVICE)
@@ -129,8 +131,10 @@ async def test_device_new_invitation_and_info(
     token = rep.token
 
     async with real_clock_timeout():
-        rep = await events_listen_wait(alice2_ws)
-    assert rep == EventsListenRepOk(APIEventInviteStatusChanged(token, InvitationStatus.IDLE))
+        rep = await apiv2v3_events_listen_wait(alice2_ws)
+    assert rep == ApiV2V3_EventsListenRepOk(
+        ApiV2V3_APIEventInviteStatusChanged(token, InvitationStatus.IDLE)
+    )
 
     rep = await invite_list(alice_ws)
     assert rep == InviteListRepOk(
@@ -340,7 +344,7 @@ async def test_delete_invitation(
         )
         await spy.wait_multiple_with_timeout([BackendEventInviteStatusChanged])
 
-    await events_subscribe(alice2_ws)
+    await apiv2v3_events_subscribe(alice2_ws)
 
     with backend_asgi_app.backend.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):
@@ -352,9 +356,9 @@ async def test_delete_invitation(
         await spy.wait_with_timeout(BackendEventInviteStatusChanged)
 
     async with real_clock_timeout():
-        rep = await events_listen_wait(alice2_ws)
-    assert rep == EventsListenRepOk(
-        APIEventInviteStatusChanged(invitation.token, InvitationStatus.DELETED)
+        rep = await apiv2v3_events_listen_wait(alice2_ws)
+    assert rep == ApiV2V3_EventsListenRepOk(
+        ApiV2V3_APIEventInviteStatusChanged(invitation.token, InvitationStatus.DELETED)
     )
 
     # Deleted invitation are no longer visible

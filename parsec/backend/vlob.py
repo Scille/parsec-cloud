@@ -193,6 +193,26 @@ async def extract_sequestered_data_and_proceed_webhook(
 
 class BaseVlobComponent:
     @api
+    async def apiv2_vlob_create(
+        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.v2.vlob_create.Req
+    ) -> authenticated_cmds.v2.vlob_create.Rep:
+        # `vlob_create` command is similar between APIv2 and v4+ from the server
+        # point of view.
+        # (from client point of view, server may return `bad_timestamp` response
+        # with some fields missing)
+        return await self.api_vlob_create(client_ctx, req)
+
+    @api
+    async def apiv3_vlob_create(
+        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.v3.vlob_create.Req
+    ) -> authenticated_cmds.v3.vlob_create.Rep:
+        # `vlob_create` command is similar between APIv3 and v4+ from the server
+        # point of view.
+        # (from client point of view, server may return `bad_timestamp` response
+        # with some fields missing)
+        return await self.api_vlob_create(client_ctx, req)
+
+    @api
     async def api_vlob_create(
         self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.latest.vlob_create.Req
     ) -> authenticated_cmds.latest.vlob_create.Rep:
@@ -263,6 +283,26 @@ class BaseVlobComponent:
         return authenticated_cmds.latest.vlob_create.RepOk()
 
     @api
+    async def apiv2_vlob_read(
+        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.v2.vlob_read.Req
+    ) -> authenticated_cmds.v2.vlob_read.Rep:
+        # `vlob_read` command is similar between APIv2 and v4+ from the server
+        # point of view.
+        # (from client point of view, server may return `bad_timestamp` response
+        # with some fields missing)
+        return await self.api_vlob_read(client_ctx, req)
+
+    @api
+    async def apiv3_vlob_read(
+        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.v3.vlob_read.Req
+    ) -> authenticated_cmds.v3.vlob_read.Rep:
+        # `vlob_read` command is similar between APIv3 and v4+ from the server
+        # point of view.
+        # (from client point of view, server may return `bad_timestamp` response
+        # with some fields missing)
+        return await self.api_vlob_read(client_ctx, req)
+
+    @api
     async def api_vlob_read(
         self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.latest.vlob_read.Req
     ) -> authenticated_cmds.latest.vlob_read.Rep:
@@ -304,6 +344,26 @@ class BaseVlobComponent:
             created_on,
             author_last_role_granted_on,
         )
+
+    @api
+    async def apiv2_vlob_update(
+        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.v2.vlob_update.Req
+    ) -> authenticated_cmds.v2.vlob_update.Rep:
+        # `vlob_update` command is similar between APIv2 and v4+ from the server
+        # point of view.
+        # (from client point of view, server may return `bad_timestamp` response
+        # with some fields missing)
+        return await self.api_vlob_update(client_ctx, req)
+
+    @api
+    async def apiv3_vlob_update(
+        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.v3.vlob_update.Req
+    ) -> authenticated_cmds.v3.vlob_update.Rep:
+        # `vlob_update` command is similar between APIv3 and v4+ from the server
+        # point of view.
+        # (from client point of view, server may return `bad_timestamp` response
+        # with some fields missing)
+        return await self.api_vlob_update(client_ctx, req)
 
     @api
     async def api_vlob_update(

@@ -24,7 +24,7 @@ from parsec._parsec import (
 )
 from parsec.api.data import EntryName, RevokedUserCertificate
 from parsec.api.protocol import (
-    HumanFindRepOk,
+    ApiV2V3_HumanFindRepOk,
     InvitationDeletedReason,
     InvitationEmailSentStatus,
     InviteDeleteRepAlreadyDeleted,
@@ -149,7 +149,7 @@ class LoggedCore:
             omit_revoked=omit_revoked,
             omit_non_human=omit_non_human,
         )
-        if not isinstance(rep, HumanFindRepOk):
+        if not isinstance(rep, ApiV2V3_HumanFindRepOk):
             raise BackendConnectionError(f"Backend error: {rep}")
         results = []
         for item in rep.results:

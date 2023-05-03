@@ -8,28 +8,32 @@ from parsec._parsec import (
     DateTime,
 )
 from parsec.api.protocol import (
-    APIEventMessageReceived,
-    EventsListenRepNoEvents,
-    EventsListenRepOk,
+    ApiV2V3_APIEventMessageReceived,
+    ApiV2V3_EventsListenRepNoEvents,
+    ApiV2V3_EventsListenRepOk,
     Message,
     MessageGetRepOk,
 )
 from parsec.backend.asgi import app_factory
 from parsec.backend.config import PostgreSQLBlockStoreConfig
-from tests.backend.common import message_get
-from tests.backend.test_events import events_listen, events_listen_nowait, events_subscribe
+from tests.backend.common import (
+    apiv2v3_events_listen,
+    apiv2v3_events_listen_nowait,
+    apiv2v3_events_subscribe,
+    message_get,
+)
 
 
 @pytest.mark.trio
 async def test_message_from_bob_to_alice(backend, alice, bob, alice_ws):
-    await events_subscribe(alice_ws)
+    await apiv2v3_events_subscribe(alice_ws)
     d1 = DateTime(2000, 1, 1)
-    async with events_listen(alice_ws) as listen:
+    async with apiv2v3_events_listen(alice_ws) as listen:
         await backend.message.send(
             bob.organization_id, bob.device_id, alice.user_id, d1, b"Hello from Bob !"
         )
 
-    assert listen.rep == EventsListenRepOk(unit=APIEventMessageReceived(1))
+    assert listen.rep == ApiV2V3_EventsListenRepOk(unit=ApiV2V3_APIEventMessageReceived(1))
 
     rep = await message_get(alice_ws)
     assert rep == MessageGetRepOk(
@@ -68,13 +72,13 @@ async def test_message_from_bob_to_alice_multi_backends(
     ) as backend_2:
         app_1 = app_factory(backend_1)
         async with backend_authenticated_ws_factory(app_1, alice) as alice_ws:
-            await events_subscribe(alice_ws)
-            async with events_listen(alice_ws) as listen:
+            await apiv2v3_events_subscribe(alice_ws)
+            async with apiv2v3_events_listen(alice_ws) as listen:
                 await backend_2.message.send(
                     bob.organization_id, bob.device_id, alice.user_id, d1, b"Hello from Bob !"
                 )
 
-            assert listen.rep == EventsListenRepOk(APIEventMessageReceived(1))
+            assert listen.rep == ApiV2V3_EventsListenRepOk(ApiV2V3_APIEventMessageReceived(1))
 
             rep = await message_get(alice_ws)
             assert rep == MessageGetRepOk(
@@ -92,7 +96,7 @@ async def test_message_from_bob_to_alice_multi_backends(
 @pytest.mark.trio
 async def test_message_received_event(backend, alice_ws, alice, bob):
     d1 = DateTime(2000, 1, 1)
-    await events_subscribe(alice_ws)
+    await apiv2v3_events_subscribe(alice_ws)
 
     # Good message
     with backend.event_bus.listen() as spy:
@@ -109,14 +113,14 @@ async def test_message_received_event(backend, alice_ws, alice, bob):
         )
 
     reps = [
-        await events_listen_nowait(alice_ws),
-        await events_listen_nowait(alice_ws),
-        await events_listen_nowait(alice_ws),
+        await apiv2v3_events_listen_nowait(alice_ws),
+        await apiv2v3_events_listen_nowait(alice_ws),
+        await apiv2v3_events_listen_nowait(alice_ws),
     ]
     assert reps == [
-        EventsListenRepOk(APIEventMessageReceived(1)),
-        EventsListenRepOk(APIEventMessageReceived(2)),
-        EventsListenRepNoEvents(),
+        ApiV2V3_EventsListenRepOk(ApiV2V3_APIEventMessageReceived(1)),
+        ApiV2V3_EventsListenRepOk(ApiV2V3_APIEventMessageReceived(2)),
+        ApiV2V3_EventsListenRepNoEvents(),
     ]
 
     # Message to self also trigger event (not as silly as at sound: see workspace reencryption)
@@ -128,8 +132,11 @@ async def test_message_received_event(backend, alice_ws, alice, bob):
         # No guarantees those events occur before the commands' return
         await spy.wait_multiple_with_timeout([BackendEventMessageReceived])
 
-    reps = [await events_listen_nowait(alice_ws), await events_listen_nowait(alice_ws)]
+    reps = [
+        await apiv2v3_events_listen_nowait(alice_ws),
+        await apiv2v3_events_listen_nowait(alice_ws),
+    ]
     assert reps == [
-        EventsListenRepOk(APIEventMessageReceived(3)),
-        EventsListenRepNoEvents(),
+        ApiV2V3_EventsListenRepOk(ApiV2V3_APIEventMessageReceived(3)),
+        ApiV2V3_EventsListenRepNoEvents(),
     ]

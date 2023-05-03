@@ -122,6 +122,30 @@ class RealmGrantedRole:
 
 class BaseRealmComponent:
     @api
+    async def apiv2_realm_create(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.v2.realm_create.Req,
+    ) -> authenticated_cmds.v2.realm_create.Rep:
+        # `realm_create` command is similar between APIv2 and v4+ from the server
+        # point of view.
+        # (from client point of view, server may return `bad_timestamp` response
+        # with some fields missing)
+        return await self.api_realm_create(client_ctx, req)
+
+    @api
+    async def apiv3_realm_create(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.v3.realm_create.Req,
+    ) -> authenticated_cmds.v3.realm_create.Rep:
+        # `realm_create` command is similar between APIv3 and v4+ from the server
+        # point of view.
+        # (from client point of view, server may return `bad_timestamp` response
+        # with some fields missing)
+        return await self.api_realm_create(client_ctx, req)
+
+    @api
     async def api_realm_create(
         self,
         client_ctx: AuthenticatedClientContext,
@@ -215,23 +239,47 @@ class BaseRealmComponent:
         )
 
     @api
-    async def api_realm_get_role_certificates(
+    async def apiv2v3_realm_get_role_certificates(
         self,
         client_ctx: AuthenticatedClientContext,
-        req: authenticated_cmds.latest.realm_get_role_certificates.Req,
-    ) -> authenticated_cmds.latest.realm_get_role_certificates.Rep:
+        req: authenticated_cmds.v3.realm_get_role_certificates.Req,
+    ) -> authenticated_cmds.v3.realm_get_role_certificates.Rep:
         try:
             certificates = await self.get_role_certificates(
                 client_ctx.organization_id, client_ctx.device_id, req.realm_id
             )
 
         except RealmAccessError:
-            return authenticated_cmds.latest.realm_get_role_certificates.RepNotAllowed()
+            return authenticated_cmds.v3.realm_get_role_certificates.RepNotAllowed()
 
         except RealmNotFoundError:
-            return authenticated_cmds.latest.realm_get_role_certificates.RepNotFound(None)
+            return authenticated_cmds.v3.realm_get_role_certificates.RepNotFound(None)
 
-        return authenticated_cmds.latest.realm_get_role_certificates.RepOk(certificates)
+        return authenticated_cmds.v3.realm_get_role_certificates.RepOk(certificates)
+
+    @api
+    async def apiv2_realm_update_roles(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.v2.realm_update_roles.Req,
+    ) -> authenticated_cmds.v2.realm_update_roles.Rep:
+        # `realm_update_roles` command is similar between APIv2 and v4+ from the server
+        # point of view.
+        # (from client point of view, server may return `bad_timestamp` response
+        # with some fields missing)
+        return await self.api_realm_update_roles(client_ctx, req)
+
+    @api
+    async def apiv3_realm_update_roles(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.v3.realm_update_roles.Req,
+    ) -> authenticated_cmds.v3.realm_update_roles.Rep:
+        # `realm_update_roles` command is similar between APIv3 and v4+ from the server
+        # point of view.
+        # (from client point of view, server may return `bad_timestamp` response
+        # with some fields missing)
+        return await self.api_realm_update_roles(client_ctx, req)
 
     @api
     async def api_realm_update_roles(
@@ -328,6 +376,30 @@ class BaseRealmComponent:
             return authenticated_cmds.latest.realm_update_roles.RepInMaintenance()
 
         return authenticated_cmds.latest.realm_update_roles.RepOk()
+
+    @api
+    async def apiv2_realm_start_reencryption_maintenance(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.v2.realm_start_reencryption_maintenance.Req,
+    ) -> authenticated_cmds.v2.realm_start_reencryption_maintenance.Rep:
+        # `realm_start_reencryption_maintenance` command is similar between APIv2 and v4+ from the server
+        # point of view.
+        # (from client point of view, server may return `bad_timestamp` response
+        # with some fields missing)
+        return await self.api_realm_start_reencryption_maintenance(client_ctx, req)
+
+    @api
+    async def apiv3_realm_start_reencryption_maintenance(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.v3.realm_start_reencryption_maintenance.Req,
+    ) -> authenticated_cmds.v3.realm_start_reencryption_maintenance.Rep:
+        # `realm_start_reencryption_maintenance` command is similar between APIv3 and v4+ from the server
+        # point of view.
+        # (from client point of view, server may return `bad_timestamp` response
+        # with some fields missing)
+        return await self.api_realm_start_reencryption_maintenance(client_ctx, req)
 
     @api
     async def api_realm_start_reencryption_maintenance(

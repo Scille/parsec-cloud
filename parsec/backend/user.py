@@ -59,8 +59,8 @@ class UserInvalidDataError(UserCertifValidationError):
     status = "invalid_data"
 
 
-HumanFindResultItem = authenticated_cmds.latest.human_find.HumanFindResultItem
-Trustchain = authenticated_cmds.latest.user_get.Trustchain
+HumanFindResultItem = authenticated_cmds.v3.human_find.HumanFindResultItem
+Trustchain = authenticated_cmds.v3.user_get.Trustchain
 
 
 PEER_EVENT_MAX_WAIT = 300
@@ -84,9 +84,36 @@ class BaseUserComponent:
     #### Access user API ####
 
     @api
-    async def api_user_get(
-        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.latest.user_get.Req
-    ) -> authenticated_cmds.latest.user_get.Rep:
+    async def api_certificate_get(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.certificate_get.Req,
+    ) -> authenticated_cmds.latest.certificate_get.Rep:
+        need_redacted = client_ctx.profile == UserProfile.OUTSIDER
+        offset = req.offset
+        certifs = await self.get_certificates(
+            client_ctx.organization_id, offset=offset, redacted=need_redacted
+        )
+
+        return authenticated_cmds.latest.certificate_get.RepOk(
+            certificates=[
+                authenticated_cmds.latest.certificate_get.Certificate(count=i, body=certif)
+                for i, certif in enumerate(certifs, offset + 1)
+            ]
+        )
+
+    # @api
+    # async def api_user_update_profile(
+    #     self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.latest.user_update_profile.Req
+    # ) -> authenticated_cmds.latest.user_update_profile.Rep:
+    #     # TODO: user that get there role update should get disconnected to force update
+    #     # the need_redacted
+    #     raise NotImplementedError
+
+    @api
+    async def apiv2v3_user_get(
+        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.v3.user_get.Req
+    ) -> authenticated_cmds.v3.user_get.Rep:
         need_redacted = client_ctx.profile == UserProfile.OUTSIDER
 
         try:
@@ -94,13 +121,13 @@ class BaseUserComponent:
                 client_ctx.organization_id, req.user_id, redacted=need_redacted
             )
         except UserNotFoundError:
-            return authenticated_cmds.latest.user_get.RepNotFound()
+            return authenticated_cmds.v3.user_get.RepNotFound()
 
-        return authenticated_cmds.latest.user_get.RepOk(
+        return authenticated_cmds.v3.user_get.RepOk(
             user_certificate=result.user_certificate,
             revoked_user_certificate=result.revoked_user_certificate,
             device_certificates=list(result.device_certificates),
-            trustchain=authenticated_cmds.latest.user_get.Trustchain(
+            trustchain=authenticated_cmds.v3.user_get.Trustchain(
                 devices=list(result.trustchain_device_certificates),
                 users=list(result.trustchain_user_certificates),
                 revoked_users=list(result.trustchain_revoked_user_certificates),
@@ -108,11 +135,11 @@ class BaseUserComponent:
         )
 
     @api
-    async def api_human_find(
-        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.latest.human_find.Req
-    ) -> authenticated_cmds.latest.human_find.Rep:
+    async def apiv2v3_human_find(
+        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.v3.human_find.Req
+    ) -> authenticated_cmds.v3.human_find.Rep:
         if client_ctx.profile == UserProfile.OUTSIDER:
-            return authenticated_cmds.latest.human_find.RepNotAllowed(None)
+            return authenticated_cmds.v3.human_find.RepNotAllowed(None)
         results, total = await self.find_humans(
             client_ctx.organization_id,
             omit_non_human=req.omit_non_human,
@@ -121,7 +148,7 @@ class BaseUserComponent:
             per_page=req.per_page,
             query=req.query,
         )
-        return authenticated_cmds.latest.human_find.RepOk(
+        return authenticated_cmds.v3.human_find.RepOk(
             results=results,
             page=req.page,
             per_page=req.per_page,
@@ -326,6 +353,14 @@ class BaseUserComponent:
         raise NotImplementedError()
 
     async def dump_users(self, organization_id: OrganizationID) -> Tuple[List[User], List[Device]]:
+        """
+        Raises: Nothing !
+        """
+        raise NotImplementedError()
+
+    async def get_certificates(
+        self, organization_id: OrganizationID, created_after: DateTime | None, redacted: bool
+    ) -> list[bytes]:
         """
         Raises: Nothing !
         """

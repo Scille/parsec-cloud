@@ -11,7 +11,6 @@ import pytest
 import trio
 
 from parsec._parsec import BackendEvent, CoreEvent, DateTime
-from parsec.api.protocol import EventsListenRep
 from parsec.event_bus import EventBus, MetaEvent
 from tests.common import real_clock_timeout
 
@@ -67,31 +66,12 @@ class SpiedEvent:
     # unittest.mock.ANY cannot be passed to the binding
     # without implementing some specific magic in the binding
     # itself.
-    # Instead, we try to let the ANY class to the comparaison.
+    # Instead, we try to let the ANY class do the comparaison.
     # So, calls that were EntryID.__eq__(self, ANY) (which causes
     # problems because ANY cannot be converted to EntryID) become
     # ANY.__eq__(self, EntryID) instead.
     def __eq__(self, other):
         ret = True
-
-        # This is a dirty way of overloading __eq__ for new EventsListenRep based
-        # class. Instead we should use the native __eq__ overload. This is impossible
-        # because of the nature of the class `SpiedEvent`
-        if isinstance(other, EventsListenRep):
-            for name, value in self.kwargs.items():
-                try:
-                    other_value = getattr(other, name)
-                    # Some tests compare objects like `EntryID` and `RealmID`.
-                    # When the inner IDs are the same, it is expected to be True
-                    # but because of oxidation it will be False because types are
-                    # differents. Some we only compare bytes when possible.
-                    if hasattr(value, "bytes") and hasattr(other_value, "bytes"):
-                        ret &= other_value.bytes == value.bytes
-                    else:
-                        ret &= other_value == value
-                except AttributeError:
-                    pass
-            return ret
 
         if other.event is ANY:
             ret &= other.event == self.event
@@ -208,7 +188,7 @@ class EventBusSpy:
         return cooked_events
 
     def _cook_event_params(self, event):
-        if isinstance(event, (SpiedEvent, EventsListenRep)):
+        if isinstance(event, SpiedEvent):
             return event
         elif isinstance(event, BackendEvent):
             return SpiedEvent(type(event), {"payload": event}, ANY)

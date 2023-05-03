@@ -8,9 +8,6 @@ from parsec._parsec import (
 )
 from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import (
-    RealmGetRoleCertificatesRepNotAllowed,
-    RealmGetRoleCertificatesRepNotFound,
-    RealmGetRoleCertificatesRepOk,
     RealmID,
     RealmRole,
     RealmUpdateRolesRepAlreadyGranted,
@@ -27,25 +24,18 @@ from parsec.api.protocol import (
     VlobID,
 )
 from parsec.backend.realm import RealmGrantedRole
-from tests.backend.common import realm_get_role_certificates, realm_update_roles, vlob_create
+from tests.backend.common import realm_update_roles, vlob_create
 from tests.common import customize_fixtures, freeze_time
 
-NOW = DateTime(2000, 1, 1)
 VLOB_ID = VlobID.from_hex("00000000000000000000000000000001")
 REALM_ID = RealmID.from_hex("0000000000000000000000000000000A")
 
 
-@pytest.mark.trio
-async def test_get_roles_not_found(alice_ws):
-    rep = await realm_get_role_certificates(alice_ws, REALM_ID)
-    # The reason is no longer generated
-    assert isinstance(rep, RealmGetRoleCertificatesRepNotFound)
-
-
-async def _realm_get_clear_role_certifs(sock, realm_id):
-    rep = await realm_get_role_certificates(sock, realm_id)
-    assert isinstance(rep, RealmGetRoleCertificatesRepOk)
-    cooked = [RealmRoleCertificate.unsecure_load(certif) for certif in rep.certificates]
+async def _realm_get_clear_role_certifs(backend, device, realm_id):
+    certificates = await backend.realm.get_role_certificates(
+        organization_id=device.organization_id, author=device.device_id, realm_id=realm_id
+    )
+    cooked = [RealmRoleCertificate.unsecure_load(certif) for certif in certificates]
     return [item for item in sorted(cooked, key=lambda x: x.timestamp)]
 
 
@@ -160,6 +150,7 @@ async def test_update_roles_outsider_cannot_share_with(
 @pytest.mark.trio
 @pytest.mark.parametrize("start_with_existing_role", (False, True))
 async def test_remove_role_idempotent(
+    backend,
     alice,
     bob,
     alice_ws,
@@ -189,7 +180,7 @@ async def test_remove_role_idempotent(
         )
         assert isinstance(rep, RealmUpdateRolesRepAlreadyGranted)
 
-    certifs = await _realm_get_clear_role_certifs(alice_ws, realm)
+    certifs = await _realm_get_clear_role_certifs(backend, alice, realm)
     expected_certifs = [
         RealmRoleCertificate(
             author=alice.device_id,
@@ -221,7 +212,7 @@ async def test_remove_role_idempotent(
 
 @pytest.mark.trio
 async def test_update_roles_as_owner(
-    backend, alice, bob, alice_ws, bob_ws, realm, realm_generate_certif_and_update_roles_or_fail
+    backend, alice, bob, alice_ws, realm, realm_generate_certif_and_update_roles_or_fail
 ):
     for role in RealmRole.VALUES:
         rep = await realm_generate_certif_and_update_roles_or_fail(
@@ -238,8 +229,8 @@ async def test_update_roles_as_owner(
     )
     assert isinstance(rep, RealmUpdateRolesRepOk)
 
-    rep = await realm_get_role_certificates(bob_ws, realm)
-    assert isinstance(rep, RealmGetRoleCertificatesRepNotAllowed)
+    roles = await backend.realm.get_current_roles(bob.organization_id, realm)
+    assert roles == {alice.user_id: RealmRole.OWNER}
 
 
 @pytest.mark.trio
@@ -284,8 +275,12 @@ async def test_update_roles_as_manager(
         alice_ws, alice, realm, bob.user_id, None
     )
     assert isinstance(rep, RealmUpdateRolesRepOk)
-    rep = await realm_get_role_certificates(bob_ws, realm)
-    assert isinstance(rep, RealmGetRoleCertificatesRepNotAllowed)
+
+    roles = await backend.realm.get_current_roles(alice.organization_id, realm)
+    assert roles == {
+        zack.user_id: RealmRole.OWNER,
+        alice.user_id: RealmRole.MANAGER,
+    }
 
     # Cannot give owner or manager role as manager
     for new_role in (RealmRole.OWNER, RealmRole.MANAGER):
@@ -381,69 +376,11 @@ async def test_role_access_during_maintenance(
         DateTime(2000, 1, 2),
     )
 
-    # Get roles allowed...
-    roles = await backend.realm.get_current_roles(alice.organization_id, realm)
-    assert roles == {alice.user_id: RealmRole.OWNER}
-
-    rep = await realm_get_role_certificates(alice_ws, realm)
-    assert isinstance(rep, RealmGetRoleCertificatesRepOk)
-
-    # ...but not update role
+    # Update role is not allowed
     rep = await realm_generate_certif_and_update_roles_or_fail(
         alice_ws, alice, realm, bob.user_id, RealmRole.MANAGER
     )
     assert isinstance(rep, RealmUpdateRolesRepInMaintenance)
-
-
-@pytest.mark.trio
-async def test_get_role_certificates_multiple(
-    backend, alice, bob, adam, bob_ws, realm, backend_realm_generate_certif_and_update_roles
-):
-    # Realm is created on 2000-01-02
-
-    with freeze_time("2000-01-03"):
-        c3 = await backend_realm_generate_certif_and_update_roles(
-            backend, alice, realm, bob.user_id, RealmRole.OWNER
-        )
-
-    with freeze_time("2000-01-04"):
-        c4 = await backend_realm_generate_certif_and_update_roles(
-            backend, bob, realm, adam.user_id, RealmRole.MANAGER
-        )
-
-    with freeze_time("2000-01-05"):
-        c5 = await backend_realm_generate_certif_and_update_roles(
-            backend, bob, realm, alice.user_id, RealmRole.READER
-        )
-
-    with freeze_time("2000-01-06"):
-        c6 = await backend_realm_generate_certif_and_update_roles(
-            backend, bob, realm, alice.user_id, None
-        )
-
-    rep = await realm_get_role_certificates(bob_ws, realm)
-    assert isinstance(rep, RealmGetRoleCertificatesRepOk)
-    assert rep.certificates[1:] == [c3, c4, c5, c6]
-
-
-@pytest.mark.trio
-async def test_get_role_certificates_no_longer_allowed(
-    backend, alice, bob, alice_ws, realm, backend_realm_generate_certif_and_update_roles
-):
-    # Realm is created on 2000-01-02
-
-    with freeze_time("2000-01-03"):
-        await backend_realm_generate_certif_and_update_roles(
-            backend, alice, realm, bob.user_id, RealmRole.OWNER
-        )
-
-    with freeze_time("2000-01-04"):
-        await backend_realm_generate_certif_and_update_roles(
-            backend, bob, realm, alice.user_id, None
-        )
-
-    rep = await realm_get_role_certificates(alice_ws, realm)
-    assert isinstance(rep, RealmGetRoleCertificatesRepNotAllowed)
 
 
 @pytest.mark.trio

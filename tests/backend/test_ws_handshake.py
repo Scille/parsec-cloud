@@ -19,7 +19,7 @@ from parsec.api.protocol import (
     unpackb,
 )
 from parsec.api.protocol.handshake import ServerHandshake
-from parsec.api.version import API_VERSION, ApiVersion
+from parsec.api.version import API_V3_VERSION, API_VERSION, ApiVersion
 
 
 @pytest.mark.trio
@@ -86,8 +86,8 @@ async def test_authenticated_handshake_good(backend_asgi_app, alice):
         result_req = await ws.receive()
         ch.process_result_req(result_req)
 
-        assert ch.client_api_version == API_VERSION
-        assert ch.backend_api_version == API_VERSION
+        assert ch.client_api_version == API_V3_VERSION
+        assert ch.backend_api_version == API_V3_VERSION
 
 
 @pytest.mark.trio
@@ -137,8 +137,8 @@ async def test_invited_handshake_good(backend_asgi_app, backend, alice, invitati
         result_req = await ws.receive()
         ch.process_result_req(result_req)
 
-        assert ch.client_api_version == API_VERSION
-        assert ch.backend_api_version == API_VERSION
+        assert ch.client_api_version == API_V3_VERSION
+        assert ch.backend_api_version == API_V3_VERSION
 
 
 @pytest.mark.trio
@@ -168,9 +168,9 @@ async def test_api_version_in_logs_on_handshake(backend_asgi_app, backend, alice
 
             # Sanity checks
             assert ch.client_api_version == client_api_version
-            assert ch.backend_api_version == API_VERSION
+            assert ch.backend_api_version == API_V3_VERSION
 
-        assert f"(client/server API version: {client_api_version}/{API_VERSION})" in caplog.text
+        assert f"(client/server API version: {client_api_version}/{API_V3_VERSION})" in caplog.text
 
 
 @pytest.mark.trio

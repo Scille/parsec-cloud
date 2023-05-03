@@ -17,8 +17,8 @@ from parsec.api.data import (
     RevokedUserCertificate,
 )
 from parsec.api.protocol import (
-    APIEventPkiEnrollmentUpdated,
-    EventsListenRepOk,
+    ApiV2V3_APIEventPkiEnrollmentUpdated,
+    ApiV2V3_EventsListenRepOk,
     PkiEnrollmentAcceptRepActiveUsersLimitReached,
     PkiEnrollmentAcceptRepAlreadyExists,
     PkiEnrollmentAcceptRepInvalidCertification,
@@ -45,8 +45,8 @@ from parsec.api.protocol import (
 from parsec.core.invite.greeter import _create_new_user_certificates
 from parsec.serde import packb, unpackb
 from tests.backend.common import (
-    events_listen_nowait,
-    events_subscribe,
+    apiv2v3_events_listen_nowait,
+    apiv2v3_events_subscribe,
     pki_enrollment_accept,
     pki_enrollment_info,
     pki_enrollment_list,
@@ -132,7 +132,7 @@ async def test_pki_submit(backend, anonymous_backend_ws, bob, bob_ws):
         requested_device_label=bob.device_label,
     ).dump()
 
-    await events_subscribe(bob_ws)
+    await apiv2v3_events_subscribe(bob_ws)
 
     with backend.event_bus.listen() as spy:
         rep = await pki_enrollment_submit(
@@ -146,7 +146,9 @@ async def test_pki_submit(backend, anonymous_backend_ws, bob, bob_ws):
         )
         assert isinstance(rep, PkiEnrollmentSubmitRepOk)
         await spy.wait_with_timeout(BackendEventPkiEnrollmentUpdated)
-    assert await events_listen_nowait(bob_ws) == EventsListenRepOk(APIEventPkiEnrollmentUpdated())
+    assert await apiv2v3_events_listen_nowait(bob_ws) == ApiV2V3_EventsListenRepOk(
+        ApiV2V3_APIEventPkiEnrollmentUpdated()
+    )
 
     # Retry without force
 
@@ -179,7 +181,9 @@ async def test_pki_submit(backend, anonymous_backend_ws, bob, bob_ws):
         )
         assert isinstance(rep, PkiEnrollmentSubmitRepOk)
         await spy.wait_with_timeout(BackendEventPkiEnrollmentUpdated)
-    assert await events_listen_nowait(bob_ws) == EventsListenRepOk(APIEventPkiEnrollmentUpdated())
+    assert await apiv2v3_events_listen_nowait(bob_ws) == ApiV2V3_EventsListenRepOk(
+        ApiV2V3_APIEventPkiEnrollmentUpdated()
+    )
 
 
 @pytest.mark.trio
@@ -330,7 +334,7 @@ async def test_pki_list_empty(alice_ws):
 
 @pytest.mark.trio
 async def test_pki_accept(backend, anonymous_backend_ws, mallory, alice, alice_ws):
-    await events_subscribe(alice_ws)
+    await apiv2v3_events_subscribe(alice_ws)
 
     # Assert mallory does not exist
     rep = await backend.user.find_humans(
@@ -348,7 +352,9 @@ async def test_pki_accept(backend, anonymous_backend_ws, mallory, alice, alice_w
         rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
         assert isinstance(rep, PkiEnrollmentAcceptRepOk)
         await spy.wait_with_timeout(BackendEventPkiEnrollmentUpdated)
-    assert await events_listen_nowait(alice_ws) == EventsListenRepOk(APIEventPkiEnrollmentUpdated())
+    assert await apiv2v3_events_listen_nowait(alice_ws) == ApiV2V3_EventsListenRepOk(
+        ApiV2V3_APIEventPkiEnrollmentUpdated()
+    )
 
     # Assert user has been created
     rep = await backend.user.find_humans(
@@ -474,7 +480,7 @@ async def test_pki_accept_already_rejected(backend, anonymous_backend_ws, mallor
 
 @pytest.mark.trio
 async def test_pki_reject(backend, anonymous_backend_ws, mallory, alice_ws):
-    await events_subscribe(alice_ws)
+    await apiv2v3_events_subscribe(alice_ws)
 
     # Create request
     request_id = EnrollmentID.new()
@@ -484,7 +490,9 @@ async def test_pki_reject(backend, anonymous_backend_ws, mallory, alice_ws):
         rep = await pki_enrollment_reject(alice_ws, enrollment_id=request_id)
         assert isinstance(rep, PkiEnrollmentRejectRepOk)
         await spy.wait_with_timeout(BackendEventPkiEnrollmentUpdated)
-    assert await events_listen_nowait(alice_ws) == EventsListenRepOk(APIEventPkiEnrollmentUpdated())
+    assert await apiv2v3_events_listen_nowait(alice_ws) == ApiV2V3_EventsListenRepOk(
+        ApiV2V3_APIEventPkiEnrollmentUpdated()
+    )
 
     # Reject twice
     with backend.event_bus.listen() as spy:

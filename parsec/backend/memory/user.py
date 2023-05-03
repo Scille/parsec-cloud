@@ -9,6 +9,7 @@ import attr
 
 from parsec._parsec import (
     ActiveUsersLimit,
+    BackendEventCertificatesUpdated,
     BackendEventUserRevoked,
     DateTime,
     DeviceID,
@@ -61,6 +62,19 @@ class MemoryUserComponent(BaseUserComponent):
         self._organization_component = organization
         self._realm_component = realm
 
+    async def notify_certificates_update(
+        self,
+        organization_id: OrganizationID,
+        certificate: bytes,
+        redacted_certificate: bytes | None,
+    ) -> None:
+        event = BackendEventCertificatesUpdated(
+            organization_id=organization_id,
+            certificate=certificate,
+            redacted_certificate=redacted_certificate,
+        )
+        await self._send_event(event)
+
     async def create_user(
         self, organization_id: OrganizationID, user: User, first_device: Device
     ) -> None:
@@ -87,6 +101,17 @@ class MemoryUserComponent(BaseUserComponent):
         if user.human_handle:
             org.human_handle_to_user_id[user.human_handle] = user.user_id
 
+        await self.notify_certificates_update(
+            organization_id=organization_id,
+            certificate=user.user_certificate,
+            redacted_certificate=user.redacted_user_certificate,
+        )
+        await self.notify_certificates_update(
+            organization_id=organization_id,
+            certificate=first_device.device_certificate,
+            redacted_certificate=first_device.redacted_device_certificate,
+        )
+
     async def create_device(
         self, organization_id: OrganizationID, device: Device, encrypted_answer: bytes = b""
     ) -> None:
@@ -100,6 +125,12 @@ class MemoryUserComponent(BaseUserComponent):
             raise UserAlreadyExistsError(f"Device `{device.device_id.str}` already exists")
 
         user_devices[device.device_name] = device
+
+        await self.notify_certificates_update(
+            organization_id=organization_id,
+            certificate=device.device_certificate,
+            redacted_certificate=device.redacted_device_certificate,
+        )
 
     async def _get_trustchain(
         self,
@@ -330,6 +361,11 @@ class MemoryUserComponent(BaseUserComponent):
         if user.human_handle:
             del org.human_handle_to_user_id[user.human_handle]
 
+        await self.notify_certificates_update(
+            organization_id=organization_id,
+            certificate=revoked_user_certificate,
+            redacted_certificate=None,
+        )
         await self._send_event(
             BackendEventUserRevoked(organization_id=organization_id, user_id=user_id)
         )
@@ -340,6 +376,40 @@ class MemoryUserComponent(BaseUserComponent):
         for user_devices in org.devices.values():
             devices += user_devices.values()
         return list(org.users.values()), devices
+
+    async def get_certificates(
+        self, organization_id: OrganizationID, created_after: DateTime | None, redacted: bool
+    ) -> list[bytes]:
+        """
+        Raises: Nothing !
+        """
+        certificates = []
+
+        org = self._organizations[organization_id]
+        for user in org.users.values():
+            certif = user.redacted_user_certificate if redacted else user.user_certificate
+            certificates.append((user.created_on, certif))
+            if user.revoked_user_certificate:
+                certificates.append((user.revoked_on, user.revoked_user_certificate))
+
+        for devices in org.devices.values():
+            for device in devices.values():
+                certif = (
+                    device.redacted_device_certificate if redacted else device.device_certificate
+                )
+                certificates.append((device.created_on, certif))
+
+        for (realm_orgid, _), realm in self._realm_component._realms.items():
+            if realm_orgid != organization_id:
+                continue
+            for granted_role in realm.granted_roles:
+                certificates.append((granted_role.granted_on, granted_role.certificate))
+
+        certificates.sort()
+        if created_after is None:
+            return [certif for _, certif in certificates]
+        else:
+            return [certif for timestamp, certif in certificates if timestamp > created_after]
 
     def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:
         self._organizations[new_id] = deepcopy(self._organizations[id])

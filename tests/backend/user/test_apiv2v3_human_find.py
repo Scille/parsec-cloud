@@ -5,14 +5,17 @@ import pytest
 
 from parsec._parsec import authenticated_cmds
 from parsec.api.protocol import (
-    HumanFindRepNotAllowed,
-    HumanFindRepOk,
-    HumanFindResultItem,
     UserProfile,
 )
 from parsec.backend.asgi import app_factory
-from tests.backend.common import human_find
+from tests.backend.common import apiv2v3_human_find
 from tests.common import customize_fixtures, freeze_time
+
+HumanFindRepNotAllowed = authenticated_cmds.v3.human_find.RepNotAllowed
+HumanFindRep = authenticated_cmds.v3.human_find.Rep
+HumanFindRepOk = authenticated_cmds.v3.human_find.RepOk
+HumanFindRepUnknownStatus = authenticated_cmds.v3.human_find.RepUnknownStatus
+HumanFindResultItem = authenticated_cmds.v3.human_find.HumanFindResultItem
 
 
 @pytest.fixture
@@ -46,17 +49,17 @@ async def test_isolation_from_other_organization(
     backend_asgi_app, alice, ws_from_other_organization_factory, alice_ws
 ):
     async with ws_from_other_organization_factory(backend_asgi_app) as ws:
-        rep = await human_find(ws, query=alice.human_handle.label)
+        rep = await apiv2v3_human_find(ws, query=alice.human_handle.label)
         assert rep == HumanFindRepOk(results=[], per_page=100, page=1, total=0)
-        rep = await human_find(ws)
-        rep_alice_ws = await human_find(alice_ws)
+        rep = await apiv2v3_human_find(ws)
+        rep_alice_ws = await apiv2v3_human_find(alice_ws)
         assert rep != rep_alice_ws
 
 
 @pytest.mark.trio
 @customize_fixtures(alice_profile=UserProfile.OUTSIDER)
 async def test_not_allowed_for_outsider(alice_ws):
-    rep = await human_find(alice_ws, query="whatever")
+    rep = await apiv2v3_human_find(alice_ws, query="whatever")
     assert isinstance(rep, HumanFindRepNotAllowed)
 
 
@@ -70,7 +73,7 @@ async def test_ascii_search_on_unicode_data(
     cunyet = local_device_factory(base_human_handle="Cüneyt Arkin", org=org)
     await binder.bind_device(cunyet, certifier=godfrey1)
 
-    rep = await human_find(sock, query="cuneyt")
+    rep = await apiv2v3_human_find(sock, query="cuneyt")
     assert rep == HumanFindRepOk(
         results=[
             HumanFindResultItem(
@@ -90,7 +93,7 @@ async def test_unicode_search(access_testbed, local_device_factory):
     hwang = local_device_factory(base_human_handle="황정리", org=org)
     await binder.bind_device(hwang, certifier=godfrey1)
 
-    rep = await human_find(sock, query="황")
+    rep = await apiv2v3_human_find(sock, query="황")
     assert rep == HumanFindRepOk(
         results=[
             HumanFindResultItem(
@@ -140,16 +143,16 @@ async def test_search_multiple_matches(access_testbed, local_device_factory):
     )
 
     # Simple search
-    rep = await human_find(sock, query="Bruce")
+    rep = await apiv2v3_human_find(sock, query="Bruce")
     assert rep == expected_rep
 
     # Search by email address
-    rep = await human_find(sock, query="bruce.l")
+    rep = await apiv2v3_human_find(sock, query="bruce.l")
     assert rep == expected_rep
 
     # Search with spaces
     for space in [" ", "  ", "\n", "\t"]:
-        rep = await human_find(sock, query=f"Bruce{space}L")
+        rep = await apiv2v3_human_find(sock, query=f"Bruce{space}L")
         assert rep == expected_rep
 
 
@@ -176,7 +179,7 @@ async def test_search_multiple_user_same_human_handle(access_testbed, local_devi
     )
     await binder.bind_device(nick3, certifier=godfrey1)
 
-    rep = await human_find(sock, query="Guzman Huerta")
+    rep = await apiv2v3_human_find(sock, query="Guzman Huerta")
 
     # Users have same label, the sort will have an nondeterminated ordered result.
     assert isinstance(rep, HumanFindRepOk)
@@ -189,7 +192,7 @@ async def test_search_multiple_user_same_human_handle(access_testbed, local_devi
         HumanFindResultItem(user_id=nick3.user_id, human_handle=nick3.human_handle, revoked=False),
     ]
 
-    rep = await human_find(sock, query="Guzman Huerta", omit_revoked=True)
+    rep = await apiv2v3_human_find(sock, query="Guzman Huerta", omit_revoked=True)
     assert rep == HumanFindRepOk(
         results=[
             HumanFindResultItem(
@@ -228,7 +231,7 @@ async def test_pagination(access_testbed, local_device_factory):
     await binder.bind_device(blacky2, certifier=godfrey1)
 
     # Find all, they should be sorted by human label
-    rep = await human_find(sock)
+    rep = await apiv2v3_human_find(sock)
     assert rep == HumanFindRepOk(
         results=[
             HumanFindResultItem(
@@ -262,7 +265,7 @@ async def test_pagination(access_testbed, local_device_factory):
     )
 
     # Find with pagination
-    rep = await human_find(sock, per_page=4)
+    rep = await apiv2v3_human_find(sock, per_page=4)
     assert rep == HumanFindRepOk(
         results=[
             HumanFindResultItem(
@@ -284,7 +287,7 @@ async def test_pagination(access_testbed, local_device_factory):
     )
 
     # Continue pagination
-    rep = await human_find(sock, page=2, per_page=4)
+    rep = await apiv2v3_human_find(sock, page=2, per_page=4)
     assert rep == HumanFindRepOk(
         results=[
             HumanFindResultItem(
@@ -306,11 +309,11 @@ async def test_pagination(access_testbed, local_device_factory):
     )
 
     # Test out of pagination
-    rep = await human_find(sock, page=3, per_page=4)
+    rep = await apiv2v3_human_find(sock, page=3, per_page=4)
     assert rep == HumanFindRepOk(results=[], per_page=4, page=3, total=8)
 
     # Test sort is before pagination when pagination and test non-sensitive sort
-    rep = await human_find(sock, page=1, per_page=1, query="BlaCkY")
+    rep = await apiv2v3_human_find(sock, page=1, per_page=1, query="BlaCkY")
     assert rep == HumanFindRepOk(
         results=[
             HumanFindResultItem(
@@ -388,8 +391,8 @@ async def test_bad_args(access_testbed, local_device_factory):
     ]:
         await sock.send(raw_req)
         raw_rep = await sock.receive()
-        rep = authenticated_cmds.latest.human_find.Rep.load(raw_rep)
-        assert isinstance(rep, authenticated_cmds.latest.human_find.RepUnknownStatus)
+        rep = HumanFindRep.load(raw_rep)
+        assert isinstance(rep, HumanFindRepUnknownStatus)
         assert rep.status == "invalid_msg_format"
 
 
@@ -405,11 +408,11 @@ async def test_bad_query(access_testbed):
         "god_",
         "god\\",
     ]:
-        rep = await human_find(sock, query=bad_query)
+        rep = await apiv2v3_human_find(sock, query=bad_query)
         assert rep == HumanFindRepOk(results=[], per_page=100, page=1, total=0)
 
     # Cheap test to make sure we can match anyway
-    rep = await human_find(sock, query="god")
+    rep = await apiv2v3_human_find(sock, query="god")
     assert rep.total == 1
 
 
@@ -419,7 +422,7 @@ async def test_bad_query(access_testbed):
 )
 async def test_find_with_query_does_not_ignore_non_human(alice_ws, alice, bob, adam):
     # Find all first
-    rep = await human_find(alice_ws)
+    rep = await apiv2v3_human_find(alice_ws)
 
     assert isinstance(rep, HumanFindRepOk)
     assert rep.per_page == 100
@@ -431,9 +434,9 @@ async def test_find_with_query_does_not_ignore_non_human(alice_ws, alice, bob, a
         HumanFindResultItem(user_id=bob.user_id, revoked=False, human_handle=None),
     ]
 
-    rep = await human_find(alice_ws, query=str(alice.user_id))
+    rep = await apiv2v3_human_find(alice_ws, query=str(alice.user_id))
     assert rep == HumanFindRepOk(results=[], per_page=100, page=1, total=0)
-    rep = await human_find(alice_ws, query="alice")
+    rep = await apiv2v3_human_find(alice_ws, query="alice")
     assert isinstance(rep, HumanFindRepOk)
     assert rep.per_page == 100
     assert rep.page == 1
@@ -480,7 +483,7 @@ async def test_no_query_users_with_and_without_human_label(access_testbed, local
     await binder.bind_device(titeuf, certifier=godfrey1)
 
     # Users with human label should be sorted but for now non_human users create a NonDeterministicOrder
-    rep = await human_find(sock, per_page=11, page=1)
+    rep = await apiv2v3_human_find(sock, per_page=11, page=1)
     assert isinstance(rep, HumanFindRepOk)
     assert rep.per_page == 11
     assert rep.page == 1

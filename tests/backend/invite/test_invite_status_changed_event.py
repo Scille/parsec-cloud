@@ -7,18 +7,18 @@ from parsec._parsec import (
     DateTime,
 )
 from parsec.api.protocol import (
-    APIEventInviteStatusChanged,
-    EventsListenRepNoEvents,
-    EventsListenRepOk,
+    ApiV2V3_APIEventInviteStatusChanged,
+    ApiV2V3_EventsListenRepNoEvents,
+    ApiV2V3_EventsListenRepOk,
     InvitationStatus,
     InvitationType,
     InviteListItemDevice,
     InviteListRepOk,
 )
 from tests.backend.common import (
-    events_listen_nowait,
-    events_listen_wait,
-    events_subscribe,
+    apiv2v3_events_listen_nowait,
+    apiv2v3_events_listen_wait,
+    apiv2v3_events_subscribe,
     invite_list,
 )
 from tests.common import real_clock_timeout
@@ -34,8 +34,8 @@ async def test_greeter_event_on_claimer_join_and_leave(
         created_on=DateTime(2000, 1, 2),
     )
 
-    await events_subscribe(alice_ws)
-    await events_subscribe(bob_ws)
+    await apiv2v3_events_subscribe(alice_ws)
+    await apiv2v3_events_subscribe(bob_ws)
 
     async with backend_invited_ws_factory(
         backend_asgi_app,
@@ -46,18 +46,18 @@ async def test_greeter_event_on_claimer_join_and_leave(
         # Claimer is ready, this should be notified to greeter
 
         async with real_clock_timeout():
-            rep = await events_listen_wait(alice_ws)
+            rep = await apiv2v3_events_listen_wait(alice_ws)
             # PostgreSQL event dispatching might be lagging behind and return
             # the IDLE event first
             if rep.unit.invitation_status == InvitationStatus.IDLE:
-                rep = await events_listen_wait(alice_ws)
-        assert rep == EventsListenRepOk(
-            APIEventInviteStatusChanged(invitation.token, InvitationStatus.READY)
+                rep = await apiv2v3_events_listen_wait(alice_ws)
+        assert rep == ApiV2V3_EventsListenRepOk(
+            ApiV2V3_APIEventInviteStatusChanged(invitation.token, InvitationStatus.READY)
         )
 
         # No other authenticated users should be notified
-        rep = await events_listen_nowait(bob_ws)
-        assert isinstance(rep, EventsListenRepNoEvents)
+        rep = await apiv2v3_events_listen_nowait(bob_ws)
+        assert isinstance(rep, ApiV2V3_EventsListenRepNoEvents)
 
         rep = await invite_list(alice_ws)
         assert rep == InviteListRepOk(
@@ -66,10 +66,10 @@ async def test_greeter_event_on_claimer_join_and_leave(
 
     # Now claimer has left, greeter should be again notified
     async with real_clock_timeout():
-        rep = await events_listen_wait(alice_ws)
+        rep = await apiv2v3_events_listen_wait(alice_ws)
 
-    assert rep == EventsListenRepOk(
-        APIEventInviteStatusChanged(invitation.token, InvitationStatus.IDLE)
+    assert rep == ApiV2V3_EventsListenRepOk(
+        ApiV2V3_APIEventInviteStatusChanged(invitation.token, InvitationStatus.IDLE)
     )
 
     rep = await invite_list(alice_ws)

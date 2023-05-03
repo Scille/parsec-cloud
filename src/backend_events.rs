@@ -15,6 +15,12 @@ use crate::{
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "type")]
 enum RawBackendEvent {
+    #[serde(rename = "certificates.updated")]
+    CertificatesUpdated {
+        organization_id: libparsec::types::OrganizationID,
+        certificate: Vec<u8>,
+        redacted_certificate: Option<Vec<u8>>,
+    },
     #[serde(rename = "invite.conduit_updated")]
     InviteConduitUpdated {
         organization_id: libparsec::types::OrganizationID,
@@ -41,6 +47,7 @@ enum RawBackendEvent {
         author: libparsec::types::DeviceID,
         recipient: libparsec::types::UserID,
         index: u64,
+        message: Vec<u8>,
     },
     #[serde(rename = "invite.status_changed")]
     InviteStatusChanged {
@@ -108,6 +115,11 @@ impl BackendEvent {
     fn load(py: Python, raw: &[u8]) -> PyResult<PyObject> {
         match ::rmp_serde::from_slice::<RawBackendEvent>(raw) {
             Ok(obj) => Ok(match &obj {
+                RawBackendEvent::CertificatesUpdated { .. } => {
+                    let init = PyClassInitializer::from(BackendEvent(obj));
+                    let init = init.add_subclass(BackendEventCertificatesUpdated);
+                    Py::new(py, init)?.into_py(py)
+                }
                 RawBackendEvent::InviteConduitUpdated { .. } => {
                     let init = PyClassInitializer::from(BackendEvent(obj));
                     let init = init.add_subclass(BackendEventInviteConduitUpdated);
@@ -168,6 +180,77 @@ impl BackendEvent {
         }
     }
 }
+
+/*
+ * BackendEventCertificatesUpdated
+ */
+
+#[pyclass(extends=BackendEvent)]
+pub(crate) struct BackendEventCertificatesUpdated;
+
+#[pymethods]
+impl BackendEventCertificatesUpdated {
+    #[new]
+    #[args(py_kwargs = "**")]
+    fn new(py_kwargs: Option<&PyDict>) -> PyResult<(Self, BackendEvent)> {
+        crate::binding_utils::parse_kwargs!(
+            py_kwargs,
+            [organization_id: OrganizationID, "organization_id"],
+            [certificate: &PyBytes, "certificate"],
+            [
+                redacted_certificate: Option<&PyBytes>,
+                "redacted_certificate"
+            ],
+        );
+
+        Ok((
+            BackendEventCertificatesUpdated,
+            BackendEvent(RawBackendEvent::CertificatesUpdated {
+                organization_id: organization_id.0,
+                certificate: certificate.as_bytes().to_vec(),
+                redacted_certificate: redacted_certificate.map(|rc| rc.as_bytes().to_vec()),
+            }),
+        ))
+    }
+
+    #[getter]
+    fn organization_id(_self: PyRef<Self>) -> PyResult<OrganizationID> {
+        match &_self.into_super().0 {
+            RawBackendEvent::CertificatesUpdated {
+                organization_id, ..
+            } => Ok(OrganizationID(organization_id.clone())),
+            _ => unreachable!(),
+        }
+    }
+
+    #[getter]
+    fn certificate<'py>(_self: PyRef<Self>, py: Python<'py>) -> PyResult<&'py PyBytes> {
+        match &_self.into_super().0 {
+            RawBackendEvent::CertificatesUpdated { certificate, .. } => {
+                Ok(PyBytes::new(py, certificate))
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    #[getter]
+    fn redacted_certificate<'py>(
+        _self: PyRef<Self>,
+        py: Python<'py>,
+    ) -> PyResult<Option<&'py PyBytes>> {
+        match &_self.into_super().0 {
+            RawBackendEvent::CertificatesUpdated {
+                redacted_certificate,
+                ..
+            } => Ok(redacted_certificate.as_ref().map(|rc| PyBytes::new(py, rc))),
+            _ => unreachable!(),
+        }
+    }
+}
+
+/*
+ * BackendEventInviteConduitUpdated
+ */
 
 #[pyclass(extends=BackendEvent)]
 pub(crate) struct BackendEventInviteConduitUpdated;
@@ -367,6 +450,7 @@ impl BackendEventMessageReceived {
             [author: DeviceID, "author"],
             [recipient: UserID, "recipient"],
             [index: u64, "index"],
+            [message: &PyBytes, "message"],
         );
 
         Ok((
@@ -376,6 +460,7 @@ impl BackendEventMessageReceived {
                 author: author.0,
                 recipient: recipient.0,
                 index,
+                message: message.as_bytes().to_vec(),
             }),
         ))
     }
@@ -410,6 +495,14 @@ impl BackendEventMessageReceived {
     fn index(_self: PyRef<Self>) -> PyResult<u64> {
         match &_self.into_super().0 {
             RawBackendEvent::MessageReceived { index, .. } => Ok(*index),
+            _ => unreachable!(),
+        }
+    }
+
+    #[getter]
+    fn message<'py>(_self: PyRef<Self>, py: Python<'py>) -> PyResult<&'py PyBytes> {
+        match &_self.into_super().0 {
+            RawBackendEvent::MessageReceived { message, .. } => Ok(PyBytes::new(py, message)),
             _ => unreachable!(),
         }
     }

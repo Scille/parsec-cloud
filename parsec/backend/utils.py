@@ -63,12 +63,15 @@ def api(fn: Callable[P, T]) -> Callable[P, T]:
     assert types["return"].__name__ == "Rep"
 
     if m_family == "authenticated_cmds":
-        assert types["client_ctx"] == ForwardRef("AuthenticatedClientContext")
+        expected_type_name = "AuthenticatedClientContext"
     elif m_family == "invited_cmds":
-        assert types["client_ctx"] == ForwardRef("InvitedClientContext")
+        expected_type_name = "InvitedClientContext"
     else:
         assert m_family == "anonymous_cmds"
-        assert types["client_ctx"] == ForwardRef("AnonymousClientContext")
+        expected_type_name = "AnonymousClientContext"
+    assert types["client_ctx"] == ForwardRef(
+        expected_type_name
+    ), f"Expect `client_ctx` to be an `{expected_type_name}`"
 
     fn._api_info = {  # type: ignore[attr-defined]
         "cmd": m_cmd,
@@ -81,7 +84,7 @@ def api(fn: Callable[P, T]) -> Callable[P, T]:
 def api_ws_cancel_on_client_sending_new_cmd(fn: Callable[P, T]) -> Callable[P, T]:
     # `@api` must be placed first
     assert hasattr(fn, "_api_info")
-    fn._api_info["cancel_on_client_sending_new_cmd"] = True
+    fn._api_info["cancel_on_client_sending_new_cmd"] = True  # type: ignore[attr-defined]
     return fn
 
 

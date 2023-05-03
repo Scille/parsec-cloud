@@ -118,6 +118,17 @@ class BasePkiEnrollmentComponent:
         self._event_bus = event_bus
 
     @api
+    async def apiv2_pki_enrollment_submit(
+        self,
+        client_ctx: AnonymousClientContext,
+        req: anonymous_cmds.v2.pki_enrollment_submit.Req,
+    ) -> anonymous_cmds.v2.pki_enrollment_submit.Rep:
+        # `pki_enrollment_submit` command is strictly similar between APIv2 and v4+
+        # (from client point of view, server may provide an old APIv2 where this
+        # command is not available)
+        return await self.api_pki_enrollment_submit(client_ctx, req)  # type: ignore
+
+    @api
     async def api_pki_enrollment_submit(
         self,
         client_ctx: AnonymousClientContext,
@@ -154,6 +165,17 @@ class BasePkiEnrollmentComponent:
 
         except PkiEnrollmentAlreadyEnrolledError:
             return anonymous_cmds.latest.pki_enrollment_submit.RepAlreadyEnrolled()
+
+    @api
+    async def apiv2_pki_enrollment_info(
+        self,
+        client_ctx: AnonymousClientContext,
+        req: anonymous_cmds.v2.pki_enrollment_info.Req,
+    ) -> anonymous_cmds.v2.pki_enrollment_info.Rep:
+        # `pki_enrollment_info` command is strictly similar between APIv2 and v4+
+        # (from client point of view, server may provide an old APIv2 where this
+        # command is not available)
+        return await self.api_pki_enrollment_info(client_ctx, req)  # type: ignore
 
     @api
     async def api_pki_enrollment_info(
@@ -194,6 +216,17 @@ class BasePkiEnrollmentComponent:
         return anonymous_cmds.latest.pki_enrollment_info.RepOk(rep)
 
     @api
+    async def apiv2_pki_enrollment_list(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.v2.pki_enrollment_list.Req,
+    ) -> authenticated_cmds.v2.pki_enrollment_list.Rep:
+        # `pki_enrollment_list` command is strictly similar between APIv2 and v4+
+        # (from client point of view, server may provide an old APIv2 where this
+        # command is not available)
+        return await self.api_pki_enrollment_list(client_ctx, req)  # type: ignore
+
+    @api
     async def api_pki_enrollment_list(
         self,
         client_ctx: AuthenticatedClientContext,
@@ -218,6 +251,17 @@ class BasePkiEnrollmentComponent:
         )
 
     @api
+    async def apiv2_pki_enrollment_reject(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.v2.pki_enrollment_reject.Req,
+    ) -> authenticated_cmds.v2.pki_enrollment_reject.Rep:
+        # `pki_enrollment_reject` command is strictly similar between APIv2 and v4+
+        # (from client point of view, server may provide an old APIv2 where this
+        # command is not available)
+        return await self.api_pki_enrollment_reject(client_ctx, req)  # type: ignore
+
+    @api
     async def api_pki_enrollment_reject(
         self,
         client_ctx: AuthenticatedClientContext,
@@ -240,6 +284,17 @@ class BasePkiEnrollmentComponent:
 
         except PkiEnrollmentNoLongerAvailableError as exc:
             return authenticated_cmds.latest.pki_enrollment_reject.RepNoLongerAvailable(str(exc))
+
+    @api
+    async def apiv2_pki_enrollment_accept(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.v2.pki_enrollment_accept.Req,
+    ) -> authenticated_cmds.v2.pki_enrollment_accept.Rep:
+        # `pki_enrollment_accept` command is strictly similar between APIv2 and v4+
+        # (from client point of view, server may provide an old APIv2 where this
+        # command is not available)
+        return await self.api_pki_enrollment_accept(client_ctx, req)  # type: ignore
 
     @api
     async def api_pki_enrollment_accept(

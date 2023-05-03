@@ -13,16 +13,16 @@ from parsec._parsec import (
 )
 from parsec.api.data import DeviceCertificate, UserCertificate
 from parsec.api.protocol import (
+    ApiV2V3_UserGetRepOk,
     UserCreateRepActiveUsersLimitReached,
     UserCreateRepAlreadyExists,
     UserCreateRepInvalidCertification,
     UserCreateRepInvalidData,
     UserCreateRepNotAllowed,
     UserCreateRepOk,
-    UserGetRepOk,
 )
 from parsec.backend.user import INVITATION_VALIDITY, Device, User
-from tests.backend.common import user_create, user_get
+from tests.backend.common import apiv2v3_user_get, user_create
 from tests.common import customize_fixtures, freeze_time
 
 
@@ -78,8 +78,8 @@ async def test_user_create_ok(
 
     # Make sure mallory can connect now
     async with backend_authenticated_ws_factory(backend_asgi_app, mallory) as sock:
-        rep = await user_get(sock, user_id=mallory.user_id)
-        assert isinstance(rep, UserGetRepOk)
+        rep = await apiv2v3_user_get(sock, user_id=mallory.user_id)
+        assert isinstance(rep, ApiV2V3_UserGetRepOk)
 
     # Check the resulting data in the backend
     backend_user, backend_device = await backend_asgi_app.backend.user.get_user_with_device(

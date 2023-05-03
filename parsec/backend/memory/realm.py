@@ -106,6 +106,7 @@ class MemoryRealmComponent(BaseRealmComponent):
     async def create(
         self, organization_id: OrganizationID, self_granted_role: RealmGrantedRole
     ) -> None:
+        assert self._user_component is not None
         assert self_granted_role.granted_by is not None
         assert self_granted_role.granted_by.user_id == self_granted_role.user_id
         assert self_granted_role.role == RealmRole.OWNER
@@ -114,6 +115,11 @@ class MemoryRealmComponent(BaseRealmComponent):
         if key not in self._realms:
             self._realms[key] = Realm(granted_roles=[self_granted_role])
 
+            await self._user_component.notify_certificates_update(
+                organization_id=organization_id,
+                certificate=self_granted_role.certificate,
+                redacted_certificate=None,
+            )
             await self._send_event(
                 BackendEventRealmRolesUpdated(
                     organization_id=organization_id,
@@ -258,6 +264,11 @@ class MemoryRealmComponent(BaseRealmComponent):
             else max(current_value, new_role.granted_on)
         )
 
+        await self._user_component.notify_certificates_update(
+            organization_id=organization_id,
+            certificate=new_role.certificate,
+            redacted_certificate=None,
+        )
         await self._send_event(
             BackendEventRealmRolesUpdated(
                 organization_id=organization_id,

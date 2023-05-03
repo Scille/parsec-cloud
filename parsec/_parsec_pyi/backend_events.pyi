@@ -19,6 +19,20 @@ class BackendEvent:
     @staticmethod
     def load(raw: bytes) -> BackendEvent: ...
 
+class BackendEventCertificatesUpdated(BackendEvent):
+    def __init__(
+        self,
+        organization_id: OrganizationID,
+        certificate: bytes,
+        redacted_certificate: bytes | None,
+    ) -> None: ...
+    @property
+    def organization_id(self) -> OrganizationID: ...
+    @property
+    def certificate(self) -> bytes: ...
+    @property
+    def redacted_certificate(self) -> bytes | None: ...
+
 class BackendEventInviteConduitUpdated(BackendEvent):
     def __init__(
         self,
@@ -70,6 +84,7 @@ class BackendEventMessageReceived(BackendEvent):
         author: DeviceID,
         recipient: UserID,
         index: int,
+        message: bytes,
     ) -> None: ...
     @property
     def organization_id(self) -> OrganizationID: ...
@@ -79,6 +94,8 @@ class BackendEventMessageReceived(BackendEvent):
     def recipient(self) -> UserID: ...
     @property
     def index(self) -> int: ...
+    @property
+    def message(self) -> bytes: ...
 
 class BackendEventInviteStatusChanged(BackendEvent):
     def __init__(

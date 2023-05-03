@@ -28,7 +28,13 @@ from parsec.api.protocol.types import (
     OrganizationID,
     OrganizationIDField,
 )
-from parsec.api.version import API_V1_VERSION, API_V2_VERSION, API_V3_VERSION, ApiVersion
+from parsec.api.version import (
+    API_V1_VERSION,
+    API_V2_VERSION,
+    API_V3_VERSION,
+    API_V4_VERSION,
+    ApiVersion,
+)
 from parsec.serde import BaseSchema, OneOfSchema, fields, post_load
 from parsec.utils import (
     BALLPARK_CLIENT_EARLY_OFFSET,
@@ -183,6 +189,7 @@ class ServerHandshake:
         API_V1_VERSION,
         API_V2_VERSION,
         API_V3_VERSION,
+        API_V4_VERSION,
     )
     CHALLENGE_SIZE = 48
 
@@ -417,6 +424,11 @@ class BaseClientHandshake:
 
 
 class AuthenticatedClientHandshake(BaseClientHandshake):
+    # Stick to APIv3 instead of using APIv4
+    # This is because we are planning to use APIv4 only with RPC and from Rust
+    # code.
+    # So we keep this with APIv3 for the legacy tests using Websocket (e.g.
+    # tests using event subscribe/listen) and the Python client
     SUPPORTED_API_VERSIONS = (API_V3_VERSION,)
     HANDSHAKE_TYPE: HandshakeType = HandshakeType.AUTHENTICATED
     HANDSHAKE_ANSWER_SERIALIZER = handshake_answer_serializer
@@ -459,6 +471,11 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
 
 
 class InvitedClientHandshake(BaseClientHandshake):
+    # Stick to APIv3 instead of using APIv4
+    # This is because we are planning to use APIv4 only with RPC and from Rust
+    # code.
+    # So we keep this with APIv3 for the legacy tests using Websocket (e.g.
+    # tests using event subscribe/listen) and the Python client
     SUPPORTED_API_VERSIONS = (API_V3_VERSION,)
 
     def __init__(

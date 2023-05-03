@@ -1,8 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from unittest.mock import ANY
-
 import pytest
 import trio
 from hypothesis import strategies as st
@@ -18,7 +16,9 @@ from hypothesis_trio.stateful import (
 
 from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import (
-    RealmGetRoleCertificatesRepOk,
+    ApiV2V3_RealmGetRoleCertificatesRepNotAllowed,
+    ApiV2V3_RealmGetRoleCertificatesRepOk,
+    RealmID,
     RealmRole,
     RealmUpdateRolesRepAlreadyGranted,
     RealmUpdateRolesRepInvalidData,
@@ -26,7 +26,8 @@ from parsec.api.protocol import (
     RealmUpdateRolesRepOk,
 )
 from parsec.backend.asgi import app_factory
-from tests.backend.common import realm_get_role_certificates, realm_update_roles
+from parsec.backend.realm import RealmGrantedRole
+from tests.backend.common import apiv2v3_realm_get_role_certificates, realm_update_roles
 from tests.common import call_with_control
 
 
@@ -38,7 +39,6 @@ def test_shuffle_roles(
     backend_data_binder_factory,
     backend_authenticated_ws_factory,
     local_device_factory,
-    realm_factory,
     coolorg,
     next_timestamp,
 ):
@@ -70,9 +70,24 @@ def test_shuffle_roles(
             await self.backend_data_binder.bind_organization(self.org, device)
 
             # Create realm
-            self.realm_id = await realm_factory(self.backend_asgi_app.backend, device)
+            self.realm_id = RealmID.new()
+            now = next_timestamp()
+            certif = RealmRoleCertificate.build_realm_root_certif(
+                author=device.device_id, timestamp=now, realm_id=self.realm_id
+            ).dump_and_sign(device.signing_key)
+            await self.backend_asgi_app.backend.realm.create(
+                organization_id=device.organization_id,
+                self_granted_role=RealmGrantedRole(
+                    realm_id=self.realm_id,
+                    user_id=device.user_id,
+                    certificate=certif,
+                    role=RealmRole.OWNER,
+                    granted_by=device.device_id,
+                    granted_on=now,
+                ),
+            )
             self.current_roles = {device.user_id: RealmRole.OWNER}
-            self.certifs = [ANY]
+            self.certifs = [certif]
 
             self.wss = {}
             return device
@@ -151,21 +166,16 @@ def test_shuffle_roles(
         @rule(author=User)
         async def get_role_certificates(self, author):
             ws = await self.get_ws(author)
-            rep = await realm_get_role_certificates(ws, self.realm_id)
+            rep = await apiv2v3_realm_get_role_certificates(ws, self.realm_id)
             if self.current_roles.get(author.user_id) is not None:
-                try:
-                    assert rep == RealmGetRoleCertificatesRepOk(certificates=self.certifs)
-                except TypeError:
-                    assert isinstance(rep, RealmGetRoleCertificatesRepOk)
-                except Exception:
-                    assert False
+                assert rep == ApiV2V3_RealmGetRoleCertificatesRepOk(certificates=self.certifs)
             else:
-                assert rep == {}
+                assert rep == ApiV2V3_RealmGetRoleCertificatesRepNotAllowed()
 
         @invariant()
         async def check_current_roles(self):
             try:
-                backend = self.backend_agi_app.backend
+                backend = self.backend_asgi_app.backend
             except AttributeError:
                 return
             roles = await backend.realm.get_current_roles(self.org.organization_id, self.realm_id)

@@ -41,7 +41,7 @@ from parsec.api.protocol import (
 from parsec.backend.realm import RealmGrantedRole
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 from tests.backend.common import vlob_create, vlob_list_versions, vlob_read, vlob_update
-from tests.backend.realm.test_roles import realm_generate_certif_and_update_roles_or_fail
+from tests.backend.realm.test_update_roles import realm_generate_certif_and_update_roles_or_fail
 from tests.common import freeze_time
 
 # Fixture

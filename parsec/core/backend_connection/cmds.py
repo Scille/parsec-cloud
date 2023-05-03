@@ -21,13 +21,15 @@ from parsec._parsec import (
 )
 from parsec.api.protocol import (
     ApiCommandSerializer,
+    ApiV2V3_EventsListenRep,
+    ApiV2V3_HumanFindRep,
+    ApiV2V3_RealmGetRoleCertificatesRep,
+    ApiV2V3_UserGetRep,
     AuthenticatedPingRep,
     BlockCreateRep,
     BlockReadRep,
     DeviceCreateRep,
-    EventsListenRep,
     EventsSubscribeRep,
-    HumanFindRep,
     InvitationDeletedReason,
     Invite1ClaimerWaitPeerRep,
     Invite1GreeterWaitPeerRep,
@@ -59,7 +61,6 @@ from parsec.api.protocol import (
     RealmCreateRep,
     RealmCreateRepBadTimestamp,
     RealmFinishReencryptionMaintenanceRep,
-    RealmGetRoleCertificatesRep,
     RealmStartReencryptionMaintenanceRep,
     RealmStartReencryptionMaintenanceRepBadTimestamp,
     RealmStatsRep,
@@ -67,7 +68,6 @@ from parsec.api.protocol import (
     RealmUpdateRolesRep,
     RealmUpdateRolesRepBadTimestamp,
     UserCreateRep,
-    UserGetRep,
     UserRevokeRep,
     VlobCreateRep,
     VlobCreateRepBadTimestamp,
@@ -91,9 +91,9 @@ COMMAND_RETURN_TYPE = Union[
     BlockCreateRep,
     BlockReadRep,
     DeviceCreateRep,
-    EventsListenRep,
+    ApiV2V3_EventsListenRep,
     EventsSubscribeRep,
-    HumanFindRep,
+    ApiV2V3_HumanFindRep,
     Invite1ClaimerWaitPeerRep,
     Invite1GreeterWaitPeerRep,
     Invite2aClaimerSendHashedNonceRep,
@@ -123,13 +123,13 @@ COMMAND_RETURN_TYPE = Union[
     RealmCreateRep,
     RealmFinishReencryptionMaintenanceRep,
     RealmFinishReencryptionMaintenanceRep,
-    RealmGetRoleCertificatesRep,
+    ApiV2V3_RealmGetRoleCertificatesRep,
     RealmStartReencryptionMaintenanceRep,
     RealmStatsRep,
     RealmStatusRep,
     RealmUpdateRolesRep,
     UserCreateRep,
-    UserGetRep,
+    ApiV2V3_UserGetRep,
     UserRevokeRep,
     VlobCreateRep,
     VlobListVersionsRep,
@@ -244,9 +244,9 @@ async def events_subscribe(
     )
 
 
-async def events_listen(transport: Transport, wait: bool = True) -> EventsListenRep:
+async def events_listen(transport: Transport, wait: bool = True) -> ApiV2V3_EventsListenRep:
     return cast(
-        EventsListenRep,
+        ApiV2V3_EventsListenRep,
         await _send_cmd(transport, events_listen_serializer, cmd="events_listen", wait=wait),
     )
 
@@ -421,9 +421,9 @@ async def realm_status(transport: Transport, realm_id: RealmID) -> RealmStatusRe
 
 async def realm_get_role_certificates(
     transport: Transport, realm_id: RealmID
-) -> RealmGetRoleCertificatesRep:
+) -> ApiV2V3_RealmGetRoleCertificatesRep:
     return cast(
-        RealmGetRoleCertificatesRep,
+        ApiV2V3_RealmGetRoleCertificatesRep,
         await _send_cmd(
             transport,
             realm_get_role_certificates_serializer,
@@ -733,9 +733,9 @@ async def invite_4_claimer_communicate(
 ### User API ###
 
 
-async def user_get(transport: Transport, user_id: UserID) -> UserGetRep:
+async def user_get(transport: Transport, user_id: UserID) -> ApiV2V3_UserGetRep:
     return cast(
-        UserGetRep,
+        ApiV2V3_UserGetRep,
         await _send_cmd(transport, user_get_serializer, cmd="user_get", user_id=user_id),
     )
 
@@ -747,9 +747,9 @@ async def human_find(
     per_page: int = 100,
     omit_revoked: bool = False,
     omit_non_human: bool = False,
-) -> HumanFindRep:
+) -> ApiV2V3_HumanFindRep:
     return cast(
-        HumanFindRep,
+        ApiV2V3_HumanFindRep,
         await _send_cmd(
             transport,
             human_find_serializer,

@@ -7,12 +7,12 @@ from parsec._parsec import anonymous_cmds, authenticated_cmds, invited_cmds
 #
 
 # human_find
-HumanFindReq = authenticated_cmds.latest.human_find.Req
-HumanFindRep = authenticated_cmds.latest.human_find.Rep
-HumanFindRepUnknownStatus = authenticated_cmds.latest.human_find.RepUnknownStatus
-HumanFindRepOk = authenticated_cmds.latest.human_find.RepOk
-HumanFindRepNotAllowed = authenticated_cmds.latest.human_find.RepNotAllowed
-HumanFindResultItem = authenticated_cmds.latest.human_find.HumanFindResultItem
+ApiV2V3_HumanFindReq = authenticated_cmds.v3.human_find.Req
+ApiV2V3_HumanFindRep = authenticated_cmds.v3.human_find.Rep
+ApiV2V3_HumanFindRepUnknownStatus = authenticated_cmds.v3.human_find.RepUnknownStatus
+ApiV2V3_HumanFindRepOk = authenticated_cmds.v3.human_find.RepOk
+ApiV2V3_HumanFindRepNotAllowed = authenticated_cmds.v3.human_find.RepNotAllowed
+ApiV2V3_HumanFindResultItem = authenticated_cmds.v3.human_find.HumanFindResultItem
 
 # vlob_maintenance_save_reencryption_batch
 VlobMaintenanceSaveReencryptionBatchReq = (
@@ -84,12 +84,12 @@ RealmStatsRepNotAllowed = authenticated_cmds.latest.realm_stats.RepNotAllowed
 RealmStatsRepNotFound = authenticated_cmds.latest.realm_stats.RepNotFound
 
 # user_get
-UserGetReq = authenticated_cmds.latest.user_get.Req
-UserGetRep = authenticated_cmds.latest.user_get.Rep
-UserGetRepUnknownStatus = authenticated_cmds.latest.user_get.RepUnknownStatus
-UserGetRepOk = authenticated_cmds.latest.user_get.RepOk
-UserGetRepNotFound = authenticated_cmds.latest.user_get.RepNotFound
-Trustchain = authenticated_cmds.latest.user_get.Trustchain
+ApiV2V3_UserGetReq = authenticated_cmds.v3.user_get.Req
+ApiV2V3_UserGetRep = authenticated_cmds.v3.user_get.Rep
+ApiV2V3_UserGetRepUnknownStatus = authenticated_cmds.v3.user_get.RepUnknownStatus
+ApiV2V3_UserGetRepOk = authenticated_cmds.v3.user_get.RepOk
+ApiV2V3_UserGetRepNotFound = authenticated_cmds.v3.user_get.RepNotFound
+ApiV2V3_Trustchain = authenticated_cmds.v3.user_get.Trustchain
 
 # invite_list
 InviteListReq = authenticated_cmds.latest.invite_list.Req
@@ -127,17 +127,17 @@ PkiEnrollmentAcceptRepActiveUsersLimitReached = (
 )
 
 # realm_get_role_certificates
-RealmGetRoleCertificatesReq = authenticated_cmds.latest.realm_get_role_certificates.Req
-RealmGetRoleCertificatesRep = authenticated_cmds.latest.realm_get_role_certificates.Rep
-RealmGetRoleCertificatesRepUnknownStatus = (
-    authenticated_cmds.latest.realm_get_role_certificates.RepUnknownStatus
+ApiV2V3_RealmGetRoleCertificatesReq = authenticated_cmds.v3.realm_get_role_certificates.Req
+ApiV2V3_RealmGetRoleCertificatesRep = authenticated_cmds.v3.realm_get_role_certificates.Rep
+ApiV2V3_RealmGetRoleCertificatesRepUnknownStatus = (
+    authenticated_cmds.v3.realm_get_role_certificates.RepUnknownStatus
 )
-RealmGetRoleCertificatesRepOk = authenticated_cmds.latest.realm_get_role_certificates.RepOk
-RealmGetRoleCertificatesRepNotAllowed = (
-    authenticated_cmds.latest.realm_get_role_certificates.RepNotAllowed
+ApiV2V3_RealmGetRoleCertificatesRepOk = authenticated_cmds.v3.realm_get_role_certificates.RepOk
+ApiV2V3_RealmGetRoleCertificatesRepNotAllowed = (
+    authenticated_cmds.v3.realm_get_role_certificates.RepNotAllowed
 )
-RealmGetRoleCertificatesRepNotFound = (
-    authenticated_cmds.latest.realm_get_role_certificates.RepNotFound
+ApiV2V3_RealmGetRoleCertificatesRepNotFound = (
+    authenticated_cmds.v3.realm_get_role_certificates.RepNotFound
 )
 
 # invite_3b_greeter_signify_trust
@@ -225,9 +225,9 @@ EventsListenReq = authenticated_cmds.latest.events_listen.Req
 EventsListenRep = authenticated_cmds.latest.events_listen.Rep
 EventsListenRepUnknownStatus = authenticated_cmds.latest.events_listen.RepUnknownStatus
 EventsListenRepOk = authenticated_cmds.latest.events_listen.RepOk
-EventsListenRepCancelled = authenticated_cmds.latest.events_listen.RepCancelled
 EventsListenRepNoEvents = authenticated_cmds.latest.events_listen.RepNoEvents
 APIEvent = authenticated_cmds.latest.events_listen.APIEvent
+APIEventCertificatesUpdated = authenticated_cmds.latest.events_listen.APIEventCertificatesUpdated
 APIEventPinged = authenticated_cmds.latest.events_listen.APIEventPinged
 APIEventMessageReceived = authenticated_cmds.latest.events_listen.APIEventMessageReceived
 APIEventInviteStatusChanged = authenticated_cmds.latest.events_listen.APIEventInviteStatusChanged
@@ -238,8 +238,31 @@ APIEventRealmMaintenanceFinished = (
     authenticated_cmds.latest.events_listen.APIEventRealmMaintenanceFinished
 )
 APIEventRealmVlobsUpdated = authenticated_cmds.latest.events_listen.APIEventRealmVlobsUpdated
-APIEventRealmRolesUpdated = authenticated_cmds.latest.events_listen.APIEventRealmRolesUpdated
 APIEventPkiEnrollmentUpdated = authenticated_cmds.latest.events_listen.APIEventPkiEnrollmentUpdated
+
+ApiV2V3_EventsListenReq = authenticated_cmds.v3.events_listen.Req
+ApiV2V3_EventsListenRep = authenticated_cmds.v3.events_listen.Rep
+ApiV2V3_EventsListenRepUnknownStatus = authenticated_cmds.v3.events_listen.RepUnknownStatus
+ApiV2V3_EventsListenRepOk = authenticated_cmds.v3.events_listen.RepOk
+ApiV2V3_EventsListenRepCancelled = authenticated_cmds.v3.events_listen.RepCancelled
+ApiV2V3_EventsListenRepNoEvents = authenticated_cmds.v3.events_listen.RepNoEvents
+ApiV2V3_APIEvent = authenticated_cmds.v3.events_listen.APIEvent
+ApiV2V3_APIEventPinged = authenticated_cmds.v3.events_listen.APIEventPinged
+ApiV2V3_APIEventMessageReceived = authenticated_cmds.v3.events_listen.APIEventMessageReceived
+ApiV2V3_APIEventInviteStatusChanged = (
+    authenticated_cmds.v3.events_listen.APIEventInviteStatusChanged
+)
+ApiV2V3_APIEventRealmMaintenanceStarted = (
+    authenticated_cmds.v3.events_listen.APIEventRealmMaintenanceStarted
+)
+ApiV2V3_APIEventRealmMaintenanceFinished = (
+    authenticated_cmds.v3.events_listen.APIEventRealmMaintenanceFinished
+)
+ApiV2V3_APIEventRealmVlobsUpdated = authenticated_cmds.v3.events_listen.APIEventRealmVlobsUpdated
+ApiV2V3_APIEventRealmRolesUpdated = authenticated_cmds.v3.events_listen.APIEventRealmRolesUpdated
+ApiV2V3_APIEventPkiEnrollmentUpdated = (
+    authenticated_cmds.v3.events_listen.APIEventPkiEnrollmentUpdated
+)
 
 # vlob_maintenance_get_reencryption_batch
 VlobMaintenanceGetReencryptionBatchReq = (

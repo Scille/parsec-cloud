@@ -5,16 +5,19 @@ import pytest
 
 from parsec._parsec import DateTime, authenticated_cmds
 from parsec.api.protocol import (
-    Trustchain,
-    UserGetRepNotFound,
-    UserGetRepOk,
     UserID,
     UserProfile,
     packb,
 )
 from parsec.backend.asgi import app_factory
-from tests.backend.common import user_get
+from tests.backend.common import apiv2v3_user_get
 from tests.common import customize_fixtures, freeze_time
+
+Trustchain = authenticated_cmds.v3.user_get.Trustchain
+UserGetRep = authenticated_cmds.v3.user_get.Rep
+UserGetRepOk = authenticated_cmds.v3.user_get.RepOk
+UserGetRepNotFound = authenticated_cmds.v3.user_get.RepNotFound
+UserGetRepUnknownStatus = authenticated_cmds.v3.user_get.RepUnknownStatus
 
 
 @pytest.fixture
@@ -42,7 +45,7 @@ async def access_testbed(
 async def test_api_user_get_ok(access_testbed):
     binder, org, device, sock = access_testbed
 
-    rep = await user_get(sock, device.user_id)
+    rep = await apiv2v3_user_get(sock, device.user_id)
     assert rep == UserGetRepOk(
         user_certificate=binder.certificates_store.get_user(device),
         revoked_user_certificate=None,
@@ -58,7 +61,7 @@ async def test_api_user_get_outsider_get_redacted_certifs(
 ):
     # Backend populates CoolOrg trustchain this way:
     # <root> --> alice@dev1 --> alice@dev2 --> adam@dev1 --> bob@dev1
-    rep = await user_get(bob_ws, bob.user_id)
+    rep = await apiv2v3_user_get(bob_ws, bob.user_id)
     cooked_rep = {
         "user_certificate": certificates_store.translate_certif(rep.user_certificate),
         "revoked_user_certificate": rep.revoked_user_certificate,
@@ -113,7 +116,7 @@ async def test_api_user_get_ok_deep_trustchain(
         await binder.bind_revocation(roger1.user_id, certifier=ph1)
         await binder.bind_revocation(mike1.user_id, certifier=ph2)
 
-    rep = await user_get(sock, mike2.device_id.user_id)
+    rep = await apiv2v3_user_get(sock, mike2.device_id.user_id)
     cooked_rep = {
         "user_certificate": certificates_store.translate_certif(rep.user_certificate),
         "device_certificates": certificates_store.translate_certifs(rep.device_certificates),
@@ -155,14 +158,14 @@ async def test_api_user_get_ok_deep_trustchain(
 async def test_api_user_get_bad_msg(alice_ws, bad_msg):
     await alice_ws.send(packb({"cmd": "user_get", **bad_msg}))
     raw_rep = await alice_ws.receive()
-    rep = authenticated_cmds.latest.user_get.Rep.load(raw_rep)
-    assert isinstance(rep, authenticated_cmds.latest.user_get.RepUnknownStatus)
+    rep = UserGetRep.load(raw_rep)
+    assert isinstance(rep, UserGetRepUnknownStatus)
     assert rep.status == "invalid_msg_format"
 
 
 @pytest.mark.trio
 async def test_api_user_get_not_found(alice_ws, coolorg):
-    rep = await user_get(alice_ws, UserID("dummy"))
+    rep = await apiv2v3_user_get(alice_ws, UserID("dummy"))
     assert isinstance(rep, UserGetRepNotFound)
 
 
@@ -172,7 +175,7 @@ async def test_api_user_get_other_organization(
 ):
     # Organizations should be isolated
     async with ws_from_other_organization_factory(backend_asgi_app) as sock:
-        rep = await user_get(sock, alice.user_id)
+        rep = await apiv2v3_user_get(sock, alice.user_id)
         assert isinstance(rep, UserGetRepNotFound)
 
 

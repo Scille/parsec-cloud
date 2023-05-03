@@ -26,7 +26,7 @@ from parsec.api.protocol import (
     IncompatibleAPIVersionsError,
     settle_compatible_versions,
 )
-from parsec.api.version import API_V2_VERSION, API_V3_VERSION, ApiVersion
+from parsec.api.version import API_V2_VERSION, API_V3_VERSION, API_V4_VERSION, ApiVersion
 from parsec.backend.app import BackendApp
 from parsec.backend.client_context import (
     AnonymousClientContext,
@@ -54,6 +54,7 @@ AUTHORIZATION_PARSEC_ED25519 = "PARSEC-SIGN-ED25519"
 SUPPORTED_API_VERSIONS = (
     API_V2_VERSION,
     API_V3_VERSION,
+    API_V4_VERSION,
 )
 AUTHENTICATED_CMDS_LOAD_FN = {
     int(v_version[1:]): getattr(authenticated_cmds, v_version).AnyCmdReq.load
@@ -472,7 +473,10 @@ class SSEResponseIterableBody(ResponseBody):
     async def _make_contextmanager(
         self, client_ctx: AuthenticatedClientContext, backend: BackendApp
     ) -> AsyncIterator[None]:
-        req = authenticated_cmds.latest.events_listen.Req(wait=True)
+        if client_ctx.api_version.version < 4:
+            req = authenticated_cmds.v3.events_listen.Req(wait=True)
+        else:
+            req = authenticated_cmds.latest.events_listen.Req(wait=True)
 
         async def _events_into_sse_payloads() -> None:
             # Closing sender end of the channel will cause Quart stop iterating

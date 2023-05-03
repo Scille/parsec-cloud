@@ -39,6 +39,7 @@ from parsec._parsec_pyi.addrs import (
 from parsec._parsec_pyi.backend_connection import AnonymousCmds, AuthenticatedCmds, InvitedCmds
 from parsec._parsec_pyi.backend_events import (
     BackendEvent,
+    BackendEventCertificatesUpdated,
     BackendEventInviteConduitUpdated,
     BackendEventInviteStatusChanged,
     BackendEventMessageReceived,
@@ -354,6 +355,7 @@ __all__ = [
     "claimer_retrieve_info",
     # Backend internal events
     "BackendEvent",
+    "BackendEventCertificatesUpdated",
     "BackendEventInviteConduitUpdated",
     "BackendEventUserRevoked",
     "BackendEventOrganizationExpired",

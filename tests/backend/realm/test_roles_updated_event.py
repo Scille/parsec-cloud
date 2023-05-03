@@ -9,21 +9,25 @@ from parsec._parsec import (
 )
 from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import (
-    APIEventRealmRolesUpdated,
-    EventsListenRepNoEvents,
-    EventsListenRepOk,
+    ApiV2V3_APIEventRealmRolesUpdated,
+    ApiV2V3_EventsListenRepNoEvents,
+    ApiV2V3_EventsListenRepOk,
     RealmCreateRepOk,
     RealmID,
     RealmRole,
     RealmUpdateRolesRepOk,
 )
-from tests.backend.common import realm_create, realm_update_roles
-from tests.backend.test_events import events_listen_nowait, events_subscribe
+from tests.backend.common import (
+    apiv2v3_events_listen_nowait,
+    apiv2v3_events_subscribe,
+    realm_create,
+    realm_update_roles,
+)
 
 
 @pytest.mark.trio
 async def test_realm_create(backend, alice, alice_ws):
-    await events_subscribe(alice_ws)
+    await apiv2v3_events_subscribe(alice_ws)
 
     realm_id = RealmID.from_hex("C0000000000000000000000000000000")
     certif = RealmRoleCertificate.build_realm_root_certif(
@@ -62,13 +66,13 @@ async def test_roles_updated_for_participant(
             )
 
         # Check events propagated to the client
-        rep = await events_listen_nowait(bob_ws)
-        assert rep == EventsListenRepOk(APIEventRealmRolesUpdated(realm, role))
-        rep = await events_listen_nowait(bob_ws)
-        assert isinstance(rep, EventsListenRepNoEvents)
+        rep = await apiv2v3_events_listen_nowait(bob_ws)
+        assert rep == ApiV2V3_EventsListenRepOk(ApiV2V3_APIEventRealmRolesUpdated(realm, role))
+        rep = await apiv2v3_events_listen_nowait(bob_ws)
+        assert isinstance(rep, ApiV2V3_EventsListenRepNoEvents)
 
     # 0) Init event listening on the socket
-    await events_subscribe(bob_ws)
+    await apiv2v3_events_subscribe(bob_ws)
 
     # 1) New participant
     await _update_role_and_check_events(RealmRole.MANAGER)

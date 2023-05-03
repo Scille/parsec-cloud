@@ -221,8 +221,8 @@ realm_status = CmdSock(
 realm_stats = CmdSock(
     authenticated_cmds.latest.realm_stats, parse_args=lambda realm_id: {"realm_id": realm_id}
 )
-realm_get_role_certificates = CmdSock(
-    authenticated_cmds.latest.realm_get_role_certificates,
+apiv2v3_realm_get_role_certificates = CmdSock(
+    authenticated_cmds.v3.realm_get_role_certificates,
 )
 realm_update_roles = CmdSock(
     authenticated_cmds.latest.realm_update_roles,
@@ -302,7 +302,6 @@ vlob_maintenance_save_reencryption_batch = CmdSock(
 
 
 events_subscribe = CmdSock(authenticated_cmds.latest.events_subscribe)
-
 _events_listen = CmdSock(
     authenticated_cmds.latest.events_listen, parse_args=lambda wait: {"wait": wait}
 )
@@ -322,6 +321,26 @@ async def events_listen(sock):
         yield box
 
 
+apiv2v3_events_subscribe = CmdSock(authenticated_cmds.v3.events_subscribe)
+_apiv2v3_events_listen = CmdSock(
+    authenticated_cmds.v3.events_listen, parse_args=lambda wait: {"wait": wait}
+)
+
+
+async def apiv2v3_events_listen_nowait(sock):
+    return await _apiv2v3_events_listen(sock, wait=False)
+
+
+async def apiv2v3_events_listen_wait(sock):
+    return await _apiv2v3_events_listen(sock, wait=True)
+
+
+@asynccontextmanager
+async def apiv2v3_events_listen(sock):
+    async with _apiv2v3_events_listen.async_call(sock, wait=True) as box:
+        yield box
+
+
 ### Message ###
 
 
@@ -333,11 +352,11 @@ message_get = CmdSock(
 ### User ###
 
 
-user_get = CmdSock(
-    authenticated_cmds.latest.user_get, parse_args=lambda user_id: {"user_id": user_id}
+apiv2v3_user_get = CmdSock(
+    authenticated_cmds.v3.user_get, parse_args=lambda user_id: {"user_id": user_id}
 )
-human_find = CmdSock(
-    authenticated_cmds.latest.human_find,
+apiv2v3_human_find = CmdSock(
+    authenticated_cmds.v3.human_find,
     parse_args=lambda query=None, omit_revoked=False, omit_non_human=False, page=1, per_page=100: {
         "query": query,
         "omit_revoked": omit_revoked,

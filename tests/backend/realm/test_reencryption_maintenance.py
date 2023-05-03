@@ -11,14 +11,14 @@ from parsec._parsec import (
     ReencryptionBatchEntry,
 )
 from parsec.api.protocol import (
-    APIEventMessageReceived,
-    APIEventRealmMaintenanceFinished,
-    APIEventRealmMaintenanceStarted,
+    ApiV2V3_APIEventMessageReceived,
+    ApiV2V3_APIEventRealmMaintenanceFinished,
+    ApiV2V3_APIEventRealmMaintenanceStarted,
+    ApiV2V3_EventsListenRepNoEvents,
+    ApiV2V3_EventsListenRepOk,
     BlockCreateRepInMaintenance,
     BlockID,
     BlockReadRepOk,
-    EventsListenRepNoEvents,
-    EventsListenRepOk,
     MaintenanceType,
     Message,
     MessageGetRepOk,
@@ -56,10 +56,10 @@ from parsec.backend.realm import RealmGrantedRole
 from parsec.backend.vlob import VlobNotFoundError, VlobVersionError
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 from tests.backend.common import (
+    apiv2v3_events_listen_nowait,
+    apiv2v3_events_subscribe,
     block_create,
     block_read,
-    events_listen_nowait,
-    events_subscribe,
     realm_finish_reencryption_maintenance,
     realm_start_reencryption_maintenance,
     realm_status,
@@ -692,7 +692,7 @@ async def test_access_during_reencryption(backend, alice_ws, alice, realm_factor
 @pytest.mark.trio
 async def test_reencryption_events(backend, alice_ws, alice2_ws, realm, alice, vlobs, vlob_atoms):
     # Start listening events
-    await events_subscribe(alice_ws)
+    await apiv2v3_events_subscribe(alice_ws)
 
     with backend.event_bus.listen() as spy:
         # Start maintenance and check for events
@@ -706,10 +706,10 @@ async def test_reencryption_events(backend, alice_ws, alice2_ws, realm, alice, v
                 [BackendEventRealmMaintenanceStarted, BackendEventMessageReceived]
             )
 
-        rep = await events_listen_nowait(alice_ws)
-        assert rep == EventsListenRepOk(APIEventRealmMaintenanceStarted(realm, 2))
-        rep = await events_listen_nowait(alice_ws)
-        assert rep == EventsListenRepOk(APIEventMessageReceived(1))
+        rep = await apiv2v3_events_listen_nowait(alice_ws)
+        assert rep == ApiV2V3_EventsListenRepOk(ApiV2V3_APIEventRealmMaintenanceStarted(realm, 2))
+        rep = await apiv2v3_events_listen_nowait(alice_ws)
+        assert rep == ApiV2V3_EventsListenRepOk(ApiV2V3_APIEventMessageReceived(1))
 
         # Do the reencryption
         rep = await vlob_maintenance_get_reencryption_batch(alice_ws, realm, 2, size=100)
@@ -721,9 +721,9 @@ async def test_reencryption_events(backend, alice_ws, alice2_ws, realm, alice, v
         # No guarantees those events occur before the commands' return
         await spy.wait_with_timeout(BackendEventRealmMaintenanceFinished)
 
-        rep = await events_listen_nowait(alice_ws)
-        assert rep == EventsListenRepOk(APIEventRealmMaintenanceFinished(realm, 2))
+        rep = await apiv2v3_events_listen_nowait(alice_ws)
+        assert rep == ApiV2V3_EventsListenRepOk(ApiV2V3_APIEventRealmMaintenanceFinished(realm, 2))
 
     # Sanity check
-    rep = await events_listen_nowait(alice_ws)
-    assert rep == EventsListenRepNoEvents()
+    rep = await apiv2v3_events_listen_nowait(alice_ws)
+    assert rep == ApiV2V3_EventsListenRepNoEvents()

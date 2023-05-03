@@ -285,9 +285,56 @@ class BaseInviteComponent:
                 self._claimers_ready[payload.organization_id].discard(payload.token)
 
         self._event_bus.connect(
-            BackendEventInviteStatusChanged,  # type: ignore[arg-type]
+            BackendEventInviteStatusChanged,
             _on_status_changed,  # type: ignore[arg-type]
         )
+
+    @api
+    async def apiv2_invite_new(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.v2.invite_new.Req,
+    ) -> authenticated_cmds.v2.invite_new.Rep:
+        # `invite_new` command is similar between APIv2 and v4+ from the server
+        # point of view.
+        # (from client point of view, server may return `ok` response
+        # with some fields missing)
+        v2_unit = req.unit
+        unit: authenticated_cmds.latest.invite_new.UserOrDevice
+        if isinstance(v2_unit, authenticated_cmds.v2.invite_new.UserOrDeviceUser):
+            unit = authenticated_cmds.latest.invite_new.UserOrDeviceUser(
+                claimer_email=v2_unit.claimer_email,
+                send_email=v2_unit.send_email,
+            )
+        else:
+            assert isinstance(v2_unit, authenticated_cmds.v2.invite_new.UserOrDeviceDevice)
+            unit = authenticated_cmds.latest.invite_new.UserOrDeviceDevice(
+                send_email=v2_unit.send_email,
+            )
+        req = authenticated_cmds.latest.invite_new.Req(unit)
+        return await self.api_invite_new(client_ctx, req)
+
+    @api
+    async def apiv3_invite_new(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.v3.invite_new.Req,
+    ) -> authenticated_cmds.v3.invite_new.Rep:
+        v3_unit = req.unit
+        unit: authenticated_cmds.latest.invite_new.UserOrDevice
+        if isinstance(v3_unit, authenticated_cmds.v3.invite_new.UserOrDeviceUser):
+            unit = authenticated_cmds.latest.invite_new.UserOrDeviceUser(
+                claimer_email=v3_unit.claimer_email,
+                send_email=v3_unit.send_email,
+            )
+        else:
+            assert isinstance(v3_unit, authenticated_cmds.v3.invite_new.UserOrDeviceDevice)
+            unit = authenticated_cmds.latest.invite_new.UserOrDeviceDevice(
+                send_email=v3_unit.send_email,
+            )
+        req = authenticated_cmds.latest.invite_new.Req(unit)
+        # `invite_new` command is strictly similar between APIv3 and v4+
+        return await self.api_invite_new(client_ctx, req)
 
     @api
     async def api_invite_new(

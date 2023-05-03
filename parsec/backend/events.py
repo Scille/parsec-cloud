@@ -1,12 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, Awaitable, Callable, Type
+from typing import Awaitable, Callable, Type
 
 import trio
 
 from parsec._parsec import (
     BackendEvent,
+    BackendEventCertificatesUpdated,
     BackendEventInviteStatusChanged,
     BackendEventMessageReceived,
     BackendEventPinged,
@@ -22,48 +23,94 @@ from parsec.backend.client_context import AuthenticatedClientContext
 from parsec.backend.realm import BaseRealmComponent
 from parsec.backend.utils import api, api_ws_cancel_on_client_sending_new_cmd
 
-INTERNAL_TO_API_EVENTS: dict[
-    Type[Any], Callable[[Any], authenticated_cmds.latest.events_listen.APIEvent]
-] = {
-    BackendEventPinged: (lambda e: authenticated_cmds.latest.events_listen.APIEventPinged(e.ping)),
-    BackendEventMessageReceived: (
-        lambda e: authenticated_cmds.latest.events_listen.APIEventMessageReceived(e.index)
-    ),
-    BackendEventInviteStatusChanged: lambda e: (
-        authenticated_cmds.latest.events_listen.APIEventInviteStatusChanged(
-            token=e.token, invitation_status=e.status
+
+def internal_to_api_v2_v3_events(
+    event: BackendEvent,
+) -> authenticated_cmds.v3.events_listen.APIEvent | None:
+    event_listen_cmd_mod = authenticated_cmds.v3.events_listen
+    if isinstance(event, BackendEventCertificatesUpdated):
+        # Ignore this event
+        return None
+    elif isinstance(event, BackendEventPinged):
+        return event_listen_cmd_mod.APIEventPinged(event.ping)
+    elif isinstance(event, BackendEventMessageReceived):
+        return event_listen_cmd_mod.APIEventMessageReceived(event.index)
+    elif isinstance(event, BackendEventInviteStatusChanged):
+        return event_listen_cmd_mod.APIEventInviteStatusChanged(
+            token=event.token, invitation_status=event.status
         )
-    ),
-    BackendEventRealmMaintenanceStarted: lambda e: (
-        authenticated_cmds.latest.events_listen.APIEventRealmMaintenanceStarted(
-            realm_id=e.realm_id,
-            encryption_revision=e.encryption_revision,
+    elif isinstance(event, BackendEventRealmMaintenanceStarted):
+        return event_listen_cmd_mod.APIEventRealmMaintenanceStarted(
+            realm_id=event.realm_id,
+            encryption_revision=event.encryption_revision,
         )
-    ),
-    BackendEventRealmMaintenanceFinished: lambda e: (
-        authenticated_cmds.latest.events_listen.APIEventRealmMaintenanceFinished(
-            realm_id=e.realm_id,
-            encryption_revision=e.encryption_revision,
+    elif isinstance(event, BackendEventRealmMaintenanceFinished):
+        return event_listen_cmd_mod.APIEventRealmMaintenanceFinished(
+            realm_id=event.realm_id,
+            encryption_revision=event.encryption_revision,
         )
-    ),
-    BackendEventRealmVlobsUpdated: lambda e: (
-        authenticated_cmds.latest.events_listen.APIEventRealmVlobsUpdated(
-            realm_id=e.realm_id,
-            checkpoint=e.checkpoint,
-            src_id=e.src_id,
-            src_version=e.src_version,
+    elif isinstance(event, BackendEventRealmVlobsUpdated):
+        return event_listen_cmd_mod.APIEventRealmVlobsUpdated(
+            realm_id=event.realm_id,
+            checkpoint=event.checkpoint,
+            src_id=event.src_id,
+            src_version=event.src_version,
         )
-    ),
-    BackendEventRealmRolesUpdated: lambda e: (
-        authenticated_cmds.latest.events_listen.APIEventRealmRolesUpdated(
-            realm_id=e.realm_id,
-            role=e.role,
+    elif isinstance(event, BackendEventRealmRolesUpdated):
+        return event_listen_cmd_mod.APIEventRealmRolesUpdated(
+            realm_id=event.realm_id,
+            role=event.role,
         )
-    ),
-    BackendEventPkiEnrollmentUpdated: lambda e: (
-        authenticated_cmds.latest.events_listen.APIEventPkiEnrollmentUpdated()
-    ),
-}
+    else:
+        assert isinstance(event, BackendEventPkiEnrollmentUpdated)
+        return event_listen_cmd_mod.APIEventPkiEnrollmentUpdated()
+
+
+def internal_to_api_events(
+    event: BackendEvent, redacted: bool
+) -> authenticated_cmds.latest.events_listen.APIEvent | None:
+    event_listen_cmd_mod = authenticated_cmds.latest.events_listen
+
+    if isinstance(event, BackendEventCertificatesUpdated):
+        certificate = (
+            event.certificate
+            if not redacted or event.redacted_certificate is None
+            else event.redacted_certificate
+        )
+        return event_listen_cmd_mod.APIEventCertificatesUpdated(
+            certificate=certificate,
+        )
+    elif isinstance(event, BackendEventPinged):
+        return event_listen_cmd_mod.APIEventPinged(event.ping)
+    elif isinstance(event, BackendEventMessageReceived):
+        return event_listen_cmd_mod.APIEventMessageReceived(event.index, event.message)
+    elif isinstance(event, BackendEventInviteStatusChanged):
+        return event_listen_cmd_mod.APIEventInviteStatusChanged(
+            token=event.token, invitation_status=event.status
+        )
+    elif isinstance(event, BackendEventRealmMaintenanceStarted):
+        return event_listen_cmd_mod.APIEventRealmMaintenanceStarted(
+            realm_id=event.realm_id,
+            encryption_revision=event.encryption_revision,
+        )
+    elif isinstance(event, BackendEventRealmMaintenanceFinished):
+        return event_listen_cmd_mod.APIEventRealmMaintenanceFinished(
+            realm_id=event.realm_id,
+            encryption_revision=event.encryption_revision,
+        )
+    elif isinstance(event, BackendEventRealmVlobsUpdated):
+        return event_listen_cmd_mod.APIEventRealmVlobsUpdated(
+            realm_id=event.realm_id,
+            checkpoint=event.checkpoint,
+            src_id=event.src_id,
+            src_version=event.src_version,
+        )
+    elif isinstance(event, BackendEventRealmRolesUpdated):
+        # Ignore this event
+        return None
+    else:
+        assert isinstance(event, BackendEventPkiEnrollmentUpdated)
+        return event_listen_cmd_mod.APIEventPkiEnrollmentUpdated()
 
 
 class EventsComponent:
@@ -79,10 +126,24 @@ class EventsComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.events_subscribe.Req,
     ) -> authenticated_cmds.latest.events_subscribe.Rep:
-        await self.connect_events(client_ctx)
+        # Only Websocket transport need to subscribe events
+        if client_ctx.event_bus_ctx:
+            await self.connect_events(client_ctx)
         return authenticated_cmds.latest.events_subscribe.RepOk()
 
     async def connect_events(self, client_ctx: AuthenticatedClientContext) -> None:
+        def _on_certificates_updated(
+            event: Type[BackendEvent],
+            payload: BackendEventCertificatesUpdated,
+        ) -> None:
+            if payload.organization_id != client_ctx.organization_id:
+                return
+
+            try:
+                client_ctx.send_events_channel.send_nowait(payload)
+            except trio.WouldBlock:
+                client_ctx.close_connection_asap()
+
         def _on_roles_updated(
             event: Type[BackendEvent],
             payload: BackendEventRealmRolesUpdated,
@@ -187,7 +248,14 @@ class EventsComponent:
         # Command should be idempotent
         if not client_ctx.events_subscribed:
             # Connect the new callbacks
-            client_ctx.event_bus_ctx.connect(BackendEventPinged, _on_pinged)  # type: ignore
+            client_ctx.event_bus_ctx.connect(
+                BackendEventCertificatesUpdated,
+                _on_certificates_updated,  # type: ignore
+            )
+            client_ctx.event_bus_ctx.connect(
+                BackendEventPinged,
+                _on_pinged,  # type: ignore
+            )
             client_ctx.event_bus_ctx.connect(
                 BackendEventRealmVlobsUpdated,
                 _on_realm_events,  # type: ignore
@@ -229,24 +297,50 @@ class EventsComponent:
 
     @api_ws_cancel_on_client_sending_new_cmd
     @api
+    async def api_v2_v3_events_listen(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.v3.events_listen.Req,
+    ) -> authenticated_cmds.v3.events_listen.Rep:
+        while True:
+            if req.wait:
+                event = await client_ctx.receive_events_channel.receive()
+
+            else:
+                try:
+                    event = client_ctx.receive_events_channel.receive_nowait()
+                except trio.WouldBlock:
+                    return authenticated_cmds.v3.events_listen.RepNoEvents()
+
+            unit = internal_to_api_v2_v3_events(event)
+            if not unit:
+                # Ignore the current event
+                continue
+
+            return authenticated_cmds.v3.events_listen.RepOk(unit)
+
+    @api_ws_cancel_on_client_sending_new_cmd
+    @api
     async def api_events_listen(
         self,
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.events_listen.Req,
     ) -> authenticated_cmds.latest.events_listen.Rep:
-        return await self.events_listen(client_ctx, req.wait)
+        need_redacted = client_ctx.profile == UserProfile.OUTSIDER
 
-    async def events_listen(
-        self, client_ctx: AuthenticatedClientContext, wait: bool
-    ) -> authenticated_cmds.latest.events_listen.Rep:
-        if wait:
-            event = await client_ctx.receive_events_channel.receive()
+        while True:
+            if req.wait:
+                event = await client_ctx.receive_events_channel.receive()
 
-        else:
-            try:
-                event = client_ctx.receive_events_channel.receive_nowait()
-            except trio.WouldBlock:
-                return authenticated_cmds.latest.events_listen.RepNoEvents()
+            else:
+                try:
+                    event = client_ctx.receive_events_channel.receive_nowait()
+                except trio.WouldBlock:
+                    return authenticated_cmds.latest.events_listen.RepNoEvents()
 
-        unit = INTERNAL_TO_API_EVENTS[type(event)](event)
-        return authenticated_cmds.latest.events_listen.RepOk(unit)
+            unit = internal_to_api_events(event, redacted=need_redacted)
+            if not unit:
+                # Ignore the current event
+                continue
+
+            return authenticated_cmds.latest.events_listen.RepOk(unit)
