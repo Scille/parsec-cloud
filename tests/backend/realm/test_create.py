@@ -20,13 +20,10 @@ from parsec.api.protocol import (
 )
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 from tests.backend.common import realm_create
-from tests.backend.test_events import events_subscribe
 from tests.common import customize_fixtures, freeze_time
 
 
 async def _test_create_ok(backend, device, ws):
-    await events_subscribe(ws)
-
     realm_id = RealmID.from_hex("C0000000000000000000000000000000")
     certif = RealmRoleCertificate.build_realm_root_certif(
         author=device.device_id, timestamp=DateTime.now(), realm_id=realm_id

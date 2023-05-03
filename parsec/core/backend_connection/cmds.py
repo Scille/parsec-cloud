@@ -22,6 +22,7 @@ from parsec._parsec import (
 from parsec.api.protocol import (
     ApiCommandSerializer,
     ApiV2V3_EventsListenRep,
+    ApiV2V3_EventsSubscribeRep,
     ApiV2V3_HumanFindRep,
     ApiV2V3_RealmGetRoleCertificatesRep,
     ApiV2V3_UserGetRep,
@@ -29,7 +30,6 @@ from parsec.api.protocol import (
     BlockCreateRep,
     BlockReadRep,
     DeviceCreateRep,
-    EventsSubscribeRep,
     InvitationDeletedReason,
     Invite1ClaimerWaitPeerRep,
     Invite1GreeterWaitPeerRep,
@@ -92,7 +92,7 @@ COMMAND_RETURN_TYPE = Union[
     BlockReadRep,
     DeviceCreateRep,
     ApiV2V3_EventsListenRep,
-    EventsSubscribeRep,
+    ApiV2V3_EventsSubscribeRep,
     ApiV2V3_HumanFindRep,
     Invite1ClaimerWaitPeerRep,
     Invite1GreeterWaitPeerRep,
@@ -237,9 +237,9 @@ async def invited_ping(transport: Transport, ping: str = "") -> Awaitable[Invite
 
 async def events_subscribe(
     transport: Transport,
-) -> EventsSubscribeRep:
+) -> ApiV2V3_EventsSubscribeRep:
     return cast(
-        EventsSubscribeRep,
+        ApiV2V3_EventsSubscribeRep,
         await _send_cmd(transport, events_subscribe_serializer, cmd="events_subscribe"),
     )
 

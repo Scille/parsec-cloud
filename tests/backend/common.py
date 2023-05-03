@@ -301,18 +301,7 @@ vlob_maintenance_save_reencryption_batch = CmdSock(
 ### Events ###
 
 
-events_subscribe = CmdSock(authenticated_cmds.latest.events_subscribe)
-_events_listen = CmdSock(
-    authenticated_cmds.latest.events_listen, parse_args=lambda wait: {"wait": wait}
-)
-
-
-async def events_listen_nowait(sock):
-    return await _events_listen(sock, wait=False)
-
-
-async def events_listen_wait(sock):
-    return await _events_listen(sock, wait=True)
+_events_listen = CmdSock(authenticated_cmds.latest.events_listen)
 
 
 @asynccontextmanager

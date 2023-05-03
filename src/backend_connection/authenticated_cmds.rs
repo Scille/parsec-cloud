@@ -626,6 +626,7 @@ impl AuthenticatedCmds {
                 InvalidData,
                 AlreadyExists,
                 UnknownStatus,
+                RequireGreaterTimestamp,
                 "handle_bad_timestamp"
             )
         })
@@ -844,7 +845,9 @@ impl AuthenticatedCmds {
                 InvalidCertification,
                 InvalidData,
                 NotAllowed,
-                UnknownStatus
+                UnknownStatus,
+                BadTimestamp,
+                RequireGreaterTimestamp
             )
         })
     }
@@ -889,7 +892,9 @@ impl AuthenticatedCmds {
                 UnknownStatus,
                 NotAllowed,
                 NotFound,
-                AlreadyRevoked
+                AlreadyRevoked,
+                BadTimestamp,
+                RequireGreaterTimestamp,
             )
         })
     }

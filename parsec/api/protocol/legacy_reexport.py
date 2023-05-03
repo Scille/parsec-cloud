@@ -393,10 +393,10 @@ Invite2aGreeterGetHashedNonceRepInvalidState = (
 )
 
 # events_subscribe
-EventsSubscribeReq = authenticated_cmds.latest.events_subscribe.Req
-EventsSubscribeRep = authenticated_cmds.latest.events_subscribe.Rep
-EventsSubscribeRepUnknownStatus = authenticated_cmds.latest.events_subscribe.RepUnknownStatus
-EventsSubscribeRepOk = authenticated_cmds.latest.events_subscribe.RepOk
+ApiV2V3_EventsSubscribeReq = authenticated_cmds.v3.events_subscribe.Req
+ApiV2V3_EventsSubscribeRep = authenticated_cmds.v3.events_subscribe.Rep
+ApiV2V3_EventsSubscribeRepUnknownStatus = authenticated_cmds.v3.events_subscribe.RepUnknownStatus
+ApiV2V3_EventsSubscribeRepOk = authenticated_cmds.v3.events_subscribe.RepOk
 
 # device_create
 DeviceCreateReq = authenticated_cmds.latest.device_create.Req

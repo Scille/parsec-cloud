@@ -121,15 +121,15 @@ class EventsComponent:
         self.send = send_event
 
     @api
-    async def api_events_subscribe(
+    async def apiv2v3_events_subscribe(
         self,
         client_ctx: AuthenticatedClientContext,
-        req: authenticated_cmds.latest.events_subscribe.Req,
-    ) -> authenticated_cmds.latest.events_subscribe.Rep:
+        req: authenticated_cmds.v3.events_subscribe.Req,
+    ) -> authenticated_cmds.v3.events_subscribe.Rep:
         # Only Websocket transport need to subscribe events
         if client_ctx.event_bus_ctx:
             await self.connect_events(client_ctx)
-        return authenticated_cmds.latest.events_subscribe.RepOk()
+        return authenticated_cmds.v3.events_subscribe.RepOk()
 
     async def connect_events(self, client_ctx: AuthenticatedClientContext) -> None:
         def _on_certificates_updated(
@@ -329,14 +329,7 @@ class EventsComponent:
         need_redacted = client_ctx.profile == UserProfile.OUTSIDER
 
         while True:
-            if req.wait:
-                event = await client_ctx.receive_events_channel.receive()
-
-            else:
-                try:
-                    event = client_ctx.receive_events_channel.receive_nowait()
-                except trio.WouldBlock:
-                    return authenticated_cmds.latest.events_listen.RepNoEvents()
+            event = await client_ctx.receive_events_channel.receive()
 
             unit = internal_to_api_events(event, redacted=need_redacted)
             if not unit:
