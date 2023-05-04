@@ -1,10 +1,10 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS -->
 
 <template>
-  <ion-list>
+  <ion-list class="container">
     <ion-item
       id="sort-order-button"
-      class="option"
+      class="option body-small"
       button
       @click="onOptionClick()"
     >
@@ -69,14 +69,31 @@ function onOptionClick(option?: MsSelectOption): void {
 </script>
 
 <style lang="scss" scoped>
+
 .option {
   --background-hover: var(--parsec-color-light-primary-50);
   --background-hover-opacity: 1;
-  --color-hover: var(--ion-color-tertiary);
+  --color-hover: var(--parsec-color-light-primary-700);
 
   &.selected {
-    color: var(--ion-color-tertiary) !important;
+    color: var(--parsec-color-light-primary-700) !important;
     font-weight: bold;
+  }
+}
+
+#sort-order-button {
+  --background: var(--parsec-color-light-secondary-medium);
+  --color: var(--parsec-color-light-secondary-text);
+  --color-hover: var(--parsec-color-light-secondary-text);
+  --border-radius: 25px;
+  width: fit-content;
+  padding-right: 0.5rem;
+  margin-left: auto;
+  margin-bottom: .5rem;
+
+  ion-icon {
+    margin-left: 0.25rem;
+    font-size: 1.25rem;
   }
 }
 </style>

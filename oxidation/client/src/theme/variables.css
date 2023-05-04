@@ -513,6 +513,16 @@ ion-popover {
   background: none;
 }
 
+.popover-side-bottom {
+  --offset-x: -3em;
+  --offset-y: 1em;
+}
+.popover-side-bottom .popover-viewport {
+  border: var(--parsec-color-light-secondary-disabled) 1.5px solid;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
 /* input */
 .input-label-placement-start.sc-ion-input-md-h .label-text-wrapper.sc-ion-input-md {
   -webkit-margin-start: 0;
