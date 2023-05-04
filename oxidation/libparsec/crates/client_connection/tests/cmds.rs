@@ -63,6 +63,103 @@ async fn authenticated(env: &TestbedEnv) {
     );
 }
 
+#[parsec_test(testbed = "coolorg", with_server)]
+async fn authenticated_sse(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1".parse().unwrap());
+    let bob = env.local_device("bob@dev1".parse().unwrap());
+    let cmds_alice =
+        AuthenticatedCmds::new(&env.discriminant_dir, alice.clone(), ProxyConfig::default())
+            .unwrap();
+    let cmds_bob =
+        AuthenticatedCmds::new(&env.discriminant_dir, bob.clone(), ProxyConfig::default()).unwrap();
+
+    let send_ping = |msg: &str| {
+        let msg = msg.to_owned();
+        async {
+            let rep = cmds_bob
+                .send(authenticated_cmds::ping::Req { ping: msg })
+                .await;
+            assert!(matches!(
+                rep.unwrap(),
+                authenticated_cmds::ping::Rep::Ok { .. }
+            ));
+        }
+    };
+
+    // Request sent before sse started, will be ignored
+    send_ping("too soon").await;
+
+    // Start the sse...
+    let mut sse = cmds_alice
+        .start_sse_and_wait_for_connection::<authenticated_cmds::events_listen::Req>()
+        .await
+        .unwrap();
+
+    // Now event are received !
+    send_ping("good 1").await;
+
+    p_assert_eq!(
+        sse.next().await.unwrap(),
+        authenticated_cmds::events_listen::Rep::Ok(
+            authenticated_cmds::events_listen::APIEvent::Pinged {
+                ping: "good 1".to_owned()
+            }
+        )
+    );
+
+    // Also try to enqeue multiple events
+    send_ping("good 2").await;
+    send_ping("good 3").await;
+    send_ping("good 4").await;
+    p_assert_eq!(
+        sse.next().await.unwrap(),
+        authenticated_cmds::events_listen::Rep::Ok(
+            authenticated_cmds::events_listen::APIEvent::Pinged {
+                ping: "good 2".to_owned()
+            }
+        )
+    );
+    p_assert_eq!(
+        sse.next().await.unwrap(),
+        authenticated_cmds::events_listen::Rep::Ok(
+            authenticated_cmds::events_listen::APIEvent::Pinged {
+                ping: "good 3".to_owned()
+            }
+        )
+    );
+    p_assert_eq!(
+        sse.next().await.unwrap(),
+        authenticated_cmds::events_listen::Rep::Ok(
+            authenticated_cmds::events_listen::APIEvent::Pinged {
+                ping: "good 4".to_owned()
+            }
+        )
+    );
+
+    sse.close();
+
+    // Bad request: invalid signature
+
+    let bad_alice = {
+        let mut bad_alice = (*alice).clone();
+        bad_alice.signing_key = SigningKey::generate();
+        Arc::new(bad_alice)
+    };
+    let cmds_bad_alice =
+        AuthenticatedCmds::new(&env.discriminant_dir, bad_alice, ProxyConfig::default()).unwrap();
+    let mut sse = cmds_bad_alice.start_sse::<authenticated_cmds::events_listen::Req>();
+    let rep = sse.next().await;
+    assert!(
+        matches!(
+            rep,
+            Err(CommandError::InvalidResponseStatus(
+                reqwest::StatusCode::UNAUTHORIZED
+            ))
+        ),
+        r#"expected `InvalidResponseStatus` with code 401, but got {rep:?}"#
+    );
+}
+
 #[parsec_test(testbed = "minimal", with_server)]
 async fn invited(env: &TestbedEnv) {
     // Create an invitation

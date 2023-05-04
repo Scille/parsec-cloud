@@ -32,11 +32,13 @@
 
 use base64::prelude::{Engine, BASE64_STANDARD};
 use bytes::Bytes;
+use futures::stream::StreamExt;
 use reqwest::{
     header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
     Client, RequestBuilder, Url,
 };
-use std::fmt::Debug;
+use reqwest_eventsource::{Event as SSEEvent, EventSource};
+use std::{fmt::Debug, marker::PhantomData};
 use std::{path::Path, sync::Arc};
 
 use libparsec_platform_http_proxy::ProxyConfig;
@@ -51,6 +53,81 @@ use crate::{
 
 /// Method name that will be used for the header `Authorization` to indicate that will be using this method.
 pub const PARSEC_AUTH_METHOD: &str = "PARSEC-SIGN-ED25519";
+
+pub struct SSEStream<T>
+where
+    T: ProtocolRequest + Debug + 'static,
+{
+    event_source: EventSource,
+    phantom: PhantomData<T>,
+}
+
+impl<T> Debug for SSEStream<T>
+where
+    T: ProtocolRequest + Debug + 'static,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SSEStream").finish()
+    }
+}
+
+impl<T> SSEStream<T>
+where
+    T: ProtocolRequest + Debug + 'static,
+{
+    pub async fn next(&mut self) -> Result<T::Response, CommandError> {
+        loop {
+            match self.next_sse_event().await? {
+                SSEEvent::Open => {
+                    // Should occur only once, just ignore it
+                    continue;
+                }
+                SSEEvent::Message(event) => {
+                    if let Ok(raw_rep) = BASE64_STANDARD.decode(event.data) {
+                        if let Ok(rep) = T::load_response(raw_rep.as_ref()) {
+                            return Ok(rep);
+                        }
+                    }
+                    return Err(CommandError::BadContent);
+                }
+            }
+        }
+    }
+
+    async fn next_sse_event(&mut self) -> Result<SSEEvent, CommandError> {
+        match self.event_source.next().await {
+            Some(Ok(sse_event)) => Ok(sse_event),
+            Some(Err(err)) => match err {
+                reqwest_eventsource::Error::Transport(err) => {
+                    Err(CommandError::NoResponse(Some(err)))
+                }
+                // All statuses except 200
+                reqwest_eventsource::Error::InvalidStatusCode(status_code) => {
+                    match status_code.as_u16() {
+                        415 => Err(CommandError::BadContent),
+                        // TODO: cannot  access the response headers here...
+                        // 422 => Err(crate::error::unsupported_api_version_from_headers(
+                        //     resp.headers(),
+                        // )),
+                        460 => Err(CommandError::ExpiredOrganization),
+                        461 => Err(CommandError::RevokedUser),
+                        // We typically use HTTP 503 in the tests to simulate server offline,
+                        // so it should behave just like if we were not able to connect
+                        503 => Err(CommandError::NoResponse(None)),
+                        _ => Err(CommandError::InvalidResponseStatus(status_code)),
+                    }
+                }
+                reqwest_eventsource::Error::StreamEnded => Err(CommandError::NoResponse(None)),
+                _ => Err(CommandError::BadContent),
+            },
+            None => Err(CommandError::NoResponse(None)),
+        }
+    }
+
+    pub fn close(mut self) {
+        self.event_source.close();
+    }
+}
 
 /// Factory that send commands in a authenticated context.
 #[derive(Debug)]
@@ -100,6 +177,63 @@ impl AuthenticatedCmds {
 
     pub fn addr(&self) -> &BackendOrganizationAddr {
         &self.device.organization_addr
+    }
+
+    // Just used for test
+    pub async fn start_sse_and_wait_for_connection<T>(&self) -> Result<SSEStream<T>, CommandError>
+    where
+        T: ProtocolRequest + Debug + 'static,
+    {
+        let mut sse = self.start_sse();
+        let first_event = sse.next_sse_event().await?;
+        assert!(matches!(first_event, SSEEvent::Open,));
+        Ok(sse)
+    }
+
+    pub fn start_sse<T>(&self) -> SSEStream<T>
+    where
+        T: ProtocolRequest + Debug + 'static,
+    {
+        let request_builder = {
+            let url = {
+                let mut url = self.url.clone();
+                let mut psm = url
+                    .path_segments_mut()
+                    .expect("url is not a cannot-be-a-base");
+                psm.push("events");
+                drop(psm);
+                url
+            };
+
+            let request_builder = self.client.get(url);
+            let request_builder = sign_request(
+                request_builder,
+                &self.device.signing_key,
+                self.author_header_value.clone(),
+                b"",
+            );
+
+            let mut content_headers = HeaderMap::with_capacity(2);
+            content_headers.insert(
+                API_VERSION_HEADER_NAME,
+                HeaderValue::from_str(&libparsec_protocol::API_VERSION.to_string())
+                    .expect("api version must contains valid char"),
+            );
+            // No Content-Type as this request is a GET
+            content_headers.insert(
+                CONTENT_LENGTH,
+                HeaderValue::from_str("0").expect("numeric value are valid char"),
+            );
+            request_builder.headers(content_headers)
+        };
+
+        let event_source =
+            EventSource::new(request_builder).expect("provided request builder is clonable");
+
+        SSEStream::<T> {
+            event_source,
+            phantom: PhantomData,
+        }
     }
 
     pub async fn send<T>(&self, request: T) -> CommandResult<<T>::Response>

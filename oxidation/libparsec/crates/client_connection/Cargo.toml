@@ -21,6 +21,8 @@ libparsec_platform_http_proxy = { path = "../platform_http_proxy" }
 
 # Used to send HTTP request to the server.
 reqwest = { version = "0.11.17", features = ["native-tls-vendored"] }
+reqwest-eventsource = "0.4.0"
+futures = "0.3.28"
 # Used to perform operation on URL.
 url = "2.3.1"
 # Use abstract crypto primitive, to allow to sign request.
