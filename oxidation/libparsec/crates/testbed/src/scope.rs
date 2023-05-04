@@ -83,37 +83,54 @@ impl TestbedScope {
 /// external server.
 fn ensure_testbed_server_is_started() -> (Option<BackendAddr>, Option<std::process::Child>) {
     // TESTBED_SERVER should have 3 possible values:
-    // - not set, if so the test is skipped (don't forget to print something about it !)
-    // - `AUTOSTART` or `1` or just defined to empty: auto start the server
+    // - not set, `AUTOSTART`, `1` or just defined to empty: auto start the server
+    // - `SKIP`, `0` if so the test is skipped
     // - `parsec://<domain>:<port>[?no_ssl=true]`,
     //   `<domain>:<port>`,
     //   `http://<domain>:<port>` or
     //   `https://<domain>:<port>` consider the server is already started
-    let testbed_server = std::env::var("TESTBED_SERVER");
 
-    if let Err(e) = testbed_server {
-        // That means the env variable isn't set
-        log::info!("{e}, so the test is skipped !");
-        return (None, None);
+    enum ServerConfig {
+        Default,
+        Custom { url: String },
+        No,
     }
 
-    let testbed_server = &testbed_server.unwrap();
+    let config = {
+        let var = std::env::var("TESTBED_SERVER");
+        match var {
+            Ok(var) if var == "AUTOSTART" || var == "1" || var.is_empty() => ServerConfig::Default,
+            // Err is when env variable is not set
+            Err(_) => ServerConfig::Default,
+            Ok(val) if val == "SKIP" || val == "0" => ServerConfig::No,
+            Ok(url) => ServerConfig::Custom { url },
+        }
+    };
 
-    if testbed_server != "AUTOSTART" && testbed_server != "1" && !testbed_server.is_empty() {
-        let testbed_server = if testbed_server.starts_with("http://") {
-            testbed_server.replacen("http", "parsec", 1) + "?no_ssl=true"
-        } else if testbed_server.starts_with("https://") {
-            testbed_server.replacen("https", "parsec", 1)
-        } else if !testbed_server.starts_with("parsec://") {
-            String::from("parsec://") + testbed_server
-        } else {
-            testbed_server.into()
-        };
+    // Quick return for the simple cases
+    match config {
+        ServerConfig::No => {
+            return (None, None);
+        }
 
-        let addr = BackendAddr::from_any(&testbed_server)
-            .expect("Invalid value in `TESTBED_SERVER` environ variable");
-        log::info!("Using already started testbed server at {}", &addr);
-        return (Some(addr), None);
+        ServerConfig::Custom { url } => {
+            let url = if url.starts_with("http://") {
+                url.replacen("http", "parsec", 1) + "?no_ssl=true"
+            } else if url.starts_with("https://") {
+                url.replacen("https", "parsec", 1)
+            } else if !url.starts_with("parsec://") {
+                format!("parsec://{url}")
+            } else {
+                url
+            };
+
+            let addr = BackendAddr::from_any(&url)
+                .expect("Invalid value in `TESTBED_SERVER` environ variable");
+            log::info!("Using already started testbed server at {}", &addr);
+            return (Some(addr), None);
+        }
+
+        ServerConfig::Default => (),
     }
 
     log::info!("Starting testbed server...");
