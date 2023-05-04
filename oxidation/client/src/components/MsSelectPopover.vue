@@ -15,7 +15,7 @@
       />
     </ion-item>
     <ion-item
-      class="option"
+      class="option body"
       :class="{selected: selectedOption?.key === option.key}"
       button
       lines="none"
@@ -24,6 +24,13 @@
       @click="onOptionClick(option)"
     >
       {{ option.label }}
+      <ion-icon
+        slot="end"
+        :icon="checkmark"
+        class="checked"
+        :class="{selected: selectedOption?.key === option.key}"
+        v-if="selectedOption?.key === option.key"
+      />
     </ion-item>
   </ion-list>
 </template>
@@ -38,7 +45,8 @@ import {
 } from '@ionic/vue';
 import {
   arrowUp,
-  arrowDown
+  arrowDown,
+  checkmark
 } from 'ionicons/icons';
 import { MsSelectOption, MsSelectSortByLabels, getOptionByKey } from '@/components/MsSelectOption';
 
@@ -73,11 +81,15 @@ function onOptionClick(option?: MsSelectOption): void {
 .option {
   --background-hover: var(--parsec-color-light-primary-50);
   --background-hover-opacity: 1;
+  --color: var(--parsec-color-light-secondary-grey);
   --color-hover: var(--parsec-color-light-primary-700);
 
   &.selected {
-    color: var(--parsec-color-light-primary-700) !important;
-    font-weight: bold;
+    color: var(--parsec-color-light-primary-700);
+  }
+
+  .checked.selected {
+    color: var(--parsec-color-light-primary-700);
   }
 }
 
@@ -90,9 +102,11 @@ function onOptionClick(option?: MsSelectOption): void {
   padding-right: 0.5rem;
   margin-left: auto;
   margin-bottom: .5rem;
+  --min-height: 2rem;
 
   ion-icon {
-    margin-left: 0.25rem;
+    margin: 0;
+    padding-left: 0.5rem;
     font-size: 1.25rem;
   }
 }
