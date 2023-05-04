@@ -180,6 +180,49 @@ impl BackendEvent {
             Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
     }
+
+    #[getter]
+    fn organization_id(&self) -> OrganizationID {
+        let organization_id = match &self.0 {
+            RawBackendEvent::CertificatesUpdated {
+                organization_id, ..
+            } => organization_id,
+            RawBackendEvent::InviteConduitUpdated {
+                organization_id, ..
+            } => organization_id,
+            RawBackendEvent::UserProfileUpdatedOrRevoked {
+                organization_id, ..
+            } => organization_id,
+            RawBackendEvent::OrganizationExpired {
+                organization_id, ..
+            } => organization_id,
+            RawBackendEvent::Pinged {
+                organization_id, ..
+            } => organization_id,
+            RawBackendEvent::MessageReceived {
+                organization_id, ..
+            } => organization_id,
+            RawBackendEvent::InviteStatusChanged {
+                organization_id, ..
+            } => organization_id,
+            RawBackendEvent::RealmMaintenanceFinished {
+                organization_id, ..
+            } => organization_id,
+            RawBackendEvent::RealmMaintenanceStarted {
+                organization_id, ..
+            } => organization_id,
+            RawBackendEvent::RealmVlobsUpdated {
+                organization_id, ..
+            } => organization_id,
+            RawBackendEvent::RealmRolesUpdated {
+                organization_id, ..
+            } => organization_id,
+            RawBackendEvent::PkiEnrollmentUpdated {
+                organization_id, ..
+            } => organization_id,
+        };
+        OrganizationID(organization_id.clone())
+    }
 }
 
 /*
@@ -212,16 +255,6 @@ impl BackendEventCertificatesUpdated {
                 redacted_certificate: redacted_certificate.map(|rc| rc.as_bytes().to_vec()),
             }),
         ))
-    }
-
-    #[getter]
-    fn organization_id(_self: PyRef<Self>) -> PyResult<OrganizationID> {
-        match &_self.into_super().0 {
-            RawBackendEvent::CertificatesUpdated {
-                organization_id, ..
-            } => Ok(OrganizationID(organization_id.clone())),
-            _ => unreachable!(),
-        }
     }
 
     #[getter]
@@ -277,16 +310,6 @@ impl BackendEventInviteConduitUpdated {
     }
 
     #[getter]
-    fn organization_id(_self: PyRef<Self>) -> PyResult<OrganizationID> {
-        match &_self.into_super().0 {
-            RawBackendEvent::InviteConduitUpdated {
-                organization_id, ..
-            } => Ok(OrganizationID(organization_id.clone())),
-            _ => unreachable!(),
-        }
-    }
-
-    #[getter]
     fn token(_self: PyRef<Self>) -> PyResult<InvitationToken> {
         match &_self.into_super().0 {
             RawBackendEvent::InviteConduitUpdated { token, .. } => Ok(InvitationToken(*token)),
@@ -325,19 +348,11 @@ impl BackendEventUserUpdatedOrRevoked {
     }
 
     #[getter]
-    fn organization_id(_self: PyRef<Self>) -> PyResult<OrganizationID> {
-        match &_self.into_super().0 {
-            RawBackendEvent::UserProfileUpdatedOrRevoked {
-                organization_id, ..
-            } => Ok(OrganizationID(organization_id.clone())),
-            _ => unreachable!(),
-        }
-    }
-
-    #[getter]
     fn user_id(_self: PyRef<Self>) -> PyResult<UserID> {
         match &_self.into_super().0 {
-            RawBackendEvent::UserProfileUpdatedOrRevoked { user_id, .. } => Ok(UserID(user_id.clone())),
+            RawBackendEvent::UserProfileUpdatedOrRevoked { user_id, .. } => {
+                Ok(UserID(user_id.clone()))
+            }
             _ => unreachable!(),
         }
     }
@@ -345,7 +360,9 @@ impl BackendEventUserUpdatedOrRevoked {
     #[getter]
     fn profile(_self: PyRef<Self>) -> PyResult<Option<UserProfile>> {
         match &_self.into_super().0 {
-            RawBackendEvent::UserProfileUpdatedOrRevoked { profile, .. } => Ok(profile.map(|p| UserProfile(p.clone()))),
+            RawBackendEvent::UserProfileUpdatedOrRevoked { profile, .. } => {
+                Ok(profile.map(UserProfile))
+            }
             _ => unreachable!(),
         }
     }
@@ -374,16 +391,6 @@ impl BackendEventOrganizationExpired {
                 organization_id: organization_id.0,
             }),
         ))
-    }
-
-    #[getter]
-    fn organization_id(_self: PyRef<Self>) -> PyResult<OrganizationID> {
-        match &_self.into_super().0 {
-            RawBackendEvent::OrganizationExpired {
-                organization_id, ..
-            } => Ok(OrganizationID(organization_id.clone())),
-            _ => unreachable!(),
-        }
     }
 }
 
@@ -414,16 +421,6 @@ impl BackendEventPinged {
                 ping,
             }),
         ))
-    }
-
-    #[getter]
-    fn organization_id(_self: PyRef<Self>) -> PyResult<OrganizationID> {
-        match &_self.into_super().0 {
-            RawBackendEvent::Pinged {
-                organization_id, ..
-            } => Ok(OrganizationID(organization_id.clone())),
-            _ => unreachable!(),
-        }
     }
 
     #[getter]
@@ -474,16 +471,6 @@ impl BackendEventMessageReceived {
                 message: message.as_bytes().to_vec(),
             }),
         ))
-    }
-
-    #[getter]
-    fn organization_id(_self: PyRef<Self>) -> PyResult<OrganizationID> {
-        match &_self.into_super().0 {
-            RawBackendEvent::MessageReceived {
-                organization_id, ..
-            } => Ok(OrganizationID(organization_id.clone())),
-            _ => unreachable!(),
-        }
     }
 
     #[getter]
@@ -551,16 +538,6 @@ impl BackendEventInviteStatusChanged {
     }
 
     #[getter]
-    fn organization_id(_self: PyRef<Self>) -> PyResult<OrganizationID> {
-        match &_self.into_super().0 {
-            RawBackendEvent::InviteStatusChanged {
-                organization_id, ..
-            } => Ok(OrganizationID(organization_id.clone())),
-            _ => unreachable!(),
-        }
-    }
-
-    #[getter]
     fn greeter(_self: PyRef<Self>) -> PyResult<UserID> {
         match &_self.into_super().0 {
             RawBackendEvent::InviteStatusChanged { greeter, .. } => Ok(UserID(greeter.clone())),
@@ -616,16 +593,6 @@ impl BackendEventRealmMaintenanceFinished {
                 encryption_revision,
             }),
         ))
-    }
-
-    #[getter]
-    fn organization_id(_self: PyRef<Self>) -> PyResult<OrganizationID> {
-        match &_self.into_super().0 {
-            RawBackendEvent::RealmMaintenanceFinished {
-                organization_id, ..
-            } => Ok(OrganizationID(organization_id.clone())),
-            _ => unreachable!(),
-        }
     }
 
     #[getter]
@@ -690,16 +657,6 @@ impl BackendEventRealmMaintenanceStarted {
     }
 
     #[getter]
-    fn organization_id(_self: PyRef<Self>) -> PyResult<OrganizationID> {
-        match &_self.into_super().0 {
-            RawBackendEvent::RealmMaintenanceStarted {
-                organization_id, ..
-            } => Ok(OrganizationID(organization_id.clone())),
-            _ => unreachable!(),
-        }
-    }
-
-    #[getter]
     fn author(_self: PyRef<Self>) -> PyResult<DeviceID> {
         match &_self.into_super().0 {
             RawBackendEvent::RealmMaintenanceStarted { author, .. } => Ok(DeviceID(author.clone())),
@@ -760,16 +717,6 @@ impl BackendEventRealmVlobsUpdated {
                 src_version,
             }),
         ))
-    }
-
-    #[getter]
-    fn organization_id(_self: PyRef<Self>) -> PyResult<OrganizationID> {
-        match &_self.into_super().0 {
-            RawBackendEvent::RealmVlobsUpdated {
-                organization_id, ..
-            } => Ok(OrganizationID(organization_id.clone())),
-            _ => unreachable!(),
-        }
     }
 
     #[getter]
@@ -847,16 +794,6 @@ impl BackendEventRealmRolesUpdated {
     }
 
     #[getter]
-    fn organization_id(_self: PyRef<Self>) -> PyResult<OrganizationID> {
-        match &_self.into_super().0 {
-            RawBackendEvent::RealmRolesUpdated {
-                organization_id, ..
-            } => Ok(OrganizationID(organization_id.clone())),
-            _ => unreachable!(),
-        }
-    }
-
-    #[getter]
     fn author(_self: PyRef<Self>) -> PyResult<DeviceID> {
         match &_self.into_super().0 {
             RawBackendEvent::RealmRolesUpdated { author, .. } => Ok(DeviceID(author.clone())),
@@ -912,15 +849,5 @@ impl BackendEventPkiEnrollmentUpdated {
                 organization_id: organization_id.0,
             }),
         ))
-    }
-
-    #[getter]
-    fn organization_id(_self: PyRef<Self>) -> PyResult<OrganizationID> {
-        match &_self.into_super().0 {
-            RawBackendEvent::PkiEnrollmentUpdated {
-                organization_id, ..
-            } => Ok(OrganizationID(organization_id.clone())),
-            _ => unreachable!(),
-        }
     }
 }
