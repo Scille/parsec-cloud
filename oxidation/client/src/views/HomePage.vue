@@ -429,6 +429,7 @@ async function canDismissModal(): Promise<boolean> {
     margin-right: 2rem;
     max-width: 500px;
     position: relative;
+    gap: 1rem;
   }
 
   &__logo {

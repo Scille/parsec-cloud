@@ -3,7 +3,7 @@
 <template>
   <!-- Here we still use ion-item to wrap ion-input because of lack of support of ion-icon with new v7 standalone ion-input -->
   <!-- TODO: Migrate from legacy to modern syntax following this issue: https://github.com/ionic-team/ionic-framework/issues/26297 -->
-  <ion-item fill="solid">
+  <ion-item class="container">
     <ion-icon
       :icon="search"
       slot="start"

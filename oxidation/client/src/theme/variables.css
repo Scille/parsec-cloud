@@ -293,6 +293,12 @@ body.dark {
 
 
 /* ** title ** */
+.title-h1-lg {
+  font-size: 40px;
+  line-height: 120%;
+  font-weight: 600;
+}
+
 .title-h1 {
   line-height: 120%;
   font-weight: 600;
