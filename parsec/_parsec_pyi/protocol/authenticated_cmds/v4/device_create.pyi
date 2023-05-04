@@ -1,14 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from ..v2.user_revoke import (
+from ..v2.device_create import (
     Rep,
-    RepAlreadyRevoked,
-    RepBadTimestamp,
+    RepAlreadyExists,
+    RepBadUserId,
     RepInvalidCertification,
-    RepNotAllowed,
-    RepNotFound,
+    RepInvalidData,
     RepOk,
-    RepRequireGreaterTimestamp,
     RepUnknownStatus,
     Req,
 )
@@ -18,10 +16,8 @@ __all__ = [
     "Rep",
     "RepUnknownStatus",
     "RepOk",
-    "RepNotAllowed",
     "RepInvalidCertification",
-    "RepNotFound",
-    "RepAlreadyRevoked",
-    "RepBadTimestamp",
-    "RepRequireGreaterTimestamp",
+    "RepBadUserId",
+    "RepInvalidData",
+    "RepAlreadyExists",
 ]

@@ -1,14 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from ..v2.user_revoke import (
+from ..v2.vlob_maintenance_save_reencryption_batch import (
     Rep,
-    RepAlreadyRevoked,
-    RepBadTimestamp,
-    RepInvalidCertification,
+    RepBadEncryptionRevision,
+    RepMaintenanceError,
     RepNotAllowed,
     RepNotFound,
+    RepNotInMaintenance,
     RepOk,
-    RepRequireGreaterTimestamp,
     RepUnknownStatus,
     Req,
 )
@@ -19,9 +18,8 @@ __all__ = [
     "RepUnknownStatus",
     "RepOk",
     "RepNotAllowed",
-    "RepInvalidCertification",
     "RepNotFound",
-    "RepAlreadyRevoked",
-    "RepBadTimestamp",
-    "RepRequireGreaterTimestamp",
+    "RepNotInMaintenance",
+    "RepBadEncryptionRevision",
+    "RepMaintenanceError",
 ]

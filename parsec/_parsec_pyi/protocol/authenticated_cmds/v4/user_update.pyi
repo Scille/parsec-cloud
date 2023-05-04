@@ -5,10 +5,10 @@ from __future__ import annotations
 from parsec._parsec import DateTime
 
 class Req:
-    def __init__(self, revoked_user_certificate: bytes) -> None: ...
+    def __init__(self, user_update_certificate: bytes) -> None: ...
     def dump(self) -> bytes: ...
     @property
-    def revoked_user_certificate(self) -> bytes: ...
+    def user_update_certificate(self) -> bytes: ...
 
 class Rep:
     @staticmethod
@@ -28,36 +28,33 @@ class RepOk(Rep):
     ) -> None: ...
 
 class RepNotAllowed(Rep):
-    def __init__(self, reason: str | None) -> None: ...
-    @property
-    def reason(self) -> str | None: ...
-
-class RepInvalidCertification(Rep):
-    def __init__(self, reason: str | None) -> None: ...
-    @property
-    def reason(self) -> str | None: ...
-
-class RepNotFound(Rep):
     def __init__(
         self,
     ) -> None: ...
 
-class RepAlreadyRevoked(Rep):
-    def __init__(self, reason: str | None) -> None: ...
-    @property
-    def reason(self) -> str | None: ...
+class RepInvalidCertification(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepInvalidData(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepAlreadyExists(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
 
 class RepBadTimestamp(Rep):
     def __init__(
         self,
-        reason: str | None,
         ballpark_client_early_offset: float,
         ballpark_client_late_offset: float,
         backend_timestamp: DateTime,
         client_timestamp: DateTime,
     ) -> None: ...
-    @property
-    def reason(self) -> str | None: ...
     @property
     def ballpark_client_early_offset(self) -> float: ...
     @property

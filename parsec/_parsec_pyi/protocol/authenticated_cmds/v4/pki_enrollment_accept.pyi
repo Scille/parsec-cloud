@@ -1,10 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from ..v2.user_revoke import (
+from ..v3.pki_enrollment_accept import (
     Rep,
-    RepAlreadyRevoked,
+    RepActiveUsersLimitReached,
+    RepAlreadyExists,
     RepBadTimestamp,
     RepInvalidCertification,
+    RepInvalidData,
+    RepInvalidPayloadData,
+    RepNoLongerAvailable,
     RepNotAllowed,
     RepNotFound,
     RepOk,
@@ -19,9 +23,13 @@ __all__ = [
     "RepUnknownStatus",
     "RepOk",
     "RepNotAllowed",
+    "RepInvalidPayloadData",
     "RepInvalidCertification",
+    "RepInvalidData",
     "RepNotFound",
-    "RepAlreadyRevoked",
+    "RepNoLongerAvailable",
+    "RepAlreadyExists",
+    "RepActiveUsersLimitReached",
     "RepBadTimestamp",
     "RepRequireGreaterTimestamp",
 ]

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from . import v2, v3
-from . import v3 as latest
+from . import v2, v3, v4
+from . import v4 as latest
 
-__all__ = ["latest", "v2", "v3"]
+__all__ = ["latest", "v2", "v3", "v4"]
