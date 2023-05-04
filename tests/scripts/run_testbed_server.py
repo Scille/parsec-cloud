@@ -47,22 +47,24 @@ async def _run_server(
         administration_token="s3cr3t",
         organization_spontaneous_bootstrap=True,
     )
-    async with trio.open_nursery() as nursery:
-        if stop_after_process:
+    async with backend_app_factory(config=config) as backend:
+        # Nursery must be enclosed by backend (and not the other way around !) given
+        # we will sleep forever in it __aexit__ part
+        async with trio.open_nursery() as nursery:
+            if stop_after_process:
 
-            async def _watch_and_stop_after_process(pid: int, cancel_scope: trio.CancelScope):
-                while True:
-                    await trio.sleep(1)
-                    if not psutil.pid_exists(pid):
-                        print(f"PID `{pid}` has left, closing server.")
-                        cancel_scope.cancel()
-                        break
+                async def _watch_and_stop_after_process(pid: int, cancel_scope: trio.CancelScope):
+                    while True:
+                        await trio.sleep(1)
+                        if not psutil.pid_exists(pid):
+                            print(f"PID `{pid}` has left, closing server.")
+                            cancel_scope.cancel()
+                            break
 
-            nursery.start_soon(
-                _watch_and_stop_after_process, stop_after_process, nursery.cancel_scope
-            )
+                nursery.start_soon(
+                    _watch_and_stop_after_process, stop_after_process, nursery.cancel_scope
+                )
 
-        async with backend_app_factory(config=config) as backend:
             org_count = 0
 
             # Populate the server with the testbed templates
