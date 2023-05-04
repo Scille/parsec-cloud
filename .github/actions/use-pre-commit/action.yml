@@ -5,11 +5,11 @@ inputs:
   extra-args:
     description: options to pass to pre-commit run-precommit
     required: false
-    default: ''
+    default: ""
   changed-files:
     description: List of changed files to run `pre-commit` on, if empty will run on all files
     required: false
-    default: ''
+    default: ""
   config-file:
     description: where is located the pre-commit config file
     required: false
@@ -18,11 +18,22 @@ inputs:
     description: pre-commit version to use
     required: false
     default: 2.21.0
+  install-only:
+    description: Only install pre-commit without running it.
+    required: false
+    default: "false"
+  install-dir:
+    description: Path where to install pre-commit.
+    required: false
+    default: ~/.cache/pre-commit
 
 outputs:
   cache-hit:
     description: A boolean value to indicate an exact match was found for the key.
     value: ${{ steps.cache-pre-commit.outputs.cache-hit }}
+  install-path:
+    description: A path where pre-commit.pyz is installed
+    value: ${{ inputs.install-dir }}/pre-commit.pyz
 
 runs:
   using: composite
@@ -33,29 +44,34 @@ runs:
       with:
         key: pre-commit-${{ inputs.version }}-${{ hashFiles(inputs.config-file) }}
         path: |
-          ~/.cache/pre-commit
+          ${{ inputs.install-dir }}
 
     # Install pre-commit as a standalone .pyz archive that can be run by Python
     - name: Install pre-commit
+      id: install-precommit
       if: steps.cache-pre-commit.outputs.cache-hit != 'true'
       run: |
-        mkdir -p ~/.cache/pre-commit/
-        curl --proto '=https' --tlsv1.2 -sSL https://github.com/pre-commit/pre-commit/releases/download/v${{ inputs.version }}/pre-commit-${{ inputs.version }}.pyz > ~/.cache/pre-commit/pre-commit.pyz
+        set -eux
+        mkdir -p ${{ inputs.install-dir }}
+        curl --proto '=https' --tlsv1.2 -sSL \
+          https://github.com/pre-commit/pre-commit/releases/download/v${{ inputs.version }}/pre-commit-${{ inputs.version }}.pyz \
+          > ${{ inputs.install-dir }}/pre-commit.pyz
       shell: bash
 
     - name: Debug installed python package
       run: |
         python --version
-        python ~/.cache/pre-commit/pre-commit.pyz --version
+        python ${{ inputs.install-dir }}/pre-commit.pyz --version
       shell: bash
 
 
     - name: Run pre-commit
+      if: inputs.install-only != 'true'
       run: |
         # Run pre-commit
         set -x
         python \
-          ~/.cache/pre-commit/pre-commit.pyz \
+          ${{ inputs.install-dir }}/pre-commit.pyz \
           run \
           --verbose \
           --show-diff-on-failure \

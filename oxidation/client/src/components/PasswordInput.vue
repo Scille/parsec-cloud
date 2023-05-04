@@ -11,6 +11,7 @@
             :type="passwordVisible ? 'text' : 'password'"
             v-model="passwordRef"
             @ion-input="$emit('change', $event.detail.value)"
+            @ion-input="$emit('change', $event.detail.value)"
             @keyup.enter="onEnterPress()"
           />
           <ion-button
@@ -20,7 +21,7 @@
           >
             <ion-icon
               slot="icon-only"
-              :icon="passwordVisible ? eyeOffOutline : eyeOutline"
+              :icon="passwordVisible ? eyeOff : eye"
             />
           </ion-button>
         </ion-item>
@@ -33,9 +34,10 @@
 import { ref } from 'vue';
 import { IonGrid, IonCol, IonRow, IonButton, IonItem, IonInput, IonIcon } from '@ionic/vue';
 import {
-  eyeOutline,
-  eyeOffOutline
+  eye,
+  eyeOff
 } from 'ionicons/icons';
+import { useI18n } from 'vue-i18n';
 
 defineProps<{
   label: string
@@ -48,6 +50,7 @@ const emits = defineEmits<{
   (e: 'change', value: string): void
   (e: 'enter'): void
 }>();
+const { t, d } = useI18n();
 
 function onEnterPress() : void {
   if (passwordRef.value.length > 0) {
@@ -57,7 +60,20 @@ function onEnterPress() : void {
 </script>
 
 <style lang="scss" scoped>
-  ion-item {
-    align-items: center;
+
+.input-col {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+
+  .form-label{
+    color: var(--parsec-color-light-primary-700);
   }
+
+  .input {
+    border-radius: 6px;
+    overflow: hidden;
+  }
+}
 </style>

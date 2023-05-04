@@ -234,9 +234,9 @@ dependencies = [
 
 [[package]]
 name = "chrono"
-version = "0.4.23"
+version = "0.4.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16b0a3d9ed01224b22057780a37bb8c5dbfe1be8ba48678e7bf57ec4b385411f"
+checksum = "4e3c5919066adf22df73762e50cffcde3a758f2a848b113b586d1f86728b673b"
 dependencies = [
  "iana-time-zone",
  "js-sys",
@@ -533,9 +533,9 @@ checksum = "3f107b87b6afc2a64fd13cac55fe06d6c8859f12d4b14cbcdd2c67d0976781be"
 
 [[package]]
 name = "email-address-parser"
-version = "2.0.0-rc2"
+version = "2.0.0-rc3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e903f37351d8e1163d782d08b6c0a542cf76efbbff2bcb5bcec123d11d9c04e3"
+checksum = "7a0c5c0dbbdb1567e94f22231b9992cbf5b42166b8fa640eb019b9fb8d016521"
 dependencies = [
  "console_error_panic_hook",
  "pest",
@@ -893,12 +893,6 @@ name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
-
-[[package]]
-name = "hex-literal"
-version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ebdb29d2ea9ed0083cd8cece49bbd968021bd99b0849edb4a9a7ee0fdf6a4e0"
 
 [[package]]
 name = "hex-literal"
@@ -1313,7 +1307,7 @@ dependencies = [
  "getrandom 0.1.16",
  "getrandom 0.2.6",
  "hex",
- "hex-literal 0.3.4",
+ "hex-literal",
  "lazy_static",
  "libsodium-sys",
  "openssl",
@@ -1358,7 +1352,7 @@ dependencies = [
 name = "libparsec_platform_device_loader"
 version = "0.0.0"
 dependencies = [
- "hex-literal 0.3.4",
+ "hex-literal",
  "libparsec_crypto",
  "libparsec_testbed",
  "libparsec_tests_fixtures",
@@ -1401,7 +1395,7 @@ version = "0.0.0"
 dependencies = [
  "futures",
  "glob",
- "hex-literal 0.3.4",
+ "hex-literal",
  "libparsec_serialization_format",
  "libparsec_tests_fixtures",
  "libparsec_types",
@@ -1436,7 +1430,7 @@ name = "libparsec_testbed"
 version = "0.0.0"
 dependencies = [
  "crc32fast",
- "hex-literal 0.3.4",
+ "hex-literal",
  "lazy_static",
  "libparsec_tests_fixtures",
  "libparsec_types",
@@ -1452,7 +1446,7 @@ name = "libparsec_tests_fixtures"
 version = "0.0.0"
 dependencies = [
  "env_logger",
- "hex-literal 0.3.4",
+ "hex-literal",
  "lazy_static",
  "libparsec_platform_device_loader",
  "libparsec_platform_storage",
@@ -1482,7 +1476,7 @@ dependencies = [
  "flate2",
  "fnmatch-regex",
  "glob",
- "hex-literal 0.4.1",
+ "hex-literal",
  "lazy_static",
  "libparsec_crypto",
  "libparsec_platform_async",
@@ -2282,9 +2276,9 @@ checksum = "f162c6dd7b008981e4d40210aca20b4bd0f9b60ca9271061b07f78537722f2e1"
 
 [[package]]
 name = "reqwest"
-version = "0.11.16"
+version = "0.11.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "27b71749df584b7f4cac2c426c127a7c785a5106cc98f7a8feb044115f0fa254"
+checksum = "13293b639a097af28fc8a90f22add145a9c954e49d77da06263d58cf44d5fb91"
 dependencies = [
  "base64 0.21.0",
  "bytes",
@@ -2573,9 +2567,9 @@ dependencies = [
 
 [[package]]
 name = "serde_with"
-version = "2.2.0"
+version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30d904179146de381af4c93d3af6ca4984b3152db687dacb9c3c35e86f39809c"
+checksum = "331bb8c3bf9b92457ab7abecf07078c13f7d270ba490103e84e8b014490cd0b0"
 dependencies = [
  "base64 0.13.1",
  "chrono",
@@ -2589,9 +2583,9 @@ dependencies = [
 
 [[package]]
 name = "serde_with_macros"
-version = "2.2.0"
+version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1966009f3c05f095697c537312f5415d1e3ed31ce0a56942bac4c771c5c335e"
+checksum = "859011bddcc11f289f07f467cc1fe01c7a941daa4d8f6c40d4d1c92eb6d9319c"
 dependencies = [
  "darling",
  "proc-macro2",

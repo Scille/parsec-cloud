@@ -1,0 +1,94 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS -->
+
+<template>
+  <ion-list class="container">
+    <ion-item class="container__item">
+      <ion-icon
+        :icon="addCircle"
+        slot="start"
+      />
+      <div class="text-content">
+        <ion-label class="body">
+          {{ $t('HomePage.noExistingOrganization.createOrganizationTitle') }}
+        </ion-label>
+        <ion-text class="body-sm sub-text">
+          {{ $t('HomePage.noExistingOrganization.createOrganizationSubtitle') }}
+        </ion-text>
+      </div>
+    </ion-item>
+    <ion-item class="container__item">
+      <ion-icon
+        :icon="mail"
+        slot="start"
+      />
+      <div class="text-content">
+        <ion-label class="body">
+          {{ $t('HomePage.noExistingOrganization.joinOrganizationTitle') }}
+        </ion-label>
+        <ion-text class="body-sm sub-text">
+          {{ $t('HomePage.noExistingOrganization.joinOrganizationSubtitle') }}
+        </ion-text>
+      </div>
+    </ion-item>
+  </ion-list>
+</template>
+
+<script setup lang="ts">
+import {
+  IonList,
+  IonItem,
+  IonIcon,
+  IonLabel,
+  IonText
+} from '@ionic/vue';
+import {
+  addCircle,
+  mail
+} from 'ionicons/icons';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
+
+</script>
+
+<style lang="scss" scoped>
+.container {
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.container__item {
+  --background: none;
+  width: 100%;
+  --min-height: 1rem;
+  user-select: none;
+  cursor: pointer;
+  margin-inline-end: 2px;
+  color: var(--parsec-color-light-primary-600);
+  border-radius: 0.25rem;
+
+  ion-icon {
+    color: var(--parsec-color-light-primary-600);
+    margin-inline-end: 0.75rem;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  &:hover {
+    --background: var(--parsec-color-light-primary-30);
+    color: var(--parsec-color-light-primary-600);
+  }
+
+  .text-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    .sub-text {
+      color: var(--parsec-color-light-secondary-grey);
+    }
+  }
+}
+
+</style>

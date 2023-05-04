@@ -24,6 +24,10 @@ rust-python-binding: &rust-python-binding src/**
 
 rust-web-binding: &rust-web-binding oxidation/bindings/web/**
 
+any-python:
+  - "*.py"
+  - "*.pyi"
+
 python: &python
   - parsec/**
   - tests/**

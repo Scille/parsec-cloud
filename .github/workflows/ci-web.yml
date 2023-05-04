@@ -8,6 +8,7 @@ env:
   # We use the version 18.12 because the version >= 18.13 have some breaking changes on how they format the date.
   # That would break our unit test if we don't update them.
   node-version: 18.12.0
+  wasm-pack-version: 0.11.0
   # Cargo will be faster with this configuration.
   # It will only update it's index for the dependencies that we use.
   # https://blog.rust-lang.org/2023/03/09/Rust-1.68.0.html#cargos-sparse-protocol
@@ -42,8 +43,6 @@ jobs:
           node-version: ${{ env.node-version }}
         timeout-minutes: 2
 
-      # TODO: cache libparsec and reuse it if Rust code hasn't changed !
-
       - name: Install dependencies
         if: steps.should-run-web-jobs.outputs.run == 'true'
         run: |
@@ -61,12 +60,90 @@ jobs:
         working-directory: oxidation/client
         timeout-minutes: 5
 
-      - name: Install web bindings
-        # Currently disable because `E2E tests & Unit tests` are.
-        if: false && steps.should-run-web-jobs.outputs.run == 'true'
-        run: npm run build:ci
+      - name: Setup cache-key
+        if: steps.should-run-web-jobs.outputs.run == 'true'
+        id: cache-key
+        run: >-
+          echo "key=web-${{ hashFiles(
+            'oxidation/bindings/web/**',
+            'oxidation/libparsec/**',
+            'rust-toolchain.toml',
+            'Cargo.lock'
+          ) }}-libparsec" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Restore libparsec if Rust hasn't been modified
+        if: steps.should-run-web-jobs.outputs.run == 'true'
+        id: cache-libparsec
+        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # pin v3.3.1
+        with:
+          key: ${{ steps.cache-key.outputs.key }}
+          path: |
+            oxidation/bindings/web/pkg/libparsec_*
+            oxidation/bindings/web/pkg/package*
+        timeout-minutes: 2
+
+      - name: Retrieve Rust cache
+        uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f # pin v2.2.1
+        if: >-
+          steps.should-run-web-jobs.outputs.run == 'true'
+          && steps.cache-libparsec.outputs.cache-hit != 'true'
+        with:
+          # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
+          # cache is only shared between master and the PRs (and not accross PRs).
+          # So we only save the cache on master build given it's the ones that are the
+          # most likely to be reused.
+          save-if: ${{ github.ref == 'refs/heads/master' }}
+        timeout-minutes: 5
+
+      - name: Install wasm-pack
+        if: >-
+          steps.should-run-web-jobs.outputs.run == 'true'
+          && steps.cache-libparsec.outputs.cache-hit != 'true'
+        run: |
+          set -eux
+          set -o pipefail
+
+          BASE_DIR=wasm-pack-v${{ env.wasm-pack-version }}-x86_64-unknown-linux-musl
+
+          mkdir -p ~/.local/bin
+
+          curl -sSL \
+            https://github.com/rustwasm/wasm-pack/releases/download/v${{ env.wasm-pack-version }}/$BASE_DIR.tar.gz \
+            | tar --extract --gzip --to-stdout \
+              $BASE_DIR/wasm-pack \
+              > ~/.local/bin/wasm-pack
+
+          chmod a+rx ~/.local/bin/wasm-pack
+
+          echo $HOME/.local/bin >> $GITHUB_PATH
+        timeout-minutes: 2
+
+      - name: Build web bindings
+        if: >-
+          steps.should-run-web-jobs.outputs.run == 'true'
+          && steps.cache-libparsec.outputs.cache-hit != 'true'
+        run: npm run build:dev
         working-directory: oxidation/bindings/web
-        timeout-minutes: 15
+        timeout-minutes: 10
+
+      - name: Save libparsec to be reuse later
+        if: >-
+          steps.should-run-web-jobs.outputs.run == 'true'
+          && steps.cache-libparsec.outputs.cache-hit != 'true'
+        uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # pin v3.3.1
+        with:
+          key: ${{ steps.cache-key.outputs.key }}
+          path: |
+            oxidation/bindings/web/pkg/libparsec_*
+            oxidation/bindings/web/pkg/package*
+        timeout-minutes: 2
+
+      - name: Unit tests
+        if: steps.should-run-web-jobs.outputs.run == 'true'
+        run: npm run test:unit
+        working-directory: oxidation/client
+        timeout-minutes: 10
 
       - name: E2E tests
         # Currently disable because of #4393
@@ -75,15 +152,5 @@ jobs:
         # it fails to stop the server :'(
         # (see https://github.com/vuejs/vue-cli/issues/3401)
         run: VUE_CLI_TEST=1 npm run test:e2e:headless
-        working-directory: oxidation/client
-        timeout-minutes: 10
-
-      # Need to run e2e first, as it will trigger compilation of the
-      # libparsec web plugin that is also needed for the unit tests (but
-      # which doesn't trigger it compilation...)
-      - name: Unit tests
-        # Currently disabled because of #3494
-        if: false && steps.should-run-web-jobs.outputs.run == 'true'
-        run: npm run test:unit
         working-directory: oxidation/client
         timeout-minutes: 10

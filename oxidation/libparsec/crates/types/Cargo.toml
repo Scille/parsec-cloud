@@ -17,10 +17,10 @@ libparsec_platform_async = { path = "../platform_async" }
 
 lazy_static = "1.4.0"
 serde = { version = "1.0.147", features = ["derive"] }
-serde_with = "2.2.0"
+serde_with = "2.3.2"
 rmp-serde = "1.1.1"
 serde_bytes = "0.11.9"
-chrono = "0.4.23"
+chrono = "0.4.24"
 # By default uuid crate uses `getrandom` directly instead of `rand`, however
 # the latter is much faster (see. https://github.com/uuid-rs/uuid/pull/545,
 # tl;dr: `rand` uses `getrandom` as seed then applies a fast chacha algo on it)
@@ -35,7 +35,7 @@ paste = "1.0.12"
 flate2 = "1.0.25"
 rand = "0.8.4"
 thiserror = "1.0.40"
-email-address-parser = "2.0.0-rc2"
+email-address-parser = "2.0.0-rc3"
 fnmatch-regex = "0.2.0"
 sha2 = "0.10.6"
 hex-literal = { version = "0.4.1", optional = true }

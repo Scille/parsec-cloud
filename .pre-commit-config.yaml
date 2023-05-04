@@ -2,7 +2,7 @@ exclude: ^misc/bench.py$
 
 default_language_version:
   rust: 1.68.0
-  node: 18.13.0
+  node: 18.12.0
 
 repos:
   ##############
@@ -119,7 +119,7 @@ repos:
         require_serial: true
         language: system
         types_or: [ python, pyi ]
-        files: ^(parsec|tests)/
+        files: ^(parsec|tests|misc)/
 
   ######
   # Rust
