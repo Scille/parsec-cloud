@@ -7,7 +7,8 @@
             "myDevices": "Mes appareils"
         },
         "organizationList": {
-            "title": "Liste de vos organisations",
+            "title": "Vos organisations",
+            "subtitle": "Gardez le contrôle total sur vos données avec Parsec et soyez sûr de leur sécurité.",
             "lastLogin": "Dernière connexion sur cet appareil :",
             "sortOrderAsc": "Ordre croissant",
             "sortOrderDesc": "Ordre décroissant",
@@ -19,6 +20,7 @@
         },
         "noExistingOrganization": {
             "title": "Besoin de créer ou rejoindre une organisation ?",
+            "createOrJoin": "Créer ou rejoindre",
             "createOrganization": "Créer une organisation",
             "joinOrganization": "Rejoindre une organisation"
         },
