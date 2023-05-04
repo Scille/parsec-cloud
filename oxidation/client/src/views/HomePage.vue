@@ -1,4 +1,5 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS -->
+
 <template>
   <ion-page>
     <ion-content
@@ -30,45 +31,64 @@
 
         <!-- organization -->
         <div class="rightSide">
+          <!-- topbar -->
+          <ion-card-content class="topbar">
+            <!-- back btn -->
+            <ion-card-title
+              color="tertiary"
+              v-if="!showOrganizationList"
+            >
+              <ion-button
+                fill="clear"
+                @click="showOrganizationList = !showOrganizationList"
+                id="back-to-list-button"
+              >
+                <ion-icon
+                  slot="start"
+                  :icon="chevronBack"
+                />
+                {{ $t('HomePage.organizationLogin.backToList') }}
+              </ion-button>
+            </ion-card-title>
+            <!-- end of back btn -->
+            <search-input
+              :label="t('HomePage.organizationList.search')"
+              v-if="showOrganizationList"
+              @change="onSearchChange($event)"
+              id="search-input"
+            />
+            <ion-button
+              @click="openCreateOrganizationModal()"
+              size="large"
+              id="create-organization-button"
+              class="button-default"
+            >
+              {{ $t('HomePage.noExistingOrganization.createOrJoin') }}
+            </ion-button>
+            <ion-buttons
+              slot="primary"
+              class="topbar-icon__settings"
+            >
+              <ion-button
+                slot="icon-only"
+                id="trigger-search-button"
+                class="topbar-button__item"
+              >
+                <ion-icon
+                  slot="icon-only"
+                  :icon="cog"
+                />
+              </ion-button>
+            </ion-buttons>
+          </ion-card-content>
+          <!-- end of topbar -->
           <slide-horizontal :reverse-direction="!showOrganizationList">
             <ion-card
               v-if="showOrganizationList"
               class="rightSide-container"
             >
-              <!-- topbar -->
-              <ion-card-content class="topbar">
-                <search-input
-                  :label="t('HomePage.organizationList.search')"
-                  @change="onSearchChange($event)"
-                  id="search-input"
-                />
-                <ion-button
-                  @click="openCreateOrganizationModal()"
-                  size="large"
-                  id="create-organization-button"
-                  class="button-default"
-                >
-                  {{ $t('HomePage.noExistingOrganization.createOrJoin') }}
-                </ion-button>
-                <ion-buttons
-                  slot="primary"
-                  class="topbar-icon__settings"
-                >
-                  <ion-button
-                    slot="icon-only"
-                    id="trigger-search-button"
-                    class="topbar-button__item"
-                  >
-                    <ion-icon
-                      slot="icon-only"
-                      :icon="cog"
-                    />
-                  </ion-button>
-                </ion-buttons>
-              </ion-card-content>
-              <!-- end of topbar -->
               <ion-card-content class="organization-container">
-                <ion-card-title class="organization-container__filter">
+                <ion-card-title class="organization-filter">
                   <!-- No use in showing the sort/filter options for less than 2 devices -->
                   <template v-if="deviceList.length > 2">
                     <ms-select
@@ -81,25 +101,26 @@
                     />
                   </template>
                 </ion-card-title>
-                <ion-grid class="organization-list-grid">
-                  <ion-row>
+                <ion-grid class="organization-list">
+                  <ion-row
+                    class="organization-list__row"
+                  >
                     <ion-col
-                      size="1"
                       v-for="device in filteredDevices"
                       :key="device.slug"
                     >
                       <ion-card
                         button
-                        class="organization-card-container"
+                        class="organization-card"
                         @click="onOrganizationCardClick(device)"
                       >
-                        <ion-card-content>
+                        <ion-card-content class="card-content">
                           <ion-grid>
                             <organization-card
                               :device="device"
-                              class="organization-card"
+                              class="card-content__body"
                             />
-                            <ion-row class="organization-card-footer">
+                            <ion-row class="card-content__footer">
                               <ion-col size="auto">
                                 <p>{{ $t('HomePage.organizationList.lastLogin') }}</p>
                                 <p>
@@ -119,25 +140,9 @@
             <!-- after slide -->
             <ion-card
               v-if="!showOrganizationList"
-              id="login-popup-container"
+              class="login-popup"
             >
               <ion-card-content class="organization-container">
-                <!-- back btn -->
-                <ion-card-title color="tertiary">
-                  <ion-button
-                    fill="clear"
-                    @click="showOrganizationList = !showOrganizationList"
-                    id="back-to-list-button"
-                  >
-                    <ion-icon
-                      slot="start"
-                      :icon="chevronBack"
-                    />
-                    {{ $t('HomePage.organizationLogin.backToList') }}
-                  </ion-button>
-                </ion-card-title>
-                <!-- end of back btn -->
-
                 <!-- login -->
                 <div id="login-container">
                   <ion-card id="login-card-container">
@@ -196,8 +201,8 @@ import {
   IonCardTitle,
   IonButton,
   IonIcon,
-  IonItem,
-  IonLabel,
+  IonButtons,
+  IonText,
   IonRow,
   IonCol,
   IonGrid,
@@ -205,9 +210,7 @@ import {
 } from '@ionic/vue';
 import {
   add,
-  link,
   chevronBack,
-  searchOutline,
   cog,
   logIn
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
@@ -381,11 +384,14 @@ async function canDismissModal(): Promise<boolean> {
 <style lang="scss" scoped>
 #page {
   height: 100vh;
+  background: white;
   display: flex;
   flex-direction: row;
   overflow: hidden;
   margin: 0 auto;
   align-items: center;
+  position: relative;
+  z-index: -4;
 }
 
 .sidebar {
@@ -475,6 +481,7 @@ async function canDismissModal(): Promise<boolean> {
   border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
   padding: 3.5rem 3.5rem 1.5rem;
   display: flex;
+  align-items: center;
 
   #create-organization-button {
     margin-left: auto;
@@ -507,78 +514,90 @@ async function canDismissModal(): Promise<boolean> {
   padding: 1.5rem 3.5rem 0;
   height: 100%;
 
-  &__filter{
+  .organization-filter {
     display: flex;
-    margin: 0;
+    margin: 0 0 .5rem;
     justify-content: flex-end;
   }
 
-  ion-grid {
-    --ion-grid-padding: 1em;
-    --ion-grid-columns: 3;
-  }
-
-  .organization-list-grid {
+  .organization-list {
     max-height: 30em;
     overflow-y: auto;
+    --ion-grid-columns: 3;
+
+    &__row {
+      gap: 1rem;
+    }
   }
 
-  ion-item {
-    align-items: center;
-  }
-
-  .organization-card-container {
+  .organization-card {
     background: var(--parsec-color-light-secondary-background);
-    margin: 1em 1.5em;
     user-select: none;
-
-    ion-card-content {
-      padding: 0 !important;
-    }
-
-    .organization-card {
-      padding: 1em;
-    }
-
-    .organization-card-footer {
-      padding: 0.5em 1em;
-      background: var(--parsec-color-light-secondary-medium);
-      border-top: 1px solid var(--parsec-color-light-secondary-disabled);
-      color: var(--parsec-color-light-secondary-grey);
-      height: 4.6em;
-
-      p {
-        font-size: 0.8em;
-      }
-    }
+    transition: transform 150ms linear, box-shadow 150ms linear;
+    box-shadow: none;
+    border-radius: 0.5em;
+    margin-inline: 0;
+    margin-top: 0;
+    margin-bottom: 0;
 
     &:hover {
-      background: var(--parsec-color-light-primary-50);
-      cursor: pointer;
+      transform: scale(1.02);
+      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
+    }
 
-      .organization-card-footer {
+    .card-content {
+      padding-top: 0px;
+      padding-bottom: 0px;
+      padding-inline-end: 0px;
+      padding-inline-start: 0px;
+
+      &__footer {
+        padding: 0.5em 1em;
+        background: var(--parsec-color-light-secondary-medium);
+        border-top: 1px solid var(--parsec-color-light-secondary-disabled);
+        color: var(--parsec-color-light-secondary-grey);
+        height: 4.6em;
+
+        p {
+          font-size: 0.8em;
+        }
+      }
+
+      &:hover {
         background: var(--parsec-color-light-primary-50);
-        border-top: 1px solid var(--parsec-color-light-primary-100);
+        cursor: pointer;
+
+        .card-content__footer {
+          background: var(--parsec-color-light-primary-50);
+          border-top: 1px solid var(--parsec-color-light-primary-100);
+        }
       }
     }
   }
+}
+
+.login-popup {
+  margin: 0;
+  box-shadow: none;
+
   #login-container {
-  margin-right: 3em;
-  margin-left: 3em;
+    margin-right: 3em;
+    margin-left: 3em;
 
-  #login-card-container {
-    background: var(--parsec-color-light-secondary-background);
-    border-radius: 8px;
-    padding: 2em;
+    #login-card-container {
+      background: var(--parsec-color-light-secondary-background);
+      border-radius: 8px;
+      padding: 2em;
+      box-shadow: none;
 
-    .organization-card {
-      margin-bottom: 2em;
+      .organization-card {
+        margin-bottom: 2em;
+      }
+    }
+
+    #login-button-container {
+      text-align: right;
     }
   }
-
-  #login-button-container {
-    text-align: right;
-  }
-}
 }
 </style>
