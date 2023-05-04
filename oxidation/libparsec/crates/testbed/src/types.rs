@@ -21,14 +21,29 @@ pub struct TestbedTemplate {
 
 impl TestbedTemplate {
     pub fn device(&self, device_id: &DeviceID) -> &TestbedDeviceData {
-        self.devices
-            .iter()
-            .find(|x| x.device_id == *device_id)
-            .unwrap()
+        match self.devices.iter().find(|x| x.device_id == *device_id) {
+            Some(device) => device,
+            None => {
+                let devices: Vec<_> = self.devices.iter().map(|d| d.device_id.as_ref()).collect();
+                panic!(
+                    "Unknown device `{}` in environment `{}`, valid devices: {:?}",
+                    device_id, self.id, devices
+                )
+            }
+        }
     }
 
     pub fn user(&self, user_id: &UserID) -> &TestbedUserData {
-        self.users.iter().find(|x| x.user_id == *user_id).unwrap()
+        match self.users.iter().find(|x| x.user_id == *user_id) {
+            Some(user) => user,
+            None => {
+                let users: Vec<_> = self.users.iter().map(|d| d.user_id.as_ref()).collect();
+                panic!(
+                    "Unknown user `{}` in environment `{}`, valid users: {:?}",
+                    user_id, self.id, users
+                )
+            }
+        }
     }
 
     pub fn new(
