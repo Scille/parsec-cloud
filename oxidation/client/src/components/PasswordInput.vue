@@ -13,6 +13,7 @@
             @ion-input="$emit('change', $event.detail.value)"
             @keyup.enter="onEnterPress()"
             :autofocus="true"
+            id="password-input"
           />
           <ion-button
             @click="passwordVisible = !passwordVisible"

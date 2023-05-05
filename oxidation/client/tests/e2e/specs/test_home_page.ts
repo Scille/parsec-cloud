@@ -29,14 +29,15 @@ describe('Check organization list', () => {
   it('Go to login page and enter password', () => {
     cy.contains('Boby McBobFace').click();
     cy.get('#login-button-container > ion-button').should('have.class', 'button-disabled');
-    cy.get('ion-input > input').invoke('attr', 'type').should('eq', 'password');
-    cy.get('ion-input > input').type('P@ssw0rd');
+    cy.get('#password-input').find('input').invoke('attr', 'type').should('eq', 'password');
+    cy.get('#password-input').find('input').type('P@ssw0rd');
     cy.get('#login-button-container > ion-button').should('not.have.class', 'button-disabled');
     cy.get('#login-button-container > ion-button').click();
     cy.get('@configPath').then(($elem) => {
       const orgId = ($elem as unknown as string).split('/').slice(-1)[0];
       cy.get('@consoleLog').should('have.been.calledWith', `Log in to ${orgId} with password "P@ssw0rd"`);
     });
+    cy.contains('Documents');
   });
 
   it('Go to login page and sort and filter orgs', () => {
@@ -44,12 +45,12 @@ describe('Check organization list', () => {
     // Sorted by org name asc by default
     cy.get('.organization-card-container').first().contains('Alicey McAliceFace');
     cy.get('.organization-card-container').last().contains('Boby McBobFace');
-    cy.get('#search-input > input').type('alice');
+    cy.get('#search-input').find('input').type('alice');
     cy.get('.organization-card-container').should('have.length', 2);
     // Only 2 devices shown
     cy.get('.organization-card-container').first().contains('Alicey McAliceFace');
     cy.get('.organization-card-container').last().contains('Alicey McAliceFace');
-    cy.get('#search-input > input').clear();
+    cy.get('#search-input').find('input').clear();
     cy.get('.organization-card-container').should('have.length', 3);
     // Change sort order
     cy.get('#filter-select').contains('Organization').click();
@@ -72,4 +73,10 @@ describe('Check organization list', () => {
     cy.contains('Join an organization').click();
     cy.contains('Please enter the organization\'s URL');
   });
+
+  it('Log into organization with command', () => {
+    // Uses Cypress command to simplify the log in part
+    cy.login('Boby', 'P@ssw0rd');
+    cy.contains('Documents');
+  })
 });

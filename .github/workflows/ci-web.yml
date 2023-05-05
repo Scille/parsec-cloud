@@ -29,6 +29,11 @@ jobs:
     name: 🌐 Web tests
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 20
+    services:
+      parsec-testbed-server:
+        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:v2.15.0-dev.2023-05-25-sha.62a3811
+        ports:
+          - 6770:6770
     steps:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
         timeout-minutes: 5
@@ -155,11 +160,9 @@ jobs:
         timeout-minutes: 10
 
       - name: E2E tests
-        # Currently disable because of #4393
-        if: false && steps.should-run-web-jobs.outputs.run == 'true'
-        # Without `VUE_CLI_TEST` set, the command hangs forever because
-        # it fails to stop the server :'(
-        # (see https://github.com/vuejs/vue-cli/issues/3401)
-        run: VUE_CLI_TEST=1 npm run test:e2e:headless
+        if: steps.should-run-web-jobs.outputs.run == 'true'
+        run: npm run test:e2e:headless
+        env:
+          TESTBED_SERVER_URL: parsec://127.0.0.1:6770?no_ssl=true
         working-directory: oxidation/client
         timeout-minutes: 10

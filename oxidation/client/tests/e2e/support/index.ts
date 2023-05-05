@@ -40,6 +40,8 @@ declare global {
 Cypress.Commands.add('visitApp', (template) => {
   const TESTBED_SERVER_URL = Cypress.env('TESTBED_SERVER_URL');
   assert.isDefined(TESTBED_SERVER_URL, 'Environ variable `TESTBED_SERVER_URL` must be defined to use testbed');
+  // If the variable is not defined, Cypress gets it as the string "undefined" instead of the value. So we check that also.
+  assert.notStrictEqual(TESTBED_SERVER_URL, 'undefined', 'Environ variable `TESTBED_SERVER_URL` must be defined to use testbed');
 
   cy.visit('/', {
     onBeforeLoad(win) {
@@ -64,6 +66,14 @@ Cypress.Commands.add('visitApp', (template) => {
     .as('configPath')
     // Return the Window object (type cast because Cypress expects `get` to only return JQuery)
     .get('@window') as unknown as Cypress.Chainable<Window>;
+});
+
+Cypress.Commands.add('login', (userName, password) => {
+  cy.contains(userName).click();
+  cy.get('#password-input').find('input').type(password);
+  cy.get('#login-button-container > ion-button').click();
+  cy.url().should('include', '/documents/workspaces');
+  cy.contains('Documents')
 });
 
 Cypress.Commands.add('dropTestbed', () => {
