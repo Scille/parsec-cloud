@@ -13,7 +13,7 @@
             {{ device.organizationId }}
           </ion-card-title>
           <ion-card-subtitle>
-            <p>
+            <p class="subtitles-sm">
               {{ device.humanHandle }}
             </p>
           </ion-card-subtitle>
