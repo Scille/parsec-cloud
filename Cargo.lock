@@ -1240,6 +1240,7 @@ dependencies = [
  "libparsec_tests_fixtures",
  "libparsec_types",
  "log",
+ "paste",
  "thiserror",
 ]
 

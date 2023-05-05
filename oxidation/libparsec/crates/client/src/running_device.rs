@@ -49,7 +49,7 @@ impl RunningDevice {
 
     pub async fn start(device: Arc<LocalDevice>, data_base_dir: &Path) -> Result<Self, DynError> {
         // TODO: error handling
-        let event_bus = Arc::new(EventBus {});
+        let event_bus = Arc::new(EventBus::default());
         let cmds = Arc::new(
             AuthenticatedCmds::new(data_base_dir, device.clone(), ProxyConfig::default()).unwrap(),
         );

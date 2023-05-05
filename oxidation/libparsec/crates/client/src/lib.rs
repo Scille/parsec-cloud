@@ -6,4 +6,5 @@ mod running_device;
 mod user_ops;
 // mod workspace_ops;
 
+pub use event_bus::*;
 pub use running_device::*;
