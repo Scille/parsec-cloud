@@ -82,7 +82,9 @@
             </ion-buttons>
           </ion-card-content>
           <!-- end of topbar -->
-          <slide-horizontal :reverse-direction="!showOrganizationList">
+          <slide-horizontal
+            :reverse-direction="!showOrganizationList"
+          >
             <ion-card
               v-if="showOrganizationList"
               class="rightSide-container"
@@ -143,10 +145,13 @@
               class="login-popup"
             >
               <ion-card-content class="organization-container">
+                <ion-text class="title-h1">
+                  {{ $t('HomePage.organizationLogin.login') }}
+                </ion-text>
                 <!-- login -->
                 <div id="login-container">
-                  <ion-card id="login-card-container">
-                    <ion-card-content>
+                  <ion-card class="login-card">
+                    <ion-card-content class="login-card__content">
                       <ion-grid>
                         <organization-card :device="selectedDevice" />
                         <password-input
@@ -165,12 +170,12 @@
                       </ion-grid>
                     </ion-card-content>
                   </ion-card>
-                  <div id="login-button-container">
+                  <div class="login-button-container">
                     <ion-button
-                      @click="login($event)"
+                      @click="login()"
                       size="large"
                       :disabled="password.length == 0"
-                      id="login-button"
+                      class="login-button"
                     >
                       <ion-icon
                         slot="start"
@@ -209,7 +214,6 @@ import {
   modalController
 } from '@ionic/vue';
 import {
-  add,
   chevronBack,
   cog,
   logIn
@@ -466,6 +470,10 @@ async function canDismissModal(): Promise<boolean> {
   width: 60vw;
   max-width: 1254px;
   background: #fff;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: -5;
 
   .rightSide-container {
     margin-inline: 0px;
@@ -513,7 +521,6 @@ async function canDismissModal(): Promise<boolean> {
 
 .organization-container {
   padding: 1.5rem 3.5rem 0;
-  height: 100%;
 
   .organization-filter {
     display: flex;
@@ -558,10 +565,6 @@ async function canDismissModal(): Promise<boolean> {
         border-top: 1px solid var(--parsec-color-light-secondary-disabled);
         color: var(--parsec-color-light-secondary-grey);
         height: 4.6em;
-
-        p {
-          font-size: 0.8em;
-        }
       }
 
       &:hover {
@@ -578,27 +581,62 @@ async function canDismissModal(): Promise<boolean> {
 }
 
 .login-popup {
-  margin: 0;
   box-shadow: none;
+  display: flex;
+  margin: auto 0;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+
+  .organization-container {
+    max-width: 62.5rem;
+    padding: 0 3.5rem 3.5rem;
+    flex-grow: 1;
+  }
+
+  .title-h1 {
+    color: var(--parsec-color-light-primary-700);
+  }
 
   #login-container {
-    margin-right: 3em;
-    margin-left: 3em;
+    margin-top: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
 
-    #login-card-container {
+  .login-card {
       background: var(--parsec-color-light-secondary-background);
       border-radius: 8px;
       padding: 2em;
       box-shadow: none;
+      margin: 0;
+
+      &__content {
+        padding: 0;
+
+        #password-input {
+          margin: 1.5rem 0 1rem;
+        }
+      }
 
       .organization-card {
         margin-bottom: 2em;
+        display: flex;
+
+        &__body {
+          padding: 0;
+        }
       }
     }
 
-    #login-button-container {
-      text-align: right;
+  .login-button-container {
+    text-align: right;
+
+    .login-button{
+      margin: 0;
     }
   }
 }
+
 </style>

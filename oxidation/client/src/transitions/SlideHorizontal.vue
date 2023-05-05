@@ -15,12 +15,12 @@ const props = defineProps<{
 
 <style>
 .slide-left-enter-active, .slide-right-enter-active {
-  transition: 0.5s ease-in-out;
-  transition-delay: 0.5s;
+  transition: .4s ease-out;
+  transition-delay: 0.3s;
 }
 
 .slide-left-leave-active, .slide-right-leave-active {
-  transition: 0.5s;
+  transition: .4s;
 }
 
 .slide-left-enter-from, .slide-right-leave-to {
