@@ -502,11 +502,24 @@ https: //github.com/ionic-team/ionic-framework/issues/24080 */
   --inner-border-width: 0px;
   --box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
 }
-
+/* popover global */
 ion-popover {
   --width: 300px;
 }
 
+.popover-side-bottom .popover-viewport {
+  border: var(--parsec-color-light-secondary-disabled) 1.5px solid;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.popover-side-bottom {
+  --width: 250px;
+  --offset-x: -3em;
+  --offset-y: .5em;
+}
+
+/* header popover */
 .profile-header-popover {
   --offset-x: -2em;
   --offset-y: 1em;
@@ -517,15 +530,14 @@ ion-popover {
 }
 
 /* homepage popover */
-.popover-side-bottom {
-  --width: 250px;
-  --offset-x: -3em;
+.homepage-popover {
+  --width: 350px;
+  --offset-x: -6.8rem;
   --offset-y: .5em;
 }
-.popover-side-bottom .popover-viewport {
-  border: var(--parsec-color-light-secondary-disabled) 1.5px solid;
-  border-radius: 6px;
-  overflow: hidden;
+
+.homepage-popover .item-native {
+  padding-inline-start: 0;
 }
 
 /* input */

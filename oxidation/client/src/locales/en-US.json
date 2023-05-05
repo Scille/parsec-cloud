@@ -22,7 +22,11 @@
             "title": "Need to create or join an organization?",
             "createOrJoin": "Create or join",
             "createOrganization": "Create an organization",
-            "joinOrganization": "Join an organization"
+            "createOrganizationTitle": "Create",
+            "createOrganizationSubtitle": "I want to create an organization",
+            "joinOrganization": "Join an organization",
+            "joinOrganizationTitle": "Join",
+            "joinOrganizationSubtitle": "I reveice an invitation Parsec Cloud"
         },
         "organizationLogin": {
             "backToList": "Return to organizations",

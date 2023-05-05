@@ -58,7 +58,7 @@
               id="search-input"
             />
             <ion-button
-              @click="openCreateOrganizationModal()"
+              @click="isPopoverOpen = !isPopoverOpen; openPopover($event)"
               size="large"
               id="create-organization-button"
               class="button-default"
@@ -211,7 +211,8 @@ import {
   IonRow,
   IonCol,
   IonGrid,
-  modalController
+  modalController,
+  popoverController
 } from '@ionic/vue';
 import {
   chevronBack,
@@ -236,6 +237,7 @@ import { StoredDeviceData, StorageManager } from '@/services/storageManager';
 import { DateTime } from 'luxon';
 import { useRouter } from 'vue-router';
 import { configPathKey, formattersKey, storageManagerKey } from '../main';
+import HomePagePopover from '@/components/HomePagePopover.vue';
 
 const router = useRouter();
 const { t, d } = useI18n();
@@ -249,6 +251,7 @@ const sortByAsc = ref(true);
 const { timeSince } = inject(formattersKey)!;
 const configPath = inject(configPathKey, '/');  // Must be a valid Unix path !
 const storageManager: StorageManager = inject(storageManagerKey)!;
+const isPopoverOpen = ref(false);
 
 const msSelectOptions: MsSelectOption[] = [
   { label: t('HomePage.organizationList.sortByOrganization'), key: 'organization' },
@@ -383,6 +386,17 @@ async function canDismissModal(): Promise<boolean> {
   const { role } = await alert.onDidDismiss();
   return role === 'confirm';
 }
+
+async function openPopover(ev: Event): Promise<void> {
+  const popover = await popoverController.create({
+    component: HomePagePopover,
+    cssClass: 'homepage-popover',
+    event: ev,
+    showBackdrop: false
+  });
+  await popover.present();
+}
+
 </script>
 
 <style lang="scss" scoped>
