@@ -25,7 +25,7 @@ fn device_file_factory(device: LocalDevice) -> DeviceFile {
 #[parsec_test]
 #[case(false)]
 #[case(true)]
-async fn test_list_no_devices(tmp_path: TmpPath, #[case] path_exists: bool) {
+async fn list_no_devices(tmp_path: TmpPath, #[case] path_exists: bool) {
     if path_exists {
         std::fs::create_dir(tmp_path.join("devices")).unwrap();
     }
@@ -35,7 +35,7 @@ async fn test_list_no_devices(tmp_path: TmpPath, #[case] path_exists: bool) {
 }
 
 #[parsec_test]
-async fn test_list_devices(tmp_path: TmpPath, alice: &Device, bob: &Device, mallory: &Device) {
+async fn list_devices(tmp_path: TmpPath, alice: &Device, bob: &Device, mallory: &Device) {
     let alice = alice.local_device();
     let bob = bob.local_device();
     let mallory = mallory.local_device();
@@ -104,7 +104,7 @@ async fn test_list_devices(tmp_path: TmpPath, alice: &Device, bob: &Device, mall
 }
 
 #[parsec_test]
-async fn test_list_devices_support_legacy_file_without_labels(tmp_path: TmpPath) {
+async fn list_devices_support_legacy_file_without_labels(tmp_path: TmpPath) {
     let legacy_device = hex!(
         "85a474797065a870617373776f7264a473616c74c40473616c74aa63697068657274657874"
         "c40a63697068657274657874ac68756d616e5f68616e646c65c0ac6465766963655f6c6162"
@@ -131,7 +131,7 @@ async fn test_list_devices_support_legacy_file_without_labels(tmp_path: TmpPath)
 }
 
 #[parsec_test]
-async fn test_renew_legacy_file(tmp_path: TmpPath) {
+async fn renew_legacy_file(tmp_path: TmpPath) {
     let legacy_device = hex!(
         "85a474797065a870617373776f7264a473616c74c40473616c74aa63697068657274657874"
         "c40a63697068657274657874ac68756d616e5f68616e646c65c0ac6465766963655f6c6162"
@@ -160,7 +160,7 @@ async fn test_renew_legacy_file(tmp_path: TmpPath) {
 }
 
 #[parsec_test(testbed = "coolorg")]
-async fn test_testbed(env: &TestbedEnv) {
+async fn testbed(env: &TestbedEnv) {
     let devices = list_available_devices(&env.discriminant_dir).await;
     assert_eq!(
         devices
