@@ -38,7 +38,7 @@ pub struct UserOps {
     storage: UserStorage,
     cmds: Arc<AuthenticatedCmds>,
     #[allow(dead_code)]
-    event_bus: Arc<EventBus>,
+    event_bus: EventBus,
     // // Message processing is done in-order, hence it is pointless to do
     // // it concurrently
     // process_messages_lock: Mutex<()>,
@@ -54,7 +54,7 @@ impl UserOps {
         device: Arc<LocalDevice>,
         cmds: Arc<AuthenticatedCmds>,
         // remote_device_manager,
-        event_bus: Arc<EventBus>,
+        event_bus: EventBus,
         // prevent_sync_pattern,
         // preferred_language,
         // workspace_storage_cache_size,

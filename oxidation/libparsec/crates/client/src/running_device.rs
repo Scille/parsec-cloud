@@ -14,7 +14,10 @@ use std::{
 use libparsec_client_connection::{AuthenticatedCmds, ProxyConfig};
 use libparsec_types::prelude::*;
 
-use crate::{event_bus::EventBus, user_ops::UserOps};
+use crate::{
+    certifs_monitor::CertifsMonitor, certifs_ops::CertifsOps,
+    connection_monitor::ConnectionMonitor, event_bus::EventBus, user_ops::UserOps,
+};
 
 pub type DynError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -27,11 +30,14 @@ pub type DynError = Box<dyn std::error::Error + Send + Sync>;
 
 // Should not be `Clone` given it manages underlying resources !
 pub struct RunningDevice {
-    device: Arc<LocalDevice>,
-    cmds: Arc<AuthenticatedCmds>,
-    event_bus: Arc<EventBus>,
-    pub user_ops: UserOps,
     stopped: AtomicBool,
+    device: Arc<LocalDevice>,
+    event_bus: EventBus,
+    cmds: Arc<AuthenticatedCmds>,
+    certifs_ops: Arc<CertifsOps>,
+    pub user_ops: UserOps,
+    connection_monitor: ConnectionMonitor,
+    certifs_monitor: CertifsMonitor,
 }
 
 impl Debug for RunningDevice {
@@ -48,10 +54,23 @@ impl RunningDevice {
     }
 
     pub async fn start(device: Arc<LocalDevice>, data_base_dir: &Path) -> Result<Self, DynError> {
+        let event_bus = EventBus::default();
         // TODO: error handling
-        let event_bus = Arc::new(EventBus::default());
-        let cmds = Arc::new(
-            AuthenticatedCmds::new(data_base_dir, device.clone(), ProxyConfig::default()).unwrap(),
+        let cmds = Arc::new(AuthenticatedCmds::new(
+            data_base_dir,
+            device.clone(),
+            ProxyConfig::default(),
+        )?);
+
+        // TODO: error handling
+        let certifs_ops = Arc::new(
+            CertifsOps::new(
+                data_base_dir,
+                device.clone(),
+                event_bus.clone(),
+                cmds.clone(),
+            )
+            .await?,
         );
         let user_ops = UserOps::start(
             data_base_dir.to_owned(),
@@ -61,12 +80,20 @@ impl RunningDevice {
         )
         .await?;
         // TODO: init workspace ops
+
+        let certifs_monitor = CertifsMonitor::start(certifs_ops.clone(), event_bus.clone()).await;
+        // Start the connection monitors last, as it send events to others
+        let connection_monitor = ConnectionMonitor::start(cmds.clone(), event_bus.clone()).await;
+
         Ok(Self {
-            device,
-            cmds,
-            event_bus,
-            user_ops,
             stopped: AtomicBool::new(false),
+            device,
+            event_bus,
+            cmds,
+            certifs_ops,
+            user_ops,
+            connection_monitor,
+            certifs_monitor,
         })
     }
 

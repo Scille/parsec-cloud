@@ -8,6 +8,8 @@ use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_storage2::CertifsStorage;
 use libparsec_types::prelude::*;
 
+use crate::event_bus::EventBus;
+
 pub type DynError = Box<dyn std::error::Error + Send + Sync>;
 
 pub enum Author {
@@ -33,6 +35,7 @@ pub enum SecureLoadError {
 #[derive(Debug)]
 pub struct CertifsOps {
     device: Arc<LocalDevice>,
+    event_bus: EventBus,
     cmds: Arc<AuthenticatedCmds>,
     storage: CertifsStorage,
 }
@@ -41,11 +44,13 @@ impl CertifsOps {
     pub async fn new(
         data_base_dir: &Path,
         device: Arc<LocalDevice>,
+        event_bus: EventBus,
         cmds: Arc<AuthenticatedCmds>,
     ) -> Result<Self, DynError> {
         let storage = CertifsStorage::start(data_base_dir, device.clone()).await?;
         Ok(Self {
             device,
+            event_bus,
             cmds,
             storage,
         })
@@ -53,6 +58,10 @@ impl CertifsOps {
 
     pub async fn stop(&self) {
         self.storage.stop().await;
+    }
+
+    pub async fn insert_new_certificate(&self, _certificate: &[u8]) {
+        todo!()
     }
 
     pub async fn secure_load_user_manifest(

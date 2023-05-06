@@ -5,6 +5,8 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use libparsec_protocol::ApiVersion;
+use libparsec_types::prelude::*;
 use paste::paste;
 
 macro_rules! impl_event_bus_internal_and_event_bus_debug {
@@ -12,7 +14,7 @@ macro_rules! impl_event_bus_internal_and_event_bus_debug {
 
         pub struct EventBusInternal {
             $(
-                $field_on_event_cbs: Mutex<Vec<Box<dyn Fn(&$event_struct)>>>,
+                $field_on_event_cbs: Mutex<Vec<Box<dyn Fn(&$event_struct) + Send>>>,
             )*
         }
 
@@ -59,7 +61,7 @@ macro_rules! impl_broadcastable {
             }
             fn connect(
                 event_bus: &EventBus,
-                callback: Box<dyn Fn(&Self)>,
+                callback: Box<dyn Fn(&Self) + Send>,
             ) -> EventBusConnectionLifetime<Self> {
                 let mut guard = event_bus
                     .0
@@ -147,22 +149,57 @@ macro_rules! impl_events {
     }
 }
 
+pub type DynError = Box<dyn std::error::Error + Send + Sync>;
+
+pub enum IncompatibleServerReason {
+    UnsupportedApiVersion {
+        api_version: ApiVersion,
+        supported_api_versions: Vec<ApiVersion>,
+    },
+    Unexpected(DynError),
+}
+
 impl_events!(
     Ping { ping: String },
     Offline,
     Online,
     ExpiredOrganization,
     RevokedUser,
+    IncompatibleServer(IncompatibleServerReason),
+    CertificatesUpdated { certificate: Bytes },
+    MessageReceived {
+        index: u64,
+        message: Bytes
+    },
+    InviteStatusChanged {
+        invitation_status: InvitationStatus,
+        token: InvitationToken
+    },
+    RealmMaintenanceStarted {
+        encryption_revision: u64,
+        realm_id: RealmID
+    },
+    RealmMaintenanceFinished {
+        encryption_revision: u64,
+        realm_id: RealmID
+    },
+    RealmVlobsUpdated {
+        checkpoint: u64,
+        realm_id: RealmID,
+        src_id: VlobID,
+        src_version: u64
+    },
+    PkiEnrollmentUpdated,
 );
 
-pub trait Broadcastable
+pub trait Broadcastable: Send
 where
     Self: Sized,
 {
     fn send(&self, event_bus: &EventBus);
     fn connect(
         event_bus: &EventBus,
-        callback: Box<dyn Fn(&Self)>,
+        callback: Box<dyn Fn(&Self) + Send>,
     ) -> EventBusConnectionLifetime<Self>;
     fn disconnect(event_bus: &EventBusInternal, ptr: usize);
 }

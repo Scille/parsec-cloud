@@ -1240,11 +1240,13 @@ dependencies = [
  "libparsec_client_connection",
  "libparsec_platform_async",
  "libparsec_platform_storage2",
+ "libparsec_protocol",
  "libparsec_tests_fixtures",
  "libparsec_types",
  "log",
  "paste",
  "thiserror",
+ "tokio",
 ]
 
 [[package]]
