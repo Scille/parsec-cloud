@@ -26,7 +26,7 @@ where
 {
     let compressed = author_verify_key.verify(signed)?;
     let mut serialized = vec![];
-    ZlibDecoder::new(&compressed[..])
+    ZlibDecoder::new(compressed)
         .read_to_end(&mut serialized)
         .map_err(|_| DataError::Compression)?;
     rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)

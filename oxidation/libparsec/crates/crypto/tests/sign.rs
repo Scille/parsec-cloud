@@ -72,9 +72,8 @@ fn signature_only() {
 
     // Also test verify_with_signature
 
-    let res = vk.verify_with_signature(signed, data).unwrap();
-
-    assert_eq!(res, data);
+    vk.verify_with_signature(signed.as_ref().try_into().unwrap(), data)
+        .unwrap();
 }
 
 test_msgpack_serialization!(

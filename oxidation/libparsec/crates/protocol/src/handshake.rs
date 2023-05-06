@@ -337,7 +337,7 @@ impl ServerHandshakeAnswer {
                         let answer = verify_key
                             .verify(&answer)
                             .map_err(|_| HandshakeError::FailedChallenge)?;
-                        SignedAnswer::load(&answer)
+                        SignedAnswer::load(answer)
                             .map_err(HandshakeError::InvalidMessage)?
                             .answer
                     } else {

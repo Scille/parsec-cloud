@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
-use sodiumoxide::crypto::sign::{ed25519, gen_keypair, sign, verify, verify_detached, Signature};
+use sodiumoxide::crypto::sign::{ed25519, gen_keypair, sign, verify_detached, Signature};
 
 use crate::CryptoError;
 
@@ -106,22 +106,26 @@ impl VerifyKey {
         signed.get(SigningKey::SIGNATURE_SIZE..)
     }
 
-    pub fn verify(&self, signed: &[u8]) -> Result<Vec<u8>, CryptoError> {
-        verify(signed, &self.0).or(Err(CryptoError::SignatureVerification))
+    pub fn verify<'a>(&self, signed: &'a [u8]) -> Result<&'a [u8], CryptoError> {
+        let signature = signed[..SigningKey::SIGNATURE_SIZE]
+            .try_into()
+            .map_err(|_e| CryptoError::Signature)?;
+        let message = &signed[SigningKey::SIGNATURE_SIZE..];
+        self.verify_with_signature(signature, message)?;
+        Ok(message)
     }
 
     /// Verify a signature using the given [VerifyKey], `signature` and `message`
     pub fn verify_with_signature(
         &self,
-        raw_signature: [u8; SigningKey::SIGNATURE_SIZE],
+        raw_signature: &[u8; SigningKey::SIGNATURE_SIZE],
         message: &[u8],
-    ) -> Result<Vec<u8>, CryptoError> {
-        let signature =
-            Signature::from_bytes(&raw_signature).map_err(|_| CryptoError::Signature)?;
-        if !verify_detached(&signature, message, &self.0) {
-            return Err(CryptoError::SignatureVerification);
+    ) -> Result<(), CryptoError> {
+        let signature = Signature::from_bytes(raw_signature).map_err(|_| CryptoError::Signature)?;
+        match verify_detached(&signature, message, &self.0) {
+            true => Ok(()),
+            false => Err(CryptoError::SignatureVerification),
         }
-        Ok(message.into())
     }
 }
 

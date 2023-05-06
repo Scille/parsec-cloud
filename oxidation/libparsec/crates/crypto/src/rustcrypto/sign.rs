@@ -122,32 +122,26 @@ impl VerifyKey {
 
     /// Verify a message using the given [VerifyKey].
     /// `signed` value is the concatenation of the `signature` + the signed `data`
-    pub fn verify(&self, signed: &[u8]) -> Result<Vec<u8>, CryptoError> {
-        // Signature::try_from expects a [u8;64] and I have no idea how to get
-        // one except by slicing, so we make sure the array is large enough before slicing.
-        if signed.len() < SigningKey::SIGNATURE_SIZE {
-            return Err(CryptoError::Signature);
-        }
-        self.verify_with_signature(
-            signed[..SigningKey::SIGNATURE_SIZE]
-                .try_into()
-                .expect("Unreachable, because it's the correct size"),
-            &signed[SigningKey::SIGNATURE_SIZE..],
-        )
+    pub fn verify<'a>(&self, signed: &'a [u8]) -> Result<&'a [u8], CryptoError> {
+        let signature = signed[..SigningKey::SIGNATURE_SIZE]
+            .try_into()
+            .map_err(|_e| CryptoError::Signature)?;
+        let message = &signed[SigningKey::SIGNATURE_SIZE..];
+        self.verify_with_signature(signature, message)?;
+        Ok(message)
     }
 
     /// Verify a signature using the given [VerifyKey], `signature` and `message`
     pub fn verify_with_signature(
         &self,
-        raw_signature: [u8; SigningKey::SIGNATURE_SIZE],
+        raw_signature: &[u8; SigningKey::SIGNATURE_SIZE],
         message: &[u8],
-    ) -> Result<Vec<u8>, CryptoError> {
-        let signature =
-            Signature::from_bytes(&raw_signature).map_err(|_| CryptoError::Signature)?;
+    ) -> Result<(), CryptoError> {
+        let signature = Signature::from_bytes(raw_signature).map_err(|_| CryptoError::Signature)?;
         self.0
             .verify(message, &signature)
             .map_err(|_| CryptoError::SignatureVerification)?;
-        Ok(message.into())
+        Ok(())
     }
 }
 
@@ -170,7 +164,7 @@ impl TryFrom<&[u8]> for VerifyKey {
 impl From<[u8; Self::SIZE]> for VerifyKey {
     fn from(key: [u8; Self::SIZE]) -> Self {
         // TODO: zero copy
-        Self::try_from(key.as_ref()).unwrap()
+        Self::try_from(key.as_ref()).expect("key has the right size")
     }
 }
 

@@ -559,7 +559,7 @@ impl Manifest {
     ) -> DataResult<Self> {
         let compressed = author_verify_key.verify(signed)?;
 
-        let obj = Manifest::deserialize_data(&compressed)?;
+        let obj = Manifest::deserialize_data(compressed)?;
 
         macro_rules! internal_verify {
             ($obj:ident) => {{

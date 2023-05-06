@@ -78,7 +78,7 @@ impl MessageContent {
             .verify(&signed)
             .map_err(|_| "Invalid signature")?;
         let mut serialized = vec![];
-        ZlibDecoder::new(&compressed[..])
+        ZlibDecoder::new(compressed)
             .read_to_end(&mut serialized)
             .map_err(|_| "Invalid compression")?;
         let data: MessageContent =
