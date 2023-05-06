@@ -5,8 +5,7 @@ use hex_literal::hex;
 use libparsec_protocol::{
     authenticated_cmds::v2 as authenticated_cmds, invited_cmds::v2 as invited_cmds,
 };
-use libparsec_tests_fixtures::*;
-use libparsec_types::prelude::*;
+use libparsec_tests_fixtures::prelude::*;
 
 #[parsec_test]
 fn serde_authenticated_ping_req() {
@@ -117,7 +116,7 @@ fn serde_invited_ping_rep() {
 }
 
 #[parsec_test]
-fn test_authenticated_ping_load_response() {
+fn authenticated_ping_load_response() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   pong: "pong"
@@ -135,7 +134,7 @@ fn test_authenticated_ping_load_response() {
 }
 
 #[parsec_test]
-fn test_invited_ping_load_response() {
+fn invited_ping_load_response() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   pong: "pong"

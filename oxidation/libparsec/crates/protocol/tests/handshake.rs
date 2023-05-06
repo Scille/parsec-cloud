@@ -11,12 +11,31 @@ use libparsec_protocol::{
     ServerHandshakeStalled, SignedAnswer, API_V2_VERSION, BALLPARK_CLIENT_EARLY_OFFSET,
     BALLPARK_CLIENT_LATE_OFFSET,
 };
-use libparsec_tests_fixtures::*;
+use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
+
+#[parsec_test]
+#[case::valid_version_one("1.0", ApiVersion { version: 1, revision: 0 })]
+#[case::valid_version_two("2.5", ApiVersion { version: 2, revision: 5 })]
+fn valid_version_string_parse(#[case] version_str: &str, #[case] expected_version: ApiVersion) {
+    let parsed_version =
+        ApiVersion::try_from(version_str).expect("Should not fail to parse version string");
+    assert_eq!(parsed_version, expected_version);
+}
+
+#[parsec_test]
+#[case::invalid_missing_version(".0")]
+#[case::invalid_missing_minor("2.")]
+#[case::no_separator("25")]
+#[case::non_digit_chars("2.5dksjdskdjs")]
+fn invalid_version_string_parse(#[case] version_str: &str) {
+    let parsed_version = ApiVersion::try_from(version_str);
+    assert!(parsed_version.is_err());
+}
 
 #[cfg(feature = "test")]
 #[parsec_test]
-fn test_good_authenticated_handshake_server(alice: &Device, timestamp: DateTime) {
+fn good_authenticated_handshake_server(alice: &Device, timestamp: DateTime) {
     let challenge = hex!(
         "bbf9777bdc479d6c3d6a77b93aa26370f88ee51f81f3983a074ab32fbfcd33ef6a1b6e3f2e9718e2"
         "27d0b59e8a749078"
@@ -76,7 +95,7 @@ fn test_good_authenticated_handshake_server(alice: &Device, timestamp: DateTime)
 }
 
 #[parsec_test]
-fn test_good_authenticated_handshake_client(alice: &Device) {
+fn good_authenticated_handshake_client(alice: &Device) {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   backend_timestamp: ext(1, 1647884434.47775)
@@ -109,7 +128,7 @@ fn test_good_authenticated_handshake_client(alice: &Device) {
 }
 
 #[parsec_test]
-fn test_good_authenticated_handshake(alice: &Device, timestamp: DateTime) {
+fn good_authenticated_handshake(alice: &Device, timestamp: DateTime) {
     let t1 = timestamp;
     let t2 = t1.add_us(1);
     let sh = ServerHandshakeStalled::default()
@@ -195,7 +214,7 @@ fn test_good_authenticated_handshake(alice: &Device, timestamp: DateTime) {
         "5ba7736fbfd11d75"
     )
 ))]
-fn test_good_invited_handshake_server(
+fn good_invited_handshake_server(
     timestamp: DateTime,
     #[case] input: (
         &[u8],
@@ -281,7 +300,7 @@ fn test_good_invited_handshake_server(
     InvitationType::Device,
     InvitationToken::from_hex("4e12636f08c840c4bb09404e1e696b09").unwrap(),
 ))]
-fn test_good_invited_handshake_client(#[case] input: (&[u8], InvitationType, InvitationToken)) {
+fn good_invited_handshake_client(#[case] input: (&[u8], InvitationType, InvitationToken)) {
     let organization_id = OrganizationID::from_str("Org").unwrap();
     let (challenge_req, invitation_type, token) = input;
 
@@ -298,7 +317,7 @@ fn test_good_invited_handshake_client(#[case] input: (&[u8], InvitationType, Inv
 #[parsec_test]
 #[case::user(InvitationType::User)]
 #[case::device(InvitationType::Device)]
-fn test_good_invited_handshake(timestamp: DateTime, #[case] _invitation_type: InvitationType) {
+fn good_invited_handshake(timestamp: DateTime, #[case] _invitation_type: InvitationType) {
     let t1 = timestamp;
     let t2 = t1.add_us(1);
     let _organization_id = OrganizationID::default();
@@ -379,7 +398,7 @@ fn test_good_invited_handshake(timestamp: DateTime, #[case] _invitation_type: In
     "challenge": b"58f7ec2bb24b81a57feee1bad250726a2f7588a3cdd0617a206687adf8fb1274f34b0aebf9fd27a5d29f56dce902ddcd".to_vec(),
     "supported_api_versions": "invalid"
 }))]
-fn test_process_challenge_req_bad_format(alice: &Device, timestamp: DateTime, #[case] req: Value) {
+fn process_challenge_req_bad_format(alice: &Device, timestamp: DateTime, #[case] req: Value) {
     let req = rmp_serde::to_vec_named(&req).unwrap();
 
     let err = AuthenticatedClientHandshakeStalled::new(
@@ -406,7 +425,7 @@ fn test_process_challenge_req_bad_format(alice: &Device, timestamp: DateTime, #[
 #[case((ApiVersion { version: 2, revision: 22}, ApiVersion { version: 3, revision: 0 }, false))]
 #[case((ApiVersion { version: 2, revision: 22}, ApiVersion { version: 3, revision: 33 }, false))]
 #[case((ApiVersion { version: 2, revision: 22}, ApiVersion { version: 3, revision: 333 }, false))]
-fn test_process_challenge_req_good_api_version(
+fn process_challenge_req_good_api_version(
     alice: &Device,
     timestamp: DateTime,
     #[case] input: (ApiVersion, ApiVersion, bool),
@@ -542,7 +561,7 @@ fn test_process_challenge_req_good_api_version(
     None,
     None,
 ))]
-fn test_process_challenge_req_good_multiple_api_version(
+fn process_challenge_req_good_multiple_api_version(
     alice: &Device,
     timestamp: DateTime,
     #[case] input: (
@@ -678,7 +697,7 @@ fn test_process_challenge_req_good_multiple_api_version(
     "organization_id": "<good>",
     "token": "abc123",  // Invalid token type
 }))]
-fn test_process_answer_req_bad_format(alice: &Device, timestamp: DateTime, #[case] mut req: Value) {
+fn process_answer_req_bad_format(alice: &Device, timestamp: DateTime, #[case] mut req: Value) {
     for (key, good_value) in [
         ("organization_id", json!(alice.organization_id())),
         ("device_id", json!(alice.device_id)),
@@ -703,7 +722,7 @@ fn test_process_answer_req_bad_format(alice: &Device, timestamp: DateTime, #[cas
 // 4) Server build result
 
 #[parsec_test]
-fn test_build_result_req_bad_key(alice: &Device, bob: &Device, timestamp: DateTime) {
+fn build_result_req_bad_key(alice: &Device, bob: &Device, timestamp: DateTime) {
     let sh = ServerHandshakeStalled::default()
         .build_challenge_req(timestamp)
         .unwrap();
@@ -732,7 +751,7 @@ fn test_build_result_req_bad_key(alice: &Device, bob: &Device, timestamp: DateTi
 }
 
 #[parsec_test]
-fn test_build_result_req_bad_challenge(alice: &Device, timestamp: DateTime) {
+fn build_result_req_bad_challenge(alice: &Device, timestamp: DateTime) {
     let sh = ServerHandshakeStalled::default()
         .build_challenge_req(timestamp)
         .unwrap();
@@ -791,7 +810,7 @@ fn test_build_result_req_bad_challenge(alice: &Device, timestamp: DateTime) {
         (sh.build_bad_administration_token_result_req(None).unwrap(), HandshakeResult::BadAdminToken)
     })
 )]
-fn test_build_bad_outcomes(
+fn build_bad_outcomes(
     alice: &Device,
     timestamp: DateTime,
     #[case] generate_method_and_expected: Box<
@@ -831,7 +850,7 @@ fn test_build_bad_outcomes(
 #[case(json!({"handshake": "foo", "result": "ok"}))]
 #[case(json!({"result": "ok"}))]
 #[case(json!({"handshake": "result", "result": "error"}))]
-fn test_process_result_req_bad_format(timestamp: DateTime, #[case] req: Value) {
+fn process_result_req_bad_format(timestamp: DateTime, #[case] req: Value) {
     let req = &rmp_serde::to_vec_named(&req).unwrap();
 
     let err = InvitedClientHandshakeStalled::new(
@@ -853,7 +872,7 @@ fn test_process_result_req_bad_format(timestamp: DateTime, #[case] req: Value) {
 #[case(("revoked_device", HandshakeError::RevokedDevice))]
 #[case(("bad_admin_token", HandshakeError::BadAdministrationToken))]
 #[case(("dummy", HandshakeError::InvalidMessage("Deserialization failed")))]
-fn test_process_result_req_bad_outcome(
+fn process_result_req_bad_outcome(
     timestamp: DateTime,
     #[case] result_expected: (&str, HandshakeError),
 ) {

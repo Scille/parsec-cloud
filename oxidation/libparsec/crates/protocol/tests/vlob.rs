@@ -4,7 +4,7 @@ use hex_literal::hex;
 use std::collections::HashMap;
 
 use libparsec_protocol::authenticated_cmds::v2 as authenticated_cmds;
-use libparsec_tests_fixtures::*;
+use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 #[parsec_test]

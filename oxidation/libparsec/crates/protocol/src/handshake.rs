@@ -748,32 +748,3 @@ pub struct InvitedClientHandshakeChallenge {
     pub client_api_version: ApiVersion,
     pub raw: Vec<u8>,
 }
-
-#[cfg(test)]
-mod test {
-    use libparsec_tests_fixtures::{parsec_test, rstest};
-
-    use crate::ApiVersion;
-
-    #[parsec_test]
-    #[case::valid_version_one("1.0", ApiVersion { version: 1, revision: 0 })]
-    #[case::valid_version_two("2.5", ApiVersion { version: 2, revision: 5 })]
-    fn test_valid_version_string_parse(
-        #[case] version_str: &str,
-        #[case] expected_version: ApiVersion,
-    ) {
-        let parsed_version =
-            ApiVersion::try_from(version_str).expect("Should not fail to parse version string");
-        assert_eq!(parsed_version, expected_version);
-    }
-
-    #[parsec_test]
-    #[case::invalid_missing_version(".0")]
-    #[case::invalid_missing_minor("2.")]
-    #[case::no_separator("25")]
-    #[case::non_digit_chars("2.5dksjdskdjs")]
-    fn test_invalid_version_string_parse(#[case] version_str: &str) {
-        let parsed_version = ApiVersion::try_from(version_str);
-        assert!(parsed_version.is_err());
-    }
-}
