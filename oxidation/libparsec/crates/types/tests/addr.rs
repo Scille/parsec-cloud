@@ -165,7 +165,7 @@ fn addr_with_org(testbed: &dyn Testbed) {}
  */
 
 #[rstest_reuse::apply(all_addr)]
-fn test_good_addr(testbed: &dyn Testbed) {
+fn good_addr(testbed: &dyn Testbed) {
     testbed.assert_addr_ok(&testbed.url());
 }
 
@@ -208,20 +208,20 @@ fn test_good_addr(testbed: &dyn Testbed) {
     Some("/El Niño/"),
     "https://example.com/El%20Ni%C3%B1o/"
 )]
-fn test_backend_addr_to_http_domain_url(value: &str, path: Option<&str>, expected: &str) {
+fn backend_addr_to_http_domain_url(value: &str, path: Option<&str>, expected: &str) {
     let addr: BackendAddr = value.parse().unwrap();
     let result = addr.to_http_url_with_path(path);
     assert_eq!(result.as_str(), expected);
 }
 
 #[apply(all_addr)]
-fn test_good_addr_with_port(testbed: &dyn Testbed) {
+fn good_addr_with_port(testbed: &dyn Testbed) {
     let url = testbed.url().replace(DOMAIN, "example.com:4242");
     testbed.assert_addr_ok(&url);
 }
 
 #[apply(all_addr)]
-fn test_addr_with_bad_port(testbed: &dyn Testbed, #[values("NaN", "999999")] bad_port: &str) {
+fn addr_with_bad_port(testbed: &dyn Testbed, #[values("NaN", "999999")] bad_port: &str) {
     let url = testbed
         .url()
         .replace(DOMAIN, &format!("{}:{}", DOMAIN, bad_port));
@@ -232,7 +232,7 @@ fn test_addr_with_bad_port(testbed: &dyn Testbed, #[values("NaN", "999999")] bad
 }
 
 #[apply(all_addr)]
-fn test_addr_with_no_hostname(testbed: &dyn Testbed, #[values("", ":4242")] bad_domain: &str) {
+fn addr_with_no_hostname(testbed: &dyn Testbed, #[values("", ":4242")] bad_domain: &str) {
     let (url, expected_error) = if bad_domain.is_empty() {
         // `http:///foo` is a valid url, so we also have to remove the path
         let url = match testbed.url().split('?').nth(1) {
@@ -251,7 +251,7 @@ fn test_addr_with_no_hostname(testbed: &dyn Testbed, #[values("", ":4242")] bad_
 
 // Based on a true debug story...
 #[apply(all_addr)]
-fn test_addr_with_bad_hostname(
+fn addr_with_bad_hostname(
     testbed: &dyn Testbed,
     #[values("1270.0.1", "1270.0.1:4242")] bad_domain: &str,
 ) {
@@ -263,7 +263,7 @@ fn test_addr_with_bad_hostname(
 }
 
 #[apply(all_addr)]
-fn test_good_addr_with_unknown_field(testbed: &dyn Testbed) {
+fn good_addr_with_unknown_field(testbed: &dyn Testbed) {
     let base_url = testbed.url();
     let mut url = url::Url::parse(&base_url).unwrap();
     url.query_pairs_mut().append_pair("unknown_field", "ok");
@@ -271,7 +271,7 @@ fn test_good_addr_with_unknown_field(testbed: &dyn Testbed) {
 }
 
 #[apply(addr_with_org)]
-fn test_addr_with_unicode_organization_id(testbed: &dyn Testbed) {
+fn addr_with_unicode_organization_id(testbed: &dyn Testbed) {
     let org_name: OrganizationID = "康熙帝".parse().unwrap();
     let org_name_percent_quoted = "%E5%BA%B7%E7%86%99%E5%B8%9D";
     let url = testbed.url().replace(ORG, org_name_percent_quoted);
@@ -280,7 +280,7 @@ fn test_addr_with_unicode_organization_id(testbed: &dyn Testbed) {
 }
 
 #[apply(addr_with_org)]
-fn test_addr_with_bad_unicode_organization_id(testbed: &dyn Testbed) {
+fn addr_with_bad_unicode_organization_id(testbed: &dyn Testbed) {
     // Not a valid percent-encoded utf8 string
     let org_name_percent_quoted = "%E5%BA%B7%E7";
     let url = testbed.url().replace(ORG, org_name_percent_quoted);
@@ -288,10 +288,7 @@ fn test_addr_with_bad_unicode_organization_id(testbed: &dyn Testbed) {
 }
 
 #[apply(addr_with_org)]
-fn test_addr_with_missing_organization_id(
-    testbed: &dyn Testbed,
-    #[values("/", "")] bad_path: &str,
-) {
+fn addr_with_missing_organization_id(testbed: &dyn Testbed, #[values("/", "")] bad_path: &str) {
     let url = testbed.url().replace(
         &format!("{}/{}", DOMAIN, ORG),
         &format!("{}{}", DOMAIN, bad_path),
@@ -300,7 +297,7 @@ fn test_addr_with_missing_organization_id(
 }
 
 #[rstest]
-fn test_bootstrap_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Option<&str>) {
+fn bootstrap_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Option<&str>) {
     let testbed = BackendOrganizationBootstrapAddrTestbed {};
 
     match bad_type {
@@ -326,7 +323,7 @@ fn test_bootstrap_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_typ
 
 // Unlike for `BackendInvitationAddr`, here token is not required to be an UUID
 #[test]
-fn test_bootstrap_addr_unicode_token() {
+fn bootstrap_addr_unicode_token() {
     let testbed = BackendOrganizationBootstrapAddrTestbed {};
     let token = "康熙帝";
     let token_percent_quoted = "%E5%BA%B7%E7%86%99%E5%B8%9D";
@@ -341,7 +338,7 @@ fn test_bootstrap_addr_unicode_token() {
 // Note: unlike with the Python implementation, invalid percent-encoding doesn't
 // cause a failure (the replacement character EF BF BD is used instead)
 #[test]
-fn test_bootstrap_addr_bad_unicode_token() {
+fn bootstrap_addr_bad_unicode_token() {
     let testbed = BackendOrganizationBootstrapAddrTestbed {};
     // Not a valid percent-encoded utf8 string
     let token_percent_quoted = "%E5%BA%B7%E7";
@@ -351,7 +348,7 @@ fn test_bootstrap_addr_bad_unicode_token() {
 
 // Unlike for `BackendInvitationAddr`, here token is not required to be an UUID and can be missing
 #[test]
-fn test_bootstrap_addr_no_token() {
+fn bootstrap_addr_no_token() {
     let testbed = BackendOrganizationBootstrapAddrTestbed {};
     let url_with = testbed.url().replace(TOKEN, "");
     let url_without = testbed.url().replace(&format!("&token={}", TOKEN), "");
@@ -368,7 +365,7 @@ fn test_bootstrap_addr_no_token() {
 }
 
 #[rstest]
-fn test_file_link_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Option<&str>) {
+fn file_link_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Option<&str>) {
     let testbed = BackendOrganizationFileLinkAddrTestbed {};
 
     match bad_type {
@@ -393,7 +390,7 @@ fn test_file_link_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_typ
 }
 
 #[rstest]
-fn test_file_link_addr_bad_workspace(
+fn file_link_addr_bad_workspace(
     #[values(Some(""), Some("4def"), Some("康熙帝"), None)] bad_workspace: Option<&str>,
 ) {
     let testbed = BackendOrganizationFileLinkAddrTestbed {};
@@ -422,7 +419,7 @@ fn test_file_link_addr_bad_workspace(
 }
 
 #[rstest]
-fn test_file_link_addr_bad_encrypted_path(
+fn file_link_addr_bad_encrypted_path(
     #[values(Some("__notbase32__"), Some("康熙帝"), None)] bad_path: Option<&str>,
 ) {
     let testbed = BackendOrganizationFileLinkAddrTestbed {};
@@ -451,7 +448,7 @@ fn test_file_link_addr_bad_encrypted_path(
 }
 
 #[test]
-fn test_file_link_addr_get_encrypted_path() {
+fn file_link_addr_get_encrypted_path() {
     let testbed = BackendOrganizationFileLinkAddrTestbed {};
 
     let serialized_encrypted_path = "HRSW4Y3SPFYHIZLEL5YGC6LMN5QWIPQs";
@@ -466,7 +463,7 @@ fn test_file_link_addr_get_encrypted_path() {
 }
 
 #[rstest]
-fn test_invitation_addr_bad_type(
+fn invitation_addr_bad_type(
     #[values(Some("claim"), Some("claim_foo"), None)] bad_type: Option<&str>,
 ) {
     let testbed = BackendInvitationAddrTestbed {};
@@ -495,7 +492,7 @@ fn test_invitation_addr_bad_type(
 }
 
 #[rstest]
-fn test_invitation_addr_bad_token(
+fn invitation_addr_bad_token(
     #[values(Some(""), Some("not_an_uuid"), Some("42"), Some("康熙帝"), None)] bad_token: Option<
         &str,
     >,
@@ -524,7 +521,7 @@ fn test_invitation_addr_bad_token(
 }
 
 #[test]
-fn test_invitation_addr_types() {
+fn invitation_addr_types() {
     let testbed = BackendInvitationAddrTestbed {};
 
     let url = testbed.url().replace(INVITATION_TYPE, "claim_user");
@@ -537,7 +534,7 @@ fn test_invitation_addr_types() {
 }
 
 #[rstest]
-fn test_invitation_addr_to_redirection(#[values("http", "https")] redirection_scheme: &str) {
+fn invitation_addr_to_redirection(#[values("http", "https")] redirection_scheme: &str) {
     let testbed = BackendInvitationAddrTestbed {};
 
     // `no_ssl` param should be ignored when build a redirection url given
@@ -561,10 +558,7 @@ fn test_invitation_addr_to_redirection(#[values("http", "https")] redirection_sc
 }
 
 #[apply(all_addr)]
-fn test_addr_to_redirection(
-    testbed: &dyn Testbed,
-    #[values("http", "https")] redirection_scheme: &str,
-) {
+fn addr_to_redirection(testbed: &dyn Testbed, #[values("http", "https")] redirection_scheme: &str) {
     // `no_ssl` param should be ignored when build a redirection url given
     // this information is provided by the http/https scheme
     let mut url = testbed.url();
@@ -680,7 +674,7 @@ fn backend_addr_redirection() {
 #[case("https://foo.bar/not_valid")]
 #[case("http://1270.0.1/redirect")]
 #[case("http://foo:99999/redirect")]
-fn test_faulty_addr_redirection(#[case] raw_url: &str) {
+fn faulty_addr_redirection(#[case] raw_url: &str) {
     let res = BackendAddr::from_http_redirection(raw_url);
 
     assert!(res.is_err());
@@ -694,7 +688,7 @@ fn test_faulty_addr_redirection(#[case] raw_url: &str) {
 #[case("parsec://foo:42?dummy=", 42, true)]
 #[case("parsec://foo:42?no_ssl=true", 42, false)]
 #[case("parsec://foo:42?no_ssl=false&dummy=foo", 42, true)]
-fn test_backend_addr_good(#[case] url: &str, #[case] port: u16, #[case] use_ssl: bool) {
+fn backend_addr_good(#[case] url: &str, #[case] port: u16, #[case] use_ssl: bool) {
     let addr = BackendAddr::from_str(url).unwrap();
     assert_eq!(addr.hostname(), "foo");
     assert_eq!(addr.port(), port);
@@ -730,7 +724,7 @@ fn test_backend_addr_good(#[case] url: &str, #[case] port: u16, #[case] use_ssl:
          help: "Expected `no_ssl=true` or `no_ssl=false`".to_string(),
     }
 )]
-fn test_backend_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
+fn backend_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
     assert_eq!(BackendAddr::from_str(url).unwrap_err(), msg);
 }
 
@@ -743,7 +737,7 @@ fn test_backend_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
 #[case("parsec://foo:42?no_ssl=true", 42, false)]
 #[case("parsec://foo:42?no_ssl=false", 42, true)]
 #[case("parsec://foo:42?no_ssl=false&dummy=foo", 42, true)]
-fn test_backend_organization_addr_good(
+fn backend_organization_addr_good(
     #[case] base_url: &str,
     #[case] port: u16,
     #[case] use_ssl: bool,
@@ -785,7 +779,7 @@ fn test_backend_organization_addr_good(
     "parsec://foo:42/~org?rvk=RAFI2CQYDHXMEY4NXEAJCTCBELJAUDE2OTYYLTVHGAGX57WS7LRQssss",
     AddrError::InvalidOrganizationID
 )]
-fn test_backend_organization_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
+fn backend_organization_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
     assert_eq!(BackendOrganizationAddr::from_str(url).unwrap_err(), msg);
 }
 
@@ -798,7 +792,7 @@ fn test_backend_organization_addr_bad_value(#[case] url: &str, #[case] msg: Addr
 #[case("parsec://foo:42?no_ssl=true", 42, false)]
 #[case("parsec://foo:42?no_ssl=true&dummy=", 42, false)]
 #[case("parsec://foo:42?no_ssl=false", 42, true)]
-fn test_backend_organization_bootstrap_addr_good(
+fn backend_organization_bootstrap_addr_good(
     #[case] base_url: &str,
     #[case] port: u16,
     #[case] use_ssl: bool,
@@ -858,7 +852,7 @@ fn test_backend_organization_bootstrap_addr_good(
     "parsec://foo:42/~org?action=bootstrap_organization&token=123",
     AddrError::InvalidOrganizationID
 )]
-fn test_backend_organization_bootstrap_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
+fn backend_organization_bootstrap_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
     assert_eq!(
         BackendOrganizationBootstrapAddr::from_str(url).unwrap_err(),
         msg

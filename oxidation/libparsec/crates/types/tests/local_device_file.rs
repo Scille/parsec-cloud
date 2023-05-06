@@ -7,7 +7,7 @@ use libparsec_types::fixtures::{alice, Device};
 use libparsec_types::prelude::*;
 
 #[rstest]
-fn test_password_protected_device_file(alice: &Device) {
+fn password_protected_device_file(alice: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
     //   type: "password"
@@ -76,7 +76,7 @@ fn test_password_protected_device_file(alice: &Device) {
 }
 
 #[rstest]
-fn test_recovery_device_file(alice: &Device) {
+fn recovery_device_file(alice: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
     //   type: "recovery"
@@ -143,7 +143,7 @@ fn test_recovery_device_file(alice: &Device) {
 }
 
 #[rstest]
-fn test_smartcard_device_file(alice: &Device) {
+fn smartcard_device_file(alice: &Device) {
     // Generated from Python implementation (Parsec v2.15.0+dev)
     // Content:
     //   type: "smartcard"
@@ -238,7 +238,7 @@ fn test_smartcard_device_file(alice: &Device) {
 }
 
 #[test]
-fn test_available_device() {
+fn available_device() {
     let org: OrganizationID = "CoolOrg".parse().unwrap();
 
     let available = AvailableDevice {

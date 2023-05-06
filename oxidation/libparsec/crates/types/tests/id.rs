@@ -13,7 +13,7 @@ use libparsec_types::prelude::*;
 #[case("f_o_o")]
 #[case(&"x".repeat(32))]
 #[case("三国")]
-fn test_organization_id_user_id_and_device_name(#[case] raw: &str) {
+fn organization_id_user_id_and_device_name(#[case] raw: &str) {
     let organization_id = OrganizationID::from_str(raw).unwrap();
     assert_eq!(organization_id.to_string(), raw);
     assert_eq!(organization_id, OrganizationID::from_str(raw).unwrap());
@@ -31,7 +31,7 @@ fn test_organization_id_user_id_and_device_name(#[case] raw: &str) {
 #[case(&"x".repeat(33))]
 #[case("F~o")]
 #[case("f o")]
-fn test_bad_organization_id_user_id_and_device_name(#[case] raw: &str) {
+fn bad_organization_id_user_id_and_device_name(#[case] raw: &str) {
     OrganizationID::from_str(raw).unwrap_err();
     UserID::from_str(raw).unwrap_err();
     DeviceName::from_str(raw).unwrap_err();
@@ -43,7 +43,7 @@ fn test_bad_organization_id_user_id_and_device_name(#[case] raw: &str) {
 #[case("a@x")]
 #[case(&("a".repeat(32) + "@" + &"b".repeat(32)))]
 #[case("关羽@三国")]
-fn test_device_id(#[case] raw: &str) {
+fn device_id(#[case] raw: &str) {
     let (user_id, device_name) = raw.split_once('@').unwrap();
     let device_id = DeviceID::from_str(raw).unwrap();
 
@@ -61,11 +61,11 @@ fn test_device_id(#[case] raw: &str) {
 #[case(&("a".repeat(32) + "@" + &"x".repeat(33)))]
 #[case("a@@x")]
 #[case("a@1@x")]
-fn test_bad_device_id(#[case] raw: &str) {
+fn bad_device_id(#[case] raw: &str) {
     DeviceID::from_str(raw).unwrap_err();
 }
 
 #[test]
-fn test_device_label_bad_size() {
+fn device_label_bad_size() {
     DeviceLabel::from_str("").unwrap_err();
 }

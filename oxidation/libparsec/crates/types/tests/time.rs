@@ -5,7 +5,7 @@ use libparsec_types::prelude::*;
 type Part = (Box<dyn Fn(DateTime) -> u32>, i64);
 
 #[test]
-fn test_datetime() {
+fn datetime() {
     let dt = DateTime::from_ymd_hms_us(2000, 1, 2, 12, 30, 45, 123456).unwrap();
 
     assert_eq!(dt.year(), 2000);
