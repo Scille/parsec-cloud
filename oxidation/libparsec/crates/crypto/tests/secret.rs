@@ -78,7 +78,7 @@ fn secret_key_should_verify_length_when_deserialize() {
 }
 
 #[test]
-fn test_recovery_passphrase() {
+fn recovery_passphrase() {
     let (passphrase, key) = SecretKey::generate_recovery_passphrase();
 
     let key2 = SecretKey::from_recovery_passphrase(&passphrase).unwrap();
@@ -98,7 +98,7 @@ fn test_recovery_passphrase() {
     "D5VR-53YO-QYJW-VJ4A-4DQR-4LVC-W425-3CXN-F3AQ-J6X2-YVPZ-XBAO-NU4Q-NU4Q",
     35
 )]
-fn test_invalid_passphrase(#[case] bad_passphrase: &str, #[case] key_length: usize) {
+fn invalid_passphrase(#[case] bad_passphrase: &str, #[case] key_length: usize) {
     assert_eq!(
         SecretKey::from_recovery_passphrase(bad_passphrase).unwrap_err(),
         CryptoError::KeySize {
@@ -110,7 +110,7 @@ fn test_invalid_passphrase(#[case] bad_passphrase: &str, #[case] key_length: usi
 
 #[cfg_attr(feature = "test-unsecure-but-fast-secretkey-from-password", ignore)]
 #[test]
-fn test_from_password() {
+fn from_password() {
     let password = "P@ssw0rd.";
     let salt = hex!("cffcc16d78cbc0e773aa5ee7b2210159");
 

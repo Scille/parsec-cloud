@@ -171,7 +171,7 @@ fn only_rsa_is_supported() {
 #[rstest]
 #[case(&PUBLIC_KEY_DER_1024[..])]
 #[case(&PUBLIC_KEY_DER_2048[..])]
-fn test_key_equality(#[case] pub_key: &[u8]) {
+fn key_equality(#[case] pub_key: &[u8]) {
     let pub_key = SequesterPublicKeyDer::try_from(pub_key).unwrap();
 
     let pub_key2 = pub_key.clone();
@@ -182,7 +182,7 @@ fn test_key_equality(#[case] pub_key: &[u8]) {
 #[rstest]
 #[case(SequesterKeySize::_1024Bits)]
 #[case(SequesterKeySize::_2048Bits)]
-fn test_size(#[case] size_in_bits: SequesterKeySize) {
+fn size(#[case] size_in_bits: SequesterKeySize) {
     let (priv_key, pub_key) = SequesterPrivateKeyDer::generate_pair(size_in_bits);
     let (signing_key, verify_key) = SequesterSigningKeyDer::generate_pair(size_in_bits);
     assert_eq!(priv_key.size_in_bytes(), size_in_bits as usize / 8);
@@ -194,7 +194,7 @@ fn test_size(#[case] size_in_bits: SequesterKeySize) {
 #[rstest]
 #[case(SequesterKeySize::_1024Bits)]
 #[case(SequesterKeySize::_2048Bits)]
-fn test_encrypt_decrypt(#[case] size_in_bits: SequesterKeySize) {
+fn encrypt_decrypt(#[case] size_in_bits: SequesterKeySize) {
     let (priv_key, pub_key) = SequesterPrivateKeyDer::generate_pair(size_in_bits);
 
     let encrypted = pub_key.encrypt(b"foo");
@@ -205,7 +205,7 @@ fn test_encrypt_decrypt(#[case] size_in_bits: SequesterKeySize) {
 #[rstest]
 #[case(SequesterKeySize::_1024Bits)]
 #[case(SequesterKeySize::_2048Bits)]
-fn test_sign_verify(#[case] size_in_bits: SequesterKeySize) {
+fn sign_verify(#[case] size_in_bits: SequesterKeySize) {
     let (signing_key, verify_key) = SequesterSigningKeyDer::generate_pair(size_in_bits);
 
     let signed = signing_key.sign(b"foo");
@@ -216,7 +216,7 @@ fn test_sign_verify(#[case] size_in_bits: SequesterKeySize) {
 #[rstest]
 #[case(PRIVATE_KEY_PEM_1024, &PRIVATE_KEY_DER_1024[..], PUBLIC_KEY_PEM_1024, &PUBLIC_KEY_DER_1024[..])]
 #[case(PRIVATE_KEY_PEM_2048, &PRIVATE_KEY_DER_2048[..], PUBLIC_KEY_PEM_2048, &PUBLIC_KEY_DER_2048[..])]
-fn test_import_export(
+fn import_export(
     #[case] private_key_pem: &str,
     #[case] private_key_der: &[u8],
     #[case] public_key_pem: &str,
@@ -276,7 +276,7 @@ fn test_import_export(
 }
 
 #[test]
-fn test_sign_compat() {
+fn sign_compat() {
     let verify_key = SequesterVerifyKeyDer::try_from(&PUBLIC_KEY_DER_1024[..]).unwrap();
 
     let signed = hex!(
@@ -291,7 +291,7 @@ fn test_sign_compat() {
 }
 
 #[test]
-fn test_encrypt_compat() {
+fn encrypt_compat() {
     let priv_key = SequesterPrivateKeyDer::try_from(&PRIVATE_KEY_DER_1024[..]).unwrap();
 
     let encrypted = hex!(

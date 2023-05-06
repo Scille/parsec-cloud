@@ -3,7 +3,7 @@
 use libparsec_crypto::{PrivateKey, SecretKey, SigningKey};
 
 #[test]
-fn test_anti_leak_debug() {
+fn anti_leak_debug() {
     assert_eq!(format!("{:?}", SecretKey::generate()), "SecretKey(****)");
     assert_eq!(format!("{:?}", PrivateKey::generate()), "PrivateKey(****)");
     assert_eq!(format!("{:?}", SigningKey::generate()), "SigningKey(****)");
