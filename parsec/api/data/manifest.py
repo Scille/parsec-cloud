@@ -13,7 +13,7 @@ from parsec._parsec import (
     WorkspaceManifest,
     manifest_decrypt_and_load,
     manifest_decrypt_verify_and_load,
-    manifest_unverified_load,
+    manifest_unsecure_load,
     manifest_verify_and_load,
 )
 
@@ -36,5 +36,5 @@ __all__ = [
     "manifest_decrypt_and_load",
     "manifest_decrypt_verify_and_load",
     "manifest_verify_and_load",
-    "manifest_unverified_load",
+    "manifest_unsecure_load",
 ]

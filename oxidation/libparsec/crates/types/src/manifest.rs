@@ -586,7 +586,7 @@ impl Manifest {
     }
 
     /// Load the manifest without checking the signature header.
-    pub fn unverified_load(data: &[u8]) -> DataResult<Self> {
+    pub fn unsecure_load(data: &[u8]) -> DataResult<Self> {
         let compressed = VerifyKey::unsecure_unwrap(data).unwrap();
 
         Manifest::deserialize_data(compressed)

@@ -274,6 +274,6 @@ def manifest_verify_and_load(
     expected_id: EntryID | None = None,
     expected_version: int | None = None,
 ) -> AnyRemoteManifest: ...
-def manifest_unverified_load(
+def manifest_unsecure_load(
     data: bytes,
 ) -> AnyRemoteManifest: ...

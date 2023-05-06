@@ -1041,8 +1041,8 @@ pub(crate) fn manifest_verify_and_load(
 }
 
 #[pyfunction]
-pub(crate) fn manifest_unverified_load(py: Python, data: &[u8]) -> DataResult<PyObject> {
-    Ok(Manifest::unverified_load(data).map(|blob| unwrap_manifest(py, blob))?)
+pub(crate) fn manifest_unsecure_load(py: Python, data: &[u8]) -> DataResult<PyObject> {
+    Ok(Manifest::unsecure_load(data).map(|blob| unwrap_manifest(py, blob))?)
 }
 
 fn unwrap_manifest(py: Python, manifest: Manifest) -> PyObject {

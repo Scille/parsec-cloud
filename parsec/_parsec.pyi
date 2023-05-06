@@ -173,7 +173,7 @@ from parsec._parsec_pyi.manifest import (
     WorkspaceManifest,
     manifest_decrypt_and_load,
     manifest_decrypt_verify_and_load,
-    manifest_unverified_load,
+    manifest_unsecure_load,
     manifest_verify_and_load,
 )
 from parsec._parsec_pyi.message import (
@@ -386,7 +386,7 @@ __all__ = [
     "manifest_decrypt_and_load",
     "manifest_decrypt_verify_and_load",
     "manifest_verify_and_load",
-    "manifest_unverified_load",
+    "manifest_unsecure_load",
     # Message
     "MessageContent",
     "SharingGrantedMessageContent",

@@ -512,8 +512,8 @@ fn file_manifest_verify(
 }
 
 #[rstest]
-fn file_manifest_unverified_load() {
-    // Test the unverified_load() function on a file manifest.
+fn file_manifest_unsecure_load() {
+    // Test the unsecure_load() function on a file manifest.
     // File manifest has been generated with Parsec 1.12, it is provided raw as it is a bit hard
     // to generate (would need to create keys and all that). We're only interested in the
     // deserialization of raw unciphered data to a FileManifest.
@@ -532,7 +532,7 @@ fn file_manifest_unverified_load() {
         87e579fce76b37e4e93b7605022da52e6ccc26fd2e5299be8"
     );
 
-    let manifest = Manifest::unverified_load(&serialized_manifest).unwrap();
+    let manifest = Manifest::unsecure_load(&serialized_manifest).unwrap();
 
     let file_manifest = match manifest {
         Manifest::File(fm) => fm,
