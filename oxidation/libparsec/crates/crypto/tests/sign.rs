@@ -34,8 +34,12 @@ fn round_trip() {
     let verified_data = vk.verify(&signed).unwrap();
     assert_eq!(verified_data, data);
 
-    let unwrapped_data = VerifyKey::unsecure_unwrap(&signed).unwrap();
-    assert_eq!(unwrapped_data, &data[..]);
+    let expected_signature = &signed[..SigningKey::SIGNATURE_SIZE];
+    let expected_message = &signed[SigningKey::SIGNATURE_SIZE..];
+
+    let (signature, message) = VerifyKey::unsecure_unwrap(&signed).unwrap();
+    assert_eq!(signature, expected_signature);
+    assert_eq!(message, expected_message);
 }
 
 #[test]
@@ -49,8 +53,9 @@ fn signature_verification_spec() {
     let text = vk.verify(&signed_text).unwrap();
     assert_eq!(text, b"all your base are belong to us");
 
-    let unwrapped_text = VerifyKey::unsecure_unwrap(&signed_text).unwrap();
-    assert_eq!(unwrapped_text, b"all your base are belong to us");
+    let (signature, message) = VerifyKey::unsecure_unwrap(&signed_text).unwrap();
+    assert_eq!(message, b"all your base are belong to us");
+    assert_eq!(signature, &signed_text[..64]);
 }
 
 #[test]

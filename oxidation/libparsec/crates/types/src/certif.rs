@@ -62,7 +62,8 @@ macro_rules! impl_unsecure_load {
     ($name:ident) => {
         impl $name {
             pub fn unsecure_load(signed: &[u8]) -> DataResult<$name> {
-                let compressed = VerifyKey::unsecure_unwrap(signed).ok_or(DataError::Signature)?;
+                let (_, compressed) =
+                    VerifyKey::unsecure_unwrap(signed).map_err(|_| DataError::Signature)?;
                 let mut serialized = vec![];
                 ZlibDecoder::new(&compressed[..])
                     .read_to_end(&mut serialized)

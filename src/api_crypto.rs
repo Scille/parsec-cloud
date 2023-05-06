@@ -149,11 +149,14 @@ impl VerifyKey {
     }
 
     #[classmethod]
-    fn unsecure_unwrap<'py>(_cls: &PyType, py: Python<'py>, signed: &[u8]) -> &'py PyBytes {
-        PyBytes::new(
-            py,
-            libparsec::crypto::VerifyKey::unsecure_unwrap(signed).unwrap_or_default(),
-        )
+    fn unsecure_unwrap<'py>(
+        _cls: &PyType,
+        py: Python<'py>,
+        signed: &[u8],
+    ) -> PyResult<&'py PyBytes> {
+        let (_, message) = libparsec::crypto::VerifyKey::unsecure_unwrap(signed)
+            .map_err(|_| CryptoError::new_err("Signature was forged or corrupt"))?;
+        Ok(PyBytes::new(py, message))
     }
 
     fn encode<'py>(&self, py: Python<'py>) -> &'py PyBytes {

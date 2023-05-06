@@ -102,15 +102,18 @@ impl VerifyKey {
     /// Size of the public key.
     pub const SIZE: usize = ed25519::PUBLICKEYBYTES;
 
-    pub fn unsecure_unwrap(signed: &[u8]) -> Option<&[u8]> {
-        signed.get(SigningKey::SIGNATURE_SIZE..)
-    }
-
-    pub fn verify<'a>(&self, signed: &'a [u8]) -> Result<&'a [u8], CryptoError> {
+    pub fn unsecure_unwrap<'a>(
+        signed: &'a [u8],
+    ) -> Result<(&'a [u8; SigningKey::SIGNATURE_SIZE], &'a [u8]), CryptoError> {
         let signature = signed[..SigningKey::SIGNATURE_SIZE]
             .try_into()
             .map_err(|_e| CryptoError::Signature)?;
         let message = &signed[SigningKey::SIGNATURE_SIZE..];
+        Ok((signature, message))
+    }
+
+    pub fn verify<'a>(&self, signed: &'a [u8]) -> Result<&'a [u8], CryptoError> {
+        let (signature, message) = Self::unsecure_unwrap(signed)?;
         self.verify_with_signature(signature, message)?;
         Ok(message)
     }
