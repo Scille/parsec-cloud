@@ -7,7 +7,7 @@ use crate::ProxyConfig;
 use std::env;
 
 #[test]
-fn test_default() {
+fn default() {
     let config = ProxyConfig::default();
 
     assert!(config.http_proxy.is_none());
@@ -16,7 +16,7 @@ fn test_default() {
 
 #[cfg(not(target_arch = "wasm32"))]
 #[test]
-fn test_with_http_proxy() {
+fn with_http_proxy() {
     let config = ProxyConfig::default().with_http_proxy("https://127.0.0.1:1337");
 
     let proxies = config
@@ -38,7 +38,7 @@ fn test_with_http_proxy() {
 
 #[cfg(not(target_arch = "wasm32"))]
 #[test]
-fn test_with_https_proxy() {
+fn with_https_proxy() {
     let config = ProxyConfig::default().with_https_proxy("https://127.0.0.1:1337");
 
     let proxies = config
@@ -63,7 +63,7 @@ fn test_with_https_proxy() {
 // Where other tests are modifying the env variables `HTTP_PROXY` & `HTTPS_PROXY`.
 #[cfg(not(target_arch = "wasm32"))]
 #[test]
-fn test_with_env() {
+fn with_env() {
     assert_eq!(env::var(crate::HTTPS_PROXY), Err(env::VarError::NotPresent), "HTTPS_PROXY is already configured. Meaning it could be in use elsewhere, this will likely conflict with this test");
     assert_eq!(env::var(crate::HTTP_PROXY), Err(env::VarError::NotPresent), "HTTPS_PROXY is already configured. Meaning it could be in use elsewhere, this will likely conflict with this test");
 
