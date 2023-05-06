@@ -987,15 +987,6 @@ impl UserManifest {
 }
 
 #[pyfunction]
-pub(crate) fn manifest_decrypt_and_load(
-    py: Python<'_>,
-    encrypted: &[u8],
-    key: &SecretKey,
-) -> DataResult<PyObject> {
-    Ok(Manifest::decrypt_and_load(encrypted, &key.0).map(|blob| unwrap_manifest(py, blob))?)
-}
-
-#[pyfunction]
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn manifest_decrypt_verify_and_load(
     py: Python<'_>,
@@ -1038,11 +1029,6 @@ pub(crate) fn manifest_verify_and_load(
         expected_version,
     )
     .map(|blob| unwrap_manifest(py, blob))?)
-}
-
-#[pyfunction]
-pub(crate) fn manifest_unsecure_load(py: Python, data: &[u8]) -> DataResult<PyObject> {
-    Ok(Manifest::unsecure_load(data).map(|blob| unwrap_manifest(py, blob))?)
 }
 
 fn unwrap_manifest(py: Python, manifest: Manifest) -> PyObject {

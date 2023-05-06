@@ -521,13 +521,6 @@ pub enum Manifest {
 }
 
 impl Manifest {
-    pub fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> DataResult<Self> {
-        let blob = key
-            .decrypt(encrypted)
-            .map_err(|exc| DataError::Crypto { exc })?;
-        rmp_serde::from_slice(&blob).map_err(|_| DataError::Serialization)
-    }
-
     pub fn decrypt_verify_and_load(
         encrypted: &[u8],
         key: &SecretKey,
@@ -583,13 +576,6 @@ impl Manifest {
             Manifest::User(user) => internal_verify!(user),
         }
         Ok(obj)
-    }
-
-    /// Load the manifest without checking the signature header.
-    pub fn unsecure_load(data: &[u8]) -> DataResult<Self> {
-        let (_, compressed) = VerifyKey::unsecure_unwrap(data).unwrap();
-
-        Manifest::deserialize_data(compressed)
     }
 
     fn deserialize_data(data: &[u8]) -> DataResult<Self> {

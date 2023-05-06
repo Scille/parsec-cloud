@@ -11,9 +11,7 @@ from parsec._parsec import (
     UserManifest,
     WorkspaceEntry,
     WorkspaceManifest,
-    manifest_decrypt_and_load,
     manifest_decrypt_verify_and_load,
-    manifest_unsecure_load,
     manifest_verify_and_load,
 )
 
@@ -33,8 +31,6 @@ __all__ = [
     "UserManifest",
     "WorkspaceManifest",
     "BlockAccess",
-    "manifest_decrypt_and_load",
     "manifest_decrypt_verify_and_load",
     "manifest_verify_and_load",
-    "manifest_unsecure_load",
 ]

@@ -87,10 +87,8 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<FileManifest>()?;
     m.add_class::<WorkspaceManifest>()?;
     m.add_class::<UserManifest>()?;
-    m.add_function(wrap_pyfunction!(manifest_decrypt_and_load, m)?)?;
     m.add_function(wrap_pyfunction!(manifest_decrypt_verify_and_load, m)?)?;
     m.add_function(wrap_pyfunction!(manifest_verify_and_load, m)?)?;
-    m.add_function(wrap_pyfunction!(manifest_unsecure_load, m)?)?;
 
     // Message
     m.add_class::<MessageContent>()?;
