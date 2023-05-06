@@ -233,7 +233,8 @@ impl UserRemoteLoader {
             user_id: self.device.device_id.user_id().clone(),
             role: Some(RealmRole::Owner),
         }
-        .dump_and_sign(&self.device.signing_key);
+        .dump_and_sign(&self.device.signing_key)
+        .into();
 
         let rep = self
             .backend_cmds

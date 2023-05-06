@@ -10,8 +10,8 @@ use libparsec_types::prelude::*;
 
 fn device_file_factory(device: LocalDevice) -> DeviceFile {
     DeviceFile::Password(DeviceFilePassword {
-        salt: b"salt".to_vec(),
-        ciphertext: b"ciphertext".to_vec(),
+        salt: b"salt".as_ref().into(),
+        ciphertext: b"ciphertext".as_ref().into(),
 
         slug: device.slug(),
         organization_id: device.organization_id().clone(),
@@ -148,8 +148,8 @@ async fn test_renew_legacy_file(tmp_path: TmpPath) {
     assert_eq!(
         device,
         DeviceFile::Password(DeviceFilePassword {
-            ciphertext: hex!("63697068657274657874").to_vec(),
-            salt: hex!("73616c74").to_vec(),
+            ciphertext: hex!("63697068657274657874").as_ref().into(),
+            salt: hex!("73616c74").as_ref().into(),
             organization_id: "Org".parse().unwrap(),
             device_id: "Zack@PC1".parse().unwrap(),
             human_handle: None,

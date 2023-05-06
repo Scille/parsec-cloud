@@ -3,6 +3,8 @@
 #[macro_use]
 extern crate lazy_static;
 
+pub use bytes::Bytes;
+
 // Re-expose crypto so that `use libparsec_types::prelude::*` is the single-no-brainer-one-liner™
 pub use libparsec_crypto::*;
 

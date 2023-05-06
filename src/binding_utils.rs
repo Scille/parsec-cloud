@@ -46,13 +46,27 @@ impl From<BytesWrapper<'_>> for Vec<u8> {
     }
 }
 
+impl From<BytesWrapper<'_>> for libparsec::types::Bytes {
+    fn from(wrapper: BytesWrapper) -> Self {
+        match wrapper {
+            BytesWrapper::Bytes(bytes) => bytes.as_bytes().to_owned().into(),
+            BytesWrapper::ByteArray(byte_array) => {
+                // SAFETY: Using PyByteArray::as_bytes is safe as long as the corresponding memory is not modified.
+                // Here, the GIL is held during the entire access to `bytes` so there is no risk of another
+                // python thread modifying the bytearray behind our back.
+                unsafe { byte_array.as_bytes() }.to_owned().into()
+            }
+        }
+    }
+}
+
 pub trait UnwrapBytesWrapper {
     type ResultType;
     fn unwrap_bytes(self) -> Self::ResultType;
 }
 
 impl UnwrapBytesWrapper for BytesWrapper<'_> {
-    type ResultType = Vec<u8>;
+    type ResultType = libparsec::types::Bytes;
     fn unwrap_bytes(self) -> Self::ResultType {
         self.into()
     }

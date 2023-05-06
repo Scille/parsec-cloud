@@ -74,7 +74,9 @@ impl BaseClaimInitialCtx {
 
         let rep = self
             .cmds
-            .send(invite_2b_claimer_send_nonce::Req { claimer_nonce })
+            .send(invite_2b_claimer_send_nonce::Req {
+                claimer_nonce: claimer_nonce.into(),
+            })
             .await?;
 
         match rep {
@@ -298,7 +300,7 @@ struct BaseClaimInProgress3Ctx {
 }
 
 impl BaseClaimInProgress3Ctx {
-    async fn do_claim(&self, payload: Vec<u8>) -> InviteResult<Vec<u8>> {
+    async fn do_claim(&self, payload: Bytes) -> InviteResult<Bytes> {
         let rep = self
             .cmds
             .send(invite_4_claimer_communicate::Req { payload })
@@ -320,7 +322,9 @@ impl BaseClaimInProgress3Ctx {
         // data, but for that we must send it something.
         let rep = self
             .cmds
-            .send(invite_4_claimer_communicate::Req { payload: vec![] })
+            .send(invite_4_claimer_communicate::Req {
+                payload: Bytes::new(),
+            })
             .await?;
 
         match rep {
@@ -363,7 +367,8 @@ impl UserClaimInProgress3Ctx {
             public_key: private_key.public_key(),
             verify_key: signing_key.verify_key(),
         }
-        .dump_and_encrypt(&self.0.shared_secret_key);
+        .dump_and_encrypt(&self.0.shared_secret_key)
+        .into();
 
         let payload = self.0.do_claim(payload).await?;
 
@@ -423,7 +428,8 @@ impl DeviceClaimInProgress3Ctx {
             requested_device_label,
             verify_key: signing_key.verify_key(),
         }
-        .dump_and_encrypt(&self.0.shared_secret_key);
+        .dump_and_encrypt(&self.0.shared_secret_key)
+        .into();
 
         let payload = self.0.do_claim(payload).await?;
 

@@ -31,9 +31,9 @@ fn serde_anonymous_pki_enrollment_submit_req() {
         anonymous_cmds::pki_enrollment_submit::Req {
             enrollment_id: EnrollmentID::from_hex("34556b1fcabe496dafb64a69ca932666").unwrap(),
             force: false,
-            submit_payload: hex!("64756d6d79").to_vec(),
-            submit_payload_signature: hex!("64756d6d79").to_vec(),
-            submitter_der_x509_certificate: hex!("64756d6d79").to_vec(),
+            submit_payload: hex!("64756d6d79").as_ref().into(),
+            submit_payload_signature: hex!("64756d6d79").as_ref().into(),
+            submitter_der_x509_certificate: hex!("64756d6d79").as_ref().into(),
             submitter_der_x509_certificate_email: Some("mail@mail.com".to_string()),
         },
     );
@@ -122,10 +122,10 @@ fn serde_anonymous_pki_enrollment_submit_rep() {
     )[..],
     anonymous_cmds::pki_enrollment_info::Rep::Ok(
         anonymous_cmds::pki_enrollment_info::PkiEnrollmentInfoStatus::Accepted {
-            accept_payload: hex!("64756d6d79").to_vec(),
-            accept_payload_signature: hex!("64756d6d79").to_vec(),
+            accept_payload: hex!("64756d6d79").as_ref().into(),
+            accept_payload_signature: hex!("64756d6d79").as_ref().into(),
             accepted_on: DateTime::from_f64_with_us_precision(1668768160.714565),
-            accepter_der_x509_certificate: hex!("64756d6d79").to_vec(),
+            accepter_der_x509_certificate: hex!("64756d6d79").as_ref().into(),
             submitted_on: DateTime::from_f64_with_us_precision(1668768160.714573)
         }
     )
@@ -248,17 +248,18 @@ fn serde_authenticated_pki_enrollment_accep_req() {
     )[..];
     let expected = authenticated_cmds::AnyCmdReq::PkiEnrollmentAccept(
         authenticated_cmds::pki_enrollment_accept::Req {
-            accept_payload: hex!("3c64756d6d793e").to_vec(),
-            accept_payload_signature: hex!("3c7369676e61747572653e").to_vec(),
+            accept_payload: hex!("3c64756d6d793e").as_ref().into(),
+            accept_payload_signature: hex!("3c7369676e61747572653e").as_ref().into(),
             accepter_der_x509_certificate: hex!(
                 "3c61636365707465725f6465725f783530395f63657274696669636174653e"
             )
-            .to_vec(),
-            device_certificate: hex!("3c64756d6d793e").to_vec(),
+            .as_ref()
+            .into(),
+            device_certificate: hex!("3c64756d6d793e").as_ref().into(),
             enrollment_id: EnrollmentID::from_hex("56f48ed307984f10830e197287399c22").unwrap(),
-            redacted_device_certificate: hex!("3c64756d6d793e").to_vec(),
-            redacted_user_certificate: hex!("3c64756d6d793e").to_vec(),
-            user_certificate: hex!("3c64756d6d793e").to_vec(),
+            redacted_device_certificate: hex!("3c64756d6d793e").as_ref().into(),
+            redacted_user_certificate: hex!("3c64756d6d793e").as_ref().into(),
+            user_certificate: hex!("3c64756d6d793e").as_ref().into(),
         },
     );
 
@@ -351,10 +352,10 @@ fn serde_authenticated_accept_pki_rep() {
     authenticated_cmds::pki_enrollment_list::Rep::Ok {
             enrollments: vec![authenticated_cmds::pki_enrollment_list::PkiEnrollmentListItem {
                 enrollment_id: EnrollmentID::from_hex("e1fe88bd0f054261887a6c8039710b40").unwrap(),
-                submit_payload: hex!("3c64756d6d793e").to_vec(),
-                submit_payload_signature: hex!("3c7369676e61747572653e").to_vec(),
+                submit_payload: hex!("3c64756d6d793e").as_ref().into(),
+                submit_payload_signature: hex!("3c7369676e61747572653e").as_ref().into(),
                 submitted_on: DateTime::from_f64_with_us_precision(1668594983.390001f64),
-                submitter_der_x509_certificate: hex!("3c78353039206365727469663e").to_vec(),
+                submitter_der_x509_certificate: hex!("3c78353039206365727469663e").as_ref().into(),
             }],
         }
 )]

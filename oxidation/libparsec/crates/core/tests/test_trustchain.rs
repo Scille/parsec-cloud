@@ -3,10 +3,7 @@
 use libparsec_core::{TrustchainContext, TrustchainError};
 use libparsec_protocol::authenticated_cmds::v2::user_get::Trustchain;
 use libparsec_tests_fixtures::parsec_test;
-use libparsec_types::{
-    CertificateSignerOwned, DateTime, DeviceCertificate, DeviceID, RevokedUserCertificate,
-    UserCertificate, UserProfile,
-};
+use libparsec_types::prelude::*;
 
 use libparsec_tests_fixtures::{
     alice, alice_device_certif, alice_revoked_user_certif, alice_user_certif, bob,
@@ -35,9 +32,11 @@ fn test_bad_expected_user(
                 devices: vec![],
                 revoked_users: vec![],
             },
-            alice_user_certif.dump_and_sign(&coolorg.signing_key),
+            alice_user_certif.dump_and_sign(&coolorg.signing_key).into(),
             None,
-            vec![alice_device_certif.dump_and_sign(&coolorg.signing_key)],
+            vec![alice_device_certif
+                .dump_and_sign(&coolorg.signing_key)
+                .into()],
             Some(bob.user_id()),
         )
         .unwrap_err();
@@ -81,12 +80,18 @@ fn test_verify_no_trustchain(
                 devices: vec![],
                 revoked_users: vec![],
             },
-            alice_user_certif.dump_and_sign(&coolorg.signing_key),
+            alice_user_certif.dump_and_sign(&coolorg.signing_key).into(),
             None,
             vec![
-                alice_device_certif.dump_and_sign(&coolorg.signing_key),
-                alice2_device_certif.dump_and_sign(&alice.signing_key),
-                alice3_device_certif.dump_and_sign(&alice.signing_key),
+                alice_device_certif
+                    .dump_and_sign(&coolorg.signing_key)
+                    .into(),
+                alice2_device_certif
+                    .dump_and_sign(&alice.signing_key)
+                    .into(),
+                alice3_device_certif
+                    .dump_and_sign(&alice.signing_key)
+                    .into(),
             ],
             Some(alice.user_id()),
         )
@@ -124,9 +129,11 @@ fn test_bad_user_self_signed(
                 devices: vec![],
                 revoked_users: vec![],
             },
-            alice_user_certif.dump_and_sign(&coolorg.signing_key),
+            alice_user_certif.dump_and_sign(&coolorg.signing_key).into(),
             None,
-            vec![alice_device_certif.dump_and_sign(&coolorg.signing_key)],
+            vec![alice_device_certif
+                .dump_and_sign(&coolorg.signing_key)
+                .into()],
             Some(alice.user_id()),
         )
         .unwrap_err();
@@ -162,9 +169,15 @@ fn test_bad_revoked_user_self_signed(
                 devices: vec![],
                 revoked_users: vec![],
             },
-            alice_user_certif.dump_and_sign(&coolorg.signing_key),
-            Some(alice_revoked_user_certif.dump_and_sign(&alice.signing_key)),
-            vec![alice_device_certif.dump_and_sign(&coolorg.signing_key)],
+            alice_user_certif.dump_and_sign(&coolorg.signing_key).into(),
+            Some(
+                alice_revoked_user_certif
+                    .dump_and_sign(&alice.signing_key)
+                    .into(),
+            ),
+            vec![alice_device_certif
+                .dump_and_sign(&coolorg.signing_key)
+                .into()],
             Some(alice.user_id()),
         )
         .unwrap_err();
@@ -201,15 +214,19 @@ fn test_invalid_loop_on_device_certif_trustchain_error(
     let err = ctx
         .load_user_and_devices(
             Trustchain {
-                devices: vec![bob_device_certif.dump_and_sign(&alice.signing_key)],
+                devices: vec![bob_device_certif.dump_and_sign(&alice.signing_key).into()],
                 users: vec![],
                 revoked_users: vec![],
             },
-            alice_user_certif.dump_and_sign(&coolorg.signing_key),
+            alice_user_certif.dump_and_sign(&coolorg.signing_key).into(),
             None,
             vec![
-                alice_device_certif.dump_and_sign(&coolorg.signing_key),
-                alice_device_loop_certif.dump_and_sign(&bob.signing_key),
+                alice_device_certif
+                    .dump_and_sign(&coolorg.signing_key)
+                    .into(),
+                alice_device_loop_certif
+                    .dump_and_sign(&bob.signing_key)
+                    .into(),
             ],
             Some(alice.user_id()),
         )
@@ -256,18 +273,26 @@ fn test_device_signature_while_revoked(
         .load_user_and_devices(
             Trustchain {
                 devices: vec![
-                    alice_device_certif.dump_and_sign(&coolorg.signing_key),
-                    bob_device_certif.dump_and_sign(&coolorg.signing_key),
+                    alice_device_certif
+                        .dump_and_sign(&coolorg.signing_key)
+                        .into(),
+                    bob_device_certif.dump_and_sign(&coolorg.signing_key).into(),
                 ],
                 users: vec![
-                    alice_user_certif.dump_and_sign(&coolorg.signing_key),
-                    bob_user_certif.dump_and_sign(&coolorg.signing_key),
+                    alice_user_certif.dump_and_sign(&coolorg.signing_key).into(),
+                    bob_user_certif.dump_and_sign(&coolorg.signing_key).into(),
                 ],
-                revoked_users: vec![alice_revoked_user_certif.dump_and_sign(&bob.signing_key)],
+                revoked_users: vec![alice_revoked_user_certif
+                    .dump_and_sign(&bob.signing_key)
+                    .into()],
             },
-            mallory_user_certif.dump_and_sign(&coolorg.signing_key),
+            mallory_user_certif
+                .dump_and_sign(&coolorg.signing_key)
+                .into(),
             None,
-            vec![mallory_device_certif.dump_and_sign(&alice.signing_key)],
+            vec![mallory_device_certif
+                .dump_and_sign(&alice.signing_key)
+                .into()],
             Some(mallory.user_id()),
         )
         .unwrap_err();
@@ -313,18 +338,24 @@ fn test_user_signature_while_revoked(
         .load_user_and_devices(
             Trustchain {
                 devices: vec![
-                    alice_device_certif.dump_and_sign(&coolorg.signing_key),
-                    bob_device_certif.dump_and_sign(&coolorg.signing_key),
+                    alice_device_certif
+                        .dump_and_sign(&coolorg.signing_key)
+                        .into(),
+                    bob_device_certif.dump_and_sign(&coolorg.signing_key).into(),
                 ],
                 users: vec![
-                    alice_user_certif.dump_and_sign(&coolorg.signing_key),
-                    bob_user_certif.dump_and_sign(&coolorg.signing_key),
+                    alice_user_certif.dump_and_sign(&coolorg.signing_key).into(),
+                    bob_user_certif.dump_and_sign(&coolorg.signing_key).into(),
                 ],
-                revoked_users: vec![alice_revoked_user_certif.dump_and_sign(&bob.signing_key)],
+                revoked_users: vec![alice_revoked_user_certif
+                    .dump_and_sign(&bob.signing_key)
+                    .into()],
             },
-            mallory_user_certif.dump_and_sign(&alice.signing_key),
+            mallory_user_certif.dump_and_sign(&alice.signing_key).into(),
             None,
-            vec![mallory_device_certif.dump_and_sign(&coolorg.signing_key)],
+            vec![mallory_device_certif
+                .dump_and_sign(&coolorg.signing_key)
+                .into()],
             Some(mallory.user_id()),
         )
         .unwrap_err();
@@ -373,21 +404,31 @@ fn test_revoked_user_signature_while_revoked(
         .load_user_and_devices(
             Trustchain {
                 devices: vec![
-                    alice_device_certif.dump_and_sign(&coolorg.signing_key),
-                    bob_device_certif.dump_and_sign(&coolorg.signing_key),
+                    alice_device_certif
+                        .dump_and_sign(&coolorg.signing_key)
+                        .into(),
+                    bob_device_certif.dump_and_sign(&coolorg.signing_key).into(),
                 ],
                 users: vec![
-                    alice_user_certif.dump_and_sign(&coolorg.signing_key),
-                    bob_user_certif.dump_and_sign(&coolorg.signing_key),
+                    alice_user_certif.dump_and_sign(&coolorg.signing_key).into(),
+                    bob_user_certif.dump_and_sign(&coolorg.signing_key).into(),
                 ],
                 revoked_users: vec![
-                    alice_revoked_user_certif.dump_and_sign(&bob.signing_key),
-                    mallory_revoked_user_certif.dump_and_sign(&alice.signing_key),
+                    alice_revoked_user_certif
+                        .dump_and_sign(&bob.signing_key)
+                        .into(),
+                    mallory_revoked_user_certif
+                        .dump_and_sign(&alice.signing_key)
+                        .into(),
                 ],
             },
-            mallory_user_certif.dump_and_sign(&coolorg.signing_key),
+            mallory_user_certif
+                .dump_and_sign(&coolorg.signing_key)
+                .into(),
             None,
-            vec![mallory_device_certif.dump_and_sign(&coolorg.signing_key)],
+            vec![mallory_device_certif
+                .dump_and_sign(&coolorg.signing_key)
+                .into()],
             Some(mallory.user_id()),
         )
         .unwrap_err();
@@ -429,13 +470,15 @@ fn test_create_user_not_admin(
     let err = ctx
         .load_user_and_devices(
             Trustchain {
-                devices: vec![bob_device_certif.dump_and_sign(&coolorg.signing_key)],
-                users: vec![bob_user_certif.dump_and_sign(&coolorg.signing_key)],
+                devices: vec![bob_device_certif.dump_and_sign(&coolorg.signing_key).into()],
+                users: vec![bob_user_certif.dump_and_sign(&coolorg.signing_key).into()],
                 revoked_users: vec![],
             },
-            alice_user_certif.dump_and_sign(&bob.signing_key),
+            alice_user_certif.dump_and_sign(&bob.signing_key).into(),
             None,
-            vec![alice_device_certif.dump_and_sign(&coolorg.signing_key)],
+            vec![alice_device_certif
+                .dump_and_sign(&coolorg.signing_key)
+                .into()],
             Some(alice.user_id()),
         )
         .unwrap_err();
@@ -474,13 +517,17 @@ fn test_revoked_user_not_admin(
     let err = ctx
         .load_user_and_devices(
             Trustchain {
-                devices: vec![bob_device_certif.dump_and_sign(&coolorg.signing_key)],
-                users: vec![bob_user_certif.dump_and_sign(&coolorg.signing_key)],
-                revoked_users: vec![alice_revoked_user_certif.dump_and_sign(&bob.signing_key)],
+                devices: vec![bob_device_certif.dump_and_sign(&coolorg.signing_key).into()],
+                users: vec![bob_user_certif.dump_and_sign(&coolorg.signing_key).into()],
+                revoked_users: vec![alice_revoked_user_certif
+                    .dump_and_sign(&bob.signing_key)
+                    .into()],
             },
-            alice_user_certif.dump_and_sign(&coolorg.signing_key),
+            alice_user_certif.dump_and_sign(&coolorg.signing_key).into(),
             None,
-            vec![alice_device_certif.dump_and_sign(&coolorg.signing_key)],
+            vec![alice_device_certif
+                .dump_and_sign(&coolorg.signing_key)
+                .into()],
             Some(alice.user_id()),
         )
         .unwrap_err();
@@ -523,16 +570,22 @@ fn test_verify_user_with_broken_trustchain(
     let err = ctx
         .load_user_and_devices(
             Trustchain {
-                devices: vec![bob_device_certif.dump_and_sign(&mallory.signing_key)],
+                devices: vec![bob_device_certif.dump_and_sign(&mallory.signing_key).into()],
                 users: vec![
-                    bob_user_certif.dump_and_sign(&coolorg.signing_key),
-                    mallory_user_certif.dump_and_sign(&coolorg.signing_key),
+                    bob_user_certif.dump_and_sign(&coolorg.signing_key).into(),
+                    mallory_user_certif
+                        .dump_and_sign(&coolorg.signing_key)
+                        .into(),
                 ],
-                revoked_users: vec![alice_revoked_user_certif.dump_and_sign(&bob.signing_key)],
+                revoked_users: vec![alice_revoked_user_certif
+                    .dump_and_sign(&bob.signing_key)
+                    .into()],
             },
-            alice_user_certif.dump_and_sign(&coolorg.signing_key),
+            alice_user_certif.dump_and_sign(&coolorg.signing_key).into(),
             None,
-            vec![alice_device_certif.dump_and_sign(&coolorg.signing_key)],
+            vec![alice_device_certif
+                .dump_and_sign(&coolorg.signing_key)
+                .into()],
             Some(alice.user_id()),
         )
         .unwrap_err();

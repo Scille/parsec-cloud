@@ -325,9 +325,9 @@ impl TrustchainContext {
 
     pub fn load_trustchain(
         &mut self,
-        users: &[Vec<u8>],
-        revoked_users: &[Vec<u8>],
-        devices: &[Vec<u8>],
+        users: &[Bytes],
+        revoked_users: &[Bytes],
+        devices: &[Bytes],
     ) -> TrustchainResult<(
         Vec<UserCertificate>,
         Vec<RevokedUserCertificate>,
@@ -509,9 +509,9 @@ impl TrustchainContext {
     pub fn load_user_and_devices(
         &mut self,
         mut trustchain: Trustchain,
-        user_certif: Vec<u8>,
-        revoked_user_certif: Option<Vec<u8>>,
-        devices_certifs: Vec<Vec<u8>>,
+        user_certif: Bytes,
+        revoked_user_certif: Option<Bytes>,
+        devices_certifs: Vec<Bytes>,
         expected_user_id: Option<&UserID>,
     ) -> TrustchainResult<(
         UserCertificate,

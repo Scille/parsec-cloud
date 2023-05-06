@@ -29,7 +29,7 @@ use libparsec_types::prelude::*;
             encryption_revision: 8,
             vlob_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
             timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
-            blob: b"foobar".to_vec(),
+            blob: b"foobar".as_ref().into(),
             sequester_blob: Maybe::Absent,
         }
     )
@@ -57,7 +57,7 @@ use libparsec_types::prelude::*;
             encryption_revision: 8,
             vlob_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
             timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
-            blob: b"foobar".to_vec(),
+            blob: b"foobar".as_ref().into(),
             sequester_blob: Maybe::Present(None),
         }
     )
@@ -88,9 +88,9 @@ use libparsec_types::prelude::*;
             encryption_revision: 8,
             vlob_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
             timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
-            blob: b"foobar".to_vec(),
+            blob: b"foobar".as_ref().into(),
             sequester_blob: Maybe::Present(Some(
-                HashMap::from([(SequesterServiceID::from_hex("b5eb565343c442b3a26be44573813ff0").unwrap(), b"foobar".to_vec())])
+                HashMap::from([(SequesterServiceID::from_hex("b5eb565343c442b3a26be44573813ff0").unwrap(), b"foobar".as_ref().into())])
             )),
         }
     )
@@ -238,8 +238,8 @@ fn serde_vlob_create_req(#[case] raw: &[u8], #[case] expected: authenticated_cmd
         "656e6379"
     )[..],
     authenticated_cmds::vlob_create::Rep::SequesterInconsistency {
-        sequester_authority_certificate: b"foobar".to_vec(),
-        sequester_services_certificates: vec![b"foo".to_vec(), b"bar".to_vec()],
+        sequester_authority_certificate: b"foobar".as_ref().into(),
+        sequester_services_certificates: vec![b"foo".as_ref().into(), b"bar".as_ref().into()],
     },
 )]
 fn serde_vlob_create_rep(
@@ -315,7 +315,7 @@ fn serde_vlob_read_req() {
     )[..],
     authenticated_cmds::vlob_read::Rep::Ok {
         version: 8,
-        blob: b"foobar".to_vec(),
+        blob: b"foobar".as_ref().into(),
         author: "alice@dev1".parse().unwrap(),
         timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
         author_last_role_granted_on: Maybe::Present("2000-1-2T01:00:00Z".parse().unwrap()),
@@ -403,7 +403,7 @@ fn serde_vlob_read_rep(#[case] raw: &[u8], #[case] expected: authenticated_cmds:
             vlob_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
             timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
             version: 8,
-            blob: b"foobar".to_vec(),
+            blob: b"foobar".as_ref().into(),
             sequester_blob: Maybe::Absent,
         }
     )
@@ -431,7 +431,7 @@ fn serde_vlob_read_rep(#[case] raw: &[u8], #[case] expected: authenticated_cmds:
             vlob_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
             timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
             version: 8,
-            blob: b"foobar".to_vec(),
+            blob: b"foobar".as_ref().into(),
             sequester_blob: Maybe::Present(None),
         }
     )
@@ -461,9 +461,9 @@ fn serde_vlob_read_rep(#[case] raw: &[u8], #[case] expected: authenticated_cmds:
             vlob_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
             timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
             version: 8,
-            blob: b"foobar".to_vec(),
+            blob: b"foobar".as_ref().into(),
             sequester_blob: Maybe::Present(Some(
-                HashMap::from([(SequesterServiceID::from_hex("b5eb565343c442b3a26be44573813ff0").unwrap(), b"foobar".to_vec())])
+                HashMap::from([(SequesterServiceID::from_hex("b5eb565343c442b3a26be44573813ff0").unwrap(), b"foobar".as_ref().into())])
             )),
         }
     )
@@ -620,8 +620,8 @@ fn serde_vlob_update_req(#[case] raw: &[u8], #[case] expected: authenticated_cmd
         "656e6379"
     )[..],
     authenticated_cmds::vlob_update::Rep::SequesterInconsistency {
-        sequester_authority_certificate: b"foobar".to_vec(),
-        sequester_services_certificates: vec![b"foo".to_vec(), b"bar".to_vec()],
+        sequester_authority_certificate: b"foobar".as_ref().into(),
+        sequester_services_certificates: vec![b"foo".as_ref().into(), b"bar".as_ref().into()],
     },
 )]
 fn serde_vlob_update_rep(
@@ -895,7 +895,7 @@ fn serde_vlob_maintenance_get_reencryption_batch_req() {
         batch: vec![ReencryptionBatchEntry {
             vlob_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
             version: 8,
-            blob: b"foobar".to_vec(),
+            blob: b"foobar".as_ref().into(),
         }],
     }
 )]
@@ -1000,7 +1000,7 @@ fn serde_vlob_maintenance_save_reencryption_batch_req() {
         batch: vec![ReencryptionBatchEntry {
             vlob_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
             version: 8,
-            blob: b"foobar".to_vec(),
+            blob: b"foobar".as_ref().into(),
         }],
     };
 

@@ -1,4 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
+use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 
 use crate::UsersPerProfileDetailItem;
@@ -18,9 +20,9 @@ pub struct OrganizationConfig {
     pub user_profile_outsider_allowed: bool,
     pub active_users_limit: ActiveUsersLimit,
     // TODO: Should this be `SequesterAuthorityCertificate` instead of bytes?
-    pub sequester_authority: Option<Vec<u8>>,
+    pub sequester_authority: Option<Bytes>,
     // TODO: Should this be `SequesterServiceCertificate` instead of bytes?
-    pub sequester_services: Option<Vec<Vec<u8>>>,
+    pub sequester_services: Option<Vec<Bytes>>,
 }
 
 impl OrganizationConfig {

@@ -19,7 +19,7 @@ fn serde_realm_create_req() {
     );
 
     let req = authenticated_cmds::realm_create::Req {
-        role_certificate: b"foobar".to_vec(),
+        role_certificate: b"foobar".as_ref().into(),
     };
 
     let expected = authenticated_cmds::AnyCmdReq::RealmCreate(req);
@@ -397,7 +397,7 @@ fn serde_realm_get_role_certificates_req() {
         "82ac63657274696669636174657391c406666f6f626172a6737461747573a26f6b"
     )[..],
     authenticated_cmds::realm_get_role_certificates::Rep::Ok {
-        certificates: vec![b"foobar".to_vec()],
+        certificates: vec![b"foobar".as_ref().into()],
     }
 )]
 #[case::not_allowed(
@@ -450,7 +450,7 @@ fn serde_realm_get_role_certificates_rep(
         "63617465c406666f6f626172b1726563697069656e745f6d657373616765c0"
     )[..],
     authenticated_cmds::AnyCmdReq::RealmUpdateRoles(authenticated_cmds::realm_update_roles::Req {
-        role_certificate: b"foobar".to_vec(),
+        role_certificate: b"foobar".as_ref().into(),
         recipient_message: None,
     })
 )]
@@ -466,8 +466,8 @@ fn serde_realm_get_role_certificates_rep(
         "72"
     )[..],
     authenticated_cmds::AnyCmdReq::RealmUpdateRoles(authenticated_cmds::realm_update_roles::Req {
-        role_certificate: b"foobar".to_vec(),
-        recipient_message: Some(b"foobar".to_vec()),
+        role_certificate: b"foobar".as_ref().into(),
+        recipient_message: Some(b"foobar".as_ref().into()),
     })
 )]
 fn serde_realm_update_roles_req(
@@ -679,7 +679,7 @@ fn serde_realm_start_reencryption_maintenance_req() {
         timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
         per_participant_message: HashMap::from([(
             "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
-            b"foobar".to_vec(),
+            b"foobar".as_ref().into(),
         )]),
     };
 

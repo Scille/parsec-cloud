@@ -59,13 +59,14 @@ fn test_password_protected_device_file(alice: &Device) {
             "0a7dfe1b876d23f22c2668aaefb817cdc47be0f1f8d2a5500014920f51adb2f5a1d9a3e543"
             "012c3ed270ff12cd481df5"
         )
-        .to_vec(),
+        .as_ref()
+        .into(),
         human_handle: alice.human_handle.to_owned(),
         device_label: alice.device_label.to_owned(),
         device_id: alice.device_id.to_owned(),
         organization_id: alice.organization_id().to_owned(),
         slug: alice.local_device().slug(),
-        salt: hex!("2ae6167f0f7472b8565c390df3af4a8b").to_vec(),
+        salt: hex!("2ae6167f0f7472b8565c390df3af4a8b").as_ref().into(),
     };
 
     let file_device = rmp_serde::from_slice::<DeviceFilePassword>(&filedata).unwrap();
@@ -126,7 +127,8 @@ fn test_recovery_device_file(alice: &Device) {
             "681f6a8c6ef65e7831a381999dfedc98e7b33afae58d4edb101475c29fd9804a7bd9adfc99"
             "bc2697e16c460e5a4f2dc7"
         )
-        .to_vec(),
+        .as_ref()
+        .into(),
         human_handle: alice.human_handle.to_owned(),
         device_label: alice.device_label.to_owned(),
         device_id: alice.device_id.to_owned(),
@@ -195,7 +197,7 @@ fn test_smartcard_device_file(alice: &Device) {
         "7264"
     );
     let expected = DeviceFile::Smartcard(DeviceFileSmartcard {
-        encrypted_key: b"foo".to_vec(),
+        encrypted_key: b"foo".as_ref().into(),
         certificate_id: "foo".into(),
         certificate_sha1: Some("foo".into()),
         ciphertext: hex!(
@@ -214,7 +216,8 @@ fn test_smartcard_device_file(alice: &Device) {
             "dedba44fcb6224654859605a2bbeb979e7d73f233724ab4846b38c94ce603de796f866d0d90fb0ba"
             "dd037a135cca4d018e"
         )
-        .to_vec(),
+        .as_ref()
+        .into(),
         human_handle: alice.human_handle.clone(),
         device_label: alice.device_label.clone(),
         device_id: alice.device_id.clone(),
@@ -324,7 +327,7 @@ fn test_available_device() {
         "c4106f48555e77fd45429cfe26d1dcdd3a8ea474797065a870617373776f7264"
     )[..],
     LegacyDeviceFile::Password(LegacyDeviceFilePassword {
-        salt: hex!("6f48555e77fd45429cfe26d1dcdd3a8e").to_vec(),
+        salt: hex!("6f48555e77fd45429cfe26d1dcdd3a8e").as_ref().into(),
         ciphertext: hex!(
             "92d7b106ad7efbbb5603a41094681bc7c65fff23066e0e0eff8e1db5e626b626f22acd334e5ae3f9"
             "92bb822717b6ed29fd706250583a9007b59b87d41e072b92d78775c936a2b418cce1561b46feb8f9"
@@ -340,7 +343,7 @@ fn test_available_device() {
             "d1af2b23919e8841be9c85d5305b96149f58e020abb3aff2641370ecb2aeca9084fce184f78ff56a"
             "889c9ad80e8b59e441d86c82242e70261c31cde2ba82535a5667cac313c1fb8cb0107e2b1a1f6224"
             "559dc9d052be275865"
-      ).to_vec(),
+      ).as_ref().into(),
         human_handle: Some(HumanHandle::new("alice@example.com",  "Alicey McAliceFace").unwrap()),
         device_label: Some("My dev1 machine".parse().unwrap())
     })
@@ -385,7 +388,7 @@ fn test_available_device() {
         "77fd45429cfe26d1dcdd3a8ea474797065a870617373776f7264"
     )[..],
     LegacyDeviceFile::Password(LegacyDeviceFilePassword {
-        salt: hex!("6f48555e77fd45429cfe26d1dcdd3a8e").to_vec(),
+        salt: hex!("6f48555e77fd45429cfe26d1dcdd3a8e").as_ref().into(),
         ciphertext: hex!(
             "92d7b106ad7efbbb5603a41094681bc7c65fff23066e0e0eff8e1db5e626b626f22acd334e5ae3f9"
             "92bb822717b6ed29fd706250583a9007b59b87d41e072b92d78775c936a2b418cce1561b46feb8f9"
@@ -401,7 +404,7 @@ fn test_available_device() {
             "d1af2b23919e8841be9c85d5305b96149f58e020abb3aff2641370ecb2aeca9084fce184f78ff56a"
             "889c9ad80e8b59e441d86c82242e70261c31cde2ba82535a5667cac313c1fb8cb0107e2b1a1f6224"
             "559dc9d052be275865"
-        ).to_vec(),
+        ).as_ref().into(),
         human_handle: None,
         device_label: None,
     })

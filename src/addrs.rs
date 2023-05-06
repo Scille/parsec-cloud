@@ -456,8 +456,8 @@ impl BackendOrganizationFileLinkAddr {
                 addr.0,
                 organization_id.0,
                 workspace_id.0,
-                encrypted_path,
-                encrypted_timestamp,
+                encrypted_path.into(),
+                encrypted_timestamp.map(|e| e.into()),
             ),
         ))
     }
@@ -558,8 +558,8 @@ impl BackendOrganizationFileLinkAddr {
             organization_addr.get_backend_addr().0,
             organization_addr.organization_id().0,
             workspace_id.0,
-            encrypted_path,
-            encrypted_timestamp,
+            encrypted_path.to_vec(),
+            encrypted_timestamp.map(|e| e.to_vec()),
         ))
     }
 }

@@ -39,7 +39,7 @@ impl BaseGreetInitialCtx {
         }?;
 
         let shared_secret_key = greeter_private_key.generate_shared_secret_key(&claimer_public_key);
-        let greeter_nonce = generate_nonce();
+        let greeter_nonce: Bytes = generate_nonce().into();
 
         let rep = self
             .cmds
@@ -85,7 +85,7 @@ impl BaseGreetInitialCtx {
         }
 
         let (claimer_sas, greeter_sas) =
-            SASCode::generate_sas_codes(&claimer_nonce, &greeter_nonce, &shared_secret_key);
+            SASCode::generate_sas_codes(&claimer_nonce, greeter_nonce.as_ref(), &shared_secret_key);
 
         Ok(BaseGreetInProgress1Ctx {
             token: self.token,
@@ -278,7 +278,7 @@ struct BaseGreetInProgress3WithPayloadCtx {
     token: InvitationToken,
     shared_secret_key: SecretKey,
     cmds: Arc<AuthenticatedCmds>,
-    payload: Vec<u8>,
+    payload: Bytes,
 }
 
 impl BaseGreetInProgress3Ctx {
@@ -287,7 +287,7 @@ impl BaseGreetInProgress3Ctx {
             .cmds
             .send(invite_4_greeter_communicate::Req {
                 token: self.token,
-                payload: vec![],
+                payload: Bytes::new(),
             })
             .await?;
 
@@ -364,7 +364,7 @@ fn create_new_signed_user_certificates(
     profile: UserProfile,
     public_key: PublicKey,
     verify_key: VerifyKey,
-) -> (Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>, InviteUserConfirmation) {
+) -> (Bytes, Bytes, Bytes, Bytes, InviteUserConfirmation) {
     let device_id = DeviceID::default();
     let timestamp = author.now();
 
@@ -418,10 +418,10 @@ fn create_new_signed_user_certificates(
     };
 
     (
-        user_certificate_bytes,
-        redacted_user_certificate_bytes,
-        device_certificate_bytes,
-        redacted_device_certificate_bytes,
+        user_certificate_bytes.into(),
+        redacted_user_certificate_bytes.into(),
+        device_certificate_bytes.into(),
+        redacted_device_certificate_bytes.into(),
         invite_user_confirmation,
     )
 }
@@ -430,7 +430,7 @@ fn create_new_signed_device_certificates(
     author: &LocalDevice,
     device_label: Option<DeviceLabel>,
     verify_key: VerifyKey,
-) -> (Vec<u8>, Vec<u8>, DeviceID) {
+) -> (Bytes, Bytes, DeviceID) {
     let device_id = author.user_id().to_device_id(DeviceName::default());
     let timestamp = author.now();
 
@@ -455,8 +455,8 @@ fn create_new_signed_device_certificates(
         redacted_device_certificate.dump_and_sign(&author.signing_key);
 
     (
-        device_certificate_bytes,
-        redacted_device_certificate_bytes,
+        device_certificate_bytes.into(),
+        redacted_device_certificate_bytes.into(),
         device_id,
     )
 }
@@ -524,7 +524,9 @@ impl UserGreetInProgress4Ctx {
         // 2) if this occurs the inviter can revoke the user and retry the
         // enrollment process to fix this
 
-        let payload = invite_user_confirmation.dump_and_encrypt(&self.shared_secret_key);
+        let payload = invite_user_confirmation
+            .dump_and_encrypt(&self.shared_secret_key)
+            .into();
 
         let rep = self
             .cmds
@@ -616,7 +618,8 @@ impl DeviceGreetInProgress4Ctx {
             user_manifest_key: author.user_manifest_key.clone(),
             root_verify_key: author.root_verify_key().clone(),
         }
-        .dump_and_encrypt(&self.shared_secret_key);
+        .dump_and_encrypt(&self.shared_secret_key)
+        .into();
 
         let rep = self
             .cmds

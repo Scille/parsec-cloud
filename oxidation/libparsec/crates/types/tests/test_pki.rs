@@ -155,8 +155,8 @@ fn serde_pki_enrollment_submit_payload(
             x509_certificate: X509Certificate {
                 issuer: HashMap::from([("foo".into(), "bar".into())]),
                 subject: HashMap::from([("foo".into(), "bar".into())]),
-                der_x509_certificate: b"foo".to_vec(),
-                certificate_sha1: b"foo".to_vec(),
+                der_x509_certificate: b"foo".as_ref().into(),
+                certificate_sha1: b"foo".as_ref().into(),
                 certificate_id: Some("foo".into()),
             },
             addr: BackendPkiEnrollmentAddr::from_str(
@@ -170,8 +170,8 @@ fn serde_pki_enrollment_submit_payload(
                 public_key: alice.public_key(),
                 requested_device_label: alice.device_label.clone().unwrap(),
             },
-            encrypted_key: b"foo".to_vec(),
-            ciphertext: b"foo".to_vec(),
+            encrypted_key: b"foo".as_ref().into(),
+            ciphertext: b"foo".as_ref().into(),
         }
     })
 )]
@@ -220,8 +220,8 @@ fn serde_pki_enrollment_submit_payload(
             x509_certificate: X509Certificate {
                 issuer: HashMap::from([("foo".into(), "bar".into())]),
                 subject: HashMap::from([("foo".into(), "bar".into())]),
-                der_x509_certificate: b"foo".to_vec(),
-                certificate_sha1: b"foo".to_vec(),
+                der_x509_certificate: b"foo".as_ref().into(),
+                certificate_sha1: b"foo".as_ref().into(),
                 certificate_id: None,
             },
             addr: BackendPkiEnrollmentAddr::from_str(
@@ -235,8 +235,8 @@ fn serde_pki_enrollment_submit_payload(
                 public_key: alice.public_key(),
                 requested_device_label: alice.device_label.clone().unwrap(),
             },
-            encrypted_key: b"foo".to_vec(),
-            ciphertext: b"foo".to_vec(),
+            encrypted_key: b"foo".as_ref().into(),
+            ciphertext: b"foo".as_ref().into(),
         }
     })
 )]

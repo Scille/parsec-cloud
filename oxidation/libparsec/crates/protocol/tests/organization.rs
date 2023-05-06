@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use bytes::Bytes;
 use hex_literal::hex;
 
 use libparsec_protocol::{
@@ -9,7 +10,7 @@ use libparsec_tests_fixtures::*;
 use libparsec_types::prelude::*;
 
 type OrganizationBootstrapGenerator =
-    Box<dyn FnOnce(&Device, Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>) -> anonymous_cmds::AnyCmdReq>;
+    Box<dyn FnOnce(&Device, Bytes, Bytes, Bytes, Bytes) -> anonymous_cmds::AnyCmdReq>;
 
 #[parsec_test]
 fn serde_organization_stats_req() {
@@ -190,8 +191,8 @@ fn serde_organization_config_req() {
     authenticated_cmds::organization_config::Rep::Ok {
         user_profile_outsider_allowed: false,
         active_users_limit: ActiveUsersLimit::LimitedTo(1),
-        sequester_authority_certificate: Maybe::Present(Some(b"foobar".to_vec())),
-        sequester_services_certificates: Maybe::Present(Some(vec![b"foo".to_vec(), b"bar".to_vec()])),
+        sequester_authority_certificate: Maybe::Present(Some(b"foobar".as_ref().into())),
+        sequester_services_certificates: Maybe::Present(Some(vec![b"foo".as_ref().into(), b"bar".as_ref().into()])),
     }
 )]
 #[case::not_found(
@@ -297,10 +298,10 @@ fn serde_organization_config_rep(
     )[..],
     Box::new(|
         alice: &Device,
-        user_certificate: Vec<u8>,
-        redacted_user_certificate: Vec<u8>,
-        device_certificate: Vec<u8>,
-        redacted_device_certificate: Vec<u8>
+        user_certificate: Bytes,
+        redacted_user_certificate: Bytes,
+        device_certificate: Bytes,
+        redacted_device_certificate: Bytes
         | {
         anonymous_cmds::AnyCmdReq::OrganizationBootstrap(anonymous_cmds::organization_bootstrap::Req {
             bootstrap_token: "0db537dee3ff9a3c2f76e337a4461f41fb3d738f35eb48f3759046dfbedb2e79".into(),
@@ -392,10 +393,10 @@ fn serde_organization_config_rep(
     )[..],
     Box::new(|
         alice: &Device,
-        user_certificate: Vec<u8>,
-        redacted_user_certificate: Vec<u8>,
-        device_certificate: Vec<u8>,
-        redacted_device_certificate: Vec<u8>
+        user_certificate: Bytes,
+        redacted_user_certificate: Bytes,
+        device_certificate: Bytes,
+        redacted_device_certificate: Bytes
         | {
         anonymous_cmds::AnyCmdReq::OrganizationBootstrap(anonymous_cmds::organization_bootstrap::Req {
             bootstrap_token: "0db537dee3ff9a3c2f76e337a4461f41fb3d738f35eb48f3759046dfbedb2e79".into(),
@@ -487,10 +488,10 @@ fn serde_organization_config_rep(
     )[..],
     Box::new(|
         alice: &Device,
-        user_certificate: Vec<u8>,
-        redacted_user_certificate: Vec<u8>,
-        device_certificate: Vec<u8>,
-        redacted_device_certificate: Vec<u8>
+        user_certificate: Bytes,
+        redacted_user_certificate: Bytes,
+        device_certificate: Bytes,
+        redacted_device_certificate: Bytes
         | {
         anonymous_cmds::AnyCmdReq::OrganizationBootstrap(anonymous_cmds::organization_bootstrap::Req {
             bootstrap_token: "0db537dee3ff9a3c2f76e337a4461f41fb3d738f35eb48f3759046dfbedb2e79".into(),
@@ -499,25 +500,25 @@ fn serde_organization_config_rep(
             device_certificate,
             redacted_user_certificate,
             redacted_device_certificate,
-            sequester_authority_certificate: Maybe::Present(Some(b"foo".to_vec())),
+            sequester_authority_certificate: Maybe::Present(Some(b"foo".as_ref().into())),
         })
     })
 )]
 fn serde_organization_bootstrap_req(
     alice: &Device,
-    user_certificate: &[u8],
-    redacted_user_certificate: &[u8],
-    device_certificate: &[u8],
-    redacted_device_certificate: &[u8],
+    user_certificate: &'static [u8],
+    redacted_user_certificate: &'static [u8],
+    device_certificate: &'static [u8],
+    redacted_device_certificate: &'static [u8],
     #[case] raw: &[u8],
     #[case] generate_expected: OrganizationBootstrapGenerator,
 ) {
     let expected = generate_expected(
         alice,
-        user_certificate.to_vec(),
-        redacted_user_certificate.to_vec(),
-        device_certificate.to_vec(),
-        redacted_device_certificate.to_vec(),
+        user_certificate.into(),
+        redacted_user_certificate.into(),
+        device_certificate.into(),
+        redacted_device_certificate.into(),
     );
 
     let data = anonymous_cmds::AnyCmdReq::load(raw).unwrap();

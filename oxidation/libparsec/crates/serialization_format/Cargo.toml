@@ -24,3 +24,4 @@ serde = { version = "1.0.147", features = ["derive"] }
 serde_with = "2.3.2"
 rmp-serde = "1.1.1"
 hex-literal = "0.4.1"
+bytes = { version = "1.4.0", features = ["serde"] }

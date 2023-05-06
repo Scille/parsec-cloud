@@ -58,7 +58,7 @@ fn serde_message_get_rep() {
             count: 1,
             sender: "alice@dev1".parse().unwrap(),
             timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
-            body: b"foobar".to_vec(),
+            body: b"foobar".as_ref().into(),
         }],
     };
 

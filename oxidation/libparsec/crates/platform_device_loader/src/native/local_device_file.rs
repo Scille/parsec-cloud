@@ -68,7 +68,7 @@ pub async fn save_recovery_device(
 
     let (passphrase, key) = SecretKey::generate_recovery_passphrase();
 
-    let ciphertext = key.encrypt(&device.dump());
+    let ciphertext = key.encrypt(&device.dump()).into();
 
     let key_file_content = DeviceFile::Recovery(DeviceFileRecovery {
         ciphertext,
@@ -244,9 +244,9 @@ pub fn save_device_with_password(
     let salt = SecretKey::generate_salt();
     let key = SecretKey::from_password(password, &salt);
 
-    let ciphertext = key.encrypt(&cleartext);
+    let ciphertext = key.encrypt(&cleartext).into();
     let key_file_content = DeviceFile::Password(DeviceFilePassword {
-        salt,
+        salt: salt.into(),
         ciphertext,
         // TODO: Can we avoid these copy?
         human_handle: device.human_handle.clone(),

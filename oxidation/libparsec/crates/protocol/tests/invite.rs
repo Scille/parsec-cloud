@@ -647,7 +647,7 @@ fn serde_invite_2a_claimer_send_hashed_nonce_req() {
         "82ad677265657465725f6e6f6e6365c406666f6f626172a6737461747573a26f6b"
     )[..],
     invited_cmds::invite_2a_claimer_send_hashed_nonce::Rep::Ok {
-        greeter_nonce: b"foobar".to_vec(),
+        greeter_nonce: b"foobar".as_ref().into(),
     }
 )]
 #[case::not_found(
@@ -800,7 +800,7 @@ fn serde_invite_2b_greeter_send_nonce_req() {
 
     let req = authenticated_cmds::invite_2b_greeter_send_nonce::Req {
         token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
-        greeter_nonce: b"foobar".to_vec(),
+        greeter_nonce: b"foobar".as_ref().into(),
     };
 
     let expected = authenticated_cmds::AnyCmdReq::Invite2bGreeterSendNonce(req);
@@ -831,7 +831,7 @@ fn serde_invite_2b_greeter_send_nonce_req() {
         "82ad636c61696d65725f6e6f6e6365c406666f6f626172a6737461747573a26f6b"
     )[..],
     authenticated_cmds::invite_2b_greeter_send_nonce::Rep::Ok {
-        claimer_nonce: b"foobar".to_vec(),
+        claimer_nonce: b"foobar".as_ref().into(),
     }
 )]
 #[case::not_found(
@@ -889,7 +889,7 @@ fn serde_invite_2b_claimer_send_nonce_req() {
     );
 
     let req = invited_cmds::invite_2b_claimer_send_nonce::Req {
-        claimer_nonce: b"foobar".to_vec(),
+        claimer_nonce: b"foobar".as_ref().into(),
     };
 
     let expected = invited_cmds::AnyCmdReq::Invite2bClaimerSendNonce(req);
@@ -1285,7 +1285,7 @@ fn serde_invite_4_greeter_communicate_req() {
 
     let req = authenticated_cmds::invite_4_greeter_communicate::Req {
         token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
-        payload: b"foobar".to_vec(),
+        payload: b"foobar".as_ref().into(),
     };
 
     let expected = authenticated_cmds::AnyCmdReq::Invite4GreeterCommunicate(req);
@@ -1316,7 +1316,7 @@ fn serde_invite_4_greeter_communicate_req() {
         "82a77061796c6f6164c406666f6f626172a6737461747573a26f6b"
     )[..],
     authenticated_cmds::invite_4_greeter_communicate::Rep::Ok {
-        payload: b"foobar".to_vec(),
+        payload: b"foobar".as_ref().into(),
     }
 )]
 #[case::not_found(
@@ -1373,7 +1373,7 @@ fn serde_invite_4_claimer_communicate_req() {
     );
 
     let req = invited_cmds::invite_4_claimer_communicate::Req {
-        payload: b"foobar".to_vec(),
+        payload: b"foobar".as_ref().into(),
     };
 
     let expected = invited_cmds::AnyCmdReq::Invite4ClaimerCommunicate(req);
@@ -1404,7 +1404,7 @@ fn serde_invite_4_claimer_communicate_req() {
         "82a77061796c6f6164c406666f6f626172a6737461747573a26f6b"
     )[..],
     invited_cmds::invite_4_claimer_communicate::Rep::Ok {
-        payload: b"foobar".to_vec(),
+        payload: b"foobar".as_ref().into(),
     }
 )]
 #[case::not_found(

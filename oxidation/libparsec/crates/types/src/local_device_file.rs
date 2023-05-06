@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use bytes::Bytes;
 use serde::{Deserialize, Serialize};
-use serde_with::{serde_as, Bytes};
 use sha2::{Digest, Sha256};
 use std::path::PathBuf;
 
@@ -15,14 +15,14 @@ use crate::{
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceFilePasswordData", from = "DeviceFilePasswordData")]
 pub struct DeviceFilePassword {
-    pub ciphertext: Vec<u8>,
+    pub ciphertext: Bytes,
     pub human_handle: Option<HumanHandle>,
     pub device_label: Option<DeviceLabel>,
     pub device_id: DeviceID,
     pub organization_id: OrganizationID,
     pub slug: String,
 
-    pub salt: Vec<u8>,
+    pub salt: Bytes,
 }
 
 parsec_data!("schema/local_device/device_file_password.json5");
@@ -42,7 +42,7 @@ impl_transparent_data_format_conversion!(
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceFileRecoveryData", from = "DeviceFileRecoveryData")]
 pub struct DeviceFileRecovery {
-    pub ciphertext: Vec<u8>,
+    pub ciphertext: Bytes,
     pub human_handle: Option<HumanHandle>,
     pub device_label: Option<DeviceLabel>,
     pub device_id: DeviceID,
@@ -66,16 +66,16 @@ impl_transparent_data_format_conversion!(
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceFileSmartcardData", from = "DeviceFileSmartcardData")]
 pub struct DeviceFileSmartcard {
-    pub ciphertext: Vec<u8>,
+    pub ciphertext: Bytes,
     pub human_handle: Option<HumanHandle>,
     pub device_label: Option<DeviceLabel>,
     pub device_id: DeviceID,
     pub organization_id: OrganizationID,
     pub slug: String,
 
-    pub encrypted_key: Vec<u8>,
+    pub encrypted_key: Bytes,
     pub certificate_id: String,
-    pub certificate_sha1: Option<Vec<u8>>,
+    pub certificate_sha1: Option<Bytes>,
 }
 
 parsec_data!("schema/local_device/device_file_smartcard.json5");
@@ -112,13 +112,10 @@ impl DeviceFile {
     }
 }
 
-#[serde_as]
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 pub struct LegacyDeviceFilePassword {
-    #[serde_as(as = "Bytes")]
-    pub salt: Vec<u8>,
-    #[serde_as(as = "Bytes")]
-    pub ciphertext: Vec<u8>,
+    pub salt: Bytes,
+    pub ciphertext: Bytes,
     pub human_handle: Option<HumanHandle>,
     pub device_label: Option<DeviceLabel>,
 }

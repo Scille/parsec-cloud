@@ -96,7 +96,7 @@ macro_rules! generate_field_type_enum {
                     // Scalars
                     FieldType::Boolean => quote!{ bool },
                     FieldType::String => quote!{ String },
-                    FieldType::Bytes => quote!{ Vec<u8> },
+                    FieldType::Bytes => quote!{ bytes::Bytes },
                     $(FieldType::$type_name => {
                         let (absolute_prefix, relative_path) = match stringify!($rust_type){
                             rust_type if rust_type.starts_with("::") => (true, &rust_type[2..]),
@@ -216,7 +216,6 @@ macro_rules! generate_field_type_enum {
                             (#(#elems),*)
                         }
                     }
-                    FieldType::Bytes => quote!{ ::serde_with::Bytes },
                     _ => return None,
                 };
                 Some(code)

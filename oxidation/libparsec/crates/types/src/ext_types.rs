@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 
@@ -229,6 +230,5 @@ pub(crate) use impl_from_maybe;
 pub struct ReencryptionBatchEntry {
     pub vlob_id: VlobID,
     pub version: u64,
-    #[serde_as(as = "serde_with::Bytes")]
-    pub blob: Vec<u8>,
+    pub blob: Bytes,
 }

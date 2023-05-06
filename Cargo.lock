@@ -189,6 +189,9 @@ name = "bytes"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "89b2fd2a0dcf38d7971e2194b6b6eebab45ae01067456a7fd93d5547a61b70be"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "cc"
@@ -1436,6 +1439,7 @@ dependencies = [
 name = "libparsec_protocol"
 version = "0.0.0"
 dependencies = [
+ "bytes",
  "futures",
  "glob",
  "hex-literal",
@@ -1455,6 +1459,7 @@ dependencies = [
 name = "libparsec_serialization_format"
 version = "0.0.0"
 dependencies = [
+ "bytes",
  "hex-literal",
  "itertools",
  "miniserde",
@@ -1517,6 +1522,7 @@ dependencies = [
 name = "libparsec_types"
 version = "0.0.0"
 dependencies = [
+ "bytes",
  "chrono",
  "data-encoding",
  "email-address-parser",

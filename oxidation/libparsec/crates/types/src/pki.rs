@@ -6,6 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use bytes::Bytes;
 use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
@@ -114,8 +115,8 @@ impl PkiEnrollmentSubmitPayload {
 pub struct X509Certificate {
     pub issuer: HashMap<String, String>,
     pub subject: HashMap<String, String>,
-    pub der_x509_certificate: Vec<u8>,
-    pub certificate_sha1: Vec<u8>,
+    pub der_x509_certificate: Bytes,
+    pub certificate_sha1: Bytes,
     pub certificate_id: Option<String>,
 }
 
@@ -161,8 +162,8 @@ pub struct LocalPendingEnrollment {
     pub submitted_on: DateTime,
     pub enrollment_id: EnrollmentID,
     pub submit_payload: PkiEnrollmentSubmitPayload,
-    pub encrypted_key: Vec<u8>,
-    pub ciphertext: Vec<u8>,
+    pub encrypted_key: Bytes,
+    pub ciphertext: Bytes,
 }
 
 impl LocalPendingEnrollment {

@@ -61,13 +61,13 @@ fn serde_user_get_req() {
         "727469666963617465c406666f6f626172"
     ),
     authenticated_cmds::user_get::Rep::Ok {
-        user_certificate: b"foobar".to_vec(),
-        revoked_user_certificate: Some(b"foobar".to_vec()),
-        device_certificates: vec![b"foobar".to_vec()],
+        user_certificate: b"foobar".as_ref().into(),
+        revoked_user_certificate: Some(b"foobar".as_ref().into()),
+        device_certificates: vec![b"foobar".as_ref().into()],
         trustchain: authenticated_cmds::user_get::Trustchain {
-            users: vec![b"foobar".to_vec()],
-            devices: vec![b"foobar".to_vec()],
-            revoked_users: vec![b"foobar".to_vec()],
+            users: vec![b"foobar".as_ref().into()],
+            devices: vec![b"foobar".as_ref().into()],
+            revoked_users: vec![b"foobar".as_ref().into()],
         },
     }
 )]
@@ -92,13 +92,13 @@ fn serde_user_get_req() {
         "7465c406666f6f626172"
     ),
     authenticated_cmds::user_get::Rep::Ok {
-        user_certificate: b"foobar".to_vec(),
+        user_certificate: b"foobar".as_ref().into(),
         revoked_user_certificate: None,
-        device_certificates: vec![b"foobar".to_vec()],
+        device_certificates: vec![b"foobar".as_ref().into()],
         trustchain: authenticated_cmds::user_get::Trustchain {
-            users: vec![b"foobar".to_vec()],
-            devices: vec![b"foobar".to_vec()],
-            revoked_users: vec![b"foobar".to_vec()],
+            users: vec![b"foobar".as_ref().into()],
+            devices: vec![b"foobar".as_ref().into()],
+            revoked_users: vec![b"foobar".as_ref().into()],
         },
     }
 )]
@@ -141,10 +141,10 @@ fn serde_user_create_req() {
     );
 
     let req = authenticated_cmds::user_create::Req {
-        user_certificate: b"foobar".to_vec(),
-        device_certificate: b"foobar".to_vec(),
-        redacted_user_certificate: b"foobar".to_vec(),
-        redacted_device_certificate: b"foobar".to_vec(),
+        user_certificate: b"foobar".as_ref().into(),
+        device_certificate: b"foobar".as_ref().into(),
+        redacted_user_certificate: b"foobar".as_ref().into(),
+        redacted_device_certificate: b"foobar".as_ref().into(),
     };
 
     let expected = authenticated_cmds::AnyCmdReq::UserCreate(req);
@@ -300,7 +300,7 @@ fn serde_user_revoke_req() {
     );
 
     let req = authenticated_cmds::user_revoke::Req {
-        revoked_user_certificate: b"foobar".to_vec(),
+        revoked_user_certificate: b"foobar".as_ref().into(),
     };
 
     let expected = authenticated_cmds::AnyCmdReq::UserRevoke(req);
@@ -408,8 +408,8 @@ fn serde_device_create_req() {
     );
 
     let req = authenticated_cmds::device_create::Req {
-        device_certificate: b"foobar".to_vec(),
-        redacted_device_certificate: b"foobar".to_vec(),
+        device_certificate: b"foobar".as_ref().into(),
+        redacted_device_certificate: b"foobar".as_ref().into(),
     };
 
     let expected = authenticated_cmds::AnyCmdReq::DeviceCreate(req);

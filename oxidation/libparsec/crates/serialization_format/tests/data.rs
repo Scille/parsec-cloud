@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use bytes::Bytes;
 use hex_literal::hex;
 use pretty_assertions::assert_eq;
 
@@ -22,6 +23,10 @@ fn simple() {
                 {
                     "name": "version",
                     "type": "Integer"
+                },
+                {
+                    "name": "certificate",
+                    "type": "Bytes"
                 }
             ]
         }"#
@@ -33,6 +38,7 @@ fn simple() {
         ty: FooManifestDataType,
         author: libparsec_types::DeviceID("alice@pc1".to_owned()),
         version: 1,
+        certificate: Bytes::from_static(b"whatever"),
     };
     let dumped = rmp_serde::to_vec_named(&data).unwrap();
     let reloaded: FooManifestData = rmp_serde::from_slice(&dumped).unwrap();
