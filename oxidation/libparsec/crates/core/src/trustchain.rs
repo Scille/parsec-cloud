@@ -339,8 +339,9 @@ impl TrustchainContext {
 
         // Deserialize the certificates and filter the ones we already have in cache
         for certif in devices {
-            let unverified_device =
-                DeviceCertificate::unsecure_load(certif).unwrap_or_else(|_| unreachable!());
+            let unverified_device = DeviceCertificate::unsecure_load(certif.to_owned())
+                .unwrap_or_else(|_| unreachable!())
+                .skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage);
             match self.get_device(&unverified_device.device_id) {
                 Some(verified_device) => {
                     devices_states.insert(
@@ -366,8 +367,9 @@ impl TrustchainContext {
         }
 
         for certif in users {
-            let unverified_user =
-                UserCertificate::unsecure_load(certif).unwrap_or_else(|_| unreachable!());
+            let unverified_user = UserCertificate::unsecure_load(certif.to_owned())
+                .unwrap_or_else(|_| unreachable!())
+                .skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage);
             match self.get_user(&unverified_user.user_id) {
                 Some(verified_user) => {
                     users_states.insert(
@@ -393,8 +395,9 @@ impl TrustchainContext {
         }
 
         for certif in revoked_users {
-            let unverified_revoked_user =
-                RevokedUserCertificate::unsecure_load(certif).unwrap_or_else(|_| unreachable!());
+            let unverified_revoked_user = RevokedUserCertificate::unsecure_load(certif.to_owned())
+                .unwrap_or_else(|_| unreachable!())
+                .skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage);
             match self.get_revoked_user(&unverified_revoked_user.user_id) {
                 Some(verified_revoked_user) => {
                     revoked_users_states.insert(
@@ -518,8 +521,9 @@ impl TrustchainContext {
         Option<RevokedUserCertificate>,
         Vec<DeviceCertificate>,
     )> {
-        let UserCertificate { user_id, .. } =
-            UserCertificate::unsecure_load(&user_certif).unwrap_or_else(|_| unreachable!());
+        let UserCertificate { user_id, .. } = UserCertificate::unsecure_load(user_certif.clone())
+            .unwrap_or_else(|_| unreachable!())
+            .skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage);
 
         if let Some(expected_user_id) = expected_user_id {
             if expected_user_id != &user_id {

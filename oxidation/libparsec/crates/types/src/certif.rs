@@ -2,8 +2,10 @@
 
 use std::io::{Read, Write};
 
+use bytes::Bytes;
 use flate2::read::ZlibDecoder;
 use flate2::write::ZlibEncoder;
+use paste::paste;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 
@@ -20,16 +22,33 @@ use crate::{
     UserProfile,
 };
 
-fn verify_and_load<T>(signed: &[u8], author_verify_key: &VerifyKey) -> DataResult<T>
+fn load<T>(compressed: &[u8]) -> DataResult<T>
 where
     T: for<'a> Deserialize<'a>,
 {
-    let compressed = author_verify_key.verify(signed)?;
     let mut serialized = vec![];
     ZlibDecoder::new(compressed)
         .read_to_end(&mut serialized)
         .map_err(|_| DataError::Compression)?;
     rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)
+}
+
+fn verify_and_load<T>(signed: &[u8], author_verify_key: &VerifyKey) -> DataResult<T>
+where
+    T: for<'a> Deserialize<'a>,
+{
+    let compressed = author_verify_key.verify(signed)?;
+    load::<T>(compressed)
+}
+
+fn dump<T>(obj: &T) -> Vec<u8>
+where
+    T: Serialize,
+{
+    let serialized = ::rmp_serde::to_vec_named(obj).unwrap_or_else(|_| unreachable!());
+    let mut e = ZlibEncoder::new(Vec::new(), flate2::Compression::default());
+    e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
+    e.finish().unwrap_or_else(|_| unreachable!())
 }
 
 fn check_author_allow_root(
@@ -58,17 +77,51 @@ fn check_author_allow_root(
     Ok(())
 }
 
+pub enum UnsecureSkipValidationReason {
+    // Certificate must have been valided prior to being added to the local storage,
+    // on top of that the certificate are store encrypted so they cannot be tempered.
+    // Hence it's safe not to validate the certificate when reading thom from the
+    // local storage.
+    DataFromLocalStorage,
+}
+
 macro_rules! impl_unsecure_load {
-    ($name:ident) => {
-        impl $name {
-            pub fn unsecure_load(signed: &[u8]) -> DataResult<$name> {
-                let (_, compressed) =
-                    VerifyKey::unsecure_unwrap(signed).map_err(|_| DataError::Signature)?;
-                let mut serialized = vec![];
-                ZlibDecoder::new(&compressed[..])
-                    .read_to_end(&mut serialized)
-                    .map_err(|_| DataError::Compression)?;
-                ::rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)
+    ($name:ident $( -> $author_type:ty )? ) => {
+        paste!{
+            #[derive(Debug)]
+            pub struct [< Unsecure $name >] {
+                signed: Bytes,
+                unsecure: $name,
+            }
+            impl [< Unsecure $name >] {
+                $(
+                pub fn author(&self) -> &$author_type {
+                    &self.unsecure.author
+                }
+                )?
+                pub fn verify_signature(self, author_verify_key: &VerifyKey) -> Result<($name, Bytes), (Self, DataError)> {
+                    match author_verify_key.verify(self.signed.as_ref()) {
+                        // Unsecure is now secure \o/
+                        Ok(_) => Ok((self.unsecure, self.signed)),
+                        Err(_) => Err((self, DataError::Signature)),
+                    }
+                }
+                /// The `reason` field is only there to explain the only places using this function
+                /// is not a terrible idea
+                pub fn skip_validation(self, _reason: UnsecureSkipValidationReason) -> $name {
+                    self.unsecure
+                }
+            }
+
+            impl $name {
+                pub fn unsecure_load(signed: Bytes) -> DataResult<[< Unsecure $name >]> {
+                    let (_, compressed) = VerifyKey::unsecure_unwrap(signed.as_ref())?;
+                    let unsecure = load::<$name>(compressed)?;
+                    Ok([< Unsecure $name >] {
+                        signed,
+                        unsecure,
+                    })
+                }
             }
         }
     };
@@ -78,11 +131,7 @@ macro_rules! impl_unsecure_dump {
     ($name:ident) => {
         impl $name {
             pub fn unsecure_dump(&self) -> Vec<u8> {
-                let serialized =
-                    ::rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
-                let mut e = ZlibEncoder::new(Vec::new(), flate2::Compression::default());
-                e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
-                e.finish().unwrap_or_else(|_| unreachable!())
+                dump::<Self>(self)
             }
         }
     };
@@ -171,7 +220,7 @@ pub struct UserCertificate {
     pub profile: UserProfile,
 }
 
-impl_unsecure_load!(UserCertificate);
+impl_unsecure_load!(UserCertificate -> CertificateSignerOwned);
 impl_unsecure_dump!(UserCertificate);
 impl_dump_and_sign!(UserCertificate);
 
@@ -255,7 +304,7 @@ pub struct RevokedUserCertificate {
     pub user_id: UserID,
 }
 
-impl_unsecure_load!(RevokedUserCertificate);
+impl_unsecure_load!(RevokedUserCertificate -> DeviceID);
 impl_unsecure_dump!(RevokedUserCertificate);
 impl_dump_and_sign!(RevokedUserCertificate);
 
@@ -312,7 +361,7 @@ pub struct UserUpdateCertificate {
     pub new_profile: UserProfile,
 }
 
-impl_unsecure_load!(UserUpdateCertificate);
+impl_unsecure_load!(UserUpdateCertificate -> DeviceID);
 impl_unsecure_dump!(UserUpdateCertificate);
 impl_dump_and_sign!(UserUpdateCertificate);
 
@@ -374,7 +423,7 @@ pub struct DeviceCertificate {
 
 parsec_data!("schema/certif/device_certificate.json5");
 
-impl_unsecure_load!(DeviceCertificate);
+impl_unsecure_load!(DeviceCertificate -> CertificateSignerOwned);
 impl_unsecure_dump!(DeviceCertificate);
 impl_dump_and_sign!(DeviceCertificate);
 
@@ -427,7 +476,7 @@ pub struct RealmRoleCertificate {
     pub role: Option<RealmRole>, // TODO: use a custom type instead
 }
 
-impl_unsecure_load!(RealmRoleCertificate);
+impl_unsecure_load!(RealmRoleCertificate -> CertificateSignerOwned);
 impl_unsecure_dump!(RealmRoleCertificate);
 impl_dump_and_sign!(RealmRoleCertificate);
 
@@ -490,6 +539,8 @@ pub struct SequesterAuthorityCertificate {
     pub verify_key_der: SequesterVerifyKeyDer,
 }
 
+// `insecure_load` doesn't need to expose the author field here given
+// `SequesterAuthorityCertificate` is always signed by the root verify key
 impl_unsecure_load!(SequesterAuthorityCertificate);
 impl_unsecure_dump!(SequesterAuthorityCertificate);
 impl_dump_and_sign!(SequesterAuthorityCertificate);
@@ -545,20 +596,17 @@ pub struct SequesterServiceCertificate {
 
 impl SequesterServiceCertificate {
     pub fn dump(&self) -> Vec<u8> {
-        let serialized = rmp_serde::to_vec_named(self).expect("Unreachable");
-        let mut e = ZlibEncoder::new(Vec::new(), flate2::Compression::default());
-        e.write_all(&serialized).expect("Unreachable");
-        e.finish().expect("Unreachable")
+        dump::<Self>(self)
     }
 
     pub fn load(buf: &[u8]) -> DataResult<Self> {
-        let mut serialized = vec![];
-        ZlibDecoder::new(buf)
-            .read_to_end(&mut serialized)
-            .map_err(|_| DataError::Compression)?;
-        rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)
+        load::<Self>(buf)
     }
 }
+
+// `SequesterServiceCertificate` has no `insecure_load` given it is signed by
+// the sequester authority, which is a special signature system (RSA, PKI etc.)
+// that is dealt with by another layer.
 
 parsec_data!("schema/certif/sequester_service_certificate.json5");
 
@@ -570,3 +618,48 @@ impl_transparent_data_format_conversion!(
     service_label,
     encryption_key_der,
 );
+
+/*
+ * AnyCertificate
+ */
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum AnyCertificate {
+    User(UserCertificate),
+    Device(DeviceCertificate),
+    RevokedUser(RevokedUserCertificate),
+    RealmRole(RealmRoleCertificate),
+}
+
+#[derive(Debug)]
+pub enum UnsecureAnyCertificate {
+    User(UnsecureUserCertificate),
+    Device(UnsecureDeviceCertificate),
+    RevokedUser(UnsecureRevokedUserCertificate),
+    RealmRole(UnsecureRealmRoleCertificate),
+}
+
+impl AnyCertificate {
+    pub fn unsecure_load(signed: Bytes) -> Result<UnsecureAnyCertificate, DataError> {
+        let (_, compressed) = VerifyKey::unsecure_unwrap(signed.as_ref())?;
+        let unsecure = load::<Self>(compressed)?;
+        Ok(match unsecure {
+            AnyCertificate::User(unsecure) => {
+                UnsecureAnyCertificate::User(UnsecureUserCertificate { signed, unsecure })
+            }
+            AnyCertificate::Device(unsecure) => {
+                UnsecureAnyCertificate::Device(UnsecureDeviceCertificate { signed, unsecure })
+            }
+            AnyCertificate::RevokedUser(unsecure) => {
+                UnsecureAnyCertificate::RevokedUser(UnsecureRevokedUserCertificate {
+                    signed,
+                    unsecure,
+                })
+            }
+            AnyCertificate::RealmRole(unsecure) => {
+                UnsecureAnyCertificate::RealmRole(UnsecureRealmRoleCertificate { signed, unsecure })
+            }
+        })
+    }
+}

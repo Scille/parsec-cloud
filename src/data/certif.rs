@@ -5,7 +5,9 @@ use pyo3::{
     types::{PyBytes, PyDict, PyType},
 };
 
-use libparsec::types::{CertificateSignerOwned, CertificateSignerRef};
+use libparsec::types::{
+    CertificateSignerOwned, CertificateSignerRef, UnsecureSkipValidationReason,
+};
 
 use crate::{
     api_crypto::{PublicKey, SequesterPublicKeyDer, SequesterVerifyKeyDer, SigningKey, VerifyKey},
@@ -118,7 +120,11 @@ impl UserCertificate {
 
     #[classmethod]
     fn unsecure_load(_cls: &PyType, signed: &[u8]) -> DataResult<Self> {
-        Ok(libparsec::types::UserCertificate::unsecure_load(signed).map(Self)?)
+        Ok(
+            libparsec::types::UserCertificate::unsecure_load(signed.to_vec().into())
+                .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
+                .map(Self)?,
+        )
     }
 
     #[getter]
@@ -255,7 +261,11 @@ impl DeviceCertificate {
 
     #[classmethod]
     fn unsecure_load(_cls: &PyType, signed: &[u8]) -> DataResult<Self> {
-        Ok(libparsec::types::DeviceCertificate::unsecure_load(signed).map(Self)?)
+        Ok(
+            libparsec::types::DeviceCertificate::unsecure_load(signed.to_vec().into())
+                .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
+                .map(Self)?,
+        )
     }
 
     #[getter]
@@ -361,7 +371,11 @@ impl RevokedUserCertificate {
 
     #[classmethod]
     fn unsecure_load(_cls: &PyType, signed: &[u8]) -> DataResult<Self> {
-        Ok(libparsec::types::RevokedUserCertificate::unsecure_load(signed).map(Self)?)
+        Ok(
+            libparsec::types::RevokedUserCertificate::unsecure_load(signed.to_vec().into())
+                .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
+                .map(Self)?,
+        )
     }
 
     #[getter]
@@ -460,7 +474,11 @@ impl UserUpdateCertificate {
 
     #[classmethod]
     fn unsecure_load(_cls: &PyType, signed: &[u8]) -> DataResult<Self> {
-        Ok(libparsec::types::UserUpdateCertificate::unsecure_load(signed).map(Self)?)
+        Ok(
+            libparsec::types::UserUpdateCertificate::unsecure_load(signed.to_vec().into())
+                .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
+                .map(Self)?,
+        )
     }
 
     #[getter]
@@ -581,7 +599,11 @@ impl RealmRoleCertificate {
 
     #[classmethod]
     fn unsecure_load(_cls: &PyType, signed: &[u8]) -> DataResult<Self> {
-        Ok(libparsec::types::RealmRoleCertificate::unsecure_load(signed).map(Self)?)
+        Ok(
+            libparsec::types::RealmRoleCertificate::unsecure_load(signed.to_vec().into())
+                .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
+                .map(Self)?,
+        )
     }
 
     #[classmethod]

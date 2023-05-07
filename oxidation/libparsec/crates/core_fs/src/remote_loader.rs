@@ -127,7 +127,16 @@ impl UserRemoteLoader {
             realm_get_role_certificates::Rep::Ok { certificates } => {
                 let mut unsecure_certifs = certificates
                     .into_iter()
-                    .map(|uv| RealmRoleCertificate::unsecure_load(&uv).map(|rc| (rc, uv)))
+                    .map(|uv| {
+                        RealmRoleCertificate::unsecure_load(uv.clone()).map(|rc| {
+                            (
+                                rc.skip_validation(
+                                    UnsecureSkipValidationReason::DataFromLocalStorage,
+                                ),
+                                uv,
+                            )
+                        })
+                    })
                     .collect::<DataResult<Vec<_>>>()
                     .map_err(|e| FSError::InvalidRealmRoleCertificates(e.to_string()))?;
 

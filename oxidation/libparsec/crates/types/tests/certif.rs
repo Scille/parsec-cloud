@@ -21,7 +21,7 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
     //   user_id: "bob"
     //   public_key: <bob.public_key as bytes>
     //   profile: "STANDARD"
-    let data = hex!(
+    let data = Bytes::from_static(&hex!(
         "2610244ce2508516dd5eb7fd93d2962de2897028bb0b0a2bb5cd3fae6563c06f0a02171cbe51e9"
         "5678c5e9e18b90489bfd1df5b9df945f982605c9345b272006789ceb585992999b5a5c92985b70"
         "9dd1f146d6d596b3b1c16b324a7313f3e23312f352725227ad4fca4f7248ad00aac849d54bcecf"
@@ -29,7 +29,7 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
         "949f969993ba2238c4d1cfc531c865554169524e66727c766ae511859a99f36636ecfb5cceced6"
         "cd7eb33452ee4f9871f4cb649f77df4f1a2d98d329a7ba1c6c5c66ca62a0d5cb124b4b32f28b56"
         "250275a73aa4a49619aec82c8e4f4cc9cdcc3b040023ce53bc"
-    );
+    ));
 
     let expected = UserCertificate {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
@@ -50,8 +50,23 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
     .unwrap();
     assert_eq!(certif, expected);
 
-    let unsecure_certif = UserCertificate::unsecure_load(&data).unwrap();
-    assert_eq!(unsecure_certif, expected);
+    let unsecure_certif = UserCertificate::unsecure_load(data.clone()).unwrap();
+    assert_eq!(
+        unsecure_certif.author(),
+        &CertificateSignerOwned::User(alice.device_id.clone())
+    );
+    assert_eq!(
+        unsecure_certif
+            .verify_signature(&alice.verify_key())
+            .unwrap(),
+        (expected.clone(), data.clone())
+    );
+
+    let unsecure_certif = UserCertificate::unsecure_load(data).unwrap();
+    assert_eq!(
+        unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
+        expected
+    );
 
     // Also test serialization round trip
     let data2 = expected.dump_and_sign(&alice.signing_key);
@@ -86,6 +101,7 @@ fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
         "28d4cc9c37b361dfe77276b66ef69ba591727fc28ca35f26fbbcfb7ed268c19c4e39d56589a525"
         "19f945ab12813a521d5252cb0c971714e5a765e6a4ae080e71f473710c720100e58447e3"
     );
+    let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = UserCertificate {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
@@ -106,8 +122,23 @@ fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
     .unwrap();
     assert_eq!(certif, expected);
 
-    let unsecure_certif = UserCertificate::unsecure_load(&data).unwrap();
-    assert_eq!(unsecure_certif, expected);
+    let unsecure_certif = UserCertificate::unsecure_load(data.clone()).unwrap();
+    assert_eq!(
+        unsecure_certif.author(),
+        &CertificateSignerOwned::User(alice.device_id.clone())
+    );
+    assert_eq!(
+        unsecure_certif
+            .verify_signature(&alice.verify_key())
+            .unwrap(),
+        (expected.clone(), data.clone())
+    );
+
+    let unsecure_certif = UserCertificate::unsecure_load(data).unwrap();
+    assert_eq!(
+        unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
+        expected
+    );
 
     // Also test serialization round trip
     let data2 = expected.dump_and_sign(&alice.signing_key);
@@ -183,8 +214,25 @@ fn serde_user_certificate_legacy_format(alice: &Device, bob: &Device) {
         .unwrap();
         assert_eq!(&certif, expected);
 
+        let data = Bytes::from(data.as_ref().to_vec());
+
+        let unsecure_certif = UserCertificate::unsecure_load(data.clone()).unwrap();
+        assert_eq!(
+            unsecure_certif.author(),
+            &CertificateSignerOwned::User(alice.device_id.clone())
+        );
+        assert_eq!(
+            unsecure_certif
+                .verify_signature(&alice.verify_key())
+                .unwrap(),
+            (expected.clone(), data.clone())
+        );
+
         let unsecure_certif = UserCertificate::unsecure_load(data).unwrap();
-        assert_eq!(&unsecure_certif, expected);
+        assert_eq!(
+            unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
+            *expected
+        );
     };
 
     check(&data_is_admin_true, &expected_is_admin_true);
@@ -209,6 +257,7 @@ fn serde_device_certificate(alice: &Device, bob: &Device) {
         "24b312aa3c336545527e12586849496541ea26a878726a5149665a66726249eaca92ccdcd4e292"
         "c4dc82eb8c8e37b2aeb69c8d0d06004dc544f6"
     );
+    let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = DeviceCertificate {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
@@ -227,8 +276,23 @@ fn serde_device_certificate(alice: &Device, bob: &Device) {
     .unwrap();
     assert_eq!(certif, expected);
 
-    let unsecure_certif = DeviceCertificate::unsecure_load(&data).unwrap();
-    assert_eq!(unsecure_certif, expected);
+    let unsecure_certif = DeviceCertificate::unsecure_load(data.clone()).unwrap();
+    assert_eq!(
+        unsecure_certif.author(),
+        &CertificateSignerOwned::User(alice.device_id.clone())
+    );
+    assert_eq!(
+        unsecure_certif
+            .verify_signature(&alice.verify_key())
+            .unwrap(),
+        (expected.clone(), data.clone())
+    );
+
+    let unsecure_certif = DeviceCertificate::unsecure_load(data).unwrap();
+    assert_eq!(
+        unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
+        expected
+    );
 
     // Also test serialization round trip
     let data2 = expected.dump_and_sign(&alice.signing_key);
@@ -261,6 +325,7 @@ fn serde_device_certificate_redacted(alice: &Device, bob: &Device) {
         "d02d5d99f98dcb6bb77e58ba731b57cc3db957fb1d2cfabeed59e6c9b9126a5866ca8aa4fc24b0"
         "7e00b3a93fbc"
     );
+    let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = DeviceCertificate {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
@@ -279,8 +344,23 @@ fn serde_device_certificate_redacted(alice: &Device, bob: &Device) {
     .unwrap();
     assert_eq!(certif, expected);
 
-    let unsecure_certif = DeviceCertificate::unsecure_load(&data).unwrap();
-    assert_eq!(unsecure_certif, expected);
+    let unsecure_certif = DeviceCertificate::unsecure_load(data.clone()).unwrap();
+    assert_eq!(
+        unsecure_certif.author(),
+        &CertificateSignerOwned::User(alice.device_id.clone())
+    );
+    assert_eq!(
+        unsecure_certif
+            .verify_signature(&alice.verify_key())
+            .unwrap(),
+        (expected.clone(), data.clone())
+    );
+
+    let unsecure_certif = DeviceCertificate::unsecure_load(data).unwrap();
+    assert_eq!(
+        unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
+        expected
+    );
 
     // Also test serialization round trip
     let data2 = expected.dump_and_sign(&alice.signing_key);
@@ -311,6 +391,7 @@ fn serde_device_certificate_legacy_format(alice: &Device, bob: &Device) {
         "c17546c71b59575bcec606af846acc4c5991949f0456b6aa2cb52833ad323e3bb5f288420b6fbb"
         "be53d02d5d99f98dcb6bb77e58ba731b57cc3db957fb1d2cfabeed59e6c90900151e3980"
     );
+    let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = DeviceCertificate {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
@@ -329,8 +410,23 @@ fn serde_device_certificate_legacy_format(alice: &Device, bob: &Device) {
     .unwrap();
     assert_eq!(certif, expected);
 
-    let unsecure_certif = DeviceCertificate::unsecure_load(&data).unwrap();
-    assert_eq!(unsecure_certif, expected);
+    let unsecure_certif = DeviceCertificate::unsecure_load(data.clone()).unwrap();
+    assert_eq!(
+        unsecure_certif.author(),
+        &CertificateSignerOwned::User(alice.device_id.clone())
+    );
+    assert_eq!(
+        unsecure_certif
+            .verify_signature(&alice.verify_key())
+            .unwrap(),
+        (expected.clone(), data.clone())
+    );
+
+    let unsecure_certif = DeviceCertificate::unsecure_load(data).unwrap();
+    assert_eq!(
+        unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
+        expected
+    );
 }
 
 #[rstest]
@@ -347,6 +443,7 @@ fn serde_revoked_user_certificate(alice: &Device, bob: &Device) {
         "3339d52125b5cc7049496541ea8ea2d4b2fcecd494f8d2e2d4a2f8e4d4a292ccb4cce4c492d495"
         "2599b9a9c52589b905d7191d6f645d6d391b1bbc1cac28336571527e1200bd0d243a"
     );
+    let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = RevokedUserCertificate {
         author: alice.device_id.to_owned(),
@@ -354,8 +451,20 @@ fn serde_revoked_user_certificate(alice: &Device, bob: &Device) {
         user_id: bob.user_id().to_owned(),
     };
 
-    let unsecure_certif = RevokedUserCertificate::unsecure_load(&data).unwrap();
-    assert_eq!(unsecure_certif, expected);
+    let unsecure_certif = RevokedUserCertificate::unsecure_load(data.clone()).unwrap();
+    assert_eq!(unsecure_certif.author(), &alice.device_id);
+    assert_eq!(
+        unsecure_certif
+            .verify_signature(&alice.verify_key())
+            .unwrap(),
+        (expected.clone(), data.clone())
+    );
+
+    let unsecure_certif = RevokedUserCertificate::unsecure_load(data.clone()).unwrap();
+    assert_eq!(
+        unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
+        expected
+    );
 
     let certif =
         RevokedUserCertificate::verify_and_load(&data, &alice.verify_key(), &alice.device_id, None)
@@ -392,6 +501,8 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
         "8fa5647969716a11506671527ed21290bea5fee17eae412b4b3273538b4b12730bae333adec8ba"
         "da7236367859626949467ed1aac49ccce4548794d432430020cc3454"
     );
+    let data = Bytes::from(data.as_ref().to_vec());
+
     let certif = RealmRoleCertificate::verify_and_load(
         &data,
         &alice.verify_key(),
@@ -409,6 +520,24 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
         role: Some(RealmRole::Owner),
     };
     assert_eq!(certif, expected);
+
+    let unsecure_certif = RealmRoleCertificate::unsecure_load(data.clone()).unwrap();
+    assert_eq!(
+        unsecure_certif.author(),
+        &CertificateSignerOwned::User(alice.device_id.clone())
+    );
+    assert_eq!(
+        unsecure_certif
+            .verify_signature(&alice.verify_key())
+            .unwrap(),
+        (expected.clone(), data.clone())
+    );
+
+    let unsecure_certif = RealmRoleCertificate::unsecure_load(data).unwrap();
+    assert_eq!(
+        unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
+        expected
+    );
 
     // Also test serialization round trip
     let data2 = expected.dump_and_sign(&alice.signing_key);
@@ -500,6 +629,7 @@ fn serde_sequester_authority_certificate(alice: &Device) {
         "82f8a30219047b087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66f7ee18303195f3bc"
         "c72ab57207ebfd0203010001a6617574686f72c0b8006a3d"
     );
+    let data = Bytes::from(data.as_ref().to_vec());
     let certif =
         SequesterAuthorityCertificate::verify_and_load(&data, &alice.verify_key()).unwrap();
 
@@ -516,6 +646,12 @@ fn serde_sequester_authority_certificate(alice: &Device) {
         .unwrap(),
     };
     assert_eq!(certif, expected);
+
+    let unsecure_certif = SequesterAuthorityCertificate::unsecure_load(data).unwrap();
+    assert_eq!(
+        unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
+        expected
+    );
 
     // Also test serialization round trip
     let data2 = expected.dump_and_sign(&alice.signing_key);
