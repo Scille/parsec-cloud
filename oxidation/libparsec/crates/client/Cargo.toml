@@ -15,7 +15,6 @@ libparsec_protocol = { path = "../protocol" }
 
 tokio = { version = "1.27.0", features = ["rt", "time", "sync", "macros"] }
 paste = "1.0.12"
-thiserror = "1.0.40"
 log = "0.4.17"
 
 [dev-dependencies]

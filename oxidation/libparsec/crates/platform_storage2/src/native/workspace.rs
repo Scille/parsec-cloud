@@ -8,40 +8,20 @@ use libparsec_types::prelude::*;
 use super::db::{DatabaseResult, LocalDatabase, VacuumMode};
 use super::model::get_workspace_data_storage_db_relative_path;
 
-#[derive(Debug, thiserror::Error)]
-pub enum OperationError {
-    #[error("{when}: {what}")]
-    Internal { when: &'static str, what: DynError },
-}
-
 pub async fn workspace_storage_non_speculative_init(
     data_base_dir: &Path,
     device: &LocalDevice,
     workspace_id: EntryID,
-) -> Result<(), OperationError> {
+) -> anyhow::Result<()> {
     // 1) Open the database
 
     let db_relative_path = get_workspace_data_storage_db_relative_path(device, &workspace_id);
-    let db = match LocalDatabase::from_path(data_base_dir, &db_relative_path, VacuumMode::default())
-        .await
-    {
-        Ok(db) => db,
-        Err(err) => {
-            return Err(OperationError::Internal {
-                when: "database open",
-                what: err.into(),
-            });
-        }
-    };
+    let db = LocalDatabase::from_path(data_base_dir, &db_relative_path, VacuumMode::default())
+        .await?;
 
     // 2) Initialize the database
 
-    if let Err(err) = super::model::initialize_model_if_needed(&db).await {
-        return Err(OperationError::Internal {
-            when: "database model initialization",
-            what: err.into(),
-        });
-    }
+    super::model::initialize_model_if_needed(&db).await?;
 
     // 3) Populate the database with the workspace manifest
 
@@ -52,12 +32,7 @@ pub async fn workspace_storage_non_speculative_init(
         Some(workspace_id),
         false,
     ));
-    if let Err(err) = db_set_workspace_manifest(&db, device, manifest).await {
-        return Err(OperationError::Internal {
-            when: "insert workspace manifest",
-            what: err.into(),
-        });
-    }
+    db_set_workspace_manifest(&db, device, manifest).await?;
 
     // 4) All done ! Don't forget the close the database before exit ;-)
 

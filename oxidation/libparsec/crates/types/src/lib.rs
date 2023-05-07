@@ -3,7 +3,27 @@
 #[macro_use]
 extern crate lazy_static;
 
+// Convenient dependencies we are going to need everywhere
 pub use bytes::Bytes;
+/// ThisError vs Anyhow ?
+/// `anyhow::Error` is your friend: the idea is when call a function we can have 3 outcomes:
+/// - success, wrap it with `Result::Ok` and you're good ^^
+/// - error we care about, your function should have a dedicated error listing those
+///   errors so that caller can do pattern matching on the result
+/// - error we don't care about, that's where we want to use anyhow !
+///
+/// Typically you should endup with something like:
+/// ```
+/// #[derive(Debug, thiserror::Error)]
+/// pub enum AddMoreSpamError {
+///     #[error("Not enough spam")]
+///     NotEnoughSpam,
+///     #[error(transparent)]
+///     Internal(#[from] anyhow::Error),
+/// }
+/// ```
+pub use anyhow;
+pub use thiserror;
 
 // Re-expose crypto so that `use libparsec_types::prelude::*` is the single-no-brainer-one-liner™
 pub use libparsec_crypto::*;
@@ -57,16 +77,6 @@ pub enum ClientType {
     Invited,
     Anonymous,
 }
-
-/// `DynError` is your friend: the idea is when call a function we can have 3 outcomes:
-/// - success, wrap it with `Result::Ok` and you're good ^^
-/// - error we care about, your function should have a dedicated error listing those
-///   errors so that caller can do pattern matching on the result
-/// - error we don't care about, that's where we want to use `DynError` !
-///
-/// Typically you should declare a `Internal{when: &'static str, what: DynError}` in
-/// your custom error type and hence we keep nice stacktrace-like error message
-pub type DynError = Box<dyn std::error::Error + Send + Sync>;
 
 // Numeric types aliases for the data in the schemas.
 // We use them instead of standard Rust types for readability and to ease changing

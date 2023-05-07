@@ -37,6 +37,7 @@ flate2 = "1.0.25"
 rand = "0.8.4"
 thiserror = "1.0.40"
 email-address-parser = "2.0.0-rc3"
+anyhow = { version="1.0.71", features = ["backtrace"] }
 fnmatch-regex = "0.2.0"
 sha2 = "0.10.6"
 hex-literal = { version = "0.4.1", optional = true }

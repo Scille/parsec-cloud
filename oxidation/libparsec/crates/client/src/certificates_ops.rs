@@ -11,8 +11,6 @@ use libparsec_types::prelude::*;
 
 use crate::event_bus::EventBus;
 
-pub type DynError = Box<dyn std::error::Error + Send + Sync>;
-
 pub enum Author {
     OrganizationBootstrap,
     Device(DeviceID),
@@ -23,6 +21,30 @@ pub struct UserInfo {
     created_on: DateTime,
     revoked_on: Option<DateTime>,
     profile: UserProfile,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum OperationError {
+    #[error("{when}: {what}")]
+    Internal { when: &'static str, what: DynError },
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum GetCertificateError {
+    #[error("Certificate doesn't exist")]
+    NonExistant,
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error("{when}: {what}")]
+    Internal { when: &'static str, what: DynError },
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum FetchNewCertificatesError {
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error("{when}: {what}")]
+    Internal { when: &'static str, what: DynError },
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -62,8 +84,13 @@ impl CertificatesOps {
         device: Arc<LocalDevice>,
         event_bus: EventBus,
         cmds: Arc<AuthenticatedCmds>,
-    ) -> Result<Self, DynError> {
-        let storage = CertificatesStorage::start(data_base_dir, device.clone()).await?;
+    ) -> Result<Self, OperationError> {
+        let storage = match CertificatesStorage::start(data_base_dir, device.clone()).await {
+            Ok(storage) => storage,
+            Err(err) => {
+                return OperationError::Internal { when: "certificate ops init", what: err.into() }
+            }
+        };
         Ok(Self {
             device,
             event_bus,
@@ -79,27 +106,38 @@ impl CertificatesOps {
     async fn get_device_certificate(
         &self,
         device_id: &DeviceID,
-    ) -> Result<Option<Arc<DeviceCertificate>>, TodoError> {
-        match self.storage.get_device_certificate(device_id).await {
-            Err(err) => Err(TodoError(
-                "Internal error while trying to retrieve certificate from local database",
-            )),
-            Ok(Some(certif)) => Ok(certif),
-            Ok(None) => {
-                self.fetch_new_certificates_from_server()
-                    .await
-                    .map_err(|err| err.into())?;
-                match self
-                    .storage
-                    .get_device_certificate(device_id)
-                    .await
-                    .map_err(|err| TodoError(TodoError("Internal error while trying to retrieve certificate from local database")))?
-                {
-                    Some(certif) => Ok(certif),
-                    None => Err(TodoError("We looked everywhere, this certificate doesn't exist !")),
-                }
+    ) -> Result<Option<Arc<DeviceCertificate>>, GetCertificateError> {
+        let maybe = self.storage.get_device_certificate(device_id).await.map_err(|err| {
+            GetCertificateError::Internal {when: "retrieving device certificate from storage", what: err.into()}
+        })?;
+
+        if Some(certif) = maybe {
+            return Ok(certif)
+        }
+
+        // The certificate doesn't exist locally, it might be because it is very recent
+        // and the server hasn't yet notified us about it...
+
+        match self.fetch_new_certificates_from_server().await {
+            Ok(_) => (),
+            Err() => {
+                return GetCertificateError::Offline;
+            }
+            Err(err) => {
+                return GetCertificateError::Internal { when: "fetching new certificates from server", what: () }
             }
         }
+
+        match self
+            .storage
+            .get_device_certificate(device_id)
+            .await
+            .map_err(|err| TodoError(TodoError("Internal error while trying to retrieve certificate from local database")))?
+        {
+            Some(certif) => Ok(certif),
+            None => Err(GetCertificateError::NonExistant),
+        }
+
     }
 
     // pub async fn secure_load_user_manifest(
@@ -129,12 +167,17 @@ impl CertificatesOps {
     //     Ok(Arc::new(user_manifest))
     // }
 
-    pub async fn fetch_new_certificates_from_server(&self) -> Result<(), TodoError> {
-        let last_timestamp = self
+    pub async fn fetch_new_certificates_from_server(&self) -> Result<(), FetchNewCertificatesError> {
+        let last_timestamp = match self
             .storage
             .get_last_certificate_timestamp()
-            .await
-            .map_err(|_| TodoError("Internal error while trying to compute last certificate timestamp from local database"))?;
+            .await {
+                Ok(last_timestamp) => last_timestamp,
+                Err(err) => {
+                    return FetchNewCertificatesError::Internal { when: "compute last certificate timestamp from database", what: err.into() }
+                }
+        };
+
         let request = authenticated_cmds::latest::certificate_get::Req {
             // Note this is `None` if our local storage is empty, meaning we want to fetch everything !
             created_after: last_timestamp,
@@ -155,6 +198,7 @@ impl CertificatesOps {
             }
             Err(err) => Err(CertificatesOpsRetreiveNewCertificatesFromServerError::ServerCmd(err)),
         }
+
     }
 
     pub async fn add_new_certificate(
@@ -167,7 +211,7 @@ impl CertificatesOps {
                 let validated = unsecure
                     .skip_validation(UnsecureSkipValidationReason::TodoValidationNotYetImplemented);
                 // TODO: error handling
-                self.storage
+                let ret = self.storage
                     .add_new_user_certificate(Arc::new(validated), certificate)
                     .await
                     .unwrap();
