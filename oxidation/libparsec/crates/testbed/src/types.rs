@@ -12,9 +12,9 @@ pub struct TestbedTemplate {
     pub device_files: Vec<TestbedDeviceFileData>,
     // TODO: finish me !
     // pub manifests: Vec<std::sync::Arc<Manifest>>,
-    // pub vlobs: Vec<(VlobID, Vec<u8>)>,
-    // pub blocks: Vec<(BlockID, Vec<u8>)>,
-    // pub messages: Vec<(DeviceID, DateTime, Vec<u8>, MessageContent)>,
+    // pub vlobs: Vec<(VlobID, Bytes)>,
+    // pub blocks: Vec<(BlockID, Bytes)>,
+    // pub messages: Vec<(DeviceID, DateTime, Bytes, MessageContent)>,
     // pub sequester_services: Vec<(SequesterServiceID, SequesterServiceCertificate)>,
     pub crc: u32,
 }
@@ -87,8 +87,8 @@ pub struct TestbedDeviceData {
     pub signing_key: SigningKey,
     pub local_symkey: SecretKey,
     pub certif: DeviceCertificate,
-    pub raw_certif: Vec<u8>,
-    pub raw_redacted_certif: Vec<u8>,
+    pub raw_certif: Bytes,
+    pub raw_redacted_certif: Bytes,
     pub crc: u32,
 }
 
@@ -125,8 +125,8 @@ impl TestbedDeviceData {
             signing_key,
             local_symkey,
             certif,
-            raw_certif,
-            raw_redacted_certif,
+            raw_certif: raw_certif.into(),
+            raw_redacted_certif: raw_redacted_certif.into(),
             crc: hasher.finalize(),
         }
     }
@@ -142,8 +142,8 @@ pub struct TestbedUserData {
     pub user_manifest_id: EntryID,
     pub user_manifest_key: SecretKey,
     pub certif: UserCertificate,
-    pub raw_certif: Vec<u8>,
-    pub raw_redacted_certif: Vec<u8>,
+    pub raw_certif: Bytes,
+    pub raw_redacted_certif: Bytes,
     pub crc: u32,
 }
 
@@ -187,8 +187,8 @@ impl TestbedUserData {
             user_manifest_id,
             user_manifest_key,
             certif,
-            raw_certif,
-            raw_redacted_certif,
+            raw_certif: raw_certif.into(),
+            raw_redacted_certif: raw_redacted_certif.into(),
             crc: hasher.finalize(),
         }
     }
