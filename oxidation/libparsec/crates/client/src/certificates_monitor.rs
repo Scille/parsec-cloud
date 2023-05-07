@@ -5,17 +5,17 @@ use std::sync::Arc;
 use libparsec_types::prelude::*;
 
 use crate::{
-    certifs_ops::CertifsOps,
+    certificates_ops::CertificatesOps,
     event_bus::{EventBus, EventBusConnectionLifetime, EventCertificatesUpdated},
 };
 
-pub struct CertifsMonitor {
+pub struct CertificatesMonitor {
     worker: tokio::task::JoinHandle<()>,
     _event_connection: EventBusConnectionLifetime<EventCertificatesUpdated>,
 }
 
-impl CertifsMonitor {
-    pub async fn start(certifs_ops: Arc<CertifsOps>, event_bus: EventBus) -> Self {
+impl CertificatesMonitor {
+    pub async fn start(certifs_ops: Arc<CertificatesOps>, event_bus: EventBus) -> Self {
         let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<Bytes>();
 
         let event_connection = event_bus.connect(move |e: &EventCertificatesUpdated| {
@@ -26,9 +26,8 @@ impl CertifsMonitor {
             loop {
                 match rx.recv().await {
                     Some(certificate) => {
-                        certifs_ops
-                            .insert_new_certificate(certificate.as_ref())
-                            .await;
+                        certifs_ops.add_new_certificate(certificate).await.unwrap();
+                        // TODO: error handling
                     }
                     None => return,
                 }
@@ -42,7 +41,7 @@ impl CertifsMonitor {
     }
 }
 
-impl Drop for CertifsMonitor {
+impl Drop for CertificatesMonitor {
     fn drop(&mut self) {
         self.worker.abort()
     }

@@ -15,7 +15,7 @@ use libparsec_client_connection::{AuthenticatedCmds, ProxyConfig};
 use libparsec_types::prelude::*;
 
 use crate::{
-    certifs_monitor::CertifsMonitor, certifs_ops::CertifsOps,
+    certificates_monitor::CertificatesMonitor, certificates_ops::CertificatesOps,
     connection_monitor::ConnectionMonitor, event_bus::EventBus, user_ops::UserOps,
 };
 
@@ -34,10 +34,10 @@ pub struct RunningDevice {
     device: Arc<LocalDevice>,
     event_bus: EventBus,
     cmds: Arc<AuthenticatedCmds>,
-    certifs_ops: Arc<CertifsOps>,
+    certifs_ops: Arc<CertificatesOps>,
     pub user_ops: UserOps,
     connection_monitor: ConnectionMonitor,
-    certifs_monitor: CertifsMonitor,
+    certifs_monitor: CertificatesMonitor,
 }
 
 impl Debug for RunningDevice {
@@ -64,7 +64,7 @@ impl RunningDevice {
 
         // TODO: error handling
         let certifs_ops = Arc::new(
-            CertifsOps::new(
+            CertificatesOps::new(
                 data_base_dir,
                 device.clone(),
                 event_bus.clone(),
@@ -81,7 +81,8 @@ impl RunningDevice {
         .await?;
         // TODO: init workspace ops
 
-        let certifs_monitor = CertifsMonitor::start(certifs_ops.clone(), event_bus.clone()).await;
+        let certifs_monitor =
+            CertificatesMonitor::start(certifs_ops.clone(), event_bus.clone()).await;
         // Start the connection monitors last, as it send events to others
         let connection_monitor = ConnectionMonitor::start(cmds.clone(), event_bus.clone()).await;
 
