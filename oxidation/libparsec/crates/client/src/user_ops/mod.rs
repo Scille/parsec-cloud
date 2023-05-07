@@ -6,7 +6,9 @@ use std::{path::PathBuf, sync::Arc};
 
 use libparsec_client_connection::{protocol::authenticated_cmds, AuthenticatedCmds};
 use libparsec_platform_async::Mutex as AsyncMutex;
-use libparsec_platform_storage2::{workspace_storage_non_speculative_init, UserStorage};
+use libparsec_platform_storage2::{
+    user::UserStorage, workspace::workspace_storage_non_speculative_init,
+};
 use libparsec_types::prelude::*;
 
 use crate::event_bus::EventBus;

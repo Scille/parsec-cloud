@@ -5,7 +5,7 @@
 use std::{path::Path, sync::Arc};
 
 use libparsec_client_connection::AuthenticatedCmds;
-use libparsec_platform_storage2::CertificatesStorage;
+use libparsec_platform_storage2::certificates::CertificatesStorage;
 use libparsec_types::prelude::*;
 
 use crate::event_bus::EventBus;

@@ -5,7 +5,7 @@ use std::sync::Arc;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use libparsec_platform_storage2::{user_storage_non_speculative_init, UserStorage};
+use libparsec_platform_storage2::user::{user_storage_non_speculative_init, UserStorage};
 
 #[parsec_test(testbed = "minimal")]
 async fn operations(timestamp: DateTime, env: &TestbedEnv) {

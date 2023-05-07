@@ -31,7 +31,7 @@ pub struct UserStorage {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum UserStorageStartError {
+pub enum StartError {
     #[error("Cannot open database: {0}")]
     Open(DynError),
     #[error("Cannot initialize database: {0}")]
@@ -39,7 +39,7 @@ pub enum UserStorageStartError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum UserStorageNonSpeculativeInitError {
+pub enum NonSpeculativeInitError {
     #[error("Cannot open database: {0}")]
     Open(DynError),
     #[error("Cannot initialize database: {0}")]
@@ -47,16 +47,13 @@ pub enum UserStorageNonSpeculativeInitError {
 }
 
 impl UserStorage {
-    pub async fn start(
-        data_base_dir: &Path,
-        device: Arc<LocalDevice>,
-    ) -> Result<Self, UserStorageStartError> {
+    pub async fn start(data_base_dir: &Path, device: Arc<LocalDevice>) -> Result<Self, StartError> {
         // 1) Open the database
 
         let db_relative_path = get_user_data_storage_db_relative_path(&device);
         let db = LocalDatabase::from_path(data_base_dir, &db_relative_path, VacuumMode::default())
             .await
-            .map_err(|err| UserStorageStartError::Open(Box::new(err)))?;
+            .map_err(|err| StartError::Open(Box::new(err)))?;
 
         // TODO: What should be our strategy when the database contains invalid data ?
         //
@@ -83,13 +80,13 @@ impl UserStorage {
 
         super::model::initialize_model_if_needed(&db)
             .await
-            .map_err(|err| UserStorageStartError::Initialization(Box::new(err)))?;
+            .map_err(|err| StartError::Initialization(Box::new(err)))?;
 
         // 3) Retreive the user manifest
 
         let user_manifest = UserStorage::load_user_manifest(&db, &device)
             .await
-            .map_err(|err| UserStorageStartError::Initialization(Box::new(err)))?;
+            .map_err(|err| StartError::Initialization(Box::new(err)))?;
 
         // 4) All done !
 
@@ -189,19 +186,19 @@ impl UserStorage {
 pub async fn user_storage_non_speculative_init(
     data_base_dir: &Path,
     device: &LocalDevice,
-) -> Result<(), UserStorageNonSpeculativeInitError> {
+) -> Result<(), NonSpeculativeInitError> {
     // 1) Open the database
 
     let db_relative_path = get_user_data_storage_db_relative_path(device);
     let db = LocalDatabase::from_path(data_base_dir, &db_relative_path, VacuumMode::default())
         .await
-        .map_err(|err| UserStorageNonSpeculativeInitError::Open(Box::new(err)))?;
+        .map_err(|err| NonSpeculativeInitError::Open(Box::new(err)))?;
 
     // 2) Initialize the database
 
     super::model::initialize_model_if_needed(&db)
         .await
-        .map_err(|err| UserStorageNonSpeculativeInitError::Operation(Box::new(err)))?;
+        .map_err(|err| NonSpeculativeInitError::Operation(Box::new(err)))?;
 
     // 3) Populate the database with the user manifest
 
@@ -215,7 +212,7 @@ pub async fn user_storage_non_speculative_init(
 
     db_set_user_manifest(&db, device, manifest)
         .await
-        .map_err(|err| UserStorageNonSpeculativeInitError::Operation(Box::new(err)))?;
+        .map_err(|err| NonSpeculativeInitError::Operation(Box::new(err)))?;
 
     // 4) All done ! Don't forget the close the database before exit ;-)
 

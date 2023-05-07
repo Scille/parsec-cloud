@@ -156,7 +156,7 @@ pub struct CertificatesStorage {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum CertificatesStorageStartError {
+pub enum StorageStartError {
     #[error("Cannot open database: {0}")]
     Open(DatabaseError),
     #[error("Cannot initialize database: {0}")]
@@ -164,7 +164,7 @@ pub enum CertificatesStorageStartError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum CertificatesStorageGetCertificateError {
+pub enum GetCertificateError {
     #[error("Cannot retreive the certificate from database: {0}")]
     Operation(DatabaseError),
 }
@@ -182,7 +182,7 @@ macro_rules! impl_add_certificate_error {
     ($certificate_type:ident) => {
         paste!{
             #[derive(Debug, thiserror::Error)]
-            pub enum [< CertificatesStorage $certificate_type AddError >] {
+            pub enum [< Add $certificate_type Error >] {
                 #[error("We already know this certificate, but with a different content: `{ours:?}` vs `{incoming:?}`")]
                 AlreadyKnownButMismatch {ours: Arc<$certificate_type>, incoming: Arc<$certificate_type>},
                 #[error("Cannot store the certificate in database: {0}")]
@@ -215,14 +215,14 @@ macro_rules! impl_add_certificate_fn {
     ($certificate_type:ident) => {
 
     paste!{
-        pub async fn [< add_new_ $certificate_type:snake >](&self, cooked: Arc<$certificate_type>, certificate: Bytes) -> Result<(), [< CertificatesStorage $certificate_type AddError >] > {
+        pub async fn [< add_new_ $certificate_type:snake >](&self, cooked: Arc<$certificate_type>, certificate: Bytes) -> Result<(), [< Add $certificate_type Error >] > {
             let hint = mk_hint!($certificate_type, certificate=cooked);
 
             let certificate_type_name = [< $certificate_type:snake:upper _TYPE >];
-            type CertificateAddError = [< CertificatesStorage $certificate_type AddError >];
+            type AddCertificateError = [< Add $certificate_type Error >];
 
             let outcome = self.add_new_certificate_in_db(certificate_type_name, hint, cooked.timestamp, certificate, false).await
-            .map_err(|err| CertificateAddError::Operation(err))?;
+            .map_err(|err| AddCertificateError::Operation(err))?;
 
             // In theory they should never be any conflict given the we should only receive
             // new certificates from the server.
@@ -242,13 +242,13 @@ macro_rules! impl_add_certificate_fn {
             if let AddCertificateOutcome::AlreadyPresent { in_db_encrypted, incoming, hint } = outcome {
                 if let Ok(decrypted) = self.device.local_symkey.decrypt(&in_db_encrypted) {
                     if let Ok(ours) = load_certificate_from_local_storage!($certificate_type, decrypted) {
-                        return Err(CertificateAddError::AlreadyKnownButMismatch { ours, incoming: cooked });
+                        return Err(AddCertificateError::AlreadyKnownButMismatch { ours, incoming: cooked });
                     }
                 }
                 // Cannot load the existing certificate, so just overwrite it for self-healing
                 log::warn!("{} ({}) appears to be corrupted, overwritting it", stringify!($certificate_type), &hint);
                 let outcome = self.add_new_certificate_in_db(certificate_type_name, hint, cooked.timestamp, incoming, true).await
-                .map_err(|err| CertificateAddError::Operation(err.into()))?;
+                .map_err(|err| AddCertificateError::Operation(err.into()))?;
                 assert!(matches!(outcome, AddCertificateOutcome::Inserted));
             }
 
@@ -271,7 +271,7 @@ macro_rules! impl_get_certificate_fn {
             $(
                 $field_name: &$field_type
             ),*
-        ) -> Result<Option<Arc<$certificate_type>>, CertificatesStorageGetCertificateError> {
+        ) -> Result<Option<Arc<$certificate_type>>, GetCertificateError> {
             {
                 let guard = self.cache.lock().expect("Mutex is poisoned");
                 if let Some(found) = guard.[< get_ $certificate_type:snake >]($($field_name),*) {
@@ -281,7 +281,7 @@ macro_rules! impl_get_certificate_fn {
 
             // Certif not in cache, look into the db...
             let hint = mk_hint!($certificate_type $(, $field_name=$field_name)*);
-            let encrypted = self.get_certificate_from_db(USER_CERTIFICATE_TYPE, hint).await.map_err(|err| CertificatesStorageGetCertificateError::Operation(err))?;
+            let encrypted = self.get_certificate_from_db(USER_CERTIFICATE_TYPE, hint).await.map_err(|err| GetCertificateError::Operation(err))?;
 
             if let Ok(decrypted) = self.device.local_symkey.decrypt(&encrypted) {
                 if let Ok(cooked) = load_certificate_from_local_storage!($certificate_type, decrypted) {
@@ -310,19 +310,19 @@ impl CertificatesStorage {
     pub async fn start(
         data_base_dir: &Path,
         device: Arc<LocalDevice>,
-    ) -> Result<Self, CertificatesStorageStartError> {
+    ) -> Result<Self, StorageStartError> {
         // 1) Open the database
 
         let db_relative_path = get_certificates_storage_db_relative_path(&device);
         let db = LocalDatabase::from_path(data_base_dir, &db_relative_path, VacuumMode::default())
             .await
-            .map_err(CertificatesStorageStartError::Open)?;
+            .map_err(StorageStartError::Open)?;
 
         // 2) Initialize the database (if needed)
 
         super::model::initialize_model_if_needed(&db)
             .await
-            .map_err(CertificatesStorageStartError::Initialization)?;
+            .map_err(StorageStartError::Initialization)?;
 
         // 3) All done !
 
@@ -341,7 +341,7 @@ impl CertificatesStorage {
 
     pub async fn get_last_certificate_timestamp(
         &self,
-    ) -> Result<Option<DateTime>, CertificatesStorageGetCertificateError> {
+    ) -> Result<Option<DateTime>, GetCertificateError> {
         self.db
             .exec(move |conn| {
                 conn.immediate_transaction(|conn| {
@@ -358,7 +358,7 @@ impl CertificatesStorage {
                 })
             })
             .await
-            .map_err(CertificatesStorageGetCertificateError::Operation)
+            .map_err(GetCertificateError::Operation)
     }
 
     impl_add_certificate_fn!(UserCertificate);

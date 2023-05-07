@@ -4,7 +4,7 @@ use std::{ops::Deref, sync::Arc};
 
 use libparsec_tests_fixtures::prelude::*;
 
-use libparsec_platform_storage2::CertificatesStorage;
+use libparsec_platform_storage2::certificates::CertificatesStorage;
 
 #[parsec_test(testbed = "minimal")]
 async fn user_certificate(env: &TestbedEnv) {
