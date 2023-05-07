@@ -1433,6 +1433,7 @@ dependencies = [
  "libparsec_types",
  "libsqlite3-sys",
  "log",
+ "paste",
  "thiserror",
  "tokio",
 ]

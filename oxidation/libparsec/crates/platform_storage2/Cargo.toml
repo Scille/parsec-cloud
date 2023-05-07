@@ -21,6 +21,7 @@ libparsec_testbed = { path = "../testbed", optional = true }
 log = "0.4.17"
 thiserror = "1.0.37"
 lazy_static = { version = "1.4.0", optional = true }
+paste = "1.0.12"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio = { version = "1.27.0", features = ["fs", "sync"] }

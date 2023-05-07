@@ -101,9 +101,10 @@ table! {
 }
 
 table! {
-    certificates (index_) {
-        index_ -> BigInt,
+    certificates (_id) {
+        _id -> BigInt,
         certificate -> Binary,
+        certificate_timestamp -> Double, // Timestamp
         // We want to have a way to retreive a singe certificate without having to iterate,
         // decrypt and deserialize all of them.
         // However this is tricky given we don't want to make this table dependent on the
@@ -119,7 +120,8 @@ table! {
         // - User & revoked user certificates: "user_id:2199bb7d21ec4988825db6bcf9d7a43e"
         // - Realm role certficate: "user_id:2199bb7d21ec4988825db6bcf9d7a43e realm_id:dcf41c521cae4682a4cf29302e2af1b6"
         // - Device certificate: "user_id:2199bb7d21ec4988825db6bcf9d7a43e device_name:78c339d140664e909961c05b4d9add4c"
-        // - Sequester authority & sequester service certificate: "" (nothing to index)
+        // - sequester service certificate: "service_id:1fc552746e1e4a27aa9fd2aa9c8c95cc"
+        // - Sequester authority: "" (nothing to index)
         certificate_type -> Text,
         hint -> Text,
     }
@@ -163,8 +165,8 @@ pub(super) struct NewPreventSyncPattern<'a> {
 #[derive(Insertable)]
 #[diesel(table_name = certificates)]
 pub(super) struct NewCertificate<'a> {
-    pub index_: i64,
     pub certificate: &'a [u8],
+    pub certificate_timestamp: super::db::DateTime,
     pub certificate_type: &'a str,
     pub hint: &'a str,
 }

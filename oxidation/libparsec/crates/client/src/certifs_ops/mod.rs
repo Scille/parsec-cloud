@@ -5,7 +5,7 @@
 use std::{path::Path, sync::Arc};
 
 use libparsec_client_connection::AuthenticatedCmds;
-use libparsec_platform_storage2::CertifsStorage;
+use libparsec_platform_storage2::CertificatesStorage;
 use libparsec_types::prelude::*;
 
 use crate::event_bus::EventBus;
@@ -37,7 +37,7 @@ pub struct CertifsOps {
     device: Arc<LocalDevice>,
     event_bus: EventBus,
     cmds: Arc<AuthenticatedCmds>,
-    storage: CertifsStorage,
+    storage: CertificatesStorage,
 }
 
 impl CertifsOps {
@@ -47,7 +47,7 @@ impl CertifsOps {
         event_bus: EventBus,
         cmds: Arc<AuthenticatedCmds>,
     ) -> Result<Self, DynError> {
-        let storage = CertifsStorage::start(data_base_dir, device.clone()).await?;
+        let storage = CertificatesStorage::start(data_base_dir, device.clone()).await?;
         Ok(Self {
             device,
             event_bus,
