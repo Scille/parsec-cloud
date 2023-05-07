@@ -12,8 +12,6 @@ use libparsec_types::prelude::*;
 use super::db::{DatabaseError, DatabaseResult, LocalDatabase, VacuumMode};
 use super::model::get_user_data_storage_db_relative_path;
 
-pub type DynError = Box<dyn std::error::Error + Send + Sync>;
-
 pub struct NeedSyncEntries {
     pub remote: Vec<EntryID>,
     pub local: Vec<EntryID>,
@@ -31,29 +29,31 @@ pub struct UserStorage {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum StartError {
-    #[error("Cannot open database: {0}")]
-    Open(DynError),
-    #[error("Cannot initialize database: {0}")]
-    Initialization(DynError),
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum NonSpeculativeInitError {
-    #[error("Cannot open database: {0}")]
-    Open(DynError),
-    #[error("Cannot initialize database: {0}")]
-    Operation(DynError),
+pub enum OperationError {
+    #[error("{when}: {what}")]
+    Internal { when: &'static str, what: DynError },
 }
 
 impl UserStorage {
-    pub async fn start(data_base_dir: &Path, device: Arc<LocalDevice>) -> Result<Self, StartError> {
+    pub async fn start(
+        data_base_dir: &Path,
+        device: Arc<LocalDevice>,
+    ) -> Result<Self, OperationError> {
         // 1) Open the database
 
         let db_relative_path = get_user_data_storage_db_relative_path(&device);
-        let db = LocalDatabase::from_path(data_base_dir, &db_relative_path, VacuumMode::default())
-            .await
-            .map_err(|err| StartError::Open(Box::new(err)))?;
+        let db =
+            match LocalDatabase::from_path(data_base_dir, &db_relative_path, VacuumMode::default())
+                .await
+            {
+                Ok(db) => db,
+                Err(err) => {
+                    return Err(OperationError::Internal {
+                        when: "database open",
+                        what: err.into(),
+                    });
+                }
+            };
 
         // TODO: What should be our strategy when the database contains invalid data ?
         //
@@ -78,15 +78,24 @@ impl UserStorage {
 
         // 2) Initialize the database (if needed)
 
-        super::model::initialize_model_if_needed(&db)
-            .await
-            .map_err(|err| StartError::Initialization(Box::new(err)))?;
+        if let Err(err) = super::model::initialize_model_if_needed(&db).await {
+            return Err(OperationError::Internal {
+                when: "database model initialization",
+                what: err.into(),
+            });
+        }
 
         // 3) Retreive the user manifest
 
-        let user_manifest = UserStorage::load_user_manifest(&db, &device)
-            .await
-            .map_err(|err| StartError::Initialization(Box::new(err)))?;
+        let user_manifest = match UserStorage::load_user_manifest(&db, &device).await {
+            Ok(user_manifest) => user_manifest,
+            Err(err) => {
+                return Err(OperationError::Internal {
+                    when: "user manifest load from database",
+                    what: err.into(),
+                });
+            }
+        };
 
         // 4) All done !
 
@@ -103,11 +112,22 @@ impl UserStorage {
         self.db.close().await
     }
 
-    pub async fn get_realm_checkpoint(&self) -> Result<IndexInt, DynError> {
-        let ret = db_get_realm_checkpoint(&self.db).await;
-        match ret {
-            Ok(checkpoint) => Ok(IndexInt::try_from(checkpoint)?),
-            Err(err) => Err(Box::new(err)),
+    pub async fn get_realm_checkpoint(&self) -> Result<IndexInt, OperationError> {
+        let checkpoint = match db_get_realm_checkpoint(&self.db).await {
+            Ok(checkpoint) => checkpoint,
+            Err(err) => {
+                return Err(OperationError::Internal {
+                    when: "database access",
+                    what: err.into(),
+                });
+            }
+        };
+        match IndexInt::try_from(checkpoint) {
+            Ok(checkpoint) => Ok(checkpoint),
+            Err(err) => Err(OperationError::Internal {
+                when: "deserialize",
+                what: err.into(),
+            }),
         }
     }
 
@@ -115,18 +135,30 @@ impl UserStorage {
         &self,
         new_checkpoint: IndexInt,
         remote_user_manifest_version: Option<VersionInt>,
-    ) -> Result<(), DynError> {
-        let new_checkpoint = i64::try_from(new_checkpoint)?;
-        let ret = db_update_realm_checkpoint(
+    ) -> Result<(), OperationError> {
+        let new_checkpoint = match i64::try_from(new_checkpoint) {
+            Ok(new_checkpoint) => new_checkpoint,
+            Err(err) => {
+                return Err(OperationError::Internal {
+                    when: "serialization",
+                    what: err.into(),
+                });
+            }
+        };
+
+        match db_update_realm_checkpoint(
             &self.db,
             &self.device,
             new_checkpoint,
             remote_user_manifest_version,
         )
-        .await;
-        match ret {
+        .await
+        {
             Ok(checkpoint) => Ok(checkpoint),
-            Err(err) => Err(Box::new(err)),
+            Err(err) => Err(OperationError::Internal {
+                when: "database access",
+                what: err.into(),
+            }),
         }
     }
 
@@ -140,10 +172,16 @@ impl UserStorage {
     pub async fn set_user_manifest(
         &self,
         user_manifest: Arc<LocalUserManifest>,
-    ) -> Result<(), DynError> {
+    ) -> Result<(), OperationError> {
         let guard = self.lock_update_user_manifest.lock().await;
 
-        db_set_user_manifest(&self.db, &self.device, user_manifest.clone()).await?;
+        if let Err(err) = db_set_user_manifest(&self.db, &self.device, user_manifest.clone()).await
+        {
+            return Err(OperationError::Internal {
+                when: "database access",
+                what: err.into(),
+            });
+        }
 
         *self.user_manifest.lock().expect("Mutex is poisoned") = user_manifest;
 
@@ -186,19 +224,30 @@ impl UserStorage {
 pub async fn user_storage_non_speculative_init(
     data_base_dir: &Path,
     device: &LocalDevice,
-) -> Result<(), NonSpeculativeInitError> {
+) -> Result<(), OperationError> {
     // 1) Open the database
 
     let db_relative_path = get_user_data_storage_db_relative_path(device);
-    let db = LocalDatabase::from_path(data_base_dir, &db_relative_path, VacuumMode::default())
+    let db = match LocalDatabase::from_path(data_base_dir, &db_relative_path, VacuumMode::default())
         .await
-        .map_err(|err| NonSpeculativeInitError::Open(Box::new(err)))?;
+    {
+        Ok(db) => db,
+        Err(err) => {
+            return Err(OperationError::Internal {
+                when: "database open",
+                what: err.into(),
+            });
+        }
+    };
 
     // 2) Initialize the database
 
-    super::model::initialize_model_if_needed(&db)
-        .await
-        .map_err(|err| NonSpeculativeInitError::Operation(Box::new(err)))?;
+    if let Err(err) = super::model::initialize_model_if_needed(&db).await {
+        return Err(OperationError::Internal {
+            when: "database model initialization",
+            what: err.into(),
+        });
+    }
 
     // 3) Populate the database with the user manifest
 
@@ -210,9 +259,12 @@ pub async fn user_storage_non_speculative_init(
         false,
     ));
 
-    db_set_user_manifest(&db, device, manifest)
-        .await
-        .map_err(|err| NonSpeculativeInitError::Operation(Box::new(err)))?;
+    if let Err(err) = db_set_user_manifest(&db, device, manifest).await {
+        return Err(OperationError::Internal {
+            when: "insert user manifest",
+            what: err.into(),
+        });
+    }
 
     // 4) All done ! Don't forget the close the database before exit ;-)
 

@@ -58,6 +58,16 @@ pub enum ClientType {
     Anonymous,
 }
 
+/// `DynError` is your friend: the idea is when call a function we can have 3 outcomes:
+/// - success, wrap it with `Result::Ok` and you're good ^^
+/// - error we care about, your function should have a dedicated error listing those
+///   errors so that caller can do pattern matching on the result
+/// - error we don't care about, that's where we want to use `DynError` !
+///
+/// Typically you should declare a `Internal{when: &'static str, what: DynError}` in
+/// your custom error type and hence we keep nice stacktrace-like error message
+pub type DynError = Box<dyn std::error::Error + Send + Sync>;
+
 // Numeric types aliases for the data in the schemas.
 // We use them instead of standard Rust types for readability and to ease changing
 // their size.

@@ -8,33 +8,40 @@ use libparsec_types::prelude::*;
 use super::db::{DatabaseResult, LocalDatabase, VacuumMode};
 use super::model::get_workspace_data_storage_db_relative_path;
 
-pub type DynError = Box<dyn std::error::Error + Send + Sync>;
-
 #[derive(Debug, thiserror::Error)]
-pub enum WorkspaceStorageNonSpeculativeInitError {
-    #[error("Cannot open database: {0}")]
-    Open(DynError),
-    #[error("Cannot initialize database: {0}")]
-    Operation(DynError),
+pub enum OperationError {
+    #[error("{when}: {what}")]
+    Internal { when: &'static str, what: DynError },
 }
 
 pub async fn workspace_storage_non_speculative_init(
     data_base_dir: &Path,
     device: &LocalDevice,
     workspace_id: EntryID,
-) -> Result<(), WorkspaceStorageNonSpeculativeInitError> {
+) -> Result<(), OperationError> {
     // 1) Open the database
 
     let db_relative_path = get_workspace_data_storage_db_relative_path(device, &workspace_id);
-    let db = LocalDatabase::from_path(data_base_dir, &db_relative_path, VacuumMode::default())
+    let db = match LocalDatabase::from_path(data_base_dir, &db_relative_path, VacuumMode::default())
         .await
-        .map_err(|err| WorkspaceStorageNonSpeculativeInitError::Open(Box::new(err)))?;
+    {
+        Ok(db) => db,
+        Err(err) => {
+            return Err(OperationError::Internal {
+                when: "database open",
+                what: err.into(),
+            });
+        }
+    };
 
     // 2) Initialize the database
 
-    super::model::initialize_model_if_needed(&db)
-        .await
-        .map_err(|err| WorkspaceStorageNonSpeculativeInitError::Operation(Box::new(err)))?;
+    if let Err(err) = super::model::initialize_model_if_needed(&db).await {
+        return Err(OperationError::Internal {
+            when: "database model initialization",
+            what: err.into(),
+        });
+    }
 
     // 3) Populate the database with the workspace manifest
 
@@ -45,9 +52,12 @@ pub async fn workspace_storage_non_speculative_init(
         Some(workspace_id),
         false,
     ));
-    db_set_workspace_manifest(&db, device, manifest)
-        .await
-        .map_err(|err| WorkspaceStorageNonSpeculativeInitError::Operation(Box::new(err)))?;
+    if let Err(err) = db_set_workspace_manifest(&db, device, manifest).await {
+        return Err(OperationError::Internal {
+            when: "insert workspace manifest",
+            what: err.into(),
+        });
+    }
 
     // 4) All done ! Don't forget the close the database before exit ;-)
 
