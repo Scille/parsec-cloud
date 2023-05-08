@@ -57,7 +57,7 @@ macro_rules! impl_manifest_dump_load {
                 expected_id: Option<EntryID>,
                 expected_version: Option<u32>,
             ) -> DataResult<Self> {
-                let signed = key.decrypt(encrypted)?;
+                let signed = key.decrypt(encrypted).map_err(|_| DataError::Decryption)?;
 
                 Self::verify_and_load(
                     &signed,
@@ -79,7 +79,9 @@ macro_rules! impl_manifest_dump_load {
                 expected_id: Option<EntryID>,
                 expected_version: Option<u32>,
             ) -> DataResult<Self> {
-                let compressed = author_verify_key.verify(&signed)?;
+                let compressed = author_verify_key
+                    .verify(&signed)
+                    .map_err(|_| DataError::Signature)?;
                 let mut serialized = vec![];
 
                 ZlibDecoder::new(&compressed[..])
@@ -530,7 +532,7 @@ impl Manifest {
         expected_id: Option<EntryID>,
         expected_version: Option<u32>,
     ) -> DataResult<Self> {
-        let signed = key.decrypt(encrypted)?;
+        let signed = key.decrypt(encrypted).map_err(|_| DataError::Decryption)?;
 
         Self::verify_and_load(
             &signed,
@@ -550,7 +552,9 @@ impl Manifest {
         expected_id: Option<EntryID>,
         expected_version: Option<u32>,
     ) -> DataResult<Self> {
-        let compressed = author_verify_key.verify(signed)?;
+        let compressed = author_verify_key
+            .verify(signed)
+            .map_err(|_| DataError::Signature)?;
 
         let obj = Manifest::deserialize_data(compressed)?;
 
@@ -585,8 +589,6 @@ impl Manifest {
             .read_to_end(&mut deserialized)
             .map_err(|_| DataError::Compression)?;
 
-        Ok(rmp_serde::from_slice(&deserialized)
-            .map_err(|_| DataError::Serialization)
-            .unwrap())
+        rmp_serde::from_slice(&deserialized).map_err(|_| DataError::Serialization)
     }
 }

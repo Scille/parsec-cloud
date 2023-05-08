@@ -6,7 +6,7 @@ use thiserror::Error;
 
 use libparsec_crypto::CryptoError;
 
-use crate::{DateTime, DeviceFileType, DeviceID, EntryID, RealmID, UserID};
+use crate::{DateTime, DeviceFileType, DeviceID, EntryID, HumanHandle, RealmID, UserID};
 
 #[derive(Error, Debug)]
 pub enum RegexError {
@@ -33,23 +33,17 @@ pub enum EntryNameError {
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum DataError {
+    #[error("Invalid encryption")]
+    Decryption,
+
     #[error("Invalid compression")]
     Compression,
-
-    #[error("{exc}")]
-    Crypto { exc: CryptoError },
-
-    #[error("Invalid serialization")]
-    Serialization,
 
     #[error("Invalid signature")]
     Signature,
 
-    #[error("Invalid HumanHandle")]
-    InvalidHumanHandle,
-
-    #[error("Invalid author: expected Root(None), got `{0}`")]
-    Root(DeviceID),
+    #[error("Invalid serialization")]
+    Serialization,
 
     // `DeviceID` is 72bytes long, so boxing is needed to limit presure on the stack
     #[error("Invalid author: expected `{expected}`, got `{}`", match .got { Some(got) => got.to_string(), None => "None".to_string() })]
@@ -57,6 +51,9 @@ pub enum DataError {
         expected: Box<DeviceID>,
         got: Option<Box<DeviceID>>,
     },
+
+    #[error("Invalid author: expected root, got `{0}`")]
+    UnexpectedNonRootAuthor(DeviceID),
 
     // `DeviceID` is 72bytes long, so boxing is needed to limit presure on the stack
     #[error("Invalid device ID: expected `{expected}`, got `{got}`")]
@@ -71,6 +68,13 @@ pub enum DataError {
     #[error("Invalid user ID: expected `{expected}`, got `{got}`")]
     UnexpectedUserID { expected: UserID, got: UserID },
 
+    // `HumanHandle` is 72bytes long, so boxing is needed to limit presure on the stack
+    #[error("Invalid HumanHandle, expected `{expected}`, got `{got}`")]
+    UnexpecteddHumanHandle {
+        expected: Box<HumanHandle>,
+        got: Box<HumanHandle>,
+    },
+
     #[error("Invalid timestamp: expected `{expected}`, got `{got}`")]
     UnexpectedTimestamp { expected: DateTime, got: DateTime },
 
@@ -82,12 +86,6 @@ pub enum DataError {
 }
 
 pub type DataResult<T> = Result<T, DataError>;
-
-impl From<CryptoError> for DataError {
-    fn from(exc: CryptoError) -> Self {
-        DataError::Crypto { exc }
-    }
-}
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum PkiEnrollmentLocalPendingError {

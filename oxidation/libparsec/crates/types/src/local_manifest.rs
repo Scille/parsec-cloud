@@ -32,7 +32,7 @@ macro_rules! impl_local_manifest_dump_load {
             ) -> libparsec_types::DataResult<Self> {
                 let serialized = key
                     .decrypt(encrypted)
-                    .map_err(|exc| libparsec_types::DataError::Crypto { exc })?;
+                    .map_err(|_| libparsec_types::DataError::Decryption)?;
                 ::rmp_serde::from_slice(&serialized)
                     .map_err(|_| libparsec_types::DataError::Serialization)
             }
@@ -1073,9 +1073,7 @@ impl LocalManifest {
     }
 
     pub fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> DataResult<Self> {
-        let serialized = key
-            .decrypt(encrypted)
-            .map_err(|exc| DataError::Crypto { exc })?;
+        let serialized = key.decrypt(encrypted).map_err(|_| DataError::Decryption)?;
         rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)
     }
 }

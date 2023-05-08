@@ -37,7 +37,9 @@ fn verify_and_load<T>(signed: &[u8], author_verify_key: &VerifyKey) -> DataResul
 where
     T: for<'a> Deserialize<'a>,
 {
-    let compressed = author_verify_key.verify(signed)?;
+    let compressed = author_verify_key
+        .verify(signed)
+        .map_err(|_| DataError::Signature)?;
     load::<T>(compressed)
 }
 
@@ -99,6 +101,11 @@ macro_rules! impl_unsecure_load {
                     &self.unsecure.author
                 }
                 )?
+                /// Hint is useful to provide of representation the certificate in case
+                /// it has failed validation we want to report it in an error message
+                pub fn hint(&self) -> String {
+                    format!("{:?}", self.unsecure)
+                }
                 pub fn verify_signature(self, author_verify_key: &VerifyKey) -> Result<($name, Bytes), (Self, DataError)> {
                     match author_verify_key.verify(self.signed.as_ref()) {
                         // Unsecure is now secure \o/
@@ -115,7 +122,7 @@ macro_rules! impl_unsecure_load {
 
             impl $name {
                 pub fn unsecure_load(signed: Bytes) -> DataResult<[< Unsecure $name >]> {
-                    let (_, compressed) = VerifyKey::unsecure_unwrap(signed.as_ref())?;
+                    let (_, compressed) = VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
                     let unsecure = load::<$name>(compressed)?;
                     Ok([< Unsecure $name >] {
                         signed,
@@ -245,8 +252,13 @@ impl UserCertificate {
         }
 
         if let Some(expected_human_handle) = expected_human_handle {
-            if r.human_handle.as_ref() != Some(expected_human_handle) {
-                return Err(DataError::InvalidHumanHandle);
+            if let Some(human_handle) = &r.human_handle {
+                if human_handle != expected_human_handle {
+                    return Err(DataError::UnexpecteddHumanHandle {
+                        expected: Box::new(expected_human_handle.clone()),
+                        got: Box::new(human_handle.clone()),
+                    });
+                }
             }
         }
 
@@ -557,7 +569,7 @@ impl TryFrom<SequesterAuthorityCertificateData> for SequesterAuthorityCertificat
     type Error = DataError;
     fn try_from(data: SequesterAuthorityCertificateData) -> Result<Self, Self::Error> {
         if let Some(author) = data.author {
-            return Err(DataError::Root(author));
+            return Err(DataError::UnexpectedNonRootAuthor(author));
         }
 
         Ok(Self {
@@ -642,7 +654,8 @@ pub enum UnsecureAnyCertificate {
 
 impl AnyCertificate {
     pub fn unsecure_load(signed: Bytes) -> Result<UnsecureAnyCertificate, DataError> {
-        let (_, compressed) = VerifyKey::unsecure_unwrap(signed.as_ref())?;
+        let (_, compressed) =
+            VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
         let unsecure = load::<Self>(compressed)?;
         Ok(match unsecure {
             AnyCertificate::User(unsecure) => {
