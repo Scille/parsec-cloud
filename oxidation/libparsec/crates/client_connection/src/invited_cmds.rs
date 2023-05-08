@@ -14,7 +14,7 @@ use libparsec_types::prelude::*;
 #[cfg(feature = "test-with-testbed")]
 use crate::testbed::{get_send_hook, SendHookConfig};
 use crate::{
-    error::{CommandError, CommandResult},
+    error::{ConnectionError, ConnectionResult},
     API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
 };
 
@@ -64,7 +64,7 @@ impl InvitedCmds {
         &self.addr
     }
 
-    pub async fn send<T>(&self, request: T) -> CommandResult<<T>::Response>
+    pub async fn send<T>(&self, request: T) -> ConnectionResult<<T>::Response>
     where
         T: ProtocolRequest + Debug + 'static,
     {
@@ -85,7 +85,7 @@ impl InvitedCmds {
         Ok(T::load_response(&response_body)?)
     }
 
-    async fn internal_send(&self, request_body: Vec<u8>) -> Result<Bytes, CommandError> {
+    async fn internal_send(&self, request_body: Vec<u8>) -> Result<Bytes, ConnectionError> {
         let request_builder = self.client.post(self.url.clone());
 
         let req = prepare_request(request_builder, self.addr().token(), request_body);
@@ -100,18 +100,18 @@ impl InvitedCmds {
                 let response_body = resp.bytes().await?;
                 Ok(response_body)
             }
-            404 => Err(CommandError::InvitationNotFound),
-            410 => Err(CommandError::InvitationAlreadyDeleted),
-            415 => Err(CommandError::BadContent),
+            404 => Err(ConnectionError::InvitationNotFound),
+            410 => Err(ConnectionError::InvitationAlreadyDeleted),
+            415 => Err(ConnectionError::BadContent),
             422 => Err(crate::error::unsupported_api_version_from_headers(
                 resp.headers(),
             )),
-            460 => Err(CommandError::ExpiredOrganization),
-            461 => Err(CommandError::RevokedUser),
+            460 => Err(ConnectionError::ExpiredOrganization),
+            461 => Err(ConnectionError::RevokedUser),
             // We typically use HTTP 503 in the tests to simulate server offline,
             // so it should behave just like if we were not able to connect
-            503 => Err(CommandError::NoResponse(None)),
-            _ => Err(CommandError::InvalidResponseStatus(resp.status())),
+            503 => Err(ConnectionError::NoResponse(None)),
+            _ => Err(ConnectionError::InvalidResponseStatus(resp.status())),
         }
     }
 }

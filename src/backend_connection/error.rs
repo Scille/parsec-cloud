@@ -24,27 +24,27 @@ pyo3::create_exception!(
 );
 pyo3::create_exception!(_parsec, BackendOutOfBallparkError, BackendConnectionError);
 
-pub(crate) struct CommandExc(libparsec::client_connection::CommandError);
+pub(crate) struct CommandExc(libparsec::client_connection::ConnectionError);
 
 impl From<CommandExc> for PyErr {
     fn from(err: CommandExc) -> Self {
         match err.0 {
-            libparsec::client_connection::CommandError::NoResponse { .. } => {
+            libparsec::client_connection::ConnectionError::NoResponse { .. } => {
                 BackendNotAvailable::new_err(err.0.to_string())
             }
-            libparsec::client_connection::CommandError::InvalidResponseStatus(status, ..)
+            libparsec::client_connection::ConnectionError::InvalidResponseStatus(status, ..)
                 if (status == 401 || status == 404) =>
             {
                 BackendConnectionRefused::new_err("Invalid handshake information")
             }
-            libparsec::client_connection::CommandError::RevokedUser
-            | libparsec::client_connection::CommandError::ExpiredOrganization => {
+            libparsec::client_connection::ConnectionError::RevokedUser
+            | libparsec::client_connection::ConnectionError::ExpiredOrganization => {
                 BackendConnectionRefused::new_err(err.0.to_string())
             }
-            libparsec::client_connection::CommandError::InvitationNotFound => {
+            libparsec::client_connection::ConnectionError::InvitationNotFound => {
                 BackendInvitationNotFound::new_err(err.0.to_string())
             }
-            libparsec::client_connection::CommandError::InvitationAlreadyDeleted => {
+            libparsec::client_connection::ConnectionError::InvitationAlreadyDeleted => {
                 BackendInvitationAlreadyUsed::new_err(err.0.to_string())
             }
             _ => BackendConnectionError::new_err(err.0.to_string()),
@@ -52,8 +52,8 @@ impl From<CommandExc> for PyErr {
     }
 }
 
-impl From<libparsec::client_connection::CommandError> for CommandExc {
-    fn from(err: libparsec::client_connection::CommandError) -> Self {
+impl From<libparsec::client_connection::ConnectionError> for CommandExc {
+    fn from(err: libparsec::client_connection::ConnectionError) -> Self {
         CommandExc(err)
     }
 }

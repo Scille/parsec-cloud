@@ -5,8 +5,8 @@ use std::sync::Arc;
 use libparsec_client_connection::{
     test_register_low_level_send_hook, test_register_low_level_send_hook_default,
     test_register_low_level_send_hook_multicall, test_register_send_hook, AnonymousCmds,
-    AuthenticatedCmds, Bytes, CommandError, HeaderMap, InvitedCmds, ProxyConfig, ResponseMock,
-    StatusCode,
+    AuthenticatedCmds, Bytes, ConnectionError, HeaderMap, InvitedCmds, ProxyConfig, ResponseMock,
+    SSEResponseOrMissedEvents, StatusCode,
 };
 use libparsec_protocol::{
     anonymous_cmds::latest as anonymous_cmds, authenticated_cmds::latest as authenticated_cmds,
@@ -55,7 +55,7 @@ async fn authenticated(env: &TestbedEnv) {
     assert!(
         matches!(
             rep,
-            Err(CommandError::InvalidResponseStatus(
+            Err(ConnectionError::InvalidResponseStatus(
                 reqwest::StatusCode::UNAUTHORIZED
             ))
         ),
@@ -100,40 +100,40 @@ async fn authenticated_sse(env: &TestbedEnv) {
 
     p_assert_eq!(
         sse.next().await.unwrap(),
-        authenticated_cmds::events_listen::Rep::Ok(
+        SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
             authenticated_cmds::events_listen::APIEvent::Pinged {
                 ping: "good 1".to_owned()
             }
-        )
+        ))
     );
 
-    // Also try to enqeue multiple events
+    // Also try to enqueue multiple events
     send_ping("good 2").await;
     send_ping("good 3").await;
     send_ping("good 4").await;
     p_assert_eq!(
         sse.next().await.unwrap(),
-        authenticated_cmds::events_listen::Rep::Ok(
+        SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
             authenticated_cmds::events_listen::APIEvent::Pinged {
                 ping: "good 2".to_owned()
             }
-        )
+        ))
     );
     p_assert_eq!(
         sse.next().await.unwrap(),
-        authenticated_cmds::events_listen::Rep::Ok(
+        SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
             authenticated_cmds::events_listen::APIEvent::Pinged {
                 ping: "good 3".to_owned()
             }
-        )
+        ))
     );
     p_assert_eq!(
         sse.next().await.unwrap(),
-        authenticated_cmds::events_listen::Rep::Ok(
+        SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
             authenticated_cmds::events_listen::APIEvent::Pinged {
                 ping: "good 4".to_owned()
             }
-        )
+        ))
     );
 
     sse.close();
@@ -152,7 +152,7 @@ async fn authenticated_sse(env: &TestbedEnv) {
     assert!(
         matches!(
             rep,
-            Err(CommandError::InvalidResponseStatus(
+            Err(ConnectionError::InvalidResponseStatus(
                 reqwest::StatusCode::UNAUTHORIZED
             ))
         ),
@@ -215,7 +215,7 @@ async fn invited(env: &TestbedEnv) {
         })
         .await;
     assert!(
-        matches!(rep, Err(CommandError::InvitationNotFound)),
+        matches!(rep, Err(ConnectionError::InvitationNotFound)),
         r#"expected `InvitationNotFound`, but got {rep:?}"#
     );
 }
@@ -267,7 +267,9 @@ async fn low_level_send_hook(env: &TestbedEnv) {
     assert!(
         matches!(
             rep,
-            Err(CommandError::InvalidResponseStatus(StatusCode::IM_A_TEAPOT)),
+            Err(ConnectionError::InvalidResponseStatus(
+                StatusCode::IM_A_TEAPOT
+            )),
         ),
         "expected a teapot, but got {rep:?}"
     );
@@ -280,7 +282,7 @@ async fn low_level_send_hook(env: &TestbedEnv) {
         })
         .await;
     assert!(
-        matches!(rep, Err(CommandError::NoResponse(None))),
+        matches!(rep, Err(ConnectionError::NoResponse(None))),
         r#"expected a `NoResponse`, but got {rep:?}"#
     );
 
@@ -302,7 +304,9 @@ async fn low_level_send_hook(env: &TestbedEnv) {
         assert!(
             matches!(
                 rep,
-                Err(CommandError::InvalidResponseStatus(StatusCode::IM_A_TEAPOT)),
+                Err(ConnectionError::InvalidResponseStatus(
+                    StatusCode::IM_A_TEAPOT
+                )),
             ),
             "expected a teapot, but got {rep:?}"
         );
@@ -318,7 +322,7 @@ async fn low_level_send_hook(env: &TestbedEnv) {
         })
         .await;
     assert!(
-        matches!(rep, Err(CommandError::NoResponse(None))),
+        matches!(rep, Err(ConnectionError::NoResponse(None))),
         r#"expected a `NoResponse`, but got {rep:?}"#
     );
 }
@@ -359,7 +363,7 @@ async fn high_level_send_hook(env: &TestbedEnv) {
         })
         .await;
     assert!(
-        matches!(rep, Err(CommandError::NoResponse(None))),
+        matches!(rep, Err(ConnectionError::NoResponse(None))),
         r#"expected a `NoResponse`, but got {rep:?}"#
     );
 }

@@ -5,13 +5,13 @@ use thiserror::Error;
 use libparsec_protocol::ApiVersion;
 use libparsec_types::prelude::*;
 
-pub type CommandResult<T> = core::result::Result<T, CommandError>;
+pub type ConnectionResult<T> = core::result::Result<T, ConnectionError>;
 
 /// Sending a command isn't risk-free, we have multiple possible way to fail.
 /// Also note we only deal with *transport* related errors here (i.e. *deserialization* / *http* / *tcp* related stuff),
 /// hence dealing with the `status` field of the response message is left to the caller
 #[derive(Debug, Error)]
-pub enum CommandError {
+pub enum ConnectionError {
     /// Any invalid content
     #[error("Invalid content")]
     BadContent,
@@ -69,7 +69,7 @@ pub enum CommandError {
 }
 
 // Custom equality to skip comparison of some fields
-impl PartialEq for CommandError {
+impl PartialEq for ConnectionError {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::BadContent, Self::BadContent) => true,
@@ -106,21 +106,21 @@ impl PartialEq for CommandError {
     }
 }
 
-impl Eq for CommandError {}
+impl Eq for ConnectionError {}
 
-impl From<ProtocolDecodeError> for CommandError {
+impl From<ProtocolDecodeError> for ConnectionError {
     fn from(e: ProtocolDecodeError) -> Self {
         Self::InvalidResponseContent(e)
     }
 }
 
-impl From<reqwest::Error> for CommandError {
+impl From<reqwest::Error> for ConnectionError {
     fn from(e: reqwest::Error) -> Self {
         Self::NoResponse(Some(e))
     }
 }
 
-impl From<ProtocolEncodeError> for CommandError {
+impl From<ProtocolEncodeError> for ConnectionError {
     fn from(e: ProtocolEncodeError) -> Self {
         Self::Serialization(e)
     }
@@ -128,20 +128,20 @@ impl From<ProtocolEncodeError> for CommandError {
 
 pub(crate) fn unsupported_api_version_from_headers(
     headers: &reqwest::header::HeaderMap,
-) -> CommandError {
+) -> ConnectionError {
     let api_version = match headers.get("Api-Version") {
         Some(api_version) => {
             let api_version = api_version.to_str().unwrap_or_default();
             match api_version.try_into() {
                 Ok(api_version) => api_version,
-                Err(_) => return CommandError::WrongApiVersion(api_version.into()),
+                Err(_) => return ConnectionError::WrongApiVersion(api_version.into()),
             }
         }
-        None => return CommandError::MissingApiVersion,
+        None => return ConnectionError::MissingApiVersion,
     };
 
     match headers.get("Supported-Api-Versions") {
-        Some(supported_api_versions) => CommandError::UnsupportedApiVersion {
+        Some(supported_api_versions) => ConnectionError::UnsupportedApiVersion {
             api_version,
             supported_api_versions: supported_api_versions
                 .to_str()
@@ -150,6 +150,6 @@ pub(crate) fn unsupported_api_version_from_headers(
                 .filter_map(|x| ApiVersion::try_from(x).ok())
                 .collect(),
         },
-        None => CommandError::MissingSupportedApiVersions,
+        None => ConnectionError::MissingSupportedApiVersions,
     }
 }

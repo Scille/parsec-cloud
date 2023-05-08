@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use libparsec_client_connection::CommandError;
+use libparsec_client_connection::ConnectionError;
 use libparsec_core::RemoteDevicesManagerError;
 use thiserror::Error;
 
@@ -116,10 +116,10 @@ impl From<CryptoError> for FSError {
     }
 }
 
-impl From<CommandError> for FSError {
-    fn from(e: CommandError) -> Self {
+impl From<ConnectionError> for FSError {
+    fn from(e: ConnectionError) -> Self {
         match e {
-            CommandError::NoResponse(..) => Self::BackendOffline(e.to_string()),
+            ConnectionError::NoResponse(..) => Self::BackendOffline(e.to_string()),
             _ => Self::RemoteOperation(e.to_string()),
         }
     }

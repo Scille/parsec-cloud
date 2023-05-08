@@ -291,14 +291,12 @@ macro_rules! impl_get_certificate_fn {
 }
 
 impl CertificatesStorage {
-    pub async fn start(
-        data_base_dir: &Path,
-        device: Arc<LocalDevice>,
-    ) -> anyhow::Result<Self> {
+    pub async fn start(data_base_dir: &Path, device: Arc<LocalDevice>) -> anyhow::Result<Self> {
         // 1) Open the database
 
         let db_relative_path = get_certificates_storage_db_relative_path(&device);
-        let db = LocalDatabase::from_path(data_base_dir, &db_relative_path, VacuumMode::default()).await?;
+        let db = LocalDatabase::from_path(data_base_dir, &db_relative_path, VacuumMode::default())
+            .await?;
 
         // 2) Initialize the database (if needed)
 
@@ -320,7 +318,8 @@ impl CertificatesStorage {
     }
 
     pub async fn get_last_certificate_timestamp(&self) -> anyhow::Result<Option<DateTime>> {
-        let ts = self.db
+        let ts = self
+            .db
             .exec(move |conn| {
                 conn.immediate_transaction(|conn| {
                     let query = {

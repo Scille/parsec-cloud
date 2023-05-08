@@ -8,8 +8,8 @@ mod invited_cmds;
 mod testbed;
 
 pub use anonymous_cmds::AnonymousCmds;
-pub use authenticated_cmds::{AuthenticatedCmds, PARSEC_AUTH_METHOD};
-pub use error::{CommandError, CommandResult};
+pub use authenticated_cmds::{AuthenticatedCmds, SSEResponseOrMissedEvents, PARSEC_AUTH_METHOD};
+pub use error::{ConnectionError, ConnectionResult};
 pub use invited_cmds::InvitedCmds;
 #[cfg(feature = "test-with-testbed")]
 // Also re-expose reqwest&bytes stuff to simplify building mock response

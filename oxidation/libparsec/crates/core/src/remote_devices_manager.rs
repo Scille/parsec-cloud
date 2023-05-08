@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use libparsec_client_connection::{AuthenticatedCmds, CommandError};
+use libparsec_client_connection::{AuthenticatedCmds, ConnectionError};
 use libparsec_protocol::authenticated_cmds::v2::user_get;
 use libparsec_types::prelude::*;
 
@@ -132,7 +132,7 @@ impl RemoteDevicesManager {
                     reason: reason.unwrap_or_default(),
                 })
             }
-            Err(CommandError::NoResponse { .. }) => {
+            Err(ConnectionError::NoResponse { .. }) => {
                 Err(RemoteDevicesManagerError::BackendOffline {
                     user_id: user_id.clone(),
                 })

@@ -47,7 +47,7 @@ use libparsec_types::prelude::*;
 #[cfg(feature = "test-with-testbed")]
 use crate::testbed::{get_send_hook, SendHookConfig};
 use crate::{
-    error::{CommandError, CommandResult},
+    error::{ConnectionError, ConnectionResult},
     API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
 };
 
@@ -71,11 +71,20 @@ where
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum SSEResponseOrMissedEvents<T>
+where
+    T: ProtocolRequest + Debug + 'static,
+{
+    Response(T::Response),
+    MissedEvents,
+}
+
 impl<T> SSEStream<T>
 where
     T: ProtocolRequest + Debug + 'static,
 {
-    pub async fn next(&mut self) -> Result<T::Response, CommandError> {
+    pub async fn next(&mut self) -> Result<SSEResponseOrMissedEvents<T>, ConnectionError> {
         loop {
             match self.next_sse_event().await? {
                 SSEEvent::Open => {
@@ -83,44 +92,51 @@ where
                     continue;
                 }
                 SSEEvent::Message(event) => {
-                    if let Ok(raw_rep) = BASE64_STANDARD.decode(event.data) {
-                        if let Ok(rep) = T::load_response(raw_rep.as_ref()) {
-                            return Ok(rep);
+                    match event.event.as_ref() {
+                        "missed_events" => return Ok(SSEResponseOrMissedEvents::MissedEvents),
+                        "message" => {
+                            if let Ok(raw_rep) = BASE64_STANDARD.decode(event.data) {
+                                if let Ok(rep) = T::load_response(raw_rep.as_ref()) {
+                                    return Ok(SSEResponseOrMissedEvents::Response(rep));
+                                }
+                            }
+                            return Err(ConnectionError::BadContent);
                         }
+                        // Ignore the rest
+                        _ => continue,
                     }
-                    return Err(CommandError::BadContent);
                 }
             }
         }
     }
 
-    async fn next_sse_event(&mut self) -> Result<SSEEvent, CommandError> {
+    async fn next_sse_event(&mut self) -> Result<SSEEvent, ConnectionError> {
         match self.event_source.next().await {
             Some(Ok(sse_event)) => Ok(sse_event),
             Some(Err(err)) => match err {
                 reqwest_eventsource::Error::Transport(err) => {
-                    Err(CommandError::NoResponse(Some(err)))
+                    Err(ConnectionError::NoResponse(Some(err)))
                 }
                 // All statuses except 200
                 reqwest_eventsource::Error::InvalidStatusCode(status_code) => {
                     match status_code.as_u16() {
-                        415 => Err(CommandError::BadContent),
+                        415 => Err(ConnectionError::BadContent),
                         // TODO: cannot  access the response headers here...
                         // 422 => Err(crate::error::unsupported_api_version_from_headers(
                         //     resp.headers(),
                         // )),
-                        460 => Err(CommandError::ExpiredOrganization),
-                        461 => Err(CommandError::RevokedUser),
+                        460 => Err(ConnectionError::ExpiredOrganization),
+                        461 => Err(ConnectionError::RevokedUser),
                         // We typically use HTTP 503 in the tests to simulate server offline,
                         // so it should behave just like if we were not able to connect
-                        503 => Err(CommandError::NoResponse(None)),
-                        _ => Err(CommandError::InvalidResponseStatus(status_code)),
+                        503 => Err(ConnectionError::NoResponse(None)),
+                        _ => Err(ConnectionError::InvalidResponseStatus(status_code)),
                     }
                 }
-                reqwest_eventsource::Error::StreamEnded => Err(CommandError::NoResponse(None)),
-                _ => Err(CommandError::BadContent),
+                reqwest_eventsource::Error::StreamEnded => Err(ConnectionError::NoResponse(None)),
+                _ => Err(ConnectionError::BadContent),
             },
-            None => Err(CommandError::NoResponse(None)),
+            None => Err(ConnectionError::NoResponse(None)),
         }
     }
 
@@ -180,7 +196,9 @@ impl AuthenticatedCmds {
     }
 
     // Just used for test
-    pub async fn start_sse_and_wait_for_connection<T>(&self) -> Result<SSEStream<T>, CommandError>
+    pub async fn start_sse_and_wait_for_connection<T>(
+        &self,
+    ) -> Result<SSEStream<T>, ConnectionError>
     where
         T: ProtocolRequest + Debug + 'static,
     {
@@ -236,7 +254,7 @@ impl AuthenticatedCmds {
         }
     }
 
-    pub async fn send<T>(&self, request: T) -> CommandResult<<T>::Response>
+    pub async fn send<T>(&self, request: T) -> ConnectionResult<<T>::Response>
     where
         T: ProtocolRequest + Debug + 'static,
     {
@@ -257,7 +275,7 @@ impl AuthenticatedCmds {
         Ok(T::load_response(&response_body)?)
     }
 
-    async fn internal_send(&self, request_body: Vec<u8>) -> Result<Bytes, CommandError> {
+    async fn internal_send(&self, request_body: Vec<u8>) -> Result<Bytes, ConnectionError> {
         let request_builder = self.client.post(self.url.clone());
 
         let req = prepare_request(
@@ -277,16 +295,16 @@ impl AuthenticatedCmds {
                 let response_body = resp.bytes().await?;
                 Ok(response_body)
             }
-            415 => Err(CommandError::BadContent),
+            415 => Err(ConnectionError::BadContent),
             422 => Err(crate::error::unsupported_api_version_from_headers(
                 resp.headers(),
             )),
-            460 => Err(CommandError::ExpiredOrganization),
-            461 => Err(CommandError::RevokedUser),
+            460 => Err(ConnectionError::ExpiredOrganization),
+            461 => Err(ConnectionError::RevokedUser),
             // We typically use HTTP 503 in the tests to simulate server offline,
             // so it should behave just like if we were not able to connect
-            503 => Err(CommandError::NoResponse(None)),
-            _ => Err(CommandError::InvalidResponseStatus(resp.status())),
+            503 => Err(ConnectionError::NoResponse(None)),
+            _ => Err(ConnectionError::InvalidResponseStatus(resp.status())),
         }
     }
 }

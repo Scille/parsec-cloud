@@ -4,7 +4,6 @@
 extern crate lazy_static;
 
 // Convenient dependencies we are going to need everywhere
-pub use bytes::Bytes;
 /// ThisError vs Anyhow ?
 /// `anyhow::Error` is your friend: the idea is when call a function we can have 3 outcomes:
 /// - success, wrap it with `Result::Ok` and you're good ^^
@@ -23,6 +22,7 @@ pub use bytes::Bytes;
 /// }
 /// ```
 pub use anyhow;
+pub use bytes::Bytes;
 pub use thiserror;
 
 // Re-expose crypto so that `use libparsec_types::prelude::*` is the single-no-brainer-one-liner™

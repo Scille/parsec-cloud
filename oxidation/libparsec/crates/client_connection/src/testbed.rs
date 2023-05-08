@@ -17,7 +17,7 @@ use reqwest::{RequestBuilder, Response};
 use libparsec_testbed::{test_get_testbed, TestbedKind};
 use libparsec_types::prelude::*;
 
-use crate::CommandResult;
+use crate::ConnectionResult;
 
 const STORE_ENTRY_KEY: &str = "client_connection";
 
@@ -115,7 +115,7 @@ pub(crate) enum HighLevelSendResult<T>
 where
     T: ProtocolRequest,
 {
-    Resolved(CommandResult<<T>::Response>),
+    Resolved(ConnectionResult<<T>::Response>),
     PassToLowLevel(T),
 }
 

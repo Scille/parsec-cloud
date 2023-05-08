@@ -16,8 +16,8 @@ pub async fn workspace_storage_non_speculative_init(
     // 1) Open the database
 
     let db_relative_path = get_workspace_data_storage_db_relative_path(device, &workspace_id);
-    let db = LocalDatabase::from_path(data_base_dir, &db_relative_path, VacuumMode::default())
-        .await?;
+    let db =
+        LocalDatabase::from_path(data_base_dir, &db_relative_path, VacuumMode::default()).await?;
 
     // 2) Initialize the database
 

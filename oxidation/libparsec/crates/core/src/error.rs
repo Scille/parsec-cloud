@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use libparsec_client_connection::CommandError;
+use libparsec_client_connection::ConnectionError;
 use thiserror::Error;
 
 use libparsec_types::prelude::*;
@@ -100,7 +100,7 @@ pub enum InviteError {
     Backend(String),
 
     #[error("{0}")]
-    Command(CommandError),
+    Command(ConnectionError),
 
     #[error("{0}")]
     Custom(String),
@@ -108,11 +108,11 @@ pub enum InviteError {
 
 pub type InviteResult<T> = Result<T, InviteError>;
 
-impl From<CommandError> for InviteError {
-    fn from(exc: CommandError) -> Self {
+impl From<ConnectionError> for InviteError {
+    fn from(exc: ConnectionError) -> Self {
         match exc {
-            CommandError::InvitationAlreadyDeleted => Self::AlreadyUsed,
-            CommandError::InvitationNotFound => Self::NotFound,
+            ConnectionError::InvitationAlreadyDeleted => Self::AlreadyUsed,
+            ConnectionError::InvitationNotFound => Self::NotFound,
             _ => Self::Command(exc),
         }
     }
