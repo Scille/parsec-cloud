@@ -3,11 +3,16 @@
 <template>
   <ion-grid>
     <ion-row>
-      <ion-col>
-        <ion-item>
+      <ion-col class="input-col">
+        <ion-text
+          id="passwordLabel"
+          class="form-label"
+        >
+          {{ $t('HomePage.organizationLogin.passwordLabel') }}
+        </ion-text>
+        <ion-item class="input">
           <ion-input
-            :label="label"
-            label-placement="floating"
+            aria-label="passwordLabel"
             :type="passwordVisible ? 'text' : 'password'"
             v-model="passwordRef"
             @ion-input="$emit('change', $event.detail.value)"
