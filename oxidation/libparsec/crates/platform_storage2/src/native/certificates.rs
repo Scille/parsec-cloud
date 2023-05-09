@@ -168,9 +168,15 @@ macro_rules! impl_add_certificate_error {
     ($certificate_type:ident) => {
         paste!{
             #[derive(Debug, thiserror::Error)]
+            #[error("We already know this certificate, but with a different content: `{ours:?}` vs `{incoming:?}`")]
+            pub struct [< $certificate_type AlreadyKnownButMismatch >] {
+                ours: Arc<$certificate_type>,
+                incoming: Arc<$certificate_type>,
+            }
+            #[derive(Debug, thiserror::Error)]
             pub enum [< Add $certificate_type Error >] {
-                #[error("We already know this certificate, but with a different content: `{ours:?}` vs `{incoming:?}`")]
-                AlreadyKnownButMismatch {ours: Arc<$certificate_type>, incoming: Arc<$certificate_type>},
+                #[error(transparent)]
+                AlreadyKnownButMismatch(#[from] [< $certificate_type AlreadyKnownButMismatch >]),
                 #[error(transparent)]
                 Internal(#[from] anyhow::Error),
             }
@@ -201,13 +207,13 @@ macro_rules! impl_add_certificate_fn {
     ($certificate_type:ident) => {
 
     paste!{
-        pub async fn [< add_new_ $certificate_type:snake >](&self, cooked: Arc<$certificate_type>, certificate: Bytes) -> Result<(), [< Add $certificate_type Error >] > {
+        pub async fn [< add_new_ $certificate_type:snake >](&self, cooked: Arc<$certificate_type>, raw: Bytes) -> Result<(), [< Add $certificate_type Error >] > {
             let hint = mk_hint!($certificate_type, certificate=cooked);
 
             let certificate_type_name = [< $certificate_type:snake:upper _TYPE >];
             type AddCertificateError = [< Add $certificate_type Error >];
 
-            let outcome = self.add_new_certificate_in_db(certificate_type_name, hint, cooked.timestamp, certificate, false).await.map_err(|e| anyhow::anyhow!(e))?;
+            let outcome = self.add_new_certificate_in_db(certificate_type_name, hint, cooked.timestamp, raw, false).await.map_err(|e| anyhow::anyhow!(e))?;
 
             // In theory they should never be any conflict given the we should only receive
             // new certificates from the server.
@@ -227,7 +233,7 @@ macro_rules! impl_add_certificate_fn {
             if let AddCertificateOutcome::AlreadyPresent { in_db_encrypted, incoming, hint } = outcome {
                 if let Ok(decrypted) = self.device.local_symkey.decrypt(&in_db_encrypted) {
                     if let Ok(ours) = load_certificate_from_local_storage!($certificate_type, decrypted) {
-                        return Err(AddCertificateError::AlreadyKnownButMismatch { ours, incoming: cooked });
+                        return Err([< $certificate_type AlreadyKnownButMismatch >] { ours, incoming: cooked }.into());
                     }
                 }
                 // Cannot load the existing certificate, so just overwrite it for self-healing

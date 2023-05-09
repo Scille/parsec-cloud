@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use libparsec_client_connection::AuthenticatedCmds;
+use libparsec_client_connection::{AuthenticatedCmds, SSEResponseOrMissedEvents};
 use libparsec_protocol::authenticated_cmds::v4::events_listen::{APIEvent, Rep, Req};
 
 use crate::event_bus::*;
@@ -85,7 +85,10 @@ impl ConnectionMonitor {
 
             loop {
                 match stream.next().await {
-                    Ok(rep) => {
+                    Ok(SSEResponseOrMissedEvents::MissedEvents) => {
+                        event_bus.send(&EventMissedServerEvents);
+                    }
+                    Ok(SSEResponseOrMissedEvents::Response(rep)) => {
                         if let ConnectionState::Offline = state {
                             event_bus.send(&EventOnline);
                             state = ConnectionState::Online;
@@ -94,7 +97,9 @@ impl ConnectionMonitor {
                         match rep {
                             Rep::Ok(event) => dispatch_api_event(event, &event_bus),
                             // Unexpected error status
-                            _ => continue,
+                            rep => {
+                                log::warn!("`events_listen` unexpected error response: {:?}", rep);
+                            }
                         };
                     }
                     Err(err) => {
@@ -102,21 +107,22 @@ impl ConnectionMonitor {
                             event_bus.send(&EventOffline);
                             state = ConnectionState::Offline;
                         }
+
                         match err {
-                            // The only legic error is if we couldn't reach the server...
-                            libparsec_client_connection::CommandError::NoResponse(_) => (),
+                            // The only legit error is if we couldn't reach the server...
+                            libparsec_client_connection::ConnectionError::NoResponse(_) => (),
 
                             // ...otherwise the server rejected us, hence there is no use
                             // retrying to connect and we just stop this coroutine
-                            libparsec_client_connection::CommandError::ExpiredOrganization => {
+                            libparsec_client_connection::ConnectionError::ExpiredOrganization => {
                                 event_bus.send(&EventExpiredOrganization);
                                 return;
                             }
-                            libparsec_client_connection::CommandError::RevokedUser => {
+                            libparsec_client_connection::ConnectionError::RevokedUser => {
                                 event_bus.send(&EventRevokedUser);
                                 return;
                             }
-                            libparsec_client_connection::CommandError::UnsupportedApiVersion {
+                            libparsec_client_connection::ConnectionError::UnsupportedApiVersion {
                                 api_version,
                                 supported_api_versions,
                             } => {

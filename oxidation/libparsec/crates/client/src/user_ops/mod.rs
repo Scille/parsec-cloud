@@ -19,8 +19,8 @@ pub type DynError = Box<dyn std::error::Error + Send + Sync>;
 pub enum UserOpsError {
     #[error("Unknown workspace `{0}`")]
     UnknownWorkspace(EntryID),
-    #[error("Internal error: {0}")]
-    Internal(DynError),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -29,8 +29,8 @@ pub enum UserOpsWorkspaceShareError {
     UnknownWorkspace(EntryID),
     #[error("Cannot share with oneself")]
     ShareToSelf,
-    #[error("Internal error: {0}")]
-    Internal(DynError),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
 }
 
 #[derive(Debug)]
