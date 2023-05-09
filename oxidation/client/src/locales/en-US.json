@@ -26,7 +26,7 @@
             "createOrganizationSubtitle": "I want to create an organization",
             "joinOrganization": "Join an organization",
             "joinOrganizationTitle": "Join",
-            "joinOrganizationSubtitle": "I reveice an invitation Parsec Cloud"
+            "joinOrganizationSubtitle": "I received a Parsec Cloud invitation"
         },
         "organizationLogin": {
             "backToList": "Return to organizations",
