@@ -7,305 +7,177 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 1.7.2+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-05-09 10:57+0200\n"
+"POT-Creation-Date: 2020-03-17 23:50+0100\n"
 "PO-Revision-Date: 2020-02-27 17:34+0100\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: \n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Plural-Forms: nplurals=2; plural=(n > 1)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.12.1\n"
+"Generated-By: Babel 2.6.0\n"
 
-#: ../../development/functional_architecture.rst:7
-msgid "WiP : Parsec client functional components"
-msgstr ""
+#: ../../development.rst:5
+msgid "Development"
+msgstr "Développement"
 
-#: ../../development/functional_architecture.rst:9
-msgid "Missing translations and figures"
-msgstr ""
+#: ../../development.rst:8
+msgid "Get the sources"
+msgstr "Récupérer le code source"
 
-#: ../../development/functional_architecture.rst:12
-msgid "Mountpoint"
-msgstr ""
-
-#: ../../development/functional_architecture.rst:13
+#: ../../development.rst:10
 msgid ""
-"Le composant Mountpoint est responsable de l’interaction avec le système "
-"de fichiers pour communiquer avec les applications tiers selon une "
-"logique très simple consistant à transmettre toutes les requêtes natives "
-"au système de fichiers virtuel défini dans le composant Core."
+"Source code is `available on github <https://github.com/Scille/parsec-"
+"cloud>`_."
 msgstr ""
+"Le code du projet est `disponible sur github <https://github.com/Scille"
+"/parsec-cloud>`_."
 
-#: ../../development/functional_architecture.rst:18
-msgid "GUI"
+#: ../../development.rst:12
+msgid "You should fist clone it with ``git`` and move to the project dir::"
 msgstr ""
+"Vous devez tout d'abord le cloner avec ``git`` et aller dans le "
+"répertoire du projet::"
 
-#: ../../development/functional_architecture.rst:19
+#: ../../development.rst:17
+msgid "Create a Python virtual environment for the project::"
+msgstr "Créer un environnement virtuel Python pour le projet::"
+
+#: ../../development.rst:24
+msgid "Parsec requires Python >= 3.9"
+msgstr "Parsec nécessite Python >= 3.9"
+
+#: ../../development.rst:26
+#, fuzzy
+msgid "Install Parsec within the virtualenv::"
+msgstr "Installer Parsec dans l'environnement virtuel::"
+
+#: ../../development.rst:30
 msgid ""
-"Le composant GUI gérant l'interface utilisateur interagit avec le "
-"composant Core ou directement avec le système de fichiers natif, mais pas"
-" avec le composant Mountpoint. Contrairement au composant Mountpoint, la "
-"GUI souscrit aux événements exposés par le serveur de métadonnées, tels "
-"que les notifications en cas d’actions concurrentes, de suppression d'un "
-"groupe etc. cela afin d’en informer l’utilisateur."
+"Note the ``--editable`` option, this tell the virtualenv to directly rely"
+" on the source code within the parsec-cloud directory instead of copying "
+"it into it install directory. This way you don't need to reinstall the "
+"project each time you modify something in the project source code."
+msgstr ""
+"Notez l'option ``--editable``, sa présence est nécessaire pour "
+"directement utiliser le code présent dans le répertoire parsec-cloud au "
+"lieu de le copier dans le répertoire d'installation. De cette façon il "
+"n'est pas nécessaire de réinstaller le projet à chaque modification du "
+"code source."
+
+#: ../../development.rst:37
+msgid "Run the tests"
+msgstr "Lancer les tests"
+
+#: ../../development.rst:39
+msgid "Run the tests with pytest::"
+msgstr "Les tests se lancent avec pytest::"
+
+#: ../../development.rst:43
+msgid "On top of that, multiple options are available:"
+msgstr "En outre, plusieurs options sont disponibles :"
+
+#: ../../development.rst:46
+msgid "``--runmountpoint``"
 msgstr ""
 
-#: ../../development/functional_architecture.rst:25
-msgid "CORE"
+#: ../../development.rst:46
+msgid "Include mountpoint tests"
+msgstr "Inclus les tests du point de montage"
+
+#: ../../development.rst:47
+msgid "``--rungui``"
 msgstr ""
 
-#: ../../development/functional_architecture.rst:26
+#: ../../development.rst:47
+msgid "Include GUI tests"
+msgstr "Inclus les tests d'interface graphique"
+
+#: ../../development.rst:48
+msgid "``--runslow``"
+msgstr ""
+
+#: ../../development.rst:48
+msgid "Include slow tests"
+msgstr "Inclus les tests lents"
+
+#: ../../development.rst:49
+msgid "``--postgresql``"
+msgstr ""
+
+#: ../../development.rst:49
+msgid "Use PostgreSQL in the backend instead of a mock in memory"
+msgstr "Utilise PostgreSQL comme moteur de backend au lieu d'un mock en mémoire"
+
+#: ../../development.rst:50
+msgid "``-n 4``"
+msgstr ""
+
+#: ../../development.rst:50
+msgid "Run tests in parallel"
+msgstr "Lance les tests en parallèle"
+
+#: ../../development.rst:53
 msgid ""
-"Outre les deux fonctions précédentes, le composant Core intègre toute la "
-"logique du client et contient cinq sous-modules (Figure 3) dont les rôles"
-" sont les suivants :"
+"Note you can mix&match the flags, e.g. ``py.test tests --runmountpoint "
+"--postgresql --runslow -n auto``."
 msgstr ""
+"Notez qu'il est possible de mélanger ces options, par exemple ``py.test "
+"tests --runmountpoint --postgresql --runslow -n auto``."
 
-#: ../../development/functional_architecture.rst:29
+#: ../../development.rst:55
+#, fuzzy
 msgid ""
-"● Le Système de Fichiers Virtuels (VFS) reçoit toutes les requêtes "
-"relatives au système de fichiers en provenance du composant Mountpoint "
-"et, à cette fin, dispose d’une API qui simule une interface de système de"
-" fichiers. Pour optimiser ses performances, ce composant ne cherche pas à"
-" pousser les modifications jusqu’au serveur de métadonnées; il se "
-"contente de stocker de manière chiffrées les modifications sur le disque "
-"dur de la machine locale."
+"If you want to run GUI test, it is a good idea to install ``pytest-xvfb``"
+" in order to hide the Qt windows when running the GUI tests::"
 msgstr ""
+"Pour lancer les tests d'interface graphique, il est intéressant "
+"d'installer``pytest-xvfb`` afin de cacher les fenêtres Qt lorsque les "
+"tests se lancent::"
 
-#: ../../development/functional_architecture.rst:35
+#: ../../development.rst:63
+msgid "Run Parsec in local"
+msgstr "Lancer Parsec en local"
+
+#: ../../development.rst:65
 msgid ""
-"● Le Synchroniseur est le composant qui transfère périodiquement les "
-"données modifiées stockées sur la machine locale vers le serveur de "
-"métadonnées. Il s’occupe d’écouter les notifications du serveur de "
-"métadonnées en cas de modification des données par un autre terminal "
-"ainsi que de résoudre les conflits de version entre les données locales "
-"et celles du serveur de métadonnées."
+"You can use the ``run_testenv`` scripts to easily create a development "
+"environment:"
 msgstr ""
+"Il est possible d'utiliser le script ``run_testenv`` afin de facilement "
+"créer un environnement de développement :"
 
-#: ../../development/functional_architecture.rst:40
+#: ../../development.rst:67
+msgid "On linux::"
+msgstr "Sous linux::"
+
+#: ../../development.rst:71
+msgid "On Windows::"
+msgstr "Sous Windows::"
+
+#: ../../development.rst:75
+msgid "This script will:"
+msgstr "Ce script va :"
+
+#: ../../development.rst:77
+msgid "Start a development backend server with in-memory storage"
+msgstr ""
+"Démarrer un backend de développement avec un stockage de données en "
+"mémoire"
+
+#: ../../development.rst:78
 msgid ""
-"● Le Gestionnaire d’Identités stocke dans la mémoire locale l’identité de"
-" l’utilisateur connecté (sous la forme d’une session). La phrase de passe"
-" de l’utilisateur, qui n’est pas stockée, à laquelle on a rajouté un sel,"
-" chiffre la clé privée du terminal (DEVICE_SIG_S_KEY), ainsi que celle de"
-" l’utilisateur (USER_ENC_S_KEY) qui est partagée entre tous les terminaux"
-" de l’utilisateur. La DEVICE_SIG_S_KEY sert à signer une modification, et"
-" la USER_ENC_S_KEY sert à déchiffrer les métadonnées personnelles de "
-"l’utilisateur."
+"Configure environment variables to isolate the development environment "
+"from your global Parsec configuration"
 msgstr ""
+"Configurer les variables d'environnement pour isoler l'environnement de "
+"développement de la configuration globale de Parsec"
 
-#: ../../development/functional_architecture.rst:47
-msgid ""
-"● La Messagerie a pour rôle d’écouter les messages techniques "
-"(notifications) en provenance du serveur de métadonnées (le Core est lié "
-"via une socket TCP au serveur de métadonnées). Ces messages peuvent soit "
-"demander une action du Core (par exemple en cas de partage de fichier), "
-"soit être à but purement informatif et affichés sous la forme d’une "
-"notification."
-msgstr ""
+#: ../../development.rst:80
+msgid "Create a default organization"
+msgstr "Créer une organisation par défaut"
 
-#: ../../development/functional_architecture.rst:52
-msgid ""
-"● Le Partage gère les opérations de partage. S’il reçoit un message de "
-"partage de workspace, il déchiffre ce message et ajoute les entrées "
-"correspondantes dans le user manifest de l’utilisateur. Si des messages "
-"ont été envoyés alors qu’aucun des terminaux de l’utilisateur n’étaient "
-"connectés, ils sont gardés en file d’attente sur le serveur de "
-"métadonnées et traités à la connexion de l’utilisateur."
-msgstr ""
-
-#: ../../development/functional_architecture.rst:59
-msgid "Le serveur de métadonnées"
-msgstr ""
-
-#: ../../development/functional_architecture.rst:60
-msgid ""
-"Le serveur de métadonnées est dans un environnement distant et contient "
-"trois sous-modules :"
-msgstr ""
-
-#: ../../development/functional_architecture.rst:62
-msgid ""
-"● La Messagerie permet d’envoyer des notifications techniques aux "
-"utilisateurs"
-msgstr ""
-
-#: ../../development/functional_architecture.rst:64
-msgid ""
-"● Le Stockage des Données/Métadonnées. Les données des fichiers (les "
-"Blocks) sont stockées sur un service de stockages objet (AWS S3 ou "
-"OpenStack Swift), les métadonnées (les Vlobs, pour Versioned Blobs) sont "
-"stockées dans une base PostgreSQL"
-msgstr ""
-
-#: ../../development/functional_architecture.rst:68
-msgid ""
-"● Le module Notification des Terminaux - s’occupe d’envoyer des "
-"notifications aux terminaux connectés lors de modifications des données "
-"ou bien de la réception d’un nouveau message"
-msgstr ""
-
-#: ../../development/functional_architecture.rst:71
-msgid ""
-"● Le Gestionnaire de Clés Publiques contient une correspondance entre "
-"l’identité des utilisateurs/terminaux et leur clé publique "
-"(USER_ENC_P_KEY et DEVICE_SIG_P_KEY)."
-msgstr ""
-
-#: ../../development/index.rst:7
-msgid "Hack on Parsec"
-msgstr ""
-
-#~ msgid "Development"
-#~ msgstr "Développement"
-
-#~ msgid "Get the sources"
-#~ msgstr "Récupérer le code source"
-
-#~ msgid ""
-#~ "Source code is `available on github "
-#~ "<https://github.com/Scille/parsec-cloud>`_."
-#~ msgstr ""
-#~ "Le code du projet est `disponible "
-#~ "sur github <https://github.com/Scille/parsec-"
-#~ "cloud>`_."
-
-#~ msgid "You should fist clone it with ``git`` and move to the project dir::"
-#~ msgstr ""
-#~ "Vous devez tout d'abord le cloner "
-#~ "avec ``git`` et aller dans le "
-#~ "répertoire du projet::"
-
-#~ msgid "Create a Python virtual environment for the project::"
-#~ msgstr "Créer un environnement virtuel Python pour le projet::"
-
-#~ msgid "Parsec requires Python >= 3.9"
-#~ msgstr "Parsec nécessite Python >= 3.9"
-
-#~ msgid "Install Parsec within the virtualenv::"
-#~ msgstr "Installer Parsec dans l'environnement virtuel::"
-
-#~ msgid ""
-#~ "Note the ``--editable`` option, this "
-#~ "tell the virtualenv to directly rely "
-#~ "on the source code within the "
-#~ "parsec-cloud directory instead of copying"
-#~ " it into it install directory. This"
-#~ " way you don't need to reinstall "
-#~ "the project each time you modify "
-#~ "something in the project source code."
-#~ msgstr ""
-#~ "Notez l'option ``--editable``, sa présence "
-#~ "est nécessaire pour directement utiliser "
-#~ "le code présent dans le répertoire "
-#~ "parsec-cloud au lieu de le copier"
-#~ " dans le répertoire d'installation. De "
-#~ "cette façon il n'est pas nécessaire "
-#~ "de réinstaller le projet à chaque "
-#~ "modification du code source."
-
-#~ msgid "Run the tests"
-#~ msgstr "Lancer les tests"
-
-#~ msgid "Run the tests with pytest::"
-#~ msgstr "Les tests se lancent avec pytest::"
-
-#~ msgid "On top of that, multiple options are available:"
-#~ msgstr "En outre, plusieurs options sont disponibles :"
-
-#~ msgid "``--runmountpoint``"
-#~ msgstr ""
-
-#~ msgid "Include mountpoint tests"
-#~ msgstr "Inclus les tests du point de montage"
-
-#~ msgid "``--rungui``"
-#~ msgstr ""
-
-#~ msgid "Include GUI tests"
-#~ msgstr "Inclus les tests d'interface graphique"
-
-#~ msgid "``--runslow``"
-#~ msgstr ""
-
-#~ msgid "Include slow tests"
-#~ msgstr "Inclus les tests lents"
-
-#~ msgid "``--postgresql``"
-#~ msgstr ""
-
-#~ msgid "Use PostgreSQL in the backend instead of a mock in memory"
-#~ msgstr "Utilise PostgreSQL comme moteur de backend au lieu d'un mock en mémoire"
-
-#~ msgid "``-n 4``"
-#~ msgstr ""
-
-#~ msgid "Run tests in parallel"
-#~ msgstr "Lance les tests en parallèle"
-
-#~ msgid ""
-#~ "Note you can mix&match the flags, "
-#~ "e.g. ``py.test tests --runmountpoint "
-#~ "--postgresql --runslow -n auto``."
-#~ msgstr ""
-#~ "Notez qu'il est possible de mélanger "
-#~ "ces options, par exemple ``py.test tests"
-#~ " --runmountpoint --postgresql --runslow -n "
-#~ "auto``."
-
-#~ msgid ""
-#~ "If you want to run GUI test, "
-#~ "it is a good idea to install "
-#~ "``pytest-xvfb`` in order to hide "
-#~ "the Qt windows when running the "
-#~ "GUI tests::"
-#~ msgstr ""
-#~ "Pour lancer les tests d'interface "
-#~ "graphique, il est intéressant d'installer"
-#~ "``pytest-xvfb`` afin de cacher les "
-#~ "fenêtres Qt lorsque les tests se "
-#~ "lancent::"
-
-#~ msgid "Run Parsec in local"
-#~ msgstr "Lancer Parsec en local"
-
-#~ msgid ""
-#~ "You can use the ``run_testenv`` scripts"
-#~ " to easily create a development "
-#~ "environment:"
-#~ msgstr ""
-#~ "Il est possible d'utiliser le script "
-#~ "``run_testenv`` afin de facilement créer "
-#~ "un environnement de développement :"
-
-#~ msgid "On linux::"
-#~ msgstr "Sous linux::"
-
-#~ msgid "On Windows::"
-#~ msgstr "Sous Windows::"
-
-#~ msgid "This script will:"
-#~ msgstr "Ce script va :"
-
-#~ msgid "Start a development backend server with in-memory storage"
-#~ msgstr ""
-#~ "Démarrer un backend de développement "
-#~ "avec un stockage de données en "
-#~ "mémoire"
-
-#~ msgid ""
-#~ "Configure environment variables to isolate "
-#~ "the development environment from your "
-#~ "global Parsec configuration"
-#~ msgstr ""
-#~ "Configurer les variables d'environnement pour"
-#~ " isoler l'environnement de développement de"
-#~ " la configuration globale de Parsec"
-
-#~ msgid "Create a default organization"
-#~ msgstr "Créer une organisation par défaut"
-
-#~ msgid "Create multiple users and devices for this organization"
-#~ msgstr "Créer plusieurs utilisateurs et terminaux pour cette organisation"
+#: ../../development.rst:81
+msgid "Create multiple users and devices for this organization"
+msgstr "Créer plusieurs utilisateurs et terminaux pour cette organisation"
