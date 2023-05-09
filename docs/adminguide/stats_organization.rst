@@ -13,7 +13,7 @@ In order to extract organization statistics, the administrator needs to provide 
 
 .. code-block:: shell
 
-    $ parsec.cli core stats_organization --addr=parsec://example.com --administration-token=<s3cr3t> TestOrganization
+    $ parsec.cli core stats_organization --addr=parsec://example.com --administration-token=s3cr3t TestOrganization
 
     active_users: 31
     data_size: 130464340

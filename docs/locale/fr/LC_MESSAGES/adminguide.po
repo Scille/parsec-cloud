@@ -89,8 +89,8 @@ msgid "The output filename"
 msgstr "Le nom du fichier de sortie"
 
 #: ../../adminguide/stats_server.rst:14
-msgid "The output file format which can be csv or json"
-msgstr "Le format du fichier de sortie, peut être en csv ou json"
+msgid "The output file format which can be CSV or JSON"
+msgstr "Le format du fichier de sortie, peut être en CSV ou JSON"
 
 #: ../../adminguide/stats_server.rst:20
 msgid "Information available in the extraction are :"
