@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use paste::paste;
 use std::{
     marker::PhantomData,
     sync::{Arc, Mutex},
@@ -7,7 +8,6 @@ use std::{
 
 use libparsec_protocol::ApiVersion;
 use libparsec_types::prelude::*;
-use paste::paste;
 
 macro_rules! impl_event_bus_internal_and_event_bus_debug {
     ($([$event_struct:ident, $field_on_event_cbs:ident])*) => {
@@ -18,11 +18,21 @@ macro_rules! impl_event_bus_internal_and_event_bus_debug {
             )*
         }
 
+        impl Default for EventBusInternal {
+            fn default() -> Self {
+                Self{
+                    $(
+                    $field_on_event_cbs: Mutex::new(vec![]),
+                    )*
+                }
+            }
+        }
+
         impl std::fmt::Debug for EventBus {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 let mut f = f.debug_struct("EventBus");
                 $(
-                let count = self.0.$field_on_event_cbs
+                let count = self.internal.$field_on_event_cbs
                     .lock()
                     .expect("Mutex is poisoned")
                     .len();
@@ -33,25 +43,14 @@ macro_rules! impl_event_bus_internal_and_event_bus_debug {
                 f.finish()
             }
         }
-
-        impl Default for EventBus {
-            fn default() -> Self {
-                Self(Arc::new(EventBusInternal {
-                    $(
-                    $field_on_event_cbs: Mutex::new(vec![]),
-                    )*
-                }))
-            }
-        }
     };
 }
 
 macro_rules! impl_broadcastable {
     ($event_struct:ident, $field_on_event_cbs:ident) => {
         impl Broadcastable for $event_struct {
-            fn send(&self, event_bus: &EventBus) {
+            fn send(&self, event_bus: &EventBusInternal) {
                 let guard = event_bus
-                    .0
                     .$field_on_event_cbs
                     .lock()
                     .expect("Mutex is poisoned");
@@ -60,21 +59,23 @@ macro_rules! impl_broadcastable {
                 }
             }
             fn connect(
-                event_bus: &EventBus,
+                event_bus: Arc<EventBusInternal>,
                 callback: Box<dyn Fn(&Self) + Send>,
             ) -> EventBusConnectionLifetime<Self> {
-                let mut guard = event_bus
-                    .0
-                    .$field_on_event_cbs
-                    .lock()
-                    .expect("Mutex is poisoned");
-                let fatptr: *const _ = callback.as_ref();
-                let ptr = fatptr as *const () as usize;
-                guard.push(callback);
+                let ptr = {
+                    let mut guard = event_bus
+                        .$field_on_event_cbs
+                        .lock()
+                        .expect("Mutex is poisoned");
+                    let fatptr: *const _ = callback.as_ref();
+                    let ptr = fatptr as *const () as usize;
+                    guard.push(callback);
+                    ptr
+                };
                 EventBusConnectionLifetime {
                     ptr,
                     phantom: PhantomData,
-                    event_bus: event_bus.0.clone(),
+                    event_bus,
                 }
             }
             fn disconnect(event_bus: &EventBusInternal, ptr: usize) {
@@ -160,12 +161,19 @@ pub enum IncompatibleServerReason {
 }
 
 impl_events!(
+    // Dummy event for tests only
     Ping { ping: String },
+    // Events related to server connection
     Offline,
     Online,
+    MissedServerEvents,
     ExpiredOrganization,
     RevokedUser,
     IncompatibleServer(IncompatibleServerReason),
+    // Events related to monitors
+    CertificatesMonitorCrashed(anyhow::Error),
+    InvalidCertificate(crate::certificates_ops::InvalidCertificateError),
+    // Re-publishing of `events_listen`
     CertificatesUpdated { certificate: Bytes },
     MessageReceived {
         index: u64,
@@ -196,20 +204,79 @@ pub trait Broadcastable: Send
 where
     Self: Sized,
 {
-    fn send(&self, event_bus: &EventBus);
+    fn send(&self, event_bus: &EventBusInternal);
     fn connect(
-        event_bus: &EventBus,
+        event_bus: Arc<EventBusInternal>,
         callback: Box<dyn Fn(&Self) + Send>,
     ) -> EventBusConnectionLifetime<Self>;
     fn disconnect(event_bus: &EventBusInternal, ptr: usize);
 }
 
+enum ServerState {
+    Online,
+    Offline,
+}
+
+struct ServerStateListener {
+    watch: tokio::sync::watch::Receiver<ServerState>,
+    _lifetimes: (
+        EventBusConnectionLifetime<EventOnline>,
+        EventBusConnectionLifetime<EventOffline>,
+    ),
+}
+
+impl ServerStateListener {
+    fn new(event_bus: &Arc<EventBusInternal>) -> Self {
+        let (tx, rx) = tokio::sync::watch::channel(ServerState::Offline);
+        let tx_online = Arc::new(Mutex::new(tx));
+        let tx_offline = tx_online.clone();
+        let lifetimes = (
+            EventOnline::connect(
+                event_bus.clone(),
+                Box::new(move |_| {
+                    let _ = tx_online
+                        .lock()
+                        .expect("Mutex is poisoned")
+                        .send(ServerState::Online);
+                }),
+            ),
+            EventOffline::connect(
+                event_bus.clone(),
+                Box::new(move |_| {
+                    let _ = tx_offline
+                        .lock()
+                        .expect("Mutex is poisoned")
+                        .send(ServerState::Offline);
+                }),
+            ),
+        );
+        Self {
+            watch: rx,
+            _lifetimes: lifetimes,
+        }
+    }
+}
+
 #[derive(Clone)]
-pub struct EventBus(Arc<EventBusInternal>);
+pub struct EventBus {
+    internal: Arc<EventBusInternal>,
+    server_state: Arc<tokio::sync::Mutex<ServerStateListener>>,
+}
+
+impl Default for EventBus {
+    fn default() -> Self {
+        let internal = Arc::new(EventBusInternal::default());
+        let server_state = Arc::new(tokio::sync::Mutex::new(ServerStateListener::new(&internal)));
+        Self {
+            internal,
+            server_state,
+        }
+    }
+}
 
 impl EventBus {
     pub fn send(&self, event: &impl Broadcastable) {
-        event.send(self);
+        event.send(&self.internal);
     }
 
     #[must_use]
@@ -218,7 +285,20 @@ impl EventBus {
         F: Fn(&B) + Send + 'static,
         B: Broadcastable + 'static,
     {
-        B::connect(self, Box::new(callback))
+        B::connect(self.internal.clone(), Box::new(callback))
+    }
+
+    pub async fn wait_server_online(&self) {
+        let mut guard = self.server_state.lock().await;
+        if let ServerState::Online = *guard.watch.borrow_and_update() {
+            return;
+        }
+        // The server is currently offline, must wait !
+        guard
+            .watch
+            .wait_for(|state| matches!(*state, ServerState::Online))
+            .await
+            .expect("Same lifetime for senders&receiver");
     }
 }
 
@@ -226,6 +306,7 @@ pub struct EventBusConnectionLifetime<B>
 where
     B: Broadcastable,
 {
+    // Pointer on the callback's box, we use it as a unique identifier when disconnecting
     ptr: usize,
     phantom: PhantomData<B>,
     event_bus: Arc<EventBusInternal>,

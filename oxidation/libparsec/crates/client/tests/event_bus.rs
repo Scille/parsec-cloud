@@ -11,11 +11,18 @@ fn debug_format() {
 
     let eb = EventBus::default();
 
-    p_assert_eq!(format!("{:?}", eb), "EventBus");
+    // Online/Offline events are allways registered internally
+    p_assert_eq!(
+        format!("{:?}", eb),
+        "EventBus { on_offline_cbs: 1, on_online_cbs: 1 }"
+    );
 
     let _lifetime = eb.connect(callback);
 
-    p_assert_eq!(format!("{:?}", eb), "EventBus { on_ping_cbs: 1 }");
+    p_assert_eq!(
+        format!("{:?}", eb),
+        "EventBus { on_ping_cbs: 1, on_offline_cbs: 1, on_online_cbs: 1 }"
+    );
 }
 
 #[test]
