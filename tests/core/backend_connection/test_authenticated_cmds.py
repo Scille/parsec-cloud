@@ -135,7 +135,7 @@ async def test_handshake_revoked_device(running_backend, alice, bob):
 
 @pytest.mark.trio
 async def test_organization_expired(running_backend, alice, expiredorg):
-    # Organization expiration is checked before user existance, so we can
+    # Organization expiration is checked before user existence, so we can
     # use a dummy user for this test
     expiredorg_alice = LocalDevice.generate_new_device(
         organization_addr=expiredorg.addr,

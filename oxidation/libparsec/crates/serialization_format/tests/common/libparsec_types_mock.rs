@@ -3,7 +3,7 @@
 // We don't want to have this crate depend on `libparsec_types` for it test
 // given `libparsec_types` itself uses this crate... hence in case of bug in
 // this crate we wouldn't be able to use the tests !
-// So here we simulate `liparsec_types` by implementing the bare minimum that
+// So here we simulate `libparsec_types` by implementing the bare minimum that
 // our macros need.
 
 pub type Integer = i64;

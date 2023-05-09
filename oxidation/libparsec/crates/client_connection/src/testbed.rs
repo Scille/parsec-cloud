@@ -55,14 +55,14 @@ impl ResponseMock {
 }
 
 // We want the testbed to return an async function pointer to mock client requests.
-// In Rust this is increadibly cumbersome to do:
+// In Rust this is incredibly cumbersome to do:
 // - `*SendHookFn` can have multiple implementation, so it must be boxed
 // - async function is considered as a regular function that return a future...
 // - ...future which must be wrapped in a pinned box given it can have multiple
 //   implementations
 // - `*SendHookFn` is going to be stored in structure that use `Debug`, so
 //   it must implement those traits itself.
-//   Due to Rust's orphan rule, the only way to do that is to indroduce our own trait
+//   Due to Rust's orphan rule, the only way to do that is to introduce our own trait
 //   `*SendHookFnT` on which we implement `Debug`.
 //   From that, `SendHookFnT` must be auto-implemented on each closure that respect
 //   the send hook signature.

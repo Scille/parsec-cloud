@@ -379,7 +379,7 @@ impl CertificatesStorage {
             .await
     }
 
-    /// We never remove nor replace certificates, as a certifacet is immutable (a new
+    /// We never remove nor replace certificates, as a certificate is immutable (a new
     /// certificate should be issued to represent a modification, e.g. for realm role)
     /// So if the server start sending certificates that doesn't match with the one we
     /// currently have stored, it means somebody is acting fishy !
@@ -395,7 +395,7 @@ impl CertificatesStorage {
         let _update_guard = self.lock_update.lock().await;
 
         // It's unlikely the certificate is already present, so we don't check for it
-        // existance in cache and rely instead on the unique violation error from SQlite
+        // existence in cache and rely instead on the unique violation error from SQlite
         self.db
             .exec(move |conn| {
                 conn.immediate_transaction(|conn| {

@@ -27,7 +27,7 @@ from parsec.api.protocol.base import (
     unpackb,
 )
 
-# TODO: Tests should use the json shema instead of this
+# TODO: Tests should use the json schema instead of this
 from parsec.api.protocol.cmds import (
     ANONYMOUS_CMDS,
     AUTHENTICATED_CMDS,

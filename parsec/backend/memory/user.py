@@ -398,7 +398,7 @@ class MemoryUserComponent(BaseUserComponent):
         if user.revoked_on or user.profile == new_profile:
             raise UserAlreadyExistsError()
 
-        # TODO: check all user/device/realm roles certifiactes creation date against `updated_on`
+        # TODO: check all user/device/realm roles certificates creation date against `updated_on`
         # and raise `UserRequireGreaterTimestampError`
 
         # TODO: check the last vlob the updated user has uploaded is not posterior to

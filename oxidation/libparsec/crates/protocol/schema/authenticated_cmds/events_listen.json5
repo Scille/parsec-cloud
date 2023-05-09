@@ -14,7 +14,7 @@
                 "unit": "APIEvent"
             },
             {
-                // Returned if the command is used through the regualr rpc route
+                // Returned if the command is used through the regular rpc route
                 // instead of the SSE one
                 "status": "not_available"
             }

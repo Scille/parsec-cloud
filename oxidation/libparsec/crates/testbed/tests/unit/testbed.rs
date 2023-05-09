@@ -15,7 +15,7 @@ pub fn generate_stability() {
 }
 
 #[test]
-pub fn get_template_statibility() {
+pub fn get_template_stability() {
     let a1 = get_template("minimal");
     let a2 = get_template("minimal");
     assert!(Arc::ptr_eq(&a1, &a2));

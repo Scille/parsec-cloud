@@ -80,7 +80,7 @@ fn check_author_allow_root(
 }
 
 pub enum UnsecureSkipValidationReason {
-    // Certificate must have been valided prior to being added to the local storage,
+    // Certificate must have been validated prior to being added to the local storage,
     // on top of that the certificate are store encrypted so they cannot be tempered.
     // Hence it's safe not to validate the certificate when reading thom from the
     // local storage.

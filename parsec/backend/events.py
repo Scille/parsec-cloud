@@ -268,7 +268,7 @@ class EventsComponent:
             _on_event,  # type: ignore
         )
 
-        # We must do that here to be righ after even bus connection, but before any
+        # We must do that here to be right after even bus connection, but before any
         # async operation, otherwise a concurrent event may be handled by the registered
         # callbacks and also appear in the cache (and in the end we will send to the
         # client this event twice !)

@@ -148,7 +148,7 @@ impl CertificatesOps {
                         // supposed to be added in a strictly causal order, hence
                         // we are supposed to have already added all the certificates
                         // needed to validate this one. And if that's not the case
-                        // it's suspicious and error sould be raised !
+                        // it's suspicious and error should be raised !
                         return Err(InvalidCertificateError::UnknownAuthor {
                             hint: $unsecure.hint(),
                             author: $author.clone(),

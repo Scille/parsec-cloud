@@ -118,7 +118,7 @@ table! {
         // The format for `hint` is "<field_name>:<field_value> <field_name>:<field_value>..."
         // For instance:
         // - User & revoked user certificates: "user_id:2199bb7d21ec4988825db6bcf9d7a43e"
-        // - Realm role certficate: "user_id:2199bb7d21ec4988825db6bcf9d7a43e realm_id:dcf41c521cae4682a4cf29302e2af1b6"
+        // - Realm role certificate: "user_id:2199bb7d21ec4988825db6bcf9d7a43e realm_id:dcf41c521cae4682a4cf29302e2af1b6"
         // - Device certificate: "user_id:2199bb7d21ec4988825db6bcf9d7a43e device_name:78c339d140664e909961c05b4d9add4c"
         // - sequester service certificate: "service_id:1fc552746e1e4a27aa9fd2aa9c8c95cc"
         // - Sequester authority: "" (nothing to index)

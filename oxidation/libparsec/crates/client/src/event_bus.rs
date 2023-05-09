@@ -91,7 +91,7 @@ macro_rules! impl_broadcastable {
                         // th comparison is done on the fat pointer (i.e. both the pointer
                         // on the data and the pointer on the vtable).
                         // see: https://github.com/rust-lang/rust/issues/106447
-                        // So the solution is to manualy transform the fat pointer into
+                        // So the solution is to manually transform the fat pointer into
                         // a thin one (i.e. the pointer on the data)
                         let e_fatptr: *const _ = e.as_ref();
                         let e_thinptr = e_fatptr as *const () as usize;
