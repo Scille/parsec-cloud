@@ -198,15 +198,14 @@
 
 <script setup lang="ts">
 import {
-  IonContent,
-  IonInput,
   IonPage,
+  IonContent,
   IonCard,
   IonCardContent,
   IonCardTitle,
+  IonButtons,
   IonButton,
   IonIcon,
-  IonButtons,
   IonText,
   IonRow,
   IonCol,
@@ -453,6 +452,7 @@ async function openPopover(ev: Event): Promise<void> {
   &__logo {
     display: flex;
     width: 100%;
+
     img {
       width: 25%;
       height: 100%;
@@ -510,6 +510,7 @@ async function openPopover(ev: Event): Promise<void> {
     margin-left: auto;
     margin-right: 1.5rem;
   }
+
   .topbar-button__item, .sc-ion-buttons-md-s .button {
     border: 1px solid var(--parsec-color-light-secondary-light);
     color: var(--parsec-color-light-primary-700);
@@ -647,7 +648,7 @@ async function openPopover(ev: Event): Promise<void> {
   .login-button-container {
     text-align: right;
 
-    .login-button{
+    .login-button {
       margin: 0;
     }
   }

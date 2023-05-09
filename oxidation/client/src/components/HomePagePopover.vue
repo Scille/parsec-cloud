@@ -75,7 +75,7 @@ const { t } = useI18n();
     margin-bottom: 1rem;
   }
 
-  &:hover{
+  &:hover {
     --background: var(--parsec-color-light-primary-30);
     color: var(--parsec-color-light-primary-600);
   }
