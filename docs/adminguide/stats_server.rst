@@ -11,11 +11,11 @@ In order to extract server statistics, the administrator needs to provide :
 - The ``administration_token`` configured in the parsec metadata server
 - The extraction date, ignore everything after the date
 - The output filename
-- The output file format which can be csv or json
+- The output file format which can be CSV or JSON
 
 .. code-block:: shell
 
-    parsec.cli core stats_server --addr=parsec://example.com --administration-token=<s3cr3t> --at 2023-05-13 --output 202001-my_server_stats.csv --format=csv
+    parsec.cli core stats_server --addr=parsec://example.com --administration-token=s3cr3t --at 2023-05-13 --output 202001-my_server_stats.csv --format=csv
 
 Information available in the extraction are :
 
