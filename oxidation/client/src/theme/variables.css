@@ -5,13 +5,10 @@ http://ionicframework.com/docs/theming/ */
   font-family: 'montserrat';
   font-style: normal;
   src: url('../assets/fonts/montserrat-VariableFont.ttf');
-  src: url('../assets/fonts/montserrat-VariableFont.ttf');
 }
 
 @font-face {
   font-family: 'montserrat';
-  font-style: italic;
-  src: url('../assets/fonts/montserrat-Italic-VariableFont.ttf');
   font-style: italic;
   src: url('../assets/fonts/montserrat-Italic-VariableFont.ttf');
 }
@@ -293,6 +290,7 @@ body.dark {
 
 
 /* ** title ** */
+
 .title-h1-lg {
   font-size: 40px;
   line-height: 120%;
@@ -491,7 +489,6 @@ body.dark {
   letter-spacing: 0.4px;
 }
 
-
 /**** Global CSS overloads ****/
 
 /* ion-modal having auto width/height will be available in a future ionic release:
@@ -502,6 +499,7 @@ https: //github.com/ionic-team/ionic-framework/issues/24080 */
   --inner-border-width: 0px;
   --box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
 }
+
 /* popover global */
 ion-popover {
   --width: 300px;
@@ -560,6 +558,10 @@ ion-modal.join-by-link-modal::part(content) {
 
 ion-modal.one-line-modal::part(content) {
   height: 210px;
+}
+
+.header-md::after {
+  background-image: none;
 }
 
 .header-md::after {

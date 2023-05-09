@@ -76,7 +76,7 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build wheel
-        uses: pypa/cibuildwheel@02ad79a31bf7aa0eee07f690509048d2fb9fd445  # pin v2.12.1
+        uses: pypa/cibuildwheel@5e15bb25b428e1bf2daf2215f173d2b40135f56f  # pin v2.12.3
         with:
           output-dir: dist
         timeout-minutes: 50
@@ -233,7 +233,7 @@ jobs:
         run: find . -type f ! -name '*.whl' -delete
 
       - name: Publish wheel on PyPI
-        uses: pypa/gh-action-pypi-publish@48b317d84d5f59668bb13be49d1697e36b3ad009 # pin v1.8.3
+        uses: pypa/gh-action-pypi-publish@0bf742be3ebe032c25dd15117957dc15d0cfc38d # pin v1.8.5
         with:
           user: __token__
           password: ${{ secrets.PYPI_CREDENTIALS }}
@@ -243,7 +243,7 @@ jobs:
     needs: package-wheel
     runs-on: windows-2022
     steps:
-      - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435  # pin v4.5.0
+      - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b  # pin v4.6.0
         with:
           python-version: ${{ env.python-version }}
 
@@ -308,7 +308,7 @@ jobs:
       - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # pin v3.5.0
         timeout-minutes: 5
 
-      - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435  # pin v4.5.0
+      - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b  # pin v4.6.0
         id: setup-python
         with:
           python-version: ${{ env.python-version }}
@@ -397,7 +397,7 @@ jobs:
       - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # pin v3.5.0
         timeout-minutes: 5
 
-      - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435  # pin v4.5.0
+      - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b  # pin v4.6.0
         id: setup-python
         with:
           python-version: ${{ env.python-version }}

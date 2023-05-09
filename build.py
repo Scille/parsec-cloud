@@ -32,6 +32,7 @@ def run(cmd: str, **kwargs) -> subprocess.CompletedProcess:
 
 def build():
     run(f"{PYTHON_EXECUTABLE_PATH} --version")
+    run(f"maturin --version")
 
     if os.environ.get("POETRY_PYQT_BUILD_STRATEGY", "") != "no_build":
         run(f"{PYTHON_EXECUTABLE_PATH} misc/generate_pyqt.py")
