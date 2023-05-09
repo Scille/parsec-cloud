@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Union
+from typing import Union
 
 from parsec._parsec_pyi.crypto import VerifyKey
 from parsec._parsec_pyi.enumerate import InvitationType
@@ -164,7 +164,7 @@ class BackendInvitationAddr(BackendAddr):
     def __init__(
         self,
         organization_id: OrganizationID,
-        invitation_type: Any,  # TODO: find correct type
+        invitation_type: InvitationType,
         token: InvitationToken,
         hostname: str,
         port: int | None,
@@ -182,7 +182,7 @@ class BackendInvitationAddr(BackendAddr):
     @property
     def organization_id(self) -> OrganizationID: ...
     @property
-    def invitation_type(self) -> Any: ...
+    def invitation_type(self) -> InvitationType: ...
     @property
     def token(self) -> InvitationToken: ...
     def get_backend_addr(self) -> BackendAddr: ...
