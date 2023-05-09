@@ -113,7 +113,9 @@
             "dark": "Sombre",
             "light": "Clair",
             "system": "Système"
-        }
+        },
+        "general": "Général",
+        "advanced": "Avancé"
     },
     "WorkspacesPage": {
         "createWorkspace": "Créer un espace de travail",

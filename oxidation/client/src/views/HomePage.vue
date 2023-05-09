@@ -28,6 +28,17 @@
                   />
                   {{ $t('HomePage.topbar.settings') }}
                 </ion-button>
+                <ion-button
+                  fill="clear"
+                  @click="openSettingsModal()"
+                  id="settings-button"
+                >
+                  <ion-icon
+                    slot="start"
+                    :icon="cog"
+                  />
+                  {{ $t('HomePage.topbar.settings') }}New
+                </ion-button>
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -231,6 +242,7 @@ import { useI18n } from 'vue-i18n';
 import { onMounted, ref, toRaw, computed, inject, Ref } from 'vue';
 import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
 import CreateOrganization from '@/components/CreateOrganizationModal.vue';
+import SettingsModal from '@/components/SettingsModal.vue';
 import OrganizationCard from '@/components/OrganizationCard.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import SearchInput from '@/components/SearchInput.vue';
@@ -377,6 +389,16 @@ async function openCreateOrganizationModal(): Promise<void> {
   if (role === 'confirm') {
     console.log(data);
   }
+}
+
+async function openSettingsModal(): Promise<void> {
+  const modal = await modalController.create({
+    component: SettingsModal,
+    cssClass: 'settings-modal'
+  });
+  await modal.present();
+
+  const { data, role } = await modal.onWillDismiss();
 }
 
 async function canDismissModal(): Promise<boolean> {
