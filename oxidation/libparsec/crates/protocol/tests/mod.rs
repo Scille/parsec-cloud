@@ -3,7 +3,6 @@
 mod test_block;
 mod test_common;
 mod test_events;
-mod test_handshake;
 mod test_invite;
 mod test_message;
 mod test_organization;
