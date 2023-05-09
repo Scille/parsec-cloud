@@ -1399,8 +1399,6 @@ dependencies = [
  "libparsec_serialization_format",
  "libparsec_tests_fixtures",
  "libparsec_types",
- "paste",
- "rand 0.8.5",
  "rmp-serde",
  "serde",
  "serde_json",
