@@ -23,6 +23,6 @@ pretty_assertions = "1.3.0"
 
 # TODO: Currently `parsec_test` doesn't support web
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { version = "1.27.0", features = ["fs", "sync"] }
+tokio = { version = "1.28.0", features = ["fs", "sync"] }
 
 # No dev-dependencies: this crate is itself only used in other crates' own dev-dependencies

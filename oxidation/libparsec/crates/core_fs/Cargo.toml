@@ -34,4 +34,4 @@ libparsec_tests_fixtures = { path = "../tests_fixtures" }
 libparsec_testbed = { path = "../testbed" }
 libparsec_platform_storage = { path = "../platform_storage", features = ["test-utils"] }
 
-tokio = { version = "1.27.0", features = ["macros"]}
+tokio = { version = "1.28.0", features = ["macros"]}

@@ -13,7 +13,7 @@ libparsec_platform_async = { path = "../platform_async" }
 libparsec_platform_storage2 = { path = "../platform_storage2" }
 libparsec_protocol = { path = "../protocol" }
 
-tokio = { version = "1.27.0", features = ["rt", "time", "sync", "macros"] }
+tokio = { version = "1.28.0", features = ["rt", "time", "sync", "macros"] }
 paste = "1.0.12"
 log = "0.4.17"
 
