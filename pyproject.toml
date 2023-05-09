@@ -141,7 +141,7 @@ mypy = "^0.982"
 
 setuptools = ">=63.1,<68.0"
 
-maturin = "^0.14.10"
+maturin = "0.14.15"
 patchelf = { version = "^0.17.2.0", markers = "platform_system=='Linux'" }
 
 cibuildwheel = "v2.12.3"
@@ -219,8 +219,8 @@ known-first-party = ["parsec"]
 requires = [
     "poetry-core>=1.0.0",
     "setuptools",
-    "maturin~=0.14",
-    "maturin[patchelf]~=0.14; platform_system=='Linux'",
+    "maturin==0.14.15",
+    "maturin[patchelf]==0.14.15; platform_system=='Linux'",
     "patchelf~=0.17.2.0; platform_system=='Linux'",
     "PyQt5~=5.15",
     "Babel~=2.10",
