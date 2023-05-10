@@ -5,7 +5,9 @@
     <!-- top -->
     <ion-header class="ion-margin-bottom">
       <ion-toolbar>
-        <ion-title>{{ $t('SettingsPage.pageTitle') }}</ion-title>
+        <ion-title class="title-h2">
+          {{ $t('SettingsPage.pageTitle') }}
+        </ion-title>
         <ion-buttons slot="end">
           <ion-button
             slot="icon-only"
@@ -25,57 +27,52 @@
         <!-- menu list -->
         <ion-radio-group
           v-model="showTOS"
-          value="parsecServer"
+          value="general"
           class="menu-list"
         >
           <ion-radio
             slot="start"
-            value="parsecServer"
+            value="general"
             class="menu-list__item"
           >
-            <ion-icon
-              :icon="cog"
-            />
-            <ion-text class="body">
-              {{ $t('SettingsPage.general') }}
-            </ion-text>
+            <div class="item-container">
+              <ion-icon
+                :icon="cog"
+              />
+              <ion-text class="body">
+                {{ $t('SettingsPage.general') }}
+              </ion-text>
+            </div>
           </ion-radio>
           <ion-radio
             slot="start"
-            value="myOwnServer"
+            value="advanced"
             class="menu-list__item"
           >
-            <ion-icon
-              :icon="options"
-            />
-            <ion-text class="body">
-              {{ $t('SettingsPage.advanced') }}
-            </ion-text>
+            <div class="item-container">
+              <ion-icon
+                :icon="options"
+              />
+              <ion-text class="body">
+                {{ $t('SettingsPage.advanced') }}
+              </ion-text>
+            </div>
           </ion-radio>
         </ion-radio-group>
         <!-- list item content -->
         <div class="menu-item-content">
           <!-- general -->
           <div
-            v-if="showTOS != 'myOwnServer'"
+            v-if="showTOS != 'advanced'"
             class="settings-general"
           >
             <ion-list>
               <!-- synchro wifi -->
-              <ion-item>
-                <ion-toggle
-                  class="toggle-settings"
-                >
-                  <div class="toggle-settings__content">
-                    <ion-text class="body">
-                      {{ $t('SettingsPage.synchroWifi.title') }}
-                    </ion-text>
-                    <ion-text class="body-sm">
-                      {{ $t('SettingsPage.synchroWifi.description') }}
-                    </ion-text>
-                  </div>
-                </ion-toggle>
-              </ion-item>
+              <settings-option
+                :title="$t('SettingsPage.synchroWifi.title')"
+                :description="$t('SettingsPage.synchroWifi.description')"
+                :value="config.synchroWifi"
+              />
               <!-- change lang -->
               <ion-item>
                 <ion-select
@@ -100,6 +97,10 @@
             class="settings-advanced"
           >
             <ion-text>Avancé</ion-text>
+            <settings-option
+              :title="$t('SettingsPage.enableTelemetry')"
+              :description="$t('SettingsPage.enableTelemetryDescription')"
+            />
           </div>
         </div>
       </div>
@@ -169,12 +170,13 @@ import { onMounted } from '@vue/runtime-core';
 import { toggleDarkMode } from '@/states/darkMode';
 import { Config, StorageManager } from '@/services/storageManager';
 import { storageManagerKey } from '@/main';
+import SettingsOption from './SettingsOption.vue';
 
 const { locale } = useI18n();
 const storageManager = inject(storageManagerKey)!;
 const config = ref<Config>(structuredClone(StorageManager.DEFAULT_CONFIG));
 const ownServerUrl = ref('');
-const showTOS = ref('parsecServer');
+const showTOS = ref('general');
 
 function closeModal(): Promise<boolean> {
   return modalController.dismiss(null, 'cancel');
@@ -210,12 +212,16 @@ onMounted(async (): Promise<void> => {
     gap: 0.5rem;
 
     &__item {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.75rem 0.5em;
       color: var(--parsec-color-light-secondary-text);
       border-radius: 4px;
+
+      .item-container{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 0.5em;
+        gap: .5rem;
+      }
 
       &::part(container) {
         display: none;
@@ -237,20 +243,10 @@ onMounted(async (): Promise<void> => {
 }
 
 .menu-item-content {
-  background: red;
+  // background: red;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-
-  .toggle-settings {
-    display: flex;
-
-    &__content {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-  }
 }
 
 .flex-row {
