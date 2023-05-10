@@ -7,7 +7,7 @@ from typing import Any, AsyncIterator, Awaitable, Callable, Generic, TypeVar, ca
 import attr
 import trio
 import trio_typing
-from exceptiongroup import BaseExceptionGroup
+#from exceptiongroup import BaseExceptionGroup
 from structlog import get_logger
 
 from parsec import service_nursery
@@ -240,7 +240,8 @@ def collapse_exception_group(exception_group: BaseExceptionGroup[E]) -> Exceptio
         return result
     except Exception:
         # Something went wrong while collapsing
-        logger.exception("Could not create a collapsed exception")
+        #logger.exception("Could not create a collapsed exception")
+        print("here")
         return pick
 
 

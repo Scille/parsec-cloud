@@ -92,7 +92,11 @@ async def _clear_directory(
     workspace_fs: WorkspaceFS,
     folder_manifest: FolderManifest | WorkspaceManifest,
 ) -> None:
+
     local_children_keys = [p.name for p in await local_path.iterdir()]
+    print("début")
+    print(type(local_children_keys[0]))
+    print("fin")
     for name in folder_manifest.children.keys():
         if name.str not in local_children_keys:
             absolute_path = FsPath(workspace_directory_path / name)

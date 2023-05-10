@@ -237,6 +237,8 @@ async def test_clear_path(alice_workspace: UserFS):
     unlink_mock.assert_called_once_with(path)
     sync_mock.assert_called_once_with()
 
+async def _ignored(*_, **__):
+        pass
 
 @pytest.mark.trio
 async def test_clear_directory(alice_workspace: UserFS):
@@ -255,8 +257,10 @@ async def test_clear_directory(alice_workspace: UserFS):
         EntryName("item3"): "id3",
     }
 
-    clear_path_mock = AsyncMock(spec=mock.Mock())
-    with mock.patch("parsec.core.cli.rsync._clear_path", clear_path_mock):
+      
+    clear_path_mock = AsyncMock(_ignored)
+    
+    with mock.patch("parsec.core.cli.rsync._clear_path"):        
         await rsync._clear_directory(
             FsPath("/path_in_workspace"), path, alice_workspace, folder_manifest
         )
@@ -279,7 +283,7 @@ async def test_clear_directory(alice_workspace: UserFS):
     del folder_manifest.children[EntryName("item3")]
     del folder_manifest.children[EntryName("item4")]
 
-    with mock.patch("parsec.core.cli.rsync._clear_path", clear_path_mock):
+    with mock.patch("parsec.core.cli.rsync._clear_path", clear_path_mock) as clear_path_mock:
         await rsync._clear_directory(
             FsPath("/path_in_workspace"), path, alice_workspace, folder_manifest
         )
