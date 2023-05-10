@@ -89,7 +89,9 @@ def get_prevent_sync_pattern(prevent_sync_pattern_path: Path | None = None) -> R
         pattern = _get_prevent_sync_pattern(prevent_sync_pattern_path)
     # Default to the pattern from the ignore file in the core resources
     if pattern is None:
-        with importlib.resources.files(core_resources).joinpath("default_pattern.ignore") as path:  # type: ignore[attr-defined]
+        path = Path(importlib.resources.files(core_resources)).joinpath("default_pattern.ignore")
+        # Do something with the file
+        with open(path) as file:
             pattern = _get_prevent_sync_pattern(path)
     # As a last resort use the failsafe
     if pattern is None:
