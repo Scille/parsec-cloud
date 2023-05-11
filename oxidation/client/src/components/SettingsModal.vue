@@ -79,6 +79,7 @@
                 v-model="config.synchroWifiOnly"
               />
               <!-- change lang -->
+              <!-- dropdown needs to be change depending on this issue : https://github.com/Scille/parsec-cloud/issues/4527 -->
               <ion-item>
                 <ion-select
                   interface="popover"
@@ -95,6 +96,7 @@
                 </ion-select>
               </ion-item>
               <!-- change theme -->
+              <!-- dropdown needs to be change depending on this issue : https://github.com/Scille/parsec-cloud/issues/4527 -->
               <ion-item>
                 <ion-select
                   interface="popover"
