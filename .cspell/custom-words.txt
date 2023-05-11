@@ -421,6 +421,7 @@ userguide
 userspace
 userto
 usertotal
+unsync
 vacuum
 Vacuum
 verifykey
