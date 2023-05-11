@@ -12,7 +12,8 @@
     </div>
     <ion-toggle
       class="toggle-settings__toggle"
-      ref="toggle"
+      :checked="modelValue"
+      @ion-change="$emit('update:modelValue', $event.target.checked)"
     />
   </div>
 </template>
@@ -22,14 +23,16 @@ import {
   IonToggle,
   IonText
 } from '@ionic/vue';
-import { defineProps, ref } from 'vue';
-
-const toggle = ref();
-// console.log(toggle);
+import { defineProps, defineEmits } from 'vue';
 
 defineProps<{
   title: string
-  description?: string
+  description?: string,
+  modelValue: boolean
+}>();
+
+defineEmits<{
+  (e: 'update:modelValue', value: boolean): void
 }>();
 
 </script>
