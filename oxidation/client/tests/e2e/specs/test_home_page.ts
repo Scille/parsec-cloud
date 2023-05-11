@@ -37,7 +37,7 @@ describe('Check organization list', () => {
       const orgId = ($elem as unknown as string).split('/').slice(-1)[0];
       cy.get('@consoleLog').should('have.been.calledWith', `Log in to ${orgId} with password "P@ssw0rd"`);
     });
-    cy.contains('Documents');
+    cy.contains('My workspaces');
   });
 
   it('Go to login page and sort and filter orgs', () => {
@@ -77,6 +77,6 @@ describe('Check organization list', () => {
   it('Log into organization with command', () => {
     // Uses Cypress command to simplify the log in part
     cy.login('Boby', 'P@ssw0rd');
-    cy.contains('Documents');
+    cy.contains('My workspaces');
   });
 });

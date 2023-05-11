@@ -241,7 +241,7 @@ import { createAlert } from '@/components/AlertConfirmation';
 import { AvailableDevice } from '@/plugins/libparsec/definitions';
 import { libparsec } from '@/plugins/libparsec';
 import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
-import { getMockDevices, mockLastLogin } from '../common/mocks';
+import { getMockDevices, mockLastLogin } from '@/common/mocks';
 import { StoredDeviceData, StorageManager } from '@/services/storageManager';
 import { DateTime } from 'luxon';
 import { useRouter } from 'vue-router';

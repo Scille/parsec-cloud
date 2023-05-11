@@ -233,9 +233,10 @@ body.dark {
   --ion-card-background: #1e1e1e;
 }
 
-/**** Parsec colors ****/
 
 :root {
+  /**** Parsec colors ****/
+
   /*** Light ***/
   /* Primary */
   --parsec-color-light-primary-30-opacity15: hsla(212, 100%, 97.1%, 0.15000000596046448);
@@ -276,14 +277,29 @@ body.dark {
   --parsec-color-light-danger-700: hsla(352, 60.8%, 40%, 1);
 
   /* ------ tags light------ */
-  ---parsec-color--tags-blue100: hsla(198, 100%, 92%, 1);
-  ---parsec-color--tags-blue500: hsla(198, 82%, 36%, 1);
-  ---parsec-color--tags-indigo100: hsla(247, 100%, 95%, 1);
-  ---parsec-color--tags-indigo500: hsla(245, 100%, 36%, 1);
-  ---parsec-color--tags-orange100: hsla(37, 100%, 95%, 1);
-  ---parsec-color--tags-orange500: hsla(36, 100%, 36%, 1);
-  ---parsec-color--tags-green100: hsla(68, 100%, 92%, 1);
-  ---parsec-color--tags-green500: hsla(72, 90%, 32%, 1);
+  --parsec-color-tags-blue100: hsla(198, 100%, 92%, 1);
+  --parsec-color-tags-blue500: hsla(198, 82%, 36%, 1);
+  --parsec-color-tags-indigo100: hsla(247, 100%, 95%, 1);
+  --parsec-color-tags-indigo500: hsla(245, 100%, 36%, 1);
+  --parsec-color-tags-orange100: hsla(37, 100%, 95%, 1);
+  --parsec-color-tags-orange500: hsla(36, 100%, 36%, 1);
+  --parsec-color-tags-green100: hsla(68, 100%, 92%, 1);
+  --parsec-color-tags-green500: hsla(72, 90%, 32%, 1);
+
+
+  /* **** Parsec shadow **** */
+  --parsec-shadow-light: 0px 4px 12px rgba(0, 0, 0, 0.08);
+  --parsec-shadow-strong: 0px 4px 20px rgba(0, 0, 0, 0.15);
+  --parsec-shadow-toggle: -2px 1px 6px rgba(0, 0, 0, 0.24);
+
+  /* **** Parsec border-radius **** */
+  --parsec-radius-2: 2px;
+  --parsec-radius-4: 4px;
+  --parsec-radius-6: 6px;
+  --parsec-radius-8: .5em;
+  --parsec-radius-12: .75em;
+  --parsec-radius-32: 2em;
+  --parsec-radius-circle: 50%;
 }
 
 /* **** Parsec typography **** */
@@ -388,8 +404,8 @@ body.dark {
 }
 
 .caption-caption {
-  font-size: 0.75rem;
-  font-size: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
   line-height: 133%;
   letter-spacing: 0.15px;
 }
@@ -494,8 +510,16 @@ https: //github.com/ionic-team/ionic-framework/issues/24080 */
   --box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
 }
 
+ion-list.container {
+  margin-top: 0;
+}
+
 ion-popover {
   --width: 300px;
+}
+
+ion-popover::part(content) {
+  border-radius: 6px;
 }
 
 .profile-header-popover {

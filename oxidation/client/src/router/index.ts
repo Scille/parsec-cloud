@@ -32,7 +32,7 @@ const routes: Array<RouteRecordRaw> = [
             component: () => import('@/views/WorkspacesPage.vue')
           },
           {
-            path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/workspaces/:workspaceId(\\d+)',
+            path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/workspaces/:workspaceId([a-z0-9]+)',
             name: 'folder',
             component: () => import('@/views/FolderPage.vue')
           }

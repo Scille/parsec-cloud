@@ -3,7 +3,7 @@
 import { DateTime } from 'luxon';
 import { ComposerTranslation } from 'vue-i18n';
 
-export function formatTimeSince(date: DateTime | undefined, t: ComposerTranslation, d: any, defaultValue=''): string {
+export function formatTimeSince(date: DateTime | undefined, t: ComposerTranslation, d: any, defaultValue='', format='long'): string {
   if (!date) {
     return defaultValue;
   }
@@ -12,7 +12,7 @@ export function formatTimeSince(date: DateTime | undefined, t: ComposerTranslati
 
   // More than 6 days, just display the date as is
   if (!diff || diff.years && diff.years > 0 || diff.months && diff.months > 0 || diff.days && diff.days > 6) {
-    return d(date.toJSDate(), 'long');
+    return d(date.toJSDate(), format);
   } else if (diff.days && diff.days > 0) {
     return t('common.date.lastLoginDays', {days: diff.days}, diff.days);
   } else if (diff.hours && diff.hours > 0) {
