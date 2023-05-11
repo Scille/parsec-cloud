@@ -77,7 +77,6 @@
                 :title="$t('SettingsPage.synchroWifiOnly')"
                 :description="$t('SettingsPage.synchroWifiOnlyDescription')"
                 v-model="config.synchroWifiOnly"
-                @click="changeSynchroWifiOnly($event.detail.checked)"
               />
               <!-- change lang -->
               <ion-item>
@@ -113,23 +112,6 @@
                     {{ $t('SettingsPage.theme.system') }}
                   </ion-select-option>
                 </ion-select>
-                test
-                <ion-select
-                  interface="popover"
-                  :value="config.theme"
-                  :label="$t('SettingsPage.theme.label')"
-                  @ion-change="changeTheme($event.detail.value)"
-                >
-                  <ion-select-option value="dark">
-                    {{ $t('SettingsPage.theme.dark') }}
-                  </ion-select-option>
-                  <ion-select-option value="light">
-                    {{ $t('SettingsPage.theme.light') }}
-                  </ion-select-option>
-                  <ion-select-option value="system">
-                    {{ $t('SettingsPage.theme.system') }}
-                  </ion-select-option>
-                </ion-select>
               </ion-item>
             </ion-list>
           </div>
@@ -143,19 +125,19 @@
               <settings-option
                 :title="$t('SettingsPage.enableTelemetry')"
                 :description="$t('SettingsPage.enableTelemetryDescription')"
-                :value="config.enableTelemetry"
+                v-model="config.enableTelemetry"
               />
               <!-- minimise in status bar -->
               <settings-option
                 :title="$t('SettingsPage.minimizeToSystemTray')"
                 :description="$t('SettingsPage.minimizeToSystemTrayDescription')"
-                :value="config.minimizeToTray"
+                v-model="config.minimizeToTray"
               />
               <!-- display unsync files -->
               <settings-option
                 :title="$t('SettingsPage.unsyncFiles')"
                 :description="$t('SettingsPage.unsyncFilesDescription')"
-                :value="config.unsyncFiles"
+                v-model="config.unsyncFiles"
               />
             </ion-list>
           </div>
@@ -208,20 +190,11 @@ function closeModal(): Promise<boolean> {
 }
 
 const configUnwatch = watch(config, async (_, oldConfig) => {
-  console.log('test');
   if (JSON.stringify(toRaw(oldConfig)) !== JSON.stringify(StorageManager.DEFAULT_CONFIG)) {
     await storageManager.storeConfig(toRaw(config.value));
-    console.log(config.value);
-
   }
+  console.log(config.value);
 }, { deep: true });
-
-console.log(config.value.synchroWifiOnly);
-async function changeSynchroWifiOnly(NewToggleValue: boolean): Promise<void> {
-  config.value.synchroWifiOnly = NewToggleValue;
-  await storageManager.storeConfig(toRaw(config.value));
-  console.log(NewToggleValue);
-}
 
 async function changeLang(selectedLang: string): Promise<void> {
   config.value.locale = selectedLang;

@@ -12,6 +12,8 @@ export interface Config {
   theme: string;
   enableTelemetry: boolean;
   minimizeToTray: boolean;
+  synchroWifiOnly: boolean;
+  unsyncFiles: boolean;
 }
 
 export class StorageManager {
@@ -22,7 +24,9 @@ export class StorageManager {
     locale: '',
     theme: 'system',
     enableTelemetry: true,
-    minimizeToTray: true
+    minimizeToTray: true,
+    synchroWifiOnly: false,
+    unsyncFiles: false
   };
 
   _store: Storage;
@@ -73,7 +77,9 @@ export class StorageManager {
       locale: data.locale,
       theme: data.theme,
       minimizeToTray: data.minimizeToTray,
-      enableTelemetry: data.enableTelemetry
+      enableTelemetry: data.enableTelemetry,
+      synchroWifiOnly: data.synchroWifiOnly,
+      unsyncFiles: data.unsyncFiles
     });
   }
 
@@ -90,7 +96,9 @@ export class StorageManager {
       locale: data.locale ? data.locale : StorageManager.DEFAULT_CONFIG.locale,
       theme: data.theme ? data.theme : StorageManager.DEFAULT_CONFIG.theme,
       enableTelemetry: data.enableTelemetry !== undefined ? data.enableTelemetry : StorageManager.DEFAULT_CONFIG.enableTelemetry,
-      minimizeToTray: data.minimizeToTray !== undefined ? data.minimizeToTray : StorageManager.DEFAULT_CONFIG.minimizeToTray
+      minimizeToTray: data.minimizeToTray !== undefined ? data.minimizeToTray : StorageManager.DEFAULT_CONFIG.minimizeToTray,
+      synchroWifiOnly: data.synchroWifiOnly !== undefined ? data.synchroWifiOnly : StorageManager.DEFAULT_CONFIG.synchroWifiOnly,
+      unsyncFiles: data.unsyncFiles !== undefined ? data.unsyncFiles : StorageManager.DEFAULT_CONFIG.unsyncFiles
     };
     return config;
   }
