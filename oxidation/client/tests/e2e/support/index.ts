@@ -76,7 +76,7 @@ Cypress.Commands.add('login', (userName, password) => {
   cy.get('#password-input').find('input').type(password);
   cy.get('#login-button-container > ion-button').click();
   cy.url().should('include', '/workspaces');
-  cy.contains('Documents');
+  cy.contains('My workspaces');
 });
 
 Cypress.Commands.add('dropTestbed', () => {

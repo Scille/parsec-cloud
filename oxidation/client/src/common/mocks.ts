@@ -1,8 +1,79 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+// cSpell:disable
+
 import { DateTime } from 'luxon';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
 import { StorageManager } from '@/services/storageManager';
+
+export enum WorkspaceRole {
+  Owner = 'owner',
+  Manager = 'manager',
+  Contributor = 'contributor',
+  Reader = 'reader'
+}
+
+export interface MockWorkspace {
+  id: string;
+  name: string;
+  sharedWith: string[];
+  size: number;
+  role: WorkspaceRole;
+  availableOffline: boolean;
+  lastUpdate: DateTime;
+}
+
+const MOCK_WORKSPACES: MockWorkspace[] = [
+  {
+    id: 'id1',
+    name: 'Trademeet',
+    sharedWith: ['Me', 'Cernd', 'Valygar Corthala'],
+    size: 60_817_408,
+    role: WorkspaceRole.Reader,
+    availableOffline: false,
+    lastUpdate: DateTime.fromISO('2023-05-10T08:00:00')
+  },
+  {
+    id: 'id2',
+    name: 'The Copper Coronet',
+    sharedWith: ['Me', 'Korgan Bloodaxe', 'Anomen Delryn', 'Nalia De\'Arnise', 'Jaheira', 'Yoshimo'],
+    size: 8_589_934_592,
+    role: WorkspaceRole.Owner,
+    availableOffline: true,
+    lastUpdate: DateTime.fromISO('2023-05-08T12:00:00')
+  },
+  {
+    id: 'id3',
+    name: 'The Asylum',
+    sharedWith: ['Me', 'Imoen'],
+    size: 628_097_024,
+    role: WorkspaceRole.Contributor,
+    availableOffline: true,
+    lastUpdate: DateTime.fromISO('2023-04-07T12:00:00')
+  },
+  {
+    id: 'id4',
+    name: 'De\'Arnise Keep',
+    sharedWith: ['Me'],
+    size: 33_382,
+    role: WorkspaceRole.Owner,
+    availableOffline: false,
+    lastUpdate: DateTime.fromISO('2023-05-07T02:00:00')
+  },
+  {
+    id: 'id5',
+    name: 'Menzoberranzan',
+    sharedWith: ['Me', 'Drizzt Do\'Urden', 'Viconia', 'Jan Jansen'],
+    size: 4_214_402_531,
+    role: WorkspaceRole.Manager,
+    availableOffline: true,
+    lastUpdate: DateTime.fromISO('2023-05-09T08:00:00')
+  }
+];
+
+export async function getMockWorkspaces(): Promise<MockWorkspace[]> {
+  return MOCK_WORKSPACES;
+}
 
 const MOCK_DEVICES: AvailableDevice[] = [
   {

@@ -125,13 +125,21 @@
         "advanced": "Avancé"
     },
     "WorkspacesPage": {
-        "createWorkspace": "Créer un espace de travail",
+        "createWorkspace": "Nouvel espace de travail",
         "documents": "Documents",
         "user": "utilisateur",
+        "itemCount": "Aucun élément | Un élément | {count} éléments",
         "workspaceContextMenu": {
-            "share": "Partager",
-            "history": "Historique",
-            "cancel": "Annuler"
+            "titleOffline": "Hors Connexion",
+            "titleManage": "Gestion de l'espace",
+            "titleCollaboration": "Collaboration",
+            "actionOffline": "Rendre disponible hors-ligne",
+            "actionRename": "Renommer",
+            "actionOpenInExplorer": "Ouvrir dans l'explorateur",
+            "actionHistory": "Historique de versions",
+            "actionManage": "Gérer l'espace de travail",
+            "actionDetails": "Détails",
+            "actionCopyLink": "Copier le lien"
         },
         "CreateWorkspaceModal": {
             "pageTitle": "Créer un espace de travail",
@@ -148,6 +156,32 @@
             "owner": "Propriétaire",
             "notShared": "Non partagé",
             "inviteNewUser": "Inviter un nouvel utilisateur"
+        },
+        "Workspace": {
+            "sharedWith": "Non partagé | Une personne | {count} personnes",
+            "lastUpdate": "Dernière modification :"
+        },
+        "viewDisplay": {
+            "grid": "grille",
+            "list": "liste"
+        },
+        "listDisplayTitles": {
+            "name": "Nom",
+            "role": "Rôle",
+            "sharedWith": "Utilisateurs",
+            "lastUpdate": "Dernière modif.",
+            "size": "Taille"
+        },
+        "sort": {
+            "sortByName": "Nom",
+            "sortBySize": "Taille",
+            "sortByLastUpdated": "Dernière màj"
+        },
+        "role": {
+            "owner": "Propriétaire",
+            "manager": "Gérant",
+            "contributor": "Contributeur",
+            "reader": "Lecteur"
         }
     },
     "OrganizationPage": {
@@ -174,6 +208,13 @@
             "lastLoginMinutes": "il y a une minute | il y a {minutes} minutes",
             "lastLoginHours": "il y a une heure | il y a {hours} heures",
             "lastLoginDays": "il y a un jour | il y a {days} jours"
+        },
+        "filesize": {
+            "bytes": "o",
+            "kilobytes": "Ko",
+            "megabytes": "Mo",
+            "gigabytes": "Go",
+            "terabytes": "To"
         }
     }
 }

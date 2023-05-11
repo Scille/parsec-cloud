@@ -125,13 +125,21 @@
         "advanced": "Advanced"
     },
     "WorkspacesPage": {
-        "createWorkspace": "Create workspace",
+        "createWorkspace": "New workspace",
         "documents": "Documents",
         "user": "user",
+        "itemCount": "No items | One item | {count} items",
         "workspaceContextMenu": {
-            "share": "Share",
-            "history": "History",
-            "cancel": "Cancel"
+            "titleOffline": "Offline",
+            "titleManage": "Manage workspace",
+            "titleCollaboration": "Collaboration",
+            "actionOffline": "Make it available offline",
+            "actionRename": "Rename",
+            "actionOpenInExplorer": "Open in explorer",
+            "actionHistory": "History",
+            "actionManage": "Manage this workspace",
+            "actionDetails": "Details",
+            "actionCopyLink": "Copy link"
         },
         "CreateWorkspaceModal": {
             "pageTitle": "Create workspace",
@@ -148,6 +156,32 @@
             "owner": "Owner",
             "notShared": "Not shared",
             "inviteNewUser": "Invite a new user"
+        },
+        "Workspace": {
+            "sharedWith": "Not shared | One person | {count} people",
+            "lastUpdate": "Last updated:"
+        },
+        "viewDisplay": {
+            "grid": "grid",
+            "list": "list"
+        },
+        "listDisplayTitles": {
+            "name": "Name",
+            "role": "Role",
+            "sharedWith": "Users",
+            "lastUpdate": "Last update",
+            "size": "Size"
+        },
+        "sort": {
+            "sortByName": "Name",
+            "sortBySize": "Size",
+            "sortByLastUpdated": "Last update"
+        },
+        "role": {
+            "owner": "Owner",
+            "manager": "Manager",
+            "contributor": "Contributor",
+            "reader": "Reader"
         }
     },
     "OrganizationPage": {
@@ -174,6 +208,13 @@
             "lastLoginMinutes": "one minute ago | {minutes} minutes ago",
             "lastLoginHours": "one hour ago | {hours} hours ago",
             "lastLoginDays": "one day ago | {days} days ago"
+        },
+        "filesize": {
+            "bytes": "B",
+            "kilobytes": "KB",
+            "megabytes": "MB",
+            "gigabytes": "GB",
+            "terabytes": "TB"
         }
     }
 }

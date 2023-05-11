@@ -3,6 +3,7 @@
 <template>
   <ion-list>
     <ion-item
+      v-if="sortByLabels"
       id="sort-order-button"
       class="option"
       button
@@ -45,7 +46,7 @@ import { MsSelectOption, MsSelectSortByLabels, getOptionByKey } from '@/componen
 const props = defineProps<{
   defaultOption?: string,
   options: MsSelectOption[],
-  sortByLabels: MsSelectSortByLabels,
+  sortByLabels?: MsSelectSortByLabels,
   sortByAsc: boolean
 }>();
 

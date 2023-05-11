@@ -26,6 +26,7 @@ import '@ionic/vue/css/flex-utils.css';
 import '@ionic/vue/css/display.css';
 
 import { formatTimeSince } from '@/common/date';
+import { formatFileSize } from '@/common/filesize';
 import { StorageManager } from '@/services/storageManager';
 import { DateTime } from 'luxon';
 import { FormattersKey, ConfigPathKey, StorageManagerKey } from '@/common/injectionKeys';
@@ -101,9 +102,13 @@ async function setupApp(): Promise<void> {
     .use(i18n);
 
   app.provide(FormattersKey, {
-    'timeSince': (date: DateTime | undefined, defaultValue = ''): string => {
+    'timeSince': (date: DateTime | undefined, defaultValue = '', format = 'long'): string => {
       const { t, d } = useI18n();
-      return formatTimeSince(date, t, d, defaultValue);
+      return formatTimeSince(date, t, d, defaultValue, format);
+    },
+    'fileSize': (bytes: number): string => {
+      const { t } = useI18n();
+      return formatFileSize(bytes, t);
     }
   });
   app.provide(StorageManagerKey, storageManager);

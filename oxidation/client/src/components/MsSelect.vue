@@ -29,7 +29,7 @@ const props = defineProps<{
   defaultOption: string,
   label?: string,
   options: MsSelectOption[],
-  sortByLabels: MsSelectSortByLabels
+  sortByLabels?: MsSelectSortByLabels
 }>();
 
 const emits = defineEmits<{
