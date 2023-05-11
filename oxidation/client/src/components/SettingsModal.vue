@@ -265,7 +265,7 @@ closeBtn-container, .closeBtn {
     gap: 1rem;
     margin-bottom: 1.5rem;
 
-    &__toolbar{
+    &__toolbar {
       --min-height: 1rem;
     }
 
@@ -285,6 +285,7 @@ closeBtn-container, .closeBtn {
     display: flex;
     gap: 2rem;
   }
+
   .menu-list {
       display: flex;
       flex-direction: column;
@@ -296,7 +297,7 @@ closeBtn-container, .closeBtn {
         color: var(--parsec-color-light-secondary-text);
         border-radius: 4px;
 
-        .item-container{
+        .item-container {
           display: flex;
           align-items: center;
           justify-content: center;
@@ -337,11 +338,6 @@ closeBtn-container, .closeBtn {
       padding-top: 0px;
       padding-bottom: 0px;
     }
-  }
-
-  &-footer {
-    background: green;
-    padding: 2px;
   }
 }
 
