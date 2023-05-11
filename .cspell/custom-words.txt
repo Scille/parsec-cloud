@@ -413,6 +413,7 @@ unhexlify
 Unmarshal
 unmock
 unpackb
+unsync
 unwinify
 urlsafe
 userfrom
@@ -421,7 +422,6 @@ userguide
 userspace
 userto
 usertotal
-unsync
 vacuum
 Vacuum
 verifykey
