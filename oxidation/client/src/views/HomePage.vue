@@ -19,17 +19,6 @@
               <ion-col size="2">
                 <ion-button
                   fill="clear"
-                  @click="$router.push('settings')"
-                  id="settings-button"
-                >
-                  <ion-icon
-                    slot="start"
-                    :icon="cog"
-                  />
-                  {{ $t('HomePage.topbar.settings') }}
-                </ion-button>
-                <ion-button
-                  fill="clear"
                   @click="openSettingsModal()"
                   id="settings-button"
                 >
@@ -37,7 +26,7 @@
                     slot="start"
                     :icon="cog"
                   />
-                  {{ $t('HomePage.topbar.settings') }}New
+                  {{ $t('HomePage.topbar.settings') }}
                 </ion-button>
               </ion-col>
             </ion-row>
