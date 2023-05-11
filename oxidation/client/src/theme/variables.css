@@ -480,15 +480,6 @@ body.dark {
   font-size: 0.75rem;
   line-height: 133%;
   letter-spacing: 0.4px;
-  --parsec-color-light-secondary-contrast: hsla(240, 19.4%, 13.1%, 1);
-  --parsec-color-light-secondary-text: hsla(240, 20.2%, 34.9%, 1);
-  --parsec-color-light-secondary-grey: hsla(240, 19.6%, 60%, 1);
-  --parsec-color-light-secondary-light: hsla(240, 19.5%, 84.9%, 1);
-  --parsec-color-light-secondary-disabled: hsla(240, 20%, 93.1%, 1);
-  --parsec-color-light-secondary-medium: hsla(240, 20%, 96.1%, 1);
-  --parsec-color-light-secondary-premiere: hsla(240, 20%, 96.1%, 1);
-  --parsec-color-light-secondary-background: hsla(240, 20%, 98%, 1);
-  --parsec-color-light-secondary-inversed-contrast: hsla(0, 0%, 99.6%, 1);
 }
 
 
@@ -529,12 +520,18 @@ ion-modal.one-line-modal::part(content) {
   height: 210px;
 }
 
+
 @media only screen and (min-width: 768px) and (min-height: 600px) {
 
-.settings-modal, .settings-modal .ion-overlay-wrapper{
+  .settings-modal, .settings-modal .ion-overlay-wrapper{
     --width: 800px;
     --height: 600px;
   }
+
+  .modal-default > .ion-page {
+    border-radius: 8px;
+  }
+
 }
 
 ion-card-title {
