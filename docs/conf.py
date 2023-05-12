@@ -35,7 +35,14 @@ def fetch_parsec_version():
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.viewcode", "sphinx_rtd_theme"]
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.viewcode",
+    "sphinx_rtd_theme",
+    # Allow to use svg images in latex build.
+    # https://www.sphinx-doc.org/en/master/usage/extensions/imgconverter.html
+    "sphinx.ext.imgconverter",
+]
 
 # Sphinx-intl config
 locale_dirs = ["locale/"]
@@ -129,7 +136,7 @@ html_theme_options = {
     # 'sticky_navigation': True  # Set to False to disable the sticky nav while scrolling.
     "logo_only": True,  # if we have a html_logo below, this shows /only/ the logo with no title text
     "collapse_navigation": False,  # Collapse navigation (False makes it tree-like)
-    # 'display_version': True,  # Display the docs version
+    "display_version": True,  # Display the docs version
     # 'navigation_depth': 4,  # Depth of the headers shown in the navigation bar
 }
 
@@ -216,39 +223,74 @@ htmlhelp_basename = "parsecdoc"
 
 # -- Options for LaTeX output ------------------------------------------
 
+latex_engine = "lualatex"
+
 latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    # 'papersize': 'letterpaper',
-    #  The font size ('10pt', '11pt' or '12pt').
-    # 'pointsize': '10pt',
     #  Additional stuff for the LaTeX preamble.
-    # 'preamble': '',
+    "preamble": "\n".join(
+        [
+            # Use firecode in codeblocks.
+            r"\usepackage{lstfiracode}",
+        ]
+    ),
+    # Customize used font in latex
+    "fontpkg": "\n".join(
+        [
+            r"\usepackage{fontspec}",
+            r"\setmainfont{roboto}",
+            r"\setsansfont{roboto}",
+            r"\setmonofont{firacode}",
+        ]
+    ),
+    # The paper size ('letterpaper' or 'a4paper').
+    "papersize": "a4paper",
+    #  The font size ('10pt', '11pt' or '12pt').
+    "pointsize": "12pt",
+    "printindex": r"\footnotesize\raggedright\printindex",
+    "fncychap": r"\usepackage[Sonny]{fncychap}",
+    "babel": r"\usepackage{babel}",
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass
 # [howto/manual]).
-latex_documents = [("index", "parsec.tex", "Parsec Documentation", "Emmanuel Leblond", "manual")]
+latex_documents = [
+    ("index", "parsec.tex", "Parsec Documentation", "dev-parsec+fullguide@scille.fr", "howto"),
+    (
+        "userguide/index",
+        "parsec-userguide.tex",
+        "Parsec User Guide",
+        "dev-parsec+userguide@scille.fr",
+        "howto",
+    ),
+    (
+        "adminguide/index",
+        "parsec-adminguide.tex",
+        "Parsec Admin Guide",
+        "dev-parsec+adminguide@scille.fr",
+        "howto",
+    ),
+]
 
 # The name of an image file (relative to this directory) to place at
 # the top of the title page.
-# latex_logo = None
+latex_logo = "parsec.png"
 
 # For "manual" documents, if this is true, then toplevel headings
 # are parts, not chapters.
-# latex_use_parts = False
+latex_use_parts = True
 
 # If true, show page references after internal links.
-# latex_show_pagerefs = False
+latex_show_pagerefs = False
 
 # If true, show URL addresses after external links.
-# latex_show_urls = False
+latex_show_urls = "no"
 
 # Documents to append as an appendix to all manuals.
 # latex_appendices = []
 
 # If false, no module index is generated.
-# latex_domain_indices = True
+latex_domain_indices = True
 
 
 # -- Options for manual page output ------------------------------------

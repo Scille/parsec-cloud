@@ -16,6 +16,7 @@ endif
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
+LATEXMKOPTS     = -interaction=nonstopmode
 # the i18n builder cannot share the environment and doctrees with the others
 I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
@@ -110,16 +111,14 @@ latex:
 	@echo "Run \`make' in that directory to run these through (pdf)latex" \
 		"(use \`make latexpdf' here to do that automatically)."
 
-latexpdf:
-	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
+latexpdf: latex
 	@echo "Running LaTeX files through pdflatex..."
-	$(MAKE) -C $(BUILDDIR)/latex all-pdf
+	$(MAKE) -C $(BUILDDIR)/latex LATEXMKOPTS=$(LATEXMKOPTS) all-pdf
 	@echo "pdflatex finished; the PDF files are in $(BUILDDIR)/latex."
 
-latexpdfja:
-	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
+latexpdfja: latex
 	@echo "Running LaTeX files through platex and dvipdfmx..."
-	$(MAKE) -C $(BUILDDIR)/latex all-pdf-ja
+	$(MAKE) -C $(BUILDDIR)/latex LATEXMKOPTS=$(LATEXMKOPTS) all-pdf-ja
 	@echo "pdflatex finished; the PDF files are in $(BUILDDIR)/latex."
 
 text:

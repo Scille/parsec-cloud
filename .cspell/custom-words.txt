@@ -26,6 +26,10 @@ browserslistrc
 Bsas
 bxsalsa
 cachekey
+latexmk
+librsvg
+luatex
+LATEXMKOPTS
 CAFILE
 camelcase
 capacitorjs
@@ -90,8 +94,10 @@ farn
 fetchrow
 fetchval
 fghij
+firacode
 flate
 Flaticon
+fncychap
 Folderish
 fqcn
 Freepik
@@ -201,6 +207,8 @@ localdb
 LowLevel
 lproj
 lsregister
+lstfiracode
+lualatex
 MACBYTES
 MACFUSE
 makensis

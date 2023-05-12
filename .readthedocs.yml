@@ -9,6 +9,17 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.9"
+  # Must be the same list as defined in `docs/Dockerfile`.
+  # (You can exclude `make`, `python3{,-pip}` & `latexmk` since they're already present)
+  apt_packages:
+    - fonts-roboto
+    - fonts-firacode
+    - imagemagick
+    - librsvg2-bin
+    - texlive-luatex
+    - texlive-latex-base
+    - texlive-latex-recommended
+    - texlive-latex-extra
 
 # Build our docs in additional formats such as PDF
 formats:
