@@ -125,6 +125,7 @@
               />
               <!-- minimise in status bar -->
               <settings-option
+                v-if="isPlatform('electron')"
                 :title="$t('SettingsPage.minimizeToSystemTray')"
                 :description="$t('SettingsPage.minimizeToSystemTrayDescription')"
                 v-model="config.minimizeToTray"
@@ -167,6 +168,7 @@ import {
   IonIcon,
   IonSelect,
   IonSelectOption,
+  isPlatform,
   modalController
 } from '@ionic/vue';
 
