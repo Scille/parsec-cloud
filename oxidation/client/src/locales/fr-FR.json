@@ -102,7 +102,7 @@
         "unsyncFiles": "Afficher les fichiers exclus de la synchronisation",
         "unsyncFilesDescription": "Les fichiers exclus de la synchronisation seront visibles",
         "meteredConnection": "Connexion limitée",
-        "meteredConnectionDescription": "L'application réduiera la synchronisation des données lorsque vous êtes connecté à une connexion limitée",
+        "meteredConnectionDescription": "L'application réduira la synchronisation des données lorsque vous êtes connecté à une connexion limitée",
         "language": "Langue",
         "lang": {
             "frFR": "Français",
