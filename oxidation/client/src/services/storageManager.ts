@@ -12,7 +12,7 @@ export interface Config {
   theme: string;
   enableTelemetry: boolean;
   minimizeToTray: boolean;
-  synchroWifiOnly: boolean;
+  meteredConnection: boolean;
   unsyncFiles: boolean;
 }
 
@@ -25,7 +25,7 @@ export class StorageManager {
     theme: 'system',
     enableTelemetry: true,
     minimizeToTray: true,
-    synchroWifiOnly: false,
+    meteredConnection: false,
     unsyncFiles: false
   };
 
@@ -78,7 +78,7 @@ export class StorageManager {
       theme: data.theme,
       minimizeToTray: data.minimizeToTray,
       enableTelemetry: data.enableTelemetry,
-      synchroWifiOnly: data.synchroWifiOnly,
+      synchroWifiOnly: data.meteredConnection,
       unsyncFiles: data.unsyncFiles
     });
   }
@@ -97,7 +97,7 @@ export class StorageManager {
       theme: data.theme ? data.theme : StorageManager.DEFAULT_CONFIG.theme,
       enableTelemetry: data.enableTelemetry !== undefined ? data.enableTelemetry : StorageManager.DEFAULT_CONFIG.enableTelemetry,
       minimizeToTray: data.minimizeToTray !== undefined ? data.minimizeToTray : StorageManager.DEFAULT_CONFIG.minimizeToTray,
-      synchroWifiOnly: data.synchroWifiOnly !== undefined ? data.synchroWifiOnly : StorageManager.DEFAULT_CONFIG.synchroWifiOnly,
+      meteredConnection: data.meteredConnection !== undefined ? data.synchroWifiOnly : StorageManager.DEFAULT_CONFIG.meteredConnection,
       unsyncFiles: data.unsyncFiles !== undefined ? data.unsyncFiles : StorageManager.DEFAULT_CONFIG.unsyncFiles
     };
     return config;
