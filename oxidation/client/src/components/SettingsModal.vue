@@ -31,13 +31,13 @@
       <div class="menu">
         <!-- menu list -->
         <ion-radio-group
-          v-model="showTOS"
-          value="general"
+          v-model="settingTab"
+          :value="SettingsTabs.General"
           class="menu-list"
         >
           <ion-radio
             slot="start"
-            value="general"
+            :value="SettingsTabs.General"
             class="menu-list__item"
           >
             <div class="item-container">
@@ -51,7 +51,7 @@
           </ion-radio>
           <ion-radio
             slot="start"
-            value="advanced"
+            :value="SettingsTabs.Advanced"
             class="menu-list__item"
           >
             <div class="item-container">
@@ -68,16 +68,10 @@
         <div class="menu-item-content">
           <!-- general -->
           <div
-            v-if="showTOS != 'advanced'"
+            v-if="settingTab === SettingsTabs.General"
             class="settings-general"
           >
             <ion-list class="settings-list">
-              <!-- synchro wifi -->
-              <settings-option
-                :title="$t('SettingsPage.synchroWifiOnly')"
-                :description="$t('SettingsPage.synchroWifiOnlyDescription')"
-                v-model="config.synchroWifiOnly"
-              />
               <!-- change lang -->
               <!-- dropdown needs to be change depending on this issue : https://github.com/Scille/parsec-cloud/issues/4527 -->
               <ion-item>
@@ -119,7 +113,7 @@
           </div>
           <!-- advanced -->
           <div
-            v-else
+            v-if="settingTab === SettingsTabs.Advanced"
             class="settings-advanced"
           >
             <ion-list class="settings-list">
@@ -140,6 +134,13 @@
                 :title="$t('SettingsPage.unsyncFiles')"
                 :description="$t('SettingsPage.unsyncFilesDescription')"
                 v-model="config.unsyncFiles"
+              />
+              <!-- synchro wifi -->
+              <settings-option
+                v-if="false"
+                :title="$t('SettingsPage.meteredConnection')"
+                :description="$t('SettingsPage.meteredConnectionDescription')"
+                v-model="config.meteredConnection"
               />
             </ion-list>
           </div>
@@ -185,7 +186,12 @@ import SettingsOption from './SettingsOption.vue';
 const { locale } = useI18n();
 const storageManager = inject(storageManagerKey)!;
 const config = ref<Config>(structuredClone(StorageManager.DEFAULT_CONFIG));
-const showTOS = ref('general');
+
+enum SettingsTabs {
+  General = 'General',
+  Advanced = 'Advanced'
+}
+const settingTab = ref(SettingsTabs.General);
 
 function closeModal(): Promise<boolean> {
   return modalController.dismiss(null, 'cancel');
