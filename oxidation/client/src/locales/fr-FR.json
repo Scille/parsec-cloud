@@ -99,8 +99,10 @@
         "enableTelemetryDescription": "Envoie automatiquement les rapports d’erreur",
         "minimizeToSystemTray": "Réduire dans la barre d'état",
         "minimizeToSystemTrayDescription": "Lorsque l'application est fermée, Parsec continuera à fonctionner en arrière-plan",
-        "synchroWifiOnly": "Synchroniser uniquement en Wi-Fi",
-        "synchroWifiOnlyDescription": "Synchronisez vos documents uniquement lorsque vous êtes connecté à un réseau Wi-Fi",
+        "unsyncFiles": "Afficher les fichiers exclus de la synchronisation",
+        "unsyncFilesDescription": "Les fichiers exclus de la synchronisation seront visibles",
+        "meteredConnection": "Connexion limitée",
+        "meteredConnectionDescription": "L'application réduiera la synchronisation des données lorsque vous êtes connecté à une connexion limitée",
         "language": "Langue",
         "lang": {
             "frFR": "Français",
