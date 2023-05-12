@@ -1,8 +1,10 @@
 .. Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-.. note::
-    Parsec's documentation is available in several languages and versions.
-    Expand the "Read the Docs" panel at the bottom of the sidebar to see the list.
+.. only:: html
+
+   .. note::
+       Parsec's documentation is available in several languages and versions.
+       Expand the "Read the Docs" panel at the bottom of the sidebar to see the list.
 
 
 ===========
@@ -42,13 +44,14 @@ The main documentation for the site is organized into the following sections:
     roles
     cryptography
 
+.. only:: html
 
-.. toctree::
-    :maxdepth: 1
-    :caption: Development
-    :name: sec-devel
+   .. toctree::
+       :maxdepth: 1
+       :caption: Development
+       :name: sec-devel
 
-    history
+       history
 
 .. Indices and tables
 .. ------------------
