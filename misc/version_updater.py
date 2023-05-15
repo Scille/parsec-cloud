@@ -60,6 +60,7 @@ class Tool(enum.Enum):
     Poetry = "poetry"
     Node = "node"
     WasmPack = "wasm-pack"
+    Parsec = "parsec"
 
 
 TOOLS_VERSION: Dict[Tool, str] = {
@@ -68,6 +69,7 @@ TOOLS_VERSION: Dict[Tool, str] = {
     Tool.Poetry: "1.3.2",
     Tool.Node: "18.12.0",
     Tool.WasmPack: "0.11.0",
+    Tool.Parsec: "2.15.0+dev",
 }
 
 
@@ -125,12 +127,19 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
         Tool.WasmPack: [ReplaceRegex(r"wasm-pack@[0-9.]+", "wasm-pack@{version}")],
     },
     ROOT_DIR
+    / "licenses/BUSL-Scille.txt": {
+        Tool.Parsec: [
+            ReplaceRegex(r"^Licensed Work:  Parsec v.*$", "Licensed Work:  Parsec v{version}")
+        ]
+    },
+    ROOT_DIR
     / "misc/version_updater.py": {
         Tool.Rust: [ReplaceRegex(r'Tool.Rust: "[0-9.]+"', 'Tool.Rust: "{version}"')],
         Tool.Python: [ReplaceRegex(r'Tool.Python: "[0-9.]+"', 'Tool.Python: "{version}"')],
         Tool.Poetry: [ReplaceRegex(r'Tool.Poetry: "[0-9.]+"', 'Tool.Poetry: "{version}"')],
         Tool.Node: [ReplaceRegex(r'Tool.Node: "[0-9.]+"', 'Tool.Node: "{version}"')],
         Tool.WasmPack: [ReplaceRegex(r'Tool.WasmPack: "[0-9.]+"', 'Tool.WasmPack: "{version}"')],
+        Tool.Parsec: [ReplaceRegex(r'Tool.Parsec: "[0-9.]+.*",', 'Tool.Parsec: "{version}",')],
     },
     ROOT_DIR / "packaging/server/res/build-backend.sh": {Tool.Python: [PYTHON_SMALL_VERSION]},
     ROOT_DIR / "packaging/server/server.dockerfile": {Tool.Python: [PYTHON_DOCKER_VERSION]},
@@ -140,6 +149,10 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
     ROOT_DIR / "packaging/testbed-server/build-testbed.sh": {Tool.Python: [PYTHON_SMALL_VERSION]},
     ROOT_DIR
     / "packaging/testbed-server/testbed-server.dockerfile": {Tool.Python: [PYTHON_DOCKER_VERSION]},
+    ROOT_DIR
+    / "parsec/_version.py": {
+        Tool.Parsec: [ReplaceRegex(r'^__version__ = ".*"$', '__version__ = "v{version}"')]
+    },
     ROOT_DIR
     / "mypy.ini": {
         Tool.Python: [
@@ -166,7 +179,8 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
                 hide_patch_version('build = "cp{version}-{{manylinux,macos,win}}*"', separator=""),
             ),
             ReplaceRegex(r"py\d+", hide_patch_version("py{version}", separator="")),
-        ]
+        ],
+        Tool.Parsec: [ReplaceRegex(r'^version = ".*"$', 'version = "v{version}"')],
     },
     ROOT_DIR
     / "rust-toolchain.toml": {
@@ -236,7 +250,7 @@ def check_tool(tool: Tool, version: str, update: bool) -> Dict[Path, List[str]]:
     errors = {}
 
     check_or_udpate: Callable[[Path, RawRegexes, str], List[str]] = update_tool_version
-    if args.check:
+    if not update:
         check_or_udpate = check_tool_version
 
     for filename, tools_in_file in FILES_WITH_VERSION_INFO.items():
