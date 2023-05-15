@@ -1,0 +1,120 @@
+name: Release starter
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: The new version to release (e.g. `v2.16.0`)
+        required: true
+        type: string
+
+# We set `concurrency` to prevent having this workflow being run multiple time for the same version
+concurrency:
+  group: release-starter-${{ inputs.version }}
+  cancel-in-progress: true
+
+jobs:
+  release-starter:
+    runs-on: ubuntu-22.04
+    name: Release starter 🚛
+    steps:
+      - name: Checkout the repo at base `${{ github.ref }}`
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
+        timeout-minutes: 5
+
+      - name: Parse version `${{ inputs.version }}`
+        id: version
+        run: python misc/releaser.py parse-version ${{ inputs.version }} | tee -a $GITHUB_OUTPUT
+        timeout-minutes: 1
+
+      - name: Release branch & tag name
+        id: names
+        run: |
+          echo "branch=release/${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}" | tee -a $GITHUB_OUTPUT
+          echo "tag=v${{ steps.version.outputs.full }}" | tee -a $GITHUB_OUTPUT
+
+      - name: Start summary
+        run: |
+          (
+            echo '# Parsec ${{ steps.names.outputs.tag }}'
+            echo
+            echo 'Initiated by: @${{ github.triggering_actor }}'
+            echo 'Base branch: `${{ github.ref }}`'
+            echo 'Target branch: `${{ steps.names.outputs.branch }}`'
+            echo
+          ) >> "$GITHUB_STEP_SUMMARY"
+
+      # This step will fail if we are on the wrong branch, the correct branch should be the value of `steps.names.outputs.branch` (see step `Release branch & tag name`).
+      # For new version (i.e. when the version.patch == 0), we automatically create and switch to the expected branch.
+      # For patched version (i.e. when the version.patch != 0), The actor of the workflow should have selected the base branch to be `steps.names.outputs.branch`
+      # (the branch should already exist since you need to have applied the patches beforehand).
+      - name: Create git branch for new version
+        run: |
+          if [ "${{ steps.names.outputs.branch }}" = "$(git rev-parse --abbrev-ref HEAD)" ]; then
+            echo "We are already in the target branch, nothing to do"
+          elif [ "${{ steps.version.outputs.patch }}" -eq 0 ]
+            echo "Creating release branch ..."
+            git switch --create ${{ steps.names.outputs.branch }}
+          else
+            (
+              echo "You are trying to create a patched release but you are using the wrong base branch"
+              echo "The base branch should be \`${{ steps.names.outputs.branch }}\`"
+            ) >&2
+            exit 1
+          fi
+        timeout-minutes: 1
+
+      - name: Create release commits and tag
+        run: |
+          python3 misc/releaser.py build --yes "${{ steps.names.outputs.tag }}"
+
+          # Here we push the commit created by `misc/releaser`.
+          # If the branch don't exist on the remote, it will initialize it.
+          git push --set-upstream origin ${{ steps.names.outputs.branch }}
+
+          (
+            echo "## Release tag info"
+            echo
+            echo '```txt'
+            (
+              set -ex;
+              git show "${{ steps.names.outputs.tag }}" --show-signature;
+              git tag --verify "${{ steps.names.outputs.tag }}";
+              git push origin "${{ steps.names.outputs.tag }}"
+            ) 2>&1
+            echo '```'
+            echo
+          ) >> "$GITHUB_STEP_SUMMARY"
+        timeout-minutes: 5
+
+      - name: Create the Pull-request release
+        if: steps.version.outputs.prerelease == '' && steps.version.outputs.local == ''
+        run: |
+          branch="acknowledge/${{ steps.version.outputs.full }}"
+
+          set -x
+
+          git switch --create "$branch"
+
+          gh pr create --draft \
+            --base origin/master \
+            --head $branch \
+            --assignee ${{ github.triggering_actor }} \
+            --title 'Release ${{ steps.names.outputs.tag }}' \
+            --body-file "$GITHUB_STEP_SUMMARY"
+        timeout-minutes: 5
+
+      # TODO: The release body is generate using `GITHUB_STEP_SUMMARY` but I would like to add the generated HISTORY entry for the release to it.
+      # The problem is the generated entry is in `RST` format be we want to be formatted in markdown.
+      # We could take different approch:
+      # - Convert the `HISTORY.rst` to `HISTORY.md` (that required adaptation for `sphinx` & `generate_pyqt`)
+      # - Generate the new entry in to format `RST` & `MD`
+      - name: Create a pre-release
+        run: |
+          gh release create "${{ steps.names.outputs.tag }}" \
+            --draft \
+            ${{ steps.version.outputs.prerelease != '' && '--pre-release' }} \
+            --title "${{ steps.names.outputs.tag }}" \
+            --notes-file "$GITHUB_STEP_SUMMARY" \
+            --verify-tag
+        timeout-minutes: 5

@@ -43,6 +43,8 @@ For each release types, apply the following checklist:
 - The translations are up-to-date (check the translations in `docs/`, `parsec/core/gui/tr/`, `oxidation/client/src/locales/`).
 - The `releaser.py` correctly update the version in the expected files (`pyproject.toml`, `licenses/BUSL-Scille.txt`, `parsec/_version.py`).
 
+Note: Most of the work can be done using the workflow `release-starter` (_most_ because it won't cherry pick the commit need to patch a release).
+
 ## Release major/minor version
 
 In the following we will consider we want to release version ``v2.9.0``.
@@ -66,9 +68,9 @@ Master branch being protected, we do our work on a dedicated branch that we call
 Release branch naming must be ``<major>.<minor>``, so in our case ``2.9``:
 
 ```shell
-git checkout master && git pull
-git checkout -b 2.9
-git push --set-upstream origin 2.9
+git fetch
+git switch --create release/2.9 origin/master
+git push --set-upstream origin release/2.9
 ```
 
 Note at this point the branch is even with master, hence we cannot create a Pull Request yet (see part 4).
