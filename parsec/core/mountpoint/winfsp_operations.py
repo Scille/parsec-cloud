@@ -559,3 +559,341 @@ class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[misc]
         assert file_context.fd is not None
 
         self.fs_access.fd_resize(file_context.fd, allocation_size, truncate_only=True)
+
+
+def patch_file_context_path(
+    file_context: FileContext, path: FsPath
+) -> Union[OpenedFile, OpenedFolder, EntryInfo]:
+    assert isinstance(file_context, (OpenedFile, OpenedFolder, EntryInfo))
+    file_context.path = path
+    return file_context
+
+
+# `BaseFileSystemOperations` is resolved as `Any` on non-windows platform.
+# We can't derive from `Any` type (misc).
+class MultiWorkspaceWinFSPOperations(BaseFileSystemOperations):  # type: ignore[misc]
+    """
+    A WinFSPOperations for multi-workspace mount points.
+
+    Workspaces are "mounted" as top-level directories. The operations are
+    dispatched based on the path, i.e. an operation on "/<workspace_1>/path/to/something"
+    will be dispatched to the WinFSPOperations for "workspace_1", with the
+    path patched to "/path/to/something".
+
+    Operations on the root ("/") directory are not dispatched as they are not
+    part of any workspace. Instead, a list of "mounted" workspaces is presented
+    as directory entries.
+    """
+
+    def __init__(
+        self,
+        volume_label: str,
+        mountpoint: PurePath,
+        workspace_id: EntryID,
+        timestamp: DateTime | None,
+    ) -> None:
+        super().__init__()
+        # see https://docs.microsoft.com/fr-fr/windows/desktop/SecAuthZ/security-descriptor-string-format
+        self._security_descriptor = SecurityDescriptor.from_string(
+            # "O:BAG:BAD:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;WD)"
+            "O:BAG:BAD:NO_ACCESS_CONTROL"
+        )
+
+        # Mapping workspace name to its corresponding operations instance
+        self._operations: dict[str, WinFSPOperations] = {}
+
+        # We have currently no way of easily getting the size of workspace
+        # Also, the total size of a workspace is not limited
+        # For the moment let's settle on 0 MB used for 1 TB available
+        self._volume_info = {
+            "total_size": 1 * 1024**4,  # 1 TB
+            "free_size": 1 * 1024**4,  # 1 TB
+            "volume_label": volume_label,
+        }
+
+        # Stats for root directory
+        self._root_dir_stats: dict[str, Any] = {
+            "type": "folder",
+            "need_sync": False,
+            "created": DateTime.now(),
+            "updated": DateTime.now(),
+            "id": EntryID.new(),
+        }
+
+        # TODO: handle error for grouped workspaces
+        self._get_path_and_translate_error = partial(
+            get_path_and_translate_error,
+            # fs_access=None,
+            mountpoint=mountpoint,
+            # workspace_id=workspace_id,
+            # timestamp=timestamp,
+        )
+
+    def _strip_workspace_dir(self, path: FsPath) -> FsPath:
+        if path.is_root():
+            raise FSLocalOperationError(filename=str(path))
+
+        # Top-level directory should correspond to a mounted workspace
+        # i.e. "/<workspace>/path/to/something"
+        if path.parts[0].str not in self._operations:
+            raise FSLocalOperationError(filename=str(path))
+
+        # TODO: add methods to FsPath 'get_base_dir' & 'strip_base_dir'?
+        return FsPath(path.parts[1:])
+
+    def _patched_file_context(self, file_context: FileContext) -> FileContext:
+        assert isinstance(file_context, (OpenedFile, OpenedFolder, EntryInfo))
+        return patch_file_context_path(file_context, self._strip_workspace_dir(file_context.path))
+
+    def _patched_path(self, path: FsPath) -> str:
+        return str(self._strip_workspace_dir(path))
+
+    def _get_operations(self, path: FsPath) -> WinFSPOperations:
+        if path.is_root():
+            raise FSLocalOperationError(filename=str(path))
+
+        # The path should map to a mounted workspace
+        workspace_name = path.parts[0].str
+        if workspace_name not in self._operations:
+            raise FSLocalOperationError(filename=str(path))
+
+        return self._operations[workspace_name]
+
+    def mount_workspace(self, workspace_name: str, operations: WinFSPOperations) -> None:
+        self._operations[workspace_name] = operations
+
+    def unmount_workspace(self, workspace_name: str) -> None:
+        self._operations.pop(workspace_name)
+
+    def get_volume_info(self) -> dict[str, Any]:
+        return self._volume_info
+
+    def set_volume_label(self, volume_label: str) -> None:
+        self._volume_info["volume_label"] = volume_label
+
+    @handle_error
+    def get_security(self, file_context: FileContext) -> Tuple[Any, int]:
+        return self._security_descriptor.handle, self._security_descriptor.size
+
+    @handle_error
+    def set_security(
+        self, file_context: FileContext, security_information: Any, modification_descriptor: Any
+    ) -> None:
+        # TODO
+        pass
+
+    @handle_error
+    def get_security_by_name(self, file_name: str) -> Tuple[dict[str, str], Any, int]:
+        parsec_file_name = _winpath_to_parsec(file_name)
+
+        if parsec_file_name.is_root():
+            return (
+                stat_to_file_attributes(self._root_dir_stats),
+                self._security_descriptor.handle,
+                self._security_descriptor.size,
+            )
+
+        return self._get_operations(parsec_file_name).get_security_by_name(
+            self._patched_path(parsec_file_name)
+        )
+
+    @handle_error
+    def create(
+        self,
+        file_name: str,
+        create_options: Any,
+        granted_access: Any,
+        file_attributes: Any,
+        security_descriptor: Any,
+        allocation_size: Any,
+    ) -> FileContext:
+        parsec_file_name = _winpath_to_parsec(file_name)
+
+        return patch_file_context_path(
+            self._get_operations(parsec_file_name).create(
+                self._patched_path(parsec_file_name),
+                create_options,
+                granted_access,
+                file_attributes,
+                security_descriptor,
+                allocation_size,
+            ),
+            parsec_file_name,
+        )
+
+    @handle_error
+    def rename(
+        self, file_context: FileContext, file_name: str, new_file_name: str, replace_if_exists: bool
+    ) -> None:
+        # NOTE: file_context is not used by the underlying rename operation,
+        #       otherwise the workspace should be striped from file_context.path
+        self._get_operations(_winpath_to_parsec(file_name)).rename(
+            file_context,
+            self._patched_path(_winpath_to_parsec(file_name)),
+            self._patched_path(_winpath_to_parsec(new_file_name)),
+            replace_if_exists,
+        )
+
+    @handle_error
+    def open(
+        self, file_name: str, create_options: Any, granted_access: Any
+    ) -> Union[OpenedFile, OpenedFolder, EntryInfo]:
+        parsec_file_name = _winpath_to_parsec(file_name)
+
+        if parsec_file_name.is_root():
+            return OpenedFolder(parsec_file_name)
+
+        return patch_file_context_path(
+            self._get_operations(parsec_file_name).open(
+                self._patched_path(parsec_file_name), create_options, granted_access
+            ),
+            parsec_file_name,
+        )
+
+    @handle_error
+    def close(self, file_context: FileContext) -> None:
+        assert isinstance(file_context, (OpenedFile, OpenedFolder, EntryInfo))
+        self._get_operations(file_context.path).close(self._patched_file_context(file_context))
+
+    @handle_error
+    def get_file_info(self, file_context: FileContext) -> dict[str, Any]:
+        assert isinstance(file_context, (OpenedFile, OpenedFolder, EntryInfo))
+
+        if file_context.path.is_root():
+            return stat_to_winfsp_attributes(self._root_dir_stats)
+
+        return self._get_operations(file_context.path).get_file_info(
+            self._patched_file_context(file_context)
+        )
+
+    @handle_error
+    def set_basic_info(
+        self,
+        file_context: FileContext,
+        file_attributes: Any,
+        creation_time: Any,
+        last_access_time: Any,
+        last_write_time: Any,
+        change_time: Any,
+        file_info: Any,
+    ) -> Any:
+        # See: WinFSPOperations.set_basic_info
+        return self.get_file_info(file_context)
+
+    @handle_error
+    def set_file_size(
+        self, file_context: FileContext, new_size: int, set_allocation_size: bool
+    ) -> None:
+        assert isinstance(file_context, OpenedFile)
+        assert file_context.fd is not None
+
+        self._get_operations(file_context.path).set_file_size(
+            self._patched_file_context(file_context), new_size, set_allocation_size
+        )
+
+    @handle_error
+    def can_delete(self, file_context: FileContext, file_name: str) -> None:
+        assert isinstance(file_context, (OpenedFile, OpenedFolder))
+
+        if cast(OpenedFolder, file_context).is_root():
+            # Cannot remove root mountpoint
+            raise NTStatusError(NTSTATUS.STATUS_RESOURCEMANAGER_READ_ONLY)
+
+        self._get_operations(file_context.path).can_delete(
+            self._patched_file_context(file_context), self._patched_path(file_context.path)
+        )
+
+    @handle_error
+    def read_directory(self, file_context: FileContext, marker: str | None) -> List[dict[str, Any]]:
+        assert isinstance(file_context, OpenedFolder)
+
+        # For the root directory, return the list of mounted workspaces as directory entries
+        if file_context.is_root():
+            entries = []
+            for workspace_name, operations in self._operations.items():
+                entries.append(
+                    {
+                        "file_name": winify_entry_name(EntryName(workspace_name)),
+                        **operations.get_file_info(
+                            patch_file_context_path(file_context, FsPath("/"))
+                        ),
+                    }
+                )
+            return entries
+
+        return self._get_operations(file_context.path).read_directory(
+            self._patched_file_context(file_context), marker
+        )
+
+    @handle_error
+    def get_dir_info_by_name(self, file_context: FileContext, file_name: str) -> dict[str, Any]:
+        assert isinstance(file_context, OpenedFolder)
+        return self._get_operations(file_context.path).get_dir_info_by_name(
+            self._patched_file_context(file_context),
+            self._patched_path(_winpath_to_parsec(file_name)),
+        )
+
+    @handle_error
+    def read(self, file_context: FileContext, offset: int, length: int) -> bytes:
+        if isinstance(file_context, EntryInfo):
+            return file_context.read(offset, length)
+        assert isinstance(file_context, OpenedFile)
+        assert file_context.fd is not None
+        return self._get_operations(file_context.path).read(
+            self._patched_file_context(file_context), offset, length
+        )
+
+    @handle_error
+    def write(
+        self,
+        file_context: FileContext,
+        buffer: bytes,
+        offset: int,
+        write_to_end_of_file: bool,
+        constrained_io: bool,
+    ) -> int:
+        assert isinstance(file_context, OpenedFile)
+        assert file_context.fd is not None
+
+        return self._get_operations(file_context.path).write(
+            self._patched_file_context(file_context),
+            buffer,
+            offset,
+            write_to_end_of_file,
+            constrained_io,
+        )
+
+    @handle_error
+    def flush(self, file_context: FileContext) -> None:
+        assert isinstance(file_context, OpenedFile)
+        assert file_context.fd is not None
+
+        self._get_operations(file_context.path).flush(self._patched_file_context(file_context))
+
+    @handle_error
+    def cleanup(self, file_context: FileContext, file_name: str, flags: Any) -> None:
+        assert isinstance(file_context, (OpenedFile, OpenedFolder))
+
+        self._get_operations(file_context.path).cleanup(
+            self._patched_file_context(file_context),
+            self._patched_path(_winpath_to_parsec(file_name)),
+            flags,
+        )
+
+    @handle_error
+    def overwrite(
+        self,
+        file_context: FileContext,
+        file_attributes: Any,
+        replace_file_attributes: bool,
+        allocation_size: int,
+    ) -> None:
+        assert isinstance(file_context, OpenedFile)
+        assert file_context.fd is not None
+
+        self._get_operations(file_context.path).overwrite(
+            self._patched_file_context(file_context),
+            file_attributes,
+            replace_file_attributes,
+            allocation_size,
+        )
