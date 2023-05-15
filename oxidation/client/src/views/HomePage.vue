@@ -244,7 +244,7 @@ import { getMockDevices, mockLastLogin } from '../common/mocks';
 import { StoredDeviceData, StorageManager } from '@/services/storageManager';
 import { DateTime } from 'luxon';
 import { useRouter } from 'vue-router';
-import { configPathKey, formattersKey, storageManagerKey } from '../main';
+import { FormattersKey, ConfigPathKey, StorageManagerKey } from '@/common/injectionKeys';
 
 const router = useRouter();
 const { t, d } = useI18n();
@@ -255,9 +255,9 @@ const orgSearchString = ref('');
 const showOrganizationList = ref(true);
 const sortBy = ref('organization');
 const sortByAsc = ref(true);
-const { timeSince } = inject(formattersKey)!;
-const configPath = inject(configPathKey, '/');  // Must be a valid Unix path !
-const storageManager: StorageManager = inject(storageManagerKey)!;
+const { timeSince } = inject(FormattersKey)!;
+const configPath = inject(ConfigPathKey, '/');  // Must be a valid Unix path !
+const storageManager: StorageManager = inject(StorageManagerKey)!;
 
 const msSelectOptions: MsSelectOption[] = [
   { label: t('HomePage.organizationList.sortByOrganization'), key: 'organization' },
