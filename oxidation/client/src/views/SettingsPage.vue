@@ -99,10 +99,10 @@ import { useI18n } from 'vue-i18n';
 import { onMounted } from '@vue/runtime-core';
 import { toggleDarkMode } from '@/states/darkMode';
 import { Config, StorageManager } from '@/services/storageManager';
-import { storageManagerKey } from '@/main';
+import { StorageManagerKey } from '@/common/injectionKeys';
 
 const { locale } = useI18n();
-const storageManager = inject(storageManagerKey)!;
+const storageManager = inject(StorageManagerKey)!;
 const config = ref<Config>(structuredClone(StorageManager.DEFAULT_CONFIG));
 
 async function changeLang(selectedLang: string): Promise<void> {
