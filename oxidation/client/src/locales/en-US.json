@@ -91,7 +91,10 @@
     "HeaderPage": {
         "about": "About",
         "support": "Help and feedback",
-        "loggedIn": "Logged in"
+        "loggedIn": "Logged in",
+        "Breadcrumbs": {
+            "Documents": "My workspaces"
+        }
     },
     "SettingsPage": {
         "pageTitle": "Settings",

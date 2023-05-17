@@ -19,21 +19,22 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('@/views/SidebarMenuPage.vue'),
     children: [
       {
-        path: '',
-        redirect: '/'
-      },
-      {
         path: '/documents',
         component: () => import('@/views/HeaderPage.vue'),
         children: [
           {
-            path: '',
-            redirect: '/'
+            path: '/:deviceId([a-z0-9]+@[a-z0-9]+)',
+            redirect: { name: 'workspaces' }
           },
           {
-            path: 'workspaces',
+            path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/workspaces',
             name: 'workspaces',
             component: () => import('@/views/WorkspacesPage.vue')
+          },
+          {
+            path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/workspaces/:workspaceId(\\d+)',
+            name: 'folder',
+            component: () => import('@/views/FolderPage.vue')
           }
         ]
       },

@@ -91,7 +91,10 @@
     "HeaderPage": {
         "about": "À propos",
         "support": "Aide et commentaires",
-        "loggedIn": "Connecté"
+        "loggedIn": "Connecté",
+        "Breadcrumbs": {
+            "Documents": "Mes espaces"
+        }
     },
     "SettingsPage": {
         "pageTitle": "Paramètres",
