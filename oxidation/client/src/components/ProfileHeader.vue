@@ -11,10 +11,9 @@
       slot="start"
       class="avatar"
     >
-      <img
-        alt="Silhouette of a person's head"
-        src="https://ionicframework.com/docs/img/demos/avatar.svg"
-      >
+      <ion-icon
+        :icon="personCircle"
+      />
     </ion-avatar>
     <div class="text-icon">
       <ion-text class="body">
@@ -38,16 +37,17 @@ import {
   IonText,
   popoverController
 }from '@ionic/vue';
-import { chevronDown } from 'ionicons/icons';
+import { chevronDown, personCircle } from 'ionicons/icons';
 import { defineProps, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
-import ProfileHeaderPopover from './ProfileHeaderPopover.vue';
+import ProfileHeaderPopover from '@/components/ProfileHeaderPopover.vue';
+import { ProfilePopoverOption } from '@/components/ProfileHeaderPopover.vue';
+import { useRouter } from 'vue-router';
 
-const { t, d } = useI18n();
 const isPopoverOpen = ref(false);
 const chevron = ref();
+const router = useRouter();
 
-defineProps<{
+const props = defineProps<{
   firstname: string,
   lastname: string
 }>();
@@ -55,14 +55,26 @@ defineProps<{
 async function openPopover(ev: Event): Promise<void> {
   const popover = await popoverController.create({
     component: ProfileHeaderPopover,
+    componentProps: {
+      firstname: props.firstname,
+      lastname: props.lastname
+    },
     cssClass: 'profile-header-popover',
     event: ev,
     showBackdrop: false
   });
   await popover.present();
-  popover.onDidDismiss().then(() => {
+  popover.onDidDismiss().then((value) => {
     chevron.value.$el.style.setProperty('transition', 'transform ease-out 300ms');
     isPopoverOpen.value = false;
+
+    if (value.data === undefined) {
+      return;
+    }
+    if (value.data.option === ProfilePopoverOption.LogOut) {
+      // libparsec.logOut()
+      router.replace({ name: 'home' });
+    }
   });
 }
 
@@ -83,6 +95,11 @@ async function openPopover(ev: Event): Promise<void> {
 .avatar {
   margin: 0 .75em 0 0;
   position: relative;
+
+  ion-icon {
+    width: 100%;
+    height: 100%;
+  }
 
   &::after {
     content:'';
