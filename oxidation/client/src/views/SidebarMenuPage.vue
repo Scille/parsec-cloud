@@ -135,8 +135,9 @@ import { WatchStopHandle, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { createGesture } from '@ionic/vue';
 
-import { useRouter, useRoute } from 'vue-router';
+import { useRouter } from 'vue-router';
 import useSidebarMenu from '@/services/sidebarMenu';
+import { getMockDevices } from '@/common/mocks';
 
 let device: any = {};
 
@@ -168,7 +169,7 @@ const workspacesExampleData = [
   }
 ];
 const router = useRouter();
-const currentRoute = useRoute();
+
 const { t, d } = useI18n();
 
 const splitPane = ref();
@@ -189,7 +190,7 @@ function navigateToPage(pageName: string): void {
 }
 
 onMounted(() => {
-  device = JSON.parse(currentRoute.query.device as string);
+  device = getMockDevices(1)[0];
 
   if (divider.value) {
     const gesture = createGesture({

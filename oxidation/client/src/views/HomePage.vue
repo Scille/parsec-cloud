@@ -344,7 +344,7 @@ async function login(): Promise<void> {
   await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));
 
   // name: define where the user will be move, query: add parameters
-  router.push({ name: 'workspaces', query: { device: JSON.stringify(selectedDevice) } });
+  router.push({ name: 'workspaces', params: {deviceId: selectedDevice.deviceId} });
 }
 
 function onForgottenPasswordClick(): void {
