@@ -169,7 +169,6 @@ const workspacesExampleData = [
   }
 ];
 const router = useRouter();
-
 const { t, d } = useI18n();
 
 const splitPane = ref();

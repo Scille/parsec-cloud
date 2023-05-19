@@ -92,8 +92,8 @@
         "about": "About",
         "support": "Help and feedback",
         "loggedIn": "Logged in",
-        "Breadcrumbs": {
-            "Documents": "My workspaces"
+        "breadcrumbs": {
+            "documents": "My workspaces"
         }
     },
     "SettingsPage": {

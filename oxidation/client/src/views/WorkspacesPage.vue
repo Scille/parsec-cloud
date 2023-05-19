@@ -94,7 +94,7 @@ import CreateWorkspaceModal from '@/components/CreateWorkspaceModal.vue';
 import WorkspaceShareModal from '@/components/WorkspaceShareModal.vue';
 import { useI18n } from 'vue-i18n';
 import { ref } from 'vue';
-import { useRoute, useRouter} from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 const { t } = useI18n();
 const listView = ref(false);

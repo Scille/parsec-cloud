@@ -139,8 +139,8 @@ interface RouterPathNode {
   id: number,
   display: string,
   name: string,
-  params: any,
-  query: any
+  params?: any,
+  query?: any
 }
 
 // Dummy temporary function
@@ -160,9 +160,8 @@ const fullPath = computed(() => {
   // Always put the document route first
   finalPath.push({
     id: 0,
-    display: t('HeaderPage.Breadcrumbs.Documents'),
+    display: t('HeaderPage.breadcrumbs.documents'),
     name: 'workspaces',
-    query: {},
     params: { deviceId: currentRoute.params.deviceId }
   });
 
@@ -172,13 +171,13 @@ const fullPath = computed(() => {
   // If route is 'workspaces' and we have an id, we're visiting a workspace
   if (route.length >= 2 && route[0] === 'workspaces') {
     const rebuildPath: string[] = [];
-    const workspacePath = parsePath(String(currentRoute.query.path));
+    const workspacePath = parsePath(currentRoute.query.path as string);
     for (let i = 0; i < workspacePath.length; i++) {
       // Root folder
       if (workspacePath[i] === '/') {
         finalPath.push({
           id: id,
-          display: mockGetWorkspaceName(String(currentRoute.params.workspaceId)),
+          display: mockGetWorkspaceName(currentRoute.params.workspaceId as string),
           name: 'folder',
           query: { path: '/' },
           params: currentRoute.params
@@ -211,7 +210,7 @@ function navigateTo(event: PointerEvent, path: RouterPathNode): void {
   was clicked. If it was the `...` icon we reset maxBreadcrumbs to display
   all the elements, else we navigate to the folder.
   */
-  if (event.target && (event.target as any).nodeName === 'ION-BREADCRUMB')  {
+  if (event.target && (event.target as any).nodeName === 'ION-BREADCRUMB') {
     maxBreadcrumbs.value = undefined;
   } else {
     router.push({name: path.name, params: path.params, query: path.query});
@@ -221,6 +220,12 @@ function navigateTo(event: PointerEvent, path: RouterPathNode): void {
 </script>
 
 <style scoped lang="scss">
+.breadcrumb-active {
+  .home-icon {
+    color: var(--parsec-color-light-primary-700);
+  }
+}
+
 .topbar {
   --background: var(--parsec-color-light-secondary-background);
   display: flex;
@@ -233,7 +238,7 @@ function navigateTo(event: PointerEvent, path: RouterPathNode): void {
 }
 
 .home-icon {
-  margin-right: 1rem;
+  margin-right: 1em;
 }
 
 .breadcrumb-element {
