@@ -92,8 +92,8 @@
         "about": "À propos",
         "support": "Aide et commentaires",
         "loggedIn": "Connecté",
-        "Breadcrumbs": {
-            "Documents": "Mes espaces"
+        "breadcrumbs": {
+            "documents": "Mes espaces"
         }
     },
     "SettingsPage": {
