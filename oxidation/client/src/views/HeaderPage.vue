@@ -36,8 +36,8 @@
 
           <div
             class="vertical-spacer"
-          ></div>
-       </div>
+          />
+        </div>
 
         <!-- icon menu on mobile -->
         <ion-buttons slot="start">
