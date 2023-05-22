@@ -22,6 +22,12 @@ jobs:
         uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
         timeout-minutes: 5
 
+      # You can obtain the github account id at <https://api.github.com/users/github-actions[bot]>.
+      - name: Configure git user & email
+        run:
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
       - name: Parse version `${{ inputs.version }}`
         id: version
         run: python misc/releaser.py parse-version ${{ inputs.version }} | tee -a $GITHUB_OUTPUT
