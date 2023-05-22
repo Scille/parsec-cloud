@@ -38,11 +38,11 @@ import sys
 import textwrap
 from collections import defaultdict
 from copy import copy
-from datetime import date, datetime
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import version_updater
+import misc.version_updater as version_updater
 
 PYTHON_EXECUTABLE_PATH = sys.executable
 LICENSE_CONVERSION_DELAY = 4 * 365 * 24 * 3600  # 4 years
@@ -73,6 +73,7 @@ COLOR_END = "\033[0m"
 COLOR_RED = "\033[91m"
 COLOR_GREEN = "\033[92m"
 COLOR_YELLOW = "\033[93m"
+COLOR_DIM = "\033[2m"
 DESCRIPTION = (
     f"""TL,DR:
 Create release commit&tag: {COLOR_GREEN}./misc/releaser.py build v1.2.3{COLOR_END}
@@ -306,7 +307,11 @@ _test_format_version(Version(1, 2, 3, dev=4, local="foo.bar"), "1.2.3-dev.4+foo.
 
 
 def run_git(*cmd: Any, verbose: bool = False) -> str:
-    cmd = ["git", *cmd]
+    return run_cmd("git", *cmd, verbose=verbose)
+
+
+def run_cmd(*cmd: Any, verbose: bool = False) -> str:
+    print(f"{COLOR_DIM}>> {' '.join(map(str, cmd))}{COLOR_END}")
     proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if proc.returncode != 0:
         raise RuntimeError(
@@ -327,23 +332,23 @@ def get_version_from_code() -> Version:
     return Version.parse(version_updater.TOOLS_VERSION[version_updater.Tool.Parsec])
 
 
-def update_version_files(new_version: Version) -> None:
-    version_updater.check_tool(version_updater.Tool.Parsec, str(new_version), update=True)
+def update_version_files(version: Version) -> None:
+    version_updater.check_tool(version_updater.Tool.Parsec, str(version), update=True)
 
 
-def update_license_file(new_version: Version, new_release_date: date) -> None:
+def update_license_file(version: Version, new_release_date: datetime) -> None:
     license_txt = BUSL_LICENSE_FILE.read_text(encoding="utf8")
     half_updated_license_txt = re.sub(
         r"Change Date:.*", f"Change Date:  {new_release_date.strftime('%b %d, %Y')}", license_txt
     )
     updated_version_txt = re.sub(
         r"Licensed Work:.*",
-        f"Licensed Work:  Parsec {new_version.with_v_prefix()}",
+        f"Licensed Work:  Parsec {version.with_v_prefix()}",
         half_updated_license_txt,
     )
     assert (
         updated_version_txt != half_updated_license_txt
-    ), f"The `Licensed Work` field should have changed, but hasn't (likely because the new version `{new_version}` correspond to the version written on the license file)"
+    ), f"The `Licensed Work` field should have changed, but hasn't (likely because the new version `{version}` correspond to the version written on the license file)"
     BUSL_LICENSE_FILE.write_bytes(
         updated_version_txt.encode("utf8")
     )  # Use write_bytes to keep \n on Windows
@@ -363,39 +368,51 @@ def collect_newsfragments() -> list[Path]:
     return fragments
 
 
-def build_release(version: Version, yes: bool) -> None:
-    if version.is_dev:
-        raise ReleaseError(f"Don't release a dev version: {version}")
+def get_release_branch(version: Version) -> str:
+    return f"releases/{version.major}.{version.minor}"
 
-    print(f"Building release {COLOR_GREEN}{version}{COLOR_END} ...")
-    old_version = get_version_from_code()
-    if version <= old_version:
-        raise ReleaseError(
-            f"Previous version is greater that the new version ({COLOR_YELLOW}{old_version}{COLOR_END} >= {COLOR_YELLOW}{version}{COLOR_END})"
-        )
 
-    now = datetime.utcnow()
-    release_date = now.date()
-    # Cannot just add years to date given it wouldn't handle february 29th
-    license_conversion_date = datetime.fromtimestamp(
-        now.timestamp() + LICENSE_CONVERSION_DELAY
-    ).date()
-    assert release_date.toordinal() < license_conversion_date.toordinal()
-
-    # Check repo is clean
+def ensure_working_in_a_clean_git_repo() -> None:
     stdout = run_git("status", "--porcelain", "--untracked-files=no")
     if stdout.strip():
         raise ReleaseError("Repository is not clean, aborting")
 
-    # Update BUSL license date marker & version info
-    update_license_file(version, license_conversion_date)
-    # Update parsec version
-    update_version_files(version)
 
-    # Update HISTORY.rst
+def ensure_working_on_the_correct_branch(
+    release_branch: str, base_ref: str | None, version: Version
+) -> None:
+    current_branch = run_git("rev-parse", "--abbrev-ref", "HEAD")
+    print(f"Current branch {COLOR_GREEN}{current_branch}{COLOR_END}")
+
+    if current_branch == release_branch:
+        print("Already in the release branch, nothing to do")
+        return
+
+    if version.patch == 0:
+        print("Creating release branch...")
+        run_git("switch", "--create", release_branch, *([base_ref] if base_ref else []))
+    else:
+        raise ReleaseError(
+            f"""
+        It seems you are trying to create a patched release from the wrong base branch.
+        Use base branch `{release_branch}` if you want to create a patched release.
+        (commits related to the patch release should be pushed to that branch before)
+        """
+        )
+
+
+def get_licence_eol_date(release_date: datetime) -> datetime:
+    # Cannot just add years to date given it wouldn't handle february 29th
+    license_eol_date = datetime.fromtimestamp(release_date.timestamp() + LICENSE_CONVERSION_DELAY)
+    assert release_date.toordinal() < license_eol_date.toordinal()
+    return license_eol_date
+
+
+def update_history_changelog(
+    newsfragments: list[Path], version: Version, yes: bool, release_date: datetime
+) -> None:
     history_header, history_body = split_history_file()
 
-    newsfragments = collect_newsfragments()
     issues_per_type: defaultdict[str, list[str]] = convert_newsfragments_to_rst(newsfragments)
 
     new_entry = gen_rst_release_entry(version, release_date, issues_per_type)
@@ -413,10 +430,14 @@ def build_release(version: Version, yes: bool) -> None:
 
     if not yes:
         input(
-            f"Pausing so you can check {COLOR_YELLOW}HISTORY.rst{COLOR_END} is okay, press enter when ready"
+            f"Pausing so you can check {COLOR_YELLOW}HISTORY.rst{COLOR_END} is okay, press any key when ready"
         )
 
-    commit_msg = f"Bump version {old_version} -> {version}"
+
+def create_bump_commit_to_new_version(
+    release_version: Version, current_version: Version, newsfragments: list[Path]
+) -> None:
+    commit_msg = f"Bump version {current_version} -> {release_version}"
     print(f"Create commit {COLOR_GREEN}{commit_msg}{COLOR_END}")
     run_git("add", HISTORY_FILE.absolute(), *FILES_TO_COMMIT_ON_VERSION_CHANGE)
     if newsfragments:
@@ -424,26 +445,54 @@ def build_release(version: Version, yes: bool) -> None:
         run_git("rm", *fragments_pathes)
     # FIXME: the `releaser` steps in pre-commit is disable is `no-verify` still required ?
     # Disable pre-commit hooks given this commit wouldn't pass `releaser check`
-    run_git("commit", "-m", commit_msg, "--no-verify")
+    run_git("commit", f"--message={commit_msg}", "--no-verify", "--gpg-sign")
 
+
+def create_tag_for_new_version(version: Version, tag: str) -> None:
     print(f"Create tag {COLOR_GREEN}{version}{COLOR_END}")
-    run_git("tag", version.with_v_prefix(), "-m", f"Release version {version}", "-a", "-s")
+    run_git(
+        "tag",
+        tag,
+        f"--message=Release version {version}",
+        "--annotate",
+        "--sign",
+    )
 
-    # Update __version__ with dev suffix
+
+def inspect_tag(tag: str, yes: bool) -> None:
+    print(f"Inspect tag {COLOR_GREEN}{tag}{COLOR_END}")
+
+    print(run_git("show", tag, "--show-signature", "--quiet"))
+    print(run_git("tag", "--verify", tag))
+
+    if not yes:
+        input("Check if the generated git tag is okay... (press any key to continue)")
+
+
+def create_bump_commit_to_dev_version(version: Version, license_eol_date: datetime) -> None:
     dev_version = version.evolve(local="dev")
     commit_msg = f"Bump version {version} -> {dev_version}"
     print(f"Create commit {COLOR_GREEN}{commit_msg}{COLOR_END}")
-    update_license_file(dev_version, license_conversion_date)
+    update_license_file(dev_version, license_eol_date)
     update_version_files(dev_version)
     run_git("add", *FILES_TO_COMMIT_ON_VERSION_CHANGE)
     # Disable pre-commit hooks given this commit wouldn't pass `releaser check`
-    run_git("commit", "-m", commit_msg, "--no-verify")
+    run_git("commit", f"--message={commit_msg}", "--no-verify", "--gpg-sign")
+
+
+def push_release(tag: str, release_branch: str, yes: bool) -> None:
+    print("Pushing changes to remote...")
+
+    if not yes:
+        input("Press any key to push the changes to the remote server")
+    # Push the release branch and the tag at the same time
+    print(run_git("push", "--set-upstream", "--atomic", "origin", release_branch, tag))
 
 
 def gen_rst_release_entry(
-    version: Version, release_date: date, issues_per_type: defaultdict[str, list[str]]
+    version: Version, release_date: datetime, issues_per_type: defaultdict[str, list[str]]
 ) -> str:
-    new_entry_title = f"Parsec {version.with_v_prefix()} ({release_date.isoformat()})"
+    new_entry_title = f"Parsec {version.with_v_prefix()} ({release_date.date().isoformat()})"
     new_entry = f"\n\n{new_entry_title}\n{len(new_entry_title) * '-'}\n"
 
     if not issues_per_type:
@@ -537,7 +586,48 @@ def build_main(args: argparse.Namespace) -> None:
     # TODO: rethink the non-release checks
     # current_version = get_version_from_repo_describe_tag(args.verbose)
     # check_non_release(current_version)
-    build_release(args.version, yes=args.yes)
+    release_version: Version = args.version
+    yes: bool = args.yes
+    base_ref: str | None = args.base_ref
+
+    if release_version.is_dev:
+        raise ReleaseError(f"Releasing a development version is not supported: {release_version}")
+    release_branch = get_release_branch(release_version)
+    tag = release_version.with_v_prefix()
+
+    print(f"Release version to build: {COLOR_GREEN}{release_version}{COLOR_END}")
+    print(f"Release branch: {COLOR_GREEN}{release_branch}{COLOR_END}")
+    print(f"Release commit tag: {COLOR_GREEN}{tag}{COLOR_END}")
+
+    current_version = get_version_from_code()
+    if release_version <= current_version:
+        raise ReleaseError(
+            f"Previous version is greater that the new version ({COLOR_YELLOW}{current_version}{COLOR_END} >= {COLOR_YELLOW}{release_version}{COLOR_END})"
+        )
+
+    ensure_working_in_a_clean_git_repo()
+
+    ensure_working_on_the_correct_branch(release_branch, base_ref, release_version)
+
+    release_date = datetime.utcnow()
+    license_eol_date = get_licence_eol_date(release_date)
+
+    update_license_file(release_version, license_eol_date)
+
+    update_version_files(release_version)
+
+    newsfragments = collect_newsfragments()
+    update_history_changelog(newsfragments, release_version, yes, release_date)
+
+    create_bump_commit_to_new_version(release_version, current_version, newsfragments)
+
+    create_tag_for_new_version(release_version, tag)
+
+    inspect_tag(tag, yes)
+
+    create_bump_commit_to_dev_version(release_version, license_eol_date)
+
+    push_release(tag, release_branch, yes)
 
 
 def check_main(args: argparse.Namespace) -> None:
@@ -609,6 +699,46 @@ def parse_version_main(args: argparse.Namespace) -> None:
     )
 
 
+def acknowledge_main(args: argparse.Namespace) -> None:
+    if not args.version:
+        raise SystemExit("version is required for acknowledge command")
+
+    version: Version = args.version
+
+    if any((version.is_preversion, version.is_dev, version.local)):
+        print(
+            f"[{COLOR_YELLOW}WARNING{COLOR_END}] You are trying to acknowledge a non-stable version (it has a prerelease, dev or local part in the version), you are on your own"
+        )
+
+    ensure_working_in_a_clean_git_repo()
+
+    release_branch = args.base or get_release_branch(version)
+    acknowledge_branch: str = f"acknowledges/{version}"
+
+    print(
+        f"Will create a Pull-Request to acknowledge the release {COLOR_GREEN}{version}{COLOR_END}"
+    )
+    print(
+        f"{COLOR_DIM}Will use {release_branch} as base ref when creating the branch {acknowledge_branch}{COLOR_END}"
+    )
+
+    print(run_git("switch", "--create", acknowledge_branch, release_branch))
+    print(run_git("push", "--set-upstream", "origin", acknowledge_branch))
+
+    run_cmd(
+        "gh",
+        "pr",
+        "create",
+        "--draft",
+        "--base=master",
+        f"--head={acknowledge_branch}",
+        "--assignee=@me",
+        f"--title=Acknowledge release {version}",
+        "--fill",
+        verbose=True,
+    )
+
+
 def cli(description: str) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=description,
@@ -631,6 +761,13 @@ def cli(description: str) -> argparse.Namespace:
     )
     build.add_argument("version", type=Version.parse, help="The new release version")
     build.add_argument("-y", "--yes", help="Reply `yes` to asked question", action="store_true")
+    build.add_argument(
+        "--base",
+        dest="base_ref",
+        type=str,
+        default=None,
+        help="The base ref to use when creating the release branch",
+    )
 
     check = subparsers.add_parser(
         "check",
@@ -660,6 +797,20 @@ def cli(description: str) -> argparse.Namespace:
     )
     parse_version.add_argument("version", help="The version to parse")
 
+    acknowledge = subparsers.add_parser(
+        "acknowledge",
+        help="Acknowledge a release",
+        description=acknowledge_main.__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    acknowledge.add_argument("version", type=Version.parse, help="The version to acknowledge")
+    acknowledge.add_argument(
+        "--base",
+        type=str,
+        default=None,
+        help="The base ref to use when creating the acknowledge branch",
+    )
+
     return parser.parse_args()
 
 
@@ -669,6 +820,7 @@ if __name__ == "__main__":
         "check": check_main,
         "rollback": rollback_main,
         "parse-version": parse_version_main,
+        "acknowledge": acknowledge_main,
     }
 
     args = cli(DESCRIPTION)
