@@ -6,19 +6,17 @@
   - [Major/minor vs patch versions](#majorminor-vs-patch-versions)
   - [Release Checklist](#release-checklist)
   - [Release major/minor version](#release-majorminor-version)
-    - [0 - Create release candidate version](#0---create-release-candidate-version)
-    - [1 - Create the release branch](#1---create-the-release-branch)
-    - [2 - Create release commits and tag](#2---create-release-commits-and-tag)
-    - [3 - Push upstream](#3---push-upstream)
-    - [4 - Create the release Pull Request](#4---create-the-release-pull-request)
-    - [5 - Sign the installers](#5---sign-the-installers)
-    - [6 - Create the release on Github](#6---create-the-release-on-github)
-    - [7 - Merge (or update) the Pull Request](#7---merge-or-update-the-pull-request)
+    - [Create release candidate version](#create-release-candidate-version)
+    - [Create the release](#create-the-release)
+    - [Create the release Pull Request](#create-the-release-pull-request)
+    - [Sign the installers](#sign-the-installers)
+    - [Create the release on Github](#create-the-release-on-github)
+    - [Merge (or update) the Pull Request](#merge-or-update-the-pull-request)
   - [Release patch version](#release-patch-version)
-    - [0 - (Re)create the version branch](#0---recreate-the-version-branch)
-    - [1 - Cherry-pick the changes](#1---cherry-pick-the-changes)
-    - [2 - Follow the major/minor guide](#2---follow-the-majorminor-guide)
-    - [3 - All done](#3---all-done)
+    - [(Re)create the version branch](#recreate-the-version-branch)
+    - [Cherry-pick the changes](#cherry-pick-the-changes)
+    - [Follow the major/minor guide](#follow-the-majorminor-guide)
+    - [All done](#all-done)
 
 ## Major/minor vs patch versions
 
@@ -49,7 +47,7 @@ Note: Most of the work can be done using the workflow [`release-starter`](https:
 
 In the following we will consider we want to release version ``v2.9.0``.
 
-### 0 - Create release candidate version
+### Create release candidate version
 
 Release is complex and fails pretty often, so you should create release
 candidate versions.
@@ -62,63 +60,54 @@ know how it ends up ;-)
 
 Release candidate versions must have the naming ``v2.9.0-rc1``, ``v2.9.0-rc2`` etc.
 
-### 1 - Create the release branch
+### Create the release
 
-Master branch being protected, we do our work on a dedicated branch that we call the release branch.
-Release branch naming must be ``<major>.<minor>``, so in our case ``2.9``:
+The script `misc/releaser.py` provides an automated workflow to generate a new release/build.
+
+Note: The commits and release tag are annotated & signed, so you must have your GPG key
+at the ready (and this key should be configured in your github account).
+
+To create a new release, simply execute:
 
 ```shell
 git fetch
-git switch --create release/2.9 origin/master
-git push --set-upstream origin release/2.9
+python misc/releaser.py build --base=origin/master v2.9.0
 ```
 
-Note at this point the branch is even with master, hence we cannot create a Pull Request yet (see part 4).
+> `git fetch` is used to update the remote ref, that is used to get the latest remote change on `master`.
+> We specify `--base=origin/master` to be able to use that script from any branch.
 
-### 2 - Create release commits and tag
+The script will:
 
-```shell
-python misc/releaser.py build v2.9.0
-```
+- Ensure the release version is greater than the current version.
+- Ensure _git env_ is clean (no changes to be commited).
+- Create the release branch `releases/2.9` (and switch to it).
+- Update the license Date & version.
+- Update the parsec version across different files in our repository.
+- Update `HISTORY.rst` with a new block generated using the news fragments found in `newsfragments/`.
 
-The script will pause just before creating the release commit, this is so you
-can open [`HISTORY.rst`](/HISTORY.rst) and check the release note.
+  At this step, the script will ask you to review the changes made so far (mostly to check if [`HISTORY.rst`](/HISTORY.rst) was correctly generated).
 
-For instance, if some release candidate versions has been released before us,
-now is the time to merge all those release notes into ours.
+  For instance, if some release candidate versions have been released before this one,
+  now is the time to merge back the corresponding release notes.
 
-Once hitting enter, the script:
+- Create the release commit with the message `Bump version v2.8.1+dev -> v2.9.0`.
 
-- creates the release commit with a commit message of the type: ``Bump version v2.8.1+dev -> v2.9.0``.
-- create the release tag ``v2.9.0``
-- create the ``Bump version v2.9.0 -> v2.9.0+dev`` commit.
+  The commit will contains the change made to `HISTORY.rst`, the various files referencing the parsec version, the updated license and the removed news fragments.
 
-Note the release tag is annotated & signed, so you must have your GPG key
-at the ready (and this key should be configured in your github account).
+- Create the release tag `v2.9.0`.
 
-You should also check the signature of the commits and tag:
+  The script will display the tag information, it needs to be reviewed before proceeding (check the tag signature).
 
-```shell
-git show v2.9.0 --show-signature
-git tag --verify v2.9.0
-```
+- Create the dev commit with the message `Bump version v2.9.0 -> v2.9.0+dev`.
 
-### 3 - Push upstream
+- Push the branch `releases/2.9` & the tag `v2.9.0`
 
-```shell
-git push
-git push origin v2.9.0
-```
+  The script will require confirmation before continuing.
 
-It's better to push the commit before the tags, this way we can detect if
-somebody has pushed on the branch in our back.
+### Sign the installers
 
-### 4 - Create the release Pull Request
-
-Release Pull Request starts from the release branch (e.g. ``2.9``) and targets the ``master`` branch.
-Pull Request title must be ``Release v2.9.0``.
-
-### 5 - Sign the installers
+⚠️ This step is outdated.
 
 The CI is going to generate the installers for Linux, Mac and Windows.
 
@@ -129,7 +118,9 @@ signed. See the documentation in ``packaging/`` for more information.
 
 On top of that the Python wheel of the project is going to be uploaded to Pypi.
 
-### 6 - Create the release on Github
+### Create the release on Github
+
+⚠️ This step is outdated.
 
 Once the tag pushed, it can be converted as a release on github using the
 [Draft a new release](https://github.com/Scille/parsec-cloud/releases/new).
@@ -142,7 +133,9 @@ The release should contain the Mac and Windows installers that have been signed 
 > that doesn't contain an installer for there platform. Hence it's safe to create
 > a new github release without any installer.
 
-### 7 - Merge (or update) the Pull Request
+### Merge (or update) the Pull Request
+
+⚠️ This step is outdated.
 
 If you were dealing with a final release (e.g. ``v2.9.0``), you can merge the branch in master call it a day ;-)
 
@@ -163,17 +156,20 @@ do a final release and merge the version branch in master.
 
 In the following we will consider we want to release version ``v2.9.1``.
 
-### 0 - (Re)create the version branch
+### (Re)create the version branch
 
-The version branch ``2.9`` used to do ``2.9.0`` release has most likely been
-removed when merged into master, we must recreate it.
-Note the version branch should be set to the ``Bump version v2.9.0 -> v2.9.0+dev``
-commit (i.e. the commit right after the release tag) and not release tag itself.
+If the release branch ``releases/2.9`` used for the ``2.9.0`` release has been
+removed, it needs to be recreated.
+
+> Note: the release branch should live on their own and should not be deleted
+
+In that case, the branch MUST be recreated at the commit ``Bump version v2.9.0 -> v2.9.0+dev``
+(i.e. the commit right after the release tag) and not release tag itself.
 
 Of course the version branch should be reused if a previous patch release has
 already been done (e.g. you're planning to release ``v2.9.2``).
 
-### 1 - Cherry-pick the changes
+### Cherry-pick the changes
 
 Most of the time, the changes needed on the patch release are also expected to
 end up in the master branch.
@@ -181,7 +177,7 @@ end up in the master branch.
 In this case, a main PR should be opened against master, then once merge it commits
 can be cherry-picked to create another PR against the version branch.
 
-### 2 - Follow the major/minor guide
+### Follow the major/minor guide
 
 You know the drill, creating the release:
 
@@ -189,16 +185,9 @@ You know the drill, creating the release:
 python misc/releaser.py build 2.9.1
 ```
 
-Pushing upstream:
+> From the step above, your current git branch MUST be `releases/2.9`.
 
-```shell
-git push  # Here we push the `2.9` branch !
-git push origin v2.9.1
-```
-
-And finally signing the installer and creating the release on Github.
-
-### 3 - All done
+### All done
 
 Unlike the major/minor release, we don't merge back the version branch into master.
 This is of course because our version branch is decorrelated from master and merging
