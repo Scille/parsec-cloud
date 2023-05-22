@@ -11,7 +11,7 @@
         "test:unit": "cypress run --component",
         "test:e2e": "cypress run --e2e",
         "web:open": "vite --open",
-        "web:release": "vite build && run lint",
+        "web:release": "npm run lint && vite build",
         "native:build": "node ./scripts/vite_build_for_native.cjs",
         "android:copy": "npm run native:build && npx cap copy android",
         "android:copy:release": "npm run native:build && npx cap copy android",
@@ -38,12 +38,12 @@
         "@ionic/vue-router": "^7.0.3",
         "@types/luxon": "^3.2.0",
         "luxon": "^3.3.0",
-        "vite-plugin-top-level-await": "^1.3.0",
         "vue": "^3.2.45",
         "vue-i18n": "^9.2.2",
         "vue-router": "^4.1.6"
     },
     "devDependencies": {
+        "vite-plugin-top-level-await": "^1.3.0",
         "@capacitor/cli": "^4.7.1",
         "@intlify/eslint-plugin-vue-i18n": "^2.0.0",
         "@ionic/cli": "^7.0.1",
