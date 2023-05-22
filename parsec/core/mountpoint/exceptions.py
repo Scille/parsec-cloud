@@ -40,3 +40,7 @@ class MountpointFuseNotAvailable(MountpointError):
 
 class MountpointNoDriveAvailable(MountpointError):
     pass
+
+
+class MountpointPlatformNotSupported(MountpointError):
+    pass

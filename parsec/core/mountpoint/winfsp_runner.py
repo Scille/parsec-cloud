@@ -19,7 +19,11 @@ from parsec.core.fs.userfs import UserFS
 from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.mountpoint.exceptions import MountpointDriverCrash, MountpointNoDriveAvailable
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
-from parsec.core.mountpoint.winfsp_operations import WinFSPOperations, winify_entry_name
+from parsec.core.mountpoint.winfsp_operations import (
+    MultiWorkspaceWinFSPOperations,
+    WinFSPOperations,
+    winify_entry_name,
+)
 from parsec.core.types import EntryID, LocalDevice
 from parsec.core.win_registry import parsec_drive_icon_context
 from parsec.event_bus import EventBus
@@ -205,6 +209,145 @@ async def winfsp_mountpoint_runner(
             with event_bus.waiter_on(CoreEvent.SHARING_UPDATED) as waiter:
                 # Loop over `sharing.updated` event
                 while True:
+                    # Restart the mountpoint with the right read_only flag if necessary
+                    # Don't bother with restarting if the workspace has been revoked
+                    # It's the manager's responsibility to unmount the workspace in this case
+                    if (
+                        workspace_fs.is_read_only() != fs.volume_params["read_only_volume"]
+                        and not workspace_fs.is_revoked()
+                    ):
+                        restart = partial(fs.restart, read_only_volume=workspace_fs.is_read_only())
+                        await trio.to_thread.run_sync(restart)
+
+                    # Wait and reset waiter
+                    await waiter.wait()
+                    waiter.clear()
+
+    except Exception as exc:
+        raise MountpointDriverCrash(f"WinFSP has crashed on {mountpoint_path}: {exc}") from exc
+
+    finally:
+        event_bus.send(CoreEvent.MOUNTPOINT_STOPPING, **event_kwargs)
+
+        # Must run in thread given this call will wait for any winfsp operation
+        # to finish so blocking the trio loop can produce a dead lock...
+        with trio.CancelScope(shield=True):
+            try:
+                await trio.to_thread.run_sync(fs.stop)
+            # The file system might not be started,
+            # if the task gets cancelled before running `fs.start` for instance
+            except FileSystemNotStarted:
+                pass
+
+
+@asynccontextmanager
+async def winfsp_multiworkspace_mountpoint_runner(
+    group_label: str,
+    user_fs: UserFS,
+    workspaces: list[WorkspaceFS],
+    base_mountpoint_path: PurePath,
+    config: dict[str, Any],
+    event_bus: EventBus,
+) -> AsyncIterator[PurePath]:
+    # `base_mountpoint_path` is ignored given we only mount from a drive
+    mountpoint_path = await _get_available_drive(1, 1)
+
+    # TODO(137) Pass the list of workspaces_names instead?
+    # Prepare event information
+    event_kwargs = {
+        "mountpoint": mountpoint_path,
+        #        "workspace_id": workspace_fs.workspace_id,
+        #        "timestamp": getattr(workspace_fs, "timestamp", None),
+    }
+
+    if config.get("debug", False):
+        enable_debug_log()
+
+    # Volume label is limited to 32 WCHAR characters, so force the label to
+    # ascii to easily enforce the size.
+    volume_label = (
+        unicodedata.normalize("NFKD", f"{group_label.capitalize()}")
+        .encode("ascii", "ignore")[:32]
+        .decode("ascii")
+    )
+    # TODO(137) Generate volume serial number (without workspace info)
+    # volume_serial_number = _generate_volume_serial_number(workspace_fs.device, workspace_fs.workspace_id)
+    volume_serial_number = adler32(
+        f"{user_fs.device.organization_id.str}-{user_fs.device.device_id.str}".encode()
+    )
+
+    # Types can't be checked when unpacking `event_kwargs`
+    operations = MultiWorkspaceWinFSPOperations(volume_label=volume_label, **event_kwargs)  # type: ignore[arg-type]
+
+    for workspace_fs in workspaces:
+        workspace_name = winify_entry_name(workspace_fs.get_workspace_name())
+        trio_token = trio.lowlevel.current_trio_token()
+        fs_access = ThreadFSAccess(trio_token, workspace_fs, event_bus)
+
+        # Prepare event information
+        evt_kwargs = {
+            "mountpoint": mountpoint_path,
+            "workspace_id": workspace_fs.workspace_id,
+            "timestamp": getattr(workspace_fs, "timestamp", None),
+        }
+        operations.mount(
+            workspace_name,
+            WinFSPOperations(fs_access=fs_access, volume_label=volume_label, **evt_kwargs),  # type: ignore[arg-type]
+        )
+
+    # See https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getvolumeinformationa
+    fs = FileSystem(
+        mountpoint_path.drive,
+        operations,
+        sector_size=512,
+        sectors_per_allocation_unit=1,
+        volume_creation_time=filetime_now(),
+        volume_serial_number=volume_serial_number,
+        file_info_timeout=1000,
+        case_sensitive_search=1,
+        case_preserved_names=1,
+        unicode_on_disk=1,
+        persistent_acls=0,
+        reparse_points=0,
+        reparse_points_access_check=0,
+        named_streams=0,
+        # read_only_volume=workspace_fs.is_read_only(),
+        read_only_volume=0,
+        post_cleanup_when_modified_only=1,
+        device_control=0,
+        um_file_context_is_user_context2=1,
+        file_system_name="Parsec",
+        prefix="",
+        # The minimum value for IRP timeout is 1 minute (default is 5)
+        irp_timeout=60000,
+        # security_timeout_valid=1,
+        # security_timeout=10000,
+    )
+
+    try:
+        event_bus.send(CoreEvent.MOUNTPOINT_STARTING, **event_kwargs)
+
+        # Manage drive icon
+        drive_letter = mountpoint_path.drive[0]
+        with parsec_drive_icon_context(drive_letter, device=user_fs.device):
+            # Run fs start in a thread
+            await trio.to_thread.run_sync(fs.start)
+
+            # The system is too sensitive right after starting
+            await trio.sleep(0.010)  # 10 ms
+
+            # Make sure the mountpoint is ready
+            await _wait_for_winfsp_ready(mountpoint_path)
+
+            # Notify the manager that the mountpoint is ready
+            yield mountpoint_path
+
+            # Start recording `sharing.updated` events
+            with event_bus.waiter_on(CoreEvent.SHARING_UPDATED) as waiter:
+                # Loop over `sharing.updated` event
+                while True:
+                    # TODO(137): A read-only workspace should adapt the multi-workspace operations (not restart the mountpoint!)
+
                     # Restart the mountpoint with the right read_only flag if necessary
                     # Don't bother with restarting if the workspace has been revoked
                     # It's the manager's responsibility to unmount the workspace in this case
