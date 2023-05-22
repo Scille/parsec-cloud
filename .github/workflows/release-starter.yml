@@ -52,7 +52,7 @@ jobs:
         run: |
           if [ "${{ steps.names.outputs.branch }}" = "$(git rev-parse --abbrev-ref HEAD)" ]; then
             echo "We are already in the target branch, nothing to do"
-          elif [ "${{ steps.version.outputs.patch }}" -eq 0 ]
+          elif [ "${{ steps.version.outputs.patch }}" -eq 0 ]; then
             echo "Creating release branch ..."
             git switch --create ${{ steps.names.outputs.branch }}
           else
