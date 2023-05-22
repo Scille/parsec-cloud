@@ -1,22 +1,32 @@
 #! /bin/sh
 # Execute the script like `bash packaging/testbed-server/build.sh ...`
 
-set -e
+set -e -o pipefail
 
-SCRIPTDIR=$(dirname $(realpath -s "$0"))
-ROOTDIR="$SCRIPTDIR/../.."
+# Allow the user to overwrite `SCRIPTDIR` by exporting it beforehand.
+SCRIPTDIR=${SCRIPTDIR:=$(dirname $(realpath -s "$0"))}
+# Allow the user to overwrite `ROOTDIR` by exporting it beforehand.
+ROOTDIR=${ROOTDIR:=$(realpath -s "$SCRIPTDIR/../..")}
 
 CURRENT_DATE=$(date --iso-8601)
-CURRENT_VERSION=$(grep -o '^version = .*$' $ROOTDIR/pyproject.toml | sed 's/version = "\(.*\)"$/\1/' | tr '+' '.')
+CURRENT_VERSION=$(grep -o '^version = .*$' $ROOTDIR/pyproject.toml | sed 's/version = "\(.*\)"$/\1/' | tr '+' '-' )
 CURRENT_COMMIT_SHA=$(git rev-parse --short HEAD)
 
-UNIQ_TAG="$CURRENT_DATE-$CURRENT_VERSION-$CURRENT_COMMIT_SHA"
+UNIQ_TAG="$CURRENT_VERSION.$CURRENT_DATE-sha.$CURRENT_COMMIT_SHA"
 
 echo "Will create an image \`parsec-testbed-server\` with the following tags:"
 echo "- \`latest\`"
 echo "- \`$UNIQ_TAG\`"
 
 PREFIX=ghcr.io/scille/parsec-cloud
+
+if [ "$WRITE_ENV" -eq 1 ]; then
+    (
+        echo "UNIQ_TAG=$UNIQ_TAG"
+        echo "TAGS=($UNIQ_TAG latest)"
+        echo "PREFIX=$PREFIX"
+    ) > parsec-testbed.env
+fi
 
 echo "On top of that the image will use the following prefix \`$PREFIX\`"
 
