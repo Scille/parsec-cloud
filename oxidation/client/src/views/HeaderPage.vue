@@ -21,6 +21,24 @@
         </ion-buttons>
         <!-- end of icon visible when menu is hidden -->
 
+        <div
+          id="back-button"
+          v-show="hasHistory()"
+        >
+          <ion-button
+            fill="clear"
+            @click="goBack()"
+          >
+            <ion-icon
+              :icon="chevronBack"
+            />
+          </ion-button>
+
+          <div
+            class="vertical-spacer"
+          ></div>
+       </div>
+
         <!-- icon menu on mobile -->
         <ion-buttons slot="start">
           <ion-menu-button />
@@ -120,7 +138,8 @@ import {
   home,
   search,
   notifications,
-  caretForward
+  caretForward,
+  chevronBack
 } from 'ionicons/icons';
 import { useI18n } from 'vue-i18n';
 import { useRouter, useRoute } from 'vue-router';
@@ -199,6 +218,28 @@ const fullPath = computed(() => {
   return finalPath;
 });
 
+function goBack(): void {
+  if (hasHistory()) {
+    router.go(-1);
+  }
+}
+
+function hasHistory(): boolean {
+  /*
+  * Only show the back button if the previous route
+  * was a logged route. Vue router does not strictly
+  * have something to check that, so we check if
+  * the device was in the URL.
+  */
+  const deviceId = router.currentRoute.value.params.deviceId;
+  const previousRoute = router.options.history.state.back?.toString();
+
+  if (!deviceId || !previousRoute) {
+    return false;
+  }
+  return previousRoute.startsWith(`/${deviceId}`);
+}
+
 function navigateTo(event: PointerEvent, path: RouterPathNode): void {
   /*
   We're using ion-breadcrumbs, they're expecting a `href` attribute.
@@ -239,10 +280,34 @@ function navigateTo(event: PointerEvent, path: RouterPathNode): void {
 
 .home-icon {
   margin-right: 1em;
+  width: 1.2em;
+  height: 1.2em;
 }
 
 .breadcrumb-element {
   cursor: pointer;
+}
+
+#back-button {
+  float: left;
+
+  ion-icon {
+    width: 1.2em;
+    height: 1.2em;
+  }
+
+  ion-button {
+    float: left;
+  }
+
+  .vertical-spacer {
+    border-left: 2px solid var(--parsec-color-light-secondary-light);
+    height: 2em;
+    float: left;
+    margin-top: 0.3em;
+    margin-left: 1em;
+    margin-right: 1em;
+  }
 }
 
 .topbar-button__list {
