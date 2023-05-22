@@ -1,0 +1,52 @@
+name: Publish docker testbed
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - oxidation/libparsec/**
+      - tests/scripts/run_testbed_server.py
+      - packaging/testbed-server/**
+      - .github/workflows/package-testbed.yml
+  push:
+    branches:
+      - master
+    paths:
+      - oxidation/libparsec/**
+      - tests/scripts/run_testbed_server.py
+      - packaging/testbed-server/**
+      - .github/workflows/package-testbed.yml
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  publish-testbed:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
+        timeout-minutes: 5
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@40891eba8c2bcd1309b07ba8b11232f313e86779
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build docker image
+        run: bash packaging/testbed-server/build.sh 2>&1
+        env:
+          WRITE_ENV: 1
+        timeout-minutes: 20
+
+      - name: Publish docker image
+        run: |
+          source parsec-testbed.env
+
+          for tag in $UNIQ_TAG; do
+            echo "Pushing tag \`$tag\` to \`$PREFIX\`"
+            docker push $PREFIX/parsec-testbed-server:$tag
+          done
+        timeout-minutes: 5
