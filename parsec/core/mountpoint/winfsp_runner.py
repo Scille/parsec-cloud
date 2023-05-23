@@ -250,7 +250,7 @@ async def winfsp_multiworkspace_mountpoint_runner(
     event_bus: EventBus,
 ) -> AsyncIterator[PurePath]:
     # `base_mountpoint_path` is ignored given we only mount from a drive
-    mountpoint_path = await _get_available_drive(1, 1)
+    mountpoint_path = await _get_available_drive(0, 1)
 
     # TODO(137) Pass the list of workspaces_names instead?
     # Prepare event information
@@ -277,7 +277,7 @@ async def winfsp_multiworkspace_mountpoint_runner(
     )
 
     # Types can't be checked when unpacking `event_kwargs`
-    operations = MultiWorkspaceWinFSPOperations(volume_label=volume_label, **event_kwargs)  # type: ignore[arg-type]
+    operations = MultiWorkspaceWinFSPOperations(volume_label=volume_label, **event_kwargs)
 
     for workspace_fs in workspaces:
         workspace_name = winify_entry_name(workspace_fs.get_workspace_name())
@@ -290,7 +290,7 @@ async def winfsp_multiworkspace_mountpoint_runner(
             "workspace_id": workspace_fs.workspace_id,
             "timestamp": getattr(workspace_fs, "timestamp", None),
         }
-        operations.mount(
+        operations.mount_workspace(
             workspace_name,
             WinFSPOperations(fs_access=fs_access, volume_label=volume_label, **evt_kwargs),  # type: ignore[arg-type]
         )
@@ -325,7 +325,14 @@ async def winfsp_multiworkspace_mountpoint_runner(
     )
 
     try:
-        event_bus.send(CoreEvent.MOUNTPOINT_STARTING, **event_kwargs)
+        event_bus.send(
+            CoreEvent.MOUNTPOINT_STARTING,
+            **{
+                "mountpoint": mountpoint_path,
+                "workspace_id": EntryID.new(),
+                "timestamp": None,
+            },
+        )
 
         # Manage drive icon
         drive_letter = mountpoint_path.drive[0]
