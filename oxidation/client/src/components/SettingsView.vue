@@ -1,33 +1,9 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS -->
 
 <template>
-  <ion-page class="modal">
-    <!-- top -->
-    <ion-header class="modal-header">
-      <ion-toolbar class="modal-header__toolbar">
-        <ion-title class="title-h2">
-          {{ $t('SettingsPage.pageTitle') }}
-        </ion-title>
-        <ion-buttons
-          slot="end"
-          class="closeBtn-container"
-        >
-          <ion-button
-            slot="icon-only"
-            @click="closeModal()"
-            class="closeBtn"
-          >
-            <ion-icon
-              :icon="close"
-              size="large"
-              class="closeBtn__icon"
-            />
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
+  <ion-page class="page">
     <!-- content -->
-    <ion-content class="modal-content">
+    <ion-content class="page-content">
       <div class="menu">
         <!-- menu list -->
         <ion-radio-group
@@ -154,11 +130,6 @@
 <script setup lang = "ts" >
 import {
   IonPage,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonButtons,
-  IonButton,
   IonContent,
   IonList,
   IonRadioGroup,
@@ -168,12 +139,10 @@ import {
   IonIcon,
   IonSelect,
   IonSelectOption,
-  isPlatform,
-  modalController
+  isPlatform
 } from '@ionic/vue';
 
 import {
-  close,
   cog,
   options
 } from 'ionicons/icons';
@@ -195,27 +164,21 @@ enum SettingsTabs {
 }
 const settingTab = ref(SettingsTabs.General);
 
-function closeModal(): Promise<boolean> {
-  return modalController.dismiss(null, 'cancel');
-}
-
 const configUnwatch = watch(config, async (_, oldConfig) => {
+  // No point in saving a config we just loaded
   if (JSON.stringify(toRaw(oldConfig)) !== JSON.stringify(StorageManager.DEFAULT_CONFIG)) {
     await storageManager.storeConfig(toRaw(config.value));
   }
-  console.log(config.value);
 }, { deep: true });
 
 async function changeLang(selectedLang: string): Promise<void> {
   config.value.locale = selectedLang;
   locale.value = selectedLang;
-  await storageManager.storeConfig(toRaw(config.value));
 }
 
 async function changeTheme(selectedTheme: string): Promise<void> {
   config.value.theme = selectedTheme;
   toggleDarkMode(selectedTheme);
-  await storageManager.storeConfig(toRaw(config.value));
 }
 
 onMounted(async (): Promise<void> => {
@@ -232,35 +195,7 @@ onUnmounted(async ():Promise<void> => {
 </script>
 
 <style lang="scss" scoped>
-
-closeBtn-container, .closeBtn {
-  margin: 0;
-  --padding-start: 0;
-  --padding-end: 0;
-}
-
-.closeBtn {
-  border-radius: 4px;
-  width: fit-content;
-  height: fit-content;
-
-  &:hover {
-    --background-hover: var(--parsec-color-light-primary-50);
-    --border-radius: 4px;
-  }
-
-  &:active {
-    background: var(--parsec-color-light-primary-100);
-    --border-radius: 4px;
-  }
-
-  &__icon {
-    padding: 4px;
-    color: var(--parsec-color-light-primary-500);
-  }
-}
-
-.modal {
+.page {
   padding: 2.5rem;
   --border-radius: 8px;
   --background: none;

@@ -231,7 +231,7 @@ import { useI18n } from 'vue-i18n';
 import { onMounted, ref, toRaw, computed, inject, Ref } from 'vue';
 import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
 import CreateOrganization from '@/components/CreateOrganizationModal.vue';
-import SettingsModal from '@/components/SettingsModal.vue';
+import SettingsModal from '@/views/SettingsModal.vue';
 import OrganizationCard from '@/components/OrganizationCard.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import SearchInput from '@/components/SearchInput.vue';
