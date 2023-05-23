@@ -74,6 +74,8 @@ async function openPopover(ev: Event): Promise<void> {
     if (value.data.option === ProfilePopoverOption.LogOut) {
       // libparsec.logOut()
       router.replace({ name: 'home' });
+    } else if (value.data.option === ProfilePopoverOption.Settings) {
+      router.push({ name: 'settings' });
     }
   });
 }
