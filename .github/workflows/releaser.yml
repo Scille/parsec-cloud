@@ -1,0 +1,188 @@
+# When a tag is push on the repo, this workflow will run to create a release and add some artifact to it.
+name: Releaser
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/package-python.yml
+      - .github/workflows/releaser.yml
+  push:
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+*
+
+permissions:
+  contents: write
+
+# We set `concurrency` to prevent having this workflow being more than once for the same tag.
+concurrency:
+  group: releaser-${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  version:
+    runs-on: ubuntu-22.04
+    outputs:
+      full: ${{ steps.version.outputs.full }}
+      pep440: ${{ steps.version.outputs.pep440 }}
+      major: ${{ steps.version.outputs.major }}
+      minor: ${{ steps.version.outputs.minor }}
+      patch: ${{ steps.version.outputs.patch }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+      dev: ${{ steps.version.outputs.dev }}
+      local: ${{ steps.version.outputs.local }}
+    steps:
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
+        timeout-minutes: 5
+
+      - name: Parse version for event ${{ github.event_name }}
+        id: version
+        run: |
+          set -o pipefail
+
+          function parse_version {
+            PYTHONPATH=. python3 misc/releaser.py version "$@"
+          }
+
+          case "${{ github.event_name }}" in
+            push)
+              echo "Triggered by a Push"
+              parse_version "${{ github.ref_name }}" | tee -a $GITHUB_OUTPUT
+            ;;
+
+            workflow_dispatch)
+              # If workflow dispatch trigger from a tag, we use the tag as a version else we behave like pull_request
+              TAG="${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}"
+              # If TAG isn't empty use it.
+              if [ -n $TAG ]; then
+                parse_version $TAG | tee -a $GITHUB_OUTPUT
+              else
+                parse_version --uniq-dev | tee -a $GITHUB_OUTPUT
+              fi
+            ;;
+
+            pull_request)
+              echo "Triggered by a Pull-Request"
+              parse_version --uniq-dev | tee -a $GITHUB_OUTPUT
+            ;;
+
+            *)
+              echo "Unsupported event type ${{ github.event_name }}" >&2
+              exit 1
+            ;;
+          esac
+
+  package-parsec-desktop:
+    needs:
+      - version
+    uses: ./.github/workflows/package-python.yml
+    with:
+      version: ${{ needs.version.outputs.full }}
+
+  releaser:
+    needs:
+      - version
+      - package-parsec-desktop
+    name: 🚛 Releaser
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Download every artifact generated (and uploaded)
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # pin v3.0.2
+        with:
+          path: artifacts
+        timeout-minutes: 5
+
+      - name: List downloaded artifacts
+        run: tree artifacts
+
+      - name: Create the folder that will contain the release files
+        run: mkdir release-files
+
+      - name: Copy python wheels
+        run: |
+          set -ex
+          cp -v artifacts/Linux-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
+          cp -v artifacts/macOS-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
+          cp -v artifacts/Windows-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
+        env:
+          BASH_XTRACEFD: 1
+
+      - name: Copy apps for different OSes
+        run: |
+          set -ex
+          cp -v artifacts/Linux-X64-snap/parsec_v${{ needs.version.outputs.full }}_*.snap release-files
+          cp -v artifacts/macOS-X64-installer/parsec-unsigned-v${{ needs.version.outputs.full }}-macos-*.tar.bz2 release-files
+          cp -v artifacts/Windows-X64-installer/parsec-unsigned-v${{ needs.version.outputs.full }}-raw-windows-installer.zip release-files
+        env:
+          BASH_XTRACEFD: 1
+
+      - name: Generate version file
+        run:
+          (
+            echo "full=${{ needs.version.outputs.full }}";
+            echo "pep440=${{ needs.version.outputs.pep440 }}";
+            echo "major=${{ needs.version.outputs.major }}";
+            echo "minor=${{ needs.version.outputs.minor }}";
+            echo "patch=${{ needs.version.outputs.patch }}";
+            echo "prerelease=${{ needs.version.outputs.prerelease }}";
+            echo "dev=${{ needs.version.outputs.dev }}";
+            echo "local=${{ needs.version.outputs.local }}";
+          ) | tee release-files/version
+
+      - name: Generate checksums file released files
+        run: sha256sum release-files/* | sed 's;release-files/;;' | tee checksums.sha256
+
+      - name: Extract checksum for each file
+        run: |
+          set -x
+          # Every files that don't end with '.sha256'
+          for file in $(find release-files -not -name '*.sha256'); do
+            grep $(basename $file) checksums.sha256 | cut -d ' ' -f 1 > "$file".sha256
+          done
+
+      - name: List files in 'release-files'.
+        run: tree release-files
+
+      - name: Generate summary
+        id: summary
+        run: |
+          EOF="EOF-$(dd if=/dev/urandom bs=15 count=1 status=none | base64)"
+          (
+            set -e
+            echo "output<<$EOF"
+            echo '# Parsec ${{ needs.version.outputs.full }}'
+            echo
+            echo 'You can find all assets checksums below, or use `<asset name>.sha256`'
+            echo
+            echo '```txt'
+            cat checksums.sha256
+            echo '```'
+            echo
+            echo 'Generated by <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}>'
+            echo "$EOF"
+          ) | tee -a $GITHUB_OUTPUT
+
+      - name: Create release
+        if: github.event_name == 'push'
+        # FIXME: rollback to `softprops/action-gh-release` once the issue <https://github.com/softprops/action-gh-release/issues/362> is fixed.
+        uses: FirelightFlagboy/action-gh-release@58fed080aaa4be111f1b7c31013ceeb8d68e0172
+        with:
+          draft: true
+          body: ${{ steps.summary.outputs.output }}
+          prerelease: ${{ needs.version.outputs.prerelease != '' || needs.version.outputs.dev != '' || needs.version.outputs.local != '' }}
+          name: Release v${{ needs.version.outputs.full }}
+          tag_name: v${{ needs.version.outputs.full }}
+          files: |
+            release-files/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl
+            release-files/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl.sha256
+            release-files/parsec_v${{ needs.version.outputs.full }}_*.snap
+            release-files/parsec_v${{ needs.version.outputs.full }}_*.snap.sha256
+            release-files/parsec-unsigned-v${{ needs.version.outputs.full }}-raw-windows-installer.zip
+            release-files/parsec-unsigned-v${{ needs.version.outputs.full }}-raw-windows-installer.zip.sha256
+            release-files/parsec-unsigned-v${{ needs.version.outputs.full }}-macos-*.tar.bz2
+            release-files/parsec-unsigned-v${{ needs.version.outputs.full }}-macos-*.tar.bz2.sha256
+            release-files/version
+            release-files/version.sha256
+          fail_on_unmatched_files: true
+          generate_release_notes: false
+        timeout-minutes: 5
