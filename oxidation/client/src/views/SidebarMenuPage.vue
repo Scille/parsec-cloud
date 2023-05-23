@@ -5,8 +5,7 @@
     <div
       class="divider"
       ref="divider"
-    >
-    </div>
+    />
     <ion-split-pane
       content-id="main"
       ref="splitPane"
@@ -63,7 +62,6 @@
               <ion-text
                 class="subtitles-sm"
                 button
-                @click="navigateToPage('settings')"
               >
                 Gérer mon organisation
               </ion-text>
@@ -78,7 +76,7 @@
             <ion-header
               lines="none"
               button
-              @click="navigateToPage('workspacesPages')"
+              @click="navigateToWorkspaceList()"
               class="list-workspaces__header title-h5"
             >
               All {{ $t('OrganizationPage.workspaces') }}
@@ -87,7 +85,7 @@
             <ion-item
               lines="none"
               button
-              @click="navigateToPage('workspaces')"
+              @click="navigateToWorkspace(workspace.id)"
               v-for="workspace in workspacesExampleData"
               :key="workspace.id"
             >
@@ -132,10 +130,9 @@ import {
   business
 } from 'ionicons/icons';
 import { WatchStopHandle, onMounted, onUnmounted, ref, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
 import { createGesture } from '@ionic/vue';
 
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { getMockDevices } from '@/common/mocks';
 
@@ -169,8 +166,7 @@ const workspacesExampleData = [
   }
 ];
 const router = useRouter();
-const { t, d } = useI18n();
-
+const currentRoute = useRoute();
 const splitPane = ref();
 const divider = ref();
 const { defaultWidth, initialWidth, computedWidth, wasReset } = useSidebarMenu();
@@ -183,9 +179,22 @@ const unwatch: WatchStopHandle = watch(wasReset, (value) => {
   }
 });
 
-function navigateToPage(pageName: string): void {
-  router.push({ name: pageName });
+function navigateToWorkspace(workspaceId: number): void {
+  router.push({
+    name: 'folder',
+    params: { deviceId: currentRoute.params.deviceId, workspaceId: workspaceId },
+    query: { path: '/' }
+  });
   menuController.close();
+}
+
+function navigateToWorkspaceList(): void {
+  router.push({
+    name: 'workspaces',
+    params: { deviceId: currentRoute.params.deviceId }
+  });
+  menuController.close();
+
 }
 
 onMounted(() => {
