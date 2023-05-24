@@ -2,7 +2,10 @@
 
 <template>
   <ion-list class="container">
-    <ion-item class="container__item">
+    <ion-item
+      class="container__item"
+      @click="openCreateOrganizationModal()"
+    >
       <ion-icon
         :icon="addCircle"
         slot="start"
@@ -16,7 +19,10 @@
         </ion-text>
       </div>
     </ion-item>
-    <ion-item class="container__item">
+    <ion-item
+      class="container__item"
+      @click="openJoinByLinkModal()"
+    >
       <ion-icon
         :icon="mail"
         slot="start"
@@ -39,15 +45,62 @@ import {
   IonItem,
   IonIcon,
   IonLabel,
-  IonText
+  IonText,
+  modalController
 } from '@ionic/vue';
 import {
   addCircle,
   mail
 } from 'ionicons/icons';
+import { createAlert } from '@/components/AlertConfirmation';
+import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
+import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
+
+async function openJoinByLinkModal(): Promise<void> {
+  const modal = await modalController.create({
+    component: JoinByLinkModal,
+    cssClass: 'join-by-link-modal'
+  });
+  await modal.present();
+
+  const { data, role } = await modal.onWillDismiss();
+
+  if (role === 'confirm') {
+    console.log(data);
+  }
+}
+
+async function openCreateOrganizationModal(): Promise<void> {
+  const modal = await modalController.create({
+    component: CreateOrganization,
+    canDismiss: canDismissModal,
+    cssClass: 'create-organization-modal'
+  });
+  await modal.present();
+
+  const { data, role } = await modal.onWillDismiss();
+
+  if (role === 'confirm') {
+    console.log(data);
+  }
+}
+
+async function canDismissModal(): Promise<boolean> {
+  const alert = await createAlert(
+    t('AlertConfirmation.areYouSure'),
+    t('AlertConfirmation.infoNotSaved'),
+    t('AlertConfirmation.cancel'),
+    t('AlertConfirmation.ok')
+  );
+
+  await alert.present();
+
+  const { role } = await alert.onDidDismiss();
+  return role === 'confirm';
+}
 
 </script>
 
