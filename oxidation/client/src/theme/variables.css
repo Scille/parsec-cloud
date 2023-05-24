@@ -237,6 +237,9 @@ body.dark {
 
 :root {
   /*** Light ***/
+  /* gradient */
+  --parsec-color-light-gradient: linear-gradient(113.02deg, #4092FF -1.49%, #0058CC 100%);;
+
   /* Primary */
   --parsec-color-light-primary-30-opacity15: hsla(212, 100%, 97.1%, 0.15000000596046448);
   --parsec-color-light-primary-30: hsla(212, 100%, 97.1%, 1);
@@ -299,8 +302,13 @@ body.dark {
   ---parsec-color--tags-green500: hsla(72, 90%, 32%, 1);
 }
 
-/* **** Parsec typography **** */
+/* **** Parsec width ***** */
+:root {
+  --parsec-max-content-width: 78rem;
+}
 
+
+/* **** Parsec typography **** */
 
 /* ** title ** */
 
@@ -500,15 +508,6 @@ body.dark {
   font-size: 0.75rem;
   line-height: 133%;
   letter-spacing: 0.4px;
-  --parsec-color-light-secondary-contrast: hsla(240, 19.4%, 13.1%, 1);
-  --parsec-color-light-secondary-text: hsla(240, 20.2%, 34.9%, 1);
-  --parsec-color-light-secondary-grey: hsla(240, 19.6%, 60%, 1);
-  --parsec-color-light-secondary-light: hsla(240, 19.5%, 84.9%, 1);
-  --parsec-color-light-secondary-disabled: hsla(240, 20%, 93.1%, 1);
-  --parsec-color-light-secondary-medium: hsla(240, 20%, 96.1%, 1);
-  --parsec-color-light-secondary-premiere: hsla(240, 20%, 96.1%, 1);
-  --parsec-color-light-secondary-background: hsla(240, 20%, 98%, 1);
-  --parsec-color-light-secondary-inversed-contrast: hsla(0, 0%, 99.6%, 1);
 }
 
 /**** Global CSS overloads ****/
