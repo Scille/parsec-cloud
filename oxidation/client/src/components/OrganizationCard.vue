@@ -42,7 +42,7 @@ defineProps<{
   margin: 0;
 
   .card-content {
-    padding: 0px;
+    padding: 0;
   }
 
   .organization-info {
@@ -63,23 +63,9 @@ defineProps<{
       position: relative;
       z-index: 1;
     }
-    .card-title{
+
+    .card-title {
       color: var(--parsec-color-light-primary-700);
-    }
-
-  }
-
-  .organization-info {
-    text-align: left;
-
-    p {
-      margin: 0px;
-      margin-bottom: 2px;
-    }
-
-    .organization-label {
-      color: var(--parsec-color-light-primary-700);
-      font-size: 1.5em;
     }
   }
 }
