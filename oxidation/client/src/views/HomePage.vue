@@ -22,18 +22,15 @@
               <img
                 src="../assets/images/logo/logo_row_white.svg"
                 alt="Parsec logo"
-                class="logo"
+                class="logo-img"
               >
             </div>
           </div>
         </div>
-        <!-- end of sidebar -->
-
         <!-- organization -->
-        <div class="rightSide">
+        <div class="right-side">
           <!-- topbar -->
           <ion-card-content class="topbar">
-            <!-- back btn -->
             <ion-card-title
               color="tertiary"
               v-if="!showOrganizationList"
@@ -50,7 +47,6 @@
                 {{ $t('HomePage.organizationLogin.backToList') }}
               </ion-button>
             </ion-card-title>
-            <!-- end of back btn -->
             <search-input
               :label="t('HomePage.organizationList.search')"
               v-if="showOrganizationList"
@@ -81,13 +77,12 @@
               </ion-button>
             </ion-buttons>
           </ion-card-content>
-          <!-- end of topbar -->
           <slide-horizontal
             :reverse-direction="!showOrganizationList"
           >
             <ion-card
               v-if="showOrganizationList"
-              class="rightSide-container"
+              class="right-side-container"
             >
               <ion-card-content class="organization-container">
                 <ion-card-title class="organization-filter">
@@ -105,11 +100,12 @@
                 </ion-card-title>
                 <ion-grid class="organization-list">
                   <ion-row
-                    class="organization-list__row"
+                    class="organization-list-row"
                   >
                     <ion-col
                       v-for="device in filteredDevices"
                       :key="device.slug"
+                      class="organization-list-row__col"
                     >
                       <ion-card
                         button
@@ -139,7 +135,7 @@
                 </ion-grid>
               </ion-card-content>
             </ion-card>
-            <!-- after slide -->
+            <!-- after animation -->
             <ion-card
               v-if="!showOrganizationList"
               class="login-popup"
@@ -185,12 +181,10 @@
                     </ion-button>
                   </div>
                 </div>
-                <!-- end of login -->
               </ion-card-content>
             </ion-card>
           </slide-horizontal>
         </div>
-        <!-- end of organization -->
       </div>
     </ion-content>
   </ion-page>
@@ -210,7 +204,6 @@ import {
   IonRow,
   IonCol,
   IonGrid,
-  modalController,
   popoverController
 } from '@ionic/vue';
 import {
@@ -220,14 +213,11 @@ import {
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { useI18n } from 'vue-i18n';
 import { onMounted, ref, toRaw, computed, inject, Ref } from 'vue';
-import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
-import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 import OrganizationCard from '@/components/OrganizationCard.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import SearchInput from '@/components/SearchInput.vue';
 import MsSelect from '@/components/MsSelect.vue';
 import { MsSelectChangeEvent, MsSelectOption } from '@/components/MsSelectOption';
-import { createAlert } from '@/components/AlertConfirmation';
 import { AvailableDevice } from '@/plugins/libparsec/definitions';
 import { libparsec } from '@/plugins/libparsec';
 import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
@@ -343,49 +333,6 @@ function onForgottenPasswordClick(): void {
   console.log('forgotten password!');
 }
 
-async function openJoinByLinkModal(): Promise<void> {
-  const modal = await modalController.create({
-    component: JoinByLinkModal,
-    cssClass: 'join-by-link-modal'
-  });
-  await modal.present();
-
-  const { data, role } = await modal.onWillDismiss();
-
-  if (role === 'confirm') {
-    console.log(data);
-  }
-}
-
-async function openCreateOrganizationModal(): Promise<void> {
-  const modal = await modalController.create({
-    component: CreateOrganization,
-    canDismiss: canDismissModal,
-    cssClass: 'create-organization-modal'
-  });
-  await modal.present();
-
-  const { data, role } = await modal.onWillDismiss();
-
-  if (role === 'confirm') {
-    console.log(data);
-  }
-}
-
-async function canDismissModal(): Promise<boolean> {
-  const alert = await createAlert(
-    t('AlertConfirmation.areYouSure'),
-    t('AlertConfirmation.infoNotSaved'),
-    t('AlertConfirmation.cancel'),
-    t('AlertConfirmation.ok')
-  );
-
-  await alert.present();
-
-  const { role } = await alert.onDidDismiss();
-  return role === 'confirm';
-}
-
 async function openPopover(ev: Event): Promise<void> {
   const popover = await popoverController.create({
     component: HomePagePopover,
@@ -401,7 +348,7 @@ async function openPopover(ev: Event): Promise<void> {
 <style lang="scss" scoped>
 #page {
   height: 100vh;
-  background: white;
+  background: var(--parsec-color-light-secondary-inversed-contrast);
   display: flex;
   flex-direction: row;
   overflow: hidden;
@@ -416,7 +363,7 @@ async function openPopover(ev: Event): Promise<void> {
   height: 100vh;
   width: 40vw;
   padding: 2rem 0;
-  background: linear-gradient(113.02deg, #4092FF -1.49%, #0058CC 100%);
+  background: var(--parsec-color-light-gradient);
   position: relative;
   justify-content: flex-end;
   z-index: -3;
@@ -433,63 +380,47 @@ async function openPopover(ev: Event): Promise<void> {
     background-size: cover;
   }
 
-.sidebar-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  &__titles {
+  .sidebar-content {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    flex-grow: 2;
-    margin-right: 2rem;
-    max-width: 500px;
-    position: relative;
-    gap: 1rem;
-  }
+    align-items: center;
+    margin-left: 2rem;
 
-  &__logo {
-    display: flex;
-    width: 100%;
+    &__titles {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      flex-grow: 2;
+      margin-right: 2rem;
+      max-width: 500px;
+      position: relative;
+      gap: 1rem;
+    }
 
-    img {
-      width: 25%;
-      height: 100%;
+    &__logo {
+      display: flex;
+      width: 100%;
+
+      .logo-img {
+        max-height: 3em;
+        width: 25%;
+        height: 100%;
+      }
     }
   }
 }
 
-  ion-col {
-    display: flex;
-    align-items: center;
-  }
-
-  ion-col:first-child {
-    justify-content: center;
-  }
-
-  ion-col:last-child {
-    justify-content: end;
-    padding-right: 3em;
-  }
-
-  img {
-    max-height: 3em;
-  }
-}
-
-.rightSide {
+.right-side {
   height: 100vh;
   width: 60vw;
-  max-width: 1254px;
-  background: #fff;
+  max-width: var(--parsec-max-content-width);
+  background: var(--parsec-color-light-secondary-inversed-contrast);
   display: flex;
   flex-direction: column;
   position: relative;
   z-index: -5;
 
-  .rightSide-container {
+  .right-side-container {
     margin-inline: 0px;
     margin-top: 0px;
     margin-bottom: 0px;
@@ -547,16 +478,22 @@ async function openPopover(ev: Event): Promise<void> {
     max-height: 30em;
     overflow-y: auto;
     --ion-grid-columns: 3;
+  }
 
-    &__row {
-      gap: 1rem;
+  .organization-list-row {
+    gap: 1rem;
+
+    &__col {
+      display: flex;
+      align-items: center;
+      padding: 0;
     }
   }
 
   .organization-card {
     background: var(--parsec-color-light-secondary-background);
     user-select: none;
-    transition: transform 150ms linear, box-shadow 150ms linear;
+    transition: box-shadow 150ms linear;
     box-shadow: none;
     border-radius: 0.5em;
     margin-inline: 0;
@@ -564,7 +501,6 @@ async function openPopover(ev: Event): Promise<void> {
     margin-bottom: 0;
 
     &:hover {
-      transform: scale(1.02);
       box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
     }
 
