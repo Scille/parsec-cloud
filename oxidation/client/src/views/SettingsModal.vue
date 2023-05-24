@@ -2,29 +2,29 @@
 
 <template>
   <ion-page class="modal">
-    <!-- top -->
+    <!-- header -->
     <ion-header class="modal-header">
       <ion-toolbar class="modal-header__toolbar">
         <ion-title class="title-h2">
           {{ $t('SettingsPage.pageTitle') }}
         </ion-title>
-        <ion-buttons
-          slot="end"
-          class="closeBtn-container"
-        >
-          <ion-button
-            slot="icon-only"
-            @click="closeModal()"
-            class="closeBtn"
-          >
-            <ion-icon
-              :icon="close"
-              size="large"
-              class="closeBtn__icon"
-            />
-          </ion-button>
-        </ion-buttons>
       </ion-toolbar>
+      <ion-buttons
+        slot="end"
+        class="closeBtn-container"
+      >
+        <ion-button
+          slot="icon-only"
+          @click="closeModal()"
+          class="closeBtn"
+        >
+          <ion-icon
+            :icon="close"
+            size="large"
+            class="closeBtn__icon"
+          />
+        </ion-button>
+      </ion-buttons>
     </ion-header>
     <!-- content -->
     <ion-content>
@@ -58,10 +58,34 @@ function closeModal(): Promise<boolean> {
 
 <style lang="scss" scoped>
 
+.modal {
+  padding: 2.5rem;
+}
+
+.modal-header {
+  position: relative;
+
+  &__toolbar {
+    --min-height: 0;
+  }
+}
+
+.title-h2 {
+  color: var(--parsec-color-light-primary-700);
+  padding-inline: 0;
+  margin-bottom: 2rem;
+}
+
 closeBtn-container, .closeBtn {
   margin: 0;
   --padding-start: 0;
   --padding-end: 0;
+}
+
+.closeBtn-container {
+  position: absolute;
+  top: 0;
+  right: 0;
 }
 
 .closeBtn {

@@ -196,7 +196,6 @@ onUnmounted(async ():Promise<void> => {
 
 <style lang="scss" scoped>
 .page {
-  padding: 2.5rem;
   --border-radius: 8px;
   --background: none;
   background: var(--parsec-color-light-secondary-inversed-contrast);
@@ -269,10 +268,10 @@ onUnmounted(async ():Promise<void> => {
   }
 
   .menu-item-content {
-    // background: red;
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+    max-width: 40rem;
 
     .settings-list {
       display: flex;
