@@ -6,7 +6,7 @@ import { MsSelectOption, MsSelectSortByLabels } from '@/components/MsSelectOptio
 // MsSelectPopover will try to call popoverController to close itself
 // No idea how to stub this with Cypress so we'll just ignore this
 // exception.
-Cypress.on('uncaught:exception', (err, _) => {
+Cypress.on('uncaught:exception', (err, _runnable) => {
   if (err.message.includes('overlay does not exist')) {
     return false;
   }
@@ -38,7 +38,7 @@ beforeEach(() => {
 
 it('renders select popover', () => {
   cy.get('#sort-order-button').should('have.text', 'Asc ');
-  cy.get('ion-list > ion-item').each(($el, index, _) => {
+  cy.get('ion-list > ion-item').each(($el, index, _list) => {
     if (index > 0) {
       cy.wrap($el).invoke('attr', 'class').should('not.contain', 'selected');
     }
@@ -55,7 +55,7 @@ it('changes selected when clicked', () => {
   cy.get('ion-list > ion-item').eq(2).as('labelB').should('have.text', 'Label B');
   cy.get('@labelB').invoke('attr', 'class').should('not.contain', 'selected');
   cy.get('@labelB').click();
-  cy.get('ion-list > ion-item').each(($el, index, _) => {
+  cy.get('ion-list > ion-item').each(($el, index, _list) => {
     if (index > 0) {
       if (index === 2) {
         cy.wrap($el).invoke('attr', 'class').should('contain', 'selected');

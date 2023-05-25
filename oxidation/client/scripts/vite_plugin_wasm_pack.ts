@@ -100,7 +100,7 @@ function vitePluginWasmPack(
           }
 
           const regex = /input = new URL\('(.+)'.+;/g;
-          code = code.replace(regex, (_match, group1) => {
+          code = code.replace(regex, (_match, _group1) => {
             const assetUrl = path.posix.join(
               configBase,
               configAssetsDir,
