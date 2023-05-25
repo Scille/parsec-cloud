@@ -29,20 +29,20 @@ export class StorageManager {
     unsyncFiles: false
   };
 
-  _store: Storage;
+  internalStore: Storage;
 
   constructor() {
-    this._store = new Storage();
+    this.internalStore = new Storage();
   }
 
   async create(): Promise<Storage> {
-    return this._store.create();
+    return this.internalStore.create();
   }
 
   async storeDevicesData(data: {[slug: string]: StoredDeviceData}): Promise<void> {
     const serialized: {[slug: string]: object} = {};
 
-    Object.keys(data).forEach((slug: string, _) => {
+    Object.keys(data).forEach((slug: string, _data) => {
       if (data[slug] && data[slug].lastLogin) {
         serialized[slug] = {
           lastLogin: data[slug].lastLogin.toISO()
@@ -50,17 +50,17 @@ export class StorageManager {
       }
     });
 
-    this._store.set(StorageManager.STORED_DEVICE_DATA_KEY, serialized);
+    this.internalStore.set(StorageManager.STORED_DEVICE_DATA_KEY, serialized);
   }
 
   async retrieveDevicesData(): Promise<{[slug: string]: StoredDeviceData}> {
-    const data = await this._store.get(StorageManager.STORED_DEVICE_DATA_KEY);
+    const data = await this.internalStore.get(StorageManager.STORED_DEVICE_DATA_KEY);
     const deviceData: {[slug: string]: StoredDeviceData} = {};
 
     if (!data) {
       return deviceData;
     }
-    Object.keys(data).forEach((slug, _) => {
+    Object.keys(data).forEach((slug, _data) => {
       if (data[slug] && data[slug].lastLogin) {
         deviceData[slug] = {
           // Need to add setZone because Luxon (and JavaScript's date) ignore
@@ -73,7 +73,7 @@ export class StorageManager {
   }
 
   async storeConfig(data: Config): Promise<void> {
-    await this._store.set(StorageManager.STORED_CONFIG_KEY, {
+    await this.internalStore.set(StorageManager.STORED_CONFIG_KEY, {
       locale: data.locale,
       theme: data.theme,
       minimizeToTray: data.minimizeToTray,
@@ -84,7 +84,7 @@ export class StorageManager {
   }
 
   async retrieveConfig(): Promise<Config> {
-    const data = await this._store.get(StorageManager.STORED_CONFIG_KEY);
+    const data = await this.internalStore.get(StorageManager.STORED_CONFIG_KEY);
 
     if (!data) {
       return StorageManager.DEFAULT_CONFIG;
