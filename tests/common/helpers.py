@@ -17,6 +17,8 @@ from parsec.core.types import WorkspaceRole
 from tests.common.trio_clock import real_clock_timeout
 
 
+# TODO: Since `python >= 3.8` the module `unittest.mock` introduced `AsyncMock`
+# We should replace the class below with the one provided by `unittest.mock`
 class AsyncMock(Mock):
     @property
     def is_async(self):

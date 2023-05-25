@@ -7,7 +7,6 @@ from typing import Any, AsyncIterator, Awaitable, Callable, Generic, TypeVar, ca
 import attr
 import trio
 import trio_typing
-#from exceptiongroup import BaseExceptionGroup
 from structlog import get_logger
 
 from parsec import service_nursery
@@ -217,6 +216,9 @@ E = TypeVar("E", bound=BaseException)
 def collapse_exception_group(exception_group: BaseExceptionGroup[E]) -> Exception:
     # Pick the first exception as the reference exception
     pick = cast(Exception, exception_group.exceptions[0])
+    if len(exception_group.exceptions) == 1:
+        return pick
+
     try:
         # Craft a new a name to indicate the exception is collapsed
         name = f"{type(pick).__name__}AndFriends"
@@ -225,13 +227,12 @@ def collapse_exception_group(exception_group: BaseExceptionGroup[E]) -> Exceptio
         # Craft the specific class, inheriting from BaseExceptionGroup
         cls: Any = type(name, (type(pick), BaseExceptionGroup), attrs)
         # Instantiate the instance
-        result = cls()
+        result = cls(exception_group.message, exception_group.exceptions)
+
         # Replicate the picked exception inner state
         result.__dict__.update(pick.__dict__)
         result.args = pick.args
         # Replicate the exception group inner state
-        result._message = exception_group._message
-        result._exceptions = exception_group._exceptions
         result.__cause__ = exception_group.__cause__
         result.__context__ = exception_group.__context__
         result.__traceback__ = exception_group.__traceback__
@@ -240,8 +241,7 @@ def collapse_exception_group(exception_group: BaseExceptionGroup[E]) -> Exceptio
         return result
     except Exception:
         # Something went wrong while collapsing
-        #logger.exception("Could not create a collapsed exception")
-        print("here")
+        logger.exception("Could not create a collapsed exception")
         return pick
 
 

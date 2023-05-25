@@ -237,8 +237,6 @@ async def test_clear_path(alice_workspace: UserFS):
     unlink_mock.assert_called_once_with(path)
     sync_mock.assert_called_once_with()
 
-async def _ignored(*_, **__):
-        pass
 
 @pytest.mark.trio
 async def test_clear_directory(alice_workspace: UserFS):
@@ -257,10 +255,9 @@ async def test_clear_directory(alice_workspace: UserFS):
         EntryName("item3"): "id3",
     }
 
-      
-    clear_path_mock = AsyncMock(_ignored)
-    
-    with mock.patch("parsec.core.cli.rsync._clear_path"):        
+    clear_path_mock = AsyncMock(spec=mock.Mock)
+
+    with mock.patch("parsec.core.cli.rsync._clear_path", clear_path_mock):
         await rsync._clear_directory(
             FsPath("/path_in_workspace"), path, alice_workspace, folder_manifest
         )
@@ -295,10 +292,10 @@ async def test_get_or_create_directory(alice_workspace: UserFS):
     manifest1 = mock.Mock(spec=FolderManifest)
     manifest2 = mock.Mock(spec=FolderManifest)
 
-    load_manifest_mock = AsyncMock(spec=mock.Mock(), side_effect=lambda x: manifest1)
+    load_manifest_mock = AsyncMock(spec=mock.Mock, side_effect=lambda x: manifest1)
     alice_workspace.remote_loader.load_manifest = load_manifest_mock
 
-    _create_path_mock = AsyncMock(spec=mock.Mock(), side_effect=lambda *x: manifest2)
+    _create_path_mock = AsyncMock(spec=mock.Mock, side_effect=lambda *x: manifest2)
     with mock.patch("parsec.core.cli.rsync._create_path", _create_path_mock):
         entry_id = EntryID.new()
         res = await rsync._get_or_create_directory(
@@ -323,8 +320,8 @@ async def test_get_or_create_directory(alice_workspace: UserFS):
 
 @pytest.mark.trio
 async def test_upsert_file(alice_workspace: UserFS):
-    _update_file_mock = AsyncMock(spec=mock.Mock())
-    _create_path_mock = AsyncMock(spec=mock.Mock())
+    _update_file_mock = AsyncMock(spec=mock.Mock)
+    _create_path_mock = AsyncMock(spec=mock.Mock)
 
     path = FsPath("/test")
     workspace_path = FsPath("/path_in_workspace")
@@ -351,10 +348,10 @@ async def test_upsert_file(alice_workspace: UserFS):
 @pytest.mark.trio
 async def test_sync_directory(alice_workspace: UserFS):
     _get_or_create_directory_mock = AsyncMock(
-        spec=mock.Mock(), side_effect=lambda *x: "folder_manifest_mock"
+        spec=mock.Mock, side_effect=lambda *x: "folder_manifest_mock"
     )
-    _sync_directory_content_mock = AsyncMock(spec=mock.Mock())
-    _clear_directory_mock = AsyncMock(spec=mock.Mock())
+    _sync_directory_content_mock = AsyncMock(spec=mock.Mock)
+    _clear_directory_mock = AsyncMock(spec=mock.Mock)
 
     entry_id = EntryID.new()
     path = FsPath("/test")
@@ -402,20 +399,20 @@ async def test_sync_directory(alice_workspace: UserFS):
 @pytest.mark.trio
 async def test_sync_directory_content(alice_workspace: UserFS):
     path_dir1 = trio.Path("/test_dir1")
-    path_dir1.is_dir = AsyncMock(spec=mock.Mock(), side_effect=lambda: True)
+    path_dir1.is_dir = AsyncMock(spec=mock.Mock, side_effect=lambda: True)
     path_dir2 = trio.Path("/test_dir2")
-    path_dir2.is_dir = AsyncMock(spec=mock.Mock(), side_effect=lambda: True)
+    path_dir2.is_dir = AsyncMock(spec=mock.Mock, side_effect=lambda: True)
 
     workspace_path = FsPath("/path_in_workspace")
     source = trio.Path("/test")
-    source.iterdir = AsyncMock(spec=mock.Mock(), side_effect=lambda: [path_dir1, path_dir2])
+    source.iterdir = AsyncMock(spec=mock.Mock, side_effect=lambda: [path_dir1, path_dir2])
 
     children_id = EntryID.new()
     mock_manifest = mock.Mock(spec=FolderManifest)
     mock_manifest.children = {EntryName("test_dir1"): children_id}
 
-    _sync_directory_mock = AsyncMock(spec=mock.Mock())
-    _upsert_file_mock = AsyncMock(spec=mock.Mock())
+    _sync_directory_mock = AsyncMock(spec=mock.Mock)
+    _upsert_file_mock = AsyncMock(spec=mock.Mock)
 
     with mock.patch("parsec.core.cli.rsync._sync_directory", _sync_directory_mock):
         with mock.patch("parsec.core.cli.rsync._upsert_file", _upsert_file_mock):

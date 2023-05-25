@@ -18,7 +18,6 @@ from typing import (
 
 import trio
 import trio_typing
-#from exceptiongroup import BaseExceptionGroup
 from PyQt5.QtCore import QObject, pyqtBoundSignal
 from structlog import get_logger
 from typing_extensions import ParamSpec
