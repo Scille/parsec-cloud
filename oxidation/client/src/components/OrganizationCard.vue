@@ -24,7 +24,13 @@
 </template>
 
 <script setup lang="ts">
-import { IonGrid, IonCol, IonRow, IonAvatar } from '@ionic/vue';
+import {
+  IonCard,
+  IonAvatar,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardSubtitle
+} from '@ionic/vue';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
 
 defineProps<{
