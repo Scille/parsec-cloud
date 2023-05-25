@@ -69,6 +69,7 @@
                 slot="icon-only"
                 id="trigger-search-button"
                 class="topbar-button__item"
+                @click="openSettingsModal()"
               >
                 <ion-icon
                   slot="icon-only"
@@ -213,6 +214,7 @@ import {
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { useI18n } from 'vue-i18n';
 import { onMounted, ref, toRaw, computed, inject, Ref } from 'vue';
+import { modalController } from '@ionic/vue';
 import OrganizationCard from '@/components/OrganizationCard.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import SearchInput from '@/components/SearchInput.vue';
@@ -227,6 +229,7 @@ import { DateTime } from 'luxon';
 import { useRouter } from 'vue-router';
 import { configPathKey, formattersKey, storageManagerKey } from '../main';
 import HomePagePopover from '@/components/HomePagePopover.vue';
+import SettingsModal from '@/components/SettingsModal.vue';
 
 const router = useRouter();
 const { t, d } = useI18n();
@@ -341,6 +344,17 @@ async function openPopover(ev: Event): Promise<void> {
     showBackdrop: false
   });
   await popover.present();
+}
+
+// not working yet, waiting for SettingsModal to be implemented
+async function openSettingsModal(): Promise<void> {
+  const modal = await modalController.create({
+    component: SettingsModal,
+    cssClass: 'settings-modal'
+  });
+  await modal.present();
+
+  const { data, role } = await modal.onWillDismiss();
 }
 
 </script>
