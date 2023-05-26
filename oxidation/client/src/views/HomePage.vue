@@ -221,15 +221,15 @@ import { MsSelectChangeEvent, MsSelectOption } from '@/components/MsSelectOption
 import { AvailableDevice } from '@/plugins/libparsec/definitions';
 import { libparsec } from '@/plugins/libparsec';
 import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
-import { getMockDevices, mockLastLogin } from '../common/mocks';
+import { mockLastLogin } from '../common/mocks';
 import { StoredDeviceData, StorageManager } from '@/services/storageManager';
 import { DateTime } from 'luxon';
 import { useRouter } from 'vue-router';
-import { configPathKey, formattersKey, storageManagerKey } from '../main';
 import HomePagePopover from '@/components/HomePagePopover.vue';
+import { ConfigPathKey, FormattersKey, StorageManagerKey } from '@/common/injectionKeys';
 
 const router = useRouter();
-const { t, d } = useI18n();
+const { t } = useI18n();
 const deviceList: Ref<AvailableDevice[]> = ref([]);
 let selectedDevice: AvailableDevice;
 const password = ref('');
@@ -237,9 +237,9 @@ const orgSearchString = ref('');
 const showOrganizationList = ref(true);
 const sortBy = ref('organization');
 const sortByAsc = ref(true);
-const { timeSince } = inject(formattersKey)!;
-const configPath = inject(configPathKey, '/');  // Must be a valid Unix path !
-const storageManager: StorageManager = inject(storageManagerKey)!;
+const { timeSince } = inject(FormattersKey)!;
+const configPath = inject(ConfigPathKey, '/');  // Must be a valid Unix path !
+const storageManager: StorageManager = inject(StorageManagerKey)!;
 const isPopoverOpen = ref(false);
 
 const msSelectOptions: MsSelectOption[] = [
