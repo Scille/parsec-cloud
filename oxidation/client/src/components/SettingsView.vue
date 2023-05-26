@@ -229,42 +229,42 @@ onUnmounted(async ():Promise<void> => {
   }
 
   .menu-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      width: 100%;
-      max-width: 11.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 11.25rem;
 
-      &__item {
-        color: var(--parsec-color-light-secondary-text);
-        border-radius: 4px;
+    &__item {
+      color: var(--parsec-color-light-secondary-text);
+      border-radius: 4px;
 
-        .item-container {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 0.75rem 0.5em;
-          gap: .5rem;
-        }
-
-        &::part(container) {
-          display: none;
-        }
-
-        &.radio-checked {
-          color: var(--parsec-color-light-primary-600);
-          background: var(--parsec-color-light-primary-30);
-          box-shadow: inset 0px 0px 0px 1px var(--parsec-color-light-primary-600);
-        }
-
-        &:hover {
-          background: var(--parsec-color-light-primary-30);
-        }
-
-        ion-icon {
-          font-size: 1.5rem;
-        }
+      .item-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 0.5em;
+        gap: .5rem;
       }
+
+      &::part(container) {
+        display: none;
+      }
+
+      &.radio-checked {
+        color: var(--parsec-color-light-primary-600);
+        background: var(--parsec-color-light-primary-30);
+        box-shadow: inset 0px 0px 0px 1px var(--parsec-color-light-primary-600);
+      }
+
+      &:hover {
+        background: var(--parsec-color-light-primary-30);
+      }
+
+      ion-icon {
+        font-size: 1.5rem;
+      }
+    }
   }
 
   .menu-item-content {
@@ -282,5 +282,4 @@ onUnmounted(async ():Promise<void> => {
     }
   }
 }
-
 </style>
