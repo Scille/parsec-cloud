@@ -13,6 +13,7 @@
 
       <ion-label
         v-if="!short"
+        class="back-button__label"
       >
         {{ $t('HeaderPage.previous') }}
       </ion-label>
@@ -49,6 +50,10 @@ function goBack(): void {
 
   &::part(native) {
     padding: .5rem;
+  }
+
+  &__label {
+    margin-left: .625rem;
   }
 }
 
