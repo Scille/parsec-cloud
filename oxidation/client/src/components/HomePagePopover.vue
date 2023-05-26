@@ -101,7 +101,6 @@ async function canDismissModal(): Promise<boolean> {
   const { role } = await alert.onDidDismiss();
   return role === 'confirm';
 }
-
 </script>
 
 <style lang="scss" scoped>
@@ -143,5 +142,4 @@ async function canDismissModal(): Promise<boolean> {
     }
   }
 }
-
 </style>

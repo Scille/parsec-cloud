@@ -12,7 +12,7 @@
         </ion-text>
         <ion-item class="input">
           <ion-input
-            aria-label="passwordLabel"
+            aria-labelledby="passwordLabel"
             :type="passwordVisible ? 'text' : 'password'"
             v-model="passwordRef"
             @ion-input="$emit('change', $event.detail.value)"

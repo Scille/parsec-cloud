@@ -7,7 +7,6 @@
         <ion-avatar class="orga-avatar body-lg">
           <span>{{ device.organizationId?.substring(0, 2) }}</span>
         </ion-avatar>
-        <!-- txt -->
         <div class="orga-text">
           <ion-card-title class="card-title subtitles-normal">
             {{ device.organizationId }}
@@ -59,8 +58,8 @@ defineProps<{
     .orga-avatar {
       background-color: white;
       color: var(--parsec-color-light-primary-600);
-      width: 52px;
-      height: 52px;
+      width: 3.25rem;
+      height: 3.25rem;
       border-radius: 50%;
       display: flex;
       align-items: center;

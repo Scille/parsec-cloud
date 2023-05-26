@@ -66,12 +66,11 @@ function onEnterPress() : void {
     margin-inline-end: 1rem;
     color: var(--parsec-color-light-secondary-light);;
   }
-
 }
+
 .search-input {
   --placeholder-color: var(--parsec-color-light-secondary-light);
   --placeholder-opacity: .8;
   min-height: 1rem;
 }
-
 </style>

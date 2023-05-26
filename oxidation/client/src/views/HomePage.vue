@@ -342,7 +342,6 @@ async function openPopover(ev: Event): Promise<void> {
   });
   await popover.present();
 }
-
 </script>
 
 <style lang="scss" scoped>
@@ -392,7 +391,7 @@ async function openPopover(ev: Event): Promise<void> {
       justify-content: center;
       flex-grow: 2;
       margin-right: 2rem;
-      max-width: 500px;
+      max-width: var(--parsec-max-title-width);
       position: relative;
       gap: 1rem;
     }
@@ -589,5 +588,4 @@ async function openPopover(ev: Event): Promise<void> {
     }
   }
 }
-
 </style>

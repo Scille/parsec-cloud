@@ -73,11 +73,9 @@ function onOptionClick(option?: MsSelectOption): void {
     sortByAsc: sortByAsc.value
   });
 }
-
 </script>
 
 <style lang="scss" scoped>
-
 .option {
   --background-hover: var(--parsec-color-light-primary-50);
   --background-hover-opacity: 1;
