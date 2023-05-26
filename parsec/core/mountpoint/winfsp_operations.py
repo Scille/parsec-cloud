@@ -608,7 +608,7 @@ class MultiWorkspaceWinFSPOperations(BaseFileSystemOperations):  # type: ignore[
     directory ("/file_or_dir""), are processed by this class. This paths are
     not part of any workspace so these operations are not dispatched.
 
-    Operations regading a path inside a workspace ("/<ws>/path/to/file_or_dir")
+    Operations regarding a path inside a workspace ("/<ws>/path/to/file_or_dir")
     are dispatched to the corresponding WinFSPOperations instance.
     """
 
@@ -649,7 +649,10 @@ class MultiWorkspaceWinFSPOperations(BaseFileSystemOperations):  # type: ignore[
         # to WinFSPOperations instances (there is one for each workspace).
         self._get_path_and_translate_error = partial(
             get_path_and_translate_error,
+            fs_access=None,
             mountpoint=mountpoint,
+            workspace_id=None,
+            timestamp=None,
         )
 
     def _is_path_outside_workspace(self, path: FsPath) -> bool:
