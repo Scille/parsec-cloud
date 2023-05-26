@@ -8,10 +8,9 @@
   - [Release major/minor version](#release-majorminor-version)
     - [Create release candidate version](#create-release-candidate-version)
     - [Create the release](#create-the-release)
-    - [Create the release Pull Request](#create-the-release-pull-request)
     - [Sign the installers](#sign-the-installers)
-    - [Create the release on Github](#create-the-release-on-github)
-    - [Merge (or update) the Pull Request](#merge-or-update-the-pull-request)
+    - [Acknowledge the release](#acknowledge-the-release)
+    - [The release train diagram](#the-release-train-diagram)
   - [Release patch version](#release-patch-version)
     - [(Re)create the version branch](#recreate-the-version-branch)
     - [Cherry-pick the changes](#cherry-pick-the-changes)
@@ -105,52 +104,70 @@ The script will:
 
   The script will require confirmation before continuing.
 
-### Sign the installers
+After the script has finished and pushed the release branch & tag to the repository,
+this will trigger the `releaser` workflow that will:
 
-⚠️ This step is outdated.
+1. Package the application in different format (python wheels, snap, macos app, windows raw nsis files).
+2. Create the release as a draft in <https://github.com/Scille/parsec-cloud/releases>.
+
+   At this step, you need to [sign the installers](#sign-the-installers)
+
+Once you have signed the installers, you need to upload them to the generated draft release.
+After that you can publish the release (You need to edit the [draft release](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository#editing-a-release)).
+
+With the release published, this will trigger the workflow `publish` that will upload the generated python wheels & snap files to `pypi` & `snapcraft` accordingly.
+
+### Sign the installers
 
 The CI is going to generate the installers for Linux, Mac and Windows.
 
-On Linux the snap installer is automatically released on the edge channel of snapcraft.
+- The linux installer (snap) and the python wheels don't need to be signed.
 
-On Windows and Mac, the installers must be downloaded from the CI build artifacts and
-signed. See the documentation in ``packaging/`` for more information.
+- On Windows and Mac, the installers must be downloaded from the draft release and signed (the artifact start with `parsec-unsigned`).
+  See the documentation in ``packaging/`` for more information.
 
-On top of that the Python wheel of the project is going to be uploaded to Pypi.
+  > Note: The Parsec client's version checker is smart enough to ignore new version
+  > that doesn't contain an installer for their platform. Hence it's safe to create
+  > a new github release without any installer.
 
-### Create the release on Github
+### Acknowledge the release
 
-⚠️ This step is outdated.
+If you were dealing with a final release (e.g. ``v2.9.0``)
 
-Once the tag pushed, it can be converted as a release on github using the
-[Draft a new release](https://github.com/Scille/parsec-cloud/releases/new).
+You need to acknowledge the release (that means merge it back to the main branch).
 
-The release should contain the Mac and Windows installers that have been signed during step 4.
+Use the following command:
 
-⚠️ Don't forget to check `Set as a pre-release` if your creating a release candidate !
+```shell
+python misc/releaser.py acknowledge v2.9.0
+```
 
-> Note: The Parsec client's version checker is smart enough to ignore new version
-> that doesn't contain an installer for there platform. Hence it's safe to create
-> a new github release without any installer.
+This command will:
 
-### Merge (or update) the Pull Request
+- Ensure the version we want to acknowledge is indeed a release version (no pre-release, dev or local part).
+- Create the acknowledge branch `acknowledges/2.9.0`.
+- Push the branch to the remote server.
+- Create the pull-request using [`Github cli`](https://cli.github.com/)
 
-⚠️ This step is outdated.
+### The release train diagram
 
-If you were dealing with a final release (e.g. ``v2.9.0``), you can merge the branch in master call it a day ;-)
+```mermaid
+flowchart TD;
+  A{Create release}
+  B[Draft release created]
+  subgraph "manual" [User manual action]
+    C(Sign the MacOs & Windows installers)
+    D(Upload the signed installer)
+    E(Publish the release)
+    C-->D-->E
+  end
+  F["The snap & python wheels are published on <code>snapcraft</code> & <code>pypi</code>"]
+  G(Acknowledge the release)
 
-However if you just release a RC release:
+  A-->B-->manual-->F-.->G
 
-- for quickfix you can commit directly on the version branch
-
-- for bigger fix, open a PR targeting master. Once merged you can then merge back master
-  on your version branch to get the changes. Alternatively, if the master contains other
-  changes you don't want, you can cherry-pick the merge commit.
-
-Once you're happy with the changes, you can release a new RC.
-
-When you no longer have changes to add (i.e. your current RC is perfect) then you can
-do a final release and merge the version branch in master.
+  click B "https://github.com/Scille/parsec-cloud/releases?q=draft%3Atrue" "Parsec drafted releases"
+```
 
 ## Release patch version
 
