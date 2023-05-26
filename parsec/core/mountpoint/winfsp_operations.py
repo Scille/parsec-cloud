@@ -698,7 +698,8 @@ class MultiWorkspaceWinFSPOperations(BaseFileSystemOperations):  # type: ignore[
         self._workspaces[workspace_name] = self.MountedWorkspace(operations, create_stats_for_dir())
 
     def unmount_workspace(self, workspace_name: str) -> None:
-        self._workspaces.pop(workspace_name)
+        if workspace_name in self._workspaces:
+            del self._workspaces[workspace_name]
 
     def get_volume_info(self) -> dict[str, Any]:
         return self._volume_info

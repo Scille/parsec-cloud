@@ -242,9 +242,10 @@ async def winfsp_mountpoint_runner(
 
 @asynccontextmanager
 async def winfsp_multiworkspace_mountpoint_runner(
-    group_label: str,
     user_fs: UserFS,
     workspaces: list[WorkspaceFS],
+    workspace_id: EntryID,
+    mountpoint_label: str,
     base_mountpoint_path: PurePath,
     config: dict[str, Any],
     event_bus: EventBus,
@@ -252,18 +253,16 @@ async def winfsp_multiworkspace_mountpoint_runner(
     # `base_mountpoint_path` is ignored given we only mount from a drive
     mountpoint_path = await _get_available_drive(0, 1)
 
+    # Prepare event for multi-workspace operations
     # TODO: MOUNTPOINT_* events are not adapted for multi-workspace mountpoints
-    #       because there is no single workspace to refer to.
+    #       because there is no specific workspace to refer to.
     #       Currently, "dummy" kwargs (workspace_id and timestamp) are used
     #       for the required events.
     #       Later, specific events should probably be created:
     #       MOUNTPOINT_MULTIWORKSPACE_STARTING
     #       MOUNTPOINT_MULTIWORKSPACE_STOPPING
-    workspace_id = EntryID.new()
     event_kwargs = {
         "mountpoint": mountpoint_path,
-        #       "workspace_id": workspace_fs.workspace_id,
-        #       "timestamp": getattr(workspace_fs, "timestamp", None),
         "workspace_id": workspace_id,
         "timestamp": None,
     }
@@ -274,7 +273,7 @@ async def winfsp_multiworkspace_mountpoint_runner(
     # Volume label is limited to 32 WCHAR characters, so force the label to
     # ascii to easily enforce the size.
     volume_label = (
-        unicodedata.normalize("NFKD", f"{group_label.capitalize()}")
+        unicodedata.normalize("NFKD", f"{mountpoint_label.capitalize()}")
         .encode("ascii", "ignore")[:32]
         .decode("ascii")
     )
@@ -290,7 +289,7 @@ async def winfsp_multiworkspace_mountpoint_runner(
         trio_token = trio.lowlevel.current_trio_token()
         fs_access = ThreadFSAccess(trio_token, workspace_fs, event_bus)
 
-        # Prepare event information
+        # Prepare event information for workspace-specific operations
         ws_event_kwargs = {
             "mountpoint": mountpoint_path,
             "workspace_id": workspace_fs.workspace_id,

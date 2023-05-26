@@ -60,6 +60,7 @@ class CoreConfig:
     invitation_token_size: int = 8
 
     mountpoint_enabled: bool = False
+    mountpoint_label: str | None = None
     disabled_workspaces: FrozenSet[EntryID] = frozenset()
 
     sentry_dsn: str | None = None

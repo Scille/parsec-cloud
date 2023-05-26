@@ -38,7 +38,7 @@ RunnerType = Callable[
 ]
 
 MultiWorkspaceRunnerType = Callable[
-    [str, UserFS, list[WorkspaceFS], Path, dict[Any, Any], EventBus],
+    [UserFS, list[WorkspaceFS], EntryID, str, Path, dict[Any, Any], EventBus],
     AsyncContextManager[Union[Path, PurePath]],
 ]
 
@@ -114,8 +114,8 @@ class MountpointManager:
         base_mountpoint_path: Path,
         config: dict[Any, Any],
         runner: RunnerType,
-        multiworkspace_runner: MultiWorkspaceRunnerType,
         nursery: trio.Nursery,
+        multiworkspace_runner: MultiWorkspaceRunnerType | None = None,  # Lazy
     ) -> None:
         self.user_fs = user_fs
         self.event_bus = event_bus
@@ -361,22 +361,28 @@ class MountpointManager:
             await self.safe_unmount(workspace_id, timestamp=timestamp)
 
     async def _mount_multiworkspace_helper(
-        self, group_label: str, workspaces: list[WorkspaceFS]
+        self, mountpoint_label: str, workspaces: list[WorkspaceFS]
     ) -> TaskStatus[Path]:
-        # TODO(137) Define the key for multi-workspace mountpoints (or use a different tasks dictionary)
-        # workspace_id = workspace_fs.workspace_id
+        # TODO: Define key for multi-workspace mountpoints
+        #       Currently, dummy workspace_id and timestamp are used.
+        #       Alternatively, we can use a different dict to store
+        #       multi-workspace mountpoint tasks (other than _mountpoint_tasks).
         workspace_id = EntryID.new()
         timestamp = None
         key = workspace_id, timestamp
 
         async def curried_runner(task_status: TaskStatus[PurePath]) -> None:
             event_kwargs = {}
-
             try:
+                # Currently lazy because multi-workspace is supported only on Windows
+                if not self._multiworkspace_runner:
+                    self._multiworkspace_runner = get_multiworkspace_mountpoint_runner()
+
                 async with self._multiworkspace_runner(
-                    group_label,
                     self.user_fs,
                     workspaces,
+                    workspace_id,  # TODO: Temporarily required to use the same id for MOUNTPOINT_STARTING/STOPPING events
+                    mountpoint_label,
                     self.base_mountpoint_path,
                     self.config,
                     self.event_bus,
@@ -384,15 +390,20 @@ class MountpointManager:
                     # Another runner started before us
                     if key in self._mountpoint_tasks:
                         raise MountpointAlreadyMounted(
-                            f"Workspace group `{group_label}` already mounted."
+                            f"Workspace group `{mountpoint_label}` already mounted."
                         )
 
-                    # TODO (137) Define custom events for multi-workspace mountpoints?
+                    # TODO: MOUNTPOINT_* events are not adapted for multi-workspace mountpoints
+                    #       because there is no specific workspace to refer to.
+                    #       Currently, "dummy" kwargs (workspace_id and timestamp) are used
+                    #       for MOUNTPOINT_STARTED/STOPPED events.
+                    #       Later, specific events should probably be created:
+                    #       MOUNTPOINT_MULTIWORKSPACE_STARTED
+                    #       MOUNTPOINT_MULTIWORKSPACE_STOPPED
                     # Prepare kwargs for both started and stopped events
                     event_kwargs = {
                         "mountpoint": mountpoint_path,
-                        # "workspace_id": workspace_fs.workspace_id,
-                        "workspace_id": group_label,
+                        "workspace_id": workspace_id,
                         "timestamp": timestamp,
                     }
 
@@ -410,6 +421,7 @@ class MountpointManager:
                 # Pop the mountpoint task if its ours
                 if self._mountpoint_tasks.get(key) == task_status:
                     del self._mountpoint_tasks[key]
+
                 # Send stopped event if started has been previously sent
                 if event_kwargs:
                     self.event_bus.send(CoreEvent.MOUNTPOINT_STOPPED, **event_kwargs)
@@ -418,25 +430,20 @@ class MountpointManager:
         runner_task = cast(TaskStatus[Path], await start_task(self._nursery, curried_runner))
         return runner_task
 
-    async def safe_mount_all_multiworkspace(self, exclude: Sequence[EntryID] = ()) -> None:
-        group_label = "RESANA_SECURE"
+    async def safe_mount_all_multiworkspace(
+        self, mountpoint_label: str, exclude: Sequence[EntryID] = ()
+    ) -> None:
         exclude_set = set(exclude)
-        workspace_ids = []
-        user_manifest = self.user_fs.get_user_manifest()
-        for workspace_entry in user_manifest.workspaces:
-            if workspace_entry.role is None or workspace_entry.id in exclude_set:
-                continue
-            workspace_ids.append(workspace_entry.id)
-
-        logger.warning(
-            f"(MountpointManager.safe_mount_all_multiworkspace) workspace_ids: {workspace_ids}"
-        )
         try:
-            workspaces = [self._get_workspace(workspace_id) for workspace_id in workspace_ids]
-            runner_task = await self._mount_multiworkspace_helper(group_label, workspaces)
+            # Workspaces to be mounted
+            workspaces = []
+            for workspace_entry in self.user_fs.get_user_manifest().workspaces:
+                if workspace_entry.role is None or workspace_entry.id in exclude_set:
+                    continue
+                workspaces.append(self._get_workspace(workspace_entry.id))
+
+            runner_task = await self._mount_multiworkspace_helper(mountpoint_label, workspaces)
             assert runner_task.value is not None
-            # return runner_task.value
-            return
 
         # The workspace could not be mounted
         # Maybe be a `MountpointAlreadyMounted` or `MountpointNoDriveAvailable`
@@ -446,10 +453,6 @@ class MountpointManager:
         # Unexpected exception is not a reason to crash the mountpoint manager
         except Exception:
             logger.exception("Unexpected error while mounting a new workspace")
-
-    # TODO (137)
-    async def safe_unmount_all_grouped(self) -> None:
-        pass
 
 
 async def cleanup_macos_mountpoint_folder(base_mountpoint_path: Path) -> None:
@@ -502,11 +505,11 @@ async def mountpoint_manager_factory(
     mount_on_workspace_shared: bool = False,
     unmount_on_workspace_revoked: bool = False,
     exclude_from_mount_all: frozenset[EntryID] = frozenset(),
+    mountpoint_label: str | None = None,
 ) -> AsyncGenerator[MountpointManager, Any]:
     config = {"debug": debug}
 
     runner = get_mountpoint_runner()
-    multiworkspace_runner = get_multiworkspace_mountpoint_runner()
 
     # Now is a good time to perform some cleanup in the registry
     if sys.platform == "win32":
@@ -538,7 +541,7 @@ async def mountpoint_manager_factory(
     # Instantiate the mountpoint manager with its own nursery
     async with open_service_nursery() as nursery:
         mountpoint_manager = MountpointManager(
-            user_fs, event_bus, base_mountpoint_path, config, runner, multiworkspace_runner, nursery
+            user_fs, event_bus, base_mountpoint_path, config, runner, nursery
         )
 
         # Exit this context by unmounting all mountpoints
@@ -552,9 +555,17 @@ async def mountpoint_manager_factory(
                 ):
                     # Mount required workspaces
                     if mount_all:
-                        await mountpoint_manager.safe_mount_all(
-                            exclude=tuple(exclude_from_mount_all)
-                        )
+                        # If a label is specified, workspaces are mounted in a
+                        # single mountpoint with that label
+                        if mountpoint_label:
+                            await mountpoint_manager.safe_mount_all_multiworkspace(
+                                mountpoint_label, exclude=tuple(exclude_from_mount_all)
+                            )
+                        # Otherwise, a mountpoint is created for each workspace
+                        else:
+                            await mountpoint_manager.safe_mount_all(
+                                exclude=tuple(exclude_from_mount_all)
+                            )
 
                     # Yield point
                     yield mountpoint_manager
