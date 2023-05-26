@@ -20,29 +20,35 @@
           </ion-button>
         </ion-buttons>
         <!-- end of icon visible when menu is hidden -->
+        <div class="topbar-left">
+          <div
+            id="back-block"
+            v-if="hasHistory()"
+          >
+            <header-back-button
+              :short="isWorkspaceRoute() ? true : false"
+            />
+          </div>
 
-        <div
-          id="back-block"
-          v-if="hasHistory()"
-        >
-          <header-back-button
-            :short="isWorkspaceRoute() ? true : false"
-          />
-        </div>
+          <div
+            v-if="!isWorkspaceRoute()"
+            class="topbar-left__title"
+          >
+            <ion-label
+              class="title-h2"
+              :class="hasHistory() ? 'align-center' : 'align-left'"
+            >
+              {{ getTitleForRoute() }}
+            </ion-label>
+          </div>
 
-        <div
-          v-if="!isWorkspaceRoute()"
-          id="title-block"
-        >
-          <ion-label :v-bind:class="!hasHistory() ? 'align-center' : 'align-left'">
-            {{ getTitleForRoute() }}
-          </ion-label>
-        </div>
-
-        <div id="breadcrumbs-block">
-          <header-breadcrumbs
-            :path-nodes="fullPath"
-          />
+          <div
+            class="topbar-left__breadcrumb"
+          >
+            <header-breadcrumbs
+              :path-nodes="fullPath"
+            />
+          </div>
         </div>
 
         <!-- icon menu on mobile -->
@@ -270,33 +276,30 @@ function hasHistory(): boolean {
   }
 }
 
-#breadcrumbs-block {
-  float: left;
-  background-color: purple;
-  border: 3px solid pink;
-}
+.topbar-left {
+  display: flex;
+  align-items: center;
 
-#title-block {
-  float: left;
-  background-color: orange;
-  border: 6px solid salmon;
-  color: magenta;
-  font-size: 3em;
-  font-family: 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif;
-}
+  &__title {
+    width: 100%;
 
-#back-block {
-  float: left;
-  background-color: black;
-  border: 8px dotted cyan;
-}
+    .align-left {
+      display: flex;
+      justify-content: start;
+      align-items: center;
+    }
 
-.align-left {
-  text-align: left;
-}
+    .align-center {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      color: var(--parsec-color-light-primary-600);
+    }
+  }
 
-.align-center {
-  text-align: center;
+  &__breabcrumb {
+    display: flex;
+  }
 }
-
 </style>

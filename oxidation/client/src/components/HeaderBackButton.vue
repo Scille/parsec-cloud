@@ -1,25 +1,28 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS -->
 
 <template>
-  <ion-button
-    fill="clear"
-    @click="goBack()"
-  >
-    <ion-icon
-      :icon="chevronBack"
-    />
-
-    <ion-label
-      v-if="!short"
+  <div class="back-button-container">
+    <ion-button
+      fill="clear"
+      @click="goBack()"
+      class="back-button"
     >
-      {{ $t('HeaderPage.previous') }}
-    </ion-label>
-  </ion-button>
+      <ion-icon
+        :icon="chevronBack"
+      />
 
-  <div
-    v-if="short"
-    class="vertical-spacer"
-  />
+      <ion-label
+        v-if="!short"
+      >
+        {{ $t('HeaderPage.previous') }}
+      </ion-label>
+    </ion-button>
+
+    <div
+      v-if="short"
+      class="vertical-spacer"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -39,5 +42,25 @@ function goBack(): void {
 </script>
 
 <style scoped lang="scss">
+.back-button {
+  margin-inline: 0px;
+  margin-top: 0px;
+  margin-bottom: 0px;
 
+  &::part(native) {
+    padding: .5rem;
+  }
+}
+
+.back-button-container {
+  display: flex;
+  align-items: center;
+}
+
+.vertical-spacer {
+  display: block;
+  border-right: 1px solid var(--parsec-color-light-secondary-light);
+  height: 1.5rem;
+  margin: 0 1rem;
+}
 </style>
