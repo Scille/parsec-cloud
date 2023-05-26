@@ -1,0 +1,81 @@
+name: Publish package
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        required: true
+        description: The release tag to fetch the package to publish
+
+  release:
+    types:
+      - published
+      - edited
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Get tag version
+        id: version
+        run: |
+          set -eux -o pipefail
+          case "${{ github.event_name }}" in
+            workflow_dispatch)
+              raw_tag="${{ inputs.release}}"
+              ;;
+            release)
+              raw_tag="${{ github.ref_name }}"
+              ;;
+          esac
+          gh release \
+            --repo=${{ github.server_url }}/${{ github.repository }} \
+            download \
+            $raw_tag \
+            --pattern=version \
+            --output=- | grep -e "full=" -e "pep440" | tee -a $GITHUB_OUTPUT
+
+      - name: Download Wheels from release
+        run: |
+          mkdir dist
+          gh release \
+            --repo=${{ github.server_url }}/${{ github.repository }} \
+            download \
+            v${{ steps.version.outputs.full }} \
+            --pattern=parsec_cloud-${{ steps.version.outputs.pep440 }}-*.whl \
+            --dir=dist
+        timeout-minutes: 2
+
+      - name: Download snap from release
+        run: |
+          mkdir snap
+          gh release \
+            --repo=${{ github.server_url }}/${{ github.repository }} \
+            download \
+            v${{ steps.version.outputs.full }} \
+            --pattern=parsec_v${{ steps.version.outputs.full }}_*.snap \
+            --dir=snap
+        timeout-minutes: 2
+
+      - name: List downloaded files
+        run: tree snap dist
+
+      - name: Install Snapcraft
+        uses: samuelmeuli/action-snapcraft@d33c176a9b784876d966f80fb1b461808edc0641 # pin v2.1.1
+        timeout-minutes: 2
+
+      - name: Upload Snap
+        run: snapcraft upload --release=edge snap/parsec_v${{ steps.version.outputs.full }}_*.snap
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_CREDENTIALS }}
+        timeout-minutes: 2
+
+      - name: Publish wheel on PyPI
+        uses: pypa/gh-action-pypi-publish@a56da0b891b3dc519c7ee3284aff1fad93cc8598 # pin v1.8.6
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_CREDENTIALS }}
+        timeout-minutes: 2
