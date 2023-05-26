@@ -252,12 +252,20 @@ async def winfsp_multiworkspace_mountpoint_runner(
     # `base_mountpoint_path` is ignored given we only mount from a drive
     mountpoint_path = await _get_available_drive(0, 1)
 
-    # TODO(137) Pass the list of workspaces_names instead?
-    # Prepare event information
+    # TODO: MOUNTPOINT_* events are not adapted for multi-workspace mountpoints
+    #       because there is no single workspace to refer to.
+    #       Currently, "dummy" kwargs (workspace_id and timestamp) are used
+    #       for the required events.
+    #       Later, specific events should probably be created:
+    #       MOUNTPOINT_MULTIWORKSPACE_STARTING
+    #       MOUNTPOINT_MULTIWORKSPACE_STOPPING
+    workspace_id = EntryID.new()
     event_kwargs = {
         "mountpoint": mountpoint_path,
-        #        "workspace_id": workspace_fs.workspace_id,
-        #        "timestamp": getattr(workspace_fs, "timestamp", None),
+        #       "workspace_id": workspace_fs.workspace_id,
+        #       "timestamp": getattr(workspace_fs, "timestamp", None),
+        "workspace_id": workspace_id,
+        "timestamp": None,
     }
 
     if config.get("debug", False):
@@ -270,14 +278,12 @@ async def winfsp_multiworkspace_mountpoint_runner(
         .encode("ascii", "ignore")[:32]
         .decode("ascii")
     )
-    # TODO(137) Generate volume serial number (without workspace info)
-    # volume_serial_number = _generate_volume_serial_number(workspace_fs.device, workspace_fs.workspace_id)
-    volume_serial_number = adler32(
-        f"{user_fs.device.organization_id.str}-{user_fs.device.device_id.str}".encode()
-    )
 
-    # Types can't be checked when unpacking `event_kwargs`
-    operations = MultiWorkspaceWinFSPOperations(volume_label=volume_label, **event_kwargs)
+    volume_serial_number = _generate_volume_serial_number(user_fs.device, workspace_id)
+
+    operations = MultiWorkspaceWinFSPOperations(
+        volume_label=volume_label, mountpoint=mountpoint_path
+    )
 
     for workspace_fs in workspaces:
         workspace_name = winify_entry_name(workspace_fs.get_workspace_name())
@@ -285,14 +291,14 @@ async def winfsp_multiworkspace_mountpoint_runner(
         fs_access = ThreadFSAccess(trio_token, workspace_fs, event_bus)
 
         # Prepare event information
-        evt_kwargs = {
+        ws_event_kwargs = {
             "mountpoint": mountpoint_path,
             "workspace_id": workspace_fs.workspace_id,
             "timestamp": getattr(workspace_fs, "timestamp", None),
         }
         operations.mount_workspace(
             workspace_name,
-            WinFSPOperations(fs_access=fs_access, volume_label=volume_label, **evt_kwargs),  # type: ignore[arg-type]
+            WinFSPOperations(fs_access=fs_access, volume_label=volume_label, **ws_event_kwargs),  # type: ignore[arg-type]
         )
 
     # See https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getvolumeinformationa
@@ -327,11 +333,7 @@ async def winfsp_multiworkspace_mountpoint_runner(
     try:
         event_bus.send(
             CoreEvent.MOUNTPOINT_STARTING,
-            **{
-                "mountpoint": mountpoint_path,
-                "workspace_id": EntryID.new(),
-                "timestamp": None,
-            },
+            **event_kwargs,
         )
 
         # Manage drive icon
@@ -353,17 +355,16 @@ async def winfsp_multiworkspace_mountpoint_runner(
             with event_bus.waiter_on(CoreEvent.SHARING_UPDATED) as waiter:
                 # Loop over `sharing.updated` event
                 while True:
-                    # TODO(137): A read-only workspace should adapt the multi-workspace operations (not restart the mountpoint!)
-
-                    # Restart the mountpoint with the right read_only flag if necessary
-                    # Don't bother with restarting if the workspace has been revoked
-                    # It's the manager's responsibility to unmount the workspace in this case
-                    if (
-                        workspace_fs.is_read_only() != fs.volume_params["read_only_volume"]
-                        and not workspace_fs.is_revoked()
-                    ):
-                        restart = partial(fs.restart, read_only_volume=workspace_fs.is_read_only())
-                        await trio.to_thread.run_sync(restart)
+                    # TODO: Read-only workspaces should not restart the mountpoint!
+                    #       Currently, nothing is done below for read-only workspaces.
+                    #       The multi-workspace operations should be notified in
+                    #       order to forbid write/cleanup/...
+                    #       Something like:
+                    #
+                    # # Get workspace name and fs from event
+                    # ...
+                    # # Inform operations about the read-only workspace
+                    # operations.remount_readonly(workspace_name, workspace_fs.is_read_only())
 
                     # Wait and reset waiter
                     await waiter.wait()
