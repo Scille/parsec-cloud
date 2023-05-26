@@ -151,7 +151,7 @@
                       <ion-grid>
                         <organization-card :device="selectedDevice" />
                         <password-input
-                          :label="t('HomePage.organizationLogin.passwordLabel')"
+                          :label="$t('HomePage.organizationLogin.passwordLabel')"
                           @change="onPasswordChange($event)"
                           @enter="login()"
                           id="password-input"

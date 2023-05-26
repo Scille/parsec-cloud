@@ -8,7 +8,7 @@
           id="passwordLabel"
           class="form-label"
         >
-          {{ $t('HomePage.organizationLogin.passwordLabel') }}
+          {{ label }}
         </ion-text>
         <ion-item class="input">
           <ion-input
@@ -42,7 +42,6 @@ import {
   eye,
   eyeOff
 } from 'ionicons/icons';
-import { useI18n } from 'vue-i18n';
 
 defineProps<{
   label: string
@@ -52,7 +51,6 @@ const emits = defineEmits<{
   (e: 'change', value: string): void
   (e: 'enter'): void
 }>();
-const { t, d } = useI18n();
 
 const passwordVisible = ref(false);
 const passwordRef = ref('');

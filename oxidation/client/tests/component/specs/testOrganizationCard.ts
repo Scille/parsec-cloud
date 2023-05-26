@@ -21,8 +21,8 @@ it('display the organization', () => {
   }).as('orgCard');
 
   cy.get('@orgCard').get('ion-avatar').should('have.text', 'Bl');
-  cy.get('@orgCard').get('.organization-info > p').eq(0).as('orgId').should('have.text', 'Black Mesa');
-  cy.get('@orgCard').get('.organization-info > p').eq(1).as('humanHandle').should('have.text', 'Gordon Freeman');
+  cy.get('@orgCard').get('ion-card-title').as('orgId').should('have.text', 'Black Mesa');
+  cy.get('@orgCard').get('ion-card-subtitle > p').as('humanHandle').should('have.text', 'Gordon Freeman');
 });
 
 it('handles empty human handles', () => {
@@ -35,7 +35,6 @@ it('handles empty human handles', () => {
   }).as('orgCard');
 
   cy.get('@orgCard').get('ion-avatar').should('have.text', 'Bl');
-  cy.get('@orgCard').get('.organization-info > p').eq(0).as('orgId').should('have.text', 'Black Mesa');
-  cy.get('@orgCard').get('.organization-info > p').eq(1).as('humanHandle').should('have.text', '');
-
+  cy.get('@orgCard').get('ion-card-title').as('orgId').should('have.text', 'Black Mesa');
+  cy.get('@orgCard').get('ion-card-subtitle > p').as('humanHandle').should('have.text', '');
 });
