@@ -305,6 +305,7 @@ body.dark {
 /* **** Parsec width ***** */
 :root {
   --parsec-max-content-width: 78rem;
+  --parsec-max-title-width: 31.25rem;
 }
 
 
