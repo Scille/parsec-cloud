@@ -298,7 +298,7 @@ function hasHistory(): boolean {
     }
   }
 
-  &__breabcrumb {
+  &__breadcrumb {
     display: flex;
   }
 }
