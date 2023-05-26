@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 # Invite
 from parsec._parsec import (
     DateTime,
@@ -227,7 +225,7 @@ class InviteListItem:
     ) -> InviteListItem: ...
     @classmethod
     def Device(
-        cls, token: InvitationToken, created_on: DateTime, status: Any
+        cls, token: InvitationToken, created_on: DateTime, status: InvitationStatus
     ) -> InviteListItem: ...
     @property
     def type(self) -> InvitationType: ...

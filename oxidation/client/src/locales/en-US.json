@@ -97,7 +97,10 @@
     "HeaderPage": {
         "about": "About",
         "support": "Help and feedback",
-        "loggedIn": "Logged in"
+        "loggedIn": "Logged in",
+        "breadcrumbs": {
+            "documents": "My workspaces"
+        }
     },
     "SettingsPage": {
         "pageTitle": "Settings",
@@ -105,6 +108,10 @@
         "enableTelemetryDescription": "Automatically send error reports",
         "minimizeToSystemTray": "Minimize to system tray",
         "minimizeToSystemTrayDescription": "When the application is closed, Parsec will continue to run in the background",
+        "unsyncFiles": "Show files excluded from synchronization",
+        "unsyncFilesDescription": "Show files excluded from synchronization in the file explorer",
+        "meteredConnection": "Metered connection",
+        "meteredConnectionDescription": "The application will reduce data synchronisation when you are connected to a metered connection",
         "language": "Language",
         "lang": {
             "frFR": "French",
@@ -119,7 +126,9 @@
             "dark": "Dark",
             "light": "Light",
             "system": "System"
-        }
+        },
+        "general": "General",
+        "advanced": "Advanced"
     },
     "WorkspacesPage": {
         "createWorkspace": "Create workspace",

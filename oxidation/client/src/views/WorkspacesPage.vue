@@ -38,9 +38,7 @@
           :secondary-label="workspace.userRole"
           :third-label="userCountLabel(workspace.userCount)"
           :key="workspace.id"
-          @contextmenu.prevent="openWorkspaceActionSheet()"
-          @trigger-action-sheet="openWorkspaceActionSheet()"
-          @trigger-share="openWorkspaceShareModal()"
+          @click="navigateToWorkspace(workspace.id)"
         />
       </div>
       <div
@@ -53,10 +51,7 @@
           :primary-label="workspace.name"
           :secondary-label="workspace.userRole"
           :key="workspace.id"
-          @contextmenu.prevent="handleContextMenu($event)"
-          @trigger-context-menu="openWorkspaceContextMenu($event)"
-          @trigger-action-sheet="openWorkspaceActionSheet()"
-          @trigger-share="openWorkspaceShareModal()"
+          @click="navigateToWorkspace(workspace.id)"
         />
       </div>
       <ion-fab
@@ -99,9 +94,12 @@ import CreateWorkspaceModal from '@/components/CreateWorkspaceModal.vue';
 import WorkspaceShareModal from '@/components/WorkspaceShareModal.vue';
 import { useI18n } from 'vue-i18n';
 import { ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 const { t } = useI18n();
 const listView = ref(false);
+const currentRoute = useRoute();
+const router = useRouter();
 
 async function openCreateWorkspaceModal(): Promise<void> {
   const modal = await modalController.create({
@@ -223,6 +221,14 @@ async function openWorkspaceShareModal(): Promise<void> {
   if (role === 'confirm') {
     console.log(data);
   }
+}
+
+function navigateToWorkspace(workspaceId: number): void {
+  router.push({
+    name: 'folder',
+    params: { deviceId: currentRoute.params.deviceId, workspaceId: workspaceId },
+    query: { path: '/how/boring/and/small' }
+  });
 }
 </script>
 

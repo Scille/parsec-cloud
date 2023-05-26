@@ -652,7 +652,7 @@ msgid ""
 "on a user:"
 msgstr ""
 "La révocation se fait depuis le client, cette option apparaît après un clic "
-"droit sur un utilisateur :"
+"droit sur un utilisateur :"
 
 #: ../../userguide/revoke_user.rst:-1
 msgid "Revoking user process"
@@ -761,7 +761,7 @@ msgstr "Processus de partage d'un espace de travail"
 
 #: ../../userguide/share_data.rst:27
 msgid "Regarding the different sharing roles:"
-msgstr "Concernant les différents rôles de partage disponibles :"
+msgstr "Concernant les différents rôles de partage disponibles :"
 
 #: ../../userguide/share_data.rst:29
 msgid "Reader: has read-only access to the workspace"

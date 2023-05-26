@@ -24,7 +24,7 @@ libparsec_platform_async = { path = "../platform_async" }
 libparsec_platform_storage = { path = "../platform_storage" }
 
 log = "0.4.17"
-regex = "1.7.3"
+regex = "1.8.1"
 thiserror = "1.0.40"
 lazy_static = "1.4.0"
 async-trait = "0.1.61"
@@ -34,4 +34,4 @@ libparsec_tests_fixtures = { path = "../tests_fixtures" }
 libparsec_testbed = { path = "../testbed" }
 libparsec_platform_storage = { path = "../platform_storage", features = ["test-utils"] }
 
-tokio = { version = "1.27.0", features = ["macros"]}
+tokio = { version = "1.28.1", features = ["macros"]}

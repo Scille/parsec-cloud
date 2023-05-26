@@ -97,7 +97,10 @@
     "HeaderPage": {
         "about": "À propos",
         "support": "Aide et commentaires",
-        "loggedIn": "Connecté"
+        "loggedIn": "Connecté",
+        "breadcrumbs": {
+            "documents": "Mes espaces"
+        }
     },
     "SettingsPage": {
         "pageTitle": "Paramètres",
@@ -105,6 +108,10 @@
         "enableTelemetryDescription": "Envoie automatiquement les rapports d’erreur",
         "minimizeToSystemTray": "Réduire dans la barre d'état",
         "minimizeToSystemTrayDescription": "Lorsque l'application est fermée, Parsec continuera à fonctionner en arrière-plan",
+        "unsyncFiles": "Afficher les fichiers exclus de la synchronisation",
+        "unsyncFilesDescription": "Les fichiers exclus de la synchronisation seront visibles",
+        "meteredConnection": "Connexion limitée",
+        "meteredConnectionDescription": "L'application réduira la synchronisation des données lorsque vous êtes connecté à une connexion limitée",
         "language": "Langue",
         "lang": {
             "frFR": "Français",
@@ -119,7 +126,9 @@
             "dark": "Sombre",
             "light": "Clair",
             "system": "Système"
-        }
+        },
+        "general": "Général",
+        "advanced": "Avancé"
     },
     "WorkspacesPage": {
         "createWorkspace": "Créer un espace de travail",

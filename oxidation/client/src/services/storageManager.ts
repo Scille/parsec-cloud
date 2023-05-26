@@ -12,6 +12,8 @@ export interface Config {
   theme: string;
   enableTelemetry: boolean;
   minimizeToTray: boolean;
+  meteredConnection: boolean;
+  unsyncFiles: boolean;
 }
 
 export class StorageManager {
@@ -22,23 +24,25 @@ export class StorageManager {
     locale: '',
     theme: 'system',
     enableTelemetry: true,
-    minimizeToTray: true
+    minimizeToTray: true,
+    meteredConnection: false,
+    unsyncFiles: false
   };
 
-  _store: Storage;
+  internalStore: Storage;
 
   constructor() {
-    this._store = new Storage();
+    this.internalStore = new Storage();
   }
 
   async create(): Promise<Storage> {
-    return this._store.create();
+    return this.internalStore.create();
   }
 
   async storeDevicesData(data: {[slug: string]: StoredDeviceData}): Promise<void> {
     const serialized: {[slug: string]: object} = {};
 
-    Object.keys(data).forEach((slug: string, _) => {
+    Object.keys(data).forEach((slug: string, _data) => {
       if (data[slug] && data[slug].lastLogin) {
         serialized[slug] = {
           lastLogin: data[slug].lastLogin.toISO()
@@ -46,17 +50,17 @@ export class StorageManager {
       }
     });
 
-    this._store.set(StorageManager.STORED_DEVICE_DATA_KEY, serialized);
+    this.internalStore.set(StorageManager.STORED_DEVICE_DATA_KEY, serialized);
   }
 
   async retrieveDevicesData(): Promise<{[slug: string]: StoredDeviceData}> {
-    const data = await this._store.get(StorageManager.STORED_DEVICE_DATA_KEY);
+    const data = await this.internalStore.get(StorageManager.STORED_DEVICE_DATA_KEY);
     const deviceData: {[slug: string]: StoredDeviceData} = {};
 
     if (!data) {
       return deviceData;
     }
-    Object.keys(data).forEach((slug, _) => {
+    Object.keys(data).forEach((slug, _data) => {
       if (data[slug] && data[slug].lastLogin) {
         deviceData[slug] = {
           // Need to add setZone because Luxon (and JavaScript's date) ignore
@@ -69,16 +73,18 @@ export class StorageManager {
   }
 
   async storeConfig(data: Config): Promise<void> {
-    await this._store.set(StorageManager.STORED_CONFIG_KEY, {
+    await this.internalStore.set(StorageManager.STORED_CONFIG_KEY, {
       locale: data.locale,
       theme: data.theme,
       minimizeToTray: data.minimizeToTray,
-      enableTelemetry: data.enableTelemetry
+      enableTelemetry: data.enableTelemetry,
+      synchroWifiOnly: data.meteredConnection,
+      unsyncFiles: data.unsyncFiles
     });
   }
 
   async retrieveConfig(): Promise<Config> {
-    const data = await this._store.get(StorageManager.STORED_CONFIG_KEY);
+    const data = await this.internalStore.get(StorageManager.STORED_CONFIG_KEY);
 
     if (!data) {
       return StorageManager.DEFAULT_CONFIG;
@@ -90,7 +96,9 @@ export class StorageManager {
       locale: data.locale ? data.locale : StorageManager.DEFAULT_CONFIG.locale,
       theme: data.theme ? data.theme : StorageManager.DEFAULT_CONFIG.theme,
       enableTelemetry: data.enableTelemetry !== undefined ? data.enableTelemetry : StorageManager.DEFAULT_CONFIG.enableTelemetry,
-      minimizeToTray: data.minimizeToTray !== undefined ? data.minimizeToTray : StorageManager.DEFAULT_CONFIG.minimizeToTray
+      minimizeToTray: data.minimizeToTray !== undefined ? data.minimizeToTray : StorageManager.DEFAULT_CONFIG.minimizeToTray,
+      meteredConnection: data.meteredConnection !== undefined ? data.synchroWifiOnly : StorageManager.DEFAULT_CONFIG.meteredConnection,
+      unsyncFiles: data.unsyncFiles !== undefined ? data.unsyncFiles : StorageManager.DEFAULT_CONFIG.unsyncFiles
     };
     return config;
   }

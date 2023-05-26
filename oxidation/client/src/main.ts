@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import { InjectionKey, createApp } from 'vue';
+import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
 
@@ -28,18 +28,11 @@ import '@ionic/vue/css/display.css';
 import { formatTimeSince } from '@/common/date';
 import { StorageManager } from '@/services/storageManager';
 import { DateTime } from 'luxon';
+import { FormattersKey, ConfigPathKey, StorageManagerKey } from '@/common/injectionKeys';
 
 /* Theme variables */
 import './theme/variables.css';
 import { libparsec } from './plugins/libparsec';
-
-export interface Formatters {
-  timeSince(date: DateTime | undefined, defaultValue?: string): string;
-}
-
-const formattersKey = Symbol('formatters') as InjectionKey<Formatters>;
-const storageManagerKey = Symbol('storageManager') as InjectionKey<StorageManager>;
-const configPathKey = Symbol('configPath') as InjectionKey<string>;
 
 async function setupApp(): Promise<void> {
 
@@ -107,13 +100,13 @@ async function setupApp(): Promise<void> {
     .use(router)
     .use(i18n);
 
-  app.provide(formattersKey, {
+  app.provide(FormattersKey, {
     'timeSince': (date: DateTime | undefined, defaultValue = ''): string => {
       const { t, d } = useI18n();
       return formatTimeSince(date, t, d, defaultValue);
     }
   });
-  app.provide(storageManagerKey, storageManager);
+  app.provide(StorageManagerKey, storageManager);
 
   // We can start the app with different cases :
   // - dev with a testbed Parsec server with the default devices
@@ -136,7 +129,7 @@ async function setupApp(): Promise<void> {
   const nextStage = async (configPath: string): Promise<void> => {
     await router.isReady();
     // configPath is injected to components
-    app.provide(configPathKey, configPath);
+    app.provide(ConfigPathKey, configPath);
     app.mount('#app');
     appElem.setAttribute('app-state', 'ready');
   };
@@ -163,9 +156,3 @@ declare global {
 }
 
 await setupApp();
-
-export {
-  formattersKey,
-  storageManagerKey,
-  configPathKey
-};

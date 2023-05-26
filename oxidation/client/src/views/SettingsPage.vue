@@ -17,6 +17,7 @@
           <settings-option
             :title="$t('SettingsPage.enableTelemetry')"
             :description="$t('SettingsPage.enableTelemetryDescription')"
+            v-model="config.enableTelemetry"
           />
           <ion-toggle
             v-model="config.enableTelemetry"
@@ -30,6 +31,7 @@
           <settings-option
             :title="$t('SettingsPage.minimizeToSystemTray')"
             :description="$t('SettingsPage.minimizeToSystemTrayDescription')"
+            v-model="config.minimizeToTray"
           />
           <ion-toggle
             v-model="config.minimizeToTray"
@@ -99,10 +101,10 @@ import { useI18n } from 'vue-i18n';
 import { onMounted } from '@vue/runtime-core';
 import { toggleDarkMode } from '@/states/darkMode';
 import { Config, StorageManager } from '@/services/storageManager';
-import { storageManagerKey } from '@/main';
+import { StorageManagerKey } from '@/common/injectionKeys';
 
 const { locale } = useI18n();
-const storageManager = inject(storageManagerKey)!;
+const storageManager = inject(StorageManagerKey)!;
 const config = ref<Config>(structuredClone(StorageManager.DEFAULT_CONFIG));
 
 async function changeLang(selectedLang: string): Promise<void> {

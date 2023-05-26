@@ -17,6 +17,7 @@
             v-model="passwordRef"
             @ion-input="$emit('change', $event.detail.value)"
             @keyup.enter="onEnterPress()"
+            :autofocus="true"
           />
           <ion-button
             @click="passwordVisible = !passwordVisible"
@@ -47,14 +48,14 @@ defineProps<{
   label: string
 }>();
 
-const passwordVisible = ref(false);
-const passwordRef = ref('');
-
 const emits = defineEmits<{
   (e: 'change', value: string): void
   (e: 'enter'): void
 }>();
 const { t, d } = useI18n();
+
+const passwordVisible = ref(false);
+const passwordRef = ref('');
 
 function onEnterPress() : void {
   if (passwordRef.value.length > 0) {
