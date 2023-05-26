@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
 // ***********************************************************
 // This example support/index.js is processed and
 // loaded automatically before your test files.
@@ -33,6 +35,7 @@ declare global {
     interface Chainable {
       visitApp(template: 'coolorg' | 'empty'): Chainable<string>
       dropTestbed(): Chainable<null>
+      login(userName: string, password: string): Chainable<null>
     }
   }
 }
@@ -73,7 +76,7 @@ Cypress.Commands.add('login', (userName, password) => {
   cy.get('#password-input').find('input').type(password);
   cy.get('#login-button-container > ion-button').click();
   cy.url().should('include', '/documents/workspaces');
-  cy.contains('Documents')
+  cy.contains('Documents');
 });
 
 Cypress.Commands.add('dropTestbed', () => {
