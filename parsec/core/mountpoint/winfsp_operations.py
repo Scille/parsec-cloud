@@ -109,11 +109,11 @@ class EntryInfo:
 
 @contextmanager
 def get_path_and_translate_error(
-    fs_access: ThreadFSAccess,
+    fs_access: ThreadFSAccess | None,
     operation: str,
-    file_context: Union[OpenedFile, OpenedFolder, EntryInfo, str],
+    file_context: FileContext,
     mountpoint: PurePath,
-    workspace_id: EntryID,
+    workspace_id: EntryID | None,
     timestamp: DateTime | None,
 ) -> Iterator[FsPath]:
     path: FsPath = FsPath("/<unknown>")
@@ -134,15 +134,20 @@ def get_path_and_translate_error(
         raise NTStatusError(exc.ntstatus) from exc
 
     except FSRemoteOperationError as exc:
-        fs_access.send_event(
-            CoreEvent.MOUNTPOINT_REMOTE_ERROR,
-            exc=exc,
-            operation=operation,
-            path=path,
-            mountpoint=mountpoint,
-            workspace_id=workspace_id,
-            timestamp=timestamp,
-        )
+        if fs_access:
+            # In a multi-workspace context, this event is only sent from
+            # WinFSPOperations, and not from MultiWorkspaceWinFSPOperations
+            # (the latter do not uses fs_access). See comment in
+            # MultiWorkspaceWinFSPOperations.
+            fs_access.send_event(
+                CoreEvent.MOUNTPOINT_REMOTE_ERROR,
+                exc=exc,
+                operation=operation,
+                path=path,
+                mountpoint=mountpoint,
+                workspace_id=workspace_id,
+                timestamp=timestamp,
+            )
         raise NTStatusError(exc.ntstatus) from exc
 
     except (Cancelled, RunFinishedError) as exc:
@@ -160,15 +165,17 @@ def get_path_and_translate_error(
             workspace_id=workspace_id,
             timestamp=timestamp,
         )
-        fs_access.send_event(
-            CoreEvent.MOUNTPOINT_TRIO_DEADLOCK_ERROR,
-            exc=exc,
-            operation=operation,
-            path=path,
-            mountpoint=mountpoint,
-            workspace_id=workspace_id,
-            timestamp=timestamp,
-        )
+        # See comment in FSRemoteOperationError (above)
+        if fs_access:
+            fs_access.send_event(
+                CoreEvent.MOUNTPOINT_TRIO_DEADLOCK_ERROR,
+                exc=exc,
+                operation=operation,
+                path=path,
+                mountpoint=mountpoint,
+                workspace_id=workspace_id,
+                timestamp=timestamp,
+            )
         raise NTStatusError(NTSTATUS.STATUS_INTERNAL_ERROR) from exc
 
     except Exception as exc:
@@ -180,15 +187,17 @@ def get_path_and_translate_error(
             workspace_id=workspace_id,
             timestamp=timestamp,
         )
-        fs_access.send_event(
-            CoreEvent.MOUNTPOINT_UNHANDLED_ERROR,
-            exc=exc,
-            operation=operation,
-            path=path,
-            mountpoint=mountpoint,
-            workspace_id=workspace_id,
-            timestamp=timestamp,
-        )
+        # See comment in FSRemoteOperationError (above)
+        if fs_access:
+            fs_access.send_event(
+                CoreEvent.MOUNTPOINT_UNHANDLED_ERROR,
+                exc=exc,
+                operation=operation,
+                path=path,
+                mountpoint=mountpoint,
+                workspace_id=workspace_id,
+                timestamp=timestamp,
+            )
         raise NTStatusError(NTSTATUS.STATUS_INTERNAL_ERROR) from exc
 
 
@@ -561,102 +570,6 @@ class WinFSPOperations(BaseFileSystemOperations):  # type: ignore[misc]
         self.fs_access.fd_resize(file_context.fd, allocation_size, truncate_only=True)
 
 
-@contextmanager
-def get_path_and_translate_multiworkspace_error(
-    operation: str,
-    file_context: FileContext,
-    mountpoint: PurePath,
-) -> Iterator[FsPath]:
-    path: FsPath = FsPath("/<unknown>")
-    try:
-        if isinstance(file_context, (OpenedFile, OpenedFolder, EntryInfo)):
-            path = file_context.path
-        else:
-            # FsPath conversion might raise an FSNameTooLongError so make
-            # sure it runs within the try-except so it can be caught by the
-            # FSLocalOperationError filter.
-            path = _winpath_to_parsec(file_context)
-        yield path
-
-    except NTStatusError:
-        raise
-
-    except FSLocalOperationError as exc:
-        raise NTStatusError(exc.ntstatus) from exc
-
-    except FSRemoteOperationError as exc:
-        #        fs_access.send_event(
-        #            CoreEvent.MOUNTPOINT_REMOTE_ERROR,
-        #            exc=exc,
-        #            operation=operation,
-        #            path=path,
-        #            mountpoint=mountpoint,
-        #            workspace_id=workspace_id,
-        #            timestamp=timestamp,
-        #        )
-        raise NTStatusError(exc.ntstatus) from exc
-
-    except (Cancelled, RunFinishedError) as exc:
-        # WinFSP teardown operation doesn't make sure no concurrent operation
-        # are running
-        raise NTStatusError(NTSTATUS.STATUS_NO_SUCH_DEVICE) from exc
-
-    except TrioDealockTimeoutError as exc:
-        # See the similar clause in `fuse_operations` for a detailed explanation
-        logger.error(
-            "The trio thread is unreachable, a deadlock might have occurred",
-            operation=operation,
-            path=str(path),
-            mountpoint=str(mountpoint),
-            #            workspace_id=workspace_id,
-            #            timestamp=timestamp,
-        )
-        #        fs_access.send_event(
-        #            CoreEvent.MOUNTPOINT_TRIO_DEADLOCK_ERROR,
-        #            exc=exc,
-        #            operation=operation,
-        #            path=path,
-        #            mountpoint=mountpoint,
-        #            workspace_id=workspace_id,
-        #            timestamp=timestamp,
-        #        )
-        raise NTStatusError(NTSTATUS.STATUS_INTERNAL_ERROR) from exc
-
-    except Exception as exc:
-        logger.exception(
-            "Unhandled exception in winfsp mountpoint",
-            operation=operation,
-            path=str(path),
-            mountpoint=str(mountpoint),
-            #            workspace_id=workspace_id,
-            #            timestamp=timestamp,
-        )
-        #        fs_access.send_event(
-        #            CoreEvent.MOUNTPOINT_UNHANDLED_ERROR,
-        #            exc=exc,
-        #            operation=operation,
-        #            path=path,
-        #            mountpoint=mountpoint,
-        #            workspace_id=workspace_id,
-        #            timestamp=timestamp,
-        #        )
-        raise NTStatusError(NTSTATUS.STATUS_INTERNAL_ERROR) from exc
-
-
-def handle_multiworkspace_error(
-    func: Callable[Concatenate[T, U, P], R]
-) -> Callable[Concatenate[T, U, P], R]:
-    """A decorator to handle error in wfspy operations"""
-    operation = func.__name__
-
-    @wraps(func)
-    def wrapper(self: T, arg: U, *args: P.args, **kwargs: P.kwargs) -> R:
-        with self._get_path_and_translate_error(operation=operation, file_context=arg):
-            return func.__get__(self)(arg, *args, **kwargs)
-
-    return wrapper
-
-
 def patch_file_context_path(
     file_context: FileContext, path: FsPath
 ) -> Union[OpenedFile, OpenedFolder, EntryInfo]:
@@ -670,20 +583,33 @@ def patch_file_context_path(
     return EntryInfo(path, {})
 
 
+def create_stats_for_dir() -> dict[str, Any]:
+    stats: dict[str, Any] = {
+        "type": "folder",
+        "need_sync": False,
+        "created": DateTime.now(),
+        "updated": DateTime.now(),
+        "id": EntryID.new(),
+    }
+    return stats
+
+
 # `BaseFileSystemOperations` is resolved as `Any` on non-windows platform.
 # We can't derive from `Any` type (misc).
 class MultiWorkspaceWinFSPOperations(BaseFileSystemOperations):  # type: ignore[misc]
     """
-    A WinFSPOperations for multi-workspace mount points.
+    A WinFSPOperations class for multi-workspace mount points.
 
-    Workspaces are "mounted" as top-level directories. The operations are
-    dispatched based on the path, i.e. an operation on "/<workspace_1>/path/to/something"
-    will be dispatched to the WinFSPOperations for "workspace_1", with the
-    path patched to "/path/to/something".
+    Workspaces are "mounted" as top-level directories into a single mout point.
+    A separate WinFSPOperations instance is stored for each mounted workspace
+    and operations are dispatched accordingly based on the path.
 
-    Operations on the root ("/") directory are not dispatched as they are not
-    part of any workspace. Instead, a list of "mounted" workspaces is presented
-    as directory entries.
+    Operations regarding root ("/") directory, or any path directly in the root
+    directory ("/file_or_dir""), are processed by this class. This paths are
+    not part of any workspace so these operations are not dispatched.
+
+    Operations regading a path inside a workspace ("/<ws>/path/to/file_or_dir")
+    are dispatched to the corresponding WinFSPOperations instance.
     """
 
     def __init__(
@@ -698,11 +624,6 @@ class MultiWorkspaceWinFSPOperations(BaseFileSystemOperations):  # type: ignore[
             "O:BAG:BAD:NO_ACCESS_CONTROL"
         )
 
-        # Mapping workspace name to its corresponding operations instance
-        self._operations: dict[str, WinFSPOperations] = {}
-        # Mapping workspace name to workspace directory entry
-        self._entries: dict[str, Any] = {}
-
         # We have currently no way of easily getting the size of workspace
         # Also, the total size of a workspace is not limited
         # For the moment let's settle on 0 MB used for 1 TB available
@@ -712,72 +633,72 @@ class MultiWorkspaceWinFSPOperations(BaseFileSystemOperations):  # type: ignore[
             "volume_label": volume_label,
         }
 
-        # Stats for root directory
-        self._root_dir_stats: dict[str, Any] = {
-            "type": "folder",
-            "need_sync": False,
-            "created": DateTime.now(),
-            "updated": DateTime.now(),
-            "id": EntryID.new(),
-        }
+        # Root directory does not belong to any workspace
+        self._root_dir_stats: dict[str, Any] = create_stats_for_dir()
 
-        # TODO(137): handle error for grouped workspaces
+        class MountedWorkspace:
+            def __init__(self, operations: WinFSPOperations, stats: dict[str, Any]) -> None:
+                self.operations = operations
+                self.stats = stats
+
+        # Mounted workspaces are retrieved by workspace name (coming from path)
+        self._workspaces: dict[str, MountedWorkspace] = {}
+
+        # In a multi-workspace context, there is no fs_access because no remote
+        # operation is performed by this class. Operations are only dispatched
+        # to WinFSPOperations instances (there is one for each workspace).
         self._get_path_and_translate_error = partial(
-            get_path_and_translate_multiworkspace_error,
+            get_path_and_translate_error,
             mountpoint=mountpoint,
         )
 
-    def _get_workspace_from_path(self, path: FsPath) -> str:
-        if path.is_root():
-            return ""
+    def _is_path_outside_workspace(self, path: FsPath) -> bool:
+        return path.is_root() or path.parent.is_root()
 
-        # Top-level directory should correspond to a mounted workspace
-        # i.e. "/<workspace>/path/to/something"
+    def _get_workspace_name(self, path: FsPath) -> str:
+        # Root directory does not belong to any workspace
+        if path.is_root():
+            raise FSLocalOperationError(filename=str(path))
+
+        # Top-level dir should correspond to the name of a mounted workspace
         workspace_name = path.parts[0].str
-        if workspace_name not in self._operations:
+        if workspace_name not in self._workspaces:
             raise FSLocalOperationError(filename=str(path))
 
         return workspace_name
 
-    def _strip_workspace_dir(self, path: FsPath) -> FsPath:
-        if not self._get_workspace_from_path(path):
-            raise FSLocalOperationError(filename=str(path))
-
-        # TODO(137): add methods to FsPath 'get_base_dir' & 'strip_base_dir'?
-        return FsPath(path.parts[1:])
-
-    def _patched_file_context(self, file_context: FileContext) -> FileContext:
-        assert isinstance(file_context, (OpenedFile, OpenedFolder, EntryInfo))
-        return patch_file_context_path(file_context, self._strip_workspace_dir(file_context.path))
-
-    def _patched_path(self, path: FsPath) -> str:
-        return str(self._strip_workspace_dir(path))
-
     def _get_operations(self, path: FsPath) -> WinFSPOperations:
-        if path.is_root():
-            raise FSLocalOperationError(filename=str(path))
-
-        return self._operations[self._get_workspace_from_path(path)]
+        return self._workspaces[self._get_workspace_name(path)].operations
 
     def _get_dir_stats(self, path: FsPath) -> dict[str, Any]:
-        if path.is_root():
-            return self._root_dir_stats
+        return (
+            self._root_dir_stats
+            if path.is_root()
+            else self._workspaces[self._get_workspace_name(path)].stats
+        )
 
-        return self._entries[self._get_workspace_from_path(path)]
+    def _remove_workspace_from_path(self, path: FsPath) -> FsPath:
+        # Ensure path belong to a mounted workspace
+        _ = self._get_workspace_name(path)
+
+        # TODO: Maybe move this to a method in FsPath? (there does not seem to be an equivalent in pathlib)
+        return FsPath(path.parts[1:])
+
+    def _patched_file_context(
+        self, file_context: Union[OpenedFile, OpenedFolder, EntryInfo]
+    ) -> FileContext:
+        return patch_file_context_path(
+            file_context, self._remove_workspace_from_path(file_context.path)
+        )
+
+    def _patched_path(self, path: FsPath) -> str:
+        return str(self._remove_workspace_from_path(path))
 
     def mount_workspace(self, workspace_name: str, operations: WinFSPOperations) -> None:
-        self._operations[workspace_name] = operations
-        self._entries[workspace_name] = {
-            "type": "folder",
-            "need_sync": False,
-            "created": DateTime.now(),
-            "updated": DateTime.now(),
-            "id": EntryID.new(),
-        }
+        self._workspaces[workspace_name] = self.MountedWorkspace(operations, create_stats_for_dir())
 
     def unmount_workspace(self, workspace_name: str) -> None:
-        self._operations.pop(workspace_name)
-        self._entries.pop(workspace_name)
+        self._workspaces.pop(workspace_name)
 
     def get_volume_info(self) -> dict[str, Any]:
         return self._volume_info
@@ -785,24 +706,24 @@ class MultiWorkspaceWinFSPOperations(BaseFileSystemOperations):  # type: ignore[
     def set_volume_label(self, volume_label: str) -> None:
         self._volume_info["volume_label"] = volume_label
 
-    @handle_multiworkspace_error
+    @handle_error
     def get_security(self, file_context: FileContext) -> Tuple[Any, int]:
         return self._security_descriptor.handle, self._security_descriptor.size
 
-    @handle_multiworkspace_error
+    @handle_error
     def set_security(
         self, file_context: FileContext, security_information: Any, modification_descriptor: Any
     ) -> None:
         # TODO
         pass
 
-    @handle_multiworkspace_error
+    @handle_error
     def get_security_by_name(self, file_name: str) -> Tuple[dict[str, str], Any, int]:
         parsec_file_name = _winpath_to_parsec(file_name)
 
-        if parsec_file_name.is_root():
+        if self._is_path_outside_workspace(parsec_file_name):
             return (
-                stat_to_file_attributes(self._root_dir_stats),
+                stat_to_file_attributes(self._get_dir_stats(parsec_file_name)),
                 self._security_descriptor.handle,
                 self._security_descriptor.size,
             )
@@ -811,7 +732,7 @@ class MultiWorkspaceWinFSPOperations(BaseFileSystemOperations):  # type: ignore[
             self._patched_path(parsec_file_name)
         )
 
-    @handle_multiworkspace_error
+    @handle_error
     def create(
         self,
         file_name: str,
@@ -823,6 +744,11 @@ class MultiWorkspaceWinFSPOperations(BaseFileSystemOperations):  # type: ignore[
     ) -> FileContext:
         parsec_file_name = _winpath_to_parsec(file_name)
 
+        # Operation not allowed on a path outside a workspace
+        # TODO: decorator?
+        if self._is_path_outside_workspace(parsec_file_name):
+            raise FSLocalOperationError(filename=str(parsec_file_name))
+
         file_context = self._get_operations(parsec_file_name).create(
             self._patched_path(parsec_file_name),
             create_options,
@@ -831,64 +757,69 @@ class MultiWorkspaceWinFSPOperations(BaseFileSystemOperations):  # type: ignore[
             security_descriptor,
             allocation_size,
         )
+
+        # Patch the file_context returned by the workspace operations to use the
+        # original path
         assert isinstance(file_context, (OpenedFile, OpenedFolder))
         file_context.path = parsec_file_name
         return file_context
 
-    @handle_multiworkspace_error
+    @handle_error
     def rename(
         self, file_context: FileContext, file_name: str, new_file_name: str, replace_if_exists: bool
     ) -> None:
-        # TODO(137): Manage root and workspace directories
         parsec_file_name = _winpath_to_parsec(file_name)
-        parsec_new_file_name = _winpath_to_parsec(new_file_name)
+
+        # Operation not allowed on a path outside a workspace
+        if self._is_path_outside_workspace(parsec_file_name):
+            raise FSLocalOperationError(filename=str(parsec_file_name))
+
+        assert isinstance(file_context, (OpenedFile, OpenedFolder))
         self._get_operations(parsec_file_name).rename(
-            file_context,  # TODO(137): Patch path
+            self._patched_file_context(file_context),
             self._patched_path(parsec_file_name),
-            self._patched_path(parsec_new_file_name),
+            self._patched_path(_winpath_to_parsec(new_file_name)),
             replace_if_exists,
         )
 
-    @handle_multiworkspace_error
+    @handle_error
     def open(
         self, file_name: str, create_options: Any, granted_access: Any
     ) -> Union[OpenedFile, OpenedFolder, EntryInfo]:
         parsec_file_name = _winpath_to_parsec(file_name)
 
-        if parsec_file_name.is_root():
+        if self._is_path_outside_workspace(parsec_file_name):
             return OpenedFolder(parsec_file_name)
 
         file_context = self._get_operations(parsec_file_name).open(
             self._patched_path(parsec_file_name), create_options, granted_access
         )
+        # Patch the file_context returned by the workspace operations to use the
+        # original path
         file_context.path = parsec_file_name
         return file_context
 
-    @handle_multiworkspace_error
+    @handle_error
     def close(self, file_context: FileContext) -> None:
         assert isinstance(file_context, (OpenedFile, OpenedFolder, EntryInfo))
-        if file_context.path.is_root():
+
+        if self._is_path_outside_workspace(file_context.path):
             return
+
         self._get_operations(file_context.path).close(self._patched_file_context(file_context))
 
-    @handle_multiworkspace_error
+    @handle_error
     def get_file_info(self, file_context: FileContext) -> dict[str, Any]:
         assert isinstance(file_context, (OpenedFile, OpenedFolder, EntryInfo))
-        if file_context.path.is_root():
-            return stat_to_winfsp_attributes(self._root_dir_stats)
 
-        # TODO(137): manage workspace directories
-        if len(file_context.path.parts) == 1:
-            ws = file_context.path.parts[0].str
-            if ws not in self._operations:
-                return {}  # ERROR
-            return stat_to_winfsp_attributes(self._entries[ws])
+        if self._is_path_outside_workspace(file_context.path):
+            return stat_to_winfsp_attributes(self._get_dir_stats(file_context.path))
 
         return self._get_operations(file_context.path).get_file_info(
             self._patched_file_context(file_context)
         )
 
-    @handle_multiworkspace_error
+    @handle_error
     def set_basic_info(
         self,
         file_context: FileContext,
@@ -902,41 +833,44 @@ class MultiWorkspaceWinFSPOperations(BaseFileSystemOperations):  # type: ignore[
         # See: WinFSPOperations.set_basic_info
         return self.get_file_info(file_context)
 
-    @handle_multiworkspace_error
+    @handle_error
     def set_file_size(
         self, file_context: FileContext, new_size: int, set_allocation_size: bool
     ) -> None:
         assert isinstance(file_context, OpenedFile)
         assert file_context.fd is not None
 
+        if self._is_path_outside_workspace(file_context.path):
+            return
+
         self._get_operations(file_context.path).set_file_size(
             self._patched_file_context(file_context), new_size, set_allocation_size
         )
 
-    @handle_multiworkspace_error
+    @handle_error
     def can_delete(self, file_context: FileContext, file_name: str) -> None:
         assert isinstance(file_context, (OpenedFile, OpenedFolder))
 
-        if cast(OpenedFolder, file_context).is_root():
-            # Cannot remove root mountpoint
+        if self._is_path_outside_workspace(file_context.path):
+            # Cannot remove root mountpoint nor workspace directory
             raise NTStatusError(NTSTATUS.STATUS_RESOURCEMANAGER_READ_ONLY)
 
         self._get_operations(file_context.path).can_delete(
             self._patched_file_context(file_context), self._patched_path(file_context.path)
         )
 
-    @handle_multiworkspace_error
+    @handle_error
     def read_directory(self, file_context: FileContext, marker: str | None) -> List[dict[str, Any]]:
         assert isinstance(file_context, OpenedFolder)
 
-        # Root directory -> return mounted workspaces as directory entries
+        # On root, mounted workspaces are shown as directory entries
         if file_context.is_root():
             entries = []
-            for workspace_name, stats in self._entries.items():
+            for workspace_name, workspace in self._workspaces.items():
                 entries.append(
                     {
                         "file_name": winify_entry_name(EntryName(workspace_name)),
-                        **stat_to_winfsp_attributes(stats),
+                        **stat_to_winfsp_attributes(workspace.stats),
                     }
                 )
             return entries
@@ -945,34 +879,36 @@ class MultiWorkspaceWinFSPOperations(BaseFileSystemOperations):  # type: ignore[
             self._patched_file_context(file_context), marker
         )
 
-    @handle_multiworkspace_error
+    @handle_error
     def get_dir_info_by_name(self, file_context: FileContext, file_name: str) -> dict[str, Any]:
         assert isinstance(file_context, OpenedFolder)
 
-        # TODO(137): manage workspace directories
         if file_context.is_root():
             parsec_file_name = _winpath_to_parsec(file_name)
-            ws = parsec_file_name.parts[0].str
-            if ws not in self._operations:
-                return {}  # ERROR
-            return {"file_name": ws, **stat_to_winfsp_attributes(self._entries[ws])}
+            workspace_name = self._get_workspace_name(parsec_file_name)
+            workspace_stats = self._workspaces[workspace_name].stats
+            return {
+                "file_name": winify_entry_name(EntryName(workspace_name)),
+                **stat_to_winfsp_attributes(workspace_stats),
+            }
 
         return self._get_operations(file_context.path).get_dir_info_by_name(
             self._patched_file_context(file_context),
             self._patched_path(_winpath_to_parsec(file_name)),
         )
 
-    @handle_multiworkspace_error
+    @handle_error
     def read(self, file_context: FileContext, offset: int, length: int) -> bytes:
         if isinstance(file_context, EntryInfo):
             return file_context.read(offset, length)
+
         assert isinstance(file_context, OpenedFile)
         assert file_context.fd is not None
         return self._get_operations(file_context.path).read(
             self._patched_file_context(file_context), offset, length
         )
 
-    @handle_multiworkspace_error
+    @handle_error
     def write(
         self,
         file_context: FileContext,
@@ -984,6 +920,10 @@ class MultiWorkspaceWinFSPOperations(BaseFileSystemOperations):  # type: ignore[
         assert isinstance(file_context, OpenedFile)
         assert file_context.fd is not None
 
+        # Operation not allowed on a path outside a workspace
+        if self._is_path_outside_workspace(file_context.path):
+            raise FSLocalOperationError(filename=str(file_context.path))
+
         return self._get_operations(file_context.path).write(
             self._patched_file_context(file_context),
             buffer,
@@ -992,24 +932,36 @@ class MultiWorkspaceWinFSPOperations(BaseFileSystemOperations):  # type: ignore[
             constrained_io,
         )
 
-    @handle_multiworkspace_error
+    @handle_error
     def flush(self, file_context: FileContext) -> None:
         assert isinstance(file_context, OpenedFile)
         assert file_context.fd is not None
 
+        if self._is_path_outside_workspace(file_context.path):
+            return
+
         self._get_operations(file_context.path).flush(self._patched_file_context(file_context))
 
-    @handle_multiworkspace_error
+    @handle_error
     def cleanup(self, file_context: FileContext, file_name: str, flags: Any) -> None:
         assert isinstance(file_context, (OpenedFile, OpenedFolder))
 
-        self._get_operations(file_context.path).cleanup(
-            self._patched_file_context(file_context),
-            self._patched_path(_winpath_to_parsec(file_name)),
-            flags,
-        )
+        if self._is_path_outside_workspace(file_context.path):
+            return
 
-    @handle_multiworkspace_error
+        # Cleanup operation is causal but close is not, so it's important
+        # to delete file and folder here in order to make sure the file/folder
+        # is actually deleted by the time the API call returns.
+        FspCleanupDelete = 0x1
+        if flags & FspCleanupDelete:
+            # The file name is only provided for a delete operation, it is `None` otherwise
+            self._get_operations(file_context.path).cleanup(
+                self._patched_file_context(file_context),
+                self._patched_path(_winpath_to_parsec(file_name)),
+                flags,
+            )
+
+    @handle_error
     def overwrite(
         self,
         file_context: FileContext,
@@ -1019,6 +971,9 @@ class MultiWorkspaceWinFSPOperations(BaseFileSystemOperations):  # type: ignore[
     ) -> None:
         assert isinstance(file_context, OpenedFile)
         assert file_context.fd is not None
+
+        if self._path_outside_workspace(file_context.path):
+            return
 
         self._get_operations(file_context.path).overwrite(
             self._patched_file_context(file_context),
