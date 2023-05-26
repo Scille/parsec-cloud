@@ -33,7 +33,7 @@ jobs:
       parsec-testbed-server:
         image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:v2.15.0-dev.2023-05-25-sha.62a3811
         ports:
-          - 6770:6770
+          - 6777:6777
     steps:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
         timeout-minutes: 5
@@ -159,10 +159,14 @@ jobs:
         working-directory: oxidation/client
         timeout-minutes: 10
 
+      - name: Check testbed server is running
+        if: steps.should-run-web-jobs.outputs.run == 'true'
+        run: curl http://localhost:6777
+
       - name: E2E tests
         if: steps.should-run-web-jobs.outputs.run == 'true'
         run: npm run test:e2e:headless
         env:
-          TESTBED_SERVER_URL: parsec://127.0.0.1:6770?no_ssl=true
+          TESTBED_SERVER_URL: parsec://localhost:6777?no_ssl=true
         working-directory: oxidation/client
         timeout-minutes: 10
