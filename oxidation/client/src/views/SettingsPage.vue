@@ -3,7 +3,9 @@
 <template>
   <ion-page>
     <ion-content class="settings-content">
-      <settings-view />
+      <settings-view
+        class="settings-view"
+      />
     </ion-content>
   </ion-page>
 </template>
@@ -17,6 +19,8 @@ import {
 import SettingsView from '@/components/SettingsView.vue';
 </script>
 
-<style scoped>
-
+<style scoped lang="scss">
+.settings-view {
+  margin: 3rem 2rem 2rem;
+}
 </style>
