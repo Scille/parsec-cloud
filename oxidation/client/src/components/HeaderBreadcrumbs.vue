@@ -16,7 +16,7 @@
       :key="path.id"
     >
       <ion-icon
-        class="icon"
+        class="main-icon"
         v-if="path.icon"
         :icon="path.icon"
       />
@@ -85,23 +85,26 @@ function navigateTo(path: RouterPathNode): void {
 </script>
 
 <style scoped lang="scss">
+  .breadcrumb {
+    padding: 0;
+    color: var(--parsec-color-light-secondary-grey);
+
+    &-active {
+      color: var(--parsec-color-light-primary-700)
+    }
+  }
 .breadcrumb-element {
   cursor: pointer;
+
+  .main-icon {
+    font-size: 1.5rem;
+  }
 }
 
 .breadcrumb-active {
-  .icon {
+  .main-icon {
     color: var(--parsec-color-light-primary-700);
+    margin-right: 0.5rem;
   }
 }
-
-.breadcrumb {
-  padding: 0;
-  color: var(--parsec-color-light-secondary-grey);
-
-  &-active {
-    color: var(--parsec-color-light-primary-700)
-  }
-}
-
 </style>
