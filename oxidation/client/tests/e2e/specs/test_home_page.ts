@@ -78,5 +78,5 @@ describe('Check organization list', () => {
     // Uses Cypress command to simplify the log in part
     cy.login('Boby', 'P@ssw0rd');
     cy.contains('Documents');
-  })
+  });
 });
