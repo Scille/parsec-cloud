@@ -4,7 +4,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Tuple, cast
 
-import exceptiongroup
 import trio
 from PyQt5.QtCore import QObject, pyqtBoundSignal, pyqtSignal
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
@@ -45,15 +44,18 @@ async def _do_run_core(
     config: CoreConfig, device: LocalDevice, qt_on_ready: Tuple[QObject, str]
 ) -> None:
     qt_on_ready: pyqtBoundSignal = getattr(qt_on_ready[0], qt_on_ready[1])  # Retrieve the signal
+
     # Quick fix to avoid BaseExceptionGroup<Cancelled, ...> exception bubbling up
     # TODO: is it still necessary?
-    with exceptiongroup.catch({trio.Cancelled: lambda _: None}):
+    try:
         async with logged_core_factory(config=config, device=device, event_bus=None) as core:
             # Create our own job scheduler allows us to cancel all pending
             # jobs depending on us when we logout
             async with run_trio_job_scheduler() as core_jobs_ctx:
                 qt_on_ready.emit(core, core_jobs_ctx)
                 await trio.sleep_forever()
+    except* trio.Cancelled:
+        pass
 
 
 def check_macfuse_version() -> bool:

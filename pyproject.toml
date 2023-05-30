@@ -87,7 +87,6 @@ winfspy = { version="^0.8", markers="platform_system=='Windows'", optional=true 
 zxcvbn = { version="^4.4", optional=true }
 psutil = { version="^5.9", markers="platform_system=='Windows'", optional=true }
 pypac = { version="^0.16", optional=true }
-exceptiongroup = "^1.1.1"
 
 [tool.poetry.extras]
 backend = [

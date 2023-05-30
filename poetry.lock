@@ -963,21 +963,6 @@ files = [
 ]
 
 [[package]]
-name = "exceptiongroup"
-version = "1.1.1"
-description = "Backport of PEP 654 (exception groups)"
-category = "main"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "exceptiongroup-1.1.1-py3-none-any.whl", hash = "sha256:232c37c63e4f682982c8b6459f33a8981039e5fb8756b2074364e5055c498c9e"},
-    {file = "exceptiongroup-1.1.1.tar.gz", hash = "sha256:d484c3090ba2889ae2928419117447a14daf3c1231d5e30d0aae34f354f01785"},
-]
-
-[package.extras]
-test = ["pytest (>=6)"]
-
-[[package]]
 name = "execnet"
 version = "1.9.0"
 description = "execnet: rapid multi-Python deployment"
@@ -2852,4 +2837,4 @@ core = ["PyQt5", "fusepy", "packaging", "psutil", "pypac", "pyqt5-sip", "qrcode"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11.0"
-content-hash = "b829a26262effd0c0dd5ffa9f36e7b71d62cb3a2e5041b5e6ff4f6aa25ba9454"
+content-hash = "919cd501c87e1acdd4f1df52b12a2e0c0a1a535d788c442c5084691bb6ca458d"
