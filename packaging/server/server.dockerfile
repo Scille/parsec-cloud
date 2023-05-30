@@ -1,4 +1,4 @@
-FROM python:3.9 as builder
+FROM python:3.11 as builder
 
 WORKDIR /work
 
@@ -28,7 +28,7 @@ RUN bash build-backend.sh
 # 2) Bundle stage
 #
 
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 LABEL org.opencontainers.image.source=https://github.com/Scille/parsec-cloud
 LABEL org.opencontainers.image.description="Run the Parsec backend server."

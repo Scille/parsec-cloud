@@ -47,23 +47,23 @@ parts:
       cp -R bin lib include ${SNAPCRAFT_PART_INSTALL}
     filesets:
       python-bin:
-        # This is a symlink to `python3.9`
+        # This is a symlink to `python3.11`
         - bin/python3
-        - bin/python3.9
+        - bin/python3.11
       pip-bin:
         - bin/pip3
         - bin/pip3.9
       python-shared-lib:
-        - lib/libpython3.9.so
-        - lib/libpython3.9.so.*
+        - lib/libpython3.11.so
+        - lib/libpython3.11.so.*
         - lib/libpython3.so
-        - lib/python3.9
-        - -lib/python3.9/test
-        - -lib/python3.9/**/test
-        - -lib/python3.9/**/__pycache__
-        - -lib/python3.9/config-3.9-x86_64-linux-gnu
+        - lib/python3.11
+        - -lib/python3.11/test
+        - -lib/python3.11/**/test
+        - -lib/python3.11/**/__pycache__
+        - -lib/python3.11/config-3.9-x86_64-linux-gnu
       python-include:
-        - include/python3.9
+        - include/python3.11
     stage:
       - $python-bin
       - $pip-bin
@@ -96,11 +96,11 @@ parts:
       export PATH="${SNAPCRAFT_STAGE}/bin:$PATH"
 
       # Required for `duckpy`:
-      # Tell `gcc` to look in `stage/include/python3.9` for the `Python.h` headers
-      export C_INCLUDE_PATH="${SNAPCRAFT_STAGE}/include/python3.9"
+      # Tell `gcc` to look in `stage/include/python3.11` for the `Python.h` headers
+      export C_INCLUDE_PATH="${SNAPCRAFT_STAGE}/include/python3.11"
 
       # Ensure we use the expected python version.
-      python3 --version | grep 'Python 3.9.10'
+      python3 --version | grep 'Python 3.11.0'
 
       VENV=${SNAPCRAFT_PART_BUILD}/venv
 
@@ -119,7 +119,7 @@ parts:
 
       # ...then only keep the installed packages from the virtual env
       # this is fine given the same python is used between build and runtime
-      cp -R ${VENV}/lib/python3.9/site-packages ${SNAPCRAFT_PART_INSTALL}/site-packages
+      cp -R ${VENV}/lib/python3.11/site-packages ${SNAPCRAFT_PART_INSTALL}/site-packages
 
     filesets:
       site-packages:
@@ -267,7 +267,7 @@ parts:
     # Recent version of `snapcraft` provide you with a list of missing shared lib.
     # The previous method to get the list was:
     # > This list has been generated doing (with a bit of manual tweaking):
-    # > apt-cache depends --recurse  --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances python3.9
+    # > apt-cache depends --recurse  --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances python3.11
     build-packages:
       - clang
     stage-packages:

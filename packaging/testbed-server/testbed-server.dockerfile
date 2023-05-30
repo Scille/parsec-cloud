@@ -4,7 +4,7 @@
 # 1) Build stage
 #
 
-FROM python:3.9 AS builder
+FROM python:3.11 AS builder
 
 WORKDIR /work
 
@@ -33,7 +33,7 @@ RUN bash build-testbed.sh
 # # 2) Bundle stage
 # #
 
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 LABEL org.opencontainers.image.source=https://github.com/Scille/parsec-cloud
 LABEL org.opencontainers.image.description="Run a testbed parsec server to simplify mockup of an existing organization."

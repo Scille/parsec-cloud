@@ -20,6 +20,6 @@ POETRY_PYQT_BUILD_STRATEGY=no_build POETRY_LIBPARSEC_BUILD_PROFILE=ci ./venv/bin
 VERSION=$(grep "psutil-" ./poetry.lock | head -n 1 | sed -E 's/.*psutil-([0-9.]+).*/\1/') \
     && ./venv/bin/python -m pip install psutil=="$VERSION"
 
-rm -rf ./venv/lib/python3.9/site-packages/{boto3,botocore,pip,setuptools}
+rm -rf ./venv/lib/python3.11/site-packages/{boto3,botocore,pip,setuptools}
 
 (cd / && /work/venv/bin/python -m parsec.cli --version)

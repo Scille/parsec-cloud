@@ -41,7 +41,7 @@ check_env_var_path directory CORE20_PATH
 export PATH=${SNAP}/sbin:${SNAP}/bin:${SNAP}/usr/bin:${CORE20_PATH}/bin:${CORE20_PATH}/sbin:${PATH}
 
 # Select the python provided by snap and set the right python path
-export PYTHON=${SNAP}/bin/python3.9
+export PYTHON=${SNAP}/bin/python3.11
 export PYTHONPATH=${SNAP}/site-packages
 
 # We can't rely on `ctypes.util.find_library` in classic snap environment,

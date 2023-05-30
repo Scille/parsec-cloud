@@ -59,7 +59,7 @@ To start hacking, follow the basic steps detailed below:
 
        > Replace `C:/Strawberry/perl/bin/perl` with the correct installation path.
 
-    4. [`python v3.9`](https://www.python.org/)
+    4. [`python v3.11`](https://www.python.org/)
 
        To install the correct python version, we use `pyenv` instead of relaying on a system package:
 
@@ -90,7 +90,7 @@ To start hacking, follow the basic steps detailed below:
 
           ```shell
           # Install a specific Python version
-          pyenv install 3.9.10
+          pyenv install 3.11.0
           ```
 
     5. [`poetry >=1.3.2`](https://python-poetry.org/docs/#installation)
@@ -113,10 +113,10 @@ To start hacking, follow the basic steps detailed below:
 
        ```shell
        # Create the project virtual with the correct version of Python
-       poetry env use $(pyenv prefix 3.9.10)/bin/python
+       poetry env use $(pyenv prefix 3.11.0)/bin/python
        ```
 
-       > If you don't have installed `python` with `pyenv`, you need to replace `$(pyenv prefix 3.9.10)/bin/python` with the path where the python you want to use is located.
+       > If you don't have installed `python` with `pyenv`, you need to replace `$(pyenv prefix 3.11.0)/bin/python` with the path where the python you want to use is located.
 
 ## Hacking the Python code (front + back)
 
