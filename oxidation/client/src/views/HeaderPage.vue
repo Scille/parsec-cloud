@@ -88,6 +88,7 @@
           </div>
 
           <profile-header
+            id="profile-button"
             :firstname="'toto'"
             :lastname="'toto'"
             class="profile-header"
