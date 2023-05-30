@@ -175,6 +175,16 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
         Tool.Node: [ReplaceRegex(r"node: [0-9.]+", "node: {version}")],
     },
     ROOT_DIR
+    / "build.py": {
+        Tool.Python: [
+            ReplaceRegex(r"_parsec.cp311", hide_patch_version("_parsec.cp{version}", separator="")),
+            ReplaceRegex(
+                r"_parsec.cpython-311",
+                hide_patch_version("_parsec.cpython-{version}", separator=""),
+            ),
+        ]
+    },
+    ROOT_DIR
     / "pyproject.toml": {
         Tool.Python: [
             ReplaceRegex(
