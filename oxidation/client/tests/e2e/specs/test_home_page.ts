@@ -79,4 +79,12 @@ describe('Check organization list', () => {
     cy.login('Boby', 'P@ssw0rd');
     cy.contains('My workspaces');
   });
+
+  it('Log out', () => {
+    cy.login('Boby', 'P@ssw0rd');
+    cy.contains('My workspaces');
+    cy.get('#profile-button').click();
+    cy.get('.popover-viewport').contains('Log out').click();
+    cy.contains('List of your organizations');
+  });
 });

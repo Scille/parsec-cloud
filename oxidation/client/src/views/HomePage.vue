@@ -343,6 +343,8 @@ async function login(): Promise<void> {
   console.log(`Log in to ${selectedDevice.organizationId} with password "${password.value}"`);
   await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));
 
+  showOrganizationList.value = true;
+
   // name: define where the user will be move, query: add parameters
   router.push({ name: 'workspaces', params: {deviceId: selectedDevice.deviceId} });
 }
