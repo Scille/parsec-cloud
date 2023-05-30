@@ -1,4 +1,4 @@
-name: ci-rust
+name: ci-python
 
 on:
   workflow_call:
@@ -208,6 +208,7 @@ jobs:
         shell: bash
         run: |
           set -ex
+          poetry env info
           if ${{ steps.cache-libparsec.outputs.cache-hit == 'true' }}; then export POETRY_LIBPARSEC_BUILD_STRATEGY=no_build; fi
           python make.py python-ci-install
         timeout-minutes: 20
