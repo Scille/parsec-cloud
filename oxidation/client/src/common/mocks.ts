@@ -53,7 +53,7 @@ const MOCK_WORKSPACES: MockWorkspace[] = [
   },
   {
     id: 'id4',
-    name: 'De\'Arnise Keep',
+    name: 'Druid Grove',
     sharedWith: ['Me'],
     size: 33_382,
     role: WorkspaceRole.Owner,
