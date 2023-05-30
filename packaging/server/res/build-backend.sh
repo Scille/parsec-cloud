@@ -17,7 +17,7 @@ python -m venv venv
 POETRY_LIBPARSEC_BUILD_PROFILE=release POETRY_PYQT_BUILD_STRATEGY=no_build ./venv/bin/python -m pip install .[backend]
 
 # Remove some python package that aren't needed
-rm -rf ./venv/lib/python3.9/site-packages/{boto3,botocore,pip,setuptools}
+rm -rf ./venv/lib/python3.11/site-packages/{boto3,botocore,pip,setuptools}
 
 # Basic to see if the wheel look like it's well built.
 (cd / && /work/venv/bin/python -m parsec.cli --version)

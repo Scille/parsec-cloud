@@ -65,7 +65,7 @@ class Tool(enum.Enum):
 
 TOOLS_VERSION: Dict[Tool, str] = {
     Tool.Rust: "1.68.0",
-    Tool.Python: "3.9.10",
+    Tool.Python: "3.11.0",
     Tool.Poetry: "1.3.2",
     Tool.Node: "18.12.0",
     Tool.WasmPack: "0.11.0",
