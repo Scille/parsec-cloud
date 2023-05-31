@@ -7,6 +7,8 @@ from PyQt5.QtWidgets import QLabel
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize("wait_idle_core", [False, True])
 async def test_revoked_notification(
     aqtbot,

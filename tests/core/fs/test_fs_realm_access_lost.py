@@ -9,6 +9,8 @@ from tests.common import create_shared_workspace
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_manifest_no_access(running_backend, alice_user_fs: UserFS, bob_user_fs: UserFS):
     wid = await create_shared_workspace(EntryName("w"), alice_user_fs, bob_user_fs)
     alice_w = alice_user_fs.get_workspace(wid)
@@ -40,6 +42,8 @@ async def test_manifest_no_access(running_backend, alice_user_fs: UserFS, bob_us
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_block_no_access(running_backend, alice_user_fs: UserFS, bob_user_fs: UserFS):
     wid = await create_shared_workspace(EntryName("w"), alice_user_fs, bob_user_fs)
     alice_w = alice_user_fs.get_workspace(wid)

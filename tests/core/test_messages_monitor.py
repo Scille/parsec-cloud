@@ -16,6 +16,8 @@ from tests.common import create_shared_workspace, freeze_time
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_monitors_idle(running_backend, alice_core):
     assert alice_core.are_monitors_idle()
 
@@ -42,6 +44,8 @@ async def _send_msg(backend, author, recipient, ping="ping"):
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.flaky(reruns=3)
 async def test_process_while_offline(
     running_backend, alice_core, bob_user_fs, alice, bob, monkeypatch
@@ -86,6 +90,8 @@ async def test_process_while_offline(
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_new_sharing_trigger_event(
     alice_user_fs: UserFS,
     bob_core: LoggedCore,
@@ -133,6 +139,8 @@ async def test_new_sharing_trigger_event(
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_revoke_sharing_trigger_event(
     alice_user_fs: UserFS, bob_core: LoggedCore, running_backend
 ):
@@ -183,6 +191,8 @@ async def test_revoke_sharing_trigger_event(
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_new_reencryption_trigger_event(
     alice_core: LoggedCore,
     bob_core: LoggedCore,

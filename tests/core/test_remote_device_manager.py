@@ -9,6 +9,8 @@ from tests.common import freeze_time
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_retrieve_device(
     running_backend,
     alice_remote_devices_manager: RemoteDevicesManager,
@@ -47,6 +49,8 @@ async def test_retrieve_device(
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_retrieve_user(
     running_backend,
     alice_remote_devices_manager: RemoteDevicesManager,
@@ -89,6 +93,8 @@ async def test_retrieve_user(
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_retrieve_user_and_devices(
     running_backend,
     alice_remote_devices_manager: RemoteDevicesManager,

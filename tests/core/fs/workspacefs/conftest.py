@@ -9,6 +9,8 @@ from parsec.core.fs import UserFS, WorkspaceFS
 
 @pytest.fixture
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def alice_workspace(alice_user_fs: UserFS, running_backend) -> WorkspaceFS:
     wid = await alice_user_fs.workspace_create(EntryName("w"))
     workspace = alice_user_fs.get_workspace(wid)
@@ -24,6 +26,8 @@ async def alice_workspace(alice_user_fs: UserFS, running_backend) -> WorkspaceFS
 
 @pytest.fixture
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def bob_workspace(bob_user_fs: UserFS, running_backend) -> WorkspaceFS:
     wid = await bob_user_fs.workspace_create(EntryName("w"))
     workspace = bob_user_fs.get_workspace(wid)

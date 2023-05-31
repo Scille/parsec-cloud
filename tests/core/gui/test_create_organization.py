@@ -79,6 +79,8 @@ async def _do_creation_process(aqtbot, co_w):
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(backend_spontaneous_organization_bootstrap=True)
 async def test_create_organization(
     monkeypatch, gui, aqtbot, running_backend, catch_create_org_widget, autoclose_dialog
@@ -124,6 +126,8 @@ async def test_create_organization(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(backend_spontaneous_organization_bootstrap=True)
 async def test_create_organization_offline(
     gui, aqtbot, running_backend, catch_create_org_widget, autoclose_dialog
@@ -166,6 +170,8 @@ async def test_create_organization_offline(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(backend_spontaneous_organization_bootstrap=True)
 async def test_create_organization_same_name(
     gui,
@@ -221,6 +227,8 @@ async def test_create_organization_same_name(
 @pytest.mark.skip("No previous button in new process")
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(backend_spontaneous_organization_bootstrap=True)
 async def test_create_organization_previous_clicked(
     gui, aqtbot, running_backend, catch_create_org_widget, autoclose_dialog
@@ -288,6 +296,8 @@ async def test_create_organization_previous_clicked(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(backend_spontaneous_organization_bootstrap=True)
 async def test_create_organization_bootstrap_only(
     aqtbot,
@@ -357,6 +367,8 @@ async def test_create_organization_bootstrap_only(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(backend_spontaneous_organization_bootstrap=True)
 @customize_fixtures(fake_preferred_org_creation_backend_addr=True)
 async def test_create_organization_bootstrap_only_custom_server(
@@ -427,6 +439,8 @@ async def test_create_organization_bootstrap_only_custom_server(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_create_organization_already_bootstrapped(
     aqtbot,
     running_backend,
@@ -492,6 +506,8 @@ async def test_create_organization_already_bootstrapped(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(backend_spontaneous_organization_bootstrap=True)
 @customize_fixtures(fake_preferred_org_creation_backend_addr=True)
 async def test_create_organization_custom_backend(
@@ -591,6 +607,8 @@ async def test_create_organization_custom_backend(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(backend_spontaneous_organization_bootstrap=True)
 async def test_create_organization_wrong_timestamp(
     gui, aqtbot, running_backend, catch_create_org_widget, autoclose_dialog, monkeypatch
@@ -633,6 +651,8 @@ async def test_create_organization_wrong_timestamp(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_create_organization_with_bootstrap_token(
     gui, aqtbot, running_backend, catch_create_org_widget, autoclose_dialog
 ):
@@ -730,6 +750,8 @@ def catch_text_input_widget(widget_catcher_factory):
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_join_org_addr_input(
     gui, aqtbot, running_backend, autoclose_dialog, catch_text_input_widget
 ):

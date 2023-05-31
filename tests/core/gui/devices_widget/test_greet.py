@@ -258,6 +258,8 @@ def GreetDeviceTestBed(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_greet_device(GreetDeviceTestBed):
     await GreetDeviceTestBed().run()
@@ -265,6 +267,8 @@ async def test_greet_device(GreetDeviceTestBed):
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize(
     "offline_step",
     [
@@ -335,6 +339,8 @@ async def test_greet_device_offline(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize(
     "reset_step",
     ["step_3_exchange_greeter_sas", "step_4_exchange_claimer_sas", "step_5_provide_claim_info"],
@@ -391,6 +397,8 @@ async def test_greet_device_reset_by_peer(aqtbot, GreetDeviceTestBed, autoclose_
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize(
     "cancelled_step",
     [

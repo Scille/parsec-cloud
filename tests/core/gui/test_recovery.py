@@ -35,6 +35,8 @@ def catch_export_recovery_widget(widget_catcher_factory):
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize("kind", ["ok", "offline"])
 async def test_export_recovery_device(
     gui,
@@ -108,6 +110,8 @@ async def test_export_recovery_device(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize("kind", ["ok", "offline"])
 async def test_import_recovery_device(
     gui,

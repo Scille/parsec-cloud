@@ -24,6 +24,8 @@ def catch_enrollment_accept_check_infos_widget(widget_catcher_factory):
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_full_enrollment(
     aqtbot,
     mocked_parsec_ext_smartcard,

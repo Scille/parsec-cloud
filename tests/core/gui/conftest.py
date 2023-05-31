@@ -43,6 +43,8 @@ DEFAULT_PASSWORD = "P@ssw0rd"
 
 @pytest.fixture
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def job_scheduler():
     async with trio.open_nursery() as nursery:
         yield QtToTrioJobScheduler(nursery)

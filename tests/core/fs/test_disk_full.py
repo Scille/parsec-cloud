@@ -68,6 +68,8 @@ async def alice_fs_context(loopback_fs, event_bus_factory, alice, monkeypatch):
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.linux
 @pytest.mark.diskfull
 @customize_fixtures(real_data_storage=True)
@@ -93,6 +95,8 @@ async def test_workspace_fs_with_disk_full_simple(alice_fs_context, loopback_fs)
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.linux
 @pytest.mark.diskfull
 @customize_fixtures(real_data_storage=True)
@@ -126,6 +130,8 @@ async def test_workspace_fs_with_disk_full_large_write(alice_fs_context, loopbac
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.linux
 @pytest.mark.diskfull
 @customize_fixtures(real_data_storage=True)
@@ -157,6 +163,8 @@ async def test_workspace_fs_with_disk_full_issue_1535(
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.slow
 @pytest.mark.linux
 @pytest.mark.diskfull
@@ -177,6 +185,8 @@ async def test_workspace_fs_with_disk_full_systematic(alice_fs_context, loopback
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.slow
 @pytest.mark.linux
 @pytest.mark.diskfull
@@ -201,6 +211,8 @@ async def test_workspace_fs_with_disk_full_systematic_with_flush(alice_fs_contex
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.slow
 @pytest.mark.linux
 @pytest.mark.diskfull

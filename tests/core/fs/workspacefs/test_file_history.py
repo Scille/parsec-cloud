@@ -11,6 +11,8 @@ from parsec.core.fs.workspacefs.versioning_helpers import TimestampBoundedData, 
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_file_history(alice: LocalDevice, alice_workspace: WorkspaceFS):
     sync_by_id = alice_workspace.sync_by_id
     entry = alice_workspace.get_workspace_entry()

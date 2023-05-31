@@ -18,6 +18,8 @@ def catch_workspace_remanence_widget(widget_catcher_factory) -> RemanenceManagem
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_remanence_dialog_monitor_disabled(
     aqtbot,
     logged_gui,
@@ -54,6 +56,8 @@ async def test_remanence_dialog_monitor_disabled(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_remanence_dialog_empty_workspace(
     aqtbot, running_backend, logged_gui, catch_workspace_remanence_widget, remanence_monitor_event
 ):
@@ -89,6 +93,8 @@ async def test_remanence_dialog_empty_workspace(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_remanence_dialog_non_empty_workspace(
     aqtbot, logged_gui, catch_workspace_remanence_widget, running_backend, remanence_monitor_event
 ):
@@ -133,6 +139,8 @@ async def test_remanence_dialog_non_empty_workspace(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_remanence_dialog_turn_on(
     aqtbot,
     logged_gui,

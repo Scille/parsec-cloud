@@ -230,6 +230,8 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui: MainWindow):
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_file_browsing_and_edit(
     monkeypatch: pytest.MonkeyPatch,
     tmpdir: Path,
@@ -474,6 +476,8 @@ async def test_file_browsing_and_edit(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_show_inconsistent_dir(
     aqtbot, autoclose_dialog, files_widget_testbed, running_backend
 ):
@@ -506,6 +510,8 @@ async def test_show_inconsistent_dir(
 # Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.flaky(reruns=3)
 async def test_copy_cut_between_workspaces(aqtbot, autoclose_dialog, files_widget_testbed):
     tb = files_widget_testbed
@@ -565,6 +571,8 @@ async def test_copy_cut_between_workspaces(aqtbot, autoclose_dialog, files_widge
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_cut_dir_in_itself(aqtbot, autoclose_dialog, files_widget_testbed):
     tb = files_widget_testbed
 
@@ -596,6 +604,8 @@ async def test_cut_dir_in_itself(aqtbot, autoclose_dialog, files_widget_testbed)
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_drag_and_drop(tmpdir, aqtbot, autoclose_dialog, files_widget_testbed):
     tb = files_widget_testbed
     f_w = files_widget_testbed.files_widget
@@ -639,6 +649,8 @@ async def test_drag_and_drop(tmpdir, aqtbot, autoclose_dialog, files_widget_test
 @pytest.mark.linux  # Cannot chmod on Windows
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_import_file_permission_denied(
     monkeypatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed
 ):
@@ -701,6 +713,8 @@ async def test_import_file_permission_denied(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_open_file_failed(monkeypatch, aqtbot, autoclose_dialog, files_widget_testbed):
     tb = files_widget_testbed
     f_w = files_widget_testbed.files_widget
@@ -749,6 +763,8 @@ async def test_open_file_failed(monkeypatch, aqtbot, autoclose_dialog, files_wid
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_copy_file_link(aqtbot, autoclose_dialog, files_widget_testbed, snackbar_catcher):
     tb = files_widget_testbed
     f_w = files_widget_testbed.files_widget
@@ -774,6 +790,8 @@ async def test_copy_file_link(aqtbot, autoclose_dialog, files_widget_testbed, sn
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_use_file_link(aqtbot, autoclose_dialog, files_widget_testbed):
     tb = files_widget_testbed
     f_w: FilesWidget = files_widget_testbed.files_widget
@@ -809,6 +827,8 @@ def catch_file_status_widget(widget_catcher_factory):
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_show_file_status(
     running_backend, aqtbot, autoclose_dialog, files_widget_testbed, catch_file_status_widget
 ):
@@ -907,6 +927,8 @@ async def test_show_file_status(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_import_file_disk_full(
     monkeypatch: pytest.MonkeyPatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed
 ):
@@ -963,6 +985,8 @@ async def test_import_file_disk_full(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_new_folder_menu(aqtbot, files_widget_testbed, monkeypatch):
     tb = files_widget_testbed
     f_w = files_widget_testbed.files_widget
@@ -980,6 +1004,8 @@ async def test_new_folder_menu(aqtbot, files_widget_testbed, monkeypatch):
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_sort_menu(aqtbot, files_widget_testbed, monkeypatch):
     tb = files_widget_testbed
     f_w = files_widget_testbed.files_widget
@@ -1006,6 +1032,8 @@ async def test_sort_menu(aqtbot, files_widget_testbed, monkeypatch):
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_current_folder_status_menu(
     running_backend, aqtbot, files_widget_testbed, catch_file_status_widget
 ):

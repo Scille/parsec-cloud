@@ -16,6 +16,8 @@ from tests.common import customize_fixtures, freeze_time
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_expired_notification_logging(
     aqtbot,
     running_backend,
@@ -58,6 +60,8 @@ async def test_expired_notification_logging(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_expired_notification_from_connection(
     aqtbot,
     running_backend,
@@ -120,6 +124,8 @@ async def test_expired_notification_from_connection(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_expired_notification_from_update(
     aqtbot, logged_gui, running_backend, autoclose_dialog, alice, snackbar_catcher

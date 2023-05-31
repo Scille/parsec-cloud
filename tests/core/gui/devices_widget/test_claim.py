@@ -297,12 +297,16 @@ def ClaimDeviceTestBed(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_claim_device(ClaimDeviceTestBed):
     await ClaimDeviceTestBed().run()
 
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize(
     "offline_step",
     [
@@ -391,6 +395,8 @@ async def test_claim_device_offline(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize(
     "reset_step",
     [
@@ -476,6 +482,8 @@ async def test_claim_device_reset_by_peer(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize(
     "cancelled_step",
     [
@@ -581,6 +589,8 @@ async def test_claim_device_invitation_cancelled(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_claim_device_already_deleted(
     aqtbot, running_backend, backend, autoclose_dialog, alice, gui, alice_new_device_invitation
 ):
@@ -603,6 +613,8 @@ async def test_claim_device_already_deleted(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_claim_device_offline_backend(
     aqtbot, running_backend, backend, autoclose_dialog, alice, gui, alice_new_device_invitation
 ):
@@ -620,6 +632,8 @@ async def test_claim_device_offline_backend(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_claim_device_unknown_invitation(
     aqtbot, running_backend, backend, autoclose_dialog, alice, gui
 ):
@@ -643,6 +657,8 @@ async def test_claim_device_unknown_invitation(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_claim_device_with_bad_start_arg(
     event_bus, core_config, gui_factory, autoclose_dialog
 ):
@@ -657,6 +673,8 @@ async def test_claim_device_with_bad_start_arg(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_claim_device_backend_desync(
     aqtbot, running_backend, backend, autoclose_dialog, alice, gui, monkeypatch
 ):

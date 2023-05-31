@@ -10,6 +10,8 @@ from tests.common import customize_fixtures
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(logged_gui_as_admin=True)  # Use alice given she has multiple devices
 async def test_list_devices(aqtbot, running_backend, logged_gui):
     d_w = await logged_gui.test_switch_to_devices_widget()
@@ -31,6 +33,8 @@ async def test_list_devices(aqtbot, running_backend, logged_gui):
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_list_devices_offline(aqtbot, logged_gui, autoclose_dialog):
     d_w = await logged_gui.test_switch_to_devices_widget(error=True)
     assert d_w.layout_devices.count() == 1

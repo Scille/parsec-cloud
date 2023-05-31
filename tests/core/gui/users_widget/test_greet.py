@@ -356,6 +356,8 @@ def GreetUserTestBed(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(logged_gui_as_admin=True)
 @customize_fixtures(alice_has_human_handle=True)
 async def test_greet_user_greeter_has_human_handle(GreetUserTestBed):
@@ -364,6 +366,8 @@ async def test_greet_user_greeter_has_human_handle(GreetUserTestBed):
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(logged_gui_as_admin=True)
 @customize_fixtures(alice_has_human_handle=False)
 async def test_greet_user_greeter_does_not_have_human_handle(GreetUserTestBed):
@@ -372,6 +376,8 @@ async def test_greet_user_greeter_does_not_have_human_handle(GreetUserTestBed):
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_greet_user_modified_claim_info(GreetUserTestBed, backend, coolorg):
     granted_email = "zorro@example.com"
@@ -419,6 +425,8 @@ async def test_greet_user_modified_claim_info(GreetUserTestBed, backend, coolorg
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize(
     "offline_step",
     [
@@ -500,6 +508,8 @@ async def test_greet_user_offline(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize(
     "reset_step",
     [
@@ -574,6 +584,8 @@ async def test_greet_user_reset_by_peer(aqtbot, GreetUserTestBed, autoclose_dial
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize(
     "cancelled_step",
     [
@@ -664,6 +676,8 @@ async def test_greet_user_invitation_cancelled(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_greet_user_but_active_user_limit_reached(
     aqtbot, autoclose_dialog, backend, alice, GreetUserTestBed

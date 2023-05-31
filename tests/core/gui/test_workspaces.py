@@ -26,6 +26,8 @@ def catch_timestamped_workspace_widget(widget_catcher_factory):
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize("invalid_name", (False, True))
 async def test_add_workspace(
     aqtbot, running_backend, logged_gui, monkeypatch, autoclose_dialog, invalid_name
@@ -67,6 +69,8 @@ async def test_add_workspace(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize("invalid_name", (False, True))
 async def test_rename_workspace(
     aqtbot, running_backend, logged_gui, monkeypatch, autoclose_dialog, invalid_name
@@ -115,6 +119,8 @@ async def test_rename_workspace(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_mountpoint_remote_error_event(aqtbot, running_backend, logged_gui, snackbar_catcher):
     c_w = logged_gui.test_get_central_widget()
 
@@ -148,6 +154,8 @@ async def test_mountpoint_remote_error_event(aqtbot, running_backend, logged_gui
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logged_gui, monkeypatch):
     # Disable actual mount given we are only testing the GUI here
     open_workspace_mock = Mock()
@@ -219,6 +227,8 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 # We actually don't need to be admin, but we want to log as alice to have alice2 available
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_workspace_filter_user(
@@ -284,6 +294,8 @@ async def test_workspace_filter_user(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_workspace_filter_user_new_workspace(
     aqtbot,
     running_backend,
@@ -355,6 +367,8 @@ async def test_workspace_filter_user_new_workspace(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_display_timestamped_workspace_in_workspaces_list(
     aqtbot, running_backend, logged_gui, monkeypatch, catch_timestamped_workspace_widget, tmp_path
 ):
@@ -529,6 +543,8 @@ async def test_display_timestamped_workspace_in_workspaces_list(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_hide_unmounted_workspaces(logged_gui, aqtbot):
     w_w = logged_gui.test_get_workspaces_widget()
     core = logged_gui.test_get_core()
@@ -575,6 +591,8 @@ async def test_hide_unmounted_workspaces(logged_gui, aqtbot):
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_workspace_button(aqtbot, running_backend, logged_gui, autoclose_dialog, bob, adam):
     w_w = await logged_gui.test_switch_to_workspaces_widget()

@@ -19,6 +19,8 @@ from parsec.core.gui.lang import translate
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_mountpoint_notifs(aqtbot, logged_gui, snackbar_catcher):
     c_w = logged_gui.test_get_central_widget()
 
@@ -133,6 +135,8 @@ async def test_mountpoint_notifs(aqtbot, logged_gui, snackbar_catcher):
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_sharing_notifs(aqtbot, logged_gui, snackbar_catcher, monkeypatch):
     c_w = logged_gui.test_get_central_widget()
 

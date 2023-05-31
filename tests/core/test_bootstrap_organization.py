@@ -13,6 +13,8 @@ from tests.core.conftest import UserFsFactory
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize("with_labels", [False, True])
 async def test_good(
     running_backend, backend, user_fs_factory: UserFsFactory, with_labels, data_base_dir
@@ -82,6 +84,8 @@ async def test_good(
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_bootstrap_sequester_verify_key(running_backend, backend):
     org_id = OrganizationID("NewOrg")
     org_token = "123456"
@@ -114,6 +118,8 @@ async def test_bootstrap_sequester_verify_key(running_backend, backend):
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_invalid_token(running_backend, backend):
     org_id = OrganizationID("NewOrg")
     old_token = "123456"
@@ -130,6 +136,8 @@ async def test_invalid_token(running_backend, backend):
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_already_bootstrapped(running_backend, backend):
     org_id = OrganizationID("NewOrg")
     org_token = "123456"

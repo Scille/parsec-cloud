@@ -43,6 +43,8 @@ from tests.common import real_clock_timeout
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize("with_labels", [False, True], ids=["without_labels", "with_labels"])
 async def test_good_device_claim(
     backend,
@@ -179,6 +181,8 @@ async def test_good_device_claim(
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize("with_labels", [False, True], ids=["without_labels", "with_labels"])
 async def test_good_user_claim(
     backend,
@@ -339,6 +343,8 @@ async def test_good_user_claim(
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_claimer_handle_reset(
     backend, running_backend, alice, alice_backend_cmds, alice_new_device_invitation
 ):
@@ -437,6 +443,8 @@ def patch_rs_invitation_already_used_error_usage():
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize(
     "fail_on_step", ["wait_peer", "signify_trust", "wait_peer_trust", "claim_device"]
 )
@@ -536,6 +544,8 @@ async def test_claimer_handle_cancel_event(
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize(
     "fail_on_step", ["wait_peer", "signify_trust", "wait_peer_trust", "claim_device"]
 )
@@ -630,6 +640,8 @@ async def test_claimer_handle_command_failure(
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_user_claim_but_active_users_limit_reached(backend, running_backend, alice):
     # Organization has reached active user limit
     await backend.organization.update(

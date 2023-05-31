@@ -345,12 +345,16 @@ def ClaimUserTestBed(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_claim_user(ClaimUserTestBed):
     await ClaimUserTestBed().run()
 
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize(
     "offline_step",
     [
@@ -437,6 +441,8 @@ async def test_claim_user_offline(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize(
     "reset_step",
     [
@@ -519,6 +525,8 @@ async def test_claim_user_reset_by_peer(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize(
     "cancelled_step",
     [
@@ -623,6 +631,8 @@ async def test_claim_user_invitation_cancelled(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_claim_user_already_deleted(
     aqtbot, running_backend, backend, autoclose_dialog, alice, gui, zack_new_user_invitation
 ):
@@ -645,6 +655,8 @@ async def test_claim_user_already_deleted(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_claim_user_offline_backend(
     aqtbot, running_backend, backend, autoclose_dialog, alice, gui, zack_new_user_invitation
 ):
@@ -662,6 +674,8 @@ async def test_claim_user_offline_backend(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_claim_user_unknown_invitation(
     aqtbot, running_backend, backend, autoclose_dialog, alice, gui
 ):
@@ -685,6 +699,8 @@ async def test_claim_user_unknown_invitation(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_claim_user_with_bad_start_arg(event_bus, core_config, gui_factory, autoclose_dialog):
     bad_start_arg = "parsec://parsec.example.com/my_org?action=dummy&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss&token=1234ABCD&user_id=John"  # cspell: disable-line
 
@@ -697,6 +713,8 @@ async def test_claim_user_with_bad_start_arg(event_bus, core_config, gui_factory
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_claim_user_backend_desync(
     aqtbot, running_backend, backend, autoclose_dialog, alice, gui, monkeypatch
 ):

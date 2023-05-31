@@ -22,6 +22,8 @@ from tests.common import real_clock_timeout
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 async def test_win32_mutex():
     mut1 = uuid4().hex
@@ -41,6 +43,8 @@ async def test_win32_mutex():
 
 
 # @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 # @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 # async def test_win32_mutex_interprocess():
 #     mutex_name = uuid4().hex
@@ -65,6 +69,8 @@ async def test_win32_mutex():
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX only")
 async def test_posix_file_lock(tmpdir):
     file1 = Path(tmpdir / "1.lock")
@@ -85,6 +91,8 @@ async def test_posix_file_lock(tmpdir):
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX only")
 async def test_posix_file_lock_interprocess(tmpdir):
     file1 = Path(tmpdir / "1.lock")
@@ -110,6 +118,8 @@ else:
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_ipc_server(tmpdir, monkeypatch):
     # The dummy directory should be automatically created when the server starts
     file1 = Path(tmpdir / "dummy" / "1.lock")

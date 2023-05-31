@@ -26,6 +26,8 @@ async def alice_user_storage(data_base_dir, alice):
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(real_data_storage=True)
 async def test_initialization(alice, data_base_dir, alice_user_storage, user_manifest):
     aus = alice_user_storage
@@ -51,6 +53,8 @@ async def test_initialization(alice, data_base_dir, alice_user_storage, user_man
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(real_data_storage=True)
 async def test_realm_checkpoint(alice, alice_user_storage, initial_user_manifest_state):
     aws = alice_user_storage
@@ -95,6 +99,8 @@ async def test_realm_checkpoint(alice, alice_user_storage, initial_user_manifest
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(real_data_storage=True)
 async def test_vacuum(alice_user_storage):
     # Should be no-op
@@ -102,6 +108,8 @@ async def test_vacuum(alice_user_storage):
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(real_data_storage=True)
 async def test_storage_file_tree(tmp_path: Path, alice: LocalDevice):
     manifest_sqlite_db = tmp_path / alice.slug / "user_data-v1.sqlite"

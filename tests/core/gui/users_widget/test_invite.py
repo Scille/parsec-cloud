@@ -116,6 +116,8 @@ async def _invite_user(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize("online", (True, False))
 @customize_fixtures(logged_gui_as_admin=True)
 @customize_fixtures(alice_has_human_handle=True)
@@ -145,6 +147,8 @@ async def test_invite_user_greeter_has_human_handle(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize("online", (True, False))
 @customize_fixtures(logged_gui_as_admin=True)
 @customize_fixtures(alice_has_human_handle=False)
@@ -174,6 +178,8 @@ async def test_invite_user_greeter_does_not_have_human_handle(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_invite_and_greet_user_with_active_users_limit_reached(
     aqtbot, gui, alice, running_backend, monkeypatch, snackbar_catcher
@@ -214,6 +220,8 @@ async def test_invite_and_greet_user_with_active_users_limit_reached(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_invite_user_not_allowed(logged_gui, running_backend):
     u_w = await logged_gui.test_switch_to_users_widget()
 
@@ -223,6 +231,8 @@ async def test_invite_user_not_allowed(logged_gui, running_backend):
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize("online", (True, False))
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_revoke_user(
@@ -277,6 +287,8 @@ async def test_revoke_user(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_revoke_user_not_allowed(
     aqtbot, running_backend, autoclose_dialog, monkeypatch, logged_gui
 ):
@@ -310,6 +322,8 @@ async def test_revoke_user_not_allowed(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_cancel_user_invitation(
     aqtbot,

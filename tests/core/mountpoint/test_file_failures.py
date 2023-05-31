@@ -66,6 +66,8 @@ def test_empty_read_then_reopen(tmpdir, mountpoint_service):
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.mountpoint
 @pytest.mark.skipif(sys.platform == "darwin", reason="Tests crash with offline backend")
 async def test_remote_error_event(

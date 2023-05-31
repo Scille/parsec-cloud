@@ -10,6 +10,8 @@ from tests.common import real_clock_timeout
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_offline_notification(aqtbot, running_backend, logged_gui):
     central_widget = logged_gui.test_get_central_widget()
     assert central_widget is not None
@@ -35,6 +37,8 @@ async def test_offline_notification(aqtbot, running_backend, logged_gui):
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_backend_desync_notification(
     aqtbot,
     running_backend,

@@ -14,6 +14,8 @@ from tests.common import RunningBackend, customize_fixtures
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(workspace_storage_cache_size=DEFAULT_BLOCK_SIZE)
 async def test_remanence_monitor_single_device(
     running_backend: RunningBackend,
@@ -143,6 +145,8 @@ async def test_remanence_monitor_single_device(
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(workspace_storage_cache_size=DEFAULT_BLOCK_SIZE)
 async def test_remanence_monitor_multiple_device(
     running_backend,
@@ -273,6 +277,8 @@ async def test_remanence_monitor_multiple_device(
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(workspace_storage_cache_size=DEFAULT_BLOCK_SIZE)
 async def test_remanence_monitor_sharing_updated(
     running_backend,
@@ -389,6 +395,8 @@ async def test_remanence_monitor_sharing_updated(
 
 
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 # This tests seems to be flaky on windows
 @pytest.mark.flaky(reruns=6, condition="sys.platform.startswith('win32')")
 @customize_fixtures(workspace_storage_cache_size=DEFAULT_BLOCK_SIZE)

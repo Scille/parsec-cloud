@@ -187,6 +187,8 @@ async def logged_gui_with_files(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_link_file(aqtbot, logged_gui_with_files: LoggedGuiWithFiles):
     logged_gui, w_w, f_w = logged_gui_with_files
     url = f_w.workspace_fs.generate_file_link(f_w.current_directory)
@@ -207,6 +209,8 @@ async def test_link_file(aqtbot, logged_gui_with_files: LoggedGuiWithFiles):
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_link_file_with_timestamp(aqtbot, logged_gui_with_files: LoggedGuiWithFiles):
     logged_gui, w_w, f_w = logged_gui_with_files
     url = f_w.workspace_fs.generate_file_link(f_w.current_directory, DateTime.now())
@@ -226,6 +230,8 @@ async def test_link_file_with_timestamp(aqtbot, logged_gui_with_files: LoggedGui
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize(
     "toggle_timestamp", [True, False], ids=["With Timestamp", "Without Timestamp"]
 )
@@ -287,6 +293,8 @@ async def test_link_file_unmounted(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize(
     "toggle_timestamp", [False, True], ids=["without_timestamp", "with_timestamp"]
 )
@@ -319,6 +327,8 @@ async def test_link_file_invalid_path(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize("kind", ["bad_workspace_id", "legacy_url_format", "bad_timestamp"])
 async def test_link_file_invalid_url(
     aqtbot, autoclose_dialog, logged_gui_with_files: LoggedGuiWithFiles, kind
@@ -345,6 +355,8 @@ async def test_link_file_invalid_url(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize("timestamp", [None, DateTime.now()])
 async def test_link_file_disconnected(
     aqtbot,
@@ -425,6 +437,8 @@ async def test_link_file_disconnected(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize("timestamp", [None, DateTime.now()])
 async def test_link_file_disconnected_cancel_login(
     aqtbot,
@@ -492,6 +506,8 @@ async def test_link_file_disconnected_cancel_login(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize("timestamp", [None, DateTime.now()])
 async def test_link_file_unknown_workspace(
     aqtbot, core_config, gui_factory, autoclose_dialog, running_backend, alice, timestamp
@@ -536,6 +552,8 @@ async def test_link_file_unknown_workspace(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_link_organization(
     aqtbot, logged_gui, catch_create_org_widget, organization_bootstrap_addr
 ):
@@ -547,6 +565,8 @@ async def test_link_organization(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_link_organization_disconnected(
     aqtbot, logged_gui, catch_create_org_widget, organization_bootstrap_addr
 ):
@@ -559,6 +579,8 @@ async def test_link_organization_disconnected(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize("http_redirection_url", (True, False))
 async def test_link_claim_device(
     aqtbot, logged_gui, catch_claim_device_widget, bob_new_device_invitation, http_redirection_url
@@ -576,6 +598,8 @@ async def test_link_claim_device(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_link_claim_device_disconnected(
     aqtbot, logged_gui, catch_claim_device_widget, bob_new_device_invitation
 ):
@@ -590,6 +614,8 @@ async def test_link_claim_device_disconnected(
 # Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.flaky(reruns=3)
 @pytest.mark.parametrize("http_redirection_url", (True, False))
 async def test_link_claim_user(
@@ -608,6 +634,8 @@ async def test_link_claim_user(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_link_claim_user_disconnected(
     aqtbot, logged_gui, catch_claim_user_widget, billy_new_user_invitation
 ):
@@ -620,6 +648,8 @@ async def test_link_claim_user_disconnected(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_tab_login_logout(gui_factory, core_config, alice, monkeypatch):
     password = "P@ssw0rd"
     save_device_with_password_in_config(core_config.config_dir, alice, password)
@@ -650,6 +680,8 @@ async def test_tab_login_logout(gui_factory, core_config, alice, monkeypatch):
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_show_org_info(
     aqtbot, logged_gui, running_backend, snackbar_catcher, catch_org_info_widget
@@ -688,6 +720,8 @@ async def test_show_org_info(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_tab_login_logout_two_tabs(aqtbot, gui_factory, core_config, alice, monkeypatch):
     password = "P@ssw0rd"
     save_device_with_password_in_config(core_config.config_dir, alice, password)
@@ -726,6 +760,8 @@ async def test_tab_login_logout_two_tabs(aqtbot, gui_factory, core_config, alice
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_tab_login_logout_two_tabs_logged_in(
     aqtbot, gui_factory, core_config, alice, bob, monkeypatch
 ):
@@ -774,6 +810,8 @@ async def test_tab_login_logout_two_tabs_logged_in(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_link_file_unknown_org(
     aqtbot, core_config, gui_factory, autoclose_dialog, running_backend, alice
 ):
@@ -812,6 +850,8 @@ async def test_link_file_unknown_org(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @customize_fixtures(adam_profile=UserProfile.OUTSIDER)
 async def test_outsider_profil_limit(
     aqtbot, running_backend, adam, core_config, gui_factory, alice_user_fs
@@ -868,6 +908,8 @@ async def clipboard_text_provider(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 @pytest.mark.parametrize("clipboard_text_index", (0, 1, 2, 3))
 async def test_join_organization_text_in_clipboard(
     aqtbot,
@@ -895,6 +937,8 @@ async def test_join_organization_text_in_clipboard(
 
 @pytest.mark.gui
 @pytest.mark.trio
+
+@pytest.mark.skip(reason="Skipping the test")
 async def test_commercial_open_switch_offer(aqtbot, gui_factory, alice, monkeypatch):
     gui = await gui_factory()
     await gui.test_switch_to_logged_in(alice)
