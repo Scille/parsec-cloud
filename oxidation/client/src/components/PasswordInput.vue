@@ -38,7 +38,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { IonGrid, IonCol, IonRow, IonButton, IonItem, IonInput, IonIcon } from '@ionic/vue';
+import { IonGrid, IonCol, IonRow, IonButton, IonItem, IonInput, IonIcon, IonText } from '@ionic/vue';
 import {
   eye,
   eyeOff

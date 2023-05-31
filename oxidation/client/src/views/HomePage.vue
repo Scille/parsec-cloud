@@ -1,4 +1,5 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS -->
+
 <template>
   <ion-page>
     <ion-content
@@ -68,7 +69,7 @@
             >
               <ion-button
                 slot="icon-only"
-                id="trigger-search-button"
+                id="trigger-settings-button"
                 class="topbar-button__item"
                 @click="openSettingsModal()"
               >
@@ -105,7 +106,6 @@
                     class="organization-list-row"
                   >
                     <ion-col
-                      size="1"
                       v-for="device in filteredDevices"
                       :key="device.slug"
                       class="organization-list-row__col"
@@ -203,10 +203,12 @@ import {
   IonCardContent,
   IonCardTitle,
   IonButton,
+  IonButtons,
   IonIcon,
   IonRow,
   IonCol,
   IonGrid,
+  IonText,
   popoverController,
   modalController
 } from '@ionic/vue';

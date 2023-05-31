@@ -683,6 +683,16 @@ ion-button.button-large {
   height: 54px;
 }
 
+ion-button.button-default {
+  --padding-top: 0.75rem;
+  --padding-end: 1rem;
+  --padding-bottom: 0.75rem;
+  --padding-start: 1rem;
+  font-size: 1rem;
+  line-height: 20px;
+  height: 44px;
+}
+
 ion-button.button-small {
   --padding-top: 0.625rem;
   --padding-end: 1rem;
