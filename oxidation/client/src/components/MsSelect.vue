@@ -81,11 +81,10 @@ async function onDidDismissPopover(popover: any): Promise<void> {
 }
 .option {
   --background-hover: var(--parsec-color-light-primary-50);
-  --background-hover-opacity: 1;
   --color-hover: var(--ion-color-tertiary);
 
   &.selected {
-    color: var(--ion-color-tertiary) !important;
+    color: var(--parsec-color-light-primary-700);
     font-weight: bold;
   }
 }
