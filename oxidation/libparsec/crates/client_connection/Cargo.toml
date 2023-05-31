@@ -29,7 +29,7 @@ url = "2.3.1"
 # Use abstract crypto primitive, to allow to sign request.
 # Used to encoded binary data.
 base64 = "0.21.0"
-chrono = "0.4.24"
+chrono = "0.4.26"
 thiserror = "1.0.40"
 
 [dev-dependencies]
