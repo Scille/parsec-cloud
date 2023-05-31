@@ -12,7 +12,7 @@ describe('Check workspaces page', () => {
 
   it('Checks initial status', () => {
     cy.get('#button-new-workspace').contains('New workspace');
-    cy.get('#filter-select').contains('Name');
+    cy.get('#workspace-filter-select').contains('Name');
     cy.get('#grid-view').should('have.attr', 'disabled');
     cy.get('#list-view').should('not.have.attr', 'disabled');
     cy.get('.card').should('have.length', 5);
@@ -23,13 +23,13 @@ describe('Check workspaces page', () => {
   it('Sort workspaces in grid view', () => {
     cy.get('.card').first().contains('Druid Grove');
     cy.get('.card').last().contains('Trademeet');
-    cy.get('#filter-select').click();
+    cy.get('#workspace-filter-select').click();
     cy.get('.popover-viewport').contains('Size').click();
     cy.get('.card').first().contains('Druid Grove');
     cy.get('.card').last().contains('The Copper Coronet');
-    cy.get('#filter-select').click();
+    cy.get('#workspace-filter-select').click();
     cy.get('.popover-viewport').contains('Last update').click();
-    cy.get('#filter-select').contains('Last update');
+    cy.get('#workspace-filter-select').contains('Last update');
     cy.get('.card').first().contains('Trademeet');
     cy.get('.card').last().contains('The Asylum');
   });
@@ -48,13 +48,13 @@ describe('Check workspaces page', () => {
     cy.get('.workspace-list-item').should('have.length', 5);
     cy.get('.workspace-list-item').first().contains('Druid Grove');
     cy.get('.workspace-list-item').last().contains('Trademeet');
-    cy.get('#filter-select').click();
+    cy.get('#workspace-filter-select').click();
     cy.get('.popover-viewport').contains('Size').click();
     cy.get('.workspace-list-item').first().contains('Druid Grove');
     cy.get('.workspace-list-item').last().contains('The Copper Coronet');
-    cy.get('#filter-select').click();
+    cy.get('#workspace-filter-select').click();
     cy.get('.popover-viewport').contains('Last update').click();
-    cy.get('#filter-select').contains('Last update');
+    cy.get('#workspace-filter-select').contains('Last update');
     cy.get('.workspace-list-item').first().contains('Trademeet');
     cy.get('.workspace-list-item').last().contains('The Asylum');
   });

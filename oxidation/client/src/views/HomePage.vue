@@ -92,7 +92,7 @@
                   <!-- No use in showing the sort/filter options for less than 2 devices -->
                   <template v-if="deviceList.length > 2">
                     <ms-select
-                      id="filter-select"
+                      id="organization-filter-select"
                       label="t('HomePage.organizationList.labelSortBy')"
                       :options="msSelectOptions"
                       default-option="organization"

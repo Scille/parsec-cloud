@@ -49,7 +49,6 @@ export default defineConfig({
     specPattern: 'tests/e2e/specs/**.ts',
     fixturesFolder: 'tests/e2e/fixtures'
   },
-
   component: {
     screenshotsFolder: 'tests/component/screenshots',
     videosFolder: 'tests/component/videos',
@@ -62,6 +61,7 @@ export default defineConfig({
       framework: 'vue',
       bundler: 'vite'
     }
-  }
-
+  },
+  viewportHeight: 1440,
+  viewportWidth: 2560
 });

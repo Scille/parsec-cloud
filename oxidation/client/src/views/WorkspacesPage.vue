@@ -13,7 +13,7 @@
         />
         <div class="right-side">
           <ms-select
-            id="filter-select"
+            id="workspace-filter-select"
             :options="msSelectOptions"
             default-option="name"
             @change="onMsSelectChange($event)"
