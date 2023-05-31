@@ -29,7 +29,7 @@ DOCKER_BUILDKIT=1 docker build \
 
 echo
 echo "You can now test/use the docker image with:"
-echo "docker --port 6777:6777 --env-file env.list --rm --name=parsec-backend-server $PREFIX/parsec-backend-server:$UNIQ_TAG"
+echo "docker run --publish 6777:6777 --env-file env.list --rm --name=parsec-backend-server $PREFIX/parsec-backend-server:$UNIQ_TAG"
 echo
 echo "Note:"
 echo "  You need to configure the env variables in a file to be provided to \`--env-file\`"

@@ -3,7 +3,7 @@
 describe('Check organization list', () => {
 
   beforeEach(() => {
-    cy.visitApp('coolorg');
+    cy.visitApp();
   });
 
   afterEach(() => {
