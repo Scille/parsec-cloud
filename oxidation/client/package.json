@@ -10,7 +10,7 @@
         "lint": "eslint . && vue-tsc --noEmit",
         "test:unit": "cypress run --component",
         "cy:e2e:headless": "cypress run --e2e",
-        "cy:e2e": "cypress run --e2e --headed --no-exit",
+        "cy:e2e": "cypress run --e2e --headed",
         "test:e2e": "start-server-and-test dev http://localhost:8080 cy:e2e",
         "test:e2e:headless": "start-server-and-test dev http://localhost:8080 cy:e2e:headless",
         "web:open": "vite --open",
