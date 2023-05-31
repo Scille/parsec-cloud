@@ -64,7 +64,7 @@ Cypress.Commands.add('visitApp', (template) => {
       const configPath = await libparsec.testNewTestbed(template, TESTBED_SERVER_URL);
       assert.isDefined(configPath);
       // Force locale to en-EN
-      await nextStage(configPath, 'fr-FR');
+      await nextStage(configPath, 'en-EN');
       return configPath;
     })
     .as('configPath')
