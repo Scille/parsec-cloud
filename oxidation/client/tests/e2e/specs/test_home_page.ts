@@ -53,10 +53,10 @@ describe('Check organization list', () => {
     cy.get('#search-input').find('input').clear();
     cy.get('@orgList').should('have.length', 3);
     // Change sort order
-    cy.get('#filter-select').contains('Organization').click();
+    cy.get('#organization-filter-select').contains('Organization').click();
     cy.get('.option').should('have.length', 4);
     cy.get('.option').eq(2).contains('User Name').click();
-    cy.get('#filter-select').contains('User Name').click();
+    cy.get('#organization-filter-select').contains('User Name').click();
     cy.get('.option').should('have.length', 4);
     cy.get('.option').first().contains('Ascending').click();
     // Now sorted by user name desc
@@ -85,6 +85,6 @@ describe('Check organization list', () => {
     cy.contains('My workspaces');
     cy.get('#profile-button').click();
     cy.get('.popover-viewport').contains('Log out').click();
-    cy.contains('List of your organizations');
+    cy.contains('Your organizations');
   });
 });
