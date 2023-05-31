@@ -33,14 +33,14 @@ declare global {
 // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Cypress {
     interface Chainable {
-      visitApp(template: 'coolorg' | 'empty'): Chainable<string>
+      visitApp(template?: 'coolorg' | 'empty'): Chainable<string>
       dropTestbed(): Chainable<null>
       login(userName: string, password: string): Chainable<null>
     }
   }
 }
 
-Cypress.Commands.add('visitApp', (template) => {
+Cypress.Commands.add('visitApp', (template = 'coolorg') => {
   const TESTBED_SERVER_URL = Cypress.env('TESTBED_SERVER_URL');
   assert.isDefined(TESTBED_SERVER_URL, 'Environ variable `TESTBED_SERVER_URL` must be defined to use testbed');
   // If the variable is not defined, Cypress gets it as the string "undefined" instead of the value. So we check that also.

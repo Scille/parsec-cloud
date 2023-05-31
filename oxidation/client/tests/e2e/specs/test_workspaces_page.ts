@@ -2,7 +2,7 @@
 
 describe('Check workspaces page', () => {
   beforeEach(() => {
-    cy.visitApp('coolorg');
+    cy.visitApp();
     cy.login('Boby', 'P@ssw0rd');
   });
 
