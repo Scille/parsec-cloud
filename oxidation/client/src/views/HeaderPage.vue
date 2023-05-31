@@ -20,23 +20,35 @@
           </ion-button>
         </ion-buttons>
         <!-- end of icon visible when menu is hidden -->
-
-        <div
-          id="back-button"
-          v-show="hasHistory()"
-        >
-          <ion-button
-            fill="clear"
-            @click="goBack()"
+        <div class="topbar-left">
+          <div
+            id="back-block"
+            v-if="hasHistory()"
           >
-            <ion-icon
-              :icon="chevronBack"
+            <header-back-button
+              :short="isWorkspaceRoute() ? true : false"
             />
-          </ion-button>
+          </div>
 
           <div
-            class="vertical-spacer"
-          />
+            v-if="!isWorkspaceRoute()"
+            class="topbar-left__title"
+          >
+            <ion-label
+              class="title-h2"
+              :class="hasHistory() ? 'align-center' : 'align-left'"
+            >
+              {{ getTitleForRoute() }}
+            </ion-label>
+          </div>
+
+          <div
+            class="topbar-left__breadcrumb"
+          >
+            <header-breadcrumbs
+              :path-nodes="fullPath"
+            />
+          </div>
         </div>
 
         <!-- icon menu on mobile -->
@@ -44,33 +56,6 @@
           <ion-menu-button />
         </ion-buttons>
         <!-- end of icon menu on mobile -->
-
-        <ion-breadcrumbs
-          class="breadcrumb"
-          :max-items="maxBreadcrumbs"
-          :items-before-collapse="2"
-          :items-after-collapse="2"
-        >
-          <ion-breadcrumb
-            v-for="(path, index) in fullPath"
-            @click="navigateTo($event, path)"
-            class="breadcrumb-element"
-            :key="path.id"
-          >
-            <ion-icon
-              v-if="index === 0"
-              class="home-icon"
-              :icon="home"
-            />
-            <span v-if="fullPath.length === 1 || (fullPath.length >= 1 && index >= 1)">
-              {{ path.display }}
-            </span>
-            <ion-icon
-              slot="separator"
-              :icon="caretForward"
-            />
-          </ion-breadcrumb>
-        </ion-breadcrumbs>
 
         <!-- top right icon + profile -->
         <ion-buttons
@@ -131,99 +116,93 @@ import {
   IonContent,
   IonRouterOutlet,
   IonPage,
-  IonBreadcrumb,
-  IonBreadcrumbs
+  IonLabel
 } from '@ionic/vue';
 import {
   menu,
-  home,
   search,
-  notifications,
-  caretForward,
-  chevronBack
+  home,
+  notifications
 } from 'ionicons/icons';
 import { useI18n } from 'vue-i18n';
 import { useRouter, useRoute } from 'vue-router';
 import ProfileHeader from '@/components/ProfileHeader.vue';
 import useSidebarMenu from '@/services/sidebarMenu';
-import { computed, ref, Ref } from 'vue';
+import { computed } from 'vue';
 import { parse as parsePath } from '@/common/path';
+import HeaderBreadcrumbs from '@/components/HeaderBreadcrumbs.vue';
+import { RouterPathNode } from '@/components/HeaderBreadcrumbs.vue';
+import HeaderBackButton from '@/components/HeaderBackButton.vue';
 
 const currentRoute = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
-const maxBreadcrumbs: Ref<number | undefined> = ref(4);
-
-interface RouterPathNode {
-  id: number,
-  display: string,
-  name: string,
-  params?: any,
-  query?: any
-}
 
 // Dummy temporary function
 function mockGetWorkspaceName(workspaceId: string): string {
   return `Workspace ${workspaceId}`;
 }
 
-const fullPath = computed(() => {
-  // Update maxBreadcrumbs automatically if the route changes
-  maxBreadcrumbs.value = 4; // eslint-disable-line vue/no-side-effects-in-computed-properties
+function isWorkspaceRoute(): boolean {
+  return currentRoute.name === 'workspaces' || currentRoute.name === 'folder';
+}
 
+function getTitleForRoute(): string {
+  const route = currentRoute.name;
+
+  if (route === 'settings') {
+    return t('HeaderPage.titles.settings');
+  }
+  return '';
+}
+
+const fullPath = computed(() => {
   // Parse path and remove /deviceId
   const route = parsePath(currentRoute.path).slice(2);
 
   const finalPath: RouterPathNode[] = [];
 
-  // Always put the document route first
-  finalPath.push({
-    id: 0,
-    display: t('HeaderPage.breadcrumbs.documents'),
-    name: 'workspaces',
-    params: { deviceId: currentRoute.params.deviceId }
-  });
-
-  // Use for v-bind
-  let id = 1;
-
   // If route is 'workspaces' and we have an id, we're visiting a workspace
-  if (route.length >= 2 && route[0] === 'workspaces') {
-    const rebuildPath: string[] = [];
-    const workspacePath = parsePath(currentRoute.query.path as string);
-    for (let i = 0; i < workspacePath.length; i++) {
-      // Root folder
-      if (workspacePath[i] === '/') {
-        finalPath.push({
-          id: id,
-          display: mockGetWorkspaceName(currentRoute.params.workspaceId as string),
-          name: 'folder',
-          query: { path: '/' },
-          params: currentRoute.params
-        });
-      } else {
-        rebuildPath.push(workspacePath[i]);
-        finalPath.push({
-          id: id,
-          display: workspacePath[i],
-          name: 'folder',
-          query: { path: `/${rebuildPath.join('/')}` },
-          params: currentRoute.params
-        });
+  if (route[0] === 'workspaces') {
+    // Always put the document route first
+    finalPath.push({
+      id: 0,
+      display: route.length >= 2 ? '' : t('HeaderPage.titles.workspaces'),
+      icon: home,
+      name: 'workspaces',
+      params: { deviceId: currentRoute.params.deviceId }
+    });
+
+    if (route.length >= 2) {
+      const rebuildPath: string[] = [];
+      const workspacePath = parsePath(currentRoute.query.path as string);
+      for (let i = 0; i < workspacePath.length; i++) {
+        // Root folder
+        if (workspacePath[i] === '/') {
+          finalPath.push({
+            id: i + 1,
+            display: mockGetWorkspaceName(currentRoute.params.workspaceId as string),
+            name: 'folder',
+            query: { path: '/' },
+            params: currentRoute.params
+          });
+        } else {
+          rebuildPath.push(workspacePath[i]);
+          finalPath.push({
+            id: i + 1,
+            display: workspacePath[i],
+            name: 'folder',
+            query: { path: `/${rebuildPath.join('/')}` },
+            params: currentRoute.params
+          });
+        }
       }
     }
-    id += 1;
   }
 
   return finalPath;
 });
-
-function goBack(): void {
-  if (hasHistory()) {
-    router.go(-1);
-  }
-}
 
 function hasHistory(): boolean {
   /*
@@ -240,33 +219,9 @@ function hasHistory(): boolean {
   }
   return previousRoute.startsWith(`/${deviceId}`);
 }
-
-function navigateTo(event: PointerEvent, path: RouterPathNode): void {
-  /*
-  We're using ion-breadcrumbs, they're expecting a `href` attribute.
-  We could create one using router.resolve(), but it makes links
-  reload the whole page. Instead, we're handling the navigation ourselves
-  using a click signal on the breadcrumb. This creates a problem when
-  `max-items` is set, as the '...' icon counts as one of the element
-  (and so has a valid `path`). We use a bit of trickery by checking what element
-  was clicked. If it was the `...` icon we reset maxBreadcrumbs to display
-  all the elements, else we navigate to the folder.
-  */
-  if (event.target && (event.target as any).nodeName === 'ION-BREADCRUMB') {
-    maxBreadcrumbs.value = undefined;
-  } else {
-    router.push({name: path.name, params: path.params, query: path.query});
-  }
-}
-
 </script>
 
 <style scoped lang="scss">
-.breadcrumb-active {
-  .home-icon {
-    color: var(--parsec-color-light-primary-700);
-  }
-}
 
 .topbar {
   --background: var(--parsec-color-light-secondary-background);
@@ -277,38 +232,6 @@ function navigateTo(event: PointerEvent, path: RouterPathNode): void {
 .topbar-right {
   display: flex;
   gap: 1.5em;
-}
-
-.home-icon {
-  margin-right: 1em;
-  width: 1.2em;
-  height: 1.2em;
-}
-
-.breadcrumb-element {
-  cursor: pointer;
-}
-
-#back-button {
-  float: left;
-
-  ion-icon {
-    width: 1.2em;
-    height: 1.2em;
-  }
-
-  ion-button {
-    float: left;
-  }
-
-  .vertical-spacer {
-    border-left: 2px solid var(--parsec-color-light-secondary-light);
-    height: 2em;
-    float: left;
-    margin-top: 0.3em;
-    margin-left: 1em;
-    margin-right: 1em;
-  }
 }
 
 .topbar-button__list {
@@ -354,13 +277,30 @@ function navigateTo(event: PointerEvent, path: RouterPathNode): void {
   }
 }
 
-.breadcrumb {
-  padding: 0;
-  color: var(--parsec-color-light-secondary-grey);
+.topbar-left {
+  display: flex;
+  align-items: center;
 
-  &-active {
-    color: var(--parsec-color-light-primary-700)
+  &__title {
+    width: 100%;
+
+    .align-left {
+      display: flex;
+      justify-content: start;
+      align-items: center;
+    }
+
+    .align-center {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      color: var(--parsec-color-light-primary-600);
+    }
+  }
+
+  &__breadcrumb {
+    display: flex;
   }
 }
-
 </style>

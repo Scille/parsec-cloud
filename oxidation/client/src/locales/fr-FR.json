@@ -92,9 +92,11 @@
         "about": "À propos",
         "support": "Aide et commentaires",
         "loggedIn": "Connecté",
-        "breadcrumbs": {
-            "documents": "Mes espaces"
-        }
+        "titles": {
+            "workspaces": "Mes espaces",
+            "settings": "Paramètres"
+        },
+        "previous": "Précédent"
     },
     "SettingsPage": {
         "pageTitle": "Paramètres",
