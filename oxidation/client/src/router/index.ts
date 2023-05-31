@@ -35,13 +35,13 @@ const routes: Array<RouteRecordRaw> = [
             path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/workspaces/:workspaceId([a-z0-9]+)',
             name: 'folder',
             component: () => import('@/views/FolderPage.vue')
+          },
+          {
+            path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/settings',
+            name: 'settings',
+            component: () => import('@/views/SettingsPage.vue')
           }
         ]
-      },
-      {
-        path: '/settings',
-        name: 'settings',
-        component: () => import('@/views/SettingsPage.vue')
       },
       {
         path: '/organization',
