@@ -7,10 +7,11 @@
             "myDevices": "My devices"
         },
         "organizationList": {
-            "title": "List of your organizations",
+            "title": "Your organizations",
+            "subtitle": "With Parsec, keep full control of your data and be sure that it safe.",
             "lastLogin": "Last login on this device:",
-            "sortOrderAsc": "Ascending order",
-            "sortOrderDesc": "Descending order",
+            "sortOrderAsc": "Ascending",
+            "sortOrderDesc": "Descending",
             "sortByOrganization": "Organization",
             "sortByUserName": "User Name",
             "sortByLastLogin": "Last login",
@@ -19,8 +20,13 @@
         },
         "noExistingOrganization": {
             "title": "Need to create or join an organization?",
+            "createOrJoin": "Create or join",
             "createOrganization": "Create an organization",
-            "joinOrganization": "Join an organization"
+            "createOrganizationTitle": "Create",
+            "createOrganizationSubtitle": "I want to create an organization",
+            "joinOrganization": "Join an organization",
+            "joinOrganizationTitle": "Join",
+            "joinOrganizationSubtitle": "I received a Parsec Cloud invitation"
         },
         "organizationLogin": {
             "backToList": "Return to organizations",

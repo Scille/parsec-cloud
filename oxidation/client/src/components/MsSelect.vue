@@ -5,10 +5,11 @@
     fill="clear"
     @click="openPopover($event)"
     id="select-popover-button"
+    class="filter-button button-medium"
   >
     <ion-icon
       slot="end"
-      :icon="chevronDownOutline"
+      :icon="swapVertical"
     />
     {{ labelRef }}
   </ion-button>
@@ -21,7 +22,7 @@ import {
   IonIcon,
   popoverController
 } from '@ionic/vue';
-import { chevronDownOutline } from 'ionicons/icons';
+import { swapVertical } from 'ionicons/icons';
 import MsSelectPopover from '@/components/MsSelectPopover.vue';
 import { MsSelectOption, MsSelectSortByLabels, getOptionByKey, MsSelectChangeEvent } from '@/components/MsSelectOption';
 
@@ -74,13 +75,16 @@ async function onDidDismissPopover(popover: any): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
+.filter-button {
+  background: none;
+  color: var(--parsec-color-light-primary-700);
+}
 .option {
   --background-hover: var(--parsec-color-light-primary-50);
-  --background-hover-opacity: 1;
   --color-hover: var(--ion-color-tertiary);
 
   &.selected {
-    color: var(--ion-color-tertiary) !important;
+    color: var(--parsec-color-light-primary-700);
     font-weight: bold;
   }
 }

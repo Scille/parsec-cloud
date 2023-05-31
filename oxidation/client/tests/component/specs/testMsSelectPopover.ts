@@ -52,7 +52,7 @@ it('changes sort order when clicked', () => {
 
 it('changes selected when clicked', () => {
   // 0 is sort button, 1 is Label A
-  cy.get('ion-list > ion-item').eq(2).as('labelB').should('have.text', 'Label B');
+  cy.get('ion-list > ion-item').eq(2).as('labelB').should('have.text', 'Label B ');
   cy.get('@labelB').invoke('attr', 'class').should('not.contain', 'selected');
   cy.get('@labelB').click();
   cy.get('ion-list > ion-item').each(($el, index, _list) => {
