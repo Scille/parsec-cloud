@@ -131,10 +131,13 @@ async function setupApp(): Promise<void> {
   // from within `setupApp`, so instead it should be called in fire-and-forget
   // and only awaited when it is called from third party code (i.e. when
   // obtained through `window.nextStageHook`, see below)
-  const nextStage = async (configPath: string): Promise<void> => {
+  const nextStage = async (configPath: string, locale: undefined | string = undefined): Promise<void> => {
     await router.isReady();
     // configPath is injected to components
     app.provide(ConfigPathKey, configPath);
+    if (locale) {
+      (i18n.global.locale as any).value = locale;
+    }
     app.mount('#app');
     appElem.setAttribute('app-state', 'ready');
   };
@@ -156,7 +159,7 @@ async function setupApp(): Promise<void> {
 
 declare global {
   interface Window {
-    nextStageHook: () => [any, (configPath: string) => Promise<void>]
+    nextStageHook: () => [any, (configPath: string, locale: undefined | string) => Promise<void>]
   }
 }
 

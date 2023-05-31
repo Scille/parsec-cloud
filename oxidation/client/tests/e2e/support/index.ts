@@ -63,7 +63,8 @@ Cypress.Commands.add('visitApp', (template = 'coolorg') => {
       const [libparsec, nextStage] = window.nextStageHook();
       const configPath = await libparsec.testNewTestbed(template, TESTBED_SERVER_URL);
       assert.isDefined(configPath);
-      await nextStage(configPath);
+      // Force locale to en-EN
+      await nextStage(configPath, 'en-EN');
       return configPath;
     })
     .as('configPath')

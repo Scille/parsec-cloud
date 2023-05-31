@@ -92,9 +92,11 @@
         "about": "About",
         "support": "Help and feedback",
         "loggedIn": "Logged in",
-        "breadcrumbs": {
-            "documents": "My workspaces"
-        }
+        "titles": {
+            "workspaces": "My workspaces",
+            "settings": "Settings"
+        },
+        "previous": "Go back"
     },
     "SettingsPage": {
         "pageTitle": "Settings",
