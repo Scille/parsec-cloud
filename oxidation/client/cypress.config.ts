@@ -28,7 +28,6 @@ const TESTBED_SERVER_URL = process.env.CYPRESS_TESTBED_SERVER_URL;
 process.env.CYPRESS_TESTBED_SERVER_URL = undefined;  // Clear variable to prevent Cypress from doing voodoo on it
 
 export default defineConfig({
-
   e2e: {
     setupNodeEvents(on) {
       on('file:preprocessor', vitePreprocessor('./vite.config.ts'));

@@ -1,32 +1,35 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS -->
 
 <template>
-  <div class="organization-card">
-    <ion-grid>
-      <ion-row class="ion-align-items-center">
-        <ion-col size="auto">
-          <ion-avatar>
-            <span>{{ device.organizationId?.substring(0, 2) }}</span>
-          </ion-avatar>
-        </ion-col>
-        <ion-col
-          size="auto"
-          class="organization-info"
-        >
-          <p class="organization-label">
+  <ion-card class="organization-card__body">
+    <ion-card-header class="card-content">
+      <div class="organization-info">
+        <ion-avatar class="orga-avatar body-lg">
+          <span>{{ device.organizationId?.substring(0, 2) }}</span>
+        </ion-avatar>
+        <div class="orga-text">
+          <ion-card-title class="card-title subtitles-normal">
             {{ device.organizationId }}
-          </p>
-          <p>
-            {{ device.humanHandle }}
-          </p>
-        </ion-col>
-      </ion-row>
-    </ion-grid>
-  </div>
+          </ion-card-title>
+          <ion-card-subtitle>
+            <p class="subtitles-sm">
+              {{ device.humanHandle }}
+            </p>
+          </ion-card-subtitle>
+        </div>
+      </div>
+    </ion-card-header>
+  </ion-card>
 </template>
 
 <script setup lang="ts">
-import { IonGrid, IonCol, IonRow, IonAvatar } from '@ionic/vue';
+import {
+  IonCard,
+  IonAvatar,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardSubtitle
+} from '@ionic/vue';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
 
 defineProps<{
@@ -36,30 +39,38 @@ defineProps<{
 </script>
 
 <style lang="scss" scoped>
-.organization-card {
+.organization-card__body {
   user-select: none;
+  box-shadow: none;
+  background: none;
+  padding: 1.5rem 1rem;
+  margin: 0;
 
-  ion-avatar {
-    background: white;
-    color: var(--parsec-color-light-primary-600);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 2em;
-    text-transform: uppercase;
+  .card-content {
+    padding: 0;
   }
 
   .organization-info {
-    text-align: left;
+    display: flex;
+    flex-direction: row;
+    gap: .5rem;
 
-    p {
-      margin: 0px;
-      margin-bottom: 2px;
+    .orga-avatar {
+      background-color: white;
+      color: var(--parsec-color-light-primary-600);
+      width: 3.25rem;
+      height: 3.25rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
     }
 
-    .organization-label {
+    .card-title {
       color: var(--parsec-color-light-primary-700);
-      font-size: 1.5em;
     }
   }
 }

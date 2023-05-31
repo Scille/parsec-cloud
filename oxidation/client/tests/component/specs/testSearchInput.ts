@@ -16,7 +16,7 @@ beforeEach(() => {
 });
 
 it('test search input', () => {
-  cy.get('ion-input').should('contains.text', 'The Label');
+  cy.get('ion-input input').invoke('attr', 'placeholder').should('contains', 'The Label');
 });
 
 it('should emit a signal when input changes', () => {

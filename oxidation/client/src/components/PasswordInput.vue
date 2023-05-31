@@ -3,11 +3,16 @@
 <template>
   <ion-grid>
     <ion-row>
-      <ion-col>
-        <ion-item>
+      <ion-col class="input-col">
+        <ion-text
+          id="passwordLabel"
+          class="form-label"
+        >
+          {{ label }}
+        </ion-text>
+        <ion-item class="input">
           <ion-input
-            :label="label"
-            label-placement="floating"
+            aria-labelledby="passwordLabel"
             :type="passwordVisible ? 'text' : 'password'"
             v-model="passwordRef"
             @ion-input="$emit('change', $event.detail.value)"
@@ -22,7 +27,7 @@
           >
             <ion-icon
               slot="icon-only"
-              :icon="passwordVisible ? eyeOffOutline : eyeOutline"
+              :icon="passwordVisible ? eyeOff : eye"
             />
           </ion-button>
         </ion-item>
@@ -35,8 +40,8 @@
 import { ref } from 'vue';
 import { IonGrid, IonCol, IonRow, IonButton, IonItem, IonInput, IonIcon } from '@ionic/vue';
 import {
-  eyeOutline,
-  eyeOffOutline
+  eye,
+  eyeOff
 } from 'ionicons/icons';
 
 defineProps<{
@@ -59,7 +64,17 @@ function onEnterPress() : void {
 </script>
 
 <style lang="scss" scoped>
-  ion-item {
-    align-items: center;
+.input-col {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  .form-label {
+    color: var(--parsec-color-light-primary-700);
   }
+  .input {
+    border-radius: 6px;
+    overflow: hidden;
+  }
+}
 </style>
