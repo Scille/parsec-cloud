@@ -7,6 +7,7 @@
     "include": [
         ".eslintrc.cjs",
         "vite.config.ts",
+        "vitest.config.ts",
         "capacitor.config.ts",
         "cypress.config.ts",
         "src/**/*.ts",
