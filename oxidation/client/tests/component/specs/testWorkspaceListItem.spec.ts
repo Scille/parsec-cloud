@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import WorkspaceCard from '@/components/WorkspaceCard.vue';
+import WorkspaceListItem from '@/components/WorkspaceListItem.vue';
 import { MockWorkspace, WorkspaceRole } from '@/common/mocks';
 import { mount, VueWrapper } from '@vue/test-utils';
 import { DateTime } from 'luxon';
@@ -9,7 +9,7 @@ import { IonAvatar } from '@ionic/vue';
 
 mockI18n();
 
-describe('Workspace Card', () => {
+describe('Workspace List Item', () => {
 
   let wrapper: VueWrapper;
 
@@ -24,20 +24,22 @@ describe('Workspace Card', () => {
   };
 
   beforeEach(() => {
-    wrapper = mount(WorkspaceCard, {
+    wrapper = mount(WorkspaceListItem, {
       props: {
         workspace: WORKSPACE
       },
       global: {
-        provide: getDefaultProvideConfig()
-      }
+        provide: getDefaultProvideConfig(),
+        stubs: ['tagRole']
+      },
+      stubs: ['tagRole']
     });
   });
 
   it('Display the workspace card', () => {
-    expect(wrapper.get('.card-content__title').text()).to.equal('My Workspace');
-    expect(wrapper.get('.label-file-size').text()).to.equal('1MB');
-    expect(wrapper.get('.card-content-last-update').text()).to.equal('WorkspacesPage.Workspace.lastUpdateOne minute ago');
+    expect(wrapper.get('.workspace-name__label').text()).to.equal('My Workspace');
+    expect(wrapper.get('.label-size').text()).to.equal('1MB');
+    expect(wrapper.get('.label-last-update').text()).to.equal('One minute ago');
     const avatars = wrapper.get('.shared-group').findAllComponents(IonAvatar);
     expect(avatars.length).to.equal(3);
     expect(avatars.at(0).text()).to.equal('AU');
@@ -53,7 +55,7 @@ describe('Workspace Card', () => {
   });
 
   it('Emit menuClick', async () => {
-    wrapper.get('.card-option').trigger('click');
+    wrapper.get('.options-button').trigger('click');
     expect(wrapper.emitted('menuClick')?.length).to.equal(1);
     const workspace = wrapper.emitted('menuClick')?.at(0)?.at(1);
     expect(workspace).to.deep.equal(WORKSPACE);
