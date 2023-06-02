@@ -1,14 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use once_cell::sync::OnceCell;
 use thiserror::Error;
 
-use libparsec_core::LoggedCore;
+use libparsec_client::RunningDevice;
 use libparsec_platform_async::Mutex;
 use libparsec_platform_device_loader::load_device_with_password;
-use libparsec_types::DeviceID;
+use libparsec_types::prelude::*;
 
 pub use libparsec_crypto::SequesterVerifyKeyDer;
 pub use libparsec_protocol::authenticated_cmds::v3::invite_list::InviteListItem;
@@ -19,7 +22,7 @@ pub use libparsec_types::{
 
 use crate::ClientEvent;
 
-static CORE: OnceCell<Mutex<Vec<Option<LoggedCore>>>> = OnceCell::new();
+static RUNNING_DEVICES: OnceCell<Mutex<Vec<Option<RunningDevice>>>> = OnceCell::new();
 
 //
 // Client login
@@ -56,11 +59,18 @@ pub struct ClientConfig {
     pub workspace_storage_cache_size: WorkspaceStorageCacheSize,
 }
 
+#[derive(Debug, thiserror::Error)]
 pub enum ClientLoginError {
+    #[error("Device already started")]
     DeviceAlreadyLoggedIn,
+    #[error("Access method not available")]
     AccessMethodNotAvailable, // e.g. smartcard on web
-    DecryptionFailed,         // e.g. bad password
-    DeviceInvalidFormat,      // e.g. try to load a dummy file
+    #[error("Decryption failed")]
+    DecryptionFailed, // e.g. bad password
+    #[error("Invalid format for local device")]
+    DeviceInvalidFormat, // e.g. try to load a dummy file
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
 }
 
 #[allow(unused)]
@@ -82,15 +92,15 @@ pub async fn client_login(
                 .into_os_string()
                 .into_string()
                 .map_err(|_| ClientLoginError::DeviceInvalidFormat)?;
-            let mut core = CORE.get_or_init(Default::default).lock().await;
+            let mut core = RUNNING_DEVICES.get_or_init(Default::default).lock().await;
 
             let index = core.len() as u32;
 
             let device = load_device_with_password(&path, &password)
                 .map_err(|_| ClientLoginError::DeviceInvalidFormat)?;
 
-            // Store in memory
-            core.push(Some(LoggedCore { device }));
+            let running = RunningDevice::start(Arc::new(device), &config.data_base_dir).await?;
+            core.push(Some(running));
 
             Ok(index)
         }
@@ -107,7 +117,7 @@ pub enum ClientGetterError {
 }
 
 pub async fn client_get_device_id(handle: ClientHandle) -> Result<DeviceID, ClientGetterError> {
-    if let Some(logged_core) = CORE
+    if let Some(logged_core) = RUNNING_DEVICES
         .get_or_init(Default::default)
         .lock()
         .await
@@ -131,7 +141,7 @@ pub enum ClientLogoutError {
 
 #[allow(unused)]
 pub async fn client_logout(handle: ClientHandle) -> Result<(), ClientLogoutError> {
-    if let Some(logged_core) = CORE
+    if let Some(logged_core) = RUNNING_DEVICES
         .get_or_init(Default::default)
         .lock()
         .await
