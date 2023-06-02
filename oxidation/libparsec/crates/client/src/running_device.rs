@@ -19,8 +19,6 @@ use crate::{
     connection_monitor::ConnectionMonitor, event_bus::EventBus, user_ops::UserOps,
 };
 
-pub type DynError = Box<dyn std::error::Error + Send + Sync>;
-
 // pub struct RunningDeviceConfig {
 //     pub config_dir: PathBuf,
 //     pub data_base_dir: PathBuf,
@@ -53,7 +51,10 @@ impl RunningDevice {
         &self.device.device_id
     }
 
-    pub async fn start(device: Arc<LocalDevice>, data_base_dir: &Path) -> Result<Self, DynError> {
+    pub async fn start(
+        device: Arc<LocalDevice>,
+        data_base_dir: &Path,
+    ) -> Result<Self, anyhow::Error> {
         let event_bus = EventBus::default();
         // TODO: error handling
         let cmds = Arc::new(AuthenticatedCmds::new(
