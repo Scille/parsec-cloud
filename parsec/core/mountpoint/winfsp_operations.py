@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 from contextlib import contextmanager
+from dataclasses import dataclass
 from datetime import datetime
 from functools import partial, wraps
 from pathlib import PurePath
@@ -636,10 +637,10 @@ class MultiWorkspaceWinFSPOperations(BaseFileSystemOperations):  # type: ignore[
         # Root directory does not belong to any workspace
         self._root_dir_stats: dict[str, Any] = create_stats_for_dir()
 
+        @dataclass
         class MountedWorkspace:
-            def __init__(self, operations: WinFSPOperations, stats: dict[str, Any]) -> None:
-                self.operations = operations
-                self.stats = stats
+            operations: WinFSPOperations
+            stats: dict[str, Any]
 
         # Mounted workspaces are retrieved by workspace name (coming from path)
         self._workspaces: dict[str, MountedWorkspace] = {}
@@ -698,7 +699,9 @@ class MultiWorkspaceWinFSPOperations(BaseFileSystemOperations):  # type: ignore[
         return str(self._remove_workspace_from_path(path))
 
     def mount_workspace(self, workspace_name: str, operations: WinFSPOperations) -> None:
-        self._workspaces[workspace_name] = self.MountedWorkspace(operations, create_stats_for_dir())
+        self._workspaces[workspace_name] = MultiWorkspaceWinFSPOperations.MountedWorkspace(
+            operations, create_stats_for_dir()
+        )
 
     def unmount_workspace(self, workspace_name: str) -> None:
         self._workspaces.pop(workspace_name, None)
