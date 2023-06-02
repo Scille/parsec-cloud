@@ -60,7 +60,7 @@ class CoreConfig:
     invitation_token_size: int = 8
 
     mountpoint_enabled: bool = False
-    mountpoint_label: str | None = None
+    single_mountpoint_label: str | None = None
     disabled_workspaces: FrozenSet[EntryID] = frozenset()
 
     sentry_dsn: str | None = None
@@ -100,6 +100,7 @@ def config_factory(
     mountpoint_base_dir: Path | None = None,
     prevent_sync_pattern_path: Path | None = None,
     mountpoint_enabled: bool = False,
+    single_mountpoint_label: str | None = None,
     disabled_workspaces: FrozenSet[EntryID] = frozenset(),
     backend_max_cooldown: int = 30,
     backend_connection_keepalive: int | None = 29,
@@ -146,6 +147,7 @@ def config_factory(
         mountpoint_base_dir=mountpoint_base_dir,
         prevent_sync_pattern_path=prevent_sync_pattern_path,
         mountpoint_enabled=mountpoint_enabled,
+        single_mountpoint_label=single_mountpoint_label,
         disabled_workspaces=disabled_workspaces,
         backend_max_cooldown=backend_max_cooldown,
         backend_connection_keepalive=backend_connection_keepalive,

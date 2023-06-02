@@ -5,8 +5,8 @@ import math
 import unicodedata
 from contextlib import asynccontextmanager
 from functools import partial
-from pathlib import PurePath
-from typing import Any, AsyncIterator
+from pathlib import Path, PurePath
+from typing import Any, AsyncContextManager, AsyncIterator, Callable, Union
 from zlib import adler32
 
 import trio
@@ -241,31 +241,68 @@ async def winfsp_mountpoint_runner(
 
 
 @asynccontextmanager
-async def winfsp_multiworkspace_mountpoint_runner(
+async def winfsp_single_mountpoint_runner(
     user_fs: UserFS,
-    workspaces: list[WorkspaceFS],
-    workspace_id: EntryID,
-    mountpoint_label: str,
+    workspace_fs: WorkspaceFS,
     base_mountpoint_path: PurePath,
     config: dict[str, Any],
     event_bus: EventBus,
+    operations: MultiWorkspaceWinFSPOperations,
+    mountpoint_path: PurePath,
 ) -> AsyncIterator[PurePath]:
+    workspace_name = winify_entry_name(workspace_fs.get_workspace_name())
+    trio_token = trio.lowlevel.current_trio_token()
+    fs_access = ThreadFSAccess(trio_token, workspace_fs, event_bus)
     # `base_mountpoint_path` is ignored given we only mount from a drive
-    mountpoint_path = await _get_available_drive(0, 1)
 
-    # Prepare event for multi-workspace operations
-    # TODO: MOUNTPOINT_* events are not adapted for multi-workspace mountpoints
-    #       because there is no specific workspace to refer to.
-    #       Currently, "dummy" kwargs (workspace_id and timestamp) are used
-    #       for the required events.
-    #       Later, specific events should probably be created:
-    #       MOUNTPOINT_MULTIWORKSPACE_STARTING
-    #       MOUNTPOINT_MULTIWORKSPACE_STOPPING
+    mountpoint_path = mountpoint_path / workspace_name
+
+    # Prepare event information
     event_kwargs = {
         "mountpoint": mountpoint_path,
-        "workspace_id": workspace_id,
-        "timestamp": None,
+        "workspace_id": workspace_fs.workspace_id,
+        "timestamp": getattr(workspace_fs, "timestamp", None),
     }
+
+    # Mount workspace into the multi-workspace operations
+    volume_label = operations.get_volume_info().get("volume_label")
+    operations.mount_workspace(
+        workspace_name,
+        WinFSPOperations(fs_access=fs_access, volume_label=volume_label, **event_kwargs),  # type: ignore[arg-type]
+    )
+
+    try:
+        event_bus.send(
+            CoreEvent.MOUNTPOINT_STARTING,
+            **event_kwargs,
+        )
+
+        # Notify the manager that the mountpoint is ready
+        yield mountpoint_path
+
+    finally:
+        event_bus.send(CoreEvent.MOUNTPOINT_STOPPING, **event_kwargs)
+
+
+@asynccontextmanager
+async def winfsp_single_mountpoint_runner_factory(
+    user_fs: UserFS,
+    base_mountpoint_path: PurePath,
+    single_mountpoint_label: str,
+    config: dict[str, Any],
+    event_bus: EventBus,
+) -> AsyncIterator[
+    Callable[
+        [UserFS, WorkspaceFS, Path, dict[Any, Any], EventBus],
+        AsyncContextManager[Union[Path, PurePath]],
+    ]
+]:
+    """
+    Raises:
+        MountpointDriverCrash
+    """
+    # `base_mountpoint_path` is ignored given we only mount from a drive
+    mountpoint_path = await _get_available_drive(0, 1)
 
     if config.get("debug", False):
         enable_debug_log()
@@ -273,32 +310,18 @@ async def winfsp_multiworkspace_mountpoint_runner(
     # Volume label is limited to 32 WCHAR characters, so force the label to
     # ascii to easily enforce the size.
     volume_label = (
-        unicodedata.normalize("NFKD", f"{mountpoint_label.capitalize()}")
+        unicodedata.normalize("NFKD", f"{single_mountpoint_label.capitalize()}")
         .encode("ascii", "ignore")[:32]
         .decode("ascii")
     )
 
-    volume_serial_number = _generate_volume_serial_number(user_fs.device, workspace_id)
+    fake_workspace_id = EntryID.new()
+    volume_serial_number = _generate_volume_serial_number(user_fs.device, fake_workspace_id)
 
+    # Single mountpoint for all workspaces
     operations = MultiWorkspaceWinFSPOperations(
         volume_label=volume_label, mountpoint=mountpoint_path
     )
-
-    for workspace_fs in workspaces:
-        workspace_name = winify_entry_name(workspace_fs.get_workspace_name())
-        trio_token = trio.lowlevel.current_trio_token()
-        fs_access = ThreadFSAccess(trio_token, workspace_fs, event_bus)
-
-        # Prepare event information for workspace-specific operations
-        ws_event_kwargs = {
-            "mountpoint": mountpoint_path,
-            "workspace_id": workspace_fs.workspace_id,
-            "timestamp": getattr(workspace_fs, "timestamp", None),
-        }
-        operations.mount_workspace(
-            workspace_name,
-            WinFSPOperations(fs_access=fs_access, volume_label=volume_label, **ws_event_kwargs),  # type: ignore[arg-type]
-        )
 
     # See https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getvolumeinformationa
     fs = FileSystem(
@@ -316,7 +339,6 @@ async def winfsp_multiworkspace_mountpoint_runner(
         reparse_points=0,
         reparse_points_access_check=0,
         named_streams=0,
-        # read_only_volume=workspace_fs.is_read_only(),
         read_only_volume=0,
         post_cleanup_when_modified_only=1,
         device_control=0,
@@ -330,11 +352,6 @@ async def winfsp_multiworkspace_mountpoint_runner(
     )
 
     try:
-        event_bus.send(
-            CoreEvent.MOUNTPOINT_STARTING,
-            **event_kwargs,
-        )
-
         # Manage drive icon
         drive_letter = mountpoint_path.drive[0]
         with parsec_drive_icon_context(drive_letter, device=user_fs.device):
@@ -348,33 +365,16 @@ async def winfsp_multiworkspace_mountpoint_runner(
             await _wait_for_winfsp_ready(mountpoint_path)
 
             # Notify the manager that the mountpoint is ready
-            yield mountpoint_path
-
-            # Start recording `sharing.updated` events
-            with event_bus.waiter_on(CoreEvent.SHARING_UPDATED) as waiter:
-                # Loop over `sharing.updated` event
-                while True:
-                    # TODO: Read-only workspaces should not restart the mountpoint!
-                    #       Currently, nothing is done below for read-only workspaces.
-                    #       The multi-workspace operations should be notified in
-                    #       order to forbid write/cleanup/...
-                    #       Something like:
-                    #
-                    # # Get workspace name and fs from event
-                    # ...
-                    # # Inform operations about the read-only workspace
-                    # operations.remount_readonly(workspace_name, workspace_fs.is_read_only())
-
-                    # Wait and reset waiter
-                    await waiter.wait()
-                    waiter.clear()
+            yield partial(
+                winfsp_single_mountpoint_runner,
+                operations=operations,
+                mountpoint_path=mountpoint_path,
+            )
 
     except Exception as exc:
         raise MountpointDriverCrash(f"WinFSP has crashed on {mountpoint_path}: {exc}") from exc
 
     finally:
-        event_bus.send(CoreEvent.MOUNTPOINT_STOPPING, **event_kwargs)
-
         # Must run in thread given this call will wait for any winfsp operation
         # to finish so blocking the trio loop can produce a dead lock...
         with trio.CancelScope(shield=True):

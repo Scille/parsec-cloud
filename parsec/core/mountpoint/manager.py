@@ -37,11 +37,6 @@ RunnerType = Callable[
     AsyncContextManager[Union[Path, PurePath]],
 ]
 
-MultiWorkspaceRunnerType = Callable[
-    [UserFS, list[WorkspaceFS], EntryID, str, Path, dict[Any, Any], EventBus],
-    AsyncContextManager[Union[Path, PurePath]],
-]
-
 # Importing winfspy can take some time (about 0.4 seconds)
 # Let's import those bindings at module level, in order to
 # avoid spending too much time importing them later while the
@@ -85,24 +80,39 @@ def get_mountpoint_runner() -> RunnerType:
         return fuse_mountpoint_runner
 
 
-def get_multiworkspace_mountpoint_runner() -> MultiWorkspaceRunnerType:
+async def create_single_mountpoint(
+    user_fs: UserFS,
+    base_mountpoint_path: PurePath,
+    single_mountpoint_label: str,
+    config: dict[str, Any],
+    event_bus: EventBus,
+    nursery: trio.Nursery,
+) -> TaskStatus[RunnerType]:
     # Windows
     if sys.platform == "win32":
-        try:
-            # Use import function for easier mock up
-            import_function("winfspy")
-        except RuntimeError as exc:
-            raise MountpointWinfspNotAvailable(exc) from exc
+        from parsec.core.mountpoint.winfsp_runner import winfsp_single_mountpoint_runner_factory
 
-        logging.getLogger("winfspy").setLevel(logging.WARNING)
-        from parsec.core.mountpoint.winfsp_runner import winfsp_multiworkspace_mountpoint_runner
+        def curried_runner(task_status: TaskStatus[RunnerType]) -> None:
+            try:
+                async with winfsp_single_mountpoint_runner_factory(
+                    user_fs,
+                    base_mountpoint_path,
+                    single_mountpoint_label,
+                    config,
+                    event_bus,
+                ) as winfsp_single_mountpoint_runner:
+                    task_status.started(winfsp_single_mountpoint_runner)
+            finally:
+                task_status
 
-        return winfsp_multiworkspace_mountpoint_runner
+        # Start the mountpoint runner task
+        runner_task = cast(TaskStatus[RunnerType], await start_task(nursery, curried_runner))
+        return runner_task
 
     # Linux
     else:
         raise MountpointPlatformNotSupported(
-            f"Multi-workspace mountpoints are not supported for this platform ({sys.platform})"
+            f"Single mountpoint is not supported for this platform ({sys.platform})"
         )
 
 
@@ -115,14 +125,12 @@ class MountpointManager:
         config: dict[Any, Any],
         runner: RunnerType,
         nursery: trio.Nursery,
-        multiworkspace_runner: MultiWorkspaceRunnerType | None = None,  # Lazy
     ) -> None:
         self.user_fs = user_fs
         self.event_bus = event_bus
         self.base_mountpoint_path = base_mountpoint_path
         self.config = config
         self._runner = runner
-        self._multiworkspace_runner = multiworkspace_runner
         self._nursery = nursery
         self._mountpoint_tasks: dict[tuple[EntryID, DateTime | None], TaskStatus[Any]] = {}
         self._timestamped_workspacefs: dict[EntryID, dict[DateTime, WorkspaceFSTimestamped]] = {}
@@ -360,100 +368,6 @@ class MountpointManager:
         for workspace_id, timestamp in list(self._mountpoint_tasks.keys()):
             await self.safe_unmount(workspace_id, timestamp=timestamp)
 
-    async def _mount_multiworkspace_helper(
-        self, mountpoint_label: str, workspaces: list[WorkspaceFS]
-    ) -> TaskStatus[Path]:
-        # TODO: Define key for multi-workspace mountpoints
-        #       Currently, dummy workspace_id and timestamp are used.
-        #       Alternatively, we can use a different dict to store
-        #       multi-workspace mountpoint tasks (other than _mountpoint_tasks).
-        workspace_id = EntryID.new()
-        timestamp = None
-        key = workspace_id, timestamp
-
-        async def curried_runner(task_status: TaskStatus[PurePath]) -> None:
-            event_kwargs = {}
-            try:
-                # Currently lazy because multi-workspace is supported only on Windows
-                if not self._multiworkspace_runner:
-                    self._multiworkspace_runner = get_multiworkspace_mountpoint_runner()
-
-                async with self._multiworkspace_runner(
-                    self.user_fs,
-                    workspaces,
-                    workspace_id,  # TODO: Temporarily required to use the same id for MOUNTPOINT_STARTING/STOPPING events
-                    mountpoint_label,
-                    self.base_mountpoint_path,
-                    self.config,
-                    self.event_bus,
-                ) as mountpoint_path:
-                    # Another runner started before us
-                    if key in self._mountpoint_tasks:
-                        raise MountpointAlreadyMounted(
-                            f"Workspace group `{mountpoint_label}` already mounted."
-                        )
-
-                    # TODO: MOUNTPOINT_* events are not adapted for multi-workspace mountpoints
-                    #       because there is no specific workspace to refer to.
-                    #       Currently, "dummy" kwargs (workspace_id and timestamp) are used
-                    #       for MOUNTPOINT_STARTED/STOPPED events.
-                    #       Later, specific events should probably be created:
-                    #       MOUNTPOINT_MULTIWORKSPACE_STARTED
-                    #       MOUNTPOINT_MULTIWORKSPACE_STOPPED
-                    # Prepare kwargs for both started and stopped events
-                    event_kwargs = {
-                        "mountpoint": mountpoint_path,
-                        "workspace_id": workspace_id,
-                        "timestamp": timestamp,
-                    }
-
-                    # Set the mountpoint as mounted THEN send the corresponding event
-                    task_status.started(mountpoint_path)
-                    self._mountpoint_tasks[key] = task_status
-                    self.event_bus.send(CoreEvent.MOUNTPOINT_STARTED, **event_kwargs)
-
-                    # It is the reponsability of the runner context teardown to wait
-                    # for cancellation. This is done to avoid adding an extra nursery
-                    # into the winfsp runner, for simplicity. This could change in the
-                    # future in which case we'll simply add a `sleep_forever` below.
-
-            finally:
-                # Pop the mountpoint task if its ours
-                if self._mountpoint_tasks.get(key) == task_status:
-                    del self._mountpoint_tasks[key]
-
-                # Send stopped event if started has been previously sent
-                if event_kwargs:
-                    self.event_bus.send(CoreEvent.MOUNTPOINT_STOPPED, **event_kwargs)
-
-        # Start the mountpoint runner task
-        runner_task = cast(TaskStatus[Path], await start_task(self._nursery, curried_runner))
-        return runner_task
-
-    async def safe_mount_all_multiworkspace(
-        self, mountpoint_label: str, exclude: Sequence[EntryID] = ()
-    ) -> None:
-        exclude_set = set(exclude)
-        try:
-            # Workspaces to be mounted
-            workspaces = []
-            for workspace_entry in self.user_fs.get_user_manifest().workspaces:
-                if workspace_entry.role is None or workspace_entry.id in exclude_set:
-                    continue
-                workspaces.append(self._get_workspace(workspace_entry.id))
-
-            runner_task = await self._mount_multiworkspace_helper(mountpoint_label, workspaces)
-            assert runner_task.value is not None
-
-        # The workspace could not be mounted
-        # Maybe be a `MountpointAlreadyMounted` or `MountpointNoDriveAvailable`
-        except MountpointError:
-            pass
-
-        # Unexpected exception is not a reason to crash the mountpoint manager
-        except Exception:
-            logger.exception("Unexpected error while mounting a new workspace")
-
 
 async def cleanup_macos_mountpoint_folder(base_mountpoint_path: Path) -> None:
     # In case of a crash on macOS, workspaces don't unmount correctly and leave empty
@@ -505,11 +419,26 @@ async def mountpoint_manager_factory(
     mount_on_workspace_shared: bool = False,
     unmount_on_workspace_revoked: bool = False,
     exclude_from_mount_all: frozenset[EntryID] = frozenset(),
-    mountpoint_label: str | None = None,
+    single_mountpoint_label: str | None = None,
 ) -> AsyncGenerator[MountpointManager, Any]:
     config = {"debug": debug}
 
-    runner = get_mountpoint_runner()
+    # The label option is used to enable single mountpoint mode AND to define its label
+    if single_mountpoint_label:
+        # In single mountpoint mode, create the mountpoint right now with its own nursery
+        async with open_service_nursery() as single_mountpoint_nursery:
+            runner_task = await create_single_mountpoint(
+                user_fs,
+                base_mountpoint_path,
+                single_mountpoint_label,
+                config,
+                event_bus,
+                single_mountpoint_nursery,
+            )
+            assert runner_task.value is not None
+            runner = runner_task.value
+    else:
+        runner = get_mountpoint_runner()
 
     # Now is a good time to perform some cleanup in the registry
     if sys.platform == "win32":
@@ -555,17 +484,9 @@ async def mountpoint_manager_factory(
                 ):
                     # Mount required workspaces
                     if mount_all:
-                        # If a label is specified, workspaces are mounted in a
-                        # single mountpoint with that label
-                        if mountpoint_label:
-                            await mountpoint_manager.safe_mount_all_multiworkspace(
-                                mountpoint_label, exclude=tuple(exclude_from_mount_all)
-                            )
-                        # Otherwise, a mountpoint is created for each workspace
-                        else:
-                            await mountpoint_manager.safe_mount_all(
-                                exclude=tuple(exclude_from_mount_all)
-                            )
+                        await mountpoint_manager.safe_mount_all(
+                            exclude=tuple(exclude_from_mount_all)
+                        )
 
                     # Yield point
                     yield mountpoint_manager
