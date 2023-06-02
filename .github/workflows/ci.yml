@@ -17,6 +17,11 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   # Github PR merging is configured to only require this job to pass
   ci-is-happy:
