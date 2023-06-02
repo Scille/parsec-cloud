@@ -174,9 +174,11 @@ pub fn timestamp() -> DateTime {
 pub struct TimestampGenerator {
     current: DateTime,
 }
+
 impl TimestampGenerator {
+    #[allow(clippy::should_implement_trait)]
     pub fn next(&mut self) -> DateTime {
-        let ret = self.current.clone();
+        let ret = self.current;
         self.current = DateTime::from_f64_with_us_precision(ret.get_f64_with_us_precision() + 1.0);
         ret
     }
