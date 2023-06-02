@@ -224,5 +224,8 @@
             "gigabytes": "GB",
             "terabytes": "TB"
         }
+    },
+    "SideMenu": {
+        "allWorkspaces": "All Workspaces"
     }
 }

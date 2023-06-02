@@ -224,5 +224,8 @@
             "gigabytes": "Go",
             "terabytes": "To"
         }
+    },
+    "SideMenu": {
+        "allWorkspaces": "Tous les espaces de travail"
     }
 }
