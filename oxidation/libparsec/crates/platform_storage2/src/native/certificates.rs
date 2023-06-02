@@ -405,8 +405,8 @@ impl CertificatesStorage {
 
         self.db
             .exec(move |conn| {
-                let filter1 = filter1.as_ref().map(|x| &**x);
-                let filter2 = filter2.as_ref().map(|x| &**x);
+                let filter1 = filter1.as_deref();
+                let filter2 = filter2.as_deref();
 
                 // IMMEDIATE transaction means we start right away a write transaction
                 // (instead default DEFERRED mode of which waits until the first database
@@ -441,8 +441,8 @@ impl CertificatesStorage {
         let maybe = self
             .db
             .exec(move |conn| {
-                let filter1 = filter1.as_ref().map(|x| &**x);
-                let filter2 = filter2.as_ref().map(|x| &**x);
+                let filter1 = filter1.as_deref();
+                let filter2 = filter2.as_deref();
                 let query = {
                     use super::model::certificates;
                     let mut query = certificates::table
@@ -482,8 +482,8 @@ impl CertificatesStorage {
         let items = self
             .db
             .exec(move |conn| {
-                let filter1 = filter1.as_ref().map(|x| &**x);
-                let filter2 = filter2.as_ref().map(|x| &**x);
+                let filter1 = filter1.as_deref();
+                let filter2 = filter2.as_deref();
                 let query = {
                     use super::model::certificates;
                     let mut query = certificates::table
