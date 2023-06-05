@@ -2775,23 +2775,25 @@ watchdog = ["watchdog"]
 
 [[package]]
 name = "winfspy"
-version = "0.8.3"
+version = "0.8.4"
 description = "CFFI bindings for WinFSP"
 category = "main"
 optional = false
 python-versions = "*"
 files = [
-    {file = "winfspy-0.8.3-cp310-cp310-win32.whl", hash = "sha256:7c57fed1e537fb740dff0e4d0ddc11c650b68c22b3ebfe9e2640a03cd12f908c"},
-    {file = "winfspy-0.8.3-cp310-cp310-win_amd64.whl", hash = "sha256:ae87957ff05feaae0d35f4734c0176b815dd5c5e3e93f5961fcf5183c24ea6d3"},
-    {file = "winfspy-0.8.3-cp36-cp36m-win32.whl", hash = "sha256:44674057f3e8d8488ee5f46f267c60b8784c02f3cbbffb2074a0b17da0a53351"},
-    {file = "winfspy-0.8.3-cp36-cp36m-win_amd64.whl", hash = "sha256:b50ed00f4d1590d0a72b395e17ee68e1b6faa9c435fd905803d7236f45cb1717"},
-    {file = "winfspy-0.8.3-cp37-cp37m-win32.whl", hash = "sha256:d6da076aa3192753e6b0782fe40e14683caab6da687c853d635737d7eed706d3"},
-    {file = "winfspy-0.8.3-cp37-cp37m-win_amd64.whl", hash = "sha256:abce008b613f01a67bb0a792d89666391cb7c3f908998e32ed059d9538c83c5c"},
-    {file = "winfspy-0.8.3-cp38-cp38-win32.whl", hash = "sha256:218d04705c1b67db546736cbd97cb77195be4c9ffc903f85b8eba2ecdd82a37d"},
-    {file = "winfspy-0.8.3-cp38-cp38-win_amd64.whl", hash = "sha256:9d5b83403ff1cb4591757ecebcfcd46a4a091784cda37e16546f38b01a4e63bb"},
-    {file = "winfspy-0.8.3-cp39-cp39-win32.whl", hash = "sha256:fb472211e576c56e6f685fdaa15b3e19209fef91263f9257795e38e232c77291"},
-    {file = "winfspy-0.8.3-cp39-cp39-win_amd64.whl", hash = "sha256:0c42649860435cde704cda367f0775acc72cd1549f14b0fb14d73a242ae9e69e"},
-    {file = "winfspy-0.8.3.tar.gz", hash = "sha256:836338c35a8810986ad66be88f592edd2960c6e50f58becb0b77256ce5e565ba"},
+    {file = "winfspy-0.8.4-cp310-cp310-win32.whl", hash = "sha256:6cd3905e1c1c768d229a9aba9ac6f5283bc5586cb0696ead45e8cdd608beba0e"},
+    {file = "winfspy-0.8.4-cp310-cp310-win_amd64.whl", hash = "sha256:7acd765fc0c22e6b09bd7f4be3fc562651ec555dfffed13ec42d1db1333f0373"},
+    {file = "winfspy-0.8.4-cp311-cp311-win32.whl", hash = "sha256:ddacd50871dc104bd769a27d9491bafa8cd8a5998bdcbad39704361744b3a8bf"},
+    {file = "winfspy-0.8.4-cp311-cp311-win_amd64.whl", hash = "sha256:518581972a2f07806702250cb47c25c0722b37ebd2402d5b06e07fecea253317"},
+    {file = "winfspy-0.8.4-cp36-cp36m-win32.whl", hash = "sha256:6e92aedb32b8948e3a741ffcc273f36d245b3c22b6959263a420ec8ba3402bc9"},
+    {file = "winfspy-0.8.4-cp36-cp36m-win_amd64.whl", hash = "sha256:7398c3e105c88b411018e8e6b6b51182e28051541d98eee66fa3db20c7252c43"},
+    {file = "winfspy-0.8.4-cp37-cp37m-win32.whl", hash = "sha256:78593231511ef81e9ac8f6c57a67fd574b41d799234665b928b3a162e13be942"},
+    {file = "winfspy-0.8.4-cp37-cp37m-win_amd64.whl", hash = "sha256:c4e8e426bab320f1b3ae9974cf5f7825018b994f6740fbdd32c29f021de4586d"},
+    {file = "winfspy-0.8.4-cp38-cp38-win32.whl", hash = "sha256:7f07fd22616adfeb81fb82a8bc390f62202b0a8d112620754223556603805225"},
+    {file = "winfspy-0.8.4-cp38-cp38-win_amd64.whl", hash = "sha256:6af41b0083810d6a5b87f1e9cdc8b6c6204f3c8d4406686129437870bfdade17"},
+    {file = "winfspy-0.8.4-cp39-cp39-win32.whl", hash = "sha256:4b4eb4a31fe983a137f498819dd9b7bcbf456adfc0bfde0196cef643ec95d0b3"},
+    {file = "winfspy-0.8.4-cp39-cp39-win_amd64.whl", hash = "sha256:4fc6e7ed657e8d5218cb89e1a2867af2ce75553b33803368cb38b7f70ed377d1"},
+    {file = "winfspy-0.8.4.tar.gz", hash = "sha256:7870d16d74023fe5f0de98018fbc417319b02a2a5624a80fab3156d4c361a7f2"},
 ]
 
 [package.dependencies]
