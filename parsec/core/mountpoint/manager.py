@@ -92,7 +92,7 @@ async def create_single_mountpoint(
     if sys.platform == "win32":
         from parsec.core.mountpoint.winfsp_runner import winfsp_single_mountpoint_runner_factory
 
-        def curried_runner(task_status: TaskStatus[RunnerType]) -> None:
+        async def curried_runner(task_status: TaskStatus[RunnerType]) -> None:
             try:
                 async with winfsp_single_mountpoint_runner_factory(
                     user_fs,
@@ -423,22 +423,7 @@ async def mountpoint_manager_factory(
 ) -> AsyncGenerator[MountpointManager, Any]:
     config = {"debug": debug}
 
-    # The label option is used to enable single mountpoint mode AND to define its label
-    if single_mountpoint_label:
-        # In single mountpoint mode, create the mountpoint right now with its own nursery
-        async with open_service_nursery() as single_mountpoint_nursery:
-            runner_task = await create_single_mountpoint(
-                user_fs,
-                base_mountpoint_path,
-                single_mountpoint_label,
-                config,
-                event_bus,
-                single_mountpoint_nursery,
-            )
-            assert runner_task.value is not None
-            runner = runner_task.value
-    else:
-        runner = get_mountpoint_runner()
+    runner = get_mountpoint_runner()
 
     # Now is a good time to perform some cleanup in the registry
     if sys.platform == "win32":
@@ -477,6 +462,22 @@ async def mountpoint_manager_factory(
         try:
             # A nursery dedicated to new workspace events
             async with open_service_nursery() as mount_nursery:
+                # In single mountpoint mode, create the mountpoint right now.
+                # The label option is used to both enable single mountpoint mode
+                # AND to define its label
+                if single_mountpoint_label:
+                    async with open_service_nursery() as single_mountpoint_nursery:
+                        runner_task = await create_single_mountpoint(
+                            user_fs,
+                            base_mountpoint_path,
+                            single_mountpoint_label,
+                            config,
+                            event_bus,
+                            single_mountpoint_nursery,
+                        )
+                        assert runner_task.value is not None
+                        mountpoint_manager._runner = runner_task.value
+
                 # Setup new workspace events
                 with event_bus.connect_in_context(
                     (CoreEvent.FS_WORKSPACE_CREATED, on_event),  # type: ignore[arg-type]

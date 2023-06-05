@@ -255,6 +255,8 @@ async def winfsp_single_mountpoint_runner(
     fs_access = ThreadFSAccess(trio_token, workspace_fs, event_bus)
     # `base_mountpoint_path` is ignored given we only mount from a drive
 
+    # In single mountpoint mode, the workspace is mounted as top-level directory
+    # inside the (single) mountpoint path
     mountpoint_path = mountpoint_path / workspace_name
 
     # Prepare event information
@@ -264,21 +266,23 @@ async def winfsp_single_mountpoint_runner(
         "timestamp": getattr(workspace_fs, "timestamp", None),
     }
 
-    # Mount workspace into the multi-workspace operations
-    volume_label = operations.get_volume_info().get("volume_label")
-    operations.mount_workspace(
-        workspace_name,
-        WinFSPOperations(fs_access=fs_access, volume_label=volume_label, **event_kwargs),  # type: ignore[arg-type]
-    )
-
     try:
         event_bus.send(
             CoreEvent.MOUNTPOINT_STARTING,
             **event_kwargs,
         )
 
+        # Mount workspace into the multi-workspace operations
+        volume_label = operations.get_volume_info().get("volume_label")
+        operations.mount_workspace(
+            workspace_name,
+            WinFSPOperations(fs_access=fs_access, volume_label=volume_label, **event_kwargs),  # type: ignore[arg-type]
+        )
+
         # Notify the manager that the mountpoint is ready
         yield mountpoint_path
+
+        await trio.sleep_forever()
 
     finally:
         event_bus.send(CoreEvent.MOUNTPOINT_STOPPING, **event_kwargs)
@@ -370,6 +374,8 @@ async def winfsp_single_mountpoint_runner_factory(
                 operations=operations,
                 mountpoint_path=mountpoint_path,
             )
+
+            await trio.sleep_forever()
 
     except Exception as exc:
         raise MountpointDriverCrash(f"WinFSP has crashed on {mountpoint_path}: {exc}") from exc

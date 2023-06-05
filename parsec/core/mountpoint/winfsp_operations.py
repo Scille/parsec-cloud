@@ -595,8 +595,12 @@ def create_stats_for_dir() -> dict[str, Any]:
     return stats
 
 
-# `BaseFileSystemOperations` is resolved as `Any` on non-windows platform.
-# We can't derive from `Any` type (misc).
+@dataclass
+class MountedWorkspace:
+    operations: WinFSPOperations
+    stats: dict[str, Any]
+
+
 class MultiWorkspaceWinFSPOperations(BaseFileSystemOperations):  # type: ignore[misc]
     """
     A WinFSPOperations class for multi-workspace mount points.
@@ -636,11 +640,6 @@ class MultiWorkspaceWinFSPOperations(BaseFileSystemOperations):  # type: ignore[
 
         # Root directory does not belong to any workspace
         self._root_dir_stats: dict[str, Any] = create_stats_for_dir()
-
-        @dataclass
-        class MountedWorkspace:
-            operations: WinFSPOperations
-            stats: dict[str, Any]
 
         # Mounted workspaces are retrieved by workspace name (coming from path)
         self._workspaces: dict[str, MountedWorkspace] = {}
@@ -699,9 +698,7 @@ class MultiWorkspaceWinFSPOperations(BaseFileSystemOperations):  # type: ignore[
         return str(self._remove_workspace_from_path(path))
 
     def mount_workspace(self, workspace_name: str, operations: WinFSPOperations) -> None:
-        self._workspaces[workspace_name] = MultiWorkspaceWinFSPOperations.MountedWorkspace(
-            operations, create_stats_for_dir()
-        )
+        self._workspaces[workspace_name] = MountedWorkspace(operations, create_stats_for_dir())
 
     def unmount_workspace(self, workspace_name: str) -> None:
         self._workspaces.pop(workspace_name, None)
