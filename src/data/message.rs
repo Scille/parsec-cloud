@@ -10,9 +10,11 @@ use pyo3::{
 use crate::{
     api_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey},
     data::{DataExc, EntryName},
-    ids::{DeviceID, EntryID},
+    ids::{DeviceID, RealmID},
     time::DateTime,
 };
+
+use libparsec::types::IndexInt;
 
 #[pyclass(subclass)]
 #[derive(Clone)]
@@ -117,8 +119,8 @@ impl SharingGrantedMessageContent {
         author: DeviceID,
         timestamp: DateTime,
         name: EntryName,
-        id: EntryID,
-        encryption_revision: u32,
+        id: RealmID,
+        encryption_revision: IndexInt,
         encrypted_on: DateTime,
         key: SecretKey,
     ) -> PyResult<(Self, MessageContent)> {
@@ -147,15 +149,15 @@ impl SharingGrantedMessageContent {
     }
 
     #[getter]
-    fn id(_self: PyRef<'_, Self>) -> PyResult<EntryID> {
+    fn id(_self: PyRef<'_, Self>) -> PyResult<RealmID> {
         Ok(match _self.as_ref().0 {
-            libparsec::types::MessageContent::SharingGranted { id, .. } => EntryID(id),
+            libparsec::types::MessageContent::SharingGranted { id, .. } => RealmID(id),
             _ => return Err(PyNotImplementedError::new_err("")),
         })
     }
 
     #[getter]
-    fn encryption_revision(_self: PyRef<'_, Self>) -> PyResult<u32> {
+    fn encryption_revision(_self: PyRef<'_, Self>) -> PyResult<IndexInt> {
         Ok(match _self.as_ref().0 {
             libparsec::types::MessageContent::SharingGranted {
                 encryption_revision,
@@ -194,8 +196,8 @@ impl SharingReencryptedMessageContent {
         author: DeviceID,
         timestamp: DateTime,
         name: EntryName,
-        id: EntryID,
-        encryption_revision: u32,
+        id: RealmID,
+        encryption_revision: IndexInt,
         encrypted_on: DateTime,
         key: SecretKey,
     ) -> PyResult<(Self, MessageContent)> {
@@ -224,15 +226,15 @@ impl SharingReencryptedMessageContent {
     }
 
     #[getter]
-    fn id(_self: PyRef<'_, Self>) -> PyResult<EntryID> {
+    fn id(_self: PyRef<'_, Self>) -> PyResult<RealmID> {
         Ok(match _self.as_ref().0 {
-            libparsec::types::MessageContent::SharingReencrypted { id, .. } => EntryID(id),
+            libparsec::types::MessageContent::SharingReencrypted { id, .. } => RealmID(id),
             _ => return Err(PyNotImplementedError::new_err("")),
         })
     }
 
     #[getter]
-    fn encryption_revision(_self: PyRef<'_, Self>) -> PyResult<u32> {
+    fn encryption_revision(_self: PyRef<'_, Self>) -> PyResult<IndexInt> {
         Ok(match _self.as_ref().0 {
             libparsec::types::MessageContent::SharingReencrypted {
                 encryption_revision,
@@ -269,7 +271,7 @@ pub(crate) struct SharingRevokedMessageContent;
 #[pymethods]
 impl SharingRevokedMessageContent {
     #[new]
-    fn new(author: DeviceID, timestamp: DateTime, id: EntryID) -> PyResult<(Self, MessageContent)> {
+    fn new(author: DeviceID, timestamp: DateTime, id: RealmID) -> PyResult<(Self, MessageContent)> {
         Ok((
             Self,
             MessageContent(libparsec::types::MessageContent::SharingRevoked {
@@ -281,9 +283,9 @@ impl SharingRevokedMessageContent {
     }
 
     #[getter]
-    fn id(_self: PyRef<'_, Self>) -> PyResult<EntryID> {
+    fn id(_self: PyRef<'_, Self>) -> PyResult<RealmID> {
         Ok(match _self.as_ref().0 {
-            libparsec::types::MessageContent::SharingRevoked { id, .. } => EntryID(id),
+            libparsec::types::MessageContent::SharingRevoked { id, .. } => RealmID(id),
             _ => return Err(PyNotImplementedError::new_err("")),
         })
     }

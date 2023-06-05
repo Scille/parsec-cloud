@@ -253,7 +253,7 @@ impl BackendEventCertificatesUpdated {
     }
 
     #[getter]
-    fn timestamp<'py>(_self: PyRef<Self>, py: Python<'py>) -> PyResult<DateTime> {
+    fn timestamp<'py>(_self: PyRef<Self>) -> PyResult<DateTime> {
         match &_self.into_super().0 {
             RawBackendEvent::CertificatesUpdated { timestamp, .. } => Ok(DateTime(*timestamp)),
             _ => unreachable!(),

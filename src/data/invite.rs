@@ -158,7 +158,7 @@ impl InviteUserData {
     fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> PyResult<Self> {
         match libparsec::types::InviteUserData::decrypt_and_load(encrypted, &key.0) {
             Ok(x) => Ok(Self(x)),
-            Err(err) => Err(PyValueError::new_err(err)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
     }
 }
@@ -241,7 +241,7 @@ impl InviteUserConfirmation {
     fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> PyResult<Self> {
         match libparsec::types::InviteUserConfirmation::decrypt_and_load(encrypted, &key.0) {
             Ok(x) => Ok(Self(x)),
-            Err(err) => Err(PyValueError::new_err(err)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
     }
 }
@@ -298,7 +298,7 @@ impl InviteDeviceData {
     fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> PyResult<Self> {
         match libparsec::types::InviteDeviceData::decrypt_and_load(encrypted, &key.0) {
             Ok(x) => Ok(Self(x)),
-            Err(err) => Err(PyValueError::new_err(err)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
     }
 }
@@ -402,7 +402,7 @@ impl InviteDeviceConfirmation {
     fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> PyResult<Self> {
         match libparsec::types::InviteDeviceConfirmation::decrypt_and_load(encrypted, &key.0) {
             Ok(x) => Ok(Self(x)),
-            Err(err) => Err(PyValueError::new_err(err)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
     }
 }

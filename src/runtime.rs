@@ -98,6 +98,7 @@ impl TokioTaskAborterFromTrio {
 }
 
 enum FutureIntoCoroutineInternal {
+    #[allow(dead_code)]
     Ready(PyResult<PyObject>),
     ToPoll(BoxFuture<'static, PyResult<PyObject>>),
 }

@@ -10,7 +10,6 @@ mod api_crypto;
 // mod backend_connection;
 mod backend_events;
 mod binding_utils;
-// mod core_fs;
 mod data;
 mod enumerate;
 // mod file_operations;
@@ -18,7 +17,7 @@ mod ids;
 // mod invite;
 #[cfg(feature = "test-utils")]
 mod local_db;
-mod local_device;
+// mod local_device;
 mod misc;
 mod protocol;
 mod regex;
@@ -27,7 +26,7 @@ mod runtime;
 #[cfg(feature = "test-utils")]
 mod testbed;
 mod time;
-mod trustchain;
+// mod trustchain;
 
 /// A Python module implemented in Rust.
 #[pymodule]
@@ -40,7 +39,7 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     // crate::invite::add_mod(py, m)?;
     #[cfg(feature = "test-utils")]
     crate::local_db::add_mod(py, m)?;
-    crate::local_device::add_mod(py, m)?;
+    // crate::local_device::add_mod(py, m)?;
     crate::protocol::add_mod(py, m)?;
     // crate::remote_devices_manager::add_mod(py, m)?;
 
@@ -74,7 +73,6 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<addrs::BackendPkiEnrollmentAddr>()?;
     m.add_function(wrap_pyfunction!(addrs::export_root_verify_key, m)?)?;
 
-    m.add_class::<enumerate::CoreEvent>()?;
     m.add_class::<enumerate::DeviceFileType>()?;
     m.add_class::<enumerate::InvitationStatus>()?;
     m.add_class::<enumerate::InvitationType>()?;
@@ -109,13 +107,6 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
 
     // Regex
     m.add_class::<regex::Regex>()?;
-
-    m.add_class::<trustchain::TrustchainContext>()?;
-    m.add_class::<trustchain::TrustchainError>()?;
-    m.add(
-        "TrustchainErrorException",
-        py.get_type::<trustchain::TrustchainErrorException>(),
-    )?;
 
     // Registering ABC classes
     m.add_class::<runtime::FutureIntoCoroutine>()?;

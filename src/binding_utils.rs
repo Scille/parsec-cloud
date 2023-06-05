@@ -368,56 +368,6 @@ macro_rules! impl_enum_field {
     };
 }
 
-macro_rules! _cmd_error_handler {
-    ("handle_bad_timestamp", $cmd_mod_path: path, $cmd_wrapper_mod_path: path, $rep: path) => {
-        ::paste::paste! {
-            if let $cmd_mod_path::Rep::BadTimestamp { .. } = $rep {
-                let rep = ::pyo3::Python::with_gil(|py| {
-                    crate::binding_utils::py_object!(
-                        $rep,
-                        $cmd_wrapper_mod_path::Rep,
-                        $cmd_wrapper_mod_path::RepBadTimestamp,
-                        py
-                    )
-                })?;
-                return Err(crate::backend_connection::BackendOutOfBallparkError::new_err(rep));
-            }
-        }
-    };
-}
-
-macro_rules! send_command {
-    ($client: ident, $req: ident, $cmd_mod_path: path, $cmd_wrapper_mod_path: path, $($kind_type: path),* $(, $error_handler: literal)? $(,)?) => {
-        // We invoke gil because it will run in a coroutine
-        ::paste::paste! {
-            {
-                let rep = $client
-                    .send($req)
-                    .await
-                    .map_err(|e| ::pyo3::PyErr::from(crate::backend_connection::CommandExc::from(e)))?;
-
-                $(crate::binding_utils::_cmd_error_handler!($error_handler, $cmd_mod_path, $cmd_wrapper_mod_path, rep);)?
-
-                Ok(match rep {
-                    $(
-                        rep @ $cmd_mod_path::Rep::$kind_type { .. } => {
-                            ::pyo3::Python::with_gil(|py| {
-                                crate::binding_utils::py_object!(
-                                    rep,
-                                    $cmd_wrapper_mod_path::Rep,
-                                    $cmd_wrapper_mod_path::[<Rep $kind_type>],
-                                    py
-                                )
-                            })?
-                        }
-                    )*
-                })
-            }
-        }
-    }
-}
-
-pub(crate) use _cmd_error_handler;
 pub(crate) use _unwrap_bytes;
 pub(crate) use check_mandatory_kwargs;
 pub(crate) use create_exception;
@@ -427,5 +377,4 @@ pub(crate) use impl_enum_field;
 pub(crate) use parse_kwargs;
 pub(crate) use parse_kwargs_optional;
 pub(crate) use py_object;
-pub(crate) use send_command;
 pub(crate) use unwrap_bytes;

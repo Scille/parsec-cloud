@@ -15,7 +15,7 @@ use crate::{
     ids::{BlockID, DeviceID, EntryID},
     time::DateTime,
 };
-use libparsec::types::Manifest;
+use libparsec::types::{IndexInt, Manifest};
 
 #[pyclass]
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -61,7 +61,7 @@ impl WorkspaceEntry {
             [id: EntryID, "id"],
             [name: EntryName, "name"],
             [key: SecretKey, "key"],
-            [encryption_revision: u32, "encryption_revision"],
+            [encryption_revision: IndexInt, "encryption_revision"],
             [encrypted_on: DateTime, "encrypted_on"],
             [role_cached_on: DateTime, "role_cached_on"],
             [role: Option<RealmRole>, "role"],
@@ -85,7 +85,7 @@ impl WorkspaceEntry {
             [id: EntryID, "id"],
             [name: EntryName, "name"],
             [key: SecretKey, "key"],
-            [encryption_revision: u32, "encryption_revision"],
+            [encryption_revision: IndexInt, "encryption_revision"],
             [encrypted_on: DateTime, "encrypted_on"],
             [role_cached_on: DateTime, "role_cached_on"],
             [role: Option<RealmRole>, "role"],
@@ -147,7 +147,7 @@ impl WorkspaceEntry {
     }
 
     #[getter]
-    fn encryption_revision(&self) -> PyResult<u32> {
+    fn encryption_revision(&self) -> PyResult<IndexInt> {
         Ok(self.0.encryption_revision)
     }
 
