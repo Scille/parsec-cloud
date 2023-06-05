@@ -326,22 +326,22 @@ fn variant_clientevent_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent, 
 fn variant_clientevent_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
-        libparsec::ClientEvent::ClientConnectionChanged { client } => {
+        libparsec::ClientEvent::ClientConnectionChanged { client, .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientConnectionChanged".into())?;
             let js_client = JsValue::from(client);
             Reflect::set(&js_obj, &"client".into(), &js_client)?;
         }
-        libparsec::ClientEvent::WorkspaceReencryptionEnded {} => {
+        libparsec::ClientEvent::WorkspaceReencryptionEnded { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"WorkspaceReencryptionEnded".into())?;
         }
-        libparsec::ClientEvent::WorkspaceReencryptionNeeded {} => {
+        libparsec::ClientEvent::WorkspaceReencryptionNeeded { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"WorkspaceReencryptionNeeded".into(),
             )?;
         }
-        libparsec::ClientEvent::WorkspaceReencryptionStarted {} => {
+        libparsec::ClientEvent::WorkspaceReencryptionStarted { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
@@ -371,13 +371,13 @@ fn variant_devicefiletype_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceFile
 fn variant_devicefiletype_rs_to_js(rs_obj: libparsec::DeviceFileType) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
-        libparsec::DeviceFileType::Password {} => {
+        libparsec::DeviceFileType::Password { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Password".into())?;
         }
-        libparsec::DeviceFileType::Recovery {} => {
+        libparsec::DeviceFileType::Recovery { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Recovery".into())?;
         }
-        libparsec::DeviceFileType::Smartcard {} => {
+        libparsec::DeviceFileType::Smartcard { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Smartcard".into())?;
         }
     }
@@ -423,12 +423,12 @@ fn variant_workspacestoragecachesize_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
-        libparsec::WorkspaceStorageCacheSize::Custom { size } => {
+        libparsec::WorkspaceStorageCacheSize::Custom { size, .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Custom".into())?;
             let js_size = JsValue::from(size);
             Reflect::set(&js_obj, &"size".into(), &js_size)?;
         }
-        libparsec::WorkspaceStorageCacheSize::Default {} => {
+        libparsec::WorkspaceStorageCacheSize::Default { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Default".into())?;
         }
     }
@@ -499,7 +499,7 @@ fn variant_deviceaccessparams_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
-        libparsec::DeviceAccessParams::Password { path, password } => {
+        libparsec::DeviceAccessParams::Password { path, password, .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Password".into())?;
             let js_path = JsValue::from_str({
                 let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
@@ -517,7 +517,7 @@ fn variant_deviceaccessparams_rs_to_js(
             let js_password = password.into();
             Reflect::set(&js_obj, &"password".into(), &js_password)?;
         }
-        libparsec::DeviceAccessParams::Smartcard { path } => {
+        libparsec::DeviceAccessParams::Smartcard { path, .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Smartcard".into())?;
             let js_path = JsValue::from_str({
                 let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
@@ -540,44 +540,27 @@ fn variant_deviceaccessparams_rs_to_js(
 // ClientLoginError
 
 #[allow(dead_code)]
-fn variant_clientloginerror_js_to_rs(obj: JsValue) -> Result<libparsec::ClientLoginError, JsValue> {
-    let tag = Reflect::get(&obj, &"tag".into())?;
-    match tag {
-        tag if tag == JsValue::from_str("AccessMethodNotAvailable") => {
-            Ok(libparsec::ClientLoginError::AccessMethodNotAvailable {})
-        }
-        tag if tag == JsValue::from_str("DecryptionFailed") => {
-            Ok(libparsec::ClientLoginError::DecryptionFailed {})
-        }
-        tag if tag == JsValue::from_str("DeviceAlreadyLoggedIn") => {
-            Ok(libparsec::ClientLoginError::DeviceAlreadyLoggedIn {})
-        }
-        tag if tag == JsValue::from_str("DeviceInvalidFormat") => {
-            Ok(libparsec::ClientLoginError::DeviceInvalidFormat {})
-        }
-        _ => Err(JsValue::from(TypeError::new(
-            "Object is not a ClientLoginError",
-        ))),
-    }
-}
-
-#[allow(dead_code)]
 fn variant_clientloginerror_rs_to_js(
     rs_obj: libparsec::ClientLoginError,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::ClientLoginError::AccessMethodNotAvailable {} => {
+        libparsec::ClientLoginError::AccessMethodNotAvailable { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"AccessMethodNotAvailable".into())?;
         }
-        libparsec::ClientLoginError::DecryptionFailed {} => {
+        libparsec::ClientLoginError::DecryptionFailed { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"DecryptionFailed".into())?;
         }
-        libparsec::ClientLoginError::DeviceAlreadyLoggedIn {} => {
+        libparsec::ClientLoginError::DeviceAlreadyLoggedIn { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"DeviceAlreadyLoggedIn".into())?;
         }
-        libparsec::ClientLoginError::DeviceInvalidFormat {} => {
+        libparsec::ClientLoginError::DeviceInvalidFormat { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"DeviceInvalidFormat".into())?;
+        }
+        libparsec::ClientLoginError::Internal(..) => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
         }
     }
     Ok(js_obj)
@@ -586,46 +569,17 @@ fn variant_clientloginerror_rs_to_js(
 // ClientGetterError
 
 #[allow(dead_code)]
-fn variant_clientgettererror_js_to_rs(
-    obj: JsValue,
-) -> Result<libparsec::ClientGetterError, JsValue> {
-    let tag = Reflect::get(&obj, &"tag".into())?;
-    match tag {
-        tag if tag == JsValue::from_str("Disconnected") => {
-            Ok(libparsec::ClientGetterError::Disconnected {})
-        }
-        tag if tag == JsValue::from_str("InvalidHandle") => {
-            let handle = {
-                let js_val = Reflect::get(&obj, &"handle".into())?;
-                {
-                    let v = js_val
-                        .dyn_into::<Number>()
-                        .map_err(|_| TypeError::new("Not a number"))?
-                        .value_of();
-                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
-                    }
-                    v as u32
-                }
-            };
-            Ok(libparsec::ClientGetterError::InvalidHandle { handle })
-        }
-        _ => Err(JsValue::from(TypeError::new(
-            "Object is not a ClientGetterError",
-        ))),
-    }
-}
-
-#[allow(dead_code)]
 fn variant_clientgettererror_rs_to_js(
     rs_obj: libparsec::ClientGetterError,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::ClientGetterError::Disconnected {} => {
+        libparsec::ClientGetterError::Disconnected { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Disconnected".into())?;
         }
-        libparsec::ClientGetterError::InvalidHandle { handle } => {
+        libparsec::ClientGetterError::InvalidHandle { handle, .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"InvalidHandle".into())?;
             let js_handle = JsValue::from(handle);
             Reflect::set(&js_obj, &"handle".into(), &js_handle)?;

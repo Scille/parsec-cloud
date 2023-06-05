@@ -25,6 +25,9 @@ META_TYPES = [
     "I32BasedType",
     "U32BasedType",
     "Variant",
+    "VariantItemTuple",
+    "VariantItemUnit",
+    "ErrorVariant",
     "Structure",
     "OnClientEventCallback",
 ]
@@ -34,6 +37,9 @@ StrBasedType: Type = None
 I32BasedType: Type = None
 U32BasedType: Type = None
 Variant: Type = None
+VariantItemTuple = None
+VariantItemUnit = None
+ErrorVariant: Type = None
 Structure: Type = None
 OnClientEventCallback: Type = None
 
@@ -152,10 +158,21 @@ class StructSpec(BaseTypeInUse):
 
 
 @dataclass
+class VariantItemSpec(BaseTypeInUse):
+    name: str
+    is_tuple: bool = False
+    is_unit: bool = False
+    is_struct: bool = False
+    tuple: List[BaseTypeInUse] | None = None
+    struct: StructSpec | None = None
+
+
+@dataclass
 class VariantSpec(BaseTypeInUse):
     kind = "variant"
     name: str
-    values: List["StructSpec"]
+    values: List[VariantItemSpec]
+    is_error_variant: bool
 
 
 @dataclass
@@ -274,18 +291,37 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
                 if variant_val_name.startswith("_"):
                     continue
                 variant_val_type = getattr(item, variant_val_name)
-                value_spec = StructSpec(
-                    name=variant_val_name,
-                    attributes={
-                        k: BaseTypeInUse.parse(v)
-                        for k, v in getattr(variant_val_type, "__annotations__", {}).items()
-                    },
-                )
+
+                if issubclass(variant_val_type, VariantItemUnit):
+                    value_spec = VariantItemSpec(name=variant_val_name, is_unit=True)
+
+                elif issubclass(variant_val_type, VariantItemTuple):
+                    items = getattr(variant_val_type, "items", [])
+                    value_spec = VariantItemSpec(
+                        name=variant_val_name,
+                        is_tuple=True,
+                        tuple=[BaseTypeInUse.parse(v) for v in items],
+                    )
+
+                else:
+                    value_spec = VariantItemSpec(
+                        name=variant_val_name,
+                        is_struct=True,
+                        struct=StructSpec(
+                            name=variant_val_name,
+                            attributes={
+                                k: BaseTypeInUse.parse(v)
+                                for k, v in getattr(variant_val_type, "__annotations__", {}).items()
+                            },
+                        ),
+                    )
+
                 variant_values.append(value_spec)
 
             variant = VariantSpec(
                 name=item_name,
                 values=variant_values,
+                is_error_variant=issubclass(item, ErrorVariant),
             )
             # Modify placeholder instead of replacing it given it is referenced in the nested specs
             placeholder.__dict__ = variant.__dict__

@@ -7,6 +7,7 @@ from .common import (
     ClientHandle,
     DeviceID,
     DeviceLabel,
+    ErrorVariant,
     HumanHandle,
     OrganizationID,
     Path,
@@ -15,6 +16,7 @@ from .common import (
     Structure,
     U32BasedType,
     Variant,
+    VariantItemTuple,
 )
 from .events import ClientEvent
 
@@ -77,7 +79,7 @@ async def client_list_available_devices(path: Ref[Path]) -> list[AvailableDevice
     ...
 
 
-class ClientLoginError(Variant):
+class ClientLoginError(ErrorVariant):
     class DeviceAlreadyLoggedIn:
         pass
 
@@ -90,6 +92,9 @@ class ClientLoginError(Variant):
     class DeviceInvalidFormat:
         pass
 
+    class Internal(VariantItemTuple):
+        pass
+
 
 async def client_login(
     load_device_params: DeviceAccessParams,
@@ -99,7 +104,7 @@ async def client_login(
     ...
 
 
-class ClientGetterError(Variant):
+class ClientGetterError(ErrorVariant):
     class Disconnected:
         pass
 

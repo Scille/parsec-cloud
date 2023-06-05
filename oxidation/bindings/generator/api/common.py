@@ -13,7 +13,38 @@ class Result(Generic[TypeVar("OK"), TypeVar("ERR")]):
     pass
 
 
+# e.g.
+#
+#       enum Foo {
+#           A{a: u32},
+#           B(u32, u32),
+#           C
+#       }
+#
+# represented as:
+#
+#     class Foo(Variant):
+#         class A:
+#             a: int
+#         B: VariantItemTuple(int, int)
+#         C: VariantItemUnit
 class Variant:
+    pass
+
+
+class VariantItemUnit:
+    pass
+
+
+class VariantItemTuple:
+    def __init__(self, *items):
+        self.items = items
+
+
+# Similar to a variant, but:
+# - also provide an `error` field that contains the `to_string()` of the value.
+# - Doesn't allow js-to-rust conversion (given this is only a type returned by the Rust API)
+class ErrorVariant(Variant):
     pass
 
 

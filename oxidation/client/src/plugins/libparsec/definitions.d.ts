@@ -6,40 +6,40 @@
 
 export type Result<T, E = Error> =
   | { ok: true; value: T }
-  | { ok: false; error: E };
+  | { ok: false; error: E }
 
-type OrganizationID = string;
-type DeviceLabel = string;
-type HumanHandle = string;
-type Path = string;
-type BackendAddr = string;
-type DeviceID = string;
-type LoggedCoreHandle = number;
-type ClientHandle = number;
-type CacheSize = number;
+type OrganizationID = string
+type DeviceLabel = string
+type HumanHandle = string
+type BackendAddr = string
+type DeviceID = string
+type Path = string
+type LoggedCoreHandle = number
+type ClientHandle = number
+type CacheSize = number
 
 export interface AvailableDevice {
-    keyFilePath: Path;
-    organizationId: OrganizationID;
-    deviceId: DeviceID;
-    humanHandle: HumanHandle | null;
-    deviceLabel: DeviceLabel | null;
-    slug: string;
-    ty: DeviceFileType;
+    keyFilePath: Path
+    organizationId: OrganizationID
+    deviceId: DeviceID
+    humanHandle: HumanHandle | null
+    deviceLabel: DeviceLabel | null
+    slug: string
+    ty: DeviceFileType
 }
 
 export interface ClientConfig {
-    configDir: Path;
-    dataBaseDir: Path;
-    mountpointBaseDir: Path;
-    preferredOrgCreationBackendAddr: BackendAddr;
-    workspaceStorageCacheSize: WorkspaceStorageCacheSize;
+    configDir: Path
+    dataBaseDir: Path
+    mountpointBaseDir: Path
+    preferredOrgCreationBackendAddr: BackendAddr
+    workspaceStorageCacheSize: WorkspaceStorageCacheSize
 }
 
 // ClientEvent
 export interface ClientEventClientConnectionChanged {
     tag: 'ClientConnectionChanged'
-    client: number;
+    client: number
 }
 export interface ClientEventWorkspaceReencryptionEnded {
     tag: 'WorkspaceReencryptionEnded'
@@ -74,7 +74,7 @@ export type DeviceFileType =
 // WorkspaceStorageCacheSize
 export interface WorkspaceStorageCacheSizeCustom {
     tag: 'Custom'
-    size: number;
+    size: number
 }
 export interface WorkspaceStorageCacheSizeDefault {
     tag: 'Default'
@@ -86,12 +86,12 @@ export type WorkspaceStorageCacheSize =
 // DeviceAccessParams
 export interface DeviceAccessParamsPassword {
     tag: 'Password'
-    path: Path;
-    password: string;
+    path: Path
+    password: string
 }
 export interface DeviceAccessParamsSmartcard {
     tag: 'Smartcard'
-    path: Path;
+    path: Path
 }
 export type DeviceAccessParams =
   | DeviceAccessParamsPassword
@@ -100,29 +100,40 @@ export type DeviceAccessParams =
 // ClientLoginError
 export interface ClientLoginErrorAccessMethodNotAvailable {
     tag: 'AccessMethodNotAvailable'
+    error: string
 }
 export interface ClientLoginErrorDecryptionFailed {
     tag: 'DecryptionFailed'
+    error: string
 }
 export interface ClientLoginErrorDeviceAlreadyLoggedIn {
     tag: 'DeviceAlreadyLoggedIn'
+    error: string
 }
 export interface ClientLoginErrorDeviceInvalidFormat {
     tag: 'DeviceInvalidFormat'
+    error: string
+}
+export interface ClientLoginErrorInternal {
+    tag: 'Internal'
+    error: string
 }
 export type ClientLoginError =
   | ClientLoginErrorAccessMethodNotAvailable
   | ClientLoginErrorDecryptionFailed
   | ClientLoginErrorDeviceAlreadyLoggedIn
   | ClientLoginErrorDeviceInvalidFormat
+  | ClientLoginErrorInternal
 
 // ClientGetterError
 export interface ClientGetterErrorDisconnected {
     tag: 'Disconnected'
+    error: string
 }
 export interface ClientGetterErrorInvalidHandle {
     tag: 'InvalidHandle'
-    handle: number;
+    error: string
+    handle: number
 }
 export type ClientGetterError =
   | ClientGetterErrorDisconnected
@@ -131,20 +142,20 @@ export type ClientGetterError =
 export interface LibParsecPlugin {
     clientListAvailableDevices(
         path: Path
-    ): Promise<Array<AvailableDevice>>;
+    ): Promise<Array<AvailableDevice>>
     clientLogin(
         load_device_params: DeviceAccessParams,
         config: ClientConfig,
         on_event_callback: (event: ClientEvent) => void
-    ): Promise<Result<number, ClientLoginError>>;
+    ): Promise<Result<number, ClientLoginError>>
     clientGetDeviceId(
         handle: number
-    ): Promise<Result<DeviceID, ClientGetterError>>;
+    ): Promise<Result<DeviceID, ClientGetterError>>
     testNewTestbed(
         template: string,
         test_server: BackendAddr | null
-    ): Promise<Path>;
+    ): Promise<Path>
     testDropTestbed(
         path: Path
-    ): Promise<null>;
+    ): Promise<null>
 }

@@ -307,21 +307,21 @@ fn variant_clientevent_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
-        libparsec::ClientEvent::ClientConnectionChanged { client } => {
+        libparsec::ClientEvent::ClientConnectionChanged { client, .. } => {
             let js_tag = JsString::try_new(cx, "ClientConnectionChanged").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_client = JsNumber::new(cx, client as f64);
             js_obj.set(cx, "client", js_client)?;
         }
-        libparsec::ClientEvent::WorkspaceReencryptionEnded {} => {
+        libparsec::ClientEvent::WorkspaceReencryptionEnded { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceReencryptionEnded").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::ClientEvent::WorkspaceReencryptionNeeded {} => {
+        libparsec::ClientEvent::WorkspaceReencryptionNeeded { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceReencryptionNeeded").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::ClientEvent::WorkspaceReencryptionStarted {} => {
+        libparsec::ClientEvent::WorkspaceReencryptionStarted { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceReencryptionStarted").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
@@ -352,15 +352,15 @@ fn variant_devicefiletype_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
-        libparsec::DeviceFileType::Password {} => {
+        libparsec::DeviceFileType::Password { .. } => {
             let js_tag = JsString::try_new(cx, "Password").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::DeviceFileType::Recovery {} => {
+        libparsec::DeviceFileType::Recovery { .. } => {
             let js_tag = JsString::try_new(cx, "Recovery").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::DeviceFileType::Smartcard {} => {
+        libparsec::DeviceFileType::Smartcard { .. } => {
             let js_tag = JsString::try_new(cx, "Smartcard").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
@@ -402,13 +402,13 @@ fn variant_workspacestoragecachesize_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
-        libparsec::WorkspaceStorageCacheSize::Custom { size } => {
+        libparsec::WorkspaceStorageCacheSize::Custom { size, .. } => {
             let js_tag = JsString::try_new(cx, "Custom").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_size = JsNumber::new(cx, size as f64);
             js_obj.set(cx, "size", js_size)?;
         }
-        libparsec::WorkspaceStorageCacheSize::Default {} => {
+        libparsec::WorkspaceStorageCacheSize::Default { .. } => {
             let js_tag = JsString::try_new(cx, "Default").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
@@ -468,7 +468,7 @@ fn variant_deviceaccessparams_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
-        libparsec::DeviceAccessParams::Password { path, password } => {
+        libparsec::DeviceAccessParams::Password { path, password, .. } => {
             let js_tag = JsString::try_new(cx, "Password").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_path = JsString::try_new(cx, {
@@ -487,7 +487,7 @@ fn variant_deviceaccessparams_rs_to_js<'a>(
             let js_password = JsString::try_new(cx, password).or_throw(cx)?;
             js_obj.set(cx, "password", js_password)?;
         }
-        libparsec::DeviceAccessParams::Smartcard { path } => {
+        libparsec::DeviceAccessParams::Smartcard { path, .. } => {
             let js_tag = JsString::try_new(cx, "Smartcard").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_path = JsString::try_new(cx, {
@@ -511,41 +511,32 @@ fn variant_deviceaccessparams_rs_to_js<'a>(
 // ClientLoginError
 
 #[allow(dead_code)]
-fn variant_clientloginerror_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::ClientLoginError> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "AccessMethodNotAvailable" => Ok(libparsec::ClientLoginError::AccessMethodNotAvailable {}),
-        "DecryptionFailed" => Ok(libparsec::ClientLoginError::DecryptionFailed {}),
-        "DeviceAlreadyLoggedIn" => Ok(libparsec::ClientLoginError::DeviceAlreadyLoggedIn {}),
-        "DeviceInvalidFormat" => Ok(libparsec::ClientLoginError::DeviceInvalidFormat {}),
-        _ => cx.throw_type_error("Object is not a ClientLoginError"),
-    }
-}
-
-#[allow(dead_code)]
 fn variant_clientloginerror_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::ClientLoginError,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::ClientLoginError::AccessMethodNotAvailable {} => {
+        libparsec::ClientLoginError::AccessMethodNotAvailable { .. } => {
             let js_tag = JsString::try_new(cx, "AccessMethodNotAvailable").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::ClientLoginError::DecryptionFailed {} => {
+        libparsec::ClientLoginError::DecryptionFailed { .. } => {
             let js_tag = JsString::try_new(cx, "DecryptionFailed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::ClientLoginError::DeviceAlreadyLoggedIn {} => {
+        libparsec::ClientLoginError::DeviceAlreadyLoggedIn { .. } => {
             let js_tag = JsString::try_new(cx, "DeviceAlreadyLoggedIn").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::ClientLoginError::DeviceInvalidFormat {} => {
+        libparsec::ClientLoginError::DeviceInvalidFormat { .. } => {
             let js_tag = JsString::try_new(cx, "DeviceInvalidFormat").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientLoginError::Internal(..) => {
+            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -555,42 +546,19 @@ fn variant_clientloginerror_rs_to_js<'a>(
 // ClientGetterError
 
 #[allow(dead_code)]
-fn variant_clientgettererror_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::ClientGetterError> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "Disconnected" => Ok(libparsec::ClientGetterError::Disconnected {}),
-        "InvalidHandle" => {
-            let handle = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
-                {
-                    let v = js_val.value(cx);
-                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                        cx.throw_type_error("Not an u32 number")?
-                    }
-                    v as u32
-                }
-            };
-            Ok(libparsec::ClientGetterError::InvalidHandle { handle })
-        }
-        _ => cx.throw_type_error("Object is not a ClientGetterError"),
-    }
-}
-
-#[allow(dead_code)]
 fn variant_clientgettererror_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::ClientGetterError,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::ClientGetterError::Disconnected {} => {
+        libparsec::ClientGetterError::Disconnected { .. } => {
             let js_tag = JsString::try_new(cx, "Disconnected").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::ClientGetterError::InvalidHandle { handle } => {
+        libparsec::ClientGetterError::InvalidHandle { handle, .. } => {
             let js_tag = JsString::try_new(cx, "InvalidHandle").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_handle = JsNumber::new(cx, handle as f64);

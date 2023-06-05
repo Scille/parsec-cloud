@@ -7,33 +7,33 @@
 
 export type Result<T, E = Error> =
   | { ok: true; value: T }
-  | { ok: false; error: E };
+  | { ok: false; error: E }
 
 
 export interface AvailableDevice {
-    keyFilePath: string;
-    organizationId: string;
-    deviceId: string;
-    humanHandle: string | null;
-    deviceLabel: string | null;
-    slug: string;
-    ty: DeviceFileType;
+    keyFilePath: string
+    organizationId: string
+    deviceId: string
+    humanHandle: string | null
+    deviceLabel: string | null
+    slug: string
+    ty: DeviceFileType
 }
 
 
 export interface ClientConfig {
-    configDir: string;
-    dataBaseDir: string;
-    mountpointBaseDir: string;
-    preferredOrgCreationBackendAddr: string;
-    workspaceStorageCacheSize: WorkspaceStorageCacheSize;
+    configDir: string
+    dataBaseDir: string
+    mountpointBaseDir: string
+    preferredOrgCreationBackendAddr: string
+    workspaceStorageCacheSize: WorkspaceStorageCacheSize
 }
 
 
 // ClientEvent
 export interface ClientEventClientConnectionChanged {
     tag: "ClientConnectionChanged"
-    client: number;
+    client: number
 }
 export interface ClientEventWorkspaceReencryptionEnded {
     tag: "WorkspaceReencryptionEnded"
@@ -70,7 +70,7 @@ export type DeviceFileType =
 // WorkspaceStorageCacheSize
 export interface WorkspaceStorageCacheSizeCustom {
     tag: "Custom"
-    size: number;
+    size: number
 }
 export interface WorkspaceStorageCacheSizeDefault {
     tag: "Default"
@@ -83,12 +83,12 @@ export type WorkspaceStorageCacheSize =
 // DeviceAccessParams
 export interface DeviceAccessParamsPassword {
     tag: "Password"
-    path: string;
-    password: string;
+    path: string
+    password: string
 }
 export interface DeviceAccessParamsSmartcard {
     tag: "Smartcard"
-    path: string;
+    path: string
 }
 export type DeviceAccessParams =
   | DeviceAccessParamsPassword
@@ -98,30 +98,41 @@ export type DeviceAccessParams =
 // ClientLoginError
 export interface ClientLoginErrorAccessMethodNotAvailable {
     tag: "AccessMethodNotAvailable"
+    error: string
 }
 export interface ClientLoginErrorDecryptionFailed {
     tag: "DecryptionFailed"
+    error: string
 }
 export interface ClientLoginErrorDeviceAlreadyLoggedIn {
     tag: "DeviceAlreadyLoggedIn"
+    error: string
 }
 export interface ClientLoginErrorDeviceInvalidFormat {
     tag: "DeviceInvalidFormat"
+    error: string
+}
+export interface ClientLoginErrorInternal {
+    tag: "Internal"
+    error: string
 }
 export type ClientLoginError =
   | ClientLoginErrorAccessMethodNotAvailable
   | ClientLoginErrorDecryptionFailed
   | ClientLoginErrorDeviceAlreadyLoggedIn
   | ClientLoginErrorDeviceInvalidFormat
+  | ClientLoginErrorInternal
 
 
 // ClientGetterError
 export interface ClientGetterErrorDisconnected {
     tag: "Disconnected"
+    error: string
 }
 export interface ClientGetterErrorInvalidHandle {
     tag: "InvalidHandle"
-    handle: number;
+    error: string
+    handle: number
 }
 export type ClientGetterError =
   | ClientGetterErrorDisconnected
@@ -130,19 +141,19 @@ export type ClientGetterError =
 
 export function clientListAvailableDevices(
     path: string
-): Promise<Array<AvailableDevice>>;
+): Promise<Array<AvailableDevice>>
 export function clientLogin(
     load_device_params: DeviceAccessParams,
     config: ClientConfig,
     on_event_callback: (event: ClientEvent) => void
-): Promise<Result<number, ClientLoginError>>;
+): Promise<Result<number, ClientLoginError>>
 export function clientGetDeviceId(
     handle: number
-): Promise<Result<string, ClientGetterError>>;
+): Promise<Result<string, ClientGetterError>>
 export function testNewTestbed(
     template: string,
     test_server: string | null
-): Promise<string>;
+): Promise<string>
 export function testDropTestbed(
     path: string
-): Promise<null>;
+): Promise<null>

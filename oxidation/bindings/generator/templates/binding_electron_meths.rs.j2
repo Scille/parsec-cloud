@@ -315,17 +315,33 @@ fn {{ variant_js_to_rs_function_name(variant) }}<'a>(
     match tag.as_str() {
 {% for value in variant.values %}
         "{{ value.name }}" => {
-{% for attr_name, attr_type in value.attributes.items() %}
+{% if value.is_struct %}
+{% for attr_name, attr_type in value.struct.attributes.items() %}
             let {{ attr_name }} = {
                 let js_val: Handle<{{ ts_type(attr_type) }}> = obj.get(cx, "{{ attr_name }}")?;
                 {{ render_downcasted_js_to_rs("js_val", attr_type, mut_cx_ref="cx") | indent(16) }}
             };
 {% endfor %}
             Ok(libparsec::{{ variant.name }}::{{ value.name }} {
-{% for attr_name in value.attributes.keys() %}
+{% for attr_name in value.struct.attributes.keys() %}
                 {{ attr_name }},
 {% endfor %}
             })
+{% elif value.is_tuple %}
+{% for attr_type in value.items %}
+            let x{{ loop.index }} = {
+                let js_val: Handle<{{ ts_type(attr_type) }}> = obj.get(cx, "x{{ loop.index }}")?;
+                {{ render_downcasted_js_to_rs("js_val", attr_type, mut_cx_ref="cx") | indent(16) }}
+            };
+{% endfor %}
+            Ok(libparsec::{{ variant.name }}::{{ value.name }} (
+{% for _ in value.attributes.keys() %}
+                x{{ loop.index }},
+{% endfor %}
+            ))
+{% else %}
+            Ok(libparsec::{{ variant.name }}::{{ value.name }})
+{% endif %}
         },
 {% endfor %}
         _ => cx.throw_type_error("Object is not a {{ variant.name }}"),
@@ -341,16 +357,36 @@ fn {{ variant_rs_to_js_function_name(variant) }}<'a>(
     rs_obj: libparsec::{{ variant.name }},
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
+{% if variant.is_error_variant %}
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+{% endif %}
     match rs_obj {
 {% for value in variant.values %}
-        libparsec::{{ variant.name }}::{{ value.name }}{ {% for attr_name in value.attributes.keys() %}{{ attr_name }},{% endfor %} } => {
+{% if value.is_struct %}
+        libparsec::{{ variant.name }}::{{ value.name }}{ {% for attr_name in value.struct.attributes.keys() %}{{ attr_name }},{% endfor %} .. } => {
             let js_tag = JsString::try_new(cx, "{{ value.name }}").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-{% for attr_name, attr_type in value.attributes.items() %}
-            let js_{{ attr_name }} = {{ render_rs_to_js(attr_name, attr_type, mut_cx_ref="cx") | indent(12) }};
-            js_obj.set(cx, "{{ attr_name }}", js_{{ attr_name }})?;
+{% for attr_name, attr_type in value.struct.attributes.items() %}
+        let js_{{ attr_name }} = {{ render_rs_to_js(attr_name, attr_type, mut_cx_ref="cx") | indent(12) }};
+        js_obj.set(cx, "{{ attr_name }}", js_{{ attr_name }})?;
 {% endfor %}
-        },
+        }
+{% elif value.is_tuple %}
+        libparsec::{{ variant.name }}::{{ value.name }}( {% for _ in value.tuple %}x{{ loop.index }},{% endfor %} .. ) => {
+            let js_tag = JsString::try_new(cx, "{{ value.name }}").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+{% for attr_type in value.tuple %}
+            let js_x{{ loop.index }} = {{ render_rs_to_js("x%s" % loop.index, type.elem, mut_cx_ref) | indent(16) }};
+            js_obj.set(cx, "x{{ loop.index }}", js_x{{ loop.index }})?;
+{% endfor %}
+        }
+{% else %}
+        libparsec::{{ variant.name }}::{{ value.name }} => {
+            let js_tag = JsString::try_new(cx, "{{ value.name }}").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+{% endif %}
 {% endfor %}
     }
     Ok(js_obj)
@@ -495,7 +531,9 @@ use neon::{prelude::*, types::buffer::TypedArray};
 
 // {{ variant.name }}
 
+{% if not variant.is_error_variant %}
 {{ render_variant_js_to_rs(variant) }}
+{% endif %}
 
 {{ render_variant_rs_to_js(variant) }}
 {% endfor %}
