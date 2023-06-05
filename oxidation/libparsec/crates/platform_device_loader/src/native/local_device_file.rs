@@ -242,7 +242,7 @@ pub fn save_device_with_password(
 
     let cleartext = device.dump();
     let salt = SecretKey::generate_salt();
-    let key = SecretKey::from_password(password, &salt);
+    let key = SecretKey::from_password(password, &salt)?;
 
     let ciphertext = key.encrypt(&cleartext).into();
     let key_file_content = DeviceFile::Password(DeviceFilePassword {

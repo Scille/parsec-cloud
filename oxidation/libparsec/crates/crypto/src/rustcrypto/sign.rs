@@ -119,6 +119,9 @@ impl VerifyKey {
     pub fn unsecure_unwrap(
         signed: &[u8],
     ) -> Result<(&[u8; SigningKey::SIGNATURE_SIZE], &[u8]), CryptoError> {
+        if signed.len() < SigningKey::SIGNATURE_SIZE {
+            return Err(CryptoError::Signature);
+        }
         let signature = signed[..SigningKey::SIGNATURE_SIZE]
             .try_into()
             .map_err(|_e| CryptoError::Signature)?;

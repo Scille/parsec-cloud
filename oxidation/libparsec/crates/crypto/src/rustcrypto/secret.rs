@@ -95,7 +95,7 @@ impl SecretKey {
         salt
     }
 
-    pub fn from_password(password: &str, salt: &[u8]) -> Self {
+    pub fn from_password(password: &str, salt: &[u8]) -> Result<Self, CryptoError> {
         let mut key = [0; KEY_SIZE];
 
         // During test we want to skip the `argon2` algorithm for hashing the password
@@ -112,10 +112,10 @@ impl SecretKey {
         } else {
             ARGON2
                 .hash_password_into(password.as_bytes(), salt, &mut key)
-                .expect("Invalid salt");
+                .map_err(|_| CryptoError::DataSize)?;
         }
 
-        Self::from(key)
+        Ok(Self::from(key))
     }
 }
 

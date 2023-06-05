@@ -6,7 +6,7 @@ use hex_literal::hex;
 use pretty_assertions::assert_eq;
 use serde_test::{assert_tokens, Token};
 
-use libparsec_crypto::{SigningKey, VerifyKey};
+use libparsec_crypto::{CryptoError, SigningKey, VerifyKey};
 
 #[macro_use]
 mod common;
@@ -115,4 +115,35 @@ fn verify_key_should_verify_length_when_deserialize() {
             .to_string(),
         "Invalid data size"
     );
+}
+
+#[test]
+fn signkey_from_too_small_data() {
+    assert!(matches!(
+        SigningKey::try_from(b"dummy".as_ref()),
+        Err(CryptoError::DataSize)
+    ))
+}
+
+#[test]
+fn verifykey_from_too_small_data() {
+    assert!(matches!(
+        VerifyKey::try_from(b"dummy".as_ref()),
+        Err(CryptoError::DataSize)
+    ))
+}
+
+#[test]
+fn signed_too_small() {
+    let too_small = b"dummy";
+
+    assert!(matches!(
+        VerifyKey::unsecure_unwrap(too_small),
+        Err(CryptoError::Signature)
+    ));
+
+    let vk = VerifyKey::from(hex!(
+        "78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537"
+    ));
+    assert!(matches!(vk.verify(too_small), Err(CryptoError::Signature)));
 }

@@ -118,5 +118,33 @@ fn from_password() {
         "8f46e610b307443ec4ac81a4d799cbe1b97987901d4f681b82dacf3b59cad0a1"
     ));
 
-    assert_eq!(SecretKey::from_password(password, &salt), expected);
+    assert_eq!(SecretKey::from_password(password, &salt).unwrap(), expected);
+}
+
+#[test]
+fn secretkey_from_too_small_data() {
+    assert!(matches!(
+        SecretKey::try_from(b"dummy".as_ref()),
+        Err(CryptoError::KeySize { .. })
+    ))
+}
+
+#[test]
+fn encrypted_too_small() {
+    let too_small = b"dummy";
+    let sk = SecretKey::from(hex!(
+        "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
+    ));
+
+    assert!(matches!(sk.decrypt(too_small), Err(CryptoError::Nonce)));
+}
+
+#[test]
+fn from_password_salt_too_small() {
+    let too_small = b"dummy";
+
+    assert!(matches!(
+        SecretKey::from_password("Passw0rd", too_small),
+        Err(CryptoError::DataSize)
+    ));
 }

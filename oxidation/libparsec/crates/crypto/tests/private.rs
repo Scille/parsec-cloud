@@ -4,7 +4,7 @@ use hex_literal::hex;
 use pretty_assertions::assert_eq;
 use serde_test::{assert_tokens, Token};
 
-use libparsec_crypto::{PrivateKey, PublicKey, SecretKey};
+use libparsec_crypto::{CryptoError, PrivateKey, PublicKey, SecretKey};
 
 #[macro_use]
 mod common;
@@ -102,4 +102,33 @@ fn public_key_should_verify_length_when_deserialize() {
             .to_string(),
         "Invalid data size"
     );
+}
+
+#[test]
+fn privkey_from_too_small_data() {
+    assert!(matches!(
+        PrivateKey::try_from(b"dummy".as_ref()),
+        Err(CryptoError::DataSize)
+    ))
+}
+
+#[test]
+fn pubkey_from_too_small_data() {
+    assert!(matches!(
+        PublicKey::try_from(b"dummy".as_ref()),
+        Err(CryptoError::DataSize)
+    ))
+}
+
+#[test]
+fn encrypted_too_small() {
+    let too_small = b"dummy";
+
+    let privkey = PrivateKey::from(hex!(
+        "7e771d03da8ed86aaea5b82f2b3754984cb49023e9c51297b99c5c4fd0d2dc54"
+    ));
+    assert!(matches!(
+        privkey.decrypt_from_self(too_small),
+        Err(CryptoError::Decryption)
+    ));
 }

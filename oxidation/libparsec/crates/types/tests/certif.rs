@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
-use pretty_assertions::assert_eq;
+use pretty_assertions::{assert_eq, assert_matches};
 use rstest::rstest;
 
 use libparsec_types::fixtures::{alice, bob, timestamp, Device};
@@ -227,6 +227,22 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
     )
     .unwrap();
     assert_eq!(certif2, expected);
+
+    // Test invalid data
+    assert_matches!(
+        UserCertificate::unsecure_load(b"dummy".to_vec().into()),
+        Err(DataError::Signature)
+    );
+    assert_matches!(
+        UserCertificate::verify_and_load(
+            b"dummy",
+            &alice.verify_key(),
+            CertificateSignerRef::Root,
+            None,
+            None
+        ),
+        Err(DataError::Signature)
+    );
 }
 
 #[rstest]
@@ -452,6 +468,21 @@ fn serde_device_certificate(alice: &Device, bob: &Device) {
     )
     .unwrap();
     assert_eq!(certif2, expected);
+
+    // Test invalid data
+    assert_matches!(
+        DeviceCertificate::unsecure_load(b"dummy".to_vec().into()),
+        Err(DataError::Signature)
+    );
+    assert_matches!(
+        DeviceCertificate::verify_and_load(
+            b"dummy",
+            &alice.verify_key(),
+            CertificateSignerRef::Root,
+            None
+        ),
+        Err(DataError::Signature)
+    );
 }
 
 #[rstest]
@@ -629,6 +660,90 @@ fn serde_revoked_user_certificate(alice: &Device, bob: &Device) {
     )
     .unwrap();
     assert_eq!(certif2, expected);
+
+    // Test invalid data
+    assert_matches!(
+        RevokedUserCertificate::unsecure_load(b"dummy".to_vec().into()),
+        Err(DataError::Signature)
+    );
+    assert_matches!(
+        RevokedUserCertificate::verify_and_load(
+            b"dummy",
+            &alice.verify_key(),
+            &alice.device_id,
+            None
+        ),
+        Err(DataError::Signature)
+    );
+}
+
+#[rstest]
+fn serde_user_update_certificate(alice: &Device, bob: &Device) {
+    // Generated from Rust implementation (Parsec v3.0.x)
+    // Content:
+    //   type: "user_update_certificate"
+    //   author: "alice@dev1"
+    //   timestamp: ext(1, 1638618643.208821)
+    //   user_id: "bob"
+    //   new_profile: 'OUTSIDER'
+    let data = hex!(
+        "9fcf8d19225f29cb3252f792bdb8c183aadf7904e5d2f167b0ac39aeb4370c3b3193c291d14720"
+        "bd302ade3ae338bd0f6654c9270696653c4d8b91cdf9fcdc02789c0165009aff85a474797065b7"
+        "757365725f7570646174655f6365727469666963617465a6617574686f72aa616c696365406465"
+        "7631a974696d657374616d70d70141d86ad584cd5d53a7757365725f6964a3626f62ab6e65775f"
+        "70726f66696c65a84f55545349444552f6972c29"
+    );
+    let data = Bytes::from(data.as_ref().to_vec());
+
+    let expected = UserUpdateCertificate {
+        author: alice.device_id.to_owned(),
+        new_profile: UserProfile::Outsider,
+        timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
+        user_id: bob.user_id().to_owned(),
+    };
+
+    let unsecure_certif = UserUpdateCertificate::unsecure_load(data.clone()).unwrap();
+    assert_eq!(unsecure_certif.author(), &alice.device_id);
+    assert_eq!(
+        unsecure_certif
+            .verify_signature(&alice.verify_key())
+            .unwrap(),
+        (expected.clone(), data.clone())
+    );
+
+    let unsecure_certif = UserUpdateCertificate::unsecure_load(data.clone()).unwrap();
+    assert_eq!(
+        unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
+        expected
+    );
+
+    let certif =
+        UserUpdateCertificate::verify_and_load(&data, &alice.verify_key(), &alice.device_id, None)
+            .unwrap();
+    assert_eq!(certif, expected);
+
+    // Also test serialization round trip
+    let data2 = expected.dump_and_sign(&alice.signing_key);
+    // Note we cannot just compare with `data` due to signature and keys order
+    let certif2 =
+        UserUpdateCertificate::verify_and_load(&data2, &alice.verify_key(), &alice.device_id, None)
+            .unwrap();
+    assert_eq!(certif2, expected);
+
+    // Test invalid data
+    assert_matches!(
+        UserUpdateCertificate::unsecure_load(b"dummy".to_vec().into()),
+        Err(DataError::Signature)
+    );
+    assert_matches!(
+        UserUpdateCertificate::verify_and_load(
+            b"dummy",
+            &alice.verify_key(),
+            &alice.device_id,
+            None
+        ),
+        Err(DataError::Signature)
+    );
 }
 
 #[rstest]
@@ -698,6 +813,22 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
     )
     .unwrap();
     assert_eq!(certif2, expected);
+
+    // Test invalid data
+    assert_matches!(
+        RealmRoleCertificate::unsecure_load(b"dummy".to_vec().into()),
+        Err(DataError::Signature)
+    );
+    assert_matches!(
+        RealmRoleCertificate::verify_and_load(
+            b"dummy",
+            &alice.verify_key(),
+            CertificateSignerRef::Root,
+            None,
+            None
+        ),
+        Err(DataError::Signature)
+    );
 }
 
 #[rstest]
@@ -806,6 +937,16 @@ fn serde_sequester_authority_certificate(alice: &Device) {
     let certif2 =
         SequesterAuthorityCertificate::verify_and_load(&data2, &alice.verify_key()).unwrap();
     assert_eq!(certif2, expected);
+
+    // Test invalid data
+    assert_matches!(
+        SequesterAuthorityCertificate::unsecure_load(b"dummy".to_vec().into()),
+        Err(DataError::Signature)
+    );
+    assert_matches!(
+        SequesterAuthorityCertificate::verify_and_load(b"dummy", &alice.verify_key()),
+        Err(DataError::Signature)
+    );
 }
 
 #[rstest]
@@ -858,4 +999,10 @@ fn serde_sequester_service_certificate() {
     // Note we cannot just compare with `data` due to signature and keys order
     let certif2 = SequesterServiceCertificate::load(&data2).unwrap();
     assert_eq!(certif2, expected);
+
+    // Test invalid data
+    assert_matches!(
+        SequesterServiceCertificate::unsecure_load(b"dummy".to_vec().into()),
+        Err(DataError::Signature)
+    );
 }

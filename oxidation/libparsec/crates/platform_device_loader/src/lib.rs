@@ -18,7 +18,7 @@ pub(crate) fn load_device_with_password_core(
     device: &DeviceFilePassword,
     password: &str,
 ) -> LocalDeviceResult<LocalDevice> {
-    let key = SecretKey::from_password(password, &device.salt);
+    let key = SecretKey::from_password(password, &device.salt)?;
     let data = key.decrypt(&device.ciphertext)?;
 
     LocalDevice::load(&data).map_err(|_| LocalDeviceError::Validation {
