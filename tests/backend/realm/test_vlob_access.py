@@ -8,6 +8,12 @@ from parsec._parsec import (
     authenticated_cmds,
 )
 from parsec.api.protocol import (
+    ApiV2V3_VlobReadRepBadEncryptionRevision,
+    ApiV2V3_VlobReadRepBadVersion,
+    ApiV2V3_VlobReadRepInMaintenance,
+    ApiV2V3_VlobReadRepNotAllowed,
+    ApiV2V3_VlobReadRepNotFound,
+    ApiV2V3_VlobReadRepOk,
     RealmID,
     RealmRole,
     RealmUpdateRolesRepOk,
@@ -22,12 +28,6 @@ from parsec.api.protocol import (
     VlobListVersionsRepNotAllowed,
     VlobListVersionsRepNotFound,
     VlobListVersionsRepOk,
-    VlobReadRepBadEncryptionRevision,
-    VlobReadRepBadVersion,
-    VlobReadRepInMaintenance,
-    VlobReadRepNotAllowed,
-    VlobReadRepNotFound,
-    VlobReadRepOk,
     VlobUpdateRepBadEncryptionRevision,
     VlobUpdateRepBadTimestamp,
     VlobUpdateRepBadVersion,
@@ -40,7 +40,7 @@ from parsec.api.protocol import (
 )
 from parsec.backend.realm import RealmGrantedRole
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
-from tests.backend.common import vlob_create, vlob_list_versions, vlob_read, vlob_update
+from tests.backend.common import apiv2v3_vlob_read, vlob_create, vlob_list_versions, vlob_update
 from tests.backend.realm.test_update_roles import realm_generate_certif_and_update_roles_or_fail
 from tests.common import freeze_time
 
@@ -56,8 +56,8 @@ async def test_create_and_read(alice, alice_ws, alice2_ws, realm):
     with freeze_time("2000-01-03"):
         await vlob_create(alice_ws, realm, VLOB_ID, blob)
 
-    rep = await vlob_read(alice2_ws, VLOB_ID)
-    assert rep == VlobReadRepOk(
+    rep = await apiv2v3_vlob_read(alice2_ws, VLOB_ID)
+    assert rep == ApiV2V3_VlobReadRepOk(
         version=1,
         blob=blob,
         author=alice.device_id,
@@ -178,15 +178,15 @@ async def test_create_check_access_rights(backend, alice, bob, bob_ws, realm, ne
 
 @pytest.mark.trio
 async def test_read_not_found(alice_ws):
-    rep = await vlob_read(alice_ws, VLOB_ID)
+    rep = await apiv2v3_vlob_read(alice_ws, VLOB_ID)
     # The reason is no longer generated
-    assert isinstance(rep, VlobReadRepNotFound)
+    assert isinstance(rep, ApiV2V3_VlobReadRepNotFound)
 
 
 @pytest.mark.trio
 async def test_read_ok(alice, alice_ws, vlobs):
-    rep = await vlob_read(alice_ws, vlobs[0])
-    assert rep == VlobReadRepOk(
+    rep = await apiv2v3_vlob_read(alice_ws, vlobs[0])
+    assert rep == ApiV2V3_VlobReadRepOk(
         blob=b"r:A b:1 v:2",
         version=2,
         author=alice.device_id,
@@ -197,8 +197,8 @@ async def test_read_ok(alice, alice_ws, vlobs):
 
 @pytest.mark.trio
 async def test_read_ok_v1(alice, alice_ws, vlobs):
-    rep = await vlob_read(alice_ws, vlobs[0], version=1)
-    assert rep == VlobReadRepOk(
+    rep = await apiv2v3_vlob_read(alice_ws, vlobs[0], version=1)
+    assert rep == ApiV2V3_VlobReadRepOk(
         blob=b"r:A b:1 v:1",
         version=1,
         author=alice.device_id,
@@ -209,8 +209,8 @@ async def test_read_ok_v1(alice, alice_ws, vlobs):
 
 @pytest.mark.trio
 async def test_read_ok_timestamp_after_v2(alice, alice_ws, vlobs):
-    rep = await vlob_read(alice_ws, vlobs[0], timestamp=DateTime(2000, 1, 4))
-    assert rep == VlobReadRepOk(
+    rep = await apiv2v3_vlob_read(alice_ws, vlobs[0], timestamp=DateTime(2000, 1, 4))
+    assert rep == ApiV2V3_VlobReadRepOk(
         blob=b"r:A b:1 v:2",
         version=2,
         author=alice.device_id,
@@ -221,8 +221,8 @@ async def test_read_ok_timestamp_after_v2(alice, alice_ws, vlobs):
 
 @pytest.mark.trio
 async def test_read_ok_timestamp_is_v2(alice, alice_ws, vlobs):
-    rep = await vlob_read(alice_ws, vlobs[0], timestamp=DateTime(2000, 1, 3))
-    assert rep == VlobReadRepOk(
+    rep = await apiv2v3_vlob_read(alice_ws, vlobs[0], timestamp=DateTime(2000, 1, 3))
+    assert rep == ApiV2V3_VlobReadRepOk(
         blob=b"r:A b:1 v:2",
         version=2,
         author=alice.device_id,
@@ -233,8 +233,8 @@ async def test_read_ok_timestamp_is_v2(alice, alice_ws, vlobs):
 
 @pytest.mark.trio
 async def test_read_ok_timestamp_between_v1_and_v2(alice, alice_ws, vlobs):
-    rep = await vlob_read(alice_ws, vlobs[0], timestamp=DateTime(2000, 1, 2, 10))
-    assert rep == VlobReadRepOk(
+    rep = await apiv2v3_vlob_read(alice_ws, vlobs[0], timestamp=DateTime(2000, 1, 2, 10))
+    assert rep == ApiV2V3_VlobReadRepOk(
         blob=b"r:A b:1 v:1",
         version=1,
         author=alice.device_id,
@@ -245,8 +245,8 @@ async def test_read_ok_timestamp_between_v1_and_v2(alice, alice_ws, vlobs):
 
 @pytest.mark.trio
 async def test_read_ok_timestamp_is_v1(alice, alice_ws, vlobs):
-    rep = await vlob_read(alice_ws, vlobs[0], timestamp=DateTime(2000, 1, 2, 1))
-    assert rep == VlobReadRepOk(
+    rep = await apiv2v3_vlob_read(alice_ws, vlobs[0], timestamp=DateTime(2000, 1, 2, 1))
+    assert rep == ApiV2V3_VlobReadRepOk(
         blob=b"r:A b:1 v:1",
         version=1,
         author=alice.device_id,
@@ -257,15 +257,15 @@ async def test_read_ok_timestamp_is_v1(alice, alice_ws, vlobs):
 
 @pytest.mark.trio
 async def test_read_before_v1(alice_ws, vlobs):
-    rep = await vlob_read(alice_ws, vlobs[0], timestamp=DateTime(2000, 1, 1))
-    assert isinstance(rep, VlobReadRepBadVersion)
+    rep = await apiv2v3_vlob_read(alice_ws, vlobs[0], timestamp=DateTime(2000, 1, 1))
+    assert isinstance(rep, ApiV2V3_VlobReadRepBadVersion)
 
 
 @pytest.mark.trio
 async def test_read_check_access_rights(backend, alice, bob, bob_ws, realm, vlobs, next_timestamp):
     # Not part of the realm
-    rep = await vlob_read(bob_ws, vlobs[0])
-    assert isinstance(rep, VlobReadRepNotAllowed)
+    rep = await apiv2v3_vlob_read(bob_ws, vlobs[0])
+    assert isinstance(rep, ApiV2V3_VlobReadRepNotAllowed)
 
     for role in RealmRole.VALUES:
         await backend.realm.update_roles(
@@ -279,8 +279,8 @@ async def test_read_check_access_rights(backend, alice, bob, bob_ws, realm, vlob
                 granted_on=next_timestamp(),
             ),
         )
-        rep = await vlob_read(bob_ws, vlobs[0])
-        assert isinstance(rep, VlobReadRepOk)
+        rep = await apiv2v3_vlob_read(bob_ws, vlobs[0])
+        assert isinstance(rep, ApiV2V3_VlobReadRepOk)
 
     # Ensure user that used to be part of the realm have no longer access
     await backend.realm.update_roles(
@@ -294,16 +294,16 @@ async def test_read_check_access_rights(backend, alice, bob, bob_ws, realm, vlob
             granted_on=next_timestamp(),
         ),
     )
-    rep = await vlob_read(bob_ws, vlobs[0])
-    assert isinstance(rep, VlobReadRepNotAllowed)
+    rep = await apiv2v3_vlob_read(bob_ws, vlobs[0])
+    assert isinstance(rep, ApiV2V3_VlobReadRepNotAllowed)
 
 
 @pytest.mark.trio
 async def test_read_other_organization(backend_asgi_app, ws_from_other_organization_factory, vlobs):
     async with ws_from_other_organization_factory(backend_asgi_app) as sock:
-        rep = await vlob_read(sock, vlobs[0])
+        rep = await apiv2v3_vlob_read(sock, vlobs[0])
     # The reason is no longer generated
-    assert isinstance(rep, VlobReadRepNotFound)
+    assert isinstance(rep, ApiV2V3_VlobReadRepNotFound)
 
 
 @pytest.mark.parametrize(
@@ -332,8 +332,8 @@ async def test_read_bad_msg(alice_ws, bad_msg):
 
 @pytest.mark.trio
 async def test_read_bad_version(alice_ws, vlobs):
-    rep = await vlob_read(alice_ws, vlobs[0], version=3)
-    assert isinstance(rep, VlobReadRepBadVersion)
+    rep = await apiv2v3_vlob_read(alice_ws, vlobs[0], version=3)
+    assert isinstance(rep, ApiV2V3_VlobReadRepBadVersion)
 
 
 @pytest.mark.trio
@@ -487,8 +487,8 @@ async def test_bad_encryption_revision(alice_ws, realm, vlobs):
     )
     assert isinstance(rep, VlobCreateRepBadEncryptionRevision)
 
-    rep = await vlob_read(alice_ws, vlobs[0], encryption_revision=42)
-    assert isinstance(rep, VlobReadRepBadEncryptionRevision)
+    rep = await apiv2v3_vlob_read(alice_ws, vlobs[0], encryption_revision=42)
+    assert isinstance(rep, ApiV2V3_VlobReadRepBadEncryptionRevision)
 
     rep = await vlob_update(
         alice_ws,
@@ -607,8 +607,8 @@ async def test_access_during_maintenance(backend, alice, alice_ws, realm, vlobs)
     )
     assert isinstance(rep, VlobCreateRepInMaintenance)
 
-    rep = await vlob_read(alice_ws, vlobs[0], encryption_revision=2)
-    assert isinstance(rep, VlobReadRepInMaintenance)
+    rep = await apiv2v3_vlob_read(alice_ws, vlobs[0], encryption_revision=2)
+    assert isinstance(rep, ApiV2V3_VlobReadRepInMaintenance)
 
     rep = await vlob_update(
         alice_ws, vlobs[0], version=3, blob=b"Next version.", encryption_revision=2, check_rep=False

@@ -7,8 +7,16 @@ from parsec._parsec import (
     ActiveUsersLimit,
     BackendEventPkiEnrollmentUpdated,
     DateTime,
+    DeviceCertificate,
+    DeviceID,
+    DeviceLabel,
     EnrollmentID,
+    HumanHandle,
+    InviteUserConfirmation,
+    PublicKey,
+    UserCertificate,
     UserProfile,
+    VerifyKey,
     anonymous_cmds,
 )
 from parsec.api.data import (
@@ -42,7 +50,6 @@ from parsec.api.protocol import (
     PkiEnrollmentSubmitRepOk,
     UserRevokeRepOk,
 )
-from parsec.core.invite.greeter import _create_new_user_certificates
 from parsec.serde import packb, unpackb
 from tests.backend.common import (
     apiv2v3_events_listen_nowait,
@@ -54,8 +61,64 @@ from tests.backend.common import (
     pki_enrollment_submit,
     user_revoke,
 )
+from tests.common import LocalDevice
 
 # Helpers
+
+
+def _create_new_user_certificates(
+    author: LocalDevice,
+    device_label: DeviceLabel | None,
+    human_handle: HumanHandle | None,
+    profile: UserProfile,
+    public_key: PublicKey,
+    verify_key: VerifyKey,
+) -> tuple[bytes, bytes, bytes, bytes, InviteUserConfirmation]:
+    """Helper to prepare the creation of a new user."""
+    device_id = DeviceID.new()
+    timestamp = author.timestamp()
+
+    user_certificate = UserCertificate(
+        author=author.device_id,
+        timestamp=timestamp,
+        user_id=device_id.user_id,
+        human_handle=human_handle,
+        public_key=public_key,
+        profile=profile,
+    )
+    redacted_user_certificate = user_certificate.evolve(human_handle=None)
+
+    device_certificate = DeviceCertificate(
+        author=author.device_id,
+        timestamp=timestamp,
+        device_id=device_id,
+        device_label=device_label,
+        verify_key=verify_key,
+    )
+    redacted_device_certificate = device_certificate.evolve(device_label=None)
+
+    user_certificate_bytes = user_certificate.dump_and_sign(author.signing_key)
+    redacted_user_certificate_bytes = redacted_user_certificate.dump_and_sign(author.signing_key)
+    device_certificate_bytes = device_certificate.dump_and_sign(author.signing_key)
+    redacted_device_certificate_bytes = redacted_device_certificate.dump_and_sign(
+        author.signing_key
+    )
+
+    invite_user_confirmation = InviteUserConfirmation(
+        device_id=device_id,
+        device_label=device_label,
+        human_handle=human_handle,
+        profile=profile,
+        root_verify_key=author.root_verify_key,
+    )
+
+    return (
+        user_certificate_bytes,
+        redacted_user_certificate_bytes,
+        device_certificate_bytes,
+        redacted_device_certificate_bytes,
+        invite_user_confirmation,
+    )
 
 
 async def _submit_request(
@@ -125,14 +188,14 @@ def _prepare_accept_reply(admin, invitee):
 
 
 @pytest.mark.trio
-async def test_pki_submit(backend, anonymous_backend_ws, bob, bob_ws):
+async def test_pki_submit(backend, anonymous_backend_ws, bob, alice_ws):
     payload = PkiEnrollmentSubmitPayload(
         verify_key=bob.verify_key,
         public_key=bob.public_key,
         requested_device_label=bob.device_label,
     ).dump()
 
-    await apiv2v3_events_subscribe(bob_ws)
+    await apiv2v3_events_subscribe(alice_ws)
 
     with backend.event_bus.listen() as spy:
         rep = await pki_enrollment_submit(
@@ -146,7 +209,7 @@ async def test_pki_submit(backend, anonymous_backend_ws, bob, bob_ws):
         )
         assert isinstance(rep, PkiEnrollmentSubmitRepOk)
         await spy.wait_with_timeout(BackendEventPkiEnrollmentUpdated)
-    assert await apiv2v3_events_listen_nowait(bob_ws) == ApiV2V3_EventsListenRepOk(
+    assert await apiv2v3_events_listen_nowait(alice_ws) == ApiV2V3_EventsListenRepOk(
         ApiV2V3_APIEventPkiEnrollmentUpdated()
     )
 
@@ -181,7 +244,7 @@ async def test_pki_submit(backend, anonymous_backend_ws, bob, bob_ws):
         )
         assert isinstance(rep, PkiEnrollmentSubmitRepOk)
         await spy.wait_with_timeout(BackendEventPkiEnrollmentUpdated)
-    assert await apiv2v3_events_listen_nowait(bob_ws) == ApiV2V3_EventsListenRepOk(
+    assert await apiv2v3_events_listen_nowait(alice_ws) == ApiV2V3_EventsListenRepOk(
         ApiV2V3_APIEventPkiEnrollmentUpdated()
     )
 

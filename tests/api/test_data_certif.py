@@ -61,7 +61,7 @@ def test_build_user_certificate(alice, bob, mallory):
         UserCertificate.verify_and_load(
             certif, author_verify_key=mallory.verify_key, expected_author=alice.device_id
         )
-    assert str(exc.value) == "Signature was forged or corrupt"
+    assert str(exc.value) == "Invalid signature"
 
     with pytest.raises(DataError) as exc:
         UserCertificate.verify_and_load(
@@ -144,7 +144,7 @@ def test_build_device_certificate(alice, bob, mallory):
         DeviceCertificate.verify_and_load(
             certif, author_verify_key=mallory.verify_key, expected_author=alice.device_id
         )
-    assert str(exc.value) == "Signature was forged or corrupt"
+    assert str(exc.value) == "Invalid signature"
 
     with pytest.raises(DataError) as exc:
         DeviceCertificate.verify_and_load(
@@ -184,7 +184,7 @@ def test_build_revoked_user_certificate(alice, bob, mallory):
         RevokedUserCertificate.verify_and_load(
             certif, author_verify_key=mallory.verify_key, expected_author=alice.device_id
         )
-    assert str(exc.value) == "Signature was forged or corrupt"
+    assert str(exc.value) == "Invalid signature"
 
     with pytest.raises(DataError) as exc:
         RevokedUserCertificate.verify_and_load(

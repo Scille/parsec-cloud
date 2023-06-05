@@ -21,15 +21,16 @@ import subprocess
 import sys
 import tempfile
 import uuid
+from pathlib import Path
+from typing import Mapping
 
 import click
 import psutil
 import trio
 
 from parsec import __version__ as PARSEC_VERSION
+from parsec._parsec import BackendAddr
 from parsec.cli_utils import logging_config_options
-from parsec.core.config import get_default_config_dir
-from parsec.core.types import BackendAddr
 from parsec.test_utils import initialize_test_organization
 from parsec.utils import trio_run
 
@@ -42,6 +43,16 @@ DEFAULT_BLOCKSTORE = "MOCKED"
 
 
 # Helpers
+
+
+def get_default_config_dir(environ: Mapping[str, str]) -> Path:
+    if sys.platform == "win32":
+        return Path(environ["APPDATA"]) / "parsec/config"
+    else:
+        path = environ.get("XDG_CONFIG_HOME")
+        if not path:
+            path = f"{environ.get('HOME')}/.config"
+        return Path(path) / "parsec"
 
 
 async def new_environment(source_file: str | None = None):

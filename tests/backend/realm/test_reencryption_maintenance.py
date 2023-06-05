@@ -9,6 +9,7 @@ from parsec._parsec import (
     BackendEventRealmMaintenanceStarted,
     DateTime,
     ReencryptionBatchEntry,
+    authenticated_cmds,
 )
 from parsec.api.protocol import (
     ApiV2V3_APIEventMessageReceived,
@@ -16,12 +17,12 @@ from parsec.api.protocol import (
     ApiV2V3_APIEventRealmMaintenanceStarted,
     ApiV2V3_EventsListenRepNoEvents,
     ApiV2V3_EventsListenRepOk,
+    ApiV2V3_Message,
+    ApiV2V3_MessageGetRepOk,
     BlockCreateRepInMaintenance,
     BlockID,
     BlockReadRepOk,
     MaintenanceType,
-    Message,
-    MessageGetRepOk,
     RealmFinishReencryptionMaintenanceRepBadEncryptionRevision,
     RealmFinishReencryptionMaintenanceRepMaintenanceError,
     RealmFinishReencryptionMaintenanceRepNotAllowed,
@@ -47,9 +48,6 @@ from parsec.api.protocol import (
     VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance,
     VlobMaintenanceSaveReencryptionBatchRepOk,
     VlobPollChangesRepOk,
-    VlobReadRepBadEncryptionRevision,
-    VlobReadRepInMaintenance,
-    VlobReadRepOk,
     VlobUpdateRepInMaintenance,
 )
 from parsec.backend.realm import RealmGrantedRole
@@ -58,6 +56,8 @@ from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFS
 from tests.backend.common import (
     apiv2v3_events_listen_nowait,
     apiv2v3_events_subscribe,
+    apiv2v3_message_get,
+    apiv2v3_vlob_read,
     block_create,
     block_read,
     realm_finish_reencryption_maintenance,
@@ -68,10 +68,8 @@ from tests.backend.common import (
     vlob_maintenance_get_reencryption_batch,
     vlob_maintenance_save_reencryption_batch,
     vlob_poll_changes,
-    vlob_read,
     vlob_update,
 )
-from tests.backend.test_message import message_get
 from tests.common import freeze_time, real_clock_timeout
 
 
@@ -187,10 +185,10 @@ async def test_start_send_message_to_participants(backend, alice, bob, alice_ws,
 
     # Each participant should have received a message
     for user, sock in ((alice, alice_ws), (bob, bob_ws)):
-        rep = await message_get(sock)
-        assert rep == MessageGetRepOk(
+        rep = await apiv2v3_message_get(sock)
+        assert rep == ApiV2V3_MessageGetRepOk(
             messages=[
-                Message(
+                ApiV2V3_Message(
                     count=1,
                     body=f"{user.user_id.str} msg".encode(),
                     timestamp=DateTime(2000, 1, 2),
@@ -466,10 +464,10 @@ async def test_reencryption(alice, alice_ws, realm, vlob_atoms):
         )
 
     # Each participant should have received a message
-    rep = await message_get(alice_ws)
-    assert rep == MessageGetRepOk(
+    rep = await apiv2v3_message_get(alice_ws)
+    assert rep == ApiV2V3_MessageGetRepOk(
         messages=[
-            Message(
+            ApiV2V3_Message(
                 count=1,
                 body=b"foo",
                 timestamp=DateTime(2000, 1, 2),
@@ -505,7 +503,7 @@ async def test_reencryption(alice, alice_ws, realm, vlob_atoms):
 
     # Check the vlob have changed
     for vlob_id, version in vlob_atoms:
-        rep = await vlob_read(alice_ws, vlob_id, version, encryption_revision=2)
+        rep = await apiv2v3_vlob_read(alice_ws, vlob_id, version, encryption_revision=2)
         assert rep.blob == f"{vlob_id.hex}::{version} reencrypted".encode()
 
 
@@ -559,7 +557,7 @@ async def test_reencryption_provide_unknown_vlob_atom_and_duplications(
             vlob_id=duplicated_vlob_id,
             version=99,
         )
-    _, content, _, _, _ = await backend.vlob.read(
+    _, content, _, _, _, _ = await backend.vlob.read(
         organization_id=alice.organization_id,
         author=alice.device_id,
         encryption_revision=2,
@@ -618,10 +616,10 @@ async def test_access_during_reencryption(backend, alice_ws, alice, realm_factor
         assert isinstance(rep, BlockCreateRepInMaintenance)
 
     async def _assert_read_access_allowed(encryption_revision, expected_blob=b"v1"):
-        rep = await vlob_read(
+        rep = await apiv2v3_vlob_read(
             alice_ws, vlob_id=vlob_id, version=1, encryption_revision=encryption_revision
         )
-        assert isinstance(rep, VlobReadRepOk)
+        assert isinstance(rep, authenticated_cmds.v3.vlob_read.RepOk)
         assert rep.blob == expected_blob
 
         rep = await block_read(alice_ws, block_id=block_id)
@@ -635,7 +633,7 @@ async def test_access_during_reencryption(backend, alice_ws, alice, realm_factor
         assert isinstance(rep, VlobPollChangesRepOk)
 
     async def _assert_read_access_bad_encryption_revision(encryption_revision, expected_status):
-        rep = await vlob_read(
+        rep = await apiv2v3_vlob_read(
             alice_ws, vlob_id=vlob_id, version=1, encryption_revision=encryption_revision
         )
         assert isinstance(rep, expected_status)
@@ -655,7 +653,9 @@ async def test_access_during_reencryption(backend, alice_ws, alice, realm_factor
 
     # Only read with old encryption revision is now allowed
     await _assert_read_access_allowed(1)
-    await _assert_read_access_bad_encryption_revision(2, expected_status=VlobReadRepInMaintenance)
+    await _assert_read_access_bad_encryption_revision(
+        2, expected_status=authenticated_cmds.v3.vlob_read.RepInMaintenance
+    )
     await _assert_write_access_disallowed(1)
     await _assert_write_access_disallowed(2)
 
@@ -670,7 +670,9 @@ async def test_access_during_reencryption(backend, alice_ws, alice, realm_factor
     )
 
     await _assert_read_access_allowed(1)
-    await _assert_read_access_bad_encryption_revision(2, expected_status=VlobReadRepInMaintenance)
+    await _assert_read_access_bad_encryption_revision(
+        2, expected_status=authenticated_cmds.v3.vlob_read.RepInMaintenance
+    )
     await _assert_write_access_disallowed(1)
     await _assert_write_access_disallowed(2)
 
@@ -685,7 +687,7 @@ async def test_access_during_reencryption(backend, alice_ws, alice, realm_factor
     # Now only the new encryption revision is allowed
     await _assert_read_access_allowed(2, expected_blob=b"v2")
     await _assert_read_access_bad_encryption_revision(
-        1, expected_status=VlobReadRepBadEncryptionRevision
+        1, expected_status=authenticated_cmds.v3.vlob_read.RepBadEncryptionRevision
     )
 
 

@@ -8,10 +8,9 @@ from typing import Optional, Union
 
 import pytest
 
-from parsec._parsec import LocalDevice, SigningKey
+from parsec._parsec import BackendOrganizationBootstrapAddr, SigningKey
 from parsec.api.protocol import DeviceID, DeviceLabel, HumanHandle, OrganizationID, UserProfile
-from parsec.core.types import BackendOrganizationBootstrapAddr
-from tests.common.binder import OrganizationFullData
+from tests.common.binder import LocalDevice, OrganizationFullData
 from tests.common.freeze_time import freeze_time
 from tests.common.sequester import sequester_authority_factory
 
@@ -132,11 +131,9 @@ def local_device_factory(coolorg):
             device_label=device_label,
         )
         if parent_device is not None:
-            device = device.evolve(
-                private_key=parent_device.private_key,
-                user_manifest_id=parent_device.user_manifest_id,
-                user_manifest_key=parent_device.user_manifest_key,
-            )
+            device.private_key = parent_device.private_key
+            device.user_manifest_id = parent_device.user_manifest_id
+            device.user_manifest_key = parent_device.user_manifest_key
         org_devices.append(device)
         return device
 

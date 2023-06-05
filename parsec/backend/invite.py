@@ -277,7 +277,7 @@ class BaseInviteComponent:
         self._claimers_ready: Dict[OrganizationID, Set[InvitationToken]] = defaultdict(set)
 
         def _on_status_changed(
-            event: Type[BackendEvent], payload: BackendEventInviteStatusChanged
+            event: Type[BackendEvent], event_id: str, payload: BackendEventInviteStatusChanged
         ) -> None:
             if payload.status == InvitationStatus.READY:
                 self._claimers_ready[payload.organization_id].add(payload.token)
@@ -916,6 +916,7 @@ class BaseInviteComponent:
 
         def _event_filter(
             event: Type[BackendEvent],
+            event_id: str,
             payload: BackendEventInviteConduitUpdated | BackendEventInviteStatusChanged,
         ) -> bool:
             return (

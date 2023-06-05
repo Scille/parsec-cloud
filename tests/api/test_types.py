@@ -6,20 +6,32 @@ from unicodedata import normalize
 
 import pytest
 
-from parsec._parsec import EntryNameError, LocalDevice, SecretKey
-from parsec.api.data import DataError, EntryName, SASCode
-from parsec.api.data import FileManifest as RemoteFileManifest
-from parsec.api.data import FolderManifest as RemoteFolderManifest
-from parsec.api.data import UserManifest as RemoteUserManifest
-from parsec.api.data import WorkspaceManifest as RemoteWorkspaceManifest
-from parsec.api.protocol import DeviceID, DeviceName, HumanHandle, OrganizationID, UserID
-from parsec.core.types import (
-    LocalFileManifest,
-    LocalFolderManifest,
-    LocalUserManifest,
-    LocalWorkspaceManifest,
+from parsec._parsec import (
+    DataError,
+    DeviceID,
+    DeviceName,
+    EntryName,
+    EntryNameError,
+    HumanHandle,
+    OrganizationID,
+    SASCode,
+    SecretKey,
+    UserID,
+)
+from parsec._parsec import (
+    FileManifest as RemoteFileManifest,
+)
+from parsec._parsec import (
+    FolderManifest as RemoteFolderManifest,
+)
+from parsec._parsec import (
+    UserManifest as RemoteUserManifest,
+)
+from parsec._parsec import (
+    WorkspaceManifest as RemoteWorkspaceManifest,
 )
 from parsec.serde import packb
+from tests.common import LocalDevice
 
 
 @pytest.mark.parametrize("cls", (UserID, DeviceName, OrganizationID))
@@ -240,32 +252,6 @@ def test_entry_name_normalization():
     assert EntryName(nfd_str).str == nfc_str
     assert EntryName(nfc_str).str == nfc_str
     assert EntryName(nfc_str + nfd_str).str == nfc_str + nfc_str
-
-
-def test_local_manifests_load_invalid_data():
-    key = SecretKey.generate()
-    valid_msgpack_but_bad_fields = packb({"foo": 42})
-    valid_zip_bud_bad_msgpack = zlib.compress(b"dummy")
-    invalid_zip = b"\x42" * 10
-
-    for cls in (
-        LocalFileManifest,
-        LocalFolderManifest,
-        LocalWorkspaceManifest,
-        LocalUserManifest,
-    ):
-        with pytest.raises(DataError):
-            cls.decrypt_and_load(b"", key=key)
-
-        with pytest.raises(DataError):
-            cls.decrypt_and_load(invalid_zip, key=key)
-
-        with pytest.raises(DataError):
-            cls.decrypt_and_load(valid_zip_bud_bad_msgpack, key=key)
-
-        # Valid to deserialize, invalid fields
-        with pytest.raises(DataError):
-            cls.decrypt_and_load(valid_msgpack_but_bad_fields, key=key)
 
 
 def test_remote_manifests_load_invalid_data(alice: LocalDevice):

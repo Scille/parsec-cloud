@@ -18,7 +18,7 @@ from parsec.api.protocol import (
     VlobID,
 )
 from parsec.backend.realm import RealmGrantedRole
-from parsec.core.types import LocalDevice
+from tests.common import LocalDevice
 
 
 @pytest.fixture

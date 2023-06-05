@@ -10,7 +10,6 @@ use serde::{Deserialize, Serialize};
 use crate::{
     enumerate::{InvitationStatus, RealmRole, UserProfile},
     ids::{DeviceID, InvitationToken, OrganizationID, RealmID, UserID, VlobID},
-    time::DateTime,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -19,7 +18,7 @@ enum RawBackendEvent {
     #[serde(rename = "certificates.updated")]
     CertificatesUpdated {
         organization_id: libparsec::types::OrganizationID,
-        timestamp: libparsec::types::DateTime,
+        index: libparsec::types::IndexInt,
     },
     #[serde(rename = "invite.conduit_updated")]
     InviteConduitUpdated {
@@ -240,22 +239,22 @@ impl BackendEventCertificatesUpdated {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [organization_id: OrganizationID, "organization_id"],
-            [timestamp: DateTime, "timestamp"],
+            [index: u64, "index"],
         );
 
         Ok((
             BackendEventCertificatesUpdated,
             BackendEvent(RawBackendEvent::CertificatesUpdated {
                 organization_id: organization_id.0,
-                timestamp: timestamp.0,
+                index,
             }),
         ))
     }
 
     #[getter]
-    fn timestamp<'py>(_self: PyRef<Self>) -> PyResult<DateTime> {
+    fn index<'py>(_self: PyRef<Self>) -> PyResult<u64> {
         match &_self.into_super().0 {
-            RawBackendEvent::CertificatesUpdated { timestamp, .. } => Ok(DateTime(*timestamp)),
+            RawBackendEvent::CertificatesUpdated { index, .. } => Ok(*index),
             _ => unreachable!(),
         }
     }

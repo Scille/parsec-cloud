@@ -5,7 +5,6 @@ import logging
 import os
 import re
 import shutil
-import sys
 from pathlib import Path
 from typing import Any, Callable, Generator
 
@@ -24,7 +23,6 @@ from parsec.backend.config import (
     RAID1BlockStoreConfig,
     RAID5BlockStoreConfig,
 )
-from parsec.core.mountpoint.manager import get_mountpoint_runner
 from parsec.monitoring import TaskMonitoringInstrument
 
 # TODO: needed ?
@@ -54,16 +52,6 @@ def pytest_addoption(parser):
         ),
     )
     parser.addoption("--runslow", action="store_true", help="Don't skip slow tests")
-    parser.addoption("--runmountpoint", action="store_true", help="Don't skip FUSE/WinFSP tests")
-    parser.addoption("--rungui", action="store_true", help="Don't skip GUI tests")
-    parser.addoption("--rundiskfull", action="store_true", help="Don't skip the disk full tests")
-    # TODO: remove me once client connection oxidation is done
-    parser.addoption(
-        "--enable-unstable-oxidized-client-connection",
-        action="store_true",
-        help="Use the unstable Rust client connection",
-    )
-    parser.addoption("--runrust", action="store_true", help="Don't skip rust tests")
     parser.addoption(
         "--run-postgresql-cluster",
         action="store_true",
@@ -185,36 +173,15 @@ def _patch_caplog():
 def pytest_runtest_setup(item):
     if item.get_closest_marker("slow") and not item.config.getoption("--runslow"):
         pytest.skip("need --runslow option to run")
-    if item.get_closest_marker("win32") and sys.platform != "win32":
-        pytest.skip("test specific to win32")
-    if item.get_closest_marker("linux") and sys.platform != "linux":
-        pytest.skip("test specific to linux")
-    if item.get_closest_marker("mountpoint"):
-        if not item.config.getoption("--runmountpoint"):
-            pytest.skip("need --runmountpoint option to run")
-        elif not get_mountpoint_runner():
-            pytest.skip("FUSE/WinFSP not available")
-    if item.get_closest_marker("diskfull"):
-        if not item.config.getoption("--rundiskfull"):
-            pytest.skip("need --rundiskfull option to run")
-    if item.get_closest_marker("gui"):
-        if not item.config.getoption("--rungui"):
-            pytest.skip("need --rungui option to run")
     if item.get_closest_marker("postgresql"):
         if not item.config.getoption("--postgresql"):
             pytest.skip("need --postgresql option to run")
-    if item.get_closest_marker("rust") and not item.config.getoption("--runrust"):
-        pytest.skip("need --runrust option to run")
 
 
 def pytest_collection_modifyitems(config, items):
     for item in items:
         if "trio" in item.keywords:
             item.fixturenames.append("task_monitoring")
-        if "gui" in item.keywords and "trio" in item.keywords:
-            import qtrio
-
-            item.add_marker(pytest.mark.trio(run=qtrio.run))
 
     # Divide tests into slices of equal size
     slices_to_run, total_slices = config.getoption("--slice-tests")

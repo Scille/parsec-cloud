@@ -82,11 +82,11 @@ class MemoryUserComponent(BaseUserComponent):
     async def notify_certificates_update(
         self,
         organization_id: OrganizationID,
-        timestamp: DateTime,
+        index: int,
     ) -> None:
         event = BackendEventCertificatesUpdated(
             organization_id=organization_id,
-            timestamp=timestamp,
+            index=index,
         )
         await self._send_event(event)
 
@@ -118,12 +118,11 @@ class MemoryUserComponent(BaseUserComponent):
 
         await self.notify_certificates_update(
             organization_id=organization_id,
-            timestamp=user.created_on,
+            index=self.get_current_certificate_index(organization_id),
         )
         await self.notify_certificates_update(
             organization_id=organization_id,
-            # Note in theory `user.created_on == first_device.created_on`
-            timestamp=first_device.created_on,
+            index=self.get_current_certificate_index(organization_id),
         )
 
     async def create_device(
@@ -142,7 +141,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         await self.notify_certificates_update(
             organization_id=organization_id,
-            timestamp=device.created_on,
+            index=self.get_current_certificate_index(organization_id),
         )
 
     async def _get_trustchain(
@@ -377,7 +376,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         await self.notify_certificates_update(
             organization_id=organization_id,
-            timestamp=revoked_on,
+            index=self.get_current_certificate_index(organization_id),
         )
         await self._send_event(
             BackendEventUserUpdatedOrRevoked(
@@ -445,7 +444,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         await self.notify_certificates_update(
             organization_id=organization_id,
-            timestamp=updated_on,
+            index=self.get_current_certificate_index(organization_id),
         )
         await self._send_event(
             BackendEventUserUpdatedOrRevoked(

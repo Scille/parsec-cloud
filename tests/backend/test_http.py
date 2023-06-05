@@ -7,10 +7,9 @@ import pytest
 import trio
 
 from parsec import __version__ as parsec_version
-from parsec._parsec import InvitationType
+from parsec._parsec import BackendInvitationAddr, InvitationType
 from parsec.api.protocol import InvitationToken, OrganizationID
 from parsec.backend.asgi import MAX_CONTENT_LENGTH, serve_backend_with_asgi
-from parsec.core.types.backend_address import BackendInvitationAddr
 from tests.common import customize_fixtures
 
 

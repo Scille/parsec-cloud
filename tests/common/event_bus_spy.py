@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from enum import Enum
 from typing import Type
 from unittest.mock import ANY
 
@@ -10,7 +9,7 @@ import attr
 import pytest
 import trio
 
-from parsec._parsec import BackendEvent, CoreEvent, DateTime
+from parsec._parsec import BackendEvent, DateTime
 from parsec.event_bus import EventBus, MetaEvent
 from tests.common import real_clock_timeout
 
@@ -196,8 +195,6 @@ class EventBusSpy:
             return SpiedEvent(event, ANY, ANY)
         elif event is ANY:
             return event
-        elif isinstance(event, (CoreEvent, Enum)):
-            return SpiedEvent(event, ANY, ANY)
         elif isinstance(event, tuple):
             event = event + (ANY,) * (3 - len(event))
             return SpiedEvent(*event)

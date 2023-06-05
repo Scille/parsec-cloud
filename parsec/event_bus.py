@@ -15,7 +15,7 @@ from enum import Enum
 import trio
 from structlog import get_logger
 
-from parsec._parsec import BackendEvent, CoreEvent
+from parsec._parsec import BackendEvent
 
 logger = get_logger()
 
@@ -27,9 +27,8 @@ class MetaEvent(Enum):
 
 CustomEvent = TypeVar("CustomEvent", bound=Enum)
 AllEvent = Union[MetaEvent, CustomEvent]
-# `CoreEvent` is similar to a regular Enum... but implemented in Rust
 # `BackendEvent` is not an enum but a class with inheritance
-EventTypes = Union[Enum, CoreEvent, Type[BackendEvent]]
+EventTypes = Union[Enum, Type[BackendEvent]]
 
 
 class EventCallback(Protocol):
@@ -51,8 +50,11 @@ class EventWaiter:
     def _cb(self, event: EventTypes, **kwargs: object) -> None:
         if self._event_occurred.is_set():
             return
-        if self._filter and not self._filter(event, **kwargs):
-            return
+        try:
+            if self._filter and not self._filter(event, **kwargs):
+                return
+        except Exception:
+            breakpoint()
         self._event_result = (event, kwargs)
         self._event_occurred.set()
 

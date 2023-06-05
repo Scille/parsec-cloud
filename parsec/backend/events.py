@@ -76,7 +76,7 @@ def internal_to_api_events(
     event_listen_cmd_mod = authenticated_cmds.latest.events_listen
 
     if isinstance(event, BackendEventCertificatesUpdated):
-        return event_listen_cmd_mod.APIEventCertificatesUpdated(event.timestamp)
+        return event_listen_cmd_mod.APIEventCertificatesUpdated(event.index)
     elif isinstance(event, BackendEventPinged):
         return event_listen_cmd_mod.APIEventPinged(event.ping)
     elif isinstance(event, BackendEventMessageReceived):
@@ -201,15 +201,15 @@ class EventsComponent:
         def _on_event(
             event: Type[BackendEvent],
             event_id: str,
-            payload: BackendEventCertificatesUpdated,
+            payload: BackendEvent,
         ) -> None:
             if _is_event_for_our_client(client_ctx, payload):
                 # Keep up to date the list of realms the user should be notified of
-                if isinstance(event, BackendEventRealmRolesUpdated):
-                    if event.role is None:
-                        client_ctx.realms.discard(event.realm_id)
+                if isinstance(payload, BackendEventRealmRolesUpdated):
+                    if payload.role is None:
+                        client_ctx.realms.discard(payload.realm_id)
                     else:
-                        client_ctx.realms.add(event.realm_id)
+                        client_ctx.realms.add(payload.realm_id)
 
                 try:
                     client_ctx.send_events_channel.send_nowait((event_id, payload))

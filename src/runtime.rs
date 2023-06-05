@@ -126,6 +126,7 @@ impl FutureIntoCoroutine {
         })
     }
 
+    #[allow(dead_code)]
     pub fn ready(value: PyResult<PyObject>) -> Self {
         FutureIntoCoroutine(Some(FutureIntoCoroutineInternal::Ready(value)))
     }

@@ -9,9 +9,9 @@ from parsec.api.protocol import (
     OrganizationBootstrapRepInvalidData,
     OrganizationBootstrapRepOk,
 )
-from parsec.core.types import LocalDevice
 from tests.backend.common import organization_bootstrap
 from tests.common import (
+    LocalDevice,
     OrganizationFullData,
     customize_fixtures,
     local_device_to_backend_user,

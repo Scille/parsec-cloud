@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import pytest
 
-from parsec._parsec import DateTime
+from parsec._parsec import ApiVersion, DateTime
 from parsec.api.protocol import (
     AuthenticatedClientHandshake,
     BaseClientHandshake,
@@ -28,8 +28,9 @@ from parsec.api.protocol import (
     unpackb,
 )
 from parsec.api.protocol.handshake import answer_serializer
-from parsec.api.version import API_VERSION, ApiVersion
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
+
+API_VERSION = ApiVersion.API_V3_VERSION
 
 
 def test_good_authenticated_handshake(alice):

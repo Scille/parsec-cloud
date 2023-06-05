@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DateTime, InvitationStatus, InvitationToken, RealmID, VlobID
+from parsec._parsec import InvitationStatus, InvitationToken, RealmID, VlobID
 
 class APIEvent:
     pass
@@ -13,9 +13,9 @@ class APIEventPinged(APIEvent):
     def ping(self) -> str: ...
 
 class APIEventCertificatesUpdated(APIEvent):
-    def __init__(self, timestamp: DateTime) -> None: ...
+    def __init__(self, index: int) -> None: ...
     @property
-    def timestamp(self) -> bytes: ...
+    def index(self) -> int: ...
 
 class APIEventMessageReceived(APIEvent):
     def __init__(self, index: int, message: bytes) -> None: ...

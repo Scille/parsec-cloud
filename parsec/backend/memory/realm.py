@@ -117,7 +117,7 @@ class MemoryRealmComponent(BaseRealmComponent):
 
             await self._user_component.notify_certificates_update(
                 organization_id=organization_id,
-                timestamp=self_granted_role.granted_on,
+                index=self._user_component.get_current_certificate_index(organization_id),
             )
             await self._send_event(
                 BackendEventRealmRolesUpdated(
@@ -157,7 +157,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                 blocks_size += value.size
         for value in self._vlob_component._vlobs.values():
             if value.realm_id == realm_id:
-                vlobs_size += sum(len(blob) for (blob, _, _) in value.data)
+                vlobs_size += sum(len(blob) for (blob, _, _, _) in value.data)
 
         return RealmStats(blocks_size=blocks_size, vlobs_size=vlobs_size)
 
@@ -265,7 +265,7 @@ class MemoryRealmComponent(BaseRealmComponent):
 
         await self._user_component.notify_certificates_update(
             organization_id=organization_id,
-            timestamp=new_role.granted_on,
+            index=self._user_component.get_current_certificate_index(organization_id),
         )
         await self._send_event(
             BackendEventRealmRolesUpdated(

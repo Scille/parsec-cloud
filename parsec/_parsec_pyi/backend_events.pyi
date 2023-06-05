@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from parsec._parsec import (
-    DateTime,
     DeviceID,
     InvitationStatus,
     InvitationToken,
@@ -26,10 +25,10 @@ class BackendEventCertificatesUpdated(BackendEvent):
     def __init__(
         self,
         organization_id: OrganizationID,
-        timestamp: DateTime,
+        index: int,
     ) -> None: ...
     @property
-    def timestamp(self) -> DateTime: ...
+    def index(self) -> int: ...
 
 class BackendEventInviteConduitUpdated(BackendEvent):
     def __init__(

@@ -25,9 +25,9 @@ class MemoryMessageComponent(BaseMessageComponent):
         self._user_component: MemoryUserComponent
 
     def register_components(
-        self, user_component: MemoryUserComponent, **other_components: Any
+        self, user: MemoryUserComponent, **other_components: Any
     ) -> None:
-        self._user_component = user_component
+        self._user_component = user
 
     async def send(
         self,

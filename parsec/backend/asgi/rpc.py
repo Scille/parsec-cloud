@@ -631,6 +631,10 @@ async def authenticated_events_api(raw_organization_id: str) -> Response:
     assert user is not None
     assert device is not None
 
+    # API<=3 is older than SSE (and hence never needs it)
+    if api_version.version < 4:
+        _handshake_abort_bad_content(api_version=api_version)
+
     client_ctx = AuthenticatedClientContext(
         api_version=api_version,
         client_api_version=client_api_version,

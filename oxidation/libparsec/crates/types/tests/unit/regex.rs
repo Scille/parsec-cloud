@@ -34,7 +34,7 @@ fn from_pattern_file_content(#[case] file_content: &str, #[case] filename: &str)
 #[test]
 fn load_default_pattern_file() {
     let regex = Regex::from_file(Path::new(
-        "../../../../parsec/core/resources/default_pattern.ignore",
+        "../client/src/workspace_ops/default_pattern.ignore",
     ))
     .expect("Load default pattern file failed");
 

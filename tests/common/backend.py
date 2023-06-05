@@ -25,13 +25,17 @@ from hypercorn.trio.worker_context import WorkerContext
 from quart.typing import TestClientProtocol
 from quart_trio import QuartTrio
 
-from parsec._parsec import BackendEventOrganizationExpired, BackendInvitationAddr, InvitationType
+from parsec._parsec import (
+    BackendAddr,
+    BackendEventOrganizationExpired,
+    BackendInvitationAddr,
+    InvitationType,
+)
 from parsec.backend import backend_app_factory
 from parsec.backend.app import BackendApp
 from parsec.backend.asgi import app_factory
 from parsec.backend.config import BackendConfig, MockedBlockStoreConfig, MockedEmailConfig
-from parsec.core.types import BackendAddr, LocalDevice
-from tests.common.binder import OrganizationFullData
+from tests.common.binder import LocalDevice, OrganizationFullData
 from tests.common.freeze_time import freeze_time
 from tests.common.trio_clock import real_clock_timeout
 

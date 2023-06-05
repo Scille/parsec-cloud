@@ -11,12 +11,6 @@ from parsec._version import __version__
 from parsec.cli_utils import generate_not_available_cmd_group
 
 try:
-    from parsec.core.cli import core_cmd_group
-except ImportError as exc:
-    core_cmd_group = generate_not_available_cmd_group(exc)
-
-
-try:
     from parsec.backend.cli import backend_cmd_group
 except ImportError as exc:
     backend_cmd_group = generate_not_available_cmd_group(exc)
@@ -28,7 +22,6 @@ def cli() -> None:
     pass
 
 
-cli.add_command(core_cmd_group, "core")
 cli.add_command(backend_cmd_group, "backend")
 
 # Add support for PARSEC_CMD_ARGS env var

@@ -266,6 +266,15 @@ vlob_read = CmdSock(
         "encryption_revision": encryption_revision,
     },
 )
+apiv2v3_vlob_read = CmdSock(
+    authenticated_cmds.v3.vlob_read,
+    parse_args=lambda vlob_id, version=None, timestamp=None, encryption_revision=1: {
+        "vlob_id": vlob_id,
+        "version": version,
+        "timestamp": timestamp,
+        "encryption_revision": encryption_revision,
+    },
+)
 vlob_update = CmdSock(
     authenticated_cmds.latest.vlob_update,
     parse_args=lambda vlob_id, version, blob, timestamp=None, encryption_revision=1, sequester_blob=None: {
@@ -335,6 +344,11 @@ async def apiv2v3_events_listen(sock):
 
 message_get = CmdSock(
     authenticated_cmds.latest.message_get, parse_args=lambda offset=0: {"offset": offset}
+)
+
+
+apiv2v3_message_get = CmdSock(
+    authenticated_cmds.v3.message_get, parse_args=lambda offset=0: {"offset": offset}
 )
 
 

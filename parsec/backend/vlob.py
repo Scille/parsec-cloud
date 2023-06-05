@@ -296,13 +296,7 @@ class BaseVlobComponent:
         self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.v3.vlob_read.Req
     ) -> authenticated_cmds.v3.vlob_read.Rep:
         try:
-            (
-                version,
-                blob,
-                author,
-                created_on,
-                author_last_role_granted_on,
-            ) = await self.read(
+            (version, blob, author, created_on, author_last_role_granted_on, _) = await self.read(
                 client_ctx.organization_id,
                 client_ctx.device_id,
                 encryption_revision=req.encryption_revision,

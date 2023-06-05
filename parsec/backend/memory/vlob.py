@@ -44,7 +44,7 @@ if TYPE_CHECKING:
     from parsec.backend.memory.user import MemoryUserComponent
 
 
-# Tuple contains: blob, author, timestamp, certificates index
+# Tuple contains: blob, author, timestamp, certificate index at the time of creation
 VlobData = List[Tuple[bytes, DeviceID, DateTime, int]]
 SequesteredVlobData = List[Dict[SequesterServiceID, bytes]]
 
@@ -458,7 +458,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         if key in self._vlobs:
             raise VlobAlreadyExistsError()
 
-        certificates_index = self._user_component.get_current_certificates_index(organization_id)
+        certificates_index = self._user_component.get_current_certificate_index(organization_id)
 
         self._vlobs[key] = Vlob(
             realm_id, [(blob, author, timestamp, certificates_index)], sequestered_data
@@ -541,7 +541,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         if timestamp < vlob.data[vlob.current_version - 1][2]:
             raise VlobRequireGreaterTimestampError(vlob.data[vlob.current_version - 1][2])
 
-        certificates_index = self._user_component.get_current_certificates_index(organization_id)
+        certificates_index = self._user_component.get_current_certificate_index(organization_id)
 
         vlob.data.append((blob, author, timestamp, certificates_index))
         if sequestered_data is not None:  # /!\ We want to accept empty dicts !

@@ -7,11 +7,11 @@ from unittest.mock import patch
 
 import pytest
 
-from parsec._parsec import DateTime, DeviceID, LocalDevice, anonymous_cmds
+from parsec._parsec import DateTime, DeviceID, anonymous_cmds
 from parsec.api.version import API_VERSION, ApiVersion
 from parsec.backend import BackendApp
 from parsec.serde import packb
-from tests.common import AnonymousRpcApiClient, AuthenticatedRpcApiClient
+from tests.common import AnonymousRpcApiClient, AuthenticatedRpcApiClient, LocalDevice
 from tests.common.rpc_api import InvitedRpcApiClient
 
 PING_RAW_REQ = packb({"cmd": "ping", "ping": "foo"})

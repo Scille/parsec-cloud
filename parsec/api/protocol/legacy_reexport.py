@@ -329,15 +329,15 @@ RealmStartReencryptionMaintenanceRepBadTimestamp = (
 )
 
 # vlob_read
-VlobReadReq = authenticated_cmds.latest.vlob_read.Req
-VlobReadRep = authenticated_cmds.latest.vlob_read.Rep
-VlobReadRepUnknownStatus = authenticated_cmds.latest.vlob_read.RepUnknownStatus
-VlobReadRepOk = authenticated_cmds.latest.vlob_read.RepOk
-VlobReadRepNotFound = authenticated_cmds.latest.vlob_read.RepNotFound
-VlobReadRepNotAllowed = authenticated_cmds.latest.vlob_read.RepNotAllowed
-VlobReadRepBadVersion = authenticated_cmds.latest.vlob_read.RepBadVersion
-VlobReadRepBadEncryptionRevision = authenticated_cmds.latest.vlob_read.RepBadEncryptionRevision
-VlobReadRepInMaintenance = authenticated_cmds.latest.vlob_read.RepInMaintenance
+ApiV2V3_VlobReadReq = authenticated_cmds.v3.vlob_read.Req
+ApiV2V3_VlobReadRep = authenticated_cmds.v3.vlob_read.Rep
+ApiV2V3_VlobReadRepUnknownStatus = authenticated_cmds.v3.vlob_read.RepUnknownStatus
+ApiV2V3_VlobReadRepOk = authenticated_cmds.v3.vlob_read.RepOk
+ApiV2V3_VlobReadRepNotFound = authenticated_cmds.v3.vlob_read.RepNotFound
+ApiV2V3_VlobReadRepNotAllowed = authenticated_cmds.v3.vlob_read.RepNotAllowed
+ApiV2V3_VlobReadRepBadVersion = authenticated_cmds.v3.vlob_read.RepBadVersion
+ApiV2V3_VlobReadRepBadEncryptionRevision = authenticated_cmds.v3.vlob_read.RepBadEncryptionRevision
+ApiV2V3_VlobReadRepInMaintenance = authenticated_cmds.v3.vlob_read.RepInMaintenance
 
 # invite_4_greeter_communicate
 Invite4GreeterCommunicateReq = authenticated_cmds.latest.invite_4_greeter_communicate.Req
@@ -517,11 +517,11 @@ PkiEnrollmentListRepOk = authenticated_cmds.latest.pki_enrollment_list.RepOk
 PkiEnrollmentListRepNotAllowed = authenticated_cmds.latest.pki_enrollment_list.RepNotAllowed
 
 # message_get
-MessageGetReq = authenticated_cmds.latest.message_get.Req
-MessageGetRep = authenticated_cmds.latest.message_get.Rep
-MessageGetRepUnknownStatus = authenticated_cmds.latest.message_get.RepUnknownStatus
-MessageGetRepOk = authenticated_cmds.latest.message_get.RepOk
-Message = authenticated_cmds.latest.message_get.Message
+ApiV2V3_MessageGetReq = authenticated_cmds.v3.message_get.Req
+ApiV2V3_MessageGetRep = authenticated_cmds.v3.message_get.Rep
+ApiV2V3_MessageGetRepUnknownStatus = authenticated_cmds.v3.message_get.RepUnknownStatus
+ApiV2V3_MessageGetRepOk = authenticated_cmds.v3.message_get.RepOk
+ApiV2V3_Message = authenticated_cmds.v3.message_get.Message
 
 # invite_3a_greeter_wait_peer_trust
 Invite3aGreeterWaitPeerTrustReq = authenticated_cmds.latest.invite_3a_greeter_wait_peer_trust.Req

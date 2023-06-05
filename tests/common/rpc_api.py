@@ -14,15 +14,14 @@ from quart.typing import TestClientProtocol, TestHTTPConnectionProtocol
 from werkzeug.datastructures import Headers
 
 from parsec._parsec import (
+    ApiVersion,
     BackendInvitationAddr,
     DateTime,
     InvitationToken,
     OrganizationID,
     authenticated_cmds,
 )
-from parsec.api.version import API_VERSION
-from parsec.core.types import LocalDevice
-from tests.common import OrganizationFullData
+from tests.common import LocalDevice, OrganizationFullData
 
 
 class BaseRpcApiClient:
@@ -88,7 +87,7 @@ class SSEEventSink:
 
 
 class AuthenticatedRpcApiClient(BaseRpcApiClient):
-    API_VERSION = API_VERSION
+    API_VERSION = ApiVersion.API_LATEST_VERSION
 
     def __init__(self, client: TestClientProtocol, device: LocalDevice):
         self.client = client
@@ -189,7 +188,7 @@ class AuthenticatedRpcApiClient(BaseRpcApiClient):
 
 
 class AnonymousRpcApiClient(BaseRpcApiClient):
-    API_VERSION = API_VERSION
+    API_VERSION = ApiVersion.API_LATEST_VERSION
 
     def __init__(self, organization_id: OrganizationID, client: TestClientProtocol):
         self.organization_id = organization_id
@@ -246,7 +245,7 @@ class AnonymousRpcApiClient(BaseRpcApiClient):
 
 
 class InvitedRpcApiClient(BaseRpcApiClient):
-    API_VERSION = API_VERSION
+    API_VERSION = ApiVersion.API_LATEST_VERSION
 
     def __init__(
         self,

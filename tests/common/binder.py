@@ -9,12 +9,23 @@ import pytest
 from parsec._parsec import (
     BackendEventRealmRolesUpdated,
     BackendEventRealmVlobsUpdated,
+    BackendOrganizationAddr,
+    BackendOrganizationBootstrapAddr,
     DateTime,
+    DeviceID,
+    DeviceLabel,
+    EntryID,
+    HumanHandle,
     OrganizationID,
+    PrivateKey,
+    PublicKey,
     RealmID,
     RealmRole,
+    SecretKey,
     SigningKey,
     UserID,
+    UserProfile,
+    VerifyKey,
     VlobID,
 )
 from parsec.api.data import (
@@ -29,15 +40,68 @@ from parsec.backend.realm import RealmGrantedRole
 from parsec.backend.user import Device as BackendDevice
 from parsec.backend.user import User as BackendUser
 from parsec.backend.vlob import VlobSequesterServiceInconsistencyError
-from parsec.core.fs.storage import UserStorage
-from parsec.core.types import (
-    BackendOrganizationAddr,
-    BackendOrganizationBootstrapAddr,
-    LocalDevice,
-    LocalUserManifest,
-)
-from tests.common.freeze_time import freeze_time
 from tests.common.sequester import SequesterAuthorityFullData
+
+
+@dataclass
+class LocalDevice:
+    organization_addr: BackendOrganizationAddr
+    device_id: DeviceID
+    device_label: DeviceLabel | None
+    human_handle: HumanHandle | None
+    signing_key: SigningKey
+    private_key: PrivateKey
+    profile: UserProfile
+    user_manifest_id: EntryID
+    user_manifest_key: SecretKey
+    local_symkey: SecretKey
+
+    @property
+    def organization_id(self) -> OrganizationID:
+        return self.organization_addr.organization_id
+
+    @property
+    def root_verify_key(self) -> VerifyKey:
+        return self.organization_addr.root_verify_key
+
+    @property
+    def user_id(self) -> UserID:
+        return self.device_id.user_id
+
+    @property
+    def public_key(self) -> PublicKey:
+        return self.private_key.public_key
+
+    @property
+    def verify_key(self) -> VerifyKey:
+        return self.signing_key.verify_key
+
+    def timestamp(self) -> DateTime:
+        return DateTime.now()
+
+    @classmethod
+    def generate_new_device(
+        cls,
+        organization_addr: BackendOrganizationAddr,
+        profile: UserProfile,
+        device_id: DeviceID | None = None,
+        human_handle: HumanHandle | None = None,
+        device_label: DeviceLabel | None = None,
+        signing_key: SigningKey | None = None,
+        private_key: PrivateKey | None = None,
+    ) -> LocalDevice:
+        return cls(
+            organization_addr=organization_addr,
+            device_id=device_id or DeviceID.new(),
+            device_label=device_label,
+            human_handle=human_handle,
+            signing_key=signing_key or SigningKey.generate(),
+            private_key=private_key or PrivateKey.generate(),
+            profile=profile,
+            user_manifest_id=EntryID.new(),
+            user_manifest_key=SecretKey.generate(),
+            local_symkey=SecretKey.generate(),
+        )
 
 
 @dataclass
@@ -62,11 +126,9 @@ class OrganizationFullData:
 
 class InitialUserManifestState:
     def __init__(self):
-        self._v1: dict[tuple[OrganizationID, UserID], tuple[UserManifest, LocalUserManifest]] = {}
+        self._v1: dict[tuple[OrganizationID, UserID], UserManifest] = {}
 
-    def _generate_or_retrieve_user_manifest_v1(
-        self, device: LocalDevice
-    ) -> tuple[UserManifest, LocalUserManifest]:
+    def _generate_or_retrieve_user_manifest_v1(self, device: LocalDevice) -> UserManifest:
         try:
             return self._v1[(device.organization_id, device.user_id)]
 
@@ -82,23 +144,14 @@ class InitialUserManifestState:
                 last_processed_message=0,
                 workspaces=[],
             )
-            local_user_manifest = LocalUserManifest.from_remote(remote_user_manifest)
-            self._v1[(device.organization_id, device.user_id)] = (
-                remote_user_manifest,
-                local_user_manifest,
-            )
+            self._v1[(device.organization_id, device.user_id)] = remote_user_manifest
             return self._v1[(device.organization_id, device.user_id)]
 
     def force_user_manifest_v1_generation(self, device):
         self._generate_or_retrieve_user_manifest_v1(device)
 
-    def get_user_manifest_v1_for_device(self, device: LocalDevice) -> LocalUserManifest:
-        _, local = self._generate_or_retrieve_user_manifest_v1(device)
-        return local
-
     def get_user_manifest_v1_for_backend(self, device: LocalDevice) -> UserManifest:
-        remote, _ = self._generate_or_retrieve_user_manifest_v1(device)
-        return remote
+        return self._generate_or_retrieve_user_manifest_v1(device)
 
 
 @pytest.fixture
@@ -112,42 +165,6 @@ def initial_user_manifest_state() -> InitialUserManifestState:
     # hence devices and backend are empty) or only a single device to begin
     # with no knowledge of the "v1".
     return InitialUserManifestState()
-
-
-@pytest.fixture
-def initialize_local_user_manifest(initial_user_manifest_state):
-    async def _initialize_local_user_manifest(
-        data_base_dir, device, initial_user_manifest: str
-    ) -> None:
-        assert initial_user_manifest in ("non_speculative_v0", "speculative_v0", "v1")
-        # Create a storage just for this operation (the underlying database
-        # will be reused by the core's storage thanks to `persistent_mockup`)
-        with freeze_time("2000-01-01", devices=[device]) as timestamp:
-            async with UserStorage.run(data_base_dir, device) as storage:
-                assert storage.get_user_manifest().base_version == 0
-
-                if initial_user_manifest == "v1":
-                    user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(
-                        storage.device
-                    )
-                    await storage.set_user_manifest(user_manifest)
-                    # Checkpoint 1 *is* the upload of user manifest v1
-                    await storage.update_realm_checkpoint(1, {})
-
-                elif initial_user_manifest == "non_speculative_v0":
-                    user_manifest = LocalUserManifest.new_placeholder(
-                        author=storage.device.device_id,
-                        id=storage.device.user_manifest_id,
-                        timestamp=timestamp,
-                        speculative=False,
-                    )
-                    await storage.set_user_manifest(user_manifest)
-
-                else:
-                    # Nothing to do given speculative placeholder is the default
-                    assert initial_user_manifest == "speculative_v0"
-
-    return _initialize_local_user_manifest
 
 
 def local_device_to_backend_user(

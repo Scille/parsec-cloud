@@ -5,14 +5,15 @@ from dataclasses import dataclass
 
 from parsec._parsec import (
     DateTime,
+    SequesterAuthorityCertificate,
     SequesterPrivateKeyDer,
     SequesterPublicKeyDer,
+    SequesterServiceCertificate,
+    SequesterServiceID,
     SequesterSigningKeyDer,
     SequesterVerifyKeyDer,
     SigningKey,
 )
-from parsec.api.data import SequesterAuthorityCertificate, SequesterServiceCertificate
-from parsec.api.protocol import SequesterServiceID
 from parsec.backend.sequester import (
     BaseSequesterService,
     SequesterServiceType,

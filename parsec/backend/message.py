@@ -25,7 +25,7 @@ class BaseMessageComponent:
                 authenticated_cmds.v3.message_get.Message(
                     count=i, body=body, timestamp=timestamp, sender=sender
                 )
-                for i, (sender, timestamp, body) in enumerate(messages, offset + 1)
+                for i, (sender, timestamp, body, _) in enumerate(messages, offset + 1)
             ],
         )
 
