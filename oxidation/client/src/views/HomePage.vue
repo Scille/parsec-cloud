@@ -245,7 +245,7 @@ const showOrganizationList = ref(true);
 const sortBy = ref('organization');
 const sortByAsc = ref(true);
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const { timeSince } = (inject(FormattersKey)! as Formatters);
+const { timeSince } = inject(FormattersKey)! as Formatters;
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const configPath = inject(ConfigPathKey, '/');  // Must be a valid Unix path !
