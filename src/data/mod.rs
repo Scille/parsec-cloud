@@ -4,7 +4,7 @@ mod certif;
 mod error;
 mod invite;
 mod local_device_file;
-mod local_manifest;
+// mod local_manifest;
 mod manifest;
 mod message;
 mod organization;
@@ -15,7 +15,7 @@ pub(crate) use certif::*;
 pub(crate) use error::*;
 pub(crate) use invite::*;
 pub(crate) use local_device_file::*;
-pub(crate) use local_manifest::*;
+// pub(crate) use local_manifest::*;
 pub(crate) use manifest::*;
 pub(crate) use message::*;
 pub(crate) use organization::*;
@@ -72,12 +72,12 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<DeviceFile>()?;
 
     // Local Manifest
-    m.add_class::<Chunk>()?;
-    m.add_class::<LocalFileManifest>()?;
-    m.add_class::<LocalFolderManifest>()?;
-    m.add_class::<LocalWorkspaceManifest>()?;
-    m.add_class::<LocalUserManifest>()?;
-    m.add_function(wrap_pyfunction!(local_manifest_decrypt_and_load, m)?)?;
+    // m.add_class::<Chunk>()?;
+    // m.add_class::<LocalFileManifest>()?;
+    // m.add_class::<LocalFolderManifest>()?;
+    // m.add_class::<LocalWorkspaceManifest>()?;
+    // m.add_class::<LocalUserManifest>()?;
+    // m.add_function(wrap_pyfunction!(local_manifest_decrypt_and_load, m)?)?;
 
     // Manifest
     m.add_class::<EntryName>()?;

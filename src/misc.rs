@@ -13,13 +13,13 @@ use crate::{
 };
 
 #[pyclass]
-pub(crate) struct ApiVersion(libparsec::protocol::ApiVersion);
+pub(crate) struct ApiVersion(libparsec::types::ApiVersion);
 
 #[pymethods]
 impl ApiVersion {
     #[new]
     fn new(version: u32, revision: u32) -> Self {
-        Self(libparsec::protocol::ApiVersion { version, revision })
+        Self(libparsec::types::ApiVersion { version, revision })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
@@ -35,7 +35,7 @@ impl ApiVersion {
 
     #[classmethod]
     fn from_bytes(_cls: &PyType, bytes: &[u8]) -> ProtocolResult<Self> {
-        Ok(Self(libparsec::protocol::ApiVersion::load(bytes).map_err(
+        Ok(Self(libparsec::types::ApiVersion::load(bytes).map_err(
             |err| {
                 ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
                     exc: err.to_string(),
@@ -46,7 +46,7 @@ impl ApiVersion {
 
     #[classmethod]
     fn from_str(_cls: &PyType, version_str: &str) -> PyResult<Self> {
-        libparsec::protocol::ApiVersion::try_from(version_str)
+        libparsec::types::ApiVersion::try_from(version_str)
             .map(Self)
             .map_err(PyValueError::new_err)
     }
@@ -76,10 +76,24 @@ impl ApiVersion {
     }
 
     #[classattr]
-    #[pyo3(name = "API_VERSION")]
+    #[pyo3(name = "API_V3_VERSION")]
+    fn api_v3_version() -> Self {
+        const API_V3_VERSION: ApiVersion = Self(libparsec::protocol::API_V3_VERSION);
+        API_V3_VERSION
+    }
+
+    #[classattr]
+    #[pyo3(name = "API_V4_VERSION")]
+    fn api_v4_version() -> Self {
+        const API_V4_VERSION: ApiVersion = Self(libparsec::protocol::API_V4_VERSION);
+        API_V4_VERSION
+    }
+
+    #[classattr]
+    #[pyo3(name = "API_LATEST_VERSION")]
     fn api_version_number() -> Self {
-        const API_VERSION: ApiVersion = Self(libparsec::protocol::API_VERSION);
-        API_VERSION
+        const API_LATEST_VERSION: ApiVersion = Self(libparsec::protocol::API_LATEST_VERSION);
+        API_LATEST_VERSION
     }
 }
 

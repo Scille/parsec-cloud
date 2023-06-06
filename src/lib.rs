@@ -7,22 +7,22 @@ use pyo3::{
 
 mod addrs;
 mod api_crypto;
-mod backend_connection;
+// mod backend_connection;
 mod backend_events;
 mod binding_utils;
-mod core_fs;
+// mod core_fs;
 mod data;
 mod enumerate;
-mod file_operations;
+// mod file_operations;
 mod ids;
-mod invite;
+// mod invite;
 #[cfg(feature = "test-utils")]
 mod local_db;
 mod local_device;
 mod misc;
 mod protocol;
 mod regex;
-mod remote_devices_manager;
+// mod remote_devices_manager;
 mod runtime;
 #[cfg(feature = "test-utils")]
 mod testbed;
@@ -34,15 +34,15 @@ mod trustchain;
 #[pyo3(name = "_parsec")]
 fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     crate::api_crypto::add_mod(py, m)?;
-    crate::backend_connection::add_mod(py, m)?;
-    crate::core_fs::add_mod(py, m)?;
+    // crate::backend_connection::add_mod(py, m)?;
+    // crate::core_fs::add_mod(py, m)?;
     crate::data::add_mod(py, m)?;
-    crate::invite::add_mod(py, m)?;
+    // crate::invite::add_mod(py, m)?;
     #[cfg(feature = "test-utils")]
     crate::local_db::add_mod(py, m)?;
     crate::local_device::add_mod(py, m)?;
     crate::protocol::add_mod(py, m)?;
-    crate::remote_devices_manager::add_mod(py, m)?;
+    // crate::remote_devices_manager::add_mod(py, m)?;
 
     patch_panic_exception_to_inherit_exception(py);
     // Useful to expose `PanicException` for testing
@@ -81,10 +81,10 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<enumerate::RealmRole>()?;
     m.add_class::<enumerate::UserProfile>()?;
 
-    m.add_function(wrap_pyfunction!(file_operations::prepare_read, m)?)?;
-    m.add_function(wrap_pyfunction!(file_operations::prepare_write, m)?)?;
-    m.add_function(wrap_pyfunction!(file_operations::prepare_resize, m)?)?;
-    m.add_function(wrap_pyfunction!(file_operations::prepare_reshape, m)?)?;
+    // m.add_function(wrap_pyfunction!(file_operations::prepare_read, m)?)?;
+    // m.add_function(wrap_pyfunction!(file_operations::prepare_write, m)?)?;
+    // m.add_function(wrap_pyfunction!(file_operations::prepare_resize, m)?)?;
+    // m.add_function(wrap_pyfunction!(file_operations::prepare_reshape, m)?)?;
 
     m.add_class::<ids::OrganizationID>()?;
     m.add_class::<ids::EntryID>()?;

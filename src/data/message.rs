@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::{
-    exceptions::{PyNotImplementedError, PyValueError},
+    exceptions::PyNotImplementedError,
     pyclass, pymethods,
     types::{PyBytes, PyString, PyType},
     PyObject, PyRef, PyResult, Python,
@@ -9,7 +9,7 @@ use pyo3::{
 
 use crate::{
     api_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey},
-    data::EntryName,
+    data::{DataExc, EntryName},
     ids::{DeviceID, EntryID},
     time::DateTime,
 };
@@ -74,7 +74,7 @@ impl MessageContent {
             &expected_author.0,
             expected_timestamp.0,
         )
-        .map_err(PyValueError::new_err)?;
+        .map_err(DataExc::from)?;
 
         Ok(match msg {
             libparsec::types::MessageContent::SharingGranted { .. } => {

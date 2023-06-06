@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     enumerate::{InvitationStatus, RealmRole, UserProfile},
     ids::{DeviceID, InvitationToken, OrganizationID, RealmID, UserID, VlobID},
+    time::DateTime,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -18,8 +19,7 @@ enum RawBackendEvent {
     #[serde(rename = "certificates.updated")]
     CertificatesUpdated {
         organization_id: libparsec::types::OrganizationID,
-        certificate: Vec<u8>,
-        redacted_certificate: Option<Vec<u8>>,
+        timestamp: libparsec::types::DateTime,
     },
     #[serde(rename = "invite.conduit_updated")]
     InviteConduitUpdated {
@@ -240,43 +240,22 @@ impl BackendEventCertificatesUpdated {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [organization_id: OrganizationID, "organization_id"],
-            [certificate: &PyBytes, "certificate"],
-            [
-                redacted_certificate: Option<&PyBytes>,
-                "redacted_certificate"
-            ],
+            [timestamp: DateTime, "timestamp"],
         );
 
         Ok((
             BackendEventCertificatesUpdated,
             BackendEvent(RawBackendEvent::CertificatesUpdated {
                 organization_id: organization_id.0,
-                certificate: certificate.as_bytes().to_vec(),
-                redacted_certificate: redacted_certificate.map(|rc| rc.as_bytes().to_vec()),
+                timestamp: timestamp.0,
             }),
         ))
     }
 
     #[getter]
-    fn certificate<'py>(_self: PyRef<Self>, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn timestamp<'py>(_self: PyRef<Self>, py: Python<'py>) -> PyResult<DateTime> {
         match &_self.into_super().0 {
-            RawBackendEvent::CertificatesUpdated { certificate, .. } => {
-                Ok(PyBytes::new(py, certificate))
-            }
-            _ => unreachable!(),
-        }
-    }
-
-    #[getter]
-    fn redacted_certificate<'py>(
-        _self: PyRef<Self>,
-        py: Python<'py>,
-    ) -> PyResult<Option<&'py PyBytes>> {
-        match &_self.into_super().0 {
-            RawBackendEvent::CertificatesUpdated {
-                redacted_certificate,
-                ..
-            } => Ok(redacted_certificate.as_ref().map(|rc| PyBytes::new(py, rc))),
+            RawBackendEvent::CertificatesUpdated { timestamp, .. } => Ok(DateTime(*timestamp)),
             _ => unreachable!(),
         }
     }
