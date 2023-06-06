@@ -3,10 +3,12 @@
 from ..v2.device_create import (
     Rep,
     RepAlreadyExists,
+    RepBadTimestamp,
     RepBadUserId,
     RepInvalidCertification,
     RepInvalidData,
     RepOk,
+    RepRequireGreaterTimestamp,
     RepUnknownStatus,
     Req,
 )
@@ -20,4 +22,6 @@ __all__ = [
     "RepBadUserId",
     "RepInvalidData",
     "RepAlreadyExists",
+    "RepBadTimestamp",
+    "RepRequireGreaterTimestamp",
 ]
