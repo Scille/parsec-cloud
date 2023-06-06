@@ -108,7 +108,7 @@ def _patch_server_header(backend_config: BackendConfig, hyper_config: HyperConfi
         headers.append(server_header_tuple)
         return headers
 
-    hyper_config.response_headers = response_headers_with_parsec_server_header  # type: ignore[assignment]
+    hyper_config.response_headers = response_headers_with_parsec_server_header  # type: ignore[method-assign]
 
 
 async def serve_backend_with_asgi(

@@ -70,7 +70,7 @@ class FSOperationError(OSError, FSError):
             self.message = os.strerror(self.ERRNO)
         else:
             if hasattr(arg, "str"):
-                self.message = arg.str  # type: ignore[attr-defined]
+                self.message = arg.str
             else:
                 self.message = str(arg)
 
