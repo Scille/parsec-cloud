@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import ContextManager, DefaultDict, Dict, Iterator, List, Tuple, Type, TypeVar, Union
+from typing import ContextManager, DefaultDict, Dict, Iterator, List, Tuple, Type, Union
 
 try:
     # Introduced in Python 3.8
@@ -25,8 +25,6 @@ class MetaEvent(Enum):
     EVENT_DISCONNECTED = "event.disconnected"
 
 
-CustomEvent = TypeVar("CustomEvent", bound=Enum)
-AllEvent = Union[MetaEvent, CustomEvent]
 # `BackendEvent` is not an enum but a class with inheritance
 EventTypes = Union[Enum, Type[BackendEvent]]
 
@@ -107,7 +105,7 @@ class EventBus:
 
     @contextmanager
     def waiter_on_first(
-        self, *events: Enum, filter: EventFilterCallback | None = None
+        self, *events: EventTypes, filter: EventFilterCallback | None = None
     ) -> Iterator[EventWaiter]:
         ew = EventWaiter(filter)
         for event in events:
