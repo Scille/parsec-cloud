@@ -306,6 +306,12 @@ impl DeviceID {
     }
 }
 
+impl From<DeviceID> for (UserID, DeviceName) {
+    fn from(item: DeviceID) -> (UserID, DeviceName) {
+        (item.user_id, item.device_name)
+    }
+}
+
 /*
  * HumanHandle
  */

@@ -33,7 +33,9 @@ pub struct LocalDevice {
     pub human_handle: Option<HumanHandle>,
     pub signing_key: SigningKey,
     pub private_key: PrivateKey,
-    pub profile: UserProfile,
+    /// Profile the user had at enrollment time, use `CertificateOps::get_current_self_profile`
+    /// instead of relying on this.
+    pub initial_profile: UserProfile,
     pub user_manifest_id: EntryID,
     pub user_manifest_key: SecretKey,
     pub local_symkey: SecretKey,
@@ -44,7 +46,7 @@ impl LocalDevice {
     pub fn generate_new_device(
         organization_addr: BackendOrganizationAddr,
         device_id: Option<DeviceID>,
-        profile: UserProfile,
+        initial_profile: UserProfile,
         human_handle: Option<HumanHandle>,
         device_label: Option<DeviceLabel>,
         signing_key: Option<SigningKey>,
@@ -57,7 +59,7 @@ impl LocalDevice {
             human_handle,
             signing_key: signing_key.unwrap_or_else(SigningKey::generate),
             private_key: private_key.unwrap_or_else(PrivateKey::generate),
-            profile,
+            initial_profile,
             user_manifest_id: EntryID::default(),
             user_manifest_key: SecretKey::generate(),
             local_symkey: SecretKey::generate(),
@@ -180,7 +182,10 @@ impl TryFrom<LocalDeviceData> for LocalDevice {
     type Error = &'static str;
 
     fn try_from(data: LocalDeviceData) -> Result<Self, Self::Error> {
-        let profile = match data.profile {
+        // Since the introduction of UserUpdateCertificate, user profile can change.
+        // Hence this field only contains the initial profile the user had when it
+        // was enrolled.
+        let initial_profile = match data.profile {
             Maybe::Present(profile) => {
                 // `profile` field is defined, however `is_admin` is also present for
                 // backward compatibility and we must ensure they are both compatible.
@@ -208,7 +213,7 @@ impl TryFrom<LocalDeviceData> for LocalDevice {
             human_handle: data.human_handle.unwrap_or(None),
             signing_key: data.signing_key,
             private_key: data.private_key,
-            profile,
+            initial_profile,
             user_manifest_id: data.user_manifest_id,
             user_manifest_key: data.user_manifest_key,
             local_symkey: data.local_symkey,
@@ -220,7 +225,7 @@ impl TryFrom<LocalDeviceData> for LocalDevice {
 impl From<LocalDevice> for LocalDeviceData {
     fn from(obj: LocalDevice) -> Self {
         // Handle legacy `is_admin` field
-        let is_admin = obj.profile == UserProfile::Admin;
+        let is_admin = obj.initial_profile == UserProfile::Admin;
         Self {
             organization_addr: obj.organization_addr,
             device_id: obj.device_id,
@@ -228,7 +233,7 @@ impl From<LocalDevice> for LocalDeviceData {
             human_handle: Maybe::Present(obj.human_handle),
             signing_key: obj.signing_key,
             private_key: obj.private_key,
-            profile: Maybe::Present(obj.profile),
+            profile: Maybe::Present(obj.initial_profile),
             is_admin,
             user_manifest_id: obj.user_manifest_id,
             user_manifest_key: obj.user_manifest_key,

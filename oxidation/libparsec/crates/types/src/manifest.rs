@@ -17,7 +17,8 @@ use libparsec_serialization_format::parsec_data;
 
 use crate::{
     self as libparsec_types, data_macros::impl_transparent_data_format_conversion, BlockID,
-    DataError, DataResult, DateTime, DeviceID, EntryID, EntryNameError,
+    DataError, DataResult, DateTime, DeviceID, EntryID, EntryNameError, IndexInt, SizeInt,
+    VersionInt,
 };
 
 pub const DEFAULT_BLOCK_SIZE: Blocksize = Blocksize(512 * 1024); // 512 KB
@@ -55,7 +56,7 @@ macro_rules! impl_manifest_dump_load {
                 expected_author: &DeviceID,
                 expected_timestamp: DateTime,
                 expected_id: Option<EntryID>,
-                expected_version: Option<u32>,
+                expected_version: Option<VersionInt>,
             ) -> DataResult<Self> {
                 let signed = key.decrypt(encrypted).map_err(|_| DataError::Decryption)?;
 
@@ -77,7 +78,7 @@ macro_rules! impl_manifest_dump_load {
                 expected_author: &DeviceID,
                 expected_timestamp: DateTime,
                 expected_id: Option<EntryID>,
-                expected_version: Option<u32>,
+                expected_version: Option<VersionInt>,
             ) -> DataResult<Self> {
                 let compressed = author_verify_key
                     .verify(&signed)
@@ -106,7 +107,7 @@ macro_rules! impl_manifest_dump_load {
                 expected_author: &DeviceID,
                 expected_timestamp: DateTime,
                 expected_id: Option<EntryID>,
-                expected_version: Option<u32>,
+                expected_version: Option<VersionInt>,
             ) -> DataResult<()> {
                 if self.author != *expected_author {
                     Err(DataError::UnexpectedAuthor {
@@ -144,7 +145,7 @@ macro_rules! impl_manifest_dump_load {
 pub struct BlockAccess {
     pub id: BlockID,
     pub key: SecretKey,
-    pub offset: u64,
+    pub offset: SizeInt,
     pub size: NonZeroU64,
     pub digest: HashDigest,
 }
@@ -156,9 +157,13 @@ pub struct BlockAccess {
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum RealmRole {
+    /// Owner can give/remove all roles (including Owner) and have read/write access
     Owner,
+    /// Manager can give/remove Contributor/Reader roles and have read/write access
     Manager,
+    /// Contributor have read/write access
     Contributor,
+    /// Reader only have read access
     Reader,
 }
 
@@ -242,7 +247,7 @@ pub struct WorkspaceEntry {
     pub id: EntryID,
     pub name: EntryName,
     pub key: SecretKey,
-    pub encryption_revision: u32,
+    pub encryption_revision: IndexInt,
     pub encrypted_on: DateTime,
     pub role_cached_on: DateTime,
     pub role: Option<RealmRole>,
@@ -291,18 +296,18 @@ fn generate_local_author_legacy_placeholder() -> DeviceID {
  */
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Blocksize(u64);
+pub struct Blocksize(SizeInt);
 
 impl Blocksize {
     /// Return the inner value of the [Blocksize].
-    pub const fn inner(&self) -> u64 {
+    pub const fn inner(&self) -> SizeInt {
         self.0
     }
 }
 
-impl TryFrom<u64> for Blocksize {
+impl TryFrom<SizeInt> for Blocksize {
     type Error = &'static str;
-    fn try_from(data: u64) -> Result<Self, Self::Error> {
+    fn try_from(data: SizeInt) -> Result<Self, Self::Error> {
         if data < 8 {
             return Err("Invalid blocksize");
         }
@@ -311,14 +316,14 @@ impl TryFrom<u64> for Blocksize {
     }
 }
 
-impl From<Blocksize> for u64 {
+impl From<Blocksize> for SizeInt {
     fn from(data: Blocksize) -> Self {
         data.0
     }
 }
 
 impl Deref for Blocksize {
-    type Target = u64;
+    type Target = SizeInt;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -338,11 +343,11 @@ pub struct FileManifest {
     pub id: EntryID,
     pub parent: EntryID,
     // Version 0 means the data is not synchronized
-    pub version: u32,
+    pub version: VersionInt,
     pub created: DateTime,
     pub updated: DateTime,
     /// Total size of the file
-    pub size: u64,
+    pub size: SizeInt,
     /// Size of a single block
     pub blocksize: Blocksize,
     pub blocks: Vec<BlockAccess>,
@@ -401,7 +406,7 @@ pub struct FolderManifest {
     pub id: EntryID,
     pub parent: EntryID,
     // Version 0 means the data is not synchronized
-    pub version: u32,
+    pub version: VersionInt,
     pub created: DateTime,
     pub updated: DateTime,
     pub children: HashMap<EntryName, EntryID>,
@@ -436,7 +441,7 @@ pub struct WorkspaceManifest {
 
     pub id: EntryID,
     // Version 0 means the data is not synchronized
-    pub version: u32,
+    pub version: VersionInt,
     pub created: DateTime,
     pub updated: DateTime,
     pub children: HashMap<EntryName, EntryID>,
@@ -470,10 +475,10 @@ pub struct UserManifest {
 
     pub id: EntryID,
     // Version 0 means the data is not synchronized
-    pub version: u32,
+    pub version: VersionInt,
     pub created: DateTime,
     pub updated: DateTime,
-    pub last_processed_message: u64,
+    pub last_processed_message: IndexInt,
     pub workspaces: Vec<WorkspaceEntry>,
 }
 
@@ -530,7 +535,7 @@ impl Manifest {
         expected_author: &DeviceID,
         expected_timestamp: DateTime,
         expected_id: Option<EntryID>,
-        expected_version: Option<u32>,
+        expected_version: Option<VersionInt>,
     ) -> DataResult<Self> {
         let signed = key.decrypt(encrypted).map_err(|_| DataError::Decryption)?;
 
@@ -550,7 +555,7 @@ impl Manifest {
         expected_author: &DeviceID,
         expected_timestamp: DateTime,
         expected_id: Option<EntryID>,
-        expected_version: Option<u32>,
+        expected_version: Option<VersionInt>,
     ) -> DataResult<Self> {
         let compressed = author_verify_key
             .verify(signed)

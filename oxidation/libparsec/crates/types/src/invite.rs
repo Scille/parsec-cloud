@@ -11,8 +11,8 @@ use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
 use libparsec_serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types, data_macros::impl_transparent_data_format_conversion, DeviceID,
-    DeviceLabel, EntryID, HumanHandle, UserProfile,
+    self as libparsec_types, data_macros::impl_transparent_data_format_conversion, DataError,
+    DeviceID, DeviceLabel, EntryID, HumanHandle, UserProfile,
 };
 
 /*
@@ -209,15 +209,15 @@ macro_rules! impl_decrypt_and_load {
             pub fn decrypt_and_load(
                 encrypted: &[u8],
                 key: &::libparsec_crypto::SecretKey,
-            ) -> Result<$name, &'static str> {
-                let compressed = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
+            ) -> Result<$name, DataError> {
+                let compressed = key.decrypt(encrypted).map_err(|_| DataError::Decryption)?;
                 let mut serialized = vec![];
                 use std::io::Read;
                 ::flate2::read::ZlibDecoder::new(&compressed[..])
                     .read_to_end(&mut serialized)
-                    .map_err(|_| "Invalid compression")?;
+                    .map_err(|_| DataError::Compression)?;
                 let obj: $name =
-                    ::rmp_serde::from_slice(&serialized).map_err(|_| "Invalid serialization")?;
+                    ::rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)?;
                 Ok(obj)
             }
         }

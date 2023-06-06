@@ -91,6 +91,9 @@ pub type Float = f64;
 pub type VersionInt = u32;
 pub type SizeInt = u64;
 pub type IndexInt = u64;
+// // Index starts at 1, hence offset on index starts at 0
+// pub type IndexInt = std::num::NonZeroU64;
+// pub type IndexOffsetInt = u64;
 
 pub mod prelude {
     pub use super::*;

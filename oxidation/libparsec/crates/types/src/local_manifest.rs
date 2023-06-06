@@ -14,7 +14,7 @@ use libparsec_serialization_format::parsec_data;
 use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion, BlockAccess, BlockID,
     Blocksize, ChunkID, DataError, DataResult, DateTime, DeviceID, EntryID, EntryName,
-    FileManifest, FolderManifest, Regex, UserManifest, WorkspaceEntry, WorkspaceManifest,
+    FileManifest, FolderManifest, IndexInt, Regex, UserManifest, WorkspaceEntry, WorkspaceManifest,
 };
 
 macro_rules! impl_local_manifest_dump_load {
@@ -910,7 +910,7 @@ pub struct LocalUserManifest {
     pub base: UserManifest,
     pub need_sync: bool,
     pub updated: DateTime,
-    pub last_processed_message: u64,
+    pub last_processed_message: IndexInt,
     pub workspaces: Vec<WorkspaceEntry>,
     // Speculative placeholders are created when we want to access the
     // user manifest but didn't retrieve it from backend yet. This implies:
@@ -967,25 +967,34 @@ impl LocalUserManifest {
     }
 
     pub fn evolve_workspaces_and_mark_updated(
-        mut self,
+        &mut self,
         workspace: WorkspaceEntry,
         timestamp: DateTime,
-    ) -> Self {
+    ) {
         self.need_sync = true;
         self.updated = timestamp;
         self.evolve_workspaces(workspace)
     }
 
-    pub fn evolve_workspaces(mut self, workspace: WorkspaceEntry) -> Self {
+    pub fn evolve_last_processed_message_and_mark_updated(
+        &mut self,
+        last_processed_message: IndexInt,
+        timestamp: DateTime,
+    ) {
+        self.need_sync = true;
+        self.updated = timestamp;
+        self.last_processed_message = last_processed_message;
+    }
+
+    pub fn evolve_workspaces(&mut self, workspace: WorkspaceEntry) {
         for entry in self.workspaces.iter_mut() {
             if entry.id == workspace.id {
                 *entry = workspace;
-                return self;
+                return;
             }
         }
         // Entry not already present, add it
         self.workspaces.push(workspace);
-        self
     }
 
     pub fn get_workspace_entry(&self, workspace_id: &EntryID) -> Option<&WorkspaceEntry> {

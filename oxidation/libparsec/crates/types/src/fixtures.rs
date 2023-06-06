@@ -56,7 +56,7 @@ impl Device {
             human_handle: self.human_handle.to_owned(),
             signing_key: self.signing_key.to_owned(),
             private_key: self.private_key.to_owned(),
-            profile: self.profile.to_owned(),
+            initial_profile: self.profile.to_owned(),
             user_manifest_id: self.user_manifest_id.to_owned(),
             user_manifest_key: self.user_manifest_key.to_owned(),
             local_symkey: self.local_symkey.to_owned(),
@@ -169,6 +169,22 @@ pub fn mallory(coolorg: &Organization) -> Device {
 #[fixture]
 pub fn timestamp() -> DateTime {
     "2020-01-01T00:00:00Z".parse().unwrap()
+}
+
+pub struct TimestampGenerator {
+    current: DateTime,
+}
+impl TimestampGenerator {
+    pub fn next(&mut self) -> DateTime {
+        let ret = self.current.clone();
+        self.current = DateTime::from_f64_with_us_precision(ret.get_f64_with_us_precision() + 1.0);
+        ret
+    }
+}
+
+#[fixture]
+pub fn timestamps(timestamp: DateTime) -> TimestampGenerator {
+    TimestampGenerator { current: timestamp }
 }
 
 #[fixture]

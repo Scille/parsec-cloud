@@ -5,11 +5,11 @@ use std::io::{Read, Write};
 use flate2::read::ZlibDecoder;
 use flate2::write::ZlibEncoder;
 use serde::{Deserialize, Serialize};
-use serde_with::*;
+use serde_with::serde_as;
 
 use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
 
-use crate::{DateTime, DeviceID, EntryID, EntryName};
+use crate::{DataError, DateTime, DeviceID, EntryName, IndexInt, RealmID};
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -21,8 +21,8 @@ pub enum MessageContent {
         timestamp: DateTime,
 
         name: EntryName,
-        id: EntryID,
-        encryption_revision: u32,
+        id: RealmID,
+        encryption_revision: IndexInt,
         encrypted_on: DateTime,
         key: SecretKey,
         // Don't include role given the only reliable way to get this information
@@ -40,8 +40,8 @@ pub enum MessageContent {
         // interchangeably, which avoid possible concurrency issues when a sharing
         // occurs right before a reencryption.
         name: EntryName,
-        id: EntryID,
-        encryption_revision: u32,
+        id: RealmID,
+        encryption_revision: IndexInt,
         encrypted_on: DateTime,
         key: SecretKey,
     },
@@ -51,7 +51,7 @@ pub enum MessageContent {
         author: DeviceID,
         timestamp: DateTime,
 
-        id: EntryID,
+        id: RealmID,
     },
 
     #[serde(rename = "ping")]
@@ -70,19 +70,19 @@ impl MessageContent {
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
         expected_timestamp: DateTime,
-    ) -> Result<MessageContent, &'static str> {
+    ) -> Result<MessageContent, DataError> {
         let signed = recipient_privkey
             .decrypt_from_self(ciphered)
-            .map_err(|_| "Invalid encryption")?;
+            .map_err(|_| DataError::Decryption)?;
         let compressed = author_verify_key
             .verify(&signed)
-            .map_err(|_| "Invalid signature")?;
+            .map_err(|_| DataError::Signature)?;
         let mut serialized = vec![];
         ZlibDecoder::new(compressed)
             .read_to_end(&mut serialized)
-            .map_err(|_| "Invalid compression")?;
+            .map_err(|_| DataError::Compression)?;
         let data: MessageContent =
-            rmp_serde::from_slice(&serialized).map_err(|_| "Invalid serialization")?;
+            rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)?;
         let (author, &timestamp) = match &data {
             MessageContent::SharingGranted {
                 author, timestamp, ..
@@ -98,9 +98,15 @@ impl MessageContent {
             } => (author, timestamp),
         };
         if author != expected_author {
-            Err("Invalid author")
+            Err(DataError::UnexpectedAuthor {
+                expected: Box::new(expected_author.clone()),
+                got: Some(Box::new(author.clone())),
+            })
         } else if timestamp != expected_timestamp {
-            Err("Invalid timestamp")
+            Err(DataError::UnexpectedTimestamp {
+                expected: expected_timestamp,
+                got: timestamp,
+            })
         } else {
             Ok(data)
         }

@@ -203,7 +203,7 @@ fn serde_local_device_data(
         if !with_human_handle {
             expected.human_handle = None;
         }
-        expected.profile = user_profile;
+        expected.initial_profile = user_profile;
         expected
     };
 

@@ -72,7 +72,7 @@ impl TestbedEnv {
             human_handle: user.human_handle.to_owned(),
             signing_key: device.signing_key.to_owned(),
             private_key: user.private_key.to_owned(),
-            profile: user.profile.to_owned(),
+            initial_profile: user.profile.to_owned(),
             user_manifest_id: user.user_manifest_id.to_owned(),
             user_manifest_key: user.user_manifest_key.to_owned(),
             local_symkey: device.local_symkey.to_owned(),

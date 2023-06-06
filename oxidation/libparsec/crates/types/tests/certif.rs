@@ -4,11 +4,158 @@ use hex_literal::hex;
 use pretty_assertions::assert_eq;
 use rstest::rstest;
 
-use libparsec_types::fixtures::{alice, bob, Device};
+use libparsec_types::fixtures::{alice, bob, timestamp, Device};
 use libparsec_types::prelude::*;
 
 // TODO: check serde output to ensure handling of Option<T> depending of
 // default/missing policy
+
+#[rstest]
+fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
+    let user_certificate = UserCertificate {
+        author: CertificateSignerOwned::User(alice.device_id.clone()),
+        timestamp,
+        user_id: bob.user_id().clone(),
+        human_handle: bob.human_handle.clone(),
+        public_key: bob.public_key(),
+        profile: UserProfile::Standard,
+    };
+    assert_eq!(
+        format!("{:?}", user_certificate),
+        concat!(
+            "UserCertificate {",
+            " author: User(DeviceID(\"alice@dev1\")),",
+            " timestamp: DateTime(\"2020-01-01T00:00:00Z\"),",
+            " user_id: UserID(\"bob\"),",
+            " human_handle: Some(HumanHandle(\"Boby McBobFace <bob@example.com>\")),",
+            " public_key: PublicKey(****),",
+            " profile: Standard",
+            " }",
+        )
+    );
+
+    let device_certificate = DeviceCertificate {
+        author: CertificateSignerOwned::User(alice.device_id.clone()),
+        timestamp,
+        device_id: bob.device_id.clone(),
+        device_label: bob.device_label.clone(),
+        verify_key: bob.verify_key(),
+    };
+    assert_eq!(
+        format!("{:?}", device_certificate),
+        concat!(
+            "DeviceCertificate {",
+            " author: User(DeviceID(\"alice@dev1\")),",
+            " timestamp: DateTime(\"2020-01-01T00:00:00Z\"),",
+            " device_id: DeviceID(\"bob@dev1\"),",
+            " device_label: Some(DeviceLabel(\"My dev1 machine\")),",
+            " verify_key: VerifyKey(****)",
+            " }",
+        )
+    );
+
+    let revoked_user_certificate = RevokedUserCertificate {
+        author: alice.device_id.clone(),
+        timestamp,
+        user_id: bob.user_id().to_owned(),
+    };
+    assert_eq!(
+        format!("{:?}", revoked_user_certificate),
+        concat!(
+            "RevokedUserCertificate {",
+            " author: DeviceID(\"alice@dev1\"),",
+            " timestamp: DateTime(\"2020-01-01T00:00:00Z\"),",
+            " user_id: UserID(\"bob\")",
+            " }",
+        )
+    );
+
+    let user_update_certificate = UserUpdateCertificate {
+        author: alice.device_id.clone(),
+        timestamp,
+        user_id: bob.user_id().to_owned(),
+        new_profile: UserProfile::Outsider,
+    };
+    assert_eq!(
+        format!("{:?}", user_update_certificate),
+        concat!(
+            "UserUpdateCertificate {",
+            " author: DeviceID(\"alice@dev1\"),",
+            " timestamp: DateTime(\"2020-01-01T00:00:00Z\"),",
+            " user_id: UserID(\"bob\"),",
+            " new_profile: Outsider",
+            " }",
+        )
+    );
+
+    let realm_role_certificate = RealmRoleCertificate {
+        author: CertificateSignerOwned::User(alice.device_id.clone()),
+        timestamp,
+        user_id: bob.user_id().to_owned(),
+        realm_id: RealmID::from_hex("604784450642426b91eb89242f54fa52").unwrap(),
+        role: Some(RealmRole::Owner),
+    };
+    assert_eq!(
+        format!("{:?}", realm_role_certificate),
+        concat!(
+            "RealmRoleCertificate {",
+            " author: User(DeviceID(\"alice@dev1\")),",
+            " timestamp: DateTime(\"2020-01-01T00:00:00Z\"),",
+            " realm_id: RealmID(60478445-0642-426b-91eb-89242f54fa52),",
+            " user_id: UserID(\"bob\"),",
+            " role: Some(Owner)",
+            " }",
+        )
+    );
+
+    let sequester_authority_certificate = SequesterAuthorityCertificate {
+        timestamp,
+        verify_key_der: SequesterVerifyKeyDer::try_from(
+            &hex!(
+        "30819f300d06092a864886f70d010101050003818d0030818902818100b2dc00a3c3b5c689"
+        "b069f3f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256cc660d5084782738a"
+        "3045d75b584c1943bc04c7123d68ac0cef253b4ee8d79bd09da19162dcc083662269b7b62c"
+        "b38582f8a30219047b087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66f7ee18303195"
+        "f3bcc72ab57207ebfd0203010001")[..],
+        )
+        .unwrap(),
+    };
+    assert_eq!(
+        format!("{:?}", sequester_authority_certificate),
+        concat!(
+            "SequesterAuthorityCertificate {",
+            " timestamp: DateTime(\"2020-01-01T00:00:00Z\"),",
+            " verify_key_der: SequesterVerifyKeyDer(****)",
+            " }",
+        )
+    );
+
+    let sequester_service_certificate = SequesterServiceCertificate {
+        timestamp,
+        service_id: SequesterServiceID::from_hex("b5eb565343c442b3a26be44573813ff0").unwrap(),
+        service_label: "foo".into(),
+        encryption_key_der: SequesterPublicKeyDer::try_from(
+            &hex!(
+        "30819f300d06092a864886f70d010101050003818d0030818902818100b2dc00a3c3b5c689"
+        "b069f3f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256cc660d5084782738a"
+        "3045d75b584c1943bc04c7123d68ac0cef253b4ee8d79bd09da19162dcc083662269b7b62c"
+        "b38582f8a30219047b087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66f7ee18303195"
+        "f3bcc72ab57207ebfd0203010001")[..],
+        )
+        .unwrap(),
+    };
+    assert_eq!(
+        format!("{:?}", sequester_service_certificate),
+        concat!(
+            "SequesterServiceCertificate {",
+            " timestamp: DateTime(\"2020-01-01T00:00:00Z\"),",
+            " service_id: SequesterServiceID(b5eb5653-43c4-42b3-a26b-e44573813ff0),",
+            " service_label: \"foo\",",
+            " encryption_key_der: SequesterPublicKeyDer(****)",
+            " }",
+        )
+    );
+}
 
 #[rstest]
 fn serde_user_certificate(alice: &Device, bob: &Device) {

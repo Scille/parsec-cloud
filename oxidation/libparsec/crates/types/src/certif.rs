@@ -101,6 +101,9 @@ macro_rules! impl_unsecure_load {
                     &self.unsecure.author
                 }
                 )?
+                pub fn timestamp(&self) -> &DateTime {
+                    &self.unsecure.timestamp
+                }
                 /// Hint is useful to provide of representation the certificate in case
                 /// it has failed validation we want to report it in an error message
                 pub fn hint(&self) -> String {
@@ -606,6 +609,8 @@ pub struct SequesterServiceCertificate {
     pub encryption_key_der: SequesterPublicKeyDer,
 }
 
+impl_unsecure_dump!(SequesterServiceCertificate);
+
 impl SequesterServiceCertificate {
     pub fn dump(&self) -> Vec<u8> {
         dump::<Self>(self)
@@ -616,9 +621,48 @@ impl SequesterServiceCertificate {
     }
 }
 
-// `SequesterServiceCertificate` has no `insecure_load` given it is signed by
-// the sequester authority, which is a special signature system (RSA, PKI etc.)
-// that is dealt with by another layer.
+// Cannot use `impl_insecure_load` macro for `SequesterServiceCertificate` given it is
+// signed by the sequester authority, which is a special signature system (RSA, PKI etc.)
+
+#[derive(Debug)]
+pub struct UnsecureSequesterServiceCertificate {
+    signed: Bytes,
+    unsecure: SequesterServiceCertificate,
+}
+
+impl UnsecureSequesterServiceCertificate {
+    pub fn timestamp(&self) -> &DateTime {
+        &self.unsecure.timestamp
+    }
+    pub fn hint(&self) -> String {
+        format!("{:?}", self.unsecure)
+    }
+    pub fn verify_signature(
+        self,
+        author_verify_key: &SequesterVerifyKeyDer,
+    ) -> Result<(SequesterServiceCertificate, Bytes), (Self, DataError)> {
+        match author_verify_key.verify(self.signed.as_ref()) {
+            // Unsecure is now secure \o/
+            Ok(_) => Ok((self.unsecure, self.signed)),
+            Err(_) => Err((self, DataError::Signature)),
+        }
+    }
+    pub fn skip_validation(
+        self,
+        _reason: UnsecureSkipValidationReason,
+    ) -> SequesterServiceCertificate {
+        self.unsecure
+    }
+}
+
+impl SequesterServiceCertificate {
+    pub fn unsecure_load(signed: Bytes) -> DataResult<UnsecureSequesterServiceCertificate> {
+        let (_, compressed) =
+            VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
+        let unsecure = load::<SequesterServiceCertificate>(compressed)?;
+        Ok(UnsecureSequesterServiceCertificate { signed, unsecure })
+    }
+}
 
 parsec_data!("schema/certif/sequester_service_certificate.json5");
 
@@ -640,16 +684,22 @@ impl_transparent_data_format_conversion!(
 pub enum AnyCertificate {
     User(UserCertificate),
     Device(DeviceCertificate),
+    UserUpdate(UserUpdateCertificate),
     RevokedUser(RevokedUserCertificate),
     RealmRole(RealmRoleCertificate),
+    SequesterAuthority(SequesterAuthorityCertificate),
+    SequesterService(SequesterServiceCertificate),
 }
 
 #[derive(Debug)]
 pub enum UnsecureAnyCertificate {
     User(UnsecureUserCertificate),
     Device(UnsecureDeviceCertificate),
+    UserUpdate(UnsecureUserUpdateCertificate),
     RevokedUser(UnsecureRevokedUserCertificate),
     RealmRole(UnsecureRealmRoleCertificate),
+    SequesterAuthority(UnsecureSequesterAuthorityCertificate),
+    SequesterService(UnsecureSequesterServiceCertificate),
 }
 
 impl AnyCertificate {
@@ -670,9 +720,53 @@ impl AnyCertificate {
                     unsecure,
                 })
             }
+            AnyCertificate::UserUpdate(unsecure) => {
+                UnsecureAnyCertificate::UserUpdate(UnsecureUserUpdateCertificate {
+                    signed,
+                    unsecure,
+                })
+            }
             AnyCertificate::RealmRole(unsecure) => {
                 UnsecureAnyCertificate::RealmRole(UnsecureRealmRoleCertificate { signed, unsecure })
             }
+            AnyCertificate::SequesterAuthority(unsecure) => {
+                UnsecureAnyCertificate::SequesterAuthority(UnsecureSequesterAuthorityCertificate {
+                    signed,
+                    unsecure,
+                })
+            }
+            AnyCertificate::SequesterService(unsecure) => {
+                UnsecureAnyCertificate::SequesterService(UnsecureSequesterServiceCertificate {
+                    signed,
+                    unsecure,
+                })
+            }
         })
+    }
+}
+
+impl UnsecureAnyCertificate {
+    pub fn timestamp(&self) -> &DateTime {
+        match self {
+            UnsecureAnyCertificate::User(unsecure) => unsecure.timestamp(),
+            UnsecureAnyCertificate::Device(unsecure) => unsecure.timestamp(),
+            UnsecureAnyCertificate::RevokedUser(unsecure) => unsecure.timestamp(),
+            UnsecureAnyCertificate::UserUpdate(unsecure) => unsecure.timestamp(),
+            UnsecureAnyCertificate::RealmRole(unsecure) => unsecure.timestamp(),
+            UnsecureAnyCertificate::SequesterAuthority(unsecure) => unsecure.timestamp(),
+            UnsecureAnyCertificate::SequesterService(unsecure) => unsecure.timestamp(),
+        }
+    }
+
+    pub fn hint(&self) -> String {
+        match self {
+            UnsecureAnyCertificate::User(unsecure) => unsecure.hint(),
+            UnsecureAnyCertificate::Device(unsecure) => unsecure.hint(),
+            UnsecureAnyCertificate::RevokedUser(unsecure) => unsecure.hint(),
+            UnsecureAnyCertificate::UserUpdate(unsecure) => unsecure.hint(),
+            UnsecureAnyCertificate::RealmRole(unsecure) => unsecure.hint(),
+            UnsecureAnyCertificate::SequesterAuthority(unsecure) => unsecure.hint(),
+            UnsecureAnyCertificate::SequesterService(unsecure) => unsecure.hint(),
+        }
     }
 }
