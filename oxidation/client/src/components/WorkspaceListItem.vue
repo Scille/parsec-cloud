@@ -103,7 +103,7 @@ defineEmits<{
 }>();
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const { timeSince, fileSize } = (inject(FormattersKey)! as Formatters);
+const { timeSince, fileSize } = inject(FormattersKey)! as Formatters;
 </script>
 
 <style lang="scss" scoped>
