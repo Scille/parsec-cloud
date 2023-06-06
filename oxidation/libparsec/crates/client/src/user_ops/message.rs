@@ -158,7 +158,7 @@ impl super::UserOps {
         // Finally, update message offset in user manifest
 
         // Up to this point, the user manifest could have been concurrently modified
-        // from when we retreived `initial_last_index` (typically because we processed
+        // from when we retrieved `initial_last_index` (typically because we processed
         // sharing revoked messages)
         let _update_user_manifest_guard = self.update_user_manifest_lock.lock().await;
         let mut user_manifest = self.storage.get_user_manifest();

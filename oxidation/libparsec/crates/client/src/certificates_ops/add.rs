@@ -637,7 +637,7 @@ impl CertificatesOps {
                     }
                 }
                 // When the check functions are called, device certificate has already
-                // been retreived for the author (to get it verify key).
+                // been retrieved for the author (to get it verify key).
                 // Hence the user certificate must exist and be available (guaranteed by
                 // consistency checks when the author device certificate was added).
                 //

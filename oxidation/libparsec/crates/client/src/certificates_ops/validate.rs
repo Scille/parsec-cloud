@@ -206,7 +206,7 @@ impl CertificatesOps {
                 // The certificate is validated by the server poll system just like any
                 // other certificate, so we don't have to handle it validation here.
                 //
-                // So the only check we have is to retreive this certificate.
+                // So the only check we have is to retrieve this certificate.
                 let certif_as_expected = match storage.get_certificate(certificate_index).await {
                     Ok(certif) => {
                         if let AnyArcCertificate::RealmRole(certif) = certif {

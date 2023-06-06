@@ -47,7 +47,7 @@ impl UserStorage {
         //
         // The drawback is of course the fact we may lose data. However 1) there is not
         // much to lose (worst case is if the user manifest hasn't been synced since
-        // a workspace has been created) and 2) we can attempt to retreive the user manifest
+        // a workspace has been created) and 2) we can attempt to retrieve the user manifest
         // blob (if it is readable !) before overwritting the database.
         //
         // The worst case is if we are reading a newer version of the database: we will
@@ -61,7 +61,7 @@ impl UserStorage {
 
         super::model::initialize_model_if_needed(&db).await?;
 
-        // 3) Retreive the user manifest
+        // 3) Retrieve the user manifest
 
         let user_manifest = UserStorage::load_user_manifest(&db, &device).await?;
 

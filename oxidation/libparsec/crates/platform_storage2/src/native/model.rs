@@ -105,7 +105,7 @@ table! {
         certificate_index -> BigInt,
         certificate_timestamp -> Double, // Timestamp
         certificate -> Binary,
-        // We want to have a way to retreive a singe certificate without having to iterate,
+        // We want to have a way to retrieve a singe certificate without having to iterate,
         // decrypt and deserialize all of them.
         // However this is tricky given we don't want to make this table dependent on the
         // types of certificates, otherwise a migration would be required everytime we
