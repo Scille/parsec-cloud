@@ -2,9 +2,6 @@
 
 mod certif;
 mod error;
-mod invite;
-mod local_device_file;
-// mod local_manifest;
 mod manifest;
 mod message;
 mod organization;
@@ -13,9 +10,6 @@ mod user;
 
 pub(crate) use certif::*;
 pub(crate) use error::*;
-pub(crate) use invite::*;
-pub(crate) use local_device_file::*;
-// pub(crate) use local_manifest::*;
 pub(crate) use manifest::*;
 pub(crate) use message::*;
 pub(crate) use organization::*;
@@ -58,26 +52,6 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<RealmRoleCertificate>()?;
     m.add_class::<SequesterAuthorityCertificate>()?;
     m.add_class::<SequesterServiceCertificate>()?;
-
-    // Invite
-    m.add_class::<SASCode>()?;
-    m.add_function(wrap_pyfunction!(generate_sas_codes, m)?)?;
-    m.add_function(wrap_pyfunction!(generate_sas_code_candidates, m)?)?;
-    m.add_class::<InviteUserData>()?;
-    m.add_class::<InviteUserConfirmation>()?;
-    m.add_class::<InviteDeviceData>()?;
-    m.add_class::<InviteDeviceConfirmation>()?;
-
-    // Local Device File
-    m.add_class::<DeviceFile>()?;
-
-    // Local Manifest
-    // m.add_class::<Chunk>()?;
-    // m.add_class::<LocalFileManifest>()?;
-    // m.add_class::<LocalFolderManifest>()?;
-    // m.add_class::<LocalWorkspaceManifest>()?;
-    // m.add_class::<LocalUserManifest>()?;
-    // m.add_function(wrap_pyfunction!(local_manifest_decrypt_and_load, m)?)?;
 
     // Manifest
     m.add_class::<EntryName>()?;

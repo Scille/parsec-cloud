@@ -3,11 +3,11 @@
 use pyo3::{
     exceptions::PyNotImplementedError,
     pyclass::CompareOp,
-    types::{PyByteArray, PyBytes, PyFrozenSet, PyTuple},
-    FromPyObject, IntoPy, PyAny, PyObject, PyResult,
+    types::{PyByteArray, PyBytes, PyTuple},
+    FromPyObject, IntoPy, PyObject, PyResult,
 };
 use std::{
-    collections::{hash_map::DefaultHasher, HashSet},
+    collections::hash_map::DefaultHasher,
     hash::{Hash, Hasher},
 };
 
@@ -132,16 +132,6 @@ pub(crate) fn hash_generic<T: Hash>(value_to_hash: T) -> PyResult<u64> {
     let mut s = DefaultHasher::new();
     value_to_hash.hash(&mut s);
     Ok(s.finish())
-}
-
-// This implementation is due to
-// https://github.com/PyO3/pyo3/blob/39d2b9d96476e6cc85ca43e720e035e0cdff7a45/src/types/set.rs#L240
-// where HashSet is PySet in FromPyObject trait
-pub fn py_to_rs_set<'a, T: FromPyObject<'a> + Eq + Hash>(set: &'a PyAny) -> PyResult<HashSet<T>> {
-    set.downcast::<PyFrozenSet>()?
-        .iter()
-        .map(T::extract)
-        .collect::<PyResult<std::collections::HashSet<T>>>()
 }
 
 macro_rules! py_object {

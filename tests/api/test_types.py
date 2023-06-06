@@ -14,7 +14,6 @@ from parsec._parsec import (
     EntryNameError,
     HumanHandle,
     OrganizationID,
-    SASCode,
     SecretKey,
     UserID,
 )
@@ -165,36 +164,6 @@ def test_human_handle_normalization():
     hh = HumanHandle(nfc_email, nfc_label)
     assert hh.email == nfc_email
     assert hh.label == nfc_label
-
-
-def test_sas_code():
-    assert SASCode.from_int(0x0) == SASCode("AAAA")
-    assert SASCode.from_int(0x1) == SASCode("BAAA")  # cspell: disable-line
-    # [...]
-    assert SASCode.from_int(0x84001) == SASCode("BASS")
-    # [...]
-    assert SASCode.from_int(0xFFFFE) == SASCode("8999")
-    assert SASCode.from_int(0xFFFFF) == SASCode("9999")
-
-    with pytest.raises(ValueError):
-        SASCode.from_int(2**20)
-
-    # OverflowError for Rust binding
-    with pytest.raises((ValueError, OverflowError)):
-        SASCode.from_int(-1)
-
-    for invalid in [
-        "",
-        "AAA",
-        "AAAAA",
-        "aaaa",
-        "AAAI",  # cspell: disable-line
-        "AAAO",  # cspell: disable-line
-        "AAA0",
-        "AAA1",
-    ]:
-        with pytest.raises(ValueError):
-            SASCode(invalid)
 
 
 @pytest.mark.parametrize(

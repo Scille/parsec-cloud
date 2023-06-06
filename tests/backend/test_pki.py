@@ -12,7 +12,6 @@ from parsec._parsec import (
     DeviceLabel,
     EnrollmentID,
     HumanHandle,
-    InviteUserConfirmation,
     PublicKey,
     UserCertificate,
     UserProfile,
@@ -73,7 +72,7 @@ def _create_new_user_certificates(
     profile: UserProfile,
     public_key: PublicKey,
     verify_key: VerifyKey,
-) -> tuple[bytes, bytes, bytes, bytes, InviteUserConfirmation]:
+) -> tuple[bytes, bytes, bytes, bytes, DeviceID]:
     """Helper to prepare the creation of a new user."""
     device_id = DeviceID.new()
     timestamp = author.timestamp()
@@ -104,20 +103,12 @@ def _create_new_user_certificates(
         author.signing_key
     )
 
-    invite_user_confirmation = InviteUserConfirmation(
-        device_id=device_id,
-        device_label=device_label,
-        human_handle=human_handle,
-        profile=profile,
-        root_verify_key=author.root_verify_key,
-    )
-
     return (
         user_certificate_bytes,
         redacted_user_certificate_bytes,
         device_certificate_bytes,
         redacted_device_certificate_bytes,
-        invite_user_confirmation,
+        device_id,
     )
 
 
@@ -155,7 +146,7 @@ def _prepare_accept_reply(admin, invitee):
         redacted_user_certificate,
         device_certificate,
         redacted_device_certificate,
-        user_confirmation,
+        user_confirmation_device_id,
     ) = _create_new_user_certificates(
         admin,
         invitee.device_label,
@@ -181,7 +172,7 @@ def _prepare_accept_reply(admin, invitee):
         "redacted_device_certificate": redacted_device_certificate,
     }
 
-    return (user_confirmation, kwargs)
+    return (user_confirmation_device_id, kwargs)
 
 
 # Test pki_enrollment_submit
@@ -411,7 +402,7 @@ async def test_pki_accept(backend, anonymous_backend_ws, mallory, alice, alice_w
 
     # Send reply
     with backend.event_bus.listen() as spy:
-        user_confirmation, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
+        user_confirmation_device_id, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
         rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
         assert isinstance(rep, PkiEnrollmentAcceptRepOk)
         await spy.wait_with_timeout(BackendEventPkiEnrollmentUpdated)
@@ -426,11 +417,11 @@ async def test_pki_accept(backend, anonymous_backend_ws, mallory, alice, alice_w
     assert rep[1] == 1
     rep_human_handle = rep[0][0]
     assert not rep_human_handle.revoked
-    assert rep_human_handle.user_id == user_confirmation.device_id.user_id
+    assert rep_human_handle.user_id == user_confirmation_device_id.user_id
     assert rep_human_handle.human_handle == mallory.human_handle
 
     # Send reply twice
-    user_confirmation, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
+    _, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
     with backend.event_bus.listen() as spy:
         rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
         assert isinstance(rep, PkiEnrollmentAcceptRepNoLongerAvailable)
@@ -591,7 +582,7 @@ async def test_pki_submit_already_accepted(anonymous_backend_ws, mallory, alice,
     request_id = EnrollmentID.new()
     await _submit_request(anonymous_backend_ws, mallory, request_id=request_id)
 
-    user_confirmation, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
+    user_confirmation_device_id, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
     rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
     assert isinstance(rep, PkiEnrollmentAcceptRepOk)
 
@@ -615,7 +606,7 @@ async def test_pki_submit_already_accepted(anonymous_backend_ws, mallory, alice,
     # Revoke user
     now = DateTime.now()
     revocation = RevokedUserCertificate(
-        author=alice.device_id, timestamp=now, user_id=user_confirmation.device_id.user_id
+        author=alice.device_id, timestamp=now, user_id=user_confirmation_device_id.user_id
     ).dump_and_sign(alice.signing_key)
 
     rep = await user_revoke(alice_ws, revoked_user_certificate=revocation)
@@ -703,10 +694,10 @@ async def test_pki_complete_sequence(anonymous_backend_ws, mallory, alice_ws, al
     async def _accept():
         request_id = EnrollmentID.new()
         await _submit_request(anonymous_backend_ws, mallory, request_id=request_id, force=True)
-        user_confirmation, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
+        user_confirmation_device_id, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
         rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
         assert isinstance(rep, PkiEnrollmentAcceptRepOk)
-        return user_confirmation.device_id.user_id
+        return user_confirmation_device_id.user_id
 
     async def _revoke(user_id):
         now = DateTime.now()

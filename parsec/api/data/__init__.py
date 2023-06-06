@@ -24,15 +24,6 @@ from parsec._parsec import (
     UserCertificate,
     UserUpdateCertificate,
 )
-from parsec.api.data.invite import (
-    InviteDeviceConfirmation,
-    InviteDeviceData,
-    InviteUserConfirmation,
-    InviteUserData,
-    SASCode,
-    generate_sas_code_candidates,
-    generate_sas_codes,
-)
 from parsec.api.data.manifest import (
     AnyRemoteManifest,
     BlockAccess,
@@ -57,14 +48,6 @@ __all__ = (
     "RealmRoleCertificate",
     "SequesterAuthorityCertificate",
     "SequesterServiceCertificate",
-    # Invite
-    "SASCode",
-    "generate_sas_codes",
-    "generate_sas_code_candidates",
-    "InviteUserData",
-    "InviteUserConfirmation",
-    "InviteDeviceData",
-    "InviteDeviceConfirmation",
     # Messages
     "MessageContent",
     "SharingGrantedMessageContent",
