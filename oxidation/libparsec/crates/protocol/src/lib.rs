@@ -1,27 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 mod error;
-mod handshake;
+mod version;
 
 use libparsec_serialization_format::parsec_protocol_cmds_family;
 
 pub use error::*;
-pub use handshake::*;
-
-macro_rules! impl_dump_load {
-    ($name:ident) => {
-        impl $name {
-            pub fn dump(&self) -> Result<Vec<u8>, &'static str> {
-                ::rmp_serde::to_vec_named(self).map_err(|_| "Serialization failed")
-            }
-
-            pub fn load(buf: &[u8]) -> Result<Self, &'static str> {
-                ::rmp_serde::from_slice(buf).map_err(|_| "Deserialization failed")
-            }
-        }
-    };
-}
-pub(crate) use impl_dump_load;
+pub use version::*;
 
 // `libparsec_types` must be in the scope given the macro access it from submodule
 // through `super::libparsec_types` (this is needed so that it can be mocked in tests)
