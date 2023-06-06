@@ -60,6 +60,7 @@ class CoreConfig:
     invitation_token_size: int = 8
 
     mountpoint_enabled: bool = False
+    mountpoint_in_directory: bool = False
     disabled_workspaces: FrozenSet[EntryID] = frozenset()
 
     sentry_dsn: str | None = None
@@ -99,6 +100,7 @@ def config_factory(
     mountpoint_base_dir: Path | None = None,
     prevent_sync_pattern_path: Path | None = None,
     mountpoint_enabled: bool = False,
+    mountpoint_in_directory: bool = False,
     disabled_workspaces: FrozenSet[EntryID] = frozenset(),
     backend_max_cooldown: int = 30,
     backend_connection_keepalive: int | None = 29,
@@ -145,6 +147,7 @@ def config_factory(
         mountpoint_base_dir=mountpoint_base_dir,
         prevent_sync_pattern_path=prevent_sync_pattern_path,
         mountpoint_enabled=mountpoint_enabled,
+        mountpoint_in_directory=mountpoint_in_directory,
         disabled_workspaces=disabled_workspaces,
         backend_max_cooldown=backend_max_cooldown,
         backend_connection_keepalive=backend_connection_keepalive,
@@ -175,7 +178,7 @@ def config_factory(
     core_config.data_base_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
 
     # Mountpoint base directory is not used on windows
-    if sys.platform != "win32":
+    if sys.platform != "win32" or core_config.mountpoint_in_directory:
         core_config.mountpoint_base_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
 
     return core_config

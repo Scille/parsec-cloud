@@ -2,14 +2,16 @@
 from __future__ import annotations
 
 import multiprocessing
+import sys
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 import click
 import trio
 
 from parsec.cli_utils import cli_exception_handler, generate_not_available_cmd
-from parsec.core import logged_core_factory
+from parsec.core import logged_core_factory, win_registry
 from parsec.core.cli.utils import (
     cli_command_base_options,
     core_config_and_device_options,
@@ -35,7 +37,7 @@ else:
     @click.option("--diagnose", "-d", is_flag=True)
     @core_config_options
     @gui_command_base_options
-    def run_gui(
+    def run_gui(  # type: ignore
         config: CoreConfig,
         url: str,
         diagnose: bool,
@@ -56,7 +58,8 @@ else:
 
             config = config.evolve(mountpoint_enabled=True)
             try:
-                _run_gui(config, start_arg=url, diagnose=diagnose)
+                with parsec_quick_access_context(config):
+                    _run_gui(config, start_arg=url, diagnose=diagnose)
             except KeyboardInterrupt:
                 click.echo("bye ;-)")
 
@@ -89,6 +92,47 @@ def run_mountpoint(
         config = config.evolve(mountpoint_base_dir=Path(mountpoint))
     with cli_exception_handler(config.debug):
         try:
-            trio_run(_run_mountpoint, config, device)
+            with parsec_quick_access_context(config):
+                trio_run(_run_mountpoint, config, device)
         except KeyboardInterrupt:
             click.echo("bye ;-)")
+
+
+def cleanup_artifacts(base_mountpoint_path: Path) -> None:
+    # No cleanup required
+    if not base_mountpoint_path.exists():
+        return
+
+    # Loop over non-existing directories in the base mountpoint path
+    for path in base_mountpoint_path.iterdir():
+        if path.exists():
+            continue
+
+        # Artifacts from previous run can remain listed in the directory
+        # (even though `path.exists()`) returns `False`
+        # In this case, `.unlink()` still works and fixes the issue
+        try:
+            path.unlink()
+        except OSError:
+            # No artifact was present
+            pass
+        else:
+            # An artifact has been cleaned up
+            pass
+
+
+@contextmanager
+def parsec_quick_access_context(
+    config: CoreConfig, appguid: str | None = None, appname: str | None = None
+) -> Iterator[None]:
+    if sys.platform != "win32" or not config.mountpoint_in_directory:
+        yield
+        return
+    try:
+        win_registry.add_parsec_mountpoint_directory_to_quick_access(
+            config.mountpoint_base_dir, appguid, appname
+        )
+        cleanup_artifacts(config.mountpoint_base_dir)
+        yield
+    finally:
+        win_registry.remove_parsec_mountpoint_directory_from_quick_access(appguid)

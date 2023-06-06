@@ -382,6 +382,7 @@ async def mountpoint_manager_factory(
     mount_on_workspace_shared: bool = False,
     unmount_on_workspace_revoked: bool = False,
     exclude_from_mount_all: frozenset[EntryID] = frozenset(),
+    mountpoint_in_directory: bool = False,
 ) -> AsyncGenerator[MountpointManager, Any]:
     config = {"debug": debug}
 
@@ -390,6 +391,11 @@ async def mountpoint_manager_factory(
     # Now is a good time to perform some cleanup in the registry
     if sys.platform == "win32":
         cleanup_parsec_drive_icons()
+
+        # Enable mountpoint in directory mode only on Windows (also, note that
+        # the config dict is *unpacked* on Linux in fuse_mountpoint_runner)
+        config["mountpoint_in_directory"] = mountpoint_in_directory
+
     elif sys.platform == "darwin":
         await cleanup_macos_mountpoint_folder(base_mountpoint_path)
 
