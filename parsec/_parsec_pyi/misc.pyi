@@ -5,7 +5,9 @@ from __future__ import annotations
 class ApiVersion:
     API_V1_VERSION: ApiVersion
     API_V2_VERSION: ApiVersion
-    API_VERSION: ApiVersion
+    API_V3_VERSION: ApiVersion
+    API_V4_VERSION: ApiVersion
+    API_LATEST_VERSION: ApiVersion
 
     def __init__(self, version: int, revision: int) -> None: ...
     def dump(self) -> bytes: ...
