@@ -95,7 +95,7 @@ impl SecretKey {
         randombytes(SALTBYTES)
     }
 
-    pub fn from_password(password: &str, salt: &[u8]) -> Self {
+    pub fn from_password(password: &str, salt: &[u8]) -> Result<Self, CryptoError> {
         let mut key = [0; KEYBYTES];
 
         // During test we want to skip the `argon2` algorithm for hashing the password
@@ -110,7 +110,7 @@ impl SecretKey {
 
             key[password_end..password_end + salt_end].copy_from_slice(&salt[..salt_end]);
         } else {
-            let salt = Salt::from_slice(salt).expect("Invalid salt");
+            let salt = Salt::from_slice(salt).ok_or(CryptoError::DataSize)?;
 
             derive_key(
                 &mut key,
@@ -122,7 +122,7 @@ impl SecretKey {
             .expect("Can't fail");
         }
 
-        Self::from(key)
+        Ok(Self::from(key))
     }
 }
 
