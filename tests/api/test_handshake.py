@@ -106,13 +106,13 @@ def test_good_invited_handshake(coolorg, invitation_type):
     "req",
     [
         {},
-        {"handshake": "foo", "challenge": b"1234567890", "supported_api_versions": [API_VERSION]},
+        {"handshake": "foo", "challenge": b"1234567890", "supported_api_versions": [(3, 2)]},
         {"handshake": "challenge", "challenge": b"1234567890"},
         {"challenge": b"1234567890"},
-        {"challenge": b"1234567890", "supported_api_versions": [API_VERSION]},
+        {"challenge": b"1234567890", "supported_api_versions": [(3, 2)]},
         {"handshake": "challenge", "challenge": None},
-        {"handshake": "challenge", "challenge": None, "supported_api_versions": [API_VERSION]},
-        {"handshake": "challenge", "challenge": 42, "supported_api_versions": [API_VERSION]},
+        {"handshake": "challenge", "challenge": None, "supported_api_versions": [(3, 2)]},
+        {"handshake": "challenge", "challenge": 42, "supported_api_versions": [(3, 2)]},
         {"handshake": "challenge", "challenge": b"1234567890"},
         {"handshake": "challenge", "challenge": b"1234567890", "supported_api_versions": "invalid"},
     ],
@@ -155,7 +155,7 @@ def test_process_challenge_req_good_api_version(
     req = {
         "handshake": "challenge",
         "challenge": b"1234567890",
-        "supported_api_versions": [backend_version],
+        "supported_api_versions": [(backend_version.version, backend_version.revision)],
         "backend_timestamp": DateTime.now(),
         "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
         "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
@@ -219,7 +219,7 @@ def test_process_challenge_req_good_multiple_api_version(
     req = {
         "handshake": "challenge",
         "challenge": b"1234567890",
-        "supported_api_versions": list(backend_versions),
+        "supported_api_versions": [(x.version, x.revision) for x in backend_versions],
         "backend_timestamp": DateTime.now(),
         "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
         "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
@@ -331,7 +331,7 @@ def test_process_answer_req_bad_format(req, alice):
     ]:
         if req.get(key) == "<good>":
             req[key] = good_value
-    req["client_api_version"] = API_VERSION
+    req["client_api_version"] = (API_VERSION.version, API_VERSION.revision)
     sh = ServerHandshake()
     sh.build_challenge_req()
     with pytest.raises(InvalidMessageError):
@@ -347,7 +347,7 @@ def test_build_result_req_bad_key(alice, bob):
     answer = {
         "handshake": "answer",
         "type": HandshakeType.AUTHENTICATED.value,
-        "client_api_version": API_VERSION,
+        "client_api_version": (API_VERSION.version, API_VERSION.revision),
         "organization_id": alice.organization_id.str,
         "device_id": alice.device_id.str,
         "rvk": alice.root_verify_key.encode(),
@@ -364,7 +364,7 @@ def test_build_result_req_bad_challenge(alice):
     answer = {
         "handshake": "answer",
         "type": HandshakeType.AUTHENTICATED.value,
-        "client_api_version": API_VERSION,
+        "client_api_version": (API_VERSION.version, API_VERSION.revision),
         "organization_id": alice.organization_id.str,
         "device_id": alice.device_id.str,
         "rvk": alice.root_verify_key.encode(),
@@ -394,7 +394,7 @@ def test_build_bad_outcomes(alice, method, expected_result):
     answer = {
         "handshake": "answer",
         "type": HandshakeType.AUTHENTICATED.value,
-        "client_api_version": API_VERSION,
+        "client_api_version": (API_VERSION.version, API_VERSION.revision),
         "organization_id": alice.organization_id.str,
         "device_id": alice.device_id.str,
         "rvk": alice.root_verify_key.encode(),

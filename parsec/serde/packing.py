@@ -12,7 +12,7 @@ from msgpack import packb as msgpack_packb
 from msgpack import unpackb as msgpack_unpackb
 from msgpack.exceptions import ExtraData, FormatError, StackError
 
-from parsec._parsec import ApiVersion, DateTime
+from parsec._parsec import DateTime
 from parsec.serde.exceptions import SerdePackingError
 
 MAX_BIN_LEN = 1024 * 1024  # 1 MB
@@ -29,8 +29,6 @@ def packb(data: Mapping[str, Any], exc_cls: Any = SerdePackingError) -> bytes:
             return ExtType(1, struct_pack("!d", obj.timestamp()))
         elif isinstance(obj, UUID):
             return ExtType(2, obj.bytes)
-        elif isinstance(obj, ApiVersion):
-            return ExtType(3, obj.dump())
 
         raise TypeError(f"Unknown type: {obj!r}")
 
@@ -47,8 +45,6 @@ def _unpackb_ext_hook(code: int, data: bytes) -> Any:
         return DateTime.from_timestamp(struct_unpack("!d", data)[0])
     elif code == 2:
         return UUID(bytes=data)
-    elif code == 3:
-        return ApiVersion.from_bytes(data)
 
     return ExtType(code, data)
 

@@ -29,7 +29,12 @@ from parsec.api.version import API_V3_VERSION, API_VERSION, ApiVersion
 )
 async def test_handshake_send_invalid_answer_data(backend_asgi_app, kind):
     if kind == "bad_handshake_type":
-        bad_req = packb({"handshake": "dummy", "client_api_version": API_VERSION})
+        bad_req = packb(
+            {
+                "handshake": "dummy",
+                "client_api_version": (API_VERSION.version, API_VERSION.revision),
+            }
+        )
     elif kind == "irrelevant_dict":
         bad_req = packb({"foo": "bar"})
     elif kind == "valid_msgpack_but_not_a_dict":
@@ -55,7 +60,7 @@ async def test_handshake_incompatible_version(backend_asgi_app):
         req = {
             "handshake": "answer",
             "type": "anonymous",
-            "client_api_version": incompatible_version,
+            "client_api_version": (incompatible_version.version, incompatible_version.revision),
             "organization_id": "Org",
             "token": "whatever",
         }
