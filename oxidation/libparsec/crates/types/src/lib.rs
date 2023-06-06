@@ -11,7 +11,7 @@ extern crate lazy_static;
 ///   errors so that caller can do pattern matching on the result
 /// - error we don't care about, that's where we want to use anyhow !
 ///
-/// Typically you should endup with something like:
+/// Typically you should end-up with something like:
 /// ```
 /// #[derive(Debug, thiserror::Error)]
 /// pub enum AddMoreSpamError {
