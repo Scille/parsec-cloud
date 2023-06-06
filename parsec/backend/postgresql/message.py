@@ -105,11 +105,13 @@ class PGMessageComponent(BaseMessageComponent):
 
     async def get(
         self, organization_id: OrganizationID, recipient: UserID, offset: int
-    ) -> List[Tuple[DeviceID, DateTime, bytes]]:
-        async with self.dbh.pool.acquire() as conn:
-            data = await conn.fetch(
-                *_q_get_messages(
-                    organization_id=organization_id.str, recipient=recipient.str, offset=offset
-                )
-            )
-        return [(DeviceID(d[0]), d[1], d[2]) for d in data]
+    ) -> List[Tuple[DeviceID, DateTime, bytes, int]]:
+        # TODO: fixme !
+        raise NotImplementedError
+        # async with self.dbh.pool.acquire() as conn:
+        #     data = await conn.fetch(
+        #         *_q_get_messages(
+        #             organization_id=organization_id.str, recipient=recipient.str, offset=offset
+        #         )
+        #     )
+        # return [(DeviceID(d[0]), d[1], d[2]) for d in data]

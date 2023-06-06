@@ -15,7 +15,6 @@ from parsec.backend.postgresql.vlob_queries import (
     query_maintenance_get_reencryption_batch,
     query_maintenance_save_reencryption_batch,
     query_poll_changes,
-    query_read,
     query_update,
 )
 from parsec.backend.sequester import BaseSequesterService, SequesterDisabledError
@@ -160,11 +159,13 @@ class PGVlobComponent(BaseVlobComponent):
         vlob_id: VlobID,
         version: int | None = None,
         timestamp: DateTime | None = None,
-    ) -> Tuple[int, bytes, DeviceID, DateTime, DateTime]:
-        async with self.dbh.pool.acquire() as conn:
-            return await query_read(
-                conn, organization_id, author, encryption_revision, vlob_id, version, timestamp
-            )
+    ) -> Tuple[int, bytes, DeviceID, DateTime, DateTime, int]:
+        # TODO: fix me !
+        raise NotImplementedError
+        # async with self.dbh.pool.acquire() as conn:
+        # return await query_read(
+        #     conn, organization_id, author, encryption_revision, vlob_id, version, timestamp
+        # )
 
     @retry_on_unique_violation
     async def update(

@@ -347,7 +347,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                     user = User(
                         user_id=UserID(row["user_id"]),
                         human_handle=None,
-                        profile=UserProfile.from_str(row["profile"]),
+                        initial_profile=UserProfile.from_str(row["profile"]),
                         user_certificate=row["user_certificate"],
                         redacted_user_certificate=row["redacted_user_certificate"],
                         user_certifier=None,
