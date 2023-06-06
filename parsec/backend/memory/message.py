@@ -12,6 +12,7 @@ from parsec._parsec import (
     OrganizationID,
     UserID,
 )
+from parsec.backend.memory.user import MemoryUserComponent
 from parsec.backend.message import BaseMessageComponent
 
 
@@ -19,11 +20,14 @@ class MemoryMessageComponent(BaseMessageComponent):
     def __init__(self, send_event: Callable[..., Coroutine[Any, Any, None]]) -> None:
         self._send_event = send_event
         self._organizations: dict[
-            OrganizationID, dict[UserID, List[Tuple[DeviceID, DateTime, bytes]]]
+            OrganizationID, dict[UserID, List[Tuple[DeviceID, DateTime, bytes, int]]]
         ] = defaultdict(lambda: defaultdict(list))
+        self._user_component: MemoryUserComponent
 
-    def register_components(self, **other_components: Any) -> None:
-        pass
+    def register_components(
+        self, user_component: MemoryUserComponent, **other_components: Any
+    ) -> None:
+        self._user_component = user_component
 
     async def send(
         self,
@@ -34,7 +38,8 @@ class MemoryMessageComponent(BaseMessageComponent):
         body: bytes,
     ) -> None:
         messages = self._organizations[organization_id]
-        messages[recipient].append((sender, timestamp, body))
+        certificate_index = self._user_component.get_current_certificate_index(organization_id)
+        messages[recipient].append((sender, timestamp, body, certificate_index))
         index = len(messages[recipient])
         await self._send_event(
             BackendEventMessageReceived(
@@ -48,7 +53,7 @@ class MemoryMessageComponent(BaseMessageComponent):
 
     async def get(
         self, organization_id: OrganizationID, recipient: UserID, offset: int
-    ) -> List[Tuple[DeviceID, DateTime, bytes]]:
+    ) -> List[Tuple[DeviceID, DateTime, bytes, int]]:
         messages = self._organizations[organization_id]
         return messages[recipient][offset:]
 

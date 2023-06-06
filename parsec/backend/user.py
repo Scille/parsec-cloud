@@ -102,7 +102,7 @@ class BaseUserComponent:
     ) -> authenticated_cmds.latest.certificate_get.Rep:
         need_redacted = client_ctx.profile == UserProfile.OUTSIDER
         certifs = await self.get_certificates(
-            client_ctx.organization_id, created_after=req.created_after, redacted=need_redacted
+            client_ctx.organization_id, offset=req.offset, redacted=need_redacted
         )
 
         return authenticated_cmds.latest.certificate_get.RepOk(certificates=certifs)
@@ -425,7 +425,7 @@ class BaseUserComponent:
         raise NotImplementedError()
 
     async def get_certificates(
-        self, organization_id: OrganizationID, created_after: DateTime | None, redacted: bool
+        self, organization_id: OrganizationID, offset: int, redacted: bool
     ) -> list[bytes]:
         """
         Raises: Nothing !

@@ -41,9 +41,11 @@ if TYPE_CHECKING:
     from parsec.backend.memory.organization import MemoryOrganizationComponent
     from parsec.backend.memory.realm import MemoryRealmComponent, Realm
     from parsec.backend.memory.sequester import MemorySequesterComponent
+    from parsec.backend.memory.user import MemoryUserComponent
 
 
-VlobData = List[Tuple[bytes, DeviceID, DateTime]]
+# Tuple contains: blob, author, timestamp, certificates index
+VlobData = List[Tuple[bytes, DeviceID, DateTime, int]]
 SequesteredVlobData = List[Dict[SequesterServiceID, bytes]]
 
 
@@ -65,7 +67,7 @@ class Reencryption:
         self._todo: Dict[Tuple[VlobID, int], bytes] = {}
         self._done: Dict[Tuple[VlobID, int], bytes] = {}
         for vlob_id, vlob in vlobs.items():
-            for index, (data, _, _) in enumerate(vlob.data):
+            for index, (data, _, _, _) in enumerate(vlob.data):
                 version = index + 1
                 self._todo[(vlob_id, version)] = data
         self._total = len(self._todo)
@@ -75,16 +77,20 @@ class Reencryption:
         vlobs = {}
         for (vlob_id, version), data in sorted(self._done.items()):
             try:
-                (_, author, timestamp) = self._original_vlobs[vlob_id].data[version - 1]
+                (_, author, timestamp, certificates_index) = self._original_vlobs[vlob_id].data[
+                    version - 1
+                ]
 
             except KeyError:
                 raise VlobNotFoundError()
 
             if vlob_id not in vlobs:
                 # Force `sequestered_data` field to `None` as it is not used here
-                vlobs[vlob_id] = Vlob(self.realm_id, [(data, author, timestamp)], None)
+                vlobs[vlob_id] = Vlob(
+                    self.realm_id, [(data, author, timestamp, certificates_index)], None
+                )
             else:
-                vlobs[vlob_id].data.append((data, author, timestamp))
+                vlobs[vlob_id].data.append((data, author, timestamp, certificates_index))
             assert len(vlobs[vlob_id].data) == version
 
         return vlobs
@@ -127,6 +133,7 @@ class MemoryVlobComponent(BaseVlobComponent):
     def __init__(self, send_event: Callable[..., Coroutine[Any, Any, None]]) -> None:
         self._send_event = send_event
         self._organization_component: MemoryOrganizationComponent | None = None
+        self._user_component: MemoryUserComponent | None = None
         self._realm_component: MemoryRealmComponent | None = None
         self._sequester_component: MemorySequesterComponent | None = None
         self._vlobs: Dict[Tuple[OrganizationID, VlobID], Vlob] = {}
@@ -137,11 +144,13 @@ class MemoryVlobComponent(BaseVlobComponent):
     def register_components(
         self,
         organization: MemoryOrganizationComponent,
+        user: MemoryUserComponent,
         realm: MemoryRealmComponent,
         sequester: MemorySequesterComponent,
         **other_components: Any,
     ) -> None:
         self._organization_component = organization
+        self._user_component = user
         self._realm_component = realm
         self._sequester_component = sequester
 
@@ -427,6 +436,8 @@ class MemoryVlobComponent(BaseVlobComponent):
         blob: bytes,
         sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
     ) -> None:
+        assert self._user_component is not None
+
         self._check_realm_write_access(
             organization_id, realm_id, author.user_id, encryption_revision, timestamp
         )
@@ -447,7 +458,11 @@ class MemoryVlobComponent(BaseVlobComponent):
         if key in self._vlobs:
             raise VlobAlreadyExistsError()
 
-        self._vlobs[key] = Vlob(realm_id, [(blob, author, timestamp)], sequestered_data)
+        certificates_index = self._user_component.get_current_certificates_index(organization_id)
+
+        self._vlobs[key] = Vlob(
+            realm_id, [(blob, author, timestamp, certificates_index)], sequestered_data
+        )
 
         await self._update_changes(organization_id, author, realm_id, vlob_id, timestamp)
 
@@ -459,7 +474,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         vlob_id: VlobID,
         version: int | None = None,
         timestamp: DateTime | None = None,
-    ) -> Tuple[int, bytes, DeviceID, DateTime, DateTime]:
+    ) -> Tuple[int, bytes, DeviceID, DateTime, DateTime, int]:
         vlob = self._get_vlob(organization_id, vlob_id)
 
         realm = self._check_realm_read_access(
@@ -477,11 +492,18 @@ class MemoryVlobComponent(BaseVlobComponent):
                 else:
                     raise VlobVersionError()
         try:
-            vlob_data, vlob_device_id, vlob_timestamp = vlob.data[version - 1]
+            vlob_data, vlob_device_id, vlob_timestamp, certificates_index = vlob.data[version - 1]
             last_role = realm.get_last_role(vlob_device_id.user_id)
             # Given the vlob exists, the author must have had a role
             assert last_role is not None
-            return (version, vlob_data, vlob_device_id, vlob_timestamp, last_role.granted_on)
+            return (
+                version,
+                vlob_data,
+                vlob_device_id,
+                vlob_timestamp,
+                last_role.granted_on,
+                certificates_index,
+            )
 
         except IndexError:
             raise VlobVersionError()
@@ -497,6 +519,8 @@ class MemoryVlobComponent(BaseVlobComponent):
         blob: bytes,
         sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
     ) -> None:
+        assert self._user_component is not None
+
         vlob = self._get_vlob(organization_id, vlob_id)
 
         self._check_realm_write_access(
@@ -517,7 +541,9 @@ class MemoryVlobComponent(BaseVlobComponent):
         if timestamp < vlob.data[vlob.current_version - 1][2]:
             raise VlobRequireGreaterTimestampError(vlob.data[vlob.current_version - 1][2])
 
-        vlob.data.append((blob, author, timestamp))
+        certificates_index = self._user_component.get_current_certificates_index(organization_id)
+
+        vlob.data.append((blob, author, timestamp, certificates_index))
         if sequestered_data is not None:  # /!\ We want to accept empty dicts !
             assert vlob.sequestered_data is not None
             vlob.sequestered_data.append(sequestered_data)

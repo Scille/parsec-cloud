@@ -71,19 +71,12 @@ def internal_to_api_v2_v3_events(
 
 
 def internal_to_api_events(
-    event: BackendEvent, redacted: bool
+    event: BackendEvent,
 ) -> authenticated_cmds.latest.events_listen.APIEvent | None:
     event_listen_cmd_mod = authenticated_cmds.latest.events_listen
 
     if isinstance(event, BackendEventCertificatesUpdated):
-        certificate = (
-            event.certificate
-            if not redacted or event.redacted_certificate is None
-            else event.redacted_certificate
-        )
-        return event_listen_cmd_mod.APIEventCertificatesUpdated(
-            certificate=certificate,
-        )
+        return event_listen_cmd_mod.APIEventCertificatesUpdated(event.timestamp)
     elif isinstance(event, BackendEventPinged):
         return event_listen_cmd_mod.APIEventPinged(event.ping)
     elif isinstance(event, BackendEventMessageReceived):
@@ -325,8 +318,6 @@ class EventsComponent:
     async def sse_api_events_listen(
         self, client_ctx: AuthenticatedClientContext, last_event_id: str | None
     ) -> Callable[[], Awaitable[tuple[str, authenticated_cmds.latest.events_listen.Rep] | None]]:
-        need_redacted = client_ctx.profile == UserProfile.OUTSIDER
-
         missed_events = await self.connect_events(client_ctx, last_event_id)
         if missed_events is None:
             missed_events = deque((None,))
@@ -344,7 +335,7 @@ class EventsComponent:
                         return None
                     else:
                         missed_event_id, missed_event_payload = missed_event
-                        unit = internal_to_api_events(missed_event_payload, redacted=need_redacted)
+                        unit = internal_to_api_events(missed_event_payload)
                         if not unit:
                             continue
 
@@ -357,7 +348,7 @@ class EventsComponent:
 
                 (event_id, event) = await client_ctx.receive_events_channel.receive()
 
-                unit = internal_to_api_events(event, redacted=need_redacted)
+                unit = internal_to_api_events(event)
                 if not unit:
                     # Ignore the current event
                     continue

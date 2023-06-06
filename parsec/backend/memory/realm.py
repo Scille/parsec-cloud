@@ -117,8 +117,7 @@ class MemoryRealmComponent(BaseRealmComponent):
 
             await self._user_component.notify_certificates_update(
                 organization_id=organization_id,
-                certificate=self_granted_role.certificate,
-                redacted_certificate=None,
+                timestamp=self_granted_role.granted_on,
             )
             await self._send_event(
                 BackendEventRealmRolesUpdated(
@@ -266,8 +265,7 @@ class MemoryRealmComponent(BaseRealmComponent):
 
         await self._user_component.notify_certificates_update(
             organization_id=organization_id,
-            certificate=new_role.certificate,
-            redacted_certificate=None,
+            timestamp=new_role.granted_on,
         )
         await self._send_event(
             BackendEventRealmRolesUpdated(

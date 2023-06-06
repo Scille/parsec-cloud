@@ -286,26 +286,15 @@ class BaseVlobComponent:
     async def apiv2_vlob_read(
         self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.v2.vlob_read.Req
     ) -> authenticated_cmds.v2.vlob_read.Rep:
-        # `vlob_read` command is similar between APIv2 and v4+ from the server
-        # point of view.
-        # (from client point of view, server may return `bad_timestamp` response
+        # `vlob_read` command strictly similar between APIv2 and v3
+        # (from client point of view, server may return `ok` response
         # with some fields missing)
-        return await self.api_vlob_read(client_ctx, req)
+        return await self.apiv3_vlob_read(client_ctx, req)
 
     @api
     async def apiv3_vlob_read(
         self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.v3.vlob_read.Req
     ) -> authenticated_cmds.v3.vlob_read.Rep:
-        # `vlob_read` command is similar between APIv3 and v4+ from the server
-        # point of view.
-        # (from client point of view, server may return `bad_timestamp` response
-        # with some fields missing)
-        return await self.api_vlob_read(client_ctx, req)
-
-    @api
-    async def api_vlob_read(
-        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.latest.vlob_read.Req
-    ) -> authenticated_cmds.latest.vlob_read.Rep:
         try:
             (
                 version,
@@ -314,6 +303,43 @@ class BaseVlobComponent:
                 created_on,
                 author_last_role_granted_on,
             ) = await self.read(
+                client_ctx.organization_id,
+                client_ctx.device_id,
+                encryption_revision=req.encryption_revision,
+                vlob_id=req.vlob_id,
+                version=req.version,
+                timestamp=req.timestamp,
+            )
+
+        except VlobNotFoundError:
+            return authenticated_cmds.v3.vlob_read.RepNotFound(None)
+
+        except VlobAccessError:
+            return authenticated_cmds.v3.vlob_read.RepNotAllowed()
+
+        except VlobVersionError:
+            return authenticated_cmds.v3.vlob_read.RepBadVersion()
+
+        except VlobEncryptionRevisionError:
+            return authenticated_cmds.v3.vlob_read.RepBadEncryptionRevision()
+
+        except VlobInMaintenanceError:
+            return authenticated_cmds.v3.vlob_read.RepInMaintenance()
+
+        return authenticated_cmds.v3.vlob_read.RepOk(
+            version,
+            blob,
+            author,
+            created_on,
+            author_last_role_granted_on,
+        )
+
+    @api
+    async def api_vlob_read(
+        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.latest.vlob_read.Req
+    ) -> authenticated_cmds.latest.vlob_read.Rep:
+        try:
+            (version, blob, author, created_on, _, certificates_index) = await self.read(
                 client_ctx.organization_id,
                 client_ctx.device_id,
                 encryption_revision=req.encryption_revision,
@@ -342,7 +368,7 @@ class BaseVlobComponent:
             blob,
             author,
             created_on,
-            author_last_role_granted_on,
+            certificates_index,
         )
 
     @api
@@ -610,7 +636,7 @@ class BaseVlobComponent:
         vlob_id: VlobID,
         version: int | None = None,
         timestamp: DateTime | None = None,
-    ) -> Tuple[int, bytes, DeviceID, DateTime, DateTime]:
+    ) -> Tuple[int, bytes, DeviceID, DateTime, DateTime, int]:
         """
         Raises:
             VlobAccessError

@@ -63,16 +63,30 @@ class MemoryUserComponent(BaseUserComponent):
         self._organization_component = organization
         self._realm_component = realm
 
+    def get_current_certificate_index(self, organization_id: OrganizationID) -> int:
+        org = self._organizations[organization_id]
+
+        index = len(org.devices)
+
+        for user in org.users.values():
+            index += 2 if user.revoked_user_certificate else 1
+
+        for (realm_orgid, _), realm in self._realm_component._realms.items():
+            if realm_orgid != organization_id:
+                continue
+            for granted_role in realm.granted_roles:
+                index += len((granted_role.granted_on, granted_role.certificate))
+
+        return index
+
     async def notify_certificates_update(
         self,
         organization_id: OrganizationID,
-        certificate: bytes,
-        redacted_certificate: bytes | None,
+        timestamp: DateTime,
     ) -> None:
         event = BackendEventCertificatesUpdated(
             organization_id=organization_id,
-            certificate=certificate,
-            redacted_certificate=redacted_certificate,
+            timestamp=timestamp,
         )
         await self._send_event(event)
 
@@ -104,13 +118,12 @@ class MemoryUserComponent(BaseUserComponent):
 
         await self.notify_certificates_update(
             organization_id=organization_id,
-            certificate=user.user_certificate,
-            redacted_certificate=user.redacted_user_certificate,
+            timestamp=user.created_on,
         )
         await self.notify_certificates_update(
             organization_id=organization_id,
-            certificate=first_device.device_certificate,
-            redacted_certificate=first_device.redacted_device_certificate,
+            # Note in theory `user.created_on == first_device.created_on`
+            timestamp=first_device.created_on,
         )
 
     async def create_device(
@@ -129,8 +142,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         await self.notify_certificates_update(
             organization_id=organization_id,
-            certificate=device.device_certificate,
-            redacted_certificate=device.redacted_device_certificate,
+            timestamp=device.created_on,
         )
 
     async def _get_trustchain(
@@ -343,6 +355,7 @@ class MemoryUserComponent(BaseUserComponent):
         revoked_user_certifier: DeviceID,
         revoked_on: DateTime | None = None,
     ) -> None:
+        revoked_on = revoked_on or DateTime.now()
         org = self._organizations[organization_id]
 
         try:
@@ -355,7 +368,7 @@ class MemoryUserComponent(BaseUserComponent):
             raise UserAlreadyRevokedError()
 
         org.users[user_id] = user.evolve(
-            revoked_on=revoked_on or DateTime.now(),
+            revoked_on=revoked_on,
             revoked_user_certificate=revoked_user_certificate,
             revoked_user_certifier=revoked_user_certifier,
         )
@@ -364,8 +377,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         await self.notify_certificates_update(
             organization_id=organization_id,
-            certificate=revoked_user_certificate,
-            redacted_certificate=None,
+            timestamp=revoked_on,
         )
         await self._send_event(
             BackendEventUserUpdatedOrRevoked(
@@ -387,6 +399,7 @@ class MemoryUserComponent(BaseUserComponent):
             UserNotFoundError
             UserAlreadyRevokedError
         """
+        updated_on = updated_on or DateTime.now()
         org = self._organizations[organization_id]
 
         try:
@@ -420,7 +433,7 @@ class MemoryUserComponent(BaseUserComponent):
                     *user.updates,
                     UserUpdate(
                         new_profile=new_profile,
-                        updated_on=updated_on or DateTime.now(),
+                        updated_on=updated_on,
                         user_update_certificate=user_update_certificate,
                         user_update_certifier=user_update_certifier,
                     ),
@@ -432,8 +445,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         await self.notify_certificates_update(
             organization_id=organization_id,
-            certificate=user_update_certificate,
-            redacted_certificate=None,
+            timestamp=updated_on,
         )
         await self._send_event(
             BackendEventUserUpdatedOrRevoked(
@@ -449,7 +461,7 @@ class MemoryUserComponent(BaseUserComponent):
         return list(org.users.values()), devices
 
     async def get_certificates(
-        self, organization_id: OrganizationID, created_after: DateTime | None, redacted: bool
+        self, organization_id: OrganizationID, offset: int, redacted: bool
     ) -> list[bytes]:
         """
         Raises: Nothing !
@@ -477,11 +489,10 @@ class MemoryUserComponent(BaseUserComponent):
             for granted_role in realm.granted_roles:
                 certificates.append((granted_role.granted_on, granted_role.certificate))
 
+        # Sort certificates by timestamp
         certificates.sort()
-        if created_after is None:
-            return [certif for _, certif in certificates]
-        else:
-            return [certif for timestamp, certif in certificates if timestamp > created_after]
+
+        return [certif for _, certif in certificates[offset:]]
 
     def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:
         self._organizations[new_id] = deepcopy(self._organizations[id])
