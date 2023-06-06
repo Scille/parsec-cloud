@@ -14,6 +14,7 @@ pub use libparsec_testbed as testbed;
 #[cfg(not(target_arch = "wasm32"))]
 pub use libparsec_types as types;
 
+pub use libparsec_client as client;
 pub use libparsec_client_connection as client_connection;
 pub use libparsec_crypto as crypto;
 pub use libparsec_platform_device_loader as platform_device_loader;

@@ -21,6 +21,7 @@ test-utils = [
 
 [dependencies]
 libparsec_client_high_level_api = { path = "crates/client_high_level_api" }
+libparsec_client = { path = "crates/client" }
 libparsec_crypto = { path = "crates/crypto" }
 libparsec_client_connection = { path = "crates/client_connection" }
 libparsec_platform_async = { path = "crates/platform_async" }
