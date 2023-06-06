@@ -34,6 +34,9 @@
             "type": "Boolean"
         },
         {
+            // Since the introduction of UserUpdateCertificate, user profile can change.
+            // Hence this field only contains the initial profile the user had when it
+            // was enrolled.
             "name": "profile",
             "type": "UserProfile",
             // Hack to indicate this field was added in Parsec v1.14, given revision is meaningless for data
