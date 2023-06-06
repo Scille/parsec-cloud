@@ -9,6 +9,7 @@ use std::fmt::Debug;
 use std::path::Path;
 
 use libparsec_platform_http_proxy::ProxyConfig;
+use libparsec_protocol::{api_version_major_to_full, API_LATEST_VERSION};
 use libparsec_types::prelude::*;
 
 #[cfg(feature = "test-with-testbed")]
@@ -18,6 +19,7 @@ use crate::{
     API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
 };
 
+const API_LATEST_MAJOR_VERSION: u32 = API_LATEST_VERSION.version;
 const INVITATION_TOKEN_HEADER_NAME: &str = "Invitation-Token";
 
 /// Factory that send commands in a invited context.
@@ -66,7 +68,7 @@ impl InvitedCmds {
 
     pub async fn send<T>(&self, request: T) -> ConnectionResult<<T>::Response>
     where
-        T: ProtocolRequest + Debug + 'static,
+        T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
     {
         #[cfg(feature = "test-with-testbed")]
         let request = {
@@ -76,19 +78,31 @@ impl InvitedCmds {
             }
         };
 
-        let request_body = request.dump()?;
+        let request_body = request.api_dump()?;
 
         // Split non-generic code out of `send` to limit the amount of code generated
         // by monomorphization
-        let response_body = self.internal_send(request_body).await?;
+        let api_version = api_version_major_to_full(T::API_MAJOR_VERSION);
+        let response_body = self.internal_send(api_version, request_body).await?;
 
-        Ok(T::load_response(&response_body)?)
+        Ok(T::api_load_response(&response_body)?)
     }
 
-    async fn internal_send(&self, request_body: Vec<u8>) -> Result<Bytes, ConnectionError> {
+    async fn internal_send(
+        &self,
+        api_version: &ApiVersion,
+        request_body: Vec<u8>,
+    ) -> Result<Bytes, ConnectionError> {
+        let api_version_header_value = HeaderValue::from_str(&api_version.to_string())
+            .expect("api version must contains valid char");
         let request_builder = self.client.post(self.url.clone());
 
-        let req = prepare_request(request_builder, self.addr().token(), request_body);
+        let req = prepare_request(
+            request_builder,
+            self.addr().token(),
+            api_version_header_value,
+            request_body,
+        );
 
         #[cfg(feature = "test-with-testbed")]
         let resp = self.send_hook.low_level_send(req).await?;
@@ -120,14 +134,11 @@ impl InvitedCmds {
 fn prepare_request(
     request_builder: RequestBuilder,
     token: InvitationToken,
+    api_version_header_value: HeaderValue,
     body: Vec<u8>,
 ) -> RequestBuilder {
     let mut content_headers = HeaderMap::with_capacity(4);
-    content_headers.insert(
-        API_VERSION_HEADER_NAME,
-        HeaderValue::from_str(&libparsec_protocol::API_VERSION.to_string())
-            .expect("api version must contains valid char"),
-    );
+    content_headers.insert(API_VERSION_HEADER_NAME, api_version_header_value);
     content_headers.insert(CONTENT_TYPE, HeaderValue::from_static(PARSEC_CONTENT_TYPE));
     content_headers.insert(
         CONTENT_LENGTH,

@@ -443,7 +443,7 @@ fn quote_cmds_family(family: &GenCmdsFamily) -> TokenStream {
 fn quote_versioned_cmds(version: u32, cmds: &[GenCmd]) -> (Ident, TokenStream) {
     let versioned_cmds_mod = format_ident!("v{version}");
     let (any_cmd_req_variants, cmd_structs): (Vec<TokenStream>, Vec<TokenStream>) =
-        cmds.iter().map(quote_cmd).unzip();
+        cmds.iter().map(|cmd| quote_cmd(version, cmd)).unzip();
 
     let code = quote! {
         pub mod #versioned_cmds_mod {
@@ -469,7 +469,7 @@ fn quote_versioned_cmds(version: u32, cmds: &[GenCmd]) -> (Ident, TokenStream) {
     (versioned_cmds_mod, code)
 }
 
-fn quote_cmd(cmd: &GenCmd) -> (TokenStream, TokenStream) {
+fn quote_cmd(cmd_version: u32, cmd: &GenCmd) -> (TokenStream, TokenStream) {
     let pascal_case_name = &snake_to_pascal_case(&cmd.cmd);
     let snake_case_name = &cmd.cmd;
 
@@ -483,6 +483,18 @@ fn quote_cmd(cmd: &GenCmd) -> (TokenStream, TokenStream) {
             quote! {
                 pub mod #module_name {
                     pub use super::super::#reused_version_module_name::#module_name::*;
+
+                    impl super::libparsec_types::ProtocolRequest<#cmd_version> for Req {
+                        type Response = Rep;
+
+                        fn api_dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
+                            self.dump()
+                        }
+
+                        fn api_load_response(buf: &[u8]) -> Result<Self::Response, ::rmp_serde::decode::Error> {
+                            Self::load_response(buf)
+                        }
+                    }
                 }
             }
         }
@@ -508,15 +520,25 @@ fn quote_cmd(cmd: &GenCmd) -> (TokenStream, TokenStream) {
 
                     #struct_req
 
-                    impl libparsec_types::ProtocolRequest for Req {
-                        type Response = Rep;
-
-                        fn dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
+                    impl Req {
+                        pub fn dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
                             ::rmp_serde::to_vec_named(self)
                         }
 
-                        fn load_response(buf: &[u8]) -> Result<Self::Response, ::rmp_serde::decode::Error> {
+                        pub fn load_response(buf: &[u8]) -> Result<Rep, ::rmp_serde::decode::Error> {
                             Rep::load(buf)
+                        }
+                    }
+
+                    impl libparsec_types::ProtocolRequest<#cmd_version> for Req {
+                        type Response = Rep;
+
+                        fn api_dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
+                            self.dump()
+                        }
+
+                        fn api_load_response(buf: &[u8]) -> Result<Self::Response, ::rmp_serde::decode::Error> {
+                            Self::load_response(buf)
                         }
                     }
 

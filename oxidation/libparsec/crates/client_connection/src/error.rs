@@ -2,7 +2,6 @@
 
 use thiserror::Error;
 
-use libparsec_protocol::ApiVersion;
 use libparsec_types::prelude::*;
 
 pub type ConnectionResult<T> = core::result::Result<T, ConnectionError>;

@@ -42,6 +42,7 @@ use std::{fmt::Debug, marker::PhantomData};
 use std::{path::Path, sync::Arc};
 
 use libparsec_platform_http_proxy::ProxyConfig;
+use libparsec_protocol::{api_version_major_to_full, API_LATEST_MAJOR_VERSION};
 use libparsec_types::prelude::*;
 
 #[cfg(feature = "test-with-testbed")]
@@ -56,7 +57,7 @@ pub const PARSEC_AUTH_METHOD: &str = "PARSEC-SIGN-ED25519";
 
 pub struct SSEStream<T>
 where
-    T: ProtocolRequest + Debug + 'static,
+    T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
 {
     event_source: EventSource,
     phantom: PhantomData<T>,
@@ -64,7 +65,7 @@ where
 
 impl<T> Debug for SSEStream<T>
 where
-    T: ProtocolRequest + Debug + 'static,
+    T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SSEStream").finish()
@@ -74,7 +75,7 @@ where
 #[derive(Debug, PartialEq, Eq)]
 pub enum SSEResponseOrMissedEvents<T>
 where
-    T: ProtocolRequest + Debug + 'static,
+    T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
 {
     Response(T::Response),
     MissedEvents,
@@ -82,7 +83,7 @@ where
 
 impl<T> SSEStream<T>
 where
-    T: ProtocolRequest + Debug + 'static,
+    T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
 {
     pub async fn next(&mut self) -> Result<SSEResponseOrMissedEvents<T>, ConnectionError> {
         loop {
@@ -96,7 +97,7 @@ where
                         "missed_events" => return Ok(SSEResponseOrMissedEvents::MissedEvents),
                         "message" => {
                             if let Ok(raw_rep) = BASE64_STANDARD.decode(event.data) {
-                                if let Ok(rep) = T::load_response(raw_rep.as_ref()) {
+                                if let Ok(rep) = T::api_load_response(raw_rep.as_ref()) {
                                     return Ok(SSEResponseOrMissedEvents::Response(rep));
                                 }
                             }
@@ -200,7 +201,7 @@ impl AuthenticatedCmds {
         &self,
     ) -> Result<SSEStream<T>, ConnectionError>
     where
-        T: ProtocolRequest + Debug + 'static,
+        T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
     {
         let mut sse = self.start_sse();
         let first_event = sse.next_sse_event().await?;
@@ -210,7 +211,7 @@ impl AuthenticatedCmds {
 
     pub fn start_sse<T>(&self) -> SSEStream<T>
     where
-        T: ProtocolRequest + Debug + 'static,
+        T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
     {
         let request_builder = {
             let url = {
@@ -232,9 +233,10 @@ impl AuthenticatedCmds {
             );
 
             let mut content_headers = HeaderMap::with_capacity(2);
+            let api_version = api_version_major_to_full(T::API_MAJOR_VERSION);
             content_headers.insert(
                 API_VERSION_HEADER_NAME,
-                HeaderValue::from_str(&libparsec_protocol::API_VERSION.to_string())
+                HeaderValue::from_str(&api_version.to_string())
                     .expect("api version must contains valid char"),
             );
             // No Content-Type as this request is a GET
@@ -256,7 +258,7 @@ impl AuthenticatedCmds {
 
     pub async fn send<T>(&self, request: T) -> ConnectionResult<<T>::Response>
     where
-        T: ProtocolRequest + Debug + 'static,
+        T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
     {
         #[cfg(feature = "test-with-testbed")]
         let request = {
@@ -266,22 +268,30 @@ impl AuthenticatedCmds {
             }
         };
 
-        let request_body = request.dump()?;
+        let request_body = request.api_dump()?;
 
         // Split non-generic code out of `send` to limit the amount of code generated
         // by monomorphization
-        let response_body = self.internal_send(request_body).await?;
+        let api_version = api_version_major_to_full(T::API_MAJOR_VERSION);
+        let response_body = self.internal_send(api_version, request_body).await?;
 
-        Ok(T::load_response(&response_body)?)
+        Ok(T::api_load_response(&response_body)?)
     }
 
-    async fn internal_send(&self, request_body: Vec<u8>) -> Result<Bytes, ConnectionError> {
+    async fn internal_send(
+        &self,
+        api_version: &ApiVersion,
+        request_body: Vec<u8>,
+    ) -> Result<Bytes, ConnectionError> {
+        let api_version_header_value = HeaderValue::from_str(&api_version.to_string())
+            .expect("api version must contains valid char");
         let request_builder = self.client.post(self.url.clone());
 
         let req = prepare_request(
             request_builder,
             &self.device.signing_key,
             self.author_header_value.clone(),
+            api_version_header_value,
             request_body,
         );
 
@@ -314,16 +324,13 @@ fn prepare_request(
     request_builder: RequestBuilder,
     signing_key: &SigningKey,
     author_header_value: HeaderValue,
+    api_version_header_value: HeaderValue,
     body: Vec<u8>,
 ) -> RequestBuilder {
     let request_builder = sign_request(request_builder, signing_key, author_header_value, &body);
 
     let mut content_headers = HeaderMap::with_capacity(3);
-    content_headers.insert(
-        API_VERSION_HEADER_NAME,
-        HeaderValue::from_str(&libparsec_protocol::API_VERSION.to_string())
-            .expect("api version must contains valid char"),
-    );
+    content_headers.insert(API_VERSION_HEADER_NAME, api_version_header_value);
     content_headers.insert(CONTENT_TYPE, HeaderValue::from_static(PARSEC_CONTENT_TYPE));
     content_headers.insert(
         CONTENT_LENGTH,

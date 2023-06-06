@@ -8,7 +8,6 @@ use libparsec_serialization_format::generate_protocol_cmds_family_from_contents;
 
 #[path = "./common/libparsec_types_mock.rs"]
 mod libparsec_types;
-use libparsec_types::ProtocolRequest;
 
 #[test]
 fn simple() {

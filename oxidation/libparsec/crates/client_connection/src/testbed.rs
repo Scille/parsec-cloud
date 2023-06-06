@@ -14,11 +14,13 @@ use once_cell::sync::OnceCell;
 pub use reqwest::{header::HeaderMap, Error as RequestError, StatusCode};
 use reqwest::{RequestBuilder, Response};
 
+use libparsec_protocol::API_LATEST_VERSION;
 use libparsec_testbed::{test_get_testbed, TestbedKind};
 use libparsec_types::prelude::*;
 
 use crate::ConnectionResult;
 
+const API_LATEST_MAJOR_VERSION: u32 = API_LATEST_VERSION.version;
 const STORE_ENTRY_KEY: &str = "client_connection";
 
 /// Represent a response of an HTTP request sent by the client
@@ -113,7 +115,7 @@ enum SendHookStrategyBoxed {
 
 pub(crate) enum HighLevelSendResult<T>
 where
-    T: ProtocolRequest,
+    T: ProtocolRequest<API_LATEST_MAJOR_VERSION>,
 {
     Resolved(ConnectionResult<<T>::Response>),
     PassToLowLevel(T),
@@ -129,7 +131,7 @@ impl SendHookConfig {
 
     pub async fn high_level_send<T>(&self, request: T) -> HighLevelSendResult<T>
     where
-        T: ProtocolRequest + Debug + 'static,
+        T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
     {
         // Given mutex is synchronous, we must release it before any await
         let custom_hook_future = {
@@ -282,7 +284,7 @@ pub fn test_register_low_level_send_hook_default(config_dir: &Path) {
 
 pub fn test_register_send_hook<A, R>(config_dir: &Path, hook: fn(A) -> R)
 where
-    A: ProtocolRequest + Send + 'static,
+    A: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Send + 'static,
     R: std::future::Future<Output = A::Response> + Send + 'static,
 {
     with_send_hook_config(config_dir, move |send_hook_config| {
