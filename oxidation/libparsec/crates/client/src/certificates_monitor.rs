@@ -5,10 +5,10 @@ use std::sync::Arc;
 use libparsec_types::prelude::*;
 
 use crate::{
-    certificates_ops::{AddCertificateError, CertificatesOps, PollServerError},
+    certificates_ops::{CertificatesOps, PollServerError},
     event_bus::{
         EventBus, EventCertificatesMonitorCrashed, EventCertificatesUpdated,
-        EventInvalidCertificate, EventMissedServerEvents,
+        EventMissedServerEvents,
     },
 };
 
@@ -19,7 +19,7 @@ pub struct CertificatesMonitor {
 impl CertificatesMonitor {
     pub async fn start(certifs_ops: Arc<CertificatesOps>, event_bus: EventBus) -> Self {
         enum Action {
-            AddNewCertificate(Bytes),
+            NewCertificate(IndexInt),
             MissedServerEvents,
         }
         let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<Action>();
@@ -33,7 +33,7 @@ impl CertificatesMonitor {
                 })
             },
             event_bus.connect(move |e: &EventCertificatesUpdated| {
-                let _ = tx.send(Action::AddNewCertificate(e.certificate.clone()));
+                let _ = tx.send(Action::NewCertificate(e.index));
             }),
         );
 
@@ -41,48 +41,40 @@ impl CertificatesMonitor {
             let _events_connection_lifetime = events_connection_lifetime;
 
             loop {
-                match rx.recv().await {
-                    Some(Action::MissedServerEvents) => loop {
-                        if let Err(err) = certifs_ops.poll_server_for_new_certificates().await {
-                            match err {
-                                PollServerError::Offline => {
-                                    event_bus.wait_server_online().await;
-                                    continue;
-                                }
-                                PollServerError::InvalidCertificate(error) => {
-                                    log::warn!("Invalid certificate detected: {}", error);
-                                    let event = EventInvalidCertificate(error);
-                                    event_bus.send(&event);
-                                }
-                                PollServerError::Internal(err) => {
-                                    log::warn!("Certificate monitor has crashed: {}", err);
-                                    let event = EventCertificatesMonitorCrashed(err);
-                                    event_bus.send(&event);
-                                }
-                            }
-                        }
-                        break;
-                    },
-                    Some(Action::AddNewCertificate(certificate)) => {
-                        if let Err(err) = certifs_ops.add_new_certificate(certificate).await {
-                            match err {
-                                AddCertificateError::InvalidCertificate(error) => {
-                                    log::warn!("Invalid certificate detected: {}", error);
-                                    let event = EventInvalidCertificate(error);
-                                    event_bus.send(&event);
-                                }
-                                AddCertificateError::Internal(err) => {
-                                    log::warn!("Certificate monitor has crashed: {}", err);
-                                    let event = EventCertificatesMonitorCrashed(err);
-                                    event_bus.send(&event);
-                                }
-                            }
-                        }
-                    }
+                let noop_if_newer_than = match rx.recv().await {
+                    Some(Action::MissedServerEvents) => None,
+                    Some(Action::NewCertificate(index)) => Some(index),
                     // Sender has left, time to shutdown !
                     // In theory this should never happen given `CertificatesMonitor`
                     // abort our coroutine on teardown instead.
                     None => return,
+                };
+                // Need a loop here to retry the operation in case the server is not available
+                loop {
+                    if let Err(err) = certifs_ops
+                        .poll_server_for_new_certificates(noop_if_newer_than)
+                        .await
+                    {
+                        match err {
+                            PollServerError::Offline => {
+                                event_bus.wait_server_online().await;
+                                continue;
+                            }
+                            PollServerError::InvalidCertificate(error) => {
+                                // Note `CertificateOps` is responsible for sending the
+                                // invalid certificate event on the event bus
+                                log::warn!("Invalid certificate detected: {}", error);
+                            }
+                            PollServerError::Internal(err) => {
+                                // Unexpected error occured, better stop the monitor
+                                log::warn!("Certificate monitor has crashed: {}", err);
+                                let event = EventCertificatesMonitorCrashed(err);
+                                event_bus.send(&event);
+                                return;
+                            }
+                        }
+                    }
+                    break;
                 }
             }
         });

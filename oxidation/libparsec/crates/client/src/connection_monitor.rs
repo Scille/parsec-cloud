@@ -14,12 +14,12 @@ pub struct ConnectionMonitor {
 fn dispatch_api_event(event: APIEvent, event_bus: &EventBus) {
     match event {
         APIEvent::Pinged { .. } => (),
-        APIEvent::CertificatesUpdated { certificate } => {
-            let event = EventCertificatesUpdated { certificate };
+        APIEvent::CertificatesUpdated { index } => {
+            let event = EventCertificatesUpdated { index };
             event_bus.send(&event);
         }
-        APIEvent::MessageReceived { index, message } => {
-            let event = EventMessageReceived { index, message };
+        APIEvent::MessageReceived { index } => {
+            let event = EventMessageReceived { index };
             event_bus.send(&event);
         }
         APIEvent::InviteStatusChanged {
@@ -137,7 +137,7 @@ impl ConnectionMonitor {
                             }
                             err => {
                                 let event = EventIncompatibleServer(
-                                    IncompatibleServerReason::Unexpected(Box::new(err)),
+                                    IncompatibleServerReason::Unexpected(err.into()),
                                 );
                                 event_bus.send(&event);
                                 return;

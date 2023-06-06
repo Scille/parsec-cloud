@@ -34,10 +34,10 @@ pub struct RunningDevice {
     device: Arc<LocalDevice>,
     event_bus: EventBus,
     cmds: Arc<AuthenticatedCmds>,
-    certifs_ops: Arc<CertificatesOps>,
+    pub certificates_ops: Arc<CertificatesOps>,
     pub user_ops: UserOps,
     connection_monitor: ConnectionMonitor,
-    certifs_monitor: CertificatesMonitor,
+    certificates_monitor: CertificatesMonitor,
 }
 
 impl Debug for RunningDevice {
@@ -63,8 +63,8 @@ impl RunningDevice {
         )?);
 
         // TODO: error handling
-        let certifs_ops = Arc::new(
-            CertificatesOps::new(
+        let certificates_ops = Arc::new(
+            CertificatesOps::start(
                 data_base_dir,
                 device.clone(),
                 event_bus.clone(),
@@ -76,13 +76,14 @@ impl RunningDevice {
             data_base_dir.to_owned(),
             device.clone(),
             cmds.clone(),
+            certificates_ops.clone(),
             event_bus.clone(),
         )
         .await?;
         // TODO: init workspace ops
 
         let certifs_monitor =
-            CertificatesMonitor::start(certifs_ops.clone(), event_bus.clone()).await;
+            CertificatesMonitor::start(certificates_ops.clone(), event_bus.clone()).await;
         // Start the connection monitors last, as it send events to others
         let connection_monitor = ConnectionMonitor::start(cmds.clone(), event_bus.clone()).await;
 
@@ -91,10 +92,10 @@ impl RunningDevice {
             device,
             event_bus,
             cmds,
-            certifs_ops,
+            certificates_ops,
             user_ops,
             connection_monitor,
-            certifs_monitor,
+            certificates_monitor: certifs_monitor,
         })
     }
 

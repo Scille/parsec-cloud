@@ -6,8 +6,9 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use libparsec_protocol::ApiVersion;
 use libparsec_types::prelude::*;
+
+use crate::certificates_ops::InvalidMessageError;
 
 macro_rules! impl_event_bus_internal_and_event_bus_debug {
     ($([$event_struct:ident, $field_on_event_cbs:ident])*) => {
@@ -150,14 +151,19 @@ macro_rules! impl_events {
     }
 }
 
-pub type DynError = Box<dyn std::error::Error + Send + Sync>;
-
 pub enum IncompatibleServerReason {
     UnsupportedApiVersion {
         api_version: ApiVersion,
         supported_api_versions: Vec<ApiVersion>,
     },
-    Unexpected(DynError),
+    Unexpected(anyhow::Error),
+}
+
+pub enum UnprocessableMessageReason {
+    InvalidMessage(InvalidMessageError),
+    // The message is lying about the fact our role got revoked
+    SharingRevokedButNoCorrespondingCertificate,
+    SharingGrantedButNoCorrespondingCertificate,
 }
 
 impl_events!(
@@ -167,35 +173,44 @@ impl_events!(
     Offline,
     Online,
     MissedServerEvents,
+    TooMuchDriftWithServerClock {
+        backend_timestamp: DateTime,
+        ballpark_client_early_offset: Float,
+        ballpark_client_late_offset: Float,
+        client_timestamp: DateTime,
+    },
     ExpiredOrganization,
     RevokedUser,
     IncompatibleServer(IncompatibleServerReason),
+    // Events related to ops
+    UnprocessableMessage {
+        index: IndexInt,
+        sender: DeviceID,
+        reason: UnprocessableMessageReason
+    },
     // Events related to monitors
     CertificatesMonitorCrashed(anyhow::Error),
     InvalidCertificate(crate::certificates_ops::InvalidCertificateError),
     // Re-publishing of `events_listen`
-    CertificatesUpdated { certificate: Bytes },
-    MessageReceived {
-        index: u64,
-        message: Bytes
-    },
+    CertificatesUpdated { index: IndexInt },
+    MessageReceived { index: IndexInt },
     InviteStatusChanged {
         invitation_status: InvitationStatus,
         token: InvitationToken
     },
     RealmMaintenanceStarted {
-        encryption_revision: u64,
+        encryption_revision: IndexInt,
         realm_id: RealmID
     },
     RealmMaintenanceFinished {
-        encryption_revision: u64,
+        encryption_revision: IndexInt,
         realm_id: RealmID
     },
     RealmVlobsUpdated {
-        checkpoint: u64,
+        checkpoint: IndexInt,
         realm_id: RealmID,
         src_id: VlobID,
-        src_version: u64
+        src_version: VersionInt
     },
     PkiEnrollmentUpdated,
 );
@@ -306,7 +321,11 @@ pub struct EventBusConnectionLifetime<B>
 where
     B: Broadcastable,
 {
-    // Pointer on the callback's box, we use it as a unique identifier when disconnecting
+    // Pointer on the callback's box, we use it as a unique identifier when disconnecting.
+    // Of course pointer are not *really* unique given an address can be reused, but this
+    // is not an issue here given we keep the pointer only as long as the box exist, so
+    // there is no risk of re-using an old pointer which would remove an unrelated box
+    // that happens to have reused the address.
     ptr: usize,
     phantom: PhantomData<B>,
     event_bus: Arc<EventBusInternal>,

@@ -13,8 +13,8 @@ async fn base(env: &TestbedEnv) {
 
     test_register_send_hook(
         &env.discriminant_dir,
-        |_req: protocol::authenticated_cmds::v3::realm_create::Req| async {
-            protocol::authenticated_cmds::v3::realm_create::Rep::Ok
+        |_req: protocol::authenticated_cmds::latest::realm_create::Req| async {
+            protocol::authenticated_cmds::latest::realm_create::Rep::Ok
         },
     );
 
