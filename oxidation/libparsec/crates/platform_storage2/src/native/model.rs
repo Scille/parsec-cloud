@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use super::db::{DatabaseResult, LocalDatabase};
 use libparsec_types::prelude::*;
 
-// In theory we should have multiple kind of database mapped what they are used for:
+// In theory we should have multiple kinds of database after what they are used for:
 // - workspace data storage: store local manifests & chunks of file that are not
 //   synchronized yet
 // - workspace cache storage: store blocks of file that are synchronized (i.e. this
@@ -14,7 +14,7 @@ use libparsec_types::prelude::*;
 // - user storage: store the user manifest
 // - certifs storage: store all the certificates for the organization
 //
-// In practise it is just simpler to have a single datamodel that support all those
+// In practice, it is just simpler to have a single datamodel that support all those
 // needs: the tables that are not needed are just left alone.
 pub(super) const STORAGE_REVISION: u32 = 1;
 
@@ -101,10 +101,10 @@ table! {
 }
 
 table! {
-    certificates (_id) {
-        _id -> BigInt,
-        certificate -> Binary,
+    certificates (certificate_index) {
+        certificate_index -> BigInt,
         certificate_timestamp -> Double, // Timestamp
+        certificate -> Binary,
         // We want to have a way to retreive a singe certificate without having to iterate,
         // decrypt and deserialize all of them.
         // However this is tricky given we don't want to make this table dependent on the
@@ -112,18 +112,20 @@ table! {
         // introduce a new type of certificate :(
         //
         // Hence:
-        // - `certificate_type` field is not an enum
-        // - `hint` field contains a serialization the fields that we want to query using SQL LIKE
+        // - `certificate_type` is not a field with an enum type
+        // - we expose two arbitrary filter fields that value depend on the actual certificate stored.
         //
-        // The format for `hint` is "<field_name>:<field_value> <field_name>:<field_value>..."
-        // For instance:
-        // - User & revoked user certificates: "user_id:2199bb7d21ec4988825db6bcf9d7a43e"
-        // - Realm role certificate: "user_id:2199bb7d21ec4988825db6bcf9d7a43e realm_id:dcf41c521cae4682a4cf29302e2af1b6"
-        // - Device certificate: "user_id:2199bb7d21ec4988825db6bcf9d7a43e device_name:78c339d140664e909961c05b4d9add4c"
-        // - sequester service certificate: "service_id:1fc552746e1e4a27aa9fd2aa9c8c95cc"
-        // - Sequester authority: "" (nothing to index)
+        // The format is:
+        // - User certificates: filter1=<user_id>, filter2=NULL
+        // - Revoked user certificates: filter1=<user_id>, filter2=NULL
+        // - User update certificates: filter1=<user_id>, filter2=NULL
+        // - Realm role certificate: filter1=<realm id as hex>, filter2=<user_id>
+        // - Device certificate: filter1=<device_name>, filter2=<user_id>
+        // - sequester service certificate: filter1=<service_id>, filter2=NULL
+        // - Sequester authority: filter1=NULL, filter2=NULL (nothing to filter)
         certificate_type -> Text,
-        hint -> Text,
+        filter1 -> Nullable<Text>,
+        filter2 -> Nullable<Text>,
     }
 }
 
@@ -165,10 +167,12 @@ pub(super) struct NewPreventSyncPattern<'a> {
 #[derive(Insertable)]
 #[diesel(table_name = certificates)]
 pub(super) struct NewCertificate<'a> {
-    pub certificate: &'a [u8],
+    pub certificate_index: i64,
     pub certificate_timestamp: super::db::DateTime,
+    pub certificate: &'a [u8],
     pub certificate_type: &'a str,
-    pub hint: &'a str,
+    pub filter1: Option<&'a str>,
+    pub filter2: Option<&'a str>,
 }
 
 /// Do not match anything (https://stackoverflow.com/a/2302992/2846140)

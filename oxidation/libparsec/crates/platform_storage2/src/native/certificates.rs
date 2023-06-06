@@ -1,17 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use diesel::{ExpressionMethods, OptionalExtension, QueryDsl, RunQueryDsl};
-use paste::paste;
-use std::{
-    collections::HashMap,
-    path::Path,
-    sync::{Arc, Mutex},
-};
+// Certificate storage relies on the upper layer to do the actual certification
+// validation work and takes care of handling concurrency issues.
+// Hence no unique violation should occur under normal circumstances here.
+// However, as last failsafe, the certificate storage ensures an index cannot
+// be inserted multiple times, as this is a simple check (using an unique index).
 
-use libparsec_platform_async::Mutex as AsyncMutex;
+use diesel::{BoolExpressionMethods, ExpressionMethods, OptionalExtension, QueryDsl, RunQueryDsl};
+use std::path::Path;
+
 use libparsec_types::prelude::*;
 
-use super::db::{DatabaseError, LocalDatabase, VacuumMode};
+use super::db::{LocalDatabase, VacuumMode};
 use super::model::get_certificates_storage_db_relative_path;
 
 // Values for `certificate_type` column in `certificates` table
@@ -20,287 +20,100 @@ use super::model::get_certificates_storage_db_relative_path;
 const USER_CERTIFICATE_TYPE: &str = "user_certificate";
 const DEVICE_CERTIFICATE_TYPE: &str = "device_certificate";
 const REVOKED_USER_CERTIFICATE_TYPE: &str = "revoked_user_certificate";
+const USER_UPDATE_CERTIFICATE_TYPE: &str = "user_update_certificate";
 const REALM_ROLE_CERTIFICATE_TYPE: &str = "realm_role_certificate";
 const SEQUESTER_AUTHORITY_CERTIFICATE_TYPE: &str = "sequester_authority_certificate";
 const SEQUESTER_SERVICE_CERTIFICATE_TYPE: &str = "sequester_service_certificate";
 
-macro_rules! mk_hint {
-    (UserCertificate, certificate=$certif:ident) => {
-        mk_hint!(UserCertificate, user_id = $certif.user_id)
-    };
-    (DeviceCertificate, certificate=$certif:ident) => {
-        mk_hint!(DeviceCertificate, device_id = $certif.device_id)
-    };
-    (RevokedUserCertificate, certificate=$certif:ident) => {
-        mk_hint!(RevokedUserCertificate, user_id = $certif.user_id)
-    };
-    (RealmRoleCertificate, certificate=$certif:ident) => {
-        mk_hint!(
-            RealmRoleCertificate,
-            realm_id = $certif.realm_id,
-            user_id = $certif.user_id
-        )
-    };
-    (SequesterAuthorityCertificate, certificate=$certif:ident) => {
-        mk_hint!(SequesterAuthorityCertificate)
-    };
-    (SequesterServiceCertificate, certificate=$certif:ident) => {
-        mk_hint!(SequesterServiceCertificate, service_id = $certif.service_id)
-    };
-
-    (UserCertificate, user_id=$user_id:expr) => {
-        format!("user_id:{}", $user_id)
-    };
-    (DeviceCertificate, device_id=$device_id:expr) => {
-        format!(
-            "user_id:{} device_name:{}",
-            $device_id.user_id(),
-            $device_id.device_name()
-        )
-    };
-    (RevokedUserCertificate, user_id=$user_id:expr) => {
-        format!("user_id:{}", $user_id)
-    };
-    (RealmRoleCertificate, realm_id=$realm_id:expr, user_id=$user_id:expr) => {
-        format!("realm_id:{} user_id:{}", $realm_id.hex(), $user_id)
-    };
-    (SequesterAuthorityCertificate) => {
-        // No need for hint given there is only (at most) a single sequester
-        // authority certificate per organization
-        "".to_owned()
-    };
-    (SequesterServiceCertificate, service_id=$service_id:expr) => {
-        format!("service_id:{}", $service_id)
-    };
-}
-
-#[derive(Debug, Default)]
-struct CertificatesCache {
-    users: HashMap<UserID, Arc<UserCertificate>>,
-    devices: HashMap<DeviceID, Arc<DeviceCertificate>>,
-    revoked_users: HashMap<UserID, Arc<RevokedUserCertificate>>,
-    realm_roles: HashMap<RealmID, Vec<Arc<RealmRoleCertificate>>>,
-    sequester_authority: Option<Arc<SequesterAuthorityCertificate>>,
-    sequester_services: HashMap<SequesterServiceID, Arc<SequesterServiceCertificate>>,
-}
-
-impl CertificatesCache {
-    fn add_new_user_certificate(&mut self, certif: Arc<UserCertificate>) {
-        self.users.insert(certif.user_id.clone(), certif);
-    }
-    fn add_new_device_certificate(&mut self, certif: Arc<DeviceCertificate>) {
-        self.devices.insert(certif.device_id.clone(), certif);
-    }
-    fn add_new_revoked_user_certificate(&mut self, certif: Arc<RevokedUserCertificate>) {
-        self.revoked_users.insert(certif.user_id.clone(), certif);
-    }
-    fn add_new_realm_role_certificate(&mut self, certif: Arc<RealmRoleCertificate>) {
-        match self.realm_roles.entry(certif.realm_id) {
-            std::collections::hash_map::Entry::Occupied(mut entry) => {
-                entry.get_mut().push(certif);
-            }
-            std::collections::hash_map::Entry::Vacant(entry) => {
-                entry.insert(vec![certif]);
-            }
-        }
-    }
-    fn add_new_sequester_authority_certificate(
-        &mut self,
-        certif: Arc<SequesterAuthorityCertificate>,
-    ) {
-        self.sequester_authority.replace(certif);
-    }
-    fn add_new_sequester_service_certificate(&mut self, certif: Arc<SequesterServiceCertificate>) {
-        self.sequester_services.insert(certif.service_id, certif);
-    }
-
-    fn get_user_certificate(&self, user_id: &UserID) -> Option<&Arc<UserCertificate>> {
-        self.users.get(user_id)
-    }
-    fn get_device_certificate(&self, device_id: &DeviceID) -> Option<&Arc<DeviceCertificate>> {
-        self.devices.get(device_id)
-    }
-    fn get_revoked_user_certificate(
-        &self,
-        user_id: &UserID,
-    ) -> Option<&Arc<RevokedUserCertificate>> {
-        self.revoked_users.get(user_id)
-    }
-    fn get_realm_role_certificate(
-        &self,
-        realm_id: &RealmID,
-        user_id: &UserID,
-    ) -> Option<&Arc<RealmRoleCertificate>> {
-        self.realm_roles
-            .get(realm_id)
-            .and_then(|roles| roles.iter().find(|role| role.user_id == *user_id))
-    }
-    fn get_sequester_authority_certificate(&self) -> Option<&Arc<SequesterAuthorityCertificate>> {
-        self.sequester_authority.as_ref()
-    }
-    fn get_sequester_service_certificate(
-        &self,
-        service_id: &SequesterServiceID,
-    ) -> Option<&Arc<SequesterServiceCertificate>> {
-        self.sequester_services.get(service_id)
-    }
-}
-
 #[derive(Debug)]
 pub struct CertificatesStorage {
-    pub device: Arc<LocalDevice>,
     db: LocalDatabase,
-    cache: Mutex<CertificatesCache>,
-    /// Lock to prevent concurrent update between SQLite DB and the cache
-    lock_update: AsyncMutex<()>,
 }
 
-enum AddCertificateOutcome {
-    Inserted,
-    AlreadyPresent {
-        in_db_encrypted: Bytes,
-        incoming: Bytes,
-        hint: String,
-    },
+fn user_certificate_filters(user_id: UserID) -> (&'static str, Option<String>, Option<String>) {
+    let filter1 = Some(user_id.into());
+    let filter2 = None;
+    (USER_CERTIFICATE_TYPE, filter1, filter2)
 }
 
-macro_rules! impl_add_certificate_error {
-    ($certificate_type:ident) => {
-        paste!{
-            #[derive(Debug, thiserror::Error)]
-            #[error("We already know this certificate, but with a different content: `{ours:?}` vs `{incoming:?}`")]
-            pub struct [< $certificate_type AlreadyKnownButMismatch >] {
-                ours: Arc<$certificate_type>,
-                incoming: Arc<$certificate_type>,
-            }
-            #[derive(Debug, thiserror::Error)]
-            pub enum [< Add $certificate_type Error >] {
-                #[error(transparent)]
-                AlreadyKnownButMismatch(#[from] [< $certificate_type AlreadyKnownButMismatch >]),
-                #[error(transparent)]
-                Internal(#[from] anyhow::Error),
-            }
-        }
-    };
+fn revoked_user_certificate_filters(
+    user_id: UserID,
+) -> (&'static str, Option<String>, Option<String>) {
+    let filter1 = Some(user_id.into());
+    let filter2 = None;
+    (REVOKED_USER_CERTIFICATE_TYPE, filter1, filter2)
 }
 
-impl_add_certificate_error!(UserCertificate);
-impl_add_certificate_error!(DeviceCertificate);
-impl_add_certificate_error!(RevokedUserCertificate);
-impl_add_certificate_error!(RealmRoleCertificate);
-impl_add_certificate_error!(SequesterAuthorityCertificate);
-impl_add_certificate_error!(SequesterServiceCertificate);
-
-macro_rules! load_certificate_from_local_storage {
-    (SequesterServiceCertificate, $raw:expr) => {
-        SequesterServiceCertificate::load(&$raw).map(Arc::new)
-    };
-    ($certificate_type:ident, $raw:expr) => {
-        $certificate_type::unsecure_load($raw.into())
-            .map(|to_validate| {
-                to_validate.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage)
-            })
-            .map(Arc::new)
-    };
-}
-macro_rules! impl_add_certificate_fn {
-    ($certificate_type:ident) => {
-
-    paste!{
-        pub async fn [< add_new_ $certificate_type:snake >](&self, cooked: Arc<$certificate_type>, raw: Bytes) -> Result<(), [< Add $certificate_type Error >] > {
-            let hint = mk_hint!($certificate_type, certificate=cooked);
-
-            let certificate_type_name = [< $certificate_type:snake:upper _TYPE >];
-            type AddCertificateError = [< Add $certificate_type Error >];
-
-            let outcome = self.add_new_certificate_in_db(certificate_type_name, hint, cooked.timestamp, raw, false).await.map_err(|e| anyhow::anyhow!(e))?;
-
-            // In theory they should never be any conflict given the we should only receive
-            // new certificates from the server.
-            // However in case it occurs there is two possibilities:
-            // - Our certificate and the incoming one are the same. In that case we can
-            //   go idempotent and pretent everything went right
-            // - The two certificates differs. This means something fishy is going on, so
-            //   we return an error.
-            //
-            // Note this is not necessarily the proof of a malicious attack: the server may
-            // have be subjected to rollback. In any way we must notify the user and let
-            // him decide what should be done.
-            //
-            // Another possible reason for such conflict would be in case of bug on our side
-            // when our user has his role switched from/to OUTSIDER given the certificates
-            // are redacted for this role.
-            if let AddCertificateOutcome::AlreadyPresent { in_db_encrypted, incoming, hint } = outcome {
-                if let Ok(decrypted) = self.device.local_symkey.decrypt(&in_db_encrypted) {
-                    if let Ok(ours) = load_certificate_from_local_storage!($certificate_type, decrypted) {
-                        return Err([< $certificate_type AlreadyKnownButMismatch >] { ours, incoming: cooked }.into());
-                    }
-                }
-                // Cannot load the existing certificate, so just overwrite it for self-healing
-                log::warn!("{} ({}) appears to be corrupted, overwritting it", stringify!($certificate_type), &hint);
-                let outcome = self.add_new_certificate_in_db(certificate_type_name, hint, cooked.timestamp, incoming, true).await.map_err(|e| anyhow::anyhow!(e))?;
-                assert!(matches!(outcome, AddCertificateOutcome::Inserted));
-            }
-
-            // Finally update the cache
-            let mut guard = self.cache.lock().expect("Mutex is poisoned");
-            guard.[< add_new_ $certificate_type:snake >](cooked);
-
-            Ok(())
-        }
-    }
-
-    };
+fn user_update_certificate_filters(
+    user_id: UserID,
+) -> (&'static str, Option<String>, Option<String>) {
+    let filter1 = Some(user_id.into());
+    let filter2 = None;
+    (USER_UPDATE_CERTIFICATE_TYPE, filter1, filter2)
 }
 
-macro_rules! impl_get_certificate_fn {
-    ($certificate_type:ident $(, $field_name:ident: $field_type:ty)* $(,)?) => {
-    paste! {
-        pub async fn  [< get_ $certificate_type:snake >](
-            &self,
-            $(
-                $field_name: &$field_type
-            ),*
-        ) -> anyhow::Result<Option<Arc<$certificate_type>>> {
-            {
-                let guard = self.cache.lock().expect("Mutex is poisoned");
-                if let Some(found) = guard.[< get_ $certificate_type:snake >]($($field_name),*) {
-                    return Ok(Some(found.clone()));
-                }
-            }
+fn device_certificate_filters(
+    device_id: DeviceID,
+) -> (&'static str, Option<String>, Option<String>) {
+    let (user_id, device_name) = device_id.into();
+    // DeviceName is already unique enough, so we provide it as first filter
+    // to speed up database lookup
+    let filter1 = Some(device_name.into());
+    let filter2 = Some(user_id.into());
+    (DEVICE_CERTIFICATE_TYPE, filter1, filter2)
+}
 
-            // Certif not in cache, look into the db...
-            let hint = mk_hint!($certificate_type $(, $field_name=$field_name)*);
-            let encrypted = self.get_certificate_from_db(USER_CERTIFICATE_TYPE, hint).await?;
+fn realm_role_certificate_filters(
+    realm_id: RealmID,
+    user_id: UserID,
+) -> (&'static str, Option<String>, Option<String>) {
+    let filter1 = Some(realm_id.hex());
+    let filter2 = Some(user_id.into());
+    (REALM_ROLE_CERTIFICATE_TYPE, filter1, filter2)
+}
 
-            if let Ok(decrypted) = self.device.local_symkey.decrypt(&encrypted) {
-                if let Ok(cooked) = load_certificate_from_local_storage!($certificate_type, decrypted) {
+/// Get all realm role certificates for a given realm
+fn get_realm_certificates_filters(
+    realm_id: RealmID,
+) -> (&'static str, Option<String>, Option<String>) {
+    let filter1 = Some(realm_id.hex());
+    let filter2 = None;
+    (REALM_ROLE_CERTIFICATE_TYPE, filter1, filter2)
+}
 
-                    // Populate the cache before returing
-                    {
-                        let _update_guard = self.lock_update.lock().await;
-                        let mut guard = self.cache.lock().expect("Mutex is poisoned");
-                        guard.[< add_new_ $certificate_type:snake >](cooked.clone());
-                    }
+/// Get all realm role certificates for a given user
+fn get_user_realms_certificates_filters(
+    user_id: UserID,
+) -> (&'static str, Option<String>, Option<String>) {
+    let filter1 = None;
+    let filter2 = Some(user_id.into());
+    (REALM_ROLE_CERTIFICATE_TYPE, filter1, filter2)
+}
 
-                    return Ok(Some(cooked));
-                }
-            }
+fn sequester_authority_certificate_filters() -> (&'static str, Option<String>, Option<String>) {
+    (SEQUESTER_AUTHORITY_CERTIFICATE_TYPE, None, None)
+}
 
-            // The certificate in database appear to be corrupted... just pretend it doesn't exist
-            let hint = mk_hint!($certificate_type $(, $field_name=$field_name)*);
-            log::warn!("{} ({}) appears to be corrupted, ignoring it", stringify!($certificate_type), &hint);
-            Ok(None)
-        }
-    }
-    };
+fn sequester_service_certificate_filters(
+    service_id: SequesterServiceID,
+) -> (&'static str, Option<String>, Option<String>) {
+    let filter1 = Some(service_id.hex());
+    let filter2 = None;
+    (SEQUESTER_SERVICE_CERTIFICATE_TYPE, filter1, filter2)
+}
+
+// Get all sequester service certificates
+fn get_sequester_service_certificates_filters() -> (&'static str, Option<String>, Option<String>) {
+    let filter1 = None;
+    let filter2 = None;
+    (SEQUESTER_SERVICE_CERTIFICATE_TYPE, filter1, filter2)
 }
 
 impl CertificatesStorage {
-    pub async fn start(data_base_dir: &Path, device: Arc<LocalDevice>) -> anyhow::Result<Self> {
+    pub async fn start(data_base_dir: &Path, device: &LocalDevice) -> anyhow::Result<Self> {
         // 1) Open the database
 
-        let db_relative_path = get_certificates_storage_db_relative_path(&device);
+        let db_relative_path = get_certificates_storage_db_relative_path(device);
         let db = LocalDatabase::from_path(data_base_dir, &db_relative_path, VacuumMode::default())
             .await?;
 
@@ -310,151 +123,394 @@ impl CertificatesStorage {
 
         // 3) All done !
 
-        let user_storage = Self {
-            device,
-            db,
-            cache: Mutex::new(CertificatesCache::default()),
-            lock_update: AsyncMutex::new(()),
-        };
-        Ok(user_storage)
+        let storage = Self { db };
+        Ok(storage)
     }
 
     pub async fn stop(&self) {
         self.db.close().await
     }
 
-    pub async fn get_last_certificate_timestamp(&self) -> anyhow::Result<Option<DateTime>> {
-        let ts = self
-            .db
-            .exec(move |conn| {
-                conn.immediate_transaction(|conn| {
-                    let query = {
-                        use super::model::certificates::dsl::*;
-                        certificates
-                            .select(certificate_timestamp)
-                            .order_by(certificate_timestamp.desc())
-                    };
-                    query
-                        .first::<super::db::DateTime>(conn)
-                        .optional()
-                        .map(|maybe_dt| maybe_dt.map(|dt| dt.into()))
-                })
-            })
-            .await?;
-        Ok(ts)
+    pub async fn add_user_certificate(
+        &self,
+
+        index: IndexInt,
+        timestamp: DateTime,
+        user_id: UserID,
+        encrypted: Vec<u8>,
+    ) -> anyhow::Result<()> {
+        let (ty, filter1, filter2) = user_certificate_filters(user_id);
+        self.add_certificate(ty, index, timestamp, filter1, filter2, encrypted)
+            .await
     }
 
-    impl_add_certificate_fn!(UserCertificate);
-    impl_add_certificate_fn!(DeviceCertificate);
-    impl_add_certificate_fn!(RevokedUserCertificate);
-    impl_add_certificate_fn!(RealmRoleCertificate);
-    impl_add_certificate_fn!(SequesterAuthorityCertificate);
-    impl_add_certificate_fn!(SequesterServiceCertificate);
-
-    impl_get_certificate_fn!(UserCertificate, user_id: UserID);
-    impl_get_certificate_fn!(DeviceCertificate, device_id: DeviceID);
-    impl_get_certificate_fn!(RevokedUserCertificate, user_id: UserID);
-    impl_get_certificate_fn!(RealmRoleCertificate, realm_id: RealmID, user_id: UserID);
-    impl_get_certificate_fn!(SequesterAuthorityCertificate);
-    impl_get_certificate_fn!(SequesterServiceCertificate, service_id: SequesterServiceID);
-
-    async fn get_certificate_from_db(
+    pub async fn add_revoked_user_certificate(
         &self,
-        certificate_type: &'static str,
-        hint: String,
-    ) -> Result<Vec<u8>, DatabaseError> {
+
+        index: IndexInt,
+        timestamp: DateTime,
+        user_id: UserID,
+        encrypted: Vec<u8>,
+    ) -> anyhow::Result<()> {
+        let (ty, filter1, filter2) = revoked_user_certificate_filters(user_id);
+        self.add_certificate(ty, index, timestamp, filter1, filter2, encrypted)
+            .await
+    }
+
+    pub async fn add_user_update_certificate(
+        &self,
+
+        index: IndexInt,
+        timestamp: DateTime,
+        user_id: UserID,
+        encrypted: Vec<u8>,
+    ) -> anyhow::Result<()> {
+        let (ty, filter1, filter2) = user_update_certificate_filters(user_id);
+        self.add_certificate(ty, index, timestamp, filter1, filter2, encrypted)
+            .await
+    }
+
+    pub async fn add_device_certificate(
+        &self,
+
+        index: IndexInt,
+        timestamp: DateTime,
+        device_id: DeviceID,
+        encrypted: Vec<u8>,
+    ) -> anyhow::Result<()> {
+        let (ty, filter1, filter2) = device_certificate_filters(device_id);
+        self.add_certificate(ty, index, timestamp, filter1, filter2, encrypted)
+            .await
+    }
+
+    pub async fn add_realm_role_certificate(
+        &self,
+
+        index: IndexInt,
+        timestamp: DateTime,
+        realm_id: RealmID,
+        user_id: UserID,
+        encrypted: Vec<u8>,
+    ) -> anyhow::Result<()> {
+        let (ty, filter1, filter2) = realm_role_certificate_filters(realm_id, user_id);
+        self.add_certificate(ty, index, timestamp, filter1, filter2, encrypted)
+            .await
+    }
+
+    pub async fn add_sequester_authority_certificate(
+        &self,
+
+        index: IndexInt,
+        timestamp: DateTime,
+        encrypted: Vec<u8>,
+    ) -> anyhow::Result<()> {
+        let (ty, filter1, filter2) = sequester_authority_certificate_filters();
+        self.add_certificate(ty, index, timestamp, filter1, filter2, encrypted)
+            .await
+    }
+
+    pub async fn add_sequester_service_certificate(
+        &self,
+
+        index: IndexInt,
+        timestamp: DateTime,
+        service_id: SequesterServiceID,
+        encrypted: Vec<u8>,
+    ) -> anyhow::Result<()> {
+        let (ty, filter1, filter2) = sequester_service_certificate_filters(service_id);
+        self.add_certificate(ty, index, timestamp, filter1, filter2, encrypted)
+            .await
+    }
+
+    pub async fn get_user_certificate(
+        &self,
+        user_id: UserID,
+    ) -> anyhow::Result<Option<(IndexInt, Vec<u8>)>> {
+        let (ty, filter1, filter2) = user_certificate_filters(user_id);
+        self.get_single_certificate(ty, filter1, filter2).await
+    }
+
+    pub async fn get_revoked_user_certificate(
+        &self,
+        user_id: UserID,
+    ) -> anyhow::Result<Option<(IndexInt, Vec<u8>)>> {
+        let (ty, filter1, filter2) = revoked_user_certificate_filters(user_id);
+        self.get_single_certificate(ty, filter1, filter2).await
+    }
+
+    pub async fn get_user_update_certificates(
+        &self,
+        user_id: UserID,
+    ) -> anyhow::Result<Vec<(IndexInt, Vec<u8>)>> {
+        let (ty, filter1, filter2) = user_update_certificate_filters(user_id);
+        self.get_multiple_certificates(ty, filter1, filter2).await
+    }
+
+    pub async fn get_device_certificate(
+        &self,
+        device_id: DeviceID,
+    ) -> anyhow::Result<Option<(IndexInt, Vec<u8>)>> {
+        let (ty, filter1, filter2) = device_certificate_filters(device_id);
+        self.get_single_certificate(ty, filter1, filter2).await
+    }
+
+    // Get all realm role certificates for a given realm
+    pub async fn get_realm_certificates(
+        &self,
+        realm_id: RealmID,
+    ) -> anyhow::Result<Vec<(IndexInt, Vec<u8>)>> {
+        let (ty, filter1, filter2) = get_realm_certificates_filters(realm_id);
+        self.get_multiple_certificates(ty, filter1, filter2).await
+    }
+
+    // Get all realm role certificates for a given user
+    pub async fn get_user_realms_certificates(
+        &self,
+        user_id: UserID,
+    ) -> anyhow::Result<Vec<(IndexInt, Vec<u8>)>> {
+        let (ty, filter1, filter2) = get_user_realms_certificates_filters(user_id);
+        self.get_multiple_certificates(ty, filter1, filter2).await
+    }
+
+    pub async fn get_sequester_authority_certificate(
+        &self,
+    ) -> anyhow::Result<Option<(IndexInt, Vec<u8>)>> {
+        let (ty, filter1, filter2) = sequester_authority_certificate_filters();
+        self.get_single_certificate(ty, filter1, filter2).await
+    }
+
+    pub async fn get_sequester_service_certificates(
+        &self,
+    ) -> anyhow::Result<Vec<(IndexInt, Vec<u8>)>> {
+        let (ty, filter1, filter2) = get_sequester_service_certificates_filters();
+        self.get_multiple_certificates(ty, filter1, filter2).await
+    }
+
+    pub async fn get_certificate(&self, index: IndexInt) -> anyhow::Result<Option<Vec<u8>>> {
+        let index_as_i64 = i64::try_from(index)?;
+        let maybe = self
+            .db
+            .exec(move |conn| {
+                let query = {
+                    use super::model::certificates;
+                    certificates::table
+                        .select(certificates::certificate)
+                        .filter(certificates::certificate_index.eq(index_as_i64))
+                };
+                query.first::<Vec<u8>>(conn).optional()
+            })
+            .await?;
+
+        Ok(maybe)
+    }
+
+    /// Returns the timestamp of creation of the considered certificate index
+    /// and (if any) of the certificate index following it.
+    /// If this certificate index doesn't exist yet, `(None, None)` is returned.
+    pub async fn get_timestamp_bounds(
+        &self,
+        index: IndexInt,
+    ) -> anyhow::Result<(Option<DateTime>, Option<DateTime>)> {
+        let index_as_i64 = i64::try_from(index)?;
+
+        let mut items = self
+            .db
+            .exec(move |conn| {
+                let query = {
+                    use super::model::certificates;
+                    certificates::table
+                        .select(certificates::certificate_timestamp)
+                        .filter(
+                            certificates::certificate_index
+                                .eq(index_as_i64)
+                                .or(certificates::certificate_index.eq(index_as_i64 + 1)),
+                        )
+                };
+                query.limit(2).get_results::<super::db::DateTime>(conn)
+            })
+            .await?
+            .into_iter();
+
+        match (items.next(), items.next()) {
+            (Some(start), Some(end)) => {
+                Ok((Some(DateTime::from(start)), Some(DateTime::from(end))))
+            }
+            // Certificate index is the last one, hence it has no upper bound
+            (Some(start), None) => Ok((Some(DateTime::from(start)), None)),
+            // Certificate index too high
+            (None, _) => Ok((None, None)),
+        }
+    }
+
+    pub async fn get_last_index(&self) -> anyhow::Result<Option<(IndexInt, DateTime)>> {
+        let maybe = self
+            .db
+            .exec(move |conn| {
+                let query = {
+                    use super::model::certificates;
+                    certificates::table
+                        .select((
+                            certificates::certificate_index,
+                            certificates::certificate_timestamp,
+                        ))
+                        .order(certificates::certificate_index.desc())
+                };
+                query.first::<(i64, super::db::DateTime)>(conn).optional()
+            })
+            .await?;
+
+        match maybe {
+            None => Ok(None),
+            Some((last_index, last_timestamp)) => {
+                let last_index = IndexInt::try_from(last_index)?;
+                let last_timestamp = DateTime::from(last_timestamp);
+                Ok(Some((last_index, last_timestamp)))
+            }
+        }
+    }
+
+    /// Remove all certificates from the database
+    /// There is no data loss from this as certificates can be re-obtained from
+    /// the server, however it is only needed when switching from/to redacted
+    /// certificates
+    pub async fn forget_all_certificates(&self) -> anyhow::Result<()> {
         self.db
             .exec(move |conn| {
+                // IMMEDIATE transaction means we start right away a write transaction
+                // (instead default DEFERRED mode of which waits until the first database
+                // access and determine read/write transaction depending on the sql statement)
                 conn.immediate_transaction(|conn| {
                     let query = {
                         use super::model::certificates;
-                        certificates::table
-                            .select(certificates::certificate)
-                            .filter(certificates::certificate_type.eq(certificate_type))
-                            .filter(certificates::hint.eq(&hint))
+                        diesel::delete(certificates::table)
                     };
-                    query.first::<Vec<u8>>(conn)
+                    query.execute(conn).map(|_| ())
                 })
             })
             .await
+            .map_err(|err| err.into())
     }
 
-    /// We never remove nor replace certificates, as a certificate is immutable (a new
-    /// certificate should be issued to represent a modification, e.g. for realm role)
-    /// So if the server start sending certificates that doesn't match with the one we
-    /// currently have stored, it means somebody is acting fishy !
-    async fn add_new_certificate_in_db(
+    async fn add_certificate(
         &self,
-        certificate_type: &'static str,
-        hint: String,
-        certificate_timestamp: DateTime,
-        certificate: Bytes,
-        force: bool,
-    ) -> Result<AddCertificateOutcome, DatabaseError> {
-        let encrypted = self.device.local_symkey.encrypt(&certificate);
-        let _update_guard = self.lock_update.lock().await;
 
-        // It's unlikely the certificate is already present, so we don't check for it
-        // existence in cache and rely instead on the unique violation error from SQlite
+        certificate_type: &'static str,
+        index: IndexInt,
+        timestamp: DateTime,
+        filter1: Option<String>,
+        filter2: Option<String>,
+        encrypted: Vec<u8>,
+    ) -> anyhow::Result<()> {
+        let index_as_i64 = i64::try_from(index)?;
+
         self.db
             .exec(move |conn| {
+                let filter1 = filter1.as_ref().map(|x| &**x);
+                let filter2 = filter2.as_ref().map(|x| &**x);
+
+                // IMMEDIATE transaction means we start right away a write transaction
+                // (instead default DEFERRED mode of which waits until the first database
+                // access and determine read/write transaction depending on the sql statement)
                 conn.immediate_transaction(|conn| {
                     let new_certificate = super::model::NewCertificate {
+                        certificate_index: index_as_i64,
                         certificate: &encrypted,
+                        certificate_timestamp: timestamp.into(),
                         certificate_type,
-                        certificate_timestamp: certificate_timestamp.into(),
-                        hint: &hint,
+                        filter1,
+                        filter2,
                     };
 
-                    if force {
-                        let query = {
-                            use super::model::certificates::dsl::*;
-                            use diesel::upsert::excluded;
-                            diesel::insert_into(certificates)
-                                .values(new_certificate)
-                                .on_conflict((certificate_type, hint))
-                                .do_update()
-                                .set((
-                                    certificate.eq(excluded(certificate)),
-                                    certificate_timestamp.eq(excluded(certificate_timestamp)),
-                                ))
-                        };
-                        query.execute(conn).map(|_| AddCertificateOutcome::Inserted)
-                    } else {
-                        let query = {
-                            use super::model::certificates::dsl::*;
-                            diesel::insert_into(certificates).values(new_certificate)
-                        };
-                        let insert_res = query.execute(conn);
-
-                        if let Err(diesel::result::Error::DatabaseError(
-                            diesel::result::DatabaseErrorKind::UniqueViolation,
-                            _,
-                        )) = insert_res
-                        {
-                            // Conflict !
-                            let query = {
-                                use super::model::certificates;
-                                certificates::table
-                                    .select(certificates::certificate)
-                                    .filter(certificates::certificate_type.eq(certificate_type))
-                                    .filter(certificates::hint.eq(&hint))
-                            };
-                            let select_res = query.first::<Vec<u8>>(conn);
-                            match select_res {
-                                Ok(in_db_encrypted) => Ok(AddCertificateOutcome::AlreadyPresent {
-                                    in_db_encrypted: in_db_encrypted.into(),
-                                    incoming: certificate,
-                                    hint,
-                                }),
-                                Err(err) => Err(err),
-                            }
-                        } else {
-                            insert_res.map(|_| AddCertificateOutcome::Inserted)
-                        }
-                    }
+                    let query = {
+                        use super::model::certificates::dsl::*;
+                        diesel::insert_into(certificates).values(new_certificate)
+                    };
+                    query.execute(conn).map(|_| ())
                 })
             })
             .await
+            .map_err(|err| err.into())
+    }
+
+    async fn get_single_certificate(
+        &self,
+        certificate_type: &'static str,
+        filter1: Option<String>,
+        filter2: Option<String>,
+    ) -> anyhow::Result<Option<(IndexInt, Vec<u8>)>> {
+        let maybe = self
+            .db
+            .exec(move |conn| {
+                let filter1 = filter1.as_ref().map(|x| &**x);
+                let filter2 = filter2.as_ref().map(|x| &**x);
+                let query = {
+                    use super::model::certificates;
+                    let mut query = certificates::table
+                        .select((certificates::certificate_index, certificates::certificate))
+                        .filter(certificates::certificate_type.eq(certificate_type))
+                        .into_boxed();
+
+                    if filter1.is_some() {
+                        query = query.filter(certificates::filter1.eq(filter1))
+                    }
+
+                    if filter2.is_some() {
+                        query = query.filter(certificates::filter2.eq(filter2))
+                    }
+
+                    query
+                };
+                query.first::<(i64, Vec<u8>)>(conn).optional()
+            })
+            .await?;
+
+        match maybe {
+            Some((index, certif)) => {
+                let index = IndexInt::try_from(index)?;
+                Ok(Some((index, certif)))
+            }
+            None => Ok(None),
+        }
+    }
+
+    async fn get_multiple_certificates(
+        &self,
+        certificate_type: &'static str,
+        filter1: Option<String>,
+        filter2: Option<String>,
+    ) -> anyhow::Result<Vec<(IndexInt, Vec<u8>)>> {
+        let items = self
+            .db
+            .exec(move |conn| {
+                let filter1 = filter1.as_ref().map(|x| &**x);
+                let filter2 = filter2.as_ref().map(|x| &**x);
+                let query = {
+                    use super::model::certificates;
+                    let mut query = certificates::table
+                        .select((certificates::certificate_index, certificates::certificate))
+                        .filter(certificates::certificate_type.eq(certificate_type))
+                        .into_boxed();
+
+                    if filter1.is_some() {
+                        query = query.filter(certificates::filter1.eq(filter1))
+                    }
+
+                    if filter2.is_some() {
+                        query = query.filter(certificates::filter2.eq(filter2))
+                    }
+
+                    query
+                };
+                query.get_results::<(i64, Vec<u8>)>(conn)
+            })
+            .await?;
+
+        items
+            .into_iter()
+            .map(|(index, certif)| -> anyhow::Result<_> {
+                let index = IndexInt::try_from(index)?;
+                Ok((index, certif))
+            })
+            .collect()
     }
 }

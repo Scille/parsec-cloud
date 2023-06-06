@@ -1,9 +1,9 @@
 -- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 CREATE TABLE IF NOT EXISTS certificates (
-    _id INTEGER PRIMARY KEY NOT NULL,
-    certificate BLOB NOT NULL,
+    certificate_index INTEGER PRIMARY KEY NOT NULL,
     certificate_timestamp DATETIME NOT NULL,
+    certificate BLOB NOT NULL,
     -- We want to have a way to retreive a singe certificate without having to iterate,
     -- decrypt and deserialize all of them.
     -- However this is tricky given we don't want to make this table dependent on the
@@ -11,18 +11,21 @@ CREATE TABLE IF NOT EXISTS certificates (
     -- introduce a new type of certificate :(
     --
     -- Hence:
-    -- - `certificate_type` field is not an enum
-    -- - `hint` field contains a serialization the fields that we want to query using SQL LIKE
+    -- - `certificate_type` is not a field with an enum type
+    -- - we expose two arbitrary query fields that value depend on the actual certificate stored.
     --
-    -- The format for `hint` is "<field_name>:<field_value> <field_name>:<field_value>..."
-    -- For instance:
-    -- - User & revoked user certificates: "user_id:2199bb7d21ec4988825db6bcf9d7a43e"
-    -- - Realm role certificate: "user_id:2199bb7d21ec4988825db6bcf9d7a43e realm_id:dcf41c521cae4682a4cf29302e2af1b6"
-    -- - Device certificate: "user_id:2199bb7d21ec4988825db6bcf9d7a43e device_name:78c339d140664e909961c05b4d9add4c"
-    -- - sequester service certificate: "service_id:1fc552746e1e4a27aa9fd2aa9c8c95cc"
-    -- - Sequester authority: "" (nothing to index)
+    -- The format is:
+    -- - User certificates: filter1=<user_id>, filter2=NULL
+    -- - Revoked user certificates: filter1=<user_id>, filter2=NULL
+    -- - User update certificates: filter1=<user_id>, filter2=NULL
+    -- - Realm role certificate: filter1=<realm id as hex>, filter2=<user_id>
+    -- - Device certificate: filter1=<device_name>, filter2=<user_id>
+    -- - sequester service certificate: filter1=<service_id>, filter2=NULL
+    -- - Sequester authority: filter1=NULL, filter2=NULL (nothing to filter)
     certificate_type TEXT NOT NULL,
-    hint TEXT NOT NULL,
+    filter1 TEXT,
+    filter2 TEXT
+);
 
-    UNIQUE(certificate_type, hint)
-)
+CREATE INDEX IF NOT EXISTS certificates_filter1 ON certificates (certificate_type, filter1);
+CREATE INDEX IF NOT EXISTS certificates_filter2 ON certificates (certificate_type, filter2);
