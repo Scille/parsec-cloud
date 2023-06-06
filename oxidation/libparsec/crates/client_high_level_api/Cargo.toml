@@ -9,7 +9,6 @@ use-sodiumoxide = ["libparsec_crypto/use-sodiumoxide"]
 test-utils = ["libparsec_testbed"]
 
 [dependencies]
-libparsec_core = { path = "../core" }
 libparsec_crypto = { path = "../crypto" }
 libparsec_platform_async = { path = "../platform_async" }
 libparsec_platform_device_loader = { path = "../platform_device_loader" }

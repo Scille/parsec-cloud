@@ -18,8 +18,6 @@ members = [
     "oxidation/libparsec/crates/client",
     "oxidation/libparsec/crates/client_connection",
     "oxidation/libparsec/crates/client_high_level_api",
-    "oxidation/libparsec/crates/core",
-    "oxidation/libparsec/crates/core_fs",
     "oxidation/libparsec/crates/crypto",
     "oxidation/libparsec/crates/platform_async",
     "oxidation/libparsec/crates/platform_device_loader",

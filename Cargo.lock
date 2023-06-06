@@ -1219,8 +1219,6 @@ version = "0.0.0"
 dependencies = [
  "libparsec_client_connection",
  "libparsec_client_high_level_api",
- "libparsec_core",
- "libparsec_core_fs",
  "libparsec_crypto",
  "libparsec_platform_async",
  "libparsec_platform_device_loader",
@@ -1310,7 +1308,6 @@ dependencies = [
 name = "libparsec_client_high_level_api"
 version = "0.0.0"
 dependencies = [
- "libparsec_core",
  "libparsec_crypto",
  "libparsec_platform_async",
  "libparsec_platform_device_loader",
@@ -1319,43 +1316,6 @@ dependencies = [
  "libparsec_types",
  "once_cell",
  "thiserror",
-]
-
-[[package]]
-name = "libparsec_core"
-version = "0.0.0"
-dependencies = [
- "libparsec_client_connection",
- "libparsec_crypto",
- "libparsec_platform_async",
- "libparsec_protocol",
- "libparsec_tests_fixtures",
- "libparsec_types",
- "rmp-serde",
- "serde",
- "serde_with",
- "thiserror",
-]
-
-[[package]]
-name = "libparsec_core_fs"
-version = "0.0.0"
-dependencies = [
- "async-trait",
- "lazy_static",
- "libparsec_client_connection",
- "libparsec_core",
- "libparsec_crypto",
- "libparsec_platform_async",
- "libparsec_platform_storage",
- "libparsec_protocol",
- "libparsec_testbed",
- "libparsec_tests_fixtures",
- "libparsec_types",
- "log",
- "regex",
- "thiserror",
- "tokio",
 ]
 
 [[package]]
