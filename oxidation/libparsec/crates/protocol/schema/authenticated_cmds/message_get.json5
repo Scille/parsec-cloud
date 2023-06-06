@@ -1,9 +1,63 @@
 [
     {
         "major_versions": [
-            2,
-            3,
             4
+        ],
+        "req": {
+            "cmd": "message_get",
+            "fields": [
+                {
+                    "name": "offset",
+                    "type": "Index"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "messages",
+                        "type": "List<Message>"
+                    }
+                ]
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "Message",
+                "fields": [
+                    {
+                        "name": "index",
+                        "type": "Index"
+                    },
+                    {
+                        "name": "sender",
+                        "type": "DeviceID"
+                    },
+                    {
+                        "name": "timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "body",
+                        "type": "Bytes"
+                    },
+                    // Indicate at which index the certificates where when this message was
+                    // created. Hence the client knows if it is lacking some certificates
+                    // to perform the proper integrity checks on the body content.
+                    {
+                        "name": "certificate_index",
+                        "type": "Index"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "major_versions": [
+            2,
+            3
         ],
         "req": {
             "cmd": "message_get",

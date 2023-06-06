@@ -37,10 +37,32 @@
                     {
                         "name": "CertificatesUpdated",
                         "discriminant_value": "certificates_updated",
+                        // It would be easy to provide the content of the certificate here,
+                        // however correctly integrating it on client side is tricky given
+                        // it would act in concurrency with the regular use of `certificate_get`
+                        // command.
+                        //
+                        // Consider the following scenario:
+                        // 1) client send a `certificate_get` command to server
+                        // 2) server send a `certificates_updated` event to client for
+                        //    certificate C3
+                        // 3) client add C3 to it certificates store
+                        // 4) server send the response to `certificate_get`: certificates
+                        //    C1 and C2 should be added by the client
+                        // 5) client detect a causality issue given C1 & C2 are older than
+                        //    C3 which is already stored !
+                        //
+                        // In a nutshell, the server guarantees causality on the order it
+                        // provides the certificates and the client rely on this assumption
+                        // (e.g. to determine an user realm role at a given point in time).
+                        // So the best way to avoid messing with this is to always rely on
+                        // `certificate_get` everytime we detect we need to fetch new stuff.
                         "fields": [
                             {
-                                "name": "certificate",
-                                "type": "Bytes"
+                                // Index is useful to detect we have already polled the
+                                // server for new certificates since this event's inception
+                                "name": "index",
+                                "type": "Index"
                             }
                         ]
                     },
@@ -49,12 +71,10 @@
                         "discriminant_value": "message_received",
                         "fields": [
                             {
+                                // Index is useful to detect we have already polled the
+                                // server for new messages since this event's inception
                                 "name": "index",
                                 "type": "Index"
-                            },
-                            {
-                                "name": "message",
-                                "type": "Bytes"
                             }
                         ]
                     },
@@ -118,7 +138,7 @@
                             },
                             {
                                 "name": "src_version",
-                                "type": "Index"
+                                "type": "Version"
                             }
                         ]
                     },
@@ -247,7 +267,7 @@
                             },
                             {
                                 "name": "src_version",
-                                "type": "Index"
+                                "type": "Version"
                             }
                         ]
                     },

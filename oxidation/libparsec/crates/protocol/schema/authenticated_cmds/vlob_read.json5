@@ -1,9 +1,85 @@
 [
     {
         "major_versions": [
-            2,
-            3,
             4
+        ],
+        "req": {
+            "cmd": "vlob_read",
+            "fields": [
+                {
+                    "name": "encryption_revision",
+                    "type": "Index"
+                },
+                {
+                    "name": "vlob_id",
+                    "type": "VlobID"
+                },
+                {
+                    "name": "version",
+                    "type": "RequiredOption<Version>"
+                },
+                {
+                    "name": "timestamp",
+                    "type": "RequiredOption<DateTime>"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "version",
+                        "type": "Version"
+                    },
+                    {
+                        "name": "blob",
+                        "type": "Bytes"
+                    },
+                    {
+                        "name": "author",
+                        "type": "DeviceID"
+                    },
+                    {
+                        "name": "timestamp",
+                        "type": "DateTime"
+                    },
+                    // Indicate at which index the certificates where when this vlob was
+                    // created. Hence the client knows if it is lacking some certificates
+                    // to perform the proper integrity checks on the blob content.
+                    {
+                        "name": "certificates_index",
+                        "type": "Index"
+                    }
+                ]
+            },
+            {
+                "status": "not_found",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "not_allowed"
+            },
+            {
+                "status": "bad_version"
+            },
+            {
+                "status": "bad_encryption_revision"
+            },
+            {
+                "status": "in_maintenance"
+            }
+        ]
+    },
+    {
+        "major_versions": [
+            2,
+            3
         ],
         "req": {
             "cmd": "vlob_read",

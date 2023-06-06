@@ -7,10 +7,9 @@
             "cmd": "certificate_get",
             "fields": [
                 {
-                    // If specified, only return certificates which has been created
-                    // strictly after this timestamp
-                    "name": "created_after",
-                    "type": "RequiredOption<DateTime>"
+                    // Skip the certificates before this index
+                    "name": "offset",
+                    "type": "Index"
                 }
             ]
         },
@@ -18,6 +17,8 @@
             {
                 "status": "ok",
                 "fields": [
+                    // Certificates are provided in-order (with strictly growing timestamps),
+                    // their index should be calculated by `offset + <certificate's index in this list>`
                     {
                         "name": "certificates",
                         "type": "List<Bytes>"
