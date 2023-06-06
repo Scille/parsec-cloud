@@ -213,7 +213,7 @@ class PGHandler:
         self._connection_lost = False
         self._events_component: EventsComponent | None = None
 
-    async def init(self, nursery: trio.Nursery, events_component: EventsComponent) -> None:
+    async def init(self, nursery: trio.Nursery, events_component: EventsComponent | None) -> None:
         self._task_status = await start_task(nursery, self._run_connections)
         self._events_component = events_component
 

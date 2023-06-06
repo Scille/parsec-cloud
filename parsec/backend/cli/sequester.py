@@ -112,7 +112,7 @@ async def run_pg_db_handler(config: BackendDbConfig) -> AsyncGenerator[PGHandler
     dbh = PGHandler(config.db_url, config.db_min_connections, config.db_max_connections, event_bus)
 
     async with open_service_nursery() as nursery:
-        await dbh.init(nursery)
+        await dbh.init(nursery, events_component=None)
         try:
             yield dbh
         finally:
