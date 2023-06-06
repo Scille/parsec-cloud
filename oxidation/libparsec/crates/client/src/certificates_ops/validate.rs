@@ -163,7 +163,7 @@ impl CertificatesOps {
             }
 
             // D'oh :/
-            Err(err) => return Err(ValidateMessageError::Internal(err.into())),
+            Err(err) => return Err(ValidateMessageError::Internal(err)),
         }
 
         // 3) Actually validate the message
@@ -217,10 +217,10 @@ impl CertificatesOps {
                             as_expected |= certif.user_id == *self.device.user_id();
                             match &content {
                                 MessageContent::SharingRevoked { .. } => {
-                                    as_expected |= certif.role == None;
+                                    as_expected |= certif.role.is_none();
                                 }
                                 MessageContent::SharingGranted { .. } => {
-                                    as_expected |= certif.role != None;
+                                    as_expected |= certif.role.is_some();
                                 }
                                 _ => {
                                     unreachable!()

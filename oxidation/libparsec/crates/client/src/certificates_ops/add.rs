@@ -151,8 +151,8 @@ impl CertificatesOps {
                         // first call to `validated_certificate` so it value can be trusted.
                         (0, _, _) => (),
                         // Switching from/to Outsider !
-                        (_, old @ UserProfile::Outsider, new @ _)
-                        | (_, old @ _, new @ UserProfile::Outsider)
+                        (_, old @ UserProfile::Outsider, new)
+                        | (_, old, new @ UserProfile::Outsider)
                             if old != new =>
                         {
                             // So we clear the storage and don't try to go any further given
@@ -542,7 +542,7 @@ impl CertificatesOps {
             Err(GetCertificateError::NonExisting) => {
                 let hint = mk_hint();
                 let what = InvalidCertificateError::NonExistingRelatedUser { hint };
-                return Err(AddCertificateError::InvalidCertificate(what));
+                Err(AddCertificateError::InvalidCertificate(what))
             }
 
             // User doesn't exist... yet :(
@@ -555,12 +555,12 @@ impl CertificatesOps {
                     hint,
                     user_created_on: certificate_timestamp,
                 };
-                return Err(AddCertificateError::InvalidCertificate(what));
+                Err(AddCertificateError::InvalidCertificate(what))
             }
 
             // D'oh :/
             Err(err @ GetCertificateError::Internal(_)) => {
-                return Err(AddCertificateError::Internal(err.into()));
+                Err(AddCertificateError::Internal(err.into()))
             }
         }
     }
@@ -822,7 +822,7 @@ impl CertificatesOps {
         self.check_author_not_revoked_and_profile(
             storage,
             current_index,
-            &cooked.author.user_id(),
+            cooked.author.user_id(),
             true,
             mk_hint,
         )
@@ -1049,7 +1049,7 @@ impl CertificatesOps {
 
                 let user_current_role = realm_current_roles
                     .iter()
-                    .find(|role| &role.user_id == &cooked.user_id)
+                    .find(|role| role.user_id == cooked.user_id)
                     .and_then(|role| role.role);
                 let user_new_role = cooked.role;
                 match (user_current_role, user_new_role) {

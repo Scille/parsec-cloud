@@ -30,14 +30,18 @@ impl<T> ScalarCache<T> {
     }
 }
 
+type PerUserAllUserUpdates = Arc<Vec<(IndexInt, Arc<UserUpdateCertificate>)>>;
+type PerUserMaybeUserRevoked = Option<(IndexInt, Arc<RevokedUserCertificate>)>;
+type PerRealmAllRoles = Arc<Vec<(IndexInt, Arc<RealmRoleCertificate>)>>;
+
 #[derive(Debug, Default)]
 struct Cache {
     current_self_profile: ScalarCache<UserProfile>,
     user_certificates: HashMap<UserID, (IndexInt, Arc<UserCertificate>)>,
-    user_update_certificates: HashMap<UserID, Arc<Vec<(IndexInt, Arc<UserUpdateCertificate>)>>>,
-    revoked_user_certificates: HashMap<UserID, Option<(IndexInt, Arc<RevokedUserCertificate>)>>,
+    user_update_certificates: HashMap<UserID, PerUserAllUserUpdates>,
+    revoked_user_certificates: HashMap<UserID, PerUserMaybeUserRevoked>,
     device_certificates: HashMap<DeviceID, (IndexInt, Arc<DeviceCertificate>)>,
-    realm_certificates: HashMap<RealmID, Arc<Vec<(IndexInt, Arc<RealmRoleCertificate>)>>>,
+    realm_certificates: HashMap<RealmID, PerRealmAllRoles>,
     sequester_service_certificates: ScalarCache<Vec<(IndexInt, Arc<SequesterServiceCertificate>)>>,
     sequester_authority_certificate: ScalarCache<(IndexInt, Arc<SequesterAuthorityCertificate>)>,
     per_certificate_index_timestamp_bounds: HashMap<IndexInt, (DateTime, DateTime)>,
@@ -156,7 +160,7 @@ impl CertificatesCachedStorage {
         let mut guard = self.cache.lock().expect("Mutex is poisoned");
         guard.current_self_profile.set(profile);
 
-        return Ok(profile);
+        Ok(profile)
     }
 
     pub async fn add_user_certificate(

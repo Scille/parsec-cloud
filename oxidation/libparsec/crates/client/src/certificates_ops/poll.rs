@@ -39,10 +39,10 @@ impl From<AddCertificateError> for PollServerError {
 }
 
 impl CertificatesOps {
-    pub(super) async fn ensure_certificates_available_and_read_lock<'a>(
-        &'a self,
+    pub(super) async fn ensure_certificates_available_and_read_lock(
+        &self,
         certificate_index: IndexInt,
-    ) -> Result<RwLockReadGuard<'a, CertificatesCachedStorage>, PollServerError> {
+    ) -> Result<RwLockReadGuard<CertificatesCachedStorage>, PollServerError> {
         loop {
             self.poll_server_for_new_certificates(Some(certificate_index))
                 .await?;

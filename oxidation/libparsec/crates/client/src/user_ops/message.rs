@@ -213,7 +213,7 @@ impl super::UserOps {
             None => workspace_entry,
             Some(already_existing_entry) => {
                 // Merge with existing as target to keep possible workspace rename
-                merge_workspace_entry(None, &workspace_entry, &already_existing_entry)
+                merge_workspace_entry(None, &workspace_entry, already_existing_entry)
             }
         };
         // `Arc::make_mut` clones user manifest before we modify it
