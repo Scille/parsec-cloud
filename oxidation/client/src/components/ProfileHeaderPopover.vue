@@ -4,10 +4,13 @@
   <ion-list class="container">
     <ion-item class="container__item profile-email">
       <ion-text class="body-sm">
-        {{ email }}
+        {{ firstname }} {{ lastname }}
       </ion-text>
     </ion-item>
-    <ion-item class="container__item">
+    <ion-item
+      class="container__item"
+      @click="onOptionClick(ProfilePopoverOption.MyDevices)"
+    >
       <ion-icon
         :icon="phonePortrait"
         slot="start"
@@ -16,7 +19,10 @@
         {{ $t('HomePage.topbar.myDevices') }}
       </ion-label>
     </ion-item>
-    <ion-item class="container__item">
+    <ion-item
+      class="container__item"
+      @click="onOptionClick(ProfilePopoverOption.Settings)"
+    >
       <ion-icon
         :icon="cog"
         slot="start"
@@ -25,7 +31,10 @@
         {{ $t('HomePage.topbar.settings') }}
       </ion-label>
     </ion-item>
-    <ion-item class="container__item">
+    <ion-item
+      class="container__item"
+      @click="onOptionClick(ProfilePopoverOption.Help)"
+    >
       <ion-icon
         :icon="helpCircle"
         slot="start"
@@ -34,7 +43,10 @@
         {{ $t('HomePage.topbar.help') }}
       </ion-label>
     </ion-item>
-    <ion-item class="container__item logout">
+    <ion-item
+      class="container__item logout"
+      @click="onOptionClick(ProfilePopoverOption.LogOut)"
+    >
       <ion-icon
         :icon="logOut"
         slot="start"
@@ -44,10 +56,21 @@
       </ion-label>
     </ion-item>
     <ion-item class="container__item version">
-      <ion-text class="body-sm">Parsec v2.8.3</ion-text>
+      <ion-text class="body-sm">
+        Parsec v2.8.3
+      </ion-text>
     </ion-item>
   </ion-list>
 </template>
+
+<script lang="ts">
+export enum ProfilePopoverOption {
+  MyDevices = 0,
+  Settings = 1,
+  Help = 2,
+  LogOut = 3
+}
+</script>
 
 <script setup lang="ts">
 import {
@@ -64,13 +87,20 @@ import {
   logOut
 } from 'ionicons/icons';
 import { useI18n } from 'vue-i18n';
+import { popoverController } from '@ionic/core';
 
 const { t } = useI18n();
 
 defineProps<{
-  email: string
+  firstname: string,
+  lastname: string
 }>();
 
+function onOptionClick(option: ProfilePopoverOption): void {
+  popoverController.dismiss({
+    option: option
+  });
+}
 </script>
 
 <style lang="scss" scoped>

@@ -233,11 +233,28 @@ body.dark {
   --ion-card-background: #1e1e1e;
 }
 
-/**** Parsec colors ****/
 
 :root {
+  /**** Parsec colors ****/
+
   /*** Light ***/
+  /* gradient */
+  --parsec-color-light-gradient: linear-gradient(113.02deg, #4092FF -1.49%, #0058CC 100%);
+
   /* Primary */
+  --parsec-color-light-primary-30-opacity15: hsla(212, 100%, 97.1%, 0.15000000596046448);
+  --parsec-color-light-primary-30: hsla(212, 100%, 97.1%, 1);
+  --parsec-color-light-primary-50: hsla(212, 100%, 94.9%, 1);
+  --parsec-color-light-primary-100: hsla(214, 100%, 90%, 1);
+  --parsec-color-light-primary-200: hsla(214, 100%, 80%, 1);
+  --parsec-color-light-primary-300: hsla(214, 100%, 70%, 1);
+  --parsec-color-light-primary-400: hsla(214, 100%, 60%, 1);
+  --parsec-color-light-primary-500: hsla(214, 100%, 62.5%, 1);
+  --parsec-color-light-primary-600: hsla(214, 100%, 40%, 1);
+  --parsec-color-light-primary-700: hsla(214, 100%, 30%, 1);
+  --parsec-color-light-primary-800: hsla(214, 100%, 20%, 1);
+  --parsec-color-light-primary-900: hsla(214, 100%, 10%, 1);
+
   --parsec-color-light-primary-30-opacity15: hsla(212, 100%, 97.1%, 0.15000000596046448);
   --parsec-color-light-primary-30: hsla(212, 100%, 97.1%, 1);
   --parsec-color-light-primary-50: hsla(212, 100%, 94.9%, 1);
@@ -276,20 +293,47 @@ body.dark {
   --parsec-color-light-danger-700: hsla(352, 60.8%, 40%, 1);
 
   /* ------ tags light------ */
-  ---parsec-color--tags-blue100: hsla(198, 100%, 92%, 1);
-  ---parsec-color--tags-blue500: hsla(198, 82%, 36%, 1);
-  ---parsec-color--tags-indigo100: hsla(247, 100%, 95%, 1);
-  ---parsec-color--tags-indigo500: hsla(245, 100%, 36%, 1);
-  ---parsec-color--tags-orange100: hsla(37, 100%, 95%, 1);
-  ---parsec-color--tags-orange500: hsla(36, 100%, 36%, 1);
-  ---parsec-color--tags-green100: hsla(68, 100%, 92%, 1);
-  ---parsec-color--tags-green500: hsla(72, 90%, 32%, 1);
+  --parsec-color-tags-blue100: hsla(198, 100%, 92%, 1);
+  --parsec-color-tags-blue500: hsla(198, 82%, 36%, 1);
+  --parsec-color-tags-indigo100: hsla(247, 100%, 95%, 1);
+  --parsec-color-tags-indigo500: hsla(245, 100%, 36%, 1);
+  --parsec-color-tags-orange100: hsla(37, 100%, 95%, 1);
+  --parsec-color-tags-orange500: hsla(36, 100%, 36%, 1);
+  --parsec-color-tags-green100: hsla(68, 100%, 92%, 1);
+  --parsec-color-tags-green500: hsla(72, 90%, 32%, 1);
+
+
+  /* **** Parsec shadow **** */
+  --parsec-shadow-light: 0px 4px 12px rgba(0, 0, 0, 0.08);
+  --parsec-shadow-strong: 0px 4px 20px rgba(0, 0, 0, 0.15);
+  --parsec-shadow-toggle: -2px 1px 6px rgba(0, 0, 0, 0.24);
+
+  /* **** Parsec border-radius **** */
+  --parsec-radius-2: 2px;
+  --parsec-radius-4: 4px;
+  --parsec-radius-6: 6px;
+  --parsec-radius-8: .5em;
+  --parsec-radius-12: .75em;
+  --parsec-radius-32: 2em;
+  --parsec-radius-circle: 50%;
+}
+
+/* **** Parsec width **** */
+:root {
+  --parsec-max-content-width: 78rem;
+  --parsec-max-title-width: 31.25rem;
 }
 
 /* **** Parsec typography **** */
 
-
 /* ** title ** */
+
+.title-h1-lg {
+  font-size: 40px;
+  line-height: 120%;
+  font-weight: 600;
+}
+
 .title-h1 {
   line-height: 120%;
   font-weight: 600;
@@ -388,8 +432,8 @@ body.dark {
 }
 
 .caption-caption {
-  font-size: 0.75rem;
-  font-size: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
   line-height: 133%;
   letter-spacing: 0.15px;
 }
@@ -464,7 +508,7 @@ body.dark {
 /* ** form ** */
 .form-label {
   font-weight: 500;
-  font-size: 1rem;
+  font-size: 0.88rem;
   line-height: 156%;
   letter-spacing: 0.15px;
 }
@@ -480,15 +524,6 @@ body.dark {
   font-size: 0.75rem;
   line-height: 133%;
   letter-spacing: 0.4px;
-  --parsec-color-light-secondary-contrast: hsla(240, 19.4%, 13.1%, 1);
-  --parsec-color-light-secondary-text: hsla(240, 20.2%, 34.9%, 1);
-  --parsec-color-light-secondary-grey: hsla(240, 19.6%, 60%, 1);
-  --parsec-color-light-secondary-light: hsla(240, 19.5%, 84.9%, 1);
-  --parsec-color-light-secondary-disabled: hsla(240, 20%, 93.1%, 1);
-  --parsec-color-light-secondary-medium: hsla(240, 20%, 96.1%, 1);
-  --parsec-color-light-secondary-premiere: hsla(240, 20%, 96.1%, 1);
-  --parsec-color-light-secondary-background: hsla(240, 20%, 98%, 1);
-  --parsec-color-light-secondary-inversed-contrast: hsla(0, 0%, 99.6%, 1);
 }
 
 
@@ -503,8 +538,49 @@ https: //github.com/ionic-team/ionic-framework/issues/24080 */
   --box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
 }
 
+ion-list.container {
+  margin-top: 0;
+}
+
 ion-popover {
   --width: 300px;
+}
+
+.popover-side-bottom .popover-viewport {
+  border: var(--parsec-color-light-secondary-disabled) 1.5px solid;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.popover-side-bottom {
+  --width: 250px;
+  --offset-x: -3em;
+  --offset-y: .5em;
+}
+
+ion-popover::part(content) {
+  border-radius: 6px;
+}
+
+/* homepage popover */
+.homepage-popover {
+  --width: 350px;
+  --offset-x: -6.8rem;
+  --offset-y: .5em;
+}
+
+.homepage-popover .item-native {
+  padding-inline-start: 0;
+}
+
+/* input */
+.input-label-placement-start.sc-ion-input-md-h .label-text-wrapper.sc-ion-input-md {
+  -webkit-margin-start: 0;
+  margin-inline-start: 0;
+}
+
+.input-wrapper {
+  --inner-padding-end: 16px;
 }
 
 .profile-header-popover {
@@ -524,8 +600,19 @@ ion-modal.join-by-link-modal::part(content) {
   contain: content;
 }
 
+/* modal */
 ion-modal.one-line-modal::part(content) {
   height: 210px;
+}
+
+@media only screen and (min-width: 768px) and (min-height: 600px) {
+
+  .settings-modal, .settings-modal .ion-overlay-wrapper{
+    --width: 800px;
+    --height: 600px;
+    --border-radius: 8px;
+  }
+
 }
 
 ion-card-title {
@@ -538,6 +625,44 @@ ion-card-title {
 }
 
 ion-card {
+  --box-shadow: none;
+}
+
+ion-button {
+  text-transform: none;
+  --border-radius: 6px;
+  --box-shadow: none;
+}
+/* button size */
+ion-button.button-large {
+  --padding-top: 1rem ;
+  --padding-end: 1.25rem;
+  --padding-bottom: 1rem ;
+  --padding-start: 1.25rem;
+  font-size: 1.12rem;
+  line-height: 22px;
+  letter-spacing: 0.02rem;
+  height: 54px;
+}
+
+ion-button.button-default {
+  --padding-top: 0.75rem;
+  --padding-end: 1rem;
+  --padding-bottom: 0.75rem;
+  --padding-start: 1rem;
+  font-size: 1rem;
+  line-height: 20px;
+  height: 44px;
+}
+
+ion-button.button-small {
+  --padding-top: 0.625rem;
+  --padding-end: 1rem;
+  --padding-bottom: 0.625rem;
+  --padding-start: 1rem;
+  font-size: 0.88rem;
+  line-height: 17px;
+  height: 37px;
   --box-shadow: none;
 }
 

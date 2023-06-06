@@ -1,0 +1,134 @@
+name: package-webapp
+
+on:
+  push:
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+*
+    branches:
+      - "[0-9]+.[0-9]+"
+  pull_request:
+    paths:
+      - .github/workflows/package-webapp.yml
+  workflow_call:
+  workflow_dispatch:
+
+env:
+  # We use the version 18.12 because the version >= 18.13 have some breaking changes on how they format the date.
+  # That would break our unit test if we don't update them.
+  node-version: 18.12.0
+  wasm-pack-version: 0.11.0
+  # Cargo will be faster with this configuration.
+  # It will only update it's index for the dependencies that we use.
+  # https://blog.rust-lang.org/2023/03/09/Rust-1.68.0.html#cargos-sparse-protocol
+  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+
+permissions:
+  contents: read
+
+jobs:
+  webapp:
+    runs-on: ubuntu-22.04
+    name: ⚡ Package web app
+    steps:
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
+        timeout-minutes: 5
+
+      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c  # pin v3.6.0
+        with:
+          node-version: ${{ env.node-version }}
+        timeout-minutes: 2
+
+      - name: Install dependencies
+        run: npm clean-install
+        working-directory: oxidation/client
+
+      - name: Install wasm-pack
+        run: |
+          set -eux
+          set -o pipefail
+
+          BASE_DIR=wasm-pack-v${{ env.wasm-pack-version }}-x86_64-unknown-linux-musl
+
+          mkdir -p ~/.local/bin
+
+          curl -sSL \
+            https://github.com/rustwasm/wasm-pack/releases/download/v${{ env.wasm-pack-version }}/$BASE_DIR.tar.gz \
+            | tar --extract --gzip --to-stdout \
+              $BASE_DIR/wasm-pack \
+              > ~/.local/bin/wasm-pack
+
+          chmod a+rx ~/.local/bin/wasm-pack
+
+          echo $HOME/.local/bin >> $GITHUB_PATH
+        timeout-minutes: 2
+
+      - name: Build web bindings
+        run: npm run build:release
+        working-directory: oxidation/bindings/web
+
+      - name: Build web app
+        run: npm run web:release
+        working-directory: oxidation/client
+
+      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.2
+        with:
+          name: webapp
+          path: oxidation/client/dist/
+          if-no-files-found: error
+
+  electron:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: 🐧 Linux
+            os: ubuntu-20.04
+            paths: |
+              oxidation/client/electron/dist/parsec_*_*.snap
+              oxidation/client/electron/dist/parsec-*.AppImage
+              oxidation/client/electron/dist/latest-linux.yml
+          - name: 🏁 Windows
+            os: windows-2022
+            paths: |
+              oxidation/client/electron/dist/parsec Setup *.exe
+              oxidation/client/electron/dist/parsec Setup *.exe.blockmap
+              oxidation/client/electron/dist/latest.yml
+          - name: 🍎 macOS
+            os: macos-12
+            paths: |
+              oxidation/client/electron/dist/parsec-*.dmg
+              oxidation/client/electron/dist/parsec-*.dmg.blockmap
+              oxidation/client/electron/dist/latest-mac.yml
+    name: "${{matrix.name }}: ⚡ Package electron"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
+        timeout-minutes: 5
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          npm clean-install
+          (cd electron && npm clean-install)
+          (cd ../bindings/electron && npm clean-install)
+        working-directory: oxidation/client
+        timeout-minutes: 10
+
+      - name: Build Electron bindings
+        run: npm run build:release
+        working-directory: oxidation/bindings/electron
+        # MacOS is really slow when build rust
+        timeout-minutes: 30
+
+      - name: Build Electron apps
+        run: npm run electron:release
+        working-directory: oxidation/client
+        timeout-minutes: 5
+
+      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.2
+        with:
+          name: ${{ runner.os }}-${{ runner.arch }}-electron-app
+          path: ${{ matrix.paths }}
+          if-no-files-found: error
+        timeout-minutes: 10

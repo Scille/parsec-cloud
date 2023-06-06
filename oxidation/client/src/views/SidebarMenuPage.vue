@@ -5,8 +5,7 @@
     <div
       class="divider"
       ref="divider"
-    >
-    </div>
+    />
     <ion-split-pane
       content-id="main"
       ref="splitPane"
@@ -63,7 +62,6 @@
               <ion-text
                 class="subtitles-sm"
                 button
-                @click="navigateToPage('settings')"
               >
                 Gérer mon organisation
               </ion-text>
@@ -78,16 +76,16 @@
             <ion-header
               lines="none"
               button
-              @click="navigateToPage('workspacesPages')"
+              @click="navigateToWorkspaceList()"
               class="list-workspaces__header title-h5"
             >
-              All {{ $t('OrganizationPage.workspaces') }}
+              {{ $t('SideMenu.allWorkspaces') }}
             </ion-header>
 
             <ion-item
               lines="none"
               button
-              @click="navigateToPage('workspaces')"
+              @click="navigateToWorkspace(workspace.id)"
               v-for="workspace in workspacesExampleData"
               :key="workspace.id"
             >
@@ -132,11 +130,11 @@ import {
   business
 } from 'ionicons/icons';
 import { WatchStopHandle, onMounted, onUnmounted, ref, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
 import { createGesture } from '@ionic/vue';
 
 import { useRouter, useRoute } from 'vue-router';
 import useSidebarMenu from '@/services/sidebarMenu';
+import { getMockDevices } from '@/common/mocks';
 
 let device: any = {};
 
@@ -169,8 +167,6 @@ const workspacesExampleData = [
 ];
 const router = useRouter();
 const currentRoute = useRoute();
-const { t, d } = useI18n();
-
 const splitPane = ref();
 const divider = ref();
 const { defaultWidth, initialWidth, computedWidth, wasReset } = useSidebarMenu();
@@ -183,13 +179,26 @@ const unwatch: WatchStopHandle = watch(wasReset, (value) => {
   }
 });
 
-function navigateToPage(pageName: string): void {
-  router.push({ name: pageName });
+function navigateToWorkspace(workspaceId: number): void {
+  router.push({
+    name: 'folder',
+    params: { deviceId: currentRoute.params.deviceId, workspaceId: workspaceId },
+    query: { path: '/' }
+  });
   menuController.close();
 }
 
+function navigateToWorkspaceList(): void {
+  router.push({
+    name: 'workspaces',
+    params: { deviceId: currentRoute.params.deviceId }
+  });
+  menuController.close();
+
+}
+
 onMounted(() => {
-  device = JSON.parse(currentRoute.query.device as string);
+  device = getMockDevices(1)[0];
 
   if (divider.value) {
     const gesture = createGesture({
@@ -267,7 +276,7 @@ function resizeMenu(newWidth: number): void {
   border-radius: 0 .5rem .5rem 0;
   // logo parsec
   &::after{
-    content: url('../assets/images/logo/logo_icon_white.svg');
+    content: url('../assets/images/Logo/logo_icon_white.svg');
     opacity: .03;
     width: 100%;
     max-width: 270px;

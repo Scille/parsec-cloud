@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import { InjectionKey, createApp } from 'vue';
+import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
 
@@ -26,20 +26,14 @@ import '@ionic/vue/css/flex-utils.css';
 import '@ionic/vue/css/display.css';
 
 import { formatTimeSince } from '@/common/date';
+import { formatFileSize } from '@/common/filesize';
 import { StorageManager } from '@/services/storageManager';
 import { DateTime } from 'luxon';
+import { FormattersKey, ConfigPathKey, StorageManagerKey } from '@/common/injectionKeys';
 
 /* Theme variables */
 import './theme/variables.css';
 import { libparsec } from './plugins/libparsec';
-
-export interface Formatters {
-  timeSince(date: DateTime | undefined, defaultValue?: string): string;
-}
-
-const formattersKey = Symbol('formatters') as InjectionKey<Formatters>;
-const storageManagerKey = Symbol('storageManager') as InjectionKey<StorageManager>;
-const configPathKey = Symbol('configPath') as InjectionKey<string>;
 
 async function setupApp(): Promise<void> {
 
@@ -107,13 +101,17 @@ async function setupApp(): Promise<void> {
     .use(router)
     .use(i18n);
 
-  app.provide(formattersKey, {
-    'timeSince': (date: DateTime | undefined, defaultValue = ''): string => {
+  app.provide(FormattersKey, {
+    'timeSince': (date: DateTime | undefined, defaultValue = '', format = 'long'): string => {
       const { t, d } = useI18n();
-      return formatTimeSince(date, t, d, defaultValue);
+      return formatTimeSince(date, t, d, defaultValue, format);
+    },
+    'fileSize': (bytes: number): string => {
+      const { t } = useI18n();
+      return formatFileSize(bytes, t);
     }
   });
-  app.provide(storageManagerKey, storageManager);
+  app.provide(StorageManagerKey, storageManager);
 
   // We can start the app with different cases :
   // - dev with a testbed Parsec server with the default devices
@@ -133,10 +131,13 @@ async function setupApp(): Promise<void> {
   // from within `setupApp`, so instead it should be called in fire-and-forget
   // and only awaited when it is called from third party code (i.e. when
   // obtained through `window.nextStageHook`, see below)
-  const nextStage = async (configPath: string): Promise<void> => {
+  const nextStage = async (configPath: string, locale: undefined | string = undefined): Promise<void> => {
     await router.isReady();
     // configPath is injected to components
-    app.provide(configPathKey, configPath);
+    app.provide(ConfigPathKey, configPath);
+    if (locale) {
+      (i18n.global.locale as any).value = locale;
+    }
     app.mount('#app');
     appElem.setAttribute('app-state', 'ready');
   };
@@ -158,14 +159,8 @@ async function setupApp(): Promise<void> {
 
 declare global {
   interface Window {
-    nextStageHook: () => [any, (configPath: string) => Promise<void>]
+    nextStageHook: () => [any, (configPath: string, locale: undefined | string) => Promise<void>]
   }
 }
 
 await setupApp();
-
-export {
-  formattersKey,
-  storageManagerKey,
-  configPathKey
-};

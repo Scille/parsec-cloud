@@ -11,10 +11,12 @@ import { IonApp, IonRouterOutlet } from '@ionic/vue';
 import { inject } from 'vue';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { onMounted } from '@vue/runtime-core';
-import { toggleDarkMode } from './states/darkMode';
-import { storageManagerKey } from './main';
+import { toggleDarkMode } from '@/states/darkMode';
+import { StorageManagerKey } from '@/common/injectionKeys';
+import { StorageManager } from '@/services/storageManager';
 
-const storageManager = inject(storageManagerKey)!;
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const storageManager: StorageManager = inject(StorageManagerKey)!;
 
 onMounted(async (): Promise<void> => {
   SplashScreen.hide();

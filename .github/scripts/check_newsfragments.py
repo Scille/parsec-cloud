@@ -23,15 +23,26 @@ BASE_CMD = "git log origin/master --exit-code --".split()
 # Also ignore release branch (e.g. `2.11`) that don't have to create newsfragments
 IGNORED_BRANCHES_PATTERN = r"(master|[0-9]+\.[0-9]+)"
 
+# This list should be keep up to date with `misc/releaser.py::FRAGMENT_TYPES.keys()`
+VALID_TYPE = ["feature", "bugfix", "doc", "removal", "api", "misc", "empty"]
+
 
 def check_newsfragment(fragment: Path) -> Optional[bool]:
     fragment_name = fragment.name
     cmd_args = [*BASE_CMD, str(fragment)]
     ret = run(cmd_args, capture_output=True)
+
     if ret.returncode == 0:
         print(f"[{fragment_name}] Found new newsfragment")
 
-        id, *_ = fragment_name.split(".")
+        id, type, *_ = fragment_name.split(".")
+
+        if type not in VALID_TYPE:
+            print(
+                f"[{fragment_name}] Not a valid fragment type `{type}` (expected one of {VALID_TYPE})"
+            )
+            return False
+
         # For more information on github api for issues:
         # see https://docs.github.com/en/rest/issues/issues#get-an-issue
         url = f"https://api.github.com/repos/Scille/parsec-cloud/issues/{id}"

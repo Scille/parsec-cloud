@@ -19,28 +19,29 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('@/views/SidebarMenuPage.vue'),
     children: [
       {
-        path: '',
-        redirect: '/'
-      },
-      {
         path: '/documents',
         component: () => import('@/views/HeaderPage.vue'),
         children: [
           {
-            path: '',
-            redirect: '/'
+            path: '/:deviceId([a-z0-9]+@[a-z0-9]+)',
+            redirect: { name: 'workspaces' }
           },
           {
-            path: 'workspaces',
+            path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/workspaces',
             name: 'workspaces',
             component: () => import('@/views/WorkspacesPage.vue')
+          },
+          {
+            path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/workspaces/:workspaceId([a-z0-9]+)',
+            name: 'folder',
+            component: () => import('@/views/FolderPage.vue')
+          },
+          {
+            path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/settings',
+            name: 'settings',
+            component: () => import('@/views/SettingsPage.vue')
           }
         ]
-      },
-      {
-        path: '/settings',
-        name: 'settings',
-        component: () => import('@/views/SettingsPage.vue')
       },
       {
         path: '/organization',

@@ -34,6 +34,7 @@ from parsec.cli_utils import logging_config_options
 from parsec.test_utils import initialize_test_organization
 from parsec.utils import trio_run
 
+DEFAULT_BACKEND_HOST = "localhost"
 DEFAULT_BACKEND_PORT = 6888
 DEFAULT_ADMINISTRATION_TOKEN = "V8VjaXrOz6gUC6ZEHPab0DSsjfq6DmcJ"
 DEFAULT_EMAIL_HOST = "MOCKED"
@@ -152,7 +153,7 @@ MimeType=x-scheme-handler/parsec;
 
 
 async def kill_parsec_backend(backend_port: int):
-    pattern = f"parsec.* backend.* run.* -P {backend_port}"
+    pattern = f"parsec.* backend.* run.* --port={backend_port}"
 
     def _windows_target():
         for proc in psutil.process_iter():
@@ -168,14 +169,20 @@ async def kill_parsec_backend(backend_port: int):
 
 
 async def restart_local_backend(
-    administration_token: str, backend_port: int, email_host: str, db: str, blockstore: str
+    administration_token: str,
+    backend_host: str,
+    backend_port: int,
+    email_host: str,
+    db: str,
+    blockstore: str,
 ):
+    url = f"parsec://{backend_host}:{backend_port}?no_ssl=true"
     command = (
         f"{sys.executable} -Wignore -m parsec.cli backend run --log-level=WARNING "
         f"-b {blockstore} --db {db} "
-        f"--email-host={email_host} -P {backend_port} "
+        f"--email-host={email_host} --port={backend_port} --host={backend_host} "
         f"--spontaneous-organization-bootstrap "
-        f"--administration-token {administration_token} --backend-addr parsec://localhost:{backend_port}?no_ssl=true"
+        f"--administration-token {administration_token} --backend-addr={url}"
     )
 
     await kill_parsec_backend(backend_port)
@@ -203,12 +210,12 @@ async def restart_local_backend(
 
     # Make sure the backend is actually started
     await trio.sleep(0.2)
-    url = f"parsec://localhost:{backend_port}?no_ssl=true"
     return BackendAddr.from_url(url)
 
 
 @click.command()
 @click.option("-B", "--backend-address", type=BackendAddr.from_url)
+@click.option("--backend-host", show_default=True, type=str, default=DEFAULT_BACKEND_HOST)
 @click.option("-p", "--backend-port", show_default=True, type=int, default=DEFAULT_BACKEND_PORT)
 @click.option("--db", show_default=True, type=str, default=DEFAULT_DATABASE)
 @click.option("-b", "--blockstore", show_default=True, type=str, default=DEFAULT_BLOCKSTORE)
@@ -268,6 +275,7 @@ def main(log_level, log_file, log_format, **kwargs):
 
 async def amain(
     backend_address: BackendAddr | None,
+    backend_host: str,
     backend_port: int,
     db: str,
     blockstore: str,
@@ -298,7 +306,7 @@ async def amain(
     # Start a local backend
     if backend_address is None:
         backend_address = await restart_local_backend(
-            administration_token, backend_port, email_host, db, blockstore
+            administration_token, backend_host, backend_port, email_host, db, blockstore
         )
         click.echo(
             f"""\
@@ -339,4 +347,4 @@ Mount alice and bob drives using:
 
 
 if __name__ == "__main__":
-    main()
+    main(auto_envvar_prefix="TESTENV")

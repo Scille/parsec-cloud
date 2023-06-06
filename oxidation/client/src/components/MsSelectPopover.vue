@@ -1,10 +1,11 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS -->
 
 <template>
-  <ion-list>
+  <ion-list class="container">
     <ion-item
+      v-if="sortByLabels"
       id="sort-order-button"
-      class="option"
+      class="option body-small"
       button
       @click="onOptionClick()"
     >
@@ -15,7 +16,7 @@
       />
     </ion-item>
     <ion-item
-      class="option"
+      class="option body"
       :class="{selected: selectedOption?.key === option.key}"
       button
       lines="none"
@@ -24,6 +25,13 @@
       @click="onOptionClick(option)"
     >
       {{ option.label }}
+      <ion-icon
+        slot="end"
+        :icon="checkmark"
+        class="checked"
+        :class="{selected: selectedOption?.key === option.key}"
+        v-if="selectedOption?.key === option.key"
+      />
     </ion-item>
   </ion-list>
 </template>
@@ -38,20 +46,21 @@ import {
 } from '@ionic/vue';
 import {
   arrowUp,
-  arrowDown
+  arrowDown,
+  checkmark
 } from 'ionicons/icons';
 import { MsSelectOption, MsSelectSortByLabels, getOptionByKey } from '@/components/MsSelectOption';
 
 const props = defineProps<{
   defaultOption?: string,
   options: MsSelectOption[],
-  sortByLabels: MsSelectSortByLabels,
+  sortByLabels?: MsSelectSortByLabels,
   sortByAsc: boolean
 }>();
 
 const sortByAsc: Ref<boolean> = ref(props.sortByAsc);
-const selectedOption: Ref<MsSelectOption | undefined> = ref(
-  props.defaultOption ? getOptionByKey(props.options, props.defaultOption) : undefined
+const selectedOption = ref(
+  props.defaultOption ? getOptionByKey(props.options, props.defaultOption) : props.options[0]
 );
 
 function onOptionClick(option?: MsSelectOption): void {
@@ -65,18 +74,37 @@ function onOptionClick(option?: MsSelectOption): void {
     sortByAsc: sortByAsc.value
   });
 }
-
 </script>
 
 <style lang="scss" scoped>
 .option {
   --background-hover: var(--parsec-color-light-primary-50);
   --background-hover-opacity: 1;
-  --color-hover: var(--ion-color-tertiary);
+  --color: var(--parsec-color-light-secondary-grey);
+  --color-hover: var(--parsec-color-light-primary-700);
 
   &.selected {
-    color: var(--ion-color-tertiary) !important;
-    font-weight: bold;
+    color: var(--parsec-color-light-primary-700);
+  }
+  .checked.selected {
+    color: var(--parsec-color-light-primary-700);
+  }
+}
+#sort-order-button {
+  --background: var(--parsec-color-light-secondary-medium);
+  --color: var(--parsec-color-light-secondary-text);
+  --color-hover: var(--parsec-color-light-secondary-text);
+  --border-radius: 25px;
+  width: fit-content;
+  padding-right: 0.5rem;
+  margin-left: auto;
+  margin-bottom: .5rem;
+  --min-height: 2rem;
+
+  ion-icon {
+    margin: 0;
+    padding-left: 0.5rem;
+    font-size: 1.25rem;
   }
 }
 </style>

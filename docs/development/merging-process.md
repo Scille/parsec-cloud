@@ -82,7 +82,7 @@ approach.
 
 Here are some tips:
 
- Give some **context**: Why this pull request exists ? Why it was created ?
+- Give some **context**: Why this pull request exists ? Why it was created ?
 - Explain **details that should not be overlooked**: Have you made any design
   choices that should be highlighted ? Are you trying to optimize something ?
 - Describe **components are being impacted**: The pull request changes many

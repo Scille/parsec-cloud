@@ -7,10 +7,11 @@
             "myDevices": "Mes appareils"
         },
         "organizationList": {
-            "title": "Liste de vos organisations",
+            "title": "Vos organisations",
+            "subtitle": "Gardez le contrôle total sur vos données avec Parsec et soyez sûr de leur sécurité.",
             "lastLogin": "Dernière connexion sur cet appareil :",
-            "sortOrderAsc": "Ordre croissant",
-            "sortOrderDesc": "Ordre décroissant",
+            "sortOrderAsc": "Croissant",
+            "sortOrderDesc": "Décroissant",
             "sortByOrganization": "Organisation",
             "sortByUserName": "Nom d'utilisateur",
             "sortByLastLogin": "Dernière connexion",
@@ -19,8 +20,13 @@
         },
         "noExistingOrganization": {
             "title": "Besoin de créer ou rejoindre une organisation ?",
+            "createOrJoin": "Créer ou rejoindre",
             "createOrganization": "Créer une organisation",
-            "joinOrganization": "Rejoindre une organisation"
+            "createOrganizationTitle": "Créer",
+            "createOrganizationSubtitle": "Je souhaite créer une organisation",
+            "joinOrganization": "Rejoindre une organisation",
+            "joinOrganizationTitle": "Rejoindre",
+            "joinOrganizationSubtitle": "J'ai reçu une invitation Parsec Cloud"
         },
         "organizationLogin": {
             "backToList": "Retour aux organisations",
@@ -91,7 +97,12 @@
     "HeaderPage": {
         "about": "À propos",
         "support": "Aide et commentaires",
-        "loggedIn": "Connecté"
+        "loggedIn": "Connecté",
+        "titles": {
+            "workspaces": "Mes espaces",
+            "settings": "Paramètres"
+        },
+        "previous": "Précédent"
     },
     "SettingsPage": {
         "pageTitle": "Paramètres",
@@ -99,6 +110,10 @@
         "enableTelemetryDescription": "Envoie automatiquement les rapports d’erreur",
         "minimizeToSystemTray": "Réduire dans la barre d'état",
         "minimizeToSystemTrayDescription": "Lorsque l'application est fermée, Parsec continuera à fonctionner en arrière-plan",
+        "unsyncFiles": "Afficher les fichiers exclus de la synchronisation",
+        "unsyncFilesDescription": "Les fichiers exclus de la synchronisation seront visibles",
+        "meteredConnection": "Connexion limitée",
+        "meteredConnectionDescription": "L'application réduira la synchronisation des données lorsque vous êtes connecté à une connexion limitée",
         "language": "Langue",
         "lang": {
             "frFR": "Français",
@@ -113,16 +128,26 @@
             "dark": "Sombre",
             "light": "Clair",
             "system": "Système"
-        }
+        },
+        "general": "Général",
+        "advanced": "Avancé"
     },
     "WorkspacesPage": {
-        "createWorkspace": "Créer un espace de travail",
+        "createWorkspace": "Nouvel espace de travail",
         "documents": "Documents",
         "user": "utilisateur",
+        "itemCount": "Aucun élément | Un élément | {count} éléments",
         "workspaceContextMenu": {
-            "share": "Partager",
-            "history": "Historique",
-            "cancel": "Annuler"
+            "titleOffline": "Hors Connexion",
+            "titleManage": "Gestion de l'espace",
+            "titleCollaboration": "Collaboration",
+            "actionOffline": "Rendre disponible hors-ligne",
+            "actionRename": "Renommer",
+            "actionOpenInExplorer": "Ouvrir dans l'explorateur",
+            "actionHistory": "Historique de versions",
+            "actionManage": "Gérer l'espace de travail",
+            "actionDetails": "Détails",
+            "actionCopyLink": "Copier le lien"
         },
         "CreateWorkspaceModal": {
             "pageTitle": "Créer un espace de travail",
@@ -139,6 +164,32 @@
             "owner": "Propriétaire",
             "notShared": "Non partagé",
             "inviteNewUser": "Inviter un nouvel utilisateur"
+        },
+        "Workspace": {
+            "sharedWith": "Non partagé | Une personne | {count} personnes",
+            "lastUpdate": "Dernière modification :"
+        },
+        "viewDisplay": {
+            "grid": "grille",
+            "list": "liste"
+        },
+        "listDisplayTitles": {
+            "name": "Nom",
+            "role": "Rôle",
+            "sharedWith": "Utilisateurs",
+            "lastUpdate": "Dernière modif.",
+            "size": "Taille"
+        },
+        "sort": {
+            "sortByName": "Nom",
+            "sortBySize": "Taille",
+            "sortByLastUpdated": "Dernière màj"
+        },
+        "role": {
+            "owner": "Propriétaire",
+            "manager": "Gérant",
+            "contributor": "Contributeur",
+            "reader": "Lecteur"
         }
     },
     "OrganizationPage": {
@@ -165,6 +216,16 @@
             "lastLoginMinutes": "il y a une minute | il y a {minutes} minutes",
             "lastLoginHours": "il y a une heure | il y a {hours} heures",
             "lastLoginDays": "il y a un jour | il y a {days} jours"
+        },
+        "filesize": {
+            "bytes": "o",
+            "kilobytes": "Ko",
+            "megabytes": "Mo",
+            "gigabytes": "Go",
+            "terabytes": "To"
         }
+    },
+    "SideMenu": {
+        "allWorkspaces": "Tous les espaces de travail"
     }
 }

@@ -4,12 +4,24 @@ on:
   workflow_call:
   workflow_dispatch:
 
+# We set `concurrency` to prevent having this workflow being run on code that is not up-to-date on a PR (a user make multiple push in a quick manner).
+# But on the main branch, we don't want that behavior.
+# Having the workflow run on each merge commit is something we would like, that could help us where a regression was made and missed by previous checks.
+#
+# For that we use `head_ref` that is only defined on `pull-request` and fallback to `run_id` (this is a counter, so it's value is unique between workflow call).
+concurrency:
+  group: cspell-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   cpsell:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # pin v3.5.0
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
         timeout-minutes: 5
 
       - name: Generate cspell cache key
@@ -62,7 +74,7 @@ jobs:
 
       - name: Check spelling in the repository
         id: cspell
-        uses: streetsidesoftware/cspell-action@fb047b6866b3893c12bc3ef002327bc57c0037c8 # pin v2.26.0
+        uses: streetsidesoftware/cspell-action@c5eae96241f654d2437c16bdfad146ff33a025cc # pin v2.26.2
         with:
           config: .cspell/cspell.config.yml
           # Only check for changed files on a PR

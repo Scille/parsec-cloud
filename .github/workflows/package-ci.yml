@@ -15,6 +15,15 @@ on:
     tags:
       - v[0-9]+.[0-9]+.[0-9]+*
 
+# We set `concurrency` to prevent having this workflow being run on code that is not up-to-date on a PR (a user make multiple push in a quick manner).
+# But on the main branch, we don't want that behavior.
+# Having the workflow run on each merge commit is something we would like, that could help us where a regression was made and missed by previous checks.
+#
+# For that we use `head_ref` that is only defined on `pull-request` and fallback to `run_id` (this is a counter, so it's value is unique between workflow call).
+concurrency:
+  group: package-ci-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 env:
   node-version: 18.12.0
   python-version: 3.9
@@ -23,6 +32,9 @@ env:
   # It will only update it's index for the dependencies that we use.
   # https://blog.rust-lang.org/2023/03/09/Rust-1.68.0.html#cargos-sparse-protocol
   CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+
+permissions:
+  contents: read
 
 jobs:
   package-wheel:
@@ -41,7 +53,7 @@ jobs:
     outputs:
       wheel-version: ${{ steps.wheel-version.outputs.version }}
     steps:
-      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # pin v3.5.0
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
         timeout-minutes: 5
 
       - uses: ./.github/actions/setup-python-poetry
@@ -76,7 +88,7 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build wheel
-        uses: pypa/cibuildwheel@5e15bb25b428e1bf2daf2215f173d2b40135f56f  # pin v2.12.3
+        uses: pypa/cibuildwheel@51f5c7fe68ff24694d5a6ac0eb3ad476ddd062a8  # pin v2.13.0
         with:
           output-dir: dist
         timeout-minutes: 50
@@ -133,7 +145,7 @@ jobs:
           set -e
           echo "::warning title=Snapcraft Version::using $(snapcraft --version)"
 
-      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # pin v3.5.0
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
         timeout-minutes: 5
 
       - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # pin v3.0.2
@@ -157,8 +169,11 @@ jobs:
 
       - name: Set snap build version
         run: |
-          sed -i.back 's/__PARSEC_VERSION__/"${{ env.WHEEL_VERSION }}"/' ${{ runner.temp }}/snap/snapcraft.yaml
+          # Sed with a range specifier to only match on line 2 (where the version value is expected to be).
+          sed -i.back '2,/^version:/{s/^version: .*$/version: ${{ env.WHEEL_VERSION }}/}' ${{ runner.temp }}/snap/snapcraft.yaml
           diff -u ${{ runner.temp }}/snap/snapcraft.yaml{.back,} || true
+          # Use grep as sanity check to ensure that we have the expected version value.
+          grep --line-number --fixed-string 'version: ${{ env.WHEEL_VERSION }}' ${{ runner.temp }}/snap/snapcraft.yaml
 
       - name: Run snapcraft
         working-directory: ${{ runner.temp }}
@@ -233,7 +248,7 @@ jobs:
         run: find . -type f ! -name '*.whl' -delete
 
       - name: Publish wheel on PyPI
-        uses: pypa/gh-action-pypi-publish@0bf742be3ebe032c25dd15117957dc15d0cfc38d # pin v1.8.5
+        uses: pypa/gh-action-pypi-publish@a56da0b891b3dc519c7ee3284aff1fad93cc8598 # pin v1.8.6
         with:
           user: __token__
           password: ${{ secrets.PYPI_CREDENTIALS }}
@@ -243,11 +258,11 @@ jobs:
     needs: package-wheel
     runs-on: windows-2022
     steps:
-      - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b  # pin v4.6.0
+      - uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0  # pin v4.6.1
         with:
           python-version: ${{ env.python-version }}
 
-      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # pin v3.5.0
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
         timeout-minutes: 5
 
       - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # pin v3.0.2
@@ -305,10 +320,10 @@ jobs:
     env:
       WHEEL_VERSION: ${{ needs.package-wheel.outputs.wheel-version }}
     steps:
-      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # pin v3.5.0
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
         timeout-minutes: 5
 
-      - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b  # pin v4.6.0
+      - uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0  # pin v4.6.1
         id: setup-python
         with:
           python-version: ${{ env.python-version }}
@@ -367,63 +382,6 @@ jobs:
           /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f parsec.app
           open parsec.app --args --diagnose
 
-  package-electron-app:
-    # We currently disable electron building, this job need to be updated to work with `vite`.
-    # See tracking issue #4419
-    if: false
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: 🐧 Linux
-            os: ubuntu-22.04
-            paths: |
-              oxidation/client/electron/dist/parsec_*_*.snap
-              oxidation/client/electron/dist/parsec-*.AppImage
-          - name: 🏁 Windows
-            os: windows-2022
-            paths: |
-              oxidation/client/electron/dist/parsec Setup *.exe
-              oxidation/client/electron/dist/parsec Setup *.exe.blockmap
-          - name: 🍎 macOS
-            os: macos-12
-            paths: |
-              oxidation/client/electron/dist/parsec-*.dmg
-              oxidation/client/electron/dist/parsec-*.dmg.blockmap
-    name: "${{matrix.name }}: ⚡ Package electron"
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # pin v3.5.0
-        timeout-minutes: 5
-
-      - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b  # pin v4.6.0
-        id: setup-python
-        with:
-          python-version: ${{ env.python-version }}
-        timeout-minutes: 10
-
-      - name: Install dependencies
-        shell: bash
-        run: |
-          npm clean-install
-          (cd electron && npm clean-install)
-          (cd ../bindings/electron && npm clean-install)
-        working-directory: oxidation/client
-        timeout-minutes: 40
-
-      - name: Build Electron App
-        run: npm run electron:release:sodium
-        working-directory: oxidation/client
-        timeout-minutes: 40
-
-      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.2
-        with:
-          name: ${{ runner.os }}-${{ runner.arch }}-electron-app
-          path: ${{ matrix.paths }}
-          if-no-files-found: error
-        timeout-minutes: 10
-
   package-android-app:
     # We currently disable android building, this job need to be updated to work with `vite`.
     # See tracking issue #4395 & #4419
@@ -434,7 +392,7 @@ jobs:
       NDK_VERSION: 23.2.8568313
       SDK_VERSION: 30.0.3
     steps:
-      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # pin v3.5.0
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
         timeout-minutes: 5
 
       - name: Add rustup targets
@@ -467,28 +425,4 @@ jobs:
           path: |
             oxidation/client/android/app/build/outputs/apk/release/app-release-unsigned.apk
             oxidation/client/android/app/build/outputs/apk/release/output-metadata.json
-          if-no-files-found: error
-
-  package-web-app:
-    # We currently disable web building, this job need to be updated to work with `vite`.
-    # See tracking issue #4419
-    if: false
-    runs-on: ubuntu-22.04
-    name: ⚡ Package web app
-    steps:
-      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # pin v3.0.2
-        timeout-minutes: 5
-
-      - name: Install dependencies
-        run: npm clean-install
-        working-directory: oxidation/client
-
-      - name: Build Vue App
-        run: npm run web:release
-        working-directory: oxidation/client
-
-      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.0
-        with:
-          name: webapp
-          path: oxidation/client/dist/
           if-no-files-found: error

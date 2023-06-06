@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
 // ***********************************************************
 // This example support/index.js is processed and
 // loaded automatically before your test files.
@@ -31,15 +33,18 @@ declare global {
 // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Cypress {
     interface Chainable {
-      visitApp(template: 'coolorg' | 'empty'): Chainable<string>
+      visitApp(template?: 'coolorg' | 'empty'): Chainable<string>
       dropTestbed(): Chainable<null>
+      login(userName: string, password: string): Chainable<null>
     }
   }
 }
 
-Cypress.Commands.add('visitApp', (template) => {
+Cypress.Commands.add('visitApp', (template = 'coolorg') => {
   const TESTBED_SERVER_URL = Cypress.env('TESTBED_SERVER_URL');
   assert.isDefined(TESTBED_SERVER_URL, 'Environ variable `TESTBED_SERVER_URL` must be defined to use testbed');
+  // If the variable is not defined, Cypress gets it as the string "undefined" instead of the value. So we check that also.
+  assert.notStrictEqual(TESTBED_SERVER_URL, 'undefined', 'Environ variable `TESTBED_SERVER_URL` must be defined to use testbed');
 
   cy.visit('/', {
     onBeforeLoad(win) {
@@ -58,12 +63,21 @@ Cypress.Commands.add('visitApp', (template) => {
       const [libparsec, nextStage] = window.nextStageHook();
       const configPath = await libparsec.testNewTestbed(template, TESTBED_SERVER_URL);
       assert.isDefined(configPath);
-      await nextStage(configPath);
+      // Force locale to en-US
+      await nextStage(configPath, 'en-US');
       return configPath;
     })
     .as('configPath')
     // Return the Window object (type cast because Cypress expects `get` to only return JQuery)
     .get('@window') as unknown as Cypress.Chainable<Window>;
+});
+
+Cypress.Commands.add('login', (userName, password) => {
+  cy.contains(userName).click();
+  cy.get('#password-input').find('input').type(password);
+  cy.get('.login-button-container > ion-button').click();
+  cy.url().should('include', '/workspaces');
+  cy.contains('My workspaces');
 });
 
 Cypress.Commands.add('dropTestbed', () => {

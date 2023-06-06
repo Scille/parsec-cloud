@@ -7,10 +7,11 @@
             "myDevices": "My devices"
         },
         "organizationList": {
-            "title": "List of your organizations",
+            "title": "Your organizations",
+            "subtitle": "With Parsec, keep full control of your data and be sure that it safe.",
             "lastLogin": "Last login on this device:",
-            "sortOrderAsc": "Ascending order",
-            "sortOrderDesc": "Descending order",
+            "sortOrderAsc": "Ascending",
+            "sortOrderDesc": "Descending",
             "sortByOrganization": "Organization",
             "sortByUserName": "User Name",
             "sortByLastLogin": "Last login",
@@ -19,8 +20,13 @@
         },
         "noExistingOrganization": {
             "title": "Need to create or join an organization?",
+            "createOrJoin": "Create or join",
             "createOrganization": "Create an organization",
-            "joinOrganization": "Join an organization"
+            "createOrganizationTitle": "Create",
+            "createOrganizationSubtitle": "I want to create an organization",
+            "joinOrganization": "Join an organization",
+            "joinOrganizationTitle": "Join",
+            "joinOrganizationSubtitle": "I received a Parsec Cloud invitation"
         },
         "organizationLogin": {
             "backToList": "Return to organizations",
@@ -91,7 +97,12 @@
     "HeaderPage": {
         "about": "About",
         "support": "Help and feedback",
-        "loggedIn": "Logged in"
+        "loggedIn": "Logged in",
+        "titles": {
+            "workspaces": "My workspaces",
+            "settings": "Settings"
+        },
+        "previous": "Go back"
     },
     "SettingsPage": {
         "pageTitle": "Settings",
@@ -99,6 +110,10 @@
         "enableTelemetryDescription": "Automatically send error reports",
         "minimizeToSystemTray": "Minimize to system tray",
         "minimizeToSystemTrayDescription": "When the application is closed, Parsec will continue to run in the background",
+        "unsyncFiles": "Show files excluded from synchronization",
+        "unsyncFilesDescription": "Show files excluded from synchronization in the file explorer",
+        "meteredConnection": "Metered connection",
+        "meteredConnectionDescription": "The application will reduce data synchronisation when you are connected to a metered connection",
         "language": "Language",
         "lang": {
             "frFR": "French",
@@ -113,16 +128,26 @@
             "dark": "Dark",
             "light": "Light",
             "system": "System"
-        }
+        },
+        "general": "General",
+        "advanced": "Advanced"
     },
     "WorkspacesPage": {
-        "createWorkspace": "Create workspace",
+        "createWorkspace": "New workspace",
         "documents": "Documents",
         "user": "user",
+        "itemCount": "No items | One item | {count} items",
         "workspaceContextMenu": {
-            "share": "Share",
-            "history": "History",
-            "cancel": "Cancel"
+            "titleOffline": "Offline",
+            "titleManage": "Manage workspace",
+            "titleCollaboration": "Collaboration",
+            "actionOffline": "Make it available offline",
+            "actionRename": "Rename",
+            "actionOpenInExplorer": "Open in explorer",
+            "actionHistory": "History",
+            "actionManage": "Manage this workspace",
+            "actionDetails": "Details",
+            "actionCopyLink": "Copy link"
         },
         "CreateWorkspaceModal": {
             "pageTitle": "Create workspace",
@@ -139,6 +164,32 @@
             "owner": "Owner",
             "notShared": "Not shared",
             "inviteNewUser": "Invite a new user"
+        },
+        "Workspace": {
+            "sharedWith": "Not shared | One person | {count} people",
+            "lastUpdate": "Last updated:"
+        },
+        "viewDisplay": {
+            "grid": "grid",
+            "list": "list"
+        },
+        "listDisplayTitles": {
+            "name": "Name",
+            "role": "Role",
+            "sharedWith": "Users",
+            "lastUpdate": "Last update",
+            "size": "Size"
+        },
+        "sort": {
+            "sortByName": "Name",
+            "sortBySize": "Size",
+            "sortByLastUpdated": "Last update"
+        },
+        "role": {
+            "owner": "Owner",
+            "manager": "Manager",
+            "contributor": "Contributor",
+            "reader": "Reader"
         }
     },
     "OrganizationPage": {
@@ -165,6 +216,16 @@
             "lastLoginMinutes": "one minute ago | {minutes} minutes ago",
             "lastLoginHours": "one hour ago | {hours} hours ago",
             "lastLoginDays": "one day ago | {days} days ago"
+        },
+        "filesize": {
+            "bytes": "B",
+            "kilobytes": "KB",
+            "megabytes": "MB",
+            "gigabytes": "GB",
+            "terabytes": "TB"
         }
+    },
+    "SideMenu": {
+        "allWorkspaces": "All Workspaces"
     }
 }

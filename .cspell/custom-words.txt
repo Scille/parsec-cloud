@@ -26,6 +26,10 @@ browserslistrc
 Bsas
 bxsalsa
 cachekey
+latexmk
+librsvg
+luatex
+LATEXMKOPTS
 CAFILE
 camelcase
 capacitorjs
@@ -82,6 +86,7 @@ dotenv
 drawio
 duckpy
 dvipdfmx
+egldeviceintegrations
 EINVAL
 endup
 enmascarado
@@ -91,8 +96,10 @@ farn
 fetchrow
 fetchval
 fghij
+firacode
 flate
 Flaticon
+fncychap
 Folderish
 fqcn
 Freepik
@@ -160,18 +167,21 @@ libgstaudiodecoder
 libgstcamerabin
 libgstmediacapture
 libgstmediaplayer
+libgstreamer
 libmpdec
 libncursesw
 libopenglrenderer
 libpulse
 libpython
 libqconnmanbearer
+libqeglfs
 libqgenericbearer
 libqgtk
 libqnmbearer
 libqsqlite
 libqsqlodbc
 libqsqlpsql
+libqt
 libqtaudio
 libqtexttospeech
 libqtgeoservices
@@ -203,6 +213,8 @@ localns
 LowLevel
 lproj
 lsregister
+lstfiracode
+lualatex
 MACBYTES
 MACFUSE
 makensis
@@ -238,6 +250,7 @@ noserver
 NONCEBYTES
 noopener
 noreferrer
+noreply
 notbase
 notr
 nplurals
@@ -411,6 +424,7 @@ unhexlify
 Unmarshal
 unmock
 unpackb
+unsync
 unwinify
 urlsafe
 userfrom

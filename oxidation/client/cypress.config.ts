@@ -11,7 +11,7 @@ process.env.CYPRESS_TESTBED_SERVER_URL = process.env.CYPRESS_TESTBED_SERVER_URL 
 // - CYPRESS_BASE_URL: the address of the web server serving our application
 // - TESTBED_SERVER_URL: the address of the testbed server for mocking Parsec server
 
-const DEFAULT_BASE_URL = 'http://localhost:5173/';  // Vite's dev server
+const DEFAULT_BASE_URL = 'http://localhost:8080/';  // Vite's dev server
 if (!process.env.CYPRESS_BASE_URL) {
   console.log(`\`CYPRESS_BASE_URL\` not set, defaulting to \`${DEFAULT_BASE_URL}\``);
   process.env.CYPRESS_BASE_URL = DEFAULT_BASE_URL;
@@ -28,7 +28,6 @@ const TESTBED_SERVER_URL = process.env.CYPRESS_TESTBED_SERVER_URL;
 process.env.CYPRESS_TESTBED_SERVER_URL = undefined;  // Clear variable to prevent Cypress from doing voodoo on it
 
 export default defineConfig({
-
   e2e: {
     setupNodeEvents(on) {
       on('file:preprocessor', vitePreprocessor('./vite.config.ts'));
@@ -50,7 +49,6 @@ export default defineConfig({
     specPattern: 'tests/e2e/specs/**.ts',
     fixturesFolder: 'tests/e2e/fixtures'
   },
-
   component: {
     screenshotsFolder: 'tests/component/screenshots',
     videosFolder: 'tests/component/videos',
@@ -64,5 +62,7 @@ export default defineConfig({
       bundler: 'vite'
     }
   }
-
+  // TODO: investigate how to use it properly
+  // viewportHeight: 1440,
+  // viewportWidth: 2560
 });
