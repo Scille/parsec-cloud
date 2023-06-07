@@ -48,7 +48,7 @@ from parsec.api.protocol.handshake import (
     InvitedClientHandshake,
     ServerHandshake,
 )
-from parsec.api.protocol.legacy_reexport import *
+from parsec.api.protocol.legacy_reexport import *  # noqa: F403
 from parsec.api.protocol.types import (
     DeviceID,
     DeviceIDField,
@@ -115,7 +115,6 @@ __all__ = (
     "InvitationType",
     "InvitationTypeField",
     "InvitationStatus",
-    "InvitationEmailSentStatus",
     "EnrollmentID",
     "SequesterServiceID",
 )
