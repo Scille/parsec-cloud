@@ -31,7 +31,24 @@ members = [
     "oxidation/bindings/android/libparsec/rust",
 ]
 # Ignore bindings stuff given they are special snowflakes that require exotic toolchain and dependencies
-default-members = ["oxidation/libparsec"]
+# The idea is to be able to do `cargo test` from the root and have all the libparsec&co tests run
+default-members = [
+    "oxidation/libparsec",
+    "oxidation/libparsec/crates/client",
+    "oxidation/libparsec/crates/client_connection",
+    "oxidation/libparsec/crates/client_high_level_api",
+    "oxidation/libparsec/crates/crypto",
+    "oxidation/libparsec/crates/platform_async",
+    "oxidation/libparsec/crates/platform_device_loader",
+    "oxidation/libparsec/crates/platform_storage",
+    "oxidation/libparsec/crates/platform_storage2",
+    "oxidation/libparsec/crates/protocol",
+    "oxidation/libparsec/crates/serialization_format",
+    "oxidation/libparsec/crates/testbed",
+    "oxidation/libparsec/crates/tests_fixtures",
+    "oxidation/libparsec/crates/tests_macros",
+    "oxidation/libparsec/crates/types",
+]
 
 [features]
 test-utils = ["libparsec/test-utils"]
