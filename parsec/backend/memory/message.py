@@ -24,9 +24,7 @@ class MemoryMessageComponent(BaseMessageComponent):
         ] = defaultdict(lambda: defaultdict(list))
         self._user_component: MemoryUserComponent
 
-    def register_components(
-        self, user: MemoryUserComponent, **other_components: Any
-    ) -> None:
+    def register_components(self, user: MemoryUserComponent, **other_components: Any) -> None:
         self._user_component = user
 
     async def send(

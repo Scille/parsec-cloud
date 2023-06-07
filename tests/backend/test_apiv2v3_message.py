@@ -3,11 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from parsec._parsec import (
-    BackendEventMessageReceived,
-    DateTime,
-    authenticated_cmds
-)
+from parsec._parsec import BackendEventMessageReceived, DateTime, authenticated_cmds
 from parsec.backend.asgi import app_factory
 from parsec.backend.config import PostgreSQLBlockStoreConfig
 from tests.backend.common import (
@@ -16,7 +12,6 @@ from tests.backend.common import (
     apiv2v3_events_subscribe,
     apiv2v3_message_get,
 )
-
 
 ApiV2V3_APIEventMessageReceived = authenticated_cmds.v3.events_listen.APIEventMessageReceived
 ApiV2V3_EventsListenRepNoEvents = authenticated_cmds.v3.events_listen.RepNoEvents
@@ -38,7 +33,9 @@ async def test_message_from_bob_to_alice(backend, alice, bob, alice_ws):
 
     rep = await apiv2v3_message_get(alice_ws)
     assert rep == ApiV2V3_MessageGetRepOk(
-        messages=[ApiV2V3_Message(body=b"Hello from Bob !", sender=bob.device_id, timestamp=d1, count=1)],
+        messages=[
+            ApiV2V3_Message(body=b"Hello from Bob !", sender=bob.device_id, timestamp=d1, count=1)
+        ],
     )
 
 

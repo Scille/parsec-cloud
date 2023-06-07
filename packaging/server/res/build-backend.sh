@@ -13,7 +13,7 @@ export PATH="/root/.cargo/bin:$PATH"
 # Install parsec in virtual env
 python -m venv venv
 
-# Compile in release mode & skip PyQT code generation.
+# Compile in release mode
 POETRY_LIBPARSEC_BUILD_PROFILE=release ./venv/bin/python -m pip install .[backend]
 
 # Remove some python package that aren't needed
