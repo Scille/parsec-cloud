@@ -14,7 +14,7 @@ export PATH="/root/.cargo/bin:$PATH"
 python -m venv venv
 
 # Compile in release mode & skip PyQT code generation.
-POETRY_LIBPARSEC_BUILD_PROFILE=release POETRY_PYQT_BUILD_STRATEGY=no_build ./venv/bin/python -m pip install .[backend]
+POETRY_LIBPARSEC_BUILD_PROFILE=release ./venv/bin/python -m pip install .[backend]
 
 # Remove some python package that aren't needed
 rm -rf ./venv/lib/python3.9/site-packages/{boto3,botocore,pip,setuptools}
