@@ -132,8 +132,7 @@ archs = ["auto64"]
 build-verbosity = 3
 before-all = "bash {project}/misc/setup-rust.sh"
 before-build = "python -m pip install -U pip"
-test-extras = "core"
-test-command = "parsec --version && parsec core list_devices"
+test-command = "parsec --version"
 
 [tool.cibuildwheel.environment]
 # As it name suggests, `misc/setup-rust.sh` (run during cibuildwheel's before-all) will
@@ -169,8 +168,6 @@ ignore = ["E501", "E402", "F541"]
 extend-exclude = [
     "docs",
     "oxidation/",
-    "parsec/core/gui/_resources_rc.py",
-    "parsec/core/gui/ui/",
     "misc/bench.py",
 ]
 

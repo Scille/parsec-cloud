@@ -114,7 +114,6 @@ cache:
 useGitignore: true
 allowCompoundWords: true
 ignorePaths:
-  - "**/parsec/core/resources/default_*.ignore"
   - "**/*.svg"
   - "**/docs/figures/*.svg"
   - "**/windows-icon-handler/**/*.vcxproj"

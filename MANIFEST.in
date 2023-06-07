@@ -8,7 +8,3 @@ recursive-include parsec/backend/templates *
 recursive-include parsec/backend/static/ *
 recursive-include tests *.py *.bat *.sh *.md
 recursive-include docs *.rst conf.py Makefile make.bat
-recursive-include parsec/core/resources *.ico *.ignore
-recursive-include parsec/core/gui/forms *.ui
-recursive-include parsec/core/gui/tr *.po *.ts
-recursive-include parsec/core/gui/rc *.css *.html *.mo *.otf *.png *.qrc *.svg *.ttf

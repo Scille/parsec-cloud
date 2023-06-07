@@ -143,17 +143,6 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
     },
     ROOT_DIR / "packaging/server/res/build-backend.sh": {Tool.Python: [PYTHON_SMALL_VERSION]},
     ROOT_DIR / "packaging/server/server.dockerfile": {Tool.Python: [PYTHON_DOCKER_VERSION]},
-    ROOT_DIR / "packaging/snap/bin/parsec-setup.sh": {Tool.Python: [PYTHON_SMALL_VERSION]},
-    ROOT_DIR
-    / "packaging/snap/snap/snapcraft.yaml": {
-        Tool.Python: [
-            PYTHON_SMALL_VERSION,
-            ReplaceRegex(
-                r"python3 --version \| grep 'Python [0-9.]+'",
-                "python3 --version | grep 'Python {version}'",
-            ),
-        ]
-    },
     ROOT_DIR / "packaging/testbed-server/build-testbed.sh": {Tool.Python: [PYTHON_SMALL_VERSION]},
     ROOT_DIR
     / "packaging/testbed-server/testbed-server.dockerfile": {Tool.Python: [PYTHON_DOCKER_VERSION]},

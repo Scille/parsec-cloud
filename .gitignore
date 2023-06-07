@@ -65,20 +65,8 @@ target/
 # gnupg stuff
 random_seed
 
-# PyQt's big ass resource bundle, automatically generated
-/parsec/core/gui/_resources_rc.py
-
-# PyQt's forms, automatically generated
-/parsec/core/gui/ui/*.py
-
 # QtCreator's temporary files
 *.ui.autosave
-
-# Qt's translation files
-parsec/core/gui/tr/**/*.ts
-
-# History html file, automatically generated
-/parsec/core/gui/rc/generated_misc/
 
 # Temporary files
 *~

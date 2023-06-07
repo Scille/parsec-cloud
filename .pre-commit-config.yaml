@@ -94,8 +94,6 @@ repos:
         types_or: [ python, pyi ]
         args:
           [
-            --extend-exclude=parsec/core/gui/_resources_rc.py,
-            --extend-exclude=parsec/core/gui/ui/*,
             --extend-exclude=oxidation/*,
             --fix,
           ]
@@ -109,8 +107,6 @@ repos:
         args:
           [
             --line-length=100,
-            --exclude=parsec/core/gui/_resources_rc.py,
-            --exclude=parsec/core/gui/ui/,
           ]
 
       - id: mypy

@@ -144,14 +144,14 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
         # (note only the first `maturin develop` is impacted, as all maturin
         # develop uses the same default virtualenv)
         Cmd(
-            cmd="poetry install -E backend -E core --with=docs",
+            cmd="poetry install -E backend --with=docs",
             extra_env={"POETRY_LIBPARSEC_BUILD_STRATEGY": "no_build"},
         ),
         Cmd(f"maturin develop {PYTHON_DEV_CARGO_FLAGS}"),
     ),
     ("python-dev-rebuild", "r"): Cmd(f"maturin develop {PYTHON_DEV_CARGO_FLAGS}"),
     ("python-ci-install",): Cmd(
-        cmd="poetry install -E backend -E core",
+        cmd="poetry install -E backend",
         extra_env={"POETRY_LIBPARSEC_BUILD_PROFILE": "ci"},
     ),
     # Flags used in poetry's `build.py` when command is `python-ci-build`
