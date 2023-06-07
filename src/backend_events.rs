@@ -252,7 +252,7 @@ impl BackendEventCertificatesUpdated {
     }
 
     #[getter]
-    fn index<'py>(_self: PyRef<Self>) -> PyResult<u64> {
+    fn index(_self: PyRef<Self>) -> PyResult<u64> {
         match &_self.into_super().0 {
             RawBackendEvent::CertificatesUpdated { index, .. } => Ok(*index),
             _ => unreachable!(),
