@@ -34,24 +34,14 @@ permissions:
   contents: read
 
 jobs:
-  test-python-matrix:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: 🐧 Linux
-            # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
-            # 20.04 is required to install PostgreSQL 12
-            os: ubuntu-20.04
-          - name: 🍎 macOS
-            os: macos-12
-          - name: 🏁 Windows
-            os: windows-2022
-            winfsp-version: 1.11.22176
-    name: "${{ matrix.name }}: 🐍 Python tests"
+  test-python-server:
+    # Only the server is in Python, and it is only meant to be run on Linux
+    name: "(🐧 Linux only): 🐍 Python server tests"
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 60
-    runs-on: ${{ matrix.os }}
+    # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
+    # 20.04 is required to install PostgreSQL 12
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
         timeout-minutes: 5
@@ -70,12 +60,11 @@ jobs:
         run: echo "run=true" >> $GITHUB_OUTPUT
         shell: bash
 
-      - name: (🐧 Linux) Set apt mirror
+      - name: Set apt mirror
         # GitHub Actions apt proxy is super unstable
         # see https://github.com/actions/runner-images/issues/7048
         if: >-
           steps.should-run-python-jobs.outputs.run == 'true'
-          && startsWith(matrix.os, 'ubuntu-')
         run: |
           set -e -o pipefail
           (
@@ -85,10 +74,9 @@ jobs:
           ) | sudo tee /etc/apt/mirrors.txt
           sudo sed -i 's/http:\/\/azure.archive.ubuntu.com\/ubuntu\//mirror+file:\/etc\/apt\/mirrors.txt/' /etc/apt/sources.list
 
-      - name: (🐧 Linux) Configure PostgreSQL APT repository
+      - name: Configure PostgreSQL APT repository
         if: >-
           steps.should-run-python-jobs.outputs.run == 'true'
-          && startsWith(matrix.os, 'ubuntu-')
         env:
           POSTGRE_APT_KEY_SHA_512: df557805862cd279f40819834af14e1723b18044df9dc22bea710b6980c98cc8ed39e75ed5c9adaa1932992710f1180f0491dc9437bfd485b4aa2b75776407d4  /usr/share/keyrings/postgre-sql-keyring.gpg
         run: |
@@ -105,21 +93,21 @@ jobs:
           sudo apt-get update
         timeout-minutes: 5
 
-      - name: (🐧 Linux) Install PostgreSQL-${{ env.postgresql-version }}
-        if: >-
-          steps.should-run-python-jobs.outputs.run == 'true'
-          && startsWith(matrix.os, 'ubuntu-')
-        run: |
-          # Retry the command until it succeed.
-          # We retry because sometime the APT repo configured
-          # by the runner seems drop the connection causing the command to fail.
-          until sudo apt-get -y install ${{ env.PACKAGE_TO_INSTALL }}; do
-            echo "Fail to install APT package retrying ...";
-          done
-        env:
-          PACKAGE_TO_INSTALL: >-
-            postgresql-${{ env.postgresql-version }}
-        timeout-minutes: 5
+      # TODO: Postgresql implemetation is currently broken
+      # - name: Install PostgreSQL-${{ env.postgresql-version }}
+      #   if: >-
+      #     steps.should-run-python-jobs.outputs.run == 'true'
+      #   run: |
+      #     # Retry the command until it succeed.
+      #     # We retry because sometime the APT repo configured
+      #     # by the runner seems drop the connection causing the command to fail.
+      #     until sudo apt-get -y install ${{ env.PACKAGE_TO_INSTALL }}; do
+      #       echo "Fail to install APT package retrying ...";
+      #     done
+      #   env:
+      #     PACKAGE_TO_INSTALL: >-
+      #       postgresql-${{ env.postgresql-version }}
+      #   timeout-minutes: 5
 
       - uses: ./.github/actions/setup-python-poetry
         if: steps.should-run-python-jobs.outputs.run == 'true'
@@ -187,7 +175,6 @@ jobs:
       - name: Install pre-commit
         if: >-
           steps.should-run-python-jobs.outputs.run == 'true'
-          && startsWith(matrix.os, 'ubuntu-')
         id: pre-commit
         uses: ./.github/actions/use-pre-commit
         with:
@@ -196,7 +183,6 @@ jobs:
       - name: Check python code style
         if: >-
           steps.should-run-python-jobs.outputs.run == 'true'
-          && startsWith(matrix.os, 'ubuntu-')
         run: |
           set -eux
           for step in mypy black ruff; do
@@ -236,10 +222,9 @@ jobs:
         timeout-minutes: 10
 
       # TODO: Postgresql implemetation is currently broken
-      # - name: (🐧 Linux) PostgreSQL tests
+      # - name: PostgreSQL tests
       #   if: >-
       #     steps.should-run-python-jobs.outputs.run == 'true'
-      #     && startsWith(matrix.os, 'ubuntu-')
       #   env:
       #     PGINSTALLATION: /usr/lib/postgresql/${{ env.postgresql-version }}/bin
       #   run: poetry run pytest ${{ env.pytest-base-args }} tests/backend tests/test_cli.py -k 'not test_shuffle_roles' --postgresql --runslow
