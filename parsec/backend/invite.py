@@ -311,8 +311,9 @@ class BaseInviteComponent:
             unit = authenticated_cmds.latest.invite_new.UserOrDeviceDevice(
                 send_email=v2_unit.send_email,
             )
-        req = authenticated_cmds.latest.invite_new.Req(unit)
-        return await self.api_invite_new(client_ctx, req)
+        # TODO: proper api req/rep conversion
+        latest_req = authenticated_cmds.latest.invite_new.Req(unit)
+        return await self.api_invite_new(client_ctx, latest_req)  # type: ignore[return-value]
 
     @api
     async def apiv3_invite_new(
@@ -332,9 +333,10 @@ class BaseInviteComponent:
             unit = authenticated_cmds.latest.invite_new.UserOrDeviceDevice(
                 send_email=v3_unit.send_email,
             )
-        req = authenticated_cmds.latest.invite_new.Req(unit)
+        # TODO: proper api req/rep conversion
+        latest_req = authenticated_cmds.latest.invite_new.Req(unit)
         # `invite_new` command is strictly similar between APIv3 and v4+
-        return await self.api_invite_new(client_ctx, req)
+        return await self.api_invite_new(client_ctx, latest_req)  # type: ignore[return-value]
 
     @api
     async def api_invite_new(

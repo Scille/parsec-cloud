@@ -200,7 +200,8 @@ class BaseVlobComponent:
         # point of view.
         # (from client point of view, server may return `bad_timestamp` response
         # with some fields missing)
-        return await self.api_vlob_create(client_ctx, req)
+        # TODO: proper api req/rep conversion
+        return await self.api_vlob_create(client_ctx, req)  # type: ignore[return-value, arg-type]
 
     @api
     async def apiv3_vlob_create(
@@ -210,7 +211,8 @@ class BaseVlobComponent:
         # point of view.
         # (from client point of view, server may return `bad_timestamp` response
         # with some fields missing)
-        return await self.api_vlob_create(client_ctx, req)
+        # TODO: proper api req/rep conversion
+        return await self.api_vlob_create(client_ctx, req)  # type: ignore[return-value, arg-type]
 
     @api
     async def api_vlob_create(
@@ -289,7 +291,8 @@ class BaseVlobComponent:
         # `vlob_read` command strictly similar between APIv2 and v3
         # (from client point of view, server may return `ok` response
         # with some fields missing)
-        return await self.apiv3_vlob_read(client_ctx, req)
+        # TODO: proper api req/rep conversion
+        return await self.apiv3_vlob_read(client_ctx, req)  # type: ignore[return-value, arg-type]
 
     @api
     async def apiv3_vlob_read(
@@ -373,7 +376,8 @@ class BaseVlobComponent:
         # point of view.
         # (from client point of view, server may return `bad_timestamp` response
         # with some fields missing)
-        return await self.api_vlob_update(client_ctx, req)
+        # TODO: proper api req/rep conversion
+        return await self.api_vlob_update(client_ctx, req)  # type: ignore[return-value, arg-type]
 
     @api
     async def apiv3_vlob_update(
@@ -383,7 +387,8 @@ class BaseVlobComponent:
         # point of view.
         # (from client point of view, server may return `bad_timestamp` response
         # with some fields missing)
-        return await self.api_vlob_update(client_ctx, req)
+        # TODO: proper api req/rep conversion
+        return await self.api_vlob_update(client_ctx, req)  # type: ignore[return-value, arg-type]
 
     @api
     async def api_vlob_update(

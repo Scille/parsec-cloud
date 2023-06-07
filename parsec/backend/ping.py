@@ -34,7 +34,7 @@ class BasePingComponent:
     async def anonymous_api_ping(
         self, client_ctx: AnonymousClientContext, req: anonymous_cmds.latest.ping.Req
     ) -> anonymous_cmds.latest.ping.Rep:
-        return authenticated_cmds.latest.ping.RepOk(pong=req.ping)
+        return anonymous_cmds.latest.ping.RepOk(pong=req.ping)
 
     async def ping(self, organization_id: OrganizationID, author: DeviceID, ping: str) -> None:
         raise NotImplementedError()

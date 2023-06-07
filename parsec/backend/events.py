@@ -80,7 +80,7 @@ def internal_to_api_events(
     elif isinstance(event, BackendEventPinged):
         return event_listen_cmd_mod.APIEventPinged(event.ping)
     elif isinstance(event, BackendEventMessageReceived):
-        return event_listen_cmd_mod.APIEventMessageReceived(event.index, event.message)
+        return event_listen_cmd_mod.APIEventMessageReceived(event.index)
     elif isinstance(event, BackendEventInviteStatusChanged):
         return event_listen_cmd_mod.APIEventInviteStatusChanged(
             token=event.token, invitation_status=event.status

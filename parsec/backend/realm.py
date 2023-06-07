@@ -131,7 +131,8 @@ class BaseRealmComponent:
         # point of view.
         # (from client point of view, server may return `bad_timestamp` response
         # with some fields missing)
-        return await self.api_realm_create(client_ctx, req)
+        # TODO: proper api req/rep conversion
+        return await self.api_realm_create(client_ctx, req)  # type: ignore[return-value, arg-type]
 
     @api
     async def apiv3_realm_create(
@@ -143,7 +144,8 @@ class BaseRealmComponent:
         # point of view.
         # (from client point of view, server may return `bad_timestamp` response
         # with some fields missing)
-        return await self.api_realm_create(client_ctx, req)
+        # TODO: proper api req/rep conversion
+        return await self.api_realm_create(client_ctx, req)  # type: ignore[return-value, arg-type]
 
     @api
     async def api_realm_create(
@@ -267,7 +269,8 @@ class BaseRealmComponent:
         # point of view.
         # (from client point of view, server may return `bad_timestamp` response
         # with some fields missing)
-        return await self.api_realm_update_roles(client_ctx, req)
+        # TODO: proper api req/rep conversion
+        return await self.api_realm_update_roles(client_ctx, req)  # type: ignore[return-value, arg-type]
 
     @api
     async def apiv3_realm_update_roles(
@@ -279,7 +282,8 @@ class BaseRealmComponent:
         # point of view.
         # (from client point of view, server may return `bad_timestamp` response
         # with some fields missing)
-        return await self.api_realm_update_roles(client_ctx, req)
+        # TODO: proper api req/rep conversion
+        return await self.api_realm_update_roles(client_ctx, req)  # type: ignore[return-value, arg-type]
 
     @api
     async def api_realm_update_roles(
@@ -387,7 +391,8 @@ class BaseRealmComponent:
         # point of view.
         # (from client point of view, server may return `bad_timestamp` response
         # with some fields missing)
-        return await self.api_realm_start_reencryption_maintenance(client_ctx, req)
+        # TODO: proper api req/rep conversion
+        return await self.api_realm_start_reencryption_maintenance(client_ctx, req)  # type: ignore[return-value, arg-type]
 
     @api
     async def apiv3_realm_start_reencryption_maintenance(
@@ -399,7 +404,8 @@ class BaseRealmComponent:
         # point of view.
         # (from client point of view, server may return `bad_timestamp` response
         # with some fields missing)
-        return await self.api_realm_start_reencryption_maintenance(client_ctx, req)
+        # TODO: proper api req/rep conversion
+        return await self.api_realm_start_reencryption_maintenance(client_ctx, req)  # type: ignore[return-value, arg-type]
 
     @api
     async def api_realm_start_reencryption_maintenance(
