@@ -1,1 +1,0 @@
-Fix user invitation email sending error when the greeter's name contains special characters

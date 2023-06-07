@@ -1,1 +1,0 @@
-Added instructions to the macFUSE installation pop-up window, and updated a deprecated link to the installation guide.
