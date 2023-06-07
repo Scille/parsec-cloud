@@ -75,7 +75,6 @@ from parsec._parsec import (
     VlobUpdateRepTimeout,
     WorkspaceEntry,
 )
-from parsec._parsec import UserRemoteLoader as RsUserRemoteLoader
 from parsec.api.data import (
     AnyRemoteManifest,
     DataError,
@@ -984,6 +983,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
         self.local_storage = remote_loader.local_storage.to_timestamped(timestamp)
         self._realm_role_certificates_cache = None
         self.timestamp = timestamp
+        self.event_bus = remote_loader.event_bus
 
     async def upload_block(self, access: BlockAccess, data: bytes) -> None:
         raise FSError("Cannot upload block through a timestamped remote loader")
@@ -1053,6 +1053,8 @@ class RemoteLoaderTimestamped(RemoteLoader):
 
 
 if not TYPE_CHECKING and FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
-    UserRemoteLoader = RsUserRemoteLoader
+    # UserRemoteLoader = RsUserRemoteLoader
+    UserRemoteLoader = PyUserRemoteLoader
+    raise SystemError("Chao")
 else:
     UserRemoteLoader = PyUserRemoteLoader
