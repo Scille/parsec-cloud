@@ -42,12 +42,27 @@ jobs:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
         timeout-minutes: 5
 
+      - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
+        id: changes
+        with:
+          filters: .github/filters/ci.yml
+
+      - name: Check modified path that require `test-web` to run
+        id: should-run-web-jobs
+        if: >-
+          steps.changes.outputs.web-jobs == 'true'
+          || github.ref == 'refs/heads/master'
+        run: echo "run=true" >> $GITHUB_OUTPUT
+        shell: bash
+
       - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c  # pin v3.6.0
+        if: steps.should-run-web-jobs.outputs.run == 'true'
         with:
           node-version: ${{ env.node-version }}
         timeout-minutes: 2
 
       - name: Install dependencies
+        if: steps.should-run-web-jobs.outputs.run == 'true'
         run: |
           # Execute 'npm clean-install' until success,
           # This is done that way because sometime some CDN response with 503
@@ -58,11 +73,13 @@ jobs:
         timeout-minutes: 5
 
       - name: Check lint
+        if: steps.should-run-web-jobs.outputs.run == 'true'
         run: npm run lint
         working-directory: oxidation/client
         timeout-minutes: 5
 
       - name: Setup cache-key
+        if: steps.should-run-web-jobs.outputs.run == 'true'
         id: cache-key
         run: >-
           echo "key=web-${{ hashFiles(
@@ -74,6 +91,7 @@ jobs:
         shell: bash
 
       - name: Restore libparsec if Rust hasn't been modified
+        if: steps.should-run-web-jobs.outputs.run == 'true'
         id: cache-libparsec
         uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # pin v3.3.1
         with:
@@ -85,7 +103,9 @@ jobs:
 
       - name: Retrieve Rust cache
         uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f # pin v2.2.1
-        if: steps.cache-libparsec.outputs.cache-hit != 'true'
+        if: >-
+          steps.should-run-web-jobs.outputs.run == 'true'
+          && steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
           # cache is only shared between master and the PRs (and not accross PRs).
@@ -95,7 +115,9 @@ jobs:
         timeout-minutes: 5
 
       - name: Install wasm-pack
-        if: steps.cache-libparsec.outputs.cache-hit != 'true'
+        if: >-
+          steps.should-run-web-jobs.outputs.run == 'true'
+          && steps.cache-libparsec.outputs.cache-hit != 'true'
         run: |
           set -eux
           set -o pipefail
@@ -116,13 +138,17 @@ jobs:
         timeout-minutes: 2
 
       - name: Build web bindings
-        if: steps.cache-libparsec.outputs.cache-hit != 'true'
+        if: >-
+          steps.should-run-web-jobs.outputs.run == 'true'
+          && steps.cache-libparsec.outputs.cache-hit != 'true'
         run: npm run build:dev
         working-directory: oxidation/bindings/web
         timeout-minutes: 10
 
       - name: Save libparsec to be reuse later
-        if: steps.cache-libparsec.outputs.cache-hit != 'true'
+        if: >-
+          steps.should-run-web-jobs.outputs.run == 'true'
+          && steps.cache-libparsec.outputs.cache-hit != 'true'
         uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # pin v3.3.1
         with:
           key: ${{ steps.cache-key.outputs.key }}
@@ -132,14 +158,17 @@ jobs:
         timeout-minutes: 2
 
       - name: Unit tests
+        if: steps.should-run-web-jobs.outputs.run == 'true'
         run: npm run test:unit
         working-directory: oxidation/client
         timeout-minutes: 10
 
       - name: Check testbed server is running
+        if: steps.should-run-web-jobs.outputs.run == 'true'
         run: curl http://localhost:6777
 
       - name: E2E tests
+        if: steps.should-run-web-jobs.outputs.run == 'true'
         run: npm run test:e2e:headless
         env:
           TESTBED_SERVER_URL: parsec://localhost:6777?no_ssl=true

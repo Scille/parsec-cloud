@@ -48,7 +48,21 @@ jobs:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
         timeout-minutes: 5
 
+      - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
+        id: changes
+        with:
+          filters: .github/filters/ci.yml
+
+      - name: Check modified path that require rust-ci run
+        id: should-run-rust-jobs
+        if: >-
+          steps.changes.outputs.rust-jobs == 'true'
+          || github.ref == 'refs/heads/master'
+        run: echo "run=true" >> $GITHUB_OUTPUT
+        shell: bash
+
       - uses: actions-rust-lang/setup-rust-toolchain@ac6bb38f317802fab2f463811237b0d9cba8cc80 # pin v1.4.4
+        if: steps.should-run-rust-jobs.outputs.run == 'true'
         with:
           # We setup the cache by hand, see below
           cache: false
@@ -56,6 +70,7 @@ jobs:
 
       - name: Retrieve Rust cache
         uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f # pin v2.2.1
+        if: steps.should-run-rust-jobs.outputs.run == 'true'
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
           # cache is only shared between master and the PRs (and not accross PRs).
@@ -69,7 +84,7 @@ jobs:
       # The default one does not provide windows-style filesystem
       # paths so we have to switch to Strawberry.
       - name: Use strawberry perl
-        if: startsWith(matrix.os, 'windows')
+        if: steps.should-run-rust-jobs.outputs.run == 'true' && startsWith(matrix.os, 'windows')
         shell: bash
         run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
         timeout-minutes: 1
@@ -78,6 +93,7 @@ jobs:
       # so if we modify `libparsec_crypto` which are not tested, it will pass the CI,
       # that's why we add a check
       - name: Test rust codebase
+        if: steps.should-run-rust-jobs.outputs.run == 'true'
         shell: bash
         run: |
           set -ex
@@ -91,12 +107,16 @@ jobs:
       # Clippy basically compile the project, hence it's faster to run it in
       # the test-rust-matrix job where compilation cache is reused !
       - uses: ./.github/actions/use-pre-commit
-        if: startsWith(matrix.os, 'ubuntu-')
+        if: >-
+          steps.should-run-rust-jobs.outputs.run == 'true'
+          && startsWith(matrix.os, 'ubuntu-')
         with:
           extra-args: clippy --verbose
         timeout-minutes: 5
 
       - name: Check rust code format
-        if: startsWith(matrix.os, 'ubuntu-')
+        if: >-
+          steps.should-run-rust-jobs.outputs.run == 'true'
+          && startsWith(matrix.os, 'ubuntu-')
         run: cargo fmt --check
         timeout-minutes: 2
