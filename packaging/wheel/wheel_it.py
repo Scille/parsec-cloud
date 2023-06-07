@@ -26,7 +26,6 @@ def run(cmd, **kwargs):
 def main(program_source: Path, output_dir: Path, skip_wheel: bool = False):
     output_dir.mkdir(exist_ok=True)
 
-    core_requirements = output_dir / "core-requirements.txt"
     backend_requirements = output_dir / "backend-requirements.txt"
     all_requirements = output_dir / "all-requirements.txt"
     constraints = output_dir / "constraints.txt"
@@ -36,17 +35,12 @@ def main(program_source: Path, output_dir: Path, skip_wheel: bool = False):
     # On top of that we cannot use stdout because poetry may print random `Creating virtualenv`
     # if we are not already within a virtualenv (please poetry, add a --no-venv option !!!)
     run(
-        f"{poetry} export --no-interaction --extras core --format requirements.txt --output wheel_it-core-requirements.txt",
-        cwd=program_source,
-    )
-    shutil.move(program_source / "wheel_it-core-requirements.txt", core_requirements)
-    run(
         f"{poetry} export --no-interaction --extras backend --format requirements.txt --output wheel_it-backend-requirements.txt",
         cwd=program_source,
     )
     shutil.move(program_source / "wheel_it-backend-requirements.txt", backend_requirements)
     run(
-        f"{poetry} export --no-interaction --with dev --extras core --extras backend --format requirements.txt --output wheel_it-dev-requirements.txt",
+        f"{poetry} export --no-interaction --with dev --extras backend --format requirements.txt --output wheel_it-dev-requirements.txt",
         cwd=program_source,
     )
     shutil.move(program_source / "wheel_it-dev-requirements.txt", all_requirements)
