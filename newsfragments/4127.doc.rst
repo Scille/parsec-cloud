@@ -1,1 +1,0 @@
-Correct the favicon displayed on the provided documentation at <https://docs.parsec.cloud>

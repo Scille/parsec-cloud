@@ -5,6 +5,79 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.16.0-a.0 (2023-06-07)
+-------------------------------
+
+Features
+~~~~~~~~
+
+* Add a dialog to manage offline availability for workspaces (i.e a user can now
+  choose keep all the data available locally for offline access)  (`#2266
+  <https://github.com/Scille/parsec-cloud/issues/2266>`__)
+* Added user filtering by profile  (`#4033 <https://github.com/Scille/parsec-
+  cloud/issues/4033>`__)
+* Handle the CLI flag ``--version`` on parsec sub-command. You can now type
+  ``parsec --version`` to get the current version of parsec in a terminal.
+  (`#4363 <https://github.com/Scille/parsec-cloud/issues/4363>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Prevent accidental creation of multiple parsec organizations at the same time
+  (`#3698 <https://github.com/Scille/parsec-cloud/issues/3698>`__)
+* Accept parenthesis in HumanHandle's label  (`#3749
+  <https://github.com/Scille/parsec-cloud/issues/3749>`__)
+* Fix user invitation email sending error when the greeter's name contains
+  special characters  (`#3752 <https://github.com/Scille/parsec-
+  cloud/issues/3752>`__)
+* Fixed error when opening the QRCode for device invitation  (`#3769
+  <https://github.com/Scille/parsec-cloud/issues/3769>`__)
+* Hide spinner during an enrollment using PKI  (`#3846
+  <https://github.com/Scille/parsec-cloud/issues/3846>`__)
+* The window now takes the whole screen by default  (`#3946
+  <https://github.com/Scille/parsec-cloud/issues/3946>`__)
+* No longer hides user invitations if they match the search string  (`#3967
+  <https://github.com/Scille/parsec-cloud/issues/3967>`__)
+* Unmounted workspaces are no longer hidden by default and the state is saved
+  when the application exits  (`#3969 <https://github.com/Scille/parsec-
+  cloud/issues/3969>`__)
+* Fixed link to user guide not clickable after creation an organization  (`#4367
+  <https://github.com/Scille/parsec-cloud/issues/4367>`__)
+* Fix `parsec backend sequester list_services` CLI output when an error is
+  returned  (`#4368 <https://github.com/Scille/parsec-cloud/issues/4368>`__)
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+* Correct the favicon displayed on the provided documentation at
+  <https://docs.parsec.cloud>  (`#4127 <https://github.com/Scille/parsec-
+  cloud/issues/4127>`__)
+
+Client/Backend API evolutions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* APIv1 has been removed, which cut off compatibility with Parsec client < 2.15
+  and Parsec server < 2.10  (`#3706 <https://github.com/Scille/parsec-
+  cloud/issues/3706>`__)
+* Drop API V2 support on the client side.  (`#3837
+  <https://github.com/Scille/parsec-cloud/issues/3837>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Correct some typo found in PO files used by QT for english/french translation
+  (`#3757 <https://github.com/Scille/parsec-cloud/issues/3757>`__)
+* Added better distinction between file and folder actions in contextual menus.
+  (`#3855 <https://github.com/Scille/parsec-cloud/issues/3855>`__)
+* Fix an underlying issue that caused an overall performance degradation
+  (`#3925 <https://github.com/Scille/parsec-cloud/issues/3925>`__)
+* Added instructions to the macFUSE installation pop-up window, and updated a
+  deprecated link to the installation guide.  (`#3958
+  <https://github.com/Scille/parsec-cloud/issues/3958>`__)
+* Fix french typography  (`#4059 <https://github.com/Scille/parsec-
+  cloud/issues/4059>`__)
+
+
 Parsec v2.15.0 (2022-12-12)
 ---------------------------
 
