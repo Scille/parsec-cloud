@@ -25,18 +25,6 @@ files = [
 ]
 
 [[package]]
-name = "altgraph"
-version = "0.17.3"
-description = "Python graph (network) package"
-category = "dev"
-optional = false
-python-versions = "*"
-files = [
-    {file = "altgraph-0.17.3-py2.py3-none-any.whl", hash = "sha256:c8ac1ca6772207179ed8003ce7687757c04b0b71536f81e2ac5755c6226458fe"},
-    {file = "altgraph-0.17.3.tar.gz", hash = "sha256:ad33358114df7c9416cdb8fa1eaa5852166c505118717021c6a8c7c7abbd03dd"},
-]
-
-[[package]]
 name = "async-exit-stack"
 version = "1.0.1"
 description = "AsyncExitStack backport for Python 3.5+"
@@ -898,18 +886,6 @@ test-randomorder = ["pytest-randomly"]
 tox = ["tox"]
 
 [[package]]
-name = "decorator"
-version = "5.1.1"
-description = "Decorators for Humans"
-category = "main"
-optional = true
-python-versions = ">=3.5"
-files = [
-    {file = "decorator-5.1.1-py3-none-any.whl", hash = "sha256:b8c3f85900b9dc423225913c5aace94729fe1fa9763b38939a95226f02d37186"},
-    {file = "decorator-5.1.1.tar.gz", hash = "sha256:637996211036b6385ef91435e4fae22989472f9d571faba8927ba8253acbc330"},
-]
-
-[[package]]
 name = "docutils"
 version = "0.18.1"
 description = "Docutils -- Python Documentation Utilities"
@@ -920,43 +896,6 @@ files = [
     {file = "docutils-0.18.1-py2.py3-none-any.whl", hash = "sha256:23010f129180089fbcd3bc08cfefccb3b890b0050e1ca00c867036e9d161b98c"},
     {file = "docutils-0.18.1.tar.gz", hash = "sha256:679987caf361a7539d76e584cbeddc311e3aee937877c87346f31debc63e9d06"},
 ]
-
-[[package]]
-name = "dukpy"
-version = "0.2.3"
-description = "Simple JavaScript interpreter for Python"
-category = "main"
-optional = true
-python-versions = "*"
-files = [
-    {file = "dukpy-0.2.3-cp27-cp27m-manylinux1_i686.whl", hash = "sha256:edd0862c34f085b60f17fc214c19ab6e38166fd08c85506aeaf370449b3ca20f"},
-    {file = "dukpy-0.2.3-cp27-cp27m-manylinux1_x86_64.whl", hash = "sha256:99e5a90e01cf60a52bafed04d2099ab91b853279429c39a6010fcb264615679a"},
-    {file = "dukpy-0.2.3-cp27-cp27m-win32.whl", hash = "sha256:267ddd5e4e88903467d3b0940b26e248739f2c870dde1365749fe39f24b76ebe"},
-    {file = "dukpy-0.2.3-cp27-cp27m-win_amd64.whl", hash = "sha256:26af4776043578cd5a90b723f97c862172dd0c03be90db462c4a50526b370b70"},
-    {file = "dukpy-0.2.3-cp27-cp27mu-manylinux1_i686.whl", hash = "sha256:9a89548ff0bd15e415755bc034f76eb6220e8e0d5b9f9d476e6c7b7edc9470b7"},
-    {file = "dukpy-0.2.3-cp27-cp27mu-manylinux1_x86_64.whl", hash = "sha256:906ec0fa1933fdb0df49e2de286ea8d64f14f7a1ed23705057b2f8eb73c5a036"},
-    {file = "dukpy-0.2.3-cp35-cp35m-manylinux1_i686.whl", hash = "sha256:0658ecda9e85499c2a3236f59837aab27fbef19b75544f1d1f33704fa43e52e7"},
-    {file = "dukpy-0.2.3-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:39739d135786d14b430c1d0a82b821d731dfec31369d4a315e1929ca37c48d72"},
-    {file = "dukpy-0.2.3-cp35-cp35m-win32.whl", hash = "sha256:f90e133688e2d2d010c909b7a0e8d2dff73b7c08622480dcb6f8d81169a48235"},
-    {file = "dukpy-0.2.3-cp35-cp35m-win_amd64.whl", hash = "sha256:e9512519d39d048e64c89a876e3d4b569862e9bacdb9294046b13385b92fe657"},
-    {file = "dukpy-0.2.3-cp36-cp36m-manylinux1_i686.whl", hash = "sha256:9aa761142872407d39da88fdbfcc0cc77c6a91b25c9cb9547b564c3e699137b6"},
-    {file = "dukpy-0.2.3-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:5b3589426d20dc46d6758754a42f359ad265f02a508de9978065de60626249dd"},
-    {file = "dukpy-0.2.3-cp36-cp36m-win32.whl", hash = "sha256:cf8f702599f3abb42a1bc64df2d7a63115226042feff57b89d8f0fd3d5cb2592"},
-    {file = "dukpy-0.2.3-cp36-cp36m-win_amd64.whl", hash = "sha256:494bccfe65c0db95c498584a99052b4039c28f171c901cf609dadf303c097d62"},
-    {file = "dukpy-0.2.3-cp37-cp37m-manylinux1_i686.whl", hash = "sha256:061f84e9786f18e7bc63c78afcddec7287ebacae35b4a95c4c49fac0146b6f0d"},
-    {file = "dukpy-0.2.3-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:79f1dfe1276b3b2cef6f353df8889da45cab4cbae88c1b0c2f8895bc68efb345"},
-    {file = "dukpy-0.2.3-cp37-cp37m-win32.whl", hash = "sha256:123c39095d5b282f2fdebe08088572688c67ce7d876129eb4bb7e1262650a4af"},
-    {file = "dukpy-0.2.3-cp37-cp37m-win_amd64.whl", hash = "sha256:929c5fe7fc4c0aff25c8bf6284e9fb3a3ac74430104c2d260858b76e290013fe"},
-    {file = "dukpy-0.2.3-cp38-cp38-manylinux1_i686.whl", hash = "sha256:3395f84d793f1be55f250705fd1f4562c58718dde0304ae21b001dc0332e020a"},
-    {file = "dukpy-0.2.3-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:9499ec53247cc0e2453d2be0586d9fa6803b751961d05bc947946341ecea6560"},
-    {file = "dukpy-0.2.3-cp38-cp38-win32.whl", hash = "sha256:ff245b01239fbb25b4a0b9bf30d3b4499648ce52bba981fe2cbac868052354fe"},
-    {file = "dukpy-0.2.3-cp38-cp38-win_amd64.whl", hash = "sha256:770c0795cbe5c41b604b12f372d2905587035f2f83489d2e1c36b88d50f9b175"},
-    {file = "dukpy-0.2.3.tar.gz", hash = "sha256:cc8dd158326f95231d320da80be6e6a1d72bbaad9de2569eaffb6af736f45e6b"},
-]
-
-[package.extras]
-testing = ["mock", "pytest", "pytest-cov"]
-webassets = ["webassets"]
 
 [[package]]
 name = "editorconfig-checker"
@@ -1003,7 +942,7 @@ testing = ["pre-commit"]
 name = "filelock"
 version = "3.8.0"
 description = "A platform independent file lock."
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -1014,28 +953,6 @@ files = [
 [package.extras]
 docs = ["furo (>=2022.6.21)", "sphinx (>=5.1.1)", "sphinx-autodoc-typehints (>=1.19.1)"]
 testing = ["covdefaults (>=2.2)", "coverage (>=6.4.2)", "pytest (>=7.1.2)", "pytest-cov (>=3)", "pytest-timeout (>=2.1)"]
-
-[[package]]
-name = "fusepy"
-version = "3.0.1"
-description = "Simple ctypes bindings for FUSE"
-category = "main"
-optional = true
-python-versions = "*"
-files = [
-    {file = "fusepy-3.0.1.tar.gz", hash = "sha256:72ff783ec2f43de3ab394e3f7457605bf04c8cf288a2f4068b4cde141d4ee6bd"},
-]
-
-[[package]]
-name = "future"
-version = "0.18.3"
-description = "Clean single-source support for Python 3 and 2"
-category = "dev"
-optional = false
-python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
-files = [
-    {file = "future-0.18.3.tar.gz", hash = "sha256:34a17436ed1e96697a86f9de3d15a3b0be01d8bc8de9c1dffd59fb8234ed5307"},
-]
 
 [[package]]
 name = "h11"
@@ -1262,21 +1179,6 @@ files = [
 ]
 
 [[package]]
-name = "macholib"
-version = "1.16.2"
-description = "Mach-O header analysis and editing"
-category = "dev"
-optional = false
-python-versions = "*"
-files = [
-    {file = "macholib-1.16.2-py2.py3-none-any.whl", hash = "sha256:44c40f2cd7d6726af8fa6fe22549178d3a4dfecc35a9cd15ea916d9c83a688e0"},
-    {file = "macholib-1.16.2.tar.gz", hash = "sha256:557bbfa1bb255c20e9abafe7ed6cd8046b48d9525db2f9b77d3122a63a2a8bf8"},
-]
-
-[package.dependencies]
-altgraph = ">=0.17"
-
-[[package]]
 name = "markupsafe"
 version = "2.1.1"
 description = "Safely add untrusted strings to HTML/XML markup."
@@ -1493,7 +1395,7 @@ attrs = ">=19.2.0"
 name = "packaging"
 version = "23.0"
 description = "Core utilities for Python packages"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -1544,20 +1446,6 @@ files = [
     {file = "pbr-5.11.1-py2.py3-none-any.whl", hash = "sha256:567f09558bae2b3ab53cb3c1e2e33e726ff3338e7bae3db5dc954b3a44eef12b"},
     {file = "pbr-5.11.1.tar.gz", hash = "sha256:aefc51675b0b533d56bb5fd1c8c6c0522fe31896679882e1c4c63d5e4a0fccb3"},
 ]
-
-[[package]]
-name = "pefile"
-version = "2022.5.30"
-description = "Python PE parsing module"
-category = "dev"
-optional = false
-python-versions = ">=3.6.0"
-files = [
-    {file = "pefile-2022.5.30.tar.gz", hash = "sha256:a5488a3dd1fd021ce33f969780b88fe0f7eebb76eb20996d7318f307612a045b"},
-]
-
-[package.dependencies]
-future = "*"
 
 [[package]]
 name = "platformdirs"
@@ -1622,7 +1510,7 @@ files = [
 name = "psutil"
 version = "5.9.4"
 description = "Cross-platform lib for process and system monitoring in Python."
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 files = [
@@ -1673,209 +1561,6 @@ files = [
 plugins = ["importlib-metadata"]
 
 [[package]]
-name = "pyinstaller"
-version = "5.9.0"
-description = "PyInstaller bundles a Python application and all its dependencies into a single package."
-category = "dev"
-optional = false
-python-versions = "<3.12,>=3.7"
-files = [
-    {file = "pyinstaller-5.9.0-py3-none-macosx_10_13_universal2.whl", hash = "sha256:93d7e8443a6b60745d42aa50f08730f6b419410832b4c616c4f1bb315f087661"},
-    {file = "pyinstaller-5.9.0-py3-none-manylinux2014_aarch64.whl", hash = "sha256:3b2c34c3c3ddf38f68d9f5afbed82abe0f89d53014c56892326fef10172ee652"},
-    {file = "pyinstaller-5.9.0-py3-none-manylinux2014_i686.whl", hash = "sha256:dcd348b174fd72c4df271790ac582969c9423cb099fe92db9ec131a8a9243d5a"},
-    {file = "pyinstaller-5.9.0-py3-none-manylinux2014_ppc64le.whl", hash = "sha256:4b21b0298db44f5f07fc04d8ff81ec31efa47b72798efaecc4e811c50a102111"},
-    {file = "pyinstaller-5.9.0-py3-none-manylinux2014_s390x.whl", hash = "sha256:12ca6567be457826e14416637ea54485a185d0ce7a5a044df0d0daf588fff6d1"},
-    {file = "pyinstaller-5.9.0-py3-none-manylinux2014_x86_64.whl", hash = "sha256:c7dd156c2438f197c168b990bbce03c97d3fb758dd9bbc3ca93626c2f4473a47"},
-    {file = "pyinstaller-5.9.0-py3-none-musllinux_1_1_aarch64.whl", hash = "sha256:2ba42038b3bd83e1fba7c8eb9e7cde43bd5938e37ca542c89e8779355d213f52"},
-    {file = "pyinstaller-5.9.0-py3-none-musllinux_1_1_x86_64.whl", hash = "sha256:d1ff94347183ae3755cfb8f02e64744eb7fe384469bd61e453c6ff59a81665d6"},
-    {file = "pyinstaller-5.9.0-py3-none-win32.whl", hash = "sha256:8476538aec8a0a3be4f74b93388bd6989b91cc437ff86d6f0d3a68961176dce6"},
-    {file = "pyinstaller-5.9.0-py3-none-win_amd64.whl", hash = "sha256:e7a4c292810285c2466f3bdcb1e03ba2170177ebe3d7054ff1af3bb348bf61a4"},
-    {file = "pyinstaller-5.9.0-py3-none-win_arm64.whl", hash = "sha256:6cf6c032c72ef78fd9aa5e47d8952e784db45b2c3f7862bd44a99df68c216f64"},
-    {file = "pyinstaller-5.9.0.tar.gz", hash = "sha256:2bde16a8d664e8eba9aa7b84f729f7ab005c1793be4fe1986b3c9cad6c486622"},
-]
-
-[package.dependencies]
-altgraph = "*"
-macholib = {version = ">=1.8", markers = "sys_platform == \"darwin\""}
-pefile = {version = ">=2022.5.30", markers = "sys_platform == \"win32\""}
-pyinstaller-hooks-contrib = ">=2021.4"
-pywin32-ctypes = {version = ">=0.2.0", markers = "sys_platform == \"win32\""}
-setuptools = ">=42.0.0"
-
-[package.extras]
-encryption = ["tinyaes (>=1.0.0)"]
-hook-testing = ["execnet (>=1.5.0)", "psutil", "pytest (>=2.7.3)"]
-
-[[package]]
-name = "pyinstaller-hooks-contrib"
-version = "2022.10"
-description = "Community maintained hooks for PyInstaller"
-category = "dev"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "pyinstaller-hooks-contrib-2022.10.tar.gz", hash = "sha256:e5edd4094175e78c178ef987b61be19efff6caa23d266ade456fc753e847f62e"},
-    {file = "pyinstaller_hooks_contrib-2022.10-py2.py3-none-any.whl", hash = "sha256:d1dd6ea059dc30e77813cc12a5efa8b1d228e7da8f5b884fe11775f946db1784"},
-]
-
-[[package]]
-name = "pyobjc-core"
-version = "8.5.1"
-description = "Python<->ObjC Interoperability Module"
-category = "main"
-optional = true
-python-versions = ">=3.6"
-files = [
-    {file = "pyobjc-core-8.5.1.tar.gz", hash = "sha256:f8592a12de076c27006700c4a46164478564fa33d7da41e7cbdd0a3bf9ddbccf"},
-    {file = "pyobjc_core-8.5.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:b62dcf987cc511188fc2aa5b4d3b9fd895361ea4984380463497ce4b0752ddf4"},
-    {file = "pyobjc_core-8.5.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:0accc653501a655f66c13f149a1d3d30e6cb65824edf852f7960a00c4f930d5b"},
-    {file = "pyobjc_core-8.5.1-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:f82b32affc898e9e5af041c1cecde2c99f2ce160b87df77f678c99f1550a4655"},
-    {file = "pyobjc_core-8.5.1-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:f7b2f6b6f3caeb882c658fe0c7098be2e8b79893d84daa8e636cb3e58a07df00"},
-    {file = "pyobjc_core-8.5.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:872c0202c911a5a2f1269261c168e36569f6ddac17e5d854ac19e581726570cc"},
-    {file = "pyobjc_core-8.5.1-cp38-cp38-macosx_11_0_universal2.whl", hash = "sha256:21f92e231a4bae7f2d160d065f5afbf5e859a1e37f29d34ac12592205fc8c108"},
-    {file = "pyobjc_core-8.5.1-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:315334dd09781129af6a39641248891c4caa57043901750b0139c6614ce84ec0"},
-]
-
-[[package]]
-name = "pyobjc-framework-cocoa"
-version = "8.5.1"
-description = "Wrappers for the Cocoa frameworks on macOS"
-category = "main"
-optional = true
-python-versions = ">=3.6"
-files = [
-    {file = "pyobjc-framework-Cocoa-8.5.1.tar.gz", hash = "sha256:9a3de5cdb4644e85daf53f2ed912ef6c16ea5804a9e65552eafe62c2e139eb8c"},
-    {file = "pyobjc_framework_Cocoa-8.5.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:aa572acc2628488a47be8d19f4701fc96fce7377cc4da18316e1e08c3918521a"},
-    {file = "pyobjc_framework_Cocoa-8.5.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:cb3ae21c8d81b7f02a891088c623cef61bca89bd671eff58c632d2f926b649f3"},
-    {file = "pyobjc_framework_Cocoa-8.5.1-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:88f08f5bd94c66d373d8413c1d08218aff4cff0b586e0cc4249b2284023e7577"},
-    {file = "pyobjc_framework_Cocoa-8.5.1-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:063683b57e4bd88cb0f9631ae65d25ec4eecf427d2fe8d0c578f88da9c896f3f"},
-    {file = "pyobjc_framework_Cocoa-8.5.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:8f8806ddfac40620fb27f185d0f8937e69e330617319ecc2eccf6b9c8451bdd1"},
-    {file = "pyobjc_framework_Cocoa-8.5.1-cp38-cp38-macosx_11_0_universal2.whl", hash = "sha256:7733a9a201df9e0cc2a0cf7bf54d76bd7981cba9b599353b243e3e0c9eefec10"},
-    {file = "pyobjc_framework_Cocoa-8.5.1-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:f0ab227f99d3e25dd3db73f8cde0999914a5f0dd6a08600349d25f95eaa0da63"},
-]
-
-[package.dependencies]
-pyobjc-core = ">=8.5.1"
-
-[[package]]
-name = "pyobjc-framework-systemconfiguration"
-version = "8.5.1"
-description = "Wrappers for the framework SystemConfiguration on macOS"
-category = "main"
-optional = true
-python-versions = ">=3.6"
-files = [
-    {file = "pyobjc-framework-SystemConfiguration-8.5.1.tar.gz", hash = "sha256:f0c75fda3498d296e10a673700032ae0562e4c24b1f41c6290751edb939f84b5"},
-    {file = "pyobjc_framework_SystemConfiguration-8.5.1-cp36-abi3-macosx_10_9_universal2.whl", hash = "sha256:e499ddcdf02b8cb9cdf207ea4c09c4bde2cc891c01f11ffd4fc040d658a1fd4d"},
-    {file = "pyobjc_framework_SystemConfiguration-8.5.1-cp36-abi3-macosx_10_9_x86_64.whl", hash = "sha256:bbd56a3a6534ae3de62ecbc3551c8e4d6861406369c2e7d96fb6ff2158491f08"},
-    {file = "pyobjc_framework_SystemConfiguration-8.5.1-cp36-abi3-macosx_11_0_universal2.whl", hash = "sha256:4a373c010df56cdf4b620c7f706fb7807a50d60ae12f2547ee0e8dae0616986b"},
-]
-
-[package.dependencies]
-pyobjc-core = ">=8.5.1"
-pyobjc-framework-Cocoa = ">=8.5.1"
-
-[[package]]
-name = "pypac"
-version = "0.16.1"
-description = "Proxy auto-config and auto-discovery for Python."
-category = "main"
-optional = true
-python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
-files = [
-    {file = "PyPAC-0.16.1-py2.py3-none-any.whl", hash = "sha256:77aee379abb96c59063320c99e8641ce97d4f98f29a1d150242c4a332d9d9f67"},
-]
-
-[package.dependencies]
-dukpy = ">=0.2.2"
-pyobjc-framework-SystemConfiguration = {version = ">=3.2.1", markers = "sys_platform == \"darwin\""}
-requests = ">=2.0.0"
-tldextract = ">=2.2.3"
-
-[package.extras]
-dev = ["mock", "pytest", "pytest-cov", "wheel"]
-socks = ["requests[socks] (>=2.10.0)"]
-
-[[package]]
-name = "pyqt5"
-version = "5.15.9"
-description = "Python bindings for the Qt cross platform application toolkit"
-category = "main"
-optional = true
-python-versions = ">=3.7"
-files = [
-    {file = "PyQt5-5.15.9-cp37-abi3-macosx_10_13_x86_64.whl", hash = "sha256:883ba5c8a348be78c8be6a3d3ba014c798e679503bce00d76c666c2dc6afe828"},
-    {file = "PyQt5-5.15.9-cp37-abi3-manylinux_2_17_x86_64.whl", hash = "sha256:dd5ce10e79fbf1df29507d2daf99270f2057cdd25e4de6fbf2052b46c652e3a5"},
-    {file = "PyQt5-5.15.9-cp37-abi3-win32.whl", hash = "sha256:e45c5cc15d4fd26ab5cb0e5cdba60691a3e9086411f8e3662db07a5a4222a696"},
-    {file = "PyQt5-5.15.9-cp37-abi3-win_amd64.whl", hash = "sha256:e030d795df4cbbfcf4f38b18e2e119bcc9e177ef658a5094b87bb16cac0ce4c5"},
-    {file = "PyQt5-5.15.9.tar.gz", hash = "sha256:dc41e8401a90dc3e2b692b411bd5492ab559ae27a27424eed4bd3915564ec4c0"},
-]
-
-[package.dependencies]
-PyQt5-Qt5 = ">=5.15.2"
-PyQt5-sip = ">=12.11,<13"
-
-[[package]]
-name = "pyqt5-qt5"
-version = "5.15.2"
-description = "The subset of a Qt installation needed by PyQt5."
-category = "main"
-optional = true
-python-versions = "*"
-files = [
-    {file = "PyQt5_Qt5-5.15.2-py3-none-macosx_10_13_intel.whl", hash = "sha256:76980cd3d7ae87e3c7a33bfebfaee84448fd650bad6840471d6cae199b56e154"},
-    {file = "PyQt5_Qt5-5.15.2-py3-none-manylinux2014_x86_64.whl", hash = "sha256:1988f364ec8caf87a6ee5d5a3a5210d57539988bf8e84714c7d60972692e2f4a"},
-    {file = "PyQt5_Qt5-5.15.2-py3-none-win32.whl", hash = "sha256:9cc7a768b1921f4b982ebc00a318ccb38578e44e45316c7a4a850e953e1dd327"},
-    {file = "PyQt5_Qt5-5.15.2-py3-none-win_amd64.whl", hash = "sha256:750b78e4dba6bdf1607febedc08738e318ea09e9b10aea9ff0d73073f11f6962"},
-]
-
-[[package]]
-name = "pyqt5-sip"
-version = "12.11.1"
-description = "The sip module support for PyQt5"
-category = "main"
-optional = true
-python-versions = ">=3.7"
-files = [
-    {file = "PyQt5_sip-12.11.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:a40a39a6136a90e10c31510295c2be924564fc6260691501cdde669bdc5edea5"},
-    {file = "PyQt5_sip-12.11.1-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:19b06164793177146c7f7604fe8389f44221a7bde196f2182457eb3e4229fa88"},
-    {file = "PyQt5_sip-12.11.1-cp310-cp310-win32.whl", hash = "sha256:3afb1d1c07adcfef5c8bb12356a2ec2ec094f324af4417735d43b1ecaf1bb1a4"},
-    {file = "PyQt5_sip-12.11.1-cp310-cp310-win_amd64.whl", hash = "sha256:54dad6c2e5dab14e46f6822a889bbb1515bbd2061762273af10d26566d649bd9"},
-    {file = "PyQt5_sip-12.11.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:7218f6a1cefeb0b2fc26b89f15011f841aa4cd77786ccd863bf9792347fa38a8"},
-    {file = "PyQt5_sip-12.11.1-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:6b1113538082a7dd63b908587f61ce28ba4c7b8341e801fdf305d53a50a878ab"},
-    {file = "PyQt5_sip-12.11.1-cp311-cp311-win32.whl", hash = "sha256:ac5f7ed06213d3bb203e33037f7c1a0716584c21f4f0922dcc044750e3659b80"},
-    {file = "PyQt5_sip-12.11.1-cp311-cp311-win_amd64.whl", hash = "sha256:4f0497e2f5eeaea9f5a67b0e55c501168efa86df4e53aace2a46498b87bc55c1"},
-    {file = "PyQt5_sip-12.11.1-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:b355d56483edc79dcba30be947a6b700856bb74beb90539e14cc4d92b9bad152"},
-    {file = "PyQt5_sip-12.11.1-cp37-cp37m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:dd163d9cffc4a56ebb9dd6908c0f0cb0caff8080294d41f4fb60fc3be63ca434"},
-    {file = "PyQt5_sip-12.11.1-cp37-cp37m-win32.whl", hash = "sha256:b714f550ea6ddae94fd7acae531971e535f4a4e7277b62eb44e7c649cf3f03d0"},
-    {file = "PyQt5_sip-12.11.1-cp37-cp37m-win_amd64.whl", hash = "sha256:d09b2586235deab7a5f2e28e4bde9a70c0b3730fa84f2590804a9932414136a3"},
-    {file = "PyQt5_sip-12.11.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:9a6f9c058564d0ac573561036299f54c452ae78b7d2a65d7c2d01685e6dca50d"},
-    {file = "PyQt5_sip-12.11.1-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:fc920c0e0d5050474d2d6282b478e4957548bf1dce58e1b0678914514dc70064"},
-    {file = "PyQt5_sip-12.11.1-cp38-cp38-win32.whl", hash = "sha256:3358c584832f0ac9fd1ad3623d8a346c705f43414df1fcd0cb285a6ef51fec08"},
-    {file = "PyQt5_sip-12.11.1-cp38-cp38-win_amd64.whl", hash = "sha256:f9691c6f4d899ca762dd54442a1be158c3e52017f583183da6ef37d5bae86595"},
-    {file = "PyQt5_sip-12.11.1-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:0bc81cb9e171d29302d393775f95cfa01b7a15f61b199ab1812976e5c4cb2cb9"},
-    {file = "PyQt5_sip-12.11.1-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:b077fb4383536f51382f5516f0347328a4f338c6ccc4c268cc358643bef1b838"},
-    {file = "PyQt5_sip-12.11.1-cp39-cp39-win32.whl", hash = "sha256:5c152878443c3e951d5db7df53509d444708dc06a121c267b548146be06b87f8"},
-    {file = "PyQt5_sip-12.11.1-cp39-cp39-win_amd64.whl", hash = "sha256:bd935cc46dfdbb89c21042c1db2e46a71f25693af57272f146d6d9418e2934f1"},
-    {file = "PyQt5_sip-12.11.1.tar.gz", hash = "sha256:97d3fbda0f61edb1be6529ec2d5c7202ae83aee4353e4b264a159f8c9ada4369"},
-]
-
-[[package]]
-name = "pyqt5-stubs"
-version = "5.15.6.0"
-description = "PEP561 stub files for the PyQt5 framework"
-category = "dev"
-optional = false
-python-versions = ">= 3.5"
-files = [
-    {file = "PyQt5-stubs-5.15.6.0.tar.gz", hash = "sha256:91270ac23ebf38a1dc04cd97aa852cd08af82dc839100e5395af1447e3e99707"},
-    {file = "PyQt5_stubs-5.15.6.0-py3-none-any.whl", hash = "sha256:7fb8177c72489a8911f021b7bd7c33f12c87f6dba92dcef3fdcdb5d9400f0f3f"},
-]
-
-[package.extras]
-dev = ["mypy (==0.930)", "pytest", "pytest-xvfb"]
-
-[[package]]
 name = "pytest"
 version = "7.2.2"
 description = "pytest: simple powerful testing with Python"
@@ -1917,25 +1602,6 @@ pytest = ">=4.6"
 
 [package.extras]
 testing = ["fields", "hunter", "process-tests", "pytest-xdist", "six", "virtualenv"]
-
-[[package]]
-name = "pytest-qt"
-version = "4.2.0"
-description = "pytest support for PyQt and PySide applications"
-category = "dev"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "pytest-qt-4.2.0.tar.gz", hash = "sha256:00a17b586dd530b6d7a9399923a40489ca4a9a309719011175f55dc6b5dc8f41"},
-    {file = "pytest_qt-4.2.0-py2.py3-none-any.whl", hash = "sha256:a7659960a1ab2af8fc944655a157ff45d714b80ed7a6af96a4b5bb99ecf40a22"},
-]
-
-[package.dependencies]
-pytest = ">=3.0.0"
-
-[package.extras]
-dev = ["pre-commit", "tox"]
-doc = ["sphinx", "sphinx-rtd-theme"]
 
 [[package]]
 name = "pytest-rerunfailures"
@@ -2050,102 +1716,6 @@ files = [
 ]
 
 [[package]]
-name = "pywin32-ctypes"
-version = "0.2.0"
-description = ""
-category = "dev"
-optional = false
-python-versions = "*"
-files = [
-    {file = "pywin32-ctypes-0.2.0.tar.gz", hash = "sha256:24ffc3b341d457d48e8922352130cf2644024a4ff09762a2261fd34c36ee5942"},
-    {file = "pywin32_ctypes-0.2.0-py2.py3-none-any.whl", hash = "sha256:9dc2d991b3479cc2df15930958b674a48a227d5361d413827a4cfd0b5876fc98"},
-]
-
-[[package]]
-name = "qrcode"
-version = "7.3.1"
-description = "QR Code image generator"
-category = "main"
-optional = true
-python-versions = ">=3.6"
-files = [
-    {file = "qrcode-7.3.1.tar.gz", hash = "sha256:375a6ff240ca9bd41adc070428b5dfc1dcfbb0f2507f1ac848f6cded38956578"},
-]
-
-[package.dependencies]
-colorama = {version = "*", markers = "platform_system == \"Windows\""}
-
-[package.extras]
-all = ["pillow", "pytest", "pytest", "pytest-cov", "tox", "zest.releaser[recommended]"]
-dev = ["pytest", "tox"]
-maintainer = ["zest.releaser[recommended]"]
-pil = ["pillow"]
-test = ["pytest", "pytest-cov"]
-
-[[package]]
-name = "qtrio"
-version = "0.6.0"
-description = "a library bringing Qt GUIs together with ``async`` and ``await`` via Trio"
-category = "main"
-optional = true
-python-versions = ">=3.7"
-files = [
-    {file = "qtrio-0.6.0-py3-none-any.whl", hash = "sha256:25f48b1debc1ad44ada6269f10dcffabb9e699d56064b443f36d428c83cccdcb"},
-    {file = "qtrio-0.6.0.tar.gz", hash = "sha256:1435eb11fb8e06fed28815aad0cd614f22f9a5c94855d82fa7a4abb69a5b54e4"},
-]
-
-[package.dependencies]
-async-generator = "*"
-attrs = "*"
-decorator = "*"
-outcome = "*"
-qts = ">=0.3.0,<0.4.0"
-trio = ">=0.16"
-trio-typing = ">=0.7.0,<0.8.0"
-
-[package.extras]
-cli = ["click (>=8.1,<9.0)"]
-examples = ["click (>=8.1,<9.0)", "httpcore (>=0.16,<1.0)", "httpx (>=0.23,<1.0)", "hyperlink (>=21.0.0,<21.1.0)"]
-p-checks = ["black (==22.10.0)", "check-manifest (>=0.46.0,<0.47.0)", "click (>=8.1,<9.0)", "flake8 (>=3.8,<4.0)", "httpcore (>=0.16,<1.0)", "httpx (>=0.23,<1.0)", "hyperlink (>=21.0.0,<21.1.0)", "mypy (==0.991)", "pytest (>=7.2,<8.0)", "quart (>=0.18.3,<0.19.0)", "quart-trio (>=0.10.0,<0.11.0)", "towncrier (>=21.3.0)"]
-p-docs = ["sphinx (>=5.1,<6.0)", "sphinx-autodoc-typehints (>=1.11,<2.0)", "sphinx-qt-documentation (>=0.4.0,<0.5.0)", "sphinx-rtd-theme (>=1.0,<2.0)", "sphinxcontrib-trio (>=1.1,<2.0)", "towncrier (>=21.3.0)"]
-p-tests = ["click (>=8.1,<9.0)", "coverage (>=6.5,<7.0)", "httpcore (>=0.16,<1.0)", "httpx (>=0.23,<1.0)", "hyperlink (>=21.0.0,<21.1.0)", "pytest (>=7.2,<8.0)", "pytest-cov (>=4.0,<5.0)", "pytest-faulthandler (>=2.0,<3.0)", "pytest-qt (>=4.2,<5.0)", "pytest-trio (>=0.7.0)", "pytest-xdist[psutil] (>=2.2,<3.0)", "pytest-xvfb (>=2.0,<3.0)", "quart (>=0.18.3,<0.19.0)", "quart-trio (>=0.10.0,<0.11.0)"]
-pyqt5 = ["pyqt5 (>=5.15.1,<5.16.0)", "pyqt5-stubs (>=5.15.2,<5.16.0)"]
-pyside2 = ["pyside2 (>=5.15,!=5.15.2,!=5.15.2.1,<6.0)"]
-s-pytest = ["pytest (>=7.2,<8.0)"]
-s-pytest-trio = ["pytest-trio (>=0.7.0)"]
-s-quart-trio = ["quart (>=0.18.3,<0.19.0)", "quart-trio (>=0.10.0,<0.11.0)"]
-s-towncrier = ["towncrier (>=21.3.0)"]
-testing = ["pytest-trio (>=0.7.0)"]
-
-[[package]]
-name = "qts"
-version = "0.3"
-description = "a thin compatibility layer for Python code to use Qt through various wrappers"
-category = "main"
-optional = true
-python-versions = ">=3.6"
-files = [
-    {file = "qts-0.3-py3-none-any.whl", hash = "sha256:4e041b91daeb02fce0a156889ea3e48fc5e3e3ba8f594cd72b6bd5765720b702"},
-    {file = "qts-0.3.tar.gz", hash = "sha256:84c62a445824cab252b64cff66b244f6d130fd2df88cf495c23c77df00024345"},
-]
-
-[package.dependencies]
-attrs = ">=20.1.0"
-typing-extensions = ">=3.10"
-
-[package.extras]
-cli = ["click (>=8.0,<9.0)"]
-p-checks = ["black (==22.10.0)", "check-manifest (>=0.46.0,<0.47.0)", "flake8 (>=3.8,<4.0)", "mypy (==0.901)", "pytest (>=6.2,<7.0)", "towncrier (>=21.3,<22.0)"]
-p-docs = ["importlib-metadata (>=4.5,<5.0)", "pyside2 (>=5.15,<6.0)", "sphinx (>=4.0,<5.0)", "sphinx-autodoc-typehints (>=1.11,<2.0)", "sphinx-click (>=3.0,<4.0)", "sphinx-inline-tabs (>=2020.10.19b4,<2020.11.0)", "sphinx-qt-documentation (>=0.3.0,<0.4.0)", "sphinx-rtd-theme (>=0.5.0,<0.6.0)", "towncrier (>=21.3,<22.0)"]
-p-tests = ["click (>=8.0,<9.0)", "coverage (>=5.5,<6.0)", "pytest (>=6.2,<7.0)", "pytest-cov (>=2.12,<3.0)", "pytest-xvfb (>=2.0,<3.0)"]
-pyqt5 = ["pyqt5 (>=5.15,<6.0)"]
-pyqt6 = ["pyqt6 (>=6.0,<7.0)"]
-pyside2 = ["pyside2 (>=5.15,<6.0)"]
-pyside6 = ["pyside6 (>=6.0,<7.0)"]
-s-pytest = ["pytest (>=6.2,<7.0)"]
-s-towncrier = ["towncrier (>=21.3,<22.0)"]
-
-[[package]]
 name = "quart"
 version = "0.18.3"
 description = "A Python ASGI web microframework with the same API as Flask"
@@ -2213,22 +1783,6 @@ urllib3 = ">=1.21.1,<1.27"
 [package.extras]
 socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
-
-[[package]]
-name = "requests-file"
-version = "1.5.1"
-description = "File transport adapter for Requests"
-category = "main"
-optional = true
-python-versions = "*"
-files = [
-    {file = "requests-file-1.5.1.tar.gz", hash = "sha256:07d74208d3389d01c38ab89ef403af0cfec63957d53a0081d8eca738d0247d8e"},
-    {file = "requests_file-1.5.1-py2.py3-none-any.whl", hash = "sha256:dfe5dae75c12481f68ba353183c53a65e6044c923e64c24b2209f6c7570ca953"},
-]
-
-[package.dependencies]
-requests = ">=1.0.0"
-six = "*"
 
 [[package]]
 name = "ruff"
@@ -2585,24 +2139,6 @@ tests = ["coverage[toml]", "freezegun (>=0.2.8)", "pretend", "pytest (>=6.0)", "
 typing = ["mypy", "rich", "twisted"]
 
 [[package]]
-name = "tldextract"
-version = "3.4.0"
-description = "Accurately separates a URL's subdomain, domain, and public suffix, using the Public Suffix List (PSL). By default, this includes the public ICANN TLDs and their exceptions. You can optionally support the Public Suffix List's private domains as well."
-category = "main"
-optional = true
-python-versions = ">=3.7"
-files = [
-    {file = "tldextract-3.4.0-py3-none-any.whl", hash = "sha256:47aa4d8f1a4da79a44529c9a2ddc518663b25d371b805194ec5ce2a5f615ccd2"},
-    {file = "tldextract-3.4.0.tar.gz", hash = "sha256:78aef13ac1459d519b457a03f1f74c1bf1c2808122a6bcc0e6840f81ba55ad73"},
-]
-
-[package.dependencies]
-filelock = ">=3.0.8"
-idna = "*"
-requests = ">=2.1.0"
-requests-file = ">=1.4"
-
-[[package]]
 name = "toastedmarshmallow"
 version = "0.2.6"
 description = "A JIT implementation for Marshmallow to speed up dumping and loading objects."
@@ -2841,7 +2377,7 @@ watchdog = ["watchdog"]
 name = "winfspy"
 version = "0.8.3"
 description = "CFFI bindings for WinFSP"
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 files = [
@@ -2899,22 +2435,10 @@ files = [
 docs = ["furo", "jaraco.packaging (>=9)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)"]
 testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools", "more-itertools", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=1.3)", "pytest-flake8", "pytest-mypy (>=0.9.1)"]
 
-[[package]]
-name = "zxcvbn"
-version = "4.4.28"
-description = ""
-category = "main"
-optional = true
-python-versions = "*"
-files = [
-    {file = "zxcvbn-4.4.28.tar.gz", hash = "sha256:151bd816817e645e9064c354b13544f85137ea3320ca3be1fb6873ea75ef7dc1"},
-]
-
 [extras]
 backend = ["boto3", "botocore", "hypercorn", "jinja2", "pbr", "python-swiftclient", "quart", "quart-trio", "trio-asyncio", "triopg"]
-core = ["PyQt5", "fusepy", "packaging", "psutil", "pypac", "pyqt5-sip", "qrcode", "qtrio", "winfspy", "zxcvbn"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = "~3.9.5"
-content-hash = "b390bab4e63c482bf2920c31eec96b1d7c955e4bc5c4e49d2217813d2d9b6341"
+python-versions = "~3.9.10"
+content-hash = "34f0ff32acd7ef5c610e0d66464fe2302c33d6b2c693813e1817988e405c5cf1"
