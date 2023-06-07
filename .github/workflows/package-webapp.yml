@@ -1,11 +1,6 @@
 name: package-webapp
 
 on:
-  push:
-    tags:
-      - v[0-9]+.[0-9]+.[0-9]+*
-    branches:
-      - "[0-9]+.[0-9]+"
   pull_request:
     paths:
       - .github/workflows/package-webapp.yml
