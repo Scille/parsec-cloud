@@ -34,13 +34,7 @@ _FIXTURES_CUSTOMIZATIONS = {
     "backend_over_ssl",
     "backend_forward_proto_enforce_https",
     "backend_spontaneous_organization_bootstrap",
-    "logged_gui_as_admin",
-    "fake_preferred_org_creation_backend_addr",
     "blockstore_mode",
-    "real_data_storage",
-    "gui_language",
-    "alternate_workspace_storage",
-    "workspace_storage_cache_size",
 }
 
 F = TypeVar("F")

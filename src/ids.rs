@@ -10,14 +10,14 @@ macro_rules! gen_uuid {
         impl $class {
             #[classmethod]
             fn from_bytes(_cls: &::pyo3::types::PyType, bytes: &[u8]) -> PyResult<Self> {
-                libparsec::types::$class::try_from(bytes)
+                libparsec::low_level::types::$class::try_from(bytes)
                     .map(Self)
                     .map_err(::pyo3::exceptions::PyValueError::new_err)
             }
 
             #[classmethod]
             fn from_hex(_cls: &::pyo3::types::PyType, hex: &str) -> PyResult<Self> {
-                libparsec::types::$class::from_hex(hex)
+                libparsec::low_level::types::$class::from_hex(hex)
                     .map(Self)
                     .map_err(::pyo3::exceptions::PyValueError::new_err)
             }
@@ -25,7 +25,7 @@ macro_rules! gen_uuid {
             #[classmethod]
             #[pyo3(name = "new")]
             fn default(_cls: &::pyo3::types::PyType) -> Self {
-                Self(libparsec::types::$class::default())
+                Self(libparsec::low_level::types::$class::default())
             }
 
             #[getter]
@@ -53,7 +53,7 @@ macro_rules! gen_uuid {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone, Hash)]
-pub(crate) struct EntryID(pub libparsec::types::EntryID);
+pub(crate) struct EntryID(pub libparsec::low_level::types::EntryID);
 
 crate::binding_utils::gen_proto!(EntryID, __repr__);
 crate::binding_utils::gen_proto!(EntryID, __copy__);
@@ -65,7 +65,7 @@ gen_uuid!(EntryID);
 
 #[pyclass]
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub(crate) struct BlockID(pub libparsec::types::BlockID);
+pub(crate) struct BlockID(pub libparsec::low_level::types::BlockID);
 
 crate::binding_utils::gen_proto!(BlockID, __repr__);
 crate::binding_utils::gen_proto!(BlockID, __copy__);
@@ -77,7 +77,7 @@ gen_uuid!(BlockID);
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct RealmID(pub libparsec::types::RealmID);
+pub(crate) struct RealmID(pub libparsec::low_level::types::RealmID);
 
 crate::binding_utils::gen_proto!(RealmID, __repr__);
 crate::binding_utils::gen_proto!(RealmID, __copy__);
@@ -89,17 +89,17 @@ gen_uuid!(RealmID);
 #[pymethods]
 impl RealmID {
     fn to_entry_id(&self) -> EntryID {
-        EntryID(libparsec::types::EntryID::from(*self.0))
+        EntryID(libparsec::low_level::types::EntryID::from(*self.0))
     }
     #[classmethod]
     fn from_entry_id(_cls: &PyType, id: EntryID) -> Self {
-        Self(libparsec::types::RealmID::from(*id.0))
+        Self(libparsec::low_level::types::RealmID::from(*id.0))
     }
 }
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone, Hash)]
-pub(crate) struct VlobID(pub libparsec::types::VlobID);
+pub(crate) struct VlobID(pub libparsec::low_level::types::VlobID);
 
 crate::binding_utils::gen_proto!(VlobID, __repr__);
 crate::binding_utils::gen_proto!(VlobID, __copy__);
@@ -111,17 +111,17 @@ gen_uuid!(VlobID);
 #[pymethods]
 impl VlobID {
     fn to_entry_id(&self) -> EntryID {
-        EntryID(libparsec::types::EntryID::from(*self.0))
+        EntryID(libparsec::low_level::types::EntryID::from(*self.0))
     }
     #[classmethod]
     fn from_entry_id(_cls: &PyType, id: EntryID) -> Self {
-        Self(libparsec::types::VlobID::from(*id.0))
+        Self(libparsec::low_level::types::VlobID::from(*id.0))
     }
 }
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone, Hash)]
-pub(crate) struct ChunkID(pub libparsec::types::ChunkID);
+pub(crate) struct ChunkID(pub libparsec::low_level::types::ChunkID);
 
 crate::binding_utils::gen_proto!(ChunkID, __repr__);
 crate::binding_utils::gen_proto!(ChunkID, __copy__);
@@ -134,13 +134,13 @@ gen_uuid!(ChunkID);
 impl ChunkID {
     #[classmethod]
     fn from_block_id(_cls: &PyType, id: BlockID) -> Self {
-        Self(libparsec::types::ChunkID::from(*id.0))
+        Self(libparsec::low_level::types::ChunkID::from(*id.0))
     }
 }
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone, Hash)]
-pub(crate) struct SequesterServiceID(pub libparsec::types::SequesterServiceID);
+pub(crate) struct SequesterServiceID(pub libparsec::low_level::types::SequesterServiceID);
 
 crate::binding_utils::gen_proto!(SequesterServiceID, __repr__);
 crate::binding_utils::gen_proto!(SequesterServiceID, __copy__);
@@ -151,7 +151,7 @@ gen_uuid!(SequesterServiceID);
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct InvitationToken(pub libparsec::types::InvitationToken);
+pub(crate) struct InvitationToken(pub libparsec::low_level::types::InvitationToken);
 
 crate::binding_utils::gen_proto!(InvitationToken, __repr__);
 crate::binding_utils::gen_proto!(InvitationToken, __copy__);
@@ -162,7 +162,7 @@ gen_uuid!(InvitationToken);
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct EnrollmentID(pub libparsec::types::EnrollmentID);
+pub(crate) struct EnrollmentID(pub libparsec::low_level::types::EnrollmentID);
 
 crate::binding_utils::gen_proto!(EnrollmentID, __repr__);
 crate::binding_utils::gen_proto!(EnrollmentID, __copy__);
@@ -174,7 +174,7 @@ gen_uuid!(EnrollmentID);
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct OrganizationID(pub libparsec::types::OrganizationID);
+pub(crate) struct OrganizationID(pub libparsec::low_level::types::OrganizationID);
 
 crate::binding_utils::gen_proto!(OrganizationID, __repr__);
 crate::binding_utils::gen_proto!(OrganizationID, __copy__);
@@ -189,7 +189,7 @@ impl OrganizationID {
         if let Ok(organization_id) = organization_id.extract::<Self>() {
             Ok(organization_id)
         } else if let Ok(organization_id) = organization_id.extract::<&str>() {
-            match organization_id.parse::<libparsec::types::OrganizationID>() {
+            match organization_id.parse::<libparsec::low_level::types::OrganizationID>() {
                 Ok(organization_id) => Ok(Self(organization_id)),
                 Err(err) => Err(PyValueError::new_err(err)),
             }
@@ -206,7 +206,7 @@ impl OrganizationID {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone, Hash)]
-pub(crate) struct UserID(pub libparsec::types::UserID);
+pub(crate) struct UserID(pub libparsec::low_level::types::UserID);
 
 crate::binding_utils::gen_proto!(UserID, __repr__);
 crate::binding_utils::gen_proto!(UserID, __copy__);
@@ -221,7 +221,7 @@ impl UserID {
         if let Ok(user_id) = user_id.extract::<Self>() {
             Ok(user_id)
         } else if let Ok(user_id) = user_id.extract::<&str>() {
-            match user_id.parse::<libparsec::types::UserID>() {
+            match user_id.parse::<libparsec::low_level::types::UserID>() {
                 Ok(user_id) => Ok(Self(user_id)),
                 Err(err) => Err(PyValueError::new_err(err)),
             }
@@ -246,7 +246,7 @@ impl UserID {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct DeviceName(pub libparsec::types::DeviceName);
+pub(crate) struct DeviceName(pub libparsec::low_level::types::DeviceName);
 
 crate::binding_utils::gen_proto!(DeviceName, __repr__);
 crate::binding_utils::gen_proto!(DeviceName, __copy__);
@@ -261,7 +261,7 @@ impl DeviceName {
         if let Ok(device_name) = device_name.extract::<Self>() {
             Ok(device_name)
         } else if let Ok(device_name) = device_name.extract::<&str>() {
-            match device_name.parse::<libparsec::types::DeviceName>() {
+            match device_name.parse::<libparsec::low_level::types::DeviceName>() {
                 Ok(device_name) => Ok(Self(device_name)),
                 Err(err) => Err(PyValueError::new_err(err)),
             }
@@ -278,13 +278,13 @@ impl DeviceName {
     #[classmethod]
     #[pyo3(name = "new")]
     fn class_new(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(libparsec::types::DeviceName::default()))
+        Ok(Self(libparsec::low_level::types::DeviceName::default()))
     }
 }
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct DeviceLabel(pub libparsec::types::DeviceLabel);
+pub(crate) struct DeviceLabel(pub libparsec::low_level::types::DeviceLabel);
 
 crate::binding_utils::gen_proto!(DeviceLabel, __repr__);
 crate::binding_utils::gen_proto!(DeviceLabel, __copy__);
@@ -299,7 +299,7 @@ impl DeviceLabel {
         if let Ok(device_label) = device_label.extract::<Self>() {
             Ok(device_label)
         } else if let Ok(device_label) = device_label.extract::<&str>() {
-            match device_label.parse::<libparsec::types::DeviceLabel>() {
+            match device_label.parse::<libparsec::low_level::types::DeviceLabel>() {
                 Ok(device_label) => Ok(Self(device_label)),
                 Err(err) => Err(PyValueError::new_err(err)),
             }
@@ -316,7 +316,7 @@ impl DeviceLabel {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct DeviceID(pub libparsec::types::DeviceID);
+pub(crate) struct DeviceID(pub libparsec::low_level::types::DeviceID);
 
 crate::binding_utils::gen_proto!(DeviceID, __repr__);
 crate::binding_utils::gen_proto!(DeviceID, __copy__);
@@ -331,7 +331,7 @@ impl DeviceID {
         if let Ok(device_id) = device_id.extract::<Self>() {
             Ok(device_id)
         } else if let Ok(device_id) = device_id.extract::<&str>() {
-            match device_id.parse::<libparsec::types::DeviceID>() {
+            match device_id.parse::<libparsec::low_level::types::DeviceID>() {
                 Ok(device_id) => Ok(Self(device_id)),
                 Err(err) => Err(PyValueError::new_err(err)),
             }
@@ -358,13 +358,13 @@ impl DeviceID {
     #[classmethod]
     #[pyo3(name = "new")]
     fn class_new(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(libparsec::types::DeviceID::default()))
+        Ok(Self(libparsec::low_level::types::DeviceID::default()))
     }
 }
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct HumanHandle(pub libparsec::types::HumanHandle);
+pub(crate) struct HumanHandle(pub libparsec::low_level::types::HumanHandle);
 
 crate::binding_utils::gen_proto!(HumanHandle, __repr__);
 crate::binding_utils::gen_proto!(HumanHandle, __copy__);
@@ -376,7 +376,7 @@ crate::binding_utils::gen_proto!(HumanHandle, __hash__);
 impl HumanHandle {
     #[new]
     pub fn new(email: &str, label: &str) -> PyResult<Self> {
-        match libparsec::types::HumanHandle::new(email, label) {
+        match libparsec::low_level::types::HumanHandle::new(email, label) {
             Ok(human_handle) => Ok(Self(human_handle)),
             Err(err) => Err(PyValueError::new_err(err)),
         }

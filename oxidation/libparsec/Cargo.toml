@@ -9,6 +9,9 @@ rust-version = "1.62.0"
 [features]
 # Remember kid: RustCrypto is used if `use-sodiumoxide` is not set !
 use-sodiumoxide = ["libparsec_crypto/use-sodiumoxide"]
+python-bindings-support = [
+    "libparsec_serialization_format/python-bindings-support"
+]
 test-utils = [
     "dep:libparsec_testbed",
     "libparsec_client_high_level_api/test-utils",
@@ -20,16 +23,12 @@ test-utils = [
 ]
 
 [dependencies]
-libparsec_client_high_level_api = { path = "crates/client_high_level_api" }
-libparsec_client = { path = "crates/client" }
-libparsec_crypto = { path = "crates/crypto" }
-libparsec_client_connection = { path = "crates/client_connection" }
-libparsec_platform_async = { path = "crates/platform_async" }
-libparsec_platform_device_loader = { path = "crates/platform_device_loader" }
-libparsec_testbed = { path = "crates/testbed", optional = true }
-libparsec_platform_storage = { path = "crates/platform_storage", optional = true }
-
-# TODO: merge with regular dependencies
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+libparsec_client_high_level_api = { path = "crates/client_high_level_api"}
 libparsec_protocol = { path = "crates/protocol" }
+libparsec_crypto = { path = "crates/crypto" }
 libparsec_types = { path = "crates/types" }
+libparsec_platform_device_loader = { path = "crates/platform_device_loader" }
+libparsec_platform_storage = { path = "crates/platform_storage" }
+libparsec_serialization_format = { path = "crates/serialization_format" }
+
+libparsec_testbed = { path = "crates/testbed", optional = true }

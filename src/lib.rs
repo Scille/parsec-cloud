@@ -12,8 +12,6 @@ mod binding_utils;
 mod data;
 mod enumerate;
 mod ids;
-#[cfg(feature = "test-utils")]
-mod local_db;
 mod misc;
 mod protocol;
 mod regex;
@@ -28,8 +26,6 @@ mod time;
 fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     crate::api_crypto::add_mod(py, m)?;
     crate::data::add_mod(py, m)?;
-    #[cfg(feature = "test-utils")]
-    crate::local_db::add_mod(py, m)?;
     crate::protocol::add_mod(py, m)?;
 
     patch_panic_exception_to_inherit_exception(py);

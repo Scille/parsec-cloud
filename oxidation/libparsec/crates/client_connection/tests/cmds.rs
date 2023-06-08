@@ -63,6 +63,7 @@ async fn authenticated(env: &TestbedEnv) {
     );
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 #[parsec_test(testbed = "coolorg", with_server)]
 async fn authenticated_sse(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1".parse().unwrap());

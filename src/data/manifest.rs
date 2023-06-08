@@ -15,11 +15,11 @@ use crate::{
     ids::{BlockID, DeviceID, EntryID},
     time::DateTime,
 };
-use libparsec::types::{IndexInt, Manifest};
+use libparsec::low_level::types::{IndexInt, Manifest};
 
 #[pyclass]
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub(crate) struct EntryName(pub libparsec::types::EntryName);
+pub(crate) struct EntryName(pub libparsec::low_level::types::EntryName);
 
 crate::binding_utils::gen_proto!(EntryName, __str__);
 crate::binding_utils::gen_proto!(EntryName, __richcmp__, ord);
@@ -29,7 +29,7 @@ crate::binding_utils::gen_proto!(EntryName, __hash__);
 impl EntryName {
     #[new]
     fn new(name: &str) -> EntryNameResult<Self> {
-        Ok(libparsec::types::EntryName::try_from(name).map(Self)?)
+        Ok(libparsec::low_level::types::EntryName::try_from(name).map(Self)?)
     }
 
     fn __repr__(&self) -> PyResult<String> {
@@ -44,7 +44,7 @@ impl EntryName {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct WorkspaceEntry(pub libparsec::types::WorkspaceEntry);
+pub(crate) struct WorkspaceEntry(pub libparsec::low_level::types::WorkspaceEntry);
 
 crate::binding_utils::gen_proto!(WorkspaceEntry, __repr__);
 crate::binding_utils::gen_proto!(WorkspaceEntry, __copy__);
@@ -67,7 +67,7 @@ impl WorkspaceEntry {
             [role: Option<RealmRole>, "role"],
         );
 
-        Ok(Self(libparsec::types::WorkspaceEntry {
+        Ok(Self(libparsec::low_level::types::WorkspaceEntry {
             id: id.0,
             name: name.0,
             key: key.0,
@@ -121,7 +121,7 @@ impl WorkspaceEntry {
     #[classmethod]
     #[pyo3(name = "new")]
     fn class_new(_cls: &PyType, name: &EntryName, timestamp: DateTime) -> PyResult<Self> {
-        Ok(Self(libparsec::types::WorkspaceEntry::generate(
+        Ok(Self(libparsec::low_level::types::WorkspaceEntry::generate(
             name.0.to_owned(),
             timestamp.0,
         )))
@@ -169,7 +169,7 @@ impl WorkspaceEntry {
 
 #[pyclass]
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub(crate) struct BlockAccess(pub libparsec::types::BlockAccess);
+pub(crate) struct BlockAccess(pub libparsec::low_level::types::BlockAccess);
 
 crate::binding_utils::gen_proto!(BlockAccess, __repr__);
 crate::binding_utils::gen_proto!(BlockAccess, __copy__);
@@ -190,7 +190,7 @@ impl BlockAccess {
             [digest: HashDigest, "digest"],
         );
 
-        Ok(Self(libparsec::types::BlockAccess {
+        Ok(Self(libparsec::low_level::types::BlockAccess {
             id: id.0,
             key: key.0,
             offset,
@@ -264,7 +264,7 @@ impl BlockAccess {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct FileManifest(pub libparsec::types::FileManifest);
+pub(crate) struct FileManifest(pub libparsec::low_level::types::FileManifest);
 
 crate::binding_utils::gen_proto!(FileManifest, __repr__);
 crate::binding_utils::gen_proto!(FileManifest, __copy__);
@@ -290,7 +290,7 @@ impl FileManifest {
             [blocks: Vec<BlockAccess>, "blocks"],
         );
 
-        Ok(Self(libparsec::types::FileManifest {
+        Ok(Self(libparsec::low_level::types::FileManifest {
             author: author.0,
             timestamp: timestamp.0,
             id: id.0,
@@ -299,7 +299,7 @@ impl FileManifest {
             created: created.0,
             updated: updated.0,
             size,
-            blocksize: libparsec::types::Blocksize::try_from(blocksize)
+            blocksize: libparsec::low_level::types::Blocksize::try_from(blocksize)
                 .map_err(|_| PyValueError::new_err("Invalid `blocksize` field"))?,
             blocks: blocks.into_iter().map(|b| b.0).collect(),
         }))
@@ -337,16 +337,18 @@ impl FileManifest {
         expected_id: Option<EntryID>,
         expected_version: Option<u32>,
     ) -> DataResult<Self> {
-        Ok(libparsec::types::FileManifest::decrypt_verify_and_load(
-            encrypted,
-            &key.0,
-            &author_verify_key.0,
-            &expected_author.0,
-            expected_timestamp.0,
-            expected_id.map(|id| id.0),
-            expected_version,
+        Ok(
+            libparsec::low_level::types::FileManifest::decrypt_verify_and_load(
+                encrypted,
+                &key.0,
+                &author_verify_key.0,
+                &expected_author.0,
+                expected_timestamp.0,
+                expected_id.map(|id| id.0),
+                expected_version,
+            )
+            .map(Self)?,
         )
-        .map(Self)?)
     }
 
     #[args(py_kwargs = "**")]
@@ -392,7 +394,7 @@ impl FileManifest {
             r.size = v;
         }
         if let Some(v) = blocksize {
-            r.blocksize = libparsec::types::Blocksize::try_from(v)
+            r.blocksize = libparsec::low_level::types::Blocksize::try_from(v)
                 .map_err(|_| PyValueError::new_err("Invalid `blocksize` field"))?;
         }
         if let Some(v) = blocks {
@@ -461,7 +463,7 @@ impl FileManifest {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct FolderManifest(pub libparsec::types::FolderManifest);
+pub(crate) struct FolderManifest(pub libparsec::low_level::types::FolderManifest);
 
 crate::binding_utils::gen_proto!(FolderManifest, __repr__);
 crate::binding_utils::gen_proto!(FolderManifest, __copy__);
@@ -485,7 +487,7 @@ impl FolderManifest {
             [children: HashMap<EntryName, EntryID>, "children"],
         );
 
-        Ok(Self(libparsec::types::FolderManifest {
+        Ok(Self(libparsec::low_level::types::FolderManifest {
             author: author.0,
             timestamp: timestamp.0,
             version,
@@ -532,16 +534,18 @@ impl FolderManifest {
         expected_id: Option<EntryID>,
         expected_version: Option<u32>,
     ) -> DataResult<Self> {
-        Ok(libparsec::types::FolderManifest::decrypt_verify_and_load(
-            encrypted,
-            &key.0,
-            &author_verify_key.0,
-            &expected_author.0,
-            expected_timestamp.0,
-            expected_id.map(|id| id.0),
-            expected_version,
+        Ok(
+            libparsec::low_level::types::FolderManifest::decrypt_verify_and_load(
+                encrypted,
+                &key.0,
+                &author_verify_key.0,
+                &expected_author.0,
+                expected_timestamp.0,
+                expected_id.map(|id| id.0),
+                expected_version,
+            )
+            .map(Self)?,
         )
-        .map(Self)?)
     }
 
     #[args(py_kwargs = "**")]
@@ -638,7 +642,7 @@ impl FolderManifest {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct WorkspaceManifest(pub libparsec::types::WorkspaceManifest);
+pub(crate) struct WorkspaceManifest(pub libparsec::low_level::types::WorkspaceManifest);
 
 crate::binding_utils::gen_proto!(WorkspaceManifest, __repr__);
 crate::binding_utils::gen_proto!(WorkspaceManifest, __copy__);
@@ -661,7 +665,7 @@ impl WorkspaceManifest {
             [children: HashMap<EntryName, EntryID>, "children"],
         );
 
-        Ok(Self(libparsec::types::WorkspaceManifest {
+        Ok(Self(libparsec::low_level::types::WorkspaceManifest {
             author: author.0,
             timestamp: timestamp.0,
             id: id.0,
@@ -708,7 +712,7 @@ impl WorkspaceManifest {
         expected_version: Option<u32>,
     ) -> DataResult<Self> {
         Ok(
-            libparsec::types::WorkspaceManifest::decrypt_verify_and_load(
+            libparsec::low_level::types::WorkspaceManifest::decrypt_verify_and_load(
                 encrypted,
                 &key.0,
                 &author_verify_key.0,
@@ -806,7 +810,7 @@ impl WorkspaceManifest {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct UserManifest(pub libparsec::types::UserManifest);
+pub(crate) struct UserManifest(pub libparsec::low_level::types::UserManifest);
 
 crate::binding_utils::gen_proto!(UserManifest, __repr__);
 crate::binding_utils::gen_proto!(UserManifest, __copy__);
@@ -830,7 +834,7 @@ impl UserManifest {
             [workspaces: Vec<WorkspaceEntry>, "workspaces"],
         );
 
-        Ok(Self(libparsec::types::UserManifest {
+        Ok(Self(libparsec::low_level::types::UserManifest {
             author: author.0,
             timestamp: timestamp.0,
             id: id.0,
@@ -874,16 +878,18 @@ impl UserManifest {
         expected_id: Option<EntryID>,
         expected_version: Option<u32>,
     ) -> DataResult<Self> {
-        Ok(libparsec::types::UserManifest::decrypt_verify_and_load(
-            encrypted,
-            &key.0,
-            &author_verify_key.0,
-            &expected_author.0,
-            expected_timestamp.0,
-            expected_id.map(|id| id.0),
-            expected_version,
+        Ok(
+            libparsec::low_level::types::UserManifest::decrypt_verify_and_load(
+                encrypted,
+                &key.0,
+                &author_verify_key.0,
+                &expected_author.0,
+                expected_timestamp.0,
+                expected_id.map(|id| id.0),
+                expected_version,
+            )
+            .map(Self)?,
         )
-        .map(Self)?)
     }
 
     #[args(py_kwargs = "**")]

@@ -25,7 +25,7 @@ impl<T: Clone> Clone for Receiver<T> {
 }
 
 impl<T> Sender<T> {
-    pub fn send(&mut self, _value: T) -> Result<(), ()> {
+    pub fn send(&self, _value: T) -> Result<(), ()> {
         Ok(())
     }
 }

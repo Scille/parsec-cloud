@@ -6,7 +6,9 @@ use crate::enumerate::UserProfile;
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct UsersPerProfileDetailItem(pub libparsec::types::UsersPerProfileDetailItem);
+pub(crate) struct UsersPerProfileDetailItem(
+    pub libparsec::low_level::types::UsersPerProfileDetailItem,
+);
 
 crate::binding_utils::gen_proto!(UsersPerProfileDetailItem, __repr__);
 crate::binding_utils::gen_proto!(UsersPerProfileDetailItem, __copy__);
@@ -17,11 +19,13 @@ crate::binding_utils::gen_proto!(UsersPerProfileDetailItem, __richcmp__, eq);
 impl UsersPerProfileDetailItem {
     #[new]
     fn new(profile: UserProfile, active: u64, revoked: u64) -> PyResult<Self> {
-        Ok(Self(libparsec::types::UsersPerProfileDetailItem {
-            profile: profile.0,
-            active,
-            revoked,
-        }))
+        Ok(Self(
+            libparsec::low_level::types::UsersPerProfileDetailItem {
+                profile: profile.0,
+                active,
+                revoked,
+            },
+        ))
     }
 
     #[getter]

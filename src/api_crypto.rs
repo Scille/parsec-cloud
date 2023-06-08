@@ -29,7 +29,7 @@ pub(crate) fn add_mod(py: Python, m: &PyModule) -> PyResult<()> {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct HashDigest(pub libparsec::crypto::HashDigest);
+pub(crate) struct HashDigest(pub libparsec::low_level::crypto::HashDigest);
 
 crate::binding_utils::gen_proto!(HashDigest, __repr__);
 crate::binding_utils::gen_proto!(HashDigest, __copy__);
@@ -40,7 +40,7 @@ crate::binding_utils::gen_proto!(HashDigest, __richcmp__, eq);
 impl HashDigest {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
-        libparsec::crypto::HashDigest::try_from(data)
+        libparsec::low_level::crypto::HashDigest::try_from(data)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -54,7 +54,9 @@ impl HashDigest {
             Ok(x) => unsafe { x.as_bytes() },
             Err(_) => data.extract::<&PyBytes>(py)?.as_bytes(),
         };
-        Ok(Self(libparsec::crypto::HashDigest::from_data(bytes)))
+        Ok(Self(libparsec::low_level::crypto::HashDigest::from_data(
+            bytes,
+        )))
     }
 
     #[getter]
@@ -69,7 +71,7 @@ impl HashDigest {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct SigningKey(pub libparsec::crypto::SigningKey);
+pub(crate) struct SigningKey(pub libparsec::low_level::crypto::SigningKey);
 
 crate::binding_utils::gen_proto!(SigningKey, __repr__);
 crate::binding_utils::gen_proto!(SigningKey, __copy__);
@@ -80,7 +82,7 @@ crate::binding_utils::gen_proto!(SigningKey, __richcmp__, eq);
 impl SigningKey {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
-        libparsec::crypto::SigningKey::try_from(data)
+        libparsec::low_level::crypto::SigningKey::try_from(data)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -92,7 +94,7 @@ impl SigningKey {
 
     #[classmethod]
     fn generate(_cls: &PyType) -> Self {
-        Self(libparsec::crypto::SigningKey::generate())
+        Self(libparsec::low_level::crypto::SigningKey::generate())
     }
 
     /// Return the signature + the signed data
@@ -112,7 +114,7 @@ impl SigningKey {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct VerifyKey(pub libparsec::crypto::VerifyKey);
+pub(crate) struct VerifyKey(pub libparsec::low_level::crypto::VerifyKey);
 
 crate::binding_utils::gen_proto!(VerifyKey, __repr__);
 crate::binding_utils::gen_proto!(VerifyKey, __copy__);
@@ -123,7 +125,7 @@ crate::binding_utils::gen_proto!(VerifyKey, __richcmp__, eq);
 impl VerifyKey {
     #[new]
     pub fn new(data: &[u8]) -> PyResult<Self> {
-        libparsec::crypto::VerifyKey::try_from(data)
+        libparsec::low_level::crypto::VerifyKey::try_from(data)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -141,8 +143,10 @@ impl VerifyKey {
     fn verify_with_signature(&self, signature: &[u8], message: &[u8]) -> PyResult<()> {
         self.0
             .verify_with_signature(
-                <&[u8; libparsec::crypto::SigningKey::SIGNATURE_SIZE]>::try_from(signature)
-                    .map_err(|_| CryptoError::new_err("Invalid signature size"))?,
+                <&[u8; libparsec::low_level::crypto::SigningKey::SIGNATURE_SIZE]>::try_from(
+                    signature,
+                )
+                .map_err(|_| CryptoError::new_err("Invalid signature size"))?,
                 message,
             )
             .map_err(|_| CryptoError::new_err("Signature was forged or corrupt"))
@@ -154,7 +158,7 @@ impl VerifyKey {
         py: Python<'py>,
         signed: &[u8],
     ) -> PyResult<&'py PyBytes> {
-        let (_, message) = libparsec::crypto::VerifyKey::unsecure_unwrap(signed)
+        let (_, message) = libparsec::low_level::crypto::VerifyKey::unsecure_unwrap(signed)
             .map_err(|_| CryptoError::new_err("Signature was forged or corrupt"))?;
         Ok(PyBytes::new(py, message))
     }
@@ -170,7 +174,7 @@ impl VerifyKey {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct SecretKey(pub libparsec::crypto::SecretKey);
+pub(crate) struct SecretKey(pub libparsec::low_level::crypto::SecretKey);
 
 crate::binding_utils::gen_proto!(SecretKey, __repr__);
 crate::binding_utils::gen_proto!(SecretKey, __copy__);
@@ -181,14 +185,14 @@ crate::binding_utils::gen_proto!(SecretKey, __richcmp__, eq);
 impl SecretKey {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
-        libparsec::crypto::SecretKey::try_from(data)
+        libparsec::low_level::crypto::SecretKey::try_from(data)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
 
     #[classmethod]
     fn generate(_cls: &PyType) -> Self {
-        Self(libparsec::crypto::SecretKey::generate())
+        Self(libparsec::low_level::crypto::SecretKey::generate())
     }
 
     #[getter]
@@ -220,25 +224,29 @@ impl SecretKey {
 
     #[classmethod]
     fn generate_salt<'py>(_cls: &PyType, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &libparsec::crypto::SecretKey::generate_salt())
+        PyBytes::new(
+            py,
+            &libparsec::low_level::crypto::SecretKey::generate_salt(),
+        )
     }
 
     #[classmethod]
     fn from_password(_cls: &PyType, password: &str, salt: &[u8]) -> PyResult<Self> {
-        libparsec::crypto::SecretKey::from_password(password, salt)
+        libparsec::low_level::crypto::SecretKey::from_password(password, salt)
             .map(Self)
             .map_err(|err| CryptoError::new_err(err.to_string()))
     }
 
     #[classmethod]
     fn generate_recovery_passphrase(_cls: &PyType) -> (String, Self) {
-        let (passphrase, key) = libparsec::crypto::SecretKey::generate_recovery_passphrase();
+        let (passphrase, key) =
+            libparsec::low_level::crypto::SecretKey::generate_recovery_passphrase();
         (passphrase, Self(key))
     }
 
     #[classmethod]
     fn from_recovery_passphrase(_cls: &PyType, passphrase: &str) -> PyResult<Self> {
-        libparsec::crypto::SecretKey::from_recovery_passphrase(passphrase)
+        libparsec::low_level::crypto::SecretKey::from_recovery_passphrase(passphrase)
             .map(Self)
             .map_err(|err| CryptoError::new_err(err.to_string()))
     }
@@ -246,7 +254,7 @@ impl SecretKey {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct PrivateKey(pub libparsec::crypto::PrivateKey);
+pub(crate) struct PrivateKey(pub libparsec::low_level::crypto::PrivateKey);
 
 crate::binding_utils::gen_proto!(PrivateKey, __repr__);
 crate::binding_utils::gen_proto!(PrivateKey, __copy__);
@@ -257,19 +265,21 @@ crate::binding_utils::gen_proto!(PrivateKey, __richcmp__, eq);
 impl PrivateKey {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
-        libparsec::crypto::PrivateKey::try_from(data)
+        libparsec::low_level::crypto::PrivateKey::try_from(data)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
 
     #[classmethod]
     fn generate(_cls: &PyType) -> Self {
-        PrivateKey(libparsec::crypto::PrivateKey::generate())
+        PrivateKey(libparsec::low_level::crypto::PrivateKey::generate())
     }
 
     #[getter]
     fn public_key(&self) -> PublicKey {
-        PublicKey(libparsec::crypto::PrivateKey::public_key(&self.0))
+        PublicKey(libparsec::low_level::crypto::PrivateKey::public_key(
+            &self.0,
+        ))
     }
 
     fn decrypt_from_self<'py>(&self, py: Python<'py>, ciphered: &[u8]) -> PyResult<&'py PyBytes> {
@@ -290,7 +300,7 @@ impl PrivateKey {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct PublicKey(pub libparsec::crypto::PublicKey);
+pub(crate) struct PublicKey(pub libparsec::low_level::crypto::PublicKey);
 
 crate::binding_utils::gen_proto!(PublicKey, __repr__);
 crate::binding_utils::gen_proto!(PublicKey, __copy__);
@@ -301,7 +311,7 @@ crate::binding_utils::gen_proto!(PublicKey, __richcmp__, eq);
 impl PublicKey {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
-        libparsec::crypto::PublicKey::try_from(data)
+        libparsec::low_level::crypto::PublicKey::try_from(data)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -324,7 +334,7 @@ impl PublicKey {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct SequesterPrivateKeyDer(pub libparsec::crypto::SequesterPrivateKeyDer);
+pub(crate) struct SequesterPrivateKeyDer(pub libparsec::low_level::crypto::SequesterPrivateKeyDer);
 
 crate::binding_utils::gen_proto!(SequesterPrivateKeyDer, __repr__);
 crate::binding_utils::gen_proto!(SequesterPrivateKeyDer, __copy__);
@@ -334,7 +344,7 @@ crate::binding_utils::gen_proto!(SequesterPrivateKeyDer, __deepcopy__);
 impl SequesterPrivateKeyDer {
     #[new]
     pub fn new(data: &[u8]) -> PyResult<Self> {
-        libparsec::crypto::SequesterPrivateKeyDer::try_from(data)
+        libparsec::low_level::crypto::SequesterPrivateKeyDer::try_from(data)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -346,17 +356,17 @@ impl SequesterPrivateKeyDer {
         size_in_bits: usize,
     ) -> PyResult<(Self, SequesterPublicKeyDer)> {
         let (priv_key, pub_key) =
-            libparsec::crypto::SequesterPrivateKeyDer::generate_pair(match size_in_bits {
-                1024 => libparsec::crypto::SequesterKeySize::_1024Bits,
-                2048 => libparsec::crypto::SequesterKeySize::_2048Bits,
-                3072 => libparsec::crypto::SequesterKeySize::_3072Bits,
-                4096 => libparsec::crypto::SequesterKeySize::_4096Bits,
-                _ => {
-                    return Err(PyValueError::new_err(
+            libparsec::low_level::crypto::SequesterPrivateKeyDer::generate_pair(
+                match size_in_bits {
+                    1024 => libparsec::low_level::crypto::SequesterKeySize::_1024Bits,
+                    2048 => libparsec::low_level::crypto::SequesterKeySize::_2048Bits,
+                    3072 => libparsec::low_level::crypto::SequesterKeySize::_3072Bits,
+                    4096 => libparsec::low_level::crypto::SequesterKeySize::_4096Bits,
+                    _ => return Err(PyValueError::new_err(
                         "Invalid argument: size_in_bits must be equal to 1024 | 2048 | 3072 | 4096",
-                    ))
-                }
-            });
+                    )),
+                },
+            );
         Ok((Self(priv_key), SequesterPublicKeyDer(pub_key)))
     }
 
@@ -370,7 +380,7 @@ impl SequesterPrivateKeyDer {
 
     #[classmethod]
     fn load_pem(_cls: &PyType, s: &str) -> PyResult<Self> {
-        libparsec::crypto::SequesterPrivateKeyDer::load_pem(s)
+        libparsec::low_level::crypto::SequesterPrivateKeyDer::load_pem(s)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -385,7 +395,7 @@ impl SequesterPrivateKeyDer {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct SequesterPublicKeyDer(pub libparsec::crypto::SequesterPublicKeyDer);
+pub(crate) struct SequesterPublicKeyDer(pub libparsec::low_level::crypto::SequesterPublicKeyDer);
 
 crate::binding_utils::gen_proto!(SequesterPublicKeyDer, __repr__);
 crate::binding_utils::gen_proto!(SequesterPublicKeyDer, __copy__);
@@ -396,7 +406,7 @@ crate::binding_utils::gen_proto!(SequesterPublicKeyDer, __richcmp__, eq);
 impl SequesterPublicKeyDer {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
-        libparsec::crypto::SequesterPublicKeyDer::try_from(data)
+        libparsec::low_level::crypto::SequesterPublicKeyDer::try_from(data)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -411,7 +421,7 @@ impl SequesterPublicKeyDer {
 
     #[classmethod]
     fn load_pem(_cls: &PyType, s: &str) -> PyResult<Self> {
-        libparsec::crypto::SequesterPublicKeyDer::load_pem(s)
+        libparsec::low_level::crypto::SequesterPublicKeyDer::load_pem(s)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -423,7 +433,7 @@ impl SequesterPublicKeyDer {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct SequesterSigningKeyDer(pub libparsec::crypto::SequesterSigningKeyDer);
+pub(crate) struct SequesterSigningKeyDer(pub libparsec::low_level::crypto::SequesterSigningKeyDer);
 
 crate::binding_utils::gen_proto!(SequesterSigningKeyDer, __repr__);
 crate::binding_utils::gen_proto!(SequesterSigningKeyDer, __copy__);
@@ -433,7 +443,7 @@ crate::binding_utils::gen_proto!(SequesterSigningKeyDer, __deepcopy__);
 impl SequesterSigningKeyDer {
     #[new]
     pub fn new(data: &[u8]) -> PyResult<Self> {
-        libparsec::crypto::SequesterSigningKeyDer::try_from(data)
+        libparsec::low_level::crypto::SequesterSigningKeyDer::try_from(data)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -445,17 +455,17 @@ impl SequesterSigningKeyDer {
         size_in_bits: usize,
     ) -> PyResult<(Self, SequesterVerifyKeyDer)> {
         let (priv_key, pub_key) =
-            libparsec::crypto::SequesterSigningKeyDer::generate_pair(match size_in_bits {
-                1024 => libparsec::crypto::SequesterKeySize::_1024Bits,
-                2048 => libparsec::crypto::SequesterKeySize::_2048Bits,
-                3072 => libparsec::crypto::SequesterKeySize::_3072Bits,
-                4096 => libparsec::crypto::SequesterKeySize::_4096Bits,
-                _ => {
-                    return Err(PyValueError::new_err(
+            libparsec::low_level::crypto::SequesterSigningKeyDer::generate_pair(
+                match size_in_bits {
+                    1024 => libparsec::low_level::crypto::SequesterKeySize::_1024Bits,
+                    2048 => libparsec::low_level::crypto::SequesterKeySize::_2048Bits,
+                    3072 => libparsec::low_level::crypto::SequesterKeySize::_3072Bits,
+                    4096 => libparsec::low_level::crypto::SequesterKeySize::_4096Bits,
+                    _ => return Err(PyValueError::new_err(
                         "Invalid argument: size_in_bits must be equal to 1024 | 2048 | 3072 | 4096",
-                    ))
-                }
-            });
+                    )),
+                },
+            );
         Ok((Self(priv_key), SequesterVerifyKeyDer(pub_key)))
     }
 
@@ -469,7 +479,7 @@ impl SequesterSigningKeyDer {
 
     #[classmethod]
     fn load_pem(_cls: &PyType, s: &str) -> PyResult<Self> {
-        libparsec::crypto::SequesterSigningKeyDer::load_pem(s)
+        libparsec::low_level::crypto::SequesterSigningKeyDer::load_pem(s)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -481,7 +491,7 @@ impl SequesterSigningKeyDer {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct SequesterVerifyKeyDer(pub libparsec::crypto::SequesterVerifyKeyDer);
+pub(crate) struct SequesterVerifyKeyDer(pub libparsec::low_level::crypto::SequesterVerifyKeyDer);
 
 crate::binding_utils::gen_proto!(SequesterVerifyKeyDer, __repr__);
 crate::binding_utils::gen_proto!(SequesterVerifyKeyDer, __copy__);
@@ -491,7 +501,7 @@ crate::binding_utils::gen_proto!(SequesterVerifyKeyDer, __deepcopy__);
 impl SequesterVerifyKeyDer {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
-        libparsec::crypto::SequesterVerifyKeyDer::try_from(data)
+        libparsec::low_level::crypto::SequesterVerifyKeyDer::try_from(data)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -506,7 +516,7 @@ impl SequesterVerifyKeyDer {
 
     #[classmethod]
     fn load_pem(_cls: &PyType, s: &str) -> PyResult<Self> {
-        libparsec::crypto::SequesterVerifyKeyDer::load_pem(s)
+        libparsec::low_level::crypto::SequesterVerifyKeyDer::load_pem(s)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -521,5 +531,5 @@ impl SequesterVerifyKeyDer {
 
 #[pyfunction]
 pub(crate) fn generate_nonce(py: Python<'_>) -> &PyBytes {
-    PyBytes::new(py, &libparsec::crypto::generate_nonce())
+    PyBytes::new(py, &libparsec::low_level::crypto::generate_nonce())
 }

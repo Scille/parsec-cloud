@@ -5,8 +5,12 @@ use pyo3::{
     PyErr,
 };
 
-crate::binding_utils::create_exception!(Data, PyException, libparsec::types::DataError);
-crate::binding_utils::create_exception!(EntryName, PyValueError, libparsec::types::EntryNameError);
+crate::binding_utils::create_exception!(Data, PyException, libparsec::low_level::types::DataError);
+crate::binding_utils::create_exception!(
+    EntryName,
+    PyValueError,
+    libparsec::low_level::types::EntryNameError
+);
 
 // PkiEnrollmentError
 
@@ -36,11 +40,13 @@ pyo3::create_exception!(
     PkiEnrollmentLocalPendingError
 );
 
-pub(crate) struct PkiEnrollmentLocalPendingExc(libparsec::types::PkiEnrollmentLocalPendingError);
+pub(crate) struct PkiEnrollmentLocalPendingExc(
+    libparsec::low_level::types::PkiEnrollmentLocalPendingError,
+);
 
 impl From<PkiEnrollmentLocalPendingExc> for PyErr {
     fn from(err: PkiEnrollmentLocalPendingExc) -> Self {
-        use libparsec::types::PkiEnrollmentLocalPendingError::*;
+        use libparsec::low_level::types::PkiEnrollmentLocalPendingError::*;
         match err.0 {
             CannotRead { .. } => {
                 PkiEnrollmentLocalPendingCannotReadError::new_err(err.0.to_string())
@@ -58,8 +64,10 @@ impl From<PkiEnrollmentLocalPendingExc> for PyErr {
     }
 }
 
-impl From<libparsec::types::PkiEnrollmentLocalPendingError> for PkiEnrollmentLocalPendingExc {
-    fn from(err: libparsec::types::PkiEnrollmentLocalPendingError) -> Self {
+impl From<libparsec::low_level::types::PkiEnrollmentLocalPendingError>
+    for PkiEnrollmentLocalPendingExc
+{
+    fn from(err: libparsec::low_level::types::PkiEnrollmentLocalPendingError) -> Self {
         PkiEnrollmentLocalPendingExc(err)
     }
 }

@@ -10,7 +10,7 @@ use crate::{
 };
 
 #[pyclass]
-pub(crate) struct OrganizationStats(pub libparsec::types::OrganizationStats);
+pub(crate) struct OrganizationStats(pub libparsec::low_level::types::OrganizationStats);
 
 crate::binding_utils::gen_proto!(OrganizationStats, __repr__);
 crate::binding_utils::gen_proto!(OrganizationStats, __copy__);
@@ -28,7 +28,7 @@ impl OrganizationStats {
         metadata_size: u64,
         users_per_profile_detail: Vec<UsersPerProfileDetailItem>,
     ) -> Self {
-        Self(libparsec::types::OrganizationStats {
+        Self(libparsec::low_level::types::OrganizationStats {
             users,
             active_users,
             realms,
@@ -76,7 +76,7 @@ impl OrganizationStats {
 }
 
 #[pyclass]
-pub(crate) struct OrganizationConfig(libparsec::types::OrganizationConfig);
+pub(crate) struct OrganizationConfig(libparsec::low_level::types::OrganizationConfig);
 
 crate::binding_utils::gen_proto!(OrganizationConfig, __repr__);
 crate::binding_utils::gen_proto!(OrganizationConfig, __copy__);
@@ -93,7 +93,7 @@ impl OrganizationConfig {
         sequester_services: Option<Vec<BytesWrapper>>,
     ) -> Self {
         crate::binding_utils::unwrap_bytes!(sequester_authority, sequester_services);
-        Self(libparsec::types::OrganizationConfig {
+        Self(libparsec::low_level::types::OrganizationConfig {
             user_profile_outsider_allowed,
             active_users_limit: active_users_limit.0,
             sequester_authority,

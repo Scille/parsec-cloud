@@ -8,7 +8,25 @@ use std::{
 use once_cell::sync::OnceCell;
 use thiserror::Error;
 
+// TODO: support wasm32
+#[cfg(not(target_arch = "wasm32"))]
 use libparsec_client::RunningDevice;
+#[cfg(target_arch = "wasm32")]
+#[derive(Debug)]
+pub struct RunningDevice;
+#[cfg(target_arch = "wasm32")]
+impl RunningDevice {
+    pub fn device_id(&self) -> DeviceID {
+        unimplemented!()
+    }
+    pub async fn start(
+        _device: Arc<LocalDevice>,
+        _data_base_dir: &Path,
+    ) -> Result<Self, anyhow::Error> {
+        unimplemented!()
+    }
+}
+
 use libparsec_platform_async::Mutex;
 use libparsec_platform_device_loader::load_device_with_password;
 use libparsec_types::prelude::*;

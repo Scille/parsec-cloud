@@ -46,7 +46,7 @@ impl From<BytesWrapper<'_>> for Vec<u8> {
     }
 }
 
-impl From<BytesWrapper<'_>> for libparsec::types::Bytes {
+impl From<BytesWrapper<'_>> for libparsec::low_level::types::Bytes {
     fn from(wrapper: BytesWrapper) -> Self {
         match wrapper {
             BytesWrapper::Bytes(bytes) => bytes.as_bytes().to_owned().into(),
@@ -66,7 +66,7 @@ pub trait UnwrapBytesWrapper {
 }
 
 impl UnwrapBytesWrapper for BytesWrapper<'_> {
-    type ResultType = libparsec::types::Bytes;
+    type ResultType = libparsec::low_level::types::Bytes;
     fn unwrap_bytes(self) -> Self::ResultType {
         self.into()
     }

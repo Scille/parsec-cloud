@@ -474,7 +474,7 @@ mod time_provider {
                 // fired randomly (we just recompute the remaining time and go back to sleep).
                 if let Some(to_sleep) = to_sleep {
                     libparsec_platform_async::select!(
-                        _ = libparsec_platform_async::native::sleep(to_sleep).fuse() => break,
+                        _ = libparsec_platform_async::sleep(to_sleep).fuse() => break,
                         _ = config.changed().fuse() => {
                             recompute_time_we_have_to_sleep();
                         }

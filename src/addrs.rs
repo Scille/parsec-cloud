@@ -17,7 +17,7 @@ use crate::{
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct BackendAddr(pub libparsec::types::BackendAddr);
+pub(crate) struct BackendAddr(pub libparsec::low_level::types::BackendAddr);
 
 crate::binding_utils::gen_proto!(BackendAddr, __repr__);
 crate::binding_utils::gen_proto!(BackendAddr, __copy__);
@@ -29,7 +29,9 @@ crate::binding_utils::gen_proto!(BackendAddr, __hash__);
 impl BackendAddr {
     #[new]
     fn new(hostname: String, port: Option<u16>, use_ssl: bool) -> Self {
-        Self(libparsec::types::BackendAddr::new(hostname, port, use_ssl))
+        Self(libparsec::low_level::types::BackendAddr::new(
+            hostname, port, use_ssl,
+        ))
     }
 
     #[getter]
@@ -73,11 +75,11 @@ impl BackendAddr {
     #[args(allow_http_redirection = "false")]
     fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
         match allow_http_redirection {
-            true => match libparsec::types::BackendAddr::from_any(url) {
+            true => match libparsec::low_level::types::BackendAddr::from_any(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
                 Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
-            false => match libparsec::types::BackendAddr::from_str(url) {
+            false => match libparsec::low_level::types::BackendAddr::from_str(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
                 Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
@@ -87,7 +89,7 @@ impl BackendAddr {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct BackendOrganizationAddr(pub libparsec::types::BackendOrganizationAddr);
+pub(crate) struct BackendOrganizationAddr(pub libparsec::low_level::types::BackendOrganizationAddr);
 
 crate::binding_utils::gen_proto!(BackendOrganizationAddr, __repr__);
 crate::binding_utils::gen_proto!(BackendOrganizationAddr, __copy__);
@@ -120,11 +122,13 @@ impl BackendOrganizationAddr {
             ),
             None => return Err(PyValueError::new_err("Missing parameters")),
         };
-        Ok(Self(libparsec::types::BackendOrganizationAddr::new(
-            addr.0,
-            organization_id.0,
-            root_verify_key.0,
-        )))
+        Ok(Self(
+            libparsec::low_level::types::BackendOrganizationAddr::new(
+                addr.0,
+                organization_id.0,
+                root_verify_key.0,
+            ),
+        ))
     }
 
     fn get_backend_addr(&self) -> BackendAddr {
@@ -185,11 +189,11 @@ impl BackendOrganizationAddr {
     #[args(allow_http_redirection = "false")]
     fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
         match allow_http_redirection {
-            true => match libparsec::types::BackendOrganizationAddr::from_any(url) {
+            true => match libparsec::low_level::types::BackendOrganizationAddr::from_any(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
                 Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
-            false => match libparsec::types::BackendOrganizationAddr::from_str(url) {
+            false => match libparsec::low_level::types::BackendOrganizationAddr::from_str(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
                 Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
@@ -203,7 +207,7 @@ impl BackendOrganizationAddr {
         organization_id: OrganizationID,
         root_verify_key: VerifyKey,
     ) -> Self {
-        Self(libparsec::types::BackendOrganizationAddr::new(
+        Self(libparsec::low_level::types::BackendOrganizationAddr::new(
             backend_addr.0,
             organization_id.0,
             root_verify_key.0,
@@ -225,39 +229,39 @@ impl BackendActionAddr {
         allow_http_redirection: bool,
     ) -> PyResult<PyObject> {
         match allow_http_redirection {
-            true => match libparsec::types::BackendActionAddr::from_any(url) {
+            true => match libparsec::low_level::types::BackendActionAddr::from_any(url) {
                 Ok(ba) => match ba {
-                    libparsec::types::BackendActionAddr::OrganizationBootstrap(v) => {
+                    libparsec::low_level::types::BackendActionAddr::OrganizationBootstrap(v) => {
                         Ok(BackendOrganizationBootstrapAddr(v)
                             .into_py(py)
                             .to_object(py))
                     }
-                    libparsec::types::BackendActionAddr::OrganizationFileLink(v) => {
+                    libparsec::low_level::types::BackendActionAddr::OrganizationFileLink(v) => {
                         Ok(BackendOrganizationFileLinkAddr(v).into_py(py).to_object(py))
                     }
-                    libparsec::types::BackendActionAddr::Invitation(v) => {
+                    libparsec::low_level::types::BackendActionAddr::Invitation(v) => {
                         Ok(BackendInvitationAddr(v).into_py(py).to_object(py))
                     }
-                    libparsec::types::BackendActionAddr::PkiEnrollment(v) => {
+                    libparsec::low_level::types::BackendActionAddr::PkiEnrollment(v) => {
                         Ok(BackendPkiEnrollmentAddr(v).into_py(py).to_object(py))
                     }
                 },
                 Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
-            false => match url.parse::<libparsec::types::BackendActionAddr>() {
+            false => match url.parse::<libparsec::low_level::types::BackendActionAddr>() {
                 Ok(ba) => match ba {
-                    libparsec::types::BackendActionAddr::OrganizationBootstrap(v) => {
+                    libparsec::low_level::types::BackendActionAddr::OrganizationBootstrap(v) => {
                         Ok(BackendOrganizationBootstrapAddr(v)
                             .into_py(py)
                             .to_object(py))
                     }
-                    libparsec::types::BackendActionAddr::OrganizationFileLink(v) => {
+                    libparsec::low_level::types::BackendActionAddr::OrganizationFileLink(v) => {
                         Ok(BackendOrganizationFileLinkAddr(v).into_py(py).to_object(py))
                     }
-                    libparsec::types::BackendActionAddr::Invitation(v) => {
+                    libparsec::low_level::types::BackendActionAddr::Invitation(v) => {
                         Ok(BackendInvitationAddr(v).into_py(py).to_object(py))
                     }
-                    libparsec::types::BackendActionAddr::PkiEnrollment(v) => {
+                    libparsec::low_level::types::BackendActionAddr::PkiEnrollment(v) => {
                         Ok(BackendPkiEnrollmentAddr(v).into_py(py).to_object(py))
                     }
                 },
@@ -270,7 +274,7 @@ impl BackendActionAddr {
 #[pyclass]
 #[derive(Clone)]
 pub(crate) struct BackendOrganizationBootstrapAddr(
-    pub libparsec::types::BackendOrganizationBootstrapAddr,
+    pub libparsec::low_level::types::BackendOrganizationBootstrapAddr,
 );
 
 crate::binding_utils::gen_proto!(BackendOrganizationBootstrapAddr, __repr__);
@@ -306,7 +310,7 @@ impl BackendOrganizationBootstrapAddr {
             None => return Err(PyValueError::new_err("Missing parameters")),
         };
         Ok(Self(
-            libparsec::types::BackendOrganizationBootstrapAddr::new(
+            libparsec::low_level::types::BackendOrganizationBootstrapAddr::new(
                 addr.0,
                 organization_id.0,
                 token,
@@ -384,14 +388,18 @@ impl BackendOrganizationBootstrapAddr {
     #[args(allow_http_redirection = "false")]
     fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
         match allow_http_redirection {
-            true => match libparsec::types::BackendOrganizationBootstrapAddr::from_any(url) {
-                Ok(backend_addr) => Ok(Self(backend_addr)),
-                Err(err) => Err(PyValueError::new_err(err.to_string())),
-            },
-            false => match libparsec::types::BackendOrganizationBootstrapAddr::from_str(url) {
-                Ok(backend_addr) => Ok(Self(backend_addr)),
-                Err(err) => Err(PyValueError::new_err(err.to_string())),
-            },
+            true => {
+                match libparsec::low_level::types::BackendOrganizationBootstrapAddr::from_any(url) {
+                    Ok(backend_addr) => Ok(Self(backend_addr)),
+                    Err(err) => Err(PyValueError::new_err(err.to_string())),
+                }
+            }
+            false => {
+                match libparsec::low_level::types::BackendOrganizationBootstrapAddr::from_str(url) {
+                    Ok(backend_addr) => Ok(Self(backend_addr)),
+                    Err(err) => Err(PyValueError::new_err(err.to_string())),
+                }
+            }
         }
     }
 
@@ -402,18 +410,20 @@ impl BackendOrganizationBootstrapAddr {
         organization_id: OrganizationID,
         token: Option<String>,
     ) -> Self {
-        Self(libparsec::types::BackendOrganizationBootstrapAddr::new(
-            backend_addr.0,
-            organization_id.0,
-            token,
-        ))
+        Self(
+            libparsec::low_level::types::BackendOrganizationBootstrapAddr::new(
+                backend_addr.0,
+                organization_id.0,
+                token,
+            ),
+        )
     }
 }
 
 #[pyclass]
 #[derive(Clone)]
 pub(crate) struct BackendOrganizationFileLinkAddr(
-    libparsec::types::BackendOrganizationFileLinkAddr,
+    libparsec::low_level::types::BackendOrganizationFileLinkAddr,
 );
 
 crate::binding_utils::gen_proto!(BackendOrganizationFileLinkAddr, __repr__);
@@ -452,7 +462,7 @@ impl BackendOrganizationFileLinkAddr {
             None => return Err(PyValueError::new_err("Missing parameters")),
         };
         Ok(Self(
-            libparsec::types::BackendOrganizationFileLinkAddr::new(
+            libparsec::low_level::types::BackendOrganizationFileLinkAddr::new(
                 addr.0,
                 organization_id.0,
                 workspace_id.0,
@@ -533,14 +543,18 @@ impl BackendOrganizationFileLinkAddr {
     #[args(allow_http_redirection = "false")]
     fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
         match allow_http_redirection {
-            true => match libparsec::types::BackendOrganizationFileLinkAddr::from_any(url) {
-                Ok(backend_addr) => Ok(Self(backend_addr)),
-                Err(err) => Err(PyValueError::new_err(err.to_string())),
-            },
-            false => match libparsec::types::BackendOrganizationFileLinkAddr::from_str(url) {
-                Ok(backend_addr) => Ok(Self(backend_addr)),
-                Err(err) => Err(PyValueError::new_err(err.to_string())),
-            },
+            true => {
+                match libparsec::low_level::types::BackendOrganizationFileLinkAddr::from_any(url) {
+                    Ok(backend_addr) => Ok(Self(backend_addr)),
+                    Err(err) => Err(PyValueError::new_err(err.to_string())),
+                }
+            }
+            false => {
+                match libparsec::low_level::types::BackendOrganizationFileLinkAddr::from_str(url) {
+                    Ok(backend_addr) => Ok(Self(backend_addr)),
+                    Err(err) => Err(PyValueError::new_err(err.to_string())),
+                }
+            }
         }
     }
 
@@ -554,19 +568,21 @@ impl BackendOrganizationFileLinkAddr {
         encrypted_timestamp: Option<BytesWrapper>,
     ) -> Self {
         crate::binding_utils::unwrap_bytes!(encrypted_path, encrypted_timestamp);
-        Self(libparsec::types::BackendOrganizationFileLinkAddr::new(
-            organization_addr.get_backend_addr().0,
-            organization_addr.organization_id().0,
-            workspace_id.0,
-            encrypted_path.to_vec(),
-            encrypted_timestamp.map(|e| e.to_vec()),
-        ))
+        Self(
+            libparsec::low_level::types::BackendOrganizationFileLinkAddr::new(
+                organization_addr.get_backend_addr().0,
+                organization_addr.organization_id().0,
+                workspace_id.0,
+                encrypted_path.to_vec(),
+                encrypted_timestamp.map(|e| e.to_vec()),
+            ),
+        )
     }
 }
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct BackendInvitationAddr(pub libparsec::types::BackendInvitationAddr);
+pub(crate) struct BackendInvitationAddr(pub libparsec::low_level::types::BackendInvitationAddr);
 
 crate::binding_utils::gen_proto!(BackendInvitationAddr, __repr__);
 crate::binding_utils::gen_proto!(BackendInvitationAddr, __copy__);
@@ -601,12 +617,14 @@ impl BackendInvitationAddr {
             ),
             None => return Err(PyValueError::new_err("Missing parameters")),
         };
-        Ok(Self(libparsec::types::BackendInvitationAddr::new(
-            addr.0,
-            organization_id.0,
-            invitation_type.0,
-            token.0,
-        )))
+        Ok(Self(
+            libparsec::low_level::types::BackendInvitationAddr::new(
+                addr.0,
+                organization_id.0,
+                invitation_type.0,
+                token.0,
+            ),
+        ))
     }
 
     #[getter]
@@ -676,11 +694,11 @@ impl BackendInvitationAddr {
     #[args(allow_http_redirection = "false")]
     fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
         match allow_http_redirection {
-            true => match libparsec::types::BackendInvitationAddr::from_any(url) {
+            true => match libparsec::low_level::types::BackendInvitationAddr::from_any(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
                 Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
-            false => match libparsec::types::BackendInvitationAddr::from_str(url) {
+            false => match libparsec::low_level::types::BackendInvitationAddr::from_str(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
                 Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
@@ -695,7 +713,7 @@ impl BackendInvitationAddr {
         invitation_type: InvitationType,
         token: InvitationToken,
     ) -> Self {
-        Self(libparsec::types::BackendInvitationAddr::new(
+        Self(libparsec::low_level::types::BackendInvitationAddr::new(
             backend_addr.0,
             organization_id.0,
             invitation_type.0,
@@ -706,7 +724,9 @@ impl BackendInvitationAddr {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct BackendPkiEnrollmentAddr(pub libparsec::types::BackendPkiEnrollmentAddr);
+pub(crate) struct BackendPkiEnrollmentAddr(
+    pub libparsec::low_level::types::BackendPkiEnrollmentAddr,
+);
 
 crate::binding_utils::gen_proto!(BackendPkiEnrollmentAddr, __repr__);
 crate::binding_utils::gen_proto!(BackendPkiEnrollmentAddr, __copy__);
@@ -736,10 +756,9 @@ impl BackendPkiEnrollmentAddr {
             ),
             None => return Err(PyValueError::new_err("Missing parameters")),
         };
-        Ok(Self(libparsec::types::BackendPkiEnrollmentAddr::new(
-            addr.0,
-            organization_id.0,
-        )))
+        Ok(Self(
+            libparsec::low_level::types::BackendPkiEnrollmentAddr::new(addr.0, organization_id.0),
+        ))
     }
 
     #[getter]
@@ -804,11 +823,11 @@ impl BackendPkiEnrollmentAddr {
     #[args(allow_http_redirection = "false")]
     fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
         match allow_http_redirection {
-            true => match libparsec::types::BackendPkiEnrollmentAddr::from_any(url) {
+            true => match libparsec::low_level::types::BackendPkiEnrollmentAddr::from_any(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
                 Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
-            false => match libparsec::types::BackendPkiEnrollmentAddr::from_str(url) {
+            false => match libparsec::low_level::types::BackendPkiEnrollmentAddr::from_str(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
                 Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
@@ -817,7 +836,7 @@ impl BackendPkiEnrollmentAddr {
 
     #[classmethod]
     fn build(_cls: &PyType, backend_addr: BackendAddr, organization_id: OrganizationID) -> Self {
-        Self(libparsec::types::BackendPkiEnrollmentAddr::new(
+        Self(libparsec::low_level::types::BackendPkiEnrollmentAddr::new(
             backend_addr.0,
             organization_id.0,
         ))
@@ -826,5 +845,5 @@ impl BackendPkiEnrollmentAddr {
 
 #[pyfunction]
 pub(crate) fn export_root_verify_key(key: &VerifyKey) -> String {
-    libparsec::types::export_root_verify_key(&key.0)
+    libparsec::low_level::types::export_root_verify_key(&key.0)
 }

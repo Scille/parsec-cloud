@@ -38,9 +38,7 @@ from parsec.sequester_export_reader import extract_workspace
 from tests.common import OrganizationFullData, customize_fixtures, sequester_service_factory
 
 
-@customize_fixtures(
-    real_data_storage=True, coolorg_is_sequestered_organization=True, adam_is_revoked=True
-)
+@customize_fixtures(coolorg_is_sequestered_organization=True, adam_is_revoked=True)
 @pytest.mark.postgresql
 @pytest.mark.trio
 async def test_sequester_export_full_run(
