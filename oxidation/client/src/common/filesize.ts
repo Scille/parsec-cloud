@@ -19,6 +19,10 @@ import { ComposerTranslation } from 'vue-i18n';
 
 function size(bytes: number, system: [number, string][]): string {
 
+  if (bytes < 0) {
+    throw Error('Bytes must be >= 0');
+  }
+
   // Iterate over factors, expecting them to be in increasing order
   let formattedAmount = '';
   let factor = 1;
