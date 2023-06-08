@@ -10,7 +10,6 @@ from itertools import chain, dropwhile
 from pathlib import Path
 from typing import Iterable, Iterator, Type
 
-
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -206,16 +205,13 @@ class SkipLicenser(Licenser):
 
 LICENSERS_MAP = {
     # First match is used
-    re.compile(r"^parsec/backend/.*\.sql$"): SqlBuslLicenser,
-    re.compile(r"^parsec/backend/.*\.(py|pyi)"): PythonBuslLicenser,
-    re.compile(r"^parsec/core/gui/_resources_rc.py$"): SkipLicenser,
-    re.compile(r"^parsec/core/gui/ui/"): SkipLicenser,
     re.compile(r"^oxidation/(.*/)?(target|node_modules|build|dist)/"): SkipLicenser,
     re.compile(r"^oxidation/.*\.rs$"): RustBuslLicenser,
     re.compile(r"^oxidation/.*\.(py|pyi)$"): PythonBuslLicenser,
     re.compile(r"^oxidation/.*\.sql$"): SqlBuslLicenser,
-    re.compile(r"^src/.*\.rs"): RustBuslLicenser,
-    re.compile(r"^windows-icon-handler/.*\.(cpp|h)$"): RustAgplLicenser,
+    re.compile(r"^server/parsec/backend/.*\.sql$"): SqlBuslLicenser,
+    re.compile(r"^server/parsec/backend/.*\.(py|pyi)"): PythonBuslLicenser,
+    re.compile(r"^server/src/.*\.rs"): RustBuslLicenser,
     re.compile(r"^docs/.*\.(py|pyi)$"): PythonBuslLicenser,
     re.compile(r"^docs/.*\.rst$"): RstBuslLicenser,
     # Js project is a minefield full of node_modules/build/dist/assets etc.
@@ -295,8 +291,7 @@ if __name__ == "__main__":
         nargs="*",
         type=Path,
         default=[
-            Path("parsec"),
-            Path("tests"),
+            Path("server"),
             Path("oxidation"),
             Path("windows-icon-handler"),
             Path("packaging"),

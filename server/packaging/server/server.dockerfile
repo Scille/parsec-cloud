@@ -6,23 +6,18 @@ WORKDIR /work
 # file will invalidate the cache.
 # Dockerfile must be move in the root directory prior to being run
 ADD --link \
-    build.py \
+    README.rst \
+    rust-toolchain.toml \
     Cargo.lock \
     Cargo.toml \
     make.py \
-    poetry.lock \
-    pyproject.toml \
-    rust-toolchain.toml \
-    setup.cfg \
-    README.rst \
-    packaging/server/res/build-backend.sh \
+    server/packaging/server/in-docker-build.sh \
     .
 
 ADD --link oxidation/libparsec/ oxidation/libparsec/
-ADD --link parsec/ parsec/
-ADD --link src/ src/
+ADD --link server/ server/
 
-RUN bash build-backend.sh
+RUN bash in-docker-build.sh
 
 #
 # 2) Bundle stage

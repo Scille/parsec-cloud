@@ -2,6 +2,7 @@
 oxidation/client
 oxidation/bindings
 oxidation/generate_test_data
+oxidation/libparsec_python
 target
 .cargo
 
@@ -12,14 +13,13 @@ target
 
 # Python test file & cache folder
 
-tests
+server/tests
+!server/tests/scripts/run_testbed_server.py
 __pycache__
 .hypothesis
 .mypy_cache
 .pytest_cache
-.ruff_cache
-parsec/core
-parsec/*.so
+server/parsec/*.so
 
 # Cov file
 htmlcov
@@ -30,11 +30,5 @@ json_schema
 logs
 licenses
 newsfragment
-packaging
-!packaging/server
-
-# Windows icon handler
-
-windows-icon-handler
-
-.cspell
+server/packaging
+!server/packaging/testbed-server

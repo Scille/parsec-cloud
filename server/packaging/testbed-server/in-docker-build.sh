@@ -14,12 +14,14 @@ export PATH="/root/.cargo/bin:$PATH"
 python -m venv venv
 
 # Compile in CI mode to reduce size while still retain `test-utils` feature
-POETRY_LIBPARSEC_BUILD_PROFILE=ci ./venv/bin/python -m pip install .[backend]
+POETRY_LIBPARSEC_BUILD_PROFILE=ci ./venv/bin/python -m pip install ./server
 
 # PSutil is among the dev requirements, retrieve it version and install it manually
-VERSION=$(grep "psutil-" ./poetry.lock | head -n 1 | sed -E 's/.*psutil-([0-9.]+).*/\1/') \
+VERSION=$(grep "psutil-" ./server/poetry.lock | head -n 1 | sed -E 's/.*psutil-([0-9.]+).*/\1/') \
     && ./venv/bin/python -m pip install psutil=="$VERSION"
 
+# Boto3/Botocore are pretty big dependencies and won't be used (given the testbed
+# server only uses the memory storage)
 rm -rf ./venv/lib/python3.9/site-packages/{boto3,botocore,pip,setuptools}
 
 (cd / && /work/venv/bin/python -m parsec.cli --version)

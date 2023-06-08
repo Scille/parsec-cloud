@@ -5,7 +5,7 @@ name = "aiofiles"
 version = "22.1.0"
 description = "File support for asyncio."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7,<4.0"
 files = [
     {file = "aiofiles-22.1.0-py3-none-any.whl", hash = "sha256:1142fa8e80dbae46bb6339573ad4c8c0841358f79c6eb50a493dceca14621bad"},
@@ -53,7 +53,7 @@ name = "asyncpg"
 version = "0.26.0"
 description = "An asyncio PostgreSQL driver"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6.0"
 files = [
     {file = "asyncpg-0.26.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:2ed3880b3aec8bda90548218fe0914d251d641f798382eda39a17abfc4910af0"},
@@ -186,7 +186,7 @@ name = "blinker"
 version = "1.5"
 description = "Fast, simple object-to-object and broadcast signaling"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 files = [
     {file = "blinker-1.5-py2.py3-none-any.whl", hash = "sha256:1eb563df6fdbc39eeddc177d953203f99f097e9bf0e2b8f9f3cf18b6ca425e36"},
@@ -198,7 +198,7 @@ name = "boto3"
 version = "1.25.1"
 description = "The AWS SDK for Python"
 category = "main"
-optional = true
+optional = false
 python-versions = ">= 3.7"
 files = [
     {file = "boto3-1.25.1-py3-none-any.whl", hash = "sha256:5684030fb1fa742c9bec33bee1a0829ff4b4bb2cdef40d9465969fdb55b501bc"},
@@ -572,7 +572,7 @@ name = "botocore"
 version = "1.28.5"
 description = "Low-level, data-driven core of boto 3."
 category = "main"
-optional = true
+optional = false
 python-versions = ">= 3.7"
 files = [
     {file = "botocore-1.28.5-py3-none-any.whl", hash = "sha256:5eb98c85e80fab6640342377ce947c86a003bbaf8427c2e7a03c8da0bdbb796c"},
@@ -971,7 +971,7 @@ name = "h2"
 version = "4.1.0"
 description = "HTTP/2 State-Machine based protocol implementation"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6.1"
 files = [
     {file = "h2-4.1.0-py3-none-any.whl", hash = "sha256:03a46bcf682256c95b5fd9e9a99c1323584c3eec6440d379b9903d709476bc6d"},
@@ -987,7 +987,7 @@ name = "hpack"
 version = "4.0.0"
 description = "Pure-Python HPACK header compression"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6.1"
 files = [
     {file = "hpack-4.0.0-py3-none-any.whl", hash = "sha256:84a076fad3dc9a9f8063ccb8041ef100867b1878b25ef0ee63847a5d53818a6c"},
@@ -999,7 +999,7 @@ name = "hypercorn"
 version = "0.13.2"
 description = "A ASGI Server based on Hyper libraries and inspired by Gunicorn"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 files = [
     {file = "Hypercorn-0.13.2-py3-none-any.whl", hash = "sha256:ca18f91ab3fa823cbe9e949738f9f2cc07027cd647c80d8f93e4b1a2a175f112"},
@@ -1024,7 +1024,7 @@ name = "hyperframe"
 version = "6.0.1"
 description = "HTTP/2 framing layer for Python"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6.1"
 files = [
     {file = "hyperframe-6.0.1-py3-none-any.whl", hash = "sha256:0ec6bafd80d8ad2195c4f03aacba3a8265e57bc4cff261e802bf39970ed02a15"},
@@ -1141,7 +1141,7 @@ name = "itsdangerous"
 version = "2.1.2"
 description = "Safely pass data to untrusted environments and back."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 files = [
     {file = "itsdangerous-2.1.2-py3-none-any.whl", hash = "sha256:2c2349112351b88699d8d4b6b075022c0808887cb7ad10069318a8b0bc88db44"},
@@ -1171,7 +1171,7 @@ name = "jmespath"
 version = "1.0.1"
 description = "JSON Matching Expressions"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 files = [
     {file = "jmespath-1.0.1-py3-none-any.whl", hash = "sha256:02e2e4cc71b5bcab88332eebf907519190dd9e6e82107fa7f83b1003a6252980"},
@@ -1440,7 +1440,7 @@ name = "pbr"
 version = "5.11.1"
 description = "Python Build Reasonableness"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=2.6"
 files = [
     {file = "pbr-5.11.1-py2.py3-none-any.whl", hash = "sha256:567f09558bae2b3ab53cb3c1e2e33e726ff3338e7bae3db5dc954b3a44eef12b"},
@@ -1499,7 +1499,7 @@ name = "priority"
 version = "2.0.0"
 description = "A pure-Python implementation of the HTTP/2 priority tree"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6.1"
 files = [
     {file = "priority-2.0.0-py3-none-any.whl", hash = "sha256:6f8eefce5f3ad59baf2c080a664037bb4725cd0a790d53d59ab4059288faf6aa"},
@@ -1662,7 +1662,7 @@ name = "python-dateutil"
 version = "2.8.2"
 description = "Extensions to the standard Python datetime module"
 category = "main"
-optional = true
+optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
 files = [
     {file = "python-dateutil-2.8.2.tar.gz", hash = "sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86"},
@@ -1677,7 +1677,7 @@ name = "python-swiftclient"
 version = "4.1.0"
 description = "OpenStack Object Storage API Client Library"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6"
 files = [
     {file = "python-swiftclient-4.1.0.tar.gz", hash = "sha256:f82298e4a48f7cbdd680f2638c85d1ca7ae1a76edbe30036d21b4cd7a29c09eb"},
@@ -1720,7 +1720,7 @@ name = "quart"
 version = "0.18.3"
 description = "A Python ASGI web microframework with the same API as Flask"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 files = [
     {file = "Quart-0.18.3-py3-none-any.whl", hash = "sha256:c221a7deb83a014dee040108d654b6141fe37f59e249c5caa0fdcf6506caf50b"},
@@ -1747,7 +1747,7 @@ name = "quart-trio"
 version = "0.10.0"
 description = "A Quart extension to provide trio support"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 files = [
     {file = "quart-trio-0.10.0.tar.gz", hash = "sha256:66d4a2f8c3c417741d0e9709e0270edcedfdc26a9daac9e348b374f51c6decf8"},
@@ -1816,7 +1816,7 @@ name = "s3transfer"
 version = "0.6.0"
 description = "An Amazon S3 Transfer Manager"
 category = "main"
-optional = true
+optional = false
 python-versions = ">= 3.7"
 files = [
     {file = "s3transfer-0.6.0-py3-none-any.whl", hash = "sha256:06176b74f3a15f61f1b4f25a1fc29a4429040b7647133a463da8fa5bd28d5ecd"},
@@ -1890,7 +1890,7 @@ name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 files = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
@@ -2207,7 +2207,7 @@ name = "trio-asyncio"
 version = "0.12.0"
 description = "A re-implementation of the asyncio mainloop on top of Trio"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6"
 files = [
     {file = "trio_asyncio-0.12.0-py3-none-any.whl", hash = "sha256:9bf678f83204ba33c395783681c69af563a84145fad2110a152a81a4a18ae7e4"},
@@ -2244,7 +2244,7 @@ name = "triopg"
 version = "0.6.0"
 description = "PostgreSQL client for Trio based on asyncpg"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6"
 files = [
     {file = "triopg-0.6.0-py3-none-any.whl", hash = "sha256:a65147183c0992d0902f6acdeb2b177bb23efbff1ca971ee4f480d02c9cd5442"},
@@ -2360,7 +2360,7 @@ name = "werkzeug"
 version = "2.2.3"
 description = "The comprehensive WSGI web application library."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 files = [
     {file = "Werkzeug-2.2.3-py3-none-any.whl", hash = "sha256:56433961bc1f12533306c624f3be5e744389ac61d722175d543e1751285da612"},
@@ -2435,10 +2435,7 @@ files = [
 docs = ["furo", "jaraco.packaging (>=9)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)"]
 testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools", "more-itertools", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=1.3)", "pytest-flake8", "pytest-mypy (>=0.9.1)"]
 
-[extras]
-backend = ["boto3", "botocore", "hypercorn", "jinja2", "pbr", "python-swiftclient", "quart", "quart-trio", "trio-asyncio", "triopg"]
-
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.9.10"
-content-hash = "34f0ff32acd7ef5c610e0d66464fe2302c33d6b2c693813e1817988e405c5cf1"
+content-hash = "e55494b75366e7425fa65ee5eb6f428252f685f1d76e5ee1fbcef12d35287a1c"

@@ -6,12 +6,13 @@ import subprocess
 import sys
 import tempfile
 import zipfile
+from typing import Any
 
 # The profile we pass to `make.py` to get the flags (cargo profile & features) for cargo build
 DEFAULT_BUILD_PROFILE = "release"
 
 
-def display(line: str):
+def display(line: str) -> None:
     YELLOW_FG = "\x1b[33m"
     DEFAULT_FG = "\x1b[39m"
 
@@ -24,13 +25,13 @@ PYTHON_EXECUTABLE_PATH = sys.executable
 display(f"PYTHON_EXECUTABLE_PATH={PYTHON_EXECUTABLE_PATH}")
 
 
-def run(cmd: str, **kwargs) -> subprocess.CompletedProcess:
+def run(cmd: str, **kwargs: Any) -> subprocess.CompletedProcess[bytes]:
     display(f">>> {cmd}")
     ret = subprocess.run(cmd, shell=True, check=True, **kwargs)
     return ret
 
 
-def build():
+def build() -> None:
     run(f"{PYTHON_EXECUTABLE_PATH} --version")
     run(f"maturin --version")
 
@@ -62,7 +63,7 @@ def build():
     # when compiling bindings unrelated to Python) on this sensible piece of configuration.
     build_profile = os.environ.get("POETRY_LIBPARSEC_BUILD_PROFILE", DEFAULT_BUILD_PROFILE)
     ret = run(
-        f"{PYTHON_EXECUTABLE_PATH} make.py --quiet python-{build_profile}-libparsec-cargo-flags",
+        f"{PYTHON_EXECUTABLE_PATH} {BASEDIR.parent}/make.py --quiet python-{build_profile}-libparsec-cargo-flags",
         stdout=subprocess.PIPE,
     )
     cargo_flags = ret.stdout.decode("ascii").strip()

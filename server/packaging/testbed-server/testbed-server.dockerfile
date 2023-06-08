@@ -12,26 +12,21 @@ WORKDIR /work
 # file will invalidate the cache.
 # Dockerfile must be move in the root directory prior to being run
 ADD --link \
-    build.py \
+    README.rst \
+    rust-toolchain.toml \
     Cargo.lock \
     Cargo.toml \
     make.py \
-    poetry.lock \
-    pyproject.toml \
-    rust-toolchain.toml \
-    setup.cfg \
-    README.rst \
-    packaging/testbed-server/build-testbed.sh \
+    server/packaging/testbed-server/in-docker-build.sh \
     .
-ADD --link oxidation/ oxidation/
-ADD --link parsec/ parsec/
-ADD --link src/ src/
+ADD --link oxidation/libparsec oxidation/libparsec
+ADD --link server/ server/
 
-RUN bash build-testbed.sh
+RUN bash in-docker-build.sh
 
-# #
-# # 2) Bundle stage
-# #
+#
+# 2) Bundle stage
+#
 
 FROM python:3.9-slim
 
@@ -41,7 +36,7 @@ LABEL org.opencontainers.image.description="Run a testbed parsec server to simpl
 USER 1234:1234
 WORKDIR /testbed
 
-COPY --chown=1234:1234 tests/scripts/run_testbed_server.py /testbed/.
+COPY --chown=1234:1234 server/tests/scripts/run_testbed_server.py /testbed/.
 COPY --chown=1234:1234 --from=builder /work/venv /testbed/venv
 
 EXPOSE 6777

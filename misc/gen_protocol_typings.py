@@ -134,7 +134,7 @@ def gen_reps(
     collected_items.append("Rep")
     collected_items.append("RepUnknownStatus")
 
-    code = f"""class Rep:
+    code = """class Rep:
     @staticmethod
     def load(raw: bytes) -> Rep: ...
     def dump(self) -> bytes: ...
@@ -363,7 +363,7 @@ if __name__ == "__main__":
         "--output",
         type=Path,
         help="Path to protocol typing dir",
-        default=BASEDIR / "parsec/_parsec_pyi/protocol",
+        default=BASEDIR / "server/parsec/_parsec_pyi/protocol",
     )
     args = parser.parse_args()
     # {<family>: {<version>: {<cmd>: [<collected items>]}}}

@@ -1,13 +1,13 @@
-name: package-ci
+name: package-server
 
 on:
   workflow_dispatch:
   pull_request:
     paths:
-      - .github/workflows/package-ci.yml
-      - packaging
-      - build.py
-      - pyproject.toml
+      - .github/workflows/package-server.yml
+      - server/packaging
+      - server/build.py
+      - server/pyproject.toml
   push:
     branches:
       - master
@@ -21,7 +21,7 @@ on:
 #
 # For that we use `head_ref` that is only defined on `pull-request` and fallback to `run_id` (this is a counter, so it's value is unique between workflow call).
 concurrency:
-  group: package-ci-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  group: package-server-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 env:
@@ -60,6 +60,7 @@ jobs:
         with:
           python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}
+          project-path: ./server
         timeout-minutes: 10
 
       - name: Get wheel version
@@ -75,13 +76,13 @@ jobs:
             VERSION=`git describe --tag`
           else
             # Use `<tag_name>+dev<commit_hash>` as version
-            VERSION=`sed -n 's/^__version__ = "\\(.*\\)"$/\\1/p' parsec/_version.py`
+            VERSION=`sed -n 's/^__version__ = "\\(.*\\)"$/\\1/p' server/parsec/_version.py`
             COMMIT=`git rev-parse --verify --short HEAD`
             VERSION="$VERSION.$COMMIT"
             # Customize version with tag
-            sed -i.back -e "s#^\\(__version__ = \\).*\$#\\1'$VERSION'#" parsec/_version.py
-            test $(grep -E '^version = ' -o pyproject.toml | wc -l) -eq 1  # Sanity check for the next sed
-            sed -i.back -e "s#^\\(version = \\).*\$#\\1'$VERSION'#" pyproject.toml
+            sed -i.back -e "s#^\\(__version__ = \\).*\$#\\1'$VERSION'#" server/parsec/_version.py
+            test $(grep -E '^version = ' -o server/pyproject.toml | wc -l) -eq 1  # Sanity check for the next sed
+            sed -i.back -e "s#^\\(version = \\).*\$#\\1'$VERSION'#" server/pyproject.toml
           fi
 
           echo "::warning title=Wheel version::$VERSION"
@@ -90,6 +91,7 @@ jobs:
       - name: Build wheel
         uses: pypa/cibuildwheel@51f5c7fe68ff24694d5a6ac0eb3ad476ddd062a8  # pin v2.13.0
         with:
+          package-dir: server
           output-dir: dist
         timeout-minutes: 50
 
@@ -121,7 +123,7 @@ jobs:
           rm -rf temp
 
       - name: Generate requirements & constraints infos
-        run: python packaging/wheel/wheel_it.py . --output dist --skip-wheel
+        run: python server/packaging/wheel/wheel_it.py ./server --output dist --skip-wheel
 
       - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.2
         with:

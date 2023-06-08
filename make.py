@@ -38,6 +38,7 @@ WEB_CI_CARGO_FLAGS = f"{WEB_DEV_CARGO_FLAGS} --profile=ci-rust"
 
 
 BASE_DIR = Path(__file__).parent.resolve()
+SERVER_DIR = BASE_DIR / "server"
 ELECTRON_DIR = BASE_DIR / "oxidation/bindings/electron"
 WEB_DIR = BASE_DIR / "oxidation/bindings/web"
 
@@ -133,9 +134,10 @@ class Cmd(Op):
 
 COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
     #
-    # Python bindings
+    # Python bindings for the server
     #
     ("python-dev-install", "i"): (
+        Cwd(SERVER_DIR),
         # Don't build rust as part of poetry install step.
         # This is because poetry creates a temporary virtualenv to run the
         # build in, hence the python interpreter path changes between
@@ -144,15 +146,21 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
         # (note only the first `maturin develop` is impacted, as all maturin
         # develop uses the same default virtualenv)
         Cmd(
-            cmd="poetry install -E backend --with=docs",
+            cmd="poetry install --with=docs",
             extra_env={"POETRY_LIBPARSEC_BUILD_STRATEGY": "no_build"},
         ),
-        Cmd(f"maturin develop {PYTHON_DEV_CARGO_FLAGS}"),
+        Cmd(f"poetry run maturin develop {PYTHON_DEV_CARGO_FLAGS}"),
     ),
-    ("python-dev-rebuild", "r"): Cmd(f"maturin develop {PYTHON_DEV_CARGO_FLAGS}"),
-    ("python-ci-install",): Cmd(
-        cmd="poetry install -E backend",
-        extra_env={"POETRY_LIBPARSEC_BUILD_PROFILE": "ci"},
+    ("python-dev-rebuild", "r"): (
+        Cwd(SERVER_DIR),
+        Cmd(f"poetry run maturin develop {PYTHON_DEV_CARGO_FLAGS}"),
+    ),
+    ("python-ci-install",): (
+        Cwd(SERVER_DIR),
+        Cmd(
+            cmd="poetry install",
+            extra_env={"POETRY_LIBPARSEC_BUILD_PROFILE": "ci"},
+        ),
     ),
     # Flags used in poetry's `build.py` when command is `python-ci-build`
     ("python-ci-libparsec-cargo-flags",): Echo(PYTHON_CI_CARGO_FLAGS),
@@ -169,13 +177,13 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
             cmd="npm install",
         ),
         Cmd(
-            cmd=f"npm run build:dev",
+            cmd="npm run build:dev",
         ),
     ),
     ("electron-dev-rebuild", "er"): (
         Cwd(ELECTRON_DIR),
         Cmd(
-            cmd=f"npm run build:dev",
+            cmd="npm run build:dev",
         ),
     ),
     ("electron-ci-install",): (
@@ -184,7 +192,7 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
             cmd="npm install",
         ),
         Cmd(
-            cmd=f"npm run build:ci",
+            cmd="npm run build:ci",
         ),
     ),
     # Flags used in `bindings/electron/scripts/build.js`
@@ -221,7 +229,7 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
             cmd="npm install",
         ),
         Cmd(
-            cmd=f"npm run build:ci",
+            cmd="npm run build:ci",
         ),
     ),
     # Flags used in `bindings/web/scripts/build.js`

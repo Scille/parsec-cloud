@@ -76,12 +76,14 @@ jobs:
         with:
           python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}
+          project-path: ./server
 
       - name: Install python deps
         if: steps.should-run-python-analysis.outputs.run == 'true'
         run: |
-          poetry install -E backend
+          poetry install
           poetry run sh -c 'echo "CODEQL_PYTHON=$(which python)"' >> $GITHUB_ENV
+        working-directory: server
         env:
           POETRY_LIBPARSEC_BUILD_STRATEGY: no_build
 

@@ -50,8 +50,8 @@ PROJECT_DIR = Path(__file__).resolve().parent.parent
 HISTORY_FILE = PROJECT_DIR / "HISTORY.rst"
 BUSL_LICENSE_FILE = PROJECT_DIR / "licenses/BUSL-Scille.txt"
 VERSION_UPDATER = PROJECT_DIR / "misc/version_updater.py"
-VERSION_FILE = PROJECT_DIR / "parsec/_version.py"
-PYPROJECT_FILE = PROJECT_DIR / "pyproject.toml"
+VERSION_FILE = PROJECT_DIR / "server/parsec/_version.py"
+PYPROJECT_FILE = PROJECT_DIR / "server/pyproject.toml"
 FILES_TO_COMMIT_ON_VERSION_CHANGE = [
     BUSL_LICENSE_FILE.absolute(),
     VERSION_FILE.absolute(),
@@ -547,13 +547,13 @@ def check_release(version: Version) -> None:
     code_version = get_version_from_code()
     if code_version != version:
         raise ReleaseError(
-            f"Invalid __version__ in parsec/_version.py: expected `{COLOR_YELLOW}{version}{COLOR_END}`, got `{COLOR_YELLOW}{code_version}{COLOR_END}`"
+            f"Invalid __version__ in server/parsec/_version.py: expected `{COLOR_YELLOW}{version}{COLOR_END}`, got `{COLOR_YELLOW}{code_version}{COLOR_END}`"
         )
     version_updater.check_tool(version_updater.Tool.Parsec, str(version), update=False)
     success()
 
     # Check newsfragments
-    print(f"Checking we dont have any left over fragment ...", end="")
+    print("Checking we dont have any left over fragment ...", end="")
     fragments = collect_newsfragments()
     if fragments:
         fragments_names = [fragment.name for fragment in fragments]
@@ -655,12 +655,12 @@ def rollback_main(args: argparse.Namespace) -> None:
     current_version = get_version_from_code()
     if not current_version.is_dev:
         raise ReleaseError(
-            f"Invalid __version__ in parsec/_version.py: expected {COLOR_YELLOW}vX.Y.Z+dev{COLOR_END}, got {COLOR_YELLOW}{current_version}{COLOR_END}"
+            f"Invalid __version__ in server/parsec/_version.py: expected {COLOR_YELLOW}vX.Y.Z+dev{COLOR_END}, got {COLOR_YELLOW}{current_version}{COLOR_END}"
         )
 
     version = current_version.evolve(local=None)
     print(
-        f"__version__ in parsec/_version.py contains version {COLOR_GREEN}{current_version}{COLOR_END}, hence we should rollback version {COLOR_GREEN}{version}{COLOR_END}"
+        f"__version__ in server/parsec/_version.py contains version {COLOR_GREEN}{current_version}{COLOR_END}, hence we should rollback version {COLOR_GREEN}{version}{COLOR_END}"
     )
 
     # Retrieve `Bump version vX.Y.A+dev -> vX.Y.B` and `Bump version vX.Y.B -> vX.Y.B+dev` commits

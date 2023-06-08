@@ -115,6 +115,7 @@ jobs:
         with:
           python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}
+          project-path: ./server
         timeout-minutes: 10
 
       # libparsec is slow to compile, so we save it in cache and skip the
@@ -125,7 +126,7 @@ jobs:
       - name: Setup cache-key
         if: steps.should-run-python-jobs.outputs.run == 'true'
         id: cache-key
-        run: echo "key=${{ matrix.os }}-${{ hashFiles('src/**', 'oxidation/libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-libparsec-python-${{ env.python-version }}" >> $GITHUB_OUTPUT
+        run: echo "key=${{ matrix.os }}-${{ hashFiles('server/src/**', 'server/Cargo.toml', 'oxidation/libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-libparsec-python-${{ env.python-version }}" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Restore libparsec if Rust hasn't been modified
@@ -135,8 +136,8 @@ jobs:
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
-            parsec/_parsec.*.pyd
-            parsec/_parsec.*.so
+            server/parsec/_parsec.*.pyd
+            server/parsec/_parsec.*.so
         timeout-minutes: 2
 
       - name: Setup Rust toolchain
@@ -167,7 +168,7 @@ jobs:
         shell: bash
         run: |
           set -ex
-          poetry env info
+          poetry --directory ./server env info
           if ${{ steps.cache-libparsec.outputs.cache-hit == 'true' }}; then export POETRY_LIBPARSEC_BUILD_STRATEGY=no_build; fi
           python make.py python-ci-install
         timeout-minutes: 20
@@ -212,14 +213,15 @@ jobs:
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
-            parsec/_parsec.*.pyd
-            parsec/_parsec.*.so
+            server/parsec/_parsec.*.pyd
+            server/parsec/_parsec.*.so
         timeout-minutes: 2
 
       - name: Basic tests
         if: steps.should-run-python-jobs.outputs.run == 'true'
         run: poetry run pytest ${{ env.pytest-base-args }} tests -n auto
         timeout-minutes: 10
+        working-directory: server
 
       # TODO: Postgresql implemetation is currently broken
       # - name: PostgreSQL tests
@@ -229,8 +231,10 @@ jobs:
       #     PGINSTALLATION: /usr/lib/postgresql/${{ env.postgresql-version }}/bin
       #   run: poetry run pytest ${{ env.pytest-base-args }} tests/backend tests/test_cli.py -k 'not test_shuffle_roles' --postgresql --runslow
       #   timeout-minutes: 20
+      #   working-directory: server
 
       - name: Hypothesis tests
         if: steps.should-run-python-jobs.outputs.run == 'true'
         run: poetry run pytest ${{ env.pytest-base-args }} tests --runslow -m slow --numprocesses auto
         timeout-minutes: 50
+        working-directory: server

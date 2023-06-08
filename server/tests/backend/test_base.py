@@ -43,7 +43,9 @@ async def test_bad_msg_format(alice_ws, kind):
 async def test_all_api_cmds_implemented(backend):
     from parsec import _parsec
 
-    schema_dir = (Path(__file__) / "../../../oxidation/libparsec/crates/protocol/schema/").resolve()
+    schema_dir = (
+        Path(__file__) / "../../../../oxidation/libparsec/crates/protocol/schema/"
+    ).resolve()
     for family_dir in schema_dir.iterdir():
         family_mod_name = family_dir.name
         for cmd_file in family_dir.glob("*.json5"):

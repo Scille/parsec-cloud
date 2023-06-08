@@ -14,9 +14,10 @@ export PATH="/root/.cargo/bin:$PATH"
 python -m venv venv
 
 # Compile in release mode
-POETRY_LIBPARSEC_BUILD_PROFILE=release ./venv/bin/python -m pip install .[backend]
+POETRY_LIBPARSEC_BUILD_PROFILE=release ./venv/bin/python -m pip install ./server
 
-# Remove some python package that aren't needed
+# Boto3/Botocore are pretty big dependencies and won't be used (given the testbed
+# server only uses the memory storage)
 rm -rf ./venv/lib/python3.9/site-packages/{boto3,botocore,pip,setuptools}
 
 # Basic to see if the wheel look like it's well built.

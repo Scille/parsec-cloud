@@ -10,6 +10,10 @@ inputs:
     description: Poetry version to install
     required: true
 
+  project-path:
+    description: Path to the directory containing the pyproject.toml
+    required: true
+
 runs:
   using: composite
   steps:
@@ -49,4 +53,4 @@ runs:
 
     - name: (*Nix) Configure poetry to use the installed python
       shell: ${{ runner.os != 'Windows' && 'bash' || 'pwsh' }}
-      run: poetry env use ${{ steps.setup-python.outputs.python-path }}
+      run: poetry -C ${{ inputs.project-path }} env use ${{ steps.setup-python.outputs.python-path }}

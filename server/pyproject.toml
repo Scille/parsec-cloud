@@ -3,7 +3,7 @@ name = "parsec-cloud"
 version = "v2.15.0+dev"
 description = "Secure cloud framework"
 authors = ["Scille SAS <contact@scille.fr>"]
-readme = "README.rst"
+readme = "../README.rst"
 homepage = "https://github.com/Scille/parsec-cloud"
 documentation = "https://docs.parsec.cloud"
 keywords = ["parsec", "cryptography", "sharing", "encryption"]
@@ -51,36 +51,20 @@ structlog = ">=21.5,<23.0"
 async_exit_stack = "^1.0"
 outcome = "^1.1"
 
-# Backend-only requirements
-
-jinja2 = { version="^3.0", optional=true }
+jinja2 = { version="^3.0" }
 # Quart
-quart-trio = { version="^0.10.0", optional=true }
-quart = { version="^0.18.1", optional=true }
-hypercorn = { version="^0.13.2", optional=true }
+quart-trio = { version="^0.10.0" }
+quart = { version="^0.18.1" }
+hypercorn = { version="^0.13.2" }
 # PostgreSQL
-triopg = { version="^0.6", optional=true }
-trio-asyncio = { version="^0.12", optional=true }
+triopg = { version="^0.6" }
+trio-asyncio = { version="^0.12" }
 # S3
-boto3 = { version="^1.23", optional=true }
-botocore = { version="^1.26", optional=true }
+boto3 = { version="^1.23" }
+botocore = { version="^1.26" }
 # Swift
-python-swiftclient = { version=">=3.13,<5.0", optional=true }
-pbr = { version="^5.9", optional=true }
-
-[tool.poetry.extras]
-backend = [
-    "jinja2",
-    "quart-trio",
-    "quart",
-    "hypercorn",
-    "triopg",
-    "trio-asyncio",
-    "boto3",
-    "botocore",
-    "python-swiftclient",
-    "pbr",
-]
+python-swiftclient = { version=">=3.13,<5.0" }
+pbr = { version="^5.9" }
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0"
@@ -170,10 +154,75 @@ extend-exclude = [
 ]
 
 [tool.ruff.isort]
-known-first-party = ["parsec"]
+known-first-party = ["parsec", "tests"]
 
 [tool.maturin]
 module-name = "parsec._parsec"
+
+[tool.mypy]
+mypy_path = "$MYPY_CONFIG_FILE_DIR:$MYPY_CONFIG_FILE_DIR/parsec/stubs"
+namespace_packages = true
+explicit_package_bases = true
+python_version = 3.9
+ignore_errors = false
+show_error_codes=true
+warn_unused_ignores=true
+plugins = "trio_typing.plugin"
+
+# Global configuration
+strict_optional = true
+strict_equality = true
+allow_redefinition = true
+no_implicit_optional = true
+disallow_untyped_defs = true
+disallow_any_unimported = true
+disallow_any_decorated = true
+disallow_any_generics = true
+disallow_subclassing_any = true
+disallow_incomplete_defs = true
+ignore_missing_imports = false
+
+# Per-module customization
+
+# 3rd party libraries with missing typing
+
+[[tool.mypy.overrides]]
+module = "pbr.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "swiftclient.*"
+ignore_missing_imports = true
+
+# Ignore any python files not in the parsec module
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "tests.common.freeze_time"
+ignore_errors = false
+
+[[tool.mypy.overrides]]
+module = "oxidation.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "misc.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "misc.releaser"
+ignore_errors = false
+
+[[tool.mypy.overrides]]
+module = "misc.version_updater"
+ignore_errors = false
+
+[[tool.mypy.overrides]]
+module = "docs.*"
+ignore_errors = true
 
 [build-system]
 # Be careful `build-system` entry works out of poetry,

@@ -6,10 +6,10 @@ set -e -o pipefail
 # Allow the user to overwrite `SCRIPTDIR` by exporting it beforehand.
 SCRIPTDIR=${SCRIPTDIR:=$(dirname $(realpath -s "$0"))}
 # Allow the user to overwrite `ROOTDIR` by exporting it beforehand.
-ROOTDIR=${ROOTDIR:=$(realpath -s "$SCRIPTDIR/../..")}
+ROOTDIR=${ROOTDIR:=$(realpath -s "$SCRIPTDIR/../../..")}
 
 CURRENT_DATE=$(date --iso-8601)
-CURRENT_VERSION=$(grep -o '^version = .*$' $ROOTDIR/pyproject.toml | sed 's/version = "\(.*\)"$/\1/' | tr '+' '-' )
+CURRENT_VERSION=$(grep -o '^version = .*$' $ROOTDIR/server/pyproject.toml | sed 's/version = "\(.*\)"$/\1/' | tr '+' '-' )
 CURRENT_COMMIT_SHA=$(git rev-parse --short HEAD)
 
 UNIQ_TAG="$CURRENT_VERSION.$CURRENT_DATE-sha.$CURRENT_COMMIT_SHA"
