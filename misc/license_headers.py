@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+from __future__ import annotations
 
 import argparse
 import re
 import sys
 from itertools import chain, dropwhile
 from pathlib import Path
-from typing import Iterable, Iterator
+from typing import Iterable, Iterator, Type
+
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 
@@ -248,7 +250,7 @@ def get_files(paths: Iterable[Path]) -> Iterator[Path]:
             raise SystemExit(f"Error: Path `{path}` doesn't exist !")
 
 
-def get_licenser(path: Path) -> Licenser:
+def get_licenser(path: Path) -> Type[Licenser] | None:
     for regex, licenser in LICENSERS_MAP.items():
         if regex.match(path.absolute().relative_to(PROJECT_DIR).as_posix()):
             return licenser

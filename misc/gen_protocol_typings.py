@@ -311,7 +311,7 @@ def gen_pyi_file_for_cmd_spec(
     collected_items: dict[str, dict[str, list[str]]],
 ) -> None:
     first_version = None
-    other_versions = []
+    other_versions: list[str] = []
     for version in sorted(spec["major_versions"]):
         v_version = f"v{version}"
         collected_items.setdefault(v_version, {})
