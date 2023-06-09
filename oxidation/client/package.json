@@ -46,7 +46,7 @@
         "vue-router": "^4.1.6"
     },
     "devDependencies": {
-        "@capacitor/cli": "^4.7.1",
+        "@capacitor/cli": "^5.0.5",
         "@intlify/eslint-plugin-vue-i18n": "^2.0.0",
         "@ionic/cli": "^7.0.1",
         "@types/luxon": "^3.2.0",
