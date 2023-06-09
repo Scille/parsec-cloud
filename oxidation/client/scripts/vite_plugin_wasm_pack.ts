@@ -34,6 +34,10 @@ function vitePluginWasmPack(
     return path.join(crate.path, pkg, `${crate.name}.js`);
   }
 
+  function getJsInternalPath(crate: WasmPackCrate, relativePath: string): string {
+    return path.join(crate.path, pkg, relativePath);
+  }
+
   function getWasmFilePath(crate: WasmPackCrate): string {
     return path.join(crate.path, pkg, `${crate.name}_bg.wasm`);
   }
@@ -73,19 +77,56 @@ function vitePluginWasmPack(
       }
     },
 
-    async resolveId(source: string): Promise<string|null> {
+    async resolveId(source: string, importer: string | undefined): Promise<string|null> {
+      // Handle import of the crate itself (e.g. `import * from 'libparsec_bindings_web'`)
       const crate = retrieveCrate(source);
       if (crate) {
         return prefix + source;
       }
+
+      // Handle imports within the crate itself (e.g. `import * from './snippets/wasm-streams/inline0.js'`;)
+      if (importer && importer.indexOf(prefix) === 0) {
+        const crateName = importer.replace(prefix, '');
+        const crate = retrieveCrate(crateName);
+        if (crate) {
+          // e.g. `@vite-plugin-wasm-pack@libparsec_bindings_web@./snippets/wasm-streams/inline0.js`
+          return `${prefix}${crateName}@${source}`;
+        }
+      }
+
       return null;
     },
 
     async load(id: string): Promise<string|null> {
       if (id.indexOf(prefix) === 0) {
         const source = id.replace(prefix, '');
-        const crate = retrieveCrate(source);
-        if (crate) {
+        const splitted = source.split('@');
+
+        let crate: WasmPackCrate | null = null;
+        let relativePath: string | null = null;
+        switch (splitted.length) {
+        case 1: {
+          crate = retrieveCrate(splitted[0]);
+          break;
+        }
+
+        case 2: {
+          crate = retrieveCrate(splitted[0]);
+          relativePath = splitted[1];
+          break;
+        }
+        }
+
+        if (!crate) {
+          return null;
+        }
+
+        if (relativePath) {
+          const code = await fs.promises.readFile(getJsInternalPath(crate, relativePath), {
+            encoding: 'utf-8'
+          });
+          return code;
+        } else {
           let code = await fs.promises.readFile(getJsEntryPointPath(crate), {
             encoding: 'utf-8'
           });
