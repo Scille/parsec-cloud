@@ -59,7 +59,7 @@
         "cypress": "^12.13.0",
         "cypress-vite": "^1.4.0",
         "esbuild": "^0.17.18",
-        "eslint": "^8.36.0",
+        "eslint": "^8.42.0",
         "eslint-config-standard-with-typescript": "^34.0.1",
         "eslint-plugin-cypress": "^2.13.3",
         "eslint-plugin-import": "^2.27.5",
