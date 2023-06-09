@@ -12,6 +12,6 @@
     "author": "",
     "license": "",
     "dependencies": {
-        "cargo-cp-artifact": "^0.1.7"
+        "cargo-cp-artifact": "^0.1.8"
     }
 }
