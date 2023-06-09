@@ -155,7 +155,8 @@ import { StorageManagerKey } from '@/common/injectionKeys';
 import SettingsOption from './SettingsOption.vue';
 
 const { locale } = useI18n();
-const storageManager = inject(StorageManagerKey)!;
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const storageManager = inject(StorageManagerKey)! as StorageManager;
 const config = ref<Config>(structuredClone(StorageManager.DEFAULT_CONFIG));
 
 enum SettingsTabs {

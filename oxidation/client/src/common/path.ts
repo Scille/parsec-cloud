@@ -2,11 +2,11 @@
 
 export function parse(path: string): string[] {
   if (path.length === 0 || path[0] !== '/') {
-    throw new Error('Path should be at least "/"');
+    throw new Error('Path should be at least "/" and start with "/"');
   }
 
   // Remove two "/" following each other
-  path = path.replace(/\/\//g, '/');
+  path = path.replace(/\/\/+/g, '/');
   const splitted = path.split('/');
 
   // path is only "/" which transforms into an array with two empty strings

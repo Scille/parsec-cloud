@@ -33,6 +33,9 @@ env:
   # https://blog.rust-lang.org/2023/03/09/Rust-1.68.0.html#cargos-sparse-protocol
   CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
 
+permissions:
+  contents: read
+
 jobs:
   package-wheel:
     strategy:
@@ -85,7 +88,7 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build wheel
-        uses: pypa/cibuildwheel@5e15bb25b428e1bf2daf2215f173d2b40135f56f  # pin v2.12.3
+        uses: pypa/cibuildwheel@51f5c7fe68ff24694d5a6ac0eb3ad476ddd062a8  # pin v2.13.0
         with:
           output-dir: dist
         timeout-minutes: 50
@@ -245,7 +248,7 @@ jobs:
         run: find . -type f ! -name '*.whl' -delete
 
       - name: Publish wheel on PyPI
-        uses: pypa/gh-action-pypi-publish@0bf742be3ebe032c25dd15117957dc15d0cfc38d # pin v1.8.5
+        uses: pypa/gh-action-pypi-publish@a56da0b891b3dc519c7ee3284aff1fad93cc8598 # pin v1.8.6
         with:
           user: __token__
           password: ${{ secrets.PYPI_CREDENTIALS }}
@@ -255,7 +258,7 @@ jobs:
     needs: package-wheel
     runs-on: windows-2022
     steps:
-      - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b  # pin v4.6.0
+      - uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0  # pin v4.6.1
         with:
           python-version: ${{ env.python-version }}
 
@@ -320,7 +323,7 @@ jobs:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
         timeout-minutes: 5
 
-      - uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b  # pin v4.6.0
+      - uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0  # pin v4.6.1
         id: setup-python
         with:
           python-version: ${{ env.python-version }}

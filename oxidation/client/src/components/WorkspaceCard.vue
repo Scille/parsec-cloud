@@ -61,7 +61,7 @@ import {
 } from 'ionicons/icons';
 import { IonAvatar, IonIcon, IonText, IonTitle } from '@ionic/vue';
 import { inject } from 'vue';
-import { FormattersKey } from '@/common/injectionKeys';
+import { FormattersKey, Formatters } from '@/common/injectionKeys';
 import { MockWorkspace } from '@/common/mocks';
 import AvatarGroup from '@/components/AvatarGroup.vue';
 
@@ -76,7 +76,7 @@ defineEmits<{
 }>();
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const { timeSince, fileSize } = inject(FormattersKey)!;
+const { timeSince, fileSize } = inject(FormattersKey)! as Formatters;
 </script>
 
 <style lang="scss" scoped>

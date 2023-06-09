@@ -59,8 +59,8 @@ const props = defineProps<{
 }>();
 
 const sortByAsc: Ref<boolean> = ref(props.sortByAsc);
-const selectedOption: Ref<MsSelectOption | undefined> = ref(
-  props.defaultOption ? getOptionByKey(props.options, props.defaultOption) : undefined
+const selectedOption = ref(
+  props.defaultOption ? getOptionByKey(props.options, props.defaultOption) : props.options[0]
 );
 
 function onOptionClick(option?: MsSelectOption): void {

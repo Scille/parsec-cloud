@@ -233,7 +233,7 @@ import { DateTime } from 'luxon';
 import { useRouter } from 'vue-router';
 import HomePagePopover from '@/components/HomePagePopover.vue';
 import SettingsModal from '@/views/SettingsModal.vue';
-import { ConfigPathKey, FormattersKey, StorageManagerKey } from '@/common/injectionKeys';
+import { ConfigPathKey, Formatters, FormattersKey, StorageManagerKey } from '@/common/injectionKeys';
 
 const router = useRouter();
 const { t } = useI18n();
@@ -244,9 +244,11 @@ const orgSearchString = ref('');
 const showOrganizationList = ref(true);
 const sortBy = ref('organization');
 const sortByAsc = ref(true);
-const { timeSince } = inject(FormattersKey)!;
-const configPath = inject(ConfigPathKey, '/');  // Must be a valid Unix path !
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const { timeSince } = inject(FormattersKey)! as Formatters;
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const storageManager: StorageManager = inject(StorageManagerKey)!;
+const configPath = inject(ConfigPathKey, '/');  // Must be a valid Unix path !
 const isPopoverOpen = ref(false);
 
 const msSelectOptions: MsSelectOption[] = [

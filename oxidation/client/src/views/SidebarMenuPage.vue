@@ -79,7 +79,7 @@
               @click="navigateToWorkspaceList()"
               class="list-workspaces__header title-h5"
             >
-              All {{ $t('OrganizationPage.workspaces') }}
+              {{ $t('SideMenu.allWorkspaces') }}
             </ion-header>
 
             <ion-item
