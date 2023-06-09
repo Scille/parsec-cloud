@@ -28,7 +28,7 @@ uuid = { version = "1.2.2", features = ["serde", "v4", "fast-rng"] }
 data-encoding = "2.3.3"
 url = "2.3.1"
 percent-encoding = "2.2.0"
-regex = "1.8.1"
+regex = "1.8.4"
 unicode-normalization = "0.1.22"
 paste = "1.0.12"
 flate2 = "1.0.26"
