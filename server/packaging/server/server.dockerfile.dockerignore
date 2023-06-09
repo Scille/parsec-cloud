@@ -1,0 +1,34 @@
+# Rust code that isn't need for testbed
+oxidation/client
+bindings
+target
+.cargo
+
+# Editor config folder
+
+.idea
+.vscode
+
+# Python test file & cache folder
+
+server/tests
+__pycache__
+.hypothesis
+.mypy_cache
+.pytest_cache
+.ruff_cache
+server/parsec/*.so
+
+# Cov file
+htmlcov
+
+# Other files
+docs
+json_schema
+logs
+licenses
+newsfragment
+server/packaging
+!server/packaging/server
+
+.cspell

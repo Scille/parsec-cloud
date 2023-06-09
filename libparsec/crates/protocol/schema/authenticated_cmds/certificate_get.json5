@@ -1,0 +1,30 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "certificate_get",
+            "fields": [
+                {
+                    // Skip the certificates before this index
+                    "name": "offset",
+                    "type": "Index"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    // Certificates are provided in-order (with strictly growing timestamps),
+                    // their index should be calculated by `offset + <certificate's index in this list>`
+                    {
+                        "name": "certificates",
+                        "type": "List<Bytes>"
+                    }
+                ]
+            }
+        ]
+    }
+]

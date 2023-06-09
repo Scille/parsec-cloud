@@ -1,0 +1,99 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+{# Macros -#}
+
+{%- macro render_type(t) %}
+{%- if t.kind == "ref" -%}
+{{ render_type(t.elem) }}
+{%- elif t.kind == "optional" -%}
+{{ render_type(t.elem) }} | null
+{%- elif t.kind == "result" -%}
+Result<{{ render_type(t.ok) }}, {{ render_type(t.err) }}>
+{%- elif t.kind == "struct" or t.kind == "variant" -%}
+{{ t.name }}
+{%- elif t.kind == "list" -%}
+Array<{{ render_type(t.elem) }}>
+{%- elif t.kind == "bool" -%}
+boolean
+{%- elif t.kind in ("i32_based", "u32_based", "float") -%}
+number
+{%- elif t.kind == "str" -%}
+string
+{%- elif t.kind == "str_based" -%}
+{{ t.name }}
+{%- elif t.kind == "bytes" -%}
+Uint8Array
+{%- elif t.kind == "OnClientEventCallback" -%}
+(event: ClientEvent) => void
+{%- else -%}
+{{ raise("Unsupported type %r" % t) }}
+{%- endif -%}
+{% endmacro -%}
+
+{#- End of macros #}
+
+/*
+ * /!\ Auto-generated code (see `bindings/generator`), any modification will be lost ! /!\
+ */
+
+{# Result meta-type #}
+export type Result<T, E = Error> =
+  | { ok: true; value: T }
+  | { ok: false; error: E }
+
+{# Str-based types #}
+{% for type_name in api.str_based_types %}
+type {{ type_name }} = string
+{% endfor %}
+{# Int-based types #}
+{% for type_name in api.i32_based_types %}
+type {{ type_name }} = number
+{% endfor %}
+{% for type_name in api.u32_based_types %}
+type {{ type_name }} = number
+{% endfor %}
+{# Structures #}
+{% for struct in api.structs %}
+
+export interface {{ struct.name }} {
+{% for attr_name, attr_type in struct.attributes.items() %}
+    {{ attr_name | snake2camel }}: {{ render_type(attr_type) }}
+{% endfor %}
+}
+{% endfor %}
+{# Variants #}
+{% for variant in api.variants %}
+
+// {{ variant.name }}
+{% for variant_value in variant.values %}
+export interface {{ variant.name }}{{ variant_value.name }} {
+    tag: '{{ variant_value.name }}'
+{% if variant.is_error_variant %}
+    error: string
+{% endif %}
+{% if variant_value.is_struct %}
+{% for attr_name, attr_type in variant_value.struct.attributes.items() %}
+    {{ attr_name | snake2camel }}: {{ render_type(attr_type) }}
+{% endfor %}
+{% elif variant_value.is_tuple %}
+{% for attr_type in variant_value.tuple %}
+    x{{ loop.index }}: {{ render_type(attr_type) }}
+{% endfor %}
+{% endif %}
+}
+{% endfor %}
+export type {{ variant.name }} =
+{% for variant_value in variant.values %}
+  | {{ variant.name }}{{ variant_value.name }}
+{% endfor %}
+{% endfor %}
+
+{# Methods #}
+export interface LibParsecPlugin {
+{% for meth in api.meths %}
+    {{ meth.name | snake2camel }}(
+{% for arg_name, arg_type in meth.params.items() %}
+        {{ arg_name }}: {{ render_type(arg_type) }}{{ "," if not loop.last else "" }}
+{% endfor %}
+    ): Promise<{{ render_type(meth.return_type) if meth.return_type else "null" }}>
+{% endfor %}
+}

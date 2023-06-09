@@ -1,0 +1,296 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "events_listen",
+            // No `wait` param as this API is only meant to be used from SSE
+            "fields": []
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "unit": "APIEvent"
+            },
+            {
+                // Returned if the command is used through the regular rpc route
+                // instead of the SSE one
+                "status": "not_available"
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "APIEvent",
+                "discriminant_field": "event",
+                "variants": [
+                    {
+                        "name": "Pinged",
+                        "discriminant_value": "pinged",
+                        "fields": [
+                            {
+                                "name": "ping",
+                                "type": "String"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "CertificatesUpdated",
+                        "discriminant_value": "certificates_updated",
+                        // It would be easy to provide the content of the certificate here,
+                        // however correctly integrating it on client side is tricky given
+                        // it would act in concurrency with the regular use of `certificate_get`
+                        // command.
+                        //
+                        // Consider the following scenario:
+                        // 1) client send a `certificate_get` command to server
+                        // 2) server send a `certificates_updated` event to client for
+                        //    certificate C3
+                        // 3) client add C3 to it certificates store
+                        // 4) server send the response to `certificate_get`: certificates
+                        //    C1 and C2 should be added by the client
+                        // 5) client detect a causality issue given C1 & C2 are older than
+                        //    C3 which is already stored !
+                        //
+                        // In a nutshell, the server guarantees causality on the order it
+                        // provides the certificates and the client rely on this assumption
+                        // (e.g. to determine an user realm role at a given point in time).
+                        // So the best way to avoid messing with this is to always rely on
+                        // `certificate_get` everytime we detect we need to fetch new stuff.
+                        "fields": [
+                            {
+                                // Index is useful to detect we have already polled the
+                                // server for new certificates since this event's inception
+                                "name": "index",
+                                "type": "Index"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "MessageReceived",
+                        "discriminant_value": "message_received",
+                        "fields": [
+                            {
+                                // Index is useful to detect we have already polled the
+                                // server for new messages since this event's inception
+                                "name": "index",
+                                "type": "Index"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "InviteStatusChanged",
+                        "discriminant_value": "invite_status_changed",
+                        "fields": [
+                            {
+                                "name": "token",
+                                "type": "InvitationToken"
+                            },
+                            {
+                                "name": "invitation_status",
+                                "type": "InvitationStatus"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "RealmMaintenanceStarted",
+                        "discriminant_value": "realm_maintenance_started",
+                        "fields": [
+                            {
+                                "name": "realm_id",
+                                "type": "RealmID"
+                            },
+                            {
+                                "name": "encryption_revision",
+                                "type": "Index"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "RealmMaintenanceFinished",
+                        "discriminant_value": "realm_maintenance_finished",
+                        "fields": [
+                            {
+                                "name": "realm_id",
+                                "type": "RealmID"
+                            },
+                            {
+                                "name": "encryption_revision",
+                                "type": "Index"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "RealmVlobsUpdated",
+                        "discriminant_value": "realm_vlobs_updated",
+                        "fields": [
+                            {
+                                "name": "realm_id",
+                                "type": "RealmID"
+                            },
+                            {
+                                "name": "checkpoint",
+                                "type": "Index"
+                            },
+                            {
+                                "name": "src_id",
+                                "type": "VlobID"
+                            },
+                            {
+                                "name": "src_version",
+                                "type": "Version"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "PkiEnrollmentUpdated",
+                        "discriminant_value": "pki_enrollment_updated"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "events_listen",
+            "fields": [
+                {
+                    "name": "wait",
+                    "type": "Boolean"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "unit": "APIEvent"
+            },
+            {
+                "status": "cancelled",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "no_events"
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "APIEvent",
+                "discriminant_field": "event",
+                "variants": [
+                    {
+                        "name": "Pinged",
+                        "discriminant_value": "pinged",
+                        "fields": [
+                            {
+                                "name": "ping",
+                                "type": "String"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "MessageReceived",
+                        "discriminant_value": "message.received",
+                        "fields": [
+                            {
+                                "name": "index",
+                                "type": "Index"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "InviteStatusChanged",
+                        "discriminant_value": "invite.status_changed",
+                        "fields": [
+                            {
+                                "name": "token",
+                                "type": "InvitationToken"
+                            },
+                            {
+                                "name": "invitation_status",
+                                "type": "InvitationStatus"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "RealmMaintenanceStarted",
+                        "discriminant_value": "realm.maintenance_started",
+                        "fields": [
+                            {
+                                "name": "realm_id",
+                                "type": "RealmID"
+                            },
+                            {
+                                "name": "encryption_revision",
+                                "type": "Index"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "RealmMaintenanceFinished",
+                        "discriminant_value": "realm.maintenance_finished",
+                        "fields": [
+                            {
+                                "name": "realm_id",
+                                "type": "RealmID"
+                            },
+                            {
+                                "name": "encryption_revision",
+                                "type": "Index"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "RealmVlobsUpdated",
+                        "discriminant_value": "realm.vlobs_updated",
+                        "fields": [
+                            {
+                                "name": "realm_id",
+                                "type": "RealmID"
+                            },
+                            {
+                                "name": "checkpoint",
+                                "type": "Index"
+                            },
+                            {
+                                "name": "src_id",
+                                "type": "VlobID"
+                            },
+                            {
+                                "name": "src_version",
+                                "type": "Version"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "RealmRolesUpdated",
+                        "discriminant_value": "realm.roles_updated",
+                        "fields": [
+                            {
+                                "name": "realm_id",
+                                "type": "RealmID"
+                            },
+                            {
+                                "name": "role",
+                                "type": "RequiredOption<RealmRole>"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "PkiEnrollmentUpdated",
+                        "discriminant_value": "pki_enrollment.updated"
+                    }
+                ]
+            }
+        ]
+    }
+]

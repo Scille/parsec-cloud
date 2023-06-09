@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+from __future__ import annotations
 
 import argparse
 import re
 import sys
 from itertools import chain, dropwhile
 from pathlib import Path
-from typing import Iterable, Iterator
+from typing import Iterable, Iterator, Type
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 
@@ -204,16 +205,13 @@ class SkipLicenser(Licenser):
 
 LICENSERS_MAP = {
     # First match is used
-    re.compile(r"^parsec/backend/.*\.sql$"): SqlBuslLicenser,
-    re.compile(r"^parsec/backend/.*\.(py|pyi)"): PythonBuslLicenser,
-    re.compile(r"^parsec/core/gui/_resources_rc.py$"): SkipLicenser,
-    re.compile(r"^parsec/core/gui/ui/"): SkipLicenser,
-    re.compile(r"^oxidation/(.*/)?(target|node_modules|build|dist)/"): SkipLicenser,
-    re.compile(r"^oxidation/.*\.rs$"): RustBuslLicenser,
-    re.compile(r"^oxidation/.*\.(py|pyi)$"): PythonBuslLicenser,
-    re.compile(r"^oxidation/.*\.sql$"): SqlBuslLicenser,
-    re.compile(r"^src/.*\.rs"): RustBuslLicenser,
-    re.compile(r"^windows-icon-handler/.*\.(cpp|h)$"): RustAgplLicenser,
+    re.compile(r"^(.*/)?(target|node_modules|build|dist)/"): SkipLicenser,
+    re.compile(r"^(libparsec|bindings)/.*\.(py|pyi)$"): PythonBuslLicenser,
+    re.compile(r"^(libparsec|bindings)/.*\.rs$"): RustBuslLicenser,
+    re.compile(r"^(libparsec|bindings)/.*\.sql$"): SqlBuslLicenser,
+    re.compile(r"^server/parsec/backend/.*\.sql$"): SqlBuslLicenser,
+    re.compile(r"^server/parsec/backend/.*\.(py|pyi)"): PythonBuslLicenser,
+    re.compile(r"^server/src/.*\.rs"): RustBuslLicenser,
     re.compile(r"^docs/.*\.(py|pyi)$"): PythonBuslLicenser,
     re.compile(r"^docs/.*\.rst$"): RstBuslLicenser,
     # Js project is a minefield full of node_modules/build/dist/assets etc.
@@ -248,7 +246,7 @@ def get_files(paths: Iterable[Path]) -> Iterator[Path]:
             raise SystemExit(f"Error: Path `{path}` doesn't exist !")
 
 
-def get_licenser(path: Path) -> Licenser:
+def get_licenser(path: Path) -> Type[Licenser] | None:
     for regex, licenser in LICENSERS_MAP.items():
         if regex.match(path.absolute().relative_to(PROJECT_DIR).as_posix()):
             return licenser
@@ -293,10 +291,9 @@ if __name__ == "__main__":
         nargs="*",
         type=Path,
         default=[
-            Path("parsec"),
-            Path("tests"),
-            Path("oxidation"),
-            Path("windows-icon-handler"),
+            Path("server"),
+            Path("bindings"),
+            Path("libparsec"),
             Path("packaging"),
             Path("misc"),
             Path("docs"),

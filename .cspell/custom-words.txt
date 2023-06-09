@@ -208,6 +208,7 @@ linuxsys
 Ljava
 llabel
 localdb
+localns
 LowLevel
 lproj
 lsregister
@@ -226,6 +227,7 @@ metaraw
 miniserde
 mnone
 moff
+monomorphization
 mountpoint
 MountPoints
 msgid
@@ -235,12 +237,15 @@ multibytes
 mycapacitorapp
 myclass
 Nanos
+ntns
+ntics
 napi
 newsfragment
 newsfragments
 Niño
 nmspc
 nocapture
+noserver
 NONCEBYTES
 noopener
 noreferrer
@@ -260,6 +265,7 @@ oneofschema
 Onone
 OpsLimit
 ORGANIZATIONID
+orgid
 oscrypt
 oscrypto
 OSXFUSE

@@ -10,6 +10,9 @@
                 "properties": {
                     "status": {
                         "type": "string"
+                    },
+                    "introduced_in": {
+                        "$ref": "./major-minor-string.schema.json"
                     }
                 },
                 "additionalProperties": false
@@ -26,6 +29,9 @@
                     "unit": {
                         "type": "string",
                         "description": "The status of an `nested-types`"
+                    },
+                    "introduced_in": {
+                        "$ref": "./major-minor-string.schema.json"
                     }
                 },
                 "additionalProperties": false
@@ -42,6 +48,9 @@
                     "fields": {
                         "description": "Additional fields to send alongside the response",
                         "$ref": "./fields.schema.json"
+                    },
+                    "introduced_in": {
+                        "$ref": "./major-minor-string.schema.json"
                     }
                 },
                 "additionalProperties": false

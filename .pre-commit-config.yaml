@@ -88,38 +88,39 @@ repos:
     hooks:
       - id: ruff
         name: ruff (using `poetry run ruff`)
-        entry: poetry run ruff
+        entry: poetry --directory ./server run ruff check
         require_serial: true
         language: system
         types_or: [ python, pyi ]
         args:
           [
-            --extend-exclude=parsec/core/gui/_resources_rc.py,
-            --extend-exclude=parsec/core/gui/ui/*,
+            --config=server/pyproject.toml,
             --extend-exclude=oxidation/*,
             --fix,
           ]
 
       - id: black
         name: black (using `poetry run black`)
-        entry: poetry run black
+        entry: poetry --directory ./server run black
         require_serial: true
         language: system
         types_or: [ python, pyi ]
         args:
           [
             --line-length=100,
-            --exclude=parsec/core/gui/_resources_rc.py,
-            --exclude=parsec/core/gui/ui/,
           ]
 
       - id: mypy
         name: Mypy (using `poetry run mypy`)
-        entry: poetry run mypy
+        entry: poetry --directory ./server run mypy
         require_serial: true
         language: system
         types_or: [ python, pyi ]
-        files: ^(parsec|tests|misc)/
+        args:
+          [
+            --config=server/pyproject.toml,
+          ]
+        files: ^(server|misc)/
 
   ######
   # Rust

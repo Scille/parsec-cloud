@@ -1,0 +1,22 @@
+{
+    "label": "UserUpdateCertificate",
+    "type": "user_update_certificate",
+    "other_fields": [
+        {
+            "name": "author",
+            "type": "DeviceID"
+        },
+        {
+            "name": "timestamp",
+            "type": "DateTime"
+        },
+        {
+            "name": "user_id",
+            "type": "UserID"
+        },
+        {
+            "name": "new_profile",
+            "type": "UserProfile"
+        }
+    ]
+}

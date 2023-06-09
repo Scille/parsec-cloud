@@ -34,7 +34,7 @@ def naturalize(bytes_size: int) -> str:
 
 
 def gh_api(url: str, method: Optional[str] = "GET"):
-    extra_args = [f"--header='Accept: application/json'"]
+    extra_args = ["--header='Accept: application/json'"]
     if method is not None:
         extra_args.append(f"--method={method}")
     cmd_args = ["gh", "api", *extra_args, url]

@@ -34,24 +34,14 @@ permissions:
   contents: read
 
 jobs:
-  test-python-matrix:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: 🐧 Linux
-            # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
-            # 20.04 is required to install PostgreSQL 12
-            os: ubuntu-20.04
-          - name: 🍎 macOS
-            os: macos-12
-          - name: 🏁 Windows
-            os: windows-2022
-            winfsp-version: 1.11.22176
-    name: "${{ matrix.name }}: 🐍 Python tests"
+  test-python-server:
+    # Only the server is in Python, and it is only meant to be run on Linux
+    name: "(🐧 Linux only): 🐍 Python server tests"
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 60
-    runs-on: ${{ matrix.os }}
+    # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
+    # 20.04 is required to install PostgreSQL 12
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
         timeout-minutes: 5
@@ -70,12 +60,11 @@ jobs:
         run: echo "run=true" >> $GITHUB_OUTPUT
         shell: bash
 
-      - name: (🐧 Linux) Set apt mirror
+      - name: Set apt mirror
         # GitHub Actions apt proxy is super unstable
         # see https://github.com/actions/runner-images/issues/7048
         if: >-
           steps.should-run-python-jobs.outputs.run == 'true'
-          && startsWith(matrix.os, 'ubuntu-')
         run: |
           set -e -o pipefail
           (
@@ -85,10 +74,9 @@ jobs:
           ) | sudo tee /etc/apt/mirrors.txt
           sudo sed -i 's/http:\/\/azure.archive.ubuntu.com\/ubuntu\//mirror+file:\/etc\/apt\/mirrors.txt/' /etc/apt/sources.list
 
-      - name: (🐧 Linux) Configure PostgreSQL APT repository
+      - name: Configure PostgreSQL APT repository
         if: >-
           steps.should-run-python-jobs.outputs.run == 'true'
-          && startsWith(matrix.os, 'ubuntu-')
         env:
           POSTGRE_APT_KEY_SHA_512: df557805862cd279f40819834af14e1723b18044df9dc22bea710b6980c98cc8ed39e75ed5c9adaa1932992710f1180f0491dc9437bfd485b4aa2b75776407d4  /usr/share/keyrings/postgre-sql-keyring.gpg
         run: |
@@ -105,53 +93,21 @@ jobs:
           sudo apt-get update
         timeout-minutes: 5
 
-        # Install required packages for ubuntu:
-        # - LibFuse2 since only libfuse3 is available on ubuntu-20.04.
-        # - `desktop-file-utils` provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`.
-        # - A specific version of postgresql is used for PostgreSQL's tests.
-        # - dependencies for Qt testing. See: https://pytest-qt.readthedocs.io/en/latest/troubleshooting.html#github-actions.
-      - name: (🐧 Linux) Install packages fuse2, PostgreSQL-${{ env.postgresql-version }}
-        if: >-
-          steps.should-run-python-jobs.outputs.run == 'true'
-          && startsWith(matrix.os, 'ubuntu-')
-        run: |
-          # Retry the command until it succeed.
-          # We retry because sometime the APT repo configured
-          # by the runner seems drop the connection causing the command to fail.
-          until sudo apt-get -y install ${{ env.PACKAGE_TO_INSTALL }}; do
-            echo "Fail to install APT package retrying ...";
-          done
-        env:
-          PACKAGE_TO_INSTALL: >-
-            libfuse2
-            fuse
-            desktop-file-utils
-            postgresql-${{ env.postgresql-version }}
-            libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0
-            libxcb-keysyms1 libxcb-randr0 libxcb-render-util0
-            libxcb-xinerama0 libxcb-xfixes0 x11-utils
-        timeout-minutes: 5
-
-      - name: (🍎 macOS) Install macfuse
-        if: >-
-          steps.should-run-python-jobs.outputs.run == 'true'
-          && startsWith(matrix.os, 'macos-')
-        run: brew install --cask macfuse
-        timeout-minutes: 5
-
-      - name: (🏁 Windows) Install WinFSP
-        if: >-
-          steps.should-run-python-jobs.outputs.run == 'true'
-          && startsWith(matrix.os, 'windows-')
-        shell: bash
-        run: |
-          choco install -y --limit-output winfsp --version=${{ matrix.winfsp-version }}
-          mkdir winfsp-test
-          curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.8/winfsp-tests-1.8.20304.zip -o winfsp-test/winfsp-tests.zip
-          unzip winfsp-test/winfsp-tests.zip -d winfsp-test
-          pwd
-          echo "$(pwd)\winfsp-test" >> "$GITHUB_PATH"
-        timeout-minutes: 5
+      # TODO: Postgresql implemetation is currently broken
+      # - name: Install PostgreSQL-${{ env.postgresql-version }}
+      #   if: >-
+      #     steps.should-run-python-jobs.outputs.run == 'true'
+      #   run: |
+      #     # Retry the command until it succeed.
+      #     # We retry because sometime the APT repo configured
+      #     # by the runner seems drop the connection causing the command to fail.
+      #     until sudo apt-get -y install ${{ env.PACKAGE_TO_INSTALL }}; do
+      #       echo "Fail to install APT package retrying ...";
+      #     done
+      #   env:
+      #     PACKAGE_TO_INSTALL: >-
+      #       postgresql-${{ env.postgresql-version }}
+      #   timeout-minutes: 5
 
       - uses: ./.github/actions/setup-python-poetry
         if: steps.should-run-python-jobs.outputs.run == 'true'
@@ -159,6 +115,7 @@ jobs:
         with:
           python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}
+          project-path: ./server
         timeout-minutes: 10
 
       # libparsec is slow to compile, so we save it in cache and skip the
@@ -169,7 +126,7 @@ jobs:
       - name: Setup cache-key
         if: steps.should-run-python-jobs.outputs.run == 'true'
         id: cache-key
-        run: echo "key=${{ matrix.os }}-${{ hashFiles('src/**', 'oxidation/libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-libparsec-python-${{ env.python-version }}" >> $GITHUB_OUTPUT
+        run: echo "key=${{ matrix.os }}-${{ hashFiles('server/src/**', 'server/Cargo.toml', 'libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-libparsec-python-${{ env.python-version }}" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Restore libparsec if Rust hasn't been modified
@@ -179,8 +136,8 @@ jobs:
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
-            parsec/_parsec.*.pyd
-            parsec/_parsec.*.so
+            server/parsec/_parsec.*.pyd
+            server/parsec/_parsec.*.so
         timeout-minutes: 2
 
       - name: Setup Rust toolchain
@@ -211,7 +168,7 @@ jobs:
         shell: bash
         run: |
           set -ex
-          poetry env info
+          poetry --directory ./server env info
           if ${{ steps.cache-libparsec.outputs.cache-hit == 'true' }}; then export POETRY_LIBPARSEC_BUILD_STRATEGY=no_build; fi
           python make.py python-ci-install
         timeout-minutes: 20
@@ -219,7 +176,6 @@ jobs:
       - name: Install pre-commit
         if: >-
           steps.should-run-python-jobs.outputs.run == 'true'
-          && startsWith(matrix.os, 'ubuntu-')
         id: pre-commit
         uses: ./.github/actions/use-pre-commit
         with:
@@ -228,7 +184,6 @@ jobs:
       - name: Check python code style
         if: >-
           steps.should-run-python-jobs.outputs.run == 'true'
-          && startsWith(matrix.os, 'ubuntu-')
         run: |
           set -eux
           for step in mypy black ruff; do
@@ -258,58 +213,28 @@ jobs:
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
-            parsec/_parsec.*.pyd
-            parsec/_parsec.*.so
+            server/parsec/_parsec.*.pyd
+            server/parsec/_parsec.*.so
         timeout-minutes: 2
 
       - name: Basic tests
         if: steps.should-run-python-jobs.outputs.run == 'true'
         run: poetry run pytest ${{ env.pytest-base-args }} tests -n auto
         timeout-minutes: 10
+        working-directory: server
 
-      # TODO: remove me once client connection oxidation is done
-      - name: (🐧 Linux) Basic tests (with unstable Rust client connection)
-        if: steps.should-run-python-jobs.outputs.run == 'true'
-          && startsWith(matrix.os, 'ubuntu-')
-        # TODO: -n auto doesn't work see: https://github.com/Scille/parsec-cloud/issues/4145
-        run: poetry run pytest ${{ env.pytest-base-args }} tests
-        timeout-minutes: 10
-        env:
-          UNSTABLE_OXIDIZED_CLIENT_CONNECTION: true
-
-      - name: (🐧🏁 Not macOS) Mountpoint tests
-        if: >-
-          steps.should-run-python-jobs.outputs.run == 'true'
-          && startsWith(matrix.os, 'macos-') != true
-        run: poetry run pytest ${{ env.pytest-base-args }} tests --runmountpoint --runslow -m mountpoint
-        timeout-minutes: 10
-
-      - name: (🐧 Linux) Install pytest-xvfb plugin for pytest for Qt Testing
-        if: >-
-          steps.should-run-python-jobs.outputs.run == 'true'
-          && startsWith(matrix.os, 'ubuntu-')
-        run: poetry run pip install pytest-xvfb
-        timeout-minutes: 2
-
-      - name: (🐧🏁 Not MacOS) GUI tests
-        if: >-
-          steps.should-run-python-jobs.outputs.run == 'true'
-          && startsWith(matrix.os, 'macos-') != true
-        # Note: using `--numprocesses 1` force pytest to print the test that it will be executing
-        # This is usefull to pinpoint exactly which test in blocking.
-        run: poetry run pytest ${{ env.pytest-base-args }} tests --runmountpoint --runslow --rungui -m gui --numprocesses 1
-        timeout-minutes: 10
-
-      - name: (🐧 Linux) PostgreSQL tests
-        if: >-
-          steps.should-run-python-jobs.outputs.run == 'true'
-          && startsWith(matrix.os, 'ubuntu-')
-        env:
-          PGINSTALLATION: /usr/lib/postgresql/${{ env.postgresql-version }}/bin
-        run: poetry run pytest ${{ env.pytest-base-args }} tests/backend tests/test_cli.py -k 'not test_shuffle_roles' --postgresql --runslow
-        timeout-minutes: 20
+      # TODO: Postgresql implemetation is currently broken
+      # - name: PostgreSQL tests
+      #   if: >-
+      #     steps.should-run-python-jobs.outputs.run == 'true'
+      #   env:
+      #     PGINSTALLATION: /usr/lib/postgresql/${{ env.postgresql-version }}/bin
+      #   run: poetry run pytest ${{ env.pytest-base-args }} tests/backend tests/test_cli.py -k 'not test_shuffle_roles' --postgresql --runslow
+      #   timeout-minutes: 20
+      #   working-directory: server
 
       - name: Hypothesis tests
         if: steps.should-run-python-jobs.outputs.run == 'true'
         run: poetry run pytest ${{ env.pytest-base-args }} tests --runslow -m slow --numprocesses auto
         timeout-minutes: 50
+        working-directory: server

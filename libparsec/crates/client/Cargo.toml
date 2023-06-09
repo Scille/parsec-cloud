@@ -1,0 +1,21 @@
+[package]
+name = "libparsec_client"
+version = "0.0.0"
+edition = "2021"
+license = " BUSL-1.1"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+libparsec_client_connection = { path = "../client_connection" }
+libparsec_types = { path = "../types" }
+libparsec_platform_async = { path = "../platform_async" }
+libparsec_platform_storage2 = { path = "../platform_storage2" }
+libparsec_protocol = { path = "../protocol" }
+
+tokio = { version = "1.28.0", features = ["rt", "time", "sync", "macros"] }
+paste = "1.0.12"
+log = "0.4.17"
+
+[dev-dependencies]
+libparsec_tests_fixtures = { path = "../tests_fixtures" }

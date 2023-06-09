@@ -33,9 +33,14 @@ jobs:
     name: 🌐 Web tests
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 20
+    # Testbed server comes as a Docker image, so it will eventually goes out of sync
+    # with the tests (typically a new API is introduced in the Parsce server, or a new
+    # testbed template is introduced).
+    # In such case, the container url should be updated from the, see:
+    # https://github.com/Scille/parsec-cloud/pkgs/container/parsec-cloud%2Fparsec-testbed-server
     services:
       parsec-testbed-server:
-        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:v2.15.0-dev.2023-05-25-sha.62a3811
+        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:v2.15.0-dev.2023-06-07-sha.1058bbc
         ports:
           - 6777:6777
     steps:
@@ -83,8 +88,8 @@ jobs:
         id: cache-key
         run: >-
           echo "key=web-${{ hashFiles(
-            'oxidation/bindings/web/**',
-            'oxidation/libparsec/**',
+            'bindings/web/**',
+            'libparsec/**',
             'rust-toolchain.toml',
             'Cargo.lock'
           ) }}-libparsec" >> "$GITHUB_OUTPUT"
@@ -97,8 +102,8 @@ jobs:
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
-            oxidation/bindings/web/pkg/libparsec_*
-            oxidation/bindings/web/pkg/package*
+            bindings/web/pkg/
+            bindings/web/pkg/
         timeout-minutes: 2
 
       - name: Retrieve Rust cache
@@ -114,35 +119,17 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/master' }}
         timeout-minutes: 5
 
-      - name: Install wasm-pack
-        if: >-
-          steps.should-run-web-jobs.outputs.run == 'true'
-          && steps.cache-libparsec.outputs.cache-hit != 'true'
-        run: |
-          set -eux
-          set -o pipefail
-
-          BASE_DIR=wasm-pack-v${{ env.wasm-pack-version }}-x86_64-unknown-linux-musl
-
-          mkdir -p ~/.local/bin
-
-          curl -sSL \
-            https://github.com/rustwasm/wasm-pack/releases/download/v${{ env.wasm-pack-version }}/$BASE_DIR.tar.gz \
-            | tar --extract --gzip --to-stdout \
-              $BASE_DIR/wasm-pack \
-              > ~/.local/bin/wasm-pack
-
-          chmod a+rx ~/.local/bin/wasm-pack
-
-          echo $HOME/.local/bin >> $GITHUB_PATH
-        timeout-minutes: 2
+      # Install wasm-pack command
+      - uses: taiki-e/install-action@835cdc15ee7680334982c900847bcafb86487299 # pin v2.9.3
+        with:
+          tool: wasm-pack@${{ env.wasm-pack-version }}
 
       - name: Build web bindings
         if: >-
           steps.should-run-web-jobs.outputs.run == 'true'
           && steps.cache-libparsec.outputs.cache-hit != 'true'
         run: npm run build:dev
-        working-directory: oxidation/bindings/web
+        working-directory: bindings/web
         timeout-minutes: 10
 
       - name: Save libparsec to be reuse later
@@ -153,8 +140,8 @@ jobs:
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
-            oxidation/bindings/web/pkg/libparsec_*
-            oxidation/bindings/web/pkg/package*
+            bindings/web/pkg/
+            bindings/web/pkg/
         timeout-minutes: 2
 
       - name: Unit tests

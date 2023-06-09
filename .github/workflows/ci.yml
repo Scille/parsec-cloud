@@ -28,7 +28,7 @@ jobs:
     name: ⭐ CI is happy ⭐
     needs:
       - check-quality-assurance
-      - test-python-matrix
+      - test-python-server
       - test-rust-matrix
       - test-web-app
       - check-spelling
@@ -138,7 +138,7 @@ jobs:
           SKIP: clippy,fmt,cspell,ruff,black,mypy,eslint
         timeout-minutes: 5
 
-  test-python-matrix:
+  test-python-server:
     uses: ./.github/workflows/ci-python.yml
 
   test-rust-matrix:

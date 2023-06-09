@@ -1,38 +1,44 @@
-[package]
-name = "parsec"
-# We don't use this version to set the version of parsec
-# For that you're looking for `parsec/_version.py`
-version = "0.0.0"
-edition = "2021"
-
-[lib]
-name = "parsec"
-crate-type = ["cdylib"]
-
 [workspace]
 members = [
-    "oxidation/libparsec",
-    "oxidation/libparsec/crates/*",
-    "oxidation/bindings/web",
-    "oxidation/bindings/electron",
-    "oxidation/bindings/android/libparsec/rust",
+    "server",
+    "libparsec",
+    "libparsec/crates/client",
+    "libparsec/crates/client_connection",
+    "libparsec/crates/client_high_level_api",
+    "libparsec/crates/crypto",
+    "libparsec/crates/platform_async",
+    "libparsec/crates/platform_device_loader",
+    "libparsec/crates/platform_storage",
+    "libparsec/crates/platform_storage2",
+    "libparsec/crates/protocol",
+    "libparsec/crates/serialization_format",
+    "libparsec/crates/testbed",
+    "libparsec/crates/tests_fixtures",
+    "libparsec/crates/tests_macros",
+    "libparsec/crates/types",
+    "bindings/web",
+    "bindings/electron",
+    "bindings/android/libparsec/rust",
 ]
 # Ignore bindings stuff given they are special snowflakes that require exotic toolchain and dependencies
-default-members = ["oxidation/libparsec"]
-
-[features]
-test-utils = ["libparsec/test-utils"]
-
-[dependencies]
-libparsec = { path = "oxidation/libparsec" }
-
-regex = "1.8.1"
-paste = "1.0.12"
-pyo3 = { version = "0.17.3", features = ["multiple-pymethods", "extension-module"] }
-uuid = { version = "1.2.2", features = ["serde", "v4", "fast-rng"] }
-tokio = { version = "1.28", features = ["rt", "rt-multi-thread"] }
-lazy_static = "1.4.0"
-futures = "0.3.28"
+# The idea is to be able to do `cargo test` from the root and have all the libparsec&co tests run
+default-members = [
+    "libparsec",
+    "libparsec/crates/client",
+    "libparsec/crates/client_connection",
+    "libparsec/crates/client_high_level_api",
+    "libparsec/crates/crypto",
+    "libparsec/crates/platform_async",
+    "libparsec/crates/platform_device_loader",
+    "libparsec/crates/platform_storage",
+    "libparsec/crates/platform_storage2",
+    "libparsec/crates/protocol",
+    "libparsec/crates/serialization_format",
+    "libparsec/crates/testbed",
+    "libparsec/crates/tests_fixtures",
+    "libparsec/crates/tests_macros",
+    "libparsec/crates/types",
+]
 
 # Rust unoptimized code is really slow with crypto algorithm and regex compilation,
 # hence we optimize our 3rd party dependencies.

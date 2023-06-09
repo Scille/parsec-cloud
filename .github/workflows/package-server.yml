@@ -1,0 +1,133 @@
+name: package-server
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/package-server.yml
+      - server/packaging
+      - server/build.py
+      - server/pyproject.toml
+  push:
+    branches:
+      - master
+      - "[0-9]+.[0-9]+"
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+*
+
+# We set `concurrency` to prevent having this workflow being run on code that is not up-to-date on a PR (a user make multiple push in a quick manner).
+# But on the main branch, we don't want that behavior.
+# Having the workflow run on each merge commit is something we would like, that could help us where a regression was made and missed by previous checks.
+#
+# For that we use `head_ref` that is only defined on `pull-request` and fallback to `run_id` (this is a counter, so it's value is unique between workflow call).
+concurrency:
+  group: package-server-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  node-version: 18.12.0
+  python-version: 3.9
+  poetry-version: 1.3.2
+  # Cargo will be faster with this configuration.
+  # It will only update it's index for the dependencies that we use.
+  # https://blog.rust-lang.org/2023/03/09/Rust-1.68.0.html#cargos-sparse-protocol
+  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+
+permissions:
+  contents: read
+
+jobs:
+  package-wheel:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: 🐧 Linux
+            os: ubuntu-22.04
+          - name: 🍎 macOS
+            os: macos-12
+          - name: 🏁 Windows
+            os: windows-2022
+    name: "${{ matrix.name }}: 📦 Packaging (build Wheel)"
+    runs-on: ${{ matrix.os }}
+    outputs:
+      wheel-version: ${{ steps.wheel-version.outputs.version }}
+    steps:
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
+        timeout-minutes: 5
+
+      - uses: ./.github/actions/setup-python-poetry
+        with:
+          python-version: ${{ env.python-version }}
+          poetry-version: ${{ env.poetry-version }}
+          project-path: ./server
+        timeout-minutes: 10
+
+      - name: Get wheel version
+        id: wheel-version
+        shell: bash
+        run: |
+          set -eux
+          # Retrieve Parsec version and customize it if we are not building on a tag
+          # See https://www.python.org/dev/peps/pep-0440/#local-version-identifiers
+          if ([ "${{ github.ref_type }}" == "tag" ])
+          then
+            # Use tag name as version
+            VERSION=`git describe --tag`
+          else
+            # Use `<tag_name>+dev<commit_hash>` as version
+            VERSION=`sed -n 's/^__version__ = "\\(.*\\)"$/\\1/p' server/parsec/_version.py`
+            COMMIT=`git rev-parse --verify --short HEAD`
+            VERSION="$VERSION.$COMMIT"
+            # Customize version with tag
+            sed -i.back -e "s#^\\(__version__ = \\).*\$#\\1'$VERSION'#" server/parsec/_version.py
+            test $(grep -E '^version = ' -o server/pyproject.toml | wc -l) -eq 1  # Sanity check for the next sed
+            sed -i.back -e "s#^\\(version = \\).*\$#\\1'$VERSION'#" server/pyproject.toml
+          fi
+
+          echo "::warning title=Wheel version::$VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build wheel
+        uses: pypa/cibuildwheel@51f5c7fe68ff24694d5a6ac0eb3ad476ddd062a8  # pin v2.13.0
+        with:
+          package-dir: server
+          output-dir: dist
+        timeout-minutes: 50
+
+      - name: Set file for wheel version
+        run: echo ${{ steps.wheel-version.outputs.version }} > dist/version
+
+      - name: Hack the wheel macos version
+        if: startsWith(matrix.os, 'macos-')
+        shell: bash
+        run: |
+          set -eux
+          # Old wheel name
+          OLD_WHEEL_NAME=$(basename dist/parsec_cloud-*.whl)
+          # Unzip the wheel
+          mkdir temp
+          cd temp
+          unzip ../dist/$OLD_WHEEL_NAME
+          # Get platform new wheel name
+          python -m pip install wheel
+          PLATFORM=$(python -c "from wheel.bdist_wheel import get_platform; print(get_platform('.'))")
+          NEW_WHEEL_NAME=$(basename ../dist/parsec_cloud-*.whl | sed "s/macosx_.*_x86_64/$PLATFORM/")
+          # Update archive and zip back
+          sed -i "" "s/macosx_.*_x86_64/$PLATFORM/" parsec_cloud-*.dist-info/WHEEL
+          zip -r $NEW_WHEEL_NAME *
+          cd ..
+          # Replace old wheel with the new one
+          mv temp/$NEW_WHEEL_NAME dist/
+          rm dist/$OLD_WHEEL_NAME
+          rm -rf temp
+
+      - name: Generate requirements & constraints infos
+        run: python server/packaging/wheel/wheel_it.py ./server --output dist --skip-wheel
+
+      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.2
+        with:
+          name: ${{ runner.os }}-${{ runner.arch }}-wheel
+          path: dist/
+          if-no-files-found: error
+        timeout-minutes: 5

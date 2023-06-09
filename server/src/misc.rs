@@ -1,0 +1,109 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
+use pyo3::{
+    exceptions::PyValueError,
+    pyclass, pymethods,
+    types::{PyBytes, PyType},
+    PyResult, Python,
+};
+
+use crate::{
+    binding_utils::gen_proto,
+    protocol::{ProtocolErrorFields, ProtocolResult},
+};
+
+#[pyclass]
+pub(crate) struct ApiVersion(libparsec::low_level::types::ApiVersion);
+
+#[pymethods]
+impl ApiVersion {
+    #[new]
+    fn new(version: u32, revision: u32) -> Self {
+        Self(libparsec::low_level::types::ApiVersion { version, revision })
+    }
+
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
+        Ok(PyBytes::new(
+            py,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(
+                    libparsec::low_level::protocol::ProtocolError::EncodingError {
+                        exc: e.to_string(),
+                    },
+                )
+            })?,
+        ))
+    }
+
+    #[classmethod]
+    fn from_bytes(_cls: &PyType, bytes: &[u8]) -> ProtocolResult<Self> {
+        Ok(Self(
+            libparsec::low_level::types::ApiVersion::load(bytes).map_err(|err| {
+                ProtocolErrorFields(
+                    libparsec::low_level::protocol::ProtocolError::EncodingError {
+                        exc: err.to_string(),
+                    },
+                )
+            })?,
+        ))
+    }
+
+    #[classmethod]
+    fn from_str(_cls: &PyType, version_str: &str) -> PyResult<Self> {
+        libparsec::low_level::types::ApiVersion::try_from(version_str)
+            .map(Self)
+            .map_err(PyValueError::new_err)
+    }
+
+    #[getter]
+    fn version(&self) -> u32 {
+        self.0.version
+    }
+
+    #[getter]
+    fn revision(&self) -> u32 {
+        self.0.revision
+    }
+
+    #[classattr]
+    #[pyo3(name = "API_V1_VERSION")]
+    fn api_v1_version() -> Self {
+        const API_V1_VERSION: ApiVersion = Self(*libparsec::low_level::protocol::API_V1_VERSION);
+        API_V1_VERSION
+    }
+
+    #[classattr]
+    #[pyo3(name = "API_V2_VERSION")]
+    fn api_v2_version() -> Self {
+        const API_V2_VERSION: ApiVersion = Self(*libparsec::low_level::protocol::API_V2_VERSION);
+        API_V2_VERSION
+    }
+
+    #[classattr]
+    #[pyo3(name = "API_V3_VERSION")]
+    fn api_v3_version() -> Self {
+        const API_V3_VERSION: ApiVersion = Self(*libparsec::low_level::protocol::API_V3_VERSION);
+        API_V3_VERSION
+    }
+
+    #[classattr]
+    #[pyo3(name = "API_V4_VERSION")]
+    fn api_v4_version() -> Self {
+        const API_V4_VERSION: ApiVersion = Self(*libparsec::low_level::protocol::API_V4_VERSION);
+        API_V4_VERSION
+    }
+
+    #[classattr]
+    #[pyo3(name = "API_LATEST_VERSION")]
+    fn api_version_number() -> Self {
+        const API_LATEST_VERSION: ApiVersion =
+            Self(*libparsec::low_level::protocol::API_LATEST_VERSION);
+        API_LATEST_VERSION
+    }
+}
+
+gen_proto!(ApiVersion, __str__);
+gen_proto!(ApiVersion, __copy__);
+gen_proto!(ApiVersion, __deepcopy__);
+gen_proto!(ApiVersion, __repr__);
+gen_proto!(ApiVersion, __richcmp__, ord);

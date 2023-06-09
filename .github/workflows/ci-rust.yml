@@ -14,11 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  cargo-exclude-unused-crates: >-
-    --exclude=parsec
-    --exclude=libparsec_bindings_android
-    --exclude=libparsec_bindings_web
-    --exclude=libparsec_bindings_electron
+  cargo-nextest-version: 0.9.53
   # Cargo will be faster with this configuration.
   # It will only update it's index for the dependencies that we use.
   # https://blog.rust-lang.org/2023/03/09/Rust-1.68.0.html#cargos-sparse-protocol
@@ -26,16 +22,124 @@ env:
 
 permissions:
   contents: read
+  packages: read
 
 jobs:
-  test-rust-matrix:
+  # Cannot factorize the jobs with a matrix since we use a service container that is
+  # only available on linux (see https://github.com/orgs/community/discussions/25578)
+  test-rust-linux:
+    name: "🐧 Linux: 🦀 Rust tests"
+    # Just a fail-safe timeout, see the fine grain per-task timeout instead
+    timeout-minutes: 30
+    runs-on: ubuntu-20.04
+    # Testbed server comes as a Docker image, so it will eventually goes out of sync
+    # with the tests (typically a new API is introduced in the Parsce server, or a new
+    # testbed template is introduced).
+    # In such case, the container url should be updated from the, see:
+    # https://github.com/Scille/parsec-cloud/pkgs/container/parsec-cloud%2Fparsec-testbed-server
+    services:
+      parsec-testbed-server:
+        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:v2.15.0-dev.2023-06-07-sha.1058bbc
+        ports:
+          - 6777:6777
+    steps:
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
+        timeout-minutes: 5
+
+      - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
+        id: changes
+        with:
+          filters: .github/filters/ci.yml
+
+      - name: Check modified path that require rust-ci run
+        id: should-run-rust-jobs
+        if: >-
+          steps.changes.outputs.rust-jobs == 'true'
+          || github.ref == 'refs/heads/master'
+        run: echo "run=true" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - uses: actions-rust-lang/setup-rust-toolchain@ac6bb38f317802fab2f463811237b0d9cba8cc80 # pin v1.4.4
+        if: steps.should-run-rust-jobs.outputs.run == 'true'
+        with:
+          # We setup the cache by hand, see below
+          cache: false
+        timeout-minutes: 10
+
+      # Just need a python good enough to run `misc/libparsec_crates_flags.py`
+      - uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # pin v4.6.1
+        if: steps.should-run-rust-jobs.outputs.run == 'true'
+        with:
+          python-version: "3.10"
+
+      - name: Retrieve Rust cache
+        uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f # pin v2.2.1
+        if: steps.should-run-rust-jobs.outputs.run == 'true'
+        with:
+          # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
+          # cache is only shared between master and the PRs (and not accross PRs).
+          # So we only save the cache on master build given it's the ones that are the
+          # most likely to be reused.
+          save-if: ${{ github.ref == 'refs/heads/master' }}
+        timeout-minutes: 5
+
+      # Install cargo nextest command
+      - uses: taiki-e/install-action@835cdc15ee7680334982c900847bcafb86487299 # pin v2.9.3
+        with:
+          tool: nextest@${{ env.cargo-nextest-version }}
+
+      - name: Test Rust codebase (platform agnostic)
+        if: steps.should-run-rust-jobs.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -ex
+          AGNOSTIC_CRATES=`python misc/libparsec_crates_flags.py agnostic`
+          cargo nextest run --cargo-profile ci-rust $AGNOSTIC_CRATES
+          # By default `libparsec_crypto` uses RustCrypto, so here we test the sodiumoxide
+          # implementation and it compatibility with the rest of the project
+          cargo nextest run --cargo-profile ci-rust --package libparsec_crypto --features use-sodiumoxide
+          NON_BINDINGS_CRATES=`python misc/libparsec_crates_flags.py agnostic platform`
+          cargo check --profile ci-rust $NON_BINDINGS_CRATES --features use-sodiumoxide
+        timeout-minutes: 30
+        env:
+          RUST_LOG: debug
+          TESTBED_SERVER: http://localhost:6777
+
+      - name: Test Rust codebase (🐧 Linux specific)
+        if: steps.should-run-rust-jobs.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -ex
+          CRATES=`python misc/libparsec_crates_flags.py platform`
+          # Use sodiumoxide here given 1) it is composed of C code, so not totally
+          # platform independant and 2) it is what is going to be used in release
+          cargo nextest run --cargo-profile ci-rust $CRATES --features libparsec_crypto/use-sodiumoxide
+        timeout-minutes: 30
+        env:
+          RUST_LOG: debug
+
+      # Clippy basically compile the project, hence it's faster to run it in
+      # the test-rust-matrix job where compilation cache is reused !
+      - uses: ./.github/actions/use-pre-commit
+        if: >-
+          steps.should-run-rust-jobs.outputs.run == 'true'
+          && startsWith(matrix.os, 'ubuntu-')
+        with:
+          extra-args: clippy --verbose
+        timeout-minutes: 5
+
+      - name: Check rust code format
+        if: >-
+          steps.should-run-rust-jobs.outputs.run == 'true'
+          && startsWith(matrix.os, 'ubuntu-')
+        run: cargo fmt --check
+        timeout-minutes: 2
+
+  test-rust-non-linux:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: 🐧 Linux
-            # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
-            os: ubuntu-20.04
           - name: 🍎 macOS
             os: macos-12
           - name: 🏁 Windows
@@ -68,6 +172,12 @@ jobs:
           cache: false
         timeout-minutes: 10
 
+      # Just need a python good enough to run `misc/libparsec_crates_flags.py`
+      - uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # pin v4.6.1
+        if: steps.should-run-rust-jobs.outputs.run == 'true'
+        with:
+          python-version: "3.10"
+
       - name: Retrieve Rust cache
         uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f # pin v2.2.1
         if: steps.should-run-rust-jobs.outputs.run == 'true'
@@ -79,7 +189,6 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/master' }}
         timeout-minutes: 5
 
-
       # Building OpenSSL requires a perl interpreter.
       # The default one does not provide windows-style filesystem
       # paths so we have to switch to Strawberry.
@@ -89,20 +198,29 @@ jobs:
         run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
         timeout-minutes: 1
 
-      # By default, `libparsec_crypto` uses Rust Crypto
-      # so if we modify `libparsec_crypto` which are not tested, it will pass the CI,
-      # that's why we add a check
-      - name: Test rust codebase
+      # Install cargo nextest command
+      - uses: taiki-e/install-action@835cdc15ee7680334982c900847bcafb86487299 # pin v2.9.3
+        with:
+          tool: nextest@${{ env.cargo-nextest-version }}
+
+      # Don't run platform agnostic tests here (only runned on Linux)
+
+      - name: Test Rust codebase (${{ matrix.name }} specific)
         if: steps.should-run-rust-jobs.outputs.run == 'true'
         shell: bash
         run: |
           set -ex
-          cargo check --profile ci-rust --workspace --features use-sodiumoxide
-          cargo test --profile ci-rust --workspace ${{ env.cargo-exclude-unused-crates }}
-          cargo test --profile ci-rust --package libparsec_crypto --features use-sodiumoxide
+          CRATES=`python misc/libparsec_crates_flags.py platform`
+          cargo nextest run --cargo-profile ci-rust $CRATES --features libparsec_crypto/use-sodiumoxide
+          # By default `libparsec_crypto` uses RustCrypto, so here we test the sodiumoxide
+          # implementation and it compatibility with the rest of the project
+          cargo nextest run --cargo-profile ci-rust --package libparsec_crypto --features use-sodiumoxide
+          NON_BINDINGS_CRATES=`python misc/libparsec_crates_flags.py agnostic platform`
+          cargo check --profile ci-rust $NON_BINDINGS_CRATES --features use-sodiumoxide
         timeout-minutes: 30
         env:
           RUST_LOG: debug
+          TESTBED_SERVER: http://localhost:6777
 
       # Clippy basically compile the project, hence it's faster to run it in
       # the test-rust-matrix job where compilation cache is reused !

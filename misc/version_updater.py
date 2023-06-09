@@ -89,7 +89,7 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
         Tool.Poetry: [POETRY_GA_VERSION],
     },
     ROOT_DIR
-    / ".github/workflows/package-ci.yml": {
+    / ".github/workflows/package-server.yml": {
         Tool.Python: [PYTHON_GA_VERSION],
         Tool.Poetry: [POETRY_GA_VERSION],
         Tool.Node: [NODE_GA_VERSION],
@@ -141,41 +141,20 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
         Tool.WasmPack: [ReplaceRegex(r'Tool.WasmPack: "[0-9.]+"', 'Tool.WasmPack: "{version}"')],
         Tool.Parsec: [ReplaceRegex(r'Tool.Parsec: "[0-9.]+.*",', 'Tool.Parsec: "{version}",')],
     },
-    ROOT_DIR / "packaging/server/res/build-backend.sh": {Tool.Python: [PYTHON_SMALL_VERSION]},
-    ROOT_DIR / "packaging/server/server.dockerfile": {Tool.Python: [PYTHON_DOCKER_VERSION]},
-    ROOT_DIR / "packaging/snap/bin/parsec-setup.sh": {Tool.Python: [PYTHON_SMALL_VERSION]},
+    ROOT_DIR / "server/packaging/server/in-docker-build.sh": {Tool.Python: [PYTHON_SMALL_VERSION]},
+    ROOT_DIR / "server/packaging/server/server.dockerfile": {Tool.Python: [PYTHON_DOCKER_VERSION]},
     ROOT_DIR
-    / "packaging/snap/snap/snapcraft.yaml": {
-        Tool.Python: [
-            PYTHON_SMALL_VERSION,
-            ReplaceRegex(
-                r"python3 --version \| grep 'Python [0-9.]+'",
-                "python3 --version | grep 'Python {version}'",
-            ),
-        ]
+    / "server/packaging/testbed-server/in-docker-build.sh": {Tool.Python: [PYTHON_SMALL_VERSION]},
+    ROOT_DIR
+    / "server/packaging/testbed-server/testbed-server.dockerfile": {
+        Tool.Python: [PYTHON_DOCKER_VERSION]
     },
-    ROOT_DIR / "packaging/testbed-server/build-testbed.sh": {Tool.Python: [PYTHON_SMALL_VERSION]},
     ROOT_DIR
-    / "packaging/testbed-server/testbed-server.dockerfile": {Tool.Python: [PYTHON_DOCKER_VERSION]},
-    ROOT_DIR
-    / "parsec/_version.py": {
+    / "server/parsec/_version.py": {
         Tool.Parsec: [ReplaceRegex(r'^__version__ = ".*"$', '__version__ = "v{version}"')]
     },
     ROOT_DIR
-    / "mypy.ini": {
-        Tool.Python: [
-            ReplaceRegex(
-                r"python_version = \d.\d+", hide_patch_version("python_version = {version}")
-            )
-        ]
-    },
-    ROOT_DIR
-    / ".pre-commit-config.yaml": {
-        Tool.Rust: [ReplaceRegex(r"rust: [0-9.]+", "rust: {version}")],
-        Tool.Node: [ReplaceRegex(r"node: [0-9.]+", "node: {version}")],
-    },
-    ROOT_DIR
-    / "pyproject.toml": {
+    / "server/pyproject.toml": {
         Tool.Python: [
             ReplaceRegex(
                 r'"Programming Language :: Python :: .*"',
@@ -187,8 +166,16 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
                 hide_patch_version('build = "cp{version}-{{manylinux,macos,win}}*"', separator=""),
             ),
             ReplaceRegex(r"py\d+", hide_patch_version("py{version}", separator="")),
+            ReplaceRegex(
+                r"python_version = \d.\d+", hide_patch_version("python_version = {version}")
+            ),
         ],
         Tool.Parsec: [ReplaceRegex(r'^version = ".*"$', 'version = "v{version}"')],
+    },
+    ROOT_DIR
+    / ".pre-commit-config.yaml": {
+        Tool.Rust: [ReplaceRegex(r"rust: [0-9.]+", "rust: {version}")],
+        Tool.Node: [ReplaceRegex(r"node: [0-9.]+", "node: {version}")],
     },
     ROOT_DIR
     / "rust-toolchain.toml": {

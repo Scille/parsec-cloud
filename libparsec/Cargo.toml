@@ -1,0 +1,34 @@
+[package]
+name = "libparsec"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.62.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+# Remember kid: RustCrypto is used if `use-sodiumoxide` is not set !
+use-sodiumoxide = ["libparsec_crypto/use-sodiumoxide"]
+python-bindings-support = [
+    "libparsec_serialization_format/python-bindings-support"
+]
+test-utils = [
+    "dep:libparsec_testbed",
+    "libparsec_client_high_level_api/test-utils",
+    "libparsec_platform_device_loader/test-with-testbed",
+    "libparsec_platform_storage/test-with-testbed",
+    "libparsec_platform_storage/test-in-memory-mock",
+    "libparsec_types/test-mock-time",
+    "libparsec_crypto/test-unsecure-but-fast-secretkey-from-password"
+]
+
+[dependencies]
+libparsec_client_high_level_api = { path = "crates/client_high_level_api"}
+libparsec_protocol = { path = "crates/protocol" }
+libparsec_crypto = { path = "crates/crypto" }
+libparsec_types = { path = "crates/types" }
+libparsec_platform_device_loader = { path = "crates/platform_device_loader" }
+libparsec_platform_storage = { path = "crates/platform_storage" }
+libparsec_serialization_format = { path = "crates/serialization_format" }
+
+libparsec_testbed = { path = "crates/testbed", optional = true }

@@ -1,6 +1,0 @@
-#!/bin/sh
-
-. ${SNAP}/parsec-setup.sh
-
-# Execute the parsec.cli module with arguments forwarding
-exec ${PYTHON} -m parsec.cli $@

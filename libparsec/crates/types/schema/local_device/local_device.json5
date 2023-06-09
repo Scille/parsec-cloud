@@ -1,0 +1,58 @@
+{
+    "label": "LocalDevice",
+    "other_fields": [
+        {
+            "name": "organization_addr",
+            "type": "BackendOrganizationAddr"
+        },
+        {
+            "name": "device_id",
+            "type": "DeviceID"
+        },
+        {
+            "name": "device_label",
+            "type": "Option<DeviceLabel>",
+            // Hack to indicate this field was added in Parsec v1.14, given revision is meaningless for data
+            "introduced_in_revision": 114
+        },
+        {
+            "name": "human_handle",
+            "type": "Option<HumanHandle>",
+            // Hack to indicate this field was added in Parsec v1.13, given revision is meaningless for data
+            "introduced_in_revision": 113
+        },
+        {
+            "name": "signing_key",
+            "type": "SigningKey"
+        },
+        {
+            "name": "private_key",
+            "type": "PrivateKey"
+        },
+        {
+            "name": "is_admin",
+            "type": "Boolean"
+        },
+        {
+            // Since the introduction of UserUpdateCertificate, user profile can change.
+            // Hence this field only contains the initial profile the user had when it
+            // was enrolled.
+            "name": "profile",
+            "type": "UserProfile",
+            // Hack to indicate this field was added in Parsec v1.14, given revision is meaningless for data
+            "introduced_in_revision": 114
+        },
+        {
+            "name": "user_manifest_id",
+            "type": "EntryID"
+        },
+        {
+            "name": "user_manifest_key",
+            "type": "SecretKey"
+        },
+        {
+            "name": "local_symkey",
+            "type": "SecretKey"
+        }
+    ]
+}

@@ -1,4 +1,4 @@
-rust-libparsec: &rust-libparsec oxidation/libparsec/**
+rust-libparsec: &rust-libparsec libparsec/**
 
 rust-dependencies-workspace: &rust-dependencies-workspace
   - Cargo.toml
@@ -10,19 +10,19 @@ rust-python-binding: &rust-python-binding src/**
 
 # TODO: We currently don't test the electron application
 # So we don't have to watch the electron binding (likewise for the client code related to electron)
-# rust-electron-binding: &rust-electron-binding oxidation/bindings/electron
+# rust-electron-binding: &rust-electron-binding bindings/electron
 # new-client-electron: &new-client-electron: oxidation/client/electron
 
 # TODO: We currently don't test the android application
 # So we don't have to watch the android binding (likewise for the client code related to android)
-# rust-android-binding: &rust-android-binding oxidation/bindings/android
+# rust-android-binding: &rust-android-binding bindings/android
 # new-client-android: &new-client-android: oxidation/client/android
 
 # TODO: We currently don't test the ios application
 # So we don't have to watch the client code related to the ios application
 # new-client-ios: &new-client-ios oxidation/client/ios
 
-rust-web-binding: &rust-web-binding oxidation/bindings/web/**
+rust-web-binding: &rust-web-binding bindings/web/**
 
 any-python:
   - "**.py"

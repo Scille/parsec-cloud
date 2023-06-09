@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const WORKDIR = path.join(__dirname, '..');
-const SRCDIR = path.join(WORKDIR, '../../bindings/electron/dist/libparsec');
+const SRCDIR = path.join(WORKDIR, '../../../bindings/electron/dist/libparsec');
 const DSTDIR = path.join(WORKDIR, 'build');
 
 function copy(src, dst) {
