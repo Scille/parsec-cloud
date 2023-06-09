@@ -99,7 +99,7 @@ updates:
     rebase-strategy: disabled
 
   - package-ecosystem: npm
-    directory: /oxidation/bindings/electron
+    directory: /bindings/electron
     pull-request-branch-name:
       separator: "-"
     schedule:
@@ -110,7 +110,7 @@ updates:
     rebase-strategy: disabled
 
   - package-ecosystem: npm
-    directory: /oxidation/bindings/web
+    directory: /bindings/web
     pull-request-branch-name:
       separator: "-"
     schedule:
@@ -147,7 +147,7 @@ updates:
     rebase-strategy: disabled
 
   - package-ecosystem: gradle
-    directory: /oxidation/bindings/android
+    directory: /bindings/android
     pull-request-branch-name:
       separator: "-"
     schedule:

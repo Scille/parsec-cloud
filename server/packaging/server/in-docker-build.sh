@@ -3,7 +3,7 @@
 set -xe
 
 # Remove bindings crates that aren't needed for backend-server
-sed -i -e '\;oxidation/bindings;d' Cargo.toml
+sed -i -e '\;bindings;d' Cargo.toml
 
 # Install Rust (actual toolchain is going to be installed by maturin according to `rust-toolchain.toml`)
 curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none

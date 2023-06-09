@@ -59,7 +59,7 @@ function fetch_cargo_flags() {
   const PYTHON = get_python();
   const ARGS = [
     PYTHON,
-    path.join(__dirname, "../../../../make.py"),
+    path.join(__dirname, "../../../make.py"),
     `electron-${profile}-libparsec-cargo-flags`,
     "--quiet",
   ];

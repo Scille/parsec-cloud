@@ -3,6 +3,6 @@ include ':capacitor-cordova-android-plugins'
 project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
 
 include ':libparsec'
-project(':libparsec').projectDir = new File('../../bindings/android/libparsec')
+project(':libparsec').projectDir = new File('../../../bindings/android/libparsec')
 
 apply from: 'capacitor.settings.gradle'

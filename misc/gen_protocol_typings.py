@@ -357,7 +357,7 @@ if __name__ == "__main__":
         "--input",
         type=Path,
         help="Path to api schema folder",
-        default=BASEDIR / "oxidation/libparsec/crates/protocol/schema/",
+        default=BASEDIR / "libparsec/crates/protocol/schema/",
     )
     parser.add_argument(
         "--output",

@@ -57,7 +57,7 @@ try {
 // 3) Add the packaging of the Wasm stuff if the platform requires it
 
 if (platform === 'web') {
-  plugins.push(wasmPack([{path: '../bindings/web/', name: 'libparsec_bindings_web'}]));
+  plugins.push(wasmPack([{path: '../../bindings/web/', name: 'libparsec_bindings_web'}]));
 }
 
 // 4) Finally configure Vite

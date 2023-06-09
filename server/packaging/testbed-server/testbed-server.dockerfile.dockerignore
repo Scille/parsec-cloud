@@ -1,8 +1,6 @@
 # Rust code that isn't need for testbed
 oxidation/client
-oxidation/bindings
-oxidation/generate_test_data
-oxidation/libparsec_python
+bindings
 target
 .cargo
 

@@ -29,4 +29,4 @@ task clean(type: Delete) {
 // libparsec AAR (as opposed to run the `build.gradle` in `client/android/` which
 // contains a full Parsec APK application with dependency on the libparsec module)
 // So we share the same configuration between AAR and APK projects.
-apply from: file("$rootDir/../../client/android/variables.gradle")
+apply from: file("$rootDir/../../oxidation/client/android/variables.gradle")

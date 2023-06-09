@@ -22,16 +22,16 @@ python-analyze:
   - *python
   - *python-dependencies-project
 
-rust-android-binding: &rust-android-binding oxidation/bindings/android/**
+rust-android-binding: &rust-android-binding bindings/android/**
 
 android: &android oxidation/client/android/**
 
 android-dependencies-project: &android-dependencies-project
   # Bindings configuration
-  - oxidation/bindings/android/gradle/verification-metadata.xml
-  - oxidation/bindings/android/*.gradle
-  - oxidation/bindings/android/*.lockfile
-  - oxidation/bindings/android/*.properties
+  - bindings/android/gradle/verification-metadata.xml
+  - bindings/android/*.gradle
+  - bindings/android/*.lockfile
+  - bindings/android/*.properties
   # Client configuration
   - oxidation/client/android/gradle/verification-metadata.xml
   - oxidation/client/android/*.gradle

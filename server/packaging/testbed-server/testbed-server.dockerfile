@@ -19,7 +19,7 @@ ADD --link \
     make.py \
     server/packaging/testbed-server/in-docker-build.sh \
     .
-ADD --link oxidation/libparsec oxidation/libparsec
+ADD --link libparsec/ libparsec/
 ADD --link server/ server/
 
 RUN bash in-docker-build.sh

@@ -205,10 +205,10 @@ class SkipLicenser(Licenser):
 
 LICENSERS_MAP = {
     # First match is used
-    re.compile(r"^oxidation/(.*/)?(target|node_modules|build|dist)/"): SkipLicenser,
-    re.compile(r"^oxidation/.*\.rs$"): RustBuslLicenser,
-    re.compile(r"^oxidation/.*\.(py|pyi)$"): PythonBuslLicenser,
-    re.compile(r"^oxidation/.*\.sql$"): SqlBuslLicenser,
+    re.compile(r"^(.*/)?(target|node_modules|build|dist)/"): SkipLicenser,
+    re.compile(r"^(libparsec|bindings)/.*\.(py|pyi)$"): PythonBuslLicenser,
+    re.compile(r"^(libparsec|bindings)/.*\.rs$"): RustBuslLicenser,
+    re.compile(r"^(libparsec|bindings)/.*\.sql$"): SqlBuslLicenser,
     re.compile(r"^server/parsec/backend/.*\.sql$"): SqlBuslLicenser,
     re.compile(r"^server/parsec/backend/.*\.(py|pyi)"): PythonBuslLicenser,
     re.compile(r"^server/src/.*\.rs"): RustBuslLicenser,
@@ -292,8 +292,8 @@ if __name__ == "__main__":
         type=Path,
         default=[
             Path("server"),
-            Path("oxidation"),
-            Path("windows-icon-handler"),
+            Path("bindings"),
+            Path("libparsec"),
             Path("packaging"),
             Path("misc"),
             Path("docs"),

@@ -39,8 +39,8 @@ WEB_CI_CARGO_FLAGS = f"{WEB_DEV_CARGO_FLAGS} --profile=ci-rust"
 
 BASE_DIR = Path(__file__).parent.resolve()
 SERVER_DIR = BASE_DIR / "server"
-ELECTRON_DIR = BASE_DIR / "oxidation/bindings/electron"
-WEB_DIR = BASE_DIR / "oxidation/bindings/web"
+ELECTRON_DIR = BASE_DIR / "bindings/electron"
+WEB_DIR = BASE_DIR / "bindings/web"
 
 
 CYAN = "\x1b[36m"

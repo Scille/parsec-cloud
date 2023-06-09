@@ -88,8 +88,8 @@ jobs:
         id: cache-key
         run: >-
           echo "key=web-${{ hashFiles(
-            'oxidation/bindings/web/**',
-            'oxidation/libparsec/**',
+            'bindings/web/**',
+            'libparsec/**',
             'rust-toolchain.toml',
             'Cargo.lock'
           ) }}-libparsec" >> "$GITHUB_OUTPUT"
@@ -102,8 +102,8 @@ jobs:
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
-            oxidation/bindings/web/pkg/libparsec_*
-            oxidation/bindings/web/pkg/package*
+            bindings/web/pkg/
+            bindings/web/pkg/
         timeout-minutes: 2
 
       - name: Retrieve Rust cache
@@ -129,7 +129,7 @@ jobs:
           steps.should-run-web-jobs.outputs.run == 'true'
           && steps.cache-libparsec.outputs.cache-hit != 'true'
         run: npm run build:dev
-        working-directory: oxidation/bindings/web
+        working-directory: bindings/web
         timeout-minutes: 10
 
       - name: Save libparsec to be reuse later
@@ -140,8 +140,8 @@ jobs:
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
-            oxidation/bindings/web/pkg/libparsec_*
-            oxidation/bindings/web/pkg/package*
+            bindings/web/pkg/
+            bindings/web/pkg/
         timeout-minutes: 2
 
       - name: Unit tests

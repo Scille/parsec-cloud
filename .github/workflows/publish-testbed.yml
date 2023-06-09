@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
-      - oxidation/libparsec/**
+      - libparsec/**
       - server/tests/scripts/run_testbed_server.py
       - server/packaging/testbed-server/**
       - .github/workflows/publish-testbed.yml
@@ -12,7 +12,7 @@ on:
     branches:
       - master
     paths:
-      - oxidation/libparsec/**
+      - libparsec/**
       - server/tests/scripts/run_testbed_server.py
       - server/packaging/testbed-server/**
       - .github/workflows/publish-testbed.yml

@@ -263,7 +263,7 @@ In addition to the [shared requirements](#shared-requirements), you need to inst
 4. Setup the web binding
 
    ```shell
-   pushd oxidation/bindings/web
+   pushd bindings/web
    npm install
    npm build:dev
    popd
@@ -274,7 +274,7 @@ In addition to the [shared requirements](#shared-requirements), you need to inst
 5. Setup the electron binding
 
    ```shell
-   pushd oxidation/bindings/electron
+   pushd bindings/electron
    npm install
    npm run build:dev
    popd

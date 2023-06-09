@@ -6,7 +6,7 @@ const path = require("path");
 const fs = require('node:fs');
 
 const DEFAULT_PROFILE = "release";
-const ROOT_DIR = path.resolve(__dirname, "../../../..");
+const ROOT_DIR = path.resolve(__dirname, "../../..");
 const WORKDIR = path.resolve(__dirname, '..');
 const TARGET = "wasm32-unknown-unknown";
 

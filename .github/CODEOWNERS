@@ -16,11 +16,11 @@ package-lock.json       @Scille/js-code-owners
 
 # The bindings folder contains rust code that is used by the `web`, `electron` & `android`.
 # The responsability is shared between the js & rust teams.
-/oxidation/bindings/    @Scille/js-code-owners @Scille/rust-code-owners
+/bindings/              @Scille/js-code-owners @Scille/rust-code-owners
 
 
 # Rust team is responsible for the rust code.
-/oxidation/libparsec/   @Scille/rust-code-owners
+/libparsec/             @Scille/rust-code-owners
 /src                    @Scille/rust-code-owners
 rust-toolchain.toml     @Scille/rust-code-owners
 Cargo.toml              @Scille/rust-code-owners
@@ -42,9 +42,9 @@ mypy.ini                @Scille/python-code-owners
 setup.cfg               @Scille/python-code-owners
 
 # Ops team is responsible for the CI & the packaging system.
-/.github/                @Scille/ops-code-owners
+/.github/               @Scille/ops-code-owners
 /packaging/             @Scille/ops-code-owners
 /misc/                  @Scille/ops-code-owners
 
 # @touilleMan is responsible for the CODEOWNERS file ;)
-/.github/CODEOWNERS      @touilleMan
+/.github/CODEOWNERS     @touilleMan

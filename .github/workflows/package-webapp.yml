@@ -64,7 +64,7 @@ jobs:
 
       - name: Build web bindings
         run: npm run build:release
-        working-directory: oxidation/bindings/web
+        working-directory: bindings/web
 
       - name: Build web app
         run: npm run web:release
@@ -111,13 +111,13 @@ jobs:
         run: |
           npm clean-install
           (cd electron && npm clean-install)
-          (cd ../bindings/electron && npm clean-install)
+          (cd ../../bindings/electron && npm clean-install)
         working-directory: oxidation/client
         timeout-minutes: 10
 
       - name: Build Electron bindings
         run: npm run build:release
-        working-directory: oxidation/bindings/electron
+        working-directory: bindings/electron
         # MacOS is really slow when build rust
         timeout-minutes: 30
 

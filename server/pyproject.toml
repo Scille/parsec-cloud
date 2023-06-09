@@ -149,7 +149,6 @@ ignore = ["E501", "E402", "F541"]
 
 extend-exclude = [
     "docs",
-    "oxidation/",
     "misc/bench.py",
 ]
 
@@ -203,10 +202,6 @@ ignore_errors = true
 [[tool.mypy.overrides]]
 module = "tests.common.freeze_time"
 ignore_errors = false
-
-[[tool.mypy.overrides]]
-module = "oxidation.*"
-ignore_errors = true
 
 [[tool.mypy.overrides]]
 module = "misc.*"

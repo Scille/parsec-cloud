@@ -143,16 +143,17 @@ fn ensure_testbed_server_is_started() -> (Option<BackendAddr>, Option<std::proce
     }
 
     log::info!("Starting testbed server...");
+
     // We don't really know where we are executed from given it depend on what is
     // the currently tested crate. Hence we only make the assumption we are within
     // the project repository and will eventually reach the project root by testing
     // each parent.
-    let script = {
+    let (server_dir, script) = {
         let mut dir = std::env::current_dir().expect("Cannot retrieve current dir");
         loop {
-            let target = dir.join("./tests/scripts/run_testbed_server.py");
+            let target = dir.join("./server/tests/scripts/run_testbed_server.py");
             if target.exists() {
-                break target;
+                break (dir.join("server"), target);
             }
             dir = match dir.parent() {
                 Some(dir) => dir.to_path_buf(),
@@ -163,6 +164,8 @@ fn ensure_testbed_server_is_started() -> (Option<BackendAddr>, Option<std::proce
 
     let mut process = std::process::Command::new("poetry")
         .args([
+            "--directory",
+            server_dir.to_str().expect("Script path contains non-utf8"),
             "run",
             "--",
             "python",
@@ -193,6 +196,7 @@ fn ensure_testbed_server_is_started() -> (Option<BackendAddr>, Option<std::proce
             let re = regex::Regex::new(r"127.0.0.1:([0-9]+)").unwrap();
             let mut buf = vec![0u8; 1024];
             let mut total = 0;
+            let mut sleep_wait_count = 30; // Sleep at most for 3s
             loop {
                 let n = stderr
                     .read(&mut buf[total..])
@@ -212,8 +216,16 @@ fn ensure_testbed_server_is_started() -> (Option<BackendAddr>, Option<std::proce
                             .expect("Invalid testbed server port");
                     }
                     None => {
-                        // Not enough output from subprocess, wait 100ms more
-                        std::thread::sleep(std::time::Duration::new(0, 100000));
+                        if sleep_wait_count > 0 {
+                            // Not enough output from subprocess, wait 100ms more
+                            std::thread::sleep(std::time::Duration::new(0, 100000));
+                            sleep_wait_count -= 1;
+                        } else {
+                            panic!(
+                                "Timeout to retrieve port of testbed server, stderr: {}",
+                                strbuf
+                            );
+                        }
                     }
                 }
                 if total == buf.len() {

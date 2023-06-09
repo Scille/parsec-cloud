@@ -183,15 +183,11 @@ crate::binding_utils::gen_proto!(ActiveUsersLimit, __repr__);
 crate::binding_utils::gen_proto!(ActiveUsersLimit, __copy__);
 crate::binding_utils::gen_proto!(ActiveUsersLimit, __deepcopy__);
 
+python_bindings_parsec_protocol_cmds_family!("../libparsec/crates/protocol/schema/invited_cmds");
 python_bindings_parsec_protocol_cmds_family!(
-    "../oxidation/libparsec/crates/protocol/schema/invited_cmds"
+    "../libparsec/crates/protocol/schema/authenticated_cmds"
 );
-python_bindings_parsec_protocol_cmds_family!(
-    "../oxidation/libparsec/crates/protocol/schema/authenticated_cmds"
-);
-python_bindings_parsec_protocol_cmds_family!(
-    "../oxidation/libparsec/crates/protocol/schema/anonymous_cmds"
-);
+python_bindings_parsec_protocol_cmds_family!("../libparsec/crates/protocol/schema/anonymous_cmds");
 
 pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     invited_cmds_populate_mod(py, m)?;
