@@ -210,6 +210,13 @@ new_uuid_type!(pub InvitationToken);
 new_uuid_type!(pub EnrollmentID);
 impl_from_maybe!(std::collections::HashSet<EntryID>);
 
+// RealmID correspond to user/worspace manifest's EntryID, so conversion is useful
+impl From<EntryID> for RealmID {
+    fn from(value: EntryID) -> Self {
+        Self(value.0)
+    }
+}
+
 /*
  * OrganizationID
  */
