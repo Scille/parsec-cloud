@@ -2,7 +2,7 @@
 
 use libparsec_types::prelude::*;
 
-pub(crate) fn merge_workspace_entry(
+pub(super) fn merge_workspace_entry(
     base: Option<&WorkspaceEntry>,
     diverged: &WorkspaceEntry,
     target: &WorkspaceEntry,

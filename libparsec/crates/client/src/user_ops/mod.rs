@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-// UserOps is a big boy, hence we split it definition in multiple submodules
 mod create;
 mod merge;
 mod message;
@@ -8,7 +7,6 @@ mod message;
 // mod share;
 // mod sync;
 
-pub use create::*;
 pub use message::*;
 // pub use reencryption::*;
 // pub use share::*;
@@ -38,6 +36,14 @@ pub struct UserOps {
     update_user_manifest_lock: AsyncMutex<()>,
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum UserOpsError {
+    #[error("Unknown workspace `{0}`")]
+    UnknownWorkspace(EntryID),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
 #[derive(Debug)]
 pub struct ReencryptionJob {}
 
@@ -47,7 +53,6 @@ impl UserOps {
         device: Arc<LocalDevice>,
         cmds: Arc<AuthenticatedCmds>,
         certificates_ops: Arc<CertificatesOps>,
-        // remote_device_manager,
         event_bus: EventBus,
         // prevent_sync_pattern,
         // preferred_language,
@@ -69,5 +74,41 @@ impl UserOps {
 
     pub async fn stop(&self) {
         self.storage.stop().await;
+    }
+
+    // For readability, we define the public interface here and let the actual
+    // implementation in separated submodules
+
+    pub async fn workspace_create(&self, name: EntryName) -> Result<EntryID, UserOpsError> {
+        create::workspace_create(self, name).await
+    }
+
+    pub async fn workspace_rename(
+        &self,
+        workspace_id: &EntryID,
+        new_name: EntryName,
+    ) -> Result<(), UserOpsError> {
+        create::workspace_rename(self, workspace_id, new_name).await
+    }
+
+    pub async fn process_last_messages(
+        &self,
+        latest_known_index: Option<IndexInt>,
+    ) -> Result<(), ProcessLastMessagesError> {
+        message::process_last_messages(self, latest_known_index).await
+    }
+
+    pub async fn workspace_start_reencryption(
+        &self,
+        _workspace_id: &EntryID,
+    ) -> Result<ReencryptionJob, anyhow::Error> {
+        todo!()
+    }
+
+    pub async fn workspace_continue_reencryption(
+        &self,
+        _workspace_id: &EntryID,
+    ) -> Result<ReencryptionJob, anyhow::Error> {
+        todo!()
     }
 }

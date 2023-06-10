@@ -83,8 +83,8 @@ impl super::UserOps {
         // Workspace sharing involves multiple checks:
         // - recipient should not be revoked
         // - OWNER/MANAGER role cannot be given to an OUTSIDER recipient
-        // - The current user role determine which (or even if !) role he can
-        //   given to the recipient
+        // - The current user role determine which role (or even if !) he can
+        //   give to the recipient
         //
         // In theory we should not trust the server on those checks, hand hence we should:
         // 1) do the checks in local
@@ -160,7 +160,7 @@ impl super::UserOps {
         };
         let dumped_role_certificate = role_certificate.dump_and_sign(&self.device.signing_key);
 
-        // Actually send the command to the backend
+        // Actually send the command to the server
 
         use authenticated_cmds::latest::realm_update_roles::{Rep, Req};
 
