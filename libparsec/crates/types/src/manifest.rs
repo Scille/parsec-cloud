@@ -249,8 +249,14 @@ pub struct WorkspaceEntry {
     pub key: SecretKey,
     pub encryption_revision: IndexInt,
     pub encrypted_on: DateTime,
-    pub role_cached_on: DateTime,
-    pub role: Option<RealmRole>,
+    // As they name suggest, `role`/`role_cached_on` are only cache information.
+    // However they are no longer needed given certificates are now eagerly
+    // fetched by the client (see `CertificatesOps` internals).
+    // Hence why they are not public: they are only kept for compatibility reason.
+    #[serde(rename = "role_cached_on")]
+    pub legacy_role_cache_timestamp: DateTime,
+    #[serde(rename = "role")]
+    pub legacy_role_cache_value: Option<RealmRole>,
 }
 
 impl WorkspaceEntry {
@@ -261,13 +267,9 @@ impl WorkspaceEntry {
             key: SecretKey::generate(),
             encryption_revision: 1,
             encrypted_on: timestamp,
-            role_cached_on: timestamp,
-            role: Some(RealmRole::Owner),
+            legacy_role_cache_timestamp: timestamp,
+            legacy_role_cache_value: Some(RealmRole::Owner),
         }
-    }
-
-    pub fn is_revoked(&self) -> bool {
-        self.role.is_none()
     }
 }
 

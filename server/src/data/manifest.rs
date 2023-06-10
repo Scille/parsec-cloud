@@ -63,8 +63,14 @@ impl WorkspaceEntry {
             [key: SecretKey, "key"],
             [encryption_revision: IndexInt, "encryption_revision"],
             [encrypted_on: DateTime, "encrypted_on"],
-            [role_cached_on: DateTime, "role_cached_on"],
-            [role: Option<RealmRole>, "role"],
+            [
+                legacy_role_cache_timestamp: DateTime,
+                "legacy_role_cache_timestamp"
+            ],
+            [
+                legacy_role_cache_value: Option<RealmRole>,
+                "legacy_role_cache_value"
+            ],
         );
 
         Ok(Self(libparsec::low_level::types::WorkspaceEntry {
@@ -73,8 +79,8 @@ impl WorkspaceEntry {
             key: key.0,
             encryption_revision,
             encrypted_on: encrypted_on.0,
-            role_cached_on: role_cached_on.0,
-            role: role.map(|x| x.0),
+            legacy_role_cache_timestamp: legacy_role_cache_timestamp.0,
+            legacy_role_cache_value: legacy_role_cache_value.map(|x| x.0),
         }))
     }
 
@@ -87,8 +93,14 @@ impl WorkspaceEntry {
             [key: SecretKey, "key"],
             [encryption_revision: IndexInt, "encryption_revision"],
             [encrypted_on: DateTime, "encrypted_on"],
-            [role_cached_on: DateTime, "role_cached_on"],
-            [role: Option<RealmRole>, "role"],
+            [
+                legacy_role_cache_timestamp: DateTime,
+                "legacy_role_cache_timestamp"
+            ],
+            [
+                legacy_role_cache_value: Option<RealmRole>,
+                "legacy_role_cache_value"
+            ],
         );
 
         let mut r = self.0.clone();
@@ -108,11 +120,11 @@ impl WorkspaceEntry {
         if let Some(v) = encrypted_on {
             r.encrypted_on = v.0;
         }
-        if let Some(v) = role_cached_on {
-            r.role_cached_on = v.0;
+        if let Some(v) = legacy_role_cache_timestamp {
+            r.legacy_role_cache_timestamp = v.0;
         }
-        if let Some(v) = role {
-            r.role = v.map(|x| x.0);
+        if let Some(v) = legacy_role_cache_value {
+            r.legacy_role_cache_value = v.map(|x| x.0);
         }
 
         Ok(Self(r))
@@ -125,10 +137,6 @@ impl WorkspaceEntry {
             name.0.to_owned(),
             timestamp.0,
         )))
-    }
-
-    fn is_revoked(&self) -> bool {
-        self.0.is_revoked()
     }
 
     #[getter]
@@ -157,13 +165,13 @@ impl WorkspaceEntry {
     }
 
     #[getter]
-    fn role_cached_on(&self) -> PyResult<DateTime> {
-        Ok(DateTime(self.0.role_cached_on))
+    fn legacy_role_cache_timestamp(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.legacy_role_cache_timestamp))
     }
 
     #[getter]
-    fn role(&self) -> Option<RealmRole> {
-        self.0.role.map(RealmRole)
+    fn legacy_role_cache_value(&self) -> Option<RealmRole> {
+        self.0.legacy_role_cache_value.map(RealmRole)
     }
 }
 

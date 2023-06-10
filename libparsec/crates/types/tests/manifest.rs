@@ -393,8 +393,8 @@ fn serde_user_manifest(alice: &Device) {
                 )),
                 encryption_revision: 2,
                 encrypted_on: now,
-                role_cached_on: now,
-                role: Some(RealmRole::Owner),
+                legacy_role_cache_timestamp: now,
+                legacy_role_cache_value: Some(RealmRole::Owner),
             },
             WorkspaceEntry {
                 name: "wksp2".parse().unwrap(),
@@ -404,8 +404,8 @@ fn serde_user_manifest(alice: &Device) {
                 )),
                 encryption_revision: 1,
                 encrypted_on: now,
-                role_cached_on: now,
-                role: None,
+                legacy_role_cache_timestamp: now,
+                legacy_role_cache_value: None,
             },
         ],
     };

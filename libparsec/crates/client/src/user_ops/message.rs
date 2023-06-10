@@ -130,9 +130,9 @@ pub(super) async fn process_last_messages(
                 .await?;
             }
             MessageContent::SharingRevoked { .. } => {
-                // We used to have to update user manifest's `WorkspaceEntry.role/role_cached_on`
-                // fields. However this is no longer needed given certificates are now eagerly
-                // fetched by the client.
+                // We used to have to update user manifest's `WorkspaceEntry`'s
+                // `role`/`role_cached_on` fields. However this is no longer needed
+                // given certificates are now eagerly fetched by the client.
                 //
                 // The corollary is `MessageSharingRevoked` is now useless given we are
                 // notified of the role revocation when we receive the corresponding
@@ -196,14 +196,12 @@ async fn process_message_sharing_granted(
         key,
         encryption_revision,
         encrypted_on,
-        // As they name suggest, `role`/`role_cached_on` are only cache information.
-        // However they are no longer needed given certificates are now eagerly
-        // fetched by the client.
-        // We still have to provide them for compatibility reason. So we choose
-        // an always true value: at epoch 0 Parsec didn't exist, hence the user
-        // couldn't have access to this workspace !
-        role_cached_on: DateTime::from_f64_with_us_precision(0.0),
-        role: None,
+        // For backward compatibility we still have to provide the legacy cache on role
+        // even if we don't use it anymore.
+        // The good news is it's easy to provide an always valid value: at epoch 0
+        // Parsec didn't exist, hence the user couldn't have access to this workspace !
+        legacy_role_cache_timestamp: DateTime::from_f64_with_us_precision(0.0),
+        legacy_role_cache_value: None,
     };
 
     // Check if we already know this workspace
