@@ -10,7 +10,7 @@ use super::{UserOps, UserOpsError};
 pub(super) async fn workspace_create(
     ops: &UserOps,
     name: EntryName,
-) -> Result<EntryID, UserOpsError> {
+) -> Result<EntryID, anyhow::Error> {
     let guard = ops.update_user_manifest_lock.lock().await;
 
     let timestamp = ops.device.time_provider.now();
@@ -36,13 +36,8 @@ pub(super) async fn workspace_create(
     // However a speculative manifest means the workspace have been
     // created by somebody else, and hence we shouldn't try to create
     // it corresponding realm in the backend !
-    workspace_storage_non_speculative_init(&ops.data_base_dir, &ops.device, workspace_id)
-        .await
-        .map_err(UserOpsError::Internal)?;
-    ops.storage
-        .set_user_manifest(user_manifest)
-        .await
-        .map_err(UserOpsError::Internal)?;
+    workspace_storage_non_speculative_init(&ops.data_base_dir, &ops.device, workspace_id).await?;
+    ops.storage.set_user_manifest(user_manifest).await?;
     // TODO: handle events
     // ops.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=ops.user_manifest_id)
     // ops.event_bus.send(CoreEvent.FS_WORKSPACE_CREATED, new_entry=workspace_entry)

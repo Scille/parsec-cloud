@@ -79,7 +79,16 @@ impl UserOps {
     // For readability, we define the public interface here and let the actual
     // implementation in separated submodules
 
-    pub async fn workspace_create(&self, name: EntryName) -> Result<EntryID, UserOpsError> {
+    pub fn list_workspaces(&self) -> Vec<(EntryID, EntryName)> {
+        let user_manifest = self.storage.get_user_manifest();
+        user_manifest
+            .workspaces
+            .iter()
+            .map(|entry| (entry.id, entry.name.clone()))
+            .collect()
+    }
+
+    pub async fn workspace_create(&self, name: EntryName) -> Result<EntryID, anyhow::Error> {
         create::workspace_create(self, name).await
     }
 
