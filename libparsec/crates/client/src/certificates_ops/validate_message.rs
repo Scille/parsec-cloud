@@ -29,21 +29,6 @@ pub enum InvalidMessageError {
         sender: DeviceID,
         timestamp: DateTime,
     },
-    #[error("Message #{index} from `{sender}` at {timestamp}: at that time author couldn't share `{realm_id}` with us given it role was `{sender_role:?}`")]
-    AuthorRealmRoleCannotShare {
-        index: IndexInt,
-        sender: DeviceID,
-        timestamp: DateTime,
-        realm_id: RealmID,
-        sender_role: RealmRole,
-    },
-    #[error("Message #{index} from `{sender}` at {timestamp}: at that time author didn't have access to realm `{realm_id}` and hence couldn't share it with us")]
-    AuthorNoAccessToRealm {
-        index: IndexInt,
-        sender: DeviceID,
-        timestamp: DateTime,
-        realm_id: RealmID,
-    },
     #[error("Message #{index} from `{sender}` at {timestamp}: no realm role certificate correspond to this message !")]
     NoCorrespondingRealmRoleCertificate {
         index: IndexInt,
@@ -202,7 +187,9 @@ async fn validate_message_internal(
             // The certificate is validated by the server poll system just like any
             // other certificate, so we don't have to handle it validation here.
             //
-            // So the only check we have is to retrieve this certificate.
+            // So the only check we have is to retrieve this certificate, if this succeed
+            // we are guaranteed the sender was part of the realm with sufficient role
+            // to share it with us !
             let certif_as_expected = match storage.get_certificate(certificate_index).await {
                 Ok(certif) => {
                     if let AnyArcCertificate::RealmRole(certif) = certif {

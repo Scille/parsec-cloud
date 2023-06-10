@@ -1,0 +1,191 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
+use libparsec_types::prelude::*;
+
+use super::{
+    storage::{GetCertificateError, UpTo},
+    CertificatesOps, PollServerError,
+};
+
+#[derive(Debug, thiserror::Error)]
+pub enum InvalidManifestError {
+    #[error("Manifest from vlob `{vlob_id}` version {version} (create by `{author}` on {timestamp}) is corrupted: {error}")]
+    Corrupted {
+        vlob_id: EntryID,
+        version: VersionInt,
+        author: DeviceID,
+        timestamp: DateTime,
+        error: DataError,
+    },
+    #[error("Manifest from vlob `{vlob_id}` version {version} (create by `{author}` on {timestamp}): at that time author didn't exist !")]
+    NonExistantAuthor {
+        vlob_id: EntryID,
+        version: VersionInt,
+        author: DeviceID,
+        timestamp: DateTime,
+    },
+    #[error("Manifest from vlob `{vlob_id}` version {version} (create by `{author}` on {timestamp}): at that time author was already revoked !")]
+    RevokedAuthor {
+        vlob_id: EntryID,
+        version: VersionInt,
+        author: DeviceID,
+        timestamp: DateTime,
+    },
+    #[error("Manifest from vlob `{vlob_id}` version {version} (create by `{author}` on {timestamp}): at that time author couldn't write in realm `{realm_id}` given it role was `{author_role:?}`")]
+    AuthorRealmRoleCannotWrite {
+        vlob_id: EntryID,
+        version: VersionInt,
+        author: DeviceID,
+        timestamp: DateTime,
+        realm_id: RealmID,
+        author_role: RealmRole,
+    },
+    #[error("Manifest from vlob `{vlob_id}` version {version} (create by `{author}` on {timestamp}): at that time author didn't have access to realm `{realm_id}` and hence couldn't write in it")]
+    AuthorNoAccessToRealm {
+        vlob_id: EntryID,
+        version: VersionInt,
+        author: DeviceID,
+        timestamp: DateTime,
+        realm_id: RealmID,
+    },
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ValidateManifestError {
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error(transparent)]
+    InvalidManifest(#[from] InvalidManifestError),
+    #[error(transparent)]
+    PollServerError(#[from] PollServerError),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub(super) async fn validate_user_manifest(
+    ops: &CertificatesOps,
+    certificate_index: IndexInt,
+    author: &DeviceID,
+    version: VersionInt,
+    timestamp: DateTime,
+    encrypted: &[u8],
+) -> Result<UserManifest, ValidateManifestError> {
+    let realm_id = ops.device.user_manifest_id.into();
+
+    // 1) Make sure we have all the needed certificates
+
+    let storage =
+        super::poll::ensure_certificates_available_and_read_lock(ops, certificate_index).await?;
+
+    // 2) Author must exist and not be revoked at the time the manifest was created !
+
+    // 2.1) Check device exists (this also imply the user exists)
+
+    let author_certif = match storage
+        .get_device_certificate(UpTo::Index(certificate_index), author)
+        .await
+    {
+        // Exists, as expected :)
+        Ok(certif) => certif,
+
+        // Doesn't exist at the considered index :(
+        Err(GetCertificateError::NonExisting | GetCertificateError::ExistButTooRecent { .. }) => {
+            let what = InvalidManifestError::NonExistantAuthor {
+                vlob_id: ops.device.user_manifest_id,
+                version,
+                author: author.to_owned(),
+                timestamp,
+            };
+            return Err(ValidateManifestError::InvalidManifest(what));
+        }
+
+        // D'oh :/
+        Err(err @ GetCertificateError::Internal(_)) => {
+            return Err(ValidateManifestError::Internal(err.into()))
+        }
+    };
+
+    // 2.2) Check author is not revoked
+
+    match storage
+        .get_revoked_user_certificate(UpTo::Index(certificate_index), author.user_id())
+        .await
+    {
+        // Not revoked at the considered index, as we expected :)
+        Ok(None) => (),
+
+        // Revoked :(
+        Ok(Some(_)) => {
+            let what = InvalidManifestError::RevokedAuthor {
+                vlob_id: ops.device.user_manifest_id,
+                version,
+                author: author.to_owned(),
+                timestamp,
+            };
+            return Err(ValidateManifestError::InvalidManifest(what));
+        }
+
+        // D'oh :/
+        Err(err) => return Err(ValidateManifestError::Internal(err)),
+    }
+
+    // 3) Actually validate the manifest
+
+    let manifest = UserManifest::decrypt_verify_and_load(
+        encrypted,
+        &ops.device.user_manifest_key,
+        &author_certif.verify_key,
+        author,
+        timestamp,
+        Some(ops.device.user_manifest_id),
+        Some(version),
+    )
+    .map_err(|error| {
+        let what = InvalidManifestError::Corrupted {
+            vlob_id: ops.device.user_manifest_id,
+            version,
+            author: author.to_owned(),
+            timestamp,
+            error,
+        };
+        ValidateManifestError::InvalidManifest(what)
+    })?;
+
+    // 4) Finally we have to check the manifest content is consistent with the system
+    // (i.e. the author had the right to create this manifest)
+    let author_role = storage
+        .get_user_realm_role(UpTo::Index(certificate_index), author.user_id(), realm_id)
+        .await?
+        .and_then(|certif| certif.role);
+    match author_role {
+        // All good :)
+        Some(RealmRole::Contributor) | Some(RealmRole::Manager) | Some(RealmRole::Owner) => (),
+
+        // The author wasn't part of the realm :(
+        None => {
+            let what = InvalidManifestError::AuthorNoAccessToRealm {
+                vlob_id: ops.device.user_manifest_id,
+                version,
+                author: author.to_owned(),
+                timestamp,
+                realm_id,
+            };
+            return Err(ValidateManifestError::InvalidManifest(what));
+        }
+
+        // The author doesn't have write access to the realm :(
+        Some(role @ RealmRole::Reader) => {
+            let what = InvalidManifestError::AuthorRealmRoleCannotWrite {
+                vlob_id: ops.device.user_manifest_id,
+                version,
+                author: author.to_owned(),
+                timestamp,
+                realm_id,
+                author_role: role,
+            };
+            return Err(ValidateManifestError::InvalidManifest(what));
+        }
+    }
+
+    Ok(manifest)
+}

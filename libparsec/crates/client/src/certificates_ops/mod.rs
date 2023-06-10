@@ -3,11 +3,13 @@
 mod add;
 mod poll;
 mod storage;
-mod validate;
+mod validate_manifest;
+mod validate_message;
 
 pub use add::{AddCertificateError, InvalidCertificateError, MaybeRedactedSwitch};
 pub use poll::PollServerError;
-pub use validate::{InvalidMessageError, ValidateMessageError};
+pub use validate_manifest::ValidateManifestError;
+pub use validate_message::{InvalidMessageError, ValidateMessageError};
 
 use std::{path::Path, sync::Arc};
 
@@ -64,6 +66,26 @@ impl CertificatesOps {
         timestamp: DateTime,
         body: &[u8],
     ) -> Result<MessageContent, ValidateMessageError> {
-        validate::validate_message(self, certificate_index, index, sender, timestamp, body).await
+        validate_message::validate_message(self, certificate_index, index, sender, timestamp, body)
+            .await
+    }
+
+    pub async fn validate_user_manifest(
+        &self,
+        certificate_index: IndexInt,
+        author: &DeviceID,
+        version: VersionInt,
+        timestamp: DateTime,
+        encrypted: &[u8],
+    ) -> Result<UserManifest, ValidateManifestError> {
+        validate_manifest::validate_user_manifest(
+            self,
+            certificate_index,
+            author,
+            version,
+            timestamp,
+            encrypted,
+        )
+        .await
     }
 }
