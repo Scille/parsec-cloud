@@ -115,6 +115,7 @@ useGitignore: true
 allowCompoundWords: true
 ignorePaths:
   - "**/*.svg"
+  - "**/default_pattern.ignore"
   - "**/docs/figures/*.svg"
   - "**/windows-icon-handler/**/*.vcxproj"
   - "**/windows-icon-handler/**/*.vcxproj.filters"

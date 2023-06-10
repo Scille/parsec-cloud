@@ -34,7 +34,7 @@ jobs:
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 20
     # Testbed server comes as a Docker image, so it will eventually goes out of sync
-    # with the tests (typically a new API is introduced in the Parsce server, or a new
+    # with the tests (typically a new API is introduced in the Parsec server, or a new
     # testbed template is introduced).
     # In such case, the container url should be updated from the, see:
     # https://github.com/Scille/parsec-cloud/pkgs/container/parsec-cloud%2Fparsec-testbed-server
