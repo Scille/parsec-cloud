@@ -290,7 +290,7 @@ impl CertificatesOps {
                     // The index is the one we expected, now ensure it timestamp is compatible
                     // with the previous certificate. Note we allow both certificates to have
                     // the same timestamp, this is the case when creating a new user given
-                    // the device cerificate must also be created at the same time.
+                    // the device certificate must also be created at the same time.
                     if *unsecure.timestamp() < lower {
                         let hint = unsecure.hint();
                         let what = InvalidCertificateError::InvalidTimestamp {
@@ -309,7 +309,7 @@ impl CertificatesOps {
         };
 
         // 3) Verify the certificate signature
-        // By doing so we also verify author's device existance, but we don't go
+        // By doing so we also verify author's device existence, but we don't go
         // any further, hence additional checks on author must be done at step 4 !
 
         macro_rules! verify_certificate_signature {
@@ -593,7 +593,7 @@ impl CertificatesOps {
         Ok(())
     }
 
-    /// Admin existance has already been checked while fetching it device's verify key,
+    /// Admin existence has already been checked while fetching it device's verify key,
     /// so what's left is checking it is not revoked and (optionally) it profile
     async fn check_author_not_revoked_and_profile<'a>(
         &self,
@@ -641,7 +641,7 @@ impl CertificatesOps {
                 // Hence the user certificate must exist and be available (guaranteed by
                 // consistency checks when the author device certificate was added).
                 //
-                // If we endup here, something went very wrong (Parsec bug, or the certificates
+                // If we end up here, something went very wrong (Parsec bug, or the certificates
                 // SQLite database got tempered with), so we don't return this as a regular
                 // error but instead as an internal one with error report.
                 Err(AddCertificateError::InvalidCertificate(err)) => {
@@ -1129,7 +1129,7 @@ impl CertificatesOps {
             // - can only be OWNER of not-shared workspaces
             UserProfile::Outsider => {
                 // Given self-signing is only allowed for the first realm role certificate,
-                // a workspace with an outsider owner necessarly contains only this first
+                // a workspace with an outsider owner necessarily contains only this first
                 // realm role certificate. Hence the only valid situation is if we are
                 // currently adding this initial realm role certificate.
                 if !realm_current_roles.is_empty() {
@@ -1199,7 +1199,7 @@ impl CertificatesOps {
         current_index: IndexInt,
         cooked: &SequesterServiceCertificate,
     ) -> Result<(), AddCertificateError> {
-        // No need to check the existance of sequester authority given it has already
+        // No need to check the existence of sequester authority given it has already
         // been made while verifying sequester service certificate signature
 
         // 1) Make sure the service doesn't already exist

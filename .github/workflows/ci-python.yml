@@ -93,7 +93,7 @@ jobs:
           sudo apt-get update
         timeout-minutes: 5
 
-      # TODO: Postgresql implemetation is currently broken
+      # TODO: Postgresql implementation is currently broken
       # - name: Install PostgreSQL-${{ env.postgresql-version }}
       #   if: >-
       #     steps.should-run-python-jobs.outputs.run == 'true'
@@ -223,7 +223,7 @@ jobs:
         timeout-minutes: 10
         working-directory: server
 
-      # TODO: Postgresql implemetation is currently broken
+      # TODO: Postgresql implementation is currently broken
       # - name: PostgreSQL tests
       #   if: >-
       #     steps.should-run-python-jobs.outputs.run == 'true'
