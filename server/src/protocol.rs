@@ -10,16 +10,21 @@ use pyo3::{
 
 use libparsec::low_level::serialization_format::python_bindings_parsec_protocol_cmds_family;
 
-use crate::binding_utils::gen_proto;
-
 /*
  * ProtocolError
  */
 
 create_exception!(_parsec, ProtocolError, PyException);
 
-#[pyclass]
-pub struct ProtocolErrorFields(pub libparsec::low_level::protocol::ProtocolError);
+crate::binding_utils::gen_py_wrapper_class!(
+    ProtocolErrorFields,
+    libparsec::low_level::protocol::ProtocolError,
+    __repr__,
+    __str__, // Needed for python's exceptions
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl ProtocolErrorFields {
@@ -60,38 +65,26 @@ impl ProtocolErrorFields {
     }
 }
 
-gen_proto!(ProtocolErrorFields, __richcmp__, eq);
-gen_proto!(ProtocolErrorFields, __str__); // Needed for python's exceptions
-gen_proto!(ProtocolErrorFields, __repr__);
-gen_proto!(ProtocolErrorFields, __copy__);
-gen_proto!(ProtocolErrorFields, __deepcopy__);
-
 impl From<ProtocolErrorFields> for PyErr {
     fn from(err: ProtocolErrorFields) -> Self {
         ProtocolError::new_err(err)
     }
 }
 
-impl From<libparsec::low_level::protocol::ProtocolError> for ProtocolErrorFields {
-    fn from(err: libparsec::low_level::protocol::ProtocolError) -> Self {
-        ProtocolErrorFields(err)
-    }
-}
-
-pub type ProtocolResult<T> = Result<T, ProtocolErrorFields>;
+pub(crate) type ProtocolResult<T> = Result<T, ProtocolErrorFields>;
 
 /*
  * Custom types `ReencryptionBatchEntry`
  */
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct ReencryptionBatchEntry(pub libparsec::low_level::types::ReencryptionBatchEntry);
-
-crate::binding_utils::gen_proto!(ReencryptionBatchEntry, __repr__);
-crate::binding_utils::gen_proto!(ReencryptionBatchEntry, __copy__);
-crate::binding_utils::gen_proto!(ReencryptionBatchEntry, __deepcopy__);
-crate::binding_utils::gen_proto!(ReencryptionBatchEntry, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class!(
+    ReencryptionBatchEntry,
+    libparsec::low_level::types::ReencryptionBatchEntry,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl ReencryptionBatchEntry {
@@ -130,9 +123,14 @@ impl ReencryptionBatchEntry {
  * Custom types `ActiveUsersLimit`
  */
 
-#[pyclass]
-#[derive(Debug, Clone)]
-pub(crate) struct ActiveUsersLimit(pub libparsec::low_level::types::ActiveUsersLimit);
+crate::binding_utils::gen_py_wrapper_class!(
+    ActiveUsersLimit,
+    libparsec::low_level::types::ActiveUsersLimit,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ ord,
+);
 
 #[pymethods]
 impl ActiveUsersLimit {
@@ -177,11 +175,6 @@ impl ActiveUsersLimit {
         }
     }
 }
-
-crate::binding_utils::gen_proto!(ActiveUsersLimit, __richcmp__, ord);
-crate::binding_utils::gen_proto!(ActiveUsersLimit, __repr__);
-crate::binding_utils::gen_proto!(ActiveUsersLimit, __copy__);
-crate::binding_utils::gen_proto!(ActiveUsersLimit, __deepcopy__);
 
 python_bindings_parsec_protocol_cmds_family!("../libparsec/crates/protocol/schema/invited_cmds");
 python_bindings_parsec_protocol_cmds_family!(

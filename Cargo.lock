@@ -90,17 +90,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "async-trait"
-version = "0.1.64"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1cd7fce9ba8c3c042128ce72d8b2ddbf3a05747efb67ea0313c635e10bda47a2"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -888,13 +877,13 @@ dependencies = [
 
 [[package]]
 name = "ghost"
-version = "0.1.6"
+version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb19fe8de3ea0920d282f7b77dd4227aea6b8b999b42cdf0ca41b2472b14443a"
+checksum = "e77ac7b51b8e6313251737fcef4b1c01a2ea102bde68415b62c0ee9268fec357"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 1.0.109",
+ "syn 2.0.13",
 ]
 
 [[package]]
@@ -1081,9 +1070,9 @@ dependencies = [
 
 [[package]]
 name = "indoc"
-version = "1.0.6"
+version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05a0bd019339e5d968b37855180087b7b9d512c5046fbd244cf8c95687927d6e"
+checksum = "bfa799dd5ed20a7e349f3b4639aa80d74549c81716d9ec4f994c9b5815598306"
 
 [[package]]
 name = "inout"
@@ -1108,11 +1097,10 @@ dependencies = [
 
 [[package]]
 name = "inventory"
-version = "0.3.1"
+version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30a61b8101d87996f82d725ba701b1987b7afc72f481c13513a30b855b9c9133"
+checksum = "e0539b5de9241582ce6bd6b0ba7399313560151e58c9aaf8b74b711b1bdce644"
 dependencies = [
- "ctor",
  "ghost",
 ]
 
@@ -1283,7 +1271,7 @@ version = "0.0.0"
 dependencies = [
  "libparsec_client_connection",
  "libparsec_platform_async",
- "libparsec_platform_storage2",
+ "libparsec_platform_storage",
  "libparsec_protocol",
  "libparsec_tests_fixtures",
  "libparsec_types",
@@ -1411,26 +1399,6 @@ dependencies = [
 name = "libparsec_platform_storage"
 version = "0.0.0"
 dependencies = [
- "async-trait",
- "diesel",
- "itertools",
- "lazy_static",
- "libparsec_crypto",
- "libparsec_platform_async",
- "libparsec_testbed",
- "libparsec_tests_fixtures",
- "libparsec_types",
- "libsqlite3-sys",
- "log",
- "pretty_assertions",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "libparsec_platform_storage2"
-version = "0.0.0"
-dependencies = [
  "diesel",
  "lazy_static",
  "libparsec_platform_async",
@@ -1504,9 +1472,9 @@ dependencies = [
  "hex-literal",
  "lazy_static",
  "libparsec_client_connection",
+ "libparsec_crypto",
  "libparsec_platform_device_loader",
  "libparsec_platform_storage",
- "libparsec_platform_storage2",
  "libparsec_testbed",
  "libparsec_tests_macros",
  "libparsec_types",
@@ -2919,9 +2887,9 @@ dependencies = [
 
 [[package]]
 name = "target-lexicon"
-version = "0.12.3"
+version = "0.12.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7fa7e55043acb85fca6b3c01485a2eeb6b69c5d21002e273c79e465f43b7ac1"
+checksum = "fd1ba337640d60c3e96bc6f0638a939b9c9a7f2c316a1598c279828b3d1dc8c5"
 
 [[package]]
 name = "tempfile"
@@ -3142,9 +3110,9 @@ checksum = "957e51f3646910546462e67d5f7599b9e4fb8acdd304b087a6494730f9eebf04"
 
 [[package]]
 name = "unindent"
-version = "0.1.9"
+version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52fee519a3e570f7df377a06a1a7775cdbfb7aa460be7e08de2b1f0e69973a44"
+checksum = "e1766d682d402817b5ac4490b3c3002d91dfa0d22812f341609f97b08757359c"
 
 [[package]]
 name = "universal-hash"

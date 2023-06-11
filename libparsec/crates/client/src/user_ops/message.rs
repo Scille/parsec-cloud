@@ -7,13 +7,15 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{merge::merge_workspace_entry, UserOps};
-use crate::certificates_ops::ValidateMessageError;
+use crate::certificates_ops::{InvalidCertificateError, ValidateMessageError};
 use crate::event_bus::EventPing;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ProcessLastMessagesError {
     #[error("Cannot reach the server")]
     Offline,
+    #[error("Cannot process user messages: {0}")]
+    InvalidCertificate(InvalidCertificateError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -83,6 +85,8 @@ pub(super) async fn process_last_messages(
             // Note CertificateOps is already responsible to dispatch an event
             // in order to inform the user about this issue.
             Err(ValidateMessageError::InvalidMessage(err)) => {
+                // TODO: is warning needed here ? or should we only rely on the event
+                // triggered by CertificatesOps's validation ?
                 log::warn!(
                     "Ignoring invalid user message #{} from {}: {}",
                     msg.index,
@@ -91,10 +95,14 @@ pub(super) async fn process_last_messages(
                 );
                 continue;
             }
-            Err(
-                err
-                @ (ValidateMessageError::Internal(_) | ValidateMessageError::PollServerError(_)),
-            ) => return Err(anyhow::anyhow!(err).into()),
+            // We couldn't validate the message due to an invalid certificate provided
+            // by the server. Hence there is nothing more we can do :(
+            Err(ValidateMessageError::InvalidCertificate(err)) => {
+                return Err(ProcessLastMessagesError::InvalidCertificate(err));
+            }
+            Err(err @ ValidateMessageError::Internal(_)) => {
+                return Err(ProcessLastMessagesError::Internal(err.into()))
+            }
             Err(ValidateMessageError::Offline) => return Err(ProcessLastMessagesError::Offline),
         };
 
@@ -158,8 +166,7 @@ pub(super) async fn process_last_messages(
     // Up to this point, the user manifest could have been concurrently modified
     // from when we retrieved `initial_last_index` (typically because we processed
     // sharing revoked messages)
-    let _update_user_manifest_guard = ops.update_user_manifest_lock.lock().await;
-    let mut user_manifest = ops.storage.get_user_manifest();
+    let (updater, mut user_manifest) = ops.storage.for_update().await;
 
     if user_manifest.last_processed_message < new_last_index {
         // `Arc::make_mut` clones user manifest before we modify it
@@ -167,7 +174,7 @@ pub(super) async fn process_last_messages(
             new_last_index,
             ops.device.time_provider.now(),
         );
-        ops.storage.set_user_manifest(user_manifest).await?;
+        updater.set_user_manifest(user_manifest).await?;
         // TODO: event
         // ops.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=ops.user_manifest_id)
     }
@@ -183,11 +190,7 @@ async fn process_message_sharing_granted(
     encrypted_on: DateTime,
     key: SecretKey,
 ) -> Result<(), ProcessLastMessagesError> {
-    let _update_user_manifest_guard = ops.update_user_manifest_lock.lock().await;
-
-    // Given we have taken `update_user_manifest_lock` we are guaranteed the user manifest
-    // cannot change in our back
-    let mut user_manifest = ops.storage.get_user_manifest();
+    let (updater, mut user_manifest) = ops.storage.for_update().await;
 
     let timestamp = ops.device.time_provider.now();
     let workspace_entry = WorkspaceEntry {
@@ -205,7 +208,7 @@ async fn process_message_sharing_granted(
     };
 
     // Check if we already know this workspace
-    let workspace_entry = match user_manifest.get_workspace_entry(&workspace_entry.id) {
+    let workspace_entry = match user_manifest.get_workspace_entry(workspace_entry.id) {
         None => workspace_entry,
         Some(already_existing_entry) => {
             // Merge with existing as target to keep possible workspace rename
@@ -216,7 +219,7 @@ async fn process_message_sharing_granted(
     Arc::make_mut(&mut user_manifest)
         .evolve_workspaces_and_mark_updated(workspace_entry, timestamp);
 
-    ops.storage.set_user_manifest(user_manifest).await?;
+    updater.set_user_manifest(user_manifest).await?;
     // TODO: events
     // ops.event_bus.send(CoreEvent.USERFS_UPDATED)
     //

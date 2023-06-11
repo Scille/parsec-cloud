@@ -29,7 +29,7 @@ pub struct AnonymousCmds {
     addr: BackendAnonymousAddr,
     url: Url,
     #[cfg(feature = "test-with-testbed")]
-    send_hook: std::sync::Arc<SendHookConfig>,
+    send_hook: SendHookConfig,
 }
 
 impl AnonymousCmds {

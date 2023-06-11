@@ -125,10 +125,9 @@ fn merge_workspace_entries(
     (resolved, need_sync)
 }
 
-#[allow(dead_code)]
 pub(super) fn merge_local_user_manifests(
     diverged: &LocalUserManifest,
-    target: &UserManifest,
+    target: UserManifest,
 ) -> LocalUserManifest {
     // Sanity checks, called is responsible to handle them properly !
     assert_eq!(diverged.base.id, target.id);
@@ -158,7 +157,7 @@ pub(super) fn merge_local_user_manifests(
     };
 
     LocalUserManifest {
-        base: target.to_owned(),
+        base: target,
         need_sync,
         updated,
         last_processed_message,

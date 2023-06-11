@@ -95,16 +95,40 @@ pub struct VerifyKey(ed25519::PublicKey);
 
 crate::impl_key_debug!(VerifyKey);
 
-super::utils::impl_try_from!(VerifyKey, ed25519::PublicKey);
+impl std::hash::Hash for VerifyKey {
+    fn hash<H>(&self, state: &mut H)
+    where
+        H: std::hash::Hasher,
+    {
+        state.write(self.as_ref())
+    }
+}
+
+impl TryFrom<&[u8]> for VerifyKey {
+    type Error = CryptoError;
+
+    fn try_from(v: &[u8]) -> Result<Self, Self::Error> {
+        let arr: [u8; Self::SIZE] = v.try_into().map_err(|_| CryptoError::DataSize)?;
+        Ok(Self(ed25519::PublicKey(arr)))
+    }
+}
+
+impl TryFrom<[u8; Self::SIZE]> for VerifyKey {
+    type Error = CryptoError;
+
+    fn try_from(key: [u8; Self::SIZE]) -> Result<Self, Self::Error> {
+        Ok(Self(ed25519::PublicKey(key)))
+    }
+}
 
 impl VerifyKey {
     pub const ALGORITHM: &'static str = "ed25519";
     /// Size of the public key.
     pub const SIZE: usize = ed25519::PUBLICKEYBYTES;
 
-    pub fn unsecure_unwrap<'a>(
-        signed: &'a [u8],
-    ) -> Result<(&'a [u8; SigningKey::SIGNATURE_SIZE], &'a [u8]), CryptoError> {
+    pub fn unsecure_unwrap(
+        signed: &[u8],
+    ) -> Result<(&[u8; SigningKey::SIGNATURE_SIZE], &[u8]), CryptoError> {
         if signed.len() < SigningKey::SIGNATURE_SIZE {
             return Err(CryptoError::Signature);
         }

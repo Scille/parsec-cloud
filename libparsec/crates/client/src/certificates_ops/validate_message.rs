@@ -3,10 +3,10 @@
 use libparsec_types::prelude::*;
 
 use super::{
-    storage::{AnyArcCertificate, GetCertificateError, UpTo},
-    CertificatesOps, PollServerError,
+    storage::{GetCertificateError, UpTo},
+    CertificatesOps, InvalidCertificateError, PollServerError,
 };
-use crate::event_bus::{EventUnprocessableMessage, UnprocessableMessageReason};
+use crate::event_bus::EventInvalidMessage;
 
 #[derive(Debug, thiserror::Error)]
 pub enum InvalidMessageError {
@@ -50,7 +50,7 @@ pub enum ValidateMessageError {
     #[error(transparent)]
     InvalidMessage(#[from] InvalidMessageError),
     #[error(transparent)]
-    PollServerError(#[from] PollServerError),
+    InvalidCertificate(#[from] InvalidCertificateError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -67,17 +67,13 @@ pub(super) async fn validate_message(
         .await
         .map_err(|err| {
             if let ValidateMessageError::InvalidMessage(what) = err {
-                let event = EventUnprocessableMessage {
+                let event = EventInvalidMessage {
                     index,
                     sender: sender.to_owned(),
-                    reason: UnprocessableMessageReason::InvalidMessage(what),
+                    reason: what,
                 };
                 ops.event_bus.send(&event);
-                if let UnprocessableMessageReason::InvalidMessage(what) = event.reason {
-                    ValidateMessageError::InvalidMessage(what)
-                } else {
-                    unreachable!();
-                }
+                ValidateMessageError::InvalidMessage(event.reason)
             } else {
                 err
             }
@@ -94,8 +90,15 @@ async fn validate_message_internal(
 ) -> Result<MessageContent, ValidateMessageError> {
     // 1) Make sure we have all the needed certificates
 
-    let storage =
-        super::poll::ensure_certificates_available_and_read_lock(ops, certificate_index).await?;
+    let storage = super::poll::ensure_certificates_available_and_read_lock(ops, certificate_index)
+        .await
+        .map_err(|err| match err {
+            PollServerError::Offline => ValidateMessageError::Offline,
+            PollServerError::InvalidCertificate(err) => {
+                ValidateMessageError::InvalidCertificate(err)
+            }
+            err @ PollServerError::Internal(_) => ValidateMessageError::Internal(err.into()),
+        })?;
 
     // 2) Sender must exist and not be revoked to send a message !
 

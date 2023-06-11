@@ -8,10 +8,10 @@ mod validate_message;
 
 pub use add::{AddCertificateError, InvalidCertificateError, MaybeRedactedSwitch};
 pub use poll::PollServerError;
-pub use validate_manifest::ValidateManifestError;
+pub use validate_manifest::{InvalidManifestError, ValidateManifestError};
 pub use validate_message::{InvalidMessageError, ValidateMessageError};
 
-use std::{path::Path, sync::Arc};
+use std::{collections::HashMap, path::Path, sync::Arc};
 
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_async::RwLock;
@@ -87,5 +87,60 @@ impl CertificatesOps {
             encrypted,
         )
         .await
+    }
+
+    // Semi-public interface
+
+    pub(crate) async fn encrypt_for_user(
+        &self,
+        user_id: &UserID,
+        data: &[u8],
+    ) -> anyhow::Result<Option<Vec<u8>>> {
+        let guard = self.storage.read().await;
+        match guard
+            .get_user_certificate(storage::UpTo::Current, user_id)
+            .await
+        {
+            Ok(certif) => Ok(Some(certif.public_key.encrypt_for_self(data))),
+            Err(storage::GetCertificateError::NonExisting) => Ok(None),
+            Err(storage::GetCertificateError::ExistButTooRecent { .. }) => {
+                unreachable!()
+            }
+            Err(err @ storage::GetCertificateError::Internal(_)) => Err(err.into()),
+        }
+    }
+
+    pub(crate) async fn encrypt_for_sequester_services(
+        &self,
+        data: &[u8],
+    ) -> anyhow::Result<Option<HashMap<SequesterServiceID, Bytes>>> {
+        let guard = self.storage.read().await;
+        match guard
+            .get_sequester_authority_certificate(storage::UpTo::Current)
+            .await
+        {
+            Ok(_) => {
+                let services = guard
+                    .get_sequester_service_certificates(storage::UpTo::Current)
+                    .await?;
+                let per_service_encrypted = services
+                    .map(|service| {
+                        (
+                            service.service_id,
+                            service.encryption_key_der.encrypt(data).into(),
+                        )
+                    })
+                    .collect();
+                Ok(Some(per_service_encrypted))
+            }
+            Err(storage::GetCertificateError::NonExisting) => {
+                // Not a sequestered organization
+                Ok(None)
+            }
+            Err(storage::GetCertificateError::ExistButTooRecent { .. }) => {
+                unreachable!()
+            }
+            Err(err @ storage::GetCertificateError::Internal(_)) => Err(err.into()),
+        }
     }
 }

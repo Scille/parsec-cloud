@@ -169,8 +169,10 @@ async fn testbed(env: &TestbedEnv) {
             .collect::<Vec<DeviceID>>(),
         [
             "alice@dev1".parse().unwrap(),
-            "alice@dev2".parse().unwrap(),
             "bob@dev1".parse().unwrap(),
+            "alice@dev2".parse().unwrap(),
+            "bob@dev2".parse().unwrap(),
+            "mallory@dev1".parse().unwrap(),
         ]
     );
 }

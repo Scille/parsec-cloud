@@ -90,7 +90,7 @@ impl SequesterPrivateKeyDer {
  * PublicKey
  */
 
-#[derive(Clone, PartialEq, Eq, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Deserialize, Hash)]
 #[serde(try_from = "&Bytes")]
 pub struct SequesterPublicKeyDer(RsaPublicKey);
 

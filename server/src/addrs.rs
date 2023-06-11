@@ -8,22 +8,17 @@ use pyo3::{
 };
 use std::str::FromStr;
 
-use crate::{
-    api_crypto::VerifyKey,
-    binding_utils::BytesWrapper,
-    enumerate::InvitationType,
-    ids::{EntryID, InvitationToken, OrganizationID},
-};
+use crate::{BytesWrapper, EntryID, InvitationToken, InvitationType, OrganizationID, VerifyKey};
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct BackendAddr(pub libparsec::low_level::types::BackendAddr);
-
-crate::binding_utils::gen_proto!(BackendAddr, __repr__);
-crate::binding_utils::gen_proto!(BackendAddr, __copy__);
-crate::binding_utils::gen_proto!(BackendAddr, __deepcopy__);
-crate::binding_utils::gen_proto!(BackendAddr, __richcmp__, eq);
-crate::binding_utils::gen_proto!(BackendAddr, __hash__);
+crate::binding_utils::gen_py_wrapper_class!(
+    BackendAddr,
+    libparsec::low_level::types::BackendAddr,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+    __hash__,
+);
 
 #[pymethods]
 impl BackendAddr {
@@ -87,14 +82,15 @@ impl BackendAddr {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct BackendOrganizationAddr(pub libparsec::low_level::types::BackendOrganizationAddr);
-
-crate::binding_utils::gen_proto!(BackendOrganizationAddr, __repr__);
-crate::binding_utils::gen_proto!(BackendOrganizationAddr, __copy__);
-crate::binding_utils::gen_proto!(BackendOrganizationAddr, __deepcopy__);
-crate::binding_utils::gen_proto!(BackendOrganizationAddr, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class!(
+    BackendOrganizationAddr,
+    libparsec::low_level::types::BackendOrganizationAddr,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+    __hash__,
+);
 
 #[pymethods]
 impl BackendOrganizationAddr {
@@ -271,17 +267,15 @@ impl BackendActionAddr {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct BackendOrganizationBootstrapAddr(
-    pub libparsec::low_level::types::BackendOrganizationBootstrapAddr,
+crate::binding_utils::gen_py_wrapper_class!(
+    BackendOrganizationBootstrapAddr,
+    libparsec::low_level::types::BackendOrganizationBootstrapAddr,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+    __hash__,
 );
-
-crate::binding_utils::gen_proto!(BackendOrganizationBootstrapAddr, __repr__);
-crate::binding_utils::gen_proto!(BackendOrganizationBootstrapAddr, __copy__);
-crate::binding_utils::gen_proto!(BackendOrganizationBootstrapAddr, __deepcopy__);
-crate::binding_utils::gen_proto!(BackendOrganizationBootstrapAddr, __richcmp__, eq);
-crate::binding_utils::gen_proto!(BackendOrganizationBootstrapAddr, __hash__);
 
 #[pymethods]
 impl BackendOrganizationBootstrapAddr {
@@ -420,17 +414,15 @@ impl BackendOrganizationBootstrapAddr {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct BackendOrganizationFileLinkAddr(
+crate::binding_utils::gen_py_wrapper_class!(
+    BackendOrganizationFileLinkAddr,
     libparsec::low_level::types::BackendOrganizationFileLinkAddr,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+    __hash__,
 );
-
-crate::binding_utils::gen_proto!(BackendOrganizationFileLinkAddr, __repr__);
-crate::binding_utils::gen_proto!(BackendOrganizationFileLinkAddr, __copy__);
-crate::binding_utils::gen_proto!(BackendOrganizationFileLinkAddr, __deepcopy__);
-crate::binding_utils::gen_proto!(BackendOrganizationFileLinkAddr, __richcmp__, eq);
-crate::binding_utils::gen_proto!(BackendOrganizationFileLinkAddr, __hash__);
 
 #[pymethods]
 impl BackendOrganizationFileLinkAddr {
@@ -580,15 +572,15 @@ impl BackendOrganizationFileLinkAddr {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct BackendInvitationAddr(pub libparsec::low_level::types::BackendInvitationAddr);
-
-crate::binding_utils::gen_proto!(BackendInvitationAddr, __repr__);
-crate::binding_utils::gen_proto!(BackendInvitationAddr, __copy__);
-crate::binding_utils::gen_proto!(BackendInvitationAddr, __deepcopy__);
-crate::binding_utils::gen_proto!(BackendInvitationAddr, __richcmp__, eq);
-crate::binding_utils::gen_proto!(BackendInvitationAddr, __hash__);
+crate::binding_utils::gen_py_wrapper_class!(
+    BackendInvitationAddr,
+    libparsec::low_level::types::BackendInvitationAddr,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+    __hash__,
+);
 
 #[pymethods]
 impl BackendInvitationAddr {
@@ -657,8 +649,8 @@ impl BackendInvitationAddr {
     }
 
     #[getter]
-    fn invitation_type(&self) -> InvitationType {
-        InvitationType(self.0.invitation_type())
+    fn invitation_type(&self) -> &'static PyObject {
+        InvitationType::convert(self.0.invitation_type())
     }
 
     #[getter]
@@ -722,17 +714,15 @@ impl BackendInvitationAddr {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct BackendPkiEnrollmentAddr(
-    pub libparsec::low_level::types::BackendPkiEnrollmentAddr,
+crate::binding_utils::gen_py_wrapper_class!(
+    BackendPkiEnrollmentAddr,
+    libparsec::low_level::types::BackendPkiEnrollmentAddr,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+    __hash__,
 );
-
-crate::binding_utils::gen_proto!(BackendPkiEnrollmentAddr, __repr__);
-crate::binding_utils::gen_proto!(BackendPkiEnrollmentAddr, __copy__);
-crate::binding_utils::gen_proto!(BackendPkiEnrollmentAddr, __deepcopy__);
-crate::binding_utils::gen_proto!(BackendPkiEnrollmentAddr, __richcmp__, eq);
-crate::binding_utils::gen_proto!(BackendPkiEnrollmentAddr, __hash__);
 
 #[pymethods]
 impl BackendPkiEnrollmentAddr {

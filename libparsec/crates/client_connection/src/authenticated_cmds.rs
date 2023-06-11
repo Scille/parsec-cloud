@@ -155,18 +155,18 @@ pub struct AuthenticatedCmds {
     device: Arc<LocalDevice>,
     author_header_value: HeaderValue,
     #[cfg(feature = "test-with-testbed")]
-    send_hook: Arc<SendHookConfig>,
+    send_hook: SendHookConfig,
 }
 
 impl AuthenticatedCmds {
     pub fn new(
         config_dir: &Path,
         device: Arc<LocalDevice>,
-        config: ProxyConfig,
+        proxy: ProxyConfig,
     ) -> reqwest::Result<Self> {
         let client = {
             let builder = reqwest::ClientBuilder::default();
-            let builder = config.configure_http_client(builder)?;
+            let builder = proxy.configure_http_client(builder)?;
             builder.build()?
         };
         Ok(Self::from_client(client, config_dir, device))

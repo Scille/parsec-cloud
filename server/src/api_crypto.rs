@@ -27,14 +27,14 @@ pub(crate) fn add_mod(py: Python, m: &PyModule) -> PyResult<()> {
     Ok(())
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct HashDigest(pub libparsec::low_level::crypto::HashDigest);
-
-crate::binding_utils::gen_proto!(HashDigest, __repr__);
-crate::binding_utils::gen_proto!(HashDigest, __copy__);
-crate::binding_utils::gen_proto!(HashDigest, __deepcopy__);
-crate::binding_utils::gen_proto!(HashDigest, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class!(
+    HashDigest,
+    libparsec::low_level::types::HashDigest,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl HashDigest {
@@ -69,14 +69,14 @@ impl HashDigest {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct SigningKey(pub libparsec::low_level::crypto::SigningKey);
-
-crate::binding_utils::gen_proto!(SigningKey, __repr__);
-crate::binding_utils::gen_proto!(SigningKey, __copy__);
-crate::binding_utils::gen_proto!(SigningKey, __deepcopy__);
-crate::binding_utils::gen_proto!(SigningKey, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class!(
+    SigningKey,
+    libparsec::low_level::types::SigningKey,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl SigningKey {
@@ -112,14 +112,14 @@ impl SigningKey {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct VerifyKey(pub libparsec::low_level::crypto::VerifyKey);
-
-crate::binding_utils::gen_proto!(VerifyKey, __repr__);
-crate::binding_utils::gen_proto!(VerifyKey, __copy__);
-crate::binding_utils::gen_proto!(VerifyKey, __deepcopy__);
-crate::binding_utils::gen_proto!(VerifyKey, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class!(
+    VerifyKey,
+    libparsec::low_level::types::VerifyKey,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl VerifyKey {
@@ -172,14 +172,14 @@ impl VerifyKey {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct SecretKey(pub libparsec::low_level::crypto::SecretKey);
-
-crate::binding_utils::gen_proto!(SecretKey, __repr__);
-crate::binding_utils::gen_proto!(SecretKey, __copy__);
-crate::binding_utils::gen_proto!(SecretKey, __deepcopy__);
-crate::binding_utils::gen_proto!(SecretKey, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class!(
+    SecretKey,
+    libparsec::low_level::types::SecretKey,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl SecretKey {
@@ -252,14 +252,14 @@ impl SecretKey {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct PrivateKey(pub libparsec::low_level::crypto::PrivateKey);
-
-crate::binding_utils::gen_proto!(PrivateKey, __repr__);
-crate::binding_utils::gen_proto!(PrivateKey, __copy__);
-crate::binding_utils::gen_proto!(PrivateKey, __deepcopy__);
-crate::binding_utils::gen_proto!(PrivateKey, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class!(
+    PrivateKey,
+    libparsec::low_level::types::PrivateKey,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl PrivateKey {
@@ -298,14 +298,14 @@ impl PrivateKey {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct PublicKey(pub libparsec::low_level::crypto::PublicKey);
-
-crate::binding_utils::gen_proto!(PublicKey, __repr__);
-crate::binding_utils::gen_proto!(PublicKey, __copy__);
-crate::binding_utils::gen_proto!(PublicKey, __deepcopy__);
-crate::binding_utils::gen_proto!(PublicKey, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class!(
+    PublicKey,
+    libparsec::low_level::types::PublicKey,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl PublicKey {
@@ -332,13 +332,13 @@ impl PublicKey {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct SequesterPrivateKeyDer(pub libparsec::low_level::crypto::SequesterPrivateKeyDer);
-
-crate::binding_utils::gen_proto!(SequesterPrivateKeyDer, __repr__);
-crate::binding_utils::gen_proto!(SequesterPrivateKeyDer, __copy__);
-crate::binding_utils::gen_proto!(SequesterPrivateKeyDer, __deepcopy__);
+crate::binding_utils::gen_py_wrapper_class!(
+    SequesterPrivateKeyDer,
+    libparsec::low_level::types::SequesterPrivateKeyDer,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+);
 
 #[pymethods]
 impl SequesterPrivateKeyDer {
@@ -393,14 +393,14 @@ impl SequesterPrivateKeyDer {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct SequesterPublicKeyDer(pub libparsec::low_level::crypto::SequesterPublicKeyDer);
-
-crate::binding_utils::gen_proto!(SequesterPublicKeyDer, __repr__);
-crate::binding_utils::gen_proto!(SequesterPublicKeyDer, __copy__);
-crate::binding_utils::gen_proto!(SequesterPublicKeyDer, __deepcopy__);
-crate::binding_utils::gen_proto!(SequesterPublicKeyDer, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class!(
+    SequesterPublicKeyDer,
+    libparsec::low_level::types::SequesterPublicKeyDer,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl SequesterPublicKeyDer {
@@ -431,13 +431,13 @@ impl SequesterPublicKeyDer {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct SequesterSigningKeyDer(pub libparsec::low_level::crypto::SequesterSigningKeyDer);
-
-crate::binding_utils::gen_proto!(SequesterSigningKeyDer, __repr__);
-crate::binding_utils::gen_proto!(SequesterSigningKeyDer, __copy__);
-crate::binding_utils::gen_proto!(SequesterSigningKeyDer, __deepcopy__);
+crate::binding_utils::gen_py_wrapper_class!(
+    SequesterSigningKeyDer,
+    libparsec::low_level::types::SequesterSigningKeyDer,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+);
 
 #[pymethods]
 impl SequesterSigningKeyDer {
@@ -489,13 +489,13 @@ impl SequesterSigningKeyDer {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct SequesterVerifyKeyDer(pub libparsec::low_level::crypto::SequesterVerifyKeyDer);
-
-crate::binding_utils::gen_proto!(SequesterVerifyKeyDer, __repr__);
-crate::binding_utils::gen_proto!(SequesterVerifyKeyDer, __copy__);
-crate::binding_utils::gen_proto!(SequesterVerifyKeyDer, __deepcopy__);
+crate::binding_utils::gen_py_wrapper_class!(
+    SequesterVerifyKeyDer,
+    libparsec::low_level::types::SequesterVerifyKeyDer,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+);
 
 #[pymethods]
 impl SequesterVerifyKeyDer {

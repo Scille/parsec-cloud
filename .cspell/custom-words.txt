@@ -305,6 +305,7 @@ pylupdate
 PyMethods
 pymodule
 pynacl
+pyobj
 pyobject
 pypa
 pypac

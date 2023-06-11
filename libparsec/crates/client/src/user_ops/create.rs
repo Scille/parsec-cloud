@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use libparsec_platform_storage2::workspace::workspace_storage_non_speculative_init;
+use libparsec_platform_storage::workspace::workspace_storage_non_speculative_init;
 use libparsec_types::prelude::*;
 
 use super::{UserOps, UserOpsError};
@@ -11,12 +11,11 @@ pub(super) async fn workspace_create(
     ops: &UserOps,
     name: EntryName,
 ) -> Result<EntryID, anyhow::Error> {
-    let guard = ops.update_user_manifest_lock.lock().await;
+    let (updater, mut user_manifest) = ops.storage.for_update().await;
 
     let timestamp = ops.device.time_provider.now();
     let workspace_entry = WorkspaceEntry::generate(name, timestamp);
     let workspace_id = workspace_entry.id;
-    let mut user_manifest = ops.storage.get_user_manifest();
 
     // `Arc::make_mut` clones user manifest before we modify it
     Arc::make_mut(&mut user_manifest)
@@ -37,23 +36,20 @@ pub(super) async fn workspace_create(
     // created by somebody else, and hence we shouldn't try to create
     // it corresponding realm in the backend !
     workspace_storage_non_speculative_init(&ops.data_base_dir, &ops.device, workspace_id).await?;
-    ops.storage.set_user_manifest(user_manifest).await?;
+    updater.set_user_manifest(user_manifest).await?;
     // TODO: handle events
     // ops.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=ops.user_manifest_id)
     // ops.event_bus.send(CoreEvent.FS_WORKSPACE_CREATED, new_entry=workspace_entry)
 
-    drop(guard);
     Ok(workspace_id)
 }
 
 pub(super) async fn workspace_rename(
     ops: &UserOps,
-    workspace_id: &EntryID,
+    workspace_id: EntryID,
     new_name: EntryName,
 ) -> Result<(), UserOpsError> {
-    let guard = ops.update_user_manifest_lock.lock().await;
-
-    let mut user_manifest = ops.storage.get_user_manifest();
+    let (updater, mut user_manifest) = ops.storage.for_update().await;
 
     if let Some(workspace_entry) = user_manifest.get_workspace_entry(workspace_id) {
         let mut updated_workspace_entry = workspace_entry.to_owned();
@@ -64,7 +60,7 @@ pub(super) async fn workspace_rename(
         Arc::make_mut(&mut user_manifest)
             .evolve_workspaces_and_mark_updated(updated_workspace_entry, timestamp);
 
-        ops.storage
+        updater
             .set_user_manifest(user_manifest)
             .await
             .map_err(UserOpsError::Internal)?;
@@ -74,6 +70,5 @@ pub(super) async fn workspace_rename(
         return Err(UserOpsError::UnknownWorkspace(workspace_id.to_owned()));
     }
 
-    drop(guard);
     Ok(())
 }

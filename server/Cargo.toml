@@ -10,6 +10,7 @@ name = "parsec"
 crate-type = ["cdylib"]
 
 [features]
+default = ["test-utils"]  # TODO: remove me !
 test-utils = ["libparsec/test-utils"]
 
 [dependencies]

@@ -148,3 +148,25 @@ fn from_password_salt_too_small() {
         Err(CryptoError::DataSize)
     ));
 }
+
+#[test]
+fn hash() {
+    let sk1 = SecretKey::from(hex!(
+        "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
+    ));
+    let sk2 = SecretKey::from(hex!(
+        "8f46e610b307443ec4ac81a4d799cbe1b97987901d4f681b82dacf3b59cad0a1"
+    ));
+
+    let hash = |x: &SecretKey| {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+
+        let mut hasher = DefaultHasher::new();
+        x.hash(&mut hasher);
+        hasher.finish()
+    };
+
+    assert_eq!(hash(&sk1), hash(&sk1));
+    assert_ne!(hash(&sk1), hash(&sk2));
+}

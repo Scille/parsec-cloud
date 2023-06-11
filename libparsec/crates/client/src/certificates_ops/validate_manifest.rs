@@ -4,7 +4,7 @@ use libparsec_types::prelude::*;
 
 use super::{
     storage::{GetCertificateError, UpTo},
-    CertificatesOps, PollServerError,
+    CertificatesOps, InvalidCertificateError, PollServerError,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -57,7 +57,7 @@ pub enum ValidateManifestError {
     #[error(transparent)]
     InvalidManifest(#[from] InvalidManifestError),
     #[error(transparent)]
-    PollServerError(#[from] PollServerError),
+    InvalidCertificate(#[from] InvalidCertificateError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -74,8 +74,15 @@ pub(super) async fn validate_user_manifest(
 
     // 1) Make sure we have all the needed certificates
 
-    let storage =
-        super::poll::ensure_certificates_available_and_read_lock(ops, certificate_index).await?;
+    let storage = super::poll::ensure_certificates_available_and_read_lock(ops, certificate_index)
+        .await
+        .map_err(|err| match err {
+            PollServerError::Offline => ValidateManifestError::Offline,
+            PollServerError::InvalidCertificate(err) => {
+                ValidateManifestError::InvalidCertificate(err)
+            }
+            err @ PollServerError::Internal(_) => ValidateManifestError::Internal(err.into()),
+        })?;
 
     // 2) Author must exist and not be revoked at the time the manifest was created !
 

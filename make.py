@@ -39,8 +39,8 @@ WEB_CI_CARGO_FLAGS = f"{WEB_DEV_CARGO_FLAGS} --profile=ci-rust"
 
 BASE_DIR = Path(__file__).parent.resolve()
 SERVER_DIR = BASE_DIR / "server"
-ELECTRON_DIR = BASE_DIR / "bindings/electron"
-WEB_DIR = BASE_DIR / "bindings/web"
+BINDINGS_ELECTRON_DIR = BASE_DIR / "bindings/electron"
+BINDINGS_WEB_DIR = BASE_DIR / "bindings/web"
 
 
 CYAN = "\x1b[36m"
@@ -172,7 +172,7 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
     # Electron bindings
     #
     ("electron-dev-install", "ei"): (
-        Cwd(ELECTRON_DIR),
+        Cwd(BINDINGS_ELECTRON_DIR),
         Cmd(
             cmd="npm install",
         ),
@@ -181,13 +181,13 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
         ),
     ),
     ("electron-dev-rebuild", "er"): (
-        Cwd(ELECTRON_DIR),
+        Cwd(BINDINGS_ELECTRON_DIR),
         Cmd(
             cmd="npm run build:dev",
         ),
     ),
     ("electron-ci-install",): (
-        Cwd(ELECTRON_DIR),
+        Cwd(BINDINGS_ELECTRON_DIR),
         Cmd(
             cmd="npm install",
         ),
@@ -207,24 +207,24 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
     # Web bindings
     #
     ("web-dev-install", "wi"): (
-        Cwd(WEB_DIR),
+        Cwd(BINDINGS_WEB_DIR),
         Cmd(
             cmd="npm install",
         ),
-        Rmdir(WEB_DIR / "pkg"),
+        Rmdir(BINDINGS_WEB_DIR / "pkg"),
         Cmd(
             cmd="npm run build:dev",
         ),
     ),
     ("web-dev-rebuild", "wr"): (
-        Cwd(WEB_DIR),
-        Rmdir(WEB_DIR / "pkg"),
+        Cwd(BINDINGS_WEB_DIR),
+        Rmdir(BINDINGS_WEB_DIR / "pkg"),
         Cmd(
             cmd="npm run build:dev",
         ),
     ),
     ("web-ci-install",): (
-        Rmdir(WEB_DIR / "pkg"),
+        Rmdir(BINDINGS_WEB_DIR / "pkg"),
         Cmd(
             cmd="npm install",
         ),

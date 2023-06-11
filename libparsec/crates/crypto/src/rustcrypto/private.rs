@@ -189,6 +189,15 @@ impl PartialEq for PublicKey {
 
 impl Eq for PublicKey {}
 
+impl std::hash::Hash for PublicKey {
+    fn hash<H>(&self, state: &mut H)
+    where
+        H: std::hash::Hasher,
+    {
+        self.as_ref().hash(state)
+    }
+}
+
 impl PublicKey {
     pub const ALGORITHM: &'static str = "curve25519blake2bxsalsa20poly1305";
     pub const SIZE: usize = KEY_SIZE;
@@ -218,6 +227,13 @@ impl From<[u8; Self::SIZE]> for PublicKey {
         Self(key.into())
     }
 }
+
+// impl TryFrom<[u8; Self::SIZE]> for PublicKey {
+//     type Error = CryptoError;
+//     fn try_from(data: [u8; Self::SIZE]) -> Result<Self, Self::Error> {
+//         Self::try_from(data.as_ref())
+//     }
+// }
 
 impl TryFrom<&Bytes> for PublicKey {
     type Error = CryptoError;

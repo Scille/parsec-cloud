@@ -434,9 +434,9 @@ async def test_find_with_query_does_not_ignore_non_human(alice_ws, alice, bob, a
         HumanFindResultItem(user_id=bob.user_id, revoked=False, human_handle=None),
     ]
 
-    rep = await apiv2v3_human_find(alice_ws, query=str(alice.user_id))
+    rep = await apiv2v3_human_find(alice_ws, query="dummy")
     assert rep == HumanFindRepOk(results=[], per_page=100, page=1, total=0)
-    rep = await apiv2v3_human_find(alice_ws, query="alice")
+    rep = await apiv2v3_human_find(alice_ws, query=alice.user_id.str)
     assert isinstance(rep, HumanFindRepOk)
     assert rep.per_page == 100
     assert rep.page == 1

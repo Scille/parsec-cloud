@@ -21,8 +21,10 @@ pub enum StorageError {
     LocalBlockIDMiss(BlockID),
     #[error("Entry {0} not found in storage")]
     LocalEntryIDMiss(EntryID),
+    // TODO: needed ? or merge into Internal ?
     #[error("{0}")]
     Crypto(CryptoError),
+    // TODO: needed ? or merge into Internal ?
     #[error("Fail to vacuum: {0}")]
     Vacuum(DynError),
 }

@@ -7,25 +7,15 @@ use pyo3::{
     IntoPy, PyObject, PyResult, Python,
 };
 
-use crate::protocol::{ProtocolErrorFields, ProtocolResult};
+use crate::{ProtocolErrorFields, ProtocolResult};
 
 // #[non_exhaustive] macro must be set for every enum like type,
 // because we would like to call `is` in `python`, then
 // a static reference should be returned instead of a new object
 
-#[pyclass]
-#[derive(Clone)]
-#[non_exhaustive]
-pub(crate) struct InvitationStatus(pub libparsec::low_level::types::InvitationStatus);
-
-crate::binding_utils::gen_proto!(InvitationStatus, __repr__);
-crate::binding_utils::gen_proto!(InvitationStatus, __copy__);
-crate::binding_utils::gen_proto!(InvitationStatus, __deepcopy__);
-crate::binding_utils::gen_proto!(InvitationStatus, __richcmp__, eq);
-crate::binding_utils::gen_proto!(InvitationStatus, __hash__);
-
-crate::binding_utils::impl_enum_field!(
+crate::binding_utils::gen_py_wrapper_class_for_enum!(
     InvitationStatus,
+    libparsec::low_level::types::InvitationStatus,
     [
         "IDLE",
         idle,
@@ -43,19 +33,9 @@ crate::binding_utils::impl_enum_field!(
     ]
 );
 
-#[pyclass]
-#[derive(Clone)]
-#[non_exhaustive]
-pub(crate) struct InvitationType(pub libparsec::low_level::types::InvitationType);
-
-crate::binding_utils::gen_proto!(InvitationType, __repr__);
-crate::binding_utils::gen_proto!(InvitationType, __copy__);
-crate::binding_utils::gen_proto!(InvitationType, __deepcopy__);
-crate::binding_utils::gen_proto!(InvitationType, __richcmp__, eq);
-crate::binding_utils::gen_proto!(InvitationType, __hash__);
-
-crate::binding_utils::impl_enum_field!(
+crate::binding_utils::gen_py_wrapper_class_for_enum!(
     InvitationType,
+    libparsec::low_level::types::InvitationType,
     [
         "DEVICE",
         device,
@@ -68,19 +48,9 @@ crate::binding_utils::impl_enum_field!(
     ]
 );
 
-#[pyclass]
-#[derive(Clone)]
-#[non_exhaustive]
-pub(crate) struct RealmRole(pub libparsec::low_level::types::RealmRole);
-
-crate::binding_utils::gen_proto!(RealmRole, __repr__);
-crate::binding_utils::gen_proto!(RealmRole, __copy__);
-crate::binding_utils::gen_proto!(RealmRole, __deepcopy__);
-crate::binding_utils::gen_proto!(RealmRole, __richcmp__, eq);
-crate::binding_utils::gen_proto!(RealmRole, __hash__);
-
-crate::binding_utils::impl_enum_field!(
+crate::binding_utils::gen_py_wrapper_class_for_enum!(
     RealmRole,
+    libparsec::low_level::types::RealmRole,
     [
         "OWNER",
         owner,
@@ -103,19 +73,9 @@ crate::binding_utils::impl_enum_field!(
     ]
 );
 
-#[pyclass]
-#[derive(Clone)]
-#[non_exhaustive]
-pub(crate) struct UserProfile(pub libparsec::low_level::types::UserProfile);
-
-crate::binding_utils::gen_proto!(UserProfile, __repr__);
-crate::binding_utils::gen_proto!(UserProfile, __copy__);
-crate::binding_utils::gen_proto!(UserProfile, __deepcopy__);
-crate::binding_utils::gen_proto!(UserProfile, __richcmp__, eq);
-crate::binding_utils::gen_proto!(UserProfile, __hash__);
-
-crate::binding_utils::impl_enum_field!(
+crate::binding_utils::gen_py_wrapper_class_for_enum!(
     UserProfile,
+    libparsec::low_level::types::UserProfile,
     [
         "ADMIN",
         admin,
@@ -133,25 +93,9 @@ crate::binding_utils::impl_enum_field!(
     ]
 );
 
-impl UserProfile {
-    pub(crate) fn from_profile(
-        profile: libparsec::low_level::types::UserProfile,
-    ) -> &'static PyObject {
-        match profile {
-            libparsec::low_level::types::UserProfile::Admin => UserProfile::admin(),
-            libparsec::low_level::types::UserProfile::Standard => UserProfile::standard(),
-            libparsec::low_level::types::UserProfile::Outsider => UserProfile::outsider(),
-        }
-    }
-}
-
-#[pyclass]
-#[derive(Clone)]
-#[non_exhaustive]
-pub(crate) struct DeviceFileType(pub libparsec::low_level::types::DeviceFileType);
-
-crate::binding_utils::impl_enum_field!(
+crate::binding_utils::gen_py_wrapper_class_for_enum!(
     DeviceFileType,
+    libparsec::low_level::types::DeviceFileType,
     [
         "PASSWORD",
         password,
@@ -185,16 +129,10 @@ impl DeviceFileType {
     }
 
     #[classmethod]
-    pub fn load(_cls: &PyType, bytes: &[u8]) -> PyResult<Self> {
-        Ok(Self(
+    pub fn load(_cls: &PyType, bytes: &[u8]) -> PyResult<&'static PyObject> {
+        Ok(Self::convert(
             libparsec::low_level::types::DeviceFileType::load(bytes)
                 .map_err(|_| PyValueError::new_err("Failed to deserialize"))?,
         ))
     }
 }
-
-crate::binding_utils::gen_proto!(DeviceFileType, __hash__);
-crate::binding_utils::gen_proto!(DeviceFileType, __repr__);
-crate::binding_utils::gen_proto!(DeviceFileType, __copy__);
-crate::binding_utils::gen_proto!(DeviceFileType, __deepcopy__);
-crate::binding_utils::gen_proto!(DeviceFileType, __richcmp__, eq);

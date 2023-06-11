@@ -184,6 +184,38 @@ macro_rules! parse_kwargs {
     };
 }
 
+macro_rules! gen_py_wrapper_class {
+    ($class: ident, $wrapped_struct: path $(,$magic_meth: ident $($magic_meth_arg: ident)? )* $(,)?) => {
+        #[pyclass]
+        #[derive(Clone)]
+        pub(crate) struct $class(pub $wrapped_struct);
+
+        impl From<$wrapped_struct> for $class {
+            fn from(value: $wrapped_struct) -> Self {
+                Self(value)
+            }
+        }
+
+        $(crate::binding_utils::gen_proto!($class, $magic_meth $(,$magic_meth_arg)?);)*
+    };
+}
+
+macro_rules! gen_py_wrapper_class_for_id {
+    ($class: ident, $wrapped_struct: path $(,$magic_meth: ident $($magic_meth_arg: ident)? )* $(,)?) => {
+        #[pyclass]
+        #[derive(Clone, Eq, PartialEq, Hash)]
+        pub(crate) struct $class(pub $wrapped_struct);
+
+        impl From<$wrapped_struct> for $class {
+            fn from(value: $wrapped_struct) -> Self {
+                Self(value)
+            }
+        }
+
+        $(crate::binding_utils::gen_proto!($class, $magic_meth $(,$magic_meth_arg)?);)*
+    };
+}
+
 macro_rules! gen_proto {
     ($class: ident, __repr__) => {
         #[pymethods]
@@ -301,18 +333,39 @@ macro_rules! create_exception {
     };
 }
 
-macro_rules! impl_enum_field {
-    ($enum_class: ident, $([$pyo3_name: literal, $fn_name: ident, $field_value: expr]),+) => {
+macro_rules! gen_py_wrapper_class_for_enum {
+    ($class: ident, $wrapped_enum: ty $(,[$pyo3_name: literal, $fn_name: ident, $field_value: path])+  $(,)?) => {
+        #[pyclass]
+        #[derive(Clone, PartialEq, Eq, Hash)]
+        // 2nd element is a dummy type to ensure the struct must be constructed
+        // using the `convert` method
+        pub(crate) struct $class(pub $wrapped_enum);
+
+        crate::binding_utils::gen_proto!($class, __repr__);
+        crate::binding_utils::gen_proto!($class, __richcmp__, eq);
+        crate::binding_utils::gen_proto!($class, __hash__);
+        crate::binding_utils::gen_proto!($class, __copy__);
+        crate::binding_utils::gen_proto!($class, __deepcopy__);
+
+        impl $class {
+            #[allow(dead_code)]
+            pub fn convert(val: $wrapped_enum) -> &'static PyObject {
+                match val {
+                    $($field_value => Self :: $fn_name ()),*
+                }
+            }
+        }
+
         #[pymethods]
-        impl $enum_class {
+        impl $class {
             $(
                 #[classattr]
-                #[pyo3(name = $pyo3_name)]
+                #[pyo3(name = $pyo3_name )]
                 pub(crate) fn $fn_name() -> &'static PyObject {
                     lazy_static::lazy_static! {
                         static ref VALUE: PyObject = {
                             Python::with_gil(|py| {
-                                $enum_class($field_value).into_py(py)
+                                $class($field_value).into_py(py)
                             })
                         };
                     };
@@ -329,7 +382,7 @@ macro_rules! impl_enum_field {
                         Python::with_gil(|py| {
                             PyTuple::new(py, [
                                 $(
-                                    $enum_class :: $fn_name ()
+                                    $class :: $fn_name ()
                                 ),*
                             ]).into_py(py)
                         })
@@ -342,7 +395,7 @@ macro_rules! impl_enum_field {
             #[classmethod]
             fn from_str(_cls: &PyType, value: &str) -> PyResult<&'static PyObject> {
                 Ok(match value {
-                    $($pyo3_name => Self:: $fn_name ()),*,
+                        $($pyo3_name => Self:: $fn_name ()),*,
                     _ => return Err(PyValueError::new_err(format!("Invalid value `{}`", value))),
                 })
             }
@@ -363,7 +416,9 @@ pub(crate) use check_mandatory_kwargs;
 pub(crate) use create_exception;
 pub(crate) use create_exception_from;
 pub(crate) use gen_proto;
-pub(crate) use impl_enum_field;
+pub(crate) use gen_py_wrapper_class;
+pub(crate) use gen_py_wrapper_class_for_enum;
+pub(crate) use gen_py_wrapper_class_for_id;
 pub(crate) use parse_kwargs;
 pub(crate) use parse_kwargs_optional;
 pub(crate) use py_object;

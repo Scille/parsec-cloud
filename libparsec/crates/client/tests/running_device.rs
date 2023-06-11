@@ -13,7 +13,7 @@ async fn base(env: &TestbedEnv) {
 
     test_register_send_hook(
         &env.discriminant_dir,
-        |_req: protocol::authenticated_cmds::latest::realm_create::Req| async {
+        |_req: protocol::authenticated_cmds::latest::realm_create::Req| {
             protocol::authenticated_cmds::latest::realm_create::Rep::Ok
         },
     );
@@ -26,7 +26,7 @@ async fn base(env: &TestbedEnv) {
 
     running
         .user_ops
-        .workspace_rename(&wid, "wksp1'".parse().unwrap())
+        .workspace_rename(wid, "wksp1'".parse().unwrap())
         .await
         .unwrap();
 

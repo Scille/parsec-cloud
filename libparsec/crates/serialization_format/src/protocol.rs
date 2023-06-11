@@ -504,11 +504,14 @@ fn quote_cmd(cmd_version: u32, cmd: &GenCmd) -> (TokenStream, TokenStream) {
             reps,
             nested_types,
         } => {
-            let struct_req = quote_cmd_req_struct(req);
+            let struct_req = quote_cmd_req_struct(pascal_case_name, req);
             let (variants_rep, status_match) = quote_cmd_rep_variants(reps);
             let nested_types = quote_cmd_nested_types(nested_types);
             let known_rep_statuses = reps.iter().map(|rep| rep.status.to_owned());
 
+            // The rep struct is exposed as `Rep`, however we want to have it named
+            // `<CmdName>Rep` for debug display
+            let rep_struct_name = format_ident!("{}Rep", pascal_case_name);
             quote! {
 
                 pub mod #module_name {
@@ -547,9 +550,10 @@ fn quote_cmd(cmd_version: u32, cmd: &GenCmd) -> (TokenStream, TokenStream) {
                     #[::serde_with::serde_as]
                     #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq)]
                     #[serde(tag = "status")]
-                    pub enum Rep {
+                    pub enum #rep_struct_name {
                         #(#variants_rep),*
                     }
+                    pub use #rep_struct_name as Rep;
 
                     impl Rep {
                         pub fn status(&self) -> &str {
@@ -635,7 +639,7 @@ fn quote_custom_literal_union(name: &str, variants: &[(String, String)]) -> Toke
 
     quote! {
         #[::serde_with::serde_as]
-        #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)]
+        #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq, Hash)]
         pub enum #name {
             #(#variants),*
         }
@@ -671,7 +675,10 @@ fn quote_cmd_nested_types(nested_types: &[GenCmdNestedType]) -> Vec<TokenStream>
         .collect()
 }
 
-fn quote_cmd_req_struct(req: &GenCmdReq) -> TokenStream {
+fn quote_cmd_req_struct(pascal_case_cmd_name: &str, req: &GenCmdReq) -> TokenStream {
+    // The req struct is exposed as `Req`, however we want to have it named
+    // `<CmdName>Req` for debug display
+    let struct_name = format_ident!("{}Req", pascal_case_cmd_name);
     match &req.kind {
         GenCmdReqKind::Unit { nested_type_name } => {
             let cmd_name_literal = &req.cmd;
@@ -680,7 +687,8 @@ fn quote_cmd_req_struct(req: &GenCmdReq) -> TokenStream {
                 #[::serde_with::serde_as]
                 #[derive(Debug, Clone, ::serde::Deserialize, PartialEq, Eq)]
                 #[serde(transparent)]
-                pub struct Req(pub #nested_type_name);
+                pub struct #struct_name(pub #nested_type_name);
+                pub use #struct_name as Req;
 
                 impl ::serde::Serialize for Req
                 {
@@ -711,7 +719,8 @@ fn quote_cmd_req_struct(req: &GenCmdReq) -> TokenStream {
                 quote! {
                     #[::serde_with::serde_as]
                     #[derive(Debug, Clone, ::serde::Deserialize, PartialEq, Eq)]
-                    pub struct Req;
+                    pub struct #struct_name;
+                    pub use #struct_name as Req;
 
                     impl ::serde::Serialize for Req
                     {
@@ -763,9 +772,10 @@ fn quote_cmd_req_struct(req: &GenCmdReq) -> TokenStream {
                 quote! {
                     #[::serde_with::serde_as]
                     #[derive(Debug, Clone, ::serde::Deserialize, PartialEq, Eq)]
-                    pub struct Req {
+                    pub struct #struct_name {
                         #(#fields_codes),*
                     }
+                    pub use #struct_name as Req;
 
                     impl ::serde::Serialize for Req
                     {

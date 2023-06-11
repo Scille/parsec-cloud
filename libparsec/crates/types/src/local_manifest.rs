@@ -997,8 +997,8 @@ impl LocalUserManifest {
         self.workspaces.push(workspace);
     }
 
-    pub fn get_workspace_entry(&self, workspace_id: &EntryID) -> Option<&WorkspaceEntry> {
-        self.workspaces.iter().find(|w| w.id == *workspace_id)
+    pub fn get_workspace_entry(&self, workspace_id: EntryID) -> Option<&WorkspaceEntry> {
+        self.workspaces.iter().find(|w| w.id == workspace_id)
     }
 
     pub fn from_remote(remote: UserManifest) -> Self {

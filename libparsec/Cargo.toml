@@ -17,7 +17,6 @@ test-utils = [
     "libparsec_client_high_level_api/test-utils",
     "libparsec_platform_device_loader/test-with-testbed",
     "libparsec_platform_storage/test-with-testbed",
-    "libparsec_platform_storage/test-in-memory-mock",
     "libparsec_types/test-mock-time",
     "libparsec_crypto/test-unsecure-but-fast-secretkey-from-password"
 ]

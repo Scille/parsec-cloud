@@ -5,17 +5,16 @@ use pyo3::{
     types::{PyBytes, PyTuple},
 };
 
-use crate::{
-    binding_utils::BytesWrapper, data::UsersPerProfileDetailItem, protocol::ActiveUsersLimit,
-};
+use crate::{ActiveUsersLimit, BytesWrapper, UsersPerProfileDetailItem};
 
-#[pyclass]
-pub(crate) struct OrganizationStats(pub libparsec::low_level::types::OrganizationStats);
-
-crate::binding_utils::gen_proto!(OrganizationStats, __repr__);
-crate::binding_utils::gen_proto!(OrganizationStats, __copy__);
-crate::binding_utils::gen_proto!(OrganizationStats, __deepcopy__);
-crate::binding_utils::gen_proto!(OrganizationStats, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class!(
+    OrganizationStats,
+    libparsec::low_level::types::OrganizationStats,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl OrganizationStats {
@@ -75,13 +74,14 @@ impl OrganizationStats {
     }
 }
 
-#[pyclass]
-pub(crate) struct OrganizationConfig(libparsec::low_level::types::OrganizationConfig);
-
-crate::binding_utils::gen_proto!(OrganizationConfig, __repr__);
-crate::binding_utils::gen_proto!(OrganizationConfig, __copy__);
-crate::binding_utils::gen_proto!(OrganizationConfig, __deepcopy__);
-crate::binding_utils::gen_proto!(OrganizationConfig, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class!(
+    OrganizationConfig,
+    libparsec::low_level::types::OrganizationConfig,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl OrganizationConfig {

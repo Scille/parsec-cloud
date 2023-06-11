@@ -4,16 +4,14 @@ use pyo3::prelude::*;
 
 use crate::enumerate::UserProfile;
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct UsersPerProfileDetailItem(
-    pub libparsec::low_level::types::UsersPerProfileDetailItem,
+crate::binding_utils::gen_py_wrapper_class!(
+    UsersPerProfileDetailItem,
+    libparsec::low_level::types::UsersPerProfileDetailItem,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
 );
-
-crate::binding_utils::gen_proto!(UsersPerProfileDetailItem, __repr__);
-crate::binding_utils::gen_proto!(UsersPerProfileDetailItem, __copy__);
-crate::binding_utils::gen_proto!(UsersPerProfileDetailItem, __deepcopy__);
-crate::binding_utils::gen_proto!(UsersPerProfileDetailItem, __richcmp__, eq);
 
 #[pymethods]
 impl UsersPerProfileDetailItem {
@@ -30,7 +28,7 @@ impl UsersPerProfileDetailItem {
 
     #[getter]
     fn profile(&self) -> PyResult<&'static PyObject> {
-        Ok(UserProfile::from_profile(self.0.profile))
+        Ok(UserProfile::convert(self.0.profile))
     }
 
     #[getter]

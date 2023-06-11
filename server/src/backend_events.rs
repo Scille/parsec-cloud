@@ -8,8 +8,8 @@ use pyo3::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    enumerate::{InvitationStatus, RealmRole, UserProfile},
-    ids::{DeviceID, InvitationToken, OrganizationID, RealmID, UserID, VlobID},
+    DeviceID, InvitationStatus, InvitationToken, OrganizationID, RealmID, RealmRole, UserID,
+    UserProfile, VlobID,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -336,10 +336,10 @@ impl BackendEventUserUpdatedOrRevoked {
     }
 
     #[getter]
-    fn profile(_self: PyRef<Self>) -> PyResult<Option<UserProfile>> {
+    fn profile(_self: PyRef<Self>) -> PyResult<Option<&'static PyObject>> {
         match &_self.into_super().0 {
             RawBackendEvent::UserProfileUpdatedOrRevoked { profile, .. } => {
-                Ok(profile.map(UserProfile))
+                Ok(profile.map(UserProfile::convert))
             }
             _ => unreachable!(),
         }
@@ -532,10 +532,10 @@ impl BackendEventInviteStatusChanged {
     }
 
     #[getter]
-    fn status(_self: PyRef<Self>) -> PyResult<InvitationStatus> {
+    fn status(_self: PyRef<Self>) -> PyResult<&'static PyObject> {
         match &_self.into_super().0 {
             RawBackendEvent::InviteStatusChanged { status, .. } => {
-                Ok(InvitationStatus(status.clone()))
+                Ok(InvitationStatus::convert(status.clone()))
             }
             _ => unreachable!(),
         }
@@ -796,9 +796,9 @@ impl BackendEventRealmRolesUpdated {
     }
 
     #[getter]
-    fn role(_self: PyRef<Self>) -> PyResult<Option<RealmRole>> {
+    fn role(_self: PyRef<Self>) -> PyResult<Option<&'static PyObject>> {
         match &_self.into_super().0 {
-            RawBackendEvent::RealmRolesUpdated { role, .. } => Ok(role.map(RealmRole)),
+            RawBackendEvent::RealmRolesUpdated { role, .. } => Ok(role.map(RealmRole::convert)),
             _ => unreachable!(),
         }
     }

@@ -6,10 +6,7 @@ use libparsec_platform_async::RwLockWriteGuard;
 use libparsec_types::prelude::*;
 
 use super::{
-    storage::{
-        AnyArcCertificate, CertificatesCachedStorage, GetCertificateError, GetTimestampBoundsError,
-        UpTo,
-    },
+    storage::{CertificatesCachedStorage, GetCertificateError, GetTimestampBoundsError, UpTo},
     CertificatesOps,
 };
 use crate::event_bus::EventInvalidCertificate;

@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use std::sync::Arc;
+
 use pyo3::{
     prelude::*,
     types::{PyBytes, PyDict, PyType},
@@ -17,13 +19,14 @@ use crate::{
     time::DateTime,
 };
 
-#[pyclass]
-pub(crate) struct UserCertificate(pub libparsec::low_level::types::UserCertificate);
-
-crate::binding_utils::gen_proto!(UserCertificate, __repr__);
-crate::binding_utils::gen_proto!(UserCertificate, __copy__);
-crate::binding_utils::gen_proto!(UserCertificate, __deepcopy__);
-crate::binding_utils::gen_proto!(UserCertificate, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class!(
+    UserCertificate,
+    Arc<libparsec::low_level::types::UserCertificate>,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl UserCertificate {
@@ -40,17 +43,19 @@ impl UserCertificate {
             [profile: UserProfile, "profile"]
         );
 
-        Ok(Self(libparsec::low_level::types::UserCertificate {
-            author: match author {
-                Some(device_id) => CertificateSignerOwned::User(device_id.0),
-                None => CertificateSignerOwned::Root,
+        Ok(Self(Arc::new(
+            libparsec::low_level::types::UserCertificate {
+                author: match author {
+                    Some(device_id) => CertificateSignerOwned::User(device_id.0),
+                    None => CertificateSignerOwned::Root,
+                },
+                timestamp: timestamp.0,
+                user_id: user_id.0,
+                human_handle: human_handle.map(|human_handle| human_handle.0),
+                public_key: public_key.0,
+                profile: profile.0,
             },
-            timestamp: timestamp.0,
-            user_id: user_id.0,
-            human_handle: human_handle.map(|human_handle| human_handle.0),
-            public_key: public_key.0,
-            profile: profile.0,
-        }))
+        )))
     }
 
     #[args(py_kwargs = "**")]
@@ -65,7 +70,8 @@ impl UserCertificate {
             [profile: UserProfile, "profile"]
         );
 
-        let mut r = self.0.clone();
+        let mut m = self.0.clone();
+        let r = Arc::make_mut(&mut m);
 
         if let Some(x) = author {
             r.author = match x {
@@ -89,7 +95,7 @@ impl UserCertificate {
             r.profile = x.0;
         }
 
-        Ok(Self(r))
+        Ok(Self(m))
     }
 
     #[classmethod]
@@ -112,7 +118,7 @@ impl UserCertificate {
                 expected_user.map(|x| &x.0),
                 expected_human_handle.map(|x| &x.0),
             )
-            .map(Self)?,
+            .map(|x| Self(Arc::new(x)))?,
         )
     }
 
@@ -125,7 +131,7 @@ impl UserCertificate {
         Ok(
             libparsec::low_level::types::UserCertificate::unsecure_load(signed.to_vec().into())
                 .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
-                .map(Self)?,
+                .map(|x| Self(Arc::new(x)))?,
         )
     }
 
@@ -144,37 +150,38 @@ impl UserCertificate {
 
     #[getter]
     fn timestamp(&self) -> DateTime {
-        DateTime(self.0.timestamp)
+        self.0.timestamp.into()
     }
 
     #[getter]
     fn user_id(&self) -> UserID {
-        UserID(self.0.user_id.clone())
+        self.0.user_id.clone().into()
     }
 
     #[getter]
     fn human_handle(&self) -> Option<HumanHandle> {
-        self.0.human_handle.clone().map(HumanHandle)
+        self.0.human_handle.clone().map(|x| x.into())
     }
 
     #[getter]
     fn public_key(&self) -> PublicKey {
-        PublicKey(self.0.public_key.clone())
+        self.0.public_key.clone().into()
     }
 
     #[getter]
     fn profile(&self) -> &'static PyObject {
-        UserProfile::from_profile(self.0.profile)
+        UserProfile::convert(self.0.profile)
     }
 }
 
-#[pyclass]
-pub(crate) struct DeviceCertificate(pub libparsec::low_level::types::DeviceCertificate);
-
-crate::binding_utils::gen_proto!(DeviceCertificate, __repr__);
-crate::binding_utils::gen_proto!(DeviceCertificate, __copy__);
-crate::binding_utils::gen_proto!(DeviceCertificate, __deepcopy__);
-crate::binding_utils::gen_proto!(DeviceCertificate, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class!(
+    DeviceCertificate,
+    Arc<libparsec::low_level::types::DeviceCertificate>,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl DeviceCertificate {
@@ -190,16 +197,18 @@ impl DeviceCertificate {
             [verify_key: VerifyKey, "verify_key"],
         );
 
-        Ok(Self(libparsec::low_level::types::DeviceCertificate {
-            author: match author {
-                Some(device_id) => CertificateSignerOwned::User(device_id.0),
-                None => CertificateSignerOwned::Root,
+        Ok(Self(Arc::new(
+            libparsec::low_level::types::DeviceCertificate {
+                author: match author {
+                    Some(device_id) => CertificateSignerOwned::User(device_id.0),
+                    None => CertificateSignerOwned::Root,
+                },
+                timestamp: timestamp.0,
+                device_id: device_id.0,
+                device_label: device_label.map(|x| x.0),
+                verify_key: verify_key.0,
             },
-            timestamp: timestamp.0,
-            device_id: device_id.0,
-            device_label: device_label.map(|x| x.0),
-            verify_key: verify_key.0,
-        }))
+        )))
     }
 
     #[args(py_kwargs = "**")]
@@ -213,7 +222,8 @@ impl DeviceCertificate {
             [verify_key: VerifyKey, "verify_key"],
         );
 
-        let mut r = self.0.clone();
+        let mut m = self.0.clone();
+        let r = Arc::make_mut(&mut m);
 
         if let Some(x) = author {
             r.author = match x {
@@ -234,7 +244,7 @@ impl DeviceCertificate {
             r.verify_key = x.0;
         }
 
-        Ok(Self(r))
+        Ok(Self(m))
     }
 
     #[classmethod]
@@ -255,7 +265,7 @@ impl DeviceCertificate {
                 },
                 expected_device.map(|x| &x.0),
             )
-            .map(Self)?,
+            .map(|x| Self(Arc::new(x)))?,
         )
     }
 
@@ -268,7 +278,7 @@ impl DeviceCertificate {
         Ok(
             libparsec::low_level::types::DeviceCertificate::unsecure_load(signed.to_vec().into())
                 .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
-                .map(Self)?,
+                .map(|x| Self(Arc::new(x)))?,
         )
     }
 
@@ -301,13 +311,14 @@ impl DeviceCertificate {
     }
 }
 
-#[pyclass]
-pub(crate) struct RevokedUserCertificate(pub libparsec::low_level::types::RevokedUserCertificate);
-
-crate::binding_utils::gen_proto!(RevokedUserCertificate, __repr__);
-crate::binding_utils::gen_proto!(RevokedUserCertificate, __copy__);
-crate::binding_utils::gen_proto!(RevokedUserCertificate, __deepcopy__);
-crate::binding_utils::gen_proto!(RevokedUserCertificate, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class!(
+    RevokedUserCertificate,
+    Arc<libparsec::low_level::types::RevokedUserCertificate>,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl RevokedUserCertificate {
@@ -321,11 +332,13 @@ impl RevokedUserCertificate {
             [user_id: UserID, "user_id"],
         );
 
-        Ok(Self(libparsec::low_level::types::RevokedUserCertificate {
-            author: author.0,
-            timestamp: timestamp.0,
-            user_id: user_id.0,
-        }))
+        Ok(Self(Arc::new(
+            libparsec::low_level::types::RevokedUserCertificate {
+                author: author.0,
+                timestamp: timestamp.0,
+                user_id: user_id.0,
+            },
+        )))
     }
 
     #[args(py_kwargs = "**")]
@@ -337,7 +350,8 @@ impl RevokedUserCertificate {
             [user_id: UserID, "user_id"],
         );
 
-        let mut r = self.0.clone();
+        let mut m = self.0.clone();
+        let r = Arc::make_mut(&mut m);
 
         if let Some(x) = author {
             r.author = x.0
@@ -349,7 +363,7 @@ impl RevokedUserCertificate {
             r.user_id = x.0;
         }
 
-        Ok(Self(r))
+        Ok(Self(m))
     }
 
     #[classmethod]
@@ -367,7 +381,7 @@ impl RevokedUserCertificate {
                 &expected_author.0,
                 expected_user.map(|x| &x.0),
             )
-            .map(Self)?,
+            .map(|x| Self(Arc::new(x)))?,
         )
     }
 
@@ -382,7 +396,7 @@ impl RevokedUserCertificate {
                 signed.to_vec().into(),
             )
             .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
-            .map(Self)?,
+            .map(|x| Self(Arc::new(x)))?,
         )
     }
 
@@ -402,13 +416,14 @@ impl RevokedUserCertificate {
     }
 }
 
-#[pyclass]
-pub(crate) struct UserUpdateCertificate(pub libparsec::low_level::types::UserUpdateCertificate);
-
-crate::binding_utils::gen_proto!(UserUpdateCertificate, __repr__);
-crate::binding_utils::gen_proto!(UserUpdateCertificate, __copy__);
-crate::binding_utils::gen_proto!(UserUpdateCertificate, __deepcopy__);
-crate::binding_utils::gen_proto!(UserUpdateCertificate, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class!(
+    UserUpdateCertificate,
+    Arc<libparsec::low_level::types::UserUpdateCertificate>,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl UserUpdateCertificate {
@@ -423,12 +438,14 @@ impl UserUpdateCertificate {
             [new_profile: UserProfile, "new_profile"]
         );
 
-        Ok(Self(libparsec::low_level::types::UserUpdateCertificate {
-            author: author.0,
-            timestamp: timestamp.0,
-            user_id: user_id.0,
-            new_profile: new_profile.0,
-        }))
+        Ok(Self(Arc::new(
+            libparsec::low_level::types::UserUpdateCertificate {
+                author: author.0,
+                timestamp: timestamp.0,
+                user_id: user_id.0,
+                new_profile: new_profile.0,
+            },
+        )))
     }
 
     #[args(py_kwargs = "**")]
@@ -441,7 +458,8 @@ impl UserUpdateCertificate {
             [new_profile: UserProfile, "new_profile"]
         );
 
-        let mut r = self.0.clone();
+        let mut m = self.0.clone();
+        let r = Arc::make_mut(&mut m);
 
         if let Some(x) = author {
             r.author = x.0;
@@ -456,7 +474,7 @@ impl UserUpdateCertificate {
             r.new_profile = x.0;
         }
 
-        Ok(Self(r))
+        Ok(Self(m))
     }
 
     #[classmethod]
@@ -474,7 +492,7 @@ impl UserUpdateCertificate {
                 &expected_author.0,
                 expected_user.map(|x| &x.0),
             )
-            .map(Self)?,
+            .map(|x| Self(Arc::new(x)))?,
         )
     }
 
@@ -489,38 +507,39 @@ impl UserUpdateCertificate {
                 signed.to_vec().into(),
             )
             .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
-            .map(Self)?,
+            .map(|x| Self(Arc::new(x)))?,
         )
     }
 
     #[getter]
     fn author(&self) -> DeviceID {
-        DeviceID(self.0.author.clone())
+        self.0.author.clone().into()
     }
 
     #[getter]
     fn timestamp(&self) -> DateTime {
-        DateTime(self.0.timestamp)
+        self.0.timestamp.into()
     }
 
     #[getter]
     fn user_id(&self) -> UserID {
-        UserID(self.0.user_id.clone())
+        self.0.user_id.clone().into()
     }
 
     #[getter]
     fn new_profile(&self) -> &'static PyObject {
-        UserProfile::from_profile(self.0.new_profile)
+        UserProfile::convert(self.0.new_profile)
     }
 }
 
-#[pyclass]
-pub(crate) struct RealmRoleCertificate(pub libparsec::low_level::types::RealmRoleCertificate);
-
-crate::binding_utils::gen_proto!(RealmRoleCertificate, __repr__);
-crate::binding_utils::gen_proto!(RealmRoleCertificate, __copy__);
-crate::binding_utils::gen_proto!(RealmRoleCertificate, __deepcopy__);
-crate::binding_utils::gen_proto!(RealmRoleCertificate, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class!(
+    RealmRoleCertificate,
+    Arc<libparsec::low_level::types::RealmRoleCertificate>,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl RealmRoleCertificate {
@@ -536,16 +555,18 @@ impl RealmRoleCertificate {
             [role: Option<RealmRole>, "role"],
         );
 
-        Ok(Self(libparsec::low_level::types::RealmRoleCertificate {
-            timestamp: timestamp.0,
-            author: match author {
-                Some(device_id) => CertificateSignerOwned::User(device_id.0),
-                None => CertificateSignerOwned::Root,
+        Ok(Self(Arc::new(
+            libparsec::low_level::types::RealmRoleCertificate {
+                timestamp: timestamp.0,
+                author: match author {
+                    Some(device_id) => CertificateSignerOwned::User(device_id.0),
+                    None => CertificateSignerOwned::Root,
+                },
+                realm_id: realm_id.0,
+                user_id: user_id.0,
+                role: role.map(|x| x.0),
             },
-            realm_id: realm_id.0,
-            user_id: user_id.0,
-            role: role.map(|x| x.0),
-        }))
+        )))
     }
 
     #[args(py_kwargs = "**")]
@@ -559,7 +580,8 @@ impl RealmRoleCertificate {
             [role: Option<RealmRole>, "role"],
         );
 
-        let mut r = self.0.clone();
+        let mut m = self.0.clone();
+        let r = Arc::make_mut(&mut m);
 
         if let Some(x) = author {
             r.author = match x {
@@ -580,7 +602,7 @@ impl RealmRoleCertificate {
             r.role = x.map(|y| y.0);
         }
 
-        Ok(Self(r))
+        Ok(Self(m))
     }
 
     #[classmethod]
@@ -603,7 +625,7 @@ impl RealmRoleCertificate {
                 expected_realm.map(|x| x.0),
                 expected_user.map(|x| &x.0),
             )
-            .map(Self)?,
+            .map(|x| Self(Arc::new(x)))?,
         )
     }
 
@@ -618,7 +640,7 @@ impl RealmRoleCertificate {
                 signed.to_vec().into(),
             )
             .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
-            .map(Self)?,
+            .map(|x| Self(Arc::new(x)))?,
         )
     }
 
@@ -629,13 +651,15 @@ impl RealmRoleCertificate {
         timestamp: DateTime,
         realm_id: RealmID,
     ) -> Self {
-        Self(libparsec::low_level::types::RealmRoleCertificate {
-            user_id: author.0.user_id().clone(),
-            author: CertificateSignerOwned::User(author.0),
-            timestamp: timestamp.0,
-            realm_id: realm_id.0,
-            role: Some(libparsec::low_level::types::RealmRole::Owner),
-        })
+        Self(Arc::new(
+            libparsec::low_level::types::RealmRoleCertificate {
+                user_id: author.0.user_id().clone(),
+                author: CertificateSignerOwned::User(author.0),
+                timestamp: timestamp.0,
+                realm_id: realm_id.0,
+                role: Some(libparsec::low_level::types::RealmRole::Owner),
+            },
+        ))
     }
 
     #[getter]
@@ -648,43 +672,44 @@ impl RealmRoleCertificate {
 
     #[getter]
     fn timestamp(&self) -> DateTime {
-        DateTime(self.0.timestamp)
+        self.0.timestamp.into()
     }
 
     #[getter]
     fn realm_id(&self) -> RealmID {
-        RealmID(self.0.realm_id)
+        self.0.realm_id.into()
     }
 
     #[getter]
     fn user_id(&self) -> UserID {
-        UserID(self.0.user_id.clone())
+        self.0.user_id.clone().into()
     }
 
     #[getter]
-    fn role(&self) -> Option<RealmRole> {
-        self.0.role.map(RealmRole)
+    fn role(&self) -> Option<&'static PyObject> {
+        self.0.role.map(RealmRole::convert)
     }
 }
 
-#[pyclass]
-pub(crate) struct SequesterAuthorityCertificate(
-    pub libparsec::low_level::types::SequesterAuthorityCertificate,
+crate::binding_utils::gen_py_wrapper_class!(
+    SequesterAuthorityCertificate,
+    Arc<libparsec::low_level::types::SequesterAuthorityCertificate>,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
 );
-
-crate::binding_utils::gen_proto!(SequesterAuthorityCertificate, __repr__);
-crate::binding_utils::gen_proto!(SequesterAuthorityCertificate, __copy__);
-crate::binding_utils::gen_proto!(SequesterAuthorityCertificate, __deepcopy__);
-crate::binding_utils::gen_proto!(SequesterAuthorityCertificate, __richcmp__, eq);
 
 #[pymethods]
 impl SequesterAuthorityCertificate {
     #[new]
     fn new(timestamp: DateTime, verify_key_der: SequesterVerifyKeyDer) -> Self {
-        Self(libparsec::low_level::types::SequesterAuthorityCertificate {
-            timestamp: timestamp.0,
-            verify_key_der: verify_key_der.0,
-        })
+        Self(Arc::new(
+            libparsec::low_level::types::SequesterAuthorityCertificate {
+                timestamp: timestamp.0,
+                verify_key_der: verify_key_der.0,
+            },
+        ))
     }
 
     #[classmethod]
@@ -698,7 +723,7 @@ impl SequesterAuthorityCertificate {
                 signed,
                 &author_verify_key.0,
             )
-            .map(Self)?,
+            .map(|x| Self(Arc::new(x)))?,
         )
     }
 
@@ -717,15 +742,14 @@ impl SequesterAuthorityCertificate {
     }
 }
 
-#[pyclass]
-pub(crate) struct SequesterServiceCertificate(
-    pub libparsec::low_level::types::SequesterServiceCertificate,
+crate::binding_utils::gen_py_wrapper_class!(
+    SequesterServiceCertificate,
+    Arc<libparsec::low_level::types::SequesterServiceCertificate>,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
 );
-
-crate::binding_utils::gen_proto!(SequesterServiceCertificate, __repr__);
-crate::binding_utils::gen_proto!(SequesterServiceCertificate, __copy__);
-crate::binding_utils::gen_proto!(SequesterServiceCertificate, __deepcopy__);
-crate::binding_utils::gen_proto!(SequesterServiceCertificate, __richcmp__, eq);
 
 #[pymethods]
 impl SequesterServiceCertificate {
@@ -736,17 +760,22 @@ impl SequesterServiceCertificate {
         service_label: String,
         encryption_key_der: SequesterPublicKeyDer,
     ) -> Self {
-        Self(libparsec::low_level::types::SequesterServiceCertificate {
-            timestamp: timestamp.0,
-            service_id: service_id.0,
-            service_label,
-            encryption_key_der: encryption_key_der.0,
-        })
+        Self(Arc::new(
+            libparsec::low_level::types::SequesterServiceCertificate {
+                timestamp: timestamp.0,
+                service_id: service_id.0,
+                service_label,
+                encryption_key_der: encryption_key_der.0,
+            },
+        ))
     }
 
     #[classmethod]
     fn load(_cls: &PyType, data: &[u8]) -> DataResult<Self> {
-        Ok(libparsec::low_level::types::SequesterServiceCertificate::load(data).map(Self)?)
+        Ok(
+            libparsec::low_level::types::SequesterServiceCertificate::load(data)
+                .map(|x| Self(Arc::new(x)))?,
+        )
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {

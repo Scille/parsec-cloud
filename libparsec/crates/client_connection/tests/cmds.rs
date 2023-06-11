@@ -181,8 +181,8 @@ async fn invited(env: &TestbedEnv) {
     // Good request
 
     let addr = BackendInvitationAddr::new(
-        env.organization_addr.clone(),
-        env.organization_addr.organization_id().to_owned(),
+        env.server_addr.clone(),
+        env.organization_id.to_owned(),
         InvitationType::User,
         invitation_token,
     );
@@ -203,8 +203,8 @@ async fn invited(env: &TestbedEnv) {
     // Bad request: invalid invitation token
 
     let bad_addr = BackendInvitationAddr::new(
-        env.organization_addr.clone(),
-        env.organization_addr.organization_id().to_owned(),
+        env.server_addr.clone(),
+        env.organization_id.to_owned(),
         InvitationType::User,
         InvitationToken::default(),
     );
@@ -224,8 +224,8 @@ async fn invited(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal", with_server)]
 async fn anonymous(env: &TestbedEnv) {
     let addr = BackendAnonymousAddr::BackendPkiEnrollmentAddr(BackendPkiEnrollmentAddr::new(
-        env.organization_addr.clone(),
-        env.organization_addr.organization_id().to_owned(),
+        env.server_addr.clone(),
+        env.organization_id.to_owned(),
     ));
     let cmds = AnonymousCmds::new(&env.discriminant_dir, addr, ProxyConfig::default()).unwrap();
 
@@ -255,8 +255,8 @@ async fn low_level_send_hook(env: &TestbedEnv) {
     });
 
     let addr = BackendAnonymousAddr::BackendPkiEnrollmentAddr(BackendPkiEnrollmentAddr::new(
-        env.organization_addr.clone(),
-        env.organization_addr.organization_id().to_owned(),
+        env.server_addr.clone(),
+        env.organization_id.to_owned(),
     ));
     let cmds = AnonymousCmds::new(&env.discriminant_dir, addr, ProxyConfig::default()).unwrap();
 
@@ -332,14 +332,14 @@ async fn low_level_send_hook(env: &TestbedEnv) {
 async fn high_level_send_hook(env: &TestbedEnv) {
     test_register_send_hook(
         &env.discriminant_dir,
-        |_req: anonymous_cmds::pki_enrollment_info::Req| async {
+        |_req: anonymous_cmds::pki_enrollment_info::Req| {
             anonymous_cmds::pki_enrollment_info::Rep::NotFound { reason: None }
         },
     );
 
     let addr = BackendAnonymousAddr::BackendPkiEnrollmentAddr(BackendPkiEnrollmentAddr::new(
-        env.organization_addr.clone(),
-        env.organization_addr.organization_id().to_owned(),
+        env.server_addr.clone(),
+        env.organization_id.to_owned(),
     ));
     let cmds = AnonymousCmds::new(&env.discriminant_dir, addr, ProxyConfig::default()).unwrap();
 

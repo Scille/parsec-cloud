@@ -48,7 +48,7 @@
                     // created. Hence the client knows if it is lacking some certificates
                     // to perform the proper integrity checks on the blob content.
                     {
-                        "name": "certificates_index",
+                        "name": "certificate_index",
                         "type": "Index"
                     }
                 ]

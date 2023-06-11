@@ -7,6 +7,8 @@ use libparsec_client_connection::{
 };
 use libparsec_types::prelude::*;
 
+use crate::{EventBus, EventTooMuchDriftWithServerClock};
+
 #[derive(Debug, thiserror::Error)]
 pub enum GreetInProgressError {
     #[error("Cannot reach the server")]
@@ -55,6 +57,7 @@ impl From<ConnectionError> for GreetInProgressError {
 struct BaseGreetInitialCtx {
     token: InvitationToken,
     cmds: Arc<AuthenticatedCmds>,
+    event_bus: EventBus,
 }
 
 impl BaseGreetInitialCtx {
@@ -139,6 +142,7 @@ impl BaseGreetInitialCtx {
             claimer_sas,
             shared_secret_key,
             cmds: self.cmds,
+            event_bus: self.event_bus,
         })
     }
 }
@@ -147,8 +151,12 @@ impl BaseGreetInitialCtx {
 pub struct UserGreetInitialCtx(BaseGreetInitialCtx);
 
 impl UserGreetInitialCtx {
-    pub fn new(cmds: Arc<AuthenticatedCmds>, token: InvitationToken) -> Self {
-        Self(BaseGreetInitialCtx { cmds, token })
+    pub fn new(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus, token: InvitationToken) -> Self {
+        Self(BaseGreetInitialCtx {
+            cmds,
+            token,
+            event_bus,
+        })
     }
 
     pub async fn do_wait_peer(self) -> Result<UserGreetInProgress1Ctx, GreetInProgressError> {
@@ -160,8 +168,12 @@ impl UserGreetInitialCtx {
 pub struct DeviceGreetInitialCtx(BaseGreetInitialCtx);
 
 impl DeviceGreetInitialCtx {
-    pub fn new(cmds: Arc<AuthenticatedCmds>, token: InvitationToken) -> Self {
-        Self(BaseGreetInitialCtx { cmds, token })
+    pub fn new(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus, token: InvitationToken) -> Self {
+        Self(BaseGreetInitialCtx {
+            cmds,
+            token,
+            event_bus,
+        })
     }
 
     pub async fn do_wait_peer(self) -> Result<DeviceGreetInProgress1Ctx, GreetInProgressError> {
@@ -178,6 +190,7 @@ struct BaseGreetInProgress1Ctx {
     claimer_sas: SASCode,
     shared_secret_key: SecretKey,
     cmds: Arc<AuthenticatedCmds>,
+    event_bus: EventBus,
 }
 
 impl BaseGreetInProgress1Ctx {
@@ -192,6 +205,7 @@ impl BaseGreetInProgress1Ctx {
                 claimer_sas: self.claimer_sas,
                 shared_secret_key: self.shared_secret_key,
                 cmds: self.cmds,
+                event_bus: self.event_bus,
             }),
             Rep::AlreadyDeleted => Err(GreetInProgressError::AlreadyUsed),
             Rep::InvalidState => Err(GreetInProgressError::PeerReset),
@@ -245,6 +259,7 @@ struct BaseGreetInProgress2Ctx {
     claimer_sas: SASCode,
     shared_secret_key: SecretKey,
     cmds: Arc<AuthenticatedCmds>,
+    event_bus: EventBus,
 }
 
 impl BaseGreetInProgress2Ctx {
@@ -262,6 +277,7 @@ impl BaseGreetInProgress2Ctx {
                 token: self.token,
                 shared_secret_key: self.shared_secret_key,
                 cmds: self.cmds,
+                event_bus: self.event_bus,
             }),
             Rep::AlreadyDeleted => Err(GreetInProgressError::AlreadyUsed),
             Rep::InvalidState => Err(GreetInProgressError::PeerReset),
@@ -317,6 +333,7 @@ struct BaseGreetInProgress3Ctx {
     token: InvitationToken,
     shared_secret_key: SecretKey,
     cmds: Arc<AuthenticatedCmds>,
+    event_bus: EventBus,
 }
 
 #[derive(Debug)]
@@ -324,6 +341,7 @@ struct BaseGreetInProgress3WithPayloadCtx {
     token: InvitationToken,
     shared_secret_key: SecretKey,
     cmds: Arc<AuthenticatedCmds>,
+    event_bus: EventBus,
     payload: Bytes,
 }
 
@@ -355,6 +373,7 @@ impl BaseGreetInProgress3Ctx {
             token: self.token,
             shared_secret_key: self.shared_secret_key,
             cmds: self.cmds,
+            event_bus: self.event_bus,
             payload,
         })
     }
@@ -380,6 +399,7 @@ impl UserGreetInProgress3Ctx {
             verify_key: data.verify_key,
             shared_secret_key: ctx.shared_secret_key,
             cmds: ctx.cmds,
+            event_bus: ctx.event_bus,
         })
     }
 }
@@ -402,6 +422,7 @@ impl DeviceGreetInProgress3Ctx {
             verify_key: data.verify_key,
             shared_secret_key: ctx.shared_secret_key,
             cmds: ctx.cmds,
+            event_bus: ctx.event_bus,
         })
     }
 }
@@ -522,6 +543,7 @@ pub struct UserGreetInProgress4Ctx {
     verify_key: VerifyKey,
     shared_secret_key: SecretKey,
     cmds: Arc<AuthenticatedCmds>,
+    event_bus: EventBus,
 }
 
 impl UserGreetInProgress4Ctx {
@@ -582,12 +604,22 @@ impl UserGreetInProgress4Ctx {
                         client_timestamp,
                         ballpark_client_early_offset,
                         ballpark_client_late_offset,
-                    } => Err(GreetInProgressError::BadTimestamp {
-                        server_timestamp: backend_timestamp,
-                        client_timestamp,
-                        ballpark_client_early_offset,
-                        ballpark_client_late_offset,
-                    }),
+                    } => {
+                        let event = EventTooMuchDriftWithServerClock {
+                            backend_timestamp,
+                            ballpark_client_early_offset,
+                            ballpark_client_late_offset,
+                            client_timestamp,
+                        };
+                        self.event_bus.send(&event);
+
+                        Err(GreetInProgressError::BadTimestamp {
+                            server_timestamp: backend_timestamp,
+                            client_timestamp,
+                            ballpark_client_early_offset,
+                            ballpark_client_late_offset,
+                        })
+                    }
                     bad_rep @ (Rep::UnknownStatus { .. }
                     | Rep::InvalidCertification { .. }
                     | Rep::InvalidData { .. }) => {
@@ -659,6 +691,8 @@ pub struct DeviceGreetInProgress4Ctx {
     verify_key: VerifyKey,
     shared_secret_key: SecretKey,
     cmds: Arc<AuthenticatedCmds>,
+    #[allow(dead_code)]
+    event_bus: EventBus,
 }
 
 impl DeviceGreetInProgress4Ctx {

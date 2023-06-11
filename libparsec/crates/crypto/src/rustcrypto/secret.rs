@@ -23,6 +23,8 @@ const MEMLIMIT_INTERACTIVE: u32 = 33_554_432;
 const OPSLIMIT_INTERACTIVE: u32 = 4;
 /// Degree of parallelism
 const PARALLELISM: u32 = 1;
+// https://github.com/sodiumoxide/sodiumoxide/blob/master/libsodium-sys/src/sodium_bindings.rs#L121
+const SALTBYTES: usize = 16;
 
 lazy_static::lazy_static! {
     static ref ARGON2: Argon2<'static> =
@@ -86,9 +88,6 @@ impl SecretKey {
     }
 
     pub fn generate_salt() -> Vec<u8> {
-        // https://github.com/sodiumoxide/sodiumoxide/blob/master/libsodium-sys/src/sodium_bindings.rs#L121
-        const SALTBYTES: usize = 16;
-
         let mut salt = vec![0; SALTBYTES];
         OsRng.fill_bytes(&mut salt);
 
@@ -102,6 +101,10 @@ impl SecretKey {
         // Because it takes some time.
         // For that we replace argon with a very basic algorithm that copy the `password + salt` to the first key bytes.
         if cfg!(feature = "test-unsecure-but-fast-secretkey-from-password") {
+            if salt.len() != SALTBYTES {
+                return Err(CryptoError::DataSize);
+            }
+
             let password_end = KEY_SIZE.min(password.len());
 
             key[..password_end].copy_from_slice(&password.as_bytes()[..password_end]);

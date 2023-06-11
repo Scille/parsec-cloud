@@ -23,8 +23,11 @@ use crate::CryptoError;
 pub struct SecretKey(Key);
 
 impl std::hash::Hash for SecretKey {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.0 .0.hash(state)
+    fn hash<H>(&self, state: &mut H)
+    where
+        H: std::hash::Hasher,
+    {
+        self.as_ref().hash(state)
     }
 }
 
@@ -102,6 +105,10 @@ impl SecretKey {
         // Because it takes some time.
         // For that we replace argon with a very basic algorithm that copy the `password + salt` to the first key bytes.
         if cfg!(feature = "test-unsecure-but-fast-secretkey-from-password") {
+            if salt.len() != SALTBYTES {
+                return Err(CryptoError::DataSize);
+            }
+
             let password_end = KEYBYTES.min(password.len());
 
             key[..password_end].copy_from_slice(&password.as_bytes()[..password_end]);

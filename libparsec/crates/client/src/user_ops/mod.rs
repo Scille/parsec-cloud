@@ -4,19 +4,19 @@ mod create;
 mod merge;
 mod message;
 // mod reencryption;
-// mod share;
-// mod sync;
+mod share;
+mod sync;
 
 pub use message::*;
 // pub use reencryption::*;
-// pub use share::*;
-// pub use sync::*;
+pub use share::*;
+pub use sync::*;
 
 use std::{path::PathBuf, sync::Arc};
 
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_async::Mutex as AsyncMutex;
-use libparsec_platform_storage2::user::UserStorage;
+use libparsec_platform_storage::user::UserStorage;
 use libparsec_types::prelude::*;
 
 use crate::{certificates_ops::CertificatesOps, event_bus::EventBus};
@@ -28,12 +28,10 @@ pub struct UserOps {
     storage: UserStorage,
     cmds: Arc<AuthenticatedCmds>,
     certificates_ops: Arc<CertificatesOps>,
-    #[allow(dead_code)]
     event_bus: EventBus,
     // Message processing is done in-order, hence it is pointless to do
     // it concurrently
     process_messages_lock: AsyncMutex<()>,
-    update_user_manifest_lock: AsyncMutex<()>,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -68,7 +66,6 @@ impl UserOps {
             certificates_ops,
             event_bus,
             process_messages_lock: AsyncMutex::new(()),
-            update_user_manifest_lock: AsyncMutex::new(()),
         })
     }
 
@@ -88,23 +85,36 @@ impl UserOps {
             .collect()
     }
 
+    pub async fn process_last_messages(
+        &self,
+        latest_known_index: Option<IndexInt>,
+    ) -> Result<(), ProcessLastMessagesError> {
+        message::process_last_messages(self, latest_known_index).await
+    }
+
+    pub async fn sync(&self) -> Result<(), SyncError> {
+        sync::sync(self).await
+    }
+
     pub async fn workspace_create(&self, name: EntryName) -> Result<EntryID, anyhow::Error> {
         create::workspace_create(self, name).await
     }
 
     pub async fn workspace_rename(
         &self,
-        workspace_id: &EntryID,
+        workspace_id: EntryID,
         new_name: EntryName,
     ) -> Result<(), UserOpsError> {
         create::workspace_rename(self, workspace_id, new_name).await
     }
 
-    pub async fn process_last_messages(
+    pub async fn workspace_share(
         &self,
-        latest_known_index: Option<IndexInt>,
-    ) -> Result<(), ProcessLastMessagesError> {
-        message::process_last_messages(self, latest_known_index).await
+        workspace_id: EntryID,
+        recipient: &UserID,
+        role: Option<RealmRole>,
+    ) -> Result<(), UserOpsWorkspaceShareError> {
+        share::workspace_share(self, workspace_id, recipient, role).await
     }
 
     pub async fn workspace_start_reencryption(

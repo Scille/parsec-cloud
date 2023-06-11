@@ -552,25 +552,17 @@ fn quote_nested_type(
             });
 
             let impl_code = quote! {
-                #[pyclass(module = #py_module_path_as_str)]
-                #[derive(Clone)]
-                pub(crate) struct #nested_type_name(pub #protocol_path::#nested_type_name);
-
-                crate::binding_utils::gen_proto!(#nested_type_name, __repr__);
-                crate::binding_utils::gen_proto!(#nested_type_name, __copy__);
-                crate::binding_utils::gen_proto!(#nested_type_name, __deepcopy__);
-                crate::binding_utils::gen_proto!(#nested_type_name, __richcmp__, eq);
+                crate::binding_utils::gen_py_wrapper_class_for_enum!(
+                    #nested_type_name,
+                    #protocol_path::#nested_type_name,
+                    #(#enum_variants),*
+                );
 
                 impl #nested_type_name {
                     fn from_raw(py: Python, raw: #protocol_path::#nested_type_name) -> PyResult<PyObject> {
-                        Ok(Py::new(py, #nested_type_name(raw))?.into_py(py))
+                        Ok(Self::convert(raw).as_ref(py).into())
                     }
                 }
-
-                crate::binding_utils::impl_enum_field!(
-                    #nested_type_name,
-                    #(#enum_variants),*
-                );
             };
 
             (vec![nested_type_name], impl_code)
@@ -840,10 +832,10 @@ fn quote_type_as_fn_getter_ret_type(ty: &FieldType) -> TokenStream {
         FieldType::SequesterServiceID => quote! { crate::ids::SequesterServiceID },
         FieldType::DeviceLabel => quote! { crate::ids::DeviceLabel },
         FieldType::HumanHandle => quote! { crate::ids::HumanHandle },
-        FieldType::UserProfile => quote! { crate::enumerate::UserProfile },
-        FieldType::RealmRole => quote! { crate::enumerate::RealmRole },
+        FieldType::UserProfile => quote! { &'static PyObject },
+        FieldType::RealmRole => quote! { &'static PyObject },
         FieldType::InvitationToken => quote! { crate::ids::InvitationToken },
-        FieldType::InvitationStatus => quote! { crate::enumerate::InvitationStatus },
+        FieldType::InvitationStatus => quote! { &'static PyObject },
         FieldType::ReencryptionBatchEntry => quote! { crate::protocol::ReencryptionBatchEntry },
         FieldType::CertificateSignerOwned => quote! { crate::certif::CertificateSignerOwned },
         FieldType::BlockAccess => quote! { crate::data::BlockAccess },
@@ -966,13 +958,17 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         }
         FieldType::DeviceLabel => quote! { crate::ids::DeviceLabel(#field_path.to_owned()) },
         FieldType::HumanHandle => quote! { crate::ids::HumanHandle(#field_path.to_owned()) },
-        FieldType::UserProfile => quote! { crate::enumerate::UserProfile(#field_path.to_owned()) },
-        FieldType::RealmRole => quote! { crate::enumerate::RealmRole(#field_path.to_owned()) },
+        FieldType::UserProfile => {
+            quote! { crate::enumerate::UserProfile::convert(#field_path.to_owned()) }
+        }
+        FieldType::RealmRole => {
+            quote! { crate::enumerate::RealmRole::convert(#field_path.to_owned()) }
+        }
         FieldType::InvitationToken => {
             quote! { crate::ids::InvitationToken(#field_path.to_owned()) }
         }
         FieldType::InvitationStatus => {
-            quote! { crate::enumerate::InvitationStatus(#field_path.to_owned()) }
+            quote! { crate::enumerate::InvitationStatus::convert(#field_path.to_owned()) }
         }
         FieldType::ReencryptionBatchEntry => {
             quote! { crate::protocol::ReencryptionBatchEntry(#field_path.to_owned()) }

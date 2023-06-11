@@ -112,16 +112,20 @@ impl MessageContent {
         }
     }
 
+    pub fn dump_and_sign(&self, author_signkey: &SigningKey) -> Vec<u8> {
+        let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
+        let mut e = ZlibEncoder::new(Vec::new(), flate2::Compression::default());
+        e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
+        let compressed = e.finish().unwrap_or_else(|_| unreachable!());
+        author_signkey.sign(&compressed)
+    }
+
     pub fn dump_sign_and_encrypt_for(
         &self,
         author_signkey: &SigningKey,
         recipient_pubkey: &PublicKey,
     ) -> Vec<u8> {
-        let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
-        let mut e = ZlibEncoder::new(Vec::new(), flate2::Compression::default());
-        e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
-        let compressed = e.finish().unwrap_or_else(|_| unreachable!());
-        let signed = author_signkey.sign(&compressed);
+        let signed = self.dump_and_sign(author_signkey);
         recipient_pubkey.encrypt_for_self(&signed)
     }
 }
