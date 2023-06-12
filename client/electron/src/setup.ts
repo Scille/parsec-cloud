@@ -11,6 +11,7 @@ import electronIsDev from 'electron-is-dev';
 import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
 import { join } from 'path';
+import { shell } from 'electron';
 
 // Define components for a watcher to detect when the webapp is changed so we can reload in Dev mode.
 const reloadWatcher = {
@@ -188,12 +189,27 @@ export class ElectronCapacitorApp {
 
     // Security
     this.MainWindow.webContents.setWindowOpenHandler((details) => {
+
+      function isAuthorizedUrl(url: string): boolean {
+        return [
+          'https://my.parsec.cloud/',
+          'https://parsec.cloud/'
+        ].some(prefix => url.startsWith(prefix));
+      }
+
+      // Open browser on trying to reach an external link, but only if we know about it.
+      if (details.url && isAuthorizedUrl(details.url)) {
+        shell.openExternal(details.url);
+      }
       if (!details.url.includes(this.customScheme)) {
         return { action: 'deny' };
       } else {
         return { action: 'allow' };
       }
     });
+
+
+
     this.MainWindow.webContents.on('will-navigate', (event) => {
       if (!this.MainWindow.webContents.getURL().includes(this.customScheme)) {
         event.preventDefault();
