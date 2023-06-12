@@ -13,7 +13,7 @@ libparsec_serialization_format = { path = "../serialization_format" }
 paste = "1.0.12"
 rand = "0.8.5"
 rmp-serde = "1.1.1"
-serde = { version = "1.0.147", features = ["derive"] }
+serde = { version = "1.0.164", features = ["derive"] }
 serde_with = "2.3.2"
 thiserror = "1.0.40"
 futures = "0.3.28"
