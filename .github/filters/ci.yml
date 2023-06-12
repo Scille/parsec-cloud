@@ -11,16 +11,16 @@ rust-python-binding: &rust-python-binding src/**
 # TODO: We currently don't test the electron application
 # So we don't have to watch the electron binding (likewise for the client code related to electron)
 # rust-electron-binding: &rust-electron-binding bindings/electron
-# new-client-electron: &new-client-electron: oxidation/client/electron
+# new-client-electron: &new-client-electron: client/electron
 
 # TODO: We currently don't test the android application
 # So we don't have to watch the android binding (likewise for the client code related to android)
 # rust-android-binding: &rust-android-binding bindings/android
-# new-client-android: &new-client-android: oxidation/client/android
+# new-client-android: &new-client-android: client/android
 
 # TODO: We currently don't test the ios application
 # So we don't have to watch the client code related to the ios application
-# new-client-ios: &new-client-ios oxidation/client/ios
+# new-client-ios: &new-client-ios client/ios
 
 rust-web-binding: &rust-web-binding bindings/web/**
 
@@ -40,17 +40,17 @@ python-dependencies-project: &python-dependencies-project
   - setup.cfg
 
 new-client-dependencies-project: &new-client-dependencies-project
-  - oxidation/client/*.ts
-  - oxidation/client/*.json
-  - oxidation/client/*.js
-  - oxidation/client/.browserslistrc
-  - oxidation/client/.env
+  - client/*.ts
+  - client/*.json
+  - client/*.js
+  - client/.browserslistrc
+  - client/.env
 
 web: &web
-  - oxidation/client/public/**
-  - oxidation/client/resources/**
-  - oxidation/client/src/**
-  - oxidation/client/tests/**
+  - client/public/**
+  - client/resources/**
+  - client/src/**
+  - client/tests/**
 
 python-changes: &python-changes
   - *python-dependencies-project

@@ -282,10 +282,10 @@ In addition to the [shared requirements](#shared-requirements), you need to inst
 
    > You can use `python make.py electron-dev-install` instead.
 
-6. Move to the client dir, For the later command we will consider that the current directory is `oxidation/client`
+6. Move to the client dir, For the later command we will consider that the current directory is `client`
 
    ```shell
-   cd oxidation/client
+   cd client
    ```
 
 7. Install client dependencies

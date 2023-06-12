@@ -74,13 +74,13 @@ jobs:
           until npm clean-install; do
             echo "Failed clean-install, retrying ...";
           done
-        working-directory: oxidation/client
+        working-directory: client
         timeout-minutes: 5
 
       - name: Check lint
         if: steps.should-run-web-jobs.outputs.run == 'true'
         run: npm run lint
-        working-directory: oxidation/client
+        working-directory: client
         timeout-minutes: 5
 
       - name: Setup cache-key
@@ -147,7 +147,7 @@ jobs:
       - name: Unit tests
         if: steps.should-run-web-jobs.outputs.run == 'true'
         run: npm run test:unit
-        working-directory: oxidation/client
+        working-directory: client
         timeout-minutes: 10
 
       - name: Check testbed server is running
@@ -159,5 +159,5 @@ jobs:
         run: npm run test:e2e:headless
         env:
           TESTBED_SERVER_URL: parsec://localhost:6777?no_ssl=true
-        working-directory: oxidation/client
+        working-directory: client
         timeout-minutes: 10

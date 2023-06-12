@@ -131,13 +131,13 @@ jobs:
   #     - name: Install dependencies for ionic project
   #       if: steps.should-run-java-analysis.outputs.run == 'true'
   #       run: npm clean-install
-  #       working-directory: oxidation/client
+  #       working-directory: client
 
   #     - name: Build ionic for Android
   #       if: steps.should-run-java-analysis.outputs.run == 'true'
   #       run: |
   #         npm run android:copy:release
-  #       working-directory: oxidation/client
+  #       working-directory: client
   #       env:
   #         GRADLE_LIBPARSEC_BUILD_STRATEGY: no_build
 
@@ -158,7 +158,7 @@ jobs:
   #       if: steps.should-run-java-analysis.outputs.run == 'true'
   #       uses: github/codeql-action/autobuild@cdcdbb579706841c47f7063dda365e292e5cad7a # pin v2.13.4
   #       with:
-  #         working-directory: oxidation/client/android
+  #         working-directory: client/android
   #       env:
   #         GRADLE_LIBPARSEC_BUILD_STRATEGY: no_build
 
@@ -200,13 +200,13 @@ jobs:
       - name: Install dependencies for ionic project
         if: steps.should-run-js-analysis.outputs.run == 'true'
         run: npm clean-install
-        working-directory: oxidation/client
+        working-directory: client
 
       - name: Autobuild for typescript
         if: steps.should-run-js-analysis.outputs.run == 'true'
         uses: github/codeql-action/autobuild@cdcdbb579706841c47f7063dda365e292e5cad7a # pin v2.13.4
         with:
-          working-directory: oxidation/client
+          working-directory: client
 
       - name: Perform CodeQL Analysis
         if: steps.should-run-js-analysis.outputs.run == 'true'

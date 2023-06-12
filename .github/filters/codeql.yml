@@ -24,7 +24,7 @@ python-analyze:
 
 rust-android-binding: &rust-android-binding bindings/android/**
 
-android: &android oxidation/client/android/**
+android: &android client/android/**
 
 android-dependencies-project: &android-dependencies-project
   # Bindings configuration
@@ -33,18 +33,18 @@ android-dependencies-project: &android-dependencies-project
   - bindings/android/*.lockfile
   - bindings/android/*.properties
   # Client configuration
-  - oxidation/client/android/gradle/verification-metadata.xml
-  - oxidation/client/android/*.gradle
-  - oxidation/client/android/*.lockfile
-  - oxidation/client/android/*.properties
+  - client/android/gradle/verification-metadata.xml
+  - client/android/*.gradle
+  - client/android/*.lockfile
+  - client/android/*.properties
   # App configuration
-  - oxidation/client/android/app/*.gradle
-  - oxidation/client/android/app/*.lockfile
-  - oxidation/client/android/app/*.properties
+  - client/android/app/*.gradle
+  - client/android/app/*.lockfile
+  - client/android/app/*.properties
   # Capacitor cordova plugins
-  - oxidation/client/android/capacitor-cordova-android-plugins/*.gradle
-  - oxidation/client/android/capacitor-cordova-android-plugins/*.lockfile
-  - oxidation/client/android/capacitor-cordova-android-plugins/*.properties
+  - client/android/capacitor-cordova-android-plugins/*.gradle
+  - client/android/capacitor-cordova-android-plugins/*.lockfile
+  - client/android/capacitor-cordova-android-plugins/*.properties
 
 java-analyze:
   - *codeql-workflow
@@ -53,16 +53,16 @@ java-analyze:
   - *android-dependencies-project
 
 electron: &electron
-  - oxidation/client/electron/**
+  - client/electron/**
 
 web: &web
-  - oxidation/client/src/**
-  - oxidation/client/tests/**
+  - client/src/**
+  - client/tests/**
 
 ionic-dependencies-project: &ionic-dependencies-project
-  - oxidation/client/*.js
-  - oxidation/client/*.ts
-  - oxidation/client/*.json
+  - client/*.js
+  - client/*.ts
+  - client/*.json
 
 js-analyze:
   - *codeql-workflow

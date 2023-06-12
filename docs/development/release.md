@@ -38,7 +38,7 @@ For each release types, apply the following checklist:
 
 - The newsfragment were squashed to generate the block added to [`HISTORY.rst`](/HISTORY.rst).
 - The updated [`HISTORY.rst`](/HISTORY.rst) is correctly formated (Some news fragment may introduce invalid syntax that can break the RST file).
-- The translations are up-to-date (check the translations in `docs/`, `parsec/core/gui/tr/`, `oxidation/client/src/locales/`).
+- The translations are up-to-date (check the translations in `docs/`, `parsec/core/gui/tr/`, `client/src/locales/`).
 - The `releaser.py` correctly update the version in the expected files (`pyproject.toml`, `licenses/BUSL-Scille.txt`, `parsec/_version.py`).
 
 Note: Most of the work can be done using the workflow [`release-starter`](https://github.com/Scille/parsec-cloud/actions/workflows/release-starter.yml) (_most_ because it won't cherry pick the commit need to patch a release).

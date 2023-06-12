@@ -95,7 +95,7 @@ repos:
         args:
           [
             --config=server/pyproject.toml,
-            --extend-exclude=oxidation/*,
+            --extend-exclude=client/*,
             --fix,
           ]
 
@@ -163,13 +163,13 @@ repos:
         name: eslint
         entry: eslint
         language: node
-        files: ^oxidation/client/
+        files: ^client/
         # see: https://github.com/pre-commit/identify/blob/master/identify/extensions.py
         types_or: [ vue, ts, tsx, javascript, jsx ]
-        args: [ --config=oxidation/client/.eslintrc.cjs ]
+        args: [ --config=client/.eslintrc.cjs ]
         stages:
           - manual
-        # Deps should be kept updated with `oxidation/client/package-lock.json` !
+        # Deps should be kept updated with `client/package-lock.json` !
         additional_dependencies:
           - "@intlify/eslint-plugin-vue-i18n@2.0.0"
           - "@typescript-eslint/eslint-plugin@5.55.0"
@@ -193,7 +193,7 @@ repos:
         name: Validate protocol files with jsonschema
         alias: check-protocol-schema
         types_or: [ json5 ]
-        files: ^oxidation/libparsec/crates/protocol/schema/
+        files: ^libparsec/crates/protocol/schema/
         args: [ --schemafile, json_schema/protocol.schema.json ]
         additional_dependencies: [ json5 ]
 
@@ -201,7 +201,7 @@ repos:
         name: Validate data files with jsonschema
         alias: check-data-schema
         types_or: [ json5 ]
-        files: ^oxidation/libparsec/crates/types/schema/
+        files: ^libparsec/crates/types/schema/
         args: [ --schemafile, json_schema/data.schema.json ]
         additional_dependencies: [ json5 ]
 
