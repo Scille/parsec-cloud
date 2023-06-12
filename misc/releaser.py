@@ -82,7 +82,7 @@ Oops I've made a mistake: {COLOR_GREEN}./misc/releaser.py rollback{COLOR_END}
     + __doc__
 )
 
-PRERELEASE_EXPR = r"(?P<pre_l>(a|b|rc))(?P<pre_n>[0-9]+)"
+PRERELEASE_EXPR = r"(?P<pre_l>(a|b|rc))\.?(?P<pre_n>[0-9]+)"
 
 # Inspired by https://peps.python.org/pep-0440/#appendix-b-parsing-version-strings-with-regular-expressions
 RELEASE_REGEX = re.compile(
@@ -114,13 +114,11 @@ class Version:
         self.minor = minor
         self.patch = patch
         self.pre: None | tuple[str, int] = None
-        self.dev = dev
+        self._dev = dev
         self.local: str | None = local
 
         if prerelease is not None:
-            match = re.match(PRERELEASE_EXPR, prerelease)
-            assert match is not None
-            self.pre = (match.group("pre_l"), int(match.group("pre_n")))
+            self.prerelease = prerelease
 
     @classmethod
     def parse(cls, raw: str, git: bool = False) -> Version:
@@ -158,20 +156,42 @@ class Version:
 
     def evolve(self, **kwargs: Any) -> Version:
         new = copy(self)
-        new.__dict__.update(kwargs)
+        for k, v in kwargs.items():
+            setattr(new, k, v)
         return new
 
-    def with_v_prefix(self) -> str:
-        return "v" + str(self)
+    def to_pep440(self) -> str:
+        """
+        Format the version into `pep440` format, will have the same format as the version present in wheel filename.
+
+        I don't use `pip._vender.packaging.utils.canonicalize_version` because it strip the trailing `.0`,
+        in the version number and the generated wheel have the trailing `0` included :(.
+        """
+
+        parts = []
+
+        parts.append(f"{self.major}.{self.minor}.{self.patch}")
+
+        if self.pre is not None:
+            part, id = self.pre
+            parts.append(f"{part}{id}")
+
+        if self.dev is not None:
+            parts.append(f".dev{self.dev}")
+
+        if self.local is not None:
+            parts.append(f"+{self.local}")
+
+        return "".join(parts)
 
     def __repr__(self) -> str:
         return f"Version(major={self.major}, minor={self.minor}, patch={self.patch}, prerelease={self.prerelease}, dev={self.dev}, local={self.local})"
 
     def __str__(self) -> str:
         base = f"{self.major}.{self.minor}.{self.patch}"
-        if self.pre is not None:
-            type, index = self.pre
-            base += f"-{type}{index}"
+        prerelease = self.prerelease
+        if prerelease is not None:
+            base += "-" + prerelease
         if self.dev is not None:
             base += f"-dev.{self.dev}"
         if self.local is not None:
@@ -185,9 +205,23 @@ class Version:
     @property
     def prerelease(self) -> str | None:
         if self.pre is not None:
-            return f"{self.pre[0]}{self.pre[1]}"
+            return f"{self.pre[0]}.{self.pre[1]}"
         else:
             return None
+
+    @prerelease.setter
+    def prerelease(self, raw: str) -> None:
+        match = re.match(PRERELEASE_EXPR, raw)
+        assert match is not None
+        self.pre = (match.group("pre_l"), int(match.group("pre_n")))
+
+    @property
+    def dev(self) -> int | None:
+        return self._dev
+
+    @dev.setter
+    def dev(self, raw: int) -> None:
+        self._dev = raw
 
     @property
     def is_dev(self) -> bool:
@@ -295,13 +329,13 @@ assert Version.parse("1.2.3-rc10+dev") < Version.parse("1.2.3")
 assert Version.parse("1.2.3-b10+dev") < Version.parse("1.2.3-rc1+dev")
 assert Version.parse("1.2.3-b10+dev") < Version.parse("1.2.3+dev")
 _test_format_version(Version(1, 2, 3), "1.2.3")
-_test_format_version(Version(1, 2, 3, prerelease="a1"), "1.2.3-a1")
-_test_format_version(Version(1, 2, 3, prerelease="b2", dev=4), "1.2.3-b2-dev.4")
+_test_format_version(Version(1, 2, 3, prerelease="a1"), "1.2.3-a.1")
+_test_format_version(Version(1, 2, 3, prerelease="b2", dev=4), "1.2.3-b.2-dev.4")
 _test_format_version(Version(1, 2, 3, dev=0), "1.2.3-dev.0")
 _test_format_version(Version(1, 2, 3, dev=5), "1.2.3-dev.5")
-_test_format_version(Version(1, 2, 3, prerelease="a1", local="foo.bar"), "1.2.3-a1+foo.bar")
+_test_format_version(Version(1, 2, 3, prerelease="a1", local="foo.bar"), "1.2.3-a.1+foo.bar")
 _test_format_version(
-    Version(1, 2, 3, prerelease="b2", dev=4, local="foo.bar"), "1.2.3-b2-dev.4+foo.bar"
+    Version(1, 2, 3, prerelease="b2", dev=4, local="foo.bar"), "1.2.3-b.2-dev.4+foo.bar"
 )
 _test_format_version(Version(1, 2, 3, dev=4, local="foo.bar"), "1.2.3-dev.4+foo.bar")
 
@@ -311,7 +345,7 @@ def run_git(*cmd: Any, verbose: bool = False) -> str:
 
 
 def run_cmd(*cmd: Any, verbose: bool = False) -> str:
-    print(f"{COLOR_DIM}>> {' '.join(map(str, cmd))}{COLOR_END}")
+    print(f"{COLOR_DIM}>> {' '.join(map(str, cmd))}{COLOR_END}", file=sys.stderr)
     proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if proc.returncode != 0:
         raise RuntimeError(
@@ -343,7 +377,7 @@ def update_license_file(version: Version, new_release_date: datetime) -> None:
     )
     updated_version_txt = re.sub(
         r"Licensed Work:.*",
-        f"Licensed Work:  Parsec {version.with_v_prefix()}",
+        f"Licensed Work:  Parsec v{version}",
         half_updated_license_txt,
     )
     assert (
@@ -492,7 +526,7 @@ def push_release(tag: str, release_branch: str, yes: bool) -> None:
 def gen_rst_release_entry(
     version: Version, release_date: datetime, issues_per_type: defaultdict[str, list[str]]
 ) -> str:
-    new_entry_title = f"Parsec {version.with_v_prefix()} ({release_date.date().isoformat()})"
+    new_entry_title = f"Parsec v{version} ({release_date.date().isoformat()})"
     new_entry = f"\n\n{new_entry_title}\n{len(new_entry_title) * '-'}\n"
 
     if not issues_per_type:
@@ -564,7 +598,7 @@ def check_release(version: Version) -> None:
     success()
 
     # Check tag exist and is an annotated&signed one
-    show_info = run_git("show", "--quiet", version.with_v_prefix())
+    show_info = run_git("show", "--quiet", "v" + str(version))
     tag_type = show_info.split(" ", 1)[0]
 
     print(f"Checking we have an annotated tag for {COLOR_GREEN}{version}{COLOR_END} ...", end="")
@@ -593,7 +627,7 @@ def build_main(args: argparse.Namespace) -> None:
     if release_version.is_dev:
         raise ReleaseError(f"Releasing a development version is not supported: {release_version}")
     release_branch = get_release_branch(release_version)
-    tag = release_version.with_v_prefix()
+    tag = "v" + str(release_version)
 
     print(f"Release version to build: {COLOR_GREEN}{release_version}{COLOR_END}")
     print(f"Release branch: {COLOR_GREEN}{release_branch}{COLOR_END}")
@@ -666,28 +700,39 @@ def rollback_main(args: argparse.Namespace) -> None:
     # Retrieve `Bump version vX.Y.A+dev -> vX.Y.B` and `Bump version vX.Y.B -> vX.Y.B+dev` commits
     head, head_minus_1, head_minus_2 = run_git("rev-list", "-n", "3", "HEAD").strip().splitlines()
 
-    tag_commit = run_git("rev-list", "-n", "1", version.with_v_prefix()).strip()
+    tag_commit = run_git("rev-list", "-n", "1", "v" + str(version)).strip()
     if tag_commit != head_minus_1:
         raise ReleaseError(
             f"Cannot rollback as tag {COLOR_YELLOW}{version}{COLOR_END} doesn't point on {COLOR_YELLOW}HEAD^{COLOR_END}"
         )
 
     print(f"Removing tag {COLOR_GREEN}{version}{COLOR_END}")
-    run_git("tag", "--delete", version.with_v_prefix())
+    run_git("tag", "--delete", "v" + str(version))
     print(f"Reset mastor to {COLOR_GREEN}{head_minus_2}{COLOR_END} (i.e. HEAD~2)")
     run_git("reset", "--hard", head_minus_2)
 
 
-def parse_version_main(args: argparse.Namespace) -> None:
-    raw_version = args.version
+def version_main(args: argparse.Namespace) -> None:
+    raw_version: str = args.version or version_updater.TOOLS_VERSION[version_updater.Tool.Parsec]
 
     assert isinstance(raw_version, str)
     version = Version.parse(raw_version)
+    for part in ("prerelease", "dev", "local"):
+        overwritted_part = getattr(args, part, None)
+        if overwritted_part is not None:
+            setattr(version, part, overwritted_part)
+
+    if args.uniq_dev:
+        now = datetime.utcnow()
+        short_commit = run_git("rev-parse", "--short", "HEAD").strip()
+        version.dev = int(now.strftime("%Y%m%d"))
+        version.local = "sha." + short_commit
 
     print(
         "\n".join(
             [
                 f"full={version}",
+                f"pep440={version.to_pep440()}",
                 f"major={version.major}",
                 f"minor={version.minor}",
                 f"patch={version.patch}",
@@ -789,13 +834,27 @@ def cli(description: str) -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    parse_version = subparsers.add_parser(
-        "parse-version",
+    version = subparsers.add_parser(
+        "version",
         help="Parse a provided version",
-        description=parse_version_main.__doc__,
+        description=version_main.__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parse_version.add_argument("version", help="The version to parse")
+    version_exclusive_group = version.add_mutually_exclusive_group()
+
+    version_exclusive_group.add_argument(
+        "--uniq-dev", help="Generate a uniq dev version", action="store_true"
+    )
+
+    version_exclusive_group.add_argument(
+        "version",
+        nargs="?",
+        help="Use a provided version (or the codebase version if not provided)",
+        type=str,
+    )
+
+    for part in ("prerelease", "local", "dev"):
+        version.add_argument(f"--{part}", help=f"Overwrite the {part} part present in the version")
 
     acknowledge = subparsers.add_parser(
         "acknowledge",
@@ -819,7 +878,7 @@ if __name__ == "__main__":
         "build": build_main,
         "check": check_main,
         "rollback": rollback_main,
-        "parse-version": parse_version_main,
+        "version": version_main,
         "acknowledge": acknowledge_main,
     }
 

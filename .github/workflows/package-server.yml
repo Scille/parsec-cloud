@@ -1,19 +1,25 @@
 name: package-server
 
 on:
+  workflow_call:
+    inputs:
+      version:
+        description: The version to use
+        type: string
+        required: true
+  # PS: If you trigger manually the packaging, take into account that it will use the workflow as defined in the main branch not in the target branch.
   workflow_dispatch:
+    inputs:
+      version:
+        description: The version to use (if not provided will generated one from the codespace version)
+        type: string
+        required: false
   pull_request:
     paths:
       - .github/workflows/package-server.yml
       - server/packaging
       - server/build.py
       - server/pyproject.toml
-  push:
-    branches:
-      - master
-      - "[0-9]+.[0-9]+"
-    tags:
-      - v[0-9]+.[0-9]+.[0-9]+*
 
 # We set `concurrency` to prevent having this workflow being run on code that is not up-to-date on a PR (a user make multiple push in a quick manner).
 # But on the main branch, we don't want that behavior.
@@ -51,7 +57,7 @@ jobs:
     name: "${{ matrix.name }}: 📦 Packaging (build Wheel)"
     runs-on: ${{ matrix.os }}
     outputs:
-      wheel-version: ${{ steps.wheel-version.outputs.version }}
+      wheel-version: ${{ steps.version.outputs.full }}
     steps:
       - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # pin v3.5.3
         timeout-minutes: 5
@@ -64,29 +70,39 @@ jobs:
         timeout-minutes: 10
 
       - name: Get wheel version
-        id: wheel-version
+        id: version
         shell: bash
         run: |
           set -eux
-          # Retrieve Parsec version and customize it if we are not building on a tag
-          # See https://www.python.org/dev/peps/pep-0440/#local-version-identifiers
-          if ([ "${{ github.ref_type }}" == "tag" ])
-          then
-            # Use tag name as version
-            VERSION=`git describe --tag`
+
+          function parse_version {
+            PYTHONPATH=. python3 misc/releaser.py version "$@"
+          }
+
+          if [ -n "${{ inputs.version }}" ]; then
+            parse_version "${{ inputs.version }}" | tee -a $GITHUB_OUTPUT
           else
-            # Use `<tag_name>+dev<commit_hash>` as version
-            VERSION=`sed -n 's/^__version__ = "\\(.*\\)"$/\\1/p' server/parsec/_version.py`
-            COMMIT=`git rev-parse --verify --short HEAD`
-            VERSION="$VERSION.$COMMIT"
-            # Customize version with tag
-            sed -i.back -e "s#^\\(__version__ = \\).*\$#\\1'$VERSION'#" server/parsec/_version.py
-            test $(grep -E '^version = ' -o server/pyproject.toml | wc -l) -eq 1  # Sanity check for the next sed
-            sed -i.back -e "s#^\\(version = \\).*\$#\\1'$VERSION'#" server/pyproject.toml
+            case "${{ github.event_name }}" in
+              workflow_call)
+                echo "The top workflow should have provided the version to use"
+                exit 2
+                ;;
+              workflow_dispatch)
+                # No version provided, fallback to the version in the repository
+                parse_version --uniq-dev | tee -a $GITHUB_OUTPUT
+                ;;
+              pull_request)
+                parse_version --uniq-dev | tee -a $GITHUB_OUTPUT
+                ;;
+              *)
+                echo 'Unsupported event type ${{ github.event_name }}' >&2
+                exit 1
+                ;;
+            esac
           fi
 
-          echo "::warning title=Wheel version::$VERSION"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      - name: Set parsec version ${{ steps.version.outputs.full }}
+        run: python3 misc/version_updater.py --tool parsec --version ${{ steps.version.outputs.full }}
 
       - name: Build wheel
         uses: pypa/cibuildwheel@0ecddd92b62987d7a2ae8911f4bb8ec9e2e4496a  # pin v2.13.1
@@ -96,7 +112,7 @@ jobs:
         timeout-minutes: 50
 
       - name: Set file for wheel version
-        run: echo ${{ steps.wheel-version.outputs.version }} > dist/version
+        run: echo ${{ steps.version.outputs.full }} > dist/version
 
       - name: Hack the wheel macos version
         if: startsWith(matrix.os, 'macos-')
