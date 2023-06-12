@@ -222,7 +222,6 @@ function hasHistory(): boolean {
 </script>
 
 <style scoped lang="scss">
-
 .topbar {
   --background: var(--parsec-color-light-secondary-background);
   display: flex;

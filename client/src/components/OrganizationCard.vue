@@ -35,7 +35,6 @@ import { AvailableDevice } from '../plugins/libparsec/definitions';
 defineProps<{
   device: AvailableDevice
 }>();
-
 </script>
 
 <style lang="scss" scoped>
@@ -74,5 +73,4 @@ defineProps<{
     }
   }
 }
-
 </style>

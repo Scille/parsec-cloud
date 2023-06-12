@@ -26,8 +26,6 @@ const path = computed(() => {
 const workspaceId = computed(() => {
   return currentRoute.params.workspaceId;
 });
-
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

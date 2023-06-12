@@ -5,3 +5,4 @@ dist
 node_modules
 electron/build
 electron/app
+src/views/TestPage.vue

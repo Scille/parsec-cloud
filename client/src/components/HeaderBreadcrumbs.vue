@@ -89,8 +89,15 @@ function navigateTo(path: RouterPathNode): void {
     padding: 0;
     color: var(--parsec-color-light-secondary-grey);
 
+    // Defined by ionic
+    // eslint-disable-next-line vue-scoped-css/no-unused-selector
     &-active {
-      color: var(--parsec-color-light-primary-700)
+      color: var(--parsec-color-light-primary-700);
+
+      .main-icon {
+        color: var(--parsec-color-light-primary-700);
+        margin-right: 0.5rem;
+      }
     }
   }
 .breadcrumb-element {
@@ -98,13 +105,6 @@ function navigateTo(path: RouterPathNode): void {
 
   .main-icon {
     font-size: 1.5rem;
-  }
-}
-
-.breadcrumb-active {
-  .main-icon {
-    color: var(--parsec-color-light-primary-700);
-    margin-right: 0.5rem;
   }
 }
 </style>

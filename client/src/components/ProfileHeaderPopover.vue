@@ -171,5 +171,4 @@ function onOptionClick(option: ProfilePopoverOption): void {
     margin-bottom: 1rem;
   }
 }
-
 </style>

@@ -13,7 +13,7 @@ const props = defineProps<{
 }>();
 </script>
 
-<style>
+<style scoped>
 .slide-left-enter-active, .slide-right-enter-active {
   transition: 0.4s ease-in-out;
   transition-delay: 0.4s;
