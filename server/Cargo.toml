@@ -24,4 +24,4 @@ tokio = { version = "1.28", features = ["rt", "rt-multi-thread"] }
 lazy_static = "1.4.0"
 futures = "0.3.28"
 rmp-serde = "1.1.1"
-serde = { version = "1.0.147", features = ["derive"] }
+serde = { version = "1.0.164", features = ["derive"] }

@@ -14,7 +14,7 @@ libparsec_serialization_format = { path = "../serialization_format" }
 libparsec_platform_async = { path = "../platform_async" }
 
 lazy_static = "1.4.0"
-serde = { version = "1.0.147", features = ["derive"] }
+serde = { version = "1.0.164", features = ["derive"] }
 serde_with = "2.3.2"
 rmp-serde = "1.1.1"
 serde_bytes = "0.11.9"
