@@ -11,7 +11,9 @@ describe('Password validation', () => {
     // Long, but same letter
     expect(getPasswordStrength('aaaaaaaaaaaaaaaaaaaaaaaaaaaa')).to.equal(PasswordStrength.Low);
     // Sequences
+    // cspell:disable-next
     expect(getPasswordStrength('qwertyuiop')).to.equal(PasswordStrength.Low);
+    // cspell:disable-next
     expect(getPasswordStrength('abcdefghijklmnopqrstuvwxyz')).to.equal(PasswordStrength.Low);
   });
 
