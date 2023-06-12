@@ -141,7 +141,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Setup Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@ac6bb38f317802fab2f463811237b0d9cba8cc80 # pin v1.4.4
+        uses: actions-rust-lang/setup-rust-toolchain@f3c84ee10bf5a86e7a5d607d487bf17d57670965 # pin v1.5.0
         if: >-
           steps.should-run-python-jobs.outputs.run == 'true'
           && steps.cache-libparsec.outputs.cache-hit != 'true'
