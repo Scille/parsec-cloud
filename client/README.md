@@ -5,7 +5,7 @@
 ### a. Dependencies
 
 ```bash
-# In /oxidation/client
+# In /client
 npm install
 ```
 
@@ -20,7 +20,7 @@ Follow this [bindings guide](../bindings/README.md)
 ## 2 - Web dev
 
 ```bash
-# In /oxidation/client
+# In /client
 npm run web:open
 ```
 
@@ -29,7 +29,7 @@ npm run web:open
 ## 3 - Electron dev
 
 ```bash
-# In /oxidation/client
+# In /client
 # Update Electron folder after main project changes
 npm run electron:copy
 # ----
@@ -48,7 +48,7 @@ npm run electron:dist -- -- --linux snap  # To generate a subset (see `npx elect
 ## 4 - Android dev
 
 ```bash
-# In /oxidation/client
+# In /client
 # Update Android folder after main project changes
 npm run android:copy
 # ----
@@ -61,7 +61,7 @@ npm run android:open
 ## 5 - iOS dev
 
 ```bash
-# In /oxidation/client
+# In /client
 # Update iOS folder after main project changes
 npm run ios:copy
 # ----
