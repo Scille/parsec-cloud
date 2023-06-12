@@ -1,5 +1,5 @@
 const path = require('path');
-const BASE_DIR = (process.cwd().endsWith(path.normalize('oxidation/client'))) ? '.' : 'oxidation/client';
+const BASE_DIR = (process.cwd().endsWith(path.normalize('client'))) ? '.' : 'client';
 
 module.exports = {
   root: true,

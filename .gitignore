@@ -101,7 +101,7 @@ target/
 .ecrc
 
 # Cypress tests files, automatically generated
-/oxidation/client/tests/e2e/videos/
+/client/tests/e2e/videos/
 
 # Cspell cache
 .cspellcache
