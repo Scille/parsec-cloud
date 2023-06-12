@@ -151,7 +151,7 @@ jobs:
         timeout-minutes: 5
 
       - name: Retrieve Rust cache
-        uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f # pin v2.2.1
+        uses: Swatinem/rust-cache@988c164c3d0e93c4dbab36aaf5bbeb77425b2894 # pin v2.4.0
         if: >-
           steps.should-run-python-jobs.outputs.run == 'true'
           && steps.cache-libparsec.outputs.cache-hit != 'true'
