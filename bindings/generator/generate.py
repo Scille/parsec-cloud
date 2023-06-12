@@ -411,9 +411,7 @@ if __name__ == "__main__":
 
     if args.what in ("all", "client"):
         template = env.get_template("client_plugin_definitions.d.ts.j2")
-        output = (
-            BASEDIR / "../../oxidation/client/src/plugins/libparsec/definitions.d.ts"
-        ).resolve()
+        output = (BASEDIR / "../../client/src/plugins/libparsec/definitions.d.ts").resolve()
         print(f"Generating {output}")
         # Don't use `write_text` given it outputs \r\n for newlines on Windows
         output.write_bytes(template.render(api=api_specs).encode("utf8"))

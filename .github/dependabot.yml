@@ -77,7 +77,7 @@ updates:
   ##############
 
   - package-ecosystem: npm
-    directory: /oxidation/client
+    directory: /client
     pull-request-branch-name:
       separator: "-"
     schedule:
@@ -88,7 +88,7 @@ updates:
     rebase-strategy: disabled
 
   - package-ecosystem: npm
-    directory: /oxidation/client/electron
+    directory: /client/electron
     pull-request-branch-name:
       separator: "-"
     schedule:
@@ -136,7 +136,7 @@ updates:
   ########
 
   - package-ecosystem: gradle
-    directory: /oxidation/client/android
+    directory: /client/android
     pull-request-branch-name:
       separator: "-"
     schedule:

@@ -216,8 +216,8 @@ LICENSERS_MAP = {
     re.compile(r"^docs/.*\.rst$"): RstBuslLicenser,
     # Js project is a minefield full of node_modules/build/dist/assets etc.
     # so we just cut simple and add copyright only to the important stuff
-    re.compile(r"^oxidation/client/src/.*\.(ts|js)$"): JavascriptBuslLicenser,
-    re.compile(r"^oxidation/client/src/.*\.vue$"): VueBuslLicenser,
+    re.compile(r"^client/src/.*\.(ts|js)$"): JavascriptBuslLicenser,
+    re.compile(r"^client/src/.*\.vue$"): VueBuslLicenser,
     # Special case for ourself given we contain the license headers in the source code !
     re.compile(r"^misc/license_headers.py$"): SkipLicenser,
     re.compile(r"^.*\.(py|pyi)$"): PythonAgplLicenser,
