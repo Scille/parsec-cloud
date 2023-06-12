@@ -36,20 +36,20 @@ use-sodiumoxide = [
 # ]
 
 [dependencies]
-serde = { version = "1.0.164", features = ["derive"] }
-serde_bytes = { version = "0.11.9" }
-hex = "0.4"
-thiserror = "1.0.40"
-base32 = "0.4.0"
+serde = { workspace = true, features = ["derive"] }
+serde_bytes = { workspace = true, features = ["std"] }
+hex = { workspace = true, features = ["std"] }
+thiserror = { workspace = true }
+base32 = { workspace = true }
 
 #
 # SodiumOxide&friends stuff
 #
 
-sodiumoxide = { version = "0.2.7", optional = true }
-libsodium-sys = { version = "0.2.7", optional = true }
-openssl = { version = "0.10.55", optional = true, features = ["vendored"] }
-zeroize = { version = "1.6.0", optional = true, features = ["alloc"]}
+sodiumoxide = { workspace = true, optional = true, features = ["std", "serde"] }
+libsodium-sys = { workspace = true, optional = true }
+openssl = { workspace = true, optional = true, features = ["vendored"] }
+zeroize = { workspace = true, optional = true, features = ["alloc"]}
 
 #
 # RustCrypto stuff
@@ -76,41 +76,41 @@ zeroize = { version = "1.6.0", optional = true, features = ["alloc"]}
 # But what about the perf ??? Well compilation is a bit longer with `use-sodiumoxide`
 # but at link time all the rustcrypto related code is discarded given it is never used.
 
-argon2 = { version = "0.5.0" }  # Optional ruscrypto dep
-blake2 = { version = "0.10.6" }  # Optional ruscrypto dep
-crypto_box = { version = "0.8.2", features = ["std"] }  # Optional ruscrypto dep
-digest = { version = "0.10.6" }  # Optional ruscrypto dep
-ed25519-dalek = { version = "1.0.1" }  # Optional ruscrypto dep
-generic-array = { version = "0.14.7", features = ["serde"] }  # Optional ruscrypto dep
-lazy_static = { version = "1.4.0" }  # Optional ruscrypto dep
-rsa = { version = "0.7.2" }  # Optional ruscrypto dep
-sha1 = { version = "0.10.5" }  # Optional ruscrypto dep
-sha2 = { version = "0.10.6" }  # Optional ruscrypto dep
+argon2 = { workspace = true, features = ["alloc", "password-hash", "rand"] }  # Optional ruscrypto dep
+blake2 = { workspace = true, features = ["std"] }  # Optional ruscrypto dep
+crypto_box = { workspace = true, features = ["std"] }  # Optional ruscrypto dep
+digest = { workspace = true, features = ["core-api"] }  # Optional ruscrypto dep
+ed25519-dalek = { workspace = true, features = ["std", "rand", "u64_backend"] }  # Optional ruscrypto dep
+generic-array = { workspace = true, features = ["serde"] }  # Optional ruscrypto dep
+lazy_static = { workspace = true } # Optional ruscrypto dep
+rsa = { workspace = true, features = ["std", "pem"] }  # Optional ruscrypto dep
+sha1 = { workspace = true, features = ["std"] }  # Optional ruscrypto dep
+sha2 = { workspace = true, features = ["std"] }  # Optional ruscrypto dep
 # This is exceptionally allowed since no significant changes
 # were made from the last stable version to this major pre-release version.
 # TODO: bump to a stable version.
-x25519-dalek = { version = "2.0.0-rc.2" }  # Optional ruscrypto dep
-xsalsa20poly1305 = { version = "0.9.0" }  # Optional ruscrypto dep
+x25519-dalek = { workspace = true, features = ["alloc", "zeroize", "precomputed-tables"] }  # Optional ruscrypto dep
+xsalsa20poly1305 = { workspace = true, features = ["alloc", "getrandom"] }  # Optional ruscrypto dep
 # Cryptographic randomness is required for generating SecretKey, SigningKey and PrivateKey
 # For SecretKey, we have `crypto_box` -> [...] -> `rand_core~=0.6` -> `getrandom~=0.2`
 # For SingingKey&PrivateKey we have `<dalek stuff>` -> `rand~=0.5` -> `getrandom~=0.1`
 # So we end up with two version of `getrandom` which have each they own way of
 # configuring wasm-unknown-unknown web support (see [features] part).
-getrandom_01 = { package = "getrandom", version = "0.1.16" }  # Optional ruscrypto dep
-getrandom_02 = { package = "getrandom", version = "0.2.3" }  # Optional ruscrypto dep
+getrandom_01 = { workspace = true }  # Optional ruscrypto dep
+getrandom_02 = { workspace = true }  # Optional ruscrypto dep
 # On top of that we need to have access to the two version of rand (0.7 and 0.8)
 # to provide the randomness configuration to the crypto functions.
 # rand 0.7 relies on rand_core~=0.5/getrandom~=0.1
-rand_07 = { package = "rand", version = "0.7" }  # Optional ruscrypto dep
+rand_07 = { workspace = true, features = ["std"] }  # Optional ruscrypto dep
 # rand 0.8 relies on rand_core~=0.6/getrandom~=0.2
-rand_08 = { package = "rand", version = "0.8" }  # Optional ruscrypto dep
+rand_08 = { workspace = true, features = ["std", "std_rng"] }  # Optional ruscrypto dep
 
 [dev-dependencies]
-pretty_assertions = { version = "1.3.0", features = ["unstable"] }
-serde_test = "1.0.159"
-hex-literal = "0.4.1"
-rmp-serde = "1.1.1"
-rstest = "0.17.0"
+pretty_assertions = { workspace = true, features = ["std", "unstable"] }
+serde_test = { workspace = true }
+hex-literal = { workspace = true }
+rmp-serde = { workspace = true }
+rstest = { workspace = true, features = ["async-timeout"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 
@@ -118,5 +118,5 @@ rstest = "0.17.0"
 # RustCrypto stuff
 #
 
-getrandom_01 = { package = "getrandom", version = "0.1.16", features = ["wasm-bindgen"] }  # Optional rustcrypto dep
-getrandom_02 = { package = "getrandom", version = "0.2.3", features = ["js"] }  # Optional rustcrypto dep
+getrandom_01 = { workspace = true, features = ["wasm-bindgen"] }  # Optional rustcrypto dep
+getrandom_02 = { workspace = true, features = ["js"] }  # Optional rustcrypto dep

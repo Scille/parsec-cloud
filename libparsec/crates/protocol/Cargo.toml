@@ -7,22 +7,22 @@ license = " BUSL-1.1"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-libparsec_types = { path = "../types" }
-libparsec_serialization_format = { path = "../serialization_format" }
+libparsec_types = { workspace = true }
+libparsec_serialization_format = { workspace = true }
 
-paste = "1.0.12"
-rand = "0.8.5"
-rmp-serde = "1.1.1"
-serde = { version = "1.0.164", features = ["derive"] }
-serde_with = "2.3.2"
-thiserror = "1.0.40"
-futures = "0.3.28"
-bytes = { version = "1.4.0", features = ["serde"] }
+paste = { workspace = true }
+rand = { workspace = true, features = ["std", "std_rng"] }
+rmp-serde = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_with = { workspace = true, features = ["std", "macros"] }
+thiserror = { workspace = true }
+futures = { workspace = true, features = ["std", "async-await", "executor"] }
+bytes = { workspace = true, features = ["serde"] }
 
 [dev-dependencies]
-libparsec_tests_fixtures = { path = "../tests_fixtures" }
-hex-literal = "0.4.1"
-serde_json = "1.0.96"
+libparsec_tests_fixtures = { workspace = true }
+hex-literal = { workspace = true }
+serde_json = { workspace = true, features = ["std"] }
 
 [build-dependencies]
-glob = "0.3.0"
+glob = { workspace = true }

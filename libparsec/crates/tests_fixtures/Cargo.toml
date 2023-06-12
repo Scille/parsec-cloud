@@ -28,26 +28,26 @@ test-with-unsecure-but-fast-secretkey-from-password = [
 ]
 
 [dependencies]
-libparsec_types = { path = "../types", features = [ "test-fixtures", "test-mock-time" ] }
-libparsec_tests_macros = { path = "../tests_macros" }
-libparsec_testbed = { path = "../testbed" }
+libparsec_types = { workspace = true, features = [ "test-fixtures", "test-mock-time" ] }
+libparsec_tests_macros = { workspace = true }
+libparsec_testbed = { workspace = true }
 # Enable testbed support in crates here
-libparsec_client_connection = { path = "../client_connection", default-features = false, optional = true }
-libparsec_platform_device_loader = { path = "../platform_device_loader", default-features = false, optional = true }
-libparsec_platform_storage = { path = "../platform_storage", default-features = false, optional = true }
-libparsec_crypto = { path = "../crypto", default-features = false, optional = true }
+libparsec_client_connection = { workspace = true, optional = true }
+libparsec_platform_device_loader = { workspace = true, optional = true }
+libparsec_platform_storage = { workspace = true, optional = true }
+libparsec_crypto = { workspace = true, optional = true }
 
-env_logger = "0.10.0"
-log = "0.4.17"
-rstest = "0.17.0"
-hex-literal = "0.4.1"
-uuid = { version = "1.2.2", features = ["v4", "fast-rng"] }
-lazy_static = "1.4.0"
+env_logger = { workspace = true, features = ["auto-color", "humantime", "regex"] }
+log = { workspace = true }
+rstest = { workspace = true, features = ["async-timeout"] }
+hex-literal = { workspace = true }
+uuid = { workspace = true, features = ["v4", "fast-rng"] }
+lazy_static = { workspace = true }
 # `assert_matches!()` requires `unstable` feature
-pretty_assertions = { version = "1.3.0", features = ["unstable"] }
+pretty_assertions = { workspace = true, features = ["std", "unstable"] }
 
 # TODO: Currently `parsec_test` doesn't support web
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { version = "1.28.0", features = ["fs", "sync"] }
+tokio = { workspace = true, features = ["fs", "sync"] }
 
 # No dev-dependencies: this crate is itself only used in other crates' own dev-dependencies
