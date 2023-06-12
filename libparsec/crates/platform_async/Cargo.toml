@@ -4,35 +4,35 @@ version = "0.0.0"
 edition = "2021"
 
 [dependencies]
-flume = "0.10.14"
+flume = { workspace = true, features = ["async", "select", "eventual-fairness"] }
 # futures is used for its macros `select_all` and `join_all`
-futures = "0.3.28"
+futures = { workspace = true, features = ["std", "async-await"] }
 
 [dev-dependencies]
-log = "0.4.17"
+log = { workspace = true }
 # `std::time::Instant` is not available for wasm32, crate `instant` provides a
 # fallback based on `window.performance.now()`
-instant = "0.1.12"
+instant = { workspace = true }
 # Used for `futures_lite::future::or` and don't require `Unpin`
-futures-lite = "1.12.0"
+futures-lite = { workspace = true, features = ["std"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = "0.2.86"
-wasm-bindgen-futures = "0.4.31"
+wasm-bindgen = { workspace = true, features = ["spans", "std"] }
+wasm-bindgen-futures = { workspace = true }
 # Window feature is require for `Timer`.
-web-sys = { version = "0.3.63", features = ["Window"] }
-js-sys = "0.3.59"
+web-sys = { workspace = true, features = ["Window"] }
+js-sys = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
-wasm-bindgen-test = "0.3.33"
+wasm-bindgen-test = { workspace = true }
 # Used for binding `log` with `console.log*`
-console_log = "1.0.0"
-instant = { version = "0.1.12", features = ["wasm-bindgen"] }
+console_log = { workspace = true }
+instant = { workspace = true, features = ["wasm-bindgen"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { version = "1.28.1", features = ["rt", "time", "sync", "macros"] }
+tokio = { workspace = true, features = ["rt", "time", "sync", "macros"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
-libparsec_tests_fixtures = { path = "../tests_fixtures" }
+libparsec_tests_fixtures = { workspace = true }
 
-tokio = { version = "1.28.1", features = ["full"] }
+tokio = { workspace = true, features = ["full"] }

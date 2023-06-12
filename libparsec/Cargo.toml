@@ -2,7 +2,6 @@
 name = "libparsec"
 version = "0.0.0"
 edition = "2021"
-rust-version = "1.62.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -22,12 +21,12 @@ test-utils = [
 ]
 
 [dependencies]
-libparsec_client_high_level_api = { path = "crates/client_high_level_api"}
-libparsec_protocol = { path = "crates/protocol" }
-libparsec_crypto = { path = "crates/crypto" }
-libparsec_types = { path = "crates/types" }
-libparsec_platform_device_loader = { path = "crates/platform_device_loader" }
-libparsec_platform_storage = { path = "crates/platform_storage" }
-libparsec_serialization_format = { path = "crates/serialization_format" }
+libparsec_client_high_level_api = { workspace = true}
+libparsec_protocol = { workspace = true }
+libparsec_crypto = { workspace = true }
+libparsec_types = { workspace = true }
+libparsec_platform_device_loader = { workspace = true }
+libparsec_platform_storage = { workspace = true }
+libparsec_serialization_format = { workspace = true }
 
-libparsec_testbed = { path = "crates/testbed", optional = true }
+libparsec_testbed = { workspace = true, optional = true }

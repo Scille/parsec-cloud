@@ -440,6 +440,7 @@ verifykey
 Vlob
 Vlobs
 VueJs
+wasmbind
 webengine
 wfspy
 whereis

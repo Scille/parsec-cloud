@@ -8,17 +8,17 @@ license = " BUSL-1.1"
 test-utils = ["libparsec_testbed"]
 
 [dependencies]
-libparsec_crypto = { path = "../crypto" }
-libparsec_platform_async = { path = "../platform_async" }
-libparsec_platform_device_loader = { path = "../platform_device_loader" }
-libparsec_protocol = { path = "../protocol" }
-libparsec_types = { path = "../types" }
+libparsec_crypto = { workspace = true }
+libparsec_platform_async = { workspace = true }
+libparsec_platform_device_loader = { workspace = true }
+libparsec_protocol = { workspace = true }
+libparsec_types = { workspace = true }
 
-libparsec_testbed = { path = "../testbed", optional = true }
+libparsec_testbed = { workspace = true, optional = true }
 
-once_cell = "1.17.1"
-thiserror = "1.0.40"
+once_cell = { workspace = true, features = ["std"] }
+thiserror = { workspace = true }
 
 # TODO: fix wasm32
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-libparsec_client = { path = "../client" }
+libparsec_client = { workspace = true }
