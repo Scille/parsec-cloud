@@ -71,7 +71,7 @@ jobs:
             ;;
           esac
 
-  package-parsec-desktop:
+  package-parsec-server:
     needs:
       - version
     uses: ./.github/workflows/package-server.yml
@@ -81,7 +81,7 @@ jobs:
   releaser:
     needs:
       - version
-      - package-parsec-desktop
+      - package-parsec-server
     name: 🚛 Releaser
     runs-on: ubuntu-22.04
     steps:
