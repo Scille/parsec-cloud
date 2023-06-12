@@ -194,7 +194,7 @@ export class ElectronCapacitorApp {
         return [
           'https://my.parsec.cloud/',
           'https://parsec.cloud/'
-        ].some(prefix => url.startsWith(prefix));
+        ].some((prefix) => url.startsWith(prefix));
       }
 
       // Open browser on trying to reach an external link, but only if we know about it.
@@ -207,8 +207,6 @@ export class ElectronCapacitorApp {
         return { action: 'allow' };
       }
     });
-
-
 
     this.MainWindow.webContents.on('will-navigate', (event) => {
       if (!this.MainWindow.webContents.getURL().includes(this.customScheme)) {

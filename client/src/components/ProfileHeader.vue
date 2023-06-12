@@ -79,7 +79,7 @@ async function openPopover(ev: Event): Promise<void> {
     } else if (value.data.option === ProfilePopoverOption.Settings) {
       router.push({ name: 'settings' });
     } else if (value.data.option === ProfilePopoverOption.MyDevices) {
-      router.push({ name: 'devices' })
+      router.push({ name: 'devices' });
     } else if (value.data.option === ProfilePopoverOption.Help) {
       window.open(t('MenuPage.helpLink'), '_blank');
     }

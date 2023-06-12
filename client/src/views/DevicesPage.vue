@@ -35,7 +35,7 @@ import { getMockDevices } from '@/common/mocks';
 
 const devices = ref(getMockDevices());
 
-function onAddDeviceClick() {
+function onAddDeviceClick(): void {
   console.log('Add device clicked');
 }
 </script>
