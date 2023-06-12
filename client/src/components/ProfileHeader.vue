@@ -79,11 +79,9 @@ async function openPopover(ev: Event): Promise<void> {
     }
   });
 }
-
 </script>
 
 <style lang="scss" scoped>
-
 .container {
   display: flex;
   flex-direction: column;
@@ -133,5 +131,4 @@ async function openPopover(ev: Event): Promise<void> {
   flex-direction: column;
   justify-content: center;
 }
-
 </style>

@@ -34,7 +34,6 @@ defineProps<{
 defineEmits<{
   (e: 'update:modelValue', value: boolean): void
 }>();
-
 </script>
 
 <style scoped lang="scss">

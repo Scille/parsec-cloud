@@ -24,5 +24,4 @@ onMounted(async (): Promise<void> => {
   const config = await storageManager.retrieveConfig();
   toggleDarkMode(config.theme);
 });
-
 </script>

@@ -57,7 +57,6 @@ function closeModal(): Promise<boolean> {
 </script>
 
 <style lang="scss" scoped>
-
 .modal {
   padding: 2.5rem;
 }
@@ -108,5 +107,4 @@ closeBtn-container, .closeBtn {
     color: var(--parsec-color-light-primary-500);
   }
 }
-
 </style>

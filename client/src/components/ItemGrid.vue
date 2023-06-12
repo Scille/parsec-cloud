@@ -180,5 +180,4 @@ ion-label {
     --background: var(--ion-color-medium);
     visibility: visible;
 }
-
 </style>

@@ -13,7 +13,8 @@ module.exports = {
     'plugin:vue/vue3-strongly-recommended',
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
-    '@vue/typescript/recommended'
+    '@vue/typescript/recommended',
+    'plugin:vue-scoped-css/vue3-recommended'
   ],
   overrides: [{
     files: ['*.ts', '*.vue'],
@@ -77,6 +78,13 @@ module.exports = {
     'vue/no-deprecated-slot-attribute': 'off',
     'vue/component-name-in-template-casing': ['error', 'kebab-case', {
       'registeredComponentsOnly': false
-    }]
+    }],
+    'vue/block-tag-newline': ['error', {
+      'singleline': 'always',
+      'multiline': 'always',
+      'maxEmptyLines': 0
+    }],
+    'vue/padding-line-between-blocks': 'error',
+    'vue/no-spaces-around-equal-signs-in-attribute': 'error'
   }
 };

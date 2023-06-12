@@ -71,7 +71,6 @@ async function onDidDismissPopover(popover: any): Promise<void> {
     });
   }
 }
-
 </script>
 
 <style lang="scss" scoped>
