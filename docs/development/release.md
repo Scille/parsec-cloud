@@ -37,8 +37,8 @@ For each release types, apply the following checklist:
 
 - The newsfragment were squashed to generate the block added to [`HISTORY.rst`](/HISTORY.rst).
 - The updated [`HISTORY.rst`](/HISTORY.rst) is correctly formated (Some news fragment may introduce invalid syntax that can break the RST file).
-- The translations are up-to-date (check the translations in `docs/`, `parsec/core/gui/tr/`, `client/src/locales/`).
-- The `releaser.py` correctly update the version in the expected files (`pyproject.toml`, `licenses/BUSL-Scille.txt`, `parsec/_version.py`).
+- The translations are up-to-date (check the translations in [`oxidation/client/src/locales/en-US.json`](/oxidation/client/src/locales/en-US.json) and [`oxidation/client/src/locales/fr-FR.json`](/client/src/locales/fr-FR.json)).
+- The `releaser.py` correctly update the version in the expected files (`server/pyproject.toml`, `licenses/BUSL-Scille.txt`, `server/parsec/_version.py`).
 
 Note: Most of the work can be done using the workflow [`release-starter`](https://github.com/Scille/parsec-cloud/actions/workflows/release-starter.yml) (_most_ because it won't cherry pick the commit need to patch a release).
 
@@ -115,20 +115,7 @@ this will trigger the `releaser` workflow that will:
 Once you have signed the installers, you need to upload them to the generated draft release.
 After that you can publish the release (You need to edit the [draft release](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository#editing-a-release)).
 
-With the release published, this will trigger the workflow `publish` that will upload the generated python wheels & snap files to `pypi` & `snapcraft` accordingly.
-
-### Sign the installers
-
-The CI is going to generate the installers for Linux, Mac and Windows.
-
-- The linux installer (snap) and the python wheels don't need to be signed.
-
-- On Windows and Mac, the installers must be downloaded from the draft release and signed (the artifact start with `parsec-unsigned`).
-  See the documentation in ``packaging/`` for more information.
-
-  > Note: The Parsec client's version checker is smart enough to ignore new version
-  > that doesn't contain an installer for their platform. Hence it's safe to create
-  > a new github release without any installer.
+With the release published, this will trigger the workflow `publish` that will upload the generated python wheels to `pypi`.
 
 ### Acknowledge the release
 
@@ -156,12 +143,9 @@ flowchart TD;
   A{Create release}
   B[Draft release created]
   subgraph "manual" [User manual action]
-    C(Sign the MacOs & Windows installers)
-    D(Upload the signed installer)
     E(Publish the release)
-    C-->D-->E
   end
-  F["The snap & python wheels are published on <code>snapcraft</code> & <code>pypi</code>"]
+  F["The python wheels are published on <code>pypi</code>"]
   G(Acknowledge the release)
 
   A-->B-->manual-->F-.->G
