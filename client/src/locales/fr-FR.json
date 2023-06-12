@@ -92,7 +92,8 @@
         "myOrganization": "Mon organisation",
         "settings": "Paramètres",
         "about": "À propos",
-        "support": "Aide et commentaires"
+        "support": "Aide et commentaires",
+        "helpLink": "https://my.parsec.cloud/help"
     },
     "HeaderPage": {
         "about": "À propos",
@@ -100,7 +101,8 @@
         "loggedIn": "Connecté",
         "titles": {
             "workspaces": "Mes espaces",
-            "settings": "Paramètres"
+            "settings": "Paramètres",
+            "devices": "Appareils"
         },
         "previous": "Précédent"
     },
@@ -227,5 +229,9 @@
     },
     "SideMenu": {
         "allWorkspaces": "Tous les espaces de travail"
+    },
+    "DevicesPage": {
+        "title": "Vos appareils",
+        "addDevice": "Ajouter"
     }
 }

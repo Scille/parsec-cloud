@@ -40,6 +40,11 @@ const routes: Array<RouteRecordRaw> = [
             path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/settings',
             name: 'settings',
             component: () => import('@/views/SettingsPage.vue')
+          },
+          {
+            path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/devices',
+            name: 'devices',
+            component: () => import('@/views/DevicesPage.vue')
           }
         ]
       },

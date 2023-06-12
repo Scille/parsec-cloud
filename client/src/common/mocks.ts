@@ -79,7 +79,7 @@ const MOCK_DEVICES: AvailableDevice[] = [
   {
     organizationId: 'Planet Express',
     humanHandle: 'Dr. John A. Zoidberg',
-    deviceLabel: 'device_label',
+    deviceLabel: 'Zoidberg_Device',
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug1',
@@ -88,7 +88,7 @@ const MOCK_DEVICES: AvailableDevice[] = [
   {
     organizationId: 'Princeton–Plainsboro Hospital',
     humanHandle: 'Dr. Gregory House',
-    deviceLabel: 'device_label',
+    deviceLabel: 'House_Device',
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug2',
@@ -97,7 +97,7 @@ const MOCK_DEVICES: AvailableDevice[] = [
   {
     organizationId: 'Black Mesa',
     humanHandle: 'Dr. Gordon Freeman',
-    deviceLabel: 'device_label',
+    deviceLabel: 'Freeman_Device',
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug3',
@@ -106,7 +106,7 @@ const MOCK_DEVICES: AvailableDevice[] = [
   {
     organizationId: 'OsCorp',
     humanHandle: 'Dr. Otto G. Octavius',
-    deviceLabel: 'device_label',
+    deviceLabel: 'Octavius_Device',
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug4',
@@ -115,7 +115,7 @@ const MOCK_DEVICES: AvailableDevice[] = [
   {
     organizationId: 'Sanctum Sanctorum',
     humanHandle: 'Dr. Stephen Strange',
-    deviceLabel: 'device_label',
+    deviceLabel: 'Strange_Device',
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug5',
@@ -124,7 +124,7 @@ const MOCK_DEVICES: AvailableDevice[] = [
   {
     organizationId: 'Holmes Consulting',
     humanHandle: 'Dr John H. Watson',
-    deviceLabel: 'device_label',
+    deviceLabel: 'Watson_Device',
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug6',
@@ -133,7 +133,7 @@ const MOCK_DEVICES: AvailableDevice[] = [
   {
     organizationId: 'Riviera M.D.',
     humanHandle: 'Dr. Nicholas "Nick" Riviera',
-    deviceLabel: 'device_label',
+    deviceLabel: 'Riviera_Device',
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug7',

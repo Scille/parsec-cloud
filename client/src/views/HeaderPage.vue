@@ -153,6 +153,8 @@ function getTitleForRoute(): string {
 
   if (route === 'settings') {
     return t('HeaderPage.titles.settings');
+  } else if (route === 'devices') {
+    return t('HeaderPage.titles.devices');
   }
   return '';
 }
