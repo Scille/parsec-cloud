@@ -50,7 +50,7 @@
         "@intlify/eslint-plugin-vue-i18n": "^2.0.0",
         "@ionic/cli": "^7.0.1",
         "@types/luxon": "^3.2.0",
-        "@types/node": "^18.0.1",
+        "@types/node": "^20.3.1",
         "@typescript-eslint/eslint-plugin": "^5.59.11",
         "@typescript-eslint/parser": "^5.59.0",
         "@vitejs/plugin-vue": "^4.0.0",
