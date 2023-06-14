@@ -1053,8 +1053,8 @@ class RemoteLoaderTimestamped(RemoteLoader):
 
 
 if not TYPE_CHECKING and FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
-    # UserRemoteLoader = RsUserRemoteLoader
-    UserRemoteLoader = PyUserRemoteLoader
-    raise SystemError("Chao")
+    from parsec._parsec import UserRemoteLoader as RsUserRemoteLoader
+
+    UserRemoteLoader = RsUserRemoteLoader
 else:
     UserRemoteLoader = PyUserRemoteLoader
