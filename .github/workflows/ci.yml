@@ -24,51 +24,86 @@ permissions:
   packages: read
 
 jobs:
+  dispatch:
+    runs-on: ubuntu-22.04
+    outputs:
+      rust: ${{ steps.need-check.outputs.rust }}
+      python: ${{ steps.need-check.outputs.python }}
+      web: ${{ steps.need-check.outputs.web }}
+    steps:
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
+        timeout-minutes: 5
+
+      - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
+        id: changes
+        with:
+          list-files: shell
+          filters: .github/filters/ci.yml
+        timeout-minutes: 5
+
+      - name: Determine which workflows need to be run
+        id: need-check
+        run: |
+          set -eux -o pipefail
+          for check in $(env | grep -o 'NEED_CHECK_\w*' ); do
+            env_value=$(eval "echo \$$check")
+            echo "${check#NEED_CHECK_}=$env_value"
+          done | tee -a $GITHUB_OUTPUT
+        env:
+          NEED_CHECK_rust: ${{ github.ref == 'refs/heads/master' || steps.changes.outputs.rust-jobs == 'true' }}
+          NEED_CHECK_web: ${{ github.ref == 'refs/heads/master' || steps.changes.outputs.web-jobs == 'true' }}
+          NEED_CHECK_python: ${{ github.ref == 'refs/heads/master' || steps.changes.outputs.python-jobs == 'true' }}
+
   # Github PR merging is configured to only require this job to pass
   ci-is-happy:
     name: ⭐ CI is happy ⭐
     needs:
-      - check-quality-assurance
-      - test-python-server
-      - test-rust-matrix
-      - test-web-app
-      - check-spelling
+      - dispatch
+      - quality-assurance
+      - python
+      - rust
+      - web
+      - spelling
     runs-on: ubuntu-latest
     if: always()
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 2
     steps:
-      # The Needs context value contains only:
-      # - the final state a jobs (if it fails or not)
-      # - it's output (actually none of our jobs are configuring outputs variable)
-      #
-      # https://docs.github.com/en/actions/learn-github-actions/contexts#needs-context
-      - name: Debug the needs context values
+      - name: Requirement fullfiled
+        run: |
+          #!python3
+          import os
+          import json
+
+          data = json.loads(os.environ["NEEDS"])
+
+          print("NEEDS:", json.dumps(data, indent=4), sep="\n")
+
+          # Check jobs aren't failed or cancelled.
+          for name, job in data.items():
+            if job["result"] in ("cancelled", "failure"):
+              raise ValueError(f"The job `{name}` is in a invalid state: {job['result']}")
+
+          # Check required jobs, here we just need to check that the state is `success` and not `skipped`.
+          for job_name, required in data["dispatch"]["outputs"].items():
+            assert required in ("true", "false")
+            job_result = data[job_name]["result"]
+            if required == "true" and job_result != "success":
+              raise ValueError(
+                  f"The required job `{job_name}` should be in a success state but is not (state={job_result})"
+              )
         env:
           NEEDS: ${{ toJSON(needs) }}
-        run: printenv NEEDS
+        shell: python
 
-      - name: We're very sorry
-        run: |
-          echo "Oh No, we have jobs that have failed/cancelled/skipped :("
-          exit 42
-        if: >-
-          contains(needs.*.result, 'failure')
-          || contains(needs.*.result, 'skipped')
-          || contains(needs.*.result, 'cancelled')
-          || ! contains(needs.*.result, 'success')
-
-      - name: It's showtime
-        run: echo "My job here is done !"
-
-  check-spelling:
+  spelling:
     uses: ./.github/workflows/cspell.yml
 
   ##############################################################################
   #                                   📊 Q&A                                   #
   ##############################################################################
 
-  check-quality-assurance:
+  quality-assurance:
     name: 📊 Q&A
     # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
     runs-on: ubuntu-20.04
@@ -139,11 +174,20 @@ jobs:
           SKIP: clippy,fmt,cspell,ruff,black,mypy,eslint
         timeout-minutes: 5
 
-  test-python-server:
+  python:
+    needs:
+      - dispatch
+    if: needs.dispatch.outputs.python == 'true'
     uses: ./.github/workflows/ci-python.yml
 
-  test-rust-matrix:
+  rust:
+    needs:
+      - dispatch
+    if: needs.dispatch.outputs.rust == 'true'
     uses: ./.github/workflows/ci-rust.yml
 
-  test-web-app:
+  web:
+    needs:
+      - dispatch
+    if: needs.dispatch.outputs.web == 'true'
     uses: ./.github/workflows/ci-web.yml
