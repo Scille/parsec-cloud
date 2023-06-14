@@ -1,4 +1,4 @@
-name: ci-rust
+name: CI Rust
 
 on:
   workflow_call:
@@ -46,21 +46,7 @@ jobs:
       - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # pin v3.5.3
         timeout-minutes: 5
 
-      - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
-        id: changes
-        with:
-          filters: .github/filters/ci.yml
-
-      - name: Check modified path that require rust-ci run
-        id: should-run-rust-jobs
-        if: >-
-          steps.changes.outputs.rust-jobs == 'true'
-          || github.ref == 'refs/heads/master'
-        run: echo "run=true" >> $GITHUB_OUTPUT
-        shell: bash
-
       - uses: actions-rust-lang/setup-rust-toolchain@f3c84ee10bf5a86e7a5d607d487bf17d57670965 # pin v1.5.0
-        if: steps.should-run-rust-jobs.outputs.run == 'true'
         with:
           # We setup the cache by hand, see below
           cache: false
@@ -68,13 +54,11 @@ jobs:
 
       # Just need a python good enough to run `misc/libparsec_crates_flags.py`
       - uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # pin v4.6.1
-        if: steps.should-run-rust-jobs.outputs.run == 'true'
         with:
           python-version: "3.10"
 
       - name: Retrieve Rust cache
         uses: Swatinem/rust-cache@988c164c3d0e93c4dbab36aaf5bbeb77425b2894 # pin v2.4.0
-        if: steps.should-run-rust-jobs.outputs.run == 'true'
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
           # cache is only shared between master and the PRs (and not accross PRs).
@@ -89,7 +73,6 @@ jobs:
           tool: nextest@${{ env.cargo-nextest-version }}
 
       - name: Test Rust codebase (platform agnostic)
-        if: steps.should-run-rust-jobs.outputs.run == 'true'
         shell: bash
         run: |
           set -ex
@@ -106,7 +89,6 @@ jobs:
           TESTBED_SERVER: http://localhost:6777
 
       - name: Test Rust codebase (🐧 Linux specific)
-        if: steps.should-run-rust-jobs.outputs.run == 'true'
         shell: bash
         run: |
           set -ex
@@ -121,17 +103,11 @@ jobs:
       # Clippy basically compile the project, hence it's faster to run it in
       # the test-rust-matrix job where compilation cache is reused !
       - uses: ./.github/actions/use-pre-commit
-        if: >-
-          steps.should-run-rust-jobs.outputs.run == 'true'
-          && startsWith(matrix.os, 'ubuntu-')
         with:
           extra-args: clippy --verbose
-        timeout-minutes: 5
+        timeout-minutes: 10
 
       - name: Check rust code format
-        if: >-
-          steps.should-run-rust-jobs.outputs.run == 'true'
-          && startsWith(matrix.os, 'ubuntu-')
         run: cargo fmt --check
         timeout-minutes: 2
 
@@ -152,21 +128,7 @@ jobs:
       - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # pin v3.5.3
         timeout-minutes: 5
 
-      - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
-        id: changes
-        with:
-          filters: .github/filters/ci.yml
-
-      - name: Check modified path that require rust-ci run
-        id: should-run-rust-jobs
-        if: >-
-          steps.changes.outputs.rust-jobs == 'true'
-          || github.ref == 'refs/heads/master'
-        run: echo "run=true" >> $GITHUB_OUTPUT
-        shell: bash
-
       - uses: actions-rust-lang/setup-rust-toolchain@f3c84ee10bf5a86e7a5d607d487bf17d57670965 # pin v1.5.0
-        if: steps.should-run-rust-jobs.outputs.run == 'true'
         with:
           # We setup the cache by hand, see below
           cache: false
@@ -174,13 +136,11 @@ jobs:
 
       # Just need a python good enough to run `misc/libparsec_crates_flags.py`
       - uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # pin v4.6.1
-        if: steps.should-run-rust-jobs.outputs.run == 'true'
         with:
           python-version: "3.10"
 
       - name: Retrieve Rust cache
         uses: Swatinem/rust-cache@988c164c3d0e93c4dbab36aaf5bbeb77425b2894 # pin v2.4.0
-        if: steps.should-run-rust-jobs.outputs.run == 'true'
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
           # cache is only shared between master and the PRs (and not accross PRs).
@@ -193,7 +153,7 @@ jobs:
       # The default one does not provide windows-style filesystem
       # paths so we have to switch to Strawberry.
       - name: Use strawberry perl
-        if: steps.should-run-rust-jobs.outputs.run == 'true' && startsWith(matrix.os, 'windows')
+        if: startsWith(matrix.os, 'windows')
         shell: bash
         run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
         timeout-minutes: 1
@@ -206,7 +166,6 @@ jobs:
       # Don't run platform agnostic tests here (only runned on Linux)
 
       - name: Test Rust codebase (${{ matrix.name }} specific)
-        if: steps.should-run-rust-jobs.outputs.run == 'true'
         shell: bash
         run: |
           set -ex
@@ -221,20 +180,3 @@ jobs:
         env:
           RUST_LOG: debug
           TESTBED_SERVER: http://localhost:6777
-
-      # Clippy basically compile the project, hence it's faster to run it in
-      # the test-rust-matrix job where compilation cache is reused !
-      - uses: ./.github/actions/use-pre-commit
-        if: >-
-          steps.should-run-rust-jobs.outputs.run == 'true'
-          && startsWith(matrix.os, 'ubuntu-')
-        with:
-          extra-args: clippy --verbose
-        timeout-minutes: 5
-
-      - name: Check rust code format
-        if: >-
-          steps.should-run-rust-jobs.outputs.run == 'true'
-          && startsWith(matrix.os, 'ubuntu-')
-        run: cargo fmt --check
-        timeout-minutes: 2
