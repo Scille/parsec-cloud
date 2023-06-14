@@ -29,16 +29,19 @@ import { formatTimeSince } from '@/common/date';
 import { formatFileSize } from '@/common/filesize';
 import { StorageManager } from '@/services/storageManager';
 import { DateTime } from 'luxon';
-import { FormattersKey, ConfigPathKey, StorageManagerKey } from '@/common/injectionKeys';
+import { FormattersKey, ConfigPathKey, StorageManagerKey, NotificationKey } from '@/common/injectionKeys';
 
 /* Theme variables */
 import './theme/variables.css';
 import { libparsec } from './plugins/libparsec';
+import { NotificationCenter } from '@/services/notificationCenter';
 
 async function setupApp(): Promise<void> {
 
   const storageManager = new StorageManager();
   await storageManager.create();
+
+  const notificationCenter = new NotificationCenter();
 
   const config = await storageManager.retrieveConfig();
 
@@ -112,6 +115,7 @@ async function setupApp(): Promise<void> {
     }
   });
   app.provide(StorageManagerKey, storageManager);
+  app.provide(NotificationKey, notificationCenter);
 
   // We can start the app with different cases :
   // - dev with a testbed Parsec server with the default devices
