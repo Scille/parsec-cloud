@@ -725,8 +725,16 @@ def version_main(args: argparse.Namespace) -> None:
     if args.uniq_dev:
         now = datetime.utcnow()
         short_commit = run_git("rev-parse", "--short", "HEAD").strip()
-        version.dev = int(now.strftime("%Y%m%d"))
-        version.local = "sha." + short_commit
+        interval = now.year * 366 + now.month * 31 + now.day
+        version.dev = interval
+        version.local = short_commit
+
+    SNAPCRAFT_MAX_VERSION_LEN = 32
+    if len(str(version)) > SNAPCRAFT_MAX_VERSION_LEN:
+        print(
+            f"[{COLOR_YELLOW}WARNING{COLOR_END}] the version is tool long for snapcraft (current length {len(str(version))} must be <= {SNAPCRAFT_MAX_VERSION_LEN})",
+            file=sys.stderr,
+        )
 
     print(
         "\n".join(
