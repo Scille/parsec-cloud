@@ -1,17 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-# flake8: noqa
+
+import tempfile
 
 import trio
-import tempfile
-from protocol.utils import *
 
-from parsec._parsec import save_recovery_device, save_device_with_password, SecretKey
-from parsec.api.protocol import *
+from parsec._parsec import SecretKey, save_device_with_password, save_recovery_device
 from parsec.api.data import *
-from parsec.core.types import *
+from parsec.api.protocol import *
 from parsec.core.local_device import *
+from parsec.core.types import *
 
+from .protocol.utils import *
 
 with tempfile.NamedTemporaryFile(suffix=".psrk") as fp:
     passphrase = trio.run(save_recovery_device, Path(fp.name), ALICE, True)

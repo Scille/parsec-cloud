@@ -1,25 +1,24 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-# flake8: noqa
 
-from utils import *
-from parsec.api.protocol import *
-from parsec.api.data import *
 from parsec._parsec import (
-    OrganizationBootstrapRepOk,
     OrganizationBootstrapRepAlreadyBootstrapped,
     OrganizationBootstrapRepBadTimestamp,
     OrganizationBootstrapRepInvalidCertification,
     OrganizationBootstrapRepInvalidData,
     OrganizationBootstrapRepNotFound,
-    OrganizationStatsRepOk,
-    OrganizationStatsRepNotFound,
-    OrganizationStatsRepNotAllowed,
-    OrganizationConfigRepOk,
+    OrganizationBootstrapRepOk,
     OrganizationConfigRepNotFound,
+    OrganizationConfigRepOk,
+    OrganizationStatsRepNotAllowed,
+    OrganizationStatsRepNotFound,
+    OrganizationStatsRepOk,
     UsersPerProfileDetailItem,
 )
+from parsec.api.data import *
+from parsec.api.protocol import *
 
+from .utils import *
 
 ################### OrganizationStats ##################
 

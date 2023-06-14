@@ -1,14 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-# flake8: noqa
-
 from uuid import UUID
-from protocol.utils import *
 
-from parsec.api.protocol import *
 from parsec.api.data import *
-from parsec.core.types import *
+from parsec.api.protocol import *
 from parsec.core.local_device import *
+from parsec.core.types import *
+
+from .protocol.utils import *
 
 ld = KEY.encrypt(ALICE.dump())
 display("local device (ADMIN)", ld, [KEY])

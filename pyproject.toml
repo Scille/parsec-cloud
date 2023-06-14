@@ -206,11 +206,13 @@ ignore = ["E501", "E402", "F541"]
 
 extend-exclude = [
     "docs",
-    "oxidation/",
     "parsec/core/gui/_resources_rc.py",
     "parsec/core/gui/ui/",
     "misc/bench.py",
 ]
+
+[tool.ruff.per-file-ignores]
+"oxidation/generate_test_data/*" = ["F403", "F405"]
 
 [tool.ruff.isort]
 known-first-party = ["parsec"]

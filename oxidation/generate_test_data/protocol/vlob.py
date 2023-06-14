@@ -1,25 +1,44 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-# flake8: noqa
 
 from parsec._parsec import (
     DateTime,
-    VlobCreateRepOk,
+    ReencryptionBatchEntry,
     VlobCreateRepAlreadyExists,
     VlobCreateRepBadEncryptionRevision,
     VlobCreateRepBadTimestamp,
     VlobCreateRepInMaintenance,
     VlobCreateRepNotAllowed,
     VlobCreateRepNotASequesteredOrganization,
+    VlobCreateRepOk,
     VlobCreateRepRequireGreaterTimestamp,
     VlobCreateRepSequesterInconsistency,
-    VlobReadRepOk,
+    VlobListVersionsRepInMaintenance,
+    VlobListVersionsRepNotAllowed,
+    VlobListVersionsRepNotFound,
+    VlobListVersionsRepOk,
+    VlobMaintenanceGetReencryptionBatchRepBadEncryptionRevision,
+    VlobMaintenanceGetReencryptionBatchRepMaintenanceError,
+    VlobMaintenanceGetReencryptionBatchRepNotAllowed,
+    VlobMaintenanceGetReencryptionBatchRepNotFound,
+    VlobMaintenanceGetReencryptionBatchRepNotInMaintenance,
+    VlobMaintenanceGetReencryptionBatchRepOk,
+    VlobMaintenanceSaveReencryptionBatchRepBadEncryptionRevision,
+    VlobMaintenanceSaveReencryptionBatchRepMaintenanceError,
+    VlobMaintenanceSaveReencryptionBatchRepNotAllowed,
+    VlobMaintenanceSaveReencryptionBatchRepNotFound,
+    VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance,
+    VlobMaintenanceSaveReencryptionBatchRepOk,
+    VlobPollChangesRepInMaintenance,
+    VlobPollChangesRepNotAllowed,
+    VlobPollChangesRepNotFound,
+    VlobPollChangesRepOk,
     VlobReadRepBadEncryptionRevision,
     VlobReadRepBadVersion,
     VlobReadRepInMaintenance,
     VlobReadRepNotAllowed,
     VlobReadRepNotFound,
-    VlobUpdateRepOk,
+    VlobReadRepOk,
     VlobUpdateRepBadEncryptionRevision,
     VlobUpdateRepBadTimestamp,
     VlobUpdateRepBadVersion,
@@ -27,33 +46,14 @@ from parsec._parsec import (
     VlobUpdateRepNotAllowed,
     VlobUpdateRepNotASequesteredOrganization,
     VlobUpdateRepNotFound,
+    VlobUpdateRepOk,
     VlobUpdateRepRequireGreaterTimestamp,
     VlobUpdateRepSequesterInconsistency,
-    VlobPollChangesRepOk,
-    VlobPollChangesRepNotFound,
-    VlobPollChangesRepNotAllowed,
-    VlobPollChangesRepInMaintenance,
-    VlobListVersionsRepOk,
-    VlobListVersionsRepNotFound,
-    VlobListVersionsRepInMaintenance,
-    VlobListVersionsRepNotAllowed,
-    VlobMaintenanceGetReencryptionBatchRepOk,
-    VlobMaintenanceGetReencryptionBatchRepNotInMaintenance,
-    VlobMaintenanceGetReencryptionBatchRepBadEncryptionRevision,
-    VlobMaintenanceGetReencryptionBatchRepMaintenanceError,
-    VlobMaintenanceGetReencryptionBatchRepNotAllowed,
-    VlobMaintenanceGetReencryptionBatchRepNotFound,
-    VlobMaintenanceSaveReencryptionBatchRepOk,
-    VlobMaintenanceSaveReencryptionBatchRepBadEncryptionRevision,
-    VlobMaintenanceSaveReencryptionBatchRepMaintenanceError,
-    VlobMaintenanceSaveReencryptionBatchRepNotFound,
-    VlobMaintenanceSaveReencryptionBatchRepNotAllowed,
-    VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance,
-    ReencryptionBatchEntry,
 )
-from utils import *
-from parsec.api.protocol import *
 from parsec.api.data import *
+from parsec.api.protocol import *
+
+from .utils import *
 
 ################### VlobCreate ##################
 

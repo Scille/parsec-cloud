@@ -1,29 +1,36 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-# flake8: noqa
-
-from parsec._parsec import DateTime
-from utils import *
-from parsec.api.protocol import *
-from parsec.api.data import *
 from parsec._parsec import (
-    RealmCreateRepOk,
+    DateTime,
     RealmCreateRepAlreadyExists,
     RealmCreateRepBadTimestamp,
     RealmCreateRepInvalidCertification,
     RealmCreateRepInvalidData,
     RealmCreateRepNotFound,
-    RealmStatusRepOk,
-    RealmStatusRepNotAllowed,
-    RealmStatusRepNotFound,
-    RealmStatsRepOk,
+    RealmCreateRepOk,
+    RealmFinishReencryptionMaintenanceRepBadEncryptionRevision,
+    RealmFinishReencryptionMaintenanceRepMaintenanceError,
+    RealmFinishReencryptionMaintenanceRepNotAllowed,
+    RealmFinishReencryptionMaintenanceRepNotFound,
+    RealmFinishReencryptionMaintenanceRepNotInMaintenance,
+    RealmFinishReencryptionMaintenanceRepOk,
+    RealmGetRoleCertificatesRepNotAllowed,
+    RealmGetRoleCertificatesRepNotFound,
+    RealmGetRoleCertificatesRepOk,
+    RealmStartReencryptionMaintenanceRepBadEncryptionRevision,
+    RealmStartReencryptionMaintenanceRepBadTimestamp,
+    RealmStartReencryptionMaintenanceRepInMaintenance,
+    RealmStartReencryptionMaintenanceRepMaintenanceError,
+    RealmStartReencryptionMaintenanceRepNotAllowed,
+    RealmStartReencryptionMaintenanceRepNotFound,
+    RealmStartReencryptionMaintenanceRepOk,
+    RealmStartReencryptionMaintenanceRepParticipantMismatch,
     RealmStatsRepNotAllowed,
     RealmStatsRepNotFound,
-    RealmGetRoleCertificatesRepOk,
-    RealmGetRoleCertificatesRepNotFound,
-    RealmGetRoleCertificatesRepNotAllowed,
-    RealmUpdateRolesRepOk,
-    RealmUpdateRolesRepUserRevoked,
+    RealmStatsRepOk,
+    RealmStatusRepNotAllowed,
+    RealmStatusRepNotFound,
+    RealmStatusRepOk,
     RealmUpdateRolesRepAlreadyGranted,
     RealmUpdateRolesRepBadTimestamp,
     RealmUpdateRolesRepIncompatibleProfile,
@@ -32,22 +39,14 @@ from parsec._parsec import (
     RealmUpdateRolesRepInvalidData,
     RealmUpdateRolesRepNotAllowed,
     RealmUpdateRolesRepNotFound,
+    RealmUpdateRolesRepOk,
     RealmUpdateRolesRepRequireGreaterTimestamp,
-    RealmStartReencryptionMaintenanceRepOk,
-    RealmStartReencryptionMaintenanceRepNotFound,
-    RealmStartReencryptionMaintenanceRepBadEncryptionRevision,
-    RealmStartReencryptionMaintenanceRepBadTimestamp,
-    RealmStartReencryptionMaintenanceRepInMaintenance,
-    RealmStartReencryptionMaintenanceRepMaintenanceError,
-    RealmStartReencryptionMaintenanceRepNotAllowed,
-    RealmStartReencryptionMaintenanceRepParticipantMismatch,
-    RealmFinishReencryptionMaintenanceRepOk,
-    RealmFinishReencryptionMaintenanceRepNotInMaintenance,
-    RealmFinishReencryptionMaintenanceRepBadEncryptionRevision,
-    RealmFinishReencryptionMaintenanceRepMaintenanceError,
-    RealmFinishReencryptionMaintenanceRepNotAllowed,
-    RealmFinishReencryptionMaintenanceRepNotFound,
+    RealmUpdateRolesRepUserRevoked,
 )
+from parsec.api.data import *
+from parsec.api.protocol import *
+
+from .utils import *
 
 ################### RealmCreate ##################
 
