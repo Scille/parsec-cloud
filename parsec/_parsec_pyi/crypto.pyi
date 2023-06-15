@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Iterable
+
 class SecretKey:
     def __init__(self, data: bytes) -> None: ...
     @property
@@ -104,3 +106,17 @@ class SequesterVerifyKeyDer:
 def generate_nonce() -> bytes: ...
 
 class CryptoError(Exception): ...
+
+class Share:
+    @classmethod
+    def load(cls, raw: bytes) -> Share: ...
+    def dump(self) -> bytes: ...
+
+class Sharks:
+    def __init__(self, threshold: int) -> None: ...
+    def dealer(
+        self,
+        secret: bytes,
+        share: int,
+    ) -> tuple[Share, ...]: ...
+    def recover(self, shares: Iterable[Share]) -> bytes: ...

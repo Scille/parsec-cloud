@@ -239,7 +239,9 @@ class InvitedCmds:
     @property
     def addr(self) -> BackendInvitationAddr: ...
     async def invite_1_claimer_wait_peer(
-        self, claimer_public_key: PublicKey
+        self,
+        claimer_public_key: PublicKey,
+        greeter_user_id: UserID,
     ) -> Invite1ClaimerWaitPeerRep: ...
     async def invite_2a_claimer_send_hashed_nonce(
         self, claimer_hashed_nonce: HashDigest

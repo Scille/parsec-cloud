@@ -43,6 +43,7 @@ class InvitationStatus:
 class InvitationType:
     DEVICE: InvitationType
     USER: InvitationType
+    SHAMIR_RECOVERY: InvitationType
     VALUES: tuple[InvitationType, ...]
 
     @classmethod

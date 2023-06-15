@@ -12,5 +12,6 @@ from .organization import *  # noqa
 from .ping import *  # noqa
 from .pki import *  # noqa
 from .realm import *  # noqa
+from .shamir import *  # noqa
 from .user import *  # noqa
 from .vlob import *  # noqa
