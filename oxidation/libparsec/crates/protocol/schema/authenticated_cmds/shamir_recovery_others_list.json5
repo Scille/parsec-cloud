@@ -1,0 +1,27 @@
+[
+    {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "shamir_recovery_others_list"
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "others",
+                        // Contains a list of `ShamirRecoveryBriefCertificate`
+                        "type": "List<Bytes>"
+                    }
+                ]
+            },
+            {
+                // Current user is not ADMIN
+                "status": "not_allowed"
+            }
+        ]
+    }
+]

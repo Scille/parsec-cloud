@@ -1,0 +1,23 @@
+{
+    "label": "ShamirRecoveryShareCertificate",
+    "type": "shamir_recovery_share_certificate",
+    "other_fields": [
+        {
+            "name": "author",
+            "type": "DeviceID"
+        },
+        {
+            "name": "timestamp",
+            "type": "DateTime"
+        },
+        {
+            "name": "recipient",
+            "type": "UserID"
+        },
+        {
+            // Share ciphered with recipient's user key
+            "name": "ciphered_share",
+            "type": "ShamirRecoveryShareData"
+        }
+    ]
+}

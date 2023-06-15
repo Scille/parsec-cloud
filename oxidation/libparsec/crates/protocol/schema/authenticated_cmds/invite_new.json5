@@ -6,7 +6,7 @@
         ],
         "req": {
             "cmd": "invite_new",
-            "unit": "UserOrDevice"
+            "unit": "UserOrDeviceOrShamirRecovery"
         },
         "reps": [
             {
@@ -31,13 +31,18 @@
             {
                 "status": "already_member"
             },
+            // TODO: A specific reps is needed for when the target user has not Shamir recovery available
+            // `not_available` seems like the obvious name, but it is already used for an unrelated
+            // situation, so not sure if we should re-use (and rename the status for the unrelated
+            // situation ? this is the right time do to if we do a major version bump !) or create
+            // another one...
             {
                 "status": "not_available"
             }
         ],
         "nested_types": [
             {
-                "name": "UserOrDevice",
+                "name": "UserOrDeviceOrShamirRecovery",
                 "discriminant_field": "type",
                 "variants": [
                     {
@@ -58,6 +63,20 @@
                         "name": "Device",
                         "discriminant_value": "DEVICE",
                         "fields": [
+                            {
+                                "name": "send_email",
+                                "type": "Boolean"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "ShamirRecovery",
+                        "discriminant_value": "SHAMIR_RECOVERY",
+                        "fields": [
+                            {
+                                "name": "claimer_user_id",
+                                "type": "UserID"
+                            },
                             {
                                 "name": "send_email",
                                 "type": "Boolean"

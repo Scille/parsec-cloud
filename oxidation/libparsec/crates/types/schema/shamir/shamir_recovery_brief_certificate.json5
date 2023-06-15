@@ -1,0 +1,24 @@
+{
+    "label": "ShamirRecoveryBriefCertificate",
+    "type": "shamir_recovery_brief_certificate",
+    "other_fields": [
+        {
+            "name": "author",
+            "type": "DeviceID"
+        },
+        {
+            "name": "timestamp",
+            "type": "DateTime"
+        },
+        {
+            // Minimal number of shares to retrieve to reach the quorum and compute the secret
+            "name": "threshold",
+            "type": "NonZeroInteger"
+        },
+        {
+            // A recipient can have multiple shares (to have a bigger weight than others)
+            "name": "per_recipient_shares",
+            "type": "Map<UserID, NonZeroInteger>"
+        }
+    ]
+}

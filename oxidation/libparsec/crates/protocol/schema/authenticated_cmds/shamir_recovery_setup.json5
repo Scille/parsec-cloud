@@ -1,0 +1,72 @@
+[
+    {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "shamir_recovery_setup",
+            "fields": [
+                {
+                    "name": "setup",
+                    // Set to `None` to clear previous Shamir recovery setup
+                    "type": "RequiredOption<ShamirRecoverySetup>"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                // Certificate is not signed by the authenticated user, or timestamp is invalid
+                "status": "invalid_certification"
+            },
+            {
+                // Cannot deserialize data into the expected certificate, or inconsistency
+                // between  certificates and/or threshold
+                "status": "invalid_data"
+            },
+            {
+                // Future evolution 1: Shamir recovery has already been setup, should ask your admin to reset it first !
+                "status": "already_set"
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "ShamirRecoverySetup",
+                "fields": [
+                    {
+                        // The actual data we want to recover.
+                        // It is encrypted with `data_key` that is itself split into shares.
+                        // This should contains a serialized `LocalDevice`
+                        "name": "ciphered_data",
+                        "type": "Bytes"
+                    },
+                    {
+                        // The token the claimer should provide to get access to `ciphered_data`.
+                        // This token is split into shares, hence it acts as a proof the claimer
+                        // asking for the `ciphered_data` had it identity confirmed by the recipients.
+                        "name": "reveal_token",
+                        "type": "Bytes"
+                    },
+                    {
+                        // The Shamir recovery setup provided as a `ShamirRecoveryBriefCertificate`.
+                        // It contains the threshold for the quorum and the shares recipients.
+                        // This field has a certain level of duplication with the "shares" below,
+                        // but they are used for different things (we provide the encrypted share
+                        // data only when needed)
+                        "name": "brief",
+                        "type": "Bytes"
+                    },
+                    {
+                        // The shares provided as a `ShamirRecoveryShareCertificate` since
+                        // each share is aimed at a specific recipient.
+                        "name": "shares",
+                        "type": "List<Bytes>"
+                    }
+                ]
+            }
+        ]
+    }
+]

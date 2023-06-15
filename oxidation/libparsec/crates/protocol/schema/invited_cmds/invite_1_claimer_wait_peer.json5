@@ -10,6 +10,11 @@
                 {
                     "name": "claimer_public_key",
                     "type": "PublicKey"
+                },
+                {
+                    "name": "greeter_user_id",
+                    "type": "UserID",
+                    "introduced_in": "2.9"
                 }
             ]
         },
