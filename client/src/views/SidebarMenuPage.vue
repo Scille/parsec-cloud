@@ -85,9 +85,9 @@
             <ion-item
               lines="none"
               button
-              @click="navigateToWorkspace(workspace.id)"
-              v-for="workspace in workspacesExampleData"
+              v-for="workspace in workspaces"
               :key="workspace.id"
+              @click="navigateToWorkspace(workspace.id)"
             >
               <ion-icon
                 :icon="business"
@@ -134,37 +134,15 @@ import { createGesture } from '@ionic/vue';
 
 import { useRouter, useRoute } from 'vue-router';
 import useSidebarMenu from '@/services/sidebarMenu';
-import { getMockDevices } from '@/common/mocks';
+import { getMockDevices, getMockWorkspaces, MockWorkspace } from '@/common/mocks';
 
 let device: any = {};
 
-// fake data
-const workspacesExampleData = [
-  {
-    id: 1234,
-    name: 'Product Design',
-    userRole: 'Owner',
-    userCount: 3
-  },
-  {
-    id: 2345,
-    name: 'Marketing',
-    userRole: 'Contributor',
-    userCount: 1
-  },
-  {
-    id: 3456,
-    name: 'Engineering',
-    userRole: 'Contributor',
-    userCount: 4
-  },
-  {
-    id: 4567,
-    name: 'Research',
-    userRole: 'Reader',
-    userCount: 3
-  }
-];
+let workspaces: MockWorkspace[] = [];
+
+getMockWorkspaces().then((ws) => {
+  workspaces = ws;
+});
 const router = useRouter();
 const currentRoute = useRoute();
 const splitPane = ref();
@@ -179,7 +157,7 @@ const unwatch: WatchStopHandle = watch(wasReset, (value) => {
   }
 });
 
-function navigateToWorkspace(workspaceId: number): void {
+function navigateToWorkspace(workspaceId: string): void {
   router.push({
     name: 'folder',
     params: { deviceId: currentRoute.params.deviceId, workspaceId: workspaceId },
@@ -197,7 +175,7 @@ function navigateToWorkspaceList(): void {
 
 }
 
-onMounted(() => {
+onMounted(async () => {
   device = getMockDevices(1)[0];
 
   if (divider.value) {

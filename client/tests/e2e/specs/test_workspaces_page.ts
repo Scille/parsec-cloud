@@ -61,7 +61,7 @@ describe('Check workspaces page', () => {
 
   it('Navigate into a workspace', () => {
     cy.contains('Trademeet').click();
-    cy.get('h2').last().should('have.text', 'Path is /how/boring/and/small');
+    cy.get('h2').last().should('have.text', 'Path is /');
     cy.get('ion-button.back-button').click();
     cy.get('.card').should('have.length', 5);
   });
