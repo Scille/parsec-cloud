@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Callable, Coroutine, List, Tuple
 
 import attr
 
-from parsec._parsec import DateTime, InvitationDeletedReason
+from parsec._parsec import DateTime, InvitationDeletedReason, ShamirRecoveryRecipient
 from parsec.api.protocol import InvitationStatus, InvitationToken, OrganizationID, UserID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.invite import (
@@ -21,10 +21,13 @@ from parsec.backend.invite import (
     InvitationAlreadyMemberError,
     InvitationInvalidStateError,
     InvitationNotFoundError,
+    InvitationShamirRecoveryNotSetup,
+    ShamirRecoveryInvitation,
     UserInvitation,
 )
 
 if TYPE_CHECKING:
+    from parsec.backend.memory.shamir import MemoryShamirComponent
     from parsec.backend.memory.user import MemoryUserComponent
 
 
@@ -54,9 +57,13 @@ class MemoryInviteComponent(BaseInviteComponent):
             OrganizationStore
         )
         self._user_component: MemoryUserComponent | None = None
+        self._shamir_component: MemoryShamirComponent | None = None
 
-    def register_components(self, user: MemoryUserComponent, **other_components: Any) -> None:
+    def register_components(
+        self, user: MemoryUserComponent, shamir: MemoryShamirComponent, **other_components: Any
+    ) -> None:
         self._user_component = user
+        self._shamir_component = shamir
 
     def _get_invitation_and_conduit(
         self,
@@ -224,12 +231,29 @@ class MemoryInviteComponent(BaseInviteComponent):
         assert isinstance(result, DeviceInvitation)
         return result
 
+    async def new_for_shamir_recovery(
+        self,
+        organization_id: OrganizationID,
+        greeter_user_id: UserID,
+        claimer_user_id: UserID,
+        created_on: DateTime | None = None,
+    ) -> ShamirRecoveryInvitation:
+        result = await self._new(
+            organization_id=organization_id,
+            greeter_user_id=greeter_user_id,
+            claimer_user_id=claimer_user_id,
+            created_on=created_on,
+        )
+        assert isinstance(result, ShamirRecoveryInvitation)
+        return result
+
     async def _new(
         self,
         organization_id: OrganizationID,
         greeter_user_id: UserID,
         created_on: DateTime | None,
         claimer_email: str | None = None,
+        claimer_user_id: UserID | None = None,
     ) -> Invitation:
         assert self._user_component is not None
 
@@ -254,6 +278,22 @@ class MemoryInviteComponent(BaseInviteComponent):
                     greeter_user_id=greeter_user_id,
                     greeter_human_handle=greeter_human_handle,
                     claimer_email=claimer_email,
+                    created_on=created_on,
+                )
+            elif claimer_user_id:
+                claimer_user = await self._user_component.get_user(organization_id, claimer_user_id)
+                claimer_email = (
+                    claimer_user.human_handle.email if claimer_user.human_handle else None
+                )
+
+                threshold, recipients = self._shamir_info(organization_id, claimer_user_id)
+
+                invitation = ShamirRecoveryInvitation(
+                    greeter_user_id=greeter_user_id,
+                    greeter_human_handle=greeter_human_handle,
+                    claimer_email=claimer_email,
+                    threshold=threshold,
+                    recipients=recipients,
                     created_on=created_on,
                 )
             else:  # Device
@@ -336,3 +376,16 @@ class MemoryInviteComponent(BaseInviteComponent):
 
     def test_drop_organization(self, id: OrganizationID) -> None:
         self._organizations.pop(id, None)
+
+    def _shamir_info(
+        self, organization_id: OrganizationID, user_id: UserID
+    ) -> tuple[int, tuple[ShamirRecoveryRecipient, ...]]:
+        assert self._shamir_component is not None
+
+        try:
+            threshold = self._shamir_component.thresholds[(organization_id, user_id)]
+            recipients = self._shamir_component.recipients[(organization_id, user_id)]
+        except KeyError as exc:
+            raise InvitationShamirRecoveryNotSetup(exc)
+
+        return (threshold, recipients)

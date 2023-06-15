@@ -110,6 +110,7 @@ from parsec._parsec import (
     InviteNewRepOk,
     InviteNewReq,
     PublicKey,
+    ShamirRecoveryRecipient,
 )
 from parsec.api.protocol import (
     HumanHandle,
@@ -160,6 +161,10 @@ class InvitationEmailConfigError(InvitationError):
 
 
 class InvitationEmailRecipientError(InvitationError):
+    pass
+
+
+class InvitationShamirRecoveryNotSetup(InvitationError):
     pass
 
 
@@ -225,7 +230,23 @@ class DeviceInvitation:
         return attr.evolve(self, **kwargs)
 
 
-Invitation = Union[UserInvitation, DeviceInvitation]
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class ShamirRecoveryInvitation:
+    TYPE = InvitationType.SHAMIR_RECOVERY
+    greeter_user_id: UserID
+    greeter_human_handle: HumanHandle | None
+    claimer_email: str | None
+    threshold: int
+    recipients: tuple[ShamirRecoveryRecipient, ...]
+    token: InvitationToken = attr.ib(factory=InvitationToken.new)
+    created_on: DateTime = attr.ib(factory=DateTime.now)
+    status: InvitationStatus = InvitationStatus.IDLE
+
+    def evolve(self, **kwargs: Any) -> ShamirRecoveryInvitation:
+        return attr.evolve(self, **kwargs)
+
+
+Invitation = Union[UserInvitation, DeviceInvitation, ShamirRecoveryInvitation]
 
 
 def generate_invite_email(
@@ -384,7 +405,7 @@ class BaseInviteComponent:
         # Define helper
         def _to_http_redirection_url(
             client_ctx: AuthenticatedClientContext,
-            invitation: Union[UserInvitation, DeviceInvitation],
+            invitation: Invitation,
         ) -> str:
             assert self._config.backend_addr
             return BackendInvitationAddr.build(
@@ -399,14 +420,14 @@ class BaseInviteComponent:
             if client_ctx.profile != UserProfile.ADMIN:
                 return InviteNewRepNotAllowed()
             try:
-                invitation: UserInvitation | DeviceInvitation = await self.new_for_user(
+                invitation: Invitation = await self.new_for_user(
                     organization_id=client_ctx.organization_id,
                     greeter_user_id=client_ctx.user_id,
                     claimer_email=req.claimer_email,
                 )
             except InvitationAlreadyMemberError:
                 return InviteNewRepAlreadyMember()
-        else:  # Device
+        elif req.type == InvitationType.DEVICE:
             if req.send_email and not client_ctx.human_handle:
                 return InviteNewRepNotAvailable()
 
@@ -414,6 +435,18 @@ class BaseInviteComponent:
                 organization_id=client_ctx.organization_id,
                 greeter_user_id=client_ctx.user_id,
             )
+        elif req.type == InvitationType.SHAMIR_RECOVERY:
+            if client_ctx.profile != UserProfile.ADMIN:
+                return InviteNewRepNotAllowed()
+
+            try:
+                invitation = await self.new_for_shamir_recovery(
+                    organization_id=client_ctx.organization_id,
+                    greeter_user_id=client_ctx.user_id,
+                    claimer_user_id=req.claimer_user_id,
+                )
+            except InvitationShamirRecoveryNotSetup:
+                return InviteNewRepNotAvailable()
 
         # No need to send email, we're done
         if not req.send_email:
@@ -447,7 +480,7 @@ class BaseInviteComponent:
                 invitation_url=_to_http_redirection_url(client_ctx, invitation),
                 backend_url=self._config.backend_addr.to_http_domain_url(),
             )
-        else:  # Device
+        elif req.type == InvitationType.DEVICE:
             assert isinstance(invitation, DeviceInvitation)
             assert client_ctx.human_handle is not None
             to_addr = client_ctx.human_handle.email
@@ -456,6 +489,25 @@ class BaseInviteComponent:
                 to_addr=to_addr,
                 greeter_name=None,
                 reply_to=None,
+                organization_id=client_ctx.organization_id,
+                invitation_url=_to_http_redirection_url(client_ctx, invitation),
+                backend_url=self._config.backend_addr.to_http_domain_url(),
+            )
+        elif req.type == InvitationType.SHAMIR_RECOVERY:
+            assert isinstance(invitation, ShamirRecoveryInvitation)
+            assert invitation.claimer_email is not None
+
+            if client_ctx.human_handle:
+                greeter_name = client_ctx.human_handle.label
+                reply_to = client_ctx.human_handle.email
+            else:
+                greeter_name = client_ctx.user_id.str
+                reply_to = None
+            message = generate_invite_email(
+                from_addr=self._config.email_config.sender,
+                to_addr=invitation.claimer_email,
+                greeter_name=greeter_name,
+                reply_to=reply_to,
                 organization_id=client_ctx.organization_id,
                 invitation_url=_to_http_redirection_url(client_ctx, invitation),
                 backend_url=self._config.backend_addr.to_http_domain_url(),
@@ -513,14 +565,29 @@ class BaseInviteComponent:
             organization_id=client_ctx.organization_id, greeter=client_ctx.user_id
         )
 
-        return InviteListRepOk(
-            [
-                InviteListItem.User(item.token, item.created_on, item.claimer_email, item.status)
-                if isinstance(item, UserInvitation)
-                else InviteListItem.Device(item.token, item.created_on, item.status)
-                for item in invitations
-            ]
-        )
+        def to_invite_list_item(invitation: Invitation) -> InviteListItem:
+            if isinstance(invitation, UserInvitation):
+                return InviteListItem.User(
+                    invitation.token,
+                    invitation.created_on,
+                    invitation.claimer_email,
+                    invitation.status,
+                )
+            elif isinstance(invitation, DeviceInvitation):
+                return InviteListItem.Device(
+                    invitation.token, invitation.created_on, invitation.status
+                )
+            elif isinstance(invitation, ShamirRecoveryInvitation):
+                return InviteListItem.ShamirRecovery(
+                    invitation.token,
+                    invitation.created_on,
+                    str(invitation.claimer_email),
+                    invitation.status,
+                )
+            else:
+                raise NotImplementedError(invitation, "not implemented")
+
+        return InviteListRepOk(tuple(map(to_invite_list_item, invitations)))
 
     @api("invite_info", client_types=[ClientType.INVITED])
     @catch_protocol_errors
@@ -537,17 +604,24 @@ class BaseInviteComponent:
         if isinstance(invitation, UserInvitation):
             return InviteInfoRepOk(
                 InvitationType.USER,
-                invitation.claimer_email,
-                invitation.greeter_user_id,
-                invitation.greeter_human_handle,
-            )
-        else:  # DeviceInvitation
-            return InviteInfoRepOk(
-                InvitationType.DEVICE,
-                claimer_email=None,
+                claimer_email=invitation.claimer_email,
                 greeter_user_id=invitation.greeter_user_id,
                 greeter_human_handle=invitation.greeter_human_handle,
             )
+        elif isinstance(invitation, DeviceInvitation):
+            return InviteInfoRepOk(
+                InvitationType.DEVICE,
+                greeter_user_id=invitation.greeter_user_id,
+                greeter_human_handle=invitation.greeter_human_handle,
+            )
+        elif isinstance(invitation, ShamirRecoveryInvitation):
+            return InviteInfoRepOk(
+                InvitationType.SHAMIR_RECOVERY,
+                threshold=invitation.threshold,
+                recipients=invitation.recipients,
+            )
+        else:
+            raise NotImplementedError()
 
     @api(
         "invite_1_claimer_wait_peer",
@@ -1012,6 +1086,18 @@ class BaseInviteComponent:
     ) -> DeviceInvitation:
         """
         Raise: Nothing
+        """
+        raise NotImplementedError()
+
+    async def new_for_shamir_recovery(
+        self,
+        organization_id: OrganizationID,
+        greeter_user_id: UserID,
+        claimer_user_id: UserID,
+        created_on: DateTime | None = None,
+    ) -> ShamirRecoveryInvitation:
+        """
+        Raise: InvitationShamirRecoveryNotSetupError
         """
         raise NotImplementedError()
 

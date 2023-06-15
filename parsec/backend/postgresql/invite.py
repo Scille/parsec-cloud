@@ -26,6 +26,7 @@ from parsec.backend.invite import (
     InvitationAlreadyMemberError,
     InvitationInvalidStateError,
     InvitationNotFoundError,
+    ShamirRecoveryInvitation,
     UserInvitation,
 )
 from parsec.backend.postgresql.handler import PGHandler, send_signal
@@ -588,7 +589,7 @@ class PGInviteComponent(BaseInviteComponent):
                     created_on=created_on,
                     status=status,
                 )
-            else:  # Device
+            elif type == InvitationType.DEVICE.str:
                 invitation = DeviceInvitation(
                     greeter_user_id=UserID(greeter),
                     greeter_human_handle=greeter_human_handle,
@@ -596,6 +597,22 @@ class PGInviteComponent(BaseInviteComponent):
                     created_on=created_on,
                     status=status,
                 )
+            elif type == InvitationType.SHAMIR_RECOVERY.str:
+                invitation = ShamirRecoveryInvitation(
+                    greeter_user_id=UserID(greeter),
+                    greeter_human_handle=greeter_human_handle,
+                    token=token,
+                    # TODO: still there ?
+                    claimer_email=claimer_email,
+                    # TODO
+                    threshold=0,
+                    # TODO
+                    recipients=(),
+                    created_on=created_on,
+                    status=status,
+                )
+            else:
+                raise NotImplementedError(type, "not implemented")
             invitations.append(invitation)
         return invitations
 

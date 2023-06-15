@@ -95,6 +95,12 @@ from parsec.api.protocol.realm import (
     realm_status_serializer,
     realm_update_roles_serializer,
 )
+from parsec.api.protocol.shamir import (
+    invite_shamir_recovery_reveal_serializer,
+    shamir_recovery_others_list_serializer,
+    shamir_recovery_self_info_serializer,
+    shamir_recovery_setup_serializer,
+)
 from parsec.api.protocol.types import (
     DeviceID,
     DeviceIDField,
@@ -246,6 +252,11 @@ __all__ = (
     "EnrollmentID",
     # Sequester
     "SequesterServiceID",
+    # Shamir
+    "shamir_recovery_others_list_serializer",
+    "shamir_recovery_self_info_serializer",
+    "shamir_recovery_setup_serializer",
+    "invite_shamir_recovery_reveal_serializer",
     # List of cmds
     "AUTHENTICATED_CMDS",
     "INVITED_CMDS",

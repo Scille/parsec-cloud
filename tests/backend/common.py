@@ -29,6 +29,7 @@ from parsec._parsec import (
     InviteDeleteRepOk,
     InviteInfoRepOk,
     InviteNewRepOk,
+    InviteShamirRecoveryRevealRepOk,
     MessageGetRepOk,
     OrganizationBootstrapRepOk,
     OrganizationConfigRepOk,
@@ -44,6 +45,9 @@ from parsec._parsec import (
     RealmStatsRepOk,
     RealmStatusRepOk,
     RealmUpdateRolesRepOk,
+    ShamirRecoveryOthersListRepOk,
+    ShamirRecoverySelfInfoRepOk,
+    ShamirRecoverySetupRepOk,
     UserCreateRepOk,
     UserGetRepOk,
     UserRevokeRepOk,
@@ -79,6 +83,7 @@ from parsec.api.protocol import (
     invite_info_serializer,
     invite_list_serializer,
     invite_new_serializer,
+    invite_shamir_recovery_reveal_serializer,
     invited_ping_serializer,
     organization_bootstrap_serializer,
     organization_config_serializer,
@@ -95,6 +100,9 @@ from parsec.api.protocol import (
     realm_stats_serializer,
     realm_status_serializer,
     realm_update_roles_serializer,
+    shamir_recovery_others_list_serializer,
+    shamir_recovery_self_info_serializer,
+    shamir_recovery_setup_serializer,
     user_create_serializer,
     user_get_serializer,
     user_revoke_serializer,
@@ -263,6 +271,10 @@ class CmdSock:
                     VlobPollChangesRepOk,
                     VlobReadRepOk,
                     VlobUpdateRepOk,
+                    ShamirRecoveryOthersListRepOk,
+                    ShamirRecoverySelfInfoRepOk,
+                    ShamirRecoverySetupRepOk,
+                    InviteShamirRecoveryRevealRepOk,
                 ),
             )  # Rust-based rep schemas
 
@@ -580,10 +592,11 @@ device_create = CmdSock(
 invite_new = CmdSock(
     "invite_new",
     invite_new_serializer,
-    parse_args=lambda self, type, send_email=False, claimer_email=None: {
+    parse_args=lambda self, type, send_email=False, claimer_email=None, claimer_user_id=None: {
         "type": type,
         "send_email": send_email,
         "claimer_email": claimer_email,
+        "claimer_user_id": claimer_user_id,
     },
 )
 invite_list = CmdSock("invite_list", invite_list_serializer)
@@ -596,7 +609,10 @@ invite_info = CmdSock("invite_info", invite_info_serializer)
 invite_1_claimer_wait_peer = CmdSock(
     "invite_1_claimer_wait_peer",
     invite_1_claimer_wait_peer_serializer,
-    parse_args=lambda self, claimer_public_key: {"claimer_public_key": claimer_public_key},
+    parse_args=lambda self, claimer_public_key, greeter_user_id: {
+        "claimer_public_key": claimer_public_key,
+        "greeter_user_id": greeter_user_id,
+    },
 )
 invite_1_greeter_wait_peer = CmdSock(
     "invite_1_greeter_wait_peer",
@@ -693,4 +709,29 @@ pki_enrollment_accept = CmdSock(
         "redacted_user_certificate": redacted_user_certificate,
         "redacted_device_certificate": redacted_device_certificate,
     },
+)
+
+
+### Shamir ###
+
+
+shamir_recovery_others_list = CmdSock(
+    "shamir_recovery_others_list",
+    shamir_recovery_others_list_serializer,
+    parse_args=lambda self: {},
+)
+shamir_recovery_self_info = CmdSock(
+    "shamir_recovery_self_info",
+    shamir_recovery_self_info_serializer,
+    parse_args=lambda self: {},
+)
+shamir_recovery_setup = CmdSock(
+    "shamir_recovery_setup",
+    shamir_recovery_setup_serializer,
+    parse_args=lambda self, setup: {"setup": setup},
+)
+invite_shamir_recovery_reveal = CmdSock(
+    "invite_shamir_recovery_reveal",
+    invite_shamir_recovery_reveal_serializer,
+    parse_args=lambda self, reveal_token: {"reveal_token": reveal_token},
 )

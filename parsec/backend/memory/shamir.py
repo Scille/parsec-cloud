@@ -1,0 +1,86 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
+from parsec._parsec import (
+    ShamirRecoveryBriefCertificate,
+    ShamirRecoveryRecipient,
+    ShamirRecoverySetup,
+)
+from parsec.api.protocol import DeviceID, OrganizationID, UserID
+from parsec.backend.shamir import BaseShamirComponent
+
+if TYPE_CHECKING:
+    from parsec.backend.memory.user import MemoryUserComponent
+
+
+class MemoryShamirComponent(BaseShamirComponent):
+    def __init__(self) -> None:
+        self._shamir_recovery_ciphered_data: dict[bytes, bytes] = {}
+        self._shamir_recovery_brief_certs: dict[tuple[OrganizationID, DeviceID], bytes] = {}
+        self._shamir_recovery_reveal: dict[tuple[OrganizationID, DeviceID], bytes] = {}
+        self._shamir_recovery_shares_certs: dict[
+            tuple[OrganizationID, DeviceID], tuple[bytes, ...]
+        ] = {}
+        self.thresholds: dict[tuple[OrganizationID, UserID], int] = {}
+        self.recipients: dict[
+            tuple[OrganizationID, UserID], tuple[ShamirRecoveryRecipient, ...]
+        ] = {}
+
+    def register_components(self, user: MemoryUserComponent, **other_components: Any) -> None:
+        self._user_component = user
+
+    async def recovery_others_list(self, organization_id: OrganizationID) -> tuple[bytes, ...]:
+        def filter_org(x: tuple[tuple[OrganizationID, DeviceID], bytes]) -> bool:
+            return x[0][0] == organization_id
+
+        def map_cert(x: tuple[tuple[OrganizationID, DeviceID], bytes]) -> bytes:
+            return x[1]
+
+        return tuple(map(map_cert, filter(filter_org, self._shamir_recovery_brief_certs.items())))
+
+    async def recovery_self_info(
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+    ) -> bytes | None:
+        return self._shamir_recovery_brief_certs.get((organization_id, author))
+
+    async def recovery_setup(
+        self, organization_id: OrganizationID, author: DeviceID, setup: ShamirRecoverySetup | None
+    ) -> None:
+        def map_recipients(x: tuple[UserID, int]) -> ShamirRecoveryRecipient:
+            assert self._user_component is not None
+            return ShamirRecoveryRecipient(
+                user_id=x[0],
+                human_handle=self._user_component._get_user(organization_id, x[0]).human_handle,
+                shares=x[1],
+            )
+
+        if setup is None:
+            self._shamir_recovery_brief_certs.pop((organization_id, author))
+            self._shamir_recovery_shares_certs.pop((organization_id, author))
+            reveal_token = self._shamir_recovery_reveal.pop((organization_id, author))
+            self._shamir_recovery_ciphered_data.pop(reveal_token)
+            self.thresholds.pop((organization_id, author.user_id))
+            self.recipients.pop((organization_id, author.user_id))
+
+        else:
+            self._shamir_recovery_brief_certs[(organization_id, author)] = setup.brief
+            self._shamir_recovery_shares_certs[(organization_id, author)] = setup.shares
+            self._shamir_recovery_reveal[(organization_id, author)] = setup.reveal_token
+            self._shamir_recovery_ciphered_data[(setup.reveal_token)] = setup.ciphered_data
+
+            brief = ShamirRecoveryBriefCertificate.load(setup.brief)
+            self.thresholds[(organization_id, author.user_id)] = brief.threshold
+            self.recipients[(organization_id, author.user_id)] = tuple(
+                map(map_recipients, brief.per_recipient_shares.items())
+            )
+
+    async def recovery_reveal(
+        self,
+        reveal_token: bytes,
+    ) -> bytes | None:
+        return self._shamir_recovery_ciphered_data.get(reveal_token)

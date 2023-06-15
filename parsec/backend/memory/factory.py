@@ -19,6 +19,7 @@ from parsec.backend.memory.ping import MemoryPingComponent
 from parsec.backend.memory.pki import MemoryPkiEnrollmentComponent
 from parsec.backend.memory.realm import MemoryRealmComponent
 from parsec.backend.memory.sequester import MemorySequesterComponent
+from parsec.backend.memory.shamir import MemoryShamirComponent
 from parsec.backend.memory.user import MemoryUserComponent
 from parsec.backend.memory.vlob import MemoryVlobComponent
 from parsec.backend.webhooks import WebhooksComponent
@@ -55,6 +56,7 @@ async def components_factory(  # type: ignore[misc]
     block = MemoryBlockComponent()
     blockstore = blockstore_factory(config.blockstore_config)
     events = EventsComponent(realm, send_event=_send_event)
+    shamir = MemoryShamirComponent()
 
     components = {
         "events": events,
@@ -70,6 +72,7 @@ async def components_factory(  # type: ignore[misc]
         "sequester": sequester,
         "block": block,
         "blockstore": blockstore,
+        "shamir": shamir,
     }
     for component in components.values():
         method = getattr(component, "register_components", None)

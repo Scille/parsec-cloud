@@ -7,6 +7,7 @@ import trio
 from parsec._parsec import (
     DateTime,
     HashDigest,
+    InvitationType,
     Invite1ClaimerWaitPeerRepOk,
     Invite1GreeterWaitPeerRepOk,
     Invite2aClaimerSendHashedNonceRepOk,
@@ -43,7 +44,28 @@ from tests.backend.common import (
 )
 
 
-class PeerControler:
+@pytest.fixture
+async def invitation(backend, alice):
+    invitation = await backend.invite.new_for_device(
+        organization_id=alice.organization_id,
+        greeter_user_id=alice.user_id,
+        created_on=DateTime(2000, 1, 2),
+    )
+    return invitation
+
+
+@pytest.fixture
+async def invited_ws(backend_asgi_app, backend_invited_ws_factory, alice, invitation):
+    async with backend_invited_ws_factory(
+        backend_asgi_app,
+        organization_id=alice.organization_id,
+        invitation_type=InvitationType.DEVICE,
+        token=invitation.token,
+    ) as invited_ws:
+        yield invited_ws
+
+
+class PeerController:
     def __init__(self):
         self._orders_sender, self._orders_receiver = trio.open_memory_channel(0)
         self._orders_ack_sender, self._orders_ack_receiver = trio.open_memory_channel(0)
@@ -219,6 +241,7 @@ async def exchange_testbed(backend_asgi_app, alice, alice_ws, backend_invited_ws
                     invite_1_claimer_wait_peer,
                     tb.claimer_ws,
                     claimer_public_key=tb.claimer_privkey.public_key,
+                    greeter_user_id=tb.greeter.user_id,
                 )
 
             elif order == "2a_send_hashed_nonce":
@@ -248,8 +271,8 @@ async def exchange_testbed(backend_asgi_app, alice, alice_ws, backend_invited_ws
             else:
                 assert False
 
-    greeter_ctlr = PeerControler()
-    claimer_ctlr = PeerControler()
+    greeter_ctlr = PeerController()
+    claimer_ctlr = PeerController()
     greeter_privkey = PrivateKey.generate()
     claimer_privkey = PrivateKey.generate()
 
