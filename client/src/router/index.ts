@@ -34,7 +34,7 @@ const routes: Array<RouteRecordRaw> = [
           {
             path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/workspaces/:workspaceId([a-z0-9]+)',
             name: 'folder',
-            component: () => import('@/views/FolderPage.vue')
+            component: () => import('@/views/FoldersPage.vue')
           },
           {
             path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/settings',

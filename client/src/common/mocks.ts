@@ -5,6 +5,43 @@
 import { DateTime } from 'luxon';
 import { AvailableDevice } from '../plugins/libparsec/definitions';
 import { StorageManager } from '@/services/storageManager';
+import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
+
+export interface MockFile {
+  name: string,
+  type: 'folder' | 'file',
+  size: number,
+  lastUpdate: DateTime,
+  updater: string,
+  children: MockFile[]
+}
+
+export function pathInfo(_path: string): MockFile {
+  const UPDATER = ['John', 'Steve', 'Bill', 'Marjolaine', 'Hilary'];
+
+  const childrenCount = Math.floor(Math.random() * 25) + 10;
+  const ret: MockFile = {
+    name: uniqueNamesGenerator({dictionaries: [adjectives, colors, animals]}),
+    type: 'folder',
+    updater: UPDATER[Math.floor(Math.random() * UPDATER.length)],
+    size: 0,
+    lastUpdate: DateTime.now(),
+    children: []
+  };
+
+  for (let i = 0; i < childrenCount; i++) {
+    const isFolder = Math.floor(Math.random() * 2) === 0;
+    ret.children.push({
+      name: uniqueNamesGenerator({dictionaries: [adjectives, colors, animals]}),
+      type: isFolder ? 'folder' : 'file',
+      size: isFolder ? 0 : Math.floor(Math.random() * 10000000),
+      lastUpdate: DateTime.now(),
+      updater: UPDATER[Math.floor(Math.random() * UPDATER.length)],
+      children: []
+    });
+  }
+  return ret;
+}
 
 export enum WorkspaceRole {
   Owner = 'owner',
@@ -86,7 +123,7 @@ const MOCK_DEVICES: AvailableDevice[] = [
     ty: {tag: 'Password'}
   },
   {
-    organizationId: 'Princeton–Plainsboro Hospital',
+    organizationId: 'Princeton-Plainsboro Hospital',
     humanHandle: 'Dr. Gregory House',
     deviceLabel: 'House_Device',
     keyFilePath: 'key_file_path',
