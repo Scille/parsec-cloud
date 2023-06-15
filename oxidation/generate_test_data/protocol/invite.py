@@ -59,6 +59,7 @@ from parsec._parsec import (
     InviteNewRepNotAvailable,
     InviteNewRepOk,
     PublicKey,
+    ShamirRecoveryRecipient,
 )
 from parsec.api.data import *
 from parsec.api.protocol import *
@@ -85,20 +86,21 @@ serialized = serializer.req_dumps(
         "type": InvitationType.DEVICE,
         "cmd": "invite_new",
         "send_email": True,
-        "claimer_email": None,
     }
 )
 serializer.req_loads(serialized)
 display("invite_new_req_device", serialized, [])
 
-serialized = serializer.rep_dumps(
-    InviteNewRepOk(
-        token=InvitationToken.from_hex("d864b93ded264aae9ae583fd3d40c45a"),
-        email_sent=None,
-    )
+serialized = serializer.req_dumps(
+    {
+        "type": InvitationType.SHAMIR_RECOVERY,
+        "cmd": "invite_new",
+        "send_email": True,
+        "claimer_user_id": ALICE.user_id,
+    }
 )
-serializer.rep_loads(serialized)
-display("invite_new_rep_without", serialized, [])
+serializer.req_loads(serialized)
+display("invite_new_req_shamir_recovery_device", serialized, [])
 
 serialized = serializer.rep_dumps(
     InviteNewRepOk(
@@ -169,6 +171,12 @@ serialized = serializer.rep_dumps(
                 created_on=DateTime(2000, 1, 2, 1),
                 status=InvitationStatus.IDLE,
             ),
+            InviteListItem.ShamirRecovery(
+                token=InvitationToken.from_hex("d864b93ded264aae9ae583fd3d40c45a"),
+                created_on=DateTime(2000, 1, 2, 1),
+                claimer_email="alice@dev1",
+                status=InvitationStatus.IDLE,
+            ),
         ]
     )
 )
@@ -227,6 +235,26 @@ serialized = serializer.rep_dumps(
 serializer.rep_loads(serialized)
 display("invite_info_rep_device no handle", serialized, [])
 
+serialized = serializer.rep_dumps(
+    InviteInfoRepOk(
+        type=InvitationType.SHAMIR_RECOVERY,
+        threshold=1,
+        recipients=[],
+    )
+)
+serializer.rep_loads(serialized)
+display("invite_info_rep_shamir_recovery without recipients", serialized, [])
+
+serialized = serializer.rep_dumps(
+    InviteInfoRepOk(
+        type=InvitationType.SHAMIR_RECOVERY,
+        threshold=1,
+        recipients=[ShamirRecoveryRecipient(ALICE.user_id, ALICE.human_handle, 1)],
+    )
+)
+serializer.rep_loads(serialized)
+display("invite_info_rep_shamir_recovery with recipients", serialized, [])
+
 ################### Invite1ClaimerWaitPeer ##################
 
 serializer = invite_1_claimer_wait_peer_serializer
@@ -237,6 +265,7 @@ serialized = serializer.req_dumps(
         "claimer_public_key": PublicKey(
             unhexlify("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
         ),
+        "greeter_user_id": ALICE.user_id,
     }
 )
 serializer.req_loads(serialized)
