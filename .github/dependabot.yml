@@ -9,8 +9,9 @@ updates:
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: monthly
-      time: "00:30"
+      interval: weekly
+      day: monday
+      time: "04:20"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
     rebase-strategy: disabled
@@ -20,8 +21,9 @@ updates:
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: monthly
-      time: "00:30"
+      interval: weekly
+      day: monday
+      time: "04:20"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
     rebase-strategy: disabled
@@ -31,8 +33,9 @@ updates:
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: monthly
-      time: "00:30"
+      interval: weekly
+      day: monday
+      time: "04:20"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
     rebase-strategy: disabled
@@ -47,8 +50,9 @@ updates:
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: monthly
-      time: "00:30"
+      interval: weekly
+      day: tuesday
+      time: "04:20"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
     rebase-strategy: disabled
@@ -66,8 +70,9 @@ updates:
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: monthly
-      time: "23:30"
+      interval: weekly
+      day: wednesday
+      time: "04:20"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
     rebase-strategy: disabled
@@ -81,8 +86,9 @@ updates:
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: monthly
-      time: "23:30"
+      interval: weekly
+      day: thursday
+      time: "04:20"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
     rebase-strategy: disabled
@@ -92,8 +98,9 @@ updates:
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: monthly
-      time: "23:30"
+      interval: weekly
+      day: thursday
+      time: "04:20"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
     rebase-strategy: disabled
@@ -103,8 +110,9 @@ updates:
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: monthly
-      time: "23:30"
+      interval: weekly
+      day: thursday
+      time: "04:20"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
     rebase-strategy: disabled
@@ -114,8 +122,9 @@ updates:
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: monthly
-      time: "23:30"
+      interval: weekly
+      day: thursday
+      time: "04:20"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
     rebase-strategy: disabled
@@ -125,8 +134,9 @@ updates:
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: monthly
-      time: "23:30"
+      interval: weekly
+      day: thursday
+      time: "04:20"
       timezone: Europe/Paris
     open-pull-requests-limit: 1
     rebase-strategy: disabled
@@ -140,8 +150,9 @@ updates:
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: monthly
-      time: "23:30"
+      interval: weekly
+      day: friday
+      time: "04:20"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
     rebase-strategy: disabled
@@ -151,8 +162,9 @@ updates:
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: monthly
-      time: "23:30"
+      interval: weekly
+      day: friday
+      time: "04:20"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
     rebase-strategy: disabled
