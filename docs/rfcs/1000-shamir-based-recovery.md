@@ -238,12 +238,12 @@ And the related certificates:
         {
             // Minimal number of shares to retrieve to reach the quorum and compute the secret
             "name": "threshold",
-            "type": "NonZeroU32"
+            "type": "NonZeroInteger"
         },
         {
             // A recipient can have multiple shares (to have a bigger weight than others)
             "name": "per_recipient_shares",
-            "type": "Map<UserID, NonZeroU32>"
+            "type": "Map<UserID, NonZeroInteger>"
         }
     ]
 }
@@ -426,7 +426,7 @@ Invited API, we reuse the `invite_info` command:
                         "fields": [
                             {
                                 "name": "threshold",
-                                "type": "NonZeroU32"
+                                "type": "NonZeroInteger"
                             },
                             {
                                 "name": "recipients",
@@ -449,7 +449,7 @@ Invited API, we reuse the `invite_info` command:
                     },
                     {
                         "name": "shares",
-                        "type": "NonZeroU32"
+                        "type": "NonZeroInteger"
                     }
                 ]
             }
@@ -662,17 +662,17 @@ authenticated API, `organization_config`
                     {
                         "name": "shamir_recovery_min_shares",
                         // Default should be 1
-                        "type": "NonZeroU32"
+                        "type": "NonZeroInteger"
                     },
                     {
                         "name": "shamir_recovery_max_shares",
                         // `None` for no limit (the default)
-                        "type": "RequiredOption<NonZeroU32>"
+                        "type": "RequiredOption<NonZeroInteger>"
                     },
                     {
                         "name": "shamir_recovery_max_shares_per_recipient",
                         // `None` for no limit (the default)
-                        "type": "RequiredOption<NonZeroU32>"
+                        "type": "RequiredOption<NonZeroInteger>"
                     },
                     {
                         "name": "shamir_recovery_recipient_allowed_profiles",
