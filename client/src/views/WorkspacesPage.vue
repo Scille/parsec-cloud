@@ -19,6 +19,7 @@
             @change="onMsSelectChange($event)"
           />
           <list-grid-toggle
+            :list-view="false"
             @toggle-view="onToggleView($event)"
           />
         </div>
@@ -180,7 +181,7 @@ function onWorkspaceClick(_event: Event, workspace: MockWorkspace): void {
   router.push({
     name: 'folder',
     params: { deviceId: currentRoute.params.deviceId, workspaceId: workspace.id },
-    query: { path: '/how/boring/and/small' }
+    query: { path: '/' }
   });
 }
 

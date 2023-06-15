@@ -40,10 +40,12 @@ import { IonButton, IonIcon } from '@ionic/vue';
 import { defineEmits } from 'vue';
 import { grid, list } from 'ionicons/icons';
 import { ref } from 'vue';
-import { useI18n } from 'vue-i18n';
 
-const listView = ref(false);
-const { t } = useI18n();
+const props = defineProps<{
+  listView: boolean
+}>();
+
+const listView = ref(props.listView);
 
 // create a custom event
 const emits = defineEmits<{

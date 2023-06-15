@@ -194,6 +194,32 @@
             "reader": "Reader"
         }
     },
+    "FoldersPage": {
+        "createFolder": "New folder",
+        "import": "Import",
+        "itemCount": "No items | One item | {count} items",
+        "listDisplayTitles": {
+            "name": "Name",
+            "updatedBy": "Updated By",
+            "lastUpdate": "Last Update",
+            "size": "Size"
+        },
+        "File": {
+            "lastUpdate": "Last updated:"
+        },
+        "fileContextMenu": {
+            "titleManage": "Manage file",
+            "titleCollaboration": "Collaboration",
+            "actionRename": "Rename",
+            "actionMoveTo": "Move to",
+            "actionMakeACopy": "Make a copy",
+            "actionOpenInExplorer": "Open in explorer",
+            "actionHistory": "History",
+            "actionDownload": "Download",
+            "actionDetails": "Details",
+            "actionCopyLink": "Copy link"
+        }
+    },
     "OrganizationPage": {
         "pageTitle": "My organization",
         "users": "Users",

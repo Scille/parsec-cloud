@@ -194,6 +194,32 @@
             "reader": "Lecteur"
         }
     },
+    "FoldersPage": {
+        "createFolder": "New folder",
+        "import": "Import",
+        "itemCount": "Aucun élément | Un élément | {count} éléments",
+        "listDisplayTitles": {
+            "name": "Nom",
+            "updatedBy": "Modifié par",
+            "lastUpdate": "Dernière modif.",
+            "size": "Taille"
+        },
+        "File": {
+            "lastUpdate": "Dernière modification :"
+        },
+        "fileContextMenu": {
+            "titleManage": "Gestion du fichier",
+            "titleCollaboration": "Collaboration",
+            "actionRename": "Renommer",
+            "actionMoveTo": "Déplacer vers",
+            "actionMakeACopy": "Dupliquer vers",
+            "actionOpenInExplorer": "Ouvrir dans l'explorateur",
+            "actionHistory": "Historique de versions",
+            "actionDownload": "Télécharger",
+            "actionDetails": "Détails",
+            "actionCopyLink": "Copier le lien"
+        }
+    },
     "OrganizationPage": {
         "pageTitle": "Mon organisation",
         "users": "Utilisateurs",
