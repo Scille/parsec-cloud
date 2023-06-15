@@ -1,15 +1,13 @@
 # Hacking Quickstart
 
-- [Hacking Quickstart](#hacking-quickstart)
-  - [Get the sources](#get-the-sources)
-  - [Shared requirements](#shared-requirements)
-  - [Hacking the Python code (front + back)](#hacking-the-python-code-front--back)
-    - [Run the Python tests](#run-the-python-tests)
-    - [Run Parsec in local](#run-parsec-in-local)
-  - [Hacking the Web client (front)](#hacking-the-web-client-front)
-    - [Start working on the web client](#start-working-on-the-web-client)
-  - [Hacking the Rust code](#hacking-the-rust-code)
-  - [If you are working on Mac](#if-you-are-working-on-mac)
+- [Get the sources](#get-the-sources)
+- [Shared requirements](#shared-requirements)
+- [Hacking the Python server](#hacking-the-python-server)
+  - [Run the Python tests](#run-the-python-tests)
+- [Hacking the Web client (front)](#hacking-the-web-client-front)
+  - [Start working on the web client](#start-working-on-the-web-client)
+- [Hacking the Rust code](#hacking-the-rust-code)
+- [If you are working on Mac](#if-you-are-working-on-mac)
 
 ## Get the sources
 
@@ -113,20 +111,68 @@ To start hacking, follow the basic steps detailed below:
 
        ```shell
        # Create the project virtual with the correct version of Python
-       poetry env use $(pyenv prefix 3.9.10)/bin/python
+       poetry env use $(pyenv prefix 3.9.10)/bin/python -C server/pyproject.toml
        ```
 
        > If you don't have installed `python` with `pyenv`, you need to replace `$(pyenv prefix 3.9.10)/bin/python` with the path where the python you want to use is located.
 
-## Hacking the Python code (front + back)
+## Hacking the Python server
 
 Once you have installed the [basic requirements](#shared-requirements), you can procede to setup to python virtual env with `poetry`.
 
-1. Install [`Qt5`](https://www.qt.io/).
+The python code is located in the folder `server`, The following steps and instruction will consider that you're in that folder.
 
-   The `python` application uses `PyQt5`, you need to have `qt5` installed for it to work (it won't even build).
+1. Initialize a poetry env
 
-2. Install FUSE (Linux/MacOS) or WinFsp (Windows)
+   ```shell
+   poetry install
+   ```
+
+2. Start a shell with the initialized virtual env
+
+    ```shell
+    poetry shell
+    ```
+
+3. To run parsec do
+
+    ```shell
+    poetry run parsec
+    ```
+
+Happy Hacking 🐍
+
+### Run the Python tests
+
+Run the tests with `pytest`:
+
+```shell
+poetry run pytest tests
+```
+
+In addition, the following options are available:
+
+| Option           | Description                                                                                               |
+| ---------------- | --------------------------------------------------------------------------------------------------------- |
+| ``--runslow``    | Include slow tests                                                                                        |
+| ``--postgresql`` | Use PostgreSQL in the backend instead of a mock in memory</br>**⚠️ Currently postgresql tests are broken** |
+| ``-n 4``         | Run tests in parallel (here `4` jobs)                                                                     |
+
+Note you can mix&match the flags, e.g.
+
+```shell
+poetry run pytest tests --runslow -n auto
+```
+
+## Hacking the Web client (front)
+
+In addition to the [shared requirements](#shared-requirements), you need to install [`Node 18.12.0`](https://nodejs.org/en/download/releases).
+
+> You can use [`nvm`](https://github.com/nvm-sh/nvm) to manage multiple node version
+> or [`nvm-windows`](https://github.com/coreybutler/nvm-windows) for `Windows`
+
+<!-- TODO: Currently the web client via electron doesn't provide mountpoint so fuse isn't required
+1. Install FUSE (Linux/MacOS) or WinFsp (Windows)
 
    Depending on your platform:
 
@@ -148,107 +194,18 @@ Once you have installed the [basic requirements](#shared-requirements), you can 
        brew install --cask macfuse
        ```
 
-     - On Linux: you need to have installed `libfuse2`
+     - On Linux: you need to have installed `libfuse2` -->
 
-3. Initialize a poetry env
-
-   ```shell
-   poetry install --extra 'core backend'
-   ```
-
-4. Start a shell with the initialized virtual env
-
-    ```shell
-    poetry shell
-    ```
-
-5. To run parsec do
-
-    ```shell
-    poetry run parsec
-    ```
-
-Happy Hacking 🐍
-
-### Run the Python tests
-
-Run the tests with `pytest`:
-
-```shell
-poetry run py.test tests
-```
-
-In addition, the following options are available:
-
-| Option              | Description                                               |
-| ------------------- | --------------------------------------------------------- |
-| ``--runmountpoint`` | Include mountpoint tests                                  |
-| ``--rungui``        | Include GUI tests                                         |
-| ``--runslow``       | Include slow tests                                        |
-| ``--postgresql``    | Use PostgreSQL in the backend instead of a mock in memory |
-| ``-n 4``            | Run tests in parallel (here `4` jobs)                     |
-
-Note you can mix&match the flags, e.g.
-
-```shell
-py.test tests --runmountpoint --postgresql --runslow -n auto
-```
-
-If you want to run GUI test, it is a good idea to install ``pytest-xvfb`` in order to
-hide the Qt windows when running the GUI tests
-
-```shell
-apt install xvfb
-pip install pytest-xvfb
-```
-
-### Run Parsec in local
-
-You can use the ``run_testenv`` scripts to easily create a development environment:
-
-On Linux and MacOS:
-
-```shell
-. ./tests/scripts/run_testenv.sh
-```
-
-On Windows:
-
-```cmd
-.\tests\scripts\run_testenv.bat
-```
-
-This script will:
-
-- Start a development backend server with in-memory storage
-- Configure environment variables to isolate the development environment from
-  your global Parsec configuration
-- Create a default organization
-- Create multiple users and devices for this organization
-
-## Hacking the Web client (front)
-
-In addition to the [shared requirements](#shared-requirements), you need to install [`Node 18.12.0`](https://nodejs.org/en/download/releases).
-
-> You could use [`nvm`](https://github.com/nvm-sh/nvm) to manage multiple node version
-> or [`nvm-windows`](https://github.com/coreybutler/nvm-windows) for `Windows`.
-
-1. Install [`Qt5`](https://www.qt.io/).
-
-   The `python` application use `PyQt5`, you need to have `qt5` installed because even if you don't need that part.
-   The build system will still require it (and).
-
-   > You can hack around that problem if your system can't have qt5 installed.
-   > You'll need to remove `PyQt5` from the build-system requirement in `pyproject.toml`
-   > see [PR-4403](https://github.com/Scille/parsec-cloud/pull/4403)
-
-2. Initialize a poetry env
+<!-- markdownlint-disable-next-line no-inline-html -->
+1. Initialize a poetry env <a id="init-web-server-env" />
 
    ```shell
-   POETRY_LIBPARSEC_BUILD_PROFILE=ci poetry install --extra 'backend'
+   ./make.py i
    ```
 
-3. Install `wasm-pack`
+   > The python backend is build from the folder `server`.
+
+2. Install `wasm-pack`
 
    Currently we use `wasm-pack@0.11.0`.
 
@@ -260,7 +217,7 @@ In addition to the [shared requirements](#shared-requirements), you need to inst
 
    > We install it using cargo because it's the simpler way to specify which version of `wasm-pack` to use.
 
-4. Setup the web binding
+3. Setup the web binding
 
    ```shell
    pushd bindings/web
@@ -271,7 +228,7 @@ In addition to the [shared requirements](#shared-requirements), you need to inst
 
    > You can use `python make.py web-dev-install` instead.
 
-5. Setup the electron binding
+4. Setup the electron binding
 
    ```shell
    pushd bindings/electron
@@ -282,13 +239,13 @@ In addition to the [shared requirements](#shared-requirements), you need to inst
 
    > You can use `python make.py electron-dev-install` instead.
 
-6. Move to the client dir, For the later command we will consider that the current directory is `client`
+5. Move to the client dir, For the later command we will consider that the current directory is `client`
 
    ```shell
    cd client
    ```
 
-7. Install client dependencies
+6. Install client dependencies
 
    ```shell
    npm install
@@ -299,11 +256,7 @@ In addition to the [shared requirements](#shared-requirements), you need to inst
 Before start working on the web client you need to setup a mock server
 that will provide some mocked data.
 
-1. Make sure you have the latest change for the python testbed server
-
-   ```shell
-   POETRY_LIBPARSEC_BUILD_PROFILE=ci poetry install --extra 'backend'
-   ```
+1. Make sure you have the latest change for the python testbed server, see [Initialize a poetry env](#init-web-server-env)
 
 2. Start the testbed server that will provide the mocked data.
 
