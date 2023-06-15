@@ -6,7 +6,9 @@ use libparsec_types::prelude::*;
 
 use crate::{InviteError, InviteResult};
 
-pub async fn claimer_retrieve_info(cmds: &InvitedCmds) -> InviteResult<invite_info::UserOrDevice> {
+pub async fn claimer_retrieve_info(
+    cmds: &InvitedCmds,
+) -> InviteResult<invite_info::UserOrDeviceOrShamirRecovery> {
     let rep = cmds.send(invite_info::Req).await?;
 
     match rep {
@@ -32,6 +34,7 @@ impl BaseClaimInitialCtx {
             .cmds
             .send(invite_1_claimer_wait_peer::Req {
                 claimer_public_key: claimer_private_key.public_key(),
+                greeter_user_id: Maybe::Present(self.greeter_user_id.clone()),
             })
             .await?;
 

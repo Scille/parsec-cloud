@@ -1,11 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use std::str::FromStr;
-
 use rand::{seq::SliceRandom, Rng};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
+use std::str::FromStr;
 
 use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
 use libparsec_serialization_format::parsec_data;
@@ -20,10 +19,11 @@ use crate::{
  */
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "UPPERCASE")]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum InvitationType {
     User,
     Device,
+    ShamirRecovery,
 }
 
 /*
@@ -55,6 +55,7 @@ impl ToString for InvitationType {
         match self {
             Self::User => String::from("USER"),
             Self::Device => String::from("DEVICE"),
+            Self::ShamirRecovery => String::from("SHAMIR_RECOVERY"),
         }
     }
 }

@@ -117,6 +117,8 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "X509Certificate" => "libparsec_types::X509Certificate",
                 // Used only in protocol
                 "IntegerBetween1And100" => "libparsec_types::IntegerBetween1And100",
+                // Used only in shamir
+                "ShamirRecoveryShareData" => "libparsec_types::ShamirRecoveryShareData",
                 ident if types.get(ident).is_some() => {
                     types.get(ident).unwrap_or_else(|| unreachable!())
                 }

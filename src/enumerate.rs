@@ -3,7 +3,7 @@
 use pyo3::{
     exceptions::PyValueError,
     pyclass, pymethods,
-    types::{PyBytes, PyTuple, PyType},
+    types::{PyBytes, PyType},
     IntoPy, PyObject, PyResult, Python,
 };
 
@@ -134,7 +134,12 @@ crate::binding_utils::gen_proto!(InvitationType, __hash__);
 crate::binding_utils::impl_enum_field!(
     InvitationType,
     ["DEVICE", device, libparsec::types::InvitationType::Device],
-    ["USER", user, libparsec::types::InvitationType::User]
+    ["USER", user, libparsec::types::InvitationType::User],
+    [
+        "SHAMIR_RECOVERY",
+        shamir_recovery,
+        libparsec::types::InvitationType::ShamirRecovery
+    ]
 );
 
 #[pyclass]

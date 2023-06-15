@@ -1,12 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use std::collections::HashMap;
-use std::convert::TryFrom;
-use std::str::FromStr;
-
 use data_encoding::BASE32;
-use serde::de::{self, Deserialize, Deserializer, Visitor};
-use serde::ser::{Serialize, Serializer};
+use serde::{
+    de::{self, Deserialize, Deserializer, Visitor},
+    ser::{Serialize, Serializer},
+};
+use std::{collections::HashMap, convert::TryFrom, str::FromStr};
 use url::Url;
 
 use libparsec_crypto::VerifyKey;
@@ -853,6 +852,7 @@ impl BackendInvitationAddr {
                 match self.invitation_type() {
                     InvitationType::User => "claim_user",
                     InvitationType::Device => "claim_device",
+                    InvitationType::ShamirRecovery => "claimer_shamir_recovery",
                 },
             )
             .append_pair("token", &self.token.hex());

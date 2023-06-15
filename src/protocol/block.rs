@@ -2,8 +2,10 @@
 
 use pyo3::{exceptions::PyNotImplementedError, prelude::*, types::PyBytes};
 
-use libparsec::protocol::authenticated_cmds::v2::{block_create, block_read};
-use libparsec::types::ProtocolRequest;
+use libparsec::{
+    protocol::authenticated_cmds::v2::{block_create, block_read},
+    types::ProtocolRequest,
+};
 
 use crate::{
     binding_utils::BytesWrapper,

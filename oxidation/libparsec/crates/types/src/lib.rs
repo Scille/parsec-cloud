@@ -28,6 +28,7 @@ mod organization;
 mod pki;
 mod protocol;
 mod regex;
+mod shamir;
 mod time;
 mod user;
 
@@ -46,6 +47,7 @@ pub use message::*;
 pub use organization::*;
 pub use pki::*;
 pub use protocol::*;
+pub use shamir::*;
 pub use time::*;
 pub use user::*;
 
