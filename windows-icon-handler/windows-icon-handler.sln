@@ -7,11 +7,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "check-icon-handler", "check
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "refresh-icon-handler", "refresh-icon-handler\refresh-icon-handler.vcxproj", "{C840C564-9041-4B53-938B-54C9BA413A1E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "refresh-icon-handlerPS", "refresh-icon-handlerPS\refresh-icon-handlerPS.vcxproj", "{F1A351F7-81CD-4E64-A14F-7DD716E64A11}"
-	ProjectSection(ProjectDependencies) = postProject
-		{C840C564-9041-4B53-938B-54C9BA413A1E} = {C840C564-9041-4B53-938B-54C9BA413A1E}
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -36,10 +31,6 @@ Global
 		{C840C564-9041-4B53-938B-54C9BA413A1E}.Release|x64.Build.0 = Release|x64
 		{C840C564-9041-4B53-938B-54C9BA413A1E}.Release|x86.ActiveCfg = Release|Win32
 		{C840C564-9041-4B53-938B-54C9BA413A1E}.Release|x86.Build.0 = Release|Win32
-		{F1A351F7-81CD-4E64-A14F-7DD716E64A11}.Debug|x64.ActiveCfg = Debug|x64
-		{F1A351F7-81CD-4E64-A14F-7DD716E64A11}.Debug|x86.ActiveCfg = Debug|Win32
-		{F1A351F7-81CD-4E64-A14F-7DD716E64A11}.Release|x64.ActiveCfg = Release|x64
-		{F1A351F7-81CD-4E64-A14F-7DD716E64A11}.Release|x86.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
