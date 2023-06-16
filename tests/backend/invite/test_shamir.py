@@ -313,9 +313,12 @@ async def test_full_shamir(
     reveal_token = b"token"
     secret_key = b"secret_key"
     ciphered_data = b"ciphered_data"
+
+    # 2 out of 10 shares are required to recover the data
     sharks = Sharks(2)
-    tokens = sharks.dealer(reveal_token, 2)
-    keys = sharks.dealer(secret_key, 2)
+    tokens = sharks.dealer(reveal_token, 10)
+    keys = sharks.dealer(secret_key, 10)
+
     now = DateTime.now()
     alice_ctlr = PeerController()
     adam_ctlr = PeerController()
@@ -371,13 +374,11 @@ async def test_full_shamir(
         assert isinstance(rep, InviteInfoRepOk)
 
         assert rep.threshold == 2
-        assert rep.recipients[0] == ShamirRecoveryRecipient(
-            bob.user_id, bob.human_handle, 1
-        ) or rep.recipients[0] == ShamirRecoveryRecipient(adam.user_id, adam.human_handle, 1)
-        assert rep.recipients[1] == ShamirRecoveryRecipient(
-            bob.user_id, bob.human_handle, 1
-        ) or rep.recipients[1] == ShamirRecoveryRecipient(adam.user_id, adam.human_handle, 1)
-        assert rep.recipients[0] != rep.recipients[1]
+        assert len(rep.recipients) == 2
+        assert sorted(rep.recipients, key=lambda x: x.human_handle or "") == [
+            ShamirRecoveryRecipient(adam.user_id, adam.human_handle, 1),
+            ShamirRecoveryRecipient(bob.user_id, bob.human_handle, 1),
+        ]
 
         async with _run_controllers(
             alice_ctlr,
