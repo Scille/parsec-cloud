@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import contextlib
+
 import pytest
 import trio
 
 from parsec._parsec import (
+    BackendInvitationAddr,
     DateTime,
     HashDigest,
     InvitationDeletedReason,
@@ -271,6 +274,7 @@ async def _shamir_exchange(
     assert claimer_rep.payload == greeter_payload
 
 
+@contextlib.asynccontextmanager
 async def _run_controllers(
     claimer_ctlr,
     greeter_ctlr,
@@ -304,6 +308,7 @@ async def test_full_shamir(
     adam_ws,
     backend_asgi_app,
     backend_invited_ws_factory,
+    backend_addr,
 ):
     reveal_token = b"token"
     secret_key = b"secret_key"
@@ -345,14 +350,19 @@ async def test_full_shamir(
     )
     assert isinstance(rep, InviteNewRepOk)
 
-    invitation_token = rep.token
+    invitation_url = BackendInvitationAddr.build(
+        backend_addr, adam.organization_id, InvitationType.SHAMIR_RECOVERY, rep.token
+    ).to_url()
+    assert "action=claim_shamir_recovery" in invitation_url
+
+    invitation_address = BackendInvitationAddr.from_url(invitation_url)
 
     # Alice comes back with adam invitation
     async with backend_invited_ws_factory(
         backend_asgi_app,
-        organization_id=alice.organization_id,
-        invitation_type=InvitationType.SHAMIR_RECOVERY,
-        token=invitation_token,
+        organization_id=invitation_address.organization_id,
+        invitation_type=invitation_address.invitation_type,
+        token=invitation_address.token,
     ) as invited_ws:
         claimer_privkey = PrivateKey.generate()
 
@@ -369,9 +379,15 @@ async def test_full_shamir(
         ) or rep.recipients[1] == ShamirRecoveryRecipient(adam.user_id, adam.human_handle, 1)
         assert rep.recipients[0] != rep.recipients[1]
 
-        async for alice_ctlr, adam_ctlr in _run_controllers(
-            alice_ctlr, adam_ctlr, invited_ws, adam_ws, claimer_privkey, adam, invitation_token
-        ):
+        async with _run_controllers(
+            alice_ctlr,
+            adam_ctlr,
+            invited_ws,
+            adam_ws,
+            claimer_privkey,
+            adam,
+            invitation_address.token,
+        ) as (alice_ctlr, adam_ctlr):
             await _shamir_exchange(
                 alice_ctlr, adam_ctlr, claimer_privkey.public_key, adam.public_key, raw_srsc_adam
             )
@@ -382,19 +398,24 @@ async def test_full_shamir(
     )
     assert isinstance(rep, InviteNewRepOk)
 
-    invitation_token = rep.token
+    invitation_url = BackendInvitationAddr.build(
+        backend_addr, bob.organization_id, InvitationType.SHAMIR_RECOVERY, rep.token
+    ).to_url()
+    assert "action=claim_shamir_recovery" in invitation_url
+
+    invitation_address = BackendInvitationAddr.from_url(invitation_url)
 
     async with backend_invited_ws_factory(
         backend_asgi_app,
-        organization_id=alice.organization_id,
-        invitation_type=InvitationType.SHAMIR_RECOVERY,
-        token=invitation_token,
+        organization_id=invitation_address.organization_id,
+        invitation_type=invitation_address.invitation_type,
+        token=invitation_address.token,
     ) as invited_ws:
         claimer_privkey = PrivateKey.generate()
 
-        async for alice_ctlr, bob_ctlr in _run_controllers(
-            alice_ctlr, bob_ctlr, invited_ws, bob_ws, claimer_privkey, bob, invitation_token
-        ):
+        async with _run_controllers(
+            alice_ctlr, bob_ctlr, invited_ws, bob_ws, claimer_privkey, bob, invitation_address.token
+        ) as (alice_ctlr, bob_ctlr):
             await _shamir_exchange(
                 alice_ctlr, bob_ctlr, claimer_privkey.public_key, bob.public_key, raw_srsc_bob
             )
@@ -458,6 +479,7 @@ async def test_shamir_list(
 
     assert len(rep.invitations) == 1
     assert rep.invitations[0].token == invitation_token
+    assert alice.human_handle is not None
     assert rep.invitations[0].claimer_email == alice.human_handle.email
 
     rep = await invite_delete(adam_ws, invitation_token, InvitationDeletedReason.CANCELLED)

@@ -808,11 +808,12 @@ impl BackendInvitationAddr {
         let invitation_type = match extract_action(&pairs)? {
             x if x == "claim_user" => InvitationType::User,
             x if x == "claim_device" => InvitationType::Device,
+            x if x == "claim_shamir_recovery" => InvitationType::ShamirRecovery,
             value => {
                 return Err(AddrError::InvalidParamValue {
                     param: "action",
                     value: value.to_string(),
-                    help: "Expected `action=claim_user` or `action=claim_device`".to_string(),
+                    help: "Expected `action=claim_user`, `action=claim_device` or `action=claim_shamir_recovery`".to_string(),
                 })
             }
         };
@@ -852,7 +853,7 @@ impl BackendInvitationAddr {
                 match self.invitation_type() {
                     InvitationType::User => "claim_user",
                     InvitationType::Device => "claim_device",
-                    InvitationType::ShamirRecovery => "claimer_shamir_recovery",
+                    InvitationType::ShamirRecovery => "claim_shamir_recovery",
                 },
             )
             .append_pair("token", &self.token.hex());

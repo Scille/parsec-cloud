@@ -45,6 +45,7 @@ impl FromStr for InvitationType {
         match s.to_uppercase().as_str() {
             "USER" => Ok(Self::User),
             "DEVICE" => Ok(Self::Device),
+            "SHAMIR_RECOVERY" => Ok(Self::ShamirRecovery),
             _ => Err("Invalid InvitationType"),
         }
     }
