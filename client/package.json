@@ -30,7 +30,7 @@
         "@capacitor-community/electron": "^4.1.2",
         "@capacitor/android": "^4.8.0",
         "@capacitor/app": "^4.1.1",
-        "@capacitor/core": "^4.7.1",
+        "@capacitor/core": "^4.8.0",
         "@capacitor/haptics": "^4.1.0",
         "@capacitor/ios": "^4.7.1",
         "@capacitor/keyboard": "^4.1.1",
