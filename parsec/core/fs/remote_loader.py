@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import math
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Awaitable, Callable, Dict, Iterable, Iterator, List, Tuple
+from typing import TYPE_CHECKING, Awaitable, Callable, Iterable, Iterator
 
 import trio
 from trio import MemoryReceiveChannel, MemorySendChannel, open_memory_channel
@@ -137,7 +137,7 @@ class VlobSequesterInconsistencyError(Exception):
     def __init__(
         self,
         sequester_authority_certificate: bytes,
-        sequester_services_certificates: Tuple[bytes],
+        sequester_services_certificates: Iterable[bytes],
     ):
         self.sequester_authority_certificate = sequester_authority_certificate
         self.sequester_services_certificates = sequester_services_certificates
@@ -147,7 +147,7 @@ def _validate_sequester_config(
     root_verify_key: VerifyKey,
     sequester_authority_certificate: bytes | None,
     sequester_services_certificates: Iterable[bytes] | None,
-) -> Tuple[SequesterAuthorityCertificate | None, List[SequesterServiceCertificate] | None]:
+) -> tuple[SequesterAuthorityCertificate | None, list[SequesterServiceCertificate] | None]:
     if sequester_authority_certificate is None:
         return None, None
 
@@ -217,14 +217,14 @@ class PyUserRemoteLoader:
         self.workspace_id = workspace_id
         self.backend_cmds = backend_cmds
         self.remote_devices_manager = remote_devices_manager
-        self._realm_role_certificates_cache: List[RealmRoleCertificate] | None = None
+        self._realm_role_certificates_cache: list[RealmRoleCertificate] | None = None
 
     def clear_realm_role_certificate_cache(self) -> None:
         self._realm_role_certificates_cache = None
 
     async def _load_realm_role_certificates(
         self, realm_id: EntryID | None = None
-    ) -> Tuple[List[RealmRoleCertificate], Dict[UserID, RealmRole]]:
+    ) -> tuple[list[RealmRoleCertificate], dict[UserID, RealmRole]]:
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.realm_get_role_certificates(
                 RealmID.from_entry_id(realm_id or self.workspace_id)
@@ -245,7 +245,7 @@ class PyUserRemoteLoader:
                 key=lambda x: x[0].timestamp,
             )
 
-            current_roles: Dict[UserID, RealmRole] = {}
+            current_roles: dict[UserID, RealmRole] = {}
             owner_only = (RealmRole.OWNER,)
             owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
 
@@ -268,7 +268,7 @@ class PyUserRemoteLoader:
                 existing_user_role = current_roles.get(unsecure_certif.user_id)
                 if not current_roles and unsecure_certif.user_id == author.device_id.user_id:
                     # First user is auto-signed
-                    needed_roles: Tuple[RealmRole | None, ...] = (None,)
+                    needed_roles: tuple[RealmRole | None, ...] = (None,)
                 elif (
                     existing_user_role in owner_or_manager
                     or unsecure_certif.role in owner_or_manager
@@ -299,7 +299,7 @@ class PyUserRemoteLoader:
 
     async def load_realm_role_certificates(
         self, realm_id: EntryID | None = None
-    ) -> List[RealmRoleCertificate]:
+    ) -> list[RealmRoleCertificate]:
         """
         Raises:
             FSError
@@ -315,7 +315,7 @@ class PyUserRemoteLoader:
 
     async def load_realm_current_roles(
         self, realm_id: EntryID | None = None
-    ) -> Dict[UserID, RealmRole]:
+    ) -> dict[UserID, RealmRole]:
         """
         Raises:
             FSError
@@ -331,7 +331,7 @@ class PyUserRemoteLoader:
 
     async def get_user(
         self, user_id: UserID, no_cache: bool = False
-    ) -> Tuple[UserCertificate, RevokedUserCertificate | None]:
+    ) -> tuple[UserCertificate, RevokedUserCertificate | None]:
         """
         Raises:
             FSRemoteOperationError
@@ -354,7 +354,7 @@ class PyUserRemoteLoader:
         with translate_remote_devices_manager_errors():
             return await self.remote_devices_manager.get_device(device_id, no_cache=no_cache)
 
-    async def list_versions(self, entry_id: EntryID) -> Dict[int, Tuple[DateTime, DeviceID]]:
+    async def list_versions(self, entry_id: EntryID) -> dict[int, tuple[DateTime, DeviceID]]:
         """
         Raises:
             FSError
@@ -428,7 +428,7 @@ class RemoteLoader(PyUserRemoteLoader):
         self.get_previous_workspace_entry = get_previous_workspace_entry
         self.local_storage = local_storage
         self.event_bus = event_bus
-        self._sequester_services_cache: List[SequesterServiceCertificate] | None = None
+        self._sequester_services_cache: list[SequesterServiceCertificate] | None = None
 
     async def _get_user_realm_role_at(
         self, user_id: UserID, timestamp: DateTime, author_last_role_granted_on: DateTime
@@ -457,14 +457,14 @@ class RemoteLoader(PyUserRemoteLoader):
         else:
             return None
 
-    async def load_blocks(self, accesses: List[BlockAccess]) -> None:
+    async def load_blocks(self, accesses: list[BlockAccess]) -> None:
         async with open_service_nursery() as nursery:
             async with await self.receive_load_blocks(accesses, nursery) as receive_channel:
                 async for value in receive_channel:
                     pass
 
     async def receive_load_blocks(
-        self, blocks: List[BlockAccess], nursery: trio.Nursery
+        self, blocks: list[BlockAccess], nursery: trio.Nursery
     ) -> "MemoryReceiveChannel[BlockAccess]":
         """
         Raises:
@@ -541,7 +541,7 @@ class RemoteLoader(PyUserRemoteLoader):
                 block_ids=removed_block_ids,
             )
 
-    async def upload_blocks(self, blocks: List[BlockAccess]) -> None:
+    async def upload_blocks(self, blocks: list[BlockAccess]) -> None:
         blocks_iter = iter(blocks)
 
         async def _uploader() -> None:
@@ -849,7 +849,7 @@ class RemoteLoader(PyUserRemoteLoader):
         entry_id: EntryID,
         ciphered: bytes,
         now: DateTime,
-        sequester_blob: Dict[SequesterServiceID, bytes] | None,
+        sequester_blob: dict[SequesterServiceID, bytes] | None,
     ) -> None:
         """
         Raises:
@@ -911,7 +911,7 @@ class RemoteLoader(PyUserRemoteLoader):
         ciphered: bytes,
         now: DateTime,
         version: int,
-        sequester_blob: Dict[SequesterServiceID, bytes] | None,
+        sequester_blob: dict[SequesterServiceID, bytes] | None,
     ) -> None:
         """
         Raises:
@@ -1036,7 +1036,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
         entry_id: EntryID,
         ciphered: bytes,
         now: DateTime,
-        sequester_blob: Dict[SequesterServiceID, bytes] | None,
+        sequester_blob: dict[SequesterServiceID, bytes] | None,
     ) -> None:
         raise FSError("Cannot create vlob through a timestamped remote loader")
 
@@ -1047,7 +1047,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
         ciphered: bytes,
         now: DateTime,
         version: int,
-        sequester_blob: Dict[SequesterServiceID, bytes] | None,
+        sequester_blob: dict[SequesterServiceID, bytes] | None,
     ) -> None:
         raise FSError("Cannot update vlob through a timestamped remote loader")
 
