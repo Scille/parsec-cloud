@@ -58,7 +58,7 @@ To create the Shamir recovery:
    Shamir algorithm.
 3) Alice create a `ShamirRecoveryShareCertificate` certificate for Bob
    (`SRSCBob`) and Adam (`SRSCAdam`). Each certificate contains a part of the
-   `SK` secret.
+   `SK` secret, signed by Alice and encrypted with Bob/Adam's user key.
 4) Alice send a `shamir_recovery_setup` command to the Parsec server
    containing the `SK(alice@shamir1)`, `SRSCBob`, `SRSCAdam` and the
    Shamir `threshold`.
@@ -194,13 +194,16 @@ And the related certificates:
             "type": "UserID"
         },
         {
-            // Share ciphered with recipient's user key
+            // The corresponding share as `ShamirRecoveryShareData`
+            // It is signed with the author's user key and ciphered with recipient's user key
             "name": "ciphered_share",
-            "type": "ShamirRecoveryShareData"
+            "type": "Bytes"
         }
     ]
 }
 ```
+
+Note: The share data is signed by the author in order to prevent attacks where a user puts someone else's share in the certificate in order to trick an administrator into deciphering it.
 
 ```json5
 {
