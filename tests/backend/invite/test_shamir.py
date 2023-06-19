@@ -2,17 +2,13 @@
 
 from __future__ import annotations
 
-import contextlib
-
 import pytest
-import trio
 
 from parsec._parsec import (
     BackendInvitationAddr,
     DateTime,
     HashDigest,
     InvitationDeletedReason,
-    InvitationToken,
     InvitationType,
     Invite3aClaimerSignifyTrustRepOk,
     Invite3aGreeterWaitPeerTrustRepOk,
@@ -26,7 +22,6 @@ from parsec._parsec import (
     InviteShamirRecoveryRevealRepOk,
     LocalDevice,
     PrivateKey,
-    PublicKey,
     ShamirRecoveryBriefCertificate,
     ShamirRecoveryOthersListRepNotAllowed,
     ShamirRecoveryOthersListRepOk,
@@ -38,22 +33,10 @@ from parsec._parsec import (
     ShamirRecoveryShareData,
     Share,
     Sharks,
-    UserID,
     UserProfile,
+    VerifyKey,
 )
 from tests.backend.common import (
-    invite_1_claimer_wait_peer,
-    invite_1_greeter_wait_peer,
-    invite_2a_claimer_send_hashed_nonce,
-    invite_2a_greeter_get_hashed_nonce,
-    invite_2b_claimer_send_nonce,
-    invite_2b_greeter_send_nonce,
-    invite_3a_claimer_signify_trust,
-    invite_3a_greeter_wait_peer_trust,
-    invite_3b_claimer_wait_peer_trust,
-    invite_3b_greeter_signify_trust,
-    invite_4_claimer_communicate,
-    invite_4_greeter_communicate,
     invite_delete,
     invite_info,
     invite_list,
@@ -63,99 +46,8 @@ from tests.backend.common import (
     shamir_recovery_self_info,
     shamir_recovery_setup,
 )
-from tests.backend.invite.conftest import PeerController
+from tests.backend.invite.test_exchange import PeerController, exchange_testbed_context
 from tests.common.fixtures_customisation import customize_fixtures
-
-
-async def _run_greeter(
-    peer_controller, greeter_ws, greeter_public_key: PublicKey, invitation_token: InvitationToken
-):
-    while True:
-        order, order_arg = await peer_controller.peer_next_order()
-
-        if order == "1_wait_peer":
-            await peer_controller.peer_do(
-                invite_1_greeter_wait_peer,
-                greeter_ws,
-                token=invitation_token,
-                greeter_public_key=greeter_public_key,
-            )
-
-        elif order == "2a_get_hashed_nonce":
-            await peer_controller.peer_do(
-                invite_2a_greeter_get_hashed_nonce, greeter_ws, token=invitation_token
-            )
-
-        elif order == "2b_send_nonce":
-            await peer_controller.peer_do(
-                invite_2b_greeter_send_nonce,
-                greeter_ws,
-                token=invitation_token,
-                greeter_nonce=b"<greeter_nonce>",
-            )
-
-        elif order == "3a_wait_peer_trust":
-            await peer_controller.peer_do(
-                invite_3a_greeter_wait_peer_trust, greeter_ws, token=invitation_token
-            )
-
-        elif order == "3b_signify_trust":
-            await peer_controller.peer_do(
-                invite_3b_greeter_signify_trust, greeter_ws, token=invitation_token
-            )
-
-        elif order == "4_communicate":
-            await peer_controller.peer_do(
-                invite_4_greeter_communicate,
-                greeter_ws,
-                token=invitation_token,
-                payload=order_arg,
-            )
-
-        else:
-            assert False
-
-
-async def _run_claimer(
-    peer_controller, claimer_ws, claimer_public_key: PublicKey, greeter_id: UserID
-):
-    while True:
-        order, order_arg = await peer_controller.peer_next_order()
-
-        if order == "1_wait_peer":
-            await peer_controller.peer_do(
-                invite_1_claimer_wait_peer,
-                claimer_ws,
-                claimer_public_key=claimer_public_key,
-                greeter_user_id=greeter_id,
-            )
-
-        elif order == "2a_send_hashed_nonce":
-            await peer_controller.peer_do(
-                invite_2a_claimer_send_hashed_nonce,
-                claimer_ws,
-                claimer_hashed_nonce=HashDigest.from_data(b"<claimer_nonce>"),
-            )
-
-        elif order == "2b_send_nonce":
-            await peer_controller.peer_do(
-                invite_2b_claimer_send_nonce, claimer_ws, claimer_nonce=b"<claimer_nonce>"
-            )
-
-        elif order == "3a_signify_trust":
-            await peer_controller.peer_do(invite_3a_claimer_signify_trust, claimer_ws)
-
-        elif order == "3b_wait_peer_trust":
-            await peer_controller.peer_do(invite_3b_claimer_wait_peer_trust, claimer_ws)
-
-        elif order == "4_communicate":
-            assert order_arg is not None
-            await peer_controller.peer_do(
-                invite_4_claimer_communicate, claimer_ws, payload=order_arg
-            )
-
-        else:
-            assert False
 
 
 @pytest.mark.trio
@@ -218,9 +110,9 @@ async def test_invite_shamir_not_available(bob: LocalDevice, alice_ws):
 async def _shamir_exchange(
     claimer_ctlr: PeerController,
     greeter_ctlr: PeerController,
-    claimer_public_key: PublicKey,
-    greeter_public_key: PublicKey,
-    greeter_payload: bytes,
+    claimer_verify_key: VerifyKey,
+    greeter_private_key: PrivateKey,
+    raw_certificate: bytes,
 ) -> None:
     # Step 1
     await claimer_ctlr.send_order("1_wait_peer")
@@ -228,9 +120,6 @@ async def _shamir_exchange(
 
     greeter_rep = await greeter_ctlr.get_result()
     claimer_rep = await claimer_ctlr.get_result()
-
-    assert greeter_rep.claimer_public_key == claimer_public_key
-    assert claimer_rep.greeter_public_key == greeter_public_key
 
     # Step 2
     await claimer_ctlr.send_order("2a_send_hashed_nonce")
@@ -265,36 +154,18 @@ async def _shamir_exchange(
     assert isinstance(claimer_rep, Invite3bClaimerWaitPeerTrustRepOk)
 
     # Step 4
-
+    certificate = ShamirRecoveryShareCertificate.load(raw_certificate)
+    share = ShamirRecoveryShareData.decrypt_verify_and_load_for(
+        certificate.ciphered_share,
+        greeter_private_key,
+        claimer_verify_key,
+    )
     await claimer_ctlr.send_order("4_communicate", b"")
-    await greeter_ctlr.send_order("4_communicate", greeter_payload)
+    await greeter_ctlr.send_order("4_communicate", share.dump())
     greeter_rep = await greeter_ctlr.get_result()
     assert greeter_rep.payload == b""
     claimer_rep = await claimer_ctlr.get_result()
-    assert claimer_rep.payload == greeter_payload
-
-
-@contextlib.asynccontextmanager
-async def _run_controllers(
-    claimer_ctlr,
-    greeter_ctlr,
-    claimer_ws,
-    greeter_ws,
-    claimer_privkey: PrivateKey,
-    greeter: LocalDevice,
-    invitation_token: InvitationToken,
-):
-    async with trio.open_nursery() as nursery:
-        nursery.start_soon(
-            _run_claimer, claimer_ctlr, claimer_ws, claimer_privkey.public_key, greeter.user_id
-        )
-        nursery.start_soon(
-            _run_greeter, greeter_ctlr, greeter_ws, greeter.public_key, invitation_token
-        )
-
-        yield claimer_ctlr, greeter_ctlr
-
-        nursery.cancel_scope.cancel()
+    return ShamirRecoveryShareData.load(claimer_rep.payload)
 
 
 @pytest.mark.trio
@@ -320,19 +191,21 @@ async def test_full_shamir(
     keys = sharks.dealer(secret_key, 10)
 
     now = DateTime.now()
-    alice_ctlr = PeerController()
-    adam_ctlr = PeerController()
-    bob_ctlr = PeerController()
 
     # Alice creates ShamirRecoveryShareCertificate for Bob & Adam
     srsd_bob = ShamirRecoveryShareData(tokens[0].dump(), keys[0].dump())
+    srsd_bob_ciphered = srsd_bob.dump_sign_and_encrypt_for(alice.signing_key, bob.public_key)
     raw_srsc_bob = ShamirRecoveryShareCertificate(
-        alice.device_id, now, bob.user_id, srsd_bob
+        alice.device_id, now, bob.user_id, srsd_bob_ciphered
     ).dump()
 
     srsd_adam = ShamirRecoveryShareData(tokens[1].dump(), keys[1].dump())
+    srsd_adam_ciphered = srsd_adam.dump_sign_and_encrypt_for(alice.signing_key, adam.public_key)
     raw_srsc_adam = ShamirRecoveryShareCertificate(
-        alice.device_id, now, bob.user_id, srsd_adam
+        alice.device_id,
+        now,
+        bob.user_id,
+        srsd_adam_ciphered,
     ).dump()
 
     # Alice creates ShamirRecoveryBriefCertificate
@@ -367,8 +240,6 @@ async def test_full_shamir(
         invitation_type=invitation_address.invitation_type,
         token=invitation_address.token,
     ) as invited_ws:
-        claimer_privkey = PrivateKey.generate()
-
         # Alice gets information
         rep = await invite_info(invited_ws)
         assert isinstance(rep, InviteInfoRepOk)
@@ -380,17 +251,18 @@ async def test_full_shamir(
             ShamirRecoveryRecipient(bob.user_id, bob.human_handle, 1),
         ]
 
-        async with _run_controllers(
-            alice_ctlr,
-            adam_ctlr,
-            invited_ws,
-            adam_ws,
-            claimer_privkey,
+        async with exchange_testbed_context(
             adam,
-            invitation_address.token,
-        ) as (alice_ctlr, adam_ctlr):
-            await _shamir_exchange(
-                alice_ctlr, adam_ctlr, claimer_privkey.public_key, adam.public_key, raw_srsc_adam
+            adam_ws,
+            invitation_address,
+            invited_ws,
+        ) as (_, _, adam_ctlr, alice_ctlr):
+            adam_share = await _shamir_exchange(
+                alice_ctlr,
+                adam_ctlr,
+                alice.verify_key,
+                adam.private_key,
+                raw_srsc_adam,
             )
 
     # Alice reiterates with Bob
@@ -412,41 +284,49 @@ async def test_full_shamir(
         invitation_type=invitation_address.invitation_type,
         token=invitation_address.token,
     ) as invited_ws:
-        claimer_privkey = PrivateKey.generate()
-
-        async with _run_controllers(
-            alice_ctlr, bob_ctlr, invited_ws, bob_ws, claimer_privkey, bob, invitation_address.token
-        ) as (alice_ctlr, bob_ctlr):
-            await _shamir_exchange(
-                alice_ctlr, bob_ctlr, claimer_privkey.public_key, bob.public_key, raw_srsc_bob
+        async with exchange_testbed_context(
+            bob,
+            bob_ws,
+            invitation_address,
+            invited_ws,
+        ) as (_, _, bob_ctlr, alice_ctlr):
+            bob_share = await _shamir_exchange(
+                alice_ctlr,
+                bob_ctlr,
+                alice.verify_key,
+                bob.private_key,
+                raw_srsc_bob,
             )
 
-        # Now Alice can recover her device
-        srsc_bob = ShamirRecoveryShareCertificate.load(raw_srsc_bob)
-        srsc_adam = ShamirRecoveryShareCertificate.load(raw_srsc_adam)
-
-        recovered_token = sharks.recover(
-            (
-                Share.load(srsc_bob.ciphered_share.reveal_token_share),
-                Share.load(srsc_adam.ciphered_share.reveal_token_share),
-            )
+    # Now Alice can recover her device
+    recovered_token = sharks.recover(
+        (
+            Share.load(adam_share.reveal_token_share),
+            Share.load(bob_share.reveal_token_share),
         )
-        recovered_key = sharks.recover(
-            (
-                Share.load(srsc_bob.ciphered_share.data_key_share),
-                Share.load(srsc_adam.ciphered_share.data_key_share),
-            )
+    )
+    recovered_key = sharks.recover(
+        (
+            Share.load(adam_share.data_key_share),
+            Share.load(bob_share.data_key_share),
         )
+    )
 
-        assert recovered_token == reveal_token
-        assert recovered_key == secret_key
+    assert recovered_token == reveal_token
+    assert recovered_key == secret_key
 
+    async with backend_invited_ws_factory(
+        backend_asgi_app,
+        organization_id=invitation_address.organization_id,
+        invitation_type=invitation_address.invitation_type,
+        token=invitation_address.token,
+    ) as invited_ws:
         rep = await invite_shamir_recovery_reveal(invited_ws, recovered_token)
         assert isinstance(rep, InviteShamirRecoveryRevealRepOk)
 
-        assert rep.ciphered_data == ciphered_data
+    assert rep.ciphered_data == ciphered_data
 
-        # TODO: Decrypt ciphered data with recovered_key
+    # TODO: Decrypt ciphered data with recovered_key
 
 
 @pytest.mark.trio

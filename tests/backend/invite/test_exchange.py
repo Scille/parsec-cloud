@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+import contextlib
+
 import pytest
 import trio
 
@@ -102,8 +104,13 @@ class PeerController:
         return await self._orders_receiver.receive()
 
 
-@pytest.fixture
-async def exchange_testbed(alice, alice_ws, invitation, invited_ws):
+@contextlib.asynccontextmanager
+async def exchange_testbed_context(
+    greeter,
+    greeter_ws,
+    invitation,
+    invited_ws,
+):
     greeter_privkey = PrivateKey.generate()
     claimer_privkey = PrivateKey.generate()
 
@@ -114,38 +121,38 @@ async def exchange_testbed(alice, alice_ws, invitation, invited_ws):
             if order == "1_wait_peer":
                 await peer_controller.peer_do(
                     invite_1_greeter_wait_peer,
-                    alice_ws,
+                    greeter_ws,
                     token=invitation.token,
                     greeter_public_key=greeter_privkey.public_key,
                 )
 
             elif order == "2a_get_hashed_nonce":
                 await peer_controller.peer_do(
-                    invite_2a_greeter_get_hashed_nonce, alice_ws, token=invitation.token
+                    invite_2a_greeter_get_hashed_nonce, greeter_ws, token=invitation.token
                 )
 
             elif order == "2b_send_nonce":
                 await peer_controller.peer_do(
                     invite_2b_greeter_send_nonce,
-                    alice_ws,
+                    greeter_ws,
                     token=invitation.token,
                     greeter_nonce=b"<greeter_nonce>",
                 )
 
             elif order == "3a_wait_peer_trust":
                 await peer_controller.peer_do(
-                    invite_3a_greeter_wait_peer_trust, alice_ws, token=invitation.token
+                    invite_3a_greeter_wait_peer_trust, greeter_ws, token=invitation.token
                 )
 
             elif order == "3b_signify_trust":
                 await peer_controller.peer_do(
-                    invite_3b_greeter_signify_trust, alice_ws, token=invitation.token
+                    invite_3b_greeter_signify_trust, greeter_ws, token=invitation.token
                 )
 
             elif order == "4_communicate":
                 await peer_controller.peer_do(
                     invite_4_greeter_communicate,
-                    alice_ws,
+                    greeter_ws,
                     token=invitation.token,
                     payload=order_arg,
                 )
@@ -162,7 +169,7 @@ async def exchange_testbed(alice, alice_ws, invitation, invited_ws):
                     invite_1_claimer_wait_peer,
                     invited_ws,
                     claimer_public_key=claimer_privkey.public_key,
-                    greeter_user_id=alice.user_id,
+                    greeter_user_id=greeter.user_id,
                 )
 
             elif order == "2a_send_hashed_nonce":
@@ -201,6 +208,12 @@ async def exchange_testbed(alice, alice_ws, invitation, invited_ws):
         yield greeter_privkey, claimer_privkey, greeter_ctlr, claimer_ctlr
 
         nursery.cancel_scope.cancel()
+
+
+@pytest.fixture
+async def exchange_testbed(alice, alice_ws, invitation, invited_ws):
+    async with exchange_testbed_context(alice, alice_ws, invitation, invited_ws) as item:
+        yield item
 
 
 @pytest.mark.trio
