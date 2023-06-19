@@ -17,7 +17,7 @@
         {
             // Share ciphered with recipient's user key
             "name": "ciphered_share",
-            "type": "ShamirRecoveryShareData"
+            "type": "Bytes"
         }
     ]
 }

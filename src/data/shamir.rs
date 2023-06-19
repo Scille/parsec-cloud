@@ -8,6 +8,7 @@ use pyo3::{
 };
 use std::{collections::HashMap, num::NonZeroU64};
 
+use crate::api_crypto::{PrivateKey, PublicKey, SigningKey, VerifyKey};
 use crate::{
     binding_utils::BytesWrapper,
     ids::{DeviceID, UserID},
@@ -122,6 +123,50 @@ impl ShamirRecoveryShareData {
     fn data_key_share(&self) -> &[u8] {
         &self.0.data_key_share
     }
+
+    fn dump<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(
+            py,
+            &self.0.dump().map_err(PyValueError::new_err)?,
+        ))
+    }
+
+    #[classmethod]
+    fn load(_cls: &PyType, data: &[u8]) -> PyResult<Self> {
+        let share_data =
+            libparsec::types::ShamirRecoveryShareData::load(data).map_err(PyValueError::new_err)?;
+        Ok(Self(share_data))
+    }
+
+    #[classmethod]
+    fn decrypt_verify_and_load_for(
+        _cls: &PyType,
+        ciphered: &[u8],
+        recipient_privkey: &PrivateKey,
+        author_verify_key: &VerifyKey,
+    ) -> PyResult<ShamirRecoveryShareData> {
+        let share_data = libparsec::types::ShamirRecoveryShareData::decrypt_verify_and_load_for(
+            ciphered,
+            &recipient_privkey.0,
+            &author_verify_key.0,
+        )
+        .map_err(PyValueError::new_err)?;
+        Ok(ShamirRecoveryShareData(share_data))
+    }
+
+    fn dump_sign_and_encrypt_for<'py>(
+        &self,
+        author_signkey: &SigningKey,
+        recipient_pubkey: &PublicKey,
+        py: Python<'py>,
+    ) -> PyResult<&'py PyBytes> {
+        Ok(PyBytes::new(
+            py,
+            &self
+                .0
+                .dump_sign_and_encrypt_for(&author_signkey.0, &recipient_pubkey.0),
+        ))
+    }
 }
 
 #[pyclass]
@@ -142,12 +187,12 @@ impl ShamirRecoveryShareCertificate {
         author: DeviceID,
         timestamp: DateTime,
         recipient: UserID,
-        ciphered_share: ShamirRecoveryShareData,
+        ciphered_share: &[u8],
     ) -> Self {
         let author = author.0;
         let timestamp = timestamp.0;
         let recipient = recipient.0;
-        let ciphered_share = ciphered_share.0;
+        let ciphered_share = ciphered_share.into();
 
         Self(libparsec::types::ShamirRecoveryShareCertificate {
             author,
@@ -173,8 +218,8 @@ impl ShamirRecoveryShareCertificate {
     }
 
     #[getter]
-    fn ciphered_share(&self) -> ShamirRecoveryShareData {
-        ShamirRecoveryShareData(self.0.ciphered_share.clone())
+    fn ciphered_share(&self) -> &[u8] {
+        &self.0.ciphered_share
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {

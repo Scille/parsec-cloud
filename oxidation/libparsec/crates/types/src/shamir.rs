@@ -1,7 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use flate2::read::ZlibDecoder;
+use flate2::write::ZlibEncoder;
+
+use libparsec_crypto::{PrivateKey, PublicKey, SigningKey, VerifyKey};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use std::{collections::HashMap, num::NonZeroU64};
+use std::{
+    collections::HashMap,
+    io::{Read, Write},
+    num::NonZeroU64,
+};
 
 use libparsec_serialization_format::parsec_data;
 
@@ -59,7 +67,7 @@ pub struct ShamirRecoveryShareCertificate {
     pub author: DeviceID,
     pub timestamp: DateTime,
     pub recipient: UserID,
-    pub ciphered_share: ShamirRecoveryShareData,
+    pub ciphered_share: Vec<u8>,
 }
 
 impl ShamirRecoveryShareCertificate {
@@ -100,3 +108,46 @@ impl_transparent_data_format_conversion!(
     reveal_token_share,
     data_key_share,
 );
+
+impl ShamirRecoveryShareData {
+    pub fn dump(&self) -> Result<Vec<u8>, &'static str> {
+        ::rmp_serde::to_vec_named(self).map_err(|_| "Serialization failed")
+    }
+
+    pub fn load(buf: &[u8]) -> Result<Self, &'static str> {
+        ::rmp_serde::from_slice(buf).map_err(|_| "Deserialization failed")
+    }
+
+    pub fn decrypt_verify_and_load_for(
+        ciphered: &[u8],
+        recipient_privkey: &PrivateKey,
+        author_verify_key: &VerifyKey,
+    ) -> Result<ShamirRecoveryShareData, &'static str> {
+        let signed = recipient_privkey
+            .decrypt_from_self(ciphered)
+            .map_err(|_| "Invalid encryption")?;
+        let compressed = author_verify_key
+            .verify(&signed)
+            .map_err(|_| "Invalid signature")?;
+        let mut serialized = vec![];
+        ZlibDecoder::new(&compressed[..])
+            .read_to_end(&mut serialized)
+            .map_err(|_| "Invalid compression")?;
+        let data: ShamirRecoveryShareData =
+            rmp_serde::from_slice(&serialized).map_err(|_| "Invalid serialization")?;
+        Ok(data)
+    }
+
+    pub fn dump_sign_and_encrypt_for(
+        &self,
+        author_signkey: &SigningKey,
+        recipient_pubkey: &PublicKey,
+    ) -> Vec<u8> {
+        let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
+        let mut e = ZlibEncoder::new(Vec::new(), flate2::Compression::default());
+        e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
+        let compressed = e.finish().unwrap_or_else(|_| unreachable!());
+        let signed = author_signkey.sign(&compressed);
+        recipient_pubkey.encrypt_for_self(&signed)
+    }
+}
