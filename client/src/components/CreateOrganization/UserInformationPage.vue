@@ -48,7 +48,6 @@ function areFieldsCorrect(): boolean {
     && userNameValidator(fullName.value) === Validity.Valid
   );
 }
-
 </script>
 
 <style scoped lang="scss">

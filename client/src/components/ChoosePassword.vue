@@ -88,7 +88,6 @@ function getPasswordLevelClass() : string {
   }
   return '';
 }
-
 </script>
 
 <style scoped lang="scss">

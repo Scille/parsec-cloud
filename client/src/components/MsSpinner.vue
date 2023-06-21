@@ -20,7 +20,6 @@
 </template>
 
 <script setup lang="ts">
-
 import { IonSpinner, IonText } from '@ionic/vue';
 
 defineProps<{

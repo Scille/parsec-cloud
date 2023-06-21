@@ -22,7 +22,6 @@ defineProps<{
   icon: string,
   text: string
 }>();
-
 </script>
 
 <style scoped lang="scss">
