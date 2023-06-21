@@ -316,10 +316,9 @@ body.dark {
   --parsec-radius-12: .75em;
   --parsec-radius-32: 2em;
   --parsec-radius-circle: 50%;
-}
 
-/* **** Parsec width **** */
-:root {
+  /* **** Parsec width **** */
+  --parsec-modal-width: 42rem;
   --parsec-max-content-width: 78rem;
   --parsec-max-title-width: 31.25rem;
 }
@@ -535,7 +534,7 @@ https: //github.com/ionic-team/ionic-framework/issues/24080 */
 /* fix issue on global */
 * {
   --inner-border-width: 0px;
-  --box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
+  --box-shadow: var(--parsec-shadow-light);
 }
 
 ion-list.container {
@@ -548,7 +547,7 @@ ion-popover {
 
 .popover-side-bottom .popover-viewport {
   border: var(--parsec-color-light-secondary-disabled) 1.5px solid;
-  border-radius: 6px;
+  border-radius: var(--parsec-radius-6);
   overflow: hidden;
 }
 
@@ -559,7 +558,13 @@ ion-popover {
 }
 
 ion-popover::part(content) {
-  border-radius: 6px;
+  border-radius: var(--parsec-radius-6);
+}
+
+ion-modal::part(content) {
+  border-radius: var(--parsec-radius-8);
+  --min-width: var(--parsec-modal-width);
+  height: 80%;
 }
 
 /* homepage popover */
@@ -612,7 +617,6 @@ ion-modal.one-line-modal::part(content) {
     --height: 600px;
     --border-radius: 8px;
   }
-
 }
 
 ion-card-title {
@@ -628,11 +632,17 @@ ion-card {
   --box-shadow: none;
 }
 
-ion-button {
+ion-button, .sc-ion-buttons-md-s ion-button:not(.button-round) {
   text-transform: none;
-  --border-radius: 6px;
+  --border-radius: var(--parsec-radius-6);
   --box-shadow: none;
 }
+
+.sc-ion-buttons-md-s ion-button {
+  margin-inline-start: 0;
+  margin-inline-end: 0;
+}
+
 /* button size */
 ion-button.button-large {
   --padding-top: 1rem ;
@@ -666,11 +676,6 @@ ion-button.button-small {
   --box-shadow: none;
 }
 
-ion-button {
-  text-transform: none;
-  --border-radius: 6px;
-  --box-shadow: none;
-}
 /* button size */
 ion-button.button-large {
   --padding-top: 1rem ;
@@ -725,7 +730,7 @@ ion-button.button-outline:hover {
 }
 
 /* ghost */
-ion-button.button-clear {
+.sc-ion-buttons-md-s .button-clear {
   --color: var(--parsec-color-light-primary-500);
   --color-hover: var(--parsec-color-light-primary-700);
   --background-hover: var(--parsec-color-light-primary-50);

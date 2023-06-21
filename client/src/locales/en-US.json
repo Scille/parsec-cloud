@@ -58,6 +58,7 @@
         "emailPlaceholder": "jean.martin{'@'}example.com",
         "organizationName": "Organization name",
         "organizationNamePlaceholder": "MyOrganization",
+        "serverDescription": "Organization server",
         "useParsecServer": "Use the main PARSEC server",
         "useMyOwnServer": "I have my own PARSEC server",
         "acceptTOS": "I accept PARSEC's Privacy Policy and Terms and Conditions",
@@ -66,8 +67,8 @@
         "registeringDevice": "Registering your device",
         "deviceNameInputLabel": "Name of the device",
         "deviceNamePlaceholder": "Desktop123",
-        "password": "Password",
-        "confirmPassword": "Confirm password",
+        "loading": "Just a moment, and we set up your organisation",
+        "organizationCreated": "You can access to your new organization",
         "next": "Next",
         "previous": "Previous",
         "done": "Done"
@@ -259,5 +260,15 @@
     "DevicesPage": {
         "title": "Your devices",
         "addDevice": "Add"
+    },
+    "Password": {
+        "password": "Password",
+        "confirmPassword": "Confirm password",
+        "passwordInfo": "Your password must be secure and you must remember it. We advise you to create several devices if possible and to share workspaces.",
+        "passwordLevelLow": "Low",
+        "passwordLevelMedium": "Moderate",
+        "passwordLevelHigh": "Strong",
+        "passwordCriteria": "Make sure it is at least 15 characters long OR at least 8 characters including a number and a lowercase letter.",
+        "noMatch": "Do not match"
     }
 }
