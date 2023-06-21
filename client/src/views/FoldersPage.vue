@@ -113,9 +113,11 @@ const folderInfo = computed((): MockFile => {
 });
 const listView = ref(true);
 
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 function createFolder(): void {
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 function importFiles(): void {
 }
 
