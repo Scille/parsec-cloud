@@ -13,7 +13,7 @@
           </ion-card-title>
           <ion-card-subtitle>
             <p class="subtitles-sm">
-              {{ device.humanHandle }}
+              {{ device.humanHandle || device.deviceId }}
             </p>
           </ion-card-subtitle>
         </div>
