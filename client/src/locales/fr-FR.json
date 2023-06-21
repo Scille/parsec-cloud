@@ -270,5 +270,9 @@
         "passwordLevelHigh": "Fort",
         "passwordCriteria": "Assurez-vous qu'il comporte au moins 15 caractères OU au moins 8 caractères comprenant un chiffre et une lettre minuscule.",
         "noMatch": "Ne correspondent pas"
+    },
+    "DevicesPage": {
+        "title": "Vos appareils",
+        "addDevice": "Ajouter"
     }
 }
