@@ -1,10 +1,14 @@
 name: Publish docker testbed
 
 on:
+  # This job must be manually triggered to publish a new version usable from
+  # other CI runs.
+  # (see https://github.com/Scille/parsec-cloud/pkgs/container/parsec-cloud%2Fparsec-testbed-server)
   workflow_dispatch:
   pull_request:
     paths:
-      - libparsec/**
+      # Testbed code also depends on `libparsec/**`, but this code change very often
+      # and we consider the server tests are good enough on this part.
       - server/tests/scripts/run_testbed_server.py
       - server/packaging/testbed-server/**
       - .github/workflows/publish-testbed.yml
@@ -12,7 +16,8 @@ on:
     branches:
       - master
     paths:
-      - libparsec/**
+      # Testbed code also depends on `libparsec/**`, but this code change very often
+      # and we consider the server tests are good enough on this part.
       - server/tests/scripts/run_testbed_server.py
       - server/packaging/testbed-server/**
       - .github/workflows/publish-testbed.yml
@@ -41,8 +46,39 @@ jobs:
           WRITE_ENV: 1
         timeout-minutes: 20
 
-      - name: Publish docker image
+      - name: Test docker image
         run: |
+          set -ex
+
+          source parsec-testbed.env
+
+          docker run --publish 6777:6777 --rm --name=parsec-testbed-server $PREFIX/parsec-testbed-server:$UNIQ_TAG &
+
+          python -c "
+          import time
+          from urllib.request import Request, urlopen
+
+          r = Request('http://127.0.0.1:6777/testbed/new/empty', method='POST')
+          for i in range(10):
+            try:
+              urlopen(r)
+            except Exception as exc:
+              print(f'Try {i + 1}/10: {exc}')
+              time.sleep(1)
+              continue
+            else:
+              break
+          else:
+            raise SystemExit('Cannot connect to testbed server :(')
+          "
+
+          kill %1
+
+      - name: Publish docker image
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          set -ex
+
           source parsec-testbed.env
 
           for tag in $UNIQ_TAG; do
