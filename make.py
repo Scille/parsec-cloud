@@ -41,6 +41,7 @@ BASE_DIR = Path(__file__).parent.resolve()
 SERVER_DIR = BASE_DIR / "server"
 ELECTRON_DIR = BASE_DIR / "bindings/electron"
 WEB_DIR = BASE_DIR / "bindings/web"
+TESTS_SCRIPTS_DIR = SERVER_DIR / "tests/scripts"
 
 
 CYAN = "\x1b[36m"
@@ -230,6 +231,12 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
         ),
         Cmd(
             cmd="npm run build:ci",
+        ),
+    ),
+    ("run-testbed-server",): (
+        Cwd(SERVER_DIR),
+        Cmd(
+            cmd=f"poetry run python {TESTS_SCRIPTS_DIR}/run_testbed_server.py",
         ),
     ),
     # Flags used in `bindings/web/scripts/build.js`
