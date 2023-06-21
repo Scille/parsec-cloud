@@ -157,6 +157,7 @@ known-first-party = ["parsec", "tests"]
 
 [tool.maturin]
 module-name = "parsec._parsec"
+bindings = "pyo3"
 
 [tool.mypy]
 mypy_path = "$MYPY_CONFIG_FILE_DIR:$MYPY_CONFIG_FILE_DIR/parsec/stubs"

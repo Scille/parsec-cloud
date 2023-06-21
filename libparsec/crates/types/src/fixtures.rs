@@ -7,8 +7,8 @@ use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
 
 use crate::{
     BackendOrganizationAddr, CertificateSignerOwned, DeviceCertificate, DeviceID, DeviceLabel,
-    EntryID, HumanHandle, LocalDevice, OrganizationID, TimeProvider, UserCertificate, UserID,
-    UserProfile,
+    Duration, EntryID, HumanHandle, LocalDevice, OrganizationID, TimeProvider, UserCertificate,
+    UserID, UserProfile,
 };
 // Re-expose `DateTime` to simplify use of `timestamp` fixture
 pub use crate::DateTime;
@@ -179,7 +179,7 @@ impl TimestampGenerator {
     #[allow(clippy::should_implement_trait)]
     pub fn next(&mut self) -> DateTime {
         let ret = self.current;
-        self.current = DateTime::from_f64_with_us_precision(ret.get_f64_with_us_precision() + 1.0);
+        self.current += Duration::microseconds(1);
         ret
     }
 }

@@ -51,39 +51,43 @@ macro_rules! gen_uuid {
     };
 }
 
-#[pyclass]
-#[derive(PartialEq, Eq, Clone, Hash)]
-pub(crate) struct EntryID(pub libparsec::low_level::types::EntryID);
+crate::binding_utils::gen_py_wrapper_class_for_id!(
+    EntryID,
+    libparsec::low_level::types::EntryID,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
 
-crate::binding_utils::gen_proto!(EntryID, __repr__);
-crate::binding_utils::gen_proto!(EntryID, __copy__);
-crate::binding_utils::gen_proto!(EntryID, __deepcopy__);
-crate::binding_utils::gen_proto!(EntryID, __str__);
-crate::binding_utils::gen_proto!(EntryID, __richcmp__, ord);
-crate::binding_utils::gen_proto!(EntryID, __hash__);
 gen_uuid!(EntryID);
 
-#[pyclass]
-#[derive(Clone, PartialEq, Eq, Hash)]
-pub(crate) struct BlockID(pub libparsec::low_level::types::BlockID);
+crate::binding_utils::gen_py_wrapper_class_for_id!(
+    BlockID,
+    libparsec::low_level::types::BlockID,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
 
-crate::binding_utils::gen_proto!(BlockID, __repr__);
-crate::binding_utils::gen_proto!(BlockID, __copy__);
-crate::binding_utils::gen_proto!(BlockID, __deepcopy__);
-crate::binding_utils::gen_proto!(BlockID, __str__);
-crate::binding_utils::gen_proto!(BlockID, __richcmp__, ord);
-crate::binding_utils::gen_proto!(BlockID, __hash__);
 gen_uuid!(BlockID);
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct RealmID(pub libparsec::low_level::types::RealmID);
+crate::binding_utils::gen_py_wrapper_class_for_id!(
+    RealmID,
+    libparsec::low_level::types::RealmID,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
 
-crate::binding_utils::gen_proto!(RealmID, __repr__);
-crate::binding_utils::gen_proto!(RealmID, __copy__);
-crate::binding_utils::gen_proto!(RealmID, __deepcopy__);
-crate::binding_utils::gen_proto!(RealmID, __richcmp__, ord);
-crate::binding_utils::gen_proto!(RealmID, __hash__);
 gen_uuid!(RealmID);
 
 #[pymethods]
@@ -97,15 +101,17 @@ impl RealmID {
     }
 }
 
-#[pyclass]
-#[derive(PartialEq, Eq, Clone, Hash)]
-pub(crate) struct VlobID(pub libparsec::low_level::types::VlobID);
+crate::binding_utils::gen_py_wrapper_class_for_id!(
+    VlobID,
+    libparsec::low_level::types::VlobID,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
 
-crate::binding_utils::gen_proto!(VlobID, __repr__);
-crate::binding_utils::gen_proto!(VlobID, __copy__);
-crate::binding_utils::gen_proto!(VlobID, __deepcopy__);
-crate::binding_utils::gen_proto!(VlobID, __richcmp__, ord);
-crate::binding_utils::gen_proto!(VlobID, __hash__);
 gen_uuid!(VlobID);
 
 #[pymethods]
@@ -119,15 +125,17 @@ impl VlobID {
     }
 }
 
-#[pyclass]
-#[derive(PartialEq, Eq, Clone, Hash)]
-pub(crate) struct ChunkID(pub libparsec::low_level::types::ChunkID);
+crate::binding_utils::gen_py_wrapper_class_for_id!(
+    ChunkID,
+    libparsec::low_level::types::ChunkID,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
 
-crate::binding_utils::gen_proto!(ChunkID, __repr__);
-crate::binding_utils::gen_proto!(ChunkID, __copy__);
-crate::binding_utils::gen_proto!(ChunkID, __deepcopy__);
-crate::binding_utils::gen_proto!(ChunkID, __richcmp__, ord);
-crate::binding_utils::gen_proto!(ChunkID, __hash__);
 gen_uuid!(ChunkID);
 
 #[pymethods]
@@ -138,49 +146,54 @@ impl ChunkID {
     }
 }
 
-#[pyclass]
-#[derive(PartialEq, Eq, Clone, Hash)]
-pub(crate) struct SequesterServiceID(pub libparsec::low_level::types::SequesterServiceID);
-
-crate::binding_utils::gen_proto!(SequesterServiceID, __repr__);
-crate::binding_utils::gen_proto!(SequesterServiceID, __copy__);
-crate::binding_utils::gen_proto!(SequesterServiceID, __deepcopy__);
-crate::binding_utils::gen_proto!(SequesterServiceID, __richcmp__, ord);
-crate::binding_utils::gen_proto!(SequesterServiceID, __hash__);
+crate::binding_utils::gen_py_wrapper_class_for_id!(
+    SequesterServiceID,
+    libparsec::low_level::types::SequesterServiceID,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
 gen_uuid!(SequesterServiceID);
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct InvitationToken(pub libparsec::low_level::types::InvitationToken);
-
-crate::binding_utils::gen_proto!(InvitationToken, __repr__);
-crate::binding_utils::gen_proto!(InvitationToken, __copy__);
-crate::binding_utils::gen_proto!(InvitationToken, __deepcopy__);
-crate::binding_utils::gen_proto!(InvitationToken, __richcmp__, eq);
-crate::binding_utils::gen_proto!(InvitationToken, __hash__);
+crate::binding_utils::gen_py_wrapper_class_for_id!(
+    InvitationToken,
+    libparsec::low_level::types::InvitationToken,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
 gen_uuid!(InvitationToken);
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct EnrollmentID(pub libparsec::low_level::types::EnrollmentID);
-
-crate::binding_utils::gen_proto!(EnrollmentID, __repr__);
-crate::binding_utils::gen_proto!(EnrollmentID, __copy__);
-crate::binding_utils::gen_proto!(EnrollmentID, __deepcopy__);
-crate::binding_utils::gen_proto!(EnrollmentID, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class_for_id!(
+    EnrollmentID,
+    libparsec::low_level::types::EnrollmentID,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
 gen_uuid!(EnrollmentID);
 
 // Other ids
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct OrganizationID(pub libparsec::low_level::types::OrganizationID);
-
-crate::binding_utils::gen_proto!(OrganizationID, __repr__);
-crate::binding_utils::gen_proto!(OrganizationID, __copy__);
-crate::binding_utils::gen_proto!(OrganizationID, __deepcopy__);
-crate::binding_utils::gen_proto!(OrganizationID, __richcmp__, ord);
-crate::binding_utils::gen_proto!(OrganizationID, __hash__);
+crate::binding_utils::gen_py_wrapper_class_for_id!(
+    OrganizationID,
+    libparsec::low_level::types::OrganizationID,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
 
 #[pymethods]
 impl OrganizationID {
@@ -204,15 +217,16 @@ impl OrganizationID {
     }
 }
 
-#[pyclass]
-#[derive(PartialEq, Eq, Clone, Hash)]
-pub(crate) struct UserID(pub libparsec::low_level::types::UserID);
-
-crate::binding_utils::gen_proto!(UserID, __repr__);
-crate::binding_utils::gen_proto!(UserID, __copy__);
-crate::binding_utils::gen_proto!(UserID, __deepcopy__);
-crate::binding_utils::gen_proto!(UserID, __richcmp__, ord);
-crate::binding_utils::gen_proto!(UserID, __hash__);
+crate::binding_utils::gen_py_wrapper_class_for_id!(
+    UserID,
+    libparsec::low_level::types::UserID,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
 
 #[pymethods]
 impl UserID {
@@ -244,15 +258,16 @@ impl UserID {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct DeviceName(pub libparsec::low_level::types::DeviceName);
-
-crate::binding_utils::gen_proto!(DeviceName, __repr__);
-crate::binding_utils::gen_proto!(DeviceName, __copy__);
-crate::binding_utils::gen_proto!(DeviceName, __deepcopy__);
-crate::binding_utils::gen_proto!(DeviceName, __richcmp__, ord);
-crate::binding_utils::gen_proto!(DeviceName, __hash__);
+crate::binding_utils::gen_py_wrapper_class_for_id!(
+    DeviceName,
+    libparsec::low_level::types::DeviceName,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
 
 #[pymethods]
 impl DeviceName {
@@ -282,15 +297,16 @@ impl DeviceName {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct DeviceLabel(pub libparsec::low_level::types::DeviceLabel);
-
-crate::binding_utils::gen_proto!(DeviceLabel, __repr__);
-crate::binding_utils::gen_proto!(DeviceLabel, __copy__);
-crate::binding_utils::gen_proto!(DeviceLabel, __deepcopy__);
-crate::binding_utils::gen_proto!(DeviceLabel, __richcmp__, ord);
-crate::binding_utils::gen_proto!(DeviceLabel, __hash__);
+crate::binding_utils::gen_py_wrapper_class_for_id!(
+    DeviceLabel,
+    libparsec::low_level::types::DeviceLabel,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
 
 #[pymethods]
 impl DeviceLabel {
@@ -314,15 +330,16 @@ impl DeviceLabel {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct DeviceID(pub libparsec::low_level::types::DeviceID);
-
-crate::binding_utils::gen_proto!(DeviceID, __repr__);
-crate::binding_utils::gen_proto!(DeviceID, __copy__);
-crate::binding_utils::gen_proto!(DeviceID, __deepcopy__);
-crate::binding_utils::gen_proto!(DeviceID, __richcmp__, ord);
-crate::binding_utils::gen_proto!(DeviceID, __hash__);
+crate::binding_utils::gen_py_wrapper_class_for_id!(
+    DeviceID,
+    libparsec::low_level::types::DeviceID,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
 
 #[pymethods]
 impl DeviceID {
@@ -362,15 +379,16 @@ impl DeviceID {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct HumanHandle(pub libparsec::low_level::types::HumanHandle);
-
-crate::binding_utils::gen_proto!(HumanHandle, __repr__);
-crate::binding_utils::gen_proto!(HumanHandle, __copy__);
-crate::binding_utils::gen_proto!(HumanHandle, __deepcopy__);
-crate::binding_utils::gen_proto!(HumanHandle, __richcmp__, ord);
-crate::binding_utils::gen_proto!(HumanHandle, __hash__);
+crate::binding_utils::gen_py_wrapper_class_for_id!(
+    HumanHandle,
+    libparsec::low_level::types::HumanHandle,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
 
 #[pymethods]
 impl HumanHandle {

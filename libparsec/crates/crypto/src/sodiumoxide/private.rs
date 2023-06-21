@@ -81,6 +81,15 @@ pub struct PublicKey(curve25519xsalsa20poly1305::PublicKey);
 
 crate::impl_key_debug!(PublicKey);
 
+impl std::hash::Hash for PublicKey {
+    fn hash<H>(&self, state: &mut H)
+    where
+        H: std::hash::Hasher,
+    {
+        self.as_ref().hash(state)
+    }
+}
+
 super::utils::impl_try_from!(PublicKey, curve25519xsalsa20poly1305::PublicKey);
 
 impl PublicKey {

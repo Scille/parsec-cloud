@@ -111,6 +111,15 @@ pub struct VerifyKey(ed25519_dalek::PublicKey);
 
 crate::impl_key_debug!(VerifyKey);
 
+impl std::hash::Hash for VerifyKey {
+    fn hash<H>(&self, state: &mut H)
+    where
+        H: std::hash::Hasher,
+    {
+        self.as_ref().hash(state)
+    }
+}
+
 impl VerifyKey {
     pub const ALGORITHM: &'static str = "ed25519";
     /// Size of the public key.
@@ -167,10 +176,10 @@ impl TryFrom<&[u8]> for VerifyKey {
     }
 }
 
-impl From<[u8; Self::SIZE]> for VerifyKey {
-    fn from(key: [u8; Self::SIZE]) -> Self {
-        // TODO: zero copy
-        Self::try_from(key.as_ref()).expect("key has the right size")
+impl TryFrom<[u8; Self::SIZE]> for VerifyKey {
+    type Error = CryptoError;
+    fn try_from(data: [u8; Self::SIZE]) -> Result<Self, Self::Error> {
+        Self::try_from(data.as_ref())
     }
 }
 

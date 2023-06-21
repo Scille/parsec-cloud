@@ -12,7 +12,7 @@ import trio
 from quart import make_response
 
 try:
-    from parsec._parsec import test_get_testbed_templates
+    from parsec._parsec import testbed
 except ImportError as exc:
     raise RuntimeError("Test features are disabled !") from exc
 from parsec.api.protocol import OrganizationID
@@ -27,7 +27,7 @@ DEFAULT_ORGANIZATION_LIFE_LIMIT = 10 * 60  # 10mn
 
 async def _run_server(
     host: str,
-    port: int | None,
+    port: int,
     backend_addr: str,
     orga_life_limit: float,
     stop_after_process: int | None,
@@ -66,13 +66,7 @@ async def _run_server(
                 )
 
             org_count = 0
-
-            # Populate the server with the testbed templates
-            templates = test_get_testbed_templates()
             template_id_to_org_id_and_crc: dict[str, tuple[OrganizationID, int]] = {}
-            for template in templates:
-                org_id = await backend.test_load_template(template)
-                template_id_to_org_id_and_crc[template.id] = (org_id, template.crc)
 
             # All set ! Now we can start the server
 
@@ -95,7 +89,16 @@ async def _run_server(
                 try:
                     template_org_id, template_crc = template_id_to_org_id_and_crc[template]
                 except KeyError:
-                    return await make_response(b"unknown template", 404)
+                    # If it exists, template has not been loaded yet
+                    template_content = testbed.test_get_testbed_template(template)
+
+                    if not template_content:
+                        # No template with the given id
+                        return await make_response(b"unknown template", 404)
+
+                    template_crc = template_content.compute_crc()
+                    template_org_id = await backend.test_load_template(template_content)
+                    template_id_to_org_id_and_crc[template] = (template_org_id, template_crc)
 
                 org_count += 1
                 new_org_id = OrganizationID(f"Org{org_count}")
@@ -114,15 +117,15 @@ async def _run_server(
             @asgi.route("/testbed/drop/<organization_id>", methods=["POST"])
             async def test_drop(organization_id: str):  # type: ignore[misc]
                 try:
-                    organization_id = OrganizationID(organization_id)
+                    cooked_organization_id = OrganizationID(organization_id)
                 except ValueError:
                     return await make_response(b"", 400)
-                print(f"drop {organization_id}")
+                print(f"drop {cooked_organization_id}")
                 # Dropping is idempotent, so no need for error handling
-                backend.test_drop_organization(organization_id)
+                backend.test_drop_organization(cooked_organization_id)
                 return await make_response(b"", 200)
 
-            binds = await nursery.start(
+            binds: list[str] = await nursery.start(
                 partial(
                     serve_backend_with_asgi,
                     backend=backend,

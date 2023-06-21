@@ -9,21 +9,18 @@ use pyo3::{
 use std::{collections::HashMap, num::NonZeroU64};
 
 use crate::{
-    api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey},
-    data::{DataResult, EntryNameResult},
-    enumerate::RealmRole,
-    ids::{BlockID, DeviceID, EntryID},
-    time::DateTime,
+    BlockID, DataResult, DateTime, DeviceID, EntryID, EntryNameResult, HashDigest, RealmRole,
+    SecretKey, SigningKey, VerifyKey,
 };
 use libparsec::low_level::types::{IndexInt, Manifest};
 
-#[pyclass]
-#[derive(Clone, PartialEq, Eq, Hash)]
-pub(crate) struct EntryName(pub libparsec::low_level::types::EntryName);
-
-crate::binding_utils::gen_proto!(EntryName, __str__);
-crate::binding_utils::gen_proto!(EntryName, __richcmp__, ord);
-crate::binding_utils::gen_proto!(EntryName, __hash__);
+crate::binding_utils::gen_py_wrapper_class_for_id!(
+    EntryName,
+    libparsec::low_level::types::EntryName,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
 
 #[pymethods]
 impl EntryName {
@@ -42,14 +39,14 @@ impl EntryName {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct WorkspaceEntry(pub libparsec::low_level::types::WorkspaceEntry);
-
-crate::binding_utils::gen_proto!(WorkspaceEntry, __repr__);
-crate::binding_utils::gen_proto!(WorkspaceEntry, __copy__);
-crate::binding_utils::gen_proto!(WorkspaceEntry, __deepcopy__);
-crate::binding_utils::gen_proto!(WorkspaceEntry, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class!(
+    WorkspaceEntry,
+    libparsec::low_level::types::WorkspaceEntry,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl WorkspaceEntry {
@@ -63,8 +60,14 @@ impl WorkspaceEntry {
             [key: SecretKey, "key"],
             [encryption_revision: IndexInt, "encryption_revision"],
             [encrypted_on: DateTime, "encrypted_on"],
-            [role_cached_on: DateTime, "role_cached_on"],
-            [role: Option<RealmRole>, "role"],
+            [
+                legacy_role_cache_timestamp: DateTime,
+                "legacy_role_cache_timestamp"
+            ],
+            [
+                legacy_role_cache_value: Option<RealmRole>,
+                "legacy_role_cache_value"
+            ],
         );
 
         Ok(Self(libparsec::low_level::types::WorkspaceEntry {
@@ -73,8 +76,8 @@ impl WorkspaceEntry {
             key: key.0,
             encryption_revision,
             encrypted_on: encrypted_on.0,
-            role_cached_on: role_cached_on.0,
-            role: role.map(|x| x.0),
+            legacy_role_cache_timestamp: legacy_role_cache_timestamp.0,
+            legacy_role_cache_value: legacy_role_cache_value.map(|x| x.0),
         }))
     }
 
@@ -87,8 +90,14 @@ impl WorkspaceEntry {
             [key: SecretKey, "key"],
             [encryption_revision: IndexInt, "encryption_revision"],
             [encrypted_on: DateTime, "encrypted_on"],
-            [role_cached_on: DateTime, "role_cached_on"],
-            [role: Option<RealmRole>, "role"],
+            [
+                legacy_role_cache_timestamp: DateTime,
+                "legacy_role_cache_timestamp"
+            ],
+            [
+                legacy_role_cache_value: Option<RealmRole>,
+                "legacy_role_cache_value"
+            ],
         );
 
         let mut r = self.0.clone();
@@ -108,11 +117,11 @@ impl WorkspaceEntry {
         if let Some(v) = encrypted_on {
             r.encrypted_on = v.0;
         }
-        if let Some(v) = role_cached_on {
-            r.role_cached_on = v.0;
+        if let Some(v) = legacy_role_cache_timestamp {
+            r.legacy_role_cache_timestamp = v.0;
         }
-        if let Some(v) = role {
-            r.role = v.map(|x| x.0);
+        if let Some(v) = legacy_role_cache_value {
+            r.legacy_role_cache_value = v.map(|x| x.0);
         }
 
         Ok(Self(r))
@@ -125,10 +134,6 @@ impl WorkspaceEntry {
             name.0.to_owned(),
             timestamp.0,
         )))
-    }
-
-    fn is_revoked(&self) -> bool {
-        self.0.is_revoked()
     }
 
     #[getter]
@@ -157,24 +162,24 @@ impl WorkspaceEntry {
     }
 
     #[getter]
-    fn role_cached_on(&self) -> PyResult<DateTime> {
-        Ok(DateTime(self.0.role_cached_on))
+    fn legacy_role_cache_timestamp(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.legacy_role_cache_timestamp))
     }
 
     #[getter]
-    fn role(&self) -> Option<RealmRole> {
-        self.0.role.map(RealmRole)
+    fn legacy_role_cache_value(&self) -> Option<&'static PyObject> {
+        self.0.legacy_role_cache_value.map(RealmRole::convert)
     }
 }
 
-#[pyclass]
-#[derive(Clone, PartialEq, Eq, Hash)]
-pub(crate) struct BlockAccess(pub libparsec::low_level::types::BlockAccess);
-
-crate::binding_utils::gen_proto!(BlockAccess, __repr__);
-crate::binding_utils::gen_proto!(BlockAccess, __copy__);
-crate::binding_utils::gen_proto!(BlockAccess, __deepcopy__);
-crate::binding_utils::gen_proto!(BlockAccess, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class!(
+    BlockAccess,
+    libparsec::low_level::types::BlockAccess,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl BlockAccess {
@@ -262,14 +267,14 @@ impl BlockAccess {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct FileManifest(pub libparsec::low_level::types::FileManifest);
-
-crate::binding_utils::gen_proto!(FileManifest, __repr__);
-crate::binding_utils::gen_proto!(FileManifest, __copy__);
-crate::binding_utils::gen_proto!(FileManifest, __deepcopy__);
-crate::binding_utils::gen_proto!(FileManifest, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class!(
+    FileManifest,
+    libparsec::low_level::types::FileManifest,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl FileManifest {
@@ -461,14 +466,14 @@ impl FileManifest {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct FolderManifest(pub libparsec::low_level::types::FolderManifest);
-
-crate::binding_utils::gen_proto!(FolderManifest, __repr__);
-crate::binding_utils::gen_proto!(FolderManifest, __copy__);
-crate::binding_utils::gen_proto!(FolderManifest, __deepcopy__);
-crate::binding_utils::gen_proto!(FolderManifest, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class!(
+    FolderManifest,
+    libparsec::low_level::types::FolderManifest,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl FolderManifest {
@@ -640,14 +645,14 @@ impl FolderManifest {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct WorkspaceManifest(pub libparsec::low_level::types::WorkspaceManifest);
-
-crate::binding_utils::gen_proto!(WorkspaceManifest, __repr__);
-crate::binding_utils::gen_proto!(WorkspaceManifest, __copy__);
-crate::binding_utils::gen_proto!(WorkspaceManifest, __deepcopy__);
-crate::binding_utils::gen_proto!(WorkspaceManifest, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class!(
+    WorkspaceManifest,
+    libparsec::low_level::types::WorkspaceManifest,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl WorkspaceManifest {
@@ -808,14 +813,14 @@ impl WorkspaceManifest {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct UserManifest(pub libparsec::low_level::types::UserManifest);
-
-crate::binding_utils::gen_proto!(UserManifest, __repr__);
-crate::binding_utils::gen_proto!(UserManifest, __copy__);
-crate::binding_utils::gen_proto!(UserManifest, __deepcopy__);
-crate::binding_utils::gen_proto!(UserManifest, __richcmp__, eq);
+crate::binding_utils::gen_py_wrapper_class!(
+    UserManifest,
+    libparsec::low_level::types::UserManifest,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl UserManifest {

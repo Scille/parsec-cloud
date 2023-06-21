@@ -75,16 +75,16 @@ mod native {
         }
 
         pub(crate) fn with_env_internal(self) -> Self {
-            let cls = if let Ok(proxy) = std::env::var(crate::HTTP_PROXY) {
+            let cfg = if let Ok(proxy) = std::env::var(crate::HTTP_PROXY) {
                 self.with_http_proxy(proxy)
             } else {
                 self
             };
 
             if let Ok(proxy) = std::env::var(crate::HTTPS_PROXY) {
-                cls.with_https_proxy(proxy)
+                cfg.with_https_proxy(proxy)
             } else {
-                cls
+                cfg
             }
         }
 

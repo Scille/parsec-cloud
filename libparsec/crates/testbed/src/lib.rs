@@ -2,68 +2,65 @@
 
 use std::sync::{Arc, Mutex};
 
-mod coolorg;
-mod empty;
 mod env;
-mod minimal;
 mod scope;
-mod types;
+mod template;
+mod templates;
 
 pub use env::*;
 pub use scope::{Run, TestbedScope};
-pub use types::*;
+pub use template::*;
 
 enum TemplateState {
-    NotGenerated(fn() -> TestbedTemplate),
+    NotGenerated(fn() -> Arc<TestbedTemplate>),
     Generated(Arc<TestbedTemplate>),
 }
 
 // Templates are generated only once, then copied for fast initialization of testbed envs
 // On top of that we generated them lazily to further improve speed of single-test runs
 // given cargo-nextest relies on that even when running multiple tests.
-static TESTBED_TEMPLATES: [(&str, Mutex<TemplateState>); 3] = [
+static TESTBED_TEMPLATES: [(&str, Mutex<TemplateState>); 4] = [
     (
         "empty",
-        Mutex::new(TemplateState::NotGenerated(empty::generate)),
+        Mutex::new(TemplateState::NotGenerated(templates::empty::generate)),
     ),
     (
         "minimal",
-        Mutex::new(TemplateState::NotGenerated(minimal::generate)),
+        Mutex::new(TemplateState::NotGenerated(templates::minimal::generate)),
+    ),
+    (
+        "alice_cruising",
+        Mutex::new(TemplateState::NotGenerated(
+            templates::alice_cruising::generate,
+        )),
     ),
     (
         "coolorg",
-        Mutex::new(TemplateState::NotGenerated(coolorg::generate)),
+        Mutex::new(TemplateState::NotGenerated(templates::coolorg::generate)),
     ),
 ];
 
-fn get_template(template: &str) -> Arc<TestbedTemplate> {
-    for (id, state) in TESTBED_TEMPLATES.as_ref() {
-        if *id == template {
+pub fn test_get_template(id: &str) -> Option<Arc<TestbedTemplate>> {
+    for (candidate, state) in TESTBED_TEMPLATES.as_ref() {
+        if *candidate == id {
             let mut guard = state.lock().expect("Mutex is poisoned");
-            match &*guard {
+            let template = match &*guard {
                 TemplateState::NotGenerated(generate) => {
-                    let testbed = Arc::new(generate());
+                    let template = generate();
                     assert_eq!(
-                        testbed.id, *id,
+                        template.id, id,
                         "Mismatch in testbed template ID `{}` vs `{}`",
-                        testbed.id, *id
+                        template.id, id
                     );
-                    *guard = TemplateState::Generated(testbed.clone());
-                    return testbed;
+                    *guard = TemplateState::Generated(template.clone());
+                    template
                 }
-                TemplateState::Generated(testbed) => return testbed.clone(),
-            }
+                TemplateState::Generated(template) => template.to_owned(),
+            };
+            return Some(template);
         }
     }
-    panic!("No testbed template with ID `{}`", template);
-}
-
-/// Only used to expose templates to the test server through Python bindings
-pub fn test_get_testbed_templates() -> Vec<Arc<TestbedTemplate>> {
-    TESTBED_TEMPLATES
-        .iter()
-        .map(|(id, _)| get_template(id))
-        .collect()
+    None
 }
 
 #[cfg(test)]

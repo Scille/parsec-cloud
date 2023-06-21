@@ -132,3 +132,25 @@ fn encrypted_too_small() {
         Err(CryptoError::Decryption)
     ));
 }
+
+#[test]
+fn pubkey_hash() {
+    let vk1 = PublicKey::from(hex!(
+        "78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537"
+    ));
+    let vk2 = PublicKey::from(hex!(
+        "7e771d03da8ed86aaea5b82f2b3754984cb49023e9c51297b99c5c4fd0d2dc54"
+    ));
+
+    let hash = |x: &PublicKey| {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+
+        let mut hasher = DefaultHasher::new();
+        x.hash(&mut hasher);
+        hasher.finish()
+    };
+
+    assert_eq!(hash(&vk1), hash(&vk1));
+    assert_ne!(hash(&vk1), hash(&vk2));
+}

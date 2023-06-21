@@ -2,7 +2,6 @@
 
 use std::{
     any::Any,
-    collections::HashMap,
     path::{Path, PathBuf},
     str::FromStr,
     sync::{
@@ -16,72 +15,13 @@ use reqwest::StatusCode;
 
 use libparsec_types::prelude::*;
 
-use crate::{get_template, TestbedTemplate};
+use crate::{
+    test_get_template, TestbedEvent, TestbedEventBootstrapOrganization, TestbedEventNewDevice,
+    TestbedEventNewUser, TestbedTemplate, TestbedTemplateBuilder,
+};
 
 // Testbed always works in memory, the path only acts as an identifier.
 const TESTBED_BASE_DUMMY_PATH: &str = "/parsec/testbed/";
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum TestbedKind {
-    ClientServer,
-    ClientOnly, // Server is considered offline for the whole run
-}
-
-#[derive(Debug)]
-pub struct TestbedEnv {
-    pub kind: TestbedKind,
-    /// Fake path used used as the key identifying the testbed env.
-    /// In Parsec there is two base directory: `config_dir` and `data_base_dir`
-    /// when the testbed is used, both should be set to the discriminant value.
-    /// Note: testbed is designed to always run mocked in memory, so this path
-    /// will never exist on the file system.
-    pub discriminant_dir: PathBuf,
-    pub organization_addr: BackendOrganizationAddr,
-    pub template: Arc<TestbedTemplate>,
-    // Testbed is designed to run entirely in memory (i.e. with no FS accesses)
-    //
-    // This hashmap should be used by components (e.g. device storage, local database)
-    // to keep track of arbitrary data that would otherwise be persisted on FS.
-    // To avoid clash between components, key should be the name (e.g. "local_database").
-    //
-    // Note the idea is for the component to be as lazy as possible: they don't have to
-    // store/initialize anything until they are actually asked to do something on a
-    // given config dir, at which point they should use `test_get_testbed` and
-    // initialize `persistence_store` by using the data from `template`.
-    pub persistence_store: Mutex<HashMap<&'static str, Box<dyn Any + Send>>>,
-    // Must keep track of the generated local devices to avoid nasty behavior
-    // if the test call generate the local device multiple times for the same device.
-    local_devices_cache: Mutex<Vec<Arc<LocalDevice>>>,
-}
-
-impl TestbedEnv {
-    pub fn local_device(&self, device_id: DeviceID) -> Arc<LocalDevice> {
-        let mut local_devices = self.local_devices_cache.lock().expect("Mutex is poisoned");
-        for item in local_devices.iter() {
-            if item.device_id == device_id {
-                return item.clone();
-            }
-        }
-        // Not found, must generate it
-        let device = self.template.device(&device_id);
-        let user = self.template.user(device_id.user_id());
-        let local_device = Arc::new(LocalDevice {
-            organization_addr: self.organization_addr.to_owned(),
-            device_id,
-            device_label: device.device_label.to_owned(),
-            human_handle: user.human_handle.to_owned(),
-            signing_key: device.signing_key.to_owned(),
-            private_key: user.private_key.to_owned(),
-            initial_profile: user.profile.to_owned(),
-            user_manifest_id: user.user_manifest_id.to_owned(),
-            user_manifest_key: user.user_manifest_key.to_owned(),
-            local_symkey: device.local_symkey.to_owned(),
-            time_provider: TimeProvider::default(),
-        });
-        local_devices.push(local_device.clone());
-        local_device
-    }
-}
 
 // Currently in use testbeds
 lazy_static! {
@@ -92,6 +32,228 @@ lazy_static! {
     static ref HTTP_CLIENT: reqwest::Client = reqwest::Client::new();
 }
 
+#[derive(Default)]
+struct TestbedEnvCache {
+    organization_addr: Option<Arc<BackendOrganizationAddr>>,
+    // Testbed is designed to run entirely in memory (i.e. with no FS accesses)
+    //
+    // This hashmap should be used by components (e.g. device storage, local database)
+    // to keep track of arbitrary data that would otherwise be persisted on FS.
+    // To avoid clash between components, key should be their name (e.g. "local_database").
+    //
+    // Note the idea is for the component to be as lazy as possible: they don't have to
+    // store/initialize anything until they are actually asked to do something on a
+    // given config dir, at which point they should use `test_get_testbed` and
+    // initialize `per_component_store` by using the data from `template`.
+    per_component_store: Vec<(&'static str, Arc<dyn Any + Send + Sync>)>,
+    // Must keep track of the generated local devices to avoid nasty behavior
+    // if the test call generate the local device multiple times for the same device.
+    local_devices: Vec<Arc<LocalDevice>>,
+}
+
+impl TestbedEnvCache {
+    pub fn local_device(&mut self, env: &TestbedEnv, device_id: DeviceID) -> Arc<LocalDevice> {
+        for item in self.local_devices.iter() {
+            if item.device_id == device_id {
+                return item.clone();
+            }
+        }
+
+        // Not found, must generate it
+
+        let (human_handle, private_key, profile, user_manifest_id, user_manifest_key) = env
+            .template
+            .events()
+            .find_map(|e| match e {
+                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                    first_user_device_id: candidate,
+                    first_user_human_handle: human_handle,
+                    first_user_private_key: private_key,
+                    first_user_user_manifest_id: user_manifest_id,
+                    first_user_user_manifest_key: user_manifest_key,
+                    ..
+                }) if candidate.user_id() == device_id.user_id() => Some((
+                    human_handle,
+                    private_key,
+                    UserProfile::Admin,
+                    user_manifest_id,
+                    user_manifest_key,
+                )),
+                TestbedEvent::NewUser(TestbedEventNewUser {
+                    device_id: candidate,
+                    human_handle,
+                    private_key,
+                    initial_profile,
+                    user_manifest_id,
+                    user_manifest_key,
+                    ..
+                }) if candidate.user_id() == device_id.user_id() => Some((
+                    human_handle,
+                    private_key,
+                    *initial_profile,
+                    user_manifest_id,
+                    user_manifest_key,
+                )),
+                _ => None,
+            })
+            .expect("User not found");
+
+        let (device_label, signing_key, local_symkey) = env
+            .template
+            .events()
+            .find_map(|e| match e {
+                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                    first_user_device_id: candidate,
+                    first_user_first_device_label: device_label,
+                    first_user_first_device_signing_key: signing_key,
+                    first_user_local_symkey: local_symkey,
+                    ..
+                })
+                | TestbedEvent::NewUser(TestbedEventNewUser {
+                    device_id: candidate,
+                    first_device_label: device_label,
+                    first_device_signing_key: signing_key,
+                    local_symkey,
+                    ..
+                })
+                | TestbedEvent::NewDevice(TestbedEventNewDevice {
+                    device_id: candidate,
+                    device_label,
+                    signing_key,
+                    local_symkey,
+                    ..
+                }) if candidate == &device_id => Some((device_label, signing_key, local_symkey)),
+                _ => None,
+            })
+            .expect("Device not found");
+
+        let local_device = Arc::new(LocalDevice {
+            organization_addr: (*self.organization_addr(env)).clone(),
+            device_id,
+            device_label: device_label.to_owned(),
+            human_handle: human_handle.to_owned(),
+            signing_key: signing_key.to_owned(),
+            private_key: private_key.to_owned(),
+            initial_profile: profile,
+            user_manifest_id: user_manifest_id.to_owned(),
+            user_manifest_key: user_manifest_key.to_owned(),
+            local_symkey: local_symkey.to_owned(),
+            time_provider: TimeProvider::default(),
+        });
+
+        self.local_devices.push(local_device.clone());
+        local_device
+    }
+
+    pub fn organization_addr(&mut self, env: &TestbedEnv) -> Arc<BackendOrganizationAddr> {
+        self.organization_addr
+            .get_or_insert_with(|| {
+                let root_signing_key = env.template.root_signing_key();
+                let organization_addr = BackendOrganizationAddr::new(
+                    env.server_addr.clone(),
+                    env.organization_id.clone(),
+                    root_signing_key.verify_key(),
+                );
+                Arc::new(organization_addr)
+            })
+            .clone()
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum TestbedKind {
+    ClientServer,
+    ClientOnly, // Server is considered offline for the whole run
+}
+
+pub struct TestbedEnv {
+    pub kind: TestbedKind,
+    /// Fake path used used as the key identifying the testbed env.
+    /// In Parsec there is two base directory: `config_dir` and `data_base_dir`
+    /// when the testbed is used, both should be set to the discriminant value.
+    /// Note: testbed is designed to always run mocked in memory, so this path
+    /// will never exist on the file system.
+    pub discriminant_dir: PathBuf,
+    pub server_addr: BackendAddr,
+    pub organization_id: OrganizationID,
+    pub template: Arc<TestbedTemplate>,
+
+    cache: Mutex<Option<TestbedEnvCache>>,
+}
+
+impl std::fmt::Debug for TestbedEnv {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut ds = f.debug_struct("TestbedEnv");
+
+        ds.field("template", &self.template.id)
+            .field("kind", &self.kind)
+            .field("discriminant_dir", &self.discriminant_dir);
+
+        if let TestbedKind::ClientServer = self.kind {
+            ds.field("server_addr", &self.server_addr)
+                .field("organization_id", &self.organization_id);
+        }
+
+        ds.finish()
+    }
+}
+
+impl TestbedEnv {
+    /// Env sealing is done lazily when data are first accessed
+    fn seal_and<R>(&self, cb: impl FnOnce(&mut TestbedEnvCache) -> R) -> R {
+        let mut guard = self.cache.lock().expect("Mutex is poisoned");
+        let cache = guard.get_or_insert_with(TestbedEnvCache::default);
+        cb(cache)
+    }
+
+    pub fn is_sealed(&self) -> bool {
+        let guard = self.cache.lock().expect("Mutex is poisoned");
+        guard.is_some()
+    }
+
+    pub fn customize(&self) -> TestbedTemplateBuilder<(), impl FnOnce(Arc<TestbedTemplate>)> {
+        assert!(
+            matches!(self.kind, TestbedKind::ClientOnly),
+            "Cannot customize the template on server side !"
+        );
+        let discriminant_dir = self.discriminant_dir.clone();
+        TestbedTemplateBuilder::new_from_base(
+            "custom",
+            self.template.clone(),
+            move |new_template| {
+                // Retreive current testbed env
+                let mut envs = TESTBED_ENVS.lock().expect("Mutex is poisoned");
+                let env = envs
+                    .iter_mut()
+                    .find(|env| env.discriminant_dir == discriminant_dir)
+                    .expect("Must exist");
+
+                // Replace it by a new one customized
+                assert!(
+                    !env.is_sealed(),
+                    "Testbed template cannot be customized once the env is sealed"
+                );
+                *env = Arc::new(TestbedEnv {
+                    kind: env.kind,
+                    discriminant_dir,
+                    server_addr: env.server_addr.clone(),
+                    organization_id: env.organization_id.clone(),
+                    template: new_template,
+                    cache: Mutex::default(),
+                });
+            },
+        )
+    }
+
+    pub fn organization_addr(&self) -> Arc<BackendOrganizationAddr> {
+        self.seal_and(|cache| cache.organization_addr(self))
+    }
+
+    pub fn local_device(&self, device_id: DeviceID) -> Arc<LocalDevice> {
+        self.seal_and(|cache| cache.local_device(self, device_id))
+    }
+}
+
 /// `test_new_testbed` should be called when a test starts (and be followed
 /// by a `test_drop_testbed` call at it end)
 pub async fn test_new_testbed(
@@ -99,9 +261,9 @@ pub async fn test_new_testbed(
     server_addr: Option<&BackendAddr>,
 ) -> Arc<TestbedEnv> {
     // 1) Retrieve the template
-    let template = get_template(template);
+    let template = test_get_template(template).expect("Testbed template not found");
 
-    let (kind, organization_addr) = if let Some(server_addr) = server_addr {
+    let (kind, server_addr, organization_id) = if let Some(server_addr) = server_addr {
         // 2) Call the test server to setup the env on it side
         let url = server_addr.to_http_url(Some(&format!("/testbed/new/{}", template.id)));
         let response = HTTP_CLIENT
@@ -131,27 +293,22 @@ pub async fn test_new_testbed(
         };
 
         // Ensure there is not inconsistency in the template's data with the server
+        let template_crc = template.compute_crc();
         assert_eq!(
-            template.crc, server_template_crc,
+            template_crc, server_template_crc,
             "CRC mismatch in template ! Check your server version."
         );
 
-        let organization_addr = BackendOrganizationAddr::new(
+        (
+            TestbedKind::ClientServer,
             server_addr.to_owned(),
             organization_id,
-            template.root_signing_key.verify_key(),
-        );
-        (TestbedKind::ClientServer, organization_addr)
+        )
     } else {
         // No server, organization ID & Addr are not relevant
-        let organization_addr = BackendOrganizationAddr::new(
-            "parsec://noserver.example.com"
-                .parse::<BackendAddr>()
-                .unwrap(),
-            "OfflineOrg".parse().unwrap(),
-            template.root_signing_key.verify_key(),
-        );
-        (TestbedKind::ClientOnly, organization_addr)
+        let organization_id = "OfflineOrg".parse().unwrap();
+        let dummy_server_addr = "parsec://noserver.example.com".parse().unwrap();
+        (TestbedKind::ClientOnly, dummy_server_addr, organization_id)
     };
 
     // 3) Finally register the testbed env
@@ -163,16 +320,16 @@ pub async fn test_new_testbed(
     let discriminant_dir = {
         let mut dir = PathBuf::from(TESTBED_BASE_DUMMY_PATH);
         dir.push(current.to_string());
-        dir.push(organization_addr.organization_id().as_ref());
+        dir.push(organization_id.as_ref());
         dir
     };
     let env = Arc::new(TestbedEnv {
         kind,
         discriminant_dir,
-        organization_addr,
+        server_addr,
+        organization_id,
         template: template.clone(),
-        persistence_store: Mutex::default(),
-        local_devices_cache: Mutex::default(),
+        cache: Mutex::default(),
     });
     envs.push(env.clone());
     env
@@ -189,6 +346,47 @@ pub fn test_get_testbed(discriminant_dir: &Path) -> Option<Arc<TestbedEnv>> {
     envs.iter()
         .find(|x| x.discriminant_dir == discriminant_dir)
         .cloned()
+}
+
+pub fn test_get_testbed_component_store<T>(
+    discriminant_dir: &Path,
+    component_key: &'static str,
+    store_factory: impl FnOnce(&TestbedEnv) -> Arc<dyn Any + Send + Sync>,
+) -> Option<Arc<T>>
+where
+    T: Send + Sync + 'static,
+{
+    test_get_testbed(discriminant_dir).map(|env| {
+        let component_store = {
+            env.seal_and(|cache| {
+                cache
+                    .per_component_store
+                    .iter()
+                    .find_map(|(candidate_key, component_store)| {
+                        if component_key == *candidate_key {
+                            // Component store already exists
+                            Some(component_store.to_owned())
+                        } else {
+                            None
+                        }
+                    })
+                    .unwrap_or_else(|| {
+                        // Component store doesn't exist, create it
+                        let store = store_factory(&env);
+                        cache
+                            .per_component_store
+                            .push((component_key, store.clone()));
+                        store
+                    })
+            })
+        };
+
+        let downcasted = component_store.downcast::<T>().unwrap_or_else(|_| {
+            panic!("Unexpected component storage type for `{}`", component_key);
+        });
+
+        downcasted
+    })
 }
 
 /// Nothing wrong will occur if `test_drop_testbed` is not called at the end of a test.
@@ -209,9 +407,9 @@ pub async fn test_drop_testbed(discriminant_dir: &Path) {
 
     // 2) Notify the testbed server about the end of test
     if env.kind == TestbedKind::ClientServer {
-        let url = env.organization_addr.to_http_url(Some(&format!(
+        let url = env.server_addr.to_http_url(Some(&format!(
             "/testbed/drop/{}",
-            env.organization_addr.organization_id().as_ref()
+            env.organization_id.as_ref()
         )));
         let response = HTTP_CLIENT
             .post(url)

@@ -30,7 +30,7 @@ use libparsec_types::prelude::*;
         device_label: None,
         human_handle: None,
         profile: UserProfile::Admin,
-        root_verify_key: libparsec_crypto::VerifyKey::from(hex!("be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd"))
+        root_verify_key: VerifyKey::try_from(hex!("be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd")).unwrap()
     }
 )]
 #[case::full(
@@ -56,7 +56,7 @@ use libparsec_types::prelude::*;
         device_label: Some(DeviceLabel::from_str("My dev1 machine").unwrap()),
         human_handle: Some(("alice@example.com", "Alicey McAliceFace").try_into().unwrap()),
         profile: UserProfile::Admin,
-        root_verify_key: VerifyKey::from(hex!("be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd"))
+        root_verify_key: VerifyKey::try_from(hex!("be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd")).unwrap()
     }
 )]
 fn serde_pki_enrollment_answer_payload(
@@ -92,7 +92,7 @@ fn serde_pki_enrollment_answer_payload(
     PkiEnrollmentSubmitPayload {
         public_key: PublicKey::from(hex!("e1b20b860a78ef778d0c776121c7027cd90ce04b4d2f1a291a48d911f145724d")),
         requested_device_label: DeviceLabel::from_str("My dev1 machine").unwrap(),
-        verify_key: VerifyKey::from(hex!("845415cd821748005054dba8d456ac18ad3e71acdf980e19d6a925191362c9f9"))
+        verify_key: VerifyKey::try_from(hex!("845415cd821748005054dba8d456ac18ad3e71acdf980e19d6a925191362c9f9")).unwrap()
     }
 )]
 fn serde_pki_enrollment_submit_payload(

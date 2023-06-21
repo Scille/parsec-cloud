@@ -4,12 +4,13 @@ use std::path::Path;
 
 use pyo3::{exceptions::PyValueError, pyclass, pymethods, types::PyType, PyResult};
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct Regex(pub libparsec::low_level::types::Regex);
-
-crate::binding_utils::gen_proto!(Regex, __richcmp__, eq);
-crate::binding_utils::gen_proto!(Regex, __str__);
+crate::binding_utils::gen_py_wrapper_class!(
+    Regex,
+    libparsec::low_level::types::Regex,
+    __repr__,
+    __str__,
+    __richcmp__ eq,
+);
 
 #[pymethods]
 impl Regex {

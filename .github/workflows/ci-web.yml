@@ -40,7 +40,7 @@ jobs:
     # https://github.com/Scille/parsec-cloud/pkgs/container/parsec-cloud%2Fparsec-testbed-server
     services:
       parsec-testbed-server:
-        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:v2.15.0-dev.2023-06-07-sha.1058bbc
+        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:v2.16.0-a.0-dev.2023-06-21-sha.77c98e3
         ports:
           - 6777:6777
     steps:

@@ -173,11 +173,10 @@ macro_rules! new_string_based_id_type {
             }
         }
 
-        // Note: FromStr is used for Deserialization !
-        impl FromStr for $name {
-            type Err = &'static str;
+        impl TryFrom<&str> for $name {
+            type Error = &'static str;
 
-            fn from_str(s: &str) -> Result<Self, Self::Err> {
+            fn try_from(s: &str) -> Result<Self, Self::Error> {
                 let id: String = s.nfc().collect();
                 lazy_static! {
                     static ref PATTERN: Regex =
@@ -189,6 +188,16 @@ macro_rules! new_string_based_id_type {
                 } else {
                     Err(concat!("Invalid ", stringify!($name)))
                 }
+            }
+        }
+
+        // Note: FromStr is used for Deserialization !
+        impl FromStr for $name {
+            type Err = &'static str;
+
+            #[inline]
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                $name::try_from(s)
             }
         }
 
@@ -209,6 +218,42 @@ new_uuid_type!(pub SequesterServiceID);
 new_uuid_type!(pub InvitationToken);
 new_uuid_type!(pub EnrollmentID);
 impl_from_maybe!(std::collections::HashSet<EntryID>);
+
+// RealmID correspond to user/workspace manifest's EntryID, so conversion is useful
+impl From<EntryID> for RealmID {
+    fn from(value: EntryID) -> Self {
+        Self(value.0)
+    }
+}
+impl From<RealmID> for EntryID {
+    fn from(value: RealmID) -> Self {
+        Self(value.0)
+    }
+}
+
+// Each entry is stored in vlob, hence there is a EntryID <-> VlobID correspondence
+impl From<EntryID> for VlobID {
+    fn from(value: EntryID) -> Self {
+        Self(value.0)
+    }
+}
+impl From<VlobID> for EntryID {
+    fn from(value: VlobID) -> Self {
+        Self(value.0)
+    }
+}
+
+// ChunkID are often created from file BlockID, so conversion is useful
+impl From<BlockID> for ChunkID {
+    fn from(value: BlockID) -> Self {
+        Self(value.0)
+    }
+}
+impl From<ChunkID> for BlockID {
+    fn from(value: ChunkID) -> Self {
+        Self(value.0)
+    }
+}
 
 /*
  * OrganizationID
@@ -276,16 +321,25 @@ impl AsRef<str> for DeviceID {
     }
 }
 
-// Note: FromStr is used for Deserialization !
-impl FromStr for DeviceID {
-    type Err = &'static str;
+impl TryFrom<&str> for DeviceID {
+    type Error = &'static str;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
         const ERR: &str = "Invalid DeviceID";
         let (raw_user_id, raw_device_name) = s.split_once('@').ok_or(ERR)?;
         let user_id = raw_user_id.parse().map_err(|_| ERR)?;
         let device_name = raw_device_name.parse().map_err(|_| ERR)?;
         Ok(Self::new(user_id, device_name))
+    }
+}
+
+// Note: FromStr is used for Deserialization !
+impl FromStr for DeviceID {
+    type Err = &'static str;
+
+    #[inline]
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        DeviceID::try_from(s)
     }
 }
 
@@ -355,13 +409,23 @@ impl AsRef<str> for HumanHandle {
     }
 }
 
-impl FromStr for HumanHandle {
-    type Err = &'static str;
+impl TryFrom<&str> for HumanHandle {
+    type Error = &'static str;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
         let start = s.chars().position(|c| c == '<').ok_or("Email is missing")?;
         let stop = s.chars().position(|c| c == '>').ok_or("Email is missing")?;
         Self::new(&s[start + 1..stop], &s[..start - 1])
+    }
+}
+
+// Note: FromStr is used for Deserialization !
+impl FromStr for HumanHandle {
+    type Err = &'static str;
+
+    #[inline]
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        HumanHandle::try_from(s)
     }
 }
 

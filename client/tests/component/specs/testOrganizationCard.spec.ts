@@ -10,7 +10,7 @@ describe('Organization Card', () => {
   const DEVICE: AvailableDevice = {
     keyFilePath: '/path',
     organizationId: 'Black Mesa',
-    deviceId: 'device_id',
+    deviceId: '5ada1b25e8904e9ba238834227a40abf@9700f0fd005e4752a13bcba0042d4703',
     humanHandle: 'Gordon Freeman',
     deviceLabel: 'hev',
     slug: '1',
@@ -42,6 +42,6 @@ describe('Organization Card', () => {
 
     expect(wrapper.find('ion-avatar').text()).to.equal('Bl');
     expect(wrapper.find('ion-card-title').text()).to.equal('Black Mesa');
-    expect(wrapper.find('ion-card-subtitle').text()).to.equal('');
+    expect(wrapper.find('ion-card-subtitle').text()).to.equal('5ada1b25e8904e9ba238834227a40abf@9700f0fd005e4752a13bcba0042d4703');
   });
 });

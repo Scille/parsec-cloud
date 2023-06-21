@@ -36,7 +36,7 @@ once_cell = { version = "1.17.1", optional = true }
 
 [dev-dependencies]
 # Note `libparsec_tests_fixtures` enables our `test-with-testbed` feature
-libparsec_tests_fixtures = { path = "../tests_fixtures" }
+libparsec_tests_fixtures = { path = "../tests_fixtures", default-features = false, features = ["test-with-client-connection-testbed"] }
 
 log = "0.4.17"
 anyhow = "1.0.70"

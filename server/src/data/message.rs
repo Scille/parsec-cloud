@@ -8,10 +8,8 @@ use pyo3::{
 };
 
 use crate::{
-    api_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey},
-    data::{DataExc, EntryName},
-    ids::{DeviceID, RealmID},
-    time::DateTime,
+    DataExc, DateTime, DeviceID, EntryName, PrivateKey, PublicKey, RealmID, SecretKey, SigningKey,
+    VerifyKey,
 };
 
 use libparsec::low_level::types::IndexInt;
@@ -19,6 +17,12 @@ use libparsec::low_level::types::IndexInt;
 #[pyclass(subclass)]
 #[derive(Clone)]
 pub(crate) struct MessageContent(pub libparsec::low_level::types::MessageContent);
+
+impl From<libparsec::low_level::types::MessageContent> for MessageContent {
+    fn from(value: libparsec::low_level::types::MessageContent) -> Self {
+        Self(value)
+    }
+}
 
 crate::binding_utils::gen_proto!(MessageContent, __repr__);
 crate::binding_utils::gen_proto!(MessageContent, __copy__);

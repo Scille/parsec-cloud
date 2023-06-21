@@ -6,7 +6,7 @@ use std::{
     sync::{Arc, Mutex, MutexGuard},
 };
 
-use libparsec_platform_storage2::certificates::{self as storage};
+use libparsec_platform_storage::certificates::{self as storage};
 use libparsec_types::prelude::*;
 
 #[derive(Debug)]
@@ -74,17 +74,6 @@ pub(super) enum GetTimestampBoundsError {
     NonExisting,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-#[derive(Debug)]
-pub(super) enum AnyArcCertificate {
-    User(Arc<UserCertificate>),
-    Device(Arc<DeviceCertificate>),
-    UserUpdate(Arc<UserUpdateCertificate>),
-    RevokedUser(Arc<RevokedUserCertificate>),
-    RealmRole(Arc<RealmRoleCertificate>),
-    SequesterAuthority(Arc<SequesterAuthorityCertificate>),
-    SequesterService(Arc<SequesterServiceCertificate>),
 }
 
 pub(super) enum UpTo {
@@ -832,7 +821,7 @@ impl CertificatesCachedStorage {
     pub async fn get_sequester_service_certificates(
         &self,
         up_to: UpTo,
-    ) -> Result<Vec<Arc<SequesterServiceCertificate>>, anyhow::Error> {
+    ) -> Result<impl Iterator<Item = Arc<SequesterServiceCertificate>> + '_, anyhow::Error> {
         let maybe = {
             let guard = self.cache.lock().expect("Mutex is poisoned");
             match &guard.sequester_service_certificates {
@@ -871,11 +860,10 @@ impl CertificatesCachedStorage {
 
         let items = items
             .into_iter()
-            .filter_map(|(index, certif)| match up_to {
+            .filter_map(move |(index, certif)| match up_to {
                 UpTo::Index(up_to_index) if index > up_to_index => None,
                 _ => Some(certif),
-            })
-            .collect();
+            });
 
         Ok(items)
     }

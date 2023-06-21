@@ -6,9 +6,8 @@ from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator, Callable, Dict, Type
 
 import attr
-from structlog import get_logger
 
-from parsec._parsec import OrganizationID
+from parsec._parsec import OrganizationID, RealmRole, UserProfile
 from parsec.backend.block import BaseBlockComponent
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.client_context import BaseClientContext
@@ -17,19 +16,17 @@ from parsec.backend.events import EventsComponent
 from parsec.backend.invite import BaseInviteComponent
 from parsec.backend.memory import components_factory as mocked_components_factory
 from parsec.backend.message import BaseMessageComponent
-from parsec.backend.organization import BaseOrganizationComponent
+from parsec.backend.organization import BaseOrganizationComponent, SequesterAuthority
 from parsec.backend.ping import BasePingComponent
 from parsec.backend.pki import BasePkiEnrollmentComponent
 from parsec.backend.postgresql import components_factory as postgresql_components_factory
-from parsec.backend.realm import BaseRealmComponent
-from parsec.backend.sequester import BaseSequesterComponent
+from parsec.backend.realm import BaseRealmComponent, RealmGrantedRole
+from parsec.backend.sequester import BaseSequesterComponent, StorageSequesterService
 from parsec.backend.user import BaseUserComponent, Device, User
 from parsec.backend.utils import collect_apis
 from parsec.backend.vlob import BaseVlobComponent
 from parsec.backend.webhooks import WebhooksComponent
 from parsec.event_bus import EventBus
-
-logger = get_logger()
 
 
 @asynccontextmanager
@@ -127,56 +124,178 @@ class BackendApp:
         self.sequester.test_drop_organization(id)  # type: ignore[attr-defined]
 
     async def test_load_template(self, template: Any) -> OrganizationID:
+        from parsec._parsec import testbed
+
         org_id = OrganizationID(f"{template.id.capitalize()}OrgTemplate")
         await self.organization.create(id=org_id, bootstrap_token="")
 
-        devices = template.devices
-
-        first_devices = set()
-        for user in template.users:
-            user_id = user.user_id
-            first_device = next(
-                d
-                for d in devices
-                if d.device_id.user_id == user_id
-                and d.certif.timestamp == user.certif.timestamp
-                and d.certif.author == user.certif.author
-            )
-            await self.user.create_user(
-                organization_id=org_id,
-                user=User(
-                    user_id=user_id,
-                    human_handle=user.human_handle,
-                    user_certificate=user.raw_certif,
-                    redacted_user_certificate=user.raw_redacted_certif,
-                    user_certifier=user.certif.author,
-                    initial_profile=user.profile,
-                    created_on=user.certif.timestamp,
-                ),
-                first_device=Device(
-                    device_id=first_device.device_id,
-                    device_label=first_device.device_label,
-                    device_certificate=first_device.raw_certif,
-                    redacted_device_certificate=first_device.raw_redacted_certif,
-                    device_certifier=first_device.certif.author,
-                    created_on=first_device.certif.timestamp,
-                ),
-            )
-            first_devices.add(first_device.device_id)
-
-        for device in devices:
-            if device.device_id in first_devices:
-                continue
-            await self.user.create_device(
-                organization_id=org_id,
-                device=Device(
-                    device_id=device.device_id,
-                    device_label=device.device_label,
-                    device_certificate=device.raw_certif,
-                    redacted_device_certificate=device.raw_redacted_certif,
-                    device_certifier=device.certif.author,
-                    created_on=device.certif.timestamp,
-                ),
-            )
+        for event in template.events:
+            if isinstance(event, testbed.TestbedEventBootstrapOrganization):
+                await self.organization.bootstrap(
+                    id=org_id,
+                    user=User(
+                        user_id=event.first_user_device_id.user_id,
+                        human_handle=event.first_user_human_handle,
+                        user_certificate=event.first_user_raw_certificate,
+                        redacted_user_certificate=event.first_user_raw_redacted_certificate,
+                        user_certifier=None,
+                        initial_profile=UserProfile.ADMIN,
+                        created_on=event.timestamp,
+                    ),
+                    first_device=Device(
+                        device_id=event.first_user_device_id,
+                        device_label=event.first_user_first_device_label,
+                        device_certificate=event.first_user_first_device_raw_certificate,
+                        redacted_device_certificate=event.first_user_first_device_raw_redacted_certificate,
+                        device_certifier=None,
+                        created_on=event.timestamp,
+                    ),
+                    bootstrap_token="",
+                    root_verify_key=event.root_signing_key.verify_key,
+                    bootstrapped_on=event.timestamp,
+                    sequester_authority=(
+                        SequesterAuthority(
+                            certificate=event.sequester_authority_raw_certificate,
+                            verify_key_der=event.sequester_authority_verify_key,
+                        )
+                    )
+                    if event.sequester_authority_raw_certificate
+                    and event.sequester_authority_verify_key
+                    else None,
+                )
+            elif isinstance(event, testbed.TestbedEventNewSequesterService):
+                await self.sequester.create_service(
+                    organization_id=org_id,
+                    service=StorageSequesterService(
+                        service_id=event.id,
+                        service_label=event.label,
+                        service_certificate=event.raw_certificate,
+                        created_on=event.timestamp,
+                        disabled_on=None,
+                    ),
+                )
+            elif isinstance(event, testbed.TestbedEventNewUser):
+                await self.user.create_user(
+                    organization_id=org_id,
+                    user=User(
+                        user_id=event.device_id.user_id,
+                        human_handle=event.human_handle,
+                        user_certificate=event.user_raw_certificate,
+                        redacted_user_certificate=event.user_raw_redacted_certificate,
+                        user_certifier=event.author,
+                        initial_profile=event.initial_profile,
+                        created_on=event.timestamp,
+                    ),
+                    first_device=Device(
+                        device_id=event.device_id,
+                        device_label=event.first_device_label,
+                        device_certificate=event.first_device_raw_certificate,
+                        redacted_device_certificate=event.first_device_raw_redacted_certificate,
+                        device_certifier=event.author,
+                        created_on=event.timestamp,
+                    ),
+                )
+            elif isinstance(event, testbed.TestbedEventNewDevice):
+                await self.user.create_device(
+                    organization_id=org_id,
+                    device=Device(
+                        device_id=event.device_id,
+                        device_label=event.device_label,
+                        device_certificate=event.raw_certificate,
+                        redacted_device_certificate=event.raw_redacted_certificate,
+                        device_certifier=event.author,
+                        created_on=event.timestamp,
+                    ),
+                )
+            elif isinstance(event, testbed.TestbedEventUpdateUserProfile):
+                await self.user.update_user(
+                    organization_id=org_id,
+                    user_id=event.user,
+                    new_profile=event.profile,
+                    user_update_certificate=event.raw_certificate,
+                    user_update_certifier=event.author,
+                    updated_on=event.timestamp,
+                )
+            elif isinstance(event, testbed.TestbedEventRevokeUser):
+                await self.user.revoke_user(
+                    organization_id=org_id,
+                    user_id=event.user,
+                    revoked_user_certificate=event.raw_certificate,
+                    revoked_user_certifier=event.author,
+                    revoked_on=event.timestamp,
+                )
+            elif isinstance(event, testbed.TestbedEventNewRealm):
+                await self.realm.create(
+                    organization_id=org_id,
+                    self_granted_role=RealmGrantedRole(
+                        certificate=event.raw_certificate,
+                        realm_id=event.realm_id,
+                        user_id=event.author.user_id,
+                        role=RealmRole.OWNER,
+                        granted_by=event.author,
+                        granted_on=event.timestamp,
+                    ),
+                )
+            elif isinstance(event, testbed.TestbedEventShareRealm):
+                await self.realm.update_roles(
+                    organization_id=org_id,
+                    new_role=RealmGrantedRole(
+                        certificate=event.raw_certificate,
+                        realm_id=event.realm,
+                        user_id=event.author.user_id,
+                        role=RealmRole.OWNER,
+                        granted_by=event.author,
+                        granted_on=event.timestamp,
+                    ),
+                    recipient_message=event.recipient_message,
+                )
+            elif isinstance(event, testbed.TestbedEventStartRealmReencryption):
+                await self.realm.start_reencryption_maintenance(
+                    organization_id=org_id,
+                    author=event.author,
+                    realm_id=event.realm,
+                    encryption_revision=event.encryption_revision,
+                    per_participant_message=dict(event.per_participant_message),
+                    timestamp=event.timestamp,
+                )
+            elif isinstance(event, testbed.TestbedEventFinishRealmReencryption):
+                await self.realm.finish_reencryption_maintenance(
+                    organization_id=org_id,
+                    author=event.author,
+                    realm_id=event.realm,
+                    encryption_revision=event.encryption_revision,
+                )
+            elif isinstance(event, testbed.TestbedEventNewVlob):
+                await self.vlob.create(
+                    organization_id=org_id,
+                    author=event.author,
+                    realm_id=event.realm,
+                    encryption_revision=event.encryption_revision,
+                    vlob_id=event.vlob_id,
+                    timestamp=event.timestamp,
+                    blob=event.blob,
+                    sequester_blob=event.seqester_blob,
+                )
+            elif isinstance(event, testbed.TestbedEventUpdateVlob):
+                await self.vlob.update(
+                    organization_id=org_id,
+                    author=event.author,
+                    encryption_revision=event.encryption_revision,
+                    vlob_id=event.vlob,
+                    version=event.version,
+                    timestamp=event.timestamp,
+                    blob=event.blob,
+                    sequester_blob=event.seqester_blob,
+                )
+            else:
+                assert isinstance(event, testbed.TestbedEventNewBlock)
+                await self.block.create(
+                    organization_id=org_id,
+                    author=event.author,
+                    block_id=event.block_id,
+                    realm_id=event.realm,
+                    block=event.block,
+                    created_on=event.timestamp,
+                )
 
         return org_id

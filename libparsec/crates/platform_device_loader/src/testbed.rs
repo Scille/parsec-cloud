@@ -1,8 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use std::path::Path;
+use std::{
+    any::Any,
+    path::Path,
+    sync::{Arc, Mutex},
+};
 
-use libparsec_testbed::{test_get_testbed, TestbedTemplate};
+use libparsec_testbed::{
+    test_get_testbed, test_get_testbed_component_store, TestbedEnv, TestbedEvent,
+};
 use libparsec_types::prelude::*;
 
 const STORE_ENTRY_KEY: &str = "platform_device_loader";
@@ -12,68 +18,90 @@ const STORE_ENTRY_KEY: &str = "platform_device_loader";
 // called, we can generate the LocalDevice object directly from template data
 // without having to do password derivation, deserialization and decryption.
 
-struct PseudoPersistentStorage {
-    available_devices: Vec<AvailableDevice>,
+enum MaybePopulated<T> {
+    Stalled,
+    Populated(T),
 }
 
-impl PseudoPersistentStorage {
-    pub fn new(
-        config_dir: &Path,
-        organization_addr: &BackendOrganizationAddr,
-        template: &TestbedTemplate,
-    ) -> Self {
-        // Populate the storage from the template.
-        // Once done we should no longer need the template data
-        let available_devices = template
-            .device_files
-            .iter()
-            .map(|device_file| {
-                let device = template.device(&device_file.device_id);
-                let user = template.user(device_file.device_id.user_id());
-
-                AvailableDevice {
-                    key_file_path: config_dir
-                        .join(format!("{}.key", device_file.device_id.as_ref())),
-                    organization_id: organization_addr.organization_id().to_owned(),
-                    device_id: device_file.device_id.clone(),
-                    human_handle: user.human_handle.clone(),
-                    device_label: device.device_label.clone(),
-                    slug: local_device_slug(
-                        organization_addr.organization_id(),
-                        &device.device_id,
-                        organization_addr.root_verify_key(),
-                    ),
-                    ty: DeviceFileType::Password,
-                }
-            })
-            .collect();
-
-        Self { available_devices }
-    }
+struct ComponentStore {
+    available_devices: Mutex<MaybePopulated<Vec<AvailableDevice>>>,
 }
 
-/// Retrieve (or create) our pseudo persistent storage, check it type and pass it to `cb`.
-/// Return `None` if `config_dir` doesn't correspond to a testbed env.
-fn with_pseudo_persistent_storage<T>(
-    config_dir: &Path,
-    cb: impl FnOnce(&mut PseudoPersistentStorage) -> T,
-) -> Option<T> {
-    test_get_testbed(config_dir).map(|env| {
-        let mut global_store = env.persistence_store.lock().expect("Mutex is poisoned");
-        let store = global_store.entry(STORE_ENTRY_KEY).or_insert_with(|| {
-            Box::new(PseudoPersistentStorage::new(
-                config_dir,
-                &env.organization_addr,
-                env.template.as_ref(),
-            ))
-        });
-        let store = store
-            .downcast_mut::<PseudoPersistentStorage>()
-            .expect("Unexpected pseudo persistent storage type for platform_device_loader");
-        cb(store)
+fn store_factory(_env: &TestbedEnv) -> Arc<dyn Any + Send + Sync> {
+    Arc::new(ComponentStore {
+        available_devices: Mutex::new(MaybePopulated::Stalled),
     })
 }
 
+fn populate_available_devices(config_dir: &Path, env: &TestbedEnv) -> Vec<AvailableDevice> {
+    // Populate the storage from the template.
+    // Once done we should no longer need the template data
+    env.template
+        .events()
+        .filter_map(|e| {
+            let (device_id, human_handle, device_label) = match e {
+                TestbedEvent::BootstrapOrganization(x) => (
+                    &x.first_user_device_id,
+                    &x.first_user_human_handle,
+                    &x.first_user_first_device_label,
+                ),
+
+                TestbedEvent::NewUser(x) => (&x.device_id, &x.human_handle, &x.first_device_label),
+
+                TestbedEvent::NewDevice(x) => {
+                    let user_id = x.device_id.user_id();
+                    let user_human_handle = env
+                        .template
+                        .events()
+                        .find_map(|e| match e {
+                            TestbedEvent::BootstrapOrganization(e)
+                                if e.first_user_device_id.user_id() == user_id =>
+                            {
+                                Some(&e.first_user_human_handle)
+                            }
+                            TestbedEvent::NewUser(e) if e.device_id.user_id() == user_id => {
+                                Some(&e.human_handle)
+                            }
+                            _ => None,
+                        })
+                        .expect("Must exist");
+                    (&x.device_id, user_human_handle, &x.device_label)
+                }
+
+                _ => return None,
+            };
+
+            let available_device = AvailableDevice {
+                key_file_path: config_dir.join(format!("{}.key", device_id)),
+                organization_id: env.organization_id.clone(),
+                device_id: device_id.clone(),
+                human_handle: human_handle.clone(),
+                device_label: device_label.clone(),
+                slug: local_device_slug(
+                    &env.organization_id,
+                    device_id,
+                    env.organization_addr().root_verify_key(),
+                ),
+                ty: DeviceFileType::Password,
+            };
+
+            Some(available_device)
+        })
+        .collect()
+}
+
 pub(crate) fn maybe_list_available_devices(config_dir: &Path) -> Option<Vec<AvailableDevice>> {
-    with_pseudo_persistent_storage(config_dir, |store| store.available_devices.clone())
+    test_get_testbed_component_store::<ComponentStore>(config_dir, STORE_ENTRY_KEY, store_factory)
+        .map(|store| {
+            let mut maybe_populated = store.available_devices.lock().expect("Mutex is poisoned");
+            match &*maybe_populated {
+                MaybePopulated::Populated(available_devices) => available_devices.clone(),
+                MaybePopulated::Stalled => {
+                    let env = test_get_testbed(config_dir).expect("Must exist");
+                    let available_devices = populate_available_devices(config_dir, &env);
+                    *maybe_populated = MaybePopulated::Populated(available_devices.clone());
+                    available_devices
+                }
+            }
+        })
 }

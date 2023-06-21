@@ -2,21 +2,21 @@
 
 use std::sync::Arc;
 
-use super::{coolorg, empty, get_template};
+use super::{templates, test_get_template};
 
 #[test]
 pub fn generate_stability() {
-    let a1 = coolorg::generate();
-    let a2 = coolorg::generate();
-    let a3 = empty::generate();
+    let a1 = templates::minimal::generate();
+    let a2 = templates::minimal::generate();
+    let a3 = templates::empty::generate();
 
-    assert_eq!(a1.crc, a2.crc);
-    assert_ne!(a1.crc, a3.crc);
+    assert_eq!(a1.compute_crc(), a2.compute_crc());
+    assert_ne!(a1.compute_crc(), a3.compute_crc());
 }
 
 #[test]
 pub fn get_template_stability() {
-    let a1 = get_template("minimal");
-    let a2 = get_template("minimal");
+    let a1 = test_get_template("minimal").unwrap();
+    let a2 = test_get_template("minimal").unwrap();
     assert!(Arc::ptr_eq(&a1, &a2));
 }

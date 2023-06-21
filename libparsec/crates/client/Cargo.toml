@@ -10,7 +10,7 @@ license = " BUSL-1.1"
 libparsec_client_connection = { path = "../client_connection" }
 libparsec_types = { path = "../types" }
 libparsec_platform_async = { path = "../platform_async" }
-libparsec_platform_storage2 = { path = "../platform_storage2" }
+libparsec_platform_storage = { path = "../platform_storage" }
 libparsec_protocol = { path = "../protocol" }
 
 tokio = { version = "1.28.0", features = ["rt", "time", "sync", "macros"] }

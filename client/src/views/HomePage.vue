@@ -265,7 +265,7 @@ const msSelectSortByLabels = {
 const filteredDevices = computed(() => {
   return deviceList.value.filter((item) => {
     const lowerSearchString = orgSearchString.value.toLocaleLowerCase();
-    return (item.humanHandle?.toLocaleLowerCase().includes(lowerSearchString) ||
+    return ((item.humanHandle || item.deviceId)?.toLocaleLowerCase().includes(lowerSearchString) ||
       item.organizationId?.toLocaleLowerCase().includes(lowerSearchString));
   }).sort((a, b) => {
     if (sortBy.value === 'organization') {
@@ -274,11 +274,11 @@ const filteredDevices = computed(() => {
       } else {
         return b.organizationId.localeCompare(a.organizationId);
       }
-    } else if (sortBy.value === 'user_name' && a.humanHandle && b.humanHandle) {
+    } else if (sortBy.value === 'user_name' && (a.humanHandle || a.deviceId) && (b.humanHandle || b.deviceId)) {
       if (sortByAsc.value) {
-        return a.humanHandle?.localeCompare(b.humanHandle ?? '');
+        return (a.humanHandle || a.deviceId)?.localeCompare((b.humanHandle || b.deviceId) ?? '');
       } else {
-        return b.humanHandle?.localeCompare(a.humanHandle ?? '');
+        return (b.humanHandle || b.deviceId)?.localeCompare((a.humanHandle || a.deviceId) ?? '');
       }
     } else if (sortBy.value === 'last_login') {
       const aLastLogin = (a.slug in storedDeviceDataDict.value && storedDeviceDataDict.value[a.slug].lastLogin !== undefined) ?

@@ -7,7 +7,7 @@ use pyo3::{
     PyAny, PyResult,
 };
 
-use crate::runtime::FutureIntoCoroutine;
+use crate::FutureIntoCoroutine;
 
 #[pyfunction]
 /// mock_time takes as argument a DateTime (for FrozenTime), an int (for ShiftedTime) or None (for RealTime)
@@ -38,9 +38,12 @@ pub(crate) fn mock_time(time: &PyAny) -> PyResult<()> {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct TimeProvider(pub libparsec::low_level::types::TimeProvider);
+crate::binding_utils::gen_py_wrapper_class!(
+    TimeProvider,
+    libparsec::low_level::types::TimeProvider,
+    __repr__,
+    __copy__,
+);
 
 #[pymethods]
 impl TimeProvider {
@@ -157,16 +160,16 @@ impl TimeProvider {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct DateTime(pub libparsec::low_level::types::DateTime);
-
-crate::binding_utils::gen_proto!(DateTime, __repr__);
-crate::binding_utils::gen_proto!(DateTime, __copy__);
-crate::binding_utils::gen_proto!(DateTime, __deepcopy__);
-crate::binding_utils::gen_proto!(DateTime, __str__);
-crate::binding_utils::gen_proto!(DateTime, __richcmp__, ord);
-crate::binding_utils::gen_proto!(DateTime, __hash__);
+crate::binding_utils::gen_py_wrapper_class!(
+    DateTime,
+    libparsec::low_level::types::DateTime,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
 
 #[pymethods]
 impl DateTime {
@@ -315,16 +318,16 @@ impl DateTime {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct LocalDateTime(pub libparsec::low_level::types::LocalDateTime);
-
-crate::binding_utils::gen_proto!(LocalDateTime, __repr__);
-crate::binding_utils::gen_proto!(LocalDateTime, __copy__);
-crate::binding_utils::gen_proto!(LocalDateTime, __deepcopy__);
-crate::binding_utils::gen_proto!(LocalDateTime, __str__);
-crate::binding_utils::gen_proto!(LocalDateTime, __richcmp__, ord);
-crate::binding_utils::gen_proto!(LocalDateTime, __hash__);
+crate::binding_utils::gen_py_wrapper_class!(
+    LocalDateTime,
+    libparsec::low_level::types::LocalDateTime,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
 
 #[pymethods]
 impl LocalDateTime {

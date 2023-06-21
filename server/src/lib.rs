@@ -20,6 +20,21 @@ mod runtime;
 mod testbed;
 mod time;
 
+pub(crate) use crate::regex::*;
+pub(crate) use addrs::*;
+pub(crate) use api_crypto::*;
+pub(crate) use backend_events::*;
+pub(crate) use binding_utils::*;
+pub(crate) use data::*;
+pub(crate) use enumerate::*;
+pub(crate) use ids::*;
+pub(crate) use misc::*;
+pub(crate) use protocol::*;
+pub(crate) use runtime::*;
+#[cfg(feature = "test-utils")]
+pub(crate) use testbed::*;
+pub(crate) use time::*;
+
 /// A Python module implemented in Rust.
 #[pymodule]
 #[pyo3(name = "_parsec")]
@@ -35,78 +50,91 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
         <pyo3::panic::PanicException as pyo3::PyTypeInfo>::type_object(py),
     )?;
 
-    m.add_class::<backend_events::BackendEvent>()?;
-    m.add_class::<backend_events::BackendEventCertificatesUpdated>()?;
-    m.add_class::<backend_events::BackendEventInviteConduitUpdated>()?;
-    m.add_class::<backend_events::BackendEventUserUpdatedOrRevoked>()?;
-    m.add_class::<backend_events::BackendEventOrganizationExpired>()?;
-    m.add_class::<backend_events::BackendEventPinged>()?;
-    m.add_class::<backend_events::BackendEventMessageReceived>()?;
-    m.add_class::<backend_events::BackendEventInviteStatusChanged>()?;
-    m.add_class::<backend_events::BackendEventRealmMaintenanceFinished>()?;
-    m.add_class::<backend_events::BackendEventRealmMaintenanceStarted>()?;
-    m.add_class::<backend_events::BackendEventRealmVlobsUpdated>()?;
-    m.add_class::<backend_events::BackendEventRealmRolesUpdated>()?;
-    m.add_class::<backend_events::BackendEventPkiEnrollmentUpdated>()?;
+    m.add_class::<BackendEvent>()?;
+    m.add_class::<BackendEventCertificatesUpdated>()?;
+    m.add_class::<BackendEventInviteConduitUpdated>()?;
+    m.add_class::<BackendEventUserUpdatedOrRevoked>()?;
+    m.add_class::<BackendEventOrganizationExpired>()?;
+    m.add_class::<BackendEventPinged>()?;
+    m.add_class::<BackendEventMessageReceived>()?;
+    m.add_class::<BackendEventInviteStatusChanged>()?;
+    m.add_class::<BackendEventRealmMaintenanceFinished>()?;
+    m.add_class::<BackendEventRealmMaintenanceStarted>()?;
+    m.add_class::<BackendEventRealmVlobsUpdated>()?;
+    m.add_class::<BackendEventRealmRolesUpdated>()?;
+    m.add_class::<BackendEventPkiEnrollmentUpdated>()?;
 
-    m.add_class::<addrs::BackendAddr>()?;
-    m.add_class::<addrs::BackendOrganizationAddr>()?;
-    m.add_class::<addrs::BackendActionAddr>()?;
-    m.add_class::<addrs::BackendOrganizationBootstrapAddr>()?;
-    m.add_class::<addrs::BackendOrganizationFileLinkAddr>()?;
-    m.add_class::<addrs::BackendInvitationAddr>()?;
-    m.add_class::<addrs::BackendPkiEnrollmentAddr>()?;
-    m.add_function(wrap_pyfunction!(addrs::export_root_verify_key, m)?)?;
+    m.add_class::<BackendAddr>()?;
+    m.add_class::<BackendOrganizationAddr>()?;
+    m.add_class::<BackendActionAddr>()?;
+    m.add_class::<BackendOrganizationBootstrapAddr>()?;
+    m.add_class::<BackendOrganizationFileLinkAddr>()?;
+    m.add_class::<BackendInvitationAddr>()?;
+    m.add_class::<BackendPkiEnrollmentAddr>()?;
+    m.add_function(wrap_pyfunction!(export_root_verify_key, m)?)?;
 
-    m.add_class::<enumerate::DeviceFileType>()?;
-    m.add_class::<enumerate::InvitationStatus>()?;
-    m.add_class::<enumerate::InvitationType>()?;
-    m.add_class::<enumerate::RealmRole>()?;
-    m.add_class::<enumerate::UserProfile>()?;
+    m.add_class::<DeviceFileType>()?;
+    m.add_class::<InvitationStatus>()?;
+    m.add_class::<InvitationType>()?;
+    m.add_class::<RealmRole>()?;
+    m.add_class::<UserProfile>()?;
 
-    m.add_class::<ids::OrganizationID>()?;
-    m.add_class::<ids::EntryID>()?;
-    m.add_class::<ids::BlockID>()?;
-    m.add_class::<ids::RealmID>()?;
-    m.add_class::<ids::VlobID>()?;
-    m.add_class::<ids::ChunkID>()?;
-    m.add_class::<ids::SequesterServiceID>()?;
-    m.add_class::<ids::EnrollmentID>()?;
-    m.add_class::<ids::HumanHandle>()?;
-    m.add_class::<ids::DeviceID>()?;
-    m.add_class::<ids::DeviceName>()?;
-    m.add_class::<ids::DeviceLabel>()?;
-    m.add_class::<ids::UserID>()?;
-    m.add_class::<ids::InvitationToken>()?;
+    m.add_class::<OrganizationID>()?;
+    m.add_class::<EntryID>()?;
+    m.add_class::<BlockID>()?;
+    m.add_class::<RealmID>()?;
+    m.add_class::<VlobID>()?;
+    m.add_class::<ChunkID>()?;
+    m.add_class::<SequesterServiceID>()?;
+    m.add_class::<EnrollmentID>()?;
+    m.add_class::<HumanHandle>()?;
+    m.add_class::<DeviceID>()?;
+    m.add_class::<DeviceName>()?;
+    m.add_class::<DeviceLabel>()?;
+    m.add_class::<UserID>()?;
+    m.add_class::<InvitationToken>()?;
 
     // Time
-    m.add_function(wrap_pyfunction!(time::mock_time, m)?)?;
-    m.add_class::<time::TimeProvider>()?;
-    m.add_class::<time::DateTime>()?;
-    m.add_class::<time::LocalDateTime>()?;
+    m.add_function(wrap_pyfunction!(mock_time, m)?)?;
+    m.add_class::<TimeProvider>()?;
+    m.add_class::<DateTime>()?;
+    m.add_class::<LocalDateTime>()?;
 
     // Regex
-    m.add_class::<regex::Regex>()?;
+    m.add_class::<Regex>()?;
 
     // Registering ABC classes
-    m.add_class::<runtime::FutureIntoCoroutine>()?;
+    m.add_class::<FutureIntoCoroutine>()?;
     let future_into_coroutine_cls = m.getattr("FutureIntoCoroutine")?;
     py.import("typing")?
         .getattr("Coroutine")?
         .call_method1("register", (future_into_coroutine_cls,))?;
 
     // Misc
-    m.add_class::<misc::ApiVersion>()?;
+    m.add_class::<ApiVersion>()?;
 
     // Testbed stuff
     #[cfg(feature = "test-utils")]
     {
-        m.add_function(wrap_pyfunction!(testbed::test_new_testbed, m)?)?;
-        m.add_function(wrap_pyfunction!(testbed::test_drop_testbed, m)?)?;
-        m.add_function(wrap_pyfunction!(testbed::test_get_testbed_templates, m)?)?;
-        m.add_class::<testbed::TestbedDeviceData>()?;
-        m.add_class::<testbed::TestbedUserData>()?;
-        m.add_class::<testbed::TestbedTemplate>()?;
+        let tm = PyModule::new(py, "testbed")?;
+        m.add_submodule(tm)?;
+        // tm.add_function(wrap_pyfunction!(test_new_testbed, tm)?)?;
+        // tm.add_function(wrap_pyfunction!(test_drop_testbed, tm)?)?;
+        tm.add_function(wrap_pyfunction!(test_get_testbed_template, tm)?)?;
+        tm.add_class::<TestbedTemplateContent>()?;
+        tm.add_class::<TestbedEventBootstrapOrganization>()?;
+        tm.add_class::<TestbedEventNewSequesterService>()?;
+        tm.add_class::<TestbedEventNewUser>()?;
+        tm.add_class::<TestbedEventNewDevice>()?;
+        tm.add_class::<TestbedEventUpdateUserProfile>()?;
+        tm.add_class::<TestbedEventRevokeUser>()?;
+        tm.add_class::<TestbedEventNewRealm>()?;
+        tm.add_class::<TestbedEventShareRealm>()?;
+        tm.add_class::<TestbedEventStartRealmReencryption>()?;
+        tm.add_class::<TestbedEventFinishRealmReencryption>()?;
+        tm.add_class::<TestbedEventNewVlob>()?;
+        tm.add_class::<TestbedEventUpdateVlob>()?;
+        tm.add_class::<TestbedEventNewBlock>()?;
     }
 
     Ok(())

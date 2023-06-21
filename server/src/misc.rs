@@ -7,13 +7,17 @@ use pyo3::{
     PyResult, Python,
 };
 
-use crate::{
-    binding_utils::gen_proto,
-    protocol::{ProtocolErrorFields, ProtocolResult},
-};
+use crate::{ProtocolErrorFields, ProtocolResult};
 
-#[pyclass]
-pub(crate) struct ApiVersion(libparsec::low_level::types::ApiVersion);
+crate::binding_utils::gen_py_wrapper_class!(
+    ApiVersion,
+    libparsec::low_level::types::ApiVersion,
+    __str__,
+    __copy__,
+    __deepcopy__,
+    __repr__,
+    __richcmp__ ord,
+);
 
 #[pymethods]
 impl ApiVersion {
@@ -101,9 +105,3 @@ impl ApiVersion {
         API_LATEST_VERSION
     }
 }
-
-gen_proto!(ApiVersion, __str__);
-gen_proto!(ApiVersion, __copy__);
-gen_proto!(ApiVersion, __deepcopy__);
-gen_proto!(ApiVersion, __repr__);
-gen_proto!(ApiVersion, __richcmp__, ord);

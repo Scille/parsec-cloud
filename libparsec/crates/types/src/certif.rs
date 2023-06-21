@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use std::io::{Read, Write};
+use std::sync::Arc;
 
 use bytes::Bytes;
 use flate2::read::ZlibDecoder;
@@ -85,6 +86,8 @@ pub enum UnsecureSkipValidationReason {
     // Hence it's safe not to validate the certificate when reading thom from the
     // local storage.
     DataFromLocalStorage,
+    #[cfg(feature = "test-fixtures")]
+    Test,
 }
 
 macro_rules! impl_unsecure_load {
@@ -496,6 +499,17 @@ impl_unsecure_dump!(RealmRoleCertificate);
 impl_dump_and_sign!(RealmRoleCertificate);
 
 impl RealmRoleCertificate {
+    pub fn new_root(author: DeviceID, timestamp: DateTime, realm_id: RealmID) -> Self {
+        let user_id = author.user_id().to_owned();
+        Self {
+            author: CertificateSignerOwned::User(author),
+            timestamp,
+            realm_id,
+            user_id,
+            role: Some(RealmRole::Owner),
+        }
+    }
+
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
@@ -678,6 +692,17 @@ impl_transparent_data_format_conversion!(
 /*
  * AnyCertificate
  */
+
+#[derive(Debug, Clone)]
+pub enum AnyArcCertificate {
+    User(Arc<UserCertificate>),
+    Device(Arc<DeviceCertificate>),
+    UserUpdate(Arc<UserUpdateCertificate>),
+    RevokedUser(Arc<RevokedUserCertificate>),
+    RealmRole(Arc<RealmRoleCertificate>),
+    SequesterAuthority(Arc<SequesterAuthorityCertificate>),
+    SequesterService(Arc<SequesterServiceCertificate>),
+}
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]

@@ -159,13 +159,6 @@ pub enum IncompatibleServerReason {
     Unexpected(anyhow::Error),
 }
 
-pub enum UnprocessableMessageReason {
-    InvalidMessage(InvalidMessageError),
-    // The message is lying about the fact our role got revoked
-    SharingRevokedButNoCorrespondingCertificate,
-    SharingGrantedButNoCorrespondingCertificate,
-}
-
 impl_events!(
     // Dummy event for tests only
     Ping { ping: String },
@@ -183,10 +176,10 @@ impl_events!(
     RevokedUser,
     IncompatibleServer(IncompatibleServerReason),
     // Events related to ops
-    UnprocessableMessage {
+    InvalidMessage {
         index: IndexInt,
         sender: DeviceID,
-        reason: UnprocessableMessageReason
+        reason: InvalidMessageError,
     },
     // Events related to monitors
     CertificatesMonitorCrashed(anyhow::Error),

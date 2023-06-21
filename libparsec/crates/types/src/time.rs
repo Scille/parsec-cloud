@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use chrono::{Datelike, LocalResult, TimeZone, Timelike};
-use core::ops::Sub;
+use core::ops::{Add, AddAssign, Sub, SubAssign};
 
 pub use chrono::Duration; // Reexported
 
@@ -183,6 +183,32 @@ impl Sub for DateTime {
     type Output = Duration;
     fn sub(self, rhs: Self) -> Self::Output {
         self.0 - rhs.0
+    }
+}
+
+impl AddAssign<Duration> for DateTime {
+    fn add_assign(&mut self, rhs: Duration) {
+        self.0 += rhs;
+    }
+}
+
+impl Add<Duration> for DateTime {
+    type Output = DateTime;
+    fn add(self, rhs: Duration) -> Self::Output {
+        Self(self.0 + rhs)
+    }
+}
+
+impl SubAssign<Duration> for DateTime {
+    fn sub_assign(&mut self, rhs: Duration) {
+        self.0 -= rhs;
+    }
+}
+
+impl Sub<Duration> for DateTime {
+    type Output = DateTime;
+    fn sub(self, rhs: Duration) -> Self::Output {
+        Self(self.0 - rhs)
     }
 }
 
@@ -495,7 +521,7 @@ mod time_provider {
             )))))
         }
 
-        pub fn mock_time(&mut self, time: MockedTime) {
+        pub fn mock_time(&self, time: MockedTime) {
             self.0.lock().expect("Mutex is poisoned").mock_time(time);
         }
     }

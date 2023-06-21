@@ -5,6 +5,7 @@ from __future__ import annotations
 from parsec._parsec_pyi import (
     DataError,
     EntryNameError,
+    testbed,  # Only define when build with `test-utils` feature
 )
 from parsec._parsec_pyi.addrs import (
     BackendActionAddr,
@@ -228,4 +229,6 @@ __all__ = [
     "ActiveUsersLimit",
     # Regex
     "Regex",
+    # Testbed
+    "testbed",
 ]

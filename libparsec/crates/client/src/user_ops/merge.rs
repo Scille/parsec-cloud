@@ -2,7 +2,7 @@
 
 use libparsec_types::prelude::*;
 
-pub(crate) fn merge_workspace_entry(
+pub(super) fn merge_workspace_entry(
     base: Option<&WorkspaceEntry>,
     diverged: &WorkspaceEntry,
     target: &WorkspaceEntry,
@@ -42,15 +42,25 @@ pub(crate) fn merge_workspace_entry(
             )
         };
 
-    // Keep most recent cache info on role
-    let (role, role_cached_on) = if target.role == diverged.role {
-        let role_cached_on = std::cmp::max(target.role_cached_on, diverged.role_cached_on);
-        (target.role, role_cached_on)
-    } else if target.role_cached_on > diverged.role_cached_on {
-        (target.role, target.role_cached_on)
-    } else {
-        (diverged.role, diverged.role_cached_on)
-    };
+    // Keep most recent cache info on role (legacy stuff only for backward compatibility)
+    let (legacy_role_cache_value, legacy_role_cache_timestamp) =
+        if target.legacy_role_cache_value == diverged.legacy_role_cache_value {
+            let role_cached_on = std::cmp::max(
+                target.legacy_role_cache_timestamp,
+                diverged.legacy_role_cache_timestamp,
+            );
+            (target.legacy_role_cache_value, role_cached_on)
+        } else if target.legacy_role_cache_timestamp > diverged.legacy_role_cache_timestamp {
+            (
+                target.legacy_role_cache_value,
+                target.legacy_role_cache_timestamp,
+            )
+        } else {
+            (
+                diverged.legacy_role_cache_value,
+                diverged.legacy_role_cache_timestamp,
+            )
+        };
 
     WorkspaceEntry {
         name,
@@ -58,8 +68,8 @@ pub(crate) fn merge_workspace_entry(
         key,
         encryption_revision,
         encrypted_on,
-        role_cached_on,
-        role,
+        legacy_role_cache_timestamp,
+        legacy_role_cache_value,
     }
 }
 
@@ -115,10 +125,9 @@ fn merge_workspace_entries(
     (resolved, need_sync)
 }
 
-#[allow(dead_code)]
 pub(super) fn merge_local_user_manifests(
     diverged: &LocalUserManifest,
-    target: &UserManifest,
+    target: UserManifest,
 ) -> LocalUserManifest {
     // Sanity checks, called is responsible to handle them properly !
     assert_eq!(diverged.base.id, target.id);
@@ -148,7 +157,7 @@ pub(super) fn merge_local_user_manifests(
     };
 
     LocalUserManifest {
-        base: target.to_owned(),
+        base: target,
         need_sync,
         updated,
         last_processed_message,

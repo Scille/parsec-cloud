@@ -3,15 +3,39 @@ name = "libparsec_tests_fixtures"
 version = "0.0.0"
 edition = "2021"
 
+[features]
+default = [
+    "test-with-client-connection-testbed",
+    "test-with-platform-device-loader-testbed",
+    "test-with-platform-storage-testbed",
+    "test-with-unsecure-but-fast-secretkey-from-password",
+]
+test-with-client-connection-testbed = [
+    "libparsec_client_connection",
+    "libparsec_client_connection/test-with-testbed",
+]
+test-with-platform-device-loader-testbed = [
+    "libparsec_platform_device_loader",
+    "libparsec_platform_device_loader/test-with-testbed",
+]
+test-with-platform-storage-testbed = [
+    "libparsec_platform_storage",
+    "libparsec_platform_storage/test-with-testbed",
+]
+test-with-unsecure-but-fast-secretkey-from-password = [
+    "libparsec_crypto",
+    "libparsec_crypto/test-unsecure-but-fast-secretkey-from-password",
+]
+
 [dependencies]
-libparsec_types = { path = "../types", features = [ "test-fixtures" ] }
+libparsec_types = { path = "../types", features = [ "test-fixtures", "test-mock-time" ] }
 libparsec_tests_macros = { path = "../tests_macros" }
 libparsec_testbed = { path = "../testbed" }
 # Enable testbed support in crates here
-libparsec_client_connection = { path = "../client_connection", features = [ "test-with-testbed" ] }
-libparsec_platform_device_loader = { path = "../platform_device_loader", features = [ "test-with-testbed" ] }
-libparsec_platform_storage = { path = "../platform_storage", features = [ "test-with-testbed" ] }
-libparsec_platform_storage2 = { path = "../platform_storage2", features = [ "test-with-testbed" ] }
+libparsec_client_connection = { path = "../client_connection", default-features = false, optional = true }
+libparsec_platform_device_loader = { path = "../platform_device_loader", default-features = false, optional = true }
+libparsec_platform_storage = { path = "../platform_storage", default-features = false, optional = true }
+libparsec_crypto = { path = "../crypto", default-features = false, optional = true }
 
 env_logger = "0.10.0"
 log = "0.4.17"

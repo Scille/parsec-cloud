@@ -397,7 +397,7 @@ impl BackendAddr {
 
 /// Represent the URL to access an organization within a backend
 /// (e.g. ``parsec://parsec.example.com/MyOrg?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss``)
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct BackendOrganizationAddr {
     base: BaseBackendAddr,
     organization_id: OrganizationID,
