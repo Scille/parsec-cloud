@@ -46,28 +46,34 @@ import {
   IonIcon,
   IonLabel,
   IonText,
-  modalController
+  modalController,
+  popoverController
 } from '@ionic/vue';
 import {
   addCircle,
   mail
 } from 'ionicons/icons';
+
 import { createAlert } from '@/components/AlertConfirmation';
 import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
-import CreateOrganization from '@/components/CreateOrganizationModal.vue';
+import CreateOrganization from '@/views/CreateOrganizationModal.vue';
 import { useI18n } from 'vue-i18n';
+
 const { t } = useI18n();
+
 async function openJoinByLinkModal(): Promise<void> {
   const modal = await modalController.create({
     component: JoinByLinkModal,
     cssClass: 'join-by-link-modal'
   });
+
   await modal.present();
   const { data, role } = await modal.onWillDismiss();
   if (role === 'confirm') {
     console.log(data);
   }
 }
+
 async function openCreateOrganizationModal(): Promise<void> {
   const modal = await modalController.create({
     component: CreateOrganization,
@@ -76,11 +82,14 @@ async function openCreateOrganizationModal(): Promise<void> {
   });
   await modal.present();
   const { data, role } = await modal.onWillDismiss();
-  if (role === 'confirm') {
-    console.log(data);
-  }
+  console.log(role, data);
+  popoverController.dismiss(data, role);
 }
-async function canDismissModal(): Promise<boolean> {
+
+async function canDismissModal(data?: any, modalRole?: string): Promise<boolean> {
+  if (modalRole === 'confirm') {
+    return true;
+  }
   const alert = await createAlert(
     t('AlertConfirmation.areYouSure'),
     t('AlertConfirmation.infoNotSaved'),
