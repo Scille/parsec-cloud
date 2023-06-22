@@ -26,7 +26,7 @@ W1pav08hVpEcTg==
 -----END PRIVATE KEY-----
 "#;
 
-const PRIVATE_KEY_DER_1024: [u8; 634] = hex!(
+const PRIVATE_KEY_DER_1024: &[u8] = &hex!(
     "30820276020100300d06092a864886f70d0101010500048202603082025c02010002818100"
     "b2dc00a3c3b5c689b069f3f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256c"
     "c660d5084782738a3045d75b584c1943bc04c7123d68ac0cef253b4ee8d79bd09da19162dc"
@@ -54,7 +54,7 @@ GDAxlfO8xyq1cgfr/QIDAQAB
 -----END PUBLIC KEY-----
 "#;
 
-const PUBLIC_KEY_DER_1024: [u8; 162] = hex!(
+const PUBLIC_KEY_DER_1024: &[u8] = &hex!(
     "30819f300d06092a864886f70d010101050003818d0030818902818100b2dc00a3c3b5c689"
     "b069f3f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256cc660d5084782738a"
     "3045d75b584c1943bc04c7123d68ac0cef253b4ee8d79bd09da19162dcc083662269b7b62c"
@@ -92,7 +92,7 @@ z0mxbH0U7CoeRzfgJ6UmIio=
 -----END PRIVATE KEY-----
 "#;
 
-const PRIVATE_KEY_DER_2048: [u8; 1217] = hex!(
+const PRIVATE_KEY_DER_2048: &[u8] = &hex!(
     "308204bd020100300d06092a864886f70d0101010500048204a7308204a302010002820101"
     "00a70d5b1919aee2bb8e44d9dfbe26ea44826765a3c1061637d72735605ddb964f8dab9b11"
     "84282011cc7b7944ad048d2b1f98b838b90aaf56511c954b4de07478eba9d4eadaa77fe3cb"
@@ -138,7 +138,7 @@ MQIDAQAB
 -----END PUBLIC KEY-----
 "#;
 
-const PUBLIC_KEY_DER_2048: [u8; 294] = hex!(
+const PUBLIC_KEY_DER_2048: &[u8] = &hex!(
     "30820122300d06092a864886f70d01010105000382010f003082010a0282010100a70d5b19"
     "19aee2bb8e44d9dfbe26ea44826765a3c1061637d72735605ddb964f8dab9b1184282011cc"
     "7b7944ad048d2b1f98b838b90aaf56511c954b4de07478eba9d4eadaa77fe3cb8d824d5504"
@@ -150,7 +150,7 @@ const PUBLIC_KEY_DER_2048: [u8; 294] = hex!(
 
 #[test]
 fn only_rsa_is_supported() {
-    let unsupported_key = hex!(
+    let unsupported_key: &[u8] = &hex!(
         "308201b73082012b06072a8648ce3804013082011e02818100f8df308877a3bcf66db78734"
         "882f854f934cb5e3bc3cd284b62751d2b6490fd0793dfd43e68393c5fe02f897236fe40949"
         "892aa7718939be9aec22e813c7ab55a245b0b3d2cef69123c862c2449af305ce30784929a3"
@@ -164,13 +164,13 @@ fn only_rsa_is_supported() {
         "cd5faa40a312dc339256e019aeffd2410c71ef00bf2c519444f3d43024adfc55be6e5db2b7"
         "8e7d6c54c6cc882ffa606e76e53fc73b3443347507e91227944aeed42004a305de09918b");
 
-    assert!(SequesterPublicKeyDer::try_from(&unsupported_key[..]).is_err());
-    assert!(SequesterVerifyKeyDer::try_from(&unsupported_key[..]).is_err());
+    assert!(SequesterPublicKeyDer::try_from(unsupported_key).is_err());
+    assert!(SequesterVerifyKeyDer::try_from(unsupported_key).is_err());
 }
 
 #[rstest]
-#[case(&PUBLIC_KEY_DER_1024[..])]
-#[case(&PUBLIC_KEY_DER_2048[..])]
+#[case(PUBLIC_KEY_DER_1024)]
+#[case(PUBLIC_KEY_DER_2048)]
 fn key_equality(#[case] pub_key: &[u8]) {
     let pub_key = SequesterPublicKeyDer::try_from(pub_key).unwrap();
 
@@ -214,8 +214,18 @@ fn sign_verify(#[case] size_in_bits: SequesterKeySize) {
 }
 
 #[rstest]
-#[case(PRIVATE_KEY_PEM_1024, &PRIVATE_KEY_DER_1024[..], PUBLIC_KEY_PEM_1024, &PUBLIC_KEY_DER_1024[..])]
-#[case(PRIVATE_KEY_PEM_2048, &PRIVATE_KEY_DER_2048[..], PUBLIC_KEY_PEM_2048, &PUBLIC_KEY_DER_2048[..])]
+#[case(
+    PRIVATE_KEY_PEM_1024,
+    PRIVATE_KEY_DER_1024,
+    PUBLIC_KEY_PEM_1024,
+    PUBLIC_KEY_DER_1024
+)]
+#[case(
+    PRIVATE_KEY_PEM_2048,
+    PRIVATE_KEY_DER_2048,
+    PUBLIC_KEY_PEM_2048,
+    PUBLIC_KEY_DER_2048
+)]
 fn import_export(
     #[case] private_key_pem: &str,
     #[case] private_key_der: &[u8],
@@ -277,7 +287,7 @@ fn import_export(
 
 #[test]
 fn sign_compat() {
-    let verify_key = SequesterVerifyKeyDer::try_from(&PUBLIC_KEY_DER_1024[..]).unwrap();
+    let verify_key = SequesterVerifyKeyDer::try_from(PUBLIC_KEY_DER_1024).unwrap();
 
     let signed = hex!(
         "5253415353412d5053532d5348413235363a0afc141b03789ac3f2c69bd1e577e279d4570b"
@@ -292,7 +302,7 @@ fn sign_compat() {
 
 #[test]
 fn encrypt_compat() {
-    let priv_key = SequesterPrivateKeyDer::try_from(&PRIVATE_KEY_DER_1024[..]).unwrap();
+    let priv_key = SequesterPrivateKeyDer::try_from(PRIVATE_KEY_DER_1024).unwrap();
 
     let encrypted = hex!(
         "52534145532d4f4145502d5853414c534132302d504f4c59313330353a278b9346743cc609"
@@ -308,7 +318,7 @@ fn encrypt_compat() {
 
 #[test]
 fn verify_with_different_salt_len() {
-    let verify_key = SequesterVerifyKeyDer::try_from(&PUBLIC_KEY_DER_1024[..]).unwrap();
+    let verify_key = SequesterVerifyKeyDer::try_from(PUBLIC_KEY_DER_1024).unwrap();
     let ciphered_salt32 = hex!(
         "5253415353412d5053532d5348413235363a5533ef66fbd8249dcf2f813da9e381bde5d5d7"
         "30231584e194e43b5a2cd2802a3a9f713939cf5398f7dd445a97ac9ae7aa3b871b296ff5de"
