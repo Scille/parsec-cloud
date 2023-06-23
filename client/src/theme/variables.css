@@ -537,6 +537,11 @@ https: //github.com/ionic-team/ionic-framework/issues/24080 */
   --box-shadow: var(--parsec-shadow-light);
 }
 
+.header-md {
+  -webkit-box-shadow: inherit;
+  box-shadow: inherit;
+}
+
 ion-list.container {
   margin-top: 0;
 }
