@@ -4,7 +4,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from enum import Enum
 from pathlib import PurePath
-from typing import Any, Iterator, Sequence, cast
+from typing import Any, Iterator, Optional, Sequence, cast
 
 from PyQt5.QtCore import QDate, QEvent, QObject, Qt, QTime, QTimer, pyqtBoundSignal, pyqtSignal
 from PyQt5.QtWidgets import QAbstractButton, QLabel, QWidget
@@ -452,8 +452,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             workspace_id = job.arguments.get("workspace_id")
             timestamp = job.arguments.get("timestamp")
             assert workspace_id is not None
-            assert timestamp is not None
-            wb = self.get_workspace_button(cast(EntryID, workspace_id), cast(DateTime, timestamp))
+            wb = self.get_workspace_button(
+                cast(EntryID, workspace_id), cast(Optional[DateTime], timestamp)
+            )
             if wb:
                 wb.set_mountpoint_state(False)
             if isinstance(job.exc, MountpointNoDriveAvailable):

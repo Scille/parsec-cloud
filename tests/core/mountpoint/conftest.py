@@ -20,9 +20,16 @@ def base_mountpoint(tmpdir):
     return Path(tmpdir / "base_mountpoint")
 
 
+@pytest.fixture(params=[True, False], ids=["mountpoint_in_directory", "mountpoint_in_drive"])
+def mountpoint_in_directory(request: pytest.FixtureRequest):
+    return request.param
+
+
 @pytest.fixture
 @pytest.mark.mountpoint
-def mountpoint_service_factory(tmpdir, local_device_factory, user_fs_factory, reset_testbed):
+def mountpoint_service_factory(
+    tmpdir, local_device_factory, user_fs_factory, reset_testbed, mountpoint_in_directory
+):
     """
     Run a trio loop with fs and mountpoint manager in a separate thread to
     allow blocking operations on the mountpoint in the test
@@ -40,7 +47,11 @@ def mountpoint_service_factory(tmpdir, local_device_factory, user_fs_factory, re
         device = local_device_factory()
         async with user_fs_factory(device) as user_fs:
             async with mountpoint_manager_factory(
-                user_fs, user_fs.event_bus, base_mountpoint, debug=False
+                user_fs,
+                user_fs.event_bus,
+                base_mountpoint,
+                debug=False,
+                mountpoint_in_directory=mountpoint_in_directory,
             ) as mountpoint_manager:
                 if bootstrap_cb:
                     await bootstrap_cb(user_fs, mountpoint_manager)

@@ -5,6 +5,7 @@ import math
 import unicodedata
 from contextlib import asynccontextmanager
 from functools import partial
+from itertools import count
 from pathlib import PurePath
 from typing import Any, AsyncIterator
 from zlib import adler32
@@ -94,6 +95,48 @@ def _generate_volume_serial_number(device: LocalDevice, workspace_id: EntryID) -
     )
 
 
+async def _bootstrap_mountpoint(base_mountpoint_path: PurePath, workspace_name: str) -> PurePath:
+    # Ensure base_mountpoint_path exists
+    trio_base_mountpoint_path = trio.Path(base_mountpoint_path)
+    if not await trio_base_mountpoint_path.exists():
+        await trio_base_mountpoint_path.mkdir(mode=0o700, exist_ok=True, parents=True)
+
+    # Find a suitable path where to mount the workspace. The check we are doing
+    # here are not atomic (and the mount operation is not itself atomic anyway),
+    # hence there is still edgecases where the mount can crash due to concurrent
+    # changes on the mountpoint path
+    for tentative in count(1):
+        # Try new path
+        dirname = workspace_name if tentative == 1 else f"{workspace_name} ({tentative})"
+        mountpoint_path = base_mountpoint_path / dirname
+
+        # For WinFSP, mounting target must NOT exists
+        try:
+            trio_mountpoint_path = trio.Path(mountpoint_path)
+            if await trio_mountpoint_path.exists():
+                continue
+
+            # Artifacts from previous run can remain listed in the directory
+            # (even though `path.exists()`) returns `False`
+            # In this case, `.unlink()` still works and fixes the issue
+            try:
+                await trio_mountpoint_path.unlink()
+            except OSError:
+                # No artifact was present
+                pass
+            else:
+                # An artifact has been cleaned up
+                pass
+
+            return mountpoint_path
+        # Just mount somewhere else if something weird is going on
+        except OSError:
+            continue
+
+    # This point is never reached
+    assert False
+
+
 async def _wait_for_winfsp_ready(mountpoint_path: PurePath, timeout: float = 1.0) -> None:
     trio_mountpoint_path = trio.Path(mountpoint_path)
 
@@ -129,11 +172,25 @@ async def winfsp_mountpoint_runner(
     trio_token = trio.lowlevel.current_trio_token()
     fs_access = ThreadFSAccess(trio_token, workspace_fs, event_bus)
 
-    user_manifest = user_fs.get_user_manifest()
-    workspace_ids = [entry.id for entry in user_manifest.workspaces]
-    workspace_index = workspace_ids.index(workspace_fs.workspace_id)
-    # `base_mountpoint_path` is ignored given we only mount from a drive
-    mountpoint_path = await _get_available_drive(workspace_index, len(workspace_ids))
+    if config.get("debug", False):
+        enable_debug_log()
+
+    if config.get("mountpoint_in_directory", False):
+        # In single mountpoint mode, use base_mountpoint_path instead of drive letters
+        mountpoint_path = await _bootstrap_mountpoint(base_mountpoint_path, workspace_name)
+        file_system_mountpoint = file_system_name = str(mountpoint_path)
+        drive_letter = ""
+        volume_serial_number = 0
+    else:
+        user_manifest = user_fs.get_user_manifest()
+        workspace_ids = [entry.id for entry in user_manifest.workspaces]
+        workspace_index = workspace_ids.index(workspace_fs.workspace_id)
+        # `base_mountpoint_path` is ignored when mounting from a drive
+        mountpoint_path = await _get_available_drive(workspace_index, len(workspace_ids))
+        file_system_mountpoint = mountpoint_path.drive
+        file_system_name = "Parsec"
+        drive_letter = mountpoint_path.drive[0]
+        volume_serial_number = _generate_volume_serial_number(device, workspace_fs.workspace_id)
 
     # Prepare event information
     event_kwargs = {
@@ -142,9 +199,6 @@ async def winfsp_mountpoint_runner(
         "timestamp": getattr(workspace_fs, "timestamp", None),
     }
 
-    if config.get("debug", False):
-        enable_debug_log()
-
     # Volume label is limited to 32 WCHAR characters, so force the label to
     # ascii to easily enforce the size.
     volume_label = (
@@ -152,12 +206,11 @@ async def winfsp_mountpoint_runner(
         .encode("ascii", "ignore")[:32]
         .decode("ascii")
     )
-    volume_serial_number = _generate_volume_serial_number(device, workspace_fs.workspace_id)
     # Types can't be checked when unpacking `event_kwargs`
     operations = WinFSPOperations(fs_access=fs_access, volume_label=volume_label, **event_kwargs)  # type: ignore[arg-type]
     # See https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getvolumeinformationa
     fs = FileSystem(
-        mountpoint_path.drive,
+        file_system_mountpoint,
         operations,
         sector_size=512,
         sectors_per_allocation_unit=1,
@@ -175,7 +228,7 @@ async def winfsp_mountpoint_runner(
         post_cleanup_when_modified_only=1,
         device_control=0,
         um_file_context_is_user_context2=1,
-        file_system_name="Parsec",
+        file_system_name=file_system_name,
         prefix="",
         # The minimum value for IRP timeout is 1 minute (default is 5)
         irp_timeout=60000,
@@ -187,7 +240,6 @@ async def winfsp_mountpoint_runner(
         event_bus.send(CoreEvent.MOUNTPOINT_STARTING, **event_kwargs)
 
         # Manage drive icon
-        drive_letter = mountpoint_path.drive[0]
         with parsec_drive_icon_context(drive_letter, device=user_fs.device):
             # Run fs start in a thread
             await trio.to_thread.run_sync(fs.start)
