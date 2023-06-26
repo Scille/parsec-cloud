@@ -16,6 +16,7 @@ from parsec.core.cli import (
     reencrypt_workspace,
     rsync,
     run,
+    shamir,
     share_workspace,
     stats_organization,
     status_organization,
@@ -58,3 +59,7 @@ core_cmd_group.add_command(bootstrap_organization.bootstrap_organization, "boots
 core_cmd_group.add_command(pki.pki_enrollment_submit, "pki_enrollment_submit")
 core_cmd_group.add_command(pki.pki_enrollment_poll, "pki_enrollment_poll")
 core_cmd_group.add_command(pki.pki_enrollment_review_pendings, "pki_enrollment_review_pendings")
+
+core_cmd_group.add_command(shamir.share_recovery_device, "share_recovery_device")
+# core_cmd_group.add_command(shamir.get_shared_recovery_device, "get_shared_recovery_device")
+# core_cmd_group.add_command(shamir.remove_shared_recovery_device, "remove_shared_recovery_device")

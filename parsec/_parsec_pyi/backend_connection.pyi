@@ -76,6 +76,10 @@ from parsec._parsec_pyi.protocol.invite import (
     InviteInfoRep,
 )
 from parsec._parsec_pyi.protocol.ping import InvitedPingRep
+from parsec._parsec_pyi.protocol.shamir import (
+    ShamirRecoverySetup,
+    ShamirRecoverySetupRep,
+)
 from parsec._parsec_pyi.protocol.vlob import ReencryptionBatchEntry
 from parsec._parsec_pyi.time import DateTime
 
@@ -233,6 +237,10 @@ class AuthenticatedCmds:
         blob: bytes,
         sequester_blob: dict[SequesterServiceID, bytes] | None,
     ) -> VlobUpdateRep: ...
+    async def shamir_recovery_setup(
+        self,
+        setup: ShamirRecoverySetup,
+    ) -> ShamirRecoverySetupRep: ...
 
 class InvitedCmds:
     def __init__(self, addr: BackendInvitationAddr) -> None: ...

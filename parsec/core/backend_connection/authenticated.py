@@ -158,6 +158,8 @@ class BackendAuthenticatedCmds:
     pki_enrollment_reject = expose_cmds_with_retrier(cmds.pki_enrollment_reject)
     pki_enrollment_accept = expose_cmds_with_retrier(cmds.pki_enrollment_accept)
 
+    shamir_recovery_setup = expose_cmds_with_retrier(cmds.shamir_recovery_setup)
+
 
 for cmd in AUTHENTICATED_CMDS:
     assert hasattr(BackendAuthenticatedCmds, cmd)
