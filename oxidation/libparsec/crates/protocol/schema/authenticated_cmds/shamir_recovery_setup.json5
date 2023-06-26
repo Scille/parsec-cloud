@@ -48,7 +48,7 @@
                         // This token is split into shares, hence it acts as a proof the claimer
                         // asking for the `ciphered_data` had it identity confirmed by the recipients.
                         "name": "reveal_token",
-                        "type": "Bytes"
+                        "type": "ShamirRevealToken"
                     },
                     {
                         // The Shamir recovery setup provided as a `ShamirRecoveryBriefCertificate`.

@@ -18,6 +18,7 @@ use libparsec::{
 
 use crate::{
     binding_utils::BytesWrapper,
+    ids::ShamirRevealToken,
     protocol::{
         error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
         gen_rep,
@@ -153,14 +154,14 @@ impl ShamirRecoverySetup {
     #[new]
     fn new(
         ciphered_data: BytesWrapper,
-        reveal_token: BytesWrapper,
+        reveal_token: ShamirRevealToken,
         brief: BytesWrapper,
         shares: Vec<BytesWrapper>,
     ) -> Self {
-        crate::binding_utils::unwrap_bytes!(ciphered_data, reveal_token, brief, shares);
+        crate::binding_utils::unwrap_bytes!(ciphered_data, brief, shares);
         Self(shamir_recovery_setup::ShamirRecoverySetup {
             ciphered_data,
-            reveal_token,
+            reveal_token: reveal_token.0,
             brief,
             shares,
         })
@@ -172,8 +173,8 @@ impl ShamirRecoverySetup {
     }
 
     #[getter]
-    fn reveal_token(&self) -> &[u8] {
-        &self.0.reveal_token
+    fn reveal_token(&self) -> ShamirRevealToken {
+        ShamirRevealToken(self.0.reveal_token)
     }
 
     #[getter]
@@ -253,9 +254,9 @@ crate::binding_utils::gen_proto!(InviteShamirRecoveryRevealReq, __richcmp__, eq)
 #[pymethods]
 impl InviteShamirRecoveryRevealReq {
     #[new]
-    fn new(reveal_token: &[u8]) -> Self {
+    fn new(reveal_token: ShamirRevealToken) -> Self {
         Self(invite_shamir_recovery_reveal::Req {
-            reveal_token: reveal_token.into(),
+            reveal_token: reveal_token.0,
         })
     }
 
@@ -271,8 +272,8 @@ impl InviteShamirRecoveryRevealReq {
     }
 
     #[getter]
-    fn reveal_token(&self) -> &[u8] {
-        &self.0.reveal_token
+    fn reveal_token(&self) -> ShamirRevealToken {
+        ShamirRevealToken(self.0.reveal_token)
     }
 }
 

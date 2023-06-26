@@ -162,6 +162,17 @@ gen_uuid!(InvitationToken);
 
 #[pyclass]
 #[derive(Clone)]
+pub(crate) struct ShamirRevealToken(pub libparsec::types::ShamirRevealToken);
+
+crate::binding_utils::gen_proto!(ShamirRevealToken, __repr__);
+crate::binding_utils::gen_proto!(ShamirRevealToken, __copy__);
+crate::binding_utils::gen_proto!(ShamirRevealToken, __deepcopy__);
+crate::binding_utils::gen_proto!(ShamirRevealToken, __richcmp__, eq);
+crate::binding_utils::gen_proto!(ShamirRevealToken, __hash__);
+gen_uuid!(ShamirRevealToken);
+
+#[pyclass]
+#[derive(Clone)]
 pub(crate) struct EnrollmentID(pub libparsec::types::EnrollmentID);
 
 crate::binding_utils::gen_proto!(EnrollmentID, __repr__);

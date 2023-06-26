@@ -98,6 +98,7 @@ from parsec._parsec_pyi.ids import (
     OrganizationID,
     RealmID,
     SequesterServiceID,
+    ShamirRevealToken,
     UserID,
     VlobID,
 )
@@ -701,6 +702,7 @@ __all__ = [
     "SequesterServiceID",
     "EnrollmentID",
     "InvitationToken",
+    "ShamirRevealToken",
     # Invite
     "SASCode",
     "generate_sas_code_candidates",

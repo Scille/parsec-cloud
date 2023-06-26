@@ -139,7 +139,7 @@ Authenticated API:
                         // This token is split into shares, hence it acts as a proof the claimer
                         // asking for the `ciphered_data` had it identity confirmed by the recipients.
                         "name": "reveal_token",
-                        "type": "Bytes"
+                        "type": "ShamirRevealToken"
                     },
                     {
                         // The Shamir recovery setup provided as a `ShamirRecoveryBriefCertificate`.
@@ -575,7 +575,7 @@ The claimer gets access to `reveal_token` and `data_key`, it can then retrieve `
             "fields": [
                 {
                     "name": "reveal_token",
-                    "type": "Bytes"
+                    "type": "ShamirRevealToken"
                 }
             ]
         },

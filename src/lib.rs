@@ -88,6 +88,7 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ids::DeviceLabel>()?;
     m.add_class::<ids::UserID>()?;
     m.add_class::<ids::InvitationToken>()?;
+    m.add_class::<ids::ShamirRevealToken>()?;
 
     // Time
     m.add_function(wrap_pyfunction!(time::mock_time, m)?)?;

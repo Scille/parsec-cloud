@@ -9,7 +9,7 @@ use crate::{
     addrs::BackendInvitationAddr,
     api_crypto::{HashDigest, PublicKey},
     binding_utils::BytesWrapper,
-    ids::UserID,
+    ids::{ShamirRevealToken, UserID},
     protocol::*,
     runtime::FutureIntoCoroutine,
 };
@@ -209,13 +209,16 @@ impl InvitedCmds {
         })
     }
 
-    fn invite_shamir_recovery_reveal(&self, reveal_token: BytesWrapper) -> FutureIntoCoroutine {
+    fn invite_shamir_recovery_reveal(
+        &self,
+        reveal_token: ShamirRevealToken,
+    ) -> FutureIntoCoroutine {
         let invited_cmds = self.0.clone();
 
-        crate::binding_utils::unwrap_bytes!(reveal_token);
-
         FutureIntoCoroutine::from_raw(async move {
-            let req = invited_cmds::invite_shamir_recovery_reveal::Req { reveal_token };
+            let req = invited_cmds::invite_shamir_recovery_reveal::Req {
+                reveal_token: reveal_token.0,
+            };
 
             crate::binding_utils::send_command!(
                 invited_cmds,

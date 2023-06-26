@@ -9,7 +9,7 @@
             "fields": [
                 {
                     "name": "reveal_token",
-                    "type": "Bytes"
+                    "type": "ShamirRevealToken"
                 }
             ]
         },
