@@ -22,6 +22,7 @@ from parsec._parsec import (
     InviteShamirRecoveryRevealRepOk,
     LocalDevice,
     PrivateKey,
+    SecretKey,
     ShamirRecoveryBriefCertificate,
     ShamirRecoveryOthersListRepNotAllowed,
     ShamirRecoveryOthersListRepOk,
@@ -31,11 +32,13 @@ from parsec._parsec import (
     ShamirRecoverySetupRepOk,
     ShamirRecoveryShareCertificate,
     ShamirRecoveryShareData,
+    ShamirRevealToken,
     Share,
     Sharks,
     UserProfile,
     VerifyKey,
 )
+from parsec.core.recovery import generate_recovery_device
 from tests.backend.common import (
     invite_delete,
     invite_info,
@@ -52,6 +55,7 @@ from tests.common.fixtures_customisation import customize_fixtures
 
 @pytest.mark.trio
 async def test_shamir_recovery(alice: LocalDevice, bob: LocalDevice, alice_ws, bob_ws, invited_ws):
+    alice_reveal_token = ShamirRevealToken.new()
     alice_brief = ShamirRecoveryBriefCertificate(
         alice.device_id,
         DateTime.now(),
@@ -59,11 +63,12 @@ async def test_shamir_recovery(alice: LocalDevice, bob: LocalDevice, alice_ws, b
         per_recipient_shares={alice.device_id.user_id: 1, bob.device_id.user_id: 1},
     ).dump()
     setup = ShamirRecoverySetup(
-        b"alice_ciphered_data", b"alice_reveal_token", alice_brief, [b"share0", b"share1"]
+        b"alice_ciphered_data", alice_reveal_token, alice_brief, [b"share0", b"share1"]
     )
     rep = await shamir_recovery_setup(alice_ws, setup)
     assert isinstance(rep, ShamirRecoverySetupRepOk)
 
+    bob_reveal_token = ShamirRevealToken.new()
     bob_brief = ShamirRecoveryBriefCertificate(
         bob.device_id,
         DateTime.now(),
@@ -71,7 +76,7 @@ async def test_shamir_recovery(alice: LocalDevice, bob: LocalDevice, alice_ws, b
         per_recipient_shares={alice.device_id.user_id: 1, bob.device_id.user_id: 1},
     ).dump()
     setup = ShamirRecoverySetup(
-        b"bob_ciphered_data", b"bob_reveal_token", bob_brief, [b"share0", b"share1"]
+        b"bob_ciphered_data", bob_reveal_token, bob_brief, [b"share0", b"share1"]
     )
     rep = await shamir_recovery_setup(bob_ws, setup)
     assert isinstance(rep, ShamirRecoverySetupRepOk)
@@ -88,7 +93,7 @@ async def test_shamir_recovery(alice: LocalDevice, bob: LocalDevice, alice_ws, b
     assert isinstance(rep, ShamirRecoveryOthersListRepOk)
     assert set(rep.others) == {alice_brief, bob_brief}
 
-    rep = await invite_shamir_recovery_reveal(invited_ws, b"alice_reveal_token")
+    rep = await invite_shamir_recovery_reveal(invited_ws, alice_reveal_token)
     assert isinstance(rep, InviteShamirRecoveryRevealRepOk)
     assert rep.ciphered_data == b"alice_ciphered_data"
 
@@ -180,15 +185,17 @@ async def test_full_shamir(
     backend_asgi_app,
     backend_invited_ws_factory,
     backend_addr,
+    running_backend,
 ):
-    reveal_token = b"token"
-    secret_key = b"secret_key"
-    ciphered_data = b"ciphered_data"
+    secret_key = SecretKey.generate()
+    reveal_token = ShamirRevealToken.new()
+    recovery_device = await generate_recovery_device(alice)
+    ciphered_data = secret_key.encrypt(recovery_device.dump())
 
     # 2 out of 10 shares are required to recover the data
     sharks = Sharks(2)
-    tokens = sharks.dealer(reveal_token, 10)
-    keys = sharks.dealer(secret_key, 10)
+    tokens = sharks.dealer(reveal_token.bytes, 10)
+    keys = sharks.dealer(secret_key.secret, 10)
 
     now = DateTime.now()
 
@@ -299,16 +306,21 @@ async def test_full_shamir(
             )
 
     # Now Alice can recover her device
-    recovered_token = sharks.recover(
-        (
-            Share.load(adam_share.reveal_token_share),
-            Share.load(bob_share.reveal_token_share),
+    sharks = Sharks(2)
+    recovered_token = ShamirRevealToken.from_bytes(
+        sharks.recover(
+            (
+                Share.load(adam_share.reveal_token_share),
+                Share.load(bob_share.reveal_token_share),
+            )
         )
     )
-    recovered_key = sharks.recover(
-        (
-            Share.load(adam_share.data_key_share),
-            Share.load(bob_share.data_key_share),
+    recovered_key = SecretKey(
+        sharks.recover(
+            (
+                Share.load(adam_share.data_key_share),
+                Share.load(bob_share.data_key_share),
+            )
         )
     )
 
@@ -325,8 +337,8 @@ async def test_full_shamir(
         assert isinstance(rep, InviteShamirRecoveryRevealRepOk)
 
     assert rep.ciphered_data == ciphered_data
-
-    # TODO: Decrypt ciphered data with recovered_key
+    recovered_device = LocalDevice.load(recovered_key.decrypt(rep.ciphered_data))
+    assert recovered_device == recovered_device
 
 
 @pytest.mark.trio
@@ -336,6 +348,7 @@ async def test_shamir_list(
     alice_ws,
     adam_ws,
 ):
+    alice_reveal_token = ShamirRevealToken.new()
     alice_brief = ShamirRecoveryBriefCertificate(
         alice.device_id,
         DateTime.now(),
@@ -343,7 +356,7 @@ async def test_shamir_list(
         per_recipient_shares={adam.device_id.user_id: 1},
     ).dump()
     setup = ShamirRecoverySetup(
-        b"alice_ciphered_data", b"alice_reveal_token", alice_brief, [b"share0", b"share1"]
+        b"alice_ciphered_data", alice_reveal_token, alice_brief, [b"share0", b"share1"]
     )
     rep = await shamir_recovery_setup(alice_ws, setup)
     assert isinstance(rep, ShamirRecoverySetupRepOk)
