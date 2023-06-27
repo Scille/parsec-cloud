@@ -146,6 +146,12 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
     ROOT_DIR / "packaging/snap/bin/parsec-setup.sh": {Tool.Python: [PYTHON_SMALL_VERSION]},
     ROOT_DIR
     / "packaging/snap/snap/snapcraft.yaml": {
+        Tool.Parsec: [
+            ReplaceRegex(
+                r"^version: (.*)$",
+                "version: {version}"
+            )
+        ],
         Tool.Python: [
             PYTHON_SMALL_VERSION,
             ReplaceRegex(
