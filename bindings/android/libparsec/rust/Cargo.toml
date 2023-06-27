@@ -10,6 +10,6 @@ crate-type = ["staticlib", "cdylib"]
 libparsec = { path = "../../../../libparsec" }
 lazy_static = "1.4.0"
 jni = "0.21.1"
-log = "0.4.14"
+log = "0.4.19"
 android_logger = "0.13"
 tokio = { version = "1.28", features = ["rt-multi-thread"] }

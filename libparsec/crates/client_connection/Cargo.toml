@@ -38,7 +38,7 @@ once_cell = { version = "1.17.1", optional = true }
 # Note `libparsec_tests_fixtures` enables our `test-with-testbed` feature
 libparsec_tests_fixtures = { path = "../tests_fixtures", default-features = false, features = ["test-with-client-connection-testbed"] }
 
-log = "0.4.17"
+log = "0.4.19"
 anyhow = "1.0.70"
 http-body = "0.4.5"
 hyper = { version = "0.14.26", features = ["server"] }

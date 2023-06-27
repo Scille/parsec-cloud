@@ -9,7 +9,7 @@ flume = "0.10.14"
 futures = "0.3.28"
 
 [dev-dependencies]
-log = "0.4.17"
+log = "0.4.19"
 # `std::time::Instant` is not available for wasm32, crate `instant` provides a
 # fallback based on `window.performance.now()`
 instant = "0.1.12"

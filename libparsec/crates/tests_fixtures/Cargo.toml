@@ -38,7 +38,7 @@ libparsec_platform_storage = { path = "../platform_storage", default-features = 
 libparsec_crypto = { path = "../crypto", default-features = false, optional = true }
 
 env_logger = "0.10.0"
-log = "0.4.17"
+log = "0.4.19"
 rstest = "0.17.0"
 hex-literal = "0.4.1"
 uuid = { version = "1.2.2", features = ["v4", "fast-rng"] }
