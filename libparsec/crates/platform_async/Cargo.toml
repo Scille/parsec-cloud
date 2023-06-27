@@ -14,7 +14,7 @@ log = "0.4.17"
 # fallback based on `window.performance.now()`
 instant = "0.1.12"
 # Used for `futures_lite::future::or` and don't require `Unpin`
-futures-lite = "1.12.0"
+futures-lite = "1.13.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2.86"
