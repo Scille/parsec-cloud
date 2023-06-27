@@ -90,7 +90,7 @@ sha2 = { version = "0.10.6" }  # Optional ruscrypto dep
 # were made from the last stable version to this major pre-release version.
 # TODO: bump to a stable version.
 x25519-dalek = { version = "2.0.0-rc.2" }  # Optional ruscrypto dep
-xsalsa20poly1305 = { version = "0.9.0" }  # Optional ruscrypto dep
+xsalsa20poly1305 = { version = "0.9.1" }  # Optional ruscrypto dep
 # Cryptographic randomness is required for generating SecretKey, SigningKey and PrivateKey
 # For SecretKey, we have `crypto_box` -> [...] -> `rand_core~=0.6` -> `getrandom~=0.2`
 # For SingingKey&PrivateKey we have `<dalek stuff>` -> `rand~=0.5` -> `getrandom~=0.1`
