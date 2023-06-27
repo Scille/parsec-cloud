@@ -1,0 +1,15 @@
+# Config for syft-0.84.0
+quiet: false
+
+check-for-app-update: false
+
+exclude:
+  - ./.git
+  # We don't ignore `target` & `node_modules` directories because they could contain additional dependencies not listed in the lock files.
+  # Ignoring those folder result in less entries produced.
+  # - ./target
+  # - '**/node_modules'
+  - "**/.mypy_cache"
+  - "**/.hypothesis"
+  - "**/.pytest_cache"
+  - "**/htmlcov"
