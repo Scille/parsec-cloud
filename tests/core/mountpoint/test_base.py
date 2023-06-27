@@ -674,3 +674,98 @@ def test_deadlock_detection(mountpoint_service, caplog, monkeypatch):
         "parsec.core.mountpoint.thread_fs_access.ThreadFSAccess.DEADLOCK_TIMEOUT", 0.1
     )
     mountpoint_service.execute(_in_trio_land)
+
+
+@pytest.mark.trio
+@pytest.mark.mountpoint
+async def test_personal_workspace(base_mountpoint, running_backend, alice_user_fs):
+    standard_workspaces = ["standard_workspace", "not_a_personal_workspace"]
+    personal_workspaces = ["personal_workspace", "personal"]
+    personal_workspace_name_pattern = "personal.*"
+
+    # Create standard and personal workspaces
+    workspaces = {}
+    for name in standard_workspaces + personal_workspaces:
+        workspaces[name] = await alice_user_fs.workspace_create(EntryName(name))
+
+    await alice_user_fs.sync()
+
+    # Add some files
+    for workspace_name, wid in workspaces.items():
+        await alice_user_fs.get_workspace(wid).touch(f"/{workspace_name}.txt")
+
+    personal_base_mountpoint = base_mountpoint / "Personal"
+    standard_base_mountpoint = base_mountpoint / "Standard"
+    async with mountpoint_manager_factory(
+        alice_user_fs,
+        alice_user_fs.event_bus,
+        standard_base_mountpoint,
+        mountpoint_in_directory=True,
+        personal_workspace_base_path=personal_base_mountpoint,
+        personal_workspace_name_pattern=personal_workspace_name_pattern,
+    ) as mountpoint_manager:
+        # Standard workspace should be mounted on standard_base_mountpoint
+        for name in standard_workspaces:
+            standard_mountpoint_path = await mountpoint_manager.mount_workspace(workspaces[name])
+            assert standard_mountpoint_path == (standard_base_mountpoint / name).absolute()
+            assert await trio.Path(standard_mountpoint_path / f"{name}.txt").exists()
+
+        # Personal workspace should be mounted on personal_base_mountpoint
+        for name in personal_workspaces:
+            personal_mountpoint_path = await mountpoint_manager.mount_workspace(workspaces[name])
+            assert personal_mountpoint_path == (personal_base_mountpoint / name).absolute()
+            assert await trio.Path(personal_mountpoint_path / f"{name}.txt").exists()
+
+
+@pytest.mark.trio
+@pytest.mark.mountpoint
+async def test_personal_workspace_invalid_options(base_mountpoint, running_backend, alice_user_fs):
+    standard_workspace_name = "standard_workspace"
+    personal_workspace_name = "personal_workspace"
+    standard_base_mountpoint = base_mountpoint / "Standard"
+    personal_base_mountpoint = base_mountpoint / "Personal"
+
+    # Create standard and personal workspaces
+    wid_standard = await alice_user_fs.workspace_create(EntryName(standard_workspace_name))
+    wid_personal = await alice_user_fs.workspace_create(EntryName(personal_workspace_name))
+    await alice_user_fs.sync()
+
+    def check_mountpoint_paths(standard_mountpoint_path, personal_mountpoint_path):
+        # Both workspaces should be mounted on standard_base_mountpoint
+        assert (
+            standard_mountpoint_path
+            == (standard_base_mountpoint / standard_workspace_name).absolute()
+        )
+        assert (
+            personal_mountpoint_path
+            == (standard_base_mountpoint / personal_workspace_name).absolute()
+        )
+
+    # In the following scenarios, workspaces should be mounted on
+    # the standard base mountpoint
+
+    async with mountpoint_manager_factory(
+        alice_user_fs,
+        alice_user_fs.event_bus,
+        standard_base_mountpoint,
+        mountpoint_in_directory=True,
+        # Mount without specifying a path for personal workspaces
+        personal_workspace_name_pattern=personal_workspace_name,
+    ) as mountpoint_manager:
+        check_mountpoint_paths(
+            await mountpoint_manager.mount_workspace(wid_standard),
+            await mountpoint_manager.mount_workspace(wid_personal),
+        )
+
+    async with mountpoint_manager_factory(
+        alice_user_fs,
+        alice_user_fs.event_bus,
+        standard_base_mountpoint,
+        mountpoint_in_directory=True,
+        personal_workspace_base_path=personal_base_mountpoint,
+        # Mount without specifying a pattern for personal workspaces
+    ) as mountpoint_manager:
+        check_mountpoint_paths(
+            await mountpoint_manager.mount_workspace(wid_standard),
+            await mountpoint_manager.mount_workspace(wid_personal),
+        )

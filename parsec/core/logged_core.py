@@ -411,6 +411,8 @@ async def logged_core_factory(
                 unmount_on_workspace_revoked=config.mountpoint_enabled,
                 exclude_from_mount_all=config.disabled_workspaces,
                 mountpoint_in_directory=config.mountpoint_in_directory,
+                personal_workspace_base_path=config.personal_workspace_base_dir,
+                personal_workspace_name_pattern=config.personal_workspace_name_pattern,
             ) as mountpoint_manager:
                 yield LoggedCore(
                     config=config,
