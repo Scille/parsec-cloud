@@ -116,6 +116,9 @@ jobs:
         env:
           BASH_XTRACEFD: 1
 
+      - name: Copy SBOM files
+        run: cp -v artifacts/**/Parsec-SBOM-*.spdx.json release-files
+
       - name: Generate version file
         run:
           (

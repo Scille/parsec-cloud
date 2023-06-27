@@ -7,6 +7,13 @@ on:
   workflow_call:
   workflow_dispatch:
 
+# Set `concurrency` to prevent this workflow from being run on code that is not up-to-date on a PR (e.g. when making many push quickly on a PR).
+# This behavior is only intended for a PR and not for merge commits on the main branch. Having the workflow run on each merge commit can be useful to spot regressions missed by previous checks.
+# To distinguish between these cases, we use `head_ref` that is only defined on `pull-request` and fallback to `run_id` (this is a counter, so it's value is unique between workflow call).
+concurrency:
+  group: package-webapp-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 env:
   # We use the version 18.12 because the version >= 18.13 have some breaking changes on how they format the date.
   # That would break our unit test if we don't update them.
@@ -37,25 +44,10 @@ jobs:
         run: npm clean-install
         working-directory: oxidation/client
 
-      - name: Install wasm-pack
-        run: |
-          set -eux
-          set -o pipefail
-
-          BASE_DIR=wasm-pack-v${{ env.wasm-pack-version }}-x86_64-unknown-linux-musl
-
-          mkdir -p ~/.local/bin
-
-          curl -sSL \
-            https://github.com/rustwasm/wasm-pack/releases/download/v${{ env.wasm-pack-version }}/$BASE_DIR.tar.gz \
-            | tar --extract --gzip --to-stdout \
-              $BASE_DIR/wasm-pack \
-              > ~/.local/bin/wasm-pack
-
-          chmod a+rx ~/.local/bin/wasm-pack
-
-          echo $HOME/.local/bin >> $GITHUB_PATH
-        timeout-minutes: 2
+      # Install syft
+      - uses: taiki-e/install-action@486baeb8af63bc3d9ec3ec66db5af6ba0ca78774 # pin v2.11.6
+        with:
+          tool: syft@0.84.0, wasm-pack@${{ env.wasm-pack-version }}
 
       - name: Build web bindings
         run: npm run build:release
@@ -65,10 +57,15 @@ jobs:
         run: npm run web:release
         working-directory: oxidation/client
 
+      - name: Generate SBOM
+        run: syft packages --config=.syft.yaml --output=spdx-json=Parsec-SBOM-Web.spdx.json .
+
       - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.2
         with:
           name: webapp
-          path: oxidation/client/dist/
+          path: |
+            oxidation/client/dist/
+            Parsec-SBOM-Web.spdx.json
           if-no-files-found: error
 
   electron:
@@ -77,23 +74,29 @@ jobs:
       matrix:
         include:
           - name: 🐧 Linux
+            platform: linux
             os: ubuntu-20.04
             paths: |
               oxidation/client/electron/dist/parsec_*_*.snap
               oxidation/client/electron/dist/parsec-*.AppImage
               oxidation/client/electron/dist/latest-linux.yml
+              Parsec-SBOM-Electron-linux.spdx.json
           - name: 🏁 Windows
+            platform: windows
             os: windows-2022
             paths: |
               oxidation/client/electron/dist/parsec Setup *.exe
               oxidation/client/electron/dist/parsec Setup *.exe.blockmap
               oxidation/client/electron/dist/latest.yml
+              Parsec-SBOM-Electron-windows.spdx.json
           - name: 🍎 macOS
+            platform: macos
             os: macos-12
             paths: |
               oxidation/client/electron/dist/parsec-*.dmg
               oxidation/client/electron/dist/parsec-*.dmg.blockmap
               oxidation/client/electron/dist/latest-mac.yml
+              Parsec-SBOM-Electron-macos.spdx.json
     name: "${{matrix.name }}: ⚡ Package electron"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
@@ -120,6 +123,14 @@ jobs:
         run: npm run electron:release
         working-directory: oxidation/client
         timeout-minutes: 5
+
+      # Install syft
+      - uses: taiki-e/install-action@486baeb8af63bc3d9ec3ec66db5af6ba0ca78774 # pin v2.11.6
+        with:
+          tool: syft@0.84.0
+
+      - name: Generate SBOM
+        run: syft packages --config=.syft.yaml --output=spdx-json=Parsec-SBOM-Electron-${{ matrix.platform }}.spdx.json .
 
       - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.2
         with:
