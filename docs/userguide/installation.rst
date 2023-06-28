@@ -32,6 +32,14 @@ If you are familiar with Snap, you may notice that Parsec snap is provided in cl
 
         sudo snap install parsec --classic
 
+.. note::
+
+    If you're using something other than ubuntu,
+    you may need to install the package ``libfuse2`` or ``fuse2`` provided by your package manager (it may be already installed).
+
+    An indication that you're missing this package is if you can't mount a workspace to your filesystem.
+
+    In the log of the application, you will see something like ``fusermount: mount failed: Operation not permitted``.
 
 
 MacOS
