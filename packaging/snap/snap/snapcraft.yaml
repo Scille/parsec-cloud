@@ -121,6 +121,13 @@ parts:
       # this is fine given the same python is used between build and runtime
       cp -R ${VENV}/lib/python3.9/site-packages ${SNAPCRAFT_PART_INSTALL}/site-packages
 
+      # Create symlink for libfuse
+      ln -sv $(basename ${SNAPCRAFT_PART_INSTALL}/lib/x86_64-linux-gnu/libfuse.so.*.*.*) ${SNAPCRAFT_PART_INSTALL}/lib/x86_64-linux-gnu/libfuse.so
+      test -f ${SNAPCRAFT_PART_INSTALL}/lib/x86_64-linux-gnu/libfuse.so
+
+      ln -sv $(basename ${SNAPCRAFT_PART_INSTALL}/lib/x86_64-linux-gnu/libulockmgr.so.*.*.*) ${SNAPCRAFT_PART_INSTALL}/lib/x86_64-linux-gnu/libulockmgr.so
+      test -f ${SNAPCRAFT_PART_INSTALL}/lib/x86_64-linux-gnu/libulockmgr.so
+
     filesets:
       site-packages:
         - site-packages
@@ -254,12 +261,18 @@ parts:
       stage-lib:
         - usr/lib/x86_64-linux-gnu
         - lib/x86_64-linux-gnu
+      fuse-bin:
+        - bin/fusermount
+        - bin/ulockmgr_server
+        - sbin/mount.fuse
     stage:
       - $site-packages
       - $stage-lib
+      - $fuse-bin
     prime:
       - $site-packages
       - $stage-lib
+      - $fuse-bin
     # Why so much packages ?
     # Well because we use a Python that comes with the bare minimum to save space.
     # The packages listed here are required by the additional python packages we install on the snap.
