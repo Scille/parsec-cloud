@@ -9,6 +9,7 @@ from parsec._parsec import (
     DateTime,
     SecretKey,
     ShamirRecoveryBriefCertificate,
+    ShamirRecoverySecret,
     ShamirRecoverySetup,
     ShamirRecoverySetupRepAlreadySet,
     ShamirRecoverySetupRepInvalidCertification,
@@ -69,19 +70,19 @@ async def _share_recovery_device(config: CoreConfig, device: LocalDevice, thresh
         secret_key = SecretKey.generate()
         reveal_token = ShamirRevealToken.new()
         recovery_device = await generate_recovery_device(device)
+        secret = ShamirRecoverySecret(secret_key, reveal_token)
         ciphered_data = secret_key.encrypt(recovery_device.dump())
 
         # Create the shares
         now = DateTime.now()
         sharks = Sharks(threshold)
         nb_shares = len(certificates)
-        tokens = sharks.dealer(reveal_token.bytes, nb_shares)
-        keys = sharks.dealer(secret_key.secret, nb_shares)
+        shares = sharks.dealer(secret.dump(), nb_shares)
 
         # Create the share certificates
         share_certificates: list[ShamirRecoveryShareCertificate] = []
-        for certificate, token, key in zip(certificates, tokens, keys):
-            share_data = ShamirRecoveryShareData(token.dump(), key.dump())
+        for certificate, share in zip(certificates, shares):
+            share_data = ShamirRecoveryShareData([share.dump()])
             share_data_encrypted = share_data.dump_sign_and_encrypt_for(
                 device.signing_key, certificate.public_key
             )

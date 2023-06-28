@@ -3,7 +3,7 @@
 use flate2::read::ZlibDecoder;
 use flate2::write::ZlibEncoder;
 
-use libparsec_crypto::{PrivateKey, PublicKey, SigningKey, VerifyKey};
+use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -15,7 +15,7 @@ use libparsec_serialization_format::parsec_data;
 
 use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion, DataError, DataResult,
-    DateTime, DeviceID, UserID,
+    DateTime, DeviceID, ShamirRevealToken, UserID,
 };
 
 fn verify_and_load<T>(signed: &[u8], author_verify_key: &VerifyKey) -> DataResult<T>
@@ -154,8 +154,7 @@ impl_transparent_data_format_conversion!(
     from = "ShamirRecoveryShareDataData"
 )]
 pub struct ShamirRecoveryShareData {
-    pub reveal_token_share: Vec<u8>,
-    pub data_key_share: Vec<u8>,
+    pub weighted_share: Vec<Vec<u8>>,
 }
 
 parsec_data!("schema/shamir/shamir_recovery_share_data.json5");
@@ -163,8 +162,7 @@ parsec_data!("schema/shamir/shamir_recovery_share_data.json5");
 impl_transparent_data_format_conversion!(
     ShamirRecoveryShareData,
     ShamirRecoveryShareDataData,
-    reveal_token_share,
-    data_key_share,
+    weighted_share,
 );
 
 impl ShamirRecoveryShareData {
@@ -208,8 +206,7 @@ impl ShamirRecoveryShareData {
     from = "ShamirRecoveryCommunicatedDataData"
 )]
 pub struct ShamirRecoveryCommunicatedData {
-    pub reveal_token_share: Vec<u8>,
-    pub data_key_share: Vec<u8>,
+    pub weighted_share: Vec<Vec<u8>>,
 }
 
 parsec_data!("schema/shamir/shamir_recovery_communicated_data.json5");
@@ -217,11 +214,36 @@ parsec_data!("schema/shamir/shamir_recovery_communicated_data.json5");
 impl_transparent_data_format_conversion!(
     ShamirRecoveryCommunicatedData,
     ShamirRecoveryCommunicatedDataData,
-    reveal_token_share,
-    data_key_share,
+    weighted_share,
 );
 
 impl ShamirRecoveryCommunicatedData {
+    pub fn dump(&self) -> Result<Vec<u8>, &'static str> {
+        ::rmp_serde::to_vec_named(self).map_err(|_| "Serialization failed")
+    }
+
+    pub fn load(buf: &[u8]) -> Result<Self, &'static str> {
+        ::rmp_serde::from_slice(buf).map_err(|_| "Deserialization failed")
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(into = "ShamirRecoverySecretData", from = "ShamirRecoverySecretData")]
+pub struct ShamirRecoverySecret {
+    pub data_key: SecretKey,
+    pub reveal_token: ShamirRevealToken,
+}
+
+parsec_data!("schema/shamir/shamir_recovery_secret.json5");
+
+impl_transparent_data_format_conversion!(
+    ShamirRecoverySecret,
+    ShamirRecoverySecretData,
+    data_key,
+    reveal_token,
+);
+
+impl ShamirRecoverySecret {
     pub fn dump(&self) -> Result<Vec<u8>, &'static str> {
         ::rmp_serde::to_vec_named(self).map_err(|_| "Serialization failed")
     }

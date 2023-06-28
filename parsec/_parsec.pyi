@@ -65,6 +65,7 @@ from parsec._parsec_pyi.crypto import (
 from parsec._parsec_pyi.data import (
     ShamirRecoveryBriefCertificate,
     ShamirRecoveryCommunicatedData,
+    ShamirRecoverySecret,
     ShamirRecoveryShareCertificate,
     ShamirRecoveryShareData,
 )
@@ -794,6 +795,7 @@ __all__ = [
     "ShamirRecoveryShareCertificate",
     "ShamirRecoveryShareData",
     "ShamirRecoveryCommunicatedData",
+    "ShamirRecoverySecret",
     # User
     "UsersPerProfileDetailItem",
     # Time
