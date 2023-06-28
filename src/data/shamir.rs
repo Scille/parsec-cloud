@@ -11,6 +11,7 @@ use std::{collections::HashMap, num::NonZeroU64};
 use crate::api_crypto::{PrivateKey, PublicKey, SigningKey, VerifyKey};
 use crate::{
     binding_utils::BytesWrapper,
+    data::DataResult,
     ids::{DeviceID, UserID},
     time::DateTime,
 };
@@ -81,15 +82,78 @@ impl ShamirRecoveryBriefCertificate {
             .collect()
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.dump())
+    #[classmethod]
+    fn verify_and_load(
+        _cls: &PyType,
+        signed: &[u8],
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+    ) -> DataResult<Self> {
+        Ok(
+            libparsec::types::ShamirRecoveryBriefCertificate::verify_and_load(
+                signed,
+                &author_verify_key.0,
+                &expected_author.0,
+            )
+            .map(Self)?,
+        )
+    }
+
+    fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
-    fn load(_cls: &PyType, raw: &[u8]) -> PyResult<Self> {
-        libparsec::types::ShamirRecoveryBriefCertificate::load(raw)
-            .map(Self)
-            .map_err(|e| PyValueError::new_err(e.to_string()))
+    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> DataResult<Self> {
+        Ok(libparsec::types::ShamirRecoveryBriefCertificate::unsecure_load(signed).map(Self)?)
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct ShamirRecoveryCommunicatedData(
+    pub libparsec::types::ShamirRecoveryCommunicatedData,
+);
+
+crate::binding_utils::gen_proto!(ShamirRecoveryCommunicatedData, __repr__);
+crate::binding_utils::gen_proto!(ShamirRecoveryCommunicatedData, __copy__);
+crate::binding_utils::gen_proto!(ShamirRecoveryCommunicatedData, __deepcopy__);
+crate::binding_utils::gen_proto!(ShamirRecoveryCommunicatedData, __richcmp__, eq);
+
+#[pymethods]
+impl ShamirRecoveryCommunicatedData {
+    #[new]
+    fn new(reveal_token_share: BytesWrapper, data_key_share: BytesWrapper) -> Self {
+        crate::binding_utils::unwrap_bytes!(reveal_token_share, data_key_share);
+
+        Self(libparsec::types::ShamirRecoveryCommunicatedData {
+            reveal_token_share,
+            data_key_share,
+        })
+    }
+
+    #[getter]
+    fn reveal_token_share(&self) -> &[u8] {
+        &self.0.reveal_token_share
+    }
+
+    #[getter]
+    fn data_key_share(&self) -> &[u8] {
+        &self.0.data_key_share
+    }
+
+    fn dump<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(
+            py,
+            &self.0.dump().map_err(PyValueError::new_err)?,
+        ))
+    }
+
+    #[classmethod]
+    fn load(_cls: &PyType, data: &[u8]) -> PyResult<Self> {
+        let share_data = libparsec::types::ShamirRecoveryCommunicatedData::load(data)
+            .map_err(PyValueError::new_err)?;
+        Ok(Self(share_data))
     }
 }
 
@@ -122,20 +186,6 @@ impl ShamirRecoveryShareData {
     #[getter]
     fn data_key_share(&self) -> &[u8] {
         &self.0.data_key_share
-    }
-
-    fn dump<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(
-            py,
-            &self.0.dump().map_err(PyValueError::new_err)?,
-        ))
-    }
-
-    #[classmethod]
-    fn load(_cls: &PyType, data: &[u8]) -> PyResult<Self> {
-        let share_data =
-            libparsec::types::ShamirRecoveryShareData::load(data).map_err(PyValueError::new_err)?;
-        Ok(Self(share_data))
     }
 
     #[classmethod]
@@ -222,14 +272,29 @@ impl ShamirRecoveryShareCertificate {
         &self.0.ciphered_share
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.dump())
+    #[classmethod]
+    fn verify_and_load(
+        _cls: &PyType,
+        signed: &[u8],
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+    ) -> DataResult<Self> {
+        Ok(
+            libparsec::types::ShamirRecoveryShareCertificate::verify_and_load(
+                signed,
+                &author_verify_key.0,
+                &expected_author.0,
+            )
+            .map(Self)?,
+        )
+    }
+
+    fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
-    fn load(_cls: &PyType, raw: &[u8]) -> PyResult<Self> {
-        libparsec::types::ShamirRecoveryShareCertificate::load(raw)
-            .map(Self)
-            .map_err(|e| PyValueError::new_err(e.to_string()))
+    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> DataResult<Self> {
+        Ok(libparsec::types::ShamirRecoveryShareCertificate::unsecure_load(signed).map(Self)?)
     }
 }

@@ -1,0 +1,17 @@
+{
+    "label": "ShamirRecoveryCommunicatedData",
+    "type": "shamir_recovery_communicated_data",
+    "other_fields": [
+        {
+            // Share to compute `reveal_token`, so claimer can ask server
+            // for `ciphered_data`
+            "name": "reveal_token_share",
+            "type": "Bytes"
+        },
+        {
+            // Share to compute `data_key`, so claimer can decrypt `ciphered_data`
+            "name": "data_key_share",
+            "type": "Bytes"
+        }
+    ]
+}

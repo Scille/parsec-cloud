@@ -8,6 +8,7 @@ from parsec._parsec import (
     ShamirRecoveryBriefCertificate,
     ShamirRecoveryRecipient,
     ShamirRecoverySetup,
+    ShamirRevealToken,
 )
 from parsec.api.protocol import DeviceID, OrganizationID, UserID
 from parsec.backend.shamir import BaseShamirComponent
@@ -18,9 +19,9 @@ if TYPE_CHECKING:
 
 class MemoryShamirComponent(BaseShamirComponent):
     def __init__(self) -> None:
-        self._shamir_recovery_ciphered_data: dict[bytes, bytes] = {}
+        self._shamir_recovery_ciphered_data: dict[ShamirRevealToken, bytes] = {}
         self._shamir_recovery_brief_certs: dict[tuple[OrganizationID, DeviceID], bytes] = {}
-        self._shamir_recovery_reveal: dict[tuple[OrganizationID, DeviceID], bytes] = {}
+        self._shamir_recovery_reveal: dict[tuple[OrganizationID, DeviceID], ShamirRevealToken] = {}
         self._shamir_recovery_shares_certs: dict[
             tuple[OrganizationID, DeviceID], tuple[bytes, ...]
         ] = {}
@@ -73,7 +74,7 @@ class MemoryShamirComponent(BaseShamirComponent):
             self._shamir_recovery_reveal[(organization_id, author)] = setup.reveal_token
             self._shamir_recovery_ciphered_data[(setup.reveal_token)] = setup.ciphered_data
 
-            brief = ShamirRecoveryBriefCertificate.load(setup.brief)
+            brief = ShamirRecoveryBriefCertificate.unsecure_load(setup.brief)
             self.thresholds[(organization_id, author.user_id)] = brief.threshold
             self.recipients[(organization_id, author.user_id)] = tuple(
                 map(map_recipients, brief.per_recipient_shares.items())
@@ -81,6 +82,6 @@ class MemoryShamirComponent(BaseShamirComponent):
 
     async def recovery_reveal(
         self,
-        reveal_token: bytes,
+        reveal_token: ShamirRevealToken,
     ) -> bytes | None:
         return self._shamir_recovery_ciphered_data.get(reveal_token)

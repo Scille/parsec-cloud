@@ -102,8 +102,11 @@ async def _share_recovery_device(config: CoreConfig, device: LocalDevice, thresh
         setup = ShamirRecoverySetup(
             ciphered_data,
             reveal_token,
-            brief_certificate.dump(),
-            [share_certificate.dump() for share_certificate in share_certificates],
+            brief_certificate.dump_and_sign(device.signing_key),
+            [
+                share_certificate.dump_and_sign(device.signing_key)
+                for share_certificate in share_certificates
+            ],
         )
 
         rep = await core._backend_conn.cmds.shamir_recovery_setup(setup)

@@ -116,6 +116,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     // Shamir
     m.add_class::<ShamirRecoveryBriefCertificate>()?;
     m.add_class::<ShamirRecoveryShareData>()?;
+    m.add_class::<ShamirRecoveryCommunicatedData>()?;
     m.add_class::<ShamirRecoveryShareCertificate>()?;
 
     Ok(())

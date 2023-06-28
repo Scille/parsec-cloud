@@ -21,6 +21,7 @@ from parsec._parsec import (
     ShamirRecoverySetupRep,
     ShamirRecoverySetupRepOk,
     ShamirRecoverySetupReq,
+    ShamirRevealToken,
     UserProfile,
 )
 from parsec.backend.client_context import AuthenticatedClientContext, InvitedClientContext
@@ -104,6 +105,6 @@ class BaseShamirComponent:
 
     async def recovery_reveal(
         self,
-        reveal_token: bytes,
+        reveal_token: ShamirRevealToken,
     ) -> bytes | None:
         raise NotImplementedError()

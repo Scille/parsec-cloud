@@ -24,6 +24,7 @@ from parsec._parsec import (
     PrivateKey,
     SecretKey,
     ShamirRecoveryBriefCertificate,
+    ShamirRecoveryCommunicatedData,
     ShamirRecoveryOthersListRepNotAllowed,
     ShamirRecoveryOthersListRepOk,
     ShamirRecoveryRecipient,
@@ -61,7 +62,7 @@ async def test_shamir_recovery(alice: LocalDevice, bob: LocalDevice, alice_ws, b
         DateTime.now(),
         threshold=1,
         per_recipient_shares={alice.device_id.user_id: 1, bob.device_id.user_id: 1},
-    ).dump()
+    ).dump_and_sign(alice.signing_key)
     setup = ShamirRecoverySetup(
         b"alice_ciphered_data", alice_reveal_token, alice_brief, [b"share0", b"share1"]
     )
@@ -74,7 +75,7 @@ async def test_shamir_recovery(alice: LocalDevice, bob: LocalDevice, alice_ws, b
         DateTime.now(),
         threshold=1,
         per_recipient_shares={alice.device_id.user_id: 1, bob.device_id.user_id: 1},
-    ).dump()
+    ).dump_and_sign(alice.signing_key)
     setup = ShamirRecoverySetup(
         b"bob_ciphered_data", bob_reveal_token, bob_brief, [b"share0", b"share1"]
     )
@@ -159,18 +160,19 @@ async def _shamir_exchange(
     assert isinstance(claimer_rep, Invite3bClaimerWaitPeerTrustRepOk)
 
     # Step 4
-    certificate = ShamirRecoveryShareCertificate.load(raw_certificate)
+    certificate = ShamirRecoveryShareCertificate.unsecure_load(raw_certificate)
     share = ShamirRecoveryShareData.decrypt_verify_and_load_for(
         certificate.ciphered_share,
         greeter_private_key,
         claimer_verify_key,
     )
+    to_communicate = ShamirRecoveryCommunicatedData(share.reveal_token_share, share.data_key_share)
     await claimer_ctlr.send_order("4_communicate", b"")
-    await greeter_ctlr.send_order("4_communicate", share.dump())
+    await greeter_ctlr.send_order("4_communicate", to_communicate.dump())
     greeter_rep = await greeter_ctlr.get_result()
     assert greeter_rep.payload == b""
     claimer_rep = await claimer_ctlr.get_result()
-    return ShamirRecoveryShareData.load(claimer_rep.payload)
+    return ShamirRecoveryCommunicatedData.load(claimer_rep.payload)
 
 
 @pytest.mark.trio
@@ -204,7 +206,7 @@ async def test_full_shamir(
     srsd_bob_ciphered = srsd_bob.dump_sign_and_encrypt_for(alice.signing_key, bob.public_key)
     raw_srsc_bob = ShamirRecoveryShareCertificate(
         alice.device_id, now, bob.user_id, srsd_bob_ciphered
-    ).dump()
+    ).dump_and_sign(alice.signing_key)
 
     srsd_adam = ShamirRecoveryShareData(tokens[1].dump(), keys[1].dump())
     srsd_adam_ciphered = srsd_adam.dump_sign_and_encrypt_for(alice.signing_key, adam.public_key)
@@ -213,12 +215,12 @@ async def test_full_shamir(
         now,
         bob.user_id,
         srsd_adam_ciphered,
-    ).dump()
+    ).dump_and_sign(alice.signing_key)
 
     # Alice creates ShamirRecoveryBriefCertificate
     raw_srbc = ShamirRecoveryBriefCertificate(
         alice.device_id, now, 2, {bob.user_id: 1, adam.user_id: 1}
-    ).dump()
+    ).dump_and_sign(alice.signing_key)
 
     # Alice setup shamir recovery
     setup = ShamirRecoverySetup(
@@ -354,7 +356,7 @@ async def test_shamir_list(
         DateTime.now(),
         threshold=1,
         per_recipient_shares={adam.device_id.user_id: 1},
-    ).dump()
+    ).dump_and_sign(alice.signing_key)
     setup = ShamirRecoverySetup(
         b"alice_ciphered_data", alice_reveal_token, alice_brief, [b"share0", b"share1"]
     )
