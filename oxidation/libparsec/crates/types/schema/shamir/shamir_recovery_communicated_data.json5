@@ -6,7 +6,7 @@
             // Weighted share to recover the secret key and the reveal token
             // The number of items in the list corresponds to the weight of the share
             "name": "weighted_share",
-            "type": "List<Bytes>"
+            "type": "List<ShamirShare>"
         }
     ]
 }

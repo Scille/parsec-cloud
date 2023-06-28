@@ -35,10 +35,10 @@ from parsec._parsec import (
     ShamirRecoveryShareCertificate,
     ShamirRecoveryShareData,
     ShamirRevealToken,
-    Share,
-    Sharks,
     UserProfile,
     VerifyKey,
+    shamir_make_shares,
+    shamir_recover_secret,
 )
 from parsec.core.recovery import generate_recovery_device
 from tests.backend.common import (
@@ -197,20 +197,20 @@ async def test_full_shamir(
     ciphered_data = secret_key.encrypt(recovery_device.dump())
 
     # 3 out of 10 shares are required to recover the data
-    sharks = Sharks(3)
-    shares = sharks.dealer(secret.dump(), 10)
+    threshold = 3
+    shares = shamir_make_shares(3, secret.dump(), 10)
 
     now = DateTime.now()
 
     # Alice creates ShamirRecoveryShareCertificate for Bob with 1 share
-    srsd_bob = ShamirRecoveryShareData([shares[0].dump()])
+    srsd_bob = ShamirRecoveryShareData([shares[0]])
     srsd_bob_ciphered = srsd_bob.dump_sign_and_encrypt_for(alice.signing_key, bob.public_key)
     raw_srsc_bob = ShamirRecoveryShareCertificate(
         alice.device_id, now, bob.user_id, srsd_bob_ciphered
     ).dump_and_sign(alice.signing_key)
 
     # Alice creates ShamirRecoveryShareCertificate for Adam with 2 shares
-    srsd_adam = ShamirRecoveryShareData([shares[1].dump(), shares[2].dump()])
+    srsd_adam = ShamirRecoveryShareData([shares[1], shares[2]])
     srsd_adam_ciphered = srsd_adam.dump_sign_and_encrypt_for(alice.signing_key, adam.public_key)
     raw_srsc_adam = ShamirRecoveryShareCertificate(
         alice.device_id,
@@ -221,7 +221,7 @@ async def test_full_shamir(
 
     # Alice creates ShamirRecoveryBriefCertificate
     raw_srbc = ShamirRecoveryBriefCertificate(
-        alice.device_id, now, 2, {bob.user_id: 1, adam.user_id: 2}
+        alice.device_id, now, threshold, {bob.user_id: 1, adam.user_id: 2}
     ).dump_and_sign(alice.signing_key)
 
     # Alice setup shamir recovery
@@ -255,7 +255,7 @@ async def test_full_shamir(
         rep = await invite_info(invited_ws)
         assert isinstance(rep, InviteInfoRepOk)
 
-        assert rep.threshold == 2
+        assert rep.threshold == threshold
         assert len(rep.recipients) == 2
         assert sorted(rep.recipients, key=lambda x: x.human_handle or "") == [
             ShamirRecoveryRecipient(adam.user_id, adam.human_handle, 2),
@@ -310,11 +310,8 @@ async def test_full_shamir(
             )
 
     # Now Alice can recover her device
-    sharks = Sharks(2)
-    recovered_shares = [
-        Share.load(raw) for raw in adam_share.weighted_share + bob_share.weighted_share
-    ]
-    recovered_secret = ShamirRecoverySecret.load(sharks.recover(recovered_shares))
+    recovered_shares = adam_share.weighted_share + bob_share.weighted_share
+    recovered_secret = ShamirRecoverySecret.load(shamir_recover_secret(threshold, recovered_shares))
 
     assert recovered_secret.reveal_token == reveal_token
     assert recovered_secret.data_key == secret_key

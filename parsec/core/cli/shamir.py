@@ -19,7 +19,7 @@ from parsec._parsec import (
     ShamirRecoveryShareCertificate,
     ShamirRecoveryShareData,
     ShamirRevealToken,
-    Sharks,
+    shamir_make_shares,
 )
 from parsec.cli_utils import async_confirm, cli_exception_handler
 from parsec.core import CoreConfig
@@ -75,14 +75,13 @@ async def _share_recovery_device(config: CoreConfig, device: LocalDevice, thresh
 
         # Create the shares
         now = DateTime.now()
-        sharks = Sharks(threshold)
         nb_shares = len(certificates)
-        shares = sharks.dealer(secret.dump(), nb_shares)
+        shares = shamir_make_shares(threshold, secret.dump(), nb_shares)
 
         # Create the share certificates
         share_certificates: list[ShamirRecoveryShareCertificate] = []
         for certificate, share in zip(certificates, shares):
-            share_data = ShamirRecoveryShareData([share.dump()])
+            share_data = ShamirRecoveryShareData([share])
             share_data_encrypted = share_data.dump_sign_and_encrypt_for(
                 device.signing_key, certificate.public_key
             )

@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
-from parsec._parsec_pyi.crypto import PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey
+from parsec._parsec_pyi.crypto import (
+    PrivateKey,
+    PublicKey,
+    SecretKey,
+    ShamirShare,
+    SigningKey,
+    VerifyKey,
+)
 from parsec._parsec_pyi.ids import DeviceID, ShamirRevealToken, UserID
 from parsec._parsec_pyi.time import DateTime
 
@@ -34,9 +41,9 @@ class ShamirRecoveryBriefCertificate:
     def unsecure_load(cls, raw: bytes) -> ShamirRecoveryBriefCertificate: ...
 
 class ShamirRecoveryShareData:
-    def __init__(self, weighted_share: list[bytes]) -> None: ...
+    def __init__(self, weighted_share: list[ShamirShare]) -> None: ...
     @property
-    def weighted_share(self) -> list[bytes]: ...
+    def weighted_share(self) -> list[ShamirShare]: ...
     @classmethod
     def decrypt_verify_and_load_for(
         cls,
@@ -51,9 +58,9 @@ class ShamirRecoveryShareData:
     ) -> bytes: ...
 
 class ShamirRecoveryCommunicatedData:
-    def __init__(self, weighted_share: list[bytes]) -> None: ...
+    def __init__(self, weighted_share: list[ShamirShare]) -> None: ...
     @property
-    def weighted_share(self) -> list[bytes]: ...
+    def weighted_share(self) -> list[ShamirShare]: ...
     def dump(self) -> bytes: ...
     @classmethod
     def load(cls, raw: bytes) -> ShamirRecoveryCommunicatedData: ...

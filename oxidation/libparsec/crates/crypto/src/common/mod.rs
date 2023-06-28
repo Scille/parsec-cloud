@@ -3,10 +3,12 @@
 mod error;
 mod secret;
 mod sequester;
+mod shamir;
 
 pub use error::*;
 pub(crate) use secret::*;
 pub use sequester::*;
+pub use shamir::*;
 
 macro_rules! impl_key_debug {
     ($name: ident) => {

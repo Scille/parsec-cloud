@@ -3,7 +3,7 @@
 use flate2::read::ZlibDecoder;
 use flate2::write::ZlibEncoder;
 
-use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
+use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, ShamirShare, SigningKey, VerifyKey};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -154,7 +154,7 @@ impl_transparent_data_format_conversion!(
     from = "ShamirRecoveryShareDataData"
 )]
 pub struct ShamirRecoveryShareData {
-    pub weighted_share: Vec<Vec<u8>>,
+    pub weighted_share: Vec<ShamirShare>,
 }
 
 parsec_data!("schema/shamir/shamir_recovery_share_data.json5");
@@ -206,7 +206,7 @@ impl ShamirRecoveryShareData {
     from = "ShamirRecoveryCommunicatedDataData"
 )]
 pub struct ShamirRecoveryCommunicatedData {
-    pub weighted_share: Vec<Vec<u8>>,
+    pub weighted_share: Vec<ShamirShare>,
 }
 
 parsec_data!("schema/shamir/shamir_recovery_communicated_data.json5");

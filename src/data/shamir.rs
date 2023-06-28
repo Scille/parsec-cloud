@@ -3,14 +3,13 @@
 use pyo3::{
     exceptions::PyValueError,
     pyclass, pymethods,
-    types::{PyBytes, PyList, PyType},
+    types::{PyBytes, PyType},
     PyResult, Python,
 };
 use std::{collections::HashMap, num::NonZeroU64};
 
-use crate::api_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
+use crate::api_crypto::{PrivateKey, PublicKey, SecretKey, ShamirShare, SigningKey, VerifyKey};
 use crate::{
-    binding_utils::BytesWrapper,
     data::DataResult,
     ids::{DeviceID, ShamirRevealToken, UserID},
     time::DateTime,
@@ -123,18 +122,18 @@ crate::binding_utils::gen_proto!(ShamirRecoveryCommunicatedData, __richcmp__, eq
 #[pymethods]
 impl ShamirRecoveryCommunicatedData {
     #[new]
-    fn new(weighted_share: Vec<BytesWrapper>) -> Self {
-        crate::binding_utils::unwrap_bytes!(weighted_share);
-
+    fn new(weighted_share: Vec<ShamirShare>) -> Self {
+        let weighted_share = weighted_share.iter().map(|x| x.0.clone()).collect();
         Self(libparsec::types::ShamirRecoveryCommunicatedData { weighted_share })
     }
 
     #[getter]
-    fn weighted_share<'p>(&self, py: Python<'p>) -> &'p PyList {
-        PyList::new(
-            py,
-            self.0.weighted_share.iter().map(|x| PyBytes::new(py, x)),
-        )
+    fn weighted_share(&self) -> Vec<ShamirShare> {
+        self.0
+            .weighted_share
+            .iter()
+            .map(|x| ShamirShare(x.clone()))
+            .collect()
     }
 
     fn dump<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
@@ -164,18 +163,18 @@ crate::binding_utils::gen_proto!(ShamirRecoveryShareData, __richcmp__, eq);
 #[pymethods]
 impl ShamirRecoveryShareData {
     #[new]
-    fn new(weighted_share: Vec<BytesWrapper>) -> Self {
-        crate::binding_utils::unwrap_bytes!(weighted_share);
-
+    fn new(weighted_share: Vec<ShamirShare>) -> Self {
+        let weighted_share = weighted_share.iter().map(|x| x.0.clone()).collect();
         Self(libparsec::types::ShamirRecoveryShareData { weighted_share })
     }
 
     #[getter]
-    fn weighted_share<'p>(&self, py: Python<'p>) -> &'p PyList {
-        PyList::new(
-            py,
-            self.0.weighted_share.iter().map(|x| PyBytes::new(py, x)),
-        )
+    fn weighted_share(&self) -> Vec<ShamirShare> {
+        self.0
+            .weighted_share
+            .iter()
+            .map(|x| ShamirShare(x.clone()))
+            .collect()
     }
 
     #[classmethod]

@@ -99,6 +99,7 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "RealmRole" => "libparsec_types::RealmRole",
                 "InvitationToken" => "libparsec_types::InvitationToken",
                 "ShamirRevealToken" => "libparsec_types::ShamirRevealToken",
+                "ShamirShare" => "libparsec_types::ShamirShare",
                 "InvitationStatus" => "libparsec_types::InvitationStatus",
                 "ReencryptionBatchEntry" => "libparsec_types::ReencryptionBatchEntry",
                 "CertificateSignerOwned" => "libparsec_types::CertificateSignerOwned",

@@ -56,11 +56,12 @@ from parsec._parsec_pyi.crypto import (
     SequesterPublicKeyDer,
     SequesterSigningKeyDer,
     SequesterVerifyKeyDer,
-    Share,
-    Sharks,
+    ShamirShare,
     SigningKey,
     VerifyKey,
     generate_nonce,
+    shamir_make_shares,
+    shamir_recover_secret,
 )
 from parsec._parsec_pyi.data import (
     ShamirRecoveryBriefCertificate,
@@ -676,8 +677,9 @@ __all__ = [
     "SequesterVerifyKeyDer",
     "generate_nonce",
     "CryptoError",
-    "Share",
-    "Sharks",
+    "ShamirShare",
+    "shamir_make_shares",
+    "shamir_recover_secret",
     # DeviceFile
     "DeviceFile",
     # Enumerate
