@@ -905,7 +905,7 @@ async def shamir_recovery_self_info(
 
 async def shamir_recovery_setup(
     transport: Transport,
-    setup: ShamirRecoverySetup,
+    setup: ShamirRecoverySetup | None,
 ) -> ShamirRecoverySetupRep:
     return cast(
         ShamirRecoverySetupRep,

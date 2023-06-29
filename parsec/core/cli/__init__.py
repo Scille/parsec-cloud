@@ -60,6 +60,6 @@ core_cmd_group.add_command(pki.pki_enrollment_submit, "pki_enrollment_submit")
 core_cmd_group.add_command(pki.pki_enrollment_poll, "pki_enrollment_poll")
 core_cmd_group.add_command(pki.pki_enrollment_review_pendings, "pki_enrollment_review_pendings")
 
-core_cmd_group.add_command(shamir.share_recovery_device, "share_recovery_device")
+core_cmd_group.add_command(shamir.create_shared_recovery_device, "create_shared_recovery_device")
 core_cmd_group.add_command(shamir.shared_recovery_device_info, "shared_recovery_device_info")
-# core_cmd_group.add_command(shamir.remove_shared_recovery_device, "remove_shared_recovery_device")
+core_cmd_group.add_command(shamir.remove_shared_recovery_device, "remove_shared_recovery_device")

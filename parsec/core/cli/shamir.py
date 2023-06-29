@@ -36,7 +36,9 @@ from parsec.core.types import LocalDevice
 from parsec.utils import trio_run
 
 
-async def _share_recovery_device(config: CoreConfig, device: LocalDevice, threshold: int) -> None:
+async def _create_shared_recovery_device(
+    config: CoreConfig, device: LocalDevice, threshold: int
+) -> None:
     # Connect to the backend
     async with logged_core_factory(config, device) as core:
         # List all adminisrators and fetch certificates
@@ -124,10 +126,10 @@ async def _share_recovery_device(config: CoreConfig, device: LocalDevice, thresh
         if isinstance(rep, ShamirRecoverySetupRepUnknownStatus):
             raise click.ClickException(f"Unknown status: {rep.status}")
         assert isinstance(rep, ShamirRecoverySetupRepOk)
-        click.echo("Recovery device successfully shared.")
+        click.echo("Shared recovery device successfully created.")
 
 
-@click.command(short_help="share recovery device")
+@click.command(short_help="create a new shared recovery device")
 @click.option(
     "--threshold",
     "-t",
@@ -137,17 +139,17 @@ async def _share_recovery_device(config: CoreConfig, device: LocalDevice, thresh
 )
 @core_config_and_device_options
 @cli_command_base_options
-def share_recovery_device(
+def create_shared_recovery_device(
     config: CoreConfig, device: LocalDevice, threshold: int, **kwargs: Any
 ) -> None:
     """
     Share a new recovery device using the shamir algorithm.
     """
     with cli_exception_handler(config.debug):
-        trio_run(_share_recovery_device, config, device, threshold)
+        trio_run(_create_shared_recovery_device, config, device, threshold)
 
 
-async def _shared_recovery_device_info(config: CoreConfig, device: LocalDevice) -> None:
+async def _shared_recovery_device_info(config: CoreConfig, device: LocalDevice) -> bool:
     assert device.human_handle is not None
     styled_human_handle = click.style(device.human_handle.str, fg="yellow")
 
@@ -165,7 +167,7 @@ async def _shared_recovery_device_info(config: CoreConfig, device: LocalDevice) 
         assert isinstance(rep, ShamirRecoverySelfInfoRepOk)
         if rep.self_info is None:
             click.echo(f"No shared recovery device configured for {styled_human_handle}")
-            return
+            return False
 
         # Load brief certificate
         unsecure_certificate = ShamirRecoveryBriefCertificate.unsecure_load(rep.self_info)
@@ -195,8 +197,11 @@ async def _shared_recovery_device_info(config: CoreConfig, device: LocalDevice) 
 
             click.echo(f"- {styled_user_human_handle} ({styled_share})")
 
+        # Indicate a shared recovery device has been found
+        return True
 
-@click.command(short_help="share recovery device")
+
+@click.command(short_help="get info for the current share recovery device")
 @core_config_and_device_options
 @cli_command_base_options
 def shared_recovery_device_info(config: CoreConfig, device: LocalDevice, **kwargs: Any) -> None:
@@ -205,3 +210,45 @@ def shared_recovery_device_info(config: CoreConfig, device: LocalDevice, **kwarg
     """
     with cli_exception_handler(config.debug):
         trio_run(_shared_recovery_device_info, config, device)
+
+
+async def _remove_shared_recovery_device(config: CoreConfig, device: LocalDevice) -> None:
+    # Print device and info and return if none has been found
+    if not await _shared_recovery_device_info(config, device):
+        return
+
+    # Confirmation prompt
+    click.echo("You're about to remove this shared recovery device")
+    await async_confirm("Do you want to continue?", abort=True)
+
+    # Perform the request
+    async with backend_authenticated_cmds_factory(
+        addr=device.organization_addr,
+        device_id=device.device_id,
+        signing_key=device.signing_key,
+        keepalive=config.backend_connection_keepalive,
+    ) as cmds:
+        rep = await cmds.shamir_recovery_setup(None)
+
+    # Unpack reply
+    if isinstance(rep, ShamirRecoverySetupRepInvalidCertification):
+        raise click.ClickException("Invalid certification")
+    if isinstance(rep, ShamirRecoverySetupRepInvalidData):
+        raise click.ClickException("Invalid data")
+    if isinstance(rep, ShamirRecoverySetupRepAlreadySet):
+        raise click.ClickException("Already set")
+    if isinstance(rep, ShamirRecoverySetupRepUnknownStatus):
+        raise click.ClickException(f"Unknown status: {rep.status}")
+    assert isinstance(rep, ShamirRecoverySetupRepOk)
+    click.echo("Shared recovery device successfully removed.")
+
+
+@click.command(short_help="remove the current shared recovery device")
+@core_config_and_device_options
+@cli_command_base_options
+def remove_shared_recovery_device(config: CoreConfig, device: LocalDevice, **kwargs: Any) -> None:
+    """
+    Share a new recovery device using the shamir algorithm.
+    """
+    with cli_exception_handler(config.debug):
+        trio_run(_remove_shared_recovery_device, config, device)

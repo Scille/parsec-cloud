@@ -240,7 +240,7 @@ class AuthenticatedCmds:
     ) -> VlobUpdateRep: ...
     async def shamir_recovery_setup(
         self,
-        setup: ShamirRecoverySetup,
+        setup: ShamirRecoverySetup | None,
     ) -> ShamirRecoverySetupRep: ...
     async def shamir_recovery_self_info(
         self,

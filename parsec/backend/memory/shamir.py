@@ -38,7 +38,7 @@ class MemoryShamirComponent(BaseShamirComponent):
             cert
             for (
                 current_organization_id,
-                user_id,
+                _,
             ), cert in self._shamir_recovery_brief_certs.items()
             if current_organization_id == organization_id
         )
@@ -62,12 +62,13 @@ class MemoryShamirComponent(BaseShamirComponent):
             )
 
         if setup is None:
-            self._shamir_recovery_brief_certs.pop((organization_id, author.user_id))
-            self._shamir_recovery_shares_certs.pop((organization_id, author.user_id))
-            reveal_token = self._shamir_recovery_reveal.pop((organization_id, author.user_id))
-            self._shamir_recovery_ciphered_data.pop(reveal_token)
-            self.thresholds.pop((organization_id, author.user_id))
-            self.recipients.pop((organization_id, author.user_id))
+            self.thresholds.pop((organization_id, author.user_id), None)
+            self.recipients.pop((organization_id, author.user_id), None)
+            self._shamir_recovery_brief_certs.pop((organization_id, author.user_id), None)
+            self._shamir_recovery_shares_certs.pop((organization_id, author.user_id), None)
+            reveal_token = self._shamir_recovery_reveal.pop((organization_id, author.user_id), None)
+            if reveal_token is not None:
+                self._shamir_recovery_ciphered_data.pop(reveal_token, None)
 
         else:
             self._shamir_recovery_brief_certs[(organization_id, author.user_id)] = setup.brief
