@@ -168,7 +168,7 @@ import InformativeText from '@/components/InformativeText.vue';
 import ChoosePassword from '@/components/ChoosePassword.vue';
 import OrganizationNamePage from '@/components/CreateOrganization/OrganizationNamePage.vue';
 import ChooseServerPage from '@/components/CreateOrganization/ChooseServerPage.vue';
-import UserInformationPage from '@/components/CreateOrganization/UserInformationPage.vue';
+import UserInformationPage from '@/components/UserInformationPage.vue';
 import MsSpinner from '@/components/MsSpinner.vue';
 import { AvailableDevice } from '@/plugins/libparsec/definitions';
 
@@ -225,24 +225,24 @@ function shouldShowNextStep(): boolean {
 
 function getCurrentPage(): Ref<any> {
   switch(pageStep.value) {
-  case CreateOrganizationStep.OrgNameStep: {
-    return orgPage;
-  }
-  case CreateOrganizationStep.UserInfoStep: {
-    return userInfoPage;
-  }
-  case CreateOrganizationStep.ServerStep: {
-    return serverPage;
-  }
-  case CreateOrganizationStep.PasswordStep: {
-    return passwordPage;
-  }
-  case CreateOrganizationStep.SpinnerStep: {
-    return spinnerPage;
-  }
-  default: {
-    return ref(null);
-  }
+    case CreateOrganizationStep.OrgNameStep: {
+      return orgPage;
+    }
+    case CreateOrganizationStep.UserInfoStep: {
+      return userInfoPage;
+    }
+    case CreateOrganizationStep.ServerStep: {
+      return serverPage;
+    }
+    case CreateOrganizationStep.PasswordStep: {
+      return passwordPage;
+    }
+    case CreateOrganizationStep.SpinnerStep: {
+      return spinnerPage;
+    }
+    default: {
+      return ref(null);
+    }
   }
 }
 
@@ -269,7 +269,7 @@ function createOrg(orgName: string, userName: string, userEmail: string, deviceN
 
 function nextStep(): void {
   if (pageStep.value === CreateOrganizationStep.FinishStep) {
-    modalController.dismiss(device.value, 'confirm');
+    modalController.dismiss({ device: device.value, password: passwordPage.value.password }, 'confirm');
     return;
   } else {
     pageStep.value = pageStep.value + 1;

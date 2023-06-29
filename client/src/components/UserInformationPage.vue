@@ -6,23 +6,26 @@
     :placeholder="$t('CreateOrganization.fullnamePlaceholder')"
     name="fullname"
     v-model="fullName"
+    :disabled="!$props.nameEnabled"
   />
   <custom-input
     :label="$t('CreateOrganization.email')"
     :placeholder="$t('CreateOrganization.emailPlaceholder')"
     v-model="email"
     name="email"
+    :disabled="!$props.emailEnabled"
   />
   <custom-input
     :label="$t('CreateOrganization.deviceNameInputLabel')"
     :placeholder="$t('CreateOrganization.deviceNamePlaceholder')"
     v-model="deviceName"
     name="deviceName"
+    :disabled="!$props.deviceEnabled"
   />
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch, onUnmounted } from 'vue';
 import CustomInput from '@/components/CustomInput.vue';
 import { Validity, userNameValidator, deviceNameValidator, emailValidator } from '@/common/validators';
 
@@ -30,9 +33,41 @@ function getDefaultDeviceName(): string {
   return 'my_device';
 }
 
+const props = defineProps({
+  defaultEmail: {
+    type: String,
+    default: ''
+  },
+  defaultName: {
+    type: String,
+    default: ''
+  },
+  emailEnabled: {
+    type: Boolean,
+    default: true
+  },
+  nameEnabled: {
+    type: Boolean,
+    default: true
+  },
+  deviceEnabled: {
+    type: Boolean,
+    default: true
+  }
+});
+
 const deviceName = ref(getDefaultDeviceName());
-const email = ref('');
-const fullName = ref('');
+const email = ref(props.defaultEmail);
+const fullName = ref(props.defaultName);
+
+const unwatchProps = watch(props, (newValue, _oldValue) => {
+  email.value = newValue.defaultEmail;
+  fullName.value = newValue.defaultName;
+});
+
+onUnmounted(() => {
+  unwatchProps();
+});
 
 defineExpose({
   areFieldsCorrect,
