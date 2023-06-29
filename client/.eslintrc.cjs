@@ -42,7 +42,7 @@ module.exports = {
     'no-multiple-empty-lines': ['error', { 'max': 1, 'maxEOF': 0 }],
     'prefer-const': 'error',
     'comma-dangle': 'error',
-    'indent': ['error', 2],
+    'indent': ['error', 2, { 'SwitchCase': 1 }],
     'camelcase': 'error',
     'max-len': ['error', 140],
     'quotes': ['error', 'single', { 'avoidEscape': true }],
