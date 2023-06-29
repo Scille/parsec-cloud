@@ -24,7 +24,7 @@ import os
 def fetch_parsec_version():
     # Awesome hack to load `__version__`
     _version_locals = {}
-    exec(open("../parsec/_version.py", encoding="utf-8").read(), _version_locals)
+    exec(open("../server/parsec/_version.py", encoding="utf-8").read(), _version_locals)
     return _version_locals["__version__"]
 
 
