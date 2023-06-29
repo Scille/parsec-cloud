@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import sys
 from contextlib import asynccontextmanager
 from importlib import __import__ as import_function
@@ -88,6 +89,8 @@ class MountpointManager:
         config: dict[Any, Any],
         runner: RunnerType,
         nursery: trio.Nursery,
+        personal_workspace_base_path: Path | None = None,
+        personal_workspace_name_pattern: str | None = None,
     ) -> None:
         self.user_fs = user_fs
         self.event_bus = event_bus
@@ -97,6 +100,10 @@ class MountpointManager:
         self._nursery = nursery
         self._mountpoint_tasks: dict[tuple[EntryID, DateTime | None], TaskStatus[Any]] = {}
         self._timestamped_workspacefs: dict[EntryID, dict[DateTime, WorkspaceFSTimestamped]] = {}
+        self.personal_workspace_base_path = personal_workspace_base_path
+        self.personal_workspace_name_regex = (
+            re.compile(personal_workspace_name_pattern) if personal_workspace_name_pattern else None
+        )
 
         if sys.platform == "win32":
             self._build_mountpoint_path = lambda base_path, parts: base_path / "\\".join(
@@ -106,6 +113,18 @@ class MountpointManager:
             self._build_mountpoint_path = lambda base_path, parts: base_path / "/".join(
                 [part.str for part in parts]
             )
+
+    def _get_base_mountpoint_path(self, workspace_fs: WorkspaceFS) -> Path:
+        if (
+            self.personal_workspace_base_path
+            and self.personal_workspace_name_regex
+            and self.personal_workspace_name_regex.fullmatch(workspace_fs.get_workspace_name().str)
+        ):
+            # Personal workspace, should be mounted on a different path
+            return self.personal_workspace_base_path
+        else:
+            # Regular workspace, mount on regular base mountpoint path
+            return self.base_mountpoint_path
 
     def _get_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         try:
@@ -174,7 +193,7 @@ class MountpointManager:
                 async with self._runner(
                     self.user_fs,
                     workspace_fs,
-                    self.base_mountpoint_path,
+                    self._get_base_mountpoint_path(workspace_fs),
                     self.config,
                     self.event_bus,
                 ) as mountpoint_path:
@@ -383,10 +402,23 @@ async def mountpoint_manager_factory(
     unmount_on_workspace_revoked: bool = False,
     exclude_from_mount_all: frozenset[EntryID] = frozenset(),
     mountpoint_in_directory: bool = False,
+    personal_workspace_base_path: Path | None = None,
+    personal_workspace_name_pattern: str | None = None,
 ) -> AsyncGenerator[MountpointManager, Any]:
     config = {"debug": debug}
 
     runner = get_mountpoint_runner()
+
+    # In order to mount personal workspaces into a directory, the
+    # mountpoint_in_directory option should be enabled
+    if not mountpoint_in_directory:
+        # Fail if personal workspaces option are
+        assert (
+            personal_workspace_base_path is None
+        ), "Option personal_workspace_base_path requires mountpoint_in_directory=True"
+        assert (
+            personal_workspace_name_pattern is None
+        ), "Option personal_workspace_name_pattern requires mountpoint_in_directory=True"
 
     # Now is a good time to perform some cleanup in the registry
     if sys.platform == "win32":
@@ -423,7 +455,14 @@ async def mountpoint_manager_factory(
     # Instantiate the mountpoint manager with its own nursery
     async with open_service_nursery() as nursery:
         mountpoint_manager = MountpointManager(
-            user_fs, event_bus, base_mountpoint_path, config, runner, nursery
+            user_fs,
+            event_bus,
+            base_mountpoint_path,
+            config,
+            runner,
+            nursery,
+            personal_workspace_base_path,
+            personal_workspace_name_pattern,
         )
 
         # Exit this context by unmounting all mountpoints

@@ -61,6 +61,12 @@ class CoreConfig:
 
     mountpoint_enabled: bool = False
     mountpoint_in_directory: bool = False
+    # A personal workspace is one whose name matches a defined pattern (such as
+    # "Drive"). These workspaces will be mounted in a specific directory
+    # Base dir to mount personal workspaces
+    personal_workspace_base_dir: Path | None = None
+    # Naming pattern for personal workspaces
+    personal_workspace_name_pattern: str | None = None
     disabled_workspaces: FrozenSet[EntryID] = frozenset()
 
     sentry_dsn: str | None = None
@@ -101,6 +107,8 @@ def config_factory(
     prevent_sync_pattern_path: Path | None = None,
     mountpoint_enabled: bool = False,
     mountpoint_in_directory: bool = False,
+    personal_workspace_base_dir: Path | None = None,
+    personal_workspace_name_pattern: str | None = None,
     disabled_workspaces: FrozenSet[EntryID] = frozenset(),
     backend_max_cooldown: int = 30,
     backend_connection_keepalive: int | None = 29,
@@ -148,6 +156,8 @@ def config_factory(
         prevent_sync_pattern_path=prevent_sync_pattern_path,
         mountpoint_enabled=mountpoint_enabled,
         mountpoint_in_directory=mountpoint_in_directory,
+        personal_workspace_base_dir=personal_workspace_base_dir,
+        personal_workspace_name_pattern=personal_workspace_name_pattern,
         disabled_workspaces=disabled_workspaces,
         backend_max_cooldown=backend_max_cooldown,
         backend_connection_keepalive=backend_connection_keepalive,
@@ -180,6 +190,9 @@ def config_factory(
     # Mountpoint base directory is not used on windows
     if sys.platform != "win32" or core_config.mountpoint_in_directory:
         core_config.mountpoint_base_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+
+        if core_config.personal_workspace_base_dir:
+            core_config.personal_workspace_base_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
 
     return core_config
 
