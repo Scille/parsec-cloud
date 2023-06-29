@@ -52,11 +52,13 @@ BUSL_LICENSE_FILE = PROJECT_DIR / "licenses/BUSL-Scille.txt"
 VERSION_UPDATER = PROJECT_DIR / "misc/version_updater.py"
 VERSION_FILE = PROJECT_DIR / "parsec/_version.py"
 PYPROJECT_FILE = PROJECT_DIR / "pyproject.toml"
+SNAPCRAFT_FILE = PROJECT_DIR / "packaging/snap/snap/snapcraft.yaml"
 FILES_TO_COMMIT_ON_VERSION_CHANGE = [
     BUSL_LICENSE_FILE.absolute(),
     VERSION_FILE.absolute(),
     PYPROJECT_FILE.absolute(),
     VERSION_UPDATER.absolute(),
+    SNAPCRAFT_FILE.absolute(),
 ]
 
 FRAGMENTS_DIR = PROJECT_DIR / "newsfragments"
@@ -415,8 +417,9 @@ def ensure_working_in_a_clean_git_repo() -> None:
 def ensure_working_on_the_correct_branch(
     release_branch: str, base_ref: str | None, version: Version
 ) -> None:
-    current_branch = run_git("rev-parse", "--abbrev-ref", "HEAD")
+    current_branch = run_git("rev-parse", "--abbrev-ref", "HEAD").strip()
     print(f"Current branch {COLOR_GREEN}{current_branch}{COLOR_END}")
+    print(f"Release branch {COLOR_YELLOW}{release_branch}{COLOR_END}")
 
     if current_branch == release_branch:
         print("Already in the release branch, nothing to do")
