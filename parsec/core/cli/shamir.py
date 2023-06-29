@@ -10,6 +10,8 @@ from parsec._parsec import (
     SecretKey,
     ShamirRecoveryBriefCertificate,
     ShamirRecoverySecret,
+    ShamirRecoverySelfInfoRepOk,
+    ShamirRecoverySelfInfoRepUnknownStatus,
     ShamirRecoverySetup,
     ShamirRecoverySetupRepAlreadySet,
     ShamirRecoverySetupRepInvalidCertification,
@@ -23,11 +25,12 @@ from parsec._parsec import (
 )
 from parsec.cli_utils import async_confirm, cli_exception_handler
 from parsec.core import CoreConfig
+from parsec.core.backend_connection import backend_authenticated_cmds_factory
 from parsec.core.cli.utils import (
     cli_command_base_options,
     core_config_and_device_options,
 )
-from parsec.core.logged_core import logged_core_factory
+from parsec.core.logged_core import RemoteDevicesManager, logged_core_factory
 from parsec.core.recovery import generate_recovery_device
 from parsec.core.types import LocalDevice
 from parsec.utils import trio_run
@@ -44,7 +47,9 @@ async def _share_recovery_device(config: CoreConfig, device: LocalDevice, thresh
         admin_infos = [
             user
             for user in user_infos
-            if user.profile == user.profile.ADMIN and user.human_handle is not None
+            if user.profile == user.profile.ADMIN
+            and user.human_handle is not None
+            and user.user_id != device.user_id
         ]
         certificates = [
             (await core._remote_devices_manager.get_user(admin_info.user_id))[0]
@@ -140,3 +145,63 @@ def share_recovery_device(
     """
     with cli_exception_handler(config.debug):
         trio_run(_share_recovery_device, config, device, threshold)
+
+
+async def _shared_recovery_device_info(config: CoreConfig, device: LocalDevice) -> None:
+    assert device.human_handle is not None
+    styled_human_handle = click.style(device.human_handle.str, fg="yellow")
+
+    # Connect to the server
+    async with backend_authenticated_cmds_factory(
+        addr=device.organization_addr,
+        device_id=device.device_id,
+        signing_key=device.signing_key,
+        keepalive=config.backend_connection_keepalive,
+    ) as cmds:
+        # Ask the server
+        rep = await cmds.shamir_recovery_self_info()
+        if isinstance(rep, ShamirRecoverySelfInfoRepUnknownStatus):
+            raise click.ClickException(f"Unknown status: {rep.status}")
+        assert isinstance(rep, ShamirRecoverySelfInfoRepOk)
+        if rep.self_info is None:
+            click.echo(f"No shared recovery device configured for {styled_human_handle}")
+            return
+
+        # Load brief certificate
+        unsecure_certificate = ShamirRecoveryBriefCertificate.unsecure_load(rep.self_info)
+        remote_devices_manager = RemoteDevicesManager(
+            cmds, device.root_verify_key, device.time_provider
+        )
+        author_certificate = await remote_devices_manager.get_device(unsecure_certificate.author)
+        brief_certificate = ShamirRecoveryBriefCertificate.verify_and_load(
+            rep.self_info, author_certificate.verify_key, unsecure_certificate.author
+        )
+
+        # Format the answer
+        assert author_certificate.device_label is not None
+        styled_device_label = click.style(author_certificate.device_label.str, fg="yellow")
+        styled_timestamp = click.style(brief_certificate.timestamp.to_rfc3339(), fg="yellow")
+        styled_threshold = click.style(brief_certificate.threshold)
+        click.echo(
+            f"A shared recovery device for {styled_human_handle} has been configured from {styled_device_label} on {styled_timestamp}"
+        )
+        click.echo(f"At least {styled_threshold} shares are required from the following users:")
+        for user_id, count in brief_certificate.per_recipient_shares.items():
+            user_certificate, _ = await remote_devices_manager.get_user(user_id)
+            assert user_certificate.human_handle is not None
+            styled_user_human_handle = click.style(user_certificate.human_handle.str, fg="yellow")
+            styled_share = click.style(count, fg="yellow")
+            styled_share = f"{styled_share} share" if count == 1 else f"{styled_share} shares"
+
+            click.echo(f"- {styled_user_human_handle} ({styled_share})")
+
+
+@click.command(short_help="share recovery device")
+@core_config_and_device_options
+@cli_command_base_options
+def shared_recovery_device_info(config: CoreConfig, device: LocalDevice, **kwargs: Any) -> None:
+    """
+    Share a new recovery device using the shamir algorithm.
+    """
+    with cli_exception_handler(config.debug):
+        trio_run(_shared_recovery_device_info, config, device)

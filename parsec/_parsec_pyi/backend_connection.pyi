@@ -77,6 +77,7 @@ from parsec._parsec_pyi.protocol.invite import (
 )
 from parsec._parsec_pyi.protocol.ping import InvitedPingRep
 from parsec._parsec_pyi.protocol.shamir import (
+    ShamirRecoverySelfInfoRep,
     ShamirRecoverySetup,
     ShamirRecoverySetupRep,
 )
@@ -241,6 +242,9 @@ class AuthenticatedCmds:
         self,
         setup: ShamirRecoverySetup,
     ) -> ShamirRecoverySetupRep: ...
+    async def shamir_recovery_self_info(
+        self,
+    ) -> ShamirRecoverySelfInfoRep: ...
 
 class InvitedCmds:
     def __init__(self, addr: BackendInvitationAddr) -> None: ...

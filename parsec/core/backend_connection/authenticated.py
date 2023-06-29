@@ -159,6 +159,7 @@ class BackendAuthenticatedCmds:
     pki_enrollment_accept = expose_cmds_with_retrier(cmds.pki_enrollment_accept)
 
     shamir_recovery_setup = expose_cmds_with_retrier(cmds.shamir_recovery_setup)
+    shamir_recovery_self_info = expose_cmds_with_retrier(cmds.shamir_recovery_self_info)
 
 
 for cmd in AUTHENTICATED_CMDS:
