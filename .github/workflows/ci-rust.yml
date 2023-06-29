@@ -94,7 +94,7 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu-')
         with:
           extra-args: clippy --verbose
-        timeout-minutes: 5
+        timeout-minutes: 10
 
       - name: Check rust code format
         if: startsWith(matrix.os, 'ubuntu-')
