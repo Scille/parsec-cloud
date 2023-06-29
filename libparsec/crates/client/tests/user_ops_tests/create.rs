@@ -8,7 +8,7 @@ use crate::utils::user_ops_factory;
 
 #[parsec_test(testbed = "minimal")]
 async fn list_create_rename(env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1".parse().unwrap());
+    let alice = env.local_device("alice@dev1");
     let user_ops = user_ops_factory(env, &alice).await;
 
     p_assert_eq!(user_ops.list_workspaces(), vec![]);
@@ -51,7 +51,7 @@ async fn list_create_rename(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn rename_unknown_id(env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1".parse().unwrap());
+    let alice = env.local_device("alice@dev1");
     let user_ops = user_ops_factory(env, &alice).await;
 
     let bad_wid = EntryID::default();

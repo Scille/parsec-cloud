@@ -20,7 +20,7 @@ use libparsec_types::prelude::*;
 
 #[parsec_test(testbed = "minimal", with_server)]
 async fn authenticated(env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1".parse().unwrap());
+    let alice = env.local_device("alice@dev1");
     let cmds = AuthenticatedCmds::new(&env.discriminant_dir, alice.clone(), ProxyConfig::default())
         .unwrap();
 
@@ -66,8 +66,8 @@ async fn authenticated(env: &TestbedEnv) {
 #[cfg(not(target_arch = "wasm32"))]
 #[parsec_test(testbed = "coolorg", with_server)]
 async fn authenticated_sse(env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1".parse().unwrap());
-    let bob = env.local_device("bob@dev1".parse().unwrap());
+    let alice = env.local_device("alice@dev1");
+    let bob = env.local_device("bob@dev1");
     let cmds_alice =
         AuthenticatedCmds::new(&env.discriminant_dir, alice.clone(), ProxyConfig::default())
             .unwrap();
@@ -165,7 +165,7 @@ async fn authenticated_sse(env: &TestbedEnv) {
 async fn invited(env: &TestbedEnv) {
     // Create an invitation
 
-    let alice = env.local_device("alice@dev1".parse().unwrap());
+    let alice = env.local_device("alice@dev1");
     let cmds = AuthenticatedCmds::new(&env.discriminant_dir, alice.clone(), ProxyConfig::default())
         .unwrap();
     let rep = cmds

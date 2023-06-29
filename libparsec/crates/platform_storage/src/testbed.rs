@@ -8,7 +8,7 @@ use libparsec_testbed::{
 };
 use libparsec_types::prelude::*;
 
-use crate::certificates::CertificatesStorage;
+use crate::{certificates::CertificatesStorage, user::UserStorage};
 
 const STORE_ENTRY_KEY: &str = "platform_storage";
 
@@ -45,7 +45,7 @@ pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, dev
             let env = test_get_testbed(data_base_dir).expect("Testbed existence already checked");
 
             // 1) Do we need to be initialized ? and by fetching up what certificate index ?
-            let up_to_index = env.template.events().rev().find_map(|e| match e {
+            let up_to_index = env.template.events.iter().rev().find_map(|e| match e {
                 TestbedEvent::CertificatesStorageFetchCertificates(x)
                     if x.device == device.device_id =>
                 {
@@ -180,30 +180,52 @@ pub(crate) async fn maybe_populate_user_storage(data_base_dir: &Path, device: Ar
         });
 
         if !already_populated {
-            // TODO
+            let env = test_get_testbed(data_base_dir).expect("Testbed existence already checked");
 
-            // let env = test_get_testbed(data_base_dir).expect("Testbed existence already checked");
+            let mut lazy_storage: Option<UserStorage> = None;
 
-            // // 1) Do we need to be initialized ? and by fetching up what certificate index ?
-            // let vlob_version = env.template.events().rev().find_map(|e| match e {
-            //     TestbedEvent::UserStorageLocalUpdate(x)
-            //         if x.device == device.device_id =>
-            //     {
-            //         Some(x.manifest)
-            //     }
-            //     _ => None,
-            // });
+            for event in &env.template.events {
+                let (manifest, maybe_checkpoint) = match event {
+                    TestbedEvent::UserStorageFetchUserVlob(x) if x.device == device.device_id => {
+                        (x.local_user_manifest.clone(), Some(x.realm_checkpoint))
+                    }
+                    TestbedEvent::UserStorageLocalUpdate(x) if x.device == device.device_id => {
+                        (x.local_user_manifest.clone(), None)
+                    }
+                    _ => continue,
+                };
 
-            // // 2) Actually do the initialization
-            // if let Some(vlob_version) = vlob_version {
-            //     let storage = UserStorage::no_populate_start(data_base_dir, device)
-            //         .await
-            //         .unwrap();
+                if lazy_storage.is_none() {
+                    lazy_storage = Some(
+                        UserStorage::no_populate_start(data_base_dir, device.clone())
+                            .await
+                            .unwrap(),
+                    );
+                }
 
-            //     // TODO :(
-            //     storage.for_update().await.0.set_user_manifest(user_manifest).await.unwrap();
-            //     storage.stop().await;
-            // }
+                if let Some(checkpoint) = maybe_checkpoint {
+                    lazy_storage
+                        .as_ref()
+                        .unwrap()
+                        .update_realm_checkpoint(checkpoint, Some(manifest.base.version))
+                        .await
+                        .unwrap();
+                }
+
+                lazy_storage
+                    .as_ref()
+                    .unwrap()
+                    .for_update()
+                    .await
+                    .0
+                    .set_user_manifest(manifest)
+                    .await
+                    .unwrap();
+            }
+
+            if let Some(storage) = lazy_storage {
+                storage.stop().await;
+            }
 
             // Mark as populated
             guard.push((device.device_id.clone(), StorageKind::User));

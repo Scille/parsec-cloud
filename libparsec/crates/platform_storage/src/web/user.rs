@@ -12,6 +12,18 @@ pub struct NeedSyncEntries {
 }
 
 #[derive(Debug)]
+pub struct UserStorageUpdater {}
+
+impl UserStorageUpdater {
+    pub async fn set_user_manifest(
+        &self,
+        user_manifest: Arc<LocalUserManifest>,
+    ) -> anyhow::Result<()> {
+        todo!();
+    }
+}
+
+#[derive(Debug)]
 pub struct UserStorage {}
 
 #[derive(Debug, thiserror::Error)]
@@ -38,6 +50,13 @@ impl UserStorage {
         todo!();
     }
 
+    pub(crate) async fn no_populate_start(
+        data_base_dir: &Path,
+        device: Arc<LocalDevice>,
+    ) -> anyhow::Result<Self> {
+        todo!();
+    }
+
     pub async fn stop(&self) {
         todo!();
     }
@@ -58,10 +77,7 @@ impl UserStorage {
         todo!();
     }
 
-    pub async fn set_user_manifest(
-        &self,
-        _user_manifest: Arc<LocalUserManifest>,
-    ) -> Result<(), DynError> {
+    pub async fn for_update(&self) -> (UserStorageUpdater, Arc<LocalUserManifest>) {
         todo!();
     }
 }

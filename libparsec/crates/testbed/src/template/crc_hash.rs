@@ -3,6 +3,8 @@
 // `std::hash::Hash` is not stable accross platforms (e.g. it uses native
 // endianness when hashing numbers), hence we have to roll our own system.
 
+use std::sync::Arc;
+
 use libparsec_types::prelude::*;
 
 pub(super) trait CrcHash {
@@ -15,9 +17,25 @@ impl CrcHash for [u8] {
     }
 }
 
+impl CrcHash for Bytes {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(self.as_ref());
+    }
+}
+
 impl CrcHash for str {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
         hasher.update(self.as_bytes());
+    }
+}
+
+impl CrcHash for bool {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        let x = match self {
+            true => b"1",
+            false => b"0",
+        };
+        hasher.update(x);
     }
 }
 
@@ -48,6 +66,12 @@ impl<T: CrcHash> CrcHash for Vec<T> {
         for item in self {
             item.crc_hash(hasher)
         }
+    }
+}
+
+impl<T: CrcHash> CrcHash for Arc<T> {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        (**self).crc_hash(hasher);
     }
 }
 
@@ -88,6 +112,7 @@ impl_crc_hash_for_str_based!(UserID);
 impl_crc_hash_for_str_based!(DeviceID);
 impl_crc_hash_for_str_based!(HumanHandle);
 impl_crc_hash_for_str_based!(DeviceLabel);
+impl_crc_hash_for_str_based!(EntryName);
 
 macro_rules! impl_crc_hash_for_uuid_based {
     ($name:ident) => {
@@ -174,5 +199,77 @@ impl CrcHash for SequesterSigningKeyDer {
 impl CrcHash for SequesterVerifyKeyDer {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
         hasher.update(&self.dump());
+    }
+}
+
+impl CrcHash for WorkspaceEntry {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"WorkspaceEntry");
+
+        let WorkspaceEntry {
+            id,
+            name,
+            key,
+            encryption_revision,
+            encrypted_on,
+            legacy_role_cache_timestamp,
+            legacy_role_cache_value,
+        } = self;
+
+        id.crc_hash(hasher);
+        name.crc_hash(hasher);
+        key.crc_hash(hasher);
+        encryption_revision.crc_hash(hasher);
+        encrypted_on.crc_hash(hasher);
+        legacy_role_cache_timestamp.crc_hash(hasher);
+        legacy_role_cache_value.crc_hash(hasher);
+    }
+}
+
+impl CrcHash for UserManifest {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"UserManifest");
+
+        let UserManifest {
+            author,
+            timestamp,
+            id,
+            version,
+            created,
+            updated,
+            last_processed_message,
+            workspaces,
+        } = self;
+
+        author.crc_hash(hasher);
+        timestamp.crc_hash(hasher);
+        id.crc_hash(hasher);
+        version.crc_hash(hasher);
+        created.crc_hash(hasher);
+        updated.crc_hash(hasher);
+        last_processed_message.crc_hash(hasher);
+        workspaces.crc_hash(hasher);
+    }
+}
+
+impl CrcHash for LocalUserManifest {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"LocalUserManifest");
+
+        let LocalUserManifest {
+            base,
+            need_sync,
+            updated,
+            last_processed_message,
+            workspaces,
+            speculative,
+        } = self;
+
+        base.crc_hash(hasher);
+        need_sync.crc_hash(hasher);
+        updated.crc_hash(hasher);
+        last_processed_message.crc_hash(hasher);
+        workspaces.crc_hash(hasher);
+        speculative.crc_hash(hasher);
     }
 }

@@ -1458,6 +1458,7 @@ dependencies = [
  "lazy_static",
  "libparsec_types",
  "log",
+ "paste",
  "regex",
  "reqwest",
  "rmp-serde",

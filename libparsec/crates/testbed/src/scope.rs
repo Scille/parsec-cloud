@@ -10,7 +10,7 @@ use crate::{test_drop_testbed, test_new_testbed, TestbedEnv};
 
 /// Keep track of testbed's lifetime, don't drop this before the test is done !
 pub struct TestbedScope {
-    pub env: Arc<TestbedEnv>,
+    env: Arc<TestbedEnv>,
 }
 
 pub enum Run {

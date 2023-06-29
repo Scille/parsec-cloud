@@ -11,7 +11,7 @@ use crate::{
     RealmID, RealmRole, RealmRoleCertificate, RevokedUserCertificate, SecretKey,
     SequesterAuthorityCertificate, SequesterPrivateKeyDer, SequesterPublicKeyDer,
     SequesterServiceCertificate, SequesterServiceID, SequesterSigningKeyDer, SequesterVerifyKeyDer,
-    SigningKey, UserCertificate, UserID, UserProfile, UserUpdateCertificate, VlobID,
+    SigningKey, UserCertificate, UserID, UserManifest, UserProfile, UserUpdateCertificate, VlobID,
 };
 
 #[pyclass]
@@ -242,7 +242,7 @@ event_wrapper!(
         realm: RealmID,
         user: UserID,
         role: Option<&'static PyObject>,
-        recipient_message: Option<Py<PyBytes>>,
+        recipient_message: Py<PyBytes>,
         certificate: RealmRoleCertificate,
         raw_redacted_certificate: Py<PyBytes>,
         raw_certificate: Py<PyBytes>,
@@ -295,46 +295,38 @@ event_wrapper!(
 );
 
 event_wrapper!(
-    TestbedEventNewVlob,
+    TestbedEventCreateOrUpdateUserManifestVlob,
+    [manifest: UserManifest,],
+    |_py, x: &TestbedEventCreateOrUpdateUserManifestVlob| -> PyResult<String> {
+        Ok(format!(
+            "timestamp={:?}, author={:?}, version={:?}",
+            &x.manifest.0.timestamp, &x.manifest.0.author, &x.manifest.0.version
+        ))
+    }
+);
+
+event_wrapper!(
+    TestbedEventCreateOrUpdateOpaqueVlob,
     [
         timestamp: DateTime,
         author: DeviceID,
         realm: RealmID,
         encryption_revision: libparsec::low_level::types::IndexInt,
         vlob_id: VlobID,
-        blob: Py<PyBytes>,
-        sequester_blob: PyObject,
-    ],
-    |_py, x: &TestbedEventNewVlob| -> PyResult<String> {
-        Ok(format!(
-            "timestamp={:?}, author={:?}, realm={:?}, vlob={:?}",
-            x.timestamp.0, x.author.0, x.realm.0, x.vlob_id.0,
-        ))
-    }
-);
-
-event_wrapper!(
-    TestbedEventUpdateVlob,
-    [
-        timestamp: DateTime,
-        author: DeviceID,
-        realm: RealmID,
-        encryption_revision: libparsec::low_level::types::IndexInt,
-        vlob: VlobID,
         version: libparsec::low_level::types::VersionInt,
         blob: Py<PyBytes>,
         sequester_blob: PyObject,
     ],
-    |_py, x: &TestbedEventUpdateVlob| -> PyResult<String> {
+    |_py, x: &TestbedEventCreateOrUpdateOpaqueVlob| -> PyResult<String> {
         Ok(format!(
-            "timestamp={:?}, author={:?}, realm={:?}, vlob={:?}",
-            x.timestamp.0, x.author.0, x.realm.0, x.vlob.0,
+            "timestamp={:?}, author={:?}, realm={:?}, vlob={:?}, version={:?}",
+            x.timestamp.0, x.author.0, x.realm.0, x.vlob_id.0, x.version
         ))
     }
 );
 
 event_wrapper!(
-    TestbedEventNewBlock,
+    TestbedEventCreateOpaqueBlock,
     [
         timestamp: DateTime,
         author: DeviceID,
@@ -342,7 +334,7 @@ event_wrapper!(
         block_id: BlockID,
         block: Py<PyBytes>,
     ],
-    |_py, x: &TestbedEventNewBlock| -> PyResult<String> {
+    |_py, x: &TestbedEventCreateOpaqueBlock| -> PyResult<String> {
         Ok(format!(
             "timestamp={:?}, author={:?}, realm={:?}, block={:?}",
             x.timestamp.0, x.author.0, x.realm.0, x.block_id.0,
@@ -360,7 +352,7 @@ pub(crate) fn test_get_testbed_template(
         Some(template) => {
             let events = {
                 let events = PyList::empty(py);
-                for event in template.events() {
+                for event in template.events.iter() {
                     if let Some(pyobj) = event_to_pyobject(py, &template, event)? {
                         events.append(pyobj)?;
                     }
@@ -509,6 +501,7 @@ fn event_to_pyobject(
             };
             Some(obj.into_py(py))
         }
+
         libparsec::low_level::testbed::TestbedEvent::NewSequesterService(x) => {
             let (certificate, raw_certificate, raw_redacted_certificate) =
                 single_certificate!(py, x, template, SequesterService);
@@ -524,6 +517,7 @@ fn event_to_pyobject(
             };
             Some(obj.into_py(py))
         }
+
         libparsec::low_level::testbed::TestbedEvent::NewUser(x) => {
             let (user_certif, device_certif) = {
                 let mut certifs = x.certificates(template);
@@ -567,6 +561,7 @@ fn event_to_pyobject(
             };
             Some(obj.into_py(py))
         }
+
         libparsec::low_level::testbed::TestbedEvent::NewDevice(x) => {
             let (certificate, raw_certificate, raw_redacted_certificate) =
                 single_certificate!(py, x, template, Device);
@@ -584,6 +579,7 @@ fn event_to_pyobject(
             };
             Some(obj.into_py(py))
         }
+
         libparsec::low_level::testbed::TestbedEvent::UpdateUserProfile(x) => {
             let (certificate, raw_certificate, raw_redacted_certificate) =
                 single_certificate!(py, x, template, UserUpdate);
@@ -598,6 +594,7 @@ fn event_to_pyobject(
             };
             Some(obj.into_py(py))
         }
+
         libparsec::low_level::testbed::TestbedEvent::RevokeUser(x) => {
             let (certificate, raw_certificate, raw_redacted_certificate) =
                 single_certificate!(py, x, template, RevokedUser);
@@ -611,6 +608,7 @@ fn event_to_pyobject(
             };
             Some(obj.into_py(py))
         }
+
         libparsec::low_level::testbed::TestbedEvent::NewRealm(x) => {
             let (certificate, raw_certificate, raw_redacted_certificate) =
                 single_certificate!(py, x, template, RealmRole);
@@ -625,26 +623,27 @@ fn event_to_pyobject(
             };
             Some(obj.into_py(py))
         }
+
         libparsec::low_level::testbed::TestbedEvent::ShareRealm(x) => {
             let (certificate, raw_certificate, raw_redacted_certificate) =
                 single_certificate!(py, x, template, RealmRole);
+            let recipient_message = x.recipient_message(template);
             let obj = TestbedEventShareRealm {
                 timestamp: x.timestamp.into(),
                 author: x.author.clone().into(),
                 realm: x.realm.into(),
                 user: x.user.clone().into(),
                 role: x.role.map(RealmRole::convert),
-                recipient_message: x
-                    .recipient_message
-                    .as_ref()
-                    .map(|msg| PyBytes::new(py, msg).into_py(py)),
+                recipient_message: PyBytes::new(py, &recipient_message.raw).into_py(py),
                 raw_certificate,
                 raw_redacted_certificate,
                 certificate,
             };
             Some(obj.into_py(py))
         }
+
         libparsec::low_level::testbed::TestbedEvent::StartRealmReencryption(x) => {
+            let per_participant_message = x.per_participant_message(template);
             let obj = TestbedEventStartRealmReencryption {
                 timestamp: x.timestamp.into(),
                 author: x.author.clone().into(),
@@ -652,12 +651,13 @@ fn event_to_pyobject(
                 encryption_revision: x.encryption_revision,
                 per_participant_message: PyList::new(
                     py,
-                    x.per_participant_message
+                    per_participant_message
+                        .items
                         .iter()
-                        .map(|(user_id, msg)| {
+                        .map(|(user_id, _, raw)| {
                             (
                                 UserID::from(user_id.to_owned()).into_py(py),
-                                PyBytes::new(py, msg),
+                                PyBytes::new(py, raw),
                             )
                         })
                         .collect::<Vec<_>>(),
@@ -666,6 +666,7 @@ fn event_to_pyobject(
             };
             Some(obj.into_py(py))
         }
+
         libparsec::low_level::testbed::TestbedEvent::FinishRealmReencryption(x) => {
             let obj = TestbedEventFinishRealmReencryption {
                 timestamp: x.timestamp.into(),
@@ -675,32 +676,15 @@ fn event_to_pyobject(
             };
             Some(obj.into_py(py))
         }
-        libparsec::low_level::testbed::TestbedEvent::NewVlob(x) => {
-            let sequester_blob = match &x.sequester_blob {
-                None => py.None().into_py(py),
-                Some(sequester_blob) => {
-                    let pyobj = PyDict::new(py);
-                    for (id, blob) in sequester_blob {
-                        pyobj.set_item(
-                            SequesterServiceID::from(id.to_owned()).into_py(py),
-                            PyBytes::new(py, blob),
-                        )?;
-                    }
-                    pyobj.into_py(py)
-                }
-            };
-            let obj = TestbedEventNewVlob {
-                timestamp: x.timestamp.into(),
-                author: x.author.clone().into(),
-                realm: x.realm.into(),
-                encryption_revision: x.encryption_revision,
-                vlob_id: x.vlob_id.into(),
-                blob: PyBytes::new(py, &x.blob).into(),
-                sequester_blob,
+
+        libparsec::low_level::testbed::TestbedEvent::CreateOrUpdateUserManifestVlob(x) => {
+            let obj = TestbedEventCreateOrUpdateUserManifestVlob {
+                manifest: UserManifest::from((*x.manifest).clone()),
             };
             Some(obj.into_py(py))
         }
-        libparsec::low_level::testbed::TestbedEvent::UpdateVlob(x) => {
+
+        libparsec::low_level::testbed::TestbedEvent::CreateOrUpdateOpaqueVlob(x) => {
             let sequester_blob = match &x.sequester_blob {
                 None => py.None().into_py(py),
                 Some(sequester_blob) => {
@@ -714,20 +698,21 @@ fn event_to_pyobject(
                     pyobj.into_py(py)
                 }
             };
-            let obj = TestbedEventUpdateVlob {
+            let obj = TestbedEventCreateOrUpdateOpaqueVlob {
                 timestamp: x.timestamp.into(),
                 author: x.author.clone().into(),
                 realm: x.realm.into(),
                 encryption_revision: x.encryption_revision,
-                vlob: x.vlob.into(),
                 version: x.version,
-                blob: PyBytes::new(py, &x.blob).into(),
+                vlob_id: x.vlob_id.into(),
+                blob: PyBytes::new(py, &x.encrypted).into(),
                 sequester_blob,
             };
             Some(obj.into_py(py))
         }
-        libparsec::low_level::testbed::TestbedEvent::NewBlock(x) => {
-            let obj = TestbedEventNewBlock {
+
+        libparsec::low_level::testbed::TestbedEvent::CreateOpaqueBlock(x) => {
+            let obj = TestbedEventCreateOpaqueBlock {
                 timestamp: x.timestamp.into(),
                 author: x.author.clone().into(),
                 realm: x.realm.into(),

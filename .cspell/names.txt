@@ -24,6 +24,7 @@ fooo
 Goku
 Kryza
 Leblond
+Mcalice
 michu
 murcielago
 mypc

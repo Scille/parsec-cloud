@@ -4,9 +4,65 @@ use libparsec_platform_storage::certificates::CertificatesStorage;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
+enum FetchStrategy {
+    Single,
+    Multiple,
+}
+
+#[parsec_test(testbed = "minimal")]
+#[case::single_fetch(FetchStrategy::Single)]
+#[case::multiple_fetch(FetchStrategy::Multiple)]
+async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv) {
+    let mut expected_last_index = None;
+
+    env.customize(|builder| {
+        builder.new_user("bob");
+        builder.new_realm("bob");
+
+        expected_last_index = Some((
+            builder.current_certificate_index(),
+            builder.current_timestamp(),
+        ));
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+
+        if matches!(fetch_strategy, FetchStrategy::Multiple) {
+            // Only the last fetch is taken into account, so this should be known
+            builder.new_device("alice");
+            builder.new_user("bill");
+            builder.new_realm("alice");
+
+            expected_last_index = Some((
+                builder.current_certificate_index(),
+                builder.current_timestamp(),
+            ));
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+        }
+
+        // Stuff the our storage is not aware of
+        builder.new_realm("alice");
+        builder.new_device("alice");
+        builder.new_user("john");
+
+        // Sanity check to ensure additional (and to be ignored) certificates have been added
+        p_assert_ne!(
+            expected_last_index.unwrap().0,
+            builder.current_certificate_index()
+        );
+        p_assert_ne!(expected_last_index.unwrap().1, builder.current_timestamp());
+    });
+
+    let alice = env.local_device("alice@dev1");
+
+    let storage = CertificatesStorage::start(&env.discriminant_dir, &alice)
+        .await
+        .unwrap();
+
+    p_assert_eq!(storage.get_last_index().await.unwrap(), expected_last_index);
+}
+
 #[parsec_test(testbed = "minimal")]
 async fn get_last_index(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1".parse().unwrap());
+    let alice = env.local_device("alice@dev1");
 
     let storage = CertificatesStorage::start(&env.discriminant_dir, &alice)
         .await
@@ -72,7 +128,7 @@ async fn get_last_index(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn get_timestamp_bounds(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1".parse().unwrap());
+    let alice = env.local_device("alice@dev1");
 
     let storage = CertificatesStorage::start(&env.discriminant_dir, &alice)
         .await
@@ -255,7 +311,7 @@ async fn get_timestamp_bounds(mut timestamps: TimestampGenerator, env: &TestbedE
 
 #[parsec_test(testbed = "minimal")]
 async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1".parse().unwrap());
+    let alice = env.local_device("alice@dev1");
 
     let storage = CertificatesStorage::start(&env.discriminant_dir, &alice)
         .await
@@ -513,7 +569,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn add_already_existing_index(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1".parse().unwrap());
+    let alice = env.local_device("alice@dev1");
 
     let storage = CertificatesStorage::start(&env.discriminant_dir, &alice)
         .await
@@ -576,7 +632,7 @@ async fn add_already_existing_index(mut timestamps: TimestampGenerator, env: &Te
 
 #[parsec_test(testbed = "minimal")]
 async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1".parse().unwrap());
+    let alice = env.local_device("alice@dev1");
 
     let storage = CertificatesStorage::start(&env.discriminant_dir, &alice)
         .await

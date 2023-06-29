@@ -7,9 +7,69 @@ use libparsec_types::prelude::*;
 
 use libparsec_platform_storage::user::{user_storage_non_speculative_init, UserStorage};
 
+#[allow(clippy::enum_variant_names)]
+enum FetchStrategy {
+    No,
+    Single,
+    Multiple,
+}
+
+#[parsec_test(testbed = "minimal")]
+#[case::no_fetch(FetchStrategy::No)]
+#[case::single_fetch(FetchStrategy::Single)]
+#[case::multiple_fetch(FetchStrategy::Multiple)]
+async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv) {
+    let mut expected_version: VersionInt = 0;
+
+    env.customize(|builder| {
+        builder.new_user_realm("alice");
+
+        if matches!(fetch_strategy, FetchStrategy::No) {
+            builder.user_storage_local_update("alice@dev1");
+        } else {
+            builder.create_or_update_user_manifest_vlob("alice");
+            expected_version = 1;
+            builder.user_storage_fetch_user_vlob("alice@dev1");
+
+            if matches!(fetch_strategy, FetchStrategy::Multiple) {
+                builder.create_or_update_user_manifest_vlob("alice");
+                expected_version = 2;
+                builder.user_storage_fetch_user_vlob("alice@dev1");
+            }
+        }
+
+        // Stuff the our storage is not aware of
+        let actual_version = builder
+            .create_or_update_user_manifest_vlob("alice")
+            .map(|e| e.manifest.version);
+
+        // Sanity check to ensure additional (and to be ignored) manifest have been added
+        p_assert_ne!(expected_version, actual_version);
+    });
+
+    let alice = env.local_device("alice@dev1");
+
+    let user_storage = UserStorage::start(&env.discriminant_dir, alice.clone())
+        .await
+        .unwrap();
+
+    p_assert_eq!(
+        user_storage.get_realm_checkpoint().await.unwrap(),
+        expected_version as IndexInt
+    );
+
+    let user_manifest = user_storage.get_user_manifest();
+    p_assert_eq!(user_manifest.base.version, expected_version);
+    let expected_need_sync = match fetch_strategy {
+        FetchStrategy::No => true,
+        FetchStrategy::Single | FetchStrategy::Multiple => false,
+    };
+    p_assert_eq!(user_manifest.need_sync, expected_need_sync);
+}
+
 #[parsec_test(testbed = "minimal")]
 async fn operations(timestamp: DateTime, env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1".parse().unwrap());
+    let alice = env.local_device("alice@dev1");
 
     let user_storage = UserStorage::start(&env.discriminant_dir, alice.clone())
         .await
@@ -84,7 +144,7 @@ async fn operations(timestamp: DateTime, env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn non_speculative_init(env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1".parse().unwrap());
+    let alice = env.local_device("alice@dev1");
 
     // 1) Initialize the database
 
