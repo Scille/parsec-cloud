@@ -1,1 +1,0 @@
-On linux, if you're using something other than ubuntu, you may need to install ``libfuse2`` or ``fuse2`` using the package manager of your system.

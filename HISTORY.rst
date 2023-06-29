@@ -5,6 +5,17 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.16.0-rc.0 (2023-06-29)
+--------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* On linux, if you're using something other than ubuntu, you may need to install
+  ``libfuse2`` or ``fuse2`` using the package manager of your system.  (`#4760
+  <https://github.com/Scille/parsec-cloud/issues/4760>`__)
+
+
 Parsec v2.16.0-a.0 (2023-06-07)
 -------------------------------
 
