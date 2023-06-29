@@ -85,18 +85,18 @@ function setSelected(bool: boolean): void {
 
 function getIconFromItemType(): string {
   switch (props.itemType) {
-  case 'folder':
-    return folder;
-  case 'file':
-    return document;
-  case 'workspace':
-    return briefcase;
-  case 'user':
-    return person;
-  case 'pendingUser':
-    return help;
-  default:
-    return help;
+    case 'folder':
+      return folder;
+    case 'file':
+      return document;
+    case 'workspace':
+      return briefcase;
+    case 'user':
+      return person;
+    case 'pendingUser':
+      return help;
+    default:
+      return help;
   }
 }
 </script>

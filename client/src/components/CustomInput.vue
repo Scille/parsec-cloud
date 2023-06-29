@@ -1,20 +1,24 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS -->
 
 <template>
-  <div class="input-container">
+  <div
+    class="input-container"
+  >
     <span
       id="label"
       class="form-label"
     >
       {{ label }}
     </span>
+
     <ion-item class="input">
       <ion-input
         class="form-input"
         :autofocus="true"
-        :placeholder="placeholder"
+        :placeholder="$props.placeholder"
         :value="modelValue"
         @ion-input="$emit('update:modelValue', $event.target.value)"
+        :disabled="$props.disabled"
       />
     </ion-item>
     <!-- We need to had a info informative text for the custom input issue-->
@@ -38,7 +42,8 @@ defineProps<{
   placeholder?: string,
   errorMessage?: string,
   errorIcon?: string,
-  modelValue?: string
+  modelValue?: string,
+  disabled?: boolean
 }>();
 
 defineEmits<{
@@ -69,7 +74,6 @@ defineEmits<{
       --background: var(--parsec-color-light-secondary-background);
       outline: var(--offset) solid var(--parsec-color-light-primary-300);
     }
-
   }
 }
 </style>

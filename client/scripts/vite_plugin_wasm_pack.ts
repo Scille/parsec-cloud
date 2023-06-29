@@ -105,16 +105,16 @@ function vitePluginWasmPack(
         let crate: WasmPackCrate | null = null;
         let relativePath: string | null = null;
         switch (splitted.length) {
-        case 1: {
-          crate = retrieveCrate(splitted[0]);
-          break;
-        }
+          case 1: {
+            crate = retrieveCrate(splitted[0]);
+            break;
+          }
 
-        case 2: {
-          crate = retrieveCrate(splitted[0]);
-          relativePath = splitted[1];
-          break;
-        }
+          case 2: {
+            crate = retrieveCrate(splitted[0]);
+            relativePath = splitted[1];
+            break;
+          }
         }
 
         if (!crate) {
