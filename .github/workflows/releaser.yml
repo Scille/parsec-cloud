@@ -165,7 +165,7 @@ jobs:
       - name: Create release
         if: github.event_name == 'push'
         # FIXME: rollback to `softprops/action-gh-release` once the issue <https://github.com/softprops/action-gh-release/issues/362> is fixed.
-        uses: FirelightFlagboy/action-gh-release@58fed080aaa4be111f1b7c31013ceeb8d68e0172
+        uses: FirelightFlagboy/action-gh-release@5f81454e6f7b173522c7de8709330e0fdd881d49
         with:
           draft: true
           body: ${{ steps.summary.outputs.output }}
