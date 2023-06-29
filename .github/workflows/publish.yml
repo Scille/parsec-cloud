@@ -75,14 +75,25 @@ jobs:
         timeout-minutes: 2
 
       - name: Upload Snap
+        id: snapcraft
         run: snapcraft upload --release=edge snap/parsec_v${{ steps.version.outputs.full }}_*.snap
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_CREDENTIALS }}
-        timeout-minutes: 2
+        continue-on-error: true
+        timeout-minutes: 5
 
       - name: Publish wheel on PyPI
+        id: pypi
         uses: pypa/gh-action-pypi-publish@a56da0b891b3dc519c7ee3284aff1fad93cc8598 # pin v1.8.6
         with:
           user: __token__
           password: ${{ secrets.PYPI_CREDENTIALS }}
-        timeout-minutes: 2
+        continue-on-error: true
+        timeout-minutes: 5
+
+      - name: Failsafe step (fail if upload fails)
+        if: steps.pypi.outcome != 'success' || steps.snapcraft.outcome != 'success'
+        run: |
+          ${{ steps.pypi.outcome != 'success' && 'echo "Pypi upload failed" >&2' || '' }}
+          ${{ steps.snapcraft.outcome != 'success' && 'echo "Snapcraft upload failed" >&2' || '' }}
+          exit 1
