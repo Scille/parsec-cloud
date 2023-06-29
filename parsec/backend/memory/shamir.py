@@ -20,10 +20,10 @@ if TYPE_CHECKING:
 class MemoryShamirComponent(BaseShamirComponent):
     def __init__(self) -> None:
         self._shamir_recovery_ciphered_data: dict[ShamirRevealToken, bytes] = {}
-        self._shamir_recovery_brief_certs: dict[tuple[OrganizationID, DeviceID], bytes] = {}
-        self._shamir_recovery_reveal: dict[tuple[OrganizationID, DeviceID], ShamirRevealToken] = {}
+        self._shamir_recovery_brief_certs: dict[tuple[OrganizationID, UserID], bytes] = {}
+        self._shamir_recovery_reveal: dict[tuple[OrganizationID, UserID], ShamirRevealToken] = {}
         self._shamir_recovery_shares_certs: dict[
-            tuple[OrganizationID, DeviceID], tuple[bytes, ...]
+            tuple[OrganizationID, UserID], tuple[bytes, ...]
         ] = {}
         self.thresholds: dict[tuple[OrganizationID, UserID], int] = {}
         self.recipients: dict[
@@ -34,20 +34,21 @@ class MemoryShamirComponent(BaseShamirComponent):
         self._user_component = user
 
     async def recovery_others_list(self, organization_id: OrganizationID) -> tuple[bytes, ...]:
-        def filter_org(x: tuple[tuple[OrganizationID, DeviceID], bytes]) -> bool:
-            return x[0][0] == organization_id
-
-        def map_cert(x: tuple[tuple[OrganizationID, DeviceID], bytes]) -> bytes:
-            return x[1]
-
-        return tuple(map(map_cert, filter(filter_org, self._shamir_recovery_brief_certs.items())))
+        return tuple(
+            cert
+            for (
+                current_organization_id,
+                user_id,
+            ), cert in self._shamir_recovery_brief_certs.items()
+            if current_organization_id == organization_id
+        )
 
     async def recovery_self_info(
         self,
         organization_id: OrganizationID,
         author: DeviceID,
     ) -> bytes | None:
-        return self._shamir_recovery_brief_certs.get((organization_id, author))
+        return self._shamir_recovery_brief_certs.get((organization_id, author.user_id))
 
     async def recovery_setup(
         self, organization_id: OrganizationID, author: DeviceID, setup: ShamirRecoverySetup | None
@@ -61,17 +62,17 @@ class MemoryShamirComponent(BaseShamirComponent):
             )
 
         if setup is None:
-            self._shamir_recovery_brief_certs.pop((organization_id, author))
-            self._shamir_recovery_shares_certs.pop((organization_id, author))
-            reveal_token = self._shamir_recovery_reveal.pop((organization_id, author))
+            self._shamir_recovery_brief_certs.pop((organization_id, author.user_id))
+            self._shamir_recovery_shares_certs.pop((organization_id, author.user_id))
+            reveal_token = self._shamir_recovery_reveal.pop((organization_id, author.user_id))
             self._shamir_recovery_ciphered_data.pop(reveal_token)
             self.thresholds.pop((organization_id, author.user_id))
             self.recipients.pop((organization_id, author.user_id))
 
         else:
-            self._shamir_recovery_brief_certs[(organization_id, author)] = setup.brief
-            self._shamir_recovery_shares_certs[(organization_id, author)] = setup.shares
-            self._shamir_recovery_reveal[(organization_id, author)] = setup.reveal_token
+            self._shamir_recovery_brief_certs[(organization_id, author.user_id)] = setup.brief
+            self._shamir_recovery_shares_certs[(organization_id, author.user_id)] = setup.shares
+            self._shamir_recovery_reveal[(organization_id, author.user_id)] = setup.reveal_token
             self._shamir_recovery_ciphered_data[(setup.reveal_token)] = setup.ciphered_data
 
             brief = ShamirRecoveryBriefCertificate.unsecure_load(setup.brief)
