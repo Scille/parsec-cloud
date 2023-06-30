@@ -40,15 +40,18 @@ class MemoryShamirComponent(BaseShamirComponent):
     def register_components(self, user: MemoryUserComponent, **other_components: Any) -> None:
         self._user_component = user
 
-    async def recovery_others_list(self, organization_id: OrganizationID) -> tuple[bytes, ...]:
-        return tuple(
-            item.brief_certificate
-            for (
-                current_organization_id,
-                _,
-            ), item in self._shamir_recovery_items.items()
-            if current_organization_id == organization_id
-        )
+    async def recovery_others_list(
+        self, organization_id: OrganizationID, author: DeviceID
+    ) -> list[tuple[bytes, bytes]]:
+        result = []
+        item_key = (organization_id, author.user_id)
+        for user_id, share_certificate in self._shamir_recovery_shares.get(item_key, []):
+            other_item_key = (organization_id, user_id)
+            item = self._shamir_recovery_items.get(other_item_key)
+            if item is None:
+                continue
+            result.append((item.brief_certificate, share_certificate))
+        return result
 
     async def recovery_self_info(
         self,

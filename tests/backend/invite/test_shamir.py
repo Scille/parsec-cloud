@@ -154,7 +154,8 @@ async def test_shamir_recovery(alice: LocalDevice, bob: LocalDevice, alice_ws, b
 
     rep = await shamir_recovery_others_list(alice_ws)
     assert isinstance(rep, ShamirRecoveryOthersListRepOk)
-    assert set(rep.others) == {alice_brief, bob_brief}
+    assert set(rep.brief_certificates) == {bob_brief}
+    assert set(rep.share_certificates) == {signed_share_bob_for_alice}
 
     rep = await invite_shamir_recovery_reveal(invited_ws, alice_reveal_token)
     assert isinstance(rep, InviteShamirRecoveryRevealRepOk)

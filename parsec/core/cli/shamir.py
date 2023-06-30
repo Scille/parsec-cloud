@@ -26,6 +26,7 @@ from parsec._parsec import (
     ShamirRecoveryShareCertificate,
     ShamirRecoveryShareData,
     ShamirRevealToken,
+    UserID,
     shamir_make_shares,
 )
 from parsec.cli_utils import async_confirm, cli_exception_handler
@@ -155,6 +156,7 @@ def create_shared_recovery_device(
 
 
 async def _show_brief_certificate(
+    our_device: LocalDevice,
     remote_devices_manager: RemoteDevicesManager,
     human_handle: HumanHandle,
     device_label: DeviceLabel,
@@ -173,8 +175,10 @@ async def _show_brief_certificate(
         styled_user_human_handle = click.style(user_certificate.human_handle.str, fg="yellow")
         styled_share = click.style(count, fg="yellow")
         styled_share = f"{styled_share} share" if count == 1 else f"{styled_share} shares"
-
-        click.echo(f"- {styled_user_human_handle} ({styled_share})")
+        if user_id == our_device.user_id:
+            click.echo(f"- {styled_user_human_handle} ({styled_share}) ← This is you")
+        else:
+            click.echo(f"- {styled_user_human_handle} ({styled_share})")
 
 
 async def _shared_recovery_device_info(config: CoreConfig, device: LocalDevice) -> bool:
@@ -210,6 +214,7 @@ async def _shared_recovery_device_info(config: CoreConfig, device: LocalDevice) 
         # Indicate a shared recovery device has been found
         assert author_certificate.device_label is not None
         await _show_brief_certificate(
+            device,
             remote_devices_manager,
             device.human_handle,
             author_certificate.device_label,
@@ -286,32 +291,56 @@ async def _list_shared_recovery_devices(config: CoreConfig, device: LocalDevice)
             raise click.ClickException(f"Unknown status: {rep.status}")
         assert isinstance(rep, ShamirRecoveryOthersListRepOk)
 
-        for i, raw in enumerate(rep.others):
-            # Load brief certificate
-            unsecure_certificate = ShamirRecoveryBriefCertificate.unsecure_load(raw)
+        # Load share certificates
+        share_certificates: dict[UserID, ShamirRecoveryShareData] = {}
+        for raw in rep.share_certificates:
+            unsecure_share_certificate = ShamirRecoveryShareCertificate.unsecure_load(raw)
             remote_devices_manager = RemoteDevicesManager(
                 cmds, device.root_verify_key, device.time_provider
             )
             author_certificate = await remote_devices_manager.get_device(
-                unsecure_certificate.author
+                unsecure_share_certificate.author
+            )
+            share_certificate = ShamirRecoveryShareCertificate.verify_and_load(
+                raw, author_certificate.verify_key, unsecure_share_certificate.author
+            )
+            share_data = ShamirRecoveryShareData.decrypt_verify_and_load_for(
+                share_certificate.ciphered_share, device.private_key, author_certificate.verify_key
+            )
+            share_certificates[author_certificate.device_id.user_id] = share_data
+
+        # Load brief certificates
+        for i, raw in enumerate(rep.brief_certificates):
+            unsecure_brief_certificate = ShamirRecoveryBriefCertificate.unsecure_load(raw)
+            remote_devices_manager = RemoteDevicesManager(
+                cmds, device.root_verify_key, device.time_provider
+            )
+            author_certificate = await remote_devices_manager.get_device(
+                unsecure_brief_certificate.author
             )
             brief_certificate = ShamirRecoveryBriefCertificate.verify_and_load(
-                raw, author_certificate.verify_key, unsecure_certificate.author
+                raw, author_certificate.verify_key, unsecure_brief_certificate.author
             )
             user_certificate, _ = await remote_devices_manager.get_user(
                 author_certificate.device_id.user_id
             )
+            maybe_share_data = share_certificates.get(author_certificate.device_id.user_id)
+            share_number = 0 if maybe_share_data is None else len(maybe_share_data.weighted_share)
 
+            # Display brief certificate
             if i != 0:
                 click.echo()
             assert author_certificate.device_label is not None
             assert user_certificate.human_handle is not None
             await _show_brief_certificate(
+                device,
                 remote_devices_manager,
                 user_certificate.human_handle,
                 author_certificate.device_label,
                 brief_certificate,
             )
+            styled_share_number = click.style(share_number, fg="yellow")
+            click.echo(f"{styled_share_number} valid share(s) has been successfully retrieved")
 
 
 @click.command(short_help="list shared recovery devices")

@@ -12,8 +12,13 @@
                 "status": "ok",
                 "fields": [
                     {
-                        "name": "others",
                         // Contains a list of `ShamirRecoveryBriefCertificate`
+                        "name": "brief_certificates",
+                        "type": "List<Bytes>"
+                    },
+                    {
+                        // Contains a list of `ShamirRecoveryShareCertificate`
+                        "name": "share_certificates",
                         "type": "List<Bytes>"
                     }
                 ]

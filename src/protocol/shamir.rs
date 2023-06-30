@@ -66,20 +66,38 @@ pub(crate) struct ShamirRecoveryOthersListRepOk;
 #[pymethods]
 impl ShamirRecoveryOthersListRepOk {
     #[new]
-    fn new(others: Vec<BytesWrapper>) -> PyResult<(Self, ShamirRecoveryOthersListRep)> {
-        crate::binding_utils::unwrap_bytes!(others);
+    fn new(
+        brief_certificates: Vec<BytesWrapper>,
+        share_certificates: Vec<BytesWrapper>,
+    ) -> PyResult<(Self, ShamirRecoveryOthersListRep)> {
+        crate::binding_utils::unwrap_bytes!(brief_certificates, share_certificates);
         Ok((
             Self,
-            ShamirRecoveryOthersListRep(shamir_recovery_others_list::Rep::Ok { others }),
+            ShamirRecoveryOthersListRep(shamir_recovery_others_list::Rep::Ok {
+                brief_certificates,
+                share_certificates,
+            }),
         ))
     }
 
     #[getter]
-    fn others<'py>(_self: PyRef<'_, Self>, py: Python<'py>) -> PyResult<&'py PyTuple> {
+    fn brief_certificates<'py>(_self: PyRef<'_, Self>, py: Python<'py>) -> PyResult<&'py PyTuple> {
         Ok(match &_self.as_ref().0 {
-            shamir_recovery_others_list::Rep::Ok { others } => {
-                PyTuple::new(py, others.iter().map(|x| PyBytes::new(py, x)))
-            }
+            shamir_recovery_others_list::Rep::Ok {
+                brief_certificates,
+                share_certificates: _,
+            } => PyTuple::new(py, brief_certificates.iter().map(|x| PyBytes::new(py, x))),
+            _ => return Err(PyNotImplementedError::new_err("")),
+        })
+    }
+
+    #[getter]
+    fn share_certificates<'py>(_self: PyRef<'_, Self>, py: Python<'py>) -> PyResult<&'py PyTuple> {
+        Ok(match &_self.as_ref().0 {
+            shamir_recovery_others_list::Rep::Ok {
+                brief_certificates: _,
+                share_certificates,
+            } => PyTuple::new(py, share_certificates.iter().map(|x| PyBytes::new(py, x))),
             _ => return Err(PyNotImplementedError::new_err("")),
         })
     }

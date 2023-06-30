@@ -41,9 +41,10 @@ class BaseShamirComponent:
         if client_ctx.profile != UserProfile.ADMIN:
             return ShamirRecoveryOthersListRepNotAllowed()
 
-        others = await self.recovery_others_list(client_ctx.organization_id)
+        result = await self.recovery_others_list(client_ctx.organization_id, client_ctx.device_id)
+        brief_certificates, share_certificates = zip(*result)
 
-        return ShamirRecoveryOthersListRepOk(others=others)
+        return ShamirRecoveryOthersListRepOk(brief_certificates, share_certificates)
 
     @api("shamir_recovery_self_info")
     @catch_protocol_errors
@@ -92,7 +93,8 @@ class BaseShamirComponent:
     async def recovery_others_list(
         self,
         organization_id: OrganizationID,
-    ) -> tuple[bytes, ...]:
+        author: DeviceID,
+    ) -> list[tuple[bytes, bytes]]:
         raise NotImplementedError()
 
     async def recovery_self_info(
