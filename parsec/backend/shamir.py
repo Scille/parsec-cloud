@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from parsec._parsec import (
     ClientType,
+    DataError,
     DeviceID,
     InviteShamirRecoveryRevealRep,
     InviteShamirRecoveryRevealRepNotFound,
@@ -19,10 +20,12 @@ from parsec._parsec import (
     ShamirRecoverySelfInfoReq,
     ShamirRecoverySetup,
     ShamirRecoverySetupRep,
+    ShamirRecoverySetupRepInvalidData,
     ShamirRecoverySetupRepOk,
     ShamirRecoverySetupReq,
     ShamirRevealToken,
     UserProfile,
+    VerifyKey,
 )
 from parsec.backend.client_context import AuthenticatedClientContext, InvitedClientContext
 from parsec.backend.utils import api, api_typed_msg_adapter, catch_protocol_errors
@@ -61,11 +64,15 @@ class BaseShamirComponent:
     async def api_shamir_recovery_setup(
         self, client_ctx: AuthenticatedClientContext, req: ShamirRecoverySetupReq
     ) -> ShamirRecoverySetupRep:
-        await self.recovery_setup(
-            organization_id=client_ctx.organization_id,
-            author=client_ctx.device_id,
-            setup=req.setup,
-        )
+        try:
+            await self.recovery_setup(
+                organization_id=client_ctx.organization_id,
+                author=client_ctx.device_id,
+                author_verify_key=client_ctx.verify_key,
+                setup=req.setup,
+            )
+        except DataError:
+            return ShamirRecoverySetupRepInvalidData()
 
         return ShamirRecoverySetupRepOk()
 
@@ -99,6 +106,7 @@ class BaseShamirComponent:
         self,
         organization_id: OrganizationID,
         author: DeviceID,
+        author_verify_key: VerifyKey,
         setup: ShamirRecoverySetup | None,
     ) -> None:
         raise NotImplementedError()

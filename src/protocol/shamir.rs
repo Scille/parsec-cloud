@@ -184,7 +184,7 @@ impl ShamirRecoverySetup {
 
     #[getter]
     fn shares<'py>(&self, py: Python<'py>) -> &'py PyTuple {
-        PyTuple::new(py, &self.0.shares)
+        PyTuple::new(py, self.0.shares.iter().map(|x| PyBytes::new(py, x)))
     }
 }
 

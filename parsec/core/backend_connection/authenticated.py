@@ -160,6 +160,7 @@ class BackendAuthenticatedCmds:
 
     shamir_recovery_setup = expose_cmds_with_retrier(cmds.shamir_recovery_setup)
     shamir_recovery_self_info = expose_cmds_with_retrier(cmds.shamir_recovery_self_info)
+    shamir_recovery_others_list = expose_cmds_with_retrier(cmds.shamir_recovery_others_list)
 
 
 for cmd in AUTHENTICATED_CMDS:

@@ -383,9 +383,8 @@ class MemoryInviteComponent(BaseInviteComponent):
         assert self._shamir_component is not None
 
         try:
-            threshold = self._shamir_component.thresholds[(organization_id, user_id)]
-            recipients = self._shamir_component.recipients[(organization_id, user_id)]
+            item = self._shamir_component._shamir_recovery_items[(organization_id, user_id)]
         except KeyError as exc:
             raise InvitationShamirRecoveryNotSetup(exc)
 
-        return (threshold, recipients)
+        return (item.threshold, item.recipients)

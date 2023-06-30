@@ -31,6 +31,7 @@ from parsec._parsec import (
     ShamirRecoverySecret,
     ShamirRecoverySelfInfoRepOk,
     ShamirRecoverySetup,
+    ShamirRecoverySetupRepInvalidData,
     ShamirRecoverySetupRepOk,
     ShamirRecoveryShareCertificate,
     ShamirRecoveryShareData,
@@ -57,6 +58,30 @@ from tests.common.fixtures_customisation import customize_fixtures
 
 @pytest.mark.trio
 async def test_shamir_recovery(alice: LocalDevice, bob: LocalDevice, alice_ws, bob_ws, invited_ws):
+    now = DateTime.now()
+
+    # Create shares
+    share_ciphered = b"share0"
+    signed_share_alice_for_bob = ShamirRecoveryShareCertificate(
+        alice.device_id, now, bob.user_id, share_ciphered
+    ).dump_and_sign(alice.signing_key)
+
+    share_ciphered = b"share1"
+    signed_share_alice_for_alice = ShamirRecoveryShareCertificate(
+        alice.device_id, now, alice.user_id, share_ciphered
+    ).dump_and_sign(alice.signing_key)
+
+    share_ciphered = b"share2"
+    signed_share_bob_for_alice = ShamirRecoveryShareCertificate(
+        bob.device_id, now, alice.user_id, share_ciphered
+    ).dump_and_sign(bob.signing_key)
+
+    share_ciphered = b"share2"
+    signed_share_bob_for_bob = ShamirRecoveryShareCertificate(
+        bob.device_id, now, bob.user_id, share_ciphered
+    ).dump_and_sign(bob.signing_key)
+
+    # Invalid setup: alice included herself
     alice_reveal_token = ShamirRevealToken.new()
     alice_brief = ShamirRecoveryBriefCertificate(
         alice.device_id,
@@ -65,24 +90,60 @@ async def test_shamir_recovery(alice: LocalDevice, bob: LocalDevice, alice_ws, b
         per_recipient_shares={alice.device_id.user_id: 1, bob.device_id.user_id: 1},
     ).dump_and_sign(alice.signing_key)
     setup = ShamirRecoverySetup(
-        b"alice_ciphered_data", alice_reveal_token, alice_brief, [b"share0", b"share1"]
+        b"alice_ciphered_data",
+        alice_reveal_token,
+        alice_brief,
+        [signed_share_alice_for_bob, signed_share_alice_for_alice],
+    )
+    rep = await shamir_recovery_setup(alice_ws, setup)
+    assert isinstance(rep, ShamirRecoverySetupRepInvalidData)
+
+    # Valid setup for alice
+    alice_reveal_token = ShamirRevealToken.new()
+    alice_brief = ShamirRecoveryBriefCertificate(
+        alice.device_id,
+        DateTime.now(),
+        threshold=1,
+        per_recipient_shares={bob.device_id.user_id: 1},
+    ).dump_and_sign(alice.signing_key)
+    setup = ShamirRecoverySetup(
+        b"alice_ciphered_data", alice_reveal_token, alice_brief, [signed_share_alice_for_bob]
     )
     rep = await shamir_recovery_setup(alice_ws, setup)
     assert isinstance(rep, ShamirRecoverySetupRepOk)
 
+    # Invalid setup: bob included himself
     bob_reveal_token = ShamirRevealToken.new()
     bob_brief = ShamirRecoveryBriefCertificate(
         bob.device_id,
         DateTime.now(),
         threshold=1,
         per_recipient_shares={alice.device_id.user_id: 1, bob.device_id.user_id: 1},
-    ).dump_and_sign(alice.signing_key)
+    ).dump_and_sign(bob.signing_key)
     setup = ShamirRecoverySetup(
-        b"bob_ciphered_data", bob_reveal_token, bob_brief, [b"share0", b"share1"]
+        b"bob_ciphered_data",
+        bob_reveal_token,
+        bob_brief,
+        [signed_share_bob_for_bob, signed_share_bob_for_alice],
+    )
+    rep = await shamir_recovery_setup(bob_ws, setup)
+    assert isinstance(rep, ShamirRecoverySetupRepInvalidData)
+
+    # Valid setup for bob
+    bob_reveal_token = ShamirRevealToken.new()
+    bob_brief = ShamirRecoveryBriefCertificate(
+        bob.device_id,
+        DateTime.now(),
+        threshold=1,
+        per_recipient_shares={alice.device_id.user_id: 1},
+    ).dump_and_sign(bob.signing_key)
+    setup = ShamirRecoverySetup(
+        b"bob_ciphered_data", bob_reveal_token, bob_brief, [signed_share_bob_for_alice]
     )
     rep = await shamir_recovery_setup(bob_ws, setup)
     assert isinstance(rep, ShamirRecoverySetupRepOk)
 
+    # Check other commands
     rep = await shamir_recovery_self_info(alice_ws)
     assert isinstance(rep, ShamirRecoverySelfInfoRepOk)
     assert rep.self_info == alice_brief
@@ -215,7 +276,7 @@ async def test_full_shamir(
     raw_srsc_adam = ShamirRecoveryShareCertificate(
         alice.device_id,
         now,
-        bob.user_id,
+        adam.user_id,
         srsd_adam_ciphered,
     ).dump_and_sign(alice.signing_key)
 
@@ -337,6 +398,12 @@ async def test_shamir_list(
     alice_ws,
     adam_ws,
 ):
+    now = DateTime.now()
+    share_ciphered = b"share0"
+    signed_share_0 = ShamirRecoveryShareCertificate(
+        alice.device_id, now, adam.user_id, share_ciphered
+    ).dump_and_sign(alice.signing_key)
+
     alice_reveal_token = ShamirRevealToken.new()
     alice_brief = ShamirRecoveryBriefCertificate(
         alice.device_id,
@@ -345,7 +412,7 @@ async def test_shamir_list(
         per_recipient_shares={adam.device_id.user_id: 1},
     ).dump_and_sign(alice.signing_key)
     setup = ShamirRecoverySetup(
-        b"alice_ciphered_data", alice_reveal_token, alice_brief, [b"share0", b"share1"]
+        b"alice_ciphered_data", alice_reveal_token, alice_brief, [signed_share_0]
     )
     rep = await shamir_recovery_setup(alice_ws, setup)
     assert isinstance(rep, ShamirRecoverySetupRepOk)
