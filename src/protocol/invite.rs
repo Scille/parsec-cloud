@@ -92,6 +92,7 @@ impl InviteListItem {
         token: InvitationToken,
         created_on: DateTime,
         claimer_email: String,
+        claimer_user_id: UserID,
         status: InvitationStatus,
     ) -> PyResult<Self> {
         let token = token.0;
@@ -100,6 +101,7 @@ impl InviteListItem {
             token,
             created_on,
             claimer_email,
+            claimer_user_id: claimer_user_id.0,
             status: status.0,
         }))
     }
@@ -138,7 +140,16 @@ impl InviteListItem {
     fn claimer_email(&self) -> PyResult<&str> {
         match &self.0 {
             invite_list::InviteListItem::User { claimer_email, .. } => Ok(claimer_email),
-            invite_list::InviteListItem::ShamirRecovery { claimer_email, .. } => Ok(claimer_email),
+            _ => Err(PyAttributeError::new_err("")),
+        }
+    }
+
+    #[getter]
+    fn claimer_user_id(&self) -> PyResult<UserID> {
+        match &self.0 {
+            invite_list::InviteListItem::ShamirRecovery {
+                claimer_user_id, ..
+            } => Ok(UserID(claimer_user_id.clone())),
             _ => Err(PyAttributeError::new_err("")),
         }
     }
@@ -600,7 +611,12 @@ impl InviteInfoRepOk {
             invite_info::Rep::Ok(invite_info::UserOrDeviceOrShamirRecovery::User { .. }) => {
                 Ok(InvitationType(libparsec::types::InvitationType::User))
             }
-            _ => Err(PyAttributeError::new_err("")),
+            invite_info::Rep::Ok(invite_info::UserOrDeviceOrShamirRecovery::ShamirRecovery {
+                ..
+            }) => Ok(InvitationType(
+                libparsec::types::InvitationType::ShamirRecovery,
+            )),
+            _ => Err(PyAttributeError::new_err("type")),
         }
     }
 

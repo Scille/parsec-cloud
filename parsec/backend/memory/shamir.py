@@ -33,9 +33,7 @@ class MemoryShamirComponent(BaseShamirComponent):
     def __init__(self) -> None:
         self._shamir_recovery_ciphered_data: dict[ShamirRevealToken, bytes] = {}
         self._shamir_recovery_items: dict[tuple[OrganizationID, UserID], ShamirRecoveryItem] = {}
-        self._shamir_recovery_shares: dict[
-            tuple[OrganizationID, UserID], list[tuple[UserID, bytes]]
-        ] = {}
+        self._shamir_recovery_shares: dict[tuple[OrganizationID, UserID], dict[UserID, bytes]] = {}
 
     def register_components(self, user: MemoryUserComponent, **other_components: Any) -> None:
         self._user_component = user
@@ -45,7 +43,7 @@ class MemoryShamirComponent(BaseShamirComponent):
     ) -> list[tuple[bytes, bytes]]:
         result = []
         item_key = (organization_id, author.user_id)
-        for user_id, share_certificate in self._shamir_recovery_shares.get(item_key, []):
+        for user_id, share_certificate in self._shamir_recovery_shares.get(item_key, {}).items():
             other_item_key = (organization_id, user_id)
             item = self._shamir_recovery_items.get(other_item_key)
             if item is None:
@@ -78,6 +76,8 @@ class MemoryShamirComponent(BaseShamirComponent):
             item = self._shamir_recovery_items.pop(item_key, None)
             if item is not None:
                 self._shamir_recovery_ciphered_data.pop(item.reveal_token, None)
+            for mapping in self._shamir_recovery_shares.values():
+                mapping.pop(author.user_id, None)
             return
 
         # Verify the certificates
@@ -128,9 +128,8 @@ class MemoryShamirComponent(BaseShamirComponent):
         # Save the shares
         for user_id, raw_certificate in share_certificates.items():
             item_key = organization_id, user_id
-            self._shamir_recovery_shares.setdefault(item_key, []).append(
-                (author.user_id, raw_certificate)
-            )
+            self._shamir_recovery_shares.setdefault(item_key, {})
+            self._shamir_recovery_shares[item_key][author.user_id] = raw_certificate
 
     async def recovery_reveal(
         self,

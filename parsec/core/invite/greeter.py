@@ -19,7 +19,14 @@ from parsec._parsec import (
     PrivateKey,
     PublicKey,
     SecretKey,
+    ShamirRecoveryCommunicatedData,
+    ShamirRecoveryOthersListRepNotAllowed,
+    ShamirRecoveryOthersListRepOk,
+    ShamirRecoveryOthersListRepUnknownStatus,
+    ShamirRecoveryShareCertificate,
+    ShamirRecoveryShareData,
     UserCreateRepOk,
+    UserID,
     VerifyKey,
     generate_nonce,
 )
@@ -58,6 +65,7 @@ from parsec.core.invite.claimer import (
     NOT_FOUND_TYPES,
     T_OK_TYPES,
 )
+from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.types import LocalDevice
 
 
@@ -143,6 +151,59 @@ class DeviceGreetInitialCtx(BaseGreetInitialCtx):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
+class ShamirRecoveryGreetInitialCtx(BaseGreetInitialCtx):
+    claimer_user_id: UserID
+
+    async def get_share_data(
+        self, device: LocalDevice, remote_devices_manager: RemoteDevicesManager | None = None
+    ) -> ShamirRecoveryShareData:
+        # Create remote devices manager if necessary
+        if remote_devices_manager is None:
+            remote_devices_manager = RemoteDevicesManager(
+                self._cmds, device.root_verify_key, device.time_provider
+            )
+
+        # Get shamir recovery certificates
+        rep = await self._cmds.shamir_recovery_others_list()
+        if isinstance(rep, ShamirRecoveryOthersListRepNotAllowed):
+            raise InviteError("Not allowed")
+        if isinstance(rep, ShamirRecoveryOthersListRepUnknownStatus):
+            raise InviteError(f"Unknown status: {rep.status}")
+        assert isinstance(rep, ShamirRecoveryOthersListRepOk)
+
+        # Look for the right certificate
+        for raw in rep.share_certificates:
+            unsecure_share_certificate = ShamirRecoveryShareCertificate.unsecure_load(raw)
+            if unsecure_share_certificate.author.user_id != self.claimer_user_id:
+                continue
+
+            # Retrieve the share
+            author_certificate = await remote_devices_manager.get_device(
+                unsecure_share_certificate.author
+            )
+            share_certificate = ShamirRecoveryShareCertificate.verify_and_load(
+                raw, author_certificate.verify_key, unsecure_share_certificate.author
+            )
+            share_data = ShamirRecoveryShareData.decrypt_verify_and_load_for(
+                share_certificate.ciphered_share, device.private_key, author_certificate.verify_key
+            )
+            return share_data
+
+        raise InviteError("Shared recovery device not found")
+
+    async def do_wait_peer(self) -> "ShamirRecoveryGreetInProgress1Ctx":
+        claimer_sas, greeter_sas, shared_secret_key = await self._do_wait_peer()
+
+        return ShamirRecoveryGreetInProgress1Ctx(
+            token=self.token,
+            greeter_sas=greeter_sas,
+            claimer_sas=claimer_sas,
+            shared_secret_key=shared_secret_key,
+            cmds=self._cmds,
+        )
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class BaseGreetInProgress1Ctx:
     token: InvitationToken
     greeter_sas: SASCode
@@ -183,6 +244,19 @@ class DeviceGreetInProgress1Ctx(BaseGreetInProgress1Ctx):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
+class ShamirRecoveryGreetInProgress1Ctx(BaseGreetInProgress1Ctx):
+    async def do_wait_peer_trust(self) -> "ShamirRecoveryGreetInProgress2Ctx":
+        await self._do_wait_peer_trust()
+
+        return ShamirRecoveryGreetInProgress2Ctx(
+            token=self.token,
+            claimer_sas=self._claimer_sas,
+            shared_secret_key=self._shared_secret_key,
+            cmds=self._cmds,
+        )
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class BaseGreetInProgress2Ctx:
     token: InvitationToken
     claimer_sas: SASCode
@@ -214,6 +288,16 @@ class DeviceGreetInProgress2Ctx(BaseGreetInProgress2Ctx):
         await self._do_signify_trust()
 
         return DeviceGreetInProgress3Ctx(
+            token=self.token, shared_secret_key=self._shared_secret_key, cmds=self._cmds
+        )
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class ShamirRecoveryGreetInProgress2Ctx(BaseGreetInProgress2Ctx):
+    async def do_signify_trust(self) -> "ShamirRecoveryGreetInProgress3Ctx":
+        await self._do_signify_trust()
+
+        return ShamirRecoveryGreetInProgress3Ctx(
             token=self.token, shared_secret_key=self._shared_secret_key, cmds=self._cmds
         )
 
@@ -278,6 +362,21 @@ class DeviceGreetInProgress3Ctx:
             shared_secret_key=self._shared_secret_key,
             cmds=self._cmds,
         )
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class ShamirRecoveryGreetInProgress3Ctx:
+    token: InvitationToken
+
+    _shared_secret_key: SecretKey
+    _cmds: BackendAuthenticatedCmds | RsBackendAuthenticatedCmds
+
+    async def send_share_data(self, share_data: ShamirRecoveryShareData) -> None:
+        to_communicate = ShamirRecoveryCommunicatedData(share_data.weighted_share)
+        rep = await self._cmds.invite_4_greeter_communicate(
+            token=self.token, payload=to_communicate.dump()
+        )
+        _check_rep(rep, step_name="step 4 (data exchange)", ok_type=Invite4GreeterCommunicateRepOk)
 
 
 def _create_new_user_certificates(

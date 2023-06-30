@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import platform
 from functools import partial
-from typing import Any, Tuple, Union
+from typing import Any, Sequence, Tuple, Union
 
 import click
 
@@ -15,6 +15,7 @@ from parsec._parsec import (
     InviteDeleteRepOk,
     InviteListRepOk,
     InviteNewRepOk,
+    ShamirRecoveryRecipient,
 )
 from parsec.api.protocol import DeviceLabel, HumanHandle, InvitationToken, UserProfile
 from parsec.cli_utils import async_prompt, cli_exception_handler, spinner
@@ -36,10 +37,14 @@ from parsec.core.invite import (
     DeviceClaimInitialCtx,
     DeviceGreetInitialCtx,
     InviteError,
+    ShamirRecoveryClaimInitialCtx,
+    ShamirRecoveryClaimPreludeCtx,
+    ShamirRecoveryGreetInitialCtx,
     UserClaimInitialCtx,
     UserGreetInitialCtx,
     claimer_retrieve_info,
 )
+from parsec.core.recovery import generate_new_device_from_recovery
 from parsec.core.types import BackendInvitationAddr, LocalDevice
 from parsec.utils import trio_run
 
@@ -260,6 +265,37 @@ async def _do_greet_device(device: LocalDevice, initial_ctx: DeviceGreetInitialC
     return True
 
 
+async def _do_greet_shamir_recovery(
+    device: LocalDevice, initial_ctx: ShamirRecoveryGreetInitialCtx
+) -> bool:
+    async with spinner("Retreiving the share"):
+        share_data = await initial_ctx.get_share_data(device)
+    async with spinner("Waiting for claimer"):
+        in_progress_ctx = await initial_ctx.do_wait_peer()
+
+    display_greeter_sas = click.style(str(in_progress_ctx.greeter_sas), fg="yellow")
+    click.echo(f"Code to provide to claimer: {display_greeter_sas}")
+    async with spinner("Waiting for claimer"):
+        in_progress2_ctx = await in_progress_ctx.do_wait_peer_trust()
+
+    choices = in_progress2_ctx.generate_claimer_sas_choices(size=3)
+    for i, choice in enumerate(choices):
+        display_choice = click.style(choice, fg="yellow")
+        click.echo(f" {i} - {display_choice}")
+    code = await async_prompt(
+        f"Select code provided by claimer", type=click.Choice([str(x) for x in range(len(choices))])
+    )
+    if choices[int(code)] != in_progress2_ctx.claimer_sas:
+        click.secho("Wrong code provided", fg="red")
+        return False
+
+    async with spinner("Waiting for claimer"):
+        in_progress3_ctx = await in_progress2_ctx.do_signify_trust()
+        await in_progress3_ctx.send_share_data(share_data)
+
+    return True
+
+
 async def _greet_invitation(
     config: CoreConfig, device: LocalDevice, token: InvitationToken
 ) -> None:
@@ -282,10 +318,16 @@ async def _greet_invitation(
         if invitation.type == InvitationType.USER:
             user_initial_ctx = UserGreetInitialCtx(cmds=cmds, token=token)
             do_greet = partial(_do_greet_user, device, user_initial_ctx)
-        else:
-            assert invitation.type == InvitationType.DEVICE
+        elif invitation.type == InvitationType.DEVICE:
             device_initial_ctx = DeviceGreetInitialCtx(cmds=cmds, token=token)
             do_greet = partial(_do_greet_device, device, device_initial_ctx)
+        elif invitation.type == InvitationType.SHAMIR_RECOVERY:
+            shamir_initial_ctx = ShamirRecoveryGreetInitialCtx(
+                cmds=cmds, token=token, claimer_user_id=invitation.claimer_user_id
+            )
+            do_greet = partial(_do_greet_shamir_recovery, device, shamir_initial_ctx)
+        else:
+            assert False
 
         while True:
             try:
@@ -293,7 +335,7 @@ async def _greet_invitation(
                 if greet_done:
                     break
             except InviteError as exc:
-                click.secho(str(exc), fg="red")
+                click.secho(repr(exc), fg="red")
             click.secho("Restarting the invitation process", fg="red")
 
 
@@ -403,6 +445,58 @@ async def _do_claim_device(initial_ctx: DeviceClaimInitialCtx) -> LocalDevice | 
     return new_device
 
 
+async def _do_claim_shamir_recovery(
+    prelude_ctx: ShamirRecoveryClaimPreludeCtx, initial_ctx: ShamirRecoveryClaimInitialCtx
+) -> LocalDevice | None:
+    async with spinner("Initializing connection with greeter"):
+        in_progress_ctx = await initial_ctx.do_wait_peer()
+
+    choices = in_progress_ctx.generate_greeter_sas_choices(size=3)
+    for i, choice in enumerate(choices):
+        display_choice = click.style(choice, fg="yellow")
+        click.echo(f" {i} - {display_choice}")
+    code = await async_prompt(
+        f"Select code provided by greeter", type=click.Choice([str(x) for x in range(len(choices))])
+    )
+    if choices[int(code)] != in_progress_ctx.greeter_sas:
+        click.secho("Wrong code provided", fg="red")
+        return None
+
+    in_progress2_ctx = await in_progress_ctx.do_signify_trust()
+    display_claimer_sas = click.style(str(in_progress2_ctx.claimer_sas), fg="yellow")
+    click.echo(f"Code to provide to greeter: {display_claimer_sas}")
+    async with spinner("Waiting for greeter"):
+        in_progress3_ctx = await in_progress2_ctx.do_wait_peer_trust()
+
+    async with spinner("Waiting for greeter (finalizing)"):
+        new_shares = await in_progress3_ctx.do_recover_share()
+    if not prelude_ctx.add_shares(initial_ctx.recipient, new_shares):
+        return None
+    async with spinner(f"Retreiving the recovery device"):
+        recovery_device = await prelude_ctx.retreive_recovery_device()
+    requested_device_label = DeviceLabel(
+        await async_prompt("Device label", default=platform.node())
+    )
+    device_label_display = click.style(requested_device_label, fg="yellow")
+    async with spinner(f"Creating new device {device_label_display}"):
+        new_device = await generate_new_device_from_recovery(
+            recovery_device, requested_device_label
+        )
+    return new_device
+
+
+async def _choose_recipient(
+    recipients: Sequence[ShamirRecoveryRecipient],
+) -> ShamirRecoveryRecipient:
+    for i, recipient in enumerate(recipients):
+        assert recipient.human_handle is not None
+        display_choice = click.style(recipient.human_handle.str, fg="yellow")
+        click.echo(f" {i} - {display_choice}")
+    choices = [str(x) for x in range(len(recipients))]
+    choice_index = await async_prompt("Next user to contact", type=click.Choice(choices))
+    return recipients[int(choice_index)]
+
+
 async def _claim_invitation(
     config: CoreConfig,
     addr: BackendInvitationAddr,
@@ -413,24 +507,42 @@ async def _claim_invitation(
     ) as cmds:
         try:
             async with spinner("Retrieving invitation info"):
-                initial_ctx = await claimer_retrieve_info(cmds)
+                initial_or_prelude_ctx = await claimer_retrieve_info(cmds)
         except BackendConnectionRefused:
             raise RuntimeError("Invitation not found")
 
-        if initial_ctx.greeter_human_handle:
-            display_greeter = click.style(str(initial_ctx.greeter_human_handle), fg="yellow")
-        else:
-            display_greeter = click.style(initial_ctx.greeter_user_id, fg="yellow")
-        click.echo(f"Invitation greeter: {display_greeter}")
         while True:
+            initial_ctx: DeviceClaimInitialCtx | UserClaimInitialCtx | ShamirRecoveryClaimInitialCtx
+            if isinstance(initial_or_prelude_ctx, ShamirRecoveryClaimPreludeCtx):
+                recipient = await _choose_recipient(initial_or_prelude_ctx.receipients)
+                initial_ctx = initial_or_prelude_ctx.get_initial_ctx(recipient)
+            else:
+                initial_ctx = initial_or_prelude_ctx
+
+            if initial_ctx.greeter_human_handle:
+                display_greeter = click.style(
+                    str(initial_ctx.greeter_human_handle.str), fg="yellow"
+                )
+            else:
+                display_greeter = click.style(initial_ctx.greeter_user_id.str, fg="yellow")
+            click.echo(f"Invitation greeter: {display_greeter}")
             try:
                 if isinstance(initial_ctx, DeviceClaimInitialCtx):
                     new_device = await _do_claim_device(initial_ctx)
-                else:
-                    assert isinstance(initial_ctx, UserClaimInitialCtx)
+                    if new_device is not None:
+                        break
+                elif isinstance(initial_ctx, UserClaimInitialCtx):
                     new_device = await _do_claim_user(initial_ctx)
-                if new_device:
-                    break
+                    if new_device is not None:
+                        break
+                elif isinstance(initial_ctx, ShamirRecoveryClaimInitialCtx):
+                    assert isinstance(initial_or_prelude_ctx, ShamirRecoveryClaimPreludeCtx)
+                    new_device = await _do_claim_shamir_recovery(
+                        initial_or_prelude_ctx, initial_ctx
+                    )
+                    if new_device is not None:
+                        break
+                    continue
             except InviteError as exc:
                 click.secho(str(exc), fg="red")
             click.secho("Restarting the invitation process", fg="red")

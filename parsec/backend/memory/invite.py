@@ -73,7 +73,13 @@ class MemoryInviteComponent(BaseInviteComponent):
     ) -> tuple[Invitation, Conduit]:
         org = self._organizations[organization_id]
         invitation = org.invitations.get(token)
-        if not invitation or (expected_greeter and invitation.greeter_user_id != expected_greeter):
+        if not invitation:
+            raise InvitationNotFoundError(token)
+        if isinstance(invitation, ShamirRecoveryInvitation):
+            recipients = {recipient.user_id for recipient in invitation.recipients}
+            if expected_greeter and expected_greeter not in recipients:
+                raise InvitationNotFoundError(token)
+        elif expected_greeter and invitation.greeter_user_id != expected_greeter:
             raise InvitationNotFoundError(token)
         if token in org.deleted_invitations:
             raise InvitationAlreadyDeletedError(token)
@@ -273,7 +279,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             greeter_human_handle = self._user_component._get_user(
                 organization_id, greeter_user_id
             ).human_handle
-            if claimer_email:
+            if claimer_email is not None:
                 invitation = UserInvitation(
                     greeter_user_id=greeter_user_id,
                     greeter_human_handle=greeter_human_handle,
@@ -292,6 +298,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                     greeter_user_id=greeter_user_id,
                     greeter_human_handle=greeter_human_handle,
                     claimer_email=claimer_email,
+                    claimer_user_id=claimer_user_id,
                     threshold=threshold,
                     recipients=recipients,
                     created_on=created_on,
@@ -337,7 +344,13 @@ class MemoryInviteComponent(BaseInviteComponent):
         invitations_with_claimer_online = self._claimers_ready[organization_id]
         invitations = []
         for invitation in org.invitations.values():
-            if invitation.greeter_user_id != greeter or invitation.token in org.deleted_invitations:
+            if isinstance(invitation, ShamirRecoveryInvitation):
+                recipients = {recipient.user_id for recipient in invitation.recipients}
+                if greeter not in recipients:
+                    continue
+            elif invitation.greeter_user_id != greeter:
+                continue
+            if invitation.token in org.deleted_invitations:
                 continue
             if invitation.token in invitations_with_claimer_online:
                 invitations.append(invitation.evolve(status=InvitationStatus.READY))

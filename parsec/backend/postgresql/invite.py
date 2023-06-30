@@ -604,6 +604,7 @@ class PGInviteComponent(BaseInviteComponent):
                     token=token,
                     # TODO: still there ?
                     claimer_email=claimer_email,
+                    claimer_user_id=None,  # type: ignore
                     # TODO
                     threshold=0,
                     # TODO

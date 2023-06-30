@@ -6,9 +6,15 @@ from typing import Any
 import click
 
 from parsec._parsec import (
+    AuthenticatedCmds,
+    BackendInvitationAddr,
     DateTime,
+    DeviceCertificate,
     DeviceLabel,
     HumanHandle,
+    InvitationEmailSentStatus,
+    InvitationType,
+    InviteNewRepOk,
     SecretKey,
     ShamirRecoveryBriefCertificate,
     ShamirRecoveryOthersListRepNotAllowed,
@@ -26,12 +32,16 @@ from parsec._parsec import (
     ShamirRecoveryShareCertificate,
     ShamirRecoveryShareData,
     ShamirRevealToken,
+    UserCertificate,
     UserID,
     shamir_make_shares,
 )
-from parsec.cli_utils import async_confirm, cli_exception_handler
+from parsec.cli_utils import async_confirm, async_prompt, cli_exception_handler, spinner
 from parsec.core import CoreConfig
-from parsec.core.backend_connection import backend_authenticated_cmds_factory
+from parsec.core.backend_connection import (
+    BackendAuthenticatedCmds,
+    backend_authenticated_cmds_factory,
+)
 from parsec.core.cli.utils import (
     cli_command_base_options,
     core_config_and_device_options,
@@ -276,6 +286,63 @@ def remove_shared_recovery_device(config: CoreConfig, device: LocalDevice, **kwa
         trio_run(_remove_shared_recovery_device, config, device)
 
 
+async def _load_and_verify_shamir_certificates(
+    cmds: BackendAuthenticatedCmds | AuthenticatedCmds,
+    remote_devices_manager: RemoteDevicesManager,
+    device: LocalDevice,
+) -> list[
+    tuple[
+        DeviceCertificate,
+        UserCertificate,
+        ShamirRecoveryBriefCertificate,
+        ShamirRecoveryShareData | None,
+    ]
+]:
+    rep = await cmds.shamir_recovery_others_list()
+    if isinstance(rep, ShamirRecoveryOthersListRepNotAllowed):
+        raise click.ClickException("Not allowed")
+    if isinstance(rep, ShamirRecoveryOthersListRepUnknownStatus):
+        raise click.ClickException(f"Unknown status: {rep.status}")
+    assert isinstance(rep, ShamirRecoveryOthersListRepOk)
+
+    # Load share certificates
+    share_certificates: dict[UserID, ShamirRecoveryShareData] = {}
+    for raw in rep.share_certificates:
+        unsecure_share_certificate = ShamirRecoveryShareCertificate.unsecure_load(raw)
+        author_certificate = await remote_devices_manager.get_device(
+            unsecure_share_certificate.author
+        )
+        share_certificate = ShamirRecoveryShareCertificate.verify_and_load(
+            raw, author_certificate.verify_key, unsecure_share_certificate.author
+        )
+        share_data = ShamirRecoveryShareData.decrypt_verify_and_load_for(
+            share_certificate.ciphered_share, device.private_key, author_certificate.verify_key
+        )
+        share_certificates[author_certificate.device_id.user_id] = share_data
+
+    # Load brief certificates
+    result = []
+    for i, raw in enumerate(rep.brief_certificates):
+        unsecure_brief_certificate = ShamirRecoveryBriefCertificate.unsecure_load(raw)
+        remote_devices_manager = RemoteDevicesManager(
+            cmds, device.root_verify_key, device.time_provider
+        )
+        author_certificate = await remote_devices_manager.get_device(
+            unsecure_brief_certificate.author
+        )
+        brief_certificate = ShamirRecoveryBriefCertificate.verify_and_load(
+            raw, author_certificate.verify_key, unsecure_brief_certificate.author
+        )
+        user_certificate, _ = await remote_devices_manager.get_user(
+            author_certificate.device_id.user_id
+        )
+        maybe_share_data = share_certificates.get(author_certificate.device_id.user_id)
+        item = (author_certificate, user_certificate, brief_certificate, maybe_share_data)
+        result.append(item)
+
+    return result
+
+
 async def _list_shared_recovery_devices(config: CoreConfig, device: LocalDevice) -> None:
     # Perform the request
     async with backend_authenticated_cmds_factory(
@@ -284,47 +351,16 @@ async def _list_shared_recovery_devices(config: CoreConfig, device: LocalDevice)
         signing_key=device.signing_key,
         keepalive=config.backend_connection_keepalive,
     ) as cmds:
-        rep = await cmds.shamir_recovery_others_list()
-        if isinstance(rep, ShamirRecoveryOthersListRepNotAllowed):
-            raise click.ClickException("Not allowed")
-        if isinstance(rep, ShamirRecoveryOthersListRepUnknownStatus):
-            raise click.ClickException(f"Unknown status: {rep.status}")
-        assert isinstance(rep, ShamirRecoveryOthersListRepOk)
-
-        # Load share certificates
-        share_certificates: dict[UserID, ShamirRecoveryShareData] = {}
-        for raw in rep.share_certificates:
-            unsecure_share_certificate = ShamirRecoveryShareCertificate.unsecure_load(raw)
-            remote_devices_manager = RemoteDevicesManager(
-                cmds, device.root_verify_key, device.time_provider
-            )
-            author_certificate = await remote_devices_manager.get_device(
-                unsecure_share_certificate.author
-            )
-            share_certificate = ShamirRecoveryShareCertificate.verify_and_load(
-                raw, author_certificate.verify_key, unsecure_share_certificate.author
-            )
-            share_data = ShamirRecoveryShareData.decrypt_verify_and_load_for(
-                share_certificate.ciphered_share, device.private_key, author_certificate.verify_key
-            )
-            share_certificates[author_certificate.device_id.user_id] = share_data
-
-        # Load brief certificates
-        for i, raw in enumerate(rep.brief_certificates):
-            unsecure_brief_certificate = ShamirRecoveryBriefCertificate.unsecure_load(raw)
-            remote_devices_manager = RemoteDevicesManager(
-                cmds, device.root_verify_key, device.time_provider
-            )
-            author_certificate = await remote_devices_manager.get_device(
-                unsecure_brief_certificate.author
-            )
-            brief_certificate = ShamirRecoveryBriefCertificate.verify_and_load(
-                raw, author_certificate.verify_key, unsecure_brief_certificate.author
-            )
-            user_certificate, _ = await remote_devices_manager.get_user(
-                author_certificate.device_id.user_id
-            )
-            maybe_share_data = share_certificates.get(author_certificate.device_id.user_id)
+        remote_devices_manager = RemoteDevicesManager(
+            cmds, device.root_verify_key, device.time_provider
+        )
+        result = await _load_and_verify_shamir_certificates(cmds, remote_devices_manager, device)
+        for i, (
+            author_certificate,
+            user_certificate,
+            brief_certificate,
+            maybe_share_data,
+        ) in enumerate(result):
             share_number = 0 if maybe_share_data is None else len(maybe_share_data.weighted_share)
 
             # Display brief certificate
@@ -352,3 +388,64 @@ def list_shared_recovery_devices(config: CoreConfig, device: LocalDevice, **kwar
     """
     with cli_exception_handler(config.debug):
         trio_run(_list_shared_recovery_devices, config, device)
+
+
+async def _invite_shared_recovery(
+    config: CoreConfig, device: LocalDevice, send_email: bool
+) -> None:
+    async with backend_authenticated_cmds_factory(
+        addr=device.organization_addr,
+        device_id=device.device_id,
+        signing_key=device.signing_key,
+        keepalive=config.backend_connection_keepalive,
+    ) as cmds:
+        remote_devices_manager = RemoteDevicesManager(
+            cmds, device.root_verify_key, device.time_provider
+        )
+        result = await _load_and_verify_shamir_certificates(cmds, remote_devices_manager, device)
+        for i, (_, user_certifice, _, _) in enumerate(result):
+            assert user_certifice.human_handle is not None
+            display_choice = click.style(user_certifice.human_handle.str, fg="yellow")
+            click.echo(f" {i} - {display_choice}")
+        choices = [str(x) for x in range(len(result))]
+        choice_index = await async_prompt("User to invite", type=click.Choice(choices))
+        _, user_certifice, _, _ = result[int(choice_index)]
+        user_id = user_certifice.user_id
+
+        async with spinner("Creating device invitation"):
+            rep = await cmds.invite_new(
+                type=InvitationType.SHAMIR_RECOVERY, claimer_user_id=user_id, send_email=send_email
+            )
+            if not isinstance(rep, InviteNewRepOk):
+                raise RuntimeError(f"Backend refused to create device invitation: {rep}")
+            try:
+                if rep.email_sent and rep.email_sent != InvitationEmailSentStatus.SUCCESS:
+                    click.secho("Email could not be sent", fg="red")
+            except AttributeError:
+                pass
+
+    action_addr = BackendInvitationAddr.build(
+        backend_addr=device.organization_addr.get_backend_addr(),
+        organization_id=device.organization_id,
+        invitation_type=InvitationType.SHAMIR_RECOVERY,
+        token=rep.token,
+    )
+    action_addr_display = click.style(action_addr.to_url(), fg="yellow")
+    click.echo(f"url: {action_addr_display}")
+
+
+@click.command(short_help="invite shared recovery")
+@core_config_and_device_options
+@cli_command_base_options
+@click.option("--send-email", is_flag=True)
+def invite_shared_recovery(
+    config: CoreConfig,
+    device: LocalDevice,
+    send_email: bool,
+    **kwargs: Any,
+) -> None:
+    """
+    Create a new invitation to start a shared recovery procedure
+    """
+    with cli_exception_handler(config.debug):
+        trio_run(_invite_shared_recovery, config, device, send_email)

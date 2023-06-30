@@ -235,6 +235,7 @@ class InviteListItem:
         token: InvitationToken,
         created_on: DateTime,
         claimer_email: str,
+        claimer_user_id: UserID,
         status: InvitationStatus,
     ) -> InviteListItem: ...
     @property
@@ -247,6 +248,8 @@ class InviteListItem:
     def status(self) -> InvitationStatus: ...
     @property
     def claimer_email(self) -> str: ...
+    @property
+    def claimer_user_id(self) -> UserID: ...
 
 class InviteListRepOk(InviteListRep):
     def __init__(self, invitations: Iterable[InviteListItem]) -> None: ...

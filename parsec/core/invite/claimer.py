@@ -60,12 +60,18 @@ from parsec._parsec import (
     InviteInfoRepOk,
     InviteListRepOk,
     InviteNewRepOk,
+    InviteShamirRecoveryRevealRepOk,
     PrivateKey,
     SecretKey,
+    ShamirRecoveryCommunicatedData,
+    ShamirRecoveryRecipient,
+    ShamirRecoverySecret,
+    ShamirShare,
     SigningKey,
     UserCreateRepActiveUsersLimitReached,
     UserCreateRepOk,
     generate_nonce,
+    shamir_recover_secret,
 )
 from parsec._parsec import InvitedCmds as RsBackendInvitedCmds
 from parsec.api.data import (
@@ -169,10 +175,9 @@ def _check_rep(rep: Any, step_name: str, ok_type: Type[T_OK_TYPES]) -> T_OK_TYPE
 
 async def claimer_retrieve_info(
     cmds: BackendInvitedCmds | RsBackendInvitedCmds,
-) -> Union["UserClaimInitialCtx", "DeviceClaimInitialCtx"]:
+) -> Union["UserClaimInitialCtx", "DeviceClaimInitialCtx", "ShamirRecoveryClaimPreludeCtx"]:
     rep = await cmds.invite_info()
     rep_ok = _check_rep(rep, step_name="invitation retrieval", ok_type=InviteInfoRepOk)
-
     if rep_ok.type == InvitationType.USER:
         return UserClaimInitialCtx(
             claimer_email=rep_ok.claimer_email,
@@ -180,12 +185,50 @@ async def claimer_retrieve_info(
             greeter_human_handle=rep_ok.greeter_human_handle,
             cmds=cmds,
         )
-    else:
+    if rep_ok.type == InvitationType.DEVICE:
         return DeviceClaimInitialCtx(
             greeter_user_id=rep_ok.greeter_user_id,
             greeter_human_handle=rep_ok.greeter_human_handle,
             cmds=cmds,
         )
+    return ShamirRecoveryClaimPreludeCtx(
+        receipients=list(rep_ok.recipients),
+        threshold=rep_ok.threshold,
+        shares=[],
+        cmds=cmds,
+    )
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class ShamirRecoveryClaimPreludeCtx:
+    receipients: list[ShamirRecoveryRecipient]
+    threshold: int
+    shares: list[ShamirShare]
+    _cmds: BackendInvitedCmds | RsBackendInvitedCmds
+
+    def get_initial_ctx(self, recipient: ShamirRecoveryRecipient) -> ShamirRecoveryClaimInitialCtx:
+        return ShamirRecoveryClaimInitialCtx(
+            recipient=recipient,
+            greeter_user_id=recipient.user_id,
+            greeter_human_handle=recipient.human_handle,
+            cmds=self._cmds,
+        )
+
+    def add_shares(self, recipient: ShamirRecoveryRecipient, shares: list[ShamirShare]) -> bool:
+        self.receipients.remove(recipient)
+        self.shares.extend(shares)
+        return len(self.shares) >= self.threshold
+
+    async def retreive_recovery_device(self) -> LocalDevice:
+        assert len(self.shares) >= self.threshold
+        recovered_secret = ShamirRecoverySecret.load(
+            shamir_recover_secret(self.threshold, self.shares)
+        )
+        rep = await self._cmds.invite_shamir_recovery_reveal(recovered_secret.reveal_token)
+        assert isinstance(rep, InviteShamirRecoveryRevealRepOk)
+        recovered_device = LocalDevice.load(recovered_secret.data_key.decrypt(rep.ciphered_data))
+        assert recovered_device == recovered_device
+        return recovered_device
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -252,6 +295,20 @@ class DeviceClaimInitialCtx(BaseClaimInitialCtx):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
+class ShamirRecoveryClaimInitialCtx(BaseClaimInitialCtx):
+    recipient: ShamirRecoveryRecipient
+
+    async def do_wait_peer(self) -> "ShamirRecoveryClaimInProgress1Ctx":
+        claimer_sas, greeter_sas, shared_secret_key = await self._do_wait_peer()
+        return ShamirRecoveryClaimInProgress1Ctx(
+            greeter_sas=greeter_sas,
+            claimer_sas=claimer_sas,
+            shared_secret_key=shared_secret_key,
+            cmds=self._cmds,
+        )
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class BaseClaimInProgress1Ctx:
     greeter_sas: SASCode
 
@@ -290,6 +347,17 @@ class DeviceClaimInProgress1Ctx(BaseClaimInProgress1Ctx):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
+class ShamirRecoveryClaimInProgress1Ctx(BaseClaimInProgress1Ctx):
+    async def do_signify_trust(self) -> "ShamirRecoveryClaimInProgress2Ctx":
+        await self._do_signify_trust()
+        return ShamirRecoveryClaimInProgress2Ctx(
+            claimer_sas=self._claimer_sas,
+            shared_secret_key=self._shared_secret_key,
+            cmds=self._cmds,
+        )
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class BaseClaimInProgress2Ctx:
     claimer_sas: SASCode
 
@@ -313,6 +381,15 @@ class DeviceClaimInProgress2Ctx(BaseClaimInProgress2Ctx):
     async def do_wait_peer_trust(self) -> "DeviceClaimInProgress3Ctx":
         await self._do_wait_peer_trust()
         return DeviceClaimInProgress3Ctx(shared_secret_key=self._shared_secret_key, cmds=self._cmds)
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class ShamirRecoveryClaimInProgress2Ctx(BaseClaimInProgress2Ctx):
+    async def do_wait_peer_trust(self) -> "ShamirRecoveryClaimInProgress3Ctx":
+        await self._do_wait_peer_trust()
+        return ShamirRecoveryClaimInProgress3Ctx(
+            shared_secret_key=self._shared_secret_key, cmds=self._cmds
+        )
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -447,3 +524,19 @@ class DeviceClaimInProgress3Ctx:
             user_manifest_key=confirmation.user_manifest_key,
             local_symkey=SecretKey.generate(),
         )
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class ShamirRecoveryClaimInProgress3Ctx:
+    _shared_secret_key: SecretKey
+    _cmds: BackendInvitedCmds | RsBackendInvitedCmds
+
+    async def do_recover_share(
+        self,
+    ) -> list[ShamirShare]:
+        rep = await self._cmds.invite_4_claimer_communicate(payload=b"")
+        rep = _check_rep(
+            rep, step_name="step 4 (data exchange)", ok_type=Invite4ClaimerCommunicateRepOk
+        )
+        data = ShamirRecoveryCommunicatedData.load(rep.payload)
+        return data.weighted_share

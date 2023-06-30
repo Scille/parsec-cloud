@@ -19,6 +19,7 @@ from parsec._parsec_pyi.ids import (
     InvitationToken,
     RealmID,
     SequesterServiceID,
+    ShamirRevealToken,
     UserID,
     VlobID,
 )
@@ -77,6 +78,7 @@ from parsec._parsec_pyi.protocol.invite import (
 )
 from parsec._parsec_pyi.protocol.ping import InvitedPingRep
 from parsec._parsec_pyi.protocol.shamir import (
+    InviteShamirRecoveryRevealRepOk,
     ShamirRecoveryOthersListRep,
     ShamirRecoverySelfInfoRep,
     ShamirRecoverySetup,
@@ -146,6 +148,7 @@ class AuthenticatedCmds:
         type: InvitationType,
         send_email: bool = False,
         claimer_email: str | None = None,
+        claimer_user_id: UserID | None = None,
     ) -> InviteNewRep: ...
     async def message_get(self, offset: int) -> MessageGetRep: ...
     async def organization_config(self) -> OrganizationConfigRep: ...
@@ -272,6 +275,9 @@ class InvitedCmds:
     ) -> Invite4ClaimerCommunicateRep: ...
     async def invite_info(self) -> InviteInfoRep: ...
     async def ping(self, ping: str = "") -> InvitedPingRep: ...
+    async def invite_shamir_recovery_reveal(
+        self, reveal_token: ShamirRevealToken
+    ) -> InviteShamirRecoveryRevealRepOk: ...
 
 class AnonymousCmds:
     def __init__(

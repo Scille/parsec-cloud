@@ -266,6 +266,7 @@ fn serde_invite_list_rep() {
     //     {
     //       type: "SHAMIR_RECOVERY"
     //       claimer_email: "alice@dev1"
+    //       claimer_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a"
     //       created_on: ext(1, 946774800.0)
     //       status: "IDLE"
     //       token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
@@ -300,6 +301,7 @@ fn serde_invite_list_rep() {
                 token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
                 created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
                 claimer_email: "alice@dev1".to_owned(),
+                claimer_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
                 status: InvitationStatus::Idle,
             },
         ],

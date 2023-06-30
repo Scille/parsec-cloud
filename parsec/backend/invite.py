@@ -236,6 +236,7 @@ class ShamirRecoveryInvitation:
     greeter_user_id: UserID
     greeter_human_handle: HumanHandle | None
     claimer_email: str | None
+    claimer_user_id: UserID
     threshold: int
     recipients: tuple[ShamirRecoveryRecipient, ...]
     token: InvitationToken = attr.ib(factory=InvitationToken.new)
@@ -496,7 +497,7 @@ class BaseInviteComponent:
         elif req.type == InvitationType.SHAMIR_RECOVERY:
             assert isinstance(invitation, ShamirRecoveryInvitation)
             assert invitation.claimer_email is not None
-
+            to_addr = invitation.claimer_email
             if client_ctx.human_handle:
                 greeter_name = client_ctx.human_handle.label
                 reply_to = client_ctx.human_handle.email
@@ -505,7 +506,7 @@ class BaseInviteComponent:
                 reply_to = None
             message = generate_invite_email(
                 from_addr=self._config.email_config.sender,
-                to_addr=invitation.claimer_email,
+                to_addr=to_addr,
                 greeter_name=greeter_name,
                 reply_to=reply_to,
                 organization_id=client_ctx.organization_id,
@@ -582,6 +583,7 @@ class BaseInviteComponent:
                     invitation.token,
                     invitation.created_on,
                     str(invitation.claimer_email),
+                    invitation.claimer_user_id,
                     invitation.status,
                 )
             else:

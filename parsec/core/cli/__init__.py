@@ -64,3 +64,4 @@ core_cmd_group.add_command(shamir.create_shared_recovery_device, "create_shared_
 core_cmd_group.add_command(shamir.shared_recovery_device_info, "shared_recovery_device_info")
 core_cmd_group.add_command(shamir.remove_shared_recovery_device, "remove_shared_recovery_device")
 core_cmd_group.add_command(shamir.list_shared_recovery_devices, "list_shared_recovery_devices")
+core_cmd_group.add_command(shamir.invite_shared_recovery, "invite_shared_recovery")

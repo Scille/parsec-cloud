@@ -60,6 +60,7 @@ from parsec._parsec import (
     ShamirRecoverySelfInfoRep,
     ShamirRecoverySetup,
     ShamirRecoverySetupRep,
+    ShamirRevealToken,
     UserCreateRep,
     UserGetRep,
     UserRevokeRep,
@@ -578,6 +579,7 @@ async def invite_new(
     type: InvitationType,
     send_email: bool = False,
     claimer_email: str | None = None,
+    claimer_user_id: UserID | None = None,
 ) -> InviteNewRep:
     return cast(
         InviteNewRep,
@@ -588,6 +590,7 @@ async def invite_new(
             type=type,
             send_email=send_email,
             claimer_email=claimer_email,
+            claimer_user_id=claimer_user_id,
         ),
     )
 
@@ -920,7 +923,7 @@ async def shamir_recovery_setup(
 
 async def invite_shamir_recovery_reveal(
     transport: Transport,
-    reveal_token: bytes,
+    reveal_token: ShamirRevealToken,
 ) -> InviteShamirRecoveryRevealRep:
     return cast(
         InviteShamirRecoveryRevealRep,

@@ -80,6 +80,10 @@
                                 "type": "String"
                             },
                             {
+                                "name": "claimer_user_id",
+                                "type": "UserID"
+                            },
+                            {
                                 "name": "status",
                                 "type": "InvitationStatus"
                             }
