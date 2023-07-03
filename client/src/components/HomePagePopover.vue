@@ -56,38 +56,52 @@ import {
 
 import { createAlert } from '@/components/AlertConfirmation';
 import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
-import CreateOrganization from '@/views/CreateOrganizationModal.vue';
+import CreateOrganizationModal from '@/views/CreateOrganizationModal.vue';
 import { useI18n } from 'vue-i18n';
+import JoinOrganizationModal from '@/views/JoinOrganizationModal.vue';
+import { ModalResultCode } from '@/common/constants';
 
 const { t } = useI18n();
 
 async function openJoinByLinkModal(): Promise<void> {
-  const modal = await modalController.create({
+  const linkModal = await modalController.create({
     component: JoinByLinkModal,
     cssClass: 'join-by-link-modal'
   });
 
-  await modal.present();
-  const { data, role } = await modal.onWillDismiss();
-  if (role === 'confirm') {
-    console.log(data);
+  await linkModal.present();
+  const linkModalResult = await linkModal.onWillDismiss();
+
+  if (linkModalResult.role !== ModalResultCode.Confirm) {
+    return;
   }
+
+  const modal = await modalController.create({
+    component: JoinOrganizationModal,
+    canDismiss: canDismissModal,
+    cssClass: 'join-organization-modal',
+    componentProps: {
+      invitationLink: linkModalResult.data
+    }
+  });
+  await modal.present();
+  const result = await modal.onWillDismiss();
+  await popoverController.dismiss(result.data, result.role);
 }
 
 async function openCreateOrganizationModal(): Promise<void> {
   const modal = await modalController.create({
-    component: CreateOrganization,
+    component: CreateOrganizationModal,
     canDismiss: canDismissModal,
     cssClass: 'create-organization-modal'
   });
   await modal.present();
   const { data, role } = await modal.onWillDismiss();
-  console.log(role, data);
-  popoverController.dismiss(data, role);
+  await popoverController.dismiss(data, role);
 }
 
 async function canDismissModal(data?: any, modalRole?: string): Promise<boolean> {
-  if (modalRole === 'confirm') {
+  if (modalRole === ModalResultCode.Confirm) {
     return true;
   }
   const alert = await createAlert(
@@ -98,7 +112,7 @@ async function canDismissModal(data?: any, modalRole?: string): Promise<boolean>
   );
   await alert.present();
   const { role } = await alert.onDidDismiss();
-  return role === 'confirm';
+  return role === ModalResultCode.Confirm;
 }
 </script>
 

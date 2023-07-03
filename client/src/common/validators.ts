@@ -73,11 +73,12 @@ export const claimUserLinkValidator: IValidator = function(value: string) {
     return Validity.Intermediate;
   }
   try {
-    const url = new URL(value);
-
-    if (url.protocol !== 'parsec:') {
+    if (!value.startsWith('parsec://')) {
       return Validity.Invalid;
     }
+    // URL does not parse other protocols correctly
+    value = value.replace('parsec://', 'http://');
+    const url = new URL(value);
     if (!url.pathname || organizationValidator(url.pathname.slice(1)) !== Validity.Valid) {
       return Validity.Invalid;
     }

@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onUnmounted } from 'vue';
+import { ref } from 'vue';
 import CustomInput from '@/components/CustomInput.vue';
 import { Validity, userNameValidator, deviceNameValidator, emailValidator } from '@/common/validators';
 
@@ -59,15 +59,6 @@ const props = defineProps({
 const deviceName = ref(getDefaultDeviceName());
 const email = ref(props.defaultEmail);
 const fullName = ref(props.defaultName);
-
-const unwatchProps = watch(props, (newValue, _oldValue) => {
-  email.value = newValue.defaultEmail;
-  fullName.value = newValue.defaultName;
-});
-
-onUnmounted(() => {
-  unwatchProps();
-});
 
 defineExpose({
   areFieldsCorrect,

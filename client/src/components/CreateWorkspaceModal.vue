@@ -67,15 +67,16 @@ import { ref } from 'vue';
 import {
   close
 } from 'ionicons/icons';
+import { ModalResultCode } from '@/common/constants';
 
 const workspaceName = ref('');
 
 function closeModal(): Promise<boolean> {
-  return modalController.dismiss(null, 'cancel');
+  return modalController.dismiss(null, ModalResultCode.Cancel);
 }
 
 function confirm(): Promise<boolean> {
-  return modalController.dismiss(workspaceName.value, 'confirm');
+  return modalController.dismiss(workspaceName.value, ModalResultCode.Confirm);
 }
 </script>
 

@@ -50,9 +50,10 @@ import {
   close
 } from 'ionicons/icons';
 import SettingsView from '@/components/SettingsView.vue';
+import { ModalResultCode } from '@/common/constants';
 
 function closeModal(): Promise<boolean> {
-  return modalController.dismiss(null, 'cancel');
+  return modalController.dismiss(null, ModalResultCode.Cancel);
 }
 </script>
 

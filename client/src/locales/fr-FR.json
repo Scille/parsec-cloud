@@ -271,8 +271,47 @@
         "passwordCriteria": "Assurez-vous qu'il comporte au moins 15 caractères OU au moins 8 caractères comprenant un chiffre et une lettre minuscule.",
         "noMatch": "Ne correspondent pas"
     },
-    "DevicesPage": {
-        "title": "Vos appareils",
-        "addDevice": "Ajouter"
+    "SasCodeChoice": {
+        "noneOfTheChoices": "Aucun de ces codes"
+    },
+    "JoinOrganization": {
+        "logIn": "Me connecter",
+        "createDevice": "Rejoindre l'organisation",
+        "validateUserInfo": "Valider mes informations",
+        "start": "Start",
+        "waitingForHost": "(En attente de l'hôte)",
+        "stepTitles": {
+            "GetHostCode": "Code hôte",
+            "ProvideGuestCode": "Code invité",
+            "ContactDetails": "Coordonnées",
+            "Password": "Mot de passe",
+            "Validation": "Validation"
+        },
+        "instructions": {
+            "start": {
+                "first": "Afin d'éviter toute attaque, vous devez être en contact direct avec la personne durant toute la durée de l'inscription.",
+                "second": "L'hôte devra se rendre dans Utilisateurs puisInvitation en cours pour commencer le process d'invitation."
+            },
+            "finish": {
+                "first": "Vous pouvez maintenant vous connecter à Parsec.",
+                "second": "Nous vous conseillons de créer un fichier de récupération au cas où vous oublieriez votre mot de passe."
+            }
+        },
+        "titles": {
+            "waitForHost": "Bienvenue sur Parsec !",
+            "getHostCode": "Réception du code de l'hôte",
+            "provideGuestCode": "Partage de votre code",
+            "getUserInfo": "Vos coordonnées",
+            "getPassword": "Votre mot de passe",
+            "finish": "Vous avez rejoint l'organisation {org} !"
+        },
+        "subtitles": {
+            "waitForHost": "",
+            "getHostCode": "Cliquez sur le code que vous donne l'hôte.",
+            "provideGuestCode": "Veuillez communiquer le code ci-dessous à l'hôte.",
+            "getUserInfo": "Veuillez saisir vos coordonées pour accéder à l'organisation.",
+            "getPassword": "Veuillez choisir un mot de passe pour finalement l'enrôlement.",
+            "finish": ""
+        }
     }
 }
