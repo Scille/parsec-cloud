@@ -480,7 +480,7 @@ fn test_invitation_addr_bad_type(
                 AddrError::InvalidParamValue {
                     param: "action",
                     value: bad_type.to_string(),
-                    help: "Expected `action=claim_user` or `action=claim_device`".to_string(),
+                    help: "Expected `action=claim_user`, `action=claim_device` or `action=claim_shamir_recovery`".to_string(),
                 },
             );
         }

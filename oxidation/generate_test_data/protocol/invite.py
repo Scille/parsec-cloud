@@ -175,6 +175,7 @@ serialized = serializer.rep_dumps(
                 token=InvitationToken.from_hex("d864b93ded264aae9ae583fd3d40c45a"),
                 created_on=DateTime(2000, 1, 2, 1),
                 claimer_email="alice@dev1",
+                claimer_user_id=UserID("109b68ba5cdf428ea0017fc6bcc04d4a"),
                 status=InvitationStatus.IDLE,
             ),
         ]
@@ -262,10 +263,10 @@ serializer = invite_1_claimer_wait_peer_serializer
 serialized = serializer.req_dumps(
     {
         "cmd": "invite_1_claimer_wait_peer",
+        "greeter_user_id": ALICE.user_id,
         "claimer_public_key": PublicKey(
             unhexlify("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
         ),
-        "greeter_user_id": ALICE.user_id,
     }
 )
 serializer.req_loads(serialized)
@@ -334,6 +335,7 @@ serializer = invite_2a_claimer_send_hashed_nonce_serializer
 serialized = serializer.req_dumps(
     {
         "cmd": "invite_2a_claimer_send_hashed_nonce",
+        "greeter_user_id": ALICE.user_id,
         "claimer_hashed_nonce": HashDigest(
             unhexlify("e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6")
         ),
@@ -428,7 +430,11 @@ display("invite_2b_greeter_send_nonce_rep_invalid_state", serialized, [])
 serializer = invite_2b_claimer_send_nonce_serializer
 
 serialized = serializer.req_dumps(
-    {"cmd": "invite_2b_claimer_send_nonce", "claimer_nonce": b"foobar"}
+    {
+        "cmd": "invite_2b_claimer_send_nonce",
+        "greeter_user_id": ALICE.user_id,
+        "claimer_nonce": b"foobar",
+    }
 )
 serializer.req_loads(serialized)
 display("invite_2b_claimer_send_nonce_req", serialized, [])
@@ -478,7 +484,9 @@ display("invite_3a_greeter_wait_peer_trust_rep_invalid_state", serialized, [])
 
 serializer = invite_3b_claimer_wait_peer_trust_serializer
 
-serialized = serializer.req_dumps({"cmd": "invite_3b_claimer_wait_peer_trust"})
+serialized = serializer.req_dumps(
+    {"cmd": "invite_3b_claimer_wait_peer_trust", "greeter_user_id": ALICE.user_id}
+)
 serializer.req_loads(serialized)
 display("invite_3b_claimer_wait_peer_trust_req", serialized, [])
 
@@ -527,7 +535,9 @@ display("invite_3b_greeter_signify_trust_rep_invalid_state", serialized, [])
 
 serializer = invite_3a_claimer_signify_trust_serializer
 
-serialized = serializer.req_dumps({"cmd": "invite_3a_claimer_signify_trust"})
+serialized = serializer.req_dumps(
+    {"cmd": "invite_3a_claimer_signify_trust", "greeter_user_id": ALICE.user_id}
+)
 serializer.req_loads(serialized)
 display("invite_3a_claimer_signify_trust_req", serialized, [])
 
@@ -577,7 +587,9 @@ display("invite_4_greeter_communicate_rep_invalid_state", serialized, [])
 
 serializer = invite_4_claimer_communicate_serializer
 
-serialized = serializer.req_dumps({"cmd": "invite_4_claimer_communicate", "payload": b"foobar"})
+serialized = serializer.req_dumps(
+    {"cmd": "invite_4_claimer_communicate", "greeter_user_id": ALICE.user_id, "payload": b"foobar"}
+)
 serializer.req_loads(serialized)
 display("invite_4_claimer_communicate_req", serialized, [])
 
