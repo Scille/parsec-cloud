@@ -20,11 +20,11 @@ libparsec_testbed = { path = "../testbed", optional = true }
 libparsec_platform_http_proxy = { path = "../platform_http_proxy" }
 
 # Used to send HTTP request to the server.
-reqwest = { version = "0.11.17", features = ["native-tls-vendored"] }
+reqwest = { version = "0.11.18", features = ["native-tls-vendored"] }
 reqwest-eventsource = "0.4.0"
 futures = "0.3.28"
 # Used to perform operation on URL.
-url = "2.3.1"
+url = "2.4.0"
 # Use abstract crypto primitive, to allow to sign request.
 # Used to encoded binary data.
 base64 = "0.21.2"
@@ -32,13 +32,13 @@ chrono = "0.4.26"
 thiserror = "1.0.40"
 # Reqwest's response body is returned as Bytes
 bytes = { version = "1.4.0" }
-once_cell = { version = "1.17.1", optional = true }
+once_cell = { version = "1.18.0", optional = true }
 
 [dev-dependencies]
 # Note `libparsec_tests_fixtures` enables our `test-with-testbed` feature
 libparsec_tests_fixtures = { path = "../tests_fixtures", default-features = false, features = ["test-with-client-connection-testbed"] }
 
-log = "0.4.17"
+log = "0.4.19"
 anyhow = "1.0.70"
 http-body = "0.4.5"
-hyper = { version = "0.14.26", features = ["server"] }
+hyper = { version = "0.14.27", features = ["server"] }
