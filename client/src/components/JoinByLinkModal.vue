@@ -27,7 +27,7 @@
         ref="urlInput"
         :autofocus="true"
         type="url"
-        v-model="joinUrl"
+        v-model="joinLink"
         :placeholder="$t('JoinByLinkModal.urlPlaceholder')"
       />
     </ion-item>
@@ -38,6 +38,7 @@
         <ion-button
           type="submit"
           @click="confirm()"
+          :disabled="claimUserLinkValidator(joinLink) !== Validity.Valid"
         >
           {{ $t('JoinByLinkModal.join') }}
         </ion-button>
@@ -63,15 +64,18 @@ import {
 } from '@ionic/vue';
 import { ref, nextTick, onMounted } from 'vue';
 import { close } from 'ionicons/icons';
-const joinUrl = ref('');
+import { claimUserLinkValidator, Validity } from '@/common/validators';
+import { ModalResultCode } from '@/common/constants';
+
+const joinLink = ref('');
 
 function closeModal(): Promise<boolean> {
-  return modalController.dismiss(null, 'cancel');
+  return modalController.dismiss(null, ModalResultCode.Cancel);
 }
 /* by the way pressing Enter won't send the form, you unfortunately have to click the button
 see https://github.com/ionic-team/ionic-framework/issues/19368 */
 function confirm(): Promise<boolean> {
-  return modalController.dismiss(joinUrl.value, 'confirm');
+  return modalController.dismiss(joinLink.value.trim(), ModalResultCode.Confirm);
 }
 
 onMounted(() => {
@@ -84,7 +88,6 @@ const urlInput = ref();
 function focusOnEditButton(): void {
   nextTick(() => {
     urlInput.value.$el.setFocus();
-    console.log('focused');
   });
 }
 </script>

@@ -1,13 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-describe('Check organization list', () => {
+describe('Create a new organization', () => {
 
   beforeEach(() => {
     cy.visit('/');
   });
 
   it('Open org creation modal', async () => {
-    cy.get('.create-organization-modal').should('not.exist');
+    cy.get('.join-organization-modal').should('not.exist');
+
+    // join-by-link-modal'
     cy.get('#create-organization-button').click();
     cy.get('.popover-viewport').get('ion-item').should('have.length', 2);
     cy.get('.popover-viewport').get('ion-item').first().contains('Create');
@@ -98,6 +100,10 @@ describe('Check organization list', () => {
     );
     cy.get('#button-next').click();
     cy.get('.modal-header__title').should('not.exist');
+
+    // Should be logged in on workspace page
+    cy.get('#button-new-workspace').contains('New workspace');
+    cy.get('.card').should('have.length', 5);
   });
 
   it('Close with X button', async() => {

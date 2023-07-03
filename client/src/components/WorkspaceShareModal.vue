@@ -87,6 +87,7 @@ import {
 } from 'ionicons/icons';
 import { ref, computed } from 'vue';
 import WorkspaceShareModalUserItem from '@/components/WorkspaceShareModalUserItem.vue';
+import { ModalResultCode } from '@/common/constants';
 
 const searchUsersInput=ref('');
 
@@ -136,7 +137,7 @@ const usersExampleData = [
 ];
 
 function closeModal(): Promise<boolean> {
-  return modalController.dismiss(null, 'cancel');
+  return modalController.dismiss(null, ModalResultCode.Cancel);
 }
 
 function goToInvitationPage(): void {

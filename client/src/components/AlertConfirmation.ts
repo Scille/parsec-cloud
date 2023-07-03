@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import { alertController } from '@ionic/vue';
+import { ModalResultCode } from '@/common/constants';
 
 export async function createAlert(
   header: string,
@@ -14,11 +15,11 @@ export async function createAlert(
     buttons: [
       {
         text: cancelLabel,
-        role: 'cancel'
+        role: ModalResultCode.Cancel
       },
       {
         text: okLabel,
-        role: 'confirm'
+        role: ModalResultCode.Confirm
       }
     ]
   });

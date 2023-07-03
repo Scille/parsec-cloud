@@ -171,6 +171,7 @@ import ChooseServerPage from '@/components/CreateOrganization/ChooseServerPage.v
 import UserInformationPage from '@/components/UserInformationPage.vue';
 import MsSpinner from '@/components/MsSpinner.vue';
 import { AvailableDevice } from '@/plugins/libparsec/definitions';
+import { ModalResultCode } from '@/common/constants';
 
 enum CreateOrganizationStep {
   OrgNameStep = 1,
@@ -247,7 +248,7 @@ function getCurrentPage(): Ref<any> {
 }
 
 function cancelModal(): Promise<boolean> {
-  return modalController.dismiss(null, 'cancel');
+  return modalController.dismiss(null, ModalResultCode.Cancel);
 }
 
 function createOrg(orgName: string, userName: string, userEmail: string, deviceName: string, backendAddr: string, password: string): void {
@@ -269,7 +270,7 @@ function createOrg(orgName: string, userName: string, userEmail: string, deviceN
 
 function nextStep(): void {
   if (pageStep.value === CreateOrganizationStep.FinishStep) {
-    modalController.dismiss({ device: device.value, password: passwordPage.value.password }, 'confirm');
+    modalController.dismiss({ device: device.value, password: passwordPage.value.password }, ModalResultCode.Confirm);
     return;
   } else {
     pageStep.value = pageStep.value + 1;

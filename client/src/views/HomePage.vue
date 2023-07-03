@@ -156,7 +156,7 @@
                         <password-input
                           :label="$t('HomePage.organizationLogin.passwordLabel')"
                           @change="onPasswordChange($event)"
-                          @enter="login()"
+                          @enter="onLoginClick()"
                           id="password-input"
                         />
                         <ion-button
@@ -171,7 +171,7 @@
                   </ion-card>
                   <div class="login-button-container">
                     <ion-button
-                      @click="login()"
+                      @click="onLoginClick()"
                       size="large"
                       :disabled="password.length == 0"
                       class="login-button"
@@ -234,6 +234,7 @@ import { useRouter } from 'vue-router';
 import HomePagePopover from '@/components/HomePagePopover.vue';
 import SettingsModal from '@/views/SettingsModal.vue';
 import { ConfigPathKey, Formatters, FormattersKey, StorageManagerKey } from '@/common/injectionKeys';
+import { ModalResultCode } from '@/common/constants';
 
 const router = useRouter();
 const { t } = useI18n();
@@ -323,21 +324,25 @@ function onOrganizationCardClick(device: AvailableDevice): void {
   selectedDevice = device;
 }
 
-async function login(): Promise<void> {
-  if (!storedDeviceDataDict.value[selectedDevice.slug]) {
-    storedDeviceDataDict.value[selectedDevice.slug] = {
+async function onLoginClick(): Promise<void> {
+  await login(selectedDevice, password.value);
+}
+
+async function login(device: AvailableDevice, password: string): Promise<void> {
+  if (!storedDeviceDataDict.value[device.slug]) {
+    storedDeviceDataDict.value[device.slug] = {
       lastLogin: DateTime.now()
     };
   } else {
-    storedDeviceDataDict.value[selectedDevice.slug].lastLogin = DateTime.now();
+    storedDeviceDataDict.value[device.slug].lastLogin = DateTime.now();
   }
-  console.log(`Log in to ${selectedDevice.organizationId} with password "${password.value}"`);
+  console.log(`Log in to ${device.organizationId} with password "${password}"`);
   await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));
 
   showOrganizationList.value = true;
 
   // name: define where the user will be move, query: add parameters
-  router.push({ name: 'workspaces', params: {deviceId: selectedDevice.deviceId} });
+  router.push({ name: 'workspaces', params: {deviceId: device.deviceId} });
 }
 
 function onForgottenPasswordClick(): void {
@@ -352,6 +357,10 @@ async function openPopover(ev: Event): Promise<void> {
     showBackdrop: false
   });
   await popover.present();
+  const result = await popover.onWillDismiss();
+  if (result.role === ModalResultCode.Confirm) {
+    login(result.data.device, result.data.password);
+  }
 }
 
 async function openSettingsModal(): Promise<void> {
@@ -360,7 +369,7 @@ async function openSettingsModal(): Promise<void> {
     cssClass: 'settings-modal'
   });
   await modal.present();
-  const { data, role } = await modal.onWillDismiss();
+  await modal.onWillDismiss();
 }
 </script>
 
