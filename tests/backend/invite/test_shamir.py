@@ -293,7 +293,7 @@ async def test_full_shamir(
     rep = await shamir_recovery_setup(alice_ws, setup)
     assert isinstance(rep, ShamirRecoverySetupRepOk)
 
-    # Alice lost her password, then Adam as ADMIN invites Alice
+    # Alice lost her password, so Adam creates a shamir invitation for Alice
     rep = await invite_new(
         adam_ws, type=InvitationType.SHAMIR_RECOVERY, claimer_user_id=alice.user_id
     )
@@ -304,7 +304,14 @@ async def test_full_shamir(
     ).to_url()
     assert "action=claim_shamir_recovery" in invitation_url
 
+    # Alice receives and parses the URL
     invitation_address = BackendInvitationAddr.from_url(invitation_url)
+
+    # Inviting for shamir recovery is idempotent
+    rep = await invite_new(
+        adam_ws, type=InvitationType.SHAMIR_RECOVERY, claimer_user_id=alice.user_id
+    )
+    assert rep.token == invitation_address.token
 
     # Alice comes back with adam invitation
     async with backend_invited_ws_factory(
@@ -338,18 +345,11 @@ async def test_full_shamir(
                 raw_srsc_adam,
             )
 
-    # Alice reiterates with Bob
+    # Inviting for shamir recovery is idempotent, even amongst different greeters
     rep = await invite_new(
         bob_ws, type=InvitationType.SHAMIR_RECOVERY, claimer_user_id=alice.user_id
     )
-    assert isinstance(rep, InviteNewRepOk)
-
-    invitation_url = BackendInvitationAddr.build(
-        backend_addr, bob.organization_id, InvitationType.SHAMIR_RECOVERY, rep.token
-    ).to_url()
-    assert "action=claim_shamir_recovery" in invitation_url
-
-    invitation_address = BackendInvitationAddr.from_url(invitation_url)
+    assert rep.token == invitation_address.token
 
     async with backend_invited_ws_factory(
         backend_asgi_app,
@@ -431,9 +431,12 @@ async def test_shamir_list(
     assert len(rep.invitations) == 1
     assert rep.invitations[0].token == invitation_token
     assert alice.human_handle is not None
+    assert rep.invitations[0].claimer_user_id == alice.user_id
     assert rep.invitations[0].claimer_email == alice.human_handle.email
 
-    rep = await invite_delete(adam_ws, invitation_token, InvitationDeletedReason.CANCELLED)
+    rep = await invite_delete(
+        adam_ws, token=invitation_token, reason=InvitationDeletedReason.CANCELLED
+    )
     assert isinstance(rep, InviteDeleteRepOk)
 
     rep = await invite_list(adam_ws)

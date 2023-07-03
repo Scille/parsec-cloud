@@ -19,6 +19,7 @@ from parsec.backend.invite import (
     Invitation,
     InvitationAlreadyDeletedError,
     InvitationAlreadyMemberError,
+    InvitationError,
     InvitationInvalidStateError,
     InvitationNotFoundError,
     InvitationShamirRecoveryNotSetup,
@@ -45,6 +46,7 @@ class OrganizationStore:
             InvitationToken, Tuple[DateTime, InvitationDeletedReason]
         ] = {}
         self.conduits: dict[InvitationToken, Conduit] = defaultdict(Conduit)
+        self.shamir_conduits: dict[tuple[InvitationToken, UserID], Conduit] = defaultdict(Conduit)
 
 
 class MemoryInviteComponent(BaseInviteComponent):
@@ -65,38 +67,48 @@ class MemoryInviteComponent(BaseInviteComponent):
         self._user_component = user
         self._shamir_component = shamir
 
-    def _get_invitation_and_conduit(
+    def _get_invitation(
         self,
         organization_id: OrganizationID,
         token: InvitationToken,
-        expected_greeter: UserID | None = None,
-    ) -> tuple[Invitation, Conduit]:
+    ) -> Invitation:
         org = self._organizations[organization_id]
         invitation = org.invitations.get(token)
         if not invitation:
             raise InvitationNotFoundError(token)
-        if isinstance(invitation, ShamirRecoveryInvitation):
-            recipients = {recipient.user_id for recipient in invitation.recipients}
-            if expected_greeter and expected_greeter not in recipients:
-                raise InvitationNotFoundError(token)
-        elif expected_greeter and invitation.greeter_user_id != expected_greeter:
-            raise InvitationNotFoundError(token)
         if token in org.deleted_invitations:
             raise InvitationAlreadyDeletedError(token)
+        return invitation
+
+    def _get_invitation_and_conduit(
+        self,
+        organization_id: OrganizationID,
+        token: InvitationToken,
+        greeter: UserID | None,
+    ) -> tuple[Invitation, Conduit]:
+        org = self._organizations[organization_id]
+        invitation = self._get_invitation(organization_id, token)
+        if isinstance(invitation, ShamirRecoveryInvitation):
+            if greeter is None:
+                raise InvitationError("`greeter_user_id` is not provided")
+            recipients = {recipient.user_id for recipient in invitation.recipients}
+            if greeter not in recipients:
+                raise InvitationNotFoundError(token)
+            return invitation, org.shamir_conduits[(token, greeter)]
+        if greeter is not None and invitation.greeter_user_id != greeter:
+            raise InvitationNotFoundError(token)
         return invitation, org.conduits[token]
 
     async def _conduit_talk(
         self,
         organization_id: OrganizationID,
         greeter: UserID | None,
+        is_greeter: bool,
         token: InvitationToken,
         state: ConduitState,
         payload: bytes,
     ) -> ConduitListenCtx:
-        is_greeter = greeter is not None
-        _, conduit = self._get_invitation_and_conduit(
-            organization_id, token, expected_greeter=greeter
-        )
+        _, conduit = self._get_invitation_and_conduit(organization_id, token, greeter=greeter)
         if is_greeter:
             curr_our_payload = conduit.greeter_payload
             curr_peer_payload = conduit.claimer_payload
@@ -137,6 +149,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         return ConduitListenCtx(
             organization_id=organization_id,
             greeter=greeter,
+            is_greeter=is_greeter,
             token=token,
             state=state,
             payload=payload,
@@ -145,7 +158,7 @@ class MemoryInviteComponent(BaseInviteComponent):
 
     async def _conduit_listen(self, ctx: ConduitListenCtx) -> bytes | None:
         _, conduit = self._get_invitation_and_conduit(
-            ctx.organization_id, ctx.token, expected_greeter=ctx.greeter
+            ctx.organization_id, ctx.token, greeter=ctx.greeter
         )
         if ctx.is_greeter:
             curr_our_payload = conduit.greeter_payload
@@ -272,7 +285,13 @@ class MemoryInviteComponent(BaseInviteComponent):
             ):
                 # An invitation already exists for what the user has asked for
                 return invitation
-
+            if (
+                isinstance(invitation, ShamirRecoveryInvitation)
+                and invitation.claimer_user_id == claimer_user_id
+                and invitation.token not in org.deleted_invitations
+            ):
+                # A shamir invitation alread exists for that user
+                return invitation
         else:
             # Must create a new invitation
             created_on = created_on or DateTime.now()
@@ -328,7 +347,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         on: DateTime,
         reason: InvitationDeletedReason,
     ) -> None:
-        self._get_invitation_and_conduit(organization_id, token, expected_greeter=greeter)
+        self._get_invitation_and_conduit(organization_id, token, greeter=greeter)
         org = self._organizations[organization_id]
         org.deleted_invitations[token] = (on, reason)
         await self._send_event(
@@ -359,7 +378,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         return sorted(invitations, key=lambda x: x.created_on)
 
     async def info(self, organization_id: OrganizationID, token: InvitationToken) -> Invitation:
-        invitation, _ = self._get_invitation_and_conduit(organization_id, token)
+        invitation = self._get_invitation(organization_id, token)
         return invitation
 
     async def claimer_joined(

@@ -454,7 +454,7 @@ fn serde_invite_info_req() {
     //     {
     //       human_handle: ["alice@example.com", "Alicey McAliceFace"]
     //       shares: 1
-    //       user_id: "alice"
+    //       user_id: "109b68ba5cdf428ea0017fc6bcc04d4a"
     //     }
     //   ]
     //   status: "ok"
@@ -470,7 +470,7 @@ fn serde_invite_info_req() {
         invited_cmds::invite_info::UserOrDeviceOrShamirRecovery::ShamirRecovery {
             threshold: NonZeroU64::new(1).unwrap(),
             recipients: vec![ShamirRecoveryRecipient {
-                user_id: "alice".parse().unwrap(),
+                user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
                 human_handle: Some("AliceyMcAliceFace <alice@example.com>".parse().unwrap()),
                 shares: NonZeroU64::new(1).unwrap(),
             }],
@@ -494,9 +494,9 @@ fn serde_invite_info_rep(#[case] raw: &[u8], #[case] expected: invited_cmds::inv
 fn serde_invite_1_claimer_wait_peer_req() {
     // Generated from Rust implementation (Parsec v2.15.0+dev)
     // Content:
-    //   claimer_public_key: hex!("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
     //   cmd: "invite_1_claimer_wait_peer"
     //   greeter_user_id: "alice"
+    //   claimer_public_key: hex!("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
     let raw = hex!(
       "83a3636d64ba696e766974655f315f636c61696d65725f776169745f70656572b2636c6169"
       "6d65725f7075626c69635f6b6579c4206507907d33bae6b5980b32fa03f3ebac56141b126e"
@@ -504,10 +504,10 @@ fn serde_invite_1_claimer_wait_peer_req() {
     );
 
     let req = invited_cmds::invite_1_claimer_wait_peer::Req {
+        greeter_user_id: Maybe::Present("109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap()),
         claimer_public_key: PublicKey::from(hex!(
             "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
         )),
-        greeter_user_id: Maybe::Present("alice".parse().unwrap()),
     };
 
     let expected = invited_cmds::AnyCmdReq::Invite1ClaimerWaitPeer(req);
@@ -671,8 +671,9 @@ fn serde_invite_1_greeter_wait_peer_rep(
 fn serde_invite_2a_claimer_send_hashed_nonce_req() {
     // Generated from Python implementation (Parsec v2.10.0+dev)
     // Content:
-    //   claimer_hashed_nonce: hex!("e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6")
     //   cmd: "invite_2a_claimer_send_hashed_nonce"
+    //   greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a"
+    //   claimer_hashed_nonce: hex!("e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6")
     let raw = hex!(
         "82b4636c61696d65725f6861736865645f6e6f6e6365c420e37ce3b00a1f15b3de62029972"
         "345420b76313a885c6ccc6e3b5547857b3ecc6a3636d64d923696e766974655f32615f636c"
@@ -680,6 +681,7 @@ fn serde_invite_2a_claimer_send_hashed_nonce_req() {
     );
 
     let req = invited_cmds::invite_2a_claimer_send_hashed_nonce::Req {
+        greeter_user_id: Maybe::Present("109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap()),
         claimer_hashed_nonce: HashDigest::from(hex!(
             "e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6"
         )),
@@ -935,14 +937,16 @@ fn serde_invite_2b_greeter_send_nonce_rep(
 fn serde_invite_2b_claimer_send_nonce_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
-    //   claimer_nonce: hex!("666f6f626172")
     //   cmd: "invite_2b_claimer_send_nonce"
+    //   claimer_nonce: hex!("666f6f626172")
+    //   greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a"
     let raw = hex!(
         "82ad636c61696d65725f6e6f6e6365c406666f6f626172a3636d64bc696e766974655f3262"
         "5f636c61696d65725f73656e645f6e6f6e6365"
     );
 
     let req = invited_cmds::invite_2b_claimer_send_nonce::Req {
+        greeter_user_id: Maybe::Present("109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap()),
         claimer_nonce: b"foobar".to_vec(),
     };
 
@@ -1091,12 +1095,15 @@ fn serde_invite_3b_claimer_wait_peer_trust_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   cmd: "invite_3b_claimer_wait_peer_trust"
+    //   greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a"
     let raw = hex!(
         "81a3636d64d921696e766974655f33625f636c61696d65725f776169745f706565725f7472"
         "757374"
     );
 
-    let req = invited_cmds::invite_3b_claimer_wait_peer_trust::Req;
+    let req = invited_cmds::invite_3b_claimer_wait_peer_trust::Req {
+        greeter_user_id: Maybe::Present("109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap()),
+    };
 
     let expected = invited_cmds::AnyCmdReq::Invite3bClaimerWaitPeerTrust(req);
 
@@ -1243,9 +1250,12 @@ fn serde_invite_3a_claimer_signify_trust_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   cmd: "invite_3a_claimer_signify_trust"
+    //   greeter_user_id: ""109b68ba5cdf428ea0017fc6bcc04d4a"
     let raw = hex!("81a3636d64bf696e766974655f33615f636c61696d65725f7369676e6966795f7472757374");
 
-    let req = invited_cmds::invite_3a_claimer_signify_trust::Req;
+    let req = invited_cmds::invite_3a_claimer_signify_trust::Req {
+        greeter_user_id: Maybe::Present("109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap()),
+    };
 
     let expected = invited_cmds::AnyCmdReq::Invite3aClaimerSignifyTrust(req);
 
@@ -1396,6 +1406,7 @@ fn serde_invite_4_claimer_communicate_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   cmd: "invite_4_claimer_communicate"
+    //   greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a"
     //   payload: hex!("666f6f626172")
     let raw = hex!(
         "82a3636d64bc696e766974655f345f636c61696d65725f636f6d6d756e6963617465a77061"
@@ -1403,6 +1414,7 @@ fn serde_invite_4_claimer_communicate_req() {
     );
 
     let req = invited_cmds::invite_4_claimer_communicate::Req {
+        greeter_user_id: Maybe::Present("109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap()),
         payload: b"foobar".to_vec(),
     };
 

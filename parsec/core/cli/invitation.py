@@ -595,8 +595,12 @@ async def _list_invitations(config: CoreConfig, device: LocalDevice) -> None:
             display_token = invitation.token.hex
             if invitation.type == InvitationType.USER:
                 display_type = f"user (email={invitation.claimer_email})"
-            else:  # Device
+            elif invitation.type == InvitationType.DEVICE:
                 display_type = f"device"
+            elif invitation.type == InvitationType.SHAMIR_RECOVERY:
+                display_type = f"shared recovery device"
+            else:
+                assert False
             click.echo(f"{display_token}\t{display_status}\t{display_type}")
         if not rep.invitations:
             click.echo("No invitations.")

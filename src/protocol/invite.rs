@@ -140,7 +140,8 @@ impl InviteListItem {
     fn claimer_email(&self) -> PyResult<&str> {
         match &self.0 {
             invite_list::InviteListItem::User { claimer_email, .. } => Ok(claimer_email),
-            _ => Err(PyAttributeError::new_err("")),
+            invite_list::InviteListItem::ShamirRecovery { claimer_email, .. } => Ok(claimer_email),
+            _ => Err(PyAttributeError::new_err("claimer_email")),
         }
     }
 
@@ -150,7 +151,7 @@ impl InviteListItem {
             invite_list::InviteListItem::ShamirRecovery {
                 claimer_user_id, ..
             } => Ok(UserID(claimer_user_id.clone())),
-            _ => Err(PyAttributeError::new_err("")),
+            _ => Err(PyAttributeError::new_err("claimer_user_id")),
         }
     }
 
@@ -725,16 +726,16 @@ impl Invite1ClaimerWaitPeerReq {
     }
 
     #[getter]
-    fn claimer_public_key(&self) -> PublicKey {
-        PublicKey(self.0.claimer_public_key.clone())
-    }
-
-    #[getter]
     fn greeter_user_id(&self) -> Option<UserID> {
         match &self.0.greeter_user_id {
             Maybe::Present(x) => Some(UserID(x.clone())),
             Maybe::Absent => None,
         }
+    }
+
+    #[getter]
+    fn claimer_public_key(&self) -> PublicKey {
+        PublicKey(self.0.claimer_public_key.clone())
     }
 }
 
@@ -861,9 +862,11 @@ crate::binding_utils::gen_proto!(Invite2aClaimerSendHashedNonceReq, __richcmp__,
 #[pymethods]
 impl Invite2aClaimerSendHashedNonceReq {
     #[new]
-    fn new(claimer_hashed_nonce: HashDigest) -> PyResult<Self> {
+    fn new(greeter_user_id: UserID, claimer_hashed_nonce: HashDigest) -> PyResult<Self> {
+        let greeter_user_id = Maybe::Present(greeter_user_id.0);
         let claimer_hashed_nonce = claimer_hashed_nonce.0;
         Ok(Self(invite_2a_claimer_send_hashed_nonce::Req {
+            greeter_user_id,
             claimer_hashed_nonce,
         }))
     }
@@ -877,6 +880,14 @@ impl Invite2aClaimerSendHashedNonceReq {
                 })
             })?,
         ))
+    }
+
+    #[getter]
+    fn greeter_user_id(&self) -> Option<UserID> {
+        match &self.0.greeter_user_id {
+            Maybe::Present(x) => Some(UserID(x.clone())),
+            Maybe::Absent => None,
+        }
     }
 
     #[getter]
@@ -1003,9 +1014,13 @@ crate::binding_utils::gen_proto!(Invite2bClaimerSendNonceReq, __richcmp__, eq);
 #[pymethods]
 impl Invite2bClaimerSendNonceReq {
     #[new]
-    fn new(claimer_nonce: BytesWrapper) -> PyResult<Self> {
+    fn new(greeter_user_id: UserID, claimer_nonce: BytesWrapper) -> PyResult<Self> {
         crate::binding_utils::unwrap_bytes!(claimer_nonce);
-        Ok(Self(invite_2b_claimer_send_nonce::Req { claimer_nonce }))
+        let greeter_user_id = Maybe::Present(greeter_user_id.0);
+        Ok(Self(invite_2b_claimer_send_nonce::Req {
+            greeter_user_id,
+            claimer_nonce,
+        }))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
@@ -1019,6 +1034,13 @@ impl Invite2bClaimerSendNonceReq {
         ))
     }
 
+    #[getter]
+    fn greeter_user_id(&self) -> Option<UserID> {
+        match &self.0.greeter_user_id {
+            Maybe::Present(x) => Some(UserID(x.clone())),
+            Maybe::Absent => None,
+        }
+    }
     #[getter]
     fn claimer_nonce<'py>(_self: PyRef<'_, Self>, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(py, &_self.0.claimer_nonce))
@@ -1137,8 +1159,19 @@ crate::binding_utils::gen_proto!(Invite3aClaimerSignifyTrustReq, __richcmp__, eq
 #[pymethods]
 impl Invite3aClaimerSignifyTrustReq {
     #[new]
-    fn new() -> PyResult<Self> {
-        Ok(Self(invite_3a_claimer_signify_trust::Req))
+    fn new(greeter_user_id: UserID) -> PyResult<Self> {
+        let greeter_user_id = Maybe::Present(greeter_user_id.0);
+        Ok(Self(invite_3a_claimer_signify_trust::Req {
+            greeter_user_id,
+        }))
+    }
+
+    #[getter]
+    fn greeter_user_id(&self) -> Option<UserID> {
+        match &self.0.greeter_user_id {
+            Maybe::Present(x) => Some(UserID(x.clone())),
+            Maybe::Absent => None,
+        }
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
@@ -1245,8 +1278,19 @@ crate::binding_utils::gen_proto!(Invite3bClaimerWaitPeerTrustReq, __richcmp__, e
 #[pymethods]
 impl Invite3bClaimerWaitPeerTrustReq {
     #[new]
-    fn new() -> PyResult<Self> {
-        Ok(Self(invite_3b_claimer_wait_peer_trust::Req))
+    fn new(greeter_user_id: UserID) -> PyResult<Self> {
+        let greeter_user_id = Maybe::Present(greeter_user_id.0);
+        Ok(Self(invite_3b_claimer_wait_peer_trust::Req {
+            greeter_user_id,
+        }))
+    }
+
+    #[getter]
+    fn greeter_user_id(&self) -> Option<UserID> {
+        match &self.0.greeter_user_id {
+            Maybe::Present(x) => Some(UserID(x.clone())),
+            Maybe::Absent => None,
+        }
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
@@ -1353,9 +1397,13 @@ crate::binding_utils::gen_proto!(Invite4ClaimerCommunicateReq, __richcmp__, eq);
 #[pymethods]
 impl Invite4ClaimerCommunicateReq {
     #[new]
-    fn new(payload: BytesWrapper) -> PyResult<Self> {
+    fn new(greeter_user_id: UserID, payload: BytesWrapper) -> PyResult<Self> {
         crate::binding_utils::unwrap_bytes!(payload);
-        Ok(Self(invite_4_claimer_communicate::Req { payload }))
+        let greeter_user_id = Maybe::Present(greeter_user_id.0);
+        Ok(Self(invite_4_claimer_communicate::Req {
+            greeter_user_id,
+            payload,
+        }))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
@@ -1367,6 +1415,14 @@ impl Invite4ClaimerCommunicateReq {
                 })
             })?,
         ))
+    }
+
+    #[getter]
+    fn greeter_user_id(&self) -> Option<UserID> {
+        match &self.0.greeter_user_id {
+            Maybe::Present(x) => Some(UserID(x.clone())),
+            Maybe::Absent => None,
+        }
     }
 
     #[getter]

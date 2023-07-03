@@ -240,32 +240,47 @@ async def exchange_testbed(backend_asgi_app, alice, alice_ws, backend_invited_ws
                 await peer_controller.peer_do(
                     invite_1_claimer_wait_peer,
                     tb.claimer_ws,
-                    claimer_public_key=tb.claimer_privkey.public_key,
                     greeter_user_id=tb.greeter.user_id,
+                    claimer_public_key=tb.claimer_privkey.public_key,
                 )
 
             elif order == "2a_send_hashed_nonce":
                 await peer_controller.peer_do(
                     invite_2a_claimer_send_hashed_nonce,
                     tb.claimer_ws,
+                    greeter_user_id=tb.greeter.user_id,
                     claimer_hashed_nonce=HashDigest.from_data(b"<claimer_nonce>"),
                 )
 
             elif order == "2b_send_nonce":
                 await peer_controller.peer_do(
-                    invite_2b_claimer_send_nonce, tb.claimer_ws, claimer_nonce=b"<claimer_nonce>"
+                    invite_2b_claimer_send_nonce,
+                    tb.claimer_ws,
+                    greeter_user_id=tb.greeter.user_id,
+                    claimer_nonce=b"<claimer_nonce>",
                 )
 
             elif order == "3a_signify_trust":
-                await peer_controller.peer_do(invite_3a_claimer_signify_trust, tb.claimer_ws)
+                await peer_controller.peer_do(
+                    invite_3a_claimer_signify_trust,
+                    tb.claimer_ws,
+                    greeter_user_id=tb.greeter.user_id,
+                )
 
             elif order == "3b_wait_peer_trust":
-                await peer_controller.peer_do(invite_3b_claimer_wait_peer_trust, tb.claimer_ws)
+                await peer_controller.peer_do(
+                    invite_3b_claimer_wait_peer_trust,
+                    tb.claimer_ws,
+                    greeter_user_id=tb.greeter.user_id,
+                )
 
             elif order == "4_communicate":
                 assert step_4_payload is not None
                 await peer_controller.peer_do(
-                    invite_4_claimer_communicate, tb.claimer_ws, payload=step_4_payload
+                    invite_4_claimer_communicate,
+                    tb.claimer_ws,
+                    greeter_user_id=tb.greeter.user_id,
+                    payload=step_4_payload,
                 )
 
             else:

@@ -200,7 +200,9 @@ async def do_http_request(
 
 
 class CmdSock:
-    def __init__(self, cmd, serializer, parse_args=lambda self: {}, check_rep_by_default=False):
+    def __init__(
+        self, cmd, serializer, parse_args=lambda self, **kwargs: kwargs, check_rep_by_default=False
+    ):
         self.cmd = cmd
         self.serializer = serializer
         self.parse_args = parse_args
@@ -603,49 +605,35 @@ invite_list = CmdSock("invite_list", invite_list_serializer)
 invite_delete = CmdSock(
     "invite_delete",
     invite_delete_serializer,
-    parse_args=lambda self, token, reason: {"token": token, "reason": reason},
 )
 invite_info = CmdSock("invite_info", invite_info_serializer)
 invite_1_claimer_wait_peer = CmdSock(
     "invite_1_claimer_wait_peer",
     invite_1_claimer_wait_peer_serializer,
-    parse_args=lambda self, claimer_public_key, greeter_user_id: {
-        "claimer_public_key": claimer_public_key,
-        "greeter_user_id": greeter_user_id,
-    },
 )
 invite_1_greeter_wait_peer = CmdSock(
     "invite_1_greeter_wait_peer",
     invite_1_greeter_wait_peer_serializer,
-    parse_args=lambda self, token, greeter_public_key: {
-        "token": token,
-        "greeter_public_key": greeter_public_key,
-    },
 )
 invite_2a_claimer_send_hashed_nonce = CmdSock(
     "invite_2a_claimer_send_hashed_nonce",
     invite_2a_claimer_send_hashed_nonce_serializer,
-    parse_args=lambda self, claimer_hashed_nonce: {"claimer_hashed_nonce": claimer_hashed_nonce},
 )
 invite_2a_greeter_get_hashed_nonce = CmdSock(
     "invite_2a_greeter_get_hashed_nonce",
     invite_2a_greeter_get_hashed_nonce_serializer,
-    parse_args=lambda self, token: {"token": token},
 )
 invite_2b_greeter_send_nonce = CmdSock(
     "invite_2b_greeter_send_nonce",
     invite_2b_greeter_send_nonce_serializer,
-    parse_args=lambda self, token, greeter_nonce: {"token": token, "greeter_nonce": greeter_nonce},
 )
 invite_2b_claimer_send_nonce = CmdSock(
     "invite_2b_claimer_send_nonce",
     invite_2b_claimer_send_nonce_serializer,
-    parse_args=lambda self, claimer_nonce: {"claimer_nonce": claimer_nonce},
 )
 invite_3a_greeter_wait_peer_trust = CmdSock(
     "invite_3a_greeter_wait_peer_trust",
     invite_3a_greeter_wait_peer_trust_serializer,
-    parse_args=lambda self, token: {"token": token},
 )
 invite_3a_claimer_signify_trust = CmdSock(
     "invite_3a_claimer_signify_trust", invite_3a_claimer_signify_trust_serializer
@@ -656,17 +644,14 @@ invite_3b_claimer_wait_peer_trust = CmdSock(
 invite_3b_greeter_signify_trust = CmdSock(
     "invite_3b_greeter_signify_trust",
     invite_3b_greeter_signify_trust_serializer,
-    parse_args=lambda self, token: {"token": token},
 )
 invite_4_greeter_communicate = CmdSock(
     "invite_4_greeter_communicate",
     invite_4_greeter_communicate_serializer,
-    parse_args=lambda self, token, payload: {"token": token, "payload": payload},
 )
 invite_4_claimer_communicate = CmdSock(
     "invite_4_claimer_communicate",
     invite_4_claimer_communicate_serializer,
-    parse_args=lambda self, payload: {"payload": payload},
 )
 
 

@@ -193,14 +193,11 @@ NEXT_CONDUIT_STATE = {
 class ConduitListenCtx:
     organization_id: OrganizationID
     greeter: UserID | None
+    is_greeter: bool
     token: InvitationToken
     state: ConduitState
     payload: bytes
     peer_payload: bytes | None
-
-    @property
-    def is_greeter(self) -> bool:
-        return self.greeter is not None
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -642,7 +639,8 @@ class BaseInviteComponent:
         try:
             greeter_public_key = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
-                greeter=None,
+                greeter=req.greeter_user_id,
+                is_greeter=False,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_1_WAIT_PEERS,
                 payload=req.claimer_public_key.encode(),
@@ -670,6 +668,7 @@ class BaseInviteComponent:
             claimer_public_key_raw = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
+                is_greeter=True,
                 token=req.token,
                 state=ConduitState.STATE_1_WAIT_PEERS,
                 payload=req.greeter_public_key.encode(),
@@ -705,7 +704,8 @@ class BaseInviteComponent:
         try:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
-                greeter=None,
+                greeter=req.greeter_user_id,
+                is_greeter=False,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_2_1_CLAIMER_HASHED_NONCE,
                 payload=req.claimer_hashed_nonce.digest,
@@ -713,7 +713,8 @@ class BaseInviteComponent:
 
             greeter_nonce = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
-                greeter=None,
+                greeter=req.greeter_user_id,
+                is_greeter=False,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_2_2_GREETER_NONCE,
                 payload=b"",
@@ -741,6 +742,7 @@ class BaseInviteComponent:
             claimer_hashed_nonce_raw = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
+                is_greeter=True,
                 token=req.token,
                 state=ConduitState.STATE_2_1_CLAIMER_HASHED_NONCE,
                 payload=b"",
@@ -769,6 +771,7 @@ class BaseInviteComponent:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
+                is_greeter=True,
                 token=req.token,
                 state=ConduitState.STATE_2_2_GREETER_NONCE,
                 payload=req.greeter_nonce,
@@ -777,6 +780,7 @@ class BaseInviteComponent:
             claimer_nonce = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
+                is_greeter=True,
                 token=req.token,
                 state=ConduitState.STATE_2_3_CLAIMER_NONCE,
                 payload=b"",
@@ -806,7 +810,8 @@ class BaseInviteComponent:
         try:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
-                greeter=None,
+                greeter=req.greeter_user_id,
+                is_greeter=False,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_2_3_CLAIMER_NONCE,
                 payload=req.claimer_nonce,
@@ -834,6 +839,7 @@ class BaseInviteComponent:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
+                is_greeter=True,
                 token=req.token,
                 state=ConduitState.STATE_3_1_CLAIMER_TRUST,
                 payload=b"",
@@ -863,7 +869,8 @@ class BaseInviteComponent:
         try:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
-                greeter=None,
+                greeter=req.greeter_user_id,
+                is_greeter=False,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_3_2_GREETER_TRUST,
                 payload=b"",
@@ -891,6 +898,7 @@ class BaseInviteComponent:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
+                is_greeter=True,
                 token=req.token,
                 state=ConduitState.STATE_3_2_GREETER_TRUST,
                 payload=b"",
@@ -920,7 +928,8 @@ class BaseInviteComponent:
         try:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
-                greeter=None,
+                greeter=req.greeter_user_id,
+                is_greeter=False,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_3_1_CLAIMER_TRUST,
                 payload=b"",
@@ -948,6 +957,7 @@ class BaseInviteComponent:
             answer_payload = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
+                is_greeter=True,
                 token=req.token,
                 state=ConduitState.STATE_4_COMMUNICATE,
                 payload=req.payload,
@@ -977,7 +987,8 @@ class BaseInviteComponent:
         try:
             answer_payload = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
-                greeter=None,
+                greeter=req.greeter_user_id,
+                is_greeter=False,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_4_COMMUNICATE,
                 payload=req.payload,
@@ -1000,6 +1011,7 @@ class BaseInviteComponent:
         organization_id: OrganizationID,
         greeter: UserID | None,
         token: InvitationToken,
+        is_greeter: bool,
         state: ConduitState,
         payload: bytes,
     ) -> bytes:
@@ -1025,7 +1037,9 @@ class BaseInviteComponent:
             BackendEvent.INVITE_STATUS_CHANGED,
             filter=cast(EventFilterCallback, _event_filter),
         ) as waiter:
-            listen_ctx = await self._conduit_talk(organization_id, greeter, token, state, payload)
+            listen_ctx = await self._conduit_talk(
+                organization_id, greeter, is_greeter, token, state, payload
+            )
 
             # Unlike what it name may imply, `_conduit_listen` doesn't wait for the peer
             # to answer (it returns `None` instead), so we wait for some events to occur
@@ -1045,7 +1059,8 @@ class BaseInviteComponent:
     async def _conduit_talk(
         self,
         organization_id: OrganizationID,
-        greeter: UserID | None,  # None for claimer
+        greeter: UserID | None,
+        is_greeter: bool,
         token: InvitationToken,
         state: ConduitState,
         payload: bytes,

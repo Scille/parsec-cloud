@@ -176,24 +176,35 @@ async def exchange_testbed_context(
                 await peer_controller.peer_do(
                     invite_2a_claimer_send_hashed_nonce,
                     invited_ws,
+                    greeter_user_id=greeter.user_id,
                     claimer_hashed_nonce=HashDigest.from_data(b"<claimer_nonce>"),
                 )
 
             elif order == "2b_send_nonce":
                 await peer_controller.peer_do(
-                    invite_2b_claimer_send_nonce, invited_ws, claimer_nonce=b"<claimer_nonce>"
+                    invite_2b_claimer_send_nonce,
+                    invited_ws,
+                    greeter_user_id=greeter.user_id,
+                    claimer_nonce=b"<claimer_nonce>",
                 )
 
             elif order == "3a_signify_trust":
-                await peer_controller.peer_do(invite_3a_claimer_signify_trust, invited_ws)
+                await peer_controller.peer_do(
+                    invite_3a_claimer_signify_trust, invited_ws, greeter_user_id=greeter.user_id
+                )
 
             elif order == "3b_wait_peer_trust":
-                await peer_controller.peer_do(invite_3b_claimer_wait_peer_trust, invited_ws)
+                await peer_controller.peer_do(
+                    invite_3b_claimer_wait_peer_trust, invited_ws, greeter_user_id=greeter.user_id
+                )
 
             elif order == "4_communicate":
                 assert order_arg is not None
                 await peer_controller.peer_do(
-                    invite_4_claimer_communicate, invited_ws, payload=order_arg
+                    invite_4_claimer_communicate,
+                    invited_ws,
+                    greeter_user_id=greeter.user_id,
+                    payload=order_arg,
                 )
 
             else:
@@ -657,6 +668,7 @@ async def test_claimer_step_2_retry(
                         # Claimer now arrives and try to do step 2a
                         rep = await invite_2a_claimer_send_hashed_nonce(
                             invited_ws,
+                            greeter_user_id=alice.user_id,
                             claimer_hashed_nonce=HashDigest.from_data(b"<claimer_nonce>"),
                         )
 
@@ -665,8 +677,8 @@ async def test_claimer_step_2_retry(
                         # So claimer returns to step 1
                         rep = await invite_1_claimer_wait_peer(
                             invited_ws,
-                            claimer_public_key=claimer_retry_privkey.public_key,
                             greeter_user_id=alice.user_id,
+                            claimer_public_key=claimer_retry_privkey.public_key,
                         )
                         assert rep.greeter_public_key == greeter_retry_privkey.public_key
 
@@ -687,10 +699,14 @@ async def test_claimer_step_2_retry(
 
             async def _greeter_step_2():
                 rep = await invite_2a_claimer_send_hashed_nonce(
-                    invited_ws, claimer_hashed_nonce=HashDigest.from_data(b"<retry_nonce>")
+                    invited_ws,
+                    greeter_user_id=alice.user_id,
+                    claimer_hashed_nonce=HashDigest.from_data(b"<retry_nonce>"),
                 )
                 assert rep.greeter_nonce == b"greeter nonce"
-                rep = await invite_2b_claimer_send_nonce(invited_ws, claimer_nonce=b"claimer nonce")
+                rep = await invite_2b_claimer_send_nonce(
+                    invited_ws, greeter_user_id=alice.user_id, claimer_nonce=b"claimer nonce"
+                )
                 assert isinstance(rep, Invite2bClaimerSendNonceRepOk)
 
             async with real_clock_timeout():

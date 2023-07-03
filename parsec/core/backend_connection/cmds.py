@@ -626,8 +626,8 @@ async def invite_info(transport: Transport) -> InviteInfoRep:
 
 async def invite_1_claimer_wait_peer(
     transport: Transport,
-    claimer_public_key: PublicKey,
     greeter_user_id: UserID,
+    claimer_public_key: PublicKey,
 ) -> Invite1ClaimerWaitPeerRep:
     return cast(
         Invite1ClaimerWaitPeerRep,
@@ -635,8 +635,8 @@ async def invite_1_claimer_wait_peer(
             transport,
             invite_1_claimer_wait_peer_serializer,
             cmd="invite_1_claimer_wait_peer",
-            claimer_public_key=claimer_public_key,
             greeter_user_id=greeter_user_id,
+            claimer_public_key=claimer_public_key,
         ),
     )
 
@@ -657,7 +657,7 @@ async def invite_1_greeter_wait_peer(
 
 
 async def invite_2a_claimer_send_hashed_nonce(
-    transport: Transport, claimer_hashed_nonce: HashDigest
+    transport: Transport, greeter_user_id: UserID, claimer_hashed_nonce: HashDigest
 ) -> Invite2aClaimerSendHashedNonceRep:
     return cast(
         Invite2aClaimerSendHashedNonceRep,
@@ -665,6 +665,7 @@ async def invite_2a_claimer_send_hashed_nonce(
             transport,
             invite_2a_claimer_send_hashed_nonce_serializer,
             cmd="invite_2a_claimer_send_hashed_nonce",
+            greeter_user_id=greeter_user_id,
             claimer_hashed_nonce=claimer_hashed_nonce,
         ),
     )
@@ -700,7 +701,7 @@ async def invite_2b_greeter_send_nonce(
 
 
 async def invite_2b_claimer_send_nonce(
-    transport: Transport, claimer_nonce: bytes
+    transport: Transport, greeter_user_id: UserID, claimer_nonce: bytes
 ) -> Invite2bClaimerSendNonceRep:
     return cast(
         Invite2bClaimerSendNonceRep,
@@ -708,6 +709,7 @@ async def invite_2b_claimer_send_nonce(
             transport,
             invite_2b_claimer_send_nonce_serializer,
             cmd="invite_2b_claimer_send_nonce",
+            greeter_user_id=greeter_user_id,
             claimer_nonce=claimer_nonce,
         ),
     )
@@ -729,6 +731,7 @@ async def invite_3a_greeter_wait_peer_trust(
 
 async def invite_3a_claimer_signify_trust(
     transport: Transport,
+    greeter_user_id: UserID,
 ) -> Invite3aClaimerSignifyTrustRep:
     return cast(
         Invite3aClaimerSignifyTrustRep,
@@ -736,12 +739,14 @@ async def invite_3a_claimer_signify_trust(
             transport,
             invite_3a_claimer_signify_trust_serializer,
             cmd="invite_3a_claimer_signify_trust",
+            greeter_user_id=greeter_user_id,
         ),
     )
 
 
 async def invite_3b_claimer_wait_peer_trust(
     transport: Transport,
+    greeter_user_id: UserID,
 ) -> Invite3bClaimerWaitPeerTrustRep:
     return cast(
         Invite3bClaimerWaitPeerTrustRep,
@@ -749,6 +754,7 @@ async def invite_3b_claimer_wait_peer_trust(
             transport,
             invite_3b_claimer_wait_peer_trust_serializer,
             cmd="invite_3b_claimer_wait_peer_trust",
+            greeter_user_id=greeter_user_id,
         ),
     )
 
@@ -783,7 +789,7 @@ async def invite_4_greeter_communicate(
 
 
 async def invite_4_claimer_communicate(
-    transport: Transport, payload: bytes | None
+    transport: Transport, greeter_user_id: UserID, payload: bytes | None
 ) -> Invite4ClaimerCommunicateRep:
     return cast(
         Invite4ClaimerCommunicateRep,
@@ -791,6 +797,7 @@ async def invite_4_claimer_communicate(
             transport,
             invite_4_claimer_communicate_serializer,
             cmd="invite_4_claimer_communicate",
+            greeter_user_id=greeter_user_id,
             payload=payload,
         ),
     )

@@ -36,7 +36,11 @@ from parsec.core.gui.ui.claim_device_code_exchange_widget import Ui_ClaimDeviceC
 from parsec.core.gui.ui.claim_device_instructions_widget import Ui_ClaimDeviceInstructionsWidget
 from parsec.core.gui.ui.claim_device_provide_info_widget import Ui_ClaimDeviceProvideInfoWidget
 from parsec.core.gui.ui.claim_device_widget import Ui_ClaimDeviceWidget
-from parsec.core.invite import InvitePeerResetError, claimer_retrieve_info
+from parsec.core.invite import (
+    InvitePeerResetError,
+    ShamirRecoveryClaimPreludeCtx,
+    claimer_retrieve_info,
+)
 from parsec.core.local_device import save_device_with_smartcard_in_config
 from parsec.core.types import BackendInvitationAddr, LocalDevice
 
@@ -80,6 +84,7 @@ class Claimer:
                     await self.job_oob_send.send((True, None))
                 except Exception as exc:
                     await self.job_oob_send.send((False, exc))
+                assert not isinstance(initial_ctx, ShamirRecoveryClaimPreludeCtx)
 
                 self._current_step = await self.main_oob_recv.receive()
 

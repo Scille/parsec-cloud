@@ -253,6 +253,7 @@ async def _conduit_talk(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     greeter: UserID | None,
+    is_greeter: bool,
     token: InvitationToken,
     state: ConduitState,
     payload: bytes,
@@ -333,6 +334,7 @@ async def _conduit_talk(
     return ConduitListenCtx(
         organization_id=organization_id,
         greeter=greeter,
+        is_greeter=is_greeter,
         token=token,
         state=state,
         payload=payload,
@@ -533,6 +535,18 @@ class PGInviteComponent(BaseInviteComponent):
             created_on=created_on,
         )
 
+    async def new_for_shamir_recovery(
+        self,
+        organization_id: OrganizationID,
+        greeter_user_id: UserID,
+        claimer_user_id: UserID,
+        created_on: DateTime | None = None,
+    ) -> ShamirRecoveryInvitation:
+        """
+        Raise: InvitationShamirRecoveryNotSetupError
+        """
+        raise NotImplementedError()
+
     async def delete(
         self,
         organization_id: OrganizationID,
@@ -667,12 +681,15 @@ class PGInviteComponent(BaseInviteComponent):
         self,
         organization_id: OrganizationID,
         greeter: UserID | None,
+        is_greeter: bool,
         token: InvitationToken,
         state: ConduitState,
         payload: bytes,
     ) -> ConduitListenCtx:
         async with self.dbh.pool.acquire() as conn:
-            return await _conduit_talk(conn, organization_id, greeter, token, state, payload)
+            return await _conduit_talk(
+                conn, organization_id, greeter, is_greeter, token, state, payload
+            )
 
     async def _conduit_listen(self, ctx: ConduitListenCtx) -> bytes | None:
         async with self.dbh.pool.acquire() as conn:
