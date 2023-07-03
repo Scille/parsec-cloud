@@ -55,7 +55,7 @@ updates:
       separator: "-"
     schedule:
       interval: weekly
-      day: tuesday
+      day: monday
       time: "04:20"
       timezone: Europe/Paris
     groups:
@@ -79,7 +79,7 @@ updates:
       separator: "-"
     schedule:
       interval: weekly
-      day: wednesday
+      day: monday
       time: "04:20"
       timezone: Europe/Paris
     groups:
@@ -99,7 +99,7 @@ updates:
       separator: "-"
     schedule:
       interval: weekly
-      day: thursday
+      day: monday
       time: "04:20"
       timezone: Europe/Paris
     groups:
@@ -127,7 +127,7 @@ updates:
       separator: "-"
     schedule:
       interval: weekly
-      day: thursday
+      day: monday
       time: "04:20"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
@@ -139,7 +139,7 @@ updates:
       separator: "-"
     schedule:
       interval: weekly
-      day: thursday
+      day: monday
       time: "04:20"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
@@ -151,7 +151,7 @@ updates:
       separator: "-"
     schedule:
       interval: weekly
-      day: thursday
+      day: monday
       time: "04:20"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
@@ -163,7 +163,7 @@ updates:
       separator: "-"
     schedule:
       interval: weekly
-      day: thursday
+      day: monday
       time: "04:20"
       timezone: Europe/Paris
     groups:
@@ -183,7 +183,7 @@ updates:
       separator: "-"
     schedule:
       interval: weekly
-      day: friday
+      day: monday
       time: "04:20"
       timezone: Europe/Paris
     groups:
@@ -199,7 +199,7 @@ updates:
       separator: "-"
     schedule:
       interval: weekly
-      day: friday
+      day: monday
       time: "04:20"
       timezone: Europe/Paris
     groups:
