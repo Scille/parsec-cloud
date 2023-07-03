@@ -113,10 +113,13 @@ impl MessageContent {
     }
 
     pub fn dump_and_sign(&self, author_signkey: &SigningKey) -> Vec<u8> {
-        let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
+        let serialized =
+            rmp_serde::to_vec_named(&self).expect("MessageContent should be serializable");
         let mut e = ZlibEncoder::new(Vec::new(), flate2::Compression::default());
-        e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
-        let compressed = e.finish().unwrap_or_else(|_| unreachable!());
+        let compressed = e
+            .write_all(&serialized)
+            .and_then(|_| e.finish())
+            .expect("in-memory buffer should not fail");
         author_signkey.sign(&compressed)
     }
 

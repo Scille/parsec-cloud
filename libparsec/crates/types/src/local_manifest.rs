@@ -22,7 +22,7 @@ macro_rules! impl_local_manifest_dump_load {
         impl $name {
             pub fn dump_and_encrypt(&self, key: &SecretKey) -> Vec<u8> {
                 let serialized =
-                    ::rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
+                    ::rmp_serde::to_vec_named(&self).expect("object should be serializable");
                 key.encrypt(&serialized)
             }
 
@@ -87,10 +87,12 @@ impl Chunk {
             stop,
             raw_offset: start,
             // TODO: what to do with overflow
-            raw_size: NonZeroU64::try_from(stop.get() - start).unwrap_or_else(|_| unreachable!()),
+            raw_size: NonZeroU64::try_from(stop.get() - start)
+                .expect("Chunk raw_size should be NonZeroU64"),
             access: None,
         }
     }
+
     pub fn from_block_access(block_access: BlockAccess) -> Result<Self, &'static str> {
         Ok(Self {
             id: ChunkID::from(*block_access.id),
@@ -100,7 +102,9 @@ impl Chunk {
             // TODO: what to do with overflow
             stop: (block_access.offset + block_access.size.get())
                 .try_into()
-                .unwrap_or_else(|_| unreachable!()),
+                .expect(
+                    "Chunk stop should be NonZeroU64 since bloc_access.size is already NonZeroU64",
+                ),
             access: Some(block_access),
         })
     }

@@ -68,7 +68,7 @@ impl LocalDevice {
     }
 
     pub fn dump(&self) -> Vec<u8> {
-        rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!())
+        rmp_serde::to_vec_named(&self).expect("LocalDevice serialization should not fail")
     }
 
     pub fn load(serialized: &[u8]) -> Result<Self, &'static str> {
