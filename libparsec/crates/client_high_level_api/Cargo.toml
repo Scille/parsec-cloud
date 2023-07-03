@@ -16,7 +16,7 @@ libparsec_types = { path = "../types" }
 
 libparsec_testbed = { path = "../testbed", optional = true }
 
-once_cell = "1.17.1"
+once_cell = "1.18.0"
 thiserror = "1.0.40"
 
 # TODO: fix wasm32
