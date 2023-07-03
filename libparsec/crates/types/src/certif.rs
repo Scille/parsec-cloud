@@ -48,10 +48,11 @@ fn dump<T>(obj: &T) -> Vec<u8>
 where
     T: Serialize,
 {
-    let serialized = ::rmp_serde::to_vec_named(obj).unwrap_or_else(|_| unreachable!());
+    let serialized = ::rmp_serde::to_vec_named(obj).expect("object should be serializable");
     let mut e = ZlibEncoder::new(Vec::new(), flate2::Compression::default());
-    e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
-    e.finish().unwrap_or_else(|_| unreachable!())
+    e.write_all(&serialized)
+        .and_then(|_| e.finish())
+        .expect("in-memory buffer should not fail")
 }
 
 fn check_author_allow_root(

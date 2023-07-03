@@ -85,7 +85,7 @@ impl<'de> serde::de::Visitor<'de> for DateTimeExtVisitor {
         let ts = f64::from_be_bytes(
             data[..F64_SIZE]
                 .try_into()
-                .unwrap_or_else(|_| unreachable!()),
+                .expect("data.len() should be equal to F64_SIZE"),
         );
 
         Ok(Self::Value::from_f64_with_us_precision(ts))

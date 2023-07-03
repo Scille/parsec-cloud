@@ -86,8 +86,8 @@ impl FromStr for SASCode {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         lazy_static! {
-            static ref PATTERN: Regex =
-                Regex::new(SAS_CODE_PATTERN).unwrap_or_else(|_| unreachable!());
+            static ref PATTERN: Regex = Regex::new(SAS_CODE_PATTERN)
+                .expect("`SAS_CODE_PATTERN` should be a valid regular expression");
         }
         if PATTERN.is_match(s) {
             Ok(Self(s.to_string()))
@@ -145,7 +145,8 @@ impl SASCode {
         sas_codes.push(SASCode(self.to_string()));
         while sas_codes.len() < size {
             let num = rand::thread_rng().gen_range(0..=SAS_CODE_MASK);
-            let candidate = SASCode::try_from(num as u32).unwrap_or_else(|_| unreachable!());
+            let candidate = SASCode::try_from(num as u32)
+                .expect("SASCode number should not exceed `SAS_CODE_BITS` bit long");
             if &candidate != self {
                 sas_codes.push(candidate);
             }
@@ -174,9 +175,11 @@ impl SASCode {
         let greeter_part_as_int = ((hmac_as_int >> SAS_CODE_BITS) & SAS_CODE_MASK as u64) as u32;
 
         // Big endian number extracted from bits [0, 20[
-        let claimer_sas = SASCode::try_from(claimer_part_as_int).unwrap_or_else(|_| unreachable!());
+        let claimer_sas = SASCode::try_from(claimer_part_as_int)
+            .expect("SASCode number should not exceed `SAS_CODE_BITS` bit long");
         // Big endian number extracted from bits [20, 40[
-        let greeter_sas = SASCode::try_from(greeter_part_as_int).unwrap_or_else(|_| unreachable!());
+        let greeter_sas = SASCode::try_from(greeter_part_as_int)
+            .expect("SASCode number should not exceed `SAS_CODE_BITS` bit long");
 
         (claimer_sas, greeter_sas)
     }
@@ -191,12 +194,14 @@ macro_rules! impl_dump_and_encrypt {
         impl $name {
             pub fn dump_and_encrypt(&self, key: &::libparsec_crypto::SecretKey) -> Vec<u8> {
                 let serialized =
-                    ::rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
+                    ::rmp_serde::to_vec_named(&self).expect("object should be serializable");
                 let mut e =
                     ::flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::default());
                 use std::io::Write;
-                e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
-                let compressed = e.finish().unwrap_or_else(|_| unreachable!());
+                let compressed = e
+                    .write_all(&serialized)
+                    .and_then(|_| e.finish())
+                    .expect("in-memory buffer should not fail");
                 key.encrypt(&compressed)
             }
         }

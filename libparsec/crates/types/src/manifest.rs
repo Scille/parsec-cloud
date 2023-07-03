@@ -30,11 +30,12 @@ macro_rules! impl_manifest_dump_load {
             /// This enabled you to encrypt the data with another method than the one provided by [SecretKey]
             pub fn dump_and_sign(&self, author_signkey: &SigningKey) -> Vec<u8> {
                 let serialized =
-                    ::rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
+                    ::rmp_serde::to_vec_named(&self).expect("object should be serializable");
                 let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
-                e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
-                let compressed = e.finish().unwrap_or_else(|_| unreachable!());
-
+                let compressed = e
+                    .write_all(&serialized)
+                    .and_then(|_| e.finish())
+                    .expect("in-memory buffer should not fail");
                 author_signkey.sign(&compressed)
             }
 
@@ -288,7 +289,7 @@ fn generate_local_author_legacy_placeholder() -> DeviceID {
     lazy_static! {
         static ref LEGACY_PLACEHOLDER: DeviceID = LOCAL_AUTHOR_LEGACY_PLACEHOLDER
             .parse()
-            .unwrap_or_else(|_| unreachable!());
+            .expect("`LOCAL_AUTHOR_LEGACY_PLACEHOLDER` string should be parseable");
     }
     LEGACY_PLACEHOLDER.clone()
 }
