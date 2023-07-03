@@ -358,6 +358,41 @@ class MemoryInviteComponent(BaseInviteComponent):
             status=InvitationStatus.DELETED,
         )
 
+    async def delete_shamir_invitation(
+        self,
+        organization_id: OrganizationID,
+        claimer: UserID,
+        on: DateTime | None = None,
+    ) -> bool:
+        org = self._organizations[organization_id]
+        # Find the corresponding invitation
+        for token, invitation in org.invitations.items():
+            if not isinstance(invitation, ShamirRecoveryInvitation):
+                continue
+            if invitation.claimer_user_id == claimer:
+                break
+        # None found, return
+        else:
+            return False
+        # Check that it's not already deleted
+        try:
+            self._get_invitation(organization_id, token)
+        except InvitationAlreadyDeletedError:
+            return False
+        # Delete the invitation and send the event
+        on = on or DateTime.now()
+        reason = InvitationDeletedReason.CANCELLED
+        org.deleted_invitations[token] = (on, reason)
+        await self._send_event(
+            BackendEvent.INVITE_STATUS_CHANGED,
+            organization_id=organization_id,
+            greeter=invitation.greeter_user_id,
+            token=token,
+            status=InvitationStatus.DELETED,
+        )
+        # Indicate the an invitation has actually been deleted
+        return True
+
     async def list(self, organization_id: OrganizationID, greeter: UserID) -> List[Invitation]:
         org = self._organizations[organization_id]
         invitations_with_claimer_online = self._claimers_ready[organization_id]

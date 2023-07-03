@@ -18,6 +18,7 @@ from parsec.api.protocol import DeviceID, OrganizationID, UserID
 from parsec.backend.shamir import BaseShamirComponent
 
 if TYPE_CHECKING:
+    from parsec.backend.memory.invite import MemoryInviteComponent
     from parsec.backend.memory.user import MemoryUserComponent
 
 
@@ -35,8 +36,11 @@ class MemoryShamirComponent(BaseShamirComponent):
         self._shamir_recovery_items: dict[tuple[OrganizationID, UserID], ShamirRecoveryItem] = {}
         self._shamir_recovery_shares: dict[tuple[OrganizationID, UserID], dict[UserID, bytes]] = {}
 
-    def register_components(self, user: MemoryUserComponent, **other_components: Any) -> None:
+    def register_components(
+        self, user: MemoryUserComponent, invite: MemoryInviteComponent, **other_components: Any
+    ) -> None:
         self._user_component = user
+        self._invite_component = invite
 
     async def recovery_others_list(
         self, organization_id: OrganizationID, author: DeviceID
@@ -78,6 +82,7 @@ class MemoryShamirComponent(BaseShamirComponent):
                 self._shamir_recovery_ciphered_data.pop(item.reveal_token, None)
             for mapping in self._shamir_recovery_shares.values():
                 mapping.pop(author.user_id, None)
+            await self._invite_component.delete_shamir_invitation(organization_id, author.user_id)
             return
 
         # Verify the certificates
@@ -130,6 +135,8 @@ class MemoryShamirComponent(BaseShamirComponent):
             item_key = organization_id, user_id
             self._shamir_recovery_shares.setdefault(item_key, {})
             self._shamir_recovery_shares[item_key][author.user_id] = raw_certificate
+
+        await self._invite_component.delete_shamir_invitation(organization_id, author.user_id)
 
     async def recovery_reveal(
         self,
