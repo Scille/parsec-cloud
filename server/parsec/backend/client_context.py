@@ -8,6 +8,7 @@ import trio
 from structlog import BoundLogger, get_logger
 
 from parsec._parsec import (
+    ApiVersion,
     BackendEvent,
     DeviceID,
     DeviceLabel,
@@ -20,7 +21,6 @@ from parsec._parsec import (
     UserProfile,
     VerifyKey,
 )
-from parsec.api.version import ApiVersion
 from parsec.backend.invite import Invitation
 from parsec.event_bus import EventBusConnectionContext
 

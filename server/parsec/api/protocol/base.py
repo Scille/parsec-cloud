@@ -3,8 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping, Sequence, Type
 
-from parsec._parsec import ProtocolError
-from parsec.api.version import ApiVersion
+from parsec._parsec import ApiVersion, ProtocolError
 from parsec.serde import BaseSchema, MsgpackSerializer, SerdePackingError, SerdeValidationError
 from parsec.serde import packb as _packb
 from parsec.serde import unpackb as _unpackb

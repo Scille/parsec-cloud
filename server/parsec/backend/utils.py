@@ -19,7 +19,7 @@ from quart import Websocket
 from trio import CancelScope
 from typing_extensions import Final, Literal, ParamSpec
 
-from parsec.api.version import API_V3_VERSION
+from parsec._parsec import ApiVersion
 from parsec.utils import open_service_nursery
 
 if TYPE_CHECKING:
@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 PEER_EVENT_MAX_WAIT = 3  # 5mn
 ALLOWED_API_VERSIONS = {
-    API_V3_VERSION.version,
+    ApiVersion.API_V3_VERSION.version,
 }
 
 

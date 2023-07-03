@@ -6,7 +6,7 @@ from unittest.mock import ANY
 
 import pytest
 
-from parsec._parsec import BackendEventOrganizationExpired
+from parsec._parsec import ApiVersion, BackendEventOrganizationExpired
 from parsec.api.protocol import (
     AuthenticatedClientHandshake,
     HandshakeBadIdentity,
@@ -19,7 +19,6 @@ from parsec.api.protocol import (
     unpackb,
 )
 from parsec.api.protocol.handshake import ServerHandshake
-from parsec.api.version import API_V3_VERSION, API_VERSION, ApiVersion
 
 
 @pytest.mark.trio
@@ -32,7 +31,10 @@ async def test_handshake_send_invalid_answer_data(backend_asgi_app, kind):
         bad_req = packb(
             {
                 "handshake": "dummy",
-                "client_api_version": (API_VERSION.version, API_VERSION.revision),
+                "client_api_version": (
+                    ApiVersion.API_LATEST_VERSION.version,
+                    ApiVersion.API_LATEST_VERSION.revision,
+                ),
             }
         )
     elif kind == "irrelevant_dict":
@@ -55,7 +57,7 @@ async def test_handshake_send_invalid_answer_data(backend_asgi_app, kind):
 async def test_handshake_incompatible_version(backend_asgi_app):
     client = backend_asgi_app.test_client()
     async with client.websocket("/ws") as ws:
-        incompatible_version = ApiVersion(API_VERSION.version + 1, 0)
+        incompatible_version = ApiVersion(ApiVersion.API_LATEST_VERSION.version + 1, 0)
         await ws.receive()  # Get challenge
         req = {
             "handshake": "answer",
@@ -91,8 +93,8 @@ async def test_authenticated_handshake_good(backend_asgi_app, alice):
         result_req = await ws.receive()
         ch.process_result_req(result_req)
 
-        assert ch.client_api_version == API_V3_VERSION
-        assert ch.backend_api_version == API_V3_VERSION
+        assert ch.client_api_version == ApiVersion.API_V3_VERSION
+        assert ch.backend_api_version == ApiVersion.API_V3_VERSION
 
 
 @pytest.mark.trio
@@ -142,8 +144,8 @@ async def test_invited_handshake_good(backend_asgi_app, backend, alice, invitati
         result_req = await ws.receive()
         ch.process_result_req(result_req)
 
-        assert ch.client_api_version == API_V3_VERSION
-        assert ch.backend_api_version == API_V3_VERSION
+        assert ch.client_api_version == ApiVersion.API_V3_VERSION
+        assert ch.backend_api_version == ApiVersion.API_V3_VERSION
 
 
 @pytest.mark.trio
@@ -173,9 +175,12 @@ async def test_api_version_in_logs_on_handshake(backend_asgi_app, backend, alice
 
             # Sanity checks
             assert ch.client_api_version == client_api_version
-            assert ch.backend_api_version == API_V3_VERSION
+            assert ch.backend_api_version == ApiVersion.API_V3_VERSION
 
-        assert f"(client/server API version: {client_api_version}/{API_V3_VERSION})" in caplog.text
+        assert (
+            f"(client/server API version: {client_api_version}/{ApiVersion.API_V3_VERSION})"
+            in caplog.text
+        )
 
 
 @pytest.mark.trio

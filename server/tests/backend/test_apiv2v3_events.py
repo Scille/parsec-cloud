@@ -5,8 +5,7 @@ import pytest
 import trio
 from quart.testing.connections import WebsocketDisconnectError
 
-from parsec._parsec import BackendEventPinged, authenticated_cmds
-from parsec.api.version import API_V3_VERSION
+from parsec._parsec import ApiVersion, BackendEventPinged, authenticated_cmds
 from parsec.backend.asgi import app_factory
 from tests.backend.common import (
     apiv2v3_events_listen,
@@ -179,7 +178,7 @@ async def test_events_close_connection_on_backpressure(
 @pytest.mark.trio
 async def test_sse_not_support_by_apiv3(backend, alice_rpc: AuthenticatedRpcApiClient):
     def _use_api_v3(args: dict) -> None:
-        args["headers"]["Api-Version"] = str(API_V3_VERSION)
+        args["headers"]["Api-Version"] = str(ApiVersion.API_V3_VERSION)
 
     async with alice_rpc.connect_sse_events(before_send_hook=_use_api_v3) as sse_con:
         assert sse_con.status_code == 415
