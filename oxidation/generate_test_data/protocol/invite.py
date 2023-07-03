@@ -74,7 +74,7 @@ serialized = serializer.req_dumps(
     {
         "type": InvitationType.USER,
         "cmd": "invite_new",
-        "claimer_email": "alice@dev1",
+        "claimer_email": "alice@example.com",
         "send_email": True,
     }
 )
@@ -163,7 +163,7 @@ serialized = serializer.rep_dumps(
             InviteListItem.User(
                 token=InvitationToken.from_hex("d864b93ded264aae9ae583fd3d40c45a"),
                 created_on=DateTime(2000, 1, 2, 1),
-                claimer_email="alice@dev1",
+                claimer_email="alice@example.com",
                 status=InvitationStatus.IDLE,
             ),
             InviteListItem.Device(
@@ -174,7 +174,7 @@ serialized = serializer.rep_dumps(
             InviteListItem.ShamirRecovery(
                 token=InvitationToken.from_hex("d864b93ded264aae9ae583fd3d40c45a"),
                 created_on=DateTime(2000, 1, 2, 1),
-                claimer_email="alice@dev1",
+                claimer_email="alice@example.com",
                 claimer_user_id=UserID("109b68ba5cdf428ea0017fc6bcc04d4a"),
                 status=InvitationStatus.IDLE,
             ),
@@ -195,9 +195,9 @@ display("invite_info_req", serialized, [])
 serialized = serializer.rep_dumps(
     InviteInfoRepOk(
         type=InvitationType.USER,
-        claimer_email="alice@dev1",
+        claimer_email="alice@example.com",
         greeter_user_id=UserID("109b68ba5cdf428ea0017fc6bcc04d4a"),
-        greeter_human_handle=HumanHandle("bob@dev1", "bob"),
+        greeter_human_handle=HumanHandle("bob@example.com", "bob"),
     )
 )
 serializer.rep_loads(serialized)
@@ -207,7 +207,7 @@ serialized = serializer.rep_dumps(
     InviteInfoRepOk(
         type=InvitationType.DEVICE,
         greeter_user_id=UserID("109b68ba5cdf428ea0017fc6bcc04d4a"),
-        greeter_human_handle=HumanHandle("bob@dev1", "bob"),
+        greeter_human_handle=HumanHandle("bob@example.com", "bob"),
         claimer_email=None,
     )
 )
@@ -217,7 +217,7 @@ display("invite_info_rep_device", serialized, [])
 serialized = serializer.rep_dumps(
     InviteInfoRepOk(
         type=InvitationType.USER,
-        claimer_email="alice@dev1",
+        claimer_email="alice@example.com",
         greeter_user_id=UserID("109b68ba5cdf428ea0017fc6bcc04d4a"),
         greeter_human_handle=None,
     )

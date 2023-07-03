@@ -12,19 +12,20 @@ use libparsec_types::prelude::*;
 
 #[parsec_test]
 #[case::user(
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Generated from Rust implementation (Parsec v2.16.0-a.0+dev)
     // Content:
     //   type: "USER"
-    //   claimer_email: "alice@dev1"
+    //   claimer_email: "alice@example.com"
     //   cmd: "invite_new"
     //   send_email: true
+    //
     &hex!(
-        "84ad636c61696d65725f656d61696caa616c6963654064657631a3636d64aa696e76697465"
-        "5f6e6577aa73656e645f656d61696cc3a474797065a455534552"
+        "84a3636d64aa696e766974655f6e6577a474797065a455534552ad636c61696d65725f656d"
+        "61696cb1616c696365406578616d706c652e636f6daa73656e645f656d61696cc3"
     )[..],
     authenticated_cmds::AnyCmdReq::InviteNew(authenticated_cmds::invite_new::Req(
         authenticated_cmds::invite_new::UserOrDeviceOrShamirRecovery::User {
-            claimer_email: "alice@dev1".to_owned(),
+            claimer_email: "alice@example.com".to_owned(),
             send_email: true,
         }
     ))
@@ -252,7 +253,7 @@ fn serde_invite_list_rep() {
     //   invitations: [
     //     {
     //       type: "USER"
-    //       claimer_email: "alice@dev1"
+    //       claimer_email: "alice@example.com"
     //       created_on: ext(1, 946774800.0)
     //       status: "IDLE"
     //       token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
@@ -265,7 +266,7 @@ fn serde_invite_list_rep() {
     //     }
     //     {
     //       type: "SHAMIR_RECOVERY"
-    //       claimer_email: "alice@dev1"
+    //       claimer_email: "alice@example.com"
     //       claimer_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a"
     //       created_on: ext(1, 946774800.0)
     //       status: "IDLE"
@@ -276,15 +277,15 @@ fn serde_invite_list_rep() {
     //
     let raw = hex!(
         "82a6737461747573a26f6bab696e7669746174696f6e739385a474797065a455534552ad63"
-        "6c61696d65725f656d61696caa616c6963654064657631aa637265617465645f6f6ed70141"
-        "cc375188000000a6737461747573a449444c45a5746f6b656ed802d864b93ded264aae9ae5"
-        "83fd3d40c45a84a474797065a6444556494345aa637265617465645f6f6ed70141cc375188"
-        "000000a6737461747573a449444c45a5746f6b656ed802d864b93ded264aae9ae583fd3d40"
-        "c45a86a474797065af5348414d49525f5245434f56455259ad636c61696d65725f656d6169"
-        "6caa616c6963654064657631af636c61696d65725f757365725f6964d92031303962363862"
-        "61356364663432386561303031376663366263633034643461aa637265617465645f6f6ed7"
-        "0141cc375188000000a6737461747573a449444c45a5746f6b656ed802d864b93ded264aae"
-        "9ae583fd3d40c45a"
+        "6c61696d65725f656d61696cb1616c696365406578616d706c652e636f6daa637265617465"
+        "645f6f6ed70141cc375188000000a6737461747573a449444c45a5746f6b656ed802d864b9"
+        "3ded264aae9ae583fd3d40c45a84a474797065a6444556494345aa637265617465645f6f6e"
+        "d70141cc375188000000a6737461747573a449444c45a5746f6b656ed802d864b93ded264a"
+        "ae9ae583fd3d40c45a86a474797065af5348414d49525f5245434f56455259ad636c61696d"
+        "65725f656d61696cb1616c696365406578616d706c652e636f6daf636c61696d65725f7573"
+        "65725f6964d920313039623638626135636466343238656130303137666336626363303464"
+        "3461aa637265617465645f6f6ed70141cc375188000000a6737461747573a449444c45a574"
+        "6f6b656ed802d864b93ded264aae9ae583fd3d40c45a"
     );
 
     let expected = authenticated_cmds::invite_list::Rep::Ok {
@@ -292,7 +293,7 @@ fn serde_invite_list_rep() {
             authenticated_cmds::invite_list::InviteListItem::User {
                 token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
                 created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
-                claimer_email: "alice@dev1".to_owned(),
+                claimer_email: "alice@example.com".to_owned(),
                 status: InvitationStatus::Idle,
             },
             authenticated_cmds::invite_list::InviteListItem::Device {
@@ -303,7 +304,7 @@ fn serde_invite_list_rep() {
             authenticated_cmds::invite_list::InviteListItem::ShamirRecovery {
                 token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
                 created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
-                claimer_email: "alice@dev1".to_owned(),
+                claimer_email: "alice@example.com".to_owned(),
                 claimer_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
                 status: InvitationStatus::Idle,
             },
@@ -347,24 +348,25 @@ fn serde_invite_info_req() {
 
 #[parsec_test]
 #[case::user(
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Generated from Rust implementation (Parsec v2.16.0-a.0+dev)
     // Content:
     //   type: "USER"
-    //   claimer_email: "alice@dev1"
-    //   greeter_human_handle: ["bob@dev1", "bob"]
+    //   claimer_email: "alice@example.com"
+    //   greeter_human_handle: ["bob@example.com", "bob"]
     //   greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a"
     //   status: "ok"
+    //
     &hex!(
-        "85ad636c61696d65725f656d61696caa616c6963654064657631b4677265657465725f6875"
-        "6d616e5f68616e646c6592a8626f624064657631a3626f62af677265657465725f75736572"
-        "5f6964d9203130396236386261356364663432386561303031376663366263633034643461"
-        "a6737461747573a26f6ba474797065a455534552"
+        "85a6737461747573a26f6ba474797065a455534552ad636c61696d65725f656d61696cb161"
+        "6c696365406578616d706c652e636f6db4677265657465725f68756d616e5f68616e646c65"
+        "92af626f62406578616d706c652e636f6da3626f62af677265657465725f757365725f6964"
+        "d9203130396236386261356364663432386561303031376663366263633034643461"
     ),
     invited_cmds::invite_info::Rep::Ok(
         invited_cmds::invite_info::UserOrDeviceOrShamirRecovery::User {
-            claimer_email: "alice@dev1".to_owned(),
+            claimer_email: "alice@example.com".to_owned(),
             greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
-            greeter_human_handle: Some(HumanHandle::new("bob@dev1", "bob").unwrap()),
+            greeter_human_handle: Some(HumanHandle::new("bob@example.com", "bob").unwrap()),
         }
     )
 )]
@@ -388,24 +390,24 @@ fn serde_invite_info_req() {
     )
 )]
 #[case::user_no_human_handle(
-    // Generated from Rust implementation (Parsec v2.13.0-rc1+dev)
+    // Generated from Rust implementation (Parsec v2.16.0-a.0+dev)
     // Content:
     //   type: "USER"
-    //   claimer_email: "alice@dev1"
+    //   claimer_email: "alice@example.com"
     //   greeter_human_handle: None
     //   greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a"
     //   status: "ok"
     //
     &hex!(
-        "85a6737461747573a26f6ba474797065a455534552ad636c61696d65725f656d61696caa61"
-        "6c6963654064657631af677265657465725f757365725f6964d92031303962363862613563"
-        "64663432386561303031376663366263633034643461b4677265657465725f68756d616e5f"
-        "68616e646c65c0"
+        "85a6737461747573a26f6ba474797065a455534552ad636c61696d65725f656d61696cb161"
+        "6c696365406578616d706c652e636f6db4677265657465725f68756d616e5f68616e646c65"
+        "c0af677265657465725f757365725f6964d920313039623638626135636466343238656130"
+        "3031376663366263633034643461"
     ),
     invited_cmds::invite_info::Rep::Ok(
         invited_cmds::invite_info::UserOrDeviceOrShamirRecovery::User {
             greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
-            claimer_email: "alice@dev1".to_string(),
+            claimer_email: "alice@example.com".to_string(),
             greeter_human_handle: None,
         }
     )
@@ -450,7 +452,7 @@ fn serde_invite_info_req() {
     )
 )]
 #[case::shamir_recovery_with_recipients(
-    // Generated from Rust implementation (Parsec v2.15.0+dev)
+    // Generated from Rust implementation (Parsec v2.16.0-a.0+dev)
     // Content:
     //   type: "SHAMIR_RECOVERY"
     //   recipients: [
