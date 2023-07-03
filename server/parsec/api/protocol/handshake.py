@@ -8,6 +8,7 @@ from typing import Dict, Sequence, Type, TypedDict, cast
 from marshmallow.fields import Field
 
 from parsec._parsec import (
+    ApiVersion,
     CryptoError,
     DateTime,
     InvitationToken,
@@ -27,13 +28,6 @@ from parsec.api.protocol.types import (
     DeviceIDField,
     OrganizationID,
     OrganizationIDField,
-)
-from parsec.api.version import (
-    API_V1_VERSION,
-    API_V2_VERSION,
-    API_V3_VERSION,
-    API_V4_VERSION,
-    ApiVersion,
 )
 from parsec.serde import BaseSchema, OneOfSchema, fields, post_load
 from parsec.utils import (
@@ -186,10 +180,10 @@ handshake_result_serializer = serializer_factory(HandshakeResultSchema)
 class ServerHandshake:
     # Class attribute
     SUPPORTED_API_VERSIONS: tuple[ApiVersion, ...] = (
-        API_V1_VERSION,
-        API_V2_VERSION,
-        API_V3_VERSION,
-        API_V4_VERSION,
+        ApiVersion.API_V1_VERSION,
+        ApiVersion.API_V2_VERSION,
+        ApiVersion.API_V3_VERSION,
+        ApiVersion.API_V4_VERSION,
     )
     CHALLENGE_SIZE = 48
 
@@ -429,7 +423,7 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
     # code.
     # So we keep this with APIv3 for the legacy tests using Websocket (e.g.
     # tests using event subscribe/listen) and the Python client
-    SUPPORTED_API_VERSIONS = (API_V3_VERSION,)
+    SUPPORTED_API_VERSIONS = (ApiVersion.API_V3_VERSION,)
     HANDSHAKE_TYPE: HandshakeType = HandshakeType.AUTHENTICATED
     HANDSHAKE_ANSWER_SERIALIZER = handshake_answer_serializer
 
@@ -476,7 +470,7 @@ class InvitedClientHandshake(BaseClientHandshake):
     # code.
     # So we keep this with APIv3 for the legacy tests using Websocket (e.g.
     # tests using event subscribe/listen) and the Python client
-    SUPPORTED_API_VERSIONS = (API_V3_VERSION,)
+    SUPPORTED_API_VERSIONS = (ApiVersion.API_V3_VERSION,)
 
     def __init__(
         self,

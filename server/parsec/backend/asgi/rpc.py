@@ -12,6 +12,7 @@ from quart import Blueprint, Response, current_app, g, request
 from quart.wrappers.response import ResponseBody
 
 from parsec._parsec import (
+    ApiVersion,
     BackendEvent,
     BackendEventOrganizationExpired,
     BackendEventUserUpdatedOrRevoked,
@@ -29,7 +30,6 @@ from parsec.api.protocol import (
     IncompatibleAPIVersionsError,
     settle_compatible_versions,
 )
-from parsec.api.version import API_V2_VERSION, API_V3_VERSION, API_V4_VERSION, ApiVersion
 from parsec.backend.app import BackendApp
 from parsec.backend.client_context import (
     AnonymousClientContext,
@@ -55,9 +55,9 @@ CONTENT_TYPE_MSGPACK = "application/msgpack"
 ACCEPT_TYPE_SSE = "text/event-stream"
 AUTHORIZATION_PARSEC_ED25519 = "PARSEC-SIGN-ED25519"
 SUPPORTED_API_VERSIONS = (
-    API_V2_VERSION,
-    API_V3_VERSION,
-    API_V4_VERSION,
+    ApiVersion.API_V2_VERSION,
+    ApiVersion.API_V3_VERSION,
+    ApiVersion.API_V4_VERSION,
 )
 AUTHENTICATED_CMDS_LOAD_FN = {
     int(v_version[1:]): getattr(authenticated_cmds, v_version).AnyCmdReq.load
