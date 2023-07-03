@@ -309,7 +309,7 @@
             "waitForHost": "",
             "getHostCode": "Cliquez sur le code que vous donne l'hôte.",
             "provideGuestCode": "Veuillez communiquer le code ci-dessous à l'hôte.",
-            "getUserInfo": "Veuillez saisir vos coordonées pour accéder à l'organisation.",
+            "getUserInfo": "Veuillez saisir vos coordonnées pour accéder à l'organisation.",
             "getPassword": "Veuillez choisir un mot de passe pour finalement l'enrôlement.",
             "finish": ""
         }

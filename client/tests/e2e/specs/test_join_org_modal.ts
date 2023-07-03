@@ -137,8 +137,8 @@ describe('Join an organization', () => {
     cy.get('@modalTitle').contains('You have joined the organization');
 
     cy.get('#next-button').contains('Log In');
-    // Clicking the button causes the modal to close whiches causes an unknown exception
-    // which causes Cypress to fial the test.
+    // Clicking the button causes the modal to close which causes an unknown exception
+    // which causes Cypress to fail the test.
 
     // cy.get('#next-button').click();
 
