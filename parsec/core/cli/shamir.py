@@ -175,7 +175,7 @@ async def _show_brief_certificate(
     styled_human_handle = click.style(human_handle.str, fg="yellow")
     styled_device_label = click.style(device_label.str, fg="yellow")
     styled_timestamp = click.style(brief_certificate.timestamp.to_rfc3339(), fg="yellow")
-    styled_threshold = click.style(brief_certificate.threshold)
+    styled_threshold = click.style(brief_certificate.threshold, fg="yellow")
     click.echo(f"━━━━━━  Shared recovery device for {styled_human_handle}  ━━━━━━")
     click.echo(f"Configured from device {styled_device_label} on {styled_timestamp}")
     click.echo(f"At least {styled_threshold} shares are required from the following users:")
