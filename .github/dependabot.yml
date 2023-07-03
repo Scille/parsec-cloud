@@ -14,7 +14,7 @@ updates:
       time: "04:20"
       timezone: Europe/Paris
     groups:
-      workflows-grouped-update:
+      github-workflows:
         patterns:
           - "*"
     open-pull-requests-limit: 5
@@ -59,7 +59,7 @@ updates:
       time: "04:20"
       timezone: Europe/Paris
     groups:
-      rust-grouped-update:
+      rust-dependencies:
         patterns:
           - "*"
     open-pull-requests-limit: 5
@@ -83,7 +83,7 @@ updates:
       time: "04:20"
       timezone: Europe/Paris
     groups:
-      pythons-grouped-update:
+      pythons-dependencies:
         patterns:
           - "*"
     open-pull-requests-limit: 5
@@ -103,14 +103,14 @@ updates:
       time: "04:20"
       timezone: Europe/Paris
     groups:
-      ionic-grouped-update:
+      ionic-client:
         patterns:
           - "@ionic/*"
-      capacitor-grouped-update:
+      capacitor-client:
         patterns:
           - "@capacitor/*"
           - "@capacitor-community/*"
-      npm-grouped-udpate:
+      client-dependencies:
         patterns:
           - "*"
         exclude-patterns:
@@ -167,7 +167,7 @@ updates:
       time: "04:20"
       timezone: Europe/Paris
     groups:
-      cspell-grouped-update:
+      cspell-dependencies:
         patterns:
           - "*"
     open-pull-requests-limit: 1
@@ -187,7 +187,7 @@ updates:
       time: "04:20"
       timezone: Europe/Paris
     groups:
-      android-client-grouped-update:
+      android-client:
         patterns:
           - "*"
     open-pull-requests-limit: 5
@@ -203,7 +203,7 @@ updates:
       time: "04:20"
       timezone: Europe/Paris
     groups:
-      android-binding-grouped-update:
+      android-binding:
         patterns:
           - "*"
     open-pull-requests-limit: 5
