@@ -226,6 +226,7 @@ MemLimit
 metaraw
 miniserde
 mnone
+MNOP
 moff
 monomorphization
 mountpoint
