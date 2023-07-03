@@ -347,7 +347,15 @@ class MemoryInviteComponent(BaseInviteComponent):
         on: DateTime,
         reason: InvitationDeletedReason,
     ) -> None:
-        self._get_invitation_and_conduit(organization_id, token, greeter=greeter)
+        invitation = self._get_invitation(organization_id, token)
+        if isinstance(invitation, ShamirRecoveryInvitation):
+            recipients = {recipient.user_id for recipient in invitation.recipients}
+            # The claimer is authorized to delete the invitation
+            if greeter not in recipients and greeter != invitation.claimer_user_id:
+                raise InvitationNotFoundError(token)
+        else:
+            if invitation.greeter_user_id != greeter:
+                raise InvitationNotFoundError(token)
         org = self._organizations[organization_id]
         org.deleted_invitations[token] = (on, reason)
         await self._send_event(

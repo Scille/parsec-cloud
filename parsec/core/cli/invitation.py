@@ -470,8 +470,12 @@ async def _do_claim_shamir_recovery(
 
     async with spinner("Waiting for greeter (finalizing)"):
         new_shares = await in_progress3_ctx.do_recover_share()
+
+    # Not enough shares to recover the device
     if not prelude_ctx.add_shares(initial_ctx.recipient, new_shares):
         return None
+
+    # Enough shares to recover the device
     async with spinner(f"Retreiving the recovery device"):
         recovery_device = await prelude_ctx.retreive_recovery_device()
     requested_device_label = DeviceLabel(
@@ -482,6 +486,7 @@ async def _do_claim_shamir_recovery(
         new_device = await generate_new_device_from_recovery(
             recovery_device, requested_device_label
         )
+
     return new_device
 
 
@@ -495,6 +500,15 @@ async def _choose_recipient(
     choices = [str(x) for x in range(len(recipients))]
     choice_index = await async_prompt("Next user to contact", type=click.Choice(choices))
     return recipients[int(choice_index)]
+
+
+async def _delete_shamir_invitation(device: LocalDevice, token: InvitationToken) -> None:
+    async with backend_authenticated_cmds_factory(
+        addr=device.organization_addr,
+        device_id=device.device_id,
+        signing_key=device.signing_key,
+    ) as cmds:
+        await cmds.invite_delete(token=token, reason=InvitationDeletedReason.FINISHED)
 
 
 async def _claim_invitation(
@@ -538,7 +552,8 @@ async def _claim_invitation(
                 elif isinstance(initial_ctx, ShamirRecoveryClaimInitialCtx):
                     assert isinstance(initial_or_prelude_ctx, ShamirRecoveryClaimPreludeCtx)
                     new_device = await _do_claim_shamir_recovery(
-                        initial_or_prelude_ctx, initial_ctx
+                        initial_or_prelude_ctx,
+                        initial_ctx,
                     )
                     if new_device is not None:
                         break
@@ -554,6 +569,10 @@ async def _claim_invitation(
                 data_base_dir=config.data_base_dir, device=new_device
             )
         await save_device_with_selected_auth(config_dir=config.config_dir, device=new_device)
+
+        # In the case of a shamir recovery, it is the claimer that deletes the invitation
+        if addr.invitation_type == InvitationType.SHAMIR_RECOVERY:
+            await _delete_shamir_invitation(new_device, addr.token)
 
 
 @click.command(short_help="claim invitation")
