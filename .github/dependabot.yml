@@ -13,6 +13,10 @@ updates:
       day: monday
       time: "04:20"
       timezone: Europe/Paris
+    groups:
+      workflows-grouped-update:
+        patterns:
+          - "*"
     open-pull-requests-limit: 5
     rebase-strategy: disabled
 
@@ -54,6 +58,10 @@ updates:
       day: tuesday
       time: "04:20"
       timezone: Europe/Paris
+    groups:
+      rust-grouped-update:
+        patterns:
+          - "*"
     open-pull-requests-limit: 5
     rebase-strategy: disabled
 
@@ -74,6 +82,10 @@ updates:
       day: wednesday
       time: "04:20"
       timezone: Europe/Paris
+    groups:
+      pythons-grouped-update:
+        patterns:
+          - "*"
     open-pull-requests-limit: 5
     rebase-strategy: disabled
 
@@ -90,6 +102,22 @@ updates:
       day: thursday
       time: "04:20"
       timezone: Europe/Paris
+    groups:
+      ionic-grouped-update:
+        patterns:
+          - "@ionic/*"
+      capacitor-grouped-update:
+        patterns:
+          - "@capacitor/*"
+          - "@capacitor-community/*"
+      npm-grouped-udpate:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "@ionic/*"
+          - "@capacitor/*"
+          - "@capacitor-community/*"
+
     open-pull-requests-limit: 5
     rebase-strategy: disabled
 
@@ -138,6 +166,10 @@ updates:
       day: thursday
       time: "04:20"
       timezone: Europe/Paris
+    groups:
+      cspell-grouped-update:
+        patterns:
+          - "*"
     open-pull-requests-limit: 1
     rebase-strategy: disabled
 
@@ -154,6 +186,10 @@ updates:
       day: friday
       time: "04:20"
       timezone: Europe/Paris
+    groups:
+      android-client-grouped-update:
+        patterns:
+          - "*"
     open-pull-requests-limit: 5
     rebase-strategy: disabled
 
@@ -166,5 +202,9 @@ updates:
       day: friday
       time: "04:20"
       timezone: Europe/Paris
+    groups:
+      android-binding-grouped-update:
+        patterns:
+          - "*"
     open-pull-requests-limit: 5
     rebase-strategy: disabled
