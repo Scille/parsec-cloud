@@ -85,7 +85,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Publish wheel on PyPI
-        uses: pypa/gh-action-pypi-publish@a56da0b891b3dc519c7ee3284aff1fad93cc8598 # pin v1.8.6
+        uses: pypa/gh-action-pypi-publish@f5622bde02b04381239da3573277701ceca8f6a0 # pin v1.8.7
         with:
           user: __token__
           password: ${{ secrets.PYPI_CREDENTIALS }}
