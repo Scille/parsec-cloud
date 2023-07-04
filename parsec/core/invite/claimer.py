@@ -192,7 +192,7 @@ async def claimer_retrieve_info(
             cmds=cmds,
         )
     return ShamirRecoveryClaimPreludeCtx(
-        receipients=list(rep_ok.recipients),
+        recipients=list(rep_ok.recipients),
         threshold=rep_ok.threshold,
         shares=[],
         cmds=cmds,
@@ -201,7 +201,7 @@ async def claimer_retrieve_info(
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class ShamirRecoveryClaimPreludeCtx:
-    receipients: list[ShamirRecoveryRecipient]
+    recipients: list[ShamirRecoveryRecipient]
     threshold: int
     shares: list[ShamirShare]
     _cmds: BackendInvitedCmds | RsBackendInvitedCmds
@@ -215,7 +215,7 @@ class ShamirRecoveryClaimPreludeCtx:
         )
 
     def add_shares(self, recipient: ShamirRecoveryRecipient, shares: list[ShamirShare]) -> bool:
-        self.receipients.remove(recipient)
+        self.recipients.remove(recipient)
         self.shares.extend(shares)
         return len(self.shares) >= self.threshold
 

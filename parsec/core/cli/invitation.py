@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import platform
 from functools import partial
-from typing import Any, Sequence, Tuple, Union
+from typing import Any, Tuple, Union
 
 import click
 
@@ -491,15 +491,33 @@ async def _do_claim_shamir_recovery(
 
 
 async def _choose_recipient(
-    recipients: Sequence[ShamirRecoveryRecipient],
+    prelude_ctx: ShamirRecoveryClaimPreludeCtx,
 ) -> ShamirRecoveryRecipient:
-    for i, recipient in enumerate(recipients):
+    styled_current_shares = click.style(len(prelude_ctx.shares), fg="yellow")
+    styled_threshold = click.style(prelude_ctx.threshold, fg="yellow")
+    if len(prelude_ctx.shares) == 0:
+        click.echo(f"A total of {styled_threshold} shares are necessary to recover the device.")
+    elif len(prelude_ctx.shares) == 1:
+        click.echo(
+            f"Out of the {styled_threshold} necessary shares, {styled_current_shares} share has been retreived so far."
+        )
+    else:
+        click.echo(
+            f"Out of the {styled_threshold} necessary shares, {styled_current_shares} shares have been retreived so far."
+        )
+    for i, recipient in enumerate(prelude_ctx.recipients):
         assert recipient.human_handle is not None
-        display_choice = click.style(recipient.human_handle.str, fg="yellow")
-        click.echo(f" {i} - {display_choice}")
-    choices = [str(x) for x in range(len(recipients))]
+        styled_human_handle = click.style(recipient.human_handle.str, fg="yellow")
+        styled_share_number = click.style(recipient.shares, fg="yellow")
+        styled_share_number = (
+            f"{styled_share_number} share"
+            if recipient.shares == 1
+            else f"{styled_share_number} shares"
+        )
+        click.echo(f" {i} - {styled_human_handle} ({styled_share_number})")
+    choices = [str(x) for x in range(len(prelude_ctx.recipients))]
     choice_index = await async_prompt("Next user to contact", type=click.Choice(choices))
-    return recipients[int(choice_index)]
+    return prelude_ctx.recipients[int(choice_index)]
 
 
 async def _delete_shamir_invitation(device: LocalDevice, token: InvitationToken) -> None:
@@ -528,7 +546,7 @@ async def _claim_invitation(
         while True:
             initial_ctx: DeviceClaimInitialCtx | UserClaimInitialCtx | ShamirRecoveryClaimInitialCtx
             if isinstance(initial_or_prelude_ctx, ShamirRecoveryClaimPreludeCtx):
-                recipient = await _choose_recipient(initial_or_prelude_ctx.receipients)
+                recipient = await _choose_recipient(initial_or_prelude_ctx)
                 initial_ctx = initial_or_prelude_ctx.get_initial_ctx(recipient)
             else:
                 initial_ctx = initial_or_prelude_ctx
