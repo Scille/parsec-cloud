@@ -12,7 +12,6 @@ from parsec._parsec import (
     InviteShamirRecoveryRevealReq,
     OrganizationID,
     ShamirRecoveryOthersListRep,
-    ShamirRecoveryOthersListRepNotAllowed,
     ShamirRecoveryOthersListRepOk,
     ShamirRecoveryOthersListReq,
     ShamirRecoverySelfInfoRep,
@@ -24,7 +23,6 @@ from parsec._parsec import (
     ShamirRecoverySetupRepOk,
     ShamirRecoverySetupReq,
     ShamirRevealToken,
-    UserProfile,
     VerifyKey,
 )
 from parsec.backend.client_context import AuthenticatedClientContext, InvitedClientContext
@@ -38,12 +36,12 @@ class BaseShamirComponent:
     async def api_shamir_recovery_others_list(
         self, client_ctx: AuthenticatedClientContext, req: ShamirRecoveryOthersListReq
     ) -> ShamirRecoveryOthersListRep:
-        if client_ctx.profile != UserProfile.ADMIN:
-            return ShamirRecoveryOthersListRepNotAllowed()
-
         result = await self.recovery_others_list(client_ctx.organization_id, client_ctx.device_id)
-        brief_certificates, share_certificates = zip(*result)
-
+        if result:
+            brief_certificates, share_certificates = zip(*result)
+        else:
+            brief_certificates = ()
+            share_certificates = ()
         return ShamirRecoveryOthersListRepOk(brief_certificates, share_certificates)
 
     @api("shamir_recovery_self_info")
