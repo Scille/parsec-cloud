@@ -9,30 +9,30 @@ flume = "0.10.14"
 futures = "0.3.28"
 
 [dev-dependencies]
-log = "0.4.17"
+log = "0.4.19"
 # `std::time::Instant` is not available for wasm32, crate `instant` provides a
 # fallback based on `window.performance.now()`
 instant = "0.1.12"
 # Used for `futures_lite::future::or` and don't require `Unpin`
-futures-lite = "1.12.0"
+futures-lite = "1.13.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = "0.2.86"
-wasm-bindgen-futures = "0.4.31"
+wasm-bindgen = "0.2.87"
+wasm-bindgen-futures = "0.4.36"
 # Window feature is require for `Timer`.
-web-sys = { version = "0.3.63", features = ["Window"] }
+web-sys = { version = "0.3.64", features = ["Window"] }
 js-sys = "0.3.59"
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
-wasm-bindgen-test = "0.3.33"
+wasm-bindgen-test = "0.3.36"
 # Used for binding `log` with `console.log*`
 console_log = "1.0.0"
 instant = { version = "0.1.12", features = ["wasm-bindgen"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { version = "1.28.1", features = ["rt", "time", "sync", "macros"] }
+tokio = { version = "1.29.1", features = ["rt", "time", "sync", "macros"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 libparsec_tests_fixtures = { path = "../tests_fixtures" }
 
-tokio = { version = "1.28.1", features = ["full"] }
+tokio = { version = "1.29.1", features = ["full"] }

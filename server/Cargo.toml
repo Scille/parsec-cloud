@@ -17,11 +17,11 @@ test-utils = ["libparsec/test-utils"]
 libparsec = { path = "../libparsec", features = ["python-bindings-support"] }
 
 regex = "1.8.4"
-paste = "1.0.12"
-pyo3 = { version = "0.17.3", features = ["multiple-pymethods", "extension-module"] }
-uuid = { version = "1.2.2", features = ["serde", "v4", "fast-rng"] }
-tokio = { version = "1.28", features = ["rt", "rt-multi-thread"] }
+paste = "1.0.13"
+pyo3 = { version = "0.19.1", features = ["multiple-pymethods", "extension-module"] }
+uuid = { version = "1.4.0", features = ["serde", "v4", "fast-rng"] }
+tokio = { version = "1.29", features = ["rt", "rt-multi-thread"] }
 lazy_static = "1.4.0"
 futures = "0.3.28"
 rmp-serde = "1.1.1"
-serde = { version = "1.0.164", features = ["derive"] }
+serde = { version = "1.0.166", features = ["derive"] }
