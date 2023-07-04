@@ -70,7 +70,7 @@ updates:
   ##########
 
   - package-ecosystem: pip
-    directory: /
+    directory: /server
     ignore:
       - dependency-name: toastedmarshmallow
       - dependency-name: trio_typing
