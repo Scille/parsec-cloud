@@ -1,4 +1,10 @@
-FROM python:3.9 as builder
+# syntax=docker/dockerfile:1.5
+
+#
+# 1) Build stage
+#
+
+FROM python:3.9 AS builder
 
 WORKDIR /work
 
@@ -13,7 +19,6 @@ ADD --link \
     make.py \
     server/packaging/server/in-docker-build.sh \
     .
-
 ADD --link libparsec/ libparsec/
 ADD --link server/ server/
 
@@ -34,6 +39,5 @@ WORKDIR /backend
 COPY --chown=1234:1234 --from=builder /work/venv /backend/venv
 
 EXPOSE 6777
-
 ENTRYPOINT ["/backend/venv/bin/python", "parsec", "backend"]
 CMD ["run", "--port=6777"]

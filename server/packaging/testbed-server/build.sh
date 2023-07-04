@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 # Execute the script like `bash packaging/testbed-server/build.sh ...`
 
 set -e -o pipefail
@@ -13,14 +13,14 @@ CURRENT_VERSION=$(grep -o '^version = .*$' $ROOTDIR/server/pyproject.toml | sed 
 CURRENT_COMMIT_SHA=$(git rev-parse --short HEAD)
 
 UNIQ_TAG="$CURRENT_VERSION.$CURRENT_DATE-sha.$CURRENT_COMMIT_SHA"
+# We use Github package repository to store our docker's container.
+PREFIX=ghcr.io/scille/parsec-cloud
 
 echo "Will create an image \`parsec-testbed-server\` with the following tags:"
 echo "- \`latest\`"
 echo "- \`$UNIQ_TAG\`"
 
-PREFIX=ghcr.io/scille/parsec-cloud
-
-if [ "$WRITE_ENV" -eq 1 ]; then
+if [ "$WRITE_ENV" = "1" ]; then
     (
         echo "UNIQ_TAG=$UNIQ_TAG"
         echo "TAGS=($UNIQ_TAG latest)"
