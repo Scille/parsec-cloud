@@ -76,10 +76,6 @@
                                 "type": "DateTime"
                             },
                             {
-                                "name": "claimer_email",
-                                "type": "String"
-                            },
-                            {
                                 "name": "claimer_user_id",
                                 "type": "UserID"
                             },

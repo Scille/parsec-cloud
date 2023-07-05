@@ -91,7 +91,6 @@ impl InviteListItem {
         _cls: &PyType,
         token: InvitationToken,
         created_on: DateTime,
-        claimer_email: String,
         claimer_user_id: UserID,
         status: InvitationStatus,
     ) -> PyResult<Self> {
@@ -100,7 +99,6 @@ impl InviteListItem {
         Ok(Self(invite_list::InviteListItem::ShamirRecovery {
             token,
             created_on,
-            claimer_email,
             claimer_user_id: claimer_user_id.0,
             status: status.0,
         }))
@@ -140,7 +138,6 @@ impl InviteListItem {
     fn claimer_email(&self) -> PyResult<&str> {
         match &self.0 {
             invite_list::InviteListItem::User { claimer_email, .. } => Ok(claimer_email),
-            invite_list::InviteListItem::ShamirRecovery { claimer_email, .. } => Ok(claimer_email),
             _ => Err(PyAttributeError::new_err("claimer_email")),
         }
     }

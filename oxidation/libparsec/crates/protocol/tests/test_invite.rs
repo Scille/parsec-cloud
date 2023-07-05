@@ -266,7 +266,6 @@ fn serde_invite_list_rep() {
     //     }
     //     {
     //       type: "SHAMIR_RECOVERY"
-    //       claimer_email: "alice@example.com"
     //       claimer_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a"
     //       created_on: ext(1, 946774800.0)
     //       status: "IDLE"
@@ -281,11 +280,10 @@ fn serde_invite_list_rep() {
         "645f6f6ed70141cc375188000000a6737461747573a449444c45a5746f6b656ed802d864b9"
         "3ded264aae9ae583fd3d40c45a84a474797065a6444556494345aa637265617465645f6f6e"
         "d70141cc375188000000a6737461747573a449444c45a5746f6b656ed802d864b93ded264a"
-        "ae9ae583fd3d40c45a86a474797065af5348414d49525f5245434f56455259ad636c61696d"
-        "65725f656d61696cb1616c696365406578616d706c652e636f6daf636c61696d65725f7573"
-        "65725f6964d920313039623638626135636466343238656130303137666336626363303464"
-        "3461aa637265617465645f6f6ed70141cc375188000000a6737461747573a449444c45a574"
-        "6f6b656ed802d864b93ded264aae9ae583fd3d40c45a"
+        "ae9ae583fd3d40c45a85a474797065af5348414d49525f5245434f56455259af636c61696d"
+        "65725f757365725f6964d92031303962363862613563646634323865613030313766633662"
+        "63633034643461aa637265617465645f6f6ed70141cc375188000000a6737461747573a449"
+        "444c45a5746f6b656ed802d864b93ded264aae9ae583fd3d40c45a"
     );
 
     let expected = authenticated_cmds::invite_list::Rep::Ok {
@@ -304,7 +302,6 @@ fn serde_invite_list_rep() {
             authenticated_cmds::invite_list::InviteListItem::ShamirRecovery {
                 token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
                 created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
-                claimer_email: "alice@example.com".to_owned(),
                 claimer_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
                 status: InvitationStatus::Idle,
             },

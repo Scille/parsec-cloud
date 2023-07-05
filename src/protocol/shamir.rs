@@ -53,12 +53,9 @@ impl ShamirRecoveryOthersListReq {
     }
 }
 
-gen_rep!(
-    shamir_recovery_others_list,
-    ShamirRecoveryOthersListRep,
-    { .. },
-    [NotAllowed],
-);
+gen_rep!(shamir_recovery_others_list, ShamirRecoveryOthersListRep, {
+    ..
+},);
 
 #[pyclass(extends=ShamirRecoveryOthersListRep)]
 pub(crate) struct ShamirRecoveryOthersListRepOk;

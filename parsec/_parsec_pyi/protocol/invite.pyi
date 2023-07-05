@@ -234,7 +234,6 @@ class InviteListItem:
         cls,
         token: InvitationToken,
         created_on: DateTime,
-        claimer_email: str,
         claimer_user_id: UserID,
         status: InvitationStatus,
     ) -> InviteListItem: ...

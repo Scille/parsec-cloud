@@ -20,7 +20,6 @@ from parsec._parsec import (
     PublicKey,
     SecretKey,
     ShamirRecoveryCommunicatedData,
-    ShamirRecoveryOthersListRepNotAllowed,
     ShamirRecoveryOthersListRepOk,
     ShamirRecoveryOthersListRepUnknownStatus,
     ShamirRecoveryShareCertificate,
@@ -165,8 +164,6 @@ class ShamirRecoveryGreetInitialCtx(BaseGreetInitialCtx):
 
         # Get shamir recovery certificates
         rep = await self._cmds.shamir_recovery_others_list()
-        if isinstance(rep, ShamirRecoveryOthersListRepNotAllowed):
-            raise InviteError("Not allowed")
         if isinstance(rep, ShamirRecoveryOthersListRepUnknownStatus):
             raise InviteError(f"Unknown status: {rep.status}")
         assert isinstance(rep, ShamirRecoveryOthersListRepOk)

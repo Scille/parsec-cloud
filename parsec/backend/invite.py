@@ -579,7 +579,6 @@ class BaseInviteComponent:
                 return InviteListItem.ShamirRecovery(
                     invitation.token,
                     invitation.created_on,
-                    str(invitation.claimer_email),
                     invitation.claimer_user_id,
                     invitation.status,
                 )

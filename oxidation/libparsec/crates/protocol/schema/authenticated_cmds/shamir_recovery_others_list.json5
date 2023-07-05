@@ -22,10 +22,6 @@
                         "type": "List<Bytes>"
                     }
                 ]
-            },
-            {
-                // Current user is not ADMIN
-                "status": "not_allowed"
             }
         ]
     }

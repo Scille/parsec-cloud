@@ -25,7 +25,6 @@ from parsec._parsec import (
     SecretKey,
     ShamirRecoveryBriefCertificate,
     ShamirRecoveryCommunicatedData,
-    ShamirRecoveryOthersListRepNotAllowed,
     ShamirRecoveryOthersListRepOk,
     ShamirRecoveryRecipient,
     ShamirRecoverySecret,
@@ -160,12 +159,6 @@ async def test_shamir_recovery(alice: LocalDevice, bob: LocalDevice, alice_ws, b
     rep = await invite_shamir_recovery_reveal(invited_ws, alice_reveal_token)
     assert isinstance(rep, InviteShamirRecoveryRevealRepOk)
     assert rep.ciphered_data == b"alice_ciphered_data"
-
-
-@pytest.mark.trio
-async def test_shamir_recovery_others_list_not_allowed(bob_ws):
-    rep = await shamir_recovery_others_list(bob_ws)
-    assert isinstance(rep, ShamirRecoveryOthersListRepNotAllowed)
 
 
 @pytest.mark.trio
@@ -432,7 +425,6 @@ async def test_shamir_list(
     assert rep.invitations[0].token == invitation_token
     assert alice.human_handle is not None
     assert rep.invitations[0].claimer_user_id == alice.user_id
-    assert rep.invitations[0].claimer_email == alice.human_handle.email
 
     rep = await invite_delete(
         adam_ws, token=invitation_token, reason=InvitationDeletedReason.CANCELLED

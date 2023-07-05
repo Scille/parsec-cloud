@@ -37,11 +37,14 @@ class BaseShamirComponent:
         self, client_ctx: AuthenticatedClientContext, req: ShamirRecoveryOthersListReq
     ) -> ShamirRecoveryOthersListRep:
         result = await self.recovery_others_list(client_ctx.organization_id, client_ctx.device_id)
-        if result:
-            brief_certificates, share_certificates = zip(*result)
-        else:
-            brief_certificates = ()
-            share_certificates = ()
+
+        # Unzip
+        brief_certificates = []
+        share_certificates = []
+        for brief_certificate, share_certificate in result:
+            brief_certificates.append(brief_certificate)
+            share_certificates.append(share_certificate)
+
         return ShamirRecoveryOthersListRepOk(brief_certificates, share_certificates)
 
     @api("shamir_recovery_self_info")

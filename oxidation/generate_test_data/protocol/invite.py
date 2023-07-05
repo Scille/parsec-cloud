@@ -174,7 +174,6 @@ serialized = serializer.rep_dumps(
             InviteListItem.ShamirRecovery(
                 token=InvitationToken.from_hex("d864b93ded264aae9ae583fd3d40c45a"),
                 created_on=DateTime(2000, 1, 2, 1),
-                claimer_email="alice@example.com",
                 claimer_user_id=UserID("109b68ba5cdf428ea0017fc6bcc04d4a"),
                 status=InvitationStatus.IDLE,
             ),

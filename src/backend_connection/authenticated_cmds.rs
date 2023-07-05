@@ -1210,7 +1210,6 @@ impl AuthenticatedCmds {
                 authenticated_cmds::shamir_recovery_others_list,
                 ShamirRecoveryOthersListRep,
                 Ok,
-                NotAllowed,
                 UnknownStatus,
             )
         })

@@ -17,7 +17,6 @@ from parsec._parsec import (
     InviteNewRepOk,
     SecretKey,
     ShamirRecoveryBriefCertificate,
-    ShamirRecoveryOthersListRepNotAllowed,
     ShamirRecoveryOthersListRepOk,
     ShamirRecoveryOthersListRepUnknownStatus,
     ShamirRecoverySecret,
@@ -299,8 +298,6 @@ async def _load_and_verify_shamir_certificates(
     ]
 ]:
     rep = await cmds.shamir_recovery_others_list()
-    if isinstance(rep, ShamirRecoveryOthersListRepNotAllowed):
-        raise click.ClickException("Not allowed")
     if isinstance(rep, ShamirRecoveryOthersListRepUnknownStatus):
         raise click.ClickException(f"Unknown status: {rep.status}")
     assert isinstance(rep, ShamirRecoveryOthersListRepOk)

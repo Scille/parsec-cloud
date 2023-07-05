@@ -424,7 +424,6 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<ShamirRecoverySelfInfoRepUnknownStatus>()?;
     m.add_class::<ShamirRecoverySelfInfoReq>()?;
     m.add_class::<ShamirRecoveryOthersListRep>()?;
-    m.add_class::<ShamirRecoveryOthersListRepNotAllowed>()?;
     m.add_class::<ShamirRecoveryOthersListRepOk>()?;
     m.add_class::<ShamirRecoveryOthersListRepUnknownStatus>()?;
     m.add_class::<ShamirRecoveryOthersListReq>()?;
