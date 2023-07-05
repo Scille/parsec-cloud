@@ -43,7 +43,7 @@ setup.cfg               @Scille/python-code-owners
 
 # Ops team is responsible for the CI & the packaging system.
 /.github/               @Scille/ops-code-owners
-/packaging/             @Scille/ops-code-owners
+/server/packaging/      @Scille/ops-code-owners
 /misc/                  @Scille/ops-code-owners
 
 # @touilleMan is responsible for the CODEOWNERS file ;)
