@@ -69,7 +69,7 @@ TOOLS_VERSION: Dict[Tool, str] = {
     Tool.Poetry: "1.3.2",
     Tool.Node: "18.12.0",
     Tool.WasmPack: "0.11.0",
-    Tool.Parsec: "2.16.0-rc.1",
+    Tool.Parsec: "2.16.0-rc.1+dev",
 }
 
 
