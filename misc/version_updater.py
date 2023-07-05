@@ -5,6 +5,7 @@ Helper that help changing the version of a tool across the repository.
 """
 
 import enum
+import glob
 import re
 import sys
 from argparse import ArgumentParser
@@ -269,10 +270,11 @@ def check_tool(tool: Tool, version: str, update: bool) -> Dict[Path, List[str]]:
         if regexes is None:
             continue
 
-        files_errors = check_or_udpate(filename, regexes, version)
-
-        if files_errors:
-            errors[filename] = files_errors
+        for glob_file in glob.glob(str(filename), recursive=True):
+            file = ROOT_DIR / glob_file
+            files_errors = check_or_udpate(file, regexes, version)
+            if files_errors:
+                errors[file] = files_errors
 
     return errors
 
