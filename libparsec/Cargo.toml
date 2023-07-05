@@ -3,6 +3,7 @@ name = "libparsec"
 version = "0.0.0"
 edition = "2021"
 rust-version = "1.62.0"
+license = "BUSL-1.1"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

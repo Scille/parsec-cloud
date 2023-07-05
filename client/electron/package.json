@@ -10,7 +10,7 @@
         "type": "git",
         "url": "https://github.com/Scille/parsec-cloud"
     },
-    "license": "MIT",
+    "license": "BUSL-1.1",
     "main": "build/src/index.js",
     "scripts": {
         "libparsec:copy": "node ./scripts/copy_bindings.js",

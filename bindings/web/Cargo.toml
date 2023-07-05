@@ -2,6 +2,7 @@
 name = "libparsec_bindings_web"
 version = "0.0.0"
 edition = "2021"
+license = "BUSL-1.1"
 
 [features]
 default = ["console_error_panic_hook"]

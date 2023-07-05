@@ -2,7 +2,7 @@
 name = "libparsec_types"
 version = "0.0.0"
 edition = "2021"
-license = " BUSL-1.1"
+license = "BUSL-1.1"
 
 [features]
 test-mock-time = []

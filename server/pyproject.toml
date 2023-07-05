@@ -6,6 +6,7 @@ authors = ["Scille SAS <contact@scille.fr>"]
 readme = "../README.rst"
 homepage = "https://github.com/Scille/parsec-cloud"
 documentation = "https://docs.parsec.cloud"
+license = "BUSL-1.1"
 keywords = ["parsec", "cryptography", "sharing", "encryption"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",

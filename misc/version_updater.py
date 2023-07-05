@@ -52,6 +52,8 @@ NODE_GA_VERSION = ReplaceRegex(r"node-version: [0-9.]+", "node-version: {version
 WASM_PACK_GA_VERSION = ReplaceRegex(r"wasm-pack-version: [0-9.]+", "wasm-pack-version: {version}")
 PYTHON_DOCKER_VERSION = ReplaceRegex(r"python:\d.\d+", hide_patch_version("python:{version}"))
 PYTHON_SMALL_VERSION = ReplaceRegex(r"python\d.\d+", hide_patch_version("python{version}"))
+TOML_LICENSE_FIELD = ReplaceRegex(r'license = ".*"', 'license = "{version}"')
+JSON_LICENSE_FIELD = ReplaceRegex(r'"license": ".*",', '"license": "{version}",')
 
 
 @enum.unique
@@ -62,6 +64,7 @@ class Tool(enum.Enum):
     Node = "node"
     WasmPack = "wasm-pack"
     Parsec = "parsec"
+    License = "license"
 
 
 TOOLS_VERSION: Dict[Tool, str] = {
@@ -71,6 +74,7 @@ TOOLS_VERSION: Dict[Tool, str] = {
     Tool.Node: "18.12.0",
     Tool.WasmPack: "0.11.0",
     Tool.Parsec: "2.16.0-a.0+dev",
+    Tool.License: "BUSL-1.1",
 }
 
 
@@ -100,6 +104,10 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
         Tool.Node: [NODE_GA_VERSION],
         Tool.WasmPack: [WASM_PACK_GA_VERSION],
     },
+    ROOT_DIR / "client/package.json": {Tool.License: [JSON_LICENSE_FIELD]},
+    ROOT_DIR / "client/electron/package.json": {Tool.License: [JSON_LICENSE_FIELD]},
+    ROOT_DIR / "bindings/electron/package.json": {Tool.License: [JSON_LICENSE_FIELD]},
+    ROOT_DIR / "bindings/web/package.json": {Tool.License: [JSON_LICENSE_FIELD]},
     ROOT_DIR
     / "docs/development/quickstart.md": {
         Tool.Rust: [
@@ -188,6 +196,7 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
             ),
         ],
         Tool.Parsec: [ReplaceRegex(r'^version = ".*"$', 'version = "v{version}"')],
+        Tool.License: [TOML_LICENSE_FIELD],
     },
     ROOT_DIR
     / ".pre-commit-config.yaml": {
@@ -198,6 +207,9 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
     / "rust-toolchain.toml": {
         Tool.Rust: [ReplaceRegex(r'channel = ".*"', 'channel = "{version}"')]
     },
+    # We don't list the root `Cargo.toml` because it's a 'pure workspace' Cargo spec file
+    # (i.e.: It don't have a `package` entry) and thus can't have a license field.
+    ROOT_DIR / "*/**/Cargo.toml": {Tool.License: [TOML_LICENSE_FIELD]},
 }
 
 

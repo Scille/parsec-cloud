@@ -2,6 +2,7 @@
 name = "libparsec_testbed"
 version = "0.0.0"
 edition = "2021"
+license = "BUSL-1.1"
 
 [dependencies]
 libparsec_types = { path = "../types" }
