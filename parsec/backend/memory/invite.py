@@ -22,6 +22,7 @@ from parsec.backend.invite import (
     InvitationError,
     InvitationInvalidStateError,
     InvitationNotFoundError,
+    InvitationShamirRecoveryGreeterNotInRecipients,
     InvitationShamirRecoveryNotSetup,
     ShamirRecoveryInvitation,
     UserInvitation,
@@ -257,14 +258,52 @@ class MemoryInviteComponent(BaseInviteComponent):
         claimer_user_id: UserID,
         created_on: DateTime | None = None,
     ) -> ShamirRecoveryInvitation:
-        result = await self._new(
-            organization_id=organization_id,
+        assert self._user_component is not None
+
+        # Check for existing invitation
+        org = self._organizations[organization_id]
+        for invitation in org.invitations.values():
+            if (
+                isinstance(invitation, ShamirRecoveryInvitation)
+                and invitation.claimer_user_id == claimer_user_id
+                and invitation.token not in org.deleted_invitations
+            ):
+                # A shamir invitation alread exists for that user
+                return invitation
+
+        # Gather information for new invitation
+        created_on = created_on or DateTime.now()
+        greeter_human_handle = self._user_component._get_user(
+            organization_id, greeter_user_id
+        ).human_handle
+        claimer_user = await self._user_component.get_user(organization_id, claimer_user_id)
+        claimer_email = claimer_user.human_handle.email if claimer_user.human_handle else None
+        threshold, recipients = self._shamir_info(organization_id, claimer_user_id)
+        allowed_greeters = {recipient.user_id for recipient in recipients}
+
+        # Check greeter
+        if greeter_user_id not in allowed_greeters:
+            raise InvitationShamirRecoveryGreeterNotInRecipients()
+
+        # Create invitation
+        invitation = ShamirRecoveryInvitation(
             greeter_user_id=greeter_user_id,
+            greeter_human_handle=greeter_human_handle,
+            claimer_email=claimer_email,
             claimer_user_id=claimer_user_id,
+            threshold=threshold,
+            recipients=recipients,
             created_on=created_on,
         )
-        assert isinstance(result, ShamirRecoveryInvitation)
-        return result
+        org.invitations[invitation.token] = invitation
+        await self._send_event(
+            BackendEvent.INVITE_STATUS_CHANGED,
+            organization_id=organization_id,
+            greeter=invitation.greeter_user_id,
+            token=invitation.token,
+            status=invitation.status,
+        )
+        return invitation
 
     async def _new(
         self,
@@ -285,13 +324,6 @@ class MemoryInviteComponent(BaseInviteComponent):
             ):
                 # An invitation already exists for what the user has asked for
                 return invitation
-            if (
-                isinstance(invitation, ShamirRecoveryInvitation)
-                and invitation.claimer_user_id == claimer_user_id
-                and invitation.token not in org.deleted_invitations
-            ):
-                # A shamir invitation alread exists for that user
-                return invitation
         else:
             # Must create a new invitation
             created_on = created_on or DateTime.now()
@@ -303,23 +335,6 @@ class MemoryInviteComponent(BaseInviteComponent):
                     greeter_user_id=greeter_user_id,
                     greeter_human_handle=greeter_human_handle,
                     claimer_email=claimer_email,
-                    created_on=created_on,
-                )
-            elif claimer_user_id:
-                claimer_user = await self._user_component.get_user(organization_id, claimer_user_id)
-                claimer_email = (
-                    claimer_user.human_handle.email if claimer_user.human_handle else None
-                )
-
-                threshold, recipients = self._shamir_info(organization_id, claimer_user_id)
-
-                invitation = ShamirRecoveryInvitation(
-                    greeter_user_id=greeter_user_id,
-                    greeter_human_handle=greeter_human_handle,
-                    claimer_email=claimer_email,
-                    claimer_user_id=claimer_user_id,
-                    threshold=threshold,
-                    recipients=recipients,
                     created_on=created_on,
                 )
             else:  # Device

@@ -168,6 +168,10 @@ class InvitationShamirRecoveryNotSetup(InvitationError):
     pass
 
 
+class InvitationShamirRecoveryGreeterNotInRecipients(InvitationError):
+    pass
+
+
 class ConduitState(Enum):
     STATE_1_WAIT_PEERS = "1_WAIT_PEERS"
     STATE_2_1_CLAIMER_HASHED_NONCE = "2_1_CLAIMER_HASHED_NONCE"
@@ -434,9 +438,6 @@ class BaseInviteComponent:
                 greeter_user_id=client_ctx.user_id,
             )
         elif req.type == InvitationType.SHAMIR_RECOVERY:
-            if client_ctx.profile != UserProfile.ADMIN:
-                return InviteNewRepNotAllowed()
-
             try:
                 invitation = await self.new_for_shamir_recovery(
                     organization_id=client_ctx.organization_id,
@@ -445,6 +446,8 @@ class BaseInviteComponent:
                 )
             except InvitationShamirRecoveryNotSetup:
                 return InviteNewRepNotAvailable()
+            except InvitationShamirRecoveryGreeterNotInRecipients:
+                return InviteNewRepNotAllowed()
 
         # No need to send email, we're done
         if not req.send_email:
@@ -493,7 +496,9 @@ class BaseInviteComponent:
             )
         elif req.type == InvitationType.SHAMIR_RECOVERY:
             assert isinstance(invitation, ShamirRecoveryInvitation)
-            assert invitation.claimer_email is not None
+            # Sending email is not available for legacy users
+            if invitation.claimer_email is None:
+                return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.BAD_RECIPIENT)
             to_addr = invitation.claimer_email
             if client_ctx.human_handle:
                 greeter_name = client_ctx.human_handle.label
