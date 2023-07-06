@@ -441,14 +441,13 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
 {% endfor %}
         ).await;
 
-        channel.send(move |mut cx| {
+        deferred.settle_with(&channel, move |mut cx| {
 {% if meth.return_type is none %}
             let js_ret = cx.null();
 {% else %}
             let js_ret = {{ render_rs_to_js("ret", meth.return_type) | indent(8) }};
 {% endif %}
-            deferred.resolve(&mut cx, js_ret);
-            Ok(())
+            Ok(js_ret)
         });
     });
 
