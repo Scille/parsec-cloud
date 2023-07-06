@@ -80,7 +80,7 @@ def build() -> None:
 
     with tempfile.TemporaryDirectory() as distdir:
         run(
-            f"maturin build {cargo_flags} --manifest-path {BASEDIR / 'Cargo.toml'} --interpreter {PYTHON_EXECUTABLE_PATH} --out {distdir}"
+            f"maturin build --locked {cargo_flags} --manifest-path {BASEDIR / 'Cargo.toml'} --interpreter {PYTHON_EXECUTABLE_PATH} --out {distdir}"
         )
 
         outputs = list(pathlib.Path(distdir).iterdir())

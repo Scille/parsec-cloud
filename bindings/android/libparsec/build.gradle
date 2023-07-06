@@ -46,6 +46,7 @@ cargo {
     targets = ["arm", "x86", "x86_64", "arm64"]
     libname = "libparsec_bindings_android"
     targetDirectory = "../../../../target/"
+    extraCargoBuildArguments = ["--locked"]
 }
 
 tasks.whenTaskAdded { task ->

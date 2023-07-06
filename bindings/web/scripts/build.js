@@ -129,6 +129,7 @@ function build_wasm(cargo_flags) {
     on_windows() ? "wasm-pack.exe" : "wasm-pack",
     "build",
     "--target=web",
+    "--locked",
     ...cargo_flags
   ];
 
