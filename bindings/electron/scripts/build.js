@@ -89,6 +89,7 @@ function build_electron_bindings(cargo_flags) {
     "--",
     "cargo",
     "build",
+    "--locked",
     "--message-format=json-render-diagnostics",
     ...cargo_flags
   ];
