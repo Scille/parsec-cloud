@@ -441,5 +441,5 @@ if __name__ == "__main__":
 
     subprocess.check_call(
         args=["cargo", "fmt"] + [f"--package={package}" for package in rust_modified_packages],
-        cwd=BASEDIR / "../../..",
+        cwd=BASEDIR / "../..",
     )
