@@ -141,10 +141,26 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
         Tool.WasmPack: [ReplaceRegex(r'Tool.WasmPack: "[0-9.]+"', 'Tool.WasmPack: "{version}"')],
         Tool.Parsec: [ReplaceRegex(r'Tool.Parsec: "[0-9.]+.*",', 'Tool.Parsec: "{version}",')],
     },
-    ROOT_DIR / "server/packaging/server/in-docker-build.sh": {Tool.Python: [PYTHON_SMALL_VERSION]},
+    ROOT_DIR
+    / "server/packaging/server/in-docker-build.sh": {
+        Tool.Poetry: [
+            ReplaceRegex(
+                r"curl -sSL https://install.python-poetry.org \| python - --version=[0-9.]+",
+                "curl -sSL https://install.python-poetry.org | python - --version={version}",
+            )
+        ],
+    },
     ROOT_DIR / "server/packaging/server/server.dockerfile": {Tool.Python: [PYTHON_DOCKER_VERSION]},
     ROOT_DIR
-    / "server/packaging/testbed-server/in-docker-build.sh": {Tool.Python: [PYTHON_SMALL_VERSION]},
+    / "server/packaging/testbed-server/in-docker-build.sh": {
+        Tool.Python: [PYTHON_SMALL_VERSION],
+        Tool.Poetry: [
+            ReplaceRegex(
+                r"curl -sSL https://install.python-poetry.org \| python - --version=[0-9.]+",
+                "curl -sSL https://install.python-poetry.org | python - --version={version}",
+            )
+        ],
+    },
     ROOT_DIR
     / "server/packaging/testbed-server/testbed-server.dockerfile": {
         Tool.Python: [PYTHON_DOCKER_VERSION]

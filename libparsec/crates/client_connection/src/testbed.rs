@@ -135,6 +135,21 @@ where
 #[derive(Debug)]
 pub(crate) struct SendHookConfig(Arc<ComponentStore>);
 
+impl Drop for SendHookConfig {
+    fn drop(&mut self) {
+        let guard = self.0.strategy.lock().expect("Mutex is poisoned");
+        if matches!(
+            &*guard,
+            SendHookStrategy::LowLevelOnce(_) | SendHookStrategy::HighLevelOnce(_)
+        ) {
+            panic!(
+                "Client connection is being destroyed while configured with a mock \
+                 expected to be trigger once !"
+            );
+        }
+    }
+}
+
 impl SendHookConfig {
     pub async fn high_level_send<T>(&self, request: T) -> HighLevelSendResult<T>
     where

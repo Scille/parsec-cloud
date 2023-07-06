@@ -63,7 +63,8 @@ impl TestbedEnvCache {
 
         let (human_handle, private_key, profile, user_manifest_id, user_manifest_key) = env
             .template
-            .events()
+            .events
+            .iter()
             .find_map(|e| match e {
                 TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
                     first_user_device_id: candidate,
@@ -100,7 +101,8 @@ impl TestbedEnvCache {
 
         let (device_label, signing_key, local_symkey) = env
             .template
-            .events()
+            .events
+            .iter()
             .find_map(|e| match e {
                 TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
                     first_user_device_id: candidate,
@@ -181,6 +183,19 @@ pub struct TestbedEnv {
     cache: Mutex<Option<TestbedEnvCache>>,
 }
 
+impl Clone for TestbedEnv {
+    fn clone(&self) -> Self {
+        Self {
+            kind: self.kind,
+            discriminant_dir: self.discriminant_dir.clone(),
+            server_addr: self.server_addr.clone(),
+            organization_id: self.organization_id.clone(),
+            template: self.template.clone(),
+            cache: Mutex::default(),
+        }
+    }
+}
+
 impl std::fmt::Debug for TestbedEnv {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut ds = f.debug_struct("TestbedEnv");
@@ -211,45 +226,42 @@ impl TestbedEnv {
         guard.is_some()
     }
 
-    pub fn customize(&self) -> TestbedTemplateBuilder<(), impl FnOnce(Arc<TestbedTemplate>)> {
+    /// Be careful env is going to be duplicated under the hood to apply the customization.
+    /// Hence only the last call of `customize` with be taken into account.
+    pub fn customize(&self, cb: impl FnOnce(&mut TestbedTemplateBuilder)) -> Arc<TestbedEnv> {
         assert!(
             matches!(self.kind, TestbedKind::ClientOnly),
             "Cannot customize the template on server side !"
         );
-        let discriminant_dir = self.discriminant_dir.clone();
-        TestbedTemplateBuilder::new_from_base(
-            "custom",
-            self.template.clone(),
-            move |new_template| {
-                // Retreive current testbed env
-                let mut envs = TESTBED_ENVS.lock().expect("Mutex is poisoned");
-                let env = envs
-                    .iter_mut()
-                    .find(|env| env.discriminant_dir == discriminant_dir)
-                    .expect("Must exist");
 
-                // Replace it by a new one customized
-                assert!(
-                    !env.is_sealed(),
-                    "Testbed template cannot be customized once the env is sealed"
-                );
-                *env = Arc::new(TestbedEnv {
-                    kind: env.kind,
-                    discriminant_dir,
-                    server_addr: env.server_addr.clone(),
-                    organization_id: env.organization_id.clone(),
-                    template: new_template,
-                    cache: Mutex::default(),
-                });
-            },
-        )
+        let mut builder = TestbedTemplateBuilder::new_from_template("custom", &self.template);
+        cb(&mut builder);
+
+        // Retreive current testbed env in the global store...
+        let mut envs = TESTBED_ENVS.lock().expect("Mutex is poisoned");
+        let env = envs
+            .iter_mut()
+            .find(|env| env.discriminant_dir == self.discriminant_dir)
+            .expect("Must exist");
+
+        // ...and patch it with the new template
+        assert!(
+            !env.is_sealed(),
+            "Testbed template cannot be customized once the env is sealed"
+        );
+        Arc::make_mut(env).template = builder.finalize();
+
+        (*env).clone()
     }
 
     pub fn organization_addr(&self) -> Arc<BackendOrganizationAddr> {
         self.seal_and(|cache| cache.organization_addr(self))
     }
 
-    pub fn local_device(&self, device_id: DeviceID) -> Arc<LocalDevice> {
+    pub fn local_device(&self, device_id: impl TryInto<DeviceID>) -> Arc<LocalDevice> {
+        let device_id = device_id
+            .try_into()
+            .unwrap_or_else(|_| panic!("Invalid DeviceID !"));
         self.seal_and(|cache| cache.local_device(self, device_id))
     }
 }

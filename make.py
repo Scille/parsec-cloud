@@ -146,7 +146,7 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
         # (note only the first `maturin develop` is impacted, as all maturin
         # develop uses the same default virtualenv)
         Cmd(
-            cmd="poetry install --with=docs",
+            cmd="poetry install --with=docs,testbed-server",
             extra_env={"POETRY_LIBPARSEC_BUILD_STRATEGY": "no_build"},
         ),
         Cmd(f"poetry run maturin develop {PYTHON_DEV_CARGO_FLAGS}"),

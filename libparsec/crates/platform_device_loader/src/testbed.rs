@@ -37,7 +37,8 @@ fn populate_available_devices(config_dir: &Path, env: &TestbedEnv) -> Vec<Availa
     // Populate the storage from the template.
     // Once done we should no longer need the template data
     env.template
-        .events()
+        .events
+        .iter()
         .filter_map(|e| {
             let (device_id, human_handle, device_label) = match e {
                 TestbedEvent::BootstrapOrganization(x) => (
@@ -52,7 +53,8 @@ fn populate_available_devices(config_dir: &Path, env: &TestbedEnv) -> Vec<Availa
                     let user_id = x.device_id.user_id();
                     let user_human_handle = env
                         .template
-                        .events()
+                        .events
+                        .iter()
                         .find_map(|e| match e {
                             TestbedEvent::BootstrapOrganization(e)
                                 if e.first_user_device_id.user_id() == user_id =>

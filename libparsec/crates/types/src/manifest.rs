@@ -261,6 +261,24 @@ pub struct WorkspaceEntry {
 }
 
 impl WorkspaceEntry {
+    pub fn new(
+        id: EntryID,
+        name: EntryName,
+        key: SecretKey,
+        encryption_revision: IndexInt,
+        encrypted_on: DateTime,
+    ) -> Self {
+        Self {
+            id,
+            name,
+            key,
+            encryption_revision,
+            encrypted_on,
+            legacy_role_cache_timestamp: DateTime::from_f64_with_us_precision(0.0),
+            legacy_role_cache_value: None,
+        }
+    }
+
     pub fn generate(name: EntryName, timestamp: DateTime) -> Self {
         Self {
             id: EntryID::default(),

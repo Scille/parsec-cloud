@@ -73,6 +73,11 @@ impl UserOps {
         self.storage.stop().await;
     }
 
+    /// Low-level access, should be only needed for tests
+    pub fn test_get_user_manifest(&self) -> Arc<LocalUserManifest> {
+        self.storage.get_user_manifest()
+    }
+
     // For readability, we define the public interface here and let the actual
     // implementation in separated submodules
 

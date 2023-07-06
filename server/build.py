@@ -79,7 +79,9 @@ def build() -> None:
     # native module and discard the rest !
 
     with tempfile.TemporaryDirectory() as distdir:
-        run(f"maturin build {cargo_flags} --interpreter {PYTHON_EXECUTABLE_PATH} --out {distdir}")
+        run(
+            f"maturin build {cargo_flags} --manifest-path {BASEDIR / 'Cargo.toml'} --interpreter {PYTHON_EXECUTABLE_PATH} --out {distdir}"
+        )
 
         outputs = list(pathlib.Path(distdir).iterdir())
         if len(outputs) != 1:

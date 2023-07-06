@@ -1,10 +1,12 @@
 #! /bin/bash
 # Execute the script line `bash packaging/backend/build.sh ...`
 
-set -e
+set -e -o pipefail
 
-SCRIPTDIR=$(dirname $(realpath -s "$0"))
-ROOTDIR="$SCRIPTDIR/../../.."
+# Allow the user to overwrite `SCRIPTDIR` by exporting it beforehand.
+SCRIPTDIR=${SCRIPTDIR:=$(dirname $(realpath -s "$0"))}
+# Allow the user to overwrite `ROOTDIR` by exporting it beforehand.
+ROOTDIR=${ROOTDIR:=$(realpath -s "$SCRIPTDIR/../../..")}
 
 CURRENT_DATE=$(date --iso-8601)
 CURRENT_VERSION=$(grep -o '^version = .*$' $ROOTDIR/server/pyproject.toml | sed 's/version = "\(.*\)"$/\1/' | tr '+' '.')

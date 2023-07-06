@@ -159,8 +159,15 @@ async fn renew_legacy_file(tmp_path: TmpPath) {
     )
 }
 
-#[parsec_test(testbed = "coolorg")]
+#[parsec_test(testbed = "empty")]
 async fn testbed(env: &TestbedEnv) {
+    env.customize(|builder| {
+        builder.bootstrap_organization("alice"); // alice@dev1
+        builder.new_user("bob"); // bob@dev1
+        builder.new_device("alice"); // alice@dev2
+        builder.new_device("bob"); // bob@dev2
+        builder.new_user("mallory"); // mallory@dev1
+    });
     let devices = list_available_devices(&env.discriminant_dir).await;
     assert_eq!(
         devices

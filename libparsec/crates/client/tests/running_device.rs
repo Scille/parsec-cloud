@@ -6,7 +6,7 @@ use libparsec_tests_fixtures::prelude::*;
 
 #[parsec_test(testbed = "minimal")]
 async fn base(env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1".parse().unwrap());
+    let alice = env.local_device("alice@dev1");
     let running = RunningDevice::start(alice, &env.discriminant_dir)
         .await
         .unwrap();

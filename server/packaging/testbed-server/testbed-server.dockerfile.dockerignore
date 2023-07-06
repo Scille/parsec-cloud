@@ -1,6 +1,6 @@
 # Rust code that isn't need for testbed
-client
 bindings
+client
 target
 .cargo
 
@@ -17,6 +17,7 @@ __pycache__
 .hypothesis
 .mypy_cache
 .pytest_cache
+.ruff_cache
 server/parsec/*.so
 
 # Cov file
@@ -30,3 +31,5 @@ licenses
 newsfragment
 server/packaging
 !server/packaging/testbed-server
+
+.cspell

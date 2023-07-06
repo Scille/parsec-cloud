@@ -29,9 +29,9 @@ static TESTBED_TEMPLATES: [(&str, Mutex<TemplateState>); 4] = [
         Mutex::new(TemplateState::NotGenerated(templates::minimal::generate)),
     ),
     (
-        "alice_cruising",
+        "minimal_client_ready",
         Mutex::new(TemplateState::NotGenerated(
-            templates::alice_cruising::generate,
+            templates::minimal_client_ready::generate,
         )),
     ),
     (

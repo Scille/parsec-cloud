@@ -132,9 +132,9 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
         tm.add_class::<TestbedEventShareRealm>()?;
         tm.add_class::<TestbedEventStartRealmReencryption>()?;
         tm.add_class::<TestbedEventFinishRealmReencryption>()?;
-        tm.add_class::<TestbedEventNewVlob>()?;
-        tm.add_class::<TestbedEventUpdateVlob>()?;
-        tm.add_class::<TestbedEventNewBlock>()?;
+        tm.add_class::<TestbedEventCreateOrUpdateUserManifestVlob>()?;
+        tm.add_class::<TestbedEventCreateOrUpdateOpaqueVlob>()?;
+        tm.add_class::<TestbedEventCreateOpaqueBlock>()?;
     }
 
     Ok(())

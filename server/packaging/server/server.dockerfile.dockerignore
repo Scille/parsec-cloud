@@ -1,6 +1,6 @@
 # Rust code that isn't need for testbed
-client
 bindings
+client
 target
 .cargo
 
