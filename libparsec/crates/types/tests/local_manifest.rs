@@ -2,7 +2,9 @@
 
 // Functions using rstest parametrize ignores `#[warn(clippy::too_many_arguments)]`
 // decorator, so we must do global ignore instead :(
-#![allow(clippy::too_many_arguments)]
+// `allow-unwrap-in-test` don't behave as expected, see:
+// https://github.com/rust-lang/rust-clippy/issues/11119
+#![allow(clippy::too_many_arguments, clippy::unwrap_used)]
 
 use hex_literal::hex;
 use rstest::rstest;

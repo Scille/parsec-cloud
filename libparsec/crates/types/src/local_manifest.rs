@@ -134,18 +134,24 @@ impl Chunk {
         Ok(self)
     }
 
-    pub fn is_block(&self) -> bool {
+    fn block(&self) -> Option<&BlockAccess> {
         // Requires an access
         if let Some(access) = &self.access {
             // Pseudo block
-            self.is_pseudo_block()
-                // Offset inconsistent
-                && self.raw_offset == access.offset
-                // Size inconsistent
+            if self.is_pseudo_block()
+            // Offset inconsistent
+            && self.raw_offset == access.offset
+            // Size inconsistent
                 && self.raw_size == access.size
-        } else {
-            false
+            {
+                return Some(access);
+            }
         }
+        None
+    }
+
+    pub fn is_block(&self) -> bool {
+        self.block().is_some()
     }
 
     pub fn is_pseudo_block(&self) -> bool {
@@ -161,10 +167,8 @@ impl Chunk {
     }
 
     pub fn get_block_access(&self) -> Result<&BlockAccess, &'static str> {
-        if !self.is_block() {
-            return Err("This chunk does not correspond to a block");
-        }
-        Ok(self.access.as_ref().unwrap())
+        self.block()
+            .ok_or("This chunk does not correspond to a block")
     }
 }
 

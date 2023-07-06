@@ -28,7 +28,7 @@ impl Drop for TmpPath {
                         .into_iter()
                         .map(|item| match item {
                             Ok(item) => {
-                                format!("{}", item.path().strip_prefix(&self.0).unwrap().display())
+                                format!("{}", item.path().strip_prefix(&self.0).expect("The item paths are the children of the inner path, they always have it as a prefix").display())
                             }
                             Err(err) => format!("<error: {:?}>", err),
                         })

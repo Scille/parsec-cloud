@@ -126,7 +126,11 @@ fn load_legacy_device_file(key_file: &Path, ciphertext: &[u8]) -> LocalDeviceRes
         .map_err(|_| LocalDeviceError::Deserialization(key_file.to_path_buf()))?;
 
     // Legacy device slug is their stem
-    let slug = key_file.file_stem().unwrap().to_str().unwrap();
+    let slug = key_file
+        .file_stem()
+        .expect("Key file should always be a filename")
+        .to_str()
+        .expect("Filename should be a UTF-8 string");
     let (organization_id, device_id) =
         LocalDevice::load_slug(slug).map_err(|_| LocalDeviceError::InvalidSlug)?;
 

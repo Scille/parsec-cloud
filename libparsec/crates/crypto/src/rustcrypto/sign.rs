@@ -18,7 +18,11 @@ crate::impl_key_debug!(SigningKey);
 
 impl Clone for SigningKey {
     fn clone(&self) -> Self {
-        Self::try_from(self.as_ref()).unwrap()
+        Self(
+            Keypair::from_bytes(&self.0.to_bytes()).expect(
+                "The input bytes come from the cloned signing key, which is a valid key size",
+            ),
+        )
     }
 }
 
@@ -81,7 +85,7 @@ impl TryFrom<&[u8]> for SigningKey {
 impl From<[u8; Self::SIZE]> for SigningKey {
     fn from(key: [u8; Self::SIZE]) -> Self {
         // TODO: zero copy
-        Self::try_from(key.as_ref()).unwrap()
+        Self::try_from(key.as_ref()).expect("Cannot fail because the provided secret key is the expected size of `ed25519_dalek::SecretKey::from_bytes`")
     }
 }
 
