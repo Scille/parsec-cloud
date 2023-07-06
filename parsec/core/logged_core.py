@@ -307,6 +307,32 @@ class LoggedCore:
             email_sent,
         )
 
+    async def new_shamir_recovery_invitation(
+        self, user_id: UserID, send_email: bool
+    ) -> Tuple[BackendInvitationAddr, InvitationEmailSentStatus]:
+        """
+        Raises:
+            BackendConnectionError
+        """
+        rep = await self._backend_conn.cmds.invite_new(
+            type=InvitationType.SHAMIR_RECOVERY, claimer_user_id=user_id, send_email=send_email
+        )
+        if not isinstance(rep, InviteNewRepOk):
+            raise BackendConnectionError(f"Backend error: {rep}")
+        try:
+            email_sent = rep.email_sent
+        except AttributeError:
+            email_sent = InvitationEmailSentStatus.SUCCESS
+        return (
+            BackendInvitationAddr.build(
+                backend_addr=self.device.organization_addr.get_backend_addr(),
+                organization_id=self.device.organization_id,
+                invitation_type=InvitationType.DEVICE,
+                token=rep.token,
+            ),
+            email_sent,
+        )
+
     async def delete_invitation(
         self,
         token: InvitationToken,
