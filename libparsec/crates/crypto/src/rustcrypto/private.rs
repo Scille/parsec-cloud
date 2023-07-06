@@ -27,7 +27,9 @@ mod sealed_box {
     /// nonce = Blake2b(ephemeral_pk||target_pk)
     /// nonce_length = 24
     fn get_nonce(ephemeral_pk: &PublicKey, target_pk: &PublicKey) -> [u8; BOX_NONCE_LENGTH] {
-        let mut hasher = Blake2bVar::new(BOX_NONCE_LENGTH).unwrap();
+        let mut hasher = Blake2bVar::new(BOX_NONCE_LENGTH).expect(
+            "Should not fail because `BOX_NONCE_LENGTH` is smaller than `Blake2bVar::MAX_OUTPUT_SIZE`",
+        );
 
         hasher.update(ephemeral_pk.as_bytes());
         hasher.update(target_pk.as_bytes());
@@ -54,7 +56,9 @@ mod sealed_box {
         let nonce = aead::generic_array::GenericArray::from_slice(&nonce);
 
         let salsabox = SalsaBox::new(pk, &ep_sk);
-        let encrypted = salsabox.encrypt(nonce, data).unwrap();
+        let encrypted = salsabox
+            .encrypt(nonce, data)
+            .expect("Should not fail as long as the associated data is not provided");
 
         out.extend_from_slice(&encrypted);
         out

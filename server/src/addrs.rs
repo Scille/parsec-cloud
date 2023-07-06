@@ -112,7 +112,9 @@ impl BackendOrganizationAddr {
                     None => None,
                 },
                 match dict.get_item("use_ssl") {
-                    Some(use_ssl) => use_ssl.extract::<bool>().unwrap(),
+                    Some(use_ssl) => use_ssl
+                        .extract::<bool>()
+                        .expect("`use_ssl` should be a boolean value"),
                     None => true,
                 },
             ),
@@ -297,7 +299,9 @@ impl BackendOrganizationBootstrapAddr {
                     None => None,
                 },
                 match dict.get_item("use_ssl") {
-                    Some(use_ssl) => use_ssl.extract::<bool>().unwrap(),
+                    Some(use_ssl) => use_ssl
+                        .extract::<bool>()
+                        .expect("`use_ssl` should be a boolean value"),
                     None => true,
                 },
             ),
@@ -447,7 +451,9 @@ impl BackendOrganizationFileLinkAddr {
                     None => None,
                 },
                 match dict.get_item("use_ssl") {
-                    Some(use_ssl) => use_ssl.extract::<bool>().unwrap(),
+                    Some(use_ssl) => use_ssl
+                        .extract::<bool>()
+                        .expect("`use_ssl` should be a boolean value"),
                     None => true,
                 },
             ),
@@ -603,7 +609,9 @@ impl BackendInvitationAddr {
                     None => None,
                 },
                 match dict.get_item("use_ssl") {
-                    Some(use_ssl) => use_ssl.extract::<bool>().unwrap(),
+                    Some(use_ssl) => use_ssl
+                        .extract::<bool>()
+                        .expect("`use_ssl` should be a boolean value"),
                     None => true,
                 },
             ),
@@ -740,7 +748,9 @@ impl BackendPkiEnrollmentAddr {
                     None => None,
                 },
                 match dict.get_item("use_ssl") {
-                    Some(use_ssl) => use_ssl.extract::<bool>().unwrap(),
+                    Some(use_ssl) => use_ssl
+                        .extract::<bool>()
+                        .expect("`use_ssl` should be a boolean value"),
                     None => true,
                 },
             ),

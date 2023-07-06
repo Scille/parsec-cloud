@@ -14,7 +14,9 @@ impl TryFrom<u64> for IntegerBetween1And100 {
             return Err("Invalid IntegerBetween1And100 value");
         }
 
-        Ok(Self(NonZeroU8::new(data as u8).unwrap()))
+        Ok(Self(
+            NonZeroU8::new(data as u8).expect("The value is in the boundary of an u8"),
+        ))
     }
 }
 
