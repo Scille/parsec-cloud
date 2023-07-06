@@ -19,6 +19,8 @@ env:
   # It will only update it's index for the dependencies that we use.
   # https://blog.rust-lang.org/2023/03/09/Rust-1.68.0.html#cargos-sparse-protocol
   CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+  CARGO_CI_FLAGS: --locked --profile ci-rust
+  CARGO_NEXTEST_CI_FLAGS: --locked --cargo-profile ci-rust
 
 permissions:
   contents: read
@@ -77,12 +79,12 @@ jobs:
         run: |
           set -ex
           AGNOSTIC_CRATES=`python misc/libparsec_crates_flags.py agnostic`
-          cargo nextest run --cargo-profile ci-rust $AGNOSTIC_CRATES
+          cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} $AGNOSTIC_CRATES
           # By default `libparsec_crypto` uses RustCrypto, so here we test the sodiumoxide
           # implementation and it compatibility with the rest of the project
-          cargo nextest run --cargo-profile ci-rust --package libparsec_crypto --features use-sodiumoxide
+          cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package libparsec_crypto --features use-sodiumoxide
           NON_BINDINGS_CRATES=`python misc/libparsec_crates_flags.py agnostic platform`
-          cargo check --profile ci-rust $NON_BINDINGS_CRATES --features use-sodiumoxide
+          cargo check ${{ env.CARGO_CI_FLAGS }} $NON_BINDINGS_CRATES --features use-sodiumoxide
         timeout-minutes: 30
         env:
           RUST_LOG: debug
@@ -95,7 +97,7 @@ jobs:
           CRATES=`python misc/libparsec_crates_flags.py platform`
           # Use sodiumoxide here given 1) it is composed of C code, so not totally
           # platform independant and 2) it is what is going to be used in release
-          cargo nextest run --cargo-profile ci-rust $CRATES --features libparsec_crypto/use-sodiumoxide
+          cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} $CRATES --features libparsec_crypto/use-sodiumoxide
         timeout-minutes: 30
         env:
           RUST_LOG: debug
@@ -170,12 +172,12 @@ jobs:
         run: |
           set -ex
           CRATES=`python misc/libparsec_crates_flags.py platform`
-          cargo nextest run --cargo-profile ci-rust $CRATES --features libparsec_crypto/use-sodiumoxide
+          cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} $CRATES --features libparsec_crypto/use-sodiumoxide
           # By default `libparsec_crypto` uses RustCrypto, so here we test the sodiumoxide
           # implementation and it compatibility with the rest of the project
-          cargo nextest run --cargo-profile ci-rust --package libparsec_crypto --features use-sodiumoxide
+          cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package libparsec_crypto --features use-sodiumoxide
           NON_BINDINGS_CRATES=`python misc/libparsec_crates_flags.py agnostic platform`
-          cargo check --profile ci-rust $NON_BINDINGS_CRATES --features use-sodiumoxide
+          cargo check ${{ env.CARGO_CI_FLAGS }} $NON_BINDINGS_CRATES --features use-sodiumoxide
         timeout-minutes: 30
         env:
           RUST_LOG: debug
