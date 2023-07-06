@@ -26,10 +26,6 @@ browserslistrc
 Bsas
 bxsalsa
 cachekey
-latexmk
-librsvg
-luatex
-LATEXMKOPTS
 CAFILE
 camelcase
 capacitorjs
@@ -125,6 +121,7 @@ HKCR
 HKCU
 HKLM
 Hodi
+htmlcov
 hypercorn
 icccm
 IDCANCEL
@@ -145,6 +142,8 @@ JsonSchema
 jvmargs
 KeyFile
 keysyms
+latexmk
+LATEXMKOPTS
 latexpdfja
 levelno
 libasound
@@ -193,6 +192,7 @@ libqtuiotouchplugin
 libqtwebview
 libqvnc
 libqwebgl
+librsvg
 libscene
 LibSodium
 libsqlite
@@ -213,6 +213,7 @@ lproj
 lsregister
 lstfiracode
 lualatex
+luatex
 MACBYTES
 MACFUSE
 makensis
@@ -245,6 +246,7 @@ NONCEBYTES
 noopener
 noreferrer
 noreply
+noserver
 notbase
 notr
 nplurals
@@ -252,6 +254,8 @@ npmkeep
 NSIS
 NSISDIR
 NSPHINXOPTS
+ntics
+ntns
 ntstatus
 numprocesses
 onboarded
@@ -268,6 +272,7 @@ Owholemodule
 PAAS
 packb
 pagetotal
+Passw0rd
 pems
 pgdg
 PGINSTALLATION
@@ -391,6 +396,7 @@ stucking
 subcode
 subsec
 swiftclient
+syft
 SymKey
 syncer
 systray
