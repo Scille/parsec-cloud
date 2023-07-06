@@ -30,9 +30,9 @@
         "@capacitor-community/electron": "^4.1.2",
         "@capacitor/android": "^4.8.0",
         "@capacitor/app": "^4.1.1",
-        "@capacitor/core": "^4.7.1",
+        "@capacitor/core": "^4.8.1",
         "@capacitor/haptics": "^4.1.0",
-        "@capacitor/ios": "^4.7.1",
+        "@capacitor/ios": "^4.8.1",
         "@capacitor/keyboard": "^4.1.1",
         "@capacitor/splash-screen": "^4.2.0",
         "@capacitor/status-bar": "^4.1.1",
@@ -47,7 +47,7 @@
         "vue-router": "^4.2.2"
     },
     "devDependencies": {
-        "@capacitor/cli": "^4.7.1",
+        "@capacitor/cli": "^5.1.1",
         "@intlify/eslint-plugin-vue-i18n": "^2.0.0",
         "@ionic/cli": "^7.1.1",
         "@types/luxon": "^3.2.0",
