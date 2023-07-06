@@ -106,6 +106,9 @@ jobs:
         env:
           BASH_XTRACEFD: 1
 
+      - name: Copy SBOM files
+        run: cp -v artifacts/**/Parsec-SBOM-*.spdx.json release-files
+
       - name: Generate version file
         run:
           (
@@ -171,6 +174,20 @@ jobs:
             release-files/parsec-unsigned-v${{ needs.version.outputs.full }}-raw-windows-installer.zip.sha256
             release-files/parsec-unsigned-v${{ needs.version.outputs.full }}-macos-*.tar.bz2
             release-files/parsec-unsigned-v${{ needs.version.outputs.full }}-macos-*.tar.bz2.sha256
+            release-files/Parsec-SBOM-Wheel-linux.spdx.json
+            release-files/Parsec-SBOM-Wheel-linux.spdx.json.sha256
+            release-files/Parsec-SBOM-Wheel-windows.spdx.json
+            release-files/Parsec-SBOM-Wheel-windows.spdx.json.sha256
+            release-files/Parsec-SBOM-Wheel-macos.spdx.json
+            release-files/Parsec-SBOM-Wheel-macos.spdx.json.sha256
+            release-files/Parsec-SBOM-Electron-linux.spdx.json
+            release-files/Parsec-SBOM-Electron-linux.spdx.json.sha256
+            release-files/Parsec-SBOM-Electron-windows.spdx.json
+            release-files/Parsec-SBOM-Electron-windows.spdx.json.sha256
+            release-files/Parsec-SBOM-Electron-macos.spdx.json
+            release-files/Parsec-SBOM-Electron-macos.spdx.json.sha256
+            release-files/Parsec-SBOM-Web.spdx.json
+            release-files/Parsec-SBOM-Web.spdx.json.sha256
             release-files/version
             release-files/version.sha256
           fail_on_unmatched_files: true
