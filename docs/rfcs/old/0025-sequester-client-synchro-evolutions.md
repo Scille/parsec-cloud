@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Sequester - Client synchro evolutions
 
 From [ISSUE-2466](https://github.com/Scille/parsec-cloud/issues/2466)

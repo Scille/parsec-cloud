@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Oxidation in prod - Feature flag in the Rust extension bindings
 
 From [ISSUE-2490](https://github.com/Scille/parsec-cloud/issues/2490)

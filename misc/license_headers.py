@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
-
 from __future__ import annotations
 
 import argparse
@@ -93,16 +91,8 @@ class Licenser:
             return False
 
 
-class AgplLicenserMixin(Licenser):
-    SPDX_ID = "AGPL-3.0"
-
-
 class BuslLicenserMixin(Licenser):
     SPDX_ID = "BUSL-1.1"
-
-    @classmethod
-    def generate_license_label(cls) -> str:
-        return f"{cls.SPDX_ID} (eventually AGPL-3.0)"
 
 
 class PythonLicenserMixin(Licenser):
@@ -129,7 +119,7 @@ class JavascriptLicenserMixin(Licenser):
         return f"// {cls.generate_license_text()}\n"
 
 
-class VueLicenserMixin(Licenser):
+class HtmlLicenserMixin(Licenser):
     @classmethod
     def generate_license_line(cls) -> str:
         return f"<!-- {cls.generate_license_text()} -->\n"
@@ -141,15 +131,13 @@ class RstLicenserMixin(Licenser):
         return f".. {cls.generate_license_text()}\n"
 
 
-class PythonAgplLicenser(AgplLicenserMixin, PythonLicenserMixin):
-    pass
+class CppLicenserMixin(Licenser):
+    @classmethod
+    def generate_license_line(cls) -> str:
+        return f"/* {cls.generate_license_text()} */\n"
 
 
 class PythonBuslLicenser(BuslLicenserMixin, PythonLicenserMixin):
-    pass
-
-
-class SqlAgplLicenser(AgplLicenserMixin, SqlLicenserMixin):
     pass
 
 
@@ -157,15 +145,7 @@ class SqlBuslLicenser(BuslLicenserMixin, SqlLicenserMixin):
     pass
 
 
-class RustAgplLicenser(AgplLicenserMixin, RustLicenserMixin):
-    pass
-
-
 class RustBuslLicenser(BuslLicenserMixin, RustLicenserMixin):
-    pass
-
-
-class JavascriptAgplLicenser(AgplLicenserMixin, JavascriptLicenserMixin):
     pass
 
 
@@ -173,19 +153,19 @@ class JavascriptBuslLicenser(BuslLicenserMixin, JavascriptLicenserMixin):
     pass
 
 
-class VueAgplLicenser(AgplLicenserMixin, VueLicenserMixin):
-    pass
-
-
-class VueBuslLicenser(BuslLicenserMixin, VueLicenserMixin):
-    pass
-
-
-class RstAgplLicenser(AgplLicenserMixin, RstLicenserMixin):
+class HtmlBuslLicenser(BuslLicenserMixin, HtmlLicenserMixin):
     pass
 
 
 class RstBuslLicenser(BuslLicenserMixin, RstLicenserMixin):
+    pass
+
+
+class CppBuslLicenser(BuslLicenserMixin, CppLicenserMixin):
+    pass
+
+
+class VueBuslLicenser(HtmlBuslLicenser):
     pass
 
 
@@ -214,14 +194,18 @@ LICENSERS_MAP = {
     re.compile(r"^server/src/.*\.rs"): RustBuslLicenser,
     re.compile(r"^docs/.*\.(py|pyi)$"): PythonBuslLicenser,
     re.compile(r"^docs/.*\.rst$"): RstBuslLicenser,
+    re.compile(r"^docs/.*\.md$"): HtmlBuslLicenser,
     # Js project is a minefield full of node_modules/build/dist/assets etc.
     # so we just cut simple and add copyright only to the important stuff
-    re.compile(r"^client/src/.*\.(ts|js)$"): JavascriptBuslLicenser,
+    re.compile(r"^(client|bindings)/.*\.(ts|js)$"): JavascriptBuslLicenser,
+    re.compile(r"^bindings/.*\.(ts|js)\.j2$"): JavascriptBuslLicenser,
+    re.compile(r"^bindings/.*\.rs\.j2$"): RustBuslLicenser,
     re.compile(r"^client/src/.*\.vue$"): VueBuslLicenser,
     # Special case for ourself given we contain the license headers in the source code !
     re.compile(r"^misc/license_headers.py$"): SkipLicenser,
-    re.compile(r"^.*\.(py|pyi)$"): PythonAgplLicenser,
-    re.compile(r"^.*\.sql$"): SqlAgplLicenser,
+    re.compile(r"^.*\.(py|pyi)$"): PythonBuslLicenser,
+    re.compile(r"^.*\.sql$"): SqlBuslLicenser,
+    re.compile(r"^windows-icon-handler/.*\.(cpp|h|idl)$"): CppBuslLicenser,
 }
 
 
@@ -239,6 +223,11 @@ def get_files(paths: Iterable[Path]) -> Iterator[Path]:
                 path.glob("**/*.js"),
                 path.glob("**/*.ts"),
                 path.glob("**/*.vue"),
+                path.glob("**/*.cpp"),
+                path.glob("**/*.j2"),
+                path.glob("**/*.h"),
+                path.glob("**/*.md"),
+                path.glob("**/*.idl"),
             )
         elif path.is_file():
             yield path
@@ -297,6 +286,7 @@ if __name__ == "__main__":
             Path("packaging"),
             Path("misc"),
             Path("docs"),
+            Path("windows-icon-handler"),
             Path(".github"),
         ],
     )

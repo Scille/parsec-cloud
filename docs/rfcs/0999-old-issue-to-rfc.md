@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Convert import old issue into RFCs
 
 Before the introduction of the RFC system, we where using Github issue to write down

@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Rework local storage
 
 From [ISSUE-120](https://github.com/Scille/parsec-cloud/issues/120)

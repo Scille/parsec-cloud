@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 # Commit signature is not mandatory for the repo (yet ?), however we
 # want to make sure the signed commits are actually valid.

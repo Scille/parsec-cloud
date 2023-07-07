@@ -1,5 +1,5 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
-from __future__ import annotations
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 
 from functools import partial
 from typing import Any, Awaitable, Callable, NoReturn, Type, TypeVar, Union, cast

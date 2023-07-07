@@ -1,4 +1,5 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from enum import Enum
@@ -26,8 +27,9 @@ if TYPE_CHECKING:
     from parsec.backend.client_context import BaseClientContext
 
     Ctx = TypeVar("Ctx", bound=BaseClientContext)
-    T = TypeVar("T")
-    P = ParamSpec("P")
+
+T = TypeVar("T")
+P = ParamSpec("P")
 
 
 PEER_EVENT_MAX_WAIT = 3  # 5mn
@@ -71,7 +73,7 @@ def api(fn: Callable[P, T]) -> Callable[P, T]:
         expected_type_name = "AnonymousClientContext"
     assert types["client_ctx"] == ForwardRef(
         expected_type_name
-    ), f"Expect `client_ctx` to be an `{expected_type_name}`"
+    ), f"Expect `client_ctx` to be an `{expected_type_name}` (but it is an `{types['client_ctx']}`)"
 
     fn._api_info = {  # type: ignore[attr-defined]
         "cmd": m_cmd,

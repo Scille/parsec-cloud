@@ -33,7 +33,23 @@ repos:
         language: python
         language_version: python3
         # see: https://github.com/pre-commit/identify/blob/master/identify/extensions.py
-        types_or: [ python, pyi, sql, rust, vue, ts, tsx, javascript, jsx ]
+        types_or:
+          [
+            python,
+            pyi,
+            sql,
+            rust,
+            vue,
+            ts,
+            tsx,
+            javascript,
+            jsx,
+            c++,
+            c,
+            idl,
+            jinja,
+            markdown,
+          ]
 
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.29.0
@@ -92,12 +108,7 @@ repos:
         require_serial: true
         language: system
         types_or: [ python, pyi ]
-        args:
-          [
-            --config=server/pyproject.toml,
-            --extend-exclude=client/*,
-            --fix,
-          ]
+        args: [ --config=server/pyproject.toml, --extend-exclude=client/*, --fix ]
 
       - id: black
         name: black (using `poetry run black`)
@@ -105,10 +116,7 @@ repos:
         require_serial: true
         language: system
         types_or: [ python, pyi ]
-        args:
-          [
-            --line-length=100,
-          ]
+        args: [ --line-length=100 ]
 
       - id: mypy
         name: Mypy (using `poetry run mypy`)
@@ -116,10 +124,7 @@ repos:
         require_serial: true
         language: system
         types_or: [ python, pyi ]
-        args:
-          [
-            --config=server/pyproject.toml,
-          ]
+        args: [ --config=server/pyproject.toml ]
         files: ^(server|misc)/
 
   ######
@@ -212,10 +217,18 @@ repos:
         name: Validate Read the doc configuration files
         alias: check-readthedoc
         files: .readthedocs.yml
-        args: [ --schemafile, https://raw.githubusercontent.com/readthedocs/readthedocs.org/main/readthedocs/rtd_tests/fixtures/spec/v2/schema.json ]
+        args:
+          [
+            --schemafile,
+            https://raw.githubusercontent.com/readthedocs/readthedocs.org/main/readthedocs/rtd_tests/fixtures/spec/v2/schema.json,
+          ]
 
       - id: check-jsonschema
         name: Validate snapcraft config
         alias: check-snapcraft
         files: ^packaging/snap/snap/snapcraft.yaml
-        args: [ --schemafile, https://raw.githubusercontent.com/snapcore/snapcraft/main/schema/snapcraft.json ]
+        args:
+          [
+            --schemafile,
+            https://raw.githubusercontent.com/snapcore/snapcraft/main/schema/snapcraft.json,
+          ]

@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Use msi format for windows packaging
 
 From [ISSUE-1865](https://github.com/Scille/parsec-cloud/issues/1865)

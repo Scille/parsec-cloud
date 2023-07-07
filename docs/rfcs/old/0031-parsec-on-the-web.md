@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Parsec on the web
 
 From [ISSUE-2546](https://github.com/Scille/parsec-cloud/issues/2546)

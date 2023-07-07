@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Improve build system
 
 From [ISSUE-1444](https://github.com/Scille/parsec-cloud/issues/1444)

@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Better names for conflicting files
 
 From [ISSUE-1820](https://github.com/Scille/parsec-cloud/issues/1820)

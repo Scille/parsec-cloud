@@ -1,5 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
-//! Module that wrap an [diesel::SqliteConnection] behind a executor to allow to have an async manner to executor sql queries.
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use std::sync::atomic::Ordering;
 use std::sync::Mutex;

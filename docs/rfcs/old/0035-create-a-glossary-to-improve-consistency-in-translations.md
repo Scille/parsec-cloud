@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Create a glossary to improve consistency in translations
 
 From [ISSUE-3852](https://github.com/Scille/parsec-cloud/issues/3852)

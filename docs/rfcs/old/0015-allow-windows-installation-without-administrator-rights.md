@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Allow Windows installation without administrator rights
 
 From [ISSUE-1651](https://github.com/Scille/parsec-cloud/issues/1651)

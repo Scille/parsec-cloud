@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Changes for the new human handle + new invitation format
 
 From [ISSUE-1078](https://github.com/Scille/parsec-cloud/issues/1078)
