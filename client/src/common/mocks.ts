@@ -8,6 +8,7 @@ import { StorageManager } from '@/services/storageManager';
 import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
 
 export interface MockFile {
+  id: string,
   name: string,
   type: 'folder' | 'file',
   size: number,
@@ -21,6 +22,7 @@ export function pathInfo(_path: string): MockFile {
 
   const childrenCount = Math.floor(Math.random() * 25) + 10;
   const ret: MockFile = {
+    id: '0',
     name: uniqueNamesGenerator({dictionaries: [adjectives, colors, animals]}),
     type: 'folder',
     updater: UPDATER[Math.floor(Math.random() * UPDATER.length)],
@@ -32,6 +34,7 @@ export function pathInfo(_path: string): MockFile {
   for (let i = 0; i < childrenCount; i++) {
     const isFolder = Math.floor(Math.random() * 2) === 0;
     ret.children.push({
+      id: `${i + 1}`,
       name: uniqueNamesGenerator({dictionaries: [adjectives, colors, animals]}),
       type: isFolder ? 'folder' : 'file',
       size: isFolder ? 0 : Math.floor(Math.random() * 10000000),

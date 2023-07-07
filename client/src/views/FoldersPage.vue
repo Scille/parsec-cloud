@@ -46,7 +46,7 @@
             </ion-list-header>
             <file-list-item
               v-for="child in folderInfo.children"
-              :key="child.name"
+              :key="child.id"
               :file="child"
               @click="onFileClick"
               @menu-click="openFileContextMenu"
@@ -60,7 +60,7 @@
           <ion-item
             class="folder-grid-item"
             v-for="child in folderInfo.children"
-            :key="child.name"
+            :key="child.id"
           >
             <file-card
               :file="child"
@@ -113,12 +113,12 @@ const folderInfo = computed((): MockFile => {
 });
 const listView = ref(true);
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
 function createFolder(): void {
+  console.log('Create folder clicked');
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
 function importFiles(): void {
+  console.log('Import files clicked');
 }
 
 function onFileClick(_event: Event, file: MockFile): void {
