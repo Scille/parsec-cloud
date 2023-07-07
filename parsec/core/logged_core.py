@@ -29,6 +29,7 @@ from parsec._parsec import (
     RemoteDevicesManagerBackendOfflineError,
     RemoteDevicesManagerError,
     RemoteDevicesManagerNotFoundError,
+    ShamirRecoveryShareData,
     UserRevokeRepOk,
     WorkspaceEntry,
 )
@@ -52,6 +53,8 @@ from parsec.core.fs.storage.workspace_storage import FAILSAFE_PATTERN_FILTER
 from parsec.core.invite import (
     DeviceGreetInitialCtx,
     DeviceGreetInProgress1Ctx,
+    ShamirRecoveryGreetInitialCtx,
+    ShamirRecoveryGreetInProgress1Ctx,
     UserGreetInitialCtx,
     UserGreetInProgress1Ctx,
 )
@@ -327,7 +330,7 @@ class LoggedCore:
             BackendInvitationAddr.build(
                 backend_addr=self.device.organization_addr.get_backend_addr(),
                 organization_id=self.device.organization_id,
-                invitation_type=InvitationType.DEVICE,
+                invitation_type=InvitationType.SHAMIR_RECOVERY,
                 token=rep.token,
             ),
             email_sent,
@@ -377,6 +380,20 @@ class LoggedCore:
         """
         initial_ctx = DeviceGreetInitialCtx(cmds=self._backend_conn.cmds, token=token)
         return await initial_ctx.do_wait_peer()
+
+    async def start_greeting_shamir_recovery(
+        self, token: InvitationToken, claimer_user_id: UserID
+    ) -> tuple[ShamirRecoveryShareData, ShamirRecoveryGreetInProgress1Ctx]:
+        """
+        Raises:
+            BackendConnectionError
+            InviteError
+        """
+        initial_ctx = ShamirRecoveryGreetInitialCtx(
+            cmds=self._backend_conn.cmds, token=token, claimer_user_id=claimer_user_id
+        )
+        share_data = await initial_ctx.get_share_data(self.device, self._remote_devices_manager)
+        return (share_data, await initial_ctx.do_wait_peer())
 
     def get_organization_config(self) -> OrganizationConfig:
         return self._backend_conn.get_organization_config()

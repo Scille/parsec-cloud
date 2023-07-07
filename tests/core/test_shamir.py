@@ -2,8 +2,13 @@
 from __future__ import annotations
 
 import pytest
+import trio
 
+from parsec._parsec import BackendInvitationAddr, DeviceLabel, InvitationDeletedReason
+from parsec.core.backend_connection import backend_invited_cmds_factory
+from parsec.core.invite import ShamirRecoveryClaimPreludeCtx, claimer_retrieve_info
 from parsec.core.logged_core import BackendConnectionError, LoggedCore
+from parsec.core.recovery import generate_new_device_from_recovery
 from parsec.core.shamir import (
     ShamirRecoveryNotSetError,
     create_shamir_recovery_device,
@@ -11,6 +16,7 @@ from parsec.core.shamir import (
     get_shamir_recovery_self_info,
     remove_shamir_recovery_device,
 )
+from tests.common import real_clock_timeout
 
 
 @pytest.mark.trio
@@ -189,3 +195,131 @@ async def test_shamir_recovery_invitation(
     assert invite_item_from_bob == invite_item_from_adam
     assert invite_item_from_bob.claimer_user_id == alice.user_id
     assert invite_item_from_bob.token == new_token
+
+
+@pytest.mark.trio
+async def test_shamir_recovery_claim(
+    alice_core: LoggedCore,
+    bob_core: LoggedCore,
+    adam_core: LoggedCore,
+    core_factory,
+    running_backend,
+):
+    alice = alice_core.device
+    bob = bob_core.device
+    adam = adam_core.device
+
+    # Create a first shamir recovery device for alice
+    certificates = [
+        (await alice_core._remote_devices_manager.get_user(device.user_id))[0]
+        for device in (adam, bob)
+    ]
+    await create_shamir_recovery_device(alice_core, certificates, threshold=4, weights=[2, 3])
+
+    # Bob creates an invitation for Alice
+    address_from_bob, email_sent = await bob_core.new_shamir_recovery_invitation(
+        alice.user_id, send_email=True
+    )
+    assert email_sent == email_sent.SUCCESS
+    invitation_type = address_from_bob.invitation_type
+    assert invitation_type == invitation_type.SHAMIR_RECOVERY
+    send_this_to_alice = address_from_bob.to_url()
+
+    # Concurrent environement
+    async with real_clock_timeout():
+        async with trio.open_nursery() as nursery:
+            # Adam decides to greet right away for some reason
+            adam_done_with_alice = trio.Event()
+
+            async def _run_adam_greeter():
+                (invite_item_from_adam,) = await adam_core.list_invitations()
+                adam_share_data, adam_ctx = await adam_core.start_greeting_shamir_recovery(
+                    invite_item_from_adam.token,
+                    invite_item_from_adam.claimer_user_id,
+                )
+                adam_ctx = await adam_ctx.do_wait_peer_trust()
+                adam_ctx.generate_claimer_sas_choices(size=3)
+                # Skip SAS code checks
+                adam_ctx = await adam_ctx.do_signify_trust()
+                await adam_ctx.send_share_data(adam_share_data)
+                adam_done_with_alice.set()
+
+            nursery.start_soon(_run_adam_greeter)
+
+            # Alice receives the invitation address
+            address = BackendInvitationAddr.from_url(send_this_to_alice)
+            async with backend_invited_cmds_factory(addr=address) as cmds:
+                prelude_ctx = await claimer_retrieve_info(cmds)
+                assert isinstance(prelude_ctx, ShamirRecoveryClaimPreludeCtx)
+                recipient1, recipient2 = prelude_ctx.recipients
+                if recipient1.user_id == adam.user_id:
+                    adam_recipient, bob_recipient = recipient1, recipient2
+                else:
+                    adam_recipient, bob_recipient = recipient2, recipient1
+                assert adam_recipient.user_id == adam.user_id
+                assert adam_recipient.shares == 2
+                assert bob_recipient.user_id == bob.user_id
+                assert bob_recipient.shares == 3
+
+                # Alice decides to start with Bob
+                alice_done_with_bob = trio.Event()
+                alice_initial_ctx = prelude_ctx.get_initial_ctx(bob_recipient)
+
+                async def _run_first_alice_claimer():
+                    alice_ctx = await alice_initial_ctx.do_wait_peer()
+                    alice_ctx.generate_greeter_sas_choices(size=3)
+                    # Skip SAS code checks
+                    alice_ctx = await alice_ctx.do_signify_trust()
+                    alice_ctx = await alice_ctx.do_wait_peer_trust()
+                    new_shares = await alice_ctx.do_recover_share()
+                    assert isinstance(prelude_ctx, ShamirRecoveryClaimPreludeCtx)
+                    assert not prelude_ctx.add_shares(bob_recipient, new_shares)
+                    assert len(prelude_ctx.shares) == 3
+                    alice_done_with_bob.set()
+
+                nursery.start_soon(_run_first_alice_claimer)
+
+                # Bob joins in
+                (invite_item_from_bob,) = await adam_core.list_invitations()
+                bob_share_data, bob_ctx = await bob_core.start_greeting_shamir_recovery(
+                    invite_item_from_bob.token,
+                    invite_item_from_bob.claimer_user_id,
+                )
+                bob_ctx = await bob_ctx.do_wait_peer_trust()
+                bob_ctx.generate_claimer_sas_choices(size=3)
+                # Skip SAS code checks
+                bob_ctx = await bob_ctx.do_signify_trust()
+                await bob_ctx.send_share_data(bob_share_data)
+                await alice_done_with_bob.wait()
+
+                # Alice then continues with Adam
+                assert len(prelude_ctx.shares) == 3
+                alice_initial_ctx = prelude_ctx.get_initial_ctx(adam_recipient)
+                alice_ctx = await alice_initial_ctx.do_wait_peer()
+                alice_ctx.generate_greeter_sas_choices(size=3)
+                # Skip SAS code checks
+                alice_ctx = await alice_ctx.do_signify_trust()
+                alice_ctx = await alice_ctx.do_wait_peer_trust()
+                new_shares = await alice_ctx.do_recover_share()
+                assert isinstance(prelude_ctx, ShamirRecoveryClaimPreludeCtx)
+                assert prelude_ctx.add_shares(adam_recipient, new_shares)
+                assert len(prelude_ctx.shares) == 5
+                await adam_done_with_alice.wait()
+
+                # Alice retrieves her recovery device
+                alice_recovery_device = await prelude_ctx.retreive_recovery_device()
+
+    # Alice creates a new device and deletes the invitation
+    assert alice_recovery_device.device_id.user_id == alice.user_id
+    alice_new_device = await generate_new_device_from_recovery(
+        alice_recovery_device, DeviceLabel("new label")
+    )
+    async with core_factory(alice_new_device) as new_alice_core:
+        new_alice_core: LoggedCore
+        await new_alice_core.delete_invitation(
+            address.token, reason=InvitationDeletedReason.FINISHED
+        )
+
+    # The list is updated
+    assert await bob_core.list_invitations() == []
+    assert await adam_core.list_invitations() == []
