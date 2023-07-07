@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from parsec.core.logged_core import LoggedCore
+from parsec.core.logged_core import BackendConnectionError, LoggedCore
 from parsec.core.shamir import (
     ShamirRecoveryNotSetError,
     create_shamir_recovery_device,
@@ -97,3 +97,95 @@ async def test_shamir_recovery_setup(
         await get_shamir_recovery_self_info(alice_core)
     assert await get_shamir_recovery_others_list(bob_core) == []
     assert await get_shamir_recovery_others_list(adam_core) == []
+
+
+@pytest.mark.trio
+@pytest.mark.parametrize(
+    "deletion",
+    ["by_alice", "by_bob", "by_adam", "by_new_setup"],
+    ids=["deletion_by_alice", "deletion_by_bob", "deletion_by_adam", "deletion_by_new_setup"],
+)
+async def test_shamir_recovery_invitation(
+    alice_core: LoggedCore,
+    bob_core: LoggedCore,
+    adam_core: LoggedCore,
+    deletion: str,
+    running_backend,
+):
+    alice = alice_core.device
+    bob = bob_core.device
+    adam = adam_core.device
+
+    # Bob tries to create an invitation for Alice
+    # but the shamir recovery device hasn't been created yet
+    with pytest.raises(BackendConnectionError):
+        await bob_core.new_shamir_recovery_invitation(alice.user_id, send_email=True)
+
+    # Create a first shamir recovery device for alice
+    certificates = [
+        (await alice_core._remote_devices_manager.get_user(device.user_id))[0]
+        for device in (adam, bob)
+    ]
+    await create_shamir_recovery_device(alice_core, certificates, threshold=2)
+
+    # Bob creates an invitation for Alice
+    # Bob doesn't have to be an administrator
+    address_from_bob, email_sent = await bob_core.new_shamir_recovery_invitation(
+        alice.user_id, send_email=True
+    )
+    assert email_sent == email_sent.SUCCESS
+
+    # Both Bob and Adam can find the invitation in their list
+    (invite_item_from_bob,) = await bob_core.list_invitations()
+    (invite_item_from_adam,) = await adam_core.list_invitations()
+    assert invite_item_from_bob == invite_item_from_adam
+    assert invite_item_from_bob.claimer_user_id == alice.user_id
+    assert invite_item_from_bob.token == address_from_bob.token
+
+    # Adam also creates an invitation for Alice
+    # They receive the same token as the one from Bob
+    address_from_adam, email_sent = await bob_core.new_shamir_recovery_invitation(
+        alice.user_id, send_email=True
+    )
+    assert email_sent == email_sent.SUCCESS
+    assert address_from_adam == address_from_bob
+
+    # The list is unaffected
+    (invite_item_from_bob,) = await bob_core.list_invitations()
+    (invite_item_from_adam,) = await adam_core.list_invitations()
+    assert invite_item_from_bob == invite_item_from_adam
+    assert invite_item_from_bob.claimer_user_id == alice.user_id
+    assert invite_item_from_bob.token == address_from_bob.token
+
+    # Different deletion scenario
+    token = invite_item_from_bob.token
+    if deletion == "by_alice":
+        await alice_core.delete_invitation(token=token)
+    elif deletion == "by_bob":
+        await bob_core.delete_invitation(token=token)
+    elif deletion == "by_adam":
+        await adam_core.delete_invitation(token=token)
+    elif deletion == "by_new_setup":
+        await create_shamir_recovery_device(alice_core, certificates, threshold=2)
+    else:
+        assert False
+
+    # The list is empty
+    assert await bob_core.list_invitations() == []
+    assert await adam_core.list_invitations() == []
+
+    # But an invitation with a new token can be recreated
+    address_from_adam, email_sent = await bob_core.new_shamir_recovery_invitation(
+        alice.user_id, send_email=True
+    )
+    old_token = address_from_bob.token
+    new_token = address_from_adam.token
+    assert email_sent == email_sent.SUCCESS
+    assert new_token != old_token
+
+    # The list is updated
+    (invite_item_from_bob,) = await bob_core.list_invitations()
+    (invite_item_from_adam,) = await adam_core.list_invitations()
+    assert invite_item_from_bob == invite_item_from_adam
+    assert invite_item_from_bob.claimer_user_id == alice.user_id
+    assert invite_item_from_bob.token == new_token
