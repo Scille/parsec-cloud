@@ -63,7 +63,7 @@ defineEmits<{
 }>();
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const { timeSince, fileSize } = inject(FormattersKey)! as Formatters;
+const { timeSince } = inject(FormattersKey)! as Formatters;
 
 function isFileSynced(): boolean {
   return true;
