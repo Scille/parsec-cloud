@@ -44,7 +44,6 @@ updates:
     open-pull-requests-limit: 5
     rebase-strategy: disabled
 
-
   ########
   # Rust #
   ########
@@ -131,6 +130,10 @@ updates:
       time: "04:20"
       timezone: Europe/Paris
     open-pull-requests-limit: 5
+    groups:
+      electron-dependencies:
+        patterns:
+          - "*"
     rebase-strategy: disabled
 
   - package-ecosystem: npm
