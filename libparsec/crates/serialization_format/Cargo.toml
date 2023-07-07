@@ -11,17 +11,17 @@ proc-macro = true
 python-bindings-support = []
 
 [dependencies]
-itertools = "0.10.5"
-miniserde = "0.1.30"
+itertools = "0.11.0"
+miniserde = "0.1.31"
 proc-macro2 = "1.0.56"
-quote = "1.0.28"
+quote = "1.0.29"
 syn = { version = "2.0.13" }
 
 [dev-dependencies]
-rstest = "0.17.0"
-pretty_assertions = "1.3.0"
-serde = { version = "1.0.164", features = ["derive"] }
-serde_with = "2.3.2"
+rstest = "0.18.1"
+pretty_assertions = "1.4.0"
+serde = { version = "1.0.167", features = ["derive"] }
+serde_with = "3.0.0"
 rmp-serde = "1.1.1"
 hex-literal = "0.4.1"
 bytes = { version = "1.4.0", features = ["serde"] }
