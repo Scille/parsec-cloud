@@ -9,6 +9,200 @@ use libparsec_types::prelude::*;
 
 use crate::{EventBus, EventTooMuchDriftWithServerClock};
 
+/*
+ * new_user_invitation
+ */
+
+#[derive(Debug, thiserror::Error)]
+pub enum NewUserInvitationError {
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error("Not allowed to invite a user")]
+    NotAllowed,
+    #[error("A non-revoked user already exists with this email")]
+    AlreadyMember,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl From<ConnectionError> for NewUserInvitationError {
+    fn from(value: ConnectionError) -> Self {
+        match value {
+            ConnectionError::NoResponse(_) => Self::Offline,
+            err => Self::Internal(err.into()),
+        }
+    }
+}
+
+pub async fn new_user_invitation(
+    cmds: &AuthenticatedCmds,
+    claimer_email: String,
+    send_email: bool,
+) -> Result<
+    (
+        InvitationToken,
+        authenticated_cmds::latest::invite_new::InvitationEmailSentStatus,
+    ),
+    NewUserInvitationError,
+> {
+    use authenticated_cmds::latest::invite_new::{Rep, Req, UserOrDevice};
+
+    let req = Req(UserOrDevice::User {
+        claimer_email,
+        send_email,
+    });
+    let rep = cmds.send(req).await?;
+
+    match rep {
+        Rep::Ok { token, email_sent } => Ok((token, email_sent)),
+        Rep::NotAllowed => Err(NewUserInvitationError::NotAllowed),
+        Rep::AlreadyMember => Err(NewUserInvitationError::AlreadyMember),
+        rep @ Rep::NotAvailable => Err(anyhow::anyhow!(
+            "Unexpected server response: {:?} (only expected when inviting a device)",
+            rep
+        )
+        .into()),
+        rep @ Rep::UnknownStatus { .. } => {
+            Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
+        }
+    }
+}
+
+/*
+ * new_device_invitation
+ */
+
+#[derive(Debug, thiserror::Error)]
+pub enum NewDeviceInvitationError {
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error("Cannot send invitation email given user has no email address")]
+    SendEmailToUserWithoutEmail,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl From<ConnectionError> for NewDeviceInvitationError {
+    fn from(value: ConnectionError) -> Self {
+        match value {
+            ConnectionError::NoResponse(_) => Self::Offline,
+            err => Self::Internal(err.into()),
+        }
+    }
+}
+
+pub async fn new_device_invitation(
+    cmds: &AuthenticatedCmds,
+    send_email: bool,
+) -> Result<
+    (
+        InvitationToken,
+        authenticated_cmds::latest::invite_new::InvitationEmailSentStatus,
+    ),
+    NewDeviceInvitationError,
+> {
+    use authenticated_cmds::latest::invite_new::{Rep, Req, UserOrDevice};
+
+    let req = Req(UserOrDevice::Device { send_email });
+    let rep = cmds.send(req).await?;
+
+    match rep {
+        Rep::Ok { token, email_sent } => Ok((token, email_sent)),
+        Rep::NotAvailable => Err(NewDeviceInvitationError::SendEmailToUserWithoutEmail),
+        rep @ Rep::NotAllowed | rep @ Rep::AlreadyMember => Err(anyhow::anyhow!(
+            "Unexpected server response: {:?} (only expected when inviting a user)",
+            rep
+        )
+        .into()),
+        rep @ Rep::UnknownStatus { .. } => {
+            Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
+        }
+    }
+}
+
+/*
+ * delete_invitation
+ */
+
+#[derive(Debug, thiserror::Error)]
+pub enum DeleteInvitationError {
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error("Invitation not found")]
+    NotFound,
+    #[error("Invitation already deleted")]
+    AlreadyDeleted,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl From<ConnectionError> for DeleteInvitationError {
+    fn from(value: ConnectionError) -> Self {
+        match value {
+            ConnectionError::NoResponse(_) => Self::Offline,
+            err => Self::Internal(err.into()),
+        }
+    }
+}
+
+pub async fn delete_invitation(
+    cmds: &AuthenticatedCmds,
+    token: InvitationToken,
+) -> Result<(), DeleteInvitationError> {
+    use authenticated_cmds::latest::invite_delete::{InvitationDeletedReason, Rep, Req};
+
+    let req = Req {
+        token,
+        reason: InvitationDeletedReason::Cancelled,
+    };
+    let rep = cmds.send(req).await?;
+
+    match rep {
+        Rep::Ok => Ok(()),
+        Rep::AlreadyDeleted => Err(DeleteInvitationError::AlreadyDeleted),
+        Rep::NotFound => Err(DeleteInvitationError::NotFound),
+        rep @ Rep::UnknownStatus { .. } => {
+            Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
+        }
+    }
+}
+
+/*
+ * list_invitation
+ */
+
+#[derive(Debug, thiserror::Error)]
+pub enum ListInvitationsError {
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl From<ConnectionError> for ListInvitationsError {
+    fn from(value: ConnectionError) -> Self {
+        match value {
+            ConnectionError::NoResponse(_) => Self::Offline,
+            err => Self::Internal(err.into()),
+        }
+    }
+}
+
+pub async fn list_invitations(
+    cmds: &AuthenticatedCmds,
+) -> Result<Vec<authenticated_cmds::latest::invite_list::InviteListItem>, ListInvitationsError> {
+    use authenticated_cmds::latest::invite_list::{Rep, Req};
+
+    let rep = cmds.send(Req).await?;
+
+    match rep {
+        Rep::Ok { invitations } => Ok(invitations),
+        rep @ Rep::UnknownStatus { .. } => {
+            Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
+        }
+    }
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum GreetInProgressError {
     #[error("Cannot reach the server")]

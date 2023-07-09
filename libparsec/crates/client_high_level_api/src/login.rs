@@ -10,12 +10,12 @@ use thiserror::Error;
 
 // TODO: support wasm32
 #[cfg(not(target_arch = "wasm32"))]
-use libparsec_client::RunningDevice;
+use libparsec_client::Client;
 #[cfg(target_arch = "wasm32")]
 #[derive(Debug)]
 pub struct RunningDevice;
 #[cfg(target_arch = "wasm32")]
-impl RunningDevice {
+impl Client {
     pub fn device_id(&self) -> DeviceID {
         unimplemented!()
     }
@@ -40,7 +40,7 @@ pub use libparsec_types::{
 
 use crate::ClientEvent;
 
-static RUNNING_DEVICES: OnceCell<Mutex<Vec<Option<RunningDevice>>>> = OnceCell::new();
+static RUNNING_DEVICES: OnceCell<Mutex<Vec<Option<Client>>>> = OnceCell::new();
 
 //
 // Client login
@@ -117,7 +117,7 @@ pub async fn client_login(
             let device = load_device_with_password(&path, password.into())
                 .map_err(|_| ClientLoginError::DeviceInvalidFormat)?;
 
-            let running = RunningDevice::start(Arc::new(device), &config.data_base_dir).await?;
+            let running = Client::start(Arc::new(device), &config.data_base_dir).await?;
             core.push(Some(running));
 
             Ok(index)

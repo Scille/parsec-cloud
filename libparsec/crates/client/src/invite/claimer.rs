@@ -5,6 +5,8 @@ use std::sync::Arc;
 use libparsec_client_connection::{protocol::invited_cmds, ConnectionError, InvitedCmds};
 use libparsec_types::prelude::*;
 
+use crate::ClientConfig;
+
 #[derive(Debug, thiserror::Error)]
 pub enum ClaimerRetrieveInfoError {
     #[error("Cannot reach the server")]
@@ -405,7 +407,7 @@ impl UserClaimInProgress3Ctx {
         self,
         requested_device_label: Option<DeviceLabel>,
         requested_human_handle: Option<HumanHandle>,
-    ) -> Result<LocalDevice, ClaimInProgressError> {
+    ) -> Result<UserClaimInProgress4Ctx, ClaimInProgressError> {
         // User&device keys are generated here and kept in memory until the end of
         // the enrollment process. This mean we can lost it if something goes wrong.
         // This has no impact until step 4 (somewhere between data exchange and
@@ -445,7 +447,7 @@ impl UserClaimInProgress3Ctx {
             root_verify_key,
         );
 
-        Ok(LocalDevice::generate_new_device(
+        let new_local_device = LocalDevice::generate_new_device(
             organization_addr,
             Some(device_id),
             profile,
@@ -453,7 +455,9 @@ impl UserClaimInProgress3Ctx {
             device_label,
             Some(signing_key),
             Some(private_key),
-        ))
+        );
+
+        Ok(UserClaimInProgress4Ctx { new_local_device })
     }
 }
 
@@ -464,7 +468,7 @@ impl DeviceClaimInProgress3Ctx {
     pub async fn do_claim_device(
         self,
         requested_device_label: Option<DeviceLabel>,
-    ) -> Result<LocalDevice, ClaimInProgressError> {
+    ) -> Result<DeviceClaimInProgress4Ctx, ClaimInProgressError> {
         // Device key is generated here and kept in memory until the end of
         // the enrollment process. This mean we can lost it if something goes wrong.
         // This has no impact until step 4 (somewhere between data exchange and
@@ -505,7 +509,7 @@ impl DeviceClaimInProgress3Ctx {
             root_verify_key,
         );
 
-        Ok(LocalDevice {
+        let new_local_device = LocalDevice {
             organization_addr,
             device_id,
             device_label,
@@ -517,6 +521,74 @@ impl DeviceClaimInProgress3Ctx {
             user_manifest_key,
             local_symkey: SecretKey::generate(),
             time_provider: Default::default(),
-        })
+        };
+
+        Ok(DeviceClaimInProgress4Ctx { new_local_device })
+    }
+}
+
+#[derive(Debug)]
+pub struct UserClaimInProgress4Ctx {
+    pub new_local_device: LocalDevice,
+}
+
+impl UserClaimInProgress4Ctx {
+    pub async fn save_local_device(
+        self,
+        config: &ClientConfig,
+        password: Password,
+    ) -> Result<(), ClaimInProgressError> {
+        // Claiming a user means we are it first device, hence we know there
+        // is no existing user manifest (hence our placeholder is non-speculative)
+        // TODO: error handling
+        libparsec_platform_storage::user::user_storage_non_speculative_init(
+            &config.data_base_dir,
+            &self.new_local_device,
+        )
+        .await
+        .unwrap();
+
+        let output = libparsec_platform_device_loader::get_default_key_file(
+            &config.config_dir,
+            &self.new_local_device,
+        );
+        // TODO: error handling
+        libparsec_platform_device_loader::save_device_with_password(
+            &output,
+            &self.new_local_device,
+            password,
+            true,
+        )
+        .unwrap();
+
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct DeviceClaimInProgress4Ctx {
+    pub new_local_device: LocalDevice,
+}
+
+impl DeviceClaimInProgress4Ctx {
+    pub async fn save_local_device(
+        self,
+        config: &ClientConfig,
+        password: Password,
+    ) -> Result<(), ClaimInProgressError> {
+        let output = libparsec_platform_device_loader::get_default_key_file(
+            &config.config_dir,
+            &self.new_local_device,
+        );
+        // TODO: error handling
+        libparsec_platform_device_loader::save_device_with_password(
+            &output,
+            &self.new_local_device,
+            password,
+            true,
+        )
+        .unwrap();
+
+        Ok(())
     }
 }

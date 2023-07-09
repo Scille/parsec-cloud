@@ -159,6 +159,7 @@ pub enum IncompatibleServerReason {
     Unexpected(anyhow::Error),
 }
 
+// All those items will be named with a `Event` prefix (e.g. `Foo` => `EventFoo`)
 impl_events!(
     // Dummy event for tests only
     Ping { ping: String },

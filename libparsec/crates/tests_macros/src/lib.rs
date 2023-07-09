@@ -99,6 +99,8 @@ pub fn parsec_test(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     TokenStream::from(quote! {
+        // TODO: support tests on Web !
+        #[cfg(not(target_arch = "wasm32"))]
         #[::libparsec_tests_fixtures::rstest::rstest]
         #quote_attrs
         #sig {

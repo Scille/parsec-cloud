@@ -1178,14 +1178,17 @@ checksum = "f7012b1bbb0719e1097c47611d3898568c546d597c2e74d66f6087edd5233ff4"
 name = "libparsec"
 version = "0.0.0"
 dependencies = [
- "libparsec_client_high_level_api",
+ "libparsec_client",
+ "libparsec_client_connection",
  "libparsec_crypto",
+ "libparsec_platform_async",
  "libparsec_platform_device_loader",
  "libparsec_platform_storage",
  "libparsec_protocol",
  "libparsec_serialization_format",
  "libparsec_testbed",
  "libparsec_types",
+ "once_cell",
 ]
 
 [[package]]
@@ -1230,6 +1233,7 @@ version = "0.0.0"
 dependencies = [
  "libparsec_client_connection",
  "libparsec_platform_async",
+ "libparsec_platform_device_loader",
  "libparsec_platform_storage",
  "libparsec_protocol",
  "libparsec_tests_fixtures",
@@ -1256,21 +1260,6 @@ dependencies = [
  "once_cell",
  "reqwest",
  "reqwest-eventsource",
- "thiserror",
-]
-
-[[package]]
-name = "libparsec_client_high_level_api"
-version = "0.0.0"
-dependencies = [
- "libparsec_client",
- "libparsec_crypto",
- "libparsec_platform_async",
- "libparsec_platform_device_loader",
- "libparsec_protocol",
- "libparsec_testbed",
- "libparsec_types",
- "once_cell",
  "thiserror",
 ]
 
@@ -1346,6 +1335,7 @@ dependencies = [
 name = "libparsec_platform_http_proxy"
 version = "0.0.0"
 dependencies = [
+ "libparsec_types",
  "reqwest",
 ]
 

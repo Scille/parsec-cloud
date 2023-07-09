@@ -17,7 +17,7 @@ pub struct UserStorageUpdater {}
 impl UserStorageUpdater {
     pub async fn set_user_manifest(
         &self,
-        user_manifest: Arc<LocalUserManifest>,
+        _user_manifest: Arc<LocalUserManifest>,
     ) -> anyhow::Result<()> {
         todo!();
     }
@@ -51,8 +51,8 @@ impl UserStorage {
     }
 
     pub(crate) async fn no_populate_start(
-        data_base_dir: &Path,
-        device: Arc<LocalDevice>,
+        _data_base_dir: &Path,
+        _device: Arc<LocalDevice>,
     ) -> anyhow::Result<Self> {
         todo!();
     }

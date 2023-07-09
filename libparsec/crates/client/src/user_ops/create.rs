@@ -35,7 +35,8 @@ pub(super) async fn workspace_create(
     // However a speculative manifest means the workspace have been
     // created by somebody else, and hence we shouldn't try to create
     // it corresponding realm in the backend !
-    workspace_storage_non_speculative_init(&ops.data_base_dir, &ops.device, workspace_id).await?;
+    workspace_storage_non_speculative_init(&ops.config.data_base_dir, &ops.device, workspace_id)
+        .await?;
     updater.set_user_manifest(user_manifest).await?;
     // TODO: handle events
     // ops.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=ops.user_manifest_id)
