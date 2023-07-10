@@ -34,8 +34,8 @@ python = "~3.9.10"
 
 # Base requirements
 
-certifi = ">=2021,<2023"
-attrs = ">=21.4,<23.0"
+certifi = ">=2021,<2024"
+attrs = ">=21.4,<24.0"
 click = "^8.0"
 msgpack = "^1.0"
 wsproto = "^1.2"
@@ -43,10 +43,10 @@ h11 = ">=0.13,<0.15"
 # Can use marshmallow or the toasted flavour as you like ;-)
 # marshmallow = "2.14.0"
 toastedmarshmallow = "0.2.6" # updating causes consistency problem in test
-trio = "^0.22,<0.22.1" # see https://github.com/python-trio/trio-typing/issues/85
+trio = ">=0.22,<0.23" # see https://github.com/python-trio/trio-typing/issues/85
 trio_typing = "^0.7"
 sentry-sdk = "^1.5"
-structlog = ">=21.5,<23.0"
+structlog = ">=21.5,<24.0"
 # colorama = "^0.4.4  # structlog colored output"
 async_exit_stack = "^1.0"
 outcome = "^1.1"
@@ -55,7 +55,7 @@ jinja2 = { version="^3.0" }
 # Quart
 quart-trio = { version="^0.10.0" }
 quart = { version="^0.18.1" }
-hypercorn = { version="^0.13.2" }
+hypercorn = { version=">=0.13.2,<0.15.0" }
 # PostgreSQL
 triopg = { version="^0.6" }
 trio-asyncio = { version="^0.12" }
@@ -71,27 +71,27 @@ pytest = "^7.0"
 pytest-cov = "^4.0"
 pytest-xdist = "^3.1"
 pytest-trio = "^0.8"
-pytest-rerunfailures = "^10.2"
+pytest-rerunfailures = ">=10.2,<13.0"
 hypothesis = "^6.54"
 hypothesis-trio = "^0.6"
-trustme = "^0.9"
+trustme = ">=0.9,<1.1"
 winfspy = { version="^0.8", extras=["test"], markers="platform_system=='Windows'" }
 psutil = "^5.9"
-poetry-lock-package = "^0.4.4"
+poetry-lock-package = ">=0.4.4,<0.6.0"
 docutils = "0.18.1"
 Babel = "^2.10"
 
-ruff = "0.0.261"
+ruff = "0.0.277"
 black = "23.3.0"
-mypy = "^0.982"
+mypy = ">=0.982,<1.5"
 
-setuptools = ">=63.1,<68.0"
+setuptools = ">=63.1,<69.0"
 
-maturin = "0.15.1"
+maturin = "1.1.0"
 patchelf = { version = "^0.17.2.0", markers = "platform_system=='Linux'" }
 
 cibuildwheel = "v2.12.3"
-editorconfig-checker = "2.4.0"
+editorconfig-checker = "2.7.2"
 types-requests = "^2.28"
 boto3-stubs = "^1.26"
 
@@ -232,7 +232,7 @@ ignore_errors = true
 requires = [
     "poetry-core>=1.0.0",
     "setuptools",
-    "maturin==0.15.1",
+    "maturin==1.1.0",
     "maturin[patchelf]==0.15.1; platform_system=='Linux'",
     "patchelf~=0.17.2.0; platform_system=='Linux'",
     "docutils~=0.18.1",
