@@ -35,7 +35,7 @@ jobs:
       - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # pin v3.5.3
         timeout-minutes: 5
 
-      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c  # pin v3.6.0
+      - uses: actions/setup-node@e33196f7422957bea03ed53f6fbb155025ffc7b8  # pin v3.7.0
         with:
           node-version: ${{ env.node-version }}
         timeout-minutes: 2
@@ -45,7 +45,7 @@ jobs:
         working-directory: client
 
       # Install syft
-      - uses: taiki-e/install-action@486baeb8af63bc3d9ec3ec66db5af6ba0ca78774 # pin v2.11.6
+      - uses: taiki-e/install-action@4efcb9aabfee0046e94203abe16b74c81238f190 # pin v2.12.10
         with:
           tool: syft@0.84.0, wasm-pack@${{ env.wasm-pack-version }}
 
@@ -122,7 +122,7 @@ jobs:
         timeout-minutes: 5
 
       # Install syft
-      - uses: taiki-e/install-action@486baeb8af63bc3d9ec3ec66db5af6ba0ca78774 # pin v2.11.6
+      - uses: taiki-e/install-action@4efcb9aabfee0046e94203abe16b74c81238f190 # pin v2.12.10
         with:
           tool: syft@0.84.0
 
