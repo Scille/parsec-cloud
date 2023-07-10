@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import itertools
 import os
 import platform
 import random
@@ -261,7 +262,13 @@ if __name__ == "__main__":
     )
     parser.add_argument("--quiet", "-q", action="store_true", help="🎵 The sound of silence 🎵")
     parser.add_argument("--dry", action="store_true", help="Don't actually run, just display")
-    parser.add_argument("command", help="The command to run", nargs="?")
+    parser.add_argument(
+        "command",
+        help="The command to run",
+        nargs="?",
+        choices=list(itertools.chain.from_iterable(COMMANDS.keys())),
+        metavar="command",
+    )
 
     # Handle `-- <extra_cmd_args>` in argv
     # (argparse doesn't understand `--`, so we have to implement it by hand)
