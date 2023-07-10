@@ -37,7 +37,7 @@ async def _create_shared_recovery_device(
 ) -> None:
     # Connect to the backend
     async with logged_core_factory(config, device) as core:
-        # List all adminisrators and fetch certificates
+        # List all administrators and fetch certificates
         user_infos, total = await core.find_humans(
             query=None, page=1, per_page=100, omit_revoked=True, omit_non_human=True
         )
@@ -232,14 +232,14 @@ async def _invite_shared_recovery(
     # Connect to the backend
     async with logged_core_factory(config, device) as core:
         result = await get_shamir_recovery_others_list(core)
-        for i, (_, user_certifice, _, _) in enumerate(result):
-            assert user_certifice.human_handle is not None
-            display_choice = click.style(user_certifice.human_handle.str, fg="yellow")
+        for i, (_, user_certificate, _, _) in enumerate(result):
+            assert user_certificate.human_handle is not None
+            display_choice = click.style(user_certificate.human_handle.str, fg="yellow")
             click.echo(f" {i} - {display_choice}")
         choices = [str(x) for x in range(len(result))]
         choice_index = await async_prompt("User to invite", type=click.Choice(choices))
-        _, user_certifice, _, _ = result[int(choice_index)]
-        user_id = user_certifice.user_id
+        _, user_certificate, _, _ = result[int(choice_index)]
+        user_id = user_certificate.user_id
 
         async with spinner("Creating device invitation"):
             address, sent_status = await core.new_shamir_recovery_invitation(

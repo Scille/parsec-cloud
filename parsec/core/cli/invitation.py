@@ -499,11 +499,11 @@ async def _choose_recipient(
         click.echo(f"A total of {styled_threshold} shares are necessary to recover the device.")
     elif len(prelude_ctx.shares) == 1:
         click.echo(
-            f"Out of the {styled_threshold} necessary shares, {styled_current_shares} share has been retreived so far."
+            f"Out of the {styled_threshold} necessary shares, {styled_current_shares} share has been retrieved so far."
         )
     else:
         click.echo(
-            f"Out of the {styled_threshold} necessary shares, {styled_current_shares} shares have been retreived so far."
+            f"Out of the {styled_threshold} necessary shares, {styled_current_shares} shares have been retrieved so far."
         )
     for i, recipient in enumerate(prelude_ctx.recipients):
         assert recipient.human_handle is not None

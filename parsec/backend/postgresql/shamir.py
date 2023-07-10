@@ -28,7 +28,7 @@ from parsec.backend.postgresql.utils import (
 )
 from parsec.backend.shamir import BaseShamirComponent
 
-_q_shamir_recovery_get_brief_cerificate = Q(
+_q_shamir_recovery_get_brief_certificate = Q(
     f"""
 SELECT
     brief_certificate
@@ -202,7 +202,7 @@ class PGShamirComponent(BaseShamirComponent):
     ) -> bytes | None:
         async with self.dbh.pool.acquire() as conn:
             row = await conn.fetchrow(
-                *_q_shamir_recovery_get_brief_cerificate(
+                *_q_shamir_recovery_get_brief_certificate(
                     organization_id=organization_id.str,
                     user_id=author.user_id.str,
                 )
