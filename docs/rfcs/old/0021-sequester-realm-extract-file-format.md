@@ -27,7 +27,7 @@ CREATE TABLE block (
 
 CREATE TABLE vlob_atom (
     -- Compared to Parsec's datamodel, we don't store `vlob_encryption_revision` given
-    -- the vlob is provided with third party encrytion key only once at creation time
+    -- the vlob is provided with third party encryption key only once at creation time
     _id PRIMARY KEY,
     vlob_id UUID NOT NULL,
     version INTEGER NOT NULL,

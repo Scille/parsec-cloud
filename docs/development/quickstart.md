@@ -21,7 +21,7 @@ To start hacking, follow the basic steps detailed below:
 2. You need to have the following tools available:
     1. [`git`](https://git-scm.com/)
 
-       Once you have installed `git` you need to clone the repository (it will be required to correctly configure the virtual environement used by `poetry` in the bellow steps).
+       Once you have installed `git` you need to clone the repository (it will be required to correctly configure the virtual environment used by `poetry` in the bellow steps).
 
        ```shell
        git clone git@github.com:Scille/parsec-cloud.git
