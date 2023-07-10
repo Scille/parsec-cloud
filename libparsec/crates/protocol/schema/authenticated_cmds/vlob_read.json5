@@ -78,7 +78,6 @@
     },
     {
         "major_versions": [
-            2,
             3
         ],
         "req": {
@@ -124,11 +123,9 @@
                     },
                     // This field is used by the client to figure out if its role certificate cache is up-to-date enough
                     // to be able to perform the proper integrity checks on the manifest timestamp.
-                    // New in API version 2.3 (Parsec 2.6.0)
                     {
                         "name": "author_last_role_granted_on",
-                        "type": "DateTime",
-                        "introduced_in": "2.3"
+                        "type": "DateTime"
                     }
                 ]
             },

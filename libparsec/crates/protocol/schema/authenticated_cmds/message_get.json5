@@ -56,7 +56,6 @@
     },
     {
         "major_versions": [
-            2,
             3
         ],
         "req": {
