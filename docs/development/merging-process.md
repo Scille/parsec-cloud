@@ -4,25 +4,24 @@ This document describes the Parsec Development Workflow and includes some
 guidelines and best practices to create, review and merge pull requests in
 Parsec.
 
-- [Parsec Development Workflow](#parsec-development-workflow)
-  - [Overview](#overview)
-  - [Opening a pull request](#opening-a-pull-request)
-    - [What makes a good pull request](#what-makes-a-good-pull-request)
-    - [How to write a useful description](#how-to-write-a-useful-description)
-    - [How to keep a sanitized commit history](#how-to-keep-a-sanitized-commit-history)
-    - [Pull request categories](#pull-request-categories)
-    - [The pull request checklist](#the-pull-request-checklist)
-  - [Reviewing a pull request](#reviewing-a-pull-request)
-    - [The automated review](#the-automated-review)
-    - [The peer review](#the-peer-review)
-      - [The code owner](#the-code-owner)
-    - [Specific pull request reviews](#specific-pull-request-reviews)
-      - [Pull request: fix typos](#pull-request-fix-typos)
-      - [Pull request: update dependencies](#pull-request-update-dependencies)
-  - [Merging a pull request](#merging-a-pull-request)
-    - [Why do we want a linear git history](#why-do-we-want-a-linear-git-history)
-    - [What is a merge queue](#what-is-a-merge-queue)
-  - [Interesting sources](#interesting-sources)
+- [Overview](#overview)
+- [Opening a pull request](#opening-a-pull-request)
+  - [What makes a good pull request](#what-makes-a-good-pull-request)
+  - [How to write a useful description](#how-to-write-a-useful-description)
+  - [How to keep a sanitized commit history](#how-to-keep-a-sanitized-commit-history)
+  - [Pull request categories](#pull-request-categories)
+  - [The pull request checklist](#the-pull-request-checklist)
+- [Reviewing a pull request](#reviewing-a-pull-request)
+  - [The automated review](#the-automated-review)
+  - [The peer review](#the-peer-review)
+    - [The code owner](#the-code-owner)
+  - [Specific pull request reviews](#specific-pull-request-reviews)
+    - [Pull request: fix typos](#pull-request-fix-typos)
+    - [Pull request: update dependencies](#pull-request-update-dependencies)
+- [Merging a pull request](#merging-a-pull-request)
+  - [Why do we want a linear git history](#why-do-we-want-a-linear-git-history)
+  - [What is a merge queue](#what-is-a-merge-queue)
+- [Interesting sources](#interesting-sources)
 
 ## Overview
 
@@ -111,7 +110,7 @@ sanitize commit history before merging it into the base branch.
   > approach.
   > See [Github flow - Make changes](https://docs.github.com/en/get-started/quickstart/github-flow#make-changes).
 
-- Squash (merge/fussion/combine) any commit that
+- Squash (merge/fusion/combine) any commit that
   - fixes or revert something that was introduced *in your branch*
     > For example if you have a commit `fix typo` that fix a typo that is introduced in your
     > branch, you should squash this commit with the commit that introduced the typo.
@@ -131,7 +130,7 @@ A pull request might affect different parts of the codebase in different ways.
 The following table lists the categories that can be manually or automatically
 assigned to a pull request.
 
-> Some categories could be automaticaly detected: for example if the pull
+> Some categories could be automatically detected: for example if the pull
 > request modifies `.rs` files we can assign the `Rust` category to it.
 
 | Category     | Meaning                                        |
