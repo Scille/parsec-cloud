@@ -200,7 +200,7 @@ In addition to the [shared requirements](#shared-requirements), you need to inst
 1. Initialize a poetry env <a id="init-web-server-env" />
 
    ```shell
-   ./make.py i
+   python ./make.py python-dev-install
    ```
 
    > The python backend is build from the folder `server`.
@@ -220,24 +220,14 @@ In addition to the [shared requirements](#shared-requirements), you need to inst
 3. Setup the web binding
 
    ```shell
-   pushd bindings/web
-   npm install
-   npm build:dev
-   popd
+   python ./make.py web-dev-install
    ```
-
-   > You can use `python make.py web-dev-install` instead.
 
 4. Setup the electron binding
 
    ```shell
-   pushd bindings/electron
-   npm install
-   npm run build:dev
-   popd
+   python ./make.py electron-dev-install
    ```
-
-   > You can use `python make.py electron-dev-install` instead.
 
 5. Move to the client dir, For the later command we will consider that the current directory is `client`
 
@@ -263,7 +253,7 @@ that will provide some mocked data.
    On another terminal
 
    ```shell
-   $ python tests/scripts/run_testbed_server.py
+   $ python ./make.py run-testbed-server
    [..]
    2023-04-18T12:16:38.649668Z [info     ] Running on http://127.0.0.1:6770 (CTRL + C to quit)
    All set ! Don't forget to export `TESTBED_SERVER_URL` environ variable:
