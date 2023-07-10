@@ -82,7 +82,8 @@ CREATE TABLE user_ (
     human INTEGER REFERENCES human (_id),
     redacted_user_certificate BYTEA NOT NULL,
     profile user_profile NOT NULL,
-
+    -- Introduces with 0013 - add shamir recovery
+    shamir_recovery INTEGER REFERENCES shamir_recovery_setup,
     UNIQUE(organization, user_id)
 );
 
@@ -110,7 +111,7 @@ ALTER TABLE user_
 ADD CONSTRAINT FK_user_device_revoked_user_certifier FOREIGN KEY (revoked_user_certifier) REFERENCES device (_id);
 
 
-CREATE TYPE invitation_type AS ENUM ('USER', 'DEVICE');
+CREATE TYPE invitation_type AS ENUM ('USER', 'DEVICE', 'SHAMIR_RECOVERY');
 CREATE TYPE invitation_deleted_reason AS ENUM ('FINISHED', 'CANCELLED', 'ROTTEN');
 CREATE TYPE invitation_conduit_state AS ENUM (
     '1_WAIT_PEERS',
@@ -132,6 +133,7 @@ CREATE TABLE invitation (
     greeter INTEGER REFERENCES user_ (_id) NOT NULL,
     -- greeter_human INTEGER REFERENCES human (_id),
     claimer_email VARCHAR(255),  -- Required for when type=USER
+    shamir_recovery INTEGER REFERENCES shamir_recovery_setup (_id), -- Required for when type=SHAMIR_RECOVERY
     created_on TIMESTAMPTZ NOT NULL,
 
     deleted_on TIMESTAMPTZ,
@@ -352,4 +354,52 @@ CREATE TABLE migration (
     _id INTEGER PRIMARY KEY,
     name VARCHAR(256) NOT NULL UNIQUE,
     applied TIMESTAMPTZ NOT NULL
+);
+
+
+-------------------------------------------------------
+--  Shamir recovery
+-------------------------------------------------------
+
+
+CREATE TABLE shamir_recovery_setup (
+    _id SERIAL PRIMARY KEY,
+    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    user_ INTEGER REFERENCES user_ (_id) NOT NULL,
+
+    brief_certificate BYTEA NOT NULL,
+    reveal_token UUID NOT NULL,
+    threshold INTEGER NOT NULL,
+    shares INTEGER NOT NULL,
+    ciphered_data BYTEA,
+
+    UNIQUE(organization, reveal_token)
+);
+
+
+CREATE TABLE shamir_recovery_share (
+    _id SERIAL PRIMARY KEY,
+    organization INTEGER REFERENCES organization (_id) NOT NULL,
+
+    shamir_recovery INTEGER REFERENCES shamir_recovery_setup (_id) NOT NULL,
+    recipient INTEGER REFERENCES user_ (_id) NOT NULL,
+
+    share_certificate BYTEA NOT NULL,
+    shares INTEGER NOT NULL,
+
+    UNIQUE(organization, shamir_recovery, recipient)
+);
+
+
+CREATE TABLE shamir_recovery_conduit (
+    _id SERIAL PRIMARY KEY,
+    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    token UUID NOT NULL,
+    greeter INTEGER REFERENCES user_ (_id) NOT NULL,
+
+    conduit_state invitation_conduit_state NOT NULL DEFAULT '1_WAIT_PEERS',
+    conduit_greeter_payload BYTEA,
+    conduit_claimer_payload BYTEA,
+
+    UNIQUE(organization, token, greeter)
 );

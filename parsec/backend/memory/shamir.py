@@ -6,11 +6,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from parsec._parsec import (
-    DataError,
-    ShamirRecoveryBriefCertificate,
     ShamirRecoveryRecipient,
     ShamirRecoverySetup,
-    ShamirRecoveryShareCertificate,
     ShamirRevealToken,
     VerifyKey,
 )
@@ -86,31 +83,11 @@ class MemoryShamirComponent(BaseShamirComponent):
             return
 
         # Verify the certificates
-        share_certificates: dict[UserID, bytes] = {}
-        brief_certificate = ShamirRecoveryBriefCertificate.verify_and_load(
-            setup.brief,
+        brief_certificate, share_certificates = self._verify_certificates(
+            setup,
+            author,
             author_verify_key,
-            expected_author=author,
         )
-        for raw_share in setup.shares:
-            share_certificate = ShamirRecoveryShareCertificate.verify_and_load(
-                raw_share, author_verify_key, expected_author=author
-            )
-            if share_certificate.recipient not in brief_certificate.per_recipient_shares:
-                raise DataError(
-                    f"Recipient {share_certificate.recipient.str} does not in appear in the brief certificate"
-                )
-            if share_certificate.recipient in share_certificates:
-                raise DataError(
-                    f"Recipient {share_certificate.recipient.str} appears more than once"
-                )
-            if share_certificate.recipient == author.user_id:
-                raise DataError(f"Author {author.user_id} included themselves in the recipients")
-            share_certificates[share_certificate.recipient] = raw_share
-        delta = set(brief_certificate.per_recipient_shares) - set(share_certificates)
-        if delta:
-            missing = ", ".join(user_id.str for user_id in delta)
-            raise DataError(f"The following shares are missing: {missing}")
 
         # Get the recipients
         recipients = tuple(

@@ -238,8 +238,6 @@ class ShamirRecoveryInvitation:
     greeter_human_handle: HumanHandle | None
     claimer_email: str | None
     claimer_user_id: UserID
-    threshold: int
-    recipients: tuple[ShamirRecoveryRecipient, ...]
     token: InvitationToken = attr.ib(factory=InvitationToken.new)
     created_on: DateTime = attr.ib(factory=DateTime.now)
     status: InvitationStatus = InvitationStatus.IDLE
@@ -618,10 +616,13 @@ class BaseInviteComponent:
                 greeter_human_handle=invitation.greeter_human_handle,
             )
         elif isinstance(invitation, ShamirRecoveryInvitation):
+            threshold, recipients = await self.shamir_info(
+                client_ctx.organization_id, invitation.claimer_user_id
+            )
             return InviteInfoRepOk(
                 InvitationType.SHAMIR_RECOVERY,
-                threshold=invitation.threshold,
-                recipients=invitation.recipients,
+                threshold=threshold,
+                recipients=recipients,
             )
         else:
             raise NotImplementedError()
@@ -1118,7 +1119,7 @@ class BaseInviteComponent:
         created_on: DateTime | None = None,
     ) -> ShamirRecoveryInvitation:
         """
-        Raise: InvitationShamirRecoveryNotSetupError
+        Raise: InvitationShamirRecoveryNotSetup
         """
         raise NotImplementedError()
 
@@ -1166,3 +1167,8 @@ class BaseInviteComponent:
         Raises: Nothing
         """
         raise NotImplementedError()
+
+    async def shamir_info(
+        self, organization_id: OrganizationID, user_id: UserID
+    ) -> tuple[int, tuple[ShamirRecoveryRecipient, ...]]:
+        raise NotImplementedError

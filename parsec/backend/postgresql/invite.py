@@ -5,7 +5,7 @@ from typing import Any, List
 
 import triopg
 
-from parsec._parsec import DateTime, InvitationDeletedReason
+from parsec._parsec import DateTime, InvitationDeletedReason, ShamirRecoveryRecipient
 from parsec.api.protocol import (
     HumanHandle,
     InvitationStatus,
@@ -24,8 +24,11 @@ from parsec.backend.invite import (
     Invitation,
     InvitationAlreadyDeletedError,
     InvitationAlreadyMemberError,
+    InvitationError,
     InvitationInvalidStateError,
     InvitationNotFoundError,
+    InvitationShamirRecoveryGreeterNotInRecipients,
+    InvitationShamirRecoveryNotSetup,
     ShamirRecoveryInvitation,
     UserInvitation,
 )
@@ -70,6 +73,23 @@ LIMIT 1
 )
 
 
+_q_retrieve_compatible_shamir_recovery_invitation = Q(
+    f"""
+SELECT
+    invitation.token
+FROM invitation
+JOIN user_
+ON invitation.shamir_recovery = user_.shamir_recovery
+WHERE
+    invitation.organization = { q_organization_internal_id("$organization_id") }
+    AND invitation.type = '{ InvitationType.SHAMIR_RECOVERY.str }'
+    AND user_.user_id = $claimer_user_id
+    AND invitation.deleted_on IS NULL
+LIMIT 1
+"""
+)
+
+
 _q_insert_invitation = Q(
     f"""
 INSERT INTO invitation(
@@ -77,6 +97,7 @@ INSERT INTO invitation(
     token,
     type,
     greeter,
+    shamir_recovery,
     claimer_email,
     created_on
 )
@@ -85,8 +106,24 @@ VALUES (
     $token,
     $type,
     { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") },
+    $shamir_recovery,
     $claimer_email,
     $created_on
+)
+"""
+)
+
+_q_insert_shamir_conduit = Q(
+    f"""
+INSERT INTO shamir_recovery_conduit(
+    organization,
+    token,
+    greeter
+)
+VALUES (
+    { q_organization_internal_id("$organization_id") },
+    $token,
+    { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
 )
 """
 )
@@ -106,6 +143,26 @@ FOR UPDATE
 """
 )
 
+_q_delete_shamir_recovery_invitation_info = Q(
+    f"""
+SELECT
+    invitation._id,
+    deleted_on
+FROM invitation
+JOIN shamir_recovery_conduit ON invitation.token = shamir_recovery_conduit.token
+JOIN shamir_recovery_setup ON invitation.shamir_recovery = shamir_recovery_setup._id
+WHERE
+    invitation.organization = { q_organization_internal_id("$organization_id") }
+    AND invitation.token = $token
+    AND type = '{ InvitationType.SHAMIR_RECOVERY.str }'
+    AND (
+        shamir_recovery_conduit.greeter = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter")}
+        OR shamir_recovery_setup.user_ = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter")}
+    )
+FOR UPDATE
+"""
+)
+
 
 _q_delete_invitation = Q(
     f"""
@@ -118,6 +175,55 @@ WHERE
 """
 )
 
+_q_get_shamir_recovery_id = Q(
+    f"""
+SELECT
+    shamir_recovery
+FROM user_
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+    AND user_id = $user_id
+"""
+)
+
+_q_list_recipients = Q(
+    f"""
+SELECT
+    { q_user(_id="recipient", select="user_id") }
+FROM shamir_recovery_share
+WHERE
+    shamir_recovery = $shamir_recovery
+"""
+)
+
+_q_get_shamir_recovery_info = Q(
+    f"""
+SELECT
+    shamir_recovery,
+    threshold
+FROM user_
+LEFT JOIN shamir_recovery_setup ON user_.shamir_recovery = shamir_recovery_setup._id
+WHERE
+    user_.organization = { q_organization_internal_id("$organization_id") }
+    AND user_id = $user_id
+"""
+)
+
+_q_get_shamir_recovery_recipients = Q(
+    f"""
+SELECT
+    human.email,
+    human.label,
+    user_.user_id,
+    shares
+FROM shamir_recovery_share
+LEFT JOIN user_ ON shamir_recovery_share.recipient = user_._id
+LEFT JOIN human ON user_.human = human._id
+WHERE
+    shamir_recovery_share.shamir_recovery = $shamir_recovery
+"""
+)
+
 
 async def _do_delete_invitation(
     conn: triopg._triopg.TrioConnectionProxy,
@@ -127,11 +233,19 @@ async def _do_delete_invitation(
     on: DateTime,
     reason: InvitationDeletedReason,
 ) -> None:
+    # Try user/device invitation first
     row = await conn.fetchrow(
         *_q_delete_invitation_info(
             organization_id=organization_id.str, greeter=greeter.str, token=token
         )
     )
+    # Look for shamir recovery invitation otherwise
+    if not row:
+        row = await conn.fetchrow(
+            *_q_delete_shamir_recovery_invitation_info(
+                organization_id=organization_id.str, greeter=greeter.str, token=token
+            )
+        )
     if not row:
         raise InvitationNotFoundError(token)
     row_id, deleted_on = row
@@ -157,7 +271,30 @@ WHERE
     AND user_.revoked_on IS NULL
 """
 
-_q_list_invitations = Q(
+
+_q_get_email = Q(
+    f"""
+SELECT
+    human.email
+FROM human LEFT JOIN user_ ON human._id = user_.human
+WHERE
+    user_.organization = { q_organization_internal_id("$organization_id") }
+    AND user_.user_id = $user_id
+    AND user_.revoked_on IS NULL
+"""
+)
+
+_q_get_invitation_type = Q(
+    f"""
+SELECT
+    type
+FROM invitation
+WHERE
+    token = $token
+"""
+)
+
+_q_list_device_and_user_invitations = Q(
     f"""
 WITH human_handle_per_user AS ({_q_human_handle_per_user})
 SELECT
@@ -174,6 +311,7 @@ FROM invitation LEFT JOIN human_handle_per_user on invitation.greeter = human_ha
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
     AND greeter = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
+    AND type != '{ InvitationType.SHAMIR_RECOVERY.str }'
     AND deleted_on IS NULL
 ORDER BY created_on
 """
@@ -189,19 +327,22 @@ SELECT
     human_handle_per_user.email,
     human_handle_per_user.label,
     claimer_email,
+    { q_user(_id="shamir_recovery_setup.user_", select="user_id") },
     created_on,
     deleted_on,
     deleted_reason
-FROM invitation LEFT JOIN human_handle_per_user on invitation.greeter = human_handle_per_user.user_
+FROM invitation
+LEFT JOIN human_handle_per_user on invitation.greeter = human_handle_per_user.user_
+LEFT JOIN shamir_recovery_setup on invitation.shamir_recovery = shamir_recovery_setup._id
 WHERE
-    organization = { q_organization_internal_id("$organization_id") }
+    invitation.organization = { q_organization_internal_id("$organization_id") }
     AND token = $token
 LIMIT 1
 """
 )
 
 
-_q_conduit_greeter_info = Q(
+_q_conduit_device_and_user_greeter_info = Q(
     f"""
 SELECT
     _id,
@@ -212,14 +353,34 @@ SELECT
 FROM invitation
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
+    AND type != '{ InvitationType.SHAMIR_RECOVERY.str }'
     AND token = $token
     AND greeter = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
 FOR UPDATE
 """
 )
 
+_q_conduit_shamir_recovery_greeter_info = Q(
+    f"""
+SELECT
+    shamir_recovery_conduit._id,
+    shamir_recovery_conduit.conduit_state,
+    shamir_recovery_conduit.conduit_greeter_payload,
+    shamir_recovery_conduit.conduit_claimer_payload,
+    deleted_on
+FROM invitation
+JOIN shamir_recovery_conduit ON invitation.token = shamir_recovery_conduit.token
+WHERE
+    invitation.organization = { q_organization_internal_id("$organization_id") }
+    AND invitation.token = $token
+    AND type = '{ InvitationType.SHAMIR_RECOVERY.str }'
+    AND shamir_recovery_conduit.greeter = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
+FOR UPDATE
+"""
+)
 
-_q_conduit_claimer_info = Q(
+
+_q_conduit_device_and_user_claimer_info = Q(
     f"""
 SELECT
     _id,
@@ -231,6 +392,27 @@ FROM invitation
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
     AND token = $token
+    AND type != '{ InvitationType.SHAMIR_RECOVERY.str }'
+FOR UPDATE
+"""
+)
+
+
+_q_conduit_shamir_recovery_claimer_info = Q(
+    f"""
+SELECT
+    shamir_recovery_conduit._id,
+    shamir_recovery_conduit.conduit_state,
+    shamir_recovery_conduit.conduit_greeter_payload,
+    shamir_recovery_conduit.conduit_claimer_payload,
+    deleted_on
+FROM invitation
+JOIN shamir_recovery_conduit ON invitation.token = shamir_recovery_conduit.token
+WHERE
+    invitation.organization = { q_organization_internal_id("$organization_id") }
+    AND invitation.token = $token
+    AND shamir_recovery_conduit.greeter = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
+    AND type = '{ InvitationType.SHAMIR_RECOVERY.str }'
 FOR UPDATE
 """
 )
@@ -248,6 +430,49 @@ WHERE
 """
 )
 
+_q_shamir_conduit_update = Q(
+    f"""
+UPDATE shamir_recovery_conduit
+SET
+    conduit_state = $conduit_state,
+    conduit_greeter_payload = $conduit_greeter_payload,
+    conduit_claimer_payload = $conduit_claimer_payload
+WHERE
+    _id = $row_id
+"""
+)
+
+
+_q_list_shamir_recovery_invitations = Q(
+    f"""
+WITH human_handle_per_user AS ({_q_human_handle_per_user})
+SELECT
+    invitation.token,
+    type,
+    { q_user(_id="invitation.greeter", select="user_id") },
+    human_handle_per_user.email,
+    human_handle_per_user.label,
+    { q_user(_id="shamir_recovery_setup.user_", select="user_id") },
+    invitation.shamir_recovery,
+    shamir_recovery_setup.threshold,
+    created_on,
+    deleted_on,
+    deleted_reason
+FROM invitation
+LEFT JOIN human_handle_per_user
+ON invitation.greeter = human_handle_per_user.user_
+JOIN shamir_recovery_conduit
+ON invitation.token = shamir_recovery_conduit.token
+JOIN shamir_recovery_setup
+ON invitation.shamir_recovery = shamir_recovery_setup._id
+WHERE
+    invitation.organization = { q_organization_internal_id("$organization_id") }
+    AND shamir_recovery_conduit.greeter = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
+    AND invitation.deleted_on IS NULL
+ORDER BY created_on
+"""
+)
+
 
 async def _conduit_talk(
     conn: triopg._triopg.TrioConnectionProxy,
@@ -258,24 +483,53 @@ async def _conduit_talk(
     state: ConduitState,
     payload: bytes,
 ) -> ConduitListenCtx:
-    is_greeter = greeter is not None
     async with conn.transaction():
         # On top of retrieving the invitation row, this query lock the row
         # in the database for the duration of the transaction.
         # Hence concurrent request will be on hold until the end of the transaction.
+        row = await conn.fetchrow(*_q_get_invitation_type(token=token))
+        if not row:
+            raise InvitationNotFoundError(token)
+        (type,) = row
+        is_shamir_recovery = type == InvitationType.SHAMIR_RECOVERY.str
+        conduit_update = _q_shamir_conduit_update if is_shamir_recovery else _q_conduit_update
 
-        if is_greeter:
+        if is_greeter and not is_shamir_recovery:
+            assert greeter is not None
             row = await conn.fetchrow(
-                *_q_conduit_greeter_info(
+                *_q_conduit_device_and_user_greeter_info(
                     organization_id=organization_id.str,
-                    greeter_user_id=greeter.str,  # type: ignore[union-attr]
+                    greeter_user_id=greeter.str,
                     token=token,
                 )
             )
-        else:
+        elif is_greeter and is_shamir_recovery:
+            assert greeter is not None
             row = await conn.fetchrow(
-                *_q_conduit_claimer_info(organization_id=organization_id.str, token=token)
+                *_q_conduit_shamir_recovery_greeter_info(
+                    organization_id=organization_id.str,
+                    greeter_user_id=greeter.str,
+                    token=token,
+                )
             )
+        elif not is_greeter and not is_shamir_recovery:
+            row = await conn.fetchrow(
+                *_q_conduit_device_and_user_claimer_info(
+                    organization_id=organization_id.str,
+                    token=token,
+                )
+            )
+        elif not is_greeter and is_shamir_recovery:
+            assert greeter is not None
+            row = await conn.fetchrow(
+                *_q_conduit_shamir_recovery_claimer_info(
+                    organization_id=organization_id.str,
+                    token=token,
+                    greeter_user_id=greeter.str,
+                )
+            )
+        else:
+            assert False
 
         if not row:
             raise InvitationNotFoundError(token)
@@ -318,7 +572,7 @@ async def _conduit_talk(
         else:
             curr_claimer_payload = payload
         await conn.execute(
-            *_q_conduit_update(
+            *conduit_update(
                 row_id=row_id,
                 conduit_state=curr_conduit_state.value,
                 conduit_greeter_payload=curr_greeter_payload,
@@ -346,18 +600,48 @@ async def _conduit_listen(
     conn: triopg._triopg.TrioConnectionProxy, ctx: ConduitListenCtx
 ) -> bytes | None:
     async with conn.transaction():
-        if ctx.is_greeter:
+        row = await conn.fetchrow(*_q_get_invitation_type(token=ctx.token))
+        if not row:
+            raise InvitationNotFoundError(ctx.token)
+        (type,) = row
+        is_shamir_recovery = type == InvitationType.SHAMIR_RECOVERY.str
+        conduit_update = _q_shamir_conduit_update if is_shamir_recovery else _q_conduit_update
+
+        if ctx.is_greeter and not is_shamir_recovery:
+            assert ctx.greeter is not None
             row = await conn.fetchrow(
-                *_q_conduit_greeter_info(
+                *_q_conduit_device_and_user_greeter_info(
                     organization_id=ctx.organization_id.str,
-                    greeter_user_id=ctx.greeter.str,  # type: ignore[union-attr]
+                    greeter_user_id=ctx.greeter.str,
                     token=ctx.token,
                 )
             )
-        else:
+        elif ctx.is_greeter and is_shamir_recovery:
+            assert ctx.greeter is not None
             row = await conn.fetchrow(
-                *_q_conduit_claimer_info(organization_id=ctx.organization_id.str, token=ctx.token)
+                *_q_conduit_shamir_recovery_greeter_info(
+                    organization_id=ctx.organization_id.str,
+                    greeter_user_id=ctx.greeter.str,
+                    token=ctx.token,
+                )
             )
+        elif not ctx.is_greeter and not is_shamir_recovery:
+            row = await conn.fetchrow(
+                *_q_conduit_device_and_user_claimer_info(
+                    organization_id=ctx.organization_id.str, token=ctx.token
+                )
+            )
+        elif not ctx.is_greeter and is_shamir_recovery:
+            assert ctx.greeter is not None
+            row = await conn.fetchrow(
+                *_q_conduit_shamir_recovery_claimer_info(
+                    organization_id=ctx.organization_id.str,
+                    token=ctx.token,
+                    greeter_user_id=ctx.greeter.str,
+                )
+            )
+        else:
+            assert False
 
         if not row:
             raise InvitationNotFoundError()
@@ -387,7 +671,7 @@ async def _conduit_listen(
                 # about our payload too), we can update the conduit
                 # to the next state
                 await conn.execute(
-                    *_q_conduit_update(
+                    *conduit_update(
                         row_id=row_id,
                         conduit_state=NEXT_CONDUIT_STATE[ctx.state].value,
                         conduit_greeter_payload=None,
@@ -447,20 +731,87 @@ async def _do_new_user_invitation(
     # Check if no compatible invitations already exists
     row = await conn.fetchrow(*q)
     if row:
-        token = InvitationToken.from_hex(row["token"])
-    else:
-        # No risk of UniqueViolationError given token is a uuid4
-        token = InvitationToken.new()
-        await conn.execute(
-            *_q_insert_invitation(
-                organization_id=organization_id.str,
-                type=invitation_type.str,
-                token=token,
-                greeter_user_id=greeter_user_id.str,
-                claimer_email=claimer_email,
-                created_on=created_on,
+        return InvitationToken.from_hex(row["token"])
+    # No risk of UniqueViolationError given token is a uuid4
+    token = InvitationToken.new()
+    await conn.execute(
+        *_q_insert_invitation(
+            organization_id=organization_id.str,
+            type=invitation_type.str,
+            token=token,
+            greeter_user_id=greeter_user_id.str,
+            shamir_recovery=None,
+            claimer_email=claimer_email,
+            created_on=created_on,
+        )
+    )
+    await send_signal(
+        conn,
+        BackendEvent.INVITE_STATUS_CHANGED,
+        organization_id=organization_id,
+        greeter=greeter_user_id,
+        token=token,
+        status=InvitationStatus.IDLE,
+    )
+    return token
+
+
+async def _do_new_shamir_recovery_invitation(
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    greeter_user_id: UserID,
+    claimer_user_id: UserID,
+    created_on: DateTime,
+) -> InvitationToken:
+    row = await conn.fetchrow(
+        *_q_retrieve_compatible_shamir_recovery_invitation(
+            organization_id=organization_id.str, claimer_user_id=claimer_user_id.str
+        )
+    )
+    if row:
+        return InvitationToken.from_hex(row["token"])
+    row = await conn.fetchrow(
+        *_q_get_shamir_recovery_id(
+            organization_id=organization_id.str,
+            user_id=claimer_user_id.str,
+        )
+    )
+    if not row:
+        raise InvitationShamirRecoveryNotSetup()
+    internal_id = row["shamir_recovery"]
+    if internal_id is None:
+        raise InvitationShamirRecoveryNotSetup()
+    recipients = [
+        UserID(recipient)
+        for recipient, in await conn.fetch(
+            *_q_list_recipients(
+                shamir_recovery=internal_id,
             )
         )
+    ]
+    if greeter_user_id not in recipients:
+        raise InvitationShamirRecoveryGreeterNotInRecipients()
+    token = InvitationToken.new()
+    await conn.execute(
+        *_q_insert_invitation(
+            organization_id=organization_id.str,
+            type=InvitationType.SHAMIR_RECOVERY.str,
+            token=token,
+            greeter_user_id=greeter_user_id.str,
+            shamir_recovery=internal_id,
+            claimer_email=None,
+            created_on=created_on,
+        )
+    )
+    for recipient in recipients:
+        await conn.execute(
+            *_q_insert_shamir_conduit(
+                organization_id=organization_id.str,
+                greeter_user_id=recipient.str,
+                token=token,
+            )
+        )
+
     await send_signal(
         conn,
         BackendEvent.INVITE_STATUS_CHANGED,
@@ -543,9 +894,34 @@ class PGInviteComponent(BaseInviteComponent):
         created_on: DateTime | None = None,
     ) -> ShamirRecoveryInvitation:
         """
-        Raise: InvitationShamirRecoveryNotSetupError
+        Raise: InvitationShamirRecoveryNotSetup
         """
-        raise NotImplementedError()
+        created_on = created_on or DateTime.now()
+        async with self.dbh.pool.acquire() as conn, conn.transaction():
+            row = await conn.fetchrow(
+                *_q_get_email(
+                    organization_id=organization_id.str,
+                    user_id=claimer_user_id.str,
+                )
+            )
+            if not row:
+                raise InvitationError("The user cannot be found")
+            claimer_email = row["email"]
+            token = await _do_new_shamir_recovery_invitation(
+                conn,
+                organization_id=organization_id,
+                greeter_user_id=greeter_user_id,
+                claimer_user_id=claimer_user_id,
+                created_on=created_on,
+            )
+        return ShamirRecoveryInvitation(
+            greeter_user_id=greeter_user_id,
+            greeter_human_handle=None,
+            claimer_email=claimer_email,
+            claimer_user_id=claimer_user_id,
+            token=token,
+            created_on=created_on,
+        )
 
     async def delete(
         self,
@@ -560,14 +936,19 @@ class PGInviteComponent(BaseInviteComponent):
 
     async def list(self, organization_id: OrganizationID, greeter: UserID) -> List[Invitation]:
         async with self.dbh.pool.acquire() as conn:
-            rows = await conn.fetch(
-                *_q_list_invitations(
+            device_and_user_rows = await conn.fetch(
+                *_q_list_device_and_user_invitations(
+                    organization_id=organization_id.str, greeter_user_id=greeter.str
+                )
+            )
+            shamir_recovery_rows = await conn.fetch(
+                *_q_list_shamir_recovery_invitations(
                     organization_id=organization_id.str, greeter_user_id=greeter.str
                 )
             )
 
         invitations_with_claimer_online = self._claimers_ready[organization_id]
-        invitations = []
+        invitations: list[UserInvitation | DeviceInvitation | ShamirRecoveryInvitation] = []
         for (
             token_uuid,
             type,
@@ -578,7 +959,7 @@ class PGInviteComponent(BaseInviteComponent):
             created_on,
             deleted_on,
             deleted_reason,
-        ) in rows:
+        ) in device_and_user_rows:
             token = InvitationToken.from_hex(token_uuid)
             greeter_human_handle = None
             if greeter_human_handle_email:
@@ -611,23 +992,47 @@ class PGInviteComponent(BaseInviteComponent):
                     created_on=created_on,
                     status=status,
                 )
-            elif type == InvitationType.SHAMIR_RECOVERY.str:
-                invitation = ShamirRecoveryInvitation(
-                    greeter_user_id=UserID(greeter),
-                    greeter_human_handle=greeter_human_handle,
-                    token=token,
-                    # TODO: still there ?
-                    claimer_email=claimer_email,
-                    claimer_user_id=None,  # type: ignore
-                    # TODO
-                    threshold=0,
-                    # TODO
-                    recipients=(),
-                    created_on=created_on,
-                    status=status,
-                )
             else:
                 raise NotImplementedError(type, "not implemented")
+            invitations.append(invitation)
+
+        for (
+            token_uuid,
+            type,
+            greeter,
+            greeter_human_handle_email,
+            greeter_human_handle_label,
+            claimer_user_id,
+            shamir_recovery_internal_id,
+            threshold,
+            created_on,
+            deleted_on,
+            deleted_reason,
+        ) in shamir_recovery_rows:
+            assert type == InvitationType.SHAMIR_RECOVERY.str
+            token = InvitationToken.from_hex(token_uuid)
+            greeter_human_handle = None
+            if greeter_human_handle_email:
+                greeter_human_handle = HumanHandle(
+                    email=greeter_human_handle_email, label=greeter_human_handle_label
+                )
+
+            if deleted_on:
+                status = InvitationStatus.DELETED
+            elif token in invitations_with_claimer_online:
+                status = InvitationStatus.READY
+            else:
+                status = InvitationStatus.IDLE
+
+            invitation = ShamirRecoveryInvitation(
+                greeter_user_id=UserID(greeter),
+                greeter_human_handle=greeter_human_handle,
+                token=token,
+                claimer_email=None,
+                claimer_user_id=UserID(claimer_user_id),
+                created_on=created_on,
+                status=status,
+            )
             invitations.append(invitation)
         return invitations
 
@@ -645,6 +1050,7 @@ class PGInviteComponent(BaseInviteComponent):
             greeter_human_handle_email,
             greeter_human_handle_label,
             claimer_email,
+            claimer_user_id,
             created_on,
             deleted_on,
             deleted_reason,
@@ -668,7 +1074,7 @@ class PGInviteComponent(BaseInviteComponent):
                 created_on=created_on,
                 status=InvitationStatus.READY,
             )
-        else:  # Device
+        elif type == InvitationType.DEVICE.str:
             return DeviceInvitation(
                 greeter_user_id=UserID(greeter),
                 greeter_human_handle=greeter_human_handle,
@@ -676,6 +1082,18 @@ class PGInviteComponent(BaseInviteComponent):
                 created_on=created_on,
                 status=InvitationStatus.READY,
             )
+        elif type == InvitationType.SHAMIR_RECOVERY.str:
+            return ShamirRecoveryInvitation(
+                greeter_user_id=UserID(greeter),
+                greeter_human_handle=greeter_human_handle,
+                claimer_email=None,
+                claimer_user_id=UserID(claimer_user_id),
+                token=token,
+                created_on=created_on,
+                status=InvitationStatus.READY,
+            )
+        else:
+            assert False
 
     async def _conduit_talk(
         self,
@@ -720,3 +1138,27 @@ class PGInviteComponent(BaseInviteComponent):
                 token=token,
                 status=InvitationStatus.IDLE,
             )
+
+    async def shamir_info(
+        self, organization_id: OrganizationID, user_id: UserID
+    ) -> tuple[int, tuple[ShamirRecoveryRecipient, ...]]:
+        async with self.dbh.pool.acquire() as conn:
+            internal_id, threshold = await conn.fetchrow(
+                *_q_get_shamir_recovery_info(
+                    organization_id=organization_id.str,
+                    user_id=user_id.str,
+                )
+            )
+            recipients = []
+            for email, label, recipient_id, shares in await conn.fetch(
+                *_q_get_shamir_recovery_recipients(shamir_recovery=internal_id)
+            ):
+                recipients.append(
+                    ShamirRecoveryRecipient(
+                        user_id=UserID(recipient_id),
+                        human_handle=HumanHandle(email, label),
+                        shares=shares,
+                    )
+                )
+
+        return (threshold, tuple(recipients))

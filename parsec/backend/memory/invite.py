@@ -92,7 +92,8 @@ class MemoryInviteComponent(BaseInviteComponent):
         if isinstance(invitation, ShamirRecoveryInvitation):
             if greeter is None:
                 raise InvitationError("`greeter_user_id` is not provided")
-            recipients = {recipient.user_id for recipient in invitation.recipients}
+            _, recipients = self._shamir_info(organization_id, invitation.claimer_user_id)
+            recipients = {recipient.user_id for recipient in recipients}
             if greeter not in recipients:
                 raise InvitationNotFoundError(token)
             return invitation, org.shamir_conduits[(token, greeter)]
@@ -278,7 +279,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         ).human_handle
         claimer_user = await self._user_component.get_user(organization_id, claimer_user_id)
         claimer_email = claimer_user.human_handle.email if claimer_user.human_handle else None
-        threshold, recipients = self._shamir_info(organization_id, claimer_user_id)
+        _, recipients = self._shamir_info(organization_id, claimer_user_id)
         allowed_greeters = {recipient.user_id for recipient in recipients}
 
         # Check greeter
@@ -291,8 +292,6 @@ class MemoryInviteComponent(BaseInviteComponent):
             greeter_human_handle=greeter_human_handle,
             claimer_email=claimer_email,
             claimer_user_id=claimer_user_id,
-            threshold=threshold,
-            recipients=recipients,
             created_on=created_on,
         )
         org.invitations[invitation.token] = invitation
@@ -364,7 +363,8 @@ class MemoryInviteComponent(BaseInviteComponent):
     ) -> None:
         invitation = self._get_invitation(organization_id, token)
         if isinstance(invitation, ShamirRecoveryInvitation):
-            recipients = {recipient.user_id for recipient in invitation.recipients}
+            _, recipients = self._shamir_info(organization_id, invitation.claimer_user_id)
+            recipients = {recipient.user_id for recipient in recipients}
             # The claimer is authorized to delete the invitation
             if greeter not in recipients and greeter != invitation.claimer_user_id:
                 raise InvitationNotFoundError(token)
@@ -422,8 +422,8 @@ class MemoryInviteComponent(BaseInviteComponent):
         invitations = []
         for invitation in org.invitations.values():
             if isinstance(invitation, ShamirRecoveryInvitation):
-                recipients = {recipient.user_id for recipient in invitation.recipients}
-                if greeter not in recipients:
+                _, recipients = self._shamir_info(organization_id, invitation.claimer_user_id)
+                if greeter not in {recipient.user_id for recipient in recipients}:
                     continue
             elif invitation.greeter_user_id != greeter:
                 continue
@@ -478,3 +478,8 @@ class MemoryInviteComponent(BaseInviteComponent):
             raise InvitationShamirRecoveryNotSetup(exc)
 
         return (item.threshold, item.recipients)
+
+    async def shamir_info(
+        self, organization_id: OrganizationID, user_id: UserID
+    ) -> tuple[int, tuple[ShamirRecoveryRecipient, ...]]:
+        return self._shamir_info(organization_id, user_id)
