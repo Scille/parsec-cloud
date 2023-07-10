@@ -123,7 +123,10 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
                 "https://install.python-poetry.org/ | python - --version={version}",
             ),
         ],
-        Tool.Node: [ReplaceRegex(r"Node [0-9.]+", "Node {version}")],
+        Tool.Node: [
+            ReplaceRegex(r"Node [0-9.]+", "Node {version}"),
+            ReplaceRegex(r"nvm install [0-9.]+", "nvm install {version}"),
+        ],
         Tool.WasmPack: [ReplaceRegex(r"wasm-pack@[0-9.]+", "wasm-pack@{version}")],
     },
     ROOT_DIR

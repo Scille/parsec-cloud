@@ -166,10 +166,7 @@ poetry run pytest tests --runslow -n auto
 
 ## Hacking the Web client (front)
 
-In addition to the [shared requirements](#shared-requirements), you need to install [`Node 18.12.0`](https://nodejs.org/en/download/releases).
-
-> You can use [`nvm`](https://github.com/nvm-sh/nvm) to manage multiple node version
-> or [`nvm-windows`](https://github.com/coreybutler/nvm-windows) for `Windows`
+In addition to the [shared requirements](#shared-requirements), for working with the web clients you need to:
 
 <!-- TODO: Currently the web client via electron doesn't provide mountpoint so fuse isn't required
 1. Install FUSE (Linux/MacOS) or WinFsp (Windows)
@@ -196,14 +193,15 @@ In addition to the [shared requirements](#shared-requirements), you need to inst
 
      - On Linux: you need to have installed `libfuse2` -->
 
-<!-- markdownlint-disable-next-line no-inline-html -->
-1. Initialize a poetry env <a id="init-web-server-env" />
+1. Install [`Node 18.12.0`](https://nodejs.org/en/download/releases).
+
+   We recommand that you use [`nvm`](https://github.com/nvm-sh/nvm) to manage multiple node versions:
+
+   > [`nvm-windows`](https://github.com/coreybutler/nvm-windows) for `Windows`
 
    ```shell
-   python ./make.py python-dev-install
+   nvm install 18.12.0
    ```
-
-   > The python backend is build from the folder `server`.
 
 2. Install `wasm-pack`
 
@@ -217,25 +215,34 @@ In addition to the [shared requirements](#shared-requirements), you need to inst
 
    > We install it using cargo because it's the simpler way to specify which version of `wasm-pack` to use.
 
-3. Setup the web binding
+   <!-- markdownlint-disable-next-line no-inline-html -->
+3. Initialize a poetry env <a id="init-web-server-env" />
+
+   ```shell
+   python ./make.py python-dev-install
+   ```
+
+   > The python backend is build from the folder `server`.
+
+4. Setup the web binding
 
    ```shell
    python ./make.py web-dev-install
    ```
 
-4. Setup the electron binding
+5. Setup the electron binding
 
    ```shell
    python ./make.py electron-dev-install
    ```
 
-5. Move to the client dir, For the later command we will consider that the current directory is `client`
+6. Move to the client dir, For the later command we will consider that the current directory is `client`
 
    ```shell
    cd client
    ```
 
-6. Install client dependencies
+7. Install client dependencies
 
    ```shell
    npm install
