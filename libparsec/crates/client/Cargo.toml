@@ -13,9 +13,9 @@ libparsec_platform_async = { path = "../platform_async" }
 libparsec_platform_storage = { path = "../platform_storage" }
 libparsec_protocol = { path = "../protocol" }
 
-tokio = { version = "1.28.0", features = ["rt", "time", "sync", "macros"] }
-paste = "1.0.12"
-log = "0.4.17"
+tokio = { version = "1.29.1", features = ["rt", "time", "sync", "macros"] }
+paste = "1.0.13"
+log = "0.4.19"
 
 [dev-dependencies]
 libparsec_tests_fixtures = { path = "../tests_fixtures" }
