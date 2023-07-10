@@ -1,0 +1,1 @@
+Drop support for API v2

@@ -1,7 +1,6 @@
 [
     {
         "major_versions": [
-            2,
             3,
             4
         ],
@@ -17,12 +16,10 @@
                         "name": "token",
                         "type": "InvitationToken"
                     },
-                    // Added in API 2.3 (Parsec v2.6.0)
                     // Field used when the invitation is correctly created but the invitation email cannot be sent
                     {
                         "name": "email_sent",
-                        "type": "InvitationEmailSentStatus",
-                        "introduced_in": "2.3"
+                        "type": "InvitationEmailSentStatus"
                     }
                 ]
             },

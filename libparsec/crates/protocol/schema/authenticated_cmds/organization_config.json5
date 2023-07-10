@@ -1,7 +1,6 @@
 [
     {
         "major_versions": [
-            2,
             3,
             4
         ],
@@ -23,13 +22,11 @@
                     },
                     {
                         "name": "sequester_authority_certificate",
-                        "type": "RequiredOption<Bytes>",
-                        "introduced_in": "2.8"
+                        "type": "RequiredOption<Bytes>"
                     },
                     {
                         "name": "sequester_services_certificates",
-                        "type": "RequiredOption<List<Bytes>>",
-                        "introduced_in": "2.8"
+                        "type": "RequiredOption<List<Bytes>>"
                     }
                 ]
             },

@@ -1,7 +1,6 @@
 [
     {
         "major_versions": [
-            2,
             3,
             4
         ],
@@ -100,23 +99,19 @@
                     },
                     {
                         "name": "ballpark_client_early_offset",
-                        "type": "Float",
-                        "introduced_in": "2.4"
+                        "type": "Float"
                     },
                     {
                         "name": "ballpark_client_late_offset",
-                        "type": "Float",
-                        "introduced_in": "2.4"
+                        "type": "Float"
                     },
                     {
                         "name": "backend_timestamp",
-                        "type": "DateTime",
-                        "introduced_in": "2.4"
+                        "type": "DateTime"
                     },
                     {
                         "name": "client_timestamp",
-                        "type": "DateTime",
-                        "introduced_in": "2.4"
+                        "type": "DateTime"
                     }
                 ]
             }
