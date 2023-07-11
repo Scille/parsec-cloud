@@ -171,10 +171,9 @@ fn only_rsa_is_supported() {
 #[rstest]
 #[case(PUBLIC_KEY_DER_1024)]
 #[case(PUBLIC_KEY_DER_2048)]
-fn key_equality(#[case] pub_key: &[u8]) {
-    let pub_key = SequesterPublicKeyDer::try_from(pub_key).unwrap();
-
-    let pub_key2 = pub_key.clone();
+fn key_equality(#[case] raw_pub_key: &[u8]) {
+    let pub_key = SequesterPublicKeyDer::try_from(raw_pub_key).unwrap();
+    let pub_key2 = SequesterPublicKeyDer::try_from(raw_pub_key).unwrap();
 
     assert_eq!(pub_key, pub_key2);
 }
