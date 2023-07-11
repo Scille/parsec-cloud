@@ -91,9 +91,9 @@ SELECT
     share_certificate
 FROM shamir_recovery_share
 JOIN shamir_recovery_setup
-ON shamir_recovery_share.shamir_recovery = shamir_recovery_setup._id
+    ON shamir_recovery_share.shamir_recovery = shamir_recovery_setup._id
 JOIN user_
-ON shamir_recovery_setup._id = user_.shamir_recovery
+    ON shamir_recovery_setup._id = user_.shamir_recovery
 WHERE
     shamir_recovery_share.organization = { q_organization_internal_id("$organization_id") }
     AND recipient = { q_user_internal_id(organization_id="$organization_id", user_id="$recipient") }
@@ -119,7 +119,8 @@ SELECT
     invitation._id,
     invitation.token
 FROM invitation
-JOIN shamir_recovery_setup ON invitation.shamir_recovery = shamir_recovery_setup._id
+JOIN shamir_recovery_setup
+    ON invitation.shamir_recovery = shamir_recovery_setup._id
 WHERE
     invitation.organization = { q_organization_internal_id("$organization_id") }
     AND type = '{ InvitationType.SHAMIR_RECOVERY.str }'

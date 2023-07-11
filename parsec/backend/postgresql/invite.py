@@ -79,7 +79,7 @@ SELECT
     invitation.token
 FROM invitation
 JOIN user_
-ON invitation.shamir_recovery = user_.shamir_recovery
+    ON invitation.shamir_recovery = user_.shamir_recovery
 WHERE
     invitation.organization = { q_organization_internal_id("$organization_id") }
     AND invitation.type = '{ InvitationType.SHAMIR_RECOVERY.str }'
@@ -149,8 +149,11 @@ SELECT
     invitation._id,
     deleted_on
 FROM invitation
-JOIN shamir_recovery_conduit ON invitation.token = shamir_recovery_conduit.token
-JOIN shamir_recovery_setup ON invitation.shamir_recovery = shamir_recovery_setup._id
+JOIN shamir_recovery_conduit
+    ON invitation.token = shamir_recovery_conduit.token
+    AND invitation.organization = shamir_recovery_conduit.organization
+JOIN shamir_recovery_setup
+    ON invitation.shamir_recovery = shamir_recovery_setup._id
 WHERE
     invitation.organization = { q_organization_internal_id("$organization_id") }
     AND invitation.token = $token
@@ -204,7 +207,8 @@ SELECT
     shamir_recovery,
     threshold
 FROM user_
-LEFT JOIN shamir_recovery_setup ON user_.shamir_recovery = shamir_recovery_setup._id
+LEFT JOIN shamir_recovery_setup
+    ON user_.shamir_recovery = shamir_recovery_setup._id
 WHERE
     user_.organization = { q_organization_internal_id("$organization_id") }
     AND user_id = $user_id
@@ -219,8 +223,11 @@ SELECT
     user_.user_id,
     shares
 FROM shamir_recovery_share
-LEFT JOIN user_ ON shamir_recovery_share.recipient = user_._id
-LEFT JOIN human ON user_.human = human._id
+LEFT JOIN user_
+    ON shamir_recovery_share.recipient = user_._id
+    AND shamir_recovery_share.organization = user_.organization
+LEFT JOIN human
+    ON user_.human = human._id
 WHERE
     shamir_recovery_share.organization = { q_organization_internal_id("$organization_id") }
     AND shamir_recovery_share.shamir_recovery = $shamir_recovery
@@ -272,7 +279,8 @@ async def _do_delete_invitation(
 
 _q_human_handle_per_user = f"""
 SELECT user_._id AS user_, email, label
-FROM human LEFT JOIN user_ ON human._id = user_.human
+FROM human LEFT JOIN user_
+    ON human._id = user_.human
 WHERE
     human.organization = { q_organization_internal_id("$organization_id") }
     AND user_.revoked_on IS NULL
@@ -283,7 +291,8 @@ _q_get_email = Q(
     f"""
 SELECT
     human.email
-FROM human LEFT JOIN user_ ON human._id = user_.human
+FROM human LEFT JOIN user_
+    ON human._id = user_.human
 WHERE
     user_.organization = { q_organization_internal_id("$organization_id") }
     AND user_.user_id = $user_id
@@ -315,7 +324,8 @@ SELECT
     created_on,
     deleted_on,
     deleted_reason
-FROM invitation LEFT JOIN human_handle_per_user on invitation.greeter = human_handle_per_user.user_
+FROM invitation LEFT JOIN human_handle_per_user
+    ON invitation.greeter = human_handle_per_user.user_
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
     AND greeter = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
@@ -340,8 +350,10 @@ SELECT
     deleted_on,
     deleted_reason
 FROM invitation
-LEFT JOIN human_handle_per_user on invitation.greeter = human_handle_per_user.user_
-LEFT JOIN shamir_recovery_setup on invitation.shamir_recovery = shamir_recovery_setup._id
+LEFT JOIN human_handle_per_user
+    ON invitation.greeter = human_handle_per_user.user_
+LEFT JOIN shamir_recovery_setup
+    ON invitation.shamir_recovery = shamir_recovery_setup._id
 WHERE
     invitation.organization = { q_organization_internal_id("$organization_id") }
     AND token = $token
@@ -377,7 +389,8 @@ SELECT
     shamir_recovery_conduit.conduit_claimer_payload,
     deleted_on
 FROM invitation
-JOIN shamir_recovery_conduit ON invitation.token = shamir_recovery_conduit.token
+JOIN shamir_recovery_conduit
+    ON invitation.token = shamir_recovery_conduit.token
 WHERE
     invitation.organization = { q_organization_internal_id("$organization_id") }
     AND invitation.token = $token
@@ -415,7 +428,9 @@ SELECT
     shamir_recovery_conduit.conduit_claimer_payload,
     deleted_on
 FROM invitation
-JOIN shamir_recovery_conduit ON invitation.token = shamir_recovery_conduit.token
+JOIN shamir_recovery_conduit
+    ON invitation.token = shamir_recovery_conduit.token
+    AND invitation.organization = shamir_recovery_conduit.organization
 WHERE
     invitation.organization = { q_organization_internal_id("$organization_id") }
     AND invitation.token = $token
@@ -470,11 +485,12 @@ SELECT
     deleted_reason
 FROM invitation
 LEFT JOIN human_handle_per_user
-ON invitation.greeter = human_handle_per_user.user_
+    ON invitation.greeter = human_handle_per_user.user_
 JOIN shamir_recovery_conduit
-ON invitation.token = shamir_recovery_conduit.token
+    ON invitation.token = shamir_recovery_conduit.token
+    AND invitation.organization = shamir_recovery_conduit.organization
 JOIN shamir_recovery_setup
-ON invitation.shamir_recovery = shamir_recovery_setup._id
+    ON invitation.shamir_recovery = shamir_recovery_setup._id
 WHERE
     invitation.organization = { q_organization_internal_id("$organization_id") }
     AND shamir_recovery_conduit.greeter = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
