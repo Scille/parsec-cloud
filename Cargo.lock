@@ -381,6 +381,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "crypto_secretbox"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9d6cf87adf719ddf43a805e92c6870a531aedda35ff640442cbaf8674e141e1"
+dependencies = [
+ "aead",
+ "cipher",
+ "generic-array 0.14.7",
+ "poly1305",
+ "salsa20",
+ "subtle",
+ "zeroize",
+]
+
+[[package]]
 name = "ctor"
 version = "0.1.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -847,6 +862,7 @@ dependencies = [
  "serde",
  "typenum",
  "version_check",
+ "zeroize",
 ]
 
 [[package]]
@@ -1328,6 +1344,7 @@ dependencies = [
  "base32",
  "blake2",
  "crypto_box",
+ "crypto_secretbox",
  "digest 0.10.6",
  "ed25519-dalek",
  "generic-array 0.14.7",
@@ -1352,7 +1369,6 @@ dependencies = [
  "sodiumoxide",
  "thiserror",
  "x25519-dalek 2.0.0-rc.2",
- "xsalsa20poly1305",
  "zeroize",
 ]
 

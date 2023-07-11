@@ -3,11 +3,11 @@
 use argon2::{Algorithm, Argon2, Params, Version};
 use blake2::Blake2bMac;
 use crypto_box::aead::Aead;
+use crypto_secretbox::{AeadCore, Key, XSalsa20Poly1305};
 use digest::{consts::U5, KeyInit, Mac};
 use rand_08::{rngs::OsRng, RngCore};
 use serde::Deserialize;
 use serde_bytes::Bytes;
-use xsalsa20poly1305::{Key, XSalsa20Poly1305, KEY_SIZE, NONCE_SIZE};
 
 use crate::CryptoError;
 
@@ -35,7 +35,7 @@ lazy_static::lazy_static! {
                 MEMLIMIT_INTERACTIVE / BLOCKSIZE,
                 OPSLIMIT_INTERACTIVE,
                 PARALLELISM,
-                Some(KEY_SIZE),
+                Some(XSalsa20Poly1305::KEY_SIZE),
             )
             .expect("Can't fail"),
         );
@@ -47,7 +47,7 @@ pub struct SecretKey(Key);
 
 impl SecretKey {
     pub const ALGORITHM: &'static str = "xsalsa20poly1305";
-    pub const SIZE: usize = KEY_SIZE;
+    pub const SIZE: usize = XSalsa20Poly1305::KEY_SIZE;
 
     pub fn generate() -> Self {
         Self(XSalsa20Poly1305::generate_key(rand_08::thread_rng()))
@@ -69,9 +69,14 @@ impl SecretKey {
 
     pub fn decrypt(&self, ciphered: &[u8]) -> Result<Vec<u8>, CryptoError> {
         let cipher = XSalsa20Poly1305::new(&self.0);
-        let nonce_slice = ciphered.get(..NONCE_SIZE).ok_or(CryptoError::Nonce)?;
+        let nonce_slice = ciphered
+            .get(..XSalsa20Poly1305::NONCE_SIZE)
+            .ok_or(CryptoError::Nonce)?;
         cipher
-            .decrypt(nonce_slice.into(), &ciphered[NONCE_SIZE..])
+            .decrypt(
+                nonce_slice.into(),
+                &ciphered[XSalsa20Poly1305::NONCE_SIZE..],
+            )
             .map_err(|_| CryptoError::Decryption)
     }
 
@@ -95,7 +100,7 @@ impl SecretKey {
     }
 
     pub fn from_password(password: &str, salt: &[u8]) -> Result<Self, CryptoError> {
-        let mut key = [0; KEY_SIZE];
+        let mut key = [0; XSalsa20Poly1305::KEY_SIZE];
 
         // During test we want to skip the `argon2` algorithm for hashing the password
         // Because it takes some time.
@@ -105,11 +110,11 @@ impl SecretKey {
                 return Err(CryptoError::DataSize);
             }
 
-            let password_end = KEY_SIZE.min(password.len());
+            let password_end = XSalsa20Poly1305::KEY_SIZE.min(password.len());
 
             key[..password_end].copy_from_slice(&password.as_bytes()[..password_end]);
 
-            let salt_end = (KEY_SIZE - password_end).min(salt.len());
+            let salt_end = (XSalsa20Poly1305::KEY_SIZE - password_end).min(salt.len());
 
             key[password_end..password_end + salt_end].copy_from_slice(&salt[..salt_end]);
         } else {
@@ -122,8 +127,8 @@ impl SecretKey {
     }
 }
 
-impl From<[u8; KEY_SIZE]> for SecretKey {
-    fn from(key: [u8; KEY_SIZE]) -> Self {
+impl From<[u8; XSalsa20Poly1305::KEY_SIZE]> for SecretKey {
+    fn from(key: [u8; XSalsa20Poly1305::KEY_SIZE]) -> Self {
         Self(key.into())
     }
 }
