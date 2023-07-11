@@ -805,10 +805,10 @@ impl BackendInvitationAddr {
         let base = BaseBackendAddr::from_url(&parsed)?;
         let organization_id = extract_organization_id(&parsed)?;
         let pairs = parsed.0.query_pairs();
-        let invitation_type = match extract_action(&pairs)? {
-            x if x == "claim_user" => InvitationType::User,
-            x if x == "claim_device" => InvitationType::Device,
-            x if x == "claim_shamir_recovery" => InvitationType::ShamirRecovery,
+        let invitation_type = match &extract_action(&pairs)?[..] {
+            "claim_user" => InvitationType::User,
+            "claim_device" => InvitationType::Device,
+            "claim_shamir_recovery" => InvitationType::ShamirRecovery,
             value => {
                 return Err(AddrError::InvalidParamValue {
                     param: "action",

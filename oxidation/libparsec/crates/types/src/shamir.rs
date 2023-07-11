@@ -170,19 +170,15 @@ impl ShamirRecoveryShareData {
         ciphered: &[u8],
         recipient_privkey: &PrivateKey,
         author_verify_key: &VerifyKey,
-    ) -> Result<ShamirRecoveryShareData, &'static str> {
-        let signed = recipient_privkey
-            .decrypt_from_self(ciphered)
-            .map_err(|_| "Invalid encryption")?;
-        let compressed = author_verify_key
-            .verify(&signed)
-            .map_err(|_| "Invalid signature")?;
+    ) -> DataResult<ShamirRecoveryShareData> {
+        let signed = recipient_privkey.decrypt_from_self(ciphered)?;
+        let compressed = author_verify_key.verify(&signed)?;
         let mut serialized = vec![];
         ZlibDecoder::new(&compressed[..])
             .read_to_end(&mut serialized)
-            .map_err(|_| "Invalid compression")?;
+            .map_err(|_| DataError::Compression)?;
         let data: ShamirRecoveryShareData =
-            rmp_serde::from_slice(&serialized).map_err(|_| "Invalid serialization")?;
+            rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)?;
         Ok(data)
     }
 
@@ -218,12 +214,12 @@ impl_transparent_data_format_conversion!(
 );
 
 impl ShamirRecoveryCommunicatedData {
-    pub fn dump(&self) -> Result<Vec<u8>, &'static str> {
-        ::rmp_serde::to_vec_named(self).map_err(|_| "Serialization failed")
+    pub fn dump(&self) -> DataResult<Vec<u8>> {
+        Ok(::rmp_serde::to_vec_named(self).map_err(|_| DataError::Serialization)?)
     }
 
-    pub fn load(buf: &[u8]) -> Result<Self, &'static str> {
-        ::rmp_serde::from_slice(buf).map_err(|_| "Deserialization failed")
+    pub fn load(buf: &[u8]) -> DataResult<Self> {
+        Ok(::rmp_serde::from_slice(buf).map_err(|_| DataError::Serialization)?)
     }
 }
 
@@ -244,11 +240,11 @@ impl_transparent_data_format_conversion!(
 );
 
 impl ShamirRecoverySecret {
-    pub fn dump(&self) -> Result<Vec<u8>, &'static str> {
-        ::rmp_serde::to_vec_named(self).map_err(|_| "Serialization failed")
+    pub fn dump(&self) -> DataResult<Vec<u8>> {
+        Ok(::rmp_serde::to_vec_named(self).map_err(|_| DataError::Serialization)?)
     }
 
-    pub fn load(buf: &[u8]) -> Result<Self, &'static str> {
-        ::rmp_serde::from_slice(buf).map_err(|_| "Deserialization failed")
+    pub fn load(buf: &[u8]) -> DataResult<Self> {
+        Ok(::rmp_serde::from_slice(buf).map_err(|_| DataError::Serialization)?)
     }
 }

@@ -12,7 +12,7 @@ crate::impl_key_debug!(ShamirShare);
 
 impl PartialEq for ShamirShare {
     fn eq(&self, other: &Self) -> bool {
-        Vec::from(&self.0) == Vec::from(&other.0)
+        self.0.x == other.0.x && self.0.y == other.0.y
     }
 }
 

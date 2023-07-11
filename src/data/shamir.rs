@@ -136,17 +136,13 @@ impl ShamirRecoveryCommunicatedData {
             .collect()
     }
 
-    fn dump<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(
-            py,
-            &self.0.dump().map_err(PyValueError::new_err)?,
-        ))
+    fn dump<'p>(&self, py: Python<'p>) -> DataResult<&'p PyBytes> {
+        Ok(PyBytes::new(py, &self.0.dump()?))
     }
 
     #[classmethod]
-    fn load(_cls: &PyType, data: &[u8]) -> PyResult<Self> {
-        let share_data = libparsec::types::ShamirRecoveryCommunicatedData::load(data)
-            .map_err(PyValueError::new_err)?;
+    fn load(_cls: &PyType, data: &[u8]) -> DataResult<Self> {
+        let share_data = libparsec::types::ShamirRecoveryCommunicatedData::load(data)?;
         Ok(Self(share_data))
     }
 }
@@ -183,13 +179,12 @@ impl ShamirRecoveryShareData {
         ciphered: &[u8],
         recipient_privkey: &PrivateKey,
         author_verify_key: &VerifyKey,
-    ) -> PyResult<ShamirRecoveryShareData> {
+    ) -> DataResult<ShamirRecoveryShareData> {
         let share_data = libparsec::types::ShamirRecoveryShareData::decrypt_verify_and_load_for(
             ciphered,
             &recipient_privkey.0,
             &author_verify_key.0,
-        )
-        .map_err(PyValueError::new_err)?;
+        )?;
         Ok(ShamirRecoveryShareData(share_data))
     }
 
@@ -317,17 +312,13 @@ impl ShamirRecoverySecret {
         ShamirRevealToken(self.0.reveal_token)
     }
 
-    fn dump<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(
-            py,
-            &self.0.dump().map_err(PyValueError::new_err)?,
-        ))
+    fn dump<'p>(&self, py: Python<'p>) -> DataResult<&'p PyBytes> {
+        Ok(PyBytes::new(py, &self.0.dump()?))
     }
 
     #[classmethod]
-    fn load(_cls: &PyType, data: &[u8]) -> PyResult<Self> {
-        let share_data =
-            libparsec::types::ShamirRecoverySecret::load(data).map_err(PyValueError::new_err)?;
+    fn load(_cls: &PyType, data: &[u8]) -> DataResult<Self> {
+        let share_data = libparsec::types::ShamirRecoverySecret::load(data)?;
         Ok(Self(share_data))
     }
 }
