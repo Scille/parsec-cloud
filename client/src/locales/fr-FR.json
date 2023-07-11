@@ -278,7 +278,7 @@
         "logIn": "Me connecter",
         "createDevice": "Rejoindre l'organisation",
         "validateUserInfo": "Valider mes informations",
-        "start": "Start",
+        "start": "Démarrer",
         "waitingForHost": "(En attente de l'hôte)",
         "stepTitles": {
             "GetHostCode": "Code hôte",

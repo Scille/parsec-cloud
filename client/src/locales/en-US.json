@@ -278,7 +278,7 @@
         "logIn": "Log In",
         "createDevice": "Join the organization",
         "validateUserInfo": "Validate my information",
-        "start": "Démarrer",
+        "start": "Start",
         "waitingForHost": "(Waiting for the host)",
         "stepTitles": {
             "GetHostCode": "Host code",

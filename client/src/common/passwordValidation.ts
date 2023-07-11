@@ -3,8 +3,6 @@
 import { ComposerTranslation } from 'vue-i18n';
 import { zxcvbn, zxcvbnOptions } from '@zxcvbn-ts/core';
 import * as zxcvbnCommonPackage from '@zxcvbn-ts/language-common';
-import * as zxcvbnEnPackage from '@zxcvbn-ts/language-en';
-import * as zxcvbnFrPackage from '@zxcvbn-ts/language-fr';
 
 export enum PasswordStrength {
   None = 0,
@@ -16,16 +14,13 @@ export enum PasswordStrength {
 const OPTIONS = {
   graphs: zxcvbnCommonPackage.adjacencyGraphs,
   dictionary: {
-    ...zxcvbnCommonPackage.dictionary,
-    ...zxcvbnEnPackage.dictionary,
-    ...zxcvbnFrPackage.dictionary
+    ...zxcvbnCommonPackage.dictionary
   }
 };
 
 zxcvbnOptions.setOptions(OPTIONS);
 
 export function getPasswordStrength(password: string): PasswordStrength {
-
   if (password.length <= 0) {
     return PasswordStrength.None;
   }

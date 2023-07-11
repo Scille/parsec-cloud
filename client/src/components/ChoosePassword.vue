@@ -13,27 +13,28 @@
       {{ $t('Password.passwordInfo') }}
     </ion-text>
   </div>
-  <custom-input
-    :label="$t('Password.password')"
-    v-model="password"
-    name="password"
-    type="password"
-  />
-  <custom-input
-    :label="$t('Password.confirmPassword')"
-    v-model="passwordConfirm"
-    name="confirmPassword"
-    type="password"
-  />
-  <span
-    class="error-message"
-    v-if="password !== passwordConfirm"
-  >
-    {{ $t('Password.noMatch') }}
-  </span>
+  <div class="password-inputs">
+    <password-input
+      :label="$t('Password.password')"
+      v-model="password"
+      @change="onPasswordChange()"
+      name="password"
+    />
+    <password-input
+      :label="$t('Password.confirmPassword')"
+      v-model="passwordConfirm"
+      name="confirmPassword"
+    />
+    <span
+      class="error-message"
+      v-if="password !== passwordConfirm"
+    >
+      {{ $t('Password.noMatch') }}
+    </span>
+  </div>
   <div
     class="container-password-level"
-    v-show="getPasswordStrength(password) !== PasswordStrength.None"
+    v-show="passwordStrength !== PasswordStrength.None"
   >
     <div
       class="password-level"
@@ -47,7 +48,7 @@
       <ion-text
         class="subtitles-sm password-level__text"
       >
-        {{ getPasswordStrengthText($t, getPasswordStrength(password)) }}
+        {{ getPasswordStrengthText($t, passwordStrength) }}
       </ion-text>
     </div>
     <ion-text
@@ -61,11 +62,12 @@
 <script setup lang="ts">
 import { IonText } from '@ionic/vue';
 import { ref } from 'vue';
-import CustomInput from '@/components/CustomInput.vue';
+import PasswordInput from '@/components/PasswordInput.vue';
 import { PasswordStrength, getPasswordStrength, getPasswordStrengthText } from '@/common/passwordValidation';
 
 const password = ref('');
 const passwordConfirm = ref('');
+const passwordStrength = ref(PasswordStrength.None);
 
 defineExpose({
   areFieldsCorrect,
@@ -73,17 +75,19 @@ defineExpose({
 });
 
 function areFieldsCorrect(): boolean {
-  return getPasswordStrength(password.value) === PasswordStrength.High && password.value === passwordConfirm.value;
+  return passwordStrength.value === PasswordStrength.High && password.value === passwordConfirm.value;
+}
+
+function onPasswordChange(): void {
+  passwordStrength.value = getPasswordStrength(password.value);
 }
 
 function getPasswordLevelClass() : string {
-  const strength = getPasswordStrength(password.value);
-
-  if (strength === PasswordStrength.Low) {
+  if (passwordStrength.value === PasswordStrength.Low) {
     return 'password-level-low';
-  } else if (strength === PasswordStrength.Medium) {
+  } else if (passwordStrength.value === PasswordStrength.Medium) {
     return 'password-level-medium';
-  } else if (strength === PasswordStrength.High) {
+  } else if (passwordStrength.value === PasswordStrength.High) {
     return 'password-level-high';
   }
   return '';
@@ -110,6 +114,10 @@ function getPasswordLevelClass() : string {
   &__text {
     color: var(--parsec-color-light-secondary-text);
   }
+}
+
+.password-inputs {
+  width: 100%;
 }
 
 .container-password-level {
