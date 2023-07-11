@@ -243,7 +243,7 @@ macro_rules! impl_event_builder {
                 }
             }
             impl TestbedTemplateBuilder {
-                pub fn [< $name:snake >]<'a>(&'a mut self $( $(, $param: impl TryInto<$param_type>)* )? ) -> [< TestbedEvent $name Builder >]<'a> {
+                pub fn [< $name:snake >](&mut self $( $(, $param: impl TryInto<$param_type>)* )? ) -> [< TestbedEvent $name Builder >]<'_> {
                     $( $( let $param: $param_type = $param.try_into().unwrap_or_else(|_| panic!(concat!("Invalid value for param ", stringify!($param)))); )* )?
                     let event = [< TestbedEvent $name >]::from_builder(self $( $(, $param)* )? );
                     self.events.push(TestbedEvent::$name(event));
