@@ -20,7 +20,7 @@
         :autofocus="true"
         :placeholder="$props.placeholder"
         :value="modelValue"
-        @ion-input="$emit('update:modelValue', $event.target.value)"
+        @ion-input="$emit('update:modelValue', $event.target.value); $emit('change', $event.detail.value)"
         :disabled="$props.disabled"
       />
     </ion-item>
@@ -50,7 +50,8 @@ defineProps<{
 }>();
 
 defineEmits<{
-  (e: 'update:modelValue', value: string): void
+  (e: 'update:modelValue', value: string): void,
+  (e: 'change', value: string): void
 }>();
 </script>
 

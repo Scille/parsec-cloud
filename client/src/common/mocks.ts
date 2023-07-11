@@ -76,7 +76,7 @@ const MOCK_WORKSPACES: MockWorkspace[] = [
   {
     id: 'id2',
     name: 'The Copper Coronet',
-    sharedWith: ['Me', 'Korgan Bloodaxe', 'Anomen Delryn', 'Nalia De\'Arnise', 'Jaheira', 'Yoshimo'],
+    sharedWith: ['Me', 'Korgan Bloodaxe', 'Anomen Delryn', 'Nalia De\'Arnise', 'Viconia', 'Yoshimo'],
     size: 8_589_934_592,
     role: WorkspaceRole.Owner,
     availableOffline: true,
@@ -103,7 +103,7 @@ const MOCK_WORKSPACES: MockWorkspace[] = [
   {
     id: 'id5',
     name: 'Menzoberranzan',
-    sharedWith: ['Me', 'Drizzt Do\'Urden', 'Viconia', 'Jan Jansen'],
+    sharedWith: ['Me', 'Drizzt Do\'Urden', 'Viconia', 'Korgan Bloodaxe'],
     size: 4_214_402_531,
     role: WorkspaceRole.Manager,
     availableOffline: true,
@@ -113,6 +113,41 @@ const MOCK_WORKSPACES: MockWorkspace[] = [
 
 export async function getMockWorkspaces(): Promise<MockWorkspace[]> {
   return MOCK_WORKSPACES;
+}
+
+export async function getUsers(): Promise<string[]> {
+  return [
+    'Cernd',
+    'Valygar Corthala',
+    'Drizzt Do\'Urden',
+    'Viconia',
+    'Jan Jansen',
+    'Imoen',
+    'Korgan Bloodaxe',
+    'Anomen Delryn',
+    'Nalia De\'Arnise',
+    'Jaheira',
+    'Yoshimo'
+  ];
+}
+
+export async function getWorkspaceUsers(workspaceId: string): Promise<Map<string, WorkspaceRole | null>> {
+  const users = new Map<string, WorkspaceRole | null>();
+
+  const workspace: MockWorkspace | undefined = MOCK_WORKSPACES.find((w) => w.id === workspaceId);
+  const ROLES = [WorkspaceRole.Contributor, WorkspaceRole.Manager, WorkspaceRole.Owner, WorkspaceRole.Reader];
+  let index = 0;
+
+  for (const user of await getUsers()) {
+    if (workspace && workspace.sharedWith.indexOf(user) !== -1) {
+      users.set(user, ROLES[index % ROLES.length]);
+    } else {
+      users.set(user, null);
+    }
+    index += 1;
+  }
+
+  return users;
 }
 
 const MOCK_DEVICES: AvailableDevice[] = [

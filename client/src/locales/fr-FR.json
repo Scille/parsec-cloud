@@ -116,6 +116,18 @@
         },
         "previous": "Précédent"
     },
+    "WorkspaceSharing": {
+        "title": "Partager cet espace de travail",
+        "searchLabel": "Nom ou adresse mail",
+        "searchPlaceholder": "ex : Jean Martin",
+        "roles": {
+            "Reader": "Lecteur",
+            "Contributor": "Contributeur",
+            "Manager": "Gérant",
+            "Owner": "Propriétaire",
+            "NotShared": "Non partagé"
+        }
+    },
     "SettingsPage": {
         "pageTitle": "Paramètres",
         "enableTelemetry": "Activer la télémétrie",
@@ -167,15 +179,6 @@
             "namePlaceholder": "Espace de travail",
             "cancel": "Annuler",
             "create": "Créer"
-        },
-        "WorkspacesShareModal": {
-            "pageTitle": "Partager l'espace de travail",
-            "reader": "Lecteur",
-            "contributor": "Contributeur",
-            "manager": "Gérant",
-            "owner": "Propriétaire",
-            "notShared": "Non partagé",
-            "inviteNewUser": "Inviter un nouvel utilisateur"
         },
         "Workspace": {
             "sharedWith": "Non partagé | Une personne | {count} personnes",

@@ -116,6 +116,18 @@
         },
         "previous": "Go back"
     },
+    "WorkspaceSharing": {
+        "title": "Share this workspace",
+        "searchLabel": "Name or email address",
+        "searchPlaceholder": "e.g.: John Smith",
+        "roles": {
+            "Reader": "Reader",
+            "Contributor": "Contributor",
+            "Manager": "Manager",
+            "Owner": "Owner",
+            "NotShared": "Not shared"
+        }
+    },
     "SettingsPage": {
         "pageTitle": "Settings",
         "enableTelemetry": "Enable telemetry",
@@ -167,15 +179,6 @@
             "namePlaceholder": "Workspace",
             "cancel": "Cancel",
             "create": "Create"
-        },
-        "WorkspacesShareModal": {
-            "pageTitle": "Share workspace",
-            "reader": "Reader",
-            "contributor": "Contributor",
-            "manager": "Manager",
-            "owner": "Owner",
-            "notShared": "Not shared",
-            "inviteNewUser": "Invite a new user"
         },
         "Workspace": {
             "sharedWith": "Not shared | One person | {count} people",
