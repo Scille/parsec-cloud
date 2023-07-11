@@ -15,10 +15,6 @@ concurrency:
 
 env:
   cargo-nextest-version: 0.9.53
-  # Cargo will be faster with this configuration.
-  # It will only update it's index for the dependencies that we use.
-  # https://blog.rust-lang.org/2023/03/09/Rust-1.68.0.html#cargos-sparse-protocol
-  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
   CARGO_CI_FLAGS: --locked --profile ci-rust
   CARGO_NEXTEST_CI_FLAGS: --locked --cargo-profile ci-rust
 
