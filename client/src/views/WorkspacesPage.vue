@@ -119,6 +119,7 @@ import WorkspaceListItem from '@/components/WorkspaceListItem.vue';
 import { MockWorkspace, getMockWorkspaces } from '@/common/mocks';
 import WorkspaceContextMenu from '@/components/WorkspaceContextMenu.vue';
 import { WorkspaceAction } from '@/components/WorkspaceContextMenu.vue';
+import WorkspaceSharingModal from './WorkspaceSharingModal.vue';
 import CreateWorkspaceModal from '@/components/CreateWorkspaceModal.vue';
 import MsSelect from '@/components/MsSelect.vue';
 import ButtonOption from '@/components/ButtonOption.vue';
@@ -185,8 +186,16 @@ function onWorkspaceClick(_event: Event, workspace: MockWorkspace): void {
   });
 }
 
-function onWorkspaceShareClick(_: Event, workspace: MockWorkspace): void {
-  console.log('Share workspace Clicked!', workspace.name);
+async function onWorkspaceShareClick(_: Event, workspace: MockWorkspace): Promise<void> {
+  const modal = await modalController.create({
+    component: WorkspaceSharingModal,
+    componentProps: {
+      workspaceId: workspace.id
+    },
+    cssClass: 'workspace-sharing-modal'
+  });
+  await modal.present();
+  await modal.onWillDismiss();
 }
 
 async function openWorkspaceContextMenu(event: Event, _workspace: MockWorkspace): Promise<void> {
