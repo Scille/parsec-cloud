@@ -277,7 +277,7 @@ impl DateTime {
         Ok(us as f64 / 1e6)
     }
 
-    #[pyo3(signature = (days = 0, hours = 0, minutes = 0, seconds = 0, microseconds = 0))]
+    #[pyo3(signature = (*, days = 0, hours = 0, minutes = 0, seconds = 0, microseconds = 0))]
     fn subtract(
         &self,
         days: i32,
@@ -291,7 +291,7 @@ impl DateTime {
         Ok(Self(self.0.add_us(us)))
     }
 
-    #[pyo3(signature = (days = 0, hours = 0, minutes = 0, seconds = 0, microseconds = 0))]
+    #[pyo3(signature = (*, days = 0, hours = 0, minutes = 0, seconds = 0, microseconds = 0))]
     fn add(
         &self,
         days: i32,
