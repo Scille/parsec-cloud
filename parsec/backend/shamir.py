@@ -87,7 +87,9 @@ class BaseShamirComponent:
     async def api_invite_shamir_recovery_reveal(
         self, client_ctx: InvitedClientContext, req: InviteShamirRecoveryRevealReq
     ) -> InviteShamirRecoveryRevealRep:
-        ciphered_data = await self.recovery_reveal(reveal_token=req.reveal_token)
+        ciphered_data = await self.recovery_reveal(
+            client_ctx.organization_id, reveal_token=req.reveal_token
+        )
 
         if ciphered_data is None:
             return InviteShamirRecoveryRevealRepNotFound()
@@ -119,6 +121,7 @@ class BaseShamirComponent:
 
     async def recovery_reveal(
         self,
+        organization_id: OrganizationID,
         reveal_token: ShamirRevealToken,
     ) -> bytes | None:
         raise NotImplementedError()

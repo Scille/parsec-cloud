@@ -117,6 +117,7 @@ class MemoryShamirComponent(BaseShamirComponent):
 
     async def recovery_reveal(
         self,
+        organization_id: OrganizationID,
         reveal_token: ShamirRevealToken,
     ) -> bytes | None:
         return self._shamir_recovery_ciphered_data.get(reveal_token)

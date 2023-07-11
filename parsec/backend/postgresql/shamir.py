@@ -34,7 +34,8 @@ SELECT
     brief_certificate
 FROM shamir_recovery_setup
 WHERE
-    _id = { q_shamir_recovery_internal_id("$organization_id", "$user_id") }
+    organization = { q_organization_internal_id("$organization_id") }
+    AND _id = { q_shamir_recovery_internal_id("$organization_id", "$user_id") }
 LIMIT 1
 """
 )
@@ -136,7 +137,8 @@ SET
     deleted_on = $on,
     deleted_reason = $reason
 WHERE
-    _id = $row_id
+    organization = { q_organization_internal_id("$organization_id") }
+    AND _id = $row_id
 """
 )
 
@@ -146,7 +148,8 @@ SELECT
     ciphered_data
 FROM shamir_recovery_setup
 WHERE
-    reveal_token = $reveal_token
+    organization = { q_organization_internal_id("$organization_id") }
+    AND reveal_token = $reveal_token
 """
 )
 
@@ -165,7 +168,11 @@ async def _do_delete_invitation_if_it_exists(
     )
     # In practice, there should be at most one element in rows
     for row_id, raw_token in rows:
-        await conn.execute(*_q_delete_invitation(row_id=row_id, on=on, reason=reason.str))
+        await conn.execute(
+            *_q_delete_invitation(
+                organization_id=organization_id.str, row_id=row_id, on=on, reason=reason.str
+            )
+        )
         await send_signal(
             conn,
             BackendEvent.INVITE_STATUS_CHANGED,
@@ -273,8 +280,13 @@ class PGShamirComponent(BaseShamirComponent):
 
     async def recovery_reveal(
         self,
+        organization_id: OrganizationID,
         reveal_token: ShamirRevealToken,
     ) -> bytes | None:
         async with self.dbh.pool.acquire() as conn:
-            (data,) = await conn.fetchrow(*_q_get_ciphered_data(reveal_token=reveal_token))
+            (data,) = await conn.fetchrow(
+                *_q_get_ciphered_data(
+                    organization_id=organization_id.str, reveal_token=reveal_token
+                )
+            )
             return data

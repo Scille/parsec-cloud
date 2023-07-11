@@ -171,7 +171,8 @@ SET
     deleted_on = $on,
     deleted_reason = $reason
 WHERE
-    _id = $row_id
+    organization = { q_organization_internal_id("$organization_id") }
+    AND _id = $row_id
 """
 )
 
@@ -192,7 +193,8 @@ SELECT
     { q_user(_id="recipient", select="user_id") }
 FROM shamir_recovery_share
 WHERE
-    shamir_recovery = $shamir_recovery
+    organization = { q_organization_internal_id("$organization_id") }
+    AND shamir_recovery = $shamir_recovery
 """
 )
 
@@ -220,7 +222,8 @@ FROM shamir_recovery_share
 LEFT JOIN user_ ON shamir_recovery_share.recipient = user_._id
 LEFT JOIN human ON user_.human = human._id
 WHERE
-    shamir_recovery_share.shamir_recovery = $shamir_recovery
+    shamir_recovery_share.organization = { q_organization_internal_id("$organization_id") }
+    AND shamir_recovery_share.shamir_recovery = $shamir_recovery
 """
 )
 
@@ -252,7 +255,11 @@ async def _do_delete_invitation(
     if deleted_on:
         raise InvitationAlreadyDeletedError(token)
 
-    await conn.execute(*_q_delete_invitation(row_id=row_id, on=on, reason=reason.str))
+    await conn.execute(
+        *_q_delete_invitation(
+            organization_id=organization_id.str, row_id=row_id, on=on, reason=reason.str
+        )
+    )
     await send_signal(
         conn,
         BackendEvent.INVITE_STATUS_CHANGED,
@@ -290,7 +297,8 @@ SELECT
     type
 FROM invitation
 WHERE
-    token = $token
+    organization = { q_organization_internal_id("$organization_id") }
+    AND token = $token
 """
 )
 
@@ -426,7 +434,8 @@ SET
     conduit_greeter_payload = $conduit_greeter_payload,
     conduit_claimer_payload = $conduit_claimer_payload
 WHERE
-    _id = $row_id
+    organization = { q_organization_internal_id("$organization_id") }
+    AND _id = $row_id
 """
 )
 
@@ -438,7 +447,8 @@ SET
     conduit_greeter_payload = $conduit_greeter_payload,
     conduit_claimer_payload = $conduit_claimer_payload
 WHERE
-    _id = $row_id
+    organization = { q_organization_internal_id("$organization_id") }
+    AND _id = $row_id
 """
 )
 
@@ -487,7 +497,9 @@ async def _conduit_talk(
         # On top of retrieving the invitation row, this query lock the row
         # in the database for the duration of the transaction.
         # Hence concurrent request will be on hold until the end of the transaction.
-        row = await conn.fetchrow(*_q_get_invitation_type(token=token))
+        row = await conn.fetchrow(
+            *_q_get_invitation_type(organization_id=organization_id.str, token=token)
+        )
         if not row:
             raise InvitationNotFoundError(token)
         (type,) = row
@@ -573,6 +585,7 @@ async def _conduit_talk(
             curr_claimer_payload = payload
         await conn.execute(
             *conduit_update(
+                organization_id=organization_id.str,
                 row_id=row_id,
                 conduit_state=curr_conduit_state.value,
                 conduit_greeter_payload=curr_greeter_payload,
@@ -600,7 +613,9 @@ async def _conduit_listen(
     conn: triopg._triopg.TrioConnectionProxy, ctx: ConduitListenCtx
 ) -> bytes | None:
     async with conn.transaction():
-        row = await conn.fetchrow(*_q_get_invitation_type(token=ctx.token))
+        row = await conn.fetchrow(
+            *_q_get_invitation_type(organization_id=ctx.organization_id.str, token=ctx.token)
+        )
         if not row:
             raise InvitationNotFoundError(ctx.token)
         (type,) = row
@@ -672,6 +687,7 @@ async def _conduit_listen(
                 # to the next state
                 await conn.execute(
                     *conduit_update(
+                        organization_id=ctx.organization_id.str,
                         row_id=row_id,
                         conduit_state=NEXT_CONDUIT_STATE[ctx.state].value,
                         conduit_greeter_payload=None,
@@ -785,6 +801,7 @@ async def _do_new_shamir_recovery_invitation(
         UserID(recipient)
         for recipient, in await conn.fetch(
             *_q_list_recipients(
+                organization_id=organization_id.str,
                 shamir_recovery=internal_id,
             )
         )
@@ -1151,7 +1168,9 @@ class PGInviteComponent(BaseInviteComponent):
             )
             recipients = []
             for email, label, recipient_id, shares in await conn.fetch(
-                *_q_get_shamir_recovery_recipients(shamir_recovery=internal_id)
+                *_q_get_shamir_recovery_recipients(
+                    organization_id=organization_id.str, shamir_recovery=internal_id
+                )
             ):
                 recipients.append(
                     ShamirRecoveryRecipient(
