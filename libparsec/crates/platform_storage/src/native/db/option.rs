@@ -127,7 +127,7 @@ where
     String: diesel::deserialize::FromSql<diesel::sql_types::Text, diesel::sqlite::Sqlite>,
 {
     fn from_sql(
-        bytes: diesel::backend::RawValue<'_, diesel::sqlite::Sqlite>,
+        bytes: <diesel::sqlite::Sqlite as diesel::backend::Backend>::RawValue<'_>,
     ) -> diesel::deserialize::Result<Self> {
         use diesel::{deserialize::FromSql, sql_types::Text, sqlite::Sqlite};
 
