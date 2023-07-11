@@ -25,6 +25,14 @@ if not TYPE_CHECKING and FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
         UserGreetInProgress3Ctx,
         UserGreetInProgress4Ctx,
     )
+
+    # Not oxidized yet
+    from parsec.core.invite.greeter import (
+        ShamirRecoveryGreetInitialCtx,
+        ShamirRecoveryGreetInProgress1Ctx,
+        ShamirRecoveryGreetInProgress2Ctx,
+        ShamirRecoveryGreetInProgress3Ctx,
+    )
 else:
     from parsec.core.invite.greeter import (
         DeviceGreetInitialCtx,
@@ -55,6 +63,12 @@ if not TYPE_CHECKING and FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
         UserClaimInProgress2Ctx,
         UserClaimInProgress3Ctx,
         claimer_retrieve_info,
+    )
+
+    # Not oxidized yet
+    from parsec.core.invite.claimer import (
+        ShamirRecoveryClaimInitialCtx,
+        ShamirRecoveryClaimPreludeCtx,
     )
 else:
     from parsec.core.invite.claimer import (
