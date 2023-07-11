@@ -3,7 +3,7 @@
 <template>
   <ion-grid>
     <ion-row>
-      <ion-col class="input-col">
+      <ion-col class="input-container">
         <ion-text
           id="passwordLabel"
           class="form-label"
@@ -15,7 +15,8 @@
             aria-labelledby="passwordLabel"
             :type="passwordVisible ? 'text' : 'password'"
             v-model="passwordRef"
-            @ion-input="$emit('change', $event.detail.value)"
+            @ion-input="onChange($event.target.value)"
+            :value="modelValue"
             @keyup.enter="onEnterPress()"
             :autofocus="true"
             id="password-input"
@@ -45,16 +46,23 @@ import {
 } from 'ionicons/icons';
 
 defineProps<{
-  label: string
+  label: string,
+  modelValue?: string
 }>();
 
 const emits = defineEmits<{
   (e: 'change', value: string): void
-  (e: 'enter'): void
+  (e: 'enter'): void,
+  (e: 'update:modelValue', value: string): void
 }>();
 
 const passwordVisible = ref(false);
 const passwordRef = ref('');
+
+function onChange(value: any) : void {
+  emits('update:modelValue', value);
+  emits('change', value);
+}
 
 function onEnterPress() : void {
   if (passwordRef.value.length > 0) {
@@ -64,17 +72,28 @@ function onEnterPress() : void {
 </script>
 
 <style lang="scss" scoped>
-.input-col {
-  padding: 0;
+.input-container {
+  // offset necessary to simulate border 3px on focus with outline (outline 2px + border 1px)
+  --offset: 2px;
+  padding: var(--offset);
   display: flex;
   flex-direction: column;
   gap: .5rem;
-  .form-label {
+
+  .form-label{
     color: var(--parsec-color-light-primary-700);
   }
+
   .input {
-    border-radius: 6px;
+    border: 1px solid var(--parsec-color-light-primary-300);
+    border-radius: var(--parsec-radius-6);
     overflow: hidden;
+    color: var(--parsec-color-light-primary-800);
+
+    &:focus-within {
+      --background: var(--parsec-color-light-secondary-background);
+      outline: var(--offset) solid var(--parsec-color-light-primary-300);
+    }
   }
 }
 </style>

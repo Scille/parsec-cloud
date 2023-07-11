@@ -24,6 +24,7 @@ describe('Join an organization', () => {
 
     cy.get('ion-modal').find('ion-footer ion-button').first().as('joinButton').contains('Join');
     cy.get('@joinButton').should('have.attr', 'disabled');
+    cy.wait(200);
     cy.get('ion-modal').find('ion-input').find('input').type(INVITATION_LINK);
     cy.get('@joinButton').should('not.have.attr', 'disabled');
     cy.get('@joinButton').click();
