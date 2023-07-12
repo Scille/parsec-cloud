@@ -12,6 +12,7 @@ use libparsec_crypto::{
     SequesterVerifyKeyDer,
 };
 
+/// Generated with `openssl genrsa -out pkey-1024.pem 1024`
 const PRIVATE_KEY_PEM_1024: &str = r#"-----BEGIN PRIVATE KEY-----
 MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBALLcAKPDtcaJsGnz
 9AxJTSpb4xOxA0+/Hf4O7uDzbPvPYkQAJWzGYNUIR4JzijBF11tYTBlDvATHEj1o
@@ -30,26 +31,32 @@ W1pav08hVpEcTg==
 -----END PRIVATE KEY-----
 "#;
 
+/// Generated with `openssl rsa -in pkey-1024.pem -outform der -out pkey-1024.der`.
+/// Formatted with `xxd -c 32 -g 32 pkey-1024.der | cut -f 2 -d ' '`.
 const PRIVATE_KEY_DER_1024: &[u8] = &hex!(
-    "30820276020100300d06092a864886f70d0101010500048202603082025c02010002818100"
-    "b2dc00a3c3b5c689b069f3f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256c"
-    "c660d5084782738a3045d75b584c1943bc04c7123d68ac0cef253b4ee8d79bd09da19162dc"
-    "c083662269b7b62cb38582f8a30219047b087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5a"
-    "ff66f7ee18303195f3bcc72ab57207ebfd0203010001028180417d044ef20dd09001a409ca"
-    "c5e4e0f82d84cb64f8cd6e30d1212e9df703647fde7eff7eb4813e5b4218cccef93e0b947a"
-    "c1adbb626da9622a6f89afd55c8ac8bb0a0f1832b2520fc1d92ac320180b9657a8b1598e67"
-    "01119d8f77f5285ac5703f4c0a93e1e5ebe6ec179bccff62495e7734d5899d86d2dcbdeb64"
-    "8923d29b11024100eb2b5d5ad5bc28cae1654505c16a2b0d82cfa237f8f10f70e5e7a33330"
-    "28aade5de4f9e2b3e8a9f924a0538f7119e088f3c11f1258319c59da03d637a324c6630241"
-    "00c2b3c49145dfd7930ac7f5681afa43b7b18f697163469c7ab9a6ca8e12168eab1a33cc4e"
-    "73b53f4509c48052a31ff289e7357a54f88e28ee543040009976621f024026b608b3ff22ee"
-    "04177e38126e782f8615d65ff99ebcefb1c1e69372c5a6ac19d692ee9f66c611d4b536bf0a"
-    "89af9cca6e7587cbd940b160090740a7ffeef9c902410093566a77ecc29965e290b2bb173f"
-    "2fa380b0a0007839e50c52154fcef70d2ee5782c9e7cf7bebea445e1f7a1916409ac25d528"
-    "3fc8dffb456f5c1bf2d82ee7cd024018b8c579f32bbd74cc1f10c786e1e0e192526c9e4134"
-    "c65bfc76799b82900adf467a5c7fb3164eb775650abaae08500bc6691e60c8575b5a5abf4f"
-    "2156911c4e");
+    "30820276020100300d06092a864886f70d0101010500048202603082025c0201"
+    "0002818100b2dc00a3c3b5c689b069f3f40c494d2a5be313b1034fbf1dfe0eee"
+    "e0f36cfbcf624400256cc660d5084782738a3045d75b584c1943bc04c7123d68"
+    "ac0cef253b4ee8d79bd09da19162dcc083662269b7b62cb38582f8a30219047b"
+    "087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66f7ee18303195f3bcc72a"
+    "b57207ebfd0203010001028180417d044ef20dd09001a409cac5e4e0f82d84cb"
+    "64f8cd6e30d1212e9df703647fde7eff7eb4813e5b4218cccef93e0b947ac1ad"
+    "bb626da9622a6f89afd55c8ac8bb0a0f1832b2520fc1d92ac320180b9657a8b1"
+    "598e6701119d8f77f5285ac5703f4c0a93e1e5ebe6ec179bccff62495e7734d5"
+    "899d86d2dcbdeb648923d29b11024100eb2b5d5ad5bc28cae1654505c16a2b0d"
+    "82cfa237f8f10f70e5e7a3333028aade5de4f9e2b3e8a9f924a0538f7119e088"
+    "f3c11f1258319c59da03d637a324c663024100c2b3c49145dfd7930ac7f5681a"
+    "fa43b7b18f697163469c7ab9a6ca8e12168eab1a33cc4e73b53f4509c48052a3"
+    "1ff289e7357a54f88e28ee543040009976621f024026b608b3ff22ee04177e38"
+    "126e782f8615d65ff99ebcefb1c1e69372c5a6ac19d692ee9f66c611d4b536bf"
+    "0a89af9cca6e7587cbd940b160090740a7ffeef9c902410093566a77ecc29965"
+    "e290b2bb173f2fa380b0a0007839e50c52154fcef70d2ee5782c9e7cf7bebea4"
+    "45e1f7a1916409ac25d5283fc8dffb456f5c1bf2d82ee7cd024018b8c579f32b"
+    "bd74cc1f10c786e1e0e192526c9e4134c65bfc76799b82900adf467a5c7fb316"
+    "4eb775650abaae08500bc6691e60c8575b5a5abf4f2156911c4e"
+);
 
+/// Generated with `openssl rsa -in pkey-1024.pem -pubout -out pubkey-1024.pem`
 const PUBLIC_KEY_PEM_1024: &str = r#"-----BEGIN PUBLIC KEY-----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCy3ACjw7XGibBp8/QMSU0qW+MT
 sQNPvx3+Du7g82z7z2JEACVsxmDVCEeCc4owRddbWEwZQ7wExxI9aKwM7yU7TujX
@@ -58,6 +65,7 @@ GDAxlfO8xyq1cgfr/QIDAQAB
 -----END PUBLIC KEY-----
 "#;
 
+/// Generated with `openssl rsa -in pkey-1024.pem -pubout -outform der -out pubkey-1024.der`
 const PUBLIC_KEY_DER_1024: &[u8] = &hex!(
     "30819f300d06092a864886f70d010101050003818d0030818902818100b2dc00a3c3b5c689"
     "b069f3f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256cc660d5084782738a"
@@ -323,21 +331,33 @@ fn encrypt_compat() {
 fn verify_with_different_salt_len() {
     let verify_key = SequesterVerifyKeyDer::try_from(PUBLIC_KEY_DER_1024).unwrap();
     let ciphered_salt32 = hex!(
-        "5253415353412d5053532d5348413235363a5533ef66fbd8249dcf2f813da9e381bde5d5d7"
-        "30231584e194e43b5a2cd2802a3a9f713939cf5398f7dd445a97ac9ae7aa3b871b296ff5de"
-        "fa1afe4ee8b1083df0c7c2631f0efb400202d5800c0540e87c4c9b94ecc50d99095212baf3"
-        "5e0ea79d3a56739867e31126b60d6f11b6448719b69562207a376ca5c5ccc0154318c94865"
-        "6c6c6f20576f726c640a"
+        "5253415353412d5053532d5348413235363a" // `RSASSA-PSS-SHA256:` in hex
+        "5533ef66fbd8249dcf2f813da9e381bde5d5d730231584e194e43b5a2cd2802a"
+        "3a9f713939cf5398f7dd445a97ac9ae7aa3b871b296ff5defa1afe4ee8b1083d"
+        "f0c7c2631f0efb400202d5800c0540e87c4c9b94ecc50d99095212baf35e0ea7"
+        "9d3a56739867e31126b60d6f11b6448719b69562207a376ca5c5ccc0154318c9"
+        "48656c6c6f20576f726c640a" // `Hello world\n` in hex
     );
     let ciphered_salt94 = hex!(
-        "5253415353412d5053532d5348413235363a320bb6b943bdf45fb39bc65b60f6353aa29f11"
-        "c5990f664b555723cc910a1b07e95fe82f1ac7c519088d03347461fa7d168686e431f0e466"
-        "6752ecbcd3d9c57698cc41b3280784c762effd2771ebc78e55351db499f0242a1e7067e275"
-        "493d513ac8c04fa8f26ca54633c75ec01a9a60eac2eedc74bbf2979a0140e24976e2874865"
-        "6c6c6f20576f726c640a"
+        "5253415353412d5053532d5348413235363a" // `RSASSA-PSS-SHA256:` in hex
+        "320bb6b943bdf45fb39bc65b60f6353aa29f11c5990f664b555723cc910a1b07"
+        "e95fe82f1ac7c519088d03347461fa7d168686e431f0e4666752ecbcd3d9c576"
+        "98cc41b3280784c762effd2771ebc78e55351db499f0242a1e7067e275493d51"
+        "3ac8c04fa8f26ca54633c75ec01a9a60eac2eedc74bbf2979a0140e24976e287"
+        "48656c6c6f20576f726c640a" // `Hello world\n` in hex
     );
     let data = b"Hello World\n";
 
-    assert_eq!(verify_key.verify(&ciphered_salt32).unwrap(), data);
-    assert_eq!(verify_key.verify(&ciphered_salt94).unwrap(), data);
+    assert_eq!(
+        verify_key
+            .verify(&ciphered_salt32)
+            .expect("Cannot verify salt32"),
+        data
+    );
+    assert_eq!(
+        verify_key
+            .verify(&ciphered_salt94)
+            .expect("Cannot verify salt94"),
+        data
+    );
 }

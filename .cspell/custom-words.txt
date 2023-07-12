@@ -272,6 +272,7 @@ oscrypt
 oscrypto
 OSXFUSE
 OURCYGPATTERN
+outform
 Owholemodule
 PAAS
 packb
@@ -297,6 +298,7 @@ psrk
 psutil
 pubkey
 PUBLICKEYBYTES
+pubout
 pwhash
 pwsh
 PyClass
