@@ -103,7 +103,12 @@
         "titles": {
             "workspaces": "Mes espaces",
             "settings": "Paramètres",
-            "devices": "Appareils"
+            "devices": "Appareils",
+            "activeUsers": "Utilisateurs actifs",
+            "revokedUsers": "Utilisateurs révoqués",
+            "invitations": "Invitations",
+            "storage": "Stockage",
+            "organization": "Informations"
         },
         "previous": "Précédent"
     },
@@ -255,7 +260,14 @@
         }
     },
     "SideMenu": {
-        "allWorkspaces": "Tous les espaces de travail"
+        "allWorkspaces": "Tous les espaces de travail",
+        "users": "Utilisateurs",
+        "revokedUsers": "Révoqués",
+        "activeUsers": "Actifs",
+        "invitations": "Invitations",
+        "storage": "Stockage",
+        "manageOrganization": "Gérer mon organisation",
+        "organizationInfo": "Informations"
     },
     "DevicesPage": {
         "title": "Vos appareils",
@@ -313,5 +325,15 @@
             "getPassword": "Veuillez choisir un mot de passe pour finalement l'enrôlement.",
             "finish": ""
         }
+    },
+    "UsersPage": {
+        "listDisplayTitles": {
+            "name": "Nom",
+            "email": "Email",
+            "role": "Rôle",
+            "joinedOn": "Rejoint le"
+        },
+        "inviteUser": "Inviter un utilisateur",
+        "itemCount": "Aucun utilisateur | Un utilisateur | {count} utilisateurs"
     }
 }

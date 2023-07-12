@@ -18,7 +18,6 @@ import {
   IonButton,
   IonIcon
 } from '@ionic/vue';
-import { type } from 'os';
 
 defineProps<{
   buttonLabel: any,

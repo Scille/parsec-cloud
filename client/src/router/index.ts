@@ -45,29 +45,31 @@ const routes: Array<RouteRecordRaw> = [
             path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/devices',
             name: 'devices',
             component: () => import('@/views/DevicesPage.vue')
-          }
-        ]
-      },
-      {
-        path: '/organization',
-        name: 'organization',
-        redirect: { name: 'OrganizationPageUsers' },
-        component: () => import('@/views/OrganizationPage.vue'),
-        children: [
-          {
-            path: 'users',
-            name: 'OrganizationPageUsers',
-            component: () => import('@/views/OrganizationPageUsers.vue')
           },
           {
-            path: 'workspaces',
-            name: 'OrganizationPageWorkspaces',
-            component: () => import('@/views/OrganizationPageWorkspaces.vue')
+            path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/activeUsers',
+            name: 'activeUsers',
+            component: () => import('@/views/ActiveUsersPage.vue')
           },
           {
-            path: 'storage',
-            name: 'OrganizationPageStorage',
-            component: () => import('@/views/OrganizationPageStorage.vue')
+            path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/revokedUsers',
+            name: 'revokedUsers',
+            component: () => import('@/views/RevokedUsersPage.vue')
+          },
+          {
+            path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/invitations',
+            name: 'invitations',
+            component: () => import('@/views/InvitationsPage.vue')
+          },
+          {
+            path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/storage',
+            name: 'storage',
+            component: () => import('@/views/StoragePage.vue')
+          },
+          {
+            path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/organization',
+            name: 'organization',
+            component: () => import('@/views/OrganizationInformationPage.vue')
           }
         ]
       }
