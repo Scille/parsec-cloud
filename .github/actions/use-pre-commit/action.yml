@@ -17,7 +17,7 @@ inputs:
   version:
     description: pre-commit version to use
     required: false
-    default: 2.21.0
+    default: 3.3.0
   install-only:
     description: Only install pre-commit without running it.
     required: false
@@ -63,7 +63,6 @@ runs:
         python --version
         python ${{ inputs.install-dir }}/pre-commit.pyz --version
       shell: bash
-
 
     - name: Run pre-commit
       if: inputs.install-only != 'true'
