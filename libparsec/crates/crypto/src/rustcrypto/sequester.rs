@@ -1,14 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use ed25519_dalek::Verifier;
 use rsa::{
+    oaep::Oaep,
     pkcs8::{
         der::zeroize::Zeroizing, DecodePrivateKey, DecodePublicKey, EncodePrivateKey,
         EncodePublicKey,
     },
     pss::{Signature, SigningKey, VerifyingKey},
-    signature::RandomizedSigner,
-    PaddingScheme, PublicKey, PublicKeyParts, RsaPrivateKey, RsaPublicKey,
+    signature::{RandomizedSigner, Verifier},
+    PublicKey, PublicKeyParts, RsaPrivateKey, RsaPublicKey,
 };
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
@@ -73,7 +73,7 @@ impl SequesterPrivateKeyDer {
     pub fn decrypt(&self, data: &[u8]) -> CryptoResult<Vec<u8>> {
         let (cipherkey, ciphertext) =
             deserialize_with_armor(data, self.size_in_bytes(), Self::ALGORITHM)?;
-        let padding = PaddingScheme::new_oaep::<Sha1>();
+        let padding = Oaep::new::<Sha1>();
 
         let clearkey = SecretKey::try_from(
             &self
@@ -151,7 +151,7 @@ impl SequesterPublicKeyDer {
     pub fn encrypt(&self, data: &[u8]) -> Vec<u8> {
         let mut rng = rand_08::thread_rng();
         // No choice but to use SHA1 here: this is the default in PKCS#1 OAEP standard
-        let padding = PaddingScheme::new_oaep::<Sha1>();
+        let padding = Oaep::new::<Sha1>();
         let secret_key = SecretKey::generate();
         let secret_key_encrypted = self
             .0
@@ -317,10 +317,12 @@ impl SequesterVerifyKeyDer {
         let (signature, data) =
             deserialize_with_armor(data, self.size_in_bytes(), Self::ALGORITHM)?;
 
-        // TODO: It Seems to be a mistake from RustCrypto/RSA
-        // Why should we allocate there ?
+        let signature = Signature::try_from(signature).expect(concat!(
+            "The conversion can fail if the raw signature is too big,",
+            " here it is not possible because the signature will be `size_in_bytes()` long"
+        ));
         self.0
-            .verify(data, &Signature::from(signature.to_vec()))
+            .verify(data, &signature)
             .map_err(|_| CryptoError::SignatureVerification)?;
 
         Ok(data.to_vec())
