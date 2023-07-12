@@ -356,7 +356,7 @@ class MemoryInviteComponent(BaseInviteComponent):
     async def delete(
         self,
         organization_id: OrganizationID,
-        greeter: UserID,
+        deleter: UserID,
         token: InvitationToken,
         on: DateTime,
         reason: InvitationDeletedReason,
@@ -366,17 +366,17 @@ class MemoryInviteComponent(BaseInviteComponent):
             _, recipients = self._shamir_info(organization_id, invitation.claimer_user_id)
             recipients = {recipient.user_id for recipient in recipients}
             # The claimer is authorized to delete the invitation
-            if greeter not in recipients and greeter != invitation.claimer_user_id:
+            if deleter not in recipients and deleter != invitation.claimer_user_id:
                 raise InvitationNotFoundError(token)
         else:
-            if invitation.greeter_user_id != greeter:
+            if invitation.greeter_user_id != deleter:
                 raise InvitationNotFoundError(token)
         org = self._organizations[organization_id]
         org.deleted_invitations[token] = (on, reason)
         await self._send_event(
             BackendEvent.INVITE_STATUS_CHANGED,
             organization_id=organization_id,
-            greeter=greeter,
+            greeter=deleter,
             token=token,
             status=InvitationStatus.DELETED,
         )
@@ -480,6 +480,8 @@ class MemoryInviteComponent(BaseInviteComponent):
         return (item.threshold, item.recipients)
 
     async def shamir_info(
-        self, organization_id: OrganizationID, user_id: UserID
+        self, organization_id: OrganizationID, token: InvitationToken
     ) -> tuple[int, tuple[ShamirRecoveryRecipient, ...]]:
-        return self._shamir_info(organization_id, user_id)
+        invitation = self._get_invitation(organization_id, token)
+        assert isinstance(invitation, ShamirRecoveryInvitation)
+        return self._shamir_info(organization_id, invitation.claimer_user_id)

@@ -494,7 +494,7 @@ async def test_claim_device_invitation_cancelled(
         async def _cancel_invitation(self):
             await backend.invite.delete(
                 organization_id=self.author.organization_id,
-                greeter=self.author.user_id,
+                deleter=self.author.user_id,
                 token=self.invitation_addr.token,
                 on=DateTime.now(),
                 reason=InvitationDeletedReason.CANCELLED,
@@ -586,7 +586,7 @@ async def test_claim_device_already_deleted(
 ):
     await backend.invite.delete(
         organization_id=alice.organization_id,
-        greeter=alice.user_id,
+        deleter=alice.user_id,
         token=alice_new_device_invitation.token,
         on=DateTime.now(),
         reason=InvitationDeletedReason.CANCELLED,

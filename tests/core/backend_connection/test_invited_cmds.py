@@ -88,7 +88,7 @@ async def test_handshake_already_used_invitation(
 ):
     await running_backend.backend.invite.delete(
         organization_id=alice.organization_id,
-        greeter=alice.user_id,
+        deleter=alice.user_id,
         token=alice_new_device_invitation.token,
         on=DateTime.now(),
         reason=InvitationDeletedReason.CANCELLED,

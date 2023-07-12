@@ -445,7 +445,7 @@ async def test_new_user_invitation_after_invitation_deleted(alice, backend, alic
     )
     await backend.invite.delete(
         organization_id=alice.organization_id,
-        greeter=invitation.greeter_user_id,
+        deleter=invitation.greeter_user_id,
         token=invitation.token,
         on=DateTime(2000, 1, 3),
         reason=InvitationDeletedReason.FINISHED,
@@ -474,7 +474,7 @@ async def test_new_device_invitation_after_invitation_deleted(alice, backend, al
     )
     await backend.invite.delete(
         organization_id=alice.organization_id,
-        greeter=invitation.greeter_user_id,
+        deleter=invitation.greeter_user_id,
         token=invitation.token,
         on=DateTime(2000, 1, 3),
         reason=InvitationDeletedReason.FINISHED,
@@ -502,7 +502,7 @@ async def test_delete_already_deleted_invitation(alice, backend, alice_ws):
 
     await backend.invite.delete(
         organization_id=alice.organization_id,
-        greeter=alice.user_id,
+        deleter=alice.user_id,
         token=invitation.token,
         on=DateTime(2000, 1, 2),
         reason=InvitationDeletedReason.ROTTEN,

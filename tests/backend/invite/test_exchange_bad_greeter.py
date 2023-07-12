@@ -49,7 +49,7 @@ async def test_greeter_exchange_bad_access(alice, backend, alice_ws, reason):
         )
         await backend.invite.delete(
             organization_id=alice.organization_id,
-            greeter=alice.user_id,
+            deleter=alice.user_id,
             token=invitation.token,
             on=DateTime(2000, 1, 2),
             reason=InvitationDeletedReason.ROTTEN,

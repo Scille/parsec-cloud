@@ -236,7 +236,7 @@ class ShamirRecoveryInvitation:
     TYPE = InvitationType.SHAMIR_RECOVERY
     greeter_user_id: UserID
     greeter_human_handle: HumanHandle | None
-    claimer_email: str | None
+    claimer_email: str | None  # Only set during invitation create, if the user has a human handle
     claimer_user_id: UserID
     token: InvitationToken = attr.ib(factory=InvitationToken.new)
     created_on: DateTime = attr.ib(factory=DateTime.now)
@@ -250,24 +250,36 @@ Invitation = Union[UserInvitation, DeviceInvitation, ShamirRecoveryInvitation]
 
 
 def generate_invite_email(
+    invitation_type: InvitationType,
     from_addr: str,
     to_addr: str,
-    reply_to: str | None,
-    greeter_name: str | None,  # None for device invitation
     organization_id: OrganizationID,
     invitation_url: str,
     backend_url: str,
+    reply_to: str | None = None,
+    greeter_name: str | None = None,
 ) -> Message:
     # Quick fix to have a similar behavior between Rust and Python
     if backend_url.endswith("/"):
         backend_url = backend_url[:-1]
+
+    is_user_invitation = invitation_type == invitation_type.USER
+    is_device_invitation = invitation_type == invitation_type.DEVICE
+    is_shamir_recovery_invitation = invitation_type == invitation_type.SHAMIR_RECOVERY
+
     html = get_template("invitation_mail.html").render(
+        is_user_invitation=is_user_invitation,
+        is_device_invitation=is_device_invitation,
+        is_shamir_recovery_invitation=is_shamir_recovery_invitation,
         greeter=greeter_name,
         organization_id=organization_id.str,
         invitation_url=invitation_url,
         backend_url=backend_url,
     )
     text = get_template("invitation_mail.txt").render(
+        is_user_invitation=is_user_invitation,
+        is_device_invitation=is_device_invitation,
+        is_shamir_recovery_invitation=is_shamir_recovery_invitation,
         greeter=greeter_name,
         organization_id=organization_id.str,
         invitation_url=invitation_url,
@@ -276,10 +288,16 @@ def generate_invite_email(
 
     # mail settings
     message = MIMEMultipart("alternative")
-    if greeter_name:
+    if is_user_invitation:
+        assert greeter_name is not None
         message["Subject"] = f"[Parsec] { greeter_name } invited you to { organization_id.str }"
-    else:
+    elif is_device_invitation:
         message["Subject"] = f"[Parsec] New device invitation to { organization_id.str }"
+    elif is_shamir_recovery_invitation:
+        message["Subject"] = f"[Parsec] Recovery invitation to { organization_id.str }"
+    else:
+        assert False
+
     message["From"] = from_addr
     message["To"] = to_addr
     if reply_to is not None and greeter_name is not None:
@@ -446,6 +464,8 @@ class BaseInviteComponent:
                 return InviteNewRepNotAvailable()
             except InvitationShamirRecoveryGreeterNotInRecipients:
                 return InviteNewRepNotAllowed()
+        else:
+            assert False
 
         # No need to send email, we're done
         if not req.send_email:
@@ -471,6 +491,7 @@ class BaseInviteComponent:
                 greeter_name = client_ctx.user_id.str
                 reply_to = None
             message = generate_invite_email(
+                invitation_type=req.type,
                 from_addr=self._config.email_config.sender,
                 to_addr=invitation.claimer_email,
                 greeter_name=greeter_name,
@@ -484,10 +505,9 @@ class BaseInviteComponent:
             assert client_ctx.human_handle is not None
             to_addr = client_ctx.human_handle.email
             message = generate_invite_email(
+                invitation_type=req.type,
                 from_addr=self._config.email_config.sender,
                 to_addr=to_addr,
-                greeter_name=None,
-                reply_to=None,
                 organization_id=client_ctx.organization_id,
                 invitation_url=_to_http_redirection_url(client_ctx, invitation),
                 backend_url=self._config.backend_addr.to_http_domain_url(),
@@ -505,6 +525,7 @@ class BaseInviteComponent:
                 greeter_name = client_ctx.user_id.str
                 reply_to = None
             message = generate_invite_email(
+                invitation_type=req.type,
                 from_addr=self._config.email_config.sender,
                 to_addr=to_addr,
                 greeter_name=greeter_name,
@@ -513,6 +534,8 @@ class BaseInviteComponent:
                 invitation_url=_to_http_redirection_url(client_ctx, invitation),
                 backend_url=self._config.backend_addr.to_http_domain_url(),
             )
+        else:
+            assert False
 
         # Send the email
         try:
@@ -542,7 +565,7 @@ class BaseInviteComponent:
         try:
             await self.delete(
                 organization_id=client_ctx.organization_id,
-                greeter=client_ctx.user_id,
+                deleter=client_ctx.user_id,
                 token=req.token,
                 on=DateTime.now(),
                 reason=req.reason,
@@ -586,7 +609,7 @@ class BaseInviteComponent:
                     invitation.status,
                 )
             else:
-                raise NotImplementedError(invitation, "not implemented")
+                assert False
 
         return InviteListRepOk(tuple(map(to_invite_list_item, invitations)))
 
@@ -617,7 +640,7 @@ class BaseInviteComponent:
             )
         elif isinstance(invitation, ShamirRecoveryInvitation):
             threshold, recipients = await self.shamir_info(
-                client_ctx.organization_id, invitation.claimer_user_id
+                client_ctx.organization_id, invitation.token
             )
             return InviteInfoRepOk(
                 InvitationType.SHAMIR_RECOVERY,
@@ -625,7 +648,7 @@ class BaseInviteComponent:
                 recipients=recipients,
             )
         else:
-            raise NotImplementedError()
+            assert False
 
     @api(
         "invite_1_claimer_wait_peer",
@@ -1126,7 +1149,7 @@ class BaseInviteComponent:
     async def delete(
         self,
         organization_id: OrganizationID,
-        greeter: UserID,
+        deleter: UserID,
         token: InvitationToken,
         on: DateTime,
         reason: InvitationDeletedReason,
@@ -1169,6 +1192,6 @@ class BaseInviteComponent:
         raise NotImplementedError()
 
     async def shamir_info(
-        self, organization_id: OrganizationID, user_id: UserID
+        self, organization_id: OrganizationID, token: InvitationToken
     ) -> tuple[int, tuple[ShamirRecoveryRecipient, ...]]:
         raise NotImplementedError

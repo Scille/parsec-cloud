@@ -49,4 +49,4 @@ CREATE TABLE shamir_recovery_conduit (
 
 ALTER TABLE user_ ADD shamir_recovery INTEGER REFERENCES shamir_recovery_setup (_id);
 ALTER TABLE invitation ADD shamir_recovery INTEGER REFERENCES shamir_recovery_setup (_id);
-ALTER TYPE invitation_type ADD VALUE IF NOT EXISTS 'SHAMIR_RECOVERY';
+ALTER TYPE invitation_type ADD VALUE 'SHAMIR_RECOVERY';

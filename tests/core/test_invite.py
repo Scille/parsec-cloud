@@ -446,7 +446,7 @@ async def test_claimer_handle_cancel_event(
     async def _cancel_invitation():
         await backend.invite.delete(
             organization_id=alice.organization_id,
-            greeter=alice.user_id,
+            deleter=alice.user_id,
             token=alice_new_device_invitation.token,
             on=DateTime.now(),
             reason=InvitationDeletedReason.CANCELLED,
@@ -551,7 +551,7 @@ async def test_claimer_handle_command_failure(
     async def _cancel_invitation():
         await backend.invite.delete(
             organization_id=alice.organization_id,
-            greeter=alice.user_id,
+            deleter=alice.user_id,
             token=alice_new_device_invitation.token,
             on=DateTime.now(),
             reason=InvitationDeletedReason.CANCELLED,

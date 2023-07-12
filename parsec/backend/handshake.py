@@ -177,7 +177,7 @@ async def _process_invited_answer(
     elif handshake.answer_data["invitation_type"] == InvitationType.SHAMIR_RECOVERY:
         expected_invitation_type = ShamirRecoveryInvitation
     else:
-        raise NotImplementedError()
+        assert False
 
     if not isinstance(invitation, expected_invitation_type):
         result_req = handshake.build_bad_identity_result_req()
