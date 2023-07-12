@@ -1064,7 +1064,7 @@ class BaseInviteComponent:
     async def _conduit_talk(
         self,
         organization_id: OrganizationID,
-        greeter: UserID | None,
+        greeter: UserID | None,  # None for claimer legacy parsec API <= 2.8 (parsec < 2.16)
         is_greeter: bool,
         token: InvitationToken,
         state: ConduitState,

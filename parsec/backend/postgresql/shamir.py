@@ -138,8 +138,7 @@ SET
     deleted_on = $on,
     deleted_reason = $reason
 WHERE
-    organization = { q_organization_internal_id("$organization_id") }
-    AND _id = $row_id
+    _id = $row_id
 """
 )
 
@@ -169,11 +168,7 @@ async def _do_delete_invitation_if_it_exists(
     )
     # In practice, there should be at most one element in rows
     for row_id, raw_token in rows:
-        await conn.execute(
-            *_q_delete_invitation(
-                organization_id=organization_id.str, row_id=row_id, on=on, reason=reason.str
-            )
-        )
+        await conn.execute(*_q_delete_invitation(row_id=row_id, on=on, reason=reason.str))
         await send_signal(
             conn,
             BackendEvent.INVITE_STATUS_CHANGED,

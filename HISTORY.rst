@@ -82,6 +82,8 @@ Client/Backend API evolutions
 * APIv1 has been removed, which cut off compatibility with Parsec client < 2.15
   and Parsec server < 2.10  (`#3706 <https://github.com/Scille/parsec-
   cloud/issues/3706>`__)
+* Drop API V2 support on the client side.  (`#3837
+  <https://github.com/Scille/parsec-cloud/issues/3837>`__)
 
 Miscellaneous internal changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

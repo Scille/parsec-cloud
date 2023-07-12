@@ -239,7 +239,6 @@ The Shamir algorithm is meant to be fed with a serialized dump of a `ShamirRecov
         }
     ]
 }
-
 ```
 
 This secret contains both:
@@ -469,7 +468,6 @@ Authenticated API for listing the invitation:
         ]
     }
 ]
-
 ```
 
 ### 3.2 - Claimer connect to the server

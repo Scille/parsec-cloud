@@ -227,7 +227,6 @@ class ShamirRecoveryClaimPreludeCtx:
         rep = await self._cmds.invite_shamir_recovery_reveal(recovered_secret.reveal_token)
         assert isinstance(rep, InviteShamirRecoveryRevealRepOk)
         recovered_device = LocalDevice.load(recovered_secret.data_key.decrypt(rep.ciphered_data))
-        assert recovered_device == recovered_device
         return recovered_device
 
 

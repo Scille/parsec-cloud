@@ -4,6 +4,7 @@ from __future__ import annotations
 import pytest
 import trio
 
+from parsec import FEATURE_FLAGS
 from parsec._parsec import BackendInvitationAddr, DeviceLabel, InvitationDeletedReason
 from parsec.core.backend_connection import backend_invited_cmds_factory
 from parsec.core.invite import ShamirRecoveryClaimPreludeCtx, claimer_retrieve_info
@@ -198,6 +199,10 @@ async def test_shamir_recovery_invitation(
 
 
 @pytest.mark.trio
+@pytest.mark.skipif(
+    FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"],
+    reason="claimer_retrieve_info not oxidized for shamir yet",
+)
 async def test_shamir_recovery_claim(
     alice_core: LoggedCore,
     bob_core: LoggedCore,

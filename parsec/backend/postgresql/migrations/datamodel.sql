@@ -197,15 +197,14 @@ CREATE TABLE invitation (
 
 CREATE TABLE shamir_recovery_conduit (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
-    token UUID NOT NULL,
+    invitation INTEGER REFERENCES invitation (_id) NOT NULL,
     greeter INTEGER REFERENCES user_ (_id) NOT NULL,
 
     conduit_state invitation_conduit_state NOT NULL DEFAULT '1_WAIT_PEERS',
     conduit_greeter_payload BYTEA,
     conduit_claimer_payload BYTEA,
 
-    UNIQUE(organization, token, greeter)
+    UNIQUE(invitation, greeter)
 );
 
 

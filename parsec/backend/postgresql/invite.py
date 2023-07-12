@@ -110,19 +110,18 @@ VALUES (
     $claimer_email,
     $created_on
 )
+RETURNING _id
 """
 )
 
 _q_insert_shamir_conduit = Q(
     f"""
 INSERT INTO shamir_recovery_conduit(
-    organization,
-    token,
+    invitation,
     greeter
 )
 VALUES (
-    { q_organization_internal_id("$organization_id") },
-    $token,
+    $invitation,
     { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
 )
 """
@@ -150,8 +149,7 @@ SELECT
     deleted_on
 FROM invitation
 JOIN shamir_recovery_conduit
-    ON invitation.token = shamir_recovery_conduit.token
-    AND invitation.organization = shamir_recovery_conduit.organization
+    ON invitation._id = shamir_recovery_conduit.invitation
 JOIN shamir_recovery_setup
     ON invitation.shamir_recovery = shamir_recovery_setup._id
 WHERE
@@ -174,8 +172,7 @@ SET
     deleted_on = $on,
     deleted_reason = $reason
 WHERE
-    organization = { q_organization_internal_id("$organization_id") }
-    AND _id = $row_id
+    _id = $row_id
 """
 )
 
@@ -187,6 +184,7 @@ FROM user_
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
     AND user_id = $user_id
+FOR UPDATE
 """
 )
 
@@ -223,9 +221,8 @@ SELECT
     user_.user_id,
     shares
 FROM shamir_recovery_share
-LEFT JOIN user_
+JOIN user_
     ON shamir_recovery_share.recipient = user_._id
-    AND shamir_recovery_share.organization = user_.organization
 LEFT JOIN human
     ON user_.human = human._id
 WHERE
@@ -262,11 +259,7 @@ async def _do_delete_invitation(
     if deleted_on:
         raise InvitationAlreadyDeletedError(token)
 
-    await conn.execute(
-        *_q_delete_invitation(
-            organization_id=organization_id.str, row_id=row_id, on=on, reason=reason.str
-        )
-    )
+    await conn.execute(*_q_delete_invitation(row_id=row_id, on=on, reason=reason.str))
     await send_signal(
         conn,
         BackendEvent.INVITE_STATUS_CHANGED,
@@ -308,6 +301,7 @@ FROM invitation
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
     AND token = $token
+FOR UPDATE
 """
 )
 
@@ -390,7 +384,7 @@ SELECT
     deleted_on
 FROM invitation
 JOIN shamir_recovery_conduit
-    ON invitation.token = shamir_recovery_conduit.token
+    ON invitation._id = shamir_recovery_conduit.invitation
 WHERE
     invitation.organization = { q_organization_internal_id("$organization_id") }
     AND invitation.token = $token
@@ -429,8 +423,7 @@ SELECT
     deleted_on
 FROM invitation
 JOIN shamir_recovery_conduit
-    ON invitation.token = shamir_recovery_conduit.token
-    AND invitation.organization = shamir_recovery_conduit.organization
+    ON invitation._id = shamir_recovery_conduit.invitation
 WHERE
     invitation.organization = { q_organization_internal_id("$organization_id") }
     AND invitation.token = $token
@@ -449,8 +442,7 @@ SET
     conduit_greeter_payload = $conduit_greeter_payload,
     conduit_claimer_payload = $conduit_claimer_payload
 WHERE
-    organization = { q_organization_internal_id("$organization_id") }
-    AND _id = $row_id
+    _id = $row_id
 """
 )
 
@@ -462,8 +454,7 @@ SET
     conduit_greeter_payload = $conduit_greeter_payload,
     conduit_claimer_payload = $conduit_claimer_payload
 WHERE
-    organization = { q_organization_internal_id("$organization_id") }
-    AND _id = $row_id
+    _id = $row_id
 """
 )
 
@@ -487,8 +478,7 @@ FROM invitation
 LEFT JOIN human_handle_per_user
     ON invitation.greeter = human_handle_per_user.user_
 JOIN shamir_recovery_conduit
-    ON invitation.token = shamir_recovery_conduit.token
-    AND invitation.organization = shamir_recovery_conduit.organization
+    ON invitation._id = shamir_recovery_conduit.invitation
 JOIN shamir_recovery_setup
     ON invitation.shamir_recovery = shamir_recovery_setup._id
 WHERE
@@ -601,7 +591,6 @@ async def _conduit_talk(
             curr_claimer_payload = payload
         await conn.execute(
             *conduit_update(
-                organization_id=organization_id.str,
                 row_id=row_id,
                 conduit_state=curr_conduit_state.value,
                 conduit_greeter_payload=curr_greeter_payload,
@@ -703,7 +692,6 @@ async def _conduit_listen(
                 # to the next state
                 await conn.execute(
                     *conduit_update(
-                        organization_id=ctx.organization_id.str,
                         row_id=row_id,
                         conduit_state=NEXT_CONDUIT_STATE[ctx.state].value,
                         conduit_greeter_payload=None,
@@ -825,7 +813,7 @@ async def _do_new_shamir_recovery_invitation(
     if greeter_user_id not in recipients:
         raise InvitationShamirRecoveryGreeterNotInRecipients()
     token = InvitationToken.new()
-    await conn.execute(
+    invitation_internal_id = await conn.fetchval(
         *_q_insert_invitation(
             organization_id=organization_id.str,
             type=InvitationType.SHAMIR_RECOVERY.str,
@@ -839,9 +827,9 @@ async def _do_new_shamir_recovery_invitation(
     for recipient in recipients:
         await conn.execute(
             *_q_insert_shamir_conduit(
+                invitation=invitation_internal_id,
                 organization_id=organization_id.str,
                 greeter_user_id=recipient.str,
-                token=token,
             )
         )
 
