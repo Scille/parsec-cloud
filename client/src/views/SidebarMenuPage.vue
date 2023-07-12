@@ -15,88 +15,195 @@
         class="sidebar"
       >
         <ion-header class="sidebar__header">
-          <!-- active organization -->
-          <ion-card class="organization-card">
-            <ion-card-header class="organization-card__header">
-              <div class="organization-card__container">
-                <ion-avatar class="orga-avatar">
-                  <span>{{ device.organizationId?.substring(0, 2) }}</span>
-                </ion-avatar>
-                <div class="orga-text">
-                  <ion-card-subtitle class="caption-info">
-                    {{ $t('HomePage.organizationActionSheet.header') }}
-                  </ion-card-subtitle>
-                  <ion-card-title class="title-h4">
-                    {{ device.organizationId }}
-                  </ion-card-title>
+          <div
+            v-show="!isOrganizationManagementRoute()"
+          >
+            <!-- active organization -->
+            <ion-card class="organization-card">
+              <ion-card-header class="organization-card__header">
+                <div class="organization-card__container">
+                  <ion-avatar class="orga-avatar">
+                    <span>{{ device.organizationId?.substring(0, 2) }}</span>
+                  </ion-avatar>
+                  <div class="orga-text">
+                    <ion-card-subtitle class="caption-info">
+                      {{ $t('HomePage.organizationActionSheet.header') }}
+                    </ion-card-subtitle>
+                    <ion-card-title class="title-h4">
+                      {{ device.organizationId }}
+                    </ion-card-title>
+                  </div>
                 </div>
-              </div>
-              <!-- new icon to provide -->
-              <div class="organization-card__icon">
-                <svg
-                  width="32"
-                  height="32"
-                  viewBox="0 0 32 32"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10.3495 20.4231L15.6049 26.795C15.6896 26.8977 15.7947 26.9801
-                    15.9129 27.0366C16.0311 27.0931 16.1597 27.1223 16.2899 27.1223C16.42 27.1223 16.5486 27.0931
-                    16.6669 27.0366C16.7851 26.9801 16.8902 26.8977 16.9749 26.795L22.2303 20.4231C22.7319 19.8149
-                    22.316 18.8755 21.5453 18.8755L11.033 18.8755C10.2622 18.8755 9.84641 19.8149 10.3495 20.4231Z"
-                    fill="#F9F9FB"
-                  />
-                  <path
-                    d="M22.2326 13.4558L16.9772 7.08389C16.8925 6.98124 16.7874 6.89884 16.6691 6.84234C16.5509 6.78585
-                    16.4223 6.7566 16.2921 6.7566C16.162 6.7566 16.0334 6.78585 15.9151 6.84234C15.7969 6.89884 15.6918
-                    6.98124 15.6071 7.08389L10.3517 13.4558C9.85015 14.064 10.266 15.0034 11.0367 15.0034L21.549 15.0034C22.3198
-                    15.0034 22.7356 14.064 22.2326 13.4558Z"
-                    fill="#F9F9FB"
-                  />
-                </svg>
-              </div>
-            </ion-card-header>
+                <!-- new icon to provide -->
+                <div class="organization-card__icon">
+                  <svg
+                    width="32"
+                    height="32"
+                    viewBox="0 0 32 32"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M10.3495 20.4231L15.6049 26.795C15.6896 26.8977 15.7947 26.9801
+                      15.9129 27.0366C16.0311 27.0931 16.1597 27.1223 16.2899 27.1223C16.42 27.1223 16.5486 27.0931
+                      16.6669 27.0366C16.7851 26.9801 16.8902 26.8977 16.9749 26.795L22.2303 20.4231C22.7319 19.8149
+                      22.316 18.8755 21.5453 18.8755L11.033 18.8755C10.2622 18.8755 9.84641 19.8149 10.3495 20.4231Z"
+                      fill="#F9F9FB"
+                    />
+                    <path
+                      d="M22.2326 13.4558L16.9772 7.08389C16.8925 6.98124 16.7874 6.89884 16.6691 6.84234C16.5509 6.78585
+                      16.4223 6.7566 16.2921 6.7566C16.162 6.7566 16.0334 6.78585 15.9151 6.84234C15.7969 6.89884 15.6918
+                      6.98124 15.6071 7.08389L10.3517 13.4558C9.85015 14.064 10.266 15.0034 11.0367 15.0034L21.549 15.0034C22.3198
+                      15.0034 22.7356 14.064 22.2326 13.4558Z"
+                      fill="#F9F9FB"
+                    />
+                  </svg>
+                </div>
+              </ion-card-header>
 
-            <div class="organization-card__manageBtn">
-              <ion-text
-                class="subtitles-sm"
-                button
+              <div
+                class="organization-card__manageBtn"
+                v-show="!isOutsider()"
               >
-                Gérer mon organisation
-              </ion-text>
+                <ion-text
+                  class="subtitles-sm"
+                  button
+                  @click="router.push({name: 'activeUsers', params: {deviceId: currentRoute.params.deviceId}})"
+                >
+                  {{ isAdmin() ? $t('SideMenu.manageOrganization') : $t('SideMenu.organizationInfo') }}
+                </ion-text>
+              </div>
+            </ion-card>
+            <!-- end of active organization -->
+          </div>
+          <div
+            v-show="isOrganizationManagementRoute()"
+          >
+            <div class="manage-organization">
+              <ion-button
+                fill="clear"
+                @click="router.push({name: 'workspaces', params: {deviceId: currentRoute.params.deviceId}})"
+              >
+                <ion-icon
+                  slot="icon-only"
+                  :icon="chevronBack"
+                />
+              </ion-button>
+              <ion-label>{{ isAdmin() ? $t('SideMenu.manageOrganization') : $t('SideMenu.organizationInfo') }}</ion-label>
             </div>
-          </ion-card>
-          <!-- end of active organization -->
+          </div>
         </ion-header>
 
         <ion-content class="ion-padding ">
-          <!-- list of workspaces -->
-          <ion-list class="list-workspaces">
-            <ion-header
-              lines="none"
-              button
-              @click="navigateToWorkspaceList()"
-              class="list-workspaces__header title-h5"
-            >
-              {{ $t('SideMenu.allWorkspaces') }}
-            </ion-header>
+          <div
+            v-show="!isOrganizationManagementRoute()"
+          >
+            <!-- list of workspaces -->
+            <ion-list class="list-workspaces">
+              <ion-header
+                lines="none"
+                button
+                @click="navigateToWorkspaceList()"
+                class="list-workspaces__header title-h5"
+              >
+                {{ $t('SideMenu.allWorkspaces') }}
+              </ion-header>
 
-            <ion-item
-              lines="none"
-              button
-              v-for="workspace in workspaces"
-              :key="workspace.id"
-              @click="navigateToWorkspace(workspace.id)"
+              <ion-item
+                lines="none"
+                button
+                v-for="workspace in workspaces"
+                :key="workspace.id"
+                @click="navigateToWorkspace(workspace.id)"
+              >
+                <ion-icon
+                  :icon="business"
+                  slot="start"
+                />
+                <ion-label>{{ workspace.name }}</ion-label>
+              </ion-item>
+            </ion-list>
+            <!-- list of workspaces -->
+          </div>
+          <div
+            v-show="isOrganizationManagementRoute()"
+          >
+            <!-- user actions -->
+            <ion-list class="list-users">
+              <ion-header
+                lines="none"
+                class="list-users__header title-h5"
+                :class="isUserRoute() ? 'category-selected' : 'category-not-selected'"
+              >
+                <ion-icon
+                  :icon="people"
+                  slot="start"
+                />
+                {{ $t('SideMenu.users') }}
+              </ion-header>
+
+              <ion-item
+                lines="none"
+                button
+                :class="currentRoute.name === 'activeUsers' ? 'user-menu-selected' : 'user-menu-not-selected'"
+                @click="router.push({name: 'activeUsers', params: {deviceId: currentRoute.params.deviceId}})"
+              >
+                <ion-label>{{ $t('SideMenu.activeUsers') }}</ion-label>
+              </ion-item>
+              <ion-item
+                lines="none"
+                button
+                :class="currentRoute.name === 'revokedUsers' ? 'user-menu-selected' : 'user-menu-not-selected'"
+                @click="router.push({name: 'revokedUsers', params: {deviceId: currentRoute.params.deviceId}})"
+              >
+                <ion-label>{{ $t('SideMenu.revokedUsers') }}</ion-label>
+              </ion-item>
+              <ion-item
+                v-show="isAdmin()"
+                lines="none"
+                button
+                :class="currentRoute.name === 'invitations' ? 'user-menu-selected' : 'user-menu-not-selected'"
+                @click="router.push({name: 'invitations', params: {deviceId: currentRoute.params.deviceId}})"
+              >
+                <ion-label>{{ $t('SideMenu.invitations') }}</ion-label>
+              </ion-item>
+            </ion-list>
+            <!-- storage -->
+            <ion-list
+              class="storage"
+              v-show="isAdmin()"
             >
-              <ion-icon
-                :icon="business"
-                slot="start"
-              />
-              <ion-label>{{ workspace.name }}</ion-label>
-            </ion-item>
-          </ion-list>
-          <!-- list of workspaces -->
+              <ion-header
+                lines="none"
+                class="storage__header title-h5"
+                :class="currentRoute.name === 'storage' ? 'category-selected' : 'category-not-selected'"
+                @click="router.push({name: 'storage', params: {deviceId: currentRoute.params.deviceId}})"
+              >
+                <ion-icon
+                  :icon="pieChart"
+                  slot="start"
+                />
+                {{ $t('SideMenu.storage') }}
+              </ion-header>
+            </ion-list>
+            <!-- org info -->
+            <ion-list
+              class="organization"
+            >
+              <ion-header
+                lines="none"
+                class="organization__header title-h5"
+                :class="currentRoute.name === 'organization' ? 'category-selected' : 'category-not-selected'"
+                @click="router.push({name: 'organization', params: {deviceId: currentRoute.params.deviceId}})"
+              >
+                <ion-icon
+                  :icon="informationCircle"
+                  slot="start"
+                />
+                {{ $t('SideMenu.organizationInfo') }}
+              </ion-header>
+            </ion-list>
+          </div>
         </ion-content>
       </ion-menu>
 
@@ -124,20 +231,25 @@ import {
   IonItem,
   IonRouterOutlet,
   menuController,
-  GestureDetail
+  GestureDetail,
+  IonButton
 } from '@ionic/vue';
 import {
-  business
+  business,
+  chevronBack,
+  people,
+  pieChart,
+  informationCircle
 } from 'ionicons/icons';
 import { WatchStopHandle, onMounted, onUnmounted, ref, watch } from 'vue';
 import { createGesture } from '@ionic/vue';
-
 import { useRouter, useRoute } from 'vue-router';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { getMockDevices, getMockWorkspaces, MockWorkspace } from '@/common/mocks';
+import { isOrganizationManagementRoute, isUserRoute } from '@/router/conditions';
+import { isAdmin, isOutsider } from '@/common/permissions';
 
 let device: any = {};
-
 let workspaces: MockWorkspace[] = [];
 
 getMockWorkspaces().then((ws) => {
@@ -375,7 +487,16 @@ ion-menu {
   user-select: none;
 }
 
-.list-workspaces {
+.manage-organization {
+  font-size: 1.5em;
+  color: var(--parsec-color-light-secondary-light);
+
+  ion-icon {
+    color: var(--parsec-color-light-secondary-light);
+  }
+}
+
+.list-workspaces, .list-users, .storage, .organization {
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -394,6 +515,30 @@ ion-menu {
       width: 100%;
       border-radius: 5px;
     }
+  }
+
+  .user-menu-selected {
+    text-decoration: underline;
+    text-decoration-color: var(--parsec-color-light-primary-30);
+  }
+
+  .user-menu-not-selected {
+    color: var(--parsec-color-light-primary-100);
+    text-decoration: none;
+  }
+
+  .category-selected {
+    animation: blinkingBackground 0.2s infinite;
+
+    @keyframes blinkingBackground {
+      0% { color: #00FF00; }
+      25% { color: #FF7700; }
+      50% { color: #FF00FF; }
+      75% { color: #00FFFF; }
+    }
+  }
+
+  .category-not-selected {
   }
 
   .item-label {

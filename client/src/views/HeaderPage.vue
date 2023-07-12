@@ -26,12 +26,12 @@
             v-if="hasHistory()"
           >
             <header-back-button
-              :short="isWorkspaceRoute() ? true : false"
+              :short="isDocumentRoute() ? true : false"
             />
           </div>
 
           <div
-            v-if="!isWorkspaceRoute()"
+            v-if="!isDocumentRoute()"
             class="topbar-left__title"
           >
             <ion-label
@@ -125,7 +125,7 @@ import {
   notifications
 } from 'ionicons/icons';
 import { useI18n } from 'vue-i18n';
-import { useRouter, useRoute } from 'vue-router';
+import { useRoute } from 'vue-router';
 import ProfileHeader from '@/components/ProfileHeader.vue';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { computed } from 'vue';
@@ -133,19 +133,15 @@ import { parse as parsePath } from '@/common/path';
 import HeaderBreadcrumbs from '@/components/HeaderBreadcrumbs.vue';
 import { RouterPathNode } from '@/components/HeaderBreadcrumbs.vue';
 import HeaderBackButton from '@/components/HeaderBackButton.vue';
+import { hasHistory, isDocumentRoute } from '@/router/conditions';
 
 const currentRoute = useRoute();
-const router = useRouter();
 const { t } = useI18n();
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
 
 // Dummy temporary function
 function mockGetWorkspaceName(workspaceId: string): string {
   return `Workspace ${workspaceId}`;
-}
-
-function isWorkspaceRoute(): boolean {
-  return currentRoute.name === 'workspaces' || currentRoute.name === 'folder';
 }
 
 function getTitleForRoute(): string {
@@ -155,7 +151,18 @@ function getTitleForRoute(): string {
     return t('HeaderPage.titles.settings');
   } else if (route === 'devices') {
     return t('HeaderPage.titles.devices');
+  } else if (route === 'activeUsers') {
+    return t('HeaderPage.titles.activeUsers');
+  } else if (route === 'revokedUsers') {
+    return t('HeaderPage.titles.revokedUsers');
+  } else if (route === 'invitations') {
+    return t('HeaderPage.titles.invitations');
+  } else if (route === 'storage') {
+    return t('HeaderPage.titles.storage');
+  } else if (route === 'organization') {
+    return t('HeaderPage.titles.organization');
   }
+
   return '';
 }
 
@@ -205,22 +212,6 @@ const fullPath = computed(() => {
 
   return finalPath;
 });
-
-function hasHistory(): boolean {
-  /*
-  * Only show the back button if the previous route
-  * was a logged route. Vue router does not strictly
-  * have something to check that, so we check if
-  * the device was in the URL.
-  */
-  const deviceId = router.currentRoute.value.params.deviceId;
-  const previousRoute = router.options.history.state.back?.toString();
-
-  if (!deviceId || !previousRoute) {
-    return false;
-  }
-  return previousRoute.startsWith(`/${deviceId}`);
-}
 </script>
 
 <style scoped lang="scss">
@@ -284,6 +275,7 @@ function hasHistory(): boolean {
 
   &__title {
     width: 100%;
+    color: var(--parsec-color-light-primary-600);
 
     .align-left {
       display: flex;
@@ -296,7 +288,6 @@ function hasHistory(): boolean {
       justify-content: center;
       align-items: center;
       height: 100%;
-      color: var(--parsec-color-light-primary-600);
     }
   }
 
