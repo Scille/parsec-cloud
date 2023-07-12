@@ -278,8 +278,11 @@
         "logIn": "Me connecter",
         "createDevice": "Rejoindre l'organisation",
         "validateUserInfo": "Valider mes informations",
+        "understand": "J'ai compris !",
         "start": "Démarrer",
         "waitingForHost": "(En attente de l'hôte)",
+        "linkFormLabel": "Lien d'invitation",
+        "linkFormPlaceholder": "parsec://invitation/...",
         "stepTitles": {
             "GetHostCode": "Code hôte",
             "ProvideGuestCode": "Code invité",
@@ -298,6 +301,7 @@
             }
         },
         "titles": {
+            "joinOrga": "Rejoindre {org}",
             "waitForHost": "Bienvenue sur Parsec !",
             "getHostCode": "Réception du code de l'hôte",
             "provideGuestCode": "Partage de votre code",
@@ -306,6 +310,7 @@
             "finish": "Vous avez rejoint l'organisation {org} !"
         },
         "subtitles": {
+            "joinOrga": "Saisissez le lien que vous avez reçu par mail.",
             "waitForHost": "",
             "getHostCode": "Cliquez sur le code que vous donne l'hôte.",
             "provideGuestCode": "Veuillez communiquer le code ci-dessous à l'hôte.",

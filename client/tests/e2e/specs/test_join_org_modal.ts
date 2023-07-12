@@ -13,24 +13,20 @@ describe('Join an organization', () => {
 
   it('Open org join modal', () => {
     cy.get('.join-organization-modal').should('not.exist');
-    cy.get('.join-by-link-modal').should('not.exist');
     cy.get('#create-organization-button').click();
     cy.get('.popover-viewport').find('ion-item');
     cy.get('.popover-viewport').find('ion-item').should('have.length', 2);
     cy.get('.popover-viewport').find('ion-item').last().contains('Join');
     cy.get('.popover-viewport').find('ion-item').last().click();
-    cy.get('.join-by-link-modal').should('exist');
-    cy.get('ion-modal').should('exist');
-
-    cy.get('ion-modal').find('ion-footer ion-button').first().as('joinButton').contains('Join');
-    cy.get('@joinButton').should('have.attr', 'disabled');
-    cy.wait(200);
-    cy.get('ion-modal').find('ion-input').find('input').type(INVITATION_LINK);
-    cy.get('@joinButton').should('not.have.attr', 'disabled');
-    cy.get('@joinButton').click();
-
-    cy.get('.join-by-link-modal').should('not.exist');
     cy.get('.join-organization-modal').should('exist');
+    cy.get('.modal-header__title').contains('Join');
+    cy.get('ion-modal').should('exist');
+    cy.get('ion-modal').find('ion-footer ion-button').first().as('startButton').contains('Start');
+    cy.get('@startButton').should('have.attr', 'disabled');
+    cy.wait(200);
+    cy.get('ion-modal').find('#link-orga-input').find('ion-input').find('input').type(INVITATION_LINK);
+    cy.get('@startButton').should('not.have.attr', 'disabled');
+    cy.get('@startButton').click();
     cy.get('.modal-header__title').contains('Welcome to Parsec!');
   });
 
@@ -38,27 +34,26 @@ describe('Join an organization', () => {
     const WAIT_TIME = 1000;
 
     function checkStepper(activeIndex: number): void {
-      cy.get('ion-modal').find('ion-chip').as('steps').should('have.length', 5);
+      cy.get('ion-modal').find('.wizard-stepper-step').as('steps').should('have.length', 5);
       for (let i = 0; i < 5; i++) {
         if (i < activeIndex) {
-          cy.get('@steps').eq(i).should('have.class', 'ion-color-medium');
+          cy.get('@steps').eq(i).find('.circle').find('.inner-circle-done').should('exist');
         } else if (i === activeIndex) {
-          cy.get('@steps').eq(i).should('have.class', 'ion-color-primary');
+          cy.get('@steps').eq(i).find('.circle').find('.inner-circle-active').should('exist');
         } else {
-          cy.get('@steps').eq(i).should('have.class', 'ion-color-secondary');
+          cy.get('@steps').eq(i).find('.circle').find('div').should('have.length', 0);
         }
       }
     }
 
     cy.get('#create-organization-button').click();
     cy.get('.popover-viewport').find('ion-item').last().click();
-    cy.get('.join-by-link-modal').should('exist');
     cy.get('ion-modal').should('exist');
-    cy.get('ion-modal').find('ion-footer ion-button').first().as('joinButton').contains('Join');
-    cy.wait(200);
-    cy.get('ion-modal').find('ion-input').find('input').type(INVITATION_LINK);
-    cy.get('@joinButton').click();
     cy.get('.join-organization-modal').should('exist');
+    cy.get('#next-button').contains('Start');
+    cy.wait(200);
+    cy.get('ion-modal').find('#link-orga-input').find('ion-input').find('input').type(INVITATION_LINK);
+    cy.get('#next-button').click();
 
     cy.get('.modal-header__title').as('modalTitle').contains('Welcome to Parsec!');
 
@@ -77,12 +72,12 @@ describe('Join an organization', () => {
     cy.get('@modalTitle').contains('Get host code');
     cy.get('.modal-header__text').as('modalSubtitle').contains('Click on the code given to you by the host');
 
-    cy.get('ion-modal').find('ion-chip').as('steps').should('have.length', 5);
-    cy.get('@steps').eq(0).contains('Host code');
-    cy.get('@steps').eq(1).contains('Guest code');
-    cy.get('@steps').eq(2).contains('Contact details');
-    cy.get('@steps').eq(3).contains('Password');
-    cy.get('@steps').eq(4).contains('Validation');
+    cy.get('ion-modal').find('.wizard-stepper__step').as('steps').should('have.length', 5);
+    cy.get('@steps').eq(0).find('.step-title').contains('Host code');
+    cy.get('@steps').eq(1).find('.step-title').contains('Guest code');
+    cy.get('@steps').eq(2).find('.step-title').contains('Contact details');
+    cy.get('@steps').eq(3).find('.step-title').contains('Password');
+    cy.get('@steps').eq(4).find('.step-title').contains('Validation');
     checkStepper(0);
 
     cy.get('ion-modal').find('.button-choice').as('choiceButtons').should('have.length', 4);

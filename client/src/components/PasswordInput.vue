@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS -->
 
 <template>
-  <ion-grid>
+  <ion-grid class="input-grid">
     <ion-row>
       <ion-col class="input-container">
         <ion-text
@@ -22,16 +22,15 @@
             id="password-input"
             :clear-on-edit="false"
           />
-          <ion-button
+          <div
+            class="input-icon"
             @click="passwordVisible = !passwordVisible"
-            slot="end"
-            fill="clear"
           >
             <ion-icon
               slot="icon-only"
               :icon="passwordVisible ? eyeOff : eye"
             />
-          </ion-button>
+          </div>
         </ion-item>
       </ion-col>
     </ion-row>
@@ -40,7 +39,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { IonGrid, IonCol, IonRow, IonButton, IonItem, IonInput, IonIcon, IonText } from '@ionic/vue';
+import { IonGrid, IonCol, IonRow, IonItem, IonInput, IonIcon, IonText } from '@ionic/vue';
 import {
   eye,
   eyeOff
@@ -73,6 +72,10 @@ function onEnterPress() : void {
 </script>
 
 <style lang="scss" scoped>
+.input-grid {
+  width: 100%;
+}
+
 .input-container {
   // offset necessary to simulate border 3px on focus with outline (outline 2px + border 1px)
   --offset: 2px;
@@ -94,6 +97,24 @@ function onEnterPress() : void {
     &:focus-within {
       --background: var(--parsec-color-light-secondary-background);
       outline: var(--offset) solid var(--parsec-color-light-primary-300);
+    }
+
+    .input-icon {
+      padding: .5rem 0 .5rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &:hover {
+        ion-icon {
+          color: var(--parsec-color-light-primary-700);
+        }
+      }
+
+      ion-icon {
+        font-size: 1.2rem;
+        color: var(--parsec-color-light-secondary-grey);
+      }
     }
   }
 }

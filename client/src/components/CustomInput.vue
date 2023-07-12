@@ -11,7 +11,10 @@
       {{ label }}
     </span>
 
-    <ion-item class="input">
+    <ion-item
+      class="input"
+      :class="{'form-input-disabled': $props.disabled}"
+    >
       <ion-input
         class="form-input"
         :autofocus="true"
@@ -74,6 +77,11 @@ defineEmits<{
       --background: var(--parsec-color-light-secondary-background);
       outline: var(--offset) solid var(--parsec-color-light-primary-300);
     }
+  }
+
+  .form-input-disabled {
+    --background: var(--parsec-color-light-secondary-disabled);
+    border: var(--parsec-color-light-secondary-disabled);
   }
 }
 </style>
