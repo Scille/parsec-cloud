@@ -426,7 +426,7 @@ body.dark {
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 29px;
-  letter-spacing: 9px;
+  letter-spacing: 5px;
   text-transform: uppercase;
 }
 
@@ -520,7 +520,7 @@ body.dark {
 
 .form-helperText {
   font-weight: 500;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   line-height: 133%;
   letter-spacing: 0.4px;
 }
@@ -528,8 +528,28 @@ body.dark {
 
 /**** Global CSS overloads ****/
 
-/* ion-modal having auto width/height will be available in a future ionic release:
-https: //github.com/ionic-team/ionic-framework/issues/24080 */
+/* ion-modal with a height fitted to its content */
+ion-modal {
+  --height: auto;
+  --width: auto;
+  --max-width: 842px;
+}
+
+ion-modal .ion-page {
+  position: relative;
+  display: block;
+  contain: content;
+}
+
+ion-modal .inner-content {
+  max-height: 80vh;
+  max-width: 52rem;
+  overflow: auto;
+}
+
+.settings-modal .ion-page {
+  position: absolute;
+}
 
 /* fix issue on global */
 * {
@@ -537,7 +557,7 @@ https: //github.com/ionic-team/ionic-framework/issues/24080 */
   --box-shadow: var(--parsec-shadow-light);
 }
 
-.header-md {
+.header-md, .footer-md {
   -webkit-box-shadow: inherit;
   box-shadow: inherit;
 }
@@ -569,7 +589,6 @@ ion-popover::part(content) {
 ion-modal::part(content) {
   border-radius: var(--parsec-radius-8);
   --min-width: var(--parsec-modal-width);
-  height: 80%;
 }
 
 /* homepage popover */

@@ -37,9 +37,9 @@ describe('Password Input', () => {
 
   it('should toggle password visibility button icon and password input type on password visibility button click', async () => {
     expect((wrapper.vm as any).passwordVisible).to.be.false;
-    await wrapper.find('ion-button').trigger('click');
+    await wrapper.find('.input-icon').trigger('click');
     expect((wrapper.vm as any).passwordVisible).to.be.true;
-    await wrapper.find('ion-button').trigger('click');
+    await wrapper.find('.input-icon').trigger('click');
     expect((wrapper.vm as any).passwordVisible).to.be.false;
   });
 });

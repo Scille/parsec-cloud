@@ -14,28 +14,29 @@
     </ion-text>
   </div>
   <div class="password-inputs">
-    <password-input
-      :label="$t('Password.password')"
-      v-model="password"
-      @change="onPasswordChange()"
-      name="password"
-    />
-    <password-input
-      :label="$t('Password.confirmPassword')"
-      v-model="passwordConfirm"
-      name="confirmPassword"
-    />
-    <span
-      class="error-message"
-      v-if="password !== passwordConfirm"
-    >
-      {{ $t('Password.noMatch') }}
-    </span>
+    <div class="password-inputs-container">
+      <password-input
+        :label="$t('Password.password')"
+        v-model="password"
+        name="password"
+        @change="onPasswordChange()"
+      />
+    </div>
+    <div class="password-inputs-container">
+      <password-input
+        :label="$t('Password.confirmPassword')"
+        v-model="passwordConfirm"
+        name="confirmPassword"
+      />
+      <span
+        class="form-helperText"
+        v-if="password !== passwordConfirm"
+      >
+        {{ $t('Password.noMatch') }}
+      </span>
+    </div>
   </div>
-  <div
-    class="container-password-level"
-    v-show="passwordStrength !== PasswordStrength.None"
-  >
+  <div class="password-level-container">
     <div
       class="password-level"
       :class="getPasswordLevelClass()"
@@ -117,69 +118,82 @@ function getPasswordLevelClass() : string {
 }
 
 .password-inputs {
-  width: 100%;
+  display: flex;
+  gap: 1.5rem;
+
+  &-container {
+    width: 100%;
+  }
+
+  .form-helperText {
+    display: flex;
+    flex-direction: column;
+    margin-top: .5rem;
+    color: var(--parsec-color-light-danger-500);
+  }
 }
 
-.container-password-level {
+.password-level-container {
   display: flex;
   flex-direction: column;
   gap: .5rem;
-}
+  max-width: 35rem;
 
-.password-level {
+  .password-level {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  flex-direction: column;
+  gap: .5rem;
 
-  &__text {
-    color: var(--parsec-color-light-secondary-text);
-  }
+    &__text {
+      color: var(--parsec-color-light-secondary-text);
+    }
 
-  &-bar {
-    display: flex;
-    gap: .5rem;
+    &-bar {
+      display: flex;
+      gap: .5rem;
 
-    .bar-item {
-      width: 3rem;
-      height: .375rem;
-      border-radius: var(--parsec-radius-6);
-      background: var(--parsec-color-light-primary-50);
-      position: relative;
+      .bar-item {
+        width: 3rem;
+        height: .375rem;
+        border-radius: var(--parsec-radius-6);
+        background: var(--parsec-color-light-primary-50);
+        position: relative;
+      }
+    }
+
+    &.password-level-low {
+      .password-level__text {
+        color: var(--parsec-color-light-danger-500);
+      }
+
+      .bar-item:nth-child(-n+1) {
+        background: var(--parsec-color-light-danger-500);
+      }
+    }
+
+    &.password-level-medium {
+      .password-level__text {
+        color: var(--parsec-color-light-warning-500);
+      }
+
+      .bar-item:nth-child(-n+2) {
+        background: var(--parsec-color-light-warning-500);
+      }
+    }
+
+    &.password-level-high {
+      .password-level__text {
+        color: var(--parsec-color-light-success-500);
+      }
+
+      .bar-item:nth-child(-n+3) {
+        background: var(--parsec-color-light-success-500);
+      }
     }
   }
 
-  &.password-level-low {
-    .password-level__text {
-      color: var(--parsec-color-light-danger-500);
-    }
-
-    .bar-item:nth-child(-n+1) {
-      background: var(--parsec-color-light-danger-500);
-    }
+  .password-criteria {
+    color: var(--parsec-color-light-secondary-grey);
   }
-
-  &.password-level-medium {
-    .password-level__text {
-      color: var(--parsec-color-light-warning-500);
-    }
-
-    .bar-item:nth-child(-n+2) {
-      background: var(--parsec-color-light-warning-500);
-    }
-  }
-
-  &.password-level-high {
-    .password-level__text {
-      color: var(--parsec-color-light-success-500);
-    }
-
-    .bar-item:nth-child(-n+3) {
-      background: var(--parsec-color-light-success-500);
-    }
-  }
-}
-
-.password-criteria {
-  color: var(--parsec-color-light-secondary-grey);
 }
 </style>

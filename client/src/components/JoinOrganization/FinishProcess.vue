@@ -1,33 +1,29 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS -->
 
 <template>
-  <ion-list>
-    <ion-item>
-      <ion-icon
-        :icon="caretForward"
-        slot="start"
-      />
-      {{ $t('JoinOrganization.instructions.finish.first') }}
-    </ion-item>
-    <ion-item>
-      <ion-icon
-        :icon="caretForward"
-        slot="start"
-      />
-      {{ $t('JoinOrganization.instructions.finish.second') }}
-    </ion-item>
-  </ion-list>
+  <div class="container">
+    <informative-text
+      :icon="caretForward"
+      :text="$t('JoinOrganization.instructions.finish.first')"
+    />
+    <informative-text
+      :icon="caretForward"
+      :text="$t('JoinOrganization.instructions.finish.second')"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
 import {
   caretForward
 } from 'ionicons/icons';
-import { IonList, IonItem, IonIcon } from '@ionic/vue';
+import InformativeText from '@/components/InformativeText.vue';
 </script>
 
 <style scoped lang="scss">
-ion-icon {
-  color: var(--parsec-color-light-primary-400);
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 </style>

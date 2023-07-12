@@ -1,14 +1,14 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS -->
 
 <template>
-  <div class="container">
+  <div class="container-textinfo">
     <ion-icon
       :icon="icon"
       size="default"
-      class="container__icon"
+      class="container-textinfo__icon"
     />
     <ion-text
-      class="subtitles-normal container__text"
+      class="subtitles-normal container-textinfo__text"
     >
       {{ text }}
     </ion-text>
@@ -25,7 +25,7 @@ defineProps<{
 </script>
 
 <style scoped lang="scss">
-.container {
+.container-textinfo {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -34,6 +34,7 @@ defineProps<{
   &__icon {
     color: var(--parsec-color-light-primary-400);
     font-size: 1.25rem;
+    min-width: 1.25rem;
   }
 
   &__text {
