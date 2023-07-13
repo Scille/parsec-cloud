@@ -195,7 +195,7 @@ In addition to the [shared requirements](#shared-requirements), for working with
 
 1. Install [`Node 18.12.0`](https://nodejs.org/en/download/releases).
 
-   We recommand that you use [`nvm`](https://github.com/nvm-sh/nvm) to manage multiple node versions:
+   We recommend using [`nvm`](https://github.com/nvm-sh/nvm) to manage multiple node versions:
 
    > [`nvm-windows`](https://github.com/coreybutler/nvm-windows) for `Windows`
 
@@ -222,7 +222,7 @@ In addition to the [shared requirements](#shared-requirements), for working with
    python ./make.py python-dev-install
    ```
 
-   > The python backend is build from the folder `server`.
+   > The Python backend is built from the `server` directory.
 
 4. Setup the web binding
 
@@ -236,13 +236,13 @@ In addition to the [shared requirements](#shared-requirements), for working with
    python ./make.py electron-dev-install
    ```
 
-6. Move to the client dir, For the later command we will consider that the current directory is `client`
+6. Move to the `client` directory
 
    ```shell
    cd client
    ```
 
-7. Install client dependencies
+7. Install client dependencies from the `client` directory
 
    ```shell
    npm install
