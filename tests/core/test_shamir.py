@@ -267,9 +267,13 @@ async def test_shamir_recovery_claim(
     await create_shamir_recovery_device(alice_core, certificates, threshold=4, weights=[2, 3])
 
     # Bob creates an invitation for Alice
-    address_from_bob, email_sent = await bob_core.new_shamir_recovery_invitation(
-        alice.user_id, send_email=True
-    )
+    async with assert_invite_status_changed_event(
+        bob_core, adam_core, InvitationStatus.IDLE
+    ) as feed_token:
+        address_from_bob, email_sent = await bob_core.new_shamir_recovery_invitation(
+            alice.user_id, send_email=True
+        )
+        feed_token(address_from_bob.token)
     assert email_sent == email_sent.SUCCESS
     invitation_type = address_from_bob.invitation_type
     assert invitation_type == invitation_type.SHAMIR_RECOVERY
@@ -299,7 +303,10 @@ async def test_shamir_recovery_claim(
             # Alice receives the invitation address
             address = BackendInvitationAddr.from_url(send_this_to_alice)
             async with backend_invited_cmds_factory(addr=address) as cmds:
-                prelude_ctx = await claimer_retrieve_info(cmds)
+                async with assert_invite_status_changed_event(
+                    bob_core, adam_core, InvitationStatus.READY, address.token
+                ):
+                    prelude_ctx = await claimer_retrieve_info(cmds)
                 assert isinstance(prelude_ctx, ShamirRecoveryClaimPreludeCtx)
                 recipient1, recipient2 = prelude_ctx.recipients
                 if recipient1.user_id == adam.user_id:
@@ -316,10 +323,7 @@ async def test_shamir_recovery_claim(
                 alice_initial_ctx = prelude_ctx.get_initial_ctx(bob_recipient)
 
                 async def _run_first_alice_claimer():
-                    async with assert_invite_status_changed_event(
-                        bob_core, adam_core, InvitationStatus.READY, address.token
-                    ):
-                        alice_ctx = await alice_initial_ctx.do_wait_peer()
+                    alice_ctx = await alice_initial_ctx.do_wait_peer()
                     alice_ctx.generate_greeter_sas_choices(size=3)
                     # Skip SAS code checks
                     alice_ctx = await alice_ctx.do_signify_trust()
@@ -362,16 +366,26 @@ async def test_shamir_recovery_claim(
                 # Alice retrieves her recovery device
                 alice_recovery_device = await prelude_ctx.retreive_recovery_device()
 
+            # TODO: improve robustness
+            async with assert_invite_status_changed_event(
+                bob_core, adam_core, InvitationStatus.IDLE, address.token
+            ):
+                pass
+
     # Alice creates a new device and deletes the invitation
     assert alice_recovery_device.device_id.user_id == alice.user_id
     alice_new_device = await generate_new_device_from_recovery(
         alice_recovery_device, DeviceLabel("new label")
     )
-    async with core_factory(alice_new_device) as new_alice_core:
-        new_alice_core: LoggedCore
-        await new_alice_core.delete_invitation(
-            address.token, reason=InvitationDeletedReason.FINISHED
-        )
+
+    async with assert_invite_status_changed_event(
+        bob_core, adam_core, InvitationStatus.DELETED, address.token
+    ):
+        async with core_factory(alice_new_device) as new_alice_core:
+            new_alice_core: LoggedCore
+            await new_alice_core.delete_invitation(
+                address.token, reason=InvitationDeletedReason.FINISHED
+            )
 
     # The list is updated
     assert await bob_core.list_invitations() == []

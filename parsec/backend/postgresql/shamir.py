@@ -3,23 +3,17 @@ from __future__ import annotations
 
 from typing import Any
 
-import triopg
-
 from parsec._parsec import (
-    DateTime,
     DeviceID,
-    InvitationDeletedReason,
-    InvitationStatus,
-    InvitationToken,
-    InvitationType,
     OrganizationID,
     ShamirRecoverySetup,
     ShamirRevealToken,
-    UserID,
     VerifyKey,
 )
-from parsec.backend.backend_events import BackendEvent
-from parsec.backend.postgresql.handler import PGHandler, send_signal
+from parsec.backend.postgresql.handler import PGHandler
+from parsec.backend.postgresql.invite import (
+    delete_shamir_recovery_invitation_if_it_exists,
+)
 from parsec.backend.postgresql.utils import (
     Q,
     q_organization_internal_id,
@@ -113,35 +107,6 @@ WHERE
 """
 )
 
-_q_delete_shamir_recovery_invitation_info = Q(
-    f"""
-SELECT
-    invitation._id,
-    invitation.token
-FROM invitation
-JOIN shamir_recovery_setup
-    ON invitation.shamir_recovery = shamir_recovery_setup._id
-WHERE
-    invitation.organization = { q_organization_internal_id("$organization_id") }
-    AND type = '{ InvitationType.SHAMIR_RECOVERY.str }'
-    AND shamir_recovery_setup.user_ = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter")}
-    AND deleted_on IS NULL
-FOR UPDATE
-"""
-)
-
-
-_q_delete_invitation = Q(
-    f"""
-UPDATE invitation
-SET
-    deleted_on = $on,
-    deleted_reason = $reason
-WHERE
-    _id = $row_id
-"""
-)
-
 _q_get_ciphered_data = Q(
     f"""
 SELECT
@@ -152,31 +117,6 @@ WHERE
     AND reveal_token = $reveal_token
 """
 )
-
-
-async def _do_delete_invitation_if_it_exists(
-    conn: triopg._triopg.TrioConnectionProxy,
-    organization_id: OrganizationID,
-    user_id: UserID,
-) -> None:
-    on = DateTime.now()
-    reason = InvitationDeletedReason.CANCELLED
-    rows = await conn.fetch(
-        *_q_delete_shamir_recovery_invitation_info(
-            organization_id=organization_id.str, greeter=user_id.str
-        )
-    )
-    # In practice, there should be at most one element in rows
-    for row_id, raw_token in rows:
-        await conn.execute(*_q_delete_invitation(row_id=row_id, on=on, reason=reason.str))
-        await send_signal(
-            conn,
-            BackendEvent.INVITE_STATUS_CHANGED,
-            organization_id=organization_id,
-            greeter=user_id,
-            token=InvitationToken.from_hex(raw_token),
-            status=InvitationStatus.DELETED,
-        )
 
 
 class PGShamirComponent(BaseShamirComponent):
@@ -231,7 +171,9 @@ class PGShamirComponent(BaseShamirComponent):
                         shamir_recovery=None,
                     )
                 )
-                await _do_delete_invitation_if_it_exists(conn, organization_id, author.user_id)
+                await delete_shamir_recovery_invitation_if_it_exists(
+                    conn, organization_id, author.user_id
+                )
             return
         # Verify the certificates
         brief_certificate, share_certificates = self._verify_certificates(
@@ -272,7 +214,9 @@ class PGShamirComponent(BaseShamirComponent):
                 )
             )
             # Remove pending invitation if it exists
-            await _do_delete_invitation_if_it_exists(conn, organization_id, author.user_id)
+            await delete_shamir_recovery_invitation_if_it_exists(
+                conn, organization_id, author.user_id
+            )
 
     async def recovery_reveal(
         self,

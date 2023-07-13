@@ -1176,7 +1176,9 @@ class BaseInviteComponent:
         raise NotImplementedError()
 
     async def claimer_joined(
-        self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
+        self,
+        organization_id: OrganizationID,
+        invitation: Invitation,
     ) -> None:
         """
         Raises: Nothing
@@ -1184,7 +1186,9 @@ class BaseInviteComponent:
         raise NotImplementedError()
 
     async def claimer_left(
-        self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
+        self,
+        organization_id: OrganizationID,
+        invitation: Invitation,
     ) -> None:
         """
         Raises: Nothing

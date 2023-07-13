@@ -139,6 +139,7 @@ SELECT
 FROM invitation
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
+    AND type != '{ InvitationType.SHAMIR_RECOVERY.str }'
     AND greeter = { q_user_internal_id(organization_id="$organization_id", user_id="$deleter")}
     AND token = $token
 FOR UPDATE
@@ -179,6 +180,22 @@ FOR UPDATE
 """
 )
 
+_q_new_setup_delete_shamir_recovery_invitation_info = Q(
+    f"""
+SELECT
+    invitation._id,
+    invitation.token
+FROM invitation
+JOIN shamir_recovery_setup
+    ON invitation.shamir_recovery = shamir_recovery_setup._id
+WHERE
+    invitation.organization = { q_organization_internal_id("$organization_id") }
+    AND type = '{ InvitationType.SHAMIR_RECOVERY.str }'
+    AND shamir_recovery_setup.user_ = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter")}
+    AND deleted_on IS NULL
+FOR UPDATE
+"""
+)
 
 _q_delete_invitation = Q(
     f"""
@@ -190,6 +207,7 @@ WHERE
     _id = $row_id
 """
 )
+
 
 _q_get_shamir_recovery_id_for_new_invitation = Q(
     f"""
@@ -248,6 +266,61 @@ WHERE
 )
 
 
+async def _shamir_info(
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    token: InvitationToken,
+) -> tuple[int, tuple[ShamirRecoveryRecipient, ...]]:
+    internal_id, threshold = await conn.fetchrow(
+        *_q_get_shamir_recovery_info(
+            organization_id=organization_id.str,
+            token=token,
+        )
+    )
+    recipients = []
+    for email, label, recipient_id, shares in await conn.fetch(
+        *_q_get_shamir_recovery_recipients(
+            organization_id=organization_id.str, shamir_recovery=internal_id
+        )
+    ):
+        recipients.append(
+            ShamirRecoveryRecipient(
+                user_id=UserID(recipient_id),
+                human_handle=HumanHandle(email, label),
+                shares=shares,
+            )
+        )
+
+    return (threshold, tuple(recipients))
+
+
+async def delete_shamir_recovery_invitation_if_it_exists(
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    user_id: UserID,
+) -> None:
+    on = DateTime.now()
+    reason = InvitationDeletedReason.CANCELLED
+    rows = await conn.fetch(
+        *_q_new_setup_delete_shamir_recovery_invitation_info(
+            organization_id=organization_id.str, greeter=user_id.str
+        )
+    )
+    # In practice, there should be at most one element in rows
+    for row_id, raw_token in rows:
+        token = InvitationToken.from_hex(raw_token)
+        _, recipients = await _shamir_info(conn, organization_id, token)
+        await conn.execute(*_q_delete_invitation(row_id=row_id, on=on, reason=reason.str))
+        await send_signal(
+            conn,
+            BackendEvent.INVITE_STATUS_CHANGED,
+            organization_id=organization_id,
+            greeters=[recipient.user_id for recipient in recipients],
+            token=token,
+            status=InvitationStatus.DELETED,
+        )
+
+
 async def _do_delete_invitation(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
@@ -262,7 +335,9 @@ async def _do_delete_invitation(
             organization_id=organization_id.str, deleter=deleter.str, token=token
         )
     )
+
     # Look for shamir recovery invitation otherwise
+    is_user_or_device_invitation = bool(row)
     if not row:
         row = await conn.fetchrow(
             *_q_recipient_delete_shamir_recovery_invitation_info(
@@ -282,12 +357,18 @@ async def _do_delete_invitation(
     if deleted_on:
         raise InvitationAlreadyDeletedError(token)
 
+    if is_user_or_device_invitation:
+        greeters = [deleter]
+    else:
+        _, recipients = await _shamir_info(conn, organization_id, token)
+        greeters = [recipient.user_id for recipient in recipients]
+
     await conn.execute(*_q_delete_invitation(row_id=row_id, on=on, reason=reason.str))
     await send_signal(
         conn,
         BackendEvent.INVITE_STATUS_CHANGED,
         organization_id=organization_id,
-        greeter=deleter,
+        greeters=greeters,
         token=token,
         status=InvitationStatus.DELETED,
     )
@@ -792,7 +873,7 @@ async def _do_new_user_or_device_invitation(
         conn,
         BackendEvent.INVITE_STATUS_CHANGED,
         organization_id=organization_id,
-        greeter=greeter_user_id,
+        greeters=[greeter_user_id],
         token=token,
         status=InvitationStatus.IDLE,
     )
@@ -824,7 +905,7 @@ async def _do_new_shamir_recovery_invitation(
     internal_id = row["shamir_recovery"]
     if internal_id is None:
         raise InvitationShamirRecoveryNotSetup()
-    recipients = [
+    recipient_user_ids = [
         UserID(recipient)
         for recipient, in await conn.fetch(
             *_q_list_recipients_for_new_invitation(
@@ -833,7 +914,7 @@ async def _do_new_shamir_recovery_invitation(
             )
         )
     ]
-    if greeter_user_id not in recipients:
+    if greeter_user_id not in recipient_user_ids:
         raise InvitationShamirRecoveryGreeterNotInRecipients()
     token = InvitationToken.new()
     invitation_internal_id = await conn.fetchval(
@@ -847,12 +928,12 @@ async def _do_new_shamir_recovery_invitation(
             created_on=created_on,
         )
     )
-    for recipient in recipients:
+    for recipient_user_id in recipient_user_ids:
         await conn.execute(
             *_q_insert_shamir_conduit(
                 invitation=invitation_internal_id,
                 organization_id=organization_id.str,
-                greeter_user_id=recipient.str,
+                greeter_user_id=recipient_user_id.str,
             )
         )
 
@@ -860,7 +941,7 @@ async def _do_new_shamir_recovery_invitation(
         conn,
         BackendEvent.INVITE_STATUS_CHANGED,
         organization_id=organization_id,
-        greeter=greeter_user_id,
+        greeters=recipient_user_ids,
         token=token,
         status=InvitationStatus.IDLE,
     )
@@ -1157,29 +1238,36 @@ class PGInviteComponent(BaseInviteComponent):
         async with self.dbh.pool.acquire() as conn:
             return await _conduit_listen(conn, ctx)
 
-    async def claimer_joined(
-        self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
-    ) -> None:
+    async def claimer_joined(self, organization_id: OrganizationID, invitation: Invitation) -> None:
         async with self.dbh.pool.acquire() as conn:
+            if isinstance(invitation, ShamirRecoveryInvitation):
+                _, recipients = await _shamir_info(conn, organization_id, invitation.token)
+                greeters = [recipient.user_id for recipient in recipients]
+            else:
+                greeters = [invitation.greeter_user_id]
+            print("sending READY", greeters)
             await send_signal(
                 conn,
                 BackendEvent.INVITE_STATUS_CHANGED,
                 organization_id=organization_id,
-                greeter=greeter,
-                token=token,
+                greeters=greeters,
+                token=invitation.token,
                 status=InvitationStatus.READY,
             )
 
-    async def claimer_left(
-        self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
-    ) -> None:
+    async def claimer_left(self, organization_id: OrganizationID, invitation: Invitation) -> None:
         async with self.dbh.pool.acquire() as conn:
+            if isinstance(invitation, ShamirRecoveryInvitation):
+                _, recipients = await _shamir_info(conn, organization_id, invitation.token)
+                greeters = [recipient.user_id for recipient in recipients]
+            else:
+                greeters = [invitation.greeter_user_id]
             await send_signal(
                 conn,
                 BackendEvent.INVITE_STATUS_CHANGED,
                 organization_id=organization_id,
-                greeter=greeter,
-                token=token,
+                greeters=greeters,
+                token=invitation.token,
                 status=InvitationStatus.IDLE,
             )
 
@@ -1187,24 +1275,4 @@ class PGInviteComponent(BaseInviteComponent):
         self, organization_id: OrganizationID, token: InvitationToken
     ) -> tuple[int, tuple[ShamirRecoveryRecipient, ...]]:
         async with self.dbh.pool.acquire() as conn:
-            internal_id, threshold = await conn.fetchrow(
-                *_q_get_shamir_recovery_info(
-                    organization_id=organization_id.str,
-                    token=token,
-                )
-            )
-            recipients = []
-            for email, label, recipient_id, shares in await conn.fetch(
-                *_q_get_shamir_recovery_recipients(
-                    organization_id=organization_id.str, shamir_recovery=internal_id
-                )
-            ):
-                recipients.append(
-                    ShamirRecoveryRecipient(
-                        user_id=UserID(recipient_id),
-                        human_handle=HumanHandle(email, label),
-                        shares=shares,
-                    )
-                )
-
-        return (threshold, tuple(recipients))
+            return await _shamir_info(conn, organization_id, token)

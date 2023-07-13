@@ -460,24 +460,10 @@ class MemoryInviteComponent(BaseInviteComponent):
                 status=invitation_status,
             )
 
-    async def claimer_joined(
-        self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
-    ) -> None:
-        try:
-            invitation = self._get_invitation(organization_id, token)
-        # Ignore if the invitation is no longer available
-        except InvitationError:
-            return
+    async def claimer_joined(self, organization_id: OrganizationID, invitation: Invitation) -> None:
         await self._send_invite_status_changed(organization_id, invitation, InvitationStatus.READY)
 
-    async def claimer_left(
-        self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
-    ) -> None:
-        try:
-            invitation = self._get_invitation(organization_id, token)
-        # Ignore if the invitation is no longer available
-        except InvitationError:
-            return
+    async def claimer_left(self, organization_id: OrganizationID, invitation: Invitation) -> None:
         await self._send_invite_status_changed(organization_id, invitation, InvitationStatus.IDLE)
 
     def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:
