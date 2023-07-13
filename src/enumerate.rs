@@ -378,6 +378,11 @@ crate::binding_utils::impl_enum_field!(
         "PKI_ENROLLMENTS_UPDATED",
         pki_enrollments_updated,
         libparsec::core::CoreEvent::PkiEnrollmentsUpdated
+    ],
+    [
+        "INVITE_STATUS_CHANGED",
+        invite_status_changed,
+        libparsec::core::CoreEvent::InviteStatusChanged
     ]
 );
 

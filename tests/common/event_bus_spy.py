@@ -122,6 +122,10 @@ class SpiedEvent:
         return ret
 
 
+class EventNotFound(trio.TooSlowError):
+    pass
+
+
 @attr.s(repr=False, eq=False)
 class EventBusSpy:
     ANY = ANY  # Easier to use than doing an import
@@ -147,8 +151,11 @@ class EventBusSpy:
         self.events.clear()
 
     async def wait_with_timeout(self, event, kwargs=ANY, dt=ANY, update_event_func=None):
-        async with real_clock_timeout():
-            await self.wait(event, kwargs, dt, update_event_func)
+        try:
+            async with real_clock_timeout():
+                await self.wait(event, kwargs, dt, update_event_func)
+        except trio.TooSlowError:
+            raise EventNotFound(event, self.events)
 
     async def wait(self, event, kwargs=ANY, dt=ANY, update_event_func=None):
         expected = SpiedEvent(event, kwargs, dt)

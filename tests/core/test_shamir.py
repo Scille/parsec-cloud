@@ -1,11 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+import contextlib
+
 import pytest
 import trio
 
 from parsec import FEATURE_FLAGS
-from parsec._parsec import BackendInvitationAddr, DeviceLabel, InvitationDeletedReason
+from parsec._parsec import (
+    BackendInvitationAddr,
+    CoreEvent,
+    DeviceLabel,
+    InvitationDeletedReason,
+    InvitationStatus,
+    InvitationToken,
+)
 from parsec.core.backend_connection import backend_invited_cmds_factory
 from parsec.core.invite import ShamirRecoveryClaimPreludeCtx, claimer_retrieve_info
 from parsec.core.logged_core import BackendConnectionError, LoggedCore
@@ -18,6 +27,31 @@ from parsec.core.shamir import (
     remove_shamir_recovery_device,
 )
 from tests.common import real_clock_timeout
+
+
+@contextlib.asynccontextmanager
+async def assert_invite_status_changed_event(
+    core1: LoggedCore,
+    core2: LoggedCore,
+    status: InvitationStatus,
+    token: InvitationToken | None = None,
+):
+    def feed_token(fed: InvitationToken) -> None:
+        nonlocal token
+        assert token is None
+        token = fed
+
+    with core1.event_bus.listen() as spy1, core2.event_bus.listen() as spy2:
+        yield feed_token
+        assert token is not None
+        await spy1.wait_with_timeout(
+            CoreEvent.INVITE_STATUS_CHANGED,
+            {"status": status, "token": token},
+        )
+        await spy2.wait_with_timeout(
+            CoreEvent.INVITE_STATUS_CHANGED,
+            {"status": status, "token": token},
+        )
 
 
 @pytest.mark.trio
@@ -137,10 +171,14 @@ async def test_shamir_recovery_invitation(
 
     # Bob creates an invitation for Alice
     # Bob doesn't have to be an administrator
-    address_from_bob, email_sent = await bob_core.new_shamir_recovery_invitation(
-        alice.user_id, send_email=True
-    )
-    assert email_sent == email_sent.SUCCESS
+    async with assert_invite_status_changed_event(
+        bob_core, adam_core, InvitationStatus.IDLE
+    ) as feed_token:
+        address_from_bob, email_sent = await bob_core.new_shamir_recovery_invitation(
+            alice.user_id, send_email=True
+        )
+        assert email_sent == email_sent.SUCCESS
+        feed_token(address_from_bob.token)
 
     # Both Bob and Adam can find the invitation in their list
     (invite_item_from_bob,) = await bob_core.list_invitations()
@@ -165,30 +203,37 @@ async def test_shamir_recovery_invitation(
     assert invite_item_from_bob.token == address_from_bob.token
 
     # Different deletion scenario
-    token = invite_item_from_bob.token
-    if deletion == "by_alice":
-        await alice_core.delete_invitation(token=token)
-    elif deletion == "by_bob":
-        await bob_core.delete_invitation(token=token)
-    elif deletion == "by_adam":
-        await adam_core.delete_invitation(token=token)
-    elif deletion == "by_new_setup":
-        await create_shamir_recovery_device(alice_core, certificates, threshold=2)
-    else:
-        assert False
+    async with assert_invite_status_changed_event(
+        bob_core, adam_core, InvitationStatus.DELETED, address_from_bob.token
+    ):
+        token = invite_item_from_bob.token
+        if deletion == "by_alice":
+            await alice_core.delete_invitation(token=token)
+        elif deletion == "by_bob":
+            await bob_core.delete_invitation(token=token)
+        elif deletion == "by_adam":
+            await adam_core.delete_invitation(token=token)
+        elif deletion == "by_new_setup":
+            await create_shamir_recovery_device(alice_core, certificates, threshold=2)
+        else:
+            assert False
 
     # The list is empty
     assert await bob_core.list_invitations() == []
     assert await adam_core.list_invitations() == []
 
     # But an invitation with a new token can be recreated
-    address_from_adam, email_sent = await bob_core.new_shamir_recovery_invitation(
-        alice.user_id, send_email=True
-    )
-    old_token = address_from_bob.token
-    new_token = address_from_adam.token
-    assert email_sent == email_sent.SUCCESS
-    assert new_token != old_token
+    async with assert_invite_status_changed_event(
+        bob_core, adam_core, InvitationStatus.IDLE
+    ) as feed_token:
+        address_from_adam, email_sent = await bob_core.new_shamir_recovery_invitation(
+            alice.user_id, send_email=True
+        )
+        old_token = address_from_bob.token
+        new_token = address_from_adam.token
+        assert email_sent == email_sent.SUCCESS
+        assert new_token != old_token
+        feed_token(new_token)
 
     # The list is updated
     (invite_item_from_bob,) = await bob_core.list_invitations()
@@ -271,7 +316,10 @@ async def test_shamir_recovery_claim(
                 alice_initial_ctx = prelude_ctx.get_initial_ctx(bob_recipient)
 
                 async def _run_first_alice_claimer():
-                    alice_ctx = await alice_initial_ctx.do_wait_peer()
+                    async with assert_invite_status_changed_event(
+                        bob_core, adam_core, InvitationStatus.READY, address.token
+                    ):
+                        alice_ctx = await alice_initial_ctx.do_wait_peer()
                     alice_ctx.generate_greeter_sas_choices(size=3)
                     # Skip SAS code checks
                     alice_ctx = await alice_ctx.do_signify_trust()

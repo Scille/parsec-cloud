@@ -45,6 +45,9 @@ pub enum CoreEvent {
     // Userfs
     UserfsSyncRejectedBySequesterService,
     UserfsUpdated,
+
+    // Invitation
+    InviteStatusChanged,
 }
 
 impl CoreEvent {
@@ -86,6 +89,7 @@ impl CoreEvent {
                 "userfs.sync_refused_by_sequester_service"
             }
             CoreEvent::UserfsUpdated => "userfs.updated",
+            CoreEvent::InviteStatusChanged => "invite.status_changed",
         }
     }
 }

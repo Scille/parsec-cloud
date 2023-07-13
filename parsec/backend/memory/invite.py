@@ -295,13 +295,14 @@ class MemoryInviteComponent(BaseInviteComponent):
             created_on=created_on,
         )
         org.invitations[invitation.token] = invitation
-        await self._send_event(
-            BackendEvent.INVITE_STATUS_CHANGED,
-            organization_id=organization_id,
-            greeter=invitation.greeter_user_id,
-            token=invitation.token,
-            status=invitation.status,
-        )
+        for recipient in recipients:
+            await self._send_event(
+                BackendEvent.INVITE_STATUS_CHANGED,
+                organization_id=organization_id,
+                greeter=recipient.user_id,
+                token=invitation.token,
+                status=invitation.status,
+            )
         return invitation
 
     async def _new(
@@ -368,20 +369,15 @@ class MemoryInviteComponent(BaseInviteComponent):
             # The claimer is authorized to delete the invitation
             if deleter not in recipients and deleter != invitation.claimer_user_id:
                 raise InvitationNotFoundError(token)
-        else:
-            if invitation.greeter_user_id != deleter:
-                raise InvitationNotFoundError(token)
+        elif invitation.greeter_user_id != deleter:
+            raise InvitationNotFoundError(token)
         org = self._organizations[organization_id]
         org.deleted_invitations[token] = (on, reason)
-        await self._send_event(
-            BackendEvent.INVITE_STATUS_CHANGED,
-            organization_id=organization_id,
-            greeter=deleter,
-            token=token,
-            status=InvitationStatus.DELETED,
+        await self._send_invite_status_changed(
+            organization_id, invitation, InvitationStatus.DELETED
         )
 
-    async def delete_shamir_invitation(
+    async def delete_shamir_invitation_if_it_exists(
         self,
         organization_id: OrganizationID,
         claimer: UserID,
@@ -399,20 +395,23 @@ class MemoryInviteComponent(BaseInviteComponent):
             return False
         # Check that it's not already deleted
         try:
-            self._get_invitation(organization_id, token)
+            invitation = self._get_invitation(organization_id, token)
         except InvitationAlreadyDeletedError:
             return False
+        assert isinstance(invitation, ShamirRecoveryInvitation)
+        _, recipients = self._shamir_info(organization_id, invitation.claimer_user_id)
         # Delete the invitation and send the event
         on = on or DateTime.now()
         reason = InvitationDeletedReason.CANCELLED
         org.deleted_invitations[token] = (on, reason)
-        await self._send_event(
-            BackendEvent.INVITE_STATUS_CHANGED,
-            organization_id=organization_id,
-            greeter=invitation.greeter_user_id,
-            token=token,
-            status=InvitationStatus.DELETED,
-        )
+        for recipient in recipients:
+            await self._send_event(
+                BackendEvent.INVITE_STATUS_CHANGED,
+                organization_id=organization_id,
+                greeter=recipient.user_id,
+                token=token,
+                status=InvitationStatus.DELETED,
+            )
         # Indicate the an invitation has actually been deleted
         return True
 
@@ -439,27 +438,50 @@ class MemoryInviteComponent(BaseInviteComponent):
         invitation = self._get_invitation(organization_id, token)
         return invitation
 
+    async def _send_invite_status_changed(
+        self,
+        organization_id: OrganizationID,
+        invitation: Invitation,
+        invitation_status: InvitationStatus,
+    ) -> None:
+        if isinstance(invitation, ShamirRecoveryInvitation):
+            _, recipients = self._shamir_info(organization_id, invitation.claimer_user_id)
+            for recipient in recipients:
+                await self._send_event(
+                    BackendEvent.INVITE_STATUS_CHANGED,
+                    organization_id=organization_id,
+                    greeter=recipient.user_id,
+                    token=invitation.token,
+                    status=invitation_status,
+                )
+        else:
+            await self._send_event(
+                BackendEvent.INVITE_STATUS_CHANGED,
+                organization_id=organization_id,
+                greeter=invitation.greeter_user_id,
+                token=invitation.token,
+                status=invitation_status,
+            )
+
     async def claimer_joined(
         self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
     ) -> None:
-        await self._send_event(
-            BackendEvent.INVITE_STATUS_CHANGED,
-            organization_id=organization_id,
-            greeter=greeter,
-            token=token,
-            status=InvitationStatus.READY,
-        )
+        try:
+            invitation = self._get_invitation(organization_id, token)
+        # Ignore if the invitation is no longer available
+        except InvitationError:
+            return
+        await self._send_invite_status_changed(organization_id, invitation, InvitationStatus.READY)
 
     async def claimer_left(
         self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
     ) -> None:
-        await self._send_event(
-            BackendEvent.INVITE_STATUS_CHANGED,
-            organization_id=organization_id,
-            greeter=greeter,
-            token=token,
-            status=InvitationStatus.IDLE,
-        )
+        try:
+            invitation = self._get_invitation(organization_id, token)
+        # Ignore if the invitation is no longer available
+        except InvitationError:
+            return
+        await self._send_invite_status_changed(organization_id, invitation, InvitationStatus.IDLE)
 
     def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:
         self._organizations[new_id] = deepcopy(self._organizations[id])

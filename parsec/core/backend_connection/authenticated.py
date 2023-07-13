@@ -25,6 +25,7 @@ from parsec._parsec import (
     CoreEvent,
     EventsListenRep,
     EventsListenRepOk,
+    EventsListenRepOkInviteStatusChanged,
     EventsListenRepOkMessageReceived,
     EventsListenRepOkPinged,
     EventsListenRepOkPkiEnrollmentUpdated,
@@ -211,6 +212,13 @@ def _handle_event(event_bus: EventBus, rep: EventsListenRep) -> None:
 
     elif isinstance(rep, EventsListenRepOkPkiEnrollmentUpdated):
         event_bus.send(CoreEvent.PKI_ENROLLMENTS_UPDATED)
+
+    elif isinstance(rep, EventsListenRepOkInviteStatusChanged):
+        event_bus.send(
+            CoreEvent.INVITE_STATUS_CHANGED,
+            token=rep.token,
+            status=rep.invitation_status,
+        )
 
 
 def _transport_pool_factory(

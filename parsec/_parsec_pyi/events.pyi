@@ -40,6 +40,8 @@ class CoreEvent:
     USERFS_UPDATED: CoreEvent
     # Pki enrollment
     PKI_ENROLLMENTS_UPDATED: CoreEvent
+    # Invite
+    INVITE_STATUS_CHANGED: CoreEvent
 
     VALUES: tuple[CoreEvent, ...]
 

@@ -144,6 +144,7 @@ class EventsComponent:
             token: InvitationToken,
             status: InvitationStatus,
         ) -> None:
+            assert isinstance(greeter, UserID)
             if organization_id != client_ctx.organization_id or greeter != client_ctx.user_id:
                 return
 
