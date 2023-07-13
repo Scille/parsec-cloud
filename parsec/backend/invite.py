@@ -401,7 +401,7 @@ class BaseInviteComponent:
         def _on_status_changed(
             event: BackendEvent,
             organization_id: OrganizationID,
-            greeter: UserID,
+            greeters: list[UserID],
             token: InvitationToken,
             status: InvitationStatus,
         ) -> None:

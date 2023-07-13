@@ -295,14 +295,13 @@ class MemoryInviteComponent(BaseInviteComponent):
             created_on=created_on,
         )
         org.invitations[invitation.token] = invitation
-        for recipient in recipients:
-            await self._send_event(
-                BackendEvent.INVITE_STATUS_CHANGED,
-                organization_id=organization_id,
-                greeter=recipient.user_id,
-                token=invitation.token,
-                status=invitation.status,
-            )
+        await self._send_event(
+            BackendEvent.INVITE_STATUS_CHANGED,
+            organization_id=organization_id,
+            greeters=[recipient.user_id for recipient in recipients],
+            token=invitation.token,
+            status=invitation.status,
+        )
         return invitation
 
     async def _new(
@@ -348,7 +347,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         await self._send_event(
             BackendEvent.INVITE_STATUS_CHANGED,
             organization_id=organization_id,
-            greeter=invitation.greeter_user_id,
+            greeters=[invitation.greeter_user_id],
             token=invitation.token,
             status=invitation.status,
         )
@@ -404,14 +403,13 @@ class MemoryInviteComponent(BaseInviteComponent):
         on = on or DateTime.now()
         reason = InvitationDeletedReason.CANCELLED
         org.deleted_invitations[token] = (on, reason)
-        for recipient in recipients:
-            await self._send_event(
-                BackendEvent.INVITE_STATUS_CHANGED,
-                organization_id=organization_id,
-                greeter=recipient.user_id,
-                token=token,
-                status=InvitationStatus.DELETED,
-            )
+        await self._send_event(
+            BackendEvent.INVITE_STATUS_CHANGED,
+            organization_id=organization_id,
+            greeters=[recipient.user_id for recipient in recipients],
+            token=token,
+            status=InvitationStatus.DELETED,
+        )
         # Indicate the an invitation has actually been deleted
         return True
 
@@ -446,19 +444,18 @@ class MemoryInviteComponent(BaseInviteComponent):
     ) -> None:
         if isinstance(invitation, ShamirRecoveryInvitation):
             _, recipients = self._shamir_info(organization_id, invitation.claimer_user_id)
-            for recipient in recipients:
-                await self._send_event(
-                    BackendEvent.INVITE_STATUS_CHANGED,
-                    organization_id=organization_id,
-                    greeter=recipient.user_id,
-                    token=invitation.token,
-                    status=invitation_status,
-                )
+            await self._send_event(
+                BackendEvent.INVITE_STATUS_CHANGED,
+                organization_id=organization_id,
+                greeters=[recipient.user_id for recipient in recipients],
+                token=invitation.token,
+                status=invitation_status,
+            )
         else:
             await self._send_event(
                 BackendEvent.INVITE_STATUS_CHANGED,
                 organization_id=organization_id,
-                greeter=invitation.greeter_user_id,
+                greeters=[invitation.greeter_user_id],
                 token=invitation.token,
                 status=invitation_status,
             )

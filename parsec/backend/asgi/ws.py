@@ -123,7 +123,7 @@ async def handle_ws() -> None:
                         client_ctx: InvitedClientContext,
                         event: BackendEvent,
                         organization_id: OrganizationID,
-                        greeter: UserID,
+                        greeters: list[UserID],
                         token: InvitationToken,
                         status: InvitationStatus,
                     ) -> None:

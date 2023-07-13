@@ -140,12 +140,11 @@ class EventsComponent:
         def _on_invite_status_changed(
             backend_event: BackendEvent,
             organization_id: OrganizationID,
-            greeter: UserID,
+            greeters: list[UserID],
             token: InvitationToken,
             status: InvitationStatus,
         ) -> None:
-            assert isinstance(greeter, UserID)
-            if organization_id != client_ctx.organization_id or greeter != client_ctx.user_id:
+            if organization_id != client_ctx.organization_id or client_ctx.user_id not in greeters:
                 return
 
             try:
