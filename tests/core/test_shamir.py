@@ -30,28 +30,29 @@ from tests.common import real_clock_timeout
 
 
 @contextlib.asynccontextmanager
-async def assert_invite_status_changed_event(
+async def assert_invite_status_changed_event_context(
     core1: LoggedCore,
     core2: LoggedCore,
-    status: InvitationStatus,
+    status: InvitationStatus | None = None,
     token: InvitationToken | None = None,
 ):
-    def feed_token(fed: InvitationToken) -> None:
-        nonlocal token
-        assert token is None
-        token = fed
-
-    with core1.event_bus.listen() as spy1, core2.event_bus.listen() as spy2:
-        yield feed_token
-        assert token is not None
+    async def _assert_events(status: InvitationStatus, token: InvitationToken) -> None:
         await spy1.wait_with_timeout(
             CoreEvent.INVITE_STATUS_CHANGED,
             {"status": status, "token": token},
         )
+        spy1.clear()
         await spy2.wait_with_timeout(
             CoreEvent.INVITE_STATUS_CHANGED,
             {"status": status, "token": token},
         )
+        spy2.clear()
+
+    with core1.event_bus.listen() as spy1, core2.event_bus.listen() as spy2:
+        yield _assert_events
+        if token is not None:
+            assert status is not None
+            await _assert_events(status, token)
 
 
 @pytest.mark.trio
@@ -171,14 +172,12 @@ async def test_shamir_recovery_invitation(
 
     # Bob creates an invitation for Alice
     # Bob doesn't have to be an administrator
-    async with assert_invite_status_changed_event(
-        bob_core, adam_core, InvitationStatus.IDLE
-    ) as feed_token:
+    async with assert_invite_status_changed_event_context(bob_core, adam_core) as assert_events:
         address_from_bob, email_sent = await bob_core.new_shamir_recovery_invitation(
             alice.user_id, send_email=True
         )
         assert email_sent == email_sent.SUCCESS
-        feed_token(address_from_bob.token)
+        await assert_events(InvitationStatus.IDLE, address_from_bob.token)
 
     # Both Bob and Adam can find the invitation in their list
     (invite_item_from_bob,) = await bob_core.list_invitations()
@@ -203,7 +202,7 @@ async def test_shamir_recovery_invitation(
     assert invite_item_from_bob.token == address_from_bob.token
 
     # Different deletion scenario
-    async with assert_invite_status_changed_event(
+    async with assert_invite_status_changed_event_context(
         bob_core, adam_core, InvitationStatus.DELETED, address_from_bob.token
     ):
         token = invite_item_from_bob.token
@@ -223,9 +222,7 @@ async def test_shamir_recovery_invitation(
     assert await adam_core.list_invitations() == []
 
     # But an invitation with a new token can be recreated
-    async with assert_invite_status_changed_event(
-        bob_core, adam_core, InvitationStatus.IDLE
-    ) as feed_token:
+    async with assert_invite_status_changed_event_context(bob_core, adam_core) as assert_events:
         address_from_adam, email_sent = await bob_core.new_shamir_recovery_invitation(
             alice.user_id, send_email=True
         )
@@ -233,7 +230,7 @@ async def test_shamir_recovery_invitation(
         new_token = address_from_adam.token
         assert email_sent == email_sent.SUCCESS
         assert new_token != old_token
-        feed_token(new_token)
+        await assert_events(InvitationStatus.IDLE, new_token)
 
     # The list is updated
     (invite_item_from_bob,) = await bob_core.list_invitations()
@@ -267,13 +264,11 @@ async def test_shamir_recovery_claim(
     await create_shamir_recovery_device(alice_core, certificates, threshold=4, weights=[2, 3])
 
     # Bob creates an invitation for Alice
-    async with assert_invite_status_changed_event(
-        bob_core, adam_core, InvitationStatus.IDLE
-    ) as feed_token:
+    async with assert_invite_status_changed_event_context(bob_core, adam_core) as assert_events:
         address_from_bob, email_sent = await bob_core.new_shamir_recovery_invitation(
             alice.user_id, send_email=True
         )
-        feed_token(address_from_bob.token)
+        await assert_events(InvitationStatus.IDLE, address_from_bob.token)
     assert email_sent == email_sent.SUCCESS
     invitation_type = address_from_bob.invitation_type
     assert invitation_type == invitation_type.SHAMIR_RECOVERY
@@ -302,27 +297,57 @@ async def test_shamir_recovery_claim(
 
             # Alice receives the invitation address
             address = BackendInvitationAddr.from_url(send_this_to_alice)
-            async with backend_invited_cmds_factory(addr=address) as cmds:
-                async with assert_invite_status_changed_event(
-                    bob_core, adam_core, InvitationStatus.READY, address.token
-                ):
+            async with assert_invite_status_changed_event_context(
+                bob_core, adam_core, InvitationStatus.IDLE, address.token
+            ) as assert_events:
+                async with backend_invited_cmds_factory(addr=address) as cmds:
                     prelude_ctx = await claimer_retrieve_info(cmds)
-                assert isinstance(prelude_ctx, ShamirRecoveryClaimPreludeCtx)
-                recipient1, recipient2 = prelude_ctx.recipients
-                if recipient1.user_id == adam.user_id:
-                    adam_recipient, bob_recipient = recipient1, recipient2
-                else:
-                    adam_recipient, bob_recipient = recipient2, recipient1
-                assert adam_recipient.user_id == adam.user_id
-                assert adam_recipient.shares == 2
-                assert bob_recipient.user_id == bob.user_id
-                assert bob_recipient.shares == 3
+                    await assert_events(InvitationStatus.READY, address.token)
+                    assert isinstance(prelude_ctx, ShamirRecoveryClaimPreludeCtx)
+                    recipient1, recipient2 = prelude_ctx.recipients
+                    if recipient1.user_id == adam.user_id:
+                        adam_recipient, bob_recipient = recipient1, recipient2
+                    else:
+                        adam_recipient, bob_recipient = recipient2, recipient1
+                    assert adam_recipient.user_id == adam.user_id
+                    assert adam_recipient.shares == 2
+                    assert bob_recipient.user_id == bob.user_id
+                    assert bob_recipient.shares == 3
 
-                # Alice decides to start with Bob
-                alice_done_with_bob = trio.Event()
-                alice_initial_ctx = prelude_ctx.get_initial_ctx(bob_recipient)
+                    # Alice decides to start with Bob
+                    alice_done_with_bob = trio.Event()
+                    alice_initial_ctx = prelude_ctx.get_initial_ctx(bob_recipient)
 
-                async def _run_first_alice_claimer():
+                    async def _run_first_alice_claimer():
+                        alice_ctx = await alice_initial_ctx.do_wait_peer()
+                        alice_ctx.generate_greeter_sas_choices(size=3)
+                        # Skip SAS code checks
+                        alice_ctx = await alice_ctx.do_signify_trust()
+                        alice_ctx = await alice_ctx.do_wait_peer_trust()
+                        new_shares = await alice_ctx.do_recover_share()
+                        assert isinstance(prelude_ctx, ShamirRecoveryClaimPreludeCtx)
+                        assert not prelude_ctx.add_shares(bob_recipient, new_shares)
+                        assert len(prelude_ctx.shares) == 3
+                        alice_done_with_bob.set()
+
+                    nursery.start_soon(_run_first_alice_claimer)
+
+                    # Bob joins in
+                    (invite_item_from_bob,) = await adam_core.list_invitations()
+                    bob_share_data, bob_ctx = await bob_core.start_greeting_shamir_recovery(
+                        invite_item_from_bob.token,
+                        invite_item_from_bob.claimer_user_id,
+                    )
+                    bob_ctx = await bob_ctx.do_wait_peer_trust()
+                    bob_ctx.generate_claimer_sas_choices(size=3)
+                    # Skip SAS code checks
+                    bob_ctx = await bob_ctx.do_signify_trust()
+                    await bob_ctx.send_share_data(bob_share_data)
+                    await alice_done_with_bob.wait()
+
+                    # Alice then continues with Adam
+                    assert len(prelude_ctx.shares) == 3
+                    alice_initial_ctx = prelude_ctx.get_initial_ctx(adam_recipient)
                     alice_ctx = await alice_initial_ctx.do_wait_peer()
                     alice_ctx.generate_greeter_sas_choices(size=3)
                     # Skip SAS code checks
@@ -330,47 +355,12 @@ async def test_shamir_recovery_claim(
                     alice_ctx = await alice_ctx.do_wait_peer_trust()
                     new_shares = await alice_ctx.do_recover_share()
                     assert isinstance(prelude_ctx, ShamirRecoveryClaimPreludeCtx)
-                    assert not prelude_ctx.add_shares(bob_recipient, new_shares)
-                    assert len(prelude_ctx.shares) == 3
-                    alice_done_with_bob.set()
+                    assert prelude_ctx.add_shares(adam_recipient, new_shares)
+                    assert len(prelude_ctx.shares) == 5
+                    await adam_done_with_alice.wait()
 
-                nursery.start_soon(_run_first_alice_claimer)
-
-                # Bob joins in
-                (invite_item_from_bob,) = await adam_core.list_invitations()
-                bob_share_data, bob_ctx = await bob_core.start_greeting_shamir_recovery(
-                    invite_item_from_bob.token,
-                    invite_item_from_bob.claimer_user_id,
-                )
-                bob_ctx = await bob_ctx.do_wait_peer_trust()
-                bob_ctx.generate_claimer_sas_choices(size=3)
-                # Skip SAS code checks
-                bob_ctx = await bob_ctx.do_signify_trust()
-                await bob_ctx.send_share_data(bob_share_data)
-                await alice_done_with_bob.wait()
-
-                # Alice then continues with Adam
-                assert len(prelude_ctx.shares) == 3
-                alice_initial_ctx = prelude_ctx.get_initial_ctx(adam_recipient)
-                alice_ctx = await alice_initial_ctx.do_wait_peer()
-                alice_ctx.generate_greeter_sas_choices(size=3)
-                # Skip SAS code checks
-                alice_ctx = await alice_ctx.do_signify_trust()
-                alice_ctx = await alice_ctx.do_wait_peer_trust()
-                new_shares = await alice_ctx.do_recover_share()
-                assert isinstance(prelude_ctx, ShamirRecoveryClaimPreludeCtx)
-                assert prelude_ctx.add_shares(adam_recipient, new_shares)
-                assert len(prelude_ctx.shares) == 5
-                await adam_done_with_alice.wait()
-
-                # Alice retrieves her recovery device
-                alice_recovery_device = await prelude_ctx.retreive_recovery_device()
-
-            # TODO: improve robustness
-            async with assert_invite_status_changed_event(
-                bob_core, adam_core, InvitationStatus.IDLE, address.token
-            ):
-                pass
+                    # Alice retrieves her recovery device
+                    alice_recovery_device = await prelude_ctx.retreive_recovery_device()
 
     # Alice creates a new device and deletes the invitation
     assert alice_recovery_device.device_id.user_id == alice.user_id
@@ -378,7 +368,7 @@ async def test_shamir_recovery_claim(
         alice_recovery_device, DeviceLabel("new label")
     )
 
-    async with assert_invite_status_changed_event(
+    async with assert_invite_status_changed_event_context(
         bob_core, adam_core, InvitationStatus.DELETED, address.token
     ):
         async with core_factory(alice_new_device) as new_alice_core:
