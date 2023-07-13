@@ -4,8 +4,11 @@
 - [Shared requirements](#shared-requirements)
 - [Hacking the Python server](#hacking-the-python-server)
   - [Run the Python tests](#run-the-python-tests)
-- [Hacking the Web client (front)](#hacking-the-web-client-front)
-  - [Start working on the web client](#start-working-on-the-web-client)
+- [Hacking the clients](#hacking-the-clients)
+  - [Base requirement](#base-requirement)
+  - [Hacking the web client](#hacking-the-web-client)
+  - [Hacking the electron client](#hacking-the-electron-client)
+- [Starting the testbed server](#starting-the-testbed-server)
 - [Hacking the Rust code](#hacking-the-rust-code)
 - [If you are working on Mac](#if-you-are-working-on-mac)
 
@@ -122,11 +125,14 @@ Once you have installed the [basic requirements](#shared-requirements), you can 
 
 The python code is located in the folder `server`, The following steps and instruction will consider that you're in that folder.
 
-1. Initialize a poetry env
+   <!-- markdownlint-disable-next-line no-inline-html -->
+1. Initialize a poetry env <a id="init-server-python-env" />
 
    ```shell
-   poetry install
+   python ./make.py python-dev-install
    ```
+
+   > The Python backend is built from the `server` directory.
 
 2. Start a shell with the initialized virtual env
 
@@ -164,9 +170,67 @@ Note you can mix&match the flags, e.g.
 poetry run pytest tests --runslow -n auto
 ```
 
-## Hacking the Web client (front)
+## Hacking the clients
 
 In addition to the [shared requirements](#shared-requirements), for working with the web clients you need to:
+
+### Base requirement
+
+1. Install [`Node 18.12.0`](https://nodejs.org/en/download/releases).
+
+   We recommend using [`nvm`](https://github.com/nvm-sh/nvm) to manage multiple node versions:
+
+   > [`nvm-windows`](https://github.com/coreybutler/nvm-windows) for `Windows`
+
+   ```shell
+   nvm install 18.12.0
+   ```
+
+2. Install `wasm-pack`
+
+   Currently we use `wasm-pack@0.11.0`.
+
+   Install it with:
+
+   ```shell
+   cargo install wasm-pack@0.11.0
+   ```
+
+   > We install it using cargo because it's the simpler way to specify which version of `wasm-pack` to use.
+
+### Hacking the web client
+
+1. Follow the [base requirement](#base-requirement).
+
+2. Setup the web binding:
+
+   ```shell
+   python ./make.py web-dev-install
+   ```
+
+3. Move to the `client` directory:
+
+   ```shell
+   cd client
+   ```
+
+4. Install client dependencies from the `client` directory:
+
+   ```shell
+   npm install
+   ```
+
+5. To start working on the web client, you need 2 things:
+
+   1. Start the testbed server on another shell, by following the instruction on [Starting the testbed server](#starting-the-testbed-server).
+
+   2. Start the development server for the web interface with:
+
+      ```shell
+      npm run web:open
+      ```
+
+### Hacking the electron client
 
 <!-- TODO: Currently the web client via electron doesn't provide mountpoint so fuse isn't required
 1. Install FUSE (Linux/MacOS) or WinFsp (Windows)
@@ -193,67 +257,31 @@ In addition to the [shared requirements](#shared-requirements), for working with
 
      - On Linux: you need to have installed `libfuse2` -->
 
-1. Install [`Node 18.12.0`](https://nodejs.org/en/download/releases).
+1. Follow the [Base requirement](#base-requirement).
 
-   We recommend using [`nvm`](https://github.com/nvm-sh/nvm) to manage multiple node versions:
+2. Apply the steps 2 to 4 of [Hacking the web client](#hacking-the-web-client).
 
-   > [`nvm-windows`](https://github.com/coreybutler/nvm-windows) for `Windows`
-
-   ```shell
-   nvm install 18.12.0
-   ```
-
-2. Install `wasm-pack`
-
-   Currently we use `wasm-pack@0.11.0`.
-
-   Install it with:
-
-   ```shell
-   cargo install wasm-pack@0.11.0
-   ```
-
-   > We install it using cargo because it's the simpler way to specify which version of `wasm-pack` to use.
-
-   <!-- markdownlint-disable-next-line no-inline-html -->
-3. Initialize a poetry env <a id="init-web-server-env" />
-
-   ```shell
-   python ./make.py python-dev-install
-   ```
-
-   > The Python backend is built from the `server` directory.
-
-4. Setup the web binding
-
-   ```shell
-   python ./make.py web-dev-install
-   ```
-
-5. Setup the electron binding
+3. Setup the electron binding
 
    ```shell
    python ./make.py electron-dev-install
    ```
 
-6. Move to the `client` directory
+4. To start working on the electron client, you need like the web client 2 things:
 
-   ```shell
-   cd client
-   ```
+   1. Start the testbed server, the instruction can be found [here](#starting-the-testbed-server).
+   2. Start electron in development mode with
 
-7. Install client dependencies from the `client` directory
+      ```shell
+      npm run electron:open
+      ```
 
-   ```shell
-   npm install
-   ```
-
-### Start working on the web client
+## Starting the testbed server
 
 Before start working on the web client you need to setup a mock server
 that will provide some mocked data.
 
-1. Make sure you have the latest change for the python testbed server, see [Initialize a poetry env](#init-web-server-env)
+1. Make sure you have the latest change for the python testbed server, see [Initialize a poetry env](#init-server-python-env)
 
 2. Start the testbed server that will provide the mocked data.
 
@@ -271,12 +299,6 @@ that will provide some mocked data.
    > You need to have the env variable `TESTBED_SERVER_URL` set to the value after `export TESTBED_SERVER_URL=` (depending on how you set it, you could remove the `'` around the value) on you primary terminal (the one that would run the dev server)
 
    You need to keep that terminal open with the script running otherwise, the mock server would stop working.
-
-3. On your main terminal after setting the env var `TESTBED_SERVER_URL`, you can now start the dev server
-
-   ```shell
-   npm run web:open
-   ```
 
 ## Hacking the Rust code
 
