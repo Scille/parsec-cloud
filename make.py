@@ -74,7 +74,7 @@ class Cwd(Op):
         self.cwd = cwd
 
     def display(self, extra_cmd_args: Iterable[str]) -> str:
-        return f"chdir {GREY}{self.cwd.relative_to(BASE_DIR).as_posix()}{NO_COLOR}"
+        return f"cd {GREY}{self.cwd.relative_to(BASE_DIR).as_posix()}{NO_COLOR}"
 
 
 class Rmdir(Op):
