@@ -8,7 +8,7 @@ use crate::{load_device_file, load_device_with_password_core};
 
 pub fn load_device_with_password_from_path(
     key_file: &Path,
-    password: &str,
+    password: Password,
 ) -> LocalDeviceResult<LocalDevice> {
     let device_file = load_device_file(key_file)?;
 
@@ -20,6 +20,6 @@ pub fn load_device_with_password_from_path(
     }
 }
 
-pub fn load_device_with_password(key: &str, password: &str) -> LocalDeviceResult<LocalDevice> {
+pub fn load_device_with_password(key: &str, password: Password) -> LocalDeviceResult<LocalDevice> {
     load_device_with_password_from_path(Path::new(key), password)
 }

@@ -20,3 +20,6 @@ macro_rules! impl_key_debug {
 }
 
 pub(crate) use impl_key_debug;
+
+pub type SecretKeyPassphrase = zeroize::Zeroizing<String>;
+pub type Password = zeroize::Zeroizing<String>;

@@ -12,7 +12,6 @@ use-sodiumoxide = [
     "dep:sodiumoxide",
     "dep:libsodium-sys",
     "dep:openssl",
-    "dep:zeroize",
 ]
 # In theory we should have this feature enabling optional dependencies,
 # but instead we consider use-rustcrypto as the default (see below)
@@ -41,6 +40,8 @@ serde_bytes = { workspace = true, features = ["std"] }
 hex = { workspace = true, features = ["std"] }
 thiserror = { workspace = true }
 base32 = { workspace = true }
+# `alloc` feature is required to properly erase struct containing vec/string
+zeroize = { workspace = true, features = ["alloc"] }
 
 #
 # SodiumOxide&friends stuff
@@ -49,7 +50,6 @@ base32 = { workspace = true }
 sodiumoxide = { workspace = true, optional = true, features = ["std", "serde"] }
 libsodium-sys = { workspace = true, optional = true }
 openssl = { workspace = true, optional = true, features = ["vendored"] }
-zeroize = { workspace = true, optional = true, features = ["alloc"]}
 
 #
 # RustCrypto stuff
