@@ -20,6 +20,7 @@
             @keyup.enter="onEnterPress()"
             :autofocus="true"
             id="password-input"
+            :clear-on-edit="false"
           />
           <ion-button
             @click="passwordVisible = !passwordVisible"
