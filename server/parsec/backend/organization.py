@@ -99,26 +99,6 @@ class BaseOrganizationComponent:
         self._config = config
 
     @api
-    async def apiv2_authenticated_organization_config(
-        self,
-        client_ctx: AuthenticatedClientContext,
-        req: authenticated_cmds.v2.organization_config.Req,
-    ) -> authenticated_cmds.v2.organization_config.Rep:
-        # `organization_config` command is similar between APIv2 and v4+ from the server
-        # point of view.
-        # (from client point of view, server may return `ok` response with some fields missing)
-        return await self.api_authenticated_organization_config(client_ctx, req)  # type: ignore
-
-    @api
-    async def apiv3_authenticated_organization_config(
-        self,
-        client_ctx: AuthenticatedClientContext,
-        req: authenticated_cmds.v3.organization_config.Req,
-    ) -> authenticated_cmds.v3.organization_config.Rep:
-        # `organization_config` command strictly similar between APIv3 and v4+
-        return await self.api_authenticated_organization_config(client_ctx, req)  # type: ignore
-
-    @api
     async def api_authenticated_organization_config(
         self,
         client_ctx: AuthenticatedClientContext,
@@ -175,18 +155,6 @@ class BaseOrganizationComponent:
             active_users=stats.active_users,
             users_per_profile_detail=list(stats.users_per_profile_detail),
         )
-
-    @api
-    async def apiv2_organization_bootstrap(
-        self,
-        client_ctx: AnonymousClientContext,
-        req: anonymous_cmds.v2.organization_bootstrap.Req,
-    ) -> anonymous_cmds.v2.organization_bootstrap.Rep:
-        # `organization_bootstrap` command is similar between APIv2 and v4+ from the server
-        # point of view.
-        # (from client point of view, server may return `bad_timestamp` response
-        # with some fields missing)
-        return await self.api_organization_bootstrap(client_ctx, req)  # type: ignore
 
     @api
     async def apiv3_organization_bootstrap(
