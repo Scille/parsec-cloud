@@ -6,7 +6,7 @@
 
 use hex_literal::hex;
 
-use libparsec_protocol::authenticated_cmds::v2 as authenticated_cmds;
+use libparsec_protocol::authenticated_cmds::v3 as authenticated_cmds;
 use libparsec_tests_fixtures::prelude::*;
 
 #[parsec_test]

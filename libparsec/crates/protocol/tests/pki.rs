@@ -7,7 +7,7 @@
 use hex_literal::hex;
 
 use libparsec_protocol::{
-    anonymous_cmds::v2 as anonymous_cmds, authenticated_cmds::v2 as authenticated_cmds,
+    anonymous_cmds::v3 as anonymous_cmds, authenticated_cmds::v3 as authenticated_cmds,
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;

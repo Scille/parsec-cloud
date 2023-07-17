@@ -7,7 +7,7 @@
 use hex_literal::hex;
 
 use libparsec_protocol::{
-    authenticated_cmds::v2 as authenticated_cmds, invited_cmds::v2 as invited_cmds,
+    authenticated_cmds::v3 as authenticated_cmds, invited_cmds::v3 as invited_cmds,
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -65,18 +65,24 @@ fn serde_invite_new_req(#[case] raw: &[u8], #[case] expected: authenticated_cmds
 }
 
 #[parsec_test]
+#[should_panic(expected = "missing field `email_sent`")]
 #[case::ok_without_email_sent(
     // Generated from Rust implementation (Parsec v2.12.1+dev)
     // Content:
     //   status: "ok"
     //   token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
     //
+    // Note that raw data does not contain "email_sent".
+    // This was valid behavior in api v2 but is no longer valid from v3 onwards.
+    // The corresponding expected values used here are therefore not important
+    // since loading raw data should fail.
+    //
     &hex!(
         "82a6737461747573a26f6ba5746f6b656ed802d864b93ded264aae9ae583fd3d40c45a"
     )[..],
     authenticated_cmds::invite_new::Rep::Ok {
         token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
-        email_sent: Maybe::Absent,
+        email_sent: authenticated_cmds::invite_new::InvitationEmailSentStatus::Success, // see comment above
     }
 )]
 #[case::ok_with_email_sent(
@@ -91,7 +97,7 @@ fn serde_invite_new_req(#[case] raw: &[u8], #[case] expected: authenticated_cmds
     )[..],
     authenticated_cmds::invite_new::Rep::Ok {
         token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
-        email_sent: Maybe::Present(authenticated_cmds::invite_new::InvitationEmailSentStatus::Success),
+        email_sent: authenticated_cmds::invite_new::InvitationEmailSentStatus::Success,
     }
 )]
 #[case::not_allowed(
