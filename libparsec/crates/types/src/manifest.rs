@@ -618,3 +618,7 @@ impl Manifest {
         rmp_serde::from_slice(&deserialized).map_err(|_| DataError::Serialization)
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/manifest.rs"]
+mod tests;
