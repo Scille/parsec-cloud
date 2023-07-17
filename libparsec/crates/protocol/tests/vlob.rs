@@ -7,7 +7,7 @@
 use hex_literal::hex;
 use std::collections::HashMap;
 
-use libparsec_protocol::authenticated_cmds::v2 as authenticated_cmds;
+use libparsec_protocol::authenticated_cmds::v3 as authenticated_cmds;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -179,18 +179,28 @@ fn serde_vlob_create_req(#[case] raw: &[u8], #[case] expected: authenticated_cmd
         strictly_greater_than: "2000-1-2T01:00:00Z".parse().unwrap(),
     }
 )]
+#[should_panic(expected = "missing field `backend_timestamp`")]
 #[case::bad_timestamp_legacy(
     // Generated from Python implementation (Parsec v2.8.1+dev)
     // Content:
     //   status: "bad_timestamp"
     //
+    // Note that raw data does not contain:
+    //  - ballpark_client_early_offset
+    //  - ballpark_client_late_offset
+    //  - backend_timestamp
+    //  - client_timestamp
+    // This was valid behavior in api v2 but is no longer valid from v3 onwards.
+    // The corresponding expected values used here are therefore not important
+    // since loading raw data should fail.
+    //
     &hex!("81a6737461747573ad6261645f74696d657374616d70")[..],
     authenticated_cmds::vlob_create::Rep::BadTimestamp {
         reason: None,
-        ballpark_client_early_offset: Maybe::Absent,
-        ballpark_client_late_offset: Maybe::Absent,
-        backend_timestamp: Maybe::Absent,
-        client_timestamp: Maybe::Absent,
+        ballpark_client_early_offset: 0.,
+        ballpark_client_late_offset: 0.,
+        backend_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+        client_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
     }
 )]
 #[case::bad_timestamp(
@@ -211,10 +221,10 @@ fn serde_vlob_create_req(#[case] raw: &[u8], #[case] expected: authenticated_cmd
     )[..],
     authenticated_cmds::vlob_create::Rep::BadTimestamp {
         reason: None,
-        ballpark_client_early_offset: Maybe::Present(50.),
-        ballpark_client_late_offset: Maybe::Present(70.),
-        backend_timestamp: Maybe::Present("2000-1-2T01:00:00Z".parse().unwrap()),
-        client_timestamp: Maybe::Present("2000-1-2T01:00:00Z".parse().unwrap()),
+        ballpark_client_early_offset: 50.,
+        ballpark_client_late_offset: 70.,
+        backend_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+        client_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
     }
 )]
 #[case::not_a_sequestered_organization(
@@ -322,7 +332,7 @@ fn serde_vlob_read_req() {
         blob: b"foobar".as_ref().into(),
         author: "alice@dev1".parse().unwrap(),
         timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
-        author_last_role_granted_on: Maybe::Present("2000-1-2T01:00:00Z".parse().unwrap()),
+        author_last_role_granted_on: "2000-1-2T01:00:00Z".parse().unwrap(),
     }
 )]
 #[case::not_found(
@@ -561,18 +571,28 @@ fn serde_vlob_update_req(#[case] raw: &[u8], #[case] expected: authenticated_cmd
         strictly_greater_than: "2000-1-2T01:00:00Z".parse().unwrap(),
     }
 )]
+#[should_panic(expected = "missing field `backend_timestamp`")]
 #[case::bad_timestamp_legacy(
     // Generated from Python implementation (Parsec v2.8.1+dev)
     // Content:
     //   status: "bad_timestamp"
     //
+    // Note that raw data does not contain:
+    //  - ballpark_client_early_offset
+    //  - ballpark_client_late_offset
+    //  - backend_timestamp
+    //  - client_timestamp
+    // This was valid behavior in api v2 but is no longer valid from v3 onwards.
+    // The corresponding expected values used here are therefore not important
+    // since loading raw data should fail.
+    //
     &hex!("81a6737461747573ad6261645f74696d657374616d70")[..],
     authenticated_cmds::vlob_update::Rep::BadTimestamp {
         reason: None,
-        ballpark_client_early_offset: Maybe::Absent,
-        ballpark_client_late_offset: Maybe::Absent,
-        backend_timestamp: Maybe::Absent,
-        client_timestamp: Maybe::Absent,
+        ballpark_client_early_offset: 0.,
+        ballpark_client_late_offset: 0.,
+        backend_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+        client_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
     }
 )]
 #[case::bad_timestamp(
@@ -593,10 +613,10 @@ fn serde_vlob_update_req(#[case] raw: &[u8], #[case] expected: authenticated_cmd
     )[..],
     authenticated_cmds::vlob_update::Rep::BadTimestamp {
         reason: None,
-        ballpark_client_early_offset: Maybe::Present(50.),
-        ballpark_client_late_offset: Maybe::Present(70.),
-        backend_timestamp: Maybe::Present("2000-1-2T01:00:00Z".parse().unwrap()),
-        client_timestamp: Maybe::Present("2000-1-2T01:00:00Z".parse().unwrap()),
+        ballpark_client_early_offset: 50.,
+        ballpark_client_late_offset: 70.,
+        backend_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+        client_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
     }
 )]
 #[case::not_a_sequestered_organization(

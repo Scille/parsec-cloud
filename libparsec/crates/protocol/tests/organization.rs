@@ -8,7 +8,7 @@ use bytes::Bytes;
 use hex_literal::hex;
 
 use libparsec_protocol::{
-    anonymous_cmds::v2 as anonymous_cmds, authenticated_cmds::v2 as authenticated_cmds,
+    anonymous_cmds::v3 as anonymous_cmds, authenticated_cmds::v3 as authenticated_cmds,
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -138,12 +138,21 @@ fn serde_organization_config_req() {
 }
 
 #[parsec_test]
+#[should_panic(expected = "missing field `sequester_authority_certificate`")]
 #[case::ok_with_absent_sequester(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   active_users_limit: 1
     //   status: "ok"
     //   user_profile_outsider_allowed: false
+    //
+    // Note that raw data does not contain:
+    //  - sequester_authority_certificate
+    //  - sequester_services_certificates
+    // This was valid behavior in api v2 but is no longer valid from v3 onwards.
+    // The corresponding expected values used here are therefore not important
+    // since loading raw data should fail.
+    //
     &hex!(
         "83b26163746976655f75736572735f6c696d697401a6737461747573a26f6bbd757365725f"
         "70726f66696c655f6f757473696465725f616c6c6f776564c2"
@@ -151,8 +160,8 @@ fn serde_organization_config_req() {
     authenticated_cmds::organization_config::Rep::Ok {
         user_profile_outsider_allowed: false,
         active_users_limit: ActiveUsersLimit::LimitedTo(1),
-        sequester_authority_certificate: Maybe::Absent,
-        sequester_services_certificates: Maybe::Absent,
+        sequester_authority_certificate: None,
+        sequester_services_certificates: None,
     }
 )]
 #[case::ok_with_none_sequester(
@@ -173,8 +182,8 @@ fn serde_organization_config_req() {
     authenticated_cmds::organization_config::Rep::Ok {
         user_profile_outsider_allowed: false,
         active_users_limit: ActiveUsersLimit::NoLimit,
-        sequester_authority_certificate: Maybe::Present(None),
-        sequester_services_certificates: Maybe::Present(None),
+        sequester_authority_certificate: None,
+        sequester_services_certificates: None,
     }
 )]
 #[case::ok_with_sequester(
@@ -195,8 +204,8 @@ fn serde_organization_config_req() {
     authenticated_cmds::organization_config::Rep::Ok {
         user_profile_outsider_allowed: false,
         active_users_limit: ActiveUsersLimit::LimitedTo(1),
-        sequester_authority_certificate: Maybe::Present(Some(b"foobar".as_ref().into())),
-        sequester_services_certificates: Maybe::Present(Some(vec![b"foo".as_ref().into(), b"bar".as_ref().into()])),
+        sequester_authority_certificate: Some(b"foobar".as_ref().into()),
+        sequester_services_certificates: Some(vec![b"foo".as_ref().into(), b"bar".as_ref().into()]),
     }
 )]
 #[case::not_found(
@@ -593,10 +602,10 @@ fn serde_organization_bootstrap_req(
     )[..],
     anonymous_cmds::organization_bootstrap::Rep::BadTimestamp {
         reason: None,
-        ballpark_client_early_offset: Maybe::Present(300.0),
-        ballpark_client_late_offset: Maybe::Present(320.0),
-        backend_timestamp: Maybe::Present("2000-01-02T01:00:00Z".parse().unwrap()),
-        client_timestamp: Maybe::Present("2000-01-02T01:00:00Z".parse().unwrap()),
+        ballpark_client_early_offset: 300.0,
+        ballpark_client_late_offset: 320.0,
+        backend_timestamp: "2000-01-02T01:00:00Z".parse().unwrap(),
+        client_timestamp: "2000-01-02T01:00:00Z".parse().unwrap(),
     }
 )]
 #[case::already_bootstrapped(
