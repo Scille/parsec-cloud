@@ -145,11 +145,10 @@ pub(super) async fn add_certificates_batch<'a>(
                     // Note at this point `last_index` has been indirectly checked by the
                     // first call to `validated_certificate` so it value can be trusted.
                     (0, _, _) => (),
+                    // No need to switch.
+                    (_, UserProfile::Outsider, UserProfile::Outsider) => (),
                     // Switching from/to Outsider !
-                    (_, old @ UserProfile::Outsider, new)
-                    | (_, old, new @ UserProfile::Outsider)
-                        if old != new =>
-                    {
+                    (_, UserProfile::Outsider, _) | (_, _, UserProfile::Outsider) => {
                         // So we clear the storage and don't try to go any further given
                         // the index is no longer the right one (we must instead re-poll
                         // the server to get certificates from index 0)
