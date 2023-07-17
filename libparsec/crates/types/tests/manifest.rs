@@ -163,7 +163,7 @@ fn serde_file_manifest_invalid_blocksize(alice: &Device) {
         None,
     );
 
-    assert!(manifest.is_err());
+    assert!(matches!(manifest, Err(DataError::Serialization)));
 }
 
 #[rstest]
