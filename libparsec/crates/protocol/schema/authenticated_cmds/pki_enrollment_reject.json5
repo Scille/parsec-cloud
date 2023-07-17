@@ -46,52 +46,5 @@
                 ]
             }
         ]
-    },
-    {
-        "major_versions": [
-            2
-        ],
-        "introduced_in": "2.8",
-        "req": {
-            "cmd": "pki_enrollment_reject",
-            "fields": [
-                {
-                    "name": "enrollment_id",
-                    "type": "EnrollmentID"
-                }
-            ]
-        },
-        "reps": [
-            {
-                "status": "ok"
-            },
-            {
-                "status": "not_allowed",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
-            },
-            {
-                "status": "not_found",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
-            },
-            {
-                "status": "no_longer_available",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
-            }
-        ]
     }
 ]
