@@ -63,20 +63,20 @@ async fn db_set_workspace_manifest(
                 use super::model::vlobs::dsl::*;
 
                 diesel::insert_into(vlobs)
-                .values(new_vlob)
-                .on_conflict(vlob_id)
-                .do_update()
-                .set(
-                    (
-                        base_version.eq(excluded(base_version)),
-                        remote_version.eq(
-                            sql("(CASE WHEN `remote_version` > `excluded`.`remote_version` THEN `remote_version` ELSE `excluded`.`remote_version` END)")
-                        ),
-                        need_sync.eq(excluded(need_sync)),
-                        blob.eq(excluded(blob)),
+                    .values(new_vlob)
+                    .on_conflict(vlob_id)
+                    .do_update()
+                    .set(
+                        (
+                            base_version.eq(excluded(base_version)),
+                            remote_version.eq(
+                                sql("(CASE WHEN `remote_version` > `excluded`.`remote_version` THEN `remote_version` ELSE `excluded`.`remote_version` END)")
+                            ),
+                            need_sync.eq(excluded(need_sync)),
+                            blob.eq(excluded(blob)),
+                        )
                     )
-                )
-                .execute(conn)?;
+                    .execute(conn)?;
             }
 
             Ok(())
