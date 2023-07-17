@@ -404,7 +404,6 @@ impl CertificatesStorage {
 
     async fn add_certificate(
         &self,
-
         certificate_type: &'static str,
         index: IndexInt,
         timestamp: DateTime,
