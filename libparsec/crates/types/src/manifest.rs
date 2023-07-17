@@ -111,28 +111,38 @@ macro_rules! impl_manifest_dump_load {
                 expected_version: Option<VersionInt>,
             ) -> DataResult<()> {
                 if self.author != *expected_author {
-                    Err(DataError::UnexpectedAuthor {
+                    return Err(DataError::UnexpectedAuthor {
                         expected: Box::new(expected_author.clone()),
                         got: Some(Box::new(self.author.clone())),
-                    })
-                } else if self.timestamp != expected_timestamp {
-                    Err(DataError::UnexpectedTimestamp {
+                    });
+                }
+
+                if self.timestamp != expected_timestamp {
+                    return Err(DataError::UnexpectedTimestamp {
                         expected: expected_timestamp,
                         got: self.timestamp,
-                    })
-                } else if expected_id.is_some() && expected_id != Some(self.id) {
-                    Err(DataError::UnexpectedId {
-                        expected: expected_id.unwrap(),
-                        got: self.id,
-                    })
-                } else if expected_version.is_some() && expected_version != Some(self.version) {
-                    Err(DataError::UnexpectedVersion {
-                        expected: expected_version.unwrap(),
-                        got: self.version,
-                    })
-                } else {
-                    Ok(())
+                    });
                 }
+
+                if let Some(expected) = expected_id {
+                    if self.id != expected {
+                        return Err(DataError::UnexpectedId {
+                            expected,
+                            got: self.id,
+                        });
+                    }
+                }
+
+                if let Some(expected) = expected_version {
+                    if self.version != expected {
+                        return Err(DataError::UnexpectedVersion {
+                            expected,
+                            got: self.version,
+                        });
+                    }
+                }
+
+                Ok(())
             }
         }
     };
