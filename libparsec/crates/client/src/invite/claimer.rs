@@ -151,7 +151,7 @@ impl BaseClaimInitialCtx {
             greeter_sas,
             claimer_sas,
             shared_secret_key,
-            cmds: self.cmds.clone(),
+            cmds: self.cmds,
         })
     }
 }
@@ -243,7 +243,7 @@ impl BaseClaimInProgress1Ctx {
             Rep::Ok => Ok(BaseClaimInProgress2Ctx {
                 claimer_sas: self.claimer_sas,
                 shared_secret_key: self.shared_secret_key,
-                cmds: self.cmds.clone(),
+                cmds: self.cmds,
             }),
             Rep::AlreadyDeleted => Err(ClaimInProgressError::AlreadyUsed),
             Rep::InvalidState => Err(ClaimInProgressError::PeerReset),
@@ -308,7 +308,7 @@ impl BaseClaimInProgress2Ctx {
         match rep {
             Rep::Ok => Ok(BaseClaimInProgress3Ctx {
                 shared_secret_key: self.shared_secret_key,
-                cmds: self.cmds.clone(),
+                cmds: self.cmds,
             }),
             Rep::AlreadyDeleted => Err(ClaimInProgressError::AlreadyUsed),
             Rep::InvalidState => Err(ClaimInProgressError::PeerReset),
