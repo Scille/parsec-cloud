@@ -193,17 +193,6 @@ async def extract_sequestered_data_and_proceed_webhook(
 
 class BaseVlobComponent:
     @api
-    async def apiv2_vlob_create(
-        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.v2.vlob_create.Req
-    ) -> authenticated_cmds.v2.vlob_create.Rep:
-        # `vlob_create` command is similar between APIv2 and v4+ from the server
-        # point of view.
-        # (from client point of view, server may return `bad_timestamp` response
-        # with some fields missing)
-        # TODO: proper api req/rep conversion
-        return await self.api_vlob_create(client_ctx, req)  # type: ignore[return-value, arg-type]
-
-    @api
     async def apiv3_vlob_create(
         self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.v3.vlob_create.Req
     ) -> authenticated_cmds.v3.vlob_create.Rep:
@@ -285,16 +274,6 @@ class BaseVlobComponent:
         return authenticated_cmds.latest.vlob_create.RepOk()
 
     @api
-    async def apiv2_vlob_read(
-        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.v2.vlob_read.Req
-    ) -> authenticated_cmds.v2.vlob_read.Rep:
-        # `vlob_read` command strictly similar between APIv2 and v3
-        # (from client point of view, server may return `ok` response
-        # with some fields missing)
-        # TODO: proper api req/rep conversion
-        return await self.apiv3_vlob_read(client_ctx, req)  # type: ignore[return-value, arg-type]
-
-    @api
     async def apiv3_vlob_read(
         self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.v3.vlob_read.Req
     ) -> authenticated_cmds.v3.vlob_read.Rep:
@@ -367,17 +346,6 @@ class BaseVlobComponent:
             created_on,
             certificate_index,
         )
-
-    @api
-    async def apiv2_vlob_update(
-        self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.v2.vlob_update.Req
-    ) -> authenticated_cmds.v2.vlob_update.Rep:
-        # `vlob_update` command is similar between APIv2 and v4+ from the server
-        # point of view.
-        # (from client point of view, server may return `bad_timestamp` response
-        # with some fields missing)
-        # TODO: proper api req/rep conversion
-        return await self.api_vlob_update(client_ctx, req)  # type: ignore[return-value, arg-type]
 
     @api
     async def apiv3_vlob_update(
