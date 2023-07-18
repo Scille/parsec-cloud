@@ -49,10 +49,10 @@ import { checkmark } from 'ionicons/icons';
 import { defineProps } from 'vue';
 
 defineProps<{
-  status: StepStatus,
+  status: StepStatus
 }>();
 
-function getClass(status: string): string {
+function getClass(status: StepStatus): string {
   if (status === 'default') {
     return 'default';
   } else if (status === 'done') {
