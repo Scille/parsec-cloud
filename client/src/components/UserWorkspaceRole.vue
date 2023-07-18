@@ -19,6 +19,7 @@
 </template>
 
 <script setup lang="ts">
+import { defineProps, defineEmits } from 'vue';
 import { WorkspaceRole } from '@/common/mocks';
 import UserTag from '@/components/UserTag.vue';
 import MsSelect from '@/components/MsSelect.vue';
@@ -56,14 +57,23 @@ function getRoleFromString(role: string): WorkspaceRole | null {
 </script>
 
 <style scoped lang="scss">
-.user {
-  float: left;
-}
-.select {
-  float: right;
-}
-
 .content {
+
   height: 4em;
+  padding: .5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    display: block;
+    width: 90%;
+    border: 1px solid var(--parsec-color-light-secondary-disabled);
+    bottom: 0;
+    right: 0;
+  }
 }
 </style>
