@@ -120,6 +120,8 @@
         "title": "Partager cet espace de travail",
         "searchLabel": "Nom ou adresse mail",
         "searchPlaceholder": "ex : Jean Martin",
+        "valid": "Valider",
+        "cancel": "Annuler",
         "roles": {
             "Reader": "Lecteur",
             "Contributor": "Contributeur",

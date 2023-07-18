@@ -120,6 +120,8 @@
         "title": "Share this workspace",
         "searchLabel": "Name or email address",
         "searchPlaceholder": "e.g.: John Smith",
+        "valid": "Valid",
+        "cancel": "Cancel",
         "roles": {
             "Reader": "Reader",
             "Contributor": "Contributor",

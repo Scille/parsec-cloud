@@ -33,7 +33,7 @@
         :label="$t('WorkspaceSharing.searchLabel')"
         :placeholder="$t('WorkspaceSharing.searchPlaceholder')"
       />
-      <ion-list>
+      <ion-list class="user-list">
         <user-workspace-role
           v-for="entry in userRoles.entries()"
           :key="entry[0]"
@@ -43,6 +43,27 @@
         />
       </ion-list>
     </ion-content>
+    <ion-footer class="modal-footer">
+      <ion-buttons
+        class="modal-footer-buttons"
+      >
+        <ion-button
+          fill="clear"
+          size="default"
+          id="cancel-button"
+          @click="closeModal()"
+        >
+          {{ $t('WorkspaceSharing.cancel') }}
+        </ion-button>
+        <ion-button
+          fill="solid"
+          size="default"
+          id="save-button"
+        >
+          {{ $t('WorkspaceSharing.valid') }}
+        </ion-button>
+      </ion-buttons>
+    </ion-footer>
   </ion-page>
 </template>
 
@@ -57,6 +78,7 @@ import {
   IonToolbar,
   IonIcon,
   IonList,
+  IonFooter,
   modalController
 } from '@ionic/vue';
 import {
@@ -120,12 +142,12 @@ function closeModal(): Promise<boolean> {
 }
 
 .title-h2 {
-  color: var(--parsec-color-light-primary-700);
+  color: var(--parsec-color-light-primary-600);
   padding-inline: 0;
   margin-bottom: 2rem;
 }
 
-closeBtn-container, .closeBtn {
+.closeBtn-container, .closeBtn {
   margin: 0;
   --padding-start: 0;
   --padding-end: 0;
@@ -138,23 +160,37 @@ closeBtn-container, .closeBtn {
 }
 
 .closeBtn {
-  border-radius: 4px;
+  border-radius: var(--parsec-radius-4);
   width: fit-content;
   height: fit-content;
 
   &:hover {
     --background-hover: var(--parsec-color-light-primary-50);
-    --border-radius: 4px;
+    --border-radius: var(--parsec-radius-4);
   }
 
   &:active {
     background: var(--parsec-color-light-primary-100);
-    --border-radius: 4px;
+    --border-radius: var(--parsec-radius-4);
   }
 
   &__icon {
     padding: 4px;
     color: var(--parsec-color-light-primary-500);
+  }
+}
+
+.user-list {
+  padding: .5rem;
+}
+
+.modal-footer {
+  margin-top: 2.5rem;
+
+  .modal-footer-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1.5rem;
   }
 }
 </style>
