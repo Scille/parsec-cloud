@@ -39,7 +39,7 @@
 export enum StepStatus {
   DEFAULT = 'default',
   DONE = 'done',
-  ACTIVE = 'active',
+  ACTIVE = 'active'
 }
 </script>
 
@@ -70,17 +70,15 @@ function getClass(status: StepStatus): string {
   display: flex;
 }
 
-.shape{
+.shape {
   display: flex;
   flex-direction: row;
   align-items: center;
-
   .left-line, .right-line {
     background: var(--parsec-color-light-primary-600);
     width: 53px; //change to rem
     height: 2px;
   }
-
   .circle {
     background: var(--parsec-color-light-secondary-background);
     width: 24px;
@@ -105,14 +103,11 @@ function getClass(status: StepStatus): string {
 }
 
 .active {
-
   .left-line {
     opacity: 0.4;
   }
-
   .circle {
     background: var(--parsec-color-light-secondary-background);
-
     .inner-circle-active {
       background: var(--parsec-color-light-primary-600);
       width: .75rem;
