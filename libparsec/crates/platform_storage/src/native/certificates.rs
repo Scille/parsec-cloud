@@ -388,7 +388,7 @@ impl CertificatesStorage {
         self.db
             .exec(move |conn| {
                 // IMMEDIATE transaction means we start right away a write transaction
-                // (instead default DEFERRED mode of which waits until the first database
+                // (instead of default DEFERRED mode of which waits until the first database
                 // access and determine read/write transaction depending on the sql statement)
                 conn.immediate_transaction(|conn| {
                     let query = {
@@ -420,7 +420,7 @@ impl CertificatesStorage {
                 let filter2 = filter2.as_deref();
 
                 // IMMEDIATE transaction means we start right away a write transaction
-                // (instead default DEFERRED mode of which waits until the first database
+                // (instead of default DEFERRED mode of which waits until the first database
                 // access and determine read/write transaction depending on the sql statement)
                 conn.immediate_transaction(|conn| {
                     let new_certificate = super::model::NewCertificate {

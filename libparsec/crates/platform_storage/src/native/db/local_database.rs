@@ -290,7 +290,7 @@ impl LocalDatabase {
                 | diesel::result::DatabaseErrorKind::CheckViolation => (),
                 // The Sqlite database is closed, this is either due to (by order of likeliness):
                 // - the executor has been stopped, typically because we are shutting down
-                // - an unexpected panic in the executor (or it background thread)
+                // - an unexpected panic in the executor (or its background thread)
                 // - an internal error in SQLite
                 // In any case, we want to make sure no more job can be send now (to avoid weird
                 // situation where SQLite had a hiccup and rejected a single query).

@@ -230,7 +230,7 @@ pub async fn user_storage_non_speculative_init(
 
     db_set_user_manifest(&db, device, manifest).await?;
 
-    // 4) All done ! Don't forget the close the database before exit ;-)
+    // 4) All done ! Don't forget to close the database before exiting ;-)
 
     db.close().await;
     Ok(())
