@@ -67,17 +67,17 @@ pub(super) fn maybe_open_sqlite_in_memory(path_info: &DBPathInfo) -> Option<Sqli
                 match std::mem::replace(&mut db.state, ClosableInMemoryDB::Opened) {
                     ClosableInMemoryDB::Opened => {
                         // The database is *currently* used, this is something we don't
-                        // do in Parsec (we have a single process running that have no
+                        // do in Parsec (we have a single process running that has no
                         // benefit at connecting multiple times to a database).
                         // This is most likely in a bug (typically trying to start two
-                        // client with the same device).
+                        // clients with the same device).
                         panic!(
                             "Trying to open already opened in memory database {:?}",
                             path_info
                         )
                         // In theory here we should reset the entry state (given we set
                         // it before doing the check), however in the current case both
-                        // state have the same `Opened` value so all is already good ;-)
+                        // states have the same `Opened` value so all is already good ;-)
                     }
                     ClosableInMemoryDB::Closed(conn) => {
                         // The database has been closed by the one that created it.

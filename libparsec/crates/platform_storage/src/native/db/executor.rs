@@ -90,7 +90,7 @@ impl SqliteExecutor {
 
             match guard.connection.take() {
                 Some(mut connection) => {
-                    // Run a full vacuum, meaning that it will execute a standar vacuum
+                    // Run a full vacuum, meaning that it will execute a standard vacuum
                     // and re-open the database connection to force cleanup.
                     let res = connection
                         .batch_execute("VACUUM")
