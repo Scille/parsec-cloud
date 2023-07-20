@@ -47,7 +47,20 @@ fn invalid_deserialize_data(#[case] data: &[u8], #[case] error: DataError) {
 
 #[rstest]
 fn dump_load(alice: &Device) {
-    // The blobs are generated with the expected one, to lock the test
+    // Generated from Rust implementation (Parsec v2.15.0+dev)
+    // Content:
+    //   type: "file_manifest"
+    //   author: "alice@dev1"
+    //   timestamp: ext(1, 1638618643.208821)
+    //   id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
+    //   version: 0
+    //   created: ext(1, 1638618643.208821)
+    //   updated: ext(1, 1638618643.208821)
+    //   blocks: []
+    //   blocksize: 8
+    //   parent: ext(2, hex!("09e679aa6e1147fbaa5580073202fc7f"))
+    //   size: 0
+    // see: [docs/development/generate_blob.md]
     let signed = hex!(
         "86f116d8cad06b67df476f0738750a937330f1cb20475f3c1197ea16d069ab6ce1f867fd55"
         "5fd7b4861058c128fa9c68872efed5284135a041e451d4ded93403789c558cb10ec1501440"
@@ -145,7 +158,19 @@ fn dump_load(alice: &Device) {
 
 #[rstest]
 fn invalid_load(alice: &Device) {
-    // The blob is generated from the test `dump_load`
+    // Generated from Rust implementation (Parsec v2.15.0+dev)
+    // Content:
+    //   type: "file_manifest"
+    //   author: "alice@dev1"
+    //   timestamp: ext(1, 1638618643.208821)
+    //   id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
+    //   version: 0
+    //   created: ext(1, 1638618643.208821)
+    //   updated: ext(1, 1638618643.208821)
+    //   blocks: []
+    //   blocksize: 8
+    //   parent: ext(2, hex!("09e679aa6e1147fbaa5580073202fc7f"))
+    //   size: 0
     let data = hex!(
         "be4be31375b99ebf3e76c54b1e91d05f5739e7e11b631b0c51cf2a91c3ca92c3a074e4d044"
         "9dfd02c55444d9bc500402680daa04bcbf13d8d38f8a296597cb31cc2bc277c7d1c8bb5bb4"
