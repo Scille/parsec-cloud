@@ -51,25 +51,16 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl WorkspaceEntry {
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [id: EntryID, "id"],
-            [name: EntryName, "name"],
-            [key: SecretKey, "key"],
-            [encryption_revision: IndexInt, "encryption_revision"],
-            [encrypted_on: DateTime, "encrypted_on"],
-            [
-                legacy_role_cache_timestamp: DateTime,
-                "legacy_role_cache_timestamp"
-            ],
-            [
-                legacy_role_cache_value: Option<RealmRole>,
-                "legacy_role_cache_value"
-            ],
-        );
-
+    #[pyo3(signature = (id, name, key, encryption_revision, encrypted_on, legacy_role_cache_timestamp, legacy_role_cache_value))]
+    fn new(
+        id: EntryID,
+        name: EntryName,
+        key: SecretKey,
+        encryption_revision: u64,
+        encrypted_on: DateTime,
+        legacy_role_cache_timestamp: DateTime,
+        legacy_role_cache_value: Option<RealmRole>,
+    ) -> PyResult<Self> {
         Ok(Self(libparsec::low_level::types::WorkspaceEntry {
             id: id.0,
             name: name.0,
@@ -81,7 +72,7 @@ impl WorkspaceEntry {
         }))
     }
 
-    #[args(py_kwargs = "**")]
+    #[pyo3(signature = (**py_kwargs))]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
@@ -184,17 +175,14 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl BlockAccess {
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [id: BlockID, "id"],
-            [key: SecretKey, "key"],
-            [offset: u64, "offset"],
-            [size: u64, "size"],
-            [digest: HashDigest, "digest"],
-        );
-
+    #[pyo3(signature = (id, key, offset, size, digest))]
+    fn new(
+        id: BlockID,
+        key: SecretKey,
+        offset: u64,
+        size: u64,
+        digest: HashDigest,
+    ) -> PyResult<Self> {
         Ok(Self(libparsec::low_level::types::BlockAccess {
             id: id.0,
             key: key.0,
@@ -205,7 +193,7 @@ impl BlockAccess {
         }))
     }
 
-    #[args(py_kwargs = "**")]
+    #[pyo3(signature = (**py_kwargs))]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
@@ -278,23 +266,21 @@ crate::binding_utils::gen_py_wrapper_class!(
 
 #[pymethods]
 impl FileManifest {
+    #[allow(clippy::too_many_arguments)]
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [author: DeviceID, "author"],
-            [timestamp: DateTime, "timestamp"],
-            [id: EntryID, "id"],
-            [parent: EntryID, "parent"],
-            [version: u32, "version"],
-            [created: DateTime, "created"],
-            [updated: DateTime, "updated"],
-            [size: u64, "size"],
-            [blocksize: u64, "blocksize"],
-            [blocks: Vec<BlockAccess>, "blocks"],
-        );
-
+    #[pyo3(signature = (author, timestamp, id, parent, version, created, updated, size, blocksize, blocks))]
+    fn new(
+        author: DeviceID,
+        timestamp: DateTime,
+        id: EntryID,
+        parent: EntryID,
+        version: u32,
+        created: DateTime,
+        updated: DateTime,
+        size: u64,
+        blocksize: u64,
+        blocks: Vec<BlockAccess>,
+    ) -> PyResult<Self> {
         Ok(Self(libparsec::low_level::types::FileManifest {
             author: author.0,
             timestamp: timestamp.0,
@@ -356,7 +342,7 @@ impl FileManifest {
         )
     }
 
-    #[args(py_kwargs = "**")]
+    #[pyo3(signature = (**py_kwargs))]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
@@ -477,21 +463,19 @@ crate::binding_utils::gen_py_wrapper_class!(
 
 #[pymethods]
 impl FolderManifest {
+    #[allow(clippy::too_many_arguments)]
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [author: DeviceID, "author"],
-            [timestamp: DateTime, "timestamp"],
-            [id: EntryID, "id"],
-            [parent: EntryID, "parent"],
-            [version: u32, "version"],
-            [created: DateTime, "created"],
-            [updated: DateTime, "updated"],
-            [children: HashMap<EntryName, EntryID>, "children"],
-        );
-
+    #[pyo3(signature = (author, timestamp, id, parent, version, created, updated, children))]
+    fn new(
+        author: DeviceID,
+        timestamp: DateTime,
+        id: EntryID,
+        parent: EntryID,
+        version: u32,
+        created: DateTime,
+        updated: DateTime,
+        children: HashMap<EntryName, EntryID>,
+    ) -> PyResult<Self> {
         Ok(Self(libparsec::low_level::types::FolderManifest {
             author: author.0,
             timestamp: timestamp.0,
@@ -553,7 +537,7 @@ impl FolderManifest {
         )
     }
 
-    #[args(py_kwargs = "**")]
+    #[pyo3(signature = (**py_kwargs))]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
@@ -657,19 +641,16 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl WorkspaceManifest {
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [author: DeviceID, "author"],
-            [timestamp: DateTime, "timestamp"],
-            [id: EntryID, "id"],
-            [version: u32, "version"],
-            [created: DateTime, "created"],
-            [updated: DateTime, "updated"],
-            [children: HashMap<EntryName, EntryID>, "children"],
-        );
-
+    #[pyo3(signature = (author, timestamp, id, version, created, updated, children))]
+    fn new(
+        author: DeviceID,
+        timestamp: DateTime,
+        id: EntryID,
+        version: u32,
+        created: DateTime,
+        updated: DateTime,
+        children: HashMap<EntryName, EntryID>,
+    ) -> PyResult<Self> {
         Ok(Self(libparsec::low_level::types::WorkspaceManifest {
             author: author.0,
             timestamp: timestamp.0,
@@ -730,7 +711,7 @@ impl WorkspaceManifest {
         )
     }
 
-    #[args(py_kwargs = "**")]
+    #[pyo3(signature = (**py_kwargs))]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
@@ -824,21 +805,19 @@ crate::binding_utils::gen_py_wrapper_class!(
 
 #[pymethods]
 impl UserManifest {
+    #[allow(clippy::too_many_arguments)]
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [author: DeviceID, "author"],
-            [timestamp: DateTime, "timestamp"],
-            [id: EntryID, "id"],
-            [version: u32, "version"],
-            [created: DateTime, "created"],
-            [updated: DateTime, "updated"],
-            [last_processed_message: u64, "last_processed_message"],
-            [workspaces: Vec<WorkspaceEntry>, "workspaces"],
-        );
-
+    #[pyo3(signature = (author, timestamp, id, version, created, updated, last_processed_message, workspaces))]
+    fn new(
+        author: DeviceID,
+        timestamp: DateTime,
+        id: EntryID,
+        version: u32,
+        created: DateTime,
+        updated: DateTime,
+        last_processed_message: u64,
+        workspaces: Vec<WorkspaceEntry>,
+    ) -> PyResult<Self> {
         Ok(Self(libparsec::low_level::types::UserManifest {
             author: author.0,
             timestamp: timestamp.0,
@@ -897,7 +876,7 @@ impl UserManifest {
         )
     }
 
-    #[args(py_kwargs = "**")]
+    #[pyo3(signature = (**py_kwargs))]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,

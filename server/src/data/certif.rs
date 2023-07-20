@@ -31,18 +31,15 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl UserCertificate {
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [author: Option<DeviceID>, "author"],
-            [timestamp: DateTime, "timestamp"],
-            [user_id: UserID, "user_id"],
-            [human_handle: Option<HumanHandle>, "human_handle"],
-            [public_key: PublicKey, "public_key"],
-            [profile: UserProfile, "profile"]
-        );
-
+    #[pyo3(signature = (author, timestamp, user_id, human_handle, public_key, profile))]
+    fn new(
+        author: Option<DeviceID>,
+        timestamp: DateTime,
+        user_id: UserID,
+        human_handle: Option<HumanHandle>,
+        public_key: PublicKey,
+        profile: UserProfile,
+    ) -> PyResult<Self> {
         Ok(Self(Arc::new(
             libparsec::low_level::types::UserCertificate {
                 author: match author {
@@ -58,7 +55,7 @@ impl UserCertificate {
         )))
     }
 
-    #[args(py_kwargs = "**")]
+    #[pyo3(signature = (**py_kwargs))]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
@@ -186,17 +183,14 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl DeviceCertificate {
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [author: Option<DeviceID>, "author"],
-            [timestamp: DateTime, "timestamp"],
-            [device_id: DeviceID, "device_id"],
-            [device_label: Option<DeviceLabel>, "device_label"],
-            [verify_key: VerifyKey, "verify_key"],
-        );
-
+    #[pyo3(signature = (author, timestamp, device_id, device_label, verify_key))]
+    fn new(
+        author: Option<DeviceID>,
+        timestamp: DateTime,
+        device_id: DeviceID,
+        device_label: Option<DeviceLabel>,
+        verify_key: VerifyKey,
+    ) -> PyResult<Self> {
         Ok(Self(Arc::new(
             libparsec::low_level::types::DeviceCertificate {
                 author: match author {
@@ -211,7 +205,7 @@ impl DeviceCertificate {
         )))
     }
 
-    #[args(py_kwargs = "**")]
+    #[pyo3(signature = (**py_kwargs))]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
@@ -323,15 +317,8 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl RevokedUserCertificate {
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [author: DeviceID, "author"],
-            [timestamp: DateTime, "timestamp"],
-            [user_id: UserID, "user_id"],
-        );
-
+    #[pyo3(signature = (author, timestamp, user_id))]
+    fn new(author: DeviceID, timestamp: DateTime, user_id: UserID) -> PyResult<Self> {
         Ok(Self(Arc::new(
             libparsec::low_level::types::RevokedUserCertificate {
                 author: author.0,
@@ -341,7 +328,7 @@ impl RevokedUserCertificate {
         )))
     }
 
-    #[args(py_kwargs = "**")]
+    #[pyo3(signature = (**py_kwargs))]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
@@ -428,16 +415,13 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl UserUpdateCertificate {
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [author: DeviceID, "author"],
-            [timestamp: DateTime, "timestamp"],
-            [user_id: UserID, "user_id"],
-            [new_profile: UserProfile, "new_profile"]
-        );
-
+    #[pyo3(signature = (author, timestamp, user_id, new_profile))]
+    fn new(
+        author: DeviceID,
+        timestamp: DateTime,
+        user_id: UserID,
+        new_profile: UserProfile,
+    ) -> PyResult<Self> {
         Ok(Self(Arc::new(
             libparsec::low_level::types::UserUpdateCertificate {
                 author: author.0,
@@ -448,7 +432,7 @@ impl UserUpdateCertificate {
         )))
     }
 
-    #[args(py_kwargs = "**")]
+    #[pyo3(signature = (**py_kwargs))]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
@@ -544,17 +528,14 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl RealmRoleCertificate {
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [author: Option<DeviceID>, "author"],
-            [timestamp: DateTime, "timestamp"],
-            [realm_id: RealmID, "realm_id"],
-            [user_id: UserID, "user_id"],
-            [role: Option<RealmRole>, "role"],
-        );
-
+    #[pyo3(signature = (author, timestamp, realm_id, user_id, role))]
+    fn new(
+        author: Option<DeviceID>,
+        timestamp: DateTime,
+        realm_id: RealmID,
+        user_id: UserID,
+        role: Option<RealmRole>,
+    ) -> PyResult<Self> {
         Ok(Self(Arc::new(
             libparsec::low_level::types::RealmRoleCertificate {
                 timestamp: timestamp.0,
@@ -569,7 +550,7 @@ impl RealmRoleCertificate {
         )))
     }
 
-    #[args(py_kwargs = "**")]
+    #[pyo3(signature = (**py_kwargs))]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,

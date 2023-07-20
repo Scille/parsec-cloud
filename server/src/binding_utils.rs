@@ -168,22 +168,6 @@ macro_rules! parse_kwargs_optional {
     };
 }
 
-macro_rules! check_mandatory_kwargs {
-    ($([$var: ident, $name: literal]),* $(,)?) => {
-        $(let $var = $var.expect(concat!("Missing `", stringify!($name), "` argument"));)*
-    };
-}
-
-macro_rules! parse_kwargs {
-    ($kwargs: ident $(,[$var: ident $(:$ty: ty)?, $name: literal $(,$function: ident)?])* $(,)?) => {
-        crate::binding_utils::parse_kwargs_optional!(
-            $kwargs,
-            $([$var $(:$ty)?, $name $(,$function)?],)*
-        );
-        crate::binding_utils::check_mandatory_kwargs!($([$var, $name],)*);
-    };
-}
-
 macro_rules! gen_py_wrapper_class {
     ($class: ident, $wrapped_struct: path $(,$magic_meth: ident $($magic_meth_arg: ident)? )* $(,)?) => {
         #[pyclass]
@@ -412,14 +396,12 @@ macro_rules! gen_py_wrapper_class_for_enum {
 }
 
 pub(crate) use _unwrap_bytes;
-pub(crate) use check_mandatory_kwargs;
 pub(crate) use create_exception;
 pub(crate) use create_exception_from;
 pub(crate) use gen_proto;
 pub(crate) use gen_py_wrapper_class;
 pub(crate) use gen_py_wrapper_class_for_enum;
 pub(crate) use gen_py_wrapper_class_for_id;
-pub(crate) use parse_kwargs;
 pub(crate) use parse_kwargs_optional;
 pub(crate) use py_object;
 pub(crate) use unwrap_bytes;

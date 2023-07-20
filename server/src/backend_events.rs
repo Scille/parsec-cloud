@@ -1,15 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use pyo3::{
-    exceptions::PyValueError,
-    prelude::*,
-    types::{PyBytes, PyDict},
-};
+use pyo3::{exceptions::PyValueError, prelude::*, types::PyBytes};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    DeviceID, InvitationStatus, InvitationToken, OrganizationID, RealmID, RealmRole, UserID,
-    UserProfile, VlobID,
+    BytesWrapper, DeviceID, InvitationStatus, InvitationToken, OrganizationID, RealmID, RealmRole,
+    UserID, UserProfile, VlobID,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -234,14 +230,8 @@ pub(crate) struct BackendEventCertificatesUpdated;
 #[pymethods]
 impl BackendEventCertificatesUpdated {
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<(Self, BackendEvent)> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [organization_id: OrganizationID, "organization_id"],
-            [index: u64, "index"],
-        );
-
+    #[pyo3(signature = (organization_id, index))]
+    fn new(organization_id: OrganizationID, index: u64) -> PyResult<(Self, BackendEvent)> {
         Ok((
             BackendEventCertificatesUpdated,
             BackendEvent(RawBackendEvent::CertificatesUpdated {
@@ -270,14 +260,11 @@ pub(crate) struct BackendEventInviteConduitUpdated;
 #[pymethods]
 impl BackendEventInviteConduitUpdated {
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<(Self, BackendEvent)> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [organization_id: OrganizationID, "organization_id"],
-            [token: InvitationToken, "token"],
-        );
-
+    #[pyo3(signature = (organization_id, token))]
+    fn new(
+        organization_id: OrganizationID,
+        token: InvitationToken,
+    ) -> PyResult<(Self, BackendEvent)> {
         Ok((
             BackendEventInviteConduitUpdated,
             BackendEvent(RawBackendEvent::InviteConduitUpdated {
@@ -306,15 +293,12 @@ pub(crate) struct BackendEventUserUpdatedOrRevoked;
 #[pymethods]
 impl BackendEventUserUpdatedOrRevoked {
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<(Self, BackendEvent)> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [organization_id: OrganizationID, "organization_id"],
-            [user_id: UserID, "user_id"],
-            [profile: Option<UserProfile>, "profile"],
-        );
-
+    #[pyo3(signature = (organization_id, user_id, profile))]
+    fn new(
+        organization_id: OrganizationID,
+        user_id: UserID,
+        profile: Option<UserProfile>,
+    ) -> PyResult<(Self, BackendEvent)> {
         Ok((
             BackendEventUserUpdatedOrRevoked,
             BackendEvent(RawBackendEvent::UserProfileUpdatedOrRevoked {
@@ -356,13 +340,8 @@ pub(crate) struct BackendEventOrganizationExpired;
 #[pymethods]
 impl BackendEventOrganizationExpired {
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<(Self, BackendEvent)> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [organization_id: OrganizationID, "organization_id"],
-        );
-
+    #[pyo3(signature = (organization_id))]
+    fn new(organization_id: OrganizationID) -> PyResult<(Self, BackendEvent)> {
         Ok((
             BackendEventOrganizationExpired,
             BackendEvent(RawBackendEvent::OrganizationExpired {
@@ -382,15 +361,12 @@ pub(crate) struct BackendEventPinged;
 #[pymethods]
 impl BackendEventPinged {
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<(Self, BackendEvent)> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [organization_id: OrganizationID, "organization_id"],
-            [author: DeviceID, "author"],
-            [ping: String, "ping"],
-        );
-
+    #[pyo3(signature = (organization_id, author, ping))]
+    fn new(
+        organization_id: OrganizationID,
+        author: DeviceID,
+        ping: String,
+    ) -> PyResult<(Self, BackendEvent)> {
         Ok((
             BackendEventPinged,
             BackendEvent(RawBackendEvent::Pinged {
@@ -428,16 +404,15 @@ pub(crate) struct BackendEventMessageReceived;
 #[pymethods]
 impl BackendEventMessageReceived {
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<(Self, BackendEvent)> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [organization_id: OrganizationID, "organization_id"],
-            [author: DeviceID, "author"],
-            [recipient: UserID, "recipient"],
-            [index: u64, "index"],
-            [message: &PyBytes, "message"],
-        );
+    #[pyo3(signature = (organization_id, author, recipient, index, message))]
+    fn new(
+        organization_id: OrganizationID,
+        author: DeviceID,
+        recipient: UserID,
+        index: u64,
+        message: BytesWrapper,
+    ) -> PyResult<(Self, BackendEvent)> {
+        crate::binding_utils::unwrap_bytes!(message);
 
         Ok((
             BackendEventMessageReceived,
@@ -446,7 +421,7 @@ impl BackendEventMessageReceived {
                 author: author.0,
                 recipient: recipient.0,
                 index,
-                message: message.as_bytes().to_vec(),
+                message: message.to_vec(),
             }),
         ))
     }
@@ -494,16 +469,13 @@ pub(crate) struct BackendEventInviteStatusChanged;
 #[pymethods]
 impl BackendEventInviteStatusChanged {
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<(Self, BackendEvent)> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [organization_id: OrganizationID, "organization_id"],
-            [greeter: UserID, "greeter"],
-            [token: InvitationToken, "token"],
-            [status: InvitationStatus, "status"],
-        );
-
+    #[pyo3(signature = (organization_id, greeter, token, status))]
+    fn new(
+        organization_id: OrganizationID,
+        greeter: UserID,
+        token: InvitationToken,
+        status: InvitationStatus,
+    ) -> PyResult<(Self, BackendEvent)> {
         Ok((
             BackendEventInviteStatusChanged,
             BackendEvent(RawBackendEvent::InviteStatusChanged {
@@ -552,16 +524,13 @@ pub(crate) struct BackendEventRealmMaintenanceFinished;
 #[pymethods]
 impl BackendEventRealmMaintenanceFinished {
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<(Self, BackendEvent)> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [organization_id: OrganizationID, "organization_id"],
-            [author: DeviceID, "author"],
-            [realm_id: RealmID, "realm_id"],
-            [encryption_revision: u64, "encryption_revision"],
-        );
-
+    #[pyo3(signature = (organization_id, author, realm_id, encryption_revision))]
+    fn new(
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: RealmID,
+        encryption_revision: u64,
+    ) -> PyResult<(Self, BackendEvent)> {
         Ok((
             BackendEventRealmMaintenanceFinished,
             BackendEvent(RawBackendEvent::RealmMaintenanceFinished {
@@ -613,16 +582,13 @@ pub(crate) struct BackendEventRealmMaintenanceStarted;
 #[pymethods]
 impl BackendEventRealmMaintenanceStarted {
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<(Self, BackendEvent)> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [organization_id: OrganizationID, "organization_id"],
-            [author: DeviceID, "author"],
-            [realm_id: RealmID, "realm_id"],
-            [encryption_revision: u64, "encryption_revision"],
-        );
-
+    #[pyo3(signature = (organization_id, author, realm_id, encryption_revision))]
+    fn new(
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: RealmID,
+        encryption_revision: u64,
+    ) -> PyResult<(Self, BackendEvent)> {
         Ok((
             BackendEventRealmMaintenanceStarted,
             BackendEvent(RawBackendEvent::RealmMaintenanceStarted {
@@ -672,18 +638,15 @@ pub(crate) struct BackendEventRealmVlobsUpdated;
 #[pymethods]
 impl BackendEventRealmVlobsUpdated {
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<(Self, BackendEvent)> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [organization_id: OrganizationID, "organization_id"],
-            [author: DeviceID, "author"],
-            [realm_id: RealmID, "realm_id"],
-            [checkpoint: u64, "checkpoint"],
-            [src_id: VlobID, "src_id"],
-            [src_version: u64, "src_version"],
-        );
-
+    #[pyo3(signature = (organization_id, author, realm_id, checkpoint, src_id, src_version))]
+    fn new(
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: RealmID,
+        checkpoint: u64,
+        src_id: VlobID,
+        src_version: u64,
+    ) -> PyResult<(Self, BackendEvent)> {
         Ok((
             BackendEventRealmVlobsUpdated,
             BackendEvent(RawBackendEvent::RealmVlobsUpdated {
@@ -748,17 +711,14 @@ pub(crate) struct BackendEventRealmRolesUpdated;
 #[pymethods]
 impl BackendEventRealmRolesUpdated {
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<(Self, BackendEvent)> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [organization_id: OrganizationID, "organization_id"],
-            [author: DeviceID, "author"],
-            [realm_id: RealmID, "realm_id"],
-            [user: UserID, "user"],
-            [role: Option<RealmRole>, "role"],
-        );
-
+    #[pyo3(signature = (organization_id, author, realm_id, user, role))]
+    fn new(
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: RealmID,
+        user: UserID,
+        role: Option<RealmRole>,
+    ) -> PyResult<(Self, BackendEvent)> {
         Ok((
             BackendEventRealmRolesUpdated,
             BackendEvent(RawBackendEvent::RealmRolesUpdated {
@@ -814,13 +774,8 @@ pub(crate) struct BackendEventPkiEnrollmentUpdated;
 #[pymethods]
 impl BackendEventPkiEnrollmentUpdated {
     #[new]
-    #[args(py_kwargs = "**")]
-    fn new(py_kwargs: Option<&PyDict>) -> PyResult<(Self, BackendEvent)> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [organization_id: OrganizationID, "organization_id"],
-        );
-
+    #[pyo3(signature = (organization_id))]
+    fn new(organization_id: OrganizationID) -> PyResult<(Self, BackendEvent)> {
         Ok((
             BackendEventPkiEnrollmentUpdated,
             BackendEvent(RawBackendEvent::PkiEnrollmentUpdated {
