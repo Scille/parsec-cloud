@@ -23,6 +23,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl BackendAddr {
     #[new]
+    #[pyo3(signature = (hostname, port, use_ssl))]
     fn new(hostname: String, port: Option<u16>, use_ssl: bool) -> Self {
         Self(libparsec::low_level::types::BackendAddr::new(
             hostname, port, use_ssl,
@@ -57,7 +58,7 @@ impl BackendAddr {
         self.0.to_url().to_string()
     }
 
-    #[args(path = "\"\"")]
+    #[pyo3(signature = (path = ""))]
     fn to_http_domain_url(&self, path: &str) -> String {
         self.0.to_http_url_with_path(Some(path)).to_string()
     }
@@ -67,7 +68,7 @@ impl BackendAddr {
     }
 
     #[classmethod]
-    #[args(allow_http_redirection = "false")]
+    #[pyo3(signature = (url, allow_http_redirection = false))]
     fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
         match allow_http_redirection {
             true => match libparsec::low_level::types::BackendAddr::from_any(url) {
@@ -95,7 +96,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl BackendOrganizationAddr {
     #[new]
-    #[args(py_kwargs = "**")]
+    #[pyo3(signature = (organization_id, root_verify_key, **py_kwargs))]
     fn new(
         organization_id: OrganizationID,
         root_verify_key: VerifyKey,
@@ -182,7 +183,7 @@ impl BackendOrganizationAddr {
     }
 
     #[classmethod]
-    #[args(allow_http_redirection = "false")]
+    #[pyo3(signature = (url, allow_http_redirection = false))]
     fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
         match allow_http_redirection {
             true => match libparsec::low_level::types::BackendOrganizationAddr::from_any(url) {
@@ -217,7 +218,7 @@ pub(crate) struct BackendActionAddr;
 #[pymethods]
 impl BackendActionAddr {
     #[classmethod]
-    #[args(allow_http_redirection = "false")]
+    #[pyo3(signature = (url, allow_http_redirection = false))]
     fn from_url(
         _cls: &PyType,
         py: Python,
@@ -280,7 +281,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl BackendOrganizationBootstrapAddr {
     #[new]
-    #[args(py_kwargs = "**")]
+    #[pyo3(signature = (organization_id, token, **py_kwargs))]
     fn new(
         organization_id: OrganizationID,
         token: Option<String>,
@@ -373,13 +374,13 @@ impl BackendOrganizationBootstrapAddr {
         self.0.to_http_redirection_url().to_string()
     }
 
-    #[args(path = "\"\"")]
+    #[pyo3(signature = (path = ""))]
     fn to_http_domain_url(&self, path: &str) -> String {
         self.0.to_http_url_with_path(Some(path)).to_string()
     }
 
     #[classmethod]
-    #[args(allow_http_redirection = "false")]
+    #[pyo3(signature = (url, allow_http_redirection = false))]
     fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
         match allow_http_redirection {
             true => {
@@ -427,7 +428,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl BackendOrganizationFileLinkAddr {
     #[new]
-    #[args(encrypted_timestamp = "None", py_kwargs = "**")]
+    #[pyo3(signature = (organization_id, workspace_id, encrypted_path, encrypted_timestamp = None, **py_kwargs))]
     fn new(
         organization_id: OrganizationID,
         workspace_id: EntryID,
@@ -532,7 +533,7 @@ impl BackendOrganizationFileLinkAddr {
     }
 
     #[classmethod]
-    #[args(allow_http_redirection = "false")]
+    #[pyo3(signature = (url, allow_http_redirection = false))]
     fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
         match allow_http_redirection {
             true => {
@@ -551,7 +552,7 @@ impl BackendOrganizationFileLinkAddr {
     }
 
     #[classmethod]
-    #[args(encrypted_timestamp = "None")]
+    #[pyo3(signature = (organization_addr, workspace_id, encrypted_path, encrypted_timestamp = None))]
     fn build(
         _cls: &PyType,
         organization_addr: BackendOrganizationAddr,
@@ -585,7 +586,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl BackendInvitationAddr {
     #[new]
-    #[args(py_kwargs = "**")]
+    #[pyo3(signature = (organization_id, invitation_type, token, **py_kwargs))]
     fn new(
         organization_id: OrganizationID,
         invitation_type: &InvitationType,
@@ -683,7 +684,7 @@ impl BackendInvitationAddr {
     }
 
     #[classmethod]
-    #[args(allow_http_redirection = "false")]
+    #[pyo3(signature = (url, allow_http_redirection = false))]
     fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
         match allow_http_redirection {
             true => match libparsec::low_level::types::BackendInvitationAddr::from_any(url) {
@@ -727,7 +728,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl BackendPkiEnrollmentAddr {
     #[new]
-    #[args(py_kwargs = "**")]
+    #[pyo3(signature = (organization_id, **py_kwargs))]
     fn new(organization_id: OrganizationID, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         let addr = match py_kwargs {
             Some(dict) => BackendAddr::new(
@@ -804,13 +805,13 @@ impl BackendPkiEnrollmentAddr {
         self.0.to_http_redirection_url().to_string()
     }
 
-    #[args(path = "\"\"")]
+    #[pyo3(signature = (path = ""))]
     fn to_http_domain_url(&self, path: &str) -> String {
         self.0.to_http_url_with_path(Some(path)).to_string()
     }
 
     #[classmethod]
-    #[args(allow_http_redirection = "false")]
+    #[pyo3(signature = (url, allow_http_redirection = false))]
     fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
         match allow_http_redirection {
             true => match libparsec::low_level::types::BackendPkiEnrollmentAddr::from_any(url) {

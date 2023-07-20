@@ -110,7 +110,7 @@ impl TimeProvider {
         }
     }
 
-    #[args(freeze = "None", shift = "None", speed = "None", realtime = "false")]
+    #[pyo3(signature = (freeze = None, shift = None, speed = None, realtime = false))]
     pub fn mock_time(
         &mut self,
         freeze: Option<DateTime>,
@@ -174,7 +174,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl DateTime {
     #[new]
-    #[args(hour = 0, minute = 0, second = 0, microsecond = 0)]
+    #[pyo3(signature = (year, month, day, hour = 0, minute = 0, second = 0, microsecond = 0))]
     fn new(
         year: i32,
         month: u32,
@@ -277,13 +277,7 @@ impl DateTime {
         Ok(us as f64 / 1e6)
     }
 
-    #[args(
-        days = "0",
-        hours = "0",
-        minutes = "0",
-        seconds = "0",
-        microseconds = "0"
-    )]
+    #[pyo3(signature = (days = 0, hours = 0, minutes = 0, seconds = 0, microseconds = 0))]
     fn subtract(
         &self,
         days: i32,
@@ -297,13 +291,7 @@ impl DateTime {
         Ok(Self(self.0.add_us(us)))
     }
 
-    #[args(
-        days = "0",
-        hours = "0",
-        minutes = "0",
-        seconds = "0",
-        microseconds = "0"
-    )]
+    #[pyo3(signature = (days = 0, hours = 0, minutes = 0, seconds = 0, microseconds = 0))]
     fn add(
         &self,
         days: i32,
@@ -332,7 +320,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl LocalDateTime {
     #[new]
-    #[args(hour = 0, minute = 0, second = 0, microsecond = 0)]
+    #[pyo3(signature = (year, month, day, hour = 0, minute = 0, second = 0, microsecond = 0))]
     fn new(
         year: i32,
         month: u32,

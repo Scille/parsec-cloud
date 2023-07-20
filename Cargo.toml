@@ -114,7 +114,7 @@ paste = { version = "1.0.12", default-features = false }
 percent-encoding = { version = "2.2.0", default-features = false }
 pretty_assertions = { version = "1.3.0", default-features = false }
 proc-macro2 = { version = "1.0.56", default-features = false }
-pyo3 = { version = "0.17.3", default-features = false }
+pyo3 = { version = "0.19.1", default-features = false }
 quote = { version = "1.0.28", default-features = false }
 # Two versions of `rand` needed in `libparsec_crypto`
 rand_07 = { package = "rand", version = "0.7", default-features = false }

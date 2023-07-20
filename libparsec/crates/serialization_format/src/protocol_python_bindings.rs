@@ -217,6 +217,7 @@ fn quote_reps(
                     #[pymethods]
                     impl #subclass_name {
                         #[new]
+                        #[pyo3(signature = (unit))]
                         fn new(unit: #nested_type_name) -> PyResult<(Self, Rep)> {
                             Ok((
                                 Self,
@@ -243,17 +244,19 @@ fn quote_reps(
                         let ty = quote_type_as_fn_new_param(&f.ty);
                         quote! { #name: #ty }
                     });
+                    let names = fields.iter().map(|field| format_ident!("{}", &field.name));
+                    let signature = quote! { #(#names),* };
                     let conversions = fields.iter().map(quote_field_as_fn_new_conversion);
-                    let assignments = fields.iter().map(|f| format_ident!("{}", f.name));
 
                     quote! {
                         #[new]
+                        #[pyo3(signature = (#signature))]
                         fn new<'py>(py: Python<'py>, #(#params),*) -> PyResult<(Self, Rep)> {
                             #(#conversions)*
                             Ok((
                                 Self,
                                 Rep(#protocol_path::Rep::#variant_name {
-                                    #(#assignments),*
+                                    #signature
                                 })
                             ))
                         }
@@ -368,6 +371,7 @@ fn quote_reps(
         #[pymethods]
         impl RepUnknownStatus {
             #[new]
+            #[pyo3(signature = (status, reason))]
             fn new(status: String, reason: Option<String>) -> PyResult<(Self, Rep)> {
                 Ok((
                     Self,
@@ -423,6 +427,7 @@ fn quote_req(
                 #[pymethods]
                 impl Req {
                     #[new]
+                    #[pyo3(signature = (unit))]
                     fn new(unit: #nested_type_name) -> PyResult<Self> {
                         Ok(Self(
                             #protocol_path::Req(unit.0)
@@ -456,6 +461,7 @@ fn quote_req(
             });
             let conversions = fields.iter().map(quote_field_as_fn_new_conversion);
             let names = fields.iter().map(|field| format_ident!("{}", &field.name));
+            let signature = quote! { #(#names),* };
 
             let fn_getters_impls = fields.iter().map(|field| {
                 let field_name = format_ident!("{}", field.name);
@@ -488,11 +494,12 @@ fn quote_req(
 
             let fn_new_and_getters_iml = quote! {
                 #[new]
+                #[pyo3(signature = (#signature))]
                 fn new(#(#params),*) -> PyResult<Self> {
                     #(#conversions)*
                     Ok(Self(
                         #protocol_path::Req {
-                            #(#names),*
+                            #signature
                         }
                     ))
                 }
@@ -584,17 +591,19 @@ fn quote_nested_type(
                         let ty = quote_type_as_fn_new_param(&f.ty);
                         quote! { #name: #ty }
                     });
+                    let names = v.fields.iter().map(|field| format_ident!("{}", &field.name));
+                    let signature = quote! { #(#names),* };
                     let conversions = v.fields.iter().map(quote_field_as_fn_new_conversion);
-                    let assignments = v.fields.iter().map(|f| format_ident!("{}", f.name));
 
                     quote! {
                         #[new]
+                        #[pyo3(signature = (#signature))]
                         fn new<'py>(py: Python<'py>, #(#params),*) -> PyResult<(Self, #nested_type_name)> {
                             #(#conversions)*
                             Ok((
                                 Self,
                                 #nested_type_name(#protocol_path::#nested_type_name::#variant_name {
-                                    #(#assignments),*
+                                    #signature
                                 })
                             ))
                         }
@@ -695,14 +704,16 @@ fn quote_nested_type(
                 });
                 let conversions = fields.iter().map(quote_field_as_fn_new_conversion);
                 let names = fields.iter().map(|field| format_ident!("{}", field.name));
+                let signature = quote! { #(#names),* };
 
                 quote! {
                     #[new]
+                    #[pyo3(signature = (#signature))]
                     fn new(#(#params),*) -> PyResult<Self> {
                         #(#conversions)*
                         Ok(Self(
                             #protocol_path::#nested_type_name {
-                                #(#names),*
+                                #signature
                             }
                         ))
                     }

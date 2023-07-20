@@ -24,6 +24,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl PkiEnrollmentAnswerPayload {
     #[new]
+    #[pyo3(signature = (device_id, device_label, human_handle, profile, root_verify_key))]
     fn new(
         device_id: DeviceID,
         device_label: Option<DeviceLabel>,
@@ -153,7 +154,7 @@ impl X509Certificate {
         })
     }
 
-    #[args(py_kwargs = "**")]
+    #[pyo3(signature = (**py_kwargs))]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
