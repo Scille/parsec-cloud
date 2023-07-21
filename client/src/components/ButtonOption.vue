@@ -20,7 +20,7 @@ import {
 } from '@ionic/vue';
 
 defineProps<{
-  buttonLabel: any,
+  buttonLabel?: any,
   icon?: string
 }>();
 </script>
@@ -40,6 +40,10 @@ defineProps<{
 
   &:hover {
     color: var(--parsec-color-light-primary-600);
+  }
+
+  ion-icon {
+    margin-inline: 0;
   }
 }
 </style>

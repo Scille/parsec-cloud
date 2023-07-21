@@ -162,7 +162,7 @@
         "createWorkspace": "Nouvel espace de travail",
         "documents": "Documents",
         "user": "utilisateur",
-        "itemCount": "Aucun élément | Un élément | {count} éléments",
+        "itemCount": "Aucun élément | 1 élément | {count} éléments",
         "workspaceContextMenu": {
             "titleOffline": "Hors Connexion",
             "titleManage": "Gestion de l'espace",
@@ -212,8 +212,8 @@
     "FoldersPage": {
         "createFolder": "New folder",
         "import": "Import",
-        "itemCount": "Aucun élément | Un élément | {count} éléments",
-        "itemSelectedCount": "Aucun élément sélectionné | Un élément sélectionné | {count} éléments sélectionnés",
+        "itemCount": "Aucun élément | U1n élément | {count} éléments",
+        "itemSelectedCount": "Aucun élément sélectionné | 1 élément sélectionné | {count} éléments sélectionnés",
         "listDisplayTitles": {
             "name": "Nom",
             "updatedBy": "Modifié par",

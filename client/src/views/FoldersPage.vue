@@ -86,11 +86,13 @@
               class="folder-list-header"
               lines="full"
             >
-              <ion-checkbox
-                class="folder-list-header__label label-selected"
-                @ion-change="selectAllFiles($event.detail.checked)"
-                v-model="allFilesSelected"
-              />
+              <ion-label class="folder-list-header__label label-selected">
+                <ion-checkbox
+                  class="checkbox"
+                  @ion-change="selectAllFiles($event.detail.checked)"
+                  v-model="allFilesSelected"
+                />
+              </ion-label>
               <ion-label class="folder-list-header__label label-name">
                 {{ $t('FoldersPage.listDisplayTitles.name') }}
               </ion-label>
@@ -109,8 +111,9 @@
               v-for="child in folderInfo.children"
               :key="child.id"
               :file="child"
+              :show-checkbox="selectedFilesCount > 0 || allFilesSelected"
               @click="onFileClick"
-              @menu-click="openFileContextMenu"
+              @menu-click="openFileContextMenu($event, child)"
               @select="onFileSelect"
               ref="fileItemRefs"
             />
@@ -128,21 +131,40 @@
             <file-card
               :file="child"
               @click="onFileClick"
-              @menu-click="openFileContextMenu"
+              @menu-click="openFileContextMenu($event, child)"
             />
           </ion-item>
         </div>
-        <div
-          class="folder-footer title-h5"
-          v-if="selectedFilesCount === 0"
-        >
-          {{ $t('FoldersPage.itemCount', { count: folderInfo.children.length }, folderInfo.children.length) }}
-        </div>
-        <div
-          class="folder-footer title-h5"
-          v-else
-        >
-          {{ $t('FoldersPage.itemSelectedCount', { count: selectedFilesCount }, selectedFilesCount) }}
+      </div>
+      <!-- number of item (selected or not) -->
+      <div class="folder-footer">
+        <div class="folder-footer__container">
+          <ion-text
+            class="text title-h5"
+            v-if="selectedFilesCount === 0"
+          >
+            {{ $t('FoldersPage.itemCount', { count: folderInfo.children.length }, folderInfo.children.length) }}
+          </ion-text>
+          <ion-text
+            class="text title-h5"
+            v-if="selectedFilesCount !== 0"
+          >
+            {{ $t('FoldersPage.itemSelectedCount', { count: selectedFilesCount }, selectedFilesCount) }}
+          </ion-text>
+          <button-option
+            class="shortcuts-btn"
+            id="button-move-to"
+            :icon="arrowRedo"
+            @click="actionOnSelectedFile(moveTo)"
+            v-if="selectedFilesCount >= 1"
+          />
+          <button-option
+            class="shortcuts-btn"
+            id="button-delete"
+            :icon="trashBin"
+            @click="actionOnSelectedFile(deleteFile)"
+            v-if="selectedFilesCount >= 1"
+          />
         </div>
       </div>
     </ion-content>
@@ -159,6 +181,7 @@ import {
   IonListHeader,
   IonLabel,
   IonCheckbox,
+  IonText,
   popoverController
 } from '@ionic/vue';
 import {
@@ -204,9 +227,16 @@ const selectedFilesCount = computed(() => {
 const displayView = ref(DisplayState.List);
 
 function onFileSelect(_file: MockFile, _selected: boolean): void {
+
   if (selectedFilesCount.value === 0) {
     allFilesSelected.value = false;
     selectAllFiles(false);
+  }
+  // check global checkbox if all files are selected
+  if (selectedFilesCount.value === folderInfo.value.children.length) {
+    allFilesSelected.value = true;
+  } else {
+    allFilesSelected.value = false;
   }
 }
 
@@ -297,6 +327,7 @@ async function openFileContextMenu(event: Event, file: MockFile): Promise<void> 
   const popover = await popoverController
     .create({
       component: FileContextMenu,
+      cssClass: 'file-context-menu',
       event: event,
       translucent: true,
       showBackdrop: false,
@@ -329,7 +360,15 @@ function resetSelection(): void {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+.folder-toolbar {
+  padding: 1em 2em;
+  height: 6em;
+  background-color: var(--parsec-color-light-secondary-background);
+  border-top: 1px solid var(--parsec-color-light-secondary-light);
+  position: sticky;
+}
+
 .folder-container {
   margin: 2em;
   background-color: white;
@@ -340,50 +379,45 @@ function resetSelection(): void {
   font-weight: 600;
   padding-inline-start: 0;
 
-}
+  &__label {
+    padding: .75rem 1rem;
+  }
+  .label-selected {
+    min-width: 4rem;
+    flex-grow: 0;
+    display: flex;
+    align-items: center;
+    justify-content: end;
+  }
 
-.label-selected {
-  min-width: 3rem;
-  flex-grow: 0;
-}
+  .label-name {
+    width: 100%;
+    min-width: 11.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+  }
 
-.label-name {
-  width: 100%;
-  min-width: 11.25rem;
-  white-space: nowrap;
-  overflow: hidden;
-}
+  .label-updatedBy {
+    min-width: 11.25rem;
+    max-width: 10vw;
+    flex-grow: 2;
+  }
 
-.label-updatedBy {
-  min-width: 11.25rem;
-  max-width: 10vw;
-  flex-grow: 2;
-}
+  .label-lastUpdate {
+    min-width: 11.25rem;
+    flex-grow: 0;
+  }
 
-.label-lastUpdate {
-  min-width: 11.25rem;
-  flex-grow: 0;
-}
+  .label-size {
+    min-width: 11.25rem;
+  }
 
-.label-size {
-  min-width: 11.25rem;
-}
-
-.label-space {
-  min-width: 4rem;
-  flex-grow: 0;
-  margin-left: auto;
-  margin-right: 1rem;
-}
-
-.folder-footer {
-  width: 100%;
-  left: 0;
-  position: fixed;
-  bottom: 0;
-  text-align: center;
-  color: var(--parsec-color-light-secondary-text);
-  margin-bottom: 2em;
+  .label-space {
+    min-width: 4rem;
+    flex-grow: 0;
+    margin-left: auto;
+    margin-right: 1rem;
+  }
 }
 
 .folders-container-grid {
@@ -393,15 +427,46 @@ function resetSelection(): void {
   overflow-y: auto;
 }
 
-ion-item::part(native) {
-  --padding-start: 0px;
-}
+.folder-footer {
+  width: 100%;
+  position: fixed;
+  bottom: 0;
+  padding: 1em 0 2.5em;
+  text-align: center;
+  background: linear-gradient(360deg, #FFF 0%, rgba(255, 255, 255, 0.00) 100%);
 
-.folder-toolbar {
-  padding: 1em 2em;
-  height: 6em;
-  background-color: var(--parsec-color-light-secondary-background);
-  border-top: 1px solid var(--parsec-color-light-secondary-light);
+  &__container {
+    background: var(--parsec-color-light-secondary-background);
+    width: fit-content;
+    height: 3rem;
+    padding: 0.5rem 1rem;
+    margin: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--parsec-shadow-light);
+    border-radius: var(--parsec-radius-4);
+    gap: 1rem;
+  }
+
+  .shortcuts-btn {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    &::before {
+      background: var(--parsec-color-light-secondary-light);
+      content: '';
+      width: 1.5px;
+      border-radius: var(--parsec-radius-4);
+      height: calc(100% - .5rem);
+      display: block;
+    }
+  }
+
+  .text {
+    color: var(--parsec-color-light-secondary-text);
+  }
 }
 
 .right-side {
