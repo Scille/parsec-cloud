@@ -595,12 +595,35 @@ ion-popover::part(content) {
   border-radius: var(--parsec-radius-6);
 }
 
+/* handle the popover option menu on file item (list or grid) */
+.file-context-menu {
+  --width: 20rem;
+}
+
 ion-modal::part(content) {
   border-radius: var(--parsec-radius-8);
   --min-width: var(--parsec-modal-width);
 }
 
-/* homepage popover */
+/* --- checkbox --- */
+.checkbox {
+  margin: 0;
+  --size: 1.25rem;
+  --checkbox-background-checked: var(--parsec-color-light-primary-600);
+  --checkbox-border-checked: var(--parsec-color-light-primary-600);
+}
+
+.checkbox::part(container) {
+  border: 2px solid var(--parsec-color-light-secondary-light);
+  border-radius: var(--parsec-radius-6);
+  padding: 2px;
+}
+
+.checkbox-checked::part(container) {
+  border: 2px solid var(--parsec-color-light-primary-600);
+}
+
+/* --- homepage popover --- */
 .homepage-popover {
   --width: 350px;
   --offset-x: -6.8rem;
@@ -795,4 +818,8 @@ body {
   background: var(--parsec-color-light-primary-600);
   border: 0.25em solid transparent;
   background-clip: content-box;
+}
+
+ion-item > .ion-item-child-clickable {
+  z-index: 2;
 }

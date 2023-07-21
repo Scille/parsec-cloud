@@ -26,15 +26,12 @@ defineProps<{
 .container {
   display: flex;
   flex-wrap: nowrap;
-  background: var(--parsec-color-light-secondary-inversed-contrast);
-  border-radius: 32px;
 
   .avatar {
     display: flex;
     align-items: center;
     justify-content: center;
     text-transform: uppercase;
-    margin-left: -0.6em;
     height: 2rem;
     width: 2rem;
     border: 2px solid var(--parsec-color-light-secondary-inversed-contrast);

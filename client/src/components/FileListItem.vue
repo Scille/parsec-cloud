@@ -8,13 +8,16 @@
     :detail="false"
     :class="{ selected: isSelected, 'no-padding-end': !isSelected }"
     @click="$emit('click', $event, file)"
+    @mouseenter="isHovered = true"
+    @mouseleave="isHovered = false"
   >
     <div
       class="file-selected"
-      v-if="showCheckbox"
     >
       <ion-checkbox
+        class="checkbox"
         v-model="isSelected"
+        v-if="isSelected || isHovered || showCheckbox"
         @click.stop
         @ion-change="$emit('select', file, isSelected)"
       />
@@ -53,9 +56,7 @@
     </div>
 
     <!-- file size -->
-    <div
-      class="file-size"
-    >
+    <div class="file-size">
       <ion-label
         v-show="file.type === 'file'"
         class="label-size cell"
@@ -65,9 +66,8 @@
     </div>
 
     <!-- options -->
-    <div class="file-options">
+    <div class="file-options ion-item-child-clickable">
       <ion-button
-        v-if="!showCheckbox"
         fill="clear"
         class="options-button"
         @click.stop="$emit('menuClick', $event, file)"
@@ -96,11 +96,12 @@ import { FormattersKey, Formatters } from '@/common/injectionKeys';
 import { MockFile } from '@/common/mocks';
 import UserTag from '@/components/UserTag.vue';
 
+const isHovered = ref(false);
 const isSelected = ref(false);
-const showCheckbox = ref(false);
 
 const props = defineProps<{
-  file: MockFile
+  file: MockFile,
+  showCheckbox: boolean
 }>();
 
 defineEmits<{
@@ -110,8 +111,8 @@ defineEmits<{
 }>();
 
 defineExpose({
+  isHovered,
   isSelected,
-  showCheckbox,
   props
 });
 
@@ -132,17 +133,30 @@ function isFileSynced(): boolean {
 
 <style lang="scss" scoped>
 .file-list-item {
-  --background-activated: var(--parsec-color-light-primary-100);
-  border-radius: 4px;
+  border-radius: var(--parsec-radius-4);
+  --show-full-highlight: 0;
 
-  &:hover {
+  &::part(native) {
+    --padding-start: 0px;
+  }
+
+  &:hover:not(.selected) {
     --background-hover: var(--parsec-color-light-primary-30);
     --background-hover-opacity: 1;
   }
 
-  &:focus {
+  &:hover, &.selected {
+    .cell, .options-button__icon {
+      color: var(--parsec-color-light-secondary-text);
+      --background: red;
+    }
+  }
+
+  &:focus, &:active, &.selected {
     --background-focused: var(--parsec-color-light-primary-100);
+    --background: var(--parsec-color-light-primary-100);
     --background-focused-opacity: 1;
+    --border-width: 0;
   }
 }
 
@@ -151,6 +165,11 @@ function isFileSynced(): boolean {
   display: flex;
   align-items: center;
   height: 4rem;
+}
+
+.file-selected {
+  min-width: 4rem;
+  justify-content: end;
 }
 
 .file-name {

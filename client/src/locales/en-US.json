@@ -162,7 +162,7 @@
         "createWorkspace": "New workspace",
         "documents": "Documents",
         "user": "user",
-        "itemCount": "No items | One item | {count} items",
+        "itemCount": "No items | 1 item | {count} items",
         "workspaceContextMenu": {
             "titleOffline": "Offline",
             "titleManage": "Manage workspace",
@@ -212,8 +212,8 @@
     "FoldersPage": {
         "createFolder": "New folder",
         "import": "Import",
-        "itemCount": "No items | One item | {count} items",
-        "itemSelectedCount": "No selected items | One selected item | {count} selected items",
+        "itemCount": "No items | 1 item | {count} items",
+        "itemSelectedCount": "No selected items | 1 selected item | {count} selected items",
         "listDisplayTitles": {
             "name": "Name",
             "updatedBy": "Updated By",
