@@ -212,7 +212,7 @@ async function openWorkspaceContextMenu(event: Event, workspace: MockWorkspace):
 
   const { data } = await popover.onDidDismiss();
   if (data !== undefined) {
-    if (data.action === WorkspaceAction.Manage) {
+    if (data.action === WorkspaceAction.Share) {
       onWorkspaceShareClick(new Event('ignored'), workspace);
     }
   }

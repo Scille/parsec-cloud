@@ -67,17 +67,6 @@
 
         <ion-item
           button
-          @click="onClick(WorkspaceAction.Manage)"
-          class="group-item"
-        >
-          <ion-icon :icon="cog" />
-          <ion-label class="body">
-            {{ $t('WorkspacesPage.workspaceContextMenu.actionManage') }}
-          </ion-label>
-        </ion-item>
-
-        <ion-item
-          button
           @click="onClick(WorkspaceAction.ShowDetails)"
           class="group-item"
         >
@@ -105,6 +94,17 @@
             {{ $t('WorkspacesPage.workspaceContextMenu.actionCopyLink') }}
           </ion-label>
         </ion-item>
+
+        <ion-item
+          button
+          @click="onClick(WorkspaceAction.Share)"
+          class="group-item"
+        >
+          <ion-icon :icon="shareSocial" />
+          <ion-label class="body">
+            {{ $t('WorkspacesPage.workspaceContextMenu.actionShare') }}
+          </ion-label>
+        </ion-item>
       </ion-item-group>
     </ion-list>
   </ion-content>
@@ -116,9 +116,10 @@ export enum WorkspaceAction {
   MakeAvailableOffline,
   CopyLink,
   ShowDetails,
-  Manage,
+  Share,
   ShowHistory,
-  OpenInExplorer
+  OpenInExplorer,
+  Mount,
 }
 </script>
 
@@ -129,7 +130,7 @@ import {
   pencil,
   link,
   informationCircle,
-  cog,
+  shareSocial,
   time,
   open
 } from 'ionicons/icons';
