@@ -12,6 +12,7 @@ describe('Check folders page', () => {
   });
 
   it('Checks initial status', () => {
+    cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
     cy.get('#button-new-folder').contains('New folder');
     cy.get('#button-import').contains('Import');
     cy.get('.file-list-item').should('have.length.greaterThan', 1);
@@ -66,5 +67,49 @@ describe('Check folders page', () => {
     cy.get('.folder-toolbar').find('#grid-view').click();
     cy.get('.folder-grid-item').first().find('.card-option').click();
     checkMenuItems();
+  });
+
+  it('Tests select a file', () => {
+    cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
+    cy.get('.file-list-item').eq(0).find('ion-checkbox').should('not.exist');
+    cy.get('.file-list-item').eq(1).find('ion-checkbox').should('not.exist');
+    // Make the checkbox appear
+    cy.get('.file-list-item').eq(0).trigger('mouseenter');
+    cy.get('.file-list-item').eq(0).find('ion-checkbox').should('exist');
+    // Select the first file
+    cy.get('.file-list-item').eq(0).find('ion-checkbox').click();
+    cy.get('.file-list-item').eq(0).find('ion-checkbox').should('have.class', 'checkbox-checked');
+    cy.get('.file-list-item').eq(1).find('ion-checkbox').should('not.have.class', 'checkbox-checked');
+    cy.get('.folder-footer').contains('1 selected item');
+    // Unselect the first file
+    cy.get('.file-list-item').eq(0).find('ion-checkbox').click();
+    cy.get('.file-list-item').eq(0).find('ion-checkbox').should('not.have.class', 'checkbox-checked');
+    cy.get('.file-list-item').eq(1).find('ion-checkbox').should('not.exist');
+    cy.get('.folder-footer').contains('2 items');
+  });
+
+  it('Tests select all files', () => {
+    cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
+    // Select all
+    cy.get('.folder-list-header').find('ion-checkbox').click();
+    cy.get('.folder-list-header').find('ion-checkbox').should('have.class', 'checkbox-checked');
+    cy.get('.folder-footer').contains('2 selected items');
+    cy.get('.file-list-item').eq(0).find('ion-checkbox').should('have.class', 'checkbox-checked');
+    cy.get('.file-list-item').eq(1).find('ion-checkbox').should('have.class', 'checkbox-checked');
+    // Unselect all
+    cy.get('.folder-list-header').find('ion-checkbox').click();
+    cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
+    cy.get('.file-list-item').eq(0).find('ion-checkbox').should('not.exist');
+    cy.get('.file-list-item').eq(1).find('ion-checkbox').should('not.exist');
+    cy.get('.folder-footer').contains('2 items');
+
+    // Select all, unselect first file
+    cy.get('.folder-list-header').find('ion-checkbox').click();
+    cy.get('.folder-list-header').find('ion-checkbox').should('have.class', 'checkbox-checked');
+    cy.get('.folder-footer').contains('2 selected items');
+    cy.get('.file-list-item').eq(0).find('ion-checkbox').click();
+    cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
+    cy.get('.file-list-item').eq(0).find('ion-checkbox').should('not.have.class', 'checkbox-checked');
+    cy.get('.folder-footer').contains('1 selected item');
   });
 });

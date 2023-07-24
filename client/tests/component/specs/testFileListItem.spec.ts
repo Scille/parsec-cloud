@@ -22,7 +22,8 @@ describe('File List Item', () => {
 
     const wrapper = mount(FileListItem, {
       props: {
-        file: FILE
+        file: FILE,
+        showCheckbox: false
       },
       global: {
         provide: getDefaultProvideConfig()
@@ -70,7 +71,8 @@ describe('File List Item', () => {
 
     const wrapper = mount(FileListItem, {
       props: {
-        file: FOLDER
+        file: FOLDER,
+        showCheckbox: false
       },
       global: {
         provide: getDefaultProvideConfig()
@@ -88,5 +90,4 @@ describe('File List Item', () => {
     expect(wrapper.emitted('menuClick')?.length).to.equal(1);
     expect(wrapper.emitted('menuClick')?.at(0)?.at(1)).to.deep.equal(FOLDER);
   });
-
 });
