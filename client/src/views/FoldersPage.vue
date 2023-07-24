@@ -3,80 +3,80 @@
 <template>
   <ion-page>
     <ion-content :fullscreen="true">
-      <ion-item-divider
-        class="folder-toolbar ion-margin-bottom secondary"
-      >
-        <div v-if="selectedFilesCount === 0">
-          <button-option
-            id="button-new-folder"
-            :button-label="$t('FoldersPage.createFolder')"
-            :icon="folderOpen"
-            @click="createFolder()"
-          />
-          <button-option
-            id="button-import"
-            :button-label="$t('FoldersPage.import')"
-            :icon="document"
-            @click="importFiles()"
-          />
-        </div>
-        <div v-else-if="selectedFilesCount === 1">
-          <button-option
-            id="button-rename"
-            :button-label="$t('FoldersPage.fileContextMenu.actionRename')"
-            :icon="pencil"
-            @click="actionOnSelectedFile(renameFile)"
-          />
-          <button-option
-            id="button-copy-link"
-            :button-label="$t('FoldersPage.fileContextMenu.actionCopyLink')"
-            :icon="link"
-            @click="actionOnSelectedFile(copyLink)"
-          />
-          <button-option
-            id="button-move-to"
-            :button-label="$t('FoldersPage.fileContextMenu.actionMoveTo')"
-            :icon="arrowRedo"
-            @click="actionOnSelectedFile(moveTo)"
-          />
-          <button-option
-            id="button-delete"
-            :button-label="$t('FoldersPage.fileContextMenu.actionDelete')"
-            :icon="trashBin"
-            @click="actionOnSelectedFile(deleteFile)"
-          />
-          <button-option
-            id="button-delete"
-            :button-label="$t('FoldersPage.fileContextMenu.actionDetails')"
-            :icon="informationCircle"
-            @click="actionOnSelectedFile(showDetails)"
-          />
-        </div>
-        <div v-else>
-          <button-option
-            id="button-moveto"
-            :button-label="$t('FoldersPage.fileContextMenu.actionMoveTo')"
-            :icon="arrowRedo"
-            @click="actionOnSelectedFiles(moveTo)"
-          />
-          <button-option
-            id="button-makeacopy"
-            :button-label="$t('FoldersPage.fileContextMenu.actionMakeACopy')"
-            :icon="copy"
-            @click="actionOnSelectedFiles(makeACopy)"
-          />
-          <button-option
-            id="button-delete"
-            :button-label="$t('FoldersPage.fileContextMenu.actionDelete')"
-            :icon="trashBin"
-            @click="actionOnSelectedFiles(deleteFile)"
-          />
-        </div>
-        <div class="right-side">
-          <list-grid-toggle
-            v-model="displayView"
-            @update:model-value="resetSelection()"
-          />
+      <ion-item-divider class="folder-toolbar ion-margin-bottom secondary">
+        <div class="contextual-menu">
+          <div v-if="selectedFilesCount === 0">
+            <button-option
+              id="button-new-folder"
+              :button-label="$t('FoldersPage.createFolder')"
+              :icon="folderOpen"
+              @click="createFolder()"
+            />
+            <button-option
+              id="button-import"
+              :button-label="$t('FoldersPage.import')"
+              :icon="document"
+              @click="importFiles()"
+            />
+          </div>
+          <div v-else-if="selectedFilesCount === 1">
+            <button-option
+              id="button-rename"
+              :button-label="$t('FoldersPage.fileContextMenu.actionRename')"
+              :icon="pencil"
+              @click="actionOnSelectedFile(renameFile)"
+            />
+            <button-option
+              id="button-copy-link"
+              :button-label="$t('FoldersPage.fileContextMenu.actionCopyLink')"
+              :icon="link"
+              @click="actionOnSelectedFile(copyLink)"
+            />
+            <button-option
+              id="button-move-to"
+              :button-label="$t('FoldersPage.fileContextMenu.actionMoveTo')"
+              :icon="arrowRedo"
+              @click="actionOnSelectedFile(moveTo)"
+            />
+            <button-option
+              id="button-delete"
+              :button-label="$t('FoldersPage.fileContextMenu.actionDelete')"
+              :icon="trashBin"
+              @click="actionOnSelectedFile(deleteFile)"
+            />
+            <button-option
+              id="button-delete"
+              :button-label="$t('FoldersPage.fileContextMenu.actionDetails')"
+              :icon="informationCircle"
+              @click="actionOnSelectedFile(showDetails)"
+            />
+          </div>
+          <div v-else>
+            <button-option
+              id="button-moveto"
+              :button-label="$t('FoldersPage.fileContextMenu.actionMoveTo')"
+              :icon="arrowRedo"
+              @click="actionOnSelectedFiles(moveTo)"
+            />
+            <button-option
+              id="button-makeacopy"
+              :button-label="$t('FoldersPage.fileContextMenu.actionMakeACopy')"
+              :icon="copy"
+              @click="actionOnSelectedFiles(makeACopy)"
+            />
+            <button-option
+              id="button-delete"
+              :button-label="$t('FoldersPage.fileContextMenu.actionDelete')"
+              :icon="trashBin"
+              @click="actionOnSelectedFiles(deleteFile)"
+            />
+          </div>
+          <div class="right-side">
+            <list-grid-toggle
+              v-model="displayView"
+              @update:model-value="resetSelection()"
+            />
+          </div>
         </div>
       </ion-item-divider>
       <div class="folder-container">
