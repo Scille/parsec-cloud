@@ -528,6 +528,20 @@ body.dark {
 
 /**** Global CSS overloads ****/
 
+/* contextual menu button */
+.contextual-menu {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  width: 100%;
+  gap: 1rem;
+}
+
+.contextual-menu .button-option ion-icon {
+  margin-inline: 0em;
+  margin-right: .625rem;
+}
+
 /* ion-modal with a height fitted to its content */
 ion-modal {
   --height: auto;

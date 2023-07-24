@@ -5,12 +5,14 @@
     <ion-content :fullscreen="true">
       <!-- contextual menu -->
       <ion-item-divider class="workspace-toolbar ion-margin-bottom secondary">
-        <button-option
-          id="button-new-workspace"
-          :button-label="$t('WorkspacesPage.createWorkspace')"
-          :icon="addCircle"
-          @click="openCreateWorkspaceModal()"
-        />
+        <div class="contextual-menu">
+          <button-option
+            id="button-new-workspace"
+            :button-label="$t('WorkspacesPage.createWorkspace')"
+            :icon="addCircle"
+            @click="openCreateWorkspaceModal()"
+          />
+        </div>
         <div class="right-side">
           <ms-select
             id="workspace-filter-select"
