@@ -9,6 +9,16 @@
     :class="{ selected: isSelected, 'no-padding-end': !isSelected }"
     @click="$emit('click', $event, file)"
   >
+    <div
+      class="file-selected"
+      v-if="showCheckbox"
+    >
+      <ion-checkbox
+        v-model="isSelected"
+        @click.stop
+        @ion-change="$emit('select', file, isSelected)"
+      />
+    </div>
     <!-- file name -->
     <div class="file-name">
       <div class="file-name__icons">
@@ -57,7 +67,7 @@
     <!-- options -->
     <div class="file-options">
       <ion-button
-        v-if="!isSelected"
+        v-if="!showCheckbox"
         fill="clear"
         class="options-button"
         @click.stop="$emit('menuClick', $event, file)"
@@ -81,12 +91,13 @@ import {
   document
 } from 'ionicons/icons';
 import { ref, inject } from 'vue';
-import { IonIcon, IonButton, IonItem, IonLabel } from '@ionic/vue';
+import { IonIcon, IonButton, IonItem, IonLabel, IonCheckbox } from '@ionic/vue';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
 import { MockFile } from '@/common/mocks';
 import UserTag from '@/components/UserTag.vue';
 
 const isSelected = ref(false);
+const showCheckbox = ref(false);
 
 const props = defineProps<{
   file: MockFile
@@ -94,8 +105,15 @@ const props = defineProps<{
 
 defineEmits<{
   (e: 'click', event: Event, file: MockFile): void,
-  (e: 'menuClick', event: Event, file: MockFile): void
+  (e: 'menuClick', event: Event, file: MockFile): void,
+  (e: 'select', file: MockFile, selected: boolean): void
 }>();
+
+defineExpose({
+  isSelected,
+  showCheckbox,
+  props
+});
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const { timeSince, fileSize } = inject(FormattersKey)! as Formatters;
