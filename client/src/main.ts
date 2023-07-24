@@ -32,7 +32,7 @@ import { DateTime } from 'luxon';
 import { FormattersKey, ConfigPathKey, StorageManagerKey, NotificationKey } from '@/common/injectionKeys';
 
 /* Theme variables */
-import './theme/variables.css';
+import './theme/global.scss';
 import { libparsec } from './plugins/libparsec';
 import { NotificationCenter } from '@/services/notificationCenter';
 

@@ -1,0 +1,28 @@
+ /* **** Parsec inputs **** */
+
+.input-label-placement-start.sc-ion-input-md-h .label-text-wrapper.sc-ion-input-md {
+  -webkit-margin-start: 0;
+  margin-inline-start: 0;
+}
+
+.input-wrapper {
+  --inner-padding-end: 16px;
+}
+
+/* --- checkbox --- */
+.checkbox {
+  margin: 0;
+  --size: 1.25rem;
+  --checkbox-background-checked: var(--parsec-color-light-primary-600);
+  --checkbox-border-checked: var(--parsec-color-light-primary-600);
+}
+
+.checkbox::part(container) {
+  border: 2px solid var(--parsec-color-light-secondary-light);
+  border-radius: var(--parsec-radius-6);
+  padding: 2px;
+}
+
+.checkbox-checked::part(container) {
+  border: 2px solid var(--parsec-color-light-primary-600);
+}
