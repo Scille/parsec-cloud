@@ -2,10 +2,6 @@ name: setup-python-poetry
 description: Install Python & Poetry
 
 inputs:
-  python-version:
-    description: Python version to install
-    required: true
-
   poetry-version:
     description: Poetry version to install
     required: true
@@ -44,11 +40,11 @@ runs:
           | python3 - --version=${{ inputs.poetry-version }}
         echo "${APPDATA}\.poetry\bin" >> "$GITHUB_PATH"
 
-    - name: Install python-${{ inputs.python-version }}
+    - name: Install python
       uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1  # pin v4.7.0
       id: setup-python
       with:
-        python-version: ${{ inputs.python-version }}
+        python-version-file: ${{ inputs.project-path }}/pyproject.toml
         cache: poetry
 
     - name: (*Nix) Configure poetry to use the installed python

@@ -43,9 +43,6 @@ def hide_patch_version(template: str, separator: str = ".") -> Callable[[str], s
     return _hide_patch_version
 
 
-PYTHON_GA_VERSION = ReplaceRegex(
-    r"python-version: [0-9.]+", hide_patch_version("python-version: {version}")
-)
 POETRY_GA_VERSION = ReplaceRegex(r"poetry-version: [0-9.]+", "poetry-version: {version}")
 NODE_GA_VERSION = ReplaceRegex(r"node-version: [0-9.]+", "node-version: {version}")
 WASM_PACK_GA_VERSION = ReplaceRegex(r"wasm-pack-version: [0-9.]+", "wasm-pack-version: {version}")
@@ -76,7 +73,6 @@ TOOLS_VERSION: Dict[Tool, str] = {
 FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
     ROOT_DIR
     / ".github/workflows/ci-python.yml": {
-        Tool.Python: [PYTHON_GA_VERSION],
         Tool.Poetry: [POETRY_GA_VERSION],
     },
     ROOT_DIR
@@ -85,12 +81,10 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
     },
     ROOT_DIR
     / ".github/workflows/codeql.yml": {
-        Tool.Python: [PYTHON_GA_VERSION],
         Tool.Poetry: [POETRY_GA_VERSION],
     },
     ROOT_DIR
     / ".github/workflows/package-server.yml": {
-        Tool.Python: [PYTHON_GA_VERSION],
         Tool.Poetry: [POETRY_GA_VERSION],
         Tool.Node: [NODE_GA_VERSION],
     },

@@ -31,7 +31,6 @@ jobs:
     name: 🐍 Python static code Analysis
     runs-on: ubuntu-20.04
     env:
-      python-version: 3.9
       poetry-version: 1.5.1
     steps:
       - name: Checkout repository
@@ -74,7 +73,6 @@ jobs:
         if: steps.should-run-python-analysis.outputs.run == 'true'
         id: setup-python
         with:
-          python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}
           project-path: ./server
 

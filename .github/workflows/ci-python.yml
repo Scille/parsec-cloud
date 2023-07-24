@@ -14,7 +14,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  python-version: 3.9
   poetry-version: 1.5.1
   pytest-base-args: >-
     --log-level=DEBUG
@@ -94,7 +93,6 @@ jobs:
       - uses: ./.github/actions/setup-python-poetry
         id: setup-python
         with:
-          python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}
           project-path: ./server
         timeout-minutes: 10
