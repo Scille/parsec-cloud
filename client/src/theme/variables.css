@@ -551,6 +551,15 @@ ion-modal .inner-content {
   position: absolute;
 }
 
+.workspace-sharing-modal {
+  --height: 600px;
+}
+
+.workspace-sharing-modal .ion-page {
+  position: absolute;
+  display: flex;
+}
+
 /* fix issue on global */
 * {
   --inner-border-width: 0px;
