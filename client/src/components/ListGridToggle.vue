@@ -7,13 +7,13 @@
       fill="clear"
       class="button-view"
       id="grid-view"
-      :disabled="!listView"
-      @click="toggleView()"
+      :disabled="modelValue === DisplayState.Grid"
+      @click="$emit('update:modelValue', modelValue === DisplayState.Grid ? DisplayState.List : DisplayState.Grid)"
     >
       <ion-icon
         :icon="grid"
       />
-      <span v-if="!listView">
+      <span v-if="modelValue === DisplayState.Grid">
         {{ $t('WorkspacesPage.viewDisplay.grid') }}
       </span>
     </ion-button>
@@ -22,41 +22,42 @@
       fill="clear"
       class="button-view"
       id="list-view"
-      :disabled="listView"
-      @click="toggleView()"
+      :disabled="modelValue === DisplayState.List"
+      @click="$emit('update:modelValue', modelValue === DisplayState.Grid ? DisplayState.List : DisplayState.Grid)"
     >
       <ion-icon
         :icon="list"
       />
-      <span v-if="listView">
+      <span v-if="modelValue === DisplayState.List">
         {{ $t('WorkspacesPage.viewDisplay.list') }}
       </span>
     </ion-button>
   </div>
 </template>
 
+<script lang="ts">
+export enum DisplayState {
+  List = 0,
+  Grid = 1
+}
+</script>
+
 <script setup lang="ts">
 import { IonButton, IonIcon } from '@ionic/vue';
 import { defineEmits } from 'vue';
 import { grid, list } from 'ionicons/icons';
-import { ref } from 'vue';
 
-const props = defineProps<{
-  listView: boolean
+defineProps<{
+  modelValue: DisplayState
 }>();
 
-const listView = ref(props.listView);
-
-// create a custom event
-const emits = defineEmits<{
-  (e: 'toggleView', value: boolean): void
+defineEmits<{
+  (e: 'update:modelValue', value: DisplayState): void
 }>();
 
-// trigger the custom event
-function toggleView() : void {
-  listView.value = !listView.value;
-  emits('toggleView', listView.value);
-}
+defineExpose({
+  DisplayState
+});
 </script>
 
 <style scoped lang="scss">

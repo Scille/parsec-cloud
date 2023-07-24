@@ -19,14 +19,13 @@
             @change="onMsSelectChange($event)"
           />
           <list-grid-toggle
-            :list-view="false"
-            @toggle-view="onToggleView($event)"
+            v-model="displayView"
           />
         </div>
       </ion-item-divider>
       <!-- workspaces -->
       <div class="workspaces-container">
-        <div v-if="listView">
+        <div v-if="displayView === DisplayState.List">
           <ion-list>
             <ion-list-header
               class="workspace-list-header"
@@ -123,7 +122,8 @@ import CreateWorkspaceModal from '@/components/CreateWorkspaceModal.vue';
 import MsSelect from '@/components/MsSelect.vue';
 import ButtonOption from '@/components/ButtonOption.vue';
 import { MsSelectChangeEvent, MsSelectOption } from '@/components/MsSelectOption';
-import ListGridToggle from '@/components/listGridToggle.vue';
+import ListGridToggle from '@/components/ListGridToggle.vue';
+import { DisplayState } from '@/components/ListGridToggle.vue';
 import { useI18n } from 'vue-i18n';
 import { ref, Ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -133,7 +133,7 @@ const router = useRouter();
 const { t } = useI18n();
 const sortBy = ref('name');
 const workspaceList: Ref<MockWorkspace[]> = ref([]);
-const listView = ref(false);
+const displayView = ref(DisplayState.Grid);
 
 onMounted(async (): Promise<void> => {
   workspaceList.value = await getMockWorkspaces();
@@ -213,10 +213,6 @@ async function openWorkspaceContextMenu(event: Event, _workspace: MockWorkspace)
     }
     */
   }
-}
-
-function onToggleView(value: boolean): void {
-  listView.value = value;
 }
 </script>
 

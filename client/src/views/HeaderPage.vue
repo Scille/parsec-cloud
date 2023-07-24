@@ -152,15 +152,15 @@ function getTitleForRoute(): string {
   } else if (route === 'devices') {
     return t('HeaderPage.titles.devices');
   } else if (route === 'activeUsers') {
-    return t('HeaderPage.titles.activeUsers');
+    return t('HeaderPage.titles.users.activeUsers');
   } else if (route === 'revokedUsers') {
-    return t('HeaderPage.titles.revokedUsers');
+    return t('HeaderPage.titles.users.revokedUsers');
   } else if (route === 'invitations') {
-    return t('HeaderPage.titles.invitations');
+    return t('HeaderPage.titles.users.invitations');
   } else if (route === 'storage') {
-    return t('HeaderPage.titles.storage');
+    return t('HeaderPage.titles.organization.storage');
   } else if (route === 'organization') {
-    return t('HeaderPage.titles.organization');
+    return t('HeaderPage.titles.organization.information');
   }
 
   return '';
