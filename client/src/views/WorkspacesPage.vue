@@ -198,7 +198,7 @@ async function onWorkspaceShareClick(_: Event, workspace: MockWorkspace): Promis
   await modal.onWillDismiss();
 }
 
-async function openWorkspaceContextMenu(event: Event, _workspace: MockWorkspace): Promise<void> {
+async function openWorkspaceContextMenu(event: Event, workspace: MockWorkspace): Promise<void> {
   const popover = await popoverController
     .create({
       component: WorkspaceContextMenu,
@@ -212,15 +212,9 @@ async function openWorkspaceContextMenu(event: Event, _workspace: MockWorkspace)
 
   const { data } = await popover.onDidDismiss();
   if (data !== undefined) {
-    console.log(data.action);
-    /*
-    Keeping the comment here just to show how to check
-    what action was selected.
-
-    if (data.action === WorkspaceAction.Rename) {
-      console.log('Rename!');
+    if (data.action === WorkspaceAction.Manage) {
+      onWorkspaceShareClick(new Event('ignored'), workspace);
     }
-    */
   }
 }
 </script>
