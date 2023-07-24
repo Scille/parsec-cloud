@@ -1,0 +1,78 @@
+ /* **** Parsec button **** */
+
+ion-button, .sc-ion-buttons-md-s ion-button:not(.button-round) {
+  text-transform: none;
+  --border-radius: var(--parsec-radius-6);
+  --box-shadow: none;
+}
+
+.sc-ion-buttons-md-s ion-button {
+  margin-inline-start: 0;
+  margin-inline-end: 0;
+}
+
+/* button size */
+ion-button.button-large {
+  --padding-top: 1rem ;
+  --padding-end: 1.25rem;
+  --padding-bottom: 1rem ;
+  --padding-start: 1.25rem;
+  font-size: 1.12rem;
+  line-height: 22px;
+  letter-spacing: 0.02rem;
+  height: 54px;
+}
+
+ion-button.button-default {
+  --padding-top: 0.75rem;
+  --padding-end: 1rem;
+  --padding-bottom: 0.75rem;
+  --padding-start: 1rem;
+  font-size: 1rem;
+  line-height: 20px;
+  height: 44px;
+}
+
+ion-button.button-small {
+  --padding-top: 0.625rem;
+  --padding-end: 1rem;
+  --padding-bottom: 0.625rem;
+  --padding-start: 1rem;
+  font-size: 0.88rem;
+  line-height: 17px;
+  height: 37px;
+}
+
+/* button default */
+ion-button:not(.button-outline):not(.button-clear) {
+  --background: var(--parsec-color-light-primary-500);
+  --background-hover: var(--parsec-color-light-primary-700);
+  --background-hover-opacity: none;
+}
+
+/* button outline */
+ion-button.button-outline {
+  --border-color: var(--parsec-color-light-primary-500);
+  --color: var(--parsec-color-light-primary-500);
+  --border-color-hover: var(--parsec-color-light-primary-700);
+  --color-hover: var(--parsec-color-light-primary-700);
+  --background-hover: none;
+  --background-hover-opacity: none;
+}
+
+ion-button.button-outline:hover {
+  --border-color: var(--parsec-color-light-primary-700);
+}
+
+/* ghost */
+.sc-ion-buttons-md-s .button-clear {
+  --color: var(--parsec-color-light-primary-500);
+  --color-hover: var(--parsec-color-light-primary-700);
+  --background-hover: var(--parsec-color-light-primary-50);
+  --background-hover-opacity: none;
+}
+
+/* solid */
+ion-button.button-solid {
+  --background: var(--parsec-color-light-primary-100);
+}

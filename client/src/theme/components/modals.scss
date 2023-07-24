@@ -1,0 +1,61 @@
+ /* **** Parsec modal **** */
+
+ion-modal::part(content) {
+  border-radius: var(--parsec-radius-8);
+  --min-width: var(--parsec-modal-width);
+  height: 80%;
+}
+
+/* --join by link modal -- */
+ion-modal.join-by-link-modal::part(content) {
+  min-height: 300px;
+  height: 30vh;
+  position: relative;
+  display: block;
+  contain: content;
+}
+
+/* modal */
+ion-modal.one-line-modal::part(content) {
+  height: 210px;
+}
+
+/* -- settings modal -- */
+@media only screen and (min-width: 768px) and (min-height: 600px) {
+  .settings-modal, .settings-modal .ion-overlay-wrapper{
+    --width: 800px;
+    --height: 600px;
+    --border-radius: 8px;
+  }
+}
+
+ion-modal {
+  --height: auto;
+  --width: auto;
+  --max-width: 842px;
+}
+
+ion-modal .ion-page {
+  position: relative;
+  display: block;
+  contain: content;
+}
+
+ion-modal .inner-content {
+  max-height: 80vh;
+  max-width: 52rem;
+  overflow: auto;
+}
+
+.settings-modal .ion-page {
+  position: absolute;
+}
+
+.workspace-sharing-modal {
+  --height: 600px;
+}
+
+.workspace-sharing-modal .ion-page {
+  position: absolute;
+  display: flex;
+}

@@ -1,0 +1,44 @@
+/* Ionic Variables and Theming. For more info, please see:
+http://ionicframework.com/docs/theming/ */
+
+//import variables
+@import "variables/colors";
+@import "variables/colorsIonic";
+@import "variables/fonts";
+@import "variables/radius";
+@import "variables/shadows";
+@import "variables/spacing";
+@import "variables/width";
+
+// import components
+@import "components/buttons";
+@import "components/cards";
+@import "components/inputs";
+@import "components/modals";
+@import "components/popovers";
+@import "components/scrollbars";
+
+/**** Global CSS overloads ****/
+
+/* fix issue on global */
+* {
+  --inner-border-width: 0px;
+  --box-shadow: var(--parsec-shadow-light);
+}
+
+.header-md, .footer-md {
+  -webkit-box-shadow: inherit;
+  box-shadow: inherit;
+}
+
+ion-list.container {
+  margin-top: 0;
+}
+
+.header-md::after {
+  background-image: none;
+}
+
+ion-grid.md {
+  padding: 0;
+}
