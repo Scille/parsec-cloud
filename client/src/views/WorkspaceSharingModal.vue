@@ -55,13 +55,6 @@
         >
           {{ $t('WorkspaceSharing.cancel') }}
         </ion-button>
-        <ion-button
-          fill="solid"
-          size="default"
-          id="save-button"
-        >
-          {{ $t('WorkspaceSharing.valid') }}
-        </ion-button>
       </ion-buttons>
     </ion-footer>
   </ion-page>
