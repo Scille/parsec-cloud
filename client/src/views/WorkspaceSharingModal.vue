@@ -106,9 +106,10 @@ getWorkspaceUsers(props.workspaceId).then((result) => {
 const unwatchSearch = watch(search, async() => {
   const allRoles = await getWorkspaceUsers(props.workspaceId);
   const roles = new Map<string, WorkspaceRole | null>();
+  const lowerCaseSearch = search.value.toLocaleLowerCase();
 
   for (const entry of allRoles) {
-    if (entry[0].includes(search.value)) {
+    if (entry[0].toLocaleLowerCase().includes(lowerCaseSearch)) {
       roles.set(entry[0], entry[1]);
     }
   }

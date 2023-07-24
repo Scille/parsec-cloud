@@ -777,12 +777,13 @@ body {
 ::-webkit-scrollbar {
   width: 1em;
   border-radius: 1em;
-
+  background:  var(--parsec-color-light-secondary-background);
+  border: 1px solid var(--parsec-color-light-secondary-disabled);
 }
 
 ::-webkit-scrollbar-thumb {
   border-radius: 1em;
-  background: var(--parsec-color-light-secondary-light);
+  background: var(--parsec-color-light-primary-600);
   border: 0.25em solid transparent;
   background-clip: content-box;
 }

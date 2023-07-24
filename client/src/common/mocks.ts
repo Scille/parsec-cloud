@@ -139,7 +139,7 @@ export async function getWorkspaceUsers(workspaceId: string): Promise<Map<string
   let index = 0;
 
   for (const user of await getUsers()) {
-    if (workspace && workspace.sharedWith.indexOf(user) !== -1) {
+    if (workspace && workspace.sharedWith.includes(user)) {
       users.set(user, ROLES[index % ROLES.length]);
     } else {
       users.set(user, null);
