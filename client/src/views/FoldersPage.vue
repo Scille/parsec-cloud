@@ -18,13 +18,12 @@
         />
         <div class="right-side">
           <list-grid-toggle
-            :list-view="true"
-            @toggle-view="onToggleView($event)"
+            v-model="displayView"
           />
         </div>
       </ion-item-divider>
       <div class="folder-container">
-        <div v-if="listView">
+        <div v-if="displayView === DisplayState.List">
           <ion-list>
             <ion-list-header
               class="folder-list-header"
@@ -93,7 +92,8 @@ import { useRoute } from 'vue-router';
 import { computed, ref } from 'vue';
 import { MockFile, pathInfo } from '@/common/mocks';
 import ButtonOption from '@/components/ButtonOption.vue';
-import listGridToggle from '@/components/listGridToggle.vue';
+import ListGridToggle from '@/components/ListGridToggle.vue';
+import { DisplayState } from '@/components/ListGridToggle.vue';
 import FileListItem from '@/components/FileListItem.vue';
 import FileCard from '@/components/FileCard.vue';
 import FileContextMenu from '@/components/FileContextMenu.vue';
@@ -111,7 +111,7 @@ const workspaceId = computed(() => {
 const folderInfo = computed((): MockFile => {
   return pathInfo(path.value.toString());
 });
-const listView = ref(true);
+const displayView = ref(DisplayState.List);
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 function createFolder(): void {
@@ -155,10 +155,6 @@ async function openFileContextMenu(event: Event, _file: MockFile): Promise<void>
     }
     */
   }
-}
-
-function onToggleView(value: boolean): void {
-  listView.value = value;
 }
 </script>
 

@@ -104,11 +104,15 @@
             "workspaces": "My workspaces",
             "settings": "Settings",
             "devices": "Devices",
-            "activeUsers": "Active users",
-            "revokedUsers": "Revoked users",
-            "invitations": "Invitations",
-            "storage": "Storage",
-            "organization": "Information"
+            "users": {
+                "activeUsers": "Active users",
+                "revokedUsers": "Revoked users",
+                "invitations": "Invitations"
+            },
+            "organization": {
+                "storage": "Storage",
+                "information": "Information"
+            }
         },
         "previous": "Go back"
     },

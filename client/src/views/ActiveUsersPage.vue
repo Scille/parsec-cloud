@@ -11,22 +11,15 @@
           @click="inviteUser()"
           v-show="isAdmin()"
         />
-        <!-- <div class="right-side">
-          <ms-select
-            id="user-filter-select"
-            :options="msSelectOptions"
-            default-option="name"
-            @change="onMsSelectChange($event)"
-          />
+        <div class="right-side">
           <list-grid-toggle
-            :list-view="false"
-            @toggle-view="onToggleView($event)"
+            v-model="displayView"
           />
-        </div> -->
+        </div>
       </ion-item-divider>
       <!-- users -->
       <div class="users-container">
-        <div v-if="listView">
+        <div v-if="displayView === DisplayState.List">
           <ion-list>
             <ion-list-header
               class="user-list-header"
@@ -90,8 +83,10 @@ import UserListItem from '@/components/Users/UserListItem.vue';
 import UserCard from '@/components/Users/UserCard.vue';
 import ButtonOption from '@/components/ButtonOption.vue';
 import { isAdmin } from '@/common/permissions';
+import ListGridToggle from '@/components/ListGridToggle.vue';
+import { DisplayState } from '@/components/ListGridToggle.vue';
 
-const listView = ref(true);
+const displayView = ref(DisplayState.List);
 const userList = ['User1', 'User2', 'User3'];
 
 const filteredUsers = computed(() => {
@@ -179,5 +174,10 @@ ion-item::part(native) {
   height: 6em;
   background-color: var(--parsec-color-light-secondary-background);
   border-top: 1px solid var(--parsec-color-light-secondary-light);
+}
+
+.right-side {
+  margin-left: auto;
+  display: flex;
 }
 </style>

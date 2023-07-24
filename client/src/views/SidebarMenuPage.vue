@@ -538,9 +538,6 @@ ion-menu {
     }
   }
 
-  .category-not-selected {
-  }
-
   .item-label {
     --background:none;
     border-radius: 4px;

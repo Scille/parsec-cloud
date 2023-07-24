@@ -104,11 +104,15 @@
             "workspaces": "Mes espaces",
             "settings": "Paramètres",
             "devices": "Appareils",
-            "activeUsers": "Utilisateurs actifs",
-            "revokedUsers": "Utilisateurs révoqués",
-            "invitations": "Invitations",
-            "storage": "Stockage",
-            "organization": "Informations"
+            "users": {
+                "activeUsers": "Utilisateurs actifs",
+                "revokedUsers": "Utilisateurs révoqués",
+                "invitations": "Invitations"
+            },
+            "organization": {
+                "storage": "Stockage",
+                "information": "Informations"
+            }
         },
         "previous": "Précédent"
     },
