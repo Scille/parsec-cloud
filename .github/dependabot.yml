@@ -176,38 +176,38 @@ updates:
     open-pull-requests-limit: 1
     rebase-strategy: disabled
 
-  ########
-  # Java #
-  ########
+  # ########
+  # # Java #
+  # ########
 
-  - package-ecosystem: gradle
-    directory: /client/android
-    pull-request-branch-name:
-      separator: "-"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "04:20"
-      timezone: Europe/Paris
-    groups:
-      android-client:
-        patterns:
-          - "*"
-    open-pull-requests-limit: 5
-    rebase-strategy: disabled
+  # - package-ecosystem: gradle
+  #   directory: /client/android
+  #   pull-request-branch-name:
+  #     separator: "-"
+  #   schedule:
+  #     interval: weekly
+  #     day: monday
+  #     time: "04:20"
+  #     timezone: Europe/Paris
+  #   groups:
+  #     android-client:
+  #       patterns:
+  #         - "*"
+  #   open-pull-requests-limit: 5
+  #   rebase-strategy: disabled
 
-  - package-ecosystem: gradle
-    directory: /bindings/android
-    pull-request-branch-name:
-      separator: "-"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "04:20"
-      timezone: Europe/Paris
-    groups:
-      android-binding:
-        patterns:
-          - "*"
-    open-pull-requests-limit: 5
-    rebase-strategy: disabled
+  # - package-ecosystem: gradle
+  #   directory: /bindings/android
+  #   pull-request-branch-name:
+  #     separator: "-"
+  #   schedule:
+  #     interval: weekly
+  #     day: monday
+  #     time: "04:20"
+  #     timezone: Europe/Paris
+  #   groups:
+  #     android-binding:
+  #       patterns:
+  #         - "*"
+  #   open-pull-requests-limit: 5
+  #   rebase-strategy: disabled
