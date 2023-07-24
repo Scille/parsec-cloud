@@ -32,7 +32,6 @@ concurrency:
 
 env:
   node-version: 18.12.0
-  python-version: 3.9
   poetry-version: 1.5.1
 
 permissions:
@@ -63,7 +62,6 @@ jobs:
 
       - uses: ./.github/actions/setup-python-poetry
         with:
-          python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}
           project-path: ./server
         timeout-minutes: 10
