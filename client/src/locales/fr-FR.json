@@ -54,7 +54,7 @@
         "pageTitle": "Créer une organisation",
         "fullname": "Nom complet",
         "fullnamePlaceholder": "Jean MARTIN",
-        "email": "Email",
+        "email": "Courriel",
         "emailPlaceholder": "jean.martin{'@'}exemple.com",
         "organizationName": "Nom de l'organisation",
         "organizationNamePlaceholder": "MonOrganisation",
@@ -118,7 +118,7 @@
     },
     "WorkspaceSharing": {
         "title": "Partager cet espace de travail",
-        "searchLabel": "Nom ou adresse mail",
+        "searchLabel": "Nom ou courriel",
         "searchPlaceholder": "ex : Jean Martin",
         "valid": "Valider",
         "cancel": "Annuler",

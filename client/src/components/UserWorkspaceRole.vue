@@ -58,7 +58,6 @@ function getRoleFromString(role: string): WorkspaceRole | null {
 
 <style scoped lang="scss">
 .content {
-
   height: 4em;
   padding: .5rem;
   display: flex;

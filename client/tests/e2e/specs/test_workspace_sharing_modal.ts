@@ -47,8 +47,9 @@ describe('Check workspace sharing modal', () => {
     cy.get('ion-modal').find('ion-list').find('.content').should('have.length', 11);
     cy.get('ion-modal').find('ion-input').as('searchInput');
     cy.get('@searchInput').find('input').type('a');
-    cy.get('ion-modal').find('ion-list').find('.content').should('have.length', 6);
-    cy.get('@searchInput').find('input').type('l');
+    cy.get('ion-modal').find('ion-list').find('.content').should('have.length', 7);
+    // Check upper-case too
+    cy.get('@searchInput').find('input').type('L');
     cy.get('ion-modal').find('ion-list').find('.content').should('have.length', 2);
     // cspell:disable-next-line
     cy.get('ion-list').find('.person-name').first().contains('Valygar Corthala');
