@@ -213,6 +213,7 @@
         "createFolder": "New folder",
         "import": "Import",
         "itemCount": "No items | One item | {count} items",
+        "itemSelectedCount": "No selected items | One selected item | {count} selected items",
         "listDisplayTitles": {
             "name": "Name",
             "updatedBy": "Updated By",
@@ -232,7 +233,8 @@
             "actionHistory": "History",
             "actionDownload": "Download",
             "actionDetails": "Details",
-            "actionCopyLink": "Copy link"
+            "actionCopyLink": "Copy link",
+            "actionDelete": "Delete"
         }
     },
     "OrganizationPage": {

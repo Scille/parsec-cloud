@@ -17,33 +17,73 @@ export interface MockFile {
   children: MockFile[]
 }
 
-export function pathInfo(_path: string): MockFile {
-  const UPDATER = ['John', 'Steve', 'Bill', 'Marjolaine', 'Hilary'];
-
-  const childrenCount = Math.floor(Math.random() * 25) + 10;
-  const ret: MockFile = {
-    id: '0',
-    name: uniqueNamesGenerator({dictionaries: [adjectives, colors, animals]}),
-    type: 'folder',
-    updater: UPDATER[Math.floor(Math.random() * UPDATER.length)],
-    size: 0,
-    lastUpdate: DateTime.now(),
-    children: []
-  };
-
-  for (let i = 0; i < childrenCount; i++) {
-    const isFolder = Math.floor(Math.random() * 2) === 0;
-    ret.children.push({
-      id: `${i + 1}`,
-      name: uniqueNamesGenerator({dictionaries: [adjectives, colors, animals]}),
-      type: isFolder ? 'folder' : 'file',
-      size: isFolder ? 0 : Math.floor(Math.random() * 10000000),
+export function pathInfo(_path: string, random = false): MockFile {
+  function fixedPathInfo(): MockFile {
+    const ret: MockFile = {
+      id: '0',
+      name: 'My Folder 1',
+      type: 'folder',
+      updater: 'Marjolaine',
+      size: 0,
       lastUpdate: DateTime.now(),
-      updater: UPDATER[Math.floor(Math.random() * UPDATER.length)],
+      children: []
+    };
+
+    ret.children.push({
+      id: '1',
+      name: 'My File 1',
+      type: 'file',
+      size: 123_456_789,
+      lastUpdate: DateTime.now(),
+      updater: 'Steve',
       children: []
     });
+    ret.children.push({
+      id: '2',
+      name: 'My Folder 2',
+      type: 'folder',
+      size: 0,
+      lastUpdate: DateTime.now(),
+      updater: 'Hilary',
+      children: []
+    });
+
+    return ret;
   }
-  return ret;
+
+  function randomPathInfo(): MockFile {
+    const UPDATER = ['John', 'Steve', 'Bill', 'Marjolaine', 'Hilary'];
+
+    const ret: MockFile = {
+      id: '0',
+      name: uniqueNamesGenerator({dictionaries: [adjectives, colors, animals]}),
+      type: 'folder',
+      updater: UPDATER[Math.floor(Math.random() * UPDATER.length)],
+      size: 0,
+      lastUpdate: DateTime.now(),
+      children: []
+    };
+
+    const childrenCount = Math.floor(Math.random() * 25) + 1;
+    for (let i = 0; i < childrenCount; i++) {
+      const isFolder = Math.floor(Math.random() * 2) === 0;
+      ret.children.push({
+        id: String(i + 1),
+        name: uniqueNamesGenerator({dictionaries: [adjectives, colors, animals]}),
+        type: isFolder ? 'folder' : 'file',
+        size: isFolder ? 0 : Math.floor(Math.random() * 10000000),
+        lastUpdate: DateTime.now(),
+        updater: UPDATER[Math.floor(Math.random() * UPDATER.length)],
+        children: []
+      });
+    }
+    return ret;
+  }
+
+  if (random) {
+    return randomPathInfo();
+  }
+  return fixedPathInfo();
 }
 
 export enum WorkspaceRole {
