@@ -32,6 +32,7 @@ defineProps<{
 </script>
 
 <!-- "setup" removed to interact with child component style (wizard-stepper-step) -->
+<!-- eslint-disable-next-line vue-scoped-css/enforce-style-type -->
 <style lang="scss">
 .wizard-stepper {
   background: var(--parsec-color-light-secondary-background);
