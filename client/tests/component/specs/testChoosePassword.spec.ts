@@ -3,7 +3,7 @@
 import ChoosePassword from '@/components/ChoosePassword.vue';
 import { VueWrapper, mount } from '@vue/test-utils';
 import { IonInput } from '@ionic/vue';
-import { mockI18n } from '../support/mocks';
+import { mockI18n } from 'tests/component/support/mocks';
 
 mockI18n();
 

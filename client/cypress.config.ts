@@ -39,7 +39,7 @@ export default defineConfig({
     // use `CYPRESS_TESTBED_SERVER_URL` instead of `TESTBED_SERVER_URL`. But, again, Js
     // ecosystem already contains more magic than Hogwarts.
     env: {
-      TESTBED_SERVER_URL: TESTBED_SERVER_URL
+      TESTBED_SERVER_URL: TESTBED_SERVER_URL,
     },
     screenshotsFolder: 'tests/e2e/screenshots',
     videosFolder: 'tests/e2e/videos',
@@ -47,7 +47,7 @@ export default defineConfig({
     video: false,
     supportFile: 'tests/e2e/support/index.ts',
     specPattern: 'tests/e2e/specs/**.ts',
-    fixturesFolder: 'tests/e2e/fixtures'
+    fixturesFolder: 'tests/e2e/fixtures',
   },
   component: {
     screenshotsFolder: 'tests/component/screenshots',
@@ -59,9 +59,9 @@ export default defineConfig({
     indexHtmlFile: 'tests/component/support/component-index.html',
     devServer: {
       framework: 'vue',
-      bundler: 'vite'
-    }
-  }
+      bundler: 'vite',
+    },
+  },
   // TODO: investigate how to use it properly
   // viewportHeight: 1440,
   // viewportWidth: 2560

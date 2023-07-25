@@ -35,7 +35,7 @@ import {
   IonIcon,
   IonAvatar,
   IonText,
-  popoverController
+  popoverController,
 }from '@ionic/vue';
 import { chevronDown, personCircle } from 'ionicons/icons';
 import { defineProps, ref } from 'vue';
@@ -50,7 +50,7 @@ const router = useRouter();
 const { t } = useI18n();
 
 const props = defineProps<{
-  firstname: string,
+  firstname: string
   lastname: string
 }>();
 
@@ -59,11 +59,11 @@ async function openPopover(ev: Event): Promise<void> {
     component: ProfileHeaderPopover,
     componentProps: {
       firstname: props.firstname,
-      lastname: props.lastname
+      lastname: props.lastname,
     },
     cssClass: 'profile-header-popover',
     event: ev,
-    showBackdrop: false
+    showBackdrop: false,
   });
   await popover.present();
   popover.onDidDismiss().then((value) => {

@@ -232,14 +232,14 @@ import {
   IonRouterOutlet,
   menuController,
   GestureDetail,
-  IonButton
+  IonButton,
 } from '@ionic/vue';
 import {
   business,
   chevronBack,
   people,
   pieChart,
-  informationCircle
+  informationCircle,
 } from 'ionicons/icons';
 import { WatchStopHandle, onMounted, onUnmounted, ref, watch } from 'vue';
 import { createGesture } from '@ionic/vue';
@@ -273,7 +273,7 @@ function navigateToWorkspace(workspaceId: string): void {
   router.push({
     name: 'folder',
     params: { deviceId: currentRoute.params.deviceId, workspaceId: workspaceId },
-    query: { path: '/' }
+    query: { path: '/' },
   });
   menuController.close();
 }
@@ -281,7 +281,7 @@ function navigateToWorkspace(workspaceId: string): void {
 function navigateToWorkspaceList(): void {
   router.push({
     name: 'workspaces',
-    params: { deviceId: currentRoute.params.deviceId }
+    params: { deviceId: currentRoute.params.deviceId },
   });
   menuController.close();
 
@@ -295,7 +295,7 @@ onMounted(async () => {
       gestureName: 'resize-menu',
       el: divider.value,
       onEnd,
-      onMove
+      onMove,
     });
     gesture.enable();
   }

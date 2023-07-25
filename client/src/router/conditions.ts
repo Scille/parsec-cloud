@@ -38,7 +38,7 @@ export function isOrganizationManagementRoute(): boolean {
     'revokedUsers',
     'invitations',
     'storage',
-    'organization'
+    'organization',
   ].includes(currentRoute.name.toString()) : false;
 }
 

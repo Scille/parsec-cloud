@@ -21,9 +21,9 @@ function copy(src, dst) {
 
 copy(
   path.join(SRCDIR, 'index.node'),
-  path.join(DSTDIR, 'src/libparsec/index.node')
+  path.join(DSTDIR, 'src/libparsec/index.node'),
 );
 copy(
   path.join(SRCDIR, 'index.d.ts'),
-  path.join(DSTDIR, 'generated-ts/src/libparsec.d.ts')
+  path.join(DSTDIR, 'generated-ts/src/libparsec.d.ts'),
 );

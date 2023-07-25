@@ -13,7 +13,7 @@
 <script setup lang = "ts" >
 import {
   IonContent,
-  IonPage
+  IonPage,
 } from '@ionic/vue';
 
 import SettingsView from '@/components/SettingsView.vue';

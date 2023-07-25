@@ -28,9 +28,9 @@ import {
   IonAvatar,
   IonCardHeader,
   IonCardTitle,
-  IonCardSubtitle
+  IonCardSubtitle,
 } from '@ionic/vue';
-import { AvailableDevice } from '../plugins/libparsec/definitions';
+import { AvailableDevice } from '@/plugins/libparsec/definitions';
 
 defineProps<{
   device: AvailableDevice

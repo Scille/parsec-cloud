@@ -72,7 +72,7 @@ const props = defineProps<{
   thirdLabel?: string | number
 }>();
 
-const emit = defineEmits<{
+defineEmits<{
   (event: 'trigger-action-sheet'): void
   (event: 'trigger-share'): void
 }>();

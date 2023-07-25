@@ -7,7 +7,7 @@ export enum NotificationLevel {
   Info = 'INFO',
   Success = 'SUCCESS',
   Warning = 'WARNING',
-  Error = 'ERROR'
+  Error = 'ERROR',
 }
 
 export interface Notification {
@@ -17,7 +17,7 @@ export interface Notification {
   level: NotificationLevel,
   read: boolean,
   time: DateTime,
-  data: object
+  data: object,
 }
 
 export class NotificationCenter {
@@ -33,7 +33,7 @@ export class NotificationCenter {
     level: NotificationLevel,
     addToList: boolean,
     trace = false,
-    data = {}
+    data = {},
   ): Promise<void> {
     const notif: Notification = {
       id: uuid4(),
@@ -42,7 +42,7 @@ export class NotificationCenter {
       level: level,
       read: false,
       time: DateTime.now(),
-      data: data
+      data: data,
     };
     if (trace) {
       this.trace(notif);
@@ -58,7 +58,7 @@ export class NotificationCenter {
     level: NotificationLevel,
     addToList: boolean,
     trace: false,
-    data = {}
+    data = {},
   ): Promise<void> {
     const notif: Notification = {
       id: uuid4(),
@@ -67,7 +67,7 @@ export class NotificationCenter {
       level: level,
       read: false,
       time: DateTime.now(),
-      data: data
+      data: data,
     };
     if (trace) {
       this.trace(notif);
@@ -85,7 +85,7 @@ export class NotificationCenter {
       level: level,
       read: false,
       time: DateTime.now(),
-      data: data
+      data: data,
     };
     if (trace) {
       this.trace(notif);

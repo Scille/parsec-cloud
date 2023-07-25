@@ -5,11 +5,11 @@ import path from 'path';
 export default defineConfig({
   plugins: [vue()],
   test: {
-    globals:true
+    globals:true,
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src')
-    }
-  }
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
 });

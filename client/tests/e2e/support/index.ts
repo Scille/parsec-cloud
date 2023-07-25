@@ -51,7 +51,7 @@ Cypress.Commands.add('visitApp', (template = 'coolorg') => {
       // Intercept console logs
       cy.stub(win.console, 'log').as('consoleLog');
       cy.stub(win.console, 'error').as('consoleError');
-    }
+    },
   })
     .as('window')
     // Wait App to be in the first stage of the init

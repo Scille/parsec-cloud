@@ -60,7 +60,7 @@ import {
   IonInput,
   modalController,
   IonFooter,
-  IonIcon
+  IonIcon,
 } from '@ionic/vue';
 import { ref, nextTick, onMounted } from 'vue';
 import { close } from 'ionicons/icons';

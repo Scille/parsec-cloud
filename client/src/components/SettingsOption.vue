@@ -21,13 +21,13 @@
 <script setup lang="ts">
 import {
   IonToggle,
-  IonText
+  IonText,
 } from '@ionic/vue';
 import { defineProps, defineEmits } from 'vue';
 
 defineProps<{
   title: string
-  description?: string,
+  description?: string
   modelValue: boolean
 }>();
 

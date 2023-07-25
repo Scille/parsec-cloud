@@ -14,8 +14,8 @@ export enum PasswordStrength {
 const OPTIONS = {
   graphs: zxcvbnCommonPackage.adjacencyGraphs,
   dictionary: {
-    ...zxcvbnCommonPackage.dictionary
-  }
+    ...zxcvbnCommonPackage.dictionary,
+  },
 };
 
 zxcvbnOptions.setOptions(OPTIONS);

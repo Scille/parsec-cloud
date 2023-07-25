@@ -11,7 +11,7 @@ describe('File size', () => {
       ['common.filesize.kilobytes', 'KB'],
       ['common.filesize.megabytes', 'MB'],
       ['common.filesize.gigabytes', 'GB'],
-      ['common.filesize.terabytes', 'TB']
+      ['common.filesize.terabytes', 'TB'],
     ]);
     return map.get(key) as string;
   }
@@ -75,7 +75,7 @@ describe('File size', () => {
     ['0.99 GB', 1_073_741_823],
     ['1.00 GB', 1_073_741_824],
     ['9.99 GB', 10_737_418_239],
-    ['10.0 GB', 10_737_418_240]
+    ['10.0 GB', 10_737_418_240],
   ])('Gets the right format for the size', async (expected, bytes) => {
     expect(formatFileSize(bytes, t)).to.equal(expected);
   });

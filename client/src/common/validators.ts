@@ -3,7 +3,7 @@
 export enum Validity {
   Invalid = 0,
   Intermediate = 1,
-  Valid = 2
+  Valid = 2,
 }
 
 interface IValidator {

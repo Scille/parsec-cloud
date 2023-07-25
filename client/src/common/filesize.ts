@@ -58,7 +58,7 @@ export function formatFileSize(bytesize: number, t: ComposerTranslation): string
     [Math.pow(1024, 1), t('common.filesize.kilobytes')],
     [Math.pow(1024, 2), t('common.filesize.megabytes')],
     [Math.pow(1024, 3), t('common.filesize.gigabytes')],
-    [Math.pow(1024, 4), t('common.filesize.terabytes')]
+    [Math.pow(1024, 4), t('common.filesize.terabytes')],
   ];
   return size(bytesize, SYSTEM);
 }

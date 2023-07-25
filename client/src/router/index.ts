@@ -2,17 +2,17 @@
 
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
-import TestPage from '../views/TestPage.vue';
+import TestPage from '@/views/TestPage.vue';
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    redirect: '/home'
+    redirect: '/home',
   },
   {
     path: '/home',
     name: 'home',
-    component: () => import('@/views/HomePage.vue')
+    component: () => import('@/views/HomePage.vue'),
   },
   {
     path: '/menu',
@@ -24,57 +24,57 @@ const routes: Array<RouteRecordRaw> = [
         children: [
           {
             path: '/:deviceId([a-z0-9]+@[a-z0-9]+)',
-            redirect: { name: 'workspaces' }
+            redirect: { name: 'workspaces' },
           },
           {
             path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/workspaces',
             name: 'workspaces',
-            component: () => import('@/views/WorkspacesPage.vue')
+            component: () => import('@/views/WorkspacesPage.vue'),
           },
           {
             path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/workspaces/:workspaceId([a-z0-9]+)',
             name: 'folder',
-            component: () => import('@/views/FoldersPage.vue')
+            component: () => import('@/views/FoldersPage.vue'),
           },
           {
             path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/settings',
             name: 'settings',
-            component: () => import('@/views/SettingsPage.vue')
+            component: () => import('@/views/SettingsPage.vue'),
           },
           {
             path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/devices',
             name: 'devices',
-            component: () => import('@/views/DevicesPage.vue')
+            component: () => import('@/views/DevicesPage.vue'),
           },
           {
             path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/activeUsers',
             name: 'activeUsers',
-            component: () => import('@/views/ActiveUsersPage.vue')
+            component: () => import('@/views/ActiveUsersPage.vue'),
           },
           {
             path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/revokedUsers',
             name: 'revokedUsers',
-            component: () => import('@/views/RevokedUsersPage.vue')
+            component: () => import('@/views/RevokedUsersPage.vue'),
           },
           {
             path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/invitations',
             name: 'invitations',
-            component: () => import('@/views/InvitationsPage.vue')
+            component: () => import('@/views/InvitationsPage.vue'),
           },
           {
             path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/storage',
             name: 'storage',
-            component: () => import('@/views/StoragePage.vue')
+            component: () => import('@/views/StoragePage.vue'),
           },
           {
             path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/organization',
             name: 'organization',
-            component: () => import('@/views/OrganizationInformationPage.vue')
-          }
-        ]
-      }
-    ]
-  }
+            component: () => import('@/views/OrganizationInformationPage.vue'),
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 if (import.meta.env.VUE_APP_TEST_MODE === 'True') {
@@ -82,14 +82,14 @@ if (import.meta.env.VUE_APP_TEST_MODE === 'True') {
     {
       path: '/test',
       name: 'Test',
-      component: TestPage
-    }
+      component: TestPage,
+    },
   );
 }
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes
+  routes,
 });
 
 export default router;

@@ -43,11 +43,11 @@ import {
   IonButton,
   IonIcon,
   modalController,
-  IonContent
+  IonContent,
 } from '@ionic/vue';
 
 import {
-  close
+  close,
 } from 'ionicons/icons';
 import SettingsView from '@/components/SettingsView.vue';
 import { ModalResultCode } from '@/common/constants';

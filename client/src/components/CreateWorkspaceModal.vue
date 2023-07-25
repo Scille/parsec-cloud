@@ -61,11 +61,11 @@ import {
   IonInput,
   modalController,
   IonFooter,
-  IonIcon
+  IonIcon,
 } from '@ionic/vue';
 import { ref } from 'vue';
 import {
-  close
+  close,
 } from 'ionicons/icons';
 import { ModalResultCode } from '@/common/constants';
 

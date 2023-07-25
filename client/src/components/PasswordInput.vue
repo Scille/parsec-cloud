@@ -42,17 +42,17 @@ import { ref } from 'vue';
 import { IonGrid, IonCol, IonRow, IonItem, IonInput, IonIcon, IonText } from '@ionic/vue';
 import {
   eye,
-  eyeOff
+  eyeOff,
 } from 'ionicons/icons';
 
 defineProps<{
-  label: string,
+  label: string
   modelValue?: string
 }>();
 
 const emits = defineEmits<{
   (e: 'change', value: string): void
-  (e: 'enter'): void,
+  (e: 'enter'): void
   (e: 'update:modelValue', value: string): void
 }>();
 

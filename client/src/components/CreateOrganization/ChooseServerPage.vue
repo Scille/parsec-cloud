@@ -54,7 +54,7 @@ import {
   IonRadio,
   IonRadioGroup,
   IonItem,
-  IonText
+  IonText,
 } from '@ionic/vue';
 import { ref } from 'vue';
 import CustomInput from '@/components/CustomInput.vue';
@@ -62,7 +62,7 @@ import { backendAddrValidator, Validity } from '@/common/validators';
 
 enum ServerMode {
   SaaS ='saas',
-  Custom = 'custom'
+  Custom = 'custom',
 }
 
 const backendAddr = ref('');
@@ -72,7 +72,7 @@ defineExpose({
   areFieldsCorrect,
   ServerMode,
   mode,
-  backendAddr
+  backendAddr,
 });
 
 function areFieldsCorrect(): boolean {

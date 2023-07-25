@@ -10,7 +10,7 @@ const reloadWatcher = {
   debouncer: null,
   ready: false,
   watcher: null,
-  restarting: false
+  restarting: false,
 };
 
 function runBuild() {
@@ -44,7 +44,7 @@ function setupReloadWatcher() {
     .watch(['./src', './build'], {
       // Ignore dotfiles
       ignored: /[/\\]\./,
-      persistent: true
+      persistent: true,
     })
     .on('ready', () => {
       reloadWatcher.ready = true;

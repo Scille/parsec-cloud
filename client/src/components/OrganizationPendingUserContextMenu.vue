@@ -34,6 +34,6 @@
 import { IonContent, IonItem, IonLabel, IonList, IonIcon } from '@ionic/vue';
 import {
   personAdd,
-  personRemove
+  personRemove,
 } from 'ionicons/icons';
 </script>

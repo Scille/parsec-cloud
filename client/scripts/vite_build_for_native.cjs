@@ -22,9 +22,9 @@ const ret = spawnSync(
     env: {
       ...process.env,
       // Here is the secret sauce !
-      PLATFORM: 'native'
-    }
-  }
+      PLATFORM: 'native',
+    },
+  },
 );
 if (ret.status !== 0) {
   exit(ret.status);

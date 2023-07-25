@@ -19,7 +19,7 @@ function getDefaultProvideConfig(timeSince = mockTimeSince, fileSize = mockFileS
 
   provide[FormattersKey] = {
     'timeSince': timeSince,
-    'fileSize': fileSize
+    'fileSize': fileSize,
   };
 
   return provide;
@@ -29,11 +29,11 @@ function mockI18n(): void {
   vi.mock('vue-i18n');
 
   (useI18n as any).mockReturnValue({
-    t: (key: string): string => key
+    t: (key: string): string => key,
   });
 
   config.global.mocks = {
-    $t: (key: string): string => key
+    $t: (key: string): string => key,
   };
 }
 
@@ -41,5 +41,5 @@ export {
   mockTimeSince,
   mockFileSize,
   mockI18n,
-  getDefaultProvideConfig
+  getDefaultProvideConfig,
 };

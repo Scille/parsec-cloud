@@ -24,6 +24,6 @@ export default function useSidebarMenu(): any {
     computedWidth,
     isVisible,
     reset,
-    wasReset
+    wasReset,
   };
 }

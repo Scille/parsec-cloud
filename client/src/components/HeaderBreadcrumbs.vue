@@ -46,10 +46,10 @@ import { ref, Ref, computed } from 'vue';
 import {
   IonBreadcrumb,
   IonBreadcrumbs,
-  IonIcon
+  IonIcon,
 } from '@ionic/vue';
 import {
-  caretForward
+  caretForward,
 } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
 

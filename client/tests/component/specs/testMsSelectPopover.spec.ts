@@ -10,12 +10,12 @@ describe('Select popover', () => {
   const defaultOptions: MsSelectOption[] = [
     { label: 'Label A', key: '1' },
     { label: 'Label B', key: '2' },
-    { label: 'Label C', key: '3' }
+    { label: 'Label C', key: '3' },
   ];
 
   const defaultSortLabels: MsSelectSortByLabels = {
     asc: 'Asc',
-    desc: 'Desc'
+    desc: 'Desc',
   };
 
   beforeEach(() => {
@@ -23,8 +23,8 @@ describe('Select popover', () => {
       props: {
         options: defaultOptions,
         sortByLabels: defaultSortLabels,
-        sortByAsc: true
-      }
+        sortByAsc: true,
+      },
     });
   });
 

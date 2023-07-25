@@ -139,12 +139,12 @@ import {
   IonIcon,
   IonSelect,
   IonSelectOption,
-  isPlatform
+  isPlatform,
 } from '@ionic/vue';
 
 import {
   cog,
-  options
+  options,
 } from 'ionicons/icons';
 import { ref, inject, toRaw, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -152,7 +152,7 @@ import { onMounted, onUnmounted } from '@vue/runtime-core';
 import { toggleDarkMode } from '@/states/darkMode';
 import { Config, StorageManager } from '@/services/storageManager';
 import { StorageManagerKey } from '@/common/injectionKeys';
-import SettingsOption from './SettingsOption.vue';
+import SettingsOption from '@/components/SettingsOption.vue';
 
 const { locale } = useI18n();
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -161,7 +161,7 @@ const config = ref<Config>(structuredClone(StorageManager.DEFAULT_CONFIG));
 
 enum SettingsTabs {
   General = 'General',
-  Advanced = 'Advanced'
+  Advanced = 'Advanced',
 }
 const settingTab = ref(SettingsTabs.General);
 

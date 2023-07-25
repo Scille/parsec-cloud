@@ -3,7 +3,7 @@
 import SasCodeChoice from '@/components/SasCodeChoice.vue';
 import { VueWrapper, mount } from '@vue/test-utils';
 import { IonButton } from '@ionic/vue';
-import { mockI18n } from '../support/mocks';
+import { mockI18n } from 'tests/component/support/mocks';
 
 mockI18n();
 
@@ -12,8 +12,8 @@ describe('Sas code choice', () => {
   beforeEach(() => {
     wrapper = mount(SasCodeChoice, {
       props: {
-        choices: ['AAAA', 'BBBB', 'CCCC', 'DDDD']
-      }
+        choices: ['AAAA', 'BBBB', 'CCCC', 'DDDD'],
+      },
     });
   });
 

@@ -3,7 +3,7 @@
 import {
   Notification as MsNotification,
   NotificationLevel,
-  NotificationCenter
+  NotificationCenter,
 } from '@/services/notificationCenter';
 import { vi } from 'vitest';
 import { DateTime } from 'luxon';
@@ -28,7 +28,7 @@ describe('Notification Center', () => {
         level: NotificationLevel.Warning,
         read: false,
         time: DateTime.now(),
-        data: {}
+        data: {},
       },
       {
         id: '1234',
@@ -38,8 +38,8 @@ describe('Notification Center', () => {
         read: false,
         time: DateTime.now(),
         data: {
-          'key': 'value'
-        }
+          'key': 'value',
+        },
       },
       {
         id: '1234',
@@ -48,8 +48,8 @@ describe('Notification Center', () => {
         level: NotificationLevel.Error,
         read: false,
         time: DateTime.now(),
-        data: {}
-      }
+        data: {},
+      },
     ];
   });
 

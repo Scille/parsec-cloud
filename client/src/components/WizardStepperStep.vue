@@ -39,7 +39,7 @@
 export enum StepStatus {
   DEFAULT = 'default',
   DONE = 'done',
-  ACTIVE = 'active'
+  ACTIVE = 'active',
 }
 </script>
 

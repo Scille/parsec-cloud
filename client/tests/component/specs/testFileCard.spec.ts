@@ -4,7 +4,7 @@ import FileCard from '@/components/FileCard.vue';
 import { MockFile } from '@/common/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
-import { mockI18n, getDefaultProvideConfig } from '../support/mocks';
+import { mockI18n, getDefaultProvideConfig } from 'tests/component/support/mocks';
 
 mockI18n();
 
@@ -18,16 +18,16 @@ describe('File Card Item', () => {
       size: 43_297_832_478,
       lastUpdate: DateTime.now(),
       updater: 'Gordon Freeman',
-      children: []
+      children: [],
     };
 
     const wrapper = mount(FileCard, {
       props: {
-        file: FILE
+        file: FILE,
       },
       global: {
-        provide: getDefaultProvideConfig()
-      }
+        provide: getDefaultProvideConfig(),
+      },
     });
 
     expect(wrapper.get('.card-content__title').text()).to.equal('A File.txt');
@@ -55,7 +55,7 @@ describe('File Card Item', () => {
         size: 8_932_472_384,
         lastUpdate: DateTime.now(),
         updater: 'Gordon Freeman',
-        children: []
+        children: [],
       }, {
         id: '2',
         name: 'Another File.png',
@@ -63,17 +63,17 @@ describe('File Card Item', () => {
         size: 239_029_484,
         lastUpdate: DateTime.now(),
         updater: 'Gordon Freeman',
-        children: []
-      }]
+        children: [],
+      }],
     };
 
     const wrapper = mount(FileCard, {
       props: {
-        file: FOLDER
+        file: FOLDER,
       },
       global: {
-        provide: getDefaultProvideConfig()
-      }
+        provide: getDefaultProvideConfig(),
+      },
     });
 
     expect(wrapper.get('.card-content__title').text()).to.equal('A Folder');

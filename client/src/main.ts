@@ -1,13 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import { createApp } from 'vue';
+
+// eslint-disable-next-line no-relative-import-paths/no-relative-import-paths
 import App from './App.vue';
-import router from './router';
+import router from '@/router';
 
 import { IonicVue } from '@ionic/vue';
 import { createI18n, useI18n } from 'vue-i18n';
-import frFR from './locales/fr-FR.json';
-import enUS from './locales/en-US.json';
+import frFR from '@/locales/fr-FR.json';
+import enUS from '@/locales/en-US.json';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/vue/css/core.css';
@@ -32,8 +34,8 @@ import { DateTime } from 'luxon';
 import { FormattersKey, ConfigPathKey, StorageManagerKey, NotificationKey } from '@/common/injectionKeys';
 
 /* Theme variables */
-import './theme/global.scss';
-import { libparsec } from './plugins/libparsec';
+import '@/theme/global.scss';
+import { libparsec } from '@/plugins/libparsec';
 import { NotificationCenter } from '@/services/notificationCenter';
 
 async function setupApp(): Promise<void> {
@@ -52,7 +54,7 @@ async function setupApp(): Promise<void> {
     fr: 'fr-FR',
     en: 'en-US',
     'fr-FR': 'fr-FR',
-    'en-US': 'en-US'
+    'en-US': 'en-US',
   };
   const defaultLocale = 'fr-FR';
   const i18n = createI18n<[MessageSchema], 'fr-FR' | 'en-US'>({
@@ -61,14 +63,14 @@ async function setupApp(): Promise<void> {
     locale: config.locale || supportedLocales[window.navigator.language] || defaultLocale,
     messages: {
       'fr-FR': frFR,
-      'en-US': enUS
+      'en-US': enUS,
     },
     datetimeFormats: {
       'en-US': {
         short: {
           year: 'numeric',
           month: 'short',
-          day: 'numeric'
+          day: 'numeric',
         },
         long: {
           year: 'numeric',
@@ -76,14 +78,14 @@ async function setupApp(): Promise<void> {
           day: 'numeric',
           weekday: 'long',
           hour: 'numeric',
-          minute: 'numeric'
-        }
+          minute: 'numeric',
+        },
       },
       'fr-FR': {
         short: {
           year: 'numeric',
           month: 'short',
-          day: 'numeric'
+          day: 'numeric',
         },
         long: {
           year: 'numeric',
@@ -91,15 +93,15 @@ async function setupApp(): Promise<void> {
           day: 'numeric',
           weekday: 'long',
           hour: 'numeric',
-          minute: 'numeric'
-        }
-      }
-    }
+          minute: 'numeric',
+        },
+      },
+    },
   });
 
   const app = createApp(App)
     .use(IonicVue, {
-      rippleEffect: false
+      rippleEffect: false,
     })
     .use(router)
     .use(i18n);
@@ -112,7 +114,7 @@ async function setupApp(): Promise<void> {
     'fileSize': (bytes: number): string => {
       const { t } = useI18n();
       return formatFileSize(bytes, t);
-    }
+    },
   });
   app.provide(StorageManagerKey, storageManager);
   app.provide(NotificationKey, notificationCenter);

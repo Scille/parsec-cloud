@@ -81,14 +81,14 @@ import {
   business,
   ellipsisHorizontal,
   cloudDone,
-  cloudOffline
+  cloudOffline,
 } from 'ionicons/icons';
 import { ref, inject } from 'vue';
 import { IonIcon, IonButton, IonItem, IonLabel } from '@ionic/vue';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
 import { MockWorkspace } from '@/common/mocks';
 import AvatarGroup from '@/components/AvatarGroup.vue';
-import TagRole from '@/components/tagRole.vue';
+import TagRole from '@/components/TagRole.vue';
 
 const isSelected = ref(false);
 
@@ -97,8 +97,8 @@ defineProps<{
 }>();
 
 defineEmits<{
-  (e: 'click', event: Event, workspace: MockWorkspace): void,
-  (e: 'menuClick', event: Event, workspace: MockWorkspace): void,
+  (e: 'click', event: Event, workspace: MockWorkspace): void
+  (e: 'menuClick', event: Event, workspace: MockWorkspace): void
   (e: 'shareClick', event: Event, workspace: MockWorkspace): void
 }>();
 

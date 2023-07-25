@@ -11,7 +11,7 @@
 <script setup lang="ts">
 import {
   IonPage,
-  IonContent
+  IonContent,
 } from '@ionic/vue';
 </script>
 

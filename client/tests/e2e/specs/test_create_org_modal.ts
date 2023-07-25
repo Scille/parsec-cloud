@@ -96,7 +96,7 @@ describe('Create a new organization', () => {
     cy.get('@consoleLog').should(
       'have.been.calledWith',
       // eslint-disable-next-line quotes
-      `Creating org MyOrg, user Banjo <banjo@rare.com>, device SpiralMountain, password ALongP@ssw0rd, backend my-parsec-server`
+      `Creating org MyOrg, user Banjo <banjo@rare.com>, device SpiralMountain, password ALongP@ssw0rd, backend my-parsec-server`,
     );
     cy.get('#button-next').click();
     cy.get('.modal-header__title').should('not.exist');

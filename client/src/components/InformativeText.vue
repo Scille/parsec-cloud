@@ -19,7 +19,7 @@
 import { IonIcon, IonText } from '@ionic/vue';
 
 defineProps<{
-  icon: string,
+  icon: string
   text: string
 }>();
 </script>

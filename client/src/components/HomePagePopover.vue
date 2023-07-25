@@ -47,11 +47,11 @@ import {
   IonLabel,
   IonText,
   modalController,
-  popoverController
+  popoverController,
 } from '@ionic/vue';
 import {
   addCircle,
-  mail
+  mail,
 } from 'ionicons/icons';
 
 import { createAlert } from '@/components/AlertConfirmation';
@@ -66,7 +66,7 @@ async function openCreateOrganizationModal(): Promise<void> {
   const modal = await modalController.create({
     component: CreateOrganizationModal,
     canDismiss: canDismissModal,
-    cssClass: 'create-organization-modal'
+    cssClass: 'create-organization-modal',
   });
   await modal.present();
   const { data, role } = await modal.onWillDismiss();
@@ -81,7 +81,7 @@ async function canDismissModal(data?: any, modalRole?: string): Promise<boolean>
     t('AlertConfirmation.areYouSure'),
     t('AlertConfirmation.infoNotSaved'),
     t('AlertConfirmation.cancel'),
-    t('AlertConfirmation.ok')
+    t('AlertConfirmation.ok'),
   );
   await alert.present();
   const { role } = await alert.onDidDismiss();
@@ -92,7 +92,7 @@ async function openJoinByLinkModal(): Promise<void> {
   const modal = await modalController.create({
     component: JoinOrganizationModal,
     canDismiss: canDismissModal,
-    cssClass: 'join-organization-modal'
+    cssClass: 'join-organization-modal',
   });
   await modal.present();
   const result = await modal.onWillDismiss();

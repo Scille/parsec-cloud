@@ -2,5 +2,5 @@
 
 export enum ModalResultCode {
   Cancel = 'cancel',
-  Confirm = 'confirm'
+  Confirm = 'confirm',
 }

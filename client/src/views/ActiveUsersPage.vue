@@ -77,7 +77,7 @@ import {
   IonPage,
   IonLabel,
   IonListHeader,
-  IonItemDivider
+  IonItemDivider,
 } from '@ionic/vue';
 import UserListItem from '@/components/Users/UserListItem.vue';
 import UserCard from '@/components/Users/UserCard.vue';

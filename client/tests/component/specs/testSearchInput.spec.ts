@@ -9,8 +9,8 @@ describe('Search Input', () => {
   beforeEach(() => {
     wrapper = mount(SearchInput, {
       props: {
-        label: 'A Label'
-      }
+        label: 'A Label',
+      },
     });
   });
 

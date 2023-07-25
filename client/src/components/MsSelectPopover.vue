@@ -42,25 +42,25 @@ import {
   IonList,
   IonItem,
   IonIcon,
-  popoverController
+  popoverController,
 } from '@ionic/vue';
 import {
   arrowUp,
   arrowDown,
-  checkmark
+  checkmark,
 } from 'ionicons/icons';
 import { MsSelectOption, MsSelectSortByLabels, getOptionByKey } from '@/components/MsSelectOption';
 
 const props = defineProps<{
-  defaultOption?: string,
-  options: MsSelectOption[],
-  sortByLabels?: MsSelectSortByLabels,
+  defaultOption?: string
+  options: MsSelectOption[]
+  sortByLabels?: MsSelectSortByLabels
   sortByAsc: boolean
 }>();
 
 const sortByAsc: Ref<boolean> = ref(props.sortByAsc);
 const selectedOption = ref(
-  props.defaultOption ? getOptionByKey(props.options, props.defaultOption) : props.options[0]
+  props.defaultOption ? getOptionByKey(props.options, props.defaultOption) : props.options[0],
 );
 
 function onOptionClick(option?: MsSelectOption): void {
@@ -71,7 +71,7 @@ function onOptionClick(option?: MsSelectOption): void {
   }
   popoverController.dismiss({
     option: selectedOption.value,
-    sortByAsc: sortByAsc.value
+    sortByAsc: sortByAsc.value,
   });
 }
 </script>

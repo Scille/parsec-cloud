@@ -57,7 +57,7 @@ import {
   business,
   ellipsisHorizontal,
   cloudDone,
-  cloudOffline
+  cloudOffline,
 } from 'ionicons/icons';
 import { IonAvatar, IonIcon, IonText, IonTitle } from '@ionic/vue';
 import { inject } from 'vue';
@@ -70,8 +70,8 @@ defineProps<{
 }>();
 
 defineEmits<{
-  (e: 'click', event: Event, workspace: MockWorkspace): void,
-  (e: 'menuClick', event: Event, workspace: MockWorkspace): void,
+  (e: 'click', event: Event, workspace: MockWorkspace): void
+  (e: 'menuClick', event: Event, workspace: MockWorkspace): void
   (e: 'shareClick', event: Event, workspace: MockWorkspace): void
 }>();
 
