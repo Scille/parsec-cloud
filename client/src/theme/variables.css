@@ -534,6 +534,10 @@ body.dark {
   align-items: center;
   flex-direction: row;
   width: 100%;
+}
+
+.contextual-menu>div:not(.right-side) {
+  display: flex;
   gap: 1rem;
 }
 
