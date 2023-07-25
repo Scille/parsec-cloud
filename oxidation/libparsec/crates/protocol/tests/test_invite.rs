@@ -552,6 +552,7 @@ fn serde_invite_info_rep(#[case] raw: &[u8], #[case] expected: invited_cmds::inv
 
 #[parsec_test]
 fn serde_invite_1_claimer_wait_peer_req_legacy() {
+    // Legacy: `greeter_user_id` has been introduced has mandatory field in APIv2.9/3.x
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   claimer_public_key: hex!("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
@@ -762,6 +763,7 @@ fn serde_invite_1_greeter_wait_peer_rep(
 
 #[parsec_test]
 fn serde_invite_2a_claimer_send_hashed_nonce_req_legacy() {
+    // Legacy: `greeter_user_id` has been introduced has mandatory field in APIv2.9/3.x
     // Generated from Python implementation (Parsec v2.10.0+dev)
     // Content:
     //   claimer_hashed_nonce: hex!("e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6")
@@ -1063,6 +1065,7 @@ fn serde_invite_2b_greeter_send_nonce_rep(
 
 #[parsec_test]
 fn serde_invite_2b_claimer_send_nonce_req_legacy() {
+    // Legacy: `greeter_user_id` has been introduced has mandatory field in APIv2.9/3.x
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   claimer_nonce: hex!("666f6f626172")
@@ -1252,6 +1255,7 @@ fn serde_invite_3a_greeter_wait_peer_trust_rep(
 
 #[parsec_test]
 fn serde_invite_3b_claimer_wait_peer_trust_req_legacy() {
+    // Legacy: `greeter_user_id` has been introduced has mandatory field in APIv2.9/3.x
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   cmd: "invite_3b_claimer_wait_peer_trust"
@@ -1436,6 +1440,7 @@ fn serde_invite_3b_greeter_signify_trust_rep(
 
 #[parsec_test]
 fn serde_invite_3a_claimer_signify_trust_req_legacy() {
+    // Legacy: `greeter_user_id` has been introduced has mandatory field in APIv2.9/3.x
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   cmd: "invite_3a_claimer_signify_trust"
@@ -1621,6 +1626,7 @@ fn serde_invite_4_greeter_communicate_rep(
 
 #[parsec_test]
 fn serde_invite_4_claimer_communicate_req_legacy() {
+    // Legacy: `greeter_user_id` has been introduced has mandatory field in APIv2.9/3.x
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   cmd: "invite_4_claimer_communicate"

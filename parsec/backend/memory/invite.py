@@ -277,7 +277,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         greeter_human_handle = self._user_component._get_user(
             organization_id, greeter_user_id
         ).human_handle
-        claimer_user = await self._user_component.get_user(organization_id, claimer_user_id)
+        claimer_user = self._user_component._get_user(organization_id, claimer_user_id)
         claimer_email = claimer_user.human_handle.email if claimer_user.human_handle else None
         _, recipients = self._shamir_info(organization_id, claimer_user_id)
         allowed_greeters = {recipient.user_id for recipient in recipients}
