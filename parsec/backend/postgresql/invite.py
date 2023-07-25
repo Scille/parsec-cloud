@@ -1118,7 +1118,7 @@ class PGInviteComponent(BaseInviteComponent):
                     status=status,
                 )
             else:
-                raise NotImplementedError(type, "not implemented")
+                assert False
             invitations.append(invitation)
 
         for (

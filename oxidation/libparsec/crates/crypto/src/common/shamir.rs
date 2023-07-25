@@ -10,6 +10,12 @@ pub struct ShamirShare(sharks::Share);
 
 crate::impl_key_debug!(ShamirShare);
 
+impl ShamirShare {
+    pub fn dump(&self) -> Vec<u8> {
+        Vec::from(&self.0)
+    }
+}
+
 impl PartialEq for ShamirShare {
     fn eq(&self, other: &Self) -> bool {
         self.0.x == other.0.x && self.0.y == other.0.y
@@ -39,7 +45,7 @@ impl Serialize for ShamirShare {
     where
         S: serde::Serializer,
     {
-        serializer.serialize_bytes(&Vec::from(&self.0))
+        serializer.serialize_bytes(&self.dump())
     }
 }
 

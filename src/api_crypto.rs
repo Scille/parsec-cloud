@@ -532,6 +532,20 @@ pub(crate) fn generate_nonce(py: Python<'_>) -> &PyBytes {
 #[derive(Clone)]
 pub(crate) struct ShamirShare(pub libparsec::crypto::ShamirShare);
 
+#[pymethods]
+impl ShamirShare {
+    #[new]
+    fn new(data: &[u8]) -> PyResult<Self> {
+        libparsec::crypto::ShamirShare::try_from(data)
+            .map(Self)
+            .map_err(|err| PyValueError::new_err(err.to_string()))
+    }
+
+    fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.dump())
+    }
+}
+
 #[pyfunction]
 pub(crate) fn shamir_make_shares(threshold: u8, secret: &[u8], shares: usize) -> Vec<ShamirShare> {
     let shares = libparsec::crypto::shamir_make_shares(threshold, secret, shares);

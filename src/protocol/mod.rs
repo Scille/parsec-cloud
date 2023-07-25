@@ -458,7 +458,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<InviteNewRep>()?;
     m.add_class::<InviteNewRepNotAllowed>()?;
     m.add_class::<InviteNewRepAlreadyMember>()?;
-    m.add_class::<InviteNewRepNotAvailable>()?;
+    m.add_class::<InviteNewRepShamirRecoveryNotSetup>()?;
     m.add_class::<InviteNewRepUnknownStatus>()?;
     m.add_class::<InviteNewRepOk>()?;
 

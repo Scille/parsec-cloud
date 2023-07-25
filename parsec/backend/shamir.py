@@ -31,6 +31,39 @@ from parsec._parsec import (
 from parsec.backend.client_context import AuthenticatedClientContext, InvitedClientContext
 from parsec.backend.utils import api, api_typed_msg_adapter, catch_protocol_errors
 
+# Helpers
+
+
+def verify_certificates(
+    setup: ShamirRecoverySetup,
+    author: DeviceID,
+    author_verify_key: VerifyKey,
+) -> tuple[ShamirRecoveryBriefCertificate, dict[UserID, bytes]]:
+    share_certificates: dict[UserID, bytes] = {}
+    brief_certificate = ShamirRecoveryBriefCertificate.verify_and_load(
+        setup.brief,
+        author_verify_key,
+        expected_author=author,
+    )
+    for raw_share in setup.shares:
+        share_certificate = ShamirRecoveryShareCertificate.verify_and_load(
+            raw_share, author_verify_key, expected_author=author
+        )
+        if share_certificate.recipient not in brief_certificate.per_recipient_shares:
+            raise DataError(
+                f"Recipient {share_certificate.recipient.str} does not in appear in the brief certificate"
+            )
+        if share_certificate.recipient in share_certificates:
+            raise DataError(f"Recipient {share_certificate.recipient.str} appears more than once")
+        if share_certificate.recipient == author.user_id:
+            raise DataError(f"Author {author.user_id} included themselves in the recipients")
+        share_certificates[share_certificate.recipient] = raw_share
+    delta = set(brief_certificate.per_recipient_shares) - set(share_certificates)
+    if delta:
+        missing = ", ".join(user_id.str for user_id in delta)
+        raise DataError(f"The following shares are missing: {missing}")
+    return brief_certificate, share_certificates
+
 
 class BaseShamirComponent:
     @api("shamir_recovery_others_list")
@@ -70,12 +103,24 @@ class BaseShamirComponent:
         self, client_ctx: AuthenticatedClientContext, req: ShamirRecoverySetupReq
     ) -> ShamirRecoverySetupRep:
         try:
-            await self.recovery_setup(
-                organization_id=client_ctx.organization_id,
-                author=client_ctx.device_id,
-                author_verify_key=client_ctx.verify_key,
-                setup=req.setup,
-            )
+            if req.setup is None:
+                await self.remove_recovery_setup(
+                    organization_id=client_ctx.organization_id,
+                    author=client_ctx.device_id,
+                )
+            else:
+                brief_certificate, raw_share_certificates = verify_certificates(
+                    req.setup,
+                    author=client_ctx.device_id,
+                    author_verify_key=client_ctx.verify_key,
+                )
+                await self.add_recovery_setup(
+                    organization_id=client_ctx.organization_id,
+                    author=client_ctx.device_id,
+                    setup=req.setup,
+                    brief_certificate=brief_certificate,
+                    raw_share_certificates=raw_share_certificates,
+                )
         except DataError:
             return ShamirRecoverySetupRepInvalidData()
 
@@ -110,14 +155,22 @@ class BaseShamirComponent:
     ) -> bytes | None:
         raise NotImplementedError()
 
-    async def recovery_setup(
+    async def remove_recovery_setup(
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        author_verify_key: VerifyKey,
-        setup: ShamirRecoverySetup | None,
     ) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError
+
+    async def add_recovery_setup(
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        setup: ShamirRecoverySetup,
+        brief_certificate: ShamirRecoveryBriefCertificate,
+        raw_share_certificates: dict[UserID, bytes],
+    ) -> None:
+        raise NotImplementedError
 
     async def recovery_reveal(
         self,
@@ -125,38 +178,3 @@ class BaseShamirComponent:
         reveal_token: ShamirRevealToken,
     ) -> bytes | None:
         raise NotImplementedError()
-
-    # Helpers
-
-    def _verify_certificates(
-        self,
-        setup: ShamirRecoverySetup,
-        author: DeviceID,
-        author_verify_key: VerifyKey,
-    ) -> tuple[ShamirRecoveryBriefCertificate, dict[UserID, bytes]]:
-        share_certificates: dict[UserID, bytes] = {}
-        brief_certificate = ShamirRecoveryBriefCertificate.verify_and_load(
-            setup.brief,
-            author_verify_key,
-            expected_author=author,
-        )
-        for raw_share in setup.shares:
-            share_certificate = ShamirRecoveryShareCertificate.verify_and_load(
-                raw_share, author_verify_key, expected_author=author
-            )
-            if share_certificate.recipient not in brief_certificate.per_recipient_shares:
-                raise DataError(
-                    f"Recipient {share_certificate.recipient.str} does not in appear in the brief certificate"
-                )
-            if share_certificate.recipient in share_certificates:
-                raise DataError(
-                    f"Recipient {share_certificate.recipient.str} appears more than once"
-                )
-            if share_certificate.recipient == author.user_id:
-                raise DataError(f"Author {author.user_id} included themselves in the recipients")
-            share_certificates[share_certificate.recipient] = raw_share
-        delta = set(brief_certificate.per_recipient_shares) - set(share_certificates)
-        if delta:
-            missing = ", ".join(user_id.str for user_id in delta)
-            raise DataError(f"The following shares are missing: {missing}")
-        return brief_certificate, share_certificates

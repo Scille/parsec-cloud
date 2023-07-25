@@ -19,8 +19,8 @@ from parsec._parsec import (
     InviteListRepOk,
     InviteNewRepAlreadyMember,
     InviteNewRepNotAllowed,
-    InviteNewRepNotAvailable,
     InviteNewRepOk,
+    InviteNewRepShamirRecoveryNotSetup,
 )
 from parsec.api.protocol import HandshakeBadIdentity, InvitationStatus, UserProfile
 from parsec.backend.backend_events import BackendEvent
@@ -296,7 +296,7 @@ async def test_invite_with_send_mail_and_greeter_without_human_handle(
 
     # Device invitation (not available given no human_handle means no email !)
     rep = await invite_new(alice_ws, type=InvitationType.DEVICE, send_email=True)
-    assert isinstance(rep, InviteNewRepNotAvailable)
+    assert isinstance(rep, InviteNewRepShamirRecoveryNotSetup)
 
 
 @pytest.mark.trio

@@ -6,10 +6,10 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from parsec._parsec import (
+    ShamirRecoveryBriefCertificate,
     ShamirRecoveryRecipient,
     ShamirRecoverySetup,
     ShamirRevealToken,
-    VerifyKey,
 )
 from parsec.api.protocol import DeviceID, OrganizationID, UserID
 from parsec.backend.shamir import BaseShamirComponent
@@ -62,35 +62,32 @@ class MemoryShamirComponent(BaseShamirComponent):
             return None
         return item.brief_certificate
 
-    async def recovery_setup(
+    async def remove_recovery_setup(
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        author_verify_key: VerifyKey,
-        setup: ShamirRecoverySetup | None,
     ) -> None:
         assert self._user_component is not None
 
-        # Remove shared recovery device for this user
-        if setup is None:
-            item_key = (organization_id, author.user_id)
-            item = self._shamir_recovery_items.pop(item_key, None)
-            if item is not None:
-                self._shamir_recovery_ciphered_data.pop(item.reveal_token, None)
-            for mapping in self._shamir_recovery_shares.values():
-                mapping.pop(author.user_id, None)
-            await self._invite_component.delete_shamir_invitation_if_it_exists(
-                organization_id, author.user_id
-            )
-            return
-
-        # Verify the certificates
-        brief_certificate, share_certificates = self._verify_certificates(
-            setup,
-            author,
-            author_verify_key,
+        item_key = (organization_id, author.user_id)
+        item = self._shamir_recovery_items.pop(item_key, None)
+        if item is not None:
+            self._shamir_recovery_ciphered_data.pop(item.reveal_token, None)
+        for mapping in self._shamir_recovery_shares.values():
+            mapping.pop(author.user_id, None)
+        await self._invite_component.delete_shamir_invitation_if_it_exists(
+            organization_id, author.user_id
         )
 
+    async def add_recovery_setup(
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        setup: ShamirRecoverySetup,
+        brief_certificate: ShamirRecoveryBriefCertificate,
+        raw_share_certificates: dict[UserID, bytes],
+    ) -> None:
+        assert self._user_component is not None
         # Get the recipients
         recipients = tuple(
             ShamirRecoveryRecipient(
@@ -110,7 +107,7 @@ class MemoryShamirComponent(BaseShamirComponent):
         self._shamir_recovery_ciphered_data[(setup.reveal_token)] = setup.ciphered_data
 
         # Save the shares
-        for user_id, raw_certificate in share_certificates.items():
+        for user_id, raw_certificate in raw_share_certificates.items():
             item_key = organization_id, user_id
             self._shamir_recovery_shares.setdefault(item_key, {})
             self._shamir_recovery_shares[item_key][author.user_id] = raw_certificate

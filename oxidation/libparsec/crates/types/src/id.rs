@@ -417,7 +417,7 @@ crate::impl_from_maybe!(Option<HumanHandle>);
  */
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "UPPERCASE")]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum UserProfile {
     /// Standard user can create new realms and invite new devices for himself.
     ///

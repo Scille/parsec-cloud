@@ -453,6 +453,7 @@ impl AuthenticatedCmds {
                 NotAllowed,
                 AlreadyMember,
                 NotAvailable,
+                ShamirRecoveryNotSetup,
                 Ok,
                 UnknownStatus
             )

@@ -718,5 +718,4 @@ shamir_recovery_setup = CmdSock(
 invite_shamir_recovery_reveal = CmdSock(
     "invite_shamir_recovery_reveal",
     invite_shamir_recovery_reveal_serializer,
-    parse_args=lambda self, reveal_token: {"reveal_token": reveal_token},
 )

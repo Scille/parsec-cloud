@@ -56,8 +56,8 @@ from parsec._parsec import (
     InviteListRepOk,
     InviteNewRepAlreadyMember,
     InviteNewRepNotAllowed,
-    InviteNewRepNotAvailable,
     InviteNewRepOk,
+    InviteNewRepShamirRecoveryNotSetup,
     PublicKey,
     ShamirRecoveryRecipient,
 )
@@ -119,7 +119,7 @@ serialized = serializer.rep_dumps(InviteNewRepAlreadyMember())
 serializer.rep_loads(serialized)
 display("invite_new_rep_already_member", serialized, [])
 
-serialized = serializer.rep_dumps(InviteNewRepNotAvailable())
+serialized = serializer.rep_dumps(InviteNewRepShamirRecoveryNotSetup())
 serializer.rep_loads(serialized)
 display("invite_new_rep_not_available", serialized, [])
 

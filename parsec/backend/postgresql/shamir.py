@@ -6,9 +6,10 @@ from typing import Any
 from parsec._parsec import (
     DeviceID,
     OrganizationID,
+    ShamirRecoveryBriefCertificate,
     ShamirRecoverySetup,
     ShamirRevealToken,
-    VerifyKey,
+    UserID,
 )
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.invite import (
@@ -154,33 +155,31 @@ class PGShamirComponent(BaseShamirComponent):
                 return None
             return row["brief_certificate"]
 
-    async def recovery_setup(
+    async def remove_recovery_setup(
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        author_verify_key: VerifyKey,
-        setup: ShamirRecoverySetup | None,
     ) -> None:
-        if setup is None:
-            # Unset as active shamir recovery
-            async with self.dbh.pool.acquire() as conn, conn.transaction():
-                await conn.execute(
-                    *_q_set_shamir_recovery(
-                        organization_id=organization_id.str,
-                        user_id=author.user_id.str,
-                        shamir_recovery=None,
-                    )
+        async with self.dbh.pool.acquire() as conn, conn.transaction():
+            await conn.execute(
+                *_q_set_shamir_recovery(
+                    organization_id=organization_id.str,
+                    user_id=author.user_id.str,
+                    shamir_recovery=None,
                 )
-                await delete_shamir_recovery_invitation_if_it_exists(
-                    conn, organization_id, author.user_id
-                )
-            return
-        # Verify the certificates
-        brief_certificate, share_certificates = self._verify_certificates(
-            setup,
-            author,
-            author_verify_key,
-        )
+            )
+            await delete_shamir_recovery_invitation_if_it_exists(
+                conn, organization_id, author.user_id
+            )
+
+    async def add_recovery_setup(
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        setup: ShamirRecoverySetup,
+        brief_certificate: ShamirRecoveryBriefCertificate,
+        raw_share_certificates: dict[UserID, bytes],
+    ) -> None:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             # Insert setup
             internal_setup_id = await conn.fetchval(
@@ -195,13 +194,13 @@ class PGShamirComponent(BaseShamirComponent):
                 )
             )
             # Insert shares
-            for recipient_id, share_certificate in share_certificates.items():
+            for recipient_id, raw_share_certificate in raw_share_certificates.items():
                 await conn.execute(
                     *_q_insert_shamir_recovery_share(
                         organization_id=organization_id.str,
                         shamir_recovery=internal_setup_id,
                         recipient=recipient_id.str,
-                        share_certificate=share_certificate,
+                        share_certificate=raw_share_certificate,
                         shares=brief_certificate.per_recipient_shares[recipient_id],
                     )
                 )

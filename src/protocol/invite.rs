@@ -306,7 +306,8 @@ gen_rep!(
     { .. },
     [NotAllowed],
     [AlreadyMember],
-    [NotAvailable]
+    [NotAvailable],
+    [ShamirRecoveryNotSetup],
 );
 
 #[pyclass(extends=InviteNewRep)]

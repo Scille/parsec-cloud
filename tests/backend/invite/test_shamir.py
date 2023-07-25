@@ -17,8 +17,8 @@ from parsec._parsec import (
     InviteDeleteRepOk,
     InviteInfoRepOk,
     InviteListRepOk,
-    InviteNewRepNotAvailable,
     InviteNewRepOk,
+    InviteNewRepShamirRecoveryNotSetup,
     InviteShamirRecoveryRevealRepOk,
     LocalDevice,
     PrivateKey,
@@ -156,7 +156,7 @@ async def test_shamir_recovery(alice: LocalDevice, bob: LocalDevice, alice_ws, b
     assert set(rep.brief_certificates) == {bob_brief}
     assert set(rep.share_certificates) == {signed_share_bob_for_alice}
 
-    rep = await invite_shamir_recovery_reveal(invited_ws, alice_reveal_token)
+    rep = await invite_shamir_recovery_reveal(invited_ws, reveal_token=alice_reveal_token)
     assert isinstance(rep, InviteShamirRecoveryRevealRepOk)
     assert rep.ciphered_data == b"alice_ciphered_data"
 
@@ -166,7 +166,7 @@ async def test_invite_shamir_not_available(bob: LocalDevice, alice_ws):
     rep = await invite_new(
         alice_ws, type=InvitationType.SHAMIR_RECOVERY, claimer_user_id=bob.user_id
     )
-    assert isinstance(rep, InviteNewRepNotAvailable)
+    assert isinstance(rep, InviteNewRepShamirRecoveryNotSetup)
 
 
 async def _shamir_exchange(
@@ -377,7 +377,9 @@ async def test_full_shamir(
         invitation_type=invitation_address.invitation_type,
         token=invitation_address.token,
     ) as invited_ws:
-        rep = await invite_shamir_recovery_reveal(invited_ws, recovered_secret.reveal_token)
+        rep = await invite_shamir_recovery_reveal(
+            invited_ws, reveal_token=recovered_secret.reveal_token
+        )
         assert isinstance(rep, InviteShamirRecoveryRevealRepOk)
 
     assert rep.ciphered_data == ciphered_data

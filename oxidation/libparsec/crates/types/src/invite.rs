@@ -31,7 +31,7 @@ pub enum InvitationType {
  */
 
 #[derive(Debug, Clone, Hash, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "UPPERCASE")]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum InvitationStatus {
     Idle,
     Ready,

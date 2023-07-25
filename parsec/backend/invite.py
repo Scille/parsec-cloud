@@ -106,8 +106,8 @@ from parsec._parsec import (
     InviteNewRep,
     InviteNewRepAlreadyMember,
     InviteNewRepNotAllowed,
-    InviteNewRepNotAvailable,
     InviteNewRepOk,
+    InviteNewRepShamirRecoveryNotSetup,
     InviteNewReq,
     PublicKey,
     ShamirRecoveryRecipient,
@@ -447,7 +447,7 @@ class BaseInviteComponent:
                 return InviteNewRepAlreadyMember()
         elif req.type == InvitationType.DEVICE:
             if req.send_email and not client_ctx.human_handle:
-                return InviteNewRepNotAvailable()
+                return InviteNewRepShamirRecoveryNotSetup()
 
             invitation = await self.new_for_device(
                 organization_id=client_ctx.organization_id,
@@ -461,7 +461,7 @@ class BaseInviteComponent:
                     claimer_user_id=req.claimer_user_id,
                 )
             except InvitationShamirRecoveryNotSetup:
-                return InviteNewRepNotAvailable()
+                return InviteNewRepShamirRecoveryNotSetup()
             except InvitationShamirRecoveryGreeterNotInRecipients:
                 return InviteNewRepNotAllowed()
         else:
