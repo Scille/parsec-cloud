@@ -5,9 +5,11 @@ use jni::objects::{JClass, JObject, JString};
 use jni::JNIEnv;
 use std::sync::Mutex;
 
+use libparsec::TokioRuntime;
+
 lazy_static::lazy_static! {
-    static ref TOKIO_RUNTIME: Mutex<tokio::runtime::Runtime> =
-        Mutex::new(tokio::runtime::Runtime::new().expect("Cannot start tokio runtime for libparsec"));
+    static ref TOKIO_RUNTIME: Mutex<TokioRuntime> =
+        Mutex::new(TokioRuntime::new().expect("Cannot start tokio runtime for libparsec"));
 }
 
 #[no_mangle]

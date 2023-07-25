@@ -1,18 +1,18 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use futures::{future::BoxFuture, FutureExt};
+use libparsec::low_level::platform_async::{JoinHandle, Runtime};
 use pyo3::{
     import_exception, once_cell::GILOnceCell, pyclass, pyfunction, pymethods, types::PyString,
     wrap_pyfunction, IntoPy, Py, PyAny, PyObject, PyRef, PyResult, Python,
 };
 use std::future::Future;
-use tokio::task::JoinHandle;
 
 import_exception!(trio, RunFinishedError);
 
 // We have one global Tokio runtime that is lazily initialized
 struct Stuff {
-    tokio_runtime: tokio::runtime::Runtime,
+    tokio_runtime: Runtime,
     // Cache Python function to save time when we need them
     // Stuff needed when we will have to wake up the trio coroutine. Note we do as much work
     // has possible now given we can turn error into Python exception, while we will have to
@@ -34,7 +34,7 @@ fn get_stuff(py: Python<'_>) -> &Stuff {
             let trio_lowlevel = py.import("trio")?.getattr("lowlevel")?;
             let outcome = py.import("outcome")?;
             Ok(Stuff {
-                tokio_runtime: tokio::runtime::Runtime::new()?,
+                tokio_runtime: Runtime::new()?,
                 trio_current_trio_token_fn: trio_lowlevel
                     .getattr("current_trio_token")?
                     .into_py(py),

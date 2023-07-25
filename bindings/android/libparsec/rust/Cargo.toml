@@ -12,4 +12,3 @@ lazy_static = { workspace = true }
 jni = { workspace = true }
 log = { workspace = true }
 android_logger = { workspace = true, features = ["regex"] }
-tokio = { workspace = true, features = ["rt-multi-thread"] }

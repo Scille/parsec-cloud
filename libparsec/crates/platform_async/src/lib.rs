@@ -21,4 +21,13 @@ pub use platform::{
     task::{spawn, Task},
 };
 #[cfg(not(target_arch = "wasm32"))]
-pub use tokio::sync::{Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard, TryLockError};
+pub use tokio::{
+    fs::{create_dir_all as tokio_create_dir_all, metadata as tokio_metadata},
+    runtime::Runtime,
+    sync::{
+        mpsc::unbounded_channel,
+        watch::{channel, Receiver},
+        Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard, TryLockError,
+    },
+    task::{spawn as tokio_spawn, spawn_blocking as tokio_spawn_blocking, JoinHandle},
+};

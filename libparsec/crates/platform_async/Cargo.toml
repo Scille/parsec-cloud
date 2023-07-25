@@ -30,9 +30,7 @@ console_log = { workspace = true }
 instant = { workspace = true, features = ["wasm-bindgen"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { workspace = true, features = ["rt", "time", "sync", "macros"] }
+tokio = { workspace = true, features = ["rt", "rt-multi-thread", "fs", "sync"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 libparsec_tests_fixtures = { workspace = true }
-
-tokio = { workspace = true, features = ["full"] }

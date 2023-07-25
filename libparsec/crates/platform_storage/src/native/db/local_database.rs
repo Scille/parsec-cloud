@@ -4,6 +4,7 @@
 use std::path::{Path, PathBuf};
 
 use diesel::{connection::SimpleConnection, sqlite::SqliteConnection, Connection};
+use libparsec_platform_async::{tokio_create_dir_all, tokio_metadata};
 
 use super::error::{DatabaseError, DatabaseResult};
 use super::executor::SqliteExecutor;
@@ -134,7 +135,7 @@ async fn new_sqlite_executor_from_path(
         }
     }?;
     if let Some(prefix) = path.parent() {
-        tokio::fs::create_dir_all(prefix).await.map_err(|e| {
+        tokio_create_dir_all(prefix).await.map_err(|e| {
             diesel::result::ConnectionError::BadConnection(format!(
                 "Can't create sub-directory `{}`: {e}",
                 prefix
@@ -193,7 +194,7 @@ impl LocalDatabase {
 
         /// Get the size of a file.
         async fn get_file_size(path: &Path) -> usize {
-            tokio::fs::metadata(path)
+            tokio_metadata(path)
                 .await
                 .map(|meta| meta.len() as usize)
                 .ok()

@@ -1183,6 +1183,7 @@ version = "0.0.0"
 dependencies = [
  "libparsec_client_high_level_api",
  "libparsec_crypto",
+ "libparsec_platform_async",
  "libparsec_platform_device_loader",
  "libparsec_platform_storage",
  "libparsec_protocol",
@@ -1200,7 +1201,6 @@ dependencies = [
  "lazy_static",
  "libparsec",
  "log",
- "tokio",
 ]
 
 [[package]]
@@ -1210,7 +1210,6 @@ dependencies = [
  "lazy_static",
  "libparsec",
  "neon",
- "tokio",
 ]
 
 [[package]]
@@ -1239,7 +1238,6 @@ dependencies = [
  "libparsec_types",
  "log",
  "paste",
- "tokio",
 ]
 
 [[package]]
@@ -1370,7 +1368,6 @@ dependencies = [
  "libsqlite3-sys",
  "log",
  "paste",
- "tokio",
 ]
 
 [[package]]
@@ -1866,7 +1863,6 @@ dependencies = [
  "regex",
  "rmp-serde",
  "serde",
- "tokio",
  "uuid",
 ]
 
@@ -2642,15 +2638,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "signal-hook-registry"
-version = "1.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8229b473baa5980ac72ef434c4415e70c4b5e71b423043adb4ba059f89c99a1"
-dependencies = [
- "libc",
-]
-
-[[package]]
 name = "signature"
 version = "1.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2887,23 +2874,9 @@ dependencies = [
  "libc",
  "mio",
  "num_cpus",
- "parking_lot",
  "pin-project-lite",
- "signal-hook-registry",
  "socket2",
- "tokio-macros",
  "windows-sys 0.48.0",
-]
-
-[[package]]
-name = "tokio-macros"
-version = "2.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "630bdcf245f78637c13ec01ffae6187cca34625e8c63150d424b59e55af2675e"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.25",
 ]
 
 [[package]]

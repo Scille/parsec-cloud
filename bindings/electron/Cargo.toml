@@ -13,5 +13,4 @@ crate-type = ["cdylib"]
 [dependencies]
 libparsec = { workspace = true }
 lazy_static = { workspace = true }
-tokio = { workspace = true, features = ["rt-multi-thread"] }
 neon = { workspace = true, features = ["napi-6", "channel-api", "promise-api"] }

@@ -6,6 +6,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use libparsec_platform_async::{channel, Mutex as AsyncMutex, Receiver};
 use libparsec_types::prelude::*;
 
 use crate::certificates_ops::InvalidMessageError;
@@ -226,7 +227,7 @@ enum ServerState {
 }
 
 struct ServerStateListener {
-    watch: tokio::sync::watch::Receiver<ServerState>,
+    watch: Receiver<ServerState>,
     _lifetimes: (
         EventBusConnectionLifetime<EventOnline>,
         EventBusConnectionLifetime<EventOffline>,
@@ -235,7 +236,7 @@ struct ServerStateListener {
 
 impl ServerStateListener {
     fn new(event_bus: &Arc<EventBusInternal>) -> Self {
-        let (tx, rx) = tokio::sync::watch::channel(ServerState::Offline);
+        let (tx, rx) = channel(ServerState::Offline);
         let tx_online = Arc::new(Mutex::new(tx));
         let tx_offline = tx_online.clone();
         let lifetimes = (
@@ -268,13 +269,13 @@ impl ServerStateListener {
 #[derive(Clone)]
 pub struct EventBus {
     internal: Arc<EventBusInternal>,
-    server_state: Arc<tokio::sync::Mutex<ServerStateListener>>,
+    server_state: Arc<AsyncMutex<ServerStateListener>>,
 }
 
 impl Default for EventBus {
     fn default() -> Self {
         let internal = Arc::new(EventBusInternal::default());
-        let server_state = Arc::new(tokio::sync::Mutex::new(ServerStateListener::new(&internal)));
+        let server_state = Arc::new(AsyncMutex::new(ServerStateListener::new(&internal)));
         Self {
             internal,
             server_state,

@@ -3,11 +3,13 @@
 use neon::prelude::*;
 use std::sync::Mutex;
 
+use libparsec::TokioRuntime;
+
 mod meths;
 
 lazy_static::lazy_static! {
-    static ref TOKIO_RUNTIME: Mutex<tokio::runtime::Runtime> =
-        Mutex::new(tokio::runtime::Runtime::new().expect("Cannot start tokio runtime for libparsec"));
+    static ref TOKIO_RUNTIME: Mutex<TokioRuntime> =
+        Mutex::new(TokioRuntime::new().expect("Cannot start tokio runtime for libparsec"));
 }
 
 #[neon::main]

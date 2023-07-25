@@ -7,6 +7,8 @@ use std::sync::{atomic::AtomicBool, Arc};
 
 use diesel::{connection::SimpleConnection, SqliteConnection};
 
+use libparsec_platform_async::tokio_spawn_blocking;
+
 use super::{DatabaseError, DatabaseResult};
 
 pub(super) struct SqliteExecutor {
@@ -46,7 +48,7 @@ impl SqliteExecutor {
         self.force_stop.store(true, Ordering::Relaxed);
 
         let internal = self.internal.clone();
-        tokio::task::spawn_blocking(move || {
+        tokio_spawn_blocking(move || {
             let mut guard = internal.lock().expect("Mutex is poisoned");
             guard.connection.take()
         })
@@ -60,7 +62,7 @@ impl SqliteExecutor {
         R: Send + 'static,
     {
         let internal = self.internal.clone();
-        tokio::task::spawn_blocking(move || {
+        tokio_spawn_blocking(move || {
             let mut guard = internal.lock().expect("Mutex is poisoned");
 
             // Ensure the executor hasn't been stopped while we were waiting for the lock
@@ -80,7 +82,7 @@ impl SqliteExecutor {
     #[allow(unused)]
     pub async fn full_vacuum(&self) -> DatabaseResult<()> {
         let internal = self.internal.clone();
-        tokio::task::spawn_blocking(move || {
+        tokio_spawn_blocking(move || {
             let mut guard = internal.lock().expect("Mutex is poisoned");
 
             // Ensure the executor hasn't been stopped while we where waiting for the lock

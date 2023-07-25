@@ -2,6 +2,7 @@
 
 use std::sync::Arc;
 
+use libparsec_platform_async::{tokio_spawn, unbounded_channel, JoinHandle};
 use libparsec_types::prelude::*;
 
 use crate::{
@@ -13,7 +14,7 @@ use crate::{
 };
 
 pub struct CertificatesMonitor {
-    worker: tokio::task::JoinHandle<()>,
+    worker: JoinHandle<()>,
 }
 
 impl CertificatesMonitor {
@@ -22,7 +23,7 @@ impl CertificatesMonitor {
             NewCertificate(IndexInt),
             MissedServerEvents,
         }
-        let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<Action>();
+        let (tx, mut rx) = unbounded_channel::<Action>();
         let _ = tx.send(Action::MissedServerEvents);
 
         let events_connection_lifetime = (
@@ -37,7 +38,7 @@ impl CertificatesMonitor {
             }),
         );
 
-        let worker = tokio::spawn(async move {
+        let worker = tokio_spawn(async move {
             let _events_connection_lifetime = events_connection_lifetime;
 
             loop {

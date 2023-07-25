@@ -3,6 +3,7 @@
 use diesel::{connection::SimpleConnection, Connection, SqliteConnection};
 use std::sync::Arc;
 
+use libparsec_platform_async::tokio_spawn;
 use libparsec_tests_fixtures::parsec_test;
 
 use super::{DatabaseError, SqliteExecutor};
@@ -36,7 +37,7 @@ async fn stop_with_multiple_jobs() {
         libparsec_platform_async::channel::bounded(0);
 
     // Steps 1 & 2: barrier job is submitted...
-    let barrier_job_task = tokio::spawn({
+    let barrier_job_task = tokio_spawn({
         let executor = executor.clone();
         async move {
             executor
@@ -65,7 +66,7 @@ async fn stop_with_multiple_jobs() {
     // Step 3: will-be-cancelled job is submitted
     let (about_to_submit_will_be_cancelled_tx, about_to_submit_will_be_cancelled_rx) =
         libparsec_platform_async::channel::bounded(0);
-    let submit_will_be_cancelled_job_task = tokio::spawn({
+    let submit_will_be_cancelled_job_task = tokio_spawn({
         let executor = executor.clone();
         async move {
             about_to_submit_will_be_cancelled_tx

@@ -18,7 +18,6 @@ paste = { workspace = true }
 lazy_static = { workspace = true, optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { workspace = true, features = ["fs", "sync"] }
 diesel = { workspace = true, features = ["sqlite", "returning_clauses_for_sqlite_3_35"], default-features = false }
 # We add this dependency to have sqlite3 bundled into our code.
 libsqlite3-sys = { workspace = true, features = ["bundled"] }
