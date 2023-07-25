@@ -154,14 +154,14 @@ import {
   IonButtons,
   IonFooter,
   IonIcon,
-  modalController
+  modalController,
 } from '@ionic/vue';
 
 import {
   chevronForward,
   chevronBack,
   caretForward,
-  close
+  close,
 } from 'ionicons/icons';
 import { ref, Ref, computed } from 'vue';
 import InformativeText from '@/components/InformativeText.vue';
@@ -179,7 +179,7 @@ enum CreateOrganizationStep {
   ServerStep = 3,
   PasswordStep = 4,
   SpinnerStep = 5,
-  FinishStep = 6
+  FinishStep = 6,
 }
 
 const DEFAULT_SAAS_ADDR = 'parsec://saas.parsec.cloud/';
@@ -195,13 +195,13 @@ const device: Ref<AvailableDevice | null> = ref(null);
 
 function canGoBackward(): boolean {
   return ![
-    CreateOrganizationStep.OrgNameStep, CreateOrganizationStep.SpinnerStep, CreateOrganizationStep.FinishStep
+    CreateOrganizationStep.OrgNameStep, CreateOrganizationStep.SpinnerStep, CreateOrganizationStep.FinishStep,
   ].includes(pageStep.value);
 }
 
 function canClose(): boolean {
   return ![
-    CreateOrganizationStep.SpinnerStep, CreateOrganizationStep.FinishStep
+    CreateOrganizationStep.SpinnerStep, CreateOrganizationStep.FinishStep,
   ].includes(pageStep.value);
 }
 
@@ -253,7 +253,7 @@ function cancelModal(): Promise<boolean> {
 
 function createOrg(orgName: string, userName: string, userEmail: string, deviceName: string, backendAddr: string, password: string): void {
   console.log(
-    `Creating org ${orgName}, user ${userName} <${userEmail}>, device ${deviceName}, password ${password}, backend ${backendAddr}`
+    `Creating org ${orgName}, user ${userName} <${userEmail}>, device ${deviceName}, password ${password}, backend ${backendAddr}`,
   );
   device.value = {
     organizationId: orgName,
@@ -262,7 +262,7 @@ function createOrg(orgName: string, userName: string, userEmail: string, deviceN
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug1',
-    ty: {tag: 'Password'}
+    ty: {tag: 'Password'},
   };
   // Simulate connection to the backend
   window.setTimeout(nextStep, 2000);
@@ -283,7 +283,7 @@ function nextStep(): void {
       userInfoPage.value.email,
       userInfoPage.value.deviceName,
       addr,
-      passwordPage.value.password
+      passwordPage.value.password,
     );
   }
 }

@@ -2,7 +2,6 @@
 
 import SettingsOption from '@/components/SettingsOption.vue';
 import { mount, VueWrapper } from '@vue/test-utils';
-import { IonToggle } from '@ionic/vue';
 
 describe('Setting Option', () => {
   let wrapper: VueWrapper;
@@ -15,8 +14,8 @@ describe('Setting Option', () => {
         modelValue: false,
         'onUpdate:modelValue': (e: boolean) => {
           wrapper.setProps({ modelValue: e });
-        }
-      }
+        },
+      },
     });
   });
 

@@ -41,16 +41,16 @@
 import {IonItem, IonInput } from '@ionic/vue';
 
 defineProps<{
-  label?: string,
-  placeholder?: string,
-  errorMessage?: string,
-  errorIcon?: string,
-  modelValue?: string,
+  label?: string
+  placeholder?: string
+  errorMessage?: string
+  errorIcon?: string
+  modelValue?: string
   disabled?: boolean
 }>();
 
 defineEmits<{
-  (e: 'update:modelValue', value: string): void,
+  (e: 'update:modelValue', value: string): void
   (e: 'change', value: string): void
 }>();
 </script>

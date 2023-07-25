@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import {
-  caretForward
+  caretForward,
 } from 'ionicons/icons';
 import InformativeText from '@/components/InformativeText.vue';
 </script>

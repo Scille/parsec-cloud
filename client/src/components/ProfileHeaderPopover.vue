@@ -68,7 +68,7 @@ export enum ProfilePopoverOption {
   MyDevices = 0,
   Settings = 1,
   Help = 2,
-  LogOut = 3
+  LogOut = 3,
 }
 </script>
 
@@ -78,13 +78,13 @@ import {
   IonItem,
   IonIcon,
   IonLabel,
-  IonText
+  IonText,
 } from '@ionic/vue';
 import {
   phonePortrait,
   cog,
   helpCircle,
-  logOut
+  logOut,
 } from 'ionicons/icons';
 import { useI18n } from 'vue-i18n';
 import { popoverController } from '@ionic/core';
@@ -92,13 +92,13 @@ import { popoverController } from '@ionic/core';
 const { t } = useI18n();
 
 defineProps<{
-  firstname: string,
+  firstname: string
   lastname: string
 }>();
 
 function onOptionClick(option: ProfilePopoverOption): void {
   popoverController.dismiss({
-    option: option
+    option: option,
   });
 }
 </script>

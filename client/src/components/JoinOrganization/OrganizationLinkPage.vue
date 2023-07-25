@@ -19,7 +19,7 @@ const joinLink = ref('');
 
 defineExpose({
   areFieldsCorrect,
-  joinLink
+  joinLink,
 });
 
 function areFieldsCorrect(): boolean {

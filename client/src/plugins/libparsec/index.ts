@@ -2,8 +2,8 @@
 
 import { registerPlugin } from '@capacitor/core';
 
-import type { LibParsecPlugin } from './definitions';
-import { LoadWebLibParsecPlugin } from './trampoline';
+import type { LibParsecPlugin } from '@/plugins/libparsec/definitions';
+import { LoadWebLibParsecPlugin } from '@/plugins/libparsec/trampoline';
 
 export const libparsec = registerPlugin<LibParsecPlugin>(
   'LibParsec',
@@ -22,10 +22,10 @@ export const libparsec = registerPlugin<LibParsecPlugin>(
     // We do this by extracting the `LoadWebLibParsecPlugin` into a `trampoline.ts`, this
     // file having two implementation (the real one when building for the web and a dummy
     // one otherwise) that are selected when `vue-cli-service` is called (see `vue.config.js`).
-    web: LoadWebLibParsecPlugin
+    web: LoadWebLibParsecPlugin,
 
     // In Android, capacitor already knows about the plugin given it has been registered from Java
-  }
+  },
 );
 
 // Global exposition of libparsec for easier debugging with console

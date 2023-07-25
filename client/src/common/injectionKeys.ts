@@ -16,5 +16,5 @@ export {
   FormattersKey,
   StorageManagerKey,
   ConfigPathKey,
-  NotificationKey
+  NotificationKey,
 };

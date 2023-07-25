@@ -100,14 +100,14 @@ import {
   IonRouterOutlet,
   isPlatform,
   menuController,
-  IonItemDivider
+  IonItemDivider,
 } from '@ionic/vue';
 import {
   helpCircleOutline,
   informationCircleOutline,
   folderOutline,
   settingsOutline,
-  peopleOutline
+  peopleOutline,
 } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
 

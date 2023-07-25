@@ -70,6 +70,7 @@
         "eslint-plugin-cypress": "^2.13.3",
         "eslint-plugin-import": "^2.27.5",
         "eslint-plugin-n": "^15.6.1",
+        "eslint-plugin-no-relative-import-paths": "^1.5.2",
         "eslint-plugin-promise": "^6.1.1",
         "eslint-plugin-vue": "^8.0.1",
         "eslint-plugin-vue-scoped-css": "^2.5.0",

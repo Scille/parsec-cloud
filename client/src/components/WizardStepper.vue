@@ -26,7 +26,7 @@ import WizardStepperStep, { StepStatus } from '@/components/WizardStepperStep.vu
 import { defineProps } from 'vue';
 
 defineProps<{
-  titles: string[],
+  titles: string[]
   currentIndex: number
 }>();
 </script>

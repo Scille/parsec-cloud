@@ -72,7 +72,7 @@ const passwordStrength = ref(PasswordStrength.None);
 
 defineExpose({
   areFieldsCorrect,
-  password
+  password,
 });
 
 function areFieldsCorrect(): boolean {

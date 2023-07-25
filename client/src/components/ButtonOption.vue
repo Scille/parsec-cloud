@@ -5,6 +5,7 @@
     class="button-option body"
   >
     <ion-icon
+      v-show="icon"
       slot="start"
       :icon="icon"
     />
@@ -16,11 +17,11 @@
 import { defineProps } from 'vue';
 import {
   IonButton,
-  IonIcon
+  IonIcon,
 } from '@ionic/vue';
 
 defineProps<{
-  buttonLabel?: any,
+  buttonLabel?: any
   icon?: string
 }>();
 </script>

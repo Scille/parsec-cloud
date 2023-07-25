@@ -7,7 +7,7 @@ import {
   deviceNameValidator,
   emailValidator,
   claimUserLinkValidator,
-  backendAddrValidator
+  backendAddrValidator,
 } from '@/common/validators';
 
 describe('Validators', () => {

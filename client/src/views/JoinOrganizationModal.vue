@@ -173,11 +173,11 @@ import {
   IonIcon,
   IonLabel,
   IonSpinner,
-  modalController
+  modalController,
 } from '@ionic/vue';
 
 import {
-  close
+  close,
 } from 'ionicons/icons';
 import { ref, Ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -199,7 +199,7 @@ enum JoinOrganizationStep {
   ProvideGuestCode = 3,
   GetUserInfo = 4,
   GetPassword = 5,
-  Finish = 6
+  Finish = 6,
 }
 
 // Used to simulate host interaction
@@ -232,7 +232,7 @@ function parseInvitationLink(link: string): ClaimUserLink {
   return {
     backendAddr: link,
     token: 'aaa',
-    org: 'My Org'
+    org: 'My Org',
   };
 }
 
@@ -242,38 +242,38 @@ const waitingForHost = ref(false);
 
 interface Title {
   title: string,
-  subtitle: string
+  subtitle: string,
 }
 
 const titles = new Map<JoinOrganizationStep, Title>([
   [
     JoinOrganizationStep.JoinLink,
-    {title: t('JoinOrganization.titles.joinOrga'), subtitle: t('JoinOrganization.subtitles.joinOrga')}
+    {title: t('JoinOrganization.titles.joinOrga'), subtitle: t('JoinOrganization.subtitles.joinOrga')},
   ],
   [
     JoinOrganizationStep.WaitForHost,
-    {title: t('JoinOrganization.titles.waitForHost'), subtitle: t('JoinOrganization.subtitles.waitForHost')}
+    {title: t('JoinOrganization.titles.waitForHost'), subtitle: t('JoinOrganization.subtitles.waitForHost')},
   ],
   [
     JoinOrganizationStep.GetHostSasCode,
-    {title: t('JoinOrganization.titles.getHostCode'), subtitle: t('JoinOrganization.subtitles.getHostCode')}
+    {title: t('JoinOrganization.titles.getHostCode'), subtitle: t('JoinOrganization.subtitles.getHostCode')},
   ],
   [
     JoinOrganizationStep.ProvideGuestCode,
-    {title: t('JoinOrganization.titles.provideGuestCode'), subtitle: t('JoinOrganization.subtitles.provideGuestCode')}
+    {title: t('JoinOrganization.titles.provideGuestCode'), subtitle: t('JoinOrganization.subtitles.provideGuestCode')},
   ],
   [
     JoinOrganizationStep.GetUserInfo,
-    {title: t('JoinOrganization.titles.getUserInfo'), subtitle: t('JoinOrganization.subtitles.getUserInfo')}
+    {title: t('JoinOrganization.titles.getUserInfo'), subtitle: t('JoinOrganization.subtitles.getUserInfo')},
   ],
   [
     JoinOrganizationStep.GetPassword,
-    {title: t('JoinOrganization.titles.getPassword'), subtitle: t('JoinOrganization.subtitles.getPassword')}
+    {title: t('JoinOrganization.titles.getPassword'), subtitle: t('JoinOrganization.subtitles.getPassword')},
   ],
   [
     JoinOrganizationStep.Finish,
-    {title: t('JoinOrganization.titles.finish', {org: ''}), subtitle: t('JoinOrganization.subtitles.finish')}
-  ]
+    {title: t('JoinOrganization.titles.finish', {org: ''}), subtitle: t('JoinOrganization.subtitles.finish')},
+  ],
 ]);
 
 function selectHostSas(_code: string | null): void {
@@ -354,7 +354,7 @@ function mockCreateDevice(): AvailableDevice {
   const humanHandle = `${userInfoPage.value.fullName} <${userInfoPage.value.email}>`;
   const deviceName = userInfoPage.value.deviceName;
   console.log(
-    `Creating device ${claimUserLink?.org}, user ${humanHandle}, device ${deviceName}, backend ${props.invitationLink}`
+    `Creating device ${claimUserLink?.org}, user ${humanHandle}, device ${deviceName}, backend ${props.invitationLink}`,
   );
   const device: AvailableDevice = {
     organizationId: claimUserLink?.org || '',
@@ -363,7 +363,7 @@ function mockCreateDevice(): AvailableDevice {
     keyFilePath: 'key_file_path',
     deviceId: 'device1@device1',
     slug: 'slug1',
-    ty: {tag: 'Password'}
+    ty: {tag: 'Password'},
   };
 
   return device;

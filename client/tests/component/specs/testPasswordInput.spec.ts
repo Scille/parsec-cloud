@@ -9,8 +9,8 @@ describe('Password Input', () => {
   beforeEach(() => {
     wrapper = mount(PasswordInput, {
       props: {
-        label: 'A Label'
-      }
+        label: 'A Label',
+      },
     });
   });
 

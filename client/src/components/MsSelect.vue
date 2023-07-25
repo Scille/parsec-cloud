@@ -20,16 +20,16 @@ import { defineProps, defineEmits, Ref, ref } from 'vue';
 import {
   IonButton,
   IonIcon,
-  popoverController
+  popoverController,
 } from '@ionic/vue';
 import { swapVertical } from 'ionicons/icons';
 import MsSelectPopover from '@/components/MsSelectPopover.vue';
 import { MsSelectOption, MsSelectSortByLabels, getOptionByKey, MsSelectChangeEvent } from '@/components/MsSelectOption';
 
 const props = defineProps<{
-  defaultOption: string,
-  label?: string,
-  options: MsSelectOption[],
+  defaultOption: string
+  label?: string
+  options: MsSelectOption[]
   sortByLabels?: MsSelectSortByLabels
 }>();
 
@@ -38,7 +38,7 @@ const emits = defineEmits<{
 }>();
 
 const selectedOption: Ref<MsSelectOption | undefined> = ref(
-  props.defaultOption ? getOptionByKey(props.options, props.defaultOption) : undefined
+  props.defaultOption ? getOptionByKey(props.options, props.defaultOption) : undefined,
 );
 const sortByAsc: Ref<boolean> = ref(true);
 const labelRef = ref(selectedOption.value?.label || props.label);
@@ -50,10 +50,10 @@ async function openPopover(ev: Event): Promise<void> {
       options: props.options,
       defaultOption: selectedOption.value?.key,
       sortByLabels: props.sortByLabels,
-      sortByAsc: sortByAsc.value
+      sortByAsc: sortByAsc.value,
     },
     event: ev,
-    showBackdrop: false
+    showBackdrop: false,
   });
   await popover.present();
   onDidDismissPopover(popover);
@@ -67,7 +67,7 @@ async function onDidDismissPopover(popover: any): Promise<void> {
     sortByAsc.value = data.sortByAsc;
     emits('change', {
       option: data.option,
-      sortByAsc: sortByAsc.value
+      sortByAsc: sortByAsc.value,
     });
   }
 }

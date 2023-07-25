@@ -3,6 +3,7 @@ import fs from 'fs';
 import { defineConfig, PluginOption, UserConfigExport } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import topLevelAwait from 'vite-plugin-top-level-await';
+// eslint-disable-next-line no-relative-import-paths/no-relative-import-paths
 import wasmPack from './scripts/vite_plugin_wasm_pack';
 
 const plugins: PluginOption[] = [vue(), topLevelAwait()];
@@ -66,17 +67,17 @@ if (platform === 'web') {
 const config: UserConfigExport = {
   plugins: plugins,
   build: {
-    sourcemap: true
+    sourcemap: true,
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src')
-    }
+      '@': path.resolve(__dirname, './src'),
+    },
   },
   server: {
     port: 8080,
-    hmr: true
-  }
+    hmr: true,
+  },
 };
 
 export default defineConfig(config);

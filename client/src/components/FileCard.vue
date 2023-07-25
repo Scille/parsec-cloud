@@ -46,7 +46,7 @@ import {
   document,
   ellipsisHorizontal,
   cloudDone,
-  cloudOffline
+  cloudOffline,
 } from 'ionicons/icons';
 import { IonAvatar, IonIcon, IonText, IonTitle } from '@ionic/vue';
 import { inject } from 'vue';
@@ -58,8 +58,8 @@ defineProps<{
 }>();
 
 defineEmits<{
-  (e: 'click', event: Event, file: MockFile): void,
-  (e: 'menuClick', event: Event, file: MockFile): void,
+  (e: 'click', event: Event, file: MockFile): void
+  (e: 'menuClick', event: Event, file: MockFile): void
 }>();
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

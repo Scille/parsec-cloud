@@ -36,24 +36,24 @@ function getDefaultDeviceName(): string {
 const props = defineProps({
   defaultEmail: {
     type: String,
-    default: ''
+    default: '',
   },
   defaultName: {
     type: String,
-    default: ''
+    default: '',
   },
   emailEnabled: {
     type: Boolean,
-    default: true
+    default: true,
   },
   nameEnabled: {
     type: Boolean,
-    default: true
+    default: true,
   },
   deviceEnabled: {
     type: Boolean,
-    default: true
-  }
+    default: true,
+  },
 });
 
 const deviceName = ref(getDefaultDeviceName());
@@ -64,7 +64,7 @@ defineExpose({
   areFieldsCorrect,
   deviceName,
   email,
-  fullName
+  fullName,
 });
 
 function areFieldsCorrect(): boolean {

@@ -109,18 +109,18 @@ import {
   modalController,
   IonList,
   IonListHeader,
-  IonItem
+  IonItem,
 } from '@ionic/vue';
 
 import {
-  addCircle
+  addCircle,
 } from 'ionicons/icons';
 import WorkspaceCard from '@/components/WorkspaceCard.vue';
 import WorkspaceListItem from '@/components/WorkspaceListItem.vue';
 import { MockWorkspace, getMockWorkspaces } from '@/common/mocks';
 import WorkspaceContextMenu from '@/components/WorkspaceContextMenu.vue';
 import { WorkspaceAction } from '@/components/WorkspaceContextMenu.vue';
-import WorkspaceSharingModal from './WorkspaceSharingModal.vue';
+import WorkspaceSharingModal from '@/views/WorkspaceSharingModal.vue';
 import CreateWorkspaceModal from '@/components/CreateWorkspaceModal.vue';
 import MsSelect from '@/components/MsSelect.vue';
 import ButtonOption from '@/components/ButtonOption.vue';
@@ -159,7 +159,7 @@ const filteredWorkspaces = computed(() => {
 const msSelectOptions: MsSelectOption[] = [
   { label: t('WorkspacesPage.sort.sortByName'), key: 'name' },
   { label: t('WorkspacesPage.sort.sortBySize'), key: 'size' },
-  { label: t('WorkspacesPage.sort.sortByLastUpdated'), key: 'lastUpdated' }
+  { label: t('WorkspacesPage.sort.sortByLastUpdated'), key: 'lastUpdated' },
 ];
 
 function onMsSelectChange(event: MsSelectChangeEvent): void {
@@ -169,7 +169,7 @@ function onMsSelectChange(event: MsSelectChangeEvent): void {
 async function openCreateWorkspaceModal(): Promise<void> {
   const modal = await modalController.create({
     component: CreateWorkspaceModal,
-    cssClass: 'one-line-modal'
+    cssClass: 'one-line-modal',
   });
   modal.present();
 
@@ -184,7 +184,7 @@ function onWorkspaceClick(_event: Event, workspace: MockWorkspace): void {
   router.push({
     name: 'folder',
     params: { deviceId: currentRoute.params.deviceId, workspaceId: workspace.id },
-    query: { path: '/' }
+    query: { path: '/' },
   });
 }
 
@@ -192,9 +192,9 @@ async function onWorkspaceShareClick(_: Event, workspace: MockWorkspace): Promis
   const modal = await modalController.create({
     component: WorkspaceSharingModal,
     componentProps: {
-      workspaceId: workspace.id
+      workspaceId: workspace.id,
     },
-    cssClass: 'workspace-sharing-modal'
+    cssClass: 'workspace-sharing-modal',
   });
   await modal.present();
   await modal.onWillDismiss();
@@ -208,7 +208,7 @@ async function openWorkspaceContextMenu(event: Event, workspace: MockWorkspace):
       translucent: true,
       showBackdrop: false,
       dismissOnSelect: true,
-      reference: 'event'
+      reference: 'event',
     });
   await popover.present();
 

@@ -72,10 +72,10 @@ import {
   IonIcon,
   IonList,
   IonFooter,
-  modalController
+  modalController,
 } from '@ionic/vue';
 import {
-  close
+  close,
 } from 'ionicons/icons';
 import { ref, watch, onUnmounted } from 'vue';
 import { getWorkspaceUsers, WorkspaceRole } from '@/common/mocks';

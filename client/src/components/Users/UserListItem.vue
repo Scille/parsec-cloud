@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
 import {
-  IonItem
+  IonItem,
 } from '@ionic/vue';
 
 defineProps<{

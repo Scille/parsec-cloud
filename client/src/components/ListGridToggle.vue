@@ -38,7 +38,7 @@
 <script lang="ts">
 export enum DisplayState {
   List = 0,
-  Grid = 1
+  Grid = 1,
 }
 </script>
 
@@ -56,7 +56,7 @@ defineEmits<{
 }>();
 
 defineExpose({
-  DisplayState
+  DisplayState,
 });
 </script>
 

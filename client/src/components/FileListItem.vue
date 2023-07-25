@@ -88,7 +88,7 @@ import {
   cloudDone,
   cloudOffline,
   folder,
-  document
+  document,
 } from 'ionicons/icons';
 import { ref, inject } from 'vue';
 import { IonIcon, IonButton, IonItem, IonLabel, IonCheckbox } from '@ionic/vue';
@@ -100,20 +100,20 @@ const isHovered = ref(false);
 const isSelected = ref(false);
 
 const props = defineProps<{
-  file: MockFile,
+  file: MockFile
   showCheckbox: boolean
 }>();
 
 defineEmits<{
-  (e: 'click', event: Event, file: MockFile): void,
-  (e: 'menuClick', event: Event, file: MockFile): void,
+  (e: 'click', event: Event, file: MockFile): void
+  (e: 'menuClick', event: Event, file: MockFile): void
   (e: 'select', file: MockFile, selected: boolean): void
 }>();
 
 defineExpose({
   isHovered,
   isSelected,
-  props
+  props,
 });
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

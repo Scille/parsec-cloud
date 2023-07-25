@@ -133,7 +133,7 @@ import {
   informationCircle,
   download,
   time,
-  open
+  open,
 } from 'ionicons/icons';
 
 function onClick(action: FileAction): Promise<boolean> {

@@ -4,7 +4,7 @@ import WorkspaceListItem from '@/components/WorkspaceListItem.vue';
 import { MockWorkspace, WorkspaceRole } from '@/common/mocks';
 import { mount, VueWrapper } from '@vue/test-utils';
 import { DateTime } from 'luxon';
-import { mockI18n, getDefaultProvideConfig } from '../support/mocks';
+import { mockI18n, getDefaultProvideConfig } from 'tests/component/support/mocks';
 import { IonAvatar } from '@ionic/vue';
 
 mockI18n();
@@ -20,19 +20,19 @@ describe('Workspace List Item', () => {
     size: 60_817_408,
     role: WorkspaceRole.Reader,
     availableOffline: true,
-    lastUpdate: DateTime.fromISO('2023-05-08T12:00:00')
+    lastUpdate: DateTime.fromISO('2023-05-08T12:00:00'),
   };
 
   beforeEach(() => {
     wrapper = mount(WorkspaceListItem, {
       props: {
-        workspace: WORKSPACE
+        workspace: WORKSPACE,
       },
       global: {
         provide: getDefaultProvideConfig(),
-        stubs: ['tagRole']
+        stubs: ['TagRole'],
       },
-      stubs: ['tagRole']
+      stubs: ['TagRole'],
     });
   });
 

@@ -25,12 +25,12 @@ import UserTag from '@/components/UserTag.vue';
 import MsSelect from '@/components/MsSelect.vue';
 import { Ref, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { MsSelectOption } from './MsSelectOption';
+import { MsSelectOption } from '@/components/MsSelectOption';
 
 const { t } = useI18n();
 
 defineProps<{
-  user: string,
+  user: string
   role: WorkspaceRole | null
 }>();
 
@@ -45,7 +45,7 @@ const options: Ref<MsSelectOption[]> = ref([
   { key: WorkspaceRole.Contributor, label: t('WorkspaceSharing.roles.Contributor') },
   { key: WorkspaceRole.Manager, label: t('WorkspaceSharing.roles.Manager') },
   { key: WorkspaceRole.Owner, label: t('WorkspaceSharing.roles.Owner') },
-  { key: NOT_SHARED_KEY, label: t('WorkspaceSharing.roles.NotShared') }
+  { key: NOT_SHARED_KEY, label: t('WorkspaceSharing.roles.NotShared') },
 ]);
 
 function getRoleFromString(role: string): WorkspaceRole | null {

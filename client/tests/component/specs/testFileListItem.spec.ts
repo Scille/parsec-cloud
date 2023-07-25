@@ -4,7 +4,7 @@ import FileListItem from '@/components/FileListItem.vue';
 import { MockFile } from '@/common/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
-import { mockI18n, getDefaultProvideConfig } from '../support/mocks';
+import { mockI18n, getDefaultProvideConfig } from 'tests/component/support/mocks';
 
 mockI18n();
 
@@ -17,17 +17,17 @@ describe('File List Item', () => {
       size: 43_297_832_478,
       lastUpdate: DateTime.now(),
       updater: 'Gordon Freeman',
-      children: []
+      children: [],
     };
 
     const wrapper = mount(FileListItem, {
       props: {
         file: FILE,
-        showCheckbox: false
+        showCheckbox: false,
       },
       global: {
-        provide: getDefaultProvideConfig()
-      }
+        provide: getDefaultProvideConfig(),
+      },
     });
 
     expect((wrapper.vm as any).isSelected).to.be.false;
@@ -57,7 +57,7 @@ describe('File List Item', () => {
         size: 8_932_472_384,
         lastUpdate: DateTime.now(),
         updater: 'Gordon Freeman',
-        children: []
+        children: [],
       }, {
         id: '2',
         name: 'Another File.png',
@@ -65,18 +65,18 @@ describe('File List Item', () => {
         size: 239_029_484,
         lastUpdate: DateTime.now(),
         updater: 'Gordon Freeman',
-        children: []
-      }]
+        children: [],
+      }],
     };
 
     const wrapper = mount(FileListItem, {
       props: {
         file: FOLDER,
-        showCheckbox: false
+        showCheckbox: false,
       },
       global: {
-        provide: getDefaultProvideConfig()
-      }
+        provide: getDefaultProvideConfig(),
+      },
     });
 
     expect((wrapper.vm as any).isSelected).to.be.false;

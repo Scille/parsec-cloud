@@ -203,11 +203,17 @@ import {
   IonFabButton,
   IonSearchbar,
   IonToolbar,
-  IonButtons
+  IonButtons,
 } from '@ionic/vue';
 
 import {
-  add, ban, grid, informationCircle, list, personAdd, personRemove, help
+  add,
+  ban,
+  grid,
+  informationCircle,
+  list,
+  personAdd,
+  personRemove,
 } from 'ionicons/icons';
 import ItemGrid from '@/components/ItemGrid.vue';
 import MobileItemList from '@/components/MobileItemList.vue';
@@ -224,55 +230,55 @@ const usersExampleData = [
     'id': 345,
     'name': 'Jean Paul',
     'email': 'jean.paul@test.test',
-    'profile': 'Administrator'
+    'profile': 'Administrator',
   },
   {
     'id': 456,
     'name': 'Alice Dupont',
     'email': 'alicedupont@test.test',
-    'profile': 'Standard'
+    'profile': 'Standard',
   },
   {
     'id': 567,
     'name': 'Alexandre Dubois long name test',
     'email': 'alexandre.dubois@secondtest.test.test.test',
-    'profile': 'Standard'
+    'profile': 'Standard',
   },
   {
     'id': 678,
     'name': 'Jean Martin',
     'email': 'jean.martin@thirdtest.test',
-    'profile': 'Administrator'
+    'profile': 'Administrator',
   },
   {
     'id': 789,
     'name': 'Pierre Martin',
     'email': 'pierremartin@test.test',
-    'profile': 'Standard'
+    'profile': 'Standard',
   },
   {
     'id': 901,
     'name': 'Guillaume Dupont',
     'email': 'guillaume.dupont@dupont.test',
-    'profile': 'Standard'
+    'profile': 'Standard',
   },
   {
     'id': 102,
     'name': 'Clara Dubois',
     'email': 'clara.dubois@dubois.test',
-    'profile': 'Standard'
-  }
+    'profile': 'Standard',
+  },
 ];
 
 const pendingUsersExampleData = [
   {
     'id': 344,
-    'email': 'christophe.dupont@hote.fr'
+    'email': 'christophe.dupont@hote.fr',
   },
   {
     'id': 455,
-    'email': 'thomas.dupont@test.test'
-  }
+    'email': 'thomas.dupont@test.test',
+  },
 ];
 
 function handlePendingUserContextMenu(ev: Event): void {
@@ -299,7 +305,7 @@ async function openPendingUserContextMenu(ev: Event): Promise<void> {
       translucent: true,
       showBackdrop: false,
       dismissOnSelect: true,
-      reference: 'event'
+      reference: 'event',
     });
   await popover.present();
 
@@ -315,7 +321,7 @@ async function openUserContextMenu(ev: Event): Promise<void> {
       translucent: true,
       showBackdrop: false,
       dismissOnSelect: true,
-      reference: 'event'
+      reference: 'event',
     });
   await popover.present();
 
@@ -333,7 +339,7 @@ async function openPendingUserActionSheet(): Promise<void> {
           icon: personAdd,
           handler: (): void => {
             console.log('Greet clicked');
-          }
+          },
         },
         {
           text: t('OrganizationPage.OrganizationPageUsers.OrganizationPendingUserContextMenu.cancelInvitation'),
@@ -341,9 +347,9 @@ async function openPendingUserActionSheet(): Promise<void> {
           icon: personRemove,
           handler: (): void => {
             console.log('Cancel invitation clicked');
-          }
-        }
-      ]
+          },
+        },
+      ],
     });
   await actionSheet.present();
   const { role, data } = await actionSheet.onDidDismiss();
@@ -360,7 +366,7 @@ async function openUserActionSheet(): Promise<void> {
           icon: informationCircle,
           handler: (): void => {
             console.log('Details clicked');
-          }
+          },
         },
         {
           text: t('OrganizationPage.OrganizationPageUsers.OrganizationUserContextMenu.revoke'),
@@ -368,9 +374,9 @@ async function openUserActionSheet(): Promise<void> {
           icon: ban,
           handler: (): void => {
             console.log('Revoke clicked');
-          }
-        }
-      ]
+          },
+        },
+      ],
     });
   await actionSheet.present();
   const { role, data } = await actionSheet.onDidDismiss();
@@ -383,9 +389,9 @@ const filteredUsers = computed(() => {
   if (searchUsersAndPendingUsersInput.value !== '') {
     return usersExampleData.filter((user) => {
       return (user.email.toLowerCase().includes(
-        searchUsersAndPendingUsersInput.value.toLowerCase()
+        searchUsersAndPendingUsersInput.value.toLowerCase(),
       ) || user.name.toLowerCase().includes(
-        searchUsersAndPendingUsersInput.value.toLowerCase()
+        searchUsersAndPendingUsersInput.value.toLowerCase(),
       ));
     });
   } else {
@@ -397,7 +403,7 @@ const filteredPendingUsers = computed(() => {
   if (searchUsersAndPendingUsersInput.value !== '') {
     return pendingUsersExampleData.filter((pendingUser) => {
       return pendingUser.email.toLowerCase().includes(
-        searchUsersAndPendingUsersInput.value.toLowerCase()
+        searchUsersAndPendingUsersInput.value.toLowerCase(),
       );
     });
   } else {

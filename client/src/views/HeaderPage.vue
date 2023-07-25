@@ -116,13 +116,13 @@ import {
   IonContent,
   IonRouterOutlet,
   IonPage,
-  IonLabel
+  IonLabel,
 } from '@ionic/vue';
 import {
   menu,
   search,
   home,
-  notifications
+  notifications,
 } from 'ionicons/icons';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
@@ -180,7 +180,7 @@ const fullPath = computed(() => {
       display: route.length >= 2 ? '' : t('HeaderPage.titles.workspaces'),
       icon: home,
       name: 'workspaces',
-      params: { deviceId: currentRoute.params.deviceId }
+      params: { deviceId: currentRoute.params.deviceId },
     });
 
     if (route.length >= 2) {
@@ -194,7 +194,7 @@ const fullPath = computed(() => {
             display: mockGetWorkspaceName(currentRoute.params.workspaceId as string),
             name: 'folder',
             query: { path: '/' },
-            params: currentRoute.params
+            params: currentRoute.params,
           });
         } else {
           rebuildPath.push(workspacePath[i]);
@@ -203,7 +203,7 @@ const fullPath = computed(() => {
             display: workspacePath[i],
             name: 'folder',
             query: { path: `/${rebuildPath.join('/')}` },
-            params: currentRoute.params
+            params: currentRoute.params,
           });
         }
       }

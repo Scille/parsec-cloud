@@ -14,14 +14,14 @@ describe('Organization Card', () => {
     humanHandle: 'Gordon Freeman',
     deviceLabel: 'hev',
     slug: '1',
-    ty: {tag: 'Password'}
+    ty: {tag: 'Password'},
   };
 
   beforeEach(() => {
     wrapper = mount(OrganizationCard, {
       props: {
-        device: DEVICE
-      }
+        device: DEVICE,
+      },
     });
   });
 
@@ -36,8 +36,8 @@ describe('Organization Card', () => {
 
     wrapper = mount(OrganizationCard, {
       props: {
-        device: DEVICE
-      }
+        device: DEVICE,
+      },
     });
 
     expect(wrapper.find('ion-avatar').text()).to.equal('Bl');

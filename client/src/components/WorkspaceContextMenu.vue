@@ -132,7 +132,7 @@ import {
   informationCircle,
   shareSocial,
   time,
-  open
+  open,
 } from 'ionicons/icons';
 
 function onClick(action: WorkspaceAction): Promise<boolean> {

@@ -182,7 +182,7 @@ import {
   IonLabel,
   IonCheckbox,
   IonText,
-  popoverController
+  popoverController,
 } from '@ionic/vue';
 import {
   folderOpen,
@@ -192,7 +192,7 @@ import {
   arrowRedo,
   trashBin,
   copy,
-  informationCircle
+  informationCircle,
 } from 'ionicons/icons';
 import { useRoute } from 'vue-router';
 import { computed, ref, Ref } from 'vue';
@@ -246,7 +246,7 @@ function onFileClick(_event: Event, file: MockFile): void {
     router.push({
       name: 'folder',
       params: { deviceId: currentRoute.params.deviceId, workspaceId: workspaceId.value },
-      query: { path: newPath }
+      query: { path: newPath },
     });
   }
 }
@@ -332,7 +332,7 @@ async function openFileContextMenu(event: Event, file: MockFile): Promise<void> 
       translucent: true,
       showBackdrop: false,
       dismissOnSelect: true,
-      reference: 'event'
+      reference: 'event',
     });
   await popover.present();
 
@@ -345,7 +345,7 @@ async function openFileContextMenu(event: Event, file: MockFile): Promise<void> 
     [FileAction.ShowHistory, showHistory],
     [FileAction.Download, download],
     [FileAction.ShowDetails, showDetails],
-    [FileAction.CopyLink, copyLink]
+    [FileAction.CopyLink, copyLink],
   ]);
 
   const fn = actions.get(data.action);

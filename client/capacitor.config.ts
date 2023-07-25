@@ -11,13 +11,13 @@ const config: CapacitorElectronConfig = {
       androidScaleType: 'CENTER_CROP',
       splashFullScreen: true,
       splashImmersive: false,
-      backgroundColor: '#121212'
-    }
+      backgroundColor: '#121212',
+    },
   },
   electron: {
     trayIconAndMenuEnabled: true,
-    splashScreenEnabled: true
-  }
+    splashScreenEnabled: true,
+  },
 };
 
 export default config;

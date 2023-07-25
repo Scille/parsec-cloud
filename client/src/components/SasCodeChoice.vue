@@ -63,7 +63,7 @@ import {
   IonGrid,
   IonRow,
   IonCol,
-  IonButton
+  IonButton,
 } from '@ionic/vue';
 
 defineProps<{

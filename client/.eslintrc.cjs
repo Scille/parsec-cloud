@@ -6,7 +6,7 @@ module.exports = {
   env: {
     browser: true,
     es2021: true,
-    node: true
+    node: true,
   },
   extends: [
     // Don't forget to also update plugin configuration in .pre-commit-config.yaml !
@@ -14,23 +14,24 @@ module.exports = {
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
     '@vue/typescript/recommended',
-    'plugin:vue-scoped-css/vue3-recommended'
+    'plugin:vue-scoped-css/vue3-recommended',
   ],
   overrides: [{
     files: ['*.ts', '*.vue'],
     rules: {
-      '@typescript-eslint/explicit-function-return-type': 'error'
-    }
+      '@typescript-eslint/explicit-function-return-type': 'error',
+    },
   }],
   parser: 'vue-eslint-parser',
   parserOptions: {
     ecmaVersion: 'latest',
     project: `${BASE_DIR}/tsconfig.eslint.json`,
-    extraFileExtensions: ['.vue']
+    extraFileExtensions: ['.vue'],
   },
   plugins: [
     'vue',
-    'cypress'
+    'cypress',
+    'no-relative-import-paths',
   ],
   rules: {
     'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
@@ -41,7 +42,13 @@ module.exports = {
     'no-trailing-spaces': 'error',
     'no-multiple-empty-lines': ['error', { 'max': 1, 'maxEOF': 0 }],
     'prefer-const': 'error',
-    'comma-dangle': 'error',
+    'comma-dangle': ['error', {
+      'arrays': 'always-multiline',
+      'objects': 'always-multiline',
+      'imports': 'always-multiline',
+      'exports': 'always-multiline',
+      'functions': 'always-multiline',
+    }],
     'indent': ['error', 2, { 'SwitchCase': 1 }],
     'camelcase': 'error',
     'max-len': ['error', 140],
@@ -54,8 +61,8 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': [
       'warn',
       {
-        'argsIgnorePattern': '^_[a-z]\\S*$'
-      }
+        'argsIgnorePattern': '^_[a-z]\\S*$',
+      },
     ],
     'eol-last': 'error',
     'no-useless-concat': 'error',
@@ -64,8 +71,8 @@ module.exports = {
       'error',
       'always',
       {
-        'block': { 'balanced': true }
-      }
+        'block': { 'balanced': true },
+      },
     ],
     'array-bracket-spacing': 'error',
     'arrow-parens': 'error',
@@ -77,14 +84,20 @@ module.exports = {
     'vue/html-indent': ['error', 2],
     'vue/no-deprecated-slot-attribute': 'off',
     'vue/component-name-in-template-casing': ['error', 'kebab-case', {
-      'registeredComponentsOnly': false
+      'registeredComponentsOnly': false,
     }],
     'vue/block-tag-newline': ['error', {
       'singleline': 'always',
       'multiline': 'always',
-      'maxEmptyLines': 0
+      'maxEmptyLines': 0,
     }],
     'vue/padding-line-between-blocks': 'error',
-    'vue/no-spaces-around-equal-signs-in-attribute': 'error'
-  }
+    'vue/no-spaces-around-equal-signs-in-attribute': 'error',
+    'no-relative-import-paths/no-relative-import-paths': [
+      'error', {
+        'allowSameFolder': false,
+        'prefix': '@',
+      },
+    ],
+  },
 };

@@ -26,7 +26,7 @@ export class StorageManager {
     enableTelemetry: true,
     minimizeToTray: true,
     meteredConnection: false,
-    unsyncFiles: false
+    unsyncFiles: false,
   };
 
   internalStore: Storage;
@@ -45,7 +45,7 @@ export class StorageManager {
     Object.keys(data).forEach((slug: string, _data) => {
       if (data[slug] && data[slug].lastLogin) {
         serialized[slug] = {
-          lastLogin: data[slug].lastLogin.toISO()
+          lastLogin: data[slug].lastLogin.toISO(),
         };
       }
     });
@@ -65,7 +65,7 @@ export class StorageManager {
         deviceData[slug] = {
           // Need to add setZone because Luxon (and JavaScript's date) ignore
           // the timezone part otherwise
-          lastLogin: DateTime.fromISO(data[slug].lastLogin, {setZone: true})
+          lastLogin: DateTime.fromISO(data[slug].lastLogin, {setZone: true}),
         };
       }
     });
@@ -79,7 +79,7 @@ export class StorageManager {
       minimizeToTray: data.minimizeToTray,
       enableTelemetry: data.enableTelemetry,
       synchroWifiOnly: data.meteredConnection,
-      unsyncFiles: data.unsyncFiles
+      unsyncFiles: data.unsyncFiles,
     });
   }
 
@@ -98,7 +98,7 @@ export class StorageManager {
       enableTelemetry: data.enableTelemetry !== undefined ? data.enableTelemetry : StorageManager.DEFAULT_CONFIG.enableTelemetry,
       minimizeToTray: data.minimizeToTray !== undefined ? data.minimizeToTray : StorageManager.DEFAULT_CONFIG.minimizeToTray,
       meteredConnection: data.meteredConnection !== undefined ? data.synchroWifiOnly : StorageManager.DEFAULT_CONFIG.meteredConnection,
-      unsyncFiles: data.unsyncFiles !== undefined ? data.unsyncFiles : StorageManager.DEFAULT_CONFIG.unsyncFiles
+      unsyncFiles: data.unsyncFiles !== undefined ? data.unsyncFiles : StorageManager.DEFAULT_CONFIG.unsyncFiles,
     };
     return config;
   }

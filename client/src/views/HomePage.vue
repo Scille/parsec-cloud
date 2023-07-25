@@ -210,12 +210,12 @@ import {
   IonGrid,
   IonText,
   popoverController,
-  modalController
+  modalController,
 } from '@ionic/vue';
 import {
   chevronBack,
   cog,
-  logIn
+  logIn,
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { useI18n } from 'vue-i18n';
 import { onMounted, ref, toRaw, computed, inject, Ref } from 'vue';
@@ -255,12 +255,12 @@ const isPopoverOpen = ref(false);
 const msSelectOptions: MsSelectOption[] = [
   { label: t('HomePage.organizationList.sortByOrganization'), key: 'organization' },
   { label: t('HomePage.organizationList.sortByUserName'), key: 'user_name' },
-  { label: t('HomePage.organizationList.sortByLastLogin'), key: 'last_login' }
+  { label: t('HomePage.organizationList.sortByLastLogin'), key: 'last_login' },
 ];
 
 const msSelectSortByLabels = {
   asc: t('HomePage.organizationList.sortOrderAsc'),
-  desc: t('HomePage.organizationList.sortOrderDesc')
+  desc: t('HomePage.organizationList.sortOrderDesc'),
 };
 
 const filteredDevices = computed(() => {
@@ -331,7 +331,7 @@ async function onLoginClick(): Promise<void> {
 async function login(device: AvailableDevice, password: string): Promise<void> {
   if (!storedDeviceDataDict.value[device.slug]) {
     storedDeviceDataDict.value[device.slug] = {
-      lastLogin: DateTime.now()
+      lastLogin: DateTime.now(),
     };
   } else {
     storedDeviceDataDict.value[device.slug].lastLogin = DateTime.now();
@@ -354,7 +354,7 @@ async function openPopover(ev: Event): Promise<void> {
     component: HomePagePopover,
     cssClass: 'homepage-popover',
     event: ev,
-    showBackdrop: false
+    showBackdrop: false,
   });
   await popover.present();
   const result = await popover.onWillDismiss();
@@ -366,7 +366,7 @@ async function openPopover(ev: Event): Promise<void> {
 async function openSettingsModal(): Promise<void> {
   const modal = await modalController.create({
     component: SettingsModal,
-    cssClass: 'settings-modal'
+    cssClass: 'settings-modal',
   });
   await modal.present();
   await modal.onWillDismiss();

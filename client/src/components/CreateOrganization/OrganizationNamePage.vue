@@ -19,7 +19,7 @@ const orgName = ref('');
 
 defineExpose({
   areFieldsCorrect,
-  orgName
+  orgName,
 });
 
 function areFieldsCorrect(): boolean {

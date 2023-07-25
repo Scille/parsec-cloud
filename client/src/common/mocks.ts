@@ -3,7 +3,7 @@
 // cSpell:disable
 
 import { DateTime } from 'luxon';
-import { AvailableDevice } from '../plugins/libparsec/definitions';
+import { AvailableDevice } from '@/plugins/libparsec/definitions';
 import { StorageManager } from '@/services/storageManager';
 import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
 
@@ -14,7 +14,7 @@ export interface MockFile {
   size: number,
   lastUpdate: DateTime,
   updater: string,
-  children: MockFile[]
+  children: MockFile[],
 }
 
 export function pathInfo(_path: string, random = false): MockFile {
@@ -26,7 +26,7 @@ export function pathInfo(_path: string, random = false): MockFile {
       updater: 'Marjolaine',
       size: 0,
       lastUpdate: DateTime.now(),
-      children: []
+      children: [],
     };
 
     ret.children.push({
@@ -36,7 +36,7 @@ export function pathInfo(_path: string, random = false): MockFile {
       size: 123_456_789,
       lastUpdate: DateTime.now(),
       updater: 'Steve',
-      children: []
+      children: [],
     });
     ret.children.push({
       id: '2',
@@ -45,7 +45,7 @@ export function pathInfo(_path: string, random = false): MockFile {
       size: 0,
       lastUpdate: DateTime.now(),
       updater: 'Hilary',
-      children: []
+      children: [],
     });
 
     return ret;
@@ -61,7 +61,7 @@ export function pathInfo(_path: string, random = false): MockFile {
       updater: UPDATER[Math.floor(Math.random() * UPDATER.length)],
       size: 0,
       lastUpdate: DateTime.now(),
-      children: []
+      children: [],
     };
 
     const childrenCount = Math.floor(Math.random() * 25) + 1;
@@ -74,7 +74,7 @@ export function pathInfo(_path: string, random = false): MockFile {
         size: isFolder ? 0 : Math.floor(Math.random() * 10000000),
         lastUpdate: DateTime.now(),
         updater: UPDATER[Math.floor(Math.random() * UPDATER.length)],
-        children: []
+        children: [],
       });
     }
     return ret;
@@ -90,7 +90,7 @@ export enum WorkspaceRole {
   Owner = 'owner',
   Manager = 'manager',
   Contributor = 'contributor',
-  Reader = 'reader'
+  Reader = 'reader',
 }
 
 export interface MockWorkspace {
@@ -111,7 +111,7 @@ const MOCK_WORKSPACES: MockWorkspace[] = [
     size: 60_817_408,
     role: WorkspaceRole.Reader,
     availableOffline: false,
-    lastUpdate: DateTime.fromISO('2023-05-10T08:00:00')
+    lastUpdate: DateTime.fromISO('2023-05-10T08:00:00'),
   },
   {
     id: 'id2',
@@ -120,7 +120,7 @@ const MOCK_WORKSPACES: MockWorkspace[] = [
     size: 8_589_934_592,
     role: WorkspaceRole.Owner,
     availableOffline: true,
-    lastUpdate: DateTime.fromISO('2023-05-08T12:00:00')
+    lastUpdate: DateTime.fromISO('2023-05-08T12:00:00'),
   },
   {
     id: 'id3',
@@ -129,7 +129,7 @@ const MOCK_WORKSPACES: MockWorkspace[] = [
     size: 628_097_024,
     role: WorkspaceRole.Contributor,
     availableOffline: true,
-    lastUpdate: DateTime.fromISO('2023-04-07T12:00:00')
+    lastUpdate: DateTime.fromISO('2023-04-07T12:00:00'),
   },
   {
     id: 'id4',
@@ -138,7 +138,7 @@ const MOCK_WORKSPACES: MockWorkspace[] = [
     size: 33_382,
     role: WorkspaceRole.Owner,
     availableOffline: false,
-    lastUpdate: DateTime.fromISO('2023-05-07T02:00:00')
+    lastUpdate: DateTime.fromISO('2023-05-07T02:00:00'),
   },
   {
     id: 'id5',
@@ -147,8 +147,8 @@ const MOCK_WORKSPACES: MockWorkspace[] = [
     size: 4_214_402_531,
     role: WorkspaceRole.Manager,
     availableOffline: true,
-    lastUpdate: DateTime.fromISO('2023-05-09T08:00:00')
-  }
+    lastUpdate: DateTime.fromISO('2023-05-09T08:00:00'),
+  },
 ];
 
 export async function getMockWorkspaces(): Promise<MockWorkspace[]> {
@@ -167,7 +167,7 @@ export async function getUsers(): Promise<string[]> {
     'Anomen Delryn',
     'Nalia De\'Arnise',
     'Jaheira',
-    'Yoshimo'
+    'Yoshimo',
   ];
 }
 
@@ -198,7 +198,7 @@ const MOCK_DEVICES: AvailableDevice[] = [
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug1',
-    ty: {tag: 'Password'}
+    ty: {tag: 'Password'},
   },
   {
     organizationId: 'Princeton-Plainsboro Hospital',
@@ -207,7 +207,7 @@ const MOCK_DEVICES: AvailableDevice[] = [
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug2',
-    ty: {tag: 'Password'}
+    ty: {tag: 'Password'},
   },
   {
     organizationId: 'Black Mesa',
@@ -216,7 +216,7 @@ const MOCK_DEVICES: AvailableDevice[] = [
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug3',
-    ty: {tag: 'Password'}
+    ty: {tag: 'Password'},
   },
   {
     organizationId: 'OsCorp',
@@ -225,7 +225,7 @@ const MOCK_DEVICES: AvailableDevice[] = [
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug4',
-    ty: {tag: 'Password'}
+    ty: {tag: 'Password'},
   },
   {
     organizationId: 'Sanctum Sanctorum',
@@ -234,7 +234,7 @@ const MOCK_DEVICES: AvailableDevice[] = [
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug5',
-    ty: {tag: 'Password'}
+    ty: {tag: 'Password'},
   },
   {
     organizationId: 'Holmes Consulting',
@@ -243,7 +243,7 @@ const MOCK_DEVICES: AvailableDevice[] = [
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug6',
-    ty: {tag: 'Password'}
+    ty: {tag: 'Password'},
   },
   {
     organizationId: 'Riviera M.D.',
@@ -252,8 +252,8 @@ const MOCK_DEVICES: AvailableDevice[] = [
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug7',
-    ty: {tag: 'Password'}
-  }
+    ty: {tag: 'Password'},
+  },
 ];
 
 export function getMockDevices(count: number | undefined = undefined): AvailableDevice[] {
@@ -277,6 +277,6 @@ export async function mockLastLogin(manager: StorageManager): Promise<void> {
     // 2 days ago
     slug6: { lastLogin: now.minus({days: 2}) },
     // 10 days ago
-    slug7: { lastLogin: now.minus({days: 10}) }
+    slug7: { lastLogin: now.minus({days: 10}) },
   });
 }
