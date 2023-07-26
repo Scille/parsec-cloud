@@ -125,7 +125,7 @@ import MsSelect from '@/components/MsSelect.vue';
 import ButtonOption from '@/components/ButtonOption.vue';
 import { MsSelectChangeEvent, MsSelectOption } from '@/components/MsSelectOption';
 import ListGridToggle from '@/components/ListGridToggle.vue';
-import { DisplayState } from '@/components/ListGridToggle.vue';
+import DisplayState from '@/components/ListGridToggle.vue';
 import { useI18n } from 'vue-i18n';
 import { ref, Ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';

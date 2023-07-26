@@ -4,9 +4,17 @@
   <ion-label class="label-role">
     <ion-chip
       class="caption-caption tag"
-      :class="role"
+      :class="workspacerole"
+      v-if="workspacerole !== undefined"
     >
-      {{ translateRole(role) }}
+      {{ translateWorkspaceRole(workspacerole) }}
+    </ion-chip>
+    <ion-chip
+      class="caption-caption tag"
+      :class="orgarole"
+      v-if="orgarole !== undefined"
+    >
+      {{ translateOrganizationRole(orgarole) }}
     </ion-chip>
   </ion-label>
 </template>
@@ -14,24 +22,38 @@
 <script setup lang="ts">
 import { IonChip, IonLabel } from '@ionic/vue';
 import { defineProps } from 'vue';
-import { WorkspaceRole } from '@/common/mocks';
+import { OrganizationRole, WorkspaceRole } from '@/common/mocks';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 
 defineProps<{
-  role: WorkspaceRole
+  workspacerole: WorkspaceRole,
+  orgarole: OrganizationRole
 }>();
 
-function translateRole(role: WorkspaceRole): string {
-  if (role === WorkspaceRole.Owner) {
+function translateWorkspaceRole(workspacerole: WorkspaceRole): string {
+  if (workspacerole === WorkspaceRole.Owner) {
     return t('WorkspacesPage.role.owner');
-  } else if (role === WorkspaceRole.Manager) {
+  } else if (workspacerole === WorkspaceRole.Manager) {
     return t('WorkspacesPage.role.manager');
-  } else if (role === WorkspaceRole.Contributor) {
+  } else if (workspacerole === WorkspaceRole.Contributor) {
     return t('WorkspacesPage.role.contributor');
-  } else if (role === WorkspaceRole.Reader) {
+  } else if (workspacerole === WorkspaceRole.Reader) {
     return t('WorkspacesPage.role.reader');
+  }
+  return '';
+}
+
+function translateOrganizationRole(orgarole: OrganizationRole): string {
+  if (orgarole === OrganizationRole.Owner) {
+    return t('UsersPage.role.owner');
+  } else if (orgarole === OrganizationRole.Admin) {
+    return t('UsersPage.role.admin');
+  } else if (orgarole === OrganizationRole.Standard) {
+    return t('UsersPage.role.standard');
+  } else if (orgarole === OrganizationRole.External) {
+    return t('UsersPage.role.external');
   }
   return '';
 }
@@ -41,25 +63,5 @@ function translateRole(role: WorkspaceRole): string {
 .tag {
   padding: .25rem .5rem;
   height: auto;
-}
-
-.Owner {
-  background-color: var(--parsec-color-light-primary-50);
-  color: var(--parsec-color-light-primary-700);
-}
-
-.Manager {
-  background-color: var(--parsec-color-tags-indigo100);
-  color: var(--parsec-color-tags-indigo500);
-}
-
-.Contributor {
-  background-color: var(--parsec-color-tags-green100);
-  color: var(--parsec-color-tags-green500);
-}
-
-.Reader {
-  background-color: var(--parsec-color-tags-orange100);
-  color: var(--parsec-color-tags-orange500);
 }
 </style>

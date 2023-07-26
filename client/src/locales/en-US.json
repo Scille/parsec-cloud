@@ -357,6 +357,12 @@
             "joinedOn": "Joined On"
         },
         "inviteUser": "Invite a user",
-        "itemCount": "No users | One user | {count} users"
+        "itemCount": "No users | One user | {count} users",
+        "role": {
+            "owner": "Owner",
+            "admin": "Administrator",
+            "standard": "Standard",
+            "external": "External"
+        }
     }
 }

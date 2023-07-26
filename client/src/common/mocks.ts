@@ -103,6 +103,66 @@ export interface MockWorkspace {
   lastUpdate: DateTime;
 }
 
+export enum OrganizationRole {
+  Owner = 'owner',
+  Admin = 'administrator',
+  Standard = 'standard',
+  External = 'external'
+}
+
+export interface MockUser {
+  id: string,
+  name: string,
+  email: string,
+  avatar: string,
+  joined: DateTime,
+  role: string,
+  revoked: boolean
+}
+
+const MOCK_USERS: MockUser[] = [
+  {
+    id: 'id1',
+    name: 'Cernd',
+    email: 'cernd@gmail.com',
+    avatar: 'ce',
+    joined: DateTime.fromISO('2023-05-10T08:00:00'),
+    role: OrganizationRole.Owner,
+    revoked: false
+  },
+  {
+    id: 'id2',
+    name: 'Valygar Corthala',
+    email: 'val@gmail.com',
+    avatar: 'vc',
+    joined: DateTime.fromISO('2022-01-10T08:00:00'),
+    role: OrganizationRole.Standard,
+    revoked: false
+  },
+  {
+    id: 'id3',
+    name: 'Drizzt Do\'Urden',
+    email: 'drozrt@gmail.com',
+    avatar: 'dd',
+    joined: DateTime.fromISO('2023-04-10T08:00:00'),
+    role: OrganizationRole.Admin,
+    revoked: false
+  },
+  {
+    id: 'id4',
+    name: 'Coloia Hoji',
+    email: 'coloia@gmail.com',
+    avatar: 'ch',
+    joined: DateTime.fromISO('2023-04-10T08:00:00'),
+    role: OrganizationRole.External,
+    revoked: false
+  }
+];
+
+export async function getMockUsers(): Promise<MockUser[]> {
+  return MOCK_USERS;
+}
+
 const MOCK_WORKSPACES: MockWorkspace[] = [
   {
     id: 'id1',
