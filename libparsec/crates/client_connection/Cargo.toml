@@ -22,13 +22,11 @@ libparsec_platform_http_proxy = { workspace = true }
 # Used to send HTTP request to the server.
 reqwest = { workspace = true, features = ["native-tls-vendored"] }
 reqwest-eventsource = { workspace = true }
-futures = { workspace = true, features = ["std", "async-await", "executor"] }
-# Used to perform operation on URL.
-url = { workspace = true }
+futures = { workspace = true }
 # Use abstract crypto primitive, to allow to sign request.
 # Used to encoded binary data.
 base64 = { workspace = true, features = ["std"] }
-chrono = { workspace = true, features = ["clock", "std", "oldtime", "wasmbind"] }
+chrono = { workspace = true, features = ["clock"] }
 thiserror = { workspace = true }
 # Reqwest's response body is returned as Bytes
 bytes = { workspace = true, features = ["std"] }
