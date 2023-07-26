@@ -1,0 +1,49 @@
+/* **** Parsec tags **** */
+
+.workspace-role {
+  .owner {
+    // border: 2px solid var(--parsec-color-tags-blue500);
+    color: var(--parsec-color-tags-blue500);
+    background: none;
+  }
+
+  .manager {
+    // border: 2px solid var(--parsec-color-tags-indigo500);
+    color: var(--parsec-color-tags-indigo500);
+    background: none;
+  }
+
+  .contributor {
+    // border: 2px solid var(--parsec-color-tags-green500);
+    color: var(--parsec-color-tags-green500);
+    background: none;
+  }
+
+  .reader {
+    // border: 2px solid var(--parsec-color-tags-orange500);
+    color: var(--parsec-color-tags-orange500);
+    background: none;
+  }
+}
+
+.user-role {
+  .owner {
+    background-color: var(--parsec-color-tags-blue100);
+    color: var(--parsec-color-tags-blue500);
+  }
+
+  .administrator {
+    background-color: var(--parsec-color-tags-indigo100);
+    color: var(--parsec-color-tags-indigo500);
+  }
+
+  .standard {
+    background-color: var(--parsec-color-tags-green100);
+    color: var(--parsec-color-tags-green500);
+  }
+
+  .external {
+    background-color: var(--parsec-color-tags-orange100);
+    color: var(--parsec-color-tags-orange500);
+  }
+}

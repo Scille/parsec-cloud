@@ -79,24 +79,30 @@
           <div
             v-show="isOrganizationManagementRoute()"
           >
-            <div class="manage-organization">
+            <div
+              class="back-organization"
+              @click="router.push({name: 'workspaces', params: {deviceId: currentRoute.params.deviceId}})"
+            >
               <ion-button
                 fill="clear"
-                @click="router.push({name: 'workspaces', params: {deviceId: currentRoute.params.deviceId}})"
+                class="back-button"
               >
                 <ion-icon
                   slot="icon-only"
                   :icon="chevronBack"
                 />
               </ion-button>
-              <ion-label>{{ isAdmin() ? $t('SideMenu.manageOrganization') : $t('SideMenu.organizationInfo') }}</ion-label>
+              <ion-label class="title-h3">
+                {{ isAdmin() ? $t('SideMenu.manageOrganization') : $t('SideMenu.organizationInfo') }}
+              </ion-label>
             </div>
           </div>
         </ion-header>
 
-        <ion-content class="ion-padding ">
+        <ion-content class="ion-padding">
           <div
             v-show="!isOrganizationManagementRoute()"
+            class="workspaces-organization"
           >
             <!-- list of workspaces -->
             <ion-list class="list-workspaces">
@@ -104,7 +110,7 @@
                 lines="none"
                 button
                 @click="navigateToWorkspaceList()"
-                class="list-workspaces__header title-h5"
+                class="list-workspaces__header menu-default"
               >
                 {{ $t('SideMenu.allWorkspaces') }}
               </ion-header>
@@ -115,6 +121,7 @@
                 v-for="workspace in workspaces"
                 :key="workspace.id"
                 @click="navigateToWorkspace(workspace.id)"
+                class="sidebar-item"
               >
                 <ion-icon
                   :icon="business"
@@ -127,81 +134,88 @@
           </div>
           <div
             v-show="isOrganizationManagementRoute()"
+            class="manage-organization"
           >
             <!-- user actions -->
-            <ion-list class="list-users">
-              <ion-header
+            <ion-list class="users">
+              <ion-item
                 lines="none"
-                class="list-users__header title-h5"
-                :class="isUserRoute() ? 'category-selected' : 'category-not-selected'"
+                class="sidebar-item menu-default"
+                :class="isUserRoute() ? 'item-selected' : 'item-not-selected'"
+                @click="router.push({name: 'activeUsers', params: {deviceId: currentRoute.params.deviceId}})"
               >
                 <ion-icon
                   :icon="people"
                   slot="start"
                 />
-                {{ $t('SideMenu.users') }}
-              </ion-header>
+                <ion-label>{{ $t('SideMenu.users') }}</ion-label>
+              </ion-item>
 
-              <ion-item
-                lines="none"
-                button
-                :class="currentRoute.name === 'activeUsers' ? 'user-menu-selected' : 'user-menu-not-selected'"
-                @click="router.push({name: 'activeUsers', params: {deviceId: currentRoute.params.deviceId}})"
-              >
-                <ion-label>{{ $t('SideMenu.activeUsers') }}</ion-label>
-              </ion-item>
-              <ion-item
-                lines="none"
-                button
-                :class="currentRoute.name === 'revokedUsers' ? 'user-menu-selected' : 'user-menu-not-selected'"
-                @click="router.push({name: 'revokedUsers', params: {deviceId: currentRoute.params.deviceId}})"
-              >
-                <ion-label>{{ $t('SideMenu.revokedUsers') }}</ion-label>
-              </ion-item>
-              <ion-item
-                v-show="isAdmin()"
-                lines="none"
-                button
-                :class="currentRoute.name === 'invitations' ? 'user-menu-selected' : 'user-menu-not-selected'"
-                @click="router.push({name: 'invitations', params: {deviceId: currentRoute.params.deviceId}})"
-              >
-                <ion-label>{{ $t('SideMenu.invitations') }}</ion-label>
-              </ion-item>
+              <ion-list class="user-menu">
+                <ion-item
+                  lines="none"
+                  button
+                  class="user-menu__item body"
+                  :class="currentRoute.name === 'activeUsers' ? 'user-menu-selected' : 'user-menu-not-selected'"
+                  @click="router.push({name: 'activeUsers', params: {deviceId: currentRoute.params.deviceId}})"
+                >
+                  <ion-label>{{ $t('SideMenu.activeUsers') }}</ion-label>
+                </ion-item>
+                <ion-item
+                  lines="none"
+                  button
+                  class="user-menu__item body"
+                  :class="currentRoute.name === 'revokedUsers' ? 'user-menu-selected' : 'user-menu-not-selected'"
+                  @click="router.push({name: 'revokedUsers', params: {deviceId: currentRoute.params.deviceId}})"
+                >
+                  <ion-label>{{ $t('SideMenu.revokedUsers') }}</ion-label>
+                </ion-item>
+                <ion-item
+                  v-show="isAdmin()"
+                  lines="none"
+                  button
+                  class="user-menu__item body"
+                  :class="currentRoute.name === 'invitations' ? 'user-menu-selected' : 'user-menu-not-selected'"
+                  @click="router.push({name: 'invitations', params: {deviceId: currentRoute.params.deviceId}})"
+                >
+                  <ion-label>{{ $t('SideMenu.invitations') }}</ion-label>
+                </ion-item>
+              </ion-list>
             </ion-list>
             <!-- storage -->
             <ion-list
               class="storage"
               v-show="isAdmin()"
             >
-              <ion-header
+              <ion-item
                 lines="none"
-                class="storage__header title-h5"
-                :class="currentRoute.name === 'storage' ? 'category-selected' : 'category-not-selected'"
+                class="sidebar-item menu-default"
+                :class="currentRoute.name === 'storage' ? 'item-selected' : 'item-not-selected'"
                 @click="router.push({name: 'storage', params: {deviceId: currentRoute.params.deviceId}})"
               >
                 <ion-icon
                   :icon="pieChart"
                   slot="start"
                 />
-                {{ $t('SideMenu.storage') }}
-              </ion-header>
+                <ion-label> {{ $t('SideMenu.storage') }}</ion-label>
+              </ion-item>
             </ion-list>
             <!-- org info -->
             <ion-list
               class="organization"
             >
-              <ion-header
+              <ion-item
                 lines="none"
-                class="organization__header title-h5"
-                :class="currentRoute.name === 'organization' ? 'category-selected' : 'category-not-selected'"
+                class="sidebar-item menu-default"
+                :class="currentRoute.name === 'organization' ? 'item-selected' : 'item-not-selected'"
                 @click="router.push({name: 'organization', params: {deviceId: currentRoute.params.deviceId}})"
               >
                 <ion-icon
                   :icon="informationCircle"
                   slot="start"
                 />
-                {{ $t('SideMenu.organizationInfo') }}
-              </ion-header>
+                <ion-label>{{ $t('SideMenu.organizationInfo') }}</ion-label>
+              </ion-item>
             </ion-list>
           </div>
         </ion-content>
@@ -364,6 +378,11 @@ function resizeMenu(newWidth: number): void {
   border: none;
   user-select: none;
   border-radius: 0 .5rem .5rem 0;
+
+  &__header {
+    padding: 0.5rem;
+  }
+
   // logo parsec
   &::after{
     content: url('../assets/images/Logo/logo_icon_white.svg');
@@ -381,7 +400,7 @@ function resizeMenu(newWidth: number): void {
 .organization-card {
   --background: var(--parsec-color-light-primary-30-opacity15);
   box-shadow: none;
-  margin: 0.5rem;
+  margin: 0;
 
   &__header {
     display: flex;
@@ -473,6 +492,31 @@ function resizeMenu(newWidth: number): void {
     }
   }
 }
+
+.back-organization {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  padding: 2rem 1.25rem;
+  color: var(--parsec-color-light-secondary-inversed-contrast);
+  gap: 1rem;
+  cursor: pointer;
+
+  .back-button {
+    --color: var(--parsec-color-light-secondary-light);
+    margin: 0;
+
+    &::part(native) {
+      padding: 0;
+    }
+  }
+
+  ion-icon {
+    color: var(--parsec-color-light-secondary-light);
+    font-size: 1.875rem;
+  }
+}
+
 .list-md {
   background: none;
 }
@@ -487,19 +531,11 @@ ion-menu {
   user-select: none;
 }
 
-.manage-organization {
-  font-size: 1.5em;
-  color: var(--parsec-color-light-secondary-light);
-
-  ion-icon {
-    color: var(--parsec-color-light-secondary-light);
-  }
-}
-
-.list-workspaces, .list-users, .storage, .organization {
+.list-workspaces {
   display: flex;
   flex-direction: column;
   flex: 1;
+  gap: .5rem;
 
   &__header {
     opacity: 0.6;
@@ -508,58 +544,107 @@ ion-menu {
     width: fit-content;
     transition: border 0.2s ease-in-out;
     cursor: pointer;
+    position: relative;
 
     &:hover::after {
-      background: var(--parsec-color-light-primary-100);
+      content: '';
+      position: absolute;
+      bottom: -.25rem;
+      left: 0;
       height: 2px;
       width: 100%;
-      border-radius: 5px;
+      background: var(--parsec-color-light-primary-100);
+      border-radius: var(--parsec-radius-6);
     }
   }
+}
 
-  .user-menu-selected {
-    text-decoration: underline;
-    text-decoration-color: var(--parsec-color-light-primary-30);
+.sidebar-item {
+  --background:none;
+  border-radius: var(--parsec-radius-4);
+  border: solid 1px var(--parsec-color-light-primary-800);
+  --min-height: 0;
+
+  &:hover {
+    border: solid 1px var(--parsec-color-light-primary-30-opacity15);
+    cursor: pointer;
   }
 
-  .user-menu-not-selected {
+  &:active, &.item-selected {
+    --background: var(--parsec-color-light-primary-30-opacity15);
+  }
+
+  &>ion-label {
+    --color: var(--parsec-color-light-primary-100);
+  }
+
+  &>ion-icon {
     color: var(--parsec-color-light-primary-100);
-    text-decoration: none;
+    font-size: 1.25em;
+    margin: 0;
+    margin-inline-end: 12px;
   }
+}
 
-  .category-selected {
-    animation: blinkingBackground 0.2s infinite;
+.manage-organization {
+  display: flex;
+  flex-direction: column;
+  color: var(--parsec-color-light-secondary-inversed-contrast);
+}
 
-    @keyframes blinkingBackground {
-      0% { color: #00FF00; }
-      25% { color: #FF7700; }
-      50% { color: #FF00FF; }
-      75% { color: #00FFFF; }
-    }
-  }
+.user-menu {
+  padding: .5rem 2.5rem;
 
-  .item-label {
-    --background:none;
-    border-radius: 4px;
-    border: solid 1px var(--parsec-color-light-primary-800);
+  &__item {
+    --background: none;
+    position: relative;
+    opacity: .5;
+    min-height: 100%;
+    --background-hover: none;
 
     &:hover {
-      border: solid 1px var(--parsec-color-light-primary-30-opacity15);
+      opacity: 1;
     }
 
-    &:active {
-      --background: var(--parsec-color-light-primary-30-opacity15);
+    &.user-menu-selected {
+      opacity: 1;
+      width: fit-content;
+
+      ion-label {
+        position: relative;
+        overflow: visible;
+        width: auto;
+
+        &::after {
+          content: '';
+          position: absolute;
+          left: 0;
+          bottom: -4px;
+          height: 1.5px;
+          width: 100%;
+          background: var(--parsec-color-light-primary-100);
+          border-radius: var(--parsec-radius-6);
+        }
+      }
+    }
+
+    &::part(native) {
+      padding: 0;
     }
 
     ion-label {
       --color: var(--parsec-color-light-primary-100);
     }
 
-    ion-icon {
-      color: var(--parsec-color-light-primary-100);
-      font-size: 1.25em;
-      margin-inline-end: 12px;
-    }
   }
+}
+
+.user-menu-selected {
+  text-decoration-color: var(--parsec-color-light-primary-30);
+}
+
+.user-menu-not-selected {
+  color: var(--parsec-color-light-primary-100);
+  text-decoration: none;
 }
 </style>

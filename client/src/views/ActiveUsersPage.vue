@@ -43,7 +43,7 @@
             </ion-list-header>
             <user-list-item
               v-for="user in filteredUsers"
-              :key="user"
+              :key="user.id"
               :user="user"
             />
           </ion-list>
@@ -85,25 +85,34 @@ import UserCard from '@/components/Users/UserCard.vue';
 import ButtonOption from '@/components/ButtonOption.vue';
 import { isAdmin } from '@/common/permissions';
 import ListGridToggle from '@/components/ListGridToggle.vue';
-import { DisplayState } from '@/components/ListGridToggle.vue';
-import ActionBar from '@/components/ActionBar.vue';
+import DisplayState from '@/components/ListGridToggle.vue';
+import { MockUser } from '@/common/mocks';
+import { getMockUsers } from '@/common/mocks';
+import { Ref } from 'vue';
+import { onMounted } from '@vue/runtime-core';
 
 const displayView = ref(DisplayState.List);
-const userList = ['User1', 'User2', 'User3'];
+const userList: Ref<MockUser[]> = ref([]);
 
 const filteredUsers = computed(() => {
-  return userList;
+  const revokedUsers = userList.value.filter((user) => {
+    return user.revoked === false;
+  });
+  return revokedUsers;
 });
 
 function inviteUser(): void {
   console.log('Invite user clicked');
 }
+
+onMounted(async (): Promise<void> => {
+  userList.value = await getMockUsers();
+});
 </script>
 
 <style scoped lang="scss">
 .users-container {
   margin: 2em;
-  // background-color: white;
 }
 
 .user-list-header {

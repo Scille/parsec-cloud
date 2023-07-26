@@ -199,7 +199,7 @@ import { computed, ref, Ref } from 'vue';
 import { MockFile, pathInfo } from '@/common/mocks';
 import ButtonOption from '@/components/ButtonOption.vue';
 import ListGridToggle from '@/components/ListGridToggle.vue';
-import { DisplayState } from '@/components/ListGridToggle.vue';
+import DisplayState from '@/components/ListGridToggle.vue';
 import FileListItem from '@/components/FileListItem.vue';
 import FileCard from '@/components/FileCard.vue';
 import FileContextMenu from '@/components/FileContextMenu.vue';
