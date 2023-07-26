@@ -1243,20 +1243,16 @@ dependencies = [
 name = "libparsec_client_connection"
 version = "0.0.0"
 dependencies = [
- "anyhow",
  "base64",
  "bytes",
  "chrono",
  "futures",
- "http-body",
- "hyper",
  "libparsec_crypto",
  "libparsec_platform_http_proxy",
  "libparsec_protocol",
  "libparsec_testbed",
  "libparsec_tests_fixtures",
  "libparsec_types",
- "log",
  "once_cell",
  "reqwest",
  "reqwest-eventsource",

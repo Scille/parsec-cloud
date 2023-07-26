@@ -35,8 +35,3 @@ once_cell = { workspace = true, optional = true }
 [dev-dependencies]
 # Note `libparsec_tests_fixtures` enables our `test-with-testbed` feature
 libparsec_tests_fixtures = { workspace = true, features = ["test-with-client-connection-testbed"] }
-
-log = { workspace = true }
-anyhow = { workspace = true, features = ["std"] }
-http-body = { workspace = true }
-hyper = { workspace = true, features = ["server"] }
