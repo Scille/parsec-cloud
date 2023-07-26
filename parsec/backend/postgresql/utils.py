@@ -70,6 +70,15 @@ def q_organization_internal_id(organization_id: str, **kwargs: Any) -> str:
     return q_organization(organization_id=organization_id, select="_id", **kwargs)
 
 
+def q_shamir_recovery_internal_id(organization_id: str, user_id: str) -> str:
+    select = "shamir_recovery"
+    table = "user_"
+    condition = (
+        f"organization = {q_organization_internal_id(organization_id)} AND user_id = {user_id}"
+    )
+    return f"(SELECT {select} FROM {table} WHERE {condition})"
+
+
 def _table_q_factory(
     table: str, public_id_field: str
 ) -> Tuple[Callable[..., str], Callable[..., str]]:

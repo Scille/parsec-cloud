@@ -8,6 +8,11 @@
             "cmd": "invite_4_claimer_communicate",
             "fields": [
                 {
+                    "name": "greeter_user_id",
+                    "type": "UserID",
+                    "introduced_in": "2.9"
+                },
+                {
                     "name": "payload",
                     "type": "Bytes"
                 }

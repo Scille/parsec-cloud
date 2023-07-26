@@ -32,6 +32,7 @@ from parsec._parsec import (
     InviteInfoRep,
     InviteListRep,
     InviteNewRep,
+    InviteShamirRecoveryRevealRep,
     MessageGetRep,
     OrganizationBootstrapRep,
     OrganizationBootstrapRepBadTimestamp,
@@ -55,6 +56,11 @@ from parsec._parsec import (
     RealmUpdateRolesRep,
     RealmUpdateRolesRepBadTimestamp,
     ReencryptionBatchEntry,
+    ShamirRecoveryOthersListRep,
+    ShamirRecoverySelfInfoRep,
+    ShamirRecoverySetup,
+    ShamirRecoverySetupRep,
+    ShamirRevealToken,
     UserCreateRep,
     UserGetRep,
     UserRevokeRep,
@@ -100,6 +106,7 @@ from parsec.api.protocol import (
     invite_info_serializer,
     invite_list_serializer,
     invite_new_serializer,
+    invite_shamir_recovery_reveal_serializer,
     invited_ping_serializer,
     message_get_serializer,
     organization_bootstrap_serializer,
@@ -114,6 +121,9 @@ from parsec.api.protocol import (
     realm_start_reencryption_maintenance_serializer,
     realm_status_serializer,
     realm_update_roles_serializer,
+    shamir_recovery_others_list_serializer,
+    shamir_recovery_self_info_serializer,
+    shamir_recovery_setup_serializer,
     user_create_serializer,
     user_get_serializer,
     user_revoke_serializer,
@@ -185,6 +195,10 @@ COMMAND_RETURN_TYPE = Union[
     VlobPollChangesRep,
     VlobReadRep,
     VlobUpdateRep,
+    ShamirRecoveryOthersListRep,
+    ShamirRecoverySelfInfoRep,
+    ShamirRecoverySetupRep,
+    InviteShamirRecoveryRevealRep,
     dict[str, object],
 ]
 
@@ -565,6 +579,7 @@ async def invite_new(
     type: InvitationType,
     send_email: bool = False,
     claimer_email: str | None = None,
+    claimer_user_id: UserID | None = None,
 ) -> InviteNewRep:
     return cast(
         InviteNewRep,
@@ -575,6 +590,7 @@ async def invite_new(
             type=type,
             send_email=send_email,
             claimer_email=claimer_email,
+            claimer_user_id=claimer_user_id,
         ),
     )
 
@@ -609,7 +625,9 @@ async def invite_info(transport: Transport) -> InviteInfoRep:
 
 
 async def invite_1_claimer_wait_peer(
-    transport: Transport, claimer_public_key: PublicKey
+    transport: Transport,
+    greeter_user_id: UserID,
+    claimer_public_key: PublicKey,
 ) -> Invite1ClaimerWaitPeerRep:
     return cast(
         Invite1ClaimerWaitPeerRep,
@@ -617,6 +635,7 @@ async def invite_1_claimer_wait_peer(
             transport,
             invite_1_claimer_wait_peer_serializer,
             cmd="invite_1_claimer_wait_peer",
+            greeter_user_id=greeter_user_id,
             claimer_public_key=claimer_public_key,
         ),
     )
@@ -638,7 +657,7 @@ async def invite_1_greeter_wait_peer(
 
 
 async def invite_2a_claimer_send_hashed_nonce(
-    transport: Transport, claimer_hashed_nonce: HashDigest
+    transport: Transport, greeter_user_id: UserID, claimer_hashed_nonce: HashDigest
 ) -> Invite2aClaimerSendHashedNonceRep:
     return cast(
         Invite2aClaimerSendHashedNonceRep,
@@ -646,6 +665,7 @@ async def invite_2a_claimer_send_hashed_nonce(
             transport,
             invite_2a_claimer_send_hashed_nonce_serializer,
             cmd="invite_2a_claimer_send_hashed_nonce",
+            greeter_user_id=greeter_user_id,
             claimer_hashed_nonce=claimer_hashed_nonce,
         ),
     )
@@ -681,7 +701,7 @@ async def invite_2b_greeter_send_nonce(
 
 
 async def invite_2b_claimer_send_nonce(
-    transport: Transport, claimer_nonce: bytes
+    transport: Transport, greeter_user_id: UserID, claimer_nonce: bytes
 ) -> Invite2bClaimerSendNonceRep:
     return cast(
         Invite2bClaimerSendNonceRep,
@@ -689,6 +709,7 @@ async def invite_2b_claimer_send_nonce(
             transport,
             invite_2b_claimer_send_nonce_serializer,
             cmd="invite_2b_claimer_send_nonce",
+            greeter_user_id=greeter_user_id,
             claimer_nonce=claimer_nonce,
         ),
     )
@@ -710,6 +731,7 @@ async def invite_3a_greeter_wait_peer_trust(
 
 async def invite_3a_claimer_signify_trust(
     transport: Transport,
+    greeter_user_id: UserID,
 ) -> Invite3aClaimerSignifyTrustRep:
     return cast(
         Invite3aClaimerSignifyTrustRep,
@@ -717,12 +739,14 @@ async def invite_3a_claimer_signify_trust(
             transport,
             invite_3a_claimer_signify_trust_serializer,
             cmd="invite_3a_claimer_signify_trust",
+            greeter_user_id=greeter_user_id,
         ),
     )
 
 
 async def invite_3b_claimer_wait_peer_trust(
     transport: Transport,
+    greeter_user_id: UserID,
 ) -> Invite3bClaimerWaitPeerTrustRep:
     return cast(
         Invite3bClaimerWaitPeerTrustRep,
@@ -730,6 +754,7 @@ async def invite_3b_claimer_wait_peer_trust(
             transport,
             invite_3b_claimer_wait_peer_trust_serializer,
             cmd="invite_3b_claimer_wait_peer_trust",
+            greeter_user_id=greeter_user_id,
         ),
     )
 
@@ -764,7 +789,7 @@ async def invite_4_greeter_communicate(
 
 
 async def invite_4_claimer_communicate(
-    transport: Transport, payload: bytes | None
+    transport: Transport, greeter_user_id: UserID, payload: bytes | None
 ) -> Invite4ClaimerCommunicateRep:
     return cast(
         Invite4ClaimerCommunicateRep,
@@ -772,6 +797,7 @@ async def invite_4_claimer_communicate(
             transport,
             invite_4_claimer_communicate_serializer,
             cmd="invite_4_claimer_communicate",
+            greeter_user_id=greeter_user_id,
             payload=payload,
         ),
     )
@@ -854,6 +880,65 @@ async def device_create(
             cmd="device_create",
             device_certificate=device_certificate,
             redacted_device_certificate=redacted_device_certificate,
+        ),
+    )
+
+
+### Shamir API ###
+
+
+async def shamir_recovery_others_list(
+    transport: Transport,
+) -> ShamirRecoveryOthersListRep:
+    return cast(
+        ShamirRecoveryOthersListRep,
+        await _send_cmd(
+            transport,
+            shamir_recovery_others_list_serializer,
+            cmd="shamir_recovery_others_list",
+        ),
+    )
+
+
+async def shamir_recovery_self_info(
+    transport: Transport,
+) -> ShamirRecoverySelfInfoRep:
+    return cast(
+        ShamirRecoverySelfInfoRep,
+        await _send_cmd(
+            transport,
+            shamir_recovery_self_info_serializer,
+            cmd="shamir_recovery_self_info",
+        ),
+    )
+
+
+async def shamir_recovery_setup(
+    transport: Transport,
+    setup: ShamirRecoverySetup | None,
+) -> ShamirRecoverySetupRep:
+    return cast(
+        ShamirRecoverySetupRep,
+        await _send_cmd(
+            transport,
+            shamir_recovery_setup_serializer,
+            cmd="shamir_recovery_setup",
+            setup=setup,
+        ),
+    )
+
+
+async def invite_shamir_recovery_reveal(
+    transport: Transport,
+    reveal_token: ShamirRevealToken,
+) -> InviteShamirRecoveryRevealRep:
+    return cast(
+        InviteShamirRecoveryRevealRep,
+        await _send_cmd(
+            transport,
+            invite_shamir_recovery_reveal_serializer,
+            cmd="invite_shamir_recovery_reveal",
+            reveal_token=reveal_token,
         ),
     )
 

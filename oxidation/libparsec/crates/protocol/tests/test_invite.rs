@@ -1,28 +1,31 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
+use std::num::NonZeroU64;
 
 use libparsec_protocol::{
-    authenticated_cmds::v2 as authenticated_cmds, invited_cmds::v2 as invited_cmds,
+    authenticated_cmds::v2 as authenticated_cmds,
+    invited_cmds::v2::{self as invited_cmds, invite_info::ShamirRecoveryRecipient},
 };
 use libparsec_tests_fixtures::parsec_test;
 use libparsec_types::prelude::*;
 
 #[parsec_test]
 #[case::user(
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Generated from Rust implementation (Parsec v2.16.0-a.0+dev)
     // Content:
     //   type: "USER"
-    //   claimer_email: "alice@dev1"
+    //   claimer_email: "alice@example.com"
     //   cmd: "invite_new"
     //   send_email: true
+    //
     &hex!(
-        "84ad636c61696d65725f656d61696caa616c6963654064657631a3636d64aa696e76697465"
-        "5f6e6577aa73656e645f656d61696cc3a474797065a455534552"
+        "84a3636d64aa696e766974655f6e6577a474797065a455534552ad636c61696d65725f656d"
+        "61696cb1616c696365406578616d706c652e636f6daa73656e645f656d61696cc3"
     )[..],
     authenticated_cmds::AnyCmdReq::InviteNew(authenticated_cmds::invite_new::Req(
-        authenticated_cmds::invite_new::UserOrDevice::User {
-            claimer_email: "alice@dev1".to_owned(),
+        authenticated_cmds::invite_new::UserOrDeviceOrShamirRecovery::User {
+            claimer_email: "alice@example.com".to_owned(),
             send_email: true,
         }
     ))
@@ -38,8 +41,27 @@ use libparsec_types::prelude::*;
         "494345"
     )[..],
     authenticated_cmds::AnyCmdReq::InviteNew(authenticated_cmds::invite_new::Req(
-        authenticated_cmds::invite_new::UserOrDevice::Device {
+        authenticated_cmds::invite_new::UserOrDeviceOrShamirRecovery::Device {
             send_email: true,
+        }
+    ))
+)]
+#[case::shamir_recovery(
+    // Generated from Rust implementation (Parsec v2.15.0+dev)
+    // Content:
+    //   type: "SHAMIR_RECOVERY"
+    //   claimer_user_id: "alice"
+    //   cmd: "invite_new"
+    //   send_email: true
+    //
+    &hex!(
+        "84a3636d64aa696e766974655f6e6577a474797065af5348414d49525f5245434f56455259"
+        "af636c61696d65725f757365725f6964a5616c696365aa73656e645f656d61696cc3"
+    )[..],
+    authenticated_cmds::AnyCmdReq::InviteNew(authenticated_cmds::invite_new::Req(
+        authenticated_cmds::invite_new::UserOrDeviceOrShamirRecovery::ShamirRecovery {
+            send_email: true,
+            claimer_user_id: "alice".parse().unwrap(),
         }
     ))
 )]
@@ -225,7 +247,7 @@ fn serde_invite_list_req() {
 }
 
 #[parsec_test]
-fn serde_invite_list_rep() {
+fn serde_invite_list_legacy() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   invitations: [
@@ -244,6 +266,7 @@ fn serde_invite_list_rep() {
     //     }
     //   ]
     //   status: "ok"
+    //
     let raw = hex!(
         "82ab696e7669746174696f6e739285ad636c61696d65725f656d61696caa616c6963654064"
         "657631aa637265617465645f6f6ed70141cc375188000000a6737461747573a449444c45a5"
@@ -264,6 +287,80 @@ fn serde_invite_list_rep() {
             authenticated_cmds::invite_list::InviteListItem::Device {
                 token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
                 created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
+                status: InvitationStatus::Idle,
+            },
+        ],
+    };
+
+    let data = authenticated_cmds::invite_list::Rep::load(&raw).unwrap();
+
+    assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::invite_list::Rep::load(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
+}
+
+#[parsec_test]
+fn serde_invite_list_rep() {
+    // Generated from Rust implementation (Parsec v2.16.0-a.0+dev)
+    // Content:
+    //   invitations: [
+    //     {
+    //       type: "USER"
+    //       claimer_email: "alice@example.com"
+    //       created_on: ext(1, 946774800.0)
+    //       status: "IDLE"
+    //       token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
+    //     }
+    //     {
+    //       type: "DEVICE"
+    //       created_on: ext(1, 946774800.0)
+    //       status: "IDLE"
+    //       token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
+    //     }
+    //     {
+    //       type: "SHAMIR_RECOVERY"
+    //       claimer_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a"
+    //       created_on: ext(1, 946774800.0)
+    //       status: "IDLE"
+    //       token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
+    //     }
+    //   ]
+    //   status: "ok"
+    //
+    let raw = hex!(
+        "82a6737461747573a26f6bab696e7669746174696f6e739385a474797065a455534552ad63"
+        "6c61696d65725f656d61696cb1616c696365406578616d706c652e636f6daa637265617465"
+        "645f6f6ed70141cc375188000000a6737461747573a449444c45a5746f6b656ed802d864b9"
+        "3ded264aae9ae583fd3d40c45a84a474797065a6444556494345aa637265617465645f6f6e"
+        "d70141cc375188000000a6737461747573a449444c45a5746f6b656ed802d864b93ded264a"
+        "ae9ae583fd3d40c45a85a474797065af5348414d49525f5245434f56455259af636c61696d"
+        "65725f757365725f6964d92031303962363862613563646634323865613030313766633662"
+        "63633034643461aa637265617465645f6f6ed70141cc375188000000a6737461747573a449"
+        "444c45a5746f6b656ed802d864b93ded264aae9ae583fd3d40c45a"
+    );
+
+    let expected = authenticated_cmds::invite_list::Rep::Ok {
+        invitations: vec![
+            authenticated_cmds::invite_list::InviteListItem::User {
+                token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
+                created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
+                claimer_email: "alice@example.com".to_owned(),
+                status: InvitationStatus::Idle,
+            },
+            authenticated_cmds::invite_list::InviteListItem::Device {
+                token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
+                created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
+                status: InvitationStatus::Idle,
+            },
+            authenticated_cmds::invite_list::InviteListItem::ShamirRecovery {
+                token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
+                created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
+                claimer_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
                 status: InvitationStatus::Idle,
             },
         ],
@@ -306,24 +403,25 @@ fn serde_invite_info_req() {
 
 #[parsec_test]
 #[case::user(
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Generated from Rust implementation (Parsec v2.16.0-a.0+dev)
     // Content:
     //   type: "USER"
-    //   claimer_email: "alice@dev1"
-    //   greeter_human_handle: ["bob@dev1", "bob"]
+    //   claimer_email: "alice@example.com"
+    //   greeter_human_handle: ["bob@example.com", "bob"]
     //   greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a"
     //   status: "ok"
+    //
     &hex!(
-        "85ad636c61696d65725f656d61696caa616c6963654064657631b4677265657465725f6875"
-        "6d616e5f68616e646c6592a8626f624064657631a3626f62af677265657465725f75736572"
-        "5f6964d9203130396236386261356364663432386561303031376663366263633034643461"
-        "a6737461747573a26f6ba474797065a455534552"
+        "85a6737461747573a26f6ba474797065a455534552ad636c61696d65725f656d61696cb161"
+        "6c696365406578616d706c652e636f6db4677265657465725f68756d616e5f68616e646c65"
+        "92af626f62406578616d706c652e636f6da3626f62af677265657465725f757365725f6964"
+        "d9203130396236386261356364663432386561303031376663366263633034643461"
     ),
     invited_cmds::invite_info::Rep::Ok(
-        invited_cmds::invite_info::UserOrDevice::User {
-            claimer_email: "alice@dev1".to_owned(),
+        invited_cmds::invite_info::UserOrDeviceOrShamirRecovery::User {
+            claimer_email: "alice@example.com".to_owned(),
             greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
-            greeter_human_handle: Some(HumanHandle::new("bob@dev1", "bob").unwrap()),
+            greeter_human_handle: Some(HumanHandle::new("bob@example.com", "bob").unwrap()),
         }
     )
 )]
@@ -340,31 +438,31 @@ fn serde_invite_info_req() {
         "376663366263633034643461a6737461747573a26f6ba474797065a6444556494345"
     ),
     invited_cmds::invite_info::Rep::Ok(
-        invited_cmds::invite_info::UserOrDevice::Device {
+        invited_cmds::invite_info::UserOrDeviceOrShamirRecovery::Device {
             greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
             greeter_human_handle: Some(HumanHandle::new("bob@dev1", "bob").unwrap()),
         }
     )
 )]
 #[case::user_no_human_handle(
-    // Generated from Rust implementation (Parsec v2.13.0-rc1+dev)
+    // Generated from Rust implementation (Parsec v2.16.0-a.0+dev)
     // Content:
     //   type: "USER"
-    //   claimer_email: "alice@dev1"
+    //   claimer_email: "alice@example.com"
     //   greeter_human_handle: None
     //   greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a"
     //   status: "ok"
     //
     &hex!(
-        "85a6737461747573a26f6ba474797065a455534552ad636c61696d65725f656d61696caa61"
-        "6c6963654064657631af677265657465725f757365725f6964d92031303962363862613563"
-        "64663432386561303031376663366263633034643461b4677265657465725f68756d616e5f"
-        "68616e646c65c0"
+        "85a6737461747573a26f6ba474797065a455534552ad636c61696d65725f656d61696cb161"
+        "6c696365406578616d706c652e636f6db4677265657465725f68756d616e5f68616e646c65"
+        "c0af677265657465725f757365725f6964d920313039623638626135636466343238656130"
+        "3031376663366263633034643461"
     ),
     invited_cmds::invite_info::Rep::Ok(
-        invited_cmds::invite_info::UserOrDevice::User {
+        invited_cmds::invite_info::UserOrDeviceOrShamirRecovery::User {
             greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
-            claimer_email: "alice@dev1".to_string(),
+            claimer_email: "alice@example.com".to_string(),
             greeter_human_handle: None,
         }
     )
@@ -383,9 +481,59 @@ fn serde_invite_info_req() {
         "677265657465725f68756d616e5f68616e646c65c0"
     ),
     invited_cmds::invite_info::Rep::Ok(
-        invited_cmds::invite_info::UserOrDevice::Device {
+        invited_cmds::invite_info::UserOrDeviceOrShamirRecovery::Device {
             greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
             greeter_human_handle: None,
+        }
+    )
+)]
+#[case::shamir_recovery_without_recipients(
+    // Generated from Rust implementation (Parsec v2.15.0+dev)
+    // Content:
+    //   type: "SHAMIR_RECOVERY"
+    //   recipients: []
+    //   status: "ok"
+    //   threshold: 1
+    //
+    &hex!(
+        "84a6737461747573a26f6ba474797065af5348414d49525f5245434f56455259aa72656369"
+        "7069656e747390a97468726573686f6c6401"
+    )[..],
+    invited_cmds::invite_info::Rep::Ok(
+        invited_cmds::invite_info::UserOrDeviceOrShamirRecovery::ShamirRecovery {
+            threshold: NonZeroU64::new(1).unwrap(),
+            recipients: vec![],
+        }
+    )
+)]
+#[case::shamir_recovery_with_recipients(
+    // Generated from Rust implementation (Parsec v2.16.0-a.0+dev)
+    // Content:
+    //   type: "SHAMIR_RECOVERY"
+    //   recipients: [
+    //     {
+    //       human_handle: ["alice@example.com", "Alicey McAliceFace"]
+    //       shares: 1
+    //       user_id: "alice"
+    //     }
+    //   ]
+    //   status: "ok"
+    //   threshold: 1
+    //
+    &hex!(
+        "84a6737461747573a26f6ba474797065af5348414d49525f5245434f56455259aa72656369"
+        "7069656e74739183ac68756d616e5f68616e646c6592b1616c696365406578616d706c652e"
+        "636f6db2416c69636579204d63416c69636546616365a673686172657301a7757365725f69"
+        "64a5616c696365a97468726573686f6c6401"
+    )[..],
+    invited_cmds::invite_info::Rep::Ok(
+        invited_cmds::invite_info::UserOrDeviceOrShamirRecovery::ShamirRecovery {
+            threshold: NonZeroU64::new(1).unwrap(),
+            recipients: vec![ShamirRecoveryRecipient {
+                user_id: "alice".parse().unwrap(),
+                human_handle: Some("AliceyMcAliceFace <alice@example.com>".parse().unwrap()),
+                shares: NonZeroU64::new(1).unwrap(),
+            }],
         }
     )
 )]
@@ -403,7 +551,8 @@ fn serde_invite_info_rep(#[case] raw: &[u8], #[case] expected: invited_cmds::inv
 }
 
 #[parsec_test]
-fn serde_invite_1_claimer_wait_peer_req() {
+fn serde_invite_1_claimer_wait_peer_req_legacy() {
+    // Legacy: `greeter_user_id` has been introduced has mandatory field in APIv2.9/3.x
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   claimer_public_key: hex!("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
@@ -415,9 +564,44 @@ fn serde_invite_1_claimer_wait_peer_req() {
     );
 
     let req = invited_cmds::invite_1_claimer_wait_peer::Req {
+        greeter_user_id: Maybe::Absent,
         claimer_public_key: PublicKey::from(hex!(
             "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
         )),
+    };
+
+    let expected = invited_cmds::AnyCmdReq::Invite1ClaimerWaitPeer(req);
+
+    let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
+
+    assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = invited_cmds::AnyCmdReq::load(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
+}
+
+#[parsec_test]
+fn serde_invite_1_claimer_wait_peer_req() {
+    // Generated from Rust implementation (Parsec v2.15.0+dev)
+    // Content:
+    //   claimer_public_key: hex!("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
+    //   cmd: "invite_1_claimer_wait_peer"
+    //   greeter_user_id: "alice"
+    let raw = hex!(
+      "83a3636d64ba696e766974655f315f636c61696d65725f776169745f70656572b2636c6169"
+      "6d65725f7075626c69635f6b6579c4206507907d33bae6b5980b32fa03f3ebac56141b126e"
+      "44f352ea46c5f22cd5ac57af677265657465725f757365725f6964a5616c696365"
+    );
+
+    let req = invited_cmds::invite_1_claimer_wait_peer::Req {
+        claimer_public_key: PublicKey::from(hex!(
+            "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
+        )),
+        greeter_user_id: Maybe::Present("alice".parse().unwrap()),
     };
 
     let expected = invited_cmds::AnyCmdReq::Invite1ClaimerWaitPeer(req);
@@ -578,7 +762,8 @@ fn serde_invite_1_greeter_wait_peer_rep(
 }
 
 #[parsec_test]
-fn serde_invite_2a_claimer_send_hashed_nonce_req() {
+fn serde_invite_2a_claimer_send_hashed_nonce_req_legacy() {
+    // Legacy: `greeter_user_id` has been introduced has mandatory field in APIv2.9/3.x
     // Generated from Python implementation (Parsec v2.10.0+dev)
     // Content:
     //   claimer_hashed_nonce: hex!("e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6")
@@ -590,6 +775,43 @@ fn serde_invite_2a_claimer_send_hashed_nonce_req() {
     );
 
     let req = invited_cmds::invite_2a_claimer_send_hashed_nonce::Req {
+        greeter_user_id: Maybe::Absent,
+        claimer_hashed_nonce: HashDigest::from(hex!(
+            "e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6"
+        )),
+    };
+
+    let expected = invited_cmds::AnyCmdReq::Invite2aClaimerSendHashedNonce(req);
+
+    let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
+
+    assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = invited_cmds::AnyCmdReq::load(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
+}
+
+#[parsec_test]
+fn serde_invite_2a_claimer_send_hashed_nonce_req() {
+    // Generated from Rust implementation (Parsec v2.16.0-a.0+dev)
+    // Content:
+    //   claimer_hashed_nonce: hex!("e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6")
+    //   cmd: "invite_2a_claimer_send_hashed_nonce"
+    //   greeter_user_id: "alice"
+    //
+    let raw = hex!(
+        "83a3636d64d923696e766974655f32615f636c61696d65725f73656e645f6861736865645f"
+        "6e6f6e6365b4636c61696d65725f6861736865645f6e6f6e6365c420e37ce3b00a1f15b3de"
+        "62029972345420b76313a885c6ccc6e3b5547857b3ecc6af677265657465725f757365725f"
+        "6964a5616c696365"
+    );
+
+    let req = invited_cmds::invite_2a_claimer_send_hashed_nonce::Req {
+        greeter_user_id: Maybe::Present("alice".parse().unwrap()),
         claimer_hashed_nonce: HashDigest::from(hex!(
             "e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6"
         )),
@@ -842,7 +1064,8 @@ fn serde_invite_2b_greeter_send_nonce_rep(
 }
 
 #[parsec_test]
-fn serde_invite_2b_claimer_send_nonce_req() {
+fn serde_invite_2b_claimer_send_nonce_req_legacy() {
+    // Legacy: `greeter_user_id` has been introduced has mandatory field in APIv2.9/3.x
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   claimer_nonce: hex!("666f6f626172")
@@ -853,6 +1076,40 @@ fn serde_invite_2b_claimer_send_nonce_req() {
     );
 
     let req = invited_cmds::invite_2b_claimer_send_nonce::Req {
+        greeter_user_id: Maybe::Absent,
+        claimer_nonce: b"foobar".to_vec(),
+    };
+
+    let expected = invited_cmds::AnyCmdReq::Invite2bClaimerSendNonce(req);
+
+    let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
+
+    assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = invited_cmds::AnyCmdReq::load(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
+}
+
+#[parsec_test]
+fn serde_invite_2b_claimer_send_nonce_req() {
+    // Generated from Rust implementation (Parsec v2.16.0-a.0+dev)
+    // Content:
+    //   claimer_nonce: hex!("666f6f626172")
+    //   cmd: "invite_2b_claimer_send_nonce"
+    //   greeter_user_id: "alice"
+    //
+    let raw = hex!(
+        "83a3636d64bc696e766974655f32625f636c61696d65725f73656e645f6e6f6e6365ad636c"
+        "61696d65725f6e6f6e6365c406666f6f626172af677265657465725f757365725f6964a561"
+        "6c696365"
+    );
+
+    let req = invited_cmds::invite_2b_claimer_send_nonce::Req {
+        greeter_user_id: Maybe::Present("alice".parse().unwrap()),
         claimer_nonce: b"foobar".to_vec(),
     };
 
@@ -997,7 +1254,8 @@ fn serde_invite_3a_greeter_wait_peer_trust_rep(
 }
 
 #[parsec_test]
-fn serde_invite_3b_claimer_wait_peer_trust_req() {
+fn serde_invite_3b_claimer_wait_peer_trust_req_legacy() {
+    // Legacy: `greeter_user_id` has been introduced has mandatory field in APIv2.9/3.x
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   cmd: "invite_3b_claimer_wait_peer_trust"
@@ -1006,7 +1264,39 @@ fn serde_invite_3b_claimer_wait_peer_trust_req() {
         "757374"
     );
 
-    let req = invited_cmds::invite_3b_claimer_wait_peer_trust::Req;
+    let req = invited_cmds::invite_3b_claimer_wait_peer_trust::Req {
+        greeter_user_id: Maybe::Absent,
+    };
+
+    let expected = invited_cmds::AnyCmdReq::Invite3bClaimerWaitPeerTrust(req);
+
+    let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
+
+    assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = invited_cmds::AnyCmdReq::load(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
+}
+
+#[parsec_test]
+fn serde_invite_3b_claimer_wait_peer_trust_req() {
+    // Generated from Rust implementation (Parsec v2.16.0-a.0+dev)
+    // Content:
+    //   cmd: "invite_3b_claimer_wait_peer_trust"
+    //   greeter_user_id: "alice"
+    //
+    let raw = hex!(
+        "82a3636d64d921696e766974655f33625f636c61696d65725f776169745f706565725f7472"
+        "757374af677265657465725f757365725f6964a5616c696365"
+    );
+
+    let req = invited_cmds::invite_3b_claimer_wait_peer_trust::Req {
+        greeter_user_id: Maybe::Present("alice".parse().unwrap()),
+    };
 
     let expected = invited_cmds::AnyCmdReq::Invite3bClaimerWaitPeerTrust(req);
 
@@ -1149,13 +1439,46 @@ fn serde_invite_3b_greeter_signify_trust_rep(
 }
 
 #[parsec_test]
-fn serde_invite_3a_claimer_signify_trust_req() {
+fn serde_invite_3a_claimer_signify_trust_req_legacy() {
+    // Legacy: `greeter_user_id` has been introduced has mandatory field in APIv2.9/3.x
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   cmd: "invite_3a_claimer_signify_trust"
     let raw = hex!("81a3636d64bf696e766974655f33615f636c61696d65725f7369676e6966795f7472757374");
 
-    let req = invited_cmds::invite_3a_claimer_signify_trust::Req;
+    let req = invited_cmds::invite_3a_claimer_signify_trust::Req {
+        greeter_user_id: Maybe::Absent,
+    };
+
+    let expected = invited_cmds::AnyCmdReq::Invite3aClaimerSignifyTrust(req);
+
+    let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
+
+    assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = invited_cmds::AnyCmdReq::load(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
+}
+
+#[parsec_test]
+fn serde_invite_3a_claimer_signify_trust_req() {
+    // Generated from Rust implementation (Parsec v2.16.0-a.0+dev)
+    // Content:
+    //   cmd: "invite_3a_claimer_signify_trust"
+    //   greeter_user_id: "alice"
+    //
+    let raw = hex!(
+        "82a3636d64bf696e766974655f33615f636c61696d65725f7369676e6966795f7472757374"
+        "af677265657465725f757365725f6964a5616c696365"
+    );
+
+    let req = invited_cmds::invite_3a_claimer_signify_trust::Req {
+        greeter_user_id: Maybe::Present("alice".parse().unwrap()),
+    };
 
     let expected = invited_cmds::AnyCmdReq::Invite3aClaimerSignifyTrust(req);
 
@@ -1302,7 +1625,8 @@ fn serde_invite_4_greeter_communicate_rep(
 }
 
 #[parsec_test]
-fn serde_invite_4_claimer_communicate_req() {
+fn serde_invite_4_claimer_communicate_req_legacy() {
+    // Legacy: `greeter_user_id` has been introduced has mandatory field in APIv2.9/3.x
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   cmd: "invite_4_claimer_communicate"
@@ -1313,6 +1637,39 @@ fn serde_invite_4_claimer_communicate_req() {
     );
 
     let req = invited_cmds::invite_4_claimer_communicate::Req {
+        greeter_user_id: Maybe::Absent,
+        payload: b"foobar".to_vec(),
+    };
+
+    let expected = invited_cmds::AnyCmdReq::Invite4ClaimerCommunicate(req);
+
+    let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
+
+    assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = invited_cmds::AnyCmdReq::load(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
+}
+
+#[parsec_test]
+fn serde_invite_4_claimer_communicate_req() {
+    // Generated from Rust implementation (Parsec v2.16.0-a.0+dev)
+    // Content:
+    //   cmd: "invite_4_claimer_communicate"
+    //   greeter_user_id: "alice"
+    //   payload: hex!("666f6f626172")
+    //
+    let raw = hex!(
+        "83a3636d64bc696e766974655f345f636c61696d65725f636f6d6d756e6963617465af6772"
+        "65657465725f757365725f6964a5616c696365a77061796c6f6164c406666f6f626172"
+    );
+
+    let req = invited_cmds::invite_4_claimer_communicate::Req {
+        greeter_user_id: Maybe::Present("alice".parse().unwrap()),
         payload: b"foobar".to_vec(),
     };
 

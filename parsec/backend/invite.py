@@ -106,10 +106,11 @@ from parsec._parsec import (
     InviteNewRep,
     InviteNewRepAlreadyMember,
     InviteNewRepNotAllowed,
-    InviteNewRepNotAvailable,
     InviteNewRepOk,
+    InviteNewRepShamirRecoveryNotSetup,
     InviteNewReq,
     PublicKey,
+    ShamirRecoveryRecipient,
 )
 from parsec.api.protocol import (
     HumanHandle,
@@ -163,6 +164,14 @@ class InvitationEmailRecipientError(InvitationError):
     pass
 
 
+class InvitationShamirRecoveryNotSetup(InvitationError):
+    pass
+
+
+class InvitationShamirRecoveryGreeterNotInRecipients(InvitationError):
+    pass
+
+
 class ConduitState(Enum):
     STATE_1_WAIT_PEERS = "1_WAIT_PEERS"
     STATE_2_1_CLAIMER_HASHED_NONCE = "2_1_CLAIMER_HASHED_NONCE"
@@ -188,14 +197,11 @@ NEXT_CONDUIT_STATE = {
 class ConduitListenCtx:
     organization_id: OrganizationID
     greeter: UserID | None
+    is_greeter: bool
     token: InvitationToken
     state: ConduitState
     payload: bytes
     peer_payload: bytes | None
-
-    @property
-    def is_greeter(self) -> bool:
-        return self.greeter is not None
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -225,28 +231,55 @@ class DeviceInvitation:
         return attr.evolve(self, **kwargs)
 
 
-Invitation = Union[UserInvitation, DeviceInvitation]
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class ShamirRecoveryInvitation:
+    TYPE = InvitationType.SHAMIR_RECOVERY
+    greeter_user_id: UserID
+    greeter_human_handle: HumanHandle | None
+    claimer_email: str | None  # Only set during invitation create, if the user has a human handle
+    claimer_user_id: UserID
+    token: InvitationToken = attr.ib(factory=InvitationToken.new)
+    created_on: DateTime = attr.ib(factory=DateTime.now)
+    status: InvitationStatus = InvitationStatus.IDLE
+
+    def evolve(self, **kwargs: Any) -> ShamirRecoveryInvitation:
+        return attr.evolve(self, **kwargs)
+
+
+Invitation = Union[UserInvitation, DeviceInvitation, ShamirRecoveryInvitation]
 
 
 def generate_invite_email(
+    invitation_type: InvitationType,
     from_addr: str,
     to_addr: str,
-    reply_to: str | None,
-    greeter_name: str | None,  # None for device invitation
     organization_id: OrganizationID,
     invitation_url: str,
     backend_url: str,
+    reply_to: str | None = None,
+    greeter_name: str | None = None,
 ) -> Message:
     # Quick fix to have a similar behavior between Rust and Python
     if backend_url.endswith("/"):
         backend_url = backend_url[:-1]
+
+    is_user_invitation = invitation_type == invitation_type.USER
+    is_device_invitation = invitation_type == invitation_type.DEVICE
+    is_shamir_recovery_invitation = invitation_type == invitation_type.SHAMIR_RECOVERY
+
     html = get_template("invitation_mail.html").render(
+        is_user_invitation=is_user_invitation,
+        is_device_invitation=is_device_invitation,
+        is_shamir_recovery_invitation=is_shamir_recovery_invitation,
         greeter=greeter_name,
         organization_id=organization_id.str,
         invitation_url=invitation_url,
         backend_url=backend_url,
     )
     text = get_template("invitation_mail.txt").render(
+        is_user_invitation=is_user_invitation,
+        is_device_invitation=is_device_invitation,
+        is_shamir_recovery_invitation=is_shamir_recovery_invitation,
         greeter=greeter_name,
         organization_id=organization_id.str,
         invitation_url=invitation_url,
@@ -255,10 +288,16 @@ def generate_invite_email(
 
     # mail settings
     message = MIMEMultipart("alternative")
-    if greeter_name:
+    if is_user_invitation:
+        assert greeter_name is not None
         message["Subject"] = f"[Parsec] { greeter_name } invited you to { organization_id.str }"
-    else:
+    elif is_device_invitation:
         message["Subject"] = f"[Parsec] New device invitation to { organization_id.str }"
+    elif is_shamir_recovery_invitation:
+        message["Subject"] = f"[Parsec] Recovery invitation to { organization_id.str }"
+    else:
+        assert False
+
     message["From"] = from_addr
     message["To"] = to_addr
     if reply_to is not None and greeter_name is not None:
@@ -362,7 +401,7 @@ class BaseInviteComponent:
         def _on_status_changed(
             event: BackendEvent,
             organization_id: OrganizationID,
-            greeter: UserID,
+            greeters: list[UserID],
             token: InvitationToken,
             status: InvitationStatus,
         ) -> None:
@@ -384,7 +423,7 @@ class BaseInviteComponent:
         # Define helper
         def _to_http_redirection_url(
             client_ctx: AuthenticatedClientContext,
-            invitation: Union[UserInvitation, DeviceInvitation],
+            invitation: Invitation,
         ) -> str:
             assert self._config.backend_addr
             return BackendInvitationAddr.build(
@@ -399,21 +438,34 @@ class BaseInviteComponent:
             if client_ctx.profile != UserProfile.ADMIN:
                 return InviteNewRepNotAllowed()
             try:
-                invitation: UserInvitation | DeviceInvitation = await self.new_for_user(
+                invitation: Invitation = await self.new_for_user(
                     organization_id=client_ctx.organization_id,
                     greeter_user_id=client_ctx.user_id,
                     claimer_email=req.claimer_email,
                 )
             except InvitationAlreadyMemberError:
                 return InviteNewRepAlreadyMember()
-        else:  # Device
+        elif req.type == InvitationType.DEVICE:
             if req.send_email and not client_ctx.human_handle:
-                return InviteNewRepNotAvailable()
+                return InviteNewRepShamirRecoveryNotSetup()
 
             invitation = await self.new_for_device(
                 organization_id=client_ctx.organization_id,
                 greeter_user_id=client_ctx.user_id,
             )
+        elif req.type == InvitationType.SHAMIR_RECOVERY:
+            try:
+                invitation = await self.new_for_shamir_recovery(
+                    organization_id=client_ctx.organization_id,
+                    greeter_user_id=client_ctx.user_id,
+                    claimer_user_id=req.claimer_user_id,
+                )
+            except InvitationShamirRecoveryNotSetup:
+                return InviteNewRepShamirRecoveryNotSetup()
+            except InvitationShamirRecoveryGreeterNotInRecipients:
+                return InviteNewRepNotAllowed()
+        else:
+            assert False
 
         # No need to send email, we're done
         if not req.send_email:
@@ -439,6 +491,7 @@ class BaseInviteComponent:
                 greeter_name = client_ctx.user_id.str
                 reply_to = None
             message = generate_invite_email(
+                invitation_type=req.type,
                 from_addr=self._config.email_config.sender,
                 to_addr=invitation.claimer_email,
                 greeter_name=greeter_name,
@@ -447,19 +500,42 @@ class BaseInviteComponent:
                 invitation_url=_to_http_redirection_url(client_ctx, invitation),
                 backend_url=self._config.backend_addr.to_http_domain_url(),
             )
-        else:  # Device
+        elif req.type == InvitationType.DEVICE:
             assert isinstance(invitation, DeviceInvitation)
             assert client_ctx.human_handle is not None
             to_addr = client_ctx.human_handle.email
             message = generate_invite_email(
+                invitation_type=req.type,
                 from_addr=self._config.email_config.sender,
                 to_addr=to_addr,
-                greeter_name=None,
-                reply_to=None,
                 organization_id=client_ctx.organization_id,
                 invitation_url=_to_http_redirection_url(client_ctx, invitation),
                 backend_url=self._config.backend_addr.to_http_domain_url(),
             )
+        elif req.type == InvitationType.SHAMIR_RECOVERY:
+            assert isinstance(invitation, ShamirRecoveryInvitation)
+            # Sending email is not available for legacy users
+            if invitation.claimer_email is None:
+                return InviteNewRepOk(invitation.token, InvitationEmailSentStatus.BAD_RECIPIENT)
+            to_addr = invitation.claimer_email
+            if client_ctx.human_handle:
+                greeter_name = client_ctx.human_handle.label
+                reply_to = client_ctx.human_handle.email
+            else:
+                greeter_name = client_ctx.user_id.str
+                reply_to = None
+            message = generate_invite_email(
+                invitation_type=req.type,
+                from_addr=self._config.email_config.sender,
+                to_addr=to_addr,
+                greeter_name=greeter_name,
+                reply_to=reply_to,
+                organization_id=client_ctx.organization_id,
+                invitation_url=_to_http_redirection_url(client_ctx, invitation),
+                backend_url=self._config.backend_addr.to_http_domain_url(),
+            )
+        else:
+            assert False
 
         # Send the email
         try:
@@ -489,7 +565,7 @@ class BaseInviteComponent:
         try:
             await self.delete(
                 organization_id=client_ctx.organization_id,
-                greeter=client_ctx.user_id,
+                deleter=client_ctx.user_id,
                 token=req.token,
                 on=DateTime.now(),
                 reason=req.reason,
@@ -513,14 +589,29 @@ class BaseInviteComponent:
             organization_id=client_ctx.organization_id, greeter=client_ctx.user_id
         )
 
-        return InviteListRepOk(
-            [
-                InviteListItem.User(item.token, item.created_on, item.claimer_email, item.status)
-                if isinstance(item, UserInvitation)
-                else InviteListItem.Device(item.token, item.created_on, item.status)
-                for item in invitations
-            ]
-        )
+        def to_invite_list_item(invitation: Invitation) -> InviteListItem:
+            if isinstance(invitation, UserInvitation):
+                return InviteListItem.User(
+                    invitation.token,
+                    invitation.created_on,
+                    invitation.claimer_email,
+                    invitation.status,
+                )
+            elif isinstance(invitation, DeviceInvitation):
+                return InviteListItem.Device(
+                    invitation.token, invitation.created_on, invitation.status
+                )
+            elif isinstance(invitation, ShamirRecoveryInvitation):
+                return InviteListItem.ShamirRecovery(
+                    invitation.token,
+                    invitation.created_on,
+                    invitation.claimer_user_id,
+                    invitation.status,
+                )
+            else:
+                assert False
+
+        return InviteListRepOk(tuple(map(to_invite_list_item, invitations)))
 
     @api("invite_info", client_types=[ClientType.INVITED])
     @catch_protocol_errors
@@ -537,17 +628,27 @@ class BaseInviteComponent:
         if isinstance(invitation, UserInvitation):
             return InviteInfoRepOk(
                 InvitationType.USER,
-                invitation.claimer_email,
-                invitation.greeter_user_id,
-                invitation.greeter_human_handle,
-            )
-        else:  # DeviceInvitation
-            return InviteInfoRepOk(
-                InvitationType.DEVICE,
-                claimer_email=None,
+                claimer_email=invitation.claimer_email,
                 greeter_user_id=invitation.greeter_user_id,
                 greeter_human_handle=invitation.greeter_human_handle,
             )
+        elif isinstance(invitation, DeviceInvitation):
+            return InviteInfoRepOk(
+                InvitationType.DEVICE,
+                greeter_user_id=invitation.greeter_user_id,
+                greeter_human_handle=invitation.greeter_human_handle,
+            )
+        elif isinstance(invitation, ShamirRecoveryInvitation):
+            threshold, recipients = await self.shamir_info(
+                client_ctx.organization_id, invitation.token
+            )
+            return InviteInfoRepOk(
+                InvitationType.SHAMIR_RECOVERY,
+                threshold=threshold,
+                recipients=recipients,
+            )
+        else:
+            assert False
 
     @api(
         "invite_1_claimer_wait_peer",
@@ -566,7 +667,8 @@ class BaseInviteComponent:
         try:
             greeter_public_key = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
-                greeter=None,
+                greeter=req.greeter_user_id,
+                is_greeter=False,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_1_WAIT_PEERS,
                 payload=req.claimer_public_key.encode(),
@@ -594,6 +696,7 @@ class BaseInviteComponent:
             claimer_public_key_raw = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
+                is_greeter=True,
                 token=req.token,
                 state=ConduitState.STATE_1_WAIT_PEERS,
                 payload=req.greeter_public_key.encode(),
@@ -629,7 +732,8 @@ class BaseInviteComponent:
         try:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
-                greeter=None,
+                greeter=req.greeter_user_id,
+                is_greeter=False,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_2_1_CLAIMER_HASHED_NONCE,
                 payload=req.claimer_hashed_nonce.digest,
@@ -637,7 +741,8 @@ class BaseInviteComponent:
 
             greeter_nonce = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
-                greeter=None,
+                greeter=req.greeter_user_id,
+                is_greeter=False,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_2_2_GREETER_NONCE,
                 payload=b"",
@@ -665,6 +770,7 @@ class BaseInviteComponent:
             claimer_hashed_nonce_raw = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
+                is_greeter=True,
                 token=req.token,
                 state=ConduitState.STATE_2_1_CLAIMER_HASHED_NONCE,
                 payload=b"",
@@ -693,6 +799,7 @@ class BaseInviteComponent:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
+                is_greeter=True,
                 token=req.token,
                 state=ConduitState.STATE_2_2_GREETER_NONCE,
                 payload=req.greeter_nonce,
@@ -701,6 +808,7 @@ class BaseInviteComponent:
             claimer_nonce = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
+                is_greeter=True,
                 token=req.token,
                 state=ConduitState.STATE_2_3_CLAIMER_NONCE,
                 payload=b"",
@@ -730,7 +838,8 @@ class BaseInviteComponent:
         try:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
-                greeter=None,
+                greeter=req.greeter_user_id,
+                is_greeter=False,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_2_3_CLAIMER_NONCE,
                 payload=req.claimer_nonce,
@@ -758,6 +867,7 @@ class BaseInviteComponent:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
+                is_greeter=True,
                 token=req.token,
                 state=ConduitState.STATE_3_1_CLAIMER_TRUST,
                 payload=b"",
@@ -787,7 +897,8 @@ class BaseInviteComponent:
         try:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
-                greeter=None,
+                greeter=req.greeter_user_id,
+                is_greeter=False,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_3_2_GREETER_TRUST,
                 payload=b"",
@@ -815,6 +926,7 @@ class BaseInviteComponent:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
+                is_greeter=True,
                 token=req.token,
                 state=ConduitState.STATE_3_2_GREETER_TRUST,
                 payload=b"",
@@ -844,7 +956,8 @@ class BaseInviteComponent:
         try:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
-                greeter=None,
+                greeter=req.greeter_user_id,
+                is_greeter=False,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_3_1_CLAIMER_TRUST,
                 payload=b"",
@@ -872,6 +985,7 @@ class BaseInviteComponent:
             answer_payload = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
+                is_greeter=True,
                 token=req.token,
                 state=ConduitState.STATE_4_COMMUNICATE,
                 payload=req.payload,
@@ -901,7 +1015,8 @@ class BaseInviteComponent:
         try:
             answer_payload = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
-                greeter=None,
+                greeter=req.greeter_user_id,
+                is_greeter=False,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_4_COMMUNICATE,
                 payload=req.payload,
@@ -924,6 +1039,7 @@ class BaseInviteComponent:
         organization_id: OrganizationID,
         greeter: UserID | None,
         token: InvitationToken,
+        is_greeter: bool,
         state: ConduitState,
         payload: bytes,
     ) -> bytes:
@@ -949,7 +1065,9 @@ class BaseInviteComponent:
             BackendEvent.INVITE_STATUS_CHANGED,
             filter=cast(EventFilterCallback, _event_filter),
         ) as waiter:
-            listen_ctx = await self._conduit_talk(organization_id, greeter, token, state, payload)
+            listen_ctx = await self._conduit_talk(
+                organization_id, greeter, is_greeter, token, state, payload
+            )
 
             # Unlike what it name may imply, `_conduit_listen` doesn't wait for the peer
             # to answer (it returns `None` instead), so we wait for some events to occur
@@ -969,7 +1087,8 @@ class BaseInviteComponent:
     async def _conduit_talk(
         self,
         organization_id: OrganizationID,
-        greeter: UserID | None,  # None for claimer
+        greeter: UserID | None,  # None for claimer legacy parsec API <= 2.8 (parsec < 2.16)
+        is_greeter: bool,
         token: InvitationToken,
         state: ConduitState,
         payload: bytes,
@@ -1015,10 +1134,22 @@ class BaseInviteComponent:
         """
         raise NotImplementedError()
 
+    async def new_for_shamir_recovery(
+        self,
+        organization_id: OrganizationID,
+        greeter_user_id: UserID,
+        claimer_user_id: UserID,
+        created_on: DateTime | None = None,
+    ) -> ShamirRecoveryInvitation:
+        """
+        Raise: InvitationShamirRecoveryNotSetup
+        """
+        raise NotImplementedError()
+
     async def delete(
         self,
         organization_id: OrganizationID,
-        greeter: UserID,
+        deleter: UserID,
         token: InvitationToken,
         on: DateTime,
         reason: InvitationDeletedReason,
@@ -1045,7 +1176,9 @@ class BaseInviteComponent:
         raise NotImplementedError()
 
     async def claimer_joined(
-        self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
+        self,
+        organization_id: OrganizationID,
+        invitation: Invitation,
     ) -> None:
         """
         Raises: Nothing
@@ -1053,9 +1186,16 @@ class BaseInviteComponent:
         raise NotImplementedError()
 
     async def claimer_left(
-        self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
+        self,
+        organization_id: OrganizationID,
+        invitation: Invitation,
     ) -> None:
         """
         Raises: Nothing
         """
         raise NotImplementedError()
+
+    async def shamir_info(
+        self, organization_id: OrganizationID, token: InvitationToken
+    ) -> tuple[int, tuple[ShamirRecoveryRecipient, ...]]:
+        raise NotImplementedError

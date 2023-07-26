@@ -19,6 +19,7 @@ from parsec.backend.postgresql.ping import PGPingComponent
 from parsec.backend.postgresql.pki import PGPkiEnrollmentComponent
 from parsec.backend.postgresql.realm import PGRealmComponent
 from parsec.backend.postgresql.sequester import PGPSequesterComponent
+from parsec.backend.postgresql.shamir import PGShamirComponent
 from parsec.backend.postgresql.user import PGUserComponent
 from parsec.backend.postgresql.vlob import PGVlobComponent
 from parsec.backend.webhooks import WebhooksComponent
@@ -56,6 +57,7 @@ async def components_factory(  # type: ignore[misc]
     pki = PGPkiEnrollmentComponent(dbh)
     sequester = PGPSequesterComponent(dbh)
     events = EventsComponent(realm_component=realm, send_event=_send_event)
+    shamir = PGShamirComponent(dbh)
 
     components = {
         "events": events,
@@ -71,6 +73,7 @@ async def components_factory(  # type: ignore[misc]
         "blockstore": blockstore,
         "pki": pki,
         "sequester": sequester,
+        "shamir": shamir,
     }
     for component in components.values():
         method = getattr(component, "register_components", None)

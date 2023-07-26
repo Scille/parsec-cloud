@@ -59,6 +59,8 @@ async def test_init_with_backend_online(
             return {
                 "user_profile_outsider_allowed": True,
                 "active_users_limit": None,
+                "sequester_authority_certificate": None,
+                "sequester_services_certificates": None,
                 "status": "ok",
             }
         else:

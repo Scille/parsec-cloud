@@ -21,6 +21,7 @@ from parsec.backend.pki import BasePkiEnrollmentComponent
 from parsec.backend.postgresql import components_factory as postgresql_components_factory
 from parsec.backend.realm import BaseRealmComponent
 from parsec.backend.sequester import BaseSequesterComponent
+from parsec.backend.shamir import BaseShamirComponent
 from parsec.backend.user import BaseUserComponent
 from parsec.backend.utils import collect_apis
 from parsec.backend.vlob import BaseVlobComponent
@@ -58,6 +59,7 @@ async def backend_app_factory(
             pki=components["pki"],
             sequester=components["sequester"],
             events=components["events"],
+            shamir=components["shamir"],
         )
 
 
@@ -78,6 +80,7 @@ class BackendApp:
     pki: BasePkiEnrollmentComponent
     sequester: BaseSequesterComponent
     events: EventsComponent
+    shamir: BaseShamirComponent
 
     apis: Dict[ClientType, Dict[str, Callable[..., Awaitable[dict[str, object]]]]] = attr.field(
         init=False
@@ -96,6 +99,7 @@ class BackendApp:
             self.block,
             self.pki,
             self.events,
+            self.shamir,
             # Ping command is only used in tests
             include_ping=self.config.debug,
         )
@@ -112,6 +116,7 @@ class BackendApp:
         self.block.test_duplicate_organization(id, new_id)  # type: ignore[attr-defined]
         self.pki.test_duplicate_organization(id, new_id)  # type: ignore[attr-defined]
         self.sequester.test_duplicate_organization(id, new_id)  # type: ignore[attr-defined]
+        self.shamir.test_duplicate_organization(id, new_id)  # type: ignore[attr-defined]
 
     def test_drop_organization(self, id: OrganizationID) -> None:
         self.user.test_drop_organization(id)  # type: ignore[attr-defined]
@@ -125,3 +130,4 @@ class BackendApp:
         self.block.test_drop_organization(id)  # type: ignore[attr-defined]
         self.pki.test_drop_organization(id)  # type: ignore[attr-defined]
         self.sequester.test_drop_organization(id)  # type: ignore[attr-defined]
+        self.shamir.test_drop_organization(id)  # type: ignore[attr-defined]

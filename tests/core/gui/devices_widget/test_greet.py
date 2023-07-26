@@ -409,7 +409,7 @@ async def test_greet_device_invitation_cancelled(
         async def _cancel_invitation(self):
             await backend.invite.delete(
                 organization_id=self.author.organization_id,
-                greeter=self.author.user_id,
+                deleter=self.author.user_id,
                 token=self.invitation_addr.token,
                 on=DateTime.now(),
                 reason=InvitationDeletedReason.CANCELLED,

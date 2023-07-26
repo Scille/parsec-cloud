@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Iterable
+
 class SecretKey:
     def __init__(self, data: bytes) -> None: ...
     @property
@@ -104,3 +106,14 @@ class SequesterVerifyKeyDer:
 def generate_nonce() -> bytes: ...
 
 class CryptoError(Exception): ...
+
+class ShamirShare:
+    def __init__(self, data: bytes) -> None: ...
+    def dump(self) -> bytes: ...
+
+def shamir_make_shares(
+    threshold: int,
+    secret: bytes,
+    shares: int,
+) -> list[ShamirShare]: ...
+def shamir_recover_secret(threshold: int, shares: Iterable[ShamirShare]) -> bytes: ...

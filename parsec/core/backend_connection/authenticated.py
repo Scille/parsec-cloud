@@ -25,6 +25,7 @@ from parsec._parsec import (
     CoreEvent,
     EventsListenRep,
     EventsListenRepOk,
+    EventsListenRepOkInviteStatusChanged,
     EventsListenRepOkMessageReceived,
     EventsListenRepOkPinged,
     EventsListenRepOkPkiEnrollmentUpdated,
@@ -158,6 +159,10 @@ class BackendAuthenticatedCmds:
     pki_enrollment_reject = expose_cmds_with_retrier(cmds.pki_enrollment_reject)
     pki_enrollment_accept = expose_cmds_with_retrier(cmds.pki_enrollment_accept)
 
+    shamir_recovery_setup = expose_cmds_with_retrier(cmds.shamir_recovery_setup)
+    shamir_recovery_self_info = expose_cmds_with_retrier(cmds.shamir_recovery_self_info)
+    shamir_recovery_others_list = expose_cmds_with_retrier(cmds.shamir_recovery_others_list)
+
 
 for cmd in AUTHENTICATED_CMDS:
     assert hasattr(BackendAuthenticatedCmds, cmd)
@@ -207,6 +212,13 @@ def _handle_event(event_bus: EventBus, rep: EventsListenRep) -> None:
 
     elif isinstance(rep, EventsListenRepOkPkiEnrollmentUpdated):
         event_bus.send(CoreEvent.PKI_ENROLLMENTS_UPDATED)
+
+    elif isinstance(rep, EventsListenRepOkInviteStatusChanged):
+        event_bus.send(
+            CoreEvent.INVITE_STATUS_CHANGED,
+            token=rep.token,
+            status=rep.invitation_status,
+        )
 
 
 def _transport_pool_factory(

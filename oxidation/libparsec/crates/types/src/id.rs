@@ -207,6 +207,7 @@ new_uuid_type!(pub VlobID);
 new_uuid_type!(pub ChunkID);
 new_uuid_type!(pub SequesterServiceID);
 new_uuid_type!(pub InvitationToken);
+new_uuid_type!(pub ShamirRevealToken);
 new_uuid_type!(pub EnrollmentID);
 impl_from_maybe!(std::collections::HashSet<EntryID>);
 
@@ -416,7 +417,7 @@ crate::impl_from_maybe!(Option<HumanHandle>);
  */
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "UPPERCASE")]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum UserProfile {
     /// Standard user can create new realms and invite new devices for himself.
     ///

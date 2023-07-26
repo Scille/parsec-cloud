@@ -98,6 +98,8 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "UserProfile" => "libparsec_types::UserProfile",
                 "RealmRole" => "libparsec_types::RealmRole",
                 "InvitationToken" => "libparsec_types::InvitationToken",
+                "ShamirRevealToken" => "libparsec_types::ShamirRevealToken",
+                "ShamirShare" => "libparsec_types::ShamirShare",
                 "InvitationStatus" => "libparsec_types::InvitationStatus",
                 "ReencryptionBatchEntry" => "libparsec_types::ReencryptionBatchEntry",
                 "CertificateSignerOwned" => "libparsec_types::CertificateSignerOwned",
@@ -117,6 +119,8 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "X509Certificate" => "libparsec_types::X509Certificate",
                 // Used only in protocol
                 "IntegerBetween1And100" => "libparsec_types::IntegerBetween1And100",
+                // Used only in shamir
+                "ShamirRecoveryShareData" => "libparsec_types::ShamirRecoveryShareData",
                 ident if types.get(ident).is_some() => {
                     types.get(ident).unwrap_or_else(|| unreachable!())
                 }

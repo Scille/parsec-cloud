@@ -56,9 +56,19 @@ from parsec._parsec_pyi.crypto import (
     SequesterPublicKeyDer,
     SequesterSigningKeyDer,
     SequesterVerifyKeyDer,
+    ShamirShare,
     SigningKey,
     VerifyKey,
     generate_nonce,
+    shamir_make_shares,
+    shamir_recover_secret,
+)
+from parsec._parsec_pyi.data import (
+    ShamirRecoveryBriefCertificate,
+    ShamirRecoveryCommunicatedData,
+    ShamirRecoverySecret,
+    ShamirRecoveryShareCertificate,
+    ShamirRecoveryShareData,
 )
 from parsec._parsec_pyi.device import DeviceFileType
 from parsec._parsec_pyi.device_file import DeviceFile
@@ -91,6 +101,7 @@ from parsec._parsec_pyi.ids import (
     OrganizationID,
     RealmID,
     SequesterServiceID,
+    ShamirRevealToken,
     UserID,
     VlobID,
 )
@@ -180,13 +191,11 @@ from parsec._parsec_pyi.pki import (
 )
 from parsec._parsec_pyi.protocol import (
     ActiveUsersLimit,
-    # Cmd
     AnonymousAnyCmdReq,
     AuthenticatedAnyCmdReq,
     AuthenticatedPingRep,
     AuthenticatedPingRepOk,
     AuthenticatedPingRepUnknownStatus,
-    # Ping
     AuthenticatedPingReq,
     BlockCreateRep,
     BlockCreateRepAlreadyExists,
@@ -196,7 +205,6 @@ from parsec._parsec_pyi.protocol import (
     BlockCreateRepOk,
     BlockCreateRepTimeout,
     BlockCreateRepUnknownStatus,
-    # Block
     BlockCreateReq,
     BlockReadRep,
     BlockReadRepInMaintenance,
@@ -214,7 +222,6 @@ from parsec._parsec_pyi.protocol import (
     DeviceCreateRepOk,
     DeviceCreateRepUnknownStatus,
     DeviceCreateReq,
-    # Events
     EventsListenRep,
     EventsListenRepCancelled,
     EventsListenRepNoEvents,
@@ -239,7 +246,6 @@ from parsec._parsec_pyi.protocol import (
     HumanFindRepUnknownStatus,
     HumanFindReq,
     HumanFindResultItem,
-    # Invite
     Invite1ClaimerWaitPeerRep,
     Invite1ClaimerWaitPeerRepInvalidState,
     Invite1ClaimerWaitPeerRepNotFound,
@@ -342,16 +348,20 @@ from parsec._parsec_pyi.protocol import (
     InviteNewRep,
     InviteNewRepAlreadyMember,
     InviteNewRepNotAllowed,
-    InviteNewRepNotAvailable,
     InviteNewRepOk,
+    InviteNewRepShamirRecoveryNotSetup,
     InviteNewRepUnknownStatus,
     InviteNewReq,
+    InviteShamirRecoveryRevealRep,
+    InviteShamirRecoveryRevealRepNotFound,
+    InviteShamirRecoveryRevealRepOk,
+    InviteShamirRecoveryRevealRepUnknownStatus,
+    InviteShamirRecoveryRevealReq,
     MaintenanceType,
     Message,
     MessageGetRep,
     MessageGetRepOk,
     MessageGetRepUnknownStatus,
-    # Message
     MessageGetReq,
     OrganizationBootstrapRep,
     OrganizationBootstrapRepAlreadyBootstrapped,
@@ -372,9 +382,7 @@ from parsec._parsec_pyi.protocol import (
     OrganizationStatsRepNotFound,
     OrganizationStatsRepOk,
     OrganizationStatsRepUnknownStatus,
-    # Organization
     OrganizationStatsReq,
-    # Pki commands
     PkiEnrollmentAcceptRep,
     PkiEnrollmentAcceptRepActiveUsersLimitReached,
     PkiEnrollmentAcceptRepAlreadyExists,
@@ -416,7 +424,6 @@ from parsec._parsec_pyi.protocol import (
     PkiEnrollmentSubmitRepOk,
     PkiEnrollmentSubmitRepUnknownStatus,
     PkiEnrollmentSubmitReq,
-    # Protocol errors
     ProtocolError,
     ProtocolErrorFields,
     RealmCreateRep,
@@ -427,7 +434,6 @@ from parsec._parsec_pyi.protocol import (
     RealmCreateRepNotFound,
     RealmCreateRepOk,
     RealmCreateRepUnknownStatus,
-    # Realm
     RealmCreateReq,
     RealmFinishReencryptionMaintenanceRep,
     RealmFinishReencryptionMaintenanceRepBadEncryptionRevision,
@@ -482,6 +488,24 @@ from parsec._parsec_pyi.protocol import (
     RealmUpdateRolesRepUserRevoked,
     RealmUpdateRolesReq,
     ReencryptionBatchEntry,
+    ShamirRecoveryOthersListRep,
+    ShamirRecoveryOthersListRepNotAllowed,
+    ShamirRecoveryOthersListRepOk,
+    ShamirRecoveryOthersListRepUnknownStatus,
+    ShamirRecoveryOthersListReq,
+    ShamirRecoveryRecipient,
+    ShamirRecoverySelfInfoRep,
+    ShamirRecoverySelfInfoRepOk,
+    ShamirRecoverySelfInfoRepUnknownStatus,
+    ShamirRecoverySelfInfoReq,
+    ShamirRecoverySetup,
+    ShamirRecoverySetupRep,
+    ShamirRecoverySetupRepAlreadySet,
+    ShamirRecoverySetupRepInvalidCertification,
+    ShamirRecoverySetupRepInvalidData,
+    ShamirRecoverySetupRepOk,
+    ShamirRecoverySetupRepUnknownStatus,
+    ShamirRecoverySetupReq,
     Trustchain,
     UserCreateRep,
     UserCreateRepActiveUsersLimitReached,
@@ -496,7 +520,6 @@ from parsec._parsec_pyi.protocol import (
     UserGetRepNotFound,
     UserGetRepOk,
     UserGetRepUnknownStatus,
-    # User
     UserGetReq,
     UserRevokeRep,
     UserRevokeRepAlreadyRevoked,
@@ -519,7 +542,6 @@ from parsec._parsec_pyi.protocol import (
     VlobCreateRepSequesterInconsistency,
     VlobCreateRepTimeout,
     VlobCreateRepUnknownStatus,
-    # Vlob
     VlobCreateReq,
     VlobListVersionsRep,
     VlobListVersionsRepInMaintenance,
@@ -655,6 +677,9 @@ __all__ = [
     "SequesterVerifyKeyDer",
     "generate_nonce",
     "CryptoError",
+    "ShamirShare",
+    "shamir_make_shares",
+    "shamir_recover_secret",
     # DeviceFile
     "DeviceFile",
     # Enumerate
@@ -681,6 +706,7 @@ __all__ = [
     "SequesterServiceID",
     "EnrollmentID",
     "InvitationToken",
+    "ShamirRevealToken",
     # Invite
     "SASCode",
     "generate_sas_code_candidates",
@@ -766,6 +792,12 @@ __all__ = [
     "PkiEnrollmentSubmitPayload",
     "X509Certificate",
     "LocalPendingEnrollment",
+    # Shamir Certificate
+    "ShamirRecoveryBriefCertificate",
+    "ShamirRecoveryShareCertificate",
+    "ShamirRecoveryShareData",
+    "ShamirRecoveryCommunicatedData",
+    "ShamirRecoverySecret",
     # User
     "UsersPerProfileDetailItem",
     # Time
@@ -928,7 +960,7 @@ __all__ = [
     "InviteNewRep",
     "InviteNewRepAlreadyMember",
     "InviteNewRepNotAllowed",
-    "InviteNewRepNotAvailable",
+    "InviteNewRepShamirRecoveryNotSetup",
     "InviteNewRepOk",
     "InviteNewRepUnknownStatus",
     "InviteNewReq",
@@ -1088,6 +1120,31 @@ __all__ = [
     "RealmFinishReencryptionMaintenanceRepMaintenanceError",
     "RealmFinishReencryptionMaintenanceRepUnknownStatus",
     "MaintenanceType",
+    # Protocol Shamir
+    "ShamirRecoveryOthersListReq",
+    "ShamirRecoveryOthersListRep",
+    "ShamirRecoveryOthersListRepOk",
+    "ShamirRecoveryOthersListRepUnknownStatus",
+    "ShamirRecoveryOthersListRepNotAllowed",
+    "ShamirRecoverySelfInfoReq",
+    "ShamirRecoverySelfInfoRep",
+    "ShamirRecoverySelfInfoRepOk",
+    "ShamirRecoverySelfInfoRepUnknownStatus",
+    "ShamirRecoverySetup",
+    "ShamirRecoverySetupReq",
+    "ShamirRecoverySetupRep",
+    "ShamirRecoverySetupRepOk",
+    "ShamirRecoverySetupRepUnknownStatus",
+    "ShamirRecoverySetupRepInvalidCertification",
+    "ShamirRecoverySetupRepInvalidData",
+    "ShamirRecoverySetupRepAlreadySet",
+    "InviteShamirRecoveryRevealReq",
+    "InviteShamirRecoveryRevealRep",
+    "InviteShamirRecoveryRevealRepOk",
+    "InviteShamirRecoveryRevealRepNotFound",
+    "InviteShamirRecoveryRevealRepUnknownStatus",
+    "ShamirRecoveryRecipient",
+    "ShamirRecoverySetup",
     # Protocol Ping
     "AuthenticatedPingReq",
     "AuthenticatedPingRep",

@@ -39,6 +39,7 @@ class BackendInvitedCmds:
         cmds.invite_3b_claimer_wait_peer_trust
     )
     invite_4_claimer_communicate = expose_cmds_with_retrier(cmds.invite_4_claimer_communicate)
+    invite_shamir_recovery_reveal = expose_cmds_with_retrier(cmds.invite_shamir_recovery_reveal)
 
 
 for cmd in INVITED_CMDS:

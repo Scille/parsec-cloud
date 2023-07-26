@@ -6,7 +6,7 @@
         ],
         "req": {
             "cmd": "invite_new",
-            "unit": "UserOrDevice"
+            "unit": "UserOrDeviceOrShamirRecovery"
         },
         "reps": [
             {
@@ -33,11 +33,14 @@
             },
             {
                 "status": "not_available"
+            },
+            {
+                "status": "shamir_recovery_not_setup"
             }
         ],
         "nested_types": [
             {
-                "name": "UserOrDevice",
+                "name": "UserOrDeviceOrShamirRecovery",
                 "discriminant_field": "type",
                 "variants": [
                     {
@@ -58,6 +61,20 @@
                         "name": "Device",
                         "discriminant_value": "DEVICE",
                         "fields": [
+                            {
+                                "name": "send_email",
+                                "type": "Boolean"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "ShamirRecovery",
+                        "discriminant_value": "SHAMIR_RECOVERY",
+                        "fields": [
+                            {
+                                "name": "claimer_user_id",
+                                "type": "UserID"
+                            },
                             {
                                 "name": "send_email",
                                 "type": "Boolean"

@@ -19,8 +19,8 @@ from parsec._parsec import (
     InviteListRepOk,
     InviteNewRepAlreadyMember,
     InviteNewRepNotAllowed,
-    InviteNewRepNotAvailable,
     InviteNewRepOk,
+    InviteNewRepShamirRecoveryNotSetup,
 )
 from parsec.api.protocol import HandshakeBadIdentity, InvitationStatus, UserProfile
 from parsec.backend.backend_events import BackendEvent
@@ -296,7 +296,7 @@ async def test_invite_with_send_mail_and_greeter_without_human_handle(
 
     # Device invitation (not available given no human_handle means no email !)
     rep = await invite_new(alice_ws, type=InvitationType.DEVICE, send_email=True)
-    assert isinstance(rep, InviteNewRepNotAvailable)
+    assert isinstance(rep, InviteNewRepShamirRecoveryNotSetup)
 
 
 @pytest.mark.trio
@@ -445,7 +445,7 @@ async def test_new_user_invitation_after_invitation_deleted(alice, backend, alic
     )
     await backend.invite.delete(
         organization_id=alice.organization_id,
-        greeter=invitation.greeter_user_id,
+        deleter=invitation.greeter_user_id,
         token=invitation.token,
         on=DateTime(2000, 1, 3),
         reason=InvitationDeletedReason.FINISHED,
@@ -474,7 +474,7 @@ async def test_new_device_invitation_after_invitation_deleted(alice, backend, al
     )
     await backend.invite.delete(
         organization_id=alice.organization_id,
-        greeter=invitation.greeter_user_id,
+        deleter=invitation.greeter_user_id,
         token=invitation.token,
         on=DateTime(2000, 1, 3),
         reason=InvitationDeletedReason.FINISHED,
@@ -502,7 +502,7 @@ async def test_delete_already_deleted_invitation(alice, backend, alice_ws):
 
     await backend.invite.delete(
         organization_id=alice.organization_id,
-        greeter=alice.user_id,
+        deleter=alice.user_id,
         token=invitation.token,
         on=DateTime(2000, 1, 2),
         reason=InvitationDeletedReason.ROTTEN,

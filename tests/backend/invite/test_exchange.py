@@ -1,11 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+import contextlib
+
 import pytest
 import trio
 
 from parsec._parsec import (
-    DateTime,
     HashDigest,
     Invite1ClaimerWaitPeerRepOk,
     Invite1GreeterWaitPeerRepOk,
@@ -54,28 +55,7 @@ from tests.backend.common import (
 from tests.common import real_clock_timeout
 
 
-@pytest.fixture
-async def invitation(backend, alice):
-    invitation = await backend.invite.new_for_device(
-        organization_id=alice.organization_id,
-        greeter_user_id=alice.user_id,
-        created_on=DateTime(2000, 1, 2),
-    )
-    return invitation
-
-
-@pytest.fixture
-async def invited_ws(backend_asgi_app, backend_invited_ws_factory, alice, invitation):
-    async with backend_invited_ws_factory(
-        backend_asgi_app,
-        organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE,
-        token=invitation.token,
-    ) as invited_ws:
-        yield invited_ws
-
-
-class PeerControler:
+class PeerController:
     def __init__(self):
         self._orders_sender, self._orders_receiver = trio.open_memory_channel(0)
         self._orders_ack_sender, self._orders_ack_receiver = trio.open_memory_channel(0)
@@ -124,8 +104,13 @@ class PeerControler:
         return await self._orders_receiver.receive()
 
 
-@pytest.fixture
-async def exchange_testbed(alice_ws, invitation, invited_ws):
+@contextlib.asynccontextmanager
+async def exchange_testbed_context(
+    greeter,
+    greeter_ws,
+    invitation,
+    invited_ws,
+):
     greeter_privkey = PrivateKey.generate()
     claimer_privkey = PrivateKey.generate()
 
@@ -136,38 +121,38 @@ async def exchange_testbed(alice_ws, invitation, invited_ws):
             if order == "1_wait_peer":
                 await peer_controller.peer_do(
                     invite_1_greeter_wait_peer,
-                    alice_ws,
+                    greeter_ws,
                     token=invitation.token,
                     greeter_public_key=greeter_privkey.public_key,
                 )
 
             elif order == "2a_get_hashed_nonce":
                 await peer_controller.peer_do(
-                    invite_2a_greeter_get_hashed_nonce, alice_ws, token=invitation.token
+                    invite_2a_greeter_get_hashed_nonce, greeter_ws, token=invitation.token
                 )
 
             elif order == "2b_send_nonce":
                 await peer_controller.peer_do(
                     invite_2b_greeter_send_nonce,
-                    alice_ws,
+                    greeter_ws,
                     token=invitation.token,
                     greeter_nonce=b"<greeter_nonce>",
                 )
 
             elif order == "3a_wait_peer_trust":
                 await peer_controller.peer_do(
-                    invite_3a_greeter_wait_peer_trust, alice_ws, token=invitation.token
+                    invite_3a_greeter_wait_peer_trust, greeter_ws, token=invitation.token
                 )
 
             elif order == "3b_signify_trust":
                 await peer_controller.peer_do(
-                    invite_3b_greeter_signify_trust, alice_ws, token=invitation.token
+                    invite_3b_greeter_signify_trust, greeter_ws, token=invitation.token
                 )
 
             elif order == "4_communicate":
                 await peer_controller.peer_do(
                     invite_4_greeter_communicate,
-                    alice_ws,
+                    greeter_ws,
                     token=invitation.token,
                     payload=order_arg,
                 )
@@ -184,37 +169,49 @@ async def exchange_testbed(alice_ws, invitation, invited_ws):
                     invite_1_claimer_wait_peer,
                     invited_ws,
                     claimer_public_key=claimer_privkey.public_key,
+                    greeter_user_id=greeter.user_id,
                 )
 
             elif order == "2a_send_hashed_nonce":
                 await peer_controller.peer_do(
                     invite_2a_claimer_send_hashed_nonce,
                     invited_ws,
+                    greeter_user_id=greeter.user_id,
                     claimer_hashed_nonce=HashDigest.from_data(b"<claimer_nonce>"),
                 )
 
             elif order == "2b_send_nonce":
                 await peer_controller.peer_do(
-                    invite_2b_claimer_send_nonce, invited_ws, claimer_nonce=b"<claimer_nonce>"
+                    invite_2b_claimer_send_nonce,
+                    invited_ws,
+                    greeter_user_id=greeter.user_id,
+                    claimer_nonce=b"<claimer_nonce>",
                 )
 
             elif order == "3a_signify_trust":
-                await peer_controller.peer_do(invite_3a_claimer_signify_trust, invited_ws)
+                await peer_controller.peer_do(
+                    invite_3a_claimer_signify_trust, invited_ws, greeter_user_id=greeter.user_id
+                )
 
             elif order == "3b_wait_peer_trust":
-                await peer_controller.peer_do(invite_3b_claimer_wait_peer_trust, invited_ws)
+                await peer_controller.peer_do(
+                    invite_3b_claimer_wait_peer_trust, invited_ws, greeter_user_id=greeter.user_id
+                )
 
             elif order == "4_communicate":
                 assert order_arg is not None
                 await peer_controller.peer_do(
-                    invite_4_claimer_communicate, invited_ws, payload=order_arg
+                    invite_4_claimer_communicate,
+                    invited_ws,
+                    greeter_user_id=greeter.user_id,
+                    payload=order_arg,
                 )
 
             else:
                 assert False
 
-    greeter_ctlr = PeerControler()
-    claimer_ctlr = PeerControler()
+    greeter_ctlr = PeerController()
+    claimer_ctlr = PeerController()
     async with trio.open_nursery() as nursery:
         nursery.start_soon(_run_greeter, greeter_ctlr)
         nursery.start_soon(_run_claimer, claimer_ctlr)
@@ -222,6 +219,12 @@ async def exchange_testbed(alice_ws, invitation, invited_ws):
         yield greeter_privkey, claimer_privkey, greeter_ctlr, claimer_ctlr
 
         nursery.cancel_scope.cancel()
+
+
+@pytest.fixture
+async def exchange_testbed(alice, alice_ws, invitation, invited_ws):
+    async with exchange_testbed_context(alice, alice_ws, invitation, invited_ws) as item:
+        yield item
 
 
 @pytest.mark.trio
@@ -568,7 +571,9 @@ async def test_claimer_step_1_retry(
         with backend_asgi_app.backend.event_bus.listen() as spy:
             with trio.CancelScope() as cancel_scope:
                 async with invite_1_claimer_wait_peer.async_call(
-                    invited_ws, claimer_public_key=claimer_privkey.public_key
+                    invited_ws,
+                    claimer_public_key=claimer_privkey.public_key,
+                    greeter_user_id=alice.user_id,
                 ):
                     await spy.wait_with_timeout(
                         BackendEvent.INVITE_CONDUIT_UPDATED,
@@ -590,7 +595,9 @@ async def test_claimer_step_1_retry(
         async with real_clock_timeout():
             with backend_asgi_app.backend.event_bus.listen() as spy:
                 async with invite_1_claimer_wait_peer.async_call(
-                    invited_ws, claimer_public_key=claimer_privkey.public_key
+                    invited_ws,
+                    claimer_public_key=claimer_privkey.public_key,
+                    greeter_user_id=alice.user_id,
                 ) as claimer_async_rep:
                     # Must wait for the reset command to update the conduit
                     # before starting the greeter command otherwise it will
@@ -627,7 +634,9 @@ async def test_claimer_step_2_retry(
             alice_ws, token=invitation.token, greeter_public_key=greeter_privkey.public_key
         ) as greeter_async_rep:
             claimer_rep = await invite_1_claimer_wait_peer(
-                invited_ws, claimer_public_key=claimer_privkey.public_key
+                invited_ws,
+                claimer_public_key=claimer_privkey.public_key,
+                greeter_user_id=alice.user_id,
             )
             assert claimer_rep.greeter_public_key == greeter_privkey.public_key
         assert greeter_async_rep.rep.claimer_public_key == claimer_privkey.public_key
@@ -659,6 +668,7 @@ async def test_claimer_step_2_retry(
                         # Claimer now arrives and try to do step 2a
                         rep = await invite_2a_claimer_send_hashed_nonce(
                             invited_ws,
+                            greeter_user_id=alice.user_id,
                             claimer_hashed_nonce=HashDigest.from_data(b"<claimer_nonce>"),
                         )
 
@@ -666,7 +676,9 @@ async def test_claimer_step_2_retry(
 
                         # So claimer returns to step 1
                         rep = await invite_1_claimer_wait_peer(
-                            invited_ws, claimer_public_key=claimer_retry_privkey.public_key
+                            invited_ws,
+                            greeter_user_id=alice.user_id,
+                            claimer_public_key=claimer_retry_privkey.public_key,
                         )
                         assert rep.greeter_public_key == greeter_retry_privkey.public_key
 
@@ -687,10 +699,14 @@ async def test_claimer_step_2_retry(
 
             async def _greeter_step_2():
                 rep = await invite_2a_claimer_send_hashed_nonce(
-                    invited_ws, claimer_hashed_nonce=HashDigest.from_data(b"<retry_nonce>")
+                    invited_ws,
+                    greeter_user_id=alice.user_id,
+                    claimer_hashed_nonce=HashDigest.from_data(b"<retry_nonce>"),
                 )
                 assert rep.greeter_nonce == b"greeter nonce"
-                rep = await invite_2b_claimer_send_nonce(invited_ws, claimer_nonce=b"claimer nonce")
+                rep = await invite_2b_claimer_send_nonce(
+                    invited_ws, greeter_user_id=alice.user_id, claimer_nonce=b"claimer nonce"
+                )
                 assert isinstance(rep, Invite2bClaimerSendNonceRepOk)
 
             async with real_clock_timeout():

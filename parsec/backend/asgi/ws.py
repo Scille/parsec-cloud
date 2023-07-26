@@ -111,8 +111,7 @@ async def handle_ws() -> None:
 
         await backend.invite.claimer_joined(
             organization_id=client_ctx.organization_id,
-            greeter=client_ctx.invitation.greeter_user_id,
-            token=client_ctx.invitation.token,
+            invitation=client_ctx.invitation,
         )
         try:
             with trio.CancelScope() as cancel_scope:
@@ -123,7 +122,7 @@ async def handle_ws() -> None:
                         client_ctx: InvitedClientContext,
                         event: BackendEvent,
                         organization_id: OrganizationID,
-                        greeter: UserID,
+                        greeters: list[UserID],
                         token: InvitationToken,
                         status: InvitationStatus,
                     ) -> None:
@@ -158,8 +157,7 @@ async def handle_ws() -> None:
             with trio.CancelScope(shield=True):
                 await backend.invite.claimer_left(
                     organization_id=client_ctx.organization_id,
-                    greeter=client_ctx.invitation.greeter_user_id,
-                    token=client_ctx.invitation.token,
+                    invitation=client_ctx.invitation,
                 )
 
 

@@ -21,7 +21,7 @@ async def test_delete_invitation_while_claimer_connected(exchange_testbed, backe
         with backend.event_bus.listen() as spy:
             await backend.invite.delete(
                 organization_id=tb.organization_id,
-                greeter=tb.greeter.user_id,
+                deleter=tb.greeter.user_id,
                 token=tb.invitation.token,
                 on=DateTime(2000, 1, 2),
                 reason=InvitationDeletedReason.ROTTEN,
@@ -118,7 +118,7 @@ async def test_delete_invitation_then_claimer_action_before_backend_closes_conne
 
     await backend.invite.delete(
         organization_id=tb.organization_id,
-        greeter=tb.greeter.user_id,
+        deleter=tb.greeter.user_id,
         token=tb.invitation.token,
         on=DateTime(2000, 1, 2),
         reason=InvitationDeletedReason.ROTTEN,

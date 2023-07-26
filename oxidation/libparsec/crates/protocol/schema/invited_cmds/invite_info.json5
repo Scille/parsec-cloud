@@ -10,12 +10,12 @@
         "reps": [
             {
                 "status": "ok",
-                "unit": "UserOrDevice"
+                "unit": "UserOrDeviceOrShamirRecovery"
             }
         ],
         "nested_types": [
             {
-                "name": "UserOrDevice",
+                "name": "UserOrDeviceOrShamirRecovery",
                 "discriminant_field": "type",
                 "variants": [
                     {
@@ -49,6 +49,37 @@
                                 "type": "RequiredOption<HumanHandle>"
                             }
                         ]
+                    },
+                    {
+                        "name": "ShamirRecovery",
+                        "discriminant_value": "SHAMIR_RECOVERY",
+                        "fields": [
+                            {
+                                "name": "threshold",
+                                "type": "NonZeroInteger"
+                            },
+                            {
+                                "name": "recipients",
+                                "type": "List<ShamirRecoveryRecipient>"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "ShamirRecoveryRecipient",
+                "fields": [
+                    {
+                        "name": "user_id",
+                        "type": "UserID"
+                    },
+                    {
+                        "name": "human_handle",
+                        "type": "RequiredOption<HumanHandle>"
+                    },
+                    {
+                        "name": "shares",
+                        "type": "NonZeroInteger"
                     }
                 ]
             }

@@ -6,7 +6,9 @@ use libparsec_types::prelude::*;
 
 use crate::{InviteError, InviteResult};
 
-pub async fn claimer_retrieve_info(cmds: &InvitedCmds) -> InviteResult<invite_info::UserOrDevice> {
+pub async fn claimer_retrieve_info(
+    cmds: &InvitedCmds,
+) -> InviteResult<invite_info::UserOrDeviceOrShamirRecovery> {
     let rep = cmds.send(invite_info::Req).await?;
 
     match rep {
@@ -32,6 +34,7 @@ impl BaseClaimInitialCtx {
             .cmds
             .send(invite_1_claimer_wait_peer::Req {
                 claimer_public_key: claimer_private_key.public_key(),
+                greeter_user_id: Maybe::Present(self.greeter_user_id.clone()),
             })
             .await?;
 
@@ -52,6 +55,7 @@ impl BaseClaimInitialCtx {
             .cmds
             .send(invite_2a_claimer_send_hashed_nonce::Req {
                 claimer_hashed_nonce: HashDigest::from_data(&claimer_nonce),
+                greeter_user_id: Maybe::Present(self.greeter_user_id.clone()),
             })
             .await?;
 
@@ -72,7 +76,10 @@ impl BaseClaimInitialCtx {
 
         let rep = self
             .cmds
-            .send(invite_2b_claimer_send_nonce::Req { claimer_nonce })
+            .send(invite_2b_claimer_send_nonce::Req {
+                claimer_nonce,
+                greeter_user_id: Maybe::Present(self.greeter_user_id.clone()),
+            })
             .await?;
 
         match rep {
@@ -86,6 +93,7 @@ impl BaseClaimInitialCtx {
         }?;
 
         Ok(BaseClaimInProgress1Ctx {
+            greeter_user_id: self.greeter_user_id,
             greeter_sas,
             claimer_sas,
             shared_secret_key,
@@ -161,6 +169,7 @@ impl DeviceClaimInitialCtx {
 
 #[derive(Debug)]
 struct BaseClaimInProgress1Ctx {
+    greeter_user_id: UserID,
     greeter_sas: SASCode,
     claimer_sas: SASCode,
     shared_secret_key: SecretKey,
@@ -173,13 +182,19 @@ impl BaseClaimInProgress1Ctx {
     }
 
     async fn do_signify_trust(self) -> InviteResult<BaseClaimInProgress2Ctx> {
-        let rep = self.cmds.send(invite_3a_claimer_signify_trust::Req).await?;
+        let rep = self
+            .cmds
+            .send(invite_3a_claimer_signify_trust::Req {
+                greeter_user_id: Maybe::Present(self.greeter_user_id.clone()),
+            })
+            .await?;
 
         match rep {
             invite_3a_claimer_signify_trust::Rep::AlreadyDeleted => Err(InviteError::AlreadyUsed),
             invite_3a_claimer_signify_trust::Rep::InvalidState => Err(InviteError::PeerReset),
             invite_3a_claimer_signify_trust::Rep::NotFound => Err(InviteError::NotFound),
             invite_3a_claimer_signify_trust::Rep::Ok => Ok(BaseClaimInProgress2Ctx {
+                greeter_user_id: self.greeter_user_id,
                 claimer_sas: self.claimer_sas,
                 shared_secret_key: self.shared_secret_key,
                 cmds: self.cmds,
@@ -230,6 +245,7 @@ impl DeviceClaimInProgress1Ctx {
 
 #[derive(Debug)]
 struct BaseClaimInProgress2Ctx {
+    greeter_user_id: UserID,
     claimer_sas: SASCode,
     shared_secret_key: SecretKey,
     cmds: InvitedCmds,
@@ -239,7 +255,9 @@ impl BaseClaimInProgress2Ctx {
     async fn do_wait_peer_trust(self) -> InviteResult<BaseClaimInProgress3Ctx> {
         let rep = self
             .cmds
-            .send(invite_3b_claimer_wait_peer_trust::Req)
+            .send(invite_3b_claimer_wait_peer_trust::Req {
+                greeter_user_id: Maybe::Present(self.greeter_user_id.clone()),
+            })
             .await?;
 
         match rep {
@@ -247,6 +265,7 @@ impl BaseClaimInProgress2Ctx {
             invite_3b_claimer_wait_peer_trust::Rep::InvalidState => Err(InviteError::PeerReset),
             invite_3b_claimer_wait_peer_trust::Rep::NotFound => Err(InviteError::NotFound),
             invite_3b_claimer_wait_peer_trust::Rep::Ok => Ok(BaseClaimInProgress3Ctx {
+                greeter_user_id: self.greeter_user_id,
                 shared_secret_key: self.shared_secret_key,
                 cmds: self.cmds,
             }),
@@ -291,6 +310,7 @@ impl DeviceClaimInProgress2Ctx {
 
 #[derive(Debug)]
 struct BaseClaimInProgress3Ctx {
+    greeter_user_id: UserID,
     shared_secret_key: SecretKey,
     cmds: InvitedCmds,
 }
@@ -299,7 +319,10 @@ impl BaseClaimInProgress3Ctx {
     async fn do_claim(&self, payload: Vec<u8>) -> InviteResult<Vec<u8>> {
         let rep = self
             .cmds
-            .send(invite_4_claimer_communicate::Req { payload })
+            .send(invite_4_claimer_communicate::Req {
+                payload,
+                greeter_user_id: Maybe::Present(self.greeter_user_id.clone()),
+            })
             .await?;
 
         match rep {
@@ -318,7 +341,10 @@ impl BaseClaimInProgress3Ctx {
         // data, but for that we must send it something.
         let rep = self
             .cmds
-            .send(invite_4_claimer_communicate::Req { payload: vec![] })
+            .send(invite_4_claimer_communicate::Req {
+                payload: vec![],
+                greeter_user_id: Maybe::Present(self.greeter_user_id.clone()),
+            })
             .await?;
 
         match rep {

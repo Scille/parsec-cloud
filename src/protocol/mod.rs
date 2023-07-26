@@ -10,6 +10,7 @@ mod organization;
 mod ping;
 mod pki;
 mod realm;
+mod shamir;
 mod user;
 mod vlob;
 
@@ -23,6 +24,7 @@ pub(crate) use organization::*;
 pub(crate) use ping::*;
 pub(crate) use pki::*;
 pub(crate) use realm::*;
+pub(crate) use shamir::*;
 pub(crate) use user::*;
 pub(crate) use vlob::*;
 
@@ -416,6 +418,31 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<RealmFinishReencryptionMaintenanceRepUnknownStatus>()?;
     m.add_class::<MaintenanceType>()?;
 
+    // Shamir
+    m.add_class::<ShamirRecoverySelfInfoRep>()?;
+    m.add_class::<ShamirRecoverySelfInfoRepOk>()?;
+    m.add_class::<ShamirRecoverySelfInfoRepUnknownStatus>()?;
+    m.add_class::<ShamirRecoverySelfInfoReq>()?;
+    m.add_class::<ShamirRecoveryOthersListRep>()?;
+    m.add_class::<ShamirRecoveryOthersListRepOk>()?;
+    m.add_class::<ShamirRecoveryOthersListRepUnknownStatus>()?;
+    m.add_class::<ShamirRecoveryOthersListReq>()?;
+    m.add_class::<ShamirRecoverySetup>()?;
+    m.add_class::<ShamirRecoverySetupRep>()?;
+    m.add_class::<ShamirRecoverySetupRepAlreadySet>()?;
+    m.add_class::<ShamirRecoverySetupRepInvalidCertification>()?;
+    m.add_class::<ShamirRecoverySetupRepInvalidData>()?;
+    m.add_class::<ShamirRecoverySetupRepOk>()?;
+    m.add_class::<ShamirRecoverySetupRepUnknownStatus>()?;
+    m.add_class::<ShamirRecoverySetupReq>()?;
+    m.add_class::<InviteShamirRecoveryRevealRep>()?;
+    m.add_class::<InviteShamirRecoveryRevealRepOk>()?;
+    m.add_class::<InviteShamirRecoveryRevealRepNotFound>()?;
+    m.add_class::<InviteShamirRecoveryRevealRepUnknownStatus>()?;
+    m.add_class::<InviteShamirRecoveryRevealReq>()?;
+    m.add_class::<ShamirRecoveryRecipient>()?;
+    m.add_class::<ShamirRecoverySetup>()?;
+
     // Ping
     m.add_class::<AuthenticatedPingReq>()?;
     m.add_class::<AuthenticatedPingRep>()?;
@@ -431,7 +458,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<InviteNewRep>()?;
     m.add_class::<InviteNewRepNotAllowed>()?;
     m.add_class::<InviteNewRepAlreadyMember>()?;
-    m.add_class::<InviteNewRepNotAvailable>()?;
+    m.add_class::<InviteNewRepShamirRecoveryNotSetup>()?;
     m.add_class::<InviteNewRepUnknownStatus>()?;
     m.add_class::<InviteNewRepOk>()?;
 

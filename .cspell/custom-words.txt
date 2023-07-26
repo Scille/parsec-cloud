@@ -389,7 +389,9 @@ spctl
 speechd
 splashscreen
 sqldrivers
+SRBC
 SRSC
+SRSD
 staticlib
 structlog
 stucking

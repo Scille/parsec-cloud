@@ -1,70 +1,70 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-# flake8: noqa
-
-from parsec._parsec import DateTime
-from utils import *
-from parsec.api.protocol import *
-from parsec.api.data import *
 from parsec._parsec import (
-    PublicKey,
+    DateTime,
     HashDigest,
-    InviteNewRepOk,
-    InviteNewRepAlreadyMember,
-    InviteNewRepNotAllowed,
-    InviteNewRepNotAvailable,
-    InviteDeleteRepOk,
-    InviteDeleteRepAlreadyDeleted,
-    InviteDeleteRepNotFound,
-    InviteListRepOk,
-    InviteInfoRepOk,
-    Invite1ClaimerWaitPeerRepOk,
-    Invite1ClaimerWaitPeerRepNotFound,
+    InvitationDeletedReason,
+    InvitationType,
     Invite1ClaimerWaitPeerRepInvalidState,
-    Invite1GreeterWaitPeerRepOk,
-    Invite1GreeterWaitPeerRepNotFound,
+    Invite1ClaimerWaitPeerRepNotFound,
+    Invite1ClaimerWaitPeerRepOk,
     Invite1GreeterWaitPeerRepAlreadyDeleted,
     Invite1GreeterWaitPeerRepInvalidState,
-    Invite2aClaimerSendHashedNonceRepOk,
-    Invite2aClaimerSendHashedNonceRepNotFound,
+    Invite1GreeterWaitPeerRepNotFound,
+    Invite1GreeterWaitPeerRepOk,
     Invite2aClaimerSendHashedNonceRepAlreadyDeleted,
     Invite2aClaimerSendHashedNonceRepInvalidState,
-    Invite2aGreeterGetHashedNonceRepOk,
+    Invite2aClaimerSendHashedNonceRepNotFound,
+    Invite2aClaimerSendHashedNonceRepOk,
     Invite2aGreeterGetHashedNonceRepAlreadyDeleted,
     Invite2aGreeterGetHashedNonceRepInvalidState,
     Invite2aGreeterGetHashedNonceRepNotFound,
-    Invite2bClaimerSendNonceRepOk,
-    Invite2bClaimerSendNonceRepNotFound,
+    Invite2aGreeterGetHashedNonceRepOk,
     Invite2bClaimerSendNonceRepInvalidState,
-    Invite2bGreeterSendNonceRepOk,
-    Invite2bGreeterSendNonceRepNotFound,
+    Invite2bClaimerSendNonceRepNotFound,
+    Invite2bClaimerSendNonceRepOk,
     Invite2bGreeterSendNonceRepAlreadyDeleted,
     Invite2bGreeterSendNonceRepInvalidState,
-    Invite3aClaimerSignifyTrustRepOk,
-    Invite3aClaimerSignifyTrustRepNotFound,
+    Invite2bGreeterSendNonceRepNotFound,
+    Invite2bGreeterSendNonceRepOk,
     Invite3aClaimerSignifyTrustRepInvalidState,
-    Invite3aGreeterWaitPeerTrustRepOk,
-    Invite3aGreeterWaitPeerTrustRepNotFound,
+    Invite3aClaimerSignifyTrustRepNotFound,
+    Invite3aClaimerSignifyTrustRepOk,
     Invite3aGreeterWaitPeerTrustRepAlreadyDeleted,
     Invite3aGreeterWaitPeerTrustRepInvalidState,
-    Invite3bClaimerWaitPeerTrustRepOk,
-    Invite3bClaimerWaitPeerTrustRepNotFound,
+    Invite3aGreeterWaitPeerTrustRepNotFound,
+    Invite3aGreeterWaitPeerTrustRepOk,
     Invite3bClaimerWaitPeerTrustRepInvalidState,
-    Invite3bGreeterSignifyTrustRepOk,
-    Invite3bGreeterSignifyTrustRepNotFound,
+    Invite3bClaimerWaitPeerTrustRepNotFound,
+    Invite3bClaimerWaitPeerTrustRepOk,
     Invite3bGreeterSignifyTrustRepAlreadyDeleted,
     Invite3bGreeterSignifyTrustRepInvalidState,
-    Invite4ClaimerCommunicateRepOk,
-    Invite4ClaimerCommunicateRepNotFound,
+    Invite3bGreeterSignifyTrustRepNotFound,
+    Invite3bGreeterSignifyTrustRepOk,
     Invite4ClaimerCommunicateRepInvalidState,
-    Invite4GreeterCommunicateRepOk,
-    Invite4GreeterCommunicateRepNotFound,
+    Invite4ClaimerCommunicateRepNotFound,
+    Invite4ClaimerCommunicateRepOk,
     Invite4GreeterCommunicateRepAlreadyDeleted,
     Invite4GreeterCommunicateRepInvalidState,
+    Invite4GreeterCommunicateRepNotFound,
+    Invite4GreeterCommunicateRepOk,
+    InviteDeleteRepAlreadyDeleted,
+    InviteDeleteRepNotFound,
+    InviteDeleteRepOk,
+    InviteInfoRepOk,
     InviteListItem,
-    InvitationType,
-    InvitationDeletedReason,
+    InviteListRepOk,
+    InviteNewRepAlreadyMember,
+    InviteNewRepNotAllowed,
+    InviteNewRepOk,
+    InviteNewRepShamirRecoveryNotSetup,
+    PublicKey,
+    ShamirRecoveryRecipient,
 )
+from parsec.api.data import *
+from parsec.api.protocol import *
+
+from .utils import *
 
 ################### InviteNew ##################
 
@@ -74,7 +74,7 @@ serialized = serializer.req_dumps(
     {
         "type": InvitationType.USER,
         "cmd": "invite_new",
-        "claimer_email": "alice@dev1",
+        "claimer_email": "alice@example.com",
         "send_email": True,
     }
 )
@@ -86,20 +86,21 @@ serialized = serializer.req_dumps(
         "type": InvitationType.DEVICE,
         "cmd": "invite_new",
         "send_email": True,
-        "claimer_email": None,
     }
 )
 serializer.req_loads(serialized)
 display("invite_new_req_device", serialized, [])
 
-serialized = serializer.rep_dumps(
-    InviteNewRepOk(
-        token=InvitationToken.from_hex("d864b93ded264aae9ae583fd3d40c45a"),
-        email_sent=None,
-    )
+serialized = serializer.req_dumps(
+    {
+        "type": InvitationType.SHAMIR_RECOVERY,
+        "cmd": "invite_new",
+        "send_email": True,
+        "claimer_user_id": ALICE.user_id,
+    }
 )
-serializer.rep_loads(serialized)
-display("invite_new_rep_without", serialized, [])
+serializer.req_loads(serialized)
+display("invite_new_req_shamir_recovery_device", serialized, [])
 
 serialized = serializer.rep_dumps(
     InviteNewRepOk(
@@ -118,7 +119,7 @@ serialized = serializer.rep_dumps(InviteNewRepAlreadyMember())
 serializer.rep_loads(serialized)
 display("invite_new_rep_already_member", serialized, [])
 
-serialized = serializer.rep_dumps(InviteNewRepNotAvailable())
+serialized = serializer.rep_dumps(InviteNewRepShamirRecoveryNotSetup())
 serializer.rep_loads(serialized)
 display("invite_new_rep_not_available", serialized, [])
 
@@ -162,12 +163,18 @@ serialized = serializer.rep_dumps(
             InviteListItem.User(
                 token=InvitationToken.from_hex("d864b93ded264aae9ae583fd3d40c45a"),
                 created_on=DateTime(2000, 1, 2, 1),
-                claimer_email="alice@dev1",
+                claimer_email="alice@example.com",
                 status=InvitationStatus.IDLE,
             ),
             InviteListItem.Device(
                 token=InvitationToken.from_hex("d864b93ded264aae9ae583fd3d40c45a"),
                 created_on=DateTime(2000, 1, 2, 1),
+                status=InvitationStatus.IDLE,
+            ),
+            InviteListItem.ShamirRecovery(
+                token=InvitationToken.from_hex("d864b93ded264aae9ae583fd3d40c45a"),
+                created_on=DateTime(2000, 1, 2, 1),
+                claimer_user_id=UserID("109b68ba5cdf428ea0017fc6bcc04d4a"),
                 status=InvitationStatus.IDLE,
             ),
         ]
@@ -187,9 +194,9 @@ display("invite_info_req", serialized, [])
 serialized = serializer.rep_dumps(
     InviteInfoRepOk(
         type=InvitationType.USER,
-        claimer_email="alice@dev1",
+        claimer_email="alice@example.com",
         greeter_user_id=UserID("109b68ba5cdf428ea0017fc6bcc04d4a"),
-        greeter_human_handle=HumanHandle("bob@dev1", "bob"),
+        greeter_human_handle=HumanHandle("bob@example.com", "bob"),
     )
 )
 serializer.rep_loads(serialized)
@@ -199,7 +206,7 @@ serialized = serializer.rep_dumps(
     InviteInfoRepOk(
         type=InvitationType.DEVICE,
         greeter_user_id=UserID("109b68ba5cdf428ea0017fc6bcc04d4a"),
-        greeter_human_handle=HumanHandle("bob@dev1", "bob"),
+        greeter_human_handle=HumanHandle("bob@example.com", "bob"),
         claimer_email=None,
     )
 )
@@ -209,7 +216,7 @@ display("invite_info_rep_device", serialized, [])
 serialized = serializer.rep_dumps(
     InviteInfoRepOk(
         type=InvitationType.USER,
-        claimer_email="alice@dev1",
+        claimer_email="alice@example.com",
         greeter_user_id=UserID("109b68ba5cdf428ea0017fc6bcc04d4a"),
         greeter_human_handle=None,
     )
@@ -228,6 +235,26 @@ serialized = serializer.rep_dumps(
 serializer.rep_loads(serialized)
 display("invite_info_rep_device no handle", serialized, [])
 
+serialized = serializer.rep_dumps(
+    InviteInfoRepOk(
+        type=InvitationType.SHAMIR_RECOVERY,
+        threshold=1,
+        recipients=[],
+    )
+)
+serializer.rep_loads(serialized)
+display("invite_info_rep_shamir_recovery without recipients", serialized, [])
+
+serialized = serializer.rep_dumps(
+    InviteInfoRepOk(
+        type=InvitationType.SHAMIR_RECOVERY,
+        threshold=1,
+        recipients=[ShamirRecoveryRecipient(ALICE.user_id, ALICE.human_handle, 1)],
+    )
+)
+serializer.rep_loads(serialized)
+display("invite_info_rep_shamir_recovery with recipients", serialized, [])
+
 ################### Invite1ClaimerWaitPeer ##################
 
 serializer = invite_1_claimer_wait_peer_serializer
@@ -235,6 +262,7 @@ serializer = invite_1_claimer_wait_peer_serializer
 serialized = serializer.req_dumps(
     {
         "cmd": "invite_1_claimer_wait_peer",
+        "greeter_user_id": ALICE.user_id,
         "claimer_public_key": PublicKey(
             unhexlify("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
         ),
@@ -306,6 +334,7 @@ serializer = invite_2a_claimer_send_hashed_nonce_serializer
 serialized = serializer.req_dumps(
     {
         "cmd": "invite_2a_claimer_send_hashed_nonce",
+        "greeter_user_id": ALICE.user_id,
         "claimer_hashed_nonce": HashDigest(
             unhexlify("e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6")
         ),
@@ -400,7 +429,11 @@ display("invite_2b_greeter_send_nonce_rep_invalid_state", serialized, [])
 serializer = invite_2b_claimer_send_nonce_serializer
 
 serialized = serializer.req_dumps(
-    {"cmd": "invite_2b_claimer_send_nonce", "claimer_nonce": b"foobar"}
+    {
+        "cmd": "invite_2b_claimer_send_nonce",
+        "greeter_user_id": ALICE.user_id,
+        "claimer_nonce": b"foobar",
+    }
 )
 serializer.req_loads(serialized)
 display("invite_2b_claimer_send_nonce_req", serialized, [])
@@ -450,7 +483,9 @@ display("invite_3a_greeter_wait_peer_trust_rep_invalid_state", serialized, [])
 
 serializer = invite_3b_claimer_wait_peer_trust_serializer
 
-serialized = serializer.req_dumps({"cmd": "invite_3b_claimer_wait_peer_trust"})
+serialized = serializer.req_dumps(
+    {"cmd": "invite_3b_claimer_wait_peer_trust", "greeter_user_id": ALICE.user_id}
+)
 serializer.req_loads(serialized)
 display("invite_3b_claimer_wait_peer_trust_req", serialized, [])
 
@@ -499,7 +534,9 @@ display("invite_3b_greeter_signify_trust_rep_invalid_state", serialized, [])
 
 serializer = invite_3a_claimer_signify_trust_serializer
 
-serialized = serializer.req_dumps({"cmd": "invite_3a_claimer_signify_trust"})
+serialized = serializer.req_dumps(
+    {"cmd": "invite_3a_claimer_signify_trust", "greeter_user_id": ALICE.user_id}
+)
 serializer.req_loads(serialized)
 display("invite_3a_claimer_signify_trust_req", serialized, [])
 
@@ -549,7 +586,9 @@ display("invite_4_greeter_communicate_rep_invalid_state", serialized, [])
 
 serializer = invite_4_claimer_communicate_serializer
 
-serialized = serializer.req_dumps({"cmd": "invite_4_claimer_communicate", "payload": b"foobar"})
+serialized = serializer.req_dumps(
+    {"cmd": "invite_4_claimer_communicate", "greeter_user_id": ALICE.user_id, "payload": b"foobar"}
+)
 serializer.req_loads(serialized)
 display("invite_4_claimer_communicate_req", serialized, [])
 

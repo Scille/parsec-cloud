@@ -5,7 +5,14 @@
             3
         ],
         "req": {
-            "cmd": "invite_3a_claimer_signify_trust"
+            "cmd": "invite_3a_claimer_signify_trust",
+            "fields": [
+                {
+                    "name": "greeter_user_id",
+                    "type": "UserID",
+                    "introduced_in": "2.9"
+                }
+            ]
         },
         "reps": [
             {

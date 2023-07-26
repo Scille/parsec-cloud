@@ -102,7 +102,7 @@ class InviteStatusChangedSchema(BaseSchema):
     __id__ = fields.String(required=True)
     __signal__ = fields.EnumCheckedConstant(BackendEvent.INVITE_STATUS_CHANGED, required=True)
     organization_id = OrganizationIDField(required=True)
-    greeter = UserIDField(required=True)
+    greeters = fields.List(UserIDField(), required=True)
     token = InvitationTokenField(required=True)
     status = InvitationStatusField(required=True)
 

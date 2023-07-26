@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use pyo3::{exceptions::PyRuntimeError, prelude::*};
 
-use libparsec::protocol::invited_cmds::v2::invite_info::UserOrDevice;
+use libparsec::protocol::invited_cmds::v2::invite_info::UserOrDeviceOrShamirRecovery;
 
 use crate::{
     backend_connection::InvitedCmds,
@@ -25,7 +25,7 @@ pub(crate) fn claimer_retrieve_info(cmds: &InvitedCmds) -> FutureIntoCoroutine {
                 .await
                 .map_err(InviteExc::from)?
             {
-                UserOrDevice::User {
+                UserOrDeviceOrShamirRecovery::User {
                     claimer_email,
                     greeter_user_id,
                     greeter_human_handle,
@@ -38,7 +38,7 @@ pub(crate) fn claimer_retrieve_info(cmds: &InvitedCmds) -> FutureIntoCoroutine {
                     )))
                     .into_py(py)
                 }),
-                UserOrDevice::Device {
+                UserOrDeviceOrShamirRecovery::Device {
                     greeter_user_id,
                     greeter_human_handle,
                 } => Python::with_gil(|py| {
@@ -49,6 +49,7 @@ pub(crate) fn claimer_retrieve_info(cmds: &InvitedCmds) -> FutureIntoCoroutine {
                     )))
                     .into_py(py)
                 }),
+                _ => return Err(PyRuntimeError::new_err("Not implemented")),
             },
         )
     })

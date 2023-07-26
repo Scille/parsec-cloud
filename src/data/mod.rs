@@ -9,6 +9,7 @@ mod manifest;
 mod message;
 mod organization;
 mod pki;
+mod shamir;
 mod user;
 
 pub(crate) use certif::*;
@@ -20,6 +21,7 @@ pub(crate) use manifest::*;
 pub(crate) use message::*;
 pub(crate) use organization::*;
 pub(crate) use pki::*;
+pub(crate) use shamir::*;
 pub(crate) use user::*;
 
 use pyo3::{types::PyModule, wrap_pyfunction, PyResult, Python};
@@ -110,6 +112,13 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
 
     // User
     m.add_class::<UsersPerProfileDetailItem>()?;
+
+    // Shamir
+    m.add_class::<ShamirRecoveryBriefCertificate>()?;
+    m.add_class::<ShamirRecoveryShareData>()?;
+    m.add_class::<ShamirRecoveryCommunicatedData>()?;
+    m.add_class::<ShamirRecoveryShareCertificate>()?;
+    m.add_class::<ShamirRecoverySecret>()?;
 
     Ok(())
 }

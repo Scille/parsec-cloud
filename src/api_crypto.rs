@@ -20,6 +20,9 @@ pub(crate) fn add_mod(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<SequesterPublicKeyDer>()?;
     m.add_class::<SequesterSigningKeyDer>()?;
     m.add_class::<SequesterVerifyKeyDer>()?;
+    m.add_class::<ShamirShare>()?;
+    m.add_function(wrap_pyfunction!(shamir_make_shares, m)?)?;
+    m.add_function(wrap_pyfunction!(shamir_recover_secret, m)?)?;
     m.add_function(wrap_pyfunction!(generate_nonce, m)?)?;
 
     m.add("CryptoError", py.get_type::<CryptoError>())?;
@@ -523,4 +526,40 @@ impl SequesterVerifyKeyDer {
 #[pyfunction]
 pub(crate) fn generate_nonce(py: Python<'_>) -> &PyBytes {
     PyBytes::new(py, &libparsec::crypto::generate_nonce())
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct ShamirShare(pub libparsec::crypto::ShamirShare);
+
+#[pymethods]
+impl ShamirShare {
+    #[new]
+    fn new(data: &[u8]) -> PyResult<Self> {
+        libparsec::crypto::ShamirShare::try_from(data)
+            .map(Self)
+            .map_err(|err| PyValueError::new_err(err.to_string()))
+    }
+
+    fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.dump())
+    }
+}
+
+#[pyfunction]
+pub(crate) fn shamir_make_shares(threshold: u8, secret: &[u8], shares: usize) -> Vec<ShamirShare> {
+    let shares = libparsec::crypto::shamir_make_shares(threshold, secret, shares);
+    shares.into_iter().map(ShamirShare).collect()
+}
+
+#[pyfunction]
+pub(crate) fn shamir_recover_secret(
+    threshold: u8,
+    shares: Vec<ShamirShare>,
+    py: Python,
+) -> PyResult<&PyBytes> {
+    let shares = shares.iter().map(|x| &x.0);
+    libparsec::crypto::shamir_recover_secret(threshold, shares)
+        .map(|x| PyBytes::new(py, &x))
+        .map_err(|e| PyValueError::new_err(e.to_string()))
 }

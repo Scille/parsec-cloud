@@ -305,9 +305,9 @@ macro_rules! impl_enum_field {
                 #[classattr]
                 #[pyo3(name = $pyo3_name)]
                 pub(crate) fn $fn_name() -> &'static PyObject {
-                    lazy_static::lazy_static! {
+                    ::lazy_static::lazy_static! {
                         static ref VALUE: PyObject = {
-                            Python::with_gil(|py| {
+                            ::pyo3::Python::with_gil(|py| {
                                 $enum_class($field_value).into_py(py)
                             })
                         };
@@ -320,10 +320,10 @@ macro_rules! impl_enum_field {
             #[classattr]
             #[pyo3(name = "VALUES")]
             fn values() -> &'static PyObject {
-                lazy_static::lazy_static! {
+                ::lazy_static::lazy_static! {
                     static ref VALUES: PyObject = {
-                        Python::with_gil(|py| {
-                            PyTuple::new(py, [
+                        ::pyo3::Python::with_gil(|py| {
+                            ::pyo3::types::PyTuple::new(py, [
                                 $(
                                     $enum_class :: $fn_name ()
                                 ),*
@@ -339,7 +339,7 @@ macro_rules! impl_enum_field {
             fn from_str(_cls: &PyType, value: &str) -> PyResult<&'static PyObject> {
                 Ok(match value {
                     $($pyo3_name => Self:: $fn_name ()),*,
-                    _ => return Err(PyValueError::new_err(format!("Invalid value `{}`", value))),
+                    _ => return Err(::pyo3::exceptions::PyValueError::new_err(format!("Invalid value `{}`", value))),
                 })
             }
 

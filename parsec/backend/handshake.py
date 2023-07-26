@@ -25,6 +25,7 @@ from parsec.backend.invite import (
     InvitationAlreadyDeletedError,
     InvitationError,
     InvitationNotFoundError,
+    ShamirRecoveryInvitation,
     UserInvitation,
 )
 from parsec.backend.organization import OrganizationNotFoundError
@@ -168,11 +169,16 @@ async def _process_invited_answer(
         result_req = handshake.build_bad_identity_result_req()
         return None, result_req, _make_error_infos("Bad invitation")
 
-    expected_invitation_type = (
-        UserInvitation
-        if handshake.answer_data["invitation_type"] == InvitationType.USER
-        else DeviceInvitation
-    )
+    expected_invitation_type: type
+    if handshake.answer_data["invitation_type"] == InvitationType.USER:
+        expected_invitation_type = UserInvitation
+    elif handshake.answer_data["invitation_type"] == InvitationType.DEVICE:
+        expected_invitation_type = DeviceInvitation
+    elif handshake.answer_data["invitation_type"] == InvitationType.SHAMIR_RECOVERY:
+        expected_invitation_type = ShamirRecoveryInvitation
+    else:
+        assert False
+
     if not isinstance(invitation, expected_invitation_type):
         result_req = handshake.build_bad_identity_result_req()
         return None, result_req, _make_error_infos("Bad invitation")

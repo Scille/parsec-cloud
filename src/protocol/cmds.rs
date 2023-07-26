@@ -14,7 +14,7 @@ use crate::protocol::*;
 
 #[pyclass]
 #[derive(Clone)]
-pub struct AuthenticatedAnyCmdReq(pub authenticated_cmds::AnyCmdReq);
+pub struct AuthenticatedAnyCmdReq(authenticated_cmds::AnyCmdReq);
 
 #[pymethods]
 impl AuthenticatedAnyCmdReq {
@@ -91,6 +91,9 @@ impl AuthenticatedAnyCmdReq {
             AnyCmdReq::PkiEnrollmentAccept(x) => PkiEnrollmentAcceptReq(x).into_py(py),
             AnyCmdReq::PkiEnrollmentList(x) => PkiEnrollmentListReq(x).into_py(py),
             AnyCmdReq::PkiEnrollmentReject(x) => PkiEnrollmentRejectReq(x).into_py(py),
+            AnyCmdReq::ShamirRecoverySelfInfo(x) => ShamirRecoverySelfInfoReq(x).into_py(py),
+            AnyCmdReq::ShamirRecoveryOthersList(x) => ShamirRecoveryOthersListReq(x).into_py(py),
+            AnyCmdReq::ShamirRecoverySetup(x) => ShamirRecoverySetupReq(x).into_py(py),
         })
     }
 }
@@ -135,6 +138,9 @@ impl InvitedAnyCmdReq {
             AnyCmdReq::Invite4ClaimerCommunicate(x) => Invite4ClaimerCommunicateReq(x).into_py(py),
             AnyCmdReq::InviteInfo(x) => InviteInfoReq(x).into_py(py),
             AnyCmdReq::Ping(x) => InvitedPingReq(x).into_py(py),
+            AnyCmdReq::InviteShamirRecoveryReveal(x) => {
+                InviteShamirRecoveryRevealReq(x).into_py(py)
+            }
         })
     }
 }

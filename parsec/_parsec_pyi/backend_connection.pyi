@@ -19,6 +19,7 @@ from parsec._parsec_pyi.ids import (
     InvitationToken,
     RealmID,
     SequesterServiceID,
+    ShamirRevealToken,
     UserID,
     VlobID,
 )
@@ -76,6 +77,13 @@ from parsec._parsec_pyi.protocol.invite import (
     InviteInfoRep,
 )
 from parsec._parsec_pyi.protocol.ping import InvitedPingRep
+from parsec._parsec_pyi.protocol.shamir import (
+    InviteShamirRecoveryRevealRepOk,
+    ShamirRecoveryOthersListRep,
+    ShamirRecoverySelfInfoRep,
+    ShamirRecoverySetup,
+    ShamirRecoverySetupRep,
+)
 from parsec._parsec_pyi.protocol.vlob import ReencryptionBatchEntry
 from parsec._parsec_pyi.time import DateTime
 
@@ -140,6 +148,7 @@ class AuthenticatedCmds:
         type: InvitationType,
         send_email: bool = False,
         claimer_email: str | None = None,
+        claimer_user_id: UserID | None = None,
     ) -> InviteNewRep: ...
     async def message_get(self, offset: int) -> MessageGetRep: ...
     async def organization_config(self) -> OrganizationConfigRep: ...
@@ -233,27 +242,52 @@ class AuthenticatedCmds:
         blob: bytes,
         sequester_blob: dict[SequesterServiceID, bytes] | None,
     ) -> VlobUpdateRep: ...
+    async def shamir_recovery_setup(
+        self,
+        setup: ShamirRecoverySetup | None,
+    ) -> ShamirRecoverySetupRep: ...
+    async def shamir_recovery_self_info(
+        self,
+    ) -> ShamirRecoverySelfInfoRep: ...
+    async def shamir_recovery_others_list(
+        self,
+    ) -> ShamirRecoveryOthersListRep: ...
 
 class InvitedCmds:
     def __init__(self, addr: BackendInvitationAddr) -> None: ...
     @property
     def addr(self) -> BackendInvitationAddr: ...
     async def invite_1_claimer_wait_peer(
-        self, claimer_public_key: PublicKey
+        self,
+        greeter_user_id: UserID,
+        claimer_public_key: PublicKey,
     ) -> Invite1ClaimerWaitPeerRep: ...
     async def invite_2a_claimer_send_hashed_nonce(
-        self, claimer_hashed_nonce: HashDigest
+        self,
+        greeter_user_id: UserID,
+        claimer_hashed_nonce: HashDigest,
     ) -> Invite2aClaimerSendHashedNonceRep: ...
     async def invite_2b_claimer_send_nonce(
-        self, claimer_nonce: bytes
+        self,
+        greeter_user_id: UserID,
+        claimer_nonce: bytes,
     ) -> Invite2bClaimerSendNonceRep: ...
-    async def invite_3a_claimer_signify_trust(self) -> Invite3aClaimerSignifyTrustRep: ...
-    async def invite_3b_claimer_wait_peer_trust(self) -> Invite3bClaimerWaitPeerTrustRep: ...
+    async def invite_3a_claimer_signify_trust(
+        self, greeter_user_id: UserID
+    ) -> Invite3aClaimerSignifyTrustRep: ...
+    async def invite_3b_claimer_wait_peer_trust(
+        self, greeter_user_id: UserID
+    ) -> Invite3bClaimerWaitPeerTrustRep: ...
     async def invite_4_claimer_communicate(
-        self, payload: bytes
+        self,
+        greeter_user_id: UserID,
+        payload: bytes,
     ) -> Invite4ClaimerCommunicateRep: ...
     async def invite_info(self) -> InviteInfoRep: ...
     async def ping(self, ping: str = "") -> InvitedPingRep: ...
+    async def invite_shamir_recovery_reveal(
+        self, reveal_token: ShamirRevealToken
+    ) -> InviteShamirRecoveryRevealRepOk: ...
 
 class AnonymousCmds:
     def __init__(

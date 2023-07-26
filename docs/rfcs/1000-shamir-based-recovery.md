@@ -58,7 +58,7 @@ To create the Shamir recovery:
    Shamir algorithm.
 3) Alice create a `ShamirRecoveryShareCertificate` certificate for Bob
    (`SRSCBob`) and Adam (`SRSCAdam`). Each certificate contains a part of the
-   `SK` secret.
+   `SK` secret, signed by Alice and encrypted with Bob/Adam's user key.
 4) Alice send a `shamir_recovery_setup` command to the Parsec server
    containing the `SK(alice@shamir1)`, `SRSCBob`, `SRSCAdam` and the
    Shamir `threshold`.
@@ -66,8 +66,8 @@ To create the Shamir recovery:
 To use the Shamir recovery:
 
 1) Alice has lost its account access:
-   1) Alice asks an organization Admin for a recovery invitation link.
-   2) The organization Admin uses the authenticated `invite_new` command to
+   1) Alice asks Adam or Bob for a recovery invitation link.
+   2) Adam (or Bob) uses the authenticated `invite_new` command to
       create a Shamir recovery invitation link (i.e. a special Parsec URL).
 2) Alice uses the link to connect as invited to the Parsec server:
    1) Alice uses the `invite_info` command to retrieve informations about the
@@ -139,7 +139,7 @@ Authenticated API:
                         // This token is split into shares, hence it acts as a proof the claimer
                         // asking for the `ciphered_data` had it identity confirmed by the recipients.
                         "name": "reveal_token",
-                        "type": "Bytes"
+                        "type": "ShamirRevealToken"
                     },
                     {
                         // The Shamir recovery setup provided as a `ShamirRecoveryBriefCertificate`.
@@ -194,13 +194,16 @@ And the related certificates:
             "type": "UserID"
         },
         {
-            // Share ciphered with recipient's user key
+            // The corresponding share as `ShamirRecoveryShareData`
+            // It is signed with the author's user key and ciphered with recipient's user key
             "name": "ciphered_share",
-            "type": "ShamirRecoveryShareData"
+            "type": "Bytes"
         }
     ]
 }
 ```
+
+Note: The share data is signed by the author in order to prevent attacks where a user puts someone else's share in the certificate in order to trick a recipient user into deciphering it.
 
 ```json5
 {
@@ -208,19 +211,39 @@ And the related certificates:
     "type": "shamir_recovery_share_data",
     "other_fields": [
         {
-            // Share to compute `reveal_token`, so claimer can ask server
-            // for `ciphered_data`
-            "name": "reveal_token_share",
-            "type": "Bytes"
-        },
-        {
-            // Share to compute `data_key`, so claimer can decrypt `ciphered_data`
-            "name": "data_key_share",
-            "type": "Bytes"
+            // Weighted share to recover the secret key and the reveal token
+            // The number of items in the list corresponds to the weight of the share
+            "name": "weighted_share",
+            "type": "List<ShamirShare>"
         }
     ]
 }
 ```
+
+Here, `ShamirShare` is a new cryptography primitive corresponding to a share produced by the Shamir algorithm.
+
+The Shamir algorithm is meant to be fed with a serialized dump of a `ShamirRecoverySecret` instance, defined as such:
+
+```json5
+{
+    "label": "ShamirRecoverySecret",
+    "type": "shamir_recovery_secret",
+    "other_fields": [
+        {
+            "name": "data_key",
+            "type": "SecretKey"
+        },
+        {
+            "name": "reveal_token",
+            "type": "ShamirRevealToken"
+        }
+    ]
+}
+```
+
+This secret contains both:
+- the secret key used to the encrypt the `ciphered_data` provided in the shamir recovery setup
+- the reveal token to retrieve this `ciphered_data` from the server
 
 ```json5
 {
@@ -238,12 +261,12 @@ And the related certificates:
         {
             // Minimal number of shares to retrieve to reach the quorum and compute the secret
             "name": "threshold",
-            "type": "NonZeroU32"
+            "type": "NonZeroInteger"
         },
         {
             // A recipient can have multiple shares (to have a bigger weight than others)
             "name": "per_recipient_shares",
-            "type": "Map<UserID, NonZeroU32>"
+            "type": "Map<UserID, NonZeroInteger>"
         }
     ]
 }
@@ -256,7 +279,7 @@ This enables two use cases:
 1) A User retrieving its own Shamir recovery setup. Useful for displaying it to
    the user and to ensure the setup is still valid (i.e. no recipient has been
    revoked)
-2) An Admin retrieving all the Shamir recovery setups.
+2) A user retrieving all the Shamir recovery information they are a part of.
 
 Authenticated API:
 
@@ -300,33 +323,27 @@ Authenticated API:
                 "status": "ok",
                 "fields": [
                     {
-                        "name": "others",
                         // Contains a list of `ShamirRecoveryBriefCertificate`
+                        "name": "brief_certificates",
+                        "type": "List<Bytes>"
+                    },
+                    {
+                        // Contains a list of `ShamirRecoveryShareCertificate`
+                        "name": "share_certificates",
                         "type": "List<Bytes>"
                     }
                 ]
             },
-            {
-                // Current user is not ADMIN
-                "status": "not_allowed"
-            }
         ],
     }
 ]
 ```
 
-> **_Future evolution 3:_** Allow a User (other than Admins) to be able to see
-> the Shamir recovery it is recipient of. This can be achieved by providing
-> `shamir_recovery_others_list` for non-admins. If so, this should be enabled in
-> the organization configuration (similarly to what is done for the Shamir
-> recovery setup config template). For the moment going KISS: only providing it
-> to admins seems a reasonable choice to start with.
-
 ## 3 - Use the Shamir recovery
 
-### 3.1 - Admin creates an invitation
+### 3.1 - A recipient creates an invitation
 
-Authenticated API:
+Authenticated API for creating the invitation:
 
 ```json5
 [
@@ -394,6 +411,65 @@ Authenticated API:
 ]
 ```
 
+Authenticated API for listing the invitation:
+
+```json5
+[
+    {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_list"
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "invitations",
+                        "type": "List<InviteListItem>"
+                    }
+                ]
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "InviteListItem",
+                "discriminant_field": "type",
+                "variants": [
+                    {
+                        "name": "ShamirRecovery",
+                        "discriminant_value": "SHAMIR_RECOVERY",
+                        "fields": [
+                            {
+                                "name": "token",
+                                "type": "InvitationToken"
+                            },
+                            {
+                                "name": "created_on",
+                                "type": "DateTime"
+                            },
+                            {
+                                "name": "claimer_user_id",
+                                "type": "UserID"
+                            },
+                            {
+                                "name": "status",
+                                "type": "InvitationStatus"
+                            }
+                        ]
+                    }
+                    // <-------------- User variant omitted --------->
+                    // <-------------- Device variant omitted --------->
+                ]
+            }
+        ]
+    }
+]
+```
+
 ### 3.2 - Claimer connect to the server
 
 Invited API, we reuse the `invite_info` command:
@@ -426,7 +502,7 @@ Invited API, we reuse the `invite_info` command:
                         "fields": [
                             {
                                 "name": "threshold",
-                                "type": "NonZeroU32"
+                                "type": "NonZeroInteger"
                             },
                             {
                                 "name": "recipients",
@@ -449,7 +525,7 @@ Invited API, we reuse the `invite_info` command:
                     },
                     {
                         "name": "shares",
-                        "type": "NonZeroU32"
+                        "type": "NonZeroInteger"
                     }
                 ]
             }
@@ -481,7 +557,7 @@ A single change is required: passing the recipient `user_id` as parameter
             4
         ],
         "req": {
-            // Same for the others cmds
+            // Same for the others invite_x_claimer_* cmds
             "cmd": "invite_1_claimer_wait_peer",
             "fields": [
                 {
@@ -535,14 +611,15 @@ Greeter payload:
 
 ```json5
 {
-    "label": "InviteShamirRecoveryShare",
-    "type": "invite_shamir_recovery_share",
+    "label": "ShamirRecoveryCommunicatedData",
+    "type": "shamir_recovery_communicated_data",
     "other_fields": [
         {
-            // Decrypted share
-            "name": "share",
-            "type": "Bytes"
-        },
+            // Weighted share to recover the secret key and the reveal token
+            // The number of items in the list corresponds to the weight of the share
+            "name": "weighted_share",
+            "type": "List<ShamirShare>"
+        }
     ]
 }
 ```
@@ -572,7 +649,7 @@ The claimer gets access to `reveal_token` and `data_key`, it can then retrieve `
             "fields": [
                 {
                     "name": "reveal_token",
-                    "type": "Bytes"
+                    "type": "ShamirRevealToken"
                 }
             ]
         },
@@ -662,17 +739,17 @@ authenticated API, `organization_config`
                     {
                         "name": "shamir_recovery_min_shares",
                         // Default should be 1
-                        "type": "NonZeroU32"
+                        "type": "NonZeroInteger"
                     },
                     {
                         "name": "shamir_recovery_max_shares",
                         // `None` for no limit (the default)
-                        "type": "RequiredOption<NonZeroU32>"
+                        "type": "RequiredOption<NonZeroInteger>"
                     },
                     {
                         "name": "shamir_recovery_max_shares_per_recipient",
                         // `None` for no limit (the default)
-                        "type": "RequiredOption<NonZeroU32>"
+                        "type": "RequiredOption<NonZeroInteger>"
                     },
                     {
                         "name": "shamir_recovery_recipient_allowed_profiles",
@@ -694,41 +771,3 @@ On the other hand, approach 1) allow things like "recovery requires Alice, Bob a
 requires Alice and Bob, or Adam alone". However given we cannot trust the server
 on such precise configuration, a new certificate type must be introduced which is cumbersome :(
 Also we should be able to provide approach 2) as part of approach 1).
-
-### **Future evolution 3**: Non-admin can perform Shamir recovery invite
-
-authenticated API, `organization_config`
-
-```json5
-[
-    {
-        "major_versions": [
-            4
-        ],
-        "req": {
-            "cmd": "organization_config"
-        },
-        "reps": [
-            {
-                "status": "ok",
-                "fields": [
-                    {
-                        "name": "shamir_recovery_invite_strategy",
-                        // Allowed values:
-                        // - `ADMINS_ONLY`
-                        // - `ADMINS_AND_RECIPIENTS`
-
-                        // "recipients only" doesn't seem useful: the recipients will
-                        // have to do the SAS code exchange so they already have to give
-                        // there consent at this point.
-                    },
-                    // <------------ Already existing options omitted --------->
-                ]
-            },
-            {
-                "status": "not_found"
-            }
-        ]
-    }
-]
-```

@@ -25,6 +25,14 @@ if not TYPE_CHECKING and FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
         UserGreetInProgress3Ctx,
         UserGreetInProgress4Ctx,
     )
+
+    # Not oxidized yet
+    from parsec.core.invite.greeter import (
+        ShamirRecoveryGreetInitialCtx,
+        ShamirRecoveryGreetInProgress1Ctx,
+        ShamirRecoveryGreetInProgress2Ctx,
+        ShamirRecoveryGreetInProgress3Ctx,
+    )
 else:
     from parsec.core.invite.greeter import (
         DeviceGreetInitialCtx,
@@ -32,6 +40,10 @@ else:
         DeviceGreetInProgress2Ctx,
         DeviceGreetInProgress3Ctx,
         DeviceGreetInProgress4Ctx,
+        ShamirRecoveryGreetInitialCtx,
+        ShamirRecoveryGreetInProgress1Ctx,
+        ShamirRecoveryGreetInProgress2Ctx,
+        ShamirRecoveryGreetInProgress3Ctx,
         UserGreetInitialCtx,
         UserGreetInProgress1Ctx,
         UserGreetInProgress2Ctx,
@@ -52,12 +64,20 @@ if not TYPE_CHECKING and FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
         UserClaimInProgress3Ctx,
         claimer_retrieve_info,
     )
+
+    # Not oxidized yet
+    from parsec.core.invite.claimer import (
+        ShamirRecoveryClaimInitialCtx,
+        ShamirRecoveryClaimPreludeCtx,
+    )
 else:
     from parsec.core.invite.claimer import (
         DeviceClaimInitialCtx,
         DeviceClaimInProgress1Ctx,
         DeviceClaimInProgress2Ctx,
         DeviceClaimInProgress3Ctx,
+        ShamirRecoveryClaimInitialCtx,
+        ShamirRecoveryClaimPreludeCtx,
         UserClaimInitialCtx,
         UserClaimInProgress1Ctx,
         UserClaimInProgress2Ctx,
@@ -74,8 +94,10 @@ __all__ = (
     "InviteActiveUsersLimitReachedError",
     # Claimer
     "claimer_retrieve_info",
+    "ShamirRecoveryClaimPreludeCtx",
     "UserClaimInitialCtx",
     "DeviceClaimInitialCtx",
+    "ShamirRecoveryClaimInitialCtx",
     "UserClaimInProgress1Ctx",
     "DeviceClaimInProgress1Ctx",
     "UserClaimInProgress2Ctx",
@@ -85,12 +107,16 @@ __all__ = (
     # Greeter
     "UserGreetInitialCtx",
     "DeviceGreetInitialCtx",
+    "ShamirRecoveryGreetInitialCtx",
     "UserGreetInProgress1Ctx",
     "DeviceGreetInProgress1Ctx",
+    "ShamirRecoveryGreetInProgress1Ctx",
     "UserGreetInProgress2Ctx",
     "DeviceGreetInProgress2Ctx",
+    "ShamirRecoveryGreetInProgress2Ctx",
     "UserGreetInProgress3Ctx",
     "DeviceGreetInProgress3Ctx",
+    "ShamirRecoveryGreetInProgress3Ctx",
     "UserGreetInProgress4Ctx",
     "DeviceGreetInProgress4Ctx",
     # Organization

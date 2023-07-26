@@ -1,0 +1,31 @@
+[
+    {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_shamir_recovery_reveal",
+            "fields": [
+                {
+                    "name": "reveal_token",
+                    "type": "ShamirRevealToken"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "ciphered_data",
+                        "type": "Bytes"
+                    }
+                ]
+            },
+            {
+                "status": "not_found"
+            }
+        ]
+    }
+]

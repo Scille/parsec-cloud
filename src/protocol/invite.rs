@@ -1,28 +1,30 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::{
-    exceptions::{PyAttributeError, PyNotImplementedError},
+    exceptions::{PyAttributeError, PyNotImplementedError, PyValueError},
     prelude::*,
-    types::{PyBytes, PyType},
+    types::{PyBytes, PyTuple, PyType},
 };
+use std::num::NonZeroU64;
 
-use libparsec::protocol::{
-    authenticated_cmds::v2::{
-        invite_1_greeter_wait_peer, invite_2a_greeter_get_hashed_nonce,
-        invite_2b_greeter_send_nonce, invite_3a_greeter_wait_peer_trust,
-        invite_3b_greeter_signify_trust, invite_4_greeter_communicate, invite_delete, invite_list,
-        invite_new,
+use libparsec::{
+    protocol::{
+        authenticated_cmds::v2::{
+            invite_1_greeter_wait_peer, invite_2a_greeter_get_hashed_nonce,
+            invite_2b_greeter_send_nonce, invite_3a_greeter_wait_peer_trust,
+            invite_3b_greeter_signify_trust, invite_4_greeter_communicate, invite_delete,
+            invite_list, invite_new,
+        },
+        invited_cmds::v2::{
+            invite_1_claimer_wait_peer, invite_2a_claimer_send_hashed_nonce,
+            invite_2b_claimer_send_nonce, invite_3a_claimer_signify_trust,
+            invite_3b_claimer_wait_peer_trust, invite_4_claimer_communicate, invite_info,
+        },
     },
-    invited_cmds::v2::{
-        invite_1_claimer_wait_peer, invite_2a_claimer_send_hashed_nonce,
-        invite_2b_claimer_send_nonce, invite_3a_claimer_signify_trust,
-        invite_3b_claimer_wait_peer_trust, invite_4_claimer_communicate, invite_info,
-    },
+    types::{Maybe, ProtocolRequest},
 };
-use libparsec::types::ProtocolRequest;
 
 use crate::{
-    api_crypto,
     api_crypto::{HashDigest, PublicKey},
     binding_utils::BytesWrapper,
     enumerate::{
@@ -83,12 +85,34 @@ impl InviteListItem {
         }))
     }
 
+    #[classmethod]
+    #[pyo3(name = "ShamirRecovery")]
+    fn shamir_recovery(
+        _cls: &PyType,
+        token: InvitationToken,
+        created_on: DateTime,
+        claimer_user_id: UserID,
+        status: InvitationStatus,
+    ) -> PyResult<Self> {
+        let token = token.0;
+        let created_on = created_on.0;
+        Ok(Self(invite_list::InviteListItem::ShamirRecovery {
+            token,
+            created_on,
+            claimer_user_id: claimer_user_id.0,
+            status: status.0,
+        }))
+    }
+
     #[getter]
     #[pyo3(name = "r#type")]
     fn r#type(&self) -> PyResult<InvitationType> {
         Ok(InvitationType(match self.0 {
             invite_list::InviteListItem::User { .. } => libparsec::types::InvitationType::User,
             invite_list::InviteListItem::Device { .. } => libparsec::types::InvitationType::Device,
+            invite_list::InviteListItem::ShamirRecovery { .. } => {
+                libparsec::types::InvitationType::ShamirRecovery
+            }
         }))
     }
 
@@ -97,6 +121,7 @@ impl InviteListItem {
         Ok(InvitationToken(match self.0 {
             invite_list::InviteListItem::User { token, .. } => token,
             invite_list::InviteListItem::Device { token, .. } => token,
+            invite_list::InviteListItem::ShamirRecovery { token, .. } => token,
         }))
     }
 
@@ -105,6 +130,7 @@ impl InviteListItem {
         Ok(DateTime(match self.0 {
             invite_list::InviteListItem::User { created_on, .. } => created_on,
             invite_list::InviteListItem::Device { created_on, .. } => created_on,
+            invite_list::InviteListItem::ShamirRecovery { created_on, .. } => created_on,
         }))
     }
 
@@ -112,7 +138,17 @@ impl InviteListItem {
     fn claimer_email(&self) -> PyResult<&str> {
         match &self.0 {
             invite_list::InviteListItem::User { claimer_email, .. } => Ok(claimer_email),
-            _ => Err(PyAttributeError::new_err("")),
+            _ => Err(PyAttributeError::new_err("claimer_email")),
+        }
+    }
+
+    #[getter]
+    fn claimer_user_id(&self) -> PyResult<UserID> {
+        match &self.0 {
+            invite_list::InviteListItem::ShamirRecovery {
+                claimer_user_id, ..
+            } => Ok(UserID(claimer_user_id.clone())),
+            _ => Err(PyAttributeError::new_err("claimer_user_id")),
         }
     }
 
@@ -121,6 +157,7 @@ impl InviteListItem {
         Ok(InvitationStatus(match &self.0 {
             invite_list::InviteListItem::User { status, .. } => status.clone(),
             invite_list::InviteListItem::Device { status, .. } => status.clone(),
+            invite_list::InviteListItem::ShamirRecovery { status, .. } => status.clone(),
         }))
     }
 }
@@ -137,18 +174,29 @@ crate::binding_utils::gen_proto!(InviteNewReq, __richcmp__, eq);
 #[pymethods]
 impl InviteNewReq {
     #[new]
+    #[args(claimer_email = "None", claimer_user_id = "None")]
     fn new(
         r#type: InvitationType,
-        claimer_email: Option<String>,
         send_email: bool,
+        claimer_email: Option<String>,
+        claimer_user_id: Option<UserID>,
     ) -> PyResult<Self> {
         Ok(InviteNewReq(match r#type.0 {
             libparsec::types::InvitationType::Device => {
-                invite_new::Req(invite_new::UserOrDevice::Device { send_email })
+                invite_new::Req(invite_new::UserOrDeviceOrShamirRecovery::Device { send_email })
             }
             libparsec::types::InvitationType::User => {
-                invite_new::Req(invite_new::UserOrDevice::User {
-                    claimer_email: claimer_email.expect("Missing claimer_email_argument"),
+                invite_new::Req(invite_new::UserOrDeviceOrShamirRecovery::User {
+                    claimer_email: claimer_email
+                        .ok_or(PyAttributeError::new_err("Missing claimer_email argument"))?,
+                    send_email,
+                })
+            }
+            libparsec::types::InvitationType::ShamirRecovery => {
+                invite_new::Req(invite_new::UserOrDeviceOrShamirRecovery::ShamirRecovery {
+                    claimer_user_id: claimer_user_id.map(|x| x.0).ok_or(
+                        PyAttributeError::new_err("Missing claimer_user_id argument"),
+                    )?,
                     send_email,
                 })
             }
@@ -157,52 +205,87 @@ impl InviteNewReq {
 
     #[classmethod]
     #[pyo3(name = "User")]
-    fn user(_cls: &PyType, claimer_email: String, send_email: bool) -> PyResult<Self> {
-        Ok(InviteNewReq(invite_new::Req(
-            invite_new::UserOrDevice::User {
+    fn user(_cls: &PyType, claimer_email: String, send_email: bool) -> Self {
+        Self(invite_new::Req(
+            invite_new::UserOrDeviceOrShamirRecovery::User {
                 claimer_email,
                 send_email,
             },
-        )))
+        ))
     }
 
     #[classmethod]
     #[pyo3(name = "Device")]
-    fn device(_cls: &PyType, send_email: bool) -> PyResult<Self> {
-        Ok(Self(invite_new::Req(invite_new::UserOrDevice::Device {
-            send_email,
-        })))
+    fn device(_cls: &PyType, send_email: bool) -> Self {
+        Self(invite_new::Req(
+            invite_new::UserOrDeviceOrShamirRecovery::Device { send_email },
+        ))
+    }
+
+    #[classmethod]
+    #[pyo3(name = "ShamirRecovery")]
+    fn shamir_recovery(_cls: &PyType, send_email: bool, claimer_user_id: UserID) -> Self {
+        let claimer_user_id = claimer_user_id.0;
+        Self(invite_new::Req(
+            invite_new::UserOrDeviceOrShamirRecovery::ShamirRecovery {
+                send_email,
+                claimer_user_id,
+            },
+        ))
     }
 
     #[getter]
     #[pyo3(name = "r#type")]
     fn invitation_type(&self) -> PyResult<InvitationType> {
         Ok(InvitationType(match self.0 {
-            invite_new::Req(invite_new::UserOrDevice::Device { .. }) => {
+            invite_new::Req(invite_new::UserOrDeviceOrShamirRecovery::Device { .. }) => {
                 libparsec::types::InvitationType::Device
             }
-            invite_new::Req(invite_new::UserOrDevice::User { .. }) => {
+            invite_new::Req(invite_new::UserOrDeviceOrShamirRecovery::User { .. }) => {
                 libparsec::types::InvitationType::User
             }
+            invite_new::Req(invite_new::UserOrDeviceOrShamirRecovery::ShamirRecovery {
+                ..
+            }) => libparsec::types::InvitationType::ShamirRecovery,
         }))
     }
 
     #[getter]
     fn claimer_email(&self) -> PyResult<&str> {
         match &self.0 {
-            invite_new::Req(invite_new::UserOrDevice::User { claimer_email, .. }) => {
-                Ok(claimer_email)
-            }
+            invite_new::Req(invite_new::UserOrDeviceOrShamirRecovery::User {
+                claimer_email,
+                ..
+            }) => Ok(claimer_email),
             _ => Err(PyAttributeError::new_err("No claimer_email attribute")),
         }
     }
 
     #[getter]
-    fn send_email(&self) -> PyResult<bool> {
-        Ok(match self.0 {
-            invite_new::Req(invite_new::UserOrDevice::User { send_email, .. }) => send_email,
-            invite_new::Req(invite_new::UserOrDevice::Device { send_email }) => send_email,
-        })
+    fn send_email(&self) -> bool {
+        match self.0 {
+            invite_new::Req(invite_new::UserOrDeviceOrShamirRecovery::User {
+                send_email, ..
+            }) => send_email,
+            invite_new::Req(invite_new::UserOrDeviceOrShamirRecovery::Device { send_email }) => {
+                send_email
+            }
+            invite_new::Req(invite_new::UserOrDeviceOrShamirRecovery::ShamirRecovery {
+                send_email,
+                ..
+            }) => send_email,
+        }
+    }
+
+    #[getter]
+    fn claimer_user_id(&self) -> PyResult<UserID> {
+        match &self.0 {
+            invite_new::Req(invite_new::UserOrDeviceOrShamirRecovery::ShamirRecovery {
+                claimer_user_id,
+                ..
+            }) => Ok(UserID(claimer_user_id.clone())),
+            _ => Err(PyAttributeError::new_err("No claimer_user_id attribute")),
+        }
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
@@ -223,7 +306,8 @@ gen_rep!(
     { .. },
     [NotAllowed],
     [AlreadyMember],
-    [NotAvailable]
+    [NotAvailable],
+    [ShamirRecoveryNotSetup],
 );
 
 #[pyclass(extends=InviteNewRep)]
@@ -408,6 +492,42 @@ impl InviteInfoReq {
     }
 }
 
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct ShamirRecoveryRecipient(invite_info::ShamirRecoveryRecipient);
+
+crate::binding_utils::gen_proto!(ShamirRecoveryRecipient, __repr__);
+crate::binding_utils::gen_proto!(ShamirRecoveryRecipient, __copy__);
+crate::binding_utils::gen_proto!(ShamirRecoveryRecipient, __deepcopy__);
+crate::binding_utils::gen_proto!(ShamirRecoveryRecipient, __richcmp__, eq);
+
+#[pymethods]
+impl ShamirRecoveryRecipient {
+    #[new]
+    fn new(user_id: UserID, human_handle: Option<HumanHandle>, shares: u64) -> PyResult<Self> {
+        Ok(Self(invite_info::ShamirRecoveryRecipient {
+            user_id: user_id.0,
+            human_handle: human_handle.map(|x| x.0),
+            shares: NonZeroU64::try_from(shares)
+                .map_err(|_| PyValueError::new_err("shares must be greater than 0"))?,
+        }))
+    }
+    #[getter]
+    fn user_id(&self) -> UserID {
+        UserID(self.0.user_id.clone())
+    }
+
+    #[getter]
+    fn human_handle(&self) -> Option<HumanHandle> {
+        self.0.human_handle.clone().map(HumanHandle)
+    }
+
+    #[getter]
+    fn shares(&self) -> u64 {
+        u64::from(self.0.shares)
+    }
+}
+
 gen_rep!(invite_info, InviteInfoRep, { .. });
 
 #[pyclass(extends=InviteInfoRep)]
@@ -416,30 +536,67 @@ pub(crate) struct InviteInfoRepOk;
 #[pymethods]
 impl InviteInfoRepOk {
     #[new]
+    #[args(
+        claimer_email = "None",
+        greeter_user_id = "None",
+        greeter_human_handle = "None",
+        threshold = "None",
+        recipients = "None"
+    )]
     fn new(
         r#type: InvitationType,
         claimer_email: Option<String>,
-        greeter_user_id: UserID,
+        greeter_user_id: Option<UserID>,
         greeter_human_handle: Option<HumanHandle>,
+        threshold: Option<u64>,
+        recipients: Option<Vec<ShamirRecoveryRecipient>>,
     ) -> PyResult<(Self, InviteInfoRep)> {
-        let greeter_user_id = greeter_user_id.0;
-        let greeter_human_handle = greeter_human_handle.map(|inner| inner.0);
         match r#type {
             InvitationType(libparsec::types::InvitationType::Device) => Ok((
                 Self,
-                InviteInfoRep(invite_info::Rep::Ok(invite_info::UserOrDevice::Device {
-                    greeter_user_id,
-                    greeter_human_handle,
-                })),
+                InviteInfoRep(invite_info::Rep::Ok(
+                    invite_info::UserOrDeviceOrShamirRecovery::Device {
+                        greeter_user_id: greeter_user_id
+                            .ok_or(PyAttributeError::new_err(
+                                "Missing greeter_user_id for InviteInfoRep[Device]",
+                            ))?
+                            .0,
+                        greeter_human_handle: greeter_human_handle.map(|x| x.0),
+                    },
+                )),
             )),
             InvitationType(libparsec::types::InvitationType::User) => Ok((
                 Self,
-                InviteInfoRep(invite_info::Rep::Ok(invite_info::UserOrDevice::User {
-                    claimer_email: claimer_email
-                        .expect("Missing claimer_email for InviteInfoRep[User]"),
-                    greeter_user_id,
-                    greeter_human_handle,
-                })),
+                InviteInfoRep(invite_info::Rep::Ok(
+                    invite_info::UserOrDeviceOrShamirRecovery::User {
+                        claimer_email: claimer_email.ok_or(PyAttributeError::new_err(
+                            "Missing claimer_email for InviteInfoRep[User]",
+                        ))?,
+                        greeter_user_id: greeter_user_id
+                            .ok_or(PyAttributeError::new_err(
+                                "Missing greeter_user_id for InviteInfoRep[User]",
+                            ))?
+                            .0,
+                        greeter_human_handle: greeter_human_handle.map(|x| x.0),
+                    },
+                )),
+            )),
+            InvitationType(libparsec::types::InvitationType::ShamirRecovery) => Ok((
+                Self,
+                InviteInfoRep(invite_info::Rep::Ok(
+                    invite_info::UserOrDeviceOrShamirRecovery::ShamirRecovery {
+                        threshold: NonZeroU64::try_from(
+                            threshold
+                                .ok_or(PyAttributeError::new_err("Missing threshold argument"))?,
+                        )
+                        .map_err(|_| PyValueError::new_err("threshold must be greater than 0"))?,
+                        recipients: recipients
+                            .ok_or(PyAttributeError::new_err("Missing recipients argument"))?
+                            .into_iter()
+                            .map(|x| x.0)
+                            .collect(),
+                    },
+                )),
             )),
         }
     }
@@ -447,24 +604,31 @@ impl InviteInfoRepOk {
     #[getter]
     fn r#type(_self: PyRef<'_, Self>) -> PyResult<InvitationType> {
         match &_self.as_ref().0 {
-            invite_info::Rep::Ok(invite_info::UserOrDevice::Device { .. }) => {
+            invite_info::Rep::Ok(invite_info::UserOrDeviceOrShamirRecovery::Device { .. }) => {
                 Ok(InvitationType(libparsec::types::InvitationType::Device))
             }
-            invite_info::Rep::Ok(invite_info::UserOrDevice::User { .. }) => {
+            invite_info::Rep::Ok(invite_info::UserOrDeviceOrShamirRecovery::User { .. }) => {
                 Ok(InvitationType(libparsec::types::InvitationType::User))
             }
-            _ => Err(PyAttributeError::new_err("")),
+            invite_info::Rep::Ok(invite_info::UserOrDeviceOrShamirRecovery::ShamirRecovery {
+                ..
+            }) => Ok(InvitationType(
+                libparsec::types::InvitationType::ShamirRecovery,
+            )),
+            _ => Err(PyAttributeError::new_err("type")),
         }
     }
 
     #[getter]
     fn greeter_user_id(_self: PyRef<'_, Self>) -> PyResult<UserID> {
         match &_self.as_ref().0 {
-            invite_info::Rep::Ok(invite_info::UserOrDevice::Device {
-                greeter_user_id, ..
+            invite_info::Rep::Ok(invite_info::UserOrDeviceOrShamirRecovery::Device {
+                greeter_user_id,
+                ..
             }) => Ok(UserID(greeter_user_id.clone())),
-            invite_info::Rep::Ok(invite_info::UserOrDevice::User {
-                greeter_user_id, ..
+            invite_info::Rep::Ok(invite_info::UserOrDeviceOrShamirRecovery::User {
+                greeter_user_id,
+                ..
             }) => Ok(UserID(greeter_user_id.clone())),
             _ => Err(PyAttributeError::new_err("")),
         }
@@ -473,9 +637,10 @@ impl InviteInfoRepOk {
     #[getter]
     fn claimer_email(_self: PyRef<'_, Self>) -> PyResult<String> {
         match &_self.as_ref().0 {
-            invite_info::Rep::Ok(invite_info::UserOrDevice::User { claimer_email, .. }) => {
-                Ok(claimer_email.clone())
-            }
+            invite_info::Rep::Ok(invite_info::UserOrDeviceOrShamirRecovery::User {
+                claimer_email,
+                ..
+            }) => Ok(claimer_email.clone()),
             _ => Err(PyAttributeError::new_err(
                 "no claimer_email in non device invitation",
             )),
@@ -485,15 +650,43 @@ impl InviteInfoRepOk {
     #[getter]
     fn greeter_human_handle(_self: PyRef<'_, Self>) -> PyResult<Option<HumanHandle>> {
         match &_self.as_ref().0 {
-            invite_info::Rep::Ok(invite_info::UserOrDevice::Device {
+            invite_info::Rep::Ok(invite_info::UserOrDeviceOrShamirRecovery::Device {
                 greeter_human_handle: handle,
                 ..
             })
-            | invite_info::Rep::Ok(invite_info::UserOrDevice::User {
+            | invite_info::Rep::Ok(invite_info::UserOrDeviceOrShamirRecovery::User {
                 greeter_human_handle: handle,
                 ..
             }) => Ok(handle.clone().map(HumanHandle)),
             _ => Err(PyAttributeError::new_err("no greeter_human_handle attr")),
+        }
+    }
+
+    #[getter]
+    fn threshold(_self: PyRef<'_, Self>) -> PyResult<u64> {
+        match _self.as_ref().0 {
+            invite_info::Rep::Ok(invite_info::UserOrDeviceOrShamirRecovery::ShamirRecovery {
+                threshold,
+                ..
+            }) => Ok(u64::from(threshold)),
+            _ => Err(PyAttributeError::new_err("no threshold attr")),
+        }
+    }
+
+    #[getter]
+    fn recipients<'py>(_self: PyRef<'_, Self>, py: Python<'py>) -> PyResult<&'py PyTuple> {
+        match &_self.as_ref().0 {
+            invite_info::Rep::Ok(invite_info::UserOrDeviceOrShamirRecovery::ShamirRecovery {
+                recipients,
+                ..
+            }) => Ok(PyTuple::new(
+                py,
+                recipients
+                    .clone()
+                    .into_iter()
+                    .map(|x| ShamirRecoveryRecipient(x).into_py(py)),
+            )),
+            _ => Err(PyAttributeError::new_err("no recipients attr")),
         }
     }
 }
@@ -510,9 +703,13 @@ crate::binding_utils::gen_proto!(Invite1ClaimerWaitPeerReq, __richcmp__, eq);
 #[pymethods]
 impl Invite1ClaimerWaitPeerReq {
     #[new]
-    fn new(claimer_public_key: PublicKey) -> PyResult<Self> {
+    fn new(claimer_public_key: PublicKey, greeter_user_id: UserID) -> PyResult<Self> {
         let claimer_public_key = claimer_public_key.0;
-        Ok(Self(invite_1_claimer_wait_peer::Req { claimer_public_key }))
+        let greeter_user_id = greeter_user_id.0;
+        Ok(Self(invite_1_claimer_wait_peer::Req {
+            claimer_public_key,
+            greeter_user_id: Maybe::Present(greeter_user_id),
+        }))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
@@ -527,8 +724,16 @@ impl Invite1ClaimerWaitPeerReq {
     }
 
     #[getter]
-    fn claimer_public_key(_self: PyRef<'_, Self>) -> PyResult<PublicKey> {
-        Ok(api_crypto::PublicKey(_self.0.claimer_public_key.clone()))
+    fn greeter_user_id(&self) -> Option<UserID> {
+        match &self.0.greeter_user_id {
+            Maybe::Present(x) => Some(UserID(x.clone())),
+            Maybe::Absent => None,
+        }
+    }
+
+    #[getter]
+    fn claimer_public_key(&self) -> PublicKey {
+        PublicKey(self.0.claimer_public_key.clone())
     }
 }
 
@@ -559,7 +764,7 @@ impl Invite1ClaimerWaitPeerRepOk {
     fn greeter_public_key(_self: PyRef<'_, Self>) -> PyResult<PublicKey> {
         match &_self.as_ref().0 {
             invite_1_claimer_wait_peer::Rep::Ok { greeter_public_key } => {
-                Ok(api_crypto::PublicKey(greeter_public_key.clone()))
+                Ok(PublicKey(greeter_public_key.clone()))
             }
             _ => Err(PyNotImplementedError::new_err("")),
         }
@@ -599,13 +804,13 @@ impl Invite1GreeterWaitPeerReq {
     }
 
     #[getter]
-    fn token(&self) -> PyResult<InvitationToken> {
-        Ok(InvitationToken(self.0.token))
+    fn token(&self) -> InvitationToken {
+        InvitationToken(self.0.token)
     }
 
     #[getter]
-    fn greeter_public_key(_self: PyRef<'_, Self>) -> PyResult<PublicKey> {
-        Ok(api_crypto::PublicKey(_self.0.greeter_public_key.clone()))
+    fn greeter_public_key(&self) -> PublicKey {
+        PublicKey(self.0.greeter_public_key.clone())
     }
 }
 
@@ -636,7 +841,7 @@ impl Invite1GreeterWaitPeerRepOk {
     fn claimer_public_key(_self: PyRef<'_, Self>) -> PyResult<PublicKey> {
         match &_self.as_ref().0 {
             invite_1_greeter_wait_peer::Rep::Ok { claimer_public_key } => {
-                Ok(api_crypto::PublicKey(claimer_public_key.clone()))
+                Ok(PublicKey(claimer_public_key.clone()))
             }
             _ => Err(PyNotImplementedError::new_err("")),
         }
@@ -655,9 +860,11 @@ crate::binding_utils::gen_proto!(Invite2aClaimerSendHashedNonceReq, __richcmp__,
 #[pymethods]
 impl Invite2aClaimerSendHashedNonceReq {
     #[new]
-    fn new(claimer_hashed_nonce: HashDigest) -> PyResult<Self> {
+    fn new(greeter_user_id: UserID, claimer_hashed_nonce: HashDigest) -> PyResult<Self> {
+        let greeter_user_id = Maybe::Present(greeter_user_id.0);
         let claimer_hashed_nonce = claimer_hashed_nonce.0;
         Ok(Self(invite_2a_claimer_send_hashed_nonce::Req {
+            greeter_user_id,
             claimer_hashed_nonce,
         }))
     }
@@ -674,8 +881,16 @@ impl Invite2aClaimerSendHashedNonceReq {
     }
 
     #[getter]
-    fn claimer_hashed_nonce(_self: PyRef<'_, Self>) -> PyResult<HashDigest> {
-        Ok(api_crypto::HashDigest(_self.0.claimer_hashed_nonce.clone()))
+    fn greeter_user_id(&self) -> Option<UserID> {
+        match &self.0.greeter_user_id {
+            Maybe::Present(x) => Some(UserID(x.clone())),
+            Maybe::Absent => None,
+        }
+    }
+
+    #[getter]
+    fn claimer_hashed_nonce(_self: PyRef<'_, Self>) -> HashDigest {
+        HashDigest(_self.0.claimer_hashed_nonce.clone())
     }
 }
 
@@ -779,7 +994,7 @@ impl Invite2aGreeterGetHashedNonceRepOk {
         match &_self.as_ref().0 {
             invite_2a_greeter_get_hashed_nonce::Rep::Ok {
                 claimer_hashed_nonce,
-            } => Ok(api_crypto::HashDigest(claimer_hashed_nonce.clone())),
+            } => Ok(HashDigest(claimer_hashed_nonce.clone())),
             _ => Err(PyNotImplementedError::new_err("")),
         }
     }
@@ -797,9 +1012,13 @@ crate::binding_utils::gen_proto!(Invite2bClaimerSendNonceReq, __richcmp__, eq);
 #[pymethods]
 impl Invite2bClaimerSendNonceReq {
     #[new]
-    fn new(claimer_nonce: BytesWrapper) -> PyResult<Self> {
+    fn new(greeter_user_id: UserID, claimer_nonce: BytesWrapper) -> PyResult<Self> {
         crate::binding_utils::unwrap_bytes!(claimer_nonce);
-        Ok(Self(invite_2b_claimer_send_nonce::Req { claimer_nonce }))
+        let greeter_user_id = Maybe::Present(greeter_user_id.0);
+        Ok(Self(invite_2b_claimer_send_nonce::Req {
+            greeter_user_id,
+            claimer_nonce,
+        }))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
@@ -813,6 +1032,13 @@ impl Invite2bClaimerSendNonceReq {
         ))
     }
 
+    #[getter]
+    fn greeter_user_id(&self) -> Option<UserID> {
+        match &self.0.greeter_user_id {
+            Maybe::Present(x) => Some(UserID(x.clone())),
+            Maybe::Absent => None,
+        }
+    }
     #[getter]
     fn claimer_nonce<'py>(_self: PyRef<'_, Self>, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(py, &_self.0.claimer_nonce))
@@ -931,8 +1157,19 @@ crate::binding_utils::gen_proto!(Invite3aClaimerSignifyTrustReq, __richcmp__, eq
 #[pymethods]
 impl Invite3aClaimerSignifyTrustReq {
     #[new]
-    fn new() -> PyResult<Self> {
-        Ok(Self(invite_3a_claimer_signify_trust::Req))
+    fn new(greeter_user_id: UserID) -> PyResult<Self> {
+        let greeter_user_id = Maybe::Present(greeter_user_id.0);
+        Ok(Self(invite_3a_claimer_signify_trust::Req {
+            greeter_user_id,
+        }))
+    }
+
+    #[getter]
+    fn greeter_user_id(&self) -> Option<UserID> {
+        match &self.0.greeter_user_id {
+            Maybe::Present(x) => Some(UserID(x.clone())),
+            Maybe::Absent => None,
+        }
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
@@ -1039,8 +1276,19 @@ crate::binding_utils::gen_proto!(Invite3bClaimerWaitPeerTrustReq, __richcmp__, e
 #[pymethods]
 impl Invite3bClaimerWaitPeerTrustReq {
     #[new]
-    fn new() -> PyResult<Self> {
-        Ok(Self(invite_3b_claimer_wait_peer_trust::Req))
+    fn new(greeter_user_id: UserID) -> PyResult<Self> {
+        let greeter_user_id = Maybe::Present(greeter_user_id.0);
+        Ok(Self(invite_3b_claimer_wait_peer_trust::Req {
+            greeter_user_id,
+        }))
+    }
+
+    #[getter]
+    fn greeter_user_id(&self) -> Option<UserID> {
+        match &self.0.greeter_user_id {
+            Maybe::Present(x) => Some(UserID(x.clone())),
+            Maybe::Absent => None,
+        }
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
@@ -1147,9 +1395,13 @@ crate::binding_utils::gen_proto!(Invite4ClaimerCommunicateReq, __richcmp__, eq);
 #[pymethods]
 impl Invite4ClaimerCommunicateReq {
     #[new]
-    fn new(payload: BytesWrapper) -> PyResult<Self> {
+    fn new(greeter_user_id: UserID, payload: BytesWrapper) -> PyResult<Self> {
         crate::binding_utils::unwrap_bytes!(payload);
-        Ok(Self(invite_4_claimer_communicate::Req { payload }))
+        let greeter_user_id = Maybe::Present(greeter_user_id.0);
+        Ok(Self(invite_4_claimer_communicate::Req {
+            greeter_user_id,
+            payload,
+        }))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
@@ -1161,6 +1413,14 @@ impl Invite4ClaimerCommunicateReq {
                 })
             })?,
         ))
+    }
+
+    #[getter]
+    fn greeter_user_id(&self) -> Option<UserID> {
+        match &self.0.greeter_user_id {
+            Maybe::Present(x) => Some(UserID(x.clone())),
+            Maybe::Absent => None,
+        }
     }
 
     #[getter]

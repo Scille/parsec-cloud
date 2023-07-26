@@ -1,12 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use std::collections::HashMap;
-use std::convert::TryFrom;
-use std::str::FromStr;
-
 use data_encoding::BASE32;
-use serde::de::{self, Deserialize, Deserializer, Visitor};
-use serde::ser::{Serialize, Serializer};
+use serde::{
+    de::{self, Deserialize, Deserializer, Visitor},
+    ser::{Serialize, Serializer},
+};
+use std::{collections::HashMap, convert::TryFrom, str::FromStr};
 use url::Url;
 
 use libparsec_crypto::VerifyKey;
@@ -806,14 +805,15 @@ impl BackendInvitationAddr {
         let base = BaseBackendAddr::from_url(&parsed)?;
         let organization_id = extract_organization_id(&parsed)?;
         let pairs = parsed.0.query_pairs();
-        let invitation_type = match extract_action(&pairs)? {
-            x if x == "claim_user" => InvitationType::User,
-            x if x == "claim_device" => InvitationType::Device,
+        let invitation_type = match &extract_action(&pairs)?[..] {
+            "claim_user" => InvitationType::User,
+            "claim_device" => InvitationType::Device,
+            "claim_shamir_recovery" => InvitationType::ShamirRecovery,
             value => {
                 return Err(AddrError::InvalidParamValue {
                     param: "action",
                     value: value.to_string(),
-                    help: "Expected `action=claim_user` or `action=claim_device`".to_string(),
+                    help: "Expected `action=claim_user`, `action=claim_device` or `action=claim_shamir_recovery`".to_string(),
                 })
             }
         };
@@ -853,6 +853,7 @@ impl BackendInvitationAddr {
                 match self.invitation_type() {
                     InvitationType::User => "claim_user",
                     InvitationType::Device => "claim_device",
+                    InvitationType::ShamirRecovery => "claim_shamir_recovery",
                 },
             )
             .append_pair("token", &self.token.hex());

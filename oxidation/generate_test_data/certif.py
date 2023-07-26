@@ -1,13 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-# flake8: noqa
 
-from protocol.utils import *
-
-from parsec._parsec import SequesterVerifyKeyDer, SequesterPublicKeyDer
-from parsec.api.protocol import *
+from parsec._parsec import SequesterPublicKeyDer, SequesterVerifyKeyDer
 from parsec.api.data import *
+from parsec.api.protocol import *
 
+from .protocol.utils import *
 
 uc = UserCertificate(
     author=ALICE.device_id,

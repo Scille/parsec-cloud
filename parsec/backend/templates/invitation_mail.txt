@@ -1,19 +1,24 @@
-{% if greeter %}
+{% if is_user_invitation %}
 You have received an invitation from {{ greeter }} to join the {{ organization_id }} organization on Parsec.
-{% else %}
+{% elif is_device_invitation %}
 You have received an invitation to add a new device to the {{ organization_id}} organization on Parsec.
+{% elif is_shamir_recovery_invitation %}
+You have received an invitation to start a recovery procedure on the {{ organization_id }} organization on Parsec.
 {% endif %}
 
 If you don't already have it, you should Download the Parsec client via the following link: https://parsec.cloud/get-parsec
 
 Once installed, click on the following link to proceed to Parsec: {{ invitation_url }}
 
-{% if greeter %}
+{% if is_user_invitation %}
 You should then get in touch with {{ greeter }} and follow the next steps on
 the Parsec client.
-{% else %}
+{% elif is_device_invitation %}
 You should then start the invitation process from a device already part of the organization,
 then follow the steps on the Parsec client.
+{% elif is_shamir_recovery_invitation %}
+You should then get in touch with {{ greeter }} and follow the next steps on
+the Parsec client.
 {% endif %}
 
 For more information you can consult the Parsec documentation: https://docs.parsec.cloud

@@ -83,6 +83,10 @@ CREATE TABLE user_ (
     redacted_user_certificate BYTEA NOT NULL,
     profile user_profile NOT NULL,
 
+    -- This field is added in an `ALTER TABLE` statement below
+    -- in order to avoid cross-reference issues
+    -- shamir_recovery INTEGER REFERENCES shamir_recovery_setup (_id);
+
     UNIQUE(organization, user_id)
 );
 
@@ -110,7 +114,50 @@ ALTER TABLE user_
 ADD CONSTRAINT FK_user_device_revoked_user_certifier FOREIGN KEY (revoked_user_certifier) REFERENCES device (_id);
 
 
-CREATE TYPE invitation_type AS ENUM ('USER', 'DEVICE');
+-------------------------------------------------------
+--  Shamir recovery
+-------------------------------------------------------
+
+
+CREATE TABLE shamir_recovery_setup (
+    _id SERIAL PRIMARY KEY,
+    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    user_ INTEGER REFERENCES user_ (_id) NOT NULL,
+
+    brief_certificate BYTEA NOT NULL,
+    reveal_token UUID NOT NULL,
+    threshold INTEGER NOT NULL,
+    shares INTEGER NOT NULL,
+    ciphered_data BYTEA,
+
+    UNIQUE(organization, reveal_token)
+);
+
+
+CREATE TABLE shamir_recovery_share (
+    _id SERIAL PRIMARY KEY,
+    organization INTEGER REFERENCES organization (_id) NOT NULL,
+
+    shamir_recovery INTEGER REFERENCES shamir_recovery_setup (_id) NOT NULL,
+    recipient INTEGER REFERENCES user_ (_id) NOT NULL,
+
+    share_certificate BYTEA NOT NULL,
+    shares INTEGER NOT NULL,
+
+    UNIQUE(organization, shamir_recovery, recipient)
+);
+
+
+
+-- Alter user table to introduce a cross-reference between user id and shamir id
+ALTER TABLE user_ ADD shamir_recovery INTEGER REFERENCES shamir_recovery_setup (_id);
+
+
+-------------------------------------------------------
+--  Invitation
+-------------------------------------------------------
+
+CREATE TYPE invitation_type AS ENUM ('USER', 'DEVICE', 'SHAMIR_RECOVERY');
 CREATE TYPE invitation_deleted_reason AS ENUM ('FINISHED', 'CANCELLED', 'ROTTEN');
 CREATE TYPE invitation_conduit_state AS ENUM (
     '1_WAIT_PEERS',
@@ -130,10 +177,10 @@ CREATE TABLE invitation (
     type invitation_type NOT NULL,
 
     greeter INTEGER REFERENCES user_ (_id) NOT NULL,
-    -- greeter_human INTEGER REFERENCES human (_id),
-    claimer_email VARCHAR(255),  -- Required for when type=USER
-    created_on TIMESTAMPTZ NOT NULL,
+    -- Required for when type=USER
+    claimer_email VARCHAR(255),
 
+    created_on TIMESTAMPTZ NOT NULL,
     deleted_on TIMESTAMPTZ,
     deleted_reason invitation_deleted_reason,
 
@@ -141,7 +188,23 @@ CREATE TABLE invitation (
     conduit_greeter_payload BYTEA,
     conduit_claimer_payload BYTEA,
 
+    -- Required for when type=SHAMIR_RECOVERY
+    shamir_recovery INTEGER REFERENCES shamir_recovery_setup (_id),
+
     UNIQUE(organization, token)
+);
+
+
+CREATE TABLE shamir_recovery_conduit (
+    _id SERIAL PRIMARY KEY,
+    invitation INTEGER REFERENCES invitation (_id) NOT NULL,
+    greeter INTEGER REFERENCES user_ (_id) NOT NULL,
+
+    conduit_state invitation_conduit_state NOT NULL DEFAULT '1_WAIT_PEERS',
+    conduit_greeter_payload BYTEA,
+    conduit_claimer_payload BYTEA,
+
+    UNIQUE(invitation, greeter)
 );
 
 

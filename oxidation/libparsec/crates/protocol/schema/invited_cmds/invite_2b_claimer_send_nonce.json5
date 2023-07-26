@@ -8,6 +8,11 @@
             "cmd": "invite_2b_claimer_send_nonce",
             "fields": [
                 {
+                    "name": "greeter_user_id",
+                    "type": "UserID",
+                    "introduced_in": "2.9"
+                },
+                {
                     "name": "claimer_nonce",
                     "type": "Bytes"
                 }

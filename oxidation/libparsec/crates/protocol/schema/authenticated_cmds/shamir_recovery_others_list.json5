@@ -1,0 +1,28 @@
+[
+    {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "shamir_recovery_others_list"
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        // Contains a list of `ShamirRecoveryBriefCertificate`
+                        "name": "brief_certificates",
+                        "type": "List<Bytes>"
+                    },
+                    {
+                        // Contains a list of `ShamirRecoveryShareCertificate`
+                        "name": "share_certificates",
+                        "type": "List<Bytes>"
+                    }
+                ]
+            }
+        ]
+    }
+]

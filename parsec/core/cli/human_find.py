@@ -18,9 +18,6 @@ async def _human_find(
     device: LocalDevice,
     query: str,
     omit_revoked: bool,
-    omit_non_human: bool = False,
-    page: int = 1,
-    per_page: int = 100,
 ) -> None:
     async with logged_core_factory(config, device) as core:
         user_info_tab, nb = await core.find_humans(
