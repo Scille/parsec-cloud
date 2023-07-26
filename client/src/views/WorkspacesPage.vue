@@ -3,16 +3,16 @@
 <template>
   <ion-page>
     <ion-content :fullscreen="true">
-      <!-- contextual menu -->
-      <ion-item-divider class="workspace-toolbar ion-margin-bottom secondary">
-        <div class="contextual-menu">
-          <button-option
-            id="button-new-workspace"
-            :button-label="$t('WorkspacesPage.createWorkspace')"
-            :icon="addCircle"
-            @click="openCreateWorkspaceModal()"
-          />
-        </div>
+      <action-bar
+        id="workspaces-action-bar"
+      >
+        <!-- contextual menu -->
+        <button-option
+          id="button-new-workspace"
+          :button-label="$t('WorkspacesPage.createWorkspace')"
+          :icon="addCircle"
+          @click="openCreateWorkspaceModal()"
+        />
         <div class="right-side">
           <ms-select
             id="workspace-filter-select"
@@ -24,7 +24,7 @@
             v-model="displayView"
           />
         </div>
-      </ion-item-divider>
+      </action-bar>
       <!-- workspaces -->
       <div class="workspaces-container">
         <div v-if="displayView === DisplayState.List">
@@ -100,7 +100,6 @@ import {
   IonLabel,
   IonIcon,
   IonPage,
-  IonItemDivider,
   IonContent,
   popoverController,
   isPlatform,
@@ -130,6 +129,7 @@ import { DisplayState } from '@/components/ListGridToggle.vue';
 import { useI18n } from 'vue-i18n';
 import { ref, Ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import ActionBar from '@/components/ActionBar.vue';
 
 const currentRoute = useRoute();
 const router = useRouter();
@@ -294,13 +294,6 @@ async function openWorkspaceContextMenu(event: Event, workspace: MockWorkspace):
 
 ion-item::part(native) {
   --padding-start: 0px;
-}
-
-.workspace-toolbar {
-  padding: 1em 2em;
-  height: 6em;
-  background-color: var(--parsec-color-light-secondary-background);
-  border-top: 1px solid var(--parsec-color-light-secondary-light);
 }
 
 .right-side {

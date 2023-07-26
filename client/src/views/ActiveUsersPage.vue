@@ -4,7 +4,9 @@
   <ion-page>
     <ion-content :fullscreen="true">
       <!-- contextual menu -->
-      <ion-item-divider class="users-toolbar ion-margin-bottom secondary">
+      <action-bar
+        id="activate-users-action-bar"
+      >
         <button-option
           id="button-invite-user"
           :button-label="$t('UsersPage.inviteUser')"
@@ -16,7 +18,7 @@
             v-model="displayView"
           />
         </div>
-      </ion-item-divider>
+      </action-bar>
       <!-- users -->
       <div class="users-container">
         <div v-if="displayView === DisplayState.List">
@@ -77,7 +79,6 @@ import {
   IonPage,
   IonLabel,
   IonListHeader,
-  IonItemDivider,
 } from '@ionic/vue';
 import UserListItem from '@/components/Users/UserListItem.vue';
 import UserCard from '@/components/Users/UserCard.vue';
@@ -85,6 +86,7 @@ import ButtonOption from '@/components/ButtonOption.vue';
 import { isAdmin } from '@/common/permissions';
 import ListGridToggle from '@/components/ListGridToggle.vue';
 import { DisplayState } from '@/components/ListGridToggle.vue';
+import ActionBar from '@/components/ActionBar.vue';
 
 const displayView = ref(DisplayState.List);
 const userList = ['User1', 'User2', 'User3'];
@@ -167,13 +169,6 @@ function inviteUser(): void {
 
 ion-item::part(native) {
   --padding-start: 0px;
-}
-
-.users-toolbar {
-  padding: 1em 2em;
-  height: 6em;
-  background-color: var(--parsec-color-light-secondary-background);
-  border-top: 1px solid var(--parsec-color-light-secondary-light);
 }
 
 .right-side {
