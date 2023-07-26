@@ -27,7 +27,7 @@ describe('Check workspaces page', () => {
     cy.get('.sidebar').find('.storage').contains('Storage').should('not.have.class', 'category-selected');
     cy.get('.sidebar').find('.organization').contains('Information').should('not.have.class', 'category-selected');
     cy.get('.topbar-left').find('.title-h2').contains('Active users');
-    cy.get('.users-toolbar').find('.button-option').contains('Invite a user');
+    cy.get('.toolbar').find('.button-option').contains('Invite a user');
   });
 
   it('Switch page', () => {

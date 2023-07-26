@@ -13,8 +13,8 @@ describe('Check workspaces page', () => {
   it('Checks initial status', () => {
     cy.get('#button-new-workspace').contains('New workspace');
     cy.get('#workspace-filter-select').contains('Name');
-    cy.get('#grid-view').should('have.attr', 'disabled');
-    cy.get('#list-view').should('not.have.attr', 'disabled');
+    cy.get('#workspaces-action-bar').find('#grid-view').should('have.attr', 'disabled');
+    cy.get('#workspaces-action-bar').find('#list-view').should('not.have.attr', 'disabled');
     cy.get('.card').should('have.length', 5);
     cy.get('.workspace-list-item').should('have.length', 0);
     cy.get('.card').first().contains('Druid Grove');
@@ -36,15 +36,15 @@ describe('Check workspaces page', () => {
 
   it('Switch views', () => {
     cy.get('.card').should('have.length', 5);
-    cy.get('#list-view').click();
-    cy.get('#grid-view').should('not.have.attr', 'disabled');
-    cy.get('#list-view').should('have.attr', 'disabled');
+    cy.get('#workspaces-action-bar').find('#list-view').click();
+    cy.get('#workspaces-action-bar').find('#grid-view').should('not.have.attr', 'disabled');
+    cy.get('#workspaces-action-bar').find('#list-view').should('have.attr', 'disabled');
     cy.get('.card').should('have.length', 0);
     cy.get('.workspace-list-item').should('have.length', 5);
   });
 
   it('Sort workspaces in list view', () => {
-    cy.get('#list-view').click();
+    cy.get('#workspaces-action-bar').find('#list-view').click();
     cy.get('.workspace-list-item').should('have.length', 5);
     cy.get('.workspace-list-item').first().contains('Druid Grove');
     cy.get('.workspace-list-item').last().contains('Trademeet');
@@ -73,7 +73,7 @@ describe('Check workspaces page', () => {
   });
 
   it('Open workspace menu in list view', () => {
-    cy.get('#list-view').click();
+    cy.get('#workspaces-action-bar').find('#list-view').click();
     cy.get('.workspace-options > ion-button').first().click();
     cy.get('.popover-viewport').get('.group-item').should('have.length', 7);
     cy.get('.popover-viewport').get('.group-title').should('have.length', 3);
