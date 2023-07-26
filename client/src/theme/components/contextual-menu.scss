@@ -1,0 +1,18 @@
+/* contextual menu button */
+
+.contextual-menu {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  width: 100%;
+
+	&>div:not(.right-side) {
+    display: flex;
+    gap: 1rem;
+	}
+
+	.button-option ion-icon{
+    margin-inline: 0em;
+    margin-right: .625rem;
+  }
+}
