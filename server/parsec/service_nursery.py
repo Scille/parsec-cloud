@@ -179,7 +179,7 @@ async def open_service_nursery_with_exception_group() -> AsyncIterator[trio.Nurs
                         return
                     shield_scope.shield = child_task_scopes.shield
 
-                task_status.started = wrap_started  # type: ignore[assignment]
+                task_status.started = wrap_started  # type: ignore[method-assign]
                 with shield_scope:
                     await async_fn(*args, task_status=task_status)
 
