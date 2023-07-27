@@ -37,6 +37,7 @@ use reqwest::{
     header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
     Client, RequestBuilder, Url,
 };
+#[cfg(not(target_arch = "wasm32"))]
 use reqwest_eventsource::{Event as SSEEvent, EventSource};
 use std::{fmt::Debug, marker::PhantomData};
 use std::{path::Path, sync::Arc};
@@ -59,6 +60,7 @@ pub struct SSEStream<T>
 where
     T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
 {
+    #[cfg(not(target_arch = "wasm32"))]
     event_source: EventSource,
     phantom: PhantomData<T>,
 }
@@ -85,6 +87,12 @@ impl<T> SSEStream<T>
 where
     T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
 {
+    #[cfg(target_arch = "wasm32")]
+    pub async fn next(&mut self) -> Result<SSEResponseOrMissedEvents<T>, ConnectionError> {
+        todo!();
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
     pub async fn next(&mut self) -> Result<SSEResponseOrMissedEvents<T>, ConnectionError> {
         loop {
             match self.next_sse_event().await? {
@@ -111,6 +119,7 @@ where
         }
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     async fn next_sse_event(&mut self) -> Result<SSEEvent, ConnectionError> {
         match self.event_source.next().await {
             Some(Ok(sse_event)) => Ok(sse_event),
@@ -142,6 +151,7 @@ where
     }
 
     pub fn close(mut self) {
+        #[cfg(not(target_arch = "wasm32"))]
         self.event_source.close();
     }
 }
@@ -197,6 +207,7 @@ impl AuthenticatedCmds {
     }
 
     // Just used for test
+    #[cfg(not(target_arch = "wasm32"))]
     pub async fn start_sse_and_wait_for_connection<T>(
         &self,
     ) -> Result<SSEStream<T>, ConnectionError>
@@ -209,6 +220,25 @@ impl AuthenticatedCmds {
         Ok(sse)
     }
 
+    #[cfg(target_arch = "wasm32")]
+    pub async fn start_sse_and_wait_for_connection<T>(
+        &self,
+    ) -> Result<SSEStream<T>, ConnectionError>
+    where
+        T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
+    {
+        todo!()
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn start_sse<T>(&self) -> SSEStream<T>
+    where
+        T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
+    {
+        todo!()
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn start_sse<T>(&self) -> SSEStream<T>
     where
         T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
