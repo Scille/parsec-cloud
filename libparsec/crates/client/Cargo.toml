@@ -13,9 +13,12 @@ libparsec_platform_async = { workspace = true }
 libparsec_platform_storage = { workspace = true }
 libparsec_protocol = { workspace = true }
 
-tokio = { workspace = true, features = ["rt", "time", "sync", "macros"] }
 paste = { workspace = true }
 log = { workspace = true }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+# TODO: support for Web
+tokio = { workspace = true, features = ["rt", "time", "sync", "macros"] }
 
 [dev-dependencies]
 libparsec_tests_fixtures = { workspace = true }
