@@ -10,9 +10,9 @@ Parsec
     :target: https://github.com/Scille/parsec-cloud/actions/workflows/ci.yml
     :alt: Continuous Integration
 
-.. image:: https://github.com/Scille/parsec-cloud/actions/workflows/package-ci.yml/badge.svg
-    :target: https://github.com/Scille/parsec-cloud/actions/workflows/package-ci.yml
-    :alt: Latest Packaging CI
+.. image:: https://github.com/Scille/parsec-cloud/actions/workflows/package-server.yml/badge.svg
+    :target: https://github.com/Scille/parsec-cloud/actions/workflows/package-server.yml
+    :alt: Latest Server Packaging CI
 
 .. image:: https://pyup.io/repos/github/Scille/parsec-cloud/shield.svg
     :target: https://pyup.io/repos/github/Scille/parsec-cloud/
