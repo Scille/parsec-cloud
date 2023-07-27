@@ -44,7 +44,6 @@ from . import (
     vlob_update,
 )
 
-
 class AnyCmdReq:
     @classmethod
     def load(
@@ -89,9 +88,7 @@ class AnyCmdReq:
         | vlob_poll_changes.Req
         | vlob_read.Req
         | vlob_update.Req
-    ):
-        ...
-
+    ): ...
 
 __all__ = [
     "AnyCmdReq",
