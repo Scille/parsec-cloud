@@ -153,7 +153,7 @@ impl DeviceFileType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct AvailableDevice {
     pub key_file_path: PathBuf,
     pub organization_id: OrganizationID,
@@ -161,7 +161,6 @@ pub struct AvailableDevice {
     pub human_handle: Option<HumanHandle>,
     pub device_label: Option<DeviceLabel>,
     pub slug: String,
-    #[serde(rename = "type")]
     pub ty: DeviceFileType,
 }
 
