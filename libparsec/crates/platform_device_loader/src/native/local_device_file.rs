@@ -61,7 +61,7 @@ pub async fn save_recovery_device(
     key_file: &Path,
     device: &LocalDevice,
     force: bool,
-) -> LocalDeviceResult<String> {
+) -> LocalDeviceResult<SecretKeyPassphrase> {
     if File::open(key_file).is_ok() && !force {
         return Err(LocalDeviceError::AlreadyExists(key_file.to_path_buf()));
     }
@@ -87,7 +87,7 @@ pub async fn save_recovery_device(
 /// TODO: need test (backend_cmds required)
 pub async fn load_recovery_device(
     key_file: &Path,
-    passphrase: &str,
+    passphrase: SecretKeyPassphrase,
 ) -> LocalDeviceResult<LocalDevice> {
     let ciphertext =
         std::fs::read(key_file).map_err(|_| LocalDeviceError::Access(key_file.to_path_buf()))?;
@@ -237,7 +237,7 @@ fn read_key_file_paths(path: PathBuf) -> LocalDeviceResult<Vec<PathBuf>> {
 pub fn save_device_with_password(
     key_file: &Path,
     device: &LocalDevice,
-    password: &str,
+    password: Password,
     force: bool,
 ) -> Result<(), LocalDeviceError> {
     if key_file.exists() && !force {
@@ -267,7 +267,7 @@ pub fn save_device_with_password(
 pub fn save_device_with_password_in_config(
     config_dir: &Path,
     device: &LocalDevice,
-    password: &str,
+    password: Password,
 ) -> Result<PathBuf, LocalDeviceError> {
     let key_file = get_default_key_file(config_dir, device);
 
@@ -288,8 +288,8 @@ pub fn save_device_with_password_in_config(
 
 pub fn change_device_password(
     key_file: &Path,
-    old_password: &str,
-    new_password: &str,
+    old_password: Password,
+    new_password: Password,
 ) -> Result<(), LocalDeviceError> {
     let device = load_device_with_password_from_path(key_file, old_password)?;
     save_device_with_password(key_file, &device, new_password, true)

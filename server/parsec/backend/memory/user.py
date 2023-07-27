@@ -35,6 +35,7 @@ from parsec.backend.user_type import User, UserUpdate
 if TYPE_CHECKING:
     from parsec.backend.memory.organization import MemoryOrganizationComponent
     from parsec.backend.memory.realm import MemoryRealmComponent
+    from parsec.backend.memory.sequester import MemorySequesterComponent
 
 
 @attr.s
@@ -58,10 +59,12 @@ class MemoryUserComponent(BaseUserComponent):
         self,
         organization: MemoryOrganizationComponent,
         realm: MemoryRealmComponent,
+        sequester: MemorySequesterComponent,
         **other_components: Any,
     ) -> None:
         self._organization_component = organization
         self._realm_component = realm
+        self._sequester_component = sequester
 
     def get_current_certificate_index(self, organization_id: OrganizationID) -> int:
         org = self._organizations[organization_id]
@@ -467,31 +470,64 @@ class MemoryUserComponent(BaseUserComponent):
         """
         certificates = []
 
+        # Certificates with the same timestamp will be ordered by priority (lower first)
+        # Multiple certificates can have the same timestamp if they have been created
+        # together: so far this is only the case for organization bootstrap and user creation.
+        # In such cases the events should also be ordered by they event types (e.g.
+        # `UserCertificate` must always be before `DeviceCertificate`)
+        SEQUESTER_AUTHORITY_PRIORITY = 0  # Max prio
+        USER_PRIORITY = 1
+        DEFAULT_PRIORITY = 2
+
+        # 1) Add sequester authority certificate
+        org = self._organization_component._organizations[organization_id]
+
+        # 2) Add sequester service certificates
+        if org.sequester_authority:
+            certificates.append(
+                (
+                    org.bootstrapped_on,
+                    SEQUESTER_AUTHORITY_PRIORITY,
+                    org.sequester_authority.certificate,
+                )
+            )
+            for service in self._sequester_component._services[organization_id].values():
+                certificates.append(
+                    (service.created_on, DEFAULT_PRIORITY, service.service_certificate)
+                )
+
+        # 3) Add user & revoked user certificates
         org = self._organizations[organization_id]
         for user in org.users.values():
             certif = user.redacted_user_certificate if redacted else user.user_certificate
-            certificates.append((user.created_on, certif))
+            certificates.append((user.created_on, USER_PRIORITY, certif))
             if user.revoked_user_certificate:
                 assert user.revoked_on is not None
-                certificates.append((user.revoked_on, user.revoked_user_certificate))
+                certificates.append(
+                    (user.revoked_on, DEFAULT_PRIORITY, user.revoked_user_certificate)
+                )
 
+        # 4) Add device certificates
         for devices in org.devices.values():
             for device in devices.values():
                 certif = (
                     device.redacted_device_certificate if redacted else device.device_certificate
                 )
-                certificates.append((device.created_on, certif))
+                certificates.append((device.created_on, DEFAULT_PRIORITY, certif))
 
+        # 5) Add realm role certificates
         for (realm_orgid, _), realm in self._realm_component._realms.items():
             if realm_orgid != organization_id:
                 continue
             for granted_role in realm.granted_roles:
-                certificates.append((granted_role.granted_on, granted_role.certificate))
+                certificates.append(
+                    (granted_role.granted_on, DEFAULT_PRIORITY, granted_role.certificate)
+                )
 
-        # Sort certificates by timestamp
+        # Sort certificates by timestamp... and also type (see priority) !
         certificates.sort()
 
-        return [certif for _, certif in certificates[offset:]]
+        return [certif for _, _, certif in certificates[offset:]]
 
     def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:
         self._organizations[new_id] = deepcopy(self._organizations[id])

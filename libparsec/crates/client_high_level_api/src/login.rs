@@ -114,7 +114,7 @@ pub async fn client_login(
 
             let index = core.len() as u32;
 
-            let device = load_device_with_password(&path, &password)
+            let device = load_device_with_password(&path, password.into())
                 .map_err(|_| ClientLoginError::DeviceInvalidFormat)?;
 
             let running = RunningDevice::start(Arc::new(device), &config.data_base_dir).await?;

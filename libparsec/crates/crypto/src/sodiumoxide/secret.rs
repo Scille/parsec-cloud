@@ -16,7 +16,7 @@ use sodiumoxide::{
     randombytes::randombytes,
 };
 
-use crate::CryptoError;
+use crate::{CryptoError, Password};
 
 #[derive(Clone, PartialEq, Eq, Deserialize)]
 #[serde(try_from = "&Bytes")]
@@ -98,7 +98,7 @@ impl SecretKey {
         randombytes(SALTBYTES)
     }
 
-    pub fn from_password(password: &str, salt: &[u8]) -> Result<Self, CryptoError> {
+    pub fn from_password(password: Password, salt: &[u8]) -> Result<Self, CryptoError> {
         let mut key = [0; KEYBYTES];
 
         // During test we want to skip the `argon2` algorithm for hashing the password

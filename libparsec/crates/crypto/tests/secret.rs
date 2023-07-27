@@ -9,7 +9,7 @@ use pretty_assertions::assert_eq;
 use rstest::rstest;
 use serde_test::{assert_tokens, Token};
 
-use libparsec_crypto::{CryptoError, SecretKey};
+use libparsec_crypto::{CryptoError, SecretKey, SecretKeyPassphrase};
 
 #[macro_use]
 mod common;
@@ -81,16 +81,22 @@ fn secret_key_should_verify_length_when_deserialize() {
     );
 }
 
-#[test]
-fn recovery_passphrase() {
+#[rstest]
+#[case::without_padding(0)]
+#[case::with_half_padding(3)]
+#[case::with_padding(6)]
+fn recovery_passphrase(#[case] padding: usize) {
     let (passphrase, key) = SecretKey::generate_recovery_passphrase();
 
-    let key2 = SecretKey::from_recovery_passphrase(&passphrase).unwrap();
+    let passphrase: SecretKeyPassphrase =
+        format!("{}{}", passphrase.as_str(), "=".repeat(padding)).into();
+
+    let key2 = SecretKey::from_recovery_passphrase(passphrase.clone()).unwrap();
     assert_eq!(key2, key);
 
     // Add dummy stuff to the passphrase should not cause issues
     let altered_passphrase = passphrase.to_lowercase().replace('-', "@  白");
-    let key3 = SecretKey::from_recovery_passphrase(&altered_passphrase).unwrap();
+    let key3 = SecretKey::from_recovery_passphrase(altered_passphrase.into()).unwrap();
     assert_eq!(key3, key);
 }
 
@@ -104,7 +110,7 @@ fn recovery_passphrase() {
 )]
 fn invalid_passphrase(#[case] bad_passphrase: &str, #[case] key_length: usize) {
     assert_eq!(
-        SecretKey::from_recovery_passphrase(bad_passphrase).unwrap_err(),
+        SecretKey::from_recovery_passphrase(bad_passphrase.to_owned().into()).unwrap_err(),
         CryptoError::KeySize {
             expected: SecretKey::SIZE,
             got: key_length,
@@ -115,7 +121,7 @@ fn invalid_passphrase(#[case] bad_passphrase: &str, #[case] key_length: usize) {
 #[cfg_attr(feature = "test-unsecure-but-fast-secretkey-from-password", ignore)]
 #[test]
 fn from_password() {
-    let password = "P@ssw0rd.";
+    let password = "P@ssw0rd.".to_owned().into();
     let salt = hex!("cffcc16d78cbc0e773aa5ee7b2210159");
 
     let expected = SecretKey::from(hex!(
@@ -148,7 +154,7 @@ fn from_password_salt_too_small() {
     let too_small = b"dummy";
 
     assert!(matches!(
-        SecretKey::from_password("Passw0rd", too_small),
+        SecretKey::from_password("Passw0rd".to_owned().into(), too_small),
         Err(CryptoError::DataSize)
     ));
 }

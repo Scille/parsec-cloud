@@ -232,7 +232,7 @@ impl SecretKey {
 
     #[classmethod]
     fn from_password(_cls: &PyType, password: &str, salt: &[u8]) -> PyResult<Self> {
-        libparsec::low_level::crypto::SecretKey::from_password(password, salt)
+        libparsec::low_level::crypto::SecretKey::from_password(password.to_owned().into(), salt)
             .map(Self)
             .map_err(|err| CryptoError::new_err(err.to_string()))
     }
@@ -241,14 +241,16 @@ impl SecretKey {
     fn generate_recovery_passphrase(_cls: &PyType) -> (String, Self) {
         let (passphrase, key) =
             libparsec::low_level::crypto::SecretKey::generate_recovery_passphrase();
-        (passphrase, Self(key))
+        (passphrase.to_string(), Self(key))
     }
 
     #[classmethod]
     fn from_recovery_passphrase(_cls: &PyType, passphrase: &str) -> PyResult<Self> {
-        libparsec::low_level::crypto::SecretKey::from_recovery_passphrase(passphrase)
-            .map(Self)
-            .map_err(|err| CryptoError::new_err(err.to_string()))
+        libparsec::low_level::crypto::SecretKey::from_recovery_passphrase(
+            passphrase.to_owned().into(),
+        )
+        .map(Self)
+        .map_err(|err| CryptoError::new_err(err.to_string()))
     }
 }
 

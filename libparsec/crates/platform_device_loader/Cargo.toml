@@ -4,9 +4,7 @@ version = "0.0.0"
 edition = "2021"
 
 [features]
-test-with-testbed = [
-    "libparsec_testbed"
-]
+test-with-testbed = ["libparsec_testbed"]
 
 [dependencies]
 libparsec_types = { workspace = true }

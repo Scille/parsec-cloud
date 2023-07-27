@@ -16,7 +16,7 @@ pub use web::*;
 
 pub(crate) fn load_device_with_password_core(
     device: &DeviceFilePassword,
-    password: &str,
+    password: Password,
 ) -> LocalDeviceResult<LocalDevice> {
     let key = SecretKey::from_password(password, &device.salt)?;
     let data = key.decrypt(&device.ciphertext)?;

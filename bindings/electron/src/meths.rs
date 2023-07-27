@@ -591,7 +591,7 @@ fn client_list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise>
         .spawn(async move {
             let ret = libparsec::client_list_available_devices(&path).await;
 
-            channel.send(move |mut cx| {
+            deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = {
                     // JsArray::new allocates with `undefined` value, that's why we `set` value
                     let js_array = JsArray::new(&mut cx, ret.len() as u32);
@@ -601,8 +601,7 @@ fn client_list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise>
                     }
                     js_array
                 };
-                deferred.resolve(&mut cx, js_ret);
-                Ok(())
+                Ok(js_ret)
             });
         });
 
@@ -675,7 +674,7 @@ fn client_login(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .spawn(async move {
             let ret = libparsec::client_login(load_device_params, config, on_event_callback).await;
 
-            channel.send(move |mut cx| {
+            deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
                     Ok(ok) => {
                         let js_obj = JsObject::new(&mut cx);
@@ -694,8 +693,7 @@ fn client_login(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         js_obj
                     }
                 };
-                deferred.resolve(&mut cx, js_ret);
-                Ok(())
+                Ok(js_ret)
             });
         });
 
@@ -724,7 +722,7 @@ fn client_get_device_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .spawn(async move {
             let ret = libparsec::client_get_device_id(handle).await;
 
-            channel.send(move |mut cx| {
+            deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
                     Ok(ok) => {
                         let js_obj = JsObject::new(&mut cx);
@@ -743,8 +741,7 @@ fn client_get_device_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         js_obj
                     }
                 };
-                deferred.resolve(&mut cx, js_ret);
-                Ok(())
+                Ok(js_ret)
             });
         });
 
@@ -782,7 +779,7 @@ fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .spawn(async move {
             let ret = libparsec::test_new_testbed(&template, test_server.as_ref()).await;
 
-            channel.send(move |mut cx| {
+            deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = JsString::try_new(&mut cx, {
                     let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
                         path.into_os_string()
@@ -795,8 +792,7 @@ fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
                     }
                 })
                 .or_throw(&mut cx)?;
-                deferred.resolve(&mut cx, js_ret);
-                Ok(())
+                Ok(js_ret)
             });
         });
 
@@ -826,10 +822,9 @@ fn test_drop_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .spawn(async move {
             libparsec::test_drop_testbed(&path).await;
 
-            channel.send(move |mut cx| {
+            deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = cx.null();
-                deferred.resolve(&mut cx, js_ret);
-                Ok(())
+                Ok(js_ret)
             });
         });
 

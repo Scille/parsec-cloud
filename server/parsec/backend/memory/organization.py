@@ -246,7 +246,9 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             await self._send_event(BackendEventOrganizationExpired(organization_id=id))
 
     def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:
-        self._organizations[new_id] = deepcopy(self._organizations[id])
+        organization = deepcopy(self._organizations[id])
+        organization = organization.evolve(organization_id=new_id)
+        self._organizations[new_id] = organization
 
     def test_drop_organization(self, id: OrganizationID) -> None:
         self._organizations.pop(id, None)
