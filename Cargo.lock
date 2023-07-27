@@ -1346,6 +1346,7 @@ dependencies = [
 name = "libparsec_platform_http_proxy"
 version = "0.0.0"
 dependencies = [
+ "libparsec_types",
  "reqwest",
 ]
 

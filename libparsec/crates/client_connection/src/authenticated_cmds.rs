@@ -163,10 +163,10 @@ impl AuthenticatedCmds {
         config_dir: &Path,
         device: Arc<LocalDevice>,
         proxy: ProxyConfig,
-    ) -> reqwest::Result<Self> {
+    ) -> anyhow::Result<Self> {
         let client = {
             let builder = reqwest::ClientBuilder::default();
-            let builder = proxy.configure_http_client(builder)?;
+            let builder = proxy.configure_http_client(builder);
             builder.build()?
         };
         Ok(Self::from_client(client, config_dir, device))

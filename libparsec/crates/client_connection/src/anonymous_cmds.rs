@@ -36,11 +36,11 @@ impl AnonymousCmds {
     pub fn new(
         config_dir: &Path,
         addr: BackendAnonymousAddr,
-        config: ProxyConfig,
-    ) -> reqwest::Result<Self> {
+        proxy: ProxyConfig,
+    ) -> anyhow::Result<Self> {
         let client = {
             let builder = reqwest::ClientBuilder::default();
-            let builder = config.configure_http_client(builder)?;
+            let builder = proxy.configure_http_client(builder);
             builder.build()?
         };
         Ok(Self::from_client(client, config_dir, addr))
