@@ -4,31 +4,25 @@
 
 use std::{
     fmt::Debug,
-    path::Path,
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
 };
 
-use libparsec_client_connection::{AuthenticatedCmds, ProxyConfig};
+use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_types::prelude::*;
 
 use crate::{
     certificates_monitor::CertificatesMonitor, certificates_ops::CertificatesOps,
-    connection_monitor::ConnectionMonitor, event_bus::EventBus, user_ops::UserOps,
+    config::ClientConfig, connection_monitor::ConnectionMonitor, event_bus::EventBus,
+    user_ops::UserOps,
 };
 
-// pub struct RunningDeviceConfig {
-//     pub config_dir: PathBuf,
-//     pub data_base_dir: PathBuf,
-//     pub mountpoint_base_dir: PathBuf,
-//     pub prevent_sync_pattern: Option<Path>,
-// }
-
 // Should not be `Clone` given it manages underlying resources !
-pub struct RunningDevice {
+pub struct Client {
     stopped: AtomicBool,
+    config: Arc<ClientConfig>,
     device: Arc<LocalDevice>,
     event_bus: EventBus,
     cmds: Arc<AuthenticatedCmds>,
@@ -38,35 +32,35 @@ pub struct RunningDevice {
     certificates_monitor: CertificatesMonitor,
 }
 
-impl Debug for RunningDevice {
+impl Debug for Client {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("RunningDevice")
+        f.debug_struct("Client")
             .field("device", &self.device.device_id)
             .finish()
     }
 }
 
-impl RunningDevice {
+impl Client {
     pub fn device_id(&self) -> &DeviceID {
         &self.device.device_id
     }
 
     pub async fn start(
+        config: Arc<ClientConfig>,
+        event_bus: EventBus,
         device: Arc<LocalDevice>,
-        data_base_dir: &Path,
     ) -> Result<Self, anyhow::Error> {
-        let event_bus = EventBus::default();
         // TODO: error handling
         let cmds = Arc::new(AuthenticatedCmds::new(
-            data_base_dir,
+            &config.config_dir,
             device.clone(),
-            ProxyConfig::default(),
+            config.proxy.clone(),
         )?);
 
         // TODO: error handling
         let certificates_ops = Arc::new(
             CertificatesOps::start(
-                data_base_dir,
+                config.clone(),
                 device.clone(),
                 event_bus.clone(),
                 cmds.clone(),
@@ -74,7 +68,7 @@ impl RunningDevice {
             .await?,
         );
         let user_ops = UserOps::start(
-            data_base_dir.to_owned(),
+            config.clone(),
             device.clone(),
             cmds.clone(),
             certificates_ops.clone(),
@@ -90,6 +84,7 @@ impl RunningDevice {
 
         Ok(Self {
             stopped: AtomicBool::new(false),
+            config,
             device,
             event_bus,
             cmds,
@@ -110,10 +105,10 @@ impl RunningDevice {
     }
 }
 
-impl Drop for RunningDevice {
+impl Drop for Client {
     fn drop(&mut self) {
         if !self.stopped.load(Ordering::Relaxed) {
-            log::error!("RunningDevice dropped without prior stop !");
+            log::error!("Client dropped without prior stop !");
         }
     }
 }
