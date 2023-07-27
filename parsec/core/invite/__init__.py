@@ -32,6 +32,7 @@ if not TYPE_CHECKING and FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
         ShamirRecoveryGreetInProgress1Ctx,
         ShamirRecoveryGreetInProgress2Ctx,
         ShamirRecoveryGreetInProgress3Ctx,
+        get_shamir_recovery_share_data,
     )
 else:
     from parsec.core.invite.greeter import (
@@ -49,6 +50,7 @@ else:
         UserGreetInProgress2Ctx,
         UserGreetInProgress3Ctx,
         UserGreetInProgress4Ctx,
+        get_shamir_recovery_share_data,
     )
 from parsec.core.invite.organization import bootstrap_organization
 
@@ -68,6 +70,9 @@ if not TYPE_CHECKING and FEATURE_FLAGS["UNSTABLE_OXIDIZED_CLIENT_CONNECTION"]:
     # Not oxidized yet
     from parsec.core.invite.claimer import (
         ShamirRecoveryClaimInitialCtx,
+        ShamirRecoveryClaimInProgress1Ctx,
+        ShamirRecoveryClaimInProgress2Ctx,
+        ShamirRecoveryClaimInProgress3Ctx,
         ShamirRecoveryClaimPreludeCtx,
     )
 else:
@@ -77,6 +82,9 @@ else:
         DeviceClaimInProgress2Ctx,
         DeviceClaimInProgress3Ctx,
         ShamirRecoveryClaimInitialCtx,
+        ShamirRecoveryClaimInProgress1Ctx,
+        ShamirRecoveryClaimInProgress2Ctx,
+        ShamirRecoveryClaimInProgress3Ctx,
         ShamirRecoveryClaimPreludeCtx,
         UserClaimInitialCtx,
         UserClaimInProgress1Ctx,
@@ -100,11 +108,15 @@ __all__ = (
     "ShamirRecoveryClaimInitialCtx",
     "UserClaimInProgress1Ctx",
     "DeviceClaimInProgress1Ctx",
+    "ShamirRecoveryClaimInProgress1Ctx",
     "UserClaimInProgress2Ctx",
     "DeviceClaimInProgress2Ctx",
+    "ShamirRecoveryClaimInProgress2Ctx",
     "UserClaimInProgress3Ctx",
     "DeviceClaimInProgress3Ctx",
+    "ShamirRecoveryClaimInProgress3Ctx",
     # Greeter
+    "get_shamir_recovery_share_data",
     "UserGreetInitialCtx",
     "DeviceGreetInitialCtx",
     "ShamirRecoveryGreetInitialCtx",

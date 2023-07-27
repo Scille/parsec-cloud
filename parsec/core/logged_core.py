@@ -59,6 +59,7 @@ from parsec.core.invite import (
     ShamirRecoveryGreetInProgress1Ctx,
     UserGreetInitialCtx,
     UserGreetInProgress1Ctx,
+    get_shamir_recovery_share_data,
 )
 from parsec.core.messages_monitor import monitor_messages
 from parsec.core.mountpoint import MountpointManager, mountpoint_manager_factory
@@ -387,19 +388,31 @@ class LoggedCore:
         initial_ctx = DeviceGreetInitialCtx(cmds=self._backend_conn.cmds, token=token)
         return await initial_ctx.do_wait_peer()
 
-    async def start_greeting_shamir_recovery(
-        self, token: InvitationToken, claimer_user_id: UserID
-    ) -> tuple[ShamirRecoveryShareData, ShamirRecoveryGreetInProgress1Ctx]:
+    async def get_shamir_recovery_share_data(
+        self, claimer_user_id: UserID
+    ) -> ShamirRecoveryShareData:
         """
         Raises:
             BackendConnectionError
             InviteError
         """
-        initial_ctx = ShamirRecoveryGreetInitialCtx(
-            cmds=self._backend_conn.cmds, token=token, claimer_user_id=claimer_user_id
+        return await get_shamir_recovery_share_data(
+            cmds=self._backend_conn.cmds,
+            device=self.device,
+            claimer_user_id=claimer_user_id,
+            remote_devices_manager=self._remote_devices_manager,
         )
-        share_data = await initial_ctx.get_share_data(self.device, self._remote_devices_manager)
-        return (share_data, await initial_ctx.do_wait_peer())
+
+    async def start_greeting_shamir_recovery(
+        self, token: InvitationToken
+    ) -> ShamirRecoveryGreetInProgress1Ctx:
+        """
+        Raises:
+            BackendConnectionError
+            InviteError
+        """
+        initial_ctx = ShamirRecoveryGreetInitialCtx(cmds=self._backend_conn.cmds, token=token)
+        return await initial_ctx.do_wait_peer()
 
     def get_organization_config(self) -> OrganizationConfig:
         return self._backend_conn.get_organization_config()

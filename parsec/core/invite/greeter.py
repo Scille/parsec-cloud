@@ -67,6 +67,47 @@ from parsec.core.invite.claimer import (
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.types import LocalDevice
 
+# Helper
+
+
+async def get_shamir_recovery_share_data(
+    cmds: BackendAuthenticatedCmds | RsBackendAuthenticatedCmds,
+    device: LocalDevice,
+    claimer_user_id: UserID,
+    remote_devices_manager: RemoteDevicesManager | None = None,
+) -> ShamirRecoveryShareData:
+    # Create remote devices manager if necessary
+    if remote_devices_manager is None:
+        remote_devices_manager = RemoteDevicesManager(
+            cmds, device.root_verify_key, device.time_provider
+        )
+
+    # Get shamir recovery certificates
+    rep = await cmds.shamir_recovery_others_list()
+    if isinstance(rep, ShamirRecoveryOthersListRepUnknownStatus):
+        raise InviteError(f"Unknown status: {rep.status}")
+    assert isinstance(rep, ShamirRecoveryOthersListRepOk)
+
+    # Look for the right certificate
+    for raw in rep.share_certificates:
+        unsecure_share_certificate = ShamirRecoveryShareCertificate.unsecure_load(raw)
+        if unsecure_share_certificate.author.user_id != claimer_user_id:
+            continue
+
+        # Retrieve the share
+        author_certificate = await remote_devices_manager.get_device(
+            unsecure_share_certificate.author
+        )
+        share_certificate = ShamirRecoveryShareCertificate.verify_and_load(
+            raw, author_certificate.verify_key, unsecure_share_certificate.author
+        )
+        share_data = ShamirRecoveryShareData.decrypt_verify_and_load_for(
+            share_certificate.ciphered_share, device.private_key, author_certificate.verify_key
+        )
+        return share_data
+
+    raise InviteError("Shared recovery device not found")
+
 
 def _check_rep(rep: Any, step_name: str, ok_type: Type[T_OK_TYPES]) -> T_OK_TYPES:
     if isinstance(rep, NOT_FOUND_TYPES):
@@ -151,43 +192,6 @@ class DeviceGreetInitialCtx(BaseGreetInitialCtx):
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class ShamirRecoveryGreetInitialCtx(BaseGreetInitialCtx):
-    claimer_user_id: UserID
-
-    async def get_share_data(
-        self, device: LocalDevice, remote_devices_manager: RemoteDevicesManager | None = None
-    ) -> ShamirRecoveryShareData:
-        # Create remote devices manager if necessary
-        if remote_devices_manager is None:
-            remote_devices_manager = RemoteDevicesManager(
-                self._cmds, device.root_verify_key, device.time_provider
-            )
-
-        # Get shamir recovery certificates
-        rep = await self._cmds.shamir_recovery_others_list()
-        if isinstance(rep, ShamirRecoveryOthersListRepUnknownStatus):
-            raise InviteError(f"Unknown status: {rep.status}")
-        assert isinstance(rep, ShamirRecoveryOthersListRepOk)
-
-        # Look for the right certificate
-        for raw in rep.share_certificates:
-            unsecure_share_certificate = ShamirRecoveryShareCertificate.unsecure_load(raw)
-            if unsecure_share_certificate.author.user_id != self.claimer_user_id:
-                continue
-
-            # Retrieve the share
-            author_certificate = await remote_devices_manager.get_device(
-                unsecure_share_certificate.author
-            )
-            share_certificate = ShamirRecoveryShareCertificate.verify_and_load(
-                raw, author_certificate.verify_key, unsecure_share_certificate.author
-            )
-            share_data = ShamirRecoveryShareData.decrypt_verify_and_load_for(
-                share_certificate.ciphered_share, device.private_key, author_certificate.verify_key
-            )
-            return share_data
-
-        raise InviteError("Shared recovery device not found")
-
     async def do_wait_peer(self) -> "ShamirRecoveryGreetInProgress1Ctx":
         claimer_sas, greeter_sas, shared_secret_key = await self._do_wait_peer()
 

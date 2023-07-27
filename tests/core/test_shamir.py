@@ -283,9 +283,11 @@ async def test_shamir_recovery_claim(
 
             async def _run_adam_greeter():
                 (invite_item_from_adam,) = await adam_core.list_invitations()
-                adam_share_data, adam_ctx = await adam_core.start_greeting_shamir_recovery(
-                    invite_item_from_adam.token,
+                adam_share_data = await adam_core.get_shamir_recovery_share_data(
                     invite_item_from_adam.claimer_user_id,
+                )
+                adam_ctx = await adam_core.start_greeting_shamir_recovery(
+                    invite_item_from_adam.token,
                 )
                 adam_ctx = await adam_ctx.do_wait_peer_trust()
                 adam_ctx.generate_claimer_sas_choices(size=3)
@@ -335,9 +337,11 @@ async def test_shamir_recovery_claim(
 
                     # Bob joins in
                     (invite_item_from_bob,) = await adam_core.list_invitations()
-                    bob_share_data, bob_ctx = await bob_core.start_greeting_shamir_recovery(
+                    bob_share_data = await bob_core.get_shamir_recovery_share_data(
+                        invite_item_from_bob.claimer_user_id
+                    )
+                    bob_ctx = await bob_core.start_greeting_shamir_recovery(
                         invite_item_from_bob.token,
-                        invite_item_from_bob.claimer_user_id,
                     )
                     bob_ctx = await bob_ctx.do_wait_peer_trust()
                     bob_ctx.generate_claimer_sas_choices(size=3)
