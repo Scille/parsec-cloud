@@ -1,21 +1,19 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-#[cfg(test)]
-#[path = "../tests/unit/tests.rs"]
-mod tests;
+use libparsec_types::prelude::*;
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone)]
 pub struct ProxyConfig {
     #[cfg(not(target_arch = "wasm32"))]
-    http_proxy: Option<String>,
+    http_proxy: Option<reqwest::Proxy>,
     #[cfg(not(target_arch = "wasm32"))]
-    https_proxy: Option<String>,
+    https_proxy: Option<reqwest::Proxy>,
 }
 
 impl ProxyConfig {
     /// Create a new proxy config with value which is initialized using the env see [ProxyConfig::with_env].
     /// It's an alias over `ProxyConfig::default().with_env()`.
-    pub fn new_from_env() -> Self {
+    pub fn new_from_env() -> anyhow::Result<Self> {
         Self::default().with_env()
     }
 
@@ -25,7 +23,7 @@ impl ProxyConfig {
     /// - `HTTPS_PROXY` env var. will be used to configure the https proxy.
     ///
     /// On `wasm32` this function will do nothing has we cant have access to the env variables since we will be run in a web navigator context.
-    pub fn with_env(self) -> Self {
+    pub fn with_env(self) -> anyhow::Result<Self> {
         self.with_env_internal()
     }
 }
@@ -33,24 +31,19 @@ impl ProxyConfig {
 impl ProxyConfig {
     /// Configure the http client builder with the proxy configuration,
     ///
-    /// On `wasm32` this will do nothing has `wasm32` `reqwest` don't expose `Proxy`
+    /// On `wasm32` this will do nothing as `wasm32` `reqwest` don't expose `Proxy`
     /// And we likely prefer use the web navigator to handle the proxy configuration.
     // TODO: In the future we would like to provide an `url` alongside the build to handle the proxy pac.
-    pub fn configure_http_client(
-        &self,
-        builder: reqwest::ClientBuilder,
-    ) -> reqwest::Result<reqwest::ClientBuilder> {
+    pub fn configure_http_client(&self, builder: reqwest::ClientBuilder) -> reqwest::ClientBuilder {
         self.configure_http_client_internal(builder)
     }
 }
 
 #[cfg(not(target_arch = "wasm32"))]
 mod native {
-    use std::{iter::Chain, option::IntoIter};
-
     use reqwest::Proxy;
 
-    use super::ProxyConfig;
+    use super::*;
 
     #[cfg(not(test))]
     pub const HTTP_PROXY: &str = "HTTP_PROXY";
@@ -63,50 +56,56 @@ mod native {
 
     impl ProxyConfig {
         /// Set the http proxy to use, will overwrite the previous configuration.
-        pub(crate) fn with_http_proxy<S: AsRef<str>>(mut self, proxy: S) -> Self {
-            self.http_proxy.replace(proxy.as_ref().to_string());
-            self
+        pub(crate) fn with_http_proxy(mut self, proxy: String) -> anyhow::Result<Self> {
+            let proxy = Proxy::http(proxy)
+                .map_err(|e| anyhow::anyhow!("Invalid HTTP proxy configuration: {}", e))?;
+            self.http_proxy.replace(proxy);
+            Ok(self)
         }
 
         /// Set the https proxy to use, will overwrite the previous configuration.
-        pub(crate) fn with_https_proxy<S: AsRef<str>>(mut self, proxy: S) -> Self {
-            self.https_proxy.replace(proxy.as_ref().to_string());
-            self
+        pub(crate) fn with_https_proxy(mut self, proxy: String) -> anyhow::Result<Self> {
+            let proxy = Proxy::https(proxy)
+                .map_err(|e| anyhow::anyhow!("Invalid HTTPS proxy configuration: {}", e))?;
+            self.https_proxy.replace(proxy);
+            Ok(self)
         }
 
-        pub(crate) fn with_env_internal(self) -> Self {
-            let cfg = if let Ok(proxy) = std::env::var(crate::HTTP_PROXY) {
-                self.with_http_proxy(proxy)
-            } else {
-                self
-            };
+        pub(crate) fn with_env_internal(self) -> anyhow::Result<Self> {
+            let cfg = self;
 
-            if let Ok(proxy) = std::env::var(crate::HTTPS_PROXY) {
-                cfg.with_https_proxy(proxy)
+            let cfg = if let Ok(proxy) = std::env::var(crate::HTTP_PROXY) {
+                cfg.with_http_proxy(proxy)?
             } else {
                 cfg
-            }
+            };
+
+            let cfg = if let Ok(proxy) = std::env::var(crate::HTTPS_PROXY) {
+                cfg.with_https_proxy(proxy)?
+            } else {
+                cfg
+            };
+
+            Ok(cfg)
         }
 
         pub(crate) fn configure_http_client_internal(
             &self,
             mut builder: reqwest::ClientBuilder,
-        ) -> reqwest::Result<reqwest::ClientBuilder> {
-            for proxy in self.get_proxies() {
-                builder = builder.proxy(proxy?);
-            }
+        ) -> reqwest::ClientBuilder {
+            builder = if let Some(http_proxy) = self.http_proxy.clone() {
+                builder.proxy(http_proxy)
+            } else {
+                builder
+            };
 
-            Ok(builder)
-        }
+            builder = if let Some(https_proxy) = self.https_proxy.clone() {
+                builder.proxy(https_proxy)
+            } else {
+                builder
+            };
 
-        pub(crate) fn get_proxies(
-            &self,
-        ) -> Chain<IntoIter<reqwest::Result<Proxy>>, IntoIter<reqwest::Result<Proxy>>> {
-            self.http_proxy
-                .as_ref()
-                .map(Proxy::http)
-                .into_iter()
-                .chain(self.https_proxy.as_ref().map(Proxy::https).into_iter())
+            builder
         }
     }
 }
@@ -116,18 +115,22 @@ pub use native::{HTTPS_PROXY, HTTP_PROXY};
 
 #[cfg(target_arch = "wasm32")]
 mod web {
-    use super::ProxyConfig;
+    use super::*;
 
     impl ProxyConfig {
-        pub(crate) fn with_env_internal(self) -> Self {
-            self
+        pub(crate) fn with_env_internal(self) -> anyhow::Result<Self> {
+            Ok(self)
         }
 
         pub(crate) fn configure_http_client_internal(
             &self,
             builder: reqwest::ClientBuilder,
-        ) -> reqwest::Result<reqwest::ClientBuilder> {
-            Ok(builder)
+        ) -> reqwest::ClientBuilder {
+            builder
         }
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/tests.rs"]
+mod tests;
