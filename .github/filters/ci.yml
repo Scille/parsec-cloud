@@ -29,15 +29,15 @@ any-python:
   - "**.pyi"
 
 python: &python
-  - parsec/**
-  - tests/**
+  - /server/parsec/**
+  - /server/tests/**
   - make.py
-  - build.py
+  - /server/build.py
 
 python-dependencies-project: &python-dependencies-project
-  - pyproject.toml
-  - poetry.lock
-  - setup.cfg
+  - server/pyproject.toml
+  - server/poetry.lock
+  - server/setup.cfg
 
 new-client-dependencies-project: &new-client-dependencies-project
   - client/*.ts
