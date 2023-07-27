@@ -62,6 +62,7 @@ botocore = { version = "^1.26" }
 # Swift
 python-swiftclient = { version = ">=3.13,<5.0" }
 pbr = { version = "^5.9" }
+async-generator = "1.10"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0"

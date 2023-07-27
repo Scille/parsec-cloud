@@ -34,6 +34,17 @@ files = [
 ]
 
 [[package]]
+name = "async-generator"
+version = "1.10"
+description = "Async generators and context managers for Python 3.5+"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "async_generator-1.10-py3-none-any.whl", hash = "sha256:01c7bf666359b4967d2cda0000cc2e4af16a0ae098cbffcb8472fb9e8ad6585b"},
+    {file = "async_generator-1.10.tar.gz", hash = "sha256:6ebb3d106c12920aaae42ccb6f787ef5eefdcdd166ea3d628fa8476abe712144"},
+]
+
+[[package]]
 name = "asyncpg"
 version = "0.26.0"
 description = "An asyncio PostgreSQL driver"
@@ -2356,4 +2367,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.9.10"
-content-hash = "df4ea4243ed6cb1caa3d103b5afa00a3f66984acda235d50ec34ac1f5d0f03e3"
+content-hash = "f0f8c00673a5ea7798aa1957a9c63904780a39c4a89b15ade1b9f73a1001ddcd"
