@@ -103,7 +103,7 @@ export interface MockWorkspace {
   lastUpdate: DateTime;
 }
 
-export enum OrganizationRole {
+export enum Profile {
   Owner = 'owner',
   Admin = 'administrator',
   Standard = 'standard',
@@ -116,7 +116,7 @@ export interface MockUser {
   email: string,
   avatar: string,
   joined: DateTime,
-  role: string,
+  profile: Profile,
   revoked: boolean
 }
 
@@ -127,7 +127,7 @@ const MOCK_USERS: MockUser[] = [
     email: 'cernd@gmail.com',
     avatar: 'ce',
     joined: DateTime.fromISO('2023-05-10T08:00:00'),
-    role: OrganizationRole.Owner,
+    profile: Profile.Owner,
     revoked: false
   },
   {
@@ -136,7 +136,7 @@ const MOCK_USERS: MockUser[] = [
     email: 'val@gmail.com',
     avatar: 'vc',
     joined: DateTime.fromISO('2022-01-10T08:00:00'),
-    role: OrganizationRole.Standard,
+    profile: Profile.Standard,
     revoked: false
   },
   {
@@ -145,7 +145,7 @@ const MOCK_USERS: MockUser[] = [
     email: 'drozrt@gmail.com',
     avatar: 'dd',
     joined: DateTime.fromISO('2023-04-10T08:00:00'),
-    role: OrganizationRole.Admin,
+    profile: Profile.Admin,
     revoked: false
   },
   {
@@ -154,7 +154,7 @@ const MOCK_USERS: MockUser[] = [
     email: 'coloia@gmail.com',
     avatar: 'ch',
     joined: DateTime.fromISO('2023-04-10T08:00:00'),
-    role: OrganizationRole.External,
+    profile: Profile.External,
     revoked: false
   }
 ];

@@ -5,11 +5,31 @@
     button
     class="user-list-item"
     lines="full"
+    :detail="false"
+    :class="{ selected: isSelected, 'no-padding-end': !isSelected }"
+    @click="$emit('click', $event, user)"
+    @mouseenter="isHovered = true"
+    @mouseleave="isHovered = false"
   >
+    <div
+      class="user-selected"
+    >
+      <ion-checkbox
+        v-model="isSelected"
+        v-if="isSelected || isHovered || showCheckbox"
+        class="checkbox"
+        @click.stop
+        @ion-change="$emit('select', user, isSelected)"
+      />
+    </div>
+
     <!-- user name -->
     <div class="user-name">
       <ion-label class="user-name__label cell">
-        {{ user?.name }}
+        <user-tag
+          class="main-cell"
+          :user="user.name"
+        />
       </ion-label>
     </div>
 
@@ -28,22 +48,24 @@
     </div>
 
     <!-- user size -->
-    <div class="join-on">
+    <div class="user-join">
       <ion-label
-        class="join-on-label cell"
+        class="user-join-label cell"
       >
-        {{ user.joined }}
+        {{ timeSince(user.joined, '--', 'short') }}
       </ion-label>
     </div>
 
     <!-- options -->
-    <div class="user-options">
+    <div class="user-options ion-item-child-clickable">
       <ion-button
         fill="clear"
         class="options-button"
+        @click.stop="$emit('menuClick', $event, user)"
       >
         <ion-icon
           slot="icon-only"
+          :icon="ellipsisHorizontal"
           class="options-button__icon"
         />
       </ion-button>
@@ -56,14 +78,40 @@ import {
   IonItem,
   IonLabel,
   IonIcon,
-  IonButton
+  IonButton,
+  IonCheckbox
 } from '@ionic/vue';
+import {
+  ellipsisHorizontal
+} from 'ionicons/icons';
 import { MockUser } from '@/common/mocks';
 import TagRole from '@/components/tagRole.vue';
+import { FormattersKey, Formatters } from '@/common/injectionKeys';
+import { defineProps, inject } from 'vue';
+import { defineEmits, defineExpose, ref } from '@vue/runtime-core';
+import UserTag from '@/components/UserTag.vue';
+
+const isHovered = ref(false);
+const isSelected = ref(false);
 
 defineProps<{
-  user: MockUser
+  user: MockUser,
+  showCheckbox: boolean
 }>();
+
+defineEmits<{
+  (e: 'click', event: Event, user: MockUser): void,
+  (e: 'menuClick', event: Event, user: MockUser): void,
+  (e: 'select', user: MockUser, selected: boolean): void
+}>();
+
+defineExpose({
+  isHovered,
+  isSelected
+});
+
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const { timeSince } = inject(FormattersKey)! as Formatters;
 </script>
 
 <style scoped lang="scss">
@@ -75,7 +123,7 @@ defineProps<{
     --padding-start: 0px;
   }
 
-  &:hover:not(.selected) {
+  &:hover:not(.item-checkbox-checked) {
     --background-hover: var(--parsec-color-light-primary-30);
     --background-hover-opacity: 1;
   }
@@ -83,7 +131,6 @@ defineProps<{
   &:hover, &.selected {
     .cell, .options-button__icon {
       color: var(--parsec-color-light-secondary-text);
-      --background: red;
     }
   }
 
@@ -91,7 +138,19 @@ defineProps<{
     --background-focused: var(--parsec-color-light-primary-100);
     --background: var(--parsec-color-light-primary-100);
     --background-focused-opacity: 1;
+  }
+
+  &.selected, &:focus {
     --border-width: 0;
+  }
+
+  &.item-checkbox-checked {
+    --background: var(--parsec-color-light-primary-100);
+    --background-checked-opacity: 1;
+
+    .cell, .options-button__icon {
+      color: var(--parsec-color-light-secondary-text);
+    }
   }
 }
 
@@ -110,33 +169,35 @@ defineProps<{
 .user-name {
   padding: .75rem 1rem;
   width: 100%;
+  max-width: 20vw;
+  min-width: 11.25rem;
   white-space: nowrap;
   overflow: hidden;
-
-  &__label {
-    color: var(--parsec-color-light-secondary-text);
-    margin-left: 1em;
-  }
 }
 
-.user-updatedBy {
-  min-width: 11.25rem;
+.user-email {
+  min-width: 17.5rem;
+  flex-grow: 0;
+  color: var(--parsec-color-light-secondary-grey);
+}
+
+.user-role {
+  min-width: 11.5rem;
   max-width: 10vw;
   flex-grow: 2;
 }
 
-.user-lastUpdate {
+.user-join {
   min-width: 11.25rem;
   flex-grow: 0;
-}
-
-.user-size {
-  min-width: 11.25rem;
+  overflow: hidden;
+  color: var(--parsec-color-light-secondary-grey);
 }
 
 .user-options {
-  flex-grow: 0;
-  margin-left: auto;
+  min-width: 4rem;
+    flex-grow: 0;
+    margin-left: auto;
 
   ion-button::part(native) {
     padding: 0;
@@ -155,9 +216,5 @@ defineProps<{
       }
     }
   }
-}
-
-.label-size, .label-last-update {
-  color: var(--parsec-color-light-secondary-grey);
 }
 </style>

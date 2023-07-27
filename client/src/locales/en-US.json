@@ -363,6 +363,15 @@
             "admin": "Administrator",
             "standard": "Standard",
             "external": "External"
+        },
+        "userSelectedCount": "No user selected | 1 user selected | {count} users selected",
+        "userContextMenu": {
+            "titleRemove": "Deletion",
+            "titleDetails": "User details",
+            "actionRevoke": "Revoke this user",
+            "actionRevokeSelectedUser": "Revoke these users",
+            "actionDetails": "View details",
+            "actionSeeCommonWorkspaces": "See common workspaces"
         }
     }
 }

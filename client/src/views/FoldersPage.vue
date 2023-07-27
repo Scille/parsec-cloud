@@ -436,48 +436,6 @@ function resetSelection(): void {
   overflow-y: auto;
 }
 
-.folder-footer {
-  width: 100%;
-  position: fixed;
-  bottom: 0;
-  padding: 1em 0 2.5em;
-  text-align: center;
-  background: linear-gradient(360deg, #FFF 0%, rgba(255, 255, 255, 0.00) 100%);
-
-  &__container {
-    background: var(--parsec-color-light-secondary-background);
-    width: fit-content;
-    height: 3rem;
-    padding: 0.5rem 1rem;
-    margin: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: var(--parsec-shadow-light);
-    border-radius: var(--parsec-radius-4);
-    gap: 1rem;
-  }
-
-  .shortcuts-btn {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-
-    &::before {
-      background: var(--parsec-color-light-secondary-light);
-      content: '';
-      width: 1.5px;
-      border-radius: var(--parsec-radius-4);
-      height: calc(100% - .5rem);
-      display: block;
-    }
-  }
-
-  .text {
-    color: var(--parsec-color-light-secondary-text);
-  }
-}
-
 .right-side {
   margin-left: auto;
   display: flex;

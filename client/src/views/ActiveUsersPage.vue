@@ -7,15 +7,46 @@
       <action-bar
         id="activate-users-action-bar"
       >
-        <button-option
-          id="button-invite-user"
-          :button-label="$t('UsersPage.inviteUser')"
-          @click="inviteUser()"
-          v-show="isAdmin()"
-        />
+      <div v-if="selectedUsersCount === 0">
+            <button-option
+              :icon="personAdd"
+              id="button-invite-user"
+              :button-label="$t('UsersPage.inviteUser')"
+              @click="inviteUser()"
+              v-show="isAdmin()"
+            />
+          </div>
+          <!-- revoke or view common workspace -->
+          <div v-else-if="selectedUsersCount === 1">
+            <button-option
+              :icon="personRemove"
+              id="button-revoke-user"
+              :button-label="$t('UsersPage.userContextMenu.actionRevoke')"
+              @click="revokeUser()"
+              v-show="isAdmin()"
+            />
+            <button-option
+              :icon="eye"
+              id="button-common-workspaces"
+              :button-label="$t('UsersPage.userContextMenu.actionSeeCommonWorkspaces')"
+              @click="viewCommonWorkspace()"
+            />
+          </div>
+          <!-- revoke -->
+          <div v-else>
+            <button-option
+              :icon="personRemove"
+              class="danger"
+              id="button-revoke-users"
+              :button-label="$t('UsersPage.userContextMenu.actionRevokeSelectedUser')"
+              @click="revokeUser()"
+              v-show="isAdmin()"
+            />
+          </div>
         <div class="right-side">
           <list-grid-toggle
             v-model="displayView"
+            @update:model-value="resetSelection()"
           />
         </div>
       </action-bar>
@@ -27,6 +58,13 @@
               class="user-list-header"
               lines="full"
             >
+              <ion-label class="user-list-header__label label-selected">
+                <ion-checkbox
+                  class="checkbox"
+                  @ion-change="selectAllUsers($event.detail.checked)"
+                  v-model="allUsersSelected"
+                />
+              </ion-label>
               <ion-label class="user-list-header__label label-name">
                 {{ $t('UsersPage.listDisplayTitles.name') }}
               </ion-label>
@@ -45,6 +83,10 @@
               v-for="user in filteredUsers"
               :key="user.id"
               :user="user"
+              :show-checkbox="selectedUsersCount > 0 || allUsersSelected"
+              @menu-click="openUserContextMenu($event, user)"
+              @select="onUserSelect"
+              ref="userItemRefs"
             />
           </ion-list>
         </div>
@@ -59,12 +101,56 @@
           >
             <user-card
               :user="user"
+              @menu-click="openUserContextMenu($event, user)"
             />
           </ion-item>
         </div>
       </div>
-      <div class="users-footer title-h5">
-        {{ $t('UsersPage.itemCount', { count: userList.length }, userList.length) }}
+      <div class="user-footer">
+        <div class="user-footer__container">
+          <ion-text
+            class="text title-h5"
+            v-if="selectedUsersCount === 0"
+          >
+            {{ $t('UsersPage.itemCount', { count: userList.length }, userList.length) }}
+          </ion-text>
+          <ion-text
+            class="text title-h5"
+            v-if="selectedUsersCount !== 0"
+          >
+            {{ $t('UsersPage.userSelectedCount', { count: selectedUsersCount }, selectedUsersCount) }}
+          </ion-text>
+          <div
+            class="content"
+            v-if="selectedUsersCount === 1"
+          >
+            <button-option
+              class="shortcuts-btn danger"
+              :icon="personRemove"
+              id="button-revoke-user"
+              @click="revokeUser()"
+              v-show="isAdmin()"
+            />
+            <button-option
+              class="shortcuts-btn"
+              :icon="eye"
+              id="button-common-workspaces"
+              @click="viewCommonWorkspace()"
+            />
+          </div>
+          <div
+            class="content"
+            v-if="selectedUsersCount >= 2"
+          >
+            <button-option
+              class="shortcuts-btn danger"
+              id="button-move-to"
+              :icon="personRemove"
+              @click="revokeUser()"
+              v-if="selectedUsersCount >= 1"
+            />
+          </div>
+        </div>
       </div>
     </ion-content>
   </ion-page>
@@ -79,20 +165,31 @@ import {
   IonPage,
   IonLabel,
   IonListHeader,
+  IonItemDivider,
+  IonCheckbox
 } from '@ionic/vue';
+import {
+  personRemove,
+  personAdd,
+  eye
+} from 'ionicons/icons';
 import UserListItem from '@/components/Users/UserListItem.vue';
 import UserCard from '@/components/Users/UserCard.vue';
 import ButtonOption from '@/components/ButtonOption.vue';
 import { isAdmin } from '@/common/permissions';
 import ListGridToggle from '@/components/ListGridToggle.vue';
 import DisplayState from '@/components/ListGridToggle.vue';
-import { MockUser } from '@/common/mocks';
-import { getMockUsers } from '@/common/mocks';
+import { popoverController } from '@ionic/vue';
+import UserContextMenu from '@/components/UserContextMenu.vue';
+import { UserAction } from '@/components/UserContextMenu.vue';
+import { MockUser, getMockUsers } from '@/common/mocks';
 import { Ref } from 'vue';
 import { onMounted } from '@vue/runtime-core';
 
 const displayView = ref(DisplayState.List);
 const userList: Ref<MockUser[]> = ref([]);
+const userItemRefs: Ref<typeof UserListItem[]> = ref([]);
+const allUsersSelected = ref(false);
 
 const filteredUsers = computed(() => {
   const revokedUsers = userList.value.filter((user) => {
@@ -101,8 +198,102 @@ const filteredUsers = computed(() => {
   return revokedUsers;
 });
 
+const selectedUsersCount = computed(() => {
+  const count = userItemRefs.value.filter((item) => item.isSelected).length;
+  return count;
+});
+
 function inviteUser(): void {
   console.log('Invite user clicked');
+}
+
+function revokeUser(): void {
+  console.log('Revoke user clicked');
+}
+
+function viewCommonWorkspace(): void {
+  console.log('View common workspace clicked');
+}
+
+function onUserSelect(_user: MockUser, _selected: boolean): void {
+
+  if (selectedUsersCount.value === 0) {
+    allUsersSelected.value = false;
+    selectAllUsers(false);
+  }
+  // check global checkbox if all users are selected
+  if (selectedUsersCount.value === userList.value.length) {
+    allUsersSelected.value = true;
+  } else {
+    allUsersSelected.value = false;
+  }
+}
+
+function selectAllUsers(checked: boolean): void {
+  for (const item of userItemRefs.value || []) {
+    item.isSelected = checked;
+    if (checked) {
+      item.showCheckbox = true;
+    } else {
+      item.showCheckbox = false;
+    }
+  }
+}
+
+function actionOnSelectedUser(action: (user: MockUser) => void): void {
+  const selected = userItemRefs.value.find((item) => item.isSelected);
+
+  if (!selected) {
+    return;
+  }
+  action(selected.props.file);
+}
+
+function actionOnSelectedUsers(action: (user: MockUser) => void): void {
+  const selected = userItemRefs.value.filter((item) => item.isSelected);
+
+  for (const item of selected) {
+    action(item.props.file);
+  }
+}
+
+function revokUser(user: MockUser): void {
+  console.log('Revok user clicked: ', user);
+}
+
+function details(user: MockUser): void {
+  console.log('Details user clicked: ', user);
+}
+
+async function openUserContextMenu(event: Event, user: MockUser): Promise<void> {
+  console.log('menu cliked');
+  const popover = await popoverController
+    .create({
+      component: UserContextMenu,
+      cssClass: 'user-context-menu',
+      event: event,
+      translucent: true,
+      showBackdrop: false,
+      dismissOnSelect: true,
+      reference: 'event'
+    });
+  await popover.present();
+
+  const { data } = await popover.onDidDismiss();
+  const actions = new Map<UserAction, (user: MockUser) => void>([
+    [UserAction.Revok, revokUser],
+    [UserAction.Details, details]
+  ]);
+
+  const fn = actions.get(data.action);
+  if (fn) {
+    fn(user);
+  }
+}
+
+function resetSelection(): void {
+  userItemRefs.value = [];
+  allUsersSelected.value = false;
 }
 
 onMounted(async (): Promise<void> => {
@@ -127,6 +318,14 @@ onMounted(async (): Promise<void> => {
     align-items: center;
   }
 
+  .label-selected {
+    min-width: 4rem;
+    flex-grow: 0;
+    display: flex;
+    align-items: center;
+    justify-content: end;
+  }
+
   .label-name {
     width: 100%;
     max-width: 20vw;
@@ -135,18 +334,18 @@ onMounted(async (): Promise<void> => {
     overflow: hidden;
   }
 
+  .label-email {
+    min-width: 17.5rem;
+    flex-grow: 0;
+  }
+
   .label-role {
-    min-width: 11.25rem;
+    min-width: 11.5rem;
     max-width: 10vw;
     flex-grow: 2;
   }
 
   .label-joined-on {
-    min-width: 14.5rem;
-    flex-grow: 0;
-  }
-
-  .label-email {
     min-width: 11.25rem;
     flex-grow: 0;
   }

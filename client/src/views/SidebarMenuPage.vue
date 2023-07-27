@@ -64,11 +64,11 @@
               <div
                 class="organization-card__manageBtn"
                 v-show="!isOutsider()"
+                @click="router.push({name: 'activeUsers', params: {deviceId: currentRoute.params.deviceId}})"
               >
                 <ion-text
                   class="subtitles-sm"
                   button
-                  @click="router.push({name: 'activeUsers', params: {deviceId: currentRoute.params.deviceId}})"
                 >
                   {{ isAdmin() ? $t('SideMenu.manageOrganization') : $t('SideMenu.organizationInfo') }}
                 </ion-text>
@@ -561,7 +561,7 @@ ion-menu {
 
 .sidebar-item {
   --background:none;
-  border-radius: var(--parsec-radius-4);
+  border-radius: var(--parsec-radius-6);
   border: solid 1px var(--parsec-color-light-primary-800);
   --min-height: 0;
 

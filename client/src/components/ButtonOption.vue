@@ -21,7 +21,7 @@ import {
 } from '@ionic/vue';
 
 defineProps<{
-  buttonLabel?: any
+  buttonLabel?: any,
   icon?: string
 }>();
 </script>
@@ -42,5 +42,10 @@ defineProps<{
   &:hover {
     color: var(--parsec-color-light-primary-600);
   }
+}
+
+.danger:hover {
+  color: var(--parsec-color-light-danger-700);
+  --background-hover: var(--parsec-color-light-danger-100) !important;
 }
 </style>
