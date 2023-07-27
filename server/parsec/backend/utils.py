@@ -84,7 +84,7 @@ def api(fn: Callable[P, T]) -> Callable[P, T]:
 def api_ws_cancel_on_client_sending_new_cmd(fn: Callable[P, T]) -> Callable[P, T]:
     # `@api` must be placed first
     assert hasattr(fn, "_api_info")
-    fn._api_info["cancel_on_client_sending_new_cmd"] = True  # type: ignore[attr-defined]
+    fn._api_info["cancel_on_client_sending_new_cmd"] = True
     return fn
 
 

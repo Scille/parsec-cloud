@@ -225,13 +225,13 @@ def collapse_exception_group(exception_group: BaseExceptionGroup[E]) -> Exceptio
         # Craft the specific class, inheriting from BaseExceptionGroup
         cls: Any = type(name, (type(pick), BaseExceptionGroup), attrs)
         # Instantiate the instance
-        result = cls()
+        result = BaseExceptionGroup.__new__(
+            cls, exception_group.message, exception_group.exceptions
+        )
         # Replicate the picked exception inner state
         result.__dict__.update(pick.__dict__)
         result.args = pick.args
         # Replicate the exception group inner state
-        result._message = exception_group._message
-        result._exceptions = exception_group._exceptions
         result.__cause__ = exception_group.__cause__
         result.__context__ = exception_group.__context__
         result.__traceback__ = exception_group.__traceback__

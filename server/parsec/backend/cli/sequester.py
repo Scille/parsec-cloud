@@ -687,7 +687,7 @@ async def _export_realm(
             else:
                 vlob_total_count_display = click.style(str(vlob_total_count), fg="green")
                 click.echo(f"About {vlob_total_count_display} vlobs need to be exported")
-                with click.progressbar(length=vlob_total_count, label="Exporting vlobs") as bar:
+                with click.progressbar(length=vlob_total_count, label="Exporting vlobs") as bar:  # type: ignore[var-annotated]
                     vlobs_exported_count = 0
                     vlob_batch_size = 1000
                     while True:
@@ -716,7 +716,7 @@ async def _export_realm(
                 block_total_count_display = click.style(str(block_total_count), fg="green")
 
                 click.echo(f"About {block_total_count_display} blocks need to be exported")
-                with click.progressbar(length=block_total_count, label="Exporting blocks") as bar:
+                with click.progressbar(length=block_total_count, label="Exporting blocks") as bar:  # type: ignore[var-annotated]
                     blocks_exported_count = 0
                     block_batch_size = 100
                     while True:
