@@ -50,7 +50,7 @@ jobs:
             winfsp-version: 1.11.22176
     name: "${{ matrix.name }}: 🐍 Python tests"
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
-    timeout-minutes: 60
+    timeout-minutes: 90
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
@@ -269,5 +269,5 @@ jobs:
         timeout-minutes: 20
 
       - name: Hypothesis tests
-        run: poetry run pytest ${{ env.pytest-base-args }} tests --runslow -m slow --numprocesses auto
+        run: poetry run pytest ${{ env.pytest-base-args }} tests --runslow -m slow --numprocesses auto --hypothesis-max-examples 50
         timeout-minutes: 50

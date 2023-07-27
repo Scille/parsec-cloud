@@ -22,7 +22,7 @@ pyo3::create_exception!(
     BackendInvitationOnExistingMember,
     BackendConnectionError
 );
-// TODO: `LoggedCore.new_user_invitation` raise `BackendInvitationOnExistingMember`
+// TODO: `LoggedCore.new_shamir_recovery_invitation` raise `BackendInvitationShamirRecoveryNotSetup`
 // It was convenient to have it inherit `BackendConnectionError` but it would be best to have a specific set of `exception` for it.
 pyo3::create_exception!(
     _parsec,
