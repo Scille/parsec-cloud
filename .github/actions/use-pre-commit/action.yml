@@ -6,10 +6,6 @@ inputs:
     description: options to pass to pre-commit run-precommit
     required: false
     default: ""
-  changed-files:
-    description: List of changed files to run `pre-commit` on, if empty will run on all files
-    required: false
-    default: ""
   config-file:
     description: where is located the pre-commit config file
     required: false
@@ -34,6 +30,9 @@ outputs:
   install-path:
     description: A path where pre-commit.pyz is installed
     value: ${{ inputs.install-dir }}/pre-commit.pyz
+  suggested-args:
+    description: Suggested args to run pre-commit on the minimum of files.
+    value: ${{ steps.suggested-run.outputs.args }}
 
 runs:
   using: composite
@@ -64,6 +63,24 @@ runs:
         python ${{ inputs.install-dir }}/pre-commit.pyz --version
       shell: bash
 
+    - name: Minimal pre-commit work
+      id: suggested-run
+      shell: bash
+      run: |
+        echo 'Suggested pre-commit args:'
+        (
+          case "${{ github.event_name }}" in
+            pull_request)
+              # Ensure base ref is in the git tree
+              git fetch origin ${{ github.base_ref }} >&2
+              echo "args=--origin=HEAD --source=origin/${{ github.base_ref }}"
+            ;;
+            *)
+              echo "args=--all-files"
+            ;;
+          esac
+        ) | tee -a $GITHUB_OUTPUT
+
     - name: Run pre-commit
       if: inputs.install-only != 'true'
       run: |
@@ -78,7 +95,7 @@ runs:
           $EXTRA_ARGS
       env:
         EXTRA_ARGS: >-
-          ${{ inputs.changed-files != '' && format('--files {0}', inputs.changed-files) || '--all-files '}}
           ${{ inputs.config-file != '' && format('--config {0}', inputs.config-file) || '' }}
+          ${{ steps.suggested-run.outputs.args }}
           ${{ inputs.extra-args }}
       shell: bash

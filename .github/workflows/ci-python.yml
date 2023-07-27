@@ -42,9 +42,7 @@ jobs:
         timeout-minutes: 5
 
       - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
-        id: changes
         with:
-          list-files: shell
           filters: .github/filters/ci.yml
 
       - name: Set apt mirror
@@ -162,11 +160,8 @@ jobs:
               --show-diff-on-failure \
               --verbose \
               --color=always \
-              $EXTRA_ARGS
+              ${{ steps.pre-commit.outputs.suggested-args }}
           done
-        env:
-          EXTRA_ARGS: >-
-            ${{ steps.changes.outputs.any-python_files != '' && format('--files {0}', steps.changes.outputs.any-python_files) || '--all-files' }}
         timeout-minutes: 10
 
       # We only save the libparsec lib when:

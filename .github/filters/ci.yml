@@ -24,10 +24,6 @@ rust-python-binding: &rust-python-binding src/**
 
 rust-web-binding: &rust-web-binding bindings/web/**
 
-any-python:
-  - "**.py"
-  - "**.pyi"
-
 python: &python
   - /server/parsec/**
   - /server/tests/**
