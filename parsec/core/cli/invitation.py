@@ -16,6 +16,7 @@ from parsec._parsec import (
     InviteListRepOk,
     InviteNewRepOk,
     ShamirRecoveryRecipient,
+    UserID,
 )
 from parsec.api.protocol import DeviceLabel, HumanHandle, InvitationToken, UserProfile
 from parsec.cli_utils import async_prompt, cli_exception_handler, spinner
@@ -43,6 +44,7 @@ from parsec.core.invite import (
     UserClaimInitialCtx,
     UserGreetInitialCtx,
     claimer_retrieve_info,
+    get_shamir_recovery_share_data,
 )
 from parsec.core.recovery import generate_new_device_from_recovery
 from parsec.core.types import BackendInvitationAddr, LocalDevice
@@ -266,10 +268,14 @@ async def _do_greet_device(device: LocalDevice, initial_ctx: DeviceGreetInitialC
 
 
 async def _do_greet_shamir_recovery(
-    device: LocalDevice, initial_ctx: ShamirRecoveryGreetInitialCtx
+    device: LocalDevice,
+    initial_ctx: ShamirRecoveryGreetInitialCtx,
+    claimer_user_id: UserID,
 ) -> bool:
     async with spinner("Retreiving the share"):
-        share_data = await initial_ctx.get_share_data(device)
+        share_data = await get_shamir_recovery_share_data(
+            initial_ctx._cmds, device, claimer_user_id
+        )
     async with spinner("Waiting for claimer"):
         in_progress_ctx = await initial_ctx.do_wait_peer()
 
@@ -323,9 +329,15 @@ async def _greet_invitation(
             do_greet = partial(_do_greet_device, device, device_initial_ctx)
         elif invitation.type == InvitationType.SHAMIR_RECOVERY:
             shamir_initial_ctx = ShamirRecoveryGreetInitialCtx(
-                cmds=cmds, token=token, claimer_user_id=invitation.claimer_user_id
+                cmds=cmds,
+                token=token,
             )
-            do_greet = partial(_do_greet_shamir_recovery, device, shamir_initial_ctx)
+            do_greet = partial(
+                _do_greet_shamir_recovery,
+                device,
+                shamir_initial_ctx,
+                claimer_user_id=invitation.claimer_user_id,
+            )
         else:
             assert False
 
