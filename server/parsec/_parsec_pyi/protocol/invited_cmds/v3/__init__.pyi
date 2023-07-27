@@ -13,7 +13,6 @@ from . import (
     ping,
 )
 
-
 class AnyCmdReq:
     @classmethod
     def load(
@@ -27,9 +26,7 @@ class AnyCmdReq:
         | invite_4_claimer_communicate.Req
         | invite_info.Req
         | ping.Req
-    ):
-        ...
-
+    ): ...
 
 __all__ = [
     "AnyCmdReq",
