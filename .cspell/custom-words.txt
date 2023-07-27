@@ -302,6 +302,8 @@ pubout
 pwhash
 pwsh
 PyClass
+pydeps
+pydocs
 pyenv
 PyFunction
 pyinstaller
@@ -318,6 +320,7 @@ pyqtboundsignal
 pyrcc
 pyref
 PYTHONPATH
+pytools
 pywin
 qcollectiongenerator
 qhcp
