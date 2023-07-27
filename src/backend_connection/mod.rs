@@ -48,6 +48,10 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
         py.get_type::<BackendInvitationOnExistingMember>(),
     )?;
     m.add(
+        "BackendInvitationShamirRecoveryNotSetup",
+        py.get_type::<BackendInvitationShamirRecoveryNotSetup>(),
+    )?;
+    m.add(
         "BackendOutOfBallparkError",
         py.get_type::<BackendOutOfBallparkError>(),
     )?;

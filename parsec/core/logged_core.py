@@ -22,6 +22,7 @@ from parsec._parsec import (
     InviteListRepOk,
     InviteNewRepAlreadyMember,
     InviteNewRepOk,
+    InviteNewRepShamirRecoveryNotSetup,
     OrganizationConfig,
     OrganizationStats,
     OrganizationStatsRepOk,
@@ -43,6 +44,7 @@ from parsec.core.backend_connection import (
     BackendInvitationAlreadyUsed,
     BackendInvitationNotFound,
     BackendInvitationOnExistingMember,
+    BackendInvitationShamirRecoveryNotSetup,
     BackendNotAvailable,
     BackendNotFoundError,
 )
@@ -320,6 +322,10 @@ class LoggedCore:
         rep = await self._backend_conn.cmds.invite_new(
             type=InvitationType.SHAMIR_RECOVERY, claimer_user_id=user_id, send_email=send_email
         )
+        if isinstance(rep, InviteNewRepShamirRecoveryNotSetup):
+            raise BackendInvitationShamirRecoveryNotSetup(
+                "No shamir recovery has been setup for this user"
+            )
         if not isinstance(rep, InviteNewRepOk):
             raise BackendConnectionError(f"Backend error: {rep}")
         try:

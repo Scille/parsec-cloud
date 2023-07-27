@@ -8,6 +8,7 @@ from parsec._parsec_pyi import (
     BackendInvitationAlreadyUsed,
     BackendInvitationNotFound,
     BackendInvitationOnExistingMember,
+    BackendInvitationShamirRecoveryNotSetup,
     BackendNotAvailable,
     BackendNotFoundError,
     BackendOutOfBallparkError,
@@ -636,6 +637,7 @@ __all__ = [
     "BackendInvitationNotFound",
     "BackendNotFoundError",
     "BackendInvitationOnExistingMember",
+    "BackendInvitationShamirRecoveryNotSetup",
     "BackendOutOfBallparkError",
     # Data Error
     "DataError",

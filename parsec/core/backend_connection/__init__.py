@@ -7,6 +7,7 @@ from parsec._parsec import (
     BackendInvitationAlreadyUsed,
     BackendInvitationNotFound,
     BackendInvitationOnExistingMember,
+    BackendInvitationShamirRecoveryNotSetup,
     BackendNotAvailable,
     BackendNotFoundError,
     BackendOutOfBallparkError,
@@ -35,6 +36,7 @@ __all__ = (
     "BackendInvitationAlreadyUsed",
     "BackendNotFoundError",
     "BackendInvitationOnExistingMember",
+    "BackendInvitationShamirRecoveryNotSetup",
     "BackendOutOfBallparkError",
     # Authenticated
     "BackendAuthenticatedCmds",
