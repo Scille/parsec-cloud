@@ -82,9 +82,34 @@ updates:
       time: "04:20"
       timezone: Europe/Paris
     groups:
-      pythons-dependencies:
+      pytest:
+        patterns:
+          - pytest-*
+          - hypothesis
+      pytools:
+        patterns:
+          - ruff
+          - black
+          - mypy
+          - maturin
+          - editorconfig-checker
+          - setuptools
+      pydocs:
+        patterns:
+          - sphinx*
+      pydeps:
         patterns:
           - "*"
+        exclude-patterns:
+          - pytest-*
+          - hypothesis
+          - ruff
+          - black
+          - mypy
+          - maturin
+          - editorconfig-checker
+          - setuptools
+          - sphinx*
     open-pull-requests-limit: 5
     rebase-strategy: disabled
 
