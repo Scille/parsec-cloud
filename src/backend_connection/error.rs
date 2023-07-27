@@ -22,6 +22,13 @@ pyo3::create_exception!(
     BackendInvitationOnExistingMember,
     BackendConnectionError
 );
+// TODO: `LoggedCore.new_user_invitation` raise `BackendInvitationOnExistingMember`
+// It was convenient to have it inherit `BackendConnectionError` but it would be best to have a specific set of `exception` for it.
+pyo3::create_exception!(
+    _parsec,
+    BackendInvitationShamirRecoveryNotSetup,
+    BackendConnectionError
+);
 pyo3::create_exception!(_parsec, BackendOutOfBallparkError, BackendConnectionError);
 
 pub(crate) struct CommandExc(libparsec::client_connection::CommandError);

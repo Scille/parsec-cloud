@@ -9,6 +9,7 @@ import trio
 from parsec import FEATURE_FLAGS
 from parsec._parsec import (
     BackendInvitationAddr,
+    BackendInvitationShamirRecoveryNotSetup,
     CoreEvent,
     DeviceLabel,
     InvitationDeletedReason,
@@ -17,7 +18,7 @@ from parsec._parsec import (
 )
 from parsec.core.backend_connection import backend_invited_cmds_factory
 from parsec.core.invite import ShamirRecoveryClaimPreludeCtx, claimer_retrieve_info
-from parsec.core.logged_core import BackendConnectionError, LoggedCore
+from parsec.core.logged_core import LoggedCore
 from parsec.core.recovery import generate_new_device_from_recovery
 from parsec.core.shamir import (
     ShamirRecoveryNotSetError,
@@ -160,7 +161,7 @@ async def test_shamir_recovery_invitation(
 
     # Bob tries to create an invitation for Alice
     # but the shamir recovery device hasn't been created yet
-    with pytest.raises(BackendConnectionError):
+    with pytest.raises(BackendInvitationShamirRecoveryNotSetup):
         await bob_core.new_shamir_recovery_invitation(alice.user_id, send_email=True)
 
     # Create a first shamir recovery device for alice
