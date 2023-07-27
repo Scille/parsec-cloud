@@ -6,7 +6,6 @@
     class="file-list-item"
     lines="full"
     :detail="false"
-    :class="{ selected: isSelected, 'no-padding-end': !isSelected }"
     @click="$emit('click', $event, file)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"

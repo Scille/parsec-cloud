@@ -19,6 +19,7 @@ http://ionicframework.com/docs/theming/ */
 @import "components/scrollbars";
 @import "components/contextual-menu";
 @import "components/tags";
+@import "components/footerList";
 
 /**** Global CSS overloads ****/
 
@@ -43,4 +44,13 @@ ion-list.container {
 
 ion-grid.md {
   padding: 0;
+}
+
+ion-item > .ion-item-child-clickable {
+  z-index: 2;
+  position: relative;
+}
+
+ion-icon {
+  margin-inline: 0;
 }
