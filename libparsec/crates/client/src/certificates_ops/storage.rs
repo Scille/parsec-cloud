@@ -84,7 +84,6 @@ pub(super) enum UpTo {
 impl CertificatesCachedStorage {
     pub async fn start(data_base_dir: &Path, device: Arc<LocalDevice>) -> anyhow::Result<Self> {
         let storage = storage::CertificatesStorage::start(data_base_dir, &device).await?;
-        // let current_profile = storage.get_
         Ok(Self {
             device,
             cache: Default::default(),
