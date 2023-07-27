@@ -13,7 +13,6 @@ python-bindings-support = [
 ]
 test-utils = [
     "dep:libparsec_testbed",
-    "libparsec_client_high_level_api/test-utils",
     "libparsec_platform_device_loader/test-with-testbed",
     "libparsec_platform_storage/test-with-testbed",
     "libparsec_types/test-mock-time",
@@ -21,7 +20,6 @@ test-utils = [
 ]
 
 [dependencies]
-libparsec_client_high_level_api = { workspace = true}
 libparsec_protocol = { workspace = true }
 libparsec_crypto = { workspace = true }
 libparsec_types = { workspace = true }

@@ -10,5 +10,3 @@ pub mod low_level {
     pub use libparsec_testbed as testbed;
     pub use libparsec_types as types;
 }
-
-pub use libparsec_client_high_level_api::*;

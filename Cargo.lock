@@ -1179,7 +1179,6 @@ checksum = "f7012b1bbb0719e1097c47611d3898568c546d597c2e74d66f6087edd5233ff4"
 name = "libparsec"
 version = "0.0.0"
 dependencies = [
- "libparsec_client_high_level_api",
  "libparsec_crypto",
  "libparsec_platform_device_loader",
  "libparsec_platform_storage",
@@ -1257,21 +1256,6 @@ dependencies = [
  "once_cell",
  "reqwest",
  "reqwest-eventsource",
- "thiserror",
-]
-
-[[package]]
-name = "libparsec_client_high_level_api"
-version = "0.0.0"
-dependencies = [
- "libparsec_client",
- "libparsec_crypto",
- "libparsec_platform_async",
- "libparsec_platform_device_loader",
- "libparsec_protocol",
- "libparsec_testbed",
- "libparsec_types",
- "once_cell",
  "thiserror",
 ]
 

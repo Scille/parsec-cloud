@@ -4,7 +4,6 @@ members = [
     "libparsec",
     "libparsec/crates/client",
     "libparsec/crates/client_connection",
-    "libparsec/crates/client_high_level_api",
     "libparsec/crates/crypto",
     "libparsec/crates/platform_async",
     "libparsec/crates/platform_device_loader",
@@ -25,7 +24,6 @@ default-members = [
     "libparsec",
     "libparsec/crates/client",
     "libparsec/crates/client_connection",
-    "libparsec/crates/client_high_level_api",
     "libparsec/crates/crypto",
     "libparsec/crates/platform_async",
     "libparsec/crates/platform_device_loader",
@@ -49,7 +47,6 @@ default-members = [
 # check the default feature and making sure they are actually needed ;-)
 [workspace.dependencies]
 libparsec = { path = "libparsec", default-features = false }
-libparsec_client_high_level_api = { path = "libparsec/crates/client_high_level_api", default-features = false }
 libparsec_protocol = { path = "libparsec/crates/protocol", default-features = false }
 libparsec_crypto = { path = "libparsec/crates/crypto", default-features = false }
 libparsec_types = { path = "libparsec/crates/types", default-features = false }
