@@ -27,7 +27,7 @@ def capsentry():
         def _collect_events(event):
             events.append(event)
 
-        config = build_sentry_configuration(dsn="whatever", environment="ci")
+        config = build_sentry_configuration(dsn="http://foo:bar@whatever/42", environment="ci")
         sentry_sdk.init(**config, transport=_collect_events)
 
         yield events
