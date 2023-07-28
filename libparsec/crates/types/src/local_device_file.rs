@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::path::PathBuf;
 
+use libparsec_crypto::Password;
 use libparsec_serialization_format::parsec_data;
 
 use crate as libparsec_types;
@@ -151,6 +152,26 @@ impl DeviceFileType {
     pub fn load(bytes: &[u8]) -> Result<Self, rmp_serde::decode::Error> {
         rmp_serde::from_slice(bytes)
     }
+}
+
+/// Represent how to load/save a device file
+/// Note this is only for regular device given recovery device has dedicated
+/// import/export functions.
+#[derive(Debug, Clone, PartialEq)]
+pub enum DeviceAccessStrategy {
+    Password {
+        key_file: PathBuf,
+        password: Password,
+    },
+    Smartcard {
+        key_file: PathBuf,
+    },
+    // Future API that will be use for parsec-web
+    // ServerSide{
+    //     url: BackendOrganizationAddr,
+    //     email: String,
+    //     password: Password,
+    // }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]

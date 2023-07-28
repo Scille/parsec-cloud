@@ -1325,6 +1325,7 @@ dependencies = [
  "libparsec_types",
  "serde_json",
  "web-sys",
+ "zeroize",
 ]
 
 [[package]]
