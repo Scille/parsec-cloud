@@ -128,7 +128,10 @@ fn from_password() {
         "8f46e610b307443ec4ac81a4d799cbe1b97987901d4f681b82dacf3b59cad0a1"
     ));
 
-    assert_eq!(SecretKey::from_password(password, &salt).unwrap(), expected);
+    assert_eq!(
+        SecretKey::from_password(&password, &salt).unwrap(),
+        expected
+    );
 }
 
 #[test]
@@ -154,7 +157,7 @@ fn from_password_salt_too_small() {
     let too_small = b"dummy";
 
     assert!(matches!(
-        SecretKey::from_password("Passw0rd".to_owned().into(), too_small),
+        SecretKey::from_password(&"Passw0rd".to_owned().into(), too_small),
         Err(CryptoError::DataSize)
     ));
 }
