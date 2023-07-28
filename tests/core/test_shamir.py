@@ -307,6 +307,7 @@ async def test_shamir_recovery_claim(
                     prelude_ctx = await claimer_retrieve_info(cmds)
                     await assert_events(InvitationStatus.READY, address.token)
                     assert isinstance(prelude_ctx, ShamirRecoveryClaimPreludeCtx)
+                    assert prelude_ctx.remaining_recipients == prelude_ctx.recipients
                     recipient1, recipient2 = prelude_ctx.recipients
                     if recipient1.user_id == adam.user_id:
                         adam_recipient, bob_recipient = recipient1, recipient2
@@ -327,10 +328,10 @@ async def test_shamir_recovery_claim(
                         # Skip SAS code checks
                         alice_ctx = await alice_ctx.do_signify_trust()
                         alice_ctx = await alice_ctx.do_wait_peer_trust()
-                        new_shares = await alice_ctx.do_recover_share()
-                        assert isinstance(prelude_ctx, ShamirRecoveryClaimPreludeCtx)
-                        assert not prelude_ctx.add_shares(bob_recipient, new_shares)
+                        enough_shares = await alice_ctx.do_recover_share()
+                        assert not enough_shares
                         assert len(prelude_ctx.shares) == 3
+                        assert prelude_ctx.remaining_recipients == [adam_recipient]
                         alice_done_with_bob.set()
 
                     nursery.start_soon(_run_first_alice_claimer)
@@ -358,14 +359,14 @@ async def test_shamir_recovery_claim(
                     # Skip SAS code checks
                     alice_ctx = await alice_ctx.do_signify_trust()
                     alice_ctx = await alice_ctx.do_wait_peer_trust()
-                    new_shares = await alice_ctx.do_recover_share()
-                    assert isinstance(prelude_ctx, ShamirRecoveryClaimPreludeCtx)
-                    assert prelude_ctx.add_shares(adam_recipient, new_shares)
+                    enough_shares = await alice_ctx.do_recover_share()
+                    assert enough_shares
                     assert len(prelude_ctx.shares) == 5
+                    assert prelude_ctx.remaining_recipients == []
                     await adam_done_with_alice.wait()
 
                     # Alice retrieves her recovery device
-                    alice_recovery_device = await prelude_ctx.retreive_recovery_device()
+                    alice_recovery_device = await prelude_ctx.retrieve_recovery_device()
 
     # Alice creates a new device and deletes the invitation
     assert alice_recovery_device.device_id.user_id == alice.user_id
