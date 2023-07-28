@@ -15,9 +15,10 @@
       class="file-selected"
     >
       <ion-checkbox
+        aria-label=""
         class="checkbox"
         v-model="isSelected"
-        v-if="isSelected || isHovered || showCheckbox"
+        v-show="isSelected || isHovered || showCheckbox"
         @click.stop
         @ion-change="$emit('select', file, isSelected)"
       />

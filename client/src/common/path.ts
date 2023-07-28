@@ -24,3 +24,7 @@ export function parse(path: string): string[] {
 
   return splitted;
 }
+
+export function join(path: string, elem: string): string {
+  return path.endsWith('/') ? `${path}${elem}` : `${path}/${elem}`;
+}

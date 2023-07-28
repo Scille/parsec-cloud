@@ -182,6 +182,7 @@ import {
   IonCheckbox,
   IonText,
   popoverController,
+  modalController,
 } from '@ionic/vue';
 import {
   folderOpen,
@@ -205,6 +206,7 @@ import FileContextMenu from '@/components/FileContextMenu.vue';
 import router from '@/router';
 import { FileAction } from '@/components/FileContextMenu.vue';
 import ActionBar from '@/components/ActionBar.vue';
+import FileUploadModal from '@/views/FileUploadModal.vue';
 
 const fileItemRefs: Ref<typeof FileListItem[]> = ref([]);
 const allFilesSelected = ref(false);
@@ -227,7 +229,7 @@ const selectedFilesCount = computed(() => {
 const displayView = ref(DisplayState.List);
 
 function onFileSelect(_file: MockFile, _selected: boolean): void {
-
+  console.log('File Selected');
   if (selectedFilesCount.value === 0) {
     allFilesSelected.value = false;
     selectAllFiles(false);
@@ -241,6 +243,7 @@ function onFileSelect(_file: MockFile, _selected: boolean): void {
 }
 
 function onFileClick(_event: Event, file: MockFile): void {
+  console.log('File Click');
   if (file.type === 'folder') {
     const newPath = (path.value.toString().endsWith('/')) ? `${path.value}${file.name}` : `${path.value}/${file.name}`;
     router.push({
@@ -255,8 +258,16 @@ function createFolder(): void {
   console.log('Create folder clicked');
 }
 
-function importFiles(): void {
-  console.log('Import files clicked');
+async function importFiles(): Promise<void> {
+  const modal = await modalController.create({
+    component: FileUploadModal,
+    cssClass: 'file-upload-modal',
+    componentProps: {
+      currentPath: path.value.toString(),
+    },
+  });
+  await modal.present();
+  await modal.onWillDismiss();
 }
 
 function selectAllFiles(checked: boolean): void {
@@ -324,6 +335,7 @@ function openInExplorer(file: MockFile): void {
 }
 
 async function openFileContextMenu(event: Event, file: MockFile): Promise<void> {
+  console.log('File Menu');
   const popover = await popoverController
     .create({
       component: FileContextMenu,
@@ -337,6 +349,11 @@ async function openFileContextMenu(event: Event, file: MockFile): Promise<void> 
   await popover.present();
 
   const { data } = await popover.onDidDismiss();
+
+  if (!data) {
+    return;
+  }
+
   const actions = new Map<FileAction, (file: MockFile) => void>([
     [FileAction.Rename, renameFile],
     [FileAction.MoveTo, moveTo],

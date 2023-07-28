@@ -29,6 +29,8 @@
 // but here have nothing to import/export... hence this dummy export.
 export {};
 
+import 'cypress-file-upload';
+
 declare global {
 // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Cypress {

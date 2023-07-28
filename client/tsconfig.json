@@ -17,7 +17,8 @@
         "types": [
             "node",
             "cypress",
-            "vite/client"
+            "vite/client",
+            "cypress-file-upload",
         ],
         "paths": {
             "@/*": [
