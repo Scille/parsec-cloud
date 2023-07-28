@@ -76,7 +76,7 @@ function closeModal(): Promise<boolean> {
   margin-bottom: 2rem;
 }
 
-closeBtn-container, .closeBtn {
+.closeBtn-container, .closeBtn {
   margin: 0;
   --padding-start: 0;
   --padding-end: 0;

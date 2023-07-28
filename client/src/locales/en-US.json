@@ -235,6 +235,13 @@
             "actionDetails": "Details",
             "actionCopyLink": "Copy link",
             "actionDelete": "Delete"
+        },
+        "importModal": {
+            "title": "Upload your files",
+            "dragAndDrop": "Drag and drop your files here",
+            "maxSize": "Maximale size: 25Mb",
+            "or": "or",
+            "browse": "Browse"
         }
     },
     "OrganizationPage": {
