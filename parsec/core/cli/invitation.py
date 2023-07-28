@@ -481,15 +481,15 @@ async def _do_claim_shamir_recovery(
         in_progress3_ctx = await in_progress2_ctx.do_wait_peer_trust()
 
     async with spinner("Waiting for greeter (finalizing)"):
-        new_shares = await in_progress3_ctx.do_recover_share()
+        enough_shares = await in_progress3_ctx.do_recover_share()
 
     # Not enough shares to recover the device
-    if not prelude_ctx.add_shares(initial_ctx.recipient, new_shares):
+    if not enough_shares:
         return None
 
     # Enough shares to recover the device
     async with spinner(f"Retreiving the recovery device"):
-        recovery_device = await prelude_ctx.retreive_recovery_device()
+        recovery_device = await prelude_ctx.retrieve_recovery_device()
     requested_device_label = DeviceLabel(
         await async_prompt("Device label", default=platform.node())
     )
@@ -517,7 +517,7 @@ async def _choose_recipient(
         click.echo(
             f"Out of the {styled_threshold} necessary shares, {styled_current_shares} shares have been retrieved so far."
         )
-    for i, recipient in enumerate(prelude_ctx.recipients):
+    for i, recipient in enumerate(prelude_ctx.remaining_recipients):
         assert recipient.human_handle is not None
         styled_human_handle = click.style(recipient.human_handle.str, fg="yellow")
         styled_share_number = click.style(recipient.shares, fg="yellow")
