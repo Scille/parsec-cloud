@@ -330,6 +330,7 @@ async def test_shamir_recovery_claim(
                         alice_ctx = await alice_ctx.do_wait_peer_trust()
                         enough_shares = await alice_ctx.do_recover_share()
                         assert not enough_shares
+                        assert not prelude_ctx.has_enough_shares()
                         assert len(prelude_ctx.shares) == 3
                         assert prelude_ctx.remaining_recipients == [adam_recipient]
                         alice_done_with_bob.set()
@@ -361,6 +362,7 @@ async def test_shamir_recovery_claim(
                     alice_ctx = await alice_ctx.do_wait_peer_trust()
                     enough_shares = await alice_ctx.do_recover_share()
                     assert enough_shares
+                    assert prelude_ctx.has_enough_shares()
                     assert len(prelude_ctx.shares) == 5
                     assert prelude_ctx.remaining_recipients == []
                     await adam_done_with_alice.wait()

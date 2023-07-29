@@ -217,6 +217,9 @@ class ShamirRecoveryClaimPreludeCtx:
             recipient for recipient in self.recipients if recipient.user_id not in self.recovered
         ]
 
+    def has_enough_shares(self) -> bool:
+        return len(self.shares) >= self.threshold
+
     def get_initial_ctx(self, recipient: ShamirRecoveryRecipient) -> ShamirRecoveryClaimInitialCtx:
         return ShamirRecoveryClaimInitialCtx(
             recipient=recipient,
@@ -228,10 +231,9 @@ class ShamirRecoveryClaimPreludeCtx:
 
     def add_shares(self, recipient_user_id: UserID, shares: list[ShamirShare]) -> bool:
         self.recovered[recipient_user_id] = shares
-        return len(self.shares) >= self.threshold
+        return self.has_enough_shares()
 
     async def retrieve_recovery_device(self) -> LocalDevice:
-        assert len(self.shares) >= self.threshold
         recovered_secret = ShamirRecoverySecret.load(
             shamir_recover_secret(self.threshold, self.shares)
         )
