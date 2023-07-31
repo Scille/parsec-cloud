@@ -19,4 +19,4 @@ paste = { workspace = true }
 log = { workspace = true }
 
 [dev-dependencies]
-libparsec_tests_fixtures = { workspace = true }
+libparsec_tests_fixtures = { workspace = true, features=["default"] }
