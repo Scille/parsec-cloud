@@ -137,7 +137,7 @@ async function setupApp(): Promise<void> {
   // from within `setupApp`, so instead it should be called in fire-and-forget
   // and only awaited when it is called from third party code (i.e. when
   // obtained through `window.nextStageHook`, see below)
-  const nextStage = async (configPath: string, locale: undefined | string = undefined): Promise<void> => {
+  const nextStage = async (configPath: string, locale?: string): Promise<void> => {
     await router.isReady();
     // configPath is injected to components
     app.provide(ConfigPathKey, configPath);
@@ -161,11 +161,18 @@ async function setupApp(): Promise<void> {
     // Prod or using devices in local storage
     nextStage('/');  // Fire-and-forget call
   }
+  if (import.meta.env.VITE_APP_TEST_MODE?.toLowerCase() === 'true') {
+    const x = async (): Promise<void> => {
+      await router.isReady();
+      router.push('/test');
+    };
+    x();  // Fire-and-forget call
+  }
 }
 
 declare global {
   interface Window {
-    nextStageHook: () => [any, (configPath: string, locale: undefined | string) => Promise<void>]
+    nextStageHook: () => [any, (configPath: string, locale?: string) => Promise<void>]
   }
 }
 

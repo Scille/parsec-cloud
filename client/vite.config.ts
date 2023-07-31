@@ -19,6 +19,9 @@ if (process.env.VITE_TESTBED_SERVER_URL || process.env.TESTBED_SERVER_URL) {
   // in the web page into "undefined" string...
   process.env.VITE_TESTBED_SERVER_URL = process.env.VITE_TESTBED_SERVER_URL || process.env.TESTBED_SERVER_URL;
 }
+if (process.env.VITE_APP_TEST_MODE || process.env.APP_TEST_MODE) {
+  process.env.VITE_APP_TEST_MODE = process.env.VITE_APP_TEST_MODE || process.env.APP_TEST_MODE;
+}
 
 // 1) Detect for what platform we are building for (web or native)
 
