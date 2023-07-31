@@ -22,6 +22,7 @@ META_TYPES = [
     "Result",
     "Ref",
     "StrBasedType",
+    "BytesBasedType",
     "I32BasedType",
     "U32BasedType",
     "Variant",
@@ -34,6 +35,7 @@ META_TYPES = [
 Result: Type = None
 Ref: Type = None
 StrBasedType: Type = None
+BytesBasedType: Type = None
 I32BasedType: Type = None
 U32BasedType: Type = None
 Variant: Type = None
@@ -126,6 +128,13 @@ class BaseTypeInUse:
                 custom_to_rs_string=getattr(param, "custom_to_rs_string", None),
             )
 
+        elif isinstance(param, type) and issubclass(param, BytesBasedType):
+            return BytesBasedTypeInUse(
+                name=param.__name__,
+                custom_from_rs_bytes=getattr(param, "custom_from_rs_bytes", None),
+                custom_to_rs_bytes=getattr(param, "custom_to_rs_bytes", None),
+            )
+
         elif isinstance(param, type) and issubclass(param, I32BasedType):
             return I32BasedTypeInUse(name=param.__name__)
 
@@ -201,6 +210,18 @@ class StrBasedTypeInUse(BaseTypeInUse):
 
 
 @dataclass
+class BytesBasedTypeInUse(BaseTypeInUse):
+    kind = "bytes_based"
+    name: str
+
+    # If set, custom_from_rs_bytes/custom_to_rs_bytes should inlined rust functions
+    # `fn (&[u8]) -> Result<X, AsRef<str>>`
+    custom_from_rs_bytes: str | None = None
+    # `fn (&X) -> Result<Vec<u8>, AsRef<str>>`
+    custom_to_rs_bytes: str | None = None
+
+
+@dataclass
 class I32BasedTypeInUse(BaseTypeInUse):
     kind = "i32_based"
     name: str
@@ -228,6 +249,7 @@ class MethSpec:
 @dataclass
 class ApiSpecs:
     str_based_types: List[StrBasedType]
+    bytes_based_types: List[BytesBasedType]
     i32_based_types: List[I32BasedType]
     u32_based_types: List[U32BasedType]
     meths: List[MethSpec]
@@ -292,10 +314,10 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
                     continue
                 variant_val_type = getattr(item, variant_val_name)
 
-                if issubclass(variant_val_type, VariantItemUnit):
+                if isinstance(variant_val_type, VariantItemUnit):
                     value_spec = VariantItemSpec(name=variant_val_name, is_unit=True)
 
-                elif issubclass(variant_val_type, VariantItemTuple):
+                elif isinstance(variant_val_type, VariantItemTuple):
                     items = getattr(variant_val_type, "items", [])
                     value_spec = VariantItemSpec(
                         name=variant_val_name,
@@ -374,6 +396,11 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             item.__name__
             for item in api_items.values()
             if isinstance(item, type) and issubclass(item, StrBasedType)
+        ],
+        bytes_based_types=[
+            item.__name__
+            for item in api_items.values()
+            if isinstance(item, type) and issubclass(item, BytesBasedType)
         ],
         i32_based_types=[
             item.__name__
