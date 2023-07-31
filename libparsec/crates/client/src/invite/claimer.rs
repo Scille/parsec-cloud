@@ -5,6 +5,8 @@ use std::sync::Arc;
 use libparsec_client_connection::{protocol::invited_cmds, ConnectionError, InvitedCmds};
 use libparsec_types::prelude::*;
 
+use crate::ClientConfig;
+
 #[derive(Debug, thiserror::Error)]
 pub enum ClaimerRetrieveInfoError {
     #[error("Cannot reach the server")]
@@ -405,7 +407,7 @@ impl UserClaimInProgress3Ctx {
         self,
         requested_device_label: Option<DeviceLabel>,
         requested_human_handle: Option<HumanHandle>,
-    ) -> Result<LocalDevice, ClaimInProgressError> {
+    ) -> Result<UserClaimFinalizeCtx, ClaimInProgressError> {
         // User&device keys are generated here and kept in memory until the end of
         // the enrollment process. This mean we can lost it if something goes wrong.
         // This has no impact until step 4 (somewhere between data exchange and
@@ -445,7 +447,7 @@ impl UserClaimInProgress3Ctx {
             root_verify_key,
         );
 
-        Ok(LocalDevice::generate_new_device(
+        let new_local_device = Arc::new(LocalDevice::generate_new_device(
             organization_addr,
             Some(device_id),
             profile,
@@ -453,7 +455,9 @@ impl UserClaimInProgress3Ctx {
             device_label,
             Some(signing_key),
             Some(private_key),
-        ))
+        ));
+
+        Ok(UserClaimFinalizeCtx { new_local_device })
     }
 }
 
@@ -464,7 +468,7 @@ impl DeviceClaimInProgress3Ctx {
     pub async fn do_claim_device(
         self,
         requested_device_label: Option<DeviceLabel>,
-    ) -> Result<LocalDevice, ClaimInProgressError> {
+    ) -> Result<DeviceClaimFinalizeCtx, ClaimInProgressError> {
         // Device key is generated here and kept in memory until the end of
         // the enrollment process. This mean we can lost it if something goes wrong.
         // This has no impact until step 4 (somewhere between data exchange and
@@ -505,7 +509,7 @@ impl DeviceClaimInProgress3Ctx {
             root_verify_key,
         );
 
-        Ok(LocalDevice {
+        let new_local_device = Arc::new(LocalDevice {
             organization_addr,
             device_id,
             device_label,
@@ -517,6 +521,63 @@ impl DeviceClaimInProgress3Ctx {
             user_manifest_key,
             local_symkey: SecretKey::generate(),
             time_provider: Default::default(),
-        })
+        });
+
+        Ok(DeviceClaimFinalizeCtx { new_local_device })
+    }
+}
+
+#[derive(Debug)]
+pub struct UserClaimFinalizeCtx {
+    pub new_local_device: Arc<LocalDevice>,
+}
+
+impl UserClaimFinalizeCtx {
+    pub async fn save_local_device(
+        self,
+        config: &ClientConfig,
+        access: &DeviceAccessStrategy,
+    ) -> Result<(), anyhow::Error> {
+        // Claiming a user means we are it first device, hence we know there
+        // is no existing user manifest (hence our placeholder is non-speculative)
+        libparsec_platform_storage::user::user_storage_non_speculative_init(
+            &config.data_base_dir,
+            &self.new_local_device,
+        )
+        .await
+        .map_err(|e| anyhow::anyhow!("Error while initializing device's user storage: {e}"))?;
+
+        libparsec_platform_device_loader::save_device(
+            &config.config_dir,
+            access,
+            &self.new_local_device,
+        )
+        .await
+        .map_err(|e| anyhow::anyhow!("Error while saving the device file: {e}"))?;
+
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct DeviceClaimFinalizeCtx {
+    pub new_local_device: Arc<LocalDevice>,
+}
+
+impl DeviceClaimFinalizeCtx {
+    pub async fn save_local_device(
+        self,
+        config: &ClientConfig,
+        access: &DeviceAccessStrategy,
+    ) -> Result<(), anyhow::Error> {
+        libparsec_platform_device_loader::save_device(
+            &config.config_dir,
+            access,
+            &self.new_local_device,
+        )
+        .await
+        .map_err(|e| anyhow::anyhow!("Error while saving the device file: {e}"))?;
+
+        Ok(())
     }
 }
