@@ -1253,7 +1253,6 @@ dependencies = [
  "libparsec_testbed",
  "libparsec_tests_fixtures",
  "libparsec_types",
- "once_cell",
  "reqwest",
  "reqwest-eventsource",
  "thiserror",

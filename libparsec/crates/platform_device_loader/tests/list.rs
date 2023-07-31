@@ -26,6 +26,9 @@ async fn list_no_devices(tmp_path: TmpPath, #[case] path_exists: bool) {
 // Ignore the test on MacOS given it is based on creating a non-utf8 folder,
 // which is not possible there (it causes an "Illegal byte sequence" error)
 #[cfg(not(target_os = "macos"))]
+// Also ignore the test on Windows: win32's `CreateDirectoryW` prevent from
+// creating files with an invalid UTF-16 character.
+#[cfg(not(target_family = "windows"))]
 #[parsec_test]
 async fn ignore_invalid_items(tmp_path: TmpPath) {
     let devices_dir = tmp_path.join("devices");
@@ -63,7 +66,7 @@ async fn ignore_invalid_items(tmp_path: TmpPath) {
             use std::os::windows::ffi::OsStringExt;
             // Convert UTF-8 into UTF-16 is easy as long as it is only composed of ASCII
             let mut buf: Vec<u16> = x.as_bytes().iter().map(|c| *c as u16).collect();
-            buf[0] = 0xfffe; // 0xfffe is never valid in UTF-16
+            buf[0] = 0xd800; // 0xd800 is high surrogate, but here it is lacking it pair
             let os_string = std::ffi::OsString::from_wide(&buf);
             std::path::PathBuf::from(os_string.as_os_str())
         }

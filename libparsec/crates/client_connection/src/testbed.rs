@@ -10,7 +10,6 @@ use std::{
 };
 
 pub use bytes::Bytes;
-use once_cell::sync::OnceCell;
 pub use reqwest::{header::HeaderMap, Error as RequestError, StatusCode};
 use reqwest::{RequestBuilder, Response};
 
@@ -247,7 +246,8 @@ pub(crate) fn get_send_hook(config_dir: &Path) -> SendHookConfig {
     .unwrap_or_else(|| {
         // Config dir doesn't correspond to a testbed env, so we provide a generic
         // send hook config that never do any mocking
-        static NO_TESTBED_ENV_SEND_HOOK: OnceCell<Arc<ComponentStore>> = OnceCell::new();
+        static NO_TESTBED_ENV_SEND_HOOK: std::sync::OnceLock<Arc<ComponentStore>> =
+            std::sync::OnceLock::new();
         NO_TESTBED_ENV_SEND_HOOK
             .get_or_init(|| {
                 Arc::new(ComponentStore {
