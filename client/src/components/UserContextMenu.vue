@@ -14,7 +14,7 @@
 
         <ion-item
           button
-          @click="onClick(UserAction.Revok)"
+          @click="onClick(UserAction.Revoke)"
           class="group-item"
         >
           <ion-icon :icon="personRemove" />
@@ -49,7 +49,7 @@
 
 <script lang="ts">
 export enum UserAction {
-  Revok,
+  Revoke,
   Details
 }
 </script>
@@ -58,7 +58,7 @@ export enum UserAction {
 import { IonContent, IonItem, IonLabel, IonList, popoverController, IonIcon, IonItemGroup } from '@ionic/vue';
 import {
   personRemove,
-  informationCircle
+  informationCircle,
 } from 'ionicons/icons';
 
 function onClick(action: UserAction): Promise<boolean> {

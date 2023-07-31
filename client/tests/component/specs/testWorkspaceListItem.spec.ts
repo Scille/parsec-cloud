@@ -30,9 +30,9 @@ describe('Workspace List Item', () => {
       },
       global: {
         provide: getDefaultProvideConfig(),
-        stubs: ['TagRole'],
+        stubs: ['TagWorkspaceRole'],
       },
-      stubs: ['TagRole'],
+      stubs: ['TagWorkspaceRole'],
     });
   });
 

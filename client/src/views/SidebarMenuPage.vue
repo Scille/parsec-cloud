@@ -140,7 +140,7 @@
             <ion-list class="users">
               <ion-item
                 lines="none"
-                class="sidebar-item menu-default"
+                class="sidebar-item users-title menu-default"
                 :class="isUserRoute() ? 'item-selected' : 'item-not-selected'"
                 @click="router.push({name: 'activeUsers', params: {deviceId: currentRoute.params.deviceId}})"
               >
@@ -189,7 +189,7 @@
             >
               <ion-item
                 lines="none"
-                class="sidebar-item menu-default"
+                class="sidebar-item storage-title menu-default"
                 :class="currentRoute.name === 'storage' ? 'item-selected' : 'item-not-selected'"
                 @click="router.push({name: 'storage', params: {deviceId: currentRoute.params.deviceId}})"
               >
@@ -206,7 +206,7 @@
             >
               <ion-item
                 lines="none"
-                class="sidebar-item menu-default"
+                class="sidebar-item organization-title menu-default"
                 :class="currentRoute.name === 'organization' ? 'item-selected' : 'item-not-selected'"
                 @click="router.push({name: 'organization', params: {deviceId: currentRoute.params.deviceId}})"
               >

@@ -367,7 +367,7 @@
         "userSelectedCount": "Aucun utilisateur sélectionné | 1 utilisateur sélectionné | {count} utilisateurs sélectionnés",
         "userContextMenu": {
             "titleRemove": "Suppression",
-            "titleDetails": "Détail de l'utilisateur",
+            "titleDetails": "Détails de l'utilisateur",
             "actionRevoke": "Révoquer cet utilisateur",
             "actionRevokeSelectedUser": "Révoquer ces utilisateurs",
             "actionDetails": "Voir le détail",

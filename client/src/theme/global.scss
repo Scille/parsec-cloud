@@ -54,3 +54,8 @@ ion-item > .ion-item-child-clickable {
 ion-icon {
   margin-inline: 0;
 }
+
+// fix issue with offset on checkbox
+.in-item:has(input) {
+  width: fit-content;
+}
