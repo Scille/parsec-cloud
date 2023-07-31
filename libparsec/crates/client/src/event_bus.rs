@@ -131,6 +131,7 @@ macro_rules! impl_events {
     // e.g. Foo{ bar: u64 }
     (@munch ( $event:ident { $($id:ident: $ty:ty),* $(,)? }, $($tail:tt)* ) -> ($($output:tt)*)) => {
         paste!{
+            #[derive(Debug)]
             pub struct [< Event $event>] {
                 $(pub $id:$ty),*
             }
