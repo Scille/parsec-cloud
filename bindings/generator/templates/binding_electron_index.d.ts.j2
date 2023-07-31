@@ -18,7 +18,7 @@ boolean
 number
 {%- elif t.kind in ("str", "str_based") -%}
 string
-{%- elif t.kind == "bytes" -%}
+{%- elif t.kind in ("bytes", "bytes_based") -%}
 Uint8Array
 {%- elif t.kind == "OnClientEventCallback" -%}
 (event: ClientEvent) => void

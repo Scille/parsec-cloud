@@ -12,6 +12,120 @@ use wasm_bindgen::JsCast;
 #[allow(unused_imports)]
 use wasm_bindgen_futures::*;
 
+// ClientConfig
+
+#[allow(dead_code)]
+fn struct_clientconfig_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig, JsValue> {
+    let config_dir = {
+        let js_val = Reflect::get(&obj, &"configDir".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string =
+                    |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid Path"))?
+    };
+    let data_base_dir = {
+        let js_val = Reflect::get(&obj, &"dataBaseDir".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string =
+                    |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid Path"))?
+    };
+    let mountpoint_base_dir = {
+        let js_val = Reflect::get(&obj, &"mountpointBaseDir".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string =
+                    |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid Path"))?
+    };
+    let workspace_storage_cache_size = {
+        let js_val = Reflect::get(&obj, &"workspaceStorageCacheSize".into())?;
+        variant_workspacestoragecachesize_js_to_rs(js_val)?
+    };
+    Ok(libparsec::ClientConfig {
+        config_dir,
+        data_base_dir,
+        mountpoint_base_dir,
+        workspace_storage_cache_size,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_clientconfig_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_config_dir = JsValue::from_str({
+        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+            path.into_os_string()
+                .into_string()
+                .map_err(|_| "Path contains non-utf8 characters")
+        };
+        match custom_to_rs_string(rs_obj.config_dir) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"configDir".into(), &js_config_dir)?;
+    let js_data_base_dir = JsValue::from_str({
+        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+            path.into_os_string()
+                .into_string()
+                .map_err(|_| "Path contains non-utf8 characters")
+        };
+        match custom_to_rs_string(rs_obj.data_base_dir) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"dataBaseDir".into(), &js_data_base_dir)?;
+    let js_mountpoint_base_dir = JsValue::from_str({
+        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+            path.into_os_string()
+                .into_string()
+                .map_err(|_| "Path contains non-utf8 characters")
+        };
+        match custom_to_rs_string(rs_obj.mountpoint_base_dir) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(
+        &js_obj,
+        &"mountpointBaseDir".into(),
+        &js_mountpoint_base_dir,
+    )?;
+    let js_workspace_storage_cache_size =
+        variant_workspacestoragecachesize_rs_to_js(rs_obj.workspace_storage_cache_size)?;
+    Reflect::set(
+        &js_obj,
+        &"workspaceStorageCacheSize".into(),
+        &js_workspace_storage_cache_size,
+    )?;
+    Ok(js_obj)
+}
+
 // AvailableDevice
 
 #[allow(dead_code)]
@@ -142,181 +256,22 @@ fn struct_availabledevice_rs_to_js(rs_obj: libparsec::AvailableDevice) -> Result
     Ok(js_obj)
 }
 
-// ClientConfig
-
-#[allow(dead_code)]
-fn struct_clientconfig_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig, JsValue> {
-    let config_dir = {
-        let js_val = Reflect::get(&obj, &"configDir".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))
-            .and_then(|x| {
-                let custom_from_rs_string =
-                    |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid Path"))?
-    };
-    let data_base_dir = {
-        let js_val = Reflect::get(&obj, &"dataBaseDir".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))
-            .and_then(|x| {
-                let custom_from_rs_string =
-                    |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid Path"))?
-    };
-    let mountpoint_base_dir = {
-        let js_val = Reflect::get(&obj, &"mountpointBaseDir".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))
-            .and_then(|x| {
-                let custom_from_rs_string =
-                    |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid Path"))?
-    };
-    let preferred_org_creation_backend_addr = {
-        let js_val = Reflect::get(&obj, &"preferredOrgCreationBackendAddr".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))
-            .and_then(|x| {
-                let custom_from_rs_string = |s: String| -> Result<_, String> {
-                    libparsec::BackendAddr::from_any(&s).map_err(|e| e.to_string())
-                };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid BackendAddr"))?
-    };
-    let workspace_storage_cache_size = {
-        let js_val = Reflect::get(&obj, &"workspaceStorageCacheSize".into())?;
-        variant_workspacestoragecachesize_js_to_rs(js_val)?
-    };
-    Ok(libparsec::ClientConfig {
-        config_dir,
-        data_base_dir,
-        mountpoint_base_dir,
-        preferred_org_creation_backend_addr,
-        workspace_storage_cache_size,
-    })
-}
-
-#[allow(dead_code)]
-fn struct_clientconfig_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_config_dir = JsValue::from_str({
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.config_dir) {
-            Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-        }
-        .as_ref()
-    });
-    Reflect::set(&js_obj, &"configDir".into(), &js_config_dir)?;
-    let js_data_base_dir = JsValue::from_str({
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.data_base_dir) {
-            Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-        }
-        .as_ref()
-    });
-    Reflect::set(&js_obj, &"dataBaseDir".into(), &js_data_base_dir)?;
-    let js_mountpoint_base_dir = JsValue::from_str({
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.mountpoint_base_dir) {
-            Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-        }
-        .as_ref()
-    });
-    Reflect::set(
-        &js_obj,
-        &"mountpointBaseDir".into(),
-        &js_mountpoint_base_dir,
-    )?;
-    let js_preferred_org_creation_backend_addr = JsValue::from_str({
-        let custom_to_rs_string = |addr: libparsec::BackendAddr| -> Result<String, &'static str> {
-            Ok(addr.to_url().into())
-        };
-        match custom_to_rs_string(rs_obj.preferred_org_creation_backend_addr) {
-            Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-        }
-        .as_ref()
-    });
-    Reflect::set(
-        &js_obj,
-        &"preferredOrgCreationBackendAddr".into(),
-        &js_preferred_org_creation_backend_addr,
-    )?;
-    let js_workspace_storage_cache_size =
-        variant_workspacestoragecachesize_rs_to_js(rs_obj.workspace_storage_cache_size)?;
-    Reflect::set(
-        &js_obj,
-        &"workspaceStorageCacheSize".into(),
-        &js_workspace_storage_cache_size,
-    )?;
-    Ok(js_obj)
-}
-
 // ClientEvent
 
 #[allow(dead_code)]
 fn variant_clientevent_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent, JsValue> {
     let tag = Reflect::get(&obj, &"tag".into())?;
     match tag {
-        tag if tag == JsValue::from_str("ClientConnectionChanged") => {
-            let client = {
-                let js_val = Reflect::get(&obj, &"client".into())?;
-                {
-                    let v = js_val
-                        .dyn_into::<Number>()
-                        .map_err(|_| TypeError::new("Not a number"))?
-                        .value_of();
-                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
-                    }
-                    v as u32
-                }
+        tag if tag == JsValue::from_str("Ping") => {
+            let ping = {
+                let js_val = Reflect::get(&obj, &"ping".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
             };
-            Ok(libparsec::ClientEvent::ClientConnectionChanged { client })
-        }
-        tag if tag == JsValue::from_str("WorkspaceReencryptionEnded") => {
-            Ok(libparsec::ClientEvent::WorkspaceReencryptionEnded {})
-        }
-        tag if tag == JsValue::from_str("WorkspaceReencryptionNeeded") => {
-            Ok(libparsec::ClientEvent::WorkspaceReencryptionNeeded {})
-        }
-        tag if tag == JsValue::from_str("WorkspaceReencryptionStarted") => {
-            Ok(libparsec::ClientEvent::WorkspaceReencryptionStarted {})
+            Ok(libparsec::ClientEvent::Ping { ping })
         }
         _ => Err(JsValue::from(TypeError::new("Object is not a ClientEvent"))),
     }
@@ -326,59 +281,10 @@ fn variant_clientevent_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent, 
 fn variant_clientevent_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
-        libparsec::ClientEvent::ClientConnectionChanged { client, .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"ClientConnectionChanged".into())?;
-            let js_client = JsValue::from(client);
-            Reflect::set(&js_obj, &"client".into(), &js_client)?;
-        }
-        libparsec::ClientEvent::WorkspaceReencryptionEnded { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"WorkspaceReencryptionEnded".into())?;
-        }
-        libparsec::ClientEvent::WorkspaceReencryptionNeeded { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"WorkspaceReencryptionNeeded".into(),
-            )?;
-        }
-        libparsec::ClientEvent::WorkspaceReencryptionStarted { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"WorkspaceReencryptionStarted".into(),
-            )?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// DeviceFileType
-
-#[allow(dead_code)]
-fn variant_devicefiletype_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceFileType, JsValue> {
-    let tag = Reflect::get(&obj, &"tag".into())?;
-    match tag {
-        tag if tag == JsValue::from_str("Password") => Ok(libparsec::DeviceFileType::Password {}),
-        tag if tag == JsValue::from_str("Recovery") => Ok(libparsec::DeviceFileType::Recovery {}),
-        tag if tag == JsValue::from_str("Smartcard") => Ok(libparsec::DeviceFileType::Smartcard {}),
-        _ => Err(JsValue::from(TypeError::new(
-            "Object is not a DeviceFileType",
-        ))),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_devicefiletype_rs_to_js(rs_obj: libparsec::DeviceFileType) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    match rs_obj {
-        libparsec::DeviceFileType::Password { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Password".into())?;
-        }
-        libparsec::DeviceFileType::Recovery { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Recovery".into())?;
-        }
-        libparsec::DeviceFileType::Smartcard { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Smartcard".into())?;
+        libparsec::ClientEvent::Ping { ping, .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Ping".into())?;
+            let js_ping = ping.into();
+            Reflect::set(&js_obj, &"ping".into(), &js_ping)?;
         }
     }
     Ok(js_obj)
@@ -435,163 +341,168 @@ fn variant_workspacestoragecachesize_rs_to_js(
     Ok(js_obj)
 }
 
-// DeviceAccessParams
+// DeviceFileType
 
 #[allow(dead_code)]
-fn variant_deviceaccessparams_js_to_rs(
+fn variant_devicefiletype_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceFileType, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    match tag {
+        tag if tag == JsValue::from_str("Password") => Ok(libparsec::DeviceFileType::Password {}),
+        tag if tag == JsValue::from_str("Recovery") => Ok(libparsec::DeviceFileType::Recovery {}),
+        tag if tag == JsValue::from_str("Smartcard") => Ok(libparsec::DeviceFileType::Smartcard {}),
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a DeviceFileType",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_devicefiletype_rs_to_js(rs_obj: libparsec::DeviceFileType) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::DeviceFileType::Password { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Password".into())?;
+        }
+        libparsec::DeviceFileType::Recovery { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Recovery".into())?;
+        }
+        libparsec::DeviceFileType::Smartcard { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Smartcard".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// DeviceSaveStrategy
+
+#[allow(dead_code)]
+fn variant_devicesavestrategy_js_to_rs(
     obj: JsValue,
-) -> Result<libparsec::DeviceAccessParams, JsValue> {
+) -> Result<libparsec::DeviceSaveStrategy, JsValue> {
     let tag = Reflect::get(&obj, &"tag".into())?;
     match tag {
         tag if tag == JsValue::from_str("Password") => {
-            let path = {
-                let js_val = Reflect::get(&obj, &"path".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
-                            Ok(std::path::PathBuf::from(s))
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid Path"))?
-            };
             let password = {
                 let js_val = Reflect::get(&obj, &"password".into())?;
                 js_val
                     .dyn_into::<JsString>()
                     .ok()
                     .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-            };
-            Ok(libparsec::DeviceAccessParams::Password { path, password })
-        }
-        tag if tag == JsValue::from_str("Smartcard") => {
-            let path = {
-                let js_val = Reflect::get(&obj, &"path".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
                     .ok_or_else(|| TypeError::new("Not a string"))
                     .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
-                            Ok(std::path::PathBuf::from(s))
-                        };
+                        let custom_from_rs_string =
+                            |s: String| -> Result<_, String> { Ok(s.into()) };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
                     })
-                    .map_err(|_| TypeError::new("Not a valid Path"))?
+                    .map_err(|_| TypeError::new("Not a valid Password"))?
             };
-            Ok(libparsec::DeviceAccessParams::Smartcard { path })
+            Ok(libparsec::DeviceSaveStrategy::Password { password })
+        }
+        tag if tag == JsValue::from_str("Smartcard") => {
+            Ok(libparsec::DeviceSaveStrategy::Smartcard {})
         }
         _ => Err(JsValue::from(TypeError::new(
-            "Object is not a DeviceAccessParams",
+            "Object is not a DeviceSaveStrategy",
         ))),
     }
 }
 
 #[allow(dead_code)]
-fn variant_deviceaccessparams_rs_to_js(
-    rs_obj: libparsec::DeviceAccessParams,
+fn variant_devicesavestrategy_rs_to_js(
+    rs_obj: libparsec::DeviceSaveStrategy,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
-        libparsec::DeviceAccessParams::Password { path, password, .. } => {
+        libparsec::DeviceSaveStrategy::Password { password, .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Password".into())?;
-            let js_path = JsValue::from_str({
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(path) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"path".into(), &js_path)?;
-            let js_password = password.into();
+            let js_password = JsValue::from_str(password.as_ref());
             Reflect::set(&js_obj, &"password".into(), &js_password)?;
         }
-        libparsec::DeviceAccessParams::Smartcard { path, .. } => {
+        libparsec::DeviceSaveStrategy::Smartcard { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Smartcard".into())?;
-            let js_path = JsValue::from_str({
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(path) {
+        }
+    }
+    Ok(js_obj)
+}
+
+// BootstrapOrganizationError
+
+#[allow(dead_code)]
+fn variant_bootstraporganizationerror_rs_to_js(
+    rs_obj: libparsec::BootstrapOrganizationError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::BootstrapOrganizationError::AlreadyUsedToken { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AlreadyUsedToken".into())?;
+        }
+        libparsec::BootstrapOrganizationError::BadTimestamp {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"BadTimestamp".into())?;
+            let js_server_timestamp = JsValue::from_str({
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339().into())
+                    };
+                match custom_to_rs_string(server_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                 }
                 .as_ref()
             });
-            Reflect::set(&js_obj, &"path".into(), &js_path)?;
+            Reflect::set(&js_obj, &"server_timestamp".into(), &js_server_timestamp)?;
+            let js_client_timestamp = JsValue::from_str({
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339().into())
+                    };
+                match custom_to_rs_string(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"client_timestamp".into(), &js_client_timestamp)?;
+            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballpark_client_early_offset".into(),
+                &js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballpark_client_late_offset".into(),
+                &js_ballpark_client_late_offset,
+            )?;
         }
-    }
-    Ok(js_obj)
-}
-
-// ClientLoginError
-
-#[allow(dead_code)]
-fn variant_clientloginerror_rs_to_js(
-    rs_obj: libparsec::ClientLoginError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::ClientLoginError::AccessMethodNotAvailable { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AccessMethodNotAvailable".into())?;
-        }
-        libparsec::ClientLoginError::DecryptionFailed { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"DecryptionFailed".into())?;
-        }
-        libparsec::ClientLoginError::DeviceAlreadyLoggedIn { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"DeviceAlreadyLoggedIn".into())?;
-        }
-        libparsec::ClientLoginError::DeviceInvalidFormat { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"DeviceInvalidFormat".into())?;
-        }
-        libparsec::ClientLoginError::Internal(..) => {
+        libparsec::BootstrapOrganizationError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
         }
-    }
-    Ok(js_obj)
-}
-
-// ClientGetterError
-
-#[allow(dead_code)]
-fn variant_clientgettererror_rs_to_js(
-    rs_obj: libparsec::ClientGetterError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::ClientGetterError::Disconnected { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Disconnected".into())?;
+        libparsec::BootstrapOrganizationError::InvalidToken { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"InvalidToken".into())?;
         }
-        libparsec::ClientGetterError::InvalidHandle { handle, .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"InvalidHandle".into())?;
-            let js_handle = JsValue::from(handle);
-            Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
+        libparsec::BootstrapOrganizationError::Offline { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
+        }
+        libparsec::BootstrapOrganizationError::SaveDeviceError { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SaveDeviceError".into())?;
         }
     }
     Ok(js_obj)
 }
 
-// client_list_available_devices
+// list_available_devices
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn clientListAvailableDevices(path: String) -> Promise {
+pub fn listAvailableDevices(path: String) -> Promise {
     future_to_promise(async move {
         let path = {
             let custom_from_rs_string =
@@ -599,7 +510,7 @@ pub fn clientListAvailableDevices(path: String) -> Promise {
             custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
-        let ret = libparsec::client_list_available_devices(&path).await;
+        let ret = libparsec::list_available_devices(&path).await;
         Ok({
             // Array::new_with_length allocates with `undefined` value, that's why we `set` value
             let js_array = Array::new_with_length(ret.len() as u32);
@@ -612,68 +523,97 @@ pub fn clientListAvailableDevices(path: String) -> Promise {
     })
 }
 
-// client_login
+// bootstrap_organization
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn clientLogin(
-    load_device_params: Object,
+pub fn bootstrapOrganization(
     config: Object,
     on_event_callback: Function,
+    bootstrap_organization_addr: String,
+    save_strategy: Object,
+    human_handle: Option<String>,
+    device_label: Option<String>,
+    sequester_authority_verify_key: Option<Uint8Array>,
 ) -> Promise {
     future_to_promise(async move {
-        let load_device_params = load_device_params.into();
-        let load_device_params = variant_deviceaccessparams_js_to_rs(load_device_params)?;
-
         let config = config.into();
         let config = struct_clientconfig_js_to_rs(config)?;
 
-        let on_event_callback = Box::new(move |event: libparsec::ClientEvent| {
+        let on_event_callback = std::sync::Arc::new(move |event: libparsec::ClientEvent| {
             // TODO: Better error handling here (log error ?)
             let js_event =
                 variant_clientevent_rs_to_js(event).expect("event type conversion error");
             on_event_callback
                 .call1(&JsValue::NULL, &js_event)
                 .expect("error in event callback");
-        }) as Box<dyn FnMut(libparsec::ClientEvent)>;
+        }) as std::sync::Arc<dyn Fn(libparsec::ClientEvent)>;
 
-        let ret = libparsec::client_login(load_device_params, config, on_event_callback).await;
+        let bootstrap_organization_addr = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::BackendOrganizationBootstrapAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(bootstrap_organization_addr)
+                .map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let save_strategy = save_strategy.into();
+        let save_strategy = variant_devicesavestrategy_js_to_rs(save_strategy)?;
+
+        let human_handle = match human_handle {
+            Some(human_handle) => {
+                let human_handle = human_handle
+                    .parse()
+                    .map_err(|_| JsValue::from(TypeError::new("Not a valid HumanHandle")))?;
+
+                Some(human_handle)
+            }
+            None => None,
+        };
+
+        let device_label = match device_label {
+            Some(device_label) => {
+                let device_label = device_label
+                    .parse()
+                    .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceLabel")))?;
+
+                Some(device_label)
+            }
+            None => None,
+        };
+
+        let sequester_authority_verify_key = match sequester_authority_verify_key {
+            Some(sequester_authority_verify_key) => {
+                let sequester_authority_verify_key =
+                    sequester_authority_verify_key.parse().map_err(|_| {
+                        JsValue::from(TypeError::new("Not a valid SequesterVerifyKeyDer"))
+                    })?;
+
+                Some(sequester_authority_verify_key)
+            }
+            None => None,
+        };
+
+        let ret = libparsec::bootstrap_organization(
+            config,
+            on_event_callback,
+            bootstrap_organization_addr,
+            save_strategy,
+            human_handle,
+            device_label,
+            sequester_authority_verify_key,
+        )
+        .await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from(value);
+                let js_value = struct_availabledevice_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_clientloginerror_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// client_get_device_id
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn clientGetDeviceId(handle: u32) -> Promise {
-    future_to_promise(async move {
-        let ret = libparsec::client_get_device_id(handle).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from_str(value.as_ref());
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_clientgettererror_rs_to_js(err)?;
+                let js_err = variant_bootstraporganizationerror_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -713,6 +653,49 @@ pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise 
             }
             .as_ref()
         }))
+    })
+}
+
+// test_get_testbed_organization_id
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn testGetTestbedOrganizationId(discriminant_dir: String) -> Promise {
+    future_to_promise(async move {
+        let discriminant_dir = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(discriminant_dir).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::test_get_testbed_organization_id(&discriminant_dir);
+        Ok(match ret {
+            Some(val) => JsValue::from_str(val.as_ref()),
+            None => JsValue::NULL,
+        })
+    })
+}
+
+// test_get_testbed_bootstrap_organization_addr
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn testGetTestbedBootstrapOrganizationAddr(discriminant_dir: String) -> Promise {
+    future_to_promise(async move {
+        let discriminant_dir = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(discriminant_dir).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::test_get_testbed_bootstrap_organization_addr(&discriminant_dir);
+        Ok(match ret {
+            Some(val) => JsValue::from_str({
+                let custom_to_rs_string = |addr: libparsec::BackendOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+                match custom_to_rs_string(val) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            }),
+            None => JsValue::NULL,
+        })
     })
 }
 
