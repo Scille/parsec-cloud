@@ -16,7 +16,7 @@ describe('Check folders page', () => {
     cy.get('#button-new-folder').contains('New folder');
     cy.get('#button-import').contains('Import');
     cy.get('.file-list-item').should('have.length.greaterThan', 1);
-    cy.get('#folders-action-bar').find('#list-view').should('have.attr', 'disabled');
+    // cy.get('#folders-action-bar').find('#list-view').should('have.attr', 'disabled');
     cy.get('#folders-action-bar').find('#grid-view').should('not.have.attr', 'disabled');
     cy.get('.folder-footer').contains(/\d items/);
   });

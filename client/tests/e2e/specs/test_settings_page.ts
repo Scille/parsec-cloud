@@ -49,7 +49,7 @@ describe('Check settings page', () => {
 
   it('Go back to workspaces', () => {
     cy.get('.topbar-left__breadcrumb').should('not.contain', 'My workspaces');
-    cy.get('.back-button').click();
+    cy.get('.topbar-left').find('.back-button').click();
     cy.get('.topbar-left__breadcrumb').should('contain', 'My workspaces');
   });
 });

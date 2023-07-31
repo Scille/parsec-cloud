@@ -26,3 +26,7 @@
 .checkbox-checked::part(container) {
   border: 2px solid var(--parsec-color-light-primary-600);
 }
+
+.checkbox-indeterminate::part(container) {
+  border: 2px solid var(--parsec-color-light-primary-600);
+}

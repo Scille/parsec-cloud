@@ -357,7 +357,7 @@
             "joinedOn": "Joined On"
         },
         "inviteUser": "Invite a user",
-        "itemCount": "No users | One user | {count} users",
+        "itemCount": "No user | One user | {count} users",
         "role": {
             "owner": "Owner",
             "admin": "Administrator",
@@ -370,7 +370,7 @@
             "titleDetails": "User details",
             "actionRevoke": "Revoke this user",
             "actionRevokeSelectedUser": "Revoke these users",
-            "actionDetails": "View details",
+            "actionDetails": "View detail",
             "actionSeeCommonWorkspaces": "See common workspaces"
         }
     }

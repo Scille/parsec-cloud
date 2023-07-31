@@ -43,8 +43,9 @@
 
     <!-- updated by -->
     <div class="file-updatedBy">
-      <user-tag
-        :user="file.updater"
+      <user-avatar-name
+        :user-avatar="file.updater"
+        :user-name="file.updater"
       />
     </div>
 
@@ -94,7 +95,7 @@ import { ref, inject } from 'vue';
 import { IonIcon, IonButton, IonItem, IonLabel, IonCheckbox } from '@ionic/vue';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
 import { MockFile } from '@/common/mocks';
-import UserTag from '@/components/UserTag.vue';
+import UserAvatarName from '@/components/UserAvatarName.vue';
 
 const isHovered = ref(false);
 const isSelected = ref(false);
@@ -148,7 +149,6 @@ function isFileSynced(): boolean {
   &:hover, &.selected {
     .cell, .options-button__icon {
       color: var(--parsec-color-light-secondary-text);
-      --background: red;
     }
   }
 

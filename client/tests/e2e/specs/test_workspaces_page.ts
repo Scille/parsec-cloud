@@ -62,7 +62,7 @@ describe('Check workspaces page', () => {
   it('Navigate into a workspace', () => {
     cy.contains('Trademeet').click();
     cy.get('.file-list-item').should('have.length.at.least', 1);
-    cy.get('ion-button.back-button').click();
+    cy.get('.topbar-left').find('ion-button.back-button').click();
     cy.get('.card').should('have.length', 5);
   });
 

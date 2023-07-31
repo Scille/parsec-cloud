@@ -4,9 +4,10 @@
   <div
     class="content"
   >
-    <user-tag
+    <user-avatar-name
       class="user"
-      :user="$props.user"
+      :user-avatar="$props.user"
+      :user-name="$props.user"
     />
 
     <ms-select
@@ -21,11 +22,11 @@
 <script setup lang="ts">
 import { defineProps, defineEmits } from 'vue';
 import { WorkspaceRole } from '@/common/mocks';
-import UserTag from '@/components/UserTag.vue';
 import MsSelect from '@/components/MsSelect.vue';
 import { Ref, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { MsSelectOption } from '@/components/MsSelectOption';
+import UserAvatarName from '@/components/UserAvatarName.vue';
 
 const { t } = useI18n();
 

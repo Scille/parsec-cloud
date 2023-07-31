@@ -7,42 +7,43 @@
       <action-bar
         id="activate-users-action-bar"
       >
-      <div v-if="selectedUsersCount === 0">
-            <button-option
-              :icon="personAdd"
-              id="button-invite-user"
-              :button-label="$t('UsersPage.inviteUser')"
-              @click="inviteUser()"
-              v-show="isAdmin()"
-            />
-          </div>
-          <!-- revoke or view common workspace -->
-          <div v-else-if="selectedUsersCount === 1">
-            <button-option
-              :icon="personRemove"
-              id="button-revoke-user"
-              :button-label="$t('UsersPage.userContextMenu.actionRevoke')"
-              @click="revokeUser()"
-              v-show="isAdmin()"
-            />
-            <button-option
-              :icon="eye"
-              id="button-common-workspaces"
-              :button-label="$t('UsersPage.userContextMenu.actionSeeCommonWorkspaces')"
-              @click="viewCommonWorkspace()"
-            />
-          </div>
-          <!-- revoke -->
-          <div v-else>
-            <button-option
-              :icon="personRemove"
-              class="danger"
-              id="button-revoke-users"
-              :button-label="$t('UsersPage.userContextMenu.actionRevokeSelectedUser')"
-              @click="revokeUser()"
-              v-show="isAdmin()"
-            />
-          </div>
+        <div v-if="selectedUsersCount === 0">
+          <button-option
+            :icon="personAdd"
+            id="button-invite-user"
+            :button-label="$t('UsersPage.inviteUser')"
+            @click="inviteUser()"
+            v-show="isAdmin()"
+          />
+        </div>
+        <!-- revoke or view common workspace -->
+        <div v-else-if="selectedUsersCount === 1">
+          <button-option
+            :icon="personRemove"
+            class="danger"
+            id="button-revoke-user"
+            :button-label="$t('UsersPage.userContextMenu.actionRevoke')"
+            @click="revokeUser()"
+            v-show="isAdmin()"
+          />
+          <button-option
+            :icon="eye"
+            id="button-common-workspaces"
+            :button-label="$t('UsersPage.userContextMenu.actionSeeCommonWorkspaces')"
+            @click="viewCommonWorkspace()"
+          />
+        </div>
+        <!-- revoke -->
+        <div v-else>
+          <button-option
+            :icon="personRemove"
+            class="danger"
+            id="button-revoke-users"
+            :button-label="$t('UsersPage.userContextMenu.actionRevokeSelectedUser')"
+            @click="revokeUser()"
+            v-show="isAdmin()"
+          />
+        </div>
         <div class="right-side">
           <list-grid-toggle
             v-model="displayView"
@@ -60,24 +61,26 @@
             >
               <ion-label class="user-list-header__label label-selected">
                 <ion-checkbox
+                  aria-label=""
                   class="checkbox"
                   @ion-change="selectAllUsers($event.detail.checked)"
                   v-model="allUsersSelected"
+                  :indeterminate="interminateState"
                 />
               </ion-label>
-              <ion-label class="user-list-header__label label-name">
+              <ion-label class="user-list-header__label cell-title label-name">
                 {{ $t('UsersPage.listDisplayTitles.name') }}
               </ion-label>
-              <ion-label class="user-list-header__label label-email">
+              <ion-label class="user-list-header__label cell-title label-email">
                 {{ $t('UsersPage.listDisplayTitles.email') }}
               </ion-label>
-              <ion-label class="user-list-header__label label-role">
+              <ion-label class="user-list-header__label cell-title label-role">
                 {{ $t('UsersPage.listDisplayTitles.role') }}
               </ion-label>
-              <ion-label class="user-list-header__label label-joined-on">
+              <ion-label class="user-list-header__label cell-title label-joined-on">
                 {{ $t('UsersPage.listDisplayTitles.joinedOn') }}
               </ion-label>
-              <ion-label class="user-list-header__label label-space" />
+              <ion-label class="user-list-header__label cell-title label-space" />
             </ion-list-header>
             <user-list-item
               v-for="user in filteredUsers"
@@ -86,7 +89,8 @@
               :show-checkbox="selectedUsersCount > 0 || allUsersSelected"
               @menu-click="openUserContextMenu($event, user)"
               @select="onUserSelect"
-              ref="userItemRefs"
+              ref="userListItemRefs"
+              :interminate="interminateState"
             />
           </ion-list>
         </div>
@@ -97,11 +101,14 @@
           <ion-item
             class="users-grid-item"
             v-for="user in filteredUsers"
-            :key="user"
+            :key="user.id"
           >
             <user-card
+              ref="userGridItemRefs"
               :user="user"
+              :show-checkbox="selectedUsersCount > 0 || allUsersSelected"
               @menu-click="openUserContextMenu($event, user)"
+              @select="onUserSelect"
             />
           </ion-item>
         </div>
@@ -157,7 +164,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, Ref, computed } from 'vue';
 import {
   IonContent,
   IonItem,
@@ -165,31 +172,33 @@ import {
   IonPage,
   IonLabel,
   IonListHeader,
-  IonItemDivider,
-  IonCheckbox
+  IonCheckbox,
+  IonText,
+  popoverController,
 } from '@ionic/vue';
 import {
   personRemove,
   personAdd,
-  eye
+  eye,
 } from 'ionicons/icons';
 import UserListItem from '@/components/Users/UserListItem.vue';
 import UserCard from '@/components/Users/UserCard.vue';
 import ButtonOption from '@/components/ButtonOption.vue';
 import { isAdmin } from '@/common/permissions';
 import ListGridToggle from '@/components/ListGridToggle.vue';
-import DisplayState from '@/components/ListGridToggle.vue';
-import { popoverController } from '@ionic/vue';
+import { DisplayState } from '@/components/ListGridToggle.vue';
 import UserContextMenu from '@/components/UserContextMenu.vue';
 import { UserAction } from '@/components/UserContextMenu.vue';
+import ActionBar from '@/components/ActionBar.vue';
 import { MockUser, getMockUsers } from '@/common/mocks';
-import { Ref } from 'vue';
 import { onMounted } from '@vue/runtime-core';
 
 const displayView = ref(DisplayState.List);
 const userList: Ref<MockUser[]> = ref([]);
-const userItemRefs: Ref<typeof UserListItem[]> = ref([]);
+const userListItemRefs: Ref<typeof UserListItem[]> = ref([]);
+const userGridItemRefs: Ref<typeof UserCard[]> = ref([]);
 const allUsersSelected = ref(false);
+const interminateState = ref(false);
 
 const filteredUsers = computed(() => {
   const revokedUsers = userList.value.filter((user) => {
@@ -199,16 +208,15 @@ const filteredUsers = computed(() => {
 });
 
 const selectedUsersCount = computed(() => {
-  const count = userItemRefs.value.filter((item) => item.isSelected).length;
-  return count;
+  if (displayView.value === DisplayState.List) {
+    return userListItemRefs.value.filter((item) => item.isSelected).length;
+  } else {
+    return userGridItemRefs.value.filter((item) => item.isSelected).length;
+  }
 });
 
 function inviteUser(): void {
   console.log('Invite user clicked');
-}
-
-function revokeUser(): void {
-  console.log('Revoke user clicked');
 }
 
 function viewCommonWorkspace(): void {
@@ -227,46 +235,45 @@ function onUserSelect(_user: MockUser, _selected: boolean): void {
   } else {
     allUsersSelected.value = false;
   }
+
+  if (selectedUsersCount.value !== 0 && selectedUsersCount.value !== userList.value.length) {
+    interminateState.value = true;
+  } else {
+    interminateState.value = false;
+  }
 }
 
 function selectAllUsers(checked: boolean): void {
-  for (const item of userItemRefs.value || []) {
-    item.isSelected = checked;
-    if (checked) {
-      item.showCheckbox = true;
-    } else {
-      item.showCheckbox = false;
+  if (displayView.value === DisplayState.List) {
+    for (const item of userListItemRefs.value || []) {
+      item.isSelected = checked;
+      if (checked) {
+        item.showCheckbox = true;
+      } else {
+        item.showCheckbox = false;
+      }
+    }
+  } else {
+    for (const item of userGridItemRefs.value || []) {
+      item.isSelected = checked;
+      if (checked) {
+        item.showCheckbox = true;
+      } else {
+        item.showCheckbox = false;
+      }
     }
   }
 }
 
-function actionOnSelectedUser(action: (user: MockUser) => void): void {
-  const selected = userItemRefs.value.find((item) => item.isSelected);
-
-  if (!selected) {
-    return;
-  }
-  action(selected.props.file);
+function revokeUser(): void {
+  console.log('Revoke user clicked');
 }
 
-function actionOnSelectedUsers(action: (user: MockUser) => void): void {
-  const selected = userItemRefs.value.filter((item) => item.isSelected);
-
-  for (const item of selected) {
-    action(item.props.file);
-  }
-}
-
-function revokUser(user: MockUser): void {
-  console.log('Revok user clicked: ', user);
-}
-
-function details(user: MockUser): void {
-  console.log('Details user clicked: ', user);
+function details(): void {
+  console.log('Details user clicked');
 }
 
 async function openUserContextMenu(event: Event, user: MockUser): Promise<void> {
-  console.log('menu cliked');
   const popover = await popoverController
     .create({
       component: UserContextMenu,
@@ -275,15 +282,19 @@ async function openUserContextMenu(event: Event, user: MockUser): Promise<void> 
       translucent: true,
       showBackdrop: false,
       dismissOnSelect: true,
-      reference: 'event'
+      reference: 'event',
     });
   await popover.present();
 
   const { data } = await popover.onDidDismiss();
   const actions = new Map<UserAction, (user: MockUser) => void>([
-    [UserAction.Revok, revokUser],
-    [UserAction.Details, details]
+    [UserAction.Revoke, revokeUser],
+    [UserAction.Details, details],
   ]);
+
+  if (!data) {
+    return;
+  }
 
   const fn = actions.get(data.action);
   if (fn) {
@@ -292,7 +303,8 @@ async function openUserContextMenu(event: Event, user: MockUser): Promise<void> 
 }
 
 function resetSelection(): void {
-  userItemRefs.value = [];
+  userListItemRefs.value = [];
+  userGridItemRefs.value = [];
   allUsersSelected.value = false;
 }
 
@@ -308,7 +320,6 @@ onMounted(async (): Promise<void> => {
 
 .user-list-header {
   color: var(--parsec-color-light-secondary-grey);
-  font-weight: 600;
   padding-inline-start:0;
 
   &__label {
@@ -358,16 +369,6 @@ onMounted(async (): Promise<void> => {
   }
 }
 
-.users-footer {
-  width: 100%;
-  left: 0;
-  position: fixed;
-  bottom: 0;
-  text-align: center;
-  color: var(--parsec-color-light-secondary-text);
-  margin-bottom: 2em;
-}
-
 .users-container-grid {
   display: flex;
   flex-wrap: wrap;
@@ -375,12 +376,20 @@ onMounted(async (): Promise<void> => {
   overflow-y: auto;
 }
 
-ion-item::part(native) {
-  --padding-start: 0px;
+.users-toolbar {
+  padding: 1em 2em;
+  height: 6em;
+  background-color: var(--parsec-color-light-secondary-background);
+  border-top: 1px solid var(--parsec-color-light-secondary-light);
 }
 
 .right-side {
   margin-left: auto;
   display: flex;
+}
+
+.users-grid-item {
+  --inner-padding-end: 0px;
+  --inner-padding-start: 0px;
 }
 </style>

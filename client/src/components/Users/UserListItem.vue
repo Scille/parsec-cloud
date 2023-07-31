@@ -15,6 +15,7 @@
       class="user-selected"
     >
       <ion-checkbox
+        aria-label=""
         v-model="isSelected"
         v-if="isSelected || isHovered || showCheckbox"
         class="checkbox"
@@ -26,9 +27,10 @@
     <!-- user name -->
     <div class="user-name">
       <ion-label class="user-name__label cell">
-        <user-tag
+        <user-avatar-name
           class="main-cell"
-          :user="user.name"
+          :user-avatar="user.name"
+          :user-name="user.name"
         />
       </ion-label>
     </div>
@@ -40,10 +42,10 @@
       </ion-label>
     </div>
 
-    <!-- user role -->
-    <div class="user-role">
-      <tag-role
-        :orgarole="user.role"
+    <!-- user profile -->
+    <div class="user-profile">
+      <tag-profile
+        :profile="user.profile"
       />
     </div>
 
@@ -79,17 +81,17 @@ import {
   IonLabel,
   IonIcon,
   IonButton,
-  IonCheckbox
+  IonCheckbox,
 } from '@ionic/vue';
 import {
-  ellipsisHorizontal
+  ellipsisHorizontal,
 } from 'ionicons/icons';
 import { MockUser } from '@/common/mocks';
-import TagRole from '@/components/tagRole.vue';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
 import { defineProps, inject } from 'vue';
 import { defineEmits, defineExpose, ref } from '@vue/runtime-core';
-import UserTag from '@/components/UserTag.vue';
+import UserAvatarName from '@/components/UserAvatarName.vue';
+import TagProfile from '@/components/TagProfile.vue';
 
 const isHovered = ref(false);
 const isSelected = ref(false);
@@ -107,7 +109,7 @@ defineEmits<{
 
 defineExpose({
   isHovered,
-  isSelected
+  isSelected,
 });
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -181,7 +183,7 @@ const { timeSince } = inject(FormattersKey)! as Formatters;
   color: var(--parsec-color-light-secondary-grey);
 }
 
-.user-role {
+.user-profile {
   min-width: 11.5rem;
   max-width: 10vw;
   flex-grow: 2;
@@ -196,8 +198,8 @@ const { timeSince } = inject(FormattersKey)! as Formatters;
 
 .user-options {
   min-width: 4rem;
-    flex-grow: 0;
-    margin-left: auto;
+  flex-grow: 0;
+  margin-left: auto;
 
   ion-button::part(native) {
     padding: 0;

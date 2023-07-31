@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS -->
 
 <template>
-  <ion-label class="label-role">
+  <ion-label class="label-role profile">
     <ion-chip
       class="caption-caption tag"
       :class="profile"
@@ -24,9 +24,7 @@ defineProps<{
 }>();
 
 function translateProfile(profile: Profile): string {
-  if (profile === Profile.Owner) {
-    return t('UsersPage.role.owner');
-  } else if (profile === Profile.Admin) {
+  if (profile === Profile.Admin) {
     return t('UsersPage.role.admin');
   } else if (profile === Profile.Standard) {
     return t('UsersPage.role.standard');
@@ -38,8 +36,4 @@ function translateProfile(profile: Profile): string {
 </script>
 
 <style scoped lang="scss">
-.tag {
-  padding: .25rem .5rem;
-  height: auto;
-}
 </style>

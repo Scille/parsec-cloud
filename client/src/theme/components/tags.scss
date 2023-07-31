@@ -1,6 +1,11 @@
 /* **** Parsec tags **** */
 
-.workspace-role {
+.tag {
+  padding: .25rem .5rem;
+  height: auto;
+}
+
+.role {
   .owner {
     // border: 2px solid var(--parsec-color-tags-blue500);
     color: var(--parsec-color-tags-blue500);
@@ -26,12 +31,7 @@
   }
 }
 
-.user-role {
-  .owner {
-    background-color: var(--parsec-color-tags-blue100);
-    color: var(--parsec-color-tags-blue500);
-  }
-
+.profile {
   .administrator {
     background-color: var(--parsec-color-tags-indigo100);
     color: var(--parsec-color-tags-indigo500);

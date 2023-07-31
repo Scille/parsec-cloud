@@ -29,8 +29,8 @@
 
     <!-- role user -->
     <div class="workspace-role">
-      <tag-role
-        :workspacerole="workspace.role"
+      <tag-workspace-role
+        :role="workspace.role"
       />
     </div>
 
@@ -88,7 +88,7 @@ import { IonIcon, IonButton, IonItem, IonLabel } from '@ionic/vue';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
 import { MockWorkspace } from '@/common/mocks';
 import AvatarGroup from '@/components/AvatarGroup.vue';
-import TagRole from '@/components/TagRole.vue';
+import TagWorkspaceRole from '@/components/TagWorkspaceRole.vue';
 
 const isSelected = ref(false);
 

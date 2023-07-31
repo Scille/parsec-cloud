@@ -4,9 +4,9 @@
   <ion-label class="label-role">
     <ion-chip
       class="caption-caption tag"
-      :class="workspacerole"
+      :class="role"
     >
-      {{ translateWorkspaceRole(workspacerole) }}
+      {{ translateWorkspaceRole(role) }}
     </ion-chip>
   </ion-label>
 </template>
@@ -20,17 +20,17 @@ import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 
 defineProps<{
-  workspacerole: WorkspaceRole,
+  role: WorkspaceRole,
 }>();
 
-function translateWorkspaceRole(workspacerole: WorkspaceRole): string {
-  if (workspacerole === WorkspaceRole.Owner) {
+function translateWorkspaceRole(role: WorkspaceRole): string {
+  if (role === WorkspaceRole.Owner) {
     return t('WorkspacesPage.role.owner');
-  } else if (workspacerole === WorkspaceRole.Manager) {
+  } else if (role === WorkspaceRole.Manager) {
     return t('WorkspacesPage.role.manager');
-  } else if (workspacerole === WorkspaceRole.Contributor) {
+  } else if (role === WorkspaceRole.Contributor) {
     return t('WorkspacesPage.role.contributor');
-  } else if (workspacerole === WorkspaceRole.Reader) {
+  } else if (role === WorkspaceRole.Reader) {
     return t('WorkspacesPage.role.reader');
   }
   return '';
@@ -38,8 +38,4 @@ function translateWorkspaceRole(workspacerole: WorkspaceRole): string {
 </script>
 
 <style scoped lang="scss">
-.tag {
-  padding: .25rem .5rem;
-  height: auto;
-}
 </style>

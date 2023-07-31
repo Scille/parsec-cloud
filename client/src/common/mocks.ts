@@ -104,10 +104,9 @@ export interface MockWorkspace {
 }
 
 export enum Profile {
-  Owner = 'owner',
   Admin = 'administrator',
   Standard = 'standard',
-  External = 'external'
+  External = 'external',
 }
 
 export interface MockUser {
@@ -127,8 +126,8 @@ const MOCK_USERS: MockUser[] = [
     email: 'cernd@gmail.com',
     avatar: 'ce',
     joined: DateTime.fromISO('2023-05-10T08:00:00'),
-    profile: Profile.Owner,
-    revoked: false
+    profile: Profile.Standard,
+    revoked: false,
   },
   {
     id: 'id2',
@@ -137,7 +136,7 @@ const MOCK_USERS: MockUser[] = [
     avatar: 'vc',
     joined: DateTime.fromISO('2022-01-10T08:00:00'),
     profile: Profile.Standard,
-    revoked: false
+    revoked: false,
   },
   {
     id: 'id3',
@@ -146,7 +145,7 @@ const MOCK_USERS: MockUser[] = [
     avatar: 'dd',
     joined: DateTime.fromISO('2023-04-10T08:00:00'),
     profile: Profile.Admin,
-    revoked: false
+    revoked: false,
   },
   {
     id: 'id4',
@@ -155,8 +154,8 @@ const MOCK_USERS: MockUser[] = [
     avatar: 'ch',
     joined: DateTime.fromISO('2023-04-10T08:00:00'),
     profile: Profile.External,
-    revoked: false
-  }
+    revoked: false,
+  },
 ];
 
 export async function getMockUsers(): Promise<MockUser[]> {
