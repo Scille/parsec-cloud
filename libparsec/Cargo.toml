@@ -20,9 +20,12 @@ test-utils = [
 ]
 
 [dependencies]
+libparsec_client = { workspace = true }
+libparsec_client_connection = { workspace = true }
 libparsec_protocol = { workspace = true }
 libparsec_crypto = { workspace = true }
 libparsec_types = { workspace = true }
+libparsec_platform_async = { workspace = true }
 libparsec_platform_device_loader = { workspace = true }
 libparsec_platform_storage = { workspace = true }
 libparsec_serialization_format = { workspace = true }
