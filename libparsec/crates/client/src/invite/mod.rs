@@ -2,6 +2,8 @@
 
 mod claimer;
 mod greeter;
+mod organization;
 
 pub use claimer::*;
 pub use greeter::*;
+pub use organization::*;
