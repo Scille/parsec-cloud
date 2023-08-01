@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
-
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 """
 This script is used to ease the parsec release process.
@@ -137,7 +136,10 @@ class Version:
             #
             # Convert `1.2.3-N-gSHA` to `1.2.3-dev.N+git.SHA`
             raw, _ = re.subn(
-                pattern=r"-(\d+)-g([0-9A-Za-z]+)", repl=r"-dev.\1+git.\2", string=raw, count=1
+                pattern=r"-(\d+)-g([0-9A-Za-z]+)",
+                repl=r"-dev.\1+git.\2",
+                string=raw,
+                count=1,
             )
         match = RELEASE_REGEX.match(raw)
         if not match:
@@ -306,7 +308,9 @@ _test_parse_version_string(
     "1.2.3-10-g3b5f5762", Version(1, 2, 3, dev=10, local="git.3b5f5762"), git=True
 )
 _test_parse_version_string(
-    "v2.12.1-2160-g1c38d13f8", Version(2, 12, 1, dev=2160, local="git.1c38d13f8"), git=True
+    "v2.12.1-2160-g1c38d13f8",
+    Version(2, 12, 1, dev=2160, local="git.1c38d13f8"),
+    git=True,
 )
 _test_parse_version_string("1.2.3-b42", Version(1, 2, 3, prerelease="b42"))
 _test_parse_version_string("1.2.3-rc1+dev", Version(1, 2, 3, prerelease="rc1", local="dev"))
@@ -373,7 +377,9 @@ def update_version_files(version: Version) -> None:
 def update_license_file(version: Version, new_release_date: datetime) -> None:
     license_txt = BUSL_LICENSE_FILE.read_text(encoding="utf8")
     half_updated_license_txt = re.sub(
-        r"Change Date:.*", f"Change Date:  {new_release_date.strftime('%b %d, %Y')}", license_txt
+        r"Change Date:.*",
+        f"Change Date:  {new_release_date.strftime('%b %d, %Y')}",
+        license_txt,
     )
     updated_version_txt = re.sub(
         r"Licensed Work:.*",
@@ -524,7 +530,9 @@ def push_release(tag: str, release_branch: str, yes: bool) -> None:
 
 
 def gen_rst_release_entry(
-    version: Version, release_date: datetime, issues_per_type: defaultdict[str, list[str]]
+    version: Version,
+    release_date: datetime,
+    issues_per_type: defaultdict[str, list[str]],
 ) -> str:
     new_entry_title = f"Parsec v{version} ({release_date.date().isoformat()})"
     new_entry = f"\n\n{new_entry_title}\n{len(new_entry_title) * '-'}\n"
@@ -541,7 +549,9 @@ def gen_rst_release_entry(
     return new_entry
 
 
-def convert_newsfragments_to_rst(newsfragments: list[Path]) -> defaultdict[str, list[str]]:
+def convert_newsfragments_to_rst(
+    newsfragments: list[Path],
+) -> defaultdict[str, list[str]]:
     issues_per_type = defaultdict(list)
     for fragment in newsfragments:
         issue_id, type, _ = fragment.name.split(".")
@@ -550,7 +560,11 @@ def convert_newsfragments_to_rst(newsfragments: list[Path]) -> defaultdict[str, 
             continue
         issue_txt = f"{fragment.read_text(encoding='utf8')} (`#{issue_id} <https://github.com/Scille/parsec-cloud/issues/{issue_id}>`__)\n"
         wrapped_issue_txt = textwrap.fill(
-            issue_txt, width=80, break_long_words=False, initial_indent="* ", subsequent_indent="  "
+            issue_txt,
+            width=80,
+            break_long_words=False,
+            initial_indent="* ",
+            subsequent_indent="  ",
         )
         issues_per_type[type].append(wrapped_issue_txt)
     return issues_per_type
@@ -577,7 +591,10 @@ def check_release(version: Version) -> None:
         print(f" [{COLOR_RED}FAILED{COLOR_END}]")
 
     # Check __version__
-    print(f"Validating version {COLOR_GREEN}{version}{COLOR_END} across our repo ...", end="")
+    print(
+        f"Validating version {COLOR_GREEN}{version}{COLOR_END} across our repo ...",
+        end="",
+    )
     code_version = get_version_from_code()
     if code_version != version:
         raise ReleaseError(
@@ -601,7 +618,10 @@ def check_release(version: Version) -> None:
     show_info = run_git("show", "--quiet", "v" + str(version))
     tag_type = show_info.split(" ", 1)[0]
 
-    print(f"Checking we have an annotated tag for {COLOR_GREEN}{version}{COLOR_END} ...", end="")
+    print(
+        f"Checking we have an annotated tag for {COLOR_GREEN}{version}{COLOR_END} ...",
+        end="",
+    )
     if tag_type != "tag":
         failed()
         raise ReleaseError(f"{version} is not an annotated tag (type: {tag_type})")
