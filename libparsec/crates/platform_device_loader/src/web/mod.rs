@@ -10,7 +10,7 @@ use crate::{LoadDeviceError, LoadRecoveryDeviceError, SaveDeviceError, SaveRecov
  * List available devices
  */
 
-pub async fn list_available_devices(config_dir: &Path) -> Vec<AvailableDevice> {
+pub async fn list_available_devices(_config_dir: &Path) -> Vec<AvailableDevice> {
     todo!()
 }
 
@@ -19,14 +19,14 @@ pub async fn list_available_devices(config_dir: &Path) -> Vec<AvailableDevice> {
  */
 
 pub async fn load_device(
-    access: &DeviceAccessStrategy,
+    _access: &DeviceAccessStrategy,
 ) -> Result<Arc<LocalDevice>, LoadDeviceError> {
     todo!()
 }
 
 pub async fn save_device(
-    access: &DeviceAccessStrategy,
-    device: &LocalDevice,
+    _access: &DeviceAccessStrategy,
+    _device: &LocalDevice,
 ) -> Result<(), SaveDeviceError> {
     todo!()
 }
@@ -36,15 +36,15 @@ pub async fn save_device(
  */
 
 pub async fn load_recovery_device(
-    key_file: &Path,
-    passphrase: SecretKeyPassphrase,
+    _key_file: &Path,
+    _passphrase: SecretKeyPassphrase,
 ) -> Result<LocalDevice, LoadRecoveryDeviceError> {
     todo!()
 }
 
 pub async fn save_recovery_device(
-    key_file: &Path,
-    device: &LocalDevice,
+    _key_file: &Path,
+    _device: &LocalDevice,
 ) -> Result<SecretKeyPassphrase, SaveRecoveryDeviceError> {
     todo!()
 }

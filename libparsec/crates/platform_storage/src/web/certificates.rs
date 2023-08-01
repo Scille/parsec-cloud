@@ -13,9 +13,10 @@ impl CertificatesStorage {
         todo!()
     }
 
+    #[allow(unused)]
     pub(crate) async fn no_populate_start(
-        data_base_dir: &Path,
-        device: &LocalDevice,
+        _data_base_dir: &Path,
+        _device: &LocalDevice,
     ) -> anyhow::Result<Self> {
         todo!()
     }
@@ -26,98 +27,98 @@ impl CertificatesStorage {
 
     pub async fn add_user_certificate(
         &self,
-        index: IndexInt,
-        timestamp: DateTime,
-        user_id: UserID,
-        encrypted: Vec<u8>,
+        _index: IndexInt,
+        _timestamp: DateTime,
+        _user_id: UserID,
+        _encrypted: Vec<u8>,
     ) -> anyhow::Result<()> {
         todo!()
     }
 
     pub async fn add_revoked_user_certificate(
         &self,
-        index: IndexInt,
-        timestamp: DateTime,
-        user_id: UserID,
-        encrypted: Vec<u8>,
+        _index: IndexInt,
+        _timestamp: DateTime,
+        _user_id: UserID,
+        _encrypted: Vec<u8>,
     ) -> anyhow::Result<()> {
         todo!()
     }
 
     pub async fn add_user_update_certificate(
         &self,
-        index: IndexInt,
-        timestamp: DateTime,
-        user_id: UserID,
-        encrypted: Vec<u8>,
+        _index: IndexInt,
+        _timestamp: DateTime,
+        _user_id: UserID,
+        _encrypted: Vec<u8>,
     ) -> anyhow::Result<()> {
         todo!()
     }
 
     pub async fn add_device_certificate(
         &self,
-        index: IndexInt,
-        timestamp: DateTime,
-        device_id: DeviceID,
-        encrypted: Vec<u8>,
+        _index: IndexInt,
+        _timestamp: DateTime,
+        _device_id: DeviceID,
+        _encrypted: Vec<u8>,
     ) -> anyhow::Result<()> {
         todo!()
     }
 
     pub async fn add_realm_role_certificate(
         &self,
-        index: IndexInt,
-        timestamp: DateTime,
-        realm_id: RealmID,
-        user_id: UserID,
-        encrypted: Vec<u8>,
+        _index: IndexInt,
+        _timestamp: DateTime,
+        _realm_id: RealmID,
+        _user_id: UserID,
+        _encrypted: Vec<u8>,
     ) -> anyhow::Result<()> {
         todo!()
     }
 
     pub async fn add_sequester_authority_certificate(
         &self,
-        index: IndexInt,
-        timestamp: DateTime,
-        encrypted: Vec<u8>,
+        _index: IndexInt,
+        _timestamp: DateTime,
+        _encrypted: Vec<u8>,
     ) -> anyhow::Result<()> {
         todo!()
     }
 
     pub async fn add_sequester_service_certificate(
         &self,
-        index: IndexInt,
-        timestamp: DateTime,
-        service_id: SequesterServiceID,
-        encrypted: Vec<u8>,
+        _index: IndexInt,
+        _timestamp: DateTime,
+        _service_id: SequesterServiceID,
+        _encrypted: Vec<u8>,
     ) -> anyhow::Result<()> {
         todo!()
     }
 
     pub async fn get_user_certificate(
         &self,
-        user_id: UserID,
+        _user_id: UserID,
     ) -> anyhow::Result<Option<(IndexInt, Vec<u8>)>> {
         todo!()
     }
 
     pub async fn get_revoked_user_certificate(
         &self,
-        user_id: UserID,
+        _user_id: UserID,
     ) -> anyhow::Result<Option<(IndexInt, Vec<u8>)>> {
         todo!()
     }
 
     pub async fn get_user_update_certificates(
         &self,
-        user_id: UserID,
+        _user_id: UserID,
     ) -> anyhow::Result<Vec<(IndexInt, Vec<u8>)>> {
         todo!()
     }
 
     pub async fn get_device_certificate(
         &self,
-        device_id: DeviceID,
+        _device_id: DeviceID,
     ) -> anyhow::Result<Option<(IndexInt, Vec<u8>)>> {
         todo!()
     }
@@ -125,7 +126,7 @@ impl CertificatesStorage {
     // Get all realm role certificates for a given realm
     pub async fn get_realm_certificates(
         &self,
-        realm_id: RealmID,
+        _realm_id: RealmID,
     ) -> anyhow::Result<Vec<(IndexInt, Vec<u8>)>> {
         todo!()
     }
@@ -133,7 +134,7 @@ impl CertificatesStorage {
     // Get all realm role certificates for a given user
     pub async fn get_user_realms_certificates(
         &self,
-        user_id: UserID,
+        _user_id: UserID,
     ) -> anyhow::Result<Vec<(IndexInt, Vec<u8>)>> {
         todo!()
     }
@@ -150,7 +151,7 @@ impl CertificatesStorage {
         todo!()
     }
 
-    pub async fn get_certificate(&self, index: IndexInt) -> anyhow::Result<Option<Vec<u8>>> {
+    pub async fn get_certificate(&self, _index: IndexInt) -> anyhow::Result<Option<Vec<u8>>> {
         todo!()
     }
 
@@ -159,7 +160,7 @@ impl CertificatesStorage {
     /// If this certificate index doesn't exist yet, `(None, None)` is returned.
     pub async fn get_timestamp_bounds(
         &self,
-        index: IndexInt,
+        _index: IndexInt,
     ) -> anyhow::Result<(Option<DateTime>, Option<DateTime>)> {
         todo!()
     }

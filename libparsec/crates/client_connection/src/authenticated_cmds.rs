@@ -32,7 +32,6 @@
 
 use base64::prelude::{Engine, BASE64_STANDARD};
 use bytes::Bytes;
-use futures::stream::StreamExt;
 use reqwest::{
     header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
     Client, RequestBuilder, Url,
@@ -121,6 +120,7 @@ where
 
     #[cfg(not(target_arch = "wasm32"))]
     async fn next_sse_event(&mut self) -> Result<SSEEvent, ConnectionError> {
+        use futures::stream::StreamExt;
         match self.event_source.next().await {
             Some(Ok(sse_event)) => Ok(sse_event),
             Some(Err(err)) => match err {
@@ -150,6 +150,7 @@ where
         }
     }
 
+    #[allow(unused_mut)]
     pub fn close(mut self) {
         #[cfg(not(target_arch = "wasm32"))]
         self.event_source.close();
