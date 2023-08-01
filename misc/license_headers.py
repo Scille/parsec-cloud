@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
-
 from __future__ import annotations
 
 import argparse
@@ -105,16 +103,8 @@ class Licenser:
             return False
 
 
-class AgplLicenserMixin(Licenser):
-    SPDX_ID = "AGPL-3.0"
-
-
 class BuslLicenserMixin(Licenser):
     SPDX_ID = "BUSL-1.1"
-
-    @classmethod
-    def generate_license_label(cls) -> str:
-        return f"{cls.SPDX_ID} (eventually AGPL-3.0)"
 
 
 class PythonLicenserMixin(Licenser):
