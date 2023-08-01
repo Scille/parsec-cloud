@@ -1,4 +1,4 @@
--- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 INSERT INTO user_(
     _id, organization, user_id, profile, user_certificate, redacted_user_certificate,
