@@ -83,22 +83,25 @@ async def _run_server(
             # We don't use json in the /testbed/... routes, this is to simplify
             # as much as possible implementation on the client side
 
+            load_template_lock = trio.Lock()
+
             @asgi.route("/testbed/new/<template>", methods=["POST"])
             async def test_new(template: str):  # type: ignore[misc]
                 nonlocal org_count
                 try:
                     template_org_id, template_crc = template_id_to_org_id_and_crc[template]
                 except KeyError:
-                    # If it exists, template has not been loaded yet
-                    template_content = testbed.test_get_testbed_template(template)
+                    async with load_template_lock:
+                        # If it exists, template has not been loaded yet
+                        template_content = testbed.test_get_testbed_template(template)
 
-                    if not template_content:
-                        # No template with the given id
-                        return await make_response(b"unknown template", 404)
+                        if not template_content:
+                            # No template with the given id
+                            return await make_response(b"unknown template", 404)
 
-                    template_crc = template_content.compute_crc()
-                    template_org_id = await backend.test_load_template(template_content)
-                    template_id_to_org_id_and_crc[template] = (template_org_id, template_crc)
+                        template_crc = template_content.compute_crc()
+                        template_org_id = await backend.test_load_template(template_content)
+                        template_id_to_org_id_and_crc[template] = (template_org_id, template_crc)
 
                 org_count += 1
                 new_org_id = OrganizationID(f"Org{org_count}")
