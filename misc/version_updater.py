@@ -1,10 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 """
 Helper that help changing the version of a tool across the repository.
 """
 
 import enum
+import glob
 import re
 import sys
 from argparse import ArgumentParser
@@ -48,6 +49,8 @@ NODE_GA_VERSION = ReplaceRegex(r"node-version: [0-9.]+", "node-version: {version
 WASM_PACK_GA_VERSION = ReplaceRegex(r"wasm-pack-version: [0-9.]+", "wasm-pack-version: {version}")
 PYTHON_DOCKER_VERSION = ReplaceRegex(r"python:\d.\d+", hide_patch_version("python:{version}"))
 PYTHON_SMALL_VERSION = ReplaceRegex(r"python\d.\d+", hide_patch_version("python{version}"))
+TOML_LICENSE_FIELD = ReplaceRegex(r'license = ".*"', 'license = "{version}"')
+JSON_LICENSE_FIELD = ReplaceRegex(r'"license": ".*",', '"license": "{version}",')
 
 
 @enum.unique
@@ -58,6 +61,7 @@ class Tool(enum.Enum):
     Node = "node"
     WasmPack = "wasm-pack"
     Parsec = "parsec"
+    License = "license"
 
 
 TOOLS_VERSION: Dict[Tool, str] = {
@@ -67,6 +71,7 @@ TOOLS_VERSION: Dict[Tool, str] = {
     Tool.Node: "18.12.0",
     Tool.WasmPack: "0.11.0",
     Tool.Parsec: "2.16.0-a.0+dev",
+    Tool.License: "BUSL-1.1",
 }
 
 
@@ -93,6 +98,10 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
         Tool.Node: [NODE_GA_VERSION],
         Tool.WasmPack: [WASM_PACK_GA_VERSION],
     },
+    ROOT_DIR / "client/package.json": {Tool.License: [JSON_LICENSE_FIELD]},
+    ROOT_DIR / "client/electron/package.json": {Tool.License: [JSON_LICENSE_FIELD]},
+    ROOT_DIR / "bindings/electron/package.json": {Tool.License: [JSON_LICENSE_FIELD]},
+    ROOT_DIR / "bindings/web/package.json": {Tool.License: [JSON_LICENSE_FIELD]},
     ROOT_DIR
     / "docs/development/quickstart.md": {
         Tool.Rust: [
@@ -103,10 +112,7 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
             ),
         ],
         Tool.Python: [
-            ReplaceRegex(
-                r"python v[0-9.]+",
-                hide_patch_version("python v{version}"),
-            ),
+            ReplaceRegex(r"python v[0-9.]+", hide_patch_version("python v{version}")),
             ReplaceRegex(r"pyenv install [0-9.]+", "pyenv install {version}"),
             ReplaceRegex(r"pyenv prefix [0-9.]+", "pyenv prefix {version}"),
         ],
@@ -137,6 +143,9 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
         Tool.Node: [ReplaceRegex(r'Tool.Node: "[0-9.]+"', 'Tool.Node: "{version}"')],
         Tool.WasmPack: [ReplaceRegex(r'Tool.WasmPack: "[0-9.]+"', 'Tool.WasmPack: "{version}"')],
         Tool.Parsec: [ReplaceRegex(r'Tool.Parsec: "[0-9.]+.*",', 'Tool.Parsec: "{version}",')],
+        Tool.License: [
+            ReplaceRegex(r'^    Tool.License: "[^\"]*",', '    Tool.License: "{version}",')
+        ],
     },
     ROOT_DIR
     / "server/packaging/server/in-docker-build.sh": {
@@ -180,10 +189,12 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
             ),
             ReplaceRegex(r"py\d+", hide_patch_version("py{version}", separator="")),
             ReplaceRegex(
-                r"python_version = \d.\d+", hide_patch_version("python_version = {version}")
+                r"python_version = \d.\d+",
+                hide_patch_version("python_version = {version}"),
             ),
         ],
         Tool.Parsec: [ReplaceRegex(r'^version = ".*"$', 'version = "v{version}"')],
+        Tool.License: [TOML_LICENSE_FIELD],
     },
     ROOT_DIR
     / ".pre-commit-config.yaml": {
@@ -194,6 +205,9 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
     / "rust-toolchain.toml": {
         Tool.Rust: [ReplaceRegex(r'channel = ".*"', 'channel = "{version}"')]
     },
+    # We don't list the root `Cargo.toml` because it's a 'pure workspace' Cargo spec file
+    # (i.e.: It don't have a `package` entry) and thus can't have a license field.
+    ROOT_DIR / "*/**/Cargo.toml": {Tool.License: [TOML_LICENSE_FIELD]},
 }
 
 
@@ -257,19 +271,20 @@ def does_every_regex_where_used(filename: Path, have_matched: Dict[str, bool]) -
 def check_tool(tool: Tool, version: str, update: bool) -> Dict[Path, List[str]]:
     errors = {}
 
-    check_or_udpate: Callable[[Path, RawRegexes, str], List[str]] = update_tool_version
+    check_or_update: Callable[[Path, RawRegexes, str], List[str]] = update_tool_version
     if not update:
-        check_or_udpate = check_tool_version
+        check_or_update = check_tool_version
 
     for filename, tools_in_file in FILES_WITH_VERSION_INFO.items():
         regexes = tools_in_file.get(tool, None)
         if regexes is None:
             continue
 
-        files_errors = check_or_udpate(filename, regexes, version)
-
-        if files_errors:
-            errors[filename] = files_errors
+        for glob_file in glob.glob(str(filename), recursive=True):
+            file = ROOT_DIR / glob_file
+            files_errors = check_or_update(file, regexes, version)
+            if files_errors:
+                errors[file] = files_errors
 
     return errors
 
@@ -294,7 +309,9 @@ if __name__ == "__main__":
         default=None,
     )
     parser.add_argument(
-        "--check", action="store_true", help="Check only for the version, no change will be done"
+        "--check",
+        action="store_true",
+        help="Check only for the version, no change will be done",
     )
     args = parser.parse_args()
     failed = False

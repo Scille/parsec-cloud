@@ -2,6 +2,7 @@
 name = "libparsec_bindings_android"
 version = "0.0.0"
 edition = "2021"
+license = "BUSL-1.1"
 
 [lib]
 crate-type = ["staticlib", "cdylib"]
