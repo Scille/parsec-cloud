@@ -10,6 +10,9 @@ from typing import Iterable, Iterator, Type
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 
+DIM = "\x1b[2m"
+RESET_DIM = "\x1b[22m"
+
 
 def extract_shabang_and_header_lines(fd):
     first_line = fd.readline()
@@ -47,12 +50,12 @@ class Licenser:
             shabang_line, header_line = extract_shabang_and_header_lines(fd)
             expected_license_line = cls.generate_license_line()
             if header_line != expected_license_line:
-                print(f"{file}: Missing {cls.SPDX_ID} header")
+                print(f"{DIM}{file}:{RESET_DIM} Missing {cls.SPDX_ID} header")
                 return False
 
             for line, line_txt in enumerate(fd.readlines(), 3 if shabang_line else 2):
                 if cls.is_possible_license_line(line_txt):
-                    print(f"{file}:{line}: Header wrongly present")
+                    print(f"{DIM}{file}:{line}:{RESET_DIM} Header wrongly present")
                     return False
 
         return True
@@ -70,10 +73,10 @@ class Licenser:
             if header_line != expected_license_line:
                 matcher = difflib.SequenceMatcher(None, header_line, expected_license_line)
                 if matcher.ratio() >= DIFF_MIN_RATIO:
-                    print(f"{file}: Replace previous header with `{cls.SPDX_ID}`")
+                    print(f"{DIM}{file}:{RESET_DIM} Replace previous header with `{cls.SPDX_ID}`")
                     updated_data = f"{shabang_line}{expected_license_line}{fd.read()}"
                 else:
-                    print(f"{file}: Add missing {cls.SPDX_ID} header")
+                    print(f"{DIM}{file}:{RESET_DIM} Add missing {cls.SPDX_ID} header")
                     updated_data = (
                         f"{shabang_line}{expected_license_line}\n{header_line}{fd.read()}"
                     )
@@ -89,7 +92,7 @@ class Licenser:
             need_rewrite = False
             for line in fd.readlines():
                 if cls.is_possible_license_line(line):
-                    print(f"{file}: Removing license header")
+                    print(f"{DIM}{file}:{RESET_DIM} Removing license header")
                     need_rewrite = True
                 else:
                     lines.append(line)
