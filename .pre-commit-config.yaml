@@ -33,7 +33,23 @@ repos:
         language: python
         language_version: python3
         # see: https://github.com/pre-commit/identify/blob/master/identify/extensions.py
-        types_or: [ python, pyi, sql, rust, vue, ts, tsx, javascript, jsx ]
+        types_or:
+          [
+            python,
+            pyi,
+            sql,
+            rust,
+            vue,
+            ts,
+            tsx,
+            javascript,
+            jsx,
+            c++,
+            c,
+            idl,
+            jinja,
+            markdown,
+          ]
 
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.29.0
