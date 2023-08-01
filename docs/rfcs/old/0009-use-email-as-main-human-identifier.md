@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Use email as main human identifier
 
 From [ISSUE-1011](https://github.com/Scille/parsec-cloud/issues/1011)

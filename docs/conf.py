@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
-
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 # -*- coding: utf-8 -*-
 #
@@ -255,7 +254,13 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass
 # [howto/manual]).
 latex_documents = [
-    ("index", "parsec.tex", "Parsec Documentation", "dev-parsec+fullguide@scille.fr", "howto"),
+    (
+        "index",
+        "parsec.tex",
+        "Parsec Documentation",
+        "dev-parsec+fullguide@scille.fr",
+        "howto",
+    ),
     (
         "userguide/index",
         "parsec-userguide.tex",

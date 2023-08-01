@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Change certificate fetching strategy from lazy to eager
 
 From [ISSUE-3126](https://github.com/Scille/parsec-cloud/issues/3126)

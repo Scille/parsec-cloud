@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # How to write RFCs
 
 This document indicate the `do` & `don't` when writing an RFC file.

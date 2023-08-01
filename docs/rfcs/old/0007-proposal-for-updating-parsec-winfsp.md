@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Proposal for updating Parsec/winfsp
 
 From [ISSUE-977](https://github.com/Scille/parsec-cloud/issues/977)

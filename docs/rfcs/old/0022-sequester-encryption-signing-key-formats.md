@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Sequester - Encryption & Siging key formats
 
 From [ISSUE-2463](https://github.com/Scille/parsec-cloud/issues/2463)

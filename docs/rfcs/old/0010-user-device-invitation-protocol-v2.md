@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # User/Device invitation protocol v2
 
 From [ISSUE-1037](https://github.com/Scille/parsec-cloud/issues/1037)

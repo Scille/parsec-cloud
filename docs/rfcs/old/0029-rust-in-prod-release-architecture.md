@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Oxidation in prod - Release architecture
 
 From [ISSUE-2492](https://github.com/Scille/parsec-cloud/issues/2492)

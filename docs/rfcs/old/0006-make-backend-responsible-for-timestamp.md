@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Make backend responsible for timestamp
 
 From [ISSUE-908](https://github.com/Scille/parsec-cloud/issues/908)

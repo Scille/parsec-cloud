@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # New policy for removing manifests
 
 From [ISSUE-575](https://github.com/Scille/parsec-cloud/issues/575)
