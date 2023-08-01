@@ -197,6 +197,9 @@ class SkipLicenser(Licenser):
 
 LICENSERS_MAP = {
     # First match is used
+    re.compile(r"^misc/bench.py$"): SkipLicenser,
+    # Special case for ourself given we contain the license headers in the source code !
+    re.compile(r"^misc/license_headers.py$"): SkipLicenser,
     re.compile(r"^(.*/)?(target|node_modules|build|dist)/"): SkipLicenser,
     re.compile(r"^(libparsec|bindings)/.*\.(py|pyi)$"): PythonBuslLicenser,
     re.compile(r"^(libparsec|bindings)/.*\.rs$"): RustBuslLicenser,
@@ -213,8 +216,6 @@ LICENSERS_MAP = {
     re.compile(r"^bindings/.*\.(ts|js)\.j2$"): JavascriptBuslLicenser,
     re.compile(r"^bindings/.*\.rs\.j2$"): RustBuslLicenser,
     re.compile(r"^client/src/.*\.vue$"): VueBuslLicenser,
-    # Special case for ourself given we contain the license headers in the source code !
-    re.compile(r"^misc/license_headers.py$"): SkipLicenser,
     re.compile(r"^.*\.(py|pyi)$"): PythonBuslLicenser,
     re.compile(r"^.*\.sql$"): SqlBuslLicenser,
     re.compile(r"^windows-icon-handler/.*\.(cpp|h|idl)$"): CppBuslLicenser,
