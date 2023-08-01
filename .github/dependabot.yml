@@ -52,6 +52,11 @@ updates:
     directory: /
     pull-request-branch-name:
       separator: "-"
+    ignore:
+      # `console_error_panic_hook@0.1.7` point to a commit that isn't present in the source repo
+      - dependency-name: console_error_panic_hook
+        versions:
+          - 0.1.7
     schedule:
       interval: weekly
       day: monday
