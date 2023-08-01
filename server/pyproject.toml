@@ -3,6 +3,7 @@ name = "parsec-cloud"
 version = "v2.16.0-a.0+dev"
 description = "Secure cloud framework"
 authors = ["Scille SAS <contact@scille.fr>"]
+license = "BUSL-1.1"
 readme = "../README.rst"
 homepage = "https://github.com/Scille/parsec-cloud"
 documentation = "https://docs.parsec.cloud"

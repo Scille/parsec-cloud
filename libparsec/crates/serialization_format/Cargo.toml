@@ -2,7 +2,7 @@
 name = "libparsec_serialization_format"
 version = "0.0.0"
 edition = "2021"
-license = " BUSL-1.1"
+license = "BUSL-1.1"
 
 [lib]
 proc-macro = true
