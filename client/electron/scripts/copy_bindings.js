@@ -1,4 +1,5 @@
 #! /usr/bin/env node
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 const fs = require('fs');
 const path = require('path');
