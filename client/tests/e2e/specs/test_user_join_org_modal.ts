@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 describe('User join an organization', () => {
   const INVITATION_LINK = 'parsec://parsec.cloud/Test?action=claim_user&token=47265123969c4d6584c2bc15960cf212';
