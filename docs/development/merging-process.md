@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Parsec Development Workflow
 
 This document describes the Parsec Development Workflow and includes some

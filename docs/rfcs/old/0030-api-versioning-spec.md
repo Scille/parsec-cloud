@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # API versioning spec
 
 From [ISSUE-2540](https://github.com/Scille/parsec-cloud/issues/2540)

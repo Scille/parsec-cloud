@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # CLI wrong data improvement
 
 From [ISSUE-1075](https://github.com/Scille/parsec-cloud/issues/1075)

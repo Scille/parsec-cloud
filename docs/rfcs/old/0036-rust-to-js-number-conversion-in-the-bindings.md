@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Proper Rust <-> Javascript number conversion in the bindings
 
 From [ISSUE-3941](https://github.com/Scille/parsec-cloud/issues/3941)

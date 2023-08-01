@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Remove copyright year from source headers ?
 
 From [ISSUE-2596](https://github.com/Scille/parsec-cloud/issues/2596)

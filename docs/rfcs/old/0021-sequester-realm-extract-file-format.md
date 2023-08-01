@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Sequester - realm extract file format
 
 From [ISSUE-2461](https://github.com/Scille/parsec-cloud/issues/2461)

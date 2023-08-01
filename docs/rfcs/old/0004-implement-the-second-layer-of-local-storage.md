@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Implement the second layer of local storage
 
 From [ISSUE-268](https://github.com/Scille/parsec-cloud/issues/268)

@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Simple benchmark parsec
 
 1. Download <https://github.com/Scille/parsec-cloud/archive/refs/tags/v2.15.0.zip>.

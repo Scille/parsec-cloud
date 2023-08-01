@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
 # Oxidation in prod - Poetry/Maturin based pyproject.toml for main parsec Python project
 
 From [ISSUE-2489](https://github.com/Scille/parsec-cloud/issues/2489)
