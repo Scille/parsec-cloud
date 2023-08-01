@@ -49,24 +49,36 @@ class Licenser:
             shabang_line, header_line = extract_shabang_and_header_lines(fd)
             expected_license_line = cls.generate_license_line()
             if header_line != expected_license_line:
-                print(f"Missing {cls.SPDX_ID} header", file)
+                print(f"{file}: Missing {cls.SPDX_ID} header")
                 return False
 
             for line, line_txt in enumerate(fd.readlines(), 3 if shabang_line else 2):
                 if cls.is_possible_license_line(line_txt):
-                    print(f"Header wrongly present at {file}:{line}")
+                    print(f"{file}:{line}: Header wrongly present")
                     return False
 
         return True
 
     @classmethod
     def add_header(cls, file: Path) -> bool:
+        import difflib
+
+        # Ratio at which we will consider the header line to be almost similar to the expected header line and need only replacement.
+        DIFF_MIN_RATIO = 0.75
+
         with open(file, "r", encoding="utf-8") as fd:
             shabang_line, header_line = extract_shabang_and_header_lines(fd)
             expected_license_line = cls.generate_license_line()
             if header_line != expected_license_line:
-                print(f"Add missing {cls.SPDX_ID} header: {file}")
-                updated_data = f"{shabang_line}{expected_license_line}\n{header_line}{fd.read()}"
+                matcher = difflib.SequenceMatcher(
+                    None, header_line, expected_license_line
+                )
+                if matcher.ratio() >= DIFF_MIN_RATIO:
+                    print(f"{file}: Replace previous header with `{cls.SPDX_ID}`")
+                    updated_data = f"{shabang_line}{expected_license_line}{fd.read()}"
+                else:
+                    print(f"{file}: Add missing {cls.SPDX_ID} header")
+                    updated_data = f"{shabang_line}{expected_license_line}\n{header_line}{fd.read()}"
                 file.write_text(updated_data, encoding="utf-8")
                 return True
 
@@ -79,7 +91,7 @@ class Licenser:
             need_rewrite = False
             for line in fd.readlines():
                 if cls.is_possible_license_line(line):
-                    print(f"Removing license header from {file}")
+                    print(f"{file}: Removing license header")
                     need_rewrite = True
                 else:
                     lines.append(line)
@@ -303,6 +315,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    fn = {"check": check_headers, "add": add_headers, "remove": remove_headers}[args.cmd]
+    fn = {"check": check_headers, "add": add_headers, "remove": remove_headers}[
+        args.cmd
+    ]
 
     sys.exit(fn(args.files))
