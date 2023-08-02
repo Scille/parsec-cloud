@@ -17,31 +17,21 @@
           />
         </div>
         <!-- revoke or view common workspace -->
-        <div v-else-if="selectedUsersCount === 1">
+        <div v-else-if="selectedUsersCount >= 1">
           <button-option
             :icon="personRemove"
             class="danger"
             id="button-revoke-user"
-            :button-label="$t('UsersPage.userContextMenu.actionRevoke')"
-            @click="revokeUser()"
+            :button-label="$t('UsersPage.userContextMenu.actionRevoke', selectedUsersCount)"
+            @click="revokeSelectedUsers()"
             v-show="isAdmin()"
           />
           <button-option
             :icon="eye"
+            v-show="selectedUsersCount === 1"
             id="button-common-workspaces"
             :button-label="$t('UsersPage.userContextMenu.actionSeeCommonWorkspaces')"
             @click="viewCommonWorkspace()"
-          />
-        </div>
-        <!-- revoke -->
-        <div v-else>
-          <button-option
-            :icon="personRemove"
-            class="danger"
-            id="button-revoke-users"
-            :button-label="$t('UsersPage.userContextMenu.actionRevokeSelectedUser')"
-            @click="revokeUser()"
-            v-show="isAdmin()"
           />
         </div>
         <div class="right-side">
@@ -128,32 +118,21 @@
           </ion-text>
           <div
             class="content"
-            v-if="selectedUsersCount === 1"
+            v-if="selectedUsersCount >= 1"
           >
             <button-option
               class="shortcuts-btn danger"
               :icon="personRemove"
               id="button-revoke-user"
-              @click="revokeUser()"
+              @click="revokeSelectedUsers()"
               v-show="isAdmin()"
             />
             <button-option
+              v-show="selectedUsersCount === 1"
               class="shortcuts-btn"
               :icon="eye"
               id="button-common-workspaces"
               @click="viewCommonWorkspace()"
-            />
-          </div>
-          <div
-            class="content"
-            v-if="selectedUsersCount >= 2"
-          >
-            <button-option
-              class="shortcuts-btn danger"
-              id="button-move-to"
-              :icon="personRemove"
-              @click="revokeUser()"
-              v-if="selectedUsersCount >= 1"
             />
           </div>
         </div>
@@ -222,6 +201,21 @@ const selectedUsersCount = computed(() => {
   }
 });
 
+function getSelectedUsers(): MockUser[] {
+  const selectedUsers: MockUser[] = [];
+
+  if (displayView.value === DisplayState.List) {
+    for (const item of userListItemRefs.value) {
+      selectedUsers.push(item.getUser());
+    }
+  } else {
+    for (const item of userGridItemRefs.value) {
+      selectedUsers.push(item.getUser());
+    }
+  }
+  return selectedUsers;
+}
+
 function inviteUser(): void {
   console.log('Invite user clicked');
 }
@@ -258,12 +252,18 @@ function selectAllUsers(checked: boolean): void {
   }
 }
 
-function revokeUser(): void {
-  console.log('Revoke user clicked');
+function revokeUser(user: MockUser): void {
+  console.log(`Revoke user ${user.name}`);
 }
 
-function details(): void {
-  console.log('Details user clicked');
+function details(user: MockUser): void {
+  console.log(`Show details on user ${user.name}`);
+}
+
+function revokeSelectedUsers(): void {
+  for (const user of getSelectedUsers()) {
+    revokeUser(user);
+  }
 }
 
 async function openUserContextMenu(event: Event, user: MockUser): Promise<void> {

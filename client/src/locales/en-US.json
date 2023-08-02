@@ -368,8 +368,7 @@
         "userContextMenu": {
             "titleRemove": "Deletion",
             "titleDetails": "User details",
-            "actionRevoke": "Revoke this user",
-            "actionRevokeSelectedUser": "Revoke these users",
+            "actionRevoke": "Revoke this user | Revoke these users",
             "actionDetails": "View detail",
             "actionSeeCommonWorkspaces": "See common workspaces"
         }

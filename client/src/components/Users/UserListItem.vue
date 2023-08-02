@@ -17,7 +17,7 @@
       <ion-checkbox
         aria-label=""
         v-model="isSelected"
-        v-if="isSelected || isHovered || showCheckbox"
+        v-show="isSelected || isHovered || showCheckbox"
         class="checkbox"
         @click.stop
         @ion-change="$emit('select', user, isSelected)"
@@ -96,7 +96,7 @@ import TagProfile from '@/components/TagProfile.vue';
 const isHovered = ref(false);
 const isSelected = ref(false);
 
-defineProps<{
+const props = defineProps<{
   user: MockUser,
   showCheckbox: boolean
 }>();
@@ -107,9 +107,14 @@ defineEmits<{
   (e: 'select', user: MockUser, selected: boolean): void
 }>();
 
+function getUser(): MockUser {
+  return props.user;
+}
+
 defineExpose({
   isHovered,
   isSelected,
+  getUser,
 });
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
