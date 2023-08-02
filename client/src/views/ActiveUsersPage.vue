@@ -65,7 +65,7 @@
                   class="checkbox"
                   @ion-change="selectAllUsers($event.detail.checked)"
                   v-model="allUsersSelected"
-                  :indeterminate="interminateState"
+                  :indeterminate="indeterminateState"
                 />
               </ion-label>
               <ion-label class="user-list-header__label cell-title label-name">
@@ -90,7 +90,6 @@
               @menu-click="openUserContextMenu($event, user)"
               @select="onUserSelect"
               ref="userListItemRefs"
-              :interminate="interminateState"
             />
           </ion-list>
         </div>
@@ -197,8 +196,16 @@ const displayView = ref(DisplayState.List);
 const userList: Ref<MockUser[]> = ref([]);
 const userListItemRefs: Ref<typeof UserListItem[]> = ref([]);
 const userGridItemRefs: Ref<typeof UserCard[]> = ref([]);
-const allUsersSelected = ref(false);
-const interminateState = ref(false);
+
+const allUsersSelected = computed({
+  get: (): boolean => selectedUsersCount.value === userList.value.length,
+  set: (_val) => _val,
+});
+
+const indeterminateState = computed({
+  get: (): boolean => selectedUsersCount.value > 0 && selectedUsersCount.value < userList.value.length,
+  set: (_val) => _val,
+});
 
 const filteredUsers = computed(() => {
   const revokedUsers = userList.value.filter((user) => {
@@ -224,22 +231,8 @@ function viewCommonWorkspace(): void {
 }
 
 function onUserSelect(_user: MockUser, _selected: boolean): void {
-
   if (selectedUsersCount.value === 0) {
-    allUsersSelected.value = false;
     selectAllUsers(false);
-  }
-  // check global checkbox if all users are selected
-  if (selectedUsersCount.value === userList.value.length) {
-    allUsersSelected.value = true;
-  } else {
-    allUsersSelected.value = false;
-  }
-
-  if (selectedUsersCount.value !== 0 && selectedUsersCount.value !== userList.value.length) {
-    interminateState.value = true;
-  } else {
-    interminateState.value = false;
   }
 }
 
@@ -305,7 +298,6 @@ async function openUserContextMenu(event: Event, user: MockUser): Promise<void> 
 function resetSelection(): void {
   userListItemRefs.value = [];
   userGridItemRefs.value = [];
-  allUsersSelected.value = false;
 }
 
 onMounted(async (): Promise<void> => {
