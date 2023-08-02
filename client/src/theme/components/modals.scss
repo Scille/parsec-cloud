@@ -9,7 +9,6 @@ ion-modal::part(content) {
 /* --join by link modal -- */
 ion-modal.join-by-link-modal::part(content) {
   min-height: 300px;
-  height: 30vh;
   position: relative;
   display: block;
   contain: content;

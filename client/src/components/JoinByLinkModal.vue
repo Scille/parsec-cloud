@@ -1,71 +1,85 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS -->
 
 <template>
-  <ion-header>
-    <ion-toolbar>
-      <ion-title>{{ $t('JoinByLinkModal.pageTitle') }}</ion-title>
-      <ion-buttons slot="end">
-        <ion-button
-          slot="icon-only"
-          @click="closeModal()"
+  <ion-page>
+    <ion-buttons
+      slot="end"
+      class="closeBtn-container"
+    >
+      <ion-button
+        slot="icon-only"
+        @click="closeModal()"
+        class="closeBtn"
+      >
+        <ion-icon
+          :icon="close"
+          size="large"
+          class="closeBtn__icon"
+        />
+      </ion-button>
+    </ion-buttons>
+    <div class="modal">
+      <ion-header class="modal-header">
+        <ion-title class="modal-header__title title-h2">
+          {{ $t('JoinByLinkModal.pageTitle') }}
+        </ion-title>
+        <ion-text
+          class="modal-header__text body"
         >
-          <ion-icon
-            :icon="close"
-            size="large"
-          />
-        </ion-button>
-      </ion-buttons>
-    </ion-toolbar>
-  </ion-header>
-  <ion-content class="ion-padding">
-    <p>{{ $t('JoinByLinkModal.pleaseEnterUrl') }}</p>
-    <ion-item>
-      <ion-input
-        :label="$t('JoinByLinkModal.urlInputLabel')"
-        label-placement="stacked"
-        ref="urlInput"
-        :autofocus="true"
-        type="url"
-        v-model="joinLink"
-        :placeholder="$t('JoinByLinkModal.urlPlaceholder')"
-      />
-    </ion-item>
-  </ion-content>
-  <ion-footer class="footer">
-    <ion-toolbar>
-      <ion-buttons slot="primary">
-        <ion-button
-          type="submit"
-          @click="confirm()"
-          :disabled="claimLinkValidator(joinLink) !== Validity.Valid"
-        >
-          {{ $t('JoinByLinkModal.join') }}
-        </ion-button>
-      </ion-buttons>
-    </ion-toolbar>
-  </ion-footer>
+          {{ $t('JoinByLinkModal.pleaseEnterUrl') }}
+        </ion-text>
+      </ion-header>
+      <div class="modal-content inner-content">
+        <organization-link-page
+          ref="urlInput"
+          :autofocus="true"
+          v-model="joinLink"
+        />
+      </div>
+      <ion-footer class="modal-footer">
+        <ion-toolbar>
+          <ion-buttons
+            slot="primary"
+            class="modal-footer-buttons"
+          >
+            <ion-button
+              fill="solid"
+              size="default"
+              id="next-button"
+              type="submit"
+              @click="confirm()"
+              :disabled="claimLinkValidator(joinLink) !== Validity.Valid"
+            >
+              {{ $t('JoinByLinkModal.join') }}
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-footer>
+    </div>
+  </ion-page>
 </template>
 
 <script setup lang="ts">
 import {
-  IonContent,
+  IonText,
+  IonPage,
   IonHeader,
   IonTitle,
   IonToolbar,
   IonButtons,
   IonButton,
-  IonItem,
-  IonInput,
   modalController,
   IonFooter,
   IonIcon,
 } from '@ionic/vue';
-import { ref, nextTick, onMounted } from 'vue';
+import { ref } from 'vue';
 import { close } from 'ionicons/icons';
 import { claimLinkValidator, Validity } from '@/common/validators';
+import OrganizationLinkPage from '@/components/JoinOrganization/OrganizationLinkPage.vue';
 import { ModalResultCode } from '@/common/constants';
 
 const joinLink = ref('');
+const urlInput = ref();
 
 function closeModal(): Promise<boolean> {
   return modalController.dismiss(null, ModalResultCode.Cancel);
@@ -75,24 +89,80 @@ see https://github.com/ionic-team/ionic-framework/issues/19368 */
 function confirm(): Promise<boolean> {
   return modalController.dismiss(joinLink.value.trim(), ModalResultCode.Confirm);
 }
-
-onMounted(() => {
-  focusOnEditButton();
-});
-
-const urlInput = ref();
-
-// doesn't always work, ionic currently has an issue with the input component: https://github.com/ionic-team/ionic-framework/issues/24009
-function focusOnEditButton(): void {
-  nextTick(() => {
-    urlInput.value.$el.setFocus();
-  });
-}
 </script>
 
 <style lang="scss" scoped>
-.footer {
-  margin-top: -120px;
-  padding-right: 32px;
+.modal {
+  padding: 3.5rem;
+  justify-content: start;
+}
+
+.closeBtn-container {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+  }
+
+.closeBtn-container, .closeBtn {
+  margin: 0;
+  --padding-start: 0;
+  --padding-end: 0;
+}
+
+.closeBtn {
+  width: fit-content;
+  height: fit-content;
+  --border-radius: var(--parsec-radius-4);
+  --background-hover: var(--parsec-color-light-primary-50);
+  border-radius: var(--parsec-radius-4);
+
+  &__icon {
+    padding: 4px;
+    color: var(--parsec-color-light-primary-500);
+
+    &:hover {
+      --background-hover: var(--parsec-color-light-primary-50);
+    }
+  }
+
+  &:active {
+    border-radius: var(--parsec-radius-4);
+    background: var(--parsec-color-light-primary-100);
+  }
+}
+
+.modal-header {
+  margin-bottom: 2rem;
+
+  &__title {
+    padding: 0;
+    margin-bottom: 1.5rem;
+    color: var(--parsec-color-light-primary-600);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  &__text {
+    color: var(--parsec-color-light-secondary-grey);
+  }
+}
+
+.modal-content {
+  --background: transparent;
+}
+
+.modal-footer {
+  margin-top: 2.5rem;
+
+  &::before {
+    background: transparent;
+  }
+
+  &-buttons {
+    display: flex;
+    justify-content: end;
+    gap: 1rem;
+  }
 }
 </style>

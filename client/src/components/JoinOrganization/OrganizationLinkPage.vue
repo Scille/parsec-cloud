@@ -7,6 +7,7 @@
     name="joinOrganization"
     v-model="joinLink"
     id="link-orga-input"
+    type="url"
   />
 </template>
 
