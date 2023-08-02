@@ -51,7 +51,6 @@
         "joinByQRcode": "Join by QR code"
     },
     "CreateOrganization": {
-        "pageTitle": "Create an organization",
         "fullname": "Full name",
         "fullnamePlaceholder": "Jean MARTIN",
         "email": "Email",
@@ -61,7 +60,12 @@
         "serverDescription": "Organization server",
         "useParsecServer": "Use the main PARSEC server",
         "useMyOwnServer": "I have my own PARSEC server",
-        "acceptTOS": "I accept PARSEC's Privacy Policy and Terms and Conditions",
+        "acceptTOS": {
+            "label": "I accept PARSEC's ",
+            "tos": "Privacy Policy ",
+            "and": "and ",
+            "privacyPolicy": "Terms and Conditions"
+        },
         "parsecServerUrl": "URL of your PARSEC server",
         "parsecServerUrlPlaceholder": "parsec://hote:port",
         "registeringDevice": "Registering your device",
@@ -71,7 +75,22 @@
         "organizationCreated": "You can access to your new organization",
         "next": "Next",
         "previous": "Previous",
-        "done": "Done"
+        "done": "Let's go!",
+        "title": {
+            "create": "Create an organization",
+            "coordonnate": "State your coordonnates",
+            "server": "Choose the server you need",
+            "password": "Create your password",
+            "done": "{orga} has been created!"
+        },
+        "subtitles": {
+            "nameYourOrg": "Name your organization.",
+            "coordonnate": "State your name, your email and your device name.",
+            "server": "Choose the type of server you need.",
+            "password": "Finally, create your password.",
+            "Waiting": "Just a moment and we'll set up your organization.",
+            "Done": "You can now access your new organization."
+        }
     },
     "JoinByLinkModal": {
         "pageTitle": "Join by link",

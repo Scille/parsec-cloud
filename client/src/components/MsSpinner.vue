@@ -1,20 +1,21 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS -->
 
 <template>
-  <div class="spinner">
-    <img
-      src="@/assets/images/Logo/logo_icon_gradient.svg"
-      alt="loading-image"
-      class="orga-loading__logo"
-    >
+  <div class="container">
+    <div class="container-logo">
+      <img
+        src="@/assets/images/Logo/logo_icon_gradient.svg"
+        alt="loading-image"
+      >
+    </div>
     <ion-text
-      class="subtitles-normal orga-loading__text"
+      class="subtitles-normal container-text"
     >
       {{ title }}
     </ion-text>
     <ion-spinner
       name="crescent"
-      class="orga-loading__spinner"
+      class="container-spinner"
     />
   </div>
 </template>
@@ -28,19 +29,33 @@ defineProps<{
 </script>
 
 <style scoped lang="scss">
-.spinner {
-  &__logo {
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  overflow: hidden;
+  gap: 1.5rem;
+
+  &-logo {
     max-width: 3.625rem;
+
+    img {
+      width: 100%;
+      height: auto;
+    }
   }
 
-  &__text {
+  &-text {
     color: var(--parsec-color-light-secondary-grey);
     display: block;
     width: 100%;
   }
 
-  &__spinner {
+  &-spinner {
     --color: var(--parsec-color-light-primary-500);
+    position: relative;
   }
 }
 </style>

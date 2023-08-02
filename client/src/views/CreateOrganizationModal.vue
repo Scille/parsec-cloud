@@ -1,10 +1,6 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS -->
 
 <template>
-  <!-- the modal must be decomposed in view and components -->
-  <!-- View: ionHeader; ionButton(closeBtn); ionFooter -->
-  <!-- Components: 1 part = 1 component -->
-
   <ion-page class="modal">
     <ion-buttons
       slot="end"
@@ -25,14 +21,16 @@
     </ion-buttons>
     <ion-header class="modal-header">
       <ion-title
+        v-if="titles.get(pageStep)?.title !== ''"
         class="modal-header__title title-h2"
       >
-        {{ $t('CreateOrganization.pageTitle') }}
+        {{ titles.get(pageStep)?.title }}
       </ion-title>
       <ion-text
+        v-if="titles.get(pageStep)?.subtitle !== ''"
         class="modal-header__text body"
       >
-        {{ pageStep }}
+        {{ titles.get(pageStep)?.subtitle }}
       </ion-text>
     </ion-header>
     <!-- modal content: create component for each part-->
@@ -164,6 +162,7 @@ import {
   close,
 } from 'ionicons/icons';
 import { ref, Ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import InformativeText from '@/components/InformativeText.vue';
 import ChoosePassword from '@/components/ChoosePassword.vue';
 import OrganizationNamePage from '@/components/CreateOrganization/OrganizationNamePage.vue';
@@ -182,6 +181,8 @@ enum CreateOrganizationStep {
   FinishStep = 6,
 }
 
+const { t } = useI18n();
+
 const DEFAULT_SAAS_ADDR = 'parsec://saas.parsec.cloud/';
 
 const pageStep = ref(CreateOrganizationStep.OrgNameStep);
@@ -192,6 +193,43 @@ const passwordPage = ref();
 const spinnerPage = ref();
 
 const device: Ref<AvailableDevice | null> = ref(null);
+
+interface Title {
+  title: string,
+  subtitle?: string,
+}
+
+const titles = new Map<CreateOrganizationStep, Title>([
+  [
+    CreateOrganizationStep.OrgNameStep,
+    {
+      title: t('CreateOrganization.title.create'),
+      subtitle: t('CreateOrganization.subtitles.nameYourOrg')},
+  ],
+  [
+    CreateOrganizationStep.UserInfoStep,
+    {
+      title: t('CreateOrganization.title.coordonnate'),
+      subtitle: t('CreateOrganization.subtitles.coordonnate')},
+  ],
+  [
+    CreateOrganizationStep.ServerStep,
+    {
+      title: t('CreateOrganization.title.server'),
+      subtitle: t('CreateOrganization.subtitles.server')},
+  ],
+  [
+    CreateOrganizationStep.PasswordStep,
+    {
+      title: t('CreateOrganization.title.password'),
+      subtitle: t('CreateOrganization.subtitles.password')},
+  ],
+  [
+    CreateOrganizationStep.FinishStep,
+    {
+      title: t('CreateOrganization.title.done')},
+  ],
+]);
 
 function canGoBackward(): boolean {
   return ![
