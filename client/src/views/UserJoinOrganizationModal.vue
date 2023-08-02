@@ -29,7 +29,13 @@
         />
       </ion-button>
     </ion-buttons>
-    <div class="modal wizardTrue">
+    <!-- v-if pageStep === WaitForHost so add class wizardTrue -->
+    <div
+      class="modal"
+      :class="{
+        wizardTrue: pageStep > 1
+      }"
+    >
       <ion-header class="modal-header">
         <ion-title
           v-if="titles.get(pageStep)?.title !== ''"
