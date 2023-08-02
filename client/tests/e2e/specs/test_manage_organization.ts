@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-describe('Check workspaces page', () => {
+describe('Check manage org page', () => {
   beforeEach(() => {
     cy.visitApp();
     cy.login('Boby', 'P@ssw0rd');
@@ -11,7 +11,7 @@ describe('Check workspaces page', () => {
     cy.dropTestbed();
   });
 
-  it.skip('Checks initial status', () => {
+  it('Checks initial status', () => {
     cy.get('.back-organization').find('ion-label').contains('Manage my organization');
     cy.get('.organization-card__header').should('not.be.visible');
     cy.get('.organization-card__manageBtn').should('not.be.visible');

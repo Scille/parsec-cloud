@@ -21,7 +21,7 @@ describe('Check folders page', () => {
     cy.get('.folder-footer').contains(/\d items/);
   });
 
-  it.skip('Switch to grid view', () => {
+  it('Switch to grid view', () => {
     cy.get('.file-list-item').should('have.length.greaterThan', 1);
     cy.get('#folders-action-bar').find('#list-view').as('listButton').should('have.attr', 'disabled');
     cy.get('#folders-action-bar').find('#grid-view').as('gridButton').should('not.have.attr', 'disabled');
@@ -33,14 +33,14 @@ describe('Check folders page', () => {
     cy.get('.folder-grid-item').should('have.length', 0);
   });
 
-  it.skip('Create new folder', () => {
+  it('Create new folder', () => {
     cy.get('#button-new-folder').contains('New folder').click();
     cy.get('@consoleLog').should('have.been.calledWith', 'Create folder clicked');
   });
 
-  it.skip('Import files', () => {
+  it('Import files', () => {
     cy.get('#button-import').contains('Import').click();
-    cy.get('@consoleLog').should('have.been.calledWith', 'Import files clicked');
+    cy.get('.file-upload-modal').should('exist');
   });
 
   function checkMenuItems(): void {
@@ -58,24 +58,24 @@ describe('Check folders page', () => {
     cy.get('@menuItems').eq(9).contains('Copy link');
   }
 
-  it.skip('Open file menu in list view', () => {
+  it('Open file menu in list view', () => {
     cy.get('.file-list-item').first().find('.options-button').click();
     checkMenuItems();
   });
 
-  it.skip('Open file menu in grid view', () => {
-    cy.get('.toolbar').find('#grid-view').click();
+  it('Open file menu in grid view', () => {
+    cy.get('#folders-action-bar').find('#grid-view').click();
     cy.get('.folder-grid-item').first().find('.card-option').click();
     checkMenuItems();
   });
 
-  it.skip('Tests select a file', () => {
+  it('Tests select a file', () => {
     cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
-    cy.get('.file-list-item').eq(0).find('ion-checkbox').should('not.exist');
-    cy.get('.file-list-item').eq(1).find('ion-checkbox').should('not.exist');
+    cy.get('.file-list-item').eq(0).find('ion-checkbox').should('not.be.visible');
+    cy.get('.file-list-item').eq(1).find('ion-checkbox').should('not.be.visible');
     // Make the checkbox appear
     cy.get('.file-list-item').eq(0).trigger('mouseenter');
-    cy.get('.file-list-item').eq(0).find('ion-checkbox').should('exist');
+    cy.get('.file-list-item').eq(0).find('ion-checkbox').should('be.visible');
     // Select the first file
     cy.get('.file-list-item').eq(0).find('ion-checkbox').click();
     cy.get('.file-list-item').eq(0).find('ion-checkbox').should('have.class', 'checkbox-checked');
@@ -84,11 +84,11 @@ describe('Check folders page', () => {
     // Unselect the first file
     cy.get('.file-list-item').eq(0).find('ion-checkbox').click();
     cy.get('.file-list-item').eq(0).find('ion-checkbox').should('not.have.class', 'checkbox-checked');
-    cy.get('.file-list-item').eq(1).find('ion-checkbox').should('not.exist');
+    cy.get('.file-list-item').eq(1).find('ion-checkbox').should('not.be.visible');
     cy.get('.folder-footer').contains('2 items');
   });
 
-  it.skip('Tests select all files', () => {
+  it('Tests select all files', () => {
     cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
     // Select all
     cy.get('.folder-list-header').find('ion-checkbox').click();
@@ -99,8 +99,8 @@ describe('Check folders page', () => {
     // Unselect all
     cy.get('.folder-list-header').find('ion-checkbox').click();
     cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
-    cy.get('.file-list-item').eq(0).find('ion-checkbox').should('not.exist');
-    cy.get('.file-list-item').eq(1).find('ion-checkbox').should('not.exist');
+    cy.get('.file-list-item').eq(0).find('ion-checkbox').should('not.be.visible');
+    cy.get('.file-list-item').eq(1).find('ion-checkbox').should('not.be.visible');
     cy.get('.folder-footer').contains('2 items');
 
     // Select all, unselect first file
