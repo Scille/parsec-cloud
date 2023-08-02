@@ -61,7 +61,7 @@
         "useParsecServer": "Utiliser le serveur PARSEC principal",
         "useMyOwnServer": "Je dispose de mon propre serveur PARSEC",
         "acceptTOS": {
-            "label": "En utilisant le serverur PARSEC, j'accepte la",
+            "label": "En utilisant le serveur PARSEC, j'accepte la",
             "tos": " Politique de Confidentialité",
             "and": "et les",
             "privacyPolicy": "Conditions Générales de Vente et d'Utilisation"
@@ -78,14 +78,14 @@
         "done": "Terminer",
         "title": {
             "create": "Créez une nouvelle organisation",
-            "coordonnate": "Saisissez vos informations",
-            "server": "Choisissez votre serveur adpaté",
+            "personalDetails": "Saisissez vos informations",
+            "server": "Choisissez votre serveur adapté",
             "password": "Créez votre mot de passe",
-            "done": "{orga} a bien été créée !"
+            "done": "Votre organisation a bien été créée !"
         },
         "subtitles": {
-            "nameYourOrg": "Nommez votre organisation.",
-            "coordonnate": "Indiquez votre nom, votre e-mail et le nom de votre appareil.",
+            "nameYourOrg": "Choisissez le nom de votre organisation.",
+            "personalDetails": "Indiquez votre nom, votre e-mail et le nom de votre appareil.",
             "server": "Choisissez le type de serveur que vous avez besoin.",
             "password": "Pour finir créez votre mot de passe.",
             "Waiting": "Un instant, nous mettons en place votre organisation.",

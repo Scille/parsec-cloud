@@ -209,8 +209,8 @@ const titles = new Map<CreateOrganizationStep, Title>([
   [
     CreateOrganizationStep.UserInfoStep,
     {
-      title: t('CreateOrganization.title.coordonnate'),
-      subtitle: t('CreateOrganization.subtitles.coordonnate')},
+      title: t('CreateOrganization.title.personalDetails'),
+      subtitle: t('CreateOrganization.subtitles.personalDetails')},
   ],
   [
     CreateOrganizationStep.ServerStep,

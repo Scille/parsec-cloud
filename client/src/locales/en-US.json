@@ -78,14 +78,14 @@
         "done": "Let's go!",
         "title": {
             "create": "Create an organization",
-            "coordonnate": "State your coordonnates",
+            "personalDetails": "Enter your personal information",
             "server": "Choose the server you need",
             "password": "Create your password",
-            "done": "{orga} has been created!"
+            "done": "Your organization has been created!"
         },
         "subtitles": {
-            "nameYourOrg": "Name your organization.",
-            "coordonnate": "State your name, your email and your device name.",
+            "nameYourOrg": "Choose the name of your organization.",
+            "personalDetails": "State your name, your email and your device name.",
             "server": "Choose the type of server you need.",
             "password": "Finally, create your password.",
             "Waiting": "Just a moment and we'll set up your organization.",
