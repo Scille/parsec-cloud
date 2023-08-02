@@ -2,6 +2,7 @@
 
 use std::sync::Arc;
 
+use libparsec_platform_async::{channel, spawn, JoinHandle};
 use libparsec_types::prelude::*;
 
 use crate::{
@@ -13,7 +14,7 @@ use crate::{
 };
 
 pub struct CertificatesMonitor {
-    worker: tokio::task::JoinHandle<()>,
+    worker: JoinHandle<()>,
 }
 
 impl CertificatesMonitor {
@@ -22,7 +23,7 @@ impl CertificatesMonitor {
             NewCertificate(IndexInt),
             MissedServerEvents,
         }
-        let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<Action>();
+        let (tx, rx) = channel::unbounded::<Action>();
         let _ = tx.send(Action::MissedServerEvents);
 
         let events_connection_lifetime = (
@@ -37,17 +38,17 @@ impl CertificatesMonitor {
             }),
         );
 
-        let worker = tokio::spawn(async move {
+        let worker = spawn(async move {
             let _events_connection_lifetime = events_connection_lifetime;
 
             loop {
-                let noop_if_newer_than = match rx.recv().await {
-                    Some(Action::MissedServerEvents) => None,
-                    Some(Action::NewCertificate(index)) => Some(index),
+                let noop_if_newer_than = match rx.recv_async().await {
+                    Ok(Action::MissedServerEvents) => None,
+                    Ok(Action::NewCertificate(index)) => Some(index),
                     // Sender has left, time to shutdown !
                     // In theory this should never happen given `CertificatesMonitor`
                     // abort our coroutine on teardown instead.
-                    None => return,
+                    Err(_) => return,
                 };
                 // Need a loop here to retry the operation in case the server is not available
                 loop {

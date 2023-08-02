@@ -241,43 +241,6 @@ fn struct_availabledevice_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// ClientEvent
-
-#[allow(dead_code)]
-fn variant_clientevent_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::ClientEvent> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "Ping" => {
-            let ping = {
-                let js_val: Handle<JsString> = obj.get(cx, "ping")?;
-                js_val.value(cx)
-            };
-            Ok(libparsec::ClientEvent::Ping { ping })
-        }
-        _ => cx.throw_type_error("Object is not a ClientEvent"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_clientevent_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::ClientEvent,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::ClientEvent::Ping { ping, .. } => {
-            let js_tag = JsString::try_new(cx, "Ping").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_ping = JsString::try_new(cx, ping).or_throw(cx)?;
-            js_obj.set(cx, "ping", js_ping)?;
-        }
-    }
-    Ok(js_obj)
-}
-
 // WorkspaceStorageCacheSize
 
 #[allow(dead_code)]
@@ -321,6 +284,43 @@ fn variant_workspacestoragecachesize_rs_to_js<'a>(
         libparsec::WorkspaceStorageCacheSize::Default { .. } => {
             let js_tag = JsString::try_new(cx, "Default").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientEvent
+
+#[allow(dead_code)]
+fn variant_clientevent_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::ClientEvent> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "Ping" => {
+            let ping = {
+                let js_val: Handle<JsString> = obj.get(cx, "ping")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::ClientEvent::Ping { ping })
+        }
+        _ => cx.throw_type_error("Object is not a ClientEvent"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_clientevent_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientEvent,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::ClientEvent::Ping { ping, .. } => {
+            let js_tag = JsString::try_new(cx, "Ping").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_ping = JsString::try_new(cx, ping).or_throw(cx)?;
+            js_obj.set(cx, "ping", js_ping)?;
         }
     }
     Ok(js_obj)

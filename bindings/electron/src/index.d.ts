@@ -29,15 +29,6 @@ export interface AvailableDevice {
 }
 
 
-// ClientEvent
-export interface ClientEventPing {
-    tag: "Ping"
-    ping: string
-}
-export type ClientEvent =
-  | ClientEventPing
-
-
 // WorkspaceStorageCacheSize
 export interface WorkspaceStorageCacheSizeCustom {
     tag: "Custom"
@@ -49,6 +40,15 @@ export interface WorkspaceStorageCacheSizeDefault {
 export type WorkspaceStorageCacheSize =
   | WorkspaceStorageCacheSizeCustom
   | WorkspaceStorageCacheSizeDefault
+
+
+// ClientEvent
+export interface ClientEventPing {
+    tag: "Ping"
+    ping: string
+}
+export type ClientEvent =
+  | ClientEventPing
 
 
 // DeviceFileType

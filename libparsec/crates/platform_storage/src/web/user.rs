@@ -4,8 +4,6 @@ use std::{path::Path, sync::Arc};
 
 use libparsec_types::prelude::*;
 
-pub type DynError = Box<dyn std::error::Error + Send + Sync>;
-
 pub struct NeedSyncEntries {
     pub remote: Vec<EntryID>,
     pub local: Vec<EntryID>,
@@ -26,31 +24,11 @@ impl UserStorageUpdater {
 #[derive(Debug)]
 pub struct UserStorage {}
 
-#[derive(Debug, thiserror::Error)]
-pub enum UserStorageStartError {
-    #[error("Cannot open database: {0}")]
-    Open(DynError),
-    #[error("Cannot initialize database: {0}")]
-    Initialization(DynError),
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum UserStorageNonSpeculativeInitError {
-    #[error("Cannot open database: {0}")]
-    Open(DynError),
-    #[error("Cannot initialize database: {0}")]
-    Operation(DynError),
-}
-
 impl UserStorage {
-    pub async fn start(
-        _data_base_dir: &Path,
-        _device: Arc<LocalDevice>,
-    ) -> Result<Self, UserStorageStartError> {
+    pub async fn start(_data_base_dir: &Path, _device: Arc<LocalDevice>) -> anyhow::Result<Self> {
         todo!();
     }
 
-    #[allow(unused)]
     pub(crate) async fn no_populate_start(
         _data_base_dir: &Path,
         _device: Arc<LocalDevice>,
@@ -62,7 +40,7 @@ impl UserStorage {
         todo!();
     }
 
-    pub async fn get_realm_checkpoint(&self) -> Result<IndexInt, DynError> {
+    pub async fn get_realm_checkpoint(&self) -> anyhow::Result<IndexInt> {
         todo!();
     }
 
@@ -70,7 +48,7 @@ impl UserStorage {
         &self,
         _new_checkpoint: IndexInt,
         _remote_user_manifest_version: Option<VersionInt>,
-    ) -> Result<(), DynError> {
+    ) -> anyhow::Result<()> {
         todo!();
     }
 
@@ -85,7 +63,7 @@ impl UserStorage {
 
 pub async fn user_storage_non_speculative_init(
     _data_base_dir: &Path,
-    _device: Arc<LocalDevice>,
-) -> Result<(), UserStorageNonSpeculativeInitError> {
+    _device: &LocalDevice,
+) -> anyhow::Result<()> {
     todo!();
 }

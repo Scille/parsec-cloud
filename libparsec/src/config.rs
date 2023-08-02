@@ -26,8 +26,6 @@ impl From<ClientConfig> for libparsec_client::ClientConfig {
             data_base_dir: config.data_base_dir,
             #[cfg(not(target_arch = "wasm32"))]
             mountpoint_base_dir: config.mountpoint_base_dir,
-            #[cfg(target_arch = "wasm32")]
-            mountpoint_base_dir: PathBuf::default(),
             workspace_storage_cache_size: config.workspace_storage_cache_size,
             proxy: ProxyConfig::default(),
         }

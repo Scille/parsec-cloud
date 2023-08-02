@@ -3,12 +3,13 @@
 use std::sync::Arc;
 
 use libparsec_client_connection::{AuthenticatedCmds, SSEResponseOrMissedEvents};
+use libparsec_platform_async::{spawn, JoinHandle};
 use libparsec_protocol::authenticated_cmds::v4::events_listen::{APIEvent, Rep, Req};
 
 use crate::event_bus::*;
 
 pub struct ConnectionMonitor {
-    worker: tokio::task::JoinHandle<()>,
+    worker: JoinHandle<()>,
 }
 
 fn dispatch_api_event(event: APIEvent, event_bus: &EventBus) {
@@ -75,7 +76,7 @@ fn dispatch_api_event(event: APIEvent, event_bus: &EventBus) {
 
 impl ConnectionMonitor {
     pub async fn start(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) -> Self {
-        let worker = tokio::spawn(async move {
+        let worker = spawn(async move {
             enum ConnectionState {
                 Offline,
                 Online,

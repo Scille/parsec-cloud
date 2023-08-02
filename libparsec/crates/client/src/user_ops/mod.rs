@@ -15,7 +15,7 @@ pub use sync::*;
 use std::sync::Arc;
 
 use libparsec_client_connection::AuthenticatedCmds;
-use libparsec_platform_async::Mutex as AsyncMutex;
+use libparsec_platform_async::lock::Mutex as AsyncMutex;
 use libparsec_platform_storage::user::UserStorage;
 use libparsec_types::prelude::*;
 

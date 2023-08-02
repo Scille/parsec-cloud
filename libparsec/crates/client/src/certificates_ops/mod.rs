@@ -14,7 +14,7 @@ pub use validate_message::{InvalidMessageError, ValidateMessageError};
 use std::{collections::HashMap, sync::Arc};
 
 use libparsec_client_connection::AuthenticatedCmds;
-use libparsec_platform_async::RwLock;
+use libparsec_platform_async::lock::RwLock;
 use libparsec_types::prelude::*;
 
 use crate::{event_bus::EventBus, ClientConfig};

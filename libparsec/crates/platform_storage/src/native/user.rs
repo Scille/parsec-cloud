@@ -6,7 +6,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use libparsec_platform_async::{Mutex as AsyncMutex, MutexGuard as AsyncMutexGuard};
+use libparsec_platform_async::lock::{Mutex as AsyncMutex, MutexGuard as AsyncMutexGuard};
 use libparsec_types::prelude::*;
 
 use super::db::{DatabaseError, DatabaseResult, LocalDatabase, VacuumMode};

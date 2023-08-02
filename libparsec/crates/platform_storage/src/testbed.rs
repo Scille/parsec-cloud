@@ -6,7 +6,7 @@
 
 use std::{any::Any, path::Path, sync::Arc};
 
-use libparsec_platform_async::Mutex as AsyncMutex;
+use libparsec_platform_async::lock::Mutex as AsyncMutex;
 use libparsec_testbed::{
     test_get_testbed, test_get_testbed_component_store, TestbedEnv, TestbedEvent,
 };

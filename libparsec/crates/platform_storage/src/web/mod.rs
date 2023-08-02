@@ -2,3 +2,4 @@
 
 pub mod certificates;
 pub mod user;
+pub mod workspace;

@@ -256,40 +256,6 @@ fn struct_availabledevice_rs_to_js(rs_obj: libparsec::AvailableDevice) -> Result
     Ok(js_obj)
 }
 
-// ClientEvent
-
-#[allow(dead_code)]
-fn variant_clientevent_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent, JsValue> {
-    let tag = Reflect::get(&obj, &"tag".into())?;
-    match tag {
-        tag if tag == JsValue::from_str("Ping") => {
-            let ping = {
-                let js_val = Reflect::get(&obj, &"ping".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-            };
-            Ok(libparsec::ClientEvent::Ping { ping })
-        }
-        _ => Err(JsValue::from(TypeError::new("Object is not a ClientEvent"))),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_clientevent_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    match rs_obj {
-        libparsec::ClientEvent::Ping { ping, .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Ping".into())?;
-            let js_ping = ping.into();
-            Reflect::set(&js_obj, &"ping".into(), &js_ping)?;
-        }
-    }
-    Ok(js_obj)
-}
-
 // WorkspaceStorageCacheSize
 
 #[allow(dead_code)]
@@ -336,6 +302,40 @@ fn variant_workspacestoragecachesize_rs_to_js(
         }
         libparsec::WorkspaceStorageCacheSize::Default { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Default".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientEvent
+
+#[allow(dead_code)]
+fn variant_clientevent_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    match tag {
+        tag if tag == JsValue::from_str("Ping") => {
+            let ping = {
+                let js_val = Reflect::get(&obj, &"ping".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            Ok(libparsec::ClientEvent::Ping { ping })
+        }
+        _ => Err(JsValue::from(TypeError::new("Object is not a ClientEvent"))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_clientevent_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::ClientEvent::Ping { ping, .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Ping".into())?;
+            let js_ping = ping.into();
+            Reflect::set(&js_obj, &"ping".into(), &js_ping)?;
         }
     }
     Ok(js_obj)
@@ -582,8 +582,11 @@ pub fn bootstrapOrganization(
 
         let sequester_authority_verify_key = match sequester_authority_verify_key {
             Some(sequester_authority_verify_key) => {
-                let sequester_authority_verify_key =
-                    sequester_authority_verify_key.parse().map_err(|_| {
+                let sequester_authority_verify_key = sequester_authority_verify_key
+                    .to_vec()
+                    .as_slice()
+                    .try_into()
+                    .map_err(|_| {
                         JsValue::from(TypeError::new("Not a valid SequesterVerifyKeyDer"))
                     })?;
 
