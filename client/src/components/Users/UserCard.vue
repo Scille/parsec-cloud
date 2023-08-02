@@ -76,14 +76,19 @@ defineEmits<{
   (e: 'select', user: MockUser, selected: boolean): void
 }>();
 
-defineProps<{
+const props = defineProps<{
   user: MockUser,
   showCheckbox: boolean
 }>();
 
+function getUser(): MockUser {
+  return props.user;
+}
+
 defineExpose({
   isHovered,
   isSelected,
+  getUser,
 });
 </script>
 
