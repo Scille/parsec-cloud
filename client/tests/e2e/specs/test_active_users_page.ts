@@ -24,12 +24,9 @@ describe('Check active users page', () => {
     cy.get('.user-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
     cy.get('.users-container').find('.user-list-item').as('userItems').should('have.length', 4);
     cy.get('@userItems').eq(0).find('ion-checkbox').should('not.be.visible');
-    // cspell:disable-next-line
     cy.get('@userItems').eq(0).find('.person-name').contains('Cernd');
-    // cspell:disable-next-line
     cy.get('@userItems').eq(0).find('.user-email__label').contains('cernd@gmail.com');
     cy.get('@userItems').eq(0).find('.label-role').contains('Standard');
-    // cspell:disable-next-line
     cy.get('@userItems').eq(3).find('.person-name').contains('Coloia Hoji');
     cy.get('.user-footer__container').contains('4 users');
   });
@@ -66,11 +63,8 @@ describe('Check active users page', () => {
     cy.get('.user-footer__container').contains('3 users selected');
 
     cy.get('#activate-users-action-bar').find('#button-revoke-user').click();
-    // cspell:disable-next-line
     cy.get('@consoleLog').should('have.been.calledWith', 'Revoke user Cernd');
-    // cspell:disable-next-line
     cy.get('@consoleLog').should('have.been.calledWith', 'Revoke user Valygar Corthala');
-    // cspell:disable-next-line
     cy.get('@consoleLog').should('have.been.calledWith', 'Revoke user Coloia Hoji');
 
     // Deselect [0] and [1], only [3] is selected
@@ -104,7 +98,6 @@ describe('Check active users page', () => {
     // 0 is title, 1 is revoke button
     cy.get('@menuItems').eq(1).contains('Revoke');
     cy.get('@menuItems').eq(1).click();
-    // cspell:disable-next-line
     cy.get('@consoleLog').should('have.been.calledWith', 'Revoke user Drizzt Do\'Urden');
   });
 });
