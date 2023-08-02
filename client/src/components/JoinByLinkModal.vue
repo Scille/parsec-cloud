@@ -20,10 +20,9 @@
   <ion-content class="ion-padding">
     <p>{{ $t('JoinByLinkModal.pleaseEnterUrl') }}</p>
     <ion-item>
-      <ion-label position="stacked">
-        {{ $t('JoinByLinkModal.urlInputLabel') }}
-      </ion-label>
       <ion-input
+        :label="$t('JoinByLinkModal.urlInputLabel')"
+        label-placement="stacked"
         ref="urlInput"
         :autofocus="true"
         type="url"
@@ -32,13 +31,13 @@
       />
     </ion-item>
   </ion-content>
-  <ion-footer>
+  <ion-footer class="footer">
     <ion-toolbar>
       <ion-buttons slot="primary">
         <ion-button
           type="submit"
           @click="confirm()"
-          :disabled="claimUserLinkValidator(joinLink) !== Validity.Valid"
+          :disabled="claimLinkValidator(joinLink) !== Validity.Valid"
         >
           {{ $t('JoinByLinkModal.join') }}
         </ion-button>
@@ -56,7 +55,6 @@ import {
   IonButtons,
   IonButton,
   IonItem,
-  IonLabel,
   IonInput,
   modalController,
   IonFooter,
@@ -64,7 +62,7 @@ import {
 } from '@ionic/vue';
 import { ref, nextTick, onMounted } from 'vue';
 import { close } from 'ionicons/icons';
-import { claimUserLinkValidator, Validity } from '@/common/validators';
+import { claimLinkValidator, Validity } from '@/common/validators';
 import { ModalResultCode } from '@/common/constants';
 
 const joinLink = ref('');
@@ -91,3 +89,10 @@ function focusOnEditButton(): void {
   });
 }
 </script>
+
+<style lang="scss" scoped>
+.footer {
+  margin-top: -120px;
+  padding-right: 32px;
+}
+</style>

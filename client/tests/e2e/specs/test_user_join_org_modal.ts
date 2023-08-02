@@ -1,7 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-describe('Join an organization', () => {
+describe('User join an organization', () => {
   const INVITATION_LINK = 'parsec://parsec.cloud/Test?action=claim_user&token=47265123969c4d6584c2bc15960cf212';
+  const WAIT_TIME = 1000;
 
   beforeEach(() => {
     cy.visitApp();
@@ -14,25 +15,36 @@ describe('Join an organization', () => {
   it('Open org join modal', () => {
     cy.get('.join-organization-modal').should('not.exist');
     cy.get('#create-organization-button').click();
-    cy.get('.popover-viewport').find('ion-item');
     cy.get('.popover-viewport').find('ion-item').should('have.length', 2);
     cy.get('.popover-viewport').find('ion-item').last().contains('Join');
     cy.get('.popover-viewport').find('ion-item').last().click();
+
+    cy.get('.join-by-link-modal').should('exist');
+    cy.get('.join-by-link-modal').find('ion-title').contains('Join by link');
+    cy.get('.join-by-link-modal').find('ion-footer ion-button').as('joinButton').contains('Join');
+    cy.get('@joinButton').should('have.attr', 'disabled');
+
+    cy.wait(WAIT_TIME);
+
+    cy.get('.join-by-link-modal').find('ion-content ion-input input').type(INVITATION_LINK);
+
+    cy.get('@joinButton').should('not.have.attr', 'disabled');
+    cy.get('@joinButton').click();
+
+    cy.get('.join-by-link-modal').should('not.exist');
     cy.get('.join-organization-modal').should('exist');
-    cy.get('.modal-header__title').contains('Join');
-    cy.get('ion-modal').should('exist');
-    cy.get('ion-modal').find('ion-footer ion-button').first().as('startButton').contains('Start');
-    cy.get('@startButton').should('have.attr', 'disabled');
-    cy.wait(200);
-    cy.get('ion-modal').find('#link-orga-input').find('ion-input').find('input').type(INVITATION_LINK);
-    cy.get('@startButton').should('not.have.attr', 'disabled');
-    cy.get('@startButton').click();
     cy.get('.modal-header__title').contains('Welcome to Parsec!');
+
+    cy.get('.label-waiting').should('be.visible');
+    cy.get('#next-button').should('not.be.visible');
+
+    cy.wait(WAIT_TIME);
+    cy.get('.label-waiting').should('not.be.visible');
+    cy.get('#next-button').should('be.visible');
+    cy.get('#next-button').contains('I understand!');
   });
 
   it('Go through join process', () => {
-    const WAIT_TIME = 1000;
-
     function checkStepper(activeIndex: number): void {
       cy.get('ion-modal').find('.wizard-stepper-step').as('steps').should('have.length', 5);
       for (let i = 0; i < 5; i++) {
@@ -48,24 +60,15 @@ describe('Join an organization', () => {
 
     cy.get('#create-organization-button').click();
     cy.get('.popover-viewport').find('ion-item').last().click();
-    cy.get('ion-modal').should('exist');
-    cy.get('.join-organization-modal').should('exist');
-    cy.get('#next-button').contains('Start');
-    cy.wait(200);
-    cy.get('ion-modal').find('#link-orga-input').find('ion-input').find('input').type(INVITATION_LINK);
-    cy.get('#next-button').click();
+    cy.wait(WAIT_TIME);
+    cy.get('.join-by-link-modal').find('ion-input').find('input').type(INVITATION_LINK);
+    cy.get('.join-by-link-modal').find('ion-footer ion-button').click();
 
+    cy.get('.join-organization-modal').should('exist');
     cy.get('.modal-header__title').as('modalTitle').contains('Welcome to Parsec!');
 
-    // Spinner visible, button hidden
-    cy.get('.label-waiting').should('be.visible');
-    cy.get('#next-button').should('not.be.visible');
-
-    // After some time, button visible, spinner hidden
     cy.wait(WAIT_TIME);
-    cy.get('.label-waiting').should('not.be.visible');
     cy.get('#next-button').should('be.visible');
-
     cy.get('#next-button').click();
 
     // Page with four codes, host SAS code
