@@ -56,9 +56,12 @@ import {
 
 import { createAlert } from '@/components/AlertConfirmation';
 import CreateOrganizationModal from '@/views/CreateOrganizationModal.vue';
-import JoinOrganizationModal from '@/views/JoinOrganizationModal.vue';
+import UserJoinOrganizationModal from '@/views/UserJoinOrganizationModal.vue';
+import DeviceJoinOrganizationModal from '@/views/DeviceJoinOrganizationModal.vue';
+import { claimUserLinkValidator, claimDeviceLinkValidator, Validity } from '@/common/validators';
 import { useI18n } from 'vue-i18n';
 import { ModalResultCode } from '@/common/constants';
+import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
 
 const { t } = useI18n();
 
@@ -89,14 +92,46 @@ async function canDismissModal(data?: any, modalRole?: string): Promise<boolean>
 }
 
 async function openJoinByLinkModal(): Promise<void> {
-  const modal = await modalController.create({
-    component: JoinOrganizationModal,
-    canDismiss: canDismissModal,
-    cssClass: 'join-organization-modal',
+  const linkModal = await modalController.create({
+    component: JoinByLinkModal,
+    canDismiss: true,
+    cssClass: 'join-by-link-modal',
   });
-  await modal.present();
-  const result = await modal.onWillDismiss();
-  await popoverController.dismiss(result.data, result.role);
+  await linkModal.present();
+  const linkResult = await linkModal.onWillDismiss();
+
+  if (linkResult.role !== 'confirm') {
+    await popoverController.dismiss(null, linkResult.role);
+  } else {
+    if (claimUserLinkValidator(linkResult.data) === Validity.Valid) {
+      const modal = await modalController.create({
+        component: UserJoinOrganizationModal,
+        canDismiss: canDismissModal,
+        cssClass: 'join-organization-modal',
+        componentProps: {
+          invitationLink: linkResult.data,
+        },
+      });
+      await modal.present();
+      const result = await modal.onWillDismiss();
+      await popoverController.dismiss(result.data, result.role);
+    } else if (claimDeviceLinkValidator(linkResult.data) === Validity.Valid) {
+      const modal = await modalController.create({
+        component: DeviceJoinOrganizationModal,
+        canDismiss: canDismissModal,
+        cssClass: 'join-organization-modal',
+        componentProps: {
+          invitationLink: linkResult.data,
+        },
+      });
+      await modal.present();
+      const result = await modal.onWillDismiss();
+      await popoverController.dismiss(result.data, result.role);
+    } else {
+      console.error('Invalid data gotten from link, should never happen');
+      await popoverController.dismiss(null, 'cancel');
+    }
+  }
 }
 </script>
 

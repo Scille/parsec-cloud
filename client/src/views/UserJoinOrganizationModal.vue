@@ -3,7 +3,7 @@
 <template>
   <ion-page>
     <wizard-stepper
-      v-if="pageStep > JoinOrganizationStep.WaitForHost"
+      v-if="pageStep > UserJoinOrganizationStep.WaitForHost"
       :current-index="pageStep - 2"
       :titles="[
         $t('JoinOrganization.stepTitles.GetHostCode'),
@@ -46,19 +46,9 @@
       </ion-header>
       <!-- modal content: create component for each part-->
       <div class="modal-content inner-content">
-        <!-- part 1 (orga name)-->
+        <!-- part 1 (wait for host)-->
         <div
-          v-show="pageStep === JoinOrganizationStep.JoinLink"
-          class="step orga-name"
-        >
-          <organization-link-page
-            ref="joinPage"
-          />
-        </div>
-
-        <!-- part 2 (wait for host)-->
-        <div
-          v-show="pageStep === JoinOrganizationStep.WaitForHost"
+          v-show="pageStep === UserJoinOrganizationStep.WaitForHost"
           class="step orga-name"
         >
           <wait-for-host-page
@@ -67,9 +57,9 @@
           />
         </div>
 
-        <!-- part 3 (host code)-->
+        <!-- part 2 (host code)-->
         <div
-          v-show="pageStep === JoinOrganizationStep.GetHostSasCode"
+          v-show="pageStep === UserJoinOrganizationStep.GetHostSasCode"
           class="step"
         >
           <sas-code-choice
@@ -79,9 +69,9 @@
           />
         </div>
 
-        <!-- part 4 (guest code)-->
+        <!-- part 3 (guest code)-->
         <div
-          v-show="pageStep === JoinOrganizationStep.ProvideGuestCode"
+          v-show="pageStep === UserJoinOrganizationStep.ProvideGuestCode"
           class="step guest-code"
         >
           <sas-code-provide
@@ -90,9 +80,9 @@
           />
         </div>
 
-        <!-- part 5 (user info)-->
+        <!-- part 4 (user info)-->
         <div
-          v-show="pageStep === JoinOrganizationStep.GetUserInfo"
+          v-show="pageStep === UserJoinOrganizationStep.GetUserInfo"
           class="step"
           id="get-user-info"
         >
@@ -103,9 +93,9 @@
             :name-enabled="!waitingForHost"
           />
         </div>
-        <!-- part 6 (get password)-->
+        <!-- part 5 (get password)-->
         <div
-          v-show="pageStep === JoinOrganizationStep.GetPassword"
+          v-show="pageStep === UserJoinOrganizationStep.GetPassword"
           class="step"
           id="get-password"
         >
@@ -113,9 +103,9 @@
             ref="passwordPage"
           />
         </div>
-        <!-- part 7 (finish the process)-->
+        <!-- part 6 (finish the process)-->
         <div
-          v-show="pageStep === JoinOrganizationStep.Finish"
+          v-show="pageStep === UserJoinOrganizationStep.Finish"
           class="step"
         >
           <finish-process
@@ -183,7 +173,6 @@ import { ref, Ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import WizardStepper from '@/components/WizardStepper.vue';
 import WaitForHostPage from '@/components/JoinOrganization/WaitForHostPage.vue';
-import OrganizationLinkPage from '@/components/JoinOrganization/OrganizationLinkPage.vue';
 import SasCodeProvide from '@/components/SasCodeProvide.vue';
 import SasCodeChoice from '@/components/SasCodeChoice.vue';
 import UserInformationPage from '@/components/UserInformationPage.vue';
@@ -192,8 +181,7 @@ import FinishProcess from '@/components/JoinOrganization/FinishProcess.vue';
 import { AvailableDevice } from '@/plugins/libparsec/definitions';
 import { ModalResultCode } from '@/common/constants';
 
-enum JoinOrganizationStep {
-  JoinLink = 0,
+enum UserJoinOrganizationStep {
   WaitForHost = 1,
   GetHostSasCode = 2,
   ProvideGuestCode = 3,
@@ -207,8 +195,7 @@ const OTHER_USER_WAITING_TIME = 500;
 
 const { t } = useI18n();
 
-const pageStep = ref(JoinOrganizationStep.JoinLink);
-const joinPage = ref();
+const pageStep = ref(UserJoinOrganizationStep.WaitForHost);
 const waitPage = ref();
 const hostCodePage = ref();
 const guestCodePage = ref();
@@ -218,7 +205,7 @@ const passwordPage = ref();
 let newDevice: AvailableDevice | null = null;
 
 const props = defineProps<{
-  invitationLink?: string
+  invitationLink: string
 }>();
 
 interface ClaimUserLink {
@@ -236,42 +223,37 @@ function parseInvitationLink(link: string): ClaimUserLink {
   };
 }
 
-let claimUserLink: ClaimUserLink | null = null;
-
-const waitingForHost = ref(false);
+const claimUserLink = parseInvitationLink(props.invitationLink);
+const waitingForHost = ref(true);
 
 interface Title {
   title: string,
   subtitle: string,
 }
 
-const titles = new Map<JoinOrganizationStep, Title>([
+const titles = new Map<UserJoinOrganizationStep, Title>([
   [
-    JoinOrganizationStep.JoinLink,
-    {title: t('JoinOrganization.titles.joinOrga'), subtitle: t('JoinOrganization.subtitles.joinOrga')},
-  ],
-  [
-    JoinOrganizationStep.WaitForHost,
+    UserJoinOrganizationStep.WaitForHost,
     {title: t('JoinOrganization.titles.waitForHost'), subtitle: t('JoinOrganization.subtitles.waitForHost')},
   ],
   [
-    JoinOrganizationStep.GetHostSasCode,
+    UserJoinOrganizationStep.GetHostSasCode,
     {title: t('JoinOrganization.titles.getHostCode'), subtitle: t('JoinOrganization.subtitles.getHostCode')},
   ],
   [
-    JoinOrganizationStep.ProvideGuestCode,
+    UserJoinOrganizationStep.ProvideGuestCode,
     {title: t('JoinOrganization.titles.provideGuestCode'), subtitle: t('JoinOrganization.subtitles.provideGuestCode')},
   ],
   [
-    JoinOrganizationStep.GetUserInfo,
+    UserJoinOrganizationStep.GetUserInfo,
     {title: t('JoinOrganization.titles.getUserInfo'), subtitle: t('JoinOrganization.subtitles.getUserInfo')},
   ],
   [
-    JoinOrganizationStep.GetPassword,
+    UserJoinOrganizationStep.GetPassword,
     {title: t('JoinOrganization.titles.getPassword'), subtitle: t('JoinOrganization.subtitles.getPassword')},
   ],
   [
-    JoinOrganizationStep.Finish,
+    UserJoinOrganizationStep.Finish,
     {title: t('JoinOrganization.titles.finish', {org: ''}), subtitle: t('JoinOrganization.subtitles.finish')},
   ],
 ]);
@@ -281,16 +263,14 @@ function selectHostSas(_code: string | null): void {
 }
 
 function getNextButtonText(): string {
-  if (pageStep.value === JoinOrganizationStep.GetUserInfo) {
+  if (pageStep.value === UserJoinOrganizationStep.GetUserInfo) {
     return t('JoinOrganization.validateUserInfo');
-  } else if (pageStep.value === JoinOrganizationStep.GetPassword) {
+  } else if (pageStep.value === UserJoinOrganizationStep.GetPassword) {
     return t('JoinOrganization.createDevice');
-  } else if (pageStep.value === JoinOrganizationStep.Finish) {
+  } else if (pageStep.value === UserJoinOrganizationStep.Finish) {
     return t('JoinOrganization.logIn');
-  } else if (pageStep.value === JoinOrganizationStep.WaitForHost) {
+  } else if (pageStep.value === UserJoinOrganizationStep.WaitForHost) {
     return t('JoinOrganization.understand');
-  } else if (pageStep.value === JoinOrganizationStep.JoinLink) {
-    return t('JoinOrganization.start');
   }
 
   return '';
@@ -298,11 +278,10 @@ function getNextButtonText(): string {
 
 const nextButtonIsVisible = computed(() => {
   return (
-    pageStep.value === JoinOrganizationStep.JoinLink
-    || pageStep.value === JoinOrganizationStep.WaitForHost && !waitingForHost.value
-    || pageStep.value === JoinOrganizationStep.GetUserInfo && !waitingForHost.value
-    || pageStep.value === JoinOrganizationStep.GetPassword
-    || pageStep.value === JoinOrganizationStep.Finish
+    pageStep.value === UserJoinOrganizationStep.WaitForHost && !waitingForHost.value
+    || pageStep.value === UserJoinOrganizationStep.GetUserInfo && !waitingForHost.value
+    || pageStep.value === UserJoinOrganizationStep.GetPassword
+    || pageStep.value === UserJoinOrganizationStep.Finish
   );
 });
 
@@ -311,9 +290,8 @@ const canGoForward = computed(() => {
 
   if (
     currentPage && currentPage.value
-    && (pageStep.value === JoinOrganizationStep.JoinLink
-    || pageStep.value === JoinOrganizationStep.GetUserInfo
-    || pageStep.value === JoinOrganizationStep.GetPassword)
+    && (pageStep.value === UserJoinOrganizationStep.GetUserInfo
+    || pageStep.value === UserJoinOrganizationStep.GetPassword)
   ) {
     return currentPage.value.areFieldsCorrect();
   }
@@ -322,22 +300,19 @@ const canGoForward = computed(() => {
 
 function getCurrentPage(): Ref<any> {
   switch(pageStep.value) {
-    case JoinOrganizationStep.JoinLink: {
-      return joinPage;
-    }
-    case JoinOrganizationStep.WaitForHost: {
+    case UserJoinOrganizationStep.WaitForHost: {
       return waitPage;
     }
-    case JoinOrganizationStep.GetHostSasCode: {
+    case UserJoinOrganizationStep.GetHostSasCode: {
       return hostCodePage;
     }
-    case JoinOrganizationStep.ProvideGuestCode: {
+    case UserJoinOrganizationStep.ProvideGuestCode: {
       return guestCodePage;
     }
-    case JoinOrganizationStep.GetUserInfo: {
+    case UserJoinOrganizationStep.GetUserInfo: {
       return userInfoPage;
     }
-    case JoinOrganizationStep.GetPassword: {
+    case UserJoinOrganizationStep.GetPassword: {
       return passwordPage;
     }
     default: {
@@ -374,26 +349,24 @@ function mockSaveDeviceWithPassword(_device: AvailableDevice | null, _password: 
 }
 
 function nextStep(): void {
-  if (pageStep.value === JoinOrganizationStep.GetPassword) {
+  if (pageStep.value === UserJoinOrganizationStep.GetPassword) {
     mockSaveDeviceWithPassword(newDevice, passwordPage.value.password);
-  } else if (pageStep.value === JoinOrganizationStep.GetUserInfo) {
+  } else if (pageStep.value === UserJoinOrganizationStep.GetUserInfo) {
     waitingForHost.value = true;
     window.setTimeout(hostHasValidated, OTHER_USER_WAITING_TIME);
     return;
-  } else if (pageStep.value === JoinOrganizationStep.Finish) {
+  } else if (pageStep.value === UserJoinOrganizationStep.Finish) {
     modalController.dismiss({ device: newDevice, password: passwordPage.value.password }, ModalResultCode.Confirm);
     return;
-  } else if (pageStep.value === JoinOrganizationStep.JoinLink) {
-    claimUserLink = parseInvitationLink(getCurrentPage().value.joinLink);
   }
 
   pageStep.value = pageStep.value + 1;
 
-  if (pageStep.value === JoinOrganizationStep.ProvideGuestCode) {
+  if (pageStep.value === UserJoinOrganizationStep.ProvideGuestCode) {
     waitingForHost.value = true;
     window.setTimeout(hostHasEnteredCode, OTHER_USER_WAITING_TIME);
   }
-  if (pageStep.value === JoinOrganizationStep.WaitForHost) {
+  if (pageStep.value === UserJoinOrganizationStep.WaitForHost) {
     waitingForHost.value = true;
     claimerRetrieveInfo();
   }
@@ -411,12 +384,7 @@ function hostHasValidated(): void {
 }
 
 onMounted(() => {
-  if (props.invitationLink) {
-    claimUserLink = parseInvitationLink(props.invitationLink);
-    pageStep.value = JoinOrganizationStep.WaitForHost;
-    waitingForHost.value = true;
-    claimerRetrieveInfo();
-  }
+  claimerRetrieveInfo();
 });
 
 function claimerInfoRetrieved(): void {

@@ -67,7 +67,7 @@ export const organizationValidator: IValidator = function(value: string) {
   return value.match(/^[a-z0-9_-]{1,32}$/i) ? Validity.Valid : Validity.Invalid;
 };
 
-export const claimUserLinkValidator: IValidator = function(value: string) {
+export const claimLinkValidator: IValidator = function(value: string) {
   value = value.trim();
   if (value.length === 0) {
     return Validity.Intermediate;
@@ -82,10 +82,14 @@ export const claimUserLinkValidator: IValidator = function(value: string) {
     if (!url.pathname || organizationValidator(url.pathname.slice(1)) !== Validity.Valid) {
       return Validity.Invalid;
     }
-    if (!url.searchParams.get('action') || url.searchParams.get('action') !== 'claim_user') {
+    if (!url.searchParams.get('token') || !url.searchParams.get('token')?.match(/^[a-f\d]{32}$/)) {
       return Validity.Invalid;
     }
-    if (!url.searchParams.get('token') || !url.searchParams.get('token')?.match(/^[a-f\d]{32}$/)) {
+    if (
+      !url.searchParams.get('action')
+      || (url.searchParams.get('action') !== 'claim_user'
+      && url.searchParams.get('action') !== 'claim_device')
+    ) {
       return Validity.Invalid;
     }
   } catch (e) {
@@ -93,4 +97,26 @@ export const claimUserLinkValidator: IValidator = function(value: string) {
   }
 
   return Validity.Valid;
+};
+
+export const claimUserLinkValidator: IValidator = function(value: string) {
+  const validity = claimLinkValidator(value);
+
+  if (validity === Validity.Intermediate) {
+    return Validity.Intermediate;
+  } else if (validity === Validity.Valid && value.includes('claim_user')) {
+    return Validity.Valid;
+  }
+  return Validity.Invalid;
+};
+
+export const claimDeviceLinkValidator: IValidator = function(value: string) {
+  const validity = claimLinkValidator(value);
+
+  if (validity === Validity.Intermediate) {
+    return Validity.Intermediate;
+  } else if (validity === Validity.Valid && value.includes('claim_device')) {
+    return Validity.Valid;
+  }
+  return Validity.Invalid;
 };
