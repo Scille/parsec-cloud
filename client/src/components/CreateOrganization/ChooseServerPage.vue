@@ -2,7 +2,7 @@
 
 <template>
   <ion-list class="choose-server-page">
-    <ion-text class="body orga-server__label">
+    <ion-text class="body choose-server-page__label">
       {{ $t('CreateOrganization.serverDescription') }}
     </ion-text>
     <ion-radio-group
@@ -20,7 +20,22 @@
             {{ $t('CreateOrganization.useParsecServer') }}
           </ion-text>
           <ion-text class="body-sm item-radio__text">
-            A remplacer
+            {{ $t('CreateOrganization.acceptTOS.label') }}
+            <a
+              class="link"
+              target="_blank"
+              href="https://parsec.cloud/tos"
+            >
+              {{ $t('CreateOrganization.acceptTOS.tos') }}
+            </a>
+            {{ $t('CreateOrganization.acceptTOS.and') }}
+            <a
+              class="link"
+              target="_blank"
+              href="https://parsec.cloud/tos"
+            >
+              {{ $t('CreateOrganization.acceptTOS.privacyPolicy') }}
+            </a>
           </ion-text>
         </ion-radio>
       </ion-item>
@@ -99,15 +114,36 @@ function areFieldsCorrect(): boolean {
   flex-direction: column;
   border-radius: var(--parsec-radius-6);
   width: 100%;
-  --background-hover: var(--parsec-color-light-secondary-background);;
+  --background-hover: var(--parsec-color-light-secondary-background);
   --background-hover-opacity: 1;
+  z-index: 2;
+
+  &:nth-child(2) {
+    border-radius: var(--parsec-radius-6) var(--parsec-radius-6) 0 0;
+
+    &:hover {
+      border-radius: var(--parsec-radius-6);
+    }
+  }
 
   &:has(.radio-checked) {
-    --background: var(--parsec-color-light-secondary-background);
+    --background: var(--parsec-color-light-secondary-medium);
+    --background-hover: none;
   }
 
   &:first-of-type {
     margin-bottom: .5rem;
+  }
+
+  .link {
+    color: var(--parsec-color-light-primary-600);
+    text-decoration: none;
+    position: relative;
+    z-index: 1000000;
+
+    &:hover {
+      text-decoration: underline;
+    }
   }
 }
 
@@ -146,5 +182,11 @@ function areFieldsCorrect(): boolean {
   .item-radio__label {
     color: var(--parsec-color-light-primary-600);
   }
+}
+
+.item-radio__input {
+  background: var(--parsec-color-light-secondary-medium);
+  padding: 0 1rem 1rem 1rem;
+  border-radius: 0 0 var(--parsec-radius-6) var(--parsec-radius-6);
 }
 </style>

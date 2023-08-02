@@ -51,7 +51,6 @@
         "joinByQRcode": "Rejoindre par QR code"
     },
     "CreateOrganization": {
-        "pageTitle": "Créer une organisation",
         "fullname": "Nom complet",
         "fullnamePlaceholder": "Jean MARTIN",
         "email": "E-mail",
@@ -61,7 +60,12 @@
         "serverDescription": "Serveur de l'organisation",
         "useParsecServer": "Utiliser le serveur PARSEC principal",
         "useMyOwnServer": "Je dispose de mon propre serveur PARSEC",
-        "acceptTOS": "J'accepte la Politique de Confidentialité et les Conditions Générales de Vente et d'Utilisation de PARSEC",
+        "acceptTOS": {
+            "label": "En utilisant le serverur PARSEC, j'accepte la",
+            "tos": " Politique de Confidentialité",
+            "and": "et les",
+            "privacyPolicy": "Conditions Générales de Vente et d'Utilisation"
+        },
         "parsecServerUrl": "URL de votre serveur PARSEC",
         "parsecServerUrlPlaceholder": "parsec://hote:port",
         "registeringDevice": "Enregistrement de votre appareil",
@@ -71,7 +75,22 @@
         "organizationCreated": "Vous pouvez accéder à votre nouvelle organisation",
         "next": "Suivant",
         "previous": "Précédent",
-        "done": "Terminer"
+        "done": "Terminer",
+        "title": {
+            "create": "Créez une nouvelle organisation",
+            "coordonnate": "Saisissez vos informations",
+            "server": "Choisissez votre serveur adpaté",
+            "password": "Créez votre mot de passe",
+            "done": "{orga} a bien été créée !"
+        },
+        "subtitles": {
+            "nameYourOrg": "Nommez votre organisation.",
+            "coordonnate": "Indiquez votre nom, votre e-mail et le nom de votre appareil.",
+            "server": "Choisissez le type de serveur que vous avez besoin.",
+            "password": "Pour finir créez votre mot de passe.",
+            "Waiting": "Un instant, nous mettons en place votre organisation.",
+            "Done": "Vous pouvez accéder à votre nouvelle organisation."
+        }
     },
     "JoinByLinkModal": {
         "pageTitle": "Rejoindre par lien",
