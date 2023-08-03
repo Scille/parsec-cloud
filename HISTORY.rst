@@ -5,6 +5,17 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.16.0-rc.3 (2023-08-03)
+--------------------------------
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+* Add SBOM (Software Bills Of Materials) generation on software packaging. This
+  provides the list of dependencies used to build the software.  (`#4770
+  <https://github.com/Scille/parsec-cloud/issues/4770>`__)
+
+
 Parsec v2.16.0-rc.2 (2023-07-05)
 --------------------------------
 
