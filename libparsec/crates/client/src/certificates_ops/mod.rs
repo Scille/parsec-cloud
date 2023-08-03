@@ -11,16 +11,18 @@ pub use poll::PollServerError;
 pub use validate_manifest::{InvalidManifestError, ValidateManifestError};
 pub use validate_message::{InvalidMessageError, ValidateMessageError};
 
-use std::{collections::HashMap, path::Path, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 use libparsec_client_connection::AuthenticatedCmds;
-use libparsec_platform_async::RwLock;
+use libparsec_platform_async::lock::RwLock;
 use libparsec_types::prelude::*;
 
-use crate::event_bus::EventBus;
+use crate::{event_bus::EventBus, ClientConfig};
 
 #[derive(Debug)]
 pub struct CertificatesOps {
+    #[allow(unused)]
+    config: Arc<ClientConfig>,
     device: Arc<LocalDevice>,
     event_bus: EventBus,
     cmds: Arc<AuthenticatedCmds>,
@@ -29,14 +31,16 @@ pub struct CertificatesOps {
 
 impl CertificatesOps {
     pub async fn start(
-        data_base_dir: &Path,
+        config: Arc<ClientConfig>,
         device: Arc<LocalDevice>,
         event_bus: EventBus,
         cmds: Arc<AuthenticatedCmds>,
     ) -> anyhow::Result<Self> {
         let storage =
-            storage::CertificatesCachedStorage::start(data_base_dir, device.clone()).await?;
+            storage::CertificatesCachedStorage::start(&config.data_base_dir, device.clone())
+                .await?;
         Ok(Self {
+            config,
             device,
             event_bus,
             cmds,

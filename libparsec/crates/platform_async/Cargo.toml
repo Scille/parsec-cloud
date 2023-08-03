@@ -4,9 +4,13 @@ version = "0.0.0"
 edition = "2021"
 
 [dependencies]
+async-lock = { workspace = true }
+async-broadcast = { workspace = true }
+event-listener = { workspace = true }
 flume = { workspace = true, features = ["async", "select", "eventual-fairness"] }
-# futures is used for its macros `select_all` and `join_all`
-futures = { workspace = true, features = ["std", "async-await"] }
+futures-lite = { workspace = true, features = ["std"] }
+# # futures is used for its macros `select_all` and `join_all`
+# futures = { workspace = true, features = ["std", "async-await"] }
 
 [dev-dependencies]
 log = { workspace = true }
@@ -30,9 +34,8 @@ console_log = { workspace = true }
 instant = { workspace = true, features = ["wasm-bindgen"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { workspace = true, features = ["rt", "time", "sync", "macros"] }
+tokio = { workspace = true, features = ["rt", "time", "sync"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
-libparsec_tests_fixtures = { workspace = true }
-
-tokio = { workspace = true, features = ["full"] }
+tokio = { workspace = true, features = ["macros"] }
+# libparsec_tests_fixtures = { workspace = true }

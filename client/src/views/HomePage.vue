@@ -301,7 +301,7 @@ const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
 onMounted(async (): Promise<void> => {
   await mockLastLogin(storageManager);
 
-  deviceList.value = await libparsec.clientListAvailableDevices(configPath);
+  deviceList.value = await libparsec.listAvailableDevices(configPath);
 
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
 });

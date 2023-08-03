@@ -18,7 +18,7 @@ boolean
 number
 {%- elif t.kind == "str" -%}
 string
-{%- elif t.kind == "str_based" -%}
+{%- elif t.kind in ("str_based", "bytes_based") -%}
 {{ t.name }}
 {%- elif t.kind == "bytes" -%}
 Uint8Array
@@ -43,6 +43,10 @@ export type Result<T, E = Error> =
 {# Str-based types #}
 {% for type_name in api.str_based_types %}
 type {{ type_name }} = string
+{% endfor %}
+{# Bytes-based types #}
+{% for type_name in api.bytes_based_types %}
+type {{ type_name }} = Uint8Array
 {% endfor %}
 {# Int-based types #}
 {% for type_name in api.i32_based_types %}

@@ -20,7 +20,7 @@ regex = { workspace = true, features = ["std", "perf", "unicode"] }
 paste = { workspace = true }
 pyo3 = { workspace = true, features = ["multiple-pymethods", "extension-module", "macros"] }
 uuid = { workspace = true, features = ["serde", "v4", "fast-rng"] }
-tokio = { workspace = true, features = ["rt", "rt-multi-thread"] }
+tokio = { workspace = true, features = ["rt-multi-thread"] }
 lazy_static = { workspace = true }
 futures = { workspace = true, features = ["std", "async-await", "executor"] }
 rmp-serde = { workspace = true }

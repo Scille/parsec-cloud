@@ -6,7 +6,6 @@ edition = "2021"
 [features]
 test-with-testbed = [
     "libparsec_testbed",
-    "dep:once_cell",
 ]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -29,7 +28,6 @@ chrono = { workspace = true, features = ["clock"] }
 thiserror = { workspace = true }
 # Reqwest's response body is returned as Bytes
 bytes = { workspace = true, features = ["std"] }
-once_cell = { workspace = true, optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # TODO: support SSE for Web

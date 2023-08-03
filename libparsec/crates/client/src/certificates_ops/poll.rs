@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
-use libparsec_platform_async::RwLockReadGuard;
+use libparsec_platform_async::lock::RwLockReadGuard;
 use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 

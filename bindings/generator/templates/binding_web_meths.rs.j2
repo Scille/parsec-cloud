@@ -25,7 +25,7 @@ u32
 f64
 {%- elif type.kind in ("str", "str_based") -%}
 String
-{%- elif type.kind == "bytes" -%}
+{%- elif type.kind in ("bytes", "bytes_based") -%}
 Uint8Array
 {%- elif type.kind == "struct" -%}
 Object
@@ -65,6 +65,19 @@ let {{ param_name }} =
     JsValue::from(TypeError::new("Not a valid {{ type.name }}"))
 })?;
 {% endif %}
+{% elif type.kind == "bytes_based" %}
+let {{ param_name }} =
+{% if type.custom_from_rs_bytes -%}
+{
+    let custom_from_rs_bytes = {{ type.custom_from_rs_bytes }};
+    custom_from_rs_bytes({{ param_name }})
+        .map_err(|e| TypeError::new(e.as_ref()))
+}?;
+{%- else -%}
+{{ param_name }}.to_vec().as_slice().try_into().map_err(|_| {
+    JsValue::from(TypeError::new("Not a valid {{ type.name }}"))
+})?;
+{% endif %}
 {% elif type.kind in ("struct", "variant", "result") %}
 let {{ param_name }} = {{ param_name }}.into();
 let {{ param_name }} = {{ render_js_value_to_rs(param_name, type) }};
@@ -76,11 +89,11 @@ for x in {{ param_name }}.iter() {
 }
 let {{ param_name }} = {{ param_name }}_converted;
 {% elif type.kind == "OnClientEventCallback" %}
-let {{ param_name }} = Box::new(move |event: libparsec::ClientEvent| {
+let {{ param_name }} = std::sync::Arc::new(move |event: libparsec::ClientEvent| {
     // TODO: Better error handling here (log error ?)
     let js_event = {{ variant_rs_to_js_function_name(type.event_type) }}(event).expect("event type conversion error");
     on_event_callback.call1(&JsValue::NULL, &js_event).expect("error in event callback");
-}) as Box<dyn FnMut(libparsec::ClientEvent)>;
+}) as std::sync::Arc<dyn Fn(libparsec::ClientEvent)>;
 {% endif %}
 {%- endmacro -%}
 
@@ -130,9 +143,9 @@ if {{ js_val }}.is_null() {
 {%- elif type.kind == "float" -%}
 {{ js_val }}.dyn_into::<Number>()?.value_of()
 {%- elif type.kind == "str" -%}
-js_val.dyn_into::<JsString>().ok().and_then(|s| s.as_string()).ok_or_else(|| TypeError::new("Not a string"))?
+{{ js_val }}.dyn_into::<JsString>().ok().and_then(|s| s.as_string()).ok_or_else(|| TypeError::new("Not a string"))?
 {%- elif type.kind == "str_based" -%}
-js_val.dyn_into::<JsString>().ok().and_then(|s| s.as_string()).ok_or_else(|| TypeError::new("Not a string"))
+{{ js_val }}.dyn_into::<JsString>().ok().and_then(|s| s.as_string()).ok_or_else(|| TypeError::new("Not a string"))
 {%- if type.custom_from_rs_string -%}
 .and_then(|x| {
     let custom_from_rs_string = {{ type.custom_from_rs_string }};
@@ -144,6 +157,17 @@ js_val.dyn_into::<JsString>().ok().and_then(|s| s.as_string()).ok_or_else(|| Typ
 .map_err(|_| TypeError::new("Not a valid {{ type.name }}"))?
 {%- elif type.kind == "bytes" -%}
 {{ js_val }}.dyn_into::<Uint8Array>().map_err(|_| TypeError::new("Not a Uint8Array"))?.to_vec()
+{%- elif type.kind == "bytes_based" -%}
+{{ js_val }}.dyn_into::<Uint8Array>().map_err(|_| TypeError::new("Not a Uint8Array"))
+{%- if type.custom_from_rs_string -%}
+.and_then(|x| {
+    let custom_from_rs_string = {{ type.custom_from_rs_string }};
+    custom_from_rs_string(x)
+.map_err(|e| TypeError::new(e.as_ref())) })
+{%- else -%}
+?.to_vec()
+{%- endif %}
+.map_err(|_| TypeError::new("Not a valid {{ type.name }}"))?
 {%- elif type.kind == "struct" -%}
 {{ struct_js_to_rs_function_name(type) }}({{ js_val }})?
 {%- elif type.kind == "variant" -%}
@@ -190,6 +214,19 @@ JsValue::from_str({%- if type.custom_to_rs_string -%}
 )
 {%- elif type.kind == "bytes" -%}
 JsValue::from(Uint8Array::from({{ rs_value }}.as_ref()))
+{%- elif type.kind == "bytes_based" -%}
+JsValue::from(Uint8Array::from({%- if type.custom_to_rs_bytes -%}
+{
+    let custom_to_rs_bytes = {{ type.custom_to_rs_bytes }};
+    match custom_to_rs_bytes({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+    }.as_ref()
+}
+{%- else -%}
+{{ rs_value }}.as_ref()
+{%- endif -%}
+))
 {%- elif type.kind == "list" -%}
 {
     // Array::new_with_length allocates with `undefined` value, that's why we `set` value

@@ -2,10 +2,20 @@
 
 from typing import Optional
 
-from .common import BackendAddr, Path, Ref
+from .common import BackendAddr, BackendOrganizationBootstrapAddr, OrganizationID, Path, Ref
 
 
 async def test_new_testbed(template: Ref[str], test_server: Optional[Ref[BackendAddr]]) -> Path:
+    ...
+
+
+def test_get_testbed_organization_id(discriminant_dir: Ref[Path]) -> Optional[OrganizationID]:
+    ...
+
+
+def test_get_testbed_bootstrap_organization_addr(
+    discriminant_dir: Ref[Path],
+) -> Optional[BackendOrganizationBootstrapAddr]:
     ...
 
 

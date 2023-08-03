@@ -19,7 +19,7 @@ JsBoolean
 JsNumber
 {%- elif type.kind in ("str", "str_based") -%}
 JsString
-{%- elif type.kind == "bytes" -%}
+{%- elif type.kind in ("bytes", "bytes_based") -%}
 JsTypedArray<u8>
 {%- elif type.kind == "struct" -%}
 JsObject
@@ -115,6 +115,19 @@ JsFunction
 }
 {%- elif type.kind == "bytes" -%}
 {{ js_val }}.as_slice({{ mut_cx_ref }}).to_vec()
+{%- elif type.kind == "bytes_based" -%}
+{
+    {% if type.custom_from_rs_bytes -%}
+    let custom_from_rs_bytes = {{ type.custom_from_rs_bytes }};
+    match custom_from_rs_bytes({{ js_val }}.as_slice({{ mut_cx_ref }}))
+    {%- else -%}
+    match {{ js_val }}.as_slice({{ mut_cx_ref }}).try_into()
+    {%- endif %}
+    {
+        Ok(val) => val,
+        Err(err) => return cx.throw_type_error(format!("{}", err)),
+    }
+}
 {%- elif type.kind == "struct" -%}
 {{ struct_js_to_rs_function_name(type) }}({{ mut_cx_ref }}, {{ js_val }})?
 {%- elif type.kind == "variant" -%}
@@ -147,7 +160,7 @@ let callback = std::sync::Arc::new(Callback{
     js_fn: Some(js_val.root({{ mut_cx_ref }})),
     channel: cx.channel(),
 });
-Box::new(
+std::sync::Arc::new(
     move |event: libparsec::ClientEvent| {
         let callback2 = callback.clone();
         callback.channel.send(move |mut cx| {
@@ -163,7 +176,7 @@ Box::new(
             Ok(())
         });
     }
-) as Box<dyn FnMut(libparsec::ClientEvent) + Send>
+) as std::sync::Arc<dyn Fn(libparsec::ClientEvent) + Send + Sync>
 {%- else -%}
 {{ js_val }}.value({{ mut_cx_ref }})
 {%- endif %}
@@ -236,6 +249,26 @@ JsString::try_new({{ mut_cx_ref }},
     let mut js_buff = JsArrayBuffer::new({{ mut_cx_ref }}, {{ rs_value }}.len())?;
     let js_buff_slice = js_buff.as_mut_slice({{ mut_cx_ref }});
     for (i, c) in {{ rs_value }}.iter().enumerate() {
+        js_buff_slice[i] = *c;
+    }
+    js_buff
+}
+{%- elif type.kind == "bytes_based" -%}
+{
+    let rs_buff = {
+        {%- if type.custom_to_rs_bytes -%}
+        let custom_to_rs_bytes = {{ type.custom_to_rs_bytes }};
+        match custom_to_rs_bytes({{ rs_value }}) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+        {%- else -%}
+        {{ rs_value }}
+        {%- endif -%}
+    };
+    let mut js_buff = JsArrayBuffer::new({{ mut_cx_ref }}, rs_buff.len())?;
+    let js_buff_slice = js_buff.as_mut_slice({{ mut_cx_ref }});
+    for (i, c) in rs_buff.iter().enumerate() {
         js_buff_slice[i] = *c;
     }
     js_buff
@@ -328,14 +361,14 @@ fn {{ variant_js_to_rs_function_name(variant) }}<'a>(
 {% endfor %}
             })
 {% elif value.is_tuple %}
-{% for attr_type in value.items %}
+{% for attr_type in value.tuple %}
             let x{{ loop.index }} = {
                 let js_val: Handle<{{ ts_type(attr_type) }}> = obj.get(cx, "x{{ loop.index }}")?;
                 {{ render_downcasted_js_to_rs("js_val", attr_type, mut_cx_ref="cx") | indent(16) }}
             };
 {% endfor %}
             Ok(libparsec::{{ variant.name }}::{{ value.name }} (
-{% for _ in value.attributes.keys() %}
+{% for _ in value.tuple %}
                 x{{ loop.index }},
 {% endfor %}
             ))
@@ -377,7 +410,7 @@ fn {{ variant_rs_to_js_function_name(variant) }}<'a>(
             let js_tag = JsString::try_new(cx, "{{ value.name }}").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
 {% for attr_type in value.tuple %}
-            let js_x{{ loop.index }} = {{ render_rs_to_js("x%s" % loop.index, type.elem, mut_cx_ref) | indent(16) }};
+            let js_x{{ loop.index }} = {{ render_rs_to_js("x%s" % loop.index, attr_type, mut_cx_ref="cx") | indent(16) }};
             js_obj.set(cx, "x{{ loop.index }}", js_x{{ loop.index }})?;
 {% endfor %}
         }

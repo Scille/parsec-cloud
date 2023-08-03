@@ -12,18 +12,18 @@ pub use message::*;
 pub use share::*;
 pub use sync::*;
 
-use std::{path::PathBuf, sync::Arc};
+use std::sync::Arc;
 
 use libparsec_client_connection::AuthenticatedCmds;
-use libparsec_platform_async::Mutex as AsyncMutex;
+use libparsec_platform_async::lock::Mutex as AsyncMutex;
 use libparsec_platform_storage::user::UserStorage;
 use libparsec_types::prelude::*;
 
-use crate::{certificates_ops::CertificatesOps, event_bus::EventBus};
+use crate::{certificates_ops::CertificatesOps, event_bus::EventBus, ClientConfig};
 
 #[derive(Debug)]
 pub struct UserOps {
-    data_base_dir: PathBuf, // TODO: use Arc ?
+    config: Arc<ClientConfig>,
     device: Arc<LocalDevice>,
     storage: UserStorage,
     cmds: Arc<AuthenticatedCmds>,
@@ -47,19 +47,16 @@ pub struct ReencryptionJob {}
 
 impl UserOps {
     pub async fn start(
-        data_base_dir: PathBuf,
+        config: Arc<ClientConfig>,
         device: Arc<LocalDevice>,
         cmds: Arc<AuthenticatedCmds>,
         certificates_ops: Arc<CertificatesOps>,
         event_bus: EventBus,
-        // prevent_sync_pattern,
-        // preferred_language,
-        // workspace_storage_cache_size,
     ) -> Result<Self, anyhow::Error> {
         // TODO: handle errors
-        let storage = UserStorage::start(&data_base_dir, device.clone()).await?;
+        let storage = UserStorage::start(&config.data_base_dir, device.clone()).await?;
         Ok(Self {
-            data_base_dir,
+            config,
             device,
             storage,
             cmds,

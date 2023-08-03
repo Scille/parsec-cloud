@@ -294,7 +294,7 @@ mod time_provider {
         pub async fn sleep(&self, time: super::Duration) {
             // Err in case time is negative, if such no need to sleep !
             if let Ok(time) = time.to_std() {
-                libparsec_platform_async::platform::sleep(time).await;
+                libparsec_platform_async::sleep(time).await;
             }
         }
     }
@@ -303,8 +303,6 @@ mod time_provider {
 #[cfg(feature = "test-mock-time")]
 mod time_provider {
     use std::sync::{Arc, Mutex};
-
-    use libparsec_platform_async::future::FutureExt;
 
     use super::DateTime;
     use super::MockedTime;
@@ -499,9 +497,9 @@ mod time_provider {
                 // This is okay given the code is designed around the fact config can be
                 // fired randomly (we just recompute the remaining time and go back to sleep).
                 if let Some(to_sleep) = to_sleep {
-                    libparsec_platform_async::select!(
-                        _ = libparsec_platform_async::sleep(to_sleep).fuse() => break,
-                        _ = config.changed().fuse() => {
+                    libparsec_platform_async::select2!(
+                        _ = libparsec_platform_async::sleep(to_sleep) => break,
+                        _ = config.changed() => {
                             recompute_time_we_have_to_sleep();
                         }
                     );

@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use libparsec_platform_async::RwLockWriteGuard;
+use libparsec_platform_async::lock::RwLockWriteGuard;
 use libparsec_types::prelude::*;
 
 use super::{

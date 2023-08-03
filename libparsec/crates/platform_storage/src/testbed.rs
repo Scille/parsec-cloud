@@ -6,7 +6,7 @@
 
 use std::{any::Any, path::Path, sync::Arc};
 
-use libparsec_platform_async::Mutex as AsyncMutex;
+use libparsec_platform_async::lock::Mutex as AsyncMutex;
 use libparsec_testbed::{
     test_get_testbed, test_get_testbed_component_store, TestbedEnv, TestbedEvent,
 };
@@ -34,6 +34,7 @@ fn store_factory(_env: &TestbedEnv) -> Arc<dyn Any + Send + Sync> {
     })
 }
 
+#[allow(unused)]
 pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, device: &LocalDevice) {
     if let Some(store) = test_get_testbed_component_store::<ComponentStore>(
         data_base_dir,
@@ -172,6 +173,7 @@ pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, dev
     }
 }
 
+#[allow(unused)]
 pub(crate) async fn maybe_populate_user_storage(data_base_dir: &Path, device: Arc<LocalDevice>) {
     if let Some(store) = test_get_testbed_component_store::<ComponentStore>(
         data_base_dir,

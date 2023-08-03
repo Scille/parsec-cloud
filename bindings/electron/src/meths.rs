@@ -7,6 +7,113 @@
 #[allow(unused_imports)]
 use neon::{prelude::*, types::buffer::TypedArray};
 
+// ClientConfig
+
+#[allow(dead_code)]
+fn struct_clientconfig_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::ClientConfig> {
+    let config_dir = {
+        let js_val: Handle<JsString> = obj.get(cx, "configDir")?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let data_base_dir = {
+        let js_val: Handle<JsString> = obj.get(cx, "dataBaseDir")?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let mountpoint_base_dir = {
+        let js_val: Handle<JsString> = obj.get(cx, "mountpointBaseDir")?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let workspace_storage_cache_size = {
+        let js_val: Handle<JsObject> = obj.get(cx, "workspaceStorageCacheSize")?;
+        variant_workspacestoragecachesize_js_to_rs(cx, js_val)?
+    };
+    Ok(libparsec::ClientConfig {
+        config_dir,
+        data_base_dir,
+        mountpoint_base_dir,
+        workspace_storage_cache_size,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_clientconfig_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientConfig,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_config_dir = JsString::try_new(cx, {
+        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+            path.into_os_string()
+                .into_string()
+                .map_err(|_| "Path contains non-utf8 characters")
+        };
+        match custom_to_rs_string(rs_obj.config_dir) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "configDir", js_config_dir)?;
+    let js_data_base_dir = JsString::try_new(cx, {
+        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+            path.into_os_string()
+                .into_string()
+                .map_err(|_| "Path contains non-utf8 characters")
+        };
+        match custom_to_rs_string(rs_obj.data_base_dir) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "dataBaseDir", js_data_base_dir)?;
+    let js_mountpoint_base_dir = JsString::try_new(cx, {
+        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+            path.into_os_string()
+                .into_string()
+                .map_err(|_| "Path contains non-utf8 characters")
+        };
+        match custom_to_rs_string(rs_obj.mountpoint_base_dir) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "mountpointBaseDir", js_mountpoint_base_dir)?;
+    let js_workspace_storage_cache_size =
+        variant_workspacestoragecachesize_rs_to_js(cx, rs_obj.workspace_storage_cache_size)?;
+    js_obj.set(
+        cx,
+        "workspaceStorageCacheSize",
+        js_workspace_storage_cache_size,
+    )?;
+    Ok(js_obj)
+}
+
 // AvailableDevice
 
 #[allow(dead_code)]
@@ -134,240 +241,6 @@ fn struct_availabledevice_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// ClientConfig
-
-#[allow(dead_code)]
-fn struct_clientconfig_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::ClientConfig> {
-    let config_dir = {
-        let js_val: Handle<JsString> = obj.get(cx, "configDir")?;
-        {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let data_base_dir = {
-        let js_val: Handle<JsString> = obj.get(cx, "dataBaseDir")?;
-        {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let mountpoint_base_dir = {
-        let js_val: Handle<JsString> = obj.get(cx, "mountpointBaseDir")?;
-        {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let preferred_org_creation_backend_addr = {
-        let js_val: Handle<JsString> = obj.get(cx, "preferredOrgCreationBackendAddr")?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::BackendAddr::from_any(&s).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let workspace_storage_cache_size = {
-        let js_val: Handle<JsObject> = obj.get(cx, "workspaceStorageCacheSize")?;
-        variant_workspacestoragecachesize_js_to_rs(cx, js_val)?
-    };
-    Ok(libparsec::ClientConfig {
-        config_dir,
-        data_base_dir,
-        mountpoint_base_dir,
-        preferred_org_creation_backend_addr,
-        workspace_storage_cache_size,
-    })
-}
-
-#[allow(dead_code)]
-fn struct_clientconfig_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::ClientConfig,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_config_dir = JsString::try_new(cx, {
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.config_dir) {
-            Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
-        }
-    })
-    .or_throw(cx)?;
-    js_obj.set(cx, "configDir", js_config_dir)?;
-    let js_data_base_dir = JsString::try_new(cx, {
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.data_base_dir) {
-            Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
-        }
-    })
-    .or_throw(cx)?;
-    js_obj.set(cx, "dataBaseDir", js_data_base_dir)?;
-    let js_mountpoint_base_dir = JsString::try_new(cx, {
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.mountpoint_base_dir) {
-            Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
-        }
-    })
-    .or_throw(cx)?;
-    js_obj.set(cx, "mountpointBaseDir", js_mountpoint_base_dir)?;
-    let js_preferred_org_creation_backend_addr = JsString::try_new(cx, {
-        let custom_to_rs_string = |addr: libparsec::BackendAddr| -> Result<String, &'static str> {
-            Ok(addr.to_url().into())
-        };
-        match custom_to_rs_string(rs_obj.preferred_org_creation_backend_addr) {
-            Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
-        }
-    })
-    .or_throw(cx)?;
-    js_obj.set(
-        cx,
-        "preferredOrgCreationBackendAddr",
-        js_preferred_org_creation_backend_addr,
-    )?;
-    let js_workspace_storage_cache_size =
-        variant_workspacestoragecachesize_rs_to_js(cx, rs_obj.workspace_storage_cache_size)?;
-    js_obj.set(
-        cx,
-        "workspaceStorageCacheSize",
-        js_workspace_storage_cache_size,
-    )?;
-    Ok(js_obj)
-}
-
-// ClientEvent
-
-#[allow(dead_code)]
-fn variant_clientevent_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::ClientEvent> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "ClientConnectionChanged" => {
-            let client = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "client")?;
-                {
-                    let v = js_val.value(cx);
-                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                        cx.throw_type_error("Not an u32 number")?
-                    }
-                    v as u32
-                }
-            };
-            Ok(libparsec::ClientEvent::ClientConnectionChanged { client })
-        }
-        "WorkspaceReencryptionEnded" => Ok(libparsec::ClientEvent::WorkspaceReencryptionEnded {}),
-        "WorkspaceReencryptionNeeded" => Ok(libparsec::ClientEvent::WorkspaceReencryptionNeeded {}),
-        "WorkspaceReencryptionStarted" => {
-            Ok(libparsec::ClientEvent::WorkspaceReencryptionStarted {})
-        }
-        _ => cx.throw_type_error("Object is not a ClientEvent"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_clientevent_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::ClientEvent,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::ClientEvent::ClientConnectionChanged { client, .. } => {
-            let js_tag = JsString::try_new(cx, "ClientConnectionChanged").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_client = JsNumber::new(cx, client as f64);
-            js_obj.set(cx, "client", js_client)?;
-        }
-        libparsec::ClientEvent::WorkspaceReencryptionEnded { .. } => {
-            let js_tag = JsString::try_new(cx, "WorkspaceReencryptionEnded").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::ClientEvent::WorkspaceReencryptionNeeded { .. } => {
-            let js_tag = JsString::try_new(cx, "WorkspaceReencryptionNeeded").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::ClientEvent::WorkspaceReencryptionStarted { .. } => {
-            let js_tag = JsString::try_new(cx, "WorkspaceReencryptionStarted").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// DeviceFileType
-
-#[allow(dead_code)]
-fn variant_devicefiletype_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::DeviceFileType> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "Password" => Ok(libparsec::DeviceFileType::Password {}),
-        "Recovery" => Ok(libparsec::DeviceFileType::Recovery {}),
-        "Smartcard" => Ok(libparsec::DeviceFileType::Smartcard {}),
-        _ => cx.throw_type_error("Object is not a DeviceFileType"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_devicefiletype_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::DeviceFileType,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::DeviceFileType::Password { .. } => {
-            let js_tag = JsString::try_new(cx, "Password").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::DeviceFileType::Recovery { .. } => {
-            let js_tag = JsString::try_new(cx, "Recovery").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::DeviceFileType::Smartcard { .. } => {
-            let js_tag = JsString::try_new(cx, "Smartcard").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
 // WorkspaceStorageCacheSize
 
 #[allow(dead_code)]
@@ -416,160 +289,213 @@ fn variant_workspacestoragecachesize_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// DeviceAccessParams
+// ClientEvent
 
 #[allow(dead_code)]
-fn variant_deviceaccessparams_js_to_rs<'a>(
+fn variant_clientevent_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::DeviceAccessParams> {
+) -> NeonResult<libparsec::ClientEvent> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "Ping" => {
+            let ping = {
+                let js_val: Handle<JsString> = obj.get(cx, "ping")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::ClientEvent::Ping { ping })
+        }
+        _ => cx.throw_type_error("Object is not a ClientEvent"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_clientevent_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientEvent,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::ClientEvent::Ping { ping, .. } => {
+            let js_tag = JsString::try_new(cx, "Ping").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_ping = JsString::try_new(cx, ping).or_throw(cx)?;
+            js_obj.set(cx, "ping", js_ping)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// DeviceFileType
+
+#[allow(dead_code)]
+fn variant_devicefiletype_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::DeviceFileType> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "Password" => Ok(libparsec::DeviceFileType::Password {}),
+        "Recovery" => Ok(libparsec::DeviceFileType::Recovery {}),
+        "Smartcard" => Ok(libparsec::DeviceFileType::Smartcard {}),
+        _ => cx.throw_type_error("Object is not a DeviceFileType"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_devicefiletype_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::DeviceFileType,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::DeviceFileType::Password { .. } => {
+            let js_tag = JsString::try_new(cx, "Password").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::DeviceFileType::Recovery { .. } => {
+            let js_tag = JsString::try_new(cx, "Recovery").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::DeviceFileType::Smartcard { .. } => {
+            let js_tag = JsString::try_new(cx, "Smartcard").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// DeviceSaveStrategy
+
+#[allow(dead_code)]
+fn variant_devicesavestrategy_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::DeviceSaveStrategy> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
         "Password" => {
-            let path = {
-                let js_val: Handle<JsString> = obj.get(cx, "path")?;
-                {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
             let password = {
                 let js_val: Handle<JsString> = obj.get(cx, "password")?;
-                js_val.value(cx)
-            };
-            Ok(libparsec::DeviceAccessParams::Password { path, password })
-        }
-        "Smartcard" => {
-            let path = {
-                let js_val: Handle<JsString> = obj.get(cx, "path")?;
                 {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                    let custom_from_rs_string = |s: String| -> Result<_, String> { Ok(s.into()) };
                     match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
                 }
             };
-            Ok(libparsec::DeviceAccessParams::Smartcard { path })
+            Ok(libparsec::DeviceSaveStrategy::Password { password })
         }
-        _ => cx.throw_type_error("Object is not a DeviceAccessParams"),
+        "Smartcard" => Ok(libparsec::DeviceSaveStrategy::Smartcard {}),
+        _ => cx.throw_type_error("Object is not a DeviceSaveStrategy"),
     }
 }
 
 #[allow(dead_code)]
-fn variant_deviceaccessparams_rs_to_js<'a>(
+fn variant_devicesavestrategy_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::DeviceAccessParams,
+    rs_obj: libparsec::DeviceSaveStrategy,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
-        libparsec::DeviceAccessParams::Password { path, password, .. } => {
+        libparsec::DeviceSaveStrategy::Password { password, .. } => {
             let js_tag = JsString::try_new(cx, "Password").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_path = JsString::try_new(cx, {
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(path) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "path", js_path)?;
             let js_password = JsString::try_new(cx, password).or_throw(cx)?;
             js_obj.set(cx, "password", js_password)?;
         }
-        libparsec::DeviceAccessParams::Smartcard { path, .. } => {
+        libparsec::DeviceSaveStrategy::Smartcard { .. } => {
             let js_tag = JsString::try_new(cx, "Smartcard").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_path = JsString::try_new(cx, {
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(path) {
+        }
+    }
+    Ok(js_obj)
+}
+
+// BootstrapOrganizationError
+
+#[allow(dead_code)]
+fn variant_bootstraporganizationerror_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::BootstrapOrganizationError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::BootstrapOrganizationError::AlreadyUsedToken { .. } => {
+            let js_tag = JsString::try_new(cx, "AlreadyUsedToken").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::BootstrapOrganizationError::BadTimestamp {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "BadTimestamp").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_server_timestamp = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339().into())
+                    };
+                match custom_to_rs_string(server_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
                 }
             })
             .or_throw(cx)?;
-            js_obj.set(cx, "path", js_path)?;
+            js_obj.set(cx, "server_timestamp", js_server_timestamp)?;
+            let js_client_timestamp = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339().into())
+                    };
+                match custom_to_rs_string(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "client_timestamp", js_client_timestamp)?;
+            let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
+            js_obj.set(
+                cx,
+                "ballpark_client_early_offset",
+                js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = JsNumber::new(cx, ballpark_client_late_offset);
+            js_obj.set(
+                cx,
+                "ballpark_client_late_offset",
+                js_ballpark_client_late_offset,
+            )?;
         }
-    }
-    Ok(js_obj)
-}
-
-// ClientLoginError
-
-#[allow(dead_code)]
-fn variant_clientloginerror_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::ClientLoginError,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
-    js_obj.set(cx, "error", js_display)?;
-    match rs_obj {
-        libparsec::ClientLoginError::AccessMethodNotAvailable { .. } => {
-            let js_tag = JsString::try_new(cx, "AccessMethodNotAvailable").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::ClientLoginError::DecryptionFailed { .. } => {
-            let js_tag = JsString::try_new(cx, "DecryptionFailed").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::ClientLoginError::DeviceAlreadyLoggedIn { .. } => {
-            let js_tag = JsString::try_new(cx, "DeviceAlreadyLoggedIn").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::ClientLoginError::DeviceInvalidFormat { .. } => {
-            let js_tag = JsString::try_new(cx, "DeviceInvalidFormat").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::ClientLoginError::Internal(..) => {
+        libparsec::BootstrapOrganizationError::Internal { .. } => {
             let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-    }
-    Ok(js_obj)
-}
-
-// ClientGetterError
-
-#[allow(dead_code)]
-fn variant_clientgettererror_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::ClientGetterError,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
-    js_obj.set(cx, "error", js_display)?;
-    match rs_obj {
-        libparsec::ClientGetterError::Disconnected { .. } => {
-            let js_tag = JsString::try_new(cx, "Disconnected").or_throw(cx)?;
+        libparsec::BootstrapOrganizationError::InvalidToken { .. } => {
+            let js_tag = JsString::try_new(cx, "InvalidToken").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::ClientGetterError::InvalidHandle { handle, .. } => {
-            let js_tag = JsString::try_new(cx, "InvalidHandle").or_throw(cx)?;
+        libparsec::BootstrapOrganizationError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "Offline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_handle = JsNumber::new(cx, handle as f64);
-            js_obj.set(cx, "handle", js_handle)?;
+        }
+        libparsec::BootstrapOrganizationError::SaveDeviceError { .. } => {
+            let js_tag = JsString::try_new(cx, "SaveDeviceError").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
         }
     }
     Ok(js_obj)
 }
 
-// client_list_available_devices
-fn client_list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
+// list_available_devices
+fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let path = {
         let js_val = cx.argument::<JsString>(0)?;
         {
@@ -589,7 +515,7 @@ fn client_list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise>
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_list_available_devices(&path).await;
+            let ret = libparsec::list_available_devices(&path).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = {
@@ -608,18 +534,14 @@ fn client_list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise>
     Ok(promise)
 }
 
-// client_login
-fn client_login(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    let load_device_params = {
-        let js_val = cx.argument::<JsObject>(0)?;
-        variant_deviceaccessparams_js_to_rs(&mut cx, js_val)?
-    };
+// bootstrap_organization
+fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let config = {
-        let js_val = cx.argument::<JsObject>(1)?;
+        let js_val = cx.argument::<JsObject>(0)?;
         struct_clientconfig_js_to_rs(&mut cx, js_val)?
     };
     let on_event_callback = {
-        let js_val = cx.argument::<JsFunction>(2)?;
+        let js_val = cx.argument::<JsFunction>(1)?;
         // The Javascript function object is going to be shared between the closure
         // called by rust (that can be called multiple times) and the single-use
         // closure sent to the js runtime.
@@ -647,7 +569,7 @@ fn client_login(mut cx: FunctionContext) -> JsResult<JsPromise> {
             js_fn: Some(js_val.root(&mut cx)),
             channel: cx.channel(),
         });
-        Box::new(move |event: libparsec::ClientEvent| {
+        std::sync::Arc::new(move |event: libparsec::ClientEvent| {
             let callback2 = callback.clone();
             callback.channel.send(move |mut cx| {
                 // TODO: log an error instead of panic ? (it is a bit harsh to crash
@@ -662,56 +584,60 @@ fn client_login(mut cx: FunctionContext) -> JsResult<JsPromise> {
                 }
                 Ok(())
             });
-        }) as Box<dyn FnMut(libparsec::ClientEvent) + Send>
+        }) as std::sync::Arc<dyn Fn(libparsec::ClientEvent) + Send + Sync>
     };
-    let channel = cx.channel();
-    let (deferred, promise) = cx.promise();
-
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME
-        .lock()
-        .expect("Mutex is poisoned")
-        .spawn(async move {
-            let ret = libparsec::client_login(load_device_params, config, on_event_callback).await;
-
-            deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = match ret {
-                    Ok(ok) => {
-                        let js_obj = JsObject::new(&mut cx);
-                        let js_tag = JsBoolean::new(&mut cx, true);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = JsNumber::new(&mut cx, ok as f64);
-                        js_obj.set(&mut cx, "value", js_value)?;
-                        js_obj
-                    }
-                    Err(err) => {
-                        let js_obj = cx.empty_object();
-                        let js_tag = JsBoolean::new(&mut cx, false);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_clientloginerror_rs_to_js(&mut cx, err)?;
-                        js_obj.set(&mut cx, "error", js_err)?;
-                        js_obj
-                    }
-                };
-                Ok(js_ret)
-            });
-        });
-
-    Ok(promise)
-}
-
-// client_get_device_id
-fn client_get_device_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    let handle = {
-        let js_val = cx.argument::<JsNumber>(0)?;
+    let bootstrap_organization_addr = {
+        let js_val = cx.argument::<JsString>(2)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::BackendOrganizationBootstrapAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
             }
-            v as u32
         }
     };
+    let save_strategy = {
+        let js_val = cx.argument::<JsObject>(3)?;
+        variant_devicesavestrategy_js_to_rs(&mut cx, js_val)?
+    };
+    let human_handle = match cx.argument_opt(4) {
+        Some(v) => match v.downcast::<JsString, _>(&mut cx) {
+            Ok(js_val) => Some({
+                match js_val.value(&mut cx).parse() {
+                    Ok(val) => val,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            }),
+            Err(_) => None,
+        },
+        None => None,
+    };
+    let device_label = match cx.argument_opt(5) {
+        Some(v) => match v.downcast::<JsString, _>(&mut cx) {
+            Ok(js_val) => Some({
+                match js_val.value(&mut cx).parse() {
+                    Ok(val) => val,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            }),
+            Err(_) => None,
+        },
+        None => None,
+    };
+    let sequester_authority_verify_key = match cx.argument_opt(6) {
+        Some(v) => match v.downcast::<JsTypedArray<u8>, _>(&mut cx) {
+            Ok(js_val) => Some({
+                match js_val.as_slice(&mut cx).try_into() {
+                    Ok(val) => val,
+                    Err(err) => return cx.throw_type_error(format!("{}", err)),
+                }
+            }),
+            Err(_) => None,
+        },
+        None => None,
+    };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
@@ -720,7 +646,16 @@ fn client_get_device_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_get_device_id(handle).await;
+            let ret = libparsec::bootstrap_organization(
+                config,
+                on_event_callback,
+                bootstrap_organization_addr,
+                save_strategy,
+                human_handle,
+                device_label,
+                sequester_authority_verify_key,
+            )
+            .await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -728,7 +663,7 @@ fn client_get_device_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = JsString::try_new(&mut cx, ok).or_throw(&mut cx)?;
+                        let js_value = struct_availabledevice_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -736,7 +671,7 @@ fn client_get_device_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_clientgettererror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_bootstraporganizationerror_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -799,6 +734,62 @@ fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// test_get_testbed_organization_id
+fn test_get_testbed_organization_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let discriminant_dir = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let ret = libparsec::test_get_testbed_organization_id(&discriminant_dir);
+    let js_ret = match ret {
+        Some(elem) => JsString::try_new(&mut cx, elem)
+            .or_throw(&mut cx)?
+            .as_value(&mut cx),
+        None => JsNull::new(&mut cx).as_value(&mut cx),
+    };
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// test_get_testbed_bootstrap_organization_addr
+fn test_get_testbed_bootstrap_organization_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let discriminant_dir = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let ret = libparsec::test_get_testbed_bootstrap_organization_addr(&discriminant_dir);
+    let js_ret = match ret {
+        Some(elem) => {
+            JsString::try_new(&mut cx,{
+                let custom_to_rs_string = |addr: libparsec::BackendOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+                match custom_to_rs_string(elem) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            }).or_throw(&mut cx)?.as_value(&mut cx)
+        }
+        None => JsNull::new(&mut cx).as_value(&mut cx),
+    };
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
 // test_drop_testbed
 fn test_drop_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let path = {
@@ -832,10 +823,17 @@ fn test_drop_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
 }
 
 pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
-    cx.export_function("clientListAvailableDevices", client_list_available_devices)?;
-    cx.export_function("clientLogin", client_login)?;
-    cx.export_function("clientGetDeviceId", client_get_device_id)?;
+    cx.export_function("listAvailableDevices", list_available_devices)?;
+    cx.export_function("bootstrapOrganization", bootstrap_organization)?;
     cx.export_function("testNewTestbed", test_new_testbed)?;
+    cx.export_function(
+        "testGetTestbedOrganizationId",
+        test_get_testbed_organization_id,
+    )?;
+    cx.export_function(
+        "testGetTestbedBootstrapOrganizationAddr",
+        test_get_testbed_bootstrap_organization_addr,
+    )?;
     cx.export_function("testDropTestbed", test_drop_testbed)?;
     Ok(())
 }

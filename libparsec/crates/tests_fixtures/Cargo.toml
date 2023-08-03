@@ -48,6 +48,6 @@ pretty_assertions = { workspace = true, features = ["std", "unstable"] }
 
 # TODO: Currently `parsec_test` doesn't support web
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { workspace = true, features = ["fs", "sync"] }
+tokio = { workspace = true }
 
 # No dev-dependencies: this crate is itself only used in other crates' own dev-dependencies

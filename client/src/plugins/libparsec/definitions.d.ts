@@ -11,12 +11,24 @@ export type Result<T, E = Error> =
 type OrganizationID = string
 type DeviceLabel = string
 type HumanHandle = string
+type DateTime = string
+type Password = string
 type BackendAddr = string
+type BackendOrganizationAddr = string
+type BackendOrganizationBootstrapAddr = string
 type DeviceID = string
 type Path = string
+type SequesterVerifyKeyDer = Uint8Array
 type LoggedCoreHandle = number
 type ClientHandle = number
 type CacheSize = number
+
+export interface ClientConfig {
+    configDir: Path
+    dataBaseDir: Path
+    mountpointBaseDir: Path
+    workspaceStorageCacheSize: WorkspaceStorageCacheSize
+}
 
 export interface AvailableDevice {
     keyFilePath: Path
@@ -28,33 +40,25 @@ export interface AvailableDevice {
     ty: DeviceFileType
 }
 
-export interface ClientConfig {
-    configDir: Path
-    dataBaseDir: Path
-    mountpointBaseDir: Path
-    preferredOrgCreationBackendAddr: BackendAddr
-    workspaceStorageCacheSize: WorkspaceStorageCacheSize
+// WorkspaceStorageCacheSize
+export interface WorkspaceStorageCacheSizeCustom {
+    tag: 'Custom'
+    size: number
 }
+export interface WorkspaceStorageCacheSizeDefault {
+    tag: 'Default'
+}
+export type WorkspaceStorageCacheSize =
+  | WorkspaceStorageCacheSizeCustom
+  | WorkspaceStorageCacheSizeDefault
 
 // ClientEvent
-export interface ClientEventClientConnectionChanged {
-    tag: 'ClientConnectionChanged'
-    client: number
-}
-export interface ClientEventWorkspaceReencryptionEnded {
-    tag: 'WorkspaceReencryptionEnded'
-}
-export interface ClientEventWorkspaceReencryptionNeeded {
-    tag: 'WorkspaceReencryptionNeeded'
-}
-export interface ClientEventWorkspaceReencryptionStarted {
-    tag: 'WorkspaceReencryptionStarted'
+export interface ClientEventPing {
+    tag: 'Ping'
+    ping: string
 }
 export type ClientEvent =
-  | ClientEventClientConnectionChanged
-  | ClientEventWorkspaceReencryptionEnded
-  | ClientEventWorkspaceReencryptionNeeded
-  | ClientEventWorkspaceReencryptionStarted
+  | ClientEventPing
 
 // DeviceFileType
 export interface DeviceFileTypePassword {
@@ -71,90 +75,78 @@ export type DeviceFileType =
   | DeviceFileTypeRecovery
   | DeviceFileTypeSmartcard
 
-// WorkspaceStorageCacheSize
-export interface WorkspaceStorageCacheSizeCustom {
-    tag: 'Custom'
-    size: number
-}
-export interface WorkspaceStorageCacheSizeDefault {
-    tag: 'Default'
-}
-export type WorkspaceStorageCacheSize =
-  | WorkspaceStorageCacheSizeCustom
-  | WorkspaceStorageCacheSizeDefault
-
-// DeviceAccessParams
-export interface DeviceAccessParamsPassword {
+// DeviceSaveStrategy
+export interface DeviceSaveStrategyPassword {
     tag: 'Password'
-    path: Path
-    password: string
+    password: Password
 }
-export interface DeviceAccessParamsSmartcard {
+export interface DeviceSaveStrategySmartcard {
     tag: 'Smartcard'
-    path: Path
 }
-export type DeviceAccessParams =
-  | DeviceAccessParamsPassword
-  | DeviceAccessParamsSmartcard
+export type DeviceSaveStrategy =
+  | DeviceSaveStrategyPassword
+  | DeviceSaveStrategySmartcard
 
-// ClientLoginError
-export interface ClientLoginErrorAccessMethodNotAvailable {
-    tag: 'AccessMethodNotAvailable'
+// BootstrapOrganizationError
+export interface BootstrapOrganizationErrorAlreadyUsedToken {
+    tag: 'AlreadyUsedToken'
     error: string
 }
-export interface ClientLoginErrorDecryptionFailed {
-    tag: 'DecryptionFailed'
+export interface BootstrapOrganizationErrorBadTimestamp {
+    tag: 'BadTimestamp'
     error: string
+    serverTimestamp: DateTime
+    clientTimestamp: DateTime
+    ballparkClientEarlyOffset: number
+    ballparkClientLateOffset: number
 }
-export interface ClientLoginErrorDeviceAlreadyLoggedIn {
-    tag: 'DeviceAlreadyLoggedIn'
-    error: string
-}
-export interface ClientLoginErrorDeviceInvalidFormat {
-    tag: 'DeviceInvalidFormat'
-    error: string
-}
-export interface ClientLoginErrorInternal {
+export interface BootstrapOrganizationErrorInternal {
     tag: 'Internal'
     error: string
 }
-export type ClientLoginError =
-  | ClientLoginErrorAccessMethodNotAvailable
-  | ClientLoginErrorDecryptionFailed
-  | ClientLoginErrorDeviceAlreadyLoggedIn
-  | ClientLoginErrorDeviceInvalidFormat
-  | ClientLoginErrorInternal
-
-// ClientGetterError
-export interface ClientGetterErrorDisconnected {
-    tag: 'Disconnected'
+export interface BootstrapOrganizationErrorInvalidToken {
+    tag: 'InvalidToken'
     error: string
 }
-export interface ClientGetterErrorInvalidHandle {
-    tag: 'InvalidHandle'
+export interface BootstrapOrganizationErrorOffline {
+    tag: 'Offline'
     error: string
-    handle: number
 }
-export type ClientGetterError =
-  | ClientGetterErrorDisconnected
-  | ClientGetterErrorInvalidHandle
+export interface BootstrapOrganizationErrorSaveDeviceError {
+    tag: 'SaveDeviceError'
+    error: string
+}
+export type BootstrapOrganizationError =
+  | BootstrapOrganizationErrorAlreadyUsedToken
+  | BootstrapOrganizationErrorBadTimestamp
+  | BootstrapOrganizationErrorInternal
+  | BootstrapOrganizationErrorInvalidToken
+  | BootstrapOrganizationErrorOffline
+  | BootstrapOrganizationErrorSaveDeviceError
 
 export interface LibParsecPlugin {
-    clientListAvailableDevices(
+    listAvailableDevices(
         path: Path
     ): Promise<Array<AvailableDevice>>
-    clientLogin(
-        load_device_params: DeviceAccessParams,
+    bootstrapOrganization(
         config: ClientConfig,
-        on_event_callback: (event: ClientEvent) => void
-    ): Promise<Result<number, ClientLoginError>>
-    clientGetDeviceId(
-        handle: number
-    ): Promise<Result<DeviceID, ClientGetterError>>
+        on_event_callback: (event: ClientEvent) => void,
+        bootstrap_organization_addr: BackendOrganizationBootstrapAddr,
+        save_strategy: DeviceSaveStrategy,
+        human_handle: HumanHandle | null,
+        device_label: DeviceLabel | null,
+        sequester_authority_verify_key: SequesterVerifyKeyDer | null
+    ): Promise<Result<AvailableDevice, BootstrapOrganizationError>>
     testNewTestbed(
         template: string,
         test_server: BackendAddr | null
     ): Promise<Path>
+    testGetTestbedOrganizationId(
+        discriminant_dir: Path
+    ): Promise<OrganizationID | null>
+    testGetTestbedBootstrapOrganizationAddr(
+        discriminant_dir: Path
+    ): Promise<BackendOrganizationBootstrapAddr | null>
     testDropTestbed(
         path: Path
     ): Promise<null>

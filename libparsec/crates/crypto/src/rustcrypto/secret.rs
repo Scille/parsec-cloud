@@ -99,7 +99,7 @@ impl SecretKey {
         salt
     }
 
-    pub fn from_password(password: Password, salt: &[u8]) -> Result<Self, CryptoError> {
+    pub fn from_password(password: &Password, salt: &[u8]) -> Result<Self, CryptoError> {
         let mut key = [0; XSalsa20Poly1305::KEY_SIZE];
 
         // During test we want to skip the `argon2` algorithm for hashing the password

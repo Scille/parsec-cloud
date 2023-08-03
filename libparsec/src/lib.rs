@@ -11,4 +11,16 @@ pub mod low_level {
     pub use libparsec_types as types;
 }
 
-pub use libparsec_client_high_level_api::*;
+mod config;
+mod events;
+mod invite;
+mod testbed;
+
+pub use config::*;
+pub use events::*;
+pub use invite::*;
+pub use testbed::*;
+
+pub async fn list_available_devices(config_dir: &std::path::Path) -> Vec<AvailableDevice> {
+    libparsec_platform_device_loader::list_available_devices(config_dir).await
+}

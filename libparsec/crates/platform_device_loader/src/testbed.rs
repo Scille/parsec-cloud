@@ -2,7 +2,7 @@
 
 use std::{
     any::Any,
-    path::Path,
+    path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
 
@@ -11,12 +11,10 @@ use libparsec_testbed::{
 };
 use libparsec_types::prelude::*;
 
-const STORE_ENTRY_KEY: &str = "platform_device_loader";
+use crate::{LoadDeviceError, SaveDeviceError};
 
-// TODO: Here we'd like to have a fast path for when only login is used.
-// The idea would be as long as no api doing modification in local devices is
-// called, we can generate the LocalDevice object directly from template data
-// without having to do password derivation, deserialization and decryption.
+const STORE_ENTRY_KEY: &str = "platform_device_loader";
+const KEY_FILE_PASSWORD: &str = "P@ssw0rd."; // Use the same password for all simulated key files
 
 enum MaybePopulated<T> {
     Stalled,
@@ -25,11 +23,85 @@ enum MaybePopulated<T> {
 
 struct ComponentStore {
     available_devices: Mutex<MaybePopulated<Vec<AvailableDevice>>>,
+    key_files_cache: Mutex<Vec<(DeviceAccessStrategy, Arc<LocalDevice>)>>,
 }
 
 fn store_factory(_env: &TestbedEnv) -> Arc<dyn Any + Send + Sync> {
     Arc::new(ComponentStore {
         available_devices: Mutex::new(MaybePopulated::Stalled),
+        key_files_cache: Mutex::default(),
+    })
+}
+
+/// For simplicity we store the key file as `<config_dir>/devices/<device_id>.keys`
+/// This way `device_load` is more explicit than if we use the slughash in the file
+/// name (like it is done in production)
+fn get_device_key_file(config_dir: &Path, device_id: &DeviceID) -> PathBuf {
+    config_dir.join(format!("devices/{}.keys", device_id))
+}
+
+/// Generate the `LocalDevice` from the template events, this saves us from
+/// password derivation, generation of the key file, only to do it
+/// deserialization&decryption right away.
+fn load_local_device(key_file: &Path, env: &TestbedEnv) -> Option<Arc<LocalDevice>> {
+    // Try to extract the DeviceID from the key file, then make sure the key file
+    // location correspond to where we store the testbed fake files
+    let device_id = key_file.file_stem()?.to_str()?.parse::<DeviceID>().ok()?;
+    let expected_key_file = get_device_key_file(&env.discriminant_dir, &device_id);
+    if key_file != expected_key_file {
+        return None;
+    }
+
+    env.template.events.iter().find_map(|e| match e {
+        TestbedEvent::BootstrapOrganization(x) if x.first_user_device_id == device_id => {
+            Some(Arc::new(LocalDevice {
+                organization_addr: (*env.organization_addr()).clone(),
+                device_id: device_id.clone(),
+                device_label: x.first_user_first_device_label.clone(),
+                human_handle: x.first_user_human_handle.clone(),
+                signing_key: x.first_user_first_device_signing_key.clone(),
+                private_key: x.first_user_private_key.clone(),
+                initial_profile: UserProfile::Admin,
+                user_manifest_id: x.first_user_user_manifest_id,
+                user_manifest_key: x.first_user_user_manifest_key.clone(),
+                local_symkey: x.first_user_local_symkey.clone(),
+                time_provider: TimeProvider::default(),
+            }))
+        }
+        TestbedEvent::NewUser(x) if x.device_id == device_id => Some(Arc::new(LocalDevice {
+            organization_addr: (*env.organization_addr()).clone(),
+            device_id: device_id.clone(),
+            device_label: x.first_device_label.clone(),
+            human_handle: x.human_handle.clone(),
+            signing_key: x.first_device_signing_key.clone(),
+            private_key: x.private_key.clone(),
+            initial_profile: x.initial_profile,
+            user_manifest_id: x.user_manifest_id,
+            user_manifest_key: x.user_manifest_key.clone(),
+            local_symkey: x.local_symkey.clone(),
+            time_provider: TimeProvider::default(),
+        })),
+        TestbedEvent::NewDevice(d) if d.device_id == device_id => {
+            env.template.events.iter().find_map(|e| match e {
+                TestbedEvent::NewUser(u) if u.device_id.user_id() != device_id.user_id() => {
+                    Some(Arc::new(LocalDevice {
+                        organization_addr: (*env.organization_addr()).clone(),
+                        device_id: device_id.clone(),
+                        device_label: d.device_label.clone(),
+                        human_handle: u.human_handle.clone(),
+                        signing_key: d.signing_key.clone(),
+                        private_key: u.private_key.clone(),
+                        initial_profile: u.initial_profile,
+                        user_manifest_id: u.user_manifest_id,
+                        user_manifest_key: u.user_manifest_key.clone(),
+                        local_symkey: d.local_symkey.clone(),
+                        time_provider: TimeProvider::default(),
+                    }))
+                }
+                _ => None,
+            })
+        }
+        _ => None,
     })
 }
 
@@ -74,7 +146,7 @@ fn populate_available_devices(config_dir: &Path, env: &TestbedEnv) -> Vec<Availa
             };
 
             let available_device = AvailableDevice {
-                key_file_path: config_dir.join(format!("{}.key", device_id)),
+                key_file_path: get_device_key_file(config_dir, device_id),
                 organization_id: env.organization_id.clone(),
                 device_id: device_id.clone(),
                 human_handle: human_handle.clone(),
@@ -105,5 +177,98 @@ pub(crate) fn maybe_list_available_devices(config_dir: &Path) -> Option<Vec<Avai
                     available_devices
                 }
             }
+        })
+}
+
+pub(crate) fn maybe_load_device(
+    config_dir: &Path,
+    access: &DeviceAccessStrategy,
+) -> Option<Result<Arc<LocalDevice>, LoadDeviceError>> {
+    test_get_testbed_component_store::<ComponentStore>(config_dir, STORE_ENTRY_KEY, store_factory)
+        .and_then(|store| {
+            // 1) Try to load from the cache
+
+            let mut cache = store.key_files_cache.lock().expect("Mutex is poisoned");
+            let found = cache
+                .iter()
+                .find_map(|(c_access, c_device)| match (access, c_access) {
+                    (
+                        DeviceAccessStrategy::Password {
+                            key_file: kf,
+                            password: pwd,
+                        },
+                        DeviceAccessStrategy::Password {
+                            key_file: c_kf,
+                            password: c_pwd,
+                        },
+                    ) if c_kf == kf => {
+                        if c_pwd == pwd {
+                            Some(Ok(c_device.to_owned()))
+                        } else {
+                            Some(Err(LoadDeviceError::DecryptionFailed))
+                        }
+                    }
+                    (
+                        DeviceAccessStrategy::Smartcard { key_file: kf },
+                        DeviceAccessStrategy::Smartcard { key_file: c_kf },
+                    ) if c_kf == kf => Some(Ok(c_device.to_owned())),
+                    _ => None,
+                });
+
+            if found.is_some() {
+                return found;
+            }
+
+            // 2) Try to load from the template
+
+            let (key_file, decryption_success) = match access {
+                DeviceAccessStrategy::Password { key_file, password } => {
+                    let decryption_success = password.as_str() == KEY_FILE_PASSWORD;
+                    (key_file, decryption_success)
+                }
+                DeviceAccessStrategy::Smartcard { key_file } => {
+                    let decryption_success = true;
+                    (key_file, decryption_success)
+                }
+            };
+            // We don't try to resolve the path of `key_file` into an absolute one here !
+            // This is because in practice the path is always provided absolute given it
+            // is obtained in the first place by `list_available_devices`.
+            let env = test_get_testbed(config_dir).expect("Must exist");
+            let device = load_local_device(key_file, &env)?; // Short circuit if not found
+            if !decryption_success {
+                return Some(Err(LoadDeviceError::DecryptionFailed));
+            }
+            cache.push((access.to_owned(), device.to_owned()));
+
+            Some(Ok(device))
+        })
+}
+
+pub(crate) fn maybe_save_device(
+    config_dir: &Path,
+    access: &DeviceAccessStrategy,
+    device: &LocalDevice,
+) -> Option<Result<(), SaveDeviceError>> {
+    test_get_testbed_component_store::<ComponentStore>(config_dir, STORE_ENTRY_KEY, store_factory)
+        .map(|store| {
+            let key_file = match access {
+                DeviceAccessStrategy::Password { key_file, .. } => key_file,
+                DeviceAccessStrategy::Smartcard { key_file } => key_file,
+            };
+            // We don't try to resolve the path of `key_file` into an absolute one here !
+            // This is because in practice the path is always provided absolute given it
+            // is obtained in the first place by `list_available_devices`.
+
+            let mut cache = store.key_files_cache.lock().expect("Mutex is poisoned");
+            cache.retain(|(c_access, _)| {
+                let c_key_file = match c_access {
+                    DeviceAccessStrategy::Password { key_file, .. } => key_file,
+                    DeviceAccessStrategy::Smartcard { key_file } => key_file,
+                };
+                c_key_file != key_file
+            });
+            cache.push((access.to_owned(), Arc::new(device.to_owned())));
+            Ok(())
         })
 }

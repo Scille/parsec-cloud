@@ -131,6 +131,7 @@ macro_rules! impl_events {
     // e.g. Foo{ bar: u64 }
     (@munch ( $event:ident { $($id:ident: $ty:ty),* $(,)? }, $($tail:tt)* ) -> ($($output:tt)*)) => {
         paste!{
+            #[derive(Debug)]
             pub struct [< Event $event>] {
                 $(pub $id:$ty),*
             }
@@ -159,6 +160,7 @@ pub enum IncompatibleServerReason {
     Unexpected(anyhow::Error),
 }
 
+// All those items will be named with a `Event` prefix (e.g. `Foo` => `EventFoo`)
 impl_events!(
     // Dummy event for tests only
     Ping { ping: String },
@@ -226,7 +228,7 @@ enum ServerState {
 }
 
 struct ServerStateListener {
-    watch: tokio::sync::watch::Receiver<ServerState>,
+    watch: libparsec_platform_async::watch::Receiver<ServerState>,
     _lifetimes: (
         EventBusConnectionLifetime<EventOnline>,
         EventBusConnectionLifetime<EventOffline>,
@@ -235,7 +237,7 @@ struct ServerStateListener {
 
 impl ServerStateListener {
     fn new(event_bus: &Arc<EventBusInternal>) -> Self {
-        let (tx, rx) = tokio::sync::watch::channel(ServerState::Offline);
+        let (tx, rx) = libparsec_platform_async::watch::channel(ServerState::Offline);
         let tx_online = Arc::new(Mutex::new(tx));
         let tx_offline = tx_online.clone();
         let lifetimes = (
@@ -268,13 +270,15 @@ impl ServerStateListener {
 #[derive(Clone)]
 pub struct EventBus {
     internal: Arc<EventBusInternal>,
-    server_state: Arc<tokio::sync::Mutex<ServerStateListener>>,
+    server_state: Arc<libparsec_platform_async::lock::Mutex<ServerStateListener>>,
 }
 
 impl Default for EventBus {
     fn default() -> Self {
         let internal = Arc::new(EventBusInternal::default());
-        let server_state = Arc::new(tokio::sync::Mutex::new(ServerStateListener::new(&internal)));
+        let server_state = Arc::new(libparsec_platform_async::lock::Mutex::new(
+            ServerStateListener::new(&internal),
+        ));
         Self {
             internal,
             server_state,

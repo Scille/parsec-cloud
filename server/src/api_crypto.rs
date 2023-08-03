@@ -232,7 +232,7 @@ impl SecretKey {
 
     #[classmethod]
     fn from_password(_cls: &PyType, password: &str, salt: &[u8]) -> PyResult<Self> {
-        libparsec::low_level::crypto::SecretKey::from_password(password.to_owned().into(), salt)
+        libparsec::low_level::crypto::SecretKey::from_password(&password.to_owned().into(), salt)
             .map(Self)
             .map_err(|err| CryptoError::new_err(err.to_string()))
     }
