@@ -298,7 +298,7 @@ function createOrg(orgName: string, userName: string, userEmail: string, deviceN
     humanHandle: userName,
     deviceLabel: deviceName,
     keyFilePath: 'key_file_path',
-    deviceId: 'device_id',
+    deviceId: 'device1@device1',
     slug: 'slug1',
     ty: {tag: 'Password'},
   };
