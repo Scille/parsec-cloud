@@ -184,6 +184,12 @@ jobs:
             release-files/parsec-unsigned-v${{ needs.version.outputs.full }}-raw-windows-installer.zip.sha256
             release-files/parsec-unsigned-v${{ needs.version.outputs.full }}-macos-*.tar.bz2
             release-files/parsec-unsigned-v${{ needs.version.outputs.full }}-macos-*.tar.bz2.sha256
+            release-files/Parsec-SBOM-linux-snap.spdx.json
+            release-files/Parsec-SBOM-Wheel-linux.spdx.json
+            release-files/Parsec-SBOM-windows-app.spdx.json
+            release-files/Parsec-SBOM-Wheel-windows.spdx.json
+            release-files/Parsec-SBOM-macos-app.spdx.json
+            release-files/Parsec-SBOM-Wheel-macos.spdx.json
             release-files/version
             release-files/version.sha256
           fail_on_unmatched_files: true
