@@ -42,7 +42,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import misc.version_updater as version_updater
+import version_updater
 
 PYTHON_EXECUTABLE_PATH = sys.executable
 LICENSE_CONVERSION_DELAY = 4 * 365 * 24 * 3600  # 4 years
