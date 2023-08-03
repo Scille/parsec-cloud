@@ -45,12 +45,17 @@ export const backendAddrValidator: IValidator = function(value: string) {
     return Validity.Intermediate;
   }
   try {
-    const url = new URL(value);
-
-    if (url.protocol !== 'parsec:') {
+    if (!value.startsWith('parsec://')) {
       return Validity.Invalid;
     }
-    if (url.pathname !== '') {
+    // URL does not parse other protocols correctly
+    value = value.replace('parsec://', 'http://');
+    const url = new URL(value);
+
+    if (url.hostname === '') {
+      return Validity.Invalid;
+    }
+    if (url.pathname !== '' && url.pathname !== '/') {
       return Validity.Invalid;
     }
   } catch (e) {
