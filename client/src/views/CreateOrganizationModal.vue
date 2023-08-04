@@ -199,36 +199,26 @@ interface Title {
   subtitle?: string,
 }
 
-const titles = new Map<CreateOrganizationStep, Title>([
-  [
-    CreateOrganizationStep.OrgNameStep,
-    {
-      title: t('CreateOrganization.title.create'),
-      subtitle: t('CreateOrganization.subtitles.nameYourOrg')},
-  ],
-  [
-    CreateOrganizationStep.UserInfoStep,
-    {
-      title: t('CreateOrganization.title.personalDetails'),
-      subtitle: t('CreateOrganization.subtitles.personalDetails')},
-  ],
-  [
-    CreateOrganizationStep.ServerStep,
-    {
-      title: t('CreateOrganization.title.server'),
-      subtitle: t('CreateOrganization.subtitles.server')},
-  ],
-  [
-    CreateOrganizationStep.PasswordStep,
-    {
-      title: t('CreateOrganization.title.password'),
-      subtitle: t('CreateOrganization.subtitles.password')},
-  ],
-  [
-    CreateOrganizationStep.FinishStep,
-    {
-      title: t('CreateOrganization.title.done')},
-  ],
+const titles = new Map<CreateOrganizationStep, Title>([[
+  CreateOrganizationStep.OrgNameStep, {
+    title: t('CreateOrganization.title.create'),
+    subtitle: t('CreateOrganization.subtitles.nameYourOrg'),
+  }], [
+  CreateOrganizationStep.UserInfoStep, {
+    title: t('CreateOrganization.title.personalDetails'),
+    subtitle: t('CreateOrganization.subtitles.personalDetails'),
+  }], [
+  CreateOrganizationStep.ServerStep, {
+    title: t('CreateOrganization.title.server'),
+    subtitle: t('CreateOrganization.subtitles.server'),
+  }], [
+  CreateOrganizationStep.PasswordStep, {
+    title: t('CreateOrganization.title.password'),
+    subtitle: t('CreateOrganization.subtitles.password'),
+  }], [
+  CreateOrganizationStep.FinishStep, {
+    title: t('CreateOrganization.title.done'),
+  }],
 ]);
 
 function canGoBackward(): boolean {
