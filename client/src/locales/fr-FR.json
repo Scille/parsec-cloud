@@ -61,10 +61,12 @@
         "useParsecServer": "Utiliser le serveur PARSEC principal",
         "useMyOwnServer": "Je dispose de mon propre serveur PARSEC",
         "acceptTOS": {
-            "label": "En utilisant le serveur PARSEC, j'accepte la",
-            "tos": " Politique de Confidentialité",
-            "and": "et les",
-            "privacyPolicy": "Conditions Générales de Vente et d'Utilisation"
+            "label": "En utilisant le serveur PARSEC, j'accepte les",
+            "tos": "Conditions Générales de Vente et d'Utilisation ",
+            "tosLink": "https://my.parsec.cloud/assets/pdf/Parsec-CGVU-fr.pdf",
+            "and": "et les ",
+            "privacyPolicy": "Politique de Confidentialité",
+            "privacyPolicyLink": "https://parsec.cloud/fr/politique-de-confidentialite/"
         },
         "parsecServerUrl": "URL de votre serveur PARSEC",
         "parsecServerUrlPlaceholder": "parsec://hote:port",

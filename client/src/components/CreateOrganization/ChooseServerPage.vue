@@ -24,7 +24,7 @@
             <a
               class="link"
               target="_blank"
-              href="https://parsec.cloud/tos"
+              :href="$t('CreateOrganization.acceptTOS.tosLink')"
             >
               {{ $t('CreateOrganization.acceptTOS.tos') }}
             </a>
@@ -32,7 +32,7 @@
             <a
               class="link"
               target="_blank"
-              href="https://parsec.cloud/tos"
+              :href="$t('CreateOrganization.acceptTOS.privacyPolicyLink')"
             >
               {{ $t('CreateOrganization.acceptTOS.privacyPolicy') }}
             </a>
