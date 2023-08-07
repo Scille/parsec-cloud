@@ -85,11 +85,19 @@ class CustomConversionType:
 #
 
 
-class LoggedCoreHandle(I32BasedType):
+class Handle(U32BasedType):
     pass
 
 
 class OrganizationID(StrBasedType):
+    pass
+
+
+class UserID(StrBasedType):
+    pass
+
+
+class DeviceID(StrBasedType):
     pass
 
 
@@ -127,12 +135,9 @@ class BackendOrganizationBootstrapAddr(StrBasedType):
     custom_to_rs_string = "|addr: libparsec::BackendOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
 
 
-class DeviceID(StrBasedType):
-    pass
-
-
-class ClientHandle(U32BasedType):
-    pass
+class BackendInvitationAddr(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::BackendInvitationAddr::from_any(&s).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = "|addr: libparsec::BackendInvitationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
 
 
 class Path(StrBasedType):
@@ -143,4 +148,8 @@ class Path(StrBasedType):
 
 
 class SequesterVerifyKeyDer(BytesBasedType):
+    pass
+
+
+class SASCode(StrBasedType):
     pass

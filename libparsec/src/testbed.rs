@@ -45,6 +45,7 @@ pub fn test_get_testbed_bootstrap_organization_addr(
 ) -> Option<BackendOrganizationBootstrapAddr> {
     panic!("Test features are disabled")
 }
+
 #[cfg(feature = "test-utils")]
 pub async fn test_drop_testbed(discriminant_dir: &Path) {
     libparsec_testbed::test_drop_testbed(discriminant_dir).await

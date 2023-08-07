@@ -13,6 +13,7 @@ pub mod low_level {
 
 mod config;
 mod events;
+mod handle;
 mod invite;
 mod testbed;
 
