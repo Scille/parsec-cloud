@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
 use libparsec_client_connection::{protocol::invited_cmds, ConnectionError, InvitedCmds};
 use libparsec_types::prelude::*;
@@ -41,7 +41,7 @@ pub enum ClaimInProgressError {
     #[error("Active users limit reached")]
     ActiveUsersLimitReached,
     #[error(transparent)]
-    CorruptedInviteUserConfirmation(DataError),
+    CorruptedConfirmation(DataError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -55,15 +55,45 @@ impl From<ConnectionError> for ClaimInProgressError {
     }
 }
 
+#[derive(Debug)]
+pub enum UserOrDeviceClaimInitialCtx {
+    User(UserClaimInitialCtx),
+    Device(DeviceClaimInitialCtx),
+}
+
 pub async fn claimer_retrieve_info(
-    cmds: &InvitedCmds,
-) -> Result<invited_cmds::latest::invite_info::UserOrDevice, ClaimerRetrieveInfoError> {
-    use invited_cmds::latest::invite_info::{Rep, Req};
+    config: Arc<ClientConfig>,
+    addr: BackendInvitationAddr,
+) -> Result<UserOrDeviceClaimInitialCtx, ClaimerRetrieveInfoError> {
+    use invited_cmds::latest::invite_info::{Rep, Req, UserOrDevice};
+
+    let cmds = Arc::new(
+        InvitedCmds::new(&config.config_dir, addr, config.proxy.clone())
+            .map_err(|e| anyhow::anyhow!("Error while configuring connection to server: {e}"))?,
+    );
 
     let rep = cmds.send(Req).await?;
 
     match rep {
-        Rep::Ok(claimer) => Ok(claimer),
+        Rep::Ok(claimer) => match claimer {
+            UserOrDevice::User {
+                claimer_email,
+                greeter_user_id,
+                greeter_human_handle,
+            } => Ok(UserOrDeviceClaimInitialCtx::User(UserClaimInitialCtx::new(
+                config,
+                cmds,
+                claimer_email,
+                greeter_user_id,
+                greeter_human_handle,
+            ))),
+            UserOrDevice::Device {
+                greeter_user_id,
+                greeter_human_handle,
+            } => Ok(UserOrDeviceClaimInitialCtx::Device(
+                DeviceClaimInitialCtx::new(config, cmds, greeter_user_id, greeter_human_handle),
+            )),
+        },
         bad_rep @ Rep::UnknownStatus { .. } => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
         }
@@ -72,9 +102,10 @@ pub async fn claimer_retrieve_info(
 
 #[derive(Debug)]
 struct BaseClaimInitialCtx {
+    config: Arc<ClientConfig>,
+    cmds: Arc<InvitedCmds>,
     greeter_user_id: UserID,
     greeter_human_handle: Option<HumanHandle>,
-    cmds: Arc<InvitedCmds>,
 }
 
 impl BaseClaimInitialCtx {
@@ -150,10 +181,11 @@ impl BaseClaimInitialCtx {
         }
 
         Ok(BaseClaimInProgress1Ctx {
+            config: self.config,
+            cmds: self.cmds,
             greeter_sas,
             claimer_sas,
             shared_secret_key,
-            cmds: self.cmds,
         })
     }
 }
@@ -166,6 +198,7 @@ pub struct UserClaimInitialCtx {
 
 impl UserClaimInitialCtx {
     pub fn new(
+        config: Arc<ClientConfig>,
         cmds: Arc<InvitedCmds>,
         claimer_email: String,
         greeter_user_id: UserID,
@@ -173,9 +206,10 @@ impl UserClaimInitialCtx {
     ) -> Self {
         Self {
             base: BaseClaimInitialCtx {
+                config,
+                cmds,
                 greeter_user_id,
                 greeter_human_handle,
-                cmds,
             },
             claimer_email,
         }
@@ -199,14 +233,16 @@ pub struct DeviceClaimInitialCtx(BaseClaimInitialCtx);
 
 impl DeviceClaimInitialCtx {
     pub fn new(
+        config: Arc<ClientConfig>,
         cmds: Arc<InvitedCmds>,
         greeter_user_id: UserID,
         greeter_human_handle: Option<HumanHandle>,
     ) -> Self {
         Self(BaseClaimInitialCtx {
+            config,
+            cmds,
             greeter_user_id,
             greeter_human_handle,
-            cmds,
         })
     }
 
@@ -225,10 +261,11 @@ impl DeviceClaimInitialCtx {
 
 #[derive(Debug)]
 struct BaseClaimInProgress1Ctx {
+    config: Arc<ClientConfig>,
+    cmds: Arc<InvitedCmds>,
     greeter_sas: SASCode,
     claimer_sas: SASCode,
     shared_secret_key: SecretKey,
-    cmds: Arc<InvitedCmds>,
 }
 
 impl BaseClaimInProgress1Ctx {
@@ -243,9 +280,10 @@ impl BaseClaimInProgress1Ctx {
 
         match rep {
             Rep::Ok => Ok(BaseClaimInProgress2Ctx {
+                config: self.config,
+                cmds: self.cmds,
                 claimer_sas: self.claimer_sas,
                 shared_secret_key: self.shared_secret_key,
-                cmds: self.cmds,
             }),
             Rep::AlreadyDeleted => Err(ClaimInProgressError::AlreadyUsed),
             Rep::InvalidState => Err(ClaimInProgressError::PeerReset),
@@ -296,9 +334,10 @@ impl DeviceClaimInProgress1Ctx {
 
 #[derive(Debug)]
 struct BaseClaimInProgress2Ctx {
+    config: Arc<ClientConfig>,
+    cmds: Arc<InvitedCmds>,
     claimer_sas: SASCode,
     shared_secret_key: SecretKey,
-    cmds: Arc<InvitedCmds>,
 }
 
 impl BaseClaimInProgress2Ctx {
@@ -309,8 +348,9 @@ impl BaseClaimInProgress2Ctx {
 
         match rep {
             Rep::Ok => Ok(BaseClaimInProgress3Ctx {
-                shared_secret_key: self.shared_secret_key,
+                config: self.config,
                 cmds: self.cmds,
+                shared_secret_key: self.shared_secret_key,
             }),
             Rep::AlreadyDeleted => Err(ClaimInProgressError::AlreadyUsed),
             Rep::InvalidState => Err(ClaimInProgressError::PeerReset),
@@ -358,8 +398,9 @@ impl DeviceClaimInProgress2Ctx {
 
 #[derive(Debug)]
 struct BaseClaimInProgress3Ctx {
-    shared_secret_key: SecretKey,
+    config: Arc<ClientConfig>,
     cmds: Arc<InvitedCmds>,
+    shared_secret_key: SecretKey,
 }
 
 impl BaseClaimInProgress3Ctx {
@@ -437,7 +478,7 @@ impl UserClaimInProgress3Ctx {
             profile,
             root_verify_key,
         } = InviteUserConfirmation::decrypt_and_load(&payload, &self.0.shared_secret_key)
-            .map_err(ClaimInProgressError::CorruptedInviteUserConfirmation)?;
+            .map_err(ClaimInProgressError::CorruptedConfirmation)?;
 
         let addr = self.0.cmds.addr();
 
@@ -457,7 +498,10 @@ impl UserClaimInProgress3Ctx {
             Some(private_key),
         ));
 
-        Ok(UserClaimFinalizeCtx { new_local_device })
+        Ok(UserClaimFinalizeCtx {
+            config: self.0.config,
+            new_local_device,
+        })
     }
 }
 
@@ -499,7 +543,7 @@ impl DeviceClaimInProgress3Ctx {
             root_verify_key,
             ..
         } = InviteDeviceConfirmation::decrypt_and_load(&payload, &self.0.shared_secret_key)
-            .map_err(ClaimInProgressError::CorruptedInviteUserConfirmation)?;
+            .map_err(ClaimInProgressError::CorruptedConfirmation)?;
 
         let addr = self.0.cmds.addr();
 
@@ -523,61 +567,112 @@ impl DeviceClaimInProgress3Ctx {
             time_provider: Default::default(),
         });
 
-        Ok(DeviceClaimFinalizeCtx { new_local_device })
+        Ok(DeviceClaimFinalizeCtx {
+            config: self.0.config,
+            new_local_device,
+        })
     }
 }
 
 #[derive(Debug)]
 pub struct UserClaimFinalizeCtx {
+    config: Arc<ClientConfig>,
     pub new_local_device: Arc<LocalDevice>,
 }
 
 impl UserClaimFinalizeCtx {
+    pub fn get_default_key_file(&self) -> PathBuf {
+        libparsec_platform_device_loader::get_default_key_file(
+            &self.config.config_dir,
+            &self.new_local_device,
+        )
+    }
+
     pub async fn save_local_device(
         self,
-        config: &ClientConfig,
         access: &DeviceAccessStrategy,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<AvailableDevice, anyhow::Error> {
         // Claiming a user means we are it first device, hence we know there
         // is no existing user manifest (hence our placeholder is non-speculative)
         libparsec_platform_storage::user::user_storage_non_speculative_init(
-            &config.data_base_dir,
+            &self.config.data_base_dir,
             &self.new_local_device,
         )
         .await
         .map_err(|e| anyhow::anyhow!("Error while initializing device's user storage: {e}"))?;
 
         libparsec_platform_device_loader::save_device(
-            &config.config_dir,
+            &self.config.config_dir,
             access,
             &self.new_local_device,
         )
         .await
         .map_err(|e| anyhow::anyhow!("Error while saving the device file: {e}"))?;
 
-        Ok(())
+        let (key_file_path, ty) = match access {
+            DeviceAccessStrategy::Password { key_file, .. } => {
+                (key_file.to_owned(), DeviceFileType::Password)
+            }
+            DeviceAccessStrategy::Smartcard { key_file } => {
+                (key_file.to_owned(), DeviceFileType::Smartcard)
+            }
+        };
+
+        Ok(AvailableDevice {
+            key_file_path,
+            organization_id: self.new_local_device.organization_id().to_owned(),
+            device_id: self.new_local_device.device_id.clone(),
+            device_label: self.new_local_device.device_label.clone(),
+            human_handle: self.new_local_device.human_handle.clone(),
+            slug: self.new_local_device.slug(),
+            ty,
+        })
     }
 }
 
 #[derive(Debug)]
 pub struct DeviceClaimFinalizeCtx {
+    pub config: Arc<ClientConfig>,
     pub new_local_device: Arc<LocalDevice>,
 }
 
 impl DeviceClaimFinalizeCtx {
+    pub fn get_default_key_file(&self) -> PathBuf {
+        libparsec_platform_device_loader::get_default_key_file(
+            &self.config.config_dir,
+            &self.new_local_device,
+        )
+    }
+
     pub async fn save_local_device(
         self,
-        config: &ClientConfig,
         access: &DeviceAccessStrategy,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<AvailableDevice, anyhow::Error> {
         libparsec_platform_device_loader::save_device(
-            &config.config_dir,
+            &self.config.config_dir,
             access,
             &self.new_local_device,
         )
         .await
         .map_err(|e| anyhow::anyhow!("Error while saving the device file: {e}"))?;
 
-        Ok(())
+        let (key_file_path, ty) = match access {
+            DeviceAccessStrategy::Password { key_file, .. } => {
+                (key_file.to_owned(), DeviceFileType::Password)
+            }
+            DeviceAccessStrategy::Smartcard { key_file } => {
+                (key_file.to_owned(), DeviceFileType::Smartcard)
+            }
+        };
+
+        Ok(AvailableDevice {
+            key_file_path,
+            organization_id: self.new_local_device.organization_id().to_owned(),
+            device_id: self.new_local_device.device_id.clone(),
+            device_label: self.new_local_device.device_label.clone(),
+            human_handle: self.new_local_device.human_handle.clone(),
+            slug: self.new_local_device.slug(),
+            ty,
+        })
     }
 }

@@ -3,19 +3,23 @@
 from typing import Callable, Optional
 
 from .common import (
+    BackendInvitationAddr,
     BackendOrganizationBootstrapAddr,
     DateTime,
     DeviceID,
     DeviceLabel,
     ErrorVariant,
+    Handle,
     HumanHandle,
     OrganizationID,
     Password,
     Path,
     Ref,
     Result,
+    SASCode,
     SequesterVerifyKeyDer,
     Structure,
+    UserID,
     Variant,
 )
 from .config import ClientConfig
@@ -59,6 +63,11 @@ class OnClientEventCallback(Callable[[ClientEvent], None]):
     pass
 
 
+#
+# Bootstrap organization
+#
+
+
 class BootstrapOrganizationError(ErrorVariant):
     class Offline:
         pass
@@ -91,4 +100,170 @@ async def bootstrap_organization(
     device_label: Optional[DeviceLabel],
     sequester_authority_verify_key: Optional[SequesterVerifyKeyDer],
 ) -> Result[AvailableDevice, BootstrapOrganizationError]:
+    ...
+
+
+#
+# Invitation claimer
+#
+
+
+class ClaimerRetrieveInfoError(ErrorVariant):
+    class Offline:
+        pass
+
+    class NotFound:
+        pass
+
+    class AlreadyUsed:
+        pass
+
+    class Internal:
+        pass
+
+
+class ClaimInProgressError(ErrorVariant):
+    class Offline:
+        pass
+
+    class NotFound:
+        pass
+
+    class AlreadyUsed:
+        pass
+
+    class PeerReset:
+        pass
+
+    class ActiveUsersLimitReached:
+        pass
+
+    class CorruptedConfirmation:
+        pass
+
+    class Internal:
+        pass
+
+
+class UserOrDeviceClaimInitialCtxHandle(Variant):
+    class User:
+        handle: Handle
+        claimer_email: str
+        greeter_user_id: UserID
+        greeter_human_handle: Optional[HumanHandle]
+
+    class Device:
+        handle: Handle
+        greeter_user_id: UserID
+        greeter_human_handle: Optional[HumanHandle]
+
+
+async def claimer_retrieve_info(
+    config: ClientConfig,
+    on_event_callback: OnClientEventCallback,
+    addr: BackendInvitationAddr,
+) -> Result[UserOrDeviceClaimInitialCtxHandle, ClaimerRetrieveInfoError]:
+    ...
+
+
+class UserClaimInProgress1CtxHandle(Structure):
+    handle: Handle
+    greeter_sas: SASCode
+    greeter_sas_choices: list[SASCode]
+
+
+class DeviceClaimInProgress1CtxHandle(Structure):
+    handle: Handle
+    greeter_sas: SASCode
+    greeter_sas_choices: list[SASCode]
+
+
+async def claimer_user_initial_ctx_do_wait_peer(
+    handle: Handle,
+) -> Result[UserClaimInProgress1CtxHandle, ClaimInProgressError]:
+    ...
+
+
+async def claimer_device_initial_ctx_do_wait_peer(
+    handle: Handle,
+) -> Result[DeviceClaimInProgress1CtxHandle, ClaimInProgressError]:
+    ...
+
+
+class UserClaimInProgress2CtxHandle(Structure):
+    handle: Handle
+    claimer_sas: SASCode
+
+
+class DeviceClaimInProgress2CtxHandle(Structure):
+    handle: Handle
+    claimer_sas: SASCode
+
+
+async def claimer_user_in_progress_2_do_signify_trust(
+    handle: Handle,
+) -> Result[UserClaimInProgress2CtxHandle, ClaimInProgressError]:
+    ...
+
+
+async def claimer_device_in_progress_2_do_signify_trust(
+    handle: Handle,
+) -> Result[DeviceClaimInProgress2CtxHandle, ClaimInProgressError]:
+    ...
+
+
+class UserClaimInProgress3CtxHandle(Structure):
+    handle: Handle
+
+
+class DeviceClaimInProgress3CtxHandle(Structure):
+    handle: Handle
+
+
+async def claimer_user_in_progress_2_do_wait_peer_trust(
+    handle: Handle,
+) -> Result[UserClaimInProgress3CtxHandle, ClaimInProgressError]:
+    ...
+
+
+async def claimer_device_in_progress_2_do_wait_peer_trust(
+    handle: Handle,
+) -> Result[DeviceClaimInProgress3CtxHandle, ClaimInProgressError]:
+    ...
+
+
+class UserClaimFinalizeCtxHandle(Structure):
+    handle: Handle
+
+
+class DeviceClaimFinalizeCtxHandle(Structure):
+    handle: Handle
+
+
+async def claimer_user_in_progress_3_do_claim(
+    handle: Handle,
+    requested_device_label: Optional[DeviceLabel],
+    requested_human_handle: Optional[HumanHandle],
+) -> Result[UserClaimFinalizeCtxHandle, ClaimInProgressError]:
+    ...
+
+
+async def claimer_device_in_progress_3_do_claim(
+    handle: Handle,
+    requested_device_label: Optional[DeviceLabel],
+) -> Result[DeviceClaimFinalizeCtxHandle, ClaimInProgressError]:
+    ...
+
+
+async def claimer_user_finalize_save_local_device(
+    handle: Handle,
+    save_strategy: DeviceSaveStrategy,
+) -> Result[AvailableDevice, ClaimInProgressError]:
+    ...
+
+
+async def claimer_device_finalize_save_local_device(
+    handle: Handle,
+    save_strategy: DeviceSaveStrategy,
+) -> Result[AvailableDevice, ClaimInProgressError]:
     ...

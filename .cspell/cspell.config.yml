@@ -114,6 +114,9 @@ cache:
 useGitignore: true
 allowCompoundWords: true
 ignorePaths:
+  # Cspell seems to match against the absolute path, so must always start with `**/` :(
+  - "**/bindings/web/src/meths.rs"
+  - "**/bindings/electron/src/meths.rs"
   - "**/*.svg"
   - "**/default_pattern.ignore"
   - "**/docs/figures/*.svg"

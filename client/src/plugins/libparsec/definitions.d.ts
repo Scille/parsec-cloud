@@ -9,6 +9,8 @@ export type Result<T, E = Error> =
   | { ok: false; error: E }
 
 type OrganizationID = string
+type UserID = string
+type DeviceID = string
 type DeviceLabel = string
 type HumanHandle = string
 type DateTime = string
@@ -16,11 +18,11 @@ type Password = string
 type BackendAddr = string
 type BackendOrganizationAddr = string
 type BackendOrganizationBootstrapAddr = string
-type DeviceID = string
+type BackendInvitationAddr = string
 type Path = string
+type SASCode = string
 type SequesterVerifyKeyDer = Uint8Array
-type LoggedCoreHandle = number
-type ClientHandle = number
+type Handle = number
 type CacheSize = number
 
 export interface ClientConfig {
@@ -38,6 +40,44 @@ export interface AvailableDevice {
     deviceLabel: DeviceLabel | null
     slug: string
     ty: DeviceFileType
+}
+
+export interface UserClaimInProgress1CtxHandle {
+    handle: number
+    greeterSas: SASCode
+    greeterSasChoices: Array<SASCode>
+}
+
+export interface DeviceClaimInProgress1CtxHandle {
+    handle: number
+    greeterSas: SASCode
+    greeterSasChoices: Array<SASCode>
+}
+
+export interface UserClaimInProgress2CtxHandle {
+    handle: number
+    claimerSas: SASCode
+}
+
+export interface DeviceClaimInProgress2CtxHandle {
+    handle: number
+    claimerSas: SASCode
+}
+
+export interface UserClaimInProgress3CtxHandle {
+    handle: number
+}
+
+export interface DeviceClaimInProgress3CtxHandle {
+    handle: number
+}
+
+export interface UserClaimFinalizeCtxHandle {
+    handle: number
+}
+
+export interface DeviceClaimFinalizeCtxHandle {
+    handle: number
 }
 
 // WorkspaceStorageCacheSize
@@ -124,6 +164,85 @@ export type BootstrapOrganizationError =
   | BootstrapOrganizationErrorOffline
   | BootstrapOrganizationErrorSaveDeviceError
 
+// ClaimerRetrieveInfoError
+export interface ClaimerRetrieveInfoErrorAlreadyUsed {
+    tag: 'AlreadyUsed'
+    error: string
+}
+export interface ClaimerRetrieveInfoErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export interface ClaimerRetrieveInfoErrorNotFound {
+    tag: 'NotFound'
+    error: string
+}
+export interface ClaimerRetrieveInfoErrorOffline {
+    tag: 'Offline'
+    error: string
+}
+export type ClaimerRetrieveInfoError =
+  | ClaimerRetrieveInfoErrorAlreadyUsed
+  | ClaimerRetrieveInfoErrorInternal
+  | ClaimerRetrieveInfoErrorNotFound
+  | ClaimerRetrieveInfoErrorOffline
+
+// ClaimInProgressError
+export interface ClaimInProgressErrorActiveUsersLimitReached {
+    tag: 'ActiveUsersLimitReached'
+    error: string
+}
+export interface ClaimInProgressErrorAlreadyUsed {
+    tag: 'AlreadyUsed'
+    error: string
+}
+export interface ClaimInProgressErrorCorruptedConfirmation {
+    tag: 'CorruptedConfirmation'
+    error: string
+}
+export interface ClaimInProgressErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export interface ClaimInProgressErrorNotFound {
+    tag: 'NotFound'
+    error: string
+}
+export interface ClaimInProgressErrorOffline {
+    tag: 'Offline'
+    error: string
+}
+export interface ClaimInProgressErrorPeerReset {
+    tag: 'PeerReset'
+    error: string
+}
+export type ClaimInProgressError =
+  | ClaimInProgressErrorActiveUsersLimitReached
+  | ClaimInProgressErrorAlreadyUsed
+  | ClaimInProgressErrorCorruptedConfirmation
+  | ClaimInProgressErrorInternal
+  | ClaimInProgressErrorNotFound
+  | ClaimInProgressErrorOffline
+  | ClaimInProgressErrorPeerReset
+
+// UserOrDeviceClaimInitialCtxHandle
+export interface UserOrDeviceClaimInitialCtxHandleDevice {
+    tag: 'Device'
+    handle: number
+    greeterUserId: UserID
+    greeterHumanHandle: HumanHandle | null
+}
+export interface UserOrDeviceClaimInitialCtxHandleUser {
+    tag: 'User'
+    handle: number
+    claimerEmail: string
+    greeterUserId: UserID
+    greeterHumanHandle: HumanHandle | null
+}
+export type UserOrDeviceClaimInitialCtxHandle =
+  | UserOrDeviceClaimInitialCtxHandleDevice
+  | UserOrDeviceClaimInitialCtxHandleUser
+
 export interface LibParsecPlugin {
     listAvailableDevices(
         path: Path
@@ -137,6 +256,46 @@ export interface LibParsecPlugin {
         device_label: DeviceLabel | null,
         sequester_authority_verify_key: SequesterVerifyKeyDer | null
     ): Promise<Result<AvailableDevice, BootstrapOrganizationError>>
+    claimerRetrieveInfo(
+        config: ClientConfig,
+        on_event_callback: (event: ClientEvent) => void,
+        addr: BackendInvitationAddr
+    ): Promise<Result<UserOrDeviceClaimInitialCtxHandle, ClaimerRetrieveInfoError>>
+    claimerUserInitialCtxDoWaitPeer(
+        handle: number
+    ): Promise<Result<UserClaimInProgress1CtxHandle, ClaimInProgressError>>
+    claimerDeviceInitialCtxDoWaitPeer(
+        handle: number
+    ): Promise<Result<DeviceClaimInProgress1CtxHandle, ClaimInProgressError>>
+    claimerUserInProgress2DoSignifyTrust(
+        handle: number
+    ): Promise<Result<UserClaimInProgress2CtxHandle, ClaimInProgressError>>
+    claimerDeviceInProgress2DoSignifyTrust(
+        handle: number
+    ): Promise<Result<DeviceClaimInProgress2CtxHandle, ClaimInProgressError>>
+    claimerUserInProgress2DoWaitPeerTrust(
+        handle: number
+    ): Promise<Result<UserClaimInProgress3CtxHandle, ClaimInProgressError>>
+    claimerDeviceInProgress2DoWaitPeerTrust(
+        handle: number
+    ): Promise<Result<DeviceClaimInProgress3CtxHandle, ClaimInProgressError>>
+    claimerUserInProgress3DoClaim(
+        handle: number,
+        requested_device_label: DeviceLabel | null,
+        requested_human_handle: HumanHandle | null
+    ): Promise<Result<UserClaimFinalizeCtxHandle, ClaimInProgressError>>
+    claimerDeviceInProgress3DoClaim(
+        handle: number,
+        requested_device_label: DeviceLabel | null
+    ): Promise<Result<DeviceClaimFinalizeCtxHandle, ClaimInProgressError>>
+    claimerUserFinalizeSaveLocalDevice(
+        handle: number,
+        save_strategy: DeviceSaveStrategy
+    ): Promise<Result<AvailableDevice, ClaimInProgressError>>
+    claimerDeviceFinalizeSaveLocalDevice(
+        handle: number,
+        save_strategy: DeviceSaveStrategy
+    ): Promise<Result<AvailableDevice, ClaimInProgressError>>
     testNewTestbed(
         template: string,
         test_server: BackendAddr | null

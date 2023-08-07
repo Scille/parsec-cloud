@@ -35,8 +35,12 @@ function exec_cmd(args, options) {
 
   ret = spawnSync(args[0], args.slice(1), options);
 
-  if (ret.signal != null) {
-    console.log(`The command ${args.join(" ")} receive the signal ${ret.signal}`);
+  if (ret.error) {
+    console.log(`The command ${args.join(" ")} couldn't run: ${ret.error}`);
+    exit(1);
+  }
+  if (ret.status) {
+    console.log(`The command ${args.join(" ")} failed with status ${ret.status}`);
     exit(1);
   }
 
@@ -53,73 +57,57 @@ function get_cargo_flag(profile) {
     "--quiet",
   ];
 
-  const ret = exec_cmd(cargo_flag_args, {
+  let ret = exec_cmd(cargo_flag_args, {
     // ignore stdin, stdout in pipe, stderr to actual stderr
     stdio: ['ignore', 'pipe', 'inherit'],
     cwd: WORKDIR,
     env: process.env
   });
 
-  if (ret.status != 0) {
-    console.log("stdout:", ret.stdout.toString());
-    exit(ret.status);
-  }
   return ret.stdout.toString(encoding = "ascii").trim().split(" ");
 }
 
-function ensure_rust_target_installed() {
+function ensure_wasm_pack_installed() {
+  const ret = spawnSync(
+    on_windows() ? "wasm-pack.exe" : "wasm-pack",
+    ["--version"],
+    {
+      // ignore stdin & stdout, stderr to actual stderr
+      stdio: ['ignore', 'ignore', 'inherit'],
+      cwd: WORKDIR,
+      env: process.env
+    }
+  );
 
-  const rustup_target_args = [
-    on_windows() ? "rustup.exe" : "rustup",
-    "target",
-    "add",
-    TARGET
-  ];
-
-  const ret = exec_cmd(rustup_target_args, { stdio: 'inherit', cwd: WORKDIR, env: process.env });
-
-  if (ret.status != 0) {
-    console.log("Failed too add rust wasm target :", ret.stdout());
-    exit(ret.status);
+  if (ret.error !== undefined) {
+    console.log("Command `wasm-pack` is not installed !")
+    console.log("Install it with:")
+    console.log("  curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh")
+    exit(1);
   }
 }
 
-function hack_wasm_pack_folder(source, dest) {
-  source = path.resolve(ROOT_DIR, "target", TARGET, source);
-  dest = path.resolve(ROOT_DIR, "target", TARGET, dest);
+function ensure_rust_target_installed() {
+  const rustup_installed_targets_args = [
+    on_windows() ? "rustup.exe" : "rustup",
+    "target",
+    "list",
+    "--installed",
+  ];
 
-  function create_link() {
-    console.log(`Create a link between ${source} => ${dest}`);
-    fs.symlinkSync(source, dest, 'dir');
-  }
+  const ret = exec_cmd(rustup_installed_targets_args, {
+    // ignore stdin, stdout in pipe, stderr to actual stderr
+    stdio: ['ignore', 'pipe', 'inherit'],
+    cwd: WORKDIR,
+    env: process.env
+  });
 
-  function remove_file(file) {
-    console.log(`Removing ${dest}`);
-    fs.rmSync(dest, { force: true, recursive: true });
-  }
-
-  try {
-    fs.accessSync(dest, fs.constants.F_OK);
-  } catch {
-    console.log("Link is missing, will create it...");
-    create_link();
-  } finally {
-    let stat = fs.lstatSync(dest);
-    if (!stat.isSymbolicLink()) {
-      console.log("Dest isn't a symlink, removing it...");
-      remove_file(dest);
-    }
-    else {
-      let link_source = fs.readlinkSync(dest);
-      if (link_source != source) {
-        console.log("Dest is a symlink but with the wrong source, removing it...");
-        remove_file(dest);
-      } else {
-        console.log(`Symlink ${dest} already point to ${link_source}`);
-        return;
-      }
-      create_link();
-    }
+  const targets = ret.stdout.toString(encoding = "ascii").trim().split("\n");
+  if (targets.find((e) => e === TARGET) === undefined) {
+    console.log(`Rust target \`${TARGET}\` is not installed !`)
+    console.log("Install it with:")
+    console.log(`  rustup target add ${TARGET}`)
+    exit(1);
   }
 }
 
@@ -133,7 +121,7 @@ function build_wasm(cargo_flags) {
     ...cargo_flags
   ];
 
-  const ret = exec_cmd(
+  exec_cmd(
     wasm_build_args,
     {
       stdio: 'inherit',
@@ -141,21 +129,23 @@ function build_wasm(cargo_flags) {
       env: process.env
     },
   );
-  return ret;
 }
 
+ensure_rust_target_installed();
+ensure_wasm_pack_installed();
 
 const cargo_flags = get_cargo_flag(profile);
 
-ensure_rust_target_installed();
-
+// Client GUI only separates between `debug` and `release`, hence it won't
+// find the `ci-rust` build.
+// So the solution is to symlink `ci-rust` as `debug`.
 switch (profile) {
   case "ci":
-    hack_wasm_pack_folder("ci-rust", "debug");
+    const source = path.resolve(ROOT_DIR, "target", TARGET, "ci-rust");
+    const dest = path.resolve(ROOT_DIR, "target", TARGET, "debug");
+    console.log(`Create symlink ${source} => ${dest}`);
+    fs.symlinkSync(source, dest, 'dir');
 }
 
 // Actually do the compilation
-const build_res = build_wasm(cargo_flags);
-if (build_res.status != 0) {
-  exit(build_res.status);
-}
+build_wasm(cargo_flags);
