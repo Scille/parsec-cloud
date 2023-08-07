@@ -385,7 +385,7 @@ function resizeMenu(newWidth: number): void {
 
   // logo parsec
   &::after{
-    content: url('../assets/images/Logo/logo_icon_white.svg');
+    content: url('@/assets/images/Logo/logo_icon_white.svg');
     opacity: .03;
     width: 100%;
     max-width: 270px;
