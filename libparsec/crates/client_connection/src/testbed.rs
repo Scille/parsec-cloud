@@ -310,18 +310,129 @@ pub fn test_register_low_level_send_hook_default(config_dir: &Path) {
 
 #[macro_export]
 macro_rules! test_register_sequence_of_send_hooks {
-    ($config_dir_ref: expr, $hook: expr $(,)?) => {
-        let config_dir = $config_dir_ref.to_owned();
-        libparsec_client_connection::test_register_send_hook($config_dir_ref, move |req| {
-            let rep = $hook(req);
+    ($config_dir_ref: expr, $hook1: expr $(,)?) => {
+        let config_dir_ref = $config_dir_ref.to_owned();
+        let hook1 = $hook1;
+        libparsec_client_connection::test_register_send_hook(config_dir_ref, move |req| {
+            let rep = hook1(req);
             rep
         });
     };
-    ($config_dir_ref: expr, $first_hook: expr, $($other_hooks: expr),* $(,)?) => {
-        let config_dir = $config_dir_ref.to_owned();
-        libparsec_client_connection::test_register_send_hook($config_dir_ref, move |req| {
-            let rep = $first_hook(req);
-            libparsec_client_connection::test_register_sequence_of_send_hooks!(&config_dir, $($other_hooks),*);
+
+    // We cannot use `$($hook: expr)*` here given we need to first do `let hookX = $hookX;`
+    // (i.e. we need to enumerate the hooks and give a unique variable name for each of them)
+    // And we need this initial $hook expansion to avoid conflict with the `move` in the
+    // nested closures.
+    ($config_dir_ref: expr, $hook1: expr, $hook2: expr $(,)?) => {
+        let config_dir_ref1 = $config_dir_ref.to_owned();
+        let config_dir_ref2 = config_dir_ref1.clone();
+        let hook1 = $hook1;
+        let hook2 = $hook2;
+        libparsec_client_connection::test_register_send_hook(&config_dir_ref1, move |req| {
+            let rep = hook1(req);
+            libparsec_client_connection::test_register_send_hook(&config_dir_ref2, move |req| {
+                let rep = hook2(req);
+                rep
+            });
+            rep
+        });
+    };
+
+    ($config_dir_ref: expr, $hook1: expr, $hook2: expr, $hook3: expr $(,)?) => {
+        let config_dir_ref1 = $config_dir_ref.to_owned();
+        let config_dir_ref2 = config_dir_ref1.clone();
+        let config_dir_ref3 = config_dir_ref1.clone();
+        let hook1 = $hook1;
+        let hook2 = $hook2;
+        let hook3 = $hook3;
+        libparsec_client_connection::test_register_send_hook(&config_dir_ref1, move |req| {
+            let rep = hook1(req);
+            libparsec_client_connection::test_register_send_hook(&config_dir_ref2, move |req| {
+                let rep = hook2(req);
+                libparsec_client_connection::test_register_send_hook(
+                    &config_dir_ref3,
+                    move |req| {
+                        let rep = hook3(req);
+                        rep
+                    },
+                );
+                rep
+            });
+            rep
+        });
+    };
+
+    ($config_dir_ref: expr, $hook1: expr, $hook2: expr, $hook3: expr, $hook4: expr $(,)?) => {
+        let config_dir_ref1 = $config_dir_ref.to_owned();
+        let config_dir_ref2 = config_dir_ref1.clone();
+        let config_dir_ref3 = config_dir_ref1.clone();
+        let config_dir_ref4 = config_dir_ref1.clone();
+        let hook1 = $hook1;
+        let hook2 = $hook2;
+        let hook3 = $hook3;
+        let hook4 = $hook4;
+        libparsec_client_connection::test_register_send_hook(&config_dir_ref1, move |req| {
+            let rep = hook1(req);
+            libparsec_client_connection::test_register_send_hook(&config_dir_ref2, move |req| {
+                let rep = hook2(req);
+                libparsec_client_connection::test_register_send_hook(
+                    &config_dir_ref3,
+                    move |req| {
+                        let rep = hook3(req);
+                        libparsec_client_connection::test_register_send_hook(
+                            &config_dir_ref4,
+                            move |req| {
+                                let rep = hook4(req);
+                                rep
+                            },
+                        );
+                        rep
+                    },
+                );
+                rep
+            });
+            rep
+        });
+    };
+
+    ($config_dir_ref: expr, $hook1: expr, $hook2: expr, $hook3: expr, $hook4: expr, $hook5: expr $(,)?) => {
+        let config_dir_ref1 = $config_dir_ref.to_owned();
+        let config_dir_ref2 = config_dir_ref1.clone();
+        let config_dir_ref3 = config_dir_ref1.clone();
+        let config_dir_ref4 = config_dir_ref1.clone();
+        let config_dir_ref5 = config_dir_ref1.clone();
+        let hook1 = $hook1;
+        let hook2 = $hook2;
+        let hook3 = $hook3;
+        let hook4 = $hook4;
+        let hook5 = $hook5;
+        libparsec_client_connection::test_register_send_hook(&config_dir_ref1, move |req| {
+            let rep = hook1(req);
+            libparsec_client_connection::test_register_send_hook(&config_dir_ref2, move |req| {
+                let rep = hook2(req);
+                libparsec_client_connection::test_register_send_hook(
+                    &config_dir_ref3,
+                    move |req| {
+                        let rep = hook3(req);
+                        libparsec_client_connection::test_register_send_hook(
+                            &config_dir_ref4,
+                            move |req| {
+                                let rep = hook4(req);
+                                libparsec_client_connection::test_register_send_hook(
+                                    &config_dir_ref5,
+                                    move |req| {
+                                        let rep = hook5(req);
+                                        rep
+                                    },
+                                );
+                                rep
+                            },
+                        );
+                        rep
+                    },
+                );
+                rep
+            });
             rep
         });
     };
