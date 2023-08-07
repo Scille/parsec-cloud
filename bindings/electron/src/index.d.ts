@@ -29,6 +29,52 @@ export interface AvailableDevice {
 }
 
 
+export interface UserClaimInProgress1CtxHandle {
+    handle: number
+    greeterSas: string
+    greeterSasChoices: Array<string>
+}
+
+
+export interface DeviceClaimInProgress1CtxHandle {
+    handle: number
+    greeterSas: string
+    greeterSasChoices: Array<string>
+}
+
+
+export interface UserClaimInProgress2CtxHandle {
+    handle: number
+    claimerSas: string
+}
+
+
+export interface DeviceClaimInProgress2CtxHandle {
+    handle: number
+    claimerSas: string
+}
+
+
+export interface UserClaimInProgress3CtxHandle {
+    handle: number
+}
+
+
+export interface DeviceClaimInProgress3CtxHandle {
+    handle: number
+}
+
+
+export interface UserClaimFinalizeCtxHandle {
+    handle: number
+}
+
+
+export interface DeviceClaimFinalizeCtxHandle {
+    handle: number
+}
+
+
 // WorkspaceStorageCacheSize
 export interface WorkspaceStorageCacheSizeCustom {
     tag: "Custom"
@@ -118,6 +164,88 @@ export type BootstrapOrganizationError =
   | BootstrapOrganizationErrorSaveDeviceError
 
 
+// ClaimerRetrieveInfoError
+export interface ClaimerRetrieveInfoErrorAlreadyUsed {
+    tag: "AlreadyUsed"
+    error: string
+}
+export interface ClaimerRetrieveInfoErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClaimerRetrieveInfoErrorNotFound {
+    tag: "NotFound"
+    error: string
+}
+export interface ClaimerRetrieveInfoErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type ClaimerRetrieveInfoError =
+  | ClaimerRetrieveInfoErrorAlreadyUsed
+  | ClaimerRetrieveInfoErrorInternal
+  | ClaimerRetrieveInfoErrorNotFound
+  | ClaimerRetrieveInfoErrorOffline
+
+
+// ClaimInProgressError
+export interface ClaimInProgressErrorActiveUsersLimitReached {
+    tag: "ActiveUsersLimitReached"
+    error: string
+}
+export interface ClaimInProgressErrorAlreadyUsed {
+    tag: "AlreadyUsed"
+    error: string
+}
+export interface ClaimInProgressErrorCorruptedConfirmation {
+    tag: "CorruptedConfirmation"
+    error: string
+}
+export interface ClaimInProgressErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClaimInProgressErrorNotFound {
+    tag: "NotFound"
+    error: string
+}
+export interface ClaimInProgressErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface ClaimInProgressErrorPeerReset {
+    tag: "PeerReset"
+    error: string
+}
+export type ClaimInProgressError =
+  | ClaimInProgressErrorActiveUsersLimitReached
+  | ClaimInProgressErrorAlreadyUsed
+  | ClaimInProgressErrorCorruptedConfirmation
+  | ClaimInProgressErrorInternal
+  | ClaimInProgressErrorNotFound
+  | ClaimInProgressErrorOffline
+  | ClaimInProgressErrorPeerReset
+
+
+// UserOrDeviceClaimInitialCtxHandle
+export interface UserOrDeviceClaimInitialCtxHandleDevice {
+    tag: "Device"
+    handle: number
+    greeter_user_id: string
+    greeter_human_handle: string | null
+}
+export interface UserOrDeviceClaimInitialCtxHandleUser {
+    tag: "User"
+    handle: number
+    claimer_email: string
+    greeter_user_id: string
+    greeter_human_handle: string | null
+}
+export type UserOrDeviceClaimInitialCtxHandle =
+  | UserOrDeviceClaimInitialCtxHandleDevice
+  | UserOrDeviceClaimInitialCtxHandleUser
+
+
 export function listAvailableDevices(
     path: string
 ): Promise<Array<AvailableDevice>>
@@ -130,6 +258,46 @@ export function bootstrapOrganization(
     device_label: string | null,
     sequester_authority_verify_key: Uint8Array | null
 ): Promise<Result<AvailableDevice, BootstrapOrganizationError>>
+export function claimerRetrieveInfo(
+    config: ClientConfig,
+    on_event_callback: (event: ClientEvent) => void,
+    addr: string
+): Promise<Result<UserOrDeviceClaimInitialCtxHandle, ClaimerRetrieveInfoError>>
+export function claimerUserInitialCtxDoWaitPeer(
+    handle: number
+): Promise<Result<UserClaimInProgress1CtxHandle, ClaimInProgressError>>
+export function claimerDeviceInitialCtxDoWaitPeer(
+    handle: number
+): Promise<Result<DeviceClaimInProgress1CtxHandle, ClaimInProgressError>>
+export function claimerUserInProgress2DoSignifyTrust(
+    handle: number
+): Promise<Result<UserClaimInProgress2CtxHandle, ClaimInProgressError>>
+export function claimerDeviceInProgress2DoSignifyTrust(
+    handle: number
+): Promise<Result<DeviceClaimInProgress2CtxHandle, ClaimInProgressError>>
+export function claimerUserInProgress2DoWaitPeerTrust(
+    handle: number
+): Promise<Result<UserClaimInProgress3CtxHandle, ClaimInProgressError>>
+export function claimerDeviceInProgress2DoWaitPeerTrust(
+    handle: number
+): Promise<Result<DeviceClaimInProgress3CtxHandle, ClaimInProgressError>>
+export function claimerUserInProgress3DoClaim(
+    handle: number,
+    requested_device_label: string | null,
+    requested_human_handle: string | null
+): Promise<Result<UserClaimFinalizeCtxHandle, ClaimInProgressError>>
+export function claimerDeviceInProgress3DoClaim(
+    handle: number,
+    requested_device_label: string | null
+): Promise<Result<DeviceClaimFinalizeCtxHandle, ClaimInProgressError>>
+export function claimerUserFinalizeSaveLocalDevice(
+    handle: number,
+    save_strategy: DeviceSaveStrategy
+): Promise<Result<AvailableDevice, ClaimInProgressError>>
+export function claimerDeviceFinalizeSaveLocalDevice(
+    handle: number,
+    save_strategy: DeviceSaveStrategy
+): Promise<Result<AvailableDevice, ClaimInProgressError>>
 export function testNewTestbed(
     template: string,
     test_server: string | null
