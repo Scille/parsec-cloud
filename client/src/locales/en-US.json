@@ -418,5 +418,39 @@
             "update": "Update",
             "showChangelog": "Show changelog"
         }
+    },
+    "ClaimDeviceModal": {
+        "stepper": {
+            "GetHostCode": "Host code",
+            "ProvideGuestCode": "Guest code",
+            "password": "Password",
+            "done": "Validation"
+        },
+        "titles": {
+            "claimDevice": "Add a new device",
+            "invitationLink": "Invitation link",
+            "getCode": "Get host code",
+            "provideCode": "Share guest code",
+            "password": "Create a password",
+            "done": "The device has been added!"
+        },
+        "subtitles": {
+            "claimDevice": "You must open Parsec on both devices during the registration period.",
+            "invitationLink": "Please enter the invitation link displayed on the host device.",
+            "getCode": "Click on the code you see on the main device.",
+            "provideCode": "On the main device, click on the sequence of letters you see below.",
+            "password": "Finally, enter the device name and a password.",
+            "done": "The device has been created and added to this organisation. You can now use it to connect to Parsec."
+        },
+        "buttons": {
+            "understand": "I understand!",
+            "start": "Start",
+            "password": "Confirm password",
+            "login": "Log in"
+        },
+        "currentDevice": "Actual device",
+        "newDevice": "Your new device",
+        "connected": "Connected",
+        "deviceName": "Device name"
     }
 }

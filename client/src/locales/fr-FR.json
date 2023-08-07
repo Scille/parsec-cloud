@@ -418,5 +418,39 @@
             "update": "Mettre à jour",
             "showChangelog": "Voir l'historique des versions"
         }
+    },
+    "ClaimDeviceModal": {
+        "stepper": {
+            "GetHostCode": "Code hôte",
+            "ProvideGuestCode": "Code invité",
+            "password": "Mot de passe",
+            "done": "Validation"
+        },
+        "titles": {
+            "claimDevice": "Ajouter un nouvel appareil",
+            "invitationLink": "Lien d'invitation",
+            "getCode": "Réception du code de l'hôte",
+            "provideCode": "Partage du code invité",
+            "password": "Création du mot de passe",
+            "done": "L'appareil a bien été ajouté !"
+        },
+        "subtitles": {
+            "claimDevice": "Vous devez ouvrir Parsec sur les deux appareils pendant la durée de l’inscription.",
+            "invitationLink": "Veuillez saisir le lien d'invitation afficher sur l'appareil hôte.",
+            "getCode": "Cliquez sur le code que vous apercevez sur l’appareil principal.",
+            "provideCode": "Sur l’appareil principal, veuillez cliquer la suite de lettres que vous voyez ci-dessous.",
+            "password": "Pour terminer, veuillez renseigner le nom de l’appareil et un mot de passe.",
+            "done": "L’appareil a bien été créé et ajouté à cette organisation. Vous pouvez maintenant vous connectez à Parsec avec celui-ci."
+        },
+        "buttons": {
+            "understand": "J'ai compris !",
+            "start": "Commencer",
+            "password": "Valider mon mot de passe",
+            "login": "Se connecter"
+        },
+        "currentDevice": "Cet appareil",
+        "newDevice": "Votre nouvel appareil",
+        "connected": "Connecté",
+        "deviceName": "Nom de l'appareil"
     }
 }

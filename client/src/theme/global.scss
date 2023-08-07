@@ -56,6 +56,6 @@ ion-icon {
 }
 
 // fix issue with offset on checkbox
-.in-item:has(input) {
+.in-item:is(ion-checkbox) {
   width: fit-content;
 }
