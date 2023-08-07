@@ -168,6 +168,17 @@ if {{ js_val }}.is_null() {
 ?.to_vec()
 {%- endif %}
 .map_err(|_| TypeError::new("Not a valid {{ type.name }}"))?
+{%- elif type.kind == "list" -%}
+{
+    let js_val = {{ js_val }}.dyn_into::<Array>()
+        .map_err(|_| TypeError::new("Not an array"))?;
+    let mut converted = Vec::with_capacity(js_val.length() as usize);
+    for x in {{ js_val }}.iter() {
+        let x_converted = {{ render_js_value_to_rs("x", type.elem) | indent(8) }};
+        converted.push(x_converted);
+    }
+    converted
+}
 {%- elif type.kind == "struct" -%}
 {{ struct_js_to_rs_function_name(type) }}({{ js_val }})?
 {%- elif type.kind == "variant" -%}
@@ -188,7 +199,8 @@ if {{ js_val }}.is_null() {
     }
 {%- else -%}
 {{ raise("Unsupported type %r" % type) }}
-{%- endif -%}{%- endmacro -%}
+{%- endif -%}
+{%- endmacro -%}
 
 
 {%- macro render_rs_to_js_value(rs_value, type) -%}
@@ -335,7 +347,7 @@ fn {{ variant_js_to_rs_function_name(variant) }}(obj: JsValue) -> Result<libpars
 {% elif value.is_tuple %}
 {% for attr_type in value.tuple %}
             let x{{ loop.index }} = {
-                let js_val = Reflect::get(&obj, &"x{{ loop.index }}")?;
+                let js_val = Reflect::get(&obj, &"x{{ loop.index }}".into())?;
                 {{ render_js_value_to_rs("js_val", attr_type) | indent(20) }}
             };
 {% endfor %}
@@ -378,11 +390,9 @@ fn {{ variant_rs_to_js_function_name(variant) }}(rs_obj: libparsec::{{ variant.n
 {% elif value.is_tuple %}
         libparsec::{{ variant.name }}::{{ value.name }}( {% for _ in value.tuple %}x{{ loop.index }},{% endfor %} .. ) => {
             Reflect::set(&js_obj, &"tag".into(), &"{{ value.name }}".into())?;
-            {# let js_items = Array::new_with_length({{ value.tuple | length }}); #}
 {% for attr_type in value.tuple %}
-            let js_x{{ loop.index }} = {{ render_rs_to_js("x%s" % loop.index, type.elem, mut_cx_ref) | indent(16) }};
-            js_items.set({{ mut_cx_ref }}, {{ loop.index }} as u32, js_elem)?;
-            Reflect::set(&js_obj, &"x{{ loop.index }}".into(), &js_x{{ loop.index }})?;
+            let js_x{{ loop.index }} = {{ render_rs_to_js_value("x%s" % loop.index, attr_type) | indent(16) }};
+            Reflect::set(&js_obj, &"x{{ loop.index }}".into(), &js_x{{ loop.index }}.into())?;
 {% endfor %}
         }
 {% else %}
