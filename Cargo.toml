@@ -107,18 +107,18 @@ log = { version = "0.4.19", default-features = false }
 miniserde = { version = "0.1.32", default-features = false }
 neon = { version = "0.10", default-features = false }
 once_cell = { version = "1.18.0", default-features = false }
-openssl = { version = "0.10.55", default-features = false }
+openssl = { version = "0.10.56", default-features = false }
 paste = { version = "1.0.14", default-features = false }
 percent-encoding = { version = "2.3.0", default-features = false }
 pretty_assertions = { version = "1.4.0", default-features = false }
 proc-macro2 = { version = "1.0.66", default-features = false }
-pyo3 = { version = "0.19.1", default-features = false }
+pyo3 = { version = "0.19.2", default-features = false }
 quote = { version = "1.0.32", default-features = false }
 # Two versions of `rand` needed in `libparsec_crypto`
 rand_07 = { package = "rand", version = "0.7", default-features = false }
 rand_08 = { package = "rand", version = "0.8", default-features = false }
 rand = { version = "0.8.5", default-features = false }
-regex = { version = "1.9.1", default-features = false }
+regex = { version = "1.9.3", default-features = false }
 reqwest-eventsource = { version = "0.4.0", default-features = false }
 reqwest = { version = "0.11.18", default-features = false }
 rmp-serde = { version = "1.1.2", default-features = false }
@@ -128,8 +128,8 @@ rstest = { version = "0.18.1", default-features = false }
 serde_bytes = { version = "0.11.12", default-features = false }
 serde_json = { version = "1.0.104", default-features = false }
 serde_test = { version = "1.0.176", default-features = false }
-serde = { version = "1.0.179", default-features = false }
-serde_with = { version = "3.1.0", default-features = false }
+serde = { version = "1.0.182", default-features = false }
+serde_with = { version = "3.2.0", default-features = false }
 sha1 = { version = "0.10.5", default-features = false }
 sha2 = { version = "0.10.7", default-features = false }
 sodiumoxide = { version = "0.2.7", default-features = false }
