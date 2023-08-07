@@ -68,24 +68,14 @@ function assert(outcome: boolean, msg: string) {
 onMounted(async () => {
   // Tests are runned here
 
-  await test_bootstrap_organization();
-
-  // const configPath = await testCase("Init testbed", async () => {
-  //   return await libparsec.testNewTestbed('coolorg', import.meta.env.VITE_TESTBED_SERVER_URL);
-  // });
-
-  // await testCase("List available devices", async () => {
-  //   const devices = await libparsec.listAvailableDevices(configPath);
-  //   assert(compareArrays(devices, []), `Bad devices: ${JSON.stringify(devices, null, 2)}`)
-  // });
-
-  // await testCase("Teardown testbed", async () => {
-  //   await libparsec.testDropTestbed(configPath);
-  // });
-
+  await testBootstrapOrganization();
 });
 
-async function test_bootstrap_organization() {
+/*
+ * Bootstrap organization
+ */
+
+async function testBootstrapOrganization() {
   const configPath = await testCase("Init empty testbed", async () => {
     return await libparsec.testNewTestbed('empty', import.meta.env.VITE_TESTBED_SERVER_URL);
   });
