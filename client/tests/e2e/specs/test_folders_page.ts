@@ -16,15 +16,15 @@ describe('Check folders page', () => {
     cy.get('#button-new-folder').contains('New folder');
     cy.get('#button-import').contains('Import');
     cy.get('.file-list-item').should('have.length.greaterThan', 1);
-    // cy.get('#folders-action-bar').find('#list-view').should('have.attr', 'disabled');
-    cy.get('#folders-action-bar').find('#grid-view').should('not.have.attr', 'disabled');
+    // cy.get('#folders-ms-action-bar').find('#list-view').should('have.attr', 'disabled');
+    cy.get('#folders-ms-action-bar').find('#grid-view').should('not.have.attr', 'disabled');
     cy.get('.folder-footer').contains(/\d items/);
   });
 
   it('Switch to grid view', () => {
     cy.get('.file-list-item').should('have.length.greaterThan', 1);
-    cy.get('#folders-action-bar').find('#list-view').as('listButton').should('have.attr', 'disabled');
-    cy.get('#folders-action-bar').find('#grid-view').as('gridButton').should('not.have.attr', 'disabled');
+    cy.get('#folders-ms-action-bar').find('#list-view').as('listButton').should('have.attr', 'disabled');
+    cy.get('#folders-ms-action-bar').find('#grid-view').as('gridButton').should('not.have.attr', 'disabled');
     cy.get('@gridButton').click();
     cy.get('.file-list-item').should('have.length', 0);
     cy.get('.folder-grid-item').should('have.length.greaterThan', 1);
@@ -64,7 +64,7 @@ describe('Check folders page', () => {
   });
 
   it('Open file menu in grid view', () => {
-    cy.get('#folders-action-bar').find('#grid-view').click();
+    cy.get('#folders-ms-action-bar').find('#grid-view').click();
     cy.get('.folder-grid-item').first().find('.card-option').click();
     checkMenuItems();
   });

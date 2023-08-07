@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import WizardStepper from '@/components/WizardStepper.vue';
+import MsWizardStepper from '@/components/core/ms-stepper/MsWizardStepper.vue';
 import { IonText } from '@ionic/vue';
 import { VueWrapper, mount } from '@vue/test-utils';
 
@@ -8,7 +8,7 @@ describe('Wizard stepper', () => {
   let wrapper: VueWrapper;
 
   beforeEach(() => {
-    wrapper = mount(WizardStepper, {
+    wrapper = mount(MsWizardStepper, {
       props: {
         titles: ['A', 'B', 'C', 'D', 'E'],
         currentIndex: 2,

@@ -1,13 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import SearchInput from '@/components/SearchInput.vue';
 import { mount, VueWrapper } from '@vue/test-utils';
 import { IonInput } from '@ionic/vue';
+import MsSearchInput from '@/components/core/ms-input/MsSearchInput.vue';
 
 describe('Search Input', () => {
   let wrapper: VueWrapper;
   beforeEach(() => {
-    wrapper = mount(SearchInput, {
+    wrapper = mount(MsSearchInput, {
       props: {
         label: 'A Label',
       },

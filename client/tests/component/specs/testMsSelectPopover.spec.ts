@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import MsSelectPopover from '@/components/MsSelectPopover.vue';
-import { MsSelectOption, MsSelectSortByLabels } from '@/components/MsSelectOption';
+import { MsSelectOption, MsSelectSortByLabels } from '@/components/core/ms-select/MsSelectOption';
+import MsSelectPopover from '@/components/core/ms-select/MsSelectPopover.vue';
 import { VueWrapper, mount } from '@vue/test-utils';
 
 describe('Select popover', () => {

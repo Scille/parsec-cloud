@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import UserListItem from '@/components/Users/UserListItem.vue';
+import UserListItem from '@/components/users/UserListItem.vue';
 import { MockUser, Profile } from '@/common/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';

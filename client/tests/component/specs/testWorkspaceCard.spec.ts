@@ -1,11 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import WorkspaceCard from '@/components/WorkspaceCard.vue';
 import { MockWorkspace, WorkspaceRole } from '@/common/mocks';
 import { mount, VueWrapper } from '@vue/test-utils';
 import { DateTime } from 'luxon';
 import { mockI18n, getDefaultProvideConfig } from 'tests/component/support/mocks';
 import { IonAvatar } from '@ionic/vue';
+import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 
 mockI18n();
 

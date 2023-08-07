@@ -45,7 +45,7 @@ describe('User join an organization', () => {
 
   it('Go through join process', () => {
     function checkStepper(activeIndex: number): void {
-      cy.get('ion-modal').find('.wizard-stepper-step').as('steps').should('have.length', 5);
+      cy.get('ion-modal').find('.ms-wizard-stepper-step').as('steps').should('have.length', 5);
       for (let i = 0; i < 5; i++) {
         if (i < activeIndex) {
           cy.get('@steps').eq(i).find('.circle').find('.inner-circle-done').should('exist');
@@ -74,7 +74,7 @@ describe('User join an organization', () => {
     cy.get('@modalTitle').contains('Get host code');
     cy.get('.modal-header__text').as('modalSubtitle').contains('Click on the code given to you by the host');
 
-    cy.get('ion-modal').find('.wizard-stepper__step').as('steps').should('have.length', 5);
+    cy.get('ion-modal').find('.ms-wizard-stepper__step').as('steps').should('have.length', 5);
     cy.get('@steps').eq(0).find('.step-title').contains('Host code');
     cy.get('@steps').eq(1).find('.step-title').contains('Guest code');
     cy.get('@steps').eq(2).find('.step-title').contains('Contact details');

@@ -1,13 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import PasswordInput from '@/components/PasswordInput.vue';
 import { VueWrapper, mount } from '@vue/test-utils';
 import { IonInput } from '@ionic/vue';
+import MsPasswordInput from '@/components/core/ms-input/MsPasswordInput.vue';
 
 describe('Password Input', () => {
   let wrapper: VueWrapper;
   beforeEach(() => {
-    wrapper = mount(PasswordInput, {
+    wrapper = mount(MsPasswordInput, {
       props: {
         label: 'A Label',
       },

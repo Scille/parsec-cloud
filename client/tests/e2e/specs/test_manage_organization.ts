@@ -30,7 +30,7 @@ describe('Check manage org page', () => {
     cy.get('.sidebar').find('.organization').find('ion-item').first().contains('Information');
     cy.get('.sidebar').find('.organization').find('ion-item').first().should('have.class', 'item-not-selected');
     cy.get('.topbar-left').find('.title-h2').contains('Active users');
-    cy.get('.toolbar').find('.button-option').contains('Invite a user');
+    cy.get('.toolbar').find('.ms-action-bar-button').contains('Invite a user');
   });
 
   it('Switch page', () => {

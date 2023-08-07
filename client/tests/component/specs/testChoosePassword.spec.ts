@@ -1,9 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import ChoosePassword from '@/components/ChoosePassword.vue';
 import { VueWrapper, mount } from '@vue/test-utils';
 import { IonInput } from '@ionic/vue';
 import { mockI18n } from 'tests/component/support/mocks';
+import ChoosePasswordStep from '@/views/home/ChoosePasswordStep.vue';
 
 mockI18n();
 
@@ -11,7 +11,7 @@ describe('Choose password', () => {
   let wrapper: VueWrapper<any>;
 
   beforeEach(() => {
-    wrapper = mount(ChoosePassword, {});
+    wrapper = mount(ChoosePasswordStep, {});
   });
 
   it('Validate the fields', async () => {

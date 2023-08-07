@@ -101,7 +101,7 @@
         "urlPlaceholder": "parsec://hote:port/organisation?action=action&...",
         "join": "Rejoindre"
     },
-    "AlertConfirmation": {
+    "MsAlertConfirmation": {
         "areYouSure": "Êtes-vous sûr ?",
         "infoNotSaved": "Si vous avez rempli des informations, elles ne seront pas sauvegardées.",
         "ok": "OK",

@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import SasCodeChoice from '@/components/SasCodeChoice.vue';
+import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import { VueWrapper, mount } from '@vue/test-utils';
 import { IonButton } from '@ionic/vue';
 import { mockI18n } from 'tests/component/support/mocks';

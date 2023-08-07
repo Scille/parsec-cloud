@@ -18,9 +18,9 @@ describe('Check active users page', () => {
     cy.get('.sidebar').find('.user-menu').find('ion-item').as('userItems').should('have.length', 3);
     cy.get('@userItems').eq(0).contains('Active');
     cy.get('@userItems').eq(0).should('have.class', 'user-menu-selected');
-    cy.get('#activate-users-action-bar').find('#grid-view').should('not.have.attr', 'disabled');
-    cy.get('#activate-users-action-bar').find('#list-view').should('have.attr', 'disabled');
-    cy.get('#activate-users-action-bar').find('#button-invite-user').contains('Invite a user');
+    cy.get('#activate-users-ms-action-bar').find('#grid-view').should('not.have.attr', 'disabled');
+    cy.get('#activate-users-ms-action-bar').find('#list-view').should('have.attr', 'disabled');
+    cy.get('#activate-users-ms-action-bar').find('#button-invite-user').contains('Invite a user');
     cy.get('.user-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
     cy.get('.users-container').find('.user-list-item').as('userItems').should('have.length', 4);
     cy.get('@userItems').eq(0).find('ion-checkbox').should('not.be.visible');
@@ -42,7 +42,7 @@ describe('Check active users page', () => {
       }
     }
 
-    cy.get('#activate-users-action-bar').find('#button-invite-user').contains('Invite a user');
+    cy.get('#activate-users-ms-action-bar').find('#button-invite-user').contains('Invite a user');
     cy.get('.users-container').find('.user-list-item').as('userItems').should('have.length', 4);
     // All unchecked by default
     checkChecked(false);
@@ -56,8 +56,8 @@ describe('Check active users page', () => {
     checkChecked(true);
     cy.get('.user-footer__container').contains('4 users selected');
     cy.get('.user-footer__container').find('#button-revoke-user').should('exist');
-    cy.get('#activate-users-action-bar').find('#button-invite-user').should('not.exist');
-    cy.get('#activate-users-action-bar').find('#button-revoke-user').contains('Revoke these users');
+    cy.get('#activate-users-ms-action-bar').find('#button-invite-user').should('not.exist');
+    cy.get('#activate-users-ms-action-bar').find('#button-revoke-user').contains('Revoke these users');
 
     // Deselect [2]
     cy.get('@userItems').eq(2).find('ion-checkbox').click();
@@ -65,7 +65,7 @@ describe('Check active users page', () => {
     cy.get('.user-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
     cy.get('.user-footer__container').contains('3 users selected');
 
-    cy.get('#activate-users-action-bar').find('#button-revoke-user').click();
+    cy.get('#activate-users-ms-action-bar').find('#button-revoke-user').click();
     // cspell:disable-next-line
     cy.get('@consoleLog').should('have.been.calledWith', 'Revoke user Cernd');
     // cspell:disable-next-line
@@ -76,8 +76,8 @@ describe('Check active users page', () => {
     // Deselect [0] and [1], only [3] is selected
     cy.get('@userItems').eq(0).find('ion-checkbox').click();
     cy.get('@userItems').eq(1).find('ion-checkbox').click();
-    cy.get('#activate-users-action-bar').find('#button-revoke-user').contains('Revoke this user');
-    cy.get('#activate-users-action-bar').find('#button-common-workspaces').contains('See common workspaces');
+    cy.get('#activate-users-ms-action-bar').find('#button-revoke-user').contains('Revoke this user');
+    cy.get('#activate-users-ms-action-bar').find('#button-common-workspaces').contains('See common workspaces');
     cy.get('.user-footer__container').find('#button-revoke-user').should('exist');
     cy.get('.user-footer__container').find('#button-common-workspaces').should('exist');
 
