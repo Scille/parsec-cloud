@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import FileCard from '@/components/FileCard.vue';
 import { MockFile } from '@/common/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
 import { mockI18n, getDefaultProvideConfig } from 'tests/component/support/mocks';
+import FileCard from '@/components/files/FileCard.vue';
 
 mockI18n();
 

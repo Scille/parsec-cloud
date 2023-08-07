@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import SettingsOption from '@/components/SettingsOption.vue';
+import SettingsOption from '@/components/settings/SettingsOption.vue';
 import { mount, VueWrapper } from '@vue/test-utils';
 
 describe('Setting Option', () => {

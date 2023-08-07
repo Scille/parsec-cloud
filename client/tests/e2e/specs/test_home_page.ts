@@ -29,8 +29,8 @@ describe('Check organization list', () => {
   it('Go to login page and enter password', () => {
     cy.contains('Boby McBobFace').click();
     cy.get('.login-button-container > ion-button').should('have.class', 'button-disabled');
-    cy.get('#password-input').find('input').invoke('attr', 'type').should('eq', 'password');
-    cy.get('#password-input').find('input').type('P@ssw0rd');
+    cy.get('#ms-password-input').find('input').invoke('attr', 'type').should('eq', 'password');
+    cy.get('#ms-password-input').find('input').type('P@ssw0rd');
     cy.get('.login-button-container > ion-button').should('not.have.class', 'button-disabled');
     cy.get('.login-button-container > ion-button').click();
     cy.get('@configPath').then(($elem) => {
@@ -45,12 +45,12 @@ describe('Check organization list', () => {
     // Sorted by org name asc by default
     cy.get('@orgList').first().contains('Alicey McAliceFace');
     cy.get('@orgList').last().contains('mallory');
-    cy.get('#search-input').find('input').type('alice');
+    cy.get('#ms-search-input').find('input').type('alice');
     cy.get('@orgList').should('have.length', 2);
     // Only 2 devices shown
     cy.get('@orgList').first().contains('Alicey McAliceFace');
     cy.get('@orgList').last().contains('Alicey McAliceFace');
-    cy.get('#search-input').find('input').clear();
+    cy.get('#ms-search-input').find('input').clear();
     cy.get('@orgList').should('have.length', 5);
     // Change sort order
     cy.get('#organization-filter-select').contains('Organization').click();
