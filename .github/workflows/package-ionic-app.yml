@@ -41,7 +41,7 @@ jobs:
         working-directory: client
 
       # Install syft
-      - uses: taiki-e/install-action@e4052c038b0e2fb689083c873312394ba5eb0a37 # pin v2.12.22
+      - uses: taiki-e/install-action@44516826f137d1069df1fbc585d112eed7cfec2c # pin v2.14.2
         with:
           tool: syft@0.84.0, wasm-pack@${{ env.wasm-pack-version }}
 
@@ -118,7 +118,7 @@ jobs:
         timeout-minutes: 5
 
       # Install syft
-      - uses: taiki-e/install-action@e4052c038b0e2fb689083c873312394ba5eb0a37 # pin v2.12.22
+      - uses: taiki-e/install-action@44516826f137d1069df1fbc585d112eed7cfec2c # pin v2.14.2
         with:
           tool: syft@0.84.0
 
