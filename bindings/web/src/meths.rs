@@ -256,12 +256,12 @@ fn struct_availabledevice_rs_to_js(rs_obj: libparsec::AvailableDevice) -> Result
     Ok(js_obj)
 }
 
-// UserClaimInProgress1CtxHandle
+// UserClaimInProgress1Info
 
 #[allow(dead_code)]
-fn struct_userclaiminprogress1ctxhandle_js_to_rs(
+fn struct_userclaiminprogress1info_js_to_rs(
     obj: JsValue,
-) -> Result<libparsec::UserClaimInProgress1CtxHandle, JsValue> {
+) -> Result<libparsec::UserClaimInProgress1Info, JsValue> {
     let handle = {
         let js_val = Reflect::get(&obj, &"handle".into())?;
         {
@@ -305,7 +305,7 @@ fn struct_userclaiminprogress1ctxhandle_js_to_rs(
             converted
         }
     };
-    Ok(libparsec::UserClaimInProgress1CtxHandle {
+    Ok(libparsec::UserClaimInProgress1Info {
         handle,
         greeter_sas,
         greeter_sas_choices,
@@ -313,8 +313,8 @@ fn struct_userclaiminprogress1ctxhandle_js_to_rs(
 }
 
 #[allow(dead_code)]
-fn struct_userclaiminprogress1ctxhandle_rs_to_js(
-    rs_obj: libparsec::UserClaimInProgress1CtxHandle,
+fn struct_userclaiminprogress1info_rs_to_js(
+    rs_obj: libparsec::UserClaimInProgress1Info,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
@@ -338,12 +338,12 @@ fn struct_userclaiminprogress1ctxhandle_rs_to_js(
     Ok(js_obj)
 }
 
-// DeviceClaimInProgress1CtxHandle
+// DeviceClaimInProgress1Info
 
 #[allow(dead_code)]
-fn struct_deviceclaiminprogress1ctxhandle_js_to_rs(
+fn struct_deviceclaiminprogress1info_js_to_rs(
     obj: JsValue,
-) -> Result<libparsec::DeviceClaimInProgress1CtxHandle, JsValue> {
+) -> Result<libparsec::DeviceClaimInProgress1Info, JsValue> {
     let handle = {
         let js_val = Reflect::get(&obj, &"handle".into())?;
         {
@@ -387,7 +387,7 @@ fn struct_deviceclaiminprogress1ctxhandle_js_to_rs(
             converted
         }
     };
-    Ok(libparsec::DeviceClaimInProgress1CtxHandle {
+    Ok(libparsec::DeviceClaimInProgress1Info {
         handle,
         greeter_sas,
         greeter_sas_choices,
@@ -395,8 +395,8 @@ fn struct_deviceclaiminprogress1ctxhandle_js_to_rs(
 }
 
 #[allow(dead_code)]
-fn struct_deviceclaiminprogress1ctxhandle_rs_to_js(
-    rs_obj: libparsec::DeviceClaimInProgress1CtxHandle,
+fn struct_deviceclaiminprogress1info_rs_to_js(
+    rs_obj: libparsec::DeviceClaimInProgress1Info,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
@@ -420,12 +420,12 @@ fn struct_deviceclaiminprogress1ctxhandle_rs_to_js(
     Ok(js_obj)
 }
 
-// UserClaimInProgress2CtxHandle
+// UserClaimInProgress2Info
 
 #[allow(dead_code)]
-fn struct_userclaiminprogress2ctxhandle_js_to_rs(
+fn struct_userclaiminprogress2info_js_to_rs(
     obj: JsValue,
-) -> Result<libparsec::UserClaimInProgress2CtxHandle, JsValue> {
+) -> Result<libparsec::UserClaimInProgress2Info, JsValue> {
     let handle = {
         let js_val = Reflect::get(&obj, &"handle".into())?;
         {
@@ -449,15 +449,15 @@ fn struct_userclaiminprogress2ctxhandle_js_to_rs(
             .parse()
             .map_err(|_| TypeError::new("Not a valid SASCode"))?
     };
-    Ok(libparsec::UserClaimInProgress2CtxHandle {
+    Ok(libparsec::UserClaimInProgress2Info {
         handle,
         claimer_sas,
     })
 }
 
 #[allow(dead_code)]
-fn struct_userclaiminprogress2ctxhandle_rs_to_js(
-    rs_obj: libparsec::UserClaimInProgress2CtxHandle,
+fn struct_userclaiminprogress2info_rs_to_js(
+    rs_obj: libparsec::UserClaimInProgress2Info,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
@@ -467,12 +467,12 @@ fn struct_userclaiminprogress2ctxhandle_rs_to_js(
     Ok(js_obj)
 }
 
-// DeviceClaimInProgress2CtxHandle
+// DeviceClaimInProgress2Info
 
 #[allow(dead_code)]
-fn struct_deviceclaiminprogress2ctxhandle_js_to_rs(
+fn struct_deviceclaiminprogress2info_js_to_rs(
     obj: JsValue,
-) -> Result<libparsec::DeviceClaimInProgress2CtxHandle, JsValue> {
+) -> Result<libparsec::DeviceClaimInProgress2Info, JsValue> {
     let handle = {
         let js_val = Reflect::get(&obj, &"handle".into())?;
         {
@@ -496,15 +496,15 @@ fn struct_deviceclaiminprogress2ctxhandle_js_to_rs(
             .parse()
             .map_err(|_| TypeError::new("Not a valid SASCode"))?
     };
-    Ok(libparsec::DeviceClaimInProgress2CtxHandle {
+    Ok(libparsec::DeviceClaimInProgress2Info {
         handle,
         claimer_sas,
     })
 }
 
 #[allow(dead_code)]
-fn struct_deviceclaiminprogress2ctxhandle_rs_to_js(
-    rs_obj: libparsec::DeviceClaimInProgress2CtxHandle,
+fn struct_deviceclaiminprogress2info_rs_to_js(
+    rs_obj: libparsec::DeviceClaimInProgress2Info,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
@@ -514,12 +514,12 @@ fn struct_deviceclaiminprogress2ctxhandle_rs_to_js(
     Ok(js_obj)
 }
 
-// UserClaimInProgress3CtxHandle
+// UserClaimInProgress3Info
 
 #[allow(dead_code)]
-fn struct_userclaiminprogress3ctxhandle_js_to_rs(
+fn struct_userclaiminprogress3info_js_to_rs(
     obj: JsValue,
-) -> Result<libparsec::UserClaimInProgress3CtxHandle, JsValue> {
+) -> Result<libparsec::UserClaimInProgress3Info, JsValue> {
     let handle = {
         let js_val = Reflect::get(&obj, &"handle".into())?;
         {
@@ -533,12 +533,12 @@ fn struct_userclaiminprogress3ctxhandle_js_to_rs(
             v as u32
         }
     };
-    Ok(libparsec::UserClaimInProgress3CtxHandle { handle })
+    Ok(libparsec::UserClaimInProgress3Info { handle })
 }
 
 #[allow(dead_code)]
-fn struct_userclaiminprogress3ctxhandle_rs_to_js(
-    rs_obj: libparsec::UserClaimInProgress3CtxHandle,
+fn struct_userclaiminprogress3info_rs_to_js(
+    rs_obj: libparsec::UserClaimInProgress3Info,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
@@ -546,12 +546,12 @@ fn struct_userclaiminprogress3ctxhandle_rs_to_js(
     Ok(js_obj)
 }
 
-// DeviceClaimInProgress3CtxHandle
+// DeviceClaimInProgress3Info
 
 #[allow(dead_code)]
-fn struct_deviceclaiminprogress3ctxhandle_js_to_rs(
+fn struct_deviceclaiminprogress3info_js_to_rs(
     obj: JsValue,
-) -> Result<libparsec::DeviceClaimInProgress3CtxHandle, JsValue> {
+) -> Result<libparsec::DeviceClaimInProgress3Info, JsValue> {
     let handle = {
         let js_val = Reflect::get(&obj, &"handle".into())?;
         {
@@ -565,12 +565,12 @@ fn struct_deviceclaiminprogress3ctxhandle_js_to_rs(
             v as u32
         }
     };
-    Ok(libparsec::DeviceClaimInProgress3CtxHandle { handle })
+    Ok(libparsec::DeviceClaimInProgress3Info { handle })
 }
 
 #[allow(dead_code)]
-fn struct_deviceclaiminprogress3ctxhandle_rs_to_js(
-    rs_obj: libparsec::DeviceClaimInProgress3CtxHandle,
+fn struct_deviceclaiminprogress3info_rs_to_js(
+    rs_obj: libparsec::DeviceClaimInProgress3Info,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
@@ -578,12 +578,12 @@ fn struct_deviceclaiminprogress3ctxhandle_rs_to_js(
     Ok(js_obj)
 }
 
-// UserClaimFinalizeCtxHandle
+// UserClaimFinalizeInfo
 
 #[allow(dead_code)]
-fn struct_userclaimfinalizectxhandle_js_to_rs(
+fn struct_userclaimfinalizeinfo_js_to_rs(
     obj: JsValue,
-) -> Result<libparsec::UserClaimFinalizeCtxHandle, JsValue> {
+) -> Result<libparsec::UserClaimFinalizeInfo, JsValue> {
     let handle = {
         let js_val = Reflect::get(&obj, &"handle".into())?;
         {
@@ -597,12 +597,12 @@ fn struct_userclaimfinalizectxhandle_js_to_rs(
             v as u32
         }
     };
-    Ok(libparsec::UserClaimFinalizeCtxHandle { handle })
+    Ok(libparsec::UserClaimFinalizeInfo { handle })
 }
 
 #[allow(dead_code)]
-fn struct_userclaimfinalizectxhandle_rs_to_js(
-    rs_obj: libparsec::UserClaimFinalizeCtxHandle,
+fn struct_userclaimfinalizeinfo_rs_to_js(
+    rs_obj: libparsec::UserClaimFinalizeInfo,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
@@ -610,12 +610,12 @@ fn struct_userclaimfinalizectxhandle_rs_to_js(
     Ok(js_obj)
 }
 
-// DeviceClaimFinalizeCtxHandle
+// DeviceClaimFinalizeInfo
 
 #[allow(dead_code)]
-fn struct_deviceclaimfinalizectxhandle_js_to_rs(
+fn struct_deviceclaimfinalizeinfo_js_to_rs(
     obj: JsValue,
-) -> Result<libparsec::DeviceClaimFinalizeCtxHandle, JsValue> {
+) -> Result<libparsec::DeviceClaimFinalizeInfo, JsValue> {
     let handle = {
         let js_val = Reflect::get(&obj, &"handle".into())?;
         {
@@ -629,16 +629,169 @@ fn struct_deviceclaimfinalizectxhandle_js_to_rs(
             v as u32
         }
     };
-    Ok(libparsec::DeviceClaimFinalizeCtxHandle { handle })
+    Ok(libparsec::DeviceClaimFinalizeInfo { handle })
 }
 
 #[allow(dead_code)]
-fn struct_deviceclaimfinalizectxhandle_rs_to_js(
-    rs_obj: libparsec::DeviceClaimFinalizeCtxHandle,
+fn struct_deviceclaimfinalizeinfo_rs_to_js(
+    rs_obj: libparsec::DeviceClaimFinalizeInfo,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
     Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
+    Ok(js_obj)
+}
+
+// DeviceAccessStrategy
+
+#[allow(dead_code)]
+fn variant_deviceaccessstrategy_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::DeviceAccessStrategy, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    match tag {
+        tag if tag == JsValue::from_str("Password") => {
+            let password = {
+                let js_val = Reflect::get(&obj, &"password".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string =
+                            |s: String| -> Result<_, String> { Ok(s.into()) };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid Password"))?
+            };
+            let key_file = {
+                let js_val = Reflect::get(&obj, &"key_file".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
+                            Ok(std::path::PathBuf::from(s))
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid Path"))?
+            };
+            Ok(libparsec::DeviceAccessStrategy::Password { password, key_file })
+        }
+        tag if tag == JsValue::from_str("Smartcard") => {
+            let key_file = {
+                let js_val = Reflect::get(&obj, &"key_file".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
+                            Ok(std::path::PathBuf::from(s))
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid Path"))?
+            };
+            Ok(libparsec::DeviceAccessStrategy::Smartcard { key_file })
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a DeviceAccessStrategy",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_deviceaccessstrategy_rs_to_js(
+    rs_obj: libparsec::DeviceAccessStrategy,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::DeviceAccessStrategy::Password {
+            password, key_file, ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Password".into())?;
+            let js_password = JsValue::from_str(password.as_ref());
+            Reflect::set(&js_obj, &"password".into(), &js_password)?;
+            let js_key_file = JsValue::from_str({
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(key_file) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"key_file".into(), &js_key_file)?;
+        }
+        libparsec::DeviceAccessStrategy::Smartcard { key_file, .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Smartcard".into())?;
+            let js_key_file = JsValue::from_str({
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(key_file) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"key_file".into(), &js_key_file)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientStartError
+
+#[allow(dead_code)]
+fn variant_clientstarterror_rs_to_js(
+    rs_obj: libparsec::ClientStartError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientStartError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+        libparsec::ClientStartError::LoadDeviceDecryptionFailed { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"LoadDeviceDecryptionFailed".into())?;
+        }
+        libparsec::ClientStartError::LoadDeviceInvalidData { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"LoadDeviceInvalidData".into())?;
+        }
+        libparsec::ClientStartError::LoadDeviceInvalidPath { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"LoadDeviceInvalidPath".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientStopError
+
+#[allow(dead_code)]
+fn variant_clientstoperror_rs_to_js(
+    rs_obj: libparsec::ClientStopError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientStopError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+    }
     Ok(js_obj)
 }
 
@@ -946,12 +1099,12 @@ fn variant_claiminprogresserror_rs_to_js(
     Ok(js_obj)
 }
 
-// UserOrDeviceClaimInitialCtxHandle
+// UserOrDeviceClaimInitialInfo
 
 #[allow(dead_code)]
-fn variant_userordeviceclaiminitialctxhandle_js_to_rs(
+fn variant_userordeviceclaiminitialinfo_js_to_rs(
     obj: JsValue,
-) -> Result<libparsec::UserOrDeviceClaimInitialCtxHandle, JsValue> {
+) -> Result<libparsec::UserOrDeviceClaimInitialInfo, JsValue> {
     let tag = Reflect::get(&obj, &"tag".into())?;
     match tag {
         tag if tag == JsValue::from_str("Device") => {
@@ -994,7 +1147,7 @@ fn variant_userordeviceclaiminitialctxhandle_js_to_rs(
                     )
                 }
             };
-            Ok(libparsec::UserOrDeviceClaimInitialCtxHandle::Device {
+            Ok(libparsec::UserOrDeviceClaimInitialInfo::Device {
                 handle,
                 greeter_user_id,
                 greeter_human_handle,
@@ -1048,7 +1201,7 @@ fn variant_userordeviceclaiminitialctxhandle_js_to_rs(
                     )
                 }
             };
-            Ok(libparsec::UserOrDeviceClaimInitialCtxHandle::User {
+            Ok(libparsec::UserOrDeviceClaimInitialInfo::User {
                 handle,
                 claimer_email,
                 greeter_user_id,
@@ -1056,18 +1209,18 @@ fn variant_userordeviceclaiminitialctxhandle_js_to_rs(
             })
         }
         _ => Err(JsValue::from(TypeError::new(
-            "Object is not a UserOrDeviceClaimInitialCtxHandle",
+            "Object is not a UserOrDeviceClaimInitialInfo",
         ))),
     }
 }
 
 #[allow(dead_code)]
-fn variant_userordeviceclaiminitialctxhandle_rs_to_js(
-    rs_obj: libparsec::UserOrDeviceClaimInitialCtxHandle,
+fn variant_userordeviceclaiminitialinfo_rs_to_js(
+    rs_obj: libparsec::UserOrDeviceClaimInitialInfo,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
-        libparsec::UserOrDeviceClaimInitialCtxHandle::Device {
+        libparsec::UserOrDeviceClaimInitialInfo::Device {
             handle,
             greeter_user_id,
             greeter_human_handle,
@@ -1088,7 +1241,7 @@ fn variant_userordeviceclaiminitialctxhandle_rs_to_js(
                 &js_greeter_human_handle,
             )?;
         }
-        libparsec::UserOrDeviceClaimInitialCtxHandle::User {
+        libparsec::UserOrDeviceClaimInitialInfo::User {
             handle,
             claimer_email,
             greeter_user_id,
@@ -1114,6 +1267,74 @@ fn variant_userordeviceclaiminitialctxhandle_rs_to_js(
         }
     }
     Ok(js_obj)
+}
+
+// client_start
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientStart(config: Object, on_event_callback: Function, access: Object) -> Promise {
+    future_to_promise(async move {
+        let config = config.into();
+        let config = struct_clientconfig_js_to_rs(config)?;
+
+        let on_event_callback = std::sync::Arc::new(move |event: libparsec::ClientEvent| {
+            // TODO: Better error handling here (log error ?)
+            let js_event =
+                variant_clientevent_rs_to_js(event).expect("event type conversion error");
+            on_event_callback
+                .call1(&JsValue::NULL, &js_event)
+                .expect("error in event callback");
+        }) as std::sync::Arc<dyn Fn(libparsec::ClientEvent)>;
+
+        let access = access.into();
+        let access = variant_deviceaccessstrategy_js_to_rs(access)?;
+
+        let ret = libparsec::client_start(config, on_event_callback, access).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from(value);
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_clientstarterror_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_stop
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientStop(handle: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::client_stop(handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_clientstoperror_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
 }
 
 // list_available_devices
@@ -1269,7 +1490,7 @@ pub fn claimerRetrieveInfo(config: Object, on_event_callback: Function, addr: St
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = variant_userordeviceclaiminitialctxhandle_rs_to_js(value)?;
+                let js_value = variant_userordeviceclaiminitialinfo_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -1294,7 +1515,7 @@ pub fn claimerUserInitialCtxDoWaitPeer(handle: u32) -> Promise {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_userclaiminprogress1ctxhandle_rs_to_js(value)?;
+                let js_value = struct_userclaiminprogress1info_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -1319,7 +1540,7 @@ pub fn claimerDeviceInitialCtxDoWaitPeer(handle: u32) -> Promise {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_deviceclaiminprogress1ctxhandle_rs_to_js(value)?;
+                let js_value = struct_deviceclaiminprogress1info_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -1344,7 +1565,7 @@ pub fn claimerUserInProgress2DoSignifyTrust(handle: u32) -> Promise {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_userclaiminprogress2ctxhandle_rs_to_js(value)?;
+                let js_value = struct_userclaiminprogress2info_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -1369,7 +1590,7 @@ pub fn claimerDeviceInProgress2DoSignifyTrust(handle: u32) -> Promise {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_deviceclaiminprogress2ctxhandle_rs_to_js(value)?;
+                let js_value = struct_deviceclaiminprogress2info_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -1394,7 +1615,7 @@ pub fn claimerUserInProgress2DoWaitPeerTrust(handle: u32) -> Promise {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_userclaiminprogress3ctxhandle_rs_to_js(value)?;
+                let js_value = struct_userclaiminprogress3info_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -1419,7 +1640,7 @@ pub fn claimerDeviceInProgress2DoWaitPeerTrust(handle: u32) -> Promise {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_deviceclaiminprogress3ctxhandle_rs_to_js(value)?;
+                let js_value = struct_deviceclaiminprogress3info_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -1475,7 +1696,7 @@ pub fn claimerUserInProgress3DoClaim(
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_userclaimfinalizectxhandle_rs_to_js(value)?;
+                let js_value = struct_userclaimfinalizeinfo_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -1515,7 +1736,7 @@ pub fn claimerDeviceInProgress3DoClaim(
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_deviceclaimfinalizectxhandle_rs_to_js(value)?;
+                let js_value = struct_deviceclaimfinalizeinfo_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }

@@ -12,6 +12,8 @@ Result<{{ render_type(t.ok) }}, {{ render_type(t.err) }}>
 {{ t.name }}
 {%- elif t.kind == "list" -%}
 Array<{{ render_type(t.elem) }}>
+{%- elif t.kind == "none" -%}
+null
 {%- elif t.kind == "bool" -%}
 boolean
 {%- elif t.kind in ("i32_based", "u32_based", "float") -%}

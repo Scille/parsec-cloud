@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-from typing import Callable, Optional
+from typing import Optional
 
 from .common import (
     BackendInvitationAddr,
@@ -23,7 +23,7 @@ from .common import (
     Variant,
 )
 from .config import ClientConfig
-from .events import ClientEvent
+from .events import OnClientEventCallback
 
 
 class DeviceFileType(Variant):
@@ -57,10 +57,6 @@ class DeviceSaveStrategy(Variant):
 
     class Smartcard:
         pass
-
-
-class OnClientEventCallback(Callable[[ClientEvent], None]):
-    pass
 
 
 #
@@ -145,7 +141,7 @@ class ClaimInProgressError(ErrorVariant):
         pass
 
 
-class UserOrDeviceClaimInitialCtxHandle(Variant):
+class UserOrDeviceClaimInitialInfo(Variant):
     class User:
         handle: Handle
         claimer_email: str
@@ -162,17 +158,17 @@ async def claimer_retrieve_info(
     config: ClientConfig,
     on_event_callback: OnClientEventCallback,
     addr: BackendInvitationAddr,
-) -> Result[UserOrDeviceClaimInitialCtxHandle, ClaimerRetrieveInfoError]:
+) -> Result[UserOrDeviceClaimInitialInfo, ClaimerRetrieveInfoError]:
     ...
 
 
-class UserClaimInProgress1CtxHandle(Structure):
+class UserClaimInProgress1Info(Structure):
     handle: Handle
     greeter_sas: SASCode
     greeter_sas_choices: list[SASCode]
 
 
-class DeviceClaimInProgress1CtxHandle(Structure):
+class DeviceClaimInProgress1Info(Structure):
     handle: Handle
     greeter_sas: SASCode
     greeter_sas_choices: list[SASCode]
@@ -180,63 +176,63 @@ class DeviceClaimInProgress1CtxHandle(Structure):
 
 async def claimer_user_initial_ctx_do_wait_peer(
     handle: Handle,
-) -> Result[UserClaimInProgress1CtxHandle, ClaimInProgressError]:
+) -> Result[UserClaimInProgress1Info, ClaimInProgressError]:
     ...
 
 
 async def claimer_device_initial_ctx_do_wait_peer(
     handle: Handle,
-) -> Result[DeviceClaimInProgress1CtxHandle, ClaimInProgressError]:
+) -> Result[DeviceClaimInProgress1Info, ClaimInProgressError]:
     ...
 
 
-class UserClaimInProgress2CtxHandle(Structure):
+class UserClaimInProgress2Info(Structure):
     handle: Handle
     claimer_sas: SASCode
 
 
-class DeviceClaimInProgress2CtxHandle(Structure):
+class DeviceClaimInProgress2Info(Structure):
     handle: Handle
     claimer_sas: SASCode
 
 
 async def claimer_user_in_progress_2_do_signify_trust(
     handle: Handle,
-) -> Result[UserClaimInProgress2CtxHandle, ClaimInProgressError]:
+) -> Result[UserClaimInProgress2Info, ClaimInProgressError]:
     ...
 
 
 async def claimer_device_in_progress_2_do_signify_trust(
     handle: Handle,
-) -> Result[DeviceClaimInProgress2CtxHandle, ClaimInProgressError]:
+) -> Result[DeviceClaimInProgress2Info, ClaimInProgressError]:
     ...
 
 
-class UserClaimInProgress3CtxHandle(Structure):
+class UserClaimInProgress3Info(Structure):
     handle: Handle
 
 
-class DeviceClaimInProgress3CtxHandle(Structure):
+class DeviceClaimInProgress3Info(Structure):
     handle: Handle
 
 
 async def claimer_user_in_progress_2_do_wait_peer_trust(
     handle: Handle,
-) -> Result[UserClaimInProgress3CtxHandle, ClaimInProgressError]:
+) -> Result[UserClaimInProgress3Info, ClaimInProgressError]:
     ...
 
 
 async def claimer_device_in_progress_2_do_wait_peer_trust(
     handle: Handle,
-) -> Result[DeviceClaimInProgress3CtxHandle, ClaimInProgressError]:
+) -> Result[DeviceClaimInProgress3Info, ClaimInProgressError]:
     ...
 
 
-class UserClaimFinalizeCtxHandle(Structure):
+class UserClaimFinalizeInfo(Structure):
     handle: Handle
 
 
-class DeviceClaimFinalizeCtxHandle(Structure):
+class DeviceClaimFinalizeInfo(Structure):
     handle: Handle
 
 
@@ -244,14 +240,14 @@ async def claimer_user_in_progress_3_do_claim(
     handle: Handle,
     requested_device_label: Optional[DeviceLabel],
     requested_human_handle: Optional[HumanHandle],
-) -> Result[UserClaimFinalizeCtxHandle, ClaimInProgressError]:
+) -> Result[UserClaimFinalizeInfo, ClaimInProgressError]:
     ...
 
 
 async def claimer_device_in_progress_3_do_claim(
     handle: Handle,
     requested_device_label: Optional[DeviceLabel],
-) -> Result[DeviceClaimFinalizeCtxHandle, ClaimInProgressError]:
+) -> Result[DeviceClaimFinalizeInfo, ClaimInProgressError]:
     ...
 
 

@@ -8,18 +8,18 @@ export type Result<T, E = Error> =
   | { ok: true; value: T }
   | { ok: false; error: E }
 
+type Password = string
+type Path = string
 type OrganizationID = string
 type UserID = string
 type DeviceID = string
 type DeviceLabel = string
 type HumanHandle = string
 type DateTime = string
-type Password = string
 type BackendAddr = string
 type BackendOrganizationAddr = string
 type BackendOrganizationBootstrapAddr = string
 type BackendInvitationAddr = string
-type Path = string
 type SASCode = string
 type SequesterVerifyKeyDer = Uint8Array
 type Handle = number
@@ -42,43 +42,88 @@ export interface AvailableDevice {
     ty: DeviceFileType
 }
 
-export interface UserClaimInProgress1CtxHandle {
+export interface UserClaimInProgress1Info {
     handle: number
     greeterSas: SASCode
     greeterSasChoices: Array<SASCode>
 }
 
-export interface DeviceClaimInProgress1CtxHandle {
+export interface DeviceClaimInProgress1Info {
     handle: number
     greeterSas: SASCode
     greeterSasChoices: Array<SASCode>
 }
 
-export interface UserClaimInProgress2CtxHandle {
+export interface UserClaimInProgress2Info {
     handle: number
     claimerSas: SASCode
 }
 
-export interface DeviceClaimInProgress2CtxHandle {
+export interface DeviceClaimInProgress2Info {
     handle: number
     claimerSas: SASCode
 }
 
-export interface UserClaimInProgress3CtxHandle {
+export interface UserClaimInProgress3Info {
     handle: number
 }
 
-export interface DeviceClaimInProgress3CtxHandle {
+export interface DeviceClaimInProgress3Info {
     handle: number
 }
 
-export interface UserClaimFinalizeCtxHandle {
+export interface UserClaimFinalizeInfo {
     handle: number
 }
 
-export interface DeviceClaimFinalizeCtxHandle {
+export interface DeviceClaimFinalizeInfo {
     handle: number
 }
+
+// DeviceAccessStrategy
+export interface DeviceAccessStrategyPassword {
+    tag: 'Password'
+    password: Password
+    keyFile: Path
+}
+export interface DeviceAccessStrategySmartcard {
+    tag: 'Smartcard'
+    keyFile: Path
+}
+export type DeviceAccessStrategy =
+  | DeviceAccessStrategyPassword
+  | DeviceAccessStrategySmartcard
+
+// ClientStartError
+export interface ClientStartErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export interface ClientStartErrorLoadDeviceDecryptionFailed {
+    tag: 'LoadDeviceDecryptionFailed'
+    error: string
+}
+export interface ClientStartErrorLoadDeviceInvalidData {
+    tag: 'LoadDeviceInvalidData'
+    error: string
+}
+export interface ClientStartErrorLoadDeviceInvalidPath {
+    tag: 'LoadDeviceInvalidPath'
+    error: string
+}
+export type ClientStartError =
+  | ClientStartErrorInternal
+  | ClientStartErrorLoadDeviceDecryptionFailed
+  | ClientStartErrorLoadDeviceInvalidData
+  | ClientStartErrorLoadDeviceInvalidPath
+
+// ClientStopError
+export interface ClientStopErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export type ClientStopError =
+  | ClientStopErrorInternal
 
 // WorkspaceStorageCacheSize
 export interface WorkspaceStorageCacheSizeCustom {
@@ -225,25 +270,33 @@ export type ClaimInProgressError =
   | ClaimInProgressErrorOffline
   | ClaimInProgressErrorPeerReset
 
-// UserOrDeviceClaimInitialCtxHandle
-export interface UserOrDeviceClaimInitialCtxHandleDevice {
+// UserOrDeviceClaimInitialInfo
+export interface UserOrDeviceClaimInitialInfoDevice {
     tag: 'Device'
     handle: number
     greeterUserId: UserID
     greeterHumanHandle: HumanHandle | null
 }
-export interface UserOrDeviceClaimInitialCtxHandleUser {
+export interface UserOrDeviceClaimInitialInfoUser {
     tag: 'User'
     handle: number
     claimerEmail: string
     greeterUserId: UserID
     greeterHumanHandle: HumanHandle | null
 }
-export type UserOrDeviceClaimInitialCtxHandle =
-  | UserOrDeviceClaimInitialCtxHandleDevice
-  | UserOrDeviceClaimInitialCtxHandleUser
+export type UserOrDeviceClaimInitialInfo =
+  | UserOrDeviceClaimInitialInfoDevice
+  | UserOrDeviceClaimInitialInfoUser
 
 export interface LibParsecPlugin {
+    clientStart(
+        config: ClientConfig,
+        on_event_callback: (event: ClientEvent) => void,
+        access: DeviceAccessStrategy
+    ): Promise<Result<number, ClientStartError>>
+    clientStop(
+        handle: number
+    ): Promise<Result<null, ClientStopError>>
     listAvailableDevices(
         path: Path
     ): Promise<Array<AvailableDevice>>
@@ -260,34 +313,34 @@ export interface LibParsecPlugin {
         config: ClientConfig,
         on_event_callback: (event: ClientEvent) => void,
         addr: BackendInvitationAddr
-    ): Promise<Result<UserOrDeviceClaimInitialCtxHandle, ClaimerRetrieveInfoError>>
+    ): Promise<Result<UserOrDeviceClaimInitialInfo, ClaimerRetrieveInfoError>>
     claimerUserInitialCtxDoWaitPeer(
         handle: number
-    ): Promise<Result<UserClaimInProgress1CtxHandle, ClaimInProgressError>>
+    ): Promise<Result<UserClaimInProgress1Info, ClaimInProgressError>>
     claimerDeviceInitialCtxDoWaitPeer(
         handle: number
-    ): Promise<Result<DeviceClaimInProgress1CtxHandle, ClaimInProgressError>>
+    ): Promise<Result<DeviceClaimInProgress1Info, ClaimInProgressError>>
     claimerUserInProgress2DoSignifyTrust(
         handle: number
-    ): Promise<Result<UserClaimInProgress2CtxHandle, ClaimInProgressError>>
+    ): Promise<Result<UserClaimInProgress2Info, ClaimInProgressError>>
     claimerDeviceInProgress2DoSignifyTrust(
         handle: number
-    ): Promise<Result<DeviceClaimInProgress2CtxHandle, ClaimInProgressError>>
+    ): Promise<Result<DeviceClaimInProgress2Info, ClaimInProgressError>>
     claimerUserInProgress2DoWaitPeerTrust(
         handle: number
-    ): Promise<Result<UserClaimInProgress3CtxHandle, ClaimInProgressError>>
+    ): Promise<Result<UserClaimInProgress3Info, ClaimInProgressError>>
     claimerDeviceInProgress2DoWaitPeerTrust(
         handle: number
-    ): Promise<Result<DeviceClaimInProgress3CtxHandle, ClaimInProgressError>>
+    ): Promise<Result<DeviceClaimInProgress3Info, ClaimInProgressError>>
     claimerUserInProgress3DoClaim(
         handle: number,
         requested_device_label: DeviceLabel | null,
         requested_human_handle: HumanHandle | null
-    ): Promise<Result<UserClaimFinalizeCtxHandle, ClaimInProgressError>>
+    ): Promise<Result<UserClaimFinalizeInfo, ClaimInProgressError>>
     claimerDeviceInProgress3DoClaim(
         handle: number,
         requested_device_label: DeviceLabel | null
-    ): Promise<Result<DeviceClaimFinalizeCtxHandle, ClaimInProgressError>>
+    ): Promise<Result<DeviceClaimFinalizeInfo, ClaimInProgressError>>
     claimerUserFinalizeSaveLocalDevice(
         handle: number,
         save_strategy: DeviceSaveStrategy
