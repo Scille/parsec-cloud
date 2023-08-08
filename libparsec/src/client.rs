@@ -2,8 +2,9 @@
 
 use std::sync::Arc;
 
+pub use libparsec_client::user_ops::{UserOpsError, UserOpsWorkspaceShareError};
 use libparsec_types::prelude::*;
-pub use libparsec_types::DeviceAccessStrategy;
+pub use libparsec_types::{DeviceAccessStrategy, RealmRole};
 
 use crate::{
     handle::{borrow_from_handle, register_handle, take_and_close_handle, Handle, HandleItem},
@@ -121,4 +122,74 @@ pub async fn client_list_workspaces(
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
     Ok(client.user_ops.list_workspaces())
+}
+
+/*
+ * Create workspace
+ */
+
+#[derive(Debug, thiserror::Error)]
+pub enum ClientWorkspaceCreateError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub async fn client_workspace_create(
+    handle: Handle,
+    name: EntryName,
+) -> Result<EntryID, ClientWorkspaceCreateError> {
+    let client = borrow_from_handle(handle, |x| match x {
+        crate::handle::HandleItem::Client((client, _)) => Some(client.clone()),
+        _ => None,
+    })
+    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+
+    client
+        .user_ops
+        .workspace_create(name)
+        .await
+        .map_err(|err| err.into())
+}
+
+/*
+ * Client rename workspace
+ */
+
+pub async fn client_workspace_rename(
+    handle: Handle,
+    workspace_id: EntryID,
+    new_name: EntryName,
+) -> Result<(), UserOpsError> {
+    let client = borrow_from_handle(handle, |x| match x {
+        crate::handle::HandleItem::Client((client, _)) => Some(client.clone()),
+        _ => None,
+    })
+    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+
+    client
+        .user_ops
+        .workspace_rename(workspace_id, new_name)
+        .await
+}
+
+/*
+ * Client share workspace
+ */
+
+pub async fn client_workspace_share(
+    handle: Handle,
+    workspace_id: EntryID,
+    recipient: UserID,
+    role: Option<RealmRole>,
+) -> Result<(), UserOpsWorkspaceShareError> {
+    let client = borrow_from_handle(handle, |x| match x {
+        crate::handle::HandleItem::Client((client, _)) => Some(client.clone()),
+        _ => None,
+    })
+    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+
+    client
+        .user_ops
+        .workspace_share(workspace_id, &recipient, role)
+        .await
 }

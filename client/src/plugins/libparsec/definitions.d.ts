@@ -11,12 +11,12 @@ export type Result<T, E = Error> =
 type EntryName = string
 type Password = string
 type Path = string
-type OrganizationID = string
 type UserID = string
+type DateTime = string
+type OrganizationID = string
 type DeviceID = string
 type DeviceLabel = string
 type HumanHandle = string
-type DateTime = string
 type BackendAddr = string
 type BackendOrganizationAddr = string
 type BackendOrganizationBootstrapAddr = string
@@ -82,6 +82,25 @@ export interface DeviceClaimFinalizeInfo {
     handle: number
 }
 
+// RealmRole
+export interface RealmRoleContributor {
+    tag: 'Contributor'
+}
+export interface RealmRoleManager {
+    tag: 'Manager'
+}
+export interface RealmRoleOwner {
+    tag: 'Owner'
+}
+export interface RealmRoleReader {
+    tag: 'Reader'
+}
+export type RealmRole =
+  | RealmRoleContributor
+  | RealmRoleManager
+  | RealmRoleOwner
+  | RealmRoleReader
+
 // DeviceAccessStrategy
 export interface DeviceAccessStrategyPassword {
     tag: 'Password'
@@ -134,6 +153,89 @@ export interface ClientListWorkspacesErrorInternal {
 }
 export type ClientListWorkspacesError =
   | ClientListWorkspacesErrorInternal
+
+// ClientWorkspaceCreateError
+export interface ClientWorkspaceCreateErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export type ClientWorkspaceCreateError =
+  | ClientWorkspaceCreateErrorInternal
+
+// UserOpsError
+export interface UserOpsErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export interface UserOpsErrorUnknownWorkspace {
+    tag: 'UnknownWorkspace'
+    error: string
+}
+export type UserOpsError =
+  | UserOpsErrorInternal
+  | UserOpsErrorUnknownWorkspace
+
+// UserOpsWorkspaceShareError
+export interface UserOpsWorkspaceShareErrorBadTimestamp {
+    tag: 'BadTimestamp'
+    error: string
+    serverTimestamp: DateTime
+    clientTimestamp: DateTime
+    ballparkClientEarlyOffset: number
+    ballparkClientLateOffset: number
+}
+export interface UserOpsWorkspaceShareErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export interface UserOpsWorkspaceShareErrorNotAllowed {
+    tag: 'NotAllowed'
+    error: string
+}
+export interface UserOpsWorkspaceShareErrorOffline {
+    tag: 'Offline'
+    error: string
+}
+export interface UserOpsWorkspaceShareErrorOutsiderCannotBeManagerOrOwner {
+    tag: 'OutsiderCannotBeManagerOrOwner'
+    error: string
+}
+export interface UserOpsWorkspaceShareErrorRevokedRecipient {
+    tag: 'RevokedRecipient'
+    error: string
+}
+export interface UserOpsWorkspaceShareErrorShareToSelf {
+    tag: 'ShareToSelf'
+    error: string
+}
+export interface UserOpsWorkspaceShareErrorUnknownRecipient {
+    tag: 'UnknownRecipient'
+    error: string
+}
+export interface UserOpsWorkspaceShareErrorUnknownRecipientOrWorkspace {
+    tag: 'UnknownRecipientOrWorkspace'
+    error: string
+}
+export interface UserOpsWorkspaceShareErrorUnknownWorkspace {
+    tag: 'UnknownWorkspace'
+    error: string
+}
+export interface UserOpsWorkspaceShareErrorWorkspaceInMaintenance {
+    tag: 'WorkspaceInMaintenance'
+    error: string
+}
+export type UserOpsWorkspaceShareError =
+  | UserOpsWorkspaceShareErrorBadTimestamp
+  | UserOpsWorkspaceShareErrorInternal
+  | UserOpsWorkspaceShareErrorNotAllowed
+  | UserOpsWorkspaceShareErrorOffline
+  | UserOpsWorkspaceShareErrorOutsiderCannotBeManagerOrOwner
+  | UserOpsWorkspaceShareErrorRevokedRecipient
+  | UserOpsWorkspaceShareErrorShareToSelf
+  | UserOpsWorkspaceShareErrorUnknownRecipient
+  | UserOpsWorkspaceShareErrorUnknownRecipientOrWorkspace
+  | UserOpsWorkspaceShareErrorUnknownWorkspace
+  | UserOpsWorkspaceShareErrorWorkspaceInMaintenance
 
 // WorkspaceStorageCacheSize
 export interface WorkspaceStorageCacheSizeCustom {
@@ -310,6 +412,21 @@ export interface LibParsecPlugin {
     clientListWorkspaces(
         handle: number
     ): Promise<Result<Array<[EntryID, EntryName]>, ClientListWorkspacesError>>
+    clientWorkspaceCreate(
+        handle: number,
+        name: EntryName
+    ): Promise<Result<EntryID, ClientWorkspaceCreateError>>
+    clientWorkspaceRename(
+        handle: number,
+        workspace_id: EntryID,
+        new_name: EntryName
+    ): Promise<Result<null, UserOpsError>>
+    clientWorkspaceShare(
+        handle: number,
+        workspace_id: EntryID,
+        recipient: UserID,
+        role: RealmRole | null
+    ): Promise<Result<null, UserOpsWorkspaceShareError>>
     listAvailableDevices(
         path: Path
     ): Promise<Array<AvailableDevice>>

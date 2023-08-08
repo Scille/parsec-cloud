@@ -75,6 +75,26 @@ export interface DeviceClaimFinalizeInfo {
 }
 
 
+// RealmRole
+export interface RealmRoleContributor {
+    tag: "Contributor"
+}
+export interface RealmRoleManager {
+    tag: "Manager"
+}
+export interface RealmRoleOwner {
+    tag: "Owner"
+}
+export interface RealmRoleReader {
+    tag: "Reader"
+}
+export type RealmRole =
+  | RealmRoleContributor
+  | RealmRoleManager
+  | RealmRoleOwner
+  | RealmRoleReader
+
+
 // DeviceAccessStrategy
 export interface DeviceAccessStrategyPassword {
     tag: "Password"
@@ -130,6 +150,92 @@ export interface ClientListWorkspacesErrorInternal {
 }
 export type ClientListWorkspacesError =
   | ClientListWorkspacesErrorInternal
+
+
+// ClientWorkspaceCreateError
+export interface ClientWorkspaceCreateErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type ClientWorkspaceCreateError =
+  | ClientWorkspaceCreateErrorInternal
+
+
+// UserOpsError
+export interface UserOpsErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface UserOpsErrorUnknownWorkspace {
+    tag: "UnknownWorkspace"
+    error: string
+}
+export type UserOpsError =
+  | UserOpsErrorInternal
+  | UserOpsErrorUnknownWorkspace
+
+
+// UserOpsWorkspaceShareError
+export interface UserOpsWorkspaceShareErrorBadTimestamp {
+    tag: "BadTimestamp"
+    error: string
+    server_timestamp: string
+    client_timestamp: string
+    ballpark_client_early_offset: number
+    ballpark_client_late_offset: number
+}
+export interface UserOpsWorkspaceShareErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface UserOpsWorkspaceShareErrorNotAllowed {
+    tag: "NotAllowed"
+    error: string
+}
+export interface UserOpsWorkspaceShareErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface UserOpsWorkspaceShareErrorOutsiderCannotBeManagerOrOwner {
+    tag: "OutsiderCannotBeManagerOrOwner"
+    error: string
+}
+export interface UserOpsWorkspaceShareErrorRevokedRecipient {
+    tag: "RevokedRecipient"
+    error: string
+}
+export interface UserOpsWorkspaceShareErrorShareToSelf {
+    tag: "ShareToSelf"
+    error: string
+}
+export interface UserOpsWorkspaceShareErrorUnknownRecipient {
+    tag: "UnknownRecipient"
+    error: string
+}
+export interface UserOpsWorkspaceShareErrorUnknownRecipientOrWorkspace {
+    tag: "UnknownRecipientOrWorkspace"
+    error: string
+}
+export interface UserOpsWorkspaceShareErrorUnknownWorkspace {
+    tag: "UnknownWorkspace"
+    error: string
+}
+export interface UserOpsWorkspaceShareErrorWorkspaceInMaintenance {
+    tag: "WorkspaceInMaintenance"
+    error: string
+}
+export type UserOpsWorkspaceShareError =
+  | UserOpsWorkspaceShareErrorBadTimestamp
+  | UserOpsWorkspaceShareErrorInternal
+  | UserOpsWorkspaceShareErrorNotAllowed
+  | UserOpsWorkspaceShareErrorOffline
+  | UserOpsWorkspaceShareErrorOutsiderCannotBeManagerOrOwner
+  | UserOpsWorkspaceShareErrorRevokedRecipient
+  | UserOpsWorkspaceShareErrorShareToSelf
+  | UserOpsWorkspaceShareErrorUnknownRecipient
+  | UserOpsWorkspaceShareErrorUnknownRecipientOrWorkspace
+  | UserOpsWorkspaceShareErrorUnknownWorkspace
+  | UserOpsWorkspaceShareErrorWorkspaceInMaintenance
 
 
 // WorkspaceStorageCacheSize
@@ -314,6 +420,21 @@ export function clientStop(
 export function clientListWorkspaces(
     handle: number
 ): Promise<Result<Array<[Uint8Array, string]>, ClientListWorkspacesError>>
+export function clientWorkspaceCreate(
+    handle: number,
+    name: string
+): Promise<Result<Uint8Array, ClientWorkspaceCreateError>>
+export function clientWorkspaceRename(
+    handle: number,
+    workspace_id: Uint8Array,
+    new_name: string
+): Promise<Result<null, UserOpsError>>
+export function clientWorkspaceShare(
+    handle: number,
+    workspace_id: Uint8Array,
+    recipient: string,
+    role: RealmRole | null
+): Promise<Result<null, UserOpsWorkspaceShareError>>
 export function listAvailableDevices(
     path: string
 ): Promise<Array<AvailableDevice>>

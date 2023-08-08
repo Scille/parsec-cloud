@@ -601,6 +601,50 @@ fn struct_deviceclaimfinalizeinfo_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// RealmRole
+
+#[allow(dead_code)]
+fn variant_realmrole_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::RealmRole> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "Contributor" => Ok(libparsec::RealmRole::Contributor {}),
+        "Manager" => Ok(libparsec::RealmRole::Manager {}),
+        "Owner" => Ok(libparsec::RealmRole::Owner {}),
+        "Reader" => Ok(libparsec::RealmRole::Reader {}),
+        _ => cx.throw_type_error("Object is not a RealmRole"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_realmrole_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::RealmRole,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::RealmRole::Contributor { .. } => {
+            let js_tag = JsString::try_new(cx, "Contributor").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::RealmRole::Manager { .. } => {
+            let js_tag = JsString::try_new(cx, "Manager").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::RealmRole::Owner { .. } => {
+            let js_tag = JsString::try_new(cx, "Owner").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::RealmRole::Reader { .. } => {
+            let js_tag = JsString::try_new(cx, "Reader").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // DeviceAccessStrategy
 
 #[allow(dead_code)]
@@ -764,6 +808,149 @@ fn variant_clientlistworkspaceserror_rs_to_js<'a>(
     match rs_obj {
         libparsec::ClientListWorkspacesError::Internal { .. } => {
             let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientWorkspaceCreateError
+
+#[allow(dead_code)]
+fn variant_clientworkspacecreateerror_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientWorkspaceCreateError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientWorkspaceCreateError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// UserOpsError
+
+#[allow(dead_code)]
+fn variant_useropserror_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::UserOpsError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::UserOpsError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UserOpsError::UnknownWorkspace { .. } => {
+            let js_tag = JsString::try_new(cx, "UnknownWorkspace").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// UserOpsWorkspaceShareError
+
+#[allow(dead_code)]
+fn variant_useropsworkspaceshareerror_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::UserOpsWorkspaceShareError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::UserOpsWorkspaceShareError::BadTimestamp {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "BadTimestamp").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_server_timestamp = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339().into())
+                    };
+                match custom_to_rs_string(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "server_timestamp", js_server_timestamp)?;
+            let js_client_timestamp = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339().into())
+                    };
+                match custom_to_rs_string(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "client_timestamp", js_client_timestamp)?;
+            let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
+            js_obj.set(
+                cx,
+                "ballpark_client_early_offset",
+                js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = JsNumber::new(cx, ballpark_client_late_offset);
+            js_obj.set(
+                cx,
+                "ballpark_client_late_offset",
+                js_ballpark_client_late_offset,
+            )?;
+        }
+        libparsec::UserOpsWorkspaceShareError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UserOpsWorkspaceShareError::NotAllowed { .. } => {
+            let js_tag = JsString::try_new(cx, "NotAllowed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UserOpsWorkspaceShareError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "Offline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UserOpsWorkspaceShareError::OutsiderCannotBeManagerOrOwner { .. } => {
+            let js_tag = JsString::try_new(cx, "OutsiderCannotBeManagerOrOwner").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UserOpsWorkspaceShareError::RevokedRecipient { .. } => {
+            let js_tag = JsString::try_new(cx, "RevokedRecipient").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UserOpsWorkspaceShareError::ShareToSelf { .. } => {
+            let js_tag = JsString::try_new(cx, "ShareToSelf").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UserOpsWorkspaceShareError::UnknownRecipient { .. } => {
+            let js_tag = JsString::try_new(cx, "UnknownRecipient").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UserOpsWorkspaceShareError::UnknownRecipientOrWorkspace { .. } => {
+            let js_tag = JsString::try_new(cx, "UnknownRecipientOrWorkspace").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UserOpsWorkspaceShareError::UnknownWorkspace { .. } => {
+            let js_tag = JsString::try_new(cx, "UnknownWorkspace").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UserOpsWorkspaceShareError::WorkspaceInMaintenance { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceInMaintenance").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -1464,6 +1651,238 @@ fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err = variant_clientlistworkspaceserror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_workspace_create
+fn client_workspace_create(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let name = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, _> {
+                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_workspace_create(handle, name).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            let rs_buff = {
+                                let custom_to_rs_bytes =
+                                    |x: libparsec::EntryID| -> Result<_, &'static str> {
+                                        Ok(x.as_bytes().to_owned())
+                                    };
+                                match custom_to_rs_bytes(ok) {
+                                    Ok(ok) => ok,
+                                    Err(err) => return cx.throw_type_error(err),
+                                }
+                            };
+                            let mut js_buff = JsArrayBuffer::new(&mut cx, rs_buff.len())?;
+                            let js_buff_slice = js_buff.as_mut_slice(&mut cx);
+                            for (i, c) in rs_buff.iter().enumerate() {
+                                js_buff_slice[i] = *c;
+                            }
+                            js_buff
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_clientworkspacecreateerror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_workspace_rename
+fn client_workspace_rename(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let workspace_id = {
+        let js_val = cx.argument::<JsTypedArray<u8>>(1)?;
+        {
+            let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
+                libparsec::EntryID::try_from(x).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    let new_name = {
+        let js_val = cx.argument::<JsString>(2)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, _> {
+                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_workspace_rename(handle, workspace_id, new_name).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_useropserror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_workspace_share
+fn client_workspace_share(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let workspace_id = {
+        let js_val = cx.argument::<JsTypedArray<u8>>(1)?;
+        {
+            let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
+                libparsec::EntryID::try_from(x).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    let recipient = {
+        let js_val = cx.argument::<JsString>(2)?;
+        {
+            match js_val.value(&mut cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let role = match cx.argument_opt(3) {
+        Some(v) => match v.downcast::<JsObject, _>(&mut cx) {
+            Ok(js_val) => Some(variant_realmrole_js_to_rs(&mut cx, js_val)?),
+            Err(_) => None,
+        },
+        None => None,
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::client_workspace_share(handle, workspace_id, recipient, role).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_useropsworkspaceshareerror_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -2440,6 +2859,9 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("clientStart", client_start)?;
     cx.export_function("clientStop", client_stop)?;
     cx.export_function("clientListWorkspaces", client_list_workspaces)?;
+    cx.export_function("clientWorkspaceCreate", client_workspace_create)?;
+    cx.export_function("clientWorkspaceRename", client_workspace_rename)?;
+    cx.export_function("clientWorkspaceShare", client_workspace_share)?;
     cx.export_function("listAvailableDevices", list_available_devices)?;
     cx.export_function("bootstrapOrganization", bootstrap_organization)?;
     cx.export_function("claimerRetrieveInfo", claimer_retrieve_info)?;

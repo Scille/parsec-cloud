@@ -76,7 +76,7 @@ let {{ param_name }} =
 {% if type.custom_from_rs_bytes -%}
 {
     let custom_from_rs_bytes = {{ type.custom_from_rs_bytes }};
-    custom_from_rs_bytes({{ param_name }})
+    custom_from_rs_bytes(&{{ param_name }}.to_vec())
         .map_err(|e| TypeError::new(e.as_ref()))
 }?;
 {%- else -%}
@@ -128,7 +128,6 @@ if {{ js_val }}.is_null() {
 } else {
     Some({{ render_js_value_to_rs("js_val", type.elem) }})
 }
-{%- elif type.kind == "none" -%}
 {%- elif type.kind == "none" -%}
 {
     let _ = {{ js_val }};
