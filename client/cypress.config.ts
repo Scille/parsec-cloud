@@ -48,6 +48,9 @@ export default defineConfig({
     supportFile: 'tests/e2e/support/index.ts',
     specPattern: 'tests/e2e/specs/**.ts',
     fixturesFolder: 'tests/e2e/fixtures',
+    // Most common small resolution
+    viewportHeight: 768,
+    viewportWidth: 1366,
   },
   component: {
     screenshotsFolder: 'tests/component/screenshots',
@@ -62,7 +65,4 @@ export default defineConfig({
       bundler: 'vite',
     },
   },
-  // TODO: investigate how to use it properly
-  // viewportHeight: 1440,
-  // viewportWidth: 2560
 });
