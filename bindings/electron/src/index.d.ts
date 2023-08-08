@@ -123,6 +123,15 @@ export type ClientStopError =
   | ClientStopErrorInternal
 
 
+// ClientListWorkspacesError
+export interface ClientListWorkspacesErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type ClientListWorkspacesError =
+  | ClientListWorkspacesErrorInternal
+
+
 // WorkspaceStorageCacheSize
 export interface WorkspaceStorageCacheSizeCustom {
     tag: "Custom"
@@ -302,6 +311,9 @@ export function clientStart(
 export function clientStop(
     handle: number
 ): Promise<Result<null, ClientStopError>>
+export function clientListWorkspaces(
+    handle: number
+): Promise<Result<Array<[Uint8Array, string]>, ClientListWorkspacesError>>
 export function listAvailableDevices(
     path: string
 ): Promise<Array<AvailableDevice>>
