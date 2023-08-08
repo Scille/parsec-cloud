@@ -11,6 +11,12 @@
 {{ function_param_type(type.elem) }}
 {%- elif type.kind == "list" -%}
 Vec<{{ function_param_type(type.elem) }}>
+{%- elif type.kind == "tuple" -%}
+(
+    {%- for value in type.values -%}
+        {{- function_param_type(value) }}{{ ", " if not loop.last else "" }}
+    {%- endfor -%}
+)
 {%- elif type.kind == "optional" -%}
 Option<{{ function_param_type(type.elem) }}>
 {%- elif type.kind == "none" -%}
@@ -258,6 +264,22 @@ JsValue::from(Uint8Array::from({%- if type.custom_to_rs_bytes -%}
         let js_elem = {{ render_rs_to_js_value("elem", type.elem) | indent(8) }};
         js_array.set(i as u32, js_elem);
     }
+    js_array.into()
+}
+{%- elif type.kind == "tuple" -%}
+{
+    let (
+    {%- for value in type.values -%}
+        {% set value_var_name = "x" ~ loop.index %}
+        {{- value_var_name }}{{ ", " if not loop.last else "" -}}
+    {%- endfor -%}
+    ) = {{ rs_value }};
+    let js_array = Array::new_with_length({{ type.values | length }});
+    {%- for value in type.values -%}
+        {% set value_var_name = "x" ~ loop.index %}
+        let js_value = {{ render_rs_to_js_value(value_var_name, value) | indent(8) }};
+        js_array.set(i as u32, js_value);
+    {%- endfor -%}
     js_array.into()
 }
 {%- elif type.kind == "result" -%}

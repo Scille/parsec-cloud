@@ -12,6 +12,12 @@ Result<{{ render_type(t.ok) }}, {{ render_type(t.err) }}>
 {{ t.name }}
 {%- elif t.kind == "list" -%}
 Array<{{ render_type(t.elem) }}>
+{%- elif t.kind == "tuple" -%}
+[
+    {%- for value in t.values -%}
+        {{- render_type(value) }}{{ ", " if not loop.last else "" }}
+    {%- endfor -%}
+]
 {%- elif t.kind == "none" -%}
 null
 {%- elif t.kind == "bool" -%}

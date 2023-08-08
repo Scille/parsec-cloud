@@ -10,7 +10,7 @@ from importlib import import_module
 from inspect import isclass, iscoroutinefunction, isfunction, signature
 from pathlib import Path
 from types import ModuleType
-from typing import Dict, List, Optional, OrderedDict, Type, Union
+from typing import Dict, List, Optional, OrderedDict, Tuple, Type, Union
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
@@ -101,6 +101,9 @@ class BaseTypeInUse:
             assert len(param.__args__) == 1
             return ListTypeInUse(BaseTypeInUse.parse(param.__args__[0]))
 
+        elif origin in (tuple, Tuple):
+            return TupleTypeInUse([BaseTypeInUse.parse(x) for x in param.__args__])
+
         elif origin is Result:
             assert len(param.__args__) == 2
             ok_param, err_param = param.__args__
@@ -165,6 +168,12 @@ class OptionalTypeInUse(BaseTypeInUse):
 class ListTypeInUse(BaseTypeInUse):
     kind = "list"
     elem: BaseTypeInUse
+
+
+@dataclass
+class TupleTypeInUse(BaseTypeInUse):
+    kind = "tuple"
+    values: List[BaseTypeInUse]
 
 
 @dataclass

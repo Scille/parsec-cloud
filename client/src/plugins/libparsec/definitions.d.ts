@@ -8,6 +8,7 @@ export type Result<T, E = Error> =
   | { ok: true; value: T }
   | { ok: false; error: E }
 
+type EntryName = string
 type Password = string
 type Path = string
 type OrganizationID = string
@@ -21,6 +22,7 @@ type BackendOrganizationAddr = string
 type BackendOrganizationBootstrapAddr = string
 type BackendInvitationAddr = string
 type SASCode = string
+type EntryID = Uint8Array
 type SequesterVerifyKeyDer = Uint8Array
 type Handle = number
 type CacheSize = number
@@ -124,6 +126,14 @@ export interface ClientStopErrorInternal {
 }
 export type ClientStopError =
   | ClientStopErrorInternal
+
+// ClientListWorkspacesError
+export interface ClientListWorkspacesErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export type ClientListWorkspacesError =
+  | ClientListWorkspacesErrorInternal
 
 // WorkspaceStorageCacheSize
 export interface WorkspaceStorageCacheSizeCustom {
@@ -297,6 +307,9 @@ export interface LibParsecPlugin {
     clientStop(
         handle: number
     ): Promise<Result<null, ClientStopError>>
+    clientListWorkspaces(
+        handle: number
+    ): Promise<Result<Array<[EntryID, EntryName]>, ClientListWorkspacesError>>
     listAvailableDevices(
         path: Path
     ): Promise<Array<AvailableDevice>>

@@ -751,6 +751,25 @@ fn variant_clientstoperror_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ClientListWorkspacesError
+
+#[allow(dead_code)]
+fn variant_clientlistworkspaceserror_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientListWorkspacesError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientListWorkspacesError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceStorageCacheSize
 
 #[allow(dead_code)]
@@ -1362,6 +1381,89 @@ fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err = variant_clientstoperror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_list_workspaces
+fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_list_workspaces(handle).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            // JsArray::new allocates with `undefined` value, that's why we `set` value
+                            let js_array = JsArray::new(&mut cx, ok.len() as u32);
+                            for (i, elem) in ok.into_iter().enumerate() {
+                                let js_elem = {
+                                    let (x1, x2) = elem;
+                                    let js_array = JsArray::new(&mut cx, 2);
+                                    let js_value = {
+                                        let rs_buff = {
+                                            let custom_to_rs_bytes =
+                                                |x: libparsec::EntryID| -> Result<_, &'static str> {
+                                                    Ok(x.as_bytes().to_owned())
+                                                };
+                                            match custom_to_rs_bytes(x1) {
+                                                Ok(ok) => ok,
+                                                Err(err) => return cx.throw_type_error(err),
+                                            }
+                                        };
+                                        let mut js_buff =
+                                            JsArrayBuffer::new(&mut cx, rs_buff.len())?;
+                                        let js_buff_slice = js_buff.as_mut_slice(&mut cx);
+                                        for (i, c) in rs_buff.iter().enumerate() {
+                                            js_buff_slice[i] = *c;
+                                        }
+                                        js_buff
+                                    };
+                                    js_array.set(&mut cx, i as u32, js_value)?;
+                                    let js_value =
+                                        JsString::try_new(&mut cx, x2).or_throw(&mut cx)?;
+                                    js_array.set(&mut cx, i as u32, js_value)?;
+                                    js_array
+                                };
+                                js_array.set(&mut cx, i as u32, js_elem)?;
+                            }
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_clientlistworkspaceserror_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -2337,6 +2439,7 @@ fn test_drop_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
 pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("clientStart", client_start)?;
     cx.export_function("clientStop", client_stop)?;
+    cx.export_function("clientListWorkspaces", client_list_workspaces)?;
     cx.export_function("listAvailableDevices", list_available_devices)?;
     cx.export_function("bootstrapOrganization", bootstrap_organization)?;
     cx.export_function("claimerRetrieveInfo", claimer_retrieve_info)?;

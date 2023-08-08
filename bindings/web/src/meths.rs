@@ -795,6 +795,23 @@ fn variant_clientstoperror_rs_to_js(
     Ok(js_obj)
 }
 
+// ClientListWorkspacesError
+
+#[allow(dead_code)]
+fn variant_clientlistworkspaceserror_rs_to_js(
+    rs_obj: libparsec::ClientListWorkspacesError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientListWorkspacesError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceStorageCacheSize
 
 #[allow(dead_code)]
@@ -1330,6 +1347,59 @@ pub fn clientStop(handle: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_clientstoperror_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_list_workspaces
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientListWorkspaces(handle: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::client_list_workspaces(handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(value.len() as u32);
+                    for (i, elem) in value.into_iter().enumerate() {
+                        let js_elem = {
+                            let (x1, x2) = elem;
+                            let js_array = Array::new_with_length(2);
+                            let js_value = JsValue::from(Uint8Array::from({
+                                let custom_to_rs_bytes =
+                                    |x: libparsec::EntryID| -> Result<_, &'static str> {
+                                        Ok(x.as_bytes().to_owned())
+                                    };
+                                match custom_to_rs_bytes(x1) {
+                                    Ok(ok) => ok,
+                                    Err(err) => {
+                                        return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    }
+                                }
+                                .as_ref()
+                            }));
+                            js_array.set(i as u32, js_value);
+                            let js_value = JsValue::from_str(x2.as_ref());
+                            js_array.set(i as u32, js_value);
+                            js_array.into()
+                        };
+                        js_array.set(i as u32, js_elem);
+                    }
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_clientlistworkspaceserror_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

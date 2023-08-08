@@ -11,6 +11,8 @@
 {{ ts_type(type.elem) }}
 {%- elif type.kind == "list" -%}
 JsArray
+{%- elif type.kind == "tuple" -%}
+JsArray
 {%- elif type.kind == "optional" -%}
 JsValue
 {%- elif type.kind == "none" -%}
@@ -63,6 +65,16 @@ JsFunction
     }
     v
 }
+{%- elif type.kind == "tuple" -%}
+(
+{%- for value in type.values -%}
+    {
+        let js_item: Handle<{{ ts_type(value) }}> = {{ js_val }}.get({{ mut_cx_ref }}, {{ loop.index }})?;
+        {{ render_downcasted_js_to_rs(js_value, value, mut_cx_ref) | indent(8) }}
+    }
+    {{ ", " if not loop.last else "" -}}
+{%- endfor -%}
+)
 {%- elif type.kind == "optional" -%}
 {
     if {{ js_val }}.is_a::<JsNull, _>({{ mut_cx_ref }}) {
@@ -201,6 +213,22 @@ std::sync::Arc::new(
         let js_elem = {{ render_rs_to_js("elem", type.elem, mut_cx_ref) | indent(8) }};
         js_array.set({{ mut_cx_ref }}, i as u32, js_elem)?;
     }
+    js_array
+}
+{%- elif type.kind == "tuple" -%}
+{
+    let (
+    {%- for value in type.values -%}
+        {% set value_var_name = "x" ~ loop.index %}
+        {{- value_var_name }}{{ ", " if not loop.last else "" -}}
+    {%- endfor -%}
+    ) = {{ rs_value }};
+    let js_array = JsArray::new({{ mut_cx_ref }}, {{ type.values | length }});
+    {%- for value in type.values -%}
+        {% set value_var_name = "x" ~ loop.index %}
+        let js_value = {{ render_rs_to_js(value_var_name, value, mut_cx_ref) | indent(8) }};
+        js_array.set({{ mut_cx_ref }}, i as u32, js_value)?;
+    {%- endfor -%}
     js_array
 }
 {%- elif type.kind == "optional" -%}
@@ -476,8 +504,6 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 {% if meth.return_type is none %}
         libparsec::{{ meth.name }}(
-{% elif meth.return_type.kind == "list" %}
-        let ret = libparsec::{{ meth.name }}(
 {% else %}
         let ret = libparsec::{{ meth.name }}(
 {% endif %}
@@ -527,8 +553,6 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
 {# Call actual function #}
 {% if meth.return_type is none %}
     libparsec::{{ meth.name }}(
-{% elif meth.return_type.kind == "list" %}
-    let ret = libparsec::{{ meth.name }}(
 {% else %}
     let ret = libparsec::{{ meth.name }}(
 {% endif %}
