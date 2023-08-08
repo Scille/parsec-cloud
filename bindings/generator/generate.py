@@ -121,6 +121,9 @@ class BaseTypeInUse:
             # spec.event_type = param.__orig_bases__[0].__args__[0]
             return spec
 
+        elif param is type(None):
+            return NoneTypeInUse()
+
         elif isinstance(param, type) and issubclass(param, StrBasedType):
             return StrBasedTypeInUse(
                 name=param.__name__,
@@ -145,6 +148,11 @@ class BaseTypeInUse:
             typespec = TYPESDB.get(param)
             assert typespec is not None, f"Bad param `{param!r}`, not a scalar/variant/struct"
             return typespec
+
+
+@dataclass
+class NoneTypeInUse(BaseTypeInUse):
+    kind = "none"
 
 
 @dataclass

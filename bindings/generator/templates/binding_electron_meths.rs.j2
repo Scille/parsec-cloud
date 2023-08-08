@@ -13,6 +13,8 @@
 JsArray
 {%- elif type.kind == "optional" -%}
 JsValue
+{%- elif type.kind == "none" -%}
+JsNull
 {%- elif type.kind == "bool" -%}
 JsBoolean
 {%- elif type.kind in ("i32_based", "u32_based", "float") -%}
@@ -56,7 +58,7 @@ JsFunction
     let size = {{ js_val }}.len({{ mut_cx_ref }});
     let mut v = Vec::with_capacity(size as usize);
     for i in 0..size {
-        let js_item = {{ js_val }}.get({{ mut_cx_ref }}, i)?;
+        let js_item: Handle<{{ ts_type(type.elem) }}> = {{ js_val }}.get({{ mut_cx_ref }}, i)?;
         v.push({{ render_downcasted_js_to_rs("js_item", type.elem, mut_cx_ref) | indent(8) }});
     }
     v
@@ -81,6 +83,11 @@ JsFunction
         let js_val = {{ js_val }}.get::<{{ ts_type(type.err) }}, _, _>({{ mut_cx_ref }}, "error")?;
         {{ render_downcasted_js_to_rs("js_val", type.err, mut_cx_ref) | indent(8) }}
     }
+}
+{%- elif type.kind == "none" -%}
+{
+    let _ = {{ js_val }};
+    ()
 }
 {%- elif type.kind == "i32_based" -%}
 {
@@ -221,6 +228,11 @@ match {{ rs_value }} {
         js_obj.set({{ mut_cx_ref }}, "error", js_err)?;
         js_obj
     }
+}
+{%- elif type.kind == "none" -%}
+{
+    let _ = {{ rs_value }};
+    JsNull::new({{ mut_cx_ref }})
 }
 {%- elif type.kind == "bool" -%}
 JsBoolean::new({{ mut_cx_ref }}, {{ rs_value }})

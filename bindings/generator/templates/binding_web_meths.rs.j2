@@ -9,12 +9,12 @@
 {%- macro function_param_type(type) -%}
 {%- if type.kind == "ref" -%}
 {{ function_param_type(type.elem) }}
-{%- elif type.kind == "ref" -%}
-&{{ function_param_type(type.elem) }}
 {%- elif type.kind == "list" -%}
 Vec<{{ function_param_type(type.elem) }}>
 {%- elif type.kind == "optional" -%}
 Option<{{ function_param_type(type.elem) }}>
+{%- elif type.kind == "none" -%}
+null
 {%- elif type.kind == "bool" -%}
 bool
 {%- elif type.kind == "i32_based" -%}
@@ -122,6 +122,12 @@ if {{ js_val }}.is_null() {
 } else {
     Some({{ render_js_value_to_rs("js_val", type.elem) }})
 }
+{%- elif type.kind == "none" -%}
+{%- elif type.kind == "none" -%}
+{
+    let _ = {{ js_val }};
+    ()
+}
 {%- elif type.kind == "bool" -%}
 {{ js_val }}.dyn_into::<Boolean>().map_err(|_| TypeError::new("Not a boolean"))?.value_of()
 {%- elif type.kind == "i32_based" -%}
@@ -208,6 +214,11 @@ if {{ js_val }}.is_null() {
 match {{ rs_value }} {
     Some(val) => {{ render_rs_to_js_value("val", type.elem) }},
     None => JsValue::NULL,
+}
+{%- elif type.kind == "none" -%}
+{
+    let _ = {{ rs_value }};
+    JsValue::null()
 }
 {%- elif type.kind in ("i32_based", "u32_based") -%}
 JsValue::from({{ rs_value }})
