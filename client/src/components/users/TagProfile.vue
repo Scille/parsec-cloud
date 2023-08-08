@@ -28,7 +28,7 @@ function translateProfile(profile: Profile): string {
     return t('UsersPage.role.admin');
   } else if (profile === Profile.Standard) {
     return t('UsersPage.role.standard');
-  } else if (profile === Profile.External) {
+  } else if (profile === Profile.Outsider) {
     return t('UsersPage.role.external');
   }
   return '';

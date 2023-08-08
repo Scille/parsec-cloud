@@ -42,6 +42,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  defaultDevice: {
+    type: String,
+    default: '',
+  },
   emailEnabled: {
     type: Boolean,
     default: true,
@@ -56,7 +60,7 @@ const props = defineProps({
   },
 });
 
-const deviceName = ref(getDefaultDeviceName());
+const deviceName = ref(props.defaultDevice || getDefaultDeviceName());
 const email = ref(props.defaultEmail);
 const fullName = ref(props.defaultName);
 

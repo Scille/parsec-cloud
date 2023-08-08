@@ -51,9 +51,11 @@ describe('Check manage org page', () => {
     cy.get('.sidebar').find('.user-menu').find('ion-item').as('userItems');
     checkUserMenuSelected(0);
     cy.get('@userItems').eq(1).click();
-    checkUserMenuSelected(1);
+    cy.wait(200);
     cy.get('.topbar-left').find('.title-h2').contains('Revoked users');
+    checkUserMenuSelected(1);
     cy.get('@userItems').eq(2).click();
+    cy.wait(200);
     checkUserMenuSelected(2);
     cy.get('.topbar-left').find('.title-h2').contains('Invitations');
 

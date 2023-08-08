@@ -390,7 +390,6 @@
         "inviteUser": "Inviter un utilisateur",
         "itemCount": "Aucun utilisateur | Un utilisateur | {count} utilisateurs",
         "role": {
-            "owner": "Propriétaire",
             "admin": "Administrateur",
             "standard": "Standard",
             "external": "Externe"
@@ -402,6 +401,30 @@
             "actionRevoke": "Révoquer cet utilisateur | Révoquer ces utilisateurs",
             "actionDetails": "Voir le détail",
             "actionSeeCommonWorkspaces": "Voir les espaces de travail communs"
+        },
+        "greet": {
+            "titles": {
+                "waitForGuest": "Accueillir un nouvel utilisateur",
+                "provideHostCode": "Partagez votre code",
+                "getGuestCode": "Réception du code de l'invité",
+                "contactDetails": "Coordonnées",
+                "summary": "L'utilisateur a bien été ajouté !"
+            },
+            "subtitles": {
+                "waitForGuest1": "Pour accueillir un nouvel utilisateur vous devez être en contact direct avec la personne pendant la durée de l'inscription (environ 2 min).",
+                "waitForGuest2": "Il ne faudra pas quitter la session.",
+                "provideHostCode": "Veuillez communiquer le code ci-dessous à l'invité.",
+                "getGuestCode": "Cliquez sur le code que vous donne l'invité.",
+                "getUserInfo": "Patientez le temps que l'invité saisisse ses coordonnées.",
+                "checkUserInfo": "Vous pouvez modifier le nom de l'utilisateur, son appareil et définir son profil.",
+                "summary": "{name} a été ajouté(e) à l'organisation."
+            },
+            "actions": {
+                "start": "Démarrer",
+                "finish": "Terminer",
+                "approve": "Approuver"
+            },
+            "profilePlaceholder": "Choisissez un profil"
         }
     },
     "AboutPage": {
