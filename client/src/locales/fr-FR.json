@@ -78,11 +78,13 @@
         "next": "Suivant",
         "previous": "Précédent",
         "done": "Terminer",
+        "modify": "Modifier",
         "title": {
             "create": "Créez une nouvelle organisation",
             "personalDetails": "Saisissez vos informations",
             "server": "Choisissez votre serveur adapté",
             "password": "Créez votre mot de passe",
+            "overview": "Récapitulatif de votre organisation",
             "done": "Votre organisation a bien été créée !"
         },
         "subtitles": {
@@ -90,6 +92,7 @@
             "personalDetails": "Indiquez votre nom, votre e-mail et le nom de votre appareil.",
             "server": "Choisissez le type de serveur que vous avez besoin.",
             "password": "Pour finir créez votre mot de passe.",
+            "overview": "Vérifier que les informations sont correctes.",
             "Waiting": "Un instant, nous mettons en place votre organisation.",
             "Done": "Vous pouvez accéder à votre nouvelle organisation."
         }
