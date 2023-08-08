@@ -118,7 +118,12 @@ function build_wasm(cargo_flags) {
     "build",
     "--target=web",
     "--locked",
-    ...cargo_flags
+    ...cargo_flags,
+    // If we don't force the target dir, the default one is used (i.e. `target/<profile>`)
+    // However this clashes with native platform builds (i.e. `cargo build`): both
+    // builds uses the same target dir and overwrite each other work !
+    "--target-dir",
+    path.resolve(ROOT_DIR, "target", TARGET),
   ];
 
   exec_cmd(
