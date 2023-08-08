@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use std::sync::{Mutex, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock};
 
 pub type Handle = u32;
 
@@ -10,7 +10,7 @@ pub(crate) enum RegisteredHandleItem {
 }
 
 pub(crate) enum HandleItem {
-    Client((libparsec_client::Client, crate::OnEventCallbackPlugged)),
+    Client((Arc<libparsec_client::Client>, crate::OnEventCallbackPlugged)),
     UserClaimInitial(libparsec_client::UserClaimInitialCtx),
     DeviceClaimInitial(libparsec_client::DeviceClaimInitialCtx),
     UserClaimInProgress1(libparsec_client::UserClaimInProgress1Ctx),
@@ -56,4 +56,21 @@ pub(crate) fn take_and_close_handle<T>(
             }
         }
     })
+}
+
+pub(crate) fn borrow_from_handle<T>(
+    handle: Handle,
+    mapper: impl Fn(&HandleItem) -> Option<T>,
+) -> Option<T> {
+    let mut guard = HANDLES
+        .get_or_init(Default::default)
+        .lock()
+        .expect("Mutex is poisoned");
+
+    guard
+        .get_mut(handle as usize)
+        .and_then(|maybe_running| match maybe_running {
+            RegisteredHandleItem::Closed => None,
+            RegisteredHandleItem::Running(item) => mapper(item),
+        })
 }

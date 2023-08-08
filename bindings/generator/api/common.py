@@ -153,3 +153,16 @@ class SequesterVerifyKeyDer(BytesBasedType):
 
 class SASCode(StrBasedType):
     pass
+
+
+class EntryName(StrBasedType):
+    pass
+
+
+class EntryID(BytesBasedType):
+    custom_from_rs_bytes = (
+        "|x: &[u8]| -> Result<_, _> { libparsec::EntryID::try_from(x).map_err(|e| e.to_string() }"
+    )
+    custom_to_rs_bytes = (
+        "|x: libparsec::EntryID| -> Result<_, &'static str> { Ok(x.as_bytes().to_owned()) }"
+    )

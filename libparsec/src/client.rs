@@ -6,9 +6,13 @@ use libparsec_types::prelude::*;
 pub use libparsec_types::DeviceAccessStrategy;
 
 use crate::{
-    handle::{register_handle, take_and_close_handle, Handle, HandleItem},
+    handle::{borrow_from_handle, register_handle, take_and_close_handle, Handle, HandleItem},
     ClientConfig, ClientEvent, OnEventCallbackPlugged,
 };
+
+/*
+ * Start
+ */
 
 #[derive(Debug, thiserror::Error)]
 pub enum ClientStartError {
@@ -66,10 +70,14 @@ pub async fn client_start(
         .await
         .map_err(ClientStartError::Internal)?;
 
-    let handle = register_handle(HandleItem::Client((client, events_plugged)));
+    let handle = register_handle(HandleItem::Client((Arc::new(client), events_plugged)));
 
     Ok(handle)
 }
+
+/*
+ * Stop
+ */
 
 #[derive(Debug, thiserror::Error)]
 pub enum ClientStopError {
@@ -91,4 +99,26 @@ pub async fn client_stop(handle: Handle) -> Result<(), ClientStopError> {
     drop(events_plugged);
 
     Ok(())
+}
+
+/*
+ * List workspaces
+ */
+
+#[derive(Debug, thiserror::Error)]
+pub enum ClientListWorkspacesError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub async fn client_list_workspaces(
+    handle: Handle,
+) -> Result<Vec<(EntryID, EntryName)>, ClientListWorkspacesError> {
+    let client = borrow_from_handle(handle, |x| match x {
+        crate::handle::HandleItem::Client((client, _)) => Some(client.clone()),
+        _ => None,
+    })
+    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+
+    Ok(client.user_ops.list_workspaces())
 }
