@@ -241,13 +241,13 @@ fn struct_availabledevice_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// UserClaimInProgress1CtxHandle
+// UserClaimInProgress1Info
 
 #[allow(dead_code)]
-fn struct_userclaiminprogress1ctxhandle_js_to_rs<'a>(
+fn struct_userclaiminprogress1info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::UserClaimInProgress1CtxHandle> {
+) -> NeonResult<libparsec::UserClaimInProgress1Info> {
     let handle = {
         let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
         {
@@ -273,7 +273,7 @@ fn struct_userclaiminprogress1ctxhandle_js_to_rs<'a>(
             let size = js_val.len(cx);
             let mut v = Vec::with_capacity(size as usize);
             for i in 0..size {
-                let js_item = js_val.get(cx, i)?;
+                let js_item: Handle<JsString> = js_val.get(cx, i)?;
                 v.push({
                     match js_item.value(cx).parse() {
                         Ok(val) => val,
@@ -284,7 +284,7 @@ fn struct_userclaiminprogress1ctxhandle_js_to_rs<'a>(
             v
         }
     };
-    Ok(libparsec::UserClaimInProgress1CtxHandle {
+    Ok(libparsec::UserClaimInProgress1Info {
         handle,
         greeter_sas,
         greeter_sas_choices,
@@ -292,9 +292,9 @@ fn struct_userclaiminprogress1ctxhandle_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_userclaiminprogress1ctxhandle_rs_to_js<'a>(
+fn struct_userclaiminprogress1info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::UserClaimInProgress1CtxHandle,
+    rs_obj: libparsec::UserClaimInProgress1Info,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
@@ -314,13 +314,13 @@ fn struct_userclaiminprogress1ctxhandle_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// DeviceClaimInProgress1CtxHandle
+// DeviceClaimInProgress1Info
 
 #[allow(dead_code)]
-fn struct_deviceclaiminprogress1ctxhandle_js_to_rs<'a>(
+fn struct_deviceclaiminprogress1info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::DeviceClaimInProgress1CtxHandle> {
+) -> NeonResult<libparsec::DeviceClaimInProgress1Info> {
     let handle = {
         let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
         {
@@ -346,7 +346,7 @@ fn struct_deviceclaiminprogress1ctxhandle_js_to_rs<'a>(
             let size = js_val.len(cx);
             let mut v = Vec::with_capacity(size as usize);
             for i in 0..size {
-                let js_item = js_val.get(cx, i)?;
+                let js_item: Handle<JsString> = js_val.get(cx, i)?;
                 v.push({
                     match js_item.value(cx).parse() {
                         Ok(val) => val,
@@ -357,7 +357,7 @@ fn struct_deviceclaiminprogress1ctxhandle_js_to_rs<'a>(
             v
         }
     };
-    Ok(libparsec::DeviceClaimInProgress1CtxHandle {
+    Ok(libparsec::DeviceClaimInProgress1Info {
         handle,
         greeter_sas,
         greeter_sas_choices,
@@ -365,9 +365,9 @@ fn struct_deviceclaiminprogress1ctxhandle_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_deviceclaiminprogress1ctxhandle_rs_to_js<'a>(
+fn struct_deviceclaiminprogress1info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::DeviceClaimInProgress1CtxHandle,
+    rs_obj: libparsec::DeviceClaimInProgress1Info,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
@@ -387,13 +387,13 @@ fn struct_deviceclaiminprogress1ctxhandle_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// UserClaimInProgress2CtxHandle
+// UserClaimInProgress2Info
 
 #[allow(dead_code)]
-fn struct_userclaiminprogress2ctxhandle_js_to_rs<'a>(
+fn struct_userclaiminprogress2info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::UserClaimInProgress2CtxHandle> {
+) -> NeonResult<libparsec::UserClaimInProgress2Info> {
     let handle = {
         let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
         {
@@ -413,16 +413,16 @@ fn struct_userclaiminprogress2ctxhandle_js_to_rs<'a>(
             }
         }
     };
-    Ok(libparsec::UserClaimInProgress2CtxHandle {
+    Ok(libparsec::UserClaimInProgress2Info {
         handle,
         claimer_sas,
     })
 }
 
 #[allow(dead_code)]
-fn struct_userclaiminprogress2ctxhandle_rs_to_js<'a>(
+fn struct_userclaiminprogress2info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::UserClaimInProgress2CtxHandle,
+    rs_obj: libparsec::UserClaimInProgress2Info,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
@@ -432,13 +432,13 @@ fn struct_userclaiminprogress2ctxhandle_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// DeviceClaimInProgress2CtxHandle
+// DeviceClaimInProgress2Info
 
 #[allow(dead_code)]
-fn struct_deviceclaiminprogress2ctxhandle_js_to_rs<'a>(
+fn struct_deviceclaiminprogress2info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::DeviceClaimInProgress2CtxHandle> {
+) -> NeonResult<libparsec::DeviceClaimInProgress2Info> {
     let handle = {
         let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
         {
@@ -458,16 +458,16 @@ fn struct_deviceclaiminprogress2ctxhandle_js_to_rs<'a>(
             }
         }
     };
-    Ok(libparsec::DeviceClaimInProgress2CtxHandle {
+    Ok(libparsec::DeviceClaimInProgress2Info {
         handle,
         claimer_sas,
     })
 }
 
 #[allow(dead_code)]
-fn struct_deviceclaiminprogress2ctxhandle_rs_to_js<'a>(
+fn struct_deviceclaiminprogress2info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::DeviceClaimInProgress2CtxHandle,
+    rs_obj: libparsec::DeviceClaimInProgress2Info,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
@@ -477,13 +477,13 @@ fn struct_deviceclaiminprogress2ctxhandle_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// UserClaimInProgress3CtxHandle
+// UserClaimInProgress3Info
 
 #[allow(dead_code)]
-fn struct_userclaiminprogress3ctxhandle_js_to_rs<'a>(
+fn struct_userclaiminprogress3info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::UserClaimInProgress3CtxHandle> {
+) -> NeonResult<libparsec::UserClaimInProgress3Info> {
     let handle = {
         let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
         {
@@ -494,13 +494,13 @@ fn struct_userclaiminprogress3ctxhandle_js_to_rs<'a>(
             v as u32
         }
     };
-    Ok(libparsec::UserClaimInProgress3CtxHandle { handle })
+    Ok(libparsec::UserClaimInProgress3Info { handle })
 }
 
 #[allow(dead_code)]
-fn struct_userclaiminprogress3ctxhandle_rs_to_js<'a>(
+fn struct_userclaiminprogress3info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::UserClaimInProgress3CtxHandle,
+    rs_obj: libparsec::UserClaimInProgress3Info,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
@@ -508,13 +508,13 @@ fn struct_userclaiminprogress3ctxhandle_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// DeviceClaimInProgress3CtxHandle
+// DeviceClaimInProgress3Info
 
 #[allow(dead_code)]
-fn struct_deviceclaiminprogress3ctxhandle_js_to_rs<'a>(
+fn struct_deviceclaiminprogress3info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::DeviceClaimInProgress3CtxHandle> {
+) -> NeonResult<libparsec::DeviceClaimInProgress3Info> {
     let handle = {
         let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
         {
@@ -525,13 +525,13 @@ fn struct_deviceclaiminprogress3ctxhandle_js_to_rs<'a>(
             v as u32
         }
     };
-    Ok(libparsec::DeviceClaimInProgress3CtxHandle { handle })
+    Ok(libparsec::DeviceClaimInProgress3Info { handle })
 }
 
 #[allow(dead_code)]
-fn struct_deviceclaiminprogress3ctxhandle_rs_to_js<'a>(
+fn struct_deviceclaiminprogress3info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::DeviceClaimInProgress3CtxHandle,
+    rs_obj: libparsec::DeviceClaimInProgress3Info,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
@@ -539,13 +539,13 @@ fn struct_deviceclaiminprogress3ctxhandle_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// UserClaimFinalizeCtxHandle
+// UserClaimFinalizeInfo
 
 #[allow(dead_code)]
-fn struct_userclaimfinalizectxhandle_js_to_rs<'a>(
+fn struct_userclaimfinalizeinfo_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::UserClaimFinalizeCtxHandle> {
+) -> NeonResult<libparsec::UserClaimFinalizeInfo> {
     let handle = {
         let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
         {
@@ -556,13 +556,13 @@ fn struct_userclaimfinalizectxhandle_js_to_rs<'a>(
             v as u32
         }
     };
-    Ok(libparsec::UserClaimFinalizeCtxHandle { handle })
+    Ok(libparsec::UserClaimFinalizeInfo { handle })
 }
 
 #[allow(dead_code)]
-fn struct_userclaimfinalizectxhandle_rs_to_js<'a>(
+fn struct_userclaimfinalizeinfo_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::UserClaimFinalizeCtxHandle,
+    rs_obj: libparsec::UserClaimFinalizeInfo,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
@@ -570,13 +570,13 @@ fn struct_userclaimfinalizectxhandle_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// DeviceClaimFinalizeCtxHandle
+// DeviceClaimFinalizeInfo
 
 #[allow(dead_code)]
-fn struct_deviceclaimfinalizectxhandle_js_to_rs<'a>(
+fn struct_deviceclaimfinalizeinfo_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::DeviceClaimFinalizeCtxHandle> {
+) -> NeonResult<libparsec::DeviceClaimFinalizeInfo> {
     let handle = {
         let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
         {
@@ -587,17 +587,167 @@ fn struct_deviceclaimfinalizectxhandle_js_to_rs<'a>(
             v as u32
         }
     };
-    Ok(libparsec::DeviceClaimFinalizeCtxHandle { handle })
+    Ok(libparsec::DeviceClaimFinalizeInfo { handle })
 }
 
 #[allow(dead_code)]
-fn struct_deviceclaimfinalizectxhandle_rs_to_js<'a>(
+fn struct_deviceclaimfinalizeinfo_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::DeviceClaimFinalizeCtxHandle,
+    rs_obj: libparsec::DeviceClaimFinalizeInfo,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
     js_obj.set(cx, "handle", js_handle)?;
+    Ok(js_obj)
+}
+
+// DeviceAccessStrategy
+
+#[allow(dead_code)]
+fn variant_deviceaccessstrategy_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::DeviceAccessStrategy> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "Password" => {
+            let password = {
+                let js_val: Handle<JsString> = obj.get(cx, "password")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> { Ok(s.into()) };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let key_file = {
+                let js_val: Handle<JsString> = obj.get(cx, "key_file")?;
+                {
+                    let custom_from_rs_string =
+                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::DeviceAccessStrategy::Password { password, key_file })
+        }
+        "Smartcard" => {
+            let key_file = {
+                let js_val: Handle<JsString> = obj.get(cx, "key_file")?;
+                {
+                    let custom_from_rs_string =
+                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::DeviceAccessStrategy::Smartcard { key_file })
+        }
+        _ => cx.throw_type_error("Object is not a DeviceAccessStrategy"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_deviceaccessstrategy_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::DeviceAccessStrategy,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::DeviceAccessStrategy::Password {
+            password, key_file, ..
+        } => {
+            let js_tag = JsString::try_new(cx, "Password").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_password = JsString::try_new(cx, password).or_throw(cx)?;
+            js_obj.set(cx, "password", js_password)?;
+            let js_key_file = JsString::try_new(cx, {
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(key_file) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "key_file", js_key_file)?;
+        }
+        libparsec::DeviceAccessStrategy::Smartcard { key_file, .. } => {
+            let js_tag = JsString::try_new(cx, "Smartcard").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_key_file = JsString::try_new(cx, {
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(key_file) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "key_file", js_key_file)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientStartError
+
+#[allow(dead_code)]
+fn variant_clientstarterror_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientStartError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientStartError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientStartError::LoadDeviceDecryptionFailed { .. } => {
+            let js_tag = JsString::try_new(cx, "LoadDeviceDecryptionFailed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientStartError::LoadDeviceInvalidData { .. } => {
+            let js_tag = JsString::try_new(cx, "LoadDeviceInvalidData").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientStartError::LoadDeviceInvalidPath { .. } => {
+            let js_tag = JsString::try_new(cx, "LoadDeviceInvalidPath").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientStopError
+
+#[allow(dead_code)]
+fn variant_clientstoperror_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientStopError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientStopError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
     Ok(js_obj)
 }
 
@@ -928,13 +1078,13 @@ fn variant_claiminprogresserror_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// UserOrDeviceClaimInitialCtxHandle
+// UserOrDeviceClaimInitialInfo
 
 #[allow(dead_code)]
-fn variant_userordeviceclaiminitialctxhandle_js_to_rs<'a>(
+fn variant_userordeviceclaiminitialinfo_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::UserOrDeviceClaimInitialCtxHandle> {
+) -> NeonResult<libparsec::UserOrDeviceClaimInitialInfo> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
         "Device" => {
@@ -973,7 +1123,7 @@ fn variant_userordeviceclaiminitialctxhandle_js_to_rs<'a>(
                     }
                 }
             };
-            Ok(libparsec::UserOrDeviceClaimInitialCtxHandle::Device {
+            Ok(libparsec::UserOrDeviceClaimInitialInfo::Device {
                 handle,
                 greeter_user_id,
                 greeter_human_handle,
@@ -1019,25 +1169,25 @@ fn variant_userordeviceclaiminitialctxhandle_js_to_rs<'a>(
                     }
                 }
             };
-            Ok(libparsec::UserOrDeviceClaimInitialCtxHandle::User {
+            Ok(libparsec::UserOrDeviceClaimInitialInfo::User {
                 handle,
                 claimer_email,
                 greeter_user_id,
                 greeter_human_handle,
             })
         }
-        _ => cx.throw_type_error("Object is not a UserOrDeviceClaimInitialCtxHandle"),
+        _ => cx.throw_type_error("Object is not a UserOrDeviceClaimInitialInfo"),
     }
 }
 
 #[allow(dead_code)]
-fn variant_userordeviceclaiminitialctxhandle_rs_to_js<'a>(
+fn variant_userordeviceclaiminitialinfo_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::UserOrDeviceClaimInitialCtxHandle,
+    rs_obj: libparsec::UserOrDeviceClaimInitialInfo,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
-        libparsec::UserOrDeviceClaimInitialCtxHandle::Device {
+        libparsec::UserOrDeviceClaimInitialInfo::Device {
             handle,
             greeter_user_id,
             greeter_human_handle,
@@ -1055,7 +1205,7 @@ fn variant_userordeviceclaiminitialctxhandle_rs_to_js<'a>(
             };
             js_obj.set(cx, "greeter_human_handle", js_greeter_human_handle)?;
         }
-        libparsec::UserOrDeviceClaimInitialCtxHandle::User {
+        libparsec::UserOrDeviceClaimInitialInfo::User {
             handle,
             claimer_email,
             greeter_user_id,
@@ -1078,6 +1228,149 @@ fn variant_userordeviceclaiminitialctxhandle_rs_to_js<'a>(
         }
     }
     Ok(js_obj)
+}
+
+// client_start
+fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let config = {
+        let js_val = cx.argument::<JsObject>(0)?;
+        struct_clientconfig_js_to_rs(&mut cx, js_val)?
+    };
+    let on_event_callback = {
+        let js_val = cx.argument::<JsFunction>(1)?;
+        // The Javascript function object is going to be shared between the closure
+        // called by rust (that can be called multiple times) and the single-use
+        // closure sent to the js runtime.
+        // So we must use an Arc to ensure the resource is shared correctly, but
+        // that's not all of it !
+        // When the resource is no longer use, we must consume the reference we
+        // had on the javascript function in a neon context so that it can itself
+        // notify the js runtime's garbage collector.
+        struct Callback {
+            js_fn: Option<neon::handle::Root<JsFunction>>,
+            channel: neon::event::Channel,
+        }
+        impl Drop for Callback {
+            fn drop(&mut self) {
+                if let Some(js_fn) = self.js_fn.take() {
+                    // Return the js object to the js runtime to avoid memory leak
+                    self.channel.send(move |mut cx| {
+                        js_fn.to_inner(&mut cx);
+                        Ok(())
+                    });
+                }
+            }
+        }
+        let callback = std::sync::Arc::new(Callback {
+            js_fn: Some(js_val.root(&mut cx)),
+            channel: cx.channel(),
+        });
+        std::sync::Arc::new(move |event: libparsec::ClientEvent| {
+            let callback2 = callback.clone();
+            callback.channel.send(move |mut cx| {
+                // TODO: log an error instead of panic ? (it is a bit harsh to crash
+                // the current task if an unrelated event handler has a bug...)
+                let js_event = variant_clientevent_rs_to_js(&mut cx, event)?;
+                if let Some(ref js_fn) = callback2.js_fn {
+                    js_fn
+                        .to_inner(&mut cx)
+                        .call_with(&cx)
+                        .arg(js_event)
+                        .apply::<JsNull, _>(&mut cx)?;
+                }
+                Ok(())
+            });
+        }) as std::sync::Arc<dyn Fn(libparsec::ClientEvent) + Send + Sync>
+    };
+    let access = {
+        let js_val = cx.argument::<JsObject>(2)?;
+        variant_deviceaccessstrategy_js_to_rs(&mut cx, js_val)?
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_start(config, on_event_callback, access).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsNumber::new(&mut cx, ok as f64);
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_clientstarterror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_stop
+fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_stop(handle).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_clientstoperror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
 }
 
 // list_available_devices
@@ -1349,8 +1642,7 @@ fn claimer_retrieve_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value =
-                            variant_userordeviceclaiminitialctxhandle_rs_to_js(&mut cx, ok)?;
+                        let js_value = variant_userordeviceclaiminitialinfo_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -1398,7 +1690,7 @@ fn claimer_user_initial_ctx_do_wait_peer(mut cx: FunctionContext) -> JsResult<Js
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_userclaiminprogress1ctxhandle_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_userclaiminprogress1info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -1446,8 +1738,7 @@ fn claimer_device_initial_ctx_do_wait_peer(mut cx: FunctionContext) -> JsResult<
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value =
-                            struct_deviceclaiminprogress1ctxhandle_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_deviceclaiminprogress1info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -1495,7 +1786,7 @@ fn claimer_user_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsRes
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_userclaiminprogress2ctxhandle_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_userclaiminprogress2info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -1543,8 +1834,7 @@ fn claimer_device_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsR
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value =
-                            struct_deviceclaiminprogress2ctxhandle_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_deviceclaiminprogress2info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -1592,7 +1882,7 @@ fn claimer_user_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_userclaiminprogress3ctxhandle_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_userclaiminprogress3info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -1640,8 +1930,7 @@ fn claimer_device_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> J
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value =
-                            struct_deviceclaiminprogress3ctxhandle_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_deviceclaiminprogress3info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -1718,7 +2007,7 @@ fn claimer_user_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPr
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_userclaimfinalizectxhandle_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_userclaimfinalizeinfo_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -1780,7 +2069,7 @@ fn claimer_device_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<Js
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_deviceclaimfinalizectxhandle_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_deviceclaimfinalizeinfo_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -2046,6 +2335,8 @@ fn test_drop_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
 }
 
 pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
+    cx.export_function("clientStart", client_start)?;
+    cx.export_function("clientStop", client_stop)?;
     cx.export_function("listAvailableDevices", list_available_devices)?;
     cx.export_function("bootstrapOrganization", bootstrap_organization)?;
     cx.export_function("claimerRetrieveInfo", claimer_retrieve_info)?;
