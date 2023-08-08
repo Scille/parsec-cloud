@@ -380,10 +380,9 @@
         "inviteUser": "Invite a user",
         "itemCount": "No user | One user | {count} users",
         "role": {
-            "owner": "Owner",
             "admin": "Administrator",
             "standard": "Standard",
-            "external": "External"
+            "external": "Outsider"
         },
         "userSelectedCount": "No user selected | 1 user selected | {count} users selected",
         "userContextMenu": {
@@ -392,6 +391,30 @@
             "actionRevoke": "Revoke this user | Revoke these users",
             "actionDetails": "View detail",
             "actionSeeCommonWorkspaces": "See common workspaces"
+        },
+        "greet": {
+            "titles": {
+                "waitForGuest": "Onboard a new user",
+                "provideHostCode": "Share your code",
+                "getGuestCode": "Get guest code",
+                "contactDetails": "Contact details",
+                "summary": "User has been added successfully!"
+            },
+            "subtitles": {
+                "waitForGuest1": "To onboard a new user, you have to be in direct contact with them for the whole duration of the onboarding process.",
+                "waitForGuest2": "Please don't close this window during the process",
+                "provideHostCode": "Give the code below to the guest.",
+                "getGuestCode": "Click on the code given to you by the guest.",
+                "getUserInfo": "Please wait while the guest enters their contact details. You will have to review them.",
+                "checkUserInfo": "You can update the user name, device and define their profile.",
+                "summary": "{name} has been added to your organization."
+            },
+            "actions": {
+                "start": "Start",
+                "finish": "Finish",
+                "approve": "Approve"
+            },
+            "profilePlaceholder": "Choose a profile"
         }
     }
 }

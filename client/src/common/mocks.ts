@@ -106,7 +106,7 @@ export interface MockWorkspace {
 export enum Profile {
   Admin = 'administrator',
   Standard = 'standard',
-  External = 'external',
+  Outsider = 'outsider',
 }
 
 export interface MockUser {
@@ -153,13 +153,28 @@ const MOCK_USERS: MockUser[] = [
     email: 'coloia@gmail.com',
     avatar: 'ch',
     joined: DateTime.fromISO('2023-04-10T08:00:00'),
-    profile: Profile.External,
+    profile: Profile.Outsider,
     revoked: false,
   },
 ];
 
 export async function getMockUsers(): Promise<MockUser[]> {
   return MOCK_USERS;
+}
+
+export interface MockInvitation {
+  token: string,
+  email: string,
+}
+
+export async function getInvitations(): Promise<MockInvitation[]> {
+  return [{
+    token: 'ebb4df8f132f1f6ced43c73c69c67ab48fcd26d3',
+    email: 'shadowheart@swordcoast.faerun',
+  }, {
+    token: 'ef87e15fffecf4266191287f5213d8f96ca12ed6',
+    email: 'gale@waterdeep.faerun',
+  }];
 }
 
 const MOCK_WORKSPACES: MockWorkspace[] = [
