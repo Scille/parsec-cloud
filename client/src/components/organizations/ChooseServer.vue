@@ -63,6 +63,13 @@
   </ion-list>
 </template>
 
+<script lang="ts">
+export enum ServerMode {
+  SaaS ='saas',
+  Custom = 'custom',
+}
+</script>
+
 <script setup lang="ts">
 import {
   IonList,
@@ -74,11 +81,6 @@ import {
 import { ref } from 'vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
 import { backendAddrValidator, Validity } from '@/common/validators';
-
-enum ServerMode {
-  SaaS ='saas',
-  Custom = 'custom',
-}
 
 const backendAddr = ref('');
 const mode = ref(ServerMode.SaaS);

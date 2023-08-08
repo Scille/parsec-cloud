@@ -69,6 +69,7 @@
         "serverDescription": "Organization server",
         "useParsecServer": "Use the main PARSEC server",
         "useMyOwnServer": "I have my own PARSEC server",
+        "saas": "Parsec SaaS",
         "acceptTOS": {
             "label": "I accept PARSEC's ",
             "tos": "Terms and Conditions ",
@@ -84,23 +85,37 @@
         "deviceNamePlaceholder": "Desktop123",
         "loading": "Just a moment, and we set up your organisation",
         "organizationCreated": "You can access to your new organization",
-        "next": "Next",
-        "previous": "Previous",
-        "done": "Let's go!",
         "title": {
             "create": "Create an organization",
             "personalDetails": "Enter your personal information",
             "server": "Choose the server you need",
             "password": "Create your password",
+            "overview": "Overview of your organisation",
             "done": "Your organization has been created!"
         },
-        "subtitles": {
+        "subtitle": {
             "nameYourOrg": "Choose the name of your organization.",
             "personalDetails": "State your name, your email and your device name.",
             "server": "Choose the type of server you need.",
             "password": "Finally, create your password.",
+            "overview": "Check that the information is correct.",
             "Waiting": "Just a moment and we'll set up your organization.",
             "Done": "You can now access your new organization."
+        },
+        "overview": {
+            "organization": "Organization",
+            "fullname": "Full name",
+            "email": "Email",
+            "deviceName": "Device name",
+            "server": "Server choice",
+            "password": "Password"
+        },
+        "button": {
+            "next": "Next",
+            "previous": "Previous",
+            "create": "Create organization",
+            "done": "Let's go!",
+            "modify": "Edit"
         }
     },
     "JoinByLinkModal": {

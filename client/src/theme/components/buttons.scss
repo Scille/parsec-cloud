@@ -65,7 +65,7 @@ ion-button.button-outline:hover {
 }
 
 /* ghost */
-.sc-ion-buttons-md-s .button-clear {
+.sc-ion-buttons-md-s .button-clear, .button-clear {
   --color: var(--parsec-color-light-primary-500);
   --color-hover: var(--parsec-color-light-primary-700);
   --background-hover: var(--parsec-color-light-primary-50);

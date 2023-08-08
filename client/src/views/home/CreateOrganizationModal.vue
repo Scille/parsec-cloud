@@ -44,8 +44,8 @@
           :label="$t('CreateOrganization.organizationName')"
           :placeholder="$t('CreateOrganization.organizationNamePlaceholder')"
           name="organization"
-          v-model="orgName"
           id="org-name-input"
+          v-model="orgName"
         />
       </div>
 
@@ -55,7 +55,7 @@
         class="step"
       >
         <user-information
-          ref="userInfoPage"
+          ref="userInfo"
         />
       </div>
 
@@ -65,7 +65,7 @@
         v-show="pageStep === CreateOrganizationStep.ServerStep"
       >
         <choose-server
-          ref="serverPage"
+          ref="serverChoice"
         />
       </div>
 
@@ -75,22 +75,38 @@
         v-show="pageStep === CreateOrganizationStep.PasswordStep"
       >
         <ms-choose-password-input
-          ref="passwordPage"
+          ref="passwordChoice"
         />
       </div>
 
-      <!-- part 5 (loading)-->
+      <!-- part 5 (summary) -->
+      <div
+        class="step orga-recap"
+        v-show="pageStep === CreateOrganizationStep.SummaryStep"
+      >
+        <summary-step
+          v-if="orgInfo"
+          ref="summaryInfo"
+          :organization="orgInfo.orgName"
+          :fullname="orgInfo.userName"
+          :email="orgInfo.email"
+          :device-name="orgInfo.deviceName"
+          :server-mode="orgInfo.serverMode"
+          :server-addr="orgInfo.serverAddr"
+          @update-request="onUpdateRequested"
+        />
+      </div>
+      <!-- part 6 (loading)-->
       <div
         class="step orga-loading"
         v-show="pageStep === CreateOrganizationStep.SpinnerStep"
       >
         <ms-spinner
           :title="$t('CreateOrganization.loading')"
-          ref="spinnerPage"
         />
       </div>
 
-      <!-- part 6 (loading) -->
+      <!-- part 7 (loading) -->
       <div
         class="step orga-created"
         v-show="pageStep === CreateOrganizationStep.FinishStep"
@@ -114,7 +130,7 @@
           @click="previousStep()"
           v-show="canGoBackward()"
         >
-          {{ $t('CreateOrganization.previous') }}
+          {{ $t('CreateOrganization.button.previous') }}
           <ion-icon
             slot="start"
             :icon="chevronBack"
@@ -129,15 +145,19 @@
           @click="nextStep()"
           :disabled="!canGoForward"
         >
-          <span v-show="pageStep !== CreateOrganizationStep.FinishStep">
-            {{ $t('CreateOrganization.next') }}
-          </span>
-          <span v-show="pageStep === CreateOrganizationStep.FinishStep">
-            {{ $t('CreateOrganization.done') }}
+          <span>
+            {{ getNextButtonText() }}
           </span>
           <ion-icon
+            v-show="pageStep !== CreateOrganizationStep.SummaryStep"
             slot="start"
             :icon="chevronForward"
+            size="small"
+          />
+          <ion-icon
+            v-show="pageStep === CreateOrganizationStep.SummaryStep"
+            slot="start"
+            :icon="checkmarkDone"
             size="small"
           />
         </ion-button>
@@ -163,14 +183,18 @@ import {
   chevronForward,
   chevronBack,
   caretForward,
+  checkmarkDone,
   close,
 } from 'ionicons/icons';
 import { ref, Ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
-import ChooseServer from '@/components/organizations/ChooseServer.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
+import ChooseServer from '@/components/organizations/ChooseServer.vue';
+import { ServerMode } from '@/components/organizations/ChooseServer.vue';
+import SummaryStep from '@/views/home/SummaryStep.vue';
+import { OrgInfo } from '@/views/home/SummaryStep.vue';
 import MsSpinner from '@/components/core/ms-spinner/MsSpinner.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
 import { AvailableDevice } from '@/plugins/libparsec/definitions';
@@ -182,8 +206,9 @@ enum CreateOrganizationStep {
   UserInfoStep = 2,
   ServerStep = 3,
   PasswordStep = 4,
-  SpinnerStep = 5,
-  FinishStep = 6,
+  SummaryStep = 5,
+  SpinnerStep = 6,
+  FinishStep = 7,
 }
 
 const { t } = useI18n();
@@ -191,39 +216,64 @@ const { t } = useI18n();
 const DEFAULT_SAAS_ADDR = 'parsec://saas.parsec.cloud/';
 
 const pageStep = ref(CreateOrganizationStep.OrgNameStep);
-const serverPage = ref();
-const userInfoPage = ref();
-const passwordPage = ref();
-const spinnerPage = ref();
 const orgName = ref('');
+const userInfo = ref();
+const serverChoice = ref();
+const passwordChoice = ref();
+const summaryInfo = ref();
+
 const device: Ref<AvailableDevice | null> = ref(null);
+const orgInfo: Ref<null | OrgInfoValues> = ref(null);
 
 interface Title {
   title: string,
   subtitle?: string,
 }
 
+interface OrgInfoValues {
+  orgName: string,
+  userName: string,
+  email: string,
+  deviceName: string,
+  serverMode: ServerMode,
+  serverAddr: string,
+}
+
 const titles = new Map<CreateOrganizationStep, Title>([[
   CreateOrganizationStep.OrgNameStep, {
     title: t('CreateOrganization.title.create'),
-    subtitle: t('CreateOrganization.subtitles.nameYourOrg'),
+    subtitle: t('CreateOrganization.subtitle.nameYourOrg'),
   }], [
   CreateOrganizationStep.UserInfoStep, {
     title: t('CreateOrganization.title.personalDetails'),
-    subtitle: t('CreateOrganization.subtitles.personalDetails'),
+    subtitle: t('CreateOrganization.subtitle.personalDetails'),
   }], [
   CreateOrganizationStep.ServerStep, {
     title: t('CreateOrganization.title.server'),
-    subtitle: t('CreateOrganization.subtitles.server'),
+    subtitle: t('CreateOrganization.subtitle.server'),
   }], [
   CreateOrganizationStep.PasswordStep, {
     title: t('CreateOrganization.title.password'),
-    subtitle: t('CreateOrganization.subtitles.password'),
+    subtitle: t('CreateOrganization.subtitle.password'),
+  }], [
+  CreateOrganizationStep.SummaryStep, {
+    title: t('CreateOrganization.title.overview'),
+    subtitle: t('CreateOrganization.subtitle.overview'),
   }], [
   CreateOrganizationStep.FinishStep, {
     title: t('CreateOrganization.title.done'),
   }],
 ]);
+
+function getNextButtonText(): string {
+  if (pageStep.value === CreateOrganizationStep.SummaryStep) {
+    return t('CreateOrganization.button.create');
+  } else if (pageStep.value === CreateOrganizationStep.FinishStep) {
+    return t('CreateOrganization.button.done');
+  } else {
+    return t('CreateOrganization.button.next');
+  }
+}
 
 function canGoBackward(): boolean {
   return ![
@@ -236,9 +286,8 @@ function canClose(): boolean {
     CreateOrganizationStep.SpinnerStep, CreateOrganizationStep.FinishStep,
   ].includes(pageStep.value);
 }
-
 const canGoForward = computed(() => {
-  const currentPage = getCurrentPage();
+  const currentPage = getCurrentStep();
 
   if (pageStep.value === CreateOrganizationStep.FinishStep) {
     return true;
@@ -246,32 +295,38 @@ const canGoForward = computed(() => {
   if (pageStep.value === CreateOrganizationStep.OrgNameStep) {
     return organizationValidator(orgName.value) === Validity.Valid;
   }
+  if (pageStep.value === CreateOrganizationStep.UserInfoStep
+    || pageStep.value === CreateOrganizationStep.PasswordStep
+    || pageStep.value === CreateOrganizationStep.ServerStep
+  ) {
+    return currentPage.value.areFieldsCorrect();
+  }
   if (!currentPage.value) {
     return false;
   }
-  return (
-    pageStep.value !== CreateOrganizationStep.SpinnerStep
-    && currentPage.value.areFieldsCorrect()
-  );
+  return true;
 });
 
 function shouldShowNextStep(): boolean {
   return pageStep.value !== CreateOrganizationStep.SpinnerStep;
 }
 
-function getCurrentPage(): Ref<any> {
+function getCurrentStep(): Ref<any> {
   switch(pageStep.value) {
+    case CreateOrganizationStep.OrgNameStep: {
+      return orgName;
+    }
     case CreateOrganizationStep.UserInfoStep: {
-      return userInfoPage;
+      return userInfo;
     }
     case CreateOrganizationStep.ServerStep: {
-      return serverPage;
+      return serverChoice;
     }
     case CreateOrganizationStep.PasswordStep: {
-      return passwordPage;
+      return passwordChoice;
     }
-    case CreateOrganizationStep.SpinnerStep: {
-      return spinnerPage;
+    case CreateOrganizationStep.SummaryStep: {
+      return summaryInfo;
     }
     default: {
       return ref(null);
@@ -302,26 +357,47 @@ function createOrg(orgName: string, userName: string, userEmail: string, deviceN
 
 function nextStep(): void {
   if (pageStep.value === CreateOrganizationStep.FinishStep) {
-    modalController.dismiss({ device: device.value, password: passwordPage.value.password }, MsModalResult.Confirm);
+    modalController.dismiss({ device: device.value, password: passwordChoice.value.password }, MsModalResult.Confirm);
     return;
   } else {
     pageStep.value = pageStep.value + 1;
   }
   if (pageStep.value === CreateOrganizationStep.SpinnerStep) {
-    const addr = serverPage.value.mode === serverPage.value.ServerMode.SaaS ? DEFAULT_SAAS_ADDR : serverPage.value.backendAddr;
+    const addr = serverChoice.value.mode === serverChoice.value.ServerMode.SaaS ? DEFAULT_SAAS_ADDR : serverChoice.value.backendAddr;
     createOrg(
       orgName.value,
-      userInfoPage.value.fullName,
-      userInfoPage.value.email,
-      userInfoPage.value.deviceName,
+      userInfo.value.fullName,
+      userInfo.value.email,
+      userInfo.value.deviceName,
       addr,
-      passwordPage.value.password,
+      passwordChoice.value.password,
     );
+  }
+
+  if (pageStep.value === CreateOrganizationStep.SummaryStep) {
+    orgInfo.value = {
+      orgName: orgName.value,
+      userName: userInfo.value.fullName,
+      email: userInfo.value.email,
+      deviceName: userInfo.value.deviceName,
+      serverMode: serverChoice.value.mode,
+      serverAddr: serverChoice.value.mode === serverChoice.value.ServerMode.SaaS ? DEFAULT_SAAS_ADDR : serverChoice.value.backendAddr,
+    };
   }
 }
 
 function previousStep(): void {
   pageStep.value = pageStep.value - 1;
+}
+
+function onUpdateRequested(info: OrgInfo) : void{
+  if (info === OrgInfo.Organization) {
+    pageStep.value = CreateOrganizationStep.OrgNameStep;
+  } else if (info === OrgInfo.UserInfo) {
+    pageStep.value = CreateOrganizationStep.UserInfoStep;
+  } else if (info === OrgInfo.ServerMode) {
+    pageStep.value = CreateOrganizationStep.ServerStep;
+  }
 }
 </script>
 
