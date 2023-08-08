@@ -1,6 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+from typing import Optional
+
 from .common import (
+    DateTime,
     EntryID,
     EntryName,
     ErrorVariant,
@@ -8,10 +11,19 @@ from .common import (
     Password,
     Path,
     Result,
+    UserID,
     Variant,
+    VariantItemUnit,
 )
 from .config import ClientConfig
 from .events import OnClientEventCallback
+
+
+class RealmRole(Variant):
+    Owner = VariantItemUnit
+    Manager = VariantItemUnit
+    Contributor = VariantItemUnit
+    Reader = VariantItemUnit
 
 
 class DeviceAccessStrategy(Variant):
@@ -60,4 +72,79 @@ class ClientListWorkspacesError(ErrorVariant):
 async def client_list_workspaces(
     handle: Handle,
 ) -> Result[list[tuple[EntryID, EntryName]], ClientListWorkspacesError]:
+    ...
+
+
+class ClientWorkspaceCreateError(ErrorVariant):
+    class Internal:
+        pass
+
+
+async def client_workspace_create(
+    handle: Handle,
+    name: EntryName,
+) -> Result[EntryID, ClientWorkspaceCreateError]:
+    ...
+
+
+class UserOpsError(ErrorVariant):
+    class UnknownWorkspace:
+        pass
+
+    class Internal:
+        pass
+
+
+async def client_workspace_rename(
+    handle: Handle,
+    workspace_id: EntryID,
+    new_name: EntryName,
+) -> Result[None, UserOpsError]:
+    ...
+
+
+class UserOpsWorkspaceShareError(ErrorVariant):
+    class ShareToSelf:
+        pass
+
+    class UnknownWorkspace:
+        pass
+
+    class UnknownRecipient:
+        pass
+
+    class UnknownRecipientOrWorkspace:
+        pass
+
+    class RevokedRecipient:
+        pass
+
+    class WorkspaceInMaintenance:
+        pass
+
+    class NotAllowed:
+        pass
+
+    class OutsiderCannotBeManagerOrOwner:
+        pass
+
+    class Offline:
+        pass
+
+    class BadTimestamp:
+        server_timestamp: DateTime
+        client_timestamp: DateTime
+        ballpark_client_early_offset: float
+        ballpark_client_late_offset: float
+
+    class Internal:
+        pass
+
+
+async def client_workspace_share(
+    handle: Handle,
+    workspace_id: EntryID,
+    recipient: UserID,
+    role: Optional[RealmRole],
+) -> Result[None, UserOpsWorkspaceShareError]:
     ...
