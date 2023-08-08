@@ -75,7 +75,18 @@
         />
       </div>
 
-      <!-- part 5 (loading)-->
+      <!-- part 5 (recap) -->
+      <div
+        class="step orga-recap"
+        v-show="pageStep === CreateOrganizationStep.RecapStep"
+      >
+        <organization-recap-page
+          ref="recapPage"
+          :organization="orgPage"
+        />
+      </div>
+
+      <!-- part 6 (loading)-->
       <div
         class="step orga-loading"
         v-show="pageStep === CreateOrganizationStep.SpinnerStep"
@@ -86,7 +97,7 @@
         />
       </div>
 
-      <!-- part 6 (loading) -->
+      <!-- part 7 (loading) -->
       <div
         class="step orga-created"
         v-show="pageStep === CreateOrganizationStep.FinishStep"
@@ -167,6 +178,7 @@ import InformativeText from '@/components/InformativeText.vue';
 import ChoosePassword from '@/components/ChoosePassword.vue';
 import OrganizationNamePage from '@/components/CreateOrganization/OrganizationNamePage.vue';
 import ChooseServerPage from '@/components/CreateOrganization/ChooseServerPage.vue';
+import OrganizationRecapPage from '@/components/CreateOrganization/OrganizationRecapPage.vue';
 import UserInformationPage from '@/components/UserInformationPage.vue';
 import MsSpinner from '@/components/MsSpinner.vue';
 import { AvailableDevice } from '@/plugins/libparsec/definitions';
@@ -177,8 +189,9 @@ enum CreateOrganizationStep {
   UserInfoStep = 2,
   ServerStep = 3,
   PasswordStep = 4,
-  SpinnerStep = 5,
-  FinishStep = 6,
+  RecapStep = 5,
+  SpinnerStep = 6,
+  FinishStep = 7,
 }
 
 const { t } = useI18n();
@@ -186,10 +199,11 @@ const { t } = useI18n();
 const DEFAULT_SAAS_ADDR = 'parsec://saas.parsec.cloud/';
 
 const pageStep = ref(CreateOrganizationStep.OrgNameStep);
-const serverPage = ref();
 const orgPage = ref();
 const userInfoPage = ref();
+const serverPage = ref();
 const passwordPage = ref();
+const recapPage = ref();
 const spinnerPage = ref();
 
 const device: Ref<AvailableDevice | null> = ref(null);
@@ -215,6 +229,10 @@ const titles = new Map<CreateOrganizationStep, Title>([[
   CreateOrganizationStep.PasswordStep, {
     title: t('CreateOrganization.title.password'),
     subtitle: t('CreateOrganization.subtitles.password'),
+  }], [
+  CreateOrganizationStep.RecapStep, {
+    title: t('CreateOrganization.title.overview'),
+    subtitle: t('CreateOrganization.subtitles.overview'),
   }], [
   CreateOrganizationStep.FinishStep, {
     title: t('CreateOrganization.title.done'),
@@ -265,6 +283,9 @@ function getCurrentPage(): Ref<any> {
     }
     case CreateOrganizationStep.PasswordStep: {
       return passwordPage;
+    }
+    case CreateOrganizationStep.RecapStep: {
+      return recapPage;
     }
     case CreateOrganizationStep.SpinnerStep: {
       return spinnerPage;
