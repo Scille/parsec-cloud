@@ -10,6 +10,7 @@ pub(crate) enum RegisteredHandleItem {
 }
 
 pub(crate) enum HandleItem {
+    Client((libparsec_client::Client, crate::OnEventCallbackPlugged)),
     UserClaimInitial(libparsec_client::UserClaimInitialCtx),
     DeviceClaimInitial(libparsec_client::DeviceClaimInitialCtx),
     UserClaimInProgress1(libparsec_client::UserClaimInProgress1Ctx),

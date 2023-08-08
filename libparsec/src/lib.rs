@@ -11,12 +11,14 @@ pub mod low_level {
     pub use libparsec_types as types;
 }
 
+mod client;
 mod config;
 mod events;
 mod handle;
 mod invite;
 mod testbed;
 
+pub use client::*;
 pub use config::*;
 pub use events::*;
 pub use invite::*;

@@ -3,7 +3,7 @@
 use std::{path::PathBuf, sync::Arc};
 
 pub use libparsec_client::{ProxyConfig, WorkspaceStorageCacheSize};
-pub use libparsec_types::BackendAddr;
+pub use libparsec_types::prelude::*;
 
 #[derive(Debug, Clone)]
 pub struct ClientConfig {
