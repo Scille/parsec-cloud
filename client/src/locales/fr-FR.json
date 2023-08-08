@@ -84,23 +84,37 @@
         "deviceNamePlaceholder": "Desktop123",
         "loading": "Un instant, nous mettons en place votre organisation",
         "organizationCreated": "Vous pouvez accéder à votre nouvelle organisation",
-        "next": "Suivant",
-        "previous": "Précédent",
-        "done": "Terminer",
         "title": {
             "create": "Créez une nouvelle organisation",
             "personalDetails": "Saisissez vos informations",
             "server": "Choisissez votre serveur adapté",
             "password": "Créez votre mot de passe",
+            "overview": "Récapitulatif de votre organisation",
             "done": "Votre organisation a bien été créée !"
         },
-        "subtitles": {
+        "subtitle": {
             "nameYourOrg": "Choisissez le nom de votre organisation.",
             "personalDetails": "Indiquez votre nom, votre e-mail et le nom de votre appareil.",
             "server": "Choisissez le type de serveur que vous avez besoin.",
             "password": "Pour finir créez votre mot de passe.",
+            "overview": "Vérifier que les informations sont correctes.",
             "Waiting": "Un instant, nous mettons en place votre organisation.",
             "Done": "Vous pouvez accéder à votre nouvelle organisation."
+        },
+        "overview": {
+            "organization": "Organisation",
+            "fullname": "Nom complet",
+            "email": "E-mail",
+            "deviceName": "Nom de l'appareil",
+            "server": "Choix du serveur",
+            "password": "Mot de passe"
+        },
+        "button": {
+            "next": "Suivant",
+            "previous": "Précédent",
+            "create": "Créer l'organisation",
+            "done": "Terminer",
+            "modify": "Modifier"
         }
     },
     "JoinByLinkModal": {

@@ -192,9 +192,9 @@ import { useI18n } from 'vue-i18n';
 import MsWizardStepper from '@/components/core/ms-stepper/MsWizardStepper.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
-import UserInformation from '@/components/users/UserInformation.vue';
 import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
+import UserInformation from '@/components/users/UserInformation.vue';
 import { AvailableDevice } from '@/plugins/libparsec/definitions';
 import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 
