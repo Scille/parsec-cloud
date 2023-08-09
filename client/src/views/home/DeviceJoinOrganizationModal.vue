@@ -292,9 +292,8 @@ function mockSaveDeviceWithPassword(_device: AvailableDevice | null, _password: 
 }
 
 function nextStep(): void {
-  newDevice = mockCreateDevice();
-
   if (pageStep.value === DeviceJoinOrganizationStep.Password) {
+    newDevice = mockCreateDevice();
     mockSaveDeviceWithPassword(newDevice, passwordPage.value.password);
   } else if (pageStep.value === DeviceJoinOrganizationStep.Finish) {
     modalController.dismiss({ device: newDevice, password: passwordPage.value.password }, ModalResultCode.Confirm);
