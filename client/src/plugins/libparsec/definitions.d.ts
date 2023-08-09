@@ -8,11 +8,11 @@ export type Result<T, E = Error> =
   | { ok: true; value: T }
   | { ok: false; error: E }
 
+type DateTime = string
 type EntryName = string
 type Password = string
 type Path = string
 type UserID = string
-type DateTime = string
 type OrganizationID = string
 type DeviceID = string
 type DeviceLabel = string
@@ -24,6 +24,7 @@ type BackendInvitationAddr = string
 type SASCode = string
 type EntryID = Uint8Array
 type SequesterVerifyKeyDer = Uint8Array
+type InvitationToken = Uint8Array
 type Handle = number
 type CacheSize = number
 
@@ -81,6 +82,68 @@ export interface UserClaimFinalizeInfo {
 export interface DeviceClaimFinalizeInfo {
     handle: number
 }
+
+export interface UserGreetInitialInfo {
+    handle: number
+}
+
+export interface DeviceGreetInitialInfo {
+    handle: number
+}
+
+export interface UserGreetInProgress1Info {
+    handle: number
+    greeterSas: SASCode
+}
+
+export interface DeviceGreetInProgress1Info {
+    handle: number
+    greeterSas: SASCode
+}
+
+export interface UserGreetInProgress2Info {
+    handle: number
+    claimerSas: SASCode
+    claimerSasChoices: Array<SASCode>
+}
+
+export interface DeviceGreetInProgress2Info {
+    handle: number
+    claimerSas: SASCode
+    claimerSasChoices: Array<SASCode>
+}
+
+export interface UserGreetInProgress3Info {
+    handle: number
+}
+
+export interface DeviceGreetInProgress3Info {
+    handle: number
+}
+
+export interface UserGreetInProgress4Info {
+    handle: number
+    requestedHumanHandle: HumanHandle | null
+    requestedDeviceLabel: DeviceLabel | null
+}
+
+export interface DeviceGreetInProgress4Info {
+    handle: number
+    requestedDeviceLabel: DeviceLabel | null
+}
+
+// CancelError
+export interface CancelErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export interface CancelErrorNotBinded {
+    tag: 'NotBinded'
+    error: string
+}
+export type CancelError =
+  | CancelErrorInternal
+  | CancelErrorNotBinded
 
 // RealmRole
 export interface RealmRoleContributor {
@@ -237,6 +300,21 @@ export type UserOpsWorkspaceShareError =
   | UserOpsWorkspaceShareErrorUnknownWorkspace
   | UserOpsWorkspaceShareErrorWorkspaceInMaintenance
 
+// UserProfile
+export interface UserProfileAdmin {
+    tag: 'Admin'
+}
+export interface UserProfileOutsider {
+    tag: 'Outsider'
+}
+export interface UserProfileStandard {
+    tag: 'Standard'
+}
+export type UserProfile =
+  | UserProfileAdmin
+  | UserProfileOutsider
+  | UserProfileStandard
+
 // WorkspaceStorageCacheSize
 export interface WorkspaceStorageCacheSizeCustom {
     tag: 'Custom'
@@ -256,6 +334,14 @@ export interface ClientEventPing {
 }
 export type ClientEvent =
   | ClientEventPing
+
+// ClaimerGreeterAbortOperationError
+export interface ClaimerGreeterAbortOperationErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export type ClaimerGreeterAbortOperationError =
+  | ClaimerGreeterAbortOperationErrorInternal
 
 // DeviceFileType
 export interface DeviceFileTypePassword {
@@ -353,6 +439,10 @@ export interface ClaimInProgressErrorAlreadyUsed {
     tag: 'AlreadyUsed'
     error: string
 }
+export interface ClaimInProgressErrorCancelled {
+    tag: 'Cancelled'
+    error: string
+}
 export interface ClaimInProgressErrorCorruptedConfirmation {
     tag: 'CorruptedConfirmation'
     error: string
@@ -376,6 +466,7 @@ export interface ClaimInProgressErrorPeerReset {
 export type ClaimInProgressError =
   | ClaimInProgressErrorActiveUsersLimitReached
   | ClaimInProgressErrorAlreadyUsed
+  | ClaimInProgressErrorCancelled
   | ClaimInProgressErrorCorruptedConfirmation
   | ClaimInProgressErrorInternal
   | ClaimInProgressErrorNotFound
@@ -400,33 +491,246 @@ export type UserOrDeviceClaimInitialInfo =
   | UserOrDeviceClaimInitialInfoDevice
   | UserOrDeviceClaimInitialInfoUser
 
+// InvitationStatus
+export interface InvitationStatusDeleted {
+    tag: 'Deleted'
+}
+export interface InvitationStatusIdle {
+    tag: 'Idle'
+}
+export interface InvitationStatusReady {
+    tag: 'Ready'
+}
+export type InvitationStatus =
+  | InvitationStatusDeleted
+  | InvitationStatusIdle
+  | InvitationStatusReady
+
+// InvitationEmailSentStatus
+export interface InvitationEmailSentStatusBadRecipient {
+    tag: 'BadRecipient'
+}
+export interface InvitationEmailSentStatusNotAvailable {
+    tag: 'NotAvailable'
+}
+export interface InvitationEmailSentStatusSuccess {
+    tag: 'Success'
+}
+export type InvitationEmailSentStatus =
+  | InvitationEmailSentStatusBadRecipient
+  | InvitationEmailSentStatusNotAvailable
+  | InvitationEmailSentStatusSuccess
+
+// NewUserInvitationError
+export interface NewUserInvitationErrorAlreadyMember {
+    tag: 'AlreadyMember'
+    error: string
+}
+export interface NewUserInvitationErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export interface NewUserInvitationErrorNotAllowed {
+    tag: 'NotAllowed'
+    error: string
+}
+export interface NewUserInvitationErrorOffline {
+    tag: 'Offline'
+    error: string
+}
+export type NewUserInvitationError =
+  | NewUserInvitationErrorAlreadyMember
+  | NewUserInvitationErrorInternal
+  | NewUserInvitationErrorNotAllowed
+  | NewUserInvitationErrorOffline
+
+// NewDeviceInvitationError
+export interface NewDeviceInvitationErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export interface NewDeviceInvitationErrorOffline {
+    tag: 'Offline'
+    error: string
+}
+export interface NewDeviceInvitationErrorSendEmailToUserWithoutEmail {
+    tag: 'SendEmailToUserWithoutEmail'
+    error: string
+}
+export type NewDeviceInvitationError =
+  | NewDeviceInvitationErrorInternal
+  | NewDeviceInvitationErrorOffline
+  | NewDeviceInvitationErrorSendEmailToUserWithoutEmail
+
+// DeleteInvitationError
+export interface DeleteInvitationErrorAlreadyDeleted {
+    tag: 'AlreadyDeleted'
+    error: string
+}
+export interface DeleteInvitationErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export interface DeleteInvitationErrorNotFound {
+    tag: 'NotFound'
+    error: string
+}
+export interface DeleteInvitationErrorOffline {
+    tag: 'Offline'
+    error: string
+}
+export type DeleteInvitationError =
+  | DeleteInvitationErrorAlreadyDeleted
+  | DeleteInvitationErrorInternal
+  | DeleteInvitationErrorNotFound
+  | DeleteInvitationErrorOffline
+
+// InviteListItem
+export interface InviteListItemDevice {
+    tag: 'Device'
+    token: InvitationToken
+    createdOn: DateTime
+    status: InvitationStatus
+}
+export interface InviteListItemUser {
+    tag: 'User'
+    token: InvitationToken
+    createdOn: DateTime
+    claimerEmail: string
+    status: InvitationStatus
+}
+export type InviteListItem =
+  | InviteListItemDevice
+  | InviteListItemUser
+
+// ListInvitationsError
+export interface ListInvitationsErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export interface ListInvitationsErrorOffline {
+    tag: 'Offline'
+    error: string
+}
+export type ListInvitationsError =
+  | ListInvitationsErrorInternal
+  | ListInvitationsErrorOffline
+
+// ClientStartInvitationGreetError
+export interface ClientStartInvitationGreetErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export type ClientStartInvitationGreetError =
+  | ClientStartInvitationGreetErrorInternal
+
+// GreetInProgressError
+export interface GreetInProgressErrorActiveUsersLimitReached {
+    tag: 'ActiveUsersLimitReached'
+    error: string
+}
+export interface GreetInProgressErrorAlreadyUsed {
+    tag: 'AlreadyUsed'
+    error: string
+}
+export interface GreetInProgressErrorBadTimestamp {
+    tag: 'BadTimestamp'
+    error: string
+    serverTimestamp: DateTime
+    clientTimestamp: DateTime
+    ballparkClientEarlyOffset: number
+    ballparkClientLateOffset: number
+}
+export interface GreetInProgressErrorCancelled {
+    tag: 'Cancelled'
+    error: string
+}
+export interface GreetInProgressErrorCorruptedInviteUserData {
+    tag: 'CorruptedInviteUserData'
+    error: string
+}
+export interface GreetInProgressErrorDeviceAlreadyExists {
+    tag: 'DeviceAlreadyExists'
+    error: string
+}
+export interface GreetInProgressErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export interface GreetInProgressErrorNonceMismatch {
+    tag: 'NonceMismatch'
+    error: string
+}
+export interface GreetInProgressErrorNotFound {
+    tag: 'NotFound'
+    error: string
+}
+export interface GreetInProgressErrorOffline {
+    tag: 'Offline'
+    error: string
+}
+export interface GreetInProgressErrorPeerReset {
+    tag: 'PeerReset'
+    error: string
+}
+export interface GreetInProgressErrorUserAlreadyExists {
+    tag: 'UserAlreadyExists'
+    error: string
+}
+export interface GreetInProgressErrorUserCreateNotAllowed {
+    tag: 'UserCreateNotAllowed'
+    error: string
+}
+export type GreetInProgressError =
+  | GreetInProgressErrorActiveUsersLimitReached
+  | GreetInProgressErrorAlreadyUsed
+  | GreetInProgressErrorBadTimestamp
+  | GreetInProgressErrorCancelled
+  | GreetInProgressErrorCorruptedInviteUserData
+  | GreetInProgressErrorDeviceAlreadyExists
+  | GreetInProgressErrorInternal
+  | GreetInProgressErrorNonceMismatch
+  | GreetInProgressErrorNotFound
+  | GreetInProgressErrorOffline
+  | GreetInProgressErrorPeerReset
+  | GreetInProgressErrorUserAlreadyExists
+  | GreetInProgressErrorUserCreateNotAllowed
+
 export interface LibParsecPlugin {
+    cancel(
+        canceller: number
+    ): Promise<Result<null, CancelError>>
+    newCanceller(
+    ): Promise<number>
     clientStart(
         config: ClientConfig,
         on_event_callback: (event: ClientEvent) => void,
         access: DeviceAccessStrategy
     ): Promise<Result<number, ClientStartError>>
     clientStop(
-        handle: number
+        client: number
     ): Promise<Result<null, ClientStopError>>
     clientListWorkspaces(
-        handle: number
+        client: number
     ): Promise<Result<Array<[EntryID, EntryName]>, ClientListWorkspacesError>>
     clientWorkspaceCreate(
-        handle: number,
+        client: number,
         name: EntryName
     ): Promise<Result<EntryID, ClientWorkspaceCreateError>>
     clientWorkspaceRename(
-        handle: number,
+        client: number,
         workspace_id: EntryID,
         new_name: EntryName
     ): Promise<Result<null, UserOpsError>>
     clientWorkspaceShare(
-        handle: number,
+        client: number,
         workspace_id: EntryID,
         recipient: UserID,
         role: RealmRole | null
     ): Promise<Result<null, UserOpsWorkspaceShareError>>
+    claimerGreeterAbortOperation(
+        handle: number
+    ): Promise<Result<null, ClaimerGreeterAbortOperationError>>
     listAvailableDevices(
         path: Path
     ): Promise<Array<AvailableDevice>>
@@ -444,30 +748,38 @@ export interface LibParsecPlugin {
         on_event_callback: (event: ClientEvent) => void,
         addr: BackendInvitationAddr
     ): Promise<Result<UserOrDeviceClaimInitialInfo, ClaimerRetrieveInfoError>>
-    claimerUserInitialCtxDoWaitPeer(
+    claimerUserInitialDoWaitPeer(
+        canceller: number,
         handle: number
     ): Promise<Result<UserClaimInProgress1Info, ClaimInProgressError>>
-    claimerDeviceInitialCtxDoWaitPeer(
+    claimerDeviceInitialDoWaitPeer(
+        canceller: number,
         handle: number
     ): Promise<Result<DeviceClaimInProgress1Info, ClaimInProgressError>>
-    claimerUserInProgress2DoSignifyTrust(
+    claimerUserInProgress1DoSignifyTrust(
+        canceller: number,
         handle: number
     ): Promise<Result<UserClaimInProgress2Info, ClaimInProgressError>>
-    claimerDeviceInProgress2DoSignifyTrust(
+    claimerDeviceInProgress1DoSignifyTrust(
+        canceller: number,
         handle: number
     ): Promise<Result<DeviceClaimInProgress2Info, ClaimInProgressError>>
     claimerUserInProgress2DoWaitPeerTrust(
+        canceller: number,
         handle: number
     ): Promise<Result<UserClaimInProgress3Info, ClaimInProgressError>>
     claimerDeviceInProgress2DoWaitPeerTrust(
+        canceller: number,
         handle: number
     ): Promise<Result<DeviceClaimInProgress3Info, ClaimInProgressError>>
     claimerUserInProgress3DoClaim(
+        canceller: number,
         handle: number,
         requested_device_label: DeviceLabel | null,
         requested_human_handle: HumanHandle | null
     ): Promise<Result<UserClaimFinalizeInfo, ClaimInProgressError>>
     claimerDeviceInProgress3DoClaim(
+        canceller: number,
         handle: number,
         requested_device_label: DeviceLabel | null
     ): Promise<Result<DeviceClaimFinalizeInfo, ClaimInProgressError>>
@@ -479,6 +791,74 @@ export interface LibParsecPlugin {
         handle: number,
         save_strategy: DeviceSaveStrategy
     ): Promise<Result<AvailableDevice, ClaimInProgressError>>
+    clientNewUserInvitation(
+        client: number,
+        claimer_email: string,
+        send_email: boolean
+    ): Promise<Result<[InvitationToken, InvitationEmailSentStatus], NewUserInvitationError>>
+    clientNewDeviceInvitation(
+        client: number,
+        send_email: boolean
+    ): Promise<Result<[InvitationToken, InvitationEmailSentStatus], NewDeviceInvitationError>>
+    clientDeleteInvitation(
+        client: number,
+        token: InvitationToken
+    ): Promise<Result<null, DeleteInvitationError>>
+    clientListInvitations(
+        client: number
+    ): Promise<Result<Array<InviteListItem>, ListInvitationsError>>
+    clientStartUserInvitationGreet(
+        client: number,
+        token: InvitationToken
+    ): Promise<Result<UserGreetInitialInfo, ClientStartInvitationGreetError>>
+    clientStartDeviceInvitationGreet(
+        client: number,
+        token: InvitationToken
+    ): Promise<Result<DeviceGreetInitialInfo, ClientStartInvitationGreetError>>
+    greeterUserInitialDoWaitPeer(
+        canceller: number,
+        handle: number
+    ): Promise<Result<UserGreetInProgress1Info, GreetInProgressError>>
+    greeterDeviceInitialDoWaitPeer(
+        canceller: number,
+        handle: number
+    ): Promise<Result<DeviceGreetInProgress1Info, GreetInProgressError>>
+    greeterUserInProgress1DoWaitPeerTrust(
+        canceller: number,
+        handle: number
+    ): Promise<Result<UserGreetInProgress2Info, GreetInProgressError>>
+    greeterDeviceInProgress1DoWaitPeerTrust(
+        canceller: number,
+        handle: number
+    ): Promise<Result<DeviceGreetInProgress2Info, GreetInProgressError>>
+    greeterUserInProgress2DoSignifyTrust(
+        canceller: number,
+        handle: number
+    ): Promise<Result<UserGreetInProgress3Info, GreetInProgressError>>
+    greeterDeviceInProgress2DoSignifyTrust(
+        canceller: number,
+        handle: number
+    ): Promise<Result<DeviceGreetInProgress3Info, GreetInProgressError>>
+    greeterUserInProgress3DoGetClaimRequests(
+        canceller: number,
+        handle: number
+    ): Promise<Result<UserGreetInProgress4Info, GreetInProgressError>>
+    greeterDeviceInProgress3DoGetClaimRequests(
+        canceller: number,
+        handle: number
+    ): Promise<Result<DeviceGreetInProgress4Info, GreetInProgressError>>
+    greeterUserInProgress4DoCreate(
+        canceller: number,
+        handle: number,
+        human_handle: HumanHandle | null,
+        device_label: DeviceLabel | null,
+        profile: UserProfile
+    ): Promise<Result<null, GreetInProgressError>>
+    greeterDeviceInProgress4DoCreate(
+        canceller: number,
+        handle: number,
+        device_label: DeviceLabel | null
+    ): Promise<Result<null, GreetInProgressError>>
     testNewTestbed(
         template: string,
         test_server: BackendAddr | null

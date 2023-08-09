@@ -601,6 +601,521 @@ fn struct_deviceclaimfinalizeinfo_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// UserGreetInitialInfo
+
+#[allow(dead_code)]
+fn struct_usergreetinitialinfo_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::UserGreetInitialInfo> {
+    let handle = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    Ok(libparsec::UserGreetInitialInfo { handle })
+}
+
+#[allow(dead_code)]
+fn struct_usergreetinitialinfo_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::UserGreetInitialInfo,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
+    js_obj.set(cx, "handle", js_handle)?;
+    Ok(js_obj)
+}
+
+// DeviceGreetInitialInfo
+
+#[allow(dead_code)]
+fn struct_devicegreetinitialinfo_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::DeviceGreetInitialInfo> {
+    let handle = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    Ok(libparsec::DeviceGreetInitialInfo { handle })
+}
+
+#[allow(dead_code)]
+fn struct_devicegreetinitialinfo_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::DeviceGreetInitialInfo,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
+    js_obj.set(cx, "handle", js_handle)?;
+    Ok(js_obj)
+}
+
+// UserGreetInProgress1Info
+
+#[allow(dead_code)]
+fn struct_usergreetinprogress1info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::UserGreetInProgress1Info> {
+    let handle = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let greeter_sas = {
+        let js_val: Handle<JsString> = obj.get(cx, "greeterSas")?;
+        {
+            match js_val.value(cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    Ok(libparsec::UserGreetInProgress1Info {
+        handle,
+        greeter_sas,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_usergreetinprogress1info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::UserGreetInProgress1Info,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
+    js_obj.set(cx, "handle", js_handle)?;
+    let js_greeter_sas = JsString::try_new(cx, rs_obj.greeter_sas).or_throw(cx)?;
+    js_obj.set(cx, "greeterSas", js_greeter_sas)?;
+    Ok(js_obj)
+}
+
+// DeviceGreetInProgress1Info
+
+#[allow(dead_code)]
+fn struct_devicegreetinprogress1info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::DeviceGreetInProgress1Info> {
+    let handle = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let greeter_sas = {
+        let js_val: Handle<JsString> = obj.get(cx, "greeterSas")?;
+        {
+            match js_val.value(cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    Ok(libparsec::DeviceGreetInProgress1Info {
+        handle,
+        greeter_sas,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_devicegreetinprogress1info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::DeviceGreetInProgress1Info,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
+    js_obj.set(cx, "handle", js_handle)?;
+    let js_greeter_sas = JsString::try_new(cx, rs_obj.greeter_sas).or_throw(cx)?;
+    js_obj.set(cx, "greeterSas", js_greeter_sas)?;
+    Ok(js_obj)
+}
+
+// UserGreetInProgress2Info
+
+#[allow(dead_code)]
+fn struct_usergreetinprogress2info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::UserGreetInProgress2Info> {
+    let handle = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let claimer_sas = {
+        let js_val: Handle<JsString> = obj.get(cx, "claimerSas")?;
+        {
+            match js_val.value(cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let claimer_sas_choices = {
+        let js_val: Handle<JsArray> = obj.get(cx, "claimerSasChoices")?;
+        {
+            let size = js_val.len(cx);
+            let mut v = Vec::with_capacity(size as usize);
+            for i in 0..size {
+                let js_item: Handle<JsString> = js_val.get(cx, i)?;
+                v.push({
+                    match js_item.value(cx).parse() {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                });
+            }
+            v
+        }
+    };
+    Ok(libparsec::UserGreetInProgress2Info {
+        handle,
+        claimer_sas,
+        claimer_sas_choices,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_usergreetinprogress2info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::UserGreetInProgress2Info,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
+    js_obj.set(cx, "handle", js_handle)?;
+    let js_claimer_sas = JsString::try_new(cx, rs_obj.claimer_sas).or_throw(cx)?;
+    js_obj.set(cx, "claimerSas", js_claimer_sas)?;
+    let js_claimer_sas_choices = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(cx, rs_obj.claimer_sas_choices.len() as u32);
+        for (i, elem) in rs_obj.claimer_sas_choices.into_iter().enumerate() {
+            let js_elem = JsString::try_new(cx, elem).or_throw(cx)?;
+            js_array.set(cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    js_obj.set(cx, "claimerSasChoices", js_claimer_sas_choices)?;
+    Ok(js_obj)
+}
+
+// DeviceGreetInProgress2Info
+
+#[allow(dead_code)]
+fn struct_devicegreetinprogress2info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::DeviceGreetInProgress2Info> {
+    let handle = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let claimer_sas = {
+        let js_val: Handle<JsString> = obj.get(cx, "claimerSas")?;
+        {
+            match js_val.value(cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let claimer_sas_choices = {
+        let js_val: Handle<JsArray> = obj.get(cx, "claimerSasChoices")?;
+        {
+            let size = js_val.len(cx);
+            let mut v = Vec::with_capacity(size as usize);
+            for i in 0..size {
+                let js_item: Handle<JsString> = js_val.get(cx, i)?;
+                v.push({
+                    match js_item.value(cx).parse() {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                });
+            }
+            v
+        }
+    };
+    Ok(libparsec::DeviceGreetInProgress2Info {
+        handle,
+        claimer_sas,
+        claimer_sas_choices,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_devicegreetinprogress2info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::DeviceGreetInProgress2Info,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
+    js_obj.set(cx, "handle", js_handle)?;
+    let js_claimer_sas = JsString::try_new(cx, rs_obj.claimer_sas).or_throw(cx)?;
+    js_obj.set(cx, "claimerSas", js_claimer_sas)?;
+    let js_claimer_sas_choices = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(cx, rs_obj.claimer_sas_choices.len() as u32);
+        for (i, elem) in rs_obj.claimer_sas_choices.into_iter().enumerate() {
+            let js_elem = JsString::try_new(cx, elem).or_throw(cx)?;
+            js_array.set(cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    js_obj.set(cx, "claimerSasChoices", js_claimer_sas_choices)?;
+    Ok(js_obj)
+}
+
+// UserGreetInProgress3Info
+
+#[allow(dead_code)]
+fn struct_usergreetinprogress3info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::UserGreetInProgress3Info> {
+    let handle = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    Ok(libparsec::UserGreetInProgress3Info { handle })
+}
+
+#[allow(dead_code)]
+fn struct_usergreetinprogress3info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::UserGreetInProgress3Info,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
+    js_obj.set(cx, "handle", js_handle)?;
+    Ok(js_obj)
+}
+
+// DeviceGreetInProgress3Info
+
+#[allow(dead_code)]
+fn struct_devicegreetinprogress3info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::DeviceGreetInProgress3Info> {
+    let handle = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    Ok(libparsec::DeviceGreetInProgress3Info { handle })
+}
+
+#[allow(dead_code)]
+fn struct_devicegreetinprogress3info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::DeviceGreetInProgress3Info,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
+    js_obj.set(cx, "handle", js_handle)?;
+    Ok(js_obj)
+}
+
+// UserGreetInProgress4Info
+
+#[allow(dead_code)]
+fn struct_usergreetinprogress4info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::UserGreetInProgress4Info> {
+    let handle = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let requested_human_handle = {
+        let js_val: Handle<JsValue> = obj.get(cx, "requestedHumanHandle")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                Some({
+                    match js_val.value(cx).parse() {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                })
+            }
+        }
+    };
+    let requested_device_label = {
+        let js_val: Handle<JsValue> = obj.get(cx, "requestedDeviceLabel")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                Some({
+                    match js_val.value(cx).parse() {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                })
+            }
+        }
+    };
+    Ok(libparsec::UserGreetInProgress4Info {
+        handle,
+        requested_human_handle,
+        requested_device_label,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_usergreetinprogress4info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::UserGreetInProgress4Info,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
+    js_obj.set(cx, "handle", js_handle)?;
+    let js_requested_human_handle = match rs_obj.requested_human_handle {
+        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "requestedHumanHandle", js_requested_human_handle)?;
+    let js_requested_device_label = match rs_obj.requested_device_label {
+        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "requestedDeviceLabel", js_requested_device_label)?;
+    Ok(js_obj)
+}
+
+// DeviceGreetInProgress4Info
+
+#[allow(dead_code)]
+fn struct_devicegreetinprogress4info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::DeviceGreetInProgress4Info> {
+    let handle = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let requested_device_label = {
+        let js_val: Handle<JsValue> = obj.get(cx, "requestedDeviceLabel")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                Some({
+                    match js_val.value(cx).parse() {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                })
+            }
+        }
+    };
+    Ok(libparsec::DeviceGreetInProgress4Info {
+        handle,
+        requested_device_label,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_devicegreetinprogress4info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::DeviceGreetInProgress4Info,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
+    js_obj.set(cx, "handle", js_handle)?;
+    let js_requested_device_label = match rs_obj.requested_device_label {
+        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "requestedDeviceLabel", js_requested_device_label)?;
+    Ok(js_obj)
+}
+
+// CancelError
+
+#[allow(dead_code)]
+fn variant_cancelerror_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::CancelError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::CancelError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::CancelError::NotBinded { .. } => {
+            let js_tag = JsString::try_new(cx, "NotBinded").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // RealmRole
 
 #[allow(dead_code)]
@@ -957,6 +1472,45 @@ fn variant_useropsworkspaceshareerror_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// UserProfile
+
+#[allow(dead_code)]
+fn variant_userprofile_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::UserProfile> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "Admin" => Ok(libparsec::UserProfile::Admin {}),
+        "Outsider" => Ok(libparsec::UserProfile::Outsider {}),
+        "Standard" => Ok(libparsec::UserProfile::Standard {}),
+        _ => cx.throw_type_error("Object is not a UserProfile"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_userprofile_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::UserProfile,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::UserProfile::Admin { .. } => {
+            let js_tag = JsString::try_new(cx, "Admin").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UserProfile::Outsider { .. } => {
+            let js_tag = JsString::try_new(cx, "Outsider").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UserProfile::Standard { .. } => {
+            let js_tag = JsString::try_new(cx, "Standard").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceStorageCacheSize
 
 #[allow(dead_code)]
@@ -1037,6 +1591,25 @@ fn variant_clientevent_rs_to_js<'a>(
             js_obj.set(cx, "tag", js_tag)?;
             let js_ping = JsString::try_new(cx, ping).or_throw(cx)?;
             js_obj.set(cx, "ping", js_ping)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClaimerGreeterAbortOperationError
+
+#[allow(dead_code)]
+fn variant_claimergreeterabortoperationerror_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClaimerGreeterAbortOperationError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClaimerGreeterAbortOperationError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
         }
     }
     Ok(js_obj)
@@ -1260,6 +1833,10 @@ fn variant_claiminprogresserror_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "AlreadyUsed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::ClaimInProgressError::Cancelled { .. } => {
+            let js_tag = JsString::try_new(cx, "Cancelled").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::ClaimInProgressError::CorruptedConfirmation { .. } => {
             let js_tag = JsString::try_new(cx, "CorruptedConfirmation").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -1436,6 +2013,558 @@ fn variant_userordeviceclaiminitialinfo_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// InvitationStatus
+
+#[allow(dead_code)]
+fn variant_invitationstatus_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::InvitationStatus> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "Deleted" => Ok(libparsec::InvitationStatus::Deleted {}),
+        "Idle" => Ok(libparsec::InvitationStatus::Idle {}),
+        "Ready" => Ok(libparsec::InvitationStatus::Ready {}),
+        _ => cx.throw_type_error("Object is not a InvitationStatus"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_invitationstatus_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::InvitationStatus,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::InvitationStatus::Deleted { .. } => {
+            let js_tag = JsString::try_new(cx, "Deleted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::InvitationStatus::Idle { .. } => {
+            let js_tag = JsString::try_new(cx, "Idle").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::InvitationStatus::Ready { .. } => {
+            let js_tag = JsString::try_new(cx, "Ready").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// InvitationEmailSentStatus
+
+#[allow(dead_code)]
+fn variant_invitationemailsentstatus_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::InvitationEmailSentStatus> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "BadRecipient" => Ok(libparsec::InvitationEmailSentStatus::BadRecipient {}),
+        "NotAvailable" => Ok(libparsec::InvitationEmailSentStatus::NotAvailable {}),
+        "Success" => Ok(libparsec::InvitationEmailSentStatus::Success {}),
+        _ => cx.throw_type_error("Object is not a InvitationEmailSentStatus"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_invitationemailsentstatus_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::InvitationEmailSentStatus,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::InvitationEmailSentStatus::BadRecipient { .. } => {
+            let js_tag = JsString::try_new(cx, "BadRecipient").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::InvitationEmailSentStatus::NotAvailable { .. } => {
+            let js_tag = JsString::try_new(cx, "NotAvailable").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::InvitationEmailSentStatus::Success { .. } => {
+            let js_tag = JsString::try_new(cx, "Success").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// NewUserInvitationError
+
+#[allow(dead_code)]
+fn variant_newuserinvitationerror_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::NewUserInvitationError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::NewUserInvitationError::AlreadyMember { .. } => {
+            let js_tag = JsString::try_new(cx, "AlreadyMember").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::NewUserInvitationError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::NewUserInvitationError::NotAllowed { .. } => {
+            let js_tag = JsString::try_new(cx, "NotAllowed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::NewUserInvitationError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "Offline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// NewDeviceInvitationError
+
+#[allow(dead_code)]
+fn variant_newdeviceinvitationerror_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::NewDeviceInvitationError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::NewDeviceInvitationError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::NewDeviceInvitationError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "Offline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::NewDeviceInvitationError::SendEmailToUserWithoutEmail { .. } => {
+            let js_tag = JsString::try_new(cx, "SendEmailToUserWithoutEmail").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// DeleteInvitationError
+
+#[allow(dead_code)]
+fn variant_deleteinvitationerror_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::DeleteInvitationError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::DeleteInvitationError::AlreadyDeleted { .. } => {
+            let js_tag = JsString::try_new(cx, "AlreadyDeleted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::DeleteInvitationError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::DeleteInvitationError::NotFound { .. } => {
+            let js_tag = JsString::try_new(cx, "NotFound").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::DeleteInvitationError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "Offline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// InviteListItem
+
+#[allow(dead_code)]
+fn variant_invitelistitem_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::InviteListItem> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "Device" => {
+            let token = {
+                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "token")?;
+                {
+                    let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
+                        libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(format!("{}", err)),
+                    }
+                }
+            };
+            let created_on = {
+                let js_val: Handle<JsString> = obj.get(cx, "created_on")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let status = {
+                let js_val: Handle<JsObject> = obj.get(cx, "status")?;
+                variant_invitationstatus_js_to_rs(cx, js_val)?
+            };
+            Ok(libparsec::InviteListItem::Device {
+                token,
+                created_on,
+                status,
+            })
+        }
+        "User" => {
+            let token = {
+                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "token")?;
+                {
+                    let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
+                        libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(format!("{}", err)),
+                    }
+                }
+            };
+            let created_on = {
+                let js_val: Handle<JsString> = obj.get(cx, "created_on")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let claimer_email = {
+                let js_val: Handle<JsString> = obj.get(cx, "claimer_email")?;
+                js_val.value(cx)
+            };
+            let status = {
+                let js_val: Handle<JsObject> = obj.get(cx, "status")?;
+                variant_invitationstatus_js_to_rs(cx, js_val)?
+            };
+            Ok(libparsec::InviteListItem::User {
+                token,
+                created_on,
+                claimer_email,
+                status,
+            })
+        }
+        _ => cx.throw_type_error("Object is not a InviteListItem"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_invitelistitem_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::InviteListItem,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::InviteListItem::Device {
+            token,
+            created_on,
+            status,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "Device").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_token = {
+                let rs_buff = {
+                    let custom_to_rs_bytes =
+                        |x: libparsec::InvitationToken| -> Result<_, &'static str> {
+                            Ok(x.as_bytes().to_owned())
+                        };
+                    match custom_to_rs_bytes(token) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                };
+                let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
+                let js_buff_slice = js_buff.as_mut_slice(cx);
+                for (i, c) in rs_buff.iter().enumerate() {
+                    js_buff_slice[i] = *c;
+                }
+                js_buff
+            };
+            js_obj.set(cx, "token", js_token)?;
+            let js_created_on = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339().into())
+                    };
+                match custom_to_rs_string(created_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "created_on", js_created_on)?;
+            let js_status = variant_invitationstatus_rs_to_js(cx, status)?;
+            js_obj.set(cx, "status", js_status)?;
+        }
+        libparsec::InviteListItem::User {
+            token,
+            created_on,
+            claimer_email,
+            status,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "User").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_token = {
+                let rs_buff = {
+                    let custom_to_rs_bytes =
+                        |x: libparsec::InvitationToken| -> Result<_, &'static str> {
+                            Ok(x.as_bytes().to_owned())
+                        };
+                    match custom_to_rs_bytes(token) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                };
+                let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
+                let js_buff_slice = js_buff.as_mut_slice(cx);
+                for (i, c) in rs_buff.iter().enumerate() {
+                    js_buff_slice[i] = *c;
+                }
+                js_buff
+            };
+            js_obj.set(cx, "token", js_token)?;
+            let js_created_on = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339().into())
+                    };
+                match custom_to_rs_string(created_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "created_on", js_created_on)?;
+            let js_claimer_email = JsString::try_new(cx, claimer_email).or_throw(cx)?;
+            js_obj.set(cx, "claimer_email", js_claimer_email)?;
+            let js_status = variant_invitationstatus_rs_to_js(cx, status)?;
+            js_obj.set(cx, "status", js_status)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ListInvitationsError
+
+#[allow(dead_code)]
+fn variant_listinvitationserror_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ListInvitationsError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ListInvitationsError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ListInvitationsError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "Offline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientStartInvitationGreetError
+
+#[allow(dead_code)]
+fn variant_clientstartinvitationgreeterror_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientStartInvitationGreetError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientStartInvitationGreetError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// GreetInProgressError
+
+#[allow(dead_code)]
+fn variant_greetinprogresserror_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::GreetInProgressError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::GreetInProgressError::ActiveUsersLimitReached { .. } => {
+            let js_tag = JsString::try_new(cx, "ActiveUsersLimitReached").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::GreetInProgressError::AlreadyUsed { .. } => {
+            let js_tag = JsString::try_new(cx, "AlreadyUsed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::GreetInProgressError::BadTimestamp {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "BadTimestamp").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_server_timestamp = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339().into())
+                    };
+                match custom_to_rs_string(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "server_timestamp", js_server_timestamp)?;
+            let js_client_timestamp = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339().into())
+                    };
+                match custom_to_rs_string(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "client_timestamp", js_client_timestamp)?;
+            let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
+            js_obj.set(
+                cx,
+                "ballpark_client_early_offset",
+                js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = JsNumber::new(cx, ballpark_client_late_offset);
+            js_obj.set(
+                cx,
+                "ballpark_client_late_offset",
+                js_ballpark_client_late_offset,
+            )?;
+        }
+        libparsec::GreetInProgressError::Cancelled { .. } => {
+            let js_tag = JsString::try_new(cx, "Cancelled").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::GreetInProgressError::CorruptedInviteUserData { .. } => {
+            let js_tag = JsString::try_new(cx, "CorruptedInviteUserData").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::GreetInProgressError::DeviceAlreadyExists { .. } => {
+            let js_tag = JsString::try_new(cx, "DeviceAlreadyExists").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::GreetInProgressError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::GreetInProgressError::NonceMismatch { .. } => {
+            let js_tag = JsString::try_new(cx, "NonceMismatch").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::GreetInProgressError::NotFound { .. } => {
+            let js_tag = JsString::try_new(cx, "NotFound").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::GreetInProgressError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "Offline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::GreetInProgressError::PeerReset { .. } => {
+            let js_tag = JsString::try_new(cx, "PeerReset").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::GreetInProgressError::UserAlreadyExists { .. } => {
+            let js_tag = JsString::try_new(cx, "UserAlreadyExists").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::GreetInProgressError::UserCreateNotAllowed { .. } => {
+            let js_tag = JsString::try_new(cx, "UserCreateNotAllowed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// cancel
+fn cancel(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let canceller = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let ret = libparsec::cancel(canceller);
+    let js_ret = match ret {
+        Ok(ok) => {
+            let js_obj = JsObject::new(&mut cx);
+            let js_tag = JsBoolean::new(&mut cx, true);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_value = {
+                let _ = ok;
+                JsNull::new(&mut cx)
+            };
+            js_obj.set(&mut cx, "value", js_value)?;
+            js_obj
+        }
+        Err(err) => {
+            let js_obj = cx.empty_object();
+            let js_tag = JsBoolean::new(&mut cx, false);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_err = variant_cancelerror_rs_to_js(&mut cx, err)?;
+            js_obj.set(&mut cx, "error", js_err)?;
+            js_obj
+        }
+    };
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// new_canceller
+fn new_canceller(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let ret = libparsec::new_canceller();
+    let js_ret = JsNumber::new(&mut cx, ret as f64);
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
 // client_start
 fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let config = {
@@ -1530,7 +2659,7 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // client_stop
 fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    let handle = {
+    let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
             let v = js_val.value(&mut cx);
@@ -1548,7 +2677,7 @@ fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_stop(handle).await;
+            let ret = libparsec::client_stop(client).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -1581,7 +2710,7 @@ fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // client_list_workspaces
 fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    let handle = {
+    let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
             let v = js_val.value(&mut cx);
@@ -1599,7 +2728,7 @@ fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_list_workspaces(handle).await;
+            let ret = libparsec::client_list_workspaces(client).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -1633,10 +2762,10 @@ fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
                                         }
                                         js_buff
                                     };
-                                    js_array.set(&mut cx, i as u32, js_value)?;
+                                    js_array.set(&mut cx, 1, js_value)?;
                                     let js_value =
                                         JsString::try_new(&mut cx, x2).or_throw(&mut cx)?;
-                                    js_array.set(&mut cx, i as u32, js_value)?;
+                                    js_array.set(&mut cx, 2, js_value)?;
                                     js_array
                                 };
                                 js_array.set(&mut cx, i as u32, js_elem)?;
@@ -1664,7 +2793,7 @@ fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // client_workspace_create
 fn client_workspace_create(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    let handle = {
+    let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
             let v = js_val.value(&mut cx);
@@ -1694,7 +2823,7 @@ fn client_workspace_create(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_workspace_create(handle, name).await;
+            let ret = libparsec::client_workspace_create(client, name).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -1741,7 +2870,7 @@ fn client_workspace_create(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // client_workspace_rename
 fn client_workspace_rename(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    let handle = {
+    let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
             let v = js_val.value(&mut cx);
@@ -1783,7 +2912,7 @@ fn client_workspace_rename(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_workspace_rename(handle, workspace_id, new_name).await;
+            let ret = libparsec::client_workspace_rename(client, workspace_id, new_name).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -1816,7 +2945,7 @@ fn client_workspace_rename(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // client_workspace_share
 fn client_workspace_share(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    let handle = {
+    let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
             let v = js_val.value(&mut cx);
@@ -1863,7 +2992,7 @@ fn client_workspace_share(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .expect("Mutex is poisoned")
         .spawn(async move {
             let ret =
-                libparsec::client_workspace_share(handle, workspace_id, recipient, role).await;
+                libparsec::client_workspace_share(client, workspace_id, recipient, role).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -1891,6 +3020,45 @@ fn client_workspace_share(mut cx: FunctionContext) -> JsResult<JsPromise> {
             });
         });
 
+    Ok(promise)
+}
+
+// claimer_greeter_abort_operation
+fn claimer_greeter_abort_operation(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let ret = libparsec::claimer_greeter_abort_operation(handle);
+    let js_ret = match ret {
+        Ok(ok) => {
+            let js_obj = JsObject::new(&mut cx);
+            let js_tag = JsBoolean::new(&mut cx, true);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_value = {
+                let _ = ok;
+                JsNull::new(&mut cx)
+            };
+            js_obj.set(&mut cx, "value", js_value)?;
+            js_obj
+        }
+        Err(err) => {
+            let js_obj = cx.empty_object();
+            let js_tag = JsBoolean::new(&mut cx, false);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_err = variant_claimergreeterabortoperationerror_rs_to_js(&mut cx, err)?;
+            js_obj.set(&mut cx, "error", js_err)?;
+            js_obj
+        }
+    };
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
     Ok(promise)
 }
 
@@ -2183,10 +3351,20 @@ fn claimer_retrieve_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
-// claimer_user_initial_ctx_do_wait_peer
-fn claimer_user_initial_ctx_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    let handle = {
+// claimer_user_initial_do_wait_peer
+fn claimer_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
         {
             let v = js_val.value(&mut cx);
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
@@ -2203,7 +3381,7 @@ fn claimer_user_initial_ctx_do_wait_peer(mut cx: FunctionContext) -> JsResult<Js
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::claimer_user_initial_ctx_do_wait_peer(handle).await;
+            let ret = libparsec::claimer_user_initial_do_wait_peer(canceller, handle).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -2231,10 +3409,20 @@ fn claimer_user_initial_ctx_do_wait_peer(mut cx: FunctionContext) -> JsResult<Js
     Ok(promise)
 }
 
-// claimer_device_initial_ctx_do_wait_peer
-fn claimer_device_initial_ctx_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    let handle = {
+// claimer_device_initial_do_wait_peer
+fn claimer_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
         {
             let v = js_val.value(&mut cx);
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
@@ -2251,7 +3439,7 @@ fn claimer_device_initial_ctx_do_wait_peer(mut cx: FunctionContext) -> JsResult<
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::claimer_device_initial_ctx_do_wait_peer(handle).await;
+            let ret = libparsec::claimer_device_initial_do_wait_peer(canceller, handle).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -2279,10 +3467,20 @@ fn claimer_device_initial_ctx_do_wait_peer(mut cx: FunctionContext) -> JsResult<
     Ok(promise)
 }
 
-// claimer_user_in_progress_2_do_signify_trust
-fn claimer_user_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    let handle = {
+// claimer_user_in_progress_1_do_signify_trust
+fn claimer_user_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
         {
             let v = js_val.value(&mut cx);
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
@@ -2299,7 +3497,8 @@ fn claimer_user_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsRes
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::claimer_user_in_progress_2_do_signify_trust(handle).await;
+            let ret =
+                libparsec::claimer_user_in_progress_1_do_signify_trust(canceller, handle).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -2327,10 +3526,20 @@ fn claimer_user_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsRes
     Ok(promise)
 }
 
-// claimer_device_in_progress_2_do_signify_trust
-fn claimer_device_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    let handle = {
+// claimer_device_in_progress_1_do_signify_trust
+fn claimer_device_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
         {
             let v = js_val.value(&mut cx);
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
@@ -2347,7 +3556,8 @@ fn claimer_device_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsR
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::claimer_device_in_progress_2_do_signify_trust(handle).await;
+            let ret =
+                libparsec::claimer_device_in_progress_1_do_signify_trust(canceller, handle).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -2377,8 +3587,18 @@ fn claimer_device_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsR
 
 // claimer_user_in_progress_2_do_wait_peer_trust
 fn claimer_user_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    let handle = {
+    let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
         {
             let v = js_val.value(&mut cx);
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
@@ -2395,7 +3615,8 @@ fn claimer_user_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::claimer_user_in_progress_2_do_wait_peer_trust(handle).await;
+            let ret =
+                libparsec::claimer_user_in_progress_2_do_wait_peer_trust(canceller, handle).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -2425,8 +3646,18 @@ fn claimer_user_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
 
 // claimer_device_in_progress_2_do_wait_peer_trust
 fn claimer_device_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    let handle = {
+    let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
         {
             let v = js_val.value(&mut cx);
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
@@ -2443,7 +3674,8 @@ fn claimer_device_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> J
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::claimer_device_in_progress_2_do_wait_peer_trust(handle).await;
+            let ret =
+                libparsec::claimer_device_in_progress_2_do_wait_peer_trust(canceller, handle).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -2473,7 +3705,7 @@ fn claimer_device_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> J
 
 // claimer_user_in_progress_3_do_claim
 fn claimer_user_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    let handle = {
+    let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
             let v = js_val.value(&mut cx);
@@ -2483,7 +3715,17 @@ fn claimer_user_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPr
             v as u32
         }
     };
-    let requested_device_label = match cx.argument_opt(1) {
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let requested_device_label = match cx.argument_opt(2) {
         Some(v) => match v.downcast::<JsString, _>(&mut cx) {
             Ok(js_val) => Some({
                 match js_val.value(&mut cx).parse() {
@@ -2495,7 +3737,7 @@ fn claimer_user_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPr
         },
         None => None,
     };
-    let requested_human_handle = match cx.argument_opt(2) {
+    let requested_human_handle = match cx.argument_opt(3) {
         Some(v) => match v.downcast::<JsString, _>(&mut cx) {
             Ok(js_val) => Some({
                 match js_val.value(&mut cx).parse() {
@@ -2516,6 +3758,7 @@ fn claimer_user_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPr
         .expect("Mutex is poisoned")
         .spawn(async move {
             let ret = libparsec::claimer_user_in_progress_3_do_claim(
+                canceller,
                 handle,
                 requested_device_label,
                 requested_human_handle,
@@ -2550,7 +3793,7 @@ fn claimer_user_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPr
 
 // claimer_device_in_progress_3_do_claim
 fn claimer_device_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    let handle = {
+    let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
             let v = js_val.value(&mut cx);
@@ -2560,7 +3803,17 @@ fn claimer_device_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<Js
             v as u32
         }
     };
-    let requested_device_label = match cx.argument_opt(1) {
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let requested_device_label = match cx.argument_opt(2) {
         Some(v) => match v.downcast::<JsString, _>(&mut cx) {
             Ok(js_val) => Some({
                 match js_val.value(&mut cx).parse() {
@@ -2580,9 +3833,12 @@ fn claimer_device_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<Js
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret =
-                libparsec::claimer_device_in_progress_3_do_claim(handle, requested_device_label)
-                    .await;
+            let ret = libparsec::claimer_device_in_progress_3_do_claim(
+                canceller,
+                handle,
+                requested_device_label,
+            )
+            .await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -2705,6 +3961,1053 @@ fn claimer_device_finalize_save_local_device(mut cx: FunctionContext) -> JsResul
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err = variant_claiminprogresserror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_new_user_invitation
+fn client_new_user_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let claimer_email = {
+        let js_val = cx.argument::<JsString>(1)?;
+        js_val.value(&mut cx)
+    };
+    let send_email = {
+        let js_val = cx.argument::<JsBoolean>(2)?;
+        js_val.value(&mut cx)
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::client_new_user_invitation(client, claimer_email, send_email).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            let (x1, x2) = ok;
+                            let js_array = JsArray::new(&mut cx, 2);
+                            let js_value = {
+                                let rs_buff = {
+                                    let custom_to_rs_bytes =
+                                        |x: libparsec::InvitationToken| -> Result<_, &'static str> {
+                                            Ok(x.as_bytes().to_owned())
+                                        };
+                                    match custom_to_rs_bytes(x1) {
+                                        Ok(ok) => ok,
+                                        Err(err) => return cx.throw_type_error(err),
+                                    }
+                                };
+                                let mut js_buff = JsArrayBuffer::new(&mut cx, rs_buff.len())?;
+                                let js_buff_slice = js_buff.as_mut_slice(&mut cx);
+                                for (i, c) in rs_buff.iter().enumerate() {
+                                    js_buff_slice[i] = *c;
+                                }
+                                js_buff
+                            };
+                            js_array.set(&mut cx, 1, js_value)?;
+                            let js_value = variant_invitationemailsentstatus_rs_to_js(&mut cx, x2)?;
+                            js_array.set(&mut cx, 2, js_value)?;
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_newuserinvitationerror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_new_device_invitation
+fn client_new_device_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let send_email = {
+        let js_val = cx.argument::<JsBoolean>(1)?;
+        js_val.value(&mut cx)
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_new_device_invitation(client, send_email).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            let (x1, x2) = ok;
+                            let js_array = JsArray::new(&mut cx, 2);
+                            let js_value = {
+                                let rs_buff = {
+                                    let custom_to_rs_bytes =
+                                        |x: libparsec::InvitationToken| -> Result<_, &'static str> {
+                                            Ok(x.as_bytes().to_owned())
+                                        };
+                                    match custom_to_rs_bytes(x1) {
+                                        Ok(ok) => ok,
+                                        Err(err) => return cx.throw_type_error(err),
+                                    }
+                                };
+                                let mut js_buff = JsArrayBuffer::new(&mut cx, rs_buff.len())?;
+                                let js_buff_slice = js_buff.as_mut_slice(&mut cx);
+                                for (i, c) in rs_buff.iter().enumerate() {
+                                    js_buff_slice[i] = *c;
+                                }
+                                js_buff
+                            };
+                            js_array.set(&mut cx, 1, js_value)?;
+                            let js_value = variant_invitationemailsentstatus_rs_to_js(&mut cx, x2)?;
+                            js_array.set(&mut cx, 2, js_value)?;
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_newdeviceinvitationerror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_delete_invitation
+fn client_delete_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let token = {
+        let js_val = cx.argument::<JsTypedArray<u8>>(1)?;
+        {
+            let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
+                libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_delete_invitation(client, token).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_deleteinvitationerror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_list_invitations
+fn client_list_invitations(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_list_invitations(client).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            // JsArray::new allocates with `undefined` value, that's why we `set` value
+                            let js_array = JsArray::new(&mut cx, ok.len() as u32);
+                            for (i, elem) in ok.into_iter().enumerate() {
+                                let js_elem = variant_invitelistitem_rs_to_js(&mut cx, elem)?;
+                                js_array.set(&mut cx, i as u32, js_elem)?;
+                            }
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_listinvitationserror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_start_user_invitation_greet
+fn client_start_user_invitation_greet(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let token = {
+        let js_val = cx.argument::<JsTypedArray<u8>>(1)?;
+        {
+            let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
+                libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_start_user_invitation_greet(client, token).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_usergreetinitialinfo_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_clientstartinvitationgreeterror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_start_device_invitation_greet
+fn client_start_device_invitation_greet(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let token = {
+        let js_val = cx.argument::<JsTypedArray<u8>>(1)?;
+        {
+            let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
+                libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_start_device_invitation_greet(client, token).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_devicegreetinitialinfo_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_clientstartinvitationgreeterror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// greeter_user_initial_do_wait_peer
+fn greeter_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let canceller = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::greeter_user_initial_do_wait_peer(canceller, handle).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_usergreetinprogress1info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_greetinprogresserror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// greeter_device_initial_do_wait_peer
+fn greeter_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let canceller = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::greeter_device_initial_do_wait_peer(canceller, handle).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_devicegreetinprogress1info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_greetinprogresserror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// greeter_user_in_progress_1_do_wait_peer_trust
+fn greeter_user_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let canceller = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::greeter_user_in_progress_1_do_wait_peer_trust(canceller, handle).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_usergreetinprogress2info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_greetinprogresserror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// greeter_device_in_progress_1_do_wait_peer_trust
+fn greeter_device_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let canceller = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::greeter_device_in_progress_1_do_wait_peer_trust(canceller, handle).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_devicegreetinprogress2info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_greetinprogresserror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// greeter_user_in_progress_2_do_signify_trust
+fn greeter_user_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let canceller = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::greeter_user_in_progress_2_do_signify_trust(canceller, handle).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_usergreetinprogress3info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_greetinprogresserror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// greeter_device_in_progress_2_do_signify_trust
+fn greeter_device_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let canceller = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::greeter_device_in_progress_2_do_signify_trust(canceller, handle).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_devicegreetinprogress3info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_greetinprogresserror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// greeter_user_in_progress_3_do_get_claim_requests
+fn greeter_user_in_progress_3_do_get_claim_requests(
+    mut cx: FunctionContext,
+) -> JsResult<JsPromise> {
+    let canceller = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::greeter_user_in_progress_3_do_get_claim_requests(canceller, handle)
+                    .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_usergreetinprogress4info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_greetinprogresserror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// greeter_device_in_progress_3_do_get_claim_requests
+fn greeter_device_in_progress_3_do_get_claim_requests(
+    mut cx: FunctionContext,
+) -> JsResult<JsPromise> {
+    let canceller = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::greeter_device_in_progress_3_do_get_claim_requests(canceller, handle)
+                    .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_devicegreetinprogress4info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_greetinprogresserror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// greeter_user_in_progress_4_do_create
+fn greeter_user_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let canceller = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let human_handle = match cx.argument_opt(2) {
+        Some(v) => match v.downcast::<JsString, _>(&mut cx) {
+            Ok(js_val) => Some({
+                match js_val.value(&mut cx).parse() {
+                    Ok(val) => val,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            }),
+            Err(_) => None,
+        },
+        None => None,
+    };
+    let device_label = match cx.argument_opt(3) {
+        Some(v) => match v.downcast::<JsString, _>(&mut cx) {
+            Ok(js_val) => Some({
+                match js_val.value(&mut cx).parse() {
+                    Ok(val) => val,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            }),
+            Err(_) => None,
+        },
+        None => None,
+    };
+    let profile = {
+        let js_val = cx.argument::<JsObject>(4)?;
+        variant_userprofile_js_to_rs(&mut cx, js_val)?
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::greeter_user_in_progress_4_do_create(
+                canceller,
+                handle,
+                human_handle,
+                device_label,
+                profile,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_greetinprogresserror_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// greeter_device_in_progress_4_do_create
+fn greeter_device_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let canceller = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let device_label = match cx.argument_opt(2) {
+        Some(v) => match v.downcast::<JsString, _>(&mut cx) {
+            Ok(js_val) => Some({
+                match js_val.value(&mut cx).parse() {
+                    Ok(val) => val,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            }),
+            Err(_) => None,
+        },
+        None => None,
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::greeter_device_in_progress_4_do_create(canceller, handle, device_label)
+                    .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_greetinprogresserror_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -2856,30 +5159,36 @@ fn test_drop_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
 }
 
 pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
+    cx.export_function("cancel", cancel)?;
+    cx.export_function("newCanceller", new_canceller)?;
     cx.export_function("clientStart", client_start)?;
     cx.export_function("clientStop", client_stop)?;
     cx.export_function("clientListWorkspaces", client_list_workspaces)?;
     cx.export_function("clientWorkspaceCreate", client_workspace_create)?;
     cx.export_function("clientWorkspaceRename", client_workspace_rename)?;
     cx.export_function("clientWorkspaceShare", client_workspace_share)?;
+    cx.export_function(
+        "claimerGreeterAbortOperation",
+        claimer_greeter_abort_operation,
+    )?;
     cx.export_function("listAvailableDevices", list_available_devices)?;
     cx.export_function("bootstrapOrganization", bootstrap_organization)?;
     cx.export_function("claimerRetrieveInfo", claimer_retrieve_info)?;
     cx.export_function(
-        "claimerUserInitialCtxDoWaitPeer",
-        claimer_user_initial_ctx_do_wait_peer,
+        "claimerUserInitialDoWaitPeer",
+        claimer_user_initial_do_wait_peer,
     )?;
     cx.export_function(
-        "claimerDeviceInitialCtxDoWaitPeer",
-        claimer_device_initial_ctx_do_wait_peer,
+        "claimerDeviceInitialDoWaitPeer",
+        claimer_device_initial_do_wait_peer,
     )?;
     cx.export_function(
-        "claimerUserInProgress2DoSignifyTrust",
-        claimer_user_in_progress_2_do_signify_trust,
+        "claimerUserInProgress1DoSignifyTrust",
+        claimer_user_in_progress_1_do_signify_trust,
     )?;
     cx.export_function(
-        "claimerDeviceInProgress2DoSignifyTrust",
-        claimer_device_in_progress_2_do_signify_trust,
+        "claimerDeviceInProgress1DoSignifyTrust",
+        claimer_device_in_progress_1_do_signify_trust,
     )?;
     cx.export_function(
         "claimerUserInProgress2DoWaitPeerTrust",
@@ -2904,6 +5213,58 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function(
         "claimerDeviceFinalizeSaveLocalDevice",
         claimer_device_finalize_save_local_device,
+    )?;
+    cx.export_function("clientNewUserInvitation", client_new_user_invitation)?;
+    cx.export_function("clientNewDeviceInvitation", client_new_device_invitation)?;
+    cx.export_function("clientDeleteInvitation", client_delete_invitation)?;
+    cx.export_function("clientListInvitations", client_list_invitations)?;
+    cx.export_function(
+        "clientStartUserInvitationGreet",
+        client_start_user_invitation_greet,
+    )?;
+    cx.export_function(
+        "clientStartDeviceInvitationGreet",
+        client_start_device_invitation_greet,
+    )?;
+    cx.export_function(
+        "greeterUserInitialDoWaitPeer",
+        greeter_user_initial_do_wait_peer,
+    )?;
+    cx.export_function(
+        "greeterDeviceInitialDoWaitPeer",
+        greeter_device_initial_do_wait_peer,
+    )?;
+    cx.export_function(
+        "greeterUserInProgress1DoWaitPeerTrust",
+        greeter_user_in_progress_1_do_wait_peer_trust,
+    )?;
+    cx.export_function(
+        "greeterDeviceInProgress1DoWaitPeerTrust",
+        greeter_device_in_progress_1_do_wait_peer_trust,
+    )?;
+    cx.export_function(
+        "greeterUserInProgress2DoSignifyTrust",
+        greeter_user_in_progress_2_do_signify_trust,
+    )?;
+    cx.export_function(
+        "greeterDeviceInProgress2DoSignifyTrust",
+        greeter_device_in_progress_2_do_signify_trust,
+    )?;
+    cx.export_function(
+        "greeterUserInProgress3DoGetClaimRequests",
+        greeter_user_in_progress_3_do_get_claim_requests,
+    )?;
+    cx.export_function(
+        "greeterDeviceInProgress3DoGetClaimRequests",
+        greeter_device_in_progress_3_do_get_claim_requests,
+    )?;
+    cx.export_function(
+        "greeterUserInProgress4DoCreate",
+        greeter_user_in_progress_4_do_create,
+    )?;
+    cx.export_function(
+        "greeterDeviceInProgress4DoCreate",
+        greeter_device_in_progress_4_do_create,
     )?;
     cx.export_function("testNewTestbed", test_new_testbed)?;
     cx.export_function(
