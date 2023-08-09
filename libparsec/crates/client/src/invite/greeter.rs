@@ -13,6 +13,8 @@ use crate::{EventBus, EventTooMuchDriftWithServerClock};
  * new_user_invitation
  */
 
+pub use authenticated_cmds::latest::invite_new::InvitationEmailSentStatus;
+
 #[derive(Debug, thiserror::Error)]
 pub enum NewUserInvitationError {
     #[error("Cannot reach the server")]
@@ -38,13 +40,7 @@ pub async fn new_user_invitation(
     cmds: &AuthenticatedCmds,
     claimer_email: String,
     send_email: bool,
-) -> Result<
-    (
-        InvitationToken,
-        authenticated_cmds::latest::invite_new::InvitationEmailSentStatus,
-    ),
-    NewUserInvitationError,
-> {
+) -> Result<(InvitationToken, InvitationEmailSentStatus), NewUserInvitationError> {
     use authenticated_cmds::latest::invite_new::{Rep, Req, UserOrDevice};
 
     let req = Req(UserOrDevice::User {
@@ -94,13 +90,7 @@ impl From<ConnectionError> for NewDeviceInvitationError {
 pub async fn new_device_invitation(
     cmds: &AuthenticatedCmds,
     send_email: bool,
-) -> Result<
-    (
-        InvitationToken,
-        authenticated_cmds::latest::invite_new::InvitationEmailSentStatus,
-    ),
-    NewDeviceInvitationError,
-> {
+) -> Result<(InvitationToken, InvitationEmailSentStatus), NewDeviceInvitationError> {
     use authenticated_cmds::latest::invite_new::{Rep, Req, UserOrDevice};
 
     let req = Req(UserOrDevice::Device { send_email });
@@ -188,9 +178,11 @@ impl From<ConnectionError> for ListInvitationsError {
     }
 }
 
+pub use authenticated_cmds::latest::invite_list::InviteListItem;
+
 pub async fn list_invitations(
     cmds: &AuthenticatedCmds,
-) -> Result<Vec<authenticated_cmds::latest::invite_list::InviteListItem>, ListInvitationsError> {
+) -> Result<Vec<InviteListItem>, ListInvitationsError> {
     use authenticated_cmds::latest::invite_list::{Rep, Req};
 
     let rep = cmds.send(Req).await?;
@@ -250,6 +242,7 @@ impl From<ConnectionError> for GreetInProgressError {
 #[derive(Debug)]
 struct BaseGreetInitialCtx {
     token: InvitationToken,
+    device: Arc<LocalDevice>,
     cmds: Arc<AuthenticatedCmds>,
     event_bus: EventBus,
 }
@@ -332,6 +325,7 @@ impl BaseGreetInitialCtx {
 
         Ok(BaseGreetInProgress1Ctx {
             token: self.token,
+            device: self.device,
             greeter_sas,
             claimer_sas,
             shared_secret_key,
@@ -345,11 +339,17 @@ impl BaseGreetInitialCtx {
 pub struct UserGreetInitialCtx(BaseGreetInitialCtx);
 
 impl UserGreetInitialCtx {
-    pub fn new(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus, token: InvitationToken) -> Self {
-        Self(BaseGreetInitialCtx {
+    pub fn new(
+        device: Arc<LocalDevice>,
+        cmds: Arc<AuthenticatedCmds>,
+        event_bus: EventBus,
+        token: InvitationToken,
+    ) -> Self {
+        UserGreetInitialCtx(BaseGreetInitialCtx {
+            device,
             cmds,
-            token,
             event_bus,
+            token,
         })
     }
 
@@ -362,11 +362,17 @@ impl UserGreetInitialCtx {
 pub struct DeviceGreetInitialCtx(BaseGreetInitialCtx);
 
 impl DeviceGreetInitialCtx {
-    pub fn new(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus, token: InvitationToken) -> Self {
+    pub fn new(
+        device: Arc<LocalDevice>,
+        cmds: Arc<AuthenticatedCmds>,
+        event_bus: EventBus,
+        token: InvitationToken,
+    ) -> Self {
         Self(BaseGreetInitialCtx {
+            device,
             cmds,
-            token,
             event_bus,
+            token,
         })
     }
 
@@ -380,6 +386,7 @@ impl DeviceGreetInitialCtx {
 #[derive(Debug)]
 struct BaseGreetInProgress1Ctx {
     token: InvitationToken,
+    device: Arc<LocalDevice>,
     greeter_sas: SASCode,
     claimer_sas: SASCode,
     shared_secret_key: SecretKey,
@@ -396,6 +403,7 @@ impl BaseGreetInProgress1Ctx {
         match rep {
             Rep::Ok => Ok(BaseGreetInProgress2Ctx {
                 token: self.token,
+                device: self.device,
                 claimer_sas: self.claimer_sas,
                 shared_secret_key: self.shared_secret_key,
                 cmds: self.cmds,
@@ -450,6 +458,7 @@ impl DeviceGreetInProgress1Ctx {
 #[derive(Debug)]
 struct BaseGreetInProgress2Ctx {
     token: InvitationToken,
+    device: Arc<LocalDevice>,
     claimer_sas: SASCode,
     shared_secret_key: SecretKey,
     cmds: Arc<AuthenticatedCmds>,
@@ -469,6 +478,7 @@ impl BaseGreetInProgress2Ctx {
         match rep {
             Rep::Ok => Ok(BaseGreetInProgress3Ctx {
                 token: self.token,
+                device: self.device,
                 shared_secret_key: self.shared_secret_key,
                 cmds: self.cmds,
                 event_bus: self.event_bus,
@@ -525,6 +535,7 @@ impl DeviceGreetInProgress2Ctx {
 #[derive(Debug)]
 struct BaseGreetInProgress3Ctx {
     token: InvitationToken,
+    device: Arc<LocalDevice>,
     shared_secret_key: SecretKey,
     cmds: Arc<AuthenticatedCmds>,
     event_bus: EventBus,
@@ -533,6 +544,7 @@ struct BaseGreetInProgress3Ctx {
 #[derive(Debug)]
 struct BaseGreetInProgress3WithPayloadCtx {
     token: InvitationToken,
+    device: Arc<LocalDevice>,
     shared_secret_key: SecretKey,
     cmds: Arc<AuthenticatedCmds>,
     event_bus: EventBus,
@@ -565,6 +577,7 @@ impl BaseGreetInProgress3Ctx {
 
         Ok(BaseGreetInProgress3WithPayloadCtx {
             token: self.token,
+            device: self.device,
             shared_secret_key: self.shared_secret_key,
             cmds: self.cmds,
             event_bus: self.event_bus,
@@ -587,6 +600,7 @@ impl UserGreetInProgress3Ctx {
 
         Ok(UserGreetInProgress4Ctx {
             token: ctx.token,
+            device: ctx.device,
             requested_device_label: data.requested_device_label,
             requested_human_handle: data.requested_human_handle,
             public_key: data.public_key,
@@ -612,6 +626,7 @@ impl DeviceGreetInProgress3Ctx {
 
         Ok(DeviceGreetInProgress4Ctx {
             token: ctx.token,
+            device: ctx.device,
             requested_device_label: data.requested_device_label,
             verify_key: data.verify_key,
             shared_secret_key: ctx.shared_secret_key,
@@ -733,6 +748,7 @@ pub struct UserGreetInProgress4Ctx {
     pub token: InvitationToken,
     pub requested_device_label: Option<DeviceLabel>,
     pub requested_human_handle: Option<HumanHandle>,
+    device: Arc<LocalDevice>,
     public_key: PublicKey,
     verify_key: VerifyKey,
     shared_secret_key: SecretKey,
@@ -743,12 +759,11 @@ pub struct UserGreetInProgress4Ctx {
 impl UserGreetInProgress4Ctx {
     pub async fn do_create_new_user(
         self,
-        author: &LocalDevice,
         device_label: Option<DeviceLabel>,
         human_handle: Option<HumanHandle>,
         profile: UserProfile,
     ) -> Result<(), GreetInProgressError> {
-        let mut timestamp = author.time_provider.now();
+        let mut timestamp = self.device.time_provider.now();
         let invite_user_confirmation = loop {
             let (
                 user_certificate,
@@ -757,7 +772,7 @@ impl UserGreetInProgress4Ctx {
                 redacted_device_certificate,
                 invite_user_confirmation,
             ) = create_new_signed_user_certificates(
-                author,
+                &self.device,
                 device_label.clone(),
                 human_handle.clone(),
                 profile,
@@ -785,7 +800,7 @@ impl UserGreetInProgress4Ctx {
                         strictly_greater_than,
                     } => {
                         timestamp =
-                            std::cmp::max(strictly_greater_than, author.time_provider.now());
+                            std::cmp::max(strictly_greater_than, self.device.time_provider.now());
                         continue;
                     }
                     Rep::ActiveUsersLimitReached { .. } => {
@@ -882,6 +897,7 @@ impl UserGreetInProgress4Ctx {
 pub struct DeviceGreetInProgress4Ctx {
     pub token: InvitationToken,
     pub requested_device_label: Option<DeviceLabel>,
+    device: Arc<LocalDevice>,
     verify_key: VerifyKey,
     shared_secret_key: SecretKey,
     cmds: Arc<AuthenticatedCmds>,
@@ -892,14 +908,13 @@ pub struct DeviceGreetInProgress4Ctx {
 impl DeviceGreetInProgress4Ctx {
     pub async fn do_create_new_device(
         self,
-        author: &LocalDevice,
         device_label: Option<DeviceLabel>,
     ) -> Result<(), GreetInProgressError> {
-        let mut timestamp = author.time_provider.now();
+        let mut timestamp = self.device.time_provider.now();
         let device_id = loop {
             let (device_certificate_bytes, redacted_device_certificate_bytes, device_id) =
                 create_new_signed_device_certificates(
-                    author,
+                    &self.device,
                     device_label.clone(),
                     self.verify_key.clone(),
                     timestamp,
@@ -922,7 +937,7 @@ impl DeviceGreetInProgress4Ctx {
                         strictly_greater_than,
                     } => {
                         timestamp =
-                            std::cmp::max(strictly_greater_than, author.time_provider.now());
+                            std::cmp::max(strictly_greater_than, self.device.time_provider.now());
                         continue;
                     }
                     Rep::AlreadyExists { .. } => Err(GreetInProgressError::DeviceAlreadyExists),
@@ -961,12 +976,12 @@ impl DeviceGreetInProgress4Ctx {
         let payload = InviteDeviceConfirmation {
             device_id,
             device_label,
-            human_handle: author.human_handle.clone(),
-            profile: author.initial_profile,
-            private_key: author.private_key.clone(),
-            user_manifest_id: author.user_manifest_id,
-            user_manifest_key: author.user_manifest_key.clone(),
-            root_verify_key: author.root_verify_key().clone(),
+            human_handle: self.device.human_handle.clone(),
+            profile: self.device.initial_profile,
+            private_key: self.device.private_key.clone(),
+            user_manifest_id: self.device.user_manifest_id,
+            user_manifest_key: self.device.user_manifest_key.clone(),
+            root_verify_key: self.device.root_verify_key().clone(),
         }
         .dump_and_encrypt(&self.shared_secret_key)
         .into();

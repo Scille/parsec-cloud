@@ -22,10 +22,10 @@ use crate::{
 // Should not be `Clone` given it manages underlying resources !
 pub struct Client {
     stopped: AtomicBool,
-    config: Arc<ClientConfig>,
-    device: Arc<LocalDevice>,
-    event_bus: EventBus,
-    cmds: Arc<AuthenticatedCmds>,
+    pub(crate) config: Arc<ClientConfig>,
+    pub(crate) device: Arc<LocalDevice>,
+    pub(crate) event_bus: EventBus,
+    pub(crate) cmds: Arc<AuthenticatedCmds>,
     pub certificates_ops: Arc<CertificatesOps>,
     pub user_ops: UserOps,
     connection_monitor: ConnectionMonitor,
@@ -102,6 +102,64 @@ impl Client {
         self.user_ops.stop().await;
         // TODO: stop workspace ops
         self.stopped.store(true, Ordering::Relaxed);
+    }
+
+    pub async fn new_user_invitation(
+        &self,
+        claimer_email: String,
+        send_email: bool,
+    ) -> Result<
+        (InvitationToken, crate::invite::InvitationEmailSentStatus),
+        crate::invite::NewUserInvitationError,
+    > {
+        crate::invite::new_user_invitation(&self.cmds, claimer_email, send_email).await
+    }
+
+    pub async fn new_device_invitation(
+        &self,
+        send_email: bool,
+    ) -> Result<
+        (InvitationToken, crate::invite::InvitationEmailSentStatus),
+        crate::invite::NewDeviceInvitationError,
+    > {
+        crate::invite::new_device_invitation(&self.cmds, send_email).await
+    }
+
+    pub async fn delete_invitation(
+        &self,
+        token: InvitationToken,
+    ) -> Result<(), crate::invite::DeleteInvitationError> {
+        crate::invite::delete_invitation(&self.cmds, token).await
+    }
+
+    pub async fn list_invitations(
+        &self,
+    ) -> Result<Vec<crate::invite::InviteListItem>, crate::invite::ListInvitationsError> {
+        crate::invite::list_invitations(&self.cmds).await
+    }
+
+    pub fn start_user_invitation_greet(
+        &self,
+        token: InvitationToken,
+    ) -> crate::invite::UserGreetInitialCtx {
+        crate::invite::UserGreetInitialCtx::new(
+            self.device.clone(),
+            self.cmds.clone(),
+            self.event_bus.clone(),
+            token,
+        )
+    }
+
+    pub fn start_device_invitation_greet(
+        &self,
+        token: InvitationToken,
+    ) -> crate::invite::DeviceGreetInitialCtx {
+        crate::invite::DeviceGreetInitialCtx::new(
+            self.device.clone(),
+            self.cmds.clone(),
+            self.event_bus.clone(),
+            token,
+        )
     }
 }
 
