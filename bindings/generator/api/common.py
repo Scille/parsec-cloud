@@ -110,7 +110,7 @@ class HumanHandle(StrBasedType):
 
 
 class DateTime(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::DateTime::from_frc3339(&s).map_err(|e| e.to_string()) }"
+    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string()) }"
     custom_to_rs_string = (
         "|dt: libparsec::DateTime| -> Result<String, &'static str> { Ok(dt.to_rfc3339().into()) }"
     )
@@ -166,3 +166,16 @@ class EntryID(BytesBasedType):
     custom_to_rs_bytes = (
         "|x: libparsec::EntryID| -> Result<_, &'static str> { Ok(x.as_bytes().to_owned()) }"
     )
+
+
+class InvitationToken(BytesBasedType):
+    custom_from_rs_bytes = "|x: &[u8]| -> Result<_, _> { libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string()) }"
+    custom_to_rs_bytes = (
+        "|x: libparsec::InvitationToken| -> Result<_, &'static str> { Ok(x.as_bytes().to_owned()) }"
+    )
+
+
+class UserProfile(Variant):
+    Admin = VariantItemUnit
+    Standard = VariantItemUnit
+    Outsider = VariantItemUnit
