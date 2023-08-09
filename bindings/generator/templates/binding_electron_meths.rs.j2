@@ -227,7 +227,7 @@ std::sync::Arc::new(
     {%- for value in type.values -%}
         {% set value_var_name = "x" ~ loop.index %}
         let js_value = {{ render_rs_to_js(value_var_name, value, mut_cx_ref) | indent(8) }};
-        js_array.set({{ mut_cx_ref }}, i as u32, js_value)?;
+        js_array.set({{ mut_cx_ref }}, {{ loop.index }}, js_value)?;
     {%- endfor -%}
     js_array
 }

@@ -170,10 +170,10 @@ if {{ js_val }}.is_null() {
 {{ js_val }}.dyn_into::<Uint8Array>().map_err(|_| TypeError::new("Not a Uint8Array"))?.to_vec()
 {%- elif type.kind == "bytes_based" -%}
 {{ js_val }}.dyn_into::<Uint8Array>().map_err(|_| TypeError::new("Not a Uint8Array"))
-{%- if type.custom_from_rs_string -%}
+{%- if type.custom_from_rs_bytes -%}
 .and_then(|x| {
-    let custom_from_rs_string = {{ type.custom_from_rs_string }};
-    custom_from_rs_string(x)
+    let custom_from_rs_bytes = {{ type.custom_from_rs_bytes }};
+    custom_from_rs_bytes(&x.to_vec())
 .map_err(|e| TypeError::new(e.as_ref())) })
 {%- else -%}
 ?.to_vec()
@@ -277,7 +277,7 @@ JsValue::from(Uint8Array::from({%- if type.custom_to_rs_bytes -%}
     {%- for value in type.values -%}
         {% set value_var_name = "x" ~ loop.index %}
         let js_value = {{ render_rs_to_js_value(value_var_name, value) | indent(8) }};
-        js_array.set(i as u32, js_value);
+        js_array.push(&js_value);
     {%- endfor -%}
     js_array.into()
 }
