@@ -100,7 +100,7 @@ async function openJoinByLinkModal(): Promise<void> {
   await linkModal.present();
   const linkResult = await linkModal.onWillDismiss();
 
-  if (linkResult.role !== 'confirm') {
+  if (linkResult.role !== ModalResultCode.Confirm) {
     await popoverController.dismiss(null, linkResult.role);
   } else {
     if (claimUserLinkValidator(linkResult.data) === Validity.Valid) {
