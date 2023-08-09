@@ -48,8 +48,8 @@ macro_rules! select2 {
             $crate::Either::Right($f2.await)
         };
         match f1.or(f2).await {
-            $crate::Either::Left($($r1 @ )? r1) => { $e1 }
-            $crate::Either::Right($($r2 @ )? r2) => { $e2 }
+            $crate::Either::Left(r1) => { $(let $r1 = r1; )?  $e1 }
+            $crate::Either::Right(r2) => { $(let $r2 = r2; )? $e2 }
         }
         }
     };
