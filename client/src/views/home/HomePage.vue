@@ -219,7 +219,7 @@ import {
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { useI18n } from 'vue-i18n';
 import { onMounted, ref, toRaw, computed, inject, Ref } from 'vue';
-import OrganizationCard from '@/components/home/OrganizationCard.vue';
+import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import MsPasswordInput from '@/components/core/ms-input/MsPasswordInput.vue';
 import MsSearchInput from '@/components/core/ms-input/MsSearchInput.vue';
 import MsSelect from '@/components/core/ms-select/MsSelect.vue';

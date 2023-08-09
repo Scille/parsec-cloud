@@ -40,8 +40,12 @@
         v-show="pageStep === CreateOrganizationStep.OrgNameStep"
         class="step orga-name"
       >
-        <organization-name-step
-          ref="orgPage"
+        <ms-input
+          :label="$t('CreateOrganization.organizationName')"
+          :placeholder="$t('CreateOrganization.organizationNamePlaceholder')"
+          name="organization"
+          v-model="orgName"
+          id="org-name-input"
         />
       </div>
 
@@ -50,7 +54,7 @@
         v-show="pageStep === CreateOrganizationStep.UserInfoStep"
         class="step"
       >
-        <user-information-step
+        <user-information
           ref="userInfoPage"
         />
       </div>
@@ -60,7 +64,7 @@
         class="step orga-server"
         v-show="pageStep === CreateOrganizationStep.ServerStep"
       >
-        <choose-server-step
+        <choose-server
           ref="serverPage"
         />
       </div>
@@ -70,7 +74,7 @@
         class="step orga-password"
         v-show="pageStep === CreateOrganizationStep.PasswordStep"
       >
-        <choose-password-step
+        <ms-choose-password-input
           ref="passwordPage"
         />
       </div>
@@ -164,13 +168,14 @@ import {
 import { ref, Ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
-import ChoosePasswordStep from '@/views/home/ChoosePasswordStep.vue';
-import OrganizationNameStep from '@/views/home/OrganizationNameStep.vue';
-import ChooseServerStep from '@/views/home/ChooseServerStep.vue';
-import UserInformationStep from '@/views/home/UserInformationStep.vue';
+import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
+import ChooseServer from '@/components/organizations/ChooseServer.vue';
+import UserInformation from '@/components/users/UserInformation.vue';
 import MsSpinner from '@/components/core/ms-spinner/MsSpinner.vue';
+import MsInput from '@/components/core/ms-input/MsInput.vue';
 import { AvailableDevice } from '@/plugins/libparsec/definitions';
 import { ModalResultCode } from '@/common/constants';
+import { organizationValidator, Validity } from '@/common/validators';
 
 enum CreateOrganizationStep {
   OrgNameStep = 1,
@@ -187,11 +192,10 @@ const DEFAULT_SAAS_ADDR = 'parsec://saas.parsec.cloud/';
 
 const pageStep = ref(CreateOrganizationStep.OrgNameStep);
 const serverPage = ref();
-const orgPage = ref();
 const userInfoPage = ref();
 const passwordPage = ref();
 const spinnerPage = ref();
-
+const orgName = ref('');
 const device: Ref<AvailableDevice | null> = ref(null);
 
 interface Title {
@@ -239,6 +243,9 @@ const canGoForward = computed(() => {
   if (pageStep.value === CreateOrganizationStep.FinishStep) {
     return true;
   }
+  if (pageStep.value === CreateOrganizationStep.OrgNameStep) {
+    return organizationValidator(orgName.value) === Validity.Valid;
+  }
   if (!currentPage.value) {
     return false;
   }
@@ -254,9 +261,6 @@ function shouldShowNextStep(): boolean {
 
 function getCurrentPage(): Ref<any> {
   switch(pageStep.value) {
-    case CreateOrganizationStep.OrgNameStep: {
-      return orgPage;
-    }
     case CreateOrganizationStep.UserInfoStep: {
       return userInfoPage;
     }
@@ -306,7 +310,7 @@ function nextStep(): void {
   if (pageStep.value === CreateOrganizationStep.SpinnerStep) {
     const addr = serverPage.value.mode === serverPage.value.ServerMode.SaaS ? DEFAULT_SAAS_ADDR : serverPage.value.backendAddr;
     createOrg(
-      orgPage.value.orgName,
+      orgName.value,
       userInfoPage.value.fullName,
       userInfoPage.value.email,
       userInfoPage.value.deviceName,

@@ -3,7 +3,7 @@
 import { VueWrapper, mount } from '@vue/test-utils';
 import { IonInput } from '@ionic/vue';
 import { mockI18n } from 'tests/component/support/mocks';
-import ChoosePasswordStep from '@/views/home/ChoosePasswordStep.vue';
+import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
 
 mockI18n();
 
@@ -11,7 +11,7 @@ describe('Choose password', () => {
   let wrapper: VueWrapper<any>;
 
   beforeEach(() => {
-    wrapper = mount(ChoosePasswordStep, {});
+    wrapper = mount(MsChoosePasswordInput, {});
   });
 
   it('Validate the fields', async () => {
