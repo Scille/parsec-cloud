@@ -57,10 +57,16 @@
           v-show="pageStep === UserJoinOrganizationStep.WaitForHost"
           class="step orga-name"
         >
-          <wait-for-host-step
-            ref="waitPage"
-            :org-name="'My Org'"
-          />
+          <div>
+            <ms-informative-text
+              :icon="caretForward"
+              :text="$t('JoinOrganization.instructions.start.first')"
+            />
+            <ms-informative-text
+              :icon="caretForward"
+              :text="$t('JoinOrganization.instructions.start.second')"
+            />
+          </div>
         </div>
 
         <!-- part 2 (host code)-->
@@ -92,7 +98,7 @@
           class="step"
           id="get-user-info"
         >
-          <user-information-step
+          <user-information
             ref="userInfoPage"
             :email-enabled="false"
             :device-enabled="!waitingForHost"
@@ -105,7 +111,7 @@
           class="step"
           id="get-password"
         >
-          <choose-password-step
+          <ms-choose-password-input
             ref="passwordPage"
           />
         </div>
@@ -114,8 +120,13 @@
           v-show="pageStep === UserJoinOrganizationStep.Finish"
           class="step"
         >
-          <finish-process-step
-            ref="finishPage"
+          <ms-informative-text
+            :icon="caretForward"
+            :text="$t('JoinOrganization.instructions.finish.first')"
+          />
+          <ms-informative-text
+            :icon="caretForward"
+            :text="$t('JoinOrganization.instructions.finish.second')"
           />
         </div>
       </div>
@@ -174,16 +185,16 @@ import {
 
 import {
   close,
+  caretForward,
 } from 'ionicons/icons';
 import { ref, Ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import MsWizardStepper from '@/components/core/ms-stepper/MsWizardStepper.vue';
-import WaitForHostStep from '@/views/home/WaitForHostStep.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
-import UserInformationStep from '@/views/home/UserInformationStep.vue';
-import ChoosePasswordStep from '@/views/home/ChoosePasswordStep.vue';
-import FinishProcessStep from '@/views/home/FinishProcessStep.vue';
+import UserInformation from '@/components/users/UserInformation.vue';
+import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
+import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import { AvailableDevice } from '@/plugins/libparsec/definitions';
 import { ModalResultCode } from '@/common/constants';
 

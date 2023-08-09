@@ -30,10 +30,13 @@
         </ion-text>
       </ion-header>
       <div class="modal-content inner-content">
-        <organization-link-page
-          ref="urlInput"
-          :autofocus="true"
+        <ms-input
+          :label="$t('JoinOrganization.linkFormLabel')"
+          :placeholder="$t('JoinOrganization.linkFormPlaceholder')"
+          name="joinOrganization"
           v-model="joinLink"
+          id="link-orga-input"
+          type="url"
         />
       </div>
       <ion-footer class="modal-footer">
@@ -75,11 +78,10 @@ import {
 import { ref } from 'vue';
 import { close } from 'ionicons/icons';
 import { claimLinkValidator, Validity } from '@/common/validators';
-import OrganizationLinkPage from '@/views/home/OrganizationLinkPage.vue';
 import { ModalResultCode } from '@/common/constants';
+import MsInput from '@/components/core/ms-input/MsInput.vue';
 
 const joinLink = ref('');
-const urlInput = ref();
 
 function closeModal(): Promise<boolean> {
   return modalController.dismiss(null, ModalResultCode.Cancel);
