@@ -86,8 +86,8 @@ pub enum ClientStopError {
     Internal(#[from] anyhow::Error),
 }
 
-pub async fn client_stop(handle: Handle) -> Result<(), ClientStopError> {
-    let (client, events_plugged) = take_and_close_handle(handle, |x| match x {
+pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
+    let (client, events_plugged) = take_and_close_handle(client, |x| match x {
         crate::handle::HandleItem::Client(client) => Some(client),
         _ => None,
     })
@@ -113,9 +113,9 @@ pub enum ClientListWorkspacesError {
 }
 
 pub async fn client_list_workspaces(
-    handle: Handle,
+    client: Handle,
 ) -> Result<Vec<(EntryID, EntryName)>, ClientListWorkspacesError> {
-    let client = borrow_from_handle(handle, |x| match x {
+    let client = borrow_from_handle(client, |x| match x {
         crate::handle::HandleItem::Client((client, _)) => Some(client.clone()),
         _ => None,
     })
@@ -135,10 +135,10 @@ pub enum ClientWorkspaceCreateError {
 }
 
 pub async fn client_workspace_create(
-    handle: Handle,
+    client: Handle,
     name: EntryName,
 ) -> Result<EntryID, ClientWorkspaceCreateError> {
-    let client = borrow_from_handle(handle, |x| match x {
+    let client = borrow_from_handle(client, |x| match x {
         crate::handle::HandleItem::Client((client, _)) => Some(client.clone()),
         _ => None,
     })
@@ -156,11 +156,11 @@ pub async fn client_workspace_create(
  */
 
 pub async fn client_workspace_rename(
-    handle: Handle,
+    client: Handle,
     workspace_id: EntryID,
     new_name: EntryName,
 ) -> Result<(), UserOpsError> {
-    let client = borrow_from_handle(handle, |x| match x {
+    let client = borrow_from_handle(client, |x| match x {
         crate::handle::HandleItem::Client((client, _)) => Some(client.clone()),
         _ => None,
     })
@@ -177,12 +177,12 @@ pub async fn client_workspace_rename(
  */
 
 pub async fn client_workspace_share(
-    handle: Handle,
+    client: Handle,
     workspace_id: EntryID,
     recipient: UserID,
     role: Option<RealmRole>,
 ) -> Result<(), UserOpsWorkspaceShareError> {
-    let client = borrow_from_handle(handle, |x| match x {
+    let client = borrow_from_handle(client, |x| match x {
         crate::handle::HandleItem::Client((client, _)) => Some(client.clone()),
         _ => None,
     })

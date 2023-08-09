@@ -60,7 +60,7 @@ class ClientStopError(ErrorVariant):
         pass
 
 
-async def client_stop(handle: Handle) -> Result[None, ClientStopError]:
+async def client_stop(client: Handle) -> Result[None, ClientStopError]:
     ...
 
 
@@ -70,7 +70,7 @@ class ClientListWorkspacesError(ErrorVariant):
 
 
 async def client_list_workspaces(
-    handle: Handle,
+    client: Handle,
 ) -> Result[list[tuple[EntryID, EntryName]], ClientListWorkspacesError]:
     ...
 
@@ -81,7 +81,7 @@ class ClientWorkspaceCreateError(ErrorVariant):
 
 
 async def client_workspace_create(
-    handle: Handle,
+    client: Handle,
     name: EntryName,
 ) -> Result[EntryID, ClientWorkspaceCreateError]:
     ...
@@ -96,7 +96,7 @@ class UserOpsError(ErrorVariant):
 
 
 async def client_workspace_rename(
-    handle: Handle,
+    client: Handle,
     workspace_id: EntryID,
     new_name: EntryName,
 ) -> Result[None, UserOpsError]:
@@ -142,7 +142,7 @@ class UserOpsWorkspaceShareError(ErrorVariant):
 
 
 async def client_workspace_share(
-    handle: Handle,
+    client: Handle,
     workspace_id: EntryID,
     recipient: UserID,
     role: Optional[RealmRole],
