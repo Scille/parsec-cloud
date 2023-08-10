@@ -41,7 +41,7 @@
       <ion-text class="user-name body">
         {{ user.name }}
       </ion-text>
-      <ion-title class="user-role body-lg">
+      <ion-title class="user-profile body-lg">
         <tag-profile
           :profile="user.profile"
         />
