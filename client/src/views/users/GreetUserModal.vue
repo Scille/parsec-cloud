@@ -6,9 +6,9 @@
       v-show="pageStep > GreetUserStep.WaitForGuest && pageStep < GreetUserStep.Summary"
       :current-index="getStepperIndex()"
       :titles="[
-        'Code admin',
-        'Code invité',
-        'Contact details',
+        $t('UsersPage.greet.steps.hostCode'),
+        $t('UsersPage.greet.steps.guestCode'),
+        $t('UsersPage.greet.steps.contactDetails'),
       ]"
     />
     <ion-buttons
@@ -102,13 +102,13 @@
               v-model="profile"
             >
               <ion-select-option :value="Profile.Admin">
-                {{ $t('UsersPage.role.admin') }}
+                {{ $t('UsersPage.profile.admin') }}
               </ion-select-option>
               <ion-select-option :value="Profile.Standard">
-                {{ $t('UsersPage.role.standard') }}
+                {{ $t('UsersPage.profile.standard') }}
               </ion-select-option>
               <ion-select-option :value="Profile.Outsider">
-                {{ $t('UsersPage.role.external') }}
+                {{ $t('UsersPage.profile.outsider') }}
               </ion-select-option>
             </ion-select>
           </ion-item>
