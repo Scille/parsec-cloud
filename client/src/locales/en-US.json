@@ -1,4 +1,13 @@
 {
+    "app": {
+        "name": "Parsec",
+        "developer": "Scille",
+        "developerLink": "https://scille.eu",
+        "projectLink": "https://parsec.cloud",
+        "projectSources": "https://github.com/Scille/parsec-cloud",
+        "license": "BUSL-1.1",
+        "licenseLink": "https://spdx.org/licenses/BUSL-1.1.html"
+    },
     "HomePage": {
         "topbar": {
             "settings": "Settings",
@@ -125,6 +134,7 @@
             "workspaces": "My workspaces",
             "settings": "Settings",
             "devices": "Devices",
+            "about": "About",
             "users": {
                 "activeUsers": "Active users",
                 "revokedUsers": "Revoked users",
@@ -392,6 +402,21 @@
             "actionRevoke": "Revoke this user | Revoke these users",
             "actionDetails": "View detail",
             "actionSeeCommonWorkspaces": "See common workspaces"
+        }
+    },
+    "AboutPage": {
+        "appInfo": {
+            "version": "Version",
+            "developer": "Developer",
+            "license": "License",
+            "project": "Project"
+        },
+        "update": {
+            "title": "Updates",
+            "upToDate": "Your software is up-to-date.",
+            "notUpToDate": "A new version is available.",
+            "update": "Update",
+            "showChangelog": "Show changelog"
         }
     }
 }

@@ -70,6 +70,11 @@ const routes: Array<RouteRecordRaw> = [
             name: 'organization',
             component: () => import('@/views/organizations/OrganizationInformationPage.vue'),
           },
+          {
+            path: '/:deviceId([a-z0-9]+@[a-z0-9]+)/about',
+            name: 'about',
+            component: () => import('@/views/about/AboutPage.vue'),
+          },
         ],
       },
     ],

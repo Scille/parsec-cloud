@@ -55,9 +55,14 @@
         {{ $t('HomePage.topbar.logout') }}
       </ion-label>
     </ion-item>
-    <ion-item class="container__item version">
-      <ion-text class="body-sm">
-        Parsec v2.8.3
+    <ion-item
+      class="container__item version"
+      @click="onOptionClick(ProfilePopoverOption.App)"
+    >
+      <ion-text
+        class="body-sm"
+      >
+        Parsec v{{ getAppVersion() }}
       </ion-text>
     </ion-item>
   </ion-list>
@@ -69,6 +74,7 @@ export enum ProfilePopoverOption {
   Settings = 1,
   Help = 2,
   LogOut = 3,
+  App = 4,
 }
 </script>
 
@@ -88,6 +94,7 @@ import {
 } from 'ionicons/icons';
 import { useI18n } from 'vue-i18n';
 import { popoverController } from '@ionic/core';
+import { getAppVersion } from '@/common/mocks';
 
 const { t } = useI18n();
 

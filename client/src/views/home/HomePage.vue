@@ -25,6 +25,12 @@
                 class="logo-img"
               >
             </div>
+            <div
+              class="sidebar-content__version"
+              @click="openAboutModal"
+            >
+              {{ getAppVersion() }}
+            </div>
           </div>
         </div>
 
@@ -235,6 +241,8 @@ import HomePagePopover from '@/views/home/HomePagePopover.vue';
 import SettingsModal from '@/views/settings/SettingsModal.vue';
 import { ConfigPathKey, Formatters, FormattersKey, StorageManagerKey } from '@/common/injectionKeys';
 import { ModalResultCode } from '@/common/constants';
+import { getAppVersion } from '@/common/mocks';
+import AboutModal from '@/views/about/AboutModal.vue';
 
 const router = useRouter();
 const { t } = useI18n();
@@ -347,6 +355,15 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
 
 function onForgottenPasswordClick(): void {
   console.log('forgotten password!');
+}
+
+async function openAboutModal(): Promise<void> {
+  const modal = await modalController.create({
+    component: AboutModal,
+    cssClass: 'about-modal',
+  });
+  await modal.present();
+  await modal.onWillDismiss();
 }
 
 async function openPopover(ev: Event): Promise<void> {
