@@ -83,7 +83,7 @@
           class="step"
           id="get-password"
         >
-          <choose-password-step
+          <ms-choose-password-input
             ref="passwordPage"
           />
         </div>
@@ -160,11 +160,12 @@ import { useI18n } from 'vue-i18n';
 import WizardStepper from '@/components/core/ms-stepper/MsWizardStepper.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
-import ChoosePasswordStep from '@/views/home/ChoosePasswordStep.vue';
+import ChoosePasswordStep from '@/components/core/ms-input/MsChoosePasswordInput.vue';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import { AvailableDevice } from '@/plugins/libparsec/definitions';
 import { ModalResultCode } from '@/common/constants';
+import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
 
 enum DeviceJoinOrganizationStep {
   Information = 0,
