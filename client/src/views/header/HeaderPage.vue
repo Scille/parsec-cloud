@@ -161,6 +161,8 @@ function getTitleForRoute(): string {
     return t('HeaderPage.titles.organization.storage');
   } else if (route === 'organization') {
     return t('HeaderPage.titles.organization.information');
+  } else if (route === 'about') {
+    return t('HeaderPage.titles.about');
   }
 
   return '';

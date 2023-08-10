@@ -7,6 +7,10 @@ import { AvailableDevice } from '@/plugins/libparsec/definitions';
 import { StorageManager } from '@/services/storageManager';
 import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
 
+export function getAppVersion(): string {
+  return '3.0.0a';
+}
+
 export interface MockFile {
   id: string,
   name: string,
