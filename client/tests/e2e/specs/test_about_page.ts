@@ -24,7 +24,7 @@ describe('Check about page', () => {
     cy.get('@values').eq(1).contains('Scille');
     cy.get('@values').eq(2).contains('BUSL-1.1');
     cy.get('@values').eq(3).contains('GitHub');
-    cy.get('.update-container').find('#notuptodate').contains('Your software is not up-to-date. ');
+    cy.get('.update-container').find('#notuptodate').contains('A new version is available.');
     cy.get('.update-container').find('ion-button').contains('Show changelog');
   });
 
