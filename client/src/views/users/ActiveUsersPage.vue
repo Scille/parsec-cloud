@@ -64,8 +64,8 @@
               <ion-label class="user-list-header__label cell-title label-email">
                 {{ $t('UsersPage.listDisplayTitles.email') }}
               </ion-label>
-              <ion-label class="user-list-header__label cell-title label-role">
-                {{ $t('UsersPage.listDisplayTitles.role') }}
+              <ion-label class="user-list-header__label cell-title label-profile">
+                {{ $t('UsersPage.listDisplayTitles.profile') }}
               </ion-label>
               <ion-label class="user-list-header__label cell-title label-joined-on">
                 {{ $t('UsersPage.listDisplayTitles.joinedOn') }}
@@ -342,7 +342,7 @@ onMounted(async (): Promise<void> => {
     flex-grow: 0;
   }
 
-  .label-role {
+  .label-profile {
     min-width: 11.5rem;
     max-width: 10vw;
     flex-grow: 2;

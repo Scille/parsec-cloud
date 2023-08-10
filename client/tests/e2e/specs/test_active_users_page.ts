@@ -28,7 +28,7 @@ describe('Check active users page', () => {
     cy.get('@userItems').eq(0).find('.person-name').contains('Cernd');
     // cspell:disable-next-line
     cy.get('@userItems').eq(0).find('.user-email__label').contains('cernd@gmail.com');
-    cy.get('@userItems').eq(0).find('.label-role').contains('Standard');
+    cy.get('@userItems').eq(0).find('.label-profile').contains('Standard');
     // cspell:disable-next-line
     cy.get('@userItems').eq(3).find('.person-name').contains('Coloia Hoji');
     cy.get('.user-footer__container').contains('4 users');

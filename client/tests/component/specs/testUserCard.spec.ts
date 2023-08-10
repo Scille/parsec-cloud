@@ -43,7 +43,7 @@ describe('User Card', () => {
     // currently using the first two letters for the avatar, (Jo) John Smith
     expect(wrapper.get('.card-content-avatar').text()).to.equal('Jo');
     expect(wrapper.get('.user-name').text()).to.equal('John Smith');
-    expect(wrapper.get('.user-role').text()).to.equal('standard');
+    expect(wrapper.get('.user-profile').text()).to.equal('standard');
     wrapper.trigger('click');
     expect(wrapper.emitted('click')?.length).to.equal(1);
     expect(wrapper.emitted('click')?.at(0)?.at(1)).to.deep.equal(USER);

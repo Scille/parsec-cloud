@@ -384,15 +384,15 @@
         "listDisplayTitles": {
             "name": "Nom",
             "email": "Email",
-            "role": "Rôle",
+            "profile": "Profil",
             "joinedOn": "Rejoint le"
         },
         "inviteUser": "Inviter un utilisateur",
         "itemCount": "Aucun utilisateur | Un utilisateur | {count} utilisateurs",
-        "role": {
+        "profile": {
             "admin": "Administrateur",
             "standard": "Standard",
-            "external": "Externe"
+            "outsider": "Externe"
         },
         "userSelectedCount": "Aucun utilisateur sélectionné | 1 utilisateur sélectionné | {count} utilisateurs sélectionnés",
         "userContextMenu": {
@@ -418,6 +418,11 @@
                 "getUserInfo": "Patientez le temps que l'invité saisisse ses coordonnées.",
                 "checkUserInfo": "Vous pouvez modifier le nom de l'utilisateur, son appareil et définir son profil.",
                 "summary": "{name} a été ajouté(e) à l'organisation."
+            },
+            "steps": {
+                "hostCode": "Code hôte",
+                "guestCode": "Code invité",
+                "contactDetails": "Coordonnées"
             },
             "actions": {
                 "start": "Démarrer",
