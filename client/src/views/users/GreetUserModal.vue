@@ -115,14 +115,20 @@
         </div>
         <div
           v-show="pageStep === GreetUserStep.Summary"
+          v-if="userInfo"
           class="step"
         >
-          <greet-summary-page
-            v-if="userInfo"
-            :name="userInfo.name"
-            :email="userInfo.email"
-            :profile="userInfo.profile"
-          />
+          <div>
+            {{ userInfo.name }}
+          </div>
+          <div>
+            {{ userInfo.email }}
+          </div>
+          <div class="user-profile">
+            <tag-profile
+              :profile="userInfo.profile"
+            />
+          </div>
         </div>
       </div>
       <ion-footer class="modal-footer">
@@ -191,7 +197,7 @@ import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
-import GreetSummaryPage from '@/views/users/GreetSummaryPage.vue';
+import TagProfile from '@/components/users/TagProfile.vue';
 import { ModalResultCode } from '@/common/constants';
 import { MockInvitation, Profile } from '@/common/mocks';
 
