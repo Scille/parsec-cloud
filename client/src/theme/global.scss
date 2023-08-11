@@ -1,6 +1,8 @@
 /* Ionic Variables and Theming. For more info, please see:
 http://ionicframework.com/docs/theming/ */
 
+// cSpell:disable
+
 //import variables
 @import "variables/colors";
 @import "variables/colorsIonic";
@@ -58,4 +60,76 @@ ion-icon {
 // fix issue with offset on checkbox
 .in-item:is(ion-checkbox) {
   width: fit-content;
+}
+
+
+$colors2: red, orange, yellow, green, blue, purple, rgb(94, 255, 0), #ff6600, rgb(247, 0, 255), #daf700, #e50000, #2200e5, rgb(0, 255, 247), rgb(117, 209, 63);
+$colors: aqua, black, blue, fuchsia, gray, green, lime, maroon, navy, olive, purple, red, silver, teal, white, yellow;
+$repeat: 200;
+@for $i from 1 through $repeat {
+    body.disco, body.electro {
+        *:nth-child(#{length($colors)}n+#{$i}) {
+            -webkit-animation: DISCO 0.2s infinite;  /* Safari 4+ */
+            -moz-animation: DISCO 0.2s infinite;  /* Fx 5+ */
+            -o-animation: DISCO 0.2s infinite;  /* Opera 12+ */
+            animation: DISCO 0.2s infinite;  /* IE 10+, Fx 29+ */
+        }
+    }
+    body.epilepsya, body.rainbow {
+        *:nth-child(#{length($colors)}n+#{$i}) {
+            -webkit-animation: EPILEPSYA 0.2s infinite;  /* Safari 4+ */
+            -moz-animation: EPILEPSYA 0.2s infinite;  /* Fx 5+ */
+            -o-animation: EPILEPSYA 0.2s infinite;  /* Opera 12+ */
+            animation: EPILEPSYA 0.2s infinite;  /* IE 10+, Fx 29+ */
+        }
+    }
+    body.epilepsya, body.disco {
+        *:nth-child(#{length($colors)}n+#{$i}) {
+            background: lighten(nth($colors, random(length($colors))), 20%) !important;
+            font-family: "Comic Sans MS", "Comic Sans", cursive !important;
+        }
+    }
+    body.rainbow, body.electro {
+        *:nth-child(#{length($colors)}n+#{$i}) {
+            background: lighten(nth($colors, random(length($colors))), 20%);
+            font-family: "Comic Sans MS", "Comic Sans", cursive !important;
+        }
+    }
+
+    @-webkit-keyframes EPILEPSYA {
+      0%, 25% {
+        background-color: nth($colors, random(length($colors)));
+        border: 3px solid nth($colors, random(length($colors)));
+      }
+      25%, 50% {
+        background-color: nth($colors, random(length($colors)));
+        border: 3px solid  nth($colors, random(length($colors)));
+      }
+      50%, 75% {
+        background-color: nth($colors, random(length($colors)));
+        border: 3px solid  nth($colors, random(length($colors)));
+      }
+      75%, 100% {
+        background-color: nth($colors, random(length($colors)));
+        border: 3px solid  nth($colors, random(length($colors)));
+      }
+    }
+    @-webkit-keyframes DISCO {
+      0%, 25% {
+        background-color: nth($colors, random(length($colors)));
+        border: 3px solid nth($colors, random(length($colors)));
+      }
+      25%, 50% {
+        background-color: nth($colors, random(length($colors)));
+        border: 3px solid random(length($colors));
+      }
+      50%, 75% {
+        background-color: nth($colors, random(length($colors)));
+        border: 3px solid random(length($colors));
+      }
+      75%, 100% {
+        background-color: nth($colors, random(length($colors)));
+        border: 3px solid random(length($colors));
+      }
+    }
 }

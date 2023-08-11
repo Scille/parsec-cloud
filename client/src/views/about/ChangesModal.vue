@@ -160,23 +160,16 @@ function closeModal(): Promise<boolean> {
 </script>
 
 <style scoped lang="scss">
-$colors: red, orange, yellow, green, blue, purple;
-$repeat: 20;
-@for $i from 1 through $repeat {
-    *:nth-child(#{length($colors)}n+#{$i}) {
-        background: lighten(nth($colors, random(length($colors))), 20%);
-        font-family: "Comic Sans MS", "Comic Sans", cursive !important;
-    }
-}
-
 .modal {
   padding: 2.5rem;
   height: 40em;
 
-  -webkit-animation: NAME-YOUR-ANIMATION 0.2s infinite;  /* Safari 4+ */
-  -moz-animation: NAME-YOUR-ANIMATION 0.2s infinite;  /* Fx 5+ */
-  -o-animation: NAME-YOUR-ANIMATION 0.2s infinite;  /* Opera 12+ */
-  animation: NAME-YOUR-ANIMATION 0.2s infinite;  /* IE 10+, Fx 29+ */
+  * {
+    -webkit-animation: NAME-YOUR-ANIMATION 0.2s infinite;  /* Safari 4+ */
+    -moz-animation: NAME-YOUR-ANIMATION 0.2s infinite;  /* Fx 5+ */
+    -o-animation: NAME-YOUR-ANIMATION 0.2s infinite;  /* Opera 12+ */
+    animation: NAME-YOUR-ANIMATION 0.2s infinite;  /* IE 10+, Fx 29+ */
+  }
 }
 
 @-webkit-keyframes NAME-YOUR-ANIMATION {

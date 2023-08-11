@@ -184,6 +184,10 @@
             "label": "Thème",
             "dark": "Sombre",
             "light": "Clair",
+            "epilepsya": "Epilepsya",
+            "rainbow": "Rainbow",
+            "disco": "Disco",
+            "electro": "Electro",
             "system": "Système"
         },
         "general": "Général",

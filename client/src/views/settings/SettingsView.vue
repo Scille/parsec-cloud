@@ -80,6 +80,18 @@
                   <ion-select-option value="light">
                     {{ $t('SettingsPage.theme.light') }}
                   </ion-select-option>
+                  <ion-select-option value="epilepsya">
+                    {{ $t('SettingsPage.theme.epilepsya') }}
+                  </ion-select-option>
+                  <ion-select-option value="disco">
+                    {{ $t('SettingsPage.theme.disco') }}
+                  </ion-select-option>
+                  <ion-select-option value="rainbow">
+                    {{ $t('SettingsPage.theme.rainbow') }}
+                  </ion-select-option>
+                  <ion-select-option value="electro">
+                    {{ $t('SettingsPage.theme.electro') }}
+                  </ion-select-option>
                   <ion-select-option value="system">
                     {{ $t('SettingsPage.theme.system') }}
                   </ion-select-option>
