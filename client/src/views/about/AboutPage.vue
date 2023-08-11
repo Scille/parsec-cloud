@@ -51,6 +51,7 @@ import {
   IonContent,
   IonIcon,
   IonPage,
+  modalController,
 } from '@ionic/vue';
 import {
   open,
@@ -58,6 +59,7 @@ import {
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AboutView from '@/views/about/AboutView.vue';
+import ChangesModal from '@/views/about/ChangesModal.vue';
 
 useI18n();
 const upToDate = ref(false);
@@ -67,7 +69,12 @@ async function update(): Promise<void> {
 }
 
 async function showChangelog(): Promise<void> {
-  console.log('Changelog');
+  const modal = await modalController.create({
+    component: ChangesModal,
+    cssClass: 'changes-modal',
+  });
+  await modal.present();
+  await modal.onWillDismiss();
 }
 </script>
 
