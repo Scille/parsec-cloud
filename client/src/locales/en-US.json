@@ -480,5 +480,11 @@
         "newDevice": "Your new device",
         "connected": "Connected",
         "deviceName": "Device name"
+    },
+    "Changelog": {
+        "features": "Features",
+        "fixes": "Bug fixes",
+        "misc": "Miscellaneous",
+        "title": "Changes"
     }
 }
