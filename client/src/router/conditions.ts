@@ -46,3 +46,8 @@ export function isUserRoute(): boolean {
   const currentRoute = useRoute();
   return currentRoute.name ? ['activeUsers', 'revokedUsers', 'invitations'].includes(currentRoute.name.toString()) : false;
 }
+
+export function isSpecificWorkspaceRoute(workspaceId: string): boolean {
+  const currentRoute = useRoute();
+  return currentRoute.params.workspaceId === workspaceId;
+}
