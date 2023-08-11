@@ -60,7 +60,20 @@ describe('Check workspaces page', () => {
   });
 
   it('Navigate into a workspace', () => {
+    function checkListWorkspaceSelectedItem(workspaceName: string): void {
+      cy.get('.list-workspaces').find('.sidebar-item').as('workspaceItems').should('have.length', 5);
+      for (let i = 0; i < 5; i++) {
+        cy.get('@workspaceItems').eq(i).as('currentWorkspace').find('ion-label').then((label) => {
+          if (label.get(0).innerText === workspaceName) {
+            cy.get('@currentWorkspace').should('have.class', 'item-selected');
+          } else {
+            cy.get('@currentWorkspace').should('have.class', 'item-not-selected');
+          }
+        });
+      }
+    }
     cy.contains('Trademeet').click();
+    checkListWorkspaceSelectedItem('Trademeet');
     cy.get('.file-list-item').should('have.length.at.least', 1);
     cy.get('.topbar-left').find('ion-button.back-button').click();
     cy.get('.card').should('have.length', 5);
