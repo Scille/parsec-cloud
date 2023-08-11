@@ -121,6 +121,7 @@
                 v-for="workspace in workspaces"
                 :key="workspace.id"
                 @click="navigateToWorkspace(workspace.id)"
+                :class="isSpecificWorkspaceRoute(workspace.id) ? 'item-selected' : 'item-not-selected'"
                 class="sidebar-item"
               >
                 <ion-icon
@@ -260,7 +261,7 @@ import { createGesture } from '@ionic/vue';
 import { useRouter, useRoute } from 'vue-router';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { getMockDevices, getMockWorkspaces, MockWorkspace } from '@/common/mocks';
-import { isOrganizationManagementRoute, isUserRoute } from '@/router/conditions';
+import { isOrganizationManagementRoute, isSpecificWorkspaceRoute, isUserRoute } from '@/router/conditions';
 import { isAdmin, isOutsider } from '@/common/permissions';
 
 let device: any = {};
@@ -384,7 +385,7 @@ function resizeMenu(newWidth: number): void {
   }
 
   // logo parsec
-  &::after{
+  &::after {
     content: url('@/assets/images/Logo/logo_icon_white.svg');
     opacity: .03;
     width: 100%;
