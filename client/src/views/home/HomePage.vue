@@ -242,7 +242,7 @@ import { useRouter } from 'vue-router';
 import HomePagePopover from '@/views/home/HomePagePopover.vue';
 import SettingsModal from '@/views/settings/SettingsModal.vue';
 import { ConfigPathKey, Formatters, FormattersKey, StorageManagerKey } from '@/common/injectionKeys';
-import { ModalResultCode } from '@/common/constants';
+import { ModalResultCode } from '@/components/core/ms-modal/MsModal.vue';
 import { getAppVersion } from '@/common/mocks';
 import AboutModal from '@/views/about/AboutModal.vue';
 

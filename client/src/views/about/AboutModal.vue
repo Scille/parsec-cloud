@@ -50,7 +50,7 @@ import {
   close,
 } from 'ionicons/icons';
 import AboutView from '@/views/about/AboutView.vue';
-import { ModalResultCode } from '@/common/constants';
+import { ModalResultCode } from '@/components/core/ms-modal/MsModal.vue';
 
 function closeModal(): Promise<boolean> {
   return modalController.dismiss(null, ModalResultCode.Cancel);

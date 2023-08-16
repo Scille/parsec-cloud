@@ -61,7 +61,7 @@ import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModa
 import JoinByLinkModal from '@/views/home/JoinByLinkModal.vue';
 import { claimUserLinkValidator, claimDeviceLinkValidator, Validity } from '@/common/validators';
 import { useI18n } from 'vue-i18n';
-import { ModalResultCode } from '@/common/constants';
+import { ModalResultCode } from '@/components/core/ms-modal/MsModal.vue';
 
 const { t } = useI18n();
 
