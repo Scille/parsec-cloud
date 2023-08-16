@@ -18,18 +18,20 @@
                 {{ $t('HomePage.organizationList.subtitle') }}
               </ion-text>
             </div>
-            <div class="sidebar-content__logo">
-              <img
-                src="@/assets/images/Logo/logo_row_white.svg"
-                alt="Parsec logo"
-                class="logo-img"
+            <div class="sidebar-footer">
+              <div class="sidebar-footer__logo">
+                <img
+                  src="@/assets/images/Logo/logo_row_white.svg"
+                  alt="Parsec logo"
+                  class="logo-img"
+                >
+              </div>
+              <div
+                class="sidebar-footer__version body"
+                @click="openAboutModal"
               >
-            </div>
-            <div
-              class="sidebar-content__version"
-              @click="openAboutModal"
-            >
-              {{ getAppVersion() }}
+                {{ getAppVersion() }}
+              </div>
             </div>
           </div>
         </div>
@@ -406,7 +408,7 @@ async function openSettingsModal(): Promise<void> {
   display: flex;
   height: 100vh;
   width: 40vw;
-  padding: 2rem 0;
+  padding: 2rem;
   background: var(--parsec-color-light-gradient);
   position: relative;
   justify-content: flex-end;
@@ -432,11 +434,16 @@ async function openSettingsModal(): Promise<void> {
       flex-direction: column;
       justify-content: center;
       flex-grow: 2;
-      margin-right: 2rem;
       max-width: var(--parsec-max-title-width);
       position: relative;
       gap: 1rem;
     }
+  }
+
+  .sidebar-footer {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
     &__logo {
       display: flex;
       width: 100%;
@@ -444,6 +451,16 @@ async function openSettingsModal(): Promise<void> {
         max-height: 3em;
         width: 25%;
         height: 100%;
+      }
+    }
+    &__version {
+      cursor: pointer;
+      color: var(--parsec-color-light-secondary-light);
+      padding: .5rem;
+      border-radius: var(--parsec-radius-6);
+
+      &:hover {
+        text-decoration: underline;
       }
     }
   }
