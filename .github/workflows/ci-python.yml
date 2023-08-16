@@ -127,12 +127,13 @@ jobs:
         if: startsWith(matrix.os, 'windows-')
         shell: bash
         run: |
+          set -eux
           choco install -y --limit-output winfsp --version=${{ matrix.winfsp-version }}
           mkdir winfsp-test
           curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.8/winfsp-tests-1.8.20304.zip -o winfsp-test/winfsp-tests.zip
           unzip winfsp-test/winfsp-tests.zip -d winfsp-test
-          pwd
-          echo "$(pwd)\winfsp-test" >> "$GITHUB_PATH"
+          echo "${GITHUB_WORKSPACE}/winfsp-test" >> $GITHUB_PATH
+          python -c "from distutils.spawn import find_executable; print(find_executable('winfsp-tests-x86'))"
         timeout-minutes: 5
 
       - uses: ./.github/actions/setup-python-poetry
