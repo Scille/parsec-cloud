@@ -28,9 +28,9 @@ import {
   modalController,
 } from '@ionic/vue';
 import { ref } from 'vue';
-import { ModalResultCode } from '@/common/constants';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
+import { ModalResultCode } from '@/components/core/ms-modal/MsModal.vue';
 
 const workspaceName = ref('');
 

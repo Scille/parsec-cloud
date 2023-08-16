@@ -37,7 +37,7 @@
         <slot />
       </div>
       <ion-footer class="ms-modal-footer">
-        <ion-toolbar>
+        <ion-toolbar class="ms-modal-toolbar">
           <ion-buttons
             slot="primary"
             class="ms-modal-footer-buttons"
@@ -70,6 +70,31 @@
   </ion-page>
 </template>
 
+<script lang="ts">
+export interface MsModalConfig {
+  title: string,
+  subtitle?: string,
+  closeButtonEnabled: boolean,
+  cancelButton?: {
+    disabled: boolean,
+    label: string,
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    onClick?: Function,
+  },
+  confirmButton?: {
+    disabled: boolean,
+    label: string,
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    onClick?: Function,
+  },
+}
+
+export enum ModalResultCode {
+  Cancel = 'cancel',
+  Confirm = 'confirm',
+}
+</script>
+
 <script setup lang="ts">
 import {
   IonText,
@@ -84,26 +109,6 @@ import {
   IonIcon,
 } from '@ionic/vue';
 import { close } from 'ionicons/icons';
-import { ModalResultCode } from '@/common/constants';
-
-// We are forced to re-define interface here since we are not in Vue 3.3 see: https://github.com/vuejs/core/issues/4294
-export interface MsModalConfig {
-  title: string,
-  subtitle?: string,
-  closeButtonEnabled?: boolean,
-  cancelButton?: {
-    disabled: boolean,
-    label: string,
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    onClick?: Function,
-  },
-  confirmButton?: {
-    disabled: boolean,
-    label: string,
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    onClick?: Function,
-  }
-}
 
 defineProps<MsModalConfig>();
 
@@ -183,10 +188,17 @@ function confirm(): Promise<boolean> {
     background: transparent;
   }
 
+  .ms-modal-toolbar {
+    --padding: 0;
+    --min-height: 0;
+    --margin-inline: 0;
+  }
+
   &-buttons {
     display: flex;
     justify-content: end;
     gap: 1rem;
+    margin: 0;
   }
 }
 </style>

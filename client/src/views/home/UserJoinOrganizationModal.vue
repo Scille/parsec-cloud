@@ -196,7 +196,7 @@ import UserInformation from '@/components/users/UserInformation.vue';
 import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import { AvailableDevice } from '@/plugins/libparsec/definitions';
-import { ModalResultCode } from '@/common/constants';
+import { ModalResultCode } from '@/components/core/ms-modal/MsModal.vue';
 
 enum UserJoinOrganizationStep {
   WaitForHost = 1,

@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { alertController } from '@ionic/vue';
-import { ModalResultCode } from '@/common/constants';
+import { ModalResultCode } from '@/components/core/ms-modal/MsModal.vue';
 
 export async function createAlert(
   header: string,

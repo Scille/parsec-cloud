@@ -174,7 +174,7 @@ import UserInformation from '@/components/users/UserInformation.vue';
 import MsSpinner from '@/components/core/ms-spinner/MsSpinner.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
 import { AvailableDevice } from '@/plugins/libparsec/definitions';
-import { ModalResultCode } from '@/common/constants';
+import { ModalResultCode } from '@/components/core/ms-modal/MsModal.vue';
 import { organizationValidator, Validity } from '@/common/validators';
 
 enum CreateOrganizationStep {
