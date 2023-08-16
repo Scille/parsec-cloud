@@ -213,7 +213,7 @@ import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { ModalResultCode } from '@/components/core/ms-modal/MsModal.vue';
+import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 import { MockInvitation, Profile } from '@/common/mocks';
 
 enum GreetUserStep {
@@ -315,12 +315,12 @@ const canGoForward = computed(() => {
 });
 
 function cancelModal(): Promise<boolean> {
-  return modalController.dismiss(null, ModalResultCode.Cancel);
+  return modalController.dismiss(null, MsModalResult.Cancel);
 }
 
 function nextStep(): void {
   if (pageStep.value === GreetUserStep.Summary) {
-    modalController.dismiss({}, ModalResultCode.Confirm);
+    modalController.dismiss({}, MsModalResult.Confirm);
     return;
   } else if (pageStep.value === GreetUserStep.CheckGuestInfo && guestInfoPage.value && profile.value) {
     userInfo.value = {

@@ -89,7 +89,7 @@ export interface MsModalConfig {
   },
 }
 
-export enum ModalResultCode {
+export enum MsModalResult {
   Cancel = 'cancel',
   Confirm = 'confirm',
 }
@@ -113,10 +113,10 @@ import { close } from 'ionicons/icons';
 defineProps<MsModalConfig>();
 
 function cancel(): Promise<boolean> {
-  return modalController.dismiss(null, ModalResultCode.Cancel);
+  return modalController.dismiss(null, MsModalResult.Cancel);
 }
 function confirm(): Promise<boolean> {
-  return modalController.dismiss(null, ModalResultCode.Confirm);
+  return modalController.dismiss(null, MsModalResult.Confirm);
 }
 </script>
 

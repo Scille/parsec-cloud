@@ -242,7 +242,7 @@ import { useRouter } from 'vue-router';
 import HomePagePopover from '@/views/home/HomePagePopover.vue';
 import SettingsModal from '@/views/settings/SettingsModal.vue';
 import { ConfigPathKey, Formatters, FormattersKey, StorageManagerKey } from '@/common/injectionKeys';
-import { ModalResultCode } from '@/components/core/ms-modal/MsModal.vue';
+import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 import { getAppVersion } from '@/common/mocks';
 import AboutModal from '@/views/about/AboutModal.vue';
 
@@ -377,7 +377,7 @@ async function openPopover(ev: Event): Promise<void> {
   });
   await popover.present();
   const result = await popover.onWillDismiss();
-  if (result.role === ModalResultCode.Confirm) {
+  if (result.role === MsModalResult.Confirm) {
     login(result.data.device, result.data.password);
   }
 }

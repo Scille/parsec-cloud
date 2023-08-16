@@ -27,7 +27,7 @@ import { ref } from 'vue';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { Validity, claimLinkValidator } from '@/common/validators';
 import { modalController } from '@ionic/vue';
-import { ModalResultCode } from '@/components/core/ms-modal/MsModal.vue';
+import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
 
 const joinLink = ref('');
@@ -35,7 +35,7 @@ const joinLink = ref('');
 /* by the way pressing Enter won't send the form, you unfortunately have to click the button
 see https://github.com/ionic-team/ionic-framework/issues/19368 */
 function confirm(): Promise<boolean> {
-  return modalController.dismiss(joinLink.value.trim(), ModalResultCode.Confirm);
+  return modalController.dismiss(joinLink.value.trim(), MsModalResult.Confirm);
 }
 </script>
 

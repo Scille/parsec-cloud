@@ -61,7 +61,7 @@ import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModa
 import JoinByLinkModal from '@/views/home/JoinByLinkModal.vue';
 import { claimUserLinkValidator, claimDeviceLinkValidator, Validity } from '@/common/validators';
 import { useI18n } from 'vue-i18n';
-import { ModalResultCode } from '@/components/core/ms-modal/MsModal.vue';
+import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 
 const { t } = useI18n();
 
@@ -77,7 +77,7 @@ async function openCreateOrganizationModal(): Promise<void> {
 }
 
 async function canDismissModal(data?: any, modalRole?: string): Promise<boolean> {
-  if (modalRole === ModalResultCode.Confirm) {
+  if (modalRole === MsModalResult.Confirm) {
     return true;
   }
   const alert = await createAlert(
@@ -88,7 +88,7 @@ async function canDismissModal(data?: any, modalRole?: string): Promise<boolean>
   );
   await alert.present();
   const { role } = await alert.onDidDismiss();
-  return role === ModalResultCode.Confirm;
+  return role === MsModalResult.Confirm;
 }
 
 async function openJoinByLinkModal(): Promise<void> {
@@ -100,7 +100,7 @@ async function openJoinByLinkModal(): Promise<void> {
   await linkModal.present();
   const linkResult = await linkModal.onWillDismiss();
 
-  if (linkResult.role !== ModalResultCode.Confirm) {
+  if (linkResult.role !== MsModalResult.Confirm) {
     await popoverController.dismiss(null, linkResult.role);
   } else {
     if (claimUserLinkValidator(linkResult.data) === Validity.Valid) {

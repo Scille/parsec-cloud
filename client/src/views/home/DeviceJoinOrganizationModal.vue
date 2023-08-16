@@ -163,7 +163,7 @@ import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import { AvailableDevice } from '@/plugins/libparsec/definitions';
-import { ModalResultCode } from '@/components/core/ms-modal/MsModal.vue';
+import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
 
 enum DeviceJoinOrganizationStep {
@@ -262,9 +262,9 @@ const canGoForward = computed(() => {
 
 function cancelModal(): Promise<boolean> {
   if (pageStep.value === DeviceJoinOrganizationStep.Finish) {
-    return modalController.dismiss({ device: newDevice, password: passwordPage.value.password }, ModalResultCode.Confirm);
+    return modalController.dismiss({ device: newDevice, password: passwordPage.value.password }, MsModalResult.Confirm);
   } else {
-    return modalController.dismiss(null, ModalResultCode.Cancel);
+    return modalController.dismiss(null, MsModalResult.Cancel);
   }
 }
 
@@ -296,7 +296,7 @@ function nextStep(): void {
     newDevice = mockCreateDevice();
     mockSaveDeviceWithPassword(newDevice, passwordPage.value.password);
   } else if (pageStep.value === DeviceJoinOrganizationStep.Finish) {
-    modalController.dismiss({ device: newDevice, password: passwordPage.value.password }, ModalResultCode.Confirm);
+    modalController.dismiss({ device: newDevice, password: passwordPage.value.password }, MsModalResult.Confirm);
     return;
   }
 

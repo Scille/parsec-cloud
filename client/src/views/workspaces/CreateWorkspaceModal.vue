@@ -30,16 +30,16 @@ import {
 import { ref } from 'vue';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
-import { ModalResultCode } from '@/components/core/ms-modal/MsModal.vue';
+import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 
 const workspaceName = ref('');
 
 function confirm(): Promise<boolean> {
-  return modalController.dismiss(workspaceName.value, ModalResultCode.Confirm);
+  return modalController.dismiss(workspaceName.value, MsModalResult.Confirm);
 }
 
 function cancel(): Promise<boolean> {
-  return modalController.dismiss(null, ModalResultCode.Cancel);
+  return modalController.dismiss(null, MsModalResult.Cancel);
 }
 </script>
 
