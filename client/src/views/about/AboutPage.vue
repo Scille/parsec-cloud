@@ -10,16 +10,22 @@
           <about-view />
         </div>
         <div class="update-container">
-          <h1>{{ $t('AboutPage.update.title') }}</h1>
+          <ion-title
+            class="title-h2 about-title"
+          >
+            {{ $t('AboutPage.update.title') }}
+          </ion-title>
           <div
             id="uptodate"
             v-show="upToDate"
+            class="update-text body-lg"
           >
             {{ $t('AboutPage.update.upToDate') }}
           </div>
           <div
             v-show="!upToDate"
             id="notuptodate"
+            class="update-text body-lg"
           >
             {{ $t('AboutPage.update.notUpToDate') }}
             <ion-button
@@ -32,6 +38,7 @@
           <ion-button
             @click="showChangelog"
             fill="outline"
+            class="update-btn"
           >
             <ion-icon
               :icon="open"
@@ -84,10 +91,35 @@ async function showChangelog(): Promise<void> {
 }
 .about-container {
   border-bottom: 1px solid var(--parsec-color-light-primary-100);
-  width: 80%;
+  width: 70%;
 }
 
 .update-container {
-  width: 80%;
+  width: 70%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.about-title {
+  margin-top: 2rem;
+  color: var(--parsec-color-light-primary-700);
+  padding: 0;
+}
+
+.update-text {
+  color: var(--parsec-color-light-secondary-grey);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.update-btn {
+  width: fit-content;
+  margin: 0;
+
+  ion-icon {
+    margin-right: .5rem;
+  }
 }
 </style>

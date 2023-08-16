@@ -59,3 +59,8 @@ ion-icon {
 .in-item:is(ion-checkbox) {
   width: fit-content;
 }
+
+a {
+  text-decoration: none;
+  color: var(--parsec-color-light-primary-500);
+}
