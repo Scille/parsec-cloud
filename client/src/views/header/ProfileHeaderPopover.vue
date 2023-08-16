@@ -62,7 +62,7 @@
       <ion-text
         class="body-sm"
       >
-        Parsec v{{ getAppVersion() }}
+        {{ $t('app.name') }} v{{ getAppVersion() }}
       </ion-text>
     </ion-item>
   </ion-list>
@@ -176,6 +176,15 @@ function onOptionClick(option: ProfilePopoverOption): void {
     margin-inline-end: 0.75rem;
     margin-top: 1rem;
     margin-bottom: 1rem;
+  }
+}
+
+.version {
+  cursor: pointer;
+  width: fit-content;
+
+  &:hover {
+    text-decoration: underline;
   }
 }
 </style>
