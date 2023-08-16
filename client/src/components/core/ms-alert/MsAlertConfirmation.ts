@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { alertController } from '@ionic/vue';
-import { ModalResultCode } from '@/components/core/ms-modal/MsModal.vue';
+import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 
 export async function createAlert(
   header: string,
@@ -15,11 +15,11 @@ export async function createAlert(
     buttons: [
       {
         text: cancelLabel,
-        role: ModalResultCode.Cancel,
+        role: MsModalResult.Cancel,
       },
       {
         text: okLabel,
-        role: ModalResultCode.Confirm,
+        role: MsModalResult.Confirm,
       },
     ],
   });

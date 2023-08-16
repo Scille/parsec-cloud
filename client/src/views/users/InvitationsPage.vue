@@ -91,7 +91,7 @@ import { DisplayState } from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import { isAdmin } from '@/common/permissions';
 import { MockInvitation, getInvitations } from '@/common/mocks';
 import { useI18n } from 'vue-i18n';
-import { ModalResultCode } from '@/common/constants';
+import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 import { createAlert } from '@/components/core/ms-alert/MsAlertConfirmation';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
 import InvitationCard from '@/components/users/InvitationCard.vue';
@@ -112,7 +112,7 @@ function inviteUser(): void {
 }
 
 async function canDismissModal(_data?: any, modalRole?: string): Promise<boolean> {
-  if (modalRole === ModalResultCode.Confirm) {
+  if (modalRole === MsModalResult.Confirm) {
     return true;
   }
 
@@ -124,7 +124,7 @@ async function canDismissModal(_data?: any, modalRole?: string): Promise<boolean
   );
   await alert.present();
   const { role } = await alert.onDidDismiss();
-  return role === ModalResultCode.Confirm;
+  return role === MsModalResult.Confirm;
 }
 
 async function greetUser(invitation: MockInvitation): Promise<void> {

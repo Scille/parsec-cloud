@@ -196,7 +196,7 @@ import UserInformation from '@/components/users/UserInformation.vue';
 import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import { AvailableDevice } from '@/plugins/libparsec/definitions';
-import { ModalResultCode } from '@/components/core/ms-modal/MsModal.vue';
+import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 
 enum UserJoinOrganizationStep {
   WaitForHost = 1,
@@ -339,7 +339,7 @@ function getCurrentPage(): Ref<any> {
 }
 
 function cancelModal(): Promise<boolean> {
-  return modalController.dismiss(null, ModalResultCode.Cancel);
+  return modalController.dismiss(null, MsModalResult.Cancel);
 }
 
 function mockCreateDevice(): AvailableDevice {
@@ -373,7 +373,7 @@ function nextStep(): void {
     window.setTimeout(hostHasValidated, OTHER_USER_WAITING_TIME);
     return;
   } else if (pageStep.value === UserJoinOrganizationStep.Finish) {
-    modalController.dismiss({ device: newDevice, password: passwordPage.value.password }, ModalResultCode.Confirm);
+    modalController.dismiss({ device: newDevice, password: passwordPage.value.password }, MsModalResult.Confirm);
     return;
   }
 

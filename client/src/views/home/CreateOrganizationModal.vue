@@ -174,7 +174,7 @@ import UserInformation from '@/components/users/UserInformation.vue';
 import MsSpinner from '@/components/core/ms-spinner/MsSpinner.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
 import { AvailableDevice } from '@/plugins/libparsec/definitions';
-import { ModalResultCode } from '@/components/core/ms-modal/MsModal.vue';
+import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 import { organizationValidator, Validity } from '@/common/validators';
 
 enum CreateOrganizationStep {
@@ -280,7 +280,7 @@ function getCurrentPage(): Ref<any> {
 }
 
 function cancelModal(): Promise<boolean> {
-  return modalController.dismiss(null, ModalResultCode.Cancel);
+  return modalController.dismiss(null, MsModalResult.Cancel);
 }
 
 function createOrg(orgName: string, userName: string, userEmail: string, deviceName: string, backendAddr: string, password: string): void {
@@ -302,7 +302,7 @@ function createOrg(orgName: string, userName: string, userEmail: string, deviceN
 
 function nextStep(): void {
   if (pageStep.value === CreateOrganizationStep.FinishStep) {
-    modalController.dismiss({ device: device.value, password: passwordPage.value.password }, ModalResultCode.Confirm);
+    modalController.dismiss({ device: device.value, password: passwordPage.value.password }, MsModalResult.Confirm);
     return;
   } else {
     pageStep.value = pageStep.value + 1;
