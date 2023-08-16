@@ -59,6 +59,7 @@ import {
   IonIcon,
   IonPage,
   modalController,
+  IonTitle,
 } from '@ionic/vue';
 import {
   open,
