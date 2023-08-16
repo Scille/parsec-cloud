@@ -27,7 +27,7 @@ import { ref } from 'vue';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { Validity, claimLinkValidator } from '@/common/validators';
 import { modalController } from '@ionic/vue';
-import { ModalResultCode } from '@/common/constants';
+import { ModalResultCode } from '@/components/core/ms-modal/MsModal.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
 
 const joinLink = ref('');
