@@ -11,7 +11,7 @@
         </div>
         <div class="update-container">
           <ion-title
-            class="title-h2 about-title"
+            class="title-h3 about-title"
           >
             {{ $t('AboutPage.update.title') }}
           </ion-title>

@@ -10,7 +10,7 @@
     </div>
 
     <ion-title
-      class="title-h2 about-title"
+      class="title-h3 about-title"
     >
       {{ $t('app.name') }}
     </ion-title>
