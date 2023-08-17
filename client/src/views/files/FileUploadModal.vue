@@ -1,35 +1,10 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page class="modal">
-    <ion-buttons
-      slot="end"
-      class="closeBtn-container"
-    >
-      <ion-button
-        slot="icon-only"
-        @click="closeModal()"
-        class="closeBtn"
-      >
-        <ion-icon
-          :icon="close"
-          size="large"
-          class="closeBtn__icon"
-        />
-      </ion-button>
-    </ion-buttons>
-    <ion-header class="modal-header">
-      <ion-icon
-        class="modal-header__icon"
-        :icon="folder"
-        size="medium"
-      />
-      <ion-title
-        class="modal-header__title title-h2"
-      >
-        {{ $t('FoldersPage.importModal.title') }}
-      </ion-title>
-    </ion-header>
+  <ms-modal
+    :title="$t('FoldersPage.importModal.title')"
+    :close-button-enabled="true"
+  >
     <div class="modal-content inner-content">
       <file-drop-zone
         @files-drop="onFilesDrop"
@@ -37,26 +12,13 @@
         <file-import />
       </file-drop-zone>
     </div>
-  </ion-page>
+  </ms-modal>
 </template>
 
 <script setup lang="ts">
-import {
-  IonPage,
-  IonIcon,
-  IonButton,
-  IonButtons,
-  IonHeader,
-  IonTitle,
-  modalController,
-} from '@ionic/vue';
-import {
-  close,
-  folder,
-} from 'ionicons/icons';
-import { ModalResultCode } from '@/common/constants';
 import FileImport from '@/components/files/FileImport.vue';
 import FileDropZone from '@/components/files/FileDropZone.vue';
+import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { join as joinPath } from '@/common/path';
 
 const props = defineProps<{
@@ -64,10 +26,6 @@ const props = defineProps<{
 }>();
 
 let fd = 0;
-
-function closeModal(): Promise<boolean> {
-  return modalController.dismiss(null, ModalResultCode.Cancel);
-}
 
 async function mockParsecUploadFile(currentPath: string, fsEntry: FileSystemEntry): Promise<void> {
 
@@ -127,59 +85,4 @@ async function onFilesDrop(entries: FileSystemEntry[]): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.modal {
-  padding: 3.5rem;
-  justify-content: start;
-}
-
-.closeBtn-container {
-    position: absolute;
-    top: 2rem;
-    right: 2rem;
-  }
-
-.closeBtn-container, .closeBtn {
-  margin: 0;
-  --padding-start: 0;
-  --padding-end: 0;
-}
-
-.closeBtn {
-  width: fit-content;
-  height: fit-content;
-  --border-radius: var(--parsec-radius-4);
-  --background-hover: var(--parsec-color-light-primary-50);
-  border-radius: var(--parsec-radius-4);
-
-  &__icon {
-    padding: 4px;
-    color: var(--parsec-color-light-primary-500);
-
-    &:hover {
-      --background-hover: var(--parsec-color-light-primary-50);
-    }
-  }
-
-  &:active {
-    border-radius: var(--parsec-radius-4);
-    background: var(--parsec-color-light-primary-100);
-  }
-}
-
-.modal-header {
-  margin-bottom: 2.5rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-
-  &__title {
-    padding: 0;
-    color: var(--parsec-color-light-primary-600);
-  }
-
-  &__icon {
-    color: var(--parsec-color-light-primary-600);
-    font-size: 1.5rem;
-  }
-}
 </style>
