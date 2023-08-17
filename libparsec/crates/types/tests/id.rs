@@ -9,6 +9,11 @@ use std::str::FromStr;
 
 use libparsec_types::prelude::*;
 
+#[test]
+fn device_label_bad_size() {
+    DeviceLabel::from_str("").unwrap_err();
+}
+
 #[rstest]
 #[case("foo42")]
 #[case("FOO")]
@@ -67,9 +72,4 @@ fn device_id(#[case] raw: &str) {
 #[case("a@1@x")]
 fn bad_device_id(#[case] raw: &str) {
     DeviceID::from_str(raw).unwrap_err();
-}
-
-#[test]
-fn device_label_bad_size() {
-    DeviceLabel::from_str("").unwrap_err();
 }

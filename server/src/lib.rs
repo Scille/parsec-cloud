@@ -146,7 +146,7 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
 /// see https://github.com/PyO3/pyo3/issues/2783
 /// TODO: remove me once (if ?) https://github.com/PyO3/pyo3/pull/3057 is merged
 fn patch_panic_exception_to_inherit_exception(py: Python) {
-    let mut panic_exception_cls = <pyo3::panic::PanicException as pyo3::PyTypeInfo>::type_object(py)
+    let panic_exception_cls = <pyo3::panic::PanicException as pyo3::PyTypeInfo>::type_object(py)
         .as_ptr() as *mut pyo3::ffi::PyTypeObject;
     let exception_cls = <pyo3::exceptions::PyException as pyo3::PyTypeInfo>::type_object(py);
     let new_bases = pyo3::types::PyTuple::new(py, [exception_cls]);
