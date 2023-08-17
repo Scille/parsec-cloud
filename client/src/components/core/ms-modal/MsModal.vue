@@ -36,7 +36,10 @@
       >
         <slot />
       </div>
-      <ion-footer class="ms-modal-footer">
+      <ion-footer
+        class="ms-modal-footer"
+        v-if="cancelButton || confirmButton"
+      >
         <ion-toolbar class="ms-modal-toolbar">
           <ion-buttons
             slot="primary"
