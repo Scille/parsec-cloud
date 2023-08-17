@@ -4,13 +4,14 @@
   <ion-page class="modal">
     <!-- header -->
     <ion-header class="modal-header">
+      <!-- head -->
       <ion-toolbar class="modal-header__toolbar">
-        <ion-title class="title-h2">
+        <ion-text class="title-h2">
           <ion-icon
             :icon="timeIcon"
           />
           {{ $t('Changelog.title') }}
-        </ion-title>
+        </ion-text>
       </ion-toolbar>
       <ion-buttons
         slot="end"
@@ -35,89 +36,111 @@
         <div
           v-for="versionChange in changes"
           :key="versionChange.version"
-          class="version"
+          class="container"
         >
-          <h1>{{ $t('app.name') }} v{{ versionChange.version }}</h1>
+          <div class="version">
+            <ion-text class="version-title title-h3">
+              {{ $t('app.name') }} v{{ versionChange.version }}
+            </ion-text>
+            <ion-text class="version-date body">
+              {{ versionChange.date }}
+            </ion-text>
+          </div>
 
           <!-- Features -->
           <div
             v-show="versionChange.features.length > 0"
+            class="categorie"
           >
-            <h2>
+            <ion-text class="categorie-title body-lg">
               <ion-icon
                 :icon="sparkles"
               />
               {{ $t('Changelog.features') }}
-            </h2>
-            <ul>
-              <li
+            </ion-text>
+            <ion-list class="list">
+              <ion-item
                 v-for="change in versionChange.features"
                 :key="change.description"
+                class="list-item"
               >
-                {{ change.description }}
+                <ion-text class="list-item__text">
+                  {{ change.description }}
+                </ion-text>
                 <a
                   :href="$t('app.projectSources') + '/issues/' + change.issue"
                   target="_blank"
+                  class="list-item__link body"
                   v-if="change.issue"
                 >
                   #{{ change.issue }}
                 </a>
-              </li>
-            </ul>
+              </ion-item>
+            </ion-list>
           </div>
 
           <!-- Bugfixes -->
           <div
             v-show="versionChange.fixes.length > 0"
+            class="categorie"
           >
-            <h2>
+            <ion-text class="categorie-title body-lg">
               <ion-icon
                 :icon="construct"
               />
               {{ $t('Changelog.fixes') }}
-            </h2>
-            <ul>
-              <li
+            </ion-text>
+            <ion-list class="list">
+              <ion-item
                 v-for="change in versionChange.fixes"
                 :key="change.description"
+                class="list-item"
               >
-                {{ change.description }}
+                <ion-text class="list-item__text">
+                  {{ change.description }}
+                </ion-text>
                 <a
                   :href="$t('app.projectSources') + '/issues/' + change.issue"
                   target="_blank"
+                  class="list-item__link body"
                   v-if="change.issue"
                 >
                   #{{ change.issue }}
                 </a>
-              </li>
-            </ul>
+              </ion-item>
+            </ion-list>
           </div>
 
           <!-- Misc -->
           <div
             v-show="versionChange.misc.length > 0"
+            class="categorie"
           >
-            <h2>
+            <ion-text class="categorie-title body-lg">
               <ion-icon
                 :icon="infinite"
               />
               {{ $t('Changelog.misc') }}
-            </h2>
-            <ul>
-              <li
+            </ion-text>
+            <ion-list class="list">
+              <ion-item
                 v-for="change in versionChange.misc"
                 :key="change.description"
+                class="list-item"
               >
-                {{ change.description }}
+                <ion-text class="list-item__text">
+                  {{ change.description }}
+                </ion-text>
                 <a
                   :href="$t('app.projectSources') + '/issues/' + change.issue"
                   target="_blank"
+                  class="list-item__link body"
                   v-if="change.issue"
                 >
                   #{{ change.issue }}
                 </a>
-              </li>
-            </ul>
+              </ion-item>
+            </ion-list>
           </div>
         </div>
       </div>
@@ -132,9 +155,11 @@ import {
   IonContent,
   IonHeader,
   IonPage,
-  IonTitle,
   IonToolbar,
   IonIcon,
+  IonList,
+  IonItem,
+  IonText,
   modalController,
 } from '@ionic/vue';
 import {
@@ -160,50 +185,9 @@ function closeModal(): Promise<boolean> {
 </script>
 
 <style scoped lang="scss">
-$colors: red, orange, yellow, green, blue, purple;
-$repeat: 20;
-@for $i from 1 through $repeat {
-    *:nth-child(#{length($colors)}n+#{$i}) {
-        background: lighten(nth($colors, random(length($colors))), 20%);
-        font-family: "Comic Sans MS", "Comic Sans", cursive !important;
-    }
-}
-
 .modal {
   padding: 2.5rem;
   height: 40em;
-
-  -webkit-animation: NAME-YOUR-ANIMATION 0.2s infinite;  /* Safari 4+ */
-  -moz-animation: NAME-YOUR-ANIMATION 0.2s infinite;  /* Fx 5+ */
-  -o-animation: NAME-YOUR-ANIMATION 0.2s infinite;  /* Opera 12+ */
-  animation: NAME-YOUR-ANIMATION 0.2s infinite;  /* IE 10+, Fx 29+ */
-}
-
-@-webkit-keyframes NAME-YOUR-ANIMATION {
-  0%, 25% {
-    background-color: rgb(0, 255, 247);
-    border: 3px solid #2200e5;
-  }
-  25%, 50% {
-    background-color: #e50000;
-    border: 3px solid rgb(117, 209, 63);
-  }
-  50%, 75% {
-    background-color: #daf700;
-    border: 3px solid rgb(247, 0, 255);
-  }
-  75%, 100% {
-    background-color: #ff6600;
-    border: 3px solid rgb(94, 255, 0);
-  }
-}
-
-.version {
-  background-color: green;
-  -webkit-animation: NAME-YOUR-ANIMATION 0.2s infinite;  /* Safari 4+ */
-  -moz-animation: NAME-YOUR-ANIMATION 0.2s infinite;  /* Fx 5+ */
-  -o-animation: NAME-YOUR-ANIMATION 0.2s infinite;  /* Opera 12+ */
-  animation: NAME-YOUR-ANIMATION 0.2s infinite;  /* IE 10+, Fx 29+ */
 }
 
 .modal-header {
@@ -218,6 +202,9 @@ $repeat: 20;
   color: var(--parsec-color-light-primary-700);
   padding-inline: 0;
   margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .closeBtn-container, .closeBtn {
@@ -250,6 +237,105 @@ $repeat: 20;
   &__icon {
     padding: 4px;
     color: var(--parsec-color-light-primary-500);
+  }
+}
+
+.version {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--parsec-color-light-primary-50);
+  border-radius: var(--parsec-radius-4);
+  padding: 0.75rem 1rem 0.75rem 0.5rem;
+  margin-bottom: 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  .version-title {
+    color: var(--parsec-color-light-primary-700);
+    margin-bottom: 0;
+    font-size: 1.1rem;
+  }
+
+  .version-date {
+    color: var(--parsec-color-light-secondary-text);
+  }
+}
+
+.categorie {
+  margin-bottom: 2.5rem;
+}
+
+.categorie-title {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--parsec-color-light-primary-700);
+  background: var(--parsec-color-light-secondary-inversed-contrast);
+  position: sticky;
+  top: 3rem;
+  z-index: 9;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 1px;
+    background: var(--parsec-color-light-secondary-disabled);
+  }
+}
+
+.list {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  justify-content: space-between;
+
+  .list-item {
+    display: flex;
+    --inner-padding-end: 0;
+    --padding-start: 0;
+    background: transparent;
+    position: relative;
+    color: var(--parsec-color-light-secondary-text);
+    --min-height: 40px;
+
+    &:nth-child(odd) {
+      --background: var(--parsec-color-light-secondary-background);
+      background: var(--parsec-color-light-secondary-background);
+      border-radius: var(--parsec-radius-4);
+    }
+
+    &::before {
+      content: '';
+      display: block;
+      position: relative;
+      width: 6px;
+      height: 6px;
+      background: var(--parsec-color-light-secondary-text);
+      margin: 0 10px 0 1rem;
+      border-radius: var(--parsec-radius-circle);
+      z-index: 3;
+    }
+
+    &__text {
+      padding: .4rem 0;
+    }
+
+    &__link {
+      margin-left: auto;
+      margin-right: 1rem;
+      color: var(--parsec-color-light-primary-600);
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
   }
 }
 </style>
