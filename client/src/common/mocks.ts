@@ -372,6 +372,8 @@ export interface VersionChange {
   misc: Change[],
 }
 
+// Added multiple values for testing
+// can be removed before release
 export function getChanges(): VersionChange[] {
   return [{
     version: '3.0.0a',
@@ -381,14 +383,82 @@ export function getChanges(): VersionChange[] {
       issue: '4978',
     }, {
       description: 'Added user greet modal',
+    },
+    {
+      description: 'Added changelog modal',
+      issue: '4978',
+    },
+    {
+      description: 'Added changelog modal',
+      issue: '4978',
+    },
+    {
+      description: 'Added changelog modal',
+      issue: '4978',
+    },
+    {
+      description: 'Added changelog modal',
+      issue: '4978',
+    },
+    {
+      description: 'Added changelog modal',
+      issue: '4978',
+    },
+    {
+      description: 'Added changelog modal',
+      issue: '4978',
+    },
+    {
+      description: 'Added changelog modal',
+      issue: '4978',
     }],
     fixes: [{
       description: 'Made links to accept TOS when creating a new organization clickable',
       issue: '4954',
+    },
+    {
+      description: 'Added changelog modal',
+      issue: '4978',
+    },
+    {
+      description: 'Added changelog modal',
+      issue: '4978',
+    },
+    {
+      description: 'Added changelog modal',
+      issue: '4978',
+    },
+    {
+      description: 'Added changelog modal',
+      issue: '4978',
+    },
+    {
+      description: 'Added changelog modal',
+      issue: '4978',
     }],
     misc: [{
       description: 'Updates the design of the modal to greet a new user',
       issue: '4985',
+    },
+    {
+      description: 'Added changelog modal',
+      issue: '4978',
+    },
+    {
+      description: 'Added changelog modal',
+      issue: '4978',
+    },
+    {
+      description: 'Added changelog modal',
+      issue: '4978',
+    },
+    {
+      description: 'Added changelog modal',
+      issue: '4978',
+    },
+    {
+      description: 'Added changelog modal',
+      issue: '4978',
     }],
   }];
 }
