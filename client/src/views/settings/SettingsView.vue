@@ -3,7 +3,7 @@
 <template>
   <ion-page class="page">
     <!-- content -->
-    <ion-content class="page-content">
+    <div class="page-content">
       <div class="menu">
         <!-- menu list -->
         <ion-radio-group
@@ -123,14 +123,13 @@
           </div>
         </div>
       </div>
-    </ion-content>
+    </div>
   </ion-page>
 </template>
 
 <script setup lang = "ts" >
 import {
   IonPage,
-  IonContent,
   IonList,
   IonRadioGroup,
   IonItem,
@@ -200,23 +199,6 @@ onUnmounted(async ():Promise<void> => {
   --border-radius: 8px;
   --background: none;
   background: var(--parsec-color-light-secondary-inversed-contrast);
-
-  &-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-
-    &__toolbar {
-      --min-height: 1rem;
-    }
-
-    .title-h2 {
-      color: var(--parsec-color-light-primary-700);
-      padding-inline:0;
-    }
-  }
 
   &-content {
     display: flex;

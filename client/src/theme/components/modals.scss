@@ -18,15 +18,6 @@ ion-modal.one-line-modal::part(content) {
   height: 210px;
 }
 
-/* -- settings modal -- */
-@media only screen and (min-width: 768px) and (min-height: 600px) {
-  .settings-modal, .settings-modal .ion-overlay-wrapper{
-    --width: 800px;
-    --height: 600px;
-    --border-radius: 8px;
-  }
-}
-
 ion-modal {
   --height: auto;
   --width: auto;
@@ -45,17 +36,18 @@ ion-modal .inner-content {
   overflow: auto;
 }
 
-.settings-modal .ion-page {
-  position: absolute;
+.settings-modal {
+  --width: 842px;
+  --height: 600px;
 }
 
 .workspace-sharing-modal {
   --height: 600px;
-}
 
-.workspace-sharing-modal .ion-page {
-  position: absolute;
-  display: flex;
+  .ion-page {
+    position: absolute;
+    display: flex;
+  }
 }
 
 .join-organization-modal {

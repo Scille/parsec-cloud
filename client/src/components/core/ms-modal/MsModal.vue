@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page>
+  <ion-page class="modal">
     <ion-buttons
       slot="end"
       class="closeBtn-container"
