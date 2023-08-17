@@ -112,7 +112,7 @@ class HumanHandle(StrBasedType):
 class DateTime(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string()) }"
     custom_to_rs_string = (
-        "|dt: libparsec::DateTime| -> Result<String, &'static str> { Ok(dt.to_rfc3339().into()) }"
+        "|dt: libparsec::DateTime| -> Result<String, &'static str> { Ok(dt.to_rfc3339()) }"
     )
 
 

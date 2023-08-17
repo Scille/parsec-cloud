@@ -138,12 +138,16 @@ JsFunction
 {
     {% if type.custom_from_rs_bytes -%}
     let custom_from_rs_bytes = {{ type.custom_from_rs_bytes }};
+    #[allow(clippy::unnecessary_mut_passed)]
     match custom_from_rs_bytes({{ js_val }}.as_slice({{ mut_cx_ref }}))
     {%- else -%}
+    #[allow(clippy::unnecessary_mut_passed)]
     match {{ js_val }}.as_slice({{ mut_cx_ref }}).try_into()
     {%- endif %}
     {
         Ok(val) => val,
+        // err can't infer type in some case, because of the previous `try_into`
+        #[allow(clippy::useless_format)]
         Err(err) => return cx.throw_type_error(format!("{}", err)),
     }
 }
@@ -259,6 +263,7 @@ match {{ rs_value }} {
 }
 {%- elif type.kind == "none" -%}
 {
+    #[allow(clippy::let_unit_value)]
     let _ = {{ rs_value }};
     JsNull::new({{ mut_cx_ref }})
 }

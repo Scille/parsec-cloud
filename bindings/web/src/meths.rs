@@ -1452,7 +1452,7 @@ fn variant_useropsworkspaceshareerror_rs_to_js(
             let js_server_timestamp = JsValue::from_str({
                 let custom_to_rs_string =
                     |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339().into())
+                        Ok(dt.to_rfc3339())
                     };
                 match custom_to_rs_string(server_timestamp) {
                     Ok(ok) => ok,
@@ -1464,7 +1464,7 @@ fn variant_useropsworkspaceshareerror_rs_to_js(
             let js_client_timestamp = JsValue::from_str({
                 let custom_to_rs_string =
                     |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339().into())
+                        Ok(dt.to_rfc3339())
                     };
                 match custom_to_rs_string(client_timestamp) {
                     Ok(ok) => ok,
@@ -1768,7 +1768,7 @@ fn variant_bootstraporganizationerror_rs_to_js(
             let js_server_timestamp = JsValue::from_str({
                 let custom_to_rs_string =
                     |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339().into())
+                        Ok(dt.to_rfc3339())
                     };
                 match custom_to_rs_string(server_timestamp) {
                     Ok(ok) => ok,
@@ -1780,7 +1780,7 @@ fn variant_bootstraporganizationerror_rs_to_js(
             let js_client_timestamp = JsValue::from_str({
                 let custom_to_rs_string =
                     |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339().into())
+                        Ok(dt.to_rfc3339())
                     };
                 match custom_to_rs_string(client_timestamp) {
                     Ok(ok) => ok,
@@ -2332,7 +2332,7 @@ fn variant_invitelistitem_rs_to_js(rs_obj: libparsec::InviteListItem) -> Result<
             let js_created_on = JsValue::from_str({
                 let custom_to_rs_string =
                     |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339().into())
+                        Ok(dt.to_rfc3339())
                     };
                 match custom_to_rs_string(created_on) {
                     Ok(ok) => ok,
@@ -2367,7 +2367,7 @@ fn variant_invitelistitem_rs_to_js(rs_obj: libparsec::InviteListItem) -> Result<
             let js_created_on = JsValue::from_str({
                 let custom_to_rs_string =
                     |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339().into())
+                        Ok(dt.to_rfc3339())
                     };
                 match custom_to_rs_string(created_on) {
                     Ok(ok) => ok,
@@ -2449,7 +2449,7 @@ fn variant_greetinprogresserror_rs_to_js(
             let js_server_timestamp = JsValue::from_str({
                 let custom_to_rs_string =
                     |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339().into())
+                        Ok(dt.to_rfc3339())
                     };
                 match custom_to_rs_string(server_timestamp) {
                     Ok(ok) => ok,
@@ -2461,7 +2461,7 @@ fn variant_greetinprogresserror_rs_to_js(
             let js_client_timestamp = JsValue::from_str({
                 let custom_to_rs_string =
                     |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339().into())
+                        Ok(dt.to_rfc3339())
                     };
                 match custom_to_rs_string(client_timestamp) {
                     Ok(ok) => ok,

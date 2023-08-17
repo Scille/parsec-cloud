@@ -1394,7 +1394,7 @@ fn variant_useropsworkspaceshareerror_rs_to_js<'a>(
             let js_server_timestamp = JsString::try_new(cx, {
                 let custom_to_rs_string =
                     |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339().into())
+                        Ok(dt.to_rfc3339())
                     };
                 match custom_to_rs_string(server_timestamp) {
                     Ok(ok) => ok,
@@ -1406,7 +1406,7 @@ fn variant_useropsworkspaceshareerror_rs_to_js<'a>(
             let js_client_timestamp = JsString::try_new(cx, {
                 let custom_to_rs_string =
                     |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339().into())
+                        Ok(dt.to_rfc3339())
                     };
                 match custom_to_rs_string(client_timestamp) {
                     Ok(ok) => ok,
@@ -1729,7 +1729,7 @@ fn variant_bootstraporganizationerror_rs_to_js<'a>(
             let js_server_timestamp = JsString::try_new(cx, {
                 let custom_to_rs_string =
                     |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339().into())
+                        Ok(dt.to_rfc3339())
                     };
                 match custom_to_rs_string(server_timestamp) {
                     Ok(ok) => ok,
@@ -1741,7 +1741,7 @@ fn variant_bootstraporganizationerror_rs_to_js<'a>(
             let js_client_timestamp = JsString::try_new(cx, {
                 let custom_to_rs_string =
                     |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339().into())
+                        Ok(dt.to_rfc3339())
                     };
                 match custom_to_rs_string(client_timestamp) {
                     Ok(ok) => ok,
@@ -2196,8 +2196,11 @@ fn variant_invitelistitem_js_to_rs<'a>(
                     let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
                         libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
                     };
+                    #[allow(clippy::unnecessary_mut_passed)]
                     match custom_from_rs_bytes(js_val.as_slice(cx)) {
                         Ok(val) => val,
+                        // err can't infer type in some case, because of the previous `try_into`
+                        #[allow(clippy::useless_format)]
                         Err(err) => return cx.throw_type_error(format!("{}", err)),
                     }
                 }
@@ -2231,8 +2234,11 @@ fn variant_invitelistitem_js_to_rs<'a>(
                     let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
                         libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
                     };
+                    #[allow(clippy::unnecessary_mut_passed)]
                     match custom_from_rs_bytes(js_val.as_slice(cx)) {
                         Ok(val) => val,
+                        // err can't infer type in some case, because of the previous `try_into`
+                        #[allow(clippy::useless_format)]
                         Err(err) => return cx.throw_type_error(format!("{}", err)),
                     }
                 }
@@ -2305,7 +2311,7 @@ fn variant_invitelistitem_rs_to_js<'a>(
             let js_created_on = JsString::try_new(cx, {
                 let custom_to_rs_string =
                     |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339().into())
+                        Ok(dt.to_rfc3339())
                     };
                 match custom_to_rs_string(created_on) {
                     Ok(ok) => ok,
@@ -2348,7 +2354,7 @@ fn variant_invitelistitem_rs_to_js<'a>(
             let js_created_on = JsString::try_new(cx, {
                 let custom_to_rs_string =
                     |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339().into())
+                        Ok(dt.to_rfc3339())
                     };
                 match custom_to_rs_string(created_on) {
                     Ok(ok) => ok,
@@ -2439,7 +2445,7 @@ fn variant_greetinprogresserror_rs_to_js<'a>(
             let js_server_timestamp = JsString::try_new(cx, {
                 let custom_to_rs_string =
                     |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339().into())
+                        Ok(dt.to_rfc3339())
                     };
                 match custom_to_rs_string(server_timestamp) {
                     Ok(ok) => ok,
@@ -2451,7 +2457,7 @@ fn variant_greetinprogresserror_rs_to_js<'a>(
             let js_client_timestamp = JsString::try_new(cx, {
                 let custom_to_rs_string =
                     |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339().into())
+                        Ok(dt.to_rfc3339())
                     };
                 match custom_to_rs_string(client_timestamp) {
                     Ok(ok) => ok,
@@ -2536,6 +2542,7 @@ fn cancel(mut cx: FunctionContext) -> JsResult<JsPromise> {
             let js_tag = JsBoolean::new(&mut cx, true);
             js_obj.set(&mut cx, "ok", js_tag)?;
             let js_value = {
+                #[allow(clippy::let_unit_value)]
                 let _ = ok;
                 JsNull::new(&mut cx)
             };
@@ -2686,6 +2693,7 @@ fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_value = {
+                            #[allow(clippy::let_unit_value)]
                             let _ = ok;
                             JsNull::new(&mut cx)
                         };
@@ -2886,8 +2894,11 @@ fn client_workspace_rename(mut cx: FunctionContext) -> JsResult<JsPromise> {
             let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
                 libparsec::EntryID::try_from(x).map_err(|e| e.to_string())
             };
+            #[allow(clippy::unnecessary_mut_passed)]
             match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
                 Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
                 Err(err) => return cx.throw_type_error(format!("{}", err)),
             }
         }
@@ -2921,6 +2932,7 @@ fn client_workspace_rename(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_value = {
+                            #[allow(clippy::let_unit_value)]
                             let _ = ok;
                             JsNull::new(&mut cx)
                         };
@@ -2961,8 +2973,11 @@ fn client_workspace_share(mut cx: FunctionContext) -> JsResult<JsPromise> {
             let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
                 libparsec::EntryID::try_from(x).map_err(|e| e.to_string())
             };
+            #[allow(clippy::unnecessary_mut_passed)]
             match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
                 Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
                 Err(err) => return cx.throw_type_error(format!("{}", err)),
             }
         }
@@ -3001,6 +3016,7 @@ fn client_workspace_share(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_value = {
+                            #[allow(clippy::let_unit_value)]
                             let _ = ok;
                             JsNull::new(&mut cx)
                         };
@@ -3042,6 +3058,7 @@ fn claimer_greeter_abort_operation(mut cx: FunctionContext) -> JsResult<JsPromis
             let js_tag = JsBoolean::new(&mut cx, true);
             js_obj.set(&mut cx, "ok", js_tag)?;
             let js_value = {
+                #[allow(clippy::let_unit_value)]
                 let _ = ok;
                 JsNull::new(&mut cx)
             };
@@ -3195,15 +3212,22 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
         None => None,
     };
     let sequester_authority_verify_key = match cx.argument_opt(6) {
-        Some(v) => match v.downcast::<JsTypedArray<u8>, _>(&mut cx) {
-            Ok(js_val) => Some({
-                match js_val.as_slice(&mut cx).try_into() {
-                    Ok(val) => val,
-                    Err(err) => return cx.throw_type_error(format!("{}", err)),
+        Some(v) => {
+            match v.downcast::<JsTypedArray<u8>, _>(&mut cx) {
+                Ok(js_val) => {
+                    Some({
+                        #[allow(clippy::unnecessary_mut_passed)]
+                        match js_val.as_slice(&mut cx).try_into() {
+                            Ok(val) => val,
+                            // err can't infer type in some case, because of the previous `try_into`
+                            #[allow(clippy::useless_format)]
+                            Err(err) => return cx.throw_type_error(format!("{}", err)),
+                        }
+                    })
                 }
-            }),
-            Err(_) => None,
-        },
+                Err(_) => None,
+            }
+        }
         None => None,
     };
     let channel = cx.channel();
@@ -4149,8 +4173,11 @@ fn client_delete_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
             let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
                 libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
             };
+            #[allow(clippy::unnecessary_mut_passed)]
             match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
                 Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
                 Err(err) => return cx.throw_type_error(format!("{}", err)),
             }
         }
@@ -4172,6 +4199,7 @@ fn client_delete_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_value = {
+                            #[allow(clippy::let_unit_value)]
                             let _ = ok;
                             JsNull::new(&mut cx)
                         };
@@ -4268,8 +4296,11 @@ fn client_start_user_invitation_greet(mut cx: FunctionContext) -> JsResult<JsPro
             let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
                 libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
             };
+            #[allow(clippy::unnecessary_mut_passed)]
             match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
                 Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
                 Err(err) => return cx.throw_type_error(format!("{}", err)),
             }
         }
@@ -4329,8 +4360,11 @@ fn client_start_device_invitation_greet(mut cx: FunctionContext) -> JsResult<JsP
             let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
                 libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
             };
+            #[allow(clippy::unnecessary_mut_passed)]
             match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
                 Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
                 Err(err) => return cx.throw_type_error(format!("{}", err)),
             }
         }
@@ -4922,6 +4956,7 @@ fn greeter_user_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<JsP
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_value = {
+                            #[allow(clippy::let_unit_value)]
                             let _ = ok;
                             JsNull::new(&mut cx)
                         };
@@ -4997,6 +5032,7 @@ fn greeter_device_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<J
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_value = {
+                            #[allow(clippy::let_unit_value)]
                             let _ = ok;
                             JsNull::new(&mut cx)
                         };
