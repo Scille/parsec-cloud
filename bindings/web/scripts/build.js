@@ -105,10 +105,25 @@ function ensure_rust_target_installed() {
   const targets = ret.stdout.toString(encoding = "ascii").trim().split("\n");
   if (targets.find((e) => e === TARGET) === undefined) {
     console.log(`Rust target \`${TARGET}\` is not installed !`)
-    console.log("Install it with:")
-    console.log(`  rustup target add ${TARGET}`)
-    exit(1);
+    install_rust_target(TARGET)
   }
+}
+
+function install_rust_target(target) {
+  const rustup_install_target_args = [
+    on_windows() ? "rustup.exe" : "rustup",
+    "target",
+    "install",
+    target
+  ];
+
+  console.log(`Installing rust target ${target}`);
+  const ret = exec_cmd(rustup_install_target_args, {
+    // ignore stdin, stdout in pipe, stderr to actual stderr
+    stdio: ['ignore', 'pipe', 'inherit'],
+    cwd: WORKDIR,
+    env: process.env
+  });
 }
 
 function build_wasm(cargo_flags) {
