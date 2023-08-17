@@ -57,7 +57,7 @@
           v-show="pageStep === UserJoinOrganizationStep.WaitForHost"
           class="step orga-name"
         >
-          <div>
+          <div class="orga-name-content">
             <ms-informative-text
               :icon="caretForward"
               :text="$t('JoinOrganization.instructions.start.first')"
@@ -503,6 +503,12 @@ function claimerRetrieveInfo(): void {
 .orga-name {
   display: flex;
   flex-direction: column;
+
+  &-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
 }
 
 .label-waiting {
