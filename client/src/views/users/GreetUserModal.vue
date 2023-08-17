@@ -43,6 +43,7 @@
         </ion-text>
       </ion-header>
       <div class="modal-content inner-content">
+        <!-- waiting step -->
         <div
           v-show="pageStep === GreetUserStep.WaitForGuest"
           class="step"
@@ -56,6 +57,8 @@
             :text="$t('UsersPage.greet.subtitles.waitForGuest2')"
           />
         </div>
+
+        <!-- give code step -->
         <div
           v-show="pageStep === GreetUserStep.ProvideHostSasCode"
           class="step"
@@ -64,6 +67,8 @@
             :code="'ABCD'"
           />
         </div>
+
+        <!-- choose code step -->
         <div
           v-show="pageStep === GreetUserStep.GetGuestSasCode"
           class="step"
@@ -73,6 +78,8 @@
             @select="selectGuestSas"
           />
         </div>
+
+        <!-- Waiting guest info step -->
         <div
           v-show="pageStep === GreetUserStep.WaitForGuestInfo"
           class="step"
@@ -82,6 +89,8 @@
             :icon="caretForward"
           />
         </div>
+
+        <!-- Check guest info step -->
         <div
           v-show="pageStep === GreetUserStep.CheckGuestInfo"
           class="step user-info-page"
@@ -93,7 +102,7 @@
             :email-enabled="false"
             ref="guestInfoPage"
           />
-          <ion-item>
+          <ion-item class="input-container">
             <ion-select
               label="Profile"
               label-placement="stacked"
@@ -113,6 +122,8 @@
             </ion-select>
           </ion-item>
         </div>
+
+        <!-- Final Step -->
         <div
           v-show="pageStep === GreetUserStep.Summary"
           v-if="userInfo"
