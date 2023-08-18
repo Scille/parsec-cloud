@@ -4,7 +4,7 @@ describe('Check about modal', () => {
   beforeEach(() => {
     cy.visitApp('coolorg');
     cy.contains('Your organizations');
-    cy.get('.sidebar-content__version').click();
+    cy.get('.sidebar-footer__version').click();
   });
 
   afterEach(() => {
@@ -20,7 +20,7 @@ describe('Check about modal', () => {
     cy.get('@keys').eq(1).contains('Developer');
     cy.get('@keys').eq(2).contains('License');
     cy.get('@keys').eq(3).contains('Project');
-    cy.get('@values').eq(0).contains(/Parsec v[\da-z.-]+/);
+    cy.get('@values').eq(0).contains(/Parsec Cloud v[\da-z.-]+/);
     cy.get('@values').eq(1).contains('Scille');
     cy.get('@values').eq(2).contains('BUSL-1.1');
     cy.get('@values').eq(3).contains('GitHub');
