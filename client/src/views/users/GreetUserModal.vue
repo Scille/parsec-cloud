@@ -127,10 +127,13 @@
         <div
           v-show="pageStep === GreetUserStep.Summary"
           v-if="userInfo"
-          class="step"
+          class="step final-step"
         >
-          <div>
-            {{ userInfo.name }}
+          <div class="final-step__name">
+            <user-avatar-name
+              :user-name="userInfo.name"
+              :user-avatar="userInfo.name"
+            />
           </div>
           <div>
             {{ userInfo.email }}
@@ -209,6 +212,7 @@ import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import TagProfile from '@/components/users/TagProfile.vue';
+import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { ModalResultCode } from '@/common/constants';
 import { MockInvitation, Profile } from '@/common/mocks';
 
@@ -426,6 +430,27 @@ function waitForGuest(): void {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+  }
+
+  .final-step {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    background: var(--parsec-color-light-secondary-background);
+    padding: .75rem 1rem;
+    border-radius: var(--parsec-radius-6);
+    justify-content: space-between;
+    color: var(--parsec-color-light-secondary-text);
+
+    &__icon {
+      font-size: 1.5rem;
+      color: var(--parsec-color-light-primary-500);
+    }
+
+    &__name {
+      font-weight: 500;
+    }
   }
 }
 
