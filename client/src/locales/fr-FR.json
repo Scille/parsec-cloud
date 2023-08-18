@@ -430,6 +430,11 @@
                 "approve": "Approuver"
             },
             "profilePlaceholder": "Choisissez un profil"
+        },
+        "invitation": {
+            "greetUser":"Accueillir",
+            "rejectUser": "Refuser",
+            "waiting": "En attente"
         }
     },
     "AboutPage": {
