@@ -10,7 +10,7 @@
   <ion-label
     class="body invitation-list-item__label"
   >
-    <p>{{ invitation.email }}</p>
+    {{ invitation.email }}
   </ion-label>
   <ion-buttons class="invitation-list-item__buttons">
     <ion-button
@@ -65,9 +65,11 @@ defineEmits<{
   padding: .2rem;
   color: var(--parsec-color-light-secondary-grey);
   margin-left: auto;
+  font-style: italic;
 }
 
 .invitation-list-item__label {
+  color: var(--parsec-color-light-secondary-text);
   margin: 1rem 0;
   width: 100%;
 }
@@ -76,5 +78,10 @@ defineEmits<{
   display: flex;
   gap: .5rem;
   margin-left: auto;
+  width: 100%;
+
+  ion-button {
+    width: 100%;
+  }
 }
 </style>

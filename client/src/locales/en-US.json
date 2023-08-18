@@ -434,7 +434,10 @@
         "invitation": {
             "greetUser":"Greet",
             "rejectUser": "Reject",
-            "waiting": "Waiting"
+            "waiting": "Waiting",
+            "email": "Email",
+            "date": "Invitation date",
+            "status": "Status"
         }
     },
     "AboutPage": {

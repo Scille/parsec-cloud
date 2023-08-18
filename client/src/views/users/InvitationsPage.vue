@@ -2,7 +2,6 @@
 
 <template>
   <ion-page>
-    <!-- replace all texts -->
     <ion-content :fullscreen="true">
       <!-- contextual menu -->
       <ms-action-bar
@@ -25,14 +24,37 @@
       <!-- content -->
       <div class="invitation-container">
         <div v-if="displayView === DisplayState.List">
-          coucou
+          <ion-list>
+            <ion-list-header
+              class="invitation-list-header"
+              lines="full"
+            >
+              <ion-label class="invitation-list-header__label cell-title label-email">
+                {{ $t('UsersPage.invitation.email') }}
+              </ion-label>
+              <ion-label class="invitation-list-header__label cell-title label-date">
+                {{ $t('UsersPage.invitation.date') }}
+              </ion-label>
+              <ion-label class="invitation-list-header__label cell-title label-status">
+                {{ $t('UsersPage.invitation.status') }}
+              </ion-label>
+              <ion-label class="invitation-list-header__label cell-title label-space" />
+            </ion-list-header>
+            <invitation-list-item
+              v-for="invitation in invitations"
+              :key="invitation.token"
+              :invitation="invitation"
+              @greet-user="openGreetUser"
+              @reject-user="openRejectUser"
+            />
+          </ion-list>
         </div>
         <div v-else>
           <ion-list class="invitation-list">
             <ion-item
               v-for="invitation in invitations"
               :key="invitation.token"
-              class="invitation-list-item"
+              class="invitation-card-item"
             >
               <invitation-card
                 :invitation="invitation"
@@ -53,6 +75,8 @@ import {
   IonContent,
   IonList,
   IonItem,
+  IonListHeader,
+  IonLabel,
   modalController,
 } from '@ionic/vue';
 import {
@@ -70,6 +94,7 @@ import { ModalResultCode } from '@/common/constants';
 import { createAlert } from '@/components/core/ms-alert/MsAlertConfirmation';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
 import InvitationCard from '@/components/users/InvitationCard.vue';
+import InvitationListItem from '@/components/users/InvitationListItem.vue';
 
 const invitations: Ref<MockInvitation[]> = ref([]);
 
@@ -136,7 +161,44 @@ function openRejectUser(invitation: MockInvitation) : void {
   gap: 2rem;
 }
 
-.invitation-list-item {
+.invitation-list-header {
+  color: var(--parsec-color-light-secondary-grey);
+  padding-inline-start:0;
+
+  &__label {
+    padding: 0 1rem;
+    height: 100%;
+    display: flex;
+    align-items: center;
+  }
+
+  .label-email {
+    width: 100%;
+    max-width: 30vw;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .label-date {
+    width: 100%;
+    max-width: 10vw;
+    flex-grow: 0;
+  }
+
+  .label-status {
+    width: 100%;
+    max-width: 10vw;
+    flex-grow: 0;
+  }
+
+  .label-space {
+    width: 100%;
+    min-width: 4rem;
+    flex-grow: 0;
+  }
+}
+
+.invitation-card-item {
   width: 20rem;
   padding: 1rem;
   border: var(--parsec-color-light-secondary-disabled) 1px solid;
