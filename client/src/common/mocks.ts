@@ -169,15 +169,19 @@ export async function getMockUsers(): Promise<MockUser[]> {
 export interface MockInvitation {
   token: string,
   email: string,
+  date: DateTime,
 }
 
 export async function getInvitations(): Promise<MockInvitation[]> {
   return [{
     token: 'ebb4df8f132f1f6ced43c73c69c67ab48fcd26d3',
     email: 'shadowheart@swordcoast.faerun',
+    date: DateTime.fromISO('2023-05-10T08:00:00'),
+
   }, {
     token: 'ef87e15fffecf4266191287f5213d8f96ca12ed6',
     email: 'gale@waterdeep.faerun',
+    date: DateTime.fromISO('2023-05-10T08:00:00'),
   }];
 }
 
