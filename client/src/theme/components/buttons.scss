@@ -76,3 +76,8 @@ ion-button.button-outline:hover {
 ion-button.button-solid {
   --background: var(--parsec-color-light-primary-100);
 }
+
+.danger{
+  color: var(--parsec-color-light-danger-500);
+  --background-hover: var(--parsec-color-light-danger-100) !important;
+}
