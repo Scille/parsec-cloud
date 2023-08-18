@@ -2,19 +2,47 @@
 
 <template>
   <ion-page>
-    <ion-content
-      :fullscreen="true"
-    >
-      <ul class="invitations-list">
-        <li
-          class="invitation"
-          v-for="invitation in invitations"
-          :key="invitation.token"
-          @click="openGreetUser(invitation)"
-        >
-          {{ invitation.email }}
-        </li>
-      </ul>
+    <!-- replace all texts -->
+    <ion-content :fullscreen="true">
+      <!-- contextual menu -->
+      <ms-action-bar
+        id="activate-users-ms-action-bar"
+      >
+        <ms-action-bar-button
+          :icon="personAdd"
+          id="button-invite-user"
+          :button-label="$t('UsersPage.inviteUser')"
+          @click="inviteUser()"
+          v-show="isAdmin()"
+        />
+        <div class="right-side">
+          <ms-grid-list-toggle
+            v-model="displayView"
+          />
+        </div>
+      </ms-action-bar>
+
+      <!-- content -->
+      <div class="invitation-container">
+        <div v-if="displayView === DisplayState.List">
+          coucou
+        </div>
+        <div v-else>
+          <ion-list class="invitation-list">
+            <ion-item
+              v-for="invitation in invitations"
+              :key="invitation.token"
+              class="invitation-list-item"
+            >
+              <invitation-card
+                :invitation="invitation"
+                @greet-user="openGreetUser"
+                @reject-user="openRejectUser"
+              />
+            </ion-item>
+          </ion-list>
+        </div>
+      </div>
     </ion-content>
   </ion-page>
 </template>
@@ -23,22 +51,39 @@
 import {
   IonPage,
   IonContent,
+  IonList,
+  IonItem,
   modalController,
 } from '@ionic/vue';
+import {
+  personAdd,
+} from 'ionicons/icons';
 import { onMounted, ref, Ref } from 'vue';
+import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
+import MsActionBarButton from '@/components/core/ms-action-bar/MsActionBarButton.vue';
+import MsGridListToggle from '@/components/core/ms-toggle/MsGridListToggle.vue';
+import { DisplayState } from '@/components/core/ms-toggle/MsGridListToggle.vue';
+import { isAdmin } from '@/common/permissions';
 import { MockInvitation, getInvitations } from '@/common/mocks';
+import { useI18n } from 'vue-i18n';
 import { ModalResultCode } from '@/common/constants';
 import { createAlert } from '@/components/core/ms-alert/MsAlertConfirmation';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
-import { useI18n } from 'vue-i18n';
+import InvitationCard from '@/components/users/InvitationCard.vue';
 
 const invitations: Ref<MockInvitation[]> = ref([]);
 
 const { t } = useI18n();
 
+const displayView = ref(DisplayState.List);
+
 onMounted(async () => {
   invitations.value = await getInvitations();
 });
+
+function inviteUser(): void {
+  console.log('Invite user clicked');
+}
 
 async function canDismissModal(_data?: any, modalRole?: string): Promise<boolean> {
   if (modalRole === ModalResultCode.Confirm) {
@@ -46,10 +91,10 @@ async function canDismissModal(_data?: any, modalRole?: string): Promise<boolean
   }
 
   const alert = await createAlert(
-    t('AlertConfirmation.areYouSure'),
-    t('AlertConfirmation.infoNotSaved'),
-    t('AlertConfirmation.cancel'),
-    t('AlertConfirmation.ok'),
+    t('MsAlertConfirmation.areYouSure'),
+    t('MsAlertConfirmation.infoNotSaved'),
+    t('MsAlertConfirmation.cancel'),
+    t('MsAlertConfirmation.ok'),
   );
   await alert.present();
   const { role } = await alert.onDidDismiss();
@@ -68,23 +113,43 @@ async function openGreetUser(invitation: MockInvitation): Promise<void> {
   await modal.present();
   await modal.onWillDismiss();
 }
+
+function openRejectUser(invitation: MockInvitation) : void {
+  console.log(`Reject user ${invitation.email}`);
+}
 </script>
 
 <style scoped lang="scss">
-.invitations-list {
-  list-style: none;
-  padding: 0px;
-}
-.invitation {
-  font-weight: bold;
-  font-family: "Comic Sans MS", "Comic Sans", cursive;
-  color: red;
-  font-size: 4em;
+.invitation-container {
+  margin: 2rem;
 }
 
-.invitation:before {
-  content: '\1F346';
-  color: purple;
-  margin: 0 1em;
+.right-side {
+  margin-left: auto;
+  display: flex;
+}
+
+.invitation-list {
+  padding: 0px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.invitation-list-item {
+  width: 20rem;
+  padding: 1rem;
+  border: var(--parsec-color-light-secondary-disabled) 1px solid;
+  --background: var(--parsec-color-light-secondary-background);
+  background: var(--parsec-color-light-secondary-background);
+  border-radius: var(--parsec-radius-6);
+  position: relative;
+  z-index: 2;
+
+  &::part(native) {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+  }
 }
 </style>
