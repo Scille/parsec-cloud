@@ -87,7 +87,7 @@ jobs:
       # Install cargo nextest command
       - uses: taiki-e/install-action@11dea51b35bc2bfa42820716c6cabb14fd4c3266 # pin v2.21.7
         with:
-          tool: nextest@0.9.54,wasm-pack@0.11.0
+          tool: nextest@0.9.54, wasm-pack@0.11.0, cargo-deny@0.14.3
 
       - name: Categorize workspace crates
         id: crates
@@ -142,6 +142,14 @@ jobs:
 
       - name: Check rust code format
         run: cargo fmt --check
+        timeout-minutes: 2
+
+      - name: Check restricted usage with cargo-deny
+        run: |
+          echo "::add-matcher::.github/custom-problem-matchers/cargo-deny.json"
+          # cargo-deny outputs the report on stderr and it needs to be redirected to stdout for the problem matcher to work.
+          cargo deny --color=never check --hide-inclusion-graph --show-stats 2>&1
+          echo "::remove-matcher owner=cargo-deny::"
         timeout-minutes: 2
 
   test-rust-non-linux:
