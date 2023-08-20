@@ -118,6 +118,7 @@ Dorg
 doseq
 dotenv
 dotfiles
+dotgraphs
 downcasted
 drawio
 DSTDIR
@@ -384,6 +385,7 @@ parsecdoc
 Passw0rd
 patchelf
 pdflatex
+pemfile
 pems
 pgdg
 PGINSTALLATION
@@ -488,6 +490,8 @@ Rustc
 RustCrypto
 rustflags
 rustfmt
+rustls
+RUSTSEC
 rustup
 rwfile
 rwmixread
@@ -614,6 +618,7 @@ Vlobs
 VueJs
 wasmbind
 webengine
+webpki
 websockets
 wfspy
 whereis

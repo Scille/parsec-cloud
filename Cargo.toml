@@ -174,7 +174,7 @@ wasm-bindgen-test = { version = "0.3.38", default-features = false }
 wasm-bindgen = { version = "0.2.87", default-features = false }
 web-sys = { version = "0.3.65", default-features = false }
 winfsp_build = { version = "0.1.1", default-features = false }
-winfsp_wrs = { git = "https://github.com/Scille/winfsp_wrs.git", rev = "d768c7e", default-features = false }
+winfsp_wrs = { version = "0.1.0", git = "https://github.com/Scille/winfsp_wrs.git", rev = "d768c7e", default-features = false }
 x25519-dalek = { version = "2.0.0", default-features = false }
 zeroize = { version = "1.6.0", default-features = false }
 
