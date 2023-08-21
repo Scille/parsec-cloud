@@ -1,8 +1,13 @@
 [package]
 name = "libparsec_platform_async"
-version = "0.0.0"
-edition = "2021"
-license = "BUSL-1.1"
+publish.workspace = true
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+version.workspace = true
+repository.workspace = true
+license-file.workspace = true
 
 [dependencies]
 async-lock = { workspace = true }

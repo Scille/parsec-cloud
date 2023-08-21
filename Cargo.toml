@@ -36,6 +36,21 @@ default-members = [
     "libparsec/crates/types",
 ]
 
+# Define values to be inherited by workspace members.
+#
+# For a member to inherit a value, it need to set `{key}.workspace = true`.
+#
+# https://doc.rust-lang.org/cargo/reference/workspaces.html#the-package-table
+[workspace.package]
+publish = false
+authors = [ "@Scille/parsec-dev", "@Scille/rust-code-owners" ]
+edition = "2021"
+homepage = "https://parsec.cloud"
+license-file = "./LICENSE"
+license = "BUSL-1.1"
+version = "0.0.0"
+repository = "https://github.com/Scille/parsec-cloud"
+
 # All dependencies should be specified here instead of just in the crate(s) requiring them:
 # - It ensures each given dependency version is consistent accross all crates
 # - It simplifies updating dependency version (only a single place to update)
