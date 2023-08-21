@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 mod error;
+mod winify;
 
 use once_cell::sync::{Lazy, OnceCell};
 use std::{
@@ -22,6 +23,9 @@ use libparsec_types::prelude::*;
 use crate::{
     EntryInfo, EntryInfoType, FileSystemMounted, FileSystemWrapper, MountpointInterface, WriteMode,
 };
+// TODO: Remove this when used.
+#[allow(unused_imports)]
+pub(crate) use winify::{unwinify_entry_name, winify_entry_name};
 
 /// we currently don't support arbitrary security descriptor and instead use only this one
 /// https://docs.microsoft.com/fr-fr/windows/desktop/SecAuthZ/security-descriptor-string-format

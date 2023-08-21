@@ -248,7 +248,7 @@ fn rename_with_suffix(name: &EntryName, suffix: &str) -> EntryName {
                     };
                 }
             }
-            Err(EntryNameError::InvalidName) => unreachable!(),
+            Err(_) => unreachable!(),
         }
     }
 }
