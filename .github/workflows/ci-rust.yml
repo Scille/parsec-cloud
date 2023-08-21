@@ -51,7 +51,7 @@ jobs:
         timeout-minutes: 10
 
       - name: Retrieve Rust cache
-        uses: Swatinem/rust-cache@578b235f6e5f613f7727f1c17bd3305b4d4d4e1f # pin v2.6.1
+        uses: Swatinem/rust-cache@e207df5d269b42b69c8bc5101da26f7d31feddb4 # pin v2.6.2
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
           # cache is only shared between master and the PRs (and not accross PRs).
@@ -61,7 +61,7 @@ jobs:
         timeout-minutes: 5
 
       # Install cargo nextest command
-      - uses: taiki-e/install-action@7412a5eb82f4686390763b0f92637284e91b6627 # pin v2.15.2
+      - uses: taiki-e/install-action@c9ba9d12d07c1ddcffa40b34f54a93e84ff95402 # pin v2.16.0
         with:
           tool: nextest@${{ env.cargo-nextest-version }}
 
@@ -128,7 +128,7 @@ jobs:
         timeout-minutes: 10
 
       - name: Retrieve Rust cache
-        uses: Swatinem/rust-cache@578b235f6e5f613f7727f1c17bd3305b4d4d4e1f # pin v2.6.1
+        uses: Swatinem/rust-cache@e207df5d269b42b69c8bc5101da26f7d31feddb4 # pin v2.6.2
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
           # cache is only shared between master and the PRs (and not accross PRs).
@@ -147,7 +147,7 @@ jobs:
         timeout-minutes: 1
 
       # Install cargo nextest command
-      - uses: taiki-e/install-action@7412a5eb82f4686390763b0f92637284e91b6627 # pin v2.15.2
+      - uses: taiki-e/install-action@c9ba9d12d07c1ddcffa40b34f54a93e84ff95402 # pin v2.16.0
         with:
           tool: nextest@${{ env.cargo-nextest-version }}
 
