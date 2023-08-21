@@ -205,9 +205,12 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
     / "rust-toolchain.toml": {
         Tool.Rust: [ReplaceRegex(r'channel = ".*"', 'channel = "{version}"')]
     },
-    # We don't list the root `Cargo.toml` because it's a 'pure workspace' Cargo spec file
-    # (i.e.: It don't have a `package` entry) and thus can't have a license field.
-    ROOT_DIR / "*/**/Cargo.toml": {Tool.License: [TOML_LICENSE_FIELD]},
+    # Cargo workspace members should use the license value defined in the root cargo manifest
+    ROOT_DIR
+    / "*/**/Cargo.toml": {
+        Tool.License: [ReplaceRegex(r"license.workspace = true", "license.workspace = true")]
+    },
+    ROOT_DIR / "Cargo.toml": {Tool.License: [TOML_LICENSE_FIELD]},
 }
 
 
