@@ -17,8 +17,8 @@ describe('Greet user into an organization', () => {
 
   it('Open greet user modal', () => {
     cy.get('.greet-organization-modal').should('not.exist');
-    cy.get('.ion-page').find('.invitations-list').find('.invitation').should('have.length', 2);
-    cy.get('.ion-page').find('.invitations-list').find('.invitation').eq(0).click();
+    cy.get('.invitation-list').find('.invitation-list-item').should('have.length', 2);
+    cy.get('.invitation-list').find('.invitation-list-item').find('.button-default').eq(0).click();
     cy.get('.greet-organization-modal').should('exist');
     cy.get('.greet-organization-modal').find('.modal-header__title').contains('Onboard a new user');
     cy.get('.greet-organization-modal').find('#next-button').should('have.attr', 'disabled');
@@ -42,7 +42,7 @@ describe('Greet user into an organization', () => {
       }
     }
 
-    cy.get('.ion-page').find('.invitations-list').find('.invitation').eq(0).click();
+    cy.get('.invitation-list').find('.invitation-list-item').find('.button-default').eq(0).click();
     cy.get('.greet-organization-modal').should('exist');
     cy.wait(WAIT_TIME);
     cy.get('.greet-organization-modal').find('#next-button').as('nextButton').click();
