@@ -467,7 +467,7 @@
             "invitationLink": "Please enter the invitation link displayed on the host device.",
             "getCode": "Click on the code you see on the main device.",
             "provideCode": "On the main device, click on the sequence of letters you see below.",
-            "password": "Finally, enter the device name and a password.",
+            "password": "Finally, create a password for your new device.",
             "done": "The device has been created and added to this organisation. You can now use it to connect to Parsec."
         },
         "buttons": {

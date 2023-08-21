@@ -467,7 +467,7 @@
             "invitationLink": "Veuillez saisir le lien d'invitation afficher sur l'appareil hôte.",
             "getCode": "Cliquez sur le code que vous apercevez sur l’appareil principal.",
             "provideCode": "Sur l’appareil principal, veuillez cliquer la suite de lettres que vous voyez ci-dessous.",
-            "password": "Pour terminer, veuillez renseigner le nom de l’appareil et un mot de passe.",
+            "password": "Pour terminer, créez un mot de passe pour votre nouvel appareil.",
             "done": "L’appareil a bien été créé et ajouté à cette organisation. Vous pouvez maintenant vous connectez à Parsec avec celui-ci."
         },
         "buttons": {
