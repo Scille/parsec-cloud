@@ -14,7 +14,7 @@ describe('Upload files', () => {
   it('Open import modal', () => {
     cy.get('#button-import').click();
     cy.get('.file-upload-modal').should('exist');
-    cy.get('.ion-page').find('.modal-header__title').contains('Upload your files');
+    cy.get('.ion-page').find('.ms-modal-header__title').contains('Upload your files');
     cy.get('.ion-page').find('.drop-zone').should('exist');
     cy.get('.ion-page').find('.import-button').find('ion-button').should('exist');
     cy.get('.ion-page').find('.closeBtn').should('exist');
@@ -30,7 +30,7 @@ describe('Upload files', () => {
 
   it('Import file with drag&drop', () => {
     cy.get('#button-import').click();
-    cy.get('.ion-page').find('.modal-header__title').contains('Upload your files');
+    cy.get('.ion-page').find('.ms-modal-header__title').contains('Upload your files');
     cy.get('.ion-page').find('.drop-zone').attachFile('splash.png', { subjectType: 'drag-n-drop' });
     // Sadly, the drop does react but when calling webkitGetAsEntry() on the data provided,
     // it returns null, preventing us from going further (for the time being).
