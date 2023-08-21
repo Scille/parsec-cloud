@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS -->
+
 <template>
   <ion-item
     class="invitation-list-item"
@@ -94,14 +96,15 @@ const { timeSince } = inject(FormattersKey)! as Formatters;
   &::part(native) {
     display: flex;
     padding: 0;
+    --inner-padding-end: 0px;
   }
 
-  &:hover {
+  &:hover, &:focus {
     --background: var(--parsec-color-light-primary-30);
     color: var(--parsec-color-light-secondary-text);
 
     .invitation-action-buttons {
-      display: flex;
+      opacity: 1;
     }
   }
 }
@@ -111,7 +114,6 @@ const { timeSince } = inject(FormattersKey)! as Formatters;
   max-width: 30vw;
   white-space: nowrap;
   overflow: hidden;
-  flex-shrink: 1;
   color: var(--parsec-color-light-secondary-text);
 }
 
@@ -133,7 +135,7 @@ const { timeSince } = inject(FormattersKey)! as Formatters;
   width: 100%;
 
   &-buttons {
-    display: none;
+    opacity: 0;
     gap: 1rem;
     max-width: 17.25rem;
     width: 100%;

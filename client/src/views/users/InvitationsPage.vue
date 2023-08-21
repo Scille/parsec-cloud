@@ -24,7 +24,7 @@
       <!-- content -->
       <div class="invitation-container">
         <div v-if="displayView === DisplayState.List">
-          <ion-list>
+          <ion-list class="invitation-list">
             <ion-list-header
               class="invitation-list-header"
               lines="full"
@@ -46,11 +46,12 @@
               :invitation="invitation"
               @greet-user="openGreetUser"
               @reject-user="openRejectUser"
+              class="invitation-list-item"
             />
           </ion-list>
         </div>
         <div v-else>
-          <ion-list class="invitation-list">
+          <ion-list class="invitation-card">
             <ion-item
               v-for="invitation in invitations"
               :key="invitation.token"
@@ -154,8 +155,8 @@ function openRejectUser(invitation: MockInvitation) : void {
   display: flex;
 }
 
-.invitation-list {
-  padding: 0px;
+.invitation-card {
+  padding: 0;
   display: flex;
   flex-wrap: wrap;
   gap: 2rem;
