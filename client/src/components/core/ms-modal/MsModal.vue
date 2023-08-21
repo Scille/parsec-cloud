@@ -165,14 +165,15 @@ function confirm(): Promise<boolean> {
 
 .ms-modal-header {
   margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 
   &__title {
     padding: 0;
-    margin-bottom: 1.5rem;
     color: var(--parsec-color-light-primary-600);
     display: flex;
     align-items: center;
-    gap: 1rem;
   }
 
   &__text {
