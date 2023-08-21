@@ -9,9 +9,13 @@ use unicode_normalization::UnicodeNormalization;
 pub enum EntryNameError {
     #[error("Name too long")]
     NameTooLong,
+    #[error("Invalid escaped value")]
+    InvalidEscapedValue,
     #[error("Invalid name")]
     InvalidName,
 }
+
+pub type EntryNameResult<T> = Result<T, EntryNameError>;
 
 #[derive(Error, Debug)]
 pub enum FsPathError {

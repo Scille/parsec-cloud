@@ -28,6 +28,7 @@ impl From<EntryNameError> for MountpointError {
     fn from(value: EntryNameError) -> Self {
         match value {
             EntryNameError::NameTooLong => Self::NameTooLong,
+            EntryNameError::InvalidEscapedValue => Self::InvalidName,
             EntryNameError::InvalidName => Self::InvalidName,
         }
     }

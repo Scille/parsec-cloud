@@ -594,6 +594,7 @@ unmounter
 Unmounter
 unpackb
 unsync
+unwinified
 unwinify
 urlsafe
 usepackage
@@ -621,6 +622,7 @@ windowsiconhandler
 winfs
 WinFSP
 winfspy
+winified
 winify
 winres
 wizz
