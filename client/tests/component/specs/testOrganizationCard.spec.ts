@@ -11,10 +11,13 @@ describe('Organization Card', () => {
     keyFilePath: '/path',
     organizationId: 'Black Mesa',
     deviceId: '5ada1b25e8904e9ba238834227a40abf@9700f0fd005e4752a13bcba0042d4703',
-    humanHandle: 'Gordon Freeman',
+    humanHandle: {
+      label: 'Gordon Freeman',
+      email: 'freeman.gordon@black-mesa.com',
+    },
     deviceLabel: 'hev',
     slug: '1',
-    ty: {tag: 'Password'},
+    ty: { tag: 'Password' },
   };
 
   beforeEach(() => {
