@@ -52,7 +52,7 @@ class ClientStartError(ErrorVariant):
 async def client_start(
     config: ClientConfig, on_event_callback: OnClientEventCallback, access: DeviceAccessStrategy
 ) -> Result[Handle, ClientStartError]:
-    ...
+    raise NotImplementedError
 
 
 class ClientStopError(ErrorVariant):
@@ -61,7 +61,7 @@ class ClientStopError(ErrorVariant):
 
 
 async def client_stop(client: Handle) -> Result[None, ClientStopError]:
-    ...
+    raise NotImplementedError
 
 
 class ClientListWorkspacesError(ErrorVariant):
@@ -72,7 +72,7 @@ class ClientListWorkspacesError(ErrorVariant):
 async def client_list_workspaces(
     client: Handle,
 ) -> Result[list[tuple[EntryID, EntryName]], ClientListWorkspacesError]:
-    ...
+    raise NotImplementedError
 
 
 class ClientWorkspaceCreateError(ErrorVariant):
@@ -84,7 +84,7 @@ async def client_workspace_create(
     client: Handle,
     name: EntryName,
 ) -> Result[EntryID, ClientWorkspaceCreateError]:
-    ...
+    raise NotImplementedError
 
 
 class ClientWorkspaceRenameError(ErrorVariant):
@@ -100,7 +100,7 @@ async def client_workspace_rename(
     workspace_id: EntryID,
     new_name: EntryName,
 ) -> Result[None, ClientWorkspaceRenameError]:
-    ...
+    raise NotImplementedError
 
 
 class ClientWorkspaceShareError(ErrorVariant):
@@ -147,4 +147,4 @@ async def client_workspace_share(
     recipient: UserID,
     role: Optional[RealmRole],
 ) -> Result[None, ClientWorkspaceShareError]:
-    ...
+    raise NotImplementedError
