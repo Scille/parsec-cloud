@@ -28,7 +28,7 @@ import { ClientEvent, ClientConfig } from '@/plugins/libparsec/definitions';
 
 const logs = ref('');
 
-async function testCase<T>(name: string, cb: () => Promise<T> ): Promise<T> {
+async function testCase<T>(name: string, cb: () => Promise<T>): Promise<T> {
   console.log(`${name}...`);
   logs.value += `${name}...`;
   let ret;
@@ -100,6 +100,7 @@ async function testBootstrapOrganization(): Promise<void> {
     throw new Error("Couldn't retreive bootstrap organization addr");
   }
 
+  const humanHandle = { label: 'John', email: 'john@example.com' };
   const availableDevice = await testCase('Bootstrap organization', async () => {
     const outcome = await libparsec.bootstrapOrganization(
       config,
@@ -109,7 +110,7 @@ async function testBootstrapOrganization(): Promise<void> {
         tag: 'Password',
         password: 'P@ssw0rd.',
       },
-      'John <john@examplecom>',
+      humanHandle,
       'PC1',
       null,
     );
@@ -121,7 +122,7 @@ async function testBootstrapOrganization(): Promise<void> {
         throw new Error(`Returned error: ${JSON.stringify(outcome, null, 2)}`);
     }
   });
-  assert(availableDevice.humanHandle === 'John <john@examplecom>', `Invalid available device: ${JSON.stringify(availableDevice, null, 2)}`);
+  assert(availableDevice.humanHandle === humanHandle, `Invalid available device: ${JSON.stringify(availableDevice, null, 2)}`);
   assert(availableDevice.deviceLabel === 'PC1', `Invalid available device: ${JSON.stringify(availableDevice, null, 2)}`);
 
   // Cannot re-bootstrap the organization !
