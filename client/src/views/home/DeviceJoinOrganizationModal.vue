@@ -29,7 +29,7 @@
     </ion-buttons>
     <div
       class="modal"
-      :class="{wizardTrue: pageStep > DeviceJoinOrganizationStep.Information && pageStep != DeviceJoinOrganizationStep.Finish}"
+      :class="{ wizardTrue: pageStep > DeviceJoinOrganizationStep.Information && pageStep != DeviceJoinOrganizationStep.Finish }"
     >
       <ion-header class="modal-header">
         <ion-title
@@ -72,9 +72,7 @@
           v-show="pageStep === DeviceJoinOrganizationStep.ProvideGuestCode"
           class="step guest-code"
         >
-          <sas-code-provide
-            :code="'ABCD'"
-          />
+          <sas-code-provide :code="'ABCD'" />
         </div>
 
         <!-- part 4 (get password)-->
@@ -83,9 +81,7 @@
           class="step"
           id="get-password"
         >
-          <ms-choose-password-input
-            ref="passwordPage"
-          />
+          <ms-choose-password-input ref="passwordPage" />
         </div>
         <!-- part 5 (finish the process)-->
         <div
@@ -120,9 +116,7 @@
             v-show="waitingForHost"
             class="spinner-container"
           >
-            <ion-label
-              class="label-waiting"
-            >
+            <ion-label class="label-waiting">
               {{ $t('JoinOrganization.waitingForHost') }}
             </ion-label>
             <ion-spinner
@@ -227,7 +221,7 @@ const titles = new Map<DeviceJoinOrganizationStep, Title>([[
     title: t('ClaimDeviceModal.titles.password'), subtitle: t('ClaimDeviceModal.subtitles.password'),
   }], [
   DeviceJoinOrganizationStep.Finish, {
-    title: t('ClaimDeviceModal.titles.done', {org: ''}),
+    title: t('ClaimDeviceModal.titles.done', { org: '' }),
   }],
 ]);
 
@@ -270,7 +264,10 @@ function cancelModal(): Promise<boolean> {
 }
 
 function mockCreateDevice(): AvailableDevice {
-  const humanHandle = 'Louis Dark';
+  const humanHandle = {
+    label: 'Louis Dark',
+    email: 'louis@dark.co',
+  };
   const deviceName = 'myDevice';
   console.log(
     `Creating device ${claimDeviceLink?.org}, user ${humanHandle}, device ${deviceName}, backend ${props.invitationLink}`,
@@ -282,7 +279,7 @@ function mockCreateDevice(): AvailableDevice {
     keyFilePath: 'key_file_path',
     deviceId: 'device1@device1',
     slug: 'slug1',
-    ty: {tag: 'Password'},
+    ty: { tag: 'Password' },
   };
 
   return device;
@@ -339,12 +336,13 @@ function claimerRetrieveInfo(): void {
 }
 
 .closeBtn-container {
-    position: absolute;
-    top: 2rem;
-    right: 2rem;
-  }
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+}
 
-.closeBtn-container, .closeBtn {
+.closeBtn-container,
+.closeBtn {
   margin: 0;
   --padding-start: 0;
   --padding-end: 0;
