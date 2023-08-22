@@ -136,7 +136,7 @@ repos:
           [
             --config=server/pyproject.toml,
           ]
-        files: ^(server|misc)/
+        files: ^(server|misc|bindings/generator)/
 
   ######
   # Rust

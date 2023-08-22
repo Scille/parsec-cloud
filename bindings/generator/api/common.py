@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from typing import Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 #
 # Meta-types
@@ -8,8 +8,12 @@ from typing import Generic, TypeVar
 # Those types are not part of the API but to be used to describe it.
 #
 
+OK = TypeVar("OK")
+ERR = TypeVar("ERR")
+REFERENCED = TypeVar("REFERENCED")
 
-class Result(Generic[TypeVar("OK"), TypeVar("ERR")]):
+
+class Result(Generic[OK, ERR]):
     pass
 
 
@@ -37,7 +41,7 @@ class VariantItemUnit:
 
 
 class VariantItemTuple:
-    def __init__(self, *items):
+    def __init__(self, *items: Any):
         self.items = items
 
 
@@ -53,7 +57,7 @@ class Structure:
 
 
 # Represent passing parameter in function by reference
-class Ref(Generic[TypeVar("REFERENCED")]):
+class Ref(Generic[REFERENCED]):
     pass
 
 

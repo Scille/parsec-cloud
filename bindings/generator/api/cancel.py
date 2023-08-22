@@ -4,7 +4,7 @@ from .common import ErrorVariant, Handle, Result
 
 
 def new_canceller() -> Handle:
-    ...
+    raise NotImplementedError
 
 
 class CancelError(ErrorVariant):
@@ -16,4 +16,4 @@ class CancelError(ErrorVariant):
 
 
 def cancel(canceller: Handle) -> Result[None, CancelError]:
-    ...
+    raise NotImplementedError

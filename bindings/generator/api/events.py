@@ -10,5 +10,5 @@ class ClientEvent(Variant):
         ping: str
 
 
-class OnClientEventCallback(Callable[[ClientEvent], None]):
-    pass
+class OnClientEventCallback(Callable[[ClientEvent], None]):  # type: ignore[misc]
+    ...

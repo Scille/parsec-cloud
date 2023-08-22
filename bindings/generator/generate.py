@@ -4,20 +4,20 @@ from __future__ import annotations
 
 import argparse
 import subprocess
-from collections import namedtuple
+from collections import OrderedDict, namedtuple
 from dataclasses import dataclass
 from importlib import import_module
 from inspect import isclass, iscoroutinefunction, isfunction, signature
 from pathlib import Path
 from types import ModuleType
-from typing import Dict, List, Optional, OrderedDict, Tuple, Type, Union
+from typing import Any, List, Tuple, Union
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 BASEDIR = Path(__file__).parent
 
 
-# Meta-types are defined in the api module for simplicity, `generate_api_specs` will take care of retreiving them
+# Meta-types are defined in the api module for simplicity, `generate_api_specs` will take care of retrieving them
 META_TYPES = [
     "Result",
     "Ref",
@@ -32,18 +32,54 @@ META_TYPES = [
     "Structure",
     "OnClientEventCallback",
 ]
-Result: Type = None
-Ref: Type = None
-StrBasedType: Type = None
-BytesBasedType: Type = None
-I32BasedType: Type = None
-U32BasedType: Type = None
-Variant: Type = None
-VariantItemTuple = None
-VariantItemUnit = None
-ErrorVariant: Type = None
-Structure: Type = None
-OnClientEventCallback: Type = None
+
+
+class Result:
+    ...
+
+
+class Ref:
+    ...
+
+
+class StrBasedType(str):
+    ...
+
+
+class BytesBasedType(bytes):
+    ...
+
+
+class I32BasedType(int):
+    ...
+
+
+class U32BasedType(int):
+    ...
+
+
+class Variant:
+    ...
+
+
+class VariantItemTuple:
+    ...
+
+
+class VariantItemUnit:
+    ...
+
+
+class ErrorVariant:
+    ...
+
+
+class Structure:
+    ...
+
+
+class OnClientEventCallback:
+    ...
 
 
 env = Environment(
@@ -75,7 +111,7 @@ def snake_case_to_camel_case(s: str) -> str:
 env.filters["snake2camel"] = snake_case_to_camel_case
 
 
-def _raise_helper(msg):
+def _raise_helper(msg: Any) -> None:
     raise RuntimeError(msg)
 
 
@@ -148,7 +184,7 @@ class BaseTypeInUse:
             return U32BasedTypeInUse(name=param.__name__)
 
         else:
-            typespec = TYPESDB.get(param)
+            typespec = TYPES_DB.get(param)
             assert typespec is not None, f"Bad param `{param!r}`, not a scalar/variant/struct"
             return typespec
 
@@ -259,27 +295,27 @@ class OpaqueSpec(BaseTypeInUse):
 class MethSpec:
     name: str
     params: OrderedDict[str, BaseTypeInUse]
-    return_type: Optional[BaseTypeInUse]
+    return_type: BaseTypeInUse | None
     is_async: bool
 
 
 @dataclass
 class ApiSpecs:
-    str_based_types: List[StrBasedType]
-    bytes_based_types: List[BytesBasedType]
-    i32_based_types: List[I32BasedType]
-    u32_based_types: List[U32BasedType]
+    str_based_types: List[str]
+    bytes_based_types: List[str]
+    i32_based_types: List[str]
+    u32_based_types: List[str]
     meths: List[MethSpec]
     structs: List[StructSpec]
     variants: List[VariantSpec]
-    rust_code_to_inject: Optional[str]  # Hack for the dummy test api
+    rust_code_to_inject: str | None  # Hack for the dummy test api
 
 
-# TYPESDB uses as key the type used in the api definition and as value the corresponding spec object that will
+# TYPES_DB uses as key the type used in the api definition and as value the corresponding spec object that will
 # be used in template generation.
 # For instance, if we have `def foo() -> Bar: ...` in the api:
-# The `Bar` object is going to be a key in TYPESDB, and the value will be the `StructSpec` built by introspecting `Bar`
-TYPESDB: Dict[type, Union[OpaqueSpec, StructSpec, VariantSpec]] = {
+# The `Bar` object is going to be a key in TYPES_DB, and the value will be the `StructSpec` built by introspecting `Bar`
+TYPES_DB: dict[type, OpaqueSpec | StructSpec | VariantSpec] = {
     bool: OpaqueSpec(kind="bool"),
     float: OpaqueSpec(kind="float"),
     str: OpaqueSpec(kind="str"),
@@ -306,7 +342,7 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
     # The variant/struct types we define for the api can be recursive and/or
     # refere other types defined later on.
     # Hence we do the parsing in two passes:
-    # - First we populate `TYPEDB` by collecting the variant/struct types and storing them as placeholders
+    # - First we populate `TYPES_DB` by collecting the variant/struct types and storing them as placeholders
     # - Then we do the actual type parsing and replace the placeholders
 
     # First pass
@@ -315,16 +351,16 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
 
     for item_name, item in api_items.items():
         if isclass(item) and issubclass(item, (Variant, Structure)):
-            TYPESDB[item] = ParsingPlaceholder()
+            TYPES_DB[item] = ParsingPlaceholder()  # type: ignore[assignment]
 
     # Second pass
-    variants = []
-    structs = []
+    variants: list[VariantSpec] = []
+    structs: list[StructSpec] = []
     for item_name, item in api_items.items():
         if isclass(item) and issubclass(item, Variant):
-            placeholder = TYPESDB[item]
+            placeholder = TYPES_DB[item]
             # Variant values types are special kind of structures: the are never referenced directly (the variant type
-            # must be referenced instead) so we don't need to add it to TYPESDB (hence we wait for 2nd pass to treat them)
+            # must be referenced instead) so we don't need to add it to TYPES_DB (hence we wait for 2nd pass to treat them)
             variant_values = []
             for variant_val_name in dir(item):
                 if variant_val_name.startswith("_"):
@@ -348,10 +384,14 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
                         is_struct=True,
                         struct=StructSpec(
                             name=variant_val_name,
-                            attributes={
-                                k: BaseTypeInUse.parse(v)
-                                for k, v in getattr(variant_val_type, "__annotations__", {}).items()
-                            },
+                            attributes=OrderedDict(
+                                {
+                                    k: BaseTypeInUse.parse(v)
+                                    for k, v in getattr(
+                                        variant_val_type, "__annotations__", {}
+                                    ).items()
+                                }
+                            ),
                         ),
                     )
 
@@ -365,25 +405,27 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             # Modify placeholder instead of replacing it given it is referenced in the nested specs
             placeholder.__dict__ = variant.__dict__
             placeholder.__class__ = variant.__class__
-            variants.append(placeholder)
+            variants.append(placeholder)  # type: ignore[arg-type]
 
         elif isclass(item) and issubclass(item, Structure):
-            placeholder = TYPESDB[item]
+            placeholder = TYPES_DB[item]
             struct = StructSpec(
                 name=item_name,
-                attributes={
-                    k: BaseTypeInUse.parse(v)
-                    for k, v in getattr(item, "__annotations__", {}).items()
-                },
+                attributes=OrderedDict(
+                    {
+                        k: BaseTypeInUse.parse(v)
+                        for k, v in getattr(item, "__annotations__", {}).items()
+                    }
+                ),
             )
             # Modify placeholder instead of replacing it given it is referenced in the nested specs
             placeholder.__dict__ = struct.__dict__
             placeholder.__class__ = struct.__class__
-            structs.append(placeholder)
+            structs.append(placeholder)  # type: ignore[arg-type]
 
     # Make sure all types have a unique name, this is not strictly required but it is very convenient when testing type in the template
-    reserved = {}
-    for k, v in TYPESDB.items():
+    reserved: dict[Any, OpaqueSpec | StructSpec | VariantSpec] = {}
+    for k, v in TYPES_DB.items():
         name = getattr(v, "name", v.kind)
         assert name not in reserved
         setted = reserved.setdefault(name, v)
@@ -400,7 +442,9 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             meths.append(
                 MethSpec(
                     name=item_name,
-                    params={k: BaseTypeInUse.parse(v.annotation) for k, v in s.parameters.items()},
+                    params=OrderedDict(
+                        {k: BaseTypeInUse.parse(v.annotation) for k, v in s.parameters.items()}
+                    ),
                     return_type=None
                     if s.return_annotation in (None, s.empty)
                     else BaseTypeInUse.parse(s.return_annotation),
