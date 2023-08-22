@@ -169,7 +169,7 @@ function onMsSelectChange(event: MsSelectChangeEvent): void {
 async function openCreateWorkspaceModal(): Promise<void> {
   const modal = await modalController.create({
     component: CreateWorkspaceModal,
-    cssClass: 'one-line-modal',
+    cssClass: 'create-workspace-modal',
   });
   modal.present();
 
