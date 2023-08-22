@@ -86,9 +86,7 @@
               </ion-button>
             </ion-buttons>
           </ion-card-content>
-          <slide-horizontal
-            :reverse-direction="!showOrganizationList"
-          >
+          <slide-horizontal :reverse-direction="!showOrganizationList">
             <ion-card
               v-if="showOrganizationList"
               class="right-side-container"
@@ -108,9 +106,7 @@
                   </template>
                 </ion-card-title>
                 <ion-grid class="organization-list">
-                  <ion-row
-                    class="organization-list-row"
-                  >
+                  <ion-row class="organization-list-row">
                     <ion-col
                       v-for="device in filteredDevices"
                       :key="device.slug"
@@ -274,20 +270,22 @@ const msSelectSortByLabels = {
 const filteredDevices = computed(() => {
   return deviceList.value.filter((item) => {
     const lowerSearchString = orgSearchString.value.toLocaleLowerCase();
-    return ((item.humanHandle || item.deviceId)?.toLocaleLowerCase().includes(lowerSearchString) ||
+    return ((item.humanHandle && item.humanHandle.label || item.deviceId)?.toLocaleLowerCase().includes(lowerSearchString) ||
       item.organizationId?.toLocaleLowerCase().includes(lowerSearchString));
   }).sort((a, b) => {
+    const aLabel = (a.humanHandle && a.humanHandle.label || a.deviceId);
+    const bLabel = (b.humanHandle && b.humanHandle.label || b.deviceId);
     if (sortBy.value === 'organization') {
       if (sortByAsc.value) {
         return a.organizationId.localeCompare(b.organizationId);
       } else {
         return b.organizationId.localeCompare(a.organizationId);
       }
-    } else if (sortBy.value === 'user_name' && (a.humanHandle || a.deviceId) && (b.humanHandle || b.deviceId)) {
+    } else if (sortBy.value === 'user_name' && aLabel && bLabel) {
       if (sortByAsc.value) {
-        return (a.humanHandle || a.deviceId)?.localeCompare((b.humanHandle || b.deviceId) ?? '');
+        return aLabel?.localeCompare(bLabel ?? '');
       } else {
-        return (b.humanHandle || b.deviceId)?.localeCompare((a.humanHandle || a.deviceId) ?? '');
+        return bLabel?.localeCompare(aLabel ?? '');
       }
     } else if (sortBy.value === 'last_login') {
       const aLastLogin = (a.slug in storedDeviceDataDict.value && storedDeviceDataDict.value[a.slug].lastLogin !== undefined) ?
@@ -350,7 +348,7 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
   showOrganizationList.value = true;
 
   // name: define where the user will be move, query: add parameters
-  router.push({ name: 'workspaces', params: {deviceId: device.deviceId} });
+  router.push({ name: 'workspaces', params: { deviceId: device.deviceId } });
 }
 
 function onForgottenPasswordClick(): void {
@@ -402,6 +400,7 @@ async function openSettingsModal(): Promise<void> {
   position: relative;
   z-index: -4;
 }
+
 .sidebar {
   display: flex;
   height: 100vh;
@@ -411,6 +410,7 @@ async function openSettingsModal(): Promise<void> {
   position: relative;
   justify-content: flex-end;
   z-index: -3;
+
   &::before {
     content: '';
     position: absolute;
@@ -422,11 +422,13 @@ async function openSettingsModal(): Promise<void> {
     background: url('@/assets/images/shapes-bg.svg') repeat center;
     background-size: cover;
   }
+
   .sidebar-content {
     display: flex;
     flex-direction: column;
     align-items: center;
     margin-left: 2rem;
+
     &__titles {
       display: flex;
       flex-direction: column;
@@ -437,9 +439,11 @@ async function openSettingsModal(): Promise<void> {
       position: relative;
       gap: 1rem;
     }
+
     &__logo {
       display: flex;
       width: 100%;
+
       .logo-img {
         max-height: 3em;
         width: 25%;
@@ -448,6 +452,7 @@ async function openSettingsModal(): Promise<void> {
     }
   }
 }
+
 .right-side {
   height: 100vh;
   width: 60vw;
@@ -457,6 +462,7 @@ async function openSettingsModal(): Promise<void> {
   flex-direction: column;
   position: relative;
   z-index: -5;
+
   .right-side-container {
     margin-inline: 0px;
     margin-top: 0px;
@@ -467,16 +473,20 @@ async function openSettingsModal(): Promise<void> {
     flex-shrink: 0;
   }
 }
+
 .topbar {
   border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
   padding: 3.5rem 3.5rem 1.5rem;
   display: flex;
   align-items: center;
+
   #create-organization-button {
     margin-left: auto;
     margin-right: 1.5rem;
   }
-  .topbar-button__item, .sc-ion-buttons-md-s .button {
+
+  .topbar-button__item,
+  .sc-ion-buttons-md-s .button {
     border: 1px solid var(--parsec-color-light-secondary-light);
     color: var(--parsec-color-light-primary-700);
     border-radius: 50%;
@@ -486,36 +496,44 @@ async function openSettingsModal(): Promise<void> {
     --padding-start: 0;
     width: 3em;
     height: 3em;
+
     &:hover {
       --background-hover: var(--parsec-color-light-primary-50);
       background: var(--parsec-color-light-primary-50);
       border: var(--parsec-color-light-primary-50);
     }
+
     ion-icon {
       font-size: 1.375rem;
     }
   }
 }
+
 .organization-container {
   padding: 1.5rem 3.5rem 0;
+
   .organization-filter {
     display: flex;
     margin: 0 0 .5rem;
     justify-content: flex-end;
   }
+
   .organization-list {
     max-height: 30em;
     overflow-y: auto;
     --ion-grid-columns: 3;
   }
+
   .organization-list-row {
     gap: 1rem;
+
     &__col {
       display: flex;
       align-items: center;
       padding: 0;
     }
   }
+
   .organization-card {
     background: var(--parsec-color-light-secondary-background);
     user-select: none;
@@ -525,14 +543,17 @@ async function openSettingsModal(): Promise<void> {
     margin-inline: 0;
     margin-top: 0;
     margin-bottom: 0;
+
     &:hover {
       box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
     }
+
     .card-content {
       padding-top: 0px;
       padding-bottom: 0px;
       padding-inline-end: 0px;
       padding-inline-start: 0px;
+
       &__footer {
         padding: 0.5em 1em;
         background: var(--parsec-color-light-secondary-medium);
@@ -540,9 +561,11 @@ async function openSettingsModal(): Promise<void> {
         color: var(--parsec-color-light-secondary-grey);
         height: 4.6em;
       }
+
       &:hover {
         background: var(--parsec-color-light-primary-50);
         cursor: pointer;
+
         .card-content__footer {
           background: var(--parsec-color-light-primary-50);
           border-top: 1px solid var(--parsec-color-light-primary-100);
@@ -551,6 +574,7 @@ async function openSettingsModal(): Promise<void> {
     }
   }
 }
+
 .login-popup {
   box-shadow: none;
   display: flex;
@@ -558,42 +582,52 @@ async function openSettingsModal(): Promise<void> {
   align-items: center;
   justify-content: center;
   flex-grow: 1;
+
   .organization-container {
     max-width: 62.5rem;
     padding: 0 3.5rem 3.5rem;
     flex-grow: 1;
   }
+
   .title-h1 {
     color: var(--parsec-color-light-primary-700);
   }
+
   #login-container {
     margin-top: 2.5rem;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
   }
+
   .login-card {
-      background: var(--parsec-color-light-secondary-background);
-      border-radius: 8px;
-      padding: 2em;
-      box-shadow: none;
-      margin: 0;
-      &__content {
-        padding: 0;
-        #ms-password-input {
-          margin: 1.5rem 0 1rem;
-        }
-      }
-      .organization-card {
-        margin-bottom: 2em;
-        display: flex;
-        &__body {
-          padding: 0;
-        }
+    background: var(--parsec-color-light-secondary-background);
+    border-radius: 8px;
+    padding: 2em;
+    box-shadow: none;
+    margin: 0;
+
+    &__content {
+      padding: 0;
+
+      #ms-password-input {
+        margin: 1.5rem 0 1rem;
       }
     }
+
+    .organization-card {
+      margin-bottom: 2em;
+      display: flex;
+
+      &__body {
+        padding: 0;
+      }
+    }
+  }
+
   .login-button-container {
     text-align: right;
+
     .login-button {
       margin: 0;
     }
