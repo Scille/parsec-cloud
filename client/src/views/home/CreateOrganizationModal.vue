@@ -54,9 +54,7 @@
         v-show="pageStep === CreateOrganizationStep.UserInfoStep"
         class="step"
       >
-        <user-information
-          ref="userInfoPage"
-        />
+        <user-information ref="userInfoPage" />
       </div>
 
       <!-- part 3 (server)-->
@@ -64,9 +62,7 @@
         class="step orga-server"
         v-show="pageStep === CreateOrganizationStep.ServerStep"
       >
-        <choose-server
-          ref="serverPage"
-        />
+        <choose-server ref="serverPage" />
       </div>
 
       <!-- part 4 (password)-->
@@ -74,9 +70,7 @@
         class="step orga-password"
         v-show="pageStep === CreateOrganizationStep.PasswordStep"
       >
-        <ms-choose-password-input
-          ref="passwordPage"
-        />
+        <ms-choose-password-input ref="passwordPage" />
       </div>
 
       <!-- part 5 (loading)-->
@@ -260,7 +254,7 @@ function shouldShowNextStep(): boolean {
 }
 
 function getCurrentPage(): Ref<any> {
-  switch(pageStep.value) {
+  switch (pageStep.value) {
     case CreateOrganizationStep.UserInfoStep: {
       return userInfoPage;
     }
@@ -289,12 +283,12 @@ function createOrg(orgName: string, userName: string, userEmail: string, deviceN
   );
   device.value = {
     organizationId: orgName,
-    humanHandle: userName,
+    humanHandle: { label: userName, email: userEmail },
     deviceLabel: deviceName,
     keyFilePath: 'key_file_path',
     deviceId: 'device1@device1',
     slug: 'slug1',
-    ty: {tag: 'Password'},
+    ty: { tag: 'Password' },
   };
   // Simulate connection to the backend
   window.setTimeout(nextStep, 2000);
@@ -332,12 +326,13 @@ function previousStep(): void {
 }
 
 .closeBtn-container {
-    position: absolute;
-    top: 2rem;
-    right: 2rem;
-  }
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+}
 
-.closeBtn-container, .closeBtn {
+.closeBtn-container,
+.closeBtn {
   margin: 0;
   --padding-start: 0;
   --padding-end: 0;
