@@ -54,9 +54,7 @@
         v-show="pageStep === CreateOrganizationStep.UserInfoStep"
         class="step user-info"
       >
-        <user-information
-          ref="userInfo"
-        />
+        <user-information ref="userInfo" />
       </div>
 
       <!-- part 3 (server)-->
@@ -64,9 +62,7 @@
         class="step org-server"
         v-show="pageStep === CreateOrganizationStep.ServerStep"
       >
-        <choose-server
-          ref="serverChoice"
-        />
+        <choose-server ref="serverChoice" />
       </div>
 
       <!-- part 4 (password)-->
@@ -74,9 +70,7 @@
         class="step org-password"
         v-show="pageStep === CreateOrganizationStep.PasswordStep"
       >
-        <ms-choose-password-input
-          ref="passwordChoice"
-        />
+        <ms-choose-password-input ref="passwordChoice" />
       </div>
 
       <!-- part 5 (summary) -->
@@ -101,9 +95,7 @@
         class="step org-loading"
         v-show="pageStep === CreateOrganizationStep.SpinnerStep"
       >
-        <ms-spinner
-          :title="$t('CreateOrganization.loading')"
-        />
+        <ms-spinner :title="$t('CreateOrganization.loading')" />
       </div>
 
       <!-- part 7 (loading) -->
@@ -312,7 +304,7 @@ function shouldShowNextStep(): boolean {
 }
 
 function getCurrentStep(): Ref<any> {
-  switch(pageStep.value) {
+  switch (pageStep.value) {
     case CreateOrganizationStep.OrgNameStep: {
       return orgName;
     }
@@ -344,12 +336,12 @@ function createOrg(orgName: string, userName: string, userEmail: string, deviceN
   );
   device.value = {
     organizationId: orgName,
-    humanHandle: userName,
+    humanHandle: { label: userName, email: userEmail },
     deviceLabel: deviceName,
     keyFilePath: 'key_file_path',
     deviceId: 'device1@device1',
     slug: 'slug1',
-    ty: {tag: 'Password'},
+    ty: { tag: 'Password' },
   };
   // Simulate connection to the backend
   window.setTimeout(nextStep, 2000);
@@ -390,7 +382,7 @@ function previousStep(): void {
   pageStep.value = pageStep.value - 1;
 }
 
-function onUpdateRequested(info: OrgInfo) : void{
+function onUpdateRequested(info: OrgInfo): void {
   if (info === OrgInfo.Organization) {
     pageStep.value = CreateOrganizationStep.OrgNameStep;
   } else if (info === OrgInfo.UserInfo) {
@@ -408,12 +400,13 @@ function onUpdateRequested(info: OrgInfo) : void{
 }
 
 .closeBtn-container {
-    position: absolute;
-    top: 2rem;
-    right: 2rem;
-  }
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+}
 
-.closeBtn-container, .closeBtn {
+.closeBtn-container,
+.closeBtn {
   margin: 0;
   --padding-start: 0;
   --padding-end: 0;
