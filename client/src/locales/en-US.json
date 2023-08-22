@@ -207,9 +207,9 @@
             "actionCopyLink": "Copy link"
         },
         "CreateWorkspaceModal": {
-            "pageTitle": "Create workspace",
-            "name": "Name",
-            "namePlaceholder": "Workspace",
+            "pageTitle": "Create a new workspace",
+            "label": "Workspace name",
+            "placeholder": "My space",
             "cancel": "Cancel",
             "create": "Create"
         },

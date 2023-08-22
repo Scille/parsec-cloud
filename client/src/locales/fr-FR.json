@@ -207,9 +207,9 @@
             "actionCopyLink": "Copier le lien"
         },
         "CreateWorkspaceModal": {
-            "pageTitle": "Créer un espace de travail",
-            "name": "Nom",
-            "namePlaceholder": "Espace de travail",
+            "pageTitle": "Créer un nouvel espace de travail",
+            "label": "Nom de l'espace de travail",
+            "placeholder": "Mon espace",
             "cancel": "Annuler",
             "create": "Créer"
         },

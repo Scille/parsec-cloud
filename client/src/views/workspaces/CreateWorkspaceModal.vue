@@ -1,84 +1,49 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-header>
-    <ion-toolbar>
-      <ion-title>{{ $t('WorkspacesPage.CreateWorkspaceModal.pageTitle') }}</ion-title>
-      <ion-buttons slot="end">
-        <ion-button
-          @click="closeModal()"
-        >
-          <ion-icon
-            slot="icon-only"
-            :icon="close"
-            size="large"
-          />
-        </ion-button>
-      </ion-buttons>
-    </ion-toolbar>
-  </ion-header>
-  <ion-content class="ion-padding">
-    <ion-item>
-      <ion-label position="stacked">
-        {{ $t('WorkspacesPage.CreateWorkspaceModal.name') }}
-      </ion-label>
-      <ion-input
-        :autofocus="true"
-        type="text"
-        v-model="workspaceName"
-        :placeholder="$t('WorkspacesPage.CreateWorkspaceModal.namePlaceholder')"
-      />
-    </ion-item>
-  </ion-content>
-  <ion-footer>
-    <ion-toolbar>
-      <ion-buttons slot="primary">
-        <ion-button
-          @click="closeModal()"
-        >
-          {{ $t('WorkspacesPage.CreateWorkspaceModal.cancel') }}
-        </ion-button>
-        <ion-button
-          @click="confirm()"
-        >
-          {{ $t('WorkspacesPage.CreateWorkspaceModal.create') }}
-        </ion-button>
-      </ion-buttons>
-    </ion-toolbar>
-  </ion-footer>
+  <ms-modal
+    :title="$t('WorkspacesPage.CreateWorkspaceModal.pageTitle')"
+    :close-button-enabled="true"
+    :confirm-button="{
+      label: $t('WorkspacesPage.CreateWorkspaceModal.cancel'),
+      disabled: !workspaceName,
+      onClick: cancel
+    }"
+    :cancel-button="{
+      label: $t('WorkspacesPage.CreateWorkspaceModal.create'),
+      disabled: false,
+      onClick: confirm
+    }"
+  >
+    <ms-input
+      :label="$t('WorkspacesPage.CreateWorkspaceModal.label')"
+      :placeholder="$t('WorkspacesPage.CreateWorkspaceModal.placeholder')"
+      name="createOrganization"
+      v-model="workspaceName"
+      type="url"
+    />
+  </ms-modal>
 </template>
 
 <script setup lang="ts">
 import {
-  IonContent,
-  IonHeader,
-  IonTitle,
-  IonToolbar,
-  IonButtons,
-  IonButton,
-  IonItem,
-  IonLabel,
-  IonInput,
   modalController,
-  IonFooter,
-  IonIcon,
 } from '@ionic/vue';
 import { ref } from 'vue';
-import {
-  close,
-} from 'ionicons/icons';
 import { ModalResultCode } from '@/common/constants';
+import MsModal from '@/components/core/ms-modal/MsModal.vue';
+import MsInput from '@/components/core/ms-input/MsInput.vue';
 
 const workspaceName = ref('');
-
-function closeModal(): Promise<boolean> {
-  return modalController.dismiss(null, ModalResultCode.Cancel);
-}
 
 function confirm(): Promise<boolean> {
   return modalController.dismiss(workspaceName.value, ModalResultCode.Confirm);
 }
+
+function cancel(): Promise<boolean> {
+  return modalController.dismiss(workspaceName.value, ModalResultCode.Cancel);
+}
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 </style>
