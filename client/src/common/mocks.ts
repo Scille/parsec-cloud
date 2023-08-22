@@ -60,7 +60,7 @@ export function pathInfo(_path: string, random = false): MockFile {
 
     const ret: MockFile = {
       id: '0',
-      name: uniqueNamesGenerator({dictionaries: [adjectives, colors, animals]}),
+      name: uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] }),
       type: 'folder',
       updater: UPDATER[Math.floor(Math.random() * UPDATER.length)],
       size: 0,
@@ -73,7 +73,7 @@ export function pathInfo(_path: string, random = false): MockFile {
       const isFolder = Math.floor(Math.random() * 2) === 0;
       ret.children.push({
         id: String(i + 1),
-        name: uniqueNamesGenerator({dictionaries: [adjectives, colors, animals]}),
+        name: uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] }),
         type: isFolder ? 'folder' : 'file',
         size: isFolder ? 0 : Math.floor(Math.random() * 10000000),
         lastUpdate: DateTime.now(),
@@ -271,66 +271,87 @@ export async function getWorkspaceUsers(workspaceId: string): Promise<Map<string
 const MOCK_DEVICES: AvailableDevice[] = [
   {
     organizationId: 'Planet Express',
-    humanHandle: 'Dr. John A. Zoidberg',
+    humanHandle: {
+      label: 'Dr. John A. Zoidberg',
+      email: 'john.zoidberg@platnet-express.com',
+    },
     deviceLabel: 'Zoidberg_Device',
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug1',
-    ty: {tag: 'Password'},
+    ty: { tag: 'Password' },
   },
   {
     organizationId: 'Princeton-Plainsboro Hospital',
-    humanHandle: 'Dr. Gregory House',
+    humanHandle: {
+      label: 'Dr. Gregory House',
+      email: 'g.house@hp-princeton-nj.com',
+    },
     deviceLabel: 'House_Device',
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug2',
-    ty: {tag: 'Password'},
+    ty: { tag: 'Password' },
   },
   {
     organizationId: 'Black Mesa',
-    humanHandle: 'Dr. Gordon Freeman',
+    humanHandle: {
+      label: 'Dr. Gordon Freeman',
+      email: 'freeman.gordon@black-mesa.com',
+    },
     deviceLabel: 'Freeman_Device',
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug3',
-    ty: {tag: 'Password'},
+    ty: { tag: 'Password' },
   },
   {
     organizationId: 'OsCorp',
-    humanHandle: 'Dr. Otto G. Octavius',
+    humanHandle: {
+      label: 'Dr. Otto G. Octavius',
+      email: 'octavius@oscorp.com',
+    },
     deviceLabel: 'Octavius_Device',
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug4',
-    ty: {tag: 'Password'},
+    ty: { tag: 'Password' },
   },
   {
     organizationId: 'Sanctum Sanctorum',
-    humanHandle: 'Dr. Stephen Strange',
+    humanHandle: {
+      label: 'Dr. Stephen Strange',
+      email: 'stephen@strange.com',
+    },
     deviceLabel: 'Strange_Device',
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug5',
-    ty: {tag: 'Password'},
+    ty: { tag: 'Password' },
   },
   {
     organizationId: 'Holmes Consulting',
-    humanHandle: 'Dr John H. Watson',
+    humanHandle: {
+      label: 'Dr John H. Watson',
+      email: 'john.watson@detective.uk',
+    },
     deviceLabel: 'Watson_Device',
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug6',
-    ty: {tag: 'Password'},
+    ty: { tag: 'Password' },
   },
   {
     organizationId: 'Riviera M.D.',
-    humanHandle: 'Dr. Nicholas "Nick" Riviera',
+    humanHandle: {
+      label: 'Dr. Nicholas "Nick" Riviera',
+      email: 'nick@riviera.com',
+    },
     deviceLabel: 'Riviera_Device',
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug7',
-    ty: {tag: 'Password'},
+    ty: { tag: 'Password' },
   },
 ];
 
@@ -347,15 +368,15 @@ export async function mockLastLogin(manager: StorageManager): Promise<void> {
   await manager.storeDevicesData({
     slug1: { lastLogin: now },
     // 10 seconds ago
-    slug2: { lastLogin: now.minus({seconds: 10}) },
+    slug2: { lastLogin: now.minus({ seconds: 10 }) },
     // 10 minutes ago
-    slug3: { lastLogin: now.minus({minutes: 10}) },
+    slug3: { lastLogin: now.minus({ minutes: 10 }) },
     // 5 hours ago
-    slug5: { lastLogin: now.minus({hours: 5}) },
+    slug5: { lastLogin: now.minus({ hours: 5 }) },
     // 2 days ago
-    slug6: { lastLogin: now.minus({days: 2}) },
+    slug6: { lastLogin: now.minus({ days: 2 }) },
     // 10 days ago
-    slug7: { lastLogin: now.minus({days: 10}) },
+    slug7: { lastLogin: now.minus({ days: 10 }) },
   });
 }
 
