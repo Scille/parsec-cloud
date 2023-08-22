@@ -13,9 +13,13 @@ ion-modal.join-by-link-modal::part(content) {
   contain: content;
 }
 
-/* modal */
-ion-modal.one-line-modal::part(content) {
-  height: 210px;
+/* -- settings modal -- */
+@media only screen and (min-width: 768px) and (min-height: 600px) {
+  .settings-modal, .settings-modal .ion-overlay-wrapper{
+    --width: 800px;
+    --height: 600px;
+    --border-radius: 8px;
+  }
 }
 
 ion-modal {
