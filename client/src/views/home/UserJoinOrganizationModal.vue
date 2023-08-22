@@ -111,9 +111,7 @@
           class="step"
           id="get-password"
         >
-          <ms-choose-password-input
-            ref="passwordPage"
-          />
+          <ms-choose-password-input ref="passwordPage" />
         </div>
         <!-- part 6 (finish the process)-->
         <div
@@ -152,9 +150,7 @@
             v-show="waitingForHost"
             class="spinner-container"
           >
-            <ion-label
-              class="label-waiting"
-            >
+            <ion-label class="label-waiting">
               {{ $t('JoinOrganization.waitingForHost') }}
             </ion-label>
             <ion-spinner
@@ -195,7 +191,7 @@ import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
-import { AvailableDevice } from '@/plugins/libparsec/definitions';
+import { AvailableDevice, HumanHandle } from '@/plugins/libparsec/definitions';
 import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 
 enum UserJoinOrganizationStep {
@@ -251,27 +247,27 @@ interface Title {
 const titles = new Map<UserJoinOrganizationStep, Title>([
   [
     UserJoinOrganizationStep.WaitForHost,
-    {title: t('JoinOrganization.titles.waitForHost'), subtitle: t('JoinOrganization.subtitles.waitForHost')},
+    { title: t('JoinOrganization.titles.waitForHost'), subtitle: t('JoinOrganization.subtitles.waitForHost') },
   ],
   [
     UserJoinOrganizationStep.GetHostSasCode,
-    {title: t('JoinOrganization.titles.getHostCode'), subtitle: t('JoinOrganization.subtitles.getHostCode')},
+    { title: t('JoinOrganization.titles.getHostCode'), subtitle: t('JoinOrganization.subtitles.getHostCode') },
   ],
   [
     UserJoinOrganizationStep.ProvideGuestCode,
-    {title: t('JoinOrganization.titles.provideGuestCode'), subtitle: t('JoinOrganization.subtitles.provideGuestCode')},
+    { title: t('JoinOrganization.titles.provideGuestCode'), subtitle: t('JoinOrganization.subtitles.provideGuestCode') },
   ],
   [
     UserJoinOrganizationStep.GetUserInfo,
-    {title: t('JoinOrganization.titles.getUserInfo'), subtitle: t('JoinOrganization.subtitles.getUserInfo')},
+    { title: t('JoinOrganization.titles.getUserInfo'), subtitle: t('JoinOrganization.subtitles.getUserInfo') },
   ],
   [
     UserJoinOrganizationStep.GetPassword,
-    {title: t('JoinOrganization.titles.getPassword'), subtitle: t('JoinOrganization.subtitles.getPassword')},
+    { title: t('JoinOrganization.titles.getPassword'), subtitle: t('JoinOrganization.subtitles.getPassword') },
   ],
   [
     UserJoinOrganizationStep.Finish,
-    {title: t('JoinOrganization.titles.finish', {org: ''}), subtitle: t('JoinOrganization.subtitles.finish')},
+    { title: t('JoinOrganization.titles.finish', { org: '' }), subtitle: t('JoinOrganization.subtitles.finish') },
   ],
 ]);
 
@@ -308,7 +304,7 @@ const canGoForward = computed(() => {
   if (
     currentPage && currentPage.value
     && (pageStep.value === UserJoinOrganizationStep.GetUserInfo
-    || pageStep.value === UserJoinOrganizationStep.GetPassword)
+      || pageStep.value === UserJoinOrganizationStep.GetPassword)
   ) {
     return currentPage.value.areFieldsCorrect();
   }
@@ -316,7 +312,7 @@ const canGoForward = computed(() => {
 });
 
 function getCurrentPage(): Ref<any> {
-  switch(pageStep.value) {
+  switch (pageStep.value) {
     case UserJoinOrganizationStep.WaitForHost: {
       return waitPage;
     }
@@ -343,7 +339,10 @@ function cancelModal(): Promise<boolean> {
 }
 
 function mockCreateDevice(): AvailableDevice {
-  const humanHandle = `${userInfoPage.value.fullName} <${userInfoPage.value.email}>`;
+  const humanHandle: HumanHandle = {
+    label: userInfoPage.value.fullName,
+    email: userInfoPage.value.email,
+  };
   const deviceName = userInfoPage.value.deviceName;
   console.log(
     `Creating device ${claimUserLink?.org}, user ${humanHandle}, device ${deviceName}, backend ${props.invitationLink}`,
@@ -355,7 +354,7 @@ function mockCreateDevice(): AvailableDevice {
     keyFilePath: 'key_file_path',
     deviceId: 'device1@device1',
     slug: 'slug1',
-    ty: {tag: 'Password'},
+    ty: { tag: 'Password' },
   };
 
   return device;
@@ -426,12 +425,13 @@ function claimerRetrieveInfo(): void {
 }
 
 .closeBtn-container {
-    position: absolute;
-    top: 2rem;
-    right: 2rem;
-  }
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+}
 
-.closeBtn-container, .closeBtn {
+.closeBtn-container,
+.closeBtn {
   margin: 0;
   --padding-start: 0;
   --padding-end: 0;
