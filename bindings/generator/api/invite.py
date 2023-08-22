@@ -37,7 +37,7 @@ class ClaimerGreeterAbortOperationError(ErrorVariant):
 def claimer_greeter_abort_operation(
     handle: Handle,
 ) -> Result[None, ClaimerGreeterAbortOperationError]:
-    ...
+    raise NotImplementedError
 
 
 class DeviceFileType(Variant):
@@ -62,7 +62,7 @@ class AvailableDevice(Structure):
 
 
 async def list_available_devices(path: Ref[Path]) -> list[AvailableDevice]:
-    ...
+    raise NotImplementedError
 
 
 class DeviceSaveStrategy(Variant):
@@ -110,7 +110,7 @@ async def bootstrap_organization(
     device_label: Optional[DeviceLabel],
     sequester_authority_verify_key: Optional[SequesterVerifyKeyDer],
 ) -> Result[AvailableDevice, BootstrapOrganizationError]:
-    ...
+    raise NotImplementedError
 
 
 #
@@ -176,7 +176,7 @@ async def claimer_retrieve_info(
     on_event_callback: OnClientEventCallback,
     addr: BackendInvitationAddr,
 ) -> Result[UserOrDeviceClaimInitialInfo, ClaimerRetrieveInfoError]:
-    ...
+    raise NotImplementedError
 
 
 class UserClaimInProgress1Info(Structure):
@@ -195,14 +195,14 @@ async def claimer_user_initial_do_wait_peer(
     canceller: Handle,
     handle: Handle,
 ) -> Result[UserClaimInProgress1Info, ClaimInProgressError]:
-    ...
+    raise NotImplementedError
 
 
 async def claimer_device_initial_do_wait_peer(
     canceller: Handle,
     handle: Handle,
 ) -> Result[DeviceClaimInProgress1Info, ClaimInProgressError]:
-    ...
+    raise NotImplementedError
 
 
 class UserClaimInProgress2Info(Structure):
@@ -219,14 +219,14 @@ async def claimer_user_in_progress_1_do_signify_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result[UserClaimInProgress2Info, ClaimInProgressError]:
-    ...
+    raise NotImplementedError
 
 
 async def claimer_device_in_progress_1_do_signify_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result[DeviceClaimInProgress2Info, ClaimInProgressError]:
-    ...
+    raise NotImplementedError
 
 
 class UserClaimInProgress3Info(Structure):
@@ -241,14 +241,14 @@ async def claimer_user_in_progress_2_do_wait_peer_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result[UserClaimInProgress3Info, ClaimInProgressError]:
-    ...
+    raise NotImplementedError
 
 
 async def claimer_device_in_progress_2_do_wait_peer_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result[DeviceClaimInProgress3Info, ClaimInProgressError]:
-    ...
+    raise NotImplementedError
 
 
 class UserClaimFinalizeInfo(Structure):
@@ -265,7 +265,7 @@ async def claimer_user_in_progress_3_do_claim(
     requested_device_label: Optional[DeviceLabel],
     requested_human_handle: Optional[HumanHandle],
 ) -> Result[UserClaimFinalizeInfo, ClaimInProgressError]:
-    ...
+    raise NotImplementedError
 
 
 async def claimer_device_in_progress_3_do_claim(
@@ -273,21 +273,21 @@ async def claimer_device_in_progress_3_do_claim(
     handle: Handle,
     requested_device_label: Optional[DeviceLabel],
 ) -> Result[DeviceClaimFinalizeInfo, ClaimInProgressError]:
-    ...
+    raise NotImplementedError
 
 
 async def claimer_user_finalize_save_local_device(
     handle: Handle,
     save_strategy: DeviceSaveStrategy,
 ) -> Result[AvailableDevice, ClaimInProgressError]:
-    ...
+    raise NotImplementedError
 
 
 async def claimer_device_finalize_save_local_device(
     handle: Handle,
     save_strategy: DeviceSaveStrategy,
 ) -> Result[AvailableDevice, ClaimInProgressError]:
-    ...
+    raise NotImplementedError
 
 
 #
@@ -326,7 +326,7 @@ async def client_new_user_invitation(
     claimer_email: str,
     send_email: bool,
 ) -> Result[tuple[InvitationToken, InvitationEmailSentStatus], NewUserInvitationError,]:
-    ...
+    raise NotImplementedError
 
 
 class NewDeviceInvitationError(ErrorVariant):
@@ -344,7 +344,7 @@ async def client_new_device_invitation(
     client: Handle,
     send_email: bool,
 ) -> Result[tuple[InvitationToken, InvitationEmailSentStatus], NewDeviceInvitationError,]:
-    ...
+    raise NotImplementedError
 
 
 class DeleteInvitationError(ErrorVariant):
@@ -365,7 +365,7 @@ async def client_delete_invitation(
     client: Handle,
     token: InvitationToken,
 ) -> Result[None, DeleteInvitationError]:
-    ...
+    raise NotImplementedError
 
 
 class InviteListItem(Variant):
@@ -392,7 +392,7 @@ class ListInvitationsError(ErrorVariant):
 async def client_list_invitations(
     client: Handle,
 ) -> Result[list[InviteListItem], ListInvitationsError]:
-    ...
+    raise NotImplementedError
 
 
 class UserGreetInitialInfo(Structure):
@@ -411,13 +411,13 @@ class ClientStartInvitationGreetError(ErrorVariant):
 async def client_start_user_invitation_greet(
     client: Handle, token: InvitationToken
 ) -> Result[UserGreetInitialInfo, ClientStartInvitationGreetError]:
-    ...
+    raise NotImplementedError
 
 
 async def client_start_device_invitation_greet(
     client: Handle, token: InvitationToken
 ) -> Result[DeviceGreetInitialInfo, ClientStartInvitationGreetError]:
-    ...
+    raise NotImplementedError
 
 
 class GreetInProgressError(ErrorVariant):
@@ -477,13 +477,13 @@ class DeviceGreetInProgress1Info(Structure):
 async def greeter_user_initial_do_wait_peer(
     canceller: Handle, handle: Handle
 ) -> Result[UserGreetInProgress1Info, GreetInProgressError]:
-    ...
+    raise NotImplementedError
 
 
 async def greeter_device_initial_do_wait_peer(
     canceller: Handle, handle: Handle
 ) -> Result[DeviceGreetInProgress1Info, GreetInProgressError]:
-    ...
+    raise NotImplementedError
 
 
 class UserGreetInProgress2Info(Structure):
@@ -501,13 +501,13 @@ class DeviceGreetInProgress2Info(Structure):
 async def greeter_user_in_progress_1_do_wait_peer_trust(
     canceller: Handle, handle: Handle
 ) -> Result[UserGreetInProgress2Info, GreetInProgressError]:
-    ...
+    raise NotImplementedError
 
 
 async def greeter_device_in_progress_1_do_wait_peer_trust(
     canceller: Handle, handle: Handle
 ) -> Result[DeviceGreetInProgress2Info, GreetInProgressError]:
-    ...
+    raise NotImplementedError
 
 
 class UserGreetInProgress3Info(Structure):
@@ -521,13 +521,13 @@ class DeviceGreetInProgress3Info(Structure):
 async def greeter_user_in_progress_2_do_signify_trust(
     canceller: Handle, handle: Handle
 ) -> Result[UserGreetInProgress3Info, GreetInProgressError]:
-    ...
+    raise NotImplementedError
 
 
 async def greeter_device_in_progress_2_do_signify_trust(
     canceller: Handle, handle: Handle
 ) -> Result[DeviceGreetInProgress3Info, GreetInProgressError]:
-    ...
+    raise NotImplementedError
 
 
 class UserGreetInProgress4Info(Structure):
@@ -544,13 +544,13 @@ class DeviceGreetInProgress4Info(Structure):
 async def greeter_user_in_progress_3_do_get_claim_requests(
     canceller: Handle, handle: Handle
 ) -> Result[UserGreetInProgress4Info, GreetInProgressError]:
-    ...
+    raise NotImplementedError
 
 
 async def greeter_device_in_progress_3_do_get_claim_requests(
     canceller: Handle, handle: Handle
 ) -> Result[DeviceGreetInProgress4Info, GreetInProgressError]:
-    ...
+    raise NotImplementedError
 
 
 async def greeter_user_in_progress_4_do_create(
@@ -560,7 +560,7 @@ async def greeter_user_in_progress_4_do_create(
     device_label: Optional[DeviceLabel],
     profile: UserProfile,
 ) -> Result[None, GreetInProgressError]:
-    ...
+    raise NotImplementedError
 
 
 async def greeter_device_in_progress_4_do_create(
@@ -568,4 +568,4 @@ async def greeter_device_in_progress_4_do_create(
     handle: Handle,
     device_label: Optional[DeviceLabel],
 ) -> Result[None, GreetInProgressError]:
-    ...
+    raise NotImplementedError

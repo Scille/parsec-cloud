@@ -5,12 +5,16 @@ from typing import Generic, List, Optional, TypeVar
 
 # Meta-types, not part of the API but to be used to describe the API
 
+OK = TypeVar("OK")
+ERR = TypeVar("ERR")
+REFERENCED = TypeVar("REFERENCED")
 
-class Result(Generic[TypeVar("OK"), TypeVar("ERR")]):
+
+class Result(Generic[OK, ERR]):
     pass
 
 
-class Ref(Generic[TypeVar("REFERENCED")]):
+class Ref(Generic[REFERENCED]):
     pass
 
 
@@ -175,195 +179,195 @@ class V1or2(Variant):
 
 
 def foo(a: int) -> int:
-    ...
+    raise NotImplementedError
 
 
 def f_r1(_o: OrganizationID) -> OrganizationID:
-    ...
+    raise NotImplementedError
 
 
 def f_r2() -> bool:
-    ...
+    raise NotImplementedError
 
 
 def f_r3() -> int:
-    ...
+    raise NotImplementedError
 
 
 def f_r4() -> int:
-    ...
+    raise NotImplementedError
 
 
 def f_r5() -> float:
-    ...
+    raise NotImplementedError
 
 
 def f_r6() -> str:
-    ...
+    raise NotImplementedError
 
 
 def f_r7() -> bytes:
-    ...
+    raise NotImplementedError
 
 
 def f_r8() -> Optional[Data]:
-    ...
+    raise NotImplementedError
 
 
-def f_p1():
-    ...
+def f_p1() -> None:
+    raise NotImplementedError
 
 
-def f_p2(_a: bool):
-    ...
+def f_p2(_a: bool) -> None:
+    raise NotImplementedError
 
 
-def f_p3(_a: int):
-    ...
+def f_p3(_a: int) -> None:
+    raise NotImplementedError
 
 
 # def f_p4(_a: int): ...
-def f_p5(_a: float):
-    ...
+def f_p5(_a: float) -> None:
+    raise NotImplementedError
 
 
-def f_p6(_a: Ref[str]):
-    ...
+def f_p6(_a: Ref[str]) -> None:
+    raise NotImplementedError
 
 
-def f_p7(_a: Ref[bytes]):
-    ...
+def f_p7(_a: Ref[bytes]) -> None:
+    raise NotImplementedError
 
 
-def f_p8(_a: Ref[Data]):
-    ...
+def f_p8(_a: Ref[Data]) -> None:
+    raise NotImplementedError
 
 
 def f_p9() -> Data:
-    ...
+    raise NotImplementedError
 
 
-def f_p10(_a: Optional[bool]):
-    ...
+def f_p10(_a: Optional[bool]) -> None:
+    raise NotImplementedError
 
 
-def f_p11(_a: Ref[Optional[Data]]):
-    ...
+def f_p11(_a: Ref[Optional[Data]]) -> None:
+    raise NotImplementedError
 
 
-def f_p111(_a: Optional[Ref[Data]]):
-    ...
+def f_p111(_a: Optional[Ref[Data]]) -> None:
+    raise NotImplementedError
 
 
 # def f_p112(_a: Optional[Ref[List[Data]]]): ...
-def f_p12(_a: Ref[V1or2]):
-    ...
+def f_p12(_a: Ref[V1or2]) -> None:
+    raise NotImplementedError
 
 
 def f_p13() -> V1or2:
-    ...
+    raise NotImplementedError
 
 
 def f_p14() -> Result[bool, V1or2]:
-    ...
+    raise NotImplementedError
 
 
-def f_p15(_a: Ref[List[Data]]):
-    ...
+def f_p15(_a: Ref[List[Data]]) -> None:
+    raise NotImplementedError
 
 
 def f_p16() -> List[Data]:
-    ...
+    raise NotImplementedError
 
 
 async def af_r1() -> None:
-    ...
+    raise NotImplementedError
 
 
 async def af_r2() -> bool:
-    ...
+    raise NotImplementedError
 
 
 async def af_r3() -> int:
-    ...
+    raise NotImplementedError
 
 
 async def af_r4() -> int:
-    ...
+    raise NotImplementedError
 
 
 async def af_r5() -> float:
-    ...
+    raise NotImplementedError
 
 
 async def af_r6() -> str:
-    ...
+    raise NotImplementedError
 
 
 async def af_r7() -> bytes:
-    ...
+    raise NotImplementedError
 
 
-async def af_p1():
-    ...
+async def af_p1() -> None:
+    raise NotImplementedError
 
 
-async def af_p2(_a: bool):
-    ...
+async def af_p2(_a: bool) -> None:
+    raise NotImplementedError
 
 
-async def af_p3(_a: int):
-    ...
+async def af_p3(_a: int) -> None:
+    raise NotImplementedError
 
 
 # async def af_p4(_a: int): ...
-async def af_p5(_a: float):
-    ...
+async def af_p5(_a: float) -> None:
+    raise NotImplementedError
 
 
-async def af_p6(_a: Ref[str]):
-    ...
+async def af_p6(_a: Ref[str]) -> None:
+    raise NotImplementedError
 
 
-async def af_p7(_a: Ref[bytes]):
-    ...
+async def af_p7(_a: Ref[bytes]) -> None:
+    raise NotImplementedError
 
 
 async def af_r8() -> Optional[Data]:
-    ...
+    raise NotImplementedError
 
 
-async def af_p8(_a: Ref[Data]):
-    ...
+async def af_p8(_a: Ref[Data]) -> None:
+    raise NotImplementedError
 
 
 async def af_p9() -> Data:
-    ...
+    raise NotImplementedError
 
 
-async def af_p10(_a: Optional[bool]):
-    ...
+async def af_p10(_a: Optional[bool]) -> None:
+    raise NotImplementedError
 
 
-async def af_p11(_a: Ref[Optional[Data]]):
-    ...
+async def af_p11(_a: Ref[Optional[Data]]) -> None:
+    raise NotImplementedError
 
 
-async def af_p12(_a: Ref[V1or2]):
-    ...
+async def af_p12(_a: Ref[V1or2]) -> None:
+    raise NotImplementedError
 
 
 async def af_p13() -> V1or2:
-    ...
+    raise NotImplementedError
 
 
 async def af_p14() -> Result[bool, V1or2]:
-    ...
+    raise NotImplementedError
 
 
-async def af_p15(_a: Ref[List[Data]]):
-    ...
+async def af_p15(_a: Ref[List[Data]]) -> None:
+    raise NotImplementedError
 
 
 async def af_p16() -> List[Data]:
-    ...
+    raise NotImplementedError
