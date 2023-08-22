@@ -4,15 +4,15 @@
   <ms-modal
     :title="$t('WorkspacesPage.CreateWorkspaceModal.pageTitle')"
     :close-button-enabled="true"
-    :confirm-button="{
-      label: $t('WorkspacesPage.CreateWorkspaceModal.cancel'),
-      disabled: !workspaceName,
-      onClick: cancel
-    }"
     :cancel-button="{
-      label: $t('WorkspacesPage.CreateWorkspaceModal.create'),
+      label: $t('WorkspacesPage.CreateWorkspaceModal.cancel'),
       disabled: false,
       onClick: confirm
+    }"
+    :confirm-button="{
+      label: $t('WorkspacesPage.CreateWorkspaceModal.create'),
+      disabled: !workspaceName,
+      onClick: cancel
     }"
   >
     <ms-input
