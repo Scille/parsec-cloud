@@ -2,170 +2,110 @@
 
 <template>
   <ion-page>
-    <wizard-stepper
-      v-show="pageStep > DeviceJoinOrganizationStep.Information && pageStep < DeviceJoinOrganizationStep.Finish"
-      :current-index="pageStep - 1"
-      :titles="[
-        $t('ClaimDeviceModal.stepper.GetHostCode'),
-        $t('ClaimDeviceModal.stepper.ProvideGuestCode'),
-        $t('ClaimDeviceModal.stepper.password'),
-      ]"
-    />
-    <ion-buttons
-      slot="end"
-      class="closeBtn-container"
+    <ms-modal-stepper
+      :stepper="{
+        show: pageStep > DeviceJoinOrganizationStep.Information && pageStep < DeviceJoinOrganizationStep.Finish,
+        currentIndex: pageStep - 1,
+        titles: titleStepper,
+      }"
+      :spinner="{
+        show: waitingForHost,
+        label: $t('JoinOrganization.waitingForHost'),
+      }"
+      :title="title"
+      :subtitle="subtitle"
+      :close-button="{
+        show: true,
+        onClick: cancelModal,
+      }"
+      :confirm-button="{
+        label: button,
+        disabled: !canGoForward,
+        onClick: nextStep,
+        show: nextButtonIsVisible
+      }"
     >
-      <ion-button
-        slot="icon-only"
-        @click="cancelModal()"
-        class="closeBtn"
+      <div
+        class="modal"
+        :class="{wizardTrue: pageStep > DeviceJoinOrganizationStep.Information && pageStep != DeviceJoinOrganizationStep.Finish}"
       >
-        <ion-icon
-          :icon="close"
-          size="large"
-          class="closeBtn__icon"
-        />
-      </ion-button>
-    </ion-buttons>
-    <div
-      class="modal"
-      :class="{wizardTrue: pageStep > DeviceJoinOrganizationStep.Information && pageStep != DeviceJoinOrganizationStep.Finish}"
-    >
-      <ion-header class="modal-header">
-        <ion-title
-          v-if="titles.get(pageStep)?.title !== ''"
-          class="modal-header__title title-h2"
-        >
-          {{ titles.get(pageStep)?.title }}
-        </ion-title>
-        <ion-text
-          v-if="titles.get(pageStep)?.subtitle !== ''"
-          class="modal-header__text body"
-        >
-          {{ titles.get(pageStep)?.subtitle }}
-        </ion-text>
-      </ion-header>
-      <!-- modal content: create component for each part-->
-      <div class="modal-content inner-content">
-        <!-- part 0 (manage by JoinByLink component)-->
-        <!-- part 1 (information message join)-->
-        <div
-          v-show="pageStep === DeviceJoinOrganizationStep.Information"
-          class="step orga-name"
-        >
-          <information-join-device />
-        </div>
-
-        <!-- part 2 (host code)-->
-        <div
-          v-show="pageStep === DeviceJoinOrganizationStep.GetHostSasCode"
-          class="step"
-        >
-          <sas-code-choice
-            :choices="['ABCD', 'EFGH', 'IJKL', 'MNOP']"
-            @select="selectHostSas($event)"
-          />
-        </div>
-
-        <!-- part 3 (guest code)-->
-        <div
-          v-show="pageStep === DeviceJoinOrganizationStep.ProvideGuestCode"
-          class="step guest-code"
-        >
-          <sas-code-provide
-            :code="'ABCD'"
-          />
-        </div>
-
-        <!-- part 4 (get password)-->
-        <div
-          v-show="pageStep === DeviceJoinOrganizationStep.Password"
-          class="step"
-          id="get-password"
-        >
-          <ms-choose-password-input
-            ref="passwordPage"
-          />
-        </div>
-        <!-- part 5 (finish the process)-->
-        <div
-          v-show="pageStep === DeviceJoinOrganizationStep.Finish"
-          class="step"
-        >
-          <ms-informative-text
-            :icon="checkmarkCircle"
-            :text="$t('ClaimDeviceModal.subtitles.done')"
-          />
-        </div>
-      </div>
-      <!-- the buttons must be only enabled if all fields are filled in -->
-      <ion-footer class="modal-footer">
-        <ion-buttons
-          slot="primary"
-          class="modal-footer-buttons"
-        >
-          <ion-button
-            fill="solid"
-            size="default"
-            id="next-button"
-            v-show="nextButtonIsVisible"
-            :disabled="!canGoForward"
-            @click="nextStep()"
-          >
-            <span>
-              {{ getNextButtonText() }}
-            </span>
-          </ion-button>
+        <!-- modal content: create component for each part-->
+        <div class="modal-content inner-content">
+          <!-- part 0 (manage by JoinByLink component)-->
+          <!-- part 1 (information message join)-->
           <div
-            v-show="waitingForHost"
-            class="spinner-container"
+            v-show="pageStep === DeviceJoinOrganizationStep.Information"
+            class="step orga-name"
           >
-            <ion-label
-              class="label-waiting"
-            >
-              {{ $t('JoinOrganization.waitingForHost') }}
-            </ion-label>
-            <ion-spinner
-              name="crescent"
-              color="primary"
+            <information-join-device />
+          </div>
+
+          <!-- part 2 (host code)-->
+          <div
+            v-show="pageStep === DeviceJoinOrganizationStep.GetHostSasCode"
+            class="step"
+          >
+            <sas-code-choice
+              :choices="['ABCD', 'EFGH', 'IJKL', 'MNOP']"
+              @select="selectHostSas($event)"
             />
           </div>
-        </ion-buttons>
-      </ion-footer>
-    </div>
+
+          <!-- part 3 (guest code)-->
+          <div
+            v-show="pageStep === DeviceJoinOrganizationStep.ProvideGuestCode"
+            class="step guest-code"
+          >
+            <sas-code-provide
+              :code="'ABCD'"
+            />
+          </div>
+
+          <!-- part 4 (get password)-->
+          <div
+            v-show="pageStep === DeviceJoinOrganizationStep.Password"
+            class="step"
+            id="get-password"
+          >
+            <ms-choose-password-input
+              ref="passwordPage"
+            />
+          </div>
+          <!-- part 5 (finish the process)-->
+          <div
+            v-show="pageStep === DeviceJoinOrganizationStep.Finish"
+            class="step"
+          >
+            <ms-informative-text
+              :icon="checkmarkCircle"
+              :text="$t('ClaimDeviceModal.subtitles.done')"
+            />
+          </div>
+        </div>
+      </div>
+    </ms-modal-stepper>
   </ion-page>
 </template>
 
 <script setup lang="ts">
 import {
-  IonTitle,
-  IonText,
   IonPage,
-  IonHeader,
-  IonButton,
-  IonButtons,
-  IonFooter,
-  IonIcon,
-  IonLabel,
-  IonSpinner,
   modalController,
 } from '@ionic/vue';
 
 import {
-  close,
   checkmarkCircle,
 } from 'ionicons/icons';
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import WizardStepper from '@/components/core/ms-stepper/MsWizardStepper.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
-import ChoosePasswordStep from '@/components/core/ms-input/MsChoosePasswordInput.vue';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import { AvailableDevice } from '@/plugins/libparsec/definitions';
 import { ModalResultCode } from '@/common/constants';
 import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
+import MsModalStepper from '@/components/core/ms-modal/MsModalStepper.vue';
 
 enum DeviceJoinOrganizationStep {
   Information = 0,
@@ -206,14 +146,25 @@ function parseInvitationLink(link: string): ClaimDeviceLink {
 const claimDeviceLink = parseInvitationLink(props.invitationLink);
 const waitingForHost = ref(false);
 
-interface Title {
+const titleStepper = [
+  t('ClaimDeviceModal.stepper.GetHostCode'),
+  t('ClaimDeviceModal.stepper.password'),
+  t('ClaimDeviceModal.stepper.done'),
+];
+const title = computed(() => textHeaderFooter.get(pageStep.value)?.title || '');
+const subtitle = computed(() => textHeaderFooter.get(pageStep.value)?.subtitle);
+const button = computed(() => textHeaderFooter.get(pageStep.value)?.button || '');
+
+interface TextHeaderFooter {
   title: string,
   subtitle?: string,
+  button?: string
 }
 
-const titles = new Map<DeviceJoinOrganizationStep, Title>([[
+const textHeaderFooter = new Map<DeviceJoinOrganizationStep, TextHeaderFooter>([[
   DeviceJoinOrganizationStep.Information, {
     title: t('ClaimDeviceModal.titles.claimDevice'),
+    button: t('ClaimDeviceModal.buttons.understand'),
   }], [
   DeviceJoinOrganizationStep.GetHostSasCode, {
     title: t('ClaimDeviceModal.titles.getCode'),
@@ -224,10 +175,13 @@ const titles = new Map<DeviceJoinOrganizationStep, Title>([[
     subtitle: t('ClaimDeviceModal.subtitles.provideCode'),
   }], [
   DeviceJoinOrganizationStep.Password, {
-    title: t('ClaimDeviceModal.titles.password'), subtitle: t('ClaimDeviceModal.subtitles.password'),
+    title: t('ClaimDeviceModal.titles.password'),
+    subtitle: t('ClaimDeviceModal.subtitles.password'),
+    button: t('ClaimDeviceModal.buttons.password'),
   }], [
   DeviceJoinOrganizationStep.Finish, {
     title: t('ClaimDeviceModal.titles.done', {org: ''}),
+    button: t('ClaimDeviceModal.buttons.login'),
   }],
 ]);
 
@@ -235,25 +189,18 @@ function selectHostSas(_code: string | null): void {
   nextStep();
 }
 
-function getNextButtonText(): string {
-  if (pageStep.value === DeviceJoinOrganizationStep.Information) {
-    return t('ClaimDeviceModal.buttons.understand');
-  } else if (pageStep.value === DeviceJoinOrganizationStep.Password) {
-    return t('ClaimDeviceModal.buttons.password');
-  } else if (pageStep.value === DeviceJoinOrganizationStep.Finish) {
-    return t('ClaimDeviceModal.buttons.login');
-  }
-
-  return '';
-}
-
 const nextButtonIsVisible = computed(() => {
-  return (
+  if (
     pageStep.value === DeviceJoinOrganizationStep.Information
     || pageStep.value === DeviceJoinOrganizationStep.Password
     || pageStep.value === DeviceJoinOrganizationStep.Finish
-  );
+  ) {
+    return true;
+  } else {
+    return false;
+  }
 });
+
 const canGoForward = computed(() => {
   if (pageStep.value === DeviceJoinOrganizationStep.Password) {
     return passwordPage.value.areFieldsCorrect();
@@ -329,64 +276,8 @@ function claimerRetrieveInfo(): void {
 </script>
 
 <style scoped lang="scss">
-.modal {
-  padding: 3.5rem;
-  justify-content: start;
-
-  &.wizardTrue {
-    padding-top: 2.5rem;
-  }
-}
-
-.closeBtn-container {
-    position: absolute;
-    top: 2rem;
-    right: 2rem;
-  }
-
-.closeBtn-container, .closeBtn {
-  margin: 0;
-  --padding-start: 0;
-  --padding-end: 0;
-}
-
-.closeBtn {
-  width: fit-content;
-  height: fit-content;
-  --border-radius: var(--parsec-radius-4);
-  --background-hover: var(--parsec-color-light-primary-50);
-  border-radius: var(--parsec-radius-4);
-
-  &__icon {
-    padding: 4px;
-    color: var(--parsec-color-light-primary-500);
-
-    &:hover {
-      --background-hover: var(--parsec-color-light-primary-50);
-    }
-  }
-
-  &:active {
-    border-radius: var(--parsec-radius-4);
-    background: var(--parsec-color-light-primary-100);
-  }
-}
-
-.modal-header {
-  margin-bottom: 2rem;
-
-  &__title {
-    padding: 0;
-    margin-bottom: 1.5rem;
-    color: var(--parsec-color-light-primary-600);
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  &__text {
-    color: var(--parsec-color-light-secondary-grey);
-  }
+.modal .wizardTrue {
+  padding-top: 2.5rem;
 }
 
 .modal-content {
@@ -399,40 +290,12 @@ function claimerRetrieveInfo(): void {
   }
 }
 
-.modal-footer {
-  margin-top: 2.5rem;
-
-  &::before {
-    background: transparent;
-  }
-
-  &-buttons {
-    display: flex;
-    justify-content: end;
-    gap: 1rem;
-  }
-}
-
 .orga-name {
   display: flex;
   flex-direction: column;
 }
 
-.label-waiting {
-  color: var(--parsec-color-light-secondary-grey);
-  font-style: italic;
-  padding-left: 2em;
-  padding-right: 2em;
-}
-
 .guest-code {
   margin: 4.7rem auto;
-}
-
-.spinner-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
 }
 </style>
