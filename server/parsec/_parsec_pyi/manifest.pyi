@@ -17,11 +17,9 @@ from parsec._parsec import (
 )
 from parsec.types import FrozenDict
 
-AnyRemoteManifest = Union[
+ChildManifest = Union[
     FolderManifest,
     FileManifest,
-    WorkspaceManifest,
-    UserManifest,
 ]
 
 class EntryName:
@@ -210,6 +208,16 @@ class WorkspaceManifest:
         expected_id: EntryID | None = None,
         expected_version: int | None = None,
     ) -> WorkspaceManifest: ...
+    @classmethod
+    def verify_and_load(
+        cls,
+        signed: bytes,
+        author_verify_key: VerifyKey,
+        expected_author: DeviceID,
+        expected_timestamp: DateTime,
+        expected_id: EntryID | None = None,
+        expected_version: int | None = None,
+    ) -> WorkspaceManifest: ...
 
 class UserManifest:
     def __init__(
@@ -255,7 +263,7 @@ class UserManifest:
     ) -> UserManifest: ...
     def get_workspace_entry(self, workspace_id: EntryID) -> WorkspaceEntry | None: ...
 
-def manifest_decrypt_verify_and_load(
+def child_manifest_decrypt_verify_and_load(
     encrypted: bytes,
     key: SecretKey,
     author_verify_key: VerifyKey,
@@ -263,12 +271,12 @@ def manifest_decrypt_verify_and_load(
     expected_timestamp: DateTime,
     expected_id: EntryID | None = None,
     expected_version: int | None = None,
-) -> AnyRemoteManifest: ...
-def manifest_verify_and_load(
+) -> ChildManifest: ...
+def child_manifest_verify_and_load(
     signed: bytes,
     author_verify_key: VerifyKey,
     expected_author: DeviceID,
     expected_timestamp: DateTime,
     expected_id: EntryID | None = None,
     expected_version: int | None = None,
-) -> AnyRemoteManifest: ...
+) -> ChildManifest: ...

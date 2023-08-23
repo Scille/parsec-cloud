@@ -25,8 +25,8 @@ from parsec._parsec import (
     UserUpdateCertificate,
 )
 from parsec.api.data.manifest import (
-    AnyRemoteManifest,
     BlockAccess,
+    ChildManifest,
     FileManifest,
     FolderManifest,
     UserManifest,
@@ -61,7 +61,7 @@ __all__ = (
     "WorkspaceManifest",
     "FolderManifest",
     "FileManifest",
-    "AnyRemoteManifest",
+    "ChildManifest",
     # PKI enrollment
     "PkiEnrollmentSubmitPayload",
     "PkiEnrollmentAnswerPayload",

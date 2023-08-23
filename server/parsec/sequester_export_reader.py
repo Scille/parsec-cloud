@@ -6,7 +6,7 @@ import sqlite3
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path, PurePath
-from typing import Dict, Iterator, List, Mapping, Tuple
+from typing import Callable, Dict, Iterator, List, Mapping, Tuple, TypeVar
 
 from parsec._parsec import (
     CryptoError,
@@ -25,9 +25,9 @@ from parsec._parsec import (
     UserCertificate,
     VerifyKey,
     WorkspaceManifest,
-    manifest_verify_and_load,
+    child_manifest_verify_and_load,
 )
-from parsec.api.data.manifest import AnyRemoteManifest
+from parsec.api.data.manifest import ChildManifest
 
 REALM_EXPORT_DB_MAGIC_NUMBER = 87947
 REALM_EXPORT_DB_VERSION = 1  # Only supported version so far
@@ -180,7 +180,9 @@ class WorkspaceExport:
     devices_form_internal_id: Dict[int, Tuple[DeviceID, VerifyKey]]
     filter_on_date: DateTime
 
-    def load_manifest(self, manifest_id: EntryID) -> AnyRemoteManifest:
+    M = TypeVar("M", WorkspaceManifest, ChildManifest)
+
+    def load_manifest(self, manifest_id: EntryID, verify_and_load: Callable[..., M]) -> M:
         # Convert datetime to integer timestamp with us precision (format used in sqlite dump).
         filter_timestamp = int(self.filter_on_date.timestamp() * 1000000)
         row = self.db.con.execute(
@@ -206,7 +208,7 @@ class WorkspaceExport:
 
             decrypted_blob = self.decryption_key.decrypt(blob)
 
-            manifest = manifest_verify_and_load(
+            manifest = verify_and_load(
                 signed=decrypted_blob,
                 author_verify_key=author_verify_key,
                 expected_author=author,
@@ -223,7 +225,9 @@ class WorkspaceExport:
             ) from exc
 
     def load_workspace_manifest(self) -> WorkspaceManifest:
-        manifest = self.load_manifest(self.db.realm_id.to_entry_id())
+        manifest = self.load_manifest(
+            self.db.realm_id.to_entry_id(), WorkspaceManifest.verify_and_load
+        )
         if not isinstance(manifest, WorkspaceManifest):
             raise InconsistentWorkspaceError(
                 f"Vlob with realm id is expected to contain a Workspace manifest, but actually contained {manifest}"
@@ -252,7 +256,7 @@ class WorkspaceExport:
             # TODO: this may cause issue on Windows (e.g. `AUX`, `COM1`, `<!>`)
             child_output = output / child_name.str
             try:
-                child_manifest = self.load_manifest(child_id)
+                child_manifest = self.load_manifest(child_id, child_manifest_verify_and_load)
                 if isinstance(child_manifest, FileManifest):
                     yield from self.extract_file(
                         output=child_output, fs_path=child_fs_path, manifest=child_manifest

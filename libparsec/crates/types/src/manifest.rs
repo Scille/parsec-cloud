@@ -537,28 +537,17 @@ impl_transparent_data_format_conversion!(
 );
 
 /*
- * FileOrFolderManifest
+ * ChildManifest
  */
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(tag = "type")]
-pub enum FileOrFolderManifest {
-    #[serde(rename = "file_manifest")]
-    File(FileManifest),
-    #[serde(rename = "folder_manifest")]
-    Folder(FolderManifest),
-}
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum Manifest {
+pub enum ChildManifest {
     File(FileManifest),
     Folder(FolderManifest),
-    Workspace(WorkspaceManifest),
-    User(UserManifest),
 }
 
-impl Manifest {
+impl ChildManifest {
     pub fn decrypt_verify_and_load(
         encrypted: &[u8],
         key: &SecretKey,
@@ -592,7 +581,7 @@ impl Manifest {
             .verify(signed)
             .map_err(|_| DataError::Signature)?;
 
-        let obj = Manifest::deserialize_data(compressed)?;
+        let obj = Self::deserialize_data(compressed)?;
 
         macro_rules! internal_verify {
             ($obj:ident) => {{
@@ -606,14 +595,10 @@ impl Manifest {
         }
 
         match &obj {
-            Manifest::File(file) => internal_verify!(file),
-            Manifest::Folder(folder) => {
+            Self::File(file) => internal_verify!(file),
+            Self::Folder(folder) => {
                 internal_verify!(folder)
             }
-            Manifest::Workspace(workspace) => {
-                internal_verify!(workspace)
-            }
-            Manifest::User(user) => internal_verify!(user),
         }
         Ok(obj)
     }

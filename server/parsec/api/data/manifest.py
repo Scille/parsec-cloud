@@ -11,14 +11,14 @@ from parsec._parsec import (
     UserManifest,
     WorkspaceEntry,
     WorkspaceManifest,
-    manifest_decrypt_verify_and_load,
-    manifest_verify_and_load,
+    child_manifest_decrypt_verify_and_load,
+    child_manifest_verify_and_load,
 )
 
 if TYPE_CHECKING:
-    from parsec._parsec import AnyRemoteManifest
+    from parsec._parsec import ChildManifest
 else:
-    AnyRemoteManifest = Type["AnyRemoteManifest"]
+    ChildManifest = Type["ChildManifest"]
 
 LOCAL_AUTHOR_LEGACY_PLACEHOLDER = DeviceID(
     "LOCAL_AUTHOR_LEGACY_PLACEHOLDER@LOCAL_AUTHOR_LEGACY_PLACEHOLDER"
@@ -30,7 +30,8 @@ __all__ = [
     "FolderManifest",
     "UserManifest",
     "WorkspaceManifest",
+    "ChildManifest",
     "BlockAccess",
-    "manifest_decrypt_verify_and_load",
-    "manifest_verify_and_load",
+    "child_manifest_decrypt_verify_and_load",
+    "child_manifest_verify_and_load",
 ]
