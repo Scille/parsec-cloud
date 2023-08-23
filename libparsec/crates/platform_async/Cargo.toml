@@ -27,6 +27,7 @@ wasm-bindgen-futures = { workspace = true }
 # Window feature is require for `Timer`.
 web-sys = { workspace = true, features = ["Window"] }
 js-sys = { workspace = true }
+gloo-timers = { workspace = true, features = ["futures"] }
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
 wasm-bindgen-test = { workspace = true }
