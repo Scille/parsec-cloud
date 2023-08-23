@@ -109,6 +109,7 @@ geoclue
 geometryloaders
 geoservices
 GetRandom
+gloo
 gradlew
 grapheq
 guce

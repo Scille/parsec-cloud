@@ -4,8 +4,8 @@ pub mod oneshot;
 pub mod watch;
 
 #[inline(always)]
-pub async fn sleep(_duration: std::time::Duration) {
-    todo!()
+pub async fn sleep(duration: std::time::Duration) {
+    gloo_timers::future::sleep(duration).await;
 }
 
 #[derive(Debug)]
