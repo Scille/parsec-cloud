@@ -1,4 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+#![warn(missing_docs)]
+#![doc = include_str!("../README.md")]
 
 mod data;
 mod protocol;
@@ -72,7 +74,8 @@ fn retrieve_protocol_family_json_cmds(path: &Path) -> (String, Vec<protocol::Jso
     (family_name, json_cmds)
 }
 
-/// Procedural macro that takes a directory containing one JSON file per protocol command.
+/// Generates protocol commands code from a *path* to a directory containing one
+/// JSON file per protocol command.
 #[proc_macro]
 pub fn parsec_protocol_cmds_family(path: TokenStream) -> TokenStream {
     let path = parse_macro_input!(path as LitStr).value();
@@ -84,7 +87,8 @@ pub fn parsec_protocol_cmds_family(path: TokenStream) -> TokenStream {
     ))
 }
 
-/// Procedural macro that takes a directory containing one JSON file per protocol command.
+/// Generates protocol commands bindings code from a *path* to a directory
+/// containing one JSON file per protocol command.
 #[cfg(feature = "python-bindings-support")]
 #[proc_macro]
 pub fn python_bindings_parsec_protocol_cmds_family(path: TokenStream) -> TokenStream {
@@ -97,7 +101,8 @@ pub fn python_bindings_parsec_protocol_cmds_family(path: TokenStream) -> TokenSt
     ))
 }
 
-// Useful for tests to avoid having to deal with file system
+/// Generates protocol commands code from JSON contents.
+/// Useful for tests to avoid dealing with the filesystem.
 #[proc_macro]
 pub fn generate_protocol_cmds_family_from_contents(json_contents: TokenStream) -> TokenStream {
     let json_contents: Vec<String> = {
@@ -120,6 +125,7 @@ pub fn generate_protocol_cmds_family_from_contents(json_contents: TokenStream) -
     ))
 }
 
+/// Generates serialization code from a *path* to a single data type JSON schema.
 #[proc_macro]
 pub fn parsec_data(path: TokenStream) -> TokenStream {
     let path = parse_macro_input!(path as LitStr).value();
@@ -129,7 +135,8 @@ pub fn parsec_data(path: TokenStream) -> TokenStream {
     TokenStream::from(data::generate_data(data))
 }
 
-// Useful for tests to avoid having to deal with file system
+/// Generates serialization code from the JSON contents of a single data type.
+/// Useful for tests to avoid dealing with the filesystem.
 #[proc_macro]
 pub fn parsec_data_from_contents(json_contents: TokenStream) -> TokenStream {
     let content = parse_macro_input!(json_contents as LitStr).value();
