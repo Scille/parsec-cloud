@@ -95,3 +95,12 @@ ion-modal .inner-content {
     }
   }
 }
+
+.changes-modal {
+  --width: 842px;
+
+  //required to scroll to the edge of the bottom (override --offset-top: 0px)
+  .content-ltr {
+    --offset-top: -20px !important;
+  }
+}
