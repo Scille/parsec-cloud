@@ -125,6 +125,7 @@ class RealmExportDb:
                     RealmExportProgress.INCONSISTENT_CERTIFICATE,
                     f"Ignoring invalid user certificate { row[0] } ({ exc })",
                 )
+                continue
 
             try:
                 if row[2]:
@@ -203,7 +204,9 @@ class WorkspaceExport:
             try:
                 author, author_verify_key = self.devices_form_internal_id[author_internal_id]
             except KeyError:
-                raise InconsistentWorkspaceError(f"Missing device certificate for `{author}`")
+                raise InconsistentWorkspaceError(
+                    f"Missing device certificate for `{author_internal_id}`"
+                )
             timestamp = DateTime.from_timestamp(raw_timestamp / 1000000)
 
             decrypted_blob = self.decryption_key.decrypt(blob)
@@ -255,8 +258,10 @@ class WorkspaceExport:
             child_fs_path = fs_path / child_name.str
             # TODO: this may cause issue on Windows (e.g. `AUX`, `COM1`, `<!>`)
             child_output = output / child_name.str
+            child_manifest_version = None
             try:
                 child_manifest = self.load_manifest(child_id, child_manifest_verify_and_load)
+                child_manifest_version = child_manifest.version
                 if isinstance(child_manifest, FileManifest):
                     yield from self.extract_file(
                         output=child_output, fs_path=child_fs_path, manifest=child_manifest
@@ -276,7 +281,7 @@ class WorkspaceExport:
                 yield (
                     child_fs_path,
                     RealmExportProgress.INCONSISTENT_MANIFEST,
-                    f"Vlob {child_id.hex} version {child_manifest.version}: {exc}",
+                    f"Vlob {child_id.hex} version {child_manifest_version or '<unknown>'}: {exc}",
                 )
 
     def extract_file(
@@ -295,6 +300,7 @@ class WorkspaceExport:
                 RealmExportProgress.GENERIC_ERROR,
                 f"Failed to create file {output}: {exc}",
             )
+            return
 
         fd.truncate(manifest.size)
         for i, block in enumerate(manifest.blocks):
