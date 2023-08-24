@@ -129,7 +129,10 @@ fn struct_humanhandle_js_to_rs<'a>(
         let js_val: Handle<JsString> = obj.get(cx, "label")?;
         js_val.value(cx)
     };
-    libparsec::HumanHandle::new(&email, &label).or_throw(cx)
+    (|email: String, label: String| -> Result<libparsec::HumanHandle, String> {
+        libparsec::HumanHandle::new(&email, &label).map_err(|e| e.to_string())
+    })(email, label)
+    .or_else(|e| cx.throw_error(e))
 }
 
 #[allow(dead_code)]
