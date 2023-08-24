@@ -2,7 +2,10 @@
 
 use std::sync::Arc;
 
-pub use libparsec_client::user_ops::{UserOpsError, UserOpsWorkspaceShareError};
+pub use libparsec_client::user_ops::{
+    WorkspaceRenameError as ClientWorkspaceRenameError,
+    WorkspaceShareError as ClientWorkspaceShareError,
+};
 use libparsec_types::prelude::*;
 pub use libparsec_types::{DeviceAccessStrategy, RealmRole};
 
@@ -159,7 +162,7 @@ pub async fn client_workspace_rename(
     client: Handle,
     workspace_id: EntryID,
     new_name: EntryName,
-) -> Result<(), UserOpsError> {
+) -> Result<(), ClientWorkspaceRenameError> {
     let client = borrow_from_handle(client, |x| match x {
         crate::handle::HandleItem::Client((client, _)) => Some(client.clone()),
         _ => None,
@@ -181,7 +184,7 @@ pub async fn client_workspace_share(
     workspace_id: EntryID,
     recipient: UserID,
     role: Option<RealmRole>,
-) -> Result<(), UserOpsWorkspaceShareError> {
+) -> Result<(), ClientWorkspaceShareError> {
     let client = borrow_from_handle(client, |x| match x {
         crate::handle::HandleItem::Client((client, _)) => Some(client.clone()),
         _ => None,

@@ -225,21 +225,21 @@ export interface ClientWorkspaceCreateErrorInternal {
 export type ClientWorkspaceCreateError =
   | ClientWorkspaceCreateErrorInternal
 
-// UserOpsError
-export interface UserOpsErrorInternal {
+// ClientWorkspaceRenameError
+export interface ClientWorkspaceRenameErrorInternal {
     tag: 'Internal'
     error: string
 }
-export interface UserOpsErrorUnknownWorkspace {
+export interface ClientWorkspaceRenameErrorUnknownWorkspace {
     tag: 'UnknownWorkspace'
     error: string
 }
-export type UserOpsError =
-  | UserOpsErrorInternal
-  | UserOpsErrorUnknownWorkspace
+export type ClientWorkspaceRenameError =
+  | ClientWorkspaceRenameErrorInternal
+  | ClientWorkspaceRenameErrorUnknownWorkspace
 
-// UserOpsWorkspaceShareError
-export interface UserOpsWorkspaceShareErrorBadTimestamp {
+// ClientWorkspaceShareError
+export interface ClientWorkspaceShareErrorBadTimestamp {
     tag: 'BadTimestamp'
     error: string
     serverTimestamp: DateTime
@@ -247,58 +247,58 @@ export interface UserOpsWorkspaceShareErrorBadTimestamp {
     ballparkClientEarlyOffset: number
     ballparkClientLateOffset: number
 }
-export interface UserOpsWorkspaceShareErrorInternal {
+export interface ClientWorkspaceShareErrorInternal {
     tag: 'Internal'
     error: string
 }
-export interface UserOpsWorkspaceShareErrorNotAllowed {
+export interface ClientWorkspaceShareErrorNotAllowed {
     tag: 'NotAllowed'
     error: string
 }
-export interface UserOpsWorkspaceShareErrorOffline {
+export interface ClientWorkspaceShareErrorOffline {
     tag: 'Offline'
     error: string
 }
-export interface UserOpsWorkspaceShareErrorOutsiderCannotBeManagerOrOwner {
+export interface ClientWorkspaceShareErrorOutsiderCannotBeManagerOrOwner {
     tag: 'OutsiderCannotBeManagerOrOwner'
     error: string
 }
-export interface UserOpsWorkspaceShareErrorRevokedRecipient {
+export interface ClientWorkspaceShareErrorRevokedRecipient {
     tag: 'RevokedRecipient'
     error: string
 }
-export interface UserOpsWorkspaceShareErrorShareToSelf {
+export interface ClientWorkspaceShareErrorShareToSelf {
     tag: 'ShareToSelf'
     error: string
 }
-export interface UserOpsWorkspaceShareErrorUnknownRecipient {
+export interface ClientWorkspaceShareErrorUnknownRecipient {
     tag: 'UnknownRecipient'
     error: string
 }
-export interface UserOpsWorkspaceShareErrorUnknownRecipientOrWorkspace {
+export interface ClientWorkspaceShareErrorUnknownRecipientOrWorkspace {
     tag: 'UnknownRecipientOrWorkspace'
     error: string
 }
-export interface UserOpsWorkspaceShareErrorUnknownWorkspace {
+export interface ClientWorkspaceShareErrorUnknownWorkspace {
     tag: 'UnknownWorkspace'
     error: string
 }
-export interface UserOpsWorkspaceShareErrorWorkspaceInMaintenance {
+export interface ClientWorkspaceShareErrorWorkspaceInMaintenance {
     tag: 'WorkspaceInMaintenance'
     error: string
 }
-export type UserOpsWorkspaceShareError =
-  | UserOpsWorkspaceShareErrorBadTimestamp
-  | UserOpsWorkspaceShareErrorInternal
-  | UserOpsWorkspaceShareErrorNotAllowed
-  | UserOpsWorkspaceShareErrorOffline
-  | UserOpsWorkspaceShareErrorOutsiderCannotBeManagerOrOwner
-  | UserOpsWorkspaceShareErrorRevokedRecipient
-  | UserOpsWorkspaceShareErrorShareToSelf
-  | UserOpsWorkspaceShareErrorUnknownRecipient
-  | UserOpsWorkspaceShareErrorUnknownRecipientOrWorkspace
-  | UserOpsWorkspaceShareErrorUnknownWorkspace
-  | UserOpsWorkspaceShareErrorWorkspaceInMaintenance
+export type ClientWorkspaceShareError =
+  | ClientWorkspaceShareErrorBadTimestamp
+  | ClientWorkspaceShareErrorInternal
+  | ClientWorkspaceShareErrorNotAllowed
+  | ClientWorkspaceShareErrorOffline
+  | ClientWorkspaceShareErrorOutsiderCannotBeManagerOrOwner
+  | ClientWorkspaceShareErrorRevokedRecipient
+  | ClientWorkspaceShareErrorShareToSelf
+  | ClientWorkspaceShareErrorUnknownRecipient
+  | ClientWorkspaceShareErrorUnknownRecipientOrWorkspace
+  | ClientWorkspaceShareErrorUnknownWorkspace
+  | ClientWorkspaceShareErrorWorkspaceInMaintenance
 
 // UserProfile
 export interface UserProfileAdmin {
@@ -721,13 +721,13 @@ export interface LibParsecPlugin {
         client: number,
         workspace_id: EntryID,
         new_name: EntryName
-    ): Promise<Result<null, UserOpsError>>
+    ): Promise<Result<null, ClientWorkspaceRenameError>>
     clientWorkspaceShare(
         client: number,
         workspace_id: EntryID,
         recipient: UserID,
         role: RealmRole | null
-    ): Promise<Result<null, UserOpsWorkspaceShareError>>
+    ): Promise<Result<null, ClientWorkspaceShareError>>
     claimerGreeterAbortOperation(
         handle: number
     ): Promise<Result<null, ClaimerGreeterAbortOperationError>>

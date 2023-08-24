@@ -1348,22 +1348,22 @@ fn variant_clientworkspacecreateerror_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// UserOpsError
+// ClientWorkspaceRenameError
 
 #[allow(dead_code)]
-fn variant_useropserror_rs_to_js<'a>(
+fn variant_clientworkspacerenameerror_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::UserOpsError,
+    rs_obj: libparsec::ClientWorkspaceRenameError,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::UserOpsError::Internal { .. } => {
+        libparsec::ClientWorkspaceRenameError::Internal { .. } => {
             let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::UserOpsError::UnknownWorkspace { .. } => {
+        libparsec::ClientWorkspaceRenameError::UnknownWorkspace { .. } => {
             let js_tag = JsString::try_new(cx, "UnknownWorkspace").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
@@ -1371,18 +1371,18 @@ fn variant_useropserror_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// UserOpsWorkspaceShareError
+// ClientWorkspaceShareError
 
 #[allow(dead_code)]
-fn variant_useropsworkspaceshareerror_rs_to_js<'a>(
+fn variant_clientworkspaceshareerror_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::UserOpsWorkspaceShareError,
+    rs_obj: libparsec::ClientWorkspaceShareError,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::UserOpsWorkspaceShareError::BadTimestamp {
+        libparsec::ClientWorkspaceShareError::BadTimestamp {
             server_timestamp,
             client_timestamp,
             ballpark_client_early_offset,
@@ -1428,43 +1428,43 @@ fn variant_useropsworkspaceshareerror_rs_to_js<'a>(
                 js_ballpark_client_late_offset,
             )?;
         }
-        libparsec::UserOpsWorkspaceShareError::Internal { .. } => {
+        libparsec::ClientWorkspaceShareError::Internal { .. } => {
             let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::UserOpsWorkspaceShareError::NotAllowed { .. } => {
+        libparsec::ClientWorkspaceShareError::NotAllowed { .. } => {
             let js_tag = JsString::try_new(cx, "NotAllowed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::UserOpsWorkspaceShareError::Offline { .. } => {
+        libparsec::ClientWorkspaceShareError::Offline { .. } => {
             let js_tag = JsString::try_new(cx, "Offline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::UserOpsWorkspaceShareError::OutsiderCannotBeManagerOrOwner { .. } => {
+        libparsec::ClientWorkspaceShareError::OutsiderCannotBeManagerOrOwner { .. } => {
             let js_tag = JsString::try_new(cx, "OutsiderCannotBeManagerOrOwner").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::UserOpsWorkspaceShareError::RevokedRecipient { .. } => {
+        libparsec::ClientWorkspaceShareError::RevokedRecipient { .. } => {
             let js_tag = JsString::try_new(cx, "RevokedRecipient").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::UserOpsWorkspaceShareError::ShareToSelf { .. } => {
+        libparsec::ClientWorkspaceShareError::ShareToSelf { .. } => {
             let js_tag = JsString::try_new(cx, "ShareToSelf").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::UserOpsWorkspaceShareError::UnknownRecipient { .. } => {
+        libparsec::ClientWorkspaceShareError::UnknownRecipient { .. } => {
             let js_tag = JsString::try_new(cx, "UnknownRecipient").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::UserOpsWorkspaceShareError::UnknownRecipientOrWorkspace { .. } => {
+        libparsec::ClientWorkspaceShareError::UnknownRecipientOrWorkspace { .. } => {
             let js_tag = JsString::try_new(cx, "UnknownRecipientOrWorkspace").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::UserOpsWorkspaceShareError::UnknownWorkspace { .. } => {
+        libparsec::ClientWorkspaceShareError::UnknownWorkspace { .. } => {
             let js_tag = JsString::try_new(cx, "UnknownWorkspace").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::UserOpsWorkspaceShareError::WorkspaceInMaintenance { .. } => {
+        libparsec::ClientWorkspaceShareError::WorkspaceInMaintenance { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceInMaintenance").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
@@ -2931,7 +2931,7 @@ fn client_workspace_rename(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_useropserror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_clientworkspacerenameerror_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -3011,7 +3011,7 @@ fn client_workspace_share(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_useropsworkspaceshareerror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_clientworkspaceshareerror_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
