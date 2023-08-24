@@ -5,7 +5,7 @@ use std::sync::Arc;
 use libparsec_platform_storage::workspace::workspace_storage_non_speculative_init;
 use libparsec_types::prelude::*;
 
-use super::{UserOps, UserOpsError};
+use super::UserOps;
 
 pub(super) async fn workspace_create(
     ops: &UserOps,
@@ -45,11 +45,19 @@ pub(super) async fn workspace_create(
     Ok(workspace_id)
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum WorkspaceRenameError {
+    #[error("Unknown workspace `{0}`")]
+    UnknownWorkspace(EntryID),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
 pub(super) async fn workspace_rename(
     ops: &UserOps,
     workspace_id: EntryID,
     new_name: EntryName,
-) -> Result<(), UserOpsError> {
+) -> Result<(), WorkspaceRenameError> {
     let (updater, mut user_manifest) = ops.storage.for_update().await;
 
     if let Some(workspace_entry) = user_manifest.get_workspace_entry(workspace_id) {
@@ -64,11 +72,13 @@ pub(super) async fn workspace_rename(
         updater
             .set_user_manifest(user_manifest)
             .await
-            .map_err(UserOpsError::Internal)?;
+            .map_err(WorkspaceRenameError::Internal)?;
         // TODO: handle events
         // ops.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=ops.user_manifest_id)
     } else {
-        return Err(UserOpsError::UnknownWorkspace(workspace_id.to_owned()));
+        return Err(WorkspaceRenameError::UnknownWorkspace(
+            workspace_id.to_owned(),
+        ));
     }
 
     Ok(())

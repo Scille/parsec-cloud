@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_client::user_ops::UserOpsError;
+use libparsec_client::user_ops::WorkspaceRenameError;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -62,7 +62,7 @@ async fn rename_unknown_id(env: &TestbedEnv) {
 
     p_assert_matches!(
         outcome,
-        Err(UserOpsError::UnknownWorkspace(wid))
+        Err(WorkspaceRenameError::UnknownWorkspace(wid))
         if wid == bad_wid
     );
 

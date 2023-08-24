@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_client::user_ops::UserOpsWorkspaceShareError;
+use libparsec_client::user_ops::WorkspaceShareError;
 use libparsec_client_connection::{protocol::authenticated_cmds, test_register_send_hook};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -18,7 +18,7 @@ async fn to_unknown_user(env: &TestbedEnv) {
     let outcome = user_ops
         .workspace_share(wid, &"bob".parse().unwrap(), Some(RealmRole::Contributor))
         .await;
-    p_assert_matches!(outcome, Err(UserOpsWorkspaceShareError::UnknownRecipient));
+    p_assert_matches!(outcome, Err(WorkspaceShareError::UnknownRecipient));
 
     user_ops.stop().await;
 }

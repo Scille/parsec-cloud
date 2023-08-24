@@ -87,7 +87,7 @@ async def client_workspace_create(
     ...
 
 
-class UserOpsError(ErrorVariant):
+class ClientWorkspaceRenameError(ErrorVariant):
     class UnknownWorkspace:
         pass
 
@@ -99,11 +99,11 @@ async def client_workspace_rename(
     client: Handle,
     workspace_id: EntryID,
     new_name: EntryName,
-) -> Result[None, UserOpsError]:
+) -> Result[None, ClientWorkspaceRenameError]:
     ...
 
 
-class UserOpsWorkspaceShareError(ErrorVariant):
+class ClientWorkspaceShareError(ErrorVariant):
     class ShareToSelf:
         pass
 
@@ -146,5 +146,5 @@ async def client_workspace_share(
     workspace_id: EntryID,
     recipient: UserID,
     role: Optional[RealmRole],
-) -> Result[None, UserOpsWorkspaceShareError]:
+) -> Result[None, ClientWorkspaceShareError]:
     ...

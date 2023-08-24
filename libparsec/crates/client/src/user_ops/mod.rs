@@ -7,6 +7,7 @@ mod message;
 mod share;
 mod sync;
 
+pub use create::*;
 pub use message::*;
 // pub use reencryption::*;
 pub use share::*;
@@ -32,14 +33,6 @@ pub struct UserOps {
     // Message processing is done in-order, hence it is pointless to do
     // it concurrently
     process_messages_lock: AsyncMutex<()>,
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum UserOpsError {
-    #[error("Unknown workspace `{0}`")]
-    UnknownWorkspace(EntryID),
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
 }
 
 #[derive(Debug)]
@@ -106,7 +99,7 @@ impl UserOps {
         &self,
         workspace_id: EntryID,
         new_name: EntryName,
-    ) -> Result<(), UserOpsError> {
+    ) -> Result<(), WorkspaceRenameError> {
         create::workspace_rename(self, workspace_id, new_name).await
     }
 
@@ -115,7 +108,7 @@ impl UserOps {
         workspace_id: EntryID,
         recipient: &UserID,
         role: Option<RealmRole>,
-    ) -> Result<(), UserOpsWorkspaceShareError> {
+    ) -> Result<(), WorkspaceShareError> {
         share::workspace_share(self, workspace_id, recipient, role).await
     }
 
