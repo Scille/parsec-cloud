@@ -1311,6 +1311,7 @@ dependencies = [
  "chrono",
  "futures",
  "libparsec_crypto",
+ "libparsec_platform_async",
  "libparsec_platform_http_proxy",
  "libparsec_protocol",
  "libparsec_testbed",
@@ -1400,6 +1401,19 @@ version = "0.0.0"
 dependencies = [
  "libparsec_types",
  "reqwest",
+]
+
+[[package]]
+name = "libparsec_platform_sse"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "eventsource-stream",
+ "futures",
+ "libparsec_platform_async",
+ "log",
+ "reqwest",
+ "thiserror",
 ]
 
 [[package]]

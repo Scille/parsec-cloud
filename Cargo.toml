@@ -7,6 +7,7 @@ members = [
     "libparsec/crates/crypto",
     "libparsec/crates/platform_async",
     "libparsec/crates/platform_device_loader",
+    "libparsec/crates/platform_sse",
     "libparsec/crates/platform_storage",
     "libparsec/crates/protocol",
     "libparsec/crates/serialization_format",
@@ -27,6 +28,7 @@ default-members = [
     "libparsec/crates/crypto",
     "libparsec/crates/platform_async",
     "libparsec/crates/platform_device_loader",
+    "libparsec/crates/platform_sse",
     "libparsec/crates/platform_storage",
     "libparsec/crates/protocol",
     "libparsec/crates/serialization_format",
@@ -74,6 +76,7 @@ libparsec_platform_async = { path = "libparsec/crates/platform_async", default-f
 libparsec_platform_http_proxy = { path = "libparsec/crates/platform_http_proxy", default-features = false }
 libparsec_client = { path = "libparsec/crates/client", default-features = false }
 libparsec_tests_macros = { path = "libparsec/crates/tests_macros", default-features = false }
+libparsec_platform_sse = { path = "libparsec/crates/platform_sse", default-features = false }
 
 # Third parties
 android_logger = { version = "0.13", default-features = false }
@@ -98,6 +101,7 @@ ed25519-dalek = { version = "1.0.1", default-features = false }
 email-address-parser = { version = "2.0.0", default-features = false }
 env_logger = { version = "0.10.0", default-features = false }
 event-listener = { version = "2.5.3", default-features = false }
+eventsource-stream = { version = "0.2.3", default-features = false }
 flate2 = { version = "1.0.27", default-features = false }
 flume = { version = "0.10.14", default-features = false }
 fnmatch-regex = { version = "0.2.0", default-features = false }

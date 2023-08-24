@@ -1,0 +1,20 @@
+[package]
+name = "libparsec_platform_sse"
+publish.workspace = true
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+version.workspace = true
+repository.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+libparsec_platform_async = { workspace = true }
+reqwest = { workspace = true, features = ["stream"] }
+thiserror = { workspace = true }
+futures = { workspace = true }
+eventsource-stream = { workspace = true, features = ["std"] }
+anyhow = { workspace = true, features = ["std"] }
+log = { workspace = true }
