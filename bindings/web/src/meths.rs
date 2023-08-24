@@ -1413,35 +1413,37 @@ fn variant_clientworkspacecreateerror_rs_to_js(
     Ok(js_obj)
 }
 
-// UserOpsError
+// ClientWorkspaceRenameError
 
 #[allow(dead_code)]
-fn variant_useropserror_rs_to_js(rs_obj: libparsec::UserOpsError) -> Result<JsValue, JsValue> {
+fn variant_clientworkspacerenameerror_rs_to_js(
+    rs_obj: libparsec::ClientWorkspaceRenameError,
+) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::UserOpsError::Internal { .. } => {
+        libparsec::ClientWorkspaceRenameError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
         }
-        libparsec::UserOpsError::UnknownWorkspace { .. } => {
+        libparsec::ClientWorkspaceRenameError::UnknownWorkspace { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"UnknownWorkspace".into())?;
         }
     }
     Ok(js_obj)
 }
 
-// UserOpsWorkspaceShareError
+// ClientWorkspaceShareError
 
 #[allow(dead_code)]
-fn variant_useropsworkspaceshareerror_rs_to_js(
-    rs_obj: libparsec::UserOpsWorkspaceShareError,
+fn variant_clientworkspaceshareerror_rs_to_js(
+    rs_obj: libparsec::ClientWorkspaceShareError,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::UserOpsWorkspaceShareError::BadTimestamp {
+        libparsec::ClientWorkspaceShareError::BadTimestamp {
             server_timestamp,
             client_timestamp,
             ballpark_client_early_offset,
@@ -1486,42 +1488,42 @@ fn variant_useropsworkspaceshareerror_rs_to_js(
                 &js_ballpark_client_late_offset,
             )?;
         }
-        libparsec::UserOpsWorkspaceShareError::Internal { .. } => {
+        libparsec::ClientWorkspaceShareError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
         }
-        libparsec::UserOpsWorkspaceShareError::NotAllowed { .. } => {
+        libparsec::ClientWorkspaceShareError::NotAllowed { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"NotAllowed".into())?;
         }
-        libparsec::UserOpsWorkspaceShareError::Offline { .. } => {
+        libparsec::ClientWorkspaceShareError::Offline { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
         }
-        libparsec::UserOpsWorkspaceShareError::OutsiderCannotBeManagerOrOwner { .. } => {
+        libparsec::ClientWorkspaceShareError::OutsiderCannotBeManagerOrOwner { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"OutsiderCannotBeManagerOrOwner".into(),
             )?;
         }
-        libparsec::UserOpsWorkspaceShareError::RevokedRecipient { .. } => {
+        libparsec::ClientWorkspaceShareError::RevokedRecipient { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"RevokedRecipient".into())?;
         }
-        libparsec::UserOpsWorkspaceShareError::ShareToSelf { .. } => {
+        libparsec::ClientWorkspaceShareError::ShareToSelf { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ShareToSelf".into())?;
         }
-        libparsec::UserOpsWorkspaceShareError::UnknownRecipient { .. } => {
+        libparsec::ClientWorkspaceShareError::UnknownRecipient { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"UnknownRecipient".into())?;
         }
-        libparsec::UserOpsWorkspaceShareError::UnknownRecipientOrWorkspace { .. } => {
+        libparsec::ClientWorkspaceShareError::UnknownRecipientOrWorkspace { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"UnknownRecipientOrWorkspace".into(),
             )?;
         }
-        libparsec::UserOpsWorkspaceShareError::UnknownWorkspace { .. } => {
+        libparsec::ClientWorkspaceShareError::UnknownWorkspace { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"UnknownWorkspace".into())?;
         }
-        libparsec::UserOpsWorkspaceShareError::WorkspaceInMaintenance { .. } => {
+        libparsec::ClientWorkspaceShareError::WorkspaceInMaintenance { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"WorkspaceInMaintenance".into())?;
         }
     }
@@ -2748,7 +2750,7 @@ pub fn clientWorkspaceRename(client: u32, workspace_id: Uint8Array, new_name: St
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_useropserror_rs_to_js(err)?;
+                let js_err = variant_clientworkspacerenameerror_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -2801,7 +2803,7 @@ pub fn clientWorkspaceShare(
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_useropsworkspaceshareerror_rs_to_js(err)?;
+                let js_err = variant_clientworkspaceshareerror_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
