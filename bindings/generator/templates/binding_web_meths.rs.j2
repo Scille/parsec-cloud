@@ -343,8 +343,8 @@ fn {{ struct_js_to_rs_function_name(struct) }}(obj: JsValue) -> Result<libparsec
 fn {{ struct_rs_to_js_function_name(struct) }}(rs_obj: libparsec::{{ struct.name }}) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
 {% for attr_name, attr_type in struct.attributes.items() %}
-    {% set value = struct.get_value(attr_name) or attr_name %}
-    let js_{{ attr_name }} = {{ render_rs_to_js_value("rs_obj.%s" % value, attr_type) | indent }};
+    {% set value = struct.get_value("rs_obj", attr_name) %}
+    let js_{{ attr_name }} = {{ render_rs_to_js_value(value, attr_type) | indent }};
     Reflect::set(&js_obj, &"{{ attr_name | snake2camel }}".into(), &js_{{ attr_name }})?;
 {% endfor %}
     Ok(js_obj)
