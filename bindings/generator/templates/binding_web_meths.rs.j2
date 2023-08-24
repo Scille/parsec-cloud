@@ -46,7 +46,6 @@ Function
 {%- endif -%}
 {%- endmacro -%}
 
-
 {%- macro render_function_param_cooking(param_name, type) -%}
 {% if type.kind == "ref" %}
 {{ render_function_param_cooking(param_name, type.elem) }}
@@ -328,12 +327,12 @@ fn {{ struct_js_to_rs_function_name(struct) }}(obj: JsValue) -> Result<libparsec
 {% endfor %}
 {% if struct.custom_init is none %}
     Ok(libparsec::{{ struct.name }} {
-{% for attr_name in struct.attributes.keys() %}
-        {{ attr_name }},
-{% endfor %}
+        {{ struct.list_attributes() }}
     })
 {% else %}
-    {{ struct.custom_init['web'] }}
+    ({{ struct.custom_init }})(
+        {{ struct.list_attributes() }}
+    ).map_err(|e| e.into())
 {% endif %}
 }
 {% endmacro -%}
@@ -377,9 +376,7 @@ fn {{ variant_js_to_rs_function_name(variant) }}(obj: JsValue) -> Result<libpars
             };
 {% endfor %}
             Ok(libparsec::{{ variant.name }}::{{ value.name }} {
-{% for attr_name in value.struct.attributes.keys() %}
-                {{ attr_name }},
-{% endfor %}
+                {{ value.struct.list_attributes() }}
             })
 {% elif value.is_tuple %}
 {% for attr_type in value.tuple %}
@@ -417,7 +414,7 @@ fn {{ variant_rs_to_js_function_name(variant) }}(rs_obj: libparsec::{{ variant.n
     match rs_obj {
 {% for value in variant.values %}
 {% if value.is_struct %}
-        libparsec::{{ variant.name }}::{{ value.name }}{ {% for attr_name in value.struct.attributes.keys() %}{{ attr_name }},{% endfor %} .. } => {
+        libparsec::{{ variant.name }}::{{ value.name }}{ {{ value.struct.list_attributes() }} .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"{{ value.name }}".into())?;
 {% for attr_name, attr_type in value.struct.attributes.items() %}
             let js_{{ attr_name }} = {{ render_rs_to_js_value(attr_name, attr_type) | indent(12) }};

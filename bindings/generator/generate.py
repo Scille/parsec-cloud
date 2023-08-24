@@ -239,6 +239,11 @@ class StructSpec(BaseTypeInUse):
             return value + "()"
         return None
 
+    def list_attributes(self) -> str:
+        if len(self.attributes) == 0:
+            return ""
+        return ",".join(self.attributes.keys()) + ","
+
 
 @dataclass
 class VariantItemSpec(BaseTypeInUse):

@@ -146,8 +146,10 @@ fn struct_humanhandle_js_to_rs(obj: JsValue) -> Result<libparsec::HumanHandle, J
             .and_then(|s| s.as_string())
             .ok_or_else(|| TypeError::new("Not a string"))?
     };
-    libparsec::HumanHandle::new(&email, &label)
-        .map_err(|e| TypeError::new(&format!("Invalid HumanHandle: {e}")).into())
+    (|email: String, label: String| -> Result<libparsec::HumanHandle, String> {
+        libparsec::HumanHandle::new(&email, &label).map_err(|e| e.to_string())
+    })(email, label)
+    .map_err(|e| e.into())
 }
 
 #[allow(dead_code)]
