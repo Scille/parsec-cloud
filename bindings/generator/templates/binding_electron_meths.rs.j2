@@ -346,12 +346,10 @@ fn {{ struct_js_to_rs_function_name(struct) }}<'a>(
 {% endfor %}
 {% if struct.custom_init is none %}
     Ok(libparsec::{{ struct.name }} {
-{% for attr_name in struct.attributes.keys() %}
-        {{ attr_name }},
-{% endfor %}
+        {{ struct.list_attributes() }}
     })
 {% else %}
-    {{ struct.custom_init['electron'] }}
+    ({{ struct.custom_init }})({{ struct.list_attributes() }}).or_else(|e| cx.throw_error(e))
 {% endif%}
 }
 {% endmacro -%}
@@ -401,9 +399,7 @@ fn {{ variant_js_to_rs_function_name(variant) }}<'a>(
             };
 {% endfor %}
             Ok(libparsec::{{ variant.name }}::{{ value.name }} {
-{% for attr_name in value.struct.attributes.keys() %}
-                {{ attr_name }},
-{% endfor %}
+                {{ value.struct.list_attributes() }}
             })
 {% elif value.is_tuple %}
 {% for attr_type in value.tuple %}
@@ -442,7 +438,7 @@ fn {{ variant_rs_to_js_function_name(variant) }}<'a>(
     match rs_obj {
 {% for value in variant.values %}
 {% if value.is_struct %}
-        libparsec::{{ variant.name }}::{{ value.name }}{ {% for attr_name in value.struct.attributes.keys() %}{{ attr_name }},{% endfor %} .. } => {
+        libparsec::{{ variant.name }}::{{ value.name }}{ {{ value.struct.list_attributes() }} .. } => {
             let js_tag = JsString::try_new(cx, "{{ value.name }}").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
 {% for attr_name, attr_type in value.struct.attributes.items() %}
