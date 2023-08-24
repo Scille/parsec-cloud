@@ -436,12 +436,55 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
     )
 
 
+def generate_client(api_specs: ApiSpecs) -> list[str]:
+    template = env.get_template("client_plugin_definitions.d.ts.j2")
+    output = (BASEDIR / "../../client/src/plugins/libparsec/definitions.d.ts").resolve()
+    print(f"Generating {output}")
+    # Don't use `write_text` given it outputs \r\n for newlines on Windows
+    output.write_bytes(template.render(api=api_specs).encode("utf8"))
+    return []
+
+
+def generate_electron(api_specs: ApiSpecs) -> list[str]:
+    template = env.get_template("binding_electron_index.d.ts.j2")
+    output = (BASEDIR / "../electron/src/index.d.ts").resolve()
+    print(f"Generating {output}")
+    output.write_bytes(template.render(api=api_specs).encode("utf8"))
+
+    template = env.get_template("binding_electron_meths.rs.j2")
+    output = (BASEDIR / "../electron/src/meths.rs").resolve()
+    print(f"Generating {output}")
+    output.write_bytes(template.render(api=api_specs).encode("utf8"))
+
+    return ["libparsec_bindings_electron"]
+
+
+def generate_web(api_specs: ApiSpecs) -> list[str]:
+    template = env.get_template("binding_web_meths.rs.j2")
+    output = (BASEDIR / "../web/src/meths.rs").resolve()
+    print(f"Generating {output}")
+    output.write_bytes(template.render(api=api_specs).encode("utf8"))
+
+    return ["libparsec_bindings_web"]
+
+
+def generate(what: str, api_specs: ApiSpecs) -> list[str]:
+    if what == "client":
+        return generate_client(api_specs)
+    elif what == "electron":
+        return generate_electron(api_specs)
+    elif what == "web":
+        return generate_web(api_specs)
+    elif what == "android":
+        # TODO !
+        raise NotImplementedError("Android isn't ready yet")
+    else:
+        raise ValueError(f"Unknown generator `{what}`")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate bindings code")
-    parser.add_argument(
-        "what",
-        choices=["all", "client", "electron", "web", "android"],
-    )
+    parser.add_argument("what", choices=["all", "client", "electron", "web", "android"], nargs="+")
     parser.add_argument("--test", action="store_true")
     args = parser.parse_args()
 
@@ -453,35 +496,13 @@ if __name__ == "__main__":
 
     rust_modified_packages = []
 
-    if args.what in ("all", "client"):
-        template = env.get_template("client_plugin_definitions.d.ts.j2")
-        output = (BASEDIR / "../../client/src/plugins/libparsec/definitions.d.ts").resolve()
-        print(f"Generating {output}")
-        # Don't use `write_text` given it outputs \r\n for newlines on Windows
-        output.write_bytes(template.render(api=api_specs).encode("utf8"))
-
-    if args.what in ("all", "electron"):
-        template = env.get_template("binding_electron_index.d.ts.j2")
-        output = (BASEDIR / "../electron/src/index.d.ts").resolve()
-        print(f"Generating {output}")
-        output.write_bytes(template.render(api=api_specs).encode("utf8"))
-
-        template = env.get_template("binding_electron_meths.rs.j2")
-        output = (BASEDIR / "../electron/src/meths.rs").resolve()
-        rust_modified_packages.append("libparsec_bindings_electron")
-        print(f"Generating {output}")
-        output.write_bytes(template.render(api=api_specs).encode("utf8"))
-
-    if args.what in ("all", "web"):
-        template = env.get_template("binding_web_meths.rs.j2")
-        output = (BASEDIR / "../web/src/meths.rs").resolve()
-        rust_modified_packages.append("libparsec_bindings_web")
-        print(f"Generating {output}")
-        output.write_bytes(template.render(api=api_specs).encode("utf8"))
-
-    if args.what in ("all", "android"):
-        # TODO !
-        pass
+    if "all" in args.what:
+        rust_modified_packages.extend(
+            generate_client(api_specs) + generate_electron(api_specs) + generate_web(api_specs)
+        )
+    else:
+        for what in args.what:
+            rust_modified_packages.extend(generate(what, api_specs))
 
     subprocess.check_call(
         args=["cargo", "fmt"] + [f"--package={package}" for package in rust_modified_packages],
