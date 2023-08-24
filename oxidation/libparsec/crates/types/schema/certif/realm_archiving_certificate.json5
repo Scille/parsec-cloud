@@ -1,0 +1,21 @@
+{
+    "label": "RealmArchivingCertificate",
+    "type": "realm_archiving_certificate",
+    "other_fields": [
+        {
+            "name": "author",
+            "type": "DeviceID"
+        },
+        {
+            "name": "timestamp",
+            "type": "DateTime"
+        },        {
+            "name": "realm_id",
+            "type": "RealmID"
+        },
+        {
+            "name": "configuration",
+            "type": "RealmArchivingConfiguration"
+        }
+    ]
+}

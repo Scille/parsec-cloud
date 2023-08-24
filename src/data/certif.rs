@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::{
+    exceptions::PyAttributeError,
     prelude::*,
     types::{PyBytes, PyDict, PyType},
 };
@@ -627,5 +628,146 @@ impl SequesterServiceCertificate {
     #[getter]
     fn encryption_key_der(&self) -> SequesterPublicKeyDer {
         SequesterPublicKeyDer(self.0.encryption_key_der.clone())
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct RealmArchivingConfiguration(pub libparsec::types::RealmArchivingConfiguration);
+
+crate::binding_utils::gen_proto!(RealmArchivingConfiguration, __repr__);
+crate::binding_utils::gen_proto!(RealmArchivingConfiguration, __copy__);
+crate::binding_utils::gen_proto!(RealmArchivingConfiguration, __deepcopy__);
+crate::binding_utils::gen_proto!(RealmArchivingConfiguration, __richcmp__, eq);
+crate::binding_utils::gen_proto!(RealmArchivingConfiguration, __hash__);
+
+#[pymethods]
+impl RealmArchivingConfiguration {
+    #[classmethod]
+    pub(crate) fn available(_cls: &PyType) -> &'static PyObject {
+        ::lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                ::pyo3::Python::with_gil(|py| {
+                    RealmArchivingConfiguration(libparsec::types::RealmArchivingConfiguration::Available).into_py(py)
+                })
+            };
+        };
+        &VALUE
+    }
+
+    #[classmethod]
+    pub(crate) fn archived(_cls: &PyType) -> &'static PyObject {
+        ::lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                ::pyo3::Python::with_gil(|py| {
+                    RealmArchivingConfiguration(libparsec::types::RealmArchivingConfiguration::Archived).into_py(py)
+                })
+            };
+        };
+        &VALUE
+    }
+
+    #[classmethod]
+    pub(crate) fn deletion_planned(_cls: &PyType, deletion_date: DateTime) -> Self {
+        RealmArchivingConfiguration(
+            libparsec::types::RealmArchivingConfiguration::DeletionPlanned(deletion_date.0),
+        )
+    }
+
+    #[getter]
+    fn str(&self) -> &'static str {
+        match self.0 {
+            libparsec::types::RealmArchivingConfiguration::Available => "AVAILABLE",
+            libparsec::types::RealmArchivingConfiguration::Archived => "ARCHIVED",
+            libparsec::types::RealmArchivingConfiguration::DeletionPlanned(_) => "DELETION_PLANNED",
+        }
+    }
+
+    #[getter]
+    fn deletion_date(&self) -> PyResult<DateTime> {
+        match self.0 {
+            libparsec::types::RealmArchivingConfiguration::DeletionPlanned(x) => Ok(DateTime(x)),
+            _ => Err(PyAttributeError::new_err(
+                "No such attribute `deletion_date`",
+            )),
+        }
+    }
+}
+
+#[pyclass]
+pub(crate) struct RealmArchivingCertificate(pub libparsec::types::RealmArchivingCertificate);
+
+crate::binding_utils::gen_proto!(RealmArchivingCertificate, __repr__);
+crate::binding_utils::gen_proto!(RealmArchivingCertificate, __copy__);
+crate::binding_utils::gen_proto!(RealmArchivingCertificate, __deepcopy__);
+crate::binding_utils::gen_proto!(RealmArchivingCertificate, __richcmp__, eq);
+
+#[pymethods]
+impl RealmArchivingCertificate {
+    #[new]
+    #[args(py_kwargs = "**")]
+    fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+        crate::binding_utils::parse_kwargs!(
+            py_kwargs,
+            [author: DeviceID, "author"],
+            [timestamp: DateTime, "timestamp"],
+            [realm_id: RealmID, "realm_id"],
+            [configuration: RealmArchivingConfiguration, "configuration"],
+        );
+
+        Ok(Self(libparsec::types::RealmArchivingCertificate {
+            timestamp: timestamp.0,
+            author: author.0,
+            realm_id: realm_id.0,
+            configuration: configuration.0,
+        }))
+    }
+
+    #[classmethod]
+    fn verify_and_load(
+        _cls: &PyType,
+        signed: &[u8],
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+        expected_realm: Option<RealmID>,
+    ) -> DataResult<Self> {
+        Ok(
+            libparsec::types::RealmArchivingCertificate::verify_and_load(
+                signed,
+                &author_verify_key.0,
+                &expected_author.0,
+                expected_realm.map(|x| x.0),
+            )
+            .map(Self)?,
+        )
+    }
+
+    fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
+    }
+
+    #[classmethod]
+    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> DataResult<Self> {
+        Ok(libparsec::types::RealmArchivingCertificate::unsecure_load(signed).map(Self)?)
+    }
+
+    #[getter]
+    fn author(&self) -> DeviceID {
+        DeviceID(self.0.author.clone())
+    }
+
+    #[getter]
+    fn timestamp(&self) -> DateTime {
+        DateTime(self.0.timestamp)
+    }
+
+    #[getter]
+    fn realm_id(&self) -> RealmID {
+        RealmID(self.0.realm_id)
+    }
+
+    #[getter]
+    fn configuration(&self) -> RealmArchivingConfiguration {
+        RealmArchivingConfiguration(self.0.configuration)
     }
 }

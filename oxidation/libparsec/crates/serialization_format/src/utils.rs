@@ -117,6 +117,7 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "BackendPkiEnrollmentAddr" => "libparsec_types::BackendPkiEnrollmentAddr",
                 "PkiEnrollmentSubmitPayload" => "PkiEnrollmentSubmitPayload",
                 "X509Certificate" => "libparsec_types::X509Certificate",
+                "RealmArchivingConfiguration" => "libparsec_types::RealmArchivingConfiguration",
                 // Used only in protocol
                 "IntegerBetween1And100" => "libparsec_types::IntegerBetween1And100",
                 // Used only in shamir

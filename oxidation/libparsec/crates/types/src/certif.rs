@@ -497,3 +497,70 @@ impl_transparent_data_format_conversion!(
     service_label,
     encryption_key_der,
 );
+
+/*
+ * Realm Archiving Certificate
+ */
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum RealmArchivingConfiguration {
+    Available,
+    Archived,
+    DeletionPlanned(DateTime),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(
+    into = "RealmArchivingCertificateData",
+    from = "RealmArchivingCertificateData"
+)]
+pub struct RealmArchivingCertificate {
+    pub author: DeviceID,
+    pub timestamp: DateTime,
+    pub realm_id: RealmID,
+    pub configuration: RealmArchivingConfiguration,
+}
+
+impl_unsecure_load!(RealmArchivingCertificate);
+impl_dump_and_sign!(RealmArchivingCertificate);
+
+impl RealmArchivingCertificate {
+    pub fn verify_and_load(
+        signed: &[u8],
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+        expected_realm_id: Option<RealmID>,
+    ) -> DataResult<Self> {
+        let r = verify_and_load::<Self>(signed, author_verify_key)?;
+
+        if &r.author != expected_author {
+            return Err(Box::new(DataError::UnexpectedAuthor {
+                expected: expected_author.clone(),
+                got: Some(r.author),
+            }));
+        }
+
+        if let Some(expected_realm_id) = expected_realm_id {
+            if r.realm_id != expected_realm_id {
+                return Err(Box::new(DataError::UnexpectedRealmID {
+                    expected: expected_realm_id,
+                    got: r.realm_id,
+                }));
+            }
+        }
+
+        Ok(r)
+    }
+}
+
+parsec_data!("schema/certif/realm_archiving_certificate.json5");
+
+impl_transparent_data_format_conversion!(
+    RealmArchivingCertificate,
+    RealmArchivingCertificateData,
+    author,
+    timestamp,
+    realm_id,
+    configuration,
+);
