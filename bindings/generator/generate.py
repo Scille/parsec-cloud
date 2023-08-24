@@ -220,11 +220,12 @@ class StructSpec(BaseTypeInUse):
     custom_getters: dict[str, str]
     custom_init: dict[str, str] | None
 
-    def get_value(self, attr_name: str) -> str | None:
+    def get_value(self, obj_name: str, attr_name: str) -> str | None:
         value = self.custom_getters.get(attr_name, None)
         if value is not None:
-            return value + "()"
-        return None
+            return value.format(input=obj_name)
+        else:
+            return f"{obj_name}.{attr_name}"
 
     def list_attributes(self) -> str:
         if len(self.attributes) == 0:
