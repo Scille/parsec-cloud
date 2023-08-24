@@ -326,14 +326,14 @@ fn {{ struct_js_to_rs_function_name(struct) }}(obj: JsValue) -> Result<libparsec
         {{ render_js_value_to_rs("js_val", attr_type) | indent(8) }}
     };
 {% endfor %}
-{% if struct.init is none %}
+{% if struct.custom_init is none %}
     Ok(libparsec::{{ struct.name }} {
 {% for attr_name in struct.attributes.keys() %}
         {{ attr_name }},
 {% endfor %}
     })
 {% else %}
-    {{ struct.init['web'] }}
+    {{ struct.custom_init['web'] }}
 {% endif %}
 }
 {% endmacro -%}
