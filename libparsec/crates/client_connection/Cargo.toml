@@ -22,6 +22,8 @@ libparsec_types = { workspace = true }
 libparsec_protocol = { workspace = true }
 libparsec_testbed = { workspace = true, optional = true }
 libparsec_platform_http_proxy = { workspace = true }
+libparsec_platform_sse = { workspace = true }
+libparsec_platform_async = { workspace = true }
 
 # Used to send HTTP request to the server.
 reqwest = { workspace = true, features = ["native-tls-vendored"] }
@@ -34,10 +36,6 @@ thiserror = { workspace = true }
 # Reqwest's response body is returned as Bytes
 bytes = { workspace = true, features = ["std"] }
 log = { workspace = true }
-
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-# TODO: support SSE for Web
-reqwest-eventsource = { workspace = true }
 
 [dev-dependencies]
 # Note `libparsec_tests_fixtures` enables our `test-with-testbed` feature

@@ -67,7 +67,6 @@ async fn authenticated(env: &TestbedEnv) {
     );
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 #[parsec_test(testbed = "coolorg", with_server)]
 async fn authenticated_sse(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
@@ -91,18 +90,19 @@ async fn authenticated_sse(env: &TestbedEnv) {
         }
     };
 
-    // Request sent before sse started, will be ignored
+    log::trace!("Request sent before sse started, will be ignored");
     send_ping("too soon").await;
 
-    // Start the sse...
+    log::trace!("Start the sse...");
     let mut sse = cmds_alice
         .start_sse_and_wait_for_connection::<authenticated_cmds::events_listen::Req>()
         .await
         .unwrap();
 
-    // Now event are received !
+    log::trace!("Now event are received !");
     send_ping("good 1").await;
 
+    log::trace!("Awaiting the the sse event on the client side ...");
     p_assert_eq!(
         sse.next().await.unwrap(),
         SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
@@ -112,7 +112,7 @@ async fn authenticated_sse(env: &TestbedEnv) {
         ))
     );
 
-    // Also try to enqueue multiple events
+    log::trace!("Also try to enqueue multiple events");
     send_ping("good 2").await;
     send_ping("good 3").await;
     send_ping("good 4").await;
@@ -141,9 +141,9 @@ async fn authenticated_sse(env: &TestbedEnv) {
         ))
     );
 
-    sse.close();
+    drop(sse);
 
-    // Bad request: invalid signature
+    log::trace!("Bad request: invalid signature");
 
     let bad_alice = {
         let mut bad_alice = (*alice).clone();

@@ -1313,13 +1313,13 @@ dependencies = [
  "libparsec_crypto",
  "libparsec_platform_async",
  "libparsec_platform_http_proxy",
+ "libparsec_platform_sse",
  "libparsec_protocol",
  "libparsec_testbed",
  "libparsec_tests_fixtures",
  "libparsec_types",
  "log",
  "reqwest",
- "reqwest-eventsource",
  "thiserror",
 ]
 
@@ -2344,22 +2344,6 @@ dependencies = [
  "wasm-streams",
  "web-sys",
  "winreg",
-]
-
-[[package]]
-name = "reqwest-eventsource"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f03f570355882dd8d15acc3a313841e6e90eddbc76a93c748fd82cc13ba9f51"
-dependencies = [
- "eventsource-stream",
- "futures-core",
- "futures-timer",
- "mime",
- "nom",
- "pin-project-lite",
- "reqwest",
- "thiserror",
 ]
 
 [[package]]
