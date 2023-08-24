@@ -349,14 +349,14 @@ fn {{ struct_js_to_rs_function_name(struct) }}<'a>(
         {{ render_downcasted_js_to_rs("js_val", attr_type, mut_cx_ref="cx") | indent(8) }}
     };
 {% endfor %}
-{% if struct.init is none %}
+{% if struct.custom_init is none %}
     Ok(libparsec::{{ struct.name }} {
 {% for attr_name in struct.attributes.keys() %}
         {{ attr_name }},
 {% endfor %}
     })
 {% else %}
-    {{ struct.init['electron'] }}
+    {{ struct.custom_init['electron'] }}
 {% endif%}
 }
 {% endmacro -%}
