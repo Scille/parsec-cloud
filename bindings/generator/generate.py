@@ -108,7 +108,30 @@ def snake_case_to_camel_case(s: str) -> str:
     return camel
 
 
+assert snake_case_to_camel_case("hello_world_im_here") == "helloWorldImHere"
+
+
+def pascal_case_to_snake_case(s: str) -> str:
+    s_iter = iter(s)
+    snake = next(s_iter).lower()
+    prefixed = False
+    for c in s_iter:
+        if c.isupper() and prefixed is False:
+            prefixed = True
+            snake += "_" + c.lower()
+        elif c.isupper():
+            snake += c.lower()
+        else:
+            prefixed = False
+            snake += c
+    return snake
+
+
+assert pascal_case_to_snake_case("HelloWorldImHere") == "hello_world_im_here"
+assert pascal_case_to_snake_case("EntryID") == "entry_id"
+
 env.filters["snake2camel"] = snake_case_to_camel_case
+env.filters["pascal2snake"] = pascal_case_to_snake_case
 
 
 def _raise_helper(msg: Any) -> None:
