@@ -18,11 +18,17 @@ export interface ClientConfig {
 }
 
 
+export interface HumanHandle {
+    email: string
+    label: string
+}
+
+
 export interface AvailableDevice {
     keyFilePath: string
     organizationId: string
     deviceId: string
-    humanHandle: string | null
+    humanHandle: HumanHandle | null
     deviceLabel: string | null
     slug: string
     ty: DeviceFileType
@@ -123,7 +129,7 @@ export interface DeviceGreetInProgress3Info {
 
 export interface UserGreetInProgress4Info {
     handle: number
-    requestedHumanHandle: string | null
+    requestedHumanHandle: HumanHandle | null
     requestedDeviceLabel: string | null
 }
 
@@ -498,14 +504,14 @@ export interface UserOrDeviceClaimInitialInfoDevice {
     tag: "Device"
     handle: number
     greeter_user_id: string
-    greeter_human_handle: string | null
+    greeter_human_handle: HumanHandle | null
 }
 export interface UserOrDeviceClaimInitialInfoUser {
     tag: "User"
     handle: number
     claimer_email: string
     greeter_user_id: string
-    greeter_human_handle: string | null
+    greeter_human_handle: HumanHandle | null
 }
 export type UserOrDeviceClaimInitialInfo =
   | UserOrDeviceClaimInitialInfoDevice
@@ -768,7 +774,7 @@ export function bootstrapOrganization(
     on_event_callback: (event: ClientEvent) => void,
     bootstrap_organization_addr: string,
     save_strategy: DeviceSaveStrategy,
-    human_handle: string | null,
+    human_handle: HumanHandle | null,
     device_label: string | null,
     sequester_authority_verify_key: Uint8Array | null
 ): Promise<Result<AvailableDevice, BootstrapOrganizationError>>
@@ -805,7 +811,7 @@ export function claimerUserInProgress3DoClaim(
     canceller: number,
     handle: number,
     requested_device_label: string | null,
-    requested_human_handle: string | null
+    requested_human_handle: HumanHandle | null
 ): Promise<Result<UserClaimFinalizeInfo, ClaimInProgressError>>
 export function claimerDeviceInProgress3DoClaim(
     canceller: number,
@@ -879,7 +885,7 @@ export function greeterDeviceInProgress3DoGetClaimRequests(
 export function greeterUserInProgress4DoCreate(
     canceller: number,
     handle: number,
-    human_handle: string | null,
+    human_handle: HumanHandle | null,
     device_label: string | null,
     profile: UserProfile
 ): Promise<Result<null, GreetInProgressError>>
