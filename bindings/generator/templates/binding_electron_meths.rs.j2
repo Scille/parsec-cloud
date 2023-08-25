@@ -365,7 +365,7 @@ fn {{ struct_rs_to_js_function_name(struct) }}<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
 {% for attr_name, attr_type in struct.attributes.items() %}
-    {% set value = struct.get_value("rs_obj", attr_name) %}
+    {% set value = (getter_func_name(struct.name | pascal2snake, attr_name)+"(&rs_obj)") if struct.has_getter(attr_name) else "rs_obj.{}".format(attr_name) %}
     let js_{{ attr_name }} = {{ render_rs_to_js(value, attr_type, mut_cx_ref="cx") | indent }};
     js_obj.set(cx, "{{ attr_name | snake2camel }}", js_{{ attr_name }})?;
 {% endfor %}
@@ -576,7 +576,7 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
 }
 {% endmacro -%}
 
-
+{% macro getter_func_name(obj_name, attr_name) %}{{ obj_name }}_get_{{ attr_name }}{% endmacro %}
 {#- End of macros #}
 
 /*
@@ -609,6 +609,10 @@ use neon::{prelude::*, types::buffer::TypedArray};
 {% for struct in api.structs %}
 
 // {{ struct.name }}
+
+{% for (name, getter) in struct.custom_getters.items() %}
+{{ getter.format(fn_name=getter_func_name(struct.name | pascal2snake, name)) }}
+{% endfor %}
 
 {{ render_struct_js_to_rs(struct) }}
 

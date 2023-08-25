@@ -191,6 +191,13 @@ fn struct_clientconfig_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsVal
 
 // HumanHandle
 
+fn human_handle_get_email<'a>(obj: &'a libparsec::HumanHandle) -> &'a str {
+    obj.email()
+}
+fn human_handle_get_label<'a>(obj: &'a libparsec::HumanHandle) -> &'a str {
+    obj.label()
+}
+
 fn struct_humanhandle_js_to_rs_init(
     email: impl AsRef<str>,
     label: impl AsRef<str>,
@@ -222,9 +229,9 @@ fn struct_humanhandle_js_to_rs(obj: JsValue) -> Result<libparsec::HumanHandle, J
 #[allow(dead_code)]
 fn struct_humanhandle_rs_to_js(rs_obj: libparsec::HumanHandle) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_email = rs_obj.email().into();
+    let js_email = human_handle_get_email(&rs_obj).into();
     Reflect::set(&js_obj, &"email".into(), &js_email)?;
-    let js_label = rs_obj.label().into();
+    let js_label = human_handle_get_label(&rs_obj).into();
     Reflect::set(&js_obj, &"label".into(), &js_label)?;
     Ok(js_obj)
 }

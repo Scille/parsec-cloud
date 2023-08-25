@@ -188,6 +188,13 @@ fn struct_clientconfig_rs_to_js<'a>(
 
 // HumanHandle
 
+fn human_handle_get_email<'a>(obj: &'a libparsec::HumanHandle) -> &'a str {
+    obj.email()
+}
+fn human_handle_get_label<'a>(obj: &'a libparsec::HumanHandle) -> &'a str {
+    obj.label()
+}
+
 fn struct_humanhandle_js_to_rs_init(
     email: impl AsRef<str>,
     label: impl AsRef<str>,
@@ -217,9 +224,9 @@ fn struct_humanhandle_rs_to_js<'a>(
     rs_obj: libparsec::HumanHandle,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
-    let js_email = JsString::try_new(cx, rs_obj.email()).or_throw(cx)?;
+    let js_email = JsString::try_new(cx, human_handle_get_email(&rs_obj)).or_throw(cx)?;
     js_obj.set(cx, "email", js_email)?;
-    let js_label = JsString::try_new(cx, rs_obj.label()).or_throw(cx)?;
+    let js_label = JsString::try_new(cx, human_handle_get_label(&rs_obj)).or_throw(cx)?;
     js_obj.set(cx, "label", js_label)?;
     Ok(js_obj)
 }

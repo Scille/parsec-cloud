@@ -113,8 +113,12 @@ class HumanHandle(Structure):
     email: str
     label: str
     custom_getters: dict[str, str] = {
-        "email": "{input}.email()",
-        "label": "{input}.label()",
+        "email": """fn {fn_name}<'a>(obj: &'a libparsec::HumanHandle) -> &'a str {{
+            obj.email()
+        }}""",
+        "label": """fn {fn_name}<'a>(obj: &'a libparsec::HumanHandle) -> &'a str {{
+            obj.label()
+        }}""",
     }
     custom_init_fn: str = """
         fn {fn_name}(email: impl AsRef<str>, label: impl AsRef<str>) -> Result<libparsec::HumanHandle, String> {{
