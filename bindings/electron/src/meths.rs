@@ -114,6 +114,37 @@ fn struct_clientconfig_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// HumanHandle
+
+#[allow(dead_code)]
+fn struct_humanhandle_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::HumanHandle> {
+    let email = {
+        let js_val: Handle<JsString> = obj.get(cx, "email")?;
+        js_val.value(cx)
+    };
+    let label = {
+        let js_val: Handle<JsString> = obj.get(cx, "label")?;
+        js_val.value(cx)
+    };
+    libparsec::HumanHandle::new(&email, &label).or_throw(cx)
+}
+
+#[allow(dead_code)]
+fn struct_humanhandle_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::HumanHandle,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_email = JsString::try_new(cx, rs_obj.email()).or_throw(cx)?;
+    js_obj.set(cx, "email", js_email)?;
+    let js_label = JsString::try_new(cx, rs_obj.label()).or_throw(cx)?;
+    js_obj.set(cx, "label", js_label)?;
+    Ok(js_obj)
+}
+
 // AvailableDevice
 
 #[allow(dead_code)]
@@ -156,13 +187,8 @@ fn struct_availabledevice_js_to_rs<'a>(
             if js_val.is_a::<JsNull, _>(cx) {
                 None
             } else {
-                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
-                Some({
-                    match js_val.value(cx).parse() {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                })
+                let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
+                Some(struct_humanhandle_js_to_rs(cx, js_val)?)
             }
         }
     };
@@ -225,7 +251,7 @@ fn struct_availabledevice_rs_to_js<'a>(
     let js_device_id = JsString::try_new(cx, rs_obj.device_id).or_throw(cx)?;
     js_obj.set(cx, "deviceId", js_device_id)?;
     let js_human_handle = match rs_obj.human_handle {
-        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+        Some(elem) => struct_humanhandle_rs_to_js(cx, elem)?.as_value(cx),
         None => JsNull::new(cx).as_value(cx),
     };
     js_obj.set(cx, "humanHandle", js_human_handle)?;
@@ -984,13 +1010,8 @@ fn struct_usergreetinprogress4info_js_to_rs<'a>(
             if js_val.is_a::<JsNull, _>(cx) {
                 None
             } else {
-                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
-                Some({
-                    match js_val.value(cx).parse() {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                })
+                let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
+                Some(struct_humanhandle_js_to_rs(cx, js_val)?)
             }
         }
     };
@@ -1026,7 +1047,7 @@ fn struct_usergreetinprogress4info_rs_to_js<'a>(
     let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
     js_obj.set(cx, "handle", js_handle)?;
     let js_requested_human_handle = match rs_obj.requested_human_handle {
-        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+        Some(elem) => struct_humanhandle_rs_to_js(cx, elem)?.as_value(cx),
         None => JsNull::new(cx).as_value(cx),
     };
     js_obj.set(cx, "requestedHumanHandle", js_requested_human_handle)?;
@@ -1896,13 +1917,8 @@ fn variant_userordeviceclaiminitialinfo_js_to_rs<'a>(
                     if js_val.is_a::<JsNull, _>(cx) {
                         None
                     } else {
-                        let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
-                        Some({
-                            match js_val.value(cx).parse() {
-                                Ok(val) => val,
-                                Err(err) => return cx.throw_type_error(err),
-                            }
-                        })
+                        let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
+                        Some(struct_humanhandle_js_to_rs(cx, js_val)?)
                     }
                 }
             };
@@ -1942,13 +1958,8 @@ fn variant_userordeviceclaiminitialinfo_js_to_rs<'a>(
                     if js_val.is_a::<JsNull, _>(cx) {
                         None
                     } else {
-                        let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
-                        Some({
-                            match js_val.value(cx).parse() {
-                                Ok(val) => val,
-                                Err(err) => return cx.throw_type_error(err),
-                            }
-                        })
+                        let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
+                        Some(struct_humanhandle_js_to_rs(cx, js_val)?)
                     }
                 }
             };
@@ -1983,7 +1994,7 @@ fn variant_userordeviceclaiminitialinfo_rs_to_js<'a>(
             let js_greeter_user_id = JsString::try_new(cx, greeter_user_id).or_throw(cx)?;
             js_obj.set(cx, "greeter_user_id", js_greeter_user_id)?;
             let js_greeter_human_handle = match greeter_human_handle {
-                Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+                Some(elem) => struct_humanhandle_rs_to_js(cx, elem)?.as_value(cx),
                 None => JsNull::new(cx).as_value(cx),
             };
             js_obj.set(cx, "greeter_human_handle", js_greeter_human_handle)?;
@@ -2004,7 +2015,7 @@ fn variant_userordeviceclaiminitialinfo_rs_to_js<'a>(
             let js_greeter_user_id = JsString::try_new(cx, greeter_user_id).or_throw(cx)?;
             js_obj.set(cx, "greeter_user_id", js_greeter_user_id)?;
             let js_greeter_human_handle = match greeter_human_handle {
-                Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+                Some(elem) => struct_humanhandle_rs_to_js(cx, elem)?.as_value(cx),
                 None => JsNull::new(cx).as_value(cx),
             };
             js_obj.set(cx, "greeter_human_handle", js_greeter_human_handle)?;
@@ -3171,13 +3182,8 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
         variant_devicesavestrategy_js_to_rs(&mut cx, js_val)?
     };
     let human_handle = match cx.argument_opt(4) {
-        Some(v) => match v.downcast::<JsString, _>(&mut cx) {
-            Ok(js_val) => Some({
-                match js_val.value(&mut cx).parse() {
-                    Ok(val) => val,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            }),
+        Some(v) => match v.downcast::<JsObject, _>(&mut cx) {
+            Ok(js_val) => Some(struct_humanhandle_js_to_rs(&mut cx, js_val)?),
             Err(_) => None,
         },
         None => None,
@@ -3738,13 +3744,8 @@ fn claimer_user_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPr
         None => None,
     };
     let requested_human_handle = match cx.argument_opt(3) {
-        Some(v) => match v.downcast::<JsString, _>(&mut cx) {
-            Ok(js_val) => Some({
-                match js_val.value(&mut cx).parse() {
-                    Ok(val) => val,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            }),
+        Some(v) => match v.downcast::<JsObject, _>(&mut cx) {
+            Ok(js_val) => Some(struct_humanhandle_js_to_rs(&mut cx, js_val)?),
             Err(_) => None,
         },
         None => None,
@@ -4871,13 +4872,8 @@ fn greeter_user_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<JsP
         }
     };
     let human_handle = match cx.argument_opt(2) {
-        Some(v) => match v.downcast::<JsString, _>(&mut cx) {
-            Ok(js_val) => Some({
-                match js_val.value(&mut cx).parse() {
-                    Ok(val) => val,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            }),
+        Some(v) => match v.downcast::<JsObject, _>(&mut cx) {
+            Ok(js_val) => Some(struct_humanhandle_js_to_rs(&mut cx, js_val)?),
             Err(_) => None,
         },
         None => None,

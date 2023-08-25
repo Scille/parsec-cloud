@@ -217,6 +217,14 @@ class StructSpec(BaseTypeInUse):
     kind = "struct"
     name: str
     attributes: OrderedDict[str, BaseTypeInUse]
+    getters: dict[str, str]
+    init: dict[str, str] | None
+
+    def get_value(self, attr_name: str) -> str | None:
+        value = self.getters.get(attr_name, None)
+        if value is not None:
+            return value + "()"
+        return None
 
 
 @dataclass
@@ -392,6 +400,8 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
                                     ).items()
                                 }
                             ),
+                            getters={},
+                            init=None,
                         ),
                     )
 
@@ -409,14 +419,18 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
 
         elif isclass(item) and issubclass(item, Structure):
             placeholder = TYPES_DB[item]
+            annotations = getattr(item, "__annotations__", {})
             struct = StructSpec(
                 name=item_name,
                 attributes=OrderedDict(
                     {
                         k: BaseTypeInUse.parse(v)
-                        for k, v in getattr(item, "__annotations__", {}).items()
+                        for k, v in annotations.items()
+                        if k not in ("custom_getters", "custom_init")
                     }
                 ),
+                getters=getattr(item, "custom_getters", {}),
+                init=getattr(item, "custom_init", None),
             )
             # Modify placeholder instead of replacing it given it is referenced in the nested specs
             placeholder.__dict__ = struct.__dict__

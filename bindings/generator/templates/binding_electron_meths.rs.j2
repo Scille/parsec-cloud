@@ -344,11 +344,15 @@ fn {{ struct_js_to_rs_function_name(struct) }}<'a>(
         {{ render_downcasted_js_to_rs("js_val", attr_type, mut_cx_ref="cx") | indent(8) }}
     };
 {% endfor %}
+{% if struct.init is none %}
     Ok(libparsec::{{ struct.name }} {
 {% for attr_name in struct.attributes.keys() %}
         {{ attr_name }},
 {% endfor %}
     })
+{% else %}
+    {{ struct.init['electron'] }}
+{% endif%}
 }
 {% endmacro -%}
 
@@ -361,7 +365,8 @@ fn {{ struct_rs_to_js_function_name(struct) }}<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
 {% for attr_name, attr_type in struct.attributes.items() %}
-    let js_{{ attr_name }} = {{ render_rs_to_js("rs_obj.%s" % attr_name, attr_type, mut_cx_ref="cx") | indent }};
+    {% set value = struct.get_value(attr_name) or attr_name %}
+    let js_{{ attr_name }} = {{ render_rs_to_js("rs_obj.%s" % value, attr_type, mut_cx_ref="cx") | indent }};
     js_obj.set(cx, "{{ attr_name | snake2camel }}", js_{{ attr_name }})?;
 {% endfor %}
     Ok(js_obj)

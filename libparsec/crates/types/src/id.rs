@@ -457,9 +457,11 @@ impl HumanHandle {
             display,
         })
     }
+
     pub fn email(&self) -> &str {
         &self.email
     }
+
     pub fn label(&self) -> &str {
         &self.label
     }
