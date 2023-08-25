@@ -179,9 +179,11 @@ class EntryID(BytesBasedType):
             libparsec::EntryID::try_from(x).map_err(|e| e.to_string())
         }}
     """
-    custom_to_rs_bytes = (
-        "|x: libparsec::EntryID| -> Result<_, &'static str> { Ok(x.as_bytes().to_owned()) }"
-    )
+    custom_to_rs_bytes_fn = """
+        fn {fn_name}(x: libparsec::EntryID) -> Result<Vec<u8>, &'static str> {{
+            Ok(x.as_bytes().to_vec())
+        }}
+    """
 
 
 class InvitationToken(BytesBasedType):
@@ -190,9 +192,11 @@ class InvitationToken(BytesBasedType):
             libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
         }}
     """
-    custom_to_rs_bytes = (
-        "|x: libparsec::InvitationToken| -> Result<_, &'static str> { Ok(x.as_bytes().to_owned()) }"
-    )
+    custom_to_rs_bytes_fn = """
+        fn {fn_name}(x: libparsec::InvitationToken) -> Result<Vec<u8>, &'static str> {{
+            Ok(x.as_bytes().to_owned())
+        }}
+    """
 
 
 class UserProfile(Variant):

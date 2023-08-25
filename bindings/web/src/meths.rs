@@ -16,8 +16,16 @@ fn entry_id_from_bytes(x: &[u8]) -> Result<libparsec::EntryID, String> {
     libparsec::EntryID::try_from(x).map_err(|e| e.to_string())
 }
 
+fn entry_id_to_bytes(x: libparsec::EntryID) -> Result<Vec<u8>, &'static str> {
+    Ok(x.as_bytes().to_vec())
+}
+
 fn invitation_token_from_bytes(x: &[u8]) -> Result<libparsec::InvitationToken, String> {
     libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
+}
+
+fn invitation_token_to_bytes(x: libparsec::InvitationToken) -> Result<Vec<u8>, &'static str> {
+    Ok(x.as_bytes().to_owned())
 }
 
 // ClientConfig
@@ -2331,17 +2339,13 @@ fn variant_invitelistitem_rs_to_js(rs_obj: libparsec::InviteListItem) -> Result<
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"Device".into())?;
-            let js_token = JsValue::from(Uint8Array::from({
-                let custom_to_rs_bytes =
-                    |x: libparsec::InvitationToken| -> Result<_, &'static str> {
-                        Ok(x.as_bytes().to_owned())
-                    };
-                match custom_to_rs_bytes(token) {
+            let js_token = JsValue::from(Uint8Array::from(
+                match invitation_token_to_bytes(token) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                 }
-                .as_ref()
-            }));
+                .as_ref(),
+            ));
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
             let js_created_on = JsValue::from_str({
                 let custom_to_rs_string =
@@ -2366,17 +2370,13 @@ fn variant_invitelistitem_rs_to_js(rs_obj: libparsec::InviteListItem) -> Result<
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"User".into())?;
-            let js_token = JsValue::from(Uint8Array::from({
-                let custom_to_rs_bytes =
-                    |x: libparsec::InvitationToken| -> Result<_, &'static str> {
-                        Ok(x.as_bytes().to_owned())
-                    };
-                match custom_to_rs_bytes(token) {
+            let js_token = JsValue::from(Uint8Array::from(
+                match invitation_token_to_bytes(token) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                 }
-                .as_ref()
-            }));
+                .as_ref(),
+            ));
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
             let js_created_on = JsValue::from_str({
                 let custom_to_rs_string =
@@ -2654,19 +2654,15 @@ pub fn clientListWorkspaces(client: u32) -> Promise {
                         let js_elem = {
                             let (x1, x2) = elem;
                             let js_array = Array::new_with_length(2);
-                            let js_value = JsValue::from(Uint8Array::from({
-                                let custom_to_rs_bytes =
-                                    |x: libparsec::EntryID| -> Result<_, &'static str> {
-                                        Ok(x.as_bytes().to_owned())
-                                    };
-                                match custom_to_rs_bytes(x1) {
+                            let js_value = JsValue::from(Uint8Array::from(
+                                match entry_id_to_bytes(x1) {
                                     Ok(ok) => ok,
                                     Err(err) => {
                                         return Err(JsValue::from(TypeError::new(err.as_ref())))
                                     }
                                 }
-                                .as_ref()
-                            }));
+                                .as_ref(),
+                            ));
                             js_array.push(&js_value);
                             let js_value = JsValue::from_str(x2.as_ref());
                             js_array.push(&js_value);
@@ -2706,16 +2702,13 @@ pub fn clientWorkspaceCreate(client: u32, name: String) -> Promise {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from(Uint8Array::from({
-                    let custom_to_rs_bytes = |x: libparsec::EntryID| -> Result<_, &'static str> {
-                        Ok(x.as_bytes().to_owned())
-                    };
-                    match custom_to_rs_bytes(value) {
+                let js_value = JsValue::from(Uint8Array::from(
+                    match entry_id_to_bytes(value) {
                         Ok(ok) => ok,
                         Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                     }
-                    .as_ref()
-                }));
+                    .as_ref(),
+                ));
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -3334,17 +3327,13 @@ pub fn clientNewUserInvitation(client: u32, claimer_email: String, send_email: b
                 let js_value = {
                     let (x1, x2) = value;
                     let js_array = Array::new_with_length(2);
-                    let js_value = JsValue::from(Uint8Array::from({
-                        let custom_to_rs_bytes =
-                            |x: libparsec::InvitationToken| -> Result<_, &'static str> {
-                                Ok(x.as_bytes().to_owned())
-                            };
-                        match custom_to_rs_bytes(x1) {
+                    let js_value = JsValue::from(Uint8Array::from(
+                        match invitation_token_to_bytes(x1) {
                             Ok(ok) => ok,
                             Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                         }
-                        .as_ref()
-                    }));
+                        .as_ref(),
+                    ));
                     js_array.push(&js_value);
                     let js_value = variant_invitationemailsentstatus_rs_to_js(x2)?;
                     js_array.push(&js_value);
@@ -3377,17 +3366,13 @@ pub fn clientNewDeviceInvitation(client: u32, send_email: bool) -> Promise {
                 let js_value = {
                     let (x1, x2) = value;
                     let js_array = Array::new_with_length(2);
-                    let js_value = JsValue::from(Uint8Array::from({
-                        let custom_to_rs_bytes =
-                            |x: libparsec::InvitationToken| -> Result<_, &'static str> {
-                                Ok(x.as_bytes().to_owned())
-                            };
-                        match custom_to_rs_bytes(x1) {
+                    let js_value = JsValue::from(Uint8Array::from(
+                        match invitation_token_to_bytes(x1) {
                             Ok(ok) => ok,
                             Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                         }
-                        .as_ref()
-                    }));
+                        .as_ref(),
+                    ));
                     js_array.push(&js_value);
                     let js_value = variant_invitationemailsentstatus_rs_to_js(x2)?;
                     js_array.push(&js_value);

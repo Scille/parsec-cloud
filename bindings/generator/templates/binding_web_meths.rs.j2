@@ -240,14 +240,11 @@ JsValue::from_str({%- if type.custom_to_rs_string -%}
 {%- elif type.kind == "bytes" -%}
 JsValue::from(Uint8Array::from({{ rs_value }}.as_ref()))
 {%- elif type.kind == "bytes_based" -%}
-JsValue::from(Uint8Array::from({%- if type.custom_to_rs_bytes -%}
-{
-    let custom_to_rs_bytes = {{ type.custom_to_rs_bytes }};
-    match custom_to_rs_bytes({{ rs_value }}) {
+JsValue::from(Uint8Array::from({%- if type.custom_to_rs_bytes_fn -%}
+    match {{ type.name | pascal2snake }}_to_bytes({{ rs_value }}) {
         Ok(ok) => ok,
         Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
     }.as_ref()
-}
 {%- else -%}
 {{ rs_value }}.as_ref()
 {%- endif -%}
@@ -532,7 +529,12 @@ use wasm_bindgen_futures::*;
 
 {#Bytes#}
 {% for bytes_type in api.bytes_based_types %}
-{{ bytes_type.custom_from_rs_bytes_fn.format(fn_name = bytes_type.name | pascal2snake + "_from_bytes") if bytes_type.custom_from_rs_bytes_fn }}
+{% set prefix_fn_name = bytes_type.name | pascal2snake %}
+
+{{ bytes_type.custom_from_rs_bytes_fn.format(fn_name = prefix_fn_name + "_from_bytes") if bytes_type.custom_from_rs_bytes_fn }}
+
+{{ bytes_type.custom_to_rs_bytes_fn.format(fn_name = prefix_fn_name + "_to_bytes") if bytes_type.custom_to_rs_bytes_fn }}
+
 {%- endfor %}
 
 {# Structures #}

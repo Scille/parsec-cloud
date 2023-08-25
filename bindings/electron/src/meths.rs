@@ -11,8 +11,16 @@ fn entry_id_from_bytes(x: &[u8]) -> Result<libparsec::EntryID, String> {
     libparsec::EntryID::try_from(x).map_err(|e| e.to_string())
 }
 
+fn entry_id_to_bytes(x: libparsec::EntryID) -> Result<Vec<u8>, &'static str> {
+    Ok(x.as_bytes().to_vec())
+}
+
 fn invitation_token_from_bytes(x: &[u8]) -> Result<libparsec::InvitationToken, String> {
     libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
+}
+
+fn invitation_token_to_bytes(x: libparsec::InvitationToken) -> Result<Vec<u8>, &'static str> {
+    Ok(x.as_bytes().to_owned())
 }
 
 // ClientConfig
@@ -2310,15 +2318,9 @@ fn variant_invitelistitem_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "Device").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_token = {
-                let rs_buff = {
-                    let custom_to_rs_bytes =
-                        |x: libparsec::InvitationToken| -> Result<_, &'static str> {
-                            Ok(x.as_bytes().to_owned())
-                        };
-                    match custom_to_rs_bytes(token) {
-                        Ok(ok) => ok,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
+                let rs_buff = match invitation_token_to_bytes(token) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
                 };
                 let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
                 let js_buff_slice = js_buff.as_mut_slice(cx);
@@ -2353,15 +2355,9 @@ fn variant_invitelistitem_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "User").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_token = {
-                let rs_buff = {
-                    let custom_to_rs_bytes =
-                        |x: libparsec::InvitationToken| -> Result<_, &'static str> {
-                            Ok(x.as_bytes().to_owned())
-                        };
-                    match custom_to_rs_bytes(token) {
-                        Ok(ok) => ok,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
+                let rs_buff = match invitation_token_to_bytes(token) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
                 };
                 let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
                 let js_buff_slice = js_buff.as_mut_slice(cx);
@@ -2772,15 +2768,9 @@ fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
                                     let (x1, x2) = elem;
                                     let js_array = JsArray::new(&mut cx, 2);
                                     let js_value = {
-                                        let rs_buff = {
-                                            let custom_to_rs_bytes =
-                                                |x: libparsec::EntryID| -> Result<_, &'static str> {
-                                                    Ok(x.as_bytes().to_owned())
-                                                };
-                                            match custom_to_rs_bytes(x1) {
-                                                Ok(ok) => ok,
-                                                Err(err) => return cx.throw_type_error(err),
-                                            }
+                                        let rs_buff = match entry_id_to_bytes(x1) {
+                                            Ok(ok) => ok,
+                                            Err(err) => return cx.throw_type_error(err),
                                         };
                                         let mut js_buff =
                                             JsArrayBuffer::new(&mut cx, rs_buff.len())?;
@@ -2860,15 +2850,9 @@ fn client_workspace_create(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_value = {
-                            let rs_buff = {
-                                let custom_to_rs_bytes =
-                                    |x: libparsec::EntryID| -> Result<_, &'static str> {
-                                        Ok(x.as_bytes().to_owned())
-                                    };
-                                match custom_to_rs_bytes(ok) {
-                                    Ok(ok) => ok,
-                                    Err(err) => return cx.throw_type_error(err),
-                                }
+                            let rs_buff = match entry_id_to_bytes(ok) {
+                                Ok(ok) => ok,
+                                Err(err) => return cx.throw_type_error(err),
                             };
                             let mut js_buff = JsArrayBuffer::new(&mut cx, rs_buff.len())?;
                             let js_buff_slice = js_buff.as_mut_slice(&mut cx);
@@ -4041,15 +4025,9 @@ fn client_new_user_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
                             let (x1, x2) = ok;
                             let js_array = JsArray::new(&mut cx, 2);
                             let js_value = {
-                                let rs_buff = {
-                                    let custom_to_rs_bytes =
-                                        |x: libparsec::InvitationToken| -> Result<_, &'static str> {
-                                            Ok(x.as_bytes().to_owned())
-                                        };
-                                    match custom_to_rs_bytes(x1) {
-                                        Ok(ok) => ok,
-                                        Err(err) => return cx.throw_type_error(err),
-                                    }
+                                let rs_buff = match invitation_token_to_bytes(x1) {
+                                    Ok(ok) => ok,
+                                    Err(err) => return cx.throw_type_error(err),
                                 };
                                 let mut js_buff = JsArrayBuffer::new(&mut cx, rs_buff.len())?;
                                 let js_buff_slice = js_buff.as_mut_slice(&mut cx);
@@ -4118,15 +4096,9 @@ fn client_new_device_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> 
                             let (x1, x2) = ok;
                             let js_array = JsArray::new(&mut cx, 2);
                             let js_value = {
-                                let rs_buff = {
-                                    let custom_to_rs_bytes =
-                                        |x: libparsec::InvitationToken| -> Result<_, &'static str> {
-                                            Ok(x.as_bytes().to_owned())
-                                        };
-                                    match custom_to_rs_bytes(x1) {
-                                        Ok(ok) => ok,
-                                        Err(err) => return cx.throw_type_error(err),
-                                    }
+                                let rs_buff = match invitation_token_to_bytes(x1) {
+                                    Ok(ok) => ok,
+                                    Err(err) => return cx.throw_type_error(err),
                                 };
                                 let mut js_buff = JsArrayBuffer::new(&mut cx, rs_buff.len())?;
                                 let js_buff_slice = js_buff.as_mut_slice(&mut cx);

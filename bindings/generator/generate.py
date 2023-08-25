@@ -197,7 +197,7 @@ class BaseTypeInUse:
             return BytesBasedTypeInUse(
                 name=param.__name__,
                 custom_from_rs_bytes_fn=getattr(param, "custom_from_rs_bytes_fn", None),
-                custom_to_rs_bytes=getattr(param, "custom_to_rs_bytes", None),
+                custom_to_rs_bytes_fn=getattr(param, "custom_to_rs_bytes_fn", None),
             )
 
         elif isinstance(param, type) and issubclass(param, I32BasedType):
@@ -304,11 +304,11 @@ class BytesBasedTypeInUse(BaseTypeInUse):
     kind = "bytes_based"
     name: str
 
-    # If set, custom_from_rs_bytes_fn/custom_to_rs_bytes should inlined rust functions
+    # If set, custom_from_rs_bytes_fn/custom_to_rs_bytes_fn should inlined rust functions
     # `fn (&[u8]) -> Result<X, AsRef<str>>`
     custom_from_rs_bytes_fn: str | None = None
     # `fn (&X) -> Result<Vec<u8>, AsRef<str>>`
-    custom_to_rs_bytes: str | None = None
+    custom_to_rs_bytes_fn: str | None = None
 
 
 @dataclass
@@ -499,7 +499,7 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             BytesBasedTypeInUse(
                 name=name,
                 custom_from_rs_bytes_fn=getattr(item, "custom_from_rs_bytes_fn", None),
-                custom_to_rs_bytes=getattr(item, "custom_to_rs_bytes", None),
+                custom_to_rs_bytes_fn=getattr(item, "custom_to_rs_bytes_fn", None),
             )
             for (name, item) in api_items.items()
             if isinstance(item, type) and issubclass(item, BytesBasedType)

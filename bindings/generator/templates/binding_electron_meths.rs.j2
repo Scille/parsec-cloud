@@ -299,17 +299,16 @@ JsString::try_new({{ mut_cx_ref }},
 }
 {%- elif type.kind == "bytes_based" -%}
 {
-    let rs_buff = {
-        {%- if type.custom_to_rs_bytes -%}
-        let custom_to_rs_bytes = {{ type.custom_to_rs_bytes }};
-        match custom_to_rs_bytes({{ rs_value }}) {
+    let rs_buff =
+        {%- if type.custom_to_rs_bytes_fn -%}
+        match {{ type.name | pascal2snake }}_to_bytes({{ rs_value }}) {
             Ok(ok) => ok,
             Err(err) => return cx.throw_type_error(err),
         }
         {%- else -%}
         {{ rs_value }}
         {%- endif -%}
-    };
+    ;
     let mut js_buff = JsArrayBuffer::new({{ mut_cx_ref }}, rs_buff.len())?;
     let js_buff_slice = js_buff.as_mut_slice({{ mut_cx_ref }});
     for (i, c) in rs_buff.iter().enumerate() {
@@ -597,6 +596,7 @@ use neon::{prelude::*, types::buffer::TypedArray};
 {#Bytes#}
 {% for bytes_type in api.bytes_based_types %}
 {{ bytes_type.custom_from_rs_bytes_fn.format(fn_name = bytes_type.name | pascal2snake + "_from_bytes") if bytes_type.custom_from_rs_bytes_fn }}
+{{ bytes_type.custom_to_rs_bytes_fn.format(fn_name = bytes_type.name | pascal2snake + "_to_bytes") if bytes_type.custom_to_rs_bytes_fn }}
 {%- endfor %}
 
 {# Structures #}
