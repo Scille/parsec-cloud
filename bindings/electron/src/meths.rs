@@ -23,6 +23,45 @@ fn invitation_token_to_bytes(x: libparsec::InvitationToken) -> Result<Vec<u8>, &
     Ok(x.as_bytes().to_owned())
 }
 
+fn date_time_from_string(s: String) -> Result<libparsec::DateTime, String> {
+    libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
+}
+
+fn entry_name_from_string(s: String) -> Result<libparsec::EntryName, String> {
+    s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+}
+
+fn password_from_string(s: String) -> Result<libparsec::Password, String> {
+    Ok(s.into())
+}
+
+fn path_from_string(s: String) -> Result<std::path::PathBuf, &'static str> {
+    Ok(std::path::PathBuf::from(s))
+}
+
+fn backend_addr_from_string(s: String) -> Result<libparsec::BackendAddr, String> {
+    libparsec::BackendAddr::from_any(&s).map_err(|e| e.to_string())
+}
+
+#[allow(dead_code)]
+fn backend_organization_addr_from_string(
+    s: String,
+) -> Result<libparsec::BackendOrganizationAddr, String> {
+    libparsec::BackendOrganizationAddr::from_any(&s).map_err(|e| e.to_string())
+}
+
+fn backend_organization_bootstrap_addr_from_string(
+    s: String,
+) -> Result<libparsec::BackendOrganizationBootstrapAddr, String> {
+    libparsec::BackendOrganizationBootstrapAddr::from_any(&s).map_err(|e| e.to_string())
+}
+
+fn backend_invitation_addr_from_string(
+    s: String,
+) -> Result<libparsec::BackendInvitationAddr, String> {
+    libparsec::BackendInvitationAddr::from_any(&s).map_err(|e| e.to_string())
+}
+
 // ClientConfig
 
 #[allow(dead_code)]
@@ -33,9 +72,7 @@ fn struct_clientconfig_js_to_rs<'a>(
     let config_dir = {
         let js_val: Handle<JsString> = obj.get(cx, "configDir")?;
         {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(cx)) {
+            match path_from_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -44,9 +81,7 @@ fn struct_clientconfig_js_to_rs<'a>(
     let data_base_dir = {
         let js_val: Handle<JsString> = obj.get(cx, "dataBaseDir")?;
         {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(cx)) {
+            match path_from_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -55,9 +90,7 @@ fn struct_clientconfig_js_to_rs<'a>(
     let mountpoint_base_dir = {
         let js_val: Handle<JsString> = obj.get(cx, "mountpointBaseDir")?;
         {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(cx)) {
+            match path_from_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -178,9 +211,7 @@ fn struct_availabledevice_js_to_rs<'a>(
     let key_file_path = {
         let js_val: Handle<JsString> = obj.get(cx, "keyFilePath")?;
         {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(cx)) {
+            match path_from_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -1217,8 +1248,7 @@ fn variant_deviceaccessstrategy_js_to_rs<'a>(
             let password = {
                 let js_val: Handle<JsString> = obj.get(cx, "password")?;
                 {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> { Ok(s.into()) };
-                    match custom_from_rs_string(js_val.value(cx)) {
+                    match password_from_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -1227,9 +1257,7 @@ fn variant_deviceaccessstrategy_js_to_rs<'a>(
             let key_file = {
                 let js_val: Handle<JsString> = obj.get(cx, "key_file")?;
                 {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                    match custom_from_rs_string(js_val.value(cx)) {
+                    match path_from_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -1241,9 +1269,7 @@ fn variant_deviceaccessstrategy_js_to_rs<'a>(
             let key_file = {
                 let js_val: Handle<JsString> = obj.get(cx, "key_file")?;
                 {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                    match custom_from_rs_string(js_val.value(cx)) {
+                    match path_from_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -1711,8 +1737,7 @@ fn variant_devicesavestrategy_js_to_rs<'a>(
             let password = {
                 let js_val: Handle<JsString> = obj.get(cx, "password")?;
                 {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> { Ok(s.into()) };
-                    match custom_from_rs_string(js_val.value(cx)) {
+                    match password_from_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -2239,10 +2264,7 @@ fn variant_invitelistitem_js_to_rs<'a>(
             let created_on = {
                 let js_val: Handle<JsString> = obj.get(cx, "created_on")?;
                 {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
-                    };
-                    match custom_from_rs_string(js_val.value(cx)) {
+                    match date_time_from_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -2274,10 +2296,7 @@ fn variant_invitelistitem_js_to_rs<'a>(
             let created_on = {
                 let js_val: Handle<JsString> = obj.get(cx, "created_on")?;
                 {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
-                    };
-                    match custom_from_rs_string(js_val.value(cx)) {
+                    match date_time_from_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -2824,10 +2843,7 @@ fn client_workspace_create(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let name = {
         let js_val = cx.argument::<JsString>(1)?;
         {
-            let custom_from_rs_string = |s: String| -> Result<_, _> {
-                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
+            match entry_name_from_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -2907,10 +2923,7 @@ fn client_workspace_rename(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let new_name = {
         let js_val = cx.argument::<JsString>(2)?;
         {
-            let custom_from_rs_string = |s: String| -> Result<_, _> {
-                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
+            match entry_name_from_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -3082,9 +3095,7 @@ fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let path = {
         let js_val = cx.argument::<JsString>(0)?;
         {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
+            match path_from_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -3172,10 +3183,7 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let bootstrap_organization_addr = {
         let js_val = cx.argument::<JsString>(2)?;
         {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::BackendOrganizationBootstrapAddr::from_any(&s).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
+            match backend_organization_bootstrap_addr_from_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -3323,10 +3331,7 @@ fn claimer_retrieve_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let addr = {
         let js_val = cx.argument::<JsString>(2)?;
         {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::BackendInvitationAddr::from_any(&s).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
+            match backend_invitation_addr_from_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -5026,10 +5031,7 @@ fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let test_server = match cx.argument_opt(1) {
         Some(v) => match v.downcast::<JsString, _>(&mut cx) {
             Ok(js_val) => Some({
-                let custom_from_rs_string = |s: String| -> Result<_, String> {
-                    libparsec::BackendAddr::from_any(&s).map_err(|e| e.to_string())
-                };
-                match custom_from_rs_string(js_val.value(&mut cx)) {
+                match backend_addr_from_string(js_val.value(&mut cx)) {
                     Ok(val) => val,
                     Err(err) => return cx.throw_type_error(err),
                 }
@@ -5073,9 +5075,7 @@ fn test_get_testbed_organization_id(mut cx: FunctionContext) -> JsResult<JsPromi
     let discriminant_dir = {
         let js_val = cx.argument::<JsString>(0)?;
         {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
+            match path_from_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -5098,9 +5098,7 @@ fn test_get_testbed_bootstrap_organization_addr(mut cx: FunctionContext) -> JsRe
     let discriminant_dir = {
         let js_val = cx.argument::<JsString>(0)?;
         {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
+            match path_from_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -5129,9 +5127,7 @@ fn test_drop_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let path = {
         let js_val = cx.argument::<JsString>(0)?;
         {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
+            match path_from_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }

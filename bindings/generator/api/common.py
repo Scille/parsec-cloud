@@ -124,40 +124,67 @@ class HumanHandle(Structure):
 
 
 class DateTime(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string()) }"
+    custom_from_rs_string_fn = """
+        fn {fn_name}(s: String) -> Result<libparsec::DateTime, String> {{
+            libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
+        }}
+    """
     custom_to_rs_string = (
         "|dt: libparsec::DateTime| -> Result<String, &'static str> { Ok(dt.to_rfc3339()) }"
     )
 
 
 class Password(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { Ok(s.into()) }"
+    custom_from_rs_string_fn = """
+        fn {fn_name}(s: String) -> Result<libparsec::Password, String> {{
+            Ok(s.into())
+        }}
+    """
 
 
 class BackendAddr(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::BackendAddr::from_any(&s).map_err(|e| e.to_string()) }"
+    custom_from_rs_string_fn = """
+        fn {fn_name}(s: String) -> Result<libparsec::BackendAddr, String> {{
+            libparsec::BackendAddr::from_any(&s).map_err(|e| e.to_string())
+        }}
+    """
     custom_to_rs_string = "|addr: libparsec::BackendAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
 
 
 class BackendOrganizationAddr(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::BackendOrganizationAddr::from_any(&s).map_err(|e| e.to_string()) }"
+    custom_from_rs_string_fn = """
+        #[allow(dead_code)]
+        fn {fn_name}(s: String) -> Result<libparsec::BackendOrganizationAddr, String> {{
+            libparsec::BackendOrganizationAddr::from_any(&s).map_err(|e| e.to_string())
+        }}
+    """
     custom_to_rs_string = "|addr: libparsec::BackendOrganizationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
 
 
 class BackendOrganizationBootstrapAddr(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::BackendOrganizationBootstrapAddr::from_any(&s).map_err(|e| e.to_string()) }"
+    custom_from_rs_string_fn = """
+        fn {fn_name}(s: String) -> Result<libparsec::BackendOrganizationBootstrapAddr, String> {{
+            libparsec::BackendOrganizationBootstrapAddr::from_any(&s).map_err(|e| e.to_string())
+        }}
+    """
     custom_to_rs_string = "|addr: libparsec::BackendOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
 
 
 class BackendInvitationAddr(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::BackendInvitationAddr::from_any(&s).map_err(|e| e.to_string()) }"
+    custom_from_rs_string_fn = """
+        fn {fn_name}(s: String) -> Result<libparsec::BackendInvitationAddr, String> {{
+            libparsec::BackendInvitationAddr::from_any(&s).map_err(|e| e.to_string())
+        }}
+    """
     custom_to_rs_string = "|addr: libparsec::BackendInvitationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
 
 
 class Path(StrBasedType):
-    custom_from_rs_string = (
-        "|s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) }"
-    )
+    custom_from_rs_string_fn = """
+        fn {fn_name}(s: String) -> Result<std::path::PathBuf, &'static str> {{
+            Ok(std::path::PathBuf::from(s))
+        }}
+    """
     custom_to_rs_string = '|path: std::path::PathBuf| -> Result<_, _> { path.into_os_string().into_string().map_err(|_| "Path contains non-utf8 characters") }'
 
 
@@ -170,7 +197,11 @@ class SASCode(StrBasedType):
 
 
 class EntryName(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, _> { s.parse::<libparsec::EntryName>().map_err(|e| e.to_string()) }"
+    custom_from_rs_string_fn = """
+        fn {fn_name}(s: String) -> Result<libparsec::EntryName, String> {{
+            s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+        }}
+    """
 
 
 class EntryID(BytesBasedType):

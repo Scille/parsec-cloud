@@ -121,9 +121,8 @@ JsFunction
 {{ js_val }}.value({{ mut_cx_ref }})
 {%- elif type.kind == "str_based" -%}
 {
-    {% if type.custom_from_rs_string -%}
-    let custom_from_rs_string = {{ type.custom_from_rs_string }};
-    match custom_from_rs_string({{ js_val }}.value({{ mut_cx_ref }}))
+    {% if type.custom_from_rs_string_fn -%}
+    match {{ type.name | pascal2snake }}_from_string({{ js_val }}.value({{ mut_cx_ref }}))
     {%- else -%}
     match {{ js_val }}.value({{ mut_cx_ref }}).parse()
     {%- endif %}
@@ -597,6 +596,16 @@ use neon::{prelude::*, types::buffer::TypedArray};
 {% for bytes_type in api.bytes_based_types %}
 {{ bytes_type.custom_from_rs_bytes_fn.format(fn_name = bytes_type.name | pascal2snake + "_from_bytes") if bytes_type.custom_from_rs_bytes_fn }}
 {{ bytes_type.custom_to_rs_bytes_fn.format(fn_name = bytes_type.name | pascal2snake + "_to_bytes") if bytes_type.custom_to_rs_bytes_fn }}
+{%- endfor %}
+
+{# String #}
+{% for string_type in api.str_based_types %}
+{% set prefix_fn_name = string_type.name | pascal2snake %}
+
+{{ string_type.custom_from_rs_string_fn.format(fn_name = prefix_fn_name + "_from_string") if string_type.custom_from_rs_string_fn }}
+
+{# {{ string_type.custom_to_rs_string_fn.format(fn_name = prefix_fn_name + "_to_string") if string_type.custom_to_rs_string_fn }} #}
+
 {%- endfor %}
 
 {# Structures #}

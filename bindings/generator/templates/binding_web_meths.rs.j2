@@ -59,12 +59,9 @@ let {{ param_name }} = match {{ param_name }} {
 };
 {% elif type.kind == "str_based" %}
 let {{ param_name }} =
-{% if type.custom_from_rs_string -%}
-{
-    let custom_from_rs_string = {{ type.custom_from_rs_string }};
-    custom_from_rs_string({{ param_name }})
-        .map_err(|e| TypeError::new(e.as_ref()))
-}?;
+{% if type.custom_from_rs_string_fn -%}
+{{ type.name | pascal2snake }}_from_string({{ param_name }})
+    .map_err(|e| TypeError::new(e.as_ref()))?;
 {%- else -%}
 {{ param_name }}.parse().map_err(|_| {
     JsValue::from(TypeError::new("Not a valid {{ type.name }}"))
@@ -155,11 +152,10 @@ if {{ js_val }}.is_null() {
 {{ js_val }}.dyn_into::<JsString>().ok().and_then(|s| s.as_string()).ok_or_else(|| TypeError::new("Not a string"))?
 {%- elif type.kind == "str_based" -%}
 {{ js_val }}.dyn_into::<JsString>().ok().and_then(|s| s.as_string()).ok_or_else(|| TypeError::new("Not a string"))
-{%- if type.custom_from_rs_string -%}
+{%- if type.custom_from_rs_string_fn -%}
 .and_then(|x| {
-    let custom_from_rs_string = {{ type.custom_from_rs_string }};
-    custom_from_rs_string(x)
-.map_err(|e| TypeError::new(e.as_ref())) })
+    {{ type.name | pascal2snake }}_from_string(x).map_err(|e| TypeError::new(e.as_ref()))
+})
 {%- else -%}
 ?.parse()
 {%- endif %}
@@ -534,6 +530,16 @@ use wasm_bindgen_futures::*;
 {{ bytes_type.custom_from_rs_bytes_fn.format(fn_name = prefix_fn_name + "_from_bytes") if bytes_type.custom_from_rs_bytes_fn }}
 
 {{ bytes_type.custom_to_rs_bytes_fn.format(fn_name = prefix_fn_name + "_to_bytes") if bytes_type.custom_to_rs_bytes_fn }}
+
+{%- endfor %}
+
+{# String #}
+{% for string_type in api.str_based_types %}
+{% set prefix_fn_name = string_type.name | pascal2snake %}
+
+{{ string_type.custom_from_rs_string_fn.format(fn_name = prefix_fn_name + "_from_string") if string_type.custom_from_rs_string_fn }}
+
+{# {{ string_type.custom_to_rs_string_fn.format(fn_name = prefix_fn_name + "_to_string") if string_type.custom_to_rs_string_fn }} #}
 
 {%- endfor %}
 

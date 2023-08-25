@@ -28,6 +28,45 @@ fn invitation_token_to_bytes(x: libparsec::InvitationToken) -> Result<Vec<u8>, &
     Ok(x.as_bytes().to_owned())
 }
 
+fn date_time_from_string(s: String) -> Result<libparsec::DateTime, String> {
+    libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
+}
+
+fn entry_name_from_string(s: String) -> Result<libparsec::EntryName, String> {
+    s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+}
+
+fn password_from_string(s: String) -> Result<libparsec::Password, String> {
+    Ok(s.into())
+}
+
+fn path_from_string(s: String) -> Result<std::path::PathBuf, &'static str> {
+    Ok(std::path::PathBuf::from(s))
+}
+
+fn backend_addr_from_string(s: String) -> Result<libparsec::BackendAddr, String> {
+    libparsec::BackendAddr::from_any(&s).map_err(|e| e.to_string())
+}
+
+#[allow(dead_code)]
+fn backend_organization_addr_from_string(
+    s: String,
+) -> Result<libparsec::BackendOrganizationAddr, String> {
+    libparsec::BackendOrganizationAddr::from_any(&s).map_err(|e| e.to_string())
+}
+
+fn backend_organization_bootstrap_addr_from_string(
+    s: String,
+) -> Result<libparsec::BackendOrganizationBootstrapAddr, String> {
+    libparsec::BackendOrganizationBootstrapAddr::from_any(&s).map_err(|e| e.to_string())
+}
+
+fn backend_invitation_addr_from_string(
+    s: String,
+) -> Result<libparsec::BackendInvitationAddr, String> {
+    libparsec::BackendInvitationAddr::from_any(&s).map_err(|e| e.to_string())
+}
+
 // ClientConfig
 
 #[allow(dead_code)]
@@ -39,11 +78,7 @@ fn struct_clientconfig_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig,
             .ok()
             .and_then(|s| s.as_string())
             .ok_or_else(|| TypeError::new("Not a string"))
-            .and_then(|x| {
-                let custom_from_rs_string =
-                    |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
+            .and_then(|x| path_from_string(x).map_err(|e| TypeError::new(e.as_ref())))
             .map_err(|_| TypeError::new("Not a valid Path"))?
     };
     let data_base_dir = {
@@ -53,11 +88,7 @@ fn struct_clientconfig_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig,
             .ok()
             .and_then(|s| s.as_string())
             .ok_or_else(|| TypeError::new("Not a string"))
-            .and_then(|x| {
-                let custom_from_rs_string =
-                    |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
+            .and_then(|x| path_from_string(x).map_err(|e| TypeError::new(e.as_ref())))
             .map_err(|_| TypeError::new("Not a valid Path"))?
     };
     let mountpoint_base_dir = {
@@ -67,11 +98,7 @@ fn struct_clientconfig_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig,
             .ok()
             .and_then(|s| s.as_string())
             .ok_or_else(|| TypeError::new("Not a string"))
-            .and_then(|x| {
-                let custom_from_rs_string =
-                    |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
+            .and_then(|x| path_from_string(x).map_err(|e| TypeError::new(e.as_ref())))
             .map_err(|_| TypeError::new("Not a valid Path"))?
     };
     let workspace_storage_cache_size = {
@@ -193,11 +220,7 @@ fn struct_availabledevice_js_to_rs(obj: JsValue) -> Result<libparsec::AvailableD
             .ok()
             .and_then(|s| s.as_string())
             .ok_or_else(|| TypeError::new("Not a string"))
-            .and_then(|x| {
-                let custom_from_rs_string =
-                    |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
+            .and_then(|x| path_from_string(x).map_err(|e| TypeError::new(e.as_ref())))
             .map_err(|_| TypeError::new("Not a valid Path"))?
     };
     let organization_id = {
@@ -1282,11 +1305,7 @@ fn variant_deviceaccessstrategy_js_to_rs(
                     .ok()
                     .and_then(|s| s.as_string())
                     .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string =
-                            |s: String| -> Result<_, String> { Ok(s.into()) };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
+                    .and_then(|x| password_from_string(x).map_err(|e| TypeError::new(e.as_ref())))
                     .map_err(|_| TypeError::new("Not a valid Password"))?
             };
             let key_file = {
@@ -1296,12 +1315,7 @@ fn variant_deviceaccessstrategy_js_to_rs(
                     .ok()
                     .and_then(|s| s.as_string())
                     .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
-                            Ok(std::path::PathBuf::from(s))
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
+                    .and_then(|x| path_from_string(x).map_err(|e| TypeError::new(e.as_ref())))
                     .map_err(|_| TypeError::new("Not a valid Path"))?
             };
             Ok(libparsec::DeviceAccessStrategy::Password { password, key_file })
@@ -1314,12 +1328,7 @@ fn variant_deviceaccessstrategy_js_to_rs(
                     .ok()
                     .and_then(|s| s.as_string())
                     .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
-                            Ok(std::path::PathBuf::from(s))
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
+                    .and_then(|x| path_from_string(x).map_err(|e| TypeError::new(e.as_ref())))
                     .map_err(|_| TypeError::new("Not a valid Path"))?
             };
             Ok(libparsec::DeviceAccessStrategy::Smartcard { key_file })
@@ -1750,11 +1759,7 @@ fn variant_devicesavestrategy_js_to_rs(
                     .ok()
                     .and_then(|s| s.as_string())
                     .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string =
-                            |s: String| -> Result<_, String> { Ok(s.into()) };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
+                    .and_then(|x| password_from_string(x).map_err(|e| TypeError::new(e.as_ref())))
                     .map_err(|_| TypeError::new("Not a valid Password"))?
             };
             Ok(libparsec::DeviceSaveStrategy::Password { password })
@@ -2258,12 +2263,7 @@ fn variant_invitelistitem_js_to_rs(obj: JsValue) -> Result<libparsec::InviteList
                     .ok()
                     .and_then(|s| s.as_string())
                     .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, String> {
-                            libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
+                    .and_then(|x| date_time_from_string(x).map_err(|e| TypeError::new(e.as_ref())))
                     .map_err(|_| TypeError::new("Not a valid DateTime"))?
             };
             let status = {
@@ -2295,12 +2295,7 @@ fn variant_invitelistitem_js_to_rs(obj: JsValue) -> Result<libparsec::InviteList
                     .ok()
                     .and_then(|s| s.as_string())
                     .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, String> {
-                            libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
+                    .and_then(|x| date_time_from_string(x).map_err(|e| TypeError::new(e.as_ref())))
                     .map_err(|_| TypeError::new("Not a valid DateTime"))?
             };
             let claimer_email = {
@@ -2691,12 +2686,7 @@ pub fn clientListWorkspaces(client: u32) -> Promise {
 #[wasm_bindgen]
 pub fn clientWorkspaceCreate(client: u32, name: String) -> Promise {
     future_to_promise(async move {
-        let name = {
-            let custom_from_rs_string = |s: String| -> Result<_, _> {
-                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
-            };
-            custom_from_rs_string(name).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
+        let name = entry_name_from_string(name).map_err(|e| TypeError::new(e.as_ref()))?;
         let ret = libparsec::client_workspace_create(client, name).await;
         Ok(match ret {
             Ok(value) => {
@@ -2731,12 +2721,7 @@ pub fn clientWorkspaceRename(client: u32, workspace_id: Uint8Array, new_name: St
         let workspace_id = {
             entry_id_from_bytes(&workspace_id.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-        let new_name = {
-            let custom_from_rs_string = |s: String| -> Result<_, _> {
-                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
-            };
-            custom_from_rs_string(new_name).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
+        let new_name = entry_name_from_string(new_name).map_err(|e| TypeError::new(e.as_ref()))?;
         let ret = libparsec::client_workspace_rename(client, workspace_id, new_name).await;
         Ok(match ret {
             Ok(value) => {
@@ -2843,11 +2828,7 @@ pub fn claimerGreeterAbortOperation(handle: u32) -> Promise {
 #[wasm_bindgen]
 pub fn listAvailableDevices(path: String) -> Promise {
     future_to_promise(async move {
-        let path = {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
+        let path = path_from_string(path).map_err(|e| TypeError::new(e.as_ref()))?;
 
         let ret = libparsec::list_available_devices(&path).await;
         Ok({
@@ -2887,13 +2868,9 @@ pub fn bootstrapOrganization(
                 .expect("error in event callback");
         }) as std::sync::Arc<dyn Fn(libparsec::ClientEvent)>;
 
-        let bootstrap_organization_addr = {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::BackendOrganizationBootstrapAddr::from_any(&s).map_err(|e| e.to_string())
-            };
-            custom_from_rs_string(bootstrap_organization_addr)
-                .map_err(|e| TypeError::new(e.as_ref()))
-        }?;
+        let bootstrap_organization_addr =
+            backend_organization_bootstrap_addr_from_string(bootstrap_organization_addr)
+                .map_err(|e| TypeError::new(e.as_ref()))?;
         let save_strategy = save_strategy.into();
         let save_strategy = variant_devicesavestrategy_js_to_rs(save_strategy)?;
 
@@ -2979,12 +2956,8 @@ pub fn claimerRetrieveInfo(config: Object, on_event_callback: Function, addr: St
                 .expect("error in event callback");
         }) as std::sync::Arc<dyn Fn(libparsec::ClientEvent)>;
 
-        let addr = {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::BackendInvitationAddr::from_any(&s).map_err(|e| e.to_string())
-            };
-            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
+        let addr =
+            backend_invitation_addr_from_string(addr).map_err(|e| TypeError::new(e.as_ref()))?;
         let ret = libparsec::claimer_retrieve_info(config, on_event_callback, addr).await;
         Ok(match ret {
             Ok(value) => {
@@ -3832,12 +3805,8 @@ pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise 
     future_to_promise(async move {
         let test_server = match test_server {
             Some(test_server) => {
-                let test_server = {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::BackendAddr::from_any(&s).map_err(|e| e.to_string())
-                    };
-                    custom_from_rs_string(test_server).map_err(|e| TypeError::new(e.as_ref()))
-                }?;
+                let test_server = backend_addr_from_string(test_server)
+                    .map_err(|e| TypeError::new(e.as_ref()))?;
 
                 Some(test_server)
             }
@@ -3865,11 +3834,8 @@ pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise 
 #[wasm_bindgen]
 pub fn testGetTestbedOrganizationId(discriminant_dir: String) -> Promise {
     future_to_promise(async move {
-        let discriminant_dir = {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(discriminant_dir).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
+        let discriminant_dir =
+            path_from_string(discriminant_dir).map_err(|e| TypeError::new(e.as_ref()))?;
         let ret = libparsec::test_get_testbed_organization_id(&discriminant_dir);
         Ok(match ret {
             Some(val) => JsValue::from_str(val.as_ref()),
@@ -3883,11 +3849,8 @@ pub fn testGetTestbedOrganizationId(discriminant_dir: String) -> Promise {
 #[wasm_bindgen]
 pub fn testGetTestbedBootstrapOrganizationAddr(discriminant_dir: String) -> Promise {
     future_to_promise(async move {
-        let discriminant_dir = {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(discriminant_dir).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
+        let discriminant_dir =
+            path_from_string(discriminant_dir).map_err(|e| TypeError::new(e.as_ref()))?;
         let ret = libparsec::test_get_testbed_bootstrap_organization_addr(&discriminant_dir);
         Ok(match ret {
             Some(val) => JsValue::from_str({
@@ -3908,11 +3871,7 @@ pub fn testGetTestbedBootstrapOrganizationAddr(discriminant_dir: String) -> Prom
 #[wasm_bindgen]
 pub fn testDropTestbed(path: String) -> Promise {
     future_to_promise(async move {
-        let path = {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
+        let path = path_from_string(path).map_err(|e| TypeError::new(e.as_ref()))?;
 
         libparsec::test_drop_testbed(&path).await;
         Ok(JsValue::NULL)
