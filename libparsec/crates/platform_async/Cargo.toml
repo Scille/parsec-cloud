@@ -14,6 +14,7 @@ async-broadcast = { workspace = true }
 event-listener = { workspace = true }
 flume = { workspace = true, features = ["async", "select", "eventual-fairness"] }
 futures-lite = { workspace = true, features = ["std"] }
+futures-core = { workspace = true, features = ["std"] }
 # # futures is used for its macros `select_all` and `join_all`
 # futures = { workspace = true, features = ["std", "async-await"] }
 

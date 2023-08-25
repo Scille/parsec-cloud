@@ -101,6 +101,7 @@ event-listener = { version = "2.5.3", default-features = false }
 flate2 = { version = "1.0.27", default-features = false }
 flume = { version = "0.10.14", default-features = false }
 fnmatch-regex = { version = "0.2.0", default-features = false }
+futures-core = { version = "0.3.28", default-features = false }
 futures-lite = { version = "1.13.0", default-features = false }
 futures = { version = "0.3.28", default-features = false }
 generic-array = { version = "0.14.7", default-features = false }
