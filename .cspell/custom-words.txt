@@ -133,6 +133,7 @@ excrepr
 executemany
 executescript
 farn
+fdata
 fetchrow
 fetchval
 fghij
@@ -161,6 +162,8 @@ geoclue
 geometryloaders
 geoservices
 getcapacitor
+getfileattr
+getfileinfo
 getplugin
 GetRandom
 gloo
@@ -334,6 +337,7 @@ nosetests
 notbase
 NOTIFS
 notr
+notraverse
 notuptodate
 nplurals
 npmkeep
@@ -434,10 +438,12 @@ qrichtext
 qtbot
 qthelp
 qtrio
+querydir
 quickstart
 Quotify
 randombytes
 randr
+readonlydir
 recoverin
 reenc
 Reencrypt
@@ -494,10 +500,12 @@ Serde
 serialnmea
 sessionfinish
 sessionstart
+setfileinfo
 setlocal
 setmainfont
 setmonofont
 setsansfont
+setsecurity
 shakeplugin
 shortid
 SignatureBytes

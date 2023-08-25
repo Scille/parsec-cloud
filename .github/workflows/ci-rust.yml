@@ -17,6 +17,8 @@ env:
   cargo-nextest-version: 0.9.53
   CARGO_CI_FLAGS: --locked --profile ci-rust
   CARGO_NEXTEST_CI_FLAGS: --locked --cargo-profile ci-rust
+  WINFSP_VERSION: 2.0.23075
+  WINFSP_TEST_EXE: C:/Program Files (x86)/WinFsp/bin/winfsp-tests-x64.exe
 
 permissions:
   contents: read
@@ -132,7 +134,7 @@ jobs:
             os: windows-2022
     name: "${{ matrix.name }}: 🦀 Rust tests"
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
-    timeout-minutes: 30
+    timeout-minutes: 60
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # pin v4.0.0
@@ -163,12 +165,20 @@ jobs:
         run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
         timeout-minutes: 1
 
+      - name: Install winfsp
+        if: startsWith(matrix.os, 'windows')
+        shell: bash
+        run: |
+          set -eux
+          choco install winfsp -y --version=${{ env.WINFSP_VERSION }}
+          curl -L https://github.com/winfsp/winfsp/releases/download/v2.0/winfsp-tests-${{ env.WINFSP_VERSION }}.zip -o D:/a/_temp/winfsp-tests.zip
+          unzip D:/a/_temp/winfsp-tests.zip -d D:/a/_temp/
+          mv 'D:/a/_temp/winfsp-tests-x64.exe' 'C:/Program Files (x86)/WinFsp/bin/'
+
       # Install cargo nextest command
       - uses: taiki-e/install-action@b89cfc4cdbf6930a4276f4c1d662f3217ef3edae # pin v2.18.6
         with:
           tool: nextest@${{ env.cargo-nextest-version }}
-
-      # Don't run platform agnostic tests here (only ran on Linux)
 
       - name: Test Rust codebase (${{ matrix.name }} specific)
         shell: bash
@@ -181,7 +191,7 @@ jobs:
           cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package libparsec_crypto --features use-sodiumoxide
           NON_BINDINGS_CRATES=`python3 misc/libparsec_crates_flags.py agnostic platform`
           cargo check ${{ env.CARGO_CI_FLAGS }} $NON_BINDINGS_CRATES --features use-sodiumoxide
-        timeout-minutes: 30
+        timeout-minutes: 50 # It can be very slow if cache has missed
         env:
           RUST_LOG: debug
           TESTBED_SERVER: http://localhost:6777
