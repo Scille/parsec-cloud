@@ -4,6 +4,7 @@ from __future__ import annotations
 import importlib.resources
 from contextlib import asynccontextmanager
 from functools import partial
+from importlib.resources.abc import Traversable
 from pathlib import Path
 from typing import AsyncIterator, List, Tuple, Union
 
@@ -71,7 +72,7 @@ from parsec.event_bus import EventBus
 logger = get_logger()
 
 
-def _get_prevent_sync_pattern(prevent_sync_pattern_path: Path) -> Regex | None:
+def _get_prevent_sync_pattern(prevent_sync_pattern_path: Traversable) -> Regex | None:
     try:
         return Regex.from_file(str(prevent_sync_pattern_path))
     except OSError as exc:
@@ -89,10 +90,8 @@ def get_prevent_sync_pattern(prevent_sync_pattern_path: Path | None = None) -> R
         pattern = _get_prevent_sync_pattern(prevent_sync_pattern_path)
     # Default to the pattern from the ignore file in the core resources
     if pattern is None:
-        path = Path(importlib.resources.files(core_resources)).joinpath("default_pattern.ignore")
-        # Do something with the file
-        with open(path) as file:
-            pattern = _get_prevent_sync_pattern(path)
+        path = importlib.resources.files(core_resources).joinpath("default_pattern.ignore")
+        pattern = _get_prevent_sync_pattern(path)
     # As a last resort use the failsafe
     if pattern is None:
         return FAILSAFE_PATTERN_FILTER

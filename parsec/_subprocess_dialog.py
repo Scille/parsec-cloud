@@ -34,7 +34,7 @@ def set_parsec_icon(app: QApplication) -> None:
 
 class PrintHelper:
     @classmethod
-    def print_html(cls, parent: QWidget, html: str) -> int:
+    def print_html(cls, parent: QWidget | None, html: str) -> None:
         from PyQt5.QtGui import QTextDocument
         from PyQt5.QtPrintSupport import QPrintDialog, QPrinter
 
@@ -45,7 +45,7 @@ class PrintHelper:
             doc = QTextDocument()
             doc.setHtml(html)
             doc.print_(printer)
-        return result
+        return None
 
 
 @contextlib.contextmanager

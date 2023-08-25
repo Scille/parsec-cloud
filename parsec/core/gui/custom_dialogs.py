@@ -7,7 +7,7 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
-from typing import Callable, Collection, Generic, Iterator, TypeVar, cast
+from typing import Any, Callable, Collection, Generic, Iterator, Type, TypeVar, cast
 
 from PyQt5.QtCore import QEventLoop, Qt, pyqtSignal
 from PyQt5.QtGui import (
@@ -237,18 +237,29 @@ class GreyedDialog(Generic[_CurrentWidget], QDialog, Ui_GreyedDialog):
             self.setParent(None)  # type: ignore[call-overload]
 
 
-def generate_dialog_method(
-    sub_cls: T_CLASS, sub_method: Callable[Concatenate[QWidget | None, P], R], default_return: R
-) -> Callable[Concatenate[QDialogInProcess, QWidget | None, P], R]:
-    def wrapper(
-        cls: QDialogInProcess, parent: QWidget | None, *args: P.args, **kwargs: P.kwargs
-    ) -> R:
-        try:
-            return cls._exec_method(sub_cls, sub_method, parent, *args, **kwargs)
-        except cls.DialogCancelled:
-            return default_return
+# def generate_dialog_method(
+#     sub_cls: T_CLASS, sub_method: Callable[Concatenate[QWidget | None, P], R], default_return: R
+# ) -> Callable[Concatenate[Type[QDialogInProcess], QWidget | None, P], R]:
+#     def wrapper(
+#         cls: Type[QDialogInProcess], parent: QWidget | None, *args: P.args, **kwargs: P.kwargs
+#     ) -> R:
+#         try:
+#             return cls._exec_method(sub_cls, sub_method, parent, *args, **kwargs)
+#         except cls.DialogCancelled:
+#             return default_return
 
-    return wrapper
+#     return wrapper
+
+
+def copy_args_types(
+    _method_to_copy: Callable[P, R]
+) -> Callable[[Callable[..., R]], Callable[Concatenate[Type["QDialogInProcess"], P], R]]:
+    def wrapper_inner(
+        method: Callable[..., R]
+    ) -> Callable[Concatenate[Type["QDialogInProcess"], P], R]:
+        return cast(Callable[Concatenate[Type["QDialogInProcess"], P], R], method)
+
+    return wrapper_inner
 
 
 class QDialogInProcess(GreyedDialog[QWidget]):
@@ -324,23 +335,67 @@ class QDialogInProcess(GreyedDialog[QWidget]):
                 pool.close()
                 cls.pools.pop(target_cls, None)
 
-    getOpenFileName = classmethod(
-        generate_dialog_method(QFileDialog, QFileDialog.getOpenFileName, ("", ""))
-    )
-    getOpenFileNames = classmethod(
-        generate_dialog_method(QFileDialog, QFileDialog.getOpenFileNames, (cast(list[str], []), ""))
-    )
-    getExistingDirectory = classmethod(
-        generate_dialog_method(QFileDialog, QFileDialog.getExistingDirectory, "")
-    )
-    getSaveFileName = classmethod(
-        generate_dialog_method(QFileDialog, QFileDialog.getSaveFileName, ("", ""))
-    )
-    print_html = classmethod(
-        generate_dialog_method(
-            _subprocess_dialog.PrintHelper, _subprocess_dialog.PrintHelper.print_html, None
-        )
-    )
+    # getOpenFileName = classmethod(
+    #     generate_dialog_method(QFileDialog, QFileDialog.getOpenFileName, ("", ""))
+    # )
+    @classmethod
+    @copy_args_types(QFileDialog.getOpenFileName)
+    def getOpenFileName(cls, *args: Any, **kwargs: Any) -> tuple[str, str]:
+        try:
+            return cls._exec_method(QFileDialog, QFileDialog.getOpenFileName, *args, **kwargs)
+        except cls.DialogCancelled:
+            return ("", "")
+
+    # getOpenFileNames = classmethod(
+    #     generate_dialog_method(QFileDialog, QFileDialog.getOpenFileNames, (cast(list[str], []), ""))
+    # )
+    @classmethod
+    @copy_args_types(QFileDialog.getOpenFileNames)
+    def getOpenFileNames(cls, *args: Any, **kwargs: Any) -> tuple[list[str], str]:
+        try:
+            return cls._exec_method(QFileDialog, QFileDialog.getOpenFileNames, *args, **kwargs)
+        except cls.DialogCancelled:
+            return ([], "")
+
+    # getExistingDirectory = classmethod(
+    #     generate_dialog_method(QFileDialog, QFileDialog.getExistingDirectory, "")
+    # )
+    @classmethod
+    @copy_args_types(QFileDialog.getExistingDirectory)
+    def getExistingDirectory(cls, *args: Any, **kwargs: Any) -> str:
+        try:
+            return cls._exec_method(QFileDialog, QFileDialog.getExistingDirectory, *args, **kwargs)
+        except cls.DialogCancelled:
+            return ""
+
+    # getSaveFileName = classmethod(
+    #     generate_dialog_method(QFileDialog, QFileDialog.getSaveFileName, ("", ""))
+    # )
+    @classmethod
+    @copy_args_types(QFileDialog.getSaveFileName)
+    def getSaveFileName(cls, *args: Any, **kwargs: Any) -> tuple[str, str]:
+        try:
+            return cls._exec_method(QFileDialog, QFileDialog.getSaveFileName, *args, **kwargs)
+        except cls.DialogCancelled:
+            return ("", "")
+
+    # print_html = classmethod(
+    #     generate_dialog_method(
+    #         _subprocess_dialog.PrintHelper, _subprocess_dialog.PrintHelper.print_html, None
+    #     )
+    # )
+    @classmethod
+    @copy_args_types(_subprocess_dialog.PrintHelper.print_html)
+    def print_html(cls, *args: Any, **kwargs: Any) -> None:
+        try:
+            return cls._exec_method(
+                _subprocess_dialog.PrintHelper,
+                _subprocess_dialog.PrintHelper.print_html,
+                *args,
+                **kwargs,
+            )
+        except cls.DialogCancelled:
+            return None
 
 
 class TextInputWidget(QWidget, Ui_InputWidget):

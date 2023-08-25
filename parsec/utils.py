@@ -151,6 +151,7 @@ class TaskStatus(Generic[T]):
         await self.join()
 
     @classmethod
+    # Mypy don't want `Any` in a decorated class-method
     async def wrap_task(  # type: ignore[misc]
         cls,
         corofn: Callable[..., Awaitable[T]],

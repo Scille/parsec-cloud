@@ -11,7 +11,9 @@ from PyQt5.QtWidgets import QWidget
 from structlog import get_logger
 
 from parsec._parsec import (
+    BackendInvitationAddr,
     DeviceFileType,
+    LocalDevice,
     LocalDeviceCryptoError,
     LocalDeviceError,
     LocalDeviceNotFoundError,
@@ -36,9 +38,14 @@ from parsec.core.gui.ui.claim_device_code_exchange_widget import Ui_ClaimDeviceC
 from parsec.core.gui.ui.claim_device_instructions_widget import Ui_ClaimDeviceInstructionsWidget
 from parsec.core.gui.ui.claim_device_provide_info_widget import Ui_ClaimDeviceProvideInfoWidget
 from parsec.core.gui.ui.claim_device_widget import Ui_ClaimDeviceWidget
-from parsec.core.invite import InvitePeerResetError, claimer_retrieve_info
+from parsec.core.invite import (
+    DeviceClaimInProgress3Ctx as PyDeviceClaimInProgress3Ctx,
+)
+from parsec.core.invite import (
+    InvitePeerResetError,
+    claimer_retrieve_info,
+)
 from parsec.core.local_device import save_device_with_smartcard_in_config
-from parsec.core.types import BackendInvitationAddr, LocalDevice
 
 logger = get_logger()
 
@@ -103,7 +110,7 @@ class Claimer:
 
                 assert self._current_step == self.Step.SignifyTrust
                 try:
-                    in_progress_ctx = await in_progress_ctx.do_signify_trust()
+                    in_progress_ctx_2 = await in_progress_ctx.do_signify_trust()
                     await self.job_oob_send.send((True, None))
                 except Exception as exc:
                     await self.job_oob_send.send((False, exc))
@@ -111,24 +118,27 @@ class Claimer:
                 self._current_step = await self.main_oob_recv.receive()
 
                 assert self._current_step == self.Step.GetClaimerSas
-                await self.job_oob_send.send(in_progress_ctx.claimer_sas)
+                await self.job_oob_send.send(in_progress_ctx_2.claimer_sas)
 
                 self._current_step = await self.main_oob_recv.receive()
 
                 assert self._current_step == self.Step.WaitPeerTrust
                 try:
-                    in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
+                    in_progress_ctx_3 = await in_progress_ctx_2.do_wait_peer_trust()
                     await self.job_oob_send.send((True, None))
                 except Exception as exc:
                     await self.job_oob_send.send((False, exc))
 
                 self._current_step = await self.main_oob_recv.receive()
                 assert self._current_step == self.Step.ClaimDevice
+                assert isinstance(
+                    in_progress_ctx_3, PyDeviceClaimInProgress3Ctx
+                ), f"{type(in_progress_ctx_3).__name__}"
 
                 try:
                     device_label = await self.main_oob_recv.receive()
 
-                    new_device = await in_progress_ctx.do_claim_device(
+                    new_device = await in_progress_ctx_3.do_claim_device(
                         requested_device_label=device_label
                     )
                     await self.job_oob_send.send((True, None, new_device))
