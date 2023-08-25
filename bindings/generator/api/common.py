@@ -116,7 +116,11 @@ class HumanHandle(Structure):
         "email": "{input}.email()",
         "label": "{input}.label()",
     }
-    custom_init: str = "|email: String, label: String| -> Result<libparsec::HumanHandle, String> { libparsec::HumanHandle::new(&email, &label).map_err(|e| e.to_string()) }"
+    custom_init_fn: str = """
+        fn {fn_name}(email: impl AsRef<str>, label: impl AsRef<str>) -> Result<libparsec::HumanHandle, String> {{
+            libparsec::HumanHandle::new(email.as_ref(), label.as_ref()).map_err(|e| e.to_string())
+        }}
+    """
 
 
 class DateTime(StrBasedType):
