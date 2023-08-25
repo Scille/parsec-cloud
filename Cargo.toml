@@ -7,6 +7,7 @@ members = [
     "libparsec/crates/crypto",
     "libparsec/crates/platform_async",
     "libparsec/crates/platform_device_loader",
+    "libparsec/crates/platform_mountpoint",
     "libparsec/crates/platform_storage",
     "libparsec/crates/protocol",
     "libparsec/crates/serialization_format",
@@ -28,6 +29,7 @@ default-members = [
     "libparsec/crates/crypto",
     "libparsec/crates/platform_async",
     "libparsec/crates/platform_device_loader",
+    "libparsec/crates/platform_mountpoint",
     "libparsec/crates/platform_storage",
     "libparsec/crates/protocol",
     "libparsec/crates/serialization_format",
@@ -67,6 +69,7 @@ libparsec_protocol = { path = "libparsec/crates/protocol", default-features = fa
 libparsec_crypto = { path = "libparsec/crates/crypto", default-features = false }
 libparsec_types = { path = "libparsec/crates/types", default-features = false }
 libparsec_platform_device_loader = { path = "libparsec/crates/platform_device_loader", default-features = false }
+libparsec_platform_mountpoint = { path = "libparsec/crates/platform_mountpoint", default-features = false }
 libparsec_platform_storage = { path = "libparsec/crates/platform_storage", default-features = false }
 libparsec_serialization_format = { path = "libparsec/crates/serialization_format", default-features = false }
 libparsec_testbed = { path = "libparsec/crates/testbed", default-features = false }
@@ -163,6 +166,8 @@ wasm-bindgen-futures = { version = "0.4.37", default-features = false }
 wasm-bindgen-test = { version = "0.3.37", default-features = false }
 wasm-bindgen = { version = "0.2.87", default-features = false }
 web-sys = { version = "0.3.64", default-features = false }
+winfsp_build = { version = "0.1.1", default-features = false }
+winfsp_wrs = { git = "https://github.com/Scille/winfsp_wrs.git", rev = "debed94", default-features = false }
 # Using a non-stable version is exceptionally allowed since no significant changes
 # were made from the last stable version to this major pre-release version.
 # TODO: bump to a stable version.

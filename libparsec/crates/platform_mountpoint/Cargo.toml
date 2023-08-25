@@ -1,0 +1,24 @@
+[package]
+name = "libparsec_platform_mountpoint"
+publish.workspace = true
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+version.workspace = true
+repository.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[target.'cfg(target_os = "windows")'.dependencies]
+winfsp_wrs = { workspace = true }
+once_cell = { workspace = true }
+regex = { workspace = true }
+
+[dependencies]
+libparsec_types = { workspace = true }
+chrono = { workspace = true }
+thiserror = { workspace = true }
+
+[target.'cfg(target_os = "windows")'.build-dependencies]
+winfsp_build = { workspace = true }
