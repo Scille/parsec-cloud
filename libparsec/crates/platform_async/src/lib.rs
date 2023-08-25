@@ -59,3 +59,8 @@ macro_rules! select2 {
 
 pub use platform::{oneshot, sleep, spawn, watch, JoinHandle};
 pub use std::time::Duration; // Re-exposed to simplify use of `sleep`
+
+#[cfg(target_arch = "wasm32")]
+pub type BoxStream<'a, R> = futures_core::stream::LocalBoxStream<'a, R>;
+#[cfg(not(target_arch = "wasm32"))]
+pub type BoxStream<'a, R> = futures_core::stream::BoxStream<'a, R>;

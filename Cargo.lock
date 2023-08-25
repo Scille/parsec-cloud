@@ -1366,6 +1366,7 @@ dependencies = [
  "console_log",
  "event-listener",
  "flume",
+ "futures-core",
  "futures-lite",
  "gloo-timers",
  "instant",
