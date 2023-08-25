@@ -190,7 +190,7 @@ class BaseTypeInUse:
             return StrBasedTypeInUse(
                 name=param.__name__,
                 custom_from_rs_string_fn=getattr(param, "custom_from_rs_string_fn", None),
-                custom_to_rs_string=getattr(param, "custom_to_rs_string", None),
+                custom_to_rs_string_fn=getattr(param, "custom_to_rs_string_fn", None),
             )
 
         elif isinstance(param, type) and issubclass(param, BytesBasedType):
@@ -292,11 +292,11 @@ class StrBasedTypeInUse(BaseTypeInUse):
     kind = "str_based"
     name: str
 
-    # If set, custom_from_rs_string_fn/custom_to_rs_string should inlined rust functions
+    # If set, custom_from_rs_string_fn/custom_to_rs_string_fn should inlined rust functions
     # `fn (String) -> Result<X, AsRef<str>>`
     custom_from_rs_string_fn: str | None = None
     # `fn (&X) -> Result<String, AsRef<str>>`
-    custom_to_rs_string: str | None = None
+    custom_to_rs_string_fn: str | None = None
 
 
 @dataclass
@@ -494,7 +494,7 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             StrBasedTypeInUse(
                 name=name,
                 custom_from_rs_string_fn=getattr(item, "custom_from_rs_string_fn", None),
-                custom_to_rs_string=getattr(item, "custom_to_rs_string", None),
+                custom_to_rs_string_fn=getattr(item, "custom_to_rs_string_fn", None),
             )
             for (name, item) in api_items.items()
             if isinstance(item, type) and issubclass(item, StrBasedType)

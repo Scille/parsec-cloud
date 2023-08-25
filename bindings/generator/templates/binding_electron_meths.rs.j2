@@ -275,14 +275,11 @@ JsNumber::new({{ mut_cx_ref }}, {{ rs_value }})
 JsString::try_new({{ mut_cx_ref }}, {{ rs_value }}).or_throw({{ mut_cx_ref }})?
 {%- elif type.kind == "str_based" -%}
 JsString::try_new({{ mut_cx_ref }},
-{%- if type.custom_to_rs_string -%}
-{
-    let custom_to_rs_string = {{ type.custom_to_rs_string }};
-    match custom_to_rs_string({{ rs_value }}) {
+{%- if type.custom_to_rs_string_fn -%}
+    match {{ type.name | pascal2snake }}_to_string({{ rs_value }}) {
         Ok(ok) => ok,
         Err(err) => return cx.throw_type_error(err),
     }
-}
 {%- else -%}
 {{ rs_value }}
 {%- endif -%}
@@ -604,7 +601,7 @@ use neon::{prelude::*, types::buffer::TypedArray};
 
 {{ string_type.custom_from_rs_string_fn.format(fn_name = prefix_fn_name + "_from_string") if string_type.custom_from_rs_string_fn }}
 
-{# {{ string_type.custom_to_rs_string_fn.format(fn_name = prefix_fn_name + "_to_string") if string_type.custom_to_rs_string_fn }} #}
+{{ string_type.custom_to_rs_string_fn.format(fn_name = prefix_fn_name + "_to_string") if string_type.custom_to_rs_string_fn }}
 
 {%- endfor %}
 

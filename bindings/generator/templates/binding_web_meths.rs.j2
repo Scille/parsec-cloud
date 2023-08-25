@@ -221,14 +221,11 @@ match {{ rs_value }} {
 {%- elif type.kind in ("i32_based", "u32_based") -%}
 JsValue::from({{ rs_value }})
 {%- elif type.kind == "str_based" -%}
-JsValue::from_str({%- if type.custom_to_rs_string -%}
-{
-    let custom_to_rs_string = {{ type.custom_to_rs_string }};
-    match custom_to_rs_string({{ rs_value }}) {
+JsValue::from_str({%- if type.custom_to_rs_string_fn -%}
+    match {{ type.name | pascal2snake }}_to_string({{ rs_value }}) {
         Ok(ok) => ok,
         Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
     }.as_ref()
-}
 {%- else -%}
 {{ rs_value }}.as_ref()
 {%- endif -%}
@@ -539,7 +536,7 @@ use wasm_bindgen_futures::*;
 
 {{ string_type.custom_from_rs_string_fn.format(fn_name = prefix_fn_name + "_from_string") if string_type.custom_from_rs_string_fn }}
 
-{# {{ string_type.custom_to_rs_string_fn.format(fn_name = prefix_fn_name + "_to_string") if string_type.custom_to_rs_string_fn }} #}
+{{ string_type.custom_to_rs_string_fn.format(fn_name = prefix_fn_name + "_to_string") if string_type.custom_to_rs_string_fn }}
 
 {%- endfor %}
 

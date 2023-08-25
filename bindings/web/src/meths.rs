@@ -32,6 +32,10 @@ fn date_time_from_string(s: String) -> Result<libparsec::DateTime, String> {
     libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
 }
 
+fn date_time_to_string(dt: libparsec::DateTime) -> Result<String, &'static str> {
+    Ok(dt.to_rfc3339())
+}
+
 fn entry_name_from_string(s: String) -> Result<libparsec::EntryName, String> {
     s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
 }
@@ -44,8 +48,19 @@ fn path_from_string(s: String) -> Result<std::path::PathBuf, &'static str> {
     Ok(std::path::PathBuf::from(s))
 }
 
+fn path_to_string(path: std::path::PathBuf) -> Result<String, &'static str> {
+    path.into_os_string()
+        .into_string()
+        .map_err(|_| "Path contains non-utf8 characters")
+}
+
 fn backend_addr_from_string(s: String) -> Result<libparsec::BackendAddr, String> {
     libparsec::BackendAddr::from_any(&s).map_err(|e| e.to_string())
+}
+
+#[allow(dead_code)]
+fn backend_addr_to_string(addr: libparsec::BackendAddr) -> Result<String, &'static str> {
+    Ok(addr.to_url().into())
 }
 
 #[allow(dead_code)]
@@ -55,16 +70,36 @@ fn backend_organization_addr_from_string(
     libparsec::BackendOrganizationAddr::from_any(&s).map_err(|e| e.to_string())
 }
 
+#[allow(dead_code)]
+fn backend_organization_addr_to_string(
+    addr: libparsec::BackendOrganizationAddr,
+) -> Result<String, &'static str> {
+    Ok(addr.to_url().into())
+}
+
 fn backend_organization_bootstrap_addr_from_string(
     s: String,
 ) -> Result<libparsec::BackendOrganizationBootstrapAddr, String> {
     libparsec::BackendOrganizationBootstrapAddr::from_any(&s).map_err(|e| e.to_string())
 }
 
+fn backend_organization_bootstrap_addr_to_string(
+    addr: libparsec::BackendOrganizationBootstrapAddr,
+) -> Result<String, &'static str> {
+    Ok(addr.to_url().into())
+}
+
 fn backend_invitation_addr_from_string(
     s: String,
 ) -> Result<libparsec::BackendInvitationAddr, String> {
     libparsec::BackendInvitationAddr::from_any(&s).map_err(|e| e.to_string())
+}
+
+#[allow(dead_code)]
+fn backend_invitation_addr_to_string(
+    addr: libparsec::BackendInvitationAddr,
+) -> Result<String, &'static str> {
+    Ok(addr.to_url().into())
 }
 
 // ClientConfig
@@ -116,44 +151,29 @@ fn struct_clientconfig_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig,
 #[allow(dead_code)]
 fn struct_clientconfig_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_config_dir = JsValue::from_str({
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.config_dir) {
+    let js_config_dir = JsValue::from_str(
+        match path_to_string(rs_obj.config_dir) {
             Ok(ok) => ok,
             Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"configDir".into(), &js_config_dir)?;
-    let js_data_base_dir = JsValue::from_str({
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.data_base_dir) {
+    let js_data_base_dir = JsValue::from_str(
+        match path_to_string(rs_obj.data_base_dir) {
             Ok(ok) => ok,
             Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"dataBaseDir".into(), &js_data_base_dir)?;
-    let js_mountpoint_base_dir = JsValue::from_str({
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.mountpoint_base_dir) {
+    let js_mountpoint_base_dir = JsValue::from_str(
+        match path_to_string(rs_obj.mountpoint_base_dir) {
             Ok(ok) => ok,
             Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(
         &js_obj,
         &"mountpointBaseDir".into(),
@@ -293,18 +313,13 @@ fn struct_availabledevice_js_to_rs(obj: JsValue) -> Result<libparsec::AvailableD
 #[allow(dead_code)]
 fn struct_availabledevice_rs_to_js(rs_obj: libparsec::AvailableDevice) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_key_file_path = JsValue::from_str({
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.key_file_path) {
+    let js_key_file_path = JsValue::from_str(
+        match path_to_string(rs_obj.key_file_path) {
             Ok(ok) => ok,
             Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"keyFilePath".into(), &js_key_file_path)?;
     let js_organization_id = JsValue::from_str(rs_obj.organization_id.as_ref());
     Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
@@ -1351,34 +1366,24 @@ fn variant_deviceaccessstrategy_rs_to_js(
             Reflect::set(&js_obj, &"tag".into(), &"Password".into())?;
             let js_password = JsValue::from_str(password.as_ref());
             Reflect::set(&js_obj, &"password".into(), &js_password)?;
-            let js_key_file = JsValue::from_str({
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
+            let js_key_file = JsValue::from_str(
+                match path_to_string(key_file) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"key_file".into(), &js_key_file)?;
         }
         libparsec::DeviceAccessStrategy::Smartcard { key_file, .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Smartcard".into())?;
-            let js_key_file = JsValue::from_str({
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
+            let js_key_file = JsValue::from_str(
+                match path_to_string(key_file) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"key_file".into(), &js_key_file)?;
         }
     }
@@ -1500,29 +1505,21 @@ fn variant_clientworkspaceshareerror_rs_to_js(
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"BadTimestamp".into())?;
-            let js_server_timestamp = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(server_timestamp) {
+            let js_server_timestamp = JsValue::from_str(
+                match date_time_to_string(server_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"server_timestamp".into(), &js_server_timestamp)?;
-            let js_client_timestamp = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(client_timestamp) {
+            let js_client_timestamp = JsValue::from_str(
+                match date_time_to_string(client_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"client_timestamp".into(), &js_client_timestamp)?;
             let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
             Reflect::set(
@@ -1812,29 +1809,21 @@ fn variant_bootstraporganizationerror_rs_to_js(
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"BadTimestamp".into())?;
-            let js_server_timestamp = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(server_timestamp) {
+            let js_server_timestamp = JsValue::from_str(
+                match date_time_to_string(server_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"server_timestamp".into(), &js_server_timestamp)?;
-            let js_client_timestamp = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(client_timestamp) {
+            let js_client_timestamp = JsValue::from_str(
+                match date_time_to_string(client_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"client_timestamp".into(), &js_client_timestamp)?;
             let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
             Reflect::set(
@@ -2342,17 +2331,13 @@ fn variant_invitelistitem_rs_to_js(rs_obj: libparsec::InviteListItem) -> Result<
                 .as_ref(),
             ));
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
-            let js_created_on = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(created_on) {
+            let js_created_on = JsValue::from_str(
+                match date_time_to_string(created_on) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"created_on".into(), &js_created_on)?;
             let js_status = variant_invitationstatus_rs_to_js(status)?;
             Reflect::set(&js_obj, &"status".into(), &js_status)?;
@@ -2373,17 +2358,13 @@ fn variant_invitelistitem_rs_to_js(rs_obj: libparsec::InviteListItem) -> Result<
                 .as_ref(),
             ));
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
-            let js_created_on = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(created_on) {
+            let js_created_on = JsValue::from_str(
+                match date_time_to_string(created_on) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"created_on".into(), &js_created_on)?;
             let js_claimer_email = claimer_email.into();
             Reflect::set(&js_obj, &"claimer_email".into(), &js_claimer_email)?;
@@ -2455,29 +2436,21 @@ fn variant_greetinprogresserror_rs_to_js(
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"BadTimestamp".into())?;
-            let js_server_timestamp = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(server_timestamp) {
+            let js_server_timestamp = JsValue::from_str(
+                match date_time_to_string(server_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"server_timestamp".into(), &js_server_timestamp)?;
-            let js_client_timestamp = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(client_timestamp) {
+            let js_client_timestamp = JsValue::from_str(
+                match date_time_to_string(client_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"client_timestamp".into(), &js_client_timestamp)?;
             let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
             Reflect::set(
@@ -3814,18 +3787,13 @@ pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise 
         };
 
         let ret = libparsec::test_new_testbed(&template, test_server.as_ref()).await;
-        Ok(JsValue::from_str({
-            let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                path.into_os_string()
-                    .into_string()
-                    .map_err(|_| "Path contains non-utf8 characters")
-            };
-            match custom_to_rs_string(ret) {
+        Ok(JsValue::from_str(
+            match path_to_string(ret) {
                 Ok(ok) => ok,
                 Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
             }
-            .as_ref()
-        }))
+            .as_ref(),
+        ))
     })
 }
 
@@ -3853,14 +3821,13 @@ pub fn testGetTestbedBootstrapOrganizationAddr(discriminant_dir: String) -> Prom
             path_from_string(discriminant_dir).map_err(|e| TypeError::new(e.as_ref()))?;
         let ret = libparsec::test_get_testbed_bootstrap_organization_addr(&discriminant_dir);
         Ok(match ret {
-            Some(val) => JsValue::from_str({
-                let custom_to_rs_string = |addr: libparsec::BackendOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
-                match custom_to_rs_string(val) {
+            Some(val) => JsValue::from_str(
+                match backend_organization_bootstrap_addr_to_string(val) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                 }
-                .as_ref()
-            }),
+                .as_ref(),
+            ),
             None => JsValue::NULL,
         })
     })

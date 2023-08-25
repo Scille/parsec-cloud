@@ -27,6 +27,10 @@ fn date_time_from_string(s: String) -> Result<libparsec::DateTime, String> {
     libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
 }
 
+fn date_time_to_string(dt: libparsec::DateTime) -> Result<String, &'static str> {
+    Ok(dt.to_rfc3339())
+}
+
 fn entry_name_from_string(s: String) -> Result<libparsec::EntryName, String> {
     s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
 }
@@ -39,8 +43,19 @@ fn path_from_string(s: String) -> Result<std::path::PathBuf, &'static str> {
     Ok(std::path::PathBuf::from(s))
 }
 
+fn path_to_string(path: std::path::PathBuf) -> Result<String, &'static str> {
+    path.into_os_string()
+        .into_string()
+        .map_err(|_| "Path contains non-utf8 characters")
+}
+
 fn backend_addr_from_string(s: String) -> Result<libparsec::BackendAddr, String> {
     libparsec::BackendAddr::from_any(&s).map_err(|e| e.to_string())
+}
+
+#[allow(dead_code)]
+fn backend_addr_to_string(addr: libparsec::BackendAddr) -> Result<String, &'static str> {
+    Ok(addr.to_url().into())
 }
 
 #[allow(dead_code)]
@@ -50,16 +65,36 @@ fn backend_organization_addr_from_string(
     libparsec::BackendOrganizationAddr::from_any(&s).map_err(|e| e.to_string())
 }
 
+#[allow(dead_code)]
+fn backend_organization_addr_to_string(
+    addr: libparsec::BackendOrganizationAddr,
+) -> Result<String, &'static str> {
+    Ok(addr.to_url().into())
+}
+
 fn backend_organization_bootstrap_addr_from_string(
     s: String,
 ) -> Result<libparsec::BackendOrganizationBootstrapAddr, String> {
     libparsec::BackendOrganizationBootstrapAddr::from_any(&s).map_err(|e| e.to_string())
 }
 
+fn backend_organization_bootstrap_addr_to_string(
+    addr: libparsec::BackendOrganizationBootstrapAddr,
+) -> Result<String, &'static str> {
+    Ok(addr.to_url().into())
+}
+
 fn backend_invitation_addr_from_string(
     s: String,
 ) -> Result<libparsec::BackendInvitationAddr, String> {
     libparsec::BackendInvitationAddr::from_any(&s).map_err(|e| e.to_string())
+}
+
+#[allow(dead_code)]
+fn backend_invitation_addr_to_string(
+    addr: libparsec::BackendInvitationAddr,
+) -> Result<String, &'static str> {
+    Ok(addr.to_url().into())
 }
 
 // ClientConfig
@@ -114,43 +149,31 @@ fn struct_clientconfig_rs_to_js<'a>(
     rs_obj: libparsec::ClientConfig,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
-    let js_config_dir = JsString::try_new(cx, {
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.config_dir) {
+    let js_config_dir = JsString::try_new(
+        cx,
+        match path_to_string(rs_obj.config_dir) {
             Ok(ok) => ok,
             Err(err) => return cx.throw_type_error(err),
-        }
-    })
+        },
+    )
     .or_throw(cx)?;
     js_obj.set(cx, "configDir", js_config_dir)?;
-    let js_data_base_dir = JsString::try_new(cx, {
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.data_base_dir) {
+    let js_data_base_dir = JsString::try_new(
+        cx,
+        match path_to_string(rs_obj.data_base_dir) {
             Ok(ok) => ok,
             Err(err) => return cx.throw_type_error(err),
-        }
-    })
+        },
+    )
     .or_throw(cx)?;
     js_obj.set(cx, "dataBaseDir", js_data_base_dir)?;
-    let js_mountpoint_base_dir = JsString::try_new(cx, {
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.mountpoint_base_dir) {
+    let js_mountpoint_base_dir = JsString::try_new(
+        cx,
+        match path_to_string(rs_obj.mountpoint_base_dir) {
             Ok(ok) => ok,
             Err(err) => return cx.throw_type_error(err),
-        }
-    })
+        },
+    )
     .or_throw(cx)?;
     js_obj.set(cx, "mountpointBaseDir", js_mountpoint_base_dir)?;
     let js_workspace_storage_cache_size =
@@ -287,17 +310,13 @@ fn struct_availabledevice_rs_to_js<'a>(
     rs_obj: libparsec::AvailableDevice,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
-    let js_key_file_path = JsString::try_new(cx, {
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.key_file_path) {
+    let js_key_file_path = JsString::try_new(
+        cx,
+        match path_to_string(rs_obj.key_file_path) {
             Ok(ok) => ok,
             Err(err) => return cx.throw_type_error(err),
-        }
-    })
+        },
+    )
     .or_throw(cx)?;
     js_obj.set(cx, "keyFilePath", js_key_file_path)?;
     let js_organization_id = JsString::try_new(cx, rs_obj.organization_id).or_throw(cx)?;
@@ -1295,34 +1314,26 @@ fn variant_deviceaccessstrategy_rs_to_js<'a>(
             js_obj.set(cx, "tag", js_tag)?;
             let js_password = JsString::try_new(cx, password).or_throw(cx)?;
             js_obj.set(cx, "password", js_password)?;
-            let js_key_file = JsString::try_new(cx, {
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
+            let js_key_file = JsString::try_new(
+                cx,
+                match path_to_string(key_file) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
-                }
-            })
+                },
+            )
             .or_throw(cx)?;
             js_obj.set(cx, "key_file", js_key_file)?;
         }
         libparsec::DeviceAccessStrategy::Smartcard { key_file, .. } => {
             let js_tag = JsString::try_new(cx, "Smartcard").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_key_file = JsString::try_new(cx, {
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
+            let js_key_file = JsString::try_new(
+                cx,
+                match path_to_string(key_file) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
-                }
-            })
+                },
+            )
             .or_throw(cx)?;
             js_obj.set(cx, "key_file", js_key_file)?;
         }
@@ -1461,28 +1472,22 @@ fn variant_clientworkspaceshareerror_rs_to_js<'a>(
         } => {
             let js_tag = JsString::try_new(cx, "BadTimestamp").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_server_timestamp = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(server_timestamp) {
+            let js_server_timestamp = JsString::try_new(
+                cx,
+                match date_time_to_string(server_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
-                }
-            })
+                },
+            )
             .or_throw(cx)?;
             js_obj.set(cx, "server_timestamp", js_server_timestamp)?;
-            let js_client_timestamp = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(client_timestamp) {
+            let js_client_timestamp = JsString::try_new(
+                cx,
+                match date_time_to_string(client_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
-                }
-            })
+                },
+            )
             .or_throw(cx)?;
             js_obj.set(cx, "client_timestamp", js_client_timestamp)?;
             let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
@@ -1795,28 +1800,22 @@ fn variant_bootstraporganizationerror_rs_to_js<'a>(
         } => {
             let js_tag = JsString::try_new(cx, "BadTimestamp").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_server_timestamp = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(server_timestamp) {
+            let js_server_timestamp = JsString::try_new(
+                cx,
+                match date_time_to_string(server_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
-                }
-            })
+                },
+            )
             .or_throw(cx)?;
             js_obj.set(cx, "server_timestamp", js_server_timestamp)?;
-            let js_client_timestamp = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(client_timestamp) {
+            let js_client_timestamp = JsString::try_new(
+                cx,
+                match date_time_to_string(client_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
-                }
-            })
+                },
+            )
             .or_throw(cx)?;
             js_obj.set(cx, "client_timestamp", js_client_timestamp)?;
             let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
@@ -2349,16 +2348,13 @@ fn variant_invitelistitem_rs_to_js<'a>(
                 js_buff
             };
             js_obj.set(cx, "token", js_token)?;
-            let js_created_on = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(created_on) {
+            let js_created_on = JsString::try_new(
+                cx,
+                match date_time_to_string(created_on) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
-                }
-            })
+                },
+            )
             .or_throw(cx)?;
             js_obj.set(cx, "created_on", js_created_on)?;
             let js_status = variant_invitationstatus_rs_to_js(cx, status)?;
@@ -2386,16 +2382,13 @@ fn variant_invitelistitem_rs_to_js<'a>(
                 js_buff
             };
             js_obj.set(cx, "token", js_token)?;
-            let js_created_on = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(created_on) {
+            let js_created_on = JsString::try_new(
+                cx,
+                match date_time_to_string(created_on) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
-                }
-            })
+                },
+            )
             .or_throw(cx)?;
             js_obj.set(cx, "created_on", js_created_on)?;
             let js_claimer_email = JsString::try_new(cx, claimer_email).or_throw(cx)?;
@@ -2477,28 +2470,22 @@ fn variant_greetinprogresserror_rs_to_js<'a>(
         } => {
             let js_tag = JsString::try_new(cx, "BadTimestamp").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_server_timestamp = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(server_timestamp) {
+            let js_server_timestamp = JsString::try_new(
+                cx,
+                match date_time_to_string(server_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
-                }
-            })
+                },
+            )
             .or_throw(cx)?;
             js_obj.set(cx, "server_timestamp", js_server_timestamp)?;
-            let js_client_timestamp = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(client_timestamp) {
+            let js_client_timestamp = JsString::try_new(
+                cx,
+                match date_time_to_string(client_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
-                }
-            })
+                },
+            )
             .or_throw(cx)?;
             js_obj.set(cx, "client_timestamp", js_client_timestamp)?;
             let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
@@ -5051,17 +5038,13 @@ fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
             let ret = libparsec::test_new_testbed(&template, test_server.as_ref()).await;
 
             deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = JsString::try_new(&mut cx, {
-                    let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                        path.into_os_string()
-                            .into_string()
-                            .map_err(|_| "Path contains non-utf8 characters")
-                    };
-                    match custom_to_rs_string(ret) {
+                let js_ret = JsString::try_new(
+                    &mut cx,
+                    match path_to_string(ret) {
                         Ok(ok) => ok,
                         Err(err) => return cx.throw_type_error(err),
-                    }
-                })
+                    },
+                )
                 .or_throw(&mut cx)?;
                 Ok(js_ret)
             });
@@ -5106,15 +5089,15 @@ fn test_get_testbed_bootstrap_organization_addr(mut cx: FunctionContext) -> JsRe
     };
     let ret = libparsec::test_get_testbed_bootstrap_organization_addr(&discriminant_dir);
     let js_ret = match ret {
-        Some(elem) => {
-            JsString::try_new(&mut cx,{
-                let custom_to_rs_string = |addr: libparsec::BackendOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
-                match custom_to_rs_string(elem) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            }).or_throw(&mut cx)?.as_value(&mut cx)
-        }
+        Some(elem) => JsString::try_new(
+            &mut cx,
+            match backend_organization_bootstrap_addr_to_string(elem) {
+                Ok(ok) => ok,
+                Err(err) => return cx.throw_type_error(err),
+            },
+        )
+        .or_throw(&mut cx)?
+        .as_value(&mut cx),
         None => JsNull::new(&mut cx).as_value(&mut cx),
     };
     let (deferred, promise) = cx.promise();
