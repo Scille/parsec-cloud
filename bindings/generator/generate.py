@@ -446,17 +446,20 @@ def generate_client(api_specs: ApiSpecs) -> list[str]:
 
 
 def generate_electron(api_specs: ApiSpecs) -> list[str]:
-    template = env.get_template("binding_electron_index.d.ts.j2")
-    output = (BASEDIR / "../electron/src/index.d.ts").resolve()
-    print(f"Generating {output}")
-    output.write_bytes(template.render(api=api_specs).encode("utf8"))
-
     template = env.get_template("binding_electron_meths.rs.j2")
     output = (BASEDIR / "../electron/src/meths.rs").resolve()
     print(f"Generating {output}")
     output.write_bytes(template.render(api=api_specs).encode("utf8"))
 
     return ["libparsec_bindings_electron"]
+
+
+def generate_electron_client(api_specs: ApiSpecs) -> list[str]:
+    template = env.get_template("binding_electron_index.d.ts.j2")
+    output = (BASEDIR / "../electron/src/index.d.ts").resolve()
+    print(f"Generating {output}")
+    output.write_bytes(template.render(api=api_specs).encode("utf8"))
+    return []
 
 
 def generate_web(api_specs: ApiSpecs) -> list[str]:
@@ -473,6 +476,8 @@ def generate(what: str, api_specs: ApiSpecs) -> list[str]:
         return generate_client(api_specs)
     elif what == "electron":
         return generate_electron(api_specs)
+    elif what == "electron_client":
+        return generate_electron_client(api_specs)
     elif what == "web":
         return generate_web(api_specs)
     elif what == "android":
@@ -484,7 +489,11 @@ def generate(what: str, api_specs: ApiSpecs) -> list[str]:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate bindings code")
-    parser.add_argument("what", choices=["all", "client", "electron", "web", "android"], nargs="+")
+    parser.add_argument(
+        "what",
+        choices=["all", "client", "electron", "electron_client", "web", "android"],
+        nargs="+",
+    )
     parser.add_argument("--test", action="store_true")
     args = parser.parse_args()
 
