@@ -317,22 +317,23 @@ match {{ rs_value }} {
 
 
 {%- macro render_struct_js_to_rs(struct) %}
+{% set fn_name = struct_js_to_rs_function_name(struct) %}
+{{ struct.custom_init_fn.format(fn_name=fn_name + "_init") if struct.custom_init_fn }}
+
 #[allow(dead_code)]
-fn {{ struct_js_to_rs_function_name(struct) }}(obj: JsValue) -> Result<libparsec::{{ struct.name }}, JsValue> {
+fn {{ fn_name }}(obj: JsValue) -> Result<libparsec::{{ struct.name }}, JsValue> {
 {% for attr_name, attr_type in struct.attributes.items() %}
     let {{ attr_name }} = {
         let js_val = Reflect::get(&obj, &"{{ attr_name | snake2camel }}".into())?;
         {{ render_js_value_to_rs("js_val", attr_type) | indent(8) }}
     };
 {% endfor %}
-{% if struct.custom_init is none %}
+{% if struct.custom_init_fn is none %}
     Ok(libparsec::{{ struct.name }} {
         {{ struct.list_attributes() }}
     })
 {% else %}
-    ({{ struct.custom_init }})(
-        {{ struct.list_attributes() }}
-    ).map_err(|e| e.into())
+    {{ fn_name }}_init({{ struct.list_attributes() }}).map_err(|e| e.into())
 {% endif %}
 }
 {% endmacro -%}

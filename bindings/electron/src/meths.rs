@@ -116,6 +116,13 @@ fn struct_clientconfig_rs_to_js<'a>(
 
 // HumanHandle
 
+fn struct_humanhandle_js_to_rs_init(
+    email: impl AsRef<str>,
+    label: impl AsRef<str>,
+) -> Result<libparsec::HumanHandle, String> {
+    libparsec::HumanHandle::new(email.as_ref(), label.as_ref()).map_err(|e| e.to_string())
+}
+
 #[allow(dead_code)]
 fn struct_humanhandle_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
@@ -129,10 +136,7 @@ fn struct_humanhandle_js_to_rs<'a>(
         let js_val: Handle<JsString> = obj.get(cx, "label")?;
         js_val.value(cx)
     };
-    (|email: String, label: String| -> Result<libparsec::HumanHandle, String> {
-        libparsec::HumanHandle::new(&email, &label).map_err(|e| e.to_string())
-    })(email, label)
-    .or_else(|e| cx.throw_error(e))
+    struct_humanhandle_js_to_rs_init(email, label).or_else(|e| cx.throw_error(e))
 }
 
 #[allow(dead_code)]

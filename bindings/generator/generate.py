@@ -218,7 +218,7 @@ class StructSpec(BaseTypeInUse):
     name: str
     attributes: OrderedDict[str, BaseTypeInUse]
     custom_getters: dict[str, str]
-    custom_init: dict[str, str] | None
+    custom_init_fn: str | None
 
     def get_value(self, obj_name: str, attr_name: str) -> str | None:
         value = self.custom_getters.get(attr_name, None)
@@ -407,7 +407,7 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
                                 }
                             ),
                             custom_getters={},
-                            custom_init=None,
+                            custom_init_fn=None,
                         ),
                     )
 
@@ -432,11 +432,11 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
                     {
                         k: BaseTypeInUse.parse(v)
                         for k, v in annotations.items()
-                        if k not in ("custom_getters", "custom_init")
+                        if k not in ("custom_getters", "custom_init_fn")
                     }
                 ),
                 custom_getters=getattr(item, "custom_getters", {}),
-                custom_init=getattr(item, "custom_init", None),
+                custom_init_fn=getattr(item, "custom_init_fn", None),
             )
             # Modify placeholder instead of replacing it given it is referenced in the nested specs
             placeholder.__dict__ = struct.__dict__
