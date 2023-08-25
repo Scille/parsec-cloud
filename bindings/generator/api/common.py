@@ -109,8 +109,14 @@ class DeviceLabel(StrBasedType):
     pass
 
 
-class HumanHandle(StrBasedType):
-    pass
+class HumanHandle(Structure):
+    email: str
+    label: str
+    custom_getters: dict[str, str] = {"email": "email", "label": "label"}
+    custom_init: dict[str, str] = {
+        "web": 'libparsec::HumanHandle::new(&email, &label).map_err(|e| TypeError::new(&format!("Invalid HumanHandle: {e}")).into())',
+        "electron": "libparsec::HumanHandle::new(&email, &label).or_throw(cx)",
+    }
 
 
 class DateTime(StrBasedType):

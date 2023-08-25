@@ -16,7 +16,6 @@ type UserID = string
 type OrganizationID = string
 type DeviceID = string
 type DeviceLabel = string
-type HumanHandle = string
 type BackendAddr = string
 type BackendOrganizationAddr = string
 type BackendOrganizationBootstrapAddr = string
@@ -34,6 +33,11 @@ export interface ClientConfig {
     dataBaseDir: Path
     mountpointBaseDir: Path
     workspaceStorageCacheSize: WorkspaceStorageCacheSize
+}
+
+export interface HumanHandle {
+    email: string
+    label: string
 }
 
 export interface AvailableDevice {
