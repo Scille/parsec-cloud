@@ -136,10 +136,9 @@ JsFunction
 {{ js_val }}.as_slice({{ mut_cx_ref }}).to_vec()
 {%- elif type.kind == "bytes_based" -%}
 {
-    {% if type.custom_from_rs_bytes -%}
-    let custom_from_rs_bytes = {{ type.custom_from_rs_bytes }};
+    {% if type.custom_from_rs_bytes_fn -%}
     #[allow(clippy::unnecessary_mut_passed)]
-    match custom_from_rs_bytes({{ js_val }}.as_slice({{ mut_cx_ref }}))
+    match {{ type.name | pascal2snake }}_from_bytes({{ js_val }}.as_slice({{ mut_cx_ref }}))
     {%- else -%}
     #[allow(clippy::unnecessary_mut_passed)]
     match {{ js_val }}.as_slice({{ mut_cx_ref }}).try_into()
@@ -594,6 +593,12 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 #[allow(unused_imports)]
 use neon::{prelude::*, types::buffer::TypedArray};
+
+{#Bytes#}
+{% for bytes_type in api.bytes_based_types %}
+{{ bytes_type.custom_from_rs_bytes_fn.format(fn_name = bytes_type.name | pascal2snake + "_from_bytes") if bytes_type.custom_from_rs_bytes_fn }}
+{%- endfor %}
+
 {# Structures #}
 {% for struct in api.structs %}
 

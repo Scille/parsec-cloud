@@ -7,6 +7,14 @@
 #[allow(unused_imports)]
 use neon::{prelude::*, types::buffer::TypedArray};
 
+fn entry_id_from_bytes(x: &[u8]) -> Result<libparsec::EntryID, String> {
+    libparsec::EntryID::try_from(x).map_err(|e| e.to_string())
+}
+
+fn invitation_token_from_bytes(x: &[u8]) -> Result<libparsec::InvitationToken, String> {
+    libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
+}
+
 // ClientConfig
 
 #[allow(dead_code)]
@@ -2211,11 +2219,8 @@ fn variant_invitelistitem_js_to_rs<'a>(
             let token = {
                 let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "token")?;
                 {
-                    let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                        libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
-                    };
                     #[allow(clippy::unnecessary_mut_passed)]
-                    match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                    match invitation_token_from_bytes(js_val.as_slice(cx)) {
                         Ok(val) => val,
                         // err can't infer type in some case, because of the previous `try_into`
                         #[allow(clippy::useless_format)]
@@ -2249,11 +2254,8 @@ fn variant_invitelistitem_js_to_rs<'a>(
             let token = {
                 let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "token")?;
                 {
-                    let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                        libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
-                    };
                     #[allow(clippy::unnecessary_mut_passed)]
-                    match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                    match invitation_token_from_bytes(js_val.as_slice(cx)) {
                         Ok(val) => val,
                         // err can't infer type in some case, because of the previous `try_into`
                         #[allow(clippy::useless_format)]
@@ -2909,11 +2911,8 @@ fn client_workspace_rename(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let workspace_id = {
         let js_val = cx.argument::<JsTypedArray<u8>>(1)?;
         {
-            let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                libparsec::EntryID::try_from(x).map_err(|e| e.to_string())
-            };
             #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
+            match entry_id_from_bytes(js_val.as_slice(&mut cx)) {
                 Ok(val) => val,
                 // err can't infer type in some case, because of the previous `try_into`
                 #[allow(clippy::useless_format)]
@@ -2988,11 +2987,8 @@ fn client_workspace_share(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let workspace_id = {
         let js_val = cx.argument::<JsTypedArray<u8>>(1)?;
         {
-            let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                libparsec::EntryID::try_from(x).map_err(|e| e.to_string())
-            };
             #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
+            match entry_id_from_bytes(js_val.as_slice(&mut cx)) {
                 Ok(val) => val,
                 // err can't infer type in some case, because of the previous `try_into`
                 #[allow(clippy::useless_format)]
@@ -4178,11 +4174,8 @@ fn client_delete_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let token = {
         let js_val = cx.argument::<JsTypedArray<u8>>(1)?;
         {
-            let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
-            };
             #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
+            match invitation_token_from_bytes(js_val.as_slice(&mut cx)) {
                 Ok(val) => val,
                 // err can't infer type in some case, because of the previous `try_into`
                 #[allow(clippy::useless_format)]
@@ -4301,11 +4294,8 @@ fn client_start_user_invitation_greet(mut cx: FunctionContext) -> JsResult<JsPro
     let token = {
         let js_val = cx.argument::<JsTypedArray<u8>>(1)?;
         {
-            let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
-            };
             #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
+            match invitation_token_from_bytes(js_val.as_slice(&mut cx)) {
                 Ok(val) => val,
                 // err can't infer type in some case, because of the previous `try_into`
                 #[allow(clippy::useless_format)]
@@ -4365,11 +4355,8 @@ fn client_start_device_invitation_greet(mut cx: FunctionContext) -> JsResult<JsP
     let token = {
         let js_val = cx.argument::<JsTypedArray<u8>>(1)?;
         {
-            let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
-            };
             #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
+            match invitation_token_from_bytes(js_val.as_slice(&mut cx)) {
                 Ok(val) => val,
                 // err can't infer type in some case, because of the previous `try_into`
                 #[allow(clippy::useless_format)]

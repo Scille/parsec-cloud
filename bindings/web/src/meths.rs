@@ -12,6 +12,14 @@ use wasm_bindgen::JsCast;
 #[allow(unused_imports)]
 use wasm_bindgen_futures::*;
 
+fn entry_id_from_bytes(x: &[u8]) -> Result<libparsec::EntryID, String> {
+    libparsec::EntryID::try_from(x).map_err(|e| e.to_string())
+}
+
+fn invitation_token_from_bytes(x: &[u8]) -> Result<libparsec::InvitationToken, String> {
+    libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
+}
+
 // ClientConfig
 
 #[allow(dead_code)]
@@ -2230,10 +2238,8 @@ fn variant_invitelistitem_js_to_rs(obj: JsValue) -> Result<libparsec::InviteList
                     .dyn_into::<Uint8Array>()
                     .map_err(|_| TypeError::new("Not a Uint8Array"))
                     .and_then(|x| {
-                        let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                            libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
-                        };
-                        custom_from_rs_bytes(&x.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
+                        invitation_token_from_bytes(&x.to_vec())
+                            .map_err(|e| TypeError::new(e.as_ref()))
                     })
                     .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
             };
@@ -2269,10 +2275,8 @@ fn variant_invitelistitem_js_to_rs(obj: JsValue) -> Result<libparsec::InviteList
                     .dyn_into::<Uint8Array>()
                     .map_err(|_| TypeError::new("Not a Uint8Array"))
                     .and_then(|x| {
-                        let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                            libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
-                        };
-                        custom_from_rs_bytes(&x.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
+                        invitation_token_from_bytes(&x.to_vec())
+                            .map_err(|e| TypeError::new(e.as_ref()))
                     })
                     .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
             };
@@ -2732,10 +2736,7 @@ pub fn clientWorkspaceCreate(client: u32, name: String) -> Promise {
 pub fn clientWorkspaceRename(client: u32, workspace_id: Uint8Array, new_name: String) -> Promise {
     future_to_promise(async move {
         let workspace_id = {
-            let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                libparsec::EntryID::try_from(x).map_err(|e| e.to_string())
-            };
-            custom_from_rs_bytes(&workspace_id.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
+            entry_id_from_bytes(&workspace_id.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
         }?;
         let new_name = {
             let custom_from_rs_string = |s: String| -> Result<_, _> {
@@ -2777,10 +2778,7 @@ pub fn clientWorkspaceShare(
 ) -> Promise {
     future_to_promise(async move {
         let workspace_id = {
-            let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                libparsec::EntryID::try_from(x).map_err(|e| e.to_string())
-            };
-            custom_from_rs_bytes(&workspace_id.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
+            entry_id_from_bytes(&workspace_id.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
         }?;
         let recipient = recipient
             .parse()
@@ -3415,10 +3413,7 @@ pub fn clientNewDeviceInvitation(client: u32, send_email: bool) -> Promise {
 pub fn clientDeleteInvitation(client: u32, token: Uint8Array) -> Promise {
     future_to_promise(async move {
         let token = {
-            let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
-            };
-            custom_from_rs_bytes(&token.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
+            invitation_token_from_bytes(&token.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
         }?;
         let ret = libparsec::client_delete_invitation(client, token).await;
         Ok(match ret {
@@ -3482,10 +3477,7 @@ pub fn clientListInvitations(client: u32) -> Promise {
 pub fn clientStartUserInvitationGreet(client: u32, token: Uint8Array) -> Promise {
     future_to_promise(async move {
         let token = {
-            let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
-            };
-            custom_from_rs_bytes(&token.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
+            invitation_token_from_bytes(&token.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
         }?;
         let ret = libparsec::client_start_user_invitation_greet(client, token).await;
         Ok(match ret {
@@ -3513,10 +3505,7 @@ pub fn clientStartUserInvitationGreet(client: u32, token: Uint8Array) -> Promise
 pub fn clientStartDeviceInvitationGreet(client: u32, token: Uint8Array) -> Promise {
     future_to_promise(async move {
         let token = {
-            let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
-            };
-            custom_from_rs_bytes(&token.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
+            invitation_token_from_bytes(&token.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
         }?;
         let ret = libparsec::client_start_device_invitation_greet(client, token).await;
         Ok(match ret {

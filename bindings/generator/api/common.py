@@ -174,16 +174,22 @@ class EntryName(StrBasedType):
 
 
 class EntryID(BytesBasedType):
-    custom_from_rs_bytes = (
-        "|x: &[u8]| -> Result<_, _> { libparsec::EntryID::try_from(x).map_err(|e| e.to_string()) }"
-    )
+    custom_from_rs_bytes_fn = """
+        fn {fn_name}(x: &[u8]) -> Result<libparsec::EntryID, String> {{
+            libparsec::EntryID::try_from(x).map_err(|e| e.to_string())
+        }}
+    """
     custom_to_rs_bytes = (
         "|x: libparsec::EntryID| -> Result<_, &'static str> { Ok(x.as_bytes().to_owned()) }"
     )
 
 
 class InvitationToken(BytesBasedType):
-    custom_from_rs_bytes = "|x: &[u8]| -> Result<_, _> { libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string()) }"
+    custom_from_rs_bytes_fn = """
+        fn {fn_name}(x: &[u8]) -> Result<libparsec::InvitationToken, String> {{
+            libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
+        }}
+    """
     custom_to_rs_bytes = (
         "|x: libparsec::InvitationToken| -> Result<_, &'static str> { Ok(x.as_bytes().to_owned()) }"
     )

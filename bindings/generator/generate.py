@@ -196,7 +196,7 @@ class BaseTypeInUse:
         elif isinstance(param, type) and issubclass(param, BytesBasedType):
             return BytesBasedTypeInUse(
                 name=param.__name__,
-                custom_from_rs_bytes=getattr(param, "custom_from_rs_bytes", None),
+                custom_from_rs_bytes_fn=getattr(param, "custom_from_rs_bytes_fn", None),
                 custom_to_rs_bytes=getattr(param, "custom_to_rs_bytes", None),
             )
 
@@ -304,9 +304,9 @@ class BytesBasedTypeInUse(BaseTypeInUse):
     kind = "bytes_based"
     name: str
 
-    # If set, custom_from_rs_bytes/custom_to_rs_bytes should inlined rust functions
+    # If set, custom_from_rs_bytes_fn/custom_to_rs_bytes should inlined rust functions
     # `fn (&[u8]) -> Result<X, AsRef<str>>`
-    custom_from_rs_bytes: str | None = None
+    custom_from_rs_bytes_fn: str | None = None
     # `fn (&X) -> Result<Vec<u8>, AsRef<str>>`
     custom_to_rs_bytes: str | None = None
 
@@ -338,13 +338,13 @@ class MethSpec:
 
 @dataclass
 class ApiSpecs:
-    str_based_types: List[str]
-    bytes_based_types: List[str]
-    i32_based_types: List[str]
-    u32_based_types: List[str]
-    meths: List[MethSpec]
-    structs: List[StructSpec]
-    variants: List[VariantSpec]
+    str_based_types: list[str]
+    bytes_based_types: list[BytesBasedTypeInUse]
+    i32_based_types: list[str]
+    u32_based_types: list[str]
+    meths: list[MethSpec]
+    structs: list[StructSpec]
+    variants: list[VariantSpec]
     rust_code_to_inject: str | None  # Hack for the dummy test api
 
 
@@ -496,8 +496,12 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             if isinstance(item, type) and issubclass(item, StrBasedType)
         ],
         bytes_based_types=[
-            item.__name__
-            for item in api_items.values()
+            BytesBasedTypeInUse(
+                name=name,
+                custom_from_rs_bytes_fn=getattr(item, "custom_from_rs_bytes_fn", None),
+                custom_to_rs_bytes=getattr(item, "custom_to_rs_bytes", None),
+            )
+            for (name, item) in api_items.items()
             if isinstance(item, type) and issubclass(item, BytesBasedType)
         ],
         i32_based_types=[
