@@ -126,6 +126,40 @@ fn struct_clientconfig_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsVal
     Ok(js_obj)
 }
 
+// HumanHandle
+
+#[allow(dead_code)]
+fn struct_humanhandle_js_to_rs(obj: JsValue) -> Result<libparsec::HumanHandle, JsValue> {
+    let email = {
+        let js_val = Reflect::get(&obj, &"email".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+    };
+    let label = {
+        let js_val = Reflect::get(&obj, &"label".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+    };
+    libparsec::HumanHandle::new(&email, &label)
+        .map_err(|e| TypeError::new(&format!("Invalid HumanHandle: {e}")).into())
+}
+
+#[allow(dead_code)]
+fn struct_humanhandle_rs_to_js(rs_obj: libparsec::HumanHandle) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_email = rs_obj.email().into();
+    Reflect::set(&js_obj, &"email".into(), &js_email)?;
+    let js_label = rs_obj.label().into();
+    Reflect::set(&js_obj, &"label".into(), &js_label)?;
+    Ok(js_obj)
+}
+
 // AvailableDevice
 
 #[allow(dead_code)]
@@ -169,15 +203,7 @@ fn struct_availabledevice_js_to_rs(obj: JsValue) -> Result<libparsec::AvailableD
         if js_val.is_null() {
             None
         } else {
-            Some(
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
-                    .map_err(|_| TypeError::new("Not a valid HumanHandle"))?,
-            )
+            Some(struct_humanhandle_js_to_rs(js_val)?)
         }
     };
     let device_label = {
@@ -240,7 +266,7 @@ fn struct_availabledevice_rs_to_js(rs_obj: libparsec::AvailableDevice) -> Result
     let js_device_id = JsValue::from_str(rs_obj.device_id.as_ref());
     Reflect::set(&js_obj, &"deviceId".into(), &js_device_id)?;
     let js_human_handle = match rs_obj.human_handle {
-        Some(val) => JsValue::from_str(val.as_ref()),
+        Some(val) => struct_humanhandle_rs_to_js(val)?,
         None => JsValue::NULL,
     };
     Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
@@ -1052,15 +1078,7 @@ fn struct_usergreetinprogress4info_js_to_rs(
         if js_val.is_null() {
             None
         } else {
-            Some(
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
-                    .map_err(|_| TypeError::new("Not a valid HumanHandle"))?,
-            )
+            Some(struct_humanhandle_js_to_rs(js_val)?)
         }
     };
     let requested_device_label = {
@@ -1094,7 +1112,7 @@ fn struct_usergreetinprogress4info_rs_to_js(
     let js_handle = JsValue::from(rs_obj.handle);
     Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
     let js_requested_human_handle = match rs_obj.requested_human_handle {
-        Some(val) => JsValue::from_str(val.as_ref()),
+        Some(val) => struct_humanhandle_rs_to_js(val)?,
         None => JsValue::NULL,
     };
     Reflect::set(
@@ -1921,15 +1939,7 @@ fn variant_userordeviceclaiminitialinfo_js_to_rs(
                 if js_val.is_null() {
                     None
                 } else {
-                    Some(
-                        js_val
-                            .dyn_into::<JsString>()
-                            .ok()
-                            .and_then(|s| s.as_string())
-                            .ok_or_else(|| TypeError::new("Not a string"))?
-                            .parse()
-                            .map_err(|_| TypeError::new("Not a valid HumanHandle"))?,
-                    )
+                    Some(struct_humanhandle_js_to_rs(js_val)?)
                 }
             };
             Ok(libparsec::UserOrDeviceClaimInitialInfo::Device {
@@ -1975,15 +1985,7 @@ fn variant_userordeviceclaiminitialinfo_js_to_rs(
                 if js_val.is_null() {
                     None
                 } else {
-                    Some(
-                        js_val
-                            .dyn_into::<JsString>()
-                            .ok()
-                            .and_then(|s| s.as_string())
-                            .ok_or_else(|| TypeError::new("Not a string"))?
-                            .parse()
-                            .map_err(|_| TypeError::new("Not a valid HumanHandle"))?,
-                    )
+                    Some(struct_humanhandle_js_to_rs(js_val)?)
                 }
             };
             Ok(libparsec::UserOrDeviceClaimInitialInfo::User {
@@ -2017,7 +2019,7 @@ fn variant_userordeviceclaiminitialinfo_rs_to_js(
             let js_greeter_user_id = JsValue::from_str(greeter_user_id.as_ref());
             Reflect::set(&js_obj, &"greeterUserId".into(), &js_greeter_user_id)?;
             let js_greeter_human_handle = match greeter_human_handle {
-                Some(val) => JsValue::from_str(val.as_ref()),
+                Some(val) => struct_humanhandle_rs_to_js(val)?,
                 None => JsValue::NULL,
             };
             Reflect::set(
@@ -2041,7 +2043,7 @@ fn variant_userordeviceclaiminitialinfo_rs_to_js(
             let js_greeter_user_id = JsValue::from_str(greeter_user_id.as_ref());
             Reflect::set(&js_obj, &"greeterUserId".into(), &js_greeter_user_id)?;
             let js_greeter_human_handle = match greeter_human_handle {
-                Some(val) => JsValue::from_str(val.as_ref()),
+                Some(val) => struct_humanhandle_rs_to_js(val)?,
                 None => JsValue::NULL,
             };
             Reflect::set(
@@ -2905,7 +2907,7 @@ pub fn bootstrapOrganization(
     on_event_callback: Function,
     bootstrap_organization_addr: String,
     save_strategy: Object,
-    human_handle: Option<String>,
+    human_handle: Option<Object>,
     device_label: Option<String>,
     sequester_authority_verify_key: Option<Uint8Array>,
 ) -> Promise {
@@ -2934,9 +2936,8 @@ pub fn bootstrapOrganization(
 
         let human_handle = match human_handle {
             Some(human_handle) => {
-                let human_handle = human_handle
-                    .parse()
-                    .map_err(|_| JsValue::from(TypeError::new("Not a valid HumanHandle")))?;
+                let human_handle = human_handle.into();
+                let human_handle = struct_humanhandle_js_to_rs(human_handle)?;
 
                 Some(human_handle)
             }
@@ -3199,7 +3200,7 @@ pub fn claimerUserInProgress3DoClaim(
     canceller: u32,
     handle: u32,
     requested_device_label: Option<String>,
-    requested_human_handle: Option<String>,
+    requested_human_handle: Option<Object>,
 ) -> Promise {
     future_to_promise(async move {
         let requested_device_label = match requested_device_label {
@@ -3215,9 +3216,8 @@ pub fn claimerUserInProgress3DoClaim(
 
         let requested_human_handle = match requested_human_handle {
             Some(requested_human_handle) => {
-                let requested_human_handle = requested_human_handle
-                    .parse()
-                    .map_err(|_| JsValue::from(TypeError::new("Not a valid HumanHandle")))?;
+                let requested_human_handle = requested_human_handle.into();
+                let requested_human_handle = struct_humanhandle_js_to_rs(requested_human_handle)?;
 
                 Some(requested_human_handle)
             }
@@ -3775,16 +3775,15 @@ pub fn greeterDeviceInProgress3DoGetClaimRequests(canceller: u32, handle: u32) -
 pub fn greeterUserInProgress4DoCreate(
     canceller: u32,
     handle: u32,
-    human_handle: Option<String>,
+    human_handle: Option<Object>,
     device_label: Option<String>,
     profile: Object,
 ) -> Promise {
     future_to_promise(async move {
         let human_handle = match human_handle {
             Some(human_handle) => {
-                let human_handle = human_handle
-                    .parse()
-                    .map_err(|_| JsValue::from(TypeError::new("Not a valid HumanHandle")))?;
+                let human_handle = human_handle.into();
+                let human_handle = struct_humanhandle_js_to_rs(human_handle)?;
 
                 Some(human_handle)
             }
