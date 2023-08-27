@@ -354,7 +354,7 @@ fn {{ struct_js_to_rs_function_name(struct) }}<'a>(
         {{ struct.list_attributes() }}
     })
 {% else %}
-    ({{ struct.custom_init }})({{ struct.list_attributes() }}).or_else(|e| cx.throw_error(e))
+    {{ struct.custom_init }}({{ struct.list_attributes() }}).or_else(|e| cx.throw_error(e))
 {% endif%}
 }
 {% endmacro -%}
@@ -368,8 +368,15 @@ fn {{ struct_rs_to_js_function_name(struct) }}<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
 {% for attr_name, attr_type in struct.attributes.items() %}
-    {% set value = struct.get_value("rs_obj", attr_name) %}
-    let js_{{ attr_name }} = {{ render_rs_to_js(value, attr_type, mut_cx_ref="cx") | indent }};
+{% set custom_getter = struct.custom_getters.get(attr_name) %}
+{% if custom_getter is none %}
+    let js_{{ attr_name }} = {{ render_rs_to_js("rs_obj.%s" % attr_name, attr_type, mut_cx_ref="cx") | indent }};
+{% else %}
+    let js_{{ attr_name }} = {
+        let custom_getter = {{ custom_getter }};
+        {{ render_rs_to_js("custom_getter(&rs_obj)", attr_type, mut_cx_ref="cx") | indent }}
+    };
+{% endif %}
     js_obj.set(cx, "{{ attr_name | snake2camel }}", js_{{ attr_name }})?;
 {% endfor %}
     Ok(js_obj)

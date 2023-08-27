@@ -113,10 +113,14 @@ class HumanHandle(Structure):
     email: str
     label: str
     custom_getters: dict[str, str] = {
-        "email": "{input}.email()",
-        "label": "{input}.label()",
+        "email": "|obj| { fn access(obj: &libparsec::HumanHandle) -> &str { obj.email() } access(obj) }",
+        "label": "|obj| { fn access(obj: &libparsec::HumanHandle) -> &str { obj.label() } access(obj) }",
     }
-    custom_init: str = "|email: String, label: String| -> Result<libparsec::HumanHandle, String> { libparsec::HumanHandle::new(&email, &label).map_err(|e| e.to_string()) }"
+    custom_init: str = """
+        |email: String, label: String| -> Result<_, String> {
+            libparsec::HumanHandle::new(&email, &label).map_err(|e| e.to_string())
+        }
+    """
 
 
 class DateTime(StrBasedType):

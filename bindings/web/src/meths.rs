@@ -146,18 +146,35 @@ fn struct_humanhandle_js_to_rs(obj: JsValue) -> Result<libparsec::HumanHandle, J
             .and_then(|s| s.as_string())
             .ok_or_else(|| TypeError::new("Not a string"))?
     };
-    (|email: String, label: String| -> Result<libparsec::HumanHandle, String> {
+
+    |email: String, label: String| -> Result<_, String> {
         libparsec::HumanHandle::new(&email, &label).map_err(|e| e.to_string())
-    })(email, label)
+    }(email, label)
     .map_err(|e| e.into())
 }
 
 #[allow(dead_code)]
 fn struct_humanhandle_rs_to_js(rs_obj: libparsec::HumanHandle) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_email = rs_obj.email().into();
+    let js_email = {
+        let custom_getter = |obj| {
+            fn access(obj: &libparsec::HumanHandle) -> &str {
+                obj.email()
+            }
+            access(obj)
+        };
+        custom_getter(&rs_obj).into()
+    };
     Reflect::set(&js_obj, &"email".into(), &js_email)?;
-    let js_label = rs_obj.label().into();
+    let js_label = {
+        let custom_getter = |obj| {
+            fn access(obj: &libparsec::HumanHandle) -> &str {
+                obj.label()
+            }
+            access(obj)
+        };
+        custom_getter(&rs_obj).into()
+    };
     Reflect::set(&js_obj, &"label".into(), &js_label)?;
     Ok(js_obj)
 }
