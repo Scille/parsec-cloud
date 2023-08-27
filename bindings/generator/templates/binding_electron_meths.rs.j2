@@ -334,7 +334,6 @@ JsString::try_new({{ mut_cx_ref }},
 
 {%- macro render_struct_js_to_rs(struct) %}
 {% set fn_name = struct_js_to_rs_function_name(struct) %}
-{{ struct.custom_init_fn.format(fn_name=fn_name + "_init") if struct.custom_init_fn }}
 
 #[allow(dead_code)]
 fn {{ fn_name }}<'a>(
@@ -349,10 +348,10 @@ fn {{ fn_name }}<'a>(
 {% endfor %}
 {% if struct.custom_init_fn is none %}
     Ok(libparsec::{{ struct.name }} {
-        {{ struct.list_attributes() }}
+        {{ struct.attributes.keys() |join(',') }}
     })
 {% else %}
-    {{ fn_name }}_init({{ struct.list_attributes() }}).or_else(|e| cx.throw_error(e))
+    {{ struct.custom_init_fn }}({% for attr_name in struct.attributes.keys() %} &{{ attr_name }}, {% endfor %}).or_else(|e| cx.throw_error(e))
 {% endif%}
 }
 {% endmacro -%}
@@ -366,8 +365,12 @@ fn {{ struct_rs_to_js_function_name(struct) }}<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
 {% for attr_name, attr_type in struct.attributes.items() %}
-    {% set value = struct.get_value("rs_obj", attr_name) %}
-    let js_{{ attr_name }} = {{ render_rs_to_js(value, attr_type, mut_cx_ref="cx") | indent }};
+{% set custom_getter = struct.custom_getters.get(attr_name) %}
+{% if custom_getter is none %}
+    let js_{{ attr_name }} = {{ render_rs_to_js("rs_obj.%s" % attr_name, attr_type, mut_cx_ref="cx") | indent }};
+{% else %}
+    let js_{{ attr_name }} = {{ render_rs_to_js("(%s)(&rs_obj)" % custom_getter, attr_type, mut_cx_ref="cx") | indent }};
+{% endif %}
     js_obj.set(cx, "{{ attr_name | snake2camel }}", js_{{ attr_name }})?;
 {% endfor %}
     Ok(js_obj)
@@ -402,7 +405,7 @@ fn {{ variant_js_to_rs_function_name(variant) }}<'a>(
             };
 {% endfor %}
             Ok(libparsec::{{ variant.name }}::{{ value.name }} {
-                {{ value.struct.list_attributes() }}
+                {{ value.struct.attributes.keys() |join(',') }}
             })
 {% elif value.is_tuple %}
 {% for attr_type in value.tuple %}
@@ -441,7 +444,7 @@ fn {{ variant_rs_to_js_function_name(variant) }}<'a>(
     match rs_obj {
 {% for value in variant.values %}
 {% if value.is_struct %}
-        libparsec::{{ variant.name }}::{{ value.name }}{ {{ value.struct.list_attributes() }} .. } => {
+        libparsec::{{ variant.name }}::{{ value.name }}{ {{ value.struct.attributes.keys() |join(',') }} {{ "," if value.struct.attributes else "" }} .. } => {
             let js_tag = JsString::try_new(cx, "{{ value.name }}").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
 {% for attr_name, attr_type in value.struct.attributes.items() %}

@@ -217,20 +217,12 @@ class StructSpec(BaseTypeInUse):
     kind = "struct"
     name: str
     attributes: OrderedDict[str, BaseTypeInUse]
+    # Dict of attribute name -> Rust closure snippet
+    # `fn (String) -> Result<X, AsRef<str>>`
     custom_getters: dict[str, str]
+    # If set, custom_custom_init_fn contains a Rust closure snippet
+    # `fn (String) -> Result<X, AsRef<str>>`
     custom_init_fn: str | None
-
-    def get_value(self, obj_name: str, attr_name: str) -> str | None:
-        value = self.custom_getters.get(attr_name, None)
-        if value is not None:
-            return value.format(input=obj_name)
-        else:
-            return f"{obj_name}.{attr_name}"
-
-    def list_attributes(self) -> str:
-        if len(self.attributes) == 0:
-            return ""
-        return ",".join(self.attributes.keys()) + ","
 
 
 @dataclass
@@ -269,7 +261,7 @@ class StrBasedTypeInUse(BaseTypeInUse):
     kind = "str_based"
     name: str
 
-    # If set, custom_from_rs_string/custom_to_rs_string should inlined rust functions
+    # If set, custom_from_rs_string/custom_to_rs_string contains a Rust closure snippet
     # `fn (String) -> Result<X, AsRef<str>>`
     custom_from_rs_string: str | None = None
     # `fn (&X) -> Result<String, AsRef<str>>`
@@ -281,7 +273,7 @@ class BytesBasedTypeInUse(BaseTypeInUse):
     kind = "bytes_based"
     name: str
 
-    # If set, custom_from_rs_bytes/custom_to_rs_bytes should inlined rust functions
+    # If set, custom_from_rs_bytes/custom_to_rs_bytes contains a Rust closure snippet
     # `fn (&[u8]) -> Result<X, AsRef<str>>`
     custom_from_rs_bytes: str | None = None
     # `fn (&X) -> Result<Vec<u8>, AsRef<str>>`

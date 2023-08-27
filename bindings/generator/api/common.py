@@ -113,13 +113,13 @@ class HumanHandle(Structure):
     email: str
     label: str
     custom_getters: dict[str, str] = {
-        "email": "{input}.email()",
-        "label": "{input}.label()",
+        "email": "|obj| { fn access(obj: &libparsec::HumanHandle) -> &str { obj.email() } access(obj) }",
+        "label": "|obj| { fn access(obj: &libparsec::HumanHandle) -> &str { obj.label() } access(obj) }",
     }
     custom_init_fn: str = """
-        fn {fn_name}(email: impl AsRef<str>, label: impl AsRef<str>) -> Result<libparsec::HumanHandle, String> {{
-            libparsec::HumanHandle::new(email.as_ref(), label.as_ref()).map_err(|e| e.to_string())
-        }}
+        |email: &str, label: &str| -> Result<_, String> {
+            libparsec::HumanHandle::new(email, label).map_err(|e| e.to_string())
+        }
     """
 
 

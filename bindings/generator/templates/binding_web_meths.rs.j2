@@ -318,7 +318,6 @@ match {{ rs_value }} {
 
 {%- macro render_struct_js_to_rs(struct) %}
 {% set fn_name = struct_js_to_rs_function_name(struct) %}
-{{ struct.custom_init_fn.format(fn_name=fn_name + "_init") if struct.custom_init_fn }}
 
 #[allow(dead_code)]
 fn {{ fn_name }}(obj: JsValue) -> Result<libparsec::{{ struct.name }}, JsValue> {
@@ -330,10 +329,10 @@ fn {{ fn_name }}(obj: JsValue) -> Result<libparsec::{{ struct.name }}, JsValue> 
 {% endfor %}
 {% if struct.custom_init_fn is none %}
     Ok(libparsec::{{ struct.name }} {
-        {{ struct.list_attributes() }}
+        {{ struct.attributes.keys() |join(',') }}
     })
 {% else %}
-    {{ fn_name }}_init({{ struct.list_attributes() }}).map_err(|e| e.into())
+    {{ struct.custom_init_fn }}({% for attr_name in struct.attributes.keys() %} &{{ attr_name }}, {% endfor %}).map_err(|e| e.into())
 {% endif %}
 }
 {% endmacro -%}
@@ -344,8 +343,12 @@ fn {{ fn_name }}(obj: JsValue) -> Result<libparsec::{{ struct.name }}, JsValue> 
 fn {{ struct_rs_to_js_function_name(struct) }}(rs_obj: libparsec::{{ struct.name }}) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
 {% for attr_name, attr_type in struct.attributes.items() %}
-    {% set value = struct.get_value("rs_obj", attr_name) %}
-    let js_{{ attr_name }} = {{ render_rs_to_js_value(value, attr_type) | indent }};
+{% set custom_getter = struct.custom_getters.get(attr_name) %}
+{% if custom_getter is none %}
+    let js_{{ attr_name }} = {{ render_rs_to_js_value("rs_obj.%s" % attr_name, attr_type) | indent }};
+{% else %}
+    let js_{{ attr_name }} = {{ render_rs_to_js_value("(%s)(&rs_obj)" % custom_getter, attr_type) | indent }};
+{% endif %}
     Reflect::set(&js_obj, &"{{ attr_name | snake2camel }}".into(), &js_{{ attr_name }})?;
 {% endfor %}
     Ok(js_obj)
@@ -377,7 +380,7 @@ fn {{ variant_js_to_rs_function_name(variant) }}(obj: JsValue) -> Result<libpars
             };
 {% endfor %}
             Ok(libparsec::{{ variant.name }}::{{ value.name }} {
-                {{ value.struct.list_attributes() }}
+                {{ value.struct.attributes.keys() |join(',') }}
             })
 {% elif value.is_tuple %}
 {% for attr_type in value.tuple %}
@@ -415,7 +418,7 @@ fn {{ variant_rs_to_js_function_name(variant) }}(rs_obj: libparsec::{{ variant.n
     match rs_obj {
 {% for value in variant.values %}
 {% if value.is_struct %}
-        libparsec::{{ variant.name }}::{{ value.name }}{ {{ value.struct.list_attributes() }} .. } => {
+        libparsec::{{ variant.name }}::{{ value.name }}{ {{ value.struct.attributes.keys() |join(',') }} {{ "," if value.struct.attributes else "" }} .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"{{ value.name }}".into())?;
 {% for attr_name, attr_type in value.struct.attributes.items() %}
             let js_{{ attr_name }} = {{ render_rs_to_js_value(attr_name, attr_type) | indent(12) }};
