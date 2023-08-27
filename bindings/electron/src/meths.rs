@@ -116,13 +116,6 @@ fn struct_clientconfig_rs_to_js<'a>(
 
 // HumanHandle
 
-fn struct_humanhandle_js_to_rs_init(
-    email: impl AsRef<str>,
-    label: impl AsRef<str>,
-) -> Result<libparsec::HumanHandle, String> {
-    libparsec::HumanHandle::new(email.as_ref(), label.as_ref()).map_err(|e| e.to_string())
-}
-
 #[allow(dead_code)]
 fn struct_humanhandle_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
@@ -136,7 +129,11 @@ fn struct_humanhandle_js_to_rs<'a>(
         let js_val: Handle<JsString> = obj.get(cx, "label")?;
         js_val.value(cx)
     };
-    struct_humanhandle_js_to_rs_init(email, label).or_else(|e| cx.throw_error(e))
+
+    |email: &str, label: &str| -> Result<_, String> {
+        libparsec::HumanHandle::new(email, label).map_err(|e| e.to_string())
+    }(&email, &label)
+    .or_else(|e| cx.throw_error(e))
 }
 
 #[allow(dead_code)]
@@ -145,9 +142,27 @@ fn struct_humanhandle_rs_to_js<'a>(
     rs_obj: libparsec::HumanHandle,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
-    let js_email = JsString::try_new(cx, rs_obj.email()).or_throw(cx)?;
+    let js_email = JsString::try_new(
+        cx,
+        (|obj| {
+            fn access(obj: &libparsec::HumanHandle) -> &str {
+                obj.email()
+            }
+            access(obj)
+        })(&rs_obj),
+    )
+    .or_throw(cx)?;
     js_obj.set(cx, "email", js_email)?;
-    let js_label = JsString::try_new(cx, rs_obj.label()).or_throw(cx)?;
+    let js_label = JsString::try_new(
+        cx,
+        (|obj| {
+            fn access(obj: &libparsec::HumanHandle) -> &str {
+                obj.label()
+            }
+            access(obj)
+        })(&rs_obj),
+    )
+    .or_throw(cx)?;
     js_obj.set(cx, "label", js_label)?;
     Ok(js_obj)
 }
