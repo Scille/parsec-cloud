@@ -1,6 +1,6 @@
 # Libparsec Serialization Format
 
-This create provides function-like [`procedural macros`] for generating
+This crate provides function-like [`procedural macros`] for generating
 serialization code for libparsec protocol and data types, based on JSON schemas.
 
 The JSON schema formats for libparsec protocol and data types are defined in
