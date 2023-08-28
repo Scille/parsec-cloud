@@ -35,6 +35,8 @@ jobs:
     # testbed template is introduced).
     # In such case, the container url should be updated from the, see:
     # https://github.com/Scille/parsec-cloud/pkgs/container/parsec-cloud%2Fparsec-testbed-server
+    env:
+      TESTBED_SERVER: http://localhost:6777
     services:
       parsec-testbed-server:
         image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:v2.16.0-a.0-dev.2023-08-02-sha.2664042
@@ -65,30 +67,41 @@ jobs:
         with:
           tool: nextest@${{ env.cargo-nextest-version }}
 
-      - name: Test Rust codebase (platform agnostic)
-        shell: bash
+      - name: Categorize workspace crates
+        id: crates
         run: |
-          set -ex
-          AGNOSTIC_CRATES=`python3 misc/libparsec_crates_flags.py agnostic`
-          cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} $AGNOSTIC_CRATES
-          # By default `libparsec_crypto` uses RustCrypto, so here we test the sodiumoxide
-          # implementation and it compatibility with the rest of the project
-          cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package libparsec_crypto --features use-sodiumoxide
-          NON_BINDINGS_CRATES=`python3 misc/libparsec_crates_flags.py agnostic platform`
-          cargo check ${{ env.CARGO_CI_FLAGS }} $NON_BINDINGS_CRATES --features use-sodiumoxide
-        timeout-minutes: 30
+          (
+            for type in agnostic platform bindings; do
+              echo -n "$type=" && python misc/libparsec_crates_flags.py $type
+            done
+          ) | tee -a $GITHUB_OUTPUT
+        timeout-minutes: 2
+
+      - name: Test agnostic rust codebase
+        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} ${{ steps.crates.outputs.agnostic }}
         env:
           RUST_LOG: debug
-          TESTBED_SERVER: http://localhost:6777
+        timeout-minutes: 10
 
+      # By default `libparsec_crypto` uses RustCrypto, so here we test the sodiumoxide
+      # implementation and it compatibility with the rest of the project
+      - name: Test sodiumoxide rust crypto
+        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package libparsec_crypto --features use-sodiumoxide
+        env:
+          RUST_LOG: debug
+        timeout-minutes: 10
+
+      - name: Check non bindings crates using sodium crypto features
+        run: cargo check ${{ env.CARGO_CI_FLAGS }} ${{ steps.crates.outcome.agnostic }} ${{ steps.crates.outcome.platform }} --features use-sodiumoxide
+        timeout-minutes: 10
+        env:
+          RUST_LOG: debug
+
+      # Use sodiumoxide here given 1) it is composed of C code, so not totally
+      # platform independant and 2) it is what is going to be used in release
       - name: Test Rust codebase (🐧 Linux specific)
         shell: bash
-        run: |
-          set -ex
-          CRATES=`python3 misc/libparsec_crates_flags.py platform`
-          # Use sodiumoxide here given 1) it is composed of C code, so not totally
-          # platform independant and 2) it is what is going to be used in release
-          cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} $CRATES --features libparsec_crypto/use-sodiumoxide
+        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} ${{ steps.crates.outcome.platform }} --features libparsec_crypto/use-sodiumoxide
         timeout-minutes: 30
         env:
           RUST_LOG: debug
