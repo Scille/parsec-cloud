@@ -37,14 +37,14 @@
         <ion-button
           fill="clear"
           class="danger"
-          @click.stop="$emit('reject-user', props.invitation)"
+          @click.stop="$emit('rejectUser', props.invitation)"
         >
           {{ t('UsersPage.invitation.rejectUser') }}
         </ion-button>
         <ion-button
           class="button-default"
           fill="solid"
-          @click.stop="$emit('greet-user', props.invitation)"
+          @click.stop="$emit('greetUser', props.invitation)"
         >
           {{ t('UsersPage.invitation.greetUser') }}
         </ion-button>
@@ -73,8 +73,8 @@ const props = defineProps<{
 }>();
 
 defineEmits<{
-  (e: 'reject-user', invitation: MockInvitation) : void,
-  (e: 'greet-user', invitation: MockInvitation) : void,
+  (e: 'rejectUser', invitation: MockInvitation) : void,
+  (e: 'greetUser', invitation: MockInvitation) : void,
 }>();
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
