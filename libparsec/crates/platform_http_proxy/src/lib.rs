@@ -131,6 +131,7 @@ mod web {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(target_arch = "wasm32")))]
 #[path = "../tests/unit/tests.rs"]
+#[allow(clippy::unwrap_used)]
 mod tests;

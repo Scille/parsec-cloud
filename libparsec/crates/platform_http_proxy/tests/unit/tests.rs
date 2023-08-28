@@ -40,7 +40,6 @@ fn default() {
     assert!(config.https_proxy.is_none());
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 #[test]
 fn with_http_proxy() {
     let config = ProxyConfig::default()
@@ -52,7 +51,6 @@ fn with_http_proxy() {
     assert_https_proxy_eq(&config, None);
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 #[test]
 fn with_https_proxy() {
     let config = ProxyConfig::default()
@@ -64,7 +62,6 @@ fn with_https_proxy() {
     assert_https_proxy_eq(&config, Some("https://127.0.0.1:1337"));
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 #[test]
 fn bad_http_proxy() {
     let outcome = ProxyConfig::default().with_http_proxy("<not a valid proxy !>".to_owned());
@@ -74,7 +71,6 @@ fn bad_http_proxy() {
     assert!(err.to_string().starts_with(expected));
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 #[test]
 fn bad_https_proxy() {
     let outcome = ProxyConfig::default().with_https_proxy("<not a valid proxy !>".to_owned());
@@ -87,7 +83,6 @@ fn bad_https_proxy() {
 // This test test every possible combination.
 // It can't be split because that would cause a `TOC/TOU` (Time to Check Time to use) error
 // Where other tests are modifying the env variables `HTTP_PROXY` & `HTTPS_PROXY`.
-#[cfg(not(target_arch = "wasm32"))]
 #[test]
 fn with_env() {
     assert_eq!(env::var(crate::HTTPS_PROXY), Err(env::VarError::NotPresent), "HTTPS_PROXY is already configured. Meaning it could be in use elsewhere, this will likely conflict with this test");
