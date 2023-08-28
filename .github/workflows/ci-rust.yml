@@ -54,7 +54,7 @@ jobs:
         uses: Swatinem/rust-cache@e207df5d269b42b69c8bc5101da26f7d31feddb4 # pin v2.6.2
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
-          # cache is only shared between master and the PRs (and not accross PRs).
+          # cache is only shared between master and the PRs (and not across PRs).
           # So we only save the cache on master build given it's the ones that are the
           # most likely to be reused.
           save-if: ${{ github.ref == 'refs/heads/master' }}
@@ -131,7 +131,7 @@ jobs:
         uses: Swatinem/rust-cache@e207df5d269b42b69c8bc5101da26f7d31feddb4 # pin v2.6.2
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
-          # cache is only shared between master and the PRs (and not accross PRs).
+          # cache is only shared between master and the PRs (and not across PRs).
           # So we only save the cache on master build given it's the ones that are the
           # most likely to be reused.
           save-if: ${{ github.ref == 'refs/heads/master' }}

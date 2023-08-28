@@ -243,6 +243,7 @@ Nanos
 napi
 newsfragment
 newsfragments
+nextest
 Niño
 nmspc
 nocapture
