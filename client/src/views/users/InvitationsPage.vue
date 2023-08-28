@@ -44,8 +44,8 @@
               v-for="invitation in invitations"
               :key="invitation.token"
               :invitation="invitation"
-              @greet-user="openGreetUser"
-              @reject-user="openRejectUser"
+              @greet-user="greetUser"
+              @reject-user="rejectUser"
               class="invitation-list-item"
             />
           </ion-list>
@@ -59,8 +59,8 @@
             >
               <invitation-card
                 :invitation="invitation"
-                @greet-user="openGreetUser"
-                @reject-user="openRejectUser"
+                @greet-user="greetUser"
+                @reject-user="rejectUser"
               />
             </ion-item>
           </ion-list>
@@ -127,7 +127,7 @@ async function canDismissModal(_data?: any, modalRole?: string): Promise<boolean
   return role === ModalResultCode.Confirm;
 }
 
-async function openGreetUser(invitation: MockInvitation): Promise<void> {
+async function greetUser(invitation: MockInvitation): Promise<void> {
   const modal = await modalController.create({
     component: GreetUserModal,
     canDismiss: canDismissModal,
@@ -140,7 +140,7 @@ async function openGreetUser(invitation: MockInvitation): Promise<void> {
   await modal.onWillDismiss();
 }
 
-function openRejectUser(invitation: MockInvitation) : void {
+function rejectUser(invitation: MockInvitation) : void {
   console.log(`Reject user ${invitation.email}`);
 }
 </script>
