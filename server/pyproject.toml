@@ -74,6 +74,7 @@ pytest-rerunfailures = ">=10.2,<13.0"
 hypothesis = "^6.54"
 hypothesis-trio = "^0.6"
 trustme = ">=0.9,<1.2"
+cryptography = "^41.0.3"
 winfspy = { version = "^0.8", extras = ["test"], markers = "platform_system=='Windows'" }
 psutil = "^5.9"
 poetry-lock-package = ">=0.4.4,<0.6.0"
