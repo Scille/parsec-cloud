@@ -289,17 +289,17 @@ class FuseOperations(LoggingMixIn, Operations):  # type: ignore[no-any-unimporte
         try:
             self.fs_access.entry_rename(path, destination, overwrite=True)
         except FSCrossDeviceError:
-            if (
+            # When saving from some softwares on MacOS, temporary files used for the
+            # saving process are stored in temporary folders, meaning that entry_rename
+            # will raise a FSCrossDeviceError since the parent folders differ.
+            # path.parent should then not be root, but the temporary folder.
+            # In the case of Microsoft Office softwares, a bunch of renames
+            # are done, including from the original file to a tmp folder. In this case,
+            # we check if the pattern of the destination folder matches a tmp one.
+            if platform == "darwin" and (
                 not path.parent.is_root()
-                and (platform == "darwin" or re.match(r".*\.sb-\w*-\w*", str(path.parent.name)))
-            ) or re.match(r".*\.sb-\w*-\w*", str(destination.parent.name)):
-                # When saving from some softwares on MacOS, temporary files used for the
-                # saving process are stored in temporary folders, meaning that entry_rename
-                # will raise a FSCrossDeviceError since the parent folders differ.
-                # path.parent should then not be root, but the temporary folder.
-                # In the case of Microsoft Office softwares, a bunch of renames
-                # are done, including from the original file to a tmp folder. In this case,
-                # we check if the pattern of the destination folder matches a tmp one.
+                or re.match(r".*.sb-\w*-\w*", str(destination.parent.name))
+            ):
                 self.fs_access.workspace_move(path, destination)
             else:
                 raise
