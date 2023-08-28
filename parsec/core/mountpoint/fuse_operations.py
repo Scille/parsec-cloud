@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from functools import partial
 from pathlib import PurePath
 from stat import S_IFDIR, S_IFREG, S_IRWXU
+from sys import platform
 from typing import Any, Iterator, List
 
 import trio
@@ -17,7 +18,7 @@ from structlog import get_logger
 from parsec._parsec import CoreEvent, DateTime
 from parsec.api.data import EntryID, EntryName
 from parsec.core.fs import FSLocalOperationError, FsPath, FSRemoteOperationError
-from parsec.core.fs.exceptions import FSFileNotFoundError, FSReadOnlyError
+from parsec.core.fs.exceptions import FSCrossDeviceError, FSFileNotFoundError, FSReadOnlyError
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess, TrioDealockTimeoutError
 from parsec.core.types import FileDescriptor
 
@@ -285,14 +286,23 @@ class FuseOperations(LoggingMixIn, Operations):  # type: ignore[no-any-unimporte
 
     def rename(self, path: FsPath, destination: FsPath) -> int:
         destination = FsPath(destination)
-        if not path.parent.is_root() and re.match(r".*\.sb-\w*-\w*", str(path.parent.name)):
-            # This shouldn't happen with the defer_permission option in the FUSE function,
-            # but if there ever is a permission error while saving with Apple software,
-            # this is a fallback to avoid any unintended behavior related to this format
-            # of temporary files. See https://github.com/Scille/parsec-cloud/pull/2211
-            self.fs_access.workspace_move(path, destination)
-        else:
+        try:
             self.fs_access.entry_rename(path, destination, overwrite=True)
+        except FSCrossDeviceError:
+            # When saving from some softwares on MacOS, temporary files used for the
+            # saving process are stored in temporary folders, meaning that entry_rename
+            # will raise a FSCrossDeviceError since the parent folders differ.
+            # path.parent should then not be root, but the temporary folder.
+            # In the case of Microsoft Office softwares, a bunch of renames
+            # are done, including from the original file to a tmp folder. In this case,
+            # we check if the pattern of the destination folder matches a tmp one.
+            if platform == "darwin" and (
+                not path.parent.is_root()
+                or re.match(r".*.sb-\w*-\w*", str(destination.parent.name))
+            ):
+                self.fs_access.workspace_move(path, destination)
+            else:
+                raise
         return 0
 
     def flush(self, path: FsPath, fh: FileDescriptor) -> int:
