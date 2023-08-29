@@ -7,12 +7,12 @@
     :cancel-button="{
       label: $t('WorkspacesPage.CreateWorkspaceModal.cancel'),
       disabled: false,
-      onClick: confirm
+      onClick: cancel
     }"
     :confirm-button="{
       label: $t('WorkspacesPage.CreateWorkspaceModal.create'),
       disabled: !workspaceName,
-      onClick: cancel
+      onClick: confirm
     }"
   >
     <ms-input
@@ -41,7 +41,7 @@ function confirm(): Promise<boolean> {
 }
 
 function cancel(): Promise<boolean> {
-  return modalController.dismiss(workspaceName.value, ModalResultCode.Cancel);
+  return modalController.dismiss(null, ModalResultCode.Cancel);
 }
 </script>
 
