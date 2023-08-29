@@ -125,6 +125,49 @@ pub fn generate_protocol_cmds_family_from_contents(json_contents: TokenStream) -
     ))
 }
 
+/// Generates serialization tests layout for protocol commands based on JSON
+/// schemas found in *path*.
+///
+/// The family is inferred from *path* (i.e. path "schema/authenticated_cmds"
+/// will result in "authenticated_cmds" family).
+///
+/// Example of code code generated for the "authenticated_cmds" family:
+/// ```rust
+/// pub mod authenticated_cmds {
+///     pub mod v3 {
+///         use libparsec_protocol::authenticated_cmds::v3 as authenticated_cmds;
+///         use libparsec_tests_fixtures::prelude::*;
+///
+///         pub mod block_create;
+///
+///         #[parsec_test]
+///         fn block_create_req(){
+///             block_create::req()
+///         }
+///
+///         #[parsec_test]
+///         fn block_create_rep_ok(){
+///            block_create::rep_ok()
+///         }
+///         ... other reps here ...
+///
+///         ... other cmds here ...
+///     }
+///     pub mod v4 {
+///         ... idem above ...
+///     }
+/// }
+/// ```
+#[proc_macro]
+pub fn protocol_cmds_tests(path: TokenStream) -> TokenStream {
+    let path = parse_macro_input!(path as LitStr).value();
+    let path = path_from_str(&path);
+    let (family_name, json_cmds) = retrieve_protocol_family_json_cmds(&path);
+    TokenStream::from(
+        protocol::cmds_tests_generator::generate_protocol_cmds_tests(json_cmds, &family_name),
+    )
+}
+
 /// Generates serialization code from a *path* to a single data type JSON schema.
 #[proc_macro]
 pub fn parsec_data(path: TokenStream) -> TokenStream {
