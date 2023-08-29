@@ -18,9 +18,7 @@
     <ms-input
       :label="$t('WorkspacesPage.CreateWorkspaceModal.label')"
       :placeholder="$t('WorkspacesPage.CreateWorkspaceModal.placeholder')"
-      name="createOrganization"
       v-model="workspaceName"
-      type="url"
     />
   </ms-modal>
 </template>
