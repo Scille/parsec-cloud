@@ -8,7 +8,11 @@ use super::*;
 use crate::utils::snake_to_pascal_case;
 
 pub(crate) fn generate_protocol_cmds_family(cmds: Vec<JsonCmd>, family_name: &str) -> TokenStream {
-    quote_cmds_family(&GenCmdsFamily::new(cmds, family_name))
+    quote_cmds_family(&GenCmdsFamily::new(
+        cmds,
+        family_name,
+        ReuseSchemaStrategy::Default,
+    ))
 }
 
 fn quote_cmds_family(family: &GenCmdsFamily) -> TokenStream {

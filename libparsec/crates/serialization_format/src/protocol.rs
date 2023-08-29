@@ -4,6 +4,9 @@
 #[path = "./protocol_python_bindings.rs"]
 pub(crate) mod python_bindings;
 
+#[path = "./protocol_tests.rs"]
+pub(crate) mod cmds_tests_generator;
+
 use itertools::Itertools;
 use miniserde::Deserialize;
 use proc_macro2::{Ident, TokenStream};
@@ -25,7 +28,11 @@ fn parse_api_version(raw: &str) -> Result<(u32, u32), &'static str> {
 }
 
 pub(crate) fn generate_protocol_cmds_family(cmds: Vec<JsonCmd>, family_name: &str) -> TokenStream {
-    quote_cmds_family(&GenCmdsFamily::new(cmds, family_name))
+    quote_cmds_family(&GenCmdsFamily::new(
+        cmds,
+        family_name,
+        ReuseSchemaStrategy::Default,
+    ))
 }
 
 //
@@ -134,8 +141,8 @@ struct GenCmdRep {
 struct GenCmdField {
     name: String,
     ty: FieldType,
-    // Field is required if the command has always contain it, or if
-    // it has been introduced in a previous major version of the API
+    // Field is required if the command always had it, or if
+    // it was introduced in a previous major version of the API
     added_in_minor_revision: bool,
 }
 
@@ -170,8 +177,21 @@ struct GenCmdsFamily {
 // JSON-to-gen parsing & struct conversion
 //
 
+/// Strategy for JSON schema reuse between protocol versions.
+///
+/// When a protocol command does not change between major protocol versions,
+/// its schema will not change either. In those cases, the code can be reused.
+enum ReuseSchemaStrategy {
+    /// The default behaviour is to reuse schemas if possible
+    /// (e.g. when no change was introduced in a minor version)
+    Default,
+
+    /// Force to disable schema reuse
+    Never,
+}
+
 impl GenCmdsFamily {
-    fn new(cmds: Vec<JsonCmd>, family_name: &str) -> Self {
+    fn new(cmds: Vec<JsonCmd>, family_name: &str, reuse_schemas: ReuseSchemaStrategy) -> Self {
         let mut gen_versions: HashMap<u32, Vec<GenCmd>> = HashMap::new();
         let mut version_cmd_couples: HashSet<(u32, String)> = HashSet::new();
 
@@ -324,7 +344,7 @@ impl GenCmdsFamily {
                     .clone()
                     .into_iter()
                     .map(|rep| {
-                        let kind = match (&rep.unit, rep.fields) {
+                        let kind: GenCmdRepKind = match (&rep.unit, rep.fields) {
                             (Some(nested_type_name), None) => GenCmdRepKind::Unit {
                                 nested_type_name: nested_type_name.to_owned(),
                             },
@@ -347,10 +367,20 @@ impl GenCmdsFamily {
                     .collect();
 
                 let gen_cmd = match (
+                    &reuse_schemas,
                     *has_introduced_in_field.borrow(),
                     can_reuse_schema_from_version,
                 ) {
-                    (true, _) => {
+                    // Schema are never reused in some cases (i.e. protocol tests)
+                    (ReuseSchemaStrategy::Never, _, _) => GenCmd {
+                        cmd: cmd_name.to_owned(),
+                        spec: GenCmdSpec::Original {
+                            req: gen_req,
+                            reps: gen_reps,
+                            nested_types: gen_nested_types,
+                        },
+                    },
+                    (_, true, _) => {
                         // Never reuse schema that contains `introduced_in` field
                         assert!(can_reuse_schema_from_version.is_none()); // Sanity check
                         GenCmd {
@@ -362,7 +392,7 @@ impl GenCmdsFamily {
                             },
                         }
                     }
-                    (false, None) => {
+                    (_, false, None) => {
                         // First time we see this schema
                         can_reuse_schema_from_version.replace(major_version);
                         GenCmd {
@@ -374,7 +404,7 @@ impl GenCmdsFamily {
                             },
                         }
                     }
-                    (false, Some(version)) => GenCmd {
+                    (_, false, Some(version)) => GenCmd {
                         cmd: cmd_name.to_owned(),
                         spec: GenCmdSpec::ReusedFromVersion { version },
                     },
