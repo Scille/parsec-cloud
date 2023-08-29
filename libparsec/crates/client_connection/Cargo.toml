@@ -22,9 +22,11 @@ libparsec_types = { workspace = true }
 libparsec_protocol = { workspace = true }
 libparsec_testbed = { workspace = true, optional = true }
 libparsec_platform_http_proxy = { workspace = true }
+libparsec_platform_async = { workspace = true }
 
+eventsource-stream = { workspace = true, features = ["std"] }
 # Used to send HTTP request to the server.
-reqwest = { workspace = true, features = ["native-tls-vendored"] }
+reqwest = { workspace = true, features = ["native-tls-vendored", "stream"] }
 futures = { workspace = true }
 # Use abstract crypto primitive, to allow to sign request.
 # Used to encoded binary data.
