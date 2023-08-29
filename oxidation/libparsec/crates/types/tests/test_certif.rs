@@ -576,3 +576,113 @@ fn serde_sequester_service_certificate() {
     let certif2 = SequesterServiceCertificate::load(&data2).unwrap();
     assert_eq!(certif2, expected);
 }
+
+#[rstest]
+fn serde_realm_archiving_certificate_available(alice: &Device) {
+    // Generated from Rust implementation (Parsec v2.16.0-rc.3+dev)
+    // Content:
+    //   type: "realm_archiving_certificate"
+    //   author: "alice@dev1"
+    //   timestamp: ext(1, 1577836800.0)
+    //   configuration: "AVAILABLE"
+    //   realm_id: ext(2, hex!("4486e7cf02d747bd9126679ba58e0474"))
+    //
+    let data = hex!(
+      "d87c956e1d443bcef31f136cde3ac0abf756f9eca059d8c9cc6b5bc22784721d2a4c4bf295"
+      "56a66f837c2fa01a7bb0c9ee50839e0c4a8125c672061b9b705908789c017b0084ff85a474"
+      "797065bb7265616c6d5f617263686976696e675f6365727469666963617465a6617574686f"
+      "72aa616c6963654064657631a974696d657374616d70d70141d782f840000000a87265616c"
+      "6d5f6964d8024486e7cf02d747bd9126679ba58e0474ad636f6e66696775726174696f6ea9"
+      "415641494c41424c45eb14343b"
+    );
+
+    let certif = RealmArchivingCertificate::unsecure_load(&data).unwrap();
+
+    let expected = RealmArchivingCertificate {
+        author: alice.device_id.clone(),
+        timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
+        realm_id: RealmID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
+        configuration: RealmArchivingConfiguration::Available,
+    };
+    assert_eq!(certif, expected);
+
+    // Also test serialization round trip
+    let data2 = expected.dump_and_sign(&alice.signing_key);
+    // Note we cannot just compare with `data` due to signature and keys order
+    let certif2 = RealmArchivingCertificate::unsecure_load(&data2).unwrap();
+    assert_eq!(certif2, expected);
+}
+
+#[rstest]
+fn serde_realm_archiving_certificate_archived(alice: &Device) {
+    // Generated from Rust implementation (Parsec v2.16.0-rc.3+dev)
+    // Content:
+    //   type: "realm_archiving_certificate"
+    //   author: "alice@dev1"
+    //   timestamp: ext(1, 1577836800.0)
+    //   configuration: "ARCHIVED"
+    //   realm_id: ext(2, hex!("4486e7cf02d747bd9126679ba58e0474"))
+    //
+    let data = hex!(
+      "a36919beb1e012f4614e29c03fc16739d3b886f4bcedea2df6af3f657c0e23a4ebe2cfd1c3"
+      "366026c5ce0d7df19bca4239c70ec9a56c75b6898bf32759ad0503789c017a0085ff85a474"
+      "797065bb7265616c6d5f617263686976696e675f6365727469666963617465a6617574686f"
+      "72aa616c6963654064657631a974696d657374616d70d70141d782f840000000a87265616c"
+      "6d5f6964d8024486e7cf02d747bd9126679ba58e0474ad636f6e66696775726174696f6ea8"
+      "4152434849564544b6ec33ff"
+    );
+
+    let certif = RealmArchivingCertificate::unsecure_load(&data).unwrap();
+
+    let expected = RealmArchivingCertificate {
+        author: alice.device_id.clone(),
+        timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
+        realm_id: RealmID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
+        configuration: RealmArchivingConfiguration::Archived,
+    };
+    assert_eq!(certif, expected);
+
+    // Also test serialization round trip
+    let data2 = expected.dump_and_sign(&alice.signing_key);
+    // Note we cannot just compare with `data` due to signature and keys order
+    let certif2 = RealmArchivingCertificate::unsecure_load(&data2).unwrap();
+    assert_eq!(certif2, expected);
+}
+
+#[rstest]
+fn serde_realm_archiving_certificate_deletion_planned(alice: &Device) {
+    // Generated from Rust implementation (Parsec v2.16.0-rc.3+dev)
+    // Content:
+    //   type: "realm_archiving_certificate"
+    //   author: "alice@dev1"
+    //   timestamp: ext(1, 1577836800.0)
+    //   configuration: {DELETION_PLANNED:ext(1, 1580428800.0)}
+    //   realm_id: ext(2, hex!("4486e7cf02d747bd9126679ba58e0474"))
+    //
+    let data = hex!(
+      "e37a2c5469802b8017abaf108eb795a7dcbe84cb3b2f87b0ef030a6c67054decb61f8b47ab"
+      "21dc8df554850218de33f7954625b7affaff53121e955e45fe1008789c018d0072ff85a474"
+      "797065bb7265616c6d5f617263686976696e675f6365727469666963617465a6617574686f"
+      "72aa616c6963654064657631a974696d657374616d70d70141d782f840000000a87265616c"
+      "6d5f6964d8024486e7cf02d747bd9126679ba58e0474ad636f6e66696775726174696f6e81"
+      "b044454c4554494f4e5f504c414e4e4544d70141d78cdb80000000dcf43ace"
+    );
+
+    let certif = RealmArchivingCertificate::unsecure_load(&data).unwrap();
+
+    let expected = RealmArchivingCertificate {
+        author: alice.device_id.clone(),
+        timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
+        realm_id: RealmID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
+        configuration: RealmArchivingConfiguration::DeletionPlanned(
+            "2020-01-31T00:00:00Z".parse().unwrap(),
+        ),
+    };
+    assert_eq!(certif, expected);
+
+    // Also test serialization round trip
+    let data2 = expected.dump_and_sign(&alice.signing_key);
+    // Note we cannot just compare with `data` due to signature and keys order
+    let certif2 = RealmArchivingCertificate::unsecure_load(&data2).unwrap();
+    assert_eq!(certif2, expected);
+}

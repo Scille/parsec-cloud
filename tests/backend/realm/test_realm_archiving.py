@@ -50,4 +50,5 @@ async def test_create_realm_archiving_certificate(
             expected_author=alice.device_id,
             expected_realm=realm,
         )
+        breakpoint()
         assert verified_certificate == certificate
