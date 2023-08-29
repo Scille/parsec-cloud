@@ -46,6 +46,7 @@ import {
   IonImg,
   IonButton,
   IonText,
+  IonIcon,
 } from '@ionic/vue';
 import { ref, onMounted, onUnmounted } from 'vue';
 
