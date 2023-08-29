@@ -30,6 +30,7 @@ pub const API_V4_VERSION: &ApiVersion = &ApiVersion {
 pub const API_LATEST_VERSION: &ApiVersion = API_V4_VERSION;
 
 pub const API_LATEST_MAJOR_VERSION: u32 = API_LATEST_VERSION.version;
+
 pub const fn api_version_major_to_full(major_version: u32) -> &'static ApiVersion {
     match major_version {
         1 => API_V1_VERSION,
