@@ -13,6 +13,7 @@ async-lock = { workspace = true }
 async-broadcast = { workspace = true }
 event-listener = { workspace = true }
 flume = { workspace = true, features = ["async", "select", "eventual-fairness"] }
+# Used for `futures_lite::future::or` and don't require `Unpin`
 futures-lite = { workspace = true, features = ["std"] }
 futures-core = { workspace = true, features = ["std"] }
 # # futures is used for its macros `select_all` and `join_all`
@@ -23,8 +24,6 @@ log = { workspace = true }
 # `std::time::Instant` is not available for wasm32, crate `instant` provides a
 # fallback based on `window.performance.now()`
 instant = { workspace = true }
-# Used for `futures_lite::future::or` and don't require `Unpin`
-futures-lite = { workspace = true, features = ["std"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { workspace = true, features = ["spans", "std"] }
