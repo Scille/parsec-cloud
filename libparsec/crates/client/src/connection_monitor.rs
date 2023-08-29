@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::sync::Arc;
+use std::{ops::ControlFlow, sync::Arc};
 
-use libparsec_client_connection::{AuthenticatedCmds, SSEResponseOrMissedEvents};
+use libparsec_client_connection::{AuthenticatedCmds, ConnectionError, SSEResponseOrMissedEvents};
 use libparsec_platform_async::{spawn, JoinHandle};
 use libparsec_protocol::authenticated_cmds::v4::events_listen::{APIEvent, Rep, Req};
 
@@ -74,13 +74,15 @@ fn dispatch_api_event(event: APIEvent, event_bus: &EventBus) {
     }
 }
 
+#[derive(PartialEq, Eq)]
+enum ConnectionState {
+    Offline,
+    Online,
+}
+
 impl ConnectionMonitor {
     pub async fn start(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) -> Self {
         let worker = spawn(async move {
-            enum ConnectionState {
-                Offline,
-                Online,
-            }
             let mut state = ConnectionState::Offline;
             let mut stream = cmds.start_sse::<Req>();
 
@@ -90,59 +92,11 @@ impl ConnectionMonitor {
                         event_bus.send(&EventMissedServerEvents);
                     }
                     Ok(SSEResponseOrMissedEvents::Response(rep)) => {
-                        if let ConnectionState::Offline = state {
-                            event_bus.send(&EventOnline);
-                            state = ConnectionState::Online;
-                        }
-
-                        match rep {
-                            Rep::Ok(event) => dispatch_api_event(event, &event_bus),
-                            // Unexpected error status
-                            rep => {
-                                log::warn!("`events_listen` unexpected error response: {:?}", rep);
-                            }
-                        };
+                        handle_sse_response(&mut state, &event_bus, rep);
                     }
                     Err(err) => {
-                        if let ConnectionState::Online = state {
-                            event_bus.send(&EventOffline);
-                            state = ConnectionState::Offline;
-                        }
-
-                        match err {
-                            // The only legit error is if we couldn't reach the server...
-                            libparsec_client_connection::ConnectionError::NoResponse(_) => (),
-
-                            // ...otherwise the server rejected us, hence there is no use
-                            // retrying to connect and we just stop this coroutine
-                            libparsec_client_connection::ConnectionError::ExpiredOrganization => {
-                                event_bus.send(&EventExpiredOrganization);
-                                return;
-                            }
-                            libparsec_client_connection::ConnectionError::RevokedUser => {
-                                event_bus.send(&EventRevokedUser);
-                                return;
-                            }
-                            libparsec_client_connection::ConnectionError::UnsupportedApiVersion {
-                                api_version,
-                                supported_api_versions,
-                            } => {
-                                let event = EventIncompatibleServer(
-                                    IncompatibleServerReason::UnsupportedApiVersion {
-                                        api_version,
-                                        supported_api_versions,
-                                    },
-                                );
-                                event_bus.send(&event);
-                                return;
-                            }
-                            err => {
-                                let event = EventIncompatibleServer(
-                                    IncompatibleServerReason::Unexpected(err.into()),
-                                );
-                                event_bus.send(&event);
-                                return;
-                            }
+                        if handle_sse_error(&mut state, &event_bus, err).is_break() {
+                            return;
                         }
                     }
                 }
@@ -151,6 +105,64 @@ impl ConnectionMonitor {
 
         Self { worker }
     }
+}
+
+fn handle_sse_error(
+    state: &mut ConnectionState,
+    event_bus: &EventBus,
+    err: ConnectionError,
+) -> ControlFlow<()> {
+    if &ConnectionState::Online == state {
+        event_bus.send(&EventOffline);
+        *state = ConnectionState::Offline;
+    }
+
+    match err {
+        // The only legit error is if we couldn't reach the server...
+        ConnectionError::NoResponse(_) => ControlFlow::Continue(()),
+
+        // ...otherwise the server rejected us, hence there is no use
+        // retrying to connect and we just stop this coroutine
+        ConnectionError::ExpiredOrganization => {
+            event_bus.send(&EventExpiredOrganization);
+            ControlFlow::Break(())
+        }
+        ConnectionError::RevokedUser => {
+            event_bus.send(&EventRevokedUser);
+            ControlFlow::Break(())
+        }
+        ConnectionError::UnsupportedApiVersion {
+            api_version,
+            supported_api_versions,
+        } => {
+            let event = EventIncompatibleServer(IncompatibleServerReason::UnsupportedApiVersion {
+                api_version,
+                supported_api_versions,
+            });
+            event_bus.send(&event);
+            ControlFlow::Break(())
+        }
+        err => {
+            let event = EventIncompatibleServer(IncompatibleServerReason::Unexpected(err.into()));
+            event_bus.send(&event);
+            ControlFlow::Break(())
+        }
+    }
+}
+
+fn handle_sse_response(state: &mut ConnectionState, event_bus: &EventBus, rep: Rep) {
+    if &ConnectionState::Offline == state {
+        event_bus.send(&EventOnline);
+        *state = ConnectionState::Online;
+    }
+
+    match rep {
+        Rep::Ok(event) => dispatch_api_event(event, event_bus),
+        // Unexpected error status
+        rep => {
+            log::warn!("`events_listen` unexpected error response: {:?}", rep);
+        }
+    };
 }
 
 impl Drop for ConnectionMonitor {
