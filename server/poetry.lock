@@ -2166,17 +2166,20 @@ trio = ">=0.15.0"
 
 [[package]]
 name = "trio-typing"
-version = "0.8.0"
+version = "0.9.0"
 description = "Static type checking support for Trio and related projects"
 optional = false
 python-versions = "*"
 files = [
-    {file = "trio-typing-0.8.0.tar.gz", hash = "sha256:f14264a27b45cec5dabd25b686255ac7d841984200c54b2057bc98a099318a97"},
-    {file = "trio_typing-0.8.0-py3-none-any.whl", hash = "sha256:3734fa3f61cab047fdc97aa0030c72e910455cf85f18ca18c3ff336781b144bb"},
+    {file = "trio-typing-0.9.0.tar.gz", hash = "sha256:678d4879205c4d28cbf458cf8a7c60d6feaed0fabfa8bb2129235f769b6df3ec"},
+    {file = "trio_typing-0.9.0-py3-none-any.whl", hash = "sha256:219e73f72f07fbc97e7019dad3bd49a8bf13d2e53136f3467ae2ee1fcca7a0b9"},
 ]
 
 [package.dependencies]
+async-generator = "*"
+importlib-metadata = "*"
 mypy-extensions = ">=0.4.2"
+packaging = "*"
 trio = ">=0.16.0"
 typing-extensions = ">=3.7.4"
 
@@ -2372,4 +2375,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.9.10"
-content-hash = "131bb0e9959215f53ce9a451a5b284164be303b0df248cbf4961c098e9603056"
+content-hash = "c7134f6c8aae7ba98fb726a8a9b36db844dae1fd4862d6b3d9b8b0dd07d7a1b2"
