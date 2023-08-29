@@ -30,16 +30,16 @@
 //! Beside the headers for authentication, we also add the header `API_VERSION` that contain the [parsec_api_protocol::ApiVersion]
 //!
 
+pub(crate) mod sse;
+
 use base64::prelude::{Engine, BASE64_STANDARD};
 use bytes::Bytes;
+use eventsource_stream::Eventsource;
 use reqwest::{
-    header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
+    header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
     Client, RequestBuilder, Url,
 };
-#[cfg(not(target_arch = "wasm32"))]
-use reqwest_eventsource::{Event as SSEEvent, EventSource};
-use std::{fmt::Debug, marker::PhantomData};
-use std::{path::Path, sync::Arc};
+use std::{fmt::Debug, marker::PhantomData, path::Path, sync::Arc};
 
 use libparsec_platform_http_proxy::ProxyConfig;
 use libparsec_protocol::{api_version_major_to_full, API_LATEST_MAJOR_VERSION};
@@ -48,114 +48,15 @@ use libparsec_types::prelude::*;
 #[cfg(feature = "test-with-testbed")]
 use crate::testbed::{get_send_hook, SendHookConfig};
 use crate::{
+    authenticated_cmds::sse::check_response,
     error::{ConnectionError, ConnectionResult},
-    API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
+    SSEConnectionError, SSEStream, API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
 };
+
+use self::sse::EVENT_STREAM_CONTENT_TYPE;
 
 /// Method name that will be used for the header `Authorization` to indicate that will be using this method.
 pub const PARSEC_AUTH_METHOD: &str = "PARSEC-SIGN-ED25519";
-
-pub struct SSEStream<T>
-where
-    T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
-{
-    #[cfg(not(target_arch = "wasm32"))]
-    event_source: EventSource,
-    phantom: PhantomData<T>,
-}
-
-impl<T> Debug for SSEStream<T>
-where
-    T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
-{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("SSEStream").finish()
-    }
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum SSEResponseOrMissedEvents<T>
-where
-    T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
-{
-    Response(T::Response),
-    MissedEvents,
-}
-
-impl<T> SSEStream<T>
-where
-    T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
-{
-    #[cfg(target_arch = "wasm32")]
-    pub async fn next(&mut self) -> Result<SSEResponseOrMissedEvents<T>, ConnectionError> {
-        todo!();
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    pub async fn next(&mut self) -> Result<SSEResponseOrMissedEvents<T>, ConnectionError> {
-        loop {
-            match self.next_sse_event().await? {
-                SSEEvent::Open => {
-                    // Should occur only once, just ignore it
-                    continue;
-                }
-                SSEEvent::Message(event) => {
-                    match event.event.as_ref() {
-                        "missed_events" => return Ok(SSEResponseOrMissedEvents::MissedEvents),
-                        "message" => {
-                            if let Ok(raw_rep) = BASE64_STANDARD.decode(event.data) {
-                                if let Ok(rep) = T::api_load_response(raw_rep.as_ref()) {
-                                    return Ok(SSEResponseOrMissedEvents::Response(rep));
-                                }
-                            }
-                            return Err(ConnectionError::BadContent);
-                        }
-                        // Ignore the rest
-                        _ => continue,
-                    }
-                }
-            }
-        }
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    async fn next_sse_event(&mut self) -> Result<SSEEvent, ConnectionError> {
-        use futures::stream::StreamExt;
-        match self.event_source.next().await {
-            Some(Ok(sse_event)) => Ok(sse_event),
-            Some(Err(err)) => match err {
-                reqwest_eventsource::Error::Transport(err) => {
-                    Err(ConnectionError::NoResponse(Some(err)))
-                }
-                // All statuses except 200
-                reqwest_eventsource::Error::InvalidStatusCode(status_code) => {
-                    match status_code.as_u16() {
-                        415 => Err(ConnectionError::BadContent),
-                        // TODO: cannot  access the response headers here...
-                        // 422 => Err(crate::error::unsupported_api_version_from_headers(
-                        //     resp.headers(),
-                        // )),
-                        460 => Err(ConnectionError::ExpiredOrganization),
-                        461 => Err(ConnectionError::RevokedUser),
-                        // We typically use HTTP 503 in the tests to simulate server offline,
-                        // so it should behave just like if we were not able to connect
-                        503 => Err(ConnectionError::NoResponse(None)),
-                        _ => Err(ConnectionError::InvalidResponseStatus(status_code)),
-                    }
-                }
-                reqwest_eventsource::Error::StreamEnded => Err(ConnectionError::NoResponse(None)),
-                _ => Err(ConnectionError::BadContent),
-            },
-            None => Err(ConnectionError::NoResponse(None)),
-        }
-    }
-
-    #[allow(unused_mut)]
-    pub fn close(mut self) {
-        #[cfg(not(target_arch = "wasm32"))]
-        self.event_source.close();
-    }
-}
 
 /// Factory that send commands in a authenticated context.
 #[derive(Debug)]
@@ -205,92 +106,6 @@ impl AuthenticatedCmds {
 
     pub fn addr(&self) -> &BackendOrganizationAddr {
         &self.device.organization_addr
-    }
-
-    // Just used for test
-    #[cfg(not(target_arch = "wasm32"))]
-    pub async fn start_sse_and_wait_for_connection<T>(
-        &self,
-    ) -> Result<SSEStream<T>, ConnectionError>
-    where
-        T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
-    {
-        let mut sse = self.start_sse();
-        let first_event = sse.next_sse_event().await?;
-        assert!(matches!(first_event, SSEEvent::Open,));
-        Ok(sse)
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    pub async fn start_sse_and_wait_for_connection<T>(
-        &self,
-    ) -> Result<SSEStream<T>, ConnectionError>
-    where
-        T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
-    {
-        todo!()
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    pub fn start_sse<T>(&self) -> SSEStream<T>
-    where
-        T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
-    {
-        todo!()
-    }
-
-    pub fn sse_request_builder<T>(&self) -> reqwest::RequestBuilder
-    where
-        T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
-    {
-        let url = {
-            let mut url = self.url.clone();
-            let mut psm = url
-                .path_segments_mut()
-                .expect("url is not a cannot-be-a-base");
-            psm.push("events");
-            drop(psm);
-            url
-        };
-
-        log::trace!("Will listen for SSE event at {url}");
-        let request_builder = self.client.get(url);
-        let request_builder = sign_request(
-            request_builder,
-            &self.device.signing_key,
-            self.author_header_value.clone(),
-            b"",
-        );
-
-        let mut content_headers = HeaderMap::with_capacity(2);
-        let api_version = api_version_major_to_full(T::API_MAJOR_VERSION);
-        content_headers.insert(
-            API_VERSION_HEADER_NAME,
-            HeaderValue::from_str(&api_version.to_string())
-                .expect("api version must contains valid char"),
-        );
-        // No Content-Type as this request is a GET
-        content_headers.insert(
-            CONTENT_LENGTH,
-            HeaderValue::from_str("0").expect("numeric value are valid char"),
-        );
-        request_builder.headers(content_headers)
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    pub fn start_sse<T>(&self) -> SSEStream<T>
-    where
-        T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
-    {
-        let request_builder = self.sse_request_builder::<T>();
-
-        let event_source =
-            EventSource::new(request_builder).expect("provided request builder is clonable");
-
-        SSEStream::<T> {
-            event_source,
-            phantom: PhantomData,
-        }
     }
 
     pub async fn send<T>(&self, request: T) -> ConnectionResult<<T>::Response>
@@ -353,6 +168,74 @@ impl AuthenticatedCmds {
             503 => Err(ConnectionError::NoResponse(None)),
             _ => Err(ConnectionError::InvalidResponseStatus(resp.status())),
         }
+    }
+}
+
+// SSE method impls
+
+impl AuthenticatedCmds {
+    fn sse_request_builder<T>(&self) -> reqwest::RequestBuilder
+    where
+        T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
+    {
+        let url = {
+            let mut url = self.url.clone();
+            let mut psm = url
+                .path_segments_mut()
+                .expect("url is not a cannot-be-a-base");
+            psm.push("events");
+            drop(psm);
+            url
+        };
+
+        let request_builder = self.client.get(url);
+        let request_builder = sign_request(
+            request_builder,
+            &self.device.signing_key,
+            self.author_header_value.clone(),
+            b"",
+        );
+
+        let mut content_headers = HeaderMap::with_capacity(3);
+        let api_version = api_version_major_to_full(T::API_MAJOR_VERSION);
+        content_headers.insert(
+            API_VERSION_HEADER_NAME,
+            HeaderValue::from_str(&api_version.to_string())
+                .expect("api version must contains valid char"),
+        );
+        // No Content-Type as this request is a GET
+        content_headers.insert(CONTENT_LENGTH, HeaderValue::from_static("0"));
+        content_headers.insert(ACCEPT, HeaderValue::from_static(EVENT_STREAM_CONTENT_TYPE));
+        request_builder.headers(content_headers)
+    }
+
+    pub async fn start_sse<T>(
+        &self,
+        last_event_id: Option<&str>,
+    ) -> Result<SSEStream<T>, SSEConnectionError>
+    where
+        T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
+    {
+        let request_builder = self.sse_request_builder::<T>();
+
+        let response = request_builder
+            .send()
+            .await
+            .map_err(SSEConnectionError::Transport)?;
+
+        check_response(&response)?;
+
+        log::trace!("Will listen for SSE event at {}", response.url());
+        let mut sse_stream = response.bytes_stream().eventsource();
+        if let Some(last_event_id) = last_event_id {
+            sse_stream.set_last_event_id(last_event_id);
+        }
+        let event_source = Box::pin(sse_stream);
+
+        Ok(SSEStream::<T> {
+            event_source,
+            phantom: PhantomData,
+        })
     }
 }
 

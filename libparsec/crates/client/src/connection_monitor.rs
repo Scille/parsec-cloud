@@ -2,8 +2,10 @@
 
 use std::{ops::ControlFlow, sync::Arc};
 
-use libparsec_client_connection::{AuthenticatedCmds, ConnectionError, SSEResponseOrMissedEvents};
-use libparsec_platform_async::{spawn, JoinHandle};
+use libparsec_client_connection::{
+    AuthenticatedCmds, ConnectionError, RateLimiter, SSEResponseOrMissedEvents,
+};
+use libparsec_platform_async::{spawn, stream::StreamExt, JoinHandle};
 use libparsec_protocol::authenticated_cmds::v4::events_listen::{APIEvent, Rep, Req};
 
 use crate::event_bus::*;
@@ -84,19 +86,46 @@ impl ConnectionMonitor {
     pub async fn start(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) -> Self {
         let worker = spawn(async move {
             let mut state = ConnectionState::Offline;
-            let mut stream = cmds.start_sse::<Req>();
+            let mut last_event_id: Option<String> = None;
+            let mut backoff = RateLimiter::new();
 
             loop {
-                match stream.next().await {
-                    Ok(SSEResponseOrMissedEvents::MissedEvents) => {
-                        event_bus.send(&EventMissedServerEvents);
-                    }
-                    Ok(SSEResponseOrMissedEvents::Response(rep)) => {
-                        handle_sse_response(&mut state, &event_bus, rep);
-                    }
+                backoff.wait().await;
+
+                let mut stream = match cmds.start_sse::<Req>(last_event_id.as_deref()).await {
+                    Ok(stream) => stream,
                     Err(err) => {
-                        if handle_sse_error(&mut state, &event_bus, err).is_break() {
+                        if handle_sse_error(&mut state, &event_bus, err.into()).is_break() {
                             return;
+                        }
+                        continue;
+                    }
+                };
+
+                backoff.reset();
+
+                while let Some(res) = stream.next().await {
+                    match res {
+                        Ok(event) => {
+                            if let Some(retry) = event.retry {
+                                backoff.set_desired_duration(retry)
+                            }
+                            if Some(&event.id) != last_event_id.as_ref() {
+                                last_event_id.replace(event.id);
+                            }
+                            match event.message {
+                                SSEResponseOrMissedEvents::MissedEvents => {
+                                    event_bus.send(&EventMissedServerEvents);
+                                }
+                                SSEResponseOrMissedEvents::Response(rep) => {
+                                    handle_sse_response(&mut state, &event_bus, rep);
+                                }
+                            }
+                        }
+                        Err(err) => {
+                            if handle_sse_error(&mut state, &event_bus, err).is_break() {
+                                return;
+                            }
                         }
                     }
                 }

@@ -10,8 +10,9 @@ use libparsec_client_connection::{
     test_register_low_level_send_hook, test_register_low_level_send_hook_default,
     test_register_low_level_send_hook_multicall, test_register_send_hook, AnonymousCmds,
     AuthenticatedCmds, Bytes, ConnectionError, HeaderMap, InvitedCmds, ProxyConfig, ResponseMock,
-    SSEResponseOrMissedEvents, StatusCode,
+    SSEConnectionError, SSEResponseOrMissedEvents, StatusCode,
 };
+use libparsec_platform_async::stream::StreamExt;
 use libparsec_protocol::{
     anonymous_cmds::latest as anonymous_cmds, authenticated_cmds::latest as authenticated_cmds,
     invited_cmds::latest as invited_cmds,
@@ -96,7 +97,7 @@ async fn authenticated_sse(env: &TestbedEnv) {
 
     // Start the sse...
     let mut sse = cmds_alice
-        .start_sse_and_wait_for_connection::<authenticated_cmds::events_listen::Req>()
+        .start_sse::<authenticated_cmds::events_listen::Req>(None)
         .await
         .unwrap();
 
@@ -104,7 +105,7 @@ async fn authenticated_sse(env: &TestbedEnv) {
     send_ping("good 1").await;
 
     p_assert_eq!(
-        sse.next().await.unwrap(),
+        sse.next().await.unwrap().unwrap().message,
         SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
             authenticated_cmds::events_listen::APIEvent::Pinged {
                 ping: "good 1".to_owned()
@@ -117,7 +118,7 @@ async fn authenticated_sse(env: &TestbedEnv) {
     send_ping("good 3").await;
     send_ping("good 4").await;
     p_assert_eq!(
-        sse.next().await.unwrap(),
+        sse.next().await.unwrap().unwrap().message,
         SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
             authenticated_cmds::events_listen::APIEvent::Pinged {
                 ping: "good 2".to_owned()
@@ -125,7 +126,7 @@ async fn authenticated_sse(env: &TestbedEnv) {
         ))
     );
     p_assert_eq!(
-        sse.next().await.unwrap(),
+        sse.next().await.unwrap().unwrap().message,
         SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
             authenticated_cmds::events_listen::APIEvent::Pinged {
                 ping: "good 3".to_owned()
@@ -133,7 +134,7 @@ async fn authenticated_sse(env: &TestbedEnv) {
         ))
     );
     p_assert_eq!(
-        sse.next().await.unwrap(),
+        sse.next().await.unwrap().unwrap().message,
         SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
             authenticated_cmds::events_listen::APIEvent::Pinged {
                 ping: "good 4".to_owned()
@@ -141,7 +142,7 @@ async fn authenticated_sse(env: &TestbedEnv) {
         ))
     );
 
-    sse.close();
+    drop(sse);
 
     // Bad request: invalid signature
 
@@ -152,16 +153,17 @@ async fn authenticated_sse(env: &TestbedEnv) {
     };
     let cmds_bad_alice =
         AuthenticatedCmds::new(&env.discriminant_dir, bad_alice, ProxyConfig::default()).unwrap();
-    let mut sse = cmds_bad_alice.start_sse::<authenticated_cmds::events_listen::Req>();
-    let rep = sse.next().await;
+    let res = cmds_bad_alice
+        .start_sse::<authenticated_cmds::events_listen::Req>(None)
+        .await;
     assert!(
         matches!(
-            rep,
-            Err(ConnectionError::InvalidResponseStatus(
+            res,
+            Err(SSEConnectionError::InvalidStatusCode(
                 reqwest::StatusCode::UNAUTHORIZED
             ))
         ),
-        r#"expected `InvalidResponseStatus` with code 401, but got {rep:?}"#
+        r#"expected `InvalidResponseStatus` with code 401, but got {res:?}"#
     );
 }
 
