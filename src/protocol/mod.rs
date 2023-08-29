@@ -396,6 +396,17 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<RealmUpdateRolesRepRequireGreaterTimestamp>()?;
     m.add_class::<RealmUpdateRolesRepBadTimestamp>()?;
     m.add_class::<RealmUpdateRolesRepUnknownStatus>()?;
+    m.add_class::<RealmUpdateArchivingReq>()?;
+    m.add_class::<RealmUpdateArchivingRep>()?;
+    m.add_class::<RealmUpdateArchivingRepOk>()?;
+    m.add_class::<RealmUpdateArchivingRepNotAllowed>()?;
+    m.add_class::<RealmUpdateArchivingRepInvalidCertification>()?;
+    m.add_class::<RealmUpdateArchivingRepNotFound>()?;
+    m.add_class::<RealmUpdateArchivingRepRealmDeleted>()?;
+    m.add_class::<RealmUpdateArchivingRepArchivingPeriodTooShort>()?;
+    m.add_class::<RealmUpdateArchivingRepRequireGreaterTimestamp>()?;
+    m.add_class::<RealmUpdateArchivingRepBadTimestamp>()?;
+    m.add_class::<RealmUpdateArchivingRepUnknownStatus>()?;
     m.add_class::<RealmStartReencryptionMaintenanceReq>()?;
     m.add_class::<RealmStartReencryptionMaintenanceRep>()?;
     m.add_class::<RealmStartReencryptionMaintenanceRepOk>()?;

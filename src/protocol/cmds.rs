@@ -74,6 +74,7 @@ impl AuthenticatedAnyCmdReq {
             AnyCmdReq::RealmFinishReencryptionMaintenance(x) => {
                 RealmFinishReencryptionMaintenanceReq(x).into_py(py)
             }
+            AnyCmdReq::RealmUpdateArchiving(x) => RealmUpdateArchivingReq(x).into_py(py),
             AnyCmdReq::UserGet(x) => UserGetReq(x).into_py(py),
             AnyCmdReq::UserCreate(x) => UserCreateReq(x).into_py(py),
             AnyCmdReq::UserRevoke(x) => UserRevokeReq(x).into_py(py),

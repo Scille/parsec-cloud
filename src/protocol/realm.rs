@@ -9,7 +9,8 @@ use std::collections::HashMap;
 
 use libparsec::protocol::authenticated_cmds::v2::{
     realm_create, realm_finish_reencryption_maintenance, realm_get_role_certificates,
-    realm_start_reencryption_maintenance, realm_stats, realm_status, realm_update_roles,
+    realm_start_reencryption_maintenance, realm_stats, realm_status, realm_update_archiving,
+    realm_update_roles,
 };
 use libparsec::types::ProtocolRequest;
 
@@ -618,6 +619,74 @@ impl RealmFinishReencryptionMaintenanceRepOk {
         Ok((
             Self,
             RealmFinishReencryptionMaintenanceRep(realm_finish_reencryption_maintenance::Rep::Ok),
+        ))
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct RealmUpdateArchivingReq(pub realm_update_archiving::Req);
+
+crate::binding_utils::gen_proto!(RealmUpdateArchivingReq, __repr__);
+crate::binding_utils::gen_proto!(RealmUpdateArchivingReq, __copy__);
+crate::binding_utils::gen_proto!(RealmUpdateArchivingReq, __deepcopy__);
+crate::binding_utils::gen_proto!(RealmUpdateArchivingReq, __richcmp__, eq);
+
+#[pymethods]
+impl RealmUpdateArchivingReq {
+    #[new]
+    fn new(archiving_certificate: BytesWrapper) -> PyResult<Self> {
+        crate::binding_utils::unwrap_bytes!(archiving_certificate);
+        Ok(Self(realm_update_archiving::Req {
+            archiving_certificate,
+        }))
+    }
+
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
+        Ok(PyBytes::new(
+            py,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
+        ))
+    }
+
+    #[getter]
+    fn archiving_certificate(&self) -> PyResult<&[u8]> {
+        Ok(&self.0.archiving_certificate)
+    }
+}
+
+gen_rep!(
+    realm_update_archiving,
+    RealmUpdateArchivingRep,
+    [NotAllowed],
+    [InvalidCertification],
+    [NotFound],
+    [RequireGreaterTimestamp, strictly_greater_than: DateTime],
+    [
+        BadTimestamp,
+        ballpark_client_early_offset: f64,
+        ballpark_client_late_offset: f64,
+        backend_timestamp: DateTime,
+        client_timestamp: DateTime,
+    ],
+    [RealmDeleted],
+    [ArchivingPeriodTooShort],
+);
+
+#[pyclass(extends=RealmUpdateArchivingRep)]
+pub(crate) struct RealmUpdateArchivingRepOk;
+
+#[pymethods]
+impl RealmUpdateArchivingRepOk {
+    #[new]
+    fn new() -> PyResult<(Self, RealmUpdateArchivingRep)> {
+        Ok((
+            Self,
+            RealmUpdateArchivingRep(realm_update_archiving::Rep::Ok),
         ))
     }
 }

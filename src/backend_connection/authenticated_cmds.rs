@@ -832,6 +832,35 @@ impl AuthenticatedCmds {
         })
     }
 
+    fn realm_update_archiving(&self, archiving_certificate: BytesWrapper) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        crate::binding_utils::unwrap_bytes!(archiving_certificate);
+
+        FutureIntoCoroutine::from_raw(async move {
+            let req = authenticated_cmds::realm_update_archiving::Req {
+                archiving_certificate,
+            };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                authenticated_cmds::realm_update_archiving,
+                RealmUpdateArchivingRep,
+                Ok,
+                NotAllowed,
+                NotFound,
+                RequireGreaterTimestamp,
+                BadTimestamp,
+                UnknownStatus,
+                InvalidCertification,
+                RealmDeleted,
+                ArchivingPeriodTooShort,
+                "handle_bad_timestamp"
+            )
+        })
+    }
+
     fn user_create(
         &self,
         user_certificate: BytesWrapper,

@@ -109,40 +109,16 @@ The following command is added to the authenticated API:
             },
             {
                 // Returned if the user does not have the `owner` role
-                "status": "not_allowed",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "not_allowed"
             },
             {
-                "status": "invalid_certification",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "invalid_certification"
             },
             {
-                "status": "invalid_data",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "invalid_data"
             },
             {
-                "status": "not_found",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "not_found"
             },
             {
                 "status": "require_greater_timestamp",
@@ -156,10 +132,6 @@ The following command is added to the authenticated API:
             {
                 "status": "bad_timestamp",
                 "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    },
                     {
                         "name": "ballpark_client_early_offset",
                         "type": "Float"
