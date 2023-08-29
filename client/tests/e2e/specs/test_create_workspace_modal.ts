@@ -18,7 +18,7 @@ describe('Check create workspace modal', () => {
     cy.get('ion-input').should('be.visible');
     cy.get('#cancel-button').should('be.visible');
     cy.get('#next-button').should('be.visible');
-    cy.get('.ion-page').find('#next-button').should('exist');
+    cy.get('#next-button').should('have.class', 'button-disabled');
   });
 
   it('Create workspace', () => {
