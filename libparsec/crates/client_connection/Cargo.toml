@@ -33,6 +33,7 @@ chrono = { workspace = true, features = ["clock"] }
 thiserror = { workspace = true }
 # Reqwest's response body is returned as Bytes
 bytes = { workspace = true, features = ["std"] }
+log = { workspace = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # TODO: support SSE for Web

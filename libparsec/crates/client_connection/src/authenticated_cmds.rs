@@ -239,44 +239,50 @@ impl AuthenticatedCmds {
         todo!()
     }
 
+    pub fn sse_request_builder<T>(&self) -> reqwest::RequestBuilder
+    where
+        T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
+    {
+        let url = {
+            let mut url = self.url.clone();
+            let mut psm = url
+                .path_segments_mut()
+                .expect("url is not a cannot-be-a-base");
+            psm.push("events");
+            drop(psm);
+            url
+        };
+
+        log::trace!("Will listen for SSE event at {url}");
+        let request_builder = self.client.get(url);
+        let request_builder = sign_request(
+            request_builder,
+            &self.device.signing_key,
+            self.author_header_value.clone(),
+            b"",
+        );
+
+        let mut content_headers = HeaderMap::with_capacity(2);
+        let api_version = api_version_major_to_full(T::API_MAJOR_VERSION);
+        content_headers.insert(
+            API_VERSION_HEADER_NAME,
+            HeaderValue::from_str(&api_version.to_string())
+                .expect("api version must contains valid char"),
+        );
+        // No Content-Type as this request is a GET
+        content_headers.insert(
+            CONTENT_LENGTH,
+            HeaderValue::from_str("0").expect("numeric value are valid char"),
+        );
+        request_builder.headers(content_headers)
+    }
+
     #[cfg(not(target_arch = "wasm32"))]
     pub fn start_sse<T>(&self) -> SSEStream<T>
     where
         T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
     {
-        let request_builder = {
-            let url = {
-                let mut url = self.url.clone();
-                let mut psm = url
-                    .path_segments_mut()
-                    .expect("url is not a cannot-be-a-base");
-                psm.push("events");
-                drop(psm);
-                url
-            };
-
-            let request_builder = self.client.get(url);
-            let request_builder = sign_request(
-                request_builder,
-                &self.device.signing_key,
-                self.author_header_value.clone(),
-                b"",
-            );
-
-            let mut content_headers = HeaderMap::with_capacity(2);
-            let api_version = api_version_major_to_full(T::API_MAJOR_VERSION);
-            content_headers.insert(
-                API_VERSION_HEADER_NAME,
-                HeaderValue::from_str(&api_version.to_string())
-                    .expect("api version must contains valid char"),
-            );
-            // No Content-Type as this request is a GET
-            content_headers.insert(
-                CONTENT_LENGTH,
-                HeaderValue::from_str("0").expect("numeric value are valid char"),
-            );
-            request_builder.headers(content_headers)
-        };
+        let request_builder = self.sse_request_builder::<T>();
 
         let event_source =
             EventSource::new(request_builder).expect("provided request builder is clonable");
