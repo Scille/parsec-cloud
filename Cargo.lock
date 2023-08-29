@@ -1316,6 +1316,7 @@ dependencies = [
  "libparsec_testbed",
  "libparsec_tests_fixtures",
  "libparsec_types",
+ "log",
  "reqwest",
  "reqwest-eventsource",
  "thiserror",
