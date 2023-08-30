@@ -40,7 +40,7 @@ import {
 } from '@ionic/vue';
 import { ref, watch, onUnmounted } from 'vue';
 import { getWorkspaceUsers, WorkspaceRole } from '@/common/mocks';
-import { ModalResultCode } from '@/common/constants';
+import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
@@ -82,7 +82,7 @@ async function updateUserRole(user: string, role: WorkspaceRole | null): Promise
 }
 
 function cancel(): Promise<boolean> {
-  return modalController.dismiss(userRoles.value, ModalResultCode.Cancel);
+  return modalController.dismiss(userRoles.value, MsModalResult.Cancel);
 }
 </script>
 

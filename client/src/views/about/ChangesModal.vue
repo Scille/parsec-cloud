@@ -170,7 +170,7 @@ import {
   time as timeIcon,
 } from 'ionicons/icons';
 import { onMounted, ref, Ref } from 'vue';
-import { ModalResultCode } from '@/common/constants';
+import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 import { getChanges, VersionChange } from '@/common/mocks';
 
 const changes: Ref<VersionChange[]> = ref([]);
@@ -180,7 +180,7 @@ onMounted(() => {
 });
 
 function closeModal(): Promise<boolean> {
-  return modalController.dismiss(null, ModalResultCode.Cancel);
+  return modalController.dismiss(null, MsModalResult.Cancel);
 }
 </script>
 
