@@ -10,20 +10,9 @@ pub fn parsec_test(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut sig = parsec_test_item.sig;
     let block = parsec_test_item.block;
 
-    let mut testbed = None;
-    let mut with_server = false;
+    let mut attributes = Attributes::default();
 
-    let parsec_test_parser = syn::meta::parser(|meta| {
-        if meta.path.is_ident("testbed") {
-            testbed = Some(meta.value()?.parse::<LitStr>()?);
-            Ok(())
-        } else if meta.path.is_ident("with_server") {
-            with_server = true;
-            Ok(())
-        } else {
-            Err(meta.error("unsupported parsec_test property"))
-        }
-    });
+    let parsec_test_parser = syn::meta::parser(|meta| attributes.parse(meta));
 
     let mut quote_block = quote! {
         #block
@@ -32,7 +21,7 @@ pub fn parsec_test(attr: TokenStream, item: TokenStream) -> TokenStream {
     if !attr.is_empty() {
         parse_macro_input!(attr with parsec_test_parser);
 
-        if let Some(testbed) = testbed {
+        if let Some(testbed) = attributes.testbed {
             // If `testbed` is found, `env: &TestbedEnv` must be set in args
             match sig.inputs.pop().map(Pair::into_value) {
                 Some(FnArg::Typed(typed)) => {
@@ -54,7 +43,7 @@ pub fn parsec_test(attr: TokenStream, item: TokenStream) -> TokenStream {
                 _ => panic!("Missing argument: `env: &TestbedEnv`"),
             }
 
-            if with_server {
+            if attributes.with_server {
                 quote_block = quote! {
                     ::libparsec_tests_fixtures::TestbedScope::run_with_server(#testbed, |env: std::sync::Arc<TestbedEnv>| async move {
                             let env = env.as_ref();
@@ -106,4 +95,24 @@ pub fn parsec_test(attr: TokenStream, item: TokenStream) -> TokenStream {
             #quote_block
         }
     })
+}
+
+#[derive(Default)]
+struct Attributes {
+    testbed: Option<LitStr>,
+    with_server: bool,
+}
+
+impl Attributes {
+    fn parse(&mut self, meta: syn::meta::ParseNestedMeta) -> syn::parse::Result<()> {
+        if meta.path.is_ident("testbed") {
+            self.testbed = Some(meta.value()?.parse::<LitStr>()?);
+            Ok(())
+        } else if meta.path.is_ident("with_server") {
+            self.with_server = true;
+            Ok(())
+        } else {
+            Err(meta.error("unsupported parsec_test property"))
+        }
+    }
 }
