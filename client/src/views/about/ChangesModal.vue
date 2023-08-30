@@ -2,37 +2,11 @@
 
 <template>
   <ion-page class="modal">
-    <!-- header -->
-    <ion-header class="modal-header">
-      <!-- head -->
-      <ion-toolbar class="modal-header__toolbar">
-        <ion-text class="title-h2">
-          <ion-icon
-            :icon="timeIcon"
-          />
-          {{ $t('Changelog.title') }}
-        </ion-text>
-      </ion-toolbar>
-      <ion-buttons
-        slot="end"
-        class="closeBtn-container"
-      >
-        <ion-button
-          slot="icon-only"
-          @click="closeModal()"
-          class="closeBtn"
-        >
-          <ion-icon
-            :icon="close"
-            size="large"
-            class="closeBtn__icon"
-          />
-        </ion-button>
-      </ion-buttons>
-    </ion-header>
-    <!-- content -->
-    <ion-content>
-      <div class="modal-content">
+    <ms-modal
+      :title="$t('Changelog.title')"
+      :close-button-enabled="true"
+    >
+      <div>
         <div
           v-for="versionChange in changes"
           :key="versionChange.version"
@@ -144,100 +118,38 @@
           </div>
         </div>
       </div>
-    </ion-content>
+    </ms-modal>
   </ion-page>
 </template>
 
 <script setup lang="ts">
 import {
-  IonButton,
-  IonButtons,
-  IonContent,
-  IonHeader,
   IonPage,
-  IonToolbar,
   IonIcon,
   IonList,
   IonItem,
   IonText,
-  modalController,
 } from '@ionic/vue';
 import {
-  close,
   sparkles,
   construct,
   infinite,
-  time as timeIcon,
 } from 'ionicons/icons';
 import { onMounted, ref, Ref } from 'vue';
-import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 import { getChanges, VersionChange } from '@/common/mocks';
+import MsModal from '@/components/core/ms-modal/MsModal.vue';
 
 const changes: Ref<VersionChange[]> = ref([]);
 
 onMounted(() => {
   changes.value = getChanges();
 });
-
-function closeModal(): Promise<boolean> {
-  return modalController.dismiss(null, MsModalResult.Cancel);
-}
 </script>
 
 <style scoped lang="scss">
 .modal {
   padding: 2.5rem;
   height: 40em;
-}
-
-.modal-header {
-  position: relative;
-
-  &__toolbar {
-    --min-height: 0;
-  }
-}
-
-.title-h2 {
-  color: var(--parsec-color-light-primary-700);
-  padding-inline: 0;
-  margin-bottom: 2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.closeBtn-container, .closeBtn {
-  margin: 0;
-  --padding-start: 0;
-  --padding-end: 0;
-}
-
-.closeBtn-container {
-  position: absolute;
-  top: 0;
-  right: 0;
-}
-
-.closeBtn {
-  border-radius: 4px;
-  width: fit-content;
-  height: fit-content;
-
-  &:hover {
-    --background-hover: var(--parsec-color-light-primary-50);
-    --border-radius: 4px;
-  }
-
-  &:active {
-    background: var(--parsec-color-light-primary-100);
-    --border-radius: 4px;
-  }
-
-  &__icon {
-    padding: 4px;
-    color: var(--parsec-color-light-primary-500);
-  }
 }
 
 .version {
