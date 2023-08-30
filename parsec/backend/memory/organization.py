@@ -81,8 +81,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             user_profile_outsider_allowed = (
                 self._config.organization_initial_user_profile_outsider_allowed
             )
-
         assert isinstance(active_users_limit, ActiveUsersLimit)
+        minimum_archiving_period = self._config.organization_initial_minimum_archiving_period
 
         self._organizations[id] = Organization(
             organization_id=id,
@@ -95,6 +95,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             user_profile_outsider_allowed=user_profile_outsider_allowed,
             sequester_authority=None,
             sequester_services_certificates=None,
+            minimum_archiving_period=minimum_archiving_period,
         )
 
     async def get(self, id: OrganizationID) -> Organization:

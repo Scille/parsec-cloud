@@ -16,6 +16,7 @@ async def test_organization_config_ok(coolorg: OrganizationFullData, alice_ws, b
         active_users_limit=backend.config.organization_initial_active_users_limit,
         sequester_authority_certificate=None,
         sequester_services_certificates=None,
+        minimum_archiving_period=2592000,
     )
 
     await backend.organization.update(
@@ -29,6 +30,7 @@ async def test_organization_config_ok(coolorg: OrganizationFullData, alice_ws, b
         active_users_limit=ActiveUsersLimit.LimitedTo(42),
         sequester_authority_certificate=None,
         sequester_services_certificates=None,
+        minimum_archiving_period=2592000,
     )
 
 
@@ -43,6 +45,7 @@ async def test_organization_config_ok_sequestered_organization(
         active_users_limit=backend.config.organization_initial_active_users_limit,
         sequester_authority_certificate=coolorg.sequester_authority.certif,
         sequester_services_certificates=[],
+        minimum_archiving_period=2592000,
     )
 
     # Add new services
@@ -65,6 +68,7 @@ async def test_organization_config_ok_sequestered_organization(
         active_users_limit=backend.config.organization_initial_active_users_limit,
         sequester_authority_certificate=coolorg.sequester_authority.certif,
         sequester_services_certificates=[s1.certif, s2.certif],
+        minimum_archiving_period=2592000,
     )
 
     # Delete a service, should no longer appear in config
@@ -78,4 +82,5 @@ async def test_organization_config_ok_sequestered_organization(
         active_users_limit=backend.config.organization_initial_active_users_limit,
         sequester_authority_certificate=coolorg.sequester_authority.certif,
         sequester_services_certificates=[s2.certif],
+        minimum_archiving_period=2592000,
     )

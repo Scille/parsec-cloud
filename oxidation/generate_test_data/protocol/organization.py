@@ -2,6 +2,7 @@
 
 
 from parsec._parsec import (
+    ActiveUsersLimit,
     OrganizationBootstrapRepAlreadyBootstrapped,
     OrganizationBootstrapRepBadTimestamp,
     OrganizationBootstrapRepInvalidCertification,
@@ -62,9 +63,10 @@ display("organization_config_req", serialized, [])
 serialized = serializer.rep_dumps(
     OrganizationConfigRepOk(
         user_profile_outsider_allowed=False,
-        active_users_limit=None,
+        active_users_limit=ActiveUsersLimit.NO_LIMIT,
         sequester_authority_certificate=None,
         sequester_services_certificates=None,
+        minimum_archiving_period=2592000,
     )
 )
 serializer.rep_loads(serialized)
@@ -73,9 +75,10 @@ display("organization_config_rep_without", serialized, [])
 serialized = serializer.rep_dumps(
     OrganizationConfigRepOk(
         user_profile_outsider_allowed=False,
-        active_users_limit=1,
+        active_users_limit=ActiveUsersLimit.LimitedTo(1),
         sequester_authority_certificate=b"foobar",
         sequester_services_certificates=[b"foo", b"bar"],
+        minimum_archiving_period=2592000,
     )
 )
 serializer.rep_loads(serialized)

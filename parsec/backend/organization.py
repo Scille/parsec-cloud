@@ -90,6 +90,7 @@ class Organization:
     bootstrap_token: str
     is_expired: bool
     created_on: DateTime
+    minimum_archiving_period: int
     bootstrapped_on: DateTime | None
     root_verify_key: VerifyKey | None
     user_profile_outsider_allowed: bool
@@ -144,6 +145,7 @@ class BaseOrganizationComponent:
             active_users_limit=organization.active_users_limit,
             sequester_authority_certificate=sequester_authority_certificate,
             sequester_services_certificates=sequester_services_certificates,
+            minimum_archiving_period=organization.minimum_archiving_period,
         )
 
     @api("organization_stats")

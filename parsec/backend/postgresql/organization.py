@@ -44,7 +44,8 @@ INSERT INTO organization (
     _created_on,
     _bootstrapped_on,
     is_expired,
-    _expired_on
+    _expired_on,
+    minimum_archiving_period
 )
 VALUES (
     $organization_id,
@@ -54,7 +55,8 @@ VALUES (
     $created_on,
     NULL,
     FALSE,
-    NULL
+    NULL,
+    $minimum_archiving_period
 )
 ON CONFLICT (organization_id) DO
     UPDATE SET
@@ -63,7 +65,8 @@ ON CONFLICT (organization_id) DO
         user_profile_outsider_allowed = EXCLUDED.user_profile_outsider_allowed,
         _created_on = EXCLUDED._created_on,
         is_expired = EXCLUDED.is_expired,
-        _expired_on = EXCLUDED._expired_on
+        _expired_on = EXCLUDED._expired_on,
+        minimum_archiving_period = EXCLUDED.minimum_archiving_period
     WHERE organization.root_verify_key is NULL
 """
 )
@@ -80,7 +83,8 @@ SELECT
     active_users_limit,
     user_profile_outsider_allowed,
     sequester_authority_certificate,
-    sequester_authority_verify_key_der
+    sequester_authority_verify_key_der,
+    minimum_archiving_period
 FROM organization
 WHERE organization_id = $organization_id
 """
@@ -108,7 +112,8 @@ SELECT
     active_users_limit,
     user_profile_outsider_allowed,
     sequester_authority_certificate,
-    sequester_authority_verify_key_der
+    sequester_authority_verify_key_der,
+    minimum_archiving_period
 FROM organization
 WHERE organization_id = $organization_id
 FOR UPDATE
@@ -271,6 +276,8 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             user_profile_outsider_allowed = (
                 self._config.organization_initial_user_profile_outsider_allowed
             )
+        minimum_archiving_period = self._config.organization_initial_minimum_archiving_period
+
         async with self.dbh.pool.acquire() as conn:
             try:
                 result = await conn.execute(
@@ -282,6 +289,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                         else None,
                         user_profile_outsider_allowed=user_profile_outsider_allowed,
                         created_on=created_on,
+                        minimum_archiving_period=minimum_archiving_period,
                     )
                 )
             except UniqueViolationError:
@@ -335,6 +343,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             user_profile_outsider_allowed=row["user_profile_outsider_allowed"],
             sequester_authority=sequester_authority,
             sequester_services_certificates=sequester_services_certificates,
+            minimum_archiving_period=row["minimum_archiving_period"],
         )
 
     async def bootstrap(

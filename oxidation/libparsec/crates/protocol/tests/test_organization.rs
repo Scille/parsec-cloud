@@ -128,7 +128,57 @@ fn serde_organization_config_req() {
 }
 
 #[parsec_test]
-#[case::ok_with_absent_sequester(
+#[case::ok_with_none_sequester(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   active_users_limit: None
+    //   minimum_archiving_period: 2592000
+    //   sequester_authority_certificate: None
+    //   sequester_services_certificates: None
+    //   status: "ok"
+    //   user_profile_outsider_allowed: false
+    //
+    &hex!(
+        "86a6737461747573a26f6bb26163746976655f75736572735f6c696d6974c0b86d696e696d"
+        "756d5f617263686976696e675f706572696f64ce00278d00bf7365717565737465725f6175"
+        "74686f726974795f6365727469666963617465c0bf7365717565737465725f736572766963"
+        "65735f636572746966696361746573c0bd757365725f70726f66696c655f6f757473696465"
+        "725f616c6c6f776564c2"
+    )[..],
+    authenticated_cmds::organization_config::Rep::Ok {
+        user_profile_outsider_allowed: false,
+        active_users_limit: ActiveUsersLimit::NoLimit,
+        sequester_authority_certificate: Maybe::Present(None),
+        sequester_services_certificates: Maybe::Present(None),
+        minimum_archiving_period: Maybe::Present(2592000),
+    }
+)]
+#[case::ok_with_sequester(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   active_users_limit: 1
+    //   minimum_archiving_period: 2592000
+    //   sequester_authority_certificate: hex!("666f6f626172")
+    //   sequester_services_certificates: [hex!("666f6f"), hex!("626172")]
+    //   status: "ok"
+    //   user_profile_outsider_allowed: false
+    //
+    &hex!(
+        "86a6737461747573a26f6bb26163746976655f75736572735f6c696d697401b86d696e696d"
+        "756d5f617263686976696e675f706572696f64ce00278d00bf7365717565737465725f6175"
+        "74686f726974795f6365727469666963617465c406666f6f626172bf736571756573746572"
+        "5f73657276696365735f63657274696669636174657392c403666f6fc403626172bd757365"
+        "725f70726f66696c655f6f757473696465725f616c6c6f776564c2"
+    )[..],
+    authenticated_cmds::organization_config::Rep::Ok {
+        user_profile_outsider_allowed: false,
+        active_users_limit: ActiveUsersLimit::LimitedTo(1),
+        sequester_authority_certificate: Maybe::Present(Some(b"foobar".to_vec())),
+        sequester_services_certificates: Maybe::Present(Some(vec![b"foo".to_vec(), b"bar".to_vec()])),
+        minimum_archiving_period: Maybe::Present(2592000),
+    }
+)]
+#[case::ok_with_absent_sequester_legacy(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   active_users_limit: 1
@@ -143,9 +193,10 @@ fn serde_organization_config_req() {
         active_users_limit: ActiveUsersLimit::LimitedTo(1),
         sequester_authority_certificate: Maybe::Absent,
         sequester_services_certificates: Maybe::Absent,
+        minimum_archiving_period: Maybe::Absent,
     }
 )]
-#[case::ok_with_none_sequester(
+#[case::ok_with_none_sequester_legacy(
     // Generated from Rust implementation (Parsec v2.12.1+dev)
     // Content:
     //   active_users_limit: None
@@ -165,9 +216,10 @@ fn serde_organization_config_req() {
         active_users_limit: ActiveUsersLimit::NoLimit,
         sequester_authority_certificate: Maybe::Present(None),
         sequester_services_certificates: Maybe::Present(None),
+        minimum_archiving_period: Maybe::Absent,
     }
 )]
-#[case::ok_with_sequester(
+#[case::ok_with_sequester_legacy(
     // Generated from Python implementation (Parsec v2.11.1+dev)
     // Content:
     //   active_users_limit: 1
@@ -187,6 +239,7 @@ fn serde_organization_config_req() {
         active_users_limit: ActiveUsersLimit::LimitedTo(1),
         sequester_authority_certificate: Maybe::Present(Some(b"foobar".to_vec())),
         sequester_services_certificates: Maybe::Present(Some(vec![b"foo".to_vec(), b"bar".to_vec()])),
+        minimum_archiving_period: Maybe::Absent,
     }
 )]
 #[case::not_found(

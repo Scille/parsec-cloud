@@ -328,4 +328,4 @@ class OrganizationUpdateReqSchema(BaseSchema):
     minimum_archiving_period = fields.Integer(required=False, validate=lambda x: x >= 0)
 ```
 
-Note: the value applied by default is `43200`, i.e. 30 days.
+Note: the value applied by default is `2592000`, i.e. 30 days.

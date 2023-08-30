@@ -247,6 +247,7 @@ impl OrganizationConfigRepOk {
         active_users_limit: ActiveUsersLimit,
         sequester_authority_certificate: Option<BytesWrapper>,
         sequester_services_certificates: Option<Vec<BytesWrapper>>,
+        minimum_archiving_period: i64,
     ) -> PyResult<(Self, OrganizationConfigRep)> {
         crate::binding_utils::unwrap_bytes!(
             sequester_authority_certificate,
@@ -262,6 +263,9 @@ impl OrganizationConfigRepOk {
                 ),
                 sequester_services_certificates: libparsec::types::Maybe::Present(
                     sequester_services_certificates,
+                ),
+                minimum_archiving_period: libparsec::types::Maybe::Present(
+                    minimum_archiving_period,
                 ),
             }),
         ))

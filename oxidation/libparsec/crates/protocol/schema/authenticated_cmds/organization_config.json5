@@ -29,6 +29,11 @@
                         "name": "sequester_services_certificates",
                         "type": "RequiredOption<List<Bytes>>",
                         "introduced_in": "2.8"
+                    },
+                    {
+                        "name": "minimum_archiving_period",
+                        "type": "Integer", // In seconds
+                        "introduced_in": "2.10"
                     }
                 ]
             },

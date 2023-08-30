@@ -78,6 +78,7 @@ async def test_organization_create(backend_asgi_app):
         active_users_limit=ActiveUsersLimit.NO_LIMIT,
         sequester_authority=None,
         sequester_services_certificates=None,
+        minimum_archiving_period=2592000,
     )
 
 
@@ -147,6 +148,7 @@ async def test_organization_create_already_exists_not_bootstrapped(backend_asgi_
         active_users_limit=ActiveUsersLimit.NO_LIMIT,
         sequester_authority=None,
         sequester_services_certificates=None,
+        minimum_archiving_period=2592000,
     )
 
 
@@ -197,6 +199,7 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
         active_users_limit=ActiveUsersLimit.NO_LIMIT,
         sequester_authority=None,
         sequester_services_certificates=None,
+        minimum_archiving_period=2592000,
     )
 
     # New custom initial config should be taken into account each time the org is recreated
@@ -225,6 +228,7 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
         active_users_limit=ActiveUsersLimit.LimitedTo(10),
         sequester_authority=None,
         sequester_services_certificates=None,
+        minimum_archiving_period=2592000,
     )
 
     # Default initial config should also be used if org is recreated without custom config
@@ -249,6 +253,7 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
         active_users_limit=ActiveUsersLimit.NO_LIMIT,
         sequester_authority=None,
         sequester_services_certificates=None,
+        minimum_archiving_period=2592000,
     )
 
 

@@ -25,7 +25,8 @@ CREATE TABLE organization (
     _bootstrapped_on TIMESTAMPTZ,
     _created_on TIMESTAMPTZ NOT NULL,
     sequester_authority_certificate BYTEA, -- NULL for non-sequestered organization
-    sequester_authority_verify_key_der BYTEA -- NULL for non-sequestered organization
+    sequester_authority_verify_key_der BYTEA, -- NULL for non-sequestered organization
+    minimum_archiving_period INTEGER
 );
 
 -------------------------------------------------------
