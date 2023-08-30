@@ -7,6 +7,8 @@ import attr
 
 from parsec._parsec import (
     DateTime,
+    RealmArchivingCertificate,
+    RealmArchivingConfiguration,
     RealmCreateRep,
     RealmCreateRepAlreadyExists,
     RealmCreateRepBadTimestamp,
@@ -48,6 +50,16 @@ from parsec._parsec import (
     RealmStatusRepNotFound,
     RealmStatusRepOk,
     RealmStatusReq,
+    RealmUpdateArchivingRep,
+    RealmUpdateArchivingRepArchivingPeriodTooShort,
+    RealmUpdateArchivingRepBadTimestamp,
+    RealmUpdateArchivingRepInvalidCertification,
+    RealmUpdateArchivingRepNotAllowed,
+    RealmUpdateArchivingRepNotFound,
+    RealmUpdateArchivingRepOk,
+    RealmUpdateArchivingRepRealmDeleted,
+    RealmUpdateArchivingRepRequireGreaterTimestamp,
+    RealmUpdateArchivingReq,
     RealmUpdateRolesRep,
     RealmUpdateRolesRepAlreadyGranted,
     RealmUpdateRolesRepBadTimestamp,
@@ -102,7 +114,7 @@ class RealmAlreadyExistsError(RealmError):
     pass
 
 
-class RealmRoleAlreadyGranted(RealmError):
+class RealmRoleAlreadyGrantedError(RealmError):
     pass
 
 
@@ -123,6 +135,14 @@ class RealmNotInMaintenanceError(RealmError):
 
 
 class RealmMaintenanceError(RealmError):
+    pass
+
+
+class RealmDeletedError(RealmError):
+    pass
+
+
+class RealmArchivingPeriodTooShortError(RealmError):
     pass
 
 
@@ -172,6 +192,27 @@ class RealmGrantedRole:
     role: RealmRole | None
     granted_by: DeviceID | None
     granted_on: DateTime
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class RealmArchivingConfigurationRequest:
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.realm_id} {self.configuration})"
+
+    def evolve(self, **kwargs: Any) -> RealmArchivingConfigurationRequest:
+        return attr.evolve(self, **kwargs)
+
+    def is_valid_archiving_configuration(self, minimum_archiving_period: int) -> bool:
+        if not self.configuration.is_deletion_planned():
+            return True
+        minimum_deletion_date = self.configured_on.add(seconds=minimum_archiving_period)
+        return self.configuration.deletion_date >= minimum_deletion_date
+
+    certificate: bytes
+    realm_id: RealmID
+    configuration: RealmArchivingConfiguration
+    configured_by: DeviceID
+    configured_on: DateTime
 
 
 class BaseRealmComponent:
@@ -361,7 +402,7 @@ class BaseRealmComponent:
         except UserAlreadyRevokedError:
             return RealmUpdateRolesRepUserRevoked()
 
-        except RealmRoleAlreadyGranted:
+        except RealmRoleAlreadyGrantedError:
             return RealmUpdateRolesRepAlreadyGranted()
 
         except RealmAccessError:
@@ -380,6 +421,76 @@ class BaseRealmComponent:
             return RealmUpdateRolesRepInMaintenance()
 
         return RealmUpdateRolesRepOk()
+
+    @api("realm_update_archiving")
+    @catch_protocol_errors
+    @api_typed_msg_adapter(RealmUpdateArchivingReq, RealmUpdateArchivingRep)
+    async def api_realm_update_archiving(
+        self, client_ctx: AuthenticatedClientContext, req: RealmUpdateArchivingReq
+    ) -> RealmUpdateArchivingRep:
+        """
+        This API call, when successful, performs the writing of a new archiving configuration certificate
+        to the database.
+
+        The backend server performs the following checks:
+        - The certificate must have a timestamp strictly greater than the last archiving certificate for
+          this realm.
+        - The certificate must have a timestamp strictly greater than the last role certificate in this
+          realm for this author.
+
+        If one of those constraints is not satisfied, an error is returned with the status
+        `require_greater_timestamp` indicating to the client that it should craft a new certificate
+        with a timestamp strictly greater than the timestamp provided with the error.
+        """
+
+        # TODO: Remove RealmUpdateArchivingRepInvalidData
+
+        try:
+            data = RealmArchivingCertificate.verify_and_load(
+                req.archiving_certificate,
+                author_verify_key=client_ctx.verify_key,
+                expected_author=client_ctx.device_id,
+            )
+
+        except DataError:
+            return RealmUpdateArchivingRepInvalidCertification()
+
+        now = DateTime.now()
+        if not timestamps_in_the_ballpark(data.timestamp, now):
+            return RealmUpdateArchivingRepBadTimestamp(
+                ballpark_client_early_offset=BALLPARK_CLIENT_EARLY_OFFSET,
+                ballpark_client_late_offset=BALLPARK_CLIENT_LATE_OFFSET,
+                backend_timestamp=now,
+                client_timestamp=data.timestamp,
+            )
+
+        archiving_configuration_request = RealmArchivingConfigurationRequest(
+            certificate=req.archiving_certificate,
+            realm_id=data.realm_id,
+            configuration=data.configuration,
+            configured_by=data.author,
+            configured_on=data.timestamp,
+        )
+
+        try:
+            await self.update_archiving(client_ctx.organization_id, archiving_configuration_request)
+
+        except RealmAccessError:
+            return RealmUpdateArchivingRepNotAllowed()
+
+        except RealmRoleRequireGreaterTimestampError as exc:
+            return RealmUpdateArchivingRepRequireGreaterTimestamp(exc.strictly_greater_than)
+
+        except RealmNotFoundError:
+            return RealmUpdateArchivingRepNotFound()
+
+        except RealmDeletedError:
+            return RealmUpdateArchivingRepRealmDeleted()
+
+        except RealmArchivingPeriodTooShortError:
+            return RealmUpdateArchivingRepArchivingPeriodTooShort()
+
+        return RealmUpdateArchivingRepOk()
 
     @api("realm_start_reencryption_maintenance")
     @catch_protocol_errors
@@ -520,10 +631,28 @@ class BaseRealmComponent:
     ) -> None:
         """
         Raises:
-            RealmInMaintenanceError
-            RealmNotFoundError
+            UserAlreadyRevokedError
+            RealmRoleAlreadyGrantedError
             RealmAccessError
+            RealmRoleRequireGreaterTimestampError
             RealmIncompatibleProfileError
+            RealmNotFoundError
+            RealmInMaintenanceError
+        """
+        raise NotImplementedError()
+
+    async def update_archiving(
+        self,
+        organization_id: OrganizationID,
+        archiving_certificate: RealmArchivingConfigurationRequest,
+    ) -> None:
+        """
+        Raises:
+            RealmAccessError
+            RealmRoleRequireGreaterTimestampError
+            RealmNotFoundError
+            RealmDeletedError
+            RealmArchivingPeriodTooShortError
         """
         raise NotImplementedError()
 

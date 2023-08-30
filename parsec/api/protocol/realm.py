@@ -36,6 +36,7 @@ __all__ = (
     "realm_stats_serializer",
     "realm_get_role_certificates_serializer",
     "realm_update_roles_serializer",
+    "realm_update_archiving_serializer",
     "realm_start_reencryption_maintenance_serializer",
     "realm_finish_reencryption_maintenance_serializer",
 )

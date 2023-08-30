@@ -644,6 +644,30 @@ crate::binding_utils::gen_proto!(RealmArchivingConfiguration, __hash__);
 #[pymethods]
 impl RealmArchivingConfiguration {
     #[classmethod]
+    pub(crate) fn from_str(
+        cls: &PyType,
+        name: &str,
+        deletion_date: Option<DateTime>,
+    ) -> PyResult<PyObject> {
+        Ok(match (name, deletion_date) {
+            ("AVAILABLE", None) => RealmArchivingConfiguration::available(cls).clone(),
+            ("ARCHIVED", None) => RealmArchivingConfiguration::archived(cls).clone(),
+            ("DELETION_PLANNED", Some(x)) => RealmArchivingConfiguration::deletion_planned(cls, x),
+            (_, Some(_)) => {
+                return Err(::pyo3::exceptions::PyValueError::new_err(
+                    "Deletion date should be `None`",
+                ))
+            }
+            _ => {
+                return Err(::pyo3::exceptions::PyValueError::new_err(format!(
+                    "Invalid value `{}`",
+                    name
+                )))
+            }
+        })
+    }
+
+    #[classmethod]
     pub(crate) fn available(_cls: &PyType) -> &'static PyObject {
         ::lazy_static::lazy_static! {
             static ref VALUE: PyObject = {
@@ -668,10 +692,13 @@ impl RealmArchivingConfiguration {
     }
 
     #[classmethod]
-    pub(crate) fn deletion_planned(_cls: &PyType, deletion_date: DateTime) -> Self {
-        RealmArchivingConfiguration(
-            libparsec::types::RealmArchivingConfiguration::DeletionPlanned(deletion_date.0),
-        )
+    pub(crate) fn deletion_planned(_cls: &PyType, deletion_date: DateTime) -> PyObject {
+        ::pyo3::Python::with_gil(|py| {
+            RealmArchivingConfiguration(
+                libparsec::types::RealmArchivingConfiguration::DeletionPlanned(deletion_date.0),
+            )
+            .into_py(py)
+        })
     }
 
     #[getter]
@@ -691,6 +718,27 @@ impl RealmArchivingConfiguration {
                 "No such attribute `deletion_date`",
             )),
         }
+    }
+
+    fn is_available(&self) -> bool {
+        matches!(
+            self.0,
+            libparsec::types::RealmArchivingConfiguration::Available
+        )
+    }
+
+    fn is_archived(&self) -> bool {
+        matches!(
+            self.0,
+            libparsec::types::RealmArchivingConfiguration::Archived
+        )
+    }
+
+    fn is_deletion_planned(&self) -> bool {
+        matches!(
+            self.0,
+            libparsec::types::RealmArchivingConfiguration::DeletionPlanned(_)
+        )
     }
 }
 

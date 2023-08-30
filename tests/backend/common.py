@@ -99,6 +99,7 @@ from parsec.api.protocol import (
     realm_start_reencryption_maintenance_serializer,
     realm_stats_serializer,
     realm_status_serializer,
+    realm_update_archiving_serializer,
     realm_update_roles_serializer,
     shamir_recovery_others_list_serializer,
     shamir_recovery_self_info_serializer,
@@ -416,6 +417,14 @@ realm_update_roles = CmdSock(
     parse_args=lambda self, role_certificate, recipient_message=None: {
         "role_certificate": role_certificate,
         "recipient_message": recipient_message,
+    },
+    check_rep_by_default=True,
+)
+realm_update_archiving = CmdSock(
+    "realm_update_archiving",
+    realm_update_archiving_serializer,
+    parse_args=lambda self, archiving_certificate: {
+        "archiving_certificate": archiving_certificate,
     },
     check_rep_by_default=True,
 )

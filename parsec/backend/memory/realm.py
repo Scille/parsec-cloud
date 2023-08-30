@@ -14,6 +14,9 @@ from parsec.backend.realm import (
     MaintenanceType,
     RealmAccessError,
     RealmAlreadyExistsError,
+    RealmArchivingConfigurationRequest,
+    RealmArchivingPeriodTooShortError,
+    RealmDeletedError,
     RealmEncryptionRevisionError,
     RealmGrantedRole,
     RealmIncompatibleProfileError,
@@ -23,7 +26,7 @@ from parsec.backend.realm import (
     RealmNotInMaintenanceError,
     RealmParticipantsMismatchError,
     RealmRole,
-    RealmRoleAlreadyGranted,
+    RealmRoleAlreadyGrantedError,
     RealmRoleRequireGreaterTimestampError,
     RealmStats,
     RealmStatus,
@@ -33,6 +36,7 @@ from parsec.backend.user import UserAlreadyRevokedError, UserNotFoundError
 if TYPE_CHECKING:
     from parsec.backend.memory.block import MemoryBlockComponent
     from parsec.backend.memory.message import MemoryMessageComponent
+    from parsec.backend.memory.organization import MemoryOrganizationComponent
     from parsec.backend.memory.user import MemoryUserComponent
     from parsec.backend.memory.vlob import MemoryVlobComponent
 
@@ -43,6 +47,9 @@ class Realm:
     checkpoint: int = attr.ib(default=0)
     granted_roles: List[RealmGrantedRole] = attr.ib(factory=list)
     last_role_change_per_user: Dict[UserID, DateTime] = attr.ib(factory=dict)
+    last_archiving_configuration_request: RealmArchivingConfigurationRequest | None = attr.ib(
+        default=None
+    )
 
     @property
     def created_on(self) -> DateTime:
@@ -65,6 +72,18 @@ class Realm:
         except ValueError:
             return None
 
+    def get_last_archiving_configuration_request(self) -> RealmArchivingConfigurationRequest | None:
+        return self.last_archiving_configuration_request
+
+    def is_deleted(self) -> bool:
+        if self.last_archiving_configuration_request is None:
+            return False
+        if not self.last_archiving_configuration_request.configuration.is_deletion_planned():
+            return False
+        return (
+            self.last_archiving_configuration_request.configuration.deletion_date <= DateTime.now()
+        )
+
 
 class MemoryRealmComponent(BaseRealmComponent):
     def __init__(self, send_event: Callable[..., Coroutine[Any, Any, None]]) -> None:
@@ -73,6 +92,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         self._message_component: MemoryMessageComponent | None = None
         self._vlob_component: MemoryVlobComponent | None = None
         self._block_component: MemoryBlockComponent | None = None
+        self._organization_component: MemoryOrganizationComponent | None = None
         self._realms: Dict[Tuple[OrganizationID, RealmID], Realm] = {}
         self._maintenance_reencryption_is_finished_hook = None
 
@@ -82,18 +102,23 @@ class MemoryRealmComponent(BaseRealmComponent):
         message: MemoryMessageComponent,
         vlob: MemoryVlobComponent,
         block: MemoryBlockComponent,
+        organization: MemoryOrganizationComponent,
         **other_components: Any,
     ) -> None:
         self._user_component = user
         self._message_component = message
         self._vlob_component = vlob
         self._block_component = block
+        self._organization_component = organization
 
     def _get_realm(self, organization_id: OrganizationID, realm_id: RealmID) -> Realm:
         try:
-            return self._realms[(organization_id, realm_id)]
+            realm = self._realms[(organization_id, realm_id)]
         except KeyError:
             raise RealmNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
+        if realm.is_deleted():
+            raise RealmDeletedError()
+        return realm
 
     async def create(
         self, organization_id: OrganizationID, self_granted_role: RealmGrantedRole
@@ -216,7 +241,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             raise RealmAccessError()
 
         if existing_user_role == new_role.role:
-            raise RealmRoleAlreadyGranted()
+            raise RealmRoleAlreadyGrantedError()
 
         # Timestamps for the role certificates of a given user should be strictly increasing
         last_role = realm.get_last_role(new_role.user_id)
@@ -266,6 +291,60 @@ class MemoryRealmComponent(BaseRealmComponent):
                 new_role.granted_on,
                 recipient_message,
             )
+
+    async def update_archiving(
+        self,
+        organization_id: OrganizationID,
+        archiving_configuration_request: RealmArchivingConfigurationRequest,
+    ) -> None:
+        """
+        Raises:
+            RealmAccessError
+            RealmRoleRequireGreaterTimestampError
+            RealmNotFoundError
+            RealmDeletedError
+            RealmArchivingPeriodTooShortError
+        """
+        realm = self._get_realm(organization_id, archiving_configuration_request.realm_id)
+        last_role = realm.get_last_role(archiving_configuration_request.configured_by.user_id)
+
+        # Author should be an owner
+        if last_role is None or last_role.role != RealmRole.OWNER:
+            raise RealmAccessError()
+
+        # Check minimum archiving period
+        assert self._organization_component is not None
+        organization = await self._organization_component.get(organization_id)
+        if not archiving_configuration_request.is_valid_archiving_configuration(
+            organization.minimum_archiving_period
+        ):
+            raise RealmArchivingPeriodTooShortError()
+
+        # Timestamp should be greater than last role
+        if last_role.granted_on >= archiving_configuration_request.configured_on:
+            raise RealmRoleRequireGreaterTimestampError(last_role.granted_on)
+
+        # Timestamp should be greater than last archiving certificate
+        last_archiving_configuration_request = realm.get_last_archiving_configuration_request()
+        if (
+            last_archiving_configuration_request is not None
+            and last_archiving_configuration_request.configured_on
+            >= archiving_configuration_request.configured_on
+        ):
+            raise RealmRoleRequireGreaterTimestampError(
+                last_archiving_configuration_request.configured_on
+            )
+
+        # Update archiving configuration
+        realm.last_archiving_configuration_request = archiving_configuration_request
+
+        await self._send_event(
+            BackendEvent.REALM_ARCHIVING_UPDATED,
+            organization_id=organization_id,
+            author=archiving_configuration_request.configured_by,
+            realm_id=archiving_configuration_request.realm_id,
+            configuration=archiving_configuration_request.configuration,
+        )
 
     async def start_reencryption_maintenance(
         self,

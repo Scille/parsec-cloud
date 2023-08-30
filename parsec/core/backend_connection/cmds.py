@@ -53,6 +53,7 @@ from parsec._parsec import (
     RealmStartReencryptionMaintenanceRepBadTimestamp,
     RealmStatsRep,
     RealmStatusRep,
+    RealmUpdateArchivingRep,
     RealmUpdateRolesRep,
     RealmUpdateRolesRepBadTimestamp,
     ReencryptionBatchEntry,
@@ -185,6 +186,7 @@ COMMAND_RETURN_TYPE = Union[
     RealmStatsRep,
     RealmStatusRep,
     RealmUpdateRolesRep,
+    RealmUpdateArchivingRep,
     UserCreateRep,
     UserGetRep,
     UserRevokeRep,
@@ -505,6 +507,21 @@ async def realm_update_roles(
             cmd="realm_update_roles",
             role_certificate=role_certificate,
             recipient_message=recipient_message,
+        ),
+    )
+
+
+async def realm_update_archiving(
+    transport: Transport,
+    archiving_certificate: bytes,
+) -> RealmUpdateArchivingRep:
+    return cast(
+        RealmUpdateArchivingRep,
+        await _send_cmd(
+            transport,
+            realm_update_roles_serializer,
+            cmd="realm_update_roles",
+            archiving_certificate=archiving_certificate,
         ),
     )
 

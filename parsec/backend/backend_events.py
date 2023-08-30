@@ -38,6 +38,7 @@ class BackendEvent(Enum):
     REALM_MAINTENANCE_STARTED = "realm.maintenance_started"
     REALM_VLOBS_UPDATED = "realm.vlobs_updated"
     REALM_ROLES_UPDATED = "realm.roles_updated"
+    REALM_ARCHIVING_UPDATED = "realm.archiving_updated"
     # Pki enrollment
     PKI_ENROLLMENTS_UPDATED = "pki_enrollment.updated"
 

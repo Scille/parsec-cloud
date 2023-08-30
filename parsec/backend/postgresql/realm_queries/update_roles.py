@@ -24,7 +24,7 @@ from parsec.backend.realm import (
     RealmIncompatibleProfileError,
     RealmInMaintenanceError,
     RealmNotFoundError,
-    RealmRoleAlreadyGranted,
+    RealmRoleAlreadyGrantedError,
     RealmRoleRequireGreaterTimestampError,
 )
 from parsec.backend.user import UserAlreadyRevokedError
@@ -192,7 +192,7 @@ async def query_update_roles(
         raise RealmAccessError()
 
     if existing_user_role == new_role.role:
-        raise RealmRoleAlreadyGranted()
+        raise RealmRoleAlreadyGrantedError()
 
     # Timestamps for the role certificates of a given user should be strictly increasing
     if last_role_granted_on is not None and last_role_granted_on >= new_role.granted_on:

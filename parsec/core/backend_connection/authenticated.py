@@ -147,6 +147,7 @@ class BackendAuthenticatedCmds:
     realm_status = expose_cmds_with_retrier(cmds.realm_status)
     realm_get_role_certificates = expose_cmds_with_retrier(cmds.realm_get_role_certificates)
     realm_update_roles = expose_cmds_with_retrier(cmds.realm_update_roles)
+    realm_update_archiving = expose_cmds_with_retrier(cmds.realm_update_archiving)
     realm_start_reencryption_maintenance = expose_cmds_with_retrier(
         cmds.realm_start_reencryption_maintenance
     )
