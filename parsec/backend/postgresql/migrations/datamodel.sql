@@ -26,7 +26,7 @@ CREATE TABLE organization (
     _created_on TIMESTAMPTZ NOT NULL,
     sequester_authority_certificate BYTEA, -- NULL for non-sequestered organization
     sequester_authority_verify_key_der BYTEA, -- NULL for non-sequestered organization
-    minimum_archiving_period INTEGER
+    minimum_archiving_period INTEGER NOT NULL
 );
 
 -------------------------------------------------------
@@ -311,6 +311,20 @@ CREATE TABLE realm_user_role (
     certified_by INTEGER REFERENCES device(_id) NOT NULL,
     certified_on TIMESTAMPTZ NOT NULL
 );
+
+CREATE TYPE realm_archiving_configuration AS ENUM ('AVAILABLE', 'ARCHIVED', 'DELETION_PLANNED');
+
+CREATE TABLE realm_archiving (
+    _id SERIAL PRIMARY KEY,
+    realm INTEGER REFERENCES realm (_id) NOT NULL,
+    configuration realm_archiving_configuration NOT NULL,
+    -- NULL if not DELETION_PLANNED
+    deletion_date TIMESTAMPTZ,
+    certificate BYTEA NOT NULL,
+    certified_by INTEGER REFERENCES device(_id) NOT NULL,
+    certified_on TIMESTAMPTZ NOT NULL
+);
+
 
 
 CREATE TABLE realm_user_change (

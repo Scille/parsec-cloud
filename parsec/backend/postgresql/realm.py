@@ -16,9 +16,16 @@ from parsec.backend.postgresql.realm_queries import (
     query_get_stats,
     query_get_status,
     query_start_reencryption_maintenance,
+    query_update_archiving,
     query_update_roles,
 )
-from parsec.backend.realm import BaseRealmComponent, RealmGrantedRole, RealmStats, RealmStatus
+from parsec.backend.realm import (
+    BaseRealmComponent,
+    RealmArchivingConfigurationRequest,
+    RealmGrantedRole,
+    RealmStats,
+    RealmStatus,
+)
 
 
 class PGRealmComponent(BaseRealmComponent):
@@ -69,6 +76,14 @@ class PGRealmComponent(BaseRealmComponent):
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             await query_update_roles(conn, organization_id, new_role, recipient_message)
+
+    async def update_archiving(
+        self,
+        organization_id: OrganizationID,
+        archiving_configuration_request: RealmArchivingConfigurationRequest,
+    ) -> None:
+        async with self.dbh.pool.acquire() as conn:
+            await query_update_archiving(conn, organization_id, archiving_configuration_request)
 
     async def start_reencryption_maintenance(
         self,
