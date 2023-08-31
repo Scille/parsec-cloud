@@ -11,45 +11,39 @@ use syn::{
 #[proc_macro_attribute]
 pub fn parsec_test(attr: TokenStream, item: TokenStream) -> TokenStream {
     let parsec_test_item = parse_macro_input!(item as ItemFn);
+    let mut attributes = Attributes::default();
+    let parsec_test_parser = syn::meta::parser(|meta| attributes.parse(meta));
+    parse_macro_input!(attr with parsec_test_parser);
+
     let mut sig = parsec_test_item.sig;
     let block = parsec_test_item.block;
 
-    let mut attributes = Attributes::default();
+    let quote_block = if let Some(testbed) = attributes.testbed {
+        // If `testbed` is found, `env: &TestbedEnv` must be set as the last argument.
+        if let Err(value) = validate_testbed_argument(&mut sig) {
+            return value;
+        }
 
-    let parsec_test_parser = syn::meta::parser(|meta| attributes.parse(meta));
-
-    let mut quote_block = quote! {
-        #block
-    };
-
-    if !attr.is_empty() {
-        parse_macro_input!(attr with parsec_test_parser);
-
-        if let Some(testbed) = attributes.testbed {
-            // If `testbed` is found, `env: &TestbedEnv` must be set in args
-            if let Err(value) = validate_testbed_argument(&mut sig) {
-                return value;
+        if attributes.with_server {
+            quote! {
+                ::libparsec_tests_fixtures::TestbedScope::run_with_server(#testbed, |env: std::sync::Arc<TestbedEnv>| async move {
+                        let env = env.as_ref();
+                        #block
+                    }
+                ).await;
             }
-
-            if attributes.with_server {
-                quote_block = quote! {
-                    ::libparsec_tests_fixtures::TestbedScope::run_with_server(#testbed, |env: std::sync::Arc<TestbedEnv>| async move {
-                            let env = env.as_ref();
-                            #block
-                        }
-                    ).await;
-                }
-            } else {
-                quote_block = quote! {
-                    ::libparsec_tests_fixtures::TestbedScope::run(#testbed, |env: std::sync::Arc<TestbedEnv>| async move {
-                            let env = env.as_ref();
-                            #block
-                        }
-                    ).await;
-                }
+        } else {
+            quote! {
+                ::libparsec_tests_fixtures::TestbedScope::run(#testbed, |env: std::sync::Arc<TestbedEnv>| async move {
+                        let env = env.as_ref();
+                        #block
+                    }
+                ).await;
             }
         }
-    }
+    } else {
+        quote! { #block }
+    };
 
     let tokio_decorator = sig
         .asyncness
