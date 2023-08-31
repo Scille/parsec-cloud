@@ -48,17 +48,19 @@ pub fn parsec_test(attr: TokenStream, item: TokenStream) -> TokenStream {
     let tokio_decorator = sig
         .asyncness
         .map(|_| quote! {
-            #[cfg_attr(not(target_arch = "wasm32"), ::libparsec_tests_fixtures::tokio::test(crate = "::libparsec_tests_fixtures::tokio"))]
+            #[cfg_attr(not(target_arch = "wasm32"), ::libparsec_tests_lite::tokio::test(crate = "::libparsec_tests_lite::tokio"))]
         })
         .into_iter();
     let attrs = parsec_test_item.attrs;
 
     TokenStream::from(quote! {
-        #[::libparsec_tests_fixtures::rstest::rstest]
+        #[::libparsec_tests_lite::rstest::rstest]
         #(#attrs)*
         #(#tokio_decorator)*
+        // FIXME: Workaround for rstest until https://github.com/la10736/rstest/issues/211 is resolved
+        #[cfg_attr(target_arch = "wasm32", ::libparsec_tests_lite::wasm::test)]
         #sig {
-            let _ = ::libparsec_tests_fixtures::env_logger::builder().is_test(true).try_init();
+            let _ = ::libparsec_tests_lite::env_logger::builder().is_test(true).try_init();
             #quote_block
         }
     })

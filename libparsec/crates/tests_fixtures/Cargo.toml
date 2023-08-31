@@ -34,7 +34,7 @@ test-with-unsecure-but-fast-secretkey-from-password = [
 
 [dependencies]
 libparsec_types = { workspace = true, features = [ "test-fixtures", "test-mock-time" ] }
-libparsec_tests_macros = { workspace = true }
+libparsec_tests_lite = { workspace = true }
 libparsec_testbed = { workspace = true }
 # Enable testbed support in crates here
 libparsec_client_connection = { workspace = true, optional = true }
@@ -42,17 +42,7 @@ libparsec_platform_device_loader = { workspace = true, optional = true }
 libparsec_platform_storage = { workspace = true, optional = true }
 libparsec_crypto = { workspace = true, optional = true }
 
-env_logger = { workspace = true, features = ["auto-color", "humantime", "regex"] }
-log = { workspace = true }
-rstest = { workspace = true, features = ["async-timeout"] }
-hex-literal = { workspace = true }
 uuid = { workspace = true, features = ["v4", "fast-rng"] }
-lazy_static = { workspace = true }
 # `assert_matches!()` requires `unstable` feature
-pretty_assertions = { workspace = true, features = ["std", "unstable"] }
-
-# TODO: Currently `parsec_test` doesn't support web
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { workspace = true, features = ["rt", "macros"] }
 
 # No dev-dependencies: this crate is itself only used in other crates' own dev-dependencies

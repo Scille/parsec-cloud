@@ -1297,6 +1297,7 @@ dependencies = [
  "libparsec_platform_storage",
  "libparsec_protocol",
  "libparsec_tests_fixtures",
+ "libparsec_tests_lite",
  "libparsec_types",
  "log",
  "paste",
@@ -1317,6 +1318,7 @@ dependencies = [
  "libparsec_protocol",
  "libparsec_testbed",
  "libparsec_tests_fixtures",
+ "libparsec_tests_lite",
  "libparsec_types",
  "log",
  "reqwest",
@@ -1390,6 +1392,7 @@ dependencies = [
  "libparsec_crypto",
  "libparsec_testbed",
  "libparsec_tests_fixtures",
+ "libparsec_tests_lite",
  "libparsec_types",
  "serde_json",
  "web-sys",
@@ -1413,6 +1416,7 @@ dependencies = [
  "libparsec_platform_async",
  "libparsec_testbed",
  "libparsec_tests_fixtures",
+ "libparsec_tests_lite",
  "libparsec_types",
  "libsqlite3-sys",
  "log",
@@ -1430,6 +1434,7 @@ dependencies = [
  "hex-literal",
  "libparsec_serialization_format",
  "libparsec_tests_fixtures",
+ "libparsec_tests_lite",
  "libparsec_types",
  "paste",
  "rand 0.8.5",
@@ -1478,21 +1483,30 @@ dependencies = [
 name = "libparsec_tests_fixtures"
 version = "0.0.0"
 dependencies = [
- "env_logger",
- "hex-literal",
- "lazy_static",
  "libparsec_client_connection",
  "libparsec_crypto",
  "libparsec_platform_device_loader",
  "libparsec_platform_storage",
  "libparsec_testbed",
- "libparsec_tests_macros",
+ "libparsec_tests_lite",
  "libparsec_types",
+ "uuid",
+]
+
+[[package]]
+name = "libparsec_tests_lite"
+version = "0.0.0"
+dependencies = [
+ "env_logger",
+ "hex-literal",
+ "lazy_static",
+ "libparsec_tests_macros",
  "log",
  "pretty_assertions",
  "rstest",
  "tokio",
  "uuid",
+ "wasm-bindgen-test",
 ]
 
 [[package]]

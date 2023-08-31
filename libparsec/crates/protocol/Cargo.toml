@@ -22,6 +22,7 @@ futures = { workspace = true, features = ["std", "async-await", "executor"] }
 bytes = { workspace = true, features = ["serde"] }
 
 [dev-dependencies]
+libparsec_tests_lite = { workspace = true }
 libparsec_tests_fixtures = { workspace = true }
 hex-literal = { workspace = true }
 serde_json = { workspace = true, features = ["std"] }
