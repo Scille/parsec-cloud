@@ -18,6 +18,7 @@ from parsec._parsec import (
     RealmUpdateArchivingRepRealmDeleted,
     RealmUpdateArchivingRepRequireGreaterTimestamp,
 )
+from parsec.backend.events import BackendEvent
 from tests.backend.common import realm_update_archiving
 
 
@@ -85,6 +86,7 @@ async def test_realm_update_archiving_ok(
     alice: LocalDevice,
     realm: RealmID,
     realm_update_archiving_helper,
+    backend,
 ):
     now = DateTime.now()
     available = RealmArchivingConfiguration.available()
@@ -93,13 +95,22 @@ async def test_realm_update_archiving_ok(
 
     for _ in range(3):
         for configuration in (available, archived, deletion_planned):
-            rep = await realm_update_archiving_helper(
-                alice_ws,
-                alice,
-                realm,
-                configuration,
-            )
-            assert isinstance(rep, RealmUpdateArchivingRepOk)
+            with backend.event_bus.listen() as spy:
+                rep = await realm_update_archiving_helper(
+                    alice_ws,
+                    alice,
+                    realm,
+                    configuration,
+                )
+                assert isinstance(rep, RealmUpdateArchivingRepOk)
+                await spy.wait_with_timeout(BackendEvent.REALM_ARCHIVING_UPDATED)
+            (event,) = spy.events
+            assert event.kwargs == {
+                "author": alice.device_id,
+                "configuration": configuration,
+                "organization_id": alice.organization_id,
+                "realm_id": realm,
+            }
 
 
 @pytest.mark.trio

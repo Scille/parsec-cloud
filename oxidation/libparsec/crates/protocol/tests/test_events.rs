@@ -165,6 +165,24 @@ fn serde_events_listen_req() {
         role: Some(RealmRole::Owner),
     })
 )]
+#[case::realm_archiving_updated(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   configuration: "ARCHIVED"
+    //   event: "realm.archiving_updated"
+    //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
+    //   status: "ok"
+    //
+    &hex!(
+        "84a6737461747573a26f6ba56576656e74b77265616c6d2e617263686976696e675f757064"
+        "61746564ad636f6e66696775726174696f6ea84152434849564544a87265616c6d5f6964d8"
+        "021d3353157d7d4e95ad2fdea7b3bd19c5"
+    )[..],
+    authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::RealmArchivingUpdated {
+        realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
+        configuration: RealmArchivingConfiguration::Archived,
+    })
+)]
 #[case::cancelled_without_reason(
     // Generated from Rust implementation (Parsec v2.12.1+dev)
     // Content:

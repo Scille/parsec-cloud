@@ -8,6 +8,7 @@ from parsec.api.protocol import (
     InvitationStatusField,
     InvitationTokenField,
     OrganizationIDField,
+    RealmArchivingConfigurationField,
     RealmIDField,
     RealmRoleField,
     UserIDField,
@@ -147,6 +148,15 @@ class RealmRolesUpdatedSchema(BaseSchema):
     role = RealmRoleField(required=True, allow_none=True)
 
 
+class RealmArchivingUpdatedSchema(BaseSchema):
+    __id__ = fields.String(required=True)
+    __signal__ = fields.EnumCheckedConstant(BackendEvent.REALM_ARCHIVING_UPDATED, required=True)
+    organization_id = OrganizationIDField(required=True)
+    author = DeviceIDField(required=True)
+    realm_id = RealmIDField(required=True)
+    configuration = RealmArchivingConfigurationField(required=True)
+
+
 class PkiEnrollmentUpdatedSchema(BaseSchema):
     __id__ = fields.String(required=True)
     __signal__ = fields.EnumCheckedConstant(BackendEvent.PKI_ENROLLMENTS_UPDATED, required=True)
@@ -168,6 +178,7 @@ class BackendEventSchema(OneOfSchema):
         BackendEvent.REALM_MAINTENANCE_STARTED: RealmMaintenanceStartedSchema,
         BackendEvent.REALM_VLOBS_UPDATED: RealmVlobsUpdatedSchema,
         BackendEvent.REALM_ROLES_UPDATED: RealmRolesUpdatedSchema,
+        BackendEvent.REALM_ARCHIVING_UPDATED: RealmArchivingUpdatedSchema,
         BackendEvent.PKI_ENROLLMENTS_UPDATED: PkiEnrollmentUpdatedSchema,
     }
 

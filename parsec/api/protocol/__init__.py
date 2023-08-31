@@ -111,6 +111,7 @@ from parsec.api.protocol.types import (
     HumanHandleField,
     OrganizationID,
     OrganizationIDField,
+    RealmArchivingConfigurationField,
     UserID,
     UserIDField,
     UserProfileField,
@@ -168,6 +169,7 @@ __all__ = (
     "UserProfile",
     "DeviceLabelField",
     "DeviceLabel",
+    "RealmArchivingConfigurationField",
     # Organization
     "organization_bootstrap_serializer",
     "organization_bootstrap_webhook_serializer",

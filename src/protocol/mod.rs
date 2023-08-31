@@ -275,6 +275,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<EventsListenRepOkRealmMaintenanceStarted>()?;
     m.add_class::<EventsListenRepOkRealmVlobsUpdated>()?;
     m.add_class::<EventsListenRepOkRealmRolesUpdated>()?;
+    m.add_class::<EventsListenRepOkRealmArchivingUpdated>()?;
     m.add_class::<EventsListenRepOkPkiEnrollmentUpdated>()?;
     m.add_class::<EventsSubscribeReq>()?;
     m.add_class::<EventsSubscribeRep>()?;

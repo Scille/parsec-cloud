@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
-from parsec._parsec import InvitationStatus, InvitationToken, RealmID, RealmRole, VlobID
+from parsec._parsec import (
+    InvitationStatus,
+    InvitationToken,
+    RealmArchivingConfiguration,
+    RealmID,
+    RealmRole,
+    VlobID,
+)
 
 # Events
 class EventsListenReq:
@@ -67,6 +74,13 @@ class EventsListenRepOkRealmRolesUpdated(EventsListenRep):
     def realm_id(self) -> RealmID: ...
     @property
     def role(self) -> RealmRole: ...
+
+class EventsListenRepOkRealmArchivingUpdated(EventsListenRep):
+    def __init__(self, real_id: RealmID, configuration: RealmArchivingConfiguration) -> None: ...
+    @property
+    def realm_id(self) -> RealmID: ...
+    @property
+    def configuration(self) -> RealmArchivingConfiguration: ...
 
 class EventsListenRepCancelled(EventsListenRep):
     def __init__(self, reason: str | None) -> None: ...

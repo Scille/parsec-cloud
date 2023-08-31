@@ -8,10 +8,12 @@ from marshmallow.fields import Field
 
 from parsec._parsec import (
     ApiVersion,
+    DateTime,
     DeviceID,
     DeviceLabel,
     HumanHandle,
     OrganizationID,
+    RealmArchivingConfiguration,
     UserID,
     UserProfile,
 )
@@ -86,3 +88,41 @@ class ApiVersionField(Field[ApiVersion]):
 
 
 UserProfileField = fields.rust_enum_field_factory(UserProfile)
+
+
+class RealmArchivingConfigurationField(Field[RealmArchivingConfiguration]):
+    def _serialize(
+        self, value: RealmArchivingConfiguration | None, attr: str, obj: object
+    ) -> str | dict[str, DateTime] | None:
+        if value is None:
+            return None
+        if value.is_archived() or value.is_available():
+            return value.str
+        return {value.str: value.deletion_date}
+
+    def _deserialize(
+        self, value: object, attr: str, data: dict[str, object]
+    ) -> RealmArchivingConfiguration:
+        if isinstance(value, RealmArchivingConfiguration):
+            return value
+
+        enum_name: str
+        deletion_date: DateTime | None
+
+        if isinstance(value, str):
+            enum_name = value
+            deletion_date = None
+        elif isinstance(value, dict):
+            try:
+                ((enum_name, deletion_date),) = value.items()
+            except ValueError as exc:
+                raise ValidationError(str(exc))
+        else:
+            raise ValidationError("Expecting str or dict")
+
+        try:
+            result = RealmArchivingConfiguration.from_str(enum_name, deletion_date)
+        except (ValueError, TypeError) as exc:
+            raise ValidationError(str(exc))
+
+        return result
