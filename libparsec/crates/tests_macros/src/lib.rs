@@ -63,33 +63,18 @@ pub fn parsec_test(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     }
 
-    let mut quote_attrs = quote! {};
-
-    for attr in parsec_test_item.attrs {
-        quote_attrs = quote! {
-            #quote_attrs
-            #attr
-        }
-    }
-
-    let quote_block = if sig.asyncness.is_some() {
-        sig.asyncness = None;
-        quote! {
-            ::libparsec_tests_fixtures::tokio::runtime::Builder::new_current_thread()
-                .enable_all()
-                .build()
-                .unwrap()
-                .block_on(async {
-                    #quote_block
-                })
-        }
-    } else {
-        quote_block
-    };
+    let tokio_decorator = sig
+        .asyncness
+        .map(|_| quote! {
+            #[cfg_attr(not(target_arch = "wasm32"), ::libparsec_tests_fixtures::tokio::test(crate = "::libparsec_tests_fixtures::tokio"))]
+        })
+        .into_iter();
+    let attrs = parsec_test_item.attrs;
 
     TokenStream::from(quote! {
         #[::libparsec_tests_fixtures::rstest::rstest]
-        #quote_attrs
+        #(#attrs)*
+        #(#tokio_decorator)*
         #sig {
             let _ = ::libparsec_tests_fixtures::env_logger::builder().is_test(true).try_init();
             #quote_block
