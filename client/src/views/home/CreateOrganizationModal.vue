@@ -35,10 +35,10 @@
     </ion-header>
     <!-- modal content: create component for each part-->
     <div class="modal-content inner-content">
-      <!-- part 1 (orga name)-->
+      <!-- part 1 (org name)-->
       <div
         v-show="pageStep === CreateOrganizationStep.OrgNameStep"
-        class="step orga-name"
+        class="step org-name"
       >
         <ms-input
           :label="$t('CreateOrganization.organizationName')"
@@ -52,7 +52,7 @@
       <!-- part 2 (user info)-->
       <div
         v-show="pageStep === CreateOrganizationStep.UserInfoStep"
-        class="step"
+        class="step user-info"
       >
         <user-information
           ref="userInfo"
@@ -61,7 +61,7 @@
 
       <!-- part 3 (server)-->
       <div
-        class="step orga-server"
+        class="step org-server"
         v-show="pageStep === CreateOrganizationStep.ServerStep"
       >
         <choose-server
@@ -71,7 +71,7 @@
 
       <!-- part 4 (password)-->
       <div
-        class="step orga-password"
+        class="step org-password"
         v-show="pageStep === CreateOrganizationStep.PasswordStep"
       >
         <ms-choose-password-input
@@ -81,7 +81,7 @@
 
       <!-- part 5 (summary) -->
       <div
-        class="step orga-recap"
+        class="step org-summary"
         v-show="pageStep === CreateOrganizationStep.SummaryStep"
       >
         <summary-step
@@ -98,7 +98,7 @@
       </div>
       <!-- part 6 (loading)-->
       <div
-        class="step orga-loading"
+        class="step org-loading"
         v-show="pageStep === CreateOrganizationStep.SpinnerStep"
       >
         <ms-spinner
@@ -479,22 +479,22 @@ function onUpdateRequested(info: OrgInfo) : void{
   }
 }
 
-.orga-name {
+.org-name {
   display: flex;
   flex-direction: column;
 }
 
-.orga-server {
+.org-server {
   display: flex;
   flex-direction: column;
 }
 
-.orga-password {
+.org-password {
   display: flex;
   flex-direction: column;
 }
 
-.orga-loading {
+.org-loading {
   display: flex;
   flex-direction: column;
   align-items: center;
