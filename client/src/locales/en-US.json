@@ -83,14 +83,14 @@
         "registeringDevice": "Registering your device",
         "deviceNameInputLabel": "Name of the device",
         "deviceNamePlaceholder": "Desktop123",
-        "loading": "Just a moment, and we set up your organisation",
+        "loading": "Just a moment, and we set up your organization",
         "organizationCreated": "You can access to your new organization",
         "title": {
             "create": "Create an organization",
             "personalDetails": "Enter your personal information",
             "server": "Choose the server you need",
             "password": "Create your password",
-            "overview": "Overview of your organisation",
+            "overview": "Overview of your organization",
             "done": "Your organization has been created!"
         },
         "subtitle": {
@@ -491,7 +491,7 @@
             "getCode": "Click on the code you see on the main device.",
             "provideCode": "On the main device, click on the sequence of letters you see below.",
             "password": "Finally, create a password for your new device.",
-            "done": "The device has been created and added to this organisation. You can now use it to connect to Parsec."
+            "done": "The device has been created and added to this organization. You can now use it to connect to Parsec."
         },
         "buttons": {
             "understand": "I understand!",
