@@ -9,7 +9,7 @@
     </ion-avatar>
     <ion-text
       class="person-name"
-      v-show="userName"
+      v-if="userName"
     >
       {{ userName }}
     </ion-text>

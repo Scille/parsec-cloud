@@ -4,7 +4,6 @@ import { DateTime } from 'luxon';
 import { FormattersKey } from '@/common/injectionKeys';
 import { vi } from 'vitest';
 import { config } from '@vue/test-utils';
-import { useI18n } from 'vue-i18n';
 
 function mockTimeSince(_date: DateTime | undefined, _default: string, _format: string): string {
   return 'One minute ago';
@@ -26,10 +25,10 @@ function getDefaultProvideConfig(timeSince = mockTimeSince, fileSize = mockFileS
 }
 
 function mockI18n(): void {
-  vi.mock('vue-i18n');
-
-  (useI18n as any).mockReturnValue({
-    t: (key: string): string => key,
+  vi.mock('vue-i18n', () => {
+    return { useI18n: (): any => {
+      return {t: (key: string): string => key };
+    } };
   });
 
   config.global.mocks = {
