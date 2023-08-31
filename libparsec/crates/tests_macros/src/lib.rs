@@ -1,8 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use proc_macro::TokenStream;
-use quote::quote;
-use syn::{parse_macro_input, punctuated::Pair, FnArg, ItemFn, LitStr, Pat, Type, TypeReference};
+use proc_macro2::Span;
+use quote::{quote, quote_spanned};
+use syn::{
+    parse_macro_input, punctuated::Pair, spanned::Spanned, FnArg, ItemFn, LitStr, Pat, Type,
+    TypeReference,
+};
 
 #[proc_macro_attribute]
 pub fn parsec_test(attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -23,24 +27,8 @@ pub fn parsec_test(attr: TokenStream, item: TokenStream) -> TokenStream {
 
         if let Some(testbed) = attributes.testbed {
             // If `testbed` is found, `env: &TestbedEnv` must be set in args
-            match sig.inputs.pop().map(Pair::into_value) {
-                Some(FnArg::Typed(typed)) => {
-                    match typed.pat.as_ref() {
-                        Pat::Ident(pat) if pat.ident == "env" => (),
-                        _ => panic!("The last argument must be: `env: &TestbedEnv`"),
-                    }
-
-                    match typed.ty.as_ref() {
-                        Type::Reference(TypeReference { elem: e, .. }) => match e.as_ref() {
-                            Type::Path(p)
-                                if p.path.segments.last().expect("Incomplete path").ident
-                                    == "TestbedEnv" => {}
-                            _ => panic!("The last argument must be: `env: &TestbedEnv`"),
-                        },
-                        _ => panic!("The last argument must be: `env: &TestbedEnv`"),
-                    }
-                }
-                _ => panic!("Missing argument: `env: &TestbedEnv`"),
+            if let Err(value) = validate_testbed_argument(&mut sig) {
+                return value;
             }
 
             if attributes.with_server {
@@ -82,6 +70,57 @@ pub fn parsec_test(attr: TokenStream, item: TokenStream) -> TokenStream {
     })
 }
 
+fn validate_testbed_argument(sig: &mut syn::Signature) -> Result<(), TokenStream> {
+    match sig.inputs.pop().map(Pair::into_value) {
+        Some(FnArg::Typed(typed)) => {
+            validate_testbed_argument_name(&typed)?;
+            validate_testbed_argument_type(&typed)?;
+        }
+        _ => {
+            return Err(generate_compile_error(
+                sig.inputs.span(),
+                "Missing argument: `env: &TestbedEnv`",
+            ))
+        }
+    }
+    Ok(())
+}
+
+fn validate_testbed_argument_type(typed: &syn::PatType) -> Result<(), TokenStream> {
+    match typed.ty.as_ref() {
+        Type::Reference(TypeReference { elem: e, .. }) => match e.as_ref() {
+            Type::Path(p)
+                if p.path.segments.last().expect("Incomplete path").ident == "TestbedEnv" => {}
+            _ => {
+                return Err(generate_compile_error(
+                    e.span(),
+                    "The last argument reference type must be `TestbedEnv`",
+                ))
+            }
+        },
+        _ => {
+            return Err(generate_compile_error(
+                typed.ty.span(),
+                "The last argument type must be `&TestbedEnv`",
+            ))
+        }
+    }
+    Ok(())
+}
+
+fn validate_testbed_argument_name(typed: &syn::PatType) -> Result<(), TokenStream> {
+    match typed.pat.as_ref() {
+        Pat::Ident(pat) if pat.ident == "env" => (),
+        _ => {
+            return Err(generate_compile_error(
+                typed.pat.span(),
+                "The last argument must be called `env`",
+            ))
+        }
+    }
+    Ok(())
+}
+
 #[derive(Default)]
 struct Attributes {
     testbed: Option<LitStr>,
@@ -100,4 +139,8 @@ impl Attributes {
             Err(meta.error("unsupported parsec_test property"))
         }
     }
+}
+
+fn generate_compile_error(span: Span, msg: &str) -> proc_macro::TokenStream {
+    quote_spanned! { span => compile_error!(#msg); }.into()
 }
