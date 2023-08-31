@@ -6,7 +6,7 @@
       :icon="time"
     />
     <ion-text class="caption-caption">
-      {{ t('UsersPage.invitation.waiting') }}
+      {{ $t('UsersPage.invitation.waiting') }}
     </ion-text>
   </div>
   <ion-label
@@ -18,16 +18,16 @@
     <ion-button
       fill="clear"
       class="danger"
-      @click.stop="$emit('rejectUser', props.invitation)"
+      @click.stop="$emit('rejectUser', invitation)"
     >
-      {{ t('UsersPage.invitation.rejectUser') }}
+      {{ $t('UsersPage.invitation.rejectUser') }}
     </ion-button>
     <ion-button
       class="button-default"
       fill="solid"
-      @click.stop="$emit('greetUser', props.invitation)"
+      @click.stop="$emit('greetUser', invitation)"
     >
-      {{ t('UsersPage.invitation.greetUser') }}
+      {{ $t('UsersPage.invitation.greetUser') }}
     </ion-button>
   </ion-buttons>
 </template>
@@ -44,12 +44,9 @@ import {
   time,
 } from 'ionicons/icons';
 import { MockInvitation } from '@/common/mocks';
-import { useI18n } from 'vue-i18n';
 import { defineProps } from 'vue';
 
-const { t } = useI18n();
-
-const props = defineProps<{
+defineProps<{
   invitation: MockInvitation,
 }>();
 

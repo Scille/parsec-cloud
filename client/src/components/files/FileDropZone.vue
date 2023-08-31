@@ -52,7 +52,6 @@ function onDrop(event: DragEvent): void {
       }
     }
     if (entries.length) {
-      console.log(entries);
       emits('filesDrop', entries);
     }
   }

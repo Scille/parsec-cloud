@@ -65,7 +65,7 @@ onUnmounted(() => {
 });
 
 function onInputChange(_event: any): void {
-  console.log(hiddenInput.value.webkitEntries);
+  console.log('Input', hiddenInput.value.webkitEntries);
 }
 
 function importButtonClick(): void {

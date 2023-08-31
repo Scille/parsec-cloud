@@ -125,6 +125,10 @@ export interface MockUser {
   revoked: boolean
 }
 
+export function getCurrentUserProfile(_handle: Handle): Profile {
+  return Profile.Admin;
+}
+
 const MOCK_USERS: MockUser[] = [
   {
     id: 'id1',
