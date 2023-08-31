@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use rstest::fixture;
+use libparsec_tests_lite::rstest::fixture;
 use uuid::Uuid;
 
 /// A temporary path that will be removed on drop.

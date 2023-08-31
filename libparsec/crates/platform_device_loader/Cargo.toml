@@ -24,6 +24,7 @@ web-sys = { workspace = true, features = ["Window", "Storage"] }
 serde_json = { workspace = true, features = ["std"] }
 
 [dev-dependencies]
+libparsec_tests_lite = { workspace = true }
 # Note `libparsec_tests_fixtures` enables our `test-with-testbed` feature
 libparsec_tests_fixtures = { workspace = true, features = ["test-with-platform-device-loader-testbed"] }
 

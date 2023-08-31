@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use rstest::fixture;
+use libparsec_tests_lite::rstest::fixture;
 
 use libparsec_types::prelude::*;
 
