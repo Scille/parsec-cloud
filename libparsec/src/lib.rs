@@ -17,6 +17,7 @@ mod config;
 mod events;
 mod handle;
 mod invite;
+mod os;
 mod testbed;
 
 pub use cancel::*;
@@ -24,6 +25,7 @@ pub use client::*;
 pub use config::*;
 pub use events::*;
 pub use invite::*;
+pub use os::*;
 pub use testbed::*;
 
 pub async fn list_available_devices(config_dir: &std::path::Path) -> Vec<AvailableDevice> {

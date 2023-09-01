@@ -726,6 +726,26 @@ export type GreetInProgressError =
   | GreetInProgressErrorUserCreateNotAllowed
 
 
+// OS
+export interface OSAndroid {
+    tag: "Android"
+}
+export interface OSLinux {
+    tag: "Linux"
+}
+export interface OSMacos {
+    tag: "Macos"
+}
+export interface OSWindows {
+    tag: "Windows"
+}
+export type OS =
+  | OSAndroid
+  | OSLinux
+  | OSMacos
+  | OSWindows
+
+
 export function cancel(
     canceller: number
 ): Promise<Result<null, CancelError>>
@@ -888,6 +908,8 @@ export function greeterDeviceInProgress4DoCreate(
     handle: number,
     device_label: string | null
 ): Promise<Result<null, GreetInProgressError>>
+export function getOs(
+): Promise<OS>
 export function testNewTestbed(
     template: string,
     test_server: string | null
