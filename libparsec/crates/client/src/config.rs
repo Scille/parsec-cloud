@@ -4,11 +4,22 @@ use std::path::PathBuf;
 
 pub use libparsec_client_connection::ProxyConfig;
 
+pub const DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE: u64 = 512 * 1024 * 1024;
+
 #[derive(Debug, Clone, Copy)]
 pub enum WorkspaceStorageCacheSize {
     Default,
     // TODO: support arbitrary int size in bindings
     Custom { size: u32 },
+}
+
+impl WorkspaceStorageCacheSize {
+    pub fn cache_size(&self) -> u64 {
+        match &self {
+            Self::Default => DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
+            Self::Custom { size } => *size as u64,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
