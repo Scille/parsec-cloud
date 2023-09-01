@@ -91,7 +91,7 @@ jobs:
           RUST_LOG: debug
         timeout-minutes: 10
 
-      - name: Check non bindings crates using sodium crypto features
+      - name: Check agnostic & platform crates using sodium crypto features
         run: cargo check ${{ env.CARGO_CI_FLAGS }} ${{ steps.crates.outcome.agnostic }} ${{ steps.crates.outcome.platform }} --features use-sodiumoxide
         timeout-minutes: 10
         env:
@@ -99,7 +99,7 @@ jobs:
 
       # Use sodiumoxide here given 1) it is composed of C code, so not totally
       # platform independant and 2) it is what is going to be used in release
-      - name: Test Rust codebase (🐧 Linux specific)
+      - name: Test platform crates using sodium crypto features (🐧 Linux specific)
         shell: bash
         run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} ${{ steps.crates.outcome.platform }} --features libparsec_crypto/use-sodiumoxide
         timeout-minutes: 30
