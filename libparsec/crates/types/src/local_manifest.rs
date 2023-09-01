@@ -4,6 +4,7 @@ use std::{
     cmp::Ordering,
     collections::{hash_map::RandomState, HashMap, HashSet},
     num::NonZeroU64,
+    sync::Arc,
 };
 
 use serde::{Deserialize, Serialize};
@@ -1042,22 +1043,28 @@ impl LocalUserManifest {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-#[serde(untagged)]
-pub enum LocalManifest {
-    File(LocalFileManifest),
-    Folder(LocalFolderManifest),
-    Workspace(LocalWorkspaceManifest),
-    User(LocalUserManifest),
+/*
+ * LocalChildManifest
+ */
+
+#[derive(Debug, Clone)]
+pub enum ArcLocalChildManifest {
+    File(Arc<LocalFileManifest>),
+    Folder(Arc<LocalFolderManifest>),
 }
 
-impl LocalManifest {
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(untagged)]
+pub enum LocalChildManifest {
+    File(LocalFileManifest),
+    Folder(LocalFolderManifest),
+}
+
+impl LocalChildManifest {
     pub fn id(&self) -> EntryID {
         match self {
             Self::File(manifest) => manifest.base.id,
             Self::Folder(manifest) => manifest.base.id,
-            Self::Workspace(manifest) => manifest.base.id,
-            Self::User(manifest) => manifest.base.id,
         }
     }
 
@@ -1065,8 +1072,6 @@ impl LocalManifest {
         match self {
             Self::File(manifest) => manifest.need_sync,
             Self::Folder(manifest) => manifest.need_sync,
-            Self::Workspace(manifest) => manifest.need_sync,
-            Self::User(manifest) => manifest.need_sync,
         }
     }
 
@@ -1074,8 +1079,6 @@ impl LocalManifest {
         match self {
             Self::File(manifest) => manifest.base.version,
             Self::Folder(manifest) => manifest.base.version,
-            Self::Workspace(manifest) => manifest.base.version,
-            Self::User(manifest) => manifest.base.version,
         }
     }
 
@@ -1083,8 +1086,6 @@ impl LocalManifest {
         match self {
             Self::File(manifest) => manifest.dump_and_encrypt(key),
             Self::Folder(manifest) => manifest.dump_and_encrypt(key),
-            Self::Workspace(manifest) => manifest.dump_and_encrypt(key),
-            Self::User(manifest) => manifest.dump_and_encrypt(key),
         }
     }
 
@@ -1094,26 +1095,14 @@ impl LocalManifest {
     }
 }
 
-impl From<LocalFileManifest> for LocalManifest {
+impl From<LocalFileManifest> for LocalChildManifest {
     fn from(value: LocalFileManifest) -> Self {
         Self::File(value)
     }
 }
 
-impl From<LocalUserManifest> for LocalManifest {
-    fn from(value: LocalUserManifest) -> Self {
-        Self::User(value)
-    }
-}
-
-impl From<LocalFolderManifest> for LocalManifest {
+impl From<LocalFolderManifest> for LocalChildManifest {
     fn from(value: LocalFolderManifest) -> Self {
         Self::Folder(value)
-    }
-}
-
-impl From<LocalWorkspaceManifest> for LocalManifest {
-    fn from(value: LocalWorkspaceManifest) -> Self {
-        Self::Workspace(value)
     }
 }
