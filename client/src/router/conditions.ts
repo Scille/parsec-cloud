@@ -1,28 +1,28 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { useRoute, useRouter } from 'vue-router';
+import { Handle } from '@/plugins/libparsec/definitions';
+
+export function getParsecHandle(): Handle | null {
+  const currentRoute = useRoute();
+
+  return parseInt(currentRoute.params.handle as string);
+}
 
 export function isLoggedIn(): boolean {
-  const currentRoute = useRoute();
-  const deviceId = currentRoute.params.deviceId;
-
-  if (!deviceId) {
-    return false;
-  }
-  return true;
+  return getParsecHandle() !== null;
 }
 
 export function hasHistory(): boolean {
-  const currentRoute = useRoute();
   const router = useRouter();
+  const handle = getParsecHandle();
 
-  const deviceId = currentRoute.params.deviceId;
   const previousRoute = router.options.history.state.back?.toString();
 
-  if (!deviceId || !previousRoute) {
+  if (!handle || !previousRoute) {
     return false;
   }
-  return previousRoute.startsWith(`/${deviceId}`);
+  return previousRoute.startsWith(`/${handle}`);
 }
 
 export function isDocumentRoute(): boolean {

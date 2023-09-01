@@ -128,11 +128,9 @@ import MsGridListToggle from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import { DisplayState } from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import { useI18n } from 'vue-i18n';
 import { ref, Ref, onMounted, computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
+import { routerNavigateTo } from '@/router';
 
-const currentRoute = useRoute();
-const router = useRouter();
 const { t } = useI18n();
 const sortBy = ref('name');
 const workspaceList: Ref<MockWorkspace[]> = ref([]);
@@ -181,11 +179,7 @@ async function openCreateWorkspaceModal(): Promise<void> {
 }
 
 function onWorkspaceClick(_event: Event, workspace: MockWorkspace): void {
-  router.push({
-    name: 'folder',
-    params: { deviceId: currentRoute.params.deviceId, workspaceId: workspace.id },
-    query: { path: '/' },
-  });
+  routerNavigateTo('folder', {workspaceId: workspace.id}, {path: '/'});
 }
 
 async function onWorkspaceShareClick(_: Event, workspace: MockWorkspace): Promise<void> {

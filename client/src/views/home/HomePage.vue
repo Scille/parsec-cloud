@@ -235,7 +235,7 @@ import { MsSelectChangeEvent, MsSelectOption } from '@/components/core/ms-select
 import { AvailableDevice } from '@/plugins/libparsec/definitions';
 import { libparsec } from '@/plugins/libparsec';
 import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
-import { mockLastLogin } from '@/common/mocks';
+import { mockLastLogin, DEFAULT_HANDLE } from '@/common/mocks';
 import { StoredDeviceData, StorageManager } from '@/services/storageManager';
 import { DateTime } from 'luxon';
 import { useRouter } from 'vue-router';
@@ -352,7 +352,7 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
   showOrganizationList.value = true;
 
   // name: define where the user will be move, query: add parameters
-  router.push({ name: 'workspaces', params: {deviceId: device.deviceId} });
+  router.push({ name: 'workspaces', params: {handle: DEFAULT_HANDLE} });
 }
 
 function onForgottenPasswordClick(): void {

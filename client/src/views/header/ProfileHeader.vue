@@ -42,11 +42,13 @@ import { defineProps, ref } from 'vue';
 import ProfileHeaderPopover from '@/views/header/ProfileHeaderPopover.vue';
 import { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
 import { useRouter } from 'vue-router';
+import { routerNavigateTo } from '@/router';
 import { useI18n } from 'vue-i18n';
 
 const isPopoverOpen = ref(false);
 const chevron = ref();
 const router = useRouter();
+
 const { t } = useI18n();
 
 const props = defineProps<{
@@ -77,13 +79,13 @@ async function openPopover(ev: Event): Promise<void> {
       // libparsec.logOut()
       router.replace({ name: 'home' });
     } else if (value.data.option === ProfilePopoverOption.Settings) {
-      router.push({ name: 'settings' });
+      routerNavigateTo('settings');
     } else if (value.data.option === ProfilePopoverOption.MyDevices) {
-      router.push({ name: 'devices' });
+      routerNavigateTo('devices');
     } else if (value.data.option === ProfilePopoverOption.Help) {
       window.open(t('MenuPage.helpLink'), '_blank');
     }  else if (value.data.option === ProfilePopoverOption.App) {
-      router.push({ name: 'about' });
+      routerNavigateTo('about');
     }
   });
 }

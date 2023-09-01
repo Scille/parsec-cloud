@@ -1,21 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { useRoute } from 'vue-router';
+import { getParsecHandle } from '@/router/conditions';
 
 export function isAdmin(): boolean {
-  const currentRoute = useRoute();
-  const deviceId = currentRoute.params.deviceId;
-  if (deviceId) {
-    return true;
-  }
-  return false;
+  const handle = getParsecHandle();
+
+  return handle !== null;
 }
 
 export function isOutsider(): boolean {
-  const currentRoute = useRoute();
-  const deviceId = currentRoute.params.deviceId;
-  if (deviceId) {
-    return false;
-  }
+  // const handle = getParsecHandle();
   return false;
 }

@@ -64,7 +64,7 @@
               <div
                 class="organization-card__manageBtn"
                 v-show="!isOutsider()"
-                @click="router.push({name: 'activeUsers', params: {deviceId: currentRoute.params.deviceId}})"
+                @click="routerNavigateTo('activeUsers')"
               >
                 <ion-text
                   class="subtitles-sm"
@@ -81,7 +81,7 @@
           >
             <div
               class="back-organization"
-              @click="router.push({name: 'workspaces', params: {deviceId: currentRoute.params.deviceId}})"
+              @click="routerNavigateTo('workspaces')"
             >
               <ion-button
                 fill="clear"
@@ -143,7 +143,7 @@
                 lines="none"
                 class="sidebar-item users-title menu-default"
                 :class="isUserRoute() ? 'item-selected' : 'item-not-selected'"
-                @click="router.push({name: 'activeUsers', params: {deviceId: currentRoute.params.deviceId}})"
+                @click="routerNavigateTo('activeUsers')"
               >
                 <ion-icon
                   :icon="people"
@@ -158,7 +158,7 @@
                   button
                   class="user-menu__item body"
                   :class="currentRoute.name === 'activeUsers' ? 'user-menu-selected' : 'user-menu-not-selected'"
-                  @click="router.push({name: 'activeUsers', params: {deviceId: currentRoute.params.deviceId}})"
+                  @click="routerNavigateTo('activeUsers')"
                 >
                   <ion-label>{{ $t('SideMenu.activeUsers') }}</ion-label>
                 </ion-item>
@@ -167,7 +167,7 @@
                   button
                   class="user-menu__item body"
                   :class="currentRoute.name === 'revokedUsers' ? 'user-menu-selected' : 'user-menu-not-selected'"
-                  @click="router.push({name: 'revokedUsers', params: {deviceId: currentRoute.params.deviceId}})"
+                  @click="routerNavigateTo('revokedUsers')"
                 >
                   <ion-label>{{ $t('SideMenu.revokedUsers') }}</ion-label>
                 </ion-item>
@@ -177,7 +177,7 @@
                   button
                   class="user-menu__item body"
                   :class="currentRoute.name === 'invitations' ? 'user-menu-selected' : 'user-menu-not-selected'"
-                  @click="router.push({name: 'invitations', params: {deviceId: currentRoute.params.deviceId}})"
+                  @click="routerNavigateTo('invitations')"
                 >
                   <ion-label>{{ $t('SideMenu.invitations') }}</ion-label>
                 </ion-item>
@@ -192,7 +192,7 @@
                 lines="none"
                 class="sidebar-item storage-title menu-default"
                 :class="currentRoute.name === 'storage' ? 'item-selected' : 'item-not-selected'"
-                @click="router.push({name: 'storage', params: {deviceId: currentRoute.params.deviceId}})"
+                @click="routerNavigateTo('storage')"
               >
                 <ion-icon
                   :icon="pieChart"
@@ -209,7 +209,7 @@
                 lines="none"
                 class="sidebar-item organization-title menu-default"
                 :class="currentRoute.name === 'organization' ? 'item-selected' : 'item-not-selected'"
-                @click="router.push({name: 'organization', params: {deviceId: currentRoute.params.deviceId}})"
+                @click="routerNavigateTo('organization')"
               >
                 <ion-icon
                   :icon="informationCircle"
@@ -258,11 +258,12 @@ import {
 } from 'ionicons/icons';
 import { WatchStopHandle, onMounted, onUnmounted, ref, watch } from 'vue';
 import { createGesture } from '@ionic/vue';
-import { useRouter, useRoute } from 'vue-router';
+import { useRoute } from 'vue-router';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { getMockDevices, getMockWorkspaces, MockWorkspace } from '@/common/mocks';
 import { isOrganizationManagementRoute, isSpecificWorkspaceRoute, isUserRoute } from '@/router/conditions';
 import { isAdmin, isOutsider } from '@/common/permissions';
+import { routerNavigateTo } from '@/router';
 
 let device: any = {};
 let workspaces: MockWorkspace[] = [];
@@ -270,7 +271,6 @@ let workspaces: MockWorkspace[] = [];
 getMockWorkspaces().then((ws) => {
   workspaces = ws;
 });
-const router = useRouter();
 const currentRoute = useRoute();
 const splitPane = ref();
 const divider = ref();
@@ -285,19 +285,12 @@ const unwatch: WatchStopHandle = watch(wasReset, (value) => {
 });
 
 function navigateToWorkspace(workspaceId: string): void {
-  router.push({
-    name: 'folder',
-    params: { deviceId: currentRoute.params.deviceId, workspaceId: workspaceId },
-    query: { path: '/' },
-  });
+  routerNavigateTo('folder', {workspaceId: workspaceId}, {path: '/'});
   menuController.close();
 }
 
 function navigateToWorkspaceList(): void {
-  router.push({
-    name: 'workspaces',
-    params: { deviceId: currentRoute.params.deviceId },
-  });
+  routerNavigateTo('workspaces');
   menuController.close();
 
 }

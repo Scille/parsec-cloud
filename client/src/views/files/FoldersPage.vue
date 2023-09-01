@@ -203,7 +203,7 @@ import { DisplayState } from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import FileListItem from '@/components/files/FileListItem.vue';
 import FileCard from '@/components/files/FileCard.vue';
 import FileContextMenu from '@/views/files/FileContextMenu.vue';
-import router from '@/router';
+import { routerNavigateTo } from '@/router';
 import { FileAction } from '@/views/files/FileContextMenu.vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import FileUploadModal from '@/views/files/FileUploadModal.vue';
@@ -246,11 +246,7 @@ function onFileClick(_event: Event, file: MockFile): void {
   console.log('File Click');
   if (file.type === 'folder') {
     const newPath = (path.value.toString().endsWith('/')) ? `${path.value}${file.name}` : `${path.value}/${file.name}`;
-    router.push({
-      name: 'folder',
-      params: { deviceId: currentRoute.params.deviceId, workspaceId: workspaceId.value },
-      query: { path: newPath },
-    });
+    routerNavigateTo('folder', {workspaceId: workspaceId.value}, {path: newPath});
   }
 }
 
