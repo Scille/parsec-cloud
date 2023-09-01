@@ -3,7 +3,11 @@
 // `std::hash::Hash` is not stable accross platforms (e.g. it uses native
 // endianness when hashing numbers), hence we have to roll our own system.
 
-use std::sync::Arc;
+use std::{
+    collections::{HashMap, HashSet},
+    num::NonZeroU64,
+    sync::Arc,
+};
 
 use libparsec_types::prelude::*;
 
@@ -69,6 +73,25 @@ impl<T: CrcHash> CrcHash for Vec<T> {
     }
 }
 
+impl<A: CrcHash, B: CrcHash> CrcHash for HashMap<A, B> {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"HashMap");
+        for (k, v) in self.iter() {
+            k.crc_hash(hasher);
+            v.crc_hash(hasher);
+        }
+    }
+}
+
+impl<T: CrcHash> CrcHash for HashSet<T> {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"HashSet");
+        for v in self.iter() {
+            v.crc_hash(hasher);
+        }
+    }
+}
+
 impl<T: CrcHash> CrcHash for Arc<T> {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
         (**self).crc_hash(hasher);
@@ -80,6 +103,16 @@ macro_rules! impl_crc_hash_for_number {
         impl CrcHash for $name {
             fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
                 hasher.update(&self.to_le_bytes())
+            }
+        }
+    };
+}
+
+macro_rules! impl_crc_hash_for_nonzero_number {
+    ($name:ident) => {
+        impl CrcHash for $name {
+            fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+                hasher.update(&self.get().to_le_bytes())
             }
         }
     };
@@ -97,6 +130,7 @@ impl_crc_hash_for_number!(i16);
 impl_crc_hash_for_number!(i32);
 impl_crc_hash_for_number!(i64);
 impl_crc_hash_for_number!(i128);
+impl_crc_hash_for_nonzero_number!(NonZeroU64);
 
 macro_rules! impl_crc_hash_for_str_based {
     ($name:ident) => {
@@ -161,6 +195,12 @@ impl CrcHash for RealmRole {
 }
 
 impl CrcHash for SecretKey {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(self.as_ref());
+    }
+}
+
+impl CrcHash for HashDigest {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
         hasher.update(self.as_ref());
     }
@@ -271,5 +311,194 @@ impl CrcHash for LocalUserManifest {
         last_processed_message.crc_hash(hasher);
         workspaces.crc_hash(hasher);
         speculative.crc_hash(hasher);
+    }
+}
+
+impl CrcHash for WorkspaceManifest {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"WorkspaceManifest");
+
+        let WorkspaceManifest {
+            author,
+            timestamp,
+            id,
+            version,
+            created,
+            updated,
+            children,
+        } = self;
+
+        author.crc_hash(hasher);
+        timestamp.crc_hash(hasher);
+        id.crc_hash(hasher);
+        version.crc_hash(hasher);
+        created.crc_hash(hasher);
+        updated.crc_hash(hasher);
+        children.crc_hash(hasher);
+    }
+}
+
+impl CrcHash for LocalWorkspaceManifest {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"LocalWorkspaceManifest");
+
+        let LocalWorkspaceManifest {
+            base,
+            need_sync,
+            updated,
+            children,
+            speculative,
+            local_confinement_points,
+            remote_confinement_points,
+        } = self;
+
+        base.crc_hash(hasher);
+        need_sync.crc_hash(hasher);
+        updated.crc_hash(hasher);
+        children.crc_hash(hasher);
+        speculative.crc_hash(hasher);
+        local_confinement_points.crc_hash(hasher);
+        remote_confinement_points.crc_hash(hasher);
+    }
+}
+
+impl CrcHash for FolderManifest {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"FolderManifest");
+
+        let FolderManifest {
+            author,
+            timestamp,
+            id,
+            parent,
+            version,
+            created,
+            updated,
+            children,
+        } = self;
+
+        author.crc_hash(hasher);
+        timestamp.crc_hash(hasher);
+        id.crc_hash(hasher);
+        parent.crc_hash(hasher);
+        version.crc_hash(hasher);
+        created.crc_hash(hasher);
+        updated.crc_hash(hasher);
+        children.crc_hash(hasher);
+    }
+}
+
+impl CrcHash for LocalFolderManifest {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"LocalFolderManifest");
+
+        let LocalFolderManifest {
+            base,
+            need_sync,
+            updated,
+            children,
+            local_confinement_points,
+            remote_confinement_points,
+        } = self;
+
+        base.crc_hash(hasher);
+        need_sync.crc_hash(hasher);
+        updated.crc_hash(hasher);
+        children.crc_hash(hasher);
+        local_confinement_points.crc_hash(hasher);
+        remote_confinement_points.crc_hash(hasher);
+    }
+}
+
+impl CrcHash for FileManifest {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"FileManifest");
+
+        let FileManifest {
+            author,
+            timestamp,
+            id,
+            parent,
+            version,
+            created,
+            updated,
+            size,
+            blocksize,
+            blocks,
+        } = self;
+
+        author.crc_hash(hasher);
+        timestamp.crc_hash(hasher);
+        id.crc_hash(hasher);
+        parent.crc_hash(hasher);
+        version.crc_hash(hasher);
+        created.crc_hash(hasher);
+        updated.crc_hash(hasher);
+        size.crc_hash(hasher);
+        blocksize.crc_hash(hasher);
+        blocks.crc_hash(hasher);
+    }
+}
+
+impl CrcHash for BlockAccess {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"BlockAccess");
+
+        let BlockAccess {
+            id,
+            key,
+            offset,
+            size,
+            digest,
+        } = self;
+
+        id.crc_hash(hasher);
+        key.crc_hash(hasher);
+        offset.crc_hash(hasher);
+        size.crc_hash(hasher);
+        digest.crc_hash(hasher);
+    }
+}
+impl CrcHash for Chunk {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"Chunk");
+
+        let Chunk {
+            id,
+            start,
+            stop,
+            raw_offset,
+            raw_size,
+            access,
+        } = self;
+
+        id.crc_hash(hasher);
+        start.crc_hash(hasher);
+        stop.crc_hash(hasher);
+        raw_offset.crc_hash(hasher);
+        raw_size.crc_hash(hasher);
+        access.crc_hash(hasher);
+    }
+}
+
+impl CrcHash for LocalFileManifest {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"LocalFileManifest");
+
+        let LocalFileManifest {
+            base,
+            need_sync,
+            updated,
+            size,
+            blocksize,
+            blocks,
+        } = self;
+
+        base.crc_hash(hasher);
+        need_sync.crc_hash(hasher);
+        updated.crc_hash(hasher);
+        size.crc_hash(hasher);
+        blocksize.crc_hash(hasher);
+        blocks.crc_hash(hasher);
     }
 }

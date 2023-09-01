@@ -80,7 +80,7 @@ async fn sync_placeholder(#[case] is_speculative: bool, env: &TestbedEnv) {
         builder
             .user_storage_local_update("alice@dev1")
             .customize(|e| {
-                std::sync::Arc::make_mut(&mut e.local_user_manifest).speculative = is_speculative;
+                std::sync::Arc::make_mut(&mut e.local_manifest).speculative = is_speculative;
             });
     });
     let alice = env.local_device("alice@dev1");

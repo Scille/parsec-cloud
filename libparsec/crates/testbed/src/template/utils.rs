@@ -67,17 +67,17 @@ pub(super) fn non_revoked_admins(events: &[TestbedEvent]) -> impl Iterator<Item 
     })
 }
 
-pub(super) fn non_revoked_realm_owners<'a, 'b: 'a>(
-    events: &'a [TestbedEvent],
-    realm: &'b RealmID,
-) -> impl Iterator<Item = &'a DeviceID> {
-    non_revoked_users(events).filter(|device_id| {
+pub(super) fn non_revoked_realm_owners(
+    events: &[TestbedEvent],
+    realm: RealmID,
+) -> impl Iterator<Item = &DeviceID> {
+    non_revoked_users(events).filter(move |device_id| {
         let user_id = device_id.user_id();
         let is_owner = events.iter().rev().find_map(|e| match e {
-            TestbedEvent::NewRealm(x) if x.realm_id == *realm && x.author.user_id() == user_id => {
+            TestbedEvent::NewRealm(x) if x.realm_id == realm && x.author.user_id() == user_id => {
                 Some(true)
             }
-            TestbedEvent::ShareRealm(x) if x.realm == *realm && x.user == *user_id => {
+            TestbedEvent::ShareRealm(x) if x.realm == realm && x.user == *user_id => {
                 Some(matches!(x.role, Some(RealmRole::Owner)))
             }
             _ => None,
@@ -90,27 +90,72 @@ pub(super) fn non_revoked_realm_owners<'a, 'b: 'a>(
     })
 }
 
-pub(super) fn non_revoked_realm_members<'a, 'b: 'a>(
-    events: &'a [TestbedEvent],
-    realm: &'b RealmID,
-) -> impl Iterator<Item = &'a DeviceID> {
-    non_revoked_users(events).filter(|device_id| {
+pub(super) fn non_revoked_realm_members(
+    events: &[TestbedEvent],
+    realm: RealmID,
+) -> impl Iterator<Item = (&DeviceID, RealmRole)> {
+    non_revoked_users(events).filter_map(move |device_id| {
         let user_id = device_id.user_id();
-        let is_owner = events.iter().rev().find_map(|e| match e {
-            TestbedEvent::NewRealm(x) if x.realm_id == *realm && x.author.user_id() == user_id => {
-                Some(true)
+        events.iter().rev().find_map(|e| match e {
+            TestbedEvent::NewRealm(x) if x.realm_id == realm && x.author.user_id() == user_id => {
+                Some((device_id, RealmRole::Owner))
             }
-            TestbedEvent::ShareRealm(x) if x.realm == *realm && x.user == *user_id => {
-                Some(x.role.is_some())
+            TestbedEvent::ShareRealm(x) if x.realm == realm && x.user == *user_id => {
+                x.role.map(|role| (device_id, role))
             }
             _ => None,
-        });
-        match is_owner {
-            Some(true) => true,
-            // User is either not part of the realm, or not owner
-            _ => false,
-        }
+        })
     })
+}
+
+pub(super) fn assert_realm_member_has_read_access(
+    events: &[TestbedEvent],
+    realm: RealmID,
+    user: &UserID,
+) {
+    let has_read_access = events
+        .iter()
+        .rev()
+        .find_map(move |e| match e {
+            TestbedEvent::NewRealm(x) if x.realm_id == realm => {
+                // Last chance if the user is the creator of the realm
+                Some(x.author.user_id() == user)
+            }
+            TestbedEvent::ShareRealm(x) if x.realm == realm && x.user == *user => {
+                Some(x.role.map(|r| r.can_read()).unwrap_or(false))
+            }
+            _ => None,
+        })
+        .unwrap_or(false);
+
+    if !has_read_access {
+        panic!("User {} has no read access to realm {}", user, realm);
+    }
+}
+
+pub(super) fn assert_realm_member_has_write_access(
+    events: &[TestbedEvent],
+    realm: RealmID,
+    user: &UserID,
+) {
+    let has_read_access = events
+        .iter()
+        .rev()
+        .find_map(move |e| match e {
+            TestbedEvent::NewRealm(x) if x.realm_id == realm => {
+                // Last chance if the user is the creator of the realm
+                Some(x.author.user_id() == user)
+            }
+            TestbedEvent::ShareRealm(x) if x.realm == realm && x.user == *user => {
+                Some(x.role.map(|r| r.can_write()).unwrap_or(false))
+            }
+            _ => None,
+        })
+        .unwrap_or(false);
+
+    if !has_read_access {
+        panic!("User {} has no read access to realm {}", user, realm);
+    }
 }
 
 pub(super) fn assert_organization_bootstrapped(
@@ -120,6 +165,29 @@ pub(super) fn assert_organization_bootstrapped(
         TestbedEvent::BootstrapOrganization(x) => x,
         _ => unreachable!(),
     }
+}
+
+pub(super) fn assert_device_exists_and_not_revoked<'a>(
+    events: &'a [TestbedEvent],
+    device: &DeviceID,
+) -> &'a TestbedEvent {
+    for event in events.iter().rev() {
+        match event {
+            e @ TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                first_user_device_id: candidate,
+                ..
+            })
+            | e @ TestbedEvent::NewUser(TestbedEventNewUser {
+                device_id: candidate,
+                ..
+            }) if candidate == device => return e,
+            TestbedEvent::RevokeUser(x) if x.user == *device.user_id() => {
+                panic!("User {} already revoked !", device.user_id())
+            }
+            _ => (),
+        }
+    }
+    panic!("Device {} doesn't exist", device);
 }
 
 pub(super) fn assert_user_exists_and_not_revoked<'a>(
@@ -169,6 +237,14 @@ pub(super) fn assert_device_exists<'a>(
     creation_event.unwrap_or_else(|| panic!("Device {} doesn't exist", device))
 }
 
+pub(super) fn assert_realm_exists(events: &[TestbedEvent], realm: RealmID) {
+    events
+        .iter()
+        .rev()
+        .find(|e| matches!(e, TestbedEvent::NewRealm(x) if x.realm_id == realm))
+        .unwrap_or_else(|| panic!("Realm {} doesn't exist", realm));
+}
+
 pub(super) fn assert_realm_exists_and_under_reencryption(
     events: &[TestbedEvent],
     realm: &RealmID,
@@ -193,17 +269,17 @@ pub(super) fn assert_realm_exists_and_under_reencryption(
 
 pub(super) fn assert_realm_exists_and_not_under_reencryption(
     events: &[TestbedEvent],
-    realm: &RealmID,
+    realm: RealmID,
 ) -> IndexInt {
     let outcome = events
         .iter()
         .rev()
         .find_map(|e| match e {
-            TestbedEvent::NewRealm(x) if x.realm_id == *realm => Some(Some(1)),
-            TestbedEvent::StartRealmReencryption(x) if x.realm == *realm => {
+            TestbedEvent::NewRealm(x) if x.realm_id == realm => Some(Some(1)),
+            TestbedEvent::StartRealmReencryption(x) if x.realm == realm => {
                 Some(Some(x.encryption_revision))
             }
-            TestbedEvent::FinishRealmReencryption(x) if x.realm == *realm => Some(None),
+            TestbedEvent::FinishRealmReencryption(x) if x.realm == realm => Some(None),
             _ => None,
         })
         .unwrap_or_else(|| panic!("Realm {} doesn't exist", realm));

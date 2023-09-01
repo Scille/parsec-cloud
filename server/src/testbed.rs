@@ -7,11 +7,12 @@ use pyo3::{
 use std::sync::Arc;
 
 use crate::{
-    BlockID, DateTime, DeviceCertificate, DeviceID, DeviceLabel, EntryID, HumanHandle, PrivateKey,
-    RealmID, RealmRole, RealmRoleCertificate, RevokedUserCertificate, SecretKey,
-    SequesterAuthorityCertificate, SequesterPrivateKeyDer, SequesterPublicKeyDer,
-    SequesterServiceCertificate, SequesterServiceID, SequesterSigningKeyDer, SequesterVerifyKeyDer,
-    SigningKey, UserCertificate, UserID, UserManifest, UserProfile, UserUpdateCertificate, VlobID,
+    BlockID, DateTime, DeviceCertificate, DeviceID, DeviceLabel, EntryID, FileManifest,
+    FolderManifest, HumanHandle, PrivateKey, RealmID, RealmRole, RealmRoleCertificate,
+    RevokedUserCertificate, SecretKey, SequesterAuthorityCertificate, SequesterPrivateKeyDer,
+    SequesterPublicKeyDer, SequesterServiceCertificate, SequesterServiceID, SequesterSigningKeyDer,
+    SequesterVerifyKeyDer, SigningKey, UserCertificate, UserID, UserManifest, UserProfile,
+    UserUpdateCertificate, VlobID, WorkspaceManifest,
 };
 
 #[pyclass]
@@ -306,6 +307,47 @@ event_wrapper!(
 );
 
 event_wrapper!(
+    TestbedEventCreateOrUpdateWorkspaceManifestVlob,
+    [manifest: WorkspaceManifest,],
+    |_py, x: &TestbedEventCreateOrUpdateWorkspaceManifestVlob| -> PyResult<String> {
+        Ok(format!(
+            "timestamp={:?}, author={:?}, realm={:?}, version={:?}",
+            &x.manifest.0.timestamp, &x.manifest.0.author, &x.manifest.0.id, &x.manifest.0.version
+        ))
+    }
+);
+
+event_wrapper!(
+    TestbedEventCreateOrUpdateFolderManifestVlob,
+    [realm: RealmID, manifest: FolderManifest,],
+    |_py, x: &TestbedEventCreateOrUpdateFolderManifestVlob| -> PyResult<String> {
+        Ok(format!(
+            "timestamp={:?}, author={:?}, realm={:?}, vlob={:?}, version={:?}",
+            &x.manifest.0.timestamp,
+            &x.manifest.0.author,
+            &x.realm.0,
+            &x.manifest.0.id,
+            &x.manifest.0.version
+        ))
+    }
+);
+
+event_wrapper!(
+    TestbedEventCreateOrUpdateFileManifestVlob,
+    [realm: RealmID, manifest: FileManifest,],
+    |_py, x: &TestbedEventCreateOrUpdateFileManifestVlob| -> PyResult<String> {
+        Ok(format!(
+            "timestamp={:?}, author={:?}, realm={:?}, vlob={:?}, version={:?}",
+            &x.manifest.0.timestamp,
+            &x.manifest.0.author,
+            &x.realm.0,
+            &x.manifest.0.id,
+            &x.manifest.0.version
+        ))
+    }
+);
+
+event_wrapper!(
     TestbedEventCreateOrUpdateOpaqueVlob,
     [
         timestamp: DateTime,
@@ -326,13 +368,31 @@ event_wrapper!(
 );
 
 event_wrapper!(
+    TestbedEventCreateBlock,
+    [
+        timestamp: DateTime,
+        author: DeviceID,
+        realm: RealmID,
+        block_id: BlockID,
+        cleartext_block: Py<PyBytes>,
+        encrypted_block: Py<PyBytes>,
+    ],
+    |_py, x: &TestbedEventCreateBlock| -> PyResult<String> {
+        Ok(format!(
+            "timestamp={:?}, author={:?}, realm={:?}, block={:?}",
+            x.timestamp.0, x.author.0, x.realm.0, x.block_id.0,
+        ))
+    }
+);
+
+event_wrapper!(
     TestbedEventCreateOpaqueBlock,
     [
         timestamp: DateTime,
         author: DeviceID,
         realm: RealmID,
         block_id: BlockID,
-        block: Py<PyBytes>,
+        encrypted_block: Py<PyBytes>,
     ],
     |_py, x: &TestbedEventCreateOpaqueBlock| -> PyResult<String> {
         Ok(format!(
@@ -717,7 +777,7 @@ fn event_to_pyobject(
                 author: x.author.clone().into(),
                 realm: x.realm.into(),
                 block_id: x.block_id.into(),
-                block: PyBytes::new(py, &x.block).into(),
+                encrypted_block: PyBytes::new(py, &x.encrypted_block).into(),
             };
             Some(obj.into_py(py))
         }

@@ -134,7 +134,7 @@ impl TestbedTemplateBuilderCounters {
     }
     pub fn next_entry_id(&mut self) -> EntryID {
         self.current_entry_id += 1;
-        self.current_entry_id.to_ne_bytes().into()
+        self.current_entry_id.to_be_bytes().into()
     }
     fn next_256bits_key(&mut self) -> &[u8; 32] {
         // 256 keys should be far enough for our needs
@@ -271,7 +271,7 @@ macro_rules! impl_customize_field_meth {
 impl_event_builder!(BootstrapOrganization, [first_user: UserID]);
 
 impl<'a> TestbedEventBootstrapOrganizationBuilder<'a> {
-    pub fn as_sequestered_organization(self) -> Self {
+    pub fn and_set_sequestered_organization(self) -> Self {
         let next_index = self.builder.counters.next_certificate_index();
         self.customize(|event| {
             event.sequester_authority = Some(TestbedEventBootstrapOrganizationSequesterAuthority {
@@ -451,6 +451,26 @@ impl<'a> TestbedEventNewRealmBuilder<'a> {
             builder: self.builder,
         }
     }
+
+    pub fn then_create_initial_workspace_manifest_vlob(
+        self,
+    ) -> TestbedEventCreateOrUpdateWorkspaceManifestVlobBuilder<'a> {
+        let device = self.get_event().author.clone();
+        let realm = self.get_event().realm_id;
+        let event = TestbedEventCreateOrUpdateWorkspaceManifestVlob::from_builder(
+            self.builder,
+            device,
+            realm,
+        );
+        assert_eq!(event.manifest.id, realm.into());
+
+        self.builder
+            .events
+            .push(TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(event));
+        TestbedEventCreateOrUpdateWorkspaceManifestVlobBuilder {
+            builder: self.builder,
+        }
+    }
 }
 
 /*
@@ -507,7 +527,70 @@ impl<'a> TestbedEventFinishRealmReencryptionBuilder<'a> {
 
 impl_event_builder!(CreateOrUpdateUserManifestVlob, [user: UserID]);
 
-impl<'a> TestbedEventCreateOrUpdateUserManifestVlobBuilder<'a> {}
+/*
+ * TestbedEventCreateOrUpdateWorkspaceManifestVlobBuilder
+ */
+
+impl_event_builder!(
+    CreateOrUpdateWorkspaceManifestVlob,
+    [device: DeviceID, realm: RealmID]
+);
+
+/*
+ * TestbedEventCreateOrUpdateFileManifestVlobBuilder
+ */
+
+impl_event_builder!(
+    CreateOrUpdateFileManifestVlob,
+    [device: DeviceID, realm: RealmID, vlob: Option<VlobID>]
+);
+
+/*
+ * TestbedEventCreateOrUpdateFolderManifestVlobBuilder
+ */
+
+impl_event_builder!(
+    CreateOrUpdateFolderManifestVlob,
+    [device: DeviceID, realm: RealmID, vlob: Option<VlobID>]
+);
+
+/*
+ * TestbedEventCreateBlockBuilder
+ */
+
+impl_event_builder!(
+    CreateBlock,
+    [device: DeviceID, realm: RealmID, cleartext_block: Bytes]
+);
+
+impl<'a> TestbedEventCreateBlockBuilder<'a> {
+    pub fn as_block_access(self, offset: SizeInt) -> BlockAccess {
+        let event = self.get_event();
+        let size = std::num::NonZeroU64::new(event.cleartext_block.len() as u64)
+            .expect("block is not empty");
+        BlockAccess {
+            id: event.block_id,
+            key: event.block_key.clone(),
+            offset,
+            size,
+            digest: HashDigest::from_data(&event.cleartext_block),
+        }
+    }
+}
+
+/*
+ * TestbedEventCreateOpaqueBlockBuilder
+ */
+
+impl_event_builder!(
+    CreateOpaqueBlock,
+    [
+        device: DeviceID,
+        realm: RealmID,
+        block_id: BlockID,
+        encrypted_block: Bytes
+    ]
+);
 
 /*
  * TestbedEventCertificatesStorageFetchCertificates
@@ -522,7 +605,94 @@ impl_event_builder!(CertificatesStorageFetchCertificates, [device: DeviceID]);
 impl_event_builder!(UserStorageFetchUserVlob, [device: DeviceID]);
 
 /*
+ * TestbedEventUserStorageFetchRealmCheckpoint
+ */
+
+impl_event_builder!(UserStorageFetchRealmCheckpoint, [device: DeviceID]);
+
+/*
  * TestbedEventUserStorageLocalUpdate
  */
 
 impl_event_builder!(UserStorageLocalUpdate, [device: DeviceID]);
+
+/*
+ * TestbedEventWorkspaceCacheStorageFetchBlock
+ */
+
+impl_event_builder!(
+    WorkspaceCacheStorageFetchBlock,
+    [device: DeviceID, realm: RealmID, block: BlockID]
+);
+
+/*
+ * TestbedEventWorkspaceDataStorageFetchWorkspaceVlob
+ */
+
+impl_event_builder!(
+    WorkspaceDataStorageFetchWorkspaceVlob,
+    [
+        device: DeviceID,
+        realm: RealmID,
+        prevent_sync_pattern: Option<Regex>,
+    ]
+);
+
+/*
+ * TestbedEventWorkspaceDataStorageFetchFileVlob
+ */
+
+impl_event_builder!(
+    WorkspaceDataStorageFetchFileVlob,
+    [device: DeviceID, realm: RealmID, vlob: VlobID]
+);
+
+/*
+ * TestbedEventWorkspaceDataStorageFetchFolderVlob
+ */
+
+impl_event_builder!(
+    WorkspaceDataStorageFetchFolderVlob,
+    [
+        device: DeviceID,
+        realm: RealmID,
+        vlob: VlobID,
+        prevent_sync_pattern: Option<Regex>
+    ]
+);
+
+/*
+ * TestbedEventWorkspaceDataStorageFetchRealmCheckpoint
+ */
+
+impl_event_builder!(
+    WorkspaceDataStorageFetchRealmCheckpoint,
+    [device: DeviceID, realm: RealmID]
+);
+
+/*
+ * TestbedEventWorkspaceDataStorageLocalWorkspaceManifestUpdate
+ */
+
+impl_event_builder!(
+    WorkspaceDataStorageLocalWorkspaceManifestUpdate,
+    [device: DeviceID, realm: RealmID]
+);
+
+/*
+ * TestbedEventWorkspaceDataStorageLocalFolderManifestUpdate
+ */
+
+impl_event_builder!(
+    WorkspaceDataStorageLocalFolderManifestUpdate,
+    [device: DeviceID, realm: RealmID, vlob: VlobID]
+);
+
+/*
+ * TestbedEventWorkspaceDataStorageLocalFileManifestUpdate
+ */
+
+impl_event_builder!(
+    WorkspaceDataStorageLocalFileManifestUpdate,
+    [device: DeviceID, realm: RealmID, vlob: VlobID]
+);
