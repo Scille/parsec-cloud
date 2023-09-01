@@ -172,6 +172,15 @@ class EntryID(BytesBasedType):
     )
 
 
+class RealmID(BytesBasedType):
+    custom_from_rs_bytes = (
+        "|x: &[u8]| -> Result<_, _> { libparsec::RealmID::try_from(x).map_err(|e| e.to_string()) }"
+    )
+    custom_to_rs_bytes = (
+        "|x: libparsec::RealmID| -> Result<_, &'static str> { Ok(x.as_bytes().to_owned()) }"
+    )
+
+
 class InvitationToken(BytesBasedType):
     custom_from_rs_bytes = "|x: &[u8]| -> Result<_, _> { libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string()) }"
     custom_to_rs_bytes = (

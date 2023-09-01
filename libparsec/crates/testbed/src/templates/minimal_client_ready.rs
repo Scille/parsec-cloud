@@ -28,7 +28,7 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
             Arc::make_mut(&mut e.manifest)
                 .workspaces
                 .push(WorkspaceEntry::new(
-                    realm_id.into(),
+                    realm_id,
                     "wksp1".parse().unwrap(),
                     realm_key,
                     1,

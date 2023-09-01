@@ -17,7 +17,7 @@ use libparsec_serialization_format::parsec_data;
 
 use crate::{
     self as libparsec_types, data_macros::impl_transparent_data_format_conversion, BlockID,
-    DataError, DataResult, DateTime, DeviceID, EntryID, EntryNameError, IndexInt, SizeInt,
+    DataError, DataResult, DateTime, DeviceID, EntryID, EntryNameError, IndexInt, RealmID, SizeInt,
     VersionInt,
 };
 
@@ -255,7 +255,7 @@ impl std::str::FromStr for EntryName {
 #[serde_as]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct WorkspaceEntry {
-    pub id: EntryID,
+    pub id: RealmID,
     pub name: EntryName,
     pub key: SecretKey,
     pub encryption_revision: IndexInt,
@@ -272,7 +272,7 @@ pub struct WorkspaceEntry {
 
 impl WorkspaceEntry {
     pub fn new(
-        id: EntryID,
+        id: RealmID,
         name: EntryName,
         key: SecretKey,
         encryption_revision: IndexInt,
@@ -291,7 +291,7 @@ impl WorkspaceEntry {
 
     pub fn generate(name: EntryName, timestamp: DateTime) -> Self {
         Self {
-            id: EntryID::default(),
+            id: RealmID::default(),
             name,
             key: SecretKey::generate(),
             encryption_revision: 1,
@@ -514,8 +514,8 @@ pub struct UserManifest {
 }
 
 impl UserManifest {
-    pub fn get_workspace_entry(&self, workspace_id: EntryID) -> Option<&WorkspaceEntry> {
-        self.workspaces.iter().find(|x| x.id == workspace_id)
+    pub fn get_workspace_entry(&self, realm_id: RealmID) -> Option<&WorkspaceEntry> {
+        self.workspaces.iter().find(|x| x.id == realm_id)
     }
 }
 

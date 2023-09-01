@@ -10,7 +10,7 @@ use super::UserOps;
 pub(super) async fn workspace_create(
     ops: &UserOps,
     name: EntryName,
-) -> Result<EntryID, anyhow::Error> {
+) -> Result<RealmID, anyhow::Error> {
     let (updater, mut user_manifest) = ops.storage.for_update().await;
 
     let timestamp = ops.device.time_provider.now();
@@ -48,19 +48,19 @@ pub(super) async fn workspace_create(
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceRenameError {
     #[error("Unknown workspace `{0}`")]
-    UnknownWorkspace(EntryID),
+    UnknownWorkspace(RealmID),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
 
 pub(super) async fn workspace_rename(
     ops: &UserOps,
-    workspace_id: EntryID,
+    realm_id: RealmID,
     new_name: EntryName,
 ) -> Result<(), WorkspaceRenameError> {
     let (updater, mut user_manifest) = ops.storage.for_update().await;
 
-    if let Some(workspace_entry) = user_manifest.get_workspace_entry(workspace_id) {
+    if let Some(workspace_entry) = user_manifest.get_workspace_entry(realm_id) {
         let mut updated_workspace_entry = workspace_entry.to_owned();
         updated_workspace_entry.name = new_name;
         let timestamp = ops.device.time_provider.now();
@@ -76,9 +76,7 @@ pub(super) async fn workspace_rename(
         // TODO: handle events
         // ops.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=ops.user_manifest_id)
     } else {
-        return Err(WorkspaceRenameError::UnknownWorkspace(
-            workspace_id.to_owned(),
-        ));
+        return Err(WorkspaceRenameError::UnknownWorkspace(realm_id.to_owned()));
     }
 
     Ok(())

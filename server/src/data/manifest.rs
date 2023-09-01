@@ -9,8 +9,8 @@ use pyo3::{
 use std::{collections::HashMap, num::NonZeroU64};
 
 use crate::{
-    BlockID, DataResult, DateTime, DeviceID, EntryID, EntryNameResult, HashDigest, RealmRole,
-    SecretKey, SigningKey, VerifyKey,
+    BlockID, DataResult, DateTime, DeviceID, EntryID, EntryNameResult, HashDigest, RealmID,
+    RealmRole, SecretKey, SigningKey, VerifyKey,
 };
 use libparsec::low_level::types::{ChildManifest, IndexInt};
 
@@ -53,7 +53,7 @@ impl WorkspaceEntry {
     #[new]
     #[pyo3(signature = (id, name, key, encryption_revision, encrypted_on, legacy_role_cache_timestamp, legacy_role_cache_value))]
     fn new(
-        id: EntryID,
+        id: RealmID,
         name: EntryName,
         key: SecretKey,
         encryption_revision: u64,
@@ -76,7 +76,7 @@ impl WorkspaceEntry {
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
-            [id: EntryID, "id"],
+            [id: RealmID, "id"],
             [name: EntryName, "name"],
             [key: SecretKey, "key"],
             [encryption_revision: IndexInt, "encryption_revision"],
@@ -128,8 +128,8 @@ impl WorkspaceEntry {
     }
 
     #[getter]
-    fn id(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.id))
+    fn id(&self) -> PyResult<RealmID> {
+        Ok(RealmID(self.0.id))
     }
 
     #[getter]
@@ -944,7 +944,7 @@ impl UserManifest {
         Ok(Self(r))
     }
 
-    fn get_workspace_entry(&self, workspace_id: EntryID) -> PyResult<Option<WorkspaceEntry>> {
+    fn get_workspace_entry(&self, workspace_id: RealmID) -> PyResult<Option<WorkspaceEntry>> {
         Ok(self
             .0
             .get_workspace_entry(workspace_id.0)

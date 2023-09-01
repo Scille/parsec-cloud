@@ -48,7 +48,7 @@ async fn simple(env: &TestbedEnv) {
                 &req.role_certificate,
                 &alice.verify_key(),
                 CertificateSignerRef::User(&alice.device_id),
-                Some(w_id.into()),
+                Some(w_id),
                 Some(bob.user_id()),
             )
             .unwrap();

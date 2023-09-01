@@ -14,7 +14,8 @@ use libparsec_serialization_format::parsec_data;
 use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion, BlockAccess, BlockID,
     Blocksize, ChunkID, DataError, DataResult, DateTime, DeviceID, EntryID, EntryName,
-    FileManifest, FolderManifest, IndexInt, Regex, UserManifest, WorkspaceEntry, WorkspaceManifest,
+    FileManifest, FolderManifest, IndexInt, RealmID, Regex, UserManifest, WorkspaceEntry,
+    WorkspaceManifest,
 };
 
 macro_rules! impl_local_manifest_dump_load {
@@ -1003,8 +1004,8 @@ impl LocalUserManifest {
         self.workspaces.push(workspace);
     }
 
-    pub fn get_workspace_entry(&self, workspace_id: EntryID) -> Option<&WorkspaceEntry> {
-        self.workspaces.iter().find(|w| w.id == workspace_id)
+    pub fn get_workspace_entry(&self, realm_id: RealmID) -> Option<&WorkspaceEntry> {
+        self.workspaces.iter().find(|w| w.id == realm_id)
     }
 
     pub fn from_remote(remote: UserManifest) -> Self {

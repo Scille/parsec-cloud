@@ -407,7 +407,7 @@ impl<'a> TestbedEventNewRealmBuilder<'a> {
             let realm_event = self.get_event();
             (
                 realm_event.author.user_id().to_owned(),
-                realm_event.realm_id.into(),
+                realm_event.realm_id,
                 realm_event.realm_key.clone(),
                 realm_event.timestamp,
             )

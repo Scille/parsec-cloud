@@ -391,7 +391,7 @@ fn serde_user_manifest(alice: &Device) {
         workspaces: vec![
             WorkspaceEntry {
                 name: "wksp1".parse().unwrap(),
-                id: EntryID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
+                id: RealmID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
                 key: SecretKey::from(hex!(
                     "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
                 )),
@@ -402,7 +402,7 @@ fn serde_user_manifest(alice: &Device) {
             },
             WorkspaceEntry {
                 name: "wksp2".parse().unwrap(),
-                id: EntryID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap(),
+                id: RealmID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap(),
                 key: SecretKey::from(hex!(
                     "c21ed3aae92c648cb1b6df8be149ebc872247db0dbd37686ff2d075e2d7505cc"
                 )),
