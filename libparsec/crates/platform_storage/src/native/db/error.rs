@@ -46,5 +46,11 @@ impl From<DataError> for DatabaseError {
     }
 }
 
+impl From<CryptoError> for DatabaseError {
+    fn from(_e: CryptoError) -> Self {
+        Self::InvalidData(DataError::Decryption)
+    }
+}
+
 /// A result wrapper that return [DatabaseError] on error.
 pub type DatabaseResult<T> = Result<T, DatabaseError>;

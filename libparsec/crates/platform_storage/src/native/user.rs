@@ -16,8 +16,8 @@ use super::model::get_user_data_storage_db_relative_path;
 pub struct UserStorage {
     pub device: Arc<LocalDevice>,
     db: LocalDatabase,
-    /// A lock that will be used to prevent concurrent update in [UserStorage::set_user_manifest].
-    /// This is needed to ensure `user_manifest` stay in sync with the content of the database.
+    /// A lock that will be used to prevent concurrent update on the user manifest.
+    /// This is needed to ensure `user_manifest` stays in sync with the content of the database.
     lock_update_user_manifest: AsyncMutex<()>,
     /// Keep the user manifest currently in database here for fast access
     user_manifest: Mutex<Arc<LocalUserManifest>>,
@@ -30,22 +30,14 @@ pub struct UserStorageUpdater<'a> {
 }
 
 impl<'a> UserStorageUpdater<'a> {
-    pub async fn set_user_manifest(
-        &self,
-        user_manifest: Arc<LocalUserManifest>,
-    ) -> anyhow::Result<()> {
-        db_set_user_manifest(
-            &self.storage.db,
-            &self.storage.device,
-            user_manifest.clone(),
-        )
-        .await?;
+    pub async fn set_user_manifest(self, manifest: Arc<LocalUserManifest>) -> anyhow::Result<()> {
+        db_set_user_manifest(&self.storage.db, &self.storage.device, manifest.clone()).await?;
 
         *self
             .storage
             .user_manifest
             .lock()
-            .expect("Mutex is poisoned") = user_manifest;
+            .expect("Mutex is poisoned") = manifest;
 
         Ok(())
     }
@@ -152,7 +144,7 @@ impl UserStorage {
 
     /// Updating the manifest is error prone:
     /// 1) the lock must be held
-    /// 2) the user manifest must be fetched *after* the lock is help
+    /// 2) the user manifest must be fetched *after* the lock is held
     /// This method (and the related updater structure) make sure both requirements
     /// are met before providing the method to actually update the manifest.
     pub async fn for_update(&self) -> (UserStorageUpdater, Arc<LocalUserManifest>) {

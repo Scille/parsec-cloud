@@ -3,8 +3,9 @@
 use std::sync::Arc;
 
 use libparsec_tests_fixtures::prelude::*;
+use libparsec_types::prelude::*;
 
-use super::UserStorage;
+use super::WorkspaceCacheStorage;
 
 #[parsec_test]
 async fn bad_start(tmp_path: TmpPath, alice: &Device) {
@@ -13,19 +14,25 @@ async fn bad_start(tmp_path: TmpPath, alice: &Device) {
     let not_a_dir_path = tmp_path.join("foo.txt");
     std::fs::File::create(&not_a_dir_path).unwrap();
 
+    let realm_id = RealmID::default();
+
     p_assert_matches!(
-        UserStorage::start(&not_a_dir_path, Arc::new(alice.local_device())).await,
+        WorkspaceCacheStorage::start(
+            &not_a_dir_path,
+            100,
+            Arc::new(alice.local_device()),
+            realm_id
+        )
+        .await,
         Err(_)
     );
 
-    // TODO: create a valid database, then modify the user manifest's vlob to
-    // turn it into something invalid:
+    // TODO: create a valid database, then modify the blocks to turn it into
+    // something invalid:
     // - invalid schema
     // - invalid encryption
 
     // TODO: modify the database to make it schema invalid
 
     // TODO: drop the database so that it exists but it is empty, this shouldn't cause any issue
-
-    // TODO: remove user manifest's vlob from the database, this shouldn't cause any issue
 }
