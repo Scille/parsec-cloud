@@ -355,10 +355,12 @@ impl WorkspaceDataStorage {
         Ok(storage)
     }
 
-    pub async fn stop(&self) {
-        // TODO: what to do in case of error ? log something and move on ?
-        // let _ = self.flush_work_ahead_of_db().await;
-        self.db.close().await
+    pub async fn stop(&self) -> anyhow::Result<()> {
+        self.flush_work_ahead_of_db()
+            .await
+            .context("Cannot flush work ahead of DB")?;
+        self.db.close().await;
+        Ok(())
     }
 
     async fn load_workspace_manifest(

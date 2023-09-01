@@ -82,10 +82,14 @@ impl WorkspaceOps {
         })
     }
 
-    pub async fn stop(&self) {
+    pub async fn stop(&self) -> anyhow::Result<()> {
         // TODO: is the storages teardown order important ?
-        self.data_storage.stop().await;
+        self.data_storage
+            .stop()
+            .await
+            .context("Cannot stop data storage")?;
         self.cache_storage.stop().await;
+        Ok(())
     }
 
     pub async fn entry_info(&self, path: &FsPath) -> anyhow::Result<EntryInfo> {
