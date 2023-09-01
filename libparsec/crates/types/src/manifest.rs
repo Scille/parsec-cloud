@@ -17,8 +17,8 @@ use libparsec_serialization_format::parsec_data;
 
 use crate::{
     self as libparsec_types, data_macros::impl_transparent_data_format_conversion, BlockID,
-    DataError, DataResult, DateTime, DeviceID, EntryID, EntryNameError, IndexInt, RealmID, SizeInt,
-    VersionInt,
+    DataError, DataResult, DateTime, DeviceID, EntryID, EntryNameError, FsPathError, IndexInt,
+    RealmID, SizeInt, VersionInt,
 };
 
 pub const DEFAULT_BLOCK_SIZE: Blocksize = Blocksize(512 * 1024); // 512 KB
@@ -245,6 +245,129 @@ impl std::str::FromStr for EntryName {
     #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         EntryName::try_from(s)
+    }
+}
+
+/*
+ * EntryNameRef
+ */
+
+pub struct EntryNameRef<'a>(&'a str);
+
+impl<'a> std::convert::AsRef<str> for EntryNameRef<'a> {
+    #[inline]
+    fn as_ref(&self) -> &str {
+        self.0
+    }
+}
+
+impl<'a> std::fmt::Display for EntryNameRef<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl<'a> std::fmt::Debug for EntryNameRef<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let display = self.to_string();
+        f.debug_tuple(stringify!(EntryNameRef))
+            .field(&display)
+            .finish()
+    }
+}
+
+impl<'a> From<&'a EntryName> for EntryNameRef<'a> {
+    fn from(value: &'a EntryName) -> Self {
+        EntryNameRef(&value.0)
+    }
+}
+
+impl<'a> TryFrom<&'a str> for EntryNameRef<'a> {
+    type Error = EntryNameError;
+
+    fn try_from(id: &'a str) -> Result<Self, Self::Error> {
+        if !unicode_normalization::is_nfc(id) {
+            // TODO: better error here !
+            return Err(Self::Error::InvalidName);
+        }
+
+        // Stick to UNIX filesystem philosophy:
+        // - no `.` or `..` name
+        // - no `/` or null byte in the name
+        // - max 255 bytes long name
+        if id.len() >= 256 {
+            Err(Self::Error::NameTooLong)
+        } else if id.is_empty()
+            || id == "."
+            || id == ".."
+            || id.find('/').is_some()
+            || id.find('\x00').is_some()
+        {
+            Err(Self::Error::InvalidName)
+        } else {
+            Ok(Self(id))
+        }
+    }
+}
+
+/*
+ * FsPath
+ */
+
+#[derive(Clone, PartialEq, Eq, PartialOrd, Hash)]
+pub struct FsPath {
+    parts: Vec<EntryName>,
+}
+
+impl FsPath {
+    pub fn name(&self) -> Option<&EntryName> {
+        self.parts.last()
+    }
+
+    pub fn parent(&self) -> FsPath {
+        let parts = self.parts[..self.parts.len() - 1].to_owned();
+        Self { parts }
+    }
+
+    pub fn is_root(&self) -> bool {
+        self.parts.is_empty()
+    }
+
+    pub fn parts(&self) -> &[EntryName] {
+        &self.parts
+    }
+
+    pub fn with_mountpoint(self, mountpoint: &std::path::Path) -> std::path::PathBuf {
+        let mut path = mountpoint.to_path_buf();
+        for item in &self.parts {
+            path.push(item.as_ref());
+        }
+        path
+    }
+}
+
+impl std::str::FromStr for FsPath {
+    type Err = FsPathError;
+
+    #[inline]
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if !s.starts_with('/') {
+            return Err(FsPathError::NotAbsolute);
+        }
+
+        let mut parts = vec![];
+        for item in s.split('/') {
+            match item {
+                "." | "" => (),
+                ".." => {
+                    let _ = parts.pop();
+                }
+                item => {
+                    parts.push(item.try_into()?);
+                }
+            }
+        }
+        Ok(Self { parts })
     }
 }
 
