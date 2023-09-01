@@ -12,11 +12,6 @@ use libparsec_types::prelude::*;
 use super::db::{DatabaseError, DatabaseResult, LocalDatabase, VacuumMode};
 use super::model::get_user_data_storage_db_relative_path;
 
-pub struct NeedSyncEntries {
-    pub remote: Vec<EntryID>,
-    pub local: Vec<EntryID>,
-}
-
 #[derive(Debug)]
 pub struct UserStorage {
     pub device: Arc<LocalDevice>,
