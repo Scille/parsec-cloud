@@ -65,7 +65,7 @@ jobs:
       # Install cargo nextest command
       - uses: taiki-e/install-action@b89cfc4cdbf6930a4276f4c1d662f3217ef3edae # pin v2.18.6
         with:
-          tool: nextest@${{ env.cargo-nextest-version }}
+          tool: nextest@${{ env.cargo-nextest-version }},wasm-pack@0.11.0
 
       - name: Categorize workspace crates
         id: crates
@@ -105,6 +105,10 @@ jobs:
         timeout-minutes: 30
         env:
           RUST_LOG: debug
+
+      - name: Test platform-async on wasm
+        run: wasm-pack test --headless --firefox libparsec/crates/platform_async
+        timeout-minutes: 10
 
       # Clippy basically compile the project, hence it's faster to run it in
       # the test-rust-matrix job where compilation cache is reused !

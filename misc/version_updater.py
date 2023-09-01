@@ -81,6 +81,10 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
         Tool.Poetry: [POETRY_GA_VERSION],
     },
     ROOT_DIR
+    / ".github/workflows/ci-rust.yml": {
+        Tool.WasmPack: [ReplaceRegex(r"wasm-pack@[0-9.]+", "wasm-pack@{version}")],
+    },
+    ROOT_DIR
     / ".github/workflows/ci-web.yml": {
         Tool.Node: [NODE_GA_VERSION],
     },
