@@ -696,6 +696,25 @@ export type GreetInProgressError =
   | GreetInProgressErrorUserAlreadyExists
   | GreetInProgressErrorUserCreateNotAllowed
 
+// OS
+export interface OSAndroid {
+    tag: 'Android'
+}
+export interface OSLinux {
+    tag: 'Linux'
+}
+export interface OSMacOs {
+    tag: 'MacOs'
+}
+export interface OSWindows {
+    tag: 'Windows'
+}
+export type OS =
+  | OSAndroid
+  | OSLinux
+  | OSMacOs
+  | OSWindows
+
 export interface LibParsecPlugin {
     cancel(
         canceller: number
@@ -859,6 +878,8 @@ export interface LibParsecPlugin {
         handle: number,
         device_label: DeviceLabel | null
     ): Promise<Result<null, GreetInProgressError>>
+    getOs(
+    ): Promise<OS>
     testNewTestbed(
         template: string,
         test_server: BackendAddr | null

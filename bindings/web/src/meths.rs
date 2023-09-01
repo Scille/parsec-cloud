@@ -2519,6 +2519,40 @@ fn variant_greetinprogresserror_rs_to_js(
     Ok(js_obj)
 }
 
+// OS
+
+#[allow(dead_code)]
+fn variant_os_js_to_rs(obj: JsValue) -> Result<libparsec::OS, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    match tag {
+        tag if tag == JsValue::from_str("Android") => Ok(libparsec::OS::Android {}),
+        tag if tag == JsValue::from_str("Linux") => Ok(libparsec::OS::Linux {}),
+        tag if tag == JsValue::from_str("MacOs") => Ok(libparsec::OS::MacOs {}),
+        tag if tag == JsValue::from_str("Windows") => Ok(libparsec::OS::Windows {}),
+        _ => Err(JsValue::from(TypeError::new("Object is not a OS"))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_os_rs_to_js(rs_obj: libparsec::OS) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::OS::Android { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Android".into())?;
+        }
+        libparsec::OS::Linux { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Linux".into())?;
+        }
+        libparsec::OS::MacOs { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"MacOs".into())?;
+        }
+        libparsec::OS::Windows { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Windows".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // cancel
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -3843,6 +3877,16 @@ pub fn greeterDeviceInProgress4DoCreate(
                 js_obj
             }
         })
+    })
+}
+
+// get_os
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn getOs() -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::get_os();
+        Ok(variant_os_rs_to_js(ret)?)
     })
 }
 

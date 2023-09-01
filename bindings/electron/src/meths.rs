@@ -2523,6 +2523,50 @@ fn variant_greetinprogresserror_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// OS
+
+#[allow(dead_code)]
+fn variant_os_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::OS> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "Android" => Ok(libparsec::OS::Android {}),
+        "Linux" => Ok(libparsec::OS::Linux {}),
+        "MacOs" => Ok(libparsec::OS::MacOs {}),
+        "Windows" => Ok(libparsec::OS::Windows {}),
+        _ => cx.throw_type_error("Object is not a OS"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_os_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::OS,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::OS::Android { .. } => {
+            let js_tag = JsString::try_new(cx, "Android").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::OS::Linux { .. } => {
+            let js_tag = JsString::try_new(cx, "Linux").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::OS::MacOs { .. } => {
+            let js_tag = JsString::try_new(cx, "MacOs").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::OS::Windows { .. } => {
+            let js_tag = JsString::try_new(cx, "Windows").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // cancel
 fn cancel(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let canceller = {
@@ -5055,6 +5099,15 @@ fn greeter_device_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<J
     Ok(promise)
 }
 
+// get_os
+fn get_os(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let ret = libparsec::get_os();
+    let js_ret = variant_os_rs_to_js(&mut cx, ret)?;
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
 // test_new_testbed
 fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let template = {
@@ -5302,6 +5355,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         "greeterDeviceInProgress4DoCreate",
         greeter_device_in_progress_4_do_create,
     )?;
+    cx.export_function("getOs", get_os)?;
     cx.export_function("testNewTestbed", test_new_testbed)?;
     cx.export_function(
         "testGetTestbedOrganizationId",
