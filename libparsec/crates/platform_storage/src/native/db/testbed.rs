@@ -90,8 +90,32 @@ pub(super) fn maybe_open_sqlite_in_memory(path_info: &DBPathInfo) -> Option<Sqli
         }
         // This database is brand new
         // Now create the database and register it path as opened
-        let conn =
-            SqliteConnection::establish(":memory:").expect("Cannot create in-memory database");
+        let force_db_on_disk = std::env::var("TESTBED_FORCE_SQLITE_ON_DISK").is_ok();
+        let conn = if !force_db_on_disk {
+            SqliteConnection::establish(":memory:").expect("Cannot create in-memory database")
+        } else {
+            // Our function is basically called "open db in memory", wtf is this hack ???
+            // The idea is to provide an easy way to inspect the content of the sqlite db
+            // by just setting `TESTBED_FORCE_SQLITE_ON_DISK` environ variable.
+            // Note this is not concurrent-proof (so only a single test should be run !).
+            static TEMP_DIR: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
+            let temp_dir = TEMP_DIR.get_or_init(|| std::env::temp_dir().join("parsec-test-dbs"));
+            // e.g. `/parsec/testbed/0/OfflineOrg` -> `parsec-testbed-0-OfflineOrg`
+            let base = path_info
+                .data_base_dir
+                .iter()
+                .skip(1)
+                .map(|x| x.to_string_lossy().to_string())
+                .collect::<Vec<String>>()
+                .join("-");
+            let db_path = temp_dir.join(base).join(&path_info.db_relative_path);
+            let database_url = db_path.to_str().expect("Path contains invalid caracters");
+            println!("Saving DB {:?} at {}", path_info, db_path.display());
+            std::fs::create_dir_all(db_path.parent().expect("path is not root"))
+                .expect("Cannot create on-disk database path");
+            _ = std::fs::remove_file(&db_path); // Remove db from a previous run if any
+            SqliteConnection::establish(database_url).expect("Cannot create on-disk database")
+        };
         dbs.push(DBEntry {
             path_info: path_info.clone(),
             state: ClosableInMemoryDB::Opened,
