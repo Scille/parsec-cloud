@@ -429,7 +429,7 @@ async fn inbound_sync(ops: &UserOps) -> Result<(), SyncError> {
             // (i.e. the one that is corrupted !).
             // So we tweak this old manifest into pretending it is the corrupted one.
             // TODO: what if the server sends the manifest data to client A, but dummy
-            // data to client B ? We would end up with clients no agreeing on what
+            // data to client B ? We would end up with clients not agreeing on what
             // contains a given version of the manifest...
             manifest.version = last_version;
 
