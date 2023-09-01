@@ -3,13 +3,15 @@
 // cSpell:disable
 
 import { DateTime } from 'luxon';
-import { AvailableDevice } from '@/plugins/libparsec/definitions';
+import { AvailableDevice, Handle } from '@/plugins/libparsec/definitions';
 import { StorageManager } from '@/services/storageManager';
 import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
 
 export function getAppVersion(): string {
   return '3.0.0a';
 }
+
+export const DEFAULT_HANDLE: Handle = 42;
 
 export interface MockFile {
   id: string,
