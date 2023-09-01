@@ -8,7 +8,7 @@ mod connection_monitor;
 mod event_bus;
 mod invite;
 pub mod user_ops;
-mod workspace_ops;
+pub mod workspace_ops;
 
 pub use client::*;
 pub use config::*;
