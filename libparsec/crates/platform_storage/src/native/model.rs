@@ -34,12 +34,12 @@ pub(super) fn get_user_data_storage_db_relative_path(device: &LocalDevice) -> Pa
 /// Path relative to config dir
 pub(super) fn get_workspace_data_storage_db_relative_path(
     device: &LocalDevice,
-    workspace_id: &EntryID,
+    realm_id: &RealmID,
 ) -> PathBuf {
     let slug = device.slug();
     PathBuf::from_iter([
         slug,
-        workspace_id.hex(),
+        realm_id.hex(),
         format!("workspace_data-v{STORAGE_REVISION}.sqlite"),
     ])
 }
@@ -48,12 +48,12 @@ pub(super) fn get_workspace_data_storage_db_relative_path(
 /// Path relative to config dir
 pub(super) fn get_workspace_cache_storage_db_relative_path(
     device: &LocalDevice,
-    workspace_id: &EntryID,
+    realm_id: &RealmID,
 ) -> PathBuf {
     let slug = device.slug();
     PathBuf::from_iter([
         slug,
-        workspace_id.hex(),
+        realm_id.hex(),
         format!("workspace_cache-v{STORAGE_REVISION}.sqlite"),
     ])
 }
