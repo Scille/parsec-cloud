@@ -34,9 +34,6 @@
         "electron-builder": "~24.6.3",
         "typescript": "~5.1.6"
     },
-    "overrides": {
-        "@electron/universal": "~1.3.4"
-    },
     "keywords": [
         "capacitor",
         "electron"
