@@ -1,7 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
-#![cfg(not(target_arch = "wasm32"))]
+use libparsec_tests_lite::parsec_test;
 
-#[tokio::test]
+#[cfg(target_arch = "wasm32")]
+libparsec_tests_lite::wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
+
+#[parsec_test]
+#[cfg_attr(target_arch = "wasm32", should_panic(expected = "not yet implemented"))]
 pub async fn oneshot() {
     use libparsec_platform_async::oneshot;
     let (sx, rx) = oneshot::channel::<u8>();
@@ -14,7 +18,8 @@ pub async fn oneshot() {
     assert!(matches!(ret, 42));
 }
 
-#[tokio::test]
+#[parsec_test]
+#[cfg_attr(target_arch = "wasm32", should_panic(expected = "not yet implemented"))]
 pub async fn oneshot_try_recv() {
     use libparsec_platform_async::oneshot;
     let (sx, mut rx) = oneshot::channel::<u8>();
@@ -33,7 +38,8 @@ pub async fn oneshot_try_recv() {
     assert!(matches!(err, oneshot::TryRecvError::Closed));
 }
 
-#[tokio::test]
+#[parsec_test]
+#[cfg_attr(target_arch = "wasm32", should_panic(expected = "not yet implemented"))]
 pub async fn oneshot_receiver_dropped_before_send() {
     use libparsec_platform_async::oneshot;
     let (sx, rx) = oneshot::channel::<u8>();
@@ -43,7 +49,8 @@ pub async fn oneshot_receiver_dropped_before_send() {
     assert!(matches!(err, 42));
 }
 
-#[tokio::test]
+#[parsec_test]
+#[cfg_attr(target_arch = "wasm32", should_panic(expected = "not yet implemented"))]
 pub async fn oneshot_sender_dropped_before_send() {
     use libparsec_platform_async::oneshot;
     let (sx, rx) = oneshot::channel::<u8>();
@@ -53,7 +60,8 @@ pub async fn oneshot_sender_dropped_before_send() {
     assert!(matches!(err, oneshot::RecvError { .. }));
 }
 
-#[tokio::test]
+#[parsec_test]
+#[cfg_attr(target_arch = "wasm32", should_panic(expected = "not yet implemented"))]
 pub async fn oneshot_sender_dropped_before_send_try_recv() {
     use libparsec_platform_async::oneshot;
     let (sx, mut rx) = oneshot::channel::<u8>();

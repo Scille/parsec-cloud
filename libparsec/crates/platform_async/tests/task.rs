@@ -1,14 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
-#![cfg(not(target_arch = "wasm32"))]
+use libparsec_tests_lite::parsec_test;
 
-#[tokio::test]
+#[cfg(target_arch = "wasm32")]
+libparsec_tests_lite::wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
+
+#[parsec_test]
 pub async fn sleep() {
     let ret =
         libparsec_platform_async::sleep(libparsec_platform_async::Duration::from_secs(0)).await;
     assert!(matches!(ret, ()));
 }
 
-#[tokio::test]
+#[parsec_test]
 pub async fn concurrency() {
     use libparsec_platform_async::{future::*, sleep, Duration};
 
@@ -28,7 +31,7 @@ pub async fn concurrency() {
     assert_eq!(outcome, 1);
 }
 
-#[tokio::test]
+#[parsec_test]
 pub async fn select2() {
     use libparsec_platform_async::{select2, sleep, Duration};
     let ret = select2!(
@@ -40,7 +43,7 @@ pub async fn select2() {
     assert_eq!(ret, 1);
 }
 
-#[tokio::test]
+#[parsec_test]
 pub async fn select2_with_bind() {
     use libparsec_platform_async::{select2, sleep, Duration};
     let ret = select2!(
@@ -52,7 +55,8 @@ pub async fn select2_with_bind() {
     assert_eq!(ret, 2);
 }
 
-#[tokio::test]
+#[parsec_test]
+#[cfg_attr(target_arch = "wasm32", should_panic(expected = "not yet implemented"))]
 pub async fn future_or_on_tasks_then_await_unfinished_one() {
     use libparsec_platform_async::{future::FutureExt, oneshot, sleep, spawn, Duration};
     let (f2_sx, f2_rx) = oneshot::channel::<i32>();
@@ -70,7 +74,7 @@ pub async fn future_or_on_tasks_then_await_unfinished_one() {
     assert_eq!(outcome2.unwrap(), 2);
 }
 
-// #[tokio::test]
+// #[parsec_test]
 // pub async fn spawn() {
 //     use libparsec_platform_async::{spawn, sleep, Duration};
 //     let fut = spawn(async { sleep(Duration::from_secs(0)).await; 1 });

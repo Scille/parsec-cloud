@@ -20,6 +20,7 @@ futures-core = { workspace = true, features = ["std"] }
 # futures = { workspace = true, features = ["std", "async-await"] }
 
 [dev-dependencies]
+libparsec_tests_lite = { workspace = true }
 log = { workspace = true }
 # `std::time::Instant` is not available for wasm32, crate `instant` provides a
 # fallback based on `window.performance.now()`

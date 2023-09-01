@@ -1376,6 +1376,7 @@ dependencies = [
  "gloo-timers",
  "instant",
  "js-sys",
+ "libparsec_tests_lite",
  "log",
  "tokio",
  "wasm-bindgen",
