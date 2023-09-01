@@ -237,7 +237,7 @@ async fn validate_manifest<M>(
         .and_then(|certif| certif.role);
     match author_role {
         // All good :)
-        Some(RealmRole::Contributor) | Some(RealmRole::Manager) | Some(RealmRole::Owner) => (),
+        Some(role) if role.can_write() => (),
 
         // The author wasn't part of the realm :(
         None => {
@@ -252,7 +252,7 @@ async fn validate_manifest<M>(
         }
 
         // The author doesn't have write access to the realm :(
-        Some(role @ RealmRole::Reader) => {
+        Some(role) => {
             let what = InvalidManifestError::AuthorRealmRoleCannotWrite {
                 vlob_id: ops.device.user_manifest_id,
                 version,

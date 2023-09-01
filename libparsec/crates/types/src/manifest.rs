@@ -178,6 +178,27 @@ pub enum RealmRole {
     Reader,
 }
 
+impl RealmRole {
+    pub fn can_read(&self) -> bool {
+        true
+    }
+
+    pub fn can_write(&self) -> bool {
+        matches!(
+            self,
+            RealmRole::Owner | RealmRole::Manager | RealmRole::Contributor
+        )
+    }
+
+    pub fn can_grant_non_owner_role(&self) -> bool {
+        matches!(self, RealmRole::Owner | RealmRole::Manager)
+    }
+
+    pub fn can_grant_owner_role(&self) -> bool {
+        matches!(self, RealmRole::Owner)
+    }
+}
+
 /*
  * EntryName
  */
