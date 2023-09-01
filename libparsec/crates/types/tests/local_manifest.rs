@@ -966,7 +966,7 @@ fn chunk_evolve_as_block() {
         digest: HashDigest::from_data(&[]),
     };
 
-    let chunk = Chunk::from_block_access(block_access).unwrap();
+    let chunk = Chunk::from_block_access(block_access);
     let block = chunk.clone().evolve_as_block(&[]).unwrap();
     assert_eq!(chunk, block);
 
@@ -1128,7 +1128,7 @@ fn local_file_manifest_from_remote(timestamp: DateTime, #[case] input: (u64, Vec
         blocks: blocks.clone(),
     };
 
-    let lfm = LocalFileManifest::from_remote(fm.clone()).unwrap();
+    let lfm = LocalFileManifest::from_remote(fm.clone());
 
     assert_eq!(lfm.base, fm);
     assert!(!lfm.need_sync);
@@ -1139,7 +1139,7 @@ fn local_file_manifest_from_remote(timestamp: DateTime, #[case] input: (u64, Vec
         lfm.blocks,
         blocks
             .into_iter()
-            .map(|block| vec![Chunk::from_block_access(block).unwrap()])
+            .map(|block| vec![Chunk::from_block_access(block)])
             .collect::<Vec<_>>()
     );
 }

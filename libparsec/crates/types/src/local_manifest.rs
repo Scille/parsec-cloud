@@ -93,8 +93,8 @@ impl Chunk {
         }
     }
 
-    pub fn from_block_access(block_access: BlockAccess) -> Result<Self, &'static str> {
-        Ok(Self {
+    pub fn from_block_access(block_access: BlockAccess) -> Self {
+        Self {
             id: ChunkID::from(*block_access.id),
             raw_offset: block_access.offset,
             raw_size: block_access.size,
@@ -106,7 +106,7 @@ impl Chunk {
                     "Chunk stop should be NonZeroU64 since bloc_access.size is already NonZeroU64",
                 ),
             access: Some(block_access),
-        })
+        }
     }
 
     pub fn evolve_as_block(mut self, data: &[u8]) -> Result<Self, &'static str> {
@@ -276,25 +276,23 @@ impl LocalFileManifest {
         assert_eq!(current, self.size);
     }
 
-    pub fn from_remote(remote: FileManifest) -> Result<Self, &'static str> {
+    pub fn from_remote(remote: FileManifest) -> Self {
         let base = remote.clone();
         let blocks = remote
             .blocks
             .into_iter()
             .map(Chunk::from_block_access)
-            .collect::<Result<Vec<_>, _>>()?
-            .into_iter()
             .map(|b| vec![b])
             .collect();
 
-        Ok(Self {
+        Self {
             base,
             need_sync: false,
             updated: remote.updated,
             size: remote.size,
             blocksize: remote.blocksize,
             blocks,
-        })
+        }
     }
 
     pub fn to_remote(
