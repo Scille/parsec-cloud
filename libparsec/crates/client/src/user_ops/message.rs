@@ -194,7 +194,7 @@ async fn process_message_sharing_granted(
 
     let timestamp = ops.device.time_provider.now();
     let workspace_entry = WorkspaceEntry {
-        id: EntryID::from(*id),
+        id,
         name,
         key,
         encryption_revision,

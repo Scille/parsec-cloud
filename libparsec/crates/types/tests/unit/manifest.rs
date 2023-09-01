@@ -7,7 +7,7 @@ use libparsec_crypto::{SecretKey, SigningKey};
 
 use crate::{
     fixtures::{alice, Device},
-    Blocksize, DataError, EntryID, FileManifest, Manifest,
+    Blocksize, ChildManifest, DataError, EntryID, FileManifest,
 };
 
 #[rstest]
@@ -22,7 +22,7 @@ use crate::{
     //   created: ext(1, 1638618643.208821)
     //   updated: ext(1, 1638618643.208821)
     //   blocks: []
-    //   blocksize: 2
+    //   blocksize: 2  <-- Invalid value, must be >= 8 !
     //   parent: ext(2, hex!("07748fbf67a646428427865fd730bf3e"))
     //   size: 700
     &hex!(
@@ -40,7 +40,7 @@ use crate::{
     DataError::Serialization
 )]
 fn invalid_deserialize_data(#[case] data: &[u8], #[case] error: DataError) {
-    let manifest = Manifest::deserialize_data(data);
+    let manifest = ChildManifest::deserialize_data(data);
 
     assert_eq!(manifest, Err(error));
 }
@@ -126,6 +126,21 @@ fn dump_load(alice: &Device) {
         )
         .unwrap(),
         expected_file_manifest
+    );
+
+    // Also test ChildManifest
+    assert_eq!(
+        ChildManifest::decrypt_verify_and_load(
+            &signed_encrypted,
+            &alice.local_symkey,
+            &alice.verify_key(),
+            &alice.device_id,
+            now,
+            Some(id),
+            Some(0),
+        )
+        .unwrap(),
+        ChildManifest::File(expected_file_manifest.clone())
     );
 
     // Also test round trip

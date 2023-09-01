@@ -22,8 +22,9 @@ type BackendOrganizationAddr = string
 type BackendOrganizationBootstrapAddr = string
 type BackendInvitationAddr = string
 type SASCode = string
-type EntryID = Uint8Array
+type RealmID = Uint8Array
 type SequesterVerifyKeyDer = Uint8Array
+type EntryID = Uint8Array
 type InvitationToken = Uint8Array
 type Handle = number
 type CacheSize = number
@@ -712,19 +713,19 @@ export interface LibParsecPlugin {
     ): Promise<Result<null, ClientStopError>>
     clientListWorkspaces(
         client: number
-    ): Promise<Result<Array<[EntryID, EntryName]>, ClientListWorkspacesError>>
+    ): Promise<Result<Array<[RealmID, EntryName]>, ClientListWorkspacesError>>
     clientWorkspaceCreate(
         client: number,
         name: EntryName
-    ): Promise<Result<EntryID, ClientWorkspaceCreateError>>
+    ): Promise<Result<RealmID, ClientWorkspaceCreateError>>
     clientWorkspaceRename(
         client: number,
-        workspace_id: EntryID,
+        realm_id: RealmID,
         new_name: EntryName
     ): Promise<Result<null, ClientWorkspaceRenameError>>
     clientWorkspaceShare(
         client: number,
-        workspace_id: EntryID,
+        realm_id: RealmID,
         recipient: UserID,
         role: RealmRole | null
     ): Promise<Result<null, ClientWorkspaceShareError>>

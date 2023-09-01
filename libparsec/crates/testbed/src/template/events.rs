@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use libparsec_types::prelude::*;
@@ -147,16 +148,32 @@ pub enum TestbedEvent {
     StartRealmReencryption(TestbedEventStartRealmReencryption),
     FinishRealmReencryption(TestbedEventFinishRealmReencryption),
     CreateOrUpdateUserManifestVlob(TestbedEventCreateOrUpdateUserManifestVlob),
+    CreateOrUpdateWorkspaceManifestVlob(TestbedEventCreateOrUpdateWorkspaceManifestVlob),
+    CreateOrUpdateFileManifestVlob(TestbedEventCreateOrUpdateFileManifestVlob),
+    CreateOrUpdateFolderManifestVlob(TestbedEventCreateOrUpdateFolderManifestVlob),
     CreateOrUpdateOpaqueVlob(TestbedEventCreateOrUpdateOpaqueVlob),
+    CreateBlock(TestbedEventCreateBlock),
     CreateOpaqueBlock(TestbedEventCreateOpaqueBlock),
 
     // 3) Client-side only events
     CertificatesStorageFetchCertificates(TestbedEventCertificatesStorageFetchCertificates),
     UserStorageFetchUserVlob(TestbedEventUserStorageFetchUserVlob),
+    UserStorageFetchRealmCheckpoint(TestbedEventUserStorageFetchRealmCheckpoint),
     UserStorageLocalUpdate(TestbedEventUserStorageLocalUpdate),
-    WokspaceStorageFetchVlob(TestbedEventWokspaceStorageFetchVlob),
-    WokspaceStorageFetchBlock(TestbedEventWokspaceStorageFetchBlock),
-    WorkspaceStorageLocalUpdate(TestbedEventWorkspaceStorageLocalUpdate),
+    WorkspaceDataStorageFetchWorkspaceVlob(TestbedEventWorkspaceDataStorageFetchWorkspaceVlob),
+    WorkspaceDataStorageFetchFileVlob(TestbedEventWorkspaceDataStorageFetchFileVlob),
+    WorkspaceDataStorageFetchFolderVlob(TestbedEventWorkspaceDataStorageFetchFolderVlob),
+    WorkspaceCacheStorageFetchBlock(TestbedEventWorkspaceCacheStorageFetchBlock),
+    WorkspaceDataStorageLocalWorkspaceManifestUpdate(
+        TestbedEventWorkspaceDataStorageLocalWorkspaceManifestUpdate,
+    ),
+    WorkspaceDataStorageLocalFolderManifestUpdate(
+        TestbedEventWorkspaceDataStorageLocalFolderManifestUpdate,
+    ),
+    WorkspaceDataStorageLocalFileManifestUpdate(
+        TestbedEventWorkspaceDataStorageLocalFileManifestUpdate,
+    ),
+    WorkspaceDataStorageFetchRealmCheckpoint(TestbedEventWorkspaceDataStorageFetchRealmCheckpoint),
 }
 
 impl CrcHash for TestbedEvent {
@@ -173,14 +190,24 @@ impl CrcHash for TestbedEvent {
             TestbedEvent::StartRealmReencryption(x) => x.crc_hash(hasher),
             TestbedEvent::FinishRealmReencryption(x) => x.crc_hash(hasher),
             TestbedEvent::CreateOrUpdateUserManifestVlob(x) => x.crc_hash(hasher),
+            TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(x) => x.crc_hash(hasher),
+            TestbedEvent::CreateOrUpdateFileManifestVlob(x) => x.crc_hash(hasher),
+            TestbedEvent::CreateOrUpdateFolderManifestVlob(x) => x.crc_hash(hasher),
             TestbedEvent::CreateOrUpdateOpaqueVlob(x) => x.crc_hash(hasher),
+            TestbedEvent::CreateBlock(x) => x.crc_hash(hasher),
             TestbedEvent::CreateOpaqueBlock(x) => x.crc_hash(hasher),
             TestbedEvent::CertificatesStorageFetchCertificates(x) => x.crc_hash(hasher),
             TestbedEvent::UserStorageFetchUserVlob(x) => x.crc_hash(hasher),
+            TestbedEvent::UserStorageFetchRealmCheckpoint(x) => x.crc_hash(hasher),
             TestbedEvent::UserStorageLocalUpdate(x) => x.crc_hash(hasher),
-            TestbedEvent::WokspaceStorageFetchVlob(x) => x.crc_hash(hasher),
-            TestbedEvent::WokspaceStorageFetchBlock(x) => x.crc_hash(hasher),
-            TestbedEvent::WorkspaceStorageLocalUpdate(x) => x.crc_hash(hasher),
+            TestbedEvent::WorkspaceDataStorageFetchWorkspaceVlob(x) => x.crc_hash(hasher),
+            TestbedEvent::WorkspaceDataStorageFetchFileVlob(x) => x.crc_hash(hasher),
+            TestbedEvent::WorkspaceDataStorageFetchFolderVlob(x) => x.crc_hash(hasher),
+            TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(x) => x.crc_hash(hasher),
+            TestbedEvent::WorkspaceCacheStorageFetchBlock(x) => x.crc_hash(hasher),
+            TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(x) => x.crc_hash(hasher),
+            TestbedEvent::WorkspaceDataStorageLocalFolderManifestUpdate(x) => x.crc_hash(hasher),
+            TestbedEvent::WorkspaceDataStorageLocalFileManifestUpdate(x) => x.crc_hash(hasher),
         }
     }
 }
@@ -1096,7 +1123,7 @@ impl TestbedEventShareRealm {
         // 1) Consistency checks
 
         utils::assert_organization_bootstrapped(&builder.events);
-        let author = utils::non_revoked_realm_owners(&builder.events, &realm)
+        let author = utils::non_revoked_realm_owners(&builder.events, realm)
             .find(|author| author.user_id() != &user)
             .expect("No author available (realm with a single owner ?)")
             .to_owned();
@@ -1215,8 +1242,8 @@ impl TestbedEventStartRealmReencryption {
 
         utils::assert_organization_bootstrapped(&builder.events);
         let current_encryption_revision =
-            utils::assert_realm_exists_and_not_under_reencryption(&builder.events, &realm);
-        let author = utils::non_revoked_realm_owners(&builder.events, &realm)
+            utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
+        let author = utils::non_revoked_realm_owners(&builder.events, realm)
             .next()
             .expect("At least one owner must exists")
             .to_owned();
@@ -1240,8 +1267,8 @@ impl TestbedEventStartRealmReencryption {
     ) -> TestbedEventStartRealmReencryptionPerParticipantMessage {
         let populate = || {
             let author_signkey = template.device_signing_key(&self.author);
-            let items = utils::non_revoked_realm_members(&template.events, &self.realm)
-                .map(|recipient| {
+            let items = utils::non_revoked_realm_members(&template.events, self.realm)
+                .map(|(recipient, _)| {
                     let message = Arc::new(MessageContent::SharingReencrypted {
                         author: self.author.clone(),
                         timestamp: self.timestamp,
@@ -1289,7 +1316,7 @@ impl TestbedEventFinishRealmReencryption {
         utils::assert_organization_bootstrapped(&builder.events);
         let encryption_revision =
             utils::assert_realm_exists_and_under_reencryption(&builder.events, &realm);
-        let author = utils::non_revoked_realm_owners(&builder.events, &realm)
+        let author = utils::non_revoked_realm_owners(&builder.events, realm)
             .next()
             .expect("At least one owner must exists")
             .to_owned();
@@ -1310,7 +1337,7 @@ impl TestbedEventFinishRealmReencryption {
  */
 
 #[derive(Clone)]
-pub struct TestbedEventCreateOrUpdateUserManifestCacheVlob {
+pub struct TestbedEventCreateOrUpdateVlobCache {
     pub signed: Bytes,
     pub encrypted: Bytes,
 }
@@ -1318,7 +1345,7 @@ pub struct TestbedEventCreateOrUpdateUserManifestCacheVlob {
 #[derive(Clone)]
 pub struct TestbedEventCreateOrUpdateUserManifestVlob {
     pub manifest: Arc<UserManifest>,
-    cache: Arc<Mutex<TestbedEventCacheEntry<TestbedEventCreateOrUpdateUserManifestCacheVlob>>>,
+    cache: Arc<Mutex<TestbedEventCacheEntry<TestbedEventCreateOrUpdateVlobCache>>>,
 }
 
 impl_event_debug!(
@@ -1327,49 +1354,9 @@ impl_event_debug!(
 );
 
 impl CrcHash for TestbedEventCreateOrUpdateUserManifestVlob {
-    fn crc_hash(&self, state: &mut crc32fast::Hasher) {
-        "TestbedEventCreateOrUpdateUserManifestVlob".crc_hash(state);
-
-        // Use exhaustive destructuring here to ensure this will fail whenever
-        // a new field is added to the manifest type
-        let UserManifest {
-            author,
-            timestamp,
-            id,
-            version,
-            created,
-            updated,
-            last_processed_message,
-            workspaces,
-        } = &*self.manifest;
-
-        author.crc_hash(state);
-        timestamp.crc_hash(state);
-        id.crc_hash(state);
-        version.crc_hash(state);
-        created.crc_hash(state);
-        updated.crc_hash(state);
-        last_processed_message.crc_hash(state);
-
-        for entry in workspaces {
-            let WorkspaceEntry {
-                id,
-                name,
-                key,
-                encryption_revision,
-                encrypted_on,
-                legacy_role_cache_timestamp,
-                legacy_role_cache_value,
-            } = entry;
-
-            id.crc_hash(state);
-            name.crc_hash(state);
-            key.crc_hash(state);
-            encryption_revision.crc_hash(state);
-            encrypted_on.crc_hash(state);
-            legacy_role_cache_timestamp.crc_hash(state);
-            legacy_role_cache_value.crc_hash(state);
-        }
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        "TestbedEventCreateOrUpdateUserManifestVlob".crc_hash(hasher);
+        self.manifest.crc_hash(hasher);
     }
 }
 
@@ -1396,7 +1383,8 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
                 _ => None,
             })
             .expect("User doesn't exist");
-        utils::assert_realm_exists_and_not_under_reencryption(&builder.events, &id.into());
+        utils::assert_realm_exists_and_not_under_reencryption(&builder.events, id.into());
+        utils::assert_realm_member_has_write_access(&builder.events, id.into(), &user);
 
         // 2) Actual creation
 
@@ -1447,7 +1435,7 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
         self.cache(template).encrypted
     }
 
-    fn cache(&self, template: &TestbedTemplate) -> TestbedEventCreateOrUpdateUserManifestCacheVlob {
+    fn cache(&self, template: &TestbedTemplate) -> TestbedEventCreateOrUpdateVlobCache {
         let populate = || {
             let author_signkey = template.device_signing_key(&self.manifest.author);
             let local_symkey = template.device_local_symkey(&self.manifest.author);
@@ -1455,7 +1443,365 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
             let signed: Bytes = self.manifest.dump_and_sign(author_signkey).into();
             let encrypted = local_symkey.encrypt(&signed).into();
 
-            TestbedEventCreateOrUpdateUserManifestCacheVlob { signed, encrypted }
+            TestbedEventCreateOrUpdateVlobCache { signed, encrypted }
+        };
+        let mut guard = self.cache.lock().expect("Mutex is poisoned");
+        guard.populated(populate).to_owned()
+    }
+}
+
+/*
+ * TestbedEventCreateOrUpdateWorkspaceManifestVlob
+ */
+
+#[derive(Clone)]
+pub struct TestbedEventCreateOrUpdateWorkspaceManifestVlob {
+    pub manifest: Arc<WorkspaceManifest>,
+    cache: Arc<Mutex<TestbedEventCacheEntry<TestbedEventCreateOrUpdateVlobCache>>>,
+}
+
+impl_event_debug!(
+    TestbedEventCreateOrUpdateWorkspaceManifestVlob,
+    [manifest: Arc<WorkspaceManifest>]
+);
+
+impl CrcHash for TestbedEventCreateOrUpdateWorkspaceManifestVlob {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        "TestbedEventCreateOrUpdateWorkspaceManifestVlob".crc_hash(hasher);
+        self.manifest.crc_hash(hasher);
+    }
+}
+
+impl TestbedEventCreateOrUpdateWorkspaceManifestVlob {
+    pub(super) fn from_builder(
+        builder: &mut TestbedTemplateBuilder,
+        author: DeviceID,
+        realm: RealmID,
+    ) -> Self {
+        // 1) Consistency checks
+
+        utils::assert_organization_bootstrapped(&builder.events);
+        utils::assert_device_exists_and_not_revoked(&builder.events, &author);
+        utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
+        utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
+
+        // 2) Actual creation
+
+        let id = realm.into();
+
+        let (version, children) = builder
+            .events
+            .iter()
+            .rev()
+            .find_map(|e| match e {
+                TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(x) if x.manifest.id == id => {
+                    Some((x.manifest.version + 1, x.manifest.children.to_owned()))
+                }
+                TestbedEvent::CreateOrUpdateOpaqueVlob(x)
+                    if x.vlob_id == id.into() =>
+                {
+                    // A given VlobID can only be part of a single realm
+                    assert_eq!(realm, x.realm, "VlobID {} is part of realm {}, not {}", id, x.realm, realm);
+                    Some((x.version + 1, HashMap::new()))
+                }
+                // Try to detect common mistake in testbed env definition
+                TestbedEvent::CreateOrUpdateFileManifestVlob(x)
+                    if x.manifest.id == id
+                => panic!("Expected vlob {} to be a workspace, but it previous version contains file manifest !", id),
+                TestbedEvent::CreateOrUpdateFolderManifestVlob(x)
+                    if x.manifest.id == id
+                => panic!("Expected vlob {} to be a workspace, but it previous version contains folder manifest !", id),
+                _ => None,
+            })
+            // Manifest doesn't exist yet, we create it then !
+            .unwrap_or_else(|| (1, HashMap::new()));
+
+        let timestamp = builder.counters.next_timestamp();
+        Self {
+            manifest: Arc::new(WorkspaceManifest {
+                timestamp,
+                author,
+                id,
+                version,
+                created: timestamp,
+                updated: timestamp,
+                children,
+            }),
+            cache: Arc::default(),
+        }
+    }
+
+    pub fn signed(&self, template: &TestbedTemplate) -> Bytes {
+        self.cache(template).signed
+    }
+
+    pub fn encrypted(&self, template: &TestbedTemplate) -> Bytes {
+        self.cache(template).encrypted
+    }
+
+    fn cache(&self, template: &TestbedTemplate) -> TestbedEventCreateOrUpdateVlobCache {
+        let populate = || {
+            let author_signkey = template.device_signing_key(&self.manifest.author);
+            let local_symkey = template.device_local_symkey(&self.manifest.author);
+
+            let signed: Bytes = self.manifest.dump_and_sign(author_signkey).into();
+            let encrypted = local_symkey.encrypt(&signed).into();
+
+            TestbedEventCreateOrUpdateVlobCache { signed, encrypted }
+        };
+        let mut guard = self.cache.lock().expect("Mutex is poisoned");
+        guard.populated(populate).to_owned()
+    }
+}
+
+/*
+ * TestbedEventCreateOrUpdateFolderManifestVlob
+ */
+
+#[derive(Clone)]
+pub struct TestbedEventCreateOrUpdateFolderManifestVlob {
+    pub realm: RealmID,
+    pub manifest: Arc<FolderManifest>,
+    cache: Arc<Mutex<TestbedEventCacheEntry<TestbedEventCreateOrUpdateVlobCache>>>,
+}
+
+impl_event_debug!(
+    TestbedEventCreateOrUpdateFolderManifestVlob,
+    [realm: RealmID, manifest: Arc<FolderManifest>]
+);
+
+impl CrcHash for TestbedEventCreateOrUpdateFolderManifestVlob {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        "TestbedEventCreateOrUpdateFolderManifestVlob".crc_hash(hasher);
+        self.manifest.crc_hash(hasher);
+    }
+}
+
+impl TestbedEventCreateOrUpdateFolderManifestVlob {
+    pub(super) fn from_builder(
+        builder: &mut TestbedTemplateBuilder,
+        author: DeviceID,
+        realm: RealmID,
+        vlob: Option<VlobID>,
+    ) -> Self {
+        let vlob = vlob.unwrap_or_else(|| builder.counters.next_entry_id().into());
+
+        // 1) Consistency checks
+
+        utils::assert_organization_bootstrapped(&builder.events);
+        utils::assert_device_exists_and_not_revoked(&builder.events, &author);
+        utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
+        utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
+
+        // 2) Actual creation
+
+        let (version, parent, children) = builder
+            .events
+            .iter()
+            .rev()
+            .find_map(|e| match e {
+                TestbedEvent::CreateOrUpdateFolderManifestVlob(x)
+                    if x.manifest.id == vlob.into() =>
+                {
+                    // A given VlobID can only be part of a single realm
+                    assert_eq!(realm, x.realm, "VlobID {} is part of realm {}, not {}", vlob, x.realm, realm);
+                    Some((
+                        x.manifest.version + 1,
+                        x.manifest.parent,
+                        x.manifest.children.to_owned(),
+                    ))
+                }
+                TestbedEvent::CreateOrUpdateOpaqueVlob(x)
+                    if x.vlob_id == vlob =>
+                {
+                    // A given VlobID can only be part of a single realm
+                    assert_eq!(realm, x.realm, "VlobID {} is part of realm {}, not {}", vlob, x.realm, realm);
+                    // Cannot read opaque vlob, so use default values instead
+                    Some((x.version + 1, realm.into(), HashMap::new()))
+                }
+                // Try to detect common mistake in testbed env definition
+                TestbedEvent::CreateOrUpdateFileManifestVlob(x)
+                    if x.manifest.id == vlob.into()
+                => panic!("Expected vlob {} to be a folder, but it previous version contains file manifest !", vlob),
+                TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(x)
+                    if x.manifest.id == vlob.into()
+                => panic!("Expected vlob {} to be a folder, but it previous version contains workspace manifest !", vlob),
+                _ => None,
+            })
+            // Manifest doesn't exist yet, we create it then !
+            // (note we use the workspace manifest as parent of our manifest)
+            .unwrap_or_else(|| (1, realm.into(), HashMap::new()));
+
+        let timestamp = builder.counters.next_timestamp();
+        Self {
+            realm,
+            manifest: Arc::new(FolderManifest {
+                timestamp,
+                author,
+                id: vlob.into(),
+                parent,
+                version,
+                created: timestamp,
+                updated: timestamp,
+                children,
+            }),
+            cache: Arc::default(),
+        }
+    }
+
+    pub fn signed(&self, template: &TestbedTemplate) -> Bytes {
+        self.cache(template).signed
+    }
+
+    pub fn encrypted(&self, template: &TestbedTemplate) -> Bytes {
+        self.cache(template).encrypted
+    }
+
+    fn cache(&self, template: &TestbedTemplate) -> TestbedEventCreateOrUpdateVlobCache {
+        let populate = || {
+            let author_signkey = template.device_signing_key(&self.manifest.author);
+            let local_symkey = template.device_local_symkey(&self.manifest.author);
+
+            let signed: Bytes = self.manifest.dump_and_sign(author_signkey).into();
+            let encrypted = local_symkey.encrypt(&signed).into();
+
+            TestbedEventCreateOrUpdateVlobCache { signed, encrypted }
+        };
+        let mut guard = self.cache.lock().expect("Mutex is poisoned");
+        guard.populated(populate).to_owned()
+    }
+}
+
+/*
+ * TestbedEventCreateOrUpdateFileManifestVlob
+ */
+
+#[derive(Clone)]
+pub struct TestbedEventCreateOrUpdateFileManifestVlob {
+    pub realm: RealmID,
+    pub manifest: Arc<FileManifest>,
+    cache: Arc<Mutex<TestbedEventCacheEntry<TestbedEventCreateOrUpdateVlobCache>>>,
+}
+
+impl_event_debug!(
+    TestbedEventCreateOrUpdateFileManifestVlob,
+    [realm: RealmID, manifest: Arc<FileManifest>]
+);
+
+impl CrcHash for TestbedEventCreateOrUpdateFileManifestVlob {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        "TestbedEventCreateOrUpdateFileManifestVlob".crc_hash(hasher);
+        self.manifest.crc_hash(hasher);
+    }
+}
+
+impl TestbedEventCreateOrUpdateFileManifestVlob {
+    pub(super) fn from_builder(
+        builder: &mut TestbedTemplateBuilder,
+        author: DeviceID,
+        realm: RealmID,
+        vlob: Option<VlobID>,
+    ) -> Self {
+        let vlob = vlob.unwrap_or_else(|| builder.counters.next_entry_id().into());
+
+        // 1) Consistency checks
+
+        utils::assert_organization_bootstrapped(&builder.events);
+        utils::assert_device_exists_and_not_revoked(&builder.events, &author);
+        utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
+        utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
+
+        // 2) Actual creation
+
+        let (version, parent, blocksize, size, blocks) = builder
+            .events
+            .iter()
+            .rev()
+            .find_map(|e| match e {
+                TestbedEvent::CreateOrUpdateFileManifestVlob(x)
+                    if x.manifest.id == vlob.into() =>
+                {
+                    // A given VlobID can only be part of a single realm
+                    assert_eq!(realm, x.realm, "VlobID {} is part of realm {}, not {}", vlob, x.realm, realm);
+                    Some((
+                        x.manifest.version + 1,
+                        x.manifest.parent,
+                        x.manifest.blocksize,
+                        x.manifest.size,
+                        x.manifest.blocks.clone(),
+                    ))
+                }
+                TestbedEvent::CreateOrUpdateOpaqueVlob(x)
+                    if x.vlob_id == vlob =>
+                {
+                    // A given VlobID can only be part of a single realm
+                    assert_eq!(realm, x.realm, "VlobID {} is part of realm {}, not {}", vlob, x.realm, realm);
+                    // Cannot read opaque vlob, so use default values instead
+                    Some((
+                        x.version + 1,
+                        realm.into(),
+                        Blocksize::try_from(512).expect("valid blocksize"),
+                        0,
+                        vec![],
+                    ))
+                }
+                // Try to detect common mistake in testbed env definition
+                TestbedEvent::CreateOrUpdateFolderManifestVlob(x)
+                    if x.manifest.id == vlob.into()
+                => panic!("Expected vlob {} to be a file, but it previous version contains folder manifest !", vlob),
+                TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(x)
+                    if x.manifest.id == vlob.into()
+                => panic!("Expected vlob {} to be a file, but it previous version contains workspace manifest !", vlob),
+                _ => None,
+            })
+            // Manifest doesn't exist yet, we create it then !
+            // (note we use the workspace manifest as parent of our manifest)
+            .unwrap_or_else(|| {
+                (
+                    1,
+                    realm.into(),
+                    Blocksize::try_from(512).expect("valid blocksize"),
+                    0,
+                    vec![],
+                )
+            });
+
+        let timestamp = builder.counters.next_timestamp();
+        Self {
+            realm,
+            manifest: Arc::new(FileManifest {
+                timestamp,
+                author,
+                id: vlob.into(),
+                parent,
+                version,
+                created: timestamp,
+                updated: timestamp,
+                size,
+                blocksize,
+                blocks,
+            }),
+            cache: Arc::default(),
+        }
+    }
+
+    pub fn signed(&self, template: &TestbedTemplate) -> Bytes {
+        self.cache(template).signed
+    }
+
+    pub fn encrypted(&self, template: &TestbedTemplate) -> Bytes {
+        self.cache(template).encrypted
+    }
+
+    fn cache(&self, template: &TestbedTemplate) -> TestbedEventCreateOrUpdateVlobCache {
+        let populate = || {
+            let author_signkey = template.device_signing_key(&self.manifest.author);
+            let local_symkey = template.device_local_symkey(&self.manifest.author);
+
+            let signed: Bytes = self.manifest.dump_and_sign(author_signkey).into();
+            let encrypted = local_symkey.encrypt(&signed).into();
+
+            TestbedEventCreateOrUpdateVlobCache { signed, encrypted }
         };
         let mut guard = self.cache.lock().expect("Mutex is poisoned");
         guard.populated(populate).to_owned()
@@ -1482,6 +1828,56 @@ no_certificate_event!(
 );
 
 /*
+ * TestbedEventCreateBlock
+ */
+
+no_certificate_event!(
+    TestbedEventCreateBlock,
+    [
+        timestamp: DateTime,
+        author: DeviceID,
+        realm: RealmID,
+        block_id: BlockID,
+        block_key: SecretKey,
+        cleartext_block: Bytes,
+        encrypted_block: Bytes,
+    ]
+);
+
+impl TestbedEventCreateBlock {
+    pub(super) fn from_builder(
+        builder: &mut TestbedTemplateBuilder,
+        author: DeviceID,
+        realm: RealmID,
+        cleartext_block: Bytes,
+    ) -> Self {
+        // 1) Consistency checks
+
+        utils::assert_organization_bootstrapped(&builder.events);
+        utils::assert_device_exists_and_not_revoked(&builder.events, &author);
+        utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
+        utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
+
+        // 2) Actual creation
+
+        let block_id = BlockID::from(*builder.counters.next_entry_id());
+        let block_key = builder.counters.next_secret_key();
+        let encrypted_block = block_key.encrypt(&cleartext_block).into();
+
+        let timestamp = builder.counters.next_timestamp();
+        Self {
+            timestamp,
+            author,
+            realm,
+            block_id,
+            block_key,
+            cleartext_block,
+            encrypted_block,
+        }
+    }
+}
+
+/*
  * TestbedEventCreateOpaqueBlock
  */
 
@@ -1492,9 +1888,37 @@ no_certificate_event!(
         author: DeviceID,
         realm: RealmID,
         block_id: BlockID,
-        block: Vec<u8>,
+        encrypted_block: Bytes,
     ]
 );
+
+impl TestbedEventCreateOpaqueBlock {
+    pub(super) fn from_builder(
+        builder: &mut TestbedTemplateBuilder,
+        author: DeviceID,
+        realm: RealmID,
+        block_id: BlockID,
+        encrypted_block: Bytes,
+    ) -> Self {
+        // 1) Consistency checks
+
+        utils::assert_organization_bootstrapped(&builder.events);
+        utils::assert_device_exists_and_not_revoked(&builder.events, &author);
+        utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
+        utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
+
+        // 2) Actual creation
+
+        let timestamp = builder.counters.next_timestamp();
+        Self {
+            timestamp,
+            author,
+            realm,
+            block_id,
+            encrypted_block,
+        }
+    }
+}
 
 /*
  * TestbedEventCertificatesStorageFetchCertificates
@@ -1529,11 +1953,7 @@ impl TestbedEventCertificatesStorageFetchCertificates {
 
 no_certificate_event!(
     TestbedEventUserStorageFetchUserVlob,
-    [
-        device: DeviceID,
-        realm_checkpoint: IndexInt,
-        local_user_manifest: Arc<LocalUserManifest>
-    ]
+    [device: DeviceID, local_manifest: Arc<LocalUserManifest>]
 );
 
 impl TestbedEventUserStorageFetchUserVlob {
@@ -1561,7 +1981,7 @@ impl TestbedEventUserStorageFetchUserVlob {
             })
             .expect("User existence already checked");
 
-        let local_user_manifest = builder.events.iter().rev().find_map(|e| match e {
+        let local_manifest = builder.events.iter().rev().find_map(|e| match e {
             TestbedEvent::CreateOrUpdateUserManifestVlob(x) if x.manifest.id == user_manifest_id && x.manifest.author.user_id() == device.user_id() => {
                 Some(Arc::new(LocalUserManifest::from_remote((*x.manifest).clone())))
             }
@@ -1571,15 +1991,66 @@ impl TestbedEventUserStorageFetchUserVlob {
             _ => None,
         }).unwrap_or_else( || panic!("User manifest has never been synced for user {}", device.user_id()) );
 
-        let realm_checkpoint = builder.events.iter().fold(0, |acc, e| match e {
+        // 2) Actual creation
+
+        Self {
+            device,
+            local_manifest,
+        }
+    }
+}
+
+/*
+ * TestbedEventUserStorageFetchRealmCheckpoint
+ */
+
+no_certificate_event!(
+    TestbedEventUserStorageFetchRealmCheckpoint,
+    [
+        device: DeviceID,
+        checkpoint: IndexInt,
+        remote_user_manifest_version: Option<VersionInt>,
+    ]
+);
+
+impl TestbedEventUserStorageFetchRealmCheckpoint {
+    pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, device: DeviceID) -> Self {
+        // 1) Consistency checks
+
+        utils::assert_organization_bootstrapped(&builder.events);
+        // We don't care that the user is revoked here given we don't modify
+        // anything in the server
+        utils::assert_device_exists(&builder.events, &device);
+
+        let user_manifest_id = builder
+            .events
+            .iter()
+            .find_map(|e| match e {
+                TestbedEvent::BootstrapOrganization(x)
+                    if x.first_user_device_id.user_id() == device.user_id() =>
+                {
+                    Some(x.first_user_user_manifest_id)
+                }
+                TestbedEvent::NewUser(x) if x.device_id.user_id() == device.user_id() => {
+                    Some(x.user_manifest_id)
+                }
+                _ => None,
+            })
+            .expect("User existence already checked");
+
+        let mut remote_user_manifest_version = None;
+
+        let checkpoint = builder.events.iter().fold(0, |acc, e| match e {
             TestbedEvent::CreateOrUpdateUserManifestVlob(x)
                 if x.manifest.author.user_id() == device.user_id() =>
             {
+                remote_user_manifest_version = Some(x.manifest.version);
                 acc + 1
             }
-            TestbedEvent::CreateOrUpdateOpaqueVlob(x)
-                if x.realm == user_manifest_id.into() && x.vlob_id == user_manifest_id.into() =>
-            {
+            TestbedEvent::CreateOrUpdateOpaqueVlob(x) if x.realm == user_manifest_id.into() => {
+                if x.vlob_id == user_manifest_id.into() {
+                    remote_user_manifest_version = Some(x.version);
+                }
                 acc + 1
             }
             _ => acc,
@@ -1589,8 +2060,8 @@ impl TestbedEventUserStorageFetchUserVlob {
 
         Self {
             device,
-            realm_checkpoint,
-            local_user_manifest,
+            checkpoint,
+            remote_user_manifest_version,
         }
     }
 }
@@ -1604,7 +2075,7 @@ no_certificate_event!(
     [
         timestamp: DateTime,
         device: DeviceID,
-        local_user_manifest: Arc<LocalUserManifest>
+        local_manifest: Arc<LocalUserManifest>
     ]
 );
 
@@ -1619,17 +2090,17 @@ impl TestbedEventUserStorageLocalUpdate {
 
         let timestamp = builder.counters.next_timestamp();
 
-        let local_user_manifest = builder
+        let local_manifest = builder
             .events
             .iter()
             .rev()
             .find_map(|e| {
                 match e {
                     TestbedEvent::UserStorageFetchUserVlob(x) if x.device == device => {
-                        Some(x.local_user_manifest.clone())
+                        Some(x.local_manifest.clone())
                     }
                     TestbedEvent::UserStorageLocalUpdate(x) if x.device == device => {
-                        Some(x.local_user_manifest.clone())
+                        Some(x.local_manifest.clone())
                     }
                     _ => None,
                 }
@@ -1672,45 +2143,547 @@ impl TestbedEventUserStorageLocalUpdate {
         Self {
             timestamp,
             device,
-            local_user_manifest,
+            local_manifest,
         }
     }
 }
 
 /*
- * TestbedEventWokspaceStorageFetchVlob
+ * TestbedEventWorkspaceDataStorageFetchWorkspaceVlob
  */
 
 no_certificate_event!(
-    TestbedEventWokspaceStorageFetchVlob,
+    TestbedEventWorkspaceDataStorageFetchWorkspaceVlob,
     [
         device: DeviceID,
-        workspace: RealmID,
-        vlob: VlobID,
-        version: VersionInt,
+        realm: RealmID,
+        local_manifest: Arc<LocalWorkspaceManifest>
     ]
 );
 
+impl TestbedEventWorkspaceDataStorageFetchWorkspaceVlob {
+    pub(super) fn from_builder(
+        builder: &mut TestbedTemplateBuilder,
+        device: DeviceID,
+        realm: RealmID,
+        prevent_sync_pattern: Option<Regex>,
+    ) -> Self {
+        let prevent_sync_pattern =
+            prevent_sync_pattern.unwrap_or_else(|| Regex::from_regex_str("").unwrap());
+
+        // 1) Consistency checks
+
+        utils::assert_organization_bootstrapped(&builder.events);
+        // We don't care that the user is revoked here given we don't modify
+        // anything in the server
+        utils::assert_device_exists(&builder.events, &device);
+        utils::assert_realm_exists(&builder.events, realm);
+        utils::assert_realm_member_has_read_access(&builder.events, realm, device.user_id());
+
+        let local_manifest = builder.events.iter().rev().find_map(|e| match e {
+            TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(x)
+                if x.manifest.id == realm.into() => {
+                Some(Arc::new(LocalWorkspaceManifest::from_remote(
+                    (*x.manifest).clone(),
+                    &prevent_sync_pattern,
+                )))
+            }
+            TestbedEvent::CreateOrUpdateOpaqueVlob(x)
+                if x.realm == realm && x.vlob_id == VlobID::from(*realm) => {
+                panic!("Last workspace vlob create/update for realm {} is opaque, cannot deduce what to put in the local user storage !", realm);
+            }
+            _ => None,
+        }).unwrap_or_else( || panic!("Workspace manifest has never been synced for realm {}", realm) );
+
+        // 2) Actual creation
+
+        Self {
+            device,
+            realm,
+            local_manifest,
+        }
+    }
+}
+
 /*
- * TestbedEventWokspaceStorageFetchBlock
+ * TestbedEventWorkspaceDataStorageFetchFolderVlob
  */
 
 no_certificate_event!(
-    TestbedEventWokspaceStorageFetchBlock,
-    [device: DeviceID, workspace: RealmID, block: BlockID,]
+    TestbedEventWorkspaceDataStorageFetchFolderVlob,
+    [
+        device: DeviceID,
+        realm: RealmID,
+        local_manifest: Arc<LocalFolderManifest>
+    ]
 );
 
+impl TestbedEventWorkspaceDataStorageFetchFolderVlob {
+    pub(super) fn from_builder(
+        builder: &mut TestbedTemplateBuilder,
+        device: DeviceID,
+        realm: RealmID,
+        vlob: VlobID,
+        prevent_sync_pattern: Option<Regex>,
+    ) -> Self {
+        let prevent_sync_pattern =
+            prevent_sync_pattern.unwrap_or_else(|| Regex::from_regex_str("").unwrap());
+
+        // 1) Consistency checks
+
+        utils::assert_organization_bootstrapped(&builder.events);
+        // We don't care that the user is revoked here given we don't modify
+        // anything in the server
+        utils::assert_device_exists(&builder.events, &device);
+        utils::assert_realm_exists(&builder.events, realm);
+        utils::assert_realm_member_has_read_access(&builder.events, realm, device.user_id());
+
+        let local_manifest = builder.events.iter().rev().find_map(|e| match e {
+            TestbedEvent::CreateOrUpdateFolderManifestVlob(x)
+                if x.realm == realm && x.manifest.id == vlob.into() => {
+                Some(Arc::new(LocalFolderManifest::from_remote(
+                    (*x.manifest).clone(),
+                    &prevent_sync_pattern,
+                )))
+            }
+            TestbedEvent::CreateOrUpdateOpaqueVlob(x)
+                if x.realm == realm && x.vlob_id == vlob => {
+                panic!("Last Folder vlob create/update for realm {} is opaque, cannot deduce what to put in the local user storage !", realm);
+            }
+            TestbedEvent::CreateOrUpdateFileManifestVlob(x)
+                if x.realm == realm && x.manifest.id == vlob.into() => {
+                panic!("Try to fetch realm {} vlob {} as folder, but it is a file !", realm, vlob);
+            }
+            _ => None,
+        }).unwrap_or_else( || panic!("Folder manifest has never been synced for realm {} vlob {}", realm, vlob) );
+
+        // 2) Actual creation
+
+        Self {
+            device,
+            realm,
+            local_manifest,
+        }
+    }
+}
+
 /*
- * TestbedEventWorkspaceStorageLocalUpdate
+ * TestbedEventWorkspaceDataStorageFetchFileVlob
  */
 
 no_certificate_event!(
-    TestbedEventWorkspaceStorageLocalUpdate,
+    TestbedEventWorkspaceDataStorageFetchFileVlob,
+    [
+        device: DeviceID,
+        realm: RealmID,
+        local_manifest: Arc<LocalFileManifest>
+    ]
+);
+
+impl TestbedEventWorkspaceDataStorageFetchFileVlob {
+    pub(super) fn from_builder(
+        builder: &mut TestbedTemplateBuilder,
+        device: DeviceID,
+        realm: RealmID,
+        vlob: VlobID,
+    ) -> Self {
+        // 1) Consistency checks
+
+        utils::assert_organization_bootstrapped(&builder.events);
+        // We don't care that the user is revoked here given we don't modify
+        // anything in the server
+        utils::assert_device_exists(&builder.events, &device);
+        utils::assert_realm_exists(&builder.events, realm);
+        utils::assert_realm_member_has_read_access(&builder.events, realm, device.user_id());
+
+        let local_manifest = builder.events.iter().rev().find_map(|e| match e {
+            TestbedEvent::CreateOrUpdateFileManifestVlob(x)
+                if x.realm == realm && x.manifest.id == vlob.into() => {
+                Some(Arc::new(LocalFileManifest::from_remote(
+                    (*x.manifest).clone(),
+                )))
+            }
+            TestbedEvent::CreateOrUpdateOpaqueVlob(x)
+                if x.realm == realm && x.vlob_id == vlob => {
+                panic!("Last File vlob create/update for realm {} is opaque, cannot deduce what to put in the local user storage !", realm);
+            }
+            TestbedEvent::CreateOrUpdateFolderManifestVlob(x)
+                if x.realm == realm && x.manifest.id == vlob.into() => {
+                panic!("Try to fetch realm {} vlob {} as file, but it is a folder !", realm, vlob);
+            }
+            _ => None,
+        }).unwrap_or_else( || panic!("File manifest has never been synced for realm {} vlob {}", realm, vlob) );
+
+        // 2) Actual creation
+
+        Self {
+            device,
+            realm,
+            local_manifest,
+        }
+    }
+}
+
+/*
+ * TestbedEventWorkspaceDataStorageFetchRealmCheckpoint
+ */
+
+no_certificate_event!(
+    TestbedEventWorkspaceDataStorageFetchRealmCheckpoint,
+    [
+        device: DeviceID,
+        realm: RealmID,
+        checkpoint: IndexInt,
+        changed_vlobs: Vec<(EntryID, VersionInt)>,
+    ]
+);
+
+impl TestbedEventWorkspaceDataStorageFetchRealmCheckpoint {
+    pub(super) fn from_builder(
+        builder: &mut TestbedTemplateBuilder,
+        device: DeviceID,
+        realm: RealmID,
+    ) -> Self {
+        // 1) Consistency checks
+
+        utils::assert_organization_bootstrapped(&builder.events);
+        // We don't care that the user is revoked here given we don't modify
+        // anything in the server
+        utils::assert_device_exists(&builder.events, &device);
+        utils::assert_realm_exists(&builder.events, realm);
+        utils::assert_realm_member_has_read_access(&builder.events, realm, device.user_id());
+
+        let mut changed_vlobs = vec![];
+        let mut insert_change = |id, version| {
+            for (cid, cv) in &mut changed_vlobs {
+                if *cid == id {
+                    *cv = version;
+                    return;
+                }
+            }
+            changed_vlobs.push((id, version));
+        };
+
+        let checkpoint = builder.events.iter().fold(0, |acc, e| match e {
+            TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(x)
+                if x.manifest.id == realm.into() =>
+            {
+                insert_change(x.manifest.id, x.manifest.version);
+                acc + 1
+            }
+            TestbedEvent::CreateOrUpdateFileManifestVlob(x) if x.realm == realm => {
+                insert_change(x.manifest.id, x.manifest.version);
+                acc + 1
+            }
+            TestbedEvent::CreateOrUpdateFolderManifestVlob(x) if x.realm == realm => {
+                insert_change(x.manifest.id, x.manifest.version);
+                acc + 1
+            }
+            TestbedEvent::CreateOrUpdateOpaqueVlob(x) if x.realm == realm => {
+                insert_change(x.vlob_id.into(), x.version);
+                acc + 1
+            }
+            _ => acc,
+        });
+
+        // 2) Actual creation
+
+        Self {
+            device,
+            realm,
+            checkpoint,
+            changed_vlobs,
+        }
+    }
+}
+
+/*
+ * TestbedEventWorkspaceCacheStorageFetchBlock
+ */
+
+no_certificate_event!(
+    TestbedEventWorkspaceCacheStorageFetchBlock,
+    [
+        device: DeviceID,
+        realm: RealmID,
+        block_id: BlockID,
+        cleartext_block: Bytes,
+    ]
+);
+
+impl TestbedEventWorkspaceCacheStorageFetchBlock {
+    pub(super) fn from_builder(
+        builder: &mut TestbedTemplateBuilder,
+        device: DeviceID,
+        realm: RealmID,
+        block: BlockID,
+    ) -> Self {
+        // 1) Consistency checks
+
+        utils::assert_organization_bootstrapped(&builder.events);
+        // We don't care that the user is revoked here given we don't modify
+        // anything in the server
+        utils::assert_device_exists(&builder.events, &device);
+        utils::assert_realm_exists(&builder.events, realm);
+        utils::assert_realm_member_has_read_access(&builder.events, realm, device.user_id());
+
+        let cleartext_block = builder.events.iter().rev().find_map(|e| match e {
+            TestbedEvent::CreateOpaqueBlock(x) if x.realm == realm && x.block_id == block => {
+                panic!("Block {} is opaque, cannot deduce what to put in the local workspace data storage !", block);
+            }
+            TestbedEvent::CreateBlock(x) if x.realm == realm && x.block_id == block => {
+                Some(x.cleartext_block.clone())
+            }
+            _ => None,
+        }).unwrap_or_else( || panic!("Block {} doesn't exist", block));
+
+        // 2) Actual creation
+
+        Self {
+            device,
+            realm,
+            block_id: block,
+            cleartext_block,
+        }
+    }
+}
+
+/*
+ * TestbedEventWorkspaceDataStorageLocalWorkspaceManifestUpdate
+ */
+
+no_certificate_event!(
+    TestbedEventWorkspaceDataStorageLocalWorkspaceManifestUpdate,
     [
         timestamp: DateTime,
         device: DeviceID,
-        workspace: RealmID,
-        entry: EntryID,
-        encrypted: Vec<u8>,
+        realm: RealmID,
+        local_manifest: Arc<LocalWorkspaceManifest>
     ]
 );
+
+impl TestbedEventWorkspaceDataStorageLocalWorkspaceManifestUpdate {
+    pub(super) fn from_builder(
+        builder: &mut TestbedTemplateBuilder,
+        device: DeviceID,
+        realm: RealmID,
+    ) -> Self {
+        // 1) Consistency checks
+
+        utils::assert_organization_bootstrapped(&builder.events);
+        // We don't care that the user is revoked here given we don't modify
+        // anything in the server
+        utils::assert_device_exists(&builder.events, &device);
+        utils::assert_realm_exists(&builder.events, realm);
+        // Changes are in local, so no need to check for realm read/write access
+
+        let timestamp = builder.counters.next_timestamp();
+
+        let local_manifest = builder
+            .events
+            .iter()
+            .rev()
+            .find_map(|e| {
+                match e {
+                    TestbedEvent::WorkspaceDataStorageFetchWorkspaceVlob(x)
+                        if x.device == device && x.realm == realm =>
+                    {
+                        Some(x.local_manifest.clone())
+                    }
+                    TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(x)
+                        if x.device == device && x.realm == realm =>
+                    {
+                        Some(x.local_manifest.clone())
+                    }
+                    _ => None,
+                }
+                .map(|mut manifest| {
+                    let m = Arc::make_mut(&mut manifest);
+                    m.updated = timestamp;
+                    m.need_sync = true;
+                    manifest
+                })
+            })
+            .unwrap_or_else(|| {
+                // No previous local workspace manifest, create one
+                Arc::new(LocalWorkspaceManifest::new(
+                    device.clone(),
+                    timestamp,
+                    Some(realm.into()),
+                    false,
+                ))
+            });
+
+        // 2) Actual creation
+
+        Self {
+            timestamp,
+            device,
+            realm,
+            local_manifest,
+        }
+    }
+}
+
+/*
+ * TestbedEventWorkspaceDataStorageLocalFolderManifestUpdate
+ */
+
+no_certificate_event!(
+    TestbedEventWorkspaceDataStorageLocalFolderManifestUpdate,
+    [
+        timestamp: DateTime,
+        device: DeviceID,
+        realm: RealmID,
+        local_manifest: Arc<LocalFolderManifest>
+    ]
+);
+
+impl TestbedEventWorkspaceDataStorageLocalFolderManifestUpdate {
+    pub(super) fn from_builder(
+        builder: &mut TestbedTemplateBuilder,
+        device: DeviceID,
+        realm: RealmID,
+        vlob: VlobID,
+    ) -> Self {
+        // 1) Consistency checks
+
+        utils::assert_organization_bootstrapped(&builder.events);
+        // We don't care that the user is revoked here given we don't modify
+        // anything in the server
+        utils::assert_device_exists(&builder.events, &device);
+        utils::assert_realm_exists(&builder.events, realm);
+        // Changes are in local, so no need to check for realm read/write access
+
+        let timestamp = builder.counters.next_timestamp();
+
+        let local_manifest = builder
+            .events
+            .iter()
+            .rev()
+            .find_map(|e| {
+                match e {
+                    TestbedEvent::WorkspaceDataStorageFetchFolderVlob(x)
+                        if x.device == device
+                            && x.realm == realm
+                            && x.local_manifest.base.id == vlob.into() =>
+                    {
+                        Some(x.local_manifest.clone())
+                    }
+                    TestbedEvent::WorkspaceDataStorageLocalFolderManifestUpdate(x)
+                        if x.device == device
+                            && x.realm == realm
+                            && x.local_manifest.base.id == vlob.into() =>
+                    {
+                        Some(x.local_manifest.clone())
+                    }
+                    _ => None,
+                }
+                .map(|mut manifest| {
+                    let m = Arc::make_mut(&mut manifest);
+                    m.updated = timestamp;
+                    m.need_sync = true;
+                    manifest
+                })
+            })
+            .unwrap_or_else(|| {
+                // No previous local workspace manifest, create one
+                Arc::new(LocalFolderManifest::new(
+                    device.clone(),
+                    realm.into(),
+                    timestamp,
+                ))
+            });
+
+        // 2) Actual creation
+
+        Self {
+            timestamp,
+            device,
+            realm,
+            local_manifest,
+        }
+    }
+}
+
+/*
+ * TestbedEventWorkspaceDataStorageLocalFileManifestUpdate
+ */
+
+no_certificate_event!(
+    TestbedEventWorkspaceDataStorageLocalFileManifestUpdate,
+    [
+        timestamp: DateTime,
+        device: DeviceID,
+        realm: RealmID,
+        local_manifest: Arc<LocalFileManifest>
+    ]
+);
+
+impl TestbedEventWorkspaceDataStorageLocalFileManifestUpdate {
+    pub(super) fn from_builder(
+        builder: &mut TestbedTemplateBuilder,
+        device: DeviceID,
+        realm: RealmID,
+        vlob: VlobID,
+    ) -> Self {
+        // 1) Consistency checks
+
+        utils::assert_organization_bootstrapped(&builder.events);
+        // We don't care that the user is revoked here given we don't modify
+        // anything in the server
+        utils::assert_device_exists(&builder.events, &device);
+        utils::assert_realm_exists(&builder.events, realm);
+        // Changes are in local, so no need to check for realm read/write access
+
+        let timestamp = builder.counters.next_timestamp();
+
+        let local_manifest = builder
+            .events
+            .iter()
+            .rev()
+            .find_map(|e| {
+                match e {
+                    TestbedEvent::WorkspaceDataStorageFetchFileVlob(x)
+                        if x.device == device
+                            && x.realm == realm
+                            && x.local_manifest.base.id == vlob.into() =>
+                    {
+                        Some(x.local_manifest.clone())
+                    }
+                    TestbedEvent::WorkspaceDataStorageLocalFileManifestUpdate(x)
+                        if x.device == device
+                            && x.realm == realm
+                            && x.local_manifest.base.id == vlob.into() =>
+                    {
+                        Some(x.local_manifest.clone())
+                    }
+                    _ => None,
+                }
+                .map(|mut manifest| {
+                    let m = Arc::make_mut(&mut manifest);
+                    m.updated = timestamp;
+                    m.need_sync = true;
+                    manifest
+                })
+            })
+            .unwrap_or_else(|| {
+                // No previous local workspace manifest, create one
+                Arc::new(LocalFileManifest::new(
+                    device.clone(),
+                    realm.into(),
+                    timestamp,
+                    Blocksize::try_from(512).expect("valid block size"),
+                ))
+            });
+
+        // 2) Actual creation
+
+        Self {
+            timestamp,
+            device,
+            realm,
+            local_manifest,
+        }
+    }
+}

@@ -54,7 +54,7 @@ enum WorkspaceShareDoServerCommandOutcome {
 
 pub async fn workspace_share(
     ops: &UserOps,
-    workspace_id: EntryID,
+    realm_id: RealmID,
     recipient: &UserID,
     role: Option<RealmRole>,
 ) -> Result<(), WorkspaceShareError> {
@@ -65,7 +65,7 @@ pub async fn workspace_share(
     let um = ops.storage.get_user_manifest();
 
     let workspace_entry = um
-        .get_workspace_entry(workspace_id)
+        .get_workspace_entry(realm_id)
         .ok_or_else(|| WorkspaceShareError::UnknownWorkspace)?;
 
     // Make sure the workspace is not a placeholder
@@ -124,7 +124,7 @@ async fn workspace_share_do_server_command(
                 author: ops.device.device_id.clone(),
                 timestamp,
                 name: workspace_entry.name.clone(),
-                id: workspace_entry.id.into(),
+                id: workspace_entry.id,
                 encryption_revision: workspace_entry.encryption_revision,
                 encrypted_on: workspace_entry.encrypted_on,
                 key: workspace_entry.key.clone(),
@@ -133,7 +133,7 @@ async fn workspace_share_do_server_command(
             MessageContent::SharingRevoked {
                 author: ops.device.device_id.clone(),
                 timestamp,
-                id: workspace_entry.id.into(),
+                id: workspace_entry.id,
             }
         }
         .dump_and_sign(&ops.device.signing_key);
@@ -153,7 +153,7 @@ async fn workspace_share_do_server_command(
     let signed_certificate = RealmRoleCertificate {
         author: CertificateSignerOwned::User(ops.device.device_id.clone()),
         timestamp,
-        realm_id: workspace_entry.id.into(),
+        realm_id: workspace_entry.id,
         user_id: recipient.to_owned(),
         role,
     }

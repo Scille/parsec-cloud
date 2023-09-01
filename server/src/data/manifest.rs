@@ -9,10 +9,10 @@ use pyo3::{
 use std::{collections::HashMap, num::NonZeroU64};
 
 use crate::{
-    BlockID, DataResult, DateTime, DeviceID, EntryID, EntryNameResult, HashDigest, RealmRole,
-    SecretKey, SigningKey, VerifyKey,
+    BlockID, DataResult, DateTime, DeviceID, EntryID, EntryNameResult, HashDigest, RealmID,
+    RealmRole, SecretKey, SigningKey, VerifyKey,
 };
-use libparsec::low_level::types::{IndexInt, Manifest};
+use libparsec::low_level::types::{ChildManifest, IndexInt};
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
     EntryName,
@@ -53,7 +53,7 @@ impl WorkspaceEntry {
     #[new]
     #[pyo3(signature = (id, name, key, encryption_revision, encrypted_on, legacy_role_cache_timestamp, legacy_role_cache_value))]
     fn new(
-        id: EntryID,
+        id: RealmID,
         name: EntryName,
         key: SecretKey,
         encryption_revision: u64,
@@ -76,7 +76,7 @@ impl WorkspaceEntry {
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
-            [id: EntryID, "id"],
+            [id: RealmID, "id"],
             [name: EntryName, "name"],
             [key: SecretKey, "key"],
             [encryption_revision: IndexInt, "encryption_revision"],
@@ -128,8 +128,8 @@ impl WorkspaceEntry {
     }
 
     #[getter]
-    fn id(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.id))
+    fn id(&self) -> PyResult<RealmID> {
+        Ok(RealmID(self.0.id))
     }
 
     #[getter]
@@ -711,6 +711,30 @@ impl WorkspaceManifest {
         )
     }
 
+    #[classmethod]
+    #[allow(clippy::too_many_arguments)]
+    fn verify_and_load(
+        _cls: &PyType,
+        signed: &[u8],
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+        expected_timestamp: DateTime,
+        expected_id: Option<EntryID>,
+        expected_version: Option<u32>,
+    ) -> DataResult<Self> {
+        Ok(
+            libparsec::low_level::types::WorkspaceManifest::verify_and_load(
+                signed,
+                &author_verify_key.0,
+                &expected_author.0,
+                expected_timestamp.0,
+                expected_id.map(|id| id.0),
+                expected_version,
+            )
+            .map(Self)?,
+        )
+    }
+
     #[pyo3(signature = (**py_kwargs))]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
@@ -920,7 +944,7 @@ impl UserManifest {
         Ok(Self(r))
     }
 
-    fn get_workspace_entry(&self, workspace_id: EntryID) -> PyResult<Option<WorkspaceEntry>> {
+    fn get_workspace_entry(&self, workspace_id: RealmID) -> PyResult<Option<WorkspaceEntry>> {
         Ok(self
             .0
             .get_workspace_entry(workspace_id.0)
@@ -978,7 +1002,7 @@ impl UserManifest {
 
 #[pyfunction]
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn manifest_decrypt_verify_and_load(
+pub(crate) fn child_manifest_decrypt_verify_and_load(
     py: Python<'_>,
     encrypted: &[u8],
     key: &SecretKey,
@@ -988,7 +1012,7 @@ pub(crate) fn manifest_decrypt_verify_and_load(
     expected_id: Option<EntryID>,
     expected_version: Option<u32>,
 ) -> DataResult<PyObject> {
-    Ok(Manifest::decrypt_verify_and_load(
+    Ok(ChildManifest::decrypt_verify_and_load(
         encrypted,
         &key.0,
         &author_verify_key.0,
@@ -997,11 +1021,11 @@ pub(crate) fn manifest_decrypt_verify_and_load(
         expected_id.map(|id| id.0),
         expected_version,
     )
-    .map(|blob| unwrap_manifest(py, blob))?)
+    .map(|blob| unwrap_child_manifest(py, blob))?)
 }
 
 #[pyfunction]
-pub(crate) fn manifest_verify_and_load(
+pub(crate) fn child_manifest_verify_and_load(
     py: Python<'_>,
     signed: &[u8],
     author_verify_key: &VerifyKey,
@@ -1010,7 +1034,7 @@ pub(crate) fn manifest_verify_and_load(
     expected_id: Option<EntryID>,
     expected_version: Option<u32>,
 ) -> DataResult<PyObject> {
-    Ok(Manifest::verify_and_load(
+    Ok(ChildManifest::verify_and_load(
         signed,
         &author_verify_key.0,
         &expected_author.0,
@@ -1018,14 +1042,12 @@ pub(crate) fn manifest_verify_and_load(
         expected_id.map(|id| id.0),
         expected_version,
     )
-    .map(|blob| unwrap_manifest(py, blob))?)
+    .map(|blob| unwrap_child_manifest(py, blob))?)
 }
 
-fn unwrap_manifest(py: Python, manifest: Manifest) -> PyObject {
+fn unwrap_child_manifest(py: Python, manifest: ChildManifest) -> PyObject {
     match manifest {
-        Manifest::File(file) => FileManifest(file).into_py(py),
-        Manifest::Folder(folder) => FolderManifest(folder).into_py(py),
-        Manifest::Workspace(workspace) => WorkspaceManifest(workspace).into_py(py),
-        Manifest::User(user) => UserManifest(user).into_py(py),
+        ChildManifest::File(file) => FileManifest(file).into_py(py),
+        ChildManifest::Folder(folder) => FolderManifest(folder).into_py(py),
     }
 }

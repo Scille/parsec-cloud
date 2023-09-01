@@ -78,16 +78,16 @@ from parsec._parsec_pyi.ids import (
     VlobID,
 )
 from parsec._parsec_pyi.manifest import (
-    AnyRemoteManifest,
     BlockAccess,
+    ChildManifest,
     EntryName,
     FileManifest,
     FolderManifest,
     UserManifest,
     WorkspaceEntry,
     WorkspaceManifest,
-    manifest_decrypt_verify_and_load,
-    manifest_verify_and_load,
+    child_manifest_decrypt_verify_and_load,
+    child_manifest_verify_and_load,
 )
 from parsec._parsec_pyi.message import (
     MessageContent,
@@ -195,9 +195,9 @@ __all__ = [
     "FileManifest",
     "WorkspaceManifest",
     "UserManifest",
-    "AnyRemoteManifest",
-    "manifest_decrypt_verify_and_load",
-    "manifest_verify_and_load",
+    "ChildManifest",
+    "child_manifest_decrypt_verify_and_load",
+    "child_manifest_verify_and_load",
     # Message
     "MessageContent",
     "SharingGrantedMessageContent",

@@ -17,8 +17,8 @@ use libparsec_serialization_format::parsec_data;
 
 use crate::{
     self as libparsec_types, data_macros::impl_transparent_data_format_conversion, BlockID,
-    DataError, DataResult, DateTime, DeviceID, EntryID, EntryNameError, IndexInt, SizeInt,
-    VersionInt,
+    DataError, DataResult, DateTime, DeviceID, EntryID, EntryNameError, FsPathError, IndexInt,
+    RealmID, SizeInt, VersionInt,
 };
 
 pub const DEFAULT_BLOCK_SIZE: Blocksize = Blocksize(512 * 1024); // 512 KB
@@ -178,6 +178,27 @@ pub enum RealmRole {
     Reader,
 }
 
+impl RealmRole {
+    pub fn can_read(&self) -> bool {
+        true
+    }
+
+    pub fn can_write(&self) -> bool {
+        matches!(
+            self,
+            RealmRole::Owner | RealmRole::Manager | RealmRole::Contributor
+        )
+    }
+
+    pub fn can_grant_non_owner_role(&self) -> bool {
+        matches!(self, RealmRole::Owner | RealmRole::Manager)
+    }
+
+    pub fn can_grant_owner_role(&self) -> bool {
+        matches!(self, RealmRole::Owner)
+    }
+}
+
 /*
  * EntryName
  */
@@ -249,13 +270,136 @@ impl std::str::FromStr for EntryName {
 }
 
 /*
+ * EntryNameRef
+ */
+
+pub struct EntryNameRef<'a>(&'a str);
+
+impl<'a> std::convert::AsRef<str> for EntryNameRef<'a> {
+    #[inline]
+    fn as_ref(&self) -> &str {
+        self.0
+    }
+}
+
+impl<'a> std::fmt::Display for EntryNameRef<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl<'a> std::fmt::Debug for EntryNameRef<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let display = self.to_string();
+        f.debug_tuple(stringify!(EntryNameRef))
+            .field(&display)
+            .finish()
+    }
+}
+
+impl<'a> From<&'a EntryName> for EntryNameRef<'a> {
+    fn from(value: &'a EntryName) -> Self {
+        EntryNameRef(&value.0)
+    }
+}
+
+impl<'a> TryFrom<&'a str> for EntryNameRef<'a> {
+    type Error = EntryNameError;
+
+    fn try_from(id: &'a str) -> Result<Self, Self::Error> {
+        if !unicode_normalization::is_nfc(id) {
+            // TODO: better error here !
+            return Err(Self::Error::InvalidName);
+        }
+
+        // Stick to UNIX filesystem philosophy:
+        // - no `.` or `..` name
+        // - no `/` or null byte in the name
+        // - max 255 bytes long name
+        if id.len() >= 256 {
+            Err(Self::Error::NameTooLong)
+        } else if id.is_empty()
+            || id == "."
+            || id == ".."
+            || id.find('/').is_some()
+            || id.find('\x00').is_some()
+        {
+            Err(Self::Error::InvalidName)
+        } else {
+            Ok(Self(id))
+        }
+    }
+}
+
+/*
+ * FsPath
+ */
+
+#[derive(Clone, PartialEq, Eq, PartialOrd, Hash)]
+pub struct FsPath {
+    parts: Vec<EntryName>,
+}
+
+impl FsPath {
+    pub fn name(&self) -> Option<&EntryName> {
+        self.parts.last()
+    }
+
+    pub fn parent(&self) -> FsPath {
+        let parts = self.parts[..self.parts.len() - 1].to_owned();
+        Self { parts }
+    }
+
+    pub fn is_root(&self) -> bool {
+        self.parts.is_empty()
+    }
+
+    pub fn parts(&self) -> &[EntryName] {
+        &self.parts
+    }
+
+    pub fn with_mountpoint(self, mountpoint: &std::path::Path) -> std::path::PathBuf {
+        let mut path = mountpoint.to_path_buf();
+        for item in &self.parts {
+            path.push(item.as_ref());
+        }
+        path
+    }
+}
+
+impl std::str::FromStr for FsPath {
+    type Err = FsPathError;
+
+    #[inline]
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if !s.starts_with('/') {
+            return Err(FsPathError::NotAbsolute);
+        }
+
+        let mut parts = vec![];
+        for item in s.split('/') {
+            match item {
+                "." | "" => (),
+                ".." => {
+                    let _ = parts.pop();
+                }
+                item => {
+                    parts.push(item.try_into()?);
+                }
+            }
+        }
+        Ok(Self { parts })
+    }
+}
+
+/*
  * WorkspaceEntry
  */
 
 #[serde_as]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct WorkspaceEntry {
-    pub id: EntryID,
+    pub id: RealmID,
     pub name: EntryName,
     pub key: SecretKey,
     pub encryption_revision: IndexInt,
@@ -272,7 +416,7 @@ pub struct WorkspaceEntry {
 
 impl WorkspaceEntry {
     pub fn new(
-        id: EntryID,
+        id: RealmID,
         name: EntryName,
         key: SecretKey,
         encryption_revision: IndexInt,
@@ -291,7 +435,7 @@ impl WorkspaceEntry {
 
     pub fn generate(name: EntryName, timestamp: DateTime) -> Self {
         Self {
-            id: EntryID::default(),
+            id: RealmID::default(),
             name,
             key: SecretKey::generate(),
             encryption_revision: 1,
@@ -514,8 +658,8 @@ pub struct UserManifest {
 }
 
 impl UserManifest {
-    pub fn get_workspace_entry(&self, workspace_id: EntryID) -> Option<&WorkspaceEntry> {
-        self.workspaces.iter().find(|x| x.id == workspace_id)
+    pub fn get_workspace_entry(&self, realm_id: RealmID) -> Option<&WorkspaceEntry> {
+        self.workspaces.iter().find(|x| x.id == realm_id)
     }
 }
 
@@ -537,28 +681,17 @@ impl_transparent_data_format_conversion!(
 );
 
 /*
- * FileOrFolderManifest
+ * ChildManifest
  */
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(tag = "type")]
-pub enum FileOrFolderManifest {
-    #[serde(rename = "file_manifest")]
-    File(FileManifest),
-    #[serde(rename = "folder_manifest")]
-    Folder(FolderManifest),
-}
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum Manifest {
+pub enum ChildManifest {
     File(FileManifest),
     Folder(FolderManifest),
-    Workspace(WorkspaceManifest),
-    User(UserManifest),
 }
 
-impl Manifest {
+impl ChildManifest {
     pub fn decrypt_verify_and_load(
         encrypted: &[u8],
         key: &SecretKey,
@@ -592,7 +725,7 @@ impl Manifest {
             .verify(signed)
             .map_err(|_| DataError::Signature)?;
 
-        let obj = Manifest::deserialize_data(compressed)?;
+        let obj = Self::deserialize_data(compressed)?;
 
         macro_rules! internal_verify {
             ($obj:ident) => {{
@@ -606,14 +739,10 @@ impl Manifest {
         }
 
         match &obj {
-            Manifest::File(file) => internal_verify!(file),
-            Manifest::Folder(folder) => {
+            Self::File(file) => internal_verify!(file),
+            Self::Folder(folder) => {
                 internal_verify!(folder)
             }
-            Manifest::Workspace(workspace) => {
-                internal_verify!(workspace)
-            }
-            Manifest::User(user) => internal_verify!(user),
         }
         Ok(obj)
     }

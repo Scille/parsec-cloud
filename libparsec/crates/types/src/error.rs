@@ -31,6 +31,14 @@ pub enum EntryNameError {
     InvalidName,
 }
 
+#[derive(Error, Debug)]
+pub enum FsPathError {
+    #[error("Path must be absolute")]
+    NotAbsolute,
+    #[error(transparent)]
+    InvalidEntry(#[from] EntryNameError),
+}
+
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum DataError {
     #[error("Invalid encryption")]

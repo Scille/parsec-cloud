@@ -33,16 +33,18 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
         } else {
             builder.create_or_update_user_manifest_vlob("alice");
             expected_version = 1;
+            builder.user_storage_fetch_realm_checkpoint("alice@dev1");
             builder.user_storage_fetch_user_vlob("alice@dev1");
 
             if matches!(fetch_strategy, FetchStrategy::Multiple) {
                 builder.create_or_update_user_manifest_vlob("alice");
                 expected_version = 2;
+                builder.user_storage_fetch_realm_checkpoint("alice@dev1");
                 builder.user_storage_fetch_user_vlob("alice@dev1");
             }
         }
 
-        // Stuff the our storage is not aware of
+        // Stuff our storage is not aware of
         let actual_version = builder
             .create_or_update_user_manifest_vlob("alice")
             .map(|e| e.manifest.version);
@@ -155,8 +157,6 @@ async fn non_speculative_init(env: &TestbedEnv) {
     user_storage_non_speculative_init(&env.discriminant_dir, &alice)
         .await
         .unwrap();
-
-    // See unit tests for bad init
 
     // 2) Check the database content
 

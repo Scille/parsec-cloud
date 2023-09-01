@@ -70,6 +70,77 @@ pub(super) async fn validate_user_manifest(
     timestamp: DateTime,
     encrypted: &[u8],
 ) -> Result<UserManifest, ValidateManifestError> {
+    validate_manifest(
+        ops,
+        certificate_index,
+        author,
+        version,
+        timestamp,
+        encrypted,
+        UserManifest::decrypt_verify_and_load,
+    )
+    .await
+}
+
+#[allow(unused)]
+pub(super) async fn validate_workspace_manifest(
+    ops: &CertificatesOps,
+    certificate_index: IndexInt,
+    author: &DeviceID,
+    version: VersionInt,
+    timestamp: DateTime,
+    encrypted: &[u8],
+) -> Result<WorkspaceManifest, ValidateManifestError> {
+    validate_manifest(
+        ops,
+        certificate_index,
+        author,
+        version,
+        timestamp,
+        encrypted,
+        WorkspaceManifest::decrypt_verify_and_load,
+    )
+    .await
+}
+
+#[allow(unused)]
+pub(super) async fn validate_child_manifest(
+    ops: &CertificatesOps,
+    certificate_index: IndexInt,
+    author: &DeviceID,
+    version: VersionInt,
+    timestamp: DateTime,
+    encrypted: &[u8],
+) -> Result<ChildManifest, ValidateManifestError> {
+    validate_manifest(
+        ops,
+        certificate_index,
+        author,
+        version,
+        timestamp,
+        encrypted,
+        ChildManifest::decrypt_verify_and_load,
+    )
+    .await
+}
+
+async fn validate_manifest<M>(
+    ops: &CertificatesOps,
+    certificate_index: IndexInt,
+    author: &DeviceID,
+    version: VersionInt,
+    timestamp: DateTime,
+    encrypted: &[u8],
+    decrypt_verify_and_load: impl FnOnce(
+        &[u8],
+        &SecretKey,
+        &VerifyKey,
+        &DeviceID,
+        DateTime,
+        Option<EntryID>,
+        Option<VersionInt>,
+    ) -> DataResult<M>,
+) -> Result<M, ValidateManifestError> {
     let realm_id = ops.device.user_manifest_id.into();
 
     // 1) Make sure we have all the needed certificates
@@ -138,7 +209,7 @@ pub(super) async fn validate_user_manifest(
 
     // 3) Actually validate the manifest
 
-    let manifest = UserManifest::decrypt_verify_and_load(
+    let manifest = decrypt_verify_and_load(
         encrypted,
         &ops.device.user_manifest_key,
         &author_certif.verify_key,
@@ -166,7 +237,7 @@ pub(super) async fn validate_user_manifest(
         .and_then(|certif| certif.role);
     match author_role {
         // All good :)
-        Some(RealmRole::Contributor) | Some(RealmRole::Manager) | Some(RealmRole::Owner) => (),
+        Some(role) if role.can_write() => (),
 
         // The author wasn't part of the realm :(
         None => {
@@ -181,7 +252,7 @@ pub(super) async fn validate_user_manifest(
         }
 
         // The author doesn't have write access to the realm :(
-        Some(role @ RealmRole::Reader) => {
+        Some(role) => {
             let what = InvalidManifestError::AuthorRealmRoleCannotWrite {
                 vlob_id: ops.device.user_manifest_id,
                 version,

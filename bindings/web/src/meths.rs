@@ -2644,7 +2644,7 @@ pub fn clientListWorkspaces(client: u32) -> Promise {
                             let js_array = Array::new_with_length(2);
                             let js_value = JsValue::from(Uint8Array::from({
                                 let custom_to_rs_bytes =
-                                    |x: libparsec::EntryID| -> Result<_, &'static str> {
+                                    |x: libparsec::RealmID| -> Result<_, &'static str> {
                                         Ok(x.as_bytes().to_owned())
                                     };
                                 match custom_to_rs_bytes(x1) {
@@ -2695,7 +2695,7 @@ pub fn clientWorkspaceCreate(client: u32, name: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = JsValue::from(Uint8Array::from({
-                    let custom_to_rs_bytes = |x: libparsec::EntryID| -> Result<_, &'static str> {
+                    let custom_to_rs_bytes = |x: libparsec::RealmID| -> Result<_, &'static str> {
                         Ok(x.as_bytes().to_owned())
                     };
                     match custom_to_rs_bytes(value) {
@@ -2721,13 +2721,13 @@ pub fn clientWorkspaceCreate(client: u32, name: String) -> Promise {
 // client_workspace_rename
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn clientWorkspaceRename(client: u32, workspace_id: Uint8Array, new_name: String) -> Promise {
+pub fn clientWorkspaceRename(client: u32, realm_id: Uint8Array, new_name: String) -> Promise {
     future_to_promise(async move {
-        let workspace_id = {
+        let realm_id = {
             let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                libparsec::EntryID::try_from(x).map_err(|e| e.to_string())
+                libparsec::RealmID::try_from(x).map_err(|e| e.to_string())
             };
-            custom_from_rs_bytes(&workspace_id.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_bytes(&realm_id.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
         }?;
         let new_name = {
             let custom_from_rs_string = |s: String| -> Result<_, _> {
@@ -2735,7 +2735,7 @@ pub fn clientWorkspaceRename(client: u32, workspace_id: Uint8Array, new_name: St
             };
             custom_from_rs_string(new_name).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-        let ret = libparsec::client_workspace_rename(client, workspace_id, new_name).await;
+        let ret = libparsec::client_workspace_rename(client, realm_id, new_name).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -2763,16 +2763,16 @@ pub fn clientWorkspaceRename(client: u32, workspace_id: Uint8Array, new_name: St
 #[wasm_bindgen]
 pub fn clientWorkspaceShare(
     client: u32,
-    workspace_id: Uint8Array,
+    realm_id: Uint8Array,
     recipient: String,
     role: Option<Object>,
 ) -> Promise {
     future_to_promise(async move {
-        let workspace_id = {
+        let realm_id = {
             let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                libparsec::EntryID::try_from(x).map_err(|e| e.to_string())
+                libparsec::RealmID::try_from(x).map_err(|e| e.to_string())
             };
-            custom_from_rs_bytes(&workspace_id.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_bytes(&realm_id.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
         }?;
         let recipient = recipient
             .parse()
@@ -2788,7 +2788,7 @@ pub fn clientWorkspaceShare(
             None => None,
         };
 
-        let ret = libparsec::client_workspace_share(client, workspace_id, recipient, role).await;
+        let ret = libparsec::client_workspace_share(client, realm_id, recipient, role).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();

@@ -748,12 +748,12 @@ export function clientWorkspaceCreate(
 ): Promise<Result<Uint8Array, ClientWorkspaceCreateError>>
 export function clientWorkspaceRename(
     client: number,
-    workspace_id: Uint8Array,
+    realm_id: Uint8Array,
     new_name: string
 ): Promise<Result<null, ClientWorkspaceRenameError>>
 export function clientWorkspaceShare(
     client: number,
-    workspace_id: Uint8Array,
+    realm_id: Uint8Array,
     recipient: string,
     role: RealmRole | null
 ): Promise<Result<null, ClientWorkspaceShareError>>

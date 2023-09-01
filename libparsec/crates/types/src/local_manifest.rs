@@ -4,6 +4,7 @@ use std::{
     cmp::Ordering,
     collections::{hash_map::RandomState, HashMap, HashSet},
     num::NonZeroU64,
+    sync::Arc,
 };
 
 use serde::{Deserialize, Serialize};
@@ -14,7 +15,8 @@ use libparsec_serialization_format::parsec_data;
 use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion, BlockAccess, BlockID,
     Blocksize, ChunkID, DataError, DataResult, DateTime, DeviceID, EntryID, EntryName,
-    FileManifest, FolderManifest, IndexInt, Regex, UserManifest, WorkspaceEntry, WorkspaceManifest,
+    FileManifest, FolderManifest, IndexInt, RealmID, Regex, UserManifest, WorkspaceEntry,
+    WorkspaceManifest,
 };
 
 macro_rules! impl_local_manifest_dump_load {
@@ -93,8 +95,8 @@ impl Chunk {
         }
     }
 
-    pub fn from_block_access(block_access: BlockAccess) -> Result<Self, &'static str> {
-        Ok(Self {
+    pub fn from_block_access(block_access: BlockAccess) -> Self {
+        Self {
             id: ChunkID::from(*block_access.id),
             raw_offset: block_access.offset,
             raw_size: block_access.size,
@@ -106,7 +108,7 @@ impl Chunk {
                     "Chunk stop should be NonZeroU64 since bloc_access.size is already NonZeroU64",
                 ),
             access: Some(block_access),
-        })
+        }
     }
 
     pub fn evolve_as_block(mut self, data: &[u8]) -> Result<Self, &'static str> {
@@ -276,25 +278,23 @@ impl LocalFileManifest {
         assert_eq!(current, self.size);
     }
 
-    pub fn from_remote(remote: FileManifest) -> Result<Self, &'static str> {
+    pub fn from_remote(remote: FileManifest) -> Self {
         let base = remote.clone();
         let blocks = remote
             .blocks
             .into_iter()
             .map(Chunk::from_block_access)
-            .collect::<Result<Vec<_>, _>>()?
-            .into_iter()
             .map(|b| vec![b])
             .collect();
 
-        Ok(Self {
+        Self {
             base,
             need_sync: false,
             updated: remote.updated,
             size: remote.size,
             blocksize: remote.blocksize,
             blocks,
-        })
+        }
     }
 
     pub fn to_remote(
@@ -1005,8 +1005,8 @@ impl LocalUserManifest {
         self.workspaces.push(workspace);
     }
 
-    pub fn get_workspace_entry(&self, workspace_id: EntryID) -> Option<&WorkspaceEntry> {
-        self.workspaces.iter().find(|w| w.id == workspace_id)
+    pub fn get_workspace_entry(&self, realm_id: RealmID) -> Option<&WorkspaceEntry> {
+        self.workspaces.iter().find(|w| w.id == realm_id)
     }
 
     pub fn from_remote(remote: UserManifest) -> Self {
@@ -1043,22 +1043,28 @@ impl LocalUserManifest {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-#[serde(untagged)]
-pub enum LocalManifest {
-    File(LocalFileManifest),
-    Folder(LocalFolderManifest),
-    Workspace(LocalWorkspaceManifest),
-    User(LocalUserManifest),
+/*
+ * LocalChildManifest
+ */
+
+#[derive(Debug, Clone)]
+pub enum ArcLocalChildManifest {
+    File(Arc<LocalFileManifest>),
+    Folder(Arc<LocalFolderManifest>),
 }
 
-impl LocalManifest {
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(untagged)]
+pub enum LocalChildManifest {
+    File(LocalFileManifest),
+    Folder(LocalFolderManifest),
+}
+
+impl LocalChildManifest {
     pub fn id(&self) -> EntryID {
         match self {
             Self::File(manifest) => manifest.base.id,
             Self::Folder(manifest) => manifest.base.id,
-            Self::Workspace(manifest) => manifest.base.id,
-            Self::User(manifest) => manifest.base.id,
         }
     }
 
@@ -1066,8 +1072,6 @@ impl LocalManifest {
         match self {
             Self::File(manifest) => manifest.need_sync,
             Self::Folder(manifest) => manifest.need_sync,
-            Self::Workspace(manifest) => manifest.need_sync,
-            Self::User(manifest) => manifest.need_sync,
         }
     }
 
@@ -1075,8 +1079,6 @@ impl LocalManifest {
         match self {
             Self::File(manifest) => manifest.base.version,
             Self::Folder(manifest) => manifest.base.version,
-            Self::Workspace(manifest) => manifest.base.version,
-            Self::User(manifest) => manifest.base.version,
         }
     }
 
@@ -1084,8 +1086,6 @@ impl LocalManifest {
         match self {
             Self::File(manifest) => manifest.dump_and_encrypt(key),
             Self::Folder(manifest) => manifest.dump_and_encrypt(key),
-            Self::Workspace(manifest) => manifest.dump_and_encrypt(key),
-            Self::User(manifest) => manifest.dump_and_encrypt(key),
         }
     }
 
@@ -1095,26 +1095,14 @@ impl LocalManifest {
     }
 }
 
-impl From<LocalFileManifest> for LocalManifest {
+impl From<LocalFileManifest> for LocalChildManifest {
     fn from(value: LocalFileManifest) -> Self {
         Self::File(value)
     }
 }
 
-impl From<LocalUserManifest> for LocalManifest {
-    fn from(value: LocalUserManifest) -> Self {
-        Self::User(value)
-    }
-}
-
-impl From<LocalFolderManifest> for LocalManifest {
+impl From<LocalFolderManifest> for LocalChildManifest {
     fn from(value: LocalFolderManifest) -> Self {
         Self::Folder(value)
-    }
-}
-
-impl From<LocalWorkspaceManifest> for LocalManifest {
-    fn from(value: LocalWorkspaceManifest) -> Self {
-        Self::Workspace(value)
     }
 }

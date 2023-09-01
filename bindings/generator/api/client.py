@@ -4,12 +4,12 @@ from typing import Optional
 
 from .common import (
     DateTime,
-    EntryID,
     EntryName,
     ErrorVariant,
     Handle,
     Password,
     Path,
+    RealmID,
     Result,
     UserID,
     Variant,
@@ -71,7 +71,7 @@ class ClientListWorkspacesError(ErrorVariant):
 
 async def client_list_workspaces(
     client: Handle,
-) -> Result[list[tuple[EntryID, EntryName]], ClientListWorkspacesError]:
+) -> Result[list[tuple[RealmID, EntryName]], ClientListWorkspacesError]:
     raise NotImplementedError
 
 
@@ -83,7 +83,7 @@ class ClientWorkspaceCreateError(ErrorVariant):
 async def client_workspace_create(
     client: Handle,
     name: EntryName,
-) -> Result[EntryID, ClientWorkspaceCreateError]:
+) -> Result[RealmID, ClientWorkspaceCreateError]:
     raise NotImplementedError
 
 
@@ -97,7 +97,7 @@ class ClientWorkspaceRenameError(ErrorVariant):
 
 async def client_workspace_rename(
     client: Handle,
-    workspace_id: EntryID,
+    realm_id: RealmID,
     new_name: EntryName,
 ) -> Result[None, ClientWorkspaceRenameError]:
     raise NotImplementedError
@@ -143,7 +143,7 @@ class ClientWorkspaceShareError(ErrorVariant):
 
 async def client_workspace_share(
     client: Handle,
-    workspace_id: EntryID,
+    realm_id: RealmID,
     recipient: UserID,
     role: Optional[RealmRole],
 ) -> Result[None, ClientWorkspaceShareError]:

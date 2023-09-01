@@ -2754,7 +2754,7 @@ fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
                                     let js_value = {
                                         let rs_buff = {
                                             let custom_to_rs_bytes =
-                                                |x: libparsec::EntryID| -> Result<_, &'static str> {
+                                                |x: libparsec::RealmID| -> Result<_, &'static str> {
                                                     Ok(x.as_bytes().to_owned())
                                                 };
                                             match custom_to_rs_bytes(x1) {
@@ -2842,7 +2842,7 @@ fn client_workspace_create(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_value = {
                             let rs_buff = {
                                 let custom_to_rs_bytes =
-                                    |x: libparsec::EntryID| -> Result<_, &'static str> {
+                                    |x: libparsec::RealmID| -> Result<_, &'static str> {
                                         Ok(x.as_bytes().to_owned())
                                     };
                                 match custom_to_rs_bytes(ok) {
@@ -2888,11 +2888,11 @@ fn client_workspace_rename(mut cx: FunctionContext) -> JsResult<JsPromise> {
             v as u32
         }
     };
-    let workspace_id = {
+    let realm_id = {
         let js_val = cx.argument::<JsTypedArray<u8>>(1)?;
         {
             let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                libparsec::EntryID::try_from(x).map_err(|e| e.to_string())
+                libparsec::RealmID::try_from(x).map_err(|e| e.to_string())
             };
             #[allow(clippy::unnecessary_mut_passed)]
             match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
@@ -2923,7 +2923,7 @@ fn client_workspace_rename(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_workspace_rename(client, workspace_id, new_name).await;
+            let ret = libparsec::client_workspace_rename(client, realm_id, new_name).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -2967,11 +2967,11 @@ fn client_workspace_share(mut cx: FunctionContext) -> JsResult<JsPromise> {
             v as u32
         }
     };
-    let workspace_id = {
+    let realm_id = {
         let js_val = cx.argument::<JsTypedArray<u8>>(1)?;
         {
             let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                libparsec::EntryID::try_from(x).map_err(|e| e.to_string())
+                libparsec::RealmID::try_from(x).map_err(|e| e.to_string())
             };
             #[allow(clippy::unnecessary_mut_passed)]
             match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
@@ -3006,8 +3006,7 @@ fn client_workspace_share(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret =
-                libparsec::client_workspace_share(client, workspace_id, recipient, role).await;
+            let ret = libparsec::client_workspace_share(client, realm_id, recipient, role).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
