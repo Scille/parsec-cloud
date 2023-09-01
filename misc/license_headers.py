@@ -172,7 +172,7 @@ class VueBuslLicenser(BuslLicenserMixin, HtmlLicenserMixin):
     pass
 
 
-class RstBuslLicenser(BuslLicenserMixin, HtmlLicenserMixin):
+class RstBuslLicenser(BuslLicenserMixin, RstLicenserMixin):
     pass
 
 
