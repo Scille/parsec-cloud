@@ -7,11 +7,14 @@ from parsec._parsec import (
     BlockCreateRepNotAllowed,
     BlockCreateRepNotFound,
     BlockCreateRepOk,
+    BlockCreateRepRealmArchived,
+    BlockCreateRepRealmDeleted,
     BlockCreateRepTimeout,
     BlockReadRepInMaintenance,
     BlockReadRepNotAllowed,
     BlockReadRepNotFound,
     BlockReadRepOk,
+    BlockReadRepRealmDeleted,
     BlockReadRepTimeout,
     DateTime,
 )
@@ -84,6 +87,9 @@ class BaseBlockComponent:
         except BlockInMaintenanceError:
             return BlockReadRepInMaintenance()
 
+        except BlockRealmDeletedError:
+            return BlockReadRepRealmDeleted()
+
         return BlockReadRepOk(block=block)
 
     @api("block_create")
@@ -117,6 +123,12 @@ class BaseBlockComponent:
 
         except BlockInMaintenanceError:
             return BlockCreateRepInMaintenance()
+
+        except BlockRealmArchivedError:
+            return BlockCreateRepRealmArchived()
+
+        except BlockRealmDeletedError:
+            return BlockCreateRepRealmDeleted()
 
         return BlockCreateRepOk()
 

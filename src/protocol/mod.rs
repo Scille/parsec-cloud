@@ -251,6 +251,8 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<BlockCreateRepTimeout>()?;
     m.add_class::<BlockCreateRepNotAllowed>()?;
     m.add_class::<BlockCreateRepInMaintenance>()?;
+    m.add_class::<BlockCreateRepRealmArchived>()?;
+    m.add_class::<BlockCreateRepRealmDeleted>()?;
     m.add_class::<BlockCreateRepUnknownStatus>()?;
     m.add_class::<BlockReadReq>()?;
     m.add_class::<BlockReadRep>()?;
@@ -259,6 +261,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<BlockReadRepTimeout>()?;
     m.add_class::<BlockReadRepNotAllowed>()?;
     m.add_class::<BlockReadRepInMaintenance>()?;
+    m.add_class::<BlockReadRepRealmDeleted>()?;
     m.add_class::<BlockReadRepUnknownStatus>()?;
 
     // Events

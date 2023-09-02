@@ -11,10 +11,13 @@ from parsec._parsec import (
     BlockCreateRepInMaintenance,
     BlockCreateRepNotAllowed,
     BlockCreateRepOk,
+    BlockCreateRepRealmArchived,
+    BlockCreateRepRealmDeleted,
     BlockCreateRepTimeout,
     BlockReadRepNotAllowed,
     BlockReadRepNotFound,
     BlockReadRepOk,
+    BlockReadRepRealmDeleted,
     BlockReadRepTimeout,
     DateTime,
 )
@@ -477,3 +480,34 @@ def test_split_block(block, nb_blockstores):
         partial_chunks[missing] = None
         rebuilt = rebuild_block_from_chunks(partial_chunks, checksum_chunk)
         assert rebuilt == block
+
+
+@pytest.mark.trio
+async def test_block_create_realm_archived(alice_ws, archived_realm):
+    rep = await block_create(alice_ws, BLOCK_ID, archived_realm, b"foo", check_rep=False)
+    assert isinstance(rep, BlockCreateRepRealmArchived)
+
+
+@pytest.mark.trio
+async def test_block_create_realm_deleted(alice_ws, deleted_realm):
+    rep = await block_create(alice_ws, BLOCK_ID, deleted_realm, b"foo", check_rep=False)
+    assert isinstance(rep, BlockCreateRepRealmDeleted)
+
+
+@pytest.mark.trio
+async def test_block_read_realm_archived(backend, alice, alice_ws, realm, archive_realm):
+    await block_create(alice_ws, BLOCK_ID, realm, b"foo")
+    assert await block_read(alice_ws, BLOCK_ID) == BlockReadRepOk(b"foo")
+
+    await archive_realm(backend, alice, realm)
+    assert await block_read(alice_ws, BLOCK_ID) == BlockReadRepOk(b"foo")
+
+
+@pytest.mark.trio
+async def test_block_read_realm_deleted(backend, alice, alice_ws, realm, delete_realm):
+    await block_create(alice_ws, BLOCK_ID, realm, b"foo")
+    assert await block_read(alice_ws, BLOCK_ID) == BlockReadRepOk(b"foo")
+
+    await delete_realm(backend, alice, realm)
+    rep = await block_read(alice_ws, BLOCK_ID, check_rep=False)
+    assert isinstance(rep, BlockReadRepRealmDeleted)

@@ -84,6 +84,8 @@ impl AuthenticatedCmds {
                 AlreadyExists,
                 InMaintenance,
                 NotAllowed,
+                RealmArchived,
+                RealmDeleted,
                 UnknownStatus
             )
         })
@@ -107,6 +109,7 @@ impl AuthenticatedCmds {
                 Timeout,
                 InMaintenance,
                 NotAllowed,
+                RealmDeleted,
                 UnknownStatus
             )
         })

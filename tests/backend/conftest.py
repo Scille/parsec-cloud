@@ -166,14 +166,12 @@ def realm_factory(next_timestamp):
 
 
 @pytest.fixture
-def archived_realm_factory(realm_factory, next_timestamp):
-    async def _archived_realm_factory(backend, author, realm_id=None, now=None):
+async def archive_realm(next_timestamp):
+    async def _archive_realm(backend, author, realm_id, now=None):
         now = now or next_timestamp()
-        realm = await realm_factory(backend, author, realm_id=realm_id, now=now)
-        after_now = next_timestamp()
         certificate = RealmArchivingCertificate(
             author=author.device_id,
-            timestamp=after_now,
+            timestamp=now,
             realm_id=realm_id,
             configuration=RealmArchivingConfiguration.archived(),
         )
@@ -183,49 +181,69 @@ def archived_realm_factory(realm_factory, next_timestamp):
                 organization_id=author.organization_id,
                 archiving_configuration_request=RealmArchivingConfigurationRequest(
                     certificate=signed,
-                    realm_id=realm,
+                    realm_id=realm_id,
                     configuration=certificate.configuration,
                     configured_by=certificate.author,
                     configured_on=certificate.timestamp,
                 ),
             )
             await spy.wait_with_timeout(BackendEvent.REALM_ARCHIVING_UPDATED)
-        return realm_id
 
-    return _archived_realm_factory
+    return _archive_realm
 
 
 @pytest.fixture
-def deleted_realm_factory(realm_factory, next_timestamp, monkeypatch):
-    async def _deleted_realm_factory(backend, author, realm_id=None, now=None):
+async def delete_realm(next_timestamp, monkeypatch):
+    async def _delete_realm(backend, author, realm_id, now=None):
         now = now or next_timestamp()
-        realm = await realm_factory(backend, author, realm_id=realm_id, now=now)
-        after_now = next_timestamp()
         certificate = RealmArchivingCertificate(
             author=author.device_id,
-            timestamp=after_now,
+            timestamp=now,
             realm_id=realm_id,
-            configuration=RealmArchivingConfiguration.deletion_planned(after_now),
+            configuration=RealmArchivingConfiguration.deletion_planned(now),
         )
         signed = certificate.dump_and_sign(author.signing_key)
-        with monkeypatch.context() as context:
-            context.setattr(
-                "parsec.backend.realm.RealmArchivingConfigurationRequest.is_valid_archiving_configuration",
-                lambda *args: True,
-            )
-            with backend.event_bus.listen() as spy:
+        with backend.event_bus.listen() as spy:
+            with monkeypatch.context() as context:
+                context.setattr(
+                    "parsec.backend.realm.RealmArchivingConfigurationRequest.is_valid_archiving_configuration",
+                    lambda *args: True,
+                )
                 await backend.realm.update_archiving(
                     organization_id=author.organization_id,
                     archiving_configuration_request=RealmArchivingConfigurationRequest(
                         certificate=signed,
-                        realm_id=realm,
+                        realm_id=realm_id,
                         configuration=certificate.configuration,
                         configured_by=certificate.author,
                         configured_on=certificate.timestamp,
                     ),
                 )
-                await spy.wait_with_timeout(BackendEvent.REALM_ARCHIVING_UPDATED)
-        return realm_id
+            await spy.wait_with_timeout(BackendEvent.REALM_ARCHIVING_UPDATED)
+
+    return _delete_realm
+
+
+@pytest.fixture
+def archived_realm_factory(realm_factory, next_timestamp, archive_realm):
+    async def _archived_realm_factory(backend, author, realm_id=None, now=None):
+        now = now or next_timestamp()
+        realm = await realm_factory(backend, author, realm_id=realm_id, now=now)
+        after_now = next_timestamp()
+        await archive_realm(backend, author, realm, now=after_now)
+        return realm
+
+    return _archived_realm_factory
+
+
+@pytest.fixture
+def deleted_realm_factory(realm_factory, delete_realm, next_timestamp):
+    async def _deleted_realm_factory(backend, author, realm_id=None, now=None):
+        now = now or next_timestamp()
+        realm = await realm_factory(backend, author, realm_id=realm_id, now=now)
+        after_now = next_timestamp()
+        await delete_realm(backend, author, realm, now=after_now)
+        return realm
 
     return _deleted_realm_factory
 

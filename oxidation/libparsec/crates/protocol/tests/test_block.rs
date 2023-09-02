@@ -95,6 +95,24 @@ fn serde_block_create_req() {
     )[..],
     authenticated_cmds::block_create::Rep::InMaintenance
 )]
+#[case::realm_archived(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   status: "realm_archived"
+    //
+    &hex!("81a6737461747573ae7265616c6d5f6172636869766564")
+    [..],
+    authenticated_cmds::block_create::Rep::RealmArchived
+)]
+#[case::realm_deleted(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   status: "realm_deleted"
+    //
+    &hex!("81a6737461747573ad7265616c6d5f64656c65746564")
+    [..],
+    authenticated_cmds::block_create::Rep::RealmDeleted
+)]
 fn serde_block_create_rep(
     #[case] raw: &[u8],
     #[case] expected: authenticated_cmds::block_create::Rep,
@@ -188,6 +206,14 @@ fn serde_block_read_req() {
         "81a6737461747573ae696e5f6d61696e74656e616e6365"
     )[..],
     authenticated_cmds::block_read::Rep::InMaintenance
+)]
+#[case::realm_deleted(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   status: "realm_deleted"
+    //
+    &hex!("81a6737461747573ad7265616c6d5f64656c65746564")[..],
+    authenticated_cmds::block_read::Rep::RealmDeleted
 )]
 fn serde_block_read_rep(#[case] raw: &[u8], #[case] expected: authenticated_cmds::block_read::Rep) {
     let data = authenticated_cmds::block_read::Rep::load(raw).unwrap();
