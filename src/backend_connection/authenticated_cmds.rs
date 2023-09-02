@@ -829,6 +829,7 @@ impl AuthenticatedCmds {
                 InvalidData,
                 UserRevoked,
                 IncompatibleProfile,
+                RealmDeleted,
                 "handle_bad_timestamp"
             )
         })

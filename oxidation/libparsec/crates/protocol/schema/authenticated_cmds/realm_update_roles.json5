@@ -112,6 +112,9 @@
                         "introduced_in": "2.4"
                     }
                 ]
+            },
+            {
+                "status": "realm_deleted"
             }
         ]
     }

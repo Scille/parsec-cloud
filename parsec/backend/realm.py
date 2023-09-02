@@ -72,6 +72,7 @@ from parsec._parsec import (
     RealmUpdateRolesRepNotAllowed,
     RealmUpdateRolesRepNotFound,
     RealmUpdateRolesRepOk,
+    RealmUpdateRolesRepRealmDeleted,
     RealmUpdateRolesRepRequireGreaterTimestamp,
     RealmUpdateRolesRepUserRevoked,
     RealmUpdateRolesReq,
@@ -426,6 +427,9 @@ class BaseRealmComponent:
 
         except RealmInMaintenanceError:
             return RealmUpdateRolesRepInMaintenance()
+
+        except RealmDeletedError:
+            return RealmUpdateRolesRepRealmDeleted()
 
         return RealmUpdateRolesRepOk()
 

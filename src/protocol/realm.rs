@@ -437,6 +437,7 @@ gen_rep!(
         backend_timestamp: OptionalDateTime,
         client_timestamp: OptionalDateTime,
     ],
+    [RealmDeleted],
 );
 
 #[pyclass(extends=RealmUpdateRolesRep)]

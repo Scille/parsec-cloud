@@ -247,6 +247,9 @@ class RealmUpdateRolesRepBadTimestamp(RealmUpdateRolesRep):
     @property
     def client_timestamp(self) -> DateTime: ...
 
+class RealmUpdateRolesRepRealmDeleted(RealmUpdateRolesRep):
+    def __init__(self) -> None: ...
+
 class RealmUpdateRolesRepUnknownStatus(RealmUpdateRolesRep):
     def __init__(self, status: str, reason: str | None) -> None: ...
     @property

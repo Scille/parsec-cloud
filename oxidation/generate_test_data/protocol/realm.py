@@ -50,6 +50,7 @@ from parsec._parsec import (
     RealmUpdateRolesRepNotAllowed,
     RealmUpdateRolesRepNotFound,
     RealmUpdateRolesRepOk,
+    RealmUpdateRolesRepRealmDeleted,
     RealmUpdateRolesRepRequireGreaterTimestamp,
     RealmUpdateRolesRepUserRevoked,
 )
@@ -279,6 +280,10 @@ serialized = serializer.rep_dumps(
 )
 serializer.rep_loads(serialized)
 display("realm_update_roles_rep_bad_timestamp", serialized, [])
+
+serialized = serializer.rep_dumps(RealmUpdateRolesRepRealmDeleted())
+serializer.rep_loads(serialized)
+display("realm_update_roles_rep_realm_deleted", serialized, [])
 
 ################### RealmStartReencryptionMaintenance ##################
 

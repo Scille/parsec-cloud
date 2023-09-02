@@ -398,6 +398,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<RealmUpdateRolesRepUserRevoked>()?;
     m.add_class::<RealmUpdateRolesRepRequireGreaterTimestamp>()?;
     m.add_class::<RealmUpdateRolesRepBadTimestamp>()?;
+    m.add_class::<RealmUpdateRolesRepRealmDeleted>()?;
     m.add_class::<RealmUpdateRolesRepUnknownStatus>()?;
     m.add_class::<RealmUpdateArchivingReq>()?;
     m.add_class::<RealmUpdateArchivingRep>()?;

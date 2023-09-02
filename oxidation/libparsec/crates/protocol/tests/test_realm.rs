@@ -636,6 +636,14 @@ fn serde_realm_update_roles_req(
         client_timestamp: Maybe::Present("2000-1-2T01:00:00Z".parse().unwrap()),
     }
 )]
+#[case::realm_deleted(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   status: "realm_deleted"
+    //
+    &hex!("81a6737461747573ad7265616c6d5f64656c65746564")[..],
+    authenticated_cmds::realm_update_roles::Rep::RealmDeleted
+)]
 fn serde_realm_update_roles_rep(
     #[case] raw: &[u8],
     #[case] expected: authenticated_cmds::realm_update_roles::Rep,
