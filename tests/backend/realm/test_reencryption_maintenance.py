@@ -25,6 +25,7 @@ from parsec._parsec import (
     RealmStartReencryptionMaintenanceRepNotFound,
     RealmStartReencryptionMaintenanceRepOk,
     RealmStartReencryptionMaintenanceRepParticipantMismatch,
+    RealmStartReencryptionMaintenanceRepRealmDeleted,
     RealmStatusRepOk,
     ReencryptionBatchEntry,
     VlobCreateRepInMaintenance,
@@ -67,7 +68,8 @@ from tests.common import freeze_time, real_clock_timeout
 
 
 @pytest.mark.trio
-async def test_start_bad_encryption_revision(alice_ws, realm, alice):
+async def test_start_bad_encryption_revision(alice_ws, maybe_archived_realm, alice):
+    realm = maybe_archived_realm
     rep = await realm_start_reencryption_maintenance(
         alice_ws, realm, 42, DateTime.now(), {alice.user_id: b"wathever"}, check_rep=False
     )
@@ -75,7 +77,8 @@ async def test_start_bad_encryption_revision(alice_ws, realm, alice):
 
 
 @pytest.mark.trio
-async def test_start_bad_timestamp(alice_ws, realm, alice):
+async def test_start_bad_timestamp(alice_ws, maybe_archived_realm, alice):
+    realm = maybe_archived_realm
     with freeze_time() as now:
         rep = await realm_start_reencryption_maintenance(
             alice_ws, realm, 2, DateTime(2000, 1, 1), {alice.user_id: b"wathever"}, check_rep=False
@@ -91,8 +94,9 @@ async def test_start_bad_timestamp(alice_ws, realm, alice):
 
 @pytest.mark.trio
 async def test_start_bad_per_participant_message(
-    backend, alice_ws, alice, bob, adam, realm, next_timestamp
+    backend, alice_ws, alice, bob, adam, maybe_archived_realm, next_timestamp
 ):
+    realm = maybe_archived_realm
     # Bob used to be part of the realm
     await backend.realm.update_roles(
         alice.organization_id,
@@ -154,7 +158,10 @@ async def test_start_bad_per_participant_message(
 
 
 @pytest.mark.trio
-async def test_start_send_message_to_participants(backend, alice, bob, alice_ws, bob_ws, realm):
+async def test_start_send_message_to_participants(
+    backend, alice, bob, alice_ws, bob_ws, maybe_archived_realm
+):
+    realm = maybe_archived_realm
     await backend.realm.update_roles(
         alice.organization_id,
         RealmGrantedRole(
@@ -192,7 +199,8 @@ async def test_start_send_message_to_participants(backend, alice, bob, alice_ws,
 
 
 @pytest.mark.trio
-async def test_start_reencryption_update_status(alice_ws, alice, realm):
+async def test_start_reencryption_update_status(alice_ws, alice, maybe_archived_realm):
+    realm = maybe_archived_realm
     with freeze_time("2000-01-02"):
         await realm_start_reencryption_maintenance(
             alice_ws, realm, 2, DateTime.now(), {alice.user_id: b"foo"}
@@ -208,7 +216,8 @@ async def test_start_reencryption_update_status(alice_ws, alice, realm):
 
 
 @pytest.mark.trio
-async def test_start_already_in_maintenance(alice_ws, realm, alice):
+async def test_start_already_in_maintenance(alice_ws, maybe_archived_realm, alice):
+    realm = maybe_archived_realm
     await realm_start_reencryption_maintenance(
         alice_ws, realm, 2, DateTime.now(), {alice.user_id: b"wathever"}
     )
@@ -226,7 +235,10 @@ async def test_start_already_in_maintenance(alice_ws, realm, alice):
 
 
 @pytest.mark.trio
-async def test_start_check_access_rights(backend, bob_ws, alice, bob, realm, next_timestamp):
+async def test_start_check_access_rights(
+    backend, bob_ws, alice, bob, maybe_archived_realm, next_timestamp
+):
+    realm = maybe_archived_realm
     # User not part of the realm
     rep = await realm_start_reencryption_maintenance(
         bob_ws, realm, 2, DateTime.now(), {alice.user_id: b"wathever"}, check_rep=False
@@ -283,8 +295,9 @@ async def test_start_check_access_rights(backend, bob_ws, alice, bob, realm, nex
 
 @pytest.mark.trio
 async def test_start_other_organization(
-    backend_asgi_app, ws_from_other_organization_factory, realm, alice
+    backend_asgi_app, ws_from_other_organization_factory, maybe_archived_realm, alice
 ):
+    realm = maybe_archived_realm
     async with ws_from_other_organization_factory(backend_asgi_app) as sock:
         rep = await realm_start_reencryption_maintenance(
             sock, realm, 2, DateTime.now(), {alice.user_id: b"foo"}, check_rep=False
@@ -335,8 +348,9 @@ async def test_finish_while_reencryption_not_done(alice_ws, realm, alice, vlobs)
 
 @pytest.mark.trio
 async def test_reencrypt_and_finish_check_access_rights(
-    backend, alice_ws, bob_ws, alice, bob, realm, vlobs, next_timestamp
+    backend, alice_ws, bob_ws, alice, bob, maybe_archived_realm, vlobs, next_timestamp
 ):
+    realm = maybe_archived_realm
     encryption_revision = 1
 
     # Changing realm roles is not possible during maintenance,
@@ -422,7 +436,8 @@ async def test_reencrypt_and_finish_check_access_rights(
 
 
 @pytest.mark.trio
-async def test_reencryption_batch_not_during_maintenance(alice_ws, realm):
+async def test_reencryption_batch_not_during_maintenance(alice_ws, maybe_archived_realm):
+    realm = maybe_archived_realm
     rep = await vlob_maintenance_get_reencryption_batch(alice_ws, realm, 1)
     # The reason is no longer generated
     assert isinstance(rep, VlobMaintenanceGetReencryptionBatchRepNotInMaintenance)
@@ -437,7 +452,8 @@ async def test_reencryption_batch_not_during_maintenance(alice_ws, realm):
 
 
 @pytest.mark.trio
-async def test_reencryption_batch_bad_revisison(alice_ws, realm, alice):
+async def test_reencryption_batch_bad_revisison(alice_ws, maybe_archived_realm, alice):
+    realm = maybe_archived_realm
     await realm_start_reencryption_maintenance(
         alice_ws, realm, 2, DateTime.now(), {alice.user_id: b"foo"}
     )
@@ -681,7 +697,10 @@ async def test_access_during_reencryption(backend, alice_ws, alice, realm_factor
 
 
 @pytest.mark.trio
-async def test_reencryption_events(backend, alice_ws, alice2_ws, realm, alice, vlobs, vlob_atoms):
+async def test_reencryption_events(
+    backend, alice_ws, alice2_ws, maybe_archived_realm, alice, vlobs, vlob_atoms
+):
+    realm = maybe_archived_realm
     # Start listening events
     await events_subscribe(alice_ws)
 
@@ -718,3 +737,16 @@ async def test_reencryption_events(backend, alice_ws, alice2_ws, realm, alice, v
     # Sanity check
     rep = await events_listen_nowait(alice_ws)
     assert rep == EventsListenRepNoEvents()
+
+
+@pytest.mark.trio
+async def test_start_reencryption_maintenance_realm_deleted(alice_ws, deleted_realm, alice):
+    rep = await realm_start_reencryption_maintenance(
+        alice_ws,
+        deleted_realm,
+        2,
+        DateTime.now(),
+        {alice.user_id: b"foo"},
+        check_rep=False,
+    )
+    assert isinstance(rep, RealmStartReencryptionMaintenanceRepRealmDeleted)

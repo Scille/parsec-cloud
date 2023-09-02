@@ -421,6 +421,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<RealmStartReencryptionMaintenanceRepMaintenanceError>()?;
     m.add_class::<RealmStartReencryptionMaintenanceRepInMaintenance>()?;
     m.add_class::<RealmStartReencryptionMaintenanceRepBadTimestamp>()?;
+    m.add_class::<RealmStartReencryptionMaintenanceRepRealmDeleted>()?;
     m.add_class::<RealmStartReencryptionMaintenanceRepUnknownStatus>()?;
     m.add_class::<RealmFinishReencryptionMaintenanceReq>()?;
     m.add_class::<RealmFinishReencryptionMaintenanceRep>()?;

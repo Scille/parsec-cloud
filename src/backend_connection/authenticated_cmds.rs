@@ -747,6 +747,7 @@ impl AuthenticatedCmds {
                 NotFound,
                 Ok,
                 ParticipantMismatch,
+                RealmDeleted,
                 UnknownStatus,
                 "handle_bad_timestamp"
             )

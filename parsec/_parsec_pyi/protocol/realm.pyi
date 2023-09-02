@@ -324,6 +324,9 @@ class RealmStartReencryptionMaintenanceRepBadTimestamp(RealmStartReencryptionMai
     @property
     def client_timestamp(self) -> DateTime: ...
 
+class RealmStartReencryptionMaintenanceRepRealmDeleted(RealmStartReencryptionMaintenanceRep):
+    def __init__(self) -> None: ...
+
 class RealmStartReencryptionMaintenanceRepUnknownStatus(RealmStartReencryptionMaintenanceRep):
     def __init__(self, status: str, reason: str | None) -> None: ...
     @property

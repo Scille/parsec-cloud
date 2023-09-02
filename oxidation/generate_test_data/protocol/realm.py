@@ -25,6 +25,7 @@ from parsec._parsec import (
     RealmStartReencryptionMaintenanceRepNotFound,
     RealmStartReencryptionMaintenanceRepOk,
     RealmStartReencryptionMaintenanceRepParticipantMismatch,
+    RealmStartReencryptionMaintenanceRepRealmDeleted,
     RealmStatsRepNotAllowed,
     RealmStatsRepNotFound,
     RealmStatsRepOk,
@@ -344,6 +345,10 @@ serialized = serializer.rep_dumps(
 )
 serializer.rep_loads(serialized)
 display("realm_start_reencryption_maintenance_rep_bad_timestamp", serialized, [])
+
+serialized = serializer.rep_dumps(RealmStartReencryptionMaintenanceRepRealmDeleted())
+serializer.rep_loads(serialized)
+display("realm_start_reencryption_maintenance_rep_realm_deleted", serialized, [])
 
 ################### RealmFinishReencryptionMaintenance ##################
 

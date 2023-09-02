@@ -39,6 +39,7 @@ from parsec._parsec import (
     RealmStartReencryptionMaintenanceRepNotFound,
     RealmStartReencryptionMaintenanceRepOk,
     RealmStartReencryptionMaintenanceRepParticipantMismatch,
+    RealmStartReencryptionMaintenanceRepRealmDeleted,
     RealmStartReencryptionMaintenanceReq,
     RealmStatsRep,
     RealmStatsRepNotAllowed,
@@ -548,6 +549,9 @@ class BaseRealmComponent:
 
         except RealmInMaintenanceError:
             return RealmStartReencryptionMaintenanceRepInMaintenance()
+
+        except RealmDeletedError:
+            return RealmStartReencryptionMaintenanceRepRealmDeleted()
 
         return RealmStartReencryptionMaintenanceRepOk()
 
