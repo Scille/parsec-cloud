@@ -223,30 +223,16 @@ async def test_realm_update_archiving_bad_timestamp(
 async def test_realm_update_archiving_realm_deleted(
     alice_ws,
     alice: LocalDevice,
-    realm: RealmID,
+    deleted_realm: RealmID,
     realm_update_archiving_helper,
-    monkeypatch,
 ):
-    now = DateTime.now()
+    DateTime.now()
     available = RealmArchivingConfiguration.available()
-    deletion_planned = RealmArchivingConfiguration.deletion_planned(now)
 
-    with monkeypatch.context() as context:
-        context.setattr(
-            "parsec.backend.realm.RealmArchivingConfigurationRequest.is_valid_archiving_configuration",
-            lambda *args: True,
-        )
-        rep = await realm_update_archiving_helper(
-            alice_ws,
-            alice,
-            realm,
-            deletion_planned,
-        )
-    assert isinstance(rep, RealmUpdateArchivingRepOk)
     rep = await realm_update_archiving_helper(
         alice_ws,
         alice,
-        realm,
+        deleted_realm,
         available,
     )
     assert isinstance(rep, RealmUpdateArchivingRepRealmDeleted)

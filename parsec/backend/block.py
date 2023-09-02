@@ -53,6 +53,14 @@ class BlockInMaintenanceError(BlockError):
     pass
 
 
+class BlockRealmDeletedError(BlockError):
+    pass
+
+
+class BlockRealmArchivedError(BlockError):
+    pass
+
+
 class BaseBlockComponent:
     @api("block_read")
     @catch_protocol_errors
@@ -121,6 +129,7 @@ class BaseBlockComponent:
             BlockStoreError
             BlockAccessError
             BlockInMaintenanceError
+            BlockRealmDeletedError
         """
         raise NotImplementedError()
 
@@ -140,5 +149,7 @@ class BaseBlockComponent:
             BlockStoreError
             BlockAccessError
             BlockInMaintenanceError
+            BlockRealmDeletedError
+            BlockRealmArchivedError
         """
         raise NotImplementedError()

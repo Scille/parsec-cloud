@@ -5,8 +5,8 @@ from contextlib import asynccontextmanager
 
 import pytest
 
-from parsec._parsec import DateTime
-from parsec.api.data import RealmRoleCertificate
+from parsec._parsec import DateTime, RealmArchivingConfiguration
+from parsec.api.data import RealmArchivingCertificate, RealmRoleCertificate
 from parsec.api.protocol import (
     AuthenticatedClientHandshake,
     InvitationToken,
@@ -18,7 +18,7 @@ from parsec.api.protocol import (
     VlobID,
 )
 from parsec.backend.backend_events import BackendEvent
-from parsec.backend.realm import RealmGrantedRole
+from parsec.backend.realm import RealmArchivingConfigurationRequest, RealmGrantedRole
 from parsec.core.types import LocalDevice
 
 
@@ -166,9 +166,92 @@ def realm_factory(next_timestamp):
 
 
 @pytest.fixture
+def archived_realm_factory(realm_factory, next_timestamp):
+    async def _archived_realm_factory(backend, author, realm_id=None, now=None):
+        now = now or next_timestamp()
+        realm = await realm_factory(backend, author, realm_id=realm_id, now=now)
+        after_now = next_timestamp()
+        certificate = RealmArchivingCertificate(
+            author=author.device_id,
+            timestamp=after_now,
+            realm_id=realm_id,
+            configuration=RealmArchivingConfiguration.archived(),
+        )
+        signed = certificate.dump_and_sign(author.signing_key)
+        with backend.event_bus.listen() as spy:
+            await backend.realm.update_archiving(
+                organization_id=author.organization_id,
+                archiving_configuration_request=RealmArchivingConfigurationRequest(
+                    certificate=signed,
+                    realm_id=realm,
+                    configuration=certificate.configuration,
+                    configured_by=certificate.author,
+                    configured_on=certificate.timestamp,
+                ),
+            )
+            await spy.wait_with_timeout(BackendEvent.REALM_ARCHIVING_UPDATED)
+        return realm_id
+
+    return _archived_realm_factory
+
+
+@pytest.fixture
+def deleted_realm_factory(realm_factory, next_timestamp, monkeypatch):
+    async def _deleted_realm_factory(backend, author, realm_id=None, now=None):
+        now = now or next_timestamp()
+        realm = await realm_factory(backend, author, realm_id=realm_id, now=now)
+        after_now = next_timestamp()
+        certificate = RealmArchivingCertificate(
+            author=author.device_id,
+            timestamp=after_now,
+            realm_id=realm_id,
+            configuration=RealmArchivingConfiguration.deletion_planned(after_now),
+        )
+        signed = certificate.dump_and_sign(author.signing_key)
+        with monkeypatch.context() as context:
+            context.setattr(
+                "parsec.backend.realm.RealmArchivingConfigurationRequest.is_valid_archiving_configuration",
+                lambda *args: True,
+            )
+            with backend.event_bus.listen() as spy:
+                await backend.realm.update_archiving(
+                    organization_id=author.organization_id,
+                    archiving_configuration_request=RealmArchivingConfigurationRequest(
+                        certificate=signed,
+                        realm_id=realm,
+                        configuration=certificate.configuration,
+                        configured_by=certificate.author,
+                        configured_on=certificate.timestamp,
+                    ),
+                )
+                await spy.wait_with_timeout(BackendEvent.REALM_ARCHIVING_UPDATED)
+        return realm_id
+
+    return _deleted_realm_factory
+
+
+@pytest.fixture
 async def realm(backend, alice, realm_factory):
     realm_id = RealmID.from_hex("A0000000000000000000000000000000")
     return await realm_factory(backend, alice, realm_id, DateTime(2000, 1, 2))
+
+
+@pytest.fixture
+async def archived_realm(backend, alice, archived_realm_factory):
+    realm_id = RealmID.from_hex("B0000000000000000000000000000000")
+    realm = await archived_realm_factory(backend, alice, realm_id, DateTime(2000, 1, 2))
+    return realm
+
+
+@pytest.fixture(params=(False, True), ids=["available_realm", "archived_realm"])
+async def maybe_archived_realm(request, realm, archived_realm):
+    return archived_realm if request.param else realm
+
+
+@pytest.fixture
+async def deleted_realm(backend, alice, deleted_realm_factory):
+    realm_id = RealmID.from_hex("C0000000000000000000000000000000")
+    return await deleted_realm_factory(backend, alice, realm_id, DateTime(2000, 1, 2))
 
 
 @pytest.fixture

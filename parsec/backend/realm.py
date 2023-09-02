@@ -591,6 +591,7 @@ class BaseRealmComponent:
         Raises:
             RealmNotFoundError
             RealmAccessError
+            RealmDeletedError
         """
         raise NotImplementedError()
 
@@ -601,6 +602,7 @@ class BaseRealmComponent:
         Raises:
             RealmNotFoundError
             RealmAccessError
+            RealmDeletedError
         """
         raise NotImplementedError()
 
@@ -638,6 +640,7 @@ class BaseRealmComponent:
             RealmIncompatibleProfileError
             RealmNotFoundError
             RealmInMaintenanceError
+            RealmDeletedError
         """
         raise NotImplementedError()
 
@@ -653,6 +656,7 @@ class BaseRealmComponent:
             RealmNotFoundError
             RealmDeletedError
             RealmArchivingPeriodTooShortError
+            RealmDeletedError
         """
         raise NotImplementedError()
 
@@ -671,6 +675,7 @@ class BaseRealmComponent:
             RealmMaintenanceError: bad encryption_revision or per_participant_message
             RealmNotFoundError
             RealmAccessError
+            RealmDeletedError
         """
         raise NotImplementedError()
 
@@ -686,6 +691,7 @@ class BaseRealmComponent:
             RealmNotFoundError
             RealmAccessError
             RealmMaintenanceError: not in maintenance or bad encryption_revision
+            RealmDeletedError
         """
         raise NotImplementedError()
 

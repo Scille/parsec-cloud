@@ -18,7 +18,7 @@ from parsec.api.protocol import (
     VlobID,
 )
 from parsec.backend.backend_events import BackendEvent
-from parsec.backend.realm import RealmNotFoundError
+from parsec.backend.realm import RealmDeletedError, RealmNotFoundError
 from parsec.backend.sequester import BaseSequesterService
 from parsec.backend.utils import OperationKind
 from parsec.backend.vlob import (
@@ -29,6 +29,8 @@ from parsec.backend.vlob import (
     VlobInMaintenanceError,
     VlobNotFoundError,
     VlobNotInMaintenanceError,
+    VlobRealmArchivedError,
+    VlobRealmDeletedError,
     VlobRealmNotFoundError,
     VlobRequireGreaterTimestampError,
     VlobSequesterDisabledError,
@@ -284,13 +286,18 @@ class MemoryVlobComponent(BaseVlobComponent):
         encryption_revision: int | None,
         timestamp: DateTime | None,
         operation_kind: OperationKind,
-    ) -> "Realm":
+    ) -> Realm:
         assert self._realm_component is not None
 
         try:
             realm = self._realm_component._get_realm(organization_id, realm_id)
         except RealmNotFoundError:
             raise VlobRealmNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
+        except RealmDeletedError:
+            raise VlobRealmDeletedError(f"Realm `{realm_id.hex}` has been deleted")
+
+        if operation_kind == operation_kind.DATA_WRITE and realm.is_archived():
+            raise VlobRealmArchivedError(f"Realm `{realm_id.hex}` is archived")
 
         allowed_roles: Tuple[RealmRole, ...]
         # Only an owner can perform maintenance operation

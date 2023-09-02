@@ -75,6 +75,11 @@ class Realm:
     def get_last_archiving_configuration_request(self) -> RealmArchivingConfigurationRequest | None:
         return self.last_archiving_configuration_request
 
+    def is_archived(self) -> bool:
+        if self.last_archiving_configuration_request is None:
+            return False
+        return self.last_archiving_configuration_request.configuration.is_archived()
+
     def is_deleted(self) -> bool:
         if self.last_archiving_configuration_request is None:
             return False
@@ -111,13 +116,15 @@ class MemoryRealmComponent(BaseRealmComponent):
         self._block_component = block
         self._organization_component = organization
 
-    def _get_realm(self, organization_id: OrganizationID, realm_id: RealmID) -> Realm:
+    def _get_realm(
+        self, organization_id: OrganizationID, realm_id: RealmID, allow_deleted: bool = False
+    ) -> Realm:
         try:
             realm = self._realms[(organization_id, realm_id)]
         except KeyError:
             raise RealmNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
-        if realm.is_deleted():
-            raise RealmDeletedError()
+        if not allow_deleted and realm.is_deleted():
+            raise RealmDeletedError(f"Realm `{realm_id.hex}` has been deleted")
         return realm
 
     async def create(
@@ -175,7 +182,7 @@ class MemoryRealmComponent(BaseRealmComponent):
     async def get_current_roles(
         self, organization_id: OrganizationID, realm_id: RealmID
     ) -> Dict[UserID, RealmRole]:
-        realm = self._get_realm(organization_id, realm_id)
+        realm = self._get_realm(organization_id, realm_id, allow_deleted=True)
         roles: Dict[UserID, RealmRole] = {}
         for x in realm.granted_roles:
             if x.role is None:
@@ -187,7 +194,7 @@ class MemoryRealmComponent(BaseRealmComponent):
     async def get_role_certificates(
         self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
     ) -> List[bytes]:
-        realm = self._get_realm(organization_id, realm_id)
+        realm = self._get_realm(organization_id, realm_id, allow_deleted=True)
         if author.user_id not in realm.roles:
             raise RealmAccessError()
         return [x.certificate for x in realm.granted_roles]

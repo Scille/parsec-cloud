@@ -14,10 +14,12 @@ from parsec.backend.block import (
     BlockAlreadyExistsError,
     BlockInMaintenanceError,
     BlockNotFoundError,
+    BlockRealmArchivedError,
+    BlockRealmDeletedError,
     BlockStoreError,
 )
 from parsec.backend.blockstore import BaseBlockStoreComponent
-from parsec.backend.realm import RealmNotFoundError
+from parsec.backend.realm import RealmDeletedError, RealmNotFoundError
 from parsec.backend.utils import OperationKind
 
 if TYPE_CHECKING:
@@ -69,6 +71,11 @@ class MemoryBlockComponent(BaseBlockComponent):
             realm = self._realm_component._get_realm(organization_id, realm_id)
         except RealmNotFoundError:
             raise BlockNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
+        except RealmDeletedError:
+            raise BlockRealmDeletedError(f"Realm `{realm_id.hex}` has been deleted")
+
+        if operation_kind == operation_kind.DATA_WRITE and realm.is_archived():
+            raise BlockRealmArchivedError(f"Realm `{realm_id.hex}` is archived")
 
         allowed_roles: Tuple[RealmRole, ...]
         if operation_kind == operation_kind.DATA_READ:

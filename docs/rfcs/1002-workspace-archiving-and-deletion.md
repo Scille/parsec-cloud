@@ -272,7 +272,30 @@ It is defined as such:
 
 **Note:** The command does not allow to get the archiving status for a single realm, which would be potentially more efficient to fetch the new archiving status of a freshly updated realm. This is however not a big deal as this is a temporary command for the v2/v3 transition. With v3 API, the certificates will be eagerly downloaded and this is how the device will get the new archiving status.
 
-In addition, the `vlob_create`, `vlob_update`, `vlob_read`, `block_read` and `block_create` commands are updated with new reply status:
+In addition, the following commands are updated with new reply status:
+
+
+| Check for archived/deleted status          | archived | deleted |
+|--------------------------------------------|----------|---------|
+| `realm_create`                             |          |         |
+| `realm_status`                             |          | ✔️       |
+| `realm_stats`                              |          | ✔️       |
+| `realm_get_role_certificates`              |          |         |
+| `realm_update_roles`                       |          | ✔️       |
+| `realm_update_archiving`                   |          | ✔️       |
+| `realm_start_reencryption_maintenance`     |          | ✔️       |
+| `realm_finish_reencryption_maintenance`    |          | ✔️       |
+| `vlob_create`                              | ✔️        | ✔️       |
+| `vlob_read`                                |          | ✔️       |
+| `vlob_update`                              | ✔️        | ✔️       |
+| `vlob_poll_changes`                        |          | ✔️       |
+| `vlob_list_versions`                       |          | ✔️       |
+| `vlob_maintenance_get_reencryption_batch`  |          | ✔️       |
+| `vlob_maintenance_save_reencryption_batch` |          | ✔️       |
+| `block_read`                               |          | ✔️       |
+| `block_create`                             | ✔️        | ✔️       |
+
+
 
 ```json5
             [...]

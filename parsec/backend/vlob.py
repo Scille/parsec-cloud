@@ -163,6 +163,14 @@ class VlobSequesterServiceInconsistencyError(VlobError):
         self.sequester_services_certificates = sequester_services_certificates
 
 
+class VlobRealmDeletedError(VlobError):
+    pass
+
+
+class VlobRealmArchivedError(VlobError):
+    pass
+
+
 async def extract_sequestered_data_and_proceed_webhook(
     services: Dict[SequesterServiceID, BaseSequesterService],
     organization_id: OrganizationID,
@@ -585,6 +593,8 @@ class BaseVlobComponent:
             VlobInMaintenanceError
             VlobSequesterDisabledError
             VlobSequesterServiceInconsistencyError
+            VlobRealmDeletedError
+            VlobRealmArchivedError
         """
         raise NotImplementedError()
 
@@ -604,6 +614,7 @@ class BaseVlobComponent:
             VlobNotFoundError
             VlobEncryptionRevisionError: if encryption_revision mismatch
             VlobInMaintenanceError
+            VlobRealmDeletedError
         """
         raise NotImplementedError()
 
@@ -628,6 +639,8 @@ class BaseVlobComponent:
             VlobInMaintenanceError
             VlobSequesterDisabledError
             VlobSequesterServiceInconsistencyError
+            VlobRealmDeletedError
+            VlobRealmArchivedError
         """
         raise NotImplementedError()
 
@@ -643,6 +656,7 @@ class BaseVlobComponent:
             VlobInMaintenanceError
             VlobNotFoundError
             VlobAccessError
+            VlobRealmDeletedError
         """
         raise NotImplementedError()
 
@@ -654,6 +668,7 @@ class BaseVlobComponent:
             VlobInMaintenanceError
             VlobNotFoundError
             VlobAccessError
+            VlobRealmDeletedError
         """
         raise NotImplementedError()
 
@@ -671,6 +686,7 @@ class BaseVlobComponent:
             VlobAccessError
             VlobEncryptionRevisionError
             VlobMaintenanceError: not in maintenance
+            VlobRealmDeletedError
         """
         raise NotImplementedError()
 
@@ -688,5 +704,6 @@ class BaseVlobComponent:
             VlobAccessError
             VlobEncryptionRevisionError
             VlobMaintenanceError: not in maintenance
+            VlobRealmDeletedError
         """
         raise NotImplementedError()
