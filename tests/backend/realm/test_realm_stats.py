@@ -3,7 +3,12 @@ from __future__ import annotations
 
 import pytest
 
-from parsec._parsec import RealmStatsRepNotAllowed, RealmStatsRepNotFound, RealmStatsRepOk
+from parsec._parsec import (
+    RealmStatsRepNotAllowed,
+    RealmStatsRepNotFound,
+    RealmStatsRepOk,
+    RealmStatsRepRealmDeleted,
+)
 from parsec.api.protocol import BlockID, RealmID, VlobID
 from tests.backend.common import block_create, realm_stats, vlob_create
 
@@ -45,3 +50,15 @@ async def test_realm_stats_ko(
         rep = await realm_stats(sock, realm_id=realm)
     # The reason is no longer generated
     assert isinstance(rep, RealmStatsRepNotFound)
+
+
+@pytest.mark.trio
+async def test_realm_stats_realm_archived(alice_ws, archived_realm):
+    rep = await realm_stats(alice_ws, realm_id=archived_realm)
+    assert rep == RealmStatsRepOk(blocks_size=0, vlobs_size=0)
+
+
+@pytest.mark.trio
+async def test_realm_stats_realm_deleted(alice_ws, deleted_realm):
+    rep = await realm_stats(alice_ws, realm_id=deleted_realm)
+    assert rep == RealmStatsRepRealmDeleted()

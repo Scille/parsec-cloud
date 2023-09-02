@@ -769,7 +769,8 @@ impl AuthenticatedCmds {
                 Ok,
                 NotAllowed,
                 NotFound,
-                UnknownStatus
+                RealmDeleted,
+                UnknownStatus,
             )
         })
     }
@@ -790,8 +791,8 @@ impl AuthenticatedCmds {
                 Ok,
                 NotAllowed,
                 NotFound,
-                UnknownStatus,
                 RealmDeleted,
+                UnknownStatus,
             )
         })
     }

@@ -28,6 +28,7 @@ from parsec._parsec import (
     RealmStatsRepNotAllowed,
     RealmStatsRepNotFound,
     RealmStatsRepOk,
+    RealmStatsRepRealmDeleted,
     RealmStatusRepNotAllowed,
     RealmStatusRepNotFound,
     RealmStatusRepOk,
@@ -170,6 +171,11 @@ display("realm_stats_rep_not_allowed", serialized, [])
 serialized = serializer.rep_dumps(RealmStatsRepNotFound(reason="foobar"))
 serializer.rep_loads(serialized)
 display("realm_stats_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps(RealmStatsRepRealmDeleted())
+serializer.rep_loads(serialized)
+display("realm_stats_rep_realm_deleted", serialized, [])
+
 
 ################### RealmGetRoleCertificates ##################
 

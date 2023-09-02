@@ -44,6 +44,7 @@ from parsec._parsec import (
     RealmStatsRepNotAllowed,
     RealmStatsRepNotFound,
     RealmStatsRepOk,
+    RealmStatsRepRealmDeleted,
     RealmStatsReq,
     RealmStatusRep,
     RealmStatusRepNotAllowed,
@@ -311,6 +312,8 @@ class BaseRealmComponent:
             return RealmStatsRepNotAllowed()
         except RealmNotFoundError:
             return RealmStatsRepNotFound(None)
+        except RealmDeletedError:
+            return RealmStatsRepRealmDeleted()
         return RealmStatsRepOk(blocks_size=stats.blocks_size, vlobs_size=stats.vlobs_size)
 
     @api("realm_get_role_certificates")
