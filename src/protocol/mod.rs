@@ -370,6 +370,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<RealmStatusRepOk>()?;
     m.add_class::<RealmStatusRepNotAllowed>()?;
     m.add_class::<RealmStatusRepNotFound>()?;
+    m.add_class::<RealmStatusRepRealmDeleted>()?;
     m.add_class::<RealmStatusRepUnknownStatus>()?;
     m.add_class::<RealmStatsReq>()?;
     m.add_class::<RealmStatsRep>()?;

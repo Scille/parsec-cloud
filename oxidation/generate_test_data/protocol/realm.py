@@ -31,6 +31,7 @@ from parsec._parsec import (
     RealmStatusRepNotAllowed,
     RealmStatusRepNotFound,
     RealmStatusRepOk,
+    RealmStatusRepRealmDeleted,
     RealmUpdateArchivingRepArchivingPeriodTooShort,
     RealmUpdateArchivingRepBadTimestamp,
     RealmUpdateArchivingRepInvalidCertification,
@@ -140,6 +141,10 @@ display("realm_status_rep_not_allowed", serialized, [])
 serialized = serializer.rep_dumps(RealmStatusRepNotFound(reason="foobar"))
 serializer.rep_loads(serialized)
 display("realm_status_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps(RealmStatusRepRealmDeleted())
+serializer.rep_loads(serialized)
+display("realm_status_rep_realm_deleted", serialized, [])
 
 ################### RealmStats ##################
 

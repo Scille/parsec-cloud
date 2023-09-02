@@ -49,6 +49,7 @@ from parsec._parsec import (
     RealmStatusRepNotAllowed,
     RealmStatusRepNotFound,
     RealmStatusRepOk,
+    RealmStatusRepRealmDeleted,
     RealmStatusReq,
     RealmUpdateArchivingRep,
     RealmUpdateArchivingRepArchivingPeriodTooShort,
@@ -284,6 +285,9 @@ class BaseRealmComponent:
 
         except RealmNotFoundError:
             return RealmStatusRepNotFound(None)
+
+        except RealmDeletedError:
+            return RealmStatusRepRealmDeleted()
 
         return RealmStatusRepOk(
             in_maintenance=status.in_maintenance,

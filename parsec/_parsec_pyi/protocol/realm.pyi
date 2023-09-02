@@ -102,6 +102,9 @@ class RealmStatusRepNotFound(RealmStatusRep):
     @property
     def reason(self) -> str | None: ...
 
+class RealmStatusRepRealmDeleted(RealmStatusRep):
+    def __init__(self) -> None: ...
+
 class RealmStatusRepUnknownStatus(RealmStatusRep):
     def __init__(self, status: str, reason: str | None) -> None: ...
     @property

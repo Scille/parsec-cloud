@@ -50,6 +50,9 @@
                         "type": "NonRequiredOption<String>"
                     }
                 ]
+            },
+            {
+                "status": "realm_deleted"
             }
         ],
         "nested_types": [

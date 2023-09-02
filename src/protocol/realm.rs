@@ -149,6 +149,7 @@ gen_rep!(
     { .. },
     [NotAllowed],
     [NotFound, reason: Reason],
+    [RealmDeleted],
 );
 
 #[pyclass(extends=RealmStatusRep)]
