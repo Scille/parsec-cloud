@@ -611,6 +611,7 @@ gen_rep!(
     [BadEncryptionRevision],
     [NotInMaintenance, reason: Reason],
     [MaintenanceError, reason: Reason],
+    [RealmDeleted],
 );
 
 #[pyclass(extends=RealmFinishReencryptionMaintenanceRep)]

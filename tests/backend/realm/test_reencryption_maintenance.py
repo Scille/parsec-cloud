@@ -18,6 +18,7 @@ from parsec._parsec import (
     RealmFinishReencryptionMaintenanceRepNotAllowed,
     RealmFinishReencryptionMaintenanceRepNotInMaintenance,
     RealmFinishReencryptionMaintenanceRepOk,
+    RealmFinishReencryptionMaintenanceRepRealmDeleted,
     RealmStartReencryptionMaintenanceRepBadEncryptionRevision,
     RealmStartReencryptionMaintenanceRepBadTimestamp,
     RealmStartReencryptionMaintenanceRepInMaintenance,
@@ -750,3 +751,9 @@ async def test_start_reencryption_maintenance_realm_deleted(alice_ws, deleted_re
         check_rep=False,
     )
     assert isinstance(rep, RealmStartReencryptionMaintenanceRepRealmDeleted)
+
+
+@pytest.mark.trio
+async def test_finish_reencryption_maintenance_realm_deleted(alice_ws, deleted_realm, alice):
+    rep = await realm_finish_reencryption_maintenance(alice_ws, deleted_realm, 2, check_rep=False)
+    assert isinstance(rep, RealmFinishReencryptionMaintenanceRepRealmDeleted)

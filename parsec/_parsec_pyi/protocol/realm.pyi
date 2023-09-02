@@ -369,6 +369,9 @@ class RealmFinishReencryptionMaintenanceRepMaintenanceError(RealmFinishReencrypt
     @property
     def reason(self) -> str | None: ...
 
+class RealmFinishReencryptionMaintenanceRepRealmDeleted(RealmFinishReencryptionMaintenanceRep):
+    def __init__(self) -> None: ...
+
 class RealmFinishReencryptionMaintenanceRepUnknownStatus(RealmFinishReencryptionMaintenanceRep):
     def __init__(self, status: str, reason: str | None) -> None: ...
     @property

@@ -24,6 +24,7 @@ from parsec._parsec import (
     RealmFinishReencryptionMaintenanceRepNotFound,
     RealmFinishReencryptionMaintenanceRepNotInMaintenance,
     RealmFinishReencryptionMaintenanceRepOk,
+    RealmFinishReencryptionMaintenanceRepRealmDeleted,
     RealmFinishReencryptionMaintenanceReq,
     RealmGetRoleCertificatesRep,
     RealmGetRoleCertificatesRepNotAllowed,
@@ -585,6 +586,9 @@ class BaseRealmComponent:
 
         except RealmMaintenanceError:
             return RealmFinishReencryptionMaintenanceRepMaintenanceError(None)
+
+        except RealmDeletedError:
+            return RealmFinishReencryptionMaintenanceRepRealmDeleted()
 
         return RealmFinishReencryptionMaintenanceRepOk()
 

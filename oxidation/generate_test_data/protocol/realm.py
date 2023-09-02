@@ -14,6 +14,7 @@ from parsec._parsec import (
     RealmFinishReencryptionMaintenanceRepNotFound,
     RealmFinishReencryptionMaintenanceRepNotInMaintenance,
     RealmFinishReencryptionMaintenanceRepOk,
+    RealmFinishReencryptionMaintenanceRepRealmDeleted,
     RealmGetRoleCertificatesRepNotAllowed,
     RealmGetRoleCertificatesRepNotFound,
     RealmGetRoleCertificatesRepOk,
@@ -391,6 +392,10 @@ serialized = serializer.rep_dumps(
 )
 serializer.rep_loads(serialized)
 display("realm_finish_reencryption_maintenance_rep_maintenance_error", serialized, [])
+
+serialized = serializer.rep_dumps(RealmFinishReencryptionMaintenanceRepRealmDeleted())
+serializer.rep_loads(serialized)
+display("realm_finish_reencryption_maintenance_rep_realm_deleted", serialized, [])
 
 ################### RealmUpdateArchiving ##################
 

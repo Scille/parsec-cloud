@@ -680,6 +680,7 @@ impl AuthenticatedCmds {
                 NotAllowed,
                 BadEncryptionRevision,
                 NotFound,
+                RealmDeleted,
                 UnknownStatus
             )
         })

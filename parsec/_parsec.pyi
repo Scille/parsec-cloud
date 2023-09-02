@@ -446,6 +446,7 @@ from parsec._parsec_pyi.protocol import (
     RealmFinishReencryptionMaintenanceRepNotFound,
     RealmFinishReencryptionMaintenanceRepNotInMaintenance,
     RealmFinishReencryptionMaintenanceRepOk,
+    RealmFinishReencryptionMaintenanceRepRealmDeleted,
     RealmFinishReencryptionMaintenanceRepUnknownStatus,
     RealmFinishReencryptionMaintenanceReq,
     RealmGetRoleCertificatesRep,
@@ -1157,6 +1158,7 @@ __all__ = [
     "RealmFinishReencryptionMaintenanceRepBadEncryptionRevision",
     "RealmFinishReencryptionMaintenanceRepNotInMaintenance",
     "RealmFinishReencryptionMaintenanceRepMaintenanceError",
+    "RealmFinishReencryptionMaintenanceRepRealmDeleted",
     "RealmFinishReencryptionMaintenanceRepUnknownStatus",
     "MaintenanceType",
     # Protocol Shamir
