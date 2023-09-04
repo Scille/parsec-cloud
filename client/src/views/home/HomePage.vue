@@ -229,18 +229,18 @@ import MsSearchInput from '@/components/core/ms-input/MsSearchInput.vue';
 import MsSelect from '@/components/core/ms-select/MsSelect.vue';
 import { MsSelectChangeEvent, MsSelectOption } from '@/components/core/ms-select/MsSelectOption';
 import { AvailableDevice } from '@/plugins/libparsec/definitions';
-import { libparsec } from '@/plugins/libparsec';
 import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
-import { mockLastLogin, DEFAULT_HANDLE } from '@/common/mocks';
+import { mockLastLogin } from '@/common/mocks';
 import { StoredDeviceData, StorageManager } from '@/services/storageManager';
 import { DateTime } from 'luxon';
 import { useRouter } from 'vue-router';
 import HomePagePopover from '@/views/home/HomePagePopover.vue';
 import SettingsModal from '@/views/settings/SettingsModal.vue';
-import { ConfigPathKey, Formatters, FormattersKey, StorageManagerKey } from '@/common/injectionKeys';
+import { Formatters, FormattersKey, StorageManagerKey } from '@/common/injectionKeys';
 import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 import { getAppVersion } from '@/common/mocks';
 import AboutModal from '@/views/about/AboutModal.vue';
+import * as Parsec from '@/common/parsec';
 
 const router = useRouter();
 const { t } = useI18n();
@@ -255,7 +255,6 @@ const sortByAsc = ref(true);
 const { timeSince } = inject(FormattersKey)! as Formatters;
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const storageManager: StorageManager = inject(StorageManagerKey)!;
-const configPath = inject(ConfigPathKey, '/');  // Must be a valid Unix path !
 const isPopoverOpen = ref(false);
 
 const msSelectOptions: MsSelectOption[] = [
@@ -309,7 +308,7 @@ const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
 onMounted(async (): Promise<void> => {
   await mockLastLogin(storageManager);
 
-  deviceList.value = await libparsec.listAvailableDevices(configPath);
+  deviceList.value = await Parsec.listAvailableDevices();
 
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
 });
@@ -349,8 +348,12 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
 
   showOrganizationList.value = true;
 
-  // name: define where the user will be move, query: add parameters
-  router.push({ name: 'workspaces', params: { handle: DEFAULT_HANDLE } });
+  const result = await Parsec.login(device, password);
+  if (result.ok) {
+    router.push({ name: 'workspaces', params: {handle: result.value}});
+  } else {
+    console.log('Could not login', result.error);
+  }
 }
 
 function onForgottenPasswordClick(): void {
