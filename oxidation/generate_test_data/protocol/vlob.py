@@ -11,6 +11,8 @@ from parsec._parsec import (
     VlobCreateRepNotAllowed,
     VlobCreateRepNotASequesteredOrganization,
     VlobCreateRepOk,
+    VlobCreateRepRealmArchived,
+    VlobCreateRepRealmDeleted,
     VlobCreateRepRequireGreaterTimestamp,
     VlobCreateRepSequesterInconsistency,
     VlobListVersionsRepInMaintenance,
@@ -39,6 +41,7 @@ from parsec._parsec import (
     VlobReadRepNotAllowed,
     VlobReadRepNotFound,
     VlobReadRepOk,
+    VlobReadRepRealmDeleted,
     VlobUpdateRepBadEncryptionRevision,
     VlobUpdateRepBadTimestamp,
     VlobUpdateRepBadVersion,
@@ -47,6 +50,8 @@ from parsec._parsec import (
     VlobUpdateRepNotASequesteredOrganization,
     VlobUpdateRepNotFound,
     VlobUpdateRepOk,
+    VlobUpdateRepRealmArchived,
+    VlobUpdateRepRealmDeleted,
     VlobUpdateRepRequireGreaterTimestamp,
     VlobUpdateRepSequesterInconsistency,
 )
@@ -140,6 +145,14 @@ serialized = serializer.rep_dumps(
 serializer.rep_loads(serialized)
 display("vlob_create_rep_sequester_inconsistency", serialized, [])
 
+serialized = serializer.rep_dumps(VlobCreateRepRealmArchived())
+serializer.rep_loads(serialized)
+display("vlob_create_rep_realm_archived", serialized, [])
+
+serialized = serializer.rep_dumps(VlobCreateRepRealmDeleted())
+serializer.rep_loads(serialized)
+display("vlob_create_rep_realm_deleted", serialized, [])
+
 ################### VlobRead ##################
 
 serializer = vlob_read_serializer
@@ -187,6 +200,10 @@ display("vlob_read_rep_bad_encryption_revision", serialized, [])
 serialized = serializer.rep_dumps(VlobReadRepInMaintenance())
 serializer.rep_loads(serialized)
 display("vlob_read_rep_in_maintenance", serialized, [])
+
+serialized = serializer.rep_dumps(VlobReadRepRealmDeleted())
+serializer.rep_loads(serialized)
+display("vlob_read_rep_realm_deleted", serialized, [])
 
 ################### VlobUpdate ##################
 
@@ -276,6 +293,14 @@ serialized = serializer.rep_dumps(
 )
 serializer.rep_loads(serialized)
 display("vlob_update_rep_sequester_inconsistency", serialized, [])
+
+serialized = serializer.rep_dumps(VlobUpdateRepRealmArchived())
+serializer.rep_loads(serialized)
+display("vlob_update_rep_realm_archived", serialized, [])
+
+serialized = serializer.rep_dumps(VlobUpdateRepRealmDeleted())
+serializer.rep_loads(serialized)
+display("vlob_update_rep_realm_deleted", serialized, [])
 
 ################### VlobPollChanges ##################
 

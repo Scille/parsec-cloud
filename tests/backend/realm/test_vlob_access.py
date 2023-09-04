@@ -12,6 +12,8 @@ from parsec._parsec import (
     VlobCreateRepInMaintenance,
     VlobCreateRepNotAllowed,
     VlobCreateRepOk,
+    VlobCreateRepRealmArchived,
+    VlobCreateRepRealmDeleted,
     VlobCreateRepRequireGreaterTimestamp,
     VlobListVersionsRepNotAllowed,
     VlobListVersionsRepNotFound,
@@ -22,6 +24,7 @@ from parsec._parsec import (
     VlobReadRepNotAllowed,
     VlobReadRepNotFound,
     VlobReadRepOk,
+    VlobReadRepRealmDeleted,
     VlobUpdateRepBadEncryptionRevision,
     VlobUpdateRepBadTimestamp,
     VlobUpdateRepBadVersion,
@@ -29,6 +32,8 @@ from parsec._parsec import (
     VlobUpdateRepNotAllowed,
     VlobUpdateRepNotFound,
     VlobUpdateRepOk,
+    VlobUpdateRepRealmArchived,
+    VlobUpdateRepRealmDeleted,
     VlobUpdateRepRequireGreaterTimestamp,
 )
 from parsec.api.protocol import (
@@ -662,3 +667,37 @@ async def test_vlob_updates_causality_checks(
         check_rep=False,
     )
     assert rep == VlobUpdateRepRequireGreaterTimestamp(ref)
+
+
+@pytest.mark.trio
+async def test_access_realm_archived(alice, alice_ws, realm, archived_vlobs):
+    rep = await vlob_create(alice_ws, realm, VLOB_ID, blob=b"First version.", check_rep=False)
+    assert isinstance(rep, VlobCreateRepRealmArchived)
+
+    rep = await vlob_read(alice_ws, archived_vlobs[0])
+    assert rep == VlobReadRepOk(
+        version=2,
+        blob=b"r:A b:1 v:2",
+        author=alice.device_id,
+        timestamp=DateTime(2000, 1, 3),
+        author_last_role_granted_on=DateTime(2000, 1, 2),
+    )
+
+    rep = await vlob_update(
+        alice_ws, archived_vlobs[0], version=3, blob=b"Next version.", check_rep=False
+    )
+    assert isinstance(rep, VlobUpdateRepRealmArchived)
+
+
+@pytest.mark.trio
+async def test_access_realm_deleted(alice, alice_ws, realm, deleted_vlobs):
+    rep = await vlob_create(alice_ws, realm, VLOB_ID, blob=b"First version.", check_rep=False)
+    assert isinstance(rep, VlobCreateRepRealmDeleted)
+
+    rep = await vlob_read(alice_ws, deleted_vlobs[0])
+    assert isinstance(rep, VlobReadRepRealmDeleted)
+
+    rep = await vlob_update(
+        alice_ws, deleted_vlobs[0], version=3, blob=b"Next version.", check_rep=False
+    )
+    assert isinstance(rep, VlobUpdateRepRealmDeleted)

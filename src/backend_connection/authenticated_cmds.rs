@@ -1006,6 +1006,8 @@ impl AuthenticatedCmds {
                 RequireGreaterTimestamp,
                 SequesterInconsistency,
                 Timeout,
+                RealmArchived,
+                RealmDeleted,
                 "handle_bad_timestamp"
             )
         })
@@ -1157,7 +1159,8 @@ impl AuthenticatedCmds {
                 BadEncryptionRevision,
                 InMaintenance,
                 NotAllowed,
-                NotFound
+                NotFound,
+                RealmDeleted
             )
         })
     }
@@ -1214,6 +1217,8 @@ impl AuthenticatedCmds {
                 RequireGreaterTimestamp,
                 SequesterInconsistency,
                 Timeout,
+                RealmArchived,
+                RealmDeleted,
                 "handle_bad_timestamp"
             )
         })

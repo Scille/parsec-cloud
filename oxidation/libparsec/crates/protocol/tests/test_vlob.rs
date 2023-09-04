@@ -238,6 +238,22 @@ fn serde_vlob_create_req(#[case] raw: &[u8], #[case] expected: authenticated_cmd
         sequester_services_certificates: vec![b"foo".to_vec(), b"bar".to_vec()],
     },
 )]
+#[case::realm_archived(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   status: "realm_archived"
+    //
+    &hex!("81a6737461747573ae7265616c6d5f6172636869766564")[..],
+    authenticated_cmds::vlob_create::Rep::RealmArchived,
+)]
+#[case::realm_deleted(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   status: "realm_deleted"
+    //
+    &hex!("81a6737461747573ad7265616c6d5f64656c65746564")[..],
+    authenticated_cmds::vlob_create::Rep::RealmDeleted,
+)]
 fn serde_vlob_create_rep(
     #[case] raw: &[u8],
     #[case] expected: authenticated_cmds::vlob_create::Rep,
@@ -360,6 +376,14 @@ fn serde_vlob_read_req() {
         "81a6737461747573ae696e5f6d61696e74656e616e6365"
     )[..],
     authenticated_cmds::vlob_read::Rep::InMaintenance
+)]
+#[case::realm_deleted(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   status: "realm_deleted"
+    //
+    &hex!("81a6737461747573ad7265616c6d5f64656c65746564")[..],
+    authenticated_cmds::vlob_read::Rep::RealmDeleted,
 )]
 fn serde_vlob_read_rep(#[case] raw: &[u8], #[case] expected: authenticated_cmds::vlob_read::Rep) {
     let data = authenticated_cmds::vlob_read::Rep::load(raw).unwrap();
@@ -611,6 +635,22 @@ fn serde_vlob_update_req(#[case] raw: &[u8], #[case] expected: authenticated_cmd
         sequester_authority_certificate: b"foobar".to_vec(),
         sequester_services_certificates: vec![b"foo".to_vec(), b"bar".to_vec()],
     },
+)]
+#[case::realm_archived(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   status: "realm_archived"
+    //
+    &hex!("81a6737461747573ae7265616c6d5f6172636869766564")[..],
+    authenticated_cmds::vlob_update::Rep::RealmArchived,
+)]
+#[case::realm_deleted(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   status: "realm_deleted"
+    //
+    &hex!("81a6737461747573ad7265616c6d5f64656c65746564")[..],
+    authenticated_cmds::vlob_update::Rep::RealmDeleted,
 )]
 fn serde_vlob_update_rep(
     #[case] raw: &[u8],

@@ -137,6 +137,12 @@
             },
             {
                 "status": "timeout"
+            },
+            {
+                "status": "realm_archived"
+            },
+            {
+                "status": "realm_deleted"
             }
         ]
     },
@@ -278,6 +284,12 @@
             },
             {
                 "status": "timeout"
+            },
+            {
+                "status": "realm_archived"
+            },
+            {
+                "status": "realm_deleted"
             }
         ]
     }

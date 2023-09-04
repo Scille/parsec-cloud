@@ -255,21 +255,24 @@ async def realm(backend, alice, realm_factory):
 
 
 @pytest.fixture
-async def archived_realm(backend, alice, archived_realm_factory):
-    realm_id = RealmID.from_hex("B0000000000000000000000000000000")
-    realm = await archived_realm_factory(backend, alice, realm_id, DateTime(2000, 1, 2))
+async def archived_realm(backend, alice, realm, archive_realm):
+    await archive_realm(backend, alice, realm)
     return realm
 
 
 @pytest.fixture(params=(False, True), ids=["available_realm", "archived_realm"])
-async def maybe_archived_realm(request, realm, archived_realm):
-    return archived_realm if request.param else realm
+async def maybe_archived_realm(request, backend, alice, realm, archive_realm):
+    # Warning: Do not use it along with `maybe_archived_vlobs`
+    # Use `realm` + `maybe_archived_vlobs` instead
+    if request.param:
+        await archive_realm(backend, alice, realm)
+    return realm
 
 
 @pytest.fixture
-async def deleted_realm(backend, alice, deleted_realm_factory):
-    realm_id = RealmID.from_hex("C0000000000000000000000000000000")
-    return await deleted_realm_factory(backend, alice, realm_id, DateTime(2000, 1, 2))
+async def deleted_realm(backend, alice, realm, delete_realm):
+    await delete_realm(backend, alice, realm)
+    return realm
 
 
 @pytest.fixture
@@ -309,7 +312,34 @@ async def vlobs(backend, alice, realm):
 
 
 @pytest.fixture
+async def archived_vlobs(backend, alice, realm, archive_realm, vlobs):
+    await archive_realm(backend, alice, realm)
+    return vlobs
+
+
+@pytest.fixture
+async def deleted_vlobs(backend, alice, realm, delete_realm, vlobs):
+    await delete_realm(backend, alice, realm)
+    return vlobs
+
+
+@pytest.fixture(params=(False, True), ids=["available_realm", "archived_realm"])
+async def maybe_archived_vlobs(request, backend, alice, realm, archive_realm, vlobs):
+    # Warning: Do not use it along with `maybe_archived_realm`
+    # Use `realm` + `maybe_archived_vlobs` instead
+    if request.param:
+        await archive_realm(backend, alice, realm)
+    return vlobs
+
+
+@pytest.fixture
 async def vlob_atoms(vlobs):
+    return [(vlobs[0], 1), (vlobs[0], 2), (vlobs[1], 1)]
+
+
+@pytest.fixture
+async def maybe_archived_vlob_atoms(maybe_archived_vlobs):
+    vlobs = maybe_archived_vlobs
     return [(vlobs[0], 1), (vlobs[0], 2), (vlobs[1], 1)]
 
 

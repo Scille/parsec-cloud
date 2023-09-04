@@ -644,6 +644,8 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<VlobCreateRepSequesterInconsistency>()?;
     m.add_class::<VlobCreateRepRejectedBySequesterService>()?;
     m.add_class::<VlobCreateRepTimeout>()?;
+    m.add_class::<VlobCreateRepRealmArchived>()?;
+    m.add_class::<VlobCreateRepRealmDeleted>()?;
     m.add_class::<VlobCreateRepUnknownStatus>()?;
     m.add_class::<VlobReadReq>()?;
     m.add_class::<VlobReadRep>()?;
@@ -653,6 +655,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<VlobReadRepBadVersion>()?;
     m.add_class::<VlobReadRepBadEncryptionRevision>()?;
     m.add_class::<VlobReadRepInMaintenance>()?;
+    m.add_class::<VlobReadRepRealmDeleted>()?;
     m.add_class::<VlobReadRepUnknownStatus>()?;
     m.add_class::<VlobUpdateReq>()?;
     m.add_class::<VlobUpdateRep>()?;
@@ -669,6 +672,8 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<VlobUpdateRepSequesterInconsistency>()?;
     m.add_class::<VlobUpdateRepRejectedBySequesterService>()?;
     m.add_class::<VlobUpdateRepTimeout>()?;
+    m.add_class::<VlobUpdateRepRealmArchived>()?;
+    m.add_class::<VlobUpdateRepRealmDeleted>()?;
     m.add_class::<VlobUpdateRepUnknownStatus>()?;
     m.add_class::<VlobPollChangesReq>()?;
     m.add_class::<VlobPollChangesRep>()?;

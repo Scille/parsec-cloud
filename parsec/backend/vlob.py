@@ -18,6 +18,8 @@ from parsec._parsec import (
     VlobCreateRepNotAllowed,
     VlobCreateRepNotASequesteredOrganization,
     VlobCreateRepOk,
+    VlobCreateRepRealmArchived,
+    VlobCreateRepRealmDeleted,
     VlobCreateRepRejectedBySequesterService,
     VlobCreateRepRequireGreaterTimestamp,
     VlobCreateRepSequesterInconsistency,
@@ -58,6 +60,7 @@ from parsec._parsec import (
     VlobReadRepNotAllowed,
     VlobReadRepNotFound,
     VlobReadRepOk,
+    VlobReadRepRealmDeleted,
     VlobReadReq,
     VlobUpdateRep,
     VlobUpdateRepBadEncryptionRevision,
@@ -68,6 +71,8 @@ from parsec._parsec import (
     VlobUpdateRepNotASequesteredOrganization,
     VlobUpdateRepNotFound,
     VlobUpdateRepOk,
+    VlobUpdateRepRealmArchived,
+    VlobUpdateRepRealmDeleted,
     VlobUpdateRepRejectedBySequesterService,
     VlobUpdateRepRequireGreaterTimestamp,
     VlobUpdateRepSequesterInconsistency,
@@ -326,6 +331,12 @@ class BaseVlobComponent:
         except VlobSequesterWebhookUnavailableError:
             return VlobCreateRepTimeout()
 
+        except VlobRealmArchivedError:
+            return VlobCreateRepRealmArchived()
+
+        except VlobRealmDeletedError:
+            return VlobCreateRepRealmDeleted()
+
         return VlobCreateRepOk()
 
     @api("vlob_read")
@@ -364,6 +375,9 @@ class BaseVlobComponent:
 
         except VlobInMaintenanceError:
             return VlobReadRepInMaintenance()
+
+        except VlobRealmDeletedError:
+            return VlobReadRepRealmDeleted()
 
         return VlobReadRepOk(
             version,
@@ -452,6 +466,12 @@ class BaseVlobComponent:
 
         except VlobSequesterWebhookUnavailableError:
             return VlobUpdateRepTimeout()
+
+        except VlobRealmArchivedError:
+            return VlobUpdateRepRealmArchived()
+
+        except VlobRealmDeletedError:
+            return VlobUpdateRepRealmDeleted()
 
         return VlobUpdateRepOk()
 
