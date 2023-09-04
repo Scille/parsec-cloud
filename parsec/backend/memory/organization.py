@@ -68,6 +68,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         bootstrap_token: str,
         active_users_limit: Union[UnsetType, ActiveUsersLimit] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
+        minimum_archiving_period: Union[UnsetType, int] = Unset,
         created_on: DateTime | None = None,
     ) -> None:
         created_on = created_on or DateTime.now()
@@ -81,8 +82,9 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             user_profile_outsider_allowed = (
                 self._config.organization_initial_user_profile_outsider_allowed
             )
+        if minimum_archiving_period is Unset:
+            minimum_archiving_period = self._config.organization_initial_minimum_archiving_period
         assert isinstance(active_users_limit, ActiveUsersLimit)
-        minimum_archiving_period = self._config.organization_initial_minimum_archiving_period
 
         self._organizations[id] = Organization(
             organization_id=id,
@@ -220,6 +222,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         is_expired: Union[UnsetType, bool] = Unset,
         active_users_limit: Union[UnsetType, ActiveUsersLimit] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
+        minimum_archiving_period: Union[UnsetType, int] = Unset,
     ) -> None:
         """
         Raises:
@@ -238,6 +241,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             organization = organization.evolve(
                 user_profile_outsider_allowed=user_profile_outsider_allowed
             )
+        if minimum_archiving_period is not Unset:
+            organization = organization.evolve(minimum_archiving_period=minimum_archiving_period)
 
         assert isinstance(organization.active_users_limit, ActiveUsersLimit)
         self._organizations[id] = organization

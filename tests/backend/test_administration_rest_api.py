@@ -180,6 +180,7 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
             "organization_id": organization_id.str,
             "user_profile_outsider_allowed": False,
             "active_users_limit": None,
+            "minimum_archiving_period": 3600,
         },
         headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
     )
@@ -199,7 +200,7 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
         active_users_limit=ActiveUsersLimit.NO_LIMIT,
         sequester_authority=None,
         sequester_services_certificates=None,
-        minimum_archiving_period=2592000,
+        minimum_archiving_period=3600,
     )
 
     # New custom initial config should be taken into account each time the org is recreated
@@ -209,6 +210,7 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
             "organization_id": organization_id.str,
             "user_profile_outsider_allowed": True,
             "active_users_limit": 10,
+            "minimum_archiving_period": 7200,
         },
         headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
     )
@@ -228,7 +230,7 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
         active_users_limit=ActiveUsersLimit.LimitedTo(10),
         sequester_authority=None,
         sequester_services_certificates=None,
-        minimum_archiving_period=2592000,
+        minimum_archiving_period=7200,
     )
 
     # Default initial config should also be used if org is recreated without custom config
@@ -296,11 +298,15 @@ async def test_organization_config_ok(backend_asgi_app, coolorg, bootstrapped):
         "is_bootstrapped": bootstrapped,
         "is_expired": False,
         "user_profile_outsider_allowed": True,
+        "minimum_archiving_period": 2592000,
     }
 
     # Ensure config change is taken into account
     await backend_asgi_app.backend.organization.update(
-        id=organization_id, active_users_limit=ActiveUsersLimit.LimitedTo(42), is_expired=True
+        id=organization_id,
+        active_users_limit=ActiveUsersLimit.LimitedTo(42),
+        is_expired=True,
+        minimum_archiving_period=3600,
     )
     response = await client.get(
         f"/administration/organizations/{organization_id.str}",
@@ -312,6 +318,7 @@ async def test_organization_config_ok(backend_asgi_app, coolorg, bootstrapped):
         "is_bootstrapped": bootstrapped,
         "is_expired": True,
         "user_profile_outsider_allowed": True,
+        "minimum_archiving_period": 3600,
     }
 
 
@@ -357,7 +364,11 @@ async def test_organization_update_ok(backend_asgi_app, coolorg, bootstrapped):
     with backend_asgi_app.backend.event_bus.listen() as spy:
         response = await client.patch(
             f"/administration/organizations/{organization_id.str}",
-            json={"user_profile_outsider_allowed": False, "active_users_limit": 10},
+            json={
+                "user_profile_outsider_allowed": False,
+                "active_users_limit": 10,
+                "minimum_archiving_period": 3600,
+            },
             headers={
                 "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
             },
@@ -368,6 +379,7 @@ async def test_organization_update_ok(backend_asgi_app, coolorg, bootstrapped):
         org = await backend_asgi_app.backend.organization.get(organization_id)
         assert org.user_profile_outsider_allowed is False
         assert org.active_users_limit == ActiveUsersLimit.LimitedTo(10)
+        assert org.minimum_archiving_period == 3600
 
         # Partial update
         response = await client.patch(
@@ -383,6 +395,7 @@ async def test_organization_update_ok(backend_asgi_app, coolorg, bootstrapped):
         org = await backend_asgi_app.backend.organization.get(organization_id)
         assert org.user_profile_outsider_allowed is False
         assert org.active_users_limit is ActiveUsersLimit.NO_LIMIT
+        assert org.minimum_archiving_period == 3600
 
         # Partial update with unknown field
         response = await client.patch(
@@ -409,6 +422,7 @@ async def test_organization_update_ok(backend_asgi_app, coolorg, bootstrapped):
         org = await backend_asgi_app.backend.organization.get(organization_id)
         assert org.user_profile_outsider_allowed is False
         assert org.active_users_limit is ActiveUsersLimit.NO_LIMIT
+        assert org.minimum_archiving_period == 3600
 
     # No BackendEvent.ORGANIZATION_EXPIRED should have occurred
     await trio.testing.wait_all_tasks_blocked()

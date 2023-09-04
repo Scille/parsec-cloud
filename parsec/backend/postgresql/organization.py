@@ -199,7 +199,10 @@ _q_get_average_realm_creation_date = Q(
 
 @lru_cache()
 def _q_update_factory(
-    with_is_expired: bool, with_active_users_limit: bool, with_user_profile_outsider_allowed: bool
+    with_is_expired: bool,
+    with_active_users_limit: bool,
+    with_user_profile_outsider_allowed: bool,
+    with_minimum_archiving_period: bool,
 ) -> Q:
     fields = []
     if with_is_expired:
@@ -209,6 +212,8 @@ def _q_update_factory(
         fields.append("active_users_limit = $active_users_limit")
     if with_user_profile_outsider_allowed:
         fields.append("user_profile_outsider_allowed = $user_profile_outsider_allowed")
+    if with_minimum_archiving_period:
+        fields.append("minimum_archiving_period = $minimum_archiving_period")
 
     return Q(
         f"""
@@ -267,6 +272,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         bootstrap_token: str,
         active_users_limit: Union[UnsetType, ActiveUsersLimit] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
+        minimum_archiving_period: Union[UnsetType, int] = Unset,
         created_on: DateTime | None = None,
     ) -> None:
         created_on = created_on or DateTime.now()
@@ -276,7 +282,8 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             user_profile_outsider_allowed = (
                 self._config.organization_initial_user_profile_outsider_allowed
             )
-        minimum_archiving_period = self._config.organization_initial_minimum_archiving_period
+        if minimum_archiving_period is Unset:
+            minimum_archiving_period = self._config.organization_initial_minimum_archiving_period
 
         async with self.dbh.pool.acquire() as conn:
             try:
@@ -425,6 +432,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         is_expired: Union[UnsetType, bool] = Unset,
         active_users_limit: Union[UnsetType, ActiveUsersLimit] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
+        minimum_archiving_period: Union[UnsetType, int] = Unset,
     ) -> None:
         """
         Raises:
@@ -436,11 +444,13 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         with_is_expired = is_expired is not Unset
         with_active_users_limit = active_users_limit is not Unset
         with_user_profile_outsider_allowed = user_profile_outsider_allowed is not Unset
+        with_minimum_archiving_period = minimum_archiving_period is not Unset
 
         if (
             not with_is_expired
             and not with_active_users_limit
             and not with_user_profile_outsider_allowed
+            and not with_minimum_archiving_period
         ):
             # Nothing to update, just make sure the organization exists and
             # pretent we actually did an update
@@ -454,11 +464,14 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             fields["active_users_limit"] = active_users_limit.to_int()
         if with_user_profile_outsider_allowed:
             fields["user_profile_outsider_allowed"] = user_profile_outsider_allowed
+        if with_minimum_archiving_period:
+            fields["minimum_archiving_period"] = minimum_archiving_period
 
         q = _q_update_factory(
             with_is_expired=with_is_expired,
             with_active_users_limit=with_active_users_limit,
             with_user_profile_outsider_allowed=with_user_profile_outsider_allowed,
+            with_minimum_archiving_period=with_minimum_archiving_period,
         )
 
         async with self.dbh.pool.acquire() as conn, conn.transaction():

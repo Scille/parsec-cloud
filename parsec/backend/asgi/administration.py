@@ -183,6 +183,7 @@ async def administration_organization_item(raw_organization_id: str) -> Response
                 "is_expired": organization.is_expired,
                 "user_profile_outsider_allowed": organization.user_profile_outsider_allowed,
                 "active_users_limit": organization.active_users_limit.to_int(),
+                "minimum_archiving_period": organization.minimum_archiving_period,
             },
             status=200,
         )
