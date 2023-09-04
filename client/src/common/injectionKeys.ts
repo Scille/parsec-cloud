@@ -9,12 +9,10 @@ export interface Formatters {
 
 const FormattersKey = 'formatters';
 const StorageManagerKey = 'storageManager';
-const ConfigPathKey = 'configPath';
 const NotificationKey = 'notification';
 
 export {
   FormattersKey,
   StorageManagerKey,
-  ConfigPathKey,
   NotificationKey,
 };

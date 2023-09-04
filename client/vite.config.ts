@@ -7,6 +7,7 @@ import vue from '@vitejs/plugin-vue';
 import topLevelAwait from 'vite-plugin-top-level-await';
 // eslint-disable-next-line no-relative-import-paths/no-relative-import-paths
 import wasmPack from './scripts/vite_plugin_wasm_pack';
+import os from 'os';
 
 const plugins: PluginOption[] = [vue(), topLevelAwait()];
 let platform: string;
@@ -41,6 +42,27 @@ if (process.env.PLATFORM !== undefined) {
   // Ain't nobody got time to set environ variable !
   console.log('PLATFORM environ variable not set, defaulting to `web`');
   platform = 'web';
+}
+
+// Store the OS in an env variable
+process.env.VITE_OPERATING_SYSTEM = process.platform;
+// Store the default directories to env variables
+if (platform !== 'web') {
+  process.env.VITE_HOME_DIR = os.homedir();
+  if (process.platform === 'win32') {
+    process.env.VITE_CONFIG_DIR = process.env.APPDATA;
+    process.env.VITE_DATA_DIR = process.env.APPDATA;
+  } else if (process.platform === 'linux') {
+    process.env.VITE_CONFIG_DIR = process.env.XDG_CONFIG_HOME || path.join(process.env.HOME || '', '.config');
+    process.env.VITE_DATA_DIR = process.env.XDG_DATA_HOME || path.join(process.env.HOME || '', '.local/share');
+  } else {
+    process.env.VITE_CONFIG_DIR = '';
+    process.env.VITE_DATA_DIR = '';
+  }
+} else {
+  process.env.VITE_CONFIG_DIR = '';
+  process.env.VITE_DATA_DIR = '';
+  process.env.VITE_HOME_DIR = '';
 }
 
 // 2) Now that we know the platform, we can create `trampoline.ts` accordingly

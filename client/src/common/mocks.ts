@@ -11,8 +11,6 @@ export function getAppVersion(): string {
   return '3.0.0a';
 }
 
-export const DEFAULT_HANDLE: Handle = 42;
-
 export interface MockFile {
   id: string,
   name: string,

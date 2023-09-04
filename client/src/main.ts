@@ -31,7 +31,9 @@ import { formatTimeSince } from '@/common/date';
 import { formatFileSize } from '@/common/filesize';
 import { StorageManager } from '@/services/storageManager';
 import { DateTime } from 'luxon';
-import { FormattersKey, ConfigPathKey, StorageManagerKey, NotificationKey } from '@/common/injectionKeys';
+import { FormattersKey, StorageManagerKey, NotificationKey } from '@/common/injectionKeys';
+import * as Path from '@/common/path';
+import { isPlatform } from '@ionic/vue';
 
 /* Theme variables */
 import '@/theme/global.scss';
@@ -137,10 +139,19 @@ async function setupApp(): Promise<void> {
   // from within `setupApp`, so instead it should be called in fire-and-forget
   // and only awaited when it is called from third party code (i.e. when
   // obtained through `window.nextStageHook`, see below)
-  const nextStage = async (configPath: string, locale?: string): Promise<void> => {
+  const nextStage = async (configPath?: string, locale?: string): Promise<void> => {
     await router.isReady();
-    // configPath is injected to components
-    app.provide(ConfigPathKey, configPath);
+
+    window.getConfigDir = getDefaultConfigDir;
+    window.getDataBaseDir = getDefaultDataBaseDir;
+    window.getMountpointDir = getDefaultMountpointDir;
+    window.isDesktop = isDesktop;
+    window.isLinux = isLinux;
+
+    if (configPath) {
+      window.getConfigDir = (): string => configPath;
+    }
+
     if (locale) {
       (i18n.global.locale as any).value = locale;
     }
@@ -159,7 +170,7 @@ async function setupApp(): Promise<void> {
     nextStage(configPath);  // Fire-and-forget call
   } else {
     // Prod or using devices in local storage
-    nextStage('/');  // Fire-and-forget call
+    nextStage();  // Fire-and-forget call
   }
   if (import.meta.env.VITE_APP_TEST_MODE?.toLowerCase() === 'true') {
     const x = async (): Promise<void> => {
@@ -170,9 +181,55 @@ async function setupApp(): Promise<void> {
   }
 }
 
+function isDesktop(): boolean {
+  return !('Cypress' in window) && isPlatform('electron');
+}
+
+function isLinux(): boolean {
+  return isDesktop() && import.meta.env.VITE_OPERATING_SYSTEM === 'linux';
+}
+
+function getDefaultMountpointDir(): string {
+  if (isDesktop()) {
+    return Path.join(import.meta.env.VITE_HOME_DIR, 'Parsec');
+  }
+  return '';
+}
+
+function getDefaultDataBaseDir(): string {
+  if (isDesktop()) {
+    if (import.meta.env.VITE_OPERATING_SYSTEM === 'win32') {
+      return Path.join(import.meta.env.VITE_DATA_DIR, 'parsec/data');
+    } else {
+      return Path.join(import.meta.env.VITE_DATA_DIR, 'parsec');
+    }
+  }
+  return '';
+}
+
+function getDefaultConfigDir(): string {
+  if (window.testbedPath) {
+    return window.testbedPath;
+  }
+  if (isDesktop()) {
+    if (import.meta.env.VITE_OPERATING_SYSTEM === 'win32') {
+      return Path.join(import.meta.env.VITE_CONFIG_DIR, 'parsec/config');
+    } else {
+      return Path.join(import.meta.env.VITE_CONFIG_DIR, 'parsec');
+    }
+  }
+  return '';
+}
+
 declare global {
   interface Window {
-    nextStageHook: () => [any, (configPath: string, locale?: string) => Promise<void>]
+    nextStageHook: () => [any, (configPath: string, locale?: string) => Promise<void>],
+    testbedPath: string | null,
+    getConfigDir: () => string,
+    getDataBaseDir: () => string,
+    getMountpointDir: () => string,
+    isDesktop: () => boolean,
+    isLinux: () => boolean,
   }
 }
 
