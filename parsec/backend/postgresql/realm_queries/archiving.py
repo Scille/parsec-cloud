@@ -3,27 +3,38 @@ from __future__ import annotations
 
 import triopg
 
-from parsec._parsec import DateTime, RealmArchivingConfiguration, RealmRole
+from parsec._parsec import DateTime, RealmArchivingConfiguration, RealmID, RealmRole
 from parsec.api.protocol import OrganizationID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.organization import OrganizationNotFoundError, _q_get_organization
-from parsec.backend.postgresql.realm_queries.update_roles import _q_get_realm_status
 from parsec.backend.postgresql.utils import (
     Q,
     q_device_internal_id,
+    q_realm,
     q_realm_internal_id,
     q_user_internal_id,
     query,
 )
 from parsec.backend.realm import (
     RealmAccessError,
+    RealmArchivedError,
     RealmArchivingConfigurationRequest,
     RealmArchivingPeriodTooShortError,
     RealmDeletedError,
     RealmNotFoundError,
     RealmRoleRequireGreaterTimestampError,
 )
+from parsec.backend.utils import OperationKind
+
+_q_check_realm_exist = Q(
+    q_realm(
+        organization_id="$organization_id",
+        realm_id="$realm_id",
+        select="realm_id",
+    )
+)
+
 
 _q_get_user_role = Q(
     f"""
@@ -32,6 +43,16 @@ FROM realm_user_role
 WHERE
     user_ = { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
     AND realm = { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
+ORDER BY certified_on DESC LIMIT 1
+"""
+)
+
+_q_get_archiving_configuration = Q(
+    f"""
+SELECT configuration, deletion_date, certified_on
+FROM realm_archiving
+WHERE
+    realm = { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
 ORDER BY certified_on DESC LIMIT 1
 """
 )
@@ -66,14 +87,49 @@ INSERT INTO realm_archiving(
 """
 )
 
-#     realm INTEGER REFERENCES realm (_id) NOT NULL,
-#     configuration realm_archiving_configuration NOT NULL,
-#     -- NULL if not DELETION_PLANNED
-#     deletion_date TIMESTAMPTZ,
-#     certificate BYTEA NOT NULL,
-#     certified_by INTEGER REFERENCES device(_id) NOT NULL,
-#     certified_on TIMESTAMPTZ NOT NULL
-# );
+
+async def get_archiving_configuration(
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    realm_id: RealmID,
+    for_update: bool = False,
+) -> tuple[RealmArchivingConfiguration, DateTime | None]:
+    _get_archiving_configuration = (
+        _q_get_archiving_configuration_for_update if for_update else _q_get_archiving_configuration
+    )
+    rep = await conn.fetchrow(
+        *_get_archiving_configuration(organization_id=organization_id.str, realm_id=realm_id)
+    )
+    if not rep:
+        configuration = RealmArchivingConfiguration.available()
+        archiving_certified_on = None
+    else:
+        configuration_str, deletion_date, archiving_certified_on = rep
+        configuration = RealmArchivingConfiguration.from_str(configuration_str, deletion_date)
+    return configuration, archiving_certified_on
+
+
+async def check_archiving_configuration(
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    realm_id: RealmID,
+    operation_kind: OperationKind,
+    now: DateTime | None = None,
+) -> tuple[RealmArchivingConfiguration, DateTime | None]:
+    if now is None:
+        now = DateTime.now()
+    configuration, archiving_certified_on = await get_archiving_configuration(
+        conn, organization_id, realm_id, for_update=False
+    )
+
+    if configuration.is_deletion_planned() and configuration.deletion_date <= now:
+        raise RealmDeletedError()
+
+    if operation_kind == OperationKind.DATA_WRITE:
+        if configuration.is_archived() or configuration.is_deletion_planned():
+            raise RealmArchivedError()
+
+    return configuration, archiving_certified_on
 
 
 @query(in_transaction=True)
@@ -96,25 +152,15 @@ async def query_update_archiving(
 
     # 1. Check that the realm exist
     rep = await conn.fetchrow(
-        *_q_get_realm_status(organization_id=organization_id.str, realm_id=realm_id)
+        *_q_check_realm_exist(organization_id=organization_id.str, realm_id=realm_id)
     )
     if not rep:
         raise RealmNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
 
     # 2. Check that the realm is not deleted
-    rep = await conn.fetchrow(
-        *_q_get_archiving_configuration_for_update(
-            organization_id=organization_id.str, realm_id=realm_id
-        )
+    previous_configuration, previous_archiving_certified_on = await check_archiving_configuration(
+        conn, organization_id, realm_id, OperationKind.CONFIGURATION
     )
-    if not rep:
-        previous_configuration = RealmArchivingConfiguration.available()
-        previous_archiving_certified_on = None
-    else:
-        previous_configuration_str, previous_deletion_date, previous_archiving_certified_on = rep
-        previous_configuration = RealmArchivingConfiguration.from_str(
-            previous_configuration_str, previous_deletion_date
-        )
     if previous_configuration.is_deletion_planned() and previous_configuration.deletion_date <= now:
         raise RealmDeletedError()
 

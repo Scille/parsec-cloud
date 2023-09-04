@@ -13,6 +13,7 @@ from parsec.api.protocol import (
     RealmRole,
     UserID,
 )
+from parsec.backend.postgresql.realm_queries.archiving import check_archiving_configuration
 from parsec.backend.postgresql.utils import (
     Q,
     q_device,
@@ -31,6 +32,7 @@ from parsec.backend.realm import (
     RealmStats,
     RealmStatus,
 )
+from parsec.backend.utils import OperationKind
 
 _q_get_realm_status = Q(
     f"""
@@ -145,6 +147,11 @@ async def query_get_status(
     if not ret["has_access"]:
         raise RealmAccessError()
 
+    # Make sure the realm is not deleted
+    await check_archiving_configuration(
+        conn, organization_id, realm_id, OperationKind.CONFIGURATION
+    )
+
     return RealmStatus(
         maintenance_type=MaintenanceType.from_str(ret["maintenance_type"])
         if ret["maintenance_type"]
@@ -174,6 +181,12 @@ async def query_get_stats(
 
     if not ret["has_access"]:
         raise RealmAccessError()
+
+    # Make sure the realm is not deleted
+    await check_archiving_configuration(
+        conn, organization_id, realm_id, OperationKind.CONFIGURATION
+    )
+
     blocks_size_rep = await conn.fetchrow(
         *_q_get_blocks_size_from_realm(organization_id=organization_id.str, realm_id=realm_id)
     )
@@ -198,6 +211,11 @@ async def query_get_current_roles(
     if not ret:
         # Existing group must have at least one owner user
         raise RealmNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
+
+    # Make sure the realm is not deleted
+    await check_archiving_configuration(
+        conn, organization_id, realm_id, OperationKind.CONFIGURATION
+    )
 
     return {UserID(user_id): RealmRole.from_str(role) for user_id, role in ret if role is not None}
 

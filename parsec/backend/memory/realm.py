@@ -80,6 +80,11 @@ class Realm:
             return False
         return self.last_archiving_configuration_request.configuration.is_archived()
 
+    def is_deletion_planned(self) -> bool:
+        if self.last_archiving_configuration_request is None:
+            return False
+        return self.last_archiving_configuration_request.configuration.is_deletion_planned()
+
     def is_deleted(self) -> bool:
         if self.last_archiving_configuration_request is None:
             return False

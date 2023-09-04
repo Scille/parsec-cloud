@@ -30,7 +30,7 @@ ALLOWED_API_VERSIONS = {
 
 
 # Enumeration used to check access rights for a given kind of operation
-OperationKind = Enum("OperationKind", "DATA_READ DATA_WRITE MAINTENANCE")
+OperationKind = Enum("OperationKind", "DATA_READ DATA_WRITE MAINTENANCE CONFIGURATION")
 
 
 # TODO: temporary hack that should be removed once all cmds are typed, at this point we

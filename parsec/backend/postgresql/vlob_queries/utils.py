@@ -7,6 +7,11 @@ import triopg
 
 from parsec._parsec import DateTime
 from parsec.api.protocol import DeviceID, OrganizationID, RealmID, VlobID
+from parsec.backend.postgresql.realm_queries.archiving import (
+    RealmArchivedError,
+    RealmDeletedError,
+    check_archiving_configuration,
+)
 from parsec.backend.postgresql.realm_queries.maintenance import RealmNotFoundError, get_realm_status
 from parsec.backend.postgresql.utils import (
     Q,
@@ -22,6 +27,8 @@ from parsec.backend.vlob import (
     VlobInMaintenanceError,
     VlobNotFoundError,
     VlobNotInMaintenanceError,
+    VlobRealmArchivedError,
+    VlobRealmDeletedError,
     VlobRealmNotFoundError,
     VlobRequireGreaterTimestampError,
 )
@@ -39,6 +46,14 @@ async def _check_realm(
         status = await get_realm_status(conn, organization_id, realm_id)
     except RealmNotFoundError as exc:
         raise VlobRealmNotFoundError(*exc.args) from exc
+
+    # Check archiving status
+    try:
+        await check_archiving_configuration(conn, organization_id, realm_id, operation_kind)
+    except RealmArchivedError:
+        raise VlobRealmArchivedError()
+    except RealmDeletedError:
+        raise VlobRealmDeletedError()
 
     # Special case of reading while in reencryption
     if operation_kind == OperationKind.DATA_READ and status.in_reencryption:

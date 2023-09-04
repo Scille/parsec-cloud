@@ -143,6 +143,10 @@ class RealmMaintenanceError(RealmError):
     pass
 
 
+class RealmArchivedError(RealmError):
+    pass
+
+
 class RealmDeletedError(RealmError):
     pass
 

@@ -74,8 +74,9 @@ class MemoryBlockComponent(BaseBlockComponent):
         except RealmDeletedError:
             raise BlockRealmDeletedError(f"Realm `{realm_id.hex}` has been deleted")
 
-        if operation_kind == operation_kind.DATA_WRITE and realm.is_archived():
-            raise BlockRealmArchivedError(f"Realm `{realm_id.hex}` is archived")
+        if operation_kind == operation_kind.DATA_WRITE:
+            if realm.is_archived() or realm.is_deletion_planned():
+                raise BlockRealmArchivedError(f"Realm `{realm_id.hex}` is archived")
 
         allowed_roles: Tuple[RealmRole, ...]
         if operation_kind == operation_kind.DATA_READ:

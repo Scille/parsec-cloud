@@ -193,6 +193,33 @@ async def archive_realm(next_timestamp):
 
 
 @pytest.fixture
+async def plan_realm_deletion(next_timestamp):
+    async def _plan_realm_deletion(backend, author, realm_id, now=None):
+        now = now or next_timestamp()
+        certificate = RealmArchivingCertificate(
+            author=author.device_id,
+            timestamp=now,
+            realm_id=realm_id,
+            configuration=RealmArchivingConfiguration.deletion_planned(now.add(days=31)),
+        )
+        signed = certificate.dump_and_sign(author.signing_key)
+        with backend.event_bus.listen() as spy:
+            await backend.realm.update_archiving(
+                organization_id=author.organization_id,
+                archiving_configuration_request=RealmArchivingConfigurationRequest(
+                    certificate=signed,
+                    realm_id=realm_id,
+                    configuration=certificate.configuration,
+                    configured_by=certificate.author,
+                    configured_on=certificate.timestamp,
+                ),
+            )
+            await spy.wait_with_timeout(BackendEvent.REALM_ARCHIVING_UPDATED)
+
+    return _plan_realm_deletion
+
+
+@pytest.fixture
 async def delete_realm(next_timestamp, monkeypatch):
     async def _delete_realm(backend, author, realm_id, now=None):
         now = now or next_timestamp()
@@ -260,12 +287,18 @@ async def archived_realm(backend, alice, realm, archive_realm):
     return realm
 
 
-@pytest.fixture(params=(False, True), ids=["available_realm", "archived_realm"])
-async def maybe_archived_realm(request, backend, alice, realm, archive_realm):
+@pytest.fixture(params=["available_realm", "archived_realm", "deletion_planned_realm"])
+async def maybe_archived_realm(request, backend, alice, realm, archive_realm, plan_realm_deletion):
     # Warning: Do not use it along with `maybe_archived_vlobs`
     # Use `realm` + `maybe_archived_vlobs` instead
-    if request.param:
+    if request.param == "available_realm":
+        pass
+    elif request.param == "archived_realm":
         await archive_realm(backend, alice, realm)
+    elif request.param == "deletion_planned_realm":
+        await plan_realm_deletion(backend, alice, realm)
+    else:
+        assert False
     return realm
 
 
@@ -323,12 +356,20 @@ async def deleted_vlobs(backend, alice, realm, delete_realm, vlobs):
     return vlobs
 
 
-@pytest.fixture(params=(False, True), ids=["available_realm", "archived_realm"])
-async def maybe_archived_vlobs(request, backend, alice, realm, archive_realm, vlobs):
+@pytest.fixture(params=["available_realm", "archived_realm", "deletion_planned_realm"])
+async def maybe_archived_vlobs(
+    request, backend, alice, realm, archive_realm, vlobs, plan_realm_deletion
+):
     # Warning: Do not use it along with `maybe_archived_realm`
     # Use `realm` + `maybe_archived_vlobs` instead
-    if request.param:
+    if request.param == "available_realm":
+        pass
+    elif request.param == "archived_realm":
         await archive_realm(backend, alice, realm)
+    elif request.param == "deletion_planned_realm":
+        await plan_realm_deletion(backend, alice, realm)
+    else:
+        assert False
     return vlobs
 
 

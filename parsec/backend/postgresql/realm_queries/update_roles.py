@@ -9,6 +9,7 @@ from parsec.api.protocol import OrganizationID, RealmRole, UserProfile
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.message import send_message
+from parsec.backend.postgresql.realm_queries.archiving import check_archiving_configuration
 from parsec.backend.postgresql.utils import (
     Q,
     q_device_internal_id,
@@ -28,6 +29,7 @@ from parsec.backend.realm import (
     RealmRoleRequireGreaterTimestampError,
 )
 from parsec.backend.user import UserAlreadyRevokedError
+from parsec.backend.utils import OperationKind
 
 _q_get_user_profile = Q(
     q_user(organization_id="$organization_id", user_id="$user_id", select="profile, revoked_on")
@@ -143,6 +145,11 @@ async def query_update_roles(
         RealmRole.OWNER,
     ):
         raise RealmIncompatibleProfileError("User with OUTSIDER profile cannot be MANAGER or OWNER")
+
+    # Make sure the realm is not deleted
+    await check_archiving_configuration(
+        conn, organization_id, new_role.realm_id, OperationKind.CONFIGURATION
+    )
 
     # Make the user is not revoked
     if rep["revoked_on"]:

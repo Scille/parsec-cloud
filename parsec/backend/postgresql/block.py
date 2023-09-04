@@ -13,10 +13,17 @@ from parsec.backend.block import (
     BlockError,
     BlockInMaintenanceError,
     BlockNotFoundError,
+    BlockRealmArchivedError,
+    BlockRealmDeletedError,
     BlockStoreError,
 )
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.postgresql.handler import PGHandler
+from parsec.backend.postgresql.realm_queries.archiving import (
+    RealmArchivedError,
+    RealmDeletedError,
+    check_archiving_configuration,
+)
 from parsec.backend.postgresql.realm_queries.maintenance import RealmNotFoundError, get_realm_status
 from parsec.backend.postgresql.utils import (
     Q,
@@ -110,6 +117,14 @@ async def _check_realm(
         status = await get_realm_status(conn, organization_id, realm_id)
     except RealmNotFoundError as exc:
         raise BlockNotFoundError(*exc.args) from exc
+
+    # Check archiving status
+    try:
+        await check_archiving_configuration(conn, organization_id, realm_id, operation_kind)
+    except RealmArchivedError:
+        raise BlockRealmArchivedError()
+    except RealmDeletedError:
+        raise BlockRealmDeletedError()
 
     # Special case of reading while in reencryption is authorized
     if operation_kind == OperationKind.DATA_READ and status.in_reencryption:

@@ -296,8 +296,9 @@ class MemoryVlobComponent(BaseVlobComponent):
         except RealmDeletedError:
             raise VlobRealmDeletedError(f"Realm `{realm_id.hex}` has been deleted")
 
-        if operation_kind == operation_kind.DATA_WRITE and realm.is_archived():
-            raise VlobRealmArchivedError(f"Realm `{realm_id.hex}` is archived")
+        if operation_kind == operation_kind.DATA_WRITE:
+            if realm.is_archived() or realm.is_deletion_planned():
+                raise VlobRealmArchivedError(f"Realm `{realm_id.hex}` is archived")
 
         allowed_roles: Tuple[RealmRole, ...]
         # Only an owner can perform maintenance operation
