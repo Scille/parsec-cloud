@@ -18,6 +18,7 @@ from parsec._parsec import (
     VlobListVersionsRepNotAllowed,
     VlobListVersionsRepNotFound,
     VlobListVersionsRepOk,
+    VlobListVersionsRepRealmDeleted,
     VlobReadRepBadEncryptionRevision,
     VlobReadRepBadVersion,
     VlobReadRepInMaintenance,
@@ -507,7 +508,8 @@ async def test_bad_encryption_revision(alice_ws, realm, vlobs):
 
 
 @pytest.mark.trio
-async def test_list_versions_ok(alice, alice_ws, vlobs):
+async def test_list_versions_ok(alice, alice_ws, maybe_archived_vlobs):
+    vlobs = maybe_archived_vlobs
     rep = await vlob_list_versions(alice_ws, vlobs[0])
     assert rep == VlobListVersionsRepOk(
         {
@@ -525,9 +527,16 @@ async def test_list_versions_not_found(alice_ws):
 
 
 @pytest.mark.trio
+async def test_list_versions_realm_deleted(alice, alice_ws, deleted_vlobs):
+    rep = await vlob_list_versions(alice_ws, deleted_vlobs[0])
+    assert isinstance(rep, VlobListVersionsRepRealmDeleted)
+
+
+@pytest.mark.trio
 async def test_list_versions_check_access_rights(
-    backend, alice, bob, bob_ws, realm, vlobs, next_timestamp
+    backend, alice, bob, bob_ws, realm, maybe_archived_vlobs, next_timestamp
 ):
+    vlobs = maybe_archived_vlobs
     # Not part of the realm
     rep = await vlob_list_versions(bob_ws, vlobs[0])
     assert isinstance(rep, VlobListVersionsRepNotAllowed)

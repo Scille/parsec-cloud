@@ -1030,7 +1030,8 @@ impl AuthenticatedCmds {
                 NotAllowed,
                 InMaintenance,
                 UnknownStatus,
-                NotFound
+                NotFound,
+                RealmDeleted
             )
         })
     }
@@ -1063,6 +1064,7 @@ impl AuthenticatedCmds {
                 NotAllowed,
                 NotFound,
                 NotInMaintenance,
+                RealmDeleted,
                 UnknownStatus
             )
         })
@@ -1097,6 +1099,7 @@ impl AuthenticatedCmds {
                 NotInMaintenance,
                 NotAllowed,
                 NotFound,
+                RealmDeleted,
                 UnknownStatus
             )
         })
@@ -1122,7 +1125,8 @@ impl AuthenticatedCmds {
                 UnknownStatus,
                 InMaintenance,
                 NotAllowed,
-                NotFound
+                NotFound,
+                RealmDeleted
             )
         })
     }

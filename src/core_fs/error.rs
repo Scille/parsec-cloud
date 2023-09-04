@@ -11,6 +11,7 @@ pyo3::import_exception!(parsec.core.fs.exceptions, FSBackendOfflineError);
 pyo3::import_exception!(parsec.core.fs.exceptions, FSWorkspaceNoReadAccess);
 pyo3::import_exception!(parsec.core.fs.exceptions, FSRemoteManifestNotFound);
 pyo3::import_exception!(parsec.core.fs.exceptions, FSWorkspaceInMaintenance);
+pyo3::import_exception!(parsec.core.fs.exceptions, FSWorkspaceRealmDeleted);
 
 // RemoteDevicesManager errors
 pyo3::import_exception!(parsec.core.fs.exceptions, FSUserNotFoundError);
@@ -41,6 +42,9 @@ pub(crate) fn to_py_err(e: libparsec::core_fs::FSError) -> PyErr {
         }
         libparsec::core_fs::FSError::WorkspaceInMaintenance => {
             FSWorkspaceInMaintenance::new_err(e.to_string())
+        }
+        libparsec::core_fs::FSError::RealmDeleted => {
+            FSWorkspaceRealmDeleted::new_err(e.to_string())
         }
         libparsec::core_fs::FSError::WorkspaceNoReadAccess => {
             FSWorkspaceNoReadAccess::new_err(e.to_string())

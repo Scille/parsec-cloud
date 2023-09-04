@@ -19,22 +19,26 @@ from parsec._parsec import (
     VlobListVersionsRepNotAllowed,
     VlobListVersionsRepNotFound,
     VlobListVersionsRepOk,
+    VlobListVersionsRepRealmDeleted,
     VlobMaintenanceGetReencryptionBatchRepBadEncryptionRevision,
     VlobMaintenanceGetReencryptionBatchRepMaintenanceError,
     VlobMaintenanceGetReencryptionBatchRepNotAllowed,
     VlobMaintenanceGetReencryptionBatchRepNotFound,
     VlobMaintenanceGetReencryptionBatchRepNotInMaintenance,
     VlobMaintenanceGetReencryptionBatchRepOk,
+    VlobMaintenanceGetReencryptionBatchRepRealmDeleted,
     VlobMaintenanceSaveReencryptionBatchRepBadEncryptionRevision,
     VlobMaintenanceSaveReencryptionBatchRepMaintenanceError,
     VlobMaintenanceSaveReencryptionBatchRepNotAllowed,
     VlobMaintenanceSaveReencryptionBatchRepNotFound,
     VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance,
     VlobMaintenanceSaveReencryptionBatchRepOk,
+    VlobMaintenanceSaveReencryptionBatchRepRealmDeleted,
     VlobPollChangesRepInMaintenance,
     VlobPollChangesRepNotAllowed,
     VlobPollChangesRepNotFound,
     VlobPollChangesRepOk,
+    VlobPollChangesRepRealmDeleted,
     VlobReadRepBadEncryptionRevision,
     VlobReadRepBadVersion,
     VlobReadRepInMaintenance,
@@ -337,6 +341,10 @@ serialized = serializer.rep_dumps(VlobPollChangesRepInMaintenance())
 serializer.rep_loads(serialized)
 display("vlob_poll_changes_rep_in_maintenance", serialized, [])
 
+serialized = serializer.rep_dumps(VlobPollChangesRepRealmDeleted())
+serializer.rep_loads(serialized)
+display("vlob_poll_changes_rep_realm_deleted", serialized, [])
+
 ################### VlobListVersions ##################
 
 serializer = vlob_list_versions_serializer
@@ -367,6 +375,10 @@ display("vlob_list_versions_rep_not_found", serialized, [])
 serialized = serializer.rep_dumps(VlobListVersionsRepInMaintenance())
 serializer.rep_loads(serialized)
 display("vlob_list_versions_rep_in_maintenance", serialized, [])
+
+serialized = serializer.rep_dumps(VlobListVersionsRepRealmDeleted())
+serializer.rep_loads(serialized)
+display("vlob_list_versions_rep_realm_deleted", serialized, [])
 
 ################### VlobMaintenanceGetReencryptionBatch ##################
 
@@ -425,6 +437,14 @@ serialized = serializer.rep_dumps(
 serializer.rep_loads(serialized)
 display("vlob_maintenance_get_reencryption_batch_rep_maintenance_error", serialized, [])
 
+serialized = serializer.rep_dumps(VlobMaintenanceGetReencryptionBatchRepRealmDeleted())
+serializer.rep_loads(serialized)
+display(
+    "vlob_maintenance_get_reencryption_batch_rep_realm_deleted",
+    serialized,
+    [],
+)
+
 ################### VlobMaintenanceSaveReencryptionBatch ##################
 
 serializer = vlob_maintenance_save_reencryption_batch_serializer
@@ -477,3 +497,11 @@ serialized = serializer.rep_dumps(
 )
 serializer.rep_loads(serialized)
 display("vlob_maintenance_save_reencryption_batch_rep_maintenance_error", serialized, [])
+
+serialized = serializer.rep_dumps(VlobMaintenanceSaveReencryptionBatchRepRealmDeleted())
+serializer.rep_loads(serialized)
+display(
+    "vlob_maintenance_save_reencryption_batch_rep_realm_deleted",
+    serialized,
+    [],
+)

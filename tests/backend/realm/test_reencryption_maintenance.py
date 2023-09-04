@@ -36,9 +36,11 @@ from parsec._parsec import (
     VlobMaintenanceGetReencryptionBatchRepBadEncryptionRevision,
     VlobMaintenanceGetReencryptionBatchRepNotInMaintenance,
     VlobMaintenanceGetReencryptionBatchRepOk,
+    VlobMaintenanceGetReencryptionBatchRepRealmDeleted,
     VlobMaintenanceSaveReencryptionBatchRepNotAllowed,
     VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance,
     VlobMaintenanceSaveReencryptionBatchRepOk,
+    VlobMaintenanceSaveReencryptionBatchRepRealmDeleted,
     VlobPollChangesRepOk,
     VlobReadRepBadEncryptionRevision,
     VlobReadRepInMaintenance,
@@ -774,3 +776,24 @@ async def test_start_reencryption_maintenance_realm_deleted(alice_ws, deleted_re
 async def test_finish_reencryption_maintenance_realm_deleted(alice_ws, deleted_realm, alice):
     rep = await realm_finish_reencryption_maintenance(alice_ws, deleted_realm, 2, check_rep=False)
     assert isinstance(rep, RealmFinishReencryptionMaintenanceRepRealmDeleted)
+
+
+@pytest.mark.trio
+async def test_get_save_reencryption_batch_realm_deleted(
+    backend, alice_ws, alice2_ws, realm, alice, vlobs, delete_realm
+):
+    await realm_start_reencryption_maintenance(
+        alice2_ws, realm, 2, DateTime.now(), {alice.user_id: b"foo"}
+    )
+    ok_rep = await vlob_maintenance_get_reencryption_batch(alice_ws, realm, 2, size=100)
+    await delete_realm(backend, alice, realm)
+
+    rep = await vlob_maintenance_save_reencryption_batch(
+        alice_ws, realm, 2, ok_rep.batch, check_rep=False
+    )
+    assert isinstance(rep, VlobMaintenanceSaveReencryptionBatchRepRealmDeleted)
+
+    rep = await vlob_maintenance_get_reencryption_batch(
+        alice_ws, realm, 2, size=100, check_rep=False
+    )
+    assert isinstance(rep, VlobMaintenanceGetReencryptionBatchRepRealmDeleted)

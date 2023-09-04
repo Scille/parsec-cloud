@@ -681,6 +681,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<VlobPollChangesRepNotFound>()?;
     m.add_class::<VlobPollChangesRepNotAllowed>()?;
     m.add_class::<VlobPollChangesRepInMaintenance>()?;
+    m.add_class::<VlobPollChangesRepRealmDeleted>()?;
     m.add_class::<VlobPollChangesRepUnknownStatus>()?;
     m.add_class::<VlobListVersionsReq>()?;
     m.add_class::<VlobListVersionsRep>()?;
@@ -688,6 +689,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<VlobListVersionsRepNotFound>()?;
     m.add_class::<VlobListVersionsRepNotAllowed>()?;
     m.add_class::<VlobListVersionsRepInMaintenance>()?;
+    m.add_class::<VlobListVersionsRepRealmDeleted>()?;
     m.add_class::<VlobListVersionsRepUnknownStatus>()?;
     m.add_class::<VlobMaintenanceGetReencryptionBatchReq>()?;
     m.add_class::<VlobMaintenanceGetReencryptionBatchRep>()?;
@@ -697,6 +699,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<VlobMaintenanceGetReencryptionBatchRepNotInMaintenance>()?;
     m.add_class::<VlobMaintenanceGetReencryptionBatchRepBadEncryptionRevision>()?;
     m.add_class::<VlobMaintenanceGetReencryptionBatchRepMaintenanceError>()?;
+    m.add_class::<VlobMaintenanceGetReencryptionBatchRepRealmDeleted>()?;
     m.add_class::<VlobMaintenanceGetReencryptionBatchRepUnknownStatus>()?;
     m.add_class::<VlobMaintenanceSaveReencryptionBatchReq>()?;
     m.add_class::<VlobMaintenanceSaveReencryptionBatchRep>()?;
@@ -706,6 +709,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance>()?;
     m.add_class::<VlobMaintenanceSaveReencryptionBatchRepBadEncryptionRevision>()?;
     m.add_class::<VlobMaintenanceSaveReencryptionBatchRepMaintenanceError>()?;
+    m.add_class::<VlobMaintenanceSaveReencryptionBatchRepRealmDeleted>()?;
     m.add_class::<VlobMaintenanceSaveReencryptionBatchRepUnknownStatus>()?;
     m.add_class::<ReencryptionBatchEntry>()?;
 

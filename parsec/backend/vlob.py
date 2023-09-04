@@ -30,6 +30,7 @@ from parsec._parsec import (
     VlobListVersionsRepNotAllowed,
     VlobListVersionsRepNotFound,
     VlobListVersionsRepOk,
+    VlobListVersionsRepRealmDeleted,
     VlobListVersionsReq,
     VlobMaintenanceGetReencryptionBatchRep,
     VlobMaintenanceGetReencryptionBatchRepBadEncryptionRevision,
@@ -38,6 +39,7 @@ from parsec._parsec import (
     VlobMaintenanceGetReencryptionBatchRepNotFound,
     VlobMaintenanceGetReencryptionBatchRepNotInMaintenance,
     VlobMaintenanceGetReencryptionBatchRepOk,
+    VlobMaintenanceGetReencryptionBatchRepRealmDeleted,
     VlobMaintenanceGetReencryptionBatchReq,
     VlobMaintenanceSaveReencryptionBatchRep,
     VlobMaintenanceSaveReencryptionBatchRepBadEncryptionRevision,
@@ -46,12 +48,14 @@ from parsec._parsec import (
     VlobMaintenanceSaveReencryptionBatchRepNotFound,
     VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance,
     VlobMaintenanceSaveReencryptionBatchRepOk,
+    VlobMaintenanceSaveReencryptionBatchRepRealmDeleted,
     VlobMaintenanceSaveReencryptionBatchReq,
     VlobPollChangesRep,
     VlobPollChangesRepInMaintenance,
     VlobPollChangesRepNotAllowed,
     VlobPollChangesRepNotFound,
     VlobPollChangesRepOk,
+    VlobPollChangesRepRealmDeleted,
     VlobPollChangesReq,
     VlobReadRep,
     VlobReadRepBadEncryptionRevision,
@@ -499,6 +503,9 @@ class BaseVlobComponent:
         except VlobInMaintenanceError:
             return VlobPollChangesRepInMaintenance()
 
+        except VlobRealmDeletedError:
+            return VlobPollChangesRepRealmDeleted()
+
         return VlobPollChangesRepOk(changes, checkpoint)
 
     @api("vlob_list_versions")
@@ -520,6 +527,9 @@ class BaseVlobComponent:
 
         except VlobInMaintenanceError:
             return VlobListVersionsRepInMaintenance()
+
+        except VlobRealmDeletedError:
+            return VlobListVersionsRepRealmDeleted()
 
         return VlobListVersionsRepOk(versions_dict)
 
@@ -554,6 +564,9 @@ class BaseVlobComponent:
 
         except VlobMaintenanceError:
             return VlobMaintenanceGetReencryptionBatchRepMaintenanceError(None)
+
+        except VlobRealmDeletedError:
+            return VlobMaintenanceGetReencryptionBatchRepRealmDeleted()
 
         return VlobMaintenanceGetReencryptionBatchRepOk(
             [ReencryptionBatchEntry(vlob_id, version, blob) for vlob_id, version, blob in batch]
@@ -591,6 +604,9 @@ class BaseVlobComponent:
 
         except VlobMaintenanceError:
             return VlobMaintenanceSaveReencryptionBatchRepMaintenanceError(None)
+
+        except VlobRealmDeletedError:
+            return VlobMaintenanceSaveReencryptionBatchRepRealmDeleted()
 
         return VlobMaintenanceSaveReencryptionBatchRepOk(total, done)
 

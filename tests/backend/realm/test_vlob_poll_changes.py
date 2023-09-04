@@ -9,6 +9,7 @@ from parsec._parsec import (
     VlobPollChangesRepNotAllowed,
     VlobPollChangesRepNotFound,
     VlobPollChangesRepOk,
+    VlobPollChangesRepRealmDeleted,
     VlobUpdateRepNotAllowed,
     VlobUpdateRepOk,
 )
@@ -39,7 +40,7 @@ def realm_generate_certif_and_update_roles_or_fail(next_timestamp):
 
 
 @pytest.mark.trio
-async def test_realm_updated_by_vlob(backend, alice, alice_ws, realm):
+async def test_realm_updated_by_vlob(backend, alice, alice_ws, realm, archive_realm):
     await backend.vlob.create(
         organization_id=alice.organization_id,
         author=alice.device_id,
@@ -63,9 +64,17 @@ async def test_realm_updated_by_vlob(backend, alice, alice_ws, realm):
         rep = await vlob_poll_changes(alice_ws, realm, last_checkpoint)
         assert rep == VlobPollChangesRepOk({VLOB_ID: 2}, 2)
 
+    # This should still work after the backend has been archived
+    await archive_realm(backend, alice, realm)
+    for last_checkpoint in (0, 1):
+        rep = await vlob_poll_changes(alice_ws, realm, last_checkpoint)
+        assert rep == VlobPollChangesRepOk({VLOB_ID: 2}, 2)
+
 
 @pytest.mark.trio
-async def test_vlob_poll_changes_checkpoint_up_to_date(backend, alice, alice_ws, realm):
+async def test_vlob_poll_changes_checkpoint_up_to_date(
+    backend, alice, alice_ws, realm, archive_realm
+):
     await backend.vlob.create(
         organization_id=alice.organization_id,
         author=alice.device_id,
@@ -88,12 +97,23 @@ async def test_vlob_poll_changes_checkpoint_up_to_date(backend, alice, alice_ws,
     rep = await vlob_poll_changes(alice_ws, realm, 2)
     assert rep == VlobPollChangesRepOk({}, 2)
 
+    # This should still work after the backend has been archived
+    await archive_realm(backend, alice, realm)
+    rep = await vlob_poll_changes(alice_ws, realm, 2)
+    assert rep == VlobPollChangesRepOk({}, 2)
+
 
 @pytest.mark.trio
 async def test_vlob_poll_changes_not_found(alice_ws):
     rep = await vlob_poll_changes(alice_ws, UNKNOWN_REALM_ID, 0)
     # The reason is no longer generated
     assert isinstance(rep, VlobPollChangesRepNotFound)
+
+
+@pytest.mark.trio
+async def test_vlob_poll_changes_realm_deleted(backend, alice, alice_ws, deleted_realm):
+    rep = await vlob_poll_changes(alice_ws, deleted_realm, 2)
+    assert isinstance(rep, VlobPollChangesRepRealmDeleted)
 
 
 @pytest.mark.trio

@@ -745,6 +745,14 @@ fn serde_vlob_poll_changes_req() {
     )[..],
     authenticated_cmds::vlob_poll_changes::Rep::InMaintenance
 )]
+#[case::realm_deleted(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   status: "realm_deleted"
+    //
+    &hex!("81a6737461747573ad7265616c6d5f64656c65746564")[..],
+    authenticated_cmds::vlob_poll_changes::Rep::RealmDeleted,
+)]
 fn serde_vlob_poll_changes_rep(
     #[case] raw: &[u8],
     #[case] expected: authenticated_cmds::vlob_poll_changes::Rep,
@@ -839,6 +847,14 @@ fn serde_vlob_list_versions_req() {
         "81a6737461747573ae696e5f6d61696e74656e616e6365"
     )[..],
     authenticated_cmds::vlob_list_versions::Rep::InMaintenance
+)]
+#[case::realm_deleted(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   status: "realm_deleted"
+    //
+    &hex!("81a6737461747573ad7265616c6d5f64656c65746564")[..],
+    authenticated_cmds::vlob_list_versions::Rep::RealmDeleted,
 )]
 fn serde_vlob_list_versions_rep(
     #[case] raw: &[u8],
@@ -970,6 +986,14 @@ fn serde_vlob_maintenance_get_reencryption_batch_req() {
         reason: Some("foobar".to_owned())
     }
 )]
+#[case::realm_deleted(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   status: "realm_deleted"
+    //
+    &hex!("81a6737461747573ad7265616c6d5f64656c65746564")[..],
+    authenticated_cmds::vlob_maintenance_get_reencryption_batch::Rep::RealmDeleted,
+)]
 fn serde_vlob_maintenance_get_reencryption_batch_rep(
     #[case] raw: &[u8],
     #[case] expected: authenticated_cmds::vlob_maintenance_get_reencryption_batch::Rep,
@@ -1100,6 +1124,14 @@ fn serde_vlob_maintenance_save_reencryption_batch_req() {
     authenticated_cmds::vlob_maintenance_save_reencryption_batch::Rep::MaintenanceError {
         reason: Some("foobar".to_owned())
     }
+)]
+#[case::realm_deleted(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   status: "realm_deleted"
+    //
+    &hex!("81a6737461747573ad7265616c6d5f64656c65746564")[..],
+    authenticated_cmds::vlob_maintenance_save_reencryption_batch::Rep::RealmDeleted,
 )]
 fn serde_vlob_maintenance_save_reencryption_batch_rep(
     #[case] raw: &[u8],

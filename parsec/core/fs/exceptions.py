@@ -315,6 +315,14 @@ class FSWorkspaceInMaintenance(FSRemoteOperationError):
     pass
 
 
+class FSWorkspaceRealmDeleted(FSRemoteOperationError):
+    pass
+
+
+class FSWorkspaceRealmArchived(FSRemoteOperationError):
+    pass
+
+
 # RemoteDevicesManager errors
 
 
