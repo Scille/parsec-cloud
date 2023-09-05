@@ -5,7 +5,7 @@ from typing import Any, Generic, TypeVar
 #
 # Meta-types
 #
-# Those types are not part of the API but to be used to describe it.
+# These types are not part of the API but are meant to be used to describe it.
 #
 
 OK = TypeVar("OK")
@@ -173,28 +173,25 @@ class EntryName(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, _> { s.parse::<libparsec::EntryName>().map_err(|e| e.to_string()) }"
 
 
-class EntryID(BytesBasedType):
-    custom_from_rs_bytes = (
-        "|x: &[u8]| -> Result<_, _> { libparsec::EntryID::try_from(x).map_err(|e| e.to_string()) }"
-    )
-    custom_to_rs_bytes = (
-        "|x: libparsec::EntryID| -> Result<_, &'static str> { Ok(x.as_bytes().to_owned()) }"
-    )
+# EntryID, RealmID and InvitationToken, are defined as strings (instead of
+# Uint8Array) so that the Typescript code only manipulates strings without
+# conversion or parsing.
 
 
-class RealmID(BytesBasedType):
-    custom_from_rs_bytes = (
-        "|x: &[u8]| -> Result<_, _> { libparsec::RealmID::try_from(x).map_err(|e| e.to_string()) }"
-    )
-    custom_to_rs_bytes = (
-        "|x: libparsec::RealmID| -> Result<_, &'static str> { Ok(x.as_bytes().to_owned()) }"
-    )
+class EntryID(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<libparsec::EntryID, _> { libparsec::EntryID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = "|x: libparsec::EntryID| -> Result<String, &'static str> { Ok(x.hex()) }"
 
 
-class InvitationToken(BytesBasedType):
-    custom_from_rs_bytes = "|x: &[u8]| -> Result<_, _> { libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string()) }"
-    custom_to_rs_bytes = (
-        "|x: libparsec::InvitationToken| -> Result<_, &'static str> { Ok(x.as_bytes().to_owned()) }"
+class RealmID(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<libparsec::RealmID, _> { libparsec::RealmID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = "|x: libparsec::RealmID| -> Result<String, &'static str> { Ok(x.hex()) }"
+
+
+class InvitationToken(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<libparsec::InvitationToken, _> { libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = (
+        "|x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) }"
     )
 
 

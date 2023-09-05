@@ -2222,17 +2222,16 @@ fn variant_invitelistitem_js_to_rs<'a>(
     match tag.as_str() {
         "Device" => {
             let token = {
-                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "token")?;
+                let js_val: Handle<JsString> = obj.get(cx, "token")?;
                 {
-                    let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                        libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
-                    };
-                    #[allow(clippy::unnecessary_mut_passed)]
-                    match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                    let custom_from_rs_string =
+                        |s: String| -> Result<libparsec::InvitationToken, _> {
+                            libparsec::InvitationToken::from_hex(s.as_str())
+                                .map_err(|e| e.to_string())
+                        };
+                    match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
-                        // err can't infer type in some case, because of the previous `try_into`
-                        #[allow(clippy::useless_format)]
-                        Err(err) => return cx.throw_type_error(format!("{}", err)),
+                        Err(err) => return cx.throw_type_error(err),
                     }
                 }
             };
@@ -2260,17 +2259,16 @@ fn variant_invitelistitem_js_to_rs<'a>(
         }
         "User" => {
             let token = {
-                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "token")?;
+                let js_val: Handle<JsString> = obj.get(cx, "token")?;
                 {
-                    let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                        libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
-                    };
-                    #[allow(clippy::unnecessary_mut_passed)]
-                    match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                    let custom_from_rs_string =
+                        |s: String| -> Result<libparsec::InvitationToken, _> {
+                            libparsec::InvitationToken::from_hex(s.as_str())
+                                .map_err(|e| e.to_string())
+                        };
+                    match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
-                        // err can't infer type in some case, because of the previous `try_into`
-                        #[allow(clippy::useless_format)]
-                        Err(err) => return cx.throw_type_error(format!("{}", err)),
+                        Err(err) => return cx.throw_type_error(err),
                     }
                 }
             };
@@ -2320,24 +2318,15 @@ fn variant_invitelistitem_rs_to_js<'a>(
         } => {
             let js_tag = JsString::try_new(cx, "Device").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_token = {
-                let rs_buff = {
-                    let custom_to_rs_bytes =
-                        |x: libparsec::InvitationToken| -> Result<_, &'static str> {
-                            Ok(x.as_bytes().to_owned())
-                        };
-                    match custom_to_rs_bytes(token) {
-                        Ok(ok) => ok,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                };
-                let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
-                let js_buff_slice = js_buff.as_mut_slice(cx);
-                for (i, c) in rs_buff.iter().enumerate() {
-                    js_buff_slice[i] = *c;
+            let js_token = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(token) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
                 }
-                js_buff
-            };
+            })
+            .or_throw(cx)?;
             js_obj.set(cx, "token", js_token)?;
             let js_created_on = JsString::try_new(cx, {
                 let custom_to_rs_string =
@@ -2363,24 +2352,15 @@ fn variant_invitelistitem_rs_to_js<'a>(
         } => {
             let js_tag = JsString::try_new(cx, "User").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_token = {
-                let rs_buff = {
-                    let custom_to_rs_bytes =
-                        |x: libparsec::InvitationToken| -> Result<_, &'static str> {
-                            Ok(x.as_bytes().to_owned())
-                        };
-                    match custom_to_rs_bytes(token) {
-                        Ok(ok) => ok,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                };
-                let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
-                let js_buff_slice = js_buff.as_mut_slice(cx);
-                for (i, c) in rs_buff.iter().enumerate() {
-                    js_buff_slice[i] = *c;
+            let js_token = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(token) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
                 }
-                js_buff
-            };
+            })
+            .or_throw(cx)?;
             js_obj.set(cx, "token", js_token)?;
             let js_created_on = JsString::try_new(cx, {
                 let custom_to_rs_string =
@@ -2807,69 +2787,53 @@ fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME
-        .lock()
-        .expect("Mutex is poisoned")
-        .spawn(async move {
-            let ret = libparsec::client_list_workspaces(client).await;
+    let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
 
-            deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = match ret {
-                    Ok(ok) => {
-                        let js_obj = JsObject::new(&mut cx);
-                        let js_tag = JsBoolean::new(&mut cx, true);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = {
-                            // JsArray::new allocates with `undefined` value, that's why we `set` value
-                            let js_array = JsArray::new(&mut cx, ok.len() as u32);
-                            for (i, elem) in ok.into_iter().enumerate() {
-                                let js_elem = {
-                                    let (x1, x2) = elem;
-                                    let js_array = JsArray::new(&mut cx, 2);
-                                    let js_value = {
-                                        let rs_buff = {
-                                            let custom_to_rs_bytes =
-                                                |x: libparsec::RealmID| -> Result<_, &'static str> {
-                                                    Ok(x.as_bytes().to_owned())
-                                                };
-                                            match custom_to_rs_bytes(x1) {
-                                                Ok(ok) => ok,
-                                                Err(err) => return cx.throw_type_error(err),
-                                            }
-                                        };
-                                        let mut js_buff =
-                                            JsArrayBuffer::new(&mut cx, rs_buff.len())?;
-                                        let js_buff_slice = js_buff.as_mut_slice(&mut cx);
-                                        for (i, c) in rs_buff.iter().enumerate() {
-                                            js_buff_slice[i] = *c;
-                                        }
-                                        js_buff
-                                    };
-                                    js_array.set(&mut cx, 1, js_value)?;
-                                    let js_value =
-                                        JsString::try_new(&mut cx, x2).or_throw(&mut cx)?;
-                                    js_array.set(&mut cx, 2, js_value)?;
-                                    js_array
-                                };
-                                js_array.set(&mut cx, i as u32, js_elem)?;
-                            }
-                            js_array
+        let ret = libparsec::client_list_workspaces(
+            client,
+        ).await;
+
+        deferred.settle_with(&channel, move |mut cx| {
+            let js_ret = match ret {
+            Ok(ok) => {
+                let js_obj = JsObject::new(&mut cx);
+                let js_tag = JsBoolean::new(&mut cx, true);
+                js_obj.set(&mut cx, "ok", js_tag)?;
+                let js_value = {
+                    // JsArray::new allocates with `undefined` value, that's why we `set` value
+                    let js_array = JsArray::new(&mut cx, ok.len() as u32);
+                    for (i, elem) in ok.into_iter().enumerate() {
+                        let js_elem = {
+                            let (x1, x2) = elem;
+                            let js_array = JsArray::new(&mut cx, 2);        let js_value = JsString::try_new(&mut cx,{
+                                    let custom_to_rs_string = |x: libparsec::RealmID| -> Result<String, &'static str> { Ok(x.hex()) };
+                                    match custom_to_rs_string(x1) {
+                                        Ok(ok) => ok,
+                                        Err(err) => return cx.throw_type_error(err),
+                                    }
+                                }).or_throw(&mut cx)?;
+                                js_array.set(&mut cx, 1, js_value)?;        let js_value = JsString::try_new(&mut cx,x2).or_throw(&mut cx)?;
+                                js_array.set(&mut cx, 2, js_value)?;js_array
                         };
-                        js_obj.set(&mut cx, "value", js_value)?;
-                        js_obj
+                        js_array.set(&mut cx, i as u32, js_elem)?;
                     }
-                    Err(err) => {
-                        let js_obj = cx.empty_object();
-                        let js_tag = JsBoolean::new(&mut cx, false);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_clientlistworkspaceserror_rs_to_js(&mut cx, err)?;
-                        js_obj.set(&mut cx, "error", js_err)?;
-                        js_obj
-                    }
+                    js_array
                 };
-                Ok(js_ret)
-            });
+                js_obj.set(&mut cx, "value", js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = cx.empty_object();
+                let js_tag = JsBoolean::new(&mut cx, false);
+                js_obj.set(&mut cx, "ok", js_tag)?;
+                let js_err = variant_clientlistworkspaceserror_rs_to_js(&mut cx, err)?;
+                js_obj.set(&mut cx, "error", js_err)?;
+                js_obj
+            }
+        };
+            Ok(js_ret)
         });
+    });
 
     Ok(promise)
 }
@@ -2914,24 +2878,17 @@ fn client_workspace_create(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = {
-                            let rs_buff = {
-                                let custom_to_rs_bytes =
-                                    |x: libparsec::RealmID| -> Result<_, &'static str> {
-                                        Ok(x.as_bytes().to_owned())
-                                    };
-                                match custom_to_rs_bytes(ok) {
-                                    Ok(ok) => ok,
-                                    Err(err) => return cx.throw_type_error(err),
-                                }
-                            };
-                            let mut js_buff = JsArrayBuffer::new(&mut cx, rs_buff.len())?;
-                            let js_buff_slice = js_buff.as_mut_slice(&mut cx);
-                            for (i, c) in rs_buff.iter().enumerate() {
-                                js_buff_slice[i] = *c;
+                        let js_value = JsString::try_new(&mut cx, {
+                            let custom_to_rs_string =
+                                |x: libparsec::RealmID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(ok) {
+                                Ok(ok) => ok,
+                                Err(err) => return cx.throw_type_error(err),
                             }
-                            js_buff
-                        };
+                        })
+                        .or_throw(&mut cx)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -2964,17 +2921,14 @@ fn client_workspace_rename(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let realm_id = {
-        let js_val = cx.argument::<JsTypedArray<u8>>(1)?;
+        let js_val = cx.argument::<JsString>(1)?;
         {
-            let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                libparsec::RealmID::try_from(x).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::RealmID, _> {
+                libparsec::RealmID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
+            match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
-                #[allow(clippy::useless_format)]
-                Err(err) => return cx.throw_type_error(format!("{}", err)),
+                Err(err) => return cx.throw_type_error(err),
             }
         }
     };
@@ -3043,17 +2997,14 @@ fn client_workspace_share(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let realm_id = {
-        let js_val = cx.argument::<JsTypedArray<u8>>(1)?;
+        let js_val = cx.argument::<JsString>(1)?;
         {
-            let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                libparsec::RealmID::try_from(x).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::RealmID, _> {
+                libparsec::RealmID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
+            match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
-                #[allow(clippy::useless_format)]
-                Err(err) => return cx.throw_type_error(format!("{}", err)),
+                Err(err) => return cx.throw_type_error(err),
             }
         }
     };
@@ -4084,60 +4035,47 @@ fn client_new_user_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME
-        .lock()
-        .expect("Mutex is poisoned")
-        .spawn(async move {
-            let ret =
-                libparsec::client_new_user_invitation(client, claimer_email, send_email).await;
+    let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
 
-            deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = match ret {
-                    Ok(ok) => {
-                        let js_obj = JsObject::new(&mut cx);
-                        let js_tag = JsBoolean::new(&mut cx, true);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = {
-                            let (x1, x2) = ok;
-                            let js_array = JsArray::new(&mut cx, 2);
-                            let js_value = {
-                                let rs_buff = {
-                                    let custom_to_rs_bytes =
-                                        |x: libparsec::InvitationToken| -> Result<_, &'static str> {
-                                            Ok(x.as_bytes().to_owned())
-                                        };
-                                    match custom_to_rs_bytes(x1) {
-                                        Ok(ok) => ok,
-                                        Err(err) => return cx.throw_type_error(err),
-                                    }
-                                };
-                                let mut js_buff = JsArrayBuffer::new(&mut cx, rs_buff.len())?;
-                                let js_buff_slice = js_buff.as_mut_slice(&mut cx);
-                                for (i, c) in rs_buff.iter().enumerate() {
-                                    js_buff_slice[i] = *c;
-                                }
-                                js_buff
-                            };
-                            js_array.set(&mut cx, 1, js_value)?;
-                            let js_value = variant_invitationemailsentstatus_rs_to_js(&mut cx, x2)?;
-                            js_array.set(&mut cx, 2, js_value)?;
-                            js_array
-                        };
-                        js_obj.set(&mut cx, "value", js_value)?;
-                        js_obj
-                    }
-                    Err(err) => {
-                        let js_obj = cx.empty_object();
-                        let js_tag = JsBoolean::new(&mut cx, false);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_newuserinvitationerror_rs_to_js(&mut cx, err)?;
-                        js_obj.set(&mut cx, "error", js_err)?;
-                        js_obj
-                    }
+        let ret = libparsec::client_new_user_invitation(
+            client,
+            claimer_email,
+            send_email,
+        ).await;
+
+        deferred.settle_with(&channel, move |mut cx| {
+            let js_ret = match ret {
+            Ok(ok) => {
+                let js_obj = JsObject::new(&mut cx);
+                let js_tag = JsBoolean::new(&mut cx, true);
+                js_obj.set(&mut cx, "ok", js_tag)?;
+                let js_value = {
+                    let (x1, x2) = ok;
+                    let js_array = JsArray::new(&mut cx, 2);        let js_value = JsString::try_new(&mut cx,{
+                            let custom_to_rs_string = |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                            match custom_to_rs_string(x1) {
+                                Ok(ok) => ok,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        }).or_throw(&mut cx)?;
+                        js_array.set(&mut cx, 1, js_value)?;        let js_value = variant_invitationemailsentstatus_rs_to_js(&mut cx, x2)?;
+                        js_array.set(&mut cx, 2, js_value)?;js_array
                 };
-                Ok(js_ret)
-            });
+                js_obj.set(&mut cx, "value", js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = cx.empty_object();
+                let js_tag = JsBoolean::new(&mut cx, false);
+                js_obj.set(&mut cx, "ok", js_tag)?;
+                let js_err = variant_newuserinvitationerror_rs_to_js(&mut cx, err)?;
+                js_obj.set(&mut cx, "error", js_err)?;
+                js_obj
+            }
+        };
+            Ok(js_ret)
         });
+    });
 
     Ok(promise)
 }
@@ -4162,59 +4100,46 @@ fn client_new_device_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> 
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME
-        .lock()
-        .expect("Mutex is poisoned")
-        .spawn(async move {
-            let ret = libparsec::client_new_device_invitation(client, send_email).await;
+    let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
 
-            deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = match ret {
-                    Ok(ok) => {
-                        let js_obj = JsObject::new(&mut cx);
-                        let js_tag = JsBoolean::new(&mut cx, true);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = {
-                            let (x1, x2) = ok;
-                            let js_array = JsArray::new(&mut cx, 2);
-                            let js_value = {
-                                let rs_buff = {
-                                    let custom_to_rs_bytes =
-                                        |x: libparsec::InvitationToken| -> Result<_, &'static str> {
-                                            Ok(x.as_bytes().to_owned())
-                                        };
-                                    match custom_to_rs_bytes(x1) {
-                                        Ok(ok) => ok,
-                                        Err(err) => return cx.throw_type_error(err),
-                                    }
-                                };
-                                let mut js_buff = JsArrayBuffer::new(&mut cx, rs_buff.len())?;
-                                let js_buff_slice = js_buff.as_mut_slice(&mut cx);
-                                for (i, c) in rs_buff.iter().enumerate() {
-                                    js_buff_slice[i] = *c;
-                                }
-                                js_buff
-                            };
-                            js_array.set(&mut cx, 1, js_value)?;
-                            let js_value = variant_invitationemailsentstatus_rs_to_js(&mut cx, x2)?;
-                            js_array.set(&mut cx, 2, js_value)?;
-                            js_array
-                        };
-                        js_obj.set(&mut cx, "value", js_value)?;
-                        js_obj
-                    }
-                    Err(err) => {
-                        let js_obj = cx.empty_object();
-                        let js_tag = JsBoolean::new(&mut cx, false);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_newdeviceinvitationerror_rs_to_js(&mut cx, err)?;
-                        js_obj.set(&mut cx, "error", js_err)?;
-                        js_obj
-                    }
+        let ret = libparsec::client_new_device_invitation(
+            client,
+            send_email,
+        ).await;
+
+        deferred.settle_with(&channel, move |mut cx| {
+            let js_ret = match ret {
+            Ok(ok) => {
+                let js_obj = JsObject::new(&mut cx);
+                let js_tag = JsBoolean::new(&mut cx, true);
+                js_obj.set(&mut cx, "ok", js_tag)?;
+                let js_value = {
+                    let (x1, x2) = ok;
+                    let js_array = JsArray::new(&mut cx, 2);        let js_value = JsString::try_new(&mut cx,{
+                            let custom_to_rs_string = |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                            match custom_to_rs_string(x1) {
+                                Ok(ok) => ok,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        }).or_throw(&mut cx)?;
+                        js_array.set(&mut cx, 1, js_value)?;        let js_value = variant_invitationemailsentstatus_rs_to_js(&mut cx, x2)?;
+                        js_array.set(&mut cx, 2, js_value)?;js_array
                 };
-                Ok(js_ret)
-            });
+                js_obj.set(&mut cx, "value", js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = cx.empty_object();
+                let js_tag = JsBoolean::new(&mut cx, false);
+                js_obj.set(&mut cx, "ok", js_tag)?;
+                let js_err = variant_newdeviceinvitationerror_rs_to_js(&mut cx, err)?;
+                js_obj.set(&mut cx, "error", js_err)?;
+                js_obj
+            }
+        };
+            Ok(js_ret)
         });
+    });
 
     Ok(promise)
 }
@@ -4232,17 +4157,14 @@ fn client_delete_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let token = {
-        let js_val = cx.argument::<JsTypedArray<u8>>(1)?;
+        let js_val = cx.argument::<JsString>(1)?;
         {
-            let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
+                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
+            match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
-                #[allow(clippy::useless_format)]
-                Err(err) => return cx.throw_type_error(format!("{}", err)),
+                Err(err) => return cx.throw_type_error(err),
             }
         }
     };
@@ -4355,17 +4277,14 @@ fn client_start_user_invitation_greet(mut cx: FunctionContext) -> JsResult<JsPro
         }
     };
     let token = {
-        let js_val = cx.argument::<JsTypedArray<u8>>(1)?;
+        let js_val = cx.argument::<JsString>(1)?;
         {
-            let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
+                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
+            match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
-                #[allow(clippy::useless_format)]
-                Err(err) => return cx.throw_type_error(format!("{}", err)),
+                Err(err) => return cx.throw_type_error(err),
             }
         }
     };
@@ -4419,17 +4338,14 @@ fn client_start_device_invitation_greet(mut cx: FunctionContext) -> JsResult<JsP
         }
     };
     let token = {
-        let js_val = cx.argument::<JsTypedArray<u8>>(1)?;
+        let js_val = cx.argument::<JsString>(1)?;
         {
-            let custom_from_rs_bytes = |x: &[u8]| -> Result<_, _> {
-                libparsec::InvitationToken::try_from(x).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
+                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
+            match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
-                #[allow(clippy::useless_format)]
-                Err(err) => return cx.throw_type_error(format!("{}", err)),
+                Err(err) => return cx.throw_type_error(err),
             }
         }
     };
