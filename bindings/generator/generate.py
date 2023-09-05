@@ -96,7 +96,7 @@ env = Environment(
 def snake_case_to_camel_case(s: str) -> str:
     camel = ""
     next_is_uppercase = False
-    for c in s:
+    for c in s.lower():
         if c == "_":
             next_is_uppercase = True
             continue
@@ -106,6 +106,19 @@ def snake_case_to_camel_case(s: str) -> str:
         else:
             camel += c
     return camel
+
+
+def _test_snake_case_to_camel_case(input: str, expected: str):
+    camel_case = snake_case_to_camel_case(input)
+    assert (
+        camel_case == expected
+    ), f"expected `{expected}` but got `{camel_case}` (input = `{input}`)"
+
+
+_test_snake_case_to_camel_case("hello", "hello")
+_test_snake_case_to_camel_case("hello_world", "helloWorld")
+_test_snake_case_to_camel_case("Hello_world", "helloWorld")
+_test_snake_case_to_camel_case("hello__world", "helloWorld")
 
 
 env.filters["snake2camel"] = snake_case_to_camel_case
