@@ -494,12 +494,20 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     ) -> list[RealmArchivingStatus]:
         async with self.dbh.pool.acquire() as conn:
             await self._get(conn, id)
-        realms = await realm_queries.query_get_realms_for_user(conn, id, user)
+        mapping = await realm_queries.query_get_realms_for_user(conn, id, user)
+        realm_ids = {
+            realm_id: internal_realm_id for (realm_id, (internal_realm_id, _)) in mapping.items()
+        }
         result = []
-        for realm_id in realms:
-            configuration, configured_on = await realm_queries.query_get_archiving_configuration(
-                conn, id, realm_id, for_update=False
-            )
+        for (
+            realm_id,
+            configuration,
+            configured_on,
+        ) in await realm_queries.query_get_archiving_configurations(
+            conn,
+            id,
+            realm_ids,
+        ):
             result.append(
                 RealmArchivingStatus(
                     realm_id=realm_id,

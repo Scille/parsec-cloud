@@ -66,7 +66,8 @@ class PGRealmComponent(BaseRealmComponent):
         self, organization_id: OrganizationID, user: UserID
     ) -> dict[RealmID, RealmRole]:
         async with self.dbh.pool.acquire() as conn:
-            return await query_get_realms_for_user(conn, organization_id, user)
+            mapping = await query_get_realms_for_user(conn, organization_id, user)
+            return {realm_id: realm_role for (realm_id, (_, realm_role)) in mapping.items()}
 
     async def update_roles(
         self,

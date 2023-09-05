@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from parsec.backend.postgresql.realm_queries.archiving import (
     query_get_archiving_configuration,
+    query_get_archiving_configurations,
     query_update_archiving,
 )
 from parsec.backend.postgresql.realm_queries.create import query_create
@@ -31,6 +32,7 @@ __all__ = (
     "query_update_roles",
     "query_update_archiving",
     "query_get_archiving_configuration",
+    "query_get_archiving_configurations",
     "query_start_reencryption_maintenance",
     "query_finish_reencryption_maintenance",
 )

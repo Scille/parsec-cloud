@@ -103,7 +103,7 @@ ORDER BY certified_on ASC
 
 _q_get_realms_for_user = Q(
     f"""
-SELECT DISTINCT ON(realm) { q_realm(_id="realm_user_role.realm", select="realm_id") } as realm_id, role
+SELECT DISTINCT ON(realm) realm, { q_realm(_id="realm_user_role.realm", select="realm_id") } as realm_id, role
 FROM  realm_user_role
 WHERE user_ = { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
 ORDER BY realm, certified_on DESC
@@ -252,12 +252,12 @@ async def query_get_role_certificates(
 @query()
 async def query_get_realms_for_user(
     conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, user: UserID
-) -> dict[RealmID, RealmRole]:
+) -> dict[RealmID, tuple[int, RealmRole]]:
     rep = await conn.fetch(
         *_q_get_realms_for_user(organization_id=organization_id.str, user_id=user.str)
     )
     return {
-        RealmID.from_hex(row["realm_id"]): RealmRole.from_str(row["role"])
+        RealmID.from_hex(row["realm_id"]): (row["realm"], RealmRole.from_str(row["role"]))
         for row in rep
         if row["role"] is not None
     }

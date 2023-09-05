@@ -88,6 +88,36 @@ INSERT INTO realm_archiving(
 )
 
 
+_q_get_archiving_configurations = Q(
+    f"""
+SELECT DISTINCT ON (realm) realm, configuration, deletion_date, certified_on
+FROM realm_archiving
+WHERE
+    realm = ANY($internal_realm_ids)
+ORDER BY realm, certified_on DESC
+"""
+)
+
+
+@query()
+async def query_get_archiving_configurations(
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    realm_ids: dict[RealmID, int],
+) -> list[tuple[RealmID, RealmArchivingConfiguration, DateTime | None]]:
+    rep = await conn.fetch(*_q_get_archiving_configurations(internal_realm_ids=realm_ids.values()))
+    mapping: dict[int, tuple[RealmArchivingConfiguration, DateTime | None]] = {}
+    for item in rep:
+        internal_realm_id, configuration_str, deletion_date, archiving_certified_on = item
+        configuration = RealmArchivingConfiguration.from_str(configuration_str, deletion_date)
+        mapping[internal_realm_id] = (configuration, archiving_certified_on)
+    default = RealmArchivingConfiguration.available(), None
+    return [
+        (realm_id, *mapping.get(internal_realm_id, default))
+        for realm_id, internal_realm_id in realm_ids.items()
+    ]
+
+
 @query()
 async def query_get_archiving_configuration(
     conn: triopg._triopg.TrioConnectionProxy,
