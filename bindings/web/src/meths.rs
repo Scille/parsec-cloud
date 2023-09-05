@@ -1250,7 +1250,7 @@ fn variant_deviceaccessstrategy_js_to_rs(
                     .map_err(|_| TypeError::new("Not a valid Password"))?
             };
             let key_file = {
-                let js_val = Reflect::get(&obj, &"key_file".into())?;
+                let js_val = Reflect::get(&obj, &"keyFile".into())?;
                 js_val
                     .dyn_into::<JsString>()
                     .ok()
@@ -1268,7 +1268,7 @@ fn variant_deviceaccessstrategy_js_to_rs(
         }
         tag if tag == JsValue::from_str("Smartcard") => {
             let key_file = {
-                let js_val = Reflect::get(&obj, &"key_file".into())?;
+                let js_val = Reflect::get(&obj, &"keyFile".into())?;
                 js_val
                     .dyn_into::<JsString>()
                     .ok()
@@ -1314,7 +1314,7 @@ fn variant_deviceaccessstrategy_rs_to_js(
                 }
                 .as_ref()
             });
-            Reflect::set(&js_obj, &"key_file".into(), &js_key_file)?;
+            Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
         }
         libparsec::DeviceAccessStrategy::Smartcard { key_file, .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Smartcard".into())?;
@@ -1330,7 +1330,7 @@ fn variant_deviceaccessstrategy_rs_to_js(
                 }
                 .as_ref()
             });
-            Reflect::set(&js_obj, &"key_file".into(), &js_key_file)?;
+            Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
         }
     }
     Ok(js_obj)
@@ -1462,7 +1462,7 @@ fn variant_clientworkspaceshareerror_rs_to_js(
                 }
                 .as_ref()
             });
-            Reflect::set(&js_obj, &"server_timestamp".into(), &js_server_timestamp)?;
+            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
             let js_client_timestamp = JsValue::from_str({
                 let custom_to_rs_string =
                     |dt: libparsec::DateTime| -> Result<String, &'static str> {
@@ -1474,17 +1474,17 @@ fn variant_clientworkspaceshareerror_rs_to_js(
                 }
                 .as_ref()
             });
-            Reflect::set(&js_obj, &"client_timestamp".into(), &js_client_timestamp)?;
+            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
             let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
             Reflect::set(
                 &js_obj,
-                &"ballpark_client_early_offset".into(),
+                &"ballparkClientEarlyOffset".into(),
                 &js_ballpark_client_early_offset,
             )?;
             let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
             Reflect::set(
                 &js_obj,
-                &"ballpark_client_late_offset".into(),
+                &"ballparkClientLateOffset".into(),
                 &js_ballpark_client_late_offset,
             )?;
         }
@@ -1778,7 +1778,7 @@ fn variant_bootstraporganizationerror_rs_to_js(
                 }
                 .as_ref()
             });
-            Reflect::set(&js_obj, &"server_timestamp".into(), &js_server_timestamp)?;
+            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
             let js_client_timestamp = JsValue::from_str({
                 let custom_to_rs_string =
                     |dt: libparsec::DateTime| -> Result<String, &'static str> {
@@ -1790,17 +1790,17 @@ fn variant_bootstraporganizationerror_rs_to_js(
                 }
                 .as_ref()
             });
-            Reflect::set(&js_obj, &"client_timestamp".into(), &js_client_timestamp)?;
+            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
             let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
             Reflect::set(
                 &js_obj,
-                &"ballpark_client_early_offset".into(),
+                &"ballparkClientEarlyOffset".into(),
                 &js_ballpark_client_early_offset,
             )?;
             let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
             Reflect::set(
                 &js_obj,
-                &"ballpark_client_late_offset".into(),
+                &"ballparkClientLateOffset".into(),
                 &js_ballpark_client_late_offset,
             )?;
         }
@@ -1907,7 +1907,7 @@ fn variant_userordeviceclaiminitialinfo_js_to_rs(
                 }
             };
             let greeter_user_id = {
-                let js_val = Reflect::get(&obj, &"greeter_user_id".into())?;
+                let js_val = Reflect::get(&obj, &"greeterUserId".into())?;
                 js_val
                     .dyn_into::<JsString>()
                     .ok()
@@ -1917,7 +1917,7 @@ fn variant_userordeviceclaiminitialinfo_js_to_rs(
                     .map_err(|_| TypeError::new("Not a valid UserID"))?
             };
             let greeter_human_handle = {
-                let js_val = Reflect::get(&obj, &"greeter_human_handle".into())?;
+                let js_val = Reflect::get(&obj, &"greeterHumanHandle".into())?;
                 if js_val.is_null() {
                     None
                 } else {
@@ -1953,7 +1953,7 @@ fn variant_userordeviceclaiminitialinfo_js_to_rs(
                 }
             };
             let claimer_email = {
-                let js_val = Reflect::get(&obj, &"claimer_email".into())?;
+                let js_val = Reflect::get(&obj, &"claimerEmail".into())?;
                 js_val
                     .dyn_into::<JsString>()
                     .ok()
@@ -1961,7 +1961,7 @@ fn variant_userordeviceclaiminitialinfo_js_to_rs(
                     .ok_or_else(|| TypeError::new("Not a string"))?
             };
             let greeter_user_id = {
-                let js_val = Reflect::get(&obj, &"greeter_user_id".into())?;
+                let js_val = Reflect::get(&obj, &"greeterUserId".into())?;
                 js_val
                     .dyn_into::<JsString>()
                     .ok()
@@ -1971,7 +1971,7 @@ fn variant_userordeviceclaiminitialinfo_js_to_rs(
                     .map_err(|_| TypeError::new("Not a valid UserID"))?
             };
             let greeter_human_handle = {
-                let js_val = Reflect::get(&obj, &"greeter_human_handle".into())?;
+                let js_val = Reflect::get(&obj, &"greeterHumanHandle".into())?;
                 if js_val.is_null() {
                     None
                 } else {
@@ -2015,14 +2015,14 @@ fn variant_userordeviceclaiminitialinfo_rs_to_js(
             let js_handle = JsValue::from(handle);
             Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
             let js_greeter_user_id = JsValue::from_str(greeter_user_id.as_ref());
-            Reflect::set(&js_obj, &"greeter_user_id".into(), &js_greeter_user_id)?;
+            Reflect::set(&js_obj, &"greeterUserId".into(), &js_greeter_user_id)?;
             let js_greeter_human_handle = match greeter_human_handle {
                 Some(val) => JsValue::from_str(val.as_ref()),
                 None => JsValue::NULL,
             };
             Reflect::set(
                 &js_obj,
-                &"greeter_human_handle".into(),
+                &"greeterHumanHandle".into(),
                 &js_greeter_human_handle,
             )?;
         }
@@ -2037,16 +2037,16 @@ fn variant_userordeviceclaiminitialinfo_rs_to_js(
             let js_handle = JsValue::from(handle);
             Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
             let js_claimer_email = claimer_email.into();
-            Reflect::set(&js_obj, &"claimer_email".into(), &js_claimer_email)?;
+            Reflect::set(&js_obj, &"claimerEmail".into(), &js_claimer_email)?;
             let js_greeter_user_id = JsValue::from_str(greeter_user_id.as_ref());
-            Reflect::set(&js_obj, &"greeter_user_id".into(), &js_greeter_user_id)?;
+            Reflect::set(&js_obj, &"greeterUserId".into(), &js_greeter_user_id)?;
             let js_greeter_human_handle = match greeter_human_handle {
                 Some(val) => JsValue::from_str(val.as_ref()),
                 None => JsValue::NULL,
             };
             Reflect::set(
                 &js_obj,
-                &"greeter_human_handle".into(),
+                &"greeterHumanHandle".into(),
                 &js_greeter_human_handle,
             )?;
         }
@@ -2230,7 +2230,7 @@ fn variant_invitelistitem_js_to_rs(obj: JsValue) -> Result<libparsec::InviteList
                     .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
             };
             let created_on = {
-                let js_val = Reflect::get(&obj, &"created_on".into())?;
+                let js_val = Reflect::get(&obj, &"createdOn".into())?;
                 js_val
                     .dyn_into::<JsString>()
                     .ok()
@@ -2269,7 +2269,7 @@ fn variant_invitelistitem_js_to_rs(obj: JsValue) -> Result<libparsec::InviteList
                     .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
             };
             let created_on = {
-                let js_val = Reflect::get(&obj, &"created_on".into())?;
+                let js_val = Reflect::get(&obj, &"createdOn".into())?;
                 js_val
                     .dyn_into::<JsString>()
                     .ok()
@@ -2284,7 +2284,7 @@ fn variant_invitelistitem_js_to_rs(obj: JsValue) -> Result<libparsec::InviteList
                     .map_err(|_| TypeError::new("Not a valid DateTime"))?
             };
             let claimer_email = {
-                let js_val = Reflect::get(&obj, &"claimer_email".into())?;
+                let js_val = Reflect::get(&obj, &"claimerEmail".into())?;
                 js_val
                     .dyn_into::<JsString>()
                     .ok()
@@ -2342,7 +2342,7 @@ fn variant_invitelistitem_rs_to_js(rs_obj: libparsec::InviteListItem) -> Result<
                 }
                 .as_ref()
             });
-            Reflect::set(&js_obj, &"created_on".into(), &js_created_on)?;
+            Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
             let js_status = variant_invitationstatus_rs_to_js(status)?;
             Reflect::set(&js_obj, &"status".into(), &js_status)?;
         }
@@ -2377,9 +2377,9 @@ fn variant_invitelistitem_rs_to_js(rs_obj: libparsec::InviteListItem) -> Result<
                 }
                 .as_ref()
             });
-            Reflect::set(&js_obj, &"created_on".into(), &js_created_on)?;
+            Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
             let js_claimer_email = claimer_email.into();
-            Reflect::set(&js_obj, &"claimer_email".into(), &js_claimer_email)?;
+            Reflect::set(&js_obj, &"claimerEmail".into(), &js_claimer_email)?;
             let js_status = variant_invitationstatus_rs_to_js(status)?;
             Reflect::set(&js_obj, &"status".into(), &js_status)?;
         }
@@ -2459,7 +2459,7 @@ fn variant_greetinprogresserror_rs_to_js(
                 }
                 .as_ref()
             });
-            Reflect::set(&js_obj, &"server_timestamp".into(), &js_server_timestamp)?;
+            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
             let js_client_timestamp = JsValue::from_str({
                 let custom_to_rs_string =
                     |dt: libparsec::DateTime| -> Result<String, &'static str> {
@@ -2471,17 +2471,17 @@ fn variant_greetinprogresserror_rs_to_js(
                 }
                 .as_ref()
             });
-            Reflect::set(&js_obj, &"client_timestamp".into(), &js_client_timestamp)?;
+            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
             let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
             Reflect::set(
                 &js_obj,
-                &"ballpark_client_early_offset".into(),
+                &"ballparkClientEarlyOffset".into(),
                 &js_ballpark_client_early_offset,
             )?;
             let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
             Reflect::set(
                 &js_obj,
-                &"ballpark_client_late_offset".into(),
+                &"ballparkClientLateOffset".into(),
                 &js_ballpark_client_late_offset,
             )?;
         }

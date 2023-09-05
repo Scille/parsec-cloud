@@ -1181,7 +1181,7 @@ fn variant_deviceaccessstrategy_js_to_rs<'a>(
                 }
             };
             let key_file = {
-                let js_val: Handle<JsString> = obj.get(cx, "key_file")?;
+                let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
                 {
                     let custom_from_rs_string =
                         |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
@@ -1195,7 +1195,7 @@ fn variant_deviceaccessstrategy_js_to_rs<'a>(
         }
         "Smartcard" => {
             let key_file = {
-                let js_val: Handle<JsString> = obj.get(cx, "key_file")?;
+                let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
                 {
                     let custom_from_rs_string =
                         |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
@@ -1237,7 +1237,7 @@ fn variant_deviceaccessstrategy_rs_to_js<'a>(
                 }
             })
             .or_throw(cx)?;
-            js_obj.set(cx, "key_file", js_key_file)?;
+            js_obj.set(cx, "keyFile", js_key_file)?;
         }
         libparsec::DeviceAccessStrategy::Smartcard { key_file, .. } => {
             let js_tag = JsString::try_new(cx, "Smartcard").or_throw(cx)?;
@@ -1254,7 +1254,7 @@ fn variant_deviceaccessstrategy_rs_to_js<'a>(
                 }
             })
             .or_throw(cx)?;
-            js_obj.set(cx, "key_file", js_key_file)?;
+            js_obj.set(cx, "keyFile", js_key_file)?;
         }
     }
     Ok(js_obj)
@@ -1402,7 +1402,7 @@ fn variant_clientworkspaceshareerror_rs_to_js<'a>(
                 }
             })
             .or_throw(cx)?;
-            js_obj.set(cx, "server_timestamp", js_server_timestamp)?;
+            js_obj.set(cx, "serverTimestamp", js_server_timestamp)?;
             let js_client_timestamp = JsString::try_new(cx, {
                 let custom_to_rs_string =
                     |dt: libparsec::DateTime| -> Result<String, &'static str> {
@@ -1414,17 +1414,17 @@ fn variant_clientworkspaceshareerror_rs_to_js<'a>(
                 }
             })
             .or_throw(cx)?;
-            js_obj.set(cx, "client_timestamp", js_client_timestamp)?;
+            js_obj.set(cx, "clientTimestamp", js_client_timestamp)?;
             let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
             js_obj.set(
                 cx,
-                "ballpark_client_early_offset",
+                "ballparkClientEarlyOffset",
                 js_ballpark_client_early_offset,
             )?;
             let js_ballpark_client_late_offset = JsNumber::new(cx, ballpark_client_late_offset);
             js_obj.set(
                 cx,
-                "ballpark_client_late_offset",
+                "ballparkClientLateOffset",
                 js_ballpark_client_late_offset,
             )?;
         }
@@ -1737,7 +1737,7 @@ fn variant_bootstraporganizationerror_rs_to_js<'a>(
                 }
             })
             .or_throw(cx)?;
-            js_obj.set(cx, "server_timestamp", js_server_timestamp)?;
+            js_obj.set(cx, "serverTimestamp", js_server_timestamp)?;
             let js_client_timestamp = JsString::try_new(cx, {
                 let custom_to_rs_string =
                     |dt: libparsec::DateTime| -> Result<String, &'static str> {
@@ -1749,17 +1749,17 @@ fn variant_bootstraporganizationerror_rs_to_js<'a>(
                 }
             })
             .or_throw(cx)?;
-            js_obj.set(cx, "client_timestamp", js_client_timestamp)?;
+            js_obj.set(cx, "clientTimestamp", js_client_timestamp)?;
             let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
             js_obj.set(
                 cx,
-                "ballpark_client_early_offset",
+                "ballparkClientEarlyOffset",
                 js_ballpark_client_early_offset,
             )?;
             let js_ballpark_client_late_offset = JsNumber::new(cx, ballpark_client_late_offset);
             js_obj.set(
                 cx,
-                "ballpark_client_late_offset",
+                "ballparkClientLateOffset",
                 js_ballpark_client_late_offset,
             )?;
         }
@@ -1882,7 +1882,7 @@ fn variant_userordeviceclaiminitialinfo_js_to_rs<'a>(
                 }
             };
             let greeter_user_id = {
-                let js_val: Handle<JsString> = obj.get(cx, "greeter_user_id")?;
+                let js_val: Handle<JsString> = obj.get(cx, "greeterUserId")?;
                 {
                     match js_val.value(cx).parse() {
                         Ok(val) => val,
@@ -1891,7 +1891,7 @@ fn variant_userordeviceclaiminitialinfo_js_to_rs<'a>(
                 }
             };
             let greeter_human_handle = {
-                let js_val: Handle<JsValue> = obj.get(cx, "greeter_human_handle")?;
+                let js_val: Handle<JsValue> = obj.get(cx, "greeterHumanHandle")?;
                 {
                     if js_val.is_a::<JsNull, _>(cx) {
                         None
@@ -1924,11 +1924,11 @@ fn variant_userordeviceclaiminitialinfo_js_to_rs<'a>(
                 }
             };
             let claimer_email = {
-                let js_val: Handle<JsString> = obj.get(cx, "claimer_email")?;
+                let js_val: Handle<JsString> = obj.get(cx, "claimerEmail")?;
                 js_val.value(cx)
             };
             let greeter_user_id = {
-                let js_val: Handle<JsString> = obj.get(cx, "greeter_user_id")?;
+                let js_val: Handle<JsString> = obj.get(cx, "greeterUserId")?;
                 {
                     match js_val.value(cx).parse() {
                         Ok(val) => val,
@@ -1937,7 +1937,7 @@ fn variant_userordeviceclaiminitialinfo_js_to_rs<'a>(
                 }
             };
             let greeter_human_handle = {
-                let js_val: Handle<JsValue> = obj.get(cx, "greeter_human_handle")?;
+                let js_val: Handle<JsValue> = obj.get(cx, "greeterHumanHandle")?;
                 {
                     if js_val.is_a::<JsNull, _>(cx) {
                         None
@@ -1981,12 +1981,12 @@ fn variant_userordeviceclaiminitialinfo_rs_to_js<'a>(
             let js_handle = JsNumber::new(cx, handle as f64);
             js_obj.set(cx, "handle", js_handle)?;
             let js_greeter_user_id = JsString::try_new(cx, greeter_user_id).or_throw(cx)?;
-            js_obj.set(cx, "greeter_user_id", js_greeter_user_id)?;
+            js_obj.set(cx, "greeterUserId", js_greeter_user_id)?;
             let js_greeter_human_handle = match greeter_human_handle {
                 Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
                 None => JsNull::new(cx).as_value(cx),
             };
-            js_obj.set(cx, "greeter_human_handle", js_greeter_human_handle)?;
+            js_obj.set(cx, "greeterHumanHandle", js_greeter_human_handle)?;
         }
         libparsec::UserOrDeviceClaimInitialInfo::User {
             handle,
@@ -2000,14 +2000,14 @@ fn variant_userordeviceclaiminitialinfo_rs_to_js<'a>(
             let js_handle = JsNumber::new(cx, handle as f64);
             js_obj.set(cx, "handle", js_handle)?;
             let js_claimer_email = JsString::try_new(cx, claimer_email).or_throw(cx)?;
-            js_obj.set(cx, "claimer_email", js_claimer_email)?;
+            js_obj.set(cx, "claimerEmail", js_claimer_email)?;
             let js_greeter_user_id = JsString::try_new(cx, greeter_user_id).or_throw(cx)?;
-            js_obj.set(cx, "greeter_user_id", js_greeter_user_id)?;
+            js_obj.set(cx, "greeterUserId", js_greeter_user_id)?;
             let js_greeter_human_handle = match greeter_human_handle {
                 Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
                 None => JsNull::new(cx).as_value(cx),
             };
-            js_obj.set(cx, "greeter_human_handle", js_greeter_human_handle)?;
+            js_obj.set(cx, "greeterHumanHandle", js_greeter_human_handle)?;
         }
     }
     Ok(js_obj)
@@ -2206,7 +2206,7 @@ fn variant_invitelistitem_js_to_rs<'a>(
                 }
             };
             let created_on = {
-                let js_val: Handle<JsString> = obj.get(cx, "created_on")?;
+                let js_val: Handle<JsString> = obj.get(cx, "createdOn")?;
                 {
                     let custom_from_rs_string = |s: String| -> Result<_, String> {
                         libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
@@ -2244,7 +2244,7 @@ fn variant_invitelistitem_js_to_rs<'a>(
                 }
             };
             let created_on = {
-                let js_val: Handle<JsString> = obj.get(cx, "created_on")?;
+                let js_val: Handle<JsString> = obj.get(cx, "createdOn")?;
                 {
                     let custom_from_rs_string = |s: String| -> Result<_, String> {
                         libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
@@ -2256,7 +2256,7 @@ fn variant_invitelistitem_js_to_rs<'a>(
                 }
             };
             let claimer_email = {
-                let js_val: Handle<JsString> = obj.get(cx, "claimer_email")?;
+                let js_val: Handle<JsString> = obj.get(cx, "claimerEmail")?;
                 js_val.value(cx)
             };
             let status = {
@@ -2319,7 +2319,7 @@ fn variant_invitelistitem_rs_to_js<'a>(
                 }
             })
             .or_throw(cx)?;
-            js_obj.set(cx, "created_on", js_created_on)?;
+            js_obj.set(cx, "createdOn", js_created_on)?;
             let js_status = variant_invitationstatus_rs_to_js(cx, status)?;
             js_obj.set(cx, "status", js_status)?;
         }
@@ -2362,9 +2362,9 @@ fn variant_invitelistitem_rs_to_js<'a>(
                 }
             })
             .or_throw(cx)?;
-            js_obj.set(cx, "created_on", js_created_on)?;
+            js_obj.set(cx, "createdOn", js_created_on)?;
             let js_claimer_email = JsString::try_new(cx, claimer_email).or_throw(cx)?;
-            js_obj.set(cx, "claimer_email", js_claimer_email)?;
+            js_obj.set(cx, "claimerEmail", js_claimer_email)?;
             let js_status = variant_invitationstatus_rs_to_js(cx, status)?;
             js_obj.set(cx, "status", js_status)?;
         }
@@ -2453,7 +2453,7 @@ fn variant_greetinprogresserror_rs_to_js<'a>(
                 }
             })
             .or_throw(cx)?;
-            js_obj.set(cx, "server_timestamp", js_server_timestamp)?;
+            js_obj.set(cx, "serverTimestamp", js_server_timestamp)?;
             let js_client_timestamp = JsString::try_new(cx, {
                 let custom_to_rs_string =
                     |dt: libparsec::DateTime| -> Result<String, &'static str> {
@@ -2465,17 +2465,17 @@ fn variant_greetinprogresserror_rs_to_js<'a>(
                 }
             })
             .or_throw(cx)?;
-            js_obj.set(cx, "client_timestamp", js_client_timestamp)?;
+            js_obj.set(cx, "clientTimestamp", js_client_timestamp)?;
             let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
             js_obj.set(
                 cx,
-                "ballpark_client_early_offset",
+                "ballparkClientEarlyOffset",
                 js_ballpark_client_early_offset,
             )?;
             let js_ballpark_client_late_offset = JsNumber::new(cx, ballpark_client_late_offset);
             js_obj.set(
                 cx,
-                "ballpark_client_late_offset",
+                "ballparkClientLateOffset",
                 js_ballpark_client_late_offset,
             )?;
         }
