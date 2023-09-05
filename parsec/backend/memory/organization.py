@@ -11,6 +11,9 @@ from parsec._parsec import (
     ActiveUsersLimit,
     DateTime,
     OrganizationStats,
+    RealmArchivingConfiguration,
+    RealmArchivingStatus,
+    UserID,
     UsersPerProfileDetailItem,
     VerifyKey,
 )
@@ -104,6 +107,32 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         if id not in self._organizations:
             raise OrganizationNotFoundError()
         return self._organizations[id]
+
+    async def archiving_config(
+        self, id: OrganizationID, user: UserID
+    ) -> list[RealmArchivingStatus]:
+        if id not in self._organizations:
+            raise OrganizationNotFoundError()
+        assert self._realm_component is not None
+        realms = await self._realm_component.get_realms_for_user(id, user)
+        result: list[RealmArchivingStatus] = []
+        for realm_id in realms:
+            realm = self._realm_component._get_realm(id, realm_id, allow_deleted=True)
+            last_request = realm.get_last_archiving_configuration_request()
+            if last_request is None:
+                status = RealmArchivingStatus(
+                    realm_id=realm_id,
+                    configured_on=None,
+                    configuration=RealmArchivingConfiguration.available(),
+                )
+            else:
+                status = RealmArchivingStatus(
+                    realm_id=realm_id,
+                    configured_on=last_request.configured_on,
+                    configuration=last_request.configuration,
+                )
+            result.append(status)
+        return result
 
     async def bootstrap(
         self,

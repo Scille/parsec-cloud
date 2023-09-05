@@ -8,6 +8,10 @@ import attr
 
 from parsec._parsec import (
     ActiveUsersLimit,
+    ArchivingConfigRep,
+    ArchivingConfigRepNotFound,
+    ArchivingConfigRepOk,
+    ArchivingConfigReq,
     ClientType,
     DateTime,
     OrganizationBootstrapRep,
@@ -28,7 +32,9 @@ from parsec._parsec import (
     OrganizationStatsRepNotFound,
     OrganizationStatsRepOk,
     OrganizationStatsReq,
+    RealmArchivingStatus,
     SequesterVerifyKeyDer,
+    UserID,
     VerifyKey,
 )
 from parsec.api.data import (
@@ -147,6 +153,23 @@ class BaseOrganizationComponent:
             sequester_services_certificates=sequester_services_certificates,
             minimum_archiving_period=organization.minimum_archiving_period,
         )
+
+    @api("archiving_config")
+    @catch_protocol_errors
+    @api_typed_msg_adapter(ArchivingConfigReq, ArchivingConfigRep)
+    async def api_authenticated_archiving_config(
+        self, client_ctx: AuthenticatedClientContext, req: ArchivingConfigReq
+    ) -> ArchivingConfigRep:
+        organization_id = client_ctx.organization_id
+        try:
+            archiving_config = await self.archiving_config(
+                organization_id, client_ctx.device_id.user_id
+            )
+
+        except OrganizationNotFoundError:
+            return ArchivingConfigRepNotFound()
+
+        return ArchivingConfigRepOk(archiving_config)
 
     @api("organization_stats")
     @catch_protocol_errors
@@ -339,6 +362,15 @@ class BaseOrganizationComponent:
         raise NotImplementedError()
 
     async def get(self, id: OrganizationID) -> Organization:
+        """
+        Raises:
+            OrganizationNotFoundError
+        """
+        raise NotImplementedError()
+
+    async def archiving_config(
+        self, id: OrganizationID, user_id: UserID
+    ) -> list[RealmArchivingStatus]:
         """
         Raises:
             OrganizationNotFoundError

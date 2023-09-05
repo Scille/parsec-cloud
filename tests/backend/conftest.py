@@ -188,6 +188,7 @@ async def archive_realm(next_timestamp):
                 ),
             )
             await spy.wait_with_timeout(BackendEvent.REALM_ARCHIVING_UPDATED)
+        return now
 
     return _archive_realm
 
@@ -215,6 +216,7 @@ async def plan_realm_deletion(next_timestamp):
                 ),
             )
             await spy.wait_with_timeout(BackendEvent.REALM_ARCHIVING_UPDATED)
+        return now
 
     return _plan_realm_deletion
 
@@ -258,7 +260,7 @@ def archived_realm_factory(realm_factory, next_timestamp, archive_realm):
         realm = await realm_factory(backend, author, realm_id=realm_id, now=now)
         after_now = next_timestamp()
         await archive_realm(backend, author, realm, now=after_now)
-        return realm
+        return realm, after_now
 
     return _archived_realm_factory
 
@@ -270,7 +272,7 @@ def deleted_realm_factory(realm_factory, delete_realm, next_timestamp):
         realm = await realm_factory(backend, author, realm_id=realm_id, now=now)
         after_now = next_timestamp()
         await delete_realm(backend, author, realm, now=after_now)
-        return realm
+        return realm, after_now
 
     return _deleted_realm_factory
 

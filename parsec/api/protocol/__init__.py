@@ -68,6 +68,7 @@ from parsec.api.protocol.invite import (
 )
 from parsec.api.protocol.message import message_get_serializer
 from parsec.api.protocol.organization import (
+    archiving_config_serializer,
     organization_bootstrap_serializer,
     organization_bootstrap_webhook_serializer,
     organization_config_serializer,
@@ -175,6 +176,7 @@ __all__ = (
     "organization_bootstrap_webhook_serializer",
     "organization_stats_serializer",
     "organization_config_serializer",
+    "archiving_config_serializer",
     # Events
     "events_subscribe_serializer",
     "events_listen_serializer",

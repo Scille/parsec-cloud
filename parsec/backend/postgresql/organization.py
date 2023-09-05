@@ -11,7 +11,9 @@ from parsec._parsec import (
     ActiveUsersLimit,
     DateTime,
     OrganizationStats,
+    RealmArchivingStatus,
     SequesterVerifyKeyDer,
+    UserID,
     UsersPerProfileDetailItem,
     VerifyKey,
 )
@@ -28,6 +30,7 @@ from parsec.backend.organization import (
     OrganizationNotFoundError,
     SequesterAuthority,
 )
+from parsec.backend.postgresql import realm_queries
 from parsec.backend.postgresql.handler import PGHandler, send_signal
 from parsec.backend.postgresql.user_queries.create import q_create_user
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id
@@ -485,3 +488,23 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
             if with_is_expired and is_expired:
                 await send_signal(conn, BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)
+
+    async def archiving_config(
+        self, id: OrganizationID, user: UserID
+    ) -> list[RealmArchivingStatus]:
+        async with self.dbh.pool.acquire() as conn:
+            await self._get(conn, id)
+        realms = await realm_queries.query_get_realms_for_user(conn, id, user)
+        result = []
+        for realm_id in realms:
+            configuration, configured_on = await realm_queries.query_get_archiving_configuration(
+                conn, id, realm_id, for_update=False
+            )
+            result.append(
+                RealmArchivingStatus(
+                    realm_id=realm_id,
+                    configured_on=configured_on,
+                    configuration=configuration,
+                )
+            )
+        return result

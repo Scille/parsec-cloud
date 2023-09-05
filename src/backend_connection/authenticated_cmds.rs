@@ -498,6 +498,24 @@ impl AuthenticatedCmds {
         })
     }
 
+    fn archiving_config(&self) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from_raw(async move {
+            let req = authenticated_cmds::archiving_config::Req;
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                authenticated_cmds::archiving_config,
+                ArchivingConfigRep,
+                Ok,
+                NotFound,
+                UnknownStatus
+            )
+        })
+    }
+
     fn organization_stats(&self) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 

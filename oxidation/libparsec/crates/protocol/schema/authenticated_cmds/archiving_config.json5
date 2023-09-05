@@ -1,0 +1,47 @@
+[
+    {
+        "major_versions": [
+            // Introduced in API v2.10/v3.4 (Parsec 2.16+)
+            // This command is meant to be transitional between API v2 and v3
+            // In API v3, this should be replaced by the new handling of certificates
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "archiving_config"
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "archiving_config",
+                        "type": "List<RealmArchivingStatus>"
+                    }
+                ]
+            },
+            {
+                "status": "not_found"
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "RealmArchivingStatus",
+                "fields": [
+                    {
+                        "name": "realm_id",
+                        "type": "RealmID"
+                    },
+                    {
+                        "name": "configured_on",
+                        "type": "Option<DateTime>"
+                    },
+                    {
+                        "name": "configuration",
+                        "type": "RealmArchivingConfiguration"
+                    }
+                ]
+            }
+        ]
+    }
+]

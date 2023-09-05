@@ -632,7 +632,7 @@ impl SequesterServiceCertificate {
 }
 
 #[pyclass]
-#[derive(Clone)]
+#[derive(Clone, Hash)]
 pub(crate) struct RealmArchivingConfiguration(pub libparsec::types::RealmArchivingConfiguration);
 
 crate::binding_utils::gen_proto!(RealmArchivingConfiguration, __repr__);

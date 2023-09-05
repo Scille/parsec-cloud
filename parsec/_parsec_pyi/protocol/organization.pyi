@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from typing import Iterable
 
-from parsec._parsec import DateTime, UsersPerProfileDetailItem, VerifyKey
+from parsec._parsec import (
+    DateTime,
+    RealmArchivingConfiguration,
+    RealmID,
+    UsersPerProfileDetailItem,
+    VerifyKey,
+)
 
 # Organization
 class ActiveUsersLimit:
@@ -96,11 +102,47 @@ class OrganizationConfigRepOk(OrganizationConfigRep):
     @property
     def sequester_services_certificates(self) -> tuple[bytes, ...] | None: ...
     @property
-    def minimum_archiving_period(self) -> int: ...
+    def minimum_archiving_period(self) -> int | None: ...
 
 class OrganizationConfigRepNotFound(OrganizationConfigRep): ...
 
 class OrganizationConfigRepUnknownStatus(OrganizationConfigRep):
+    def __init__(self, status: str, reason: str | None) -> None: ...
+    @property
+    def status(self) -> str: ...
+    @property
+    def reason(self) -> str | None: ...
+
+class RealmArchivingStatus:
+    def __init__(
+        self,
+        realm_id: RealmID,
+        configured_on: DateTime | None,
+        configuration: RealmArchivingConfiguration,
+    ) -> None: ...
+    @property
+    def realm_id(self) -> RealmID: ...
+    @property
+    def configured_on(self) -> DateTime | None: ...
+    @property
+    def configuration(self) -> RealmArchivingConfiguration: ...
+
+class ArchivingConfigReq:
+    def dump(self) -> bytes: ...
+
+class ArchivingConfigRep:
+    def dump(self) -> bytes: ...
+    @classmethod
+    def load(cls, buf: bytes) -> ArchivingConfigRep: ...
+
+class ArchivingConfigRepOk(ArchivingConfigRep):
+    def __init__(self, archiving_config: list[RealmArchivingStatus]) -> None: ...
+    @property
+    def archiving_config(self) -> list[RealmArchivingStatus]: ...
+
+class ArchivingConfigRepNotFound(ArchivingConfigRep): ...
+
+class ArchivingConfigRepUnknownStatus(ArchivingConfigRep):
     def __init__(self, status: str, reason: str | None) -> None: ...
     @property
     def status(self) -> str: ...

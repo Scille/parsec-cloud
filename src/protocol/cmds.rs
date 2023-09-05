@@ -62,6 +62,7 @@ impl AuthenticatedAnyCmdReq {
             AnyCmdReq::MessageGet(x) => MessageGetReq(x).into_py(py),
             AnyCmdReq::OrganizationStats(x) => OrganizationStatsReq(x).into_py(py),
             AnyCmdReq::OrganizationConfig(x) => OrganizationConfigReq(x).into_py(py),
+            AnyCmdReq::ArchivingConfig(x) => ArchivingConfigReq(x).into_py(py),
             AnyCmdReq::Ping(x) => AuthenticatedPingReq(x).into_py(py),
             AnyCmdReq::RealmCreate(x) => RealmCreateReq(x).into_py(py),
             AnyCmdReq::RealmStatus(x) => RealmStatusReq(x).into_py(py),

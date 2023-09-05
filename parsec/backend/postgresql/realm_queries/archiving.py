@@ -88,7 +88,8 @@ INSERT INTO realm_archiving(
 )
 
 
-async def get_archiving_configuration(
+@query()
+async def query_get_archiving_configuration(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     realm_id: RealmID,
@@ -118,7 +119,7 @@ async def check_archiving_configuration(
 ) -> tuple[RealmArchivingConfiguration, DateTime | None]:
     if now is None:
         now = DateTime.now()
-    configuration, archiving_certified_on = await get_archiving_configuration(
+    configuration, archiving_certified_on = await query_get_archiving_configuration(
         conn, organization_id, realm_id, for_update=False
     )
 

@@ -8,6 +8,7 @@ from typing import Callable
 import trio
 
 from parsec._parsec import (
+    ArchivingConfigRepOk,
     AuthenticatedPingRepOk,
     BlockCreateRepOk,
     BlockReadRepOk,
@@ -60,6 +61,7 @@ from parsec._parsec import (
     VlobUpdateRepOk,
 )
 from parsec.api.protocol import (
+    archiving_config_serializer,
     authenticated_ping_serializer,
     block_create_serializer,
     block_read_serializer,
@@ -252,6 +254,7 @@ class CmdSock:
                     MessageGetRepOk,
                     OrganizationBootstrapRepOk,
                     OrganizationConfigRepOk,
+                    ArchivingConfigRepOk,
                     OrganizationStatsRepOk,
                     PkiEnrollmentAcceptRepOk,
                     PkiEnrollmentInfoRepOk,
@@ -350,6 +353,9 @@ organization_config = CmdSock(
     "organization_config", organization_config_serializer, check_rep_by_default=True
 )
 
+archiving_config = CmdSock(
+    "archiving_config", archiving_config_serializer, check_rep_by_default=True
+)
 
 organization_stats = CmdSock(
     "organization_stats", organization_stats_serializer, check_rep_by_default=True

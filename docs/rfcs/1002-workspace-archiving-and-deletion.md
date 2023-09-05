@@ -166,61 +166,6 @@ When this command returns successfully, a `REALM_ARCHIVING_UPDATED` event should
 
 Also, an authenticated command is added to get the all the current archiving status at once.
 
-The archiving status is defined using the following variants:
-
-```json5
-        "nested_types": [
-            {
-                "name": "RealmArchivingStatus",
-                "discriminant_field": "type",
-                "variants": [
-                    {
-                        "name": "Available",
-                        "discriminant_value": "AVAILABLE"
-                    },
-                    {
-                        "name": "Archived",
-                        "discriminant_value": "ARCHIVED",
-                        "fields": [
-                            {
-                                "name": "archiving_date",
-                                "type": "Datetime"
-                            }
-                        ]
-                    },
-                    {
-                        "name": "DeletionPlanned",
-                        "discriminant_value": "DELETION_PLANNED",
-                        "fields": [
-                            {
-                                "name": "archiving_date",
-                                "type": "Datetime"
-                            },
-                            {
-                                "name": "deletion_date",
-                                "type": "Datetime"
-                            }
-                        ]
-                    },
-                    {
-                        "name": "Deleted",
-                        "discriminant_value": "DELETED",
-                        "fields": [
-                            {
-                                "name": "archiving_date",
-                                "type": "Datetime"
-                            },
-                            {
-                                "name": "deletion_date",
-                                "type": "Datetime"
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-```
-
 The command will be used in API v2 when a new connection is created in order to reach the correct state as soon as the connection becomes available.
 
 It's also used in API v2 to fetch to new archiving status when an `ARCHIVING_STATUS_UPDATED` event is received.
@@ -235,16 +180,16 @@ It is defined as such:
             3
         ],
         "req": {
-            "cmd": "realm_archiving_config"
+            "cmd": "archiving_config"
         },
         "reps": [
             {
                 "status": "ok",
                 "fields": [
                     {
-                        "name": "realm_archiving_configs",
-                        "type": "List<RealmArchivingConfig>"
-                    },
+                        "name": "archiving_config",
+                        "type": "List<RealmArchivingStatus>"
+                    }
                 ]
             },
             {
@@ -253,15 +198,19 @@ It is defined as such:
         ],
         "nested_types": [
             {
-                "name": "RealmArchivingConfig",
+                "name": "RealmArchivingStatus",
                 "fields": [
                     {
                         "name": "realm_id",
                         "type": "RealmID"
                     },
                     {
-                        "name": "archiving_status",
-                        "type": "RealmArchivingStatus"
+                        "name": "configured_on",
+                        "type": "Option<DateTime>"
+                    },
+                    {
+                        "name": "configuration",
+                        "type": "RealmArchivingConfiguration"
                     }
                 ]
             }

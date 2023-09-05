@@ -356,6 +356,12 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<OrganizationConfigRepOk>()?;
     m.add_class::<OrganizationConfigRepNotFound>()?;
     m.add_class::<OrganizationConfigRepUnknownStatus>()?;
+    m.add_class::<ArchivingConfigReq>()?;
+    m.add_class::<ArchivingConfigRep>()?;
+    m.add_class::<ArchivingConfigRepOk>()?;
+    m.add_class::<ArchivingConfigRepNotFound>()?;
+    m.add_class::<ArchivingConfigRepUnknownStatus>()?;
+    m.add_class::<RealmArchivingStatus>()?;
     m.add_class::<ActiveUsersLimit>()?;
 
     // Realm

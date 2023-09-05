@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 from parsec._parsec import (
+    ArchivingConfigRep,
+    ArchivingConfigReq,
     OrganizationBootstrapRep,
     OrganizationBootstrapReq,
     OrganizationConfigRep,
@@ -32,3 +34,5 @@ organization_bootstrap_webhook_serializer = JSONSerializer(OrganizationBootstrap
 organization_stats_serializer = ApiCommandSerializer(OrganizationStatsReq, OrganizationStatsRep)
 
 organization_config_serializer = ApiCommandSerializer(OrganizationConfigReq, OrganizationConfigRep)
+
+archiving_config_serializer = ApiCommandSerializer(ArchivingConfigReq, ArchivingConfigRep)
