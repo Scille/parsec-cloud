@@ -16,7 +16,12 @@ describe('Workspace List Item', () => {
   const WORKSPACE: MockWorkspace = {
     id: 'id1',
     name: 'My Workspace',
-    sharedWith: ['AUser', 'BUser', 'CUser', 'DUser'],
+    sharingInfo: new Map<string, WorkspaceRole | null>([
+      ['AUser', WorkspaceRole.Contributor],
+      ['BUser', WorkspaceRole.Reader],
+      ['CUser', WorkspaceRole.Owner],
+      ['DUSer', WorkspaceRole.Manager],
+    ]),
     size: 60_817_408,
     role: WorkspaceRole.Reader,
     availableOffline: true,

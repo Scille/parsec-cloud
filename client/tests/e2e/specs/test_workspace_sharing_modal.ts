@@ -13,38 +13,39 @@ describe('Check workspace sharing modal', () => {
   });
 
   it('Checks initial status', () => {
-    cy.get('ion-list').find('.content').should('have.length', 11);
+    cy.get('ion-list').find('.content').should('have.length', 12);
+    cy.get('ion-list').find('.person-name').first().contains('Me');
+    cy.get('ion-list').find('.filter-button').first().should('have.class', 'button-disabled');
     // cspell:disable-next-line
-    cy.get('ion-list').find('.person-name').first().contains('Cernd');
-    cy.get('ion-list').find('.content').first().find('.filter-button').contains('Not shared');
+    cy.get('ion-list').find('.person-name').eq(1).contains('Korgan Bloodaxe');
+    cy.get('ion-list').find('.content').eq(1).find('.filter-button').contains('Contributor');
     // cspell:disable-next-line
     cy.get('ion-list').find('.person-name').last().contains('Yoshimo');
     cy.get('ion-list').find('.content').last().find('.filter-button').contains('Not shared');
     cy.get('ion-list').find('.content').eq(2).find('.filter-button').contains('Owner');
 
-    cy.get('ion-list').find('.content').first().find('.filter-button').click();
+    cy.get('ion-list').find('.content').eq(1).find('.filter-button').click();
     cy.get('.popover-viewport').find('ion-item').eq(0).contains('Reader');
     cy.get('.popover-viewport').find('ion-item').eq(1).contains('Contributor');
     cy.get('.popover-viewport').find('ion-item').eq(2).contains('Manager');
     cy.get('.popover-viewport').find('ion-item').eq(3).contains('Owner');
     cy.get('.popover-viewport').find('ion-item').eq(4).contains('Not shared');
-    cy.get('.popover-viewport').find('ion-item').eq(4).find('ion-icon').should('have.class', 'checked');
-    cy.get('.popover-viewport').find('ion-item').eq(4).find('ion-icon').should('have.class', 'selected');
-
+    cy.get('.popover-viewport').find('ion-item').eq(1).find('ion-icon').should('have.class', 'checked');
+    cy.get('.popover-viewport').find('ion-item').eq(1).find('ion-icon').should('have.class', 'selected');
   });
 
   it('Change user role', () => {
-    cy.get('ion-list').find('.content').first().find('.filter-button').contains('Not shared');
-    cy.get('ion-list').find('.content').first().find('.filter-button').click();
+    cy.get('ion-list').find('.content').eq(4).find('.filter-button').contains('Not shared');
+    cy.get('ion-list').find('.content').eq(4).find('.filter-button').click();
     cy.get('.popover-viewport').find('ion-item').eq(0).contains('Reader');
     cy.get('.popover-viewport').find('ion-item').eq(0).click();
-    cy.get('ion-list').find('.content').first().find('.filter-button').contains('Reader');
+    cy.get('ion-list').find('.content').eq(4).find('.filter-button').contains('Reader');
     // cspell:disable-next-line
     cy.get('@consoleLog').should('have.been.calledWith', 'Update user Cernd role to reader');
   });
 
   it('Filter users', () => {
-    cy.get('ion-modal').find('ion-list').find('.content').should('have.length', 11);
+    cy.get('ion-modal').find('ion-list').find('.content').should('have.length', 12);
     cy.get('ion-modal').find('ion-input').as('searchInput');
     cy.get('@searchInput').find('input').type('a');
     cy.get('ion-modal').find('ion-list').find('.content').should('have.length', 7);

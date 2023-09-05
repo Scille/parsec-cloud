@@ -22,6 +22,7 @@
           <workspace-user-role
             v-for="entry in userRoles.entries()"
             :key="entry[0]"
+            :disabled="entry[0] === 'Me'"
             :user="entry[0]"
             :role="entry[1]"
             @role-update="updateUserRole"
@@ -38,8 +39,8 @@ import {
   IonList,
   modalController,
 } from '@ionic/vue';
-import { ref, watch, onUnmounted } from 'vue';
-import { getWorkspaceUsers, WorkspaceRole } from '@/common/mocks';
+import { ref, watch, onUnmounted, onMounted } from 'vue';
+import { getWorkspaceSharingInfo, WorkspaceRole, WorkspaceID } from '@/common/mocks';
 import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
@@ -49,19 +50,15 @@ import MsInput from '@/components/core/ms-input/MsInput.vue';
 const search = ref('');
 
 const props = defineProps<{
-  workspaceId: string
+  workspaceId: WorkspaceID
 }>();
 
 const userRoles = ref(new Map<string, WorkspaceRole | null>());
 
-getWorkspaceUsers(props.workspaceId).then((result) => {
-  userRoles.value = result;
-});
-
 // Would prefere to use a computed instead of a watch but
 // Vue doesn't handle async in computed.
 const unwatchSearch = watch(search, async() => {
-  const allRoles = await getWorkspaceUsers(props.workspaceId);
+  const allRoles = await getWorkspaceSharingInfo(props.workspaceId);
   const roles = new Map<string, WorkspaceRole | null>();
   const lowerCaseSearch = search.value.toLocaleLowerCase();
 
@@ -71,6 +68,10 @@ const unwatchSearch = watch(search, async() => {
     }
   }
   userRoles.value = roles;
+});
+
+onMounted(async () => {
+  userRoles.value = await getWorkspaceSharingInfo(props.workspaceId);
 });
 
 onUnmounted(() => {

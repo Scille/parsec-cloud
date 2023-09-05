@@ -6,6 +6,7 @@
     @click="openPopover($event)"
     id="select-popover-button"
     class="filter-button button-medium"
+    :disabled="disabled"
   >
     <ion-icon
       slot="end"
@@ -31,6 +32,7 @@ const props = defineProps<{
   label?: string
   options: MsSelectOption[]
   sortByLabels?: MsSelectSortByLabels
+  disabled?: boolean
 }>();
 
 const emits = defineEmits<{

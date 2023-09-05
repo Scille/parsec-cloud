@@ -97,14 +97,138 @@ export enum WorkspaceRole {
   Reader = 'reader',
 }
 
+export type WorkspaceName = string;
+export type WorkspaceID = string;
+
+export function getSharedWith(workspace: MockWorkspace): string[] {
+  const people = [];
+  for (const [key, value] of workspace.sharingInfo) {
+    if (value) {
+      people.push(key);
+    }
+  }
+  return people;
+}
+
 export interface MockWorkspace {
-  id: string;
-  name: string;
-  sharedWith: string[];
+  id: WorkspaceID;
+  name: WorkspaceName;
+  sharingInfo: Map<string, WorkspaceRole | null>,
   size: number;
   role: WorkspaceRole;
   availableOffline: boolean;
   lastUpdate: DateTime;
+}
+
+const MOCK_WORKSPACES: MockWorkspace[] = [
+  {
+    id: '1',
+    name: 'Trademeet',
+    sharingInfo: new Map(),
+    size: 60_817_408,
+    role: WorkspaceRole.Contributor,
+    availableOffline: false,
+    lastUpdate: DateTime.fromISO('2023-05-10T08:00:00'),
+  },
+  {
+    id: '2',
+    name: 'The Copper Coronet',
+    sharingInfo: new Map(),
+    size: 8_589_934_592,
+    role: WorkspaceRole.Contributor,
+    availableOffline: true,
+    lastUpdate: DateTime.fromISO('2023-05-08T12:00:00'),
+  },
+  {
+    id: '3',
+    name: 'The Asylum',
+    sharingInfo: new Map(),
+    size: 628_097_024,
+    role: WorkspaceRole.Owner,
+    availableOffline: true,
+    lastUpdate: DateTime.fromISO('2023-04-07T12:00:00'),
+  },
+  {
+    id: '4',
+    name: 'Druid Grove',
+    sharingInfo: new Map(),
+    size: 33_382,
+    role: WorkspaceRole.Owner,
+    availableOffline: false,
+    lastUpdate: DateTime.fromISO('2023-05-07T02:00:00'),
+  },
+  {
+    id: '5',
+    name: 'Menzoberranzan',
+    sharingInfo: new Map(),
+    size: 4_214_402_531,
+    role: WorkspaceRole.Reader,
+    availableOffline: true,
+    lastUpdate: DateTime.fromISO('2023-05-09T08:00:00'),
+  },
+];
+
+const WORKSPACE_SHARING_INFO: Array<[WorkspaceID, Map<string, WorkspaceRole | null>]> = [
+  [
+    '1',
+    new Map<string, WorkspaceRole | null>([
+      ['Me', WorkspaceRole.Contributor],
+      ['Cernd', WorkspaceRole.Reader],
+      ['Valygar Corthala', WorkspaceRole.Owner],
+    ]),
+  ], [
+    '2',
+    new Map<string, WorkspaceRole | null>([
+      ['Me', WorkspaceRole.Contributor],
+      ['Korgan Bloodaxe', WorkspaceRole.Contributor],
+      ['Anomen Delryn', WorkspaceRole.Contributor],
+      ['Nalia De\'Arnise', WorkspaceRole.Owner],
+      ['Viconia', WorkspaceRole.Owner],
+      ['Yoshimo', WorkspaceRole.Reader],
+    ]),
+  ], [
+    '3',
+    new Map<string, WorkspaceRole | null>([
+      ['Me', WorkspaceRole.Owner],
+      ['Imoen', WorkspaceRole.Owner],
+    ]),
+  ], [
+    '4',
+    new Map<string, WorkspaceRole | null>([
+      ['Me', WorkspaceRole.Owner],
+    ]),
+  ], [
+    '5',
+    new Map<string, WorkspaceRole | null>([
+      ['Me', WorkspaceRole.Reader],
+      ['Korgan Bloodaxe', WorkspaceRole.Contributor],
+      ['Drizzt Do\'Urden', WorkspaceRole.Owner],
+      ['Viconia', WorkspaceRole.Owner],
+    ]),
+  ],
+];
+
+export async function getWorkspaceInfo(workspaceId: WorkspaceID): Promise<MockWorkspace | null> {
+  const workspace = MOCK_WORKSPACES.find((item) => item.id === workspaceId);
+
+  if (!workspace) {
+    return null;
+  }
+  workspace.sharingInfo = await getWorkspaceSharingInfo(workspaceId);
+  return workspace;
+}
+
+export async function getWorkspaceSharingInfo(workspaceId: WorkspaceID): Promise<Map<string, WorkspaceRole | null>> {
+  const elem: [WorkspaceID, Map<string, WorkspaceRole | null>] | undefined = WORKSPACE_SHARING_INFO.find((item) => item[0] === workspaceId);
+  const sharingInfo = elem ? elem[1] : new Map<string, WorkspaceRole | null>();
+
+  for (const user of await getUsers()) {
+    if (!sharingInfo.get(user)) {
+      sharingInfo.set(user, null);
+    }
+  }
+
+  return sharingInfo;
 }
 
 export enum Profile {
@@ -170,58 +294,6 @@ export async function getMockUsers(): Promise<MockUser[]> {
   return MOCK_USERS;
 }
 
-const MOCK_WORKSPACES: MockWorkspace[] = [
-  {
-    id: 'id1',
-    name: 'Trademeet',
-    sharedWith: ['Me', 'Cernd', 'Valygar Corthala'],
-    size: 60_817_408,
-    role: WorkspaceRole.Reader,
-    availableOffline: false,
-    lastUpdate: DateTime.fromISO('2023-05-10T08:00:00'),
-  },
-  {
-    id: 'id2',
-    name: 'The Copper Coronet',
-    sharedWith: ['Me', 'Korgan Bloodaxe', 'Anomen Delryn', 'Nalia De\'Arnise', 'Viconia', 'Yoshimo'],
-    size: 8_589_934_592,
-    role: WorkspaceRole.Owner,
-    availableOffline: true,
-    lastUpdate: DateTime.fromISO('2023-05-08T12:00:00'),
-  },
-  {
-    id: 'id3',
-    name: 'The Asylum',
-    sharedWith: ['Me', 'Imoen'],
-    size: 628_097_024,
-    role: WorkspaceRole.Contributor,
-    availableOffline: true,
-    lastUpdate: DateTime.fromISO('2023-04-07T12:00:00'),
-  },
-  {
-    id: 'id4',
-    name: 'Druid Grove',
-    sharedWith: ['Me'],
-    size: 33_382,
-    role: WorkspaceRole.Owner,
-    availableOffline: false,
-    lastUpdate: DateTime.fromISO('2023-05-07T02:00:00'),
-  },
-  {
-    id: 'id5',
-    name: 'Menzoberranzan',
-    sharedWith: ['Me', 'Drizzt Do\'Urden', 'Viconia', 'Korgan Bloodaxe'],
-    size: 4_214_402_531,
-    role: WorkspaceRole.Manager,
-    availableOffline: true,
-    lastUpdate: DateTime.fromISO('2023-05-09T08:00:00'),
-  },
-];
-
-export async function getMockWorkspaces(): Promise<MockWorkspace[]> {
-  return MOCK_WORKSPACES;
-}
-
 export async function getUsers(): Promise<string[]> {
   return [
     'Cernd',
@@ -236,25 +308,6 @@ export async function getUsers(): Promise<string[]> {
     'Jaheira',
     'Yoshimo',
   ];
-}
-
-export async function getWorkspaceUsers(workspaceId: string): Promise<Map<string, WorkspaceRole | null>> {
-  const users = new Map<string, WorkspaceRole | null>();
-
-  const workspace: MockWorkspace | undefined = MOCK_WORKSPACES.find((w) => w.id === workspaceId);
-  const ROLES = [WorkspaceRole.Contributor, WorkspaceRole.Manager, WorkspaceRole.Owner, WorkspaceRole.Reader];
-  let index = 0;
-
-  for (const user of await getUsers()) {
-    if (workspace && workspace.sharedWith.includes(user)) {
-      users.set(user, ROLES[index % ROLES.length]);
-    } else {
-      users.set(user, null);
-    }
-    index += 1;
-  }
-
-  return users;
 }
 
 const MOCK_DEVICES: AvailableDevice[] = [
