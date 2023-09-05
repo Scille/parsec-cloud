@@ -228,11 +228,11 @@ std::sync::Arc::new(
     {%- endfor -%}
     ) = {{ rs_value }};
     let js_array = JsArray::new({{ mut_cx_ref }}, {{ type.values | length }});
-    {%- for value in type.values -%}
-        {% set value_var_name = "x" ~ loop.index %}
-        let js_value = {{ render_rs_to_js(value_var_name, value, mut_cx_ref) | indent(8) }};
-        js_array.set({{ mut_cx_ref }}, {{ loop.index }}, js_value)?;
-    {%- endfor -%}
+{% for value in type.values -%}
+    {% set value_var_name = "x" ~ loop.index %}
+    let js_value = {{ render_rs_to_js(value_var_name, value, mut_cx_ref) | indent(4) }};
+    js_array.set({{ mut_cx_ref }}, {{ loop.index }}, js_value)?;
+{% endfor %}
     js_array
 }
 {%- elif type.kind == "optional" -%}
