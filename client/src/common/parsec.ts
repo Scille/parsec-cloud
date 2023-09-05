@@ -2,7 +2,7 @@
 
 import {
   // Types
-  EntryID,
+  RealmID,
   AvailableDevice,
   Result,
   Handle,
@@ -19,6 +19,8 @@ import {
   ClientStartError,
   ListInvitationsError,
   DeleteInvitationError,
+  ClientListWorkspacesError,
+  ClientWorkspaceCreateError,
 } from '@/plugins/libparsec/definitions';
 import { libparsec } from '@/plugins/libparsec';
 import { getParsecHandle } from '@/router/conditions';
@@ -26,7 +28,7 @@ import { DateTime } from 'luxon';
 
 const DEFAULT_HANDLE = 42;
 
-export type WorkspaceID = EntryID;
+export type WorkspaceID = RealmID;
 export type WorkspaceName = EntryName;
 
 export interface UserInvitation extends InviteListItemUser {
@@ -70,6 +72,37 @@ export async function inviteUser(email: string): Promise<Result<[InvitationToken
   } else {
     return new Promise<Result<[InvitationToken, InvitationEmailSentStatus], NewUserInvitationError>>((resolve, _reject) => {
       resolve({ok: true, value: ['1234', {tag: 'Success'}]});
+    });
+  }
+}
+
+export async function listWorkspaces(): Promise<Result<Array<[WorkspaceID, WorkspaceName]>, ClientListWorkspacesError>> {
+  const handle = getParsecHandle();
+
+  if (handle !== null && window.isDesktop()) {
+    return await libparsec.clientListWorkspaces(handle);
+  } else {
+    return new Promise<Result<Array<[WorkspaceID, WorkspaceName]>, ClientListWorkspacesError>>((resolve, _reject) => {
+      resolve({ok: true, value: [
+        ['1', 'Trademeet'],
+        ['2', 'The Copper Coronet'],
+        ['3', 'The Asylum'],
+        ['4', 'Druid Grove'],
+        // cspell:disable-next-line
+        ['5', 'Menzoberranzan'],
+      ]});
+    });
+  }
+}
+
+export async function createWorkspace(name: WorkspaceName): Promise<Result<WorkspaceID, ClientWorkspaceCreateError>> {
+  const handle = getParsecHandle();
+
+  if (handle !== null && window.isDesktop()) {
+    return await libparsec.clientWorkspaceCreate(handle, name);
+  } else {
+    return new Promise<Result<WorkspaceID, ClientWorkspaceCreateError>>((resolve, _reject) => {
+      resolve({ok: true, value: '1337'});
     });
   }
 }

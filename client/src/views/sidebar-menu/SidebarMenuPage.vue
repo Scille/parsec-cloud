@@ -119,16 +119,16 @@
                 lines="none"
                 button
                 v-for="workspace in workspaces"
-                :key="workspace.id"
-                @click="navigateToWorkspace(workspace.id)"
-                :class="isSpecificWorkspaceRoute(workspace.id) ? 'item-selected' : 'item-not-selected'"
+                :key="workspace[0]"
+                @click="navigateToWorkspace(workspace[0])"
+                :class="isSpecificWorkspaceRoute(workspace[0]) ? 'item-selected' : 'item-not-selected'"
                 class="sidebar-item"
               >
                 <ion-icon
                   :icon="business"
                   slot="start"
                 />
-                <ion-label>{{ workspace.name }}</ion-label>
+                <ion-label>{{ workspace[1] }}</ion-label>
               </ion-item>
             </ion-list>
             <!-- list of workspaces -->
@@ -256,21 +256,19 @@ import {
   pieChart,
   informationCircle,
 } from 'ionicons/icons';
-import { WatchStopHandle, onMounted, onUnmounted, ref, watch } from 'vue';
+import { WatchStopHandle, onMounted, onUnmounted, ref, watch, Ref } from 'vue';
 import { createGesture } from '@ionic/vue';
 import { useRoute } from 'vue-router';
 import useSidebarMenu from '@/services/sidebarMenu';
-import { getMockDevices, getMockWorkspaces, MockWorkspace } from '@/common/mocks';
+import { getMockDevices } from '@/common/mocks';
 import { isOrganizationManagementRoute, isSpecificWorkspaceRoute, isUserRoute } from '@/router/conditions';
 import { isAdmin, isOutsider } from '@/common/permissions';
 import { routerNavigateTo } from '@/router';
+import * as Parsec from '@/common/parsec';
 
 let device: any = {};
-let workspaces: MockWorkspace[] = [];
+const workspaces: Ref<Array<[Parsec.WorkspaceID, Parsec.WorkspaceName]>> = ref([]);
 
-getMockWorkspaces().then((ws) => {
-  workspaces = ws;
-});
 const currentRoute = useRoute();
 const splitPane = ref();
 const divider = ref();
@@ -292,7 +290,6 @@ function navigateToWorkspace(workspaceId: string): void {
 function navigateToWorkspaceList(): void {
   routerNavigateTo('workspaces');
   menuController.close();
-
 }
 
 onMounted(async () => {
@@ -306,6 +303,12 @@ onMounted(async () => {
       onMove,
     });
     gesture.enable();
+  }
+  const result = await Parsec.listWorkspaces();
+  if (result.ok) {
+    workspaces.value = result.value;
+  } else {
+    console.log('Failed to list workspaces', result.error);
   }
 });
 

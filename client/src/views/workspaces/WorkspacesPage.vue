@@ -120,7 +120,7 @@ import {
 } from 'ionicons/icons';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
-import { MockWorkspace, getMockWorkspaces } from '@/common/mocks';
+import { MockWorkspace, getWorkspaceInfo } from '@/common/mocks';
 import WorkspaceContextMenu from '@/views/workspaces/WorkspaceContextMenu.vue';
 import { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
@@ -134,19 +134,35 @@ import { useI18n } from 'vue-i18n';
 import { ref, Ref, onMounted, computed } from 'vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import { routerNavigateTo } from '@/router';
+import * as Parsec from '@/common/parsec';
 
 const { t } = useI18n();
 const sortBy = ref('name');
-const workspaceList: Ref<MockWorkspace[]> = ref([]);
+const workspaceList: Ref<Array<[Parsec.WorkspaceID, Parsec.WorkspaceName]>> = ref([]);
+const workspacesInfo: Ref<MockWorkspace[]> = ref([]);
 const displayView = ref(DisplayState.Grid);
 
 onMounted(async (): Promise<void> => {
-  workspaceList.value = await getMockWorkspaces();
+  await refreshWorkspacesList();
 });
 
+async function refreshWorkspacesList(): Promise<void> {
+  const result = await Parsec.listWorkspaces();
+  if (result.ok) {
+    workspaceList.value = result.value;
+    for (const workspace of workspaceList.value) {
+      const info = await getWorkspaceInfo(workspace[0]);
+      if (info) {
+        workspacesInfo.value.push(info);
+      }
+    }
+  } else {
+    console.log('Could not list workspaces', result.error);
+  }
+}
+
 const filteredWorkspaces = computed(() => {
-  // Copy to avoid updating the workspaceList itself
-  return Array.from(workspaceList.value).sort((a: MockWorkspace, b: MockWorkspace) => {
+  return Array.from(workspacesInfo.value).sort((a: MockWorkspace, b: MockWorkspace) => {
     if (sortBy.value === 'name') {
       return a.name.localeCompare(b.name);
     } else if (sortBy.value === 'size') {
@@ -178,7 +194,12 @@ async function openCreateWorkspaceModal(): Promise<void> {
   const { data, role } = await modal.onWillDismiss();
 
   if (role === 'confirm') {
-    console.log(data);
+    const result = await Parsec.createWorkspace(data);
+    if (result.ok) {
+      await refreshWorkspacesList();
+    } else {
+      console.log('Could not create a new workspace', result.error);
+    }
   }
 }
 

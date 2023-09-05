@@ -43,7 +43,7 @@
         </ion-text>
         <avatar-group
           class="shared-group"
-          :people="workspace.sharedWith"
+          :people="getSharedWith(workspace)"
           :max-display="2"
           @click.stop="$emit('shareClick', $event, workspace)"
         />
@@ -62,7 +62,7 @@ import {
 import { IonAvatar, IonIcon, IonText, IonTitle } from '@ionic/vue';
 import { inject } from 'vue';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
-import { MockWorkspace } from '@/common/mocks';
+import { MockWorkspace, getSharedWith } from '@/common/mocks';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 
 defineProps<{

@@ -13,6 +13,7 @@
     <ms-select
       class="select"
       :options="options"
+      :disabled="disabled"
       :default-option="$props.role || NOT_SHARED_KEY"
       @change="$emit('roleUpdate', $props.user, getRoleFromString($event.option.key))"
     />
@@ -33,6 +34,7 @@ const { t } = useI18n();
 defineProps<{
   user: string
   role: WorkspaceRole | null
+  disabled?: boolean
 }>();
 
 defineEmits<{
