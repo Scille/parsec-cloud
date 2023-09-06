@@ -27,7 +27,11 @@
       </ms-action-bar>
       <!-- workspaces -->
       <div class="workspaces-container">
-        <div v-if="displayView === DisplayState.List">
+        <div v-if="filteredWorkspaces.length === 0">
+          {{ $t('WorkspacesPage.noWorkspaces') }}
+        </div>
+
+        <div v-if="filteredWorkspaces.length > 0 && displayView === DisplayState.List">
           <ion-list>
             <ion-list-header
               class="workspace-list-header"
@@ -61,7 +65,7 @@
           </ion-list>
         </div>
         <div
-          v-else
+          v-if="filteredWorkspaces.length > 0 && displayView === DisplayState.Grid"
           class="workspaces-container-grid"
         >
           <ion-item
