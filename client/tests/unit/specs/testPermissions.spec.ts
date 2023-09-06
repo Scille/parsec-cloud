@@ -4,9 +4,30 @@ import { vi } from 'vitest';
 
 function mockRouter(): void {
   vi.mock('vue-router', () => {
-    return { useRoute: (): any => {
-      return {params: {deviceId: 'a@b'}};
-    } };
+    return {
+      useRoute: (): any => {
+        return {params: {handle: 42}};
+      },
+    };
+  });
+
+  vi.mock('@ionic/vue-router', () => {
+    return {
+      createWebHistory: (_base? :string | undefined): any => {
+        return new Object();
+      },
+      createRouter: (_obj: any): any => {
+        return {
+          currentRoute: {
+            value: {
+              params: {
+                handle: 42,
+              },
+            },
+          },
+        };
+      },
+    };
   });
 }
 

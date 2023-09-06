@@ -61,9 +61,9 @@
     },
     "CreateOrganization": {
         "fullname": "Full name",
-        "fullnamePlaceholder": "Jean MARTIN",
+        "fullnamePlaceholder": "John SMITH",
         "email": "Email",
-        "emailPlaceholder": "jean.martin{'@'}example.com",
+        "emailPlaceholder": "john.smith{'@'}example.com",
         "organizationName": "Organization name",
         "organizationNamePlaceholder": "MyOrganization",
         "serverDescription": "Organization server",
@@ -455,6 +455,13 @@
             "date": "Invitation date",
             "status": "Status",
             "noInvitations": "No pending invitations"
+        },
+        "CreateUserInvitationModal": {
+            "pageTitle": "Invite a new user",
+            "label": "User's email",
+            "placeholder": "john.smith{'@'}example.com",
+            "cancel": "Cancel",
+            "create": "Invite"
         }
     },
     "AboutPage": {

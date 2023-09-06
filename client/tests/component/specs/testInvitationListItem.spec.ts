@@ -1,19 +1,21 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import InvitationListItem from '@/components/users/InvitationListItem.vue';
-import { MockInvitation } from '@/common/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
 import { mockI18n, getDefaultProvideConfig } from 'tests/component/support/mocks';
+import { InviteListItemUser } from '@/plugins/libparsec/definitions';
 
 mockI18n();
 
 describe('User Invitation List Item', () => {
   it('Display invitation', () => {
-    const INVITATION: MockInvitation = {
-      token: 'abcdef',
-      email: 'dung.eater@lands-between',
-      date: DateTime.fromISO('2022-02-25T00:00:00'),
+    const INVITATION: InviteListItemUser = {
+      tag: 'User',
+      token: '1234',
+      createdOn: DateTime.now().toFormat('yyyy/mm/dd'),
+      claimerEmail: 'dung.eater@lands-between',
+      status: {tag: 'Ready'},
     };
 
     const wrapper = mount(InvitationListItem, {

@@ -153,6 +153,7 @@ import {
   IonCheckbox,
   IonText,
   popoverController,
+  modalController,
 } from '@ionic/vue';
 import {
   personRemove,
@@ -170,6 +171,9 @@ import { UserAction } from '@/views/users/UserContextMenu.vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import { MockUser, getMockUsers } from '@/common/mocks';
 import { onMounted } from '@vue/runtime-core';
+import CreateUserInvitationModal from '@/views/users/CreateUserInvitationModal.vue';
+import * as Parsec from '@/common/parsec';
+import router, { routerNavigateTo } from '@/router';
 
 const displayView = ref(DisplayState.List);
 const userList: Ref<MockUser[]> = ref([]);
@@ -216,8 +220,26 @@ function getSelectedUsers(): MockUser[] {
   return selectedUsers;
 }
 
-function inviteUser(): void {
-  console.log('Invite user clicked');
+async function inviteUser(): Promise<void> {
+  const modal = await modalController.create({
+    component: CreateUserInvitationModal,
+    cssClass: 'create-user-invitation-modal',
+  });
+  modal.present();
+
+  const { data, role } = await modal.onWillDismiss();
+
+  if (role === 'confirm') {
+    const result = await Parsec.inviteUser(data);
+
+    if (result.ok) {
+      console.log('Invite successful', result.value);
+      // Redirect to invitations page
+      routerNavigateTo('invitations');
+    } else {
+      console.log(`Failed to invite ${data}`, result.error);
+    }
+  }
 }
 
 function viewCommonWorkspace(): void {

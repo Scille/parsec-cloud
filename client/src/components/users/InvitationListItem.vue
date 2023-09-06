@@ -11,7 +11,7 @@
       <ion-label
         class="cell invitation-label"
       >
-        {{ invitation.email }}
+        {{ invitation.claimerEmail }}
       </ion-label>
     </div>
 
@@ -20,7 +20,8 @@
       <ion-label
         class="cell invitation-label"
       >
-        <span>{{ timeSince(invitation.date, '--', 'short') }}</span>
+        <span>{{ invitation.createdOn }}</span>
+        <!-- <span>{{ timeSince(invitation.createdOn, '--', 'short') }}</span> -->
       </ion-label>
     </div>
 
@@ -61,17 +62,17 @@ import {
   IonItem,
   IonText,
 } from '@ionic/vue';
-import { MockInvitation } from '@/common/mocks';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
 import { defineProps, inject } from 'vue';
+import { InviteListItemUser } from '@/plugins/libparsec/definitions';
 
 defineProps<{
-  invitation: MockInvitation,
+  invitation: InviteListItemUser,
 }>();
 
 defineEmits<{
-  (e: 'rejectUser', invitation: MockInvitation) : void,
-  (e: 'greetUser', invitation: MockInvitation) : void,
+  (e: 'rejectUser', invitation: InviteListItemUser) : void,
+  (e: 'greetUser', invitation: InviteListItemUser) : void,
 }>();
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
