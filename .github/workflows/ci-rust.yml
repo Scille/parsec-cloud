@@ -164,7 +164,7 @@ jobs:
         with:
           tool: nextest@${{ env.cargo-nextest-version }}
 
-      # Don't run platform agnostic tests here (only runned on Linux)
+      # Don't run platform agnostic tests here (only ran on Linux)
 
       - name: Test Rust codebase (${{ matrix.name }} specific)
         shell: bash

@@ -100,7 +100,7 @@ class PeerControler:
                 await self._orders_ack_sender.send(None)
 
                 # Explicit use of `do_recv` instead of relying on the __aexit__
-                # which containts a `fail_after` timeout (some commands such
+                # which contains a `fail_after` timeout (some commands such
                 # as `1_wait_peer` wait for a peer to finish, on which we
                 # have here no control on)
                 await async_rep.do_recv()

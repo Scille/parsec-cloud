@@ -180,7 +180,7 @@ fn ensure_testbed_server_is_started() -> (Option<BackendAddr>, Option<std::proce
         ])
         // We make the server quiet to avoid polluting test output, if you need
         // server log you should start your own server in another terminal and
-        // provide it config with the `TESTBED_SERVER` environ variable.
+        // provide its config with the `TESTBED_SERVER` environ variable.
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::piped())
@@ -202,9 +202,9 @@ fn ensure_testbed_server_is_started() -> (Option<BackendAddr>, Option<std::proce
                     .read(&mut buf[total..])
                     .expect("Cannot read testbed server process's stderr");
                 total += n;
-                let strbuf = std::str::from_utf8(&buf[..total])
+                let str_buf = std::str::from_utf8(&buf[..total])
                     .expect("testbed server process's stderr contains non-utf8");
-                match re.captures(strbuf) {
+                match re.captures(str_buf) {
                     Some(cap) => {
                         // Replace stderr pipe to avoid closing it on drop
                         process.stderr.replace(stderr);
@@ -223,7 +223,7 @@ fn ensure_testbed_server_is_started() -> (Option<BackendAddr>, Option<std::proce
                         } else {
                             panic!(
                                 "Timeout to retrieve port of testbed server, stderr: {}",
-                                strbuf
+                                str_buf
                             );
                         }
                     }
@@ -231,7 +231,10 @@ fn ensure_testbed_server_is_started() -> (Option<BackendAddr>, Option<std::proce
                 if total == buf.len() {
                     // In theory we should increase buf size, but if we are here it
                     // is most likely something went wrong anyway
-                    panic!("Cannot retrieve port of testbed server, stderr: {}", strbuf);
+                    panic!(
+                        "Cannot retrieve port of testbed server, stderr: {}",
+                        str_buf
+                    );
                 }
             }
         })

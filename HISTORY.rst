@@ -313,7 +313,7 @@ Features
 Bugfixes
 ~~~~~~~~
 
-* Fix the snackbars not being hidden when the window loses the focus (`#2530
+* Fix the snackbar not being hidden when the window loses the focus (`#2530
   <https://github.com/Scille/parsec-cloud/issues/2530>`__)
 * Fix duplicated files appearing in workspace sneak peek  (`#2503
   <https://github.com/Scille/parsec-cloud/issues/2503>`__)

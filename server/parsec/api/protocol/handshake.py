@@ -354,7 +354,7 @@ class BaseClientHandshake:
         self.client_timestamp = self.timestamp()
 
     def timestamp(self) -> DateTime:
-        # Exposed as a method for easier testing and monkeypatching
+        # Exposed as a method for easier testing and monkeypatch'ing
         return DateTime.now()
 
     def load_challenge_req(self, req: bytes) -> None:

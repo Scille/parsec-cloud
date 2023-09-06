@@ -67,8 +67,8 @@ suffixes = {
 }
 
 
-def naturalsize(value, binary=False, gnu=False, format='%.1f'):
-    """Format a number of byteslike a human readable filesize (eg. 10 kB).  By
+def natural_size(value, binary=False, gnu=False, format='%.1f'):
+    """Format a number of bytes'like a human readable filesize (eg. 10 kB).  By
     default, decimal suffixes (kB, MB) are used.  Passing binary=true will use
     binary suffixes (KiB, MiB) are used and the base will be 2**10 instead of
     10**3.  If ``gnu`` is True, the binary argument is ignored and GNU-style
@@ -202,11 +202,11 @@ def drop_caches():
 
 
 def format_progress_message(name, progress, total, suffix, width=40, \
-                            numtype='numeric'):
+                            num_type='numeric'):
     """
     Formats the progress
     """
-    if numtype == 'normal':
+    if num_type == 'normal':
         p = int((progress*width)/total)
         percentage = int((progress*100)/total)
         return name + (" [%-40s] %d%%" % ('='*p, percentage)) + " " \
@@ -214,12 +214,12 @@ def format_progress_message(name, progress, total, suffix, width=40, \
             + total  \
             + " | " \
             + suffix + "        "
-    elif numtype == 'filesize':
+    elif num_type == 'filesize':
         p = int((progress*width)/total)
         percentage = int((progress*100)/total)
         return name + (" [%-40s] %d%%" % ('='*p, percentage)) + ", " \
-+ naturalsize(progress)  + " of "\
-            + naturalsize(total)  \
++ natural_size(progress)  + " of "\
+            + natural_size(total)  \
             + " | " \
             + suffix + "        "
 
@@ -238,7 +238,7 @@ def run_benchmark(benchmark, \
     start_barrier = Manager().Barrier(threadcount+1)
 
     #
-    # Prepapre a list of arguments for each benchmark task
+    # Prepare a list of arguments for each benchmark task
     #
     benchmark_args = []
     for thread_idx in range(threadcount):
@@ -315,9 +315,9 @@ def file_create_benchmark(task_id, file_ids, filesize, deviation, \
                                 total_written_bytes,
                                 total_size_to_write,
                                 "???",
-                                width=40, numtype='filesize')
+                                width=40, num_type='filesize')
 
-    randdata = get_random_data(blocksize)
+    random_data = get_random_data(blocksize)
 
     start_barrier.wait()
     start_time = time.time()
@@ -332,14 +332,14 @@ def file_create_benchmark(task_id, file_ids, filesize, deviation, \
         #
         file_written_bytes = 0
         while(file_written_bytes + blocksize < rand_size):
-            block_written_bytes = outfile.write(randdata)
+            block_written_bytes = outfile.write(random_data)
             file_written_bytes += block_written_bytes
             total_written_bytes += block_written_bytes
             #
             # Format progress message
             #
             create_current_throughput = \
-                naturalsize(total_written_bytes/(time.time()-start_time)) \
+                natural_size(total_written_bytes/(time.time()-start_time)) \
                 + "/s"
 
             thread_progress_messages[task_id] = \
@@ -347,13 +347,13 @@ def file_create_benchmark(task_id, file_ids, filesize, deviation, \
                                         total_written_bytes,
                                         total_size_to_write,
                                         create_current_throughput,
-                                        width=40, numtype='filesize')
+                                        width=40, num_type='filesize')
 
         #
         # Write remainder of the file
         #
         block_written_bytes = \
-                    outfile.write(randdata[0:rand_size - file_written_bytes])
+                    outfile.write(random_data[0:rand_size - file_written_bytes])
         total_written_bytes += block_written_bytes
 
         #
@@ -365,7 +365,7 @@ def file_create_benchmark(task_id, file_ids, filesize, deviation, \
     end_time = time.time() - start_time
 
     current_throughput = \
-        naturalsize(total_written_bytes/(time.time()-start_time)) \
+        natural_size(total_written_bytes/(time.time()-start_time)) \
         + "/s"
 
     thread_progress_messages[task_id] = \
@@ -373,7 +373,7 @@ def file_create_benchmark(task_id, file_ids, filesize, deviation, \
                                 total_written_bytes,
                                 total_size_to_write,
                                 current_throughput,
-                                width=40, numtype='filesize')
+                                width=40, num_type='filesize')
 
     thread_results[task_id] = (total_written_bytes, end_time)
 
@@ -401,10 +401,10 @@ def file_write_benchmark(task_id, file_ids, filesize, deviation, \
                                 total_written_bytes,
                                 total_size_to_write,
                                 "???",
-                                width=40, numtype='filesize')
+                                width=40, num_type='filesize')
 
 
-    randdata = get_random_data(blocksize)
+    random_data = get_random_data(blocksize)
 
     start_barrier.wait()
     start_time = time.time()
@@ -419,14 +419,14 @@ def file_write_benchmark(task_id, file_ids, filesize, deviation, \
         #
         file_written_bytes = 0
         while(file_written_bytes + blocksize < rand_size):
-            block_written_bytes = outfile.write(randdata)
+            block_written_bytes = outfile.write(random_data)
             file_written_bytes += block_written_bytes
             total_written_bytes += block_written_bytes
             #
             # Format progress message
             #
             create_current_throughput = \
-                naturalsize(total_written_bytes/(time.time()-start_time)) \
+                natural_size(total_written_bytes/(time.time()-start_time)) \
                 + "/s"
 
             thread_progress_messages[task_id] = \
@@ -434,19 +434,19 @@ def file_write_benchmark(task_id, file_ids, filesize, deviation, \
                                         total_written_bytes,
                                         total_size_to_write,
                                         create_current_throughput,
-                                        width=40, numtype='filesize')
+                                        width=40, num_type='filesize')
 
         #
         # Write remainder of the file
         #
         block_written_bytes = \
-                    outfile.write(randdata[0:rand_size - file_written_bytes])
+                    outfile.write(random_data[0:rand_size - file_written_bytes])
         total_written_bytes += block_written_bytes
 
     end_time = time.time() - start_time
 
     current_throughput = \
-        naturalsize(total_written_bytes/(time.time()-start_time)) \
+        natural_size(total_written_bytes/(time.time()-start_time)) \
         + "/s"
 
     thread_progress_messages[task_id] = \
@@ -454,7 +454,7 @@ def file_write_benchmark(task_id, file_ids, filesize, deviation, \
                                 total_written_bytes,
                                 total_size_to_write,
                                 current_throughput,
-                                width=40, numtype='filesize')
+                                width=40, num_type='filesize')
 
     thread_results[task_id] = (total_written_bytes, end_time)
 
@@ -481,10 +481,10 @@ def file_random_write_benchmark(task_id, file_ids, filesize, deviation, \
                                 total_written_bytes,
                                 total_size_to_write,
                                 "???",
-                                width=40, numtype='filesize')
+                                width=40, num_type='filesize')
 
 
-    randdata = get_random_data(blocksize)
+    random_data = get_random_data(blocksize)
 
     start_barrier.wait()
     start_time = time.time()
@@ -503,7 +503,7 @@ def file_random_write_benchmark(task_id, file_ids, filesize, deviation, \
         file_written_bytes = 0
         for block_index in random_block_indexes:
             outfile.seek(block_index*blocksize, 0)
-            block_written_bytes = outfile.write(randdata)
+            block_written_bytes = outfile.write(random_data)
             file_written_bytes += block_written_bytes
             total_written_bytes += block_written_bytes
 
@@ -511,7 +511,7 @@ def file_random_write_benchmark(task_id, file_ids, filesize, deviation, \
             # Format progress message
             #
             create_current_throughput = \
-                naturalsize(total_written_bytes/(time.time()-start_time)) \
+                natural_size(total_written_bytes/(time.time()-start_time)) \
                 + "/s"
 
             thread_progress_messages[task_id] = \
@@ -519,19 +519,19 @@ def file_random_write_benchmark(task_id, file_ids, filesize, deviation, \
                                         total_written_bytes,
                                         total_size_to_write,
                                         create_current_throughput,
-                                        width=40, numtype='filesize')
+                                        width=40, num_type='filesize')
 
         #
         # Write remainder of the file
         #
         block_written_bytes = \
-                    outfile.write(randdata[0:rand_size - file_written_bytes])
+                    outfile.write(random_data[0:rand_size - file_written_bytes])
         total_written_bytes += block_written_bytes
 
     end_time = time.time() - start_time
 
     current_throughput = \
-        naturalsize(total_written_bytes/(time.time()-start_time)) \
+        natural_size(total_written_bytes/(time.time()-start_time)) \
         + "/s"
 
     thread_progress_messages[task_id] = \
@@ -539,7 +539,7 @@ def file_random_write_benchmark(task_id, file_ids, filesize, deviation, \
                                 total_written_bytes,
                                 total_size_to_write,
                                 current_throughput,
-                                width=40, numtype='filesize')
+                                width=40, num_type='filesize')
 
     thread_results[task_id] = (total_written_bytes, end_time)
 
@@ -568,7 +568,7 @@ def file_linear_read_benchmark(task_id, file_ids, filesize, deviation, \
                                 total_read_bytes,
                                 total_size_to_read,
                                 "???",
-                                width=40, numtype='filesize')
+                                width=40, num_type='filesize')
 
 
     outfile = open("/dev/null", "wb")
@@ -594,7 +594,7 @@ def file_linear_read_benchmark(task_id, file_ids, filesize, deviation, \
             # Format progress message
             #
             current_throughput = \
-                naturalsize(total_read_bytes/(time.time()-start_time)) \
+                natural_size(total_read_bytes/(time.time()-start_time)) \
                 + "/s"
 
             thread_progress_messages[task_id] = \
@@ -602,7 +602,7 @@ def file_linear_read_benchmark(task_id, file_ids, filesize, deviation, \
                                         total_read_bytes,
                                         total_size_to_read,
                                         current_throughput,
-                                        width=40, numtype='filesize')
+                                        width=40, num_type='filesize')
 
         #
         # Write remainder of the file
@@ -614,7 +614,7 @@ def file_linear_read_benchmark(task_id, file_ids, filesize, deviation, \
     outfile.close()
     end_time = time.time() - start_time
     current_throughput = \
-        naturalsize(total_read_bytes/(time.time()-start_time)) \
+        natural_size(total_read_bytes/(time.time()-start_time)) \
         + "/s"
 
     thread_progress_messages[task_id] = \
@@ -622,7 +622,7 @@ def file_linear_read_benchmark(task_id, file_ids, filesize, deviation, \
                                 total_read_bytes,
                                 total_size_to_read,
                                 current_throughput,
-                                width=40, numtype='filesize')
+                                width=40, num_type='filesize')
     thread_results[task_id] = (total_read_bytes, end_time)
 
 
@@ -650,7 +650,7 @@ def file_random_read_benchmark(task_id, file_ids, filesize, deviation, \
                                 total_read_bytes,
                                 total_size_to_read,
                                 "???",
-                                width=40, numtype='filesize')
+                                width=40, num_type='filesize')
 
 
     outfile = open("/dev/null", "wb")
@@ -684,7 +684,7 @@ def file_random_read_benchmark(task_id, file_ids, filesize, deviation, \
             # Format progress message
             #
             current_throughput = \
-                naturalsize(total_read_bytes/(time.time()-start_time)) \
+                natural_size(total_read_bytes/(time.time()-start_time)) \
                 + "/s"
 
             thread_progress_messages[task_id] = \
@@ -692,7 +692,7 @@ def file_random_read_benchmark(task_id, file_ids, filesize, deviation, \
                                         total_read_bytes,
                                         total_size_to_read,
                                         current_throughput,
-                                        width=40, numtype='filesize')
+                                        width=40, num_type='filesize')
 
         #
         # Write remainder of the file
@@ -704,14 +704,14 @@ def file_random_read_benchmark(task_id, file_ids, filesize, deviation, \
     outfile.close()
     end_time = time.time() - start_time
     current_throughput = \
-        naturalsize(total_read_bytes/(time.time()-start_time)) \
+        natural_size(total_read_bytes/(time.time()-start_time)) \
         + "/s"
     thread_progress_messages[task_id] = \
         format_progress_message("Task #" + str(task_id),
                                 total_read_bytes,
                                 total_size_to_read,
                                 current_throughput,
-                                width=40, numtype='filesize')
+                                width=40, num_type='filesize')
     thread_results[task_id] = (total_read_bytes, end_time)
 
 
@@ -803,7 +803,7 @@ size is too small.""",
     blocksize = parse_file_size(options.blocksize)
     deviation = options.deviation
     threadcount = options.threadcount
-    dropcaches = not options.no_purge
+    drop_caches = not options.no_purge
 
     if math.isnan(filesize):
         print("Invalid filesize - exiting.", file=sys.stderr)
@@ -844,13 +844,13 @@ size is too small.""",
     print("------------------------------", file=sys.stderr)
     print('Starting test', file=sys.stderr)
     print("  Number of files: ", filecount, file=sys.stderr)
-    print('  Average file size: ', naturalsize(filesize), \
+    print('  Average file size: ', natural_size(filesize), \
           file=sys.stderr)
     print('  Maximum disk space needed: ', \
-          naturalsize(filesize * filecount * (1.0+deviation)),
+          natural_size(filesize * filecount * (1.0+deviation)),
           file=sys.stderr)
     print('  Available disk space: ', \
-          naturalsize(available_disk_space), file=sys.stderr)
+          natural_size(available_disk_space), file=sys.stderr)
     print('  Number of parallel threads:', \
           threadcount, file=sys.stderr)
     print('------------------------------', file=sys.stderr)
@@ -902,7 +902,7 @@ size is too small.""",
     endtime = time.time() - starttime
     print("DONE [%d s]\n"%(endtime), file=sys.stderr)
 
-    if dropcaches:
+    if drop_caches:
         print("\n--- DROPPING FILE CACHE...", end="", file=sys.stderr)
         drop_caches()
         print(" DONE", file=sys.stderr)
@@ -930,14 +930,14 @@ size is too small.""",
 
         print("", file=sys.stderr)
         print("--- CREATED " + str(filecount) + " FILES OF TOTAL SIZE " \
-            + str(naturalsize(create_files_bytes_size)) + " IN " \
+            + str(natural_size(create_files_bytes_size)) + " IN " \
             + str(create_files_time) + "s", file=sys.stderr)
         print("--- THROUGHPUT: " \
-            + str(naturalsize(create_files_bytes_size/create_files_time))\
+            + str(natural_size(create_files_bytes_size/create_files_time))\
             + "/s", file=sys.stderr)
         print("", file=sys.stderr)
 
-        if dropcaches:
+        if drop_caches:
             print("\n--- DROPPING FILE CACHE...", end="", file=sys.stderr)
             drop_caches()
             print(" DONE", file=sys.stderr)
@@ -964,15 +964,15 @@ size is too small.""",
 
         print("", file=sys.stderr)
         print("--- WRITE " + str(filecount) + " FILES WITH TOTAL SIZE" \
-            + str(naturalsize(overwrite_files_bytes_size)) + " IN " \
+            + str(natural_size(overwrite_files_bytes_size)) + " IN " \
             + str(overwrite_files_time) + "s", file=sys.stderr)
         print("--- THROUGHPUT: " \
-            + str(naturalsize(\
+            + str(natural_size(\
                                 overwrite_files_bytes_size/overwrite_files_time)) \
             + "/s", file=sys.stderr)
         print("", file=sys.stderr)
 
-        if dropcaches:
+        if drop_caches:
             print("\n--- DROPPING FILE CACHE...", end="", file=sys.stderr)
             drop_caches()
             print(" DONE", file=sys.stderr)
@@ -999,15 +999,15 @@ size is too small.""",
 
         print("", file=sys.stderr)
         print("--- OVERWRITTEN " + str(filecount) + " FILES WITH TOTAL SIZE" \
-            + str(naturalsize(overwrite_files_bytes_size)) + " IN " \
+            + str(natural_size(overwrite_files_bytes_size)) + " IN " \
             + str(overwrite_files_time) + "s", file=sys.stderr)
         print("--- THROUGHPUT: " \
-            + str(naturalsize(\
+            + str(natural_size(\
                                 overwrite_files_bytes_size/overwrite_files_time)) \
             + "/s", file=sys.stderr)
         print("", file=sys.stderr)
 
-        if dropcaches:
+        if drop_caches:
             print("\n--- DROPPING FILE CACHE...", end="", file=sys.stderr)
             drop_caches()
             print(" DONE", file=sys.stderr)
@@ -1036,14 +1036,14 @@ size is too small.""",
 
         print("", file=sys.stderr)
         print("--- READ " + str(filecount) + " FILES WITH TOTAL SIZE " \
-              + str(naturalsize(linear_read_bytes_size)) + " IN " \
+              + str(natural_size(linear_read_bytes_size)) + " IN " \
               + str(linear_read_time) + "s", file=sys.stderr)
         print("--- THROUGHPUT: " \
-              + str(naturalsize(linear_read_bytes_size/linear_read_time)) \
+              + str(natural_size(linear_read_bytes_size/linear_read_time)) \
               + "/s", file=sys.stderr)
         print("", file=sys.stderr)
 
-        if dropcaches:
+        if drop_caches:
             print("\n--- DROPPING FILE CACHE...", end="", file=sys.stderr)
             drop_caches()
             print(" DONE", file=sys.stderr)
@@ -1072,14 +1072,14 @@ size is too small.""",
 
         print("", file=sys.stderr)
         print("--- READ " + str(filecount) + " FILES WITH TOTAL SIZE " \
-              + str(naturalsize(random_read_bytes_size)) + " IN " \
+              + str(natural_size(random_read_bytes_size)) + " IN " \
               + str(random_read_time) + "s", file=sys.stderr)
         print("--- THROUGHPUT: " \
-              + str(naturalsize(random_read_bytes_size/random_read_time)) \
+              + str(natural_size(random_read_bytes_size/random_read_time)) \
               + "/s", file=sys.stderr)
         print("", file=sys.stderr)
 
-        if dropcaches:
+        if drop_caches:
             print("\n--- DROPPING FILE CACHE...", end="", file=sys.stderr)
             drop_caches()
             print(" DONE", file=sys.stderr)

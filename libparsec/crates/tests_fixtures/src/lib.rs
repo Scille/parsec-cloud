@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// Must rename `tmp_path` module to provent it `tmp_path` item from being shadowed
+// Must rename `tmp_path` module to prevent its `tmp_path` item from being shadowed
 #[path = "./tmp_path.rs"]
 mod tmp_path_mod;
 mod trustchain;

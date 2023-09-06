@@ -166,7 +166,7 @@ macro_rules! generate_field_type_enum {
                 }
             }
 
-            // Provide pattern hint for serde_as convertion
+            // Provide pattern hint for serde_as conversion
             // e.g. `HashMap<String, Vec<u8>>` => `HashMap<_, ::serde_with::Bytes>`
             pub fn to_serde_as(&self) -> Option<TokenStream> {
                 let to_serde_as_or_underscore = |nested: &FieldType| {

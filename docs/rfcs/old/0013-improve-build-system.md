@@ -32,7 +32,7 @@ scons build-wheel
 ```
 
 The good thing is we could move all the weird cooking code we have in `setup.py` (generate PyQt5 resources and forms, extract translations) into the scons build system (given Scons is written in Python this shouldn't be too complicated).
-On top of that we could generate&use a custom `setup.py` for each usecase (which would allow us to get rid of the infamous extra_requirements, except for the `setup.py` used to generate the wheel targeting pypi).
+On top of that we could generate&use a custom `setup.py` for each use case (which would allow us to get rid of the infamous extra_requirements, except for the `setup.py` used to generate the wheel targeting pypi).
 As a matter of fact we could even replace the `setup.py` by a `setup.cfg` (or a `pyproject.toml`) to end-up with a simple declarative format file.
 
 The dependencies handling could be done in the build system with the help of pip-tools. Typically we could have a `scons generate-requirements extra=core,backend` command that would output a requirements.txt file ready for any use (consumed by python-for-android, processed by `pip-compile` to generate a lock file with hashes)

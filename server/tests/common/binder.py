@@ -292,11 +292,11 @@ def backend_data_binder_factory(initial_user_manifest_state):
     class BackendDataBinder:
         def __init__(self, backend):
             self.backend = backend
-            self.binded_local_devices = []
+            self.bound_local_devices = []
             self.certificates_store = CertificatesStore()
 
         def get_device(self, organization_id, device_id):
-            for d in self.binded_local_devices:
+            for d in self.bound_local_devices:
                 if d.organization_id == organization_id and d.device_id == device_id:
                     return d
             else:
@@ -423,7 +423,7 @@ def backend_data_binder_factory(initial_user_manifest_state):
                 backend_first_device.device_certificate,
                 backend_first_device.redacted_device_certificate,
             )
-            self.binded_local_devices.append(first_device)
+            self.bound_local_devices.append(first_device)
 
             if initial_user_manifest == "v1":
                 await self._create_realm_and_first_vlob(first_device)
@@ -441,7 +441,7 @@ def backend_data_binder_factory(initial_user_manifest_state):
                 try:
                     certifier = next(
                         d
-                        for d in self.binded_local_devices
+                        for d in self.bound_local_devices
                         if d.organization_id == device.organization_id
                     )
                 except StopIteration:
@@ -453,7 +453,7 @@ def backend_data_binder_factory(initial_user_manifest_state):
                 device, certifier, timestamp
             )
 
-            if any(d for d in self.binded_local_devices if d.user_id == device.user_id):
+            if any(d for d in self.bound_local_devices if d.user_id == device.user_id):
                 # User already created, only add device
 
                 # For clarity, user manifest state in backend should be only specified
@@ -489,7 +489,7 @@ def backend_data_binder_factory(initial_user_manifest_state):
                 if initial_user_manifest in (None, "v1"):
                     await self._create_realm_and_first_vlob(device)
 
-            self.binded_local_devices.append(device)
+            self.bound_local_devices.append(device)
 
         async def bind_revocation(self, user_id: UserID, certifier: LocalDevice):
             timestamp = certifier.timestamp()

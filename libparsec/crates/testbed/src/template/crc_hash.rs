@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// `std::hash::Hash` is not stable accross platforms (e.g. it uses native
+// `std::hash::Hash` is not stable across platforms (e.g. it uses native
 // endianness when hashing numbers), hence we have to roll our own system.
 
 use std::{

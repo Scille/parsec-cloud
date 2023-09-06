@@ -72,7 +72,7 @@ impl UserStorage {
         // TODO: What should be our strategy when the database contains invalid data ?
         //
         // Currently we are conservative: we fail and stop if the data are invalid,
-        // however we could also go the violent way by overwritting the invalid database.
+        // however we could also go the violent way by overwriting the invalid database.
         //
         // This has the advantage of automatically "fixing" buggy database (in case of
         // bug in previous Parsec version or if the user played fool and modified the
@@ -81,7 +81,7 @@ impl UserStorage {
         // The drawback is of course the fact we may lose data. However 1) there is not
         // much to lose (worst case is if the user manifest hasn't been synced since
         // a workspace has been created) and 2) we can attempt to retrieve the user manifest
-        // blob (if it is readable !) before overwritting the database.
+        // blob (if it is readable !) before overwriting the database.
         //
         // The worst case is if we are reading a newer version of the database: we will
         // overwrite a valid database :'(
@@ -350,7 +350,7 @@ async fn db_update_realm_checkpoint(
     // The checkpoint index is increased everytime a vlob is created or updated in the realm,
     // hence it is possible that a vlob different from the one storing the user manifest
     // is responsible for the checkpoint increase.
-    // However this is purely theorical and, in the event it occurs, not a big deal:
+    // However this is purely theoretical and, in the event it occurs, not a big deal:
     // - the user realm only contains a single user manifest
     // - the user realm is only accessible by the user, so
 }

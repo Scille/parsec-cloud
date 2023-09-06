@@ -123,7 +123,7 @@ def test_handshake_challenge_schema_for_client_server_api_compatibility(
     result = handshake_result_serializer.loads(result_req)
     assert result["result"] == "ok"
 
-    # Authenticated client handsake: client api < 3
+    # Authenticated client handshake: client api < 3
 
     bch = AuthenticatedClientHandshake(
         mallory.organization_id, mallory.device_id, mallory.signing_key, mallory.root_verify_key

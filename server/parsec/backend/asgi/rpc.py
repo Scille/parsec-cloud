@@ -454,7 +454,7 @@ async def authenticated_api(raw_organization_id: str) -> Response:
 # async iterator into an `IterableBody` that is used as async context manager
 # returning the async iterator.
 # So long story short, given we need to have access on the async context manager
-# (so that we close the connection's scope in case backpressure gets too high),
+# (so that we close the connection's scope in case back pressure gets too high),
 # we have to implement our own custom `IterableBody` here.
 
 
@@ -466,14 +466,14 @@ class SSEResponseIterableBody(ResponseBody):
         last_event_id: str | None,
     ) -> None:
         super().__init__()
-        # Cancel scope will be closed automatically in case of backpressure issue
+        # Cancel scope will be closed automatically in case of back pressure issue
         # Note we create it here instead of in `_make_contextmanager` to avoid concurrency
         # issue if the cancellation kicks in between the moment we return the
         # response object and when quart starts entering the async context manager
         # returned by `_make_contextmanager`.
         assert client_ctx.cancel_scope is None
         client_ctx.cancel_scope = trio.CancelScope()
-        # Zero-sized channel to avoid backpressure issue: send is blocking until a receive occurs
+        # Zero-sized channel to avoid back pressure issue: send is blocking until a receive occurs
         self._sse_payload_sender, self._sse_payload_receiver = trio.open_memory_channel[bytes](0)
         self._contextmanager = self._make_contextmanager(backend, client_ctx, last_event_id)
 
@@ -584,7 +584,7 @@ class SSEResponseIterableBody(ResponseBody):
                     # Once here, Quart has decided to stop pulling for body lines, this
                     # could means three things:
                     #
-                    # 1) Backpressure has caused the cancellation of the request
+                    # 1) Back pressure has caused the cancellation of the request
                     # 2) There is no more events to pull (i.e.
                     #    `self._sse_payload_receiver.close()` has been called)
                     # 3) Quart has decided to cancel the request (e.g. the server is

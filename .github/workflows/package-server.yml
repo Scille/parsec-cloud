@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: The version to use (if not provided will generated one from the codespace version)
+        description: The version to use (if not provided will generated one from the code space version)
         type: string
         required: false
   pull_request:

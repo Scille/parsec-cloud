@@ -230,7 +230,7 @@ macro_rules! impl_event_builder {
                     self
                 }
 
-                /// Use this to retreive params auto-generated (typically IDs, keys & timestamps)
+                /// Use this to retrieve params auto-generated (typically IDs, keys & timestamps)
                 pub fn get_event(&self) -> &[< TestbedEvent $name >] {
                     match self.builder.events.iter().last() {
                         Some(TestbedEvent::$name(x)) => x,

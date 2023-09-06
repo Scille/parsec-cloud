@@ -109,14 +109,14 @@ def blockstore_factory(
     elif isinstance(config, RAID1BlockStoreConfig):
         from parsec.backend.raid1_blockstore import RAID1BlockStoreComponent
 
-        blocks = [blockstore_factory(subconf, postgresql_dbh) for subconf in config.blockstores]
+        blocks = [blockstore_factory(sub_conf, postgresql_dbh) for sub_conf in config.blockstores]
 
         return RAID1BlockStoreComponent(blocks, partial_create_ok=config.partial_create_ok)
 
     elif isinstance(config, RAID0BlockStoreConfig):
         from parsec.backend.raid0_blockstore import RAID0BlockStoreComponent
 
-        blocks = [blockstore_factory(subconf, postgresql_dbh) for subconf in config.blockstores]
+        blocks = [blockstore_factory(sub_conf, postgresql_dbh) for sub_conf in config.blockstores]
 
         return RAID0BlockStoreComponent(blocks)
 
@@ -126,7 +126,7 @@ def blockstore_factory(
         if len(config.blockstores) < 3:
             raise ValueError(f"RAID5 block store needs at least 3 nodes")
 
-        blocks = [blockstore_factory(subconf, postgresql_dbh) for subconf in config.blockstores]
+        blocks = [blockstore_factory(sub_conf, postgresql_dbh) for sub_conf in config.blockstores]
 
         return RAID5BlockStoreComponent(blocks, partial_create_ok=config.partial_create_ok)
 

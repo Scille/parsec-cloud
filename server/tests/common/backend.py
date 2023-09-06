@@ -132,11 +132,11 @@ def backend_factory(
     backend_data_binder_factory,
     coolorg,
     expiredorg,
-    otherorg,
+    other_org,
     alice,
     alice2,
-    expiredorgalice,
-    otheralice,
+    expired_org_alice,
+    other_alice,
     adam,
     bob,
     blockstore,
@@ -146,7 +146,7 @@ def backend_factory(
     # Given the postgresql driver uses trio-asyncio, any coroutine dealing with
     # the backend should inherit from the one with the asyncio loop context manager.
     # This mean the nursery fixture cannot use the backend object otherwise we
-    # can end up in a dead lock if the asyncio loop is torndown before the
+    # can end up in a dead lock if the asyncio loop is teardown before the
     # nursery fixture is done with calling the backend's postgresql stuff.
 
     @asynccontextmanager
@@ -190,13 +190,13 @@ def backend_factory(
                             "alice_initial_remote_user_manifest", "v1"
                         ),
                     )
-                    await binder.bind_organization(expiredorg, expiredorgalice)
+                    await binder.bind_organization(expiredorg, expired_org_alice)
                     with backend.event_bus.listen() as spy:
                         await backend.organization.update(
                             expiredorg.organization_id, is_expired=True
                         )
                         await spy.wait_with_timeout(BackendEventOrganizationExpired)
-                    await binder.bind_organization(otherorg, otheralice)
+                    await binder.bind_organization(other_org, other_alice)
                     await binder.bind_device(alice2, certifier=alice)
                     await binder.bind_device(
                         adam,

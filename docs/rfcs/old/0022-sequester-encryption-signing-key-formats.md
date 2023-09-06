@@ -1,6 +1,6 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
-# Sequester - Encryption & Siging key formats
+# Sequester - Encryption & Signing key formats
 
 From [ISSUE-2463](https://github.com/Scille/parsec-cloud/issues/2463)
 
@@ -44,7 +44,7 @@ On top of that we want to make sure `verify_key_der` contains valid data (given 
 So we must have at least one verification, but we can also do two:
 
 - Client side verification: this is good to catch error if the wrong file has been selected when using the bootstrap cli
-- Server side verification: do we really want to only trust the client on this ? 😄 (another possible future usecase would be to allow to provide the verify key der in the organization_create administration command, so that we can be sure the first user have done the organization bootstrap with the expected verify key)
+- Server side verification: do we really want to only trust the client on this ? 😄 (another possible future use case would be to allow to provide the verify key der in the organization_create administration command, so that we can be sure the first user have done the organization bootstrap with the expected verify key)
 
 ### Sequester encryption key
 

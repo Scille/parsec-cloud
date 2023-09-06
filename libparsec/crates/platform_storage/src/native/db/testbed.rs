@@ -109,7 +109,7 @@ pub(super) fn maybe_open_sqlite_in_memory(path_info: &DBPathInfo) -> Option<Sqli
                 .collect::<Vec<String>>()
                 .join("-");
             let db_path = temp_dir.join(base).join(&path_info.db_relative_path);
-            let database_url = db_path.to_str().expect("Path contains invalid caracters");
+            let database_url = db_path.to_str().expect("Path contains invalid characters");
             println!("Saving DB {:?} at {}", path_info, db_path.display());
             std::fs::create_dir_all(db_path.parent().expect("path is not root"))
                 .expect("Cannot create on-disk database path");

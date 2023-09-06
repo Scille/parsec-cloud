@@ -1222,8 +1222,8 @@ fn variant_cancelerror_rs_to_js(rs_obj: libparsec::CancelError) -> Result<JsValu
         libparsec::CancelError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
         }
-        libparsec::CancelError::NotBinded { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NotBinded".into())?;
+        libparsec::CancelError::NotBound { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"NotBound".into())?;
         }
     }
     Ok(js_obj)

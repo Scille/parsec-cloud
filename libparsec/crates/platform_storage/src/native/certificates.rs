@@ -16,7 +16,7 @@ use super::model::get_certificates_storage_db_relative_path;
 
 // Values for `certificate_type` column in `certificates` table
 // Note the fact their value is similar to the `type` field in certificates, this
-// is purely for simplicity as the two are totally decorelated.
+// is purely for simplicity as the two are totally decorrelated.
 const USER_CERTIFICATE_TYPE: &str = "user_certificate";
 const DEVICE_CERTIFICATE_TYPE: &str = "device_certificate";
 const REVOKED_USER_CERTIFICATE_TYPE: &str = "revoked_user_certificate";

@@ -53,13 +53,13 @@ async fn bad_path(tmp_path: TmpPath, #[case] kind: BadPathKind, env: &TestbedEnv
 enum OkKind {
     ExistingParentDir,
     MissingParentDir,
-    OverwrittingFile,
+    OverwritingFile,
 }
 
 #[parsec_test(testbed = "minimal")]
 #[case::existing_parent_dir(OkKind::ExistingParentDir)]
 #[case::missing_parent_dir(OkKind::MissingParentDir)]
-#[case::overwritting_file(OkKind::OverwrittingFile)]
+#[case::overwriting_file(OkKind::OverwritingFile)]
 async fn ok(tmp_path: TmpPath, #[case] kind: OkKind, env: &TestbedEnv) {
     let key_file = match kind {
         OkKind::ExistingParentDir => {
@@ -71,7 +71,7 @@ async fn ok(tmp_path: TmpPath, #[case] kind: OkKind, env: &TestbedEnv) {
             // Both parent and grand parent dirs are missing
             tmp_path.join("devices/sub/my_device.keys")
         }
-        OkKind::OverwrittingFile => {
+        OkKind::OverwritingFile => {
             let path = tmp_path.join("devices/my_device.keys");
             std::fs::create_dir_all(path.parent().unwrap()).unwrap();
             std::fs::write(&path, b"<dummy>").unwrap();

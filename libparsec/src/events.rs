@@ -46,13 +46,13 @@ impl OnEventCallbackPlugged {
         #[cfg(not(target_arch = "wasm32"))] on_event_callback: Arc<
             dyn Fn(ClientEvent) + Send + Sync,
         >,
-        // On web we run on the JS runtime which is monothreaded, hence everything is !Send
+        // On web we run on the JS runtime which is mono-threaded, hence everything is !Send
         #[cfg(target_arch = "wasm32")] on_event_callback: Arc<dyn Fn(ClientEvent)>,
     ) -> Self {
         // SAFETY: `EventBus` requires callback to be `Send`, however on web the runtime
         // is strictly single-threaded and callback must be `!Send`.
         // So here we are going "trust me bro" considering it is fine to lie about
-        // sendness of the callback given it will never leave the current thread.
+        // send'ness of the callback given it will never leave the current thread.
         #[cfg(target_arch = "wasm32")]
         let on_event_callback = unsafe {
             std::mem::transmute::<Arc<dyn Fn(ClientEvent)>, Arc<dyn Fn(ClientEvent) + Send + Sync>>(

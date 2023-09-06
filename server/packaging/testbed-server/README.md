@@ -2,15 +2,14 @@
 
 Parsec provides a Docker image for the testbed server that can be used for testing.
 
-- [Testbed server in a box](#testbed-server-in-a-box)
-  - [Build and publish a new testbed server docker image](#build-and-publish-a-new-testbed-server-docker-image)
-    - [Generate a github token](#generate-a-github-token)
-      - [How I regenerate my token](#how-i-regenerate-my-token)
-    - [Setup docker](#setup-docker)
-      - [Authenticate to the github container registry](#authenticate-to-the-github-container-registry)
-        - [Setup `pass` credentials store](#setup-pass-credentials-store)
-    - [Build the docker image](#build-the-docker-image)
-    - [Publish the image](#publish-the-image)
+- [Build and publish a new testbed server docker image](#build-and-publish-a-new-testbed-server-docker-image)
+  - [Generate a github token](#generate-a-github-token)
+    - [How I regenerate my token](#how-i-regenerate-my-token)
+  - [Setup docker](#setup-docker)
+    - [Authenticate to the github container registry](#authenticate-to-the-github-container-registry)
+      - [Setup `pass` credentials store](#setup-pass-credentials-store)
+  - [Build the docker image](#build-the-docker-image)
+  - [Publish the image](#publish-the-image)
 
 ## Build and publish a new testbed server docker image
 
@@ -97,7 +96,7 @@ Modify the docker config file at `~/.docker/config.json`, you need to set the ke
 }
 ```
 
-Then excute `docker login`
+Then execute `docker login`
 
 ```shell
 $ docker login ghcr.io

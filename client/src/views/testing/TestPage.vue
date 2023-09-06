@@ -68,7 +68,7 @@ function assert(outcome: boolean, msg: string): void {
 // }
 
 onMounted(async () => {
-  // Tests are runned here
+  // Tests are ran here
 
   await testBootstrapOrganization();
 });
@@ -97,7 +97,7 @@ async function testBootstrapOrganization(): Promise<void> {
   };
   const bootstrapAddr = await libparsec.testGetTestbedBootstrapOrganizationAddr(configPath);
   if (bootstrapAddr === null) {
-    throw new Error("Couldn't retreive bootstrap organization addr");
+    throw new Error("Couldn't retrieve bootstrap organization addr");
   }
 
   const humanHandle = { label: 'John', email: 'john@example.com' };

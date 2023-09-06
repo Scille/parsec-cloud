@@ -165,9 +165,9 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 metadata_size += sum(len(blob) for (blob, _, ts, _) in vlob.data if ts <= at)
 
         data_size = 0
-        for (vlob_organization_id, _), blockmeta in self._block_component._blockmetas.items():
-            if vlob_organization_id == id and (blockmeta.created_on <= at):
-                data_size += blockmeta.size
+        for (vlob_organization_id, _), block_meta in self._block_component._blockmetas.items():
+            if vlob_organization_id == id and (block_meta.created_on <= at):
+                data_size += block_meta.size
 
         users = 0
         active_users = 0

@@ -136,7 +136,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
         # Actually do the upload
         error_count = 0
 
-        async def _subblockstore_create(
+        async def _sub_blockstore_create(
             nursery: Nursery, blockstore_index: int, chunk_or_checksum: bytes
         ) -> None:
             nonlocal error_count
@@ -152,11 +152,11 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
 
         async with open_service_nursery() as nursery:
             for i, chunk_or_checksum in enumerate([*chunks, checksum_chunk]):
-                nursery.start_soon(_subblockstore_create, nursery, i, chunk_or_checksum)
+                nursery.start_soon(_sub_blockstore_create, nursery, i, chunk_or_checksum)
 
         if self._partial_create_ok:
             # Only a single blockstore is allowed to fail
-            # Note it's possible to have error_count > 1 and still have some blokstore nodes
+            # Note it's possible to have error_count > 1 and still have some blockstore nodes
             # that have written the block. This is no big deal given we consider the create
             # operation to be idempotent (and two create with the same orgID/ID couple are
             # expected to have the same block data).

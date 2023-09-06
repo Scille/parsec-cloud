@@ -8,7 +8,7 @@ def new_canceller() -> Handle:
 
 
 class CancelError(ErrorVariant):
-    class NotBinded:
+    class NotBound:
         pass
 
     class Internal:

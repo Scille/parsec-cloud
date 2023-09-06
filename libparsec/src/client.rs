@@ -55,7 +55,7 @@ pub async fn client_start(
     // we can have a simple `if func_name == "client_login"` that does a special
     // cooking of it last param.
     #[cfg(not(target_arch = "wasm32"))] on_event_callback: Arc<dyn Fn(ClientEvent) + Send + Sync>,
-    // On web we run on the JS runtime which is monothreaded, hence everything is !Send
+    // On web we run on the JS runtime which is mono-threaded, hence everything is !Send
     #[cfg(target_arch = "wasm32")] on_event_callback: Arc<dyn Fn(ClientEvent)>,
 
     access: DeviceAccessStrategy,

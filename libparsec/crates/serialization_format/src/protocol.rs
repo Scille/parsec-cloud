@@ -196,7 +196,7 @@ impl GenCmdsFamily {
             );
 
             // We don't try to play smart here: if `introduced_in` is set
-            // somewhere we consider the schema cannot be shared accross
+            // somewhere we consider the schema cannot be shared across
             // versions.
             // Cleaver optimizations are possible but it is not needed
             // for the moment given how few schema with `introduced_in`

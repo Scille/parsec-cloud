@@ -16,4 +16,4 @@ The idea is:
 6) The `SequesterEncryptionKey` should be kept in an in-memory cache so that step 3) is only done once[^2]
 
 [^1]: Of course if there is no Sequester service configured (or if the Sequester feature is entirely disabled for the organization), the server just accept the upload ^^
-[^2]: Step 3) can accors again only in case the sequester configuration changes while the client is connected (hence some of the sequester encryption sent by the client are no longer valid)
+[^2]: Step 3) can occur again only in case the sequester configuration changes while the client is connected (hence some of the sequester encryption sent by the client are no longer valid)

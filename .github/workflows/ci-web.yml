@@ -98,7 +98,7 @@ jobs:
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
-          # cache is only shared between master and the PRs (and not accross PRs).
+          # cache is only shared between master and the PRs (and not across PRs).
           # So we only save the cache on master build given it's the ones that are the
           # most likely to be reused.
           save-if: ${{ github.ref == 'refs/heads/master' }}

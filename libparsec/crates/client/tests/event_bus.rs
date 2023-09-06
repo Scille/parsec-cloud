@@ -15,7 +15,7 @@ fn debug_format() {
 
     let eb = EventBus::default();
 
-    // Online/Offline events are allways registered internally
+    // Online/Offline events are always registered internally
     p_assert_eq!(
         format!("{:?}", eb),
         "EventBus { on_offline_cbs: 1, on_online_cbs: 1 }"

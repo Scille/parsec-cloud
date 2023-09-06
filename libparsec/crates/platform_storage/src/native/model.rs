@@ -10,7 +10,7 @@ use libparsec_types::prelude::*;
 // - workspace data storage: store local manifests & chunks of file that are not
 //   synchronized yet
 // - workspace cache storage: store blocks of file that are synchronized (i.e. this
-//   database can be destroyed without occuring memory loss)
+//   database can be destroyed without occurring memory loss)
 // - user storage: store the user manifest
 // - certifs storage: store all the certificates for the organization
 //

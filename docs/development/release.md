@@ -44,7 +44,7 @@ changes present on the master on a previous version.
 For each release types, apply the following checklist:
 
 - The newsfragment were squashed to generate the block added to [`HISTORY.rst`](/HISTORY.rst).
-- The updated [`HISTORY.rst`](/HISTORY.rst) is correctly formated (Some news fragment may introduce invalid syntax that can break the RST file).
+- The updated [`HISTORY.rst`](/HISTORY.rst) is correctly formatted (Some news fragment may introduce invalid syntax that can break the RST file).
 - The translations are up-to-date (check the translations in [`oxidation/client/src/locales/en-US.json`](/oxidation/client/src/locales/en-US.json) and [`oxidation/client/src/locales/fr-FR.json`](/client/src/locales/fr-FR.json)).
 - The `releaser.py` correctly update the version in the expected files (`server/pyproject.toml`, `licenses/BUSL-Scille.txt`, `server/parsec/_version.py`).
 

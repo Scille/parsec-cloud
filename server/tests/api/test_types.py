@@ -40,7 +40,7 @@ from tests.common import LocalDevice
         "!x",  # Invalid character
         " x",  # Invalid character
         "x" * 33,  # Too long
-        # Sinogram encoded on 3 bytes with utf8, so those 11 characters
+        # Sinogramme encoded on 3 bytes with utf8, so those 11 characters
         # form a 33 bytes long utf8 string !
         "飞" * 11,
         "😀",  # Not a unicode word
@@ -77,7 +77,7 @@ def test_good_pattern(cls, data):
         "!x@x",  # Invalid character
         "x@ ",  # Invalid character
         "x" * 66,  # Too long
-        # Sinogram encoded on 3 bytes with utf8, so those 22 characters
+        # Sinogramme encoded on 3 bytes with utf8, so those 22 characters
         # form a 66 bytes long utf8 string !
         "飞" * 22,
         "😀@x",  # Not a unicode word

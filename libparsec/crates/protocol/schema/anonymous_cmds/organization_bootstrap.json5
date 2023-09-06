@@ -23,12 +23,12 @@
                     "name": "device_certificate",
                     "type": "Bytes"
                 },
-                // Same certificates than above, but expurged of human_handle
+                // Same certificates than above, but expunged of human_handle
                 {
                     "name": "redacted_user_certificate",
                     "type": "Bytes"
                 },
-                // Same certificates than above, but expurged of device_label
+                // Same certificates than above, but expunged of device_label
                 {
                     "name": "redacted_device_certificate",
                     "type": "Bytes"

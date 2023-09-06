@@ -237,7 +237,7 @@ impl TestbedEnv {
         let mut builder = TestbedTemplateBuilder::new_from_template("custom", &self.template);
         cb(&mut builder);
 
-        // Retreive current testbed env in the global store...
+        // Retrieve current testbed env in the global store...
         let mut envs = TESTBED_ENVS.lock().expect("Mutex is poisoned");
         let env = envs
             .iter_mut()
@@ -326,7 +326,7 @@ pub async fn test_new_testbed(
     // 3) Finally register the testbed env
     let mut envs = TESTBED_ENVS.lock().expect("Mutex is poisoned");
     // Config dir is used as discriminent by the testbed, hence we must make sure it
-    // is unique accross the process to avoid concurrency issues
+    // is unique across the process to avoid concurrency issues
     static ENVS_COUNTER: AtomicUsize = AtomicUsize::new(0);
     let current = ENVS_COUNTER.fetch_add(1, Ordering::Relaxed);
     let discriminant_dir = {

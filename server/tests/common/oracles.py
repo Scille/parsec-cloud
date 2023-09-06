@@ -135,14 +135,14 @@ def oracle_fs_factory(tmpdir):
             else:
                 return self.rmdir(path)
 
-        def _delete_stats(self, oldpath):
+        def _delete_stats(self, old_path):
             new_stats = {}
-            for canditate_path, candidate_stat in self.entries_stats.items():
+            for candidate_path, candidate_stat in self.entries_stats.items():
                 try:
-                    canditate_path.relative_to(oldpath)
+                    candidate_path.relative_to(old_path)
                 except ValueError:
-                    # Candidate is not a child of oldpath
-                    new_stats[canditate_path] = candidate_stat
+                    # Candidate is not a child of old_path
+                    new_stats[candidate_path] = candidate_stat
             self.entries_stats = new_stats
 
         def rename_workspace(self, src, dst):

@@ -290,7 +290,7 @@ Also:
 #### The code owner
 
 A *code owner* is a person or a team assigned to be responsible for a specific
-component or code parts, usually because it has a deep knownledge about it.
+component or code parts, usually because it has a deep knowledge about it.
 
 > For example the Python dev are the owner of the python code.
 

@@ -156,7 +156,7 @@ def build_structlog_configuration(
     log_level: str, log_format: str, log_stream: TextIO
 ) -> dict[str, Any]:
     log_level_index = _cook_log_level(log_level)
-    # A bit of struclog architecture:
+    # A bit of structlog architecture:
     # - lazy proxy: component obtained through `structlog.get_logger()`, laziness
     #     is needed given it is imported very early on (later it bind operation
     #     will initialize the logger wrapper)

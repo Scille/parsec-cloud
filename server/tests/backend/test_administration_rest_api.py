@@ -620,7 +620,7 @@ async def test_organization_stats_users(
     backend_data_binder_factory,
     organization_factory,
     local_device_factory,
-    otherorg,
+    other_org,
 ):
     client = backend_asgi_app.test_client()
 
@@ -679,9 +679,9 @@ async def test_organization_stats_users(
         assert stats == expected_stats
 
     # Also make sure stats are isolated between organizations
-    otherorg_device = local_device_factory(org=otherorg, profile=UserProfile.ADMIN)
-    await binder.bind_organization(otherorg, otherorg_device, initial_user_manifest="not_synced")
-    stats = await organization_stats(otherorg_device.organization_id)
+    other_org_device = local_device_factory(org=other_org, profile=UserProfile.ADMIN)
+    await binder.bind_organization(other_org, other_org_device, initial_user_manifest="not_synced")
+    stats = await organization_stats(other_org_device.organization_id)
     assert stats == {
         "users": 1,
         "active_users": 1,

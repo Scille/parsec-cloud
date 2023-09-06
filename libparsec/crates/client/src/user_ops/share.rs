@@ -81,7 +81,7 @@ pub async fn workspace_share(
     // In theory we should not trust the server on those checks, hand hence we should:
     // 1) do the checks in local
     // 2) if ok, then send the command to the server
-    // 3) if the server returned us an error, load the newers certificates from the
+    // 3) if the server returned us an error, load the newer certificates from the
     //    server and re-do the checks in local.
     //
     // However this is cumbersome, so here instead we rely entirely on the server for

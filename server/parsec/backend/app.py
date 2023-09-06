@@ -274,7 +274,7 @@ class BackendApp:
                     vlob_id=event.vlob_id,
                     timestamp=event.timestamp,
                     blob=event.blob,
-                    sequester_blob=event.seqester_blob,
+                    sequester_blob=event.sequester_blob,
                 )
             elif isinstance(event, testbed.TestbedEventUpdateVlob):
                 await self.vlob.update(
@@ -285,7 +285,7 @@ class BackendApp:
                     version=event.version,
                     timestamp=event.timestamp,
                     blob=event.blob,
-                    sequester_blob=event.seqester_blob,
+                    sequester_blob=event.sequester_blob,
                 )
             else:
                 assert isinstance(event, testbed.TestbedEventNewBlock)

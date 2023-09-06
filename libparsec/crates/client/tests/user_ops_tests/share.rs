@@ -116,8 +116,8 @@ async fn simple(env: &TestbedEnv) {
 
 //     let (w_name, w_key) = {
 //         let user_manifest = user_ops.get_user_manifest();
-//         let wentry = &user_manifest.workspaces.iter().find(|x| x.id == wid).unwrap();
-//         (wentry.name.clone(), wentry.key.clone())
+//         let w_entry = &user_manifest.workspaces.iter().find(|x| x.id == wid).unwrap();
+//         (w_entry.name.clone(), w_entry.key.clone())
 //     };
 
 //     // Mock server: 1) `realm_create`

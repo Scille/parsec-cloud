@@ -120,7 +120,7 @@ pub(super) async fn poll_server_for_new_certificates(
             }
             // Certificates has changed, now we have less certificates than we used to o_O
             // This special case may occur if the certificate storage got cleared (see below
-            // `MaybeRedactodSwitch`), in this case we just redo everything from the start.
+            // `MaybeRedactedSwitch`), in this case we just redo everything from the start.
             std::cmp::Ordering::Greater => continue,
         };
 

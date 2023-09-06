@@ -30,7 +30,7 @@ There is two approches to implement this with http:
 pros/cons:
 
 - stateful is a bit faster than stateless given cryptographic operations are only done once when obtaining the token.
-- stateles should be simpler given less route to implement
+- stateless should be simpler given less route to implement
 - to obtain the token in stateful, the client has to sign something. This might be a timestamp or a something random provided by the server (in which case we have yet another round trip to handle, the backend must keep track of the random info, or sign it)
 
 interesting stuff:

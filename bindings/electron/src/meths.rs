@@ -1149,8 +1149,8 @@ fn variant_cancelerror_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::CancelError::NotBinded { .. } => {
-            let js_tag = JsString::try_new(cx, "NotBinded").or_throw(cx)?;
+        libparsec::CancelError::NotBound { .. } => {
+            let js_tag = JsString::try_new(cx, "NotBound").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }

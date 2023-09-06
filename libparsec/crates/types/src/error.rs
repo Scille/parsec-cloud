@@ -78,7 +78,7 @@ pub enum DataError {
 
     // `HumanHandle` is 72bytes long, so boxing is needed to limit presure on the stack
     #[error("Invalid HumanHandle, expected `{expected}`, got `{got}`")]
-    UnexpecteddHumanHandle {
+    UnexpectedHumanHandle {
         expected: Box<HumanHandle>,
         got: Box<HumanHandle>,
     },

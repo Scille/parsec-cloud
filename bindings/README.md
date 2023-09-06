@@ -1,19 +1,18 @@
 # LibParsec bindings
 
-- [LibParsec bindings](#libparsec-bindings)
-  - [1. Desktop (electron)](#1-desktop-electron)
-  - [2. Android](#2-android)
-    - [Requirements](#requirements)
-      - [Install Android Studio](#install-android-studio)
-      - [Install Android tools](#install-android-tools)
-      - [Install required rust targets](#install-required-rust-targets)
-      - [Install Java development kit to build the application](#install-java-development-kit-to-build-the-application)
-    - [Update the Gradle dependencies locks](#update-the-gradle-dependencies-locks)
-    - [Update Gradle verification metadata](#update-gradle-verification-metadata)
-    - [Why do we lock dependencies version \& comparing dependencies checksum](#why-do-we-lock-dependencies-version--comparing-dependencies-checksum)
-    - [Building the Android apps](#building-the-android-apps)
-  - [3. iOS (ffi)](#3-ios-ffi)
-  - [4. Web](#4-web)
+- [1. Desktop (electron)](#1-desktop-electron)
+- [2. Android](#2-android)
+  - [Requirements](#requirements)
+    - [Install Android Studio](#install-android-studio)
+    - [Install Android tools](#install-android-tools)
+    - [Install required rust targets](#install-required-rust-targets)
+    - [Install Java development kit to build the application](#install-java-development-kit-to-build-the-application)
+  - [Update the Gradle dependencies locks](#update-the-gradle-dependencies-locks)
+  - [Update Gradle verification metadata](#update-gradle-verification-metadata)
+  - [Why do we lock dependencies version \& comparing dependencies checksum](#why-do-we-lock-dependencies-version--comparing-dependencies-checksum)
+  - [Building the Android apps](#building-the-android-apps)
+- [3. iOS (ffi)](#3-ios-ffi)
+- [4. Web](#4-web)
 
 ## 1. Desktop (electron)
 
@@ -70,7 +69,7 @@ You can either install `Android Studio` or `Android tools`
 
    ```shell
    # TEMP_DIR=$(mktemp -d) # You can use this command to get a temp folder.
-   unzip -d "$TEMP_DIR" <cmdlint-tools.zip>
+   unzip -d "$TEMP_DIR" <cmdline-tools.zip>
    ```
 
 5. Find the latest version of `cmdline-tools`
@@ -143,7 +142,7 @@ To regenerate the lock file use:
 bash ./gradlew dependencies --write-locks
 ```
 
-If you want to udpate a specific list of dependencies use:
+If you want to update a specific list of dependencies use:
 
 ```shell
 bash ./gradlew classes --update-locks <dependencies comma separated>
@@ -161,7 +160,7 @@ bash ./gradle --write-verification-metadata sha256 help
 
 > It you want to update the verification metadata for a specific module use: `-p <module-path>`
 
-A more detailed documentation can be found here [Gradle - dependency verifycation](https://docs.gradle.org/current/userguide/dependency_verification.html#sub:enabling-verification)
+A more detailed documentation can be found here [Gradle - dependency verification](https://docs.gradle.org/current/userguide/dependency_verification.html#sub:enabling-verification)
 
 ### Why do we lock dependencies version & comparing dependencies checksum
 
@@ -170,7 +169,7 @@ In most languages pinning dependency version and storing each dependency checksu
 - Dependency locking consists of pinning the list of dependencies (including transitive ones) used by the project.
   It ensure that the transitive dependencies don't update unexpectedly (outside of PR that bump a dependency version).
 - Verification metadata contains the list of dependency checksums (still with transitive ones).
-  The dependency metadata (verifiation metadata) ensure that a dependency isn't tempered by comparing it's checksum.
+  The dependency metadata (verification metadata) ensure that a dependency isn't tempered by comparing it's checksum.
 
 > When updating a dependency, you will need to update the lock & metadata
 

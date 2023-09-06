@@ -69,7 +69,7 @@ jobs:
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 2
     steps:
-      - name: Requirement fullfiled
+      - name: Requirement fulfilled
         run: |
           #!python3
           import os

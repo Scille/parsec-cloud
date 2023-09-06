@@ -686,7 +686,7 @@ async fn check_user_certificate_consistency<'a>(
         .await?;
     }
     // TODO: should we go further in the checking ?
-    // - only the very first user (accross all users) should be allowed to be signed by root
+    // - only the very first user (across all users) should be allowed to be signed by root
     // (This check is not enforced in Parsec <= 2.15, and might be overkill ?)
 
     // 2) Make sure the user doesn't already exists
@@ -903,7 +903,7 @@ async fn check_device_certificate_consistency<'a>(
     }
     // TODO: should we go further in the checking ?
     // - only the first device of a given user should be allowed to not be self-signed
-    // - only the very first device (accross all users) should be allowed to be signed by root
+    // - only the very first device (across all users) should be allowed to be signed by root
     // (Those checks are not enforced in Parsec <= 2.15, and might be overkill ?)
 
     // 2) Make sure the user exists

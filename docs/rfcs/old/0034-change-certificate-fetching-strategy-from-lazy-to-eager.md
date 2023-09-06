@@ -25,7 +25,7 @@ On top of that we should introduce a new certificate added event.
 With this the client would do:
 
 - when connection with the server is up, it calls `certificate_fetch` with the index it has kept in it local storage (or 0 if the local storage is empty). This call is part of the client connection init so we are guarantee the certificates are all available once we are considered online.
-- when the a new certificate is create, the server increase a global counter that correspond to the index provided in `certificate_fetch`, the server also dispatch the `certificate_added`. Given how small the certifcate is, we should provide it directly into the event (the good thing being the client is guaranteed to have the trustchain to validate the new certificate if it call `certificate_fetch` first, then process all incoming event in fifo)
+- when the a new certificate is create, the server increase a global counter that correspond to the index provided in `certificate_fetch`, the server also dispatch the `certificate_added`. Given how small the certificate is, we should provide it directly into the event (the good thing being the client is guaranteed to have the trustchain to validate the new certificate if it call `certificate_fetch` first, then process all incoming event in fifo)
 
 With this we have multiple benefits:
 

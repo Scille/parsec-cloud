@@ -169,7 +169,7 @@ or if the client try to do any unauthorized command.
 }
 ```
 
-**Q3: There is `bootstarp_organization` (in url's action field and in
+**Q3: There is `bootstrap_organization` (in url's action field and in
 handshake's operation field) and `organization_bootstrap` (command name)...
 should we stick to a single format ?**
 
@@ -210,7 +210,7 @@ compatibility, and potentially interesting for SGX applications).
 - invitation is really similar between device and client, the api is designed to
   share as much as possible (hence the `type` field)
 - `send_email` option allow to prevent backend from sending an invitation mail
-  to the invitee (useful for testing, maybe useful for advanced usecases)
+  to the invitee (useful for testing, maybe useful for advanced use cases)
 - in case `send_email=false`, the `url` field returned can be used to display
   the url to the inviter.
 
@@ -388,7 +388,7 @@ when to refresh the invitations list.
 }
 ```
 
-In such usecase we keep the event as simple as possible and notify both ready
+In such use case we keep the event as simple as possible and notify both ready
 and idle status switches.
 
 ## New claim system

@@ -28,7 +28,7 @@ from tests.common import (
 @pytest.mark.trio
 @customize_fixtures(coolorg_is_sequestered_organization=True)
 async def test_create_disable_services(
-    coolorg: OrganizationFullData, otherorg: OrganizationFullData, backend
+    coolorg: OrganizationFullData, other_org: OrganizationFullData, backend
 ):
     service = sequester_service_factory("Test Service", coolorg.sequester_authority)
 
@@ -43,7 +43,7 @@ async def test_create_disable_services(
     # Try to create service in a non sequestered organization
     with pytest.raises(SequesterDisabledError):
         await backend.sequester.create_service(
-            organization_id=otherorg.organization_id, service=service.backend_service
+            organization_id=other_org.organization_id, service=service.backend_service
         )
 
     # Invalid service certificate
@@ -90,7 +90,7 @@ async def test_create_disable_services(
     # Cannot retrieve service list on non sequestered organization
     with pytest.raises(SequesterDisabledError):
         services = await backend.sequester.get_organization_services(
-            organization_id=otherorg.organization_id
+            organization_id=other_org.organization_id
         )
 
     # 2) Disable service
@@ -115,7 +115,7 @@ async def test_create_disable_services(
     # Try disable in a non sequestered organization
     with pytest.raises(SequesterDisabledError):
         await backend.sequester.disable_service(
-            organization_id=otherorg.organization_id,
+            organization_id=other_org.organization_id,
             service_id=service.service_id,
             disabled_on=disabled_on,
         )
@@ -197,12 +197,12 @@ async def test_create_disable_services(
 
     # Try retrieve service list in a non sequestered organization
     with pytest.raises(SequesterDisabledError):
-        await backend.sequester.get_organization_services(organization_id=otherorg.organization_id)
+        await backend.sequester.get_organization_services(organization_id=other_org.organization_id)
 
     # Try retrieve single service in a non sequestered organization
     with pytest.raises(SequesterDisabledError):
         await backend.sequester.get_service(
-            organization_id=otherorg.organization_id, service_id=service.service_id
+            organization_id=other_org.organization_id, service_id=service.service_id
         )
 
     # 5) Bonus: webhook service
