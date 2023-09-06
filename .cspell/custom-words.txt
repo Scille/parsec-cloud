@@ -428,6 +428,8 @@ trustme
 tungstenite
 Ultr
 UNBITMAP
+uncaseified
+uncaseify
 uncatched
 unciphered
 UNFINISHPAGE
