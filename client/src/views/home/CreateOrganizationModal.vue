@@ -1,160 +1,162 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page class="modal">
-    <ion-buttons
-      slot="end"
-      class="closeBtn-container"
-    >
-      <ion-button
-        slot="icon-only"
-        @click="cancelModal()"
-        class="closeBtn"
-        v-show="canClose()"
-      >
-        <ion-icon
-          :icon="close"
-          size="large"
-          class="closeBtn__icon"
-        />
-      </ion-button>
-    </ion-buttons>
-    <ion-header class="modal-header">
-      <ion-title
-        v-if="titles.get(pageStep)?.title !== ''"
-        class="modal-header__title title-h2"
-      >
-        {{ titles.get(pageStep)?.title }}
-      </ion-title>
-      <ion-text
-        v-if="titles.get(pageStep)?.subtitle !== ''"
-        class="modal-header__text body"
-      >
-        {{ titles.get(pageStep)?.subtitle }}
-      </ion-text>
-    </ion-header>
-    <!-- modal content: create component for each part-->
-    <div class="modal-content inner-content">
-      <!-- part 1 (org name)-->
-      <div
-        v-show="pageStep === CreateOrganizationStep.OrgNameStep"
-        class="step org-name"
-      >
-        <ms-input
-          :label="$t('CreateOrganization.organizationName')"
-          :placeholder="$t('CreateOrganization.organizationNamePlaceholder')"
-          name="organization"
-          id="org-name-input"
-          v-model="orgName"
-        />
-      </div>
-
-      <!-- part 2 (user info)-->
-      <div
-        v-show="pageStep === CreateOrganizationStep.UserInfoStep"
-        class="step user-info"
-      >
-        <user-information ref="userInfo" />
-      </div>
-
-      <!-- part 3 (server)-->
-      <div
-        class="step org-server"
-        v-show="pageStep === CreateOrganizationStep.ServerStep"
-      >
-        <choose-server ref="serverChoice" />
-      </div>
-
-      <!-- part 4 (password)-->
-      <div
-        class="step org-password"
-        v-show="pageStep === CreateOrganizationStep.PasswordStep"
-      >
-        <ms-choose-password-input ref="passwordChoice" />
-      </div>
-
-      <!-- part 5 (summary) -->
-      <div
-        class="step org-summary"
-        v-show="pageStep === CreateOrganizationStep.SummaryStep"
-      >
-        <summary-step
-          v-if="orgInfo"
-          ref="summaryInfo"
-          :organization="orgInfo.orgName"
-          :fullname="orgInfo.userName"
-          :email="orgInfo.email"
-          :device-name="orgInfo.deviceName"
-          :server-mode="orgInfo.serverMode"
-          :server-addr="orgInfo.serverAddr"
-          @update-request="onUpdateRequested"
-        />
-      </div>
-      <!-- part 6 (loading)-->
-      <div
-        class="step org-loading"
-        v-show="pageStep === CreateOrganizationStep.SpinnerStep"
-      >
-        <ms-spinner :title="$t('CreateOrganization.loading')" />
-      </div>
-
-      <!-- part 7 (loading) -->
-      <div
-        class="step orga-created"
-        v-show="pageStep === CreateOrganizationStep.FinishStep"
-      >
-        <ms-informative-text
-          :icon="caretForward"
-          :text="$t('CreateOrganization.organizationCreated')"
-        />
-      </div>
-    </div>
-    <!-- the buttons must be only enabled if all fields are filled in -->
-    <ion-footer class="modal-footer">
+  <ion-page class="modal-stepper">
+    <div class="modal">
       <ion-buttons
-        slot="primary"
-        class="modal-footer-buttons"
+        slot="end"
+        class="closeBtn-container"
       >
         <ion-button
-          fill="clear"
-          size="default"
-          id="previous-button"
-          @click="previousStep()"
-          v-show="canGoBackward()"
+          slot="icon-only"
+          @click="cancelModal()"
+          class="closeBtn"
+          v-show="canClose()"
         >
-          {{ $t('CreateOrganization.button.previous') }}
           <ion-icon
-            slot="start"
-            :icon="chevronBack"
-            size="small"
-          />
-        </ion-button>
-        <ion-button
-          fill="solid"
-          size="default"
-          id="next-button"
-          v-show="shouldShowNextStep()"
-          @click="nextStep()"
-          :disabled="!canGoForward"
-        >
-          <span>
-            {{ getNextButtonText() }}
-          </span>
-          <ion-icon
-            v-show="pageStep !== CreateOrganizationStep.SummaryStep"
-            slot="start"
-            :icon="chevronForward"
-            size="small"
-          />
-          <ion-icon
-            v-show="pageStep === CreateOrganizationStep.SummaryStep"
-            slot="start"
-            :icon="checkmarkDone"
-            size="small"
+            :icon="close"
+            size="large"
+            class="closeBtn__icon"
           />
         </ion-button>
       </ion-buttons>
-    </ion-footer>
+      <ion-header class="modal-header">
+        <ion-title
+          v-if="titles.get(pageStep)?.title !== ''"
+          class="modal-header__title title-h2"
+        >
+          {{ titles.get(pageStep)?.title }}
+        </ion-title>
+        <ion-text
+          v-if="titles.get(pageStep)?.subtitle !== ''"
+          class="modal-header__text body"
+        >
+          {{ titles.get(pageStep)?.subtitle }}
+        </ion-text>
+      </ion-header>
+      <!-- modal content: create component for each part-->
+      <div class="modal-content inner-content">
+        <!-- part 1 (org name)-->
+        <div
+          v-show="pageStep === CreateOrganizationStep.OrgNameStep"
+          class="step org-name"
+        >
+          <ms-input
+            :label="$t('CreateOrganization.organizationName')"
+            :placeholder="$t('CreateOrganization.organizationNamePlaceholder')"
+            name="organization"
+            id="org-name-input"
+            v-model="orgName"
+          />
+        </div>
+
+        <!-- part 2 (user info)-->
+        <div
+          v-show="pageStep === CreateOrganizationStep.UserInfoStep"
+          class="step user-info"
+        >
+          <user-information ref="userInfo" />
+        </div>
+
+        <!-- part 3 (server)-->
+        <div
+          class="step org-server"
+          v-show="pageStep === CreateOrganizationStep.ServerStep"
+        >
+          <choose-server ref="serverChoice" />
+        </div>
+
+        <!-- part 4 (password)-->
+        <div
+          class="step org-password"
+          v-show="pageStep === CreateOrganizationStep.PasswordStep"
+        >
+          <ms-choose-password-input ref="passwordChoice" />
+        </div>
+
+        <!-- part 5 (summary) -->
+        <div
+          class="step org-summary"
+          v-show="pageStep === CreateOrganizationStep.SummaryStep"
+        >
+          <summary-step
+            v-if="orgInfo"
+            ref="summaryInfo"
+            :organization="orgInfo.orgName"
+            :fullname="orgInfo.userName"
+            :email="orgInfo.email"
+            :device-name="orgInfo.deviceName"
+            :server-mode="orgInfo.serverMode"
+            :server-addr="orgInfo.serverAddr"
+            @update-request="onUpdateRequested"
+          />
+        </div>
+        <!-- part 6 (loading)-->
+        <div
+          class="step org-loading"
+          v-show="pageStep === CreateOrganizationStep.SpinnerStep"
+        >
+          <ms-spinner :title="$t('CreateOrganization.loading')" />
+        </div>
+
+        <!-- part 7 (loading) -->
+        <div
+          class="step orga-created"
+          v-show="pageStep === CreateOrganizationStep.FinishStep"
+        >
+          <ms-informative-text
+            :icon="caretForward"
+            :text="$t('CreateOrganization.organizationCreated')"
+          />
+        </div>
+      </div>
+      <!-- the buttons must be only enabled if all fields are filled in -->
+      <ion-footer class="modal-footer">
+        <ion-buttons
+          slot="primary"
+          class="modal-footer-buttons"
+        >
+          <ion-button
+            fill="clear"
+            size="default"
+            id="previous-button"
+            @click="previousStep()"
+            v-show="canGoBackward()"
+          >
+            {{ $t('CreateOrganization.button.previous') }}
+            <ion-icon
+              slot="start"
+              :icon="chevronBack"
+              size="small"
+            />
+          </ion-button>
+          <ion-button
+            fill="solid"
+            size="default"
+            id="next-button"
+            v-show="shouldShowNextStep()"
+            @click="nextStep()"
+            :disabled="!canGoForward"
+          >
+            <span>
+              {{ getNextButtonText() }}
+            </span>
+            <ion-icon
+              v-show="pageStep !== CreateOrganizationStep.SummaryStep"
+              slot="start"
+              :icon="chevronForward"
+              size="small"
+            />
+            <ion-icon
+              v-show="pageStep === CreateOrganizationStep.SummaryStep"
+              slot="start"
+              :icon="checkmarkDone"
+              size="small"
+            />
+          </ion-button>
+        </ion-buttons>
+      </ion-footer>
+    </div>
   </ion-page>
 </template>
 
@@ -394,84 +396,6 @@ function onUpdateRequested(info: OrgInfo): void {
 </script>
 
 <style lang="scss" scoped>
-.modal {
-  padding: 3.5rem;
-  justify-content: start;
-}
-
-.closeBtn-container {
-  position: absolute;
-  top: 2rem;
-  right: 2rem;
-}
-
-.closeBtn-container,
-.closeBtn {
-  margin: 0;
-  --padding-start: 0;
-  --padding-end: 0;
-}
-
-.closeBtn {
-  width: fit-content;
-  height: fit-content;
-  --border-radius: var(--parsec-radius-4);
-  --background-hover: var(--parsec-color-light-primary-50);
-  border-radius: var(--parsec-radius-4);
-
-  &__icon {
-    padding: 4px;
-    color: var(--parsec-color-light-primary-500);
-
-    &:hover {
-      --background-hover: var(--parsec-color-light-primary-50);
-    }
-  }
-
-  &:active {
-    border-radius: var(--parsec-radius-4);
-    background: var(--parsec-color-light-primary-100);
-  }
-}
-
-.modal-header {
-  margin-bottom: 2rem;
-
-  &__title {
-    padding: 0;
-    margin-bottom: 1.5rem;
-    color: var(--parsec-color-light-primary-600);
-  }
-
-  &__text {
-    color: var(--parsec-color-light-secondary-grey);
-  }
-}
-
-.modal-content {
-  --background: transparent;
-
-  .step {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-}
-
-.modal-footer {
-  margin-top: 2.5rem;
-
-  &::before {
-    background: transparent;
-  }
-
-  &-buttons {
-    display: flex;
-    justify-content: end;
-    gap: 1rem;
-  }
-}
-
 .org-name {
   display: flex;
   flex-direction: column;
