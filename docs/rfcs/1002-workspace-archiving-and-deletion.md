@@ -7,13 +7,13 @@ At the moment, there is no way to delete or archive a workspace. The aim of this
 In particular, the owner of a workspace should be able to archive said workspace making it read-only for every users that is part of it. It should also be possible for the owner to set a deletion date after which the workspace is marked as deleted and becomes unavailable for all users. The data is then free to be deleted by a cleanup routine on the server, according to a configured policy. Note that owners are free to override the previous status (archiving and deletion date) as long as the workspace is not marked as deleted.
 
 
-Additionally, a minimum archiving period can be configured by the admin at the organization level in order to prevent hasty deletion (e.g, a 30 days period can be configured so that any workspace stays recoverable for at least 30 days after it's been archived).
+Additionally, a minimum archiving period can be configured by the server administrator at the organization level in order to prevent hasty deletion (e.g, a 30 days period can be configured so that any workspace stays recoverable for at least 30 days after it's been archived).
 
 ## 1 - General approach
 
 In the same way a given device has to store the information about its role for the different workspaces it has access to, a workspace archived/deletion status has to remain available for the device even when it is offline. This way, the interface can still behave according to the current workspace status even when the connection to the server is not available.
 
-For this reason, it makes sense to add new "realm archiving certificates" (similar to "realm role certificate") to the trust chain, even though the deletion itself is not managed in cryptographically secure way (i.e any actor with access to the server could remove data).
+For this reason, it makes sense to add new "realm archiving certificates" (similar to "realm role certificate") to the trust chain, even though the deletion itself is not managed in cryptographically secure way (i.e. any actor with access to the server could remove data).
 
 Similarly, the devices can keep up-to-date with the current workspace status by listening to dedicated events, and explicitly check for the current state when opening a new connection. This is especially convenient for new v3 parsec API that proactively downloads the certificates and store them in a persistent way. However the v2 parsec API is less suited for this as the current behavior for managing realm roles is to add this information to the user manifest which is something we want to avoid for the workspace archiving status (in order to avoid adding more legacy). For this reason, the target here is to adapt the existing APIs in order to ease the transition to the v3 API later on.
 
@@ -76,7 +76,7 @@ The following constraints should be verified:
 **Note 1:** A new archiving configuration completely overrides the previous one. That means that it's irrelevant whether the workspace was already archived or not, the minimum archiving period is checked against the `timestamp` provided by the new manifest.
 
 
-**Note 2:** This data model does not allow for planning a future archiving, only the deletion can be planned. TODO: check with Jérôme that it's ok.
+**Note 2:** This data model does not allow for planning a future archiving, only the deletion can be planned.
 
 **Note 3:** There is no configuration variant to delete a workspace right away. However, if the minimum archiving period is configured to zero, it allows de facto for immediate deletion by using a `DeletionPlanned` configuration where the deletion date is set to the certificate timestamp. It is then possible for the user interface to transparently handle this case if necessary (e.g providing a `Delete immediately` button if the configuration allows it).
 
