@@ -2,7 +2,7 @@
 
 <template>
   <ion-page>
-    <wizard-stepper
+    <ms-wizard-stepper
       v-show="pageStep > DeviceJoinOrganizationStep.Information && pageStep < DeviceJoinOrganizationStep.Finish"
       :current-index="pageStep - 1"
       :titles="[
@@ -151,7 +151,7 @@ import {
 } from 'ionicons/icons';
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import WizardStepper from '@/components/core/ms-stepper/MsWizardStepper.vue';
+import MsWizardStepper from '@/components/core/ms-stepper/MsWizardStepper.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
