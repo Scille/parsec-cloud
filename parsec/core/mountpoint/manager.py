@@ -427,6 +427,8 @@ async def mountpoint_manager_factory(
         # Enable mountpoint in directory mode only on Windows (also, note that
         # the config dict is *unpacked* on Linux in fuse_mountpoint_runner)
         config["mountpoint_in_directory"] = mountpoint_in_directory
+        config["personal_workspace_base_path"] = personal_workspace_base_path
+        config["personal_workspace_name_pattern"] = personal_workspace_name_pattern
 
     elif sys.platform == "darwin":
         await cleanup_macos_mountpoint_folder(base_mountpoint_path)
