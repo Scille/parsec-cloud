@@ -12,7 +12,7 @@
   <ion-label
     class="body invitation-list-item__label"
   >
-    {{ invitation.email }}
+    {{ invitation.claimerEmail }}
   </ion-label>
   <ion-buttons class="invitation-list-item__buttons">
     <ion-button
@@ -43,16 +43,16 @@ import {
 import {
   time,
 } from 'ionicons/icons';
-import { MockInvitation } from '@/common/mocks';
 import { defineProps } from 'vue';
+import { InviteListItemUser } from '@/plugins/libparsec/definitions';
 
 defineProps<{
-  invitation: MockInvitation,
+  invitation: InviteListItemUser,
 }>();
 
 defineEmits<{
-  (e: 'rejectUser', invitation: MockInvitation) : void,
-  (e: 'greetUser', invitation: MockInvitation) : void,
+  (e: 'rejectUser', invitation: InviteListItemUser) : void,
+  (e: 'greetUser', invitation: InviteListItemUser) : void,
 }>();
 </script>
 

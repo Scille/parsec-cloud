@@ -454,6 +454,13 @@
             "date": "Invitation date",
             "status": "Statut",
             "noInvitations": "Aucune invitation en cours"
+        },
+        "CreateUserInvitationModal": {
+            "pageTitle": "Inviter un nouvel utilisateur",
+            "label": "E-mail de l'utilisateur",
+            "placeholder": "jean.martin{'@'}exemple.com",
+            "cancel": "Annuler",
+            "create": "Inviter"
         }
     },
     "AboutPage": {

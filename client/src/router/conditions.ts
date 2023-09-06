@@ -1,12 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { useRoute, useRouter } from 'vue-router';
+import router from '@/router';
 import { Handle } from '@/plugins/libparsec/definitions';
 
 export function getParsecHandle(): Handle | null {
-  const currentRoute = useRoute();
+  const currentRoute = router.currentRoute.value;
 
-  return parseInt(currentRoute.params.handle as string);
+  if (currentRoute && currentRoute.params && 'handle' in currentRoute.params) {
+    return parseInt(currentRoute.params.handle as string);
+  }
+  return null;
 }
 
 export function isLoggedIn(): boolean {
@@ -14,7 +17,6 @@ export function isLoggedIn(): boolean {
 }
 
 export function hasHistory(): boolean {
-  const router = useRouter();
   const handle = getParsecHandle();
 
   const previousRoute = router.options.history.state.back?.toString();
@@ -26,13 +28,13 @@ export function hasHistory(): boolean {
 }
 
 export function isDocumentRoute(): boolean {
-  const currentRoute = useRoute();
+  const currentRoute = router.currentRoute.value;
 
   return currentRoute.name === 'workspaces' || currentRoute.name === 'folder';
 }
 
 export function isOrganizationManagementRoute(): boolean {
-  const currentRoute = useRoute();
+  const currentRoute = router.currentRoute.value;
   return currentRoute.name ? [
     'activeUsers',
     'revokedUsers',
@@ -42,12 +44,17 @@ export function isOrganizationManagementRoute(): boolean {
   ].includes(currentRoute.name.toString()) : false;
 }
 
+export function isRoute(name: string): boolean {
+  const currentRoute = router.currentRoute.value;
+  return currentRoute.name === name;
+}
+
 export function isUserRoute(): boolean {
-  const currentRoute = useRoute();
+  const currentRoute = router.currentRoute.value;
   return currentRoute.name ? ['activeUsers', 'revokedUsers', 'invitations'].includes(currentRoute.name.toString()) : false;
 }
 
 export function isSpecificWorkspaceRoute(workspaceId: string): boolean {
-  const currentRoute = useRoute();
+  const currentRoute = router.currentRoute.value;
   return currentRoute.params.workspaceId === workspaceId;
 }

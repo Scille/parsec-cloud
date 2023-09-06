@@ -96,7 +96,7 @@
           class="step user-info-page"
         >
           <user-information
-            :default-email="invitation.email"
+            :default-email="invitation.claimerEmail"
             :default-name="'Name Entered By The Guest'"
             :default-device="'Device-given-by-the-guest'"
             :email-enabled="false"
@@ -214,7 +214,8 @@ import UserInformation from '@/components/users/UserInformation.vue';
 import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
-import { MockInvitation, Profile } from '@/common/mocks';
+import { Profile } from '@/common/mocks';
+import { InviteListItemUser } from '@/plugins/libparsec/definitions';
 
 enum GreetUserStep {
   WaitForGuest = 1,
@@ -233,7 +234,7 @@ const { t } = useI18n();
 const pageStep = ref(GreetUserStep.WaitForGuest);
 
 defineProps<{
-  invitation: MockInvitation
+  invitation: InviteListItemUser
 }>();
 
 const profile: Ref<Profile | null> = ref(null);

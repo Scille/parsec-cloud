@@ -45,7 +45,7 @@
             </ion-list-header>
             <invitation-list-item
               v-for="invitation in invitations"
-              :key="invitation.token"
+              :key="invitation.token[0]"
               :invitation="invitation"
               @greet-user="greetUser"
               @reject-user="rejectUser"
@@ -57,7 +57,7 @@
           <ion-list class="invitation-card">
             <ion-item
               v-for="invitation in invitations"
-              :key="invitation.token"
+              :key="invitation.token[0]"
               class="invitation-card-item"
             >
               <invitation-card
@@ -86,32 +86,64 @@ import {
 import {
   personAdd,
 } from 'ionicons/icons';
-import { onMounted, ref, Ref } from 'vue';
+import { onUpdated, ref, Ref } from 'vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import MsActionBarButton from '@/components/core/ms-action-bar/MsActionBarButton.vue';
 import MsGridListToggle from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import { DisplayState } from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import { isAdmin } from '@/common/permissions';
-import { MockInvitation, getInvitations } from '@/common/mocks';
 import { useI18n } from 'vue-i18n';
 import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 import { createAlert } from '@/components/core/ms-alert/MsAlertConfirmation';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
 import InvitationCard from '@/components/users/InvitationCard.vue';
 import InvitationListItem from '@/components/users/InvitationListItem.vue';
+import { InviteListItemUser } from '@/plugins/libparsec/definitions';
+import * as Parsec from '@/common/parsec';
+import CreateUserInvitationModal from '@/views/users/CreateUserInvitationModal.vue';
+import { isRoute } from '@/router/conditions';
 
-const invitations: Ref<MockInvitation[]> = ref([]);
+const invitations: Ref<InviteListItemUser[]> = ref([]);
 
 const { t } = useI18n();
 
 const displayView = ref(DisplayState.List);
 
-onMounted(async () => {
-  invitations.value = await getInvitations();
+onUpdated(async () => {
+  if (isRoute('invitations')) {
+    await refreshInvitationsList();
+  }
 });
 
-function inviteUser(): void {
-  console.log('Invite user clicked');
+async function refreshInvitationsList(): Promise<void> {
+  const result = await Parsec.listUserInvitations();
+  if (result.ok) {
+    console.log('List invitations successful', result.value);
+    invitations.value = result.value;
+  } else {
+    console.log('Failed to list invitations', result.error);
+  }
+}
+
+async function inviteUser(): Promise<void> {
+  const modal = await modalController.create({
+    component: CreateUserInvitationModal,
+    cssClass: 'create-user-invitation-modal',
+  });
+  modal.present();
+
+  const { data, role } = await modal.onWillDismiss();
+
+  if (role === 'confirm') {
+    const result = await Parsec.inviteUser(data);
+
+    if (result.ok) {
+      console.log('Invite user successful', result.value);
+      await refreshInvitationsList();
+    } else {
+      console.log(`Failed to invite ${data}`, result.error);
+    }
+  }
 }
 
 async function canDismissModal(_data?: any, modalRole?: string): Promise<boolean> {
@@ -130,7 +162,7 @@ async function canDismissModal(_data?: any, modalRole?: string): Promise<boolean
   return role === MsModalResult.Confirm;
 }
 
-async function greetUser(invitation: MockInvitation): Promise<void> {
+async function greetUser(invitation: InviteListItemUser): Promise<void> {
   const modal = await modalController.create({
     component: GreetUserModal,
     canDismiss: canDismissModal,
@@ -143,8 +175,14 @@ async function greetUser(invitation: MockInvitation): Promise<void> {
   await modal.onWillDismiss();
 }
 
-function rejectUser(invitation: MockInvitation) : void {
-  console.log(`Reject user ${invitation.email}`);
+async function rejectUser(invitation: InviteListItemUser) : Promise<void> {
+  const result = await Parsec.cancelInvitation(invitation.token);
+
+  if (result.ok) {
+    await refreshInvitationsList();
+  } else {
+    console.log('Could not cancel the invitation');
+  }
 }
 </script>
 
