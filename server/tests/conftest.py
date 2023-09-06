@@ -34,7 +34,7 @@ from tests.common import (
 # Pytest hooks
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: pytest.Parser):
     parser.addoption("--side-effects-timeout", default=get_side_effects_timeout(), type=float)
     parser.addoption("--hypothesis-max-examples", default=100, type=int)
     parser.addoption("--hypothesis-derandomize", action="store_true")

@@ -21,7 +21,7 @@ A typical release process looks as follow:
     # Push the produced tag and commits
     $ git push --follow-tags
 
-    # Alternally, you can revert the commits and delete the tag in case you made
+    # Alternatively, you can revert the commits and delete the tag in case you made
     # an error (of course don't do that if you have already push the changes !)
     $ ./misc/releaser.py rollback
 
@@ -481,8 +481,8 @@ def create_bump_commit_to_new_version(
     print(f"Create commit {COLOR_GREEN}{commit_msg}{COLOR_END}")
     run_git("add", HISTORY_FILE.absolute(), *FILES_TO_COMMIT_ON_VERSION_CHANGE)
     if newsfragments:
-        fragments_pathes = [str(x.absolute()) for x in newsfragments]
-        run_git("rm", *fragments_pathes)
+        fragments_paths = [str(x.absolute()) for x in newsfragments]
+        run_git("rm", *fragments_paths)
     # FIXME: the `releaser` steps in pre-commit is disable is `no-verify` still required ?
     # Disable pre-commit hooks given this commit wouldn't pass `releaser check`
     run_git("commit", f"--message={commit_msg}", "--no-verify", "--gpg-sign")
@@ -728,7 +728,7 @@ def rollback_main(args: argparse.Namespace) -> None:
 
     print(f"Removing tag {COLOR_GREEN}{version}{COLOR_END}")
     run_git("tag", "--delete", "v" + str(version))
-    print(f"Reset mastor to {COLOR_GREEN}{head_minus_2}{COLOR_END} (i.e. HEAD~2)")
+    print(f"Reset master to {COLOR_GREEN}{head_minus_2}{COLOR_END} (i.e. HEAD~2)")
     run_git("reset", "--hard", head_minus_2)
 
 
@@ -738,9 +738,9 @@ def version_main(args: argparse.Namespace) -> None:
     assert isinstance(raw_version, str)
     version = Version.parse(raw_version)
     for part in ("prerelease", "dev", "local"):
-        overwritted_part = getattr(args, part, None)
-        if overwritted_part is not None:
-            setattr(version, part, overwritted_part)
+        overwritten_part = getattr(args, part, None)
+        if overwritten_part is not None:
+            setattr(version, part, overwritten_part)
 
     if args.uniq_dev:
         now = datetime.utcnow()

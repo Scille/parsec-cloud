@@ -94,7 +94,6 @@ ignoreWords:
   - ipdb
   - jmconfig
   - mnpcod
-  - mnpcod
   - ntvs
   - nunit
   - nupkg
@@ -112,7 +111,7 @@ cache:
   cacheStrategy: metadata
   useCache: true
 useGitignore: true
-allowCompoundWords: true
+allowCompoundWords: false
 ignorePaths:
   # Cspell seems to match against the absolute path, so must always start with `**/` :(
   - "**/bindings/web/src/meths.rs"

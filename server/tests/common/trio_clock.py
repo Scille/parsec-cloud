@@ -16,11 +16,11 @@ from trio.testing import MockClock
 # - Network socket
 # - PostgreSQL database
 # We have to decide how long we want to wait on those things, considering:
-# - the shorter we wait, the more convenient it is for when developping
+# - the shorter we wait, the more convenient it is for when developing
 # - the longer we wait, the more we avoid false positive when side effets are unexpectedly long
 # - if we wait forever we get rid of the false positive but we also hang forever
 #   in case a mistake in the code lead to a deadlock :(
-# So the solution is to make this configurable: a good middleground by default
+# So the solution is to make this configurable: a good middle ground by default
 # and a long long time on the CI.
 _SIDE_EFFECTS_TIMEOUT = 3
 

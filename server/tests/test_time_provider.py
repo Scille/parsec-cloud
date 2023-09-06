@@ -230,7 +230,7 @@ async def test_concurrent_sleeps(maybe_wrap_tp_sleep):
 async def test_reproduce_trio_corruption():
     """
     This test used to produce a trio corruption due to an incorrect
-    implementation of `FutureToCouroutine` (related to cancellation handling).
+    implementation of `FutureToCoroutine` (related to cancellation handling).
     """
     t1 = DateTime(2001, 1, 1, 0, 0, 0)
     t2 = t1.add(seconds=11)

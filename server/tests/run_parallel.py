@@ -38,6 +38,12 @@ COLOR_RED = "\033[91m"
 COLOR_GREEN = "\033[92m"
 COLOR_YELLOW = "\033[93m"
 
+EVT_WORKER_READY = "worker_ready"
+EVT_WORKER_FINISHED = "worker_finished"
+EVT_INTERNAL_ERROR = "internal_error"
+EVT_COLLECTION_FINISH = "collection_finish"
+EVT_TEST_REPORT = "test_report"
+
 
 class TestStatusReportPlugin:
     def __init__(self, job_id: int, report_queue: multiprocessing.Queue):
@@ -50,19 +56,19 @@ class TestStatusReportPlugin:
     @pytest.hookimpl
     def pytest_internalerror(self, excrepr):
         formatted_error = str(excrepr)
-        self.sendevent("internal_error", formatted_error=formatted_error)
+        self.sendevent(EVT_INTERNAL_ERROR, formatted_error=formatted_error)
 
     @pytest.hookimpl
     def pytest_collection_finish(self, session: pytest.Session):
-        self.sendevent("collection_finish", total_tests_count=len(session.items))
+        self.sendevent(EVT_COLLECTION_FINISH, total_tests_count=len(session.items))
 
     @pytest.hookimpl
     def pytest_sessionstart(self, session):
-        self.sendevent("workerready")
+        self.sendevent(EVT_WORKER_READY)
 
     @pytest.hookimpl
     def pytest_sessionfinish(self, exitstatus):
-        self.sendevent("workerfinished", exitstatus=exitstatus)
+        self.sendevent(EVT_WORKER_FINISHED, exitstatus=exitstatus)
 
     @pytest.hookimpl
     def pytest_runtest_logreport(self, report: pytest.TestReport):
@@ -70,7 +76,7 @@ class TestStatusReportPlugin:
         if ("test_out_of_slice", True) in report.user_properties:
             return
         self.sendevent(
-            "testreport",
+            EVT_TEST_REPORT,
             nodeid=report.nodeid,
             outcome=report.outcome,
             when=report.when,
@@ -184,19 +190,19 @@ if __name__ == "__main__":
                     )
                     _set_test_has_failed()
 
-                elif event_name == "internal_error":
+                elif event_name == EVT_INTERNAL_ERROR:
                     msg = f">>> [gw{job_index}] {COLOR_RED}CRASH !!!{COLOR_END} Pytest internal error:\n{event_params['formatted_error']}"
                     print(msg, flush=True)
                     job_crashes[job_index] += msg
                     _set_test_has_failed()
 
-                elif event_name == "collection_finish":
+                elif event_name == EVT_COLLECTION_FINISH:
                     total_tests_count = event_params["total_tests_count"]
 
-                elif event_name == "workerready":
+                elif event_name == EVT_WORKER_READY:
                     jobs_status[job_index] = "ready"
 
-                elif event_name == "workerfinished":
+                elif event_name == EVT_WORKER_FINISHED:
                     jobs_status[job_index] = "finished"
                     print(
                         f">>> [gw{job_index}] pytest job has finished with status {COLOR_RED if event_params['exitstatus'] else COLOR_GREEN}{event_params['exitstatus']}{COLOR_END}"
@@ -206,7 +212,7 @@ if __name__ == "__main__":
                     if all(x == "finished" for x in jobs_status):
                         break
 
-                elif event_name == "testreport":
+                elif event_name == EVT_TEST_REPORT:
                     percent_color = COLOR_RED if tests_has_failed else COLOR_GREEN
                     tests_started.setdefault(event_params["nodeid"], event_params["outcome"])
                     base = (

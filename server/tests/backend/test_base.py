@@ -31,7 +31,7 @@ async def test_bad_msg_format(alice_ws, kind):
     if kind == "string_message":
         await alice_ws.send("hello")  # Only websocket bytes message are accepted
     elif kind == "valid_msgpack_but_not_a_dict":
-        await alice_ws.send(b"\x00")  # Encodes the number 0 as positive fixint
+        await alice_ws.send(b"\x00")  # Encodes the number 0 as positive fix int
     else:
         assert kind == "invalid_msgpack"
         await alice_ws.send(b"\xc1")  # Never used value according to msgpack spec

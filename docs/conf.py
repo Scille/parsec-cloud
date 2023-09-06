@@ -228,7 +228,7 @@ latex_elements = {
     #  Additional stuff for the LaTeX preamble.
     "preamble": "\n".join(
         [
-            # Use firecode in codeblocks.
+            # Use firacode in codeblocks.
             r"\usepackage{lstfiracode}",
         ]
     ),

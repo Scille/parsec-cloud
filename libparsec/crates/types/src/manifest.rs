@@ -461,7 +461,7 @@ fn generate_local_author_legacy_placeholder() -> DeviceID {
     lazy_static! {
         static ref LEGACY_PLACEHOLDER: DeviceID = LOCAL_AUTHOR_LEGACY_PLACEHOLDER
             .parse()
-            .expect("`LOCAL_AUTHOR_LEGACY_PLACEHOLDER` string should be parseable");
+            .expect("`LOCAL_AUTHOR_LEGACY_PLACEHOLDER` string should be parsable");
     }
     LEGACY_PLACEHOLDER.clone()
 }

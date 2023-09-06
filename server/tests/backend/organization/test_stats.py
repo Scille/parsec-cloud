@@ -96,7 +96,7 @@ async def test_organization_stats_users(
     backend_data_binder_factory,
     organization_factory,
     local_device_factory,
-    otherorg,
+    other_org,
     backend_authenticated_ws_factory,
 ):
     binder = backend_data_binder_factory(backend_asgi_app.backend)
@@ -169,9 +169,9 @@ async def test_organization_stats_users(
             assert stats == expected_stats
 
     # Also make sure stats are isolated between organizations
-    otherorg_device = local_device_factory(org=otherorg, profile=UserProfile.ADMIN)
-    await binder.bind_organization(otherorg, otherorg_device, initial_user_manifest="not_synced")
-    async with backend_authenticated_ws_factory(backend_asgi_app, otherorg_device) as sock:
+    other_org_device = local_device_factory(org=other_org, profile=UserProfile.ADMIN)
+    await binder.bind_organization(other_org, other_org_device, initial_user_manifest="not_synced")
+    async with backend_authenticated_ws_factory(backend_asgi_app, other_org_device) as sock:
         stats = await organization_stats(sock)
     assert stats == OrganizationStatsRepOk(
         users=1,

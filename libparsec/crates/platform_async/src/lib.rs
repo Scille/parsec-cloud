@@ -32,7 +32,7 @@ pub enum Either<L, R> {
 /// Doing a select on two futures is the most common case.
 /// Note it is implemented with (with a [futures_lite::future::Or] so first future
 /// is prefered on simultaneous completion).
-/// For more complicated usecase, implement by hand a similar code at call site ;-)
+/// For more complicated use case, implement by hand a similar code at call site ;-)
 #[macro_export]
 macro_rules! select2 {
     (

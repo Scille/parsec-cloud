@@ -11,7 +11,7 @@ Currently administrator rights are needed for the installation due to:
 3) Install WinFSP
 
 Considering 1) & 2), we could do a user only installation (so not a global installation).
-This would mean installing into `%LOCALAPPDATA%\Programs\Parsec\` and registergin the custom url scheme for the current user only.
+This would mean installing into `%LOCALAPPDATA%\Programs\Parsec\` and register in the custom url scheme for the current user only.
 
 For 2) we could ship a WebDAV implementation of the mountpoint (it would probably have much worst performances and integration but it's ok as a fail-safe mode).
 This way the installation of Parsec wouldn't automatically install WinFSP, instead when launching Parsec a popup would be displayed to invite user to install WinFSP if it is not already installed (or if an incompatible version of WinFSP is installed).

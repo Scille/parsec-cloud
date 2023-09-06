@@ -150,7 +150,7 @@ def coolorg(fixtures_customization, organization_factory):
 
 
 @pytest.fixture
-def otherorg(organization_factory):
+def other_org(organization_factory):
     return organization_factory("OtherOrg")
 
 
@@ -162,11 +162,11 @@ def expiredorg(organization_factory):
 
 
 @pytest.fixture
-def otheralice(fixtures_customization, local_device_factory, otherorg):
+def other_alice(fixtures_customization, local_device_factory, other_org):
     return local_device_factory(
         "alice@dev1",
-        otherorg,
-        # otheralice mimics alice
+        other_org,
+        # other_alice mimics alice
         profile=fixtures_customization.get("alice_profile", UserProfile.ADMIN),
         has_human_handle=fixtures_customization.get("alice_has_human_handle", True),
         has_device_label=fixtures_customization.get("alice_has_device_label", True),
@@ -191,13 +191,13 @@ def alice(fixtures_customization, local_device_factory, initial_user_manifest_st
 
 
 @pytest.fixture
-def expiredorgalice(
+def expired_org_alice(
     fixtures_customization, local_device_factory, initial_user_manifest_state, expiredorg
 ):
     device = local_device_factory(
         "alice@dev1",
         expiredorg,
-        # expiredorgalice mimics alice
+        # expired_org_alice mimics alice
         profile=fixtures_customization.get("alice_profile", UserProfile.ADMIN),
         has_human_handle=fixtures_customization.get("alice_has_human_handle", True),
         has_device_label=fixtures_customization.get("alice_has_device_label", True),

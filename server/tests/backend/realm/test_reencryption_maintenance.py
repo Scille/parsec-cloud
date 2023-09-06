@@ -76,7 +76,7 @@ from tests.common import freeze_time, real_clock_timeout
 @pytest.mark.trio
 async def test_start_bad_encryption_revision(alice_ws, realm, alice):
     rep = await realm_start_reencryption_maintenance(
-        alice_ws, realm, 42, DateTime.now(), {alice.user_id: b"wathever"}, check_rep=False
+        alice_ws, realm, 42, DateTime.now(), {alice.user_id: b"whatever"}, check_rep=False
     )
     assert isinstance(rep, RealmStartReencryptionMaintenanceRepBadEncryptionRevision)
 
@@ -85,7 +85,7 @@ async def test_start_bad_encryption_revision(alice_ws, realm, alice):
 async def test_start_bad_timestamp(alice_ws, realm, alice):
     with freeze_time() as now:
         rep = await realm_start_reencryption_maintenance(
-            alice_ws, realm, 2, DateTime(2000, 1, 1), {alice.user_id: b"wathever"}, check_rep=False
+            alice_ws, realm, 2, DateTime(2000, 1, 1), {alice.user_id: b"whatever"}, check_rep=False
         )
     assert rep == RealmStartReencryptionMaintenanceRepBadTimestamp(
         reason=None,
@@ -217,7 +217,7 @@ async def test_start_reencryption_update_status(alice_ws, alice, realm):
 @pytest.mark.trio
 async def test_start_already_in_maintenance(alice_ws, realm, alice):
     await realm_start_reencryption_maintenance(
-        alice_ws, realm, 2, DateTime.now(), {alice.user_id: b"wathever"}
+        alice_ws, realm, 2, DateTime.now(), {alice.user_id: b"whatever"}
     )
     # Providing good or bad encryption revision shouldn't change anything
     for encryption_revision in (2, 3):
@@ -226,7 +226,7 @@ async def test_start_already_in_maintenance(alice_ws, realm, alice):
             realm,
             encryption_revision,
             DateTime.now(),
-            {alice.user_id: b"wathever"},
+            {alice.user_id: b"whatever"},
             check_rep=False,
         )
         assert isinstance(rep, RealmStartReencryptionMaintenanceRepInMaintenance)
@@ -236,7 +236,7 @@ async def test_start_already_in_maintenance(alice_ws, realm, alice):
 async def test_start_check_access_rights(backend, bob_ws, alice, bob, realm, next_timestamp):
     # User not part of the realm
     rep = await realm_start_reencryption_maintenance(
-        bob_ws, realm, 2, DateTime.now(), {alice.user_id: b"wathever"}, check_rep=False
+        bob_ws, realm, 2, DateTime.now(), {alice.user_id: b"whatever"}, check_rep=False
     )
     assert isinstance(rep, RealmStartReencryptionMaintenanceRepNotAllowed)
 
@@ -313,7 +313,7 @@ async def test_finish_not_in_maintenance(alice_ws, realm):
 @pytest.mark.trio
 async def test_finish_while_reencryption_not_done(alice_ws, realm, alice, vlobs):
     await realm_start_reencryption_maintenance(
-        alice_ws, realm, 2, DateTime.now(), {alice.user_id: b"wathever"}
+        alice_ws, realm, 2, DateTime.now(), {alice.user_id: b"whatever"}
     )
     rep = await realm_finish_reencryption_maintenance(alice_ws, realm, 2, check_rep=False)
     # The reason is no longer generated
@@ -444,7 +444,7 @@ async def test_reencryption_batch_not_during_maintenance(alice_ws, realm):
 
 
 @pytest.mark.trio
-async def test_reencryption_batch_bad_revisison(alice_ws, realm, alice):
+async def test_reencryption_batch_bad_revision(alice_ws, realm, alice):
     await realm_start_reencryption_maintenance(
         alice_ws, realm, 2, DateTime.now(), {alice.user_id: b"foo"}
     )

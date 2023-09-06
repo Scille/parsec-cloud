@@ -181,7 +181,7 @@ async def test_search_multiple_user_same_human_handle(access_testbed, local_devi
 
     rep = await apiv2v3_human_find(sock, query="Guzman Huerta")
 
-    # Users have same label, the sort will have an nondeterminated ordered result.
+    # Users have same label, the sort will have an non deterministic ordered result.
     assert isinstance(rep, HumanFindRepOk)
     assert rep.per_page == 100
     assert rep.page == 1

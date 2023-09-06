@@ -154,7 +154,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             curr_peer_payload = conduit.greeter_payload
 
         if ctx.peer_payload is None:
-            # We are waiting for the peer to provite it payload
+            # We are waiting for the peer to provide its payload
 
             # Only peer payload should be allowed to change
             if conduit.state != ctx.state or curr_our_payload != ctx.payload:

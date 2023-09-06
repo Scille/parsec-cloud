@@ -90,7 +90,7 @@ pub async fn bootstrap_organization(
     // we can have a simple `if func_name == "client_login"` that does a special
     // cooking of it last param.
     #[cfg(not(target_arch = "wasm32"))] on_event_callback: Arc<dyn Fn(ClientEvent) + Send + Sync>,
-    // On web we run on the JS runtime which is monothreaded, hence everything is !Send
+    // On web we run on the JS runtime which is mono-threaded, hence everything is !Send
     #[cfg(target_arch = "wasm32")] on_event_callback: Arc<dyn Fn(ClientEvent)>,
 
     bootstrap_organization_addr: BackendOrganizationBootstrapAddr,
@@ -187,7 +187,7 @@ pub async fn claimer_retrieve_info(
     // we can have a simple `if func_name == "client_login"` that does a special
     // cooking of it last param.
     #[cfg(not(target_arch = "wasm32"))] _on_event_callback: Arc<dyn Fn(ClientEvent) + Send + Sync>,
-    // On web we run on the JS runtime which is monothreaded, hence everything is !Send
+    // On web we run on the JS runtime which is mono-threaded, hence everything is !Send
     #[cfg(target_arch = "wasm32")] _on_event_callback: Arc<dyn Fn(ClientEvent)>,
 
     addr: BackendInvitationAddr,

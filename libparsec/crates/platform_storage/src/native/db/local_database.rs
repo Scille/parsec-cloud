@@ -28,7 +28,7 @@ use super::option::{AutoVacuum, PragmaJournalMode, PragmaOptions, PragmaSynchron
 /// in a single execution: `SELECT (?, ?, ...); SELECT (?, ?, ...); ...`
 pub const LOCAL_DATABASE_MAX_VARIABLE_NUMBER: usize = 999;
 
-/// How vacuumming should be done for the database.
+/// How vacuuming should be done for the database.
 #[derive(Debug, Clone, Copy)]
 pub enum VacuumMode {
     #[allow(unused)]

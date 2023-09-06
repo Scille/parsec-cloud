@@ -387,12 +387,12 @@ async def test_webhook_errors(caplog, coolorg: OrganizationFullData, alice_ws, r
 
         # Test json error
 
-        def raise_jsonerror_400(*args, **kwargs):
+        def raise_json_error_400(*args, **kwargs):
             fp = Mock()
             fp.read.return_value = b"not a json"
             raise urllib.error.HTTPError(url, 400, "", None, fp)
 
-        mock.urlopen.side_effect = raise_jsonerror_400
+        mock.urlopen.side_effect = raise_json_error_400
         rep = await vlob_create(
             alice_ws,
             vlob_id=new_vlob_id,

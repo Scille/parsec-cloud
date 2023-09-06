@@ -40,7 +40,7 @@ async def test_handshake_send_invalid_answer_data(backend_asgi_app, kind):
     elif kind == "irrelevant_dict":
         bad_req = packb({"foo": "bar"})
     elif kind == "valid_msgpack_but_not_a_dict":
-        bad_req = b"\x00"  # Encodes the number 0 as positive fixint
+        bad_req = b"\x00"  # Encodes the number 0 as positive fix int
     else:
         assert kind == "invalid_msgpack"
         bad_req = b"\xc1"  # Never used value according to msgpack spec
@@ -98,12 +98,12 @@ async def test_authenticated_handshake_good(backend_asgi_app, alice):
 
 
 @pytest.mark.trio
-async def test_authenticated_handshake_bad_rvk(backend_asgi_app, alice, otherorg):
+async def test_authenticated_handshake_bad_rvk(backend_asgi_app, alice, other_org):
     ch = AuthenticatedClientHandshake(
         organization_id=alice.organization_id,
         device_id=alice.device_id,
         user_signkey=alice.signing_key,
-        root_verify_key=otherorg.root_verify_key,
+        root_verify_key=other_org.root_verify_key,
     )
     client = backend_asgi_app.test_client()
     async with client.websocket("/ws") as ws:

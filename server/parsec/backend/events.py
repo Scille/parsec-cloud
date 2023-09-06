@@ -269,7 +269,7 @@ class EventsComponent:
             new_events = self._get_client_missed_events_since(client_ctx, last_event_id)
         else:
             # Returning `None` means we couldn't retrieve the last event, however here
-            # we were not asked to retrieve it... which is equivalent to retreiving
+            # we were not asked to retrieve it... which is equivalent to retrieving
             # the very last event
             new_events = deque()
 

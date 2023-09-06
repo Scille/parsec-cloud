@@ -36,7 +36,7 @@ async def test_cancel_connection_after_events_subscribe(
         await backend_asgi_app.backend.user.revoke_user(
             organization_id=bob.organization_id,
             user_id=bob.user_id,
-            revoked_user_certificate=b"wathever",
+            revoked_user_certificate=b"whatever",
             revoked_user_certifier=alice.device_id,
         )
         # connection cancellation is handled through events, so wait
@@ -149,7 +149,7 @@ async def test_events_listen_wait_cancelled(backend_asgi_app, alice_ws):
 
 
 @pytest.mark.trio
-async def test_events_close_connection_on_backpressure(
+async def test_events_close_connection_on_back_pressure(
     backend_asgi_app, alice, bob_ws, monkeypatch, backend_authenticated_ws_factory
 ):
     # The channel has a queue of size 1, meaning it will be filled after a single command

@@ -68,8 +68,8 @@ macro_rules! impl_broadcastable {
                         .$field_on_event_cbs
                         .lock()
                         .expect("Mutex is poisoned");
-                    let fatptr: *const _ = callback.as_ref();
-                    let ptr = fatptr as *const () as usize;
+                    let fat_ptr: *const _ = callback.as_ref();
+                    let ptr = fat_ptr as *const () as usize;
                     guard.push(callback);
                     ptr
                 };
@@ -94,9 +94,9 @@ macro_rules! impl_broadcastable {
                         // see: https://github.com/rust-lang/rust/issues/106447
                         // So the solution is to manually transform the fat pointer into
                         // a thin one (i.e. the pointer on the data)
-                        let e_fatptr: *const _ = e.as_ref();
-                        let e_thinptr = e_fatptr as *const () as usize;
-                        e_thinptr == ptr
+                        let e_fat_ptr: *const _ = e.as_ref();
+                        let e_thin_ptr = e_fat_ptr as *const () as usize;
+                        e_thin_ptr == ptr
                     })
                     .map(|index| guard.swap_remove(index));
             }

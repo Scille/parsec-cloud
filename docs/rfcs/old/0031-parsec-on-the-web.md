@@ -95,10 +95,10 @@ The last point is very important, considering an actor hosting a Parsec server t
 
 #### So is Parsec web application completely broken (and hence useless) ?
 
-As we saw, a web application reduces security compared to a native one. However that can be acceptable tradeoff for certain usecases:
+As we saw, a web application reduces security compared to a native one. However that can be acceptable tradeoff for certain use cases:
 
 1) Showcasing Parsec. Providing Parsec as a Web application makes it much simpler for user to play with it and discover the product.
-2) In corporate environment. In this case there is no distrust between users and administrators of the Parsec server given both are part of the company. On top of that Big company administrators are responsible for managing the computers and hence have all the latitude to install keylogger and spywares. In this context, Parsec is part of a "defense in depth" strategy to protect company resources and easing the Zero-trust guarantee can be acceptable (see for instance the new sequestered organization optional feature that allow the company to recover encrypted data).
+2) In corporate environment. In this case there is no distrust between users and administrators of the Parsec server given both are part of the company. On top of that Big company administrators are responsible for managing the computers and hence have all the latitude to install keylogger and spyware. In this context, Parsec is part of a "defense in depth" strategy to protect company resources and easing the Zero-trust guarantee can be acceptable (see for instance the new sequestered organization optional feature that allow the company to recover encrypted data).
 3) In small business environment. Small business don't have resources for advanced administration/hosting/user formation so thing should be kept simple; on the other hand they main threat model is cryptolockers and data leaks (typically a computer with they financial information in clear gets stolen). In this case trusting a 3rd party such as Parsec SAAS can be considered ok.
 
 In other words, using Parsec as a web application depends of the sensitivity of the exchanged data and the trust in the hosting party ¯\\_(ツ)_/¯
@@ -186,7 +186,7 @@ The idea is:
 - first have to authenticate to the server to retrieve the encrypted DKF
 - then decrypt locally the DKF
 
-This way an attacker cannot just download the encrypted DKF and try to bruteforce it
+This way an attacker cannot just download the encrypted DKF and try to brute force it
 
 #### The recovery device
 

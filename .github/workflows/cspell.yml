@@ -17,7 +17,7 @@ permissions:
   contents: read
 
 jobs:
-  cpsell:
+  cspell:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout the repository

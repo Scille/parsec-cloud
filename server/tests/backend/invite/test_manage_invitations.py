@@ -545,10 +545,10 @@ async def test_invitation_deletion_isolated_between_users(bob, backend, alice_ws
 
 @pytest.mark.trio
 async def test_invitation_deletion_isolated_between_organizations(
-    alice, otheralice, backend_asgi_app, backend_invited_ws_factory, alice_ws
+    alice, other_alice, backend_asgi_app, backend_invited_ws_factory, alice_ws
 ):
     invitation = await backend_asgi_app.backend.invite.new_for_device(
-        organization_id=otheralice.organization_id, greeter_user_id=otheralice.user_id
+        organization_id=other_alice.organization_id, greeter_user_id=other_alice.user_id
     )
 
     rep = await invite_list(alice_ws)

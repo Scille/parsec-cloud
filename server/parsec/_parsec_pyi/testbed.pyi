@@ -181,7 +181,7 @@ class TestbedEventNewVlob:
     encryption_revision: int
     vlob_id: VlobID
     blob: bytes
-    seqester_blob: dict[SequesterServiceID, bytes] | None
+    sequester_blob: dict[SequesterServiceID, bytes] | None
 
 class TestbedEventUpdateVlob:
     timestamp: DateTime
@@ -191,7 +191,7 @@ class TestbedEventUpdateVlob:
     vlob: VlobID
     version: int
     blob: bytes
-    seqester_blob: dict[SequesterServiceID, bytes] | None
+    sequester_blob: dict[SequesterServiceID, bytes] | None
 
 class TestbedEventNewBlock:
     timestamp: DateTime

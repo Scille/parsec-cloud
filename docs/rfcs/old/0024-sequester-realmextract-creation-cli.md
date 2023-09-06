@@ -54,7 +54,7 @@ If `--output` path points on a folder, a database name should be automatically p
 The export is divided into 3 steps:
 
 1) export vlobs
-2) export other metadatas
+2) export other metadata
 3) export blocks
 
 We should pay attention to concurrency (typically if we export device certificates before vlobs we may end up with a vlob created by a newly created device and lack the corresponding certificate...).

@@ -376,7 +376,7 @@ async def _conduit_listen(
             curr_peer_payload = row["conduit_greeter_payload"]
 
         if ctx.peer_payload is None:
-            # We are waiting for the peer to provite it payload
+            # We are waiting for the peer to provide its payload
 
             # Only peer payload should be allowed to change
             if curr_conduit_state != ctx.state or curr_our_payload != ctx.payload:

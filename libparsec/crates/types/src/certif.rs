@@ -261,7 +261,7 @@ impl UserCertificate {
         if let Some(expected_human_handle) = expected_human_handle {
             if let Some(human_handle) = &r.human_handle {
                 if human_handle != expected_human_handle {
-                    return Err(DataError::UnexpecteddHumanHandle {
+                    return Err(DataError::UnexpectedHumanHandle {
                         expected: Box::new(expected_human_handle.clone()),
                         got: Box::new(human_handle.clone()),
                     });

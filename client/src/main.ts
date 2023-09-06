@@ -124,7 +124,7 @@ async function setupApp(): Promise<void> {
   // We can start the app with different cases :
   // - dev with a testbed Parsec server with the default devices
   // - dev or prod where devices are fetched from the local storage
-  // - tests with Cypress where the testbed instantation is done by Cypress
+  // - tests with Cypress where the testbed instantiation is done by Cypress
 
   // We get the app element and we set and attribute to indicate that we are waiting for
   // the config path

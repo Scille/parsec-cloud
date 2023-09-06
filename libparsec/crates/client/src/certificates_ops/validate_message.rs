@@ -35,7 +35,7 @@ pub enum InvalidMessageError {
         sender: DeviceID,
         timestamp: DateTime,
     },
-    #[error("Message #{index} from `{sender}` at {timestamp}: author has not a sufficent role to reencrypt the workspace !")]
+    #[error("Message #{index} from `{sender}` at {timestamp}: author has not a sufficient role to reencrypt the workspace !")]
     AuthorNotAllowedToReencrypt {
         index: IndexInt,
         sender: DeviceID,

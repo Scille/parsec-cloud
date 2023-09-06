@@ -28,13 +28,13 @@ async def _test_good_handshake(
 async def _test_handshake_bad_organization(
     client: AuthenticatedRpcApiClient | AnonymousRpcApiClient | InvitedRpcApiClient,
 ):
-    for badorg in [
+    for bad_org in [
         "dummy",  # Unknown organization
         "a" * 65,  # Invalid organization ID
     ]:
 
         def _before_send_hook(args):
-            args["path"] = args["path"].replace("CoolOrg", badorg)
+            args["path"] = args["path"].replace("CoolOrg", bad_org)
 
         rep = await client.send(
             PING_RAW_REQ,
@@ -71,7 +71,7 @@ async def _test_handshake_api_version_header(
             extra_headers={"Api-Version": None},
             check_rep=False,
         )
-        # Special case for anynous
+        # Special case for anonymous
         assert rep.status_code == 200
         rep.headers["Api-Version"] == "3.0"
 

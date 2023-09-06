@@ -227,7 +227,7 @@ repos:
 
       - id: check-jsonschema
         name: Validate Read the doc configuration files
-        alias: check-readthedoc
+        alias: check-readthedocs
         files: .readthedocs.yml
         args: [ --schemafile, https://raw.githubusercontent.com/readthedocs/readthedocs.org/main/readthedocs/rtd_tests/fixtures/spec/v2/schema.json ]
 

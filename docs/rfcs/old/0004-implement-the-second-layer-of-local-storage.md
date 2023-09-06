@@ -4,7 +4,7 @@
 
 From [ISSUE-268](https://github.com/Scille/parsec-cloud/issues/268)
 
-Dans la [PR-261](https://github.com/Scille/parsec-cloud/pull/261) on a un cache mémoire au-dessus du local DB pour stocker les users et manifests, ainsi que les blocks. L'optimisation pour les blocks a été limitée au contenu et non aux metadatas (date d'accès), car il faut MAJ la date de dernier accès de manière fiable.
+Dans la [PR-261](https://github.com/Scille/parsec-cloud/pull/261) on a un cache mémoire au-dessus du local DB pour stocker les users et manifests, ainsi que les blocks. L'optimisation pour les blocks a été limitée au contenu et non aux métadonnées (date d'accès), car il faut MAJ la date de dernier accès de manière fiable.
 
 Cependant, on pourrait procéder ainsi pour éviter au maximum les requêtes de MAJ de date d'accès.
 

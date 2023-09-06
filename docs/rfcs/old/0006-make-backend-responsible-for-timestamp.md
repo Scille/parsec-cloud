@@ -115,7 +115,7 @@ Now say we want history of `foo/bar.txt` at Tx.
 
 If Tf'2 <= Tx, we will fetch the second `bar.txt` entry, but this one may have
 Tb'3 > Tx.
-I guess there is plenty of other strange usecases where looking at history at a
+I guess there is plenty of other strange use cases where looking at history at a
 given time gives different results depending on the algorithm and the path
 (from parent to child or the other way around) we choose.
 
@@ -128,7 +128,7 @@ the same time frame) is considered a perfectly normal thing.
 Obviously this would necessitate to turn TIMESTAMP_MAX_DT into a hard constant
 that cannot be changed.
 
-I guess introducting a Timestamp class to represent and take into account
+I guess introducing a Timestamp class to represent and take into account
 jitter would help things:
 
 ```python
@@ -230,8 +230,8 @@ we mix core and backend data in the fixtures...)
 For instance:
 <https://github.com/Scille/parsec-cloud/blob/cf831083182b65b670ff9ea51a18e998d1230ef4/tests/backend/user/test_device_get_invitation_creator.py#L106-L108>
 
-Here we should add new fields `devices_trustchains`, `users_trustchains` and
-`revoked_users_trustchains` (each being a list of timestamps). However we must
+Here we should add new fields `devices_trustchain`, `users_trustchain` and
+`revoked_users_trustchain` (each being a list of timestamps). However we must
 sort those field in the same order as the sort being done on there corresponding
-certificate field (e.g. `devices[0]` and `devices_trustchains[0]` should point
+certificate field (e.g. `devices[0]` and `devices_trustchain[0]` should point
 to the same stuff)... this is getting out of hand :'-(

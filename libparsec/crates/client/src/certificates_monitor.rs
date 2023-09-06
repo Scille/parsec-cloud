@@ -91,7 +91,7 @@ impl Drop for CertificatesMonitor {
         // it internals like the certificate storage) is never reused.
         //
         // If that the case, then the abort is analogue to an unexpected application crash,
-        // or a suddent shutdown of the computer. Then the only remaning data are the one
+        // or a sudden shutdown of the computer. Then the only remaining data are the one
         // in the sqlite database which are designed to sustain such event.
         //
         // However if the structures in memory get re-used, then we can end up with

@@ -25,7 +25,7 @@ from tests.common import (
 @customize_fixtures(coolorg_is_sequestered_organization=True)
 async def test_sequestered_organization_bootstrap(
     coolorg: OrganizationFullData,
-    otherorg: OrganizationFullData,
+    other_org: OrganizationFullData,
     alice: LocalDevice,
     anonymous_backend_ws,
     backend,
@@ -58,7 +58,7 @@ async def test_sequestered_organization_bootstrap(
 
     # Authority certificate not signed by the root key
     bad_sequester_authority_certificate = coolorg.sequester_authority.certif_data.dump_and_sign(
-        otherorg.root_signing_key
+        other_org.root_signing_key
     )
     rep = await organization_bootstrap(
         anonymous_backend_ws,

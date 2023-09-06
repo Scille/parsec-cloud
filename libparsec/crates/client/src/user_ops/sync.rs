@@ -424,7 +424,7 @@ async fn inbound_sync(ops: &UserOps) -> Result<(), SyncError> {
 
             let mut manifest = find_last_valid_manifest(ops, last_version).await?;
 
-            // If we return the manifest as-is, we won't be able to do outbond sync
+            // If we return the manifest as-is, we won't be able to do outbound sync
             // given the server will always complain a more recent manifest exists
             // (i.e. the one that is corrupted !).
             // So we tweak this old manifest into pretending it is the corrupted one.

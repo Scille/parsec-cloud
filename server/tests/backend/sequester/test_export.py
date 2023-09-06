@@ -42,7 +42,7 @@ from tests.common import OrganizationFullData, customize_fixtures, sequester_ser
 @pytest.mark.postgresql
 @pytest.mark.trio
 async def test_sequester_export_full_run(
-    tmp_path, coolorg: OrganizationFullData, backend, alice, alice2, bob, adam, otherorg
+    tmp_path, coolorg: OrganizationFullData, backend, alice, alice2, bob, adam, other_org
 ):
     curr_now = DateTime(2000, 1, 1)
 
@@ -71,7 +71,7 @@ async def test_sequester_export_full_run(
     await backend.realm.create(
         organization_id=coolorg.organization_id,
         self_granted_role=RealmGrantedRole(
-            certificate=b"rolecert1",
+            certificate=b"role_cert1",
             realm_id=realm1,
             user_id=alice.user_id,
             role=RealmRole.OWNER,
@@ -83,7 +83,7 @@ async def test_sequester_export_full_run(
     await backend.realm.update_roles(
         organization_id=coolorg.organization_id,
         new_role=RealmGrantedRole(
-            certificate=b"rolecert2",
+            certificate=b"role_cert2",
             realm_id=realm1,
             user_id=bob.user_id,
             role=RealmRole.MANAGER,
@@ -205,7 +205,7 @@ async def test_sequester_export_full_run(
         assert isinstance(row[0], int)  # _id
         assert isinstance(row[1], bytes)  # role_certificate
     assert len(rows) == 2  # Contains alice's OWNER role and bob MANAGER roles on realm1
-    assert {row[1] for row in rows} == {b"rolecert1", b"rolecert2"}
+    assert {row[1] for row in rows} == {b"role_cert1", b"role_cert2"}
     assert len({row[0] for row in rows}) == 2  # Make sure all ids are unique
 
     # 3) user table
@@ -305,7 +305,7 @@ async def test_sequester_export_full_run(
     await backend.realm.update_roles(
         organization_id=coolorg.organization_id,
         new_role=RealmGrantedRole(
-            certificate=b"rolecert3",
+            certificate=b"role_cert3",
             realm_id=realm1,
             user_id=bob.user_id,
             role=None,
@@ -420,7 +420,7 @@ async def test_sequester_export_full_run(
     # Non sequestered organization
     with pytest.raises(RealmExporterInputError):
         async with RealmExporter.run(
-            **{**default_args, "organization_id": otherorg.organization_id}
+            **{**default_args, "organization_id": other_org.organization_id}
         ):
             pass
 

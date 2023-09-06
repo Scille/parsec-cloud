@@ -27,7 +27,7 @@ async def test_sse_events_connection_closed_on_user_revoke(
         await backend_asgi_app.backend.user.revoke_user(
             organization_id=bob.organization_id,
             user_id=bob.user_id,
-            revoked_user_certificate=b"wathever",
+            revoked_user_certificate=b"whatever",
             revoked_user_certifier=alice.device_id,
         )
         # connection cancellation is handled through events, so wait
@@ -151,12 +151,12 @@ async def test_sse_cross_backend_event(backend_factory, alice, bob):
 
 
 @pytest.mark.trio
-async def test_sse_events_close_connection_on_backpressure(
+async def test_sse_events_close_connection_on_back_pressure(
     monkeypatch, backend, alice_rpc: AuthenticatedRpcApiClient, alice, bob
 ):
     # The channel has a queue of size 1, meaning it will be filled after a single command
     monkeypatch.setattr("parsec.backend.client_context.AUTHENTICATED_CLIENT_CHANNEL_SIZE", 1)
-    # `alice_rpc` fixture lazily intiate connection with the server, hence the
+    # `alice_rpc` fixture lazily initiate connection with the server, hence the
     # monkeypatch of the queue size will be taken into account when creating client context
 
     async with real_clock_timeout():

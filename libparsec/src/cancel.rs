@@ -20,7 +20,7 @@ pub(crate) enum Canceller {
     // Canceller has been created
     Free(libparsec_platform_async::event::Event),
     // Canceller is now listened by a running task
-    Binded(libparsec_platform_async::event::Event),
+    Bound(libparsec_platform_async::event::Event),
     // The task has finished, the canceller's mission is done
     Terminated,
 }
@@ -84,7 +84,7 @@ pub(crate) fn listen_canceller(
                     _ => unreachable!(),
                 };
                 // Actual update
-                *c = Canceller::Binded(event);
+                *c = Canceller::Bound(event);
 
                 Ok((listener, CancelListenGuard(canceller)))
             }
@@ -98,7 +98,7 @@ pub(crate) fn listen_canceller(
 #[derive(Debug, thiserror::Error)]
 pub enum CancelError {
     #[error("Canceller is not connected to any task")]
-    NotBinded,
+    NotBound,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -111,9 +111,9 @@ pub fn cancel(canceller: Handle) -> Result<(), CancelError> {
 
     match guard.get_mut(canceller as usize) {
         Some(x) => match x {
-            Canceller::Free(_) => Err(CancelError::NotBinded),
+            Canceller::Free(_) => Err(CancelError::NotBound),
             Canceller::Terminated => Ok(()), // Idempotent
-            Canceller::Binded(event) => {
+            Canceller::Bound(event) => {
                 event.notify(usize::MAX);
                 Ok(())
             }
