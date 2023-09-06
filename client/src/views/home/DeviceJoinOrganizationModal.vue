@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page>
+  <ion-page class="modal-stepper">
     <ms-wizard-stepper
       v-show="pageStep > DeviceJoinOrganizationStep.Information && pageStep < DeviceJoinOrganizationStep.Finish"
       :current-index="pageStep - 1"
@@ -325,111 +325,12 @@ function claimerRetrieveInfo(): void {
 </script>
 
 <style scoped lang="scss">
-.modal {
-  padding: 3.5rem;
-  justify-content: start;
-
-  &.wizardTrue {
-    padding-top: 2.5rem;
-  }
-}
-
-.closeBtn-container {
-  position: absolute;
-  top: 2rem;
-  right: 2rem;
-}
-
-.closeBtn-container,
-.closeBtn {
-  margin: 0;
-  --padding-start: 0;
-  --padding-end: 0;
-}
-
-.closeBtn {
-  width: fit-content;
-  height: fit-content;
-  --border-radius: var(--parsec-radius-4);
-  --background-hover: var(--parsec-color-light-primary-50);
-  border-radius: var(--parsec-radius-4);
-
-  &__icon {
-    padding: 4px;
-    color: var(--parsec-color-light-primary-500);
-
-    &:hover {
-      --background-hover: var(--parsec-color-light-primary-50);
-    }
-  }
-
-  &:active {
-    border-radius: var(--parsec-radius-4);
-    background: var(--parsec-color-light-primary-100);
-  }
-}
-
-.modal-header {
-  margin-bottom: 2rem;
-
-  &__title {
-    padding: 0;
-    margin-bottom: 1.5rem;
-    color: var(--parsec-color-light-primary-600);
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  &__text {
-    color: var(--parsec-color-light-secondary-grey);
-  }
-}
-
-.modal-content {
-  --background: transparent;
-
-  .step {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-}
-
-.modal-footer {
-  margin-top: 2.5rem;
-
-  &::before {
-    background: transparent;
-  }
-
-  &-buttons {
-    display: flex;
-    justify-content: end;
-    gap: 1rem;
-  }
-}
-
 .orga-name {
   display: flex;
   flex-direction: column;
 }
 
-.label-waiting {
-  color: var(--parsec-color-light-secondary-grey);
-  font-style: italic;
-  padding-left: 2em;
-  padding-right: 2em;
-}
-
 .guest-code {
   margin: 4.7rem auto;
-}
-
-.spinner-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
 }
 </style>
