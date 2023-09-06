@@ -208,6 +208,7 @@
         "documents": "Documents",
         "user": "utilisateur",
         "itemCount": "Aucun élément | 1 élément | {count} éléments",
+        "noWorkspaces": "Vous n'avez pas encore créé d'espace de travail, et aucun espace de travail n'a été partagé avec vous.",
         "workspaceContextMenu": {
             "titleOffline": "Hors Connexion",
             "titleManage": "Gestion de l'espace",
@@ -451,7 +452,8 @@
             "waiting": "En attente",
             "email": "Email",
             "date": "Invitation date",
-            "status": "Status"
+            "status": "Status",
+            "noInvitations": "Aucune invitation en cours"
         }
     },
     "AboutPage": {

@@ -23,7 +23,10 @@
 
       <!-- content -->
       <div class="invitation-container">
-        <div v-if="displayView === DisplayState.List">
+        <div v-if="invitations.length === 0">
+          {{ $t('UsersPage.invitation.noInvitations') }}
+        </div>
+        <div v-if="invitations.length > 0 && displayView === DisplayState.List">
           <ion-list class="invitation-list">
             <ion-list-header
               class="invitation-list-header"
@@ -50,7 +53,7 @@
             />
           </ion-list>
         </div>
-        <div v-else>
+        <div v-if="invitations.length > 0 && displayView === DisplayState.Grid">
           <ion-list class="invitation-card">
             <ion-item
               v-for="invitation in invitations"

@@ -209,6 +209,7 @@
         "documents": "Documents",
         "user": "user",
         "itemCount": "No items | 1 item | {count} items",
+        "noWorkspaces": "You haven't created a workspace, and no workspace has been shared with you yet.",
         "workspaceContextMenu": {
             "titleOffline": "Offline",
             "titleManage": "Manage workspace",
@@ -452,7 +453,8 @@
             "waiting": "Waiting",
             "email": "Email",
             "date": "Invitation date",
-            "status": "Status"
+            "status": "Status",
+            "noInvitations": "No pending invitations"
         }
     },
     "AboutPage": {
