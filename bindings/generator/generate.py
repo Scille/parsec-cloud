@@ -108,7 +108,7 @@ def snake_case_to_camel_case(s: str) -> str:
     return camel
 
 
-def _test_snake_case_to_camel_case(input: str, expected: str):
+def _test_snake_case_to_camel_case(input: str, expected: str) -> None:
     camel_case = snake_case_to_camel_case(input)
     assert (
         camel_case == expected
