@@ -84,7 +84,7 @@ jobs:
           cargo check --profile ci-rust --workspace --features use-sodiumoxide
           cargo test --profile ci-rust --workspace ${{ env.cargo-exclude-unused-crates }}
           cargo test --profile ci-rust --package libparsec_crypto --features use-sodiumoxide
-        timeout-minutes: 30
+        timeout-minutes: 40
         env:
           RUST_LOG: debug
 
