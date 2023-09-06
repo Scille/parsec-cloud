@@ -32,33 +32,13 @@ More specifically, the following API changes are required:
 
 The archiving status can be configured using one of 3 variants, `Available`, `Archived` and `DeletionPlanned`:
 
-```json5
-        "nested_types": [
-            {
-                "name": "RealmArchivingStatusConfiguration",
-                "discriminant_field": "type",
-                "variants": [
-                    {
-                        "name": "Available",
-                        "discriminant_value": "AVAILABLE"
-                    },
-                    {
-                        "name": "Archived",
-                        "discriminant_value": "ARCHIVED"
-                    },
-                    {
-                        "name": "DeletionPlanned",
-                        "discriminant_value": "DELETION_PLANNED",
-                        "fields": [
-                            {
-                                "name": "deletion_date",
-                                "type": "Datetime"
-                            },
-                        ]
-                    }
-                ]
-            }
-        ]
+```rust
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum RealmArchivingConfiguration {
+    Available,
+    Archived,
+    DeletionPlanned(DateTime),
 ```
 
 This configuration is included in a certificate signed by the owner:
@@ -76,8 +56,12 @@ This configuration is included in a certificate signed by the owner:
             "type": "DateTime"
         },
         {
+            "name": "realm_id",
+            "type": "RealmID",
+        }
+        {
             "name": "configuration",
-            "type": "RealmArchivingStatusConfiguration",
+            "type": "RealmArchivingConfiguration",
         }
     ]
 }
@@ -125,40 +109,16 @@ The following command is added to the authenticated API:
             },
             {
                 // Returned if the user does not have the `owner` role
-                "status": "not_allowed",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "not_allowed"
             },
             {
-                "status": "invalid_certification",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "invalid_certification"
             },
             {
-                "status": "invalid_data",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "invalid_data"
             },
             {
-                "status": "not_found",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "not_found"
             },
             {
                 "status": "require_greater_timestamp",
@@ -172,10 +132,6 @@ The following command is added to the authenticated API:
             {
                 "status": "bad_timestamp",
                 "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    },
                     {
                         "name": "ballpark_client_early_offset",
                         "type": "Float"
@@ -210,61 +166,6 @@ When this command returns successfully, a `REALM_ARCHIVING_UPDATED` event should
 
 Also, an authenticated command is added to get the all the current archiving status at once.
 
-The archiving status is defined using the following variants:
-
-```json5
-        "nested_types": [
-            {
-                "name": "RealmArchivingStatus",
-                "discriminant_field": "type",
-                "variants": [
-                    {
-                        "name": "Available",
-                        "discriminant_value": "AVAILABLE"
-                    },
-                    {
-                        "name": "Archived",
-                        "discriminant_value": "ARCHIVED",
-                        "fields": [
-                            {
-                                "name": "archiving_date",
-                                "type": "Datetime"
-                            }
-                        ]
-                    },
-                    {
-                        "name": "DeletionPlanned",
-                        "discriminant_value": "DELETION_PLANNED",
-                        "fields": [
-                            {
-                                "name": "archiving_date",
-                                "type": "Datetime"
-                            },
-                            {
-                                "name": "deletion_date",
-                                "type": "Datetime"
-                            }
-                        ]
-                    },
-                    {
-                        "name": "Deleted",
-                        "discriminant_value": "DELETED",
-                        "fields": [
-                            {
-                                "name": "archiving_date",
-                                "type": "Datetime"
-                            },
-                            {
-                                "name": "deletion_date",
-                                "type": "Datetime"
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-```
-
 The command will be used in API v2 when a new connection is created in order to reach the correct state as soon as the connection becomes available.
 
 It's also used in API v2 to fetch to new archiving status when an `ARCHIVING_STATUS_UPDATED` event is received.
@@ -279,16 +180,16 @@ It is defined as such:
             3
         ],
         "req": {
-            "cmd": "realm_archiving_config"
+            "cmd": "archiving_config"
         },
         "reps": [
             {
                 "status": "ok",
                 "fields": [
                     {
-                        "name": "realm_archiving_configs",
-                        "type": "List<RealmArchivingConfig>"
-                    },
+                        "name": "archiving_config",
+                        "type": "List<RealmArchivingStatus>"
+                    }
                 ]
             },
             {
@@ -297,15 +198,19 @@ It is defined as such:
         ],
         "nested_types": [
             {
-                "name": "RealmArchivingConfig",
+                "name": "RealmArchivingStatus",
                 "fields": [
                     {
                         "name": "realm_id",
                         "type": "RealmID"
                     },
                     {
-                        "name": "archiving_status",
-                        "type": "RealmArchivingStatus"
+                        "name": "configured_on",
+                        "type": "Option<DateTime>"
+                    },
+                    {
+                        "name": "configuration",
+                        "type": "RealmArchivingConfiguration"
                     }
                 ]
             }
@@ -316,7 +221,30 @@ It is defined as such:
 
 **Note:** The command does not allow to get the archiving status for a single realm, which would be potentially more efficient to fetch the new archiving status of a freshly updated realm. This is however not a big deal as this is a temporary command for the v2/v3 transition. With v3 API, the certificates will be eagerly downloaded and this is how the device will get the new archiving status.
 
-In addition, the `vlob_create`, `vlob_update`, `vlob_read`, `block_read` and `block_create` commands are updated with new reply status:
+In addition, the following commands are updated with new reply status:
+
+
+| Check for archived/deleted status          | archived | deleted |
+|--------------------------------------------|----------|---------|
+| `realm_create`                             |          |         |
+| `realm_status`                             |          | ✔️       |
+| `realm_stats`                              |          | ✔️       |
+| `realm_get_role_certificates`              |          |         |
+| `realm_update_roles`                       |          | ✔️       |
+| `realm_update_archiving`                   |          | ✔️       |
+| `realm_start_reencryption_maintenance`     |          | ✔️       |
+| `realm_finish_reencryption_maintenance`    |          | ✔️       |
+| `vlob_create`                              | ✔️        | ✔️       |
+| `vlob_read`                                |          | ✔️       |
+| `vlob_update`                              | ✔️        | ✔️       |
+| `vlob_poll_changes`                        |          | ✔️       |
+| `vlob_list_versions`                       |          | ✔️       |
+| `vlob_maintenance_get_reencryption_batch`  |          | ✔️       |
+| `vlob_maintenance_save_reencryption_batch` |          | ✔️       |
+| `block_read`                               |          | ✔️       |
+| `block_create`                             | ✔️        | ✔️       |
+
+
 
 ```json5
             [...]
@@ -372,4 +300,4 @@ class OrganizationUpdateReqSchema(BaseSchema):
     minimum_archiving_period = fields.Integer(required=False, validate=lambda x: x >= 0)
 ```
 
-Note: the value applied by default is `43200`, i.e. 30 days.
+Note: the value applied by default is `2592000`, i.e. 30 days.
