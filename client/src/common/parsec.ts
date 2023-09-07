@@ -29,6 +29,10 @@ const DEFAULT_HANDLE = 42;
 export type WorkspaceID = EntryID;
 export type WorkspaceName = EntryName;
 
+export interface UserInvitation extends InviteListItemUser {
+  date: DateTime
+}
+
 export async function listAvailableDevices(): Promise<Array<AvailableDevice>> {
   return await libparsec.listAvailableDevices(window.getConfigDir());
 }
@@ -82,7 +86,7 @@ export async function inviteDevice(sendEmail: boolean):
   });
 }
 
-export async function listUserInvitations(): Promise<Result<Array<InviteListItemUser>, ListInvitationsError>> {
+export async function listUserInvitations(): Promise<Result<Array<UserInvitation>, ListInvitationsError>> {
   const handle = getParsecHandle();
 
   if (handle !== null && window.isDesktop()) {
@@ -93,22 +97,28 @@ export async function listUserInvitations(): Promise<Result<Array<InviteListItem
     }
     // No need to add device invitations
     result.value = result.value.filter((item) => item.tag === 'User');
+    // Convert InviteListItemUser to UserInvitation
+    result.value = result.value.map((item) => {
+      (item as UserInvitation).date = DateTime.fromISO(item.createdOn);
+      return item;
+    });
     return result as any;
   } else {
-    return new Promise<Result<Array<InviteListItemUser>, ListInvitationsError>>((resolve, _reject) => {
-      const ret: Array<InviteListItemUser> = [{
+    return new Promise<Result<Array<UserInvitation>, ListInvitationsError>>((resolve, _reject) => {
+      const ret: Array<UserInvitation> = [{
         tag: 'User',
         token: '1234',
-        createdOn: DateTime.now().toFormat('yyyy/mm/dd'),
+        createdOn: DateTime.now().toISO() || '',
         claimerEmail: 'shadowheart@swordcoast.faerun',
         status: {tag: 'Ready'},
+        date: DateTime.now(),
       }, {
         tag: 'User',
         token: '5678',
-        createdOn: DateTime.now().toFormat('yyyy/mm/dd'),
+        createdOn: DateTime.now().toISO() || '',
         claimerEmail: 'gale@waterdeep.faerun',
         status: {tag: 'Ready'},
-
+        date: DateTime.now(),
       }];
       resolve({ok: true, value: ret});
     });

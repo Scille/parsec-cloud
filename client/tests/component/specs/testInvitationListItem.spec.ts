@@ -4,18 +4,19 @@ import InvitationListItem from '@/components/users/InvitationListItem.vue';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
 import { mockI18n, getDefaultProvideConfig } from 'tests/component/support/mocks';
-import { InviteListItemUser } from '@/plugins/libparsec/definitions';
+import * as Parsec from '@/common/parsec';
 
 mockI18n();
 
 describe('User Invitation List Item', () => {
   it('Display invitation', () => {
-    const INVITATION: InviteListItemUser = {
+    const INVITATION: Parsec.UserInvitation = {
       tag: 'User',
       token: '1234',
-      createdOn: DateTime.now().toFormat('yyyy/mm/dd'),
+      createdOn: DateTime.now().toISO() || '',
       claimerEmail: 'dung.eater@lands-between',
       status: {tag: 'Ready'},
+      date: DateTime.now(),
     };
 
     const wrapper = mount(InvitationListItem, {

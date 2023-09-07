@@ -215,7 +215,7 @@ import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 import { Profile } from '@/common/mocks';
-import { InviteListItemUser } from '@/plugins/libparsec/definitions';
+import * as Parsec from '@/common/parsec';
 
 enum GreetUserStep {
   WaitForGuest = 1,
@@ -234,7 +234,7 @@ const { t } = useI18n();
 const pageStep = ref(GreetUserStep.WaitForGuest);
 
 defineProps<{
-  invitation: InviteListItemUser
+  invitation: Parsec.UserInvitation
 }>();
 
 const profile: Ref<Profile | null> = ref(null);

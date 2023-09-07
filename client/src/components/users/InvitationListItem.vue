@@ -20,8 +20,7 @@
       <ion-label
         class="cell invitation-label"
       >
-        <span>{{ invitation.createdOn }}</span>
-        <!-- <span>{{ timeSince(invitation.createdOn, '--', 'short') }}</span> -->
+        <span>{{ timeSince(invitation.date, '--', 'short') }}</span>
       </ion-label>
     </div>
 
@@ -64,15 +63,15 @@ import {
 } from '@ionic/vue';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
 import { defineProps, inject } from 'vue';
-import { InviteListItemUser } from '@/plugins/libparsec/definitions';
+import * as Parsec from '@/common/parsec';
 
 defineProps<{
-  invitation: InviteListItemUser,
+  invitation: Parsec.UserInvitation,
 }>();
 
 defineEmits<{
-  (e: 'rejectUser', invitation: InviteListItemUser) : void,
-  (e: 'greetUser', invitation: InviteListItemUser) : void,
+  (e: 'rejectUser', invitation: Parsec.UserInvitation) : void,
+  (e: 'greetUser', invitation: Parsec.UserInvitation) : void,
 }>();
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

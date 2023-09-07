@@ -173,7 +173,7 @@ import { MockUser, getMockUsers } from '@/common/mocks';
 import { onMounted } from '@vue/runtime-core';
 import CreateUserInvitationModal from '@/views/users/CreateUserInvitationModal.vue';
 import * as Parsec from '@/common/parsec';
-import router, { routerNavigateTo } from '@/router';
+import { routerNavigateTo } from '@/router';
 
 const displayView = ref(DisplayState.List);
 const userList: Ref<MockUser[]> = ref([]);
