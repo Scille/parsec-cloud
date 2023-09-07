@@ -98,12 +98,11 @@ import { createAlert } from '@/components/core/ms-alert/MsAlertConfirmation';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
 import InvitationCard from '@/components/users/InvitationCard.vue';
 import InvitationListItem from '@/components/users/InvitationListItem.vue';
-import { InviteListItemUser } from '@/plugins/libparsec/definitions';
 import * as Parsec from '@/common/parsec';
 import CreateUserInvitationModal from '@/views/users/CreateUserInvitationModal.vue';
 import { isRoute } from '@/router/conditions';
 
-const invitations: Ref<InviteListItemUser[]> = ref([]);
+const invitations: Ref<Parsec.UserInvitation[]> = ref([]);
 
 const { t } = useI18n();
 
@@ -162,7 +161,7 @@ async function canDismissModal(_data?: any, modalRole?: string): Promise<boolean
   return role === MsModalResult.Confirm;
 }
 
-async function greetUser(invitation: InviteListItemUser): Promise<void> {
+async function greetUser(invitation: Parsec.UserInvitation): Promise<void> {
   const modal = await modalController.create({
     component: GreetUserModal,
     canDismiss: canDismissModal,
@@ -175,7 +174,7 @@ async function greetUser(invitation: InviteListItemUser): Promise<void> {
   await modal.onWillDismiss();
 }
 
-async function rejectUser(invitation: InviteListItemUser) : Promise<void> {
+async function rejectUser(invitation: Parsec.UserInvitation) : Promise<void> {
   const result = await Parsec.cancelInvitation(invitation.token);
 
   if (result.ok) {
