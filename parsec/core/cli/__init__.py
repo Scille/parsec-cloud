@@ -5,12 +5,14 @@ import click
 
 from parsec.cli_utils import version_option
 from parsec.core.cli import (
+    archive_workspace,
     bootstrap_organization,
     create_organization,
     create_workspace,
     human_find,
     invitation,
     list_devices,
+    list_workspace,
     pki,
     recovery,
     reencrypt_workspace,
@@ -36,6 +38,10 @@ core_cmd_group.add_command(run.run_mountpoint, "run")
 core_cmd_group.add_command(rsync.run_rsync, "rsync")
 core_cmd_group.add_command(create_workspace.create_workspace, "create_workspace")
 core_cmd_group.add_command(share_workspace.share_workspace, "share_workspace")
+core_cmd_group.add_command(list_workspace.list_workspaces, "list_workspaces")
+core_cmd_group.add_command(archive_workspace.archive_workspace, "archive_workspace")
+core_cmd_group.add_command(archive_workspace.delete_workspace, "delete_workspace")
+core_cmd_group.add_command(archive_workspace.unarchive_workspace, "unarchive_workspace")
 core_cmd_group.add_command(reencrypt_workspace.reencrypt_workspace, "reencrypt_workspace")
 core_cmd_group.add_command(list_devices.list_devices, "list_devices")
 core_cmd_group.add_command(list_devices.remove_device, "remove_device")
