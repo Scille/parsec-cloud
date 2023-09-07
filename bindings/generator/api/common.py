@@ -17,6 +17,14 @@ class Result(Generic[OK, ERR]):
     pass
 
 
+class Enum:
+    pass
+
+
+class EnumItemUnit:
+    pass
+
+
 # e.g.
 #
 #       enum Foo {
@@ -195,7 +203,7 @@ class InvitationToken(StrBasedType):
     )
 
 
-class UserProfile(Variant):
-    Admin = VariantItemUnit
-    Standard = VariantItemUnit
-    Outsider = VariantItemUnit
+class UserProfile(Enum):
+    Admin = EnumItemUnit
+    Standard = EnumItemUnit
+    Outsider = EnumItemUnit

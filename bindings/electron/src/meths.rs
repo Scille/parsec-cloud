@@ -7,10 +7,171 @@
 #[allow(unused_imports)]
 use neon::{prelude::*, types::buffer::TypedArray};
 
+// RealmRole
+
+#[allow(dead_code)]
+fn enum_realm_role_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    raw_value: &str,
+) -> NeonResult<libparsec::RealmRole> {
+    match raw_value {
+        "RealmRoleContributor" => Ok(libparsec::RealmRole::Contributor),
+        "RealmRoleManager" => Ok(libparsec::RealmRole::Manager),
+        "RealmRoleOwner" => Ok(libparsec::RealmRole::Owner),
+        "RealmRoleReader" => Ok(libparsec::RealmRole::Reader),
+        _ => cx.throw_range_error(format!("Invalid value `{raw_value}` for enum RealmRole")),
+    }
+}
+
+#[allow(dead_code)]
+fn enum_realm_role_rs_to_js(value: libparsec::RealmRole) -> &'static str {
+    match value {
+        libparsec::RealmRole::Contributor => "RealmRoleContributor",
+        libparsec::RealmRole::Manager => "RealmRoleManager",
+        libparsec::RealmRole::Owner => "RealmRoleOwner",
+        libparsec::RealmRole::Reader => "RealmRoleReader",
+    }
+}
+
+// UserProfile
+
+#[allow(dead_code)]
+fn enum_user_profile_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    raw_value: &str,
+) -> NeonResult<libparsec::UserProfile> {
+    match raw_value {
+        "UserProfileAdmin" => Ok(libparsec::UserProfile::Admin),
+        "UserProfileOutsider" => Ok(libparsec::UserProfile::Outsider),
+        "UserProfileStandard" => Ok(libparsec::UserProfile::Standard),
+        _ => cx.throw_range_error(format!("Invalid value `{raw_value}` for enum UserProfile")),
+    }
+}
+
+#[allow(dead_code)]
+fn enum_user_profile_rs_to_js(value: libparsec::UserProfile) -> &'static str {
+    match value {
+        libparsec::UserProfile::Admin => "UserProfileAdmin",
+        libparsec::UserProfile::Outsider => "UserProfileOutsider",
+        libparsec::UserProfile::Standard => "UserProfileStandard",
+    }
+}
+
+// DeviceFileType
+
+#[allow(dead_code)]
+fn enum_device_file_type_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    raw_value: &str,
+) -> NeonResult<libparsec::DeviceFileType> {
+    match raw_value {
+        "DeviceFileTypePassword" => Ok(libparsec::DeviceFileType::Password),
+        "DeviceFileTypeRecovery" => Ok(libparsec::DeviceFileType::Recovery),
+        "DeviceFileTypeSmartcard" => Ok(libparsec::DeviceFileType::Smartcard),
+        _ => cx.throw_range_error(format!(
+            "Invalid value `{raw_value}` for enum DeviceFileType"
+        )),
+    }
+}
+
+#[allow(dead_code)]
+fn enum_device_file_type_rs_to_js(value: libparsec::DeviceFileType) -> &'static str {
+    match value {
+        libparsec::DeviceFileType::Password => "DeviceFileTypePassword",
+        libparsec::DeviceFileType::Recovery => "DeviceFileTypeRecovery",
+        libparsec::DeviceFileType::Smartcard => "DeviceFileTypeSmartcard",
+    }
+}
+
+// InvitationStatus
+
+#[allow(dead_code)]
+fn enum_invitation_status_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    raw_value: &str,
+) -> NeonResult<libparsec::InvitationStatus> {
+    match raw_value {
+        "InvitationStatusDeleted" => Ok(libparsec::InvitationStatus::Deleted),
+        "InvitationStatusIdle" => Ok(libparsec::InvitationStatus::Idle),
+        "InvitationStatusReady" => Ok(libparsec::InvitationStatus::Ready),
+        _ => cx.throw_range_error(format!(
+            "Invalid value `{raw_value}` for enum InvitationStatus"
+        )),
+    }
+}
+
+#[allow(dead_code)]
+fn enum_invitation_status_rs_to_js(value: libparsec::InvitationStatus) -> &'static str {
+    match value {
+        libparsec::InvitationStatus::Deleted => "InvitationStatusDeleted",
+        libparsec::InvitationStatus::Idle => "InvitationStatusIdle",
+        libparsec::InvitationStatus::Ready => "InvitationStatusReady",
+    }
+}
+
+// InvitationEmailSentStatus
+
+#[allow(dead_code)]
+fn enum_invitation_email_sent_status_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    raw_value: &str,
+) -> NeonResult<libparsec::InvitationEmailSentStatus> {
+    match raw_value {
+        "InvitationEmailSentStatusBadRecipient" => {
+            Ok(libparsec::InvitationEmailSentStatus::BadRecipient)
+        }
+        "InvitationEmailSentStatusNotAvailable" => {
+            Ok(libparsec::InvitationEmailSentStatus::NotAvailable)
+        }
+        "InvitationEmailSentStatusSuccess" => Ok(libparsec::InvitationEmailSentStatus::Success),
+        _ => cx.throw_range_error(format!(
+            "Invalid value `{raw_value}` for enum InvitationEmailSentStatus"
+        )),
+    }
+}
+
+#[allow(dead_code)]
+fn enum_invitation_email_sent_status_rs_to_js(
+    value: libparsec::InvitationEmailSentStatus,
+) -> &'static str {
+    match value {
+        libparsec::InvitationEmailSentStatus::BadRecipient => {
+            "InvitationEmailSentStatusBadRecipient"
+        }
+        libparsec::InvitationEmailSentStatus::NotAvailable => {
+            "InvitationEmailSentStatusNotAvailable"
+        }
+        libparsec::InvitationEmailSentStatus::Success => "InvitationEmailSentStatusSuccess",
+    }
+}
+
+// OS
+
+#[allow(dead_code)]
+fn enum_os_js_to_rs<'a>(cx: &mut impl Context<'a>, raw_value: &str) -> NeonResult<libparsec::OS> {
+    match raw_value {
+        "OSAndroid" => Ok(libparsec::OS::Android),
+        "OSLinux" => Ok(libparsec::OS::Linux),
+        "OSMacOs" => Ok(libparsec::OS::MacOs),
+        "OSWindows" => Ok(libparsec::OS::Windows),
+        _ => cx.throw_range_error(format!("Invalid value `{raw_value}` for enum OS")),
+    }
+}
+
+#[allow(dead_code)]
+fn enum_os_rs_to_js(value: libparsec::OS) -> &'static str {
+    match value {
+        libparsec::OS::Android => "OSAndroid",
+        libparsec::OS::Linux => "OSLinux",
+        libparsec::OS::MacOs => "OSMacOs",
+        libparsec::OS::Windows => "OSWindows",
+    }
+}
+
 // ClientConfig
 
 #[allow(dead_code)]
-fn struct_clientconfig_js_to_rs<'a>(
+fn struct_client_config_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::ClientConfig> {
@@ -49,7 +210,7 @@ fn struct_clientconfig_js_to_rs<'a>(
     };
     let workspace_storage_cache_size = {
         let js_val: Handle<JsObject> = obj.get(cx, "workspaceStorageCacheSize")?;
-        variant_workspacestoragecachesize_js_to_rs(cx, js_val)?
+        variant_workspace_storage_cache_size_js_to_rs(cx, js_val)?
     };
     Ok(libparsec::ClientConfig {
         config_dir,
@@ -60,7 +221,7 @@ fn struct_clientconfig_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_clientconfig_rs_to_js<'a>(
+fn struct_client_config_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::ClientConfig,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -105,7 +266,7 @@ fn struct_clientconfig_rs_to_js<'a>(
     .or_throw(cx)?;
     js_obj.set(cx, "mountpointBaseDir", js_mountpoint_base_dir)?;
     let js_workspace_storage_cache_size =
-        variant_workspacestoragecachesize_rs_to_js(cx, rs_obj.workspace_storage_cache_size)?;
+        variant_workspace_storage_cache_size_rs_to_js(cx, rs_obj.workspace_storage_cache_size)?;
     js_obj.set(
         cx,
         "workspaceStorageCacheSize",
@@ -117,7 +278,7 @@ fn struct_clientconfig_rs_to_js<'a>(
 // HumanHandle
 
 #[allow(dead_code)]
-fn struct_humanhandle_js_to_rs<'a>(
+fn struct_human_handle_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::HumanHandle> {
@@ -137,7 +298,7 @@ fn struct_humanhandle_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_humanhandle_rs_to_js<'a>(
+fn struct_human_handle_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::HumanHandle,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -168,7 +329,7 @@ fn struct_humanhandle_rs_to_js<'a>(
 // AvailableDevice
 
 #[allow(dead_code)]
-fn struct_availabledevice_js_to_rs<'a>(
+fn struct_available_device_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::AvailableDevice> {
@@ -208,7 +369,7 @@ fn struct_availabledevice_js_to_rs<'a>(
                 None
             } else {
                 let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
-                Some(struct_humanhandle_js_to_rs(cx, js_val)?)
+                Some(struct_human_handle_js_to_rs(cx, js_val)?)
             }
         }
     };
@@ -233,8 +394,11 @@ fn struct_availabledevice_js_to_rs<'a>(
         js_val.value(cx)
     };
     let ty = {
-        let js_val: Handle<JsObject> = obj.get(cx, "ty")?;
-        variant_devicefiletype_js_to_rs(cx, js_val)?
+        let js_val: Handle<JsString> = obj.get(cx, "ty")?;
+        {
+            let js_string = js_val.value(cx);
+            enum_device_file_type_js_to_rs(cx, js_string.as_str())?
+        }
     };
     Ok(libparsec::AvailableDevice {
         key_file_path,
@@ -248,7 +412,7 @@ fn struct_availabledevice_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_availabledevice_rs_to_js<'a>(
+fn struct_available_device_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::AvailableDevice,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -271,7 +435,7 @@ fn struct_availabledevice_rs_to_js<'a>(
     let js_device_id = JsString::try_new(cx, rs_obj.device_id).or_throw(cx)?;
     js_obj.set(cx, "deviceId", js_device_id)?;
     let js_human_handle = match rs_obj.human_handle {
-        Some(elem) => struct_humanhandle_rs_to_js(cx, elem)?.as_value(cx),
+        Some(elem) => struct_human_handle_rs_to_js(cx, elem)?.as_value(cx),
         None => JsNull::new(cx).as_value(cx),
     };
     js_obj.set(cx, "humanHandle", js_human_handle)?;
@@ -282,7 +446,7 @@ fn struct_availabledevice_rs_to_js<'a>(
     js_obj.set(cx, "deviceLabel", js_device_label)?;
     let js_slug = JsString::try_new(cx, rs_obj.slug).or_throw(cx)?;
     js_obj.set(cx, "slug", js_slug)?;
-    let js_ty = variant_devicefiletype_rs_to_js(cx, rs_obj.ty)?;
+    let js_ty = JsString::try_new(cx, enum_device_file_type_rs_to_js(rs_obj.ty)).or_throw(cx)?;
     js_obj.set(cx, "ty", js_ty)?;
     Ok(js_obj)
 }
@@ -290,7 +454,7 @@ fn struct_availabledevice_rs_to_js<'a>(
 // UserClaimInProgress1Info
 
 #[allow(dead_code)]
-fn struct_userclaiminprogress1info_js_to_rs<'a>(
+fn struct_user_claim_in_progress1_info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::UserClaimInProgress1Info> {
@@ -338,7 +502,7 @@ fn struct_userclaiminprogress1info_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_userclaiminprogress1info_rs_to_js<'a>(
+fn struct_user_claim_in_progress1_info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::UserClaimInProgress1Info,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -363,7 +527,7 @@ fn struct_userclaiminprogress1info_rs_to_js<'a>(
 // DeviceClaimInProgress1Info
 
 #[allow(dead_code)]
-fn struct_deviceclaiminprogress1info_js_to_rs<'a>(
+fn struct_device_claim_in_progress1_info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::DeviceClaimInProgress1Info> {
@@ -411,7 +575,7 @@ fn struct_deviceclaiminprogress1info_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_deviceclaiminprogress1info_rs_to_js<'a>(
+fn struct_device_claim_in_progress1_info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::DeviceClaimInProgress1Info,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -436,7 +600,7 @@ fn struct_deviceclaiminprogress1info_rs_to_js<'a>(
 // UserClaimInProgress2Info
 
 #[allow(dead_code)]
-fn struct_userclaiminprogress2info_js_to_rs<'a>(
+fn struct_user_claim_in_progress2_info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::UserClaimInProgress2Info> {
@@ -466,7 +630,7 @@ fn struct_userclaiminprogress2info_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_userclaiminprogress2info_rs_to_js<'a>(
+fn struct_user_claim_in_progress2_info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::UserClaimInProgress2Info,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -481,7 +645,7 @@ fn struct_userclaiminprogress2info_rs_to_js<'a>(
 // DeviceClaimInProgress2Info
 
 #[allow(dead_code)]
-fn struct_deviceclaiminprogress2info_js_to_rs<'a>(
+fn struct_device_claim_in_progress2_info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::DeviceClaimInProgress2Info> {
@@ -511,7 +675,7 @@ fn struct_deviceclaiminprogress2info_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_deviceclaiminprogress2info_rs_to_js<'a>(
+fn struct_device_claim_in_progress2_info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::DeviceClaimInProgress2Info,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -526,7 +690,7 @@ fn struct_deviceclaiminprogress2info_rs_to_js<'a>(
 // UserClaimInProgress3Info
 
 #[allow(dead_code)]
-fn struct_userclaiminprogress3info_js_to_rs<'a>(
+fn struct_user_claim_in_progress3_info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::UserClaimInProgress3Info> {
@@ -544,7 +708,7 @@ fn struct_userclaiminprogress3info_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_userclaiminprogress3info_rs_to_js<'a>(
+fn struct_user_claim_in_progress3_info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::UserClaimInProgress3Info,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -557,7 +721,7 @@ fn struct_userclaiminprogress3info_rs_to_js<'a>(
 // DeviceClaimInProgress3Info
 
 #[allow(dead_code)]
-fn struct_deviceclaiminprogress3info_js_to_rs<'a>(
+fn struct_device_claim_in_progress3_info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::DeviceClaimInProgress3Info> {
@@ -575,7 +739,7 @@ fn struct_deviceclaiminprogress3info_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_deviceclaiminprogress3info_rs_to_js<'a>(
+fn struct_device_claim_in_progress3_info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::DeviceClaimInProgress3Info,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -588,7 +752,7 @@ fn struct_deviceclaiminprogress3info_rs_to_js<'a>(
 // UserClaimFinalizeInfo
 
 #[allow(dead_code)]
-fn struct_userclaimfinalizeinfo_js_to_rs<'a>(
+fn struct_user_claim_finalize_info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::UserClaimFinalizeInfo> {
@@ -606,7 +770,7 @@ fn struct_userclaimfinalizeinfo_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_userclaimfinalizeinfo_rs_to_js<'a>(
+fn struct_user_claim_finalize_info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::UserClaimFinalizeInfo,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -619,7 +783,7 @@ fn struct_userclaimfinalizeinfo_rs_to_js<'a>(
 // DeviceClaimFinalizeInfo
 
 #[allow(dead_code)]
-fn struct_deviceclaimfinalizeinfo_js_to_rs<'a>(
+fn struct_device_claim_finalize_info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::DeviceClaimFinalizeInfo> {
@@ -637,7 +801,7 @@ fn struct_deviceclaimfinalizeinfo_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_deviceclaimfinalizeinfo_rs_to_js<'a>(
+fn struct_device_claim_finalize_info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::DeviceClaimFinalizeInfo,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -650,7 +814,7 @@ fn struct_deviceclaimfinalizeinfo_rs_to_js<'a>(
 // UserGreetInitialInfo
 
 #[allow(dead_code)]
-fn struct_usergreetinitialinfo_js_to_rs<'a>(
+fn struct_user_greet_initial_info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::UserGreetInitialInfo> {
@@ -668,7 +832,7 @@ fn struct_usergreetinitialinfo_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_usergreetinitialinfo_rs_to_js<'a>(
+fn struct_user_greet_initial_info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::UserGreetInitialInfo,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -681,7 +845,7 @@ fn struct_usergreetinitialinfo_rs_to_js<'a>(
 // DeviceGreetInitialInfo
 
 #[allow(dead_code)]
-fn struct_devicegreetinitialinfo_js_to_rs<'a>(
+fn struct_device_greet_initial_info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::DeviceGreetInitialInfo> {
@@ -699,7 +863,7 @@ fn struct_devicegreetinitialinfo_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_devicegreetinitialinfo_rs_to_js<'a>(
+fn struct_device_greet_initial_info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::DeviceGreetInitialInfo,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -712,7 +876,7 @@ fn struct_devicegreetinitialinfo_rs_to_js<'a>(
 // UserGreetInProgress1Info
 
 #[allow(dead_code)]
-fn struct_usergreetinprogress1info_js_to_rs<'a>(
+fn struct_user_greet_in_progress1_info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::UserGreetInProgress1Info> {
@@ -742,7 +906,7 @@ fn struct_usergreetinprogress1info_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_usergreetinprogress1info_rs_to_js<'a>(
+fn struct_user_greet_in_progress1_info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::UserGreetInProgress1Info,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -757,7 +921,7 @@ fn struct_usergreetinprogress1info_rs_to_js<'a>(
 // DeviceGreetInProgress1Info
 
 #[allow(dead_code)]
-fn struct_devicegreetinprogress1info_js_to_rs<'a>(
+fn struct_device_greet_in_progress1_info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::DeviceGreetInProgress1Info> {
@@ -787,7 +951,7 @@ fn struct_devicegreetinprogress1info_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_devicegreetinprogress1info_rs_to_js<'a>(
+fn struct_device_greet_in_progress1_info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::DeviceGreetInProgress1Info,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -802,7 +966,7 @@ fn struct_devicegreetinprogress1info_rs_to_js<'a>(
 // UserGreetInProgress2Info
 
 #[allow(dead_code)]
-fn struct_usergreetinprogress2info_js_to_rs<'a>(
+fn struct_user_greet_in_progress2_info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::UserGreetInProgress2Info> {
@@ -850,7 +1014,7 @@ fn struct_usergreetinprogress2info_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_usergreetinprogress2info_rs_to_js<'a>(
+fn struct_user_greet_in_progress2_info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::UserGreetInProgress2Info,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -875,7 +1039,7 @@ fn struct_usergreetinprogress2info_rs_to_js<'a>(
 // DeviceGreetInProgress2Info
 
 #[allow(dead_code)]
-fn struct_devicegreetinprogress2info_js_to_rs<'a>(
+fn struct_device_greet_in_progress2_info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::DeviceGreetInProgress2Info> {
@@ -923,7 +1087,7 @@ fn struct_devicegreetinprogress2info_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_devicegreetinprogress2info_rs_to_js<'a>(
+fn struct_device_greet_in_progress2_info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::DeviceGreetInProgress2Info,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -948,7 +1112,7 @@ fn struct_devicegreetinprogress2info_rs_to_js<'a>(
 // UserGreetInProgress3Info
 
 #[allow(dead_code)]
-fn struct_usergreetinprogress3info_js_to_rs<'a>(
+fn struct_user_greet_in_progress3_info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::UserGreetInProgress3Info> {
@@ -966,7 +1130,7 @@ fn struct_usergreetinprogress3info_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_usergreetinprogress3info_rs_to_js<'a>(
+fn struct_user_greet_in_progress3_info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::UserGreetInProgress3Info,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -979,7 +1143,7 @@ fn struct_usergreetinprogress3info_rs_to_js<'a>(
 // DeviceGreetInProgress3Info
 
 #[allow(dead_code)]
-fn struct_devicegreetinprogress3info_js_to_rs<'a>(
+fn struct_device_greet_in_progress3_info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::DeviceGreetInProgress3Info> {
@@ -997,7 +1161,7 @@ fn struct_devicegreetinprogress3info_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_devicegreetinprogress3info_rs_to_js<'a>(
+fn struct_device_greet_in_progress3_info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::DeviceGreetInProgress3Info,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -1010,7 +1174,7 @@ fn struct_devicegreetinprogress3info_rs_to_js<'a>(
 // UserGreetInProgress4Info
 
 #[allow(dead_code)]
-fn struct_usergreetinprogress4info_js_to_rs<'a>(
+fn struct_user_greet_in_progress4_info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::UserGreetInProgress4Info> {
@@ -1031,7 +1195,7 @@ fn struct_usergreetinprogress4info_js_to_rs<'a>(
                 None
             } else {
                 let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
-                Some(struct_humanhandle_js_to_rs(cx, js_val)?)
+                Some(struct_human_handle_js_to_rs(cx, js_val)?)
             }
         }
     };
@@ -1059,7 +1223,7 @@ fn struct_usergreetinprogress4info_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_usergreetinprogress4info_rs_to_js<'a>(
+fn struct_user_greet_in_progress4_info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::UserGreetInProgress4Info,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -1067,7 +1231,7 @@ fn struct_usergreetinprogress4info_rs_to_js<'a>(
     let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
     js_obj.set(cx, "handle", js_handle)?;
     let js_requested_human_handle = match rs_obj.requested_human_handle {
-        Some(elem) => struct_humanhandle_rs_to_js(cx, elem)?.as_value(cx),
+        Some(elem) => struct_human_handle_rs_to_js(cx, elem)?.as_value(cx),
         None => JsNull::new(cx).as_value(cx),
     };
     js_obj.set(cx, "requestedHumanHandle", js_requested_human_handle)?;
@@ -1082,7 +1246,7 @@ fn struct_usergreetinprogress4info_rs_to_js<'a>(
 // DeviceGreetInProgress4Info
 
 #[allow(dead_code)]
-fn struct_devicegreetinprogress4info_js_to_rs<'a>(
+fn struct_device_greet_in_progress4_info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::DeviceGreetInProgress4Info> {
@@ -1119,7 +1283,7 @@ fn struct_devicegreetinprogress4info_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn struct_devicegreetinprogress4info_rs_to_js<'a>(
+fn struct_device_greet_in_progress4_info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::DeviceGreetInProgress4Info,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -1137,7 +1301,7 @@ fn struct_devicegreetinprogress4info_rs_to_js<'a>(
 // CancelError
 
 #[allow(dead_code)]
-fn variant_cancelerror_rs_to_js<'a>(
+fn variant_cancel_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::CancelError,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -1157,54 +1321,10 @@ fn variant_cancelerror_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// RealmRole
-
-#[allow(dead_code)]
-fn variant_realmrole_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::RealmRole> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "Contributor" => Ok(libparsec::RealmRole::Contributor {}),
-        "Manager" => Ok(libparsec::RealmRole::Manager {}),
-        "Owner" => Ok(libparsec::RealmRole::Owner {}),
-        "Reader" => Ok(libparsec::RealmRole::Reader {}),
-        _ => cx.throw_type_error("Object is not a RealmRole"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_realmrole_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::RealmRole,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::RealmRole::Contributor { .. } => {
-            let js_tag = JsString::try_new(cx, "Contributor").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::RealmRole::Manager { .. } => {
-            let js_tag = JsString::try_new(cx, "Manager").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::RealmRole::Owner { .. } => {
-            let js_tag = JsString::try_new(cx, "Owner").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::RealmRole::Reader { .. } => {
-            let js_tag = JsString::try_new(cx, "Reader").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
 // DeviceAccessStrategy
 
 #[allow(dead_code)]
-fn variant_deviceaccessstrategy_js_to_rs<'a>(
+fn variant_device_access_strategy_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::DeviceAccessStrategy> {
@@ -1253,7 +1373,7 @@ fn variant_deviceaccessstrategy_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn variant_deviceaccessstrategy_rs_to_js<'a>(
+fn variant_device_access_strategy_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::DeviceAccessStrategy,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -1304,7 +1424,7 @@ fn variant_deviceaccessstrategy_rs_to_js<'a>(
 // ClientStartError
 
 #[allow(dead_code)]
-fn variant_clientstarterror_rs_to_js<'a>(
+fn variant_client_start_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::ClientStartError,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -1335,7 +1455,7 @@ fn variant_clientstarterror_rs_to_js<'a>(
 // ClientStopError
 
 #[allow(dead_code)]
-fn variant_clientstoperror_rs_to_js<'a>(
+fn variant_client_stop_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::ClientStopError,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -1354,7 +1474,7 @@ fn variant_clientstoperror_rs_to_js<'a>(
 // ClientListWorkspacesError
 
 #[allow(dead_code)]
-fn variant_clientlistworkspaceserror_rs_to_js<'a>(
+fn variant_client_list_workspaces_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::ClientListWorkspacesError,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -1373,7 +1493,7 @@ fn variant_clientlistworkspaceserror_rs_to_js<'a>(
 // ClientWorkspaceCreateError
 
 #[allow(dead_code)]
-fn variant_clientworkspacecreateerror_rs_to_js<'a>(
+fn variant_client_workspace_create_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::ClientWorkspaceCreateError,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -1392,7 +1512,7 @@ fn variant_clientworkspacecreateerror_rs_to_js<'a>(
 // ClientWorkspaceRenameError
 
 #[allow(dead_code)]
-fn variant_clientworkspacerenameerror_rs_to_js<'a>(
+fn variant_client_workspace_rename_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::ClientWorkspaceRenameError,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -1415,7 +1535,7 @@ fn variant_clientworkspacerenameerror_rs_to_js<'a>(
 // ClientWorkspaceShareError
 
 #[allow(dead_code)]
-fn variant_clientworkspaceshareerror_rs_to_js<'a>(
+fn variant_client_workspace_share_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::ClientWorkspaceShareError,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -1513,49 +1633,10 @@ fn variant_clientworkspaceshareerror_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// UserProfile
-
-#[allow(dead_code)]
-fn variant_userprofile_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::UserProfile> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "Admin" => Ok(libparsec::UserProfile::Admin {}),
-        "Outsider" => Ok(libparsec::UserProfile::Outsider {}),
-        "Standard" => Ok(libparsec::UserProfile::Standard {}),
-        _ => cx.throw_type_error("Object is not a UserProfile"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_userprofile_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::UserProfile,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::UserProfile::Admin { .. } => {
-            let js_tag = JsString::try_new(cx, "Admin").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::UserProfile::Outsider { .. } => {
-            let js_tag = JsString::try_new(cx, "Outsider").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::UserProfile::Standard { .. } => {
-            let js_tag = JsString::try_new(cx, "Standard").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
 // WorkspaceStorageCacheSize
 
 #[allow(dead_code)]
-fn variant_workspacestoragecachesize_js_to_rs<'a>(
+fn variant_workspace_storage_cache_size_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::WorkspaceStorageCacheSize> {
@@ -1580,7 +1661,7 @@ fn variant_workspacestoragecachesize_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn variant_workspacestoragecachesize_rs_to_js<'a>(
+fn variant_workspace_storage_cache_size_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::WorkspaceStorageCacheSize,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -1603,7 +1684,7 @@ fn variant_workspacestoragecachesize_rs_to_js<'a>(
 // ClientEvent
 
 #[allow(dead_code)]
-fn variant_clientevent_js_to_rs<'a>(
+fn variant_client_event_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::ClientEvent> {
@@ -1621,7 +1702,7 @@ fn variant_clientevent_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn variant_clientevent_rs_to_js<'a>(
+fn variant_client_event_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::ClientEvent,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -1640,7 +1721,7 @@ fn variant_clientevent_rs_to_js<'a>(
 // ClaimerGreeterAbortOperationError
 
 #[allow(dead_code)]
-fn variant_claimergreeterabortoperationerror_rs_to_js<'a>(
+fn variant_claimer_greeter_abort_operation_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::ClaimerGreeterAbortOperationError,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -1656,49 +1737,10 @@ fn variant_claimergreeterabortoperationerror_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// DeviceFileType
-
-#[allow(dead_code)]
-fn variant_devicefiletype_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::DeviceFileType> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "Password" => Ok(libparsec::DeviceFileType::Password {}),
-        "Recovery" => Ok(libparsec::DeviceFileType::Recovery {}),
-        "Smartcard" => Ok(libparsec::DeviceFileType::Smartcard {}),
-        _ => cx.throw_type_error("Object is not a DeviceFileType"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_devicefiletype_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::DeviceFileType,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::DeviceFileType::Password { .. } => {
-            let js_tag = JsString::try_new(cx, "Password").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::DeviceFileType::Recovery { .. } => {
-            let js_tag = JsString::try_new(cx, "Recovery").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::DeviceFileType::Smartcard { .. } => {
-            let js_tag = JsString::try_new(cx, "Smartcard").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
 // DeviceSaveStrategy
 
 #[allow(dead_code)]
-fn variant_devicesavestrategy_js_to_rs<'a>(
+fn variant_device_save_strategy_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::DeviceSaveStrategy> {
@@ -1723,7 +1765,7 @@ fn variant_devicesavestrategy_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn variant_devicesavestrategy_rs_to_js<'a>(
+fn variant_device_save_strategy_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::DeviceSaveStrategy,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -1746,7 +1788,7 @@ fn variant_devicesavestrategy_rs_to_js<'a>(
 // BootstrapOrganizationError
 
 #[allow(dead_code)]
-fn variant_bootstraporganizationerror_rs_to_js<'a>(
+fn variant_bootstrap_organization_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::BootstrapOrganizationError,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -1827,7 +1869,7 @@ fn variant_bootstraporganizationerror_rs_to_js<'a>(
 // ClaimerRetrieveInfoError
 
 #[allow(dead_code)]
-fn variant_claimerretrieveinfoerror_rs_to_js<'a>(
+fn variant_claimer_retrieve_info_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::ClaimerRetrieveInfoError,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -1858,7 +1900,7 @@ fn variant_claimerretrieveinfoerror_rs_to_js<'a>(
 // ClaimInProgressError
 
 #[allow(dead_code)]
-fn variant_claiminprogresserror_rs_to_js<'a>(
+fn variant_claim_in_progress_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::ClaimInProgressError,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -1905,7 +1947,7 @@ fn variant_claiminprogresserror_rs_to_js<'a>(
 // UserOrDeviceClaimInitialInfo
 
 #[allow(dead_code)]
-fn variant_userordeviceclaiminitialinfo_js_to_rs<'a>(
+fn variant_user_or_device_claim_initial_info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::UserOrDeviceClaimInitialInfo> {
@@ -1938,7 +1980,7 @@ fn variant_userordeviceclaiminitialinfo_js_to_rs<'a>(
                         None
                     } else {
                         let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
-                        Some(struct_humanhandle_js_to_rs(cx, js_val)?)
+                        Some(struct_human_handle_js_to_rs(cx, js_val)?)
                     }
                 }
             };
@@ -1979,7 +2021,7 @@ fn variant_userordeviceclaiminitialinfo_js_to_rs<'a>(
                         None
                     } else {
                         let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
-                        Some(struct_humanhandle_js_to_rs(cx, js_val)?)
+                        Some(struct_human_handle_js_to_rs(cx, js_val)?)
                     }
                 }
             };
@@ -1995,7 +2037,7 @@ fn variant_userordeviceclaiminitialinfo_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn variant_userordeviceclaiminitialinfo_rs_to_js<'a>(
+fn variant_user_or_device_claim_initial_info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::UserOrDeviceClaimInitialInfo,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -2014,7 +2056,7 @@ fn variant_userordeviceclaiminitialinfo_rs_to_js<'a>(
             let js_greeter_user_id = JsString::try_new(cx, greeter_user_id).or_throw(cx)?;
             js_obj.set(cx, "greeterUserId", js_greeter_user_id)?;
             let js_greeter_human_handle = match greeter_human_handle {
-                Some(elem) => struct_humanhandle_rs_to_js(cx, elem)?.as_value(cx),
+                Some(elem) => struct_human_handle_rs_to_js(cx, elem)?.as_value(cx),
                 None => JsNull::new(cx).as_value(cx),
             };
             js_obj.set(cx, "greeterHumanHandle", js_greeter_human_handle)?;
@@ -2035,7 +2077,7 @@ fn variant_userordeviceclaiminitialinfo_rs_to_js<'a>(
             let js_greeter_user_id = JsString::try_new(cx, greeter_user_id).or_throw(cx)?;
             js_obj.set(cx, "greeterUserId", js_greeter_user_id)?;
             let js_greeter_human_handle = match greeter_human_handle {
-                Some(elem) => struct_humanhandle_rs_to_js(cx, elem)?.as_value(cx),
+                Some(elem) => struct_human_handle_rs_to_js(cx, elem)?.as_value(cx),
                 None => JsNull::new(cx).as_value(cx),
             };
             js_obj.set(cx, "greeterHumanHandle", js_greeter_human_handle)?;
@@ -2044,88 +2086,10 @@ fn variant_userordeviceclaiminitialinfo_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// InvitationStatus
-
-#[allow(dead_code)]
-fn variant_invitationstatus_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::InvitationStatus> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "Deleted" => Ok(libparsec::InvitationStatus::Deleted {}),
-        "Idle" => Ok(libparsec::InvitationStatus::Idle {}),
-        "Ready" => Ok(libparsec::InvitationStatus::Ready {}),
-        _ => cx.throw_type_error("Object is not a InvitationStatus"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_invitationstatus_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::InvitationStatus,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::InvitationStatus::Deleted { .. } => {
-            let js_tag = JsString::try_new(cx, "Deleted").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::InvitationStatus::Idle { .. } => {
-            let js_tag = JsString::try_new(cx, "Idle").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::InvitationStatus::Ready { .. } => {
-            let js_tag = JsString::try_new(cx, "Ready").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// InvitationEmailSentStatus
-
-#[allow(dead_code)]
-fn variant_invitationemailsentstatus_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::InvitationEmailSentStatus> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "BadRecipient" => Ok(libparsec::InvitationEmailSentStatus::BadRecipient {}),
-        "NotAvailable" => Ok(libparsec::InvitationEmailSentStatus::NotAvailable {}),
-        "Success" => Ok(libparsec::InvitationEmailSentStatus::Success {}),
-        _ => cx.throw_type_error("Object is not a InvitationEmailSentStatus"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_invitationemailsentstatus_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::InvitationEmailSentStatus,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::InvitationEmailSentStatus::BadRecipient { .. } => {
-            let js_tag = JsString::try_new(cx, "BadRecipient").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::InvitationEmailSentStatus::NotAvailable { .. } => {
-            let js_tag = JsString::try_new(cx, "NotAvailable").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::InvitationEmailSentStatus::Success { .. } => {
-            let js_tag = JsString::try_new(cx, "Success").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
 // NewUserInvitationError
 
 #[allow(dead_code)]
-fn variant_newuserinvitationerror_rs_to_js<'a>(
+fn variant_new_user_invitation_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::NewUserInvitationError,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -2156,7 +2120,7 @@ fn variant_newuserinvitationerror_rs_to_js<'a>(
 // NewDeviceInvitationError
 
 #[allow(dead_code)]
-fn variant_newdeviceinvitationerror_rs_to_js<'a>(
+fn variant_new_device_invitation_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::NewDeviceInvitationError,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -2183,7 +2147,7 @@ fn variant_newdeviceinvitationerror_rs_to_js<'a>(
 // DeleteInvitationError
 
 #[allow(dead_code)]
-fn variant_deleteinvitationerror_rs_to_js<'a>(
+fn variant_delete_invitation_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::DeleteInvitationError,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -2214,7 +2178,7 @@ fn variant_deleteinvitationerror_rs_to_js<'a>(
 // InviteListItem
 
 #[allow(dead_code)]
-fn variant_invitelistitem_js_to_rs<'a>(
+fn variant_invite_list_item_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::InviteListItem> {
@@ -2248,8 +2212,11 @@ fn variant_invitelistitem_js_to_rs<'a>(
                 }
             };
             let status = {
-                let js_val: Handle<JsObject> = obj.get(cx, "status")?;
-                variant_invitationstatus_js_to_rs(cx, js_val)?
+                let js_val: Handle<JsString> = obj.get(cx, "status")?;
+                {
+                    let js_string = js_val.value(cx);
+                    enum_invitation_status_js_to_rs(cx, js_string.as_str())?
+                }
             };
             Ok(libparsec::InviteListItem::Device {
                 token,
@@ -2289,8 +2256,11 @@ fn variant_invitelistitem_js_to_rs<'a>(
                 js_val.value(cx)
             };
             let status = {
-                let js_val: Handle<JsObject> = obj.get(cx, "status")?;
-                variant_invitationstatus_js_to_rs(cx, js_val)?
+                let js_val: Handle<JsString> = obj.get(cx, "status")?;
+                {
+                    let js_string = js_val.value(cx);
+                    enum_invitation_status_js_to_rs(cx, js_string.as_str())?
+                }
             };
             Ok(libparsec::InviteListItem::User {
                 token,
@@ -2304,7 +2274,7 @@ fn variant_invitelistitem_js_to_rs<'a>(
 }
 
 #[allow(dead_code)]
-fn variant_invitelistitem_rs_to_js<'a>(
+fn variant_invite_list_item_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::InviteListItem,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -2340,7 +2310,8 @@ fn variant_invitelistitem_rs_to_js<'a>(
             })
             .or_throw(cx)?;
             js_obj.set(cx, "createdOn", js_created_on)?;
-            let js_status = variant_invitationstatus_rs_to_js(cx, status)?;
+            let js_status =
+                JsString::try_new(cx, enum_invitation_status_rs_to_js(status)).or_throw(cx)?;
             js_obj.set(cx, "status", js_status)?;
         }
         libparsec::InviteListItem::User {
@@ -2376,7 +2347,8 @@ fn variant_invitelistitem_rs_to_js<'a>(
             js_obj.set(cx, "createdOn", js_created_on)?;
             let js_claimer_email = JsString::try_new(cx, claimer_email).or_throw(cx)?;
             js_obj.set(cx, "claimerEmail", js_claimer_email)?;
-            let js_status = variant_invitationstatus_rs_to_js(cx, status)?;
+            let js_status =
+                JsString::try_new(cx, enum_invitation_status_rs_to_js(status)).or_throw(cx)?;
             js_obj.set(cx, "status", js_status)?;
         }
     }
@@ -2386,7 +2358,7 @@ fn variant_invitelistitem_rs_to_js<'a>(
 // ListInvitationsError
 
 #[allow(dead_code)]
-fn variant_listinvitationserror_rs_to_js<'a>(
+fn variant_list_invitations_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::ListInvitationsError,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -2409,7 +2381,7 @@ fn variant_listinvitationserror_rs_to_js<'a>(
 // ClientStartInvitationGreetError
 
 #[allow(dead_code)]
-fn variant_clientstartinvitationgreeterror_rs_to_js<'a>(
+fn variant_client_start_invitation_greet_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::ClientStartInvitationGreetError,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -2428,7 +2400,7 @@ fn variant_clientstartinvitationgreeterror_rs_to_js<'a>(
 // GreetInProgressError
 
 #[allow(dead_code)]
-fn variant_greetinprogresserror_rs_to_js<'a>(
+fn variant_greet_in_progress_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
     rs_obj: libparsec::GreetInProgressError,
 ) -> NeonResult<Handle<'a, JsObject>> {
@@ -2534,50 +2506,6 @@ fn variant_greetinprogresserror_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// OS
-
-#[allow(dead_code)]
-fn variant_os_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::OS> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "Android" => Ok(libparsec::OS::Android {}),
-        "Linux" => Ok(libparsec::OS::Linux {}),
-        "MacOs" => Ok(libparsec::OS::MacOs {}),
-        "Windows" => Ok(libparsec::OS::Windows {}),
-        _ => cx.throw_type_error("Object is not a OS"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_os_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::OS,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::OS::Android { .. } => {
-            let js_tag = JsString::try_new(cx, "Android").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::OS::Linux { .. } => {
-            let js_tag = JsString::try_new(cx, "Linux").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::OS::MacOs { .. } => {
-            let js_tag = JsString::try_new(cx, "MacOs").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::OS::Windows { .. } => {
-            let js_tag = JsString::try_new(cx, "Windows").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
 // cancel
 fn cancel(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let canceller = {
@@ -2608,7 +2536,7 @@ fn cancel(mut cx: FunctionContext) -> JsResult<JsPromise> {
             let js_obj = cx.empty_object();
             let js_tag = JsBoolean::new(&mut cx, false);
             js_obj.set(&mut cx, "ok", js_tag)?;
-            let js_err = variant_cancelerror_rs_to_js(&mut cx, err)?;
+            let js_err = variant_cancel_error_rs_to_js(&mut cx, err)?;
             js_obj.set(&mut cx, "error", js_err)?;
             js_obj
         }
@@ -2631,7 +2559,7 @@ fn new_canceller(mut cx: FunctionContext) -> JsResult<JsPromise> {
 fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let config = {
         let js_val = cx.argument::<JsObject>(0)?;
-        struct_clientconfig_js_to_rs(&mut cx, js_val)?
+        struct_client_config_js_to_rs(&mut cx, js_val)?
     };
     let on_event_callback = {
         let js_val = cx.argument::<JsFunction>(1)?;
@@ -2667,7 +2595,7 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
             callback.channel.send(move |mut cx| {
                 // TODO: log an error instead of panic ? (it is a bit harsh to crash
                 // the current task if an unrelated event handler has a bug...)
-                let js_event = variant_clientevent_rs_to_js(&mut cx, event)?;
+                let js_event = variant_client_event_rs_to_js(&mut cx, event)?;
                 if let Some(ref js_fn) = callback2.js_fn {
                     js_fn
                         .to_inner(&mut cx)
@@ -2681,7 +2609,7 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let access = {
         let js_val = cx.argument::<JsObject>(2)?;
-        variant_deviceaccessstrategy_js_to_rs(&mut cx, js_val)?
+        variant_device_access_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -2707,7 +2635,7 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_clientstarterror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_client_start_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -2759,7 +2687,7 @@ fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_clientstoperror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_client_stop_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -2829,7 +2757,7 @@ fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
                 let js_obj = cx.empty_object();
                 let js_tag = JsBoolean::new(&mut cx, false);
                 js_obj.set(&mut cx, "ok", js_tag)?;
-                let js_err = variant_clientlistworkspaceserror_rs_to_js(&mut cx, err)?;
+                let js_err = variant_client_list_workspaces_error_rs_to_js(&mut cx, err)?;
                 js_obj.set(&mut cx, "error", js_err)?;
                 js_obj
             }
@@ -2899,7 +2827,7 @@ fn client_workspace_create(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_clientworkspacecreateerror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_client_workspace_create_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -2975,7 +2903,7 @@ fn client_workspace_rename(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_clientworkspacerenameerror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_client_workspace_rename_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -3021,8 +2949,11 @@ fn client_workspace_share(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let role = match cx.argument_opt(3) {
-        Some(v) => match v.downcast::<JsObject, _>(&mut cx) {
-            Ok(js_val) => Some(variant_realmrole_js_to_rs(&mut cx, js_val)?),
+        Some(v) => match v.downcast::<JsString, _>(&mut cx) {
+            Ok(js_val) => Some({
+                let js_string = js_val.value(&mut cx);
+                enum_realm_role_js_to_rs(&mut cx, js_string.as_str())?
+            }),
             Err(_) => None,
         },
         None => None,
@@ -3055,7 +2986,7 @@ fn client_workspace_share(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_clientworkspaceshareerror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_client_workspace_share_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -3097,7 +3028,7 @@ fn claimer_greeter_abort_operation(mut cx: FunctionContext) -> JsResult<JsPromis
             let js_obj = cx.empty_object();
             let js_tag = JsBoolean::new(&mut cx, false);
             js_obj.set(&mut cx, "ok", js_tag)?;
-            let js_err = variant_claimergreeterabortoperationerror_rs_to_js(&mut cx, err)?;
+            let js_err = variant_claimer_greeter_abort_operation_error_rs_to_js(&mut cx, err)?;
             js_obj.set(&mut cx, "error", js_err)?;
             js_obj
         }
@@ -3135,7 +3066,7 @@ fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
                     // JsArray::new allocates with `undefined` value, that's why we `set` value
                     let js_array = JsArray::new(&mut cx, ret.len() as u32);
                     for (i, elem) in ret.into_iter().enumerate() {
-                        let js_elem = struct_availabledevice_rs_to_js(&mut cx, elem)?;
+                        let js_elem = struct_available_device_rs_to_js(&mut cx, elem)?;
                         js_array.set(&mut cx, i as u32, js_elem)?;
                     }
                     js_array
@@ -3151,7 +3082,7 @@ fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
 fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let config = {
         let js_val = cx.argument::<JsObject>(0)?;
-        struct_clientconfig_js_to_rs(&mut cx, js_val)?
+        struct_client_config_js_to_rs(&mut cx, js_val)?
     };
     let on_event_callback = {
         let js_val = cx.argument::<JsFunction>(1)?;
@@ -3187,7 +3118,7 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
             callback.channel.send(move |mut cx| {
                 // TODO: log an error instead of panic ? (it is a bit harsh to crash
                 // the current task if an unrelated event handler has a bug...)
-                let js_event = variant_clientevent_rs_to_js(&mut cx, event)?;
+                let js_event = variant_client_event_rs_to_js(&mut cx, event)?;
                 if let Some(ref js_fn) = callback2.js_fn {
                     js_fn
                         .to_inner(&mut cx)
@@ -3213,11 +3144,11 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let save_strategy = {
         let js_val = cx.argument::<JsObject>(3)?;
-        variant_devicesavestrategy_js_to_rs(&mut cx, js_val)?
+        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let human_handle = match cx.argument_opt(4) {
         Some(v) => match v.downcast::<JsObject, _>(&mut cx) {
-            Ok(js_val) => Some(struct_humanhandle_js_to_rs(&mut cx, js_val)?),
+            Ok(js_val) => Some(struct_human_handle_js_to_rs(&mut cx, js_val)?),
             Err(_) => None,
         },
         None => None,
@@ -3278,7 +3209,7 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_availabledevice_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_available_device_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -3286,7 +3217,7 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_bootstraporganizationerror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_bootstrap_organization_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -3302,7 +3233,7 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
 fn claimer_retrieve_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let config = {
         let js_val = cx.argument::<JsObject>(0)?;
-        struct_clientconfig_js_to_rs(&mut cx, js_val)?
+        struct_client_config_js_to_rs(&mut cx, js_val)?
     };
     let on_event_callback = {
         let js_val = cx.argument::<JsFunction>(1)?;
@@ -3338,7 +3269,7 @@ fn claimer_retrieve_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
             callback.channel.send(move |mut cx| {
                 // TODO: log an error instead of panic ? (it is a bit harsh to crash
                 // the current task if an unrelated event handler has a bug...)
-                let js_event = variant_clientevent_rs_to_js(&mut cx, event)?;
+                let js_event = variant_client_event_rs_to_js(&mut cx, event)?;
                 if let Some(ref js_fn) = callback2.js_fn {
                     js_fn
                         .to_inner(&mut cx)
@@ -3378,7 +3309,8 @@ fn claimer_retrieve_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = variant_userordeviceclaiminitialinfo_rs_to_js(&mut cx, ok)?;
+                        let js_value =
+                            variant_user_or_device_claim_initial_info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -3386,7 +3318,7 @@ fn claimer_retrieve_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_claimerretrieveinfoerror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_claimer_retrieve_info_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -3436,7 +3368,7 @@ fn claimer_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_userclaiminprogress1info_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_user_claim_in_progress1_info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -3444,7 +3376,7 @@ fn claimer_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_claiminprogresserror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_claim_in_progress_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -3494,7 +3426,7 @@ fn claimer_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPr
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_deviceclaiminprogress1info_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_device_claim_in_progress1_info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -3502,7 +3434,7 @@ fn claimer_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPr
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_claiminprogresserror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_claim_in_progress_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -3553,7 +3485,7 @@ fn claimer_user_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsRes
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_userclaiminprogress2info_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_user_claim_in_progress2_info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -3561,7 +3493,7 @@ fn claimer_user_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsRes
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_claiminprogresserror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_claim_in_progress_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -3612,7 +3544,7 @@ fn claimer_device_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsR
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_deviceclaiminprogress2info_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_device_claim_in_progress2_info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -3620,7 +3552,7 @@ fn claimer_device_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsR
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_claiminprogresserror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_claim_in_progress_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -3671,7 +3603,7 @@ fn claimer_user_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_userclaiminprogress3info_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_user_claim_in_progress3_info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -3679,7 +3611,7 @@ fn claimer_user_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_claiminprogresserror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_claim_in_progress_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -3730,7 +3662,7 @@ fn claimer_device_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> J
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_deviceclaiminprogress3info_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_device_claim_in_progress3_info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -3738,7 +3670,7 @@ fn claimer_device_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> J
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_claiminprogresserror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_claim_in_progress_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -3786,7 +3718,7 @@ fn claimer_user_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPr
     };
     let requested_human_handle = match cx.argument_opt(3) {
         Some(v) => match v.downcast::<JsObject, _>(&mut cx) {
-            Ok(js_val) => Some(struct_humanhandle_js_to_rs(&mut cx, js_val)?),
+            Ok(js_val) => Some(struct_human_handle_js_to_rs(&mut cx, js_val)?),
             Err(_) => None,
         },
         None => None,
@@ -3813,7 +3745,7 @@ fn claimer_user_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPr
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_userclaimfinalizeinfo_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_user_claim_finalize_info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -3821,7 +3753,7 @@ fn claimer_user_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPr
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_claiminprogresserror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_claim_in_progress_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -3888,7 +3820,7 @@ fn claimer_device_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<Js
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_deviceclaimfinalizeinfo_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_device_claim_finalize_info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -3896,7 +3828,7 @@ fn claimer_device_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<Js
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_claiminprogresserror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_claim_in_progress_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -3922,7 +3854,7 @@ fn claimer_user_finalize_save_local_device(mut cx: FunctionContext) -> JsResult<
     };
     let save_strategy = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_devicesavestrategy_js_to_rs(&mut cx, js_val)?
+        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -3941,7 +3873,7 @@ fn claimer_user_finalize_save_local_device(mut cx: FunctionContext) -> JsResult<
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_availabledevice_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_available_device_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -3949,7 +3881,7 @@ fn claimer_user_finalize_save_local_device(mut cx: FunctionContext) -> JsResult<
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_claiminprogresserror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_claim_in_progress_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -3975,7 +3907,7 @@ fn claimer_device_finalize_save_local_device(mut cx: FunctionContext) -> JsResul
     };
     let save_strategy = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_devicesavestrategy_js_to_rs(&mut cx, js_val)?
+        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -3994,7 +3926,7 @@ fn claimer_device_finalize_save_local_device(mut cx: FunctionContext) -> JsResul
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_availabledevice_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_available_device_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -4002,7 +3934,7 @@ fn claimer_device_finalize_save_local_device(mut cx: FunctionContext) -> JsResul
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_claiminprogresserror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_claim_in_progress_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -4063,7 +3995,7 @@ fn client_new_user_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         }
                     }).or_throw(&mut cx)?;
                     js_array.set(&mut cx, 1, js_value)?;
-                    let js_value = variant_invitationemailsentstatus_rs_to_js(&mut cx, x2)?;
+                    let js_value = JsString::try_new(&mut cx, enum_invitation_email_sent_status_rs_to_js(x2)).or_throw(&mut cx)?;
                     js_array.set(&mut cx, 2, js_value)?;
                     js_array
                 };
@@ -4074,7 +4006,7 @@ fn client_new_user_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
                 let js_obj = cx.empty_object();
                 let js_tag = JsBoolean::new(&mut cx, false);
                 js_obj.set(&mut cx, "ok", js_tag)?;
-                let js_err = variant_newuserinvitationerror_rs_to_js(&mut cx, err)?;
+                let js_err = variant_new_user_invitation_error_rs_to_js(&mut cx, err)?;
                 js_obj.set(&mut cx, "error", js_err)?;
                 js_obj
             }
@@ -4130,7 +4062,7 @@ fn client_new_device_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> 
                         }
                     }).or_throw(&mut cx)?;
                     js_array.set(&mut cx, 1, js_value)?;
-                    let js_value = variant_invitationemailsentstatus_rs_to_js(&mut cx, x2)?;
+                    let js_value = JsString::try_new(&mut cx, enum_invitation_email_sent_status_rs_to_js(x2)).or_throw(&mut cx)?;
                     js_array.set(&mut cx, 2, js_value)?;
                     js_array
                 };
@@ -4141,7 +4073,7 @@ fn client_new_device_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> 
                 let js_obj = cx.empty_object();
                 let js_tag = JsBoolean::new(&mut cx, false);
                 js_obj.set(&mut cx, "ok", js_tag)?;
-                let js_err = variant_newdeviceinvitationerror_rs_to_js(&mut cx, err)?;
+                let js_err = variant_new_device_invitation_error_rs_to_js(&mut cx, err)?;
                 js_obj.set(&mut cx, "error", js_err)?;
                 js_obj
             }
@@ -4205,7 +4137,7 @@ fn client_delete_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_deleteinvitationerror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_delete_invitation_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -4249,7 +4181,7 @@ fn client_list_invitations(mut cx: FunctionContext) -> JsResult<JsPromise> {
                             // JsArray::new allocates with `undefined` value, that's why we `set` value
                             let js_array = JsArray::new(&mut cx, ok.len() as u32);
                             for (i, elem) in ok.into_iter().enumerate() {
-                                let js_elem = variant_invitelistitem_rs_to_js(&mut cx, elem)?;
+                                let js_elem = variant_invite_list_item_rs_to_js(&mut cx, elem)?;
                                 js_array.set(&mut cx, i as u32, js_elem)?;
                             }
                             js_array
@@ -4261,7 +4193,7 @@ fn client_list_invitations(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_listinvitationserror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_list_invitations_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -4313,7 +4245,7 @@ fn client_start_user_invitation_greet(mut cx: FunctionContext) -> JsResult<JsPro
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_usergreetinitialinfo_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_user_greet_initial_info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -4322,7 +4254,7 @@ fn client_start_user_invitation_greet(mut cx: FunctionContext) -> JsResult<JsPro
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err =
-                            variant_clientstartinvitationgreeterror_rs_to_js(&mut cx, err)?;
+                            variant_client_start_invitation_greet_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -4374,7 +4306,7 @@ fn client_start_device_invitation_greet(mut cx: FunctionContext) -> JsResult<JsP
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_devicegreetinitialinfo_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_device_greet_initial_info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -4383,7 +4315,7 @@ fn client_start_device_invitation_greet(mut cx: FunctionContext) -> JsResult<JsP
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err =
-                            variant_clientstartinvitationgreeterror_rs_to_js(&mut cx, err)?;
+                            variant_client_start_invitation_greet_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -4433,7 +4365,7 @@ fn greeter_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_usergreetinprogress1info_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_user_greet_in_progress1_info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -4441,7 +4373,7 @@ fn greeter_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_greetinprogresserror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_greet_in_progress_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -4491,7 +4423,7 @@ fn greeter_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPr
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_devicegreetinprogress1info_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_device_greet_in_progress1_info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -4499,7 +4431,7 @@ fn greeter_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPr
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_greetinprogresserror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_greet_in_progress_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -4550,7 +4482,7 @@ fn greeter_user_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_usergreetinprogress2info_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_user_greet_in_progress2_info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -4558,7 +4490,7 @@ fn greeter_user_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_greetinprogresserror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_greet_in_progress_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -4609,7 +4541,7 @@ fn greeter_device_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> J
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_devicegreetinprogress2info_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_device_greet_in_progress2_info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -4617,7 +4549,7 @@ fn greeter_device_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> J
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_greetinprogresserror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_greet_in_progress_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -4668,7 +4600,7 @@ fn greeter_user_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsRes
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_usergreetinprogress3info_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_user_greet_in_progress3_info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -4676,7 +4608,7 @@ fn greeter_user_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsRes
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_greetinprogresserror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_greet_in_progress_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -4727,7 +4659,7 @@ fn greeter_device_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsR
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_devicegreetinprogress3info_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_device_greet_in_progress3_info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -4735,7 +4667,7 @@ fn greeter_device_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsR
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_greetinprogresserror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_greet_in_progress_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -4789,7 +4721,7 @@ fn greeter_user_in_progress_3_do_get_claim_requests(
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_usergreetinprogress4info_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_user_greet_in_progress4_info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -4797,7 +4729,7 @@ fn greeter_user_in_progress_3_do_get_claim_requests(
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_greetinprogresserror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_greet_in_progress_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -4851,7 +4783,7 @@ fn greeter_device_in_progress_3_do_get_claim_requests(
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_devicegreetinprogress4info_rs_to_js(&mut cx, ok)?;
+                        let js_value = struct_device_greet_in_progress4_info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -4859,7 +4791,7 @@ fn greeter_device_in_progress_3_do_get_claim_requests(
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_greetinprogresserror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_greet_in_progress_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -4895,7 +4827,7 @@ fn greeter_user_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<JsP
     };
     let human_handle = match cx.argument_opt(2) {
         Some(v) => match v.downcast::<JsObject, _>(&mut cx) {
-            Ok(js_val) => Some(struct_humanhandle_js_to_rs(&mut cx, js_val)?),
+            Ok(js_val) => Some(struct_human_handle_js_to_rs(&mut cx, js_val)?),
             Err(_) => None,
         },
         None => None,
@@ -4913,8 +4845,11 @@ fn greeter_user_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<JsP
         None => None,
     };
     let profile = {
-        let js_val = cx.argument::<JsObject>(4)?;
-        variant_userprofile_js_to_rs(&mut cx, js_val)?
+        let js_val = cx.argument::<JsString>(4)?;
+        {
+            let js_string = js_val.value(&mut cx);
+            enum_user_profile_js_to_rs(&mut cx, js_string.as_str())?
+        }
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -4951,7 +4886,7 @@ fn greeter_user_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<JsP
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_greetinprogresserror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_greet_in_progress_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -5027,7 +4962,7 @@ fn greeter_device_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<J
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_greetinprogresserror_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_greet_in_progress_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -5042,7 +4977,7 @@ fn greeter_device_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<J
 // get_os
 fn get_os(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let ret = libparsec::get_os();
-    let js_ret = variant_os_rs_to_js(&mut cx, ret)?;
+    let js_ret = JsString::try_new(&mut cx, enum_os_rs_to_js(ret)).or_throw(&mut cx)?;
     let (deferred, promise) = cx.promise();
     deferred.resolve(&mut cx, js_ret);
     Ok(promise)

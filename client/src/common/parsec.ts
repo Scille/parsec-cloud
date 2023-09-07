@@ -11,7 +11,6 @@ import {
   ClientConfig,
   EntryName,
   InvitationToken,
-  InvitationEmailSentStatus,
   NewUserInvitationError,
   NewDeviceInvitationError,
   InviteListItemUser,
@@ -22,6 +21,9 @@ import {
   SASCode,
   HumanHandle,
   UserOrDeviceClaimInitialInfoUser,
+  InvitationEmailSentStatus,
+  DeviceFileType,
+  InvitationStatus,
   ClientStartError,
   ListInvitationsError,
   DeleteInvitationError,
@@ -96,7 +98,7 @@ export async function inviteUser(email: string): Promise<Result<[InvitationToken
     return await libparsec.clientNewUserInvitation(handle, email, true);
   } else {
     return new Promise<Result<[InvitationToken, InvitationEmailSentStatus], NewUserInvitationError>>((resolve, _reject) => {
-      resolve({ok: true, value: ['1234', {tag: 'Success'}]});
+      resolve({ ok: true, value: ['1234', InvitationEmailSentStatus.Success] });
     });
   }
 }
@@ -108,14 +110,16 @@ export async function listWorkspaces(): Promise<Result<Array<[WorkspaceID, Works
     return await libparsec.clientListWorkspaces(handle);
   } else {
     return new Promise<Result<Array<[WorkspaceID, WorkspaceName]>, ClientListWorkspacesError>>((resolve, _reject) => {
-      resolve({ok: true, value: [
-        ['1', 'Trademeet'],
-        ['2', 'The Copper Coronet'],
-        ['3', 'The Asylum'],
-        ['4', 'Druid Grove'],
-        // cspell:disable-next-line
-        ['5', 'Menzoberranzan'],
-      ]});
+      resolve({
+        ok: true, value: [
+          ['1', 'Trademeet'],
+          ['2', 'The Copper Coronet'],
+          ['3', 'The Asylum'],
+          ['4', 'Druid Grove'],
+          // cspell:disable-next-line
+          ['5', 'Menzoberranzan'],
+        ],
+      });
     });
   }
 }
@@ -127,7 +131,7 @@ export async function createWorkspace(name: WorkspaceName): Promise<Result<Works
     return await libparsec.clientWorkspaceCreate(handle, name);
   } else {
     return new Promise<Result<WorkspaceID, ClientWorkspaceCreateError>>((resolve, _reject) => {
-      resolve({ok: true, value: '1337'});
+      resolve({ ok: true, value: '1337' });
     });
   }
 }
@@ -140,7 +144,7 @@ export async function inviteDevice(sendEmail: boolean):
     return await libparsec.clientNewDeviceInvitation(handle, sendEmail);
   }
   return new Promise<Result<[InvitationToken, InvitationEmailSentStatus], NewDeviceInvitationError>>((resolve, _reject) => {
-    resolve({ok: true, value: ['1234', {tag: 'Success'}]});
+    resolve({ ok: true, value: ['1234', InvitationEmailSentStatus.Success] });
   });
 }
 
@@ -168,17 +172,17 @@ export async function listUserInvitations(): Promise<Result<Array<UserInvitation
         token: '1234',
         createdOn: DateTime.now().toISO() || '',
         claimerEmail: 'shadowheart@swordcoast.faerun',
-        status: {tag: 'Ready'},
+        status: InvitationStatus.Ready,
         date: DateTime.now(),
       }, {
         tag: 'User',
         token: '5678',
         createdOn: DateTime.now().toISO() || '',
         claimerEmail: 'gale@waterdeep.faerun',
-        status: {tag: 'Ready'},
+        status: InvitationStatus.Ready,
         date: DateTime.now(),
       }];
-      resolve({ok: true, value: ret});
+      resolve({ ok: true, value: ret });
     });
   }
 }
@@ -409,7 +413,7 @@ export class UserClaim {
           },
           deviceLabel: 'a@b',
           slug: 'slug',
-          ty: {tag: 'Password'},
+          ty: DeviceFileType.Password,
         };
         resolve({ok: true, value: this.device});
       });

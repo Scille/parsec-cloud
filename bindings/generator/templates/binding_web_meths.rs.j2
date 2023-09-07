@@ -41,6 +41,8 @@ Object
 Object
 {%- elif type.kind == "OnClientEventCallback" -%}
 Function
+{%- elif type.kind == "enum" -%}
+String
 {%- else -%}
 {{ raise("Unsupported type %r" % type) }}
 {%- endif -%}
@@ -99,6 +101,8 @@ let {{ param_name }} = std::sync::Arc::new(move |event: libparsec::ClientEvent| 
     let js_event = {{ variant_rs_to_js_function_name(type.event_type) }}(event).expect("event type conversion error");
     on_event_callback.call1(&JsValue::NULL, &js_event).expect("error in event callback");
 }) as std::sync::Arc<dyn Fn(libparsec::ClientEvent)>;
+{% elif type.kind == "enum"%}
+let {{ param_name }} = {{ enum_js_to_rs_function_name(type) }}(&{{ param_name }})?;
 {% endif %}
 {%- endmacro -%}
 
@@ -207,6 +211,17 @@ if {{ js_val }}.is_null() {
             return Err(TypeError::new("Invalid `ok` field in Result object: Not a boolean"));
         }
     }
+{%- elif type.kind == "enum" -%}
+{
+    let raw_string = {{ js_val }}
+        .as_string()
+        .ok_or_else(|| {
+            let type_error = TypeError::new("value is not a string");
+            type_error.set_cause(&{{ js_val }});
+            JsValue::from(type_error)
+        })?;
+    {{ enum_js_to_rs_function_name(type) }}(raw_string.as_str())
+}?
 {%- else -%}
 {{ raise("Unsupported type %r" % type) }}
 {%- endif -%}
@@ -301,6 +316,8 @@ match {{ rs_value }} {
 {{ struct_rs_to_js_function_name(type) }}({{ rs_value }})?
 {%- elif type.kind == "variant" -%}
 {{ variant_rs_to_js_function_name(type) }}({{ rs_value }})?
+{%- elif type.kind == "enum" -%}
+JsValue::from_str({{ enum_rs_to_js_function_name(type) }}({{ rs_value }}))
 {%- else -%}
 {{ rs_value }}.into()
 {%- endif -%}
@@ -312,8 +329,8 @@ match {{ rs_value }} {
  #}
 
 
-{%- macro struct_js_to_rs_function_name(struct) %}struct_{{ struct.name | lower }}_js_to_rs{% endmacro -%}
-{%- macro struct_rs_to_js_function_name(struct) %}struct_{{ struct.name | lower }}_rs_to_js{% endmacro -%}
+{%- macro struct_js_to_rs_function_name(struct) %}struct_{{ struct.name | pascal2snake }}_js_to_rs{% endmacro -%}
+{%- macro struct_rs_to_js_function_name(struct) %}struct_{{ struct.name | pascal2snake }}_rs_to_js{% endmacro -%}
 
 
 {%- macro render_struct_js_to_rs(struct) %}
@@ -362,9 +379,8 @@ fn {{ struct_rs_to_js_function_name(struct) }}(rs_obj: libparsec::{{ struct.name
  #}
 
 
-{%- macro variant_js_to_rs_function_name(variant) %}variant_{{ variant.name | lower }}_js_to_rs{% endmacro -%}
-{%- macro variant_rs_to_js_function_name(variant) %}variant_{{ variant.name | lower }}_rs_to_js{% endmacro -%}
-
+{%- macro variant_js_to_rs_function_name(variant) %}variant_{{ variant.name | pascal2snake }}_js_to_rs{% endmacro -%}
+{%- macro variant_rs_to_js_function_name(variant) %}variant_{{ variant.name | pascal2snake }}_rs_to_js{% endmacro -%}
 
 {%- macro render_variant_js_to_rs(variant) %}
 #[allow(dead_code)]
@@ -518,6 +534,35 @@ pub fn {{ meth.name | snake2camel }}(
 }
 {% endmacro -%}
 
+{%- macro enum_js_to_rs_function_name(enum) %}enum_{{ enum.name | pascal2snake }}_js_to_rs{% endmacro %}
+{%- macro enum_rs_to_js_function_name(enum) %}enum_{{ enum.name | pascal2snake }}_rs_to_js{% endmacro %}
+
+{%- macro render_enum_js_to_rs(enum) %}
+#[allow(dead_code)]
+fn {{ enum_js_to_rs_function_name(enum) }}(raw_value: &str) -> Result<libparsec::{{ enum.name }}, JsValue> {
+    match raw_value {
+{% for variant_name in enum.member_names %}
+        "{{ enum.name + variant_name }}" => Ok(libparsec::{{ enum.name }}::{{ variant_name }}),
+{% endfor %}
+        _ => {
+            let range_error = RangeError::new("Invalid value for enum {{ enum.name }}");
+            range_error.set_cause(&JsValue::from(raw_value));
+            Err(JsValue::from(range_error))
+        },
+    }
+}
+{% endmacro -%}
+
+{%- macro render_enum_rs_to_js(enum) %}
+#[allow(dead_code)]
+fn {{ enum_rs_to_js_function_name(enum) }}(value: libparsec::{{ enum.name }}) -> &'static str {
+    match value {
+{% for variant_name in enum.member_names %}
+        libparsec::{{ enum.name}}::{{ variant_name }} => "{{ enum.name + variant_name }}",
+{% endfor %}
+    }
+}
+{% endmacro -%}
 
 {#- End of macros #}
 
@@ -535,6 +580,16 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 #[allow(unused_imports)]
 use wasm_bindgen_futures::*;
+
+{# Enum #}
+{% for enum in api.enums %}
+// {{ enum.name }}
+
+{{ render_enum_js_to_rs(enum) }}
+
+{{ render_enum_rs_to_js(enum) }}
+
+{% endfor %}
 {# Structures #}
 {% for struct in api.structs %}
 

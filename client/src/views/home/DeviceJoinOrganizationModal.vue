@@ -156,7 +156,7 @@ import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
-import { AvailableDevice } from '@/plugins/libparsec/definitions';
+import { AvailableDevice, DeviceFileType } from '@/plugins/libparsec/definitions';
 import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
 
@@ -278,7 +278,7 @@ function mockCreateDevice(): AvailableDevice {
     keyFilePath: 'key_file_path',
     deviceId: 'device1@device1',
     slug: 'slug1',
-    ty: { tag: 'Password' },
+    ty: DeviceFileType.Password,
   };
 
   return device;
