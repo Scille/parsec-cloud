@@ -33,6 +33,8 @@ JsObject
 JsObject
 {%- elif type.kind == "OnClientEventCallback" -%}
 JsFunction
+{%- elif type.kind == "enum" -%}
+JsString
 {%- else -%}
 {{ raise("Unsupported type %r" % type) }}
 {%- endif -%}
@@ -200,6 +202,11 @@ std::sync::Arc::new(
         });
     }
 ) as std::sync::Arc<dyn Fn(libparsec::ClientEvent) + Send + Sync>
+{%- elif type.kind == "enum" -%}
+{
+    let js_string = {{ js_val }}.value({{ mut_cx_ref }});
+    {{ enum_js_to_rs_function_name(type) }}({{ mut_cx_ref }}, js_string.as_str())?
+}
 {%- else -%}
 {{ js_val }}.value({{ mut_cx_ref }})
 {%- endif %}
@@ -322,6 +329,8 @@ JsString::try_new({{ mut_cx_ref }},
 {{ struct_rs_to_js_function_name(type) }}({{ mut_cx_ref }}, {{ rs_value }})?
 {%- elif type.kind == "variant" -%}
 {{ variant_rs_to_js_function_name(type) }}({{ mut_cx_ref }}, {{ rs_value }})?
+{%- elif type.kind == "enum" %}
+JsString::try_new({{ mut_cx_ref }}, {{ enum_rs_to_js_function_name(type) }}({{ rs_value }})).or_throw({{ mut_cx_ref }})?
 {%- else -%}
 {{ raise("Unsupported type %r" % type) }}
 {%- endif -%}
@@ -333,8 +342,8 @@ JsString::try_new({{ mut_cx_ref }},
  #}
 
 
-{%- macro struct_js_to_rs_function_name(struct) %}struct_{{ struct.name | lower }}_js_to_rs{% endmacro -%}
-{%- macro struct_rs_to_js_function_name(struct) %}struct_{{ struct.name | lower }}_rs_to_js{% endmacro -%}
+{%- macro struct_js_to_rs_function_name(struct) %}struct_{{ struct.name | pascal2snake }}_js_to_rs{% endmacro -%}
+{%- macro struct_rs_to_js_function_name(struct) %}struct_{{ struct.name | pascal2snake }}_rs_to_js{% endmacro -%}
 
 
 {%- macro render_struct_js_to_rs(struct) %}
@@ -389,8 +398,8 @@ fn {{ struct_rs_to_js_function_name(struct) }}<'a>(
  #}
 
 
-{%- macro variant_js_to_rs_function_name(variant) %}variant_{{ variant.name | lower }}_js_to_rs{% endmacro -%}
-{%- macro variant_rs_to_js_function_name(variant) %}variant_{{ variant.name | lower }}_rs_to_js{% endmacro -%}
+{%- macro variant_js_to_rs_function_name(variant) %}variant_{{ variant.name | pascal2snake }}_js_to_rs{% endmacro -%}
+{%- macro variant_rs_to_js_function_name(variant) %}variant_{{ variant.name | pascal2snake }}_rs_to_js{% endmacro -%}
 
 
 {%- macro render_variant_js_to_rs(variant) %}
@@ -479,7 +488,33 @@ fn {{ variant_rs_to_js_function_name(variant) }}<'a>(
 }
 {% endmacro -%}
 
+{%- macro enum_js_to_rs_function_name(type) %}enum_{{ type.name | pascal2snake }}_js_to_rs{% endmacro -%}
+{%- macro enum_rs_to_js_function_name(type) %}enum_{{ type.name | pascal2snake }}_rs_to_js{% endmacro -%}
 
+{%- macro render_enum_rs_to_js(enum) %}
+#[allow(dead_code)]
+fn {{ enum_rs_to_js_function_name(enum) }}(value: libparsec::{{ enum.name }}) -> &'static str {
+    match value {
+{% for variant in enum.member_names %}
+        libparsec::{{ enum.name }}::{{ variant }} => "{{ enum.name + variant }}",
+{% endfor %}
+    }
+}
+{% endmacro -%}
+
+{%- macro render_enum_js_to_rs(enum) %}
+#[allow(dead_code)]
+fn {{ enum_js_to_rs_function_name(enum) }}<'a>(cx: &mut impl Context<'a>, raw_value: &str) -> NeonResult<libparsec::{{ enum.name }}> {
+    match raw_value {
+{% for variant in enum.member_names %}
+        "{{ enum.name + variant }}" => Ok(libparsec::{{ enum.name }}::{{ variant}}),
+{% endfor %}
+        _ => {
+            cx.throw_range_error(format!("Invalid value `{raw_value}` for enum {{ enum.name }}"))
+        }
+    }
+}
+{% endmacro -%}
 {#-
  # Function-related macros
  #}
@@ -598,6 +633,16 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 #[allow(unused_imports)]
 use neon::{prelude::*, types::buffer::TypedArray};
+{# Enum #}
+{% for enum in api.enums %}
+
+// {{ enum.name}}
+
+{{ render_enum_js_to_rs(enum) }}
+
+{{ render_enum_rs_to_js(enum) }}
+
+{% endfor %}
 {# Structures #}
 {% for struct in api.structs %}
 

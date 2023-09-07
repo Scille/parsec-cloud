@@ -5,6 +5,7 @@ import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
 import { mockI18n, getDefaultProvideConfig } from 'tests/component/support/mocks';
 import * as Parsec from '@/common/parsec';
+import { InvitationStatus } from '@/plugins/libparsec/definitions';
 
 mockI18n();
 
@@ -15,7 +16,7 @@ describe('User Invitation Card', () => {
       token: '1234',
       createdOn: DateTime.now().toISO() || '',
       claimerEmail: 'dung.eater@lands-between',
-      status: {tag: 'Ready'},
+      status: InvitationStatus.Ready,
       date: DateTime.now(),
     };
 

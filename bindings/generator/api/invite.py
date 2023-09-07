@@ -23,7 +23,8 @@ from .common import (
     UserID,
     UserProfile,
     Variant,
-    VariantItemUnit,
+    Enum,
+    EnumItemUnit,
 )
 from .config import ClientConfig
 from .events import OnClientEventCallback
@@ -40,15 +41,10 @@ def claimer_greeter_abort_operation(
     raise NotImplementedError
 
 
-class DeviceFileType(Variant):
-    class Password:
-        pass
-
-    class Recovery:
-        pass
-
-    class Smartcard:
-        pass
+class DeviceFileType(Enum):
+    Password = EnumItemUnit
+    Recovery = EnumItemUnit
+    Smartcard = EnumItemUnit
 
 
 class AvailableDevice(Structure):
@@ -295,16 +291,16 @@ async def claimer_device_finalize_save_local_device(
 #
 
 
-class InvitationStatus(Variant):
-    Idle = VariantItemUnit
-    Ready = VariantItemUnit
-    Deleted = VariantItemUnit
+class InvitationStatus(Enum):
+    Idle = EnumItemUnit
+    Ready = EnumItemUnit
+    Deleted = EnumItemUnit
 
 
-class InvitationEmailSentStatus(Variant):
-    Success = VariantItemUnit
-    NotAvailable = VariantItemUnit
-    BadRecipient = VariantItemUnit
+class InvitationEmailSentStatus(Enum):
+    Success = EnumItemUnit
+    NotAvailable = EnumItemUnit
+    BadRecipient = EnumItemUnit
 
 
 class NewUserInvitationError(ErrorVariant):

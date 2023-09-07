@@ -3,7 +3,7 @@
 // cSpell:disable
 
 import { DateTime } from 'luxon';
-import { AvailableDevice, Handle } from '@/plugins/libparsec/definitions';
+import { AvailableDevice, Handle, DeviceFileType } from '@/plugins/libparsec/definitions';
 import { StorageManager } from '@/services/storageManager';
 import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
 
@@ -321,7 +321,7 @@ const MOCK_DEVICES: AvailableDevice[] = [
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug1',
-    ty: { tag: 'Password' },
+    ty: DeviceFileType.Password,
   },
   {
     organizationId: 'Princeton-Plainsboro Hospital',
@@ -333,7 +333,7 @@ const MOCK_DEVICES: AvailableDevice[] = [
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug2',
-    ty: { tag: 'Password' },
+    ty: DeviceFileType.Password,
   },
   {
     organizationId: 'Black Mesa',
@@ -345,7 +345,7 @@ const MOCK_DEVICES: AvailableDevice[] = [
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug3',
-    ty: { tag: 'Password' },
+    ty: DeviceFileType.Password,
   },
   {
     organizationId: 'OsCorp',
@@ -357,7 +357,7 @@ const MOCK_DEVICES: AvailableDevice[] = [
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug4',
-    ty: { tag: 'Password' },
+    ty: DeviceFileType.Password,
   },
   {
     organizationId: 'Sanctum Sanctorum',
@@ -369,7 +369,7 @@ const MOCK_DEVICES: AvailableDevice[] = [
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug5',
-    ty: { tag: 'Password' },
+    ty: DeviceFileType.Password,
   },
   {
     organizationId: 'Holmes Consulting',
@@ -381,7 +381,7 @@ const MOCK_DEVICES: AvailableDevice[] = [
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug6',
-    ty: { tag: 'Password' },
+    ty: DeviceFileType.Password,
   },
   {
     organizationId: 'Riviera M.D.',
@@ -393,7 +393,7 @@ const MOCK_DEVICES: AvailableDevice[] = [
     keyFilePath: 'key_file_path',
     deviceId: 'device_id',
     slug: 'slug7',
-    ty: { tag: 'Password' },
+    ty: DeviceFileType.Password,
   },
 ];
 

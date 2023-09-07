@@ -32,6 +32,8 @@ string
 Uint8Array
 {%- elif t.kind == "OnClientEventCallback" -%}
 (event: ClientEvent) => void
+{%- elif t.kind == "enum" -%}
+{{ t.name }}
 {%- else -%}
 {{ raise("Unsupported type %r" % t) }}
 {%- endif -%}
@@ -48,20 +50,31 @@ export type Result<T, E = Error> =
   | { ok: true; value: T }
   | { ok: false; error: E }
 
+{# Simple enum #}
+{% for enum in api.enums %}
+export enum {{ enum.name }} {
+{% for variant_name in enum.member_names %}
+    {{ variant_name }} = '{{ enum.name + variant_name }}',
+{% endfor -%}
+}
+{% if not loop.last %}
+
+{% endif %}
+{% endfor %}
 {# Str-based types #}
 {% for type_name in api.str_based_types %}
-type {{ type_name }} = string
+export type {{ type_name }} = string
 {% endfor %}
 {# Bytes-based types #}
 {% for type_name in api.bytes_based_types %}
-type {{ type_name }} = Uint8Array
+export type {{ type_name }} = Uint8Array
 {% endfor %}
 {# Int-based types #}
 {% for type_name in api.i32_based_types %}
-type {{ type_name }} = number
+export type {{ type_name }} = number
 {% endfor %}
 {% for type_name in api.u32_based_types %}
-type {{ type_name }} = number
+export type {{ type_name }} = number
 {% endfor %}
 {# Structures #}
 {% for struct in api.structs %}

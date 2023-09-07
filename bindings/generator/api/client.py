@@ -13,17 +13,18 @@ from .common import (
     Result,
     UserID,
     Variant,
-    VariantItemUnit,
+    Enum,
+    EnumItemUnit,
 )
 from .config import ClientConfig
 from .events import OnClientEventCallback
 
 
-class RealmRole(Variant):
-    Owner = VariantItemUnit
-    Manager = VariantItemUnit
-    Contributor = VariantItemUnit
-    Reader = VariantItemUnit
+class RealmRole(Enum):
+    Owner = EnumItemUnit
+    Manager = EnumItemUnit
+    Contributor = EnumItemUnit
+    Reader = EnumItemUnit
 
 
 class DeviceAccessStrategy(Variant):

@@ -30,6 +30,8 @@ string
 Uint8Array
 {%- elif t.kind == "OnClientEventCallback" -%}
 (event: ClientEvent) => void
+{%- elif t.kind == "enum" -%}
+{{ t.name }}
 {%- else -%}
 {{ raise("Unsupported type %r" % t) }}
 {%- endif -%}

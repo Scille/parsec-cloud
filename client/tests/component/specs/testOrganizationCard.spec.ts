@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
-import { AvailableDevice } from '@/plugins/libparsec/definitions';
+import { DeviceFileType,  AvailableDevice } from '@/plugins/libparsec/definitions';
 import { VueWrapper, mount } from '@vue/test-utils';
 
 describe('Organization Card', () => {
@@ -17,7 +17,7 @@ describe('Organization Card', () => {
     },
     deviceLabel: 'hev',
     slug: '1',
-    ty: { tag: 'Password' },
+    ty: DeviceFileType.Password,
   };
 
   beforeEach(() => {

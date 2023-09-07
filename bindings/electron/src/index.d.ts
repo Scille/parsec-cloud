@@ -154,26 +154,6 @@ export type CancelError =
   | CancelErrorNotBound
 
 
-// RealmRole
-export interface RealmRoleContributor {
-    tag: "Contributor"
-}
-export interface RealmRoleManager {
-    tag: "Manager"
-}
-export interface RealmRoleOwner {
-    tag: "Owner"
-}
-export interface RealmRoleReader {
-    tag: "Reader"
-}
-export type RealmRole =
-  | RealmRoleContributor
-  | RealmRoleManager
-  | RealmRoleOwner
-  | RealmRoleReader
-
-
 // DeviceAccessStrategy
 export interface DeviceAccessStrategyPassword {
     tag: "Password"
@@ -317,22 +297,6 @@ export type ClientWorkspaceShareError =
   | ClientWorkspaceShareErrorWorkspaceInMaintenance
 
 
-// UserProfile
-export interface UserProfileAdmin {
-    tag: "Admin"
-}
-export interface UserProfileOutsider {
-    tag: "Outsider"
-}
-export interface UserProfileStandard {
-    tag: "Standard"
-}
-export type UserProfile =
-  | UserProfileAdmin
-  | UserProfileOutsider
-  | UserProfileStandard
-
-
 // WorkspaceStorageCacheSize
 export interface WorkspaceStorageCacheSizeCustom {
     tag: "Custom"
@@ -362,22 +326,6 @@ export interface ClaimerGreeterAbortOperationErrorInternal {
 }
 export type ClaimerGreeterAbortOperationError =
   | ClaimerGreeterAbortOperationErrorInternal
-
-
-// DeviceFileType
-export interface DeviceFileTypePassword {
-    tag: "Password"
-}
-export interface DeviceFileTypeRecovery {
-    tag: "Recovery"
-}
-export interface DeviceFileTypeSmartcard {
-    tag: "Smartcard"
-}
-export type DeviceFileType =
-  | DeviceFileTypePassword
-  | DeviceFileTypeRecovery
-  | DeviceFileTypeSmartcard
 
 
 // DeviceSaveStrategy
@@ -516,38 +464,6 @@ export interface UserOrDeviceClaimInitialInfoUser {
 export type UserOrDeviceClaimInitialInfo =
   | UserOrDeviceClaimInitialInfoDevice
   | UserOrDeviceClaimInitialInfoUser
-
-
-// InvitationStatus
-export interface InvitationStatusDeleted {
-    tag: "Deleted"
-}
-export interface InvitationStatusIdle {
-    tag: "Idle"
-}
-export interface InvitationStatusReady {
-    tag: "Ready"
-}
-export type InvitationStatus =
-  | InvitationStatusDeleted
-  | InvitationStatusIdle
-  | InvitationStatusReady
-
-
-// InvitationEmailSentStatus
-export interface InvitationEmailSentStatusBadRecipient {
-    tag: "BadRecipient"
-}
-export interface InvitationEmailSentStatusNotAvailable {
-    tag: "NotAvailable"
-}
-export interface InvitationEmailSentStatusSuccess {
-    tag: "Success"
-}
-export type InvitationEmailSentStatus =
-  | InvitationEmailSentStatusBadRecipient
-  | InvitationEmailSentStatusNotAvailable
-  | InvitationEmailSentStatusSuccess
 
 
 // NewUserInvitationError
@@ -730,26 +646,6 @@ export type GreetInProgressError =
   | GreetInProgressErrorPeerReset
   | GreetInProgressErrorUserAlreadyExists
   | GreetInProgressErrorUserCreateNotAllowed
-
-
-// OS
-export interface OSAndroid {
-    tag: "Android"
-}
-export interface OSLinux {
-    tag: "Linux"
-}
-export interface OSMacOs {
-    tag: "MacOs"
-}
-export interface OSWindows {
-    tag: "Windows"
-}
-export type OS =
-  | OSAndroid
-  | OSLinux
-  | OSMacOs
-  | OSWindows
 
 
 export function cancel(

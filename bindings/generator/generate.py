@@ -10,7 +10,7 @@ from importlib import import_module
 from inspect import isclass, iscoroutinefunction, isfunction, signature
 from pathlib import Path
 from types import ModuleType
-from typing import Any, List, Tuple, Union, get_args
+from typing import Any, List, Tuple, Union, Callable, get_args
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
@@ -31,6 +31,7 @@ META_TYPES = [
     "ErrorVariant",
     "Structure",
     "OnClientEventCallback",
+    "Enum",
 ]
 
 
@@ -82,6 +83,10 @@ class OnClientEventCallback:
     ...
 
 
+class Enum:
+    ...
+
+
 env = Environment(
     loader=FileSystemLoader(BASEDIR / "templates"),
     autoescape=False,
@@ -93,7 +98,14 @@ env = Environment(
 )
 
 
-def snake_case_to_camel_case(s: str) -> str:
+def _test_change_case_function(input: str, expected: str, func: Callable[[str], str]) -> None:
+    camel_case = func(input)
+    assert (
+        camel_case == expected
+    ), f"expected `{expected}` but got `{camel_case}` (input = `{input}`, func = {func.__name__})"
+
+
+def snake_to_camel_case(s: str) -> str:
     camel = ""
     next_is_uppercase = False
     for c in s.lower():
@@ -108,20 +120,43 @@ def snake_case_to_camel_case(s: str) -> str:
     return camel
 
 
-def _test_snake_case_to_camel_case(input: str, expected: str) -> None:
-    camel_case = snake_case_to_camel_case(input)
-    assert (
-        camel_case == expected
-    ), f"expected `{expected}` but got `{camel_case}` (input = `{input}`)"
+_test_change_case_function("hello", "hello", snake_to_camel_case)
+_test_change_case_function("hello_world", "helloWorld", snake_to_camel_case)
+_test_change_case_function("Hello_world", "helloWorld", snake_to_camel_case)
+_test_change_case_function("hello__world", "helloWorld", snake_to_camel_case)
 
 
-_test_snake_case_to_camel_case("hello", "hello")
-_test_snake_case_to_camel_case("hello_world", "helloWorld")
-_test_snake_case_to_camel_case("Hello_world", "helloWorld")
-_test_snake_case_to_camel_case("hello__world", "helloWorld")
+def pascal_to_snake_case(s: str) -> str:
+    def peek_next(index: int) -> str:
+        try:
+            return s[index + 1]
+        except IndexError:
+            return ""
+
+    snake = s[0].lower()
+    s = s[1:]
+    previous_lower = False
+    for i, c in enumerate(s):
+        if c.isupper():
+            next_lower = peek_next(i).islower()
+            if next_lower or previous_lower == True:
+                snake += "_"
+            previous_lower = False
+            snake += c.lower()
+        else:
+            previous_lower = True
+            snake += c
+    return snake
 
 
-env.filters["snake2camel"] = snake_case_to_camel_case
+_test_change_case_function("hello", "hello", pascal_to_snake_case)
+_test_change_case_function("Hello", "hello", pascal_to_snake_case)
+_test_change_case_function("helloWorld", "hello_world", pascal_to_snake_case)
+_test_change_case_function("HelloWorld", "hello_world", pascal_to_snake_case)
+_test_change_case_function("OSSimple", "os_simple", pascal_to_snake_case)
+
+env.filters["snake2camel"] = snake_to_camel_case
+env.filters["pascal2snake"] = pascal_to_snake_case
 
 
 def _raise_helper(msg: Any) -> None:
@@ -199,7 +234,9 @@ class BaseTypeInUse:
 
         else:
             typespec = TYPES_DB.get(param)
-            assert typespec is not None, f"Bad param `{param!r}`, not a scalar/variant/struct"
+            assert (
+                typespec is not None
+            ), f"Bad param `{param!r}`, not a scalar/variant/struct/enum (bases={param.__bases__})"
             return typespec
 
 
@@ -312,6 +349,13 @@ class U32BasedTypeInUse(BaseTypeInUse):
 
 
 @dataclass
+class EnumSpec(BaseTypeInUse):
+    kind = "enum"
+    member_names: list[str]
+    name: str
+
+
+@dataclass
 class OpaqueSpec(BaseTypeInUse):
     kind: str
 
@@ -333,6 +377,7 @@ class ApiSpecs:
     meths: List[MethSpec]
     structs: List[StructSpec]
     variants: List[VariantSpec]
+    enums: List[EnumSpec]
     rust_code_to_inject: str | None  # Hack for the dummy test api
 
 
@@ -340,7 +385,7 @@ class ApiSpecs:
 # be used in template generation.
 # For instance, if we have `def foo() -> Bar: ...` in the api:
 # The `Bar` object is going to be a key in TYPES_DB, and the value will be the `StructSpec` built by introspecting `Bar`
-TYPES_DB: dict[type, OpaqueSpec | StructSpec | VariantSpec] = {
+TYPES_DB: dict[type, OpaqueSpec | StructSpec | VariantSpec | EnumSpec] = {
     bool: OpaqueSpec(kind="bool"),
     float: OpaqueSpec(kind="float"),
     str: OpaqueSpec(kind="str"),
@@ -375,12 +420,13 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
         pass
 
     for item_name, item in api_items.items():
-        if isclass(item) and issubclass(item, (Variant, Structure)):
+        if isclass(item) and issubclass(item, (Variant, Structure, Enum)):
             TYPES_DB[item] = ParsingPlaceholder()  # type: ignore[assignment]
 
     # Second pass
     variants: list[VariantSpec] = []
     structs: list[StructSpec] = []
+    enums: list[EnumSpec] = []
     for item_name, item in api_items.items():
         if isclass(item) and issubclass(item, Variant):
             placeholder = TYPES_DB[item]
@@ -447,9 +493,17 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             placeholder.__dict__ = struct.__dict__
             placeholder.__class__ = struct.__class__
             structs.append(placeholder)  # type: ignore[arg-type]
+        elif isclass(item) and issubclass(item, Enum):
+            placeholder = TYPES_DB[item]
+            annotations = getattr(item, "__annotations__", {})
+            members = sorted([attr for attr in dir(item) if not attr.startswith("_")])
+            enum = EnumSpec(member_names=members, name=item.__name__)
+            placeholder.__dict__ = enum.__dict__
+            placeholder.__class__ = enum.__class__
+            enums.append(placeholder)  # type: ignore[arg-type]
 
     # Make sure all types have a unique name, this is not strictly required but it is very convenient when testing type in the template
-    reserved: dict[Any, OpaqueSpec | StructSpec | VariantSpec] = {}
+    reserved: dict[Any, OpaqueSpec | StructSpec | VariantSpec | EnumSpec] = {}
     for k, v in TYPES_DB.items():
         name = getattr(v, "name", v.kind)
         assert name not in reserved
@@ -498,6 +552,7 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             for item in api_items.values()
             if isinstance(item, type) and issubclass(item, U32BasedType)
         ],
+        enums=enums,
         variants=variants,
         structs=structs,
         meths=meths,
@@ -521,8 +576,8 @@ def generate(what: str, api_specs: ApiSpecs) -> str | None:
     if what == "client":
         return generate_target(
             api_specs,
-            template="client_plugin_definitions.d.ts.j2",
-            dest=BASEDIR / "../../client/src/plugins/libparsec/definitions.d.ts",
+            template="client_plugin_definitions.ts.j2",
+            dest=BASEDIR / "../../client/src/plugins/libparsec/definitions.ts",
         )
     elif what == "electron":
         return generate_target(

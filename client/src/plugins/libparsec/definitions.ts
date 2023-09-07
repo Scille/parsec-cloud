@@ -8,25 +8,62 @@ export type Result<T, E = Error> =
   | { ok: true; value: T }
   | { ok: false; error: E }
 
-type DateTime = string
-type EntryName = string
-type Password = string
-type Path = string
-type RealmID = string
-type UserID = string
-type OrganizationID = string
-type DeviceID = string
-type DeviceLabel = string
-type BackendAddr = string
-type BackendOrganizationAddr = string
-type BackendOrganizationBootstrapAddr = string
-type BackendInvitationAddr = string
-type SASCode = string
-type EntryID = string
-type InvitationToken = string
-type SequesterVerifyKeyDer = Uint8Array
-type Handle = number
-type CacheSize = number
+export enum RealmRole {
+    Contributor = 'RealmRoleContributor',
+    Manager = 'RealmRoleManager',
+    Owner = 'RealmRoleOwner',
+    Reader = 'RealmRoleReader',
+}
+
+export enum UserProfile {
+    Admin = 'UserProfileAdmin',
+    Outsider = 'UserProfileOutsider',
+    Standard = 'UserProfileStandard',
+}
+
+export enum DeviceFileType {
+    Password = 'DeviceFileTypePassword',
+    Recovery = 'DeviceFileTypeRecovery',
+    Smartcard = 'DeviceFileTypeSmartcard',
+}
+
+export enum InvitationStatus {
+    Deleted = 'InvitationStatusDeleted',
+    Idle = 'InvitationStatusIdle',
+    Ready = 'InvitationStatusReady',
+}
+
+export enum InvitationEmailSentStatus {
+    BadRecipient = 'InvitationEmailSentStatusBadRecipient',
+    NotAvailable = 'InvitationEmailSentStatusNotAvailable',
+    Success = 'InvitationEmailSentStatusSuccess',
+}
+
+export enum OS {
+    Android = 'OSAndroid',
+    Linux = 'OSLinux',
+    MacOs = 'OSMacOs',
+    Windows = 'OSWindows',
+}
+export type DateTime = string
+export type EntryName = string
+export type Password = string
+export type Path = string
+export type RealmID = string
+export type UserID = string
+export type OrganizationID = string
+export type DeviceID = string
+export type DeviceLabel = string
+export type BackendAddr = string
+export type BackendOrganizationAddr = string
+export type BackendOrganizationBootstrapAddr = string
+export type BackendInvitationAddr = string
+export type SASCode = string
+export type EntryID = string
+export type InvitationToken = string
+export type SequesterVerifyKeyDer = Uint8Array
+export type Handle = number
+export type CacheSize = number
 
 export interface ClientConfig {
     configDir: Path
@@ -149,25 +186,6 @@ export interface CancelErrorNotBound {
 export type CancelError =
   | CancelErrorInternal
   | CancelErrorNotBound
-
-// RealmRole
-export interface RealmRoleContributor {
-    tag: 'Contributor'
-}
-export interface RealmRoleManager {
-    tag: 'Manager'
-}
-export interface RealmRoleOwner {
-    tag: 'Owner'
-}
-export interface RealmRoleReader {
-    tag: 'Reader'
-}
-export type RealmRole =
-  | RealmRoleContributor
-  | RealmRoleManager
-  | RealmRoleOwner
-  | RealmRoleReader
 
 // DeviceAccessStrategy
 export interface DeviceAccessStrategyPassword {
@@ -305,21 +323,6 @@ export type ClientWorkspaceShareError =
   | ClientWorkspaceShareErrorUnknownWorkspace
   | ClientWorkspaceShareErrorWorkspaceInMaintenance
 
-// UserProfile
-export interface UserProfileAdmin {
-    tag: 'Admin'
-}
-export interface UserProfileOutsider {
-    tag: 'Outsider'
-}
-export interface UserProfileStandard {
-    tag: 'Standard'
-}
-export type UserProfile =
-  | UserProfileAdmin
-  | UserProfileOutsider
-  | UserProfileStandard
-
 // WorkspaceStorageCacheSize
 export interface WorkspaceStorageCacheSizeCustom {
     tag: 'Custom'
@@ -347,21 +350,6 @@ export interface ClaimerGreeterAbortOperationErrorInternal {
 }
 export type ClaimerGreeterAbortOperationError =
   | ClaimerGreeterAbortOperationErrorInternal
-
-// DeviceFileType
-export interface DeviceFileTypePassword {
-    tag: 'Password'
-}
-export interface DeviceFileTypeRecovery {
-    tag: 'Recovery'
-}
-export interface DeviceFileTypeSmartcard {
-    tag: 'Smartcard'
-}
-export type DeviceFileType =
-  | DeviceFileTypePassword
-  | DeviceFileTypeRecovery
-  | DeviceFileTypeSmartcard
 
 // DeviceSaveStrategy
 export interface DeviceSaveStrategyPassword {
@@ -495,36 +483,6 @@ export interface UserOrDeviceClaimInitialInfoUser {
 export type UserOrDeviceClaimInitialInfo =
   | UserOrDeviceClaimInitialInfoDevice
   | UserOrDeviceClaimInitialInfoUser
-
-// InvitationStatus
-export interface InvitationStatusDeleted {
-    tag: 'Deleted'
-}
-export interface InvitationStatusIdle {
-    tag: 'Idle'
-}
-export interface InvitationStatusReady {
-    tag: 'Ready'
-}
-export type InvitationStatus =
-  | InvitationStatusDeleted
-  | InvitationStatusIdle
-  | InvitationStatusReady
-
-// InvitationEmailSentStatus
-export interface InvitationEmailSentStatusBadRecipient {
-    tag: 'BadRecipient'
-}
-export interface InvitationEmailSentStatusNotAvailable {
-    tag: 'NotAvailable'
-}
-export interface InvitationEmailSentStatusSuccess {
-    tag: 'Success'
-}
-export type InvitationEmailSentStatus =
-  | InvitationEmailSentStatusBadRecipient
-  | InvitationEmailSentStatusNotAvailable
-  | InvitationEmailSentStatusSuccess
 
 // NewUserInvitationError
 export interface NewUserInvitationErrorAlreadyMember {
@@ -700,25 +658,6 @@ export type GreetInProgressError =
   | GreetInProgressErrorPeerReset
   | GreetInProgressErrorUserAlreadyExists
   | GreetInProgressErrorUserCreateNotAllowed
-
-// OS
-export interface OSAndroid {
-    tag: 'Android'
-}
-export interface OSLinux {
-    tag: 'Linux'
-}
-export interface OSMacOs {
-    tag: 'MacOs'
-}
-export interface OSWindows {
-    tag: 'Windows'
-}
-export type OS =
-  | OSAndroid
-  | OSLinux
-  | OSMacOs
-  | OSWindows
 
 export interface LibParsecPlugin {
     cancel(

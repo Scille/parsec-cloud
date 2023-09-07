@@ -191,7 +191,7 @@ import SummaryStep from '@/views/home/SummaryStep.vue';
 import { OrgInfo } from '@/views/home/SummaryStep.vue';
 import MsSpinner from '@/components/core/ms-spinner/MsSpinner.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
-import { AvailableDevice } from '@/plugins/libparsec/definitions';
+import { AvailableDevice, DeviceFileType } from '@/plugins/libparsec/definitions';
 import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 import { organizationValidator, Validity } from '@/common/validators';
 
@@ -343,7 +343,7 @@ function createOrg(orgName: string, userName: string, userEmail: string, deviceN
     keyFilePath: 'key_file_path',
     deviceId: 'device1@device1',
     slug: 'slug1',
-    ty: { tag: 'Password' },
+    ty: DeviceFileType.Password,
   };
   // Simulate connection to the backend
   window.setTimeout(nextStep, 2000);
