@@ -452,7 +452,7 @@
             "waiting": "En attente",
             "email": "Email",
             "date": "Invitation date",
-            "status": "Status",
+            "status": "Statut",
             "noInvitations": "Aucune invitation en cours"
         }
     },
