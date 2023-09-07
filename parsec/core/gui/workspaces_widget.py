@@ -10,7 +10,13 @@ from PyQt5.QtCore import QDate, QEvent, QObject, Qt, QTime, QTimer, pyqtBoundSig
 from PyQt5.QtWidgets import QAbstractButton, QLabel, QWidget
 from structlog import get_logger
 
-from parsec._parsec import CoreEvent, DateTime, LocalDateTime, WorkspaceEntry
+from parsec._parsec import (
+    CoreEvent,
+    DateTime,
+    LocalDateTime,
+    RealmArchivingConfiguration,
+    WorkspaceEntry,
+)
 from parsec.core.fs import (
     ChangesAfterSync,
     FSBackendOfflineError,
@@ -215,6 +221,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         )
         self.event_bus.connect(
             CoreEvent.SHARING_UPDATED, cast(EventCallback, self._on_sharing_updated)
+        )
+        self.event_bus.connect(
+            CoreEvent.ARCHIVING_UPDATED, cast(EventCallback, self._on_archiving_updated)
         )
         self.event_bus.connect(
             CoreEvent.FS_ENTRY_DOWNSYNCED, cast(EventCallback, self._on_entry_downsynced)
@@ -793,6 +802,15 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def _on_sharing_updated(
         self, event: CoreEvent, new_entry: WorkspaceEntry, previous_entry: WorkspaceEntry
+    ) -> None:
+        self.reset()
+
+    def _on_archiving_updated(
+        self,
+        event: CoreEvent,
+        workspace_id: EntryID,
+        configuration: RealmArchivingConfiguration,
+        configured_on: DateTime | None,
     ) -> None:
         self.reset()
 
