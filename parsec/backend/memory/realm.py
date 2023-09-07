@@ -88,11 +88,7 @@ class Realm:
     def is_deleted(self) -> bool:
         if self.last_archiving_configuration_request is None:
             return False
-        if not self.last_archiving_configuration_request.configuration.is_deletion_planned():
-            return False
-        return (
-            self.last_archiving_configuration_request.configuration.deletion_date <= DateTime.now()
-        )
+        return self.last_archiving_configuration_request.configuration.is_deleted()
 
 
 class MemoryRealmComponent(BaseRealmComponent):

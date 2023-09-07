@@ -41,6 +41,16 @@ async def test_create_realm_archiving_certificate(
     assert deletion_planned.str == "DELETION_PLANNED"
     assert deletion_planned.deletion_date == now.add(days=31)
     assert deletion_planned.is_deletion_planned()
+    assert not deletion_planned.is_deleted()
+    assert not deletion_planned.is_deleted(now=now.add(days=30))
+    assert deletion_planned.is_deleted(now=now.add(days=31))
+    assert deletion_planned.is_deleted(now=now.add(days=32))
+
+    deletion_planned = RealmArchivingConfiguration.deletion_planned(now)
+    assert deletion_planned.str == "DELETION_PLANNED"
+    assert deletion_planned.deletion_date == now
+    assert deletion_planned.is_deletion_planned()
+    assert deletion_planned.is_deleted()
 
     for config in (available, archived, deletion_planned):
         certificate = RealmArchivingCertificate(

@@ -11,7 +11,9 @@ from structlog import get_logger
 from parsec._parsec import AuthenticatedCmds as RsBackendAuthenticatedCmds
 from parsec._parsec import (
     CoreEvent,
+    DateTime,
     EntryID,
+    RealmArchivingConfiguration,
     VlobPollChangesRepInMaintenance,
     VlobPollChangesRepNotAllowed,
     VlobPollChangesRepNotFound,
@@ -36,7 +38,6 @@ from parsec.core.fs import (
 )
 from parsec.core.fs.exceptions import FSServerUploadTemporarilyUnavailableError
 from parsec.core.fs.storage import AnyWorkspaceStorage, UserStorage, WorkspaceStorage
-from parsec.core.types import WorkspaceRole
 from parsec.event_bus import EventBus, EventCallback
 
 if TYPE_CHECKING:
@@ -305,7 +306,7 @@ class SyncContext:
 class WorkspaceSyncContext(SyncContext):
     def __init__(self, user_fs: UserFS, id: EntryID) -> None:
         self.workspace = user_fs.get_workspace(id)
-        read_only = self.workspace.get_workspace_entry().role == WorkspaceRole.READER
+        read_only = self.workspace.is_read_only()
         super().__init__(user_fs, id, read_only=read_only)
 
     async def _sync(self, entry_id: EntryID) -> None:
@@ -415,6 +416,23 @@ async def monitor_sync(
                 ctx.due_time = user_fs.device.timestamp().timestamp()
                 _trigger_early_wakeup()
 
+    def _on_archiving_updated(
+        sender: str,
+        workspace_id: EntryID,
+        configuration: RealmArchivingConfiguration,
+        configured_on: DateTime | None,
+    ) -> None:
+        # If role have changed we have to reset the sync context given
+        # behavior could have changed a lot (e.g. switching to/from read-only)
+        ctxs.discard(workspace_id)
+        if not configuration.is_deleted(user_fs.device.time_provider.now()):
+            ctx = ctxs.get(workspace_id)
+            if ctx:
+                # Change the due_time so the context understands the early
+                # wakeup is for him
+                ctx.due_time = user_fs.device.timestamp().timestamp()
+                _trigger_early_wakeup()
+
     def _on_entry_confined(
         event: CoreEvent, entry_id: EntryID, cause_id: EntryID, workspace_id: EntryID
     ) -> None:
@@ -454,6 +472,7 @@ async def monitor_sync(
         (CoreEvent.FS_ENTRY_UPDATED, cast(EventCallback, _on_entry_updated)),
         (CoreEvent.BACKEND_REALM_VLOBS_UPDATED, cast(EventCallback, _on_realm_vlobs_updated)),
         (CoreEvent.SHARING_UPDATED, cast(EventCallback, _on_sharing_updated)),
+        (CoreEvent.ARCHIVING_UPDATED, cast(EventCallback, _on_archiving_updated)),
         (CoreEvent.FS_ENTRY_CONFINED, cast(EventCallback, _on_entry_confined)),
     ):
         # Init userfs sync context
@@ -461,12 +480,10 @@ async def monitor_sync(
         assert ctx is not None
         await _ctx_action(ctx, "bootstrap")
         # Init workspaces sync context
-        user_manifest = user_fs.get_user_manifest()
-        for entry in user_manifest.workspaces:
-            if entry.role is not None:
-                ctx = ctxs.get(entry.id)
-                if ctx:
-                    await _ctx_action(ctx, "bootstrap")
+        for entry in user_fs.get_available_workspace_entries():
+            ctx = ctxs.get(entry.id)
+            if ctx:
+                await _ctx_action(ctx, "bootstrap")
 
         task_status.started()
 

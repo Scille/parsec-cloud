@@ -9,11 +9,13 @@ from parsec._parsec import (
     BlockAccess,
     Chunk,
     CoreEvent,
+    DateTime,
     DeviceID,
     EntryID,
     LocalDevice,
     LocalFileManifest,
     LocalWorkspaceManifest,
+    RealmArchivingConfiguration,
     WorkspaceEntry,
     prepare_read,
     prepare_reshape,
@@ -75,6 +77,9 @@ class FileTransactions:
         self,
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
+        get_archiving_configuration: Callable[
+            [], tuple[RealmArchivingConfiguration, DateTime | None]
+        ],
         device: LocalDevice,
         local_storage: AnyWorkspaceStorage,
         remote_loader: RemoteLoader,
@@ -83,6 +88,7 @@ class FileTransactions:
     ):
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
+        self.get_archiving_configuration = get_archiving_configuration
         self.device = device
         self.local_storage = local_storage
         self.remote_loader = remote_loader

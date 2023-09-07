@@ -197,8 +197,7 @@ async def winfsp_mountpoint_runner(
         drive_letter = ""
         volume_serial_number = 0
     else:
-        user_manifest = user_fs.get_user_manifest()
-        workspace_ids = [entry.id for entry in user_manifest.workspaces]
+        workspace_ids = [entry.id for entry in user_fs.get_available_workspace_entries()]
         workspace_index = workspace_ids.index(workspace_fs.workspace_id)
         # `base_mountpoint_path` is ignored when mounting from a drive
         mountpoint_path = await _get_available_drive(workspace_index, len(workspace_ids))
@@ -269,7 +268,9 @@ async def winfsp_mountpoint_runner(
             yield mountpoint_path
 
             # Start recording `sharing.updated` events
-            with event_bus.waiter_on(CoreEvent.SHARING_UPDATED) as waiter:
+            with event_bus.waiter_on_first(
+                CoreEvent.SHARING_UPDATED, CoreEvent.ARCHIVING_UPDATED
+            ) as waiter:
                 # Loop over `sharing.updated` event
                 while True:
                     # Restart the mountpoint with the right read_only flag if necessary
@@ -278,6 +279,7 @@ async def winfsp_mountpoint_runner(
                     if (
                         workspace_fs.is_read_only() != fs.volume_params["read_only_volume"]
                         and not workspace_fs.is_revoked()
+                        and not workspace_fs.is_deleted()
                     ):
                         restart = partial(fs.restart, read_only_volume=workspace_fs.is_read_only())
                         await trio.to_thread.run_sync(restart)

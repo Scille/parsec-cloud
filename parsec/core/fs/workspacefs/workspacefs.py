@@ -23,6 +23,7 @@ from parsec._parsec import (
     LocalFolderManifest,
     LocalWorkspaceManifest,
     MaintenanceType,
+    RealmArchivingConfiguration,
     RealmID,
     RealmStatusRepOk,
     Regex,
@@ -96,6 +97,9 @@ class WorkspaceFS:
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
         get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry | None]],
+        get_archiving_configuration: Callable[
+            [], tuple[RealmArchivingConfiguration, DateTime | None]
+        ],
         device: LocalDevice,
         local_storage: AnyWorkspaceStorage,
         backend_cmds: BackendAuthenticatedCmds | RsBackendAuthenticatedCmds,
@@ -106,6 +110,7 @@ class WorkspaceFS:
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
         self.get_previous_workspace_entry = get_previous_workspace_entry
+        self.get_archiving_configuration = get_archiving_configuration
         self.device = device
         self.local_storage = local_storage
         self.backend_cmds = backend_cmds
@@ -125,6 +130,7 @@ class WorkspaceFS:
         self.transactions = SyncTransactions(
             self.workspace_id,
             self.get_workspace_entry,
+            self.get_archiving_configuration,
             self.device,
             self.local_storage,
             self.remote_loader,
@@ -156,6 +162,9 @@ class WorkspaceFS:
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
         get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry | None]],
+        get_archiving_configuration: Callable[
+            [], tuple[RealmArchivingConfiguration, DateTime | None]
+        ],
         device: LocalDevice,
         backend_cmds: BackendAuthenticatedCmds | RsBackendAuthenticatedCmds,
         event_bus: EventBus,
@@ -176,6 +185,7 @@ class WorkspaceFS:
                 workspace_id=workspace_id,
                 get_workspace_entry=get_workspace_entry,
                 get_previous_workspace_entry=get_previous_workspace_entry,
+                get_archiving_configuration=get_archiving_configuration,
                 device=device,
                 local_storage=workspace_storage,
                 backend_cmds=backend_cmds,
@@ -257,10 +267,28 @@ class WorkspaceFS:
         return self.get_workspace_entry().encryption_revision
 
     def is_read_only(self) -> bool:
-        return self.get_workspace_entry().role == WorkspaceRole.READER
+        return bool(
+            self.get_workspace_entry().role == WorkspaceRole.READER
+            or self.is_deletion_planned()
+            or self.is_archived()
+        )
 
     def is_revoked(self) -> bool:
         return self.get_workspace_entry().role is None
+
+    def is_archived(self) -> bool:
+        configuration, _ = self.get_archiving_configuration()
+        return configuration.is_archived()
+
+    def is_deletion_planned(self) -> DateTime | None:
+        configuration, _ = self.get_archiving_configuration()
+        if not configuration.is_deletion_planned():
+            return None
+        return configuration.deletion_date
+
+    def is_deleted(self) -> bool:
+        configuration, _ = self.get_archiving_configuration()
+        return configuration.is_deleted(self.device.time_provider.now())
 
     async def path_info(self, path: AnyPath) -> dict[str, object]:
         """

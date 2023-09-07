@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, cast
 import structlog
 import trio
 
-from parsec._parsec import CoreEvent, EntryID, WorkspaceEntry
+from parsec._parsec import CoreEvent, DateTime, EntryID, RealmArchivingConfiguration, WorkspaceEntry
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.fs import FSBackendOfflineError, UserFS
 from parsec.core.fs.exceptions import FSWorkspaceNoAccess, FSWorkspaceNotFoundError
@@ -90,6 +90,17 @@ async def monitor_remanent_workspaces(
         elif previous_entry is None or previous_entry.role is None:
             _start_remanence_manager(new_entry.id)
 
+    def _on_archiving_updated(
+        event: CoreEvent,
+        workspace_id: EntryID,
+        configuration: RealmArchivingConfiguration,
+        configured_on: DateTime | None,
+    ) -> None:
+        # No reader rights
+        if configuration.is_deleted(user_fs.device.time_provider.now()):
+            if workspace_id in cancel_scopes:
+                cancel_scopes[workspace_id].cancel()
+
     def _fs_workspace_created(
         event: CoreEvent,
         new_entry: WorkspaceEntry,
@@ -101,6 +112,7 @@ async def monitor_remanent_workspaces(
         async with open_service_nursery() as nursery:
             with event_bus.connect_in_context(
                 (CoreEvent.SHARING_UPDATED, cast(EventCallback, _on_sharing_updated)),
+                (CoreEvent.ARCHIVING_UPDATED, cast(EventCallback, _on_archiving_updated)),
                 (CoreEvent.FS_WORKSPACE_CREATED, cast(EventCallback, _fs_workspace_created)),
             ):
                 # All workspaces should be processed at startup

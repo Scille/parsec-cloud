@@ -76,8 +76,7 @@ async def _do_workspace_rename(
 
 async def _do_workspace_list(core: LoggedCore) -> list[WorkspaceFS]:
     workspaces = []
-    user_manifest = core.user_fs.get_user_manifest()
-    available_workspaces = [w for w in user_manifest.workspaces if w.role]
+    available_workspaces = core.user_fs.get_available_workspace_entries()
     for workspace in available_workspaces:
         workspace_id = workspace.id
         workspace_fs = core.user_fs.get_workspace(workspace_id)

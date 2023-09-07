@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from collections import defaultdict
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import (
@@ -20,11 +21,13 @@ import trio
 from structlog import get_logger
 from trio_typing import TaskStatus
 
-from parsec._parsec import AuthenticatedCmds as RsBackendAuthenticatedCmds
 from parsec._parsec import (
+    ArchivingConfigRepOk,
+    ArchivingConfigRepUnknownStatus,
     CoreEvent,
     DateTime,
     MessageGetRepOk,
+    RealmArchivingConfiguration,
     RealmCreateRepAlreadyExists,
     RealmCreateRepOk,
     RealmFinishReencryptionMaintenanceRepBadEncryptionRevision,
@@ -73,6 +76,7 @@ from parsec._parsec import (
     VlobUpdateRepSequesterInconsistency,
     VlobUpdateRepTimeout,
 )
+from parsec._parsec import AuthenticatedCmds as RsBackendAuthenticatedCmds
 from parsec.api.data import (
     DataError,
     MessageContent,
@@ -300,6 +304,11 @@ class UserFS:
             self.remote_devices_manager,
         )
 
+        self._archiving_configuration_timestamp = self.device.time_provider.now()
+        self._archiving_configuration: defaultdict[
+            EntryID, tuple[RealmArchivingConfiguration, DateTime | None]
+        ] = defaultdict(lambda: (RealmArchivingConfiguration.available(), None))
+
     @classmethod
     @asynccontextmanager
     async def run(
@@ -354,6 +363,21 @@ class UserFS:
             raise ValueError("Storage not set")
         return self.storage.get_user_manifest()
 
+    def get_available_workspace_entries(self) -> list[WorkspaceEntry]:
+        """
+        Raises: ValueError
+        """
+        user_manifest = self.get_user_manifest()
+        result = []
+        for workspace_entry in user_manifest.workspaces:
+            if workspace_entry.role is None:
+                continue
+            workspace = self.get_workspace(workspace_entry.id)
+            if workspace.is_deleted():
+                continue
+            result.append(workspace_entry)
+        return result
+
     async def set_user_manifest(self, manifest: LocalUserManifest) -> None:
         if self.storage is None:
             raise ValueError("Storage not set")
@@ -397,6 +421,9 @@ class UserFS:
             workspace_entry = get_workspace_entry()
             return await self._get_previous_workspace_entry(workspace_entry)
 
+        def get_archiving_configuration() -> tuple[RealmArchivingConfiguration, DateTime | None]:
+            return self._archiving_configuration[workspace_id]
+
         # Instantiate the local storage
 
         async def workspace_task(
@@ -407,6 +434,7 @@ class UserFS:
                 workspace_id=workspace_id,
                 get_workspace_entry=get_workspace_entry,
                 get_previous_workspace_entry=get_previous_workspace_entry,
+                get_archiving_configuration=get_archiving_configuration,
                 device=self.device,
                 backend_cmds=self.backend_cmds,
                 event_bus=self.event_bus,
@@ -949,6 +977,68 @@ class UserFS:
             return
         elif not isinstance(rep, RealmUpdateRolesRepOk):
             raise FSError(f"Error while trying to set vlob group roles in backend: {rep}")
+
+    async def update_archiving_status(self) -> DateTime | None:
+        rep = await self.backend_cmds.archiving_config()
+
+        # Authenticated's archiving_config command has been introduced in API v2.10/3.4
+        # So a cheap trick to keep backward compatibility here is to
+        # stick with the default archiving config (i.e. the realm is available)
+        if isinstance(rep, ArchivingConfigRepUnknownStatus) and rep.status == "unknown_command":
+            return None
+
+        if not isinstance(rep, ArchivingConfigRepOk):
+            raise FSError(f"Error while fetching archiving config: {rep}")
+
+        # Take a time reference before sending events
+        old_archiving_configuration_timestamp = self._archiving_configuration_timestamp
+        self._archiving_configuration_timestamp = self.device.time_provider.now()
+
+        # Loop over workspaces
+        for status in rep.archiving_config:
+            workspace_id = EntryID.from_bytes(status.realm_id.bytes)
+            previous_configuration, previous_configured_on = self._archiving_configuration[
+                workspace_id
+            ]
+
+            # Compare previous and current state
+            previous_state = (
+                previous_configuration,
+                previous_configured_on,
+                previous_configuration.is_deleted(old_archiving_configuration_timestamp),
+            )
+            current_state = (
+                status.configuration,
+                status.configured_on,
+                status.configuration.is_deleted(self._archiving_configuration_timestamp),
+            )
+            if previous_state == current_state:
+                continue
+
+            # Update state and send events
+            self._archiving_configuration[workspace_id] = (
+                status.configuration,
+                status.configured_on,
+            )
+            self.event_bus.send(
+                CoreEvent.ARCHIVING_UPDATED,
+                workspace_id=workspace_id,
+                configuration=status.configuration,
+                configured_on=status.configured_on,
+            )
+
+        # Find next deletion date
+        result: DateTime | None = None
+        for configuration, _ in self._archiving_configuration.values():
+            if not configuration.is_deletion_planned():
+                continue
+            if configuration.is_deleted(self._archiving_configuration_timestamp):
+                continue
+            if result is None:
+                result = configuration.deletion_date
+            else:
+                result = min(result, configuration.deletion_date)
+        return result
 
     async def process_last_messages(self) -> Sequence[Tuple[int, Exception]]:
         """

@@ -17,6 +17,7 @@ class WorkspaceFSTimestamped(WorkspaceFS):
             self.get_workspace_entry = workspacefs.get_workspace_entry
         else:
             self.get_workspace_entry = self.timestamp_get_entry(workspacefs.get_workspace_entry)
+        self.get_archiving_configuration = workspacefs.get_archiving_configuration
         self.device = workspacefs.device
         self.local_storage = workspacefs.local_storage.to_timestamped(timestamp)
         self.backend_cmds = workspacefs.backend_cmds
@@ -29,6 +30,7 @@ class WorkspaceFSTimestamped(WorkspaceFS):
         self.transactions = SyncTransactions(
             self.workspace_id,
             self.get_workspace_entry,
+            self.get_archiving_configuration,
             self.device,
             self.local_storage,
             self.remote_loader,

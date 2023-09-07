@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any, Awaitable, Iterable, Union, cast
 
 from parsec._parsec import (
+    ArchivingConfigRep,
     AuthenticatedPingRep,
     BlockCreateRep,
     BlockReadRep,
@@ -84,6 +85,7 @@ from parsec.api.protocol import (
     SequesterServiceID,
     UserID,
     VlobID,
+    archiving_config_serializer,
     authenticated_ping_serializer,
     block_create_serializer,
     block_read_serializer,
@@ -278,6 +280,13 @@ async def organization_config(transport: Transport) -> OrganizationConfigRep:
     return cast(
         OrganizationConfigRep,
         await _send_cmd(transport, organization_config_serializer, cmd="organization_config"),
+    )
+
+
+async def archiving_config(transport: Transport) -> ArchivingConfigRep:
+    return cast(
+        ArchivingConfigRep,
+        await _send_cmd(transport, archiving_config_serializer, cmd="archiving_config"),
     )
 
 

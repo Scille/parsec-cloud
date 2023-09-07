@@ -255,6 +255,11 @@ crate::binding_utils::impl_enum_field!(
         libparsec::core::CoreEvent::BackendRealmRolesUpdated
     ],
     [
+        "BACKEND_REALM_ARCHIVING_UPDATED",
+        backend_realm_archiving_updated,
+        libparsec::core::CoreEvent::BackendRealmArchivingUpdated
+    ],
+    [
         "BACKEND_REALM_VLOBS_UPDATED",
         backend_realm_vlobs_updated,
         libparsec::core::CoreEvent::BackendRealmVlobsUpdated
@@ -368,6 +373,11 @@ crate::binding_utils::impl_enum_field!(
         "SHARING_UPDATED",
         sharing_updated,
         libparsec::core::CoreEvent::SharingUpdated
+    ],
+    [
+        "ARCHIVING_UPDATED",
+        archiving_updated,
+        libparsec::core::CoreEvent::ArchivingUpdated
     ],
     [
         "USERFS_UPDATED",

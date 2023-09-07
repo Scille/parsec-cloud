@@ -153,7 +153,7 @@ async def check_archiving_configuration(
         conn, organization_id, realm_id, for_update=False
     )
 
-    if configuration.is_deletion_planned() and configuration.deletion_date <= now:
+    if configuration.is_deleted():
         raise RealmDeletedError()
 
     if operation_kind == OperationKind.DATA_WRITE:
@@ -177,7 +177,7 @@ async def query_update_archiving(
         RealmDeletedError
         RealmArchivingPeriodTooShortError
     """
-    now = DateTime.now()
+    DateTime.now()
     realm_id = archiving_configuration_request.realm_id
     user_id = archiving_configuration_request.configured_by.user_id
 
@@ -192,7 +192,7 @@ async def query_update_archiving(
     previous_configuration, previous_archiving_certified_on = await check_archiving_configuration(
         conn, organization_id, realm_id, OperationKind.CONFIGURATION
     )
-    if previous_configuration.is_deletion_planned() and previous_configuration.deletion_date <= now:
+    if previous_configuration.is_deleted():
         raise RealmDeletedError()
 
     # 3. Check that the author role is owner

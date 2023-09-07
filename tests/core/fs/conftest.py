@@ -15,6 +15,7 @@ from parsec._parsec import (
     EntryName,
     LocalDevice,
     LocalWorkspaceManifest,
+    RealmArchivingConfiguration,
     Regex,
     WorkspaceEntry,
 )
@@ -40,6 +41,9 @@ def transactions_factory(
     ) -> AsyncIterator[SyncTransactions]:
         def _get_workspace_entry():
             return workspace_entry
+
+        def _get_archiving_config():
+            return RealmArchivingConfiguration.available(), None
 
         async def _get_previous_workspace_entry():
             # The tests shouldn't need this yet
@@ -71,6 +75,7 @@ def transactions_factory(
             yield cls(
                 workspace_entry.id,
                 _get_workspace_entry,
+                _get_archiving_config,
                 device,
                 local_storage,
                 remote_loader,

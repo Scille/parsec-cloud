@@ -37,6 +37,7 @@ from parsec._parsec import (
 from parsec.api.data import EntryName, RevokedUserCertificate
 from parsec.api.protocol import InvitationToken, UserID
 from parsec.core import resources as core_resources
+from parsec.core.archiving_monitor import monitor_archiving
 from parsec.core.backend_connection import (
     BackendAuthenticatedConn,
     BackendConnectionError,
@@ -455,6 +456,9 @@ async def logged_core_factory(
         workspace_storage_cache_size=config.workspace_storage_cache_size,
     ) as user_fs:
         backend_conn.register_monitor(
+            "archiving monitor", partial(monitor_archiving, user_fs, event_bus), prioritized=True
+        )
+        backend_conn.register_monitor(
             "messages monitor", partial(monitor_messages, user_fs, event_bus)
         )
         backend_conn.register_monitor("sync monitor", partial(monitor_sync, user_fs, event_bus))
@@ -471,6 +475,7 @@ async def logged_core_factory(
                 mount_on_workspace_created=config.mountpoint_enabled,
                 mount_on_workspace_shared=config.mountpoint_enabled,
                 unmount_on_workspace_revoked=config.mountpoint_enabled,
+                unmount_on_workspace_deleted=config.mountpoint_enabled,
                 exclude_from_mount_all=config.disabled_workspaces,
                 mountpoint_in_directory=config.mountpoint_in_directory,
                 personal_workspace_base_path=config.personal_workspace_base_dir,
