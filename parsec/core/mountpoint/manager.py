@@ -99,6 +99,7 @@ class MountpointManager:
         self._runner = runner
         self._nursery = nursery
         self._mountpoint_tasks: dict[tuple[EntryID, DateTime | None], TaskStatus[Any]] = {}
+        self._mounting_events: dict[tuple[EntryID, DateTime | None], trio.Event] = {}
         self._timestamped_workspacefs: dict[EntryID, dict[DateTime, WorkspaceFSTimestamped]] = {}
         self.personal_workspace_base_path = personal_workspace_base_path
         self.personal_workspace_name_regex = (
@@ -213,6 +214,7 @@ class MountpointManager:
                     # Set the mountpoint as mounted THEN send the corresponding event
                     task_status.started(mountpoint_path)
                     self._mountpoint_tasks[key] = task_status
+                    self._mounting_events.pop(key, trio.Event()).set()
                     self.event_bus.send(CoreEvent.MOUNTPOINT_STARTED, **event_kwargs)
 
                     # It is the reponsability of the runner context teardown to wait
@@ -221,6 +223,8 @@ class MountpointManager:
                     # future in which case we'll simply add a `sleep_forever` below.
 
             finally:
+                # Make sure to notify we are done mounting
+                self._mounting_events.pop(key, trio.Event()).set()
                 # Pop the mountpoint task if its ours
                 if self._mountpoint_tasks.get(key) == task_status:
                     del self._mountpoint_tasks[key]
@@ -252,6 +256,13 @@ class MountpointManager:
         if (workspace_id, timestamp) in self._mountpoint_tasks:
             raise MountpointAlreadyMounted(f"Workspace `{workspace_id.hex}` already mounted.")
 
+        if (workspace_id, timestamp) in self._mounting_events:
+            raise MountpointAlreadyMounted(f"Workspace `{workspace_id.hex}` is beening mounted.")
+
+        # Set a mounting event to prevent race conditions
+        mounting = trio.Event()
+        self._mounting_events[(workspace_id, timestamp)] = mounting
+
         if timestamp is not None:
             return await self.remount_workspace_new_timestamp(workspace_id, None, timestamp)
 
@@ -263,6 +274,10 @@ class MountpointManager:
     async def unmount_workspace(
         self, workspace_id: EntryID, timestamp: DateTime | None = None
     ) -> None:
+        # Wait for the workspace to stop being mounted
+        while (workspace_id, timestamp) in self._mounting_events:
+            await self._mounting_events[(workspace_id, timestamp)].wait()
+
         if (workspace_id, timestamp) not in self._mountpoint_tasks:
             raise MountpointNotMounted(f"Workspace `{workspace_id.hex}` not mounted.")
 
