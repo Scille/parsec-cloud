@@ -56,6 +56,7 @@ from parsec._parsec_pyi.protocol import (
     RealmStartReencryptionMaintenanceRep,
     RealmStatsRep,
     RealmStatusRep,
+    RealmUpdateArchivingRep,
     RealmUpdateRolesRep,
     UserCreateRep,
     UserGetRep,
@@ -194,6 +195,10 @@ class AuthenticatedCmds:
         role_certificate: bytes,
         recipient_message: bytes | None,
     ) -> RealmUpdateRolesRep: ...
+    async def realm_update_archiving(
+        self,
+        archiving_certificate: bytes,
+    ) -> RealmUpdateArchivingRep: ...
     async def user_create(
         self,
         user_certificate: bytes,

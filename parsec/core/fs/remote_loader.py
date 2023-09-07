@@ -126,6 +126,9 @@ MANIFEST_STAMP_AHEAD_US = 100_000  # microseconds, or 0.1 seconds
 # priority over manifest updates.
 ROLE_CERTIFICATE_STAMP_AHEAD_US = 500_000  # microseconds, or 0.5 seconds
 
+# Archiving doesn't have to use a value as large 0.5 seconds
+ARCHIVING_CERTIFICATE_STAMP_AHEAD_US = 1_000  # microseconds, or 1 milliseconds
+
 
 class VlobRequireGreaterTimestampError(Exception):
     @property

@@ -323,6 +323,14 @@ class FSWorkspaceRealmArchived(FSRemoteOperationError):
     pass
 
 
+class FSWorkspaceArchivingPeriodTooShort(FSRemoteOperationError):
+    pass
+
+
+class FSWorkspaceArchivingNotAllowedError(FSRemoteOperationError):
+    pass
+
+
 # RemoteDevicesManager errors
 
 

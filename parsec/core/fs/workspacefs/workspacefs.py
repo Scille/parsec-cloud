@@ -23,9 +23,18 @@ from parsec._parsec import (
     LocalFolderManifest,
     LocalWorkspaceManifest,
     MaintenanceType,
+    RealmArchivingCertificate,
     RealmArchivingConfiguration,
     RealmID,
+    RealmRole,
     RealmStatusRepOk,
+    RealmStatusRepRealmDeleted,
+    RealmUpdateArchivingRepArchivingPeriodTooShort,
+    RealmUpdateArchivingRepNotAllowed,
+    RealmUpdateArchivingRepNotFound,
+    RealmUpdateArchivingRepOk,
+    RealmUpdateArchivingRepRealmDeleted,
+    RealmUpdateArchivingRepRequireGreaterTimestamp,
     Regex,
     UserID,
     WorkspaceEntry,
@@ -44,14 +53,19 @@ from parsec.core.fs.exceptions import (
     FSNotADirectoryError,
     FSRemoteManifestNotFound,
     FSRemoteManifestNotFoundBadVersion,
+    FSRemoteOperationError,
     FSRemoteSyncError,
     FSReshapingRequiredError,
     FSSequesterServiceRejectedError,
+    FSWorkspaceArchivingNotAllowedError,
+    FSWorkspaceArchivingPeriodTooShort,
     FSWorkspaceNoAccess,
+    FSWorkspaceNotFoundError,
+    FSWorkspaceRealmDeleted,
     FSWorkspaceTimestampedTooEarly,
 )
 from parsec.core.fs.path import AnyPath, FsPath
-from parsec.core.fs.remote_loader import RemoteLoader
+from parsec.core.fs.remote_loader import ARCHIVING_CERTIFICATE_STAMP_AHEAD_US, RemoteLoader
 from parsec.core.fs.storage.workspace_storage import AnyWorkspaceStorage, WorkspaceStorage
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.core.fs.workspacefs.remanence_manager import (
@@ -355,6 +369,9 @@ class WorkspaceFS:
                 f"Cannot retrieve remote status for workspace {self.workspace_id.hex}: {exc}"
             ) from exc
 
+        if isinstance(rep, RealmStatusRepRealmDeleted):
+            raise FSWorkspaceRealmDeleted("The realm has been deleted")
+
         assert isinstance(rep, RealmStatusRepOk)
         reencryption_already_in_progress = (
             rep.in_maintenance and rep.maintenance_type == MaintenanceType.REENCRYPTION
@@ -383,6 +400,63 @@ class WorkspaceFS:
             role_revoked=tuple(role_revoked),
             reencryption_already_in_progress=reencryption_already_in_progress,
         )
+
+    # Archiving
+
+    async def configure_archiving(
+        self,
+        configuration: RealmArchivingConfiguration,
+        timestamp_greater_than: DateTime | None = None,
+    ) -> None:
+        # Check current role
+        entry = self.get_workspace_entry()
+        if entry.role != RealmRole.OWNER:
+            raise FSWorkspaceArchivingNotAllowedError(
+                "User must be owner to change the archiving configuration"
+            )
+
+        # Check deletion
+        if self.is_deleted():
+            raise FSWorkspaceRealmDeleted("This workspace has already been deleted")
+
+        # Choose the right timestamp
+        timestamp = self.device.timestamp()
+        if timestamp_greater_than is not None:
+            timestamp = max(
+                timestamp,
+                timestamp_greater_than.add(microseconds=ARCHIVING_CERTIFICATE_STAMP_AHEAD_US),
+            )
+
+        # Check deletion date
+        if configuration.is_deletion_planned() and configuration.deletion_date < timestamp:
+            raise FSWorkspaceArchivingPeriodTooShort("Archiving period is negative")
+
+        # Generate and sign certificate
+        certif = RealmArchivingCertificate(
+            author=self.device.device_id,
+            timestamp=timestamp,
+            realm_id=RealmID.from_entry_id(self.workspace_id),
+            configuration=configuration,
+        ).dump_and_sign(self.device.signing_key)
+
+        # Perform server request
+        rep = await self.backend_cmds.realm_update_archiving(certif)
+        if isinstance(rep, RealmUpdateArchivingRepArchivingPeriodTooShort):
+            raise FSWorkspaceArchivingPeriodTooShort("Archiving period is too short")
+        if isinstance(rep, RealmUpdateArchivingRepNotAllowed):
+            raise FSWorkspaceArchivingNotAllowedError(
+                "Changing the archiving configuration is not allowed"
+            )
+        if isinstance(rep, RealmUpdateArchivingRepRequireGreaterTimestamp):
+            return await self.configure_archiving(
+                configuration, timestamp_greater_than=rep.strictly_greater_than
+            )
+        if isinstance(rep, RealmUpdateArchivingRepRealmDeleted):
+            raise FSWorkspaceRealmDeleted("The workspace has already been deleted")
+        if isinstance(rep, RealmUpdateArchivingRepNotFound):
+            raise FSWorkspaceNotFoundError("The workspace could not be found")
+        if not isinstance(rep, RealmUpdateArchivingRepOk):
+            raise FSRemoteOperationError(str(rep))
 
     # Versioning
 

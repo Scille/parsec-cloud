@@ -55,6 +55,7 @@ from parsec._parsec import (
     RealmStatsRep,
     RealmStatusRep,
     RealmUpdateArchivingRep,
+    RealmUpdateArchivingRepBadTimestamp,
     RealmUpdateRolesRep,
     RealmUpdateRolesRepBadTimestamp,
     ReencryptionBatchEntry,
@@ -123,6 +124,7 @@ from parsec.api.protocol import (
     realm_get_role_certificates_serializer,
     realm_start_reencryption_maintenance_serializer,
     realm_status_serializer,
+    realm_update_archiving_serializer,
     realm_update_roles_serializer,
     shamir_recovery_others_list_serializer,
     shamir_recovery_self_info_serializer,
@@ -257,6 +259,7 @@ async def _send_cmd(
             RealmStartReencryptionMaintenanceRepBadTimestamp,
             VlobCreateRepBadTimestamp,
             VlobUpdateRepBadTimestamp,
+            RealmUpdateArchivingRepBadTimestamp,
         ),
     ):
         raise BackendOutOfBallparkError(rep)
@@ -528,8 +531,8 @@ async def realm_update_archiving(
         RealmUpdateArchivingRep,
         await _send_cmd(
             transport,
-            realm_update_roles_serializer,
-            cmd="realm_update_roles",
+            realm_update_archiving_serializer,
+            cmd="realm_update_archiving",
             archiving_certificate=archiving_certificate,
         ),
     )
