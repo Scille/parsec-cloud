@@ -572,54 +572,38 @@ def generate_target(
     return modified_crate
 
 
-def generate(what: str, api_specs: ApiSpecs) -> str | None:
-    if what == "client":
-        return generate_target(
-            api_specs,
-            template="client_plugin_definitions.ts.j2",
-            dest=BASEDIR / "../../client/src/plugins/libparsec/definitions.ts",
-        )
-    elif what == "electron":
-        return generate_target(
-            api_specs,
-            template="binding_electron_meths.rs.j2",
-            dest=BASEDIR / "../electron/src/meths.rs",
-            modified_crate="libparsec_bindings_electron",
-        )
-
-    elif what == "electron_client":
-        return generate_target(
-            api_specs,
-            template="binding_electron_index.d.ts.j2",
-            dest=BASEDIR / "../electron/src/index.d.ts",
-        )
-    elif what == "web":
-        return generate_target(
-            api_specs,
-            template="binding_web_meths.rs.j2",
-            dest=BASEDIR / "../web/src/meths.rs",
-            modified_crate="libparsec_bindings_web",
-        )
-    elif what == "android":
-        # TODO !
-        raise NotImplementedError("Android isn't ready yet")
-    else:
-        raise ValueError(f"Unknown generator `{what}`")
-
+TEMPLATE_CHOICES = {
+    "client": lambda api_spec: generate_target(
+        api_spec,
+        template="client_plugin_definitions.ts.j2",
+        dest=BASEDIR / "../../client/src/plugins/libparsec/definitions.ts",
+    ),
+    "electron": lambda api_spec: generate_target(
+        api_spec,
+        template="binding_electron_meths.rs.j2",
+        dest=BASEDIR / "../electron/src/meths.rs",
+        modified_crate="libparsec_bindings_electron",
+    ),
+    "electron_client": lambda api_spec: generate_target(
+        api_spec,
+        template="binding_electron_index.d.ts.j2",
+        dest=BASEDIR / "../electron/src/index.d.ts",
+    ),
+    "web": lambda api_spec: generate_target(
+        api_spec,
+        template="binding_web_meths.rs.j2",
+        dest=BASEDIR / "../web/src/meths.rs",
+        modified_crate="libparsec_bindings_web",
+    ),
+    # TODO: Android isn't ready yet!
+    # "android": lambda _spec: raise NotImplementedError("Android isn't ready yet!")
+}
 
 if __name__ == "__main__":
-    TEMPLATE_CHOICES = [
-        "client",
-        "electron",
-        "electron_client",
-        "web",
-        # TODO: android not ready yet
-        # "android",
-    ]
     parser = argparse.ArgumentParser(description="Generate bindings code")
     parser.add_argument(
         "what",
-        choices=TEMPLATE_CHOICES + ["all"],
+        choices=["all"] + list(TEMPLATE_CHOICES.keys()),
         nargs="+",
     )
     parser.add_argument("--test", action="store_true")
@@ -634,10 +618,10 @@ if __name__ == "__main__":
     rust_modified_crates = []
 
     if "all" in args.what:
-        args.what = TEMPLATE_CHOICES
+        args.what = TEMPLATE_CHOICES.keys()
 
     for what in args.what:
-        possible_modified_crate = generate(what, api_specs)
+        possible_modified_crate = TEMPLATE_CHOICES[what](api_specs)
         if possible_modified_crate:
             rust_modified_crates.append(possible_modified_crate)
 
