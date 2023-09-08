@@ -198,6 +198,10 @@ async def winfsp_mountpoint_runner(
         volume_serial_number = 0
     else:
         workspace_ids = [entry.id for entry in user_fs.get_available_workspace_entries()]
+        if workspace_fs.workspace_id not in workspace_ids:
+            # We're trying to mount a workspace that is not available
+            # Here is not the right place to deal with it, so just add it to the list
+            workspace_ids.append(workspace_fs.workspace_id)
         workspace_index = workspace_ids.index(workspace_fs.workspace_id)
         # `base_mountpoint_path` is ignored when mounting from a drive
         mountpoint_path = await _get_available_drive(workspace_index, len(workspace_ids))

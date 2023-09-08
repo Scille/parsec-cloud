@@ -71,6 +71,7 @@ async def test_remanence_dialog_empty_workspace(
     await aqtbot.wait_until(_wait_workspace_mounted)
 
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
+    await wk_button.workspace_fs.wait_remanence_manager_prepared(wait_for_connection=True)
     w_w._on_manage_remanence_clicked(wk_button.workspace_fs)
 
     rem_w = await catch_workspace_remanence_widget()

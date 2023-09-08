@@ -1331,23 +1331,22 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def _on_sharing_updated(
         self, event: CoreEvent, new_entry: WorkspaceEntry, previous_entry: WorkspaceEntry
     ) -> None:
-        # Not the corresponding workspace
         assert new_entry is not None or previous_entry is not None
         workspace_id = previous_entry.id if previous_entry is not None else new_entry.id
-        if self.workspace_fs is None or workspace_id != self.workspace_fs.workspace_id:
-            return
 
         if new_entry is None or new_entry.role is None:
             # Sharing revoked
             show_error(
                 self, T("TEXT_FILE_SHARING_REVOKED_workspace").format(workspace=previous_entry.name)
             )
-            self.back_clicked.emit()
+            if self.workspace_fs is not None and workspace_id == self.workspace_fs.workspace_id:
+                self.back_clicked.emit()
 
         elif previous_entry is not None and previous_entry.role is not None:
-            self.current_user_role = new_entry.role
-            self.read_only = self.workspace_fs.is_read_only()
-            self.label_role.setText(get_role_translation(self.current_user_role))
+            if self.workspace_fs is not None and workspace_id == self.workspace_fs.workspace_id:
+                self.current_user_role = new_entry.role
+                self.read_only = self.workspace_fs.is_read_only()
+                self.label_role.setText(get_role_translation(self.current_user_role))
             if (
                 previous_entry.role != WorkspaceRole.READER
                 and new_entry.role == WorkspaceRole.READER
