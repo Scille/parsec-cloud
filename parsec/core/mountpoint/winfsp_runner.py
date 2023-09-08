@@ -178,18 +178,17 @@ async def winfsp_mountpoint_runner(
 
     mountpoint_in_directory = config.get("mountpoint_in_directory", False)
     personal_workspace_base_path = config.get("personal_workspace_base_path", None)
-    is_personal_workspace = False
     personal_workspace_name_pattern = config.get("personal_workspace_name_pattern", None)
-    personal_workspace_name_regex = (
+
+    # This is a workaround to force mounting as drive letter if personal_workspace_base_path is not set
+    name_regex = (
         re.compile(personal_workspace_name_pattern) if personal_workspace_name_pattern else None
     )
-    if personal_workspace_name_regex and personal_workspace_name_regex.fullmatch(
-        workspace_fs.get_workspace_name().str
-    ):
-        is_personal_workspace = True
+    is_personal_workspace = name_regex and name_regex.fullmatch(workspace_fs.get_workspace_name().str)
+    if is_personal_workspace and not personal_workspace_base_path:
+        mountpoint_in_directory = False
 
-    # If personal_workspace_base_path is not set, personal workspace is mounted as drive letter
-    if mountpoint_in_directory and (personal_workspace_base_path or not is_personal_workspace):
+    if mountpoint_in_directory:
         # In single mountpoint mode, use base_mountpoint_path instead of drive letters
         mountpoint_path = await _bootstrap_mountpoint(base_mountpoint_path, workspace_name)
         file_system_mountpoint = file_system_name = str(mountpoint_path)
