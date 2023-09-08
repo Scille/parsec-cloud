@@ -6,8 +6,8 @@
 
 
 export type Result<T, E = Error> =
-    | { ok: true; value: T }
-    | { ok: false; error: E }
+  | { ok: true; value: T }
+  | { ok: false; error: E }
 
 
 export interface ClientConfig {
@@ -150,8 +150,8 @@ export interface CancelErrorNotBound {
     error: string
 }
 export type CancelError =
-    | CancelErrorInternal
-    | CancelErrorNotBound
+  | CancelErrorInternal
+  | CancelErrorNotBound
 
 
 // RealmRole
@@ -168,10 +168,10 @@ export interface RealmRoleReader {
     tag: "Reader"
 }
 export type RealmRole =
-    | RealmRoleContributor
-    | RealmRoleManager
-    | RealmRoleOwner
-    | RealmRoleReader
+  | RealmRoleContributor
+  | RealmRoleManager
+  | RealmRoleOwner
+  | RealmRoleReader
 
 
 // DeviceAccessStrategy
@@ -185,8 +185,8 @@ export interface DeviceAccessStrategySmartcard {
     key_file: string
 }
 export type DeviceAccessStrategy =
-    | DeviceAccessStrategyPassword
-    | DeviceAccessStrategySmartcard
+  | DeviceAccessStrategyPassword
+  | DeviceAccessStrategySmartcard
 
 
 // ClientStartError
@@ -207,10 +207,10 @@ export interface ClientStartErrorLoadDeviceInvalidPath {
     error: string
 }
 export type ClientStartError =
-    | ClientStartErrorInternal
-    | ClientStartErrorLoadDeviceDecryptionFailed
-    | ClientStartErrorLoadDeviceInvalidData
-    | ClientStartErrorLoadDeviceInvalidPath
+  | ClientStartErrorInternal
+  | ClientStartErrorLoadDeviceDecryptionFailed
+  | ClientStartErrorLoadDeviceInvalidData
+  | ClientStartErrorLoadDeviceInvalidPath
 
 
 // ClientStopError
@@ -219,7 +219,7 @@ export interface ClientStopErrorInternal {
     error: string
 }
 export type ClientStopError =
-    | ClientStopErrorInternal
+  | ClientStopErrorInternal
 
 
 // ClientListWorkspacesError
@@ -228,7 +228,7 @@ export interface ClientListWorkspacesErrorInternal {
     error: string
 }
 export type ClientListWorkspacesError =
-    | ClientListWorkspacesErrorInternal
+  | ClientListWorkspacesErrorInternal
 
 
 // ClientWorkspaceCreateError
@@ -237,7 +237,7 @@ export interface ClientWorkspaceCreateErrorInternal {
     error: string
 }
 export type ClientWorkspaceCreateError =
-    | ClientWorkspaceCreateErrorInternal
+  | ClientWorkspaceCreateErrorInternal
 
 
 // ClientWorkspaceRenameError
@@ -250,8 +250,8 @@ export interface ClientWorkspaceRenameErrorUnknownWorkspace {
     error: string
 }
 export type ClientWorkspaceRenameError =
-    | ClientWorkspaceRenameErrorInternal
-    | ClientWorkspaceRenameErrorUnknownWorkspace
+  | ClientWorkspaceRenameErrorInternal
+  | ClientWorkspaceRenameErrorUnknownWorkspace
 
 
 // ClientWorkspaceShareError
@@ -304,17 +304,17 @@ export interface ClientWorkspaceShareErrorWorkspaceInMaintenance {
     error: string
 }
 export type ClientWorkspaceShareError =
-    | ClientWorkspaceShareErrorBadTimestamp
-    | ClientWorkspaceShareErrorInternal
-    | ClientWorkspaceShareErrorNotAllowed
-    | ClientWorkspaceShareErrorOffline
-    | ClientWorkspaceShareErrorOutsiderCannotBeManagerOrOwner
-    | ClientWorkspaceShareErrorRevokedRecipient
-    | ClientWorkspaceShareErrorShareToSelf
-    | ClientWorkspaceShareErrorUnknownRecipient
-    | ClientWorkspaceShareErrorUnknownRecipientOrWorkspace
-    | ClientWorkspaceShareErrorUnknownWorkspace
-    | ClientWorkspaceShareErrorWorkspaceInMaintenance
+  | ClientWorkspaceShareErrorBadTimestamp
+  | ClientWorkspaceShareErrorInternal
+  | ClientWorkspaceShareErrorNotAllowed
+  | ClientWorkspaceShareErrorOffline
+  | ClientWorkspaceShareErrorOutsiderCannotBeManagerOrOwner
+  | ClientWorkspaceShareErrorRevokedRecipient
+  | ClientWorkspaceShareErrorShareToSelf
+  | ClientWorkspaceShareErrorUnknownRecipient
+  | ClientWorkspaceShareErrorUnknownRecipientOrWorkspace
+  | ClientWorkspaceShareErrorUnknownWorkspace
+  | ClientWorkspaceShareErrorWorkspaceInMaintenance
 
 
 // UserProfile
@@ -328,9 +328,9 @@ export interface UserProfileStandard {
     tag: "Standard"
 }
 export type UserProfile =
-    | UserProfileAdmin
-    | UserProfileOutsider
-    | UserProfileStandard
+  | UserProfileAdmin
+  | UserProfileOutsider
+  | UserProfileStandard
 
 
 // WorkspaceStorageCacheSize
@@ -342,8 +342,8 @@ export interface WorkspaceStorageCacheSizeDefault {
     tag: "Default"
 }
 export type WorkspaceStorageCacheSize =
-    | WorkspaceStorageCacheSizeCustom
-    | WorkspaceStorageCacheSizeDefault
+  | WorkspaceStorageCacheSizeCustom
+  | WorkspaceStorageCacheSizeDefault
 
 
 // ClientEvent
@@ -352,7 +352,7 @@ export interface ClientEventPing {
     ping: string
 }
 export type ClientEvent =
-    | ClientEventPing
+  | ClientEventPing
 
 
 // ClaimerGreeterAbortOperationError
@@ -361,7 +361,7 @@ export interface ClaimerGreeterAbortOperationErrorInternal {
     error: string
 }
 export type ClaimerGreeterAbortOperationError =
-    | ClaimerGreeterAbortOperationErrorInternal
+  | ClaimerGreeterAbortOperationErrorInternal
 
 
 // DeviceFileType
@@ -375,9 +375,9 @@ export interface DeviceFileTypeSmartcard {
     tag: "Smartcard"
 }
 export type DeviceFileType =
-    | DeviceFileTypePassword
-    | DeviceFileTypeRecovery
-    | DeviceFileTypeSmartcard
+  | DeviceFileTypePassword
+  | DeviceFileTypeRecovery
+  | DeviceFileTypeSmartcard
 
 
 // DeviceSaveStrategy
@@ -389,8 +389,8 @@ export interface DeviceSaveStrategySmartcard {
     tag: "Smartcard"
 }
 export type DeviceSaveStrategy =
-    | DeviceSaveStrategyPassword
-    | DeviceSaveStrategySmartcard
+  | DeviceSaveStrategyPassword
+  | DeviceSaveStrategySmartcard
 
 
 // BootstrapOrganizationError
@@ -423,12 +423,12 @@ export interface BootstrapOrganizationErrorSaveDeviceError {
     error: string
 }
 export type BootstrapOrganizationError =
-    | BootstrapOrganizationErrorAlreadyUsedToken
-    | BootstrapOrganizationErrorBadTimestamp
-    | BootstrapOrganizationErrorInternal
-    | BootstrapOrganizationErrorInvalidToken
-    | BootstrapOrganizationErrorOffline
-    | BootstrapOrganizationErrorSaveDeviceError
+  | BootstrapOrganizationErrorAlreadyUsedToken
+  | BootstrapOrganizationErrorBadTimestamp
+  | BootstrapOrganizationErrorInternal
+  | BootstrapOrganizationErrorInvalidToken
+  | BootstrapOrganizationErrorOffline
+  | BootstrapOrganizationErrorSaveDeviceError
 
 
 // ClaimerRetrieveInfoError
@@ -449,10 +449,10 @@ export interface ClaimerRetrieveInfoErrorOffline {
     error: string
 }
 export type ClaimerRetrieveInfoError =
-    | ClaimerRetrieveInfoErrorAlreadyUsed
-    | ClaimerRetrieveInfoErrorInternal
-    | ClaimerRetrieveInfoErrorNotFound
-    | ClaimerRetrieveInfoErrorOffline
+  | ClaimerRetrieveInfoErrorAlreadyUsed
+  | ClaimerRetrieveInfoErrorInternal
+  | ClaimerRetrieveInfoErrorNotFound
+  | ClaimerRetrieveInfoErrorOffline
 
 
 // ClaimInProgressError
@@ -489,14 +489,14 @@ export interface ClaimInProgressErrorPeerReset {
     error: string
 }
 export type ClaimInProgressError =
-    | ClaimInProgressErrorActiveUsersLimitReached
-    | ClaimInProgressErrorAlreadyUsed
-    | ClaimInProgressErrorCancelled
-    | ClaimInProgressErrorCorruptedConfirmation
-    | ClaimInProgressErrorInternal
-    | ClaimInProgressErrorNotFound
-    | ClaimInProgressErrorOffline
-    | ClaimInProgressErrorPeerReset
+  | ClaimInProgressErrorActiveUsersLimitReached
+  | ClaimInProgressErrorAlreadyUsed
+  | ClaimInProgressErrorCancelled
+  | ClaimInProgressErrorCorruptedConfirmation
+  | ClaimInProgressErrorInternal
+  | ClaimInProgressErrorNotFound
+  | ClaimInProgressErrorOffline
+  | ClaimInProgressErrorPeerReset
 
 
 // UserOrDeviceClaimInitialInfo
@@ -514,8 +514,8 @@ export interface UserOrDeviceClaimInitialInfoUser {
     greeter_human_handle: HumanHandle | null
 }
 export type UserOrDeviceClaimInitialInfo =
-    | UserOrDeviceClaimInitialInfoDevice
-    | UserOrDeviceClaimInitialInfoUser
+  | UserOrDeviceClaimInitialInfoDevice
+  | UserOrDeviceClaimInitialInfoUser
 
 
 // InvitationStatus
@@ -529,9 +529,9 @@ export interface InvitationStatusReady {
     tag: "Ready"
 }
 export type InvitationStatus =
-    | InvitationStatusDeleted
-    | InvitationStatusIdle
-    | InvitationStatusReady
+  | InvitationStatusDeleted
+  | InvitationStatusIdle
+  | InvitationStatusReady
 
 
 // InvitationEmailSentStatus
@@ -545,9 +545,9 @@ export interface InvitationEmailSentStatusSuccess {
     tag: "Success"
 }
 export type InvitationEmailSentStatus =
-    | InvitationEmailSentStatusBadRecipient
-    | InvitationEmailSentStatusNotAvailable
-    | InvitationEmailSentStatusSuccess
+  | InvitationEmailSentStatusBadRecipient
+  | InvitationEmailSentStatusNotAvailable
+  | InvitationEmailSentStatusSuccess
 
 
 // NewUserInvitationError
@@ -568,10 +568,10 @@ export interface NewUserInvitationErrorOffline {
     error: string
 }
 export type NewUserInvitationError =
-    | NewUserInvitationErrorAlreadyMember
-    | NewUserInvitationErrorInternal
-    | NewUserInvitationErrorNotAllowed
-    | NewUserInvitationErrorOffline
+  | NewUserInvitationErrorAlreadyMember
+  | NewUserInvitationErrorInternal
+  | NewUserInvitationErrorNotAllowed
+  | NewUserInvitationErrorOffline
 
 
 // NewDeviceInvitationError
@@ -588,9 +588,9 @@ export interface NewDeviceInvitationErrorSendEmailToUserWithoutEmail {
     error: string
 }
 export type NewDeviceInvitationError =
-    | NewDeviceInvitationErrorInternal
-    | NewDeviceInvitationErrorOffline
-    | NewDeviceInvitationErrorSendEmailToUserWithoutEmail
+  | NewDeviceInvitationErrorInternal
+  | NewDeviceInvitationErrorOffline
+  | NewDeviceInvitationErrorSendEmailToUserWithoutEmail
 
 
 // DeleteInvitationError
@@ -611,29 +611,29 @@ export interface DeleteInvitationErrorOffline {
     error: string
 }
 export type DeleteInvitationError =
-    | DeleteInvitationErrorAlreadyDeleted
-    | DeleteInvitationErrorInternal
-    | DeleteInvitationErrorNotFound
-    | DeleteInvitationErrorOffline
+  | DeleteInvitationErrorAlreadyDeleted
+  | DeleteInvitationErrorInternal
+  | DeleteInvitationErrorNotFound
+  | DeleteInvitationErrorOffline
 
 
 // InviteListItem
 export interface InviteListItemDevice {
     tag: "Device"
-    token: Uint8Array
+    token: string
     created_on: string
     status: InvitationStatus
 }
 export interface InviteListItemUser {
     tag: "User"
-    token: Uint8Array
+    token: string
     created_on: string
     claimer_email: string
     status: InvitationStatus
 }
 export type InviteListItem =
-    | InviteListItemDevice
-    | InviteListItemUser
+  | InviteListItemDevice
+  | InviteListItemUser
 
 
 // ListInvitationsError
@@ -646,8 +646,8 @@ export interface ListInvitationsErrorOffline {
     error: string
 }
 export type ListInvitationsError =
-    | ListInvitationsErrorInternal
-    | ListInvitationsErrorOffline
+  | ListInvitationsErrorInternal
+  | ListInvitationsErrorOffline
 
 
 // ClientStartInvitationGreetError
@@ -656,7 +656,7 @@ export interface ClientStartInvitationGreetErrorInternal {
     error: string
 }
 export type ClientStartInvitationGreetError =
-    | ClientStartInvitationGreetErrorInternal
+  | ClientStartInvitationGreetErrorInternal
 
 
 // GreetInProgressError
@@ -717,19 +717,19 @@ export interface GreetInProgressErrorUserCreateNotAllowed {
     error: string
 }
 export type GreetInProgressError =
-    | GreetInProgressErrorActiveUsersLimitReached
-    | GreetInProgressErrorAlreadyUsed
-    | GreetInProgressErrorBadTimestamp
-    | GreetInProgressErrorCancelled
-    | GreetInProgressErrorCorruptedInviteUserData
-    | GreetInProgressErrorDeviceAlreadyExists
-    | GreetInProgressErrorInternal
-    | GreetInProgressErrorNonceMismatch
-    | GreetInProgressErrorNotFound
-    | GreetInProgressErrorOffline
-    | GreetInProgressErrorPeerReset
-    | GreetInProgressErrorUserAlreadyExists
-    | GreetInProgressErrorUserCreateNotAllowed
+  | GreetInProgressErrorActiveUsersLimitReached
+  | GreetInProgressErrorAlreadyUsed
+  | GreetInProgressErrorBadTimestamp
+  | GreetInProgressErrorCancelled
+  | GreetInProgressErrorCorruptedInviteUserData
+  | GreetInProgressErrorDeviceAlreadyExists
+  | GreetInProgressErrorInternal
+  | GreetInProgressErrorNonceMismatch
+  | GreetInProgressErrorNotFound
+  | GreetInProgressErrorOffline
+  | GreetInProgressErrorPeerReset
+  | GreetInProgressErrorUserAlreadyExists
+  | GreetInProgressErrorUserCreateNotAllowed
 
 
 // OS
@@ -739,17 +739,17 @@ export interface OSAndroid {
 export interface OSLinux {
     tag: "Linux"
 }
-export interface OSMacos {
-    tag: "Macos"
+export interface OSMacOs {
+    tag: "MacOs"
 }
 export interface OSWindows {
     tag: "Windows"
 }
 export type OS =
-    | OSAndroid
-    | OSLinux
-    | OSMacos
-    | OSWindows
+  | OSAndroid
+  | OSLinux
+  | OSMacOs
+  | OSWindows
 
 
 export function cancel(
@@ -767,19 +767,19 @@ export function clientStop(
 ): Promise<Result<null, ClientStopError>>
 export function clientListWorkspaces(
     client: number
-): Promise<Result<Array<[Uint8Array, string]>, ClientListWorkspacesError>>
+): Promise<Result<Array<[string, string]>, ClientListWorkspacesError>>
 export function clientWorkspaceCreate(
     client: number,
     name: string
-): Promise<Result<Uint8Array, ClientWorkspaceCreateError>>
+): Promise<Result<string, ClientWorkspaceCreateError>>
 export function clientWorkspaceRename(
     client: number,
-    realm_id: Uint8Array,
+    realm_id: string,
     new_name: string
 ): Promise<Result<null, ClientWorkspaceRenameError>>
 export function clientWorkspaceShare(
     client: number,
-    realm_id: Uint8Array,
+    realm_id: string,
     recipient: string,
     role: RealmRole | null
 ): Promise<Result<null, ClientWorkspaceShareError>>
@@ -850,25 +850,25 @@ export function clientNewUserInvitation(
     client: number,
     claimer_email: string,
     send_email: boolean
-): Promise<Result<[Uint8Array, InvitationEmailSentStatus], NewUserInvitationError>>
+): Promise<Result<[string, InvitationEmailSentStatus], NewUserInvitationError>>
 export function clientNewDeviceInvitation(
     client: number,
     send_email: boolean
-): Promise<Result<[Uint8Array, InvitationEmailSentStatus], NewDeviceInvitationError>>
+): Promise<Result<[string, InvitationEmailSentStatus], NewDeviceInvitationError>>
 export function clientDeleteInvitation(
     client: number,
-    token: Uint8Array
+    token: string
 ): Promise<Result<null, DeleteInvitationError>>
 export function clientListInvitations(
     client: number
 ): Promise<Result<Array<InviteListItem>, ListInvitationsError>>
 export function clientStartUserInvitationGreet(
     client: number,
-    token: Uint8Array
+    token: string
 ): Promise<Result<UserGreetInitialInfo, ClientStartInvitationGreetError>>
 export function clientStartDeviceInvitationGreet(
     client: number,
-    token: Uint8Array
+    token: string
 ): Promise<Result<DeviceGreetInitialInfo, ClientStartInvitationGreetError>>
 export function greeterUserInitialDoWaitPeer(
     canceller: number,
