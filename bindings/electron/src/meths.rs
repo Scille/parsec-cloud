@@ -2805,15 +2805,18 @@ fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
                     for (i, elem) in ok.into_iter().enumerate() {
                         let js_elem = {
                             let (x1, x2) = elem;
-                            let js_array = JsArray::new(&mut cx, 2);        let js_value = JsString::try_new(&mut cx,{
-                                    let custom_to_rs_string = |x: libparsec::RealmID| -> Result<String, &'static str> { Ok(x.hex()) };
-                                    match custom_to_rs_string(x1) {
-                                        Ok(ok) => ok,
-                                        Err(err) => return cx.throw_type_error(err),
-                                    }
-                                }).or_throw(&mut cx)?;
-                                js_array.set(&mut cx, 1, js_value)?;        let js_value = JsString::try_new(&mut cx,x2).or_throw(&mut cx)?;
-                                js_array.set(&mut cx, 2, js_value)?;js_array
+                            let js_array = JsArray::new(&mut cx, 2);
+                            let js_value = JsString::try_new(&mut cx,{
+                                let custom_to_rs_string = |x: libparsec::RealmID| -> Result<String, &'static str> { Ok(x.hex()) };
+                                match custom_to_rs_string(x1) {
+                                    Ok(ok) => ok,
+                                    Err(err) => return cx.throw_type_error(err),
+                                }
+                            }).or_throw(&mut cx)?;
+                            js_array.set(&mut cx, 1, js_value)?;
+                            let js_value = JsString::try_new(&mut cx,x2).or_throw(&mut cx)?;
+                            js_array.set(&mut cx, 2, js_value)?;
+                            js_array
                         };
                         js_array.set(&mut cx, i as u32, js_elem)?;
                     }
@@ -4051,15 +4054,18 @@ fn client_new_user_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
                 js_obj.set(&mut cx, "ok", js_tag)?;
                 let js_value = {
                     let (x1, x2) = ok;
-                    let js_array = JsArray::new(&mut cx, 2);        let js_value = JsString::try_new(&mut cx,{
-                            let custom_to_rs_string = |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
-                            match custom_to_rs_string(x1) {
-                                Ok(ok) => ok,
-                                Err(err) => return cx.throw_type_error(err),
-                            }
-                        }).or_throw(&mut cx)?;
-                        js_array.set(&mut cx, 1, js_value)?;        let js_value = variant_invitationemailsentstatus_rs_to_js(&mut cx, x2)?;
-                        js_array.set(&mut cx, 2, js_value)?;js_array
+                    let js_array = JsArray::new(&mut cx, 2);
+                    let js_value = JsString::try_new(&mut cx,{
+                        let custom_to_rs_string = |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(x1) {
+                            Ok(ok) => ok,
+                            Err(err) => return cx.throw_type_error(err),
+                        }
+                    }).or_throw(&mut cx)?;
+                    js_array.set(&mut cx, 1, js_value)?;
+                    let js_value = variant_invitationemailsentstatus_rs_to_js(&mut cx, x2)?;
+                    js_array.set(&mut cx, 2, js_value)?;
+                    js_array
                 };
                 js_obj.set(&mut cx, "value", js_value)?;
                 js_obj
@@ -4115,15 +4121,18 @@ fn client_new_device_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> 
                 js_obj.set(&mut cx, "ok", js_tag)?;
                 let js_value = {
                     let (x1, x2) = ok;
-                    let js_array = JsArray::new(&mut cx, 2);        let js_value = JsString::try_new(&mut cx,{
-                            let custom_to_rs_string = |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
-                            match custom_to_rs_string(x1) {
-                                Ok(ok) => ok,
-                                Err(err) => return cx.throw_type_error(err),
-                            }
-                        }).or_throw(&mut cx)?;
-                        js_array.set(&mut cx, 1, js_value)?;        let js_value = variant_invitationemailsentstatus_rs_to_js(&mut cx, x2)?;
-                        js_array.set(&mut cx, 2, js_value)?;js_array
+                    let js_array = JsArray::new(&mut cx, 2);
+                    let js_value = JsString::try_new(&mut cx,{
+                        let custom_to_rs_string = |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(x1) {
+                            Ok(ok) => ok,
+                            Err(err) => return cx.throw_type_error(err),
+                        }
+                    }).or_throw(&mut cx)?;
+                    js_array.set(&mut cx, 1, js_value)?;
+                    let js_value = variant_invitationemailsentstatus_rs_to_js(&mut cx, x2)?;
+                    js_array.set(&mut cx, 2, js_value)?;
+                    js_array
                 };
                 js_obj.set(&mut cx, "value", js_value)?;
                 js_obj
