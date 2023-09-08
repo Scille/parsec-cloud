@@ -184,7 +184,9 @@ async def winfsp_mountpoint_runner(
     name_regex = (
         re.compile(personal_workspace_name_pattern) if personal_workspace_name_pattern else None
     )
-    is_personal_workspace = name_regex and name_regex.fullmatch(workspace_fs.get_workspace_name().str)
+    is_personal_workspace = name_regex and name_regex.fullmatch(
+        workspace_fs.get_workspace_name().str
+    )
     if is_personal_workspace and not personal_workspace_base_path:
         mountpoint_in_directory = False
 
