@@ -18,6 +18,7 @@ from parsec._parsec import (
     VlobPollChangesRepNotAllowed,
     VlobPollChangesRepNotFound,
     VlobPollChangesRepOk,
+    VlobPollChangesRepRealmDeleted,
     WorkspaceEntry,
 )
 from parsec.api.protocol import RealmID
@@ -138,7 +139,14 @@ class SyncContext:
             # Workspace not yet synchronized with backend
             new_checkpoint = 0
             changes = {}
-        elif isinstance(rep, (VlobPollChangesRepInMaintenance, VlobPollChangesRepNotAllowed)):
+        elif isinstance(
+            rep,
+            (
+                VlobPollChangesRepInMaintenance,
+                VlobPollChangesRepNotAllowed,
+                VlobPollChangesRepRealmDeleted,
+            ),
+        ):
             return False
         elif not isinstance(rep, VlobPollChangesRepOk):
             return False

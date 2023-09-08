@@ -370,7 +370,7 @@ class WorkspaceFS:
             ) from exc
 
         if isinstance(rep, RealmStatusRepRealmDeleted):
-            raise FSWorkspaceRealmDeleted("The realm has been deleted")
+            raise FSWorkspaceRealmDeleted(f"The workspace {self.workspace_id.hex} has been deleted")
 
         assert isinstance(rep, RealmStatusRepOk)
         reencryption_already_in_progress = (
@@ -452,9 +452,11 @@ class WorkspaceFS:
                 configuration, timestamp_greater_than=rep.strictly_greater_than
             )
         if isinstance(rep, RealmUpdateArchivingRepRealmDeleted):
-            raise FSWorkspaceRealmDeleted("The workspace has already been deleted")
+            raise FSWorkspaceRealmDeleted(f"The workspace {self.workspace_id.hex} has been deleted")
         if isinstance(rep, RealmUpdateArchivingRepNotFound):
-            raise FSWorkspaceNotFoundError("The workspace could not be found")
+            raise FSWorkspaceNotFoundError(
+                f"The workspace {self.workspace_id.hex} could not be found"
+            )
         if not isinstance(rep, RealmUpdateArchivingRepOk):
             raise FSRemoteOperationError(str(rep))
 

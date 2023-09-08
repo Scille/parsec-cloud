@@ -34,16 +34,20 @@ from parsec._parsec import (
     RealmFinishReencryptionMaintenanceRepNotAllowed,
     RealmFinishReencryptionMaintenanceRepNotInMaintenance,
     RealmFinishReencryptionMaintenanceRepOk,
+    RealmFinishReencryptionMaintenanceRepRealmDeleted,
     RealmStartReencryptionMaintenanceRepInMaintenance,
     RealmStartReencryptionMaintenanceRepNotAllowed,
     RealmStartReencryptionMaintenanceRepOk,
     RealmStartReencryptionMaintenanceRepParticipantMismatch,
+    RealmStartReencryptionMaintenanceRepRealmDeleted,
     RealmStatusRepNotAllowed,
     RealmStatusRepOk,
+    RealmStatusRepRealmDeleted,
     RealmUpdateRolesRepAlreadyGranted,
     RealmUpdateRolesRepInMaintenance,
     RealmUpdateRolesRepNotAllowed,
     RealmUpdateRolesRepOk,
+    RealmUpdateRolesRepRealmDeleted,
     RealmUpdateRolesRepRequireGreaterTimestamp,
     RealmUpdateRolesRepUserRevoked,
     ReencryptionBatchEntry,
@@ -53,6 +57,8 @@ from parsec._parsec import (
     VlobCreateRepAlreadyExists,
     VlobCreateRepInMaintenance,
     VlobCreateRepOk,
+    VlobCreateRepRealmArchived,
+    VlobCreateRepRealmDeleted,
     VlobCreateRepRejectedBySequesterService,
     VlobCreateRepRequireGreaterTimestamp,
     VlobCreateRepSequesterInconsistency,
@@ -61,16 +67,21 @@ from parsec._parsec import (
     VlobMaintenanceGetReencryptionBatchRepNotAllowed,
     VlobMaintenanceGetReencryptionBatchRepNotInMaintenance,
     VlobMaintenanceGetReencryptionBatchRepOk,
+    VlobMaintenanceGetReencryptionBatchRepRealmDeleted,
     VlobMaintenanceSaveReencryptionBatchRepBadEncryptionRevision,
     VlobMaintenanceSaveReencryptionBatchRepNotAllowed,
     VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance,
     VlobMaintenanceSaveReencryptionBatchRepOk,
+    VlobMaintenanceSaveReencryptionBatchRepRealmDeleted,
     VlobReadRepInMaintenance,
     VlobReadRepOk,
+    VlobReadRepRealmDeleted,
     VlobUpdateRep,
     VlobUpdateRepBadVersion,
     VlobUpdateRepInMaintenance,
     VlobUpdateRepOk,
+    VlobUpdateRepRealmArchived,
+    VlobUpdateRepRealmDeleted,
     VlobUpdateRepRejectedBySequesterService,
     VlobUpdateRepRequireGreaterTimestamp,
     VlobUpdateRepSequesterInconsistency,
@@ -104,6 +115,8 @@ from parsec.core.fs.exceptions import (
     FSWorkspaceNoAccess,
     FSWorkspaceNotFoundError,
     FSWorkspaceNotInMaintenance,
+    FSWorkspaceRealmArchived,
+    FSWorkspaceRealmDeleted,
 )
 from parsec.core.fs.remote_loader import (
     MANIFEST_STAMP_AHEAD_US,
@@ -175,6 +188,8 @@ class ReencryptionJob:
                 raise FSWorkspaceNoAccess(
                     f"Not allowed to do reencryption maintenance on workspace {workspace_id.hex}: {rep}"
                 )
+            elif isinstance(rep, VlobMaintenanceGetReencryptionBatchRepRealmDeleted):
+                raise FSWorkspaceRealmDeleted(f"The workspace {workspace_id.hex} has been deleted")
             elif not isinstance(rep, VlobMaintenanceGetReencryptionBatchRepOk):
                 raise FSError(
                     f"Cannot do reencryption maintenance on workspace {workspace_id.hex}: {rep}"
@@ -207,6 +222,11 @@ class ReencryptionJob:
                 raise FSWorkspaceNoAccess(
                     f"Not allowed to do reencryption maintenance on workspace {workspace_id.hex}: {rep_maintenance_save_reencryption}"
                 )
+            elif isinstance(
+                rep_maintenance_save_reencryption,
+                VlobMaintenanceSaveReencryptionBatchRepRealmDeleted,
+            ):
+                raise FSWorkspaceRealmDeleted(f"The workspace {workspace_id.hex} has been deleted")
             elif not isinstance(
                 rep_maintenance_save_reencryption, VlobMaintenanceSaveReencryptionBatchRepOk
             ):
@@ -243,6 +263,10 @@ class ReencryptionJob:
                 ):
                     raise FSWorkspaceNoAccess(
                         f"Not allowed to do reencryption maintenance on workspace {workspace_id.hex}: {rep_reencryption_maintenance}"
+                    )
+                elif isinstance(rep, RealmFinishReencryptionMaintenanceRepRealmDeleted):
+                    raise FSWorkspaceRealmDeleted(
+                        f"The workspace {workspace_id.hex} has been deleted"
                     )
                 elif not isinstance(
                     rep_reencryption_maintenance, RealmFinishReencryptionMaintenanceRepOk
@@ -557,6 +581,10 @@ class UserFS:
             raise FSWorkspaceInMaintenance(
                 "Cannot access workspace data while it is in maintenance"
             )
+        elif isinstance(rep, VlobReadRepRealmDeleted):
+            raise FSWorkspaceRealmDeleted(
+                f"The user realm {self.user_manifest_id.hex} has been deleted"
+            )
         elif not isinstance(rep, VlobReadRepOk):
             raise FSError(f"Cannot fetch user manifest from backend: {rep}")
 
@@ -838,6 +866,14 @@ class UserFS:
             )
         elif isinstance(rep, (VlobCreateRepTimeout, VlobUpdateRepTimeout)):
             raise FSServerUploadTemporarilyUnavailableError("Temporary failure during vlob upload")
+        elif isinstance(rep, (VlobCreateRepRealmArchived, VlobUpdateRepRealmArchived)):
+            raise FSWorkspaceRealmArchived(
+                f"The user realm {self.user_manifest_id.hex} has been archived"
+            )
+        elif isinstance(rep, (VlobCreateRepRealmDeleted, VlobUpdateRepRealmDeleted)):
+            raise FSWorkspaceRealmDeleted(
+                f"The user realm {self.user_manifest_id.hex} has been deleted"
+            )
         elif not isinstance(rep, (VlobCreateRepOk, VlobUpdateRepOk)):
             raise FSError(f"Cannot sync user manifest: {rep}")
 
@@ -975,6 +1011,8 @@ class UserFS:
         elif isinstance(rep, RealmUpdateRolesRepAlreadyGranted):
             # Stay idempotent
             return
+        elif isinstance(rep, RealmUpdateRolesRepRealmDeleted):
+            raise FSWorkspaceRealmDeleted(f"The workspace {workspace_id.hex} has been deleted")
         elif not isinstance(rep, RealmUpdateRolesRepOk):
             raise FSError(f"Error while trying to set vlob group roles in backend: {rep}")
 
@@ -1343,6 +1381,8 @@ class UserFS:
             raise FSWorkspaceNoAccess(
                 f"Not allowed to start maintenance on workspace {workspace_id.hex}: {rep}"
             )
+        elif isinstance(rep, RealmStartReencryptionMaintenanceRepRealmDeleted):
+            raise FSWorkspaceRealmDeleted(f"The workspace {workspace_id.hex} has been deleted")
         elif not isinstance(rep, RealmStartReencryptionMaintenanceRepOk):
             raise FSError(f"Cannot start maintenance on workspace {workspace_id.hex}: {rep}")
         return True
@@ -1421,6 +1461,8 @@ class UserFS:
 
         if isinstance(rep, RealmStatusRepNotAllowed):
             raise FSWorkspaceNoAccess(f"Not allowed to access workspace {workspace_id.hex}: {rep}")
+        elif isinstance(rep, RealmStatusRepRealmDeleted):
+            raise FSWorkspaceRealmDeleted(f"The workspace {workspace_id.hex} has been deleted")
         elif not isinstance(rep, RealmStatusRepOk):
             raise FSError(f"Error while getting status for workspace {workspace_id.hex}: {rep}")
 

@@ -315,11 +315,11 @@ class FSWorkspaceInMaintenance(FSRemoteOperationError):
     pass
 
 
-class FSWorkspaceRealmDeleted(FSRemoteOperationError):
+class FSWorkspaceRealmDeleted(FSWorkspaceNoReadAccess):
     pass
 
 
-class FSWorkspaceRealmArchived(FSRemoteOperationError):
+class FSWorkspaceRealmArchived(FSWorkspaceNoWriteAccess):
     pass
 
 
