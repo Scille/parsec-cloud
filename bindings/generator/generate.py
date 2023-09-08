@@ -505,50 +505,46 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
     )
 
 
-def generate_client(api_specs: ApiSpecs) -> list[str]:
-    template = env.get_template("client_plugin_definitions.d.ts.j2")
-    output = (BASEDIR / "../../client/src/plugins/libparsec/definitions.d.ts").resolve()
-    print(f"Generating {output}")
+def generate_target(
+    api_specs: ApiSpecs, template: str, dest: Path, modified_crate: str | None = None
+) -> str | None:
+    dest = dest.resolve()
+
+    _template = env.get_template(template)
+    print(f"Generating {dest}")
     # Don't use `write_text` given it outputs \r\n for newlines on Windows
-    output.write_bytes(template.render(api=api_specs).encode("utf8"))
-    return []
+    dest.write_bytes(_template.render(api=api_specs).encode("utf8"))
+    return modified_crate
 
 
-def generate_electron(api_specs: ApiSpecs) -> list[str]:
-    template = env.get_template("binding_electron_meths.rs.j2")
-    output = (BASEDIR / "../electron/src/meths.rs").resolve()
-    print(f"Generating {output}")
-    output.write_bytes(template.render(api=api_specs).encode("utf8"))
-
-    return ["libparsec_bindings_electron"]
-
-
-def generate_electron_client(api_specs: ApiSpecs) -> list[str]:
-    template = env.get_template("binding_electron_index.d.ts.j2")
-    output = (BASEDIR / "../electron/src/index.d.ts").resolve()
-    print(f"Generating {output}")
-    output.write_bytes(template.render(api=api_specs).encode("utf8"))
-    return []
-
-
-def generate_web(api_specs: ApiSpecs) -> list[str]:
-    template = env.get_template("binding_web_meths.rs.j2")
-    output = (BASEDIR / "../web/src/meths.rs").resolve()
-    print(f"Generating {output}")
-    output.write_bytes(template.render(api=api_specs).encode("utf8"))
-
-    return ["libparsec_bindings_web"]
-
-
-def generate(what: str, api_specs: ApiSpecs) -> list[str]:
+def generate(what: str, api_specs: ApiSpecs) -> str | None:
     if what == "client":
-        return generate_client(api_specs)
+        return generate_target(
+            api_specs,
+            template="client_plugin_definitions.d.ts.j2",
+            dest=BASEDIR / "../../client/src/plugins/libparsec/definitions.d.ts",
+        )
     elif what == "electron":
-        return generate_electron(api_specs)
+        return generate_target(
+            api_specs,
+            template="binding_electron_meths.rs.j2",
+            dest=BASEDIR / "../electron/src/meths.rs",
+            modified_crate="libparsec_bindings_electron",
+        )
+
     elif what == "electron_client":
-        return generate_electron_client(api_specs)
+        return generate_target(
+            api_specs,
+            template="binding_electron_index.d.ts.j2",
+            dest=BASEDIR / "../electron/src/index.d.ts",
+        )
     elif what == "web":
-        return generate_web(api_specs)
+        return generate_target(
+            api_specs,
+            template="binding_web_meths.rs.j2",
+            dest=BASEDIR / "../web/src/meths.rs",
+            modified_crate="libparsec_bindings_web",
+        )
     elif what == "android":
         # TODO !
         raise NotImplementedError("Android isn't ready yet")
@@ -580,15 +576,17 @@ if __name__ == "__main__":
         api_module = import_module("api")
     api_specs = generate_api_specs(api_module)
 
-    rust_modified_packages = []
+    rust_modified_crates = []
 
     if "all" in args.what:
         args.what = TEMPLATE_CHOICES
 
     for what in args.what:
-        rust_modified_packages.extend(generate(what, api_specs))
+        possible_modified_crate = generate(what, api_specs)
+        if possible_modified_crate:
+            rust_modified_crates.append(possible_modified_crate)
 
     subprocess.check_call(
-        args=["cargo", "fmt"] + [f"--package={package}" for package in rust_modified_packages],
+        args=["cargo", "fmt"] + [f"--package={package}" for package in rust_modified_crates],
         cwd=BASEDIR / "../..",
     )
