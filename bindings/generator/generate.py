@@ -99,10 +99,10 @@ env = Environment(
 
 
 def _test_change_case_function(input: str, expected: str, func: Callable[[str], str]) -> None:
-    camel_case = func(input)
+    case = func(input)
     assert (
-        camel_case == expected
-    ), f"expected `{expected}` but got `{camel_case}` (input = `{input}`, func = {func.__name__})"
+        case == expected
+    ), f"expected `{expected}` but got `{case}` (input = `{input}`, func = {func.__name__})"
 
 
 def snake_to_camel_case(s: str) -> str:
@@ -157,6 +157,12 @@ _test_change_case_function("OSSimple", "os_simple", pascal_to_snake_case)
 
 env.filters["snake2camel"] = snake_to_camel_case
 env.filters["pascal2snake"] = pascal_to_snake_case
+
+for ty in ("struct", "enum", "variant"):
+    for way in ("rs_to_js", "js_to_rs"):
+        env.filters[
+            f"{ty}_{way}_function_name"
+        ] = lambda item, ty=ty, way=way: f"{ty}_{pascal_to_snake_case(item.name)}_{way}"
 
 
 def _raise_helper(msg: Any) -> None:

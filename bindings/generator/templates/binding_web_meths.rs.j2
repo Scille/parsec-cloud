@@ -98,11 +98,11 @@ let {{ param_name }} = {{ param_name }}_converted;
 {% elif type.kind == "OnClientEventCallback" %}
 let {{ param_name }} = std::sync::Arc::new(move |event: libparsec::ClientEvent| {
     // TODO: Better error handling here (log error ?)
-    let js_event = {{ variant_rs_to_js_function_name(type.event_type) }}(event).expect("event type conversion error");
+    let js_event = {{ type.event_type | variant_rs_to_js_function_name }}(event).expect("event type conversion error");
     on_event_callback.call1(&JsValue::NULL, &js_event).expect("error in event callback");
 }) as std::sync::Arc<dyn Fn(libparsec::ClientEvent)>;
 {% elif type.kind == "enum"%}
-let {{ param_name }} = {{ enum_js_to_rs_function_name(type) }}(&{{ param_name }})?;
+let {{ param_name }} = {{ type | enum_js_to_rs_function_name }}(&{{ param_name }})?;
 {% endif %}
 {%- endmacro -%}
 
@@ -194,9 +194,9 @@ if {{ js_val }}.is_null() {
     converted
 }
 {%- elif type.kind == "struct" -%}
-{{ struct_js_to_rs_function_name(type) }}({{ js_val }})?
+{{ type | struct_js_to_rs_function_name }}({{ js_val }})?
 {%- elif type.kind == "variant" -%}
-{{ variant_js_to_rs_function_name(type) }}({{ js_val }})?
+{{ type | variant_js_to_rs_function_name }}({{ js_val }})?
 {%- elif type.kind == "result" -%}
     match Reflect::get(&obj, &"ok".into())?.as_bool() {
         Some(true) => {
@@ -220,7 +220,7 @@ if {{ js_val }}.is_null() {
             type_error.set_cause(&{{ js_val }});
             JsValue::from(type_error)
         })?;
-    {{ enum_js_to_rs_function_name(type) }}(raw_string.as_str())
+    {{ type | enum_js_to_rs_function_name }}(raw_string.as_str())
 }?
 {%- else -%}
 {{ raise("Unsupported type %r" % type) }}
@@ -313,11 +313,11 @@ match {{ rs_value }} {
     }
 }
 {%- elif type.kind == "struct" -%}
-{{ struct_rs_to_js_function_name(type) }}({{ rs_value }})?
+{{ type | struct_rs_to_js_function_name }}({{ rs_value }})?
 {%- elif type.kind == "variant" -%}
-{{ variant_rs_to_js_function_name(type) }}({{ rs_value }})?
+{{ type | variant_rs_to_js_function_name }}({{ rs_value }})?
 {%- elif type.kind == "enum" -%}
-JsValue::from_str({{ enum_rs_to_js_function_name(type) }}({{ rs_value }}))
+JsValue::from_str({{ type | enum_rs_to_js_function_name }}({{ rs_value }}))
 {%- else -%}
 {{ rs_value }}.into()
 {%- endif -%}
@@ -328,14 +328,9 @@ JsValue::from_str({{ enum_rs_to_js_function_name(type) }}({{ rs_value }}))
  # Structure-related macros
  #}
 
-
-{%- macro struct_js_to_rs_function_name(struct) %}struct_{{ struct.name | pascal2snake }}_js_to_rs{% endmacro -%}
-{%- macro struct_rs_to_js_function_name(struct) %}struct_{{ struct.name | pascal2snake }}_rs_to_js{% endmacro -%}
-
-
 {%- macro render_struct_js_to_rs(struct) %}
 #[allow(dead_code)]
-fn {{ struct_js_to_rs_function_name(struct) }}(obj: JsValue) -> Result<libparsec::{{ struct.name }}, JsValue> {
+fn {{ struct | struct_js_to_rs_function_name }}(obj: JsValue) -> Result<libparsec::{{ struct.name }}, JsValue> {
 {% for attr_name, attr_type in struct.attributes.items() %}
     let {{ attr_name }} = {
         let js_val = Reflect::get(&obj, &"{{ attr_name | snake2camel }}".into())?;
@@ -355,7 +350,7 @@ fn {{ struct_js_to_rs_function_name(struct) }}(obj: JsValue) -> Result<libparsec
 
 {%- macro render_struct_rs_to_js(struct) %}
 #[allow(dead_code)]
-fn {{ struct_rs_to_js_function_name(struct) }}(rs_obj: libparsec::{{ struct.name }}) -> Result<JsValue, JsValue> {
+fn {{ struct | struct_rs_to_js_function_name }}(rs_obj: libparsec::{{ struct.name }}) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
 {% for attr_name, attr_type in struct.attributes.items() %}
 {% set custom_getter = struct.custom_getters.get(attr_name) %}
@@ -379,12 +374,9 @@ fn {{ struct_rs_to_js_function_name(struct) }}(rs_obj: libparsec::{{ struct.name
  #}
 
 
-{%- macro variant_js_to_rs_function_name(variant) %}variant_{{ variant.name | pascal2snake }}_js_to_rs{% endmacro -%}
-{%- macro variant_rs_to_js_function_name(variant) %}variant_{{ variant.name | pascal2snake }}_rs_to_js{% endmacro -%}
-
 {%- macro render_variant_js_to_rs(variant) %}
 #[allow(dead_code)]
-fn {{ variant_js_to_rs_function_name(variant) }}(obj: JsValue) -> Result<libparsec::{{ variant.name }}, JsValue> {
+fn {{ variant | variant_js_to_rs_function_name }}(obj: JsValue) -> Result<libparsec::{{ variant.name }}, JsValue> {
     let tag = Reflect::get(&obj, &"tag".into())?;
     match tag {
 {% for value in variant.values %}
@@ -426,7 +418,7 @@ fn {{ variant_js_to_rs_function_name(variant) }}(obj: JsValue) -> Result<libpars
 
 {%- macro render_variant_rs_to_js(variant) %}
 #[allow(dead_code)]
-fn {{ variant_rs_to_js_function_name(variant) }}(rs_obj: libparsec::{{ variant.name }}) -> Result<JsValue, JsValue> {
+fn {{ variant | variant_rs_to_js_function_name }}(rs_obj: libparsec::{{ variant.name }}) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
 {% if variant.is_error_variant %}
     let js_display = &rs_obj.to_string();
@@ -534,12 +526,9 @@ pub fn {{ meth.name | snake2camel }}(
 }
 {% endmacro -%}
 
-{%- macro enum_js_to_rs_function_name(enum) %}enum_{{ enum.name | pascal2snake }}_js_to_rs{% endmacro %}
-{%- macro enum_rs_to_js_function_name(enum) %}enum_{{ enum.name | pascal2snake }}_rs_to_js{% endmacro %}
-
 {%- macro render_enum_js_to_rs(enum) %}
 #[allow(dead_code)]
-fn {{ enum_js_to_rs_function_name(enum) }}(raw_value: &str) -> Result<libparsec::{{ enum.name }}, JsValue> {
+fn {{ enum | enum_js_to_rs_function_name }}(raw_value: &str) -> Result<libparsec::{{ enum.name }}, JsValue> {
     match raw_value {
 {% for variant_name in enum.member_names %}
         "{{ enum.name + variant_name }}" => Ok(libparsec::{{ enum.name }}::{{ variant_name }}),
@@ -555,7 +544,7 @@ fn {{ enum_js_to_rs_function_name(enum) }}(raw_value: &str) -> Result<libparsec:
 
 {%- macro render_enum_rs_to_js(enum) %}
 #[allow(dead_code)]
-fn {{ enum_rs_to_js_function_name(enum) }}(value: libparsec::{{ enum.name }}) -> &'static str {
+fn {{ enum | enum_rs_to_js_function_name }}(value: libparsec::{{ enum.name }}) -> &'static str {
     match value {
 {% for variant_name in enum.member_names %}
         libparsec::{{ enum.name}}::{{ variant_name }} => "{{ enum.name + variant_name }}",
