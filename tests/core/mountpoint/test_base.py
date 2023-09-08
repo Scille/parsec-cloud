@@ -678,7 +678,9 @@ def test_deadlock_detection(mountpoint_service, caplog, monkeypatch):
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
-async def test_personal_workspace(base_mountpoint, running_backend, alice_user_fs):
+async def test_personal_workspace_on_personal_workspace_base_path(
+    base_mountpoint, running_backend, alice_user_fs
+):
     standard_workspaces = ["standard_workspace", "not_a_personal_workspace"]
     personal_workspaces = ["personal_workspace", "personal"]
     personal_workspace_name_pattern = "personal.*"
@@ -719,6 +721,50 @@ async def test_personal_workspace(base_mountpoint, running_backend, alice_user_f
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
+@pytest.mark.win32
+async def test_personal_workspace_on_drive_letter(base_mountpoint, running_backend, alice_user_fs):
+    standard_workspaces = ["standard_workspace", "not_a_personal_workspace"]
+    personal_workspaces = ["personal_workspace", "personal"]
+    personal_workspace_name_pattern = "personal.*"
+
+    # Create standard and personal workspaces
+    workspaces = {}
+    for name in standard_workspaces + personal_workspaces:
+        workspaces[name] = await alice_user_fs.workspace_create(EntryName(name))
+
+    await alice_user_fs.sync()
+
+    # Add some files
+    for workspace_name, wid in workspaces.items():
+        await alice_user_fs.get_workspace(wid).touch(f"/{workspace_name}.txt")
+
+    personal_base_mountpoint = None
+    standard_base_mountpoint = base_mountpoint / "Standard"
+    async with mountpoint_manager_factory(
+        alice_user_fs,
+        alice_user_fs.event_bus,
+        standard_base_mountpoint,
+        mountpoint_in_directory=True,
+        personal_workspace_base_path=personal_base_mountpoint,
+        personal_workspace_name_pattern=personal_workspace_name_pattern,
+    ) as mountpoint_manager:
+        # Standard workspace should be mounted on standard_base_mountpoint
+        for name in standard_workspaces:
+            standard_mountpoint_path = await mountpoint_manager.mount_workspace(workspaces[name])
+            assert standard_mountpoint_path == (standard_base_mountpoint / name).absolute()
+            assert await trio.Path(standard_mountpoint_path / f"{name}.txt").exists()
+
+        # Personal workspace should be mounted on drive letter
+        for name in personal_workspaces:
+            personal_mountpoint_path = await mountpoint_manager.mount_workspace(workspaces[name])
+            assert personal_mountpoint_path in (
+                trio.Path(f"{letter}:\\") for letter in "PQRSTUVWXYZHIJKLMNO"
+            )
+            assert await trio.Path(personal_mountpoint_path / f"{name}.txt").exists()
+
+
+@pytest.mark.trio
+@pytest.mark.mountpoint
 async def test_personal_workspace_invalid_options(base_mountpoint, running_backend, alice_user_fs):
     standard_workspace_name = "standard_workspace"
     personal_workspace_name = "personal_workspace"
@@ -749,7 +795,8 @@ async def test_personal_workspace_invalid_options(base_mountpoint, running_backe
         alice_user_fs.event_bus,
         standard_base_mountpoint,
         mountpoint_in_directory=True,
-        # Mount without specifying a path for personal workspaces
+        # Mount specifying same path as standard for personal workspaces
+        personal_workspace_base_path=standard_base_mountpoint,
         personal_workspace_name_pattern=personal_workspace_name,
     ) as mountpoint_manager:
         check_mountpoint_paths(

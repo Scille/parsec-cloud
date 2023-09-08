@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import math
+import re
 import unicodedata
 from contextlib import asynccontextmanager
 from functools import partial
@@ -175,7 +176,21 @@ async def winfsp_mountpoint_runner(
     if config.get("debug", False):
         enable_debug_log()
 
-    if config.get("mountpoint_in_directory", False):
+    mountpoint_in_directory = config.get("mountpoint_in_directory", False)
+    personal_workspace_base_path = config.get("personal_workspace_base_path", None)
+    personal_workspace_name_pattern = config.get("personal_workspace_name_pattern", None)
+
+    # This is a workaround to force mounting as drive letter if personal_workspace_base_path is not set
+    name_regex = (
+        re.compile(personal_workspace_name_pattern) if personal_workspace_name_pattern else None
+    )
+    is_personal_workspace = name_regex and name_regex.fullmatch(
+        workspace_fs.get_workspace_name().str
+    )
+    if is_personal_workspace and not personal_workspace_base_path:
+        mountpoint_in_directory = False
+
+    if mountpoint_in_directory:
         # In single mountpoint mode, use base_mountpoint_path instead of drive letters
         mountpoint_path = await _bootstrap_mountpoint(base_mountpoint_path, workspace_name)
         file_system_mountpoint = file_system_name = str(mountpoint_path)
