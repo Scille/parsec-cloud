@@ -136,7 +136,7 @@ class BaseTypeInUse:
     kind: str
 
     @staticmethod
-    def parse(param: str) -> "BaseTypeInUse":
+    def parse(param: type) -> "BaseTypeInUse":
         assert not isinstance(
             param, str
         ), f"Bad param `{param!r}`, passing type as string is not supported"
@@ -556,10 +556,18 @@ def generate(what: str, api_specs: ApiSpecs) -> list[str]:
 
 
 if __name__ == "__main__":
+    TEMPLATE_CHOICES = [
+        "client",
+        "electron",
+        "electron_client",
+        "web",
+        # TODO: android not ready yet
+        # "android",
+    ]
     parser = argparse.ArgumentParser(description="Generate bindings code")
     parser.add_argument(
         "what",
-        choices=["all", "client", "electron", "electron_client", "web", "android"],
+        choices=TEMPLATE_CHOICES + ["all"],
         nargs="+",
     )
     parser.add_argument("--test", action="store_true")
@@ -574,12 +582,10 @@ if __name__ == "__main__":
     rust_modified_packages = []
 
     if "all" in args.what:
-        rust_modified_packages.extend(
-            generate_client(api_specs) + generate_electron(api_specs) + generate_web(api_specs)
-        )
-    else:
-        for what in args.what:
-            rust_modified_packages.extend(generate(what, api_specs))
+        args.what = TEMPLATE_CHOICES
+
+    for what in args.what:
+        rust_modified_packages.extend(generate(what, api_specs))
 
     subprocess.check_call(
         args=["cargo", "fmt"] + [f"--package={package}" for package in rust_modified_packages],
