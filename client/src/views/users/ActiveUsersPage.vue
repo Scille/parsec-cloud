@@ -142,7 +142,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref, computed } from 'vue';
+import { ref, Ref, computed, onMounted } from 'vue';
 import {
   IonContent,
   IonItem,
@@ -170,7 +170,6 @@ import UserContextMenu from '@/views/users/UserContextMenu.vue';
 import { UserAction } from '@/views/users/UserContextMenu.vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import { MockUser, getMockUsers } from '@/common/mocks';
-import { onMounted } from '@vue/runtime-core';
 import CreateUserInvitationModal from '@/views/users/CreateUserInvitationModal.vue';
 import * as Parsec from '@/common/parsec';
 import { routerNavigateTo } from '@/router';

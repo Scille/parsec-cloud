@@ -88,8 +88,7 @@ import {
 } from 'ionicons/icons';
 import { MockUser } from '@/common/mocks';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
-import { defineProps, inject } from 'vue';
-import { defineEmits, defineExpose, ref } from '@vue/runtime-core';
+import { inject, ref } from 'vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import TagProfile from '@/components/users/TagProfile.vue';
 
