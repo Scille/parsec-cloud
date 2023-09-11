@@ -359,6 +359,7 @@
         "waitingForHost": "(En attente de l'hôte)",
         "linkFormLabel": "Lien d'invitation",
         "linkFormPlaceholder": "parsec://invitation/...",
+        "successMessage": "Vous avez rejoint l'organisation.",
         "stepTitles": {
             "GetHostCode": "Code hôte",
             "ProvideGuestCode": "Code invité",
@@ -369,7 +370,8 @@
         "instructions": {
             "start": {
                 "first": "Afin d'éviter toute attaque, vous devez être en contact direct avec la personne durant toute la durée de l'inscription.",
-                "second": "L'hôte devra se rendre dans Utilisateurs puisInvitation en cours pour commencer le process d'invitation."
+                "second": "L'hôte devra se rendre dans Utilisateurs puis Invitation en cours pour commencer le process d'invitation.",
+                "greeter": "Vous serez accueilli(e) dans l'organisation par {greeter} <{greeterEmail}>."
             },
             "finish": {
                 "first": "Vous pouvez maintenant vous connecter à Parsec.",

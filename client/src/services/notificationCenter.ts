@@ -12,7 +12,7 @@ export enum NotificationLevel {
 
 export interface Notification {
   id: string,
-  title: string,
+  title?: string,
   message: string,
   level: NotificationLevel,
   read: boolean,
@@ -53,16 +53,14 @@ export class NotificationCenter {
   }
 
   async showSnackbar(
-    title: string,
     message: string,
     level: NotificationLevel,
     addToList: boolean,
-    trace: false,
+    trace = false,
     data = {},
   ): Promise<void> {
     const notif: Notification = {
       id: uuid4(),
-      title: title,
       message: message,
       level: level,
       read: false,
