@@ -10,7 +10,7 @@ from importlib import import_module
 from inspect import isclass, iscoroutinefunction, isfunction, signature
 from pathlib import Path
 from types import ModuleType
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Tuple, Union, get_args
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
@@ -141,34 +141,35 @@ class BaseTypeInUse:
             param, str
         ), f"Bad param `{param!r}`, passing type as string is not supported"
         origin = getattr(param, "__origin__", None)
+        args = get_args(param)
         if origin is Union:  # Python resolves `Optional[Foo]` as `Union[Foo, None]`
-            assert len(param.__args__) == 2 and type(None) in param.__args__
-            elem_param = next(x for x in param.__args__ if x is not type(None))
+            assert len(args) == 2 and type(None) in args
+            elem_param = next(x for x in args if x is not type(None))
             return OptionalTypeInUse(BaseTypeInUse.parse(elem_param))
 
         elif origin in (list, List):
-            assert len(param.__args__) == 1
-            return ListTypeInUse(BaseTypeInUse.parse(param.__args__[0]))
+            assert len(args) == 1
+            return ListTypeInUse(BaseTypeInUse.parse(args[0]))
 
         elif origin in (tuple, Tuple):
-            return TupleTypeInUse([BaseTypeInUse.parse(x) for x in param.__args__])
+            return TupleTypeInUse([BaseTypeInUse.parse(x) for x in args])
 
         elif origin is Result:
-            assert len(param.__args__) == 2
-            ok_param, err_param = param.__args__
+            assert len(args) == 2
+            ok_param, err_param = args
             return ResultTypeInUse(
                 ok=BaseTypeInUse.parse(ok_param),
                 err=BaseTypeInUse.parse(err_param),
             )
 
         elif origin is Ref:
-            assert len(param.__args__) == 1
-            return RefTypeInUse(elem=BaseTypeInUse.parse(param.__args__[0]))
+            assert len(args) == 1
+            return RefTypeInUse(elem=BaseTypeInUse.parse(args[0]))
 
         elif param is OnClientEventCallback:
             spec = OpaqueSpec(kind="OnClientEventCallback")
             # Ugly hack to make template rendering happy
-            spec.event_type = namedtuple("Type", "name")("ClientEvent")
+            spec.event_type = namedtuple("Type", "name")("ClientEvent")  # type: ignore[attr-defined]
 
             # spec.event_type = param.__orig_bases__[0].__args__[0]
             return spec
