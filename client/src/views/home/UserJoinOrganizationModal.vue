@@ -263,7 +263,7 @@ const titles = new Map<UserJoinOrganizationStep, Title>([
 
 async function selectHostSas(selectedCode: string | null): Promise<void> {
   if (!selectedCode) {
-    console.log('None selected, back to begining');
+    console.log('None selected, back to beginning');
     await claimer.value.abort();
     pageStep.value = UserJoinOrganizationStep.WaitForHost;
   } else {
@@ -273,10 +273,10 @@ async function selectHostSas(selectedCode: string | null): Promise<void> {
       if (result.ok) {
         nextStep();
       } else {
-        console.log('Signifiy trust failed', result.error);
+        console.log('Signify trust failed', result.error);
       }
     } else {
-      console.log('Invalid selected, back to begining');
+      console.log('Invalid selected, back to beginning');
       await claimer.value.abort();
       pageStep.value = UserJoinOrganizationStep.WaitForHost;
     }

@@ -109,6 +109,7 @@ describe('User join an organization', () => {
     cy.get('#next-button').contains('Validate my information');
     cy.get('@inputs').eq(1).find('input').should('have.value', 'shadowheart@swordcoast.faerun');
     cy.get('@inputs').eq(2).find('input').should('have.value', 'my_device');
+    // cspell:disable-next-line
     cy.get('@inputs').eq(0).find('input').type('Shadowheart');
     cy.get('#next-button').should('not.have.attr', 'disabled');
     cy.get('#next-button').click();
