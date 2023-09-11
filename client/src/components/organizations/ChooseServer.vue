@@ -9,49 +9,47 @@
       v-model="mode"
       class="radio-list"
     >
-      <ion-item class="radio-list-item">
-        <ion-radio
-          class="item-radio"
-          label-placement="end"
-          justify="start"
-          :value="ServerMode.SaaS"
-        >
-          <ion-text class="body-lg item-radio__label">
-            {{ $t('CreateOrganization.useParsecServer') }}
-          </ion-text>
-          <ion-text class="body-sm item-radio__text">
-            {{ $t('CreateOrganization.acceptTOS.label') }}
-            <a
-              class="link"
-              target="_blank"
-              :href="$t('CreateOrganization.acceptTOS.tosLink')"
-            >
-              {{ $t('CreateOrganization.acceptTOS.tos') }}
-            </a>
-            {{ $t('CreateOrganization.acceptTOS.and') }}
-            <a
-              class="link"
-              target="_blank"
-              :href="$t('CreateOrganization.acceptTOS.privacyPolicyLink')"
-            >
-              {{ $t('CreateOrganization.acceptTOS.privacyPolicy') }}
-            </a>
-          </ion-text>
-        </ion-radio>
-      </ion-item>
-
-      <ion-item class="radio-list-item">
-        <ion-radio
-          class="item-radio"
-          label-placement="end"
-          justify="start"
-          :value="ServerMode.Custom"
-        >
-          <ion-text class="body-lg item-radio__label">
-            {{ $t('CreateOrganization.useMyOwnServer') }}
-          </ion-text>
-        </ion-radio>
-      </ion-item>
+      <ion-radio
+        class="item-radio radio-list-item"
+        label-placement="end"
+        justify="start"
+        :value="ServerMode.SaaS"
+        @click="$event.preventDefault()"
+      >
+        <ion-text class="body-lg item-radio__label">
+          {{ $t('CreateOrganization.useParsecServer') }}
+        </ion-text>
+        <ion-text class="body-sm item-radio__text ion-text-wrap">
+          {{ $t('CreateOrganization.acceptTOS.label') }}
+          <a
+            class="link"
+            target="_blank"
+            @click="$event.stopPropagation()"
+            :href="$t('CreateOrganization.acceptTOS.tosLink')"
+          >
+            {{ $t('CreateOrganization.acceptTOS.tos') }}
+          </a>
+          {{ $t('CreateOrganization.acceptTOS.and') }}
+          <a
+            class="link"
+            target="_blank"
+            @click="$event.stopPropagation()"
+            :href="$t('CreateOrganization.acceptTOS.privacyPolicyLink')"
+          >
+            {{ $t('CreateOrganization.acceptTOS.privacyPolicy') }}
+          </a>
+        </ion-text>
+      </ion-radio>
+      <ion-radio
+        class="item-radio radio-list-item"
+        label-placement="end"
+        justify="start"
+        :value="ServerMode.Custom"
+      >
+        <ion-text class="body-lg item-radio__label">
+          {{ $t('CreateOrganization.useMyOwnServer') }}
+        </ion-text>
+      </ion-radio>
     </ion-radio-group>
     <ms-input
       class="item-radio__input"
@@ -75,7 +73,6 @@ import {
   IonList,
   IonRadio,
   IonRadioGroup,
-  IonItem,
   IonText,
 } from '@ionic/vue';
 import { ref } from 'vue';
@@ -116,9 +113,10 @@ function areFieldsCorrect(): boolean {
   flex-direction: column;
   border-radius: var(--parsec-radius-6);
   width: 100%;
-  --background-hover: var(--parsec-color-light-secondary-background);
-  --background-hover-opacity: 1;
   z-index: 2;
+  &:hover {
+    background: var(--parsec-color-light-secondary-background);
+  }
 
   &:nth-child(2) {
     border-radius: var(--parsec-radius-6) var(--parsec-radius-6) 0 0;
@@ -128,9 +126,8 @@ function areFieldsCorrect(): boolean {
     }
   }
 
-  &:has(.radio-checked) {
-    --background: var(--parsec-color-light-secondary-medium);
-    --background-hover: none;
+  &.radio-checked {
+    background: var(--parsec-color-light-secondary-medium);
   }
 
   &:first-of-type {
@@ -141,6 +138,7 @@ function areFieldsCorrect(): boolean {
     color: var(--parsec-color-light-primary-600);
     text-decoration: none;
     position: relative;
+    pointer-events: initial;
     z-index: 1000000;
 
     &:hover {
@@ -151,7 +149,7 @@ function areFieldsCorrect(): boolean {
 
 .item-radio {
   gap: .5rem;
-  padding: 1rem 0;
+  padding: 1em;
   width: 100%;
 
   &::part(mark) {
