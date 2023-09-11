@@ -44,6 +44,7 @@ import { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
 import { useRouter } from 'vue-router';
 import { routerNavigateTo } from '@/router';
 import { useI18n } from 'vue-i18n';
+import * as Parsec from '@/common/parsec';
 
 const isPopoverOpen = ref(false);
 const chevron = ref();
@@ -68,7 +69,8 @@ async function openPopover(ev: Event): Promise<void> {
     showBackdrop: false,
   });
   await popover.present();
-  popover.onDidDismiss().then((value) => {
+
+  popover.onDidDismiss().then(async (value) => {
     chevron.value.$el.style.setProperty('transition', 'transform ease-out 300ms');
     isPopoverOpen.value = false;
 
@@ -76,8 +78,12 @@ async function openPopover(ev: Event): Promise<void> {
       return;
     }
     if (value.data.option === ProfilePopoverOption.LogOut) {
-      // libparsec.logOut()
-      router.replace({ name: 'home' });
+      const result = await Parsec.logout();
+      if (!result.ok) {
+        console.log('Failed to logout');
+      } else {
+        router.replace({ name: 'home' });
+      }
     } else if (value.data.option === ProfilePopoverOption.Settings) {
       routerNavigateTo('settings');
     } else if (value.data.option === ProfilePopoverOption.MyDevices) {
