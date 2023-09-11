@@ -60,7 +60,7 @@ class EntryTransactions(FileTransactions):
             raise FSReadOnlyError(filename=path)
         configuration, _ = self.get_archiving_configuration()
         if not configuration.is_available():
-            raise FSNoAccessError(filename=path)
+            raise FSReadOnlyError(filename=path)
 
     # Look-up helpers
 

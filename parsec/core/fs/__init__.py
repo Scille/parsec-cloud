@@ -32,6 +32,8 @@ from parsec.core.fs.exceptions import (
     FSRemoteSyncError,
     FSSharingNotAllowedError,
     FSUserNotFoundError,
+    FSWorkspaceArchivingNotAllowedError,
+    FSWorkspaceArchivingPeriodTooShort,
     FSWorkspaceInMaintenance,
     FSWorkspaceNoAccess,
     FSWorkspaceNoReadAccess,
@@ -101,4 +103,6 @@ __all__ = (
     "FSUserNotFoundError",
     "FSDeviceNotFoundError",
     "FSInvalidTrustchainError",
+    "FSWorkspaceArchivingNotAllowedError",
+    "FSWorkspaceArchivingPeriodTooShort",
 )

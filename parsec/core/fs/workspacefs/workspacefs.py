@@ -407,6 +407,7 @@ class WorkspaceFS:
         self,
         configuration: RealmArchivingConfiguration,
         timestamp_greater_than: DateTime | None = None,
+        now: DateTime | None = None,
     ) -> None:
         # Check current role
         entry = self.get_workspace_entry()
@@ -419,17 +420,21 @@ class WorkspaceFS:
         if self.is_deleted():
             raise FSWorkspaceRealmDeleted("This workspace has already been deleted")
 
-        # Choose the right timestamp
-        timestamp = self.device.timestamp()
+        # Check deletion date
+        timestamp = now if now is not None else self.device.timestamp()
+        if configuration.is_deletion_planned() and configuration.deletion_date < timestamp:
+            raise FSWorkspaceArchivingPeriodTooShort("Archiving period is negative")
+
+        # Update timestamp if necessary
         if timestamp_greater_than is not None:
             timestamp = max(
                 timestamp,
                 timestamp_greater_than.add(microseconds=ARCHIVING_CERTIFICATE_STAMP_AHEAD_US),
             )
-
-        # Check deletion date
-        if configuration.is_deletion_planned() and configuration.deletion_date < timestamp:
-            raise FSWorkspaceArchivingPeriodTooShort("Archiving period is negative")
+            if configuration.is_deletion_planned():
+                configuration = configuration.deletion_planned(
+                    max(timestamp, configuration.deletion_date)
+                )
 
         # Generate and sign certificate
         certif = RealmArchivingCertificate(
@@ -449,7 +454,7 @@ class WorkspaceFS:
             )
         if isinstance(rep, RealmUpdateArchivingRepRequireGreaterTimestamp):
             return await self.configure_archiving(
-                configuration, timestamp_greater_than=rep.strictly_greater_than
+                configuration, timestamp_greater_than=rep.strictly_greater_than, now=now
             )
         if isinstance(rep, RealmUpdateArchivingRepRealmDeleted):
             raise FSWorkspaceRealmDeleted(f"The workspace {self.workspace_id.hex} has been deleted")

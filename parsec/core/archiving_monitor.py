@@ -28,7 +28,7 @@ async def monitor_archiving(
 ) -> None:
     wakeup = trio.Event()
 
-    def _on_archiving_updated(event: CoreEvent, **kwargs: object) -> None:
+    def _on_archiving_or_roles_updated(event: CoreEvent, **kwargs: object) -> None:
         nonlocal wakeup
         wakeup.set()
         # Don't wait for the *actual* awakening to change the status to
@@ -37,7 +37,14 @@ async def monitor_archiving(
         task_status.awake()
 
     with event_bus.connect_in_context(
-        (CoreEvent.BACKEND_REALM_ARCHIVING_UPDATED, cast(EventCallback, _on_archiving_updated))
+        (
+            CoreEvent.BACKEND_REALM_ARCHIVING_UPDATED,
+            cast(EventCallback, _on_archiving_or_roles_updated),
+        ),
+        (
+            CoreEvent.BACKEND_REALM_ROLES_UPDATED,
+            cast(EventCallback, _on_archiving_or_roles_updated),
+        ),
     ):
         try:
             next_deletion = await user_fs.update_archiving_status()

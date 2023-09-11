@@ -151,7 +151,7 @@ async def query_update_roles(
         conn, organization_id, new_role.realm_id, OperationKind.CONFIGURATION
     )
 
-    # Make the user is not revoked
+    # Make sure the user is not revoked
     if rep["revoked_on"]:
         raise UserAlreadyRevokedError(f"User `{new_role.user_id.str}` is revoked")
 
