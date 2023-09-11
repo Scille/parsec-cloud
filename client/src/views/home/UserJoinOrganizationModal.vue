@@ -63,8 +63,17 @@
               :text="$t('JoinOrganization.instructions.start.first')"
             />
             <ms-informative-text
+              v-if="!claimer.greeter"
               :icon="caretForward"
               :text="$t('JoinOrganization.instructions.start.second')"
+            />
+            <ms-informative-text
+              v-if="claimer.greeter"
+              :icon="caretForward"
+              :text="$t(
+                'JoinOrganization.instructions.start.greeter',
+                {greeter: claimer.greeter.label, greeterEmail: claimer.greeter.email}
+              )"
             />
           </div>
         </div>
@@ -75,8 +84,7 @@
           class="step"
         >
           <sas-code-choice
-            ref="hostCodePage"
-            :choices="['ABCD', 'EFGH', 'IJKL', 'MNOP']"
+            :choices="claimer.SASCodeChoices"
             @select="selectHostSas($event)"
           />
         </div>
@@ -87,8 +95,7 @@
           class="step guest-code"
         >
           <sas-code-provide
-            ref="guestCodePage"
-            :code="'ABCD'"
+            :code="claimer.guestSASCode"
           />
         </div>
 
@@ -183,7 +190,7 @@ import {
   close,
   caretForward,
 } from 'ionicons/icons';
-import { ref, Ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
 import MsWizardStepper from '@/components/core/ms-stepper/MsWizardStepper.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
@@ -191,8 +198,11 @@ import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
-import { AvailableDevice, HumanHandle } from '@/plugins/libparsec/definitions';
 import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
+import * as Parsec from '@/common/parsec';
+import { NotificationKey } from '@/common/injectionKeys';
+import { NotificationCenter, NotificationLevel } from '@/services/notificationCenter';
+import { userInfo } from 'os';
 
 enum UserJoinOrganizationStep {
   WaitForHost = 1,
@@ -203,40 +213,20 @@ enum UserJoinOrganizationStep {
   Finish = 6,
 }
 
-// Used to simulate host interaction
-const OTHER_USER_WAITING_TIME = 500;
+const notificationCenter = inject(NotificationKey) as NotificationCenter;
 
 const { t } = useI18n();
 
 const pageStep = ref(UserJoinOrganizationStep.WaitForHost);
-const waitPage = ref();
-const hostCodePage = ref();
-const guestCodePage = ref();
 const userInfoPage = ref();
 const passwordPage = ref();
 
-let newDevice: AvailableDevice | null = null;
+const claimer = ref(new Parsec.UserClaim());
 
 const props = defineProps<{
   invitationLink: string
 }>();
 
-interface ClaimUserLink {
-  backendAddr: string,
-  token: string,
-  org: string
-}
-
-// Will be done in Rust
-function parseInvitationLink(link: string): ClaimUserLink {
-  return {
-    backendAddr: link,
-    token: 'aaa',
-    org: 'My Org',
-  };
-}
-
-const claimUserLink = parseInvitationLink(props.invitationLink);
 const waitingForHost = ref(true);
 
 interface Title {
@@ -271,8 +261,26 @@ const titles = new Map<UserJoinOrganizationStep, Title>([
   ],
 ]);
 
-function selectHostSas(_code: string | null): void {
-  nextStep();
+async function selectHostSas(selectedCode: string | null): Promise<void> {
+  if (!selectedCode) {
+    console.log('None selected, back to begining');
+    await claimer.value.abort();
+    pageStep.value = UserJoinOrganizationStep.WaitForHost;
+  } else {
+    if (selectedCode === claimer.value.correctSASCode) {
+      console.log('Good choice selected, next step');
+      const result = await claimer.value.signifyTrust();
+      if (result.ok) {
+        nextStep();
+      } else {
+        console.log('Signifiy trust failed', result.error);
+      }
+    } else {
+      console.log('Invalid selected, back to begining');
+      await claimer.value.abort();
+      pageStep.value = UserJoinOrganizationStep.WaitForHost;
+    }
+  }
 }
 
 function getNextButtonText(): string {
@@ -299,119 +307,78 @@ const nextButtonIsVisible = computed(() => {
 });
 
 const canGoForward = computed(() => {
-  const currentPage = getCurrentPage();
-
-  if (
-    currentPage && currentPage.value
-    && (pageStep.value === UserJoinOrganizationStep.GetUserInfo
-      || pageStep.value === UserJoinOrganizationStep.GetPassword)
-  ) {
-    return currentPage.value.areFieldsCorrect();
+  if (pageStep.value === UserJoinOrganizationStep.GetUserInfo && !userInfoPage.value.areFieldsCorrect()) {
+    return false;
+  } else if (pageStep.value === UserJoinOrganizationStep.GetPassword && !passwordPage.value.areFieldsCorrect()) {
+    return false;
   }
   return true;
 });
 
-function getCurrentPage(): Ref<any> {
-  switch (pageStep.value) {
-    case UserJoinOrganizationStep.WaitForHost: {
-      return waitPage;
-    }
-    case UserJoinOrganizationStep.GetHostSasCode: {
-      return hostCodePage;
-    }
-    case UserJoinOrganizationStep.ProvideGuestCode: {
-      return guestCodePage;
-    }
-    case UserJoinOrganizationStep.GetUserInfo: {
-      return userInfoPage;
-    }
-    case UserJoinOrganizationStep.GetPassword: {
-      return passwordPage;
-    }
-    default: {
-      return ref(null);
-    }
-  }
-}
-
-function cancelModal(): Promise<boolean> {
+async function cancelModal(): Promise<boolean> {
+  await claimer.value.abort();
   return modalController.dismiss(null, MsModalResult.Cancel);
 }
 
-function mockCreateDevice(): AvailableDevice {
-  const humanHandle: HumanHandle = {
-    label: userInfoPage.value.fullName,
-    email: userInfoPage.value.email,
-  };
-  const deviceName = userInfoPage.value.deviceName;
-  console.log(
-    `Creating device ${claimUserLink?.org}, user ${humanHandle}, device ${deviceName}, backend ${props.invitationLink}`,
-  );
-  const device: AvailableDevice = {
-    organizationId: claimUserLink?.org || '',
-    humanHandle: humanHandle,
-    deviceLabel: deviceName,
-    keyFilePath: 'key_file_path',
-    deviceId: 'device1@device1',
-    slug: 'slug1',
-    ty: { tag: 'Password' },
-  };
-
-  return device;
-}
-
-function mockSaveDeviceWithPassword(_device: AvailableDevice | null, _password: string): void {
-  console.log(`Saving device with password ${passwordPage.value.password}`);
-}
-
-function nextStep(): void {
+async function nextStep(): Promise<void> {
   if (pageStep.value === UserJoinOrganizationStep.GetPassword) {
-    mockSaveDeviceWithPassword(newDevice, passwordPage.value.password);
+    const result = await claimer.value.finalize(passwordPage.value.password);
+    if (!result.ok) {
+      console.log('Failed to finalize', result.error);
+    }
   } else if (pageStep.value === UserJoinOrganizationStep.GetUserInfo) {
     waitingForHost.value = true;
-    window.setTimeout(hostHasValidated, OTHER_USER_WAITING_TIME);
-    return;
+    const result = await claimer.value.doClaim(
+      userInfoPage.value.deviceName, userInfoPage.value.fullName, userInfoPage.value.email,
+    );
+    if (result.ok) {
+      waitingForHost.value = false;
+    } else {
+      console.log('Do claim failed', result.error);
+      return;
+    }
   } else if (pageStep.value === UserJoinOrganizationStep.Finish) {
-    modalController.dismiss({ device: newDevice, password: passwordPage.value.password }, MsModalResult.Confirm);
+    notificationCenter.showSnackbar(
+      t('JoinOrganization.successMessage'),
+      NotificationLevel.Success,
+      false,
+      true,
+    );
+    await modalController.dismiss({ device: claimer.value.device, password: passwordPage.value.password }, MsModalResult.Confirm);
     return;
   }
 
-  pageStep.value = pageStep.value + 1;
+  pageStep.value += 1;
 
   if (pageStep.value === UserJoinOrganizationStep.ProvideGuestCode) {
     waitingForHost.value = true;
-    window.setTimeout(hostHasEnteredCode, OTHER_USER_WAITING_TIME);
+    const result = await claimer.value.waitHostTrust();
+    if (result.ok) {
+      waitingForHost.value = false;
+      pageStep.value += 1;
+    } else {
+      console.log('Wait peer trust failed', result.error);
+    }
   }
-  if (pageStep.value === UserJoinOrganizationStep.WaitForHost) {
-    waitingForHost.value = true;
-    claimerRetrieveInfo();
+}
+
+onMounted(async () => {
+  const retrieveResult = await claimer.value.retrieveInfo(props.invitationLink);
+
+  if (retrieveResult.ok) {
+    if (userInfoPage.value) {
+      userInfoPage.value.email = retrieveResult.value.claimerEmail;
+    }
+    const waitResult = await claimer.value.initialWaitHost();
+    if (waitResult.ok) {
+      waitingForHost.value = false;
+    } else {
+      console.log('Wait host failed', waitResult.error);
+    }
+  } else {
+    console.log('Failed to retrieve info', retrieveResult.error);
   }
-}
-
-function hostHasEnteredCode(): void {
-  waitingForHost.value = false;
-  nextStep();
-}
-
-function hostHasValidated(): void {
-  waitingForHost.value = false;
-  newDevice = mockCreateDevice();
-  pageStep.value = pageStep.value + 1;
-}
-
-onMounted(() => {
-  claimerRetrieveInfo();
 });
-
-function claimerInfoRetrieved(): void {
-  userInfoPage.value.email = 'gordon.freeman@blackmesa.nm';
-  waitingForHost.value = false;
-}
-
-function claimerRetrieveInfo(): void {
-  // Simulate host starting the process
-  window.setTimeout(claimerInfoRetrieved, OTHER_USER_WAITING_TIME);
-}
 </script>
 
 <style lang="scss" scoped>

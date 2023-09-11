@@ -32,7 +32,6 @@ describe('Notification Center', () => {
       },
       {
         id: '1234',
-        title: 'C',
         message: 'D',
         level: NotificationLevel.Info,
         read: false,
@@ -73,7 +72,7 @@ describe('Notification Center', () => {
     expect(center.getNotifications()).to.deep.equal(NOTIFS.slice(0, 1));
     expect(center.hasUnreadNotifications()).to.be.true;
 
-    center.showSnackbar('C', 'D', NotificationLevel.Info, true, false, {'key': 'value'});
+    center.showSnackbar('D', NotificationLevel.Info, true, false, {'key': 'value'});
     expect(center.getNotifications()).to.deep.equal(NOTIFS.slice(0, 2));
 
     center.addToList('E', 'F', NotificationLevel.Error, false);
@@ -92,7 +91,7 @@ describe('Notification Center', () => {
     expect(center.getNotifications()).to.deep.equal([]);
     expect(center.hasUnreadNotifications()).to.be.false;
 
-    center.showSnackbar('C', 'D', NotificationLevel.Info, false, false, {'key': 'value'});
+    center.showSnackbar('D', NotificationLevel.Info, false, false, {'key': 'value'});
     expect(center.getNotifications()).to.deep.equal([]);
 
     center.addToList('E', 'F', NotificationLevel.Error, false);

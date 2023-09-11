@@ -360,6 +360,7 @@
         "waitingForHost": "(Waiting for the host)",
         "linkFormLabel": "Invitation link",
         "linkFormPlaceholder": "parsec://invitation/...",
+        "successMessage": "You successfully joined the organization.",
         "stepTitles": {
             "GetHostCode": "Host code",
             "ProvideGuestCode": "Guest code",
@@ -370,7 +371,8 @@
         "instructions": {
             "start": {
                 "first": "In order to avoid any attacks, you will have to be in direct contact with the host during the whole enrollment process.",
-                "second": "The host will have to go to Users, then Pending invitation to start the process."
+                "second": "The host will have to go to Users, then Pending invitation to start the process.",
+                "greeter": "You will be welcomed into the organization by {greeter} <{greeterEmail}>."
             },
             "finish": {
                 "first": "You can now log in to Parsec.",

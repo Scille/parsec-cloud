@@ -83,14 +83,15 @@ describe('User join an organization', () => {
     checkStepper(0);
 
     cy.get('ion-modal').find('.button-choice').as('choiceButtons').should('have.length', 4);
-    cy.get('@choiceButtons').eq(0).contains('ABCD');
-    cy.get('@choiceButtons').eq(1).contains('EFGH');
-    cy.get('@choiceButtons').eq(2).contains('IJKL');
-    cy.get('@choiceButtons').eq(3).contains('MNOP');
+    cy.get('@choiceButtons').eq(0).contains('1ABC');
+    cy.get('@choiceButtons').eq(1).contains('2DEF');
+    cy.get('@choiceButtons').eq(2).contains('3GHI');
+    cy.get('@choiceButtons').eq(3).contains('4JKL');
     cy.get('ion-modal').find('.button-clear').contains('None of the codes');
     cy.get('@choiceButtons').eq(1).click();
 
     // Page with one code, guest SAS code
+    cy.get('.caption-code').contains('1337');
     cy.get('.label-waiting').should('be.visible');
     checkStepper(1);
 
@@ -106,9 +107,9 @@ describe('User join an organization', () => {
     cy.get('#get-user-info').find('ion-input').as('inputs').should('have.length', 3);
     cy.get('#next-button').should('have.attr', 'disabled');
     cy.get('#next-button').contains('Validate my information');
-    cy.get('@inputs').eq(1).find('input').should('have.value', 'gordon.freeman@blackmesa.nm');
+    cy.get('@inputs').eq(1).find('input').should('have.value', 'shadowheart@swordcoast.faerun');
     cy.get('@inputs').eq(2).find('input').should('have.value', 'my_device');
-    cy.get('@inputs').eq(0).find('input').type('Gordon Freeman');
+    cy.get('@inputs').eq(0).find('input').type('Shadowheart');
     cy.get('#next-button').should('not.have.attr', 'disabled');
     cy.get('#next-button').click();
 
