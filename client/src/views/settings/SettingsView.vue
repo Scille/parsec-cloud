@@ -145,9 +145,8 @@ import {
   cog,
   options,
 } from 'ionicons/icons';
-import { ref, inject, toRaw, watch } from 'vue';
+import { ref, inject, toRaw, watch, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { onMounted, onUnmounted } from '@vue/runtime-core';
 import { toggleDarkMode } from '@/states/darkMode';
 import { Config, StorageManager } from '@/services/storageManager';
 import { StorageManagerKey } from '@/common/injectionKeys';
