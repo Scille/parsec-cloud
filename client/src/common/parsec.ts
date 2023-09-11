@@ -21,6 +21,7 @@ import {
   DeleteInvitationError,
   ClientListWorkspacesError,
   ClientWorkspaceCreateError,
+  ClientStopError,
 } from '@/plugins/libparsec/definitions';
 import { libparsec } from '@/plugins/libparsec';
 import { getParsecHandle } from '@/router/conditions';
@@ -60,6 +61,18 @@ export async function login(device: AvailableDevice, password: string): Promise<
   } else {
     return new Promise<Result<Handle, ClientStartError>>((resolve, _reject) => {
       resolve({ok: true, value: DEFAULT_HANDLE });
+    });
+  }
+}
+
+export async function logout(): Promise<Result<null, ClientStopError>> {
+  const handle = getParsecHandle();
+
+  if (handle !== null && window.isDesktop()) {
+    return await libparsec.clientStop(handle);
+  } else {
+    return new Promise<Result<null, ClientStopError>>((resolve, _reject) => {
+      resolve({ok: true, value: null});
     });
   }
 }
