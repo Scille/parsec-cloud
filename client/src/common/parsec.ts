@@ -270,6 +270,7 @@ export class UserClaim {
       this.handle = DEFAULT_HANDLE;
       this.greeter = {
         email: 'gale@waterdeep.faerun',
+        // cspell:disable-next-line
         label: 'Gale Dekarios',
       };
       return new Promise<Result<UserOrDeviceClaimInitialInfoUser, ClaimerRetrieveInfoError>>((resolve, _reject) => {
@@ -280,6 +281,7 @@ export class UserClaim {
           greeterUserId: '1234',
           greeterHumanHandle: {
             email: 'gale@waterdeep.faerun',
+            // cspell:disable-next-line
             label: 'Gale Dekarios',
           },
         }});
