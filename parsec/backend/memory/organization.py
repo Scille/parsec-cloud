@@ -118,8 +118,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         result: list[RealmArchivingStatus] = []
         for realm_id in realms:
             realm = self._realm_component._get_realm(id, realm_id, allow_deleted=True)
-            last_request = realm.get_last_archiving_configuration_request()
-            if last_request is None:
+            configured_archiving = realm.get_last_configured_archiving()
+            if configured_archiving is None:
                 status = RealmArchivingStatus(
                     realm_id=realm_id,
                     configured_on=None,
@@ -128,8 +128,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             else:
                 status = RealmArchivingStatus(
                     realm_id=realm_id,
-                    configured_on=last_request.configured_on,
-                    configuration=last_request.configuration,
+                    configured_on=configured_archiving.configured_on,
+                    configuration=configured_archiving.configuration,
                 )
             result.append(status)
         return result

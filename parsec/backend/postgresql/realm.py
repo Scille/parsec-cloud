@@ -21,7 +21,7 @@ from parsec.backend.postgresql.realm_queries import (
 )
 from parsec.backend.realm import (
     BaseRealmComponent,
-    RealmArchivingConfigurationRequest,
+    RealmConfiguredArchiving,
     RealmGrantedRole,
     RealmStats,
     RealmStatus,
@@ -81,7 +81,7 @@ class PGRealmComponent(BaseRealmComponent):
     async def update_archiving(
         self,
         organization_id: OrganizationID,
-        archiving_configuration_request: RealmArchivingConfigurationRequest,
+        archiving_configuration_request: RealmConfiguredArchiving,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             await query_update_archiving(conn, organization_id, archiving_configuration_request)

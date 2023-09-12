@@ -14,8 +14,8 @@ from parsec.backend.realm import (
     MaintenanceType,
     RealmAccessError,
     RealmAlreadyExistsError,
-    RealmArchivingConfigurationRequest,
     RealmArchivingPeriodTooShortError,
+    RealmConfiguredArchiving,
     RealmDeletedError,
     RealmEncryptionRevisionError,
     RealmGrantedRole,
@@ -47,9 +47,7 @@ class Realm:
     checkpoint: int = attr.ib(default=0)
     granted_roles: List[RealmGrantedRole] = attr.ib(factory=list)
     last_role_change_per_user: Dict[UserID, DateTime] = attr.ib(factory=dict)
-    last_archiving_configuration_request: RealmArchivingConfigurationRequest | None = attr.ib(
-        default=None
-    )
+    configured_archiving_list: list[RealmConfiguredArchiving] = attr.ib(factory=list)
 
     @property
     def created_on(self) -> DateTime:
@@ -72,23 +70,31 @@ class Realm:
         except ValueError:
             return None
 
-    def get_last_archiving_configuration_request(self) -> RealmArchivingConfigurationRequest | None:
-        return self.last_archiving_configuration_request
+    def get_last_configured_archiving(self) -> RealmConfiguredArchiving | None:
+        if not self.configured_archiving_list:
+            return None
+        return self.configured_archiving_list[-1]
+
+    def set_last_configured_archiving(self, configured_archiving: RealmConfiguredArchiving) -> None:
+        self.configured_archiving_list.append(configured_archiving)
 
     def is_archived(self) -> bool:
-        if self.last_archiving_configuration_request is None:
+        last_configured_archiving = self.get_last_configured_archiving()
+        if last_configured_archiving is None:
             return False
-        return self.last_archiving_configuration_request.configuration.is_archived()
+        return last_configured_archiving.configuration.is_archived()
 
     def is_deletion_planned(self) -> bool:
-        if self.last_archiving_configuration_request is None:
+        last_configured_archiving = self.get_last_configured_archiving()
+        if last_configured_archiving is None:
             return False
-        return self.last_archiving_configuration_request.configuration.is_deletion_planned()
+        return last_configured_archiving.configuration.is_deletion_planned()
 
     def is_deleted(self) -> bool:
-        if self.last_archiving_configuration_request is None:
+        last_configured_archiving = self.get_last_configured_archiving()
+        if last_configured_archiving is None:
             return False
-        return self.last_archiving_configuration_request.configuration.is_deleted()
+        return last_configured_archiving.configuration.is_deleted()
 
 
 class MemoryRealmComponent(BaseRealmComponent):
@@ -303,7 +309,7 @@ class MemoryRealmComponent(BaseRealmComponent):
     async def update_archiving(
         self,
         organization_id: OrganizationID,
-        archiving_configuration_request: RealmArchivingConfigurationRequest,
+        archiving_configuration_request: RealmConfiguredArchiving,
     ) -> None:
         """
         Raises:
@@ -333,18 +339,16 @@ class MemoryRealmComponent(BaseRealmComponent):
             raise RealmRoleRequireGreaterTimestampError(last_role.granted_on)
 
         # Timestamp should be greater than last archiving certificate
-        last_archiving_configuration_request = realm.get_last_archiving_configuration_request()
+        last_configured_archiving = realm.get_last_configured_archiving()
         if (
-            last_archiving_configuration_request is not None
-            and last_archiving_configuration_request.configured_on
+            last_configured_archiving is not None
+            and last_configured_archiving.configured_on
             >= archiving_configuration_request.configured_on
         ):
-            raise RealmRoleRequireGreaterTimestampError(
-                last_archiving_configuration_request.configured_on
-            )
+            raise RealmRoleRequireGreaterTimestampError(last_configured_archiving.configured_on)
 
         # Update archiving configuration
-        realm.last_archiving_configuration_request = archiving_configuration_request
+        realm.set_last_configured_archiving(archiving_configuration_request)
 
         await self._send_event(
             BackendEvent.REALM_ARCHIVING_UPDATED,

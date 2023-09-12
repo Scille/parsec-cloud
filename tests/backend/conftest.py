@@ -18,7 +18,7 @@ from parsec.api.protocol import (
     VlobID,
 )
 from parsec.backend.backend_events import BackendEvent
-from parsec.backend.realm import RealmArchivingConfigurationRequest, RealmGrantedRole
+from parsec.backend.realm import RealmConfiguredArchiving, RealmGrantedRole
 from parsec.core.types import LocalDevice
 
 
@@ -179,7 +179,7 @@ async def archive_realm(next_timestamp):
         with backend.event_bus.listen() as spy:
             await backend.realm.update_archiving(
                 organization_id=author.organization_id,
-                archiving_configuration_request=RealmArchivingConfigurationRequest(
+                archiving_configuration_request=RealmConfiguredArchiving(
                     certificate=signed,
                     realm_id=realm_id,
                     configuration=certificate.configuration,
@@ -207,7 +207,7 @@ async def plan_realm_deletion(next_timestamp):
         with backend.event_bus.listen() as spy:
             await backend.realm.update_archiving(
                 organization_id=author.organization_id,
-                archiving_configuration_request=RealmArchivingConfigurationRequest(
+                archiving_configuration_request=RealmConfiguredArchiving(
                     certificate=signed,
                     realm_id=realm_id,
                     configuration=certificate.configuration,
@@ -235,12 +235,12 @@ async def delete_realm(next_timestamp, monkeypatch):
         with backend.event_bus.listen() as spy:
             with monkeypatch.context() as context:
                 context.setattr(
-                    "parsec.backend.realm.RealmArchivingConfigurationRequest.is_valid_archiving_configuration",
+                    "parsec.backend.realm.RealmConfiguredArchiving.is_valid_archiving_configuration",
                     lambda *args: True,
                 )
                 await backend.realm.update_archiving(
                     organization_id=author.organization_id,
-                    archiving_configuration_request=RealmArchivingConfigurationRequest(
+                    archiving_configuration_request=RealmConfiguredArchiving(
                         certificate=signed,
                         realm_id=realm_id,
                         configuration=certificate.configuration,

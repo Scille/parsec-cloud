@@ -19,8 +19,8 @@ from parsec.backend.postgresql.utils import (
 from parsec.backend.realm import (
     RealmAccessError,
     RealmArchivedError,
-    RealmArchivingConfigurationRequest,
     RealmArchivingPeriodTooShortError,
+    RealmConfiguredArchiving,
     RealmDeletedError,
     RealmNotFoundError,
     RealmRoleRequireGreaterTimestampError,
@@ -167,7 +167,7 @@ async def check_archiving_configuration(
 async def query_update_archiving(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
-    archiving_configuration_request: RealmArchivingConfigurationRequest,
+    archiving_configuration_request: RealmConfiguredArchiving,
 ) -> None:
     """
     Raises:

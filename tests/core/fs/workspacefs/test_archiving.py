@@ -42,7 +42,7 @@ def bob_workspace(shared_workspaces: tuple[WorkspaceFS, WorkspaceFS]) -> Workspa
 @pytest.fixture
 def allow_instant_deletion(monkeypatch):
     monkeypatch.setattr(
-        "parsec.backend.realm.RealmArchivingConfigurationRequest.is_valid_archiving_configuration",
+        "parsec.backend.realm.RealmConfiguredArchiving.is_valid_archiving_configuration",
         lambda *args: True,
     )
 

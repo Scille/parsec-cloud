@@ -204,11 +204,11 @@ class RealmGrantedRole:
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class RealmArchivingConfigurationRequest:
+class RealmConfiguredArchiving:
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.realm_id} {self.configuration})"
 
-    def evolve(self, **kwargs: Any) -> RealmArchivingConfigurationRequest:
+    def evolve(self, **kwargs: Any) -> RealmConfiguredArchiving:
         return attr.evolve(self, **kwargs)
 
     def is_valid_archiving_configuration(self, minimum_archiving_period: int) -> bool:
@@ -481,7 +481,7 @@ class BaseRealmComponent:
                 client_timestamp=data.timestamp,
             )
 
-        archiving_configuration_request = RealmArchivingConfigurationRequest(
+        archiving_configuration_request = RealmConfiguredArchiving(
             certificate=req.archiving_certificate,
             realm_id=data.realm_id,
             configuration=data.configuration,
@@ -670,7 +670,7 @@ class BaseRealmComponent:
     async def update_archiving(
         self,
         organization_id: OrganizationID,
-        archiving_certificate: RealmArchivingConfigurationRequest,
+        archiving_certificate: RealmConfiguredArchiving,
     ) -> None:
         """
         Raises:
