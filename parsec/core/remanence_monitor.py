@@ -95,11 +95,11 @@ async def monitor_remanent_workspaces(
         workspace_id: EntryID,
         configuration: RealmArchivingConfiguration,
         configured_on: DateTime | None,
+        is_deleted: bool,
     ) -> None:
         # No reader rights
-        if configuration.is_deleted(user_fs.device.time_provider.now()):
-            if workspace_id in cancel_scopes:
-                cancel_scopes[workspace_id].cancel()
+        if is_deleted and workspace_id in cancel_scopes:
+            cancel_scopes[workspace_id].cancel()
 
     def _fs_workspace_created(
         event: CoreEvent,

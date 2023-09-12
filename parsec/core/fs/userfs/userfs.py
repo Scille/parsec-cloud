@@ -1035,20 +1035,27 @@ class UserFS:
         # Loop over workspaces
         for status in rep.archiving_config:
             workspace_id = EntryID.from_bytes(status.realm_id.bytes)
+            is_deleted = status.configuration.is_deleted(self._archiving_configuration_timestamp)
             previous_configuration, previous_configured_on = self._archiving_configuration[
                 workspace_id
             ]
+            previous_is_deleted = previous_configuration.is_deleted(
+                old_archiving_configuration_timestamp
+            )
 
             # Compare previous and current state
+            # Note that the deletion status is also compared in order to send
+            # `ARCHIVING_UPDATED` event when the deletion date of a workspace
+            # is reached.
             previous_state = (
                 previous_configuration,
                 previous_configured_on,
-                previous_configuration.is_deleted(old_archiving_configuration_timestamp),
+                previous_is_deleted,
             )
             current_state = (
                 status.configuration,
                 status.configured_on,
-                status.configuration.is_deleted(self._archiving_configuration_timestamp),
+                is_deleted,
             )
             if previous_state == current_state:
                 continue
@@ -1058,11 +1065,14 @@ class UserFS:
                 status.configuration,
                 status.configured_on,
             )
+            # Note: `is_deleted` is provided as part of the event
+            # in order to avoid issues with non-monotonic clocks
             self.event_bus.send(
                 CoreEvent.ARCHIVING_UPDATED,
                 workspace_id=workspace_id,
                 configuration=status.configuration,
                 configured_on=status.configured_on,
+                is_deleted=is_deleted,
             )
 
         # Find next deletion date

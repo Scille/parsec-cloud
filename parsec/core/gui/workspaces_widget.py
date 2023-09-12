@@ -811,6 +811,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         workspace_id: EntryID,
         configuration: RealmArchivingConfiguration,
         configured_on: DateTime | None,
+        is_deleted: bool,
     ) -> None:
         self.reset()
 

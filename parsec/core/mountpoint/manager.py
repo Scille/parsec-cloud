@@ -453,36 +453,28 @@ async def mountpoint_manager_factory(
     ) -> None:
         if mount_on_workspace_created:
             mount_nursery.start_soon(mountpoint_manager.safe_mount, new_entry.id)
-        return
 
     def on_sharing_updated_event(
         event: CoreEvent, new_entry: WorkspaceEntry, previous_entry: WorkspaceEntry | None = None
     ) -> None:
         # Workspace revoked
-        if new_entry.role is None:
-            if unmount_on_workspace_revoked:
-                mount_nursery.start_soon(mountpoint_manager.safe_unmount, new_entry.id)
-            return
+        if new_entry.role is None and unmount_on_workspace_revoked:
+            mount_nursery.start_soon(mountpoint_manager.safe_unmount, new_entry.id)
 
         # Workspace shared
-        if previous_entry is None:
-            if mount_on_workspace_shared:
-                mount_nursery.start_soon(mountpoint_manager.safe_mount, new_entry.id)
-            return
+        if previous_entry is None and mount_on_workspace_shared:
+            mount_nursery.start_soon(mountpoint_manager.safe_mount, new_entry.id)
 
     def on_archiving_updated_event(
         event: CoreEvent,
         workspace_id: EntryID,
         configuration: RealmArchivingConfiguration,
         configured_on: DateTime | None,
+        is_deleted: bool,
     ) -> None:
         # Archiving updated
-        if event == CoreEvent.ARCHIVING_UPDATED and configuration.is_deleted(
-            user_fs.device.time_provider.now()
-        ):
-            if unmount_on_workspace_deleted:
-                mount_nursery.start_soon(mountpoint_manager.safe_unmount, workspace_id)
-            return
+        if is_deleted and unmount_on_workspace_deleted:
+            mount_nursery.start_soon(mountpoint_manager.safe_unmount, workspace_id)
 
     # Instantiate the mountpoint manager with its own nursery
     async with open_service_nursery() as nursery:

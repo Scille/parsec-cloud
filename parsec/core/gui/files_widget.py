@@ -1364,13 +1364,14 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         workspace_id: EntryID,
         configuration: RealmArchivingConfiguration,
         configured_on: DateTime | None,
+        is_deleted: bool,
     ) -> None:
         # Not the corresponding workspace
         if self.workspace_fs is None or workspace_id != self.workspace_fs.workspace_id:
             return
 
         self.read_only = self.workspace_fs.is_read_only()
-        if self.workspace_fs.is_deleted():
+        if is_deleted:
             self.back_clicked.emit()
 
     def _on_reload_timestamped_requested(
