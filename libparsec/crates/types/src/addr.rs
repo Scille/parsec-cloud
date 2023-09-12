@@ -26,6 +26,89 @@ const PARSEC_NO_SSL_DEFAULT_PORT: u16 = 80;
 /// see. https://github.com/servo/rust-url/issues/763
 struct ParsecUrlAsHTTPScheme(pub Url);
 
+impl ParsecUrlAsHTTPScheme {
+    fn from_http_redirection(url: &str) -> Result<Self, AddrError> {
+        // 1) Validate the http/https url
+
+        let mut parsed = Url::parse(url).map_err(|e| AddrError::InvalidUrl(url.to_string(), e))?;
+
+        // `no_ssl` is defined by http/https scheme and shouldn't be
+        // overwritten by the query part of the url
+        let mut cleaned_query = url::form_urlencoded::Serializer::new(String::new());
+        cleaned_query.extend_pairs(parsed.query_pairs().filter(|(k, _)| k != "no_ssl"));
+        parsed.set_query(Some(&cleaned_query.finish()));
+
+        // 2) Remove the `/redirect/` path prefix
+
+        let path = {
+            match parsed.path_segments() {
+                Some(mut path_segments) => {
+                    if path_segments.next() != Some("redirect") {
+                        return Err(AddrError::NotARedirection(parsed));
+                    }
+
+                    path_segments.collect::<Vec<&str>>().join("/")
+                }
+                None => return Err(AddrError::NotARedirection(parsed)),
+            }
+        };
+        parsed.set_path(&path);
+
+        // 3) Handle per-specific-address type parsing details
+        Ok(ParsecUrlAsHTTPScheme(parsed))
+    }
+}
+
+impl FromStr for ParsecUrlAsHTTPScheme {
+    type Err = AddrError;
+
+    fn from_str(url: &str) -> Result<Self, Self::Err> {
+        // 1) Validate the url with it parsec:// scheme
+
+        let parsed = Url::parse(url).map_err(|e| AddrError::InvalidUrl(url.to_string(), e))?;
+
+        let mut no_ssl_queries = parsed.query_pairs().filter(|(k, _)| k == "no_ssl");
+
+        let use_ssl = match no_ssl_queries.next() {
+            None => true,
+            Some((_, value)) => match value.to_lowercase().as_str() {
+                // param is no_ssl, but we store use_ssl (so invert the values)
+                "false" => true,
+                "true" => false,
+                _ => {
+                    return Err(AddrError::InvalidParamValue {
+                        param: "no_ssl",
+                        value: value.to_string(),
+                        help: "Expected `no_ssl=true` or `no_ssl=false`".to_string(),
+                    });
+                }
+            },
+        };
+
+        if no_ssl_queries.next().is_some() {
+            return Err(AddrError::DuplicateParam("no_ssl".to_string()));
+        }
+
+        // 2) Convert the url into a http/https scheme
+
+        if parsed.scheme() != PARSEC_SCHEME {
+            return Err(AddrError::InvalidUrlScheme {
+                got: parsed.scheme().to_string(),
+                expected: PARSEC_SCHEME,
+            });
+        }
+        // http vs https is important as it changes the default port for parsing !
+        let http_scheme = if use_ssl { "https" } else { "http" };
+        let url_as_http = url.replacen(PARSEC_SCHEME, http_scheme, 1);
+
+        // 3) Continue parsing with the http/https url
+
+        Url::parse(&url_as_http)
+            .map_err(|e| AddrError::InvalidUrl(url.to_string(), e))
+            .map(Self)
+    }
+}
+
 macro_rules! impl_common_stuff {
     (BackendAddr) => {
         impl_common_stuff!(BackendAddr, _internal_);
@@ -60,35 +143,8 @@ macro_rules! impl_common_stuff {
 
             /// Create a new Addr from a raw http url that must have `/redirect` as prefix of its path.
             pub fn from_http_redirection(url: &str) -> Result<Self, AddrError> {
-                // 1) Validate the http/https url
-
-                let mut parsed =
-                    Url::parse(url).map_err(|e| AddrError::InvalidUrl(url.to_string(), e))?;
-
-                // `no_ssl` is defined by http/https scheme and shouldn't be
-                // overwritten by the query part of the url
-                let mut cleaned_query = url::form_urlencoded::Serializer::new(String::new());
-                cleaned_query.extend_pairs(parsed.query_pairs().filter(|(k, _)| k != "no_ssl"));
-                parsed.set_query(Some(&cleaned_query.finish()));
-
-                // 2) Remove the `/redirect/` path prefix
-
-                let path = {
-                    match parsed.path_segments() {
-                        Some(mut path_segments) => {
-                            if path_segments.next() != Some("redirect") {
-                                return Err(AddrError::NotARedirection(parsed));
-                            }
-                            path_segments.collect::<Vec<&str>>().join("/")
-                        }
-                        None => return Err(AddrError::NotARedirection(parsed)),
-                    }
-                };
-                parsed.set_path(&path);
-
-                // 3) Handle per-specific-address type parsing details
-
-                Self::_from_url(ParsecUrlAsHTTPScheme(parsed))
+                let parsed = ParsecUrlAsHTTPScheme::from_http_redirection(url)?;
+                Self::_from_url(&parsed)
             }
         }
 
@@ -110,47 +166,8 @@ macro_rules! impl_common_stuff {
             type Err = AddrError;
 
             fn from_str(url: &str) -> Result<Self, Self::Err> {
-                // 1) Validate the url with it parsec:// scheme
-
-                let parsed =
-                    Url::parse(&url).map_err(|e| AddrError::InvalidUrl(url.to_string(), e))?;
-                let mut no_ssl_queries = parsed.query_pairs().filter(|(k, _)| k == "no_ssl");
-                let use_ssl = match no_ssl_queries.next() {
-                    None => true,
-                    Some((_, value)) => match value.to_lowercase().as_str() {
-                        // param is no_ssl, but we store use_ssl (so invert the values)
-                        "false" => true,
-                        "true" => false,
-                        _ => {
-                            return Err(AddrError::InvalidParamValue {
-                                param: "no_ssl",
-                                value: value.to_string(),
-                                help: "Expected `no_ssl=true` or `no_ssl=false`".to_string(),
-                            });
-                        }
-                    },
-                };
-                if no_ssl_queries.next().is_some() {
-                    return Err(AddrError::DuplicateParam("no_ssl".to_string()));
-                }
-
-                // 2) Convert the url into a http/https scheme
-
-                if parsed.scheme() != PARSEC_SCHEME {
-                    return Err(AddrError::InvalidUrlScheme {
-                        got: parsed.scheme().to_string(),
-                        expected: PARSEC_SCHEME,
-                    });
-                }
-                // http vs https is important as it changes the default port for parsing !
-                let http_scheme = if use_ssl { "https" } else { "http" };
-                let url_as_http = url.replacen(PARSEC_SCHEME, http_scheme, 1);
-
-                // 3) Continue parsing with the http/https url
-
-                let parsed = Url::parse(&url_as_http)
-                    .map_err(|e| AddrError::InvalidUrl(url.to_string(), e))?;
-                Self::_from_url(ParsecUrlAsHTTPScheme(parsed))
+                let parsed = url.parse()?;
+                Self::_from_url(&parsed)
             }
         }
 
@@ -358,6 +375,7 @@ impl_common_stuff!(BackendAddr);
 
 impl BackendAddr {
     pub fn new(hostname: String, port: Option<u16>, use_ssl: bool) -> Self {
+        // TODO: handle correctly the errors
         if hostname.is_empty() {
             panic!("Hostname cannot be empty !")
         }
@@ -374,11 +392,11 @@ impl BackendAddr {
         self.base.to_http_url(path)
     }
 
-    fn _from_url(parsed: ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
-        let base = BaseBackendAddr::from_url(&parsed)?;
+    fn _from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
+        let base = BaseBackendAddr::from_url(parsed)?;
 
         if parsed.0.path() != "" && parsed.0.path() != "/" {
-            return Err(AddrError::ShouldNotHaveAPath(parsed.0));
+            return Err(AddrError::ShouldNotHaveAPath(parsed.0.clone()));
         }
 
         Ok(Self { base })
@@ -419,9 +437,9 @@ impl BackendOrganizationAddr {
         }
     }
 
-    fn _from_url(parsed: ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
-        let base = BaseBackendAddr::from_url(&parsed)?;
-        let organization_id = extract_organization_id(&parsed)?;
+    fn _from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
+        let base = BaseBackendAddr::from_url(parsed)?;
+        let organization_id = extract_organization_id(parsed)?;
 
         let pairs = parsed.0.query_pairs();
         let mut rvk_queries = pairs.filter(|(k, _)| k == "rvk");
@@ -503,15 +521,16 @@ impl BackendActionAddr {
     }
 
     pub fn from_http_redirection(url: &str) -> Result<Self, AddrError> {
-        if let Ok(addr) = BackendOrganizationBootstrapAddr::from_http_redirection(url) {
+        let parsed = ParsecUrlAsHTTPScheme::from_http_redirection(url)?;
+
+        if let Ok(addr) = BackendOrganizationBootstrapAddr::_from_url(&parsed) {
             Ok(BackendActionAddr::OrganizationBootstrap(addr))
-        } else if let Ok(addr) = BackendOrganizationFileLinkAddr::from_http_redirection(url) {
+        } else if let Ok(addr) = BackendOrganizationFileLinkAddr::_from_url(&parsed) {
             Ok(BackendActionAddr::OrganizationFileLink(addr))
-        } else if let Ok(addr) = BackendInvitationAddr::from_http_redirection(url) {
+        } else if let Ok(addr) = BackendInvitationAddr::_from_url(&parsed) {
             Ok(BackendActionAddr::Invitation(addr))
         } else {
-            BackendPkiEnrollmentAddr::from_http_redirection(url)
-                .map(BackendActionAddr::PkiEnrollment)
+            BackendPkiEnrollmentAddr::_from_url(&parsed).map(BackendActionAddr::PkiEnrollment)
         }
     }
 }
@@ -521,15 +540,16 @@ impl std::str::FromStr for BackendActionAddr {
 
     #[inline]
     fn from_str(url: &str) -> Result<Self, Self::Err> {
-        if let Ok(addr) = url.parse::<BackendOrganizationBootstrapAddr>() {
+        let parsed = url.parse()?;
+
+        if let Ok(addr) = BackendOrganizationBootstrapAddr::_from_url(&parsed) {
             Ok(BackendActionAddr::OrganizationBootstrap(addr))
-        } else if let Ok(addr) = url.parse::<BackendOrganizationFileLinkAddr>() {
+        } else if let Ok(addr) = BackendOrganizationFileLinkAddr::_from_url(&parsed) {
             Ok(BackendActionAddr::OrganizationFileLink(addr))
-        } else if let Ok(addr) = url.parse::<BackendInvitationAddr>() {
+        } else if let Ok(addr) = BackendInvitationAddr::_from_url(&parsed) {
             Ok(BackendActionAddr::Invitation(addr))
         } else {
-            url.parse::<BackendPkiEnrollmentAddr>()
-                .map(BackendActionAddr::PkiEnrollment)
+            BackendPkiEnrollmentAddr::_from_url(&parsed).map(BackendActionAddr::PkiEnrollment)
         }
     }
 }
@@ -546,7 +566,9 @@ pub struct BackendOrganizationBootstrapAddr {
     organization_id: OrganizationID,
     token: Option<String>,
 }
+
 impl_common_stuff!(BackendOrganizationBootstrapAddr);
+
 impl BackendOrganizationBootstrapAddr {
     pub fn new(
         backend_addr: impl Into<BackendAddr>,
@@ -560,11 +582,12 @@ impl BackendOrganizationBootstrapAddr {
         }
     }
 
-    fn _from_url(parsed: ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
-        let base = BaseBackendAddr::from_url(&parsed)?;
-        let organization_id = extract_organization_id(&parsed)?;
+    fn _from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
+        let base = BaseBackendAddr::from_url(parsed)?;
+        let organization_id = extract_organization_id(parsed)?;
         let pairs = parsed.0.query_pairs();
         let action = extract_action(&pairs)?;
+
         if action != "bootstrap_organization" {
             return Err(AddrError::InvalidParamValue {
                 param: "action",
@@ -575,12 +598,14 @@ impl BackendOrganizationBootstrapAddr {
 
         let mut token_queries = pairs.filter(|(k, _)| k == "token");
         let token = token_queries.next().map(|(_, v)| (*v).to_owned());
+
         // Note invalid percent-encoding is not considered a failure here:
         // the replacement character EF BF BD is used instead. This should be
         // ok for our use case (but it differs from Python implementation).
         if token_queries.next().is_some() {
             return Err(AddrError::DuplicateParam("token".to_string()));
         }
+
         // Consider empty token as no token
         // It's important to do this cooking eagerly (instead of e.g. doing it in
         // the token getter) to avoid broken comparison between empty and None tokens
@@ -678,9 +703,9 @@ impl BackendOrganizationFileLinkAddr {
         }
     }
 
-    fn _from_url(parsed: ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
-        let base = BaseBackendAddr::from_url(&parsed)?;
-        let organization_id = extract_organization_id(&parsed)?;
+    fn _from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
+        let base = BaseBackendAddr::from_url(parsed)?;
+        let organization_id = extract_organization_id(parsed)?;
         let pairs = parsed.0.query_pairs();
         let action = extract_action(&pairs)?;
         if action != "file_link" {
@@ -802,9 +827,9 @@ impl BackendInvitationAddr {
         }
     }
 
-    fn _from_url(parsed: ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
-        let base = BaseBackendAddr::from_url(&parsed)?;
-        let organization_id = extract_organization_id(&parsed)?;
+    fn _from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
+        let base = BaseBackendAddr::from_url(parsed)?;
+        let organization_id = extract_organization_id(parsed)?;
         let pairs = parsed.0.query_pairs();
         let invitation_type = match extract_action(&pairs)? {
             x if x == "claim_user" => InvitationType::User,
@@ -918,9 +943,9 @@ impl BackendPkiEnrollmentAddr {
         }
     }
 
-    fn _from_url(parsed: ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
-        let base = BaseBackendAddr::from_url(&parsed)?;
-        let organization_id = extract_organization_id(&parsed)?;
+    fn _from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
+        let base = BaseBackendAddr::from_url(parsed)?;
+        let organization_id = extract_organization_id(parsed)?;
         let pairs = parsed.0.query_pairs();
         let action = extract_action(&pairs)?;
         if action != "pki_enrollment" {

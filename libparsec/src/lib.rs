@@ -11,6 +11,7 @@ pub mod low_level {
     pub use libparsec_types as types;
 }
 
+mod addr;
 mod cancel;
 mod client;
 mod config;
@@ -20,6 +21,7 @@ mod invite;
 mod os;
 mod testbed;
 
+pub use addr::*;
 pub use cancel::*;
 pub use client::*;
 pub use config::*;

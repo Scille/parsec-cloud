@@ -1298,6 +1298,489 @@ fn struct_device_greet_in_progress4_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ParseBackendAddrError
+
+#[allow(dead_code)]
+fn variant_parse_backend_addr_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ParseBackendAddrError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ParseBackendAddrError::InvalidUrl { .. } => {
+            let js_tag = JsString::try_new(cx, "InvalidUrl").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ParsedBackendAddr
+
+#[allow(dead_code)]
+fn variant_parsed_backend_addr_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::ParsedBackendAddr> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "Base" => {
+            let hostname = {
+                let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
+                js_val.value(cx)
+            };
+            let port = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "port")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    v as u32
+                }
+            };
+            let use_ssl = {
+                let js_val: Handle<JsBoolean> = obj.get(cx, "useSsl")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::ParsedBackendAddr::Base {
+                hostname,
+                port,
+                use_ssl,
+            })
+        }
+        "InvitationDevice" => {
+            let hostname = {
+                let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
+                js_val.value(cx)
+            };
+            let port = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "port")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    v as u32
+                }
+            };
+            let use_ssl = {
+                let js_val: Handle<JsBoolean> = obj.get(cx, "useSsl")?;
+                js_val.value(cx)
+            };
+            let organization_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
+                {
+                    match js_val.value(cx).parse() {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let token = {
+                let js_val: Handle<JsString> = obj.get(cx, "token")?;
+                {
+                    let custom_from_rs_string =
+                        |s: String| -> Result<libparsec::InvitationToken, _> {
+                            libparsec::InvitationToken::from_hex(s.as_str())
+                                .map_err(|e| e.to_string())
+                        };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::ParsedBackendAddr::InvitationDevice {
+                hostname,
+                port,
+                use_ssl,
+                organization_id,
+                token,
+            })
+        }
+        "InvitationUser" => {
+            let hostname = {
+                let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
+                js_val.value(cx)
+            };
+            let port = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "port")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    v as u32
+                }
+            };
+            let use_ssl = {
+                let js_val: Handle<JsBoolean> = obj.get(cx, "useSsl")?;
+                js_val.value(cx)
+            };
+            let organization_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
+                {
+                    match js_val.value(cx).parse() {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let token = {
+                let js_val: Handle<JsString> = obj.get(cx, "token")?;
+                {
+                    let custom_from_rs_string =
+                        |s: String| -> Result<libparsec::InvitationToken, _> {
+                            libparsec::InvitationToken::from_hex(s.as_str())
+                                .map_err(|e| e.to_string())
+                        };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::ParsedBackendAddr::InvitationUser {
+                hostname,
+                port,
+                use_ssl,
+                organization_id,
+                token,
+            })
+        }
+        "OrganizationBootstrap" => {
+            let hostname = {
+                let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
+                js_val.value(cx)
+            };
+            let port = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "port")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    v as u32
+                }
+            };
+            let use_ssl = {
+                let js_val: Handle<JsBoolean> = obj.get(cx, "useSsl")?;
+                js_val.value(cx)
+            };
+            let organization_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
+                {
+                    match js_val.value(cx).parse() {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let token = {
+                let js_val: Handle<JsValue> = obj.get(cx, "token")?;
+                {
+                    if js_val.is_a::<JsNull, _>(cx) {
+                        None
+                    } else {
+                        let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                        Some(js_val.value(cx))
+                    }
+                }
+            };
+            Ok(libparsec::ParsedBackendAddr::OrganizationBootstrap {
+                hostname,
+                port,
+                use_ssl,
+                organization_id,
+                token,
+            })
+        }
+        "OrganizationFileLink" => {
+            let hostname = {
+                let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
+                js_val.value(cx)
+            };
+            let port = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "port")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    v as u32
+                }
+            };
+            let use_ssl = {
+                let js_val: Handle<JsBoolean> = obj.get(cx, "useSsl")?;
+                js_val.value(cx)
+            };
+            let organization_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
+                {
+                    match js_val.value(cx).parse() {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let workspace_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "workspaceId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::EntryID, _> {
+                        libparsec::EntryID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let encrypted_path = {
+                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "encryptedPath")?;
+                js_val.as_slice(cx).to_vec()
+            };
+            let encrypted_timestamp = {
+                let js_val: Handle<JsValue> = obj.get(cx, "encryptedTimestamp")?;
+                {
+                    if js_val.is_a::<JsNull, _>(cx) {
+                        None
+                    } else {
+                        let js_val = js_val.downcast_or_throw::<JsTypedArray<u8>, _>(cx)?;
+                        Some(js_val.as_slice(cx).to_vec())
+                    }
+                }
+            };
+            Ok(libparsec::ParsedBackendAddr::OrganizationFileLink {
+                hostname,
+                port,
+                use_ssl,
+                organization_id,
+                workspace_id,
+                encrypted_path,
+                encrypted_timestamp,
+            })
+        }
+        "PkiEnrollment" => {
+            let hostname = {
+                let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
+                js_val.value(cx)
+            };
+            let port = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "port")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    v as u32
+                }
+            };
+            let use_ssl = {
+                let js_val: Handle<JsBoolean> = obj.get(cx, "useSsl")?;
+                js_val.value(cx)
+            };
+            let organization_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
+                {
+                    match js_val.value(cx).parse() {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::ParsedBackendAddr::PkiEnrollment {
+                hostname,
+                port,
+                use_ssl,
+                organization_id,
+            })
+        }
+        _ => cx.throw_type_error("Object is not a ParsedBackendAddr"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_parsed_backend_addr_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ParsedBackendAddr,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::ParsedBackendAddr::Base {
+            hostname,
+            port,
+            use_ssl,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "Base").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
+            js_obj.set(cx, "hostname", js_hostname)?;
+            let js_port = JsNumber::new(cx, port as f64);
+            js_obj.set(cx, "port", js_port)?;
+            let js_use_ssl = JsBoolean::new(cx, use_ssl);
+            js_obj.set(cx, "useSsl", js_use_ssl)?;
+        }
+        libparsec::ParsedBackendAddr::InvitationDevice {
+            hostname,
+            port,
+            use_ssl,
+            organization_id,
+            token,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "InvitationDevice").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
+            js_obj.set(cx, "hostname", js_hostname)?;
+            let js_port = JsNumber::new(cx, port as f64);
+            js_obj.set(cx, "port", js_port)?;
+            let js_use_ssl = JsBoolean::new(cx, use_ssl);
+            js_obj.set(cx, "useSsl", js_use_ssl)?;
+            let js_organization_id = JsString::try_new(cx, organization_id).or_throw(cx)?;
+            js_obj.set(cx, "organizationId", js_organization_id)?;
+            let js_token = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(token) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "token", js_token)?;
+        }
+        libparsec::ParsedBackendAddr::InvitationUser {
+            hostname,
+            port,
+            use_ssl,
+            organization_id,
+            token,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "InvitationUser").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
+            js_obj.set(cx, "hostname", js_hostname)?;
+            let js_port = JsNumber::new(cx, port as f64);
+            js_obj.set(cx, "port", js_port)?;
+            let js_use_ssl = JsBoolean::new(cx, use_ssl);
+            js_obj.set(cx, "useSsl", js_use_ssl)?;
+            let js_organization_id = JsString::try_new(cx, organization_id).or_throw(cx)?;
+            js_obj.set(cx, "organizationId", js_organization_id)?;
+            let js_token = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(token) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "token", js_token)?;
+        }
+        libparsec::ParsedBackendAddr::OrganizationBootstrap {
+            hostname,
+            port,
+            use_ssl,
+            organization_id,
+            token,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "OrganizationBootstrap").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
+            js_obj.set(cx, "hostname", js_hostname)?;
+            let js_port = JsNumber::new(cx, port as f64);
+            js_obj.set(cx, "port", js_port)?;
+            let js_use_ssl = JsBoolean::new(cx, use_ssl);
+            js_obj.set(cx, "useSsl", js_use_ssl)?;
+            let js_organization_id = JsString::try_new(cx, organization_id).or_throw(cx)?;
+            js_obj.set(cx, "organizationId", js_organization_id)?;
+            let js_token = match token {
+                Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+                None => JsNull::new(cx).as_value(cx),
+            };
+            js_obj.set(cx, "token", js_token)?;
+        }
+        libparsec::ParsedBackendAddr::OrganizationFileLink {
+            hostname,
+            port,
+            use_ssl,
+            organization_id,
+            workspace_id,
+            encrypted_path,
+            encrypted_timestamp,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "OrganizationFileLink").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
+            js_obj.set(cx, "hostname", js_hostname)?;
+            let js_port = JsNumber::new(cx, port as f64);
+            js_obj.set(cx, "port", js_port)?;
+            let js_use_ssl = JsBoolean::new(cx, use_ssl);
+            js_obj.set(cx, "useSsl", js_use_ssl)?;
+            let js_organization_id = JsString::try_new(cx, organization_id).or_throw(cx)?;
+            js_obj.set(cx, "organizationId", js_organization_id)?;
+            let js_workspace_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::EntryID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(workspace_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "workspaceId", js_workspace_id)?;
+            let js_encrypted_path = {
+                let mut js_buff = JsArrayBuffer::new(cx, encrypted_path.len())?;
+                let js_buff_slice = js_buff.as_mut_slice(cx);
+                for (i, c) in encrypted_path.iter().enumerate() {
+                    js_buff_slice[i] = *c;
+                }
+                js_buff
+            };
+            js_obj.set(cx, "encryptedPath", js_encrypted_path)?;
+            let js_encrypted_timestamp = match encrypted_timestamp {
+                Some(elem) => {
+                    let mut js_buff = JsArrayBuffer::new(cx, elem.len())?;
+                    let js_buff_slice = js_buff.as_mut_slice(cx);
+                    for (i, c) in elem.iter().enumerate() {
+                        js_buff_slice[i] = *c;
+                    }
+                    js_buff
+                }
+                .as_value(cx),
+                None => JsNull::new(cx).as_value(cx),
+            };
+            js_obj.set(cx, "encryptedTimestamp", js_encrypted_timestamp)?;
+        }
+        libparsec::ParsedBackendAddr::PkiEnrollment {
+            hostname,
+            port,
+            use_ssl,
+            organization_id,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "PkiEnrollment").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
+            js_obj.set(cx, "hostname", js_hostname)?;
+            let js_port = JsNumber::new(cx, port as f64);
+            js_obj.set(cx, "port", js_port)?;
+            let js_use_ssl = JsBoolean::new(cx, use_ssl);
+            js_obj.set(cx, "useSsl", js_use_ssl)?;
+            let js_organization_id = JsString::try_new(cx, organization_id).or_throw(cx)?;
+            js_obj.set(cx, "organizationId", js_organization_id)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // CancelError
 
 #[allow(dead_code)]
@@ -2504,6 +2987,76 @@ fn variant_greet_in_progress_error_rs_to_js<'a>(
         }
     }
     Ok(js_obj)
+}
+
+// parse_backend_addr
+fn parse_backend_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let url = {
+        let js_val = cx.argument::<JsString>(0)?;
+        js_val.value(&mut cx)
+    };
+    let ret = libparsec::parse_backend_addr(&url);
+    let js_ret = match ret {
+        Ok(ok) => {
+            let js_obj = JsObject::new(&mut cx);
+            let js_tag = JsBoolean::new(&mut cx, true);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_value = variant_parsed_backend_addr_rs_to_js(&mut cx, ok)?;
+            js_obj.set(&mut cx, "value", js_value)?;
+            js_obj
+        }
+        Err(err) => {
+            let js_obj = cx.empty_object();
+            let js_tag = JsBoolean::new(&mut cx, false);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_err = variant_parse_backend_addr_error_rs_to_js(&mut cx, err)?;
+            js_obj.set(&mut cx, "error", js_err)?;
+            js_obj
+        }
+    };
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// build_backend_organization_bootstrap_addr
+fn build_backend_organization_bootstrap_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let addr = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::BackendAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let organization_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            match js_val.value(&mut cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let ret = libparsec::build_backend_organization_bootstrap_addr(addr, organization_id);
+    let js_ret = JsString::try_new(&mut cx, {
+        let custom_to_rs_string =
+            |addr: libparsec::BackendOrganizationBootstrapAddr| -> Result<String, &'static str> {
+                Ok(addr.to_url().into())
+            };
+        match custom_to_rs_string(ret) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(&mut cx)?;
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
 }
 
 // cancel
@@ -5123,6 +5676,11 @@ fn test_drop_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
 }
 
 pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
+    cx.export_function("parseBackendAddr", parse_backend_addr)?;
+    cx.export_function(
+        "buildBackendOrganizationBootstrapAddr",
+        build_backend_organization_bootstrap_addr,
+    )?;
     cx.export_function("cancel", cancel)?;
     cx.export_function("newCanceller", new_canceller)?;
     cx.export_function("clientStart", client_start)?;

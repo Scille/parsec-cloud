@@ -2,7 +2,8 @@
 
 from typing import Optional
 
-from .common import BackendAddr, BackendOrganizationBootstrapAddr, OrganizationID, Path, Ref
+from .addr import BackendAddr, BackendOrganizationBootstrapAddr
+from .common import OrganizationID, Path, Ref
 
 
 async def test_new_testbed(template: Ref[str], test_server: Optional[Ref[BackendAddr]]) -> Path:

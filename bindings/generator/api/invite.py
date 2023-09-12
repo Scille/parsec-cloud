@@ -2,9 +2,11 @@
 
 from typing import Optional
 
-from .common import (
+from .addr import (
     BackendInvitationAddr,
     BackendOrganizationBootstrapAddr,
+)
+from .common import (
     DateTime,
     DeviceID,
     DeviceLabel,

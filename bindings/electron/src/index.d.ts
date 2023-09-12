@@ -140,6 +140,72 @@ export interface DeviceGreetInProgress4Info {
 }
 
 
+// ParseBackendAddrError
+export interface ParseBackendAddrErrorInvalidUrl {
+    tag: "InvalidUrl"
+    error: string
+}
+export type ParseBackendAddrError =
+  | ParseBackendAddrErrorInvalidUrl
+
+
+// ParsedBackendAddr
+export interface ParsedBackendAddrBase {
+    tag: "Base"
+    hostname: string
+    port: number
+    use_ssl: boolean
+}
+export interface ParsedBackendAddrInvitationDevice {
+    tag: "InvitationDevice"
+    hostname: string
+    port: number
+    use_ssl: boolean
+    organization_id: string
+    token: string
+}
+export interface ParsedBackendAddrInvitationUser {
+    tag: "InvitationUser"
+    hostname: string
+    port: number
+    use_ssl: boolean
+    organization_id: string
+    token: string
+}
+export interface ParsedBackendAddrOrganizationBootstrap {
+    tag: "OrganizationBootstrap"
+    hostname: string
+    port: number
+    use_ssl: boolean
+    organization_id: string
+    token: string | null
+}
+export interface ParsedBackendAddrOrganizationFileLink {
+    tag: "OrganizationFileLink"
+    hostname: string
+    port: number
+    use_ssl: boolean
+    organization_id: string
+    workspace_id: string
+    encrypted_path: Uint8Array
+    encrypted_timestamp: Uint8Array | null
+}
+export interface ParsedBackendAddrPkiEnrollment {
+    tag: "PkiEnrollment"
+    hostname: string
+    port: number
+    use_ssl: boolean
+    organization_id: string
+}
+export type ParsedBackendAddr =
+  | ParsedBackendAddrBase
+  | ParsedBackendAddrInvitationDevice
+  | ParsedBackendAddrInvitationUser
+  | ParsedBackendAddrOrganizationBootstrap
+  | ParsedBackendAddrOrganizationFileLink
+  | ParsedBackendAddrPkiEnrollment
+
+
 // CancelError
 export interface CancelErrorInternal {
     tag: "Internal"
@@ -648,6 +714,13 @@ export type GreetInProgressError =
   | GreetInProgressErrorUserCreateNotAllowed
 
 
+export function parseBackendAddr(
+    url: string
+): Promise<Result<ParsedBackendAddr, ParseBackendAddrError>>
+export function buildBackendOrganizationBootstrapAddr(
+    addr: string,
+    organization_id: string
+): Promise<string>
 export function cancel(
     canceller: number
 ): Promise<Result<null, CancelError>>

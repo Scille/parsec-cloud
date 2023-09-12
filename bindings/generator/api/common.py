@@ -142,26 +142,6 @@ class Password(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, String> { Ok(s.into()) }"
 
 
-class BackendAddr(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::BackendAddr::from_any(&s).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = "|addr: libparsec::BackendAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
-
-
-class BackendOrganizationAddr(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::BackendOrganizationAddr::from_any(&s).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = "|addr: libparsec::BackendOrganizationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
-
-
-class BackendOrganizationBootstrapAddr(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::BackendOrganizationBootstrapAddr::from_any(&s).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = "|addr: libparsec::BackendOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
-
-
-class BackendInvitationAddr(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::BackendInvitationAddr::from_any(&s).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = "|addr: libparsec::BackendInvitationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
-
-
 class Path(StrBasedType):
     custom_from_rs_string = (
         "|s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) }"

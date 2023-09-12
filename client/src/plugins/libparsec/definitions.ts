@@ -45,22 +45,22 @@ export enum OS {
     MacOs = 'OSMacOs',
     Windows = 'OSWindows',
 }
+export type EntryID = string
+export type InvitationToken = string
+export type OrganizationID = string
+export type BackendAddr = string
+export type BackendOrganizationAddr = string
+export type BackendOrganizationBootstrapAddr = string
+export type BackendInvitationAddr = string
 export type DateTime = string
 export type EntryName = string
 export type Password = string
 export type Path = string
 export type RealmID = string
 export type UserID = string
-export type OrganizationID = string
 export type DeviceID = string
 export type DeviceLabel = string
-export type BackendAddr = string
-export type BackendOrganizationAddr = string
-export type BackendOrganizationBootstrapAddr = string
-export type BackendInvitationAddr = string
 export type SASCode = string
-export type EntryID = string
-export type InvitationToken = string
 export type SequesterVerifyKeyDer = Uint8Array
 export type Handle = number
 export type CacheSize = number
@@ -173,6 +173,70 @@ export interface DeviceGreetInProgress4Info {
     handle: number
     requestedDeviceLabel: DeviceLabel | null
 }
+
+// ParseBackendAddrError
+export interface ParseBackendAddrErrorInvalidUrl {
+    tag: 'InvalidUrl'
+    error: string
+}
+export type ParseBackendAddrError =
+  | ParseBackendAddrErrorInvalidUrl
+
+// ParsedBackendAddr
+export interface ParsedBackendAddrBase {
+    tag: 'Base'
+    hostname: string
+    port: number
+    useSsl: boolean
+}
+export interface ParsedBackendAddrInvitationDevice {
+    tag: 'InvitationDevice'
+    hostname: string
+    port: number
+    useSsl: boolean
+    organizationId: OrganizationID
+    token: InvitationToken
+}
+export interface ParsedBackendAddrInvitationUser {
+    tag: 'InvitationUser'
+    hostname: string
+    port: number
+    useSsl: boolean
+    organizationId: OrganizationID
+    token: InvitationToken
+}
+export interface ParsedBackendAddrOrganizationBootstrap {
+    tag: 'OrganizationBootstrap'
+    hostname: string
+    port: number
+    useSsl: boolean
+    organizationId: OrganizationID
+    token: string | null
+}
+export interface ParsedBackendAddrOrganizationFileLink {
+    tag: 'OrganizationFileLink'
+    hostname: string
+    port: number
+    useSsl: boolean
+    organizationId: OrganizationID
+    workspaceId: EntryID
+    encryptedPath: Uint8Array
+    encryptedTimestamp: Uint8Array | null
+}
+export interface ParsedBackendAddrPkiEnrollment {
+    tag: 'PkiEnrollment'
+    hostname: string
+    port: number
+    useSsl: boolean
+    organizationId: OrganizationID
+}
+export type ParsedBackendAddr =
+  | ParsedBackendAddrBase
+  | ParsedBackendAddrInvitationDevice
+  | ParsedBackendAddrInvitationUser
+  | ParsedBackendAddrOrganizationBootstrap
+  | ParsedBackendAddrOrganizationFileLink
+  | ParsedBackendAddrPkiEnrollment
 
 // CancelError
 export interface CancelErrorInternal {
@@ -660,6 +724,13 @@ export type GreetInProgressError =
   | GreetInProgressErrorUserCreateNotAllowed
 
 export interface LibParsecPlugin {
+    parseBackendAddr(
+        url: string
+    ): Promise<Result<ParsedBackendAddr, ParseBackendAddrError>>
+    buildBackendOrganizationBootstrapAddr(
+        addr: BackendAddr,
+        organization_id: OrganizationID
+    ): Promise<BackendOrganizationBootstrapAddr>
     cancel(
         canceller: number
     ): Promise<Result<null, CancelError>>
