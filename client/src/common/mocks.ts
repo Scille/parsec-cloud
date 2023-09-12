@@ -290,8 +290,51 @@ const MOCK_USERS: MockUser[] = [
   },
 ];
 
+const MOCK_REVOKED_USERS: MockUser[] = [
+  {
+    id: 'id5',
+    name: 'Steve',
+    email: 'steve@gmail.com',
+    avatar: 'st',
+    joined: DateTime.fromISO('2023-05-10T08:00:00'),
+    profile: Profile.Standard,
+    revoked: true,
+  },
+  {
+    id: 'id6',
+    name: 'Alex',
+    email: 'alex@gmail.com',
+    avatar: 'al',
+    joined: DateTime.fromISO('2022-01-10T08:00:00'),
+    profile: Profile.Standard,
+    revoked: true,
+  },
+  {
+    id: 'id7',
+    name: 'Notch',
+    email: 'notch@gmail.com',
+    avatar: 'no',
+    joined: DateTime.fromISO('2023-04-10T08:00:00'),
+    profile: Profile.Admin,
+    revoked: true,
+  },
+  {
+    id: 'id8',
+    name: 'Herobrine',
+    email: 'herobrine@gmail.com',
+    avatar: 'he',
+    joined: DateTime.fromISO('2023-04-10T08:00:00'),
+    profile: Profile.Outsider,
+    revoked: true,
+  },
+];
+
 export async function getMockUsers(): Promise<MockUser[]> {
   return MOCK_USERS;
+}
+
+export async function getMockRevokedUsers(): Promise<MockUser[]> {
+  return MOCK_REVOKED_USERS;
 }
 
 export async function getUsers(): Promise<string[]> {
