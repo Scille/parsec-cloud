@@ -6,29 +6,29 @@ rust-dependencies-workspace: &rust-dependencies-workspace
 
 rust-toolchain: &rust-toolchain rust-toolchain.toml
 
-rust-python-binding: &rust-python-binding src/**
+rust-python-binding: &rust-python-binding server/src/**
 
 # TODO: We currently don't test the electron application
 # So we don't have to watch the electron binding (likewise for the client code related to electron)
 # rust-electron-binding: &rust-electron-binding bindings/electron
-# new-client-electron: &new-client-electron: client/electron
+# new-client-electron: &new-client-electron: /client/electron
 
 # TODO: We currently don't test the android application
 # So we don't have to watch the android binding (likewise for the client code related to android)
 # rust-android-binding: &rust-android-binding bindings/android
-# new-client-android: &new-client-android: client/android
+# new-client-android: &new-client-android: /client/android
 
 # TODO: We currently don't test the ios application
 # So we don't have to watch the client code related to the ios application
-# new-client-ios: &new-client-ios client/ios
+# new-client-ios: &new-client-ios /client/ios
 
 rust-web-binding: &rust-web-binding bindings/web/**
 
 python: &python
-  - /server/parsec/**
-  - /server/tests/**
+  - server/parsec/**
+  - server/tests/**
   - make.py
-  - /server/build.py
+  - server/build.py
 
 python-dependencies-project: &python-dependencies-project
   - server/pyproject.toml
