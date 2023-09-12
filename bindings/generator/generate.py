@@ -159,6 +159,9 @@ class BaseTypeInUse:
             ok_param, err_param = args
             return ResultTypeInUse(
                 ok=BaseTypeInUse.parse(ok_param),
+
+
+
                 err=BaseTypeInUse.parse(err_param),
             )
 
