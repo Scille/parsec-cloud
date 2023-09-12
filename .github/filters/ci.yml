@@ -34,7 +34,10 @@ rust-jobs:
 # PYTHON #
 ##########
 
-python: &python
+any-python-files: &any-python-files
+  - "**.py"
+
+python-server: &python-server
   - server/parsec/**
   - server/tests/**
   - make.py
@@ -47,7 +50,7 @@ python-dependencies-project: &python-dependencies-project
 
 python-changes: &python-changes
   - *python-dependencies-project
-  - *python
+  - *python-server
 
 # The python jobs need to be run when:
 # - The ci workflow has changed

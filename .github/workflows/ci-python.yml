@@ -2,7 +2,19 @@ name: CI Python
 
 on:
   workflow_call:
+    inputs:
+      style-only:
+        description: Only check the python code style (don't run test)
+        required: true
+        default: false
+        type: boolean
   workflow_dispatch:
+    inputs:
+      style-only:
+        description: Only check the python code style (don't run test)
+        required: true
+        default: false
+        type: boolean
 
 # We set `concurrency` to prevent having this workflow being run on code that is not up-to-date on a PR (a user make multiple push in a quick manner).
 # But on the main branch, we don't want that behavior.
@@ -42,6 +54,7 @@ jobs:
         timeout-minutes: 5
 
       - name: Set apt mirror
+        if: (!inputs.style-only)
         # GitHub Actions apt proxy is super unstable
         # see https://github.com/actions/runner-images/issues/7048
         run: |
@@ -54,6 +67,7 @@ jobs:
           sudo sed -i 's/http:\/\/azure.archive.ubuntu.com\/ubuntu\//mirror+file:\/etc\/apt\/mirrors.txt/' /etc/apt/sources.list
 
       - name: Configure PostgreSQL APT repository
+        if: (!inputs.style-only)
         env:
           POSTGRES_APT_KEY_SHA_512: df557805862cd279f40819834af14e1723b18044df9dc22bea710b6980c98cc8ed39e75ed5c9adaa1932992710f1180f0491dc9437bfd485b4aa2b75776407d4  /usr/share/keyrings/postgresql-keyring.gpg
         run: |
@@ -102,6 +116,7 @@ jobs:
         shell: bash
 
       - name: Restore libparsec if Rust hasn't been modified
+        if: (!inputs.style-only)
         id: cache-libparsec
         uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 # pin v3.3.2
         with:
@@ -113,7 +128,7 @@ jobs:
 
       - name: Setup Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@f3c84ee10bf5a86e7a5d607d487bf17d57670965 # pin v1.5.0
-        if: steps.cache-libparsec.outputs.cache-hit != 'true'
+        if: (!inputs.style-only) && steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           # We setup the cache by hand, see below
           cache: false
@@ -121,7 +136,7 @@ jobs:
 
       - name: Retrieve Rust cache
         uses: Swatinem/rust-cache@e207df5d269b42b69c8bc5101da26f7d31feddb4 # pin v2.6.2
-        if: steps.cache-libparsec.outputs.cache-hit != 'true'
+        if: (!inputs.style-only) && steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
           # cache is only shared between master and the PRs (and not across PRs).
@@ -135,8 +150,10 @@ jobs:
         run: |
           set -ex
           poetry --directory ./server env info
-          if ${{ steps.cache-libparsec.outputs.cache-hit == 'true' }}; then export POETRY_LIBPARSEC_BUILD_STRATEGY=no_build; fi
+          if ${{ env.SKIP_EXT_BUILD }}; then export POETRY_LIBPARSEC_BUILD_STRATEGY=no_build; fi
           python make.py python-ci-install
+        env:
+          SKIP_EXT_BUILD: ${{ steps.cache-libparsec.outputs.cache-hit == 'true' || inputs.style-only }}
         timeout-minutes: 20
 
       - name: Install pre-commit
@@ -165,7 +182,8 @@ jobs:
       # - We haven't already cached it.
       - name: Save cached libparsec to be reused on later call
         if: >-
-          steps.cache-libparsec.outputs.cache-hit != 'true'
+          (!inputs.style-only)
+          && steps.cache-libparsec.outputs.cache-hit != 'true'
           && !contains(github.ref, 'gh-readonly-queue')
         uses: actions/cache/save@704facf57e6136b1bc63b828d79edcd491f0ee84 # pin v3.3.2
         with:
@@ -176,12 +194,14 @@ jobs:
         timeout-minutes: 2
 
       - name: Basic tests
+        if: (!inputs.style-only)
         run: poetry run pytest ${{ env.pytest-base-args }} tests -n auto
         timeout-minutes: 10
         working-directory: server
 
       # TODO: Postgresql implementation is currently broken
       # - name: PostgreSQL tests
+      #   if: (!inputs.style-only)
       #   env:
       #     PGINSTALLATION: /usr/lib/postgresql/${{ env.postgresql-version }}/bin
       #   run: poetry run pytest ${{ env.pytest-base-args }} tests/backend tests/test_cli.py -k 'not test_shuffle_roles' --postgresql --runslow
@@ -189,6 +209,7 @@ jobs:
       #   working-directory: server
 
       - name: Hypothesis tests
+        if: (!inputs.style-only)
         run: poetry run pytest ${{ env.pytest-base-args }} tests --runslow -m slow --numprocesses auto
         timeout-minutes: 50
         working-directory: server
