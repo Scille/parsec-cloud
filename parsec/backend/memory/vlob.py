@@ -251,6 +251,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         user_id: UserID,
         encryption_revision: int | None,
         timestamp: DateTime | None,
+        now: DateTime,
     ) -> "Realm":
         return self._check_realm_access(
             organization_id,
@@ -259,6 +260,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             encryption_revision,
             timestamp,
             OperationKind.DATA_READ,
+            now,
         )
 
     def _check_realm_write_access(
@@ -268,6 +270,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         user_id: UserID,
         encryption_revision: int | None,
         timestamp: DateTime | None,
+        now: DateTime,
     ) -> "Realm":
         return self._check_realm_access(
             organization_id,
@@ -276,6 +279,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             encryption_revision,
             timestamp,
             OperationKind.DATA_WRITE,
+            now,
         )
 
     def _check_realm_access(
@@ -286,11 +290,12 @@ class MemoryVlobComponent(BaseVlobComponent):
         encryption_revision: int | None,
         timestamp: DateTime | None,
         operation_kind: OperationKind,
+        now: DateTime,
     ) -> Realm:
         assert self._realm_component is not None
 
         try:
-            realm = self._realm_component._get_realm(organization_id, realm_id)
+            realm = self._realm_component._get_realm(organization_id, realm_id, now)
         except RealmNotFoundError:
             raise VlobRealmNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
         except RealmDeletedError:
@@ -385,9 +390,16 @@ class MemoryVlobComponent(BaseVlobComponent):
         realm_id: RealmID,
         user_id: UserID,
         encryption_revision: int,
+        now: DateTime,
     ) -> "Realm":
         return self._check_realm_access(
-            organization_id, realm_id, user_id, encryption_revision, None, OperationKind.MAINTENANCE
+            organization_id,
+            realm_id,
+            user_id,
+            encryption_revision,
+            None,
+            OperationKind.MAINTENANCE,
+            now,
         )
 
     def _get_last_vlob_update(
@@ -432,10 +444,11 @@ class MemoryVlobComponent(BaseVlobComponent):
         vlob_id: VlobID,
         timestamp: DateTime,
         blob: bytes,
-        sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
+        sequester_blob: Dict[SequesterServiceID, bytes] | None,
+        now: DateTime,
     ) -> None:
         self._check_realm_write_access(
-            organization_id, realm_id, author.user_id, encryption_revision, timestamp
+            organization_id, realm_id, author.user_id, encryption_revision, timestamp, now
         )
 
         extracted_sequestered_data = await self._extract_sequestered_data_and_proceed_webhook(
@@ -464,13 +477,14 @@ class MemoryVlobComponent(BaseVlobComponent):
         author: DeviceID,
         encryption_revision: int,
         vlob_id: VlobID,
-        version: int | None = None,
-        timestamp: DateTime | None = None,
+        version: int | None,
+        timestamp: DateTime | None,
+        now: DateTime,
     ) -> Tuple[int, bytes, DeviceID, DateTime, DateTime]:
         vlob = self._get_vlob(organization_id, vlob_id)
 
         realm = self._check_realm_read_access(
-            organization_id, vlob.realm_id, author.user_id, encryption_revision, timestamp
+            organization_id, vlob.realm_id, author.user_id, encryption_revision, timestamp, now
         )
 
         if version is None:
@@ -502,12 +516,13 @@ class MemoryVlobComponent(BaseVlobComponent):
         version: int,
         timestamp: DateTime,
         blob: bytes,
-        sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
+        sequester_blob: Dict[SequesterServiceID, bytes] | None,
+        now: DateTime,
     ) -> None:
         vlob = self._get_vlob(organization_id, vlob_id)
 
         self._check_realm_write_access(
-            organization_id, vlob.realm_id, author.user_id, encryption_revision, timestamp
+            organization_id, vlob.realm_id, author.user_id, encryption_revision, timestamp, now
         )
 
         sequestered_data = await self._extract_sequestered_data_and_proceed_webhook(
@@ -534,9 +549,14 @@ class MemoryVlobComponent(BaseVlobComponent):
         )
 
     async def poll_changes(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID, checkpoint: int
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: RealmID,
+        checkpoint: int,
+        now: DateTime,
     ) -> Tuple[int, Dict[VlobID, int]]:
-        self._check_realm_read_access(organization_id, realm_id, author.user_id, None, None)
+        self._check_realm_read_access(organization_id, realm_id, author.user_id, None, None, now)
 
         changes = self._per_realm_changes[(organization_id, realm_id)]
         changes_since_checkpoint = {
@@ -547,11 +567,17 @@ class MemoryVlobComponent(BaseVlobComponent):
         return (changes.checkpoint, changes_since_checkpoint)
 
     async def list_versions(
-        self, organization_id: OrganizationID, author: DeviceID, vlob_id: VlobID
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        vlob_id: VlobID,
+        now: DateTime,
     ) -> Dict[int, Tuple[DateTime, DeviceID]]:
         vlobs = self._get_vlob(organization_id, vlob_id)
 
-        self._check_realm_read_access(organization_id, vlobs.realm_id, author.user_id, None, None)
+        self._check_realm_read_access(
+            organization_id, vlobs.realm_id, author.user_id, None, None, now
+        )
         return {k: (v[2], v[1]) for (k, v) in enumerate(vlobs.data, 1)}
 
     async def maintenance_get_reencryption_batch(
@@ -561,9 +587,10 @@ class MemoryVlobComponent(BaseVlobComponent):
         realm_id: RealmID,
         encryption_revision: int,
         size: int,
+        now: DateTime,
     ) -> List[Tuple[VlobID, int, bytes]]:
         self._check_realm_in_maintenance_access(
-            organization_id, realm_id, author.user_id, encryption_revision
+            organization_id, realm_id, author.user_id, encryption_revision, now
         )
 
         changes = self._per_realm_changes[(organization_id, realm_id)]
@@ -578,9 +605,10 @@ class MemoryVlobComponent(BaseVlobComponent):
         realm_id: RealmID,
         encryption_revision: int,
         batch: List[Tuple[VlobID, int, bytes]],
+        now: DateTime,
     ) -> Tuple[int, int]:
         self._check_realm_in_maintenance_access(
-            organization_id, realm_id, author.user_id, encryption_revision
+            organization_id, realm_id, author.user_id, encryption_revision, now
         )
 
         changes = self._per_realm_changes[(organization_id, realm_id)]

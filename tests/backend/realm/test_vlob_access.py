@@ -155,6 +155,8 @@ async def test_create_check_access_rights(backend, alice, bob, bob_ws, realm, ne
                 granted_by=alice.device_id,
                 granted_on=next_timestamp(),
             ),
+            recipient_message=None,
+            now=DateTime.now(),
         )
         vlob_id = VlobID.new()
         rep = await vlob_create(
@@ -177,6 +179,8 @@ async def test_create_check_access_rights(backend, alice, bob, bob_ws, realm, ne
             granted_by=alice.device_id,
             granted_on=next_timestamp(),
         ),
+        recipient_message=None,
+        now=DateTime.now(),
     )
     rep = await vlob_create(
         bob_ws, realm, vlob_id, b"Initial version.", next_timestamp(), check_rep=False
@@ -286,6 +290,8 @@ async def test_read_check_access_rights(backend, alice, bob, bob_ws, realm, vlob
                 granted_by=alice.device_id,
                 granted_on=next_timestamp(),
             ),
+            recipient_message=None,
+            now=DateTime.now(),
         )
         rep = await vlob_read(bob_ws, vlobs[0])
         assert isinstance(rep, VlobReadRepOk)
@@ -301,6 +307,8 @@ async def test_read_check_access_rights(backend, alice, bob, bob_ws, realm, vlob
             granted_by=alice.device_id,
             granted_on=next_timestamp(),
         ),
+        recipient_message=None,
+        now=DateTime.now(),
     )
     rep = await vlob_read(bob_ws, vlobs[0])
     assert isinstance(rep, VlobReadRepNotAllowed)
@@ -406,6 +414,8 @@ async def test_update_check_access_rights(
                 granted_by=alice.device_id,
                 granted_on=next_timestamp(),
             ),
+            recipient_message=None,
+            now=DateTime.now(),
         )
         rep = await vlob_update(
             bob_ws,
@@ -433,6 +443,8 @@ async def test_update_check_access_rights(
             granted_by=alice.device_id,
             granted_on=next_timestamp(),
         ),
+        recipient_message=None,
+        now=DateTime.now(),
     )
     rep = await vlob_update(
         bob_ws,
@@ -552,6 +564,8 @@ async def test_list_versions_check_access_rights(
                 granted_by=alice.device_id,
                 granted_on=next_timestamp(),
             ),
+            recipient_message=None,
+            now=DateTime.now(),
         )
         rep = await vlob_list_versions(bob_ws, vlobs[0])
         assert isinstance(rep, VlobListVersionsRepOk)
@@ -567,6 +581,8 @@ async def test_list_versions_check_access_rights(
             granted_by=alice.device_id,
             granted_on=next_timestamp(),
         ),
+        recipient_message=None,
+        now=DateTime.now(),
     )
     rep = await vlob_list_versions(bob_ws, vlobs[0])
     assert isinstance(rep, VlobListVersionsRepNotAllowed)
@@ -613,6 +629,7 @@ async def test_access_during_maintenance(backend, alice, alice_ws, realm, vlobs)
         2,
         {alice.user_id: b"whatever"},
         DateTime(2000, 1, 2),
+        now=DateTime.now(),
     )
 
     rep = await vlob_create(

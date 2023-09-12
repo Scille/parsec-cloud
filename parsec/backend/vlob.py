@@ -301,6 +301,7 @@ class BaseVlobComponent:
                 timestamp=req.timestamp,
                 blob=req.blob,
                 sequester_blob=req.sequester_blob,
+                now=now,
             )
 
         except VlobAlreadyExistsError:
@@ -349,6 +350,7 @@ class BaseVlobComponent:
     async def api_vlob_read(
         self, client_ctx: AuthenticatedClientContext, req: VlobReadReq
     ) -> VlobReadRep:
+        now = DateTime.now()
         try:
             (
                 version,
@@ -363,6 +365,7 @@ class BaseVlobComponent:
                 vlob_id=req.vlob_id,
                 version=req.version,
                 timestamp=req.timestamp,
+                now=now,
             )
 
         except VlobNotFoundError:
@@ -434,6 +437,7 @@ class BaseVlobComponent:
                 timestamp=req.timestamp,
                 blob=req.blob,
                 sequester_blob=req.sequester_blob,
+                now=now,
             )
 
         except VlobNotFoundError:
@@ -485,6 +489,7 @@ class BaseVlobComponent:
     async def api_vlob_poll_changes(
         self, client_ctx: AuthenticatedClientContext, req: VlobPollChangesReq
     ) -> VlobPollChangesRep:
+        now = DateTime.now()
         # TODO: raise error if too many events since offset ?
         try:
             checkpoint, changes = await self.poll_changes(
@@ -492,6 +497,7 @@ class BaseVlobComponent:
                 client_ctx.device_id,
                 realm_id=req.realm_id,
                 checkpoint=req.last_checkpoint,
+                now=now,
             )
 
         except VlobAccessError:
@@ -514,9 +520,13 @@ class BaseVlobComponent:
     async def api_vlob_list_versions(
         self, client_ctx: AuthenticatedClientContext, req: VlobListVersionsReq
     ) -> VlobListVersionsRep:
+        now = DateTime.now()
         try:
             versions_dict = await self.list_versions(
-                client_ctx.organization_id, client_ctx.device_id, vlob_id=req.vlob_id
+                client_ctx.organization_id,
+                client_ctx.device_id,
+                vlob_id=req.vlob_id,
+                now=now,
             )
 
         except VlobAccessError:
@@ -541,6 +551,7 @@ class BaseVlobComponent:
     async def api_vlob_maintenance_get_reencryption_batch(
         self, client_ctx: AuthenticatedClientContext, req: VlobMaintenanceGetReencryptionBatchReq
     ) -> VlobMaintenanceGetReencryptionBatchRep:
+        now = DateTime.now()
         try:
             batch = await self.maintenance_get_reencryption_batch(
                 client_ctx.organization_id,
@@ -548,6 +559,7 @@ class BaseVlobComponent:
                 realm_id=req.realm_id,
                 encryption_revision=req.encryption_revision,
                 size=req.size,
+                now=now,
             )
 
         except VlobAccessError:
@@ -580,6 +592,7 @@ class BaseVlobComponent:
     async def api_vlob_maintenance_save_reencryption_batch(
         self, client_ctx: AuthenticatedClientContext, req: VlobMaintenanceSaveReencryptionBatchReq
     ) -> VlobMaintenanceSaveReencryptionBatchRep:
+        now = DateTime.now()
         try:
             total, done = await self.maintenance_save_reencryption_batch(
                 client_ctx.organization_id,
@@ -587,6 +600,7 @@ class BaseVlobComponent:
                 realm_id=req.realm_id,
                 encryption_revision=req.encryption_revision,
                 batch=[(x.vlob_id, x.version, x.blob) for x in req.batch],
+                now=now,
             )
 
         except VlobAccessError:
@@ -619,8 +633,8 @@ class BaseVlobComponent:
         vlob_id: VlobID,
         timestamp: DateTime,
         blob: bytes,
-        # Sequester is a special case, so give it a default version to simplify tests
-        sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
+        sequester_blob: Dict[SequesterServiceID, bytes] | None,
+        now: DateTime,
     ) -> None:
         """
         Raises:
@@ -640,8 +654,9 @@ class BaseVlobComponent:
         author: DeviceID,
         encryption_revision: int,
         vlob_id: VlobID,
-        version: int | None = None,
-        timestamp: DateTime | None = None,
+        version: int | None,
+        timestamp: DateTime | None,
+        now: DateTime,
     ) -> Tuple[int, bytes, DeviceID, DateTime, DateTime]:
         """
         Raises:
@@ -663,8 +678,8 @@ class BaseVlobComponent:
         version: int,
         timestamp: DateTime,
         blob: bytes,
-        # Sequester is a special case, so give it a default version to simplify tests
-        sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
+        sequester_blob: Dict[SequesterServiceID, bytes] | None,
+        now: DateTime,
     ) -> None:
         """
         Raises:
@@ -686,6 +701,7 @@ class BaseVlobComponent:
         author: DeviceID,
         realm_id: RealmID,
         checkpoint: int,
+        now: DateTime,
     ) -> Tuple[int, Dict[VlobID, int]]:
         """
         Raises:
@@ -697,7 +713,11 @@ class BaseVlobComponent:
         raise NotImplementedError()
 
     async def list_versions(
-        self, organization_id: OrganizationID, author: DeviceID, vlob_id: VlobID
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        vlob_id: VlobID,
+        now: DateTime,
     ) -> Dict[int, Tuple[DateTime, DeviceID]]:
         """
         Raises:
@@ -715,6 +735,7 @@ class BaseVlobComponent:
         realm_id: RealmID,
         encryption_revision: int,
         size: int,
+        now: DateTime,
     ) -> List[Tuple[VlobID, int, bytes]]:
         """
         Raises:
@@ -733,6 +754,7 @@ class BaseVlobComponent:
         realm_id: RealmID,
         encryption_revision: int,
         batch: List[Tuple[VlobID, int, bytes]],
+        now: DateTime,
     ) -> Tuple[int, int]:
         """
         Raises:

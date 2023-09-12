@@ -186,6 +186,7 @@ async def archive_realm(next_timestamp):
                     configured_by=certificate.author,
                     configured_on=certificate.timestamp,
                 ),
+                now=DateTime.now(),
             )
             await spy.wait_with_timeout(BackendEvent.REALM_ARCHIVING_UPDATED)
         return now
@@ -214,6 +215,7 @@ async def plan_realm_deletion(next_timestamp):
                     configured_by=certificate.author,
                     configured_on=certificate.timestamp,
                 ),
+                now=DateTime.now(),
             )
             await spy.wait_with_timeout(BackendEvent.REALM_ARCHIVING_UPDATED)
         return now
@@ -247,6 +249,7 @@ async def delete_realm(next_timestamp, monkeypatch):
                         configured_by=certificate.author,
                         configured_on=certificate.timestamp,
                     ),
+                    now=DateTime.now(),
                 )
             await spy.wait_with_timeout(BackendEvent.REALM_ARCHIVING_UPDATED)
 
@@ -324,6 +327,8 @@ async def vlobs(backend, alice, realm):
         vlob_id=vlob_ids[0],
         timestamp=DateTime(2000, 1, 2, 1),
         blob=b"r:A b:1 v:1",
+        sequester_blob=None,
+        now=DateTime.now(),
     )
     await backend.vlob.update(
         organization_id=alice.organization_id,
@@ -333,6 +338,8 @@ async def vlobs(backend, alice, realm):
         version=2,
         timestamp=DateTime(2000, 1, 3),
         blob=b"r:A b:1 v:2",
+        sequester_blob=None,
+        now=DateTime.now(),
     )
     await backend.vlob.create(
         organization_id=alice.organization_id,
@@ -342,6 +349,8 @@ async def vlobs(backend, alice, realm):
         vlob_id=vlob_ids[1],
         timestamp=DateTime(2000, 1, 4),
         blob=b"r:A b:2 v:1",
+        sequester_blob=None,
+        now=DateTime.now(),
     )
     return vlob_ids
 

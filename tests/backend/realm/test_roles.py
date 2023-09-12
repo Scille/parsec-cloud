@@ -94,6 +94,8 @@ def backend_realm_generate_certif_and_update_roles(next_timestamp):
                 granted_by=author.device_id,
                 granted_on=now,
             ),
+            recipient_message=None,
+            now=DateTime.now(),
         )
         return certif
 
@@ -250,7 +252,9 @@ async def test_update_roles_as_owner(
         )
         assert isinstance(rep, RealmUpdateRolesRepOk)
 
-        roles = await backend.realm.get_current_roles(alice.organization_id, realm)
+        roles = await backend.realm.get_current_roles(
+            alice.organization_id, realm, now=DateTime.now()
+        )
         assert roles == {alice.user_id: RealmRole.OWNER, bob.user_id: role}
 
     # Now remove role
@@ -294,7 +298,9 @@ async def test_update_roles_as_manager(
         )
         assert isinstance(rep, RealmUpdateRolesRepOk)
 
-        roles = await backend.realm.get_current_roles(alice.organization_id, realm)
+        roles = await backend.realm.get_current_roles(
+            alice.organization_id, realm, now=DateTime.now()
+        )
         assert roles == {
             zack.user_id: RealmRole.OWNER,
             alice.user_id: RealmRole.MANAGER,
@@ -394,7 +400,9 @@ async def test_remove_role_dont_change_other_realms(
     assert isinstance(rep, RealmUpdateRolesRepOk)
 
     # Bob should still have access to bob_realm
-    roles = await backend.realm.get_current_roles(alice.organization_id, bob_realm)
+    roles = await backend.realm.get_current_roles(
+        alice.organization_id, bob_realm, now=DateTime.now()
+    )
     assert roles == {bob.user_id: RealmRole.OWNER}
 
 
@@ -415,10 +423,11 @@ async def test_role_access_during_maintenance(
         2,
         {alice.user_id: b"whatever"},
         DateTime(2000, 1, 2),
+        now=DateTime.now(),
     )
 
     # Get roles allowed...
-    roles = await backend.realm.get_current_roles(alice.organization_id, realm)
+    roles = await backend.realm.get_current_roles(alice.organization_id, realm, now=DateTime.now())
     assert roles == {alice.user_id: RealmRole.OWNER}
 
     rep = await realm_get_role_certificates(alice_ws, realm)

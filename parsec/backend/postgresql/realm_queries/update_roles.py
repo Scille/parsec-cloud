@@ -5,6 +5,7 @@ from typing import Tuple
 
 import triopg
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, RealmRole, UserProfile
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.postgresql.handler import send_signal
@@ -129,6 +130,7 @@ async def query_update_roles(
     organization_id: OrganizationID,
     new_role: RealmGrantedRole,
     recipient_message: bytes | None,
+    now: DateTime,
 ) -> None:
     assert new_role.granted_by is not None
     if new_role.granted_by.user_id == new_role.user_id:
@@ -148,7 +150,11 @@ async def query_update_roles(
 
     # Make sure the realm is not deleted
     await check_archiving_configuration(
-        conn, organization_id, new_role.realm_id, OperationKind.CONFIGURATION
+        conn,
+        organization_id,
+        new_role.realm_id,
+        OperationKind.CONFIGURATION,
+        now,
     )
 
     # Make sure the user is not revoked

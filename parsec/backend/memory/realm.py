@@ -90,11 +90,11 @@ class Realm:
             return False
         return last_configured_archiving.configuration.is_deletion_planned()
 
-    def is_deleted(self) -> bool:
+    def is_deleted(self, now: DateTime) -> bool:
         last_configured_archiving = self.get_last_configured_archiving()
         if last_configured_archiving is None:
             return False
-        return last_configured_archiving.configuration.is_deleted()
+        return last_configured_archiving.configuration.is_deleted(now)
 
 
 class MemoryRealmComponent(BaseRealmComponent):
@@ -124,13 +124,17 @@ class MemoryRealmComponent(BaseRealmComponent):
         self._organization_component = organization
 
     def _get_realm(
-        self, organization_id: OrganizationID, realm_id: RealmID, allow_deleted: bool = False
+        self,
+        organization_id: OrganizationID,
+        realm_id: RealmID,
+        now: DateTime,
+        allow_deleted: bool = False,
     ) -> Realm:
         try:
             realm = self._realms[(organization_id, realm_id)]
         except KeyError:
             raise RealmNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
-        if not allow_deleted and realm.is_deleted():
+        if not allow_deleted and realm.is_deleted(now):
             raise RealmDeletedError(f"Realm `{realm_id.hex}` has been deleted")
         return realm
 
@@ -158,20 +162,20 @@ class MemoryRealmComponent(BaseRealmComponent):
             raise RealmAlreadyExistsError()
 
     async def get_status(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID, now: DateTime
     ) -> RealmStatus:
-        realm = self._get_realm(organization_id, realm_id)
+        realm = self._get_realm(organization_id, realm_id, now)
         if author.user_id not in realm.roles:
             raise RealmAccessError()
         return realm.status
 
     async def get_stats(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID, now: DateTime
     ) -> RealmStats:
         assert self._block_component is not None
         assert self._vlob_component is not None
 
-        realm = self._get_realm(organization_id, realm_id)
+        realm = self._get_realm(organization_id, realm_id, now)
         if author.user_id not in realm.roles:
             raise RealmAccessError()
 
@@ -187,9 +191,9 @@ class MemoryRealmComponent(BaseRealmComponent):
         return RealmStats(blocks_size=blocks_size, vlobs_size=vlobs_size)
 
     async def get_current_roles(
-        self, organization_id: OrganizationID, realm_id: RealmID
+        self, organization_id: OrganizationID, realm_id: RealmID, now: DateTime
     ) -> Dict[UserID, RealmRole]:
-        realm = self._get_realm(organization_id, realm_id, allow_deleted=True)
+        realm = self._get_realm(organization_id, realm_id, now, allow_deleted=True)
         roles: Dict[UserID, RealmRole] = {}
         for x in realm.granted_roles:
             if x.role is None:
@@ -199,9 +203,9 @@ class MemoryRealmComponent(BaseRealmComponent):
         return roles
 
     async def get_role_certificates(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID, now: DateTime
     ) -> List[bytes]:
-        realm = self._get_realm(organization_id, realm_id, allow_deleted=True)
+        realm = self._get_realm(organization_id, realm_id, now, allow_deleted=True)
         if author.user_id not in realm.roles:
             raise RealmAccessError()
         return [x.certificate for x in realm.granted_roles]
@@ -210,7 +214,8 @@ class MemoryRealmComponent(BaseRealmComponent):
         self,
         organization_id: OrganizationID,
         new_role: RealmGrantedRole,
-        recipient_message: bytes | None = None,
+        recipient_message: bytes | None,
+        now: DateTime,
     ) -> None:
         assert new_role.granted_by is not None
         assert new_role.granted_by.user_id != new_role.user_id
@@ -236,7 +241,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                 "User with OUTSIDER profile cannot be MANAGER or OWNER"
             )
 
-        realm = self._get_realm(organization_id, new_role.realm_id)
+        realm = self._get_realm(organization_id, new_role.realm_id, now)
 
         if realm.status.in_maintenance:
             raise RealmInMaintenanceError("Data realm is currently under maintenance")
@@ -310,6 +315,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         self,
         organization_id: OrganizationID,
         archiving_configuration_request: RealmConfiguredArchiving,
+        now: DateTime,
     ) -> None:
         """
         Raises:
@@ -319,7 +325,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             RealmDeletedError
             RealmArchivingPeriodTooShortError
         """
-        realm = self._get_realm(organization_id, archiving_configuration_request.realm_id)
+        realm = self._get_realm(organization_id, archiving_configuration_request.realm_id, now)
         last_role = realm.get_last_role(archiving_configuration_request.configured_by.user_id)
 
         # Author should be an owner
@@ -366,12 +372,13 @@ class MemoryRealmComponent(BaseRealmComponent):
         encryption_revision: int,
         per_participant_message: Dict[UserID, bytes],
         timestamp: DateTime,
+        now: DateTime,
     ) -> None:
         assert self._message_component is not None
         assert self._user_component is not None
         assert self._vlob_component is not None
 
-        realm = self._get_realm(organization_id, realm_id)
+        realm = self._get_realm(organization_id, realm_id, now)
         if realm.roles.get(author.user_id) != RealmRole.OWNER:
             raise RealmAccessError()
         if realm.status.in_maintenance:
@@ -418,10 +425,11 @@ class MemoryRealmComponent(BaseRealmComponent):
         author: DeviceID,
         realm_id: RealmID,
         encryption_revision: int,
+        now: DateTime,
     ) -> None:
         assert self._vlob_component is not None
 
-        realm = self._get_realm(organization_id, realm_id)
+        realm = self._get_realm(organization_id, realm_id, now)
         if realm.roles.get(author.user_id) != RealmRole.OWNER:
             raise RealmAccessError()
         if not realm.status.in_maintenance:

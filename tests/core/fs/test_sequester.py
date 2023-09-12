@@ -6,7 +6,7 @@ from urllib.error import HTTPError, URLError
 
 import pytest
 
-from parsec._parsec import CoreEvent, EntryName, LocalDevice, RealmID, VlobID
+from parsec._parsec import CoreEvent, DateTime, EntryName, LocalDevice, RealmID, VlobID
 from parsec.backend.sequester import SequesterServiceType
 from parsec.core.fs import UserFS
 from parsec.core.fs.exceptions import FSServerUploadTemporarilyUnavailableError
@@ -62,6 +62,8 @@ async def test_userfs_sequester_sync(
                 encryption_revision=1,
                 vlob_id=user_manifest_vlob_id,
                 version=version,
+                timestamp=None,
+                now=DateTime.now(),
             )
             clear_blob = local_device.user_manifest_key.decrypt(blob)
 
@@ -140,6 +142,8 @@ async def test_workspacefs_sequester_sync(
                 encryption_revision=1,
                 vlob_id=vlob_id,
                 version=version,
+                timestamp=None,
+                now=DateTime.now(),
             )
             clear_blob = workspace.get_workspace_entry().key.decrypt(blob)
 

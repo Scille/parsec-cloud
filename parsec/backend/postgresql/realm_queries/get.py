@@ -5,6 +5,7 @@ from typing import Dict, List
 
 import triopg
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import (
     DeviceID,
     MaintenanceType,
@@ -135,6 +136,7 @@ async def query_get_status(
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,
+    now: DateTime,
 ) -> RealmStatus:
     ret = await conn.fetchrow(
         *_q_get_realm_status(
@@ -149,7 +151,7 @@ async def query_get_status(
 
     # Make sure the realm is not deleted
     await check_archiving_configuration(
-        conn, organization_id, realm_id, OperationKind.CONFIGURATION
+        conn, organization_id, realm_id, OperationKind.CONFIGURATION, now
     )
 
     return RealmStatus(
@@ -170,6 +172,7 @@ async def query_get_stats(
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,
+    now: DateTime,
 ) -> RealmStats:
     ret = await conn.fetchrow(
         *_q_has_realm_access(
@@ -184,7 +187,7 @@ async def query_get_stats(
 
     # Make sure the realm is not deleted
     await check_archiving_configuration(
-        conn, organization_id, realm_id, OperationKind.CONFIGURATION
+        conn, organization_id, realm_id, OperationKind.CONFIGURATION, now
     )
 
     blocks_size_rep = await conn.fetchrow(
@@ -202,7 +205,10 @@ async def query_get_stats(
 
 @query()
 async def query_get_current_roles(
-    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, realm_id: RealmID
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    realm_id: RealmID,
+    now: DateTime,
 ) -> Dict[UserID, RealmRole]:
     ret = await conn.fetch(
         *_q_get_current_roles(organization_id=organization_id.str, realm_id=realm_id)
@@ -211,11 +217,6 @@ async def query_get_current_roles(
     if not ret:
         # Existing group must have at least one owner user
         raise RealmNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
-
-    # Make sure the realm is not deleted
-    await check_archiving_configuration(
-        conn, organization_id, realm_id, OperationKind.CONFIGURATION
-    )
 
     return {UserID(user_id): RealmRole.from_str(role) for user_id, role in ret if role is not None}
 
@@ -226,6 +227,7 @@ async def query_get_role_certificates(
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,
+    now: DateTime,
 ) -> List[bytes]:
     ret = await conn.fetch(
         *_q_get_role_certificates(organization_id=organization_id.str, realm_id=realm_id)

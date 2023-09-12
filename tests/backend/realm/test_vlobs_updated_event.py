@@ -33,6 +33,8 @@ async def test_vlobs_updated_event_ok(backend, alice_ws, alice, alice2, realm, o
             vlob_id=VLOB_ID,
             timestamp=NOW,
             blob=b"v1",
+            sequester_blob=None,
+            now=DateTime.now(),
         )
         await spy.wait_with_timeout(BackendEvent.REALM_VLOBS_UPDATED)
 
@@ -49,6 +51,8 @@ async def test_vlobs_updated_event_ok(backend, alice_ws, alice, alice2, realm, o
             vlob_id=OTHER_VLOB_ID,
             timestamp=NOW,
             blob=b"v1",
+            sequester_blob=None,
+            now=DateTime.now(),
         )
         await backend.vlob.update(
             organization_id=alice.organization_id,
@@ -58,6 +62,8 @@ async def test_vlobs_updated_event_ok(backend, alice_ws, alice, alice2, realm, o
             version=2,
             timestamp=NOW,
             blob=b"v2",
+            sequester_blob=None,
+            now=DateTime.now(),
         )
         await backend.vlob.update(
             organization_id=alice.organization_id,
@@ -67,6 +73,8 @@ async def test_vlobs_updated_event_ok(backend, alice_ws, alice, alice2, realm, o
             version=3,
             timestamp=NOW,
             blob=b"v3",
+            sequester_blob=None,
+            now=DateTime.now(),
         )
 
         # No guarantees those events occur before the commands' return
@@ -110,6 +118,8 @@ async def test_vlobs_updated_event_handle_self_events(backend, alice_ws, alice, 
             vlob_id=VLOB_ID,
             timestamp=NOW,
             blob=b"v1",
+            sequester_blob=None,
+            now=DateTime.now(),
         )
 
         await backend.vlob.create(
@@ -120,6 +130,8 @@ async def test_vlobs_updated_event_handle_self_events(backend, alice_ws, alice, 
             vlob_id=OTHER_VLOB_ID,
             timestamp=NOW,
             blob=b"v1",
+            sequester_blob=None,
+            now=DateTime.now(),
         )
         await backend.vlob.update(
             organization_id=alice.organization_id,
@@ -129,6 +141,8 @@ async def test_vlobs_updated_event_handle_self_events(backend, alice_ws, alice, 
             version=2,
             timestamp=NOW,
             blob=b"v2",
+            sequester_blob=None,
+            now=DateTime.now(),
         )
 
         # Wait for events to be processed by the backend
@@ -158,6 +172,8 @@ async def test_vlobs_updated_event_not_participant(backend, alice_ws, bob, bob_r
             vlob_id=VLOB_ID,
             timestamp=NOW,
             blob=b"v1",
+            sequester_blob=None,
+            now=DateTime.now(),
         )
         await backend.vlob.update(
             organization_id=bob.organization_id,
@@ -167,6 +183,8 @@ async def test_vlobs_updated_event_not_participant(backend, alice_ws, bob, bob_r
             version=2,
             timestamp=NOW,
             blob=b"v2",
+            sequester_blob=None,
+            now=DateTime.now(),
         )
 
         # Wait for events to be processed by the backend
@@ -210,6 +228,8 @@ async def test_vlobs_updated_event_realm_created_after_subscribe(
             vlob_id=VLOB_ID,
             timestamp=NOW,
             blob=b"v1",
+            sequester_blob=None,
+            now=DateTime.now(),
         )
         # Update vlob in realm
         await backend.vlob.update(
@@ -220,6 +240,8 @@ async def test_vlobs_updated_event_realm_created_after_subscribe(
             version=2,
             timestamp=NOW,
             blob=b"v2",
+            sequester_blob=None,
+            now=DateTime.now(),
         )
 
         # Wait for events to be processed by the backend

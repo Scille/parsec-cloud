@@ -71,8 +71,11 @@ class BaseBlockComponent:
     async def api_block_read(
         self, client_ctx: AuthenticatedClientContext, req: BlockReadReq
     ) -> BlockReadRep:
+        now = DateTime.now()
         try:
-            block = await self.read(client_ctx.organization_id, client_ctx.device_id, req.block_id)
+            block = await self.read(
+                client_ctx.organization_id, client_ctx.device_id, req.block_id, now
+            )
 
         except BlockNotFoundError:
             return BlockReadRepNotFound()
@@ -98,6 +101,7 @@ class BaseBlockComponent:
     async def api_block_create(
         self, client_ctx: AuthenticatedClientContext, req: BlockCreateReq
     ) -> BlockCreateRep:
+        now = DateTime.now()
         try:
             await self.create(
                 organization_id=client_ctx.organization_id,
@@ -105,7 +109,7 @@ class BaseBlockComponent:
                 block_id=req.block_id,
                 realm_id=req.realm_id,
                 block=req.block,
-                created_on=DateTime.now(),
+                now=now,
             )
 
         except BlockAlreadyExistsError:
@@ -133,7 +137,11 @@ class BaseBlockComponent:
         return BlockCreateRepOk()
 
     async def read(
-        self, organization_id: OrganizationID, author: DeviceID, block_id: BlockID
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        block_id: BlockID,
+        now: DateTime,
     ) -> bytes:
         """
         Raises:
@@ -152,7 +160,7 @@ class BaseBlockComponent:
         block_id: BlockID,
         realm_id: RealmID,
         block: bytes,
-        created_on: DateTime | None = None,
+        now: DateTime,
     ) -> None:
         """
         Raises:

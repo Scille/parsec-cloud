@@ -54,6 +54,7 @@ async def block(backend, alice, realm):
         block_id=block_id,
         realm_id=realm,
         block=BLOCK_DATA,
+        now=DateTime.now(),
     )
     return block_id
 
@@ -78,6 +79,8 @@ async def test_block_read_check_access_rights(
                 granted_by=alice.device_id,
                 granted_on=next_timestamp(),
             ),
+            recipient_message=None,
+            now=DateTime.now(),
         )
         rep = await block_read(bob_ws, block)
         assert rep == BlockReadRepOk(BLOCK_DATA)
@@ -93,6 +96,8 @@ async def test_block_read_check_access_rights(
             granted_by=alice.device_id,
             granted_on=next_timestamp(),
         ),
+        recipient_message=None,
+        now=DateTime.now(),
     )
     rep = await block_read(bob_ws, block)
     assert isinstance(rep, BlockReadRepNotAllowed)
@@ -123,6 +128,8 @@ async def test_block_create_check_access_rights(backend, alice, bob, bob_ws, rea
                 granted_by=alice.device_id,
                 granted_on=next_timestamp(),
             ),
+            recipient_message=None,
+            now=DateTime.now(),
         )
         block_id = BlockID.new()
         rep = await block_create(bob_ws, block_id, realm, BLOCK_DATA, check_rep=False)
@@ -143,6 +150,8 @@ async def test_block_create_check_access_rights(backend, alice, bob, bob_ws, rea
             granted_by=alice.device_id,
             granted_on=next_timestamp(),
         ),
+        recipient_message=None,
+        now=DateTime.now(),
     )
     rep = await block_create(bob_ws, block_id, realm, BLOCK_DATA, check_rep=False)
     assert isinstance(rep, BlockCreateRepNotAllowed)
@@ -451,6 +460,7 @@ async def test_access_during_maintenance(backend, alice, alice_ws, realm, block)
         realm,
         2,
         {alice.user_id: b"whatever"},
+        DateTime.now(),
         DateTime.now(),
     )
     rep = await block_create(alice_ws, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)

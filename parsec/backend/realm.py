@@ -283,9 +283,10 @@ class BaseRealmComponent:
     async def api_realm_status(
         self, client_ctx: AuthenticatedClientContext, req: RealmStatusReq
     ) -> RealmStatusRep:
+        now = DateTime.now()
         try:
             status = await self.get_status(
-                client_ctx.organization_id, client_ctx.device_id, req.realm_id
+                client_ctx.organization_id, client_ctx.device_id, req.realm_id, now
             )
 
         except RealmAccessError:
@@ -311,9 +312,10 @@ class BaseRealmComponent:
     async def api_realm_stats(
         self, client_ctx: AuthenticatedClientContext, req: RealmStatsReq
     ) -> RealmStatsRep:
+        now = DateTime.now()
         try:
             stats = await self.get_stats(
-                client_ctx.organization_id, client_ctx.device_id, req.realm_id
+                client_ctx.organization_id, client_ctx.device_id, req.realm_id, now
             )
         except RealmAccessError:
             return RealmStatsRepNotAllowed()
@@ -329,9 +331,10 @@ class BaseRealmComponent:
     async def api_realm_get_role_certificates(
         self, client_ctx: AuthenticatedClientContext, req: RealmGetRoleCertificatesReq
     ) -> RealmGetRoleCertificatesRep:
+        now = DateTime.now()
         try:
             certificates = await self.get_role_certificates(
-                client_ctx.organization_id, client_ctx.device_id, req.realm_id
+                client_ctx.organization_id, client_ctx.device_id, req.realm_id, now
             )
 
         except RealmAccessError:
@@ -411,7 +414,12 @@ class BaseRealmComponent:
             return RealmUpdateRolesRepInvalidData(None)
 
         try:
-            await self.update_roles(client_ctx.organization_id, granted_role, req.recipient_message)
+            await self.update_roles(
+                client_ctx.organization_id,
+                granted_role,
+                req.recipient_message,
+                now,
+            )
 
         except UserAlreadyRevokedError:
             return RealmUpdateRolesRepUserRevoked()
@@ -490,7 +498,9 @@ class BaseRealmComponent:
         )
 
         try:
-            await self.update_archiving(client_ctx.organization_id, archiving_configuration_request)
+            await self.update_archiving(
+                client_ctx.organization_id, archiving_configuration_request, now
+            )
 
         except RealmAccessError:
             return RealmUpdateArchivingRepNotAllowed()
@@ -535,6 +545,7 @@ class BaseRealmComponent:
                 timestamp=req.timestamp,
                 encryption_revision=req.encryption_revision,
                 per_participant_message=req.per_participant_message,
+                now=now,
             )
 
         except RealmAccessError:
@@ -568,12 +579,14 @@ class BaseRealmComponent:
     async def api_realm_finish_reencryption_maintenance(
         self, client_ctx: AuthenticatedClientContext, req: RealmFinishReencryptionMaintenanceReq
     ) -> RealmFinishReencryptionMaintenanceRep:
+        now = DateTime.now()
         try:
             await self.finish_reencryption_maintenance(
                 client_ctx.organization_id,
                 client_ctx.device_id,
                 realm_id=req.realm_id,
                 encryption_revision=req.encryption_revision,
+                now=now,
             )
 
         except RealmAccessError:
@@ -597,7 +610,9 @@ class BaseRealmComponent:
         return RealmFinishReencryptionMaintenanceRepOk()
 
     async def create(
-        self, organization_id: OrganizationID, self_granted_role: RealmGrantedRole
+        self,
+        organization_id: OrganizationID,
+        self_granted_role: RealmGrantedRole,
     ) -> None:
         """
         Raises:
@@ -608,7 +623,11 @@ class BaseRealmComponent:
         raise NotImplementedError()
 
     async def get_status(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: RealmID,
+        now: DateTime,
     ) -> RealmStatus:
         """
         Raises:
@@ -619,7 +638,11 @@ class BaseRealmComponent:
         raise NotImplementedError()
 
     async def get_stats(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: RealmID,
+        now: DateTime,
     ) -> RealmStats:
         """
         Raises:
@@ -630,7 +653,10 @@ class BaseRealmComponent:
         raise NotImplementedError()
 
     async def get_current_roles(
-        self, organization_id: OrganizationID, realm_id: RealmID
+        self,
+        organization_id: OrganizationID,
+        realm_id: RealmID,
+        now: DateTime,
     ) -> Dict[UserID, RealmRole]:
         """
         Raises:
@@ -639,7 +665,11 @@ class BaseRealmComponent:
         raise NotImplementedError()
 
     async def get_role_certificates(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: RealmID,
+        now: DateTime,
     ) -> List[bytes]:
         """
         Raises:
@@ -652,7 +682,8 @@ class BaseRealmComponent:
         self,
         organization_id: OrganizationID,
         new_role: RealmGrantedRole,
-        recipient_message: bytes | None = None,
+        recipient_message: bytes | None,
+        now: DateTime,
     ) -> None:
         """
         Raises:
@@ -671,6 +702,7 @@ class BaseRealmComponent:
         self,
         organization_id: OrganizationID,
         archiving_certificate: RealmConfiguredArchiving,
+        now: DateTime,
     ) -> None:
         """
         Raises:
@@ -691,6 +723,7 @@ class BaseRealmComponent:
         encryption_revision: int,
         per_participant_message: Dict[UserID, bytes],
         timestamp: DateTime,
+        now: DateTime,
     ) -> None:
         """
         Raises:
@@ -708,6 +741,7 @@ class BaseRealmComponent:
         author: DeviceID,
         realm_id: RealmID,
         encryption_revision: int,
+        now: DateTime,
     ) -> None:
         """
         Raises:
@@ -719,7 +753,9 @@ class BaseRealmComponent:
         raise NotImplementedError()
 
     async def get_realms_for_user(
-        self, organization_id: OrganizationID, user: UserID
+        self,
+        organization_id: OrganizationID,
+        user: UserID,
     ) -> Dict[RealmID, RealmRole]:
         """
         Raises: Nothing !

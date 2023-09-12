@@ -145,15 +145,13 @@ async def check_archiving_configuration(
     organization_id: OrganizationID,
     realm_id: RealmID,
     operation_kind: OperationKind,
-    now: DateTime | None = None,
+    now: DateTime,
 ) -> tuple[RealmArchivingConfiguration, DateTime | None]:
-    if now is None:
-        now = DateTime.now()
     configuration, archiving_certified_on = await query_get_archiving_configuration(
         conn, organization_id, realm_id, for_update=False
     )
 
-    if configuration.is_deleted():
+    if configuration.is_deleted(now):
         raise RealmDeletedError()
 
     if operation_kind == OperationKind.DATA_WRITE:
@@ -168,6 +166,7 @@ async def query_update_archiving(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     archiving_configuration_request: RealmConfiguredArchiving,
+    now: DateTime,
 ) -> None:
     """
     Raises:
@@ -177,7 +176,6 @@ async def query_update_archiving(
         RealmDeletedError
         RealmArchivingPeriodTooShortError
     """
-    DateTime.now()
     realm_id = archiving_configuration_request.realm_id
     user_id = archiving_configuration_request.configured_by.user_id
 
@@ -190,9 +188,9 @@ async def query_update_archiving(
 
     # 2. Check that the realm is not deleted
     previous_configuration, previous_archiving_certified_on = await check_archiving_configuration(
-        conn, organization_id, realm_id, OperationKind.CONFIGURATION
+        conn, organization_id, realm_id, OperationKind.CONFIGURATION, now
     )
-    if previous_configuration.is_deleted():
+    if previous_configuration.is_deleted(now):
         raise RealmDeletedError()
 
     # 3. Check that the author role is owner

@@ -44,6 +44,8 @@ def testbed(running_backend, alice_user_fs, alice):
                 version=self._next_version,
                 timestamp=options["backend_timestamp"],
                 blob=options["blob"],
+                sequester_blob=None,
+                now=DateTime.now(),
             )
             self._next_version += 1
             # This should trigger FSError

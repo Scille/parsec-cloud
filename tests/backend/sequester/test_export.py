@@ -92,6 +92,8 @@ async def test_sequester_export_full_run(
             granted_by=alice.device_id,
             granted_on=_next_day(),  # 2000/1/3
         ),
+        recipient_message=None,
+        now=DateTime.now(),
     )
 
     # Populate: Vlobs
@@ -107,6 +109,7 @@ async def test_sequester_export_full_run(
         blob=b"vlob1v1",
         # Note sequester blob can have a different size than the regular blob !
         sequester_blob={s1.service_id: b"s1:vlob1v1"},
+        now=DateTime.now(),
     )
     await backend.vlob.update(
         organization_id=coolorg.organization_id,
@@ -117,6 +120,7 @@ async def test_sequester_export_full_run(
         timestamp=_next_day(),  # 2000/1/5
         blob=b"vlob1v2",
         sequester_blob={s1.service_id: b"s1:vlob1v2"},
+        now=DateTime.now(),
     )
     await backend.vlob.create(
         organization_id=coolorg.organization_id,
@@ -127,6 +131,7 @@ async def test_sequester_export_full_run(
         timestamp=_next_day(),  # 2000/1/6
         blob=b"vlob2v1",
         sequester_blob={s1.service_id: b"s1:vlob2v1"},
+        now=DateTime.now(),
     )
 
     # Populate: blocks
@@ -137,16 +142,16 @@ async def test_sequester_export_full_run(
         author=alice.device_id,
         block_id=block1,
         realm_id=realm1,
-        created_on=_next_day(),  # 2000/1/7
         block=b"block1",
+        now=_next_day(),  # 2000/1/7
     )
     await backend.block.create(
         organization_id=coolorg.organization_id,
         author=alice.device_id,
         block_id=block2,
         realm_id=realm1,
-        created_on=_next_day(),  # 2000/1/8
         block=b"block2",
+        now=_next_day(),  # 2000/1/8
     )
 
     # Now we can do the actual export !
@@ -314,6 +319,8 @@ async def test_sequester_export_full_run(
             granted_by=alice.device_id,
             granted_on=DateTime.now(),
         ),
+        recipient_message=None,
+        now=DateTime.now(),
     )
     await backend.vlob.update(
         organization_id=coolorg.organization_id,
@@ -324,6 +331,7 @@ async def test_sequester_export_full_run(
         timestamp=DateTime.now(),
         blob=b"vlob1v3",
         sequester_blob={s1.service_id: b"s1:vlob1v3"},
+        now=DateTime.now(),
     )
     vlob3 = VlobID.new()
     await backend.vlob.create(
@@ -335,6 +343,7 @@ async def test_sequester_export_full_run(
         timestamp=DateTime.now(),
         blob=b"vlob3v1",
         sequester_blob={s1.service_id: b"s1:vlob3v1"},
+        now=DateTime.now(),
     )
     block3 = BlockID.new()
     await backend.block.create(
@@ -343,6 +352,7 @@ async def test_sequester_export_full_run(
         block_id=block3,
         realm_id=realm1,
         block=b"block3",
+        now=DateTime.now(),
     )
     async with RealmExporter.run(
         organization_id=coolorg.organization_id,

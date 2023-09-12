@@ -579,6 +579,8 @@ async def test_organization_stats_data(backend_asgi_app, realm, realm_factory, a
         vlob_id=VlobID.new(),
         timestamp=DateTime.now(),
         blob=b"1234",
+        sequester_blob=None,
+        now=DateTime.now(),
     )
     rep = await organization_stats()
     assert rep == {
@@ -601,6 +603,7 @@ async def test_organization_stats_data(backend_asgi_app, realm, realm_factory, a
         block_id=BlockID.new(),
         realm_id=realm,
         block=b"1234",
+        now=DateTime.now(),
     )
     rep = await organization_stats()
     assert rep == {

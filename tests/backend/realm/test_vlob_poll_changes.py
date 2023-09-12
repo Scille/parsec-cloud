@@ -49,6 +49,8 @@ async def test_realm_updated_by_vlob(backend, alice, alice_ws, realm, archive_re
         vlob_id=VLOB_ID,
         timestamp=NOW,
         blob=b"v1",
+        sequester_blob=None,
+        now=DateTime.now(),
     )
     await backend.vlob.update(
         organization_id=alice.organization_id,
@@ -58,6 +60,8 @@ async def test_realm_updated_by_vlob(backend, alice, alice_ws, realm, archive_re
         version=2,
         timestamp=NOW,
         blob=b"v2",
+        sequester_blob=None,
+        now=DateTime.now(),
     )
 
     for last_checkpoint in (0, 1):
@@ -83,6 +87,8 @@ async def test_vlob_poll_changes_checkpoint_up_to_date(
         vlob_id=VLOB_ID,
         timestamp=NOW,
         blob=b"v1",
+        sequester_blob=None,
+        now=DateTime.now(),
     )
     await backend.vlob.update(
         organization_id=alice.organization_id,
@@ -92,6 +98,8 @@ async def test_vlob_poll_changes_checkpoint_up_to_date(
         version=2,
         timestamp=NOW,
         blob=b"v2",
+        sequester_blob=None,
+        now=DateTime.now(),
     )
 
     rep = await vlob_poll_changes(alice_ws, realm, 2)
@@ -135,6 +143,8 @@ async def test_vlob_poll_changes(
         vlob_id=VLOB_ID,
         timestamp=NOW,
         blob=b"v1",
+        sequester_blob=None,
+        now=DateTime.now(),
     )
 
     # At first only Alice is allowed
@@ -191,6 +201,7 @@ async def test_vlob_poll_changes_during_maintenance(backend, alice, alice_ws, re
         2,
         {alice.user_id: b"whatever"},
         DateTime(2000, 1, 2),
+        now=DateTime.now(),
     )
 
     # It's ok to poll changes while the workspace is being reencrypted

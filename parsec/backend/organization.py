@@ -369,7 +369,9 @@ class BaseOrganizationComponent:
         raise NotImplementedError()
 
     async def archiving_config(
-        self, id: OrganizationID, user_id: UserID
+        self,
+        id: OrganizationID,
+        user_id: UserID,
     ) -> list[RealmArchivingStatus]:
         """
         Raises:

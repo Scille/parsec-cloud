@@ -39,28 +39,28 @@ class PGRealmComponent(BaseRealmComponent):
             await query_create(conn, organization_id, self_granted_role)
 
     async def get_status(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID, now: DateTime
     ) -> RealmStatus:
         async with self.dbh.pool.acquire() as conn:
-            return await query_get_status(conn, organization_id, author, realm_id)
+            return await query_get_status(conn, organization_id, author, realm_id, now)
 
     async def get_stats(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID, now: DateTime
     ) -> RealmStats:
         async with self.dbh.pool.acquire() as conn:
-            return await query_get_stats(conn, organization_id, author, realm_id)
+            return await query_get_stats(conn, organization_id, author, realm_id, now)
 
     async def get_current_roles(
-        self, organization_id: OrganizationID, realm_id: RealmID
+        self, organization_id: OrganizationID, realm_id: RealmID, now: DateTime
     ) -> Dict[UserID, RealmRole]:
         async with self.dbh.pool.acquire() as conn:
-            return await query_get_current_roles(conn, organization_id, realm_id)
+            return await query_get_current_roles(conn, organization_id, realm_id, now)
 
     async def get_role_certificates(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID, now: DateTime
     ) -> List[bytes]:
         async with self.dbh.pool.acquire() as conn:
-            return await query_get_role_certificates(conn, organization_id, author, realm_id)
+            return await query_get_role_certificates(conn, organization_id, author, realm_id, now)
 
     async def get_realms_for_user(
         self, organization_id: OrganizationID, user: UserID
@@ -73,18 +73,22 @@ class PGRealmComponent(BaseRealmComponent):
         self,
         organization_id: OrganizationID,
         new_role: RealmGrantedRole,
-        recipient_message: bytes | None = None,
+        recipient_message: bytes | None,
+        now: DateTime,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
-            await query_update_roles(conn, organization_id, new_role, recipient_message)
+            await query_update_roles(conn, organization_id, new_role, recipient_message, now)
 
     async def update_archiving(
         self,
         organization_id: OrganizationID,
         archiving_configuration_request: RealmConfiguredArchiving,
+        now: DateTime,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
-            await query_update_archiving(conn, organization_id, archiving_configuration_request)
+            await query_update_archiving(
+                conn, organization_id, archiving_configuration_request, now
+            )
 
     async def start_reencryption_maintenance(
         self,
@@ -94,6 +98,7 @@ class PGRealmComponent(BaseRealmComponent):
         encryption_revision: int,
         per_participant_message: Dict[UserID, bytes],
         timestamp: DateTime,
+        now: DateTime,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             await query_start_reencryption_maintenance(
@@ -104,6 +109,7 @@ class PGRealmComponent(BaseRealmComponent):
                 encryption_revision,
                 per_participant_message,
                 timestamp,
+                now,
             )
 
     async def finish_reencryption_maintenance(
@@ -112,10 +118,11 @@ class PGRealmComponent(BaseRealmComponent):
         author: DeviceID,
         realm_id: RealmID,
         encryption_revision: int,
+        now: DateTime,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             await query_finish_reencryption_maintenance(
-                conn, organization_id, author, realm_id, encryption_revision
+                conn, organization_id, author, realm_id, encryption_revision, now
             )
 
     async def dump_realms_granted_roles(

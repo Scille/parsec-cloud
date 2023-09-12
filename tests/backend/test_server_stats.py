@@ -172,13 +172,15 @@ async def test_stats(
                 realm_id=realm_id,
                 timestamp=dtx4,
                 blob=b"\x00" * 10,
+                sequester_blob=None,
+                now=DateTime.now(),
             )
             await backend.block.create(
                 organization_id=org.organization_id,
                 author=org_d1.device_id,
                 block_id=BlockID.new(),
                 realm_id=realm_id,
-                created_on=dtx4,
+                now=dtx4,
                 block=b"\x00" * 100,
             )
 
@@ -237,13 +239,15 @@ async def test_stats(
         version=2,
         timestamp=dty1,
         blob=b"\x00" * 10,
+        sequester_blob=None,
+        now=DateTime.now(),
     )
     await backend.block.create(
         organization_id=org.organization_id,
         author=org_d1.device_id,
         block_id=BlockID.new(),
         realm_id=realm_id,
-        created_on=dty1,
+        now=dty1,
         block=b"\x00" * 100,
     )
 

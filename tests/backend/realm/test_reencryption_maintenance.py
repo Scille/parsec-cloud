@@ -114,6 +114,8 @@ async def test_start_bad_per_participant_message(
             granted_by=alice.device_id,
             granted_on=next_timestamp(),
         ),
+        recipient_message=None,
+        now=DateTime.now(),
     )
     await backend.realm.update_roles(
         alice.organization_id,
@@ -125,6 +127,8 @@ async def test_start_bad_per_participant_message(
             granted_by=alice.device_id,
             granted_on=next_timestamp(),
         ),
+        recipient_message=None,
+        now=DateTime.now(),
     )
     # Adam is still part of the realm, but is revoked
     await backend.realm.update_roles(
@@ -137,6 +141,8 @@ async def test_start_bad_per_participant_message(
             granted_by=alice.device_id,
             granted_on=next_timestamp(),
         ),
+        recipient_message=None,
+        now=DateTime.now(),
     )
     await backend.user.revoke_user(
         alice.organization_id,
@@ -178,6 +184,8 @@ async def test_start_send_message_to_participants(
             granted_by=alice.device_id,
             granted_on=DateTime.now(),
         ),
+        recipient_message=None,
+        now=DateTime.now(),
     )
 
     with freeze_time("2000-01-02"):
@@ -263,6 +271,8 @@ async def test_start_check_access_rights(
                 granted_by=alice.device_id,
                 granted_on=next_timestamp(),
             ),
+            recipient_message=None,
+            now=DateTime.now(),
         )
 
         rep = await realm_start_reencryption_maintenance(
@@ -286,6 +296,8 @@ async def test_start_check_access_rights(
             granted_by=alice.device_id,
             granted_on=next_timestamp(),
         ),
+        recipient_message=None,
+        now=DateTime.now(),
     )
 
     rep = await realm_start_reencryption_maintenance(
@@ -422,6 +434,8 @@ async def test_reencrypt_and_finish_check_access_rights(
                 granted_by=alice.device_id,
                 granted_on=next_timestamp(),
             ),
+            recipient_message=None,
+            now=DateTime.now(),
         )
         await _ready_to_finish(bob_in_workspace=not_allowed_role is not None)
         await _assert_bob_maintenance_access(allowed=False)
@@ -438,6 +452,8 @@ async def test_reencrypt_and_finish_check_access_rights(
             granted_by=alice.device_id,
             granted_on=next_timestamp(),
         ),
+        recipient_message=None,
+        now=DateTime.now(),
     )
     await _ready_to_finish(bob_in_workspace=True)
     await _assert_bob_maintenance_access(allowed=True)
@@ -567,6 +583,9 @@ async def test_reencryption_provide_unknown_vlob_atom_and_duplications(
             author=alice.device_id,
             encryption_revision=2,
             vlob_id=unknown_vlob_id,
+            version=None,
+            timestamp=None,
+            now=DateTime.now(),
         )
     with pytest.raises(VlobVersionError):
         await backend.vlob.read(
@@ -575,6 +594,8 @@ async def test_reencryption_provide_unknown_vlob_atom_and_duplications(
             encryption_revision=2,
             vlob_id=duplicated_vlob_id,
             version=99,
+            timestamp=None,
+            now=DateTime.now(),
         )
     _, content, _, _, _ = await backend.vlob.read(
         organization_id=alice.organization_id,
@@ -582,6 +603,8 @@ async def test_reencryption_provide_unknown_vlob_atom_and_duplications(
         encryption_revision=2,
         vlob_id=duplicated_vlob_id,
         version=duplicated_version,
+        timestamp=None,
+        now=DateTime.now(),
     )
     assert content == duplicated_expected_blob
 
@@ -603,14 +626,16 @@ async def test_access_during_reencryption(
         vlob_id=vlob_id,
         timestamp=next_timestamp(),
         blob=b"v1",
+        sequester_blob=None,
+        now=DateTime.now(),
     )
     await backend.block.create(
         organization_id=alice.organization_id,
         author=alice.device_id,
         realm_id=realm_id,
         block_id=block_id,
-        created_on=next_timestamp(),
         block=b"<block_data>",
+        now=DateTime.now(),
     )
     if archived:
         await archive_realm(backend, alice, realm_id)
@@ -679,6 +704,7 @@ async def test_access_during_reencryption(
         encryption_revision=2,
         per_participant_message={alice.user_id: b"<whatever>"},
         timestamp=DateTime.now(),
+        now=DateTime.now(),
     )
 
     # Only read with old encryption revision is now allowed
@@ -695,6 +721,7 @@ async def test_access_during_reencryption(
         realm_id=realm_id,
         encryption_revision=2,
         batch=[(vlob_id, 1, b"v2")],
+        now=DateTime.now(),
     )
 
     await _assert_read_access_allowed(1)
@@ -708,6 +735,7 @@ async def test_access_during_reencryption(
         author=alice.device_id,
         realm_id=realm_id,
         encryption_revision=2,
+        now=DateTime.now(),
     )
 
     # Now only the new encryption revision is allowed
