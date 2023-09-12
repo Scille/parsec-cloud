@@ -10,6 +10,7 @@
 ALTER TABLE organization ADD minimum_archiving_period INTEGER NOT NULL DEFAULT 2592000;
 ALTER TABLE organization ALTER COLUMN minimum_archiving_period DROP DEFAULT;
 
+ALTER TABLE realm_user_change ADD last_archiving_change TIMESTAMPTZ;
 
 CREATE TYPE realm_archiving_configuration AS ENUM ('AVAILABLE', 'ARCHIVED', 'DELETION_PLANNED');
 

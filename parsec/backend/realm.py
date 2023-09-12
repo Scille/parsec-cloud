@@ -365,6 +365,9 @@ class BaseRealmComponent:
         - If the certificate corresponds to a role without management rights, its timestamp should
           be strictly greater than the timestamp of the last role certificate uploaded by the
           corresponding user in the corresponding realm.
+        - If the certificate revokes some owner rights, its timestamp should be strictly greater than
+          the timestamp of the last archiving certificate uploaded by the corresponding user in the
+          corresponding realm.
 
         If one of those constraints is not satisfied, an error is returned with the status
         `require_greater_timestamp` indicating to the client that it should craft a new certificate
@@ -467,9 +470,6 @@ class BaseRealmComponent:
         `require_greater_timestamp` indicating to the client that it should craft a new certificate
         with a timestamp strictly greater than the timestamp provided with the error.
         """
-
-        # TODO: Remove RealmUpdateArchivingRepInvalidData
-
         try:
             data = RealmArchivingCertificate.verify_and_load(
                 req.archiving_certificate,

@@ -50,12 +50,13 @@ RETURNING index
 
 _q_set_last_vlob_update = Q(
     f"""
-INSERT INTO realm_user_change(realm, user_, last_role_change, last_vlob_update)
+INSERT INTO realm_user_change(realm, user_, last_role_change, last_vlob_update, last_archiving_change)
 VALUES (
     { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") },
     { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") },
     NULL,
-    $timestamp
+    $timestamp,
+    NULL
 )
 ON CONFLICT (realm, user_)
 DO UPDATE SET last_vlob_update = (

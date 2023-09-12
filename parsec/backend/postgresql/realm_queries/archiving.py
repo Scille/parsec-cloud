@@ -57,17 +57,6 @@ ORDER BY certified_on DESC LIMIT 1
 """
 )
 
-_q_get_archiving_configuration_for_update = Q(
-    f"""
-SELECT configuration, deletion_date, certified_on
-FROM realm_archiving
-WHERE
-    realm = { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
-ORDER BY certified_on DESC LIMIT 1
-FOR UPDATE
-"""
-)
-
 _q_set_archiving_configuration = Q(
     f"""
 INSERT INTO realm_archiving(
@@ -82,8 +71,8 @@ INSERT INTO realm_archiving(
     $configuration,
     $deletion_date,
     $certificate,
-    { q_device_internal_id(organization_id="$organization_id", device_id="$granted_by") },
-    $granted_on
+    { q_device_internal_id(organization_id="$organization_id", device_id="$certified_by") },
+    $certified_on
 """
 )
 
@@ -95,6 +84,28 @@ FROM realm_archiving
 WHERE
     realm = ANY($internal_realm_ids)
 ORDER BY realm, certified_on DESC
+"""
+)
+
+
+_q_set_last_archiving_change = Q(
+    f"""
+INSERT INTO realm_user_change(realm, user_, last_role_change, last_vlob_update, last_archiving_change)
+VALUES (
+    { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") },
+    { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") },
+    NULL,
+    NULL,
+    $configured_on
+)
+ON CONFLICT (realm, user_)
+DO UPDATE SET last_archiving_change = (
+    SELECT GREATEST($configured_on, last_archiving_change)
+    FROM realm_user_change
+    WHERE realm={ q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
+    AND user_={ q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
+    LIMIT 1
+)
 """
 )
 
@@ -123,20 +134,16 @@ async def query_get_archiving_configuration(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     realm_id: RealmID,
-    for_update: bool = False,
 ) -> tuple[RealmArchivingConfiguration, DateTime | None]:
-    _get_archiving_configuration = (
-        _q_get_archiving_configuration_for_update if for_update else _q_get_archiving_configuration
-    )
     rep = await conn.fetchrow(
-        *_get_archiving_configuration(organization_id=organization_id.str, realm_id=realm_id)
+        *_q_get_archiving_configuration(organization_id=organization_id.str, realm_id=realm_id)
     )
     if not rep:
         configuration = RealmArchivingConfiguration.available()
         archiving_certified_on = None
     else:
-        configuration_str, deletion_date, archiving_certified_on = rep
-        configuration = RealmArchivingConfiguration.from_str(configuration_str, deletion_date)
+        configuration_raw, deletion_date, archiving_certified_on = rep
+        configuration = RealmArchivingConfiguration.from_str(configuration_raw, deletion_date)
     return configuration, archiving_certified_on
 
 
@@ -147,9 +154,10 @@ async def check_archiving_configuration(
     operation_kind: OperationKind,
     now: DateTime,
 ) -> tuple[RealmArchivingConfiguration, DateTime | None]:
-    configuration, archiving_certified_on = await query_get_archiving_configuration(
-        conn, organization_id, realm_id, for_update=False
-    )
+    (
+        configuration,
+        archiving_certified_on,
+    ) = await query_get_archiving_configuration(conn, organization_id, realm_id)
 
     if configuration.is_deleted(now):
         raise RealmDeletedError()
@@ -187,7 +195,10 @@ async def query_update_archiving(
         raise RealmNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
 
     # 2. Check that the realm is not deleted
-    previous_configuration, previous_archiving_certified_on = await check_archiving_configuration(
+    (
+        previous_configuration,
+        previous_archiving_certified_on,
+    ) = await check_archiving_configuration(
         conn, organization_id, realm_id, OperationKind.CONFIGURATION, now
     )
     if previous_configuration.is_deleted(now):
@@ -234,7 +245,17 @@ async def query_update_archiving(
     ):
         raise RealmRoleRequireGreaterTimestampError(previous_archiving_certified_on)
 
-    # 7. Add archiving certificate
+    # 7. Set last archiving change
+    await conn.execute(
+        *_q_set_last_archiving_change(
+            organization_id=organization_id.str,
+            realm_id=realm_id,
+            user_id=user_id.str,
+            configured_on=archiving_configuration_request.configured_on,
+        )
+    )
+
+    # 8. Add archiving certificate
     configuration = archiving_configuration_request.configuration
     deletion_date = configuration.deletion_date if configuration.is_deletion_planned() else None
     await conn.execute(
@@ -244,12 +265,12 @@ async def query_update_archiving(
             configuration=configuration.str,
             deletion_date=deletion_date,
             certificate=archiving_configuration_request.certificate,
-            granted_by=archiving_configuration_request.configured_by.str,
-            granted_on=archiving_configuration_request.configured_on,
+            certified_by=archiving_configuration_request.configured_by.str,
+            certified_on=archiving_configuration_request.configured_on,
         )
     )
 
-    # 8. Send signal
+    # 9. Send signal
     await send_signal(
         conn,
         BackendEvent.REALM_ARCHIVING_UPDATED,
@@ -258,42 +279,3 @@ async def query_update_archiving(
         realm_id=realm_id,
         configuration=configuration,
     )
-
-    # realm = self._get_realm(organization_id, archiving_certificate.realm_id)
-
-    # last_role = realm.get_last_role(archiving_certificate.author.user_id)
-
-    # # Author should be an owner
-    # if last_role is None or last_role.role != RealmRole.OWNER:
-    #     raise RealmAccessError()
-
-    # # Check minimum archiving period
-    # assert self._organization_component is not None
-    # organization = await self._organization_component.get(organization_id)
-    # if not is_valid_archiving_configuration(
-    #     archiving_certificate, organization.minimum_archiving_period
-    # ):
-    #     raise RealmArchivingPeriodTooShortError()
-
-    # # Timestamp should be greater than last role
-    # if last_role.granted_on >= archiving_certificate.timestamp:
-    #     raise RealmRoleRequireGreaterTimestampError(last_role.granted_on)
-
-    # # Timestamp should be greater than last archiving certificate
-    # last_archiving_certificate = realm.get_last_archiving_certificate()
-    # if (
-    #     last_archiving_certificate is not None
-    #     and last_archiving_certificate.timestamp >= archiving_certificate.timestamp
-    # ):
-    #     raise RealmRoleRequireGreaterTimestampError(last_archiving_certificate.timestamp)
-
-    # # Update archiving configuration
-    # realm.last_archiving_certificate = archiving_certificate
-
-    # await self._send_event(
-    #     BackendEvent.REALM_ARCHIVING_UPDATED,
-    #     organization_id=organization_id,
-    #     author=archiving_certificate.author.user_id,
-    #     realm_id=archiving_certificate.realm_id,
-    #     configuration=archiving_certificate.configuration,
-    # )

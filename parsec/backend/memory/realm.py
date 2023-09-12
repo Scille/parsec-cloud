@@ -70,28 +70,44 @@ class Realm:
         except ValueError:
             return None
 
-    def get_last_configured_archiving(self) -> RealmConfiguredArchiving | None:
+    def get_current_configured_archiving(self) -> RealmConfiguredArchiving | None:
         if not self.configured_archiving_list:
             return None
         return self.configured_archiving_list[-1]
 
-    def set_last_configured_archiving(self, configured_archiving: RealmConfiguredArchiving) -> None:
+    def get_last_archiving_configured_by_user(
+        self, user_id: UserID
+    ) -> RealmConfiguredArchiving | None:
+        if not self.configured_archiving_list:
+            return None
+        return next(
+            (
+                configured_archiving
+                for configured_archiving in reversed(self.configured_archiving_list)
+                if configured_archiving.configured_by.user_id == user_id
+            ),
+            None,
+        )
+
+    def set_current_configured_archiving(
+        self, configured_archiving: RealmConfiguredArchiving
+    ) -> None:
         self.configured_archiving_list.append(configured_archiving)
 
     def is_archived(self) -> bool:
-        last_configured_archiving = self.get_last_configured_archiving()
+        last_configured_archiving = self.get_current_configured_archiving()
         if last_configured_archiving is None:
             return False
         return last_configured_archiving.configuration.is_archived()
 
     def is_deletion_planned(self) -> bool:
-        last_configured_archiving = self.get_last_configured_archiving()
+        last_configured_archiving = self.get_current_configured_archiving()
         if last_configured_archiving is None:
             return False
         return last_configured_archiving.configuration.is_deletion_planned()
 
     def is_deleted(self, now: DateTime) -> bool:
-        last_configured_archiving = self.get_last_configured_archiving()
+        last_configured_archiving = self.get_current_configured_archiving()
         if last_configured_archiving is None:
             return False
         return last_configured_archiving.configuration.is_deleted(now)
@@ -262,6 +278,16 @@ class MemoryRealmComponent(BaseRealmComponent):
         if existing_user_role == new_role.role:
             raise RealmRoleAlreadyGrantedError()
 
+        # If the user used to be an owner, check for timestamp causality with the last archiving
+        # certificate they uploaded.
+        if existing_user_role == RealmRole.OWNER:
+            configured_archiving = realm.get_last_archiving_configured_by_user(new_role.user_id)
+            if (
+                configured_archiving is not None
+                and configured_archiving.configured_on >= new_role.granted_on
+            ):
+                raise RealmRoleRequireGreaterTimestampError(configured_archiving.configured_on)
+
         # Timestamps for the role certificates of a given user should be strictly increasing
         last_role = realm.get_last_role(new_role.user_id)
         if last_role is not None and last_role.granted_on >= new_role.granted_on:
@@ -345,7 +371,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             raise RealmRoleRequireGreaterTimestampError(last_role.granted_on)
 
         # Timestamp should be greater than last archiving certificate
-        last_configured_archiving = realm.get_last_configured_archiving()
+        last_configured_archiving = realm.get_current_configured_archiving()
         if (
             last_configured_archiving is not None
             and last_configured_archiving.configured_on
@@ -354,7 +380,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             raise RealmRoleRequireGreaterTimestampError(last_configured_archiving.configured_on)
 
         # Update archiving configuration
-        realm.set_last_configured_archiving(archiving_configuration_request)
+        realm.set_current_configured_archiving(archiving_configuration_request)
 
         await self._send_event(
             BackendEvent.REALM_ARCHIVING_UPDATED,

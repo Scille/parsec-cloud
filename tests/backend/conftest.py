@@ -293,18 +293,32 @@ async def archived_realm(backend, alice, realm, archive_realm):
 
 
 @pytest.fixture(params=["available_realm", "archived_realm", "deletion_planned_realm"])
-async def maybe_archived_realm(request, backend, alice, realm, archive_realm, plan_realm_deletion):
+async def _maybe_archived_realm(request, backend, alice, realm, archive_realm, plan_realm_deletion):
     # Warning: Do not use it along with `maybe_archived_vlobs`
     # Use `realm` + `maybe_archived_vlobs` instead
     if request.param == "available_realm":
-        pass
+        is_archived = False
     elif request.param == "archived_realm":
+        is_archived = True
         await archive_realm(backend, alice, realm)
     elif request.param == "deletion_planned_realm":
+        is_archived = True
         await plan_realm_deletion(backend, alice, realm)
     else:
         assert False
+    return realm, is_archived
+
+
+@pytest.fixture
+async def maybe_archived_realm(_maybe_archived_realm):
+    realm, _ = _maybe_archived_realm
     return realm
+
+
+@pytest.fixture
+async def is_realm_archived(_maybe_archived_realm):
+    is_archived = _maybe_archived_realm
+    return is_archived
 
 
 @pytest.fixture

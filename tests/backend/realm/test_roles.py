@@ -449,6 +449,7 @@ async def test_get_role_certificates_multiple(
     bob_ws,
     maybe_archived_realm,
     backend_realm_generate_certif_and_update_roles,
+    is_realm_archived,
 ):
     realm = maybe_archived_realm
 
@@ -464,19 +465,22 @@ async def test_get_role_certificates_multiple(
             backend, bob, realm, adam.user_id, RealmRole.MANAGER
         )
 
-    with freeze_time("2000-01-05"):
-        c5 = await backend_realm_generate_certif_and_update_roles(
-            backend, bob, realm, alice.user_id, RealmRole.READER
-        )
+    # This does not work with archived realm since alice archived
+    # the realm after the frozen date
+    if not is_realm_archived:
+        with freeze_time("2000-01-05"):
+            c5 = await backend_realm_generate_certif_and_update_roles(
+                backend, bob, realm, alice.user_id, RealmRole.READER
+            )
 
-    with freeze_time("2000-01-06"):
-        c6 = await backend_realm_generate_certif_and_update_roles(
-            backend, bob, realm, alice.user_id, None
-        )
+        with freeze_time("2000-01-06"):
+            c6 = await backend_realm_generate_certif_and_update_roles(
+                backend, bob, realm, alice.user_id, None
+            )
 
     rep = await realm_get_role_certificates(bob_ws, realm)
     assert isinstance(rep, RealmGetRoleCertificatesRepOk)
-    assert rep.certificates[1:] == (c3, c4, c5, c6)
+    assert rep.certificates[1:] == (c3, c4) if is_realm_archived else (c3, c4, c5, c6)
 
 
 @pytest.mark.trio
@@ -485,11 +489,9 @@ async def test_get_role_certificates_no_longer_allowed(
     alice,
     bob,
     alice_ws,
-    maybe_archived_realm,
+    realm,
     backend_realm_generate_certif_and_update_roles,
 ):
-    realm = maybe_archived_realm
-
     # Realm is created on 2000-01-02
 
     with freeze_time("2000-01-03"):
@@ -565,6 +567,45 @@ async def test_update_roles_causality_checks(
             alice_ws, alice, realm, bob.user_id, RealmRole.READER, timestamp
         )
         assert rep == RealmUpdateRolesRepRequireGreaterTimestamp(ref)
+
+
+@pytest.mark.trio
+async def test_update_roles_causality_checks_with_archiving(
+    backend,
+    alice,
+    bob,
+    adam,
+    alice_ws,
+    bob_ws,
+    realm,
+    realm_generate_certif_and_update_roles_or_fail,
+    next_timestamp,
+    archive_realm,
+    plan_realm_deletion,
+):
+    # Grant a role to bob
+    ref1 = next_timestamp()
+    rep = await realm_generate_certif_and_update_roles_or_fail(
+        alice_ws, alice, realm, bob.user_id, RealmRole.OWNER, ref1
+    )
+    assert isinstance(rep, RealmUpdateRolesRepOk)
+
+    ref2 = next_timestamp()
+    await archive_realm(backend, bob, realm, ref2)
+    ref3 = next_timestamp()
+    await plan_realm_deletion(backend, bob, realm, ref3)
+
+    for timestamp in (ref2.subtract(seconds=1), ref3.subtract(seconds=1), ref2, ref3):
+        rep = await realm_generate_certif_and_update_roles_or_fail(
+            alice_ws, alice, realm, bob.user_id, RealmRole.CONTRIBUTOR, timestamp
+        )
+        assert rep == RealmUpdateRolesRepRequireGreaterTimestamp(ref3)
+
+    ref4 = next_timestamp()
+    rep = await realm_generate_certif_and_update_roles_or_fail(
+        alice_ws, alice, realm, bob.user_id, RealmRole.CONTRIBUTOR, ref4
+    )
+    assert isinstance(rep, RealmUpdateRolesRepOk)
 
 
 @pytest.mark.trio

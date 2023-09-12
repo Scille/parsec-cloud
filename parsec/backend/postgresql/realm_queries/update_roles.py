@@ -105,11 +105,12 @@ AND user_={ q_user_internal_id(organization_id="$organization_id", user_id="$use
 
 _q_set_last_role_change = Q(
     f"""
-INSERT INTO realm_user_change(realm, user_, last_role_change, last_vlob_update)
+INSERT INTO realm_user_change(realm, user_, last_role_change, last_vlob_update, last_archiving_change)
 VALUES (
     { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") },
     { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") },
     $granted_on,
+    NULL,
     NULL
 )
 ON CONFLICT (realm, user_)
@@ -120,6 +121,15 @@ DO UPDATE SET last_role_change = (
     AND user_={ q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
     LIMIT 1
 )
+"""
+)
+
+_q_get_last_archiving_change = Q(
+    f"""
+SELECT last_archiving_change
+FROM realm_user_change
+WHERE realm={ q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
+AND user_={ q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
 """
 )
 
@@ -206,6 +216,20 @@ async def query_update_roles(
 
     if existing_user_role == new_role.role:
         raise RealmRoleAlreadyGrantedError()
+
+    # If the user used to be an owner, check for timestamp causality with the last archiving
+    # certificate they uploaded.
+    if existing_user_role == RealmRole.OWNER:
+        rep = await conn.fetchrow(
+            *_q_get_last_archiving_change(
+                organization_id=organization_id.str,
+                realm_id=new_role.realm_id,
+                user_id=new_role.user_id.str,
+            )
+        )
+        archiving_configured_on: None | DateTime = rep[0] if rep else None
+        if archiving_configured_on is not None and archiving_configured_on >= new_role.granted_on:
+            raise RealmRoleRequireGreaterTimestampError(archiving_configured_on)
 
     # Timestamps for the role certificates of a given user should be strictly increasing
     if last_role_granted_on is not None and last_role_granted_on >= new_role.granted_on:

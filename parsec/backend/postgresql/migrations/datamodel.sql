@@ -335,6 +335,8 @@ CREATE TABLE realm_user_change (
     last_role_change TIMESTAMPTZ,
     -- The last time this user updated a vlob
     last_vlob_update TIMESTAMPTZ,
+    -- The last time this user changed the archiving configuration
+    last_archiving_change TIMESTAMPTZ,
 
     UNIQUE(realm, user_)
 );
