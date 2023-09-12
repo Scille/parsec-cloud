@@ -17,7 +17,7 @@
     </ion-avatar>
     <div class="text-icon">
       <ion-text class="body">
-        {{ lastname }} {{ firstname }}
+        {{ name }}
       </ion-text>
       <ion-icon
         :class="{'popover-is-open': isPopoverOpen}"
@@ -52,16 +52,14 @@ const router = useRouter();
 const { t } = useI18n();
 
 const props = defineProps<{
-  firstname: string
-  lastname: string
+  name: string
 }>();
 
 async function openPopover(ev: Event): Promise<void> {
   const popover = await popoverController.create({
     component: ProfileHeaderPopover,
     componentProps: {
-      firstname: props.firstname,
-      lastname: props.lastname,
+      name: props.name,
     },
     cssClass: 'profile-header-popover',
     event: ev,

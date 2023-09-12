@@ -89,8 +89,7 @@
 
           <profile-header
             id="profile-button"
-            :firstname="'toto'"
-            :lastname="'toto'"
+            :name="loginInfo ? loginInfo.userName : ''"
             class="profile-header"
           />
         </ion-buttons>
@@ -128,21 +127,27 @@ import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import ProfileHeader from '@/views/header/ProfileHeader.vue';
 import useSidebarMenu from '@/services/sidebarMenu';
-import { computed } from 'vue';
+import { computed, ref, Ref, onMounted } from 'vue';
 import { parse as parsePath } from '@/common/path';
 import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
 import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import { hasHistory, isDocumentRoute } from '@/router/conditions';
+import { getLoginInfo, LoginInfo } from '@/common/mocks';
 
 const currentRoute = useRoute();
 const { t } = useI18n();
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
+const loginInfo: Ref<LoginInfo | null> = ref(null);
 
 // Dummy temporary function
 function mockGetWorkspaceName(workspaceId: string): string {
   return `Workspace ${workspaceId}`;
 }
+
+onMounted(async () => {
+  loginInfo.value = await getLoginInfo();
+});
 
 function getTitleForRoute(): string {
   const route = currentRoute.name;

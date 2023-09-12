@@ -23,14 +23,14 @@
               <ion-card-header class="organization-card__header">
                 <div class="organization-card__container">
                   <ion-avatar class="orga-avatar">
-                    <span>{{ device.organizationId?.substring(0, 2) }}</span>
+                    <span>{{ loginInfo ? loginInfo.orgName.substring(0, 2) : '' }}</span>
                   </ion-avatar>
                   <div class="orga-text">
                     <ion-card-subtitle class="caption-info">
                       {{ $t('HomePage.organizationActionSheet.header') }}
                     </ion-card-subtitle>
                     <ion-card-title class="title-h4">
-                      {{ device.organizationId }}
+                      {{ loginInfo?.orgName }}
                     </ion-card-title>
                   </div>
                 </div>
@@ -260,19 +260,19 @@ import { WatchStopHandle, onMounted, onUnmounted, ref, watch, Ref } from 'vue';
 import { createGesture } from '@ionic/vue';
 import { useRoute } from 'vue-router';
 import useSidebarMenu from '@/services/sidebarMenu';
-import { getMockDevices } from '@/common/mocks';
+import { getLoginInfo, LoginInfo } from '@/common/mocks';
 import { isOrganizationManagementRoute, isSpecificWorkspaceRoute, isUserRoute } from '@/router/conditions';
 import { isAdmin, isOutsider } from '@/common/permissions';
 import { routerNavigateTo } from '@/router';
 import * as Parsec from '@/common/parsec';
 
-let device: any = {};
 const workspaces: Ref<Array<[Parsec.WorkspaceID, Parsec.WorkspaceName]>> = ref([]);
 
 const currentRoute = useRoute();
 const splitPane = ref();
 const divider = ref();
 const { defaultWidth, initialWidth, computedWidth, wasReset } = useSidebarMenu();
+const loginInfo: Ref<LoginInfo | null> = ref(null);
 
 // watching wasReset value
 const unwatch: WatchStopHandle = watch(wasReset, (value) => {
@@ -293,7 +293,7 @@ function navigateToWorkspaceList(): void {
 }
 
 onMounted(async () => {
-  device = getMockDevices(1)[0];
+  loginInfo.value = await getLoginInfo();
 
   if (divider.value) {
     const gesture = createGesture({

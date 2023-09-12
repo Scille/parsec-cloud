@@ -525,3 +525,21 @@ export function getChanges(): VersionChange[] {
     }],
   }];
 }
+
+export interface LoginInfo {
+  userName: string,
+  userEmail: string,
+  orgName: string,
+  deviceName: string
+}
+
+export async function getLoginInfo(): Promise<LoginInfo> {
+  return new Promise<LoginInfo>((resolve, _reject) => {
+    resolve({
+      userName: 'Gordon Freeman',
+      userEmail: 'gordon.freeman@blackmesa.nm',
+      orgName: 'Black_Mesa',
+      deviceName: 'hev',
+    });
+  });
+}
