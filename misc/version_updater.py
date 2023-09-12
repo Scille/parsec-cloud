@@ -234,7 +234,7 @@ def check_tool_version(filename: Path, raw_regexes: RawRegexes, version: str) ->
                 matched_part = res.group(0)
                 if matched_part != expected_line:
                     effective_line = line_nu + 1
-                    effective_col_start = res.start(0)
+                    effective_col_start = res.start(0) + 1
                     errors.append(
                         f"{filename}:{effective_line}:{effective_col_start}: Wrong version detected, got `{matched_part}` but expected `{expected_line}`"
                     )
