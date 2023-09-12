@@ -3,7 +3,7 @@
 <template>
   <ion-content id="user-context-menu">
     <ion-list class="menu-list">
-      <ion-item-group class="group">
+      <ion-item-group class="group" v-if="!isRevoked">
         <ion-item
           class="group-title caption-caption"
         >
@@ -60,6 +60,10 @@ import {
   personRemove,
   informationCircle,
 } from 'ionicons/icons';
+
+defineProps<{
+  isRevoked: boolean,
+}>();
 
 function onClick(action: UserAction): Promise<boolean> {
   return popoverController.dismiss({'action': action});

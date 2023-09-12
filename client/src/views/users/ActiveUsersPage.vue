@@ -297,6 +297,9 @@ async function openUserContextMenu(event: Event, user: MockUser): Promise<void> 
       showBackdrop: false,
       dismissOnSelect: true,
       reference: 'event',
+      componentProps: {
+        isRevoked: user.revoked,
+      },
     });
   await popover.present();
 
