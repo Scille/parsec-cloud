@@ -60,6 +60,7 @@ class Tool(enum.Enum):
     Poetry = "poetry"
     Node = "node"
     WasmPack = "wasm-pack"
+    Nextest = "nextest"
     Parsec = "parsec"
     License = "license"
 
@@ -71,6 +72,7 @@ TOOLS_VERSION: Dict[Tool, str] = {
     Tool.Node: "18.12.0",
     Tool.WasmPack: "0.11.0",
     Tool.Parsec: "2.16.0-a.0+dev",
+    Tool.Nextest: "0.9.54",
     Tool.License: "BUSL-1.1",
 }
 
@@ -83,6 +85,7 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
     ROOT_DIR
     / ".github/workflows/ci-rust.yml": {
         Tool.WasmPack: [ReplaceRegex(r"wasm-pack@[0-9.]+", "wasm-pack@{version}")],
+        Tool.Nextest: [ReplaceRegex(r"nextest@[0-9.]+", "nextest@{version}")],
     },
     ROOT_DIR
     / ".github/workflows/ci-web.yml": {
@@ -146,6 +149,7 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
         Tool.Poetry: [ReplaceRegex(r'Tool.Poetry: "[0-9.]+"', 'Tool.Poetry: "{version}"')],
         Tool.Node: [ReplaceRegex(r'Tool.Node: "[0-9.]+"', 'Tool.Node: "{version}"')],
         Tool.WasmPack: [ReplaceRegex(r'Tool.WasmPack: "[0-9.]+"', 'Tool.WasmPack: "{version}"')],
+        Tool.Nextest: [ReplaceRegex(r'Tool.Nextest: "[0-9.]+"', 'Tool.Nextest: "{version}"')],
         Tool.Parsec: [ReplaceRegex(r'Tool.Parsec: "[0-9.]+.*",', 'Tool.Parsec: "{version}",')],
         Tool.License: [
             ReplaceRegex(r'^    Tool.License: "[^\"]*",', '    Tool.License: "{version}",')
