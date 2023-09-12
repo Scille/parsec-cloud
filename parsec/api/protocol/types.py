@@ -8,6 +8,7 @@ from marshmallow.fields import Field
 
 from parsec._parsec import (
     ApiVersion,
+    DataError,
     DateTime,
     DeviceID,
     DeviceLabel,
@@ -17,7 +18,7 @@ from parsec._parsec import (
     UserID,
     UserProfile,
 )
-from parsec.serde import fields, validate
+from parsec.serde import fields, packb, unpackb, validate
 
 UserIDTypeVar = TypeVar("UserIDTypeVar", bound="UserID")
 DeviceIDTypeVar = TypeVar("DeviceIDTypeVar", bound="DeviceID")
@@ -96,9 +97,7 @@ class RealmArchivingConfigurationField(Field[RealmArchivingConfiguration]):
     ) -> str | dict[str, DateTime] | None:
         if value is None:
             return None
-        if value.is_archived() or value.is_available():
-            return value.str
-        return {value.str: value.deletion_date}
+        return unpackb(value.dump())
 
     def _deserialize(
         self, value: object, attr: str, data: dict[str, object]
@@ -106,23 +105,10 @@ class RealmArchivingConfigurationField(Field[RealmArchivingConfiguration]):
         if isinstance(value, RealmArchivingConfiguration):
             return value
 
-        enum_name: str
-        deletion_date: DateTime | None
-
-        if isinstance(value, str):
-            enum_name = value
-            deletion_date = None
-        elif isinstance(value, dict):
-            try:
-                ((enum_name, deletion_date),) = value.items()
-            except ValueError as exc:
-                raise ValidationError(str(exc))
-        else:
-            raise ValidationError("Expecting str or dict")
+        if not isinstance(value, dict):
+            raise ValidationError("Expecting a dict")
 
         try:
-            result = RealmArchivingConfiguration.from_str(enum_name, deletion_date)
-        except (ValueError, TypeError) as exc:
+            return RealmArchivingConfiguration.load(packb(value))
+        except DataError as exc:
             raise ValidationError(str(exc))
-
-        return result

@@ -504,10 +504,21 @@ impl_transparent_data_format_conversion!(
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[serde(tag = "type")]
 pub enum RealmArchivingConfiguration {
     Available,
     Archived,
-    DeletionPlanned(DateTime),
+    DeletionPlanned { deletion_date: DateTime },
+}
+
+impl RealmArchivingConfiguration {
+    pub fn dump(&self) -> Vec<u8> {
+        rmp_serde::to_vec_named(self).expect("Unreachable")
+    }
+
+    pub fn load(bytes: &[u8]) -> DataResult<Self> {
+        rmp_serde::from_slice(bytes).map_err(|_| Box::new(DataError::Serialization))
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

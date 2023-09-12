@@ -644,6 +644,15 @@ crate::binding_utils::gen_proto!(RealmArchivingConfiguration, __hash__);
 #[pymethods]
 impl RealmArchivingConfiguration {
     #[classmethod]
+    pub(crate) fn load(_cls: &PyType, raw: &[u8]) -> DataResult<Self> {
+        Ok(libparsec::types::RealmArchivingConfiguration::load(raw).map(Self)?)
+    }
+
+    pub(crate) fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.dump())
+    }
+
+    #[classmethod]
     pub(crate) fn from_str(
         cls: &PyType,
         name: &str,
@@ -695,7 +704,9 @@ impl RealmArchivingConfiguration {
     pub(crate) fn deletion_planned(_cls: &PyType, deletion_date: DateTime) -> PyObject {
         ::pyo3::Python::with_gil(|py| {
             RealmArchivingConfiguration(
-                libparsec::types::RealmArchivingConfiguration::DeletionPlanned(deletion_date.0),
+                libparsec::types::RealmArchivingConfiguration::DeletionPlanned {
+                    deletion_date: deletion_date.0,
+                },
             )
             .into_py(py)
         })
@@ -706,14 +717,18 @@ impl RealmArchivingConfiguration {
         match self.0 {
             libparsec::types::RealmArchivingConfiguration::Available => "AVAILABLE",
             libparsec::types::RealmArchivingConfiguration::Archived => "ARCHIVED",
-            libparsec::types::RealmArchivingConfiguration::DeletionPlanned(_) => "DELETION_PLANNED",
+            libparsec::types::RealmArchivingConfiguration::DeletionPlanned { .. } => {
+                "DELETION_PLANNED"
+            }
         }
     }
 
     #[getter]
     fn deletion_date(&self) -> PyResult<DateTime> {
         match self.0 {
-            libparsec::types::RealmArchivingConfiguration::DeletionPlanned(x) => Ok(DateTime(x)),
+            libparsec::types::RealmArchivingConfiguration::DeletionPlanned { deletion_date } => {
+                Ok(DateTime(deletion_date))
+            }
             _ => Err(PyAttributeError::new_err(
                 "No such attribute `deletion_date`",
             )),
@@ -737,7 +752,7 @@ impl RealmArchivingConfiguration {
     fn is_deletion_planned(&self) -> bool {
         matches!(
             self.0,
-            libparsec::types::RealmArchivingConfiguration::DeletionPlanned(_)
+            libparsec::types::RealmArchivingConfiguration::DeletionPlanned { .. }
         )
     }
 
@@ -747,7 +762,9 @@ impl RealmArchivingConfiguration {
             .map(|x| x.0)
             .unwrap_or_else(libparsec::types::DateTime::now_legacy);
         match self.0 {
-            libparsec::types::RealmArchivingConfiguration::DeletionPlanned(x) => x <= now,
+            libparsec::types::RealmArchivingConfiguration::DeletionPlanned { deletion_date } => {
+                deletion_date <= now
+            }
             _ => false,
         }
     }
