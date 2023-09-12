@@ -29,6 +29,7 @@ jobs:
     outputs:
       rust: ${{ steps.need-check.outputs.rust }}
       python: ${{ steps.need-check.outputs.python }}
+      python-style-only: ${{ steps.need-check.outputs.python_style_only }}
       web: ${{ steps.need-check.outputs.web }}
     steps:
       - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # pin v4.0.0
@@ -44,15 +45,19 @@ jobs:
       - name: Determine which workflows need to be run
         id: need-check
         run: |
+          env | grep NEED_CHECK_
           set -eux -o pipefail
-          for check in $(env | grep -o 'NEED_CHECK_\w*' ); do
-            env_value=$(eval "echo \$$check")
+          for check in $(env | grep -o 'NEED_CHECK_[a-z_]\+' ); do
+            env_value=$(eval "echo \${$check}")
             echo "${check#NEED_CHECK_}=$env_value"
           done | tee -a $GITHUB_OUTPUT
         env:
           NEED_CHECK_rust: ${{ github.ref == 'refs/heads/master' || steps.changes.outputs.rust-jobs == 'true' }}
           NEED_CHECK_web: ${{ github.ref == 'refs/heads/master' || steps.changes.outputs.web-jobs == 'true' }}
           NEED_CHECK_python: ${{ github.ref == 'refs/heads/master' || steps.changes.outputs.python-jobs == 'true' }}
+          # Basically we want to only check the python code style when we modify a file that ins't related to the parsec server (e.g.: bindings/generator/generate.py)
+          # Thus don't require to run the python test.
+          NEED_CHECK_python_style_only: ${{ steps.changes.outputs.python-jobs == 'false' || steps.changes.outputs.any-python-files == 'true' }}
 
   # Github PR merging is configured to only require this job to pass
   ci-is-happy:
@@ -75,6 +80,8 @@ jobs:
           import os
           import json
 
+          NOT_A_JOB = ('python-style-only',)
+
           data = json.loads(os.environ["NEEDS"])
 
           print("NEEDS:", json.dumps(data, indent=4), sep="\n")
@@ -86,6 +93,8 @@ jobs:
 
           # Check required jobs, here we just need to check that the state is `success` and not `skipped`.
           for job_name, required in data["dispatch"]["outputs"].items():
+            if job_name in NOT_A_JOB:
+              continue
             assert required in ("true", "false")
             job_result = data[job_name]["result"]
             if required == "true" and job_result != "success":
@@ -167,8 +176,10 @@ jobs:
   python:
     needs:
       - dispatch
-    if: needs.dispatch.outputs.python == 'true'
+    if: needs.dispatch.outputs.python == 'true' || needs.dispatch.outputs.python-style-only == 'true'
     uses: ./.github/workflows/ci-python.yml
+    with:
+      style-only: ${{ needs.dispatch.outputs.python-style-only == 'true' }}
 
   rust:
     needs:
