@@ -74,6 +74,7 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "Version" => "u32",
                 "Size" => "u64",
                 "Index" => "u64",
+                "UnsignedInteger" => "u64",
                 "NonZeroInteger" => "::std::num::NonZeroU64",
                 "PublicKey" => "libparsec_types::PublicKey",
                 "SigningKey" => "libparsec_types::SigningKey",

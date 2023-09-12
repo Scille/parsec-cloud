@@ -277,7 +277,7 @@ impl OrganizationConfigRepOk {
         active_users_limit: ActiveUsersLimit,
         sequester_authority_certificate: Option<BytesWrapper>,
         sequester_services_certificates: Option<Vec<BytesWrapper>>,
-        minimum_archiving_period: i64,
+        minimum_archiving_period: u64,
     ) -> PyResult<(Self, OrganizationConfigRep)> {
         crate::binding_utils::unwrap_bytes!(
             sequester_authority_certificate,
@@ -359,7 +359,7 @@ impl OrganizationConfigRepOk {
     }
 
     #[getter]
-    fn minimum_archiving_period(_self: PyRef<'_, Self>) -> PyResult<Option<i64>> {
+    fn minimum_archiving_period(_self: PyRef<'_, Self>) -> PyResult<Option<u64>> {
         Ok(match &_self.as_ref().0 {
             organization_config::Rep::Ok {
                 minimum_archiving_period: Maybe::Present(x),
