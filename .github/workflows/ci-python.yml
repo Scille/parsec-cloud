@@ -98,7 +98,7 @@ jobs:
       # Hence if we have a cache hit we know that there is no need for a rebuild !
       - name: Setup cache-key
         id: cache-key
-        run: echo "key=${{ matrix.os }}-${{ hashFiles('server/src/**', 'server/Cargo.toml', 'libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-libparsec-python-${{ env.python-version }}" >> $GITHUB_OUTPUT
+        run: echo "key=ubuntu-20.04-${{ hashFiles('server/src/**', 'server/Cargo.toml', 'libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-libparsec-python-${{ env.python-version }}" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Restore libparsec if Rust hasn't been modified
