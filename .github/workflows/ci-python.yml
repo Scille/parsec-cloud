@@ -41,10 +41,6 @@ jobs:
       - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # pin v4.0.0
         timeout-minutes: 5
 
-      - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50  # pin v2.11.1
-        with:
-          filters: .github/filters/ci.yml
-
       - name: Set apt mirror
         # GitHub Actions apt proxy is super unstable
         # see https://github.com/actions/runner-images/issues/7048
