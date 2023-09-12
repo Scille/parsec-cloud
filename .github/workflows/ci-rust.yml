@@ -26,7 +26,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  cargo-nextest-version: 0.9.53
   CARGO_CI_FLAGS: --locked --profile ci-rust
   CARGO_NEXTEST_CI_FLAGS: --locked --cargo-profile ci-rust
   WINFSP_VERSION: 2.0.23075
@@ -79,7 +78,7 @@ jobs:
       # Install cargo nextest command
       - uses: taiki-e/install-action@b89cfc4cdbf6930a4276f4c1d662f3217ef3edae # pin v2.18.6
         with:
-          tool: nextest@${{ env.cargo-nextest-version }},wasm-pack@0.11.0
+          tool: nextest@0.9.54,wasm-pack@0.11.0
 
       - name: Categorize workspace crates
         id: crates
@@ -191,7 +190,7 @@ jobs:
       # Install cargo nextest command
       - uses: taiki-e/install-action@b89cfc4cdbf6930a4276f4c1d662f3217ef3edae # pin v2.18.6
         with:
-          tool: nextest@${{ env.cargo-nextest-version }}
+          tool: nextest@0.9.54
 
       - name: Test Rust codebase (${{ matrix.name }} specific)
         shell: bash
