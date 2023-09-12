@@ -469,6 +469,14 @@ class BaseRealmComponent:
         If one of those constraints is not satisfied, an error is returned with the status
         `require_greater_timestamp` indicating to the client that it should craft a new certificate
         with a timestamp strictly greater than the timestamp provided with the error.
+
+        /!\\ A note on `RealmArchivingConfiguration::DeletionPlanned { deletion_date }`:
+        The deletion date provided when planning a deletion is **not** checked for causality. Instead:
+        - For the backend: it means that it no longer has to accept requests after this date is met.
+        - For the client: it means that it should not expect requests to succeed after this date is met.
+        In particular, vlobs or role certificates with timestamp after the deletion date might be accepted
+        by the backend if they happen to be stamped a little bit in the future (since the backend typically
+        use its own current time to check for deletion).
         """
         try:
             data = RealmArchivingCertificate.verify_and_load(
