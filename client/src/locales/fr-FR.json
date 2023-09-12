@@ -335,7 +335,9 @@
     },
     "DevicesPage": {
         "title": "Vos appareils",
-        "addDevice": "Ajouter"
+        "addDevice": "Ajouter",
+        "noDevices": "Aucun appareil.",
+        "activeDeviceBadge": "Actif"
     },
     "Password": {
         "password": "Mot de passe",
