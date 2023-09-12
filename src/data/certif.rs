@@ -756,14 +756,10 @@ impl RealmArchivingConfiguration {
         )
     }
 
-    #[args(now = "None")]
-    fn is_deleted(&self, now: Option<DateTime>) -> bool {
-        let now = now
-            .map(|x| x.0)
-            .unwrap_or_else(libparsec::types::DateTime::now_legacy);
+    fn is_deleted(&self, now: DateTime) -> bool {
         match self.0 {
             libparsec::types::RealmArchivingConfiguration::DeletionPlanned { deletion_date } => {
-                deletion_date <= now
+                deletion_date <= now.0
             }
             _ => false,
         }

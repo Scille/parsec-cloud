@@ -5,6 +5,7 @@ from typing import Any
 
 import click
 
+from parsec._parsec import DateTime
 from parsec.cli_utils import cli_exception_handler
 from parsec.core import logged_core_factory
 from parsec.core.cli.utils import cli_command_base_options, core_config_and_device_options
@@ -33,7 +34,7 @@ async def _show_workspace(logged_core: LoggedCore, workspace: WorkspaceFS) -> No
         styled_archiving = click.style("available", fg="yellow")
     elif archiving_configuration.is_archived():
         styled_archiving = click.style(f"archived", fg="yellow")
-    elif archiving_configuration.is_deleted():
+    elif archiving_configuration.is_deleted(DateTime.now()):
         styled_archiving = click.style(
             f"deleted since {archiving_configuration.deletion_date.to_rfc3339()}", fg="yellow"
         )
