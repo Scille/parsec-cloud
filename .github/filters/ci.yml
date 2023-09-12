@@ -1,3 +1,7 @@
+########
+# RUST #
+########
+
 rust-libparsec: &rust-libparsec libparsec/**
 
 rust-dependencies-workspace: &rust-dependencies-workspace
@@ -8,21 +12,27 @@ rust-toolchain: &rust-toolchain rust-toolchain.toml
 
 rust-python-binding: &rust-python-binding server/src/**
 
-# TODO: We currently don't test the electron application
-# So we don't have to watch the electron binding (likewise for the client code related to electron)
-# rust-electron-binding: &rust-electron-binding bindings/electron
-# new-client-electron: &new-client-electron: /client/electron
-
-# TODO: We currently don't test the android application
-# So we don't have to watch the android binding (likewise for the client code related to android)
-# rust-android-binding: &rust-android-binding bindings/android
-# new-client-android: &new-client-android: /client/android
-
-# TODO: We currently don't test the ios application
-# So we don't have to watch the client code related to the ios application
-# new-client-ios: &new-client-ios /client/ios
-
 rust-web-binding: &rust-web-binding bindings/web/**
+
+rust-changes: &rust-changes
+  - *rust-dependencies-workspace
+  - *rust-libparsec
+  - *rust-toolchain
+  - *rust-python-binding
+  - *rust-web-binding
+
+# The rust jobs need to watch for:
+# - The change on the rust code.
+# - The change in the dependencies list.
+# - We change the toolchain
+# - We modify the Ci workflow
+rust-jobs:
+  - .github/workflows/ci-rust.yml
+  - *rust-changes
+
+##########
+# PYTHON #
+##########
 
 python: &python
   - server/parsec/**
@@ -35,29 +45,9 @@ python-dependencies-project: &python-dependencies-project
   - server/poetry.lock
   - server/setup.cfg
 
-new-client-dependencies-project: &new-client-dependencies-project
-  - client/*.ts
-  - client/*.json
-  - client/*.js
-  - client/.browserslistrc
-  - client/.env
-
-web: &web
-  - client/public/**
-  - client/resources/**
-  - client/src/**
-  - client/tests/**
-
 python-changes: &python-changes
   - *python-dependencies-project
   - *python
-
-rust-changes: &rust-changes
-  - *rust-dependencies-workspace
-  - *rust-libparsec
-  - *rust-toolchain
-  - *rust-python-binding
-  - *rust-web-binding
 
 # The python jobs need to be run when:
 # - The ci workflow has changed
@@ -79,16 +69,36 @@ python-jobs:
   - *rust-toolchain
   - *rust-python-binding
 
+#########
+# IONIC #
+#########
 
-# The rust jobs need to watch for:
-# - The change on the rust code.
-# - The change in the dependencies list.
-# - We change the toolchain
-# - We modify the Ci workflow
-rust-jobs:
-  - .github/workflows/ci-rust.yml
-  - *rust-changes
+# TODO: We currently don't test the electron application
+# So we don't have to watch the electron binding (likewise for the client code related to electron)
+# rust-electron-binding: &rust-electron-binding bindings/electron
+# new-client-electron: &new-client-electron: /client/electron
 
+# TODO: We currently don't test the android application
+# So we don't have to watch the android binding (likewise for the client code related to android)
+# rust-android-binding: &rust-android-binding bindings/android
+# new-client-android: &new-client-android: /client/android
+
+# TODO: We currently don't test the ios application
+# So we don't have to watch the client code related to the ios application
+# new-client-ios: &new-client-ios /client/ios
+
+web: &web
+  - client/public/**
+  - client/resources/**
+  - client/src/**
+  - client/tests/**
+
+new-client-dependencies-project: &new-client-dependencies-project
+  - client/*.ts
+  - client/*.json
+  - client/*.js
+  - client/.browserslistrc
+  - client/.env
 
 # The web jobs need to be run when:
 # - The ci workflow has changed
