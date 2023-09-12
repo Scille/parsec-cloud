@@ -490,29 +490,32 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                 await send_signal(conn, BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)
 
     async def archiving_config(
-        self, id: OrganizationID, user: UserID
+        self,
+        id: OrganizationID,
+        user: UserID,
     ) -> list[RealmArchivingStatus]:
         async with self.dbh.pool.acquire() as conn:
             await self._get(conn, id)
-        mapping = await realm_queries.query_get_realms_for_user(conn, id, user)
-        realm_ids = {
-            realm_id: internal_realm_id for (realm_id, (internal_realm_id, _)) in mapping.items()
-        }
-        result = []
-        for (
-            realm_id,
-            configuration,
-            configured_on,
-        ) in await realm_queries.query_get_archiving_configurations(
-            conn,
-            id,
-            realm_ids,
-        ):
-            result.append(
-                RealmArchivingStatus(
-                    realm_id=realm_id,
-                    configured_on=configured_on,
-                    configuration=configuration,
+            mapping = await realm_queries.query_get_realms_for_user(conn, id, user)
+            realm_ids = {
+                realm_id: internal_realm_id
+                for (realm_id, (internal_realm_id, _)) in mapping.items()
+            }
+            result = []
+            for (
+                realm_id,
+                configuration,
+                configured_on,
+            ) in await realm_queries.query_get_archiving_configurations(
+                conn,
+                id,
+                realm_ids,
+            ):
+                result.append(
+                    RealmArchivingStatus(
+                        realm_id=realm_id,
+                        configured_on=configured_on,
+                        configuration=configuration,
+                    )
                 )
-            )
-        return result
+            return result
