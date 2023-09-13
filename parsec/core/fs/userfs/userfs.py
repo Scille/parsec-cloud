@@ -329,7 +329,6 @@ class UserFS:
         )
 
         self._archiving_lock = trio.Lock()
-        self._archiving_configuration_timestamp = self.device.time_provider.now()
         self._archiving_configuration: defaultdict[
             EntryID, tuple[RealmArchivingConfiguration, DateTime | None]
         ] = defaultdict(lambda: (RealmArchivingConfiguration.available(), None))
