@@ -8,6 +8,8 @@ from .common import (
     DateTime,
     DeviceID,
     DeviceLabel,
+    Enum,
+    EnumItemUnit,
     ErrorVariant,
     Handle,
     HumanHandle,
@@ -23,8 +25,6 @@ from .common import (
     UserID,
     UserProfile,
     Variant,
-    Enum,
-    EnumItemUnit,
 )
 from .config import ClientConfig
 from .events import OnClientEventCallback
