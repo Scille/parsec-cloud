@@ -6,7 +6,7 @@ from typing import AsyncContextManager, Callable
 import pytest
 import trio
 
-from parsec._parsec import EntryName, LocalDevice, RealmRole
+from parsec._parsec import CoreEvent, EntryName, LocalDevice, RealmArchivingConfiguration, RealmRole
 from parsec.core.fs.exceptions import FSRemanenceManagerStoppedError
 from parsec.core.logged_core import CoreConfig, LoggedCore, UserFS
 from parsec.core.types import DEFAULT_BLOCK_SIZE
@@ -348,7 +348,7 @@ async def test_remanence_monitor_sharing_updated(
     info = alice_workspace.get_remanence_manager_info()
     assert info.is_prepared
     assert not info.is_running
-    assert info.is_block_remanent
+    assert not info.is_block_remanent
     assert info.total_size == 6
     assert info.local_and_remote_size == 6
     assert info.remote_only_size == 0
@@ -363,7 +363,7 @@ async def test_remanence_monitor_sharing_updated(
     info = alice_workspace.get_remanence_manager_info()
     assert info.is_prepared
     assert not info.is_running
-    assert info.is_block_remanent
+    assert not info.is_block_remanent
     assert info.total_size == 6
     assert info.local_and_remote_size == 6
     assert info.remote_only_size == 0
@@ -382,9 +382,89 @@ async def test_remanence_monitor_sharing_updated(
     info = alice_workspace.get_remanence_manager_info()
     assert info.is_prepared
     assert info.is_running
-    assert info.is_block_remanent
+    assert not info.is_block_remanent
     assert info.total_size == 10
-    assert info.local_and_remote_size == 10
+    assert info.local_and_remote_size == 6
+    assert info.remote_only_size == 4
+
+
+@pytest.fixture
+def allow_instant_deletion(monkeypatch):
+    monkeypatch.setattr(
+        "parsec.backend.realm.RealmConfiguredArchiving.is_valid_archiving_configuration",
+        lambda *args: True,
+    )
+
+
+@pytest.mark.trio
+@customize_fixtures(workspace_storage_cache_size=DEFAULT_BLOCK_SIZE)
+async def test_remanence_monitor_archiving_updated(
+    running_backend,
+    alice_core: LoggedCore,
+    bob_user_fs: UserFS,
+    remanence_monitor_event: trio.Event,
+    monkeypatch,
+    allow_instant_deletion,
+):
+    # Go fast
+    alice_core.device.time_provider.mock_time(speed=1000.0)
+    bob_user_fs.device.time_provider.mock_time(speed=1000.0)
+    monkeypatch.setattr("parsec.utils.BALLPARK_ALWAYS_OK", True)
+
+    # Create a workspace
+    wid = await bob_user_fs.workspace_create(EntryName("w"))
+    bob_workspace = bob_user_fs.get_workspace(wid)
+    await bob_user_fs.workspace_share(wid, alice_core.device.user_id, RealmRole.READER)
+    await bob_user_fs.sync()
+    await alice_core.user_fs.process_last_messages()
+    await alice_core.wait_idle_monitors()
+    alice_workspace = alice_core.user_fs.get_workspace(wid)
+
+    # Wait for the remanence manager to start
+    remanence_monitor_event.set()
+    await alice_workspace.wait_remanence_manager_prepared(wait_for_connection=True)
+
+    # Alice enable workspace remanence
+    await alice_workspace.enable_block_remanence()
+    assert alice_workspace.is_block_remanent()
+
+    # Bob add 3 files
+    await bob_workspace.mkdir("/test/")
+    await bob_workspace.write_bytes("/1.txt", b"a")
+    await bob_workspace.write_bytes("/test/2.txt", b"bc")
+    await bob_workspace.write_bytes("/test/3.txt", b"def")
+    await bob_workspace.sync()
+
+    # Wait for alice to synchronize
+    await alice_core.user_fs.process_last_messages()
+    await alice_core.wait_idle_monitors()
+
+    # Check alice info
+    info = alice_workspace.get_remanence_manager_info()
+    assert info.is_prepared
+    assert info.is_running
+    assert info.is_block_remanent
+    assert info.total_size == 6
+    assert info.local_and_remote_size == 6
+    assert info.remote_only_size == 0
+
+    # Bob delete the workspace
+    now = bob_user_fs.device.time_provider.now()
+    deletion_planned = RealmArchivingConfiguration.deletion_planned(now)
+    with alice_core.event_bus.waiter_on(CoreEvent.ARCHIVING_UPDATED) as waiter:
+        await bob_workspace.configure_archiving(deletion_planned, now=now)
+        await waiter.wait()
+        # Let the event handlers run
+        await trio.sleep(0.01)
+    await alice_core.wait_idle_monitors()
+
+    # Check alice info
+    info = alice_workspace.get_remanence_manager_info()
+    assert info.is_prepared
+    assert not info.is_running
+    assert not info.is_block_remanent
+    assert info.total_size == 6
+    assert info.local_and_remote_size == 6
     assert info.remote_only_size == 0
 
 
