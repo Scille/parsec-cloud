@@ -5,6 +5,8 @@ from typing import Optional
 from .common import (
     DateTime,
     EntryName,
+    Enum,
+    EnumItemUnit,
     ErrorVariant,
     Handle,
     Password,
@@ -13,8 +15,6 @@ from .common import (
     Result,
     UserID,
     Variant,
-    Enum,
-    EnumItemUnit,
 )
 from .config import ClientConfig
 from .events import OnClientEventCallback

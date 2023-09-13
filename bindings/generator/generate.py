@@ -10,7 +10,7 @@ from importlib import import_module
 from inspect import isclass, iscoroutinefunction, isfunction, signature
 from pathlib import Path
 from types import ModuleType
-from typing import Any, List, Tuple, Union, Callable, get_args
+from typing import Any, Callable, List, Tuple, Union, get_args
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
@@ -139,7 +139,7 @@ def pascal_to_snake_case(s: str) -> str:
     for i, c in enumerate(s):
         if c.isupper():
             next_lower = peek_next(i).islower()
-            if next_lower or previous_lower == True:
+            if next_lower or previous_lower:
                 snake += "_"
             previous_lower = False
             snake += c.lower()
