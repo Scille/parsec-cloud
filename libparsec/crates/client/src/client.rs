@@ -41,8 +41,28 @@ impl Debug for Client {
 }
 
 impl Client {
+    pub fn organization_id(&self) -> &OrganizationID {
+        self.device.organization_id()
+    }
+
     pub fn device_id(&self) -> &DeviceID {
         &self.device.device_id
+    }
+
+    pub fn device_label(&self) -> Option<&DeviceLabel> {
+        self.device.device_label.as_ref()
+    }
+
+    pub fn user_id(&self) -> &UserID {
+        self.device.user_id()
+    }
+
+    pub fn human_handle(&self) -> Option<&HumanHandle> {
+        self.device.human_handle.as_ref()
+    }
+
+    pub async fn profile(&self) -> anyhow::Result<UserProfile> {
+        self.certificates_ops.get_current_self_profile().await
     }
 
     pub async fn start(

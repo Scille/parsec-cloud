@@ -12,6 +12,31 @@ use wasm_bindgen::JsCast;
 #[allow(unused_imports)]
 use wasm_bindgen_futures::*;
 
+// UserProfile
+
+#[allow(dead_code)]
+fn enum_user_profile_js_to_rs(raw_value: &str) -> Result<libparsec::UserProfile, JsValue> {
+    match raw_value {
+        "UserProfileAdmin" => Ok(libparsec::UserProfile::Admin),
+        "UserProfileOutsider" => Ok(libparsec::UserProfile::Outsider),
+        "UserProfileStandard" => Ok(libparsec::UserProfile::Standard),
+        _ => {
+            let range_error = RangeError::new("Invalid value for enum UserProfile");
+            range_error.set_cause(&JsValue::from(raw_value));
+            Err(JsValue::from(range_error))
+        }
+    }
+}
+
+#[allow(dead_code)]
+fn enum_user_profile_rs_to_js(value: libparsec::UserProfile) -> &'static str {
+    match value {
+        libparsec::UserProfile::Admin => "UserProfileAdmin",
+        libparsec::UserProfile::Outsider => "UserProfileOutsider",
+        libparsec::UserProfile::Standard => "UserProfileStandard",
+    }
+}
+
 // RealmRole
 
 #[allow(dead_code)]
@@ -36,31 +61,6 @@ fn enum_realm_role_rs_to_js(value: libparsec::RealmRole) -> &'static str {
         libparsec::RealmRole::Manager => "RealmRoleManager",
         libparsec::RealmRole::Owner => "RealmRoleOwner",
         libparsec::RealmRole::Reader => "RealmRoleReader",
-    }
-}
-
-// UserProfile
-
-#[allow(dead_code)]
-fn enum_user_profile_js_to_rs(raw_value: &str) -> Result<libparsec::UserProfile, JsValue> {
-    match raw_value {
-        "UserProfileAdmin" => Ok(libparsec::UserProfile::Admin),
-        "UserProfileOutsider" => Ok(libparsec::UserProfile::Outsider),
-        "UserProfileStandard" => Ok(libparsec::UserProfile::Standard),
-        _ => {
-            let range_error = RangeError::new("Invalid value for enum UserProfile");
-            range_error.set_cause(&JsValue::from(raw_value));
-            Err(JsValue::from(range_error))
-        }
-    }
-}
-
-#[allow(dead_code)]
-fn enum_user_profile_rs_to_js(value: libparsec::UserProfile) -> &'static str {
-    match value {
-        libparsec::UserProfile::Admin => "UserProfileAdmin",
-        libparsec::UserProfile::Outsider => "UserProfileOutsider",
-        libparsec::UserProfile::Standard => "UserProfileStandard",
     }
 }
 
@@ -180,6 +180,59 @@ fn enum_os_rs_to_js(value: libparsec::OS) -> &'static str {
     }
 }
 
+// HumanHandle
+
+#[allow(dead_code)]
+fn struct_human_handle_js_to_rs(obj: JsValue) -> Result<libparsec::HumanHandle, JsValue> {
+    let email = {
+        let js_val = Reflect::get(&obj, &"email".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+    };
+    let label = {
+        let js_val = Reflect::get(&obj, &"label".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+    };
+
+    |email: String, label: String| -> Result<_, String> {
+        libparsec::HumanHandle::new(&email, &label).map_err(|e| e.to_string())
+    }(email, label)
+    .map_err(|e| e.into())
+}
+
+#[allow(dead_code)]
+fn struct_human_handle_rs_to_js(rs_obj: libparsec::HumanHandle) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_email = {
+        let custom_getter = |obj| {
+            fn access(obj: &libparsec::HumanHandle) -> &str {
+                obj.email()
+            }
+            access(obj)
+        };
+        custom_getter(&rs_obj).into()
+    };
+    Reflect::set(&js_obj, &"email".into(), &js_email)?;
+    let js_label = {
+        let custom_getter = |obj| {
+            fn access(obj: &libparsec::HumanHandle) -> &str {
+                obj.label()
+            }
+            access(obj)
+        };
+        custom_getter(&rs_obj).into()
+    };
+    Reflect::set(&js_obj, &"label".into(), &js_label)?;
+    Ok(js_obj)
+}
+
 // ClientConfig
 
 #[allow(dead_code)]
@@ -294,56 +347,106 @@ fn struct_client_config_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsVa
     Ok(js_obj)
 }
 
-// HumanHandle
+// ClientInfo
 
 #[allow(dead_code)]
-fn struct_human_handle_js_to_rs(obj: JsValue) -> Result<libparsec::HumanHandle, JsValue> {
-    let email = {
-        let js_val = Reflect::get(&obj, &"email".into())?;
+fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, JsValue> {
+    let organization_id = {
+        let js_val = Reflect::get(&obj, &"organizationId".into())?;
         js_val
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
             .ok_or_else(|| TypeError::new("Not a string"))?
+            .parse()
+            .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
     };
-    let label = {
-        let js_val = Reflect::get(&obj, &"label".into())?;
+    let device_id = {
+        let js_val = Reflect::get(&obj, &"deviceId".into())?;
         js_val
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
             .ok_or_else(|| TypeError::new("Not a string"))?
+            .parse()
+            .map_err(|_| TypeError::new("Not a valid DeviceID"))?
     };
-
-    |email: String, label: String| -> Result<_, String> {
-        libparsec::HumanHandle::new(&email, &label).map_err(|e| e.to_string())
-    }(email, label)
-    .map_err(|e| e.into())
+    let device_label = {
+        let js_val = Reflect::get(&obj, &"deviceLabel".into())?;
+        if js_val.is_null() {
+            None
+        } else {
+            Some(
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+                    .parse()
+                    .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?,
+            )
+        }
+    };
+    let user_id = {
+        let js_val = Reflect::get(&obj, &"userId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+            .parse()
+            .map_err(|_| TypeError::new("Not a valid UserID"))?
+    };
+    let profile = {
+        let js_val = Reflect::get(&obj, &"profile".into())?;
+        {
+            let raw_string = js_val.as_string().ok_or_else(|| {
+                let type_error = TypeError::new("value is not a string");
+                type_error.set_cause(&js_val);
+                JsValue::from(type_error)
+            })?;
+            enum_user_profile_js_to_rs(raw_string.as_str())
+        }?
+    };
+    let human_handle = {
+        let js_val = Reflect::get(&obj, &"humanHandle".into())?;
+        if js_val.is_null() {
+            None
+        } else {
+            Some(struct_human_handle_js_to_rs(js_val)?)
+        }
+    };
+    Ok(libparsec::ClientInfo {
+        organization_id,
+        device_id,
+        device_label,
+        user_id,
+        profile,
+        human_handle,
+    })
 }
 
 #[allow(dead_code)]
-fn struct_human_handle_rs_to_js(rs_obj: libparsec::HumanHandle) -> Result<JsValue, JsValue> {
+fn struct_client_info_rs_to_js(rs_obj: libparsec::ClientInfo) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_email = {
-        let custom_getter = |obj| {
-            fn access(obj: &libparsec::HumanHandle) -> &str {
-                obj.email()
-            }
-            access(obj)
-        };
-        custom_getter(&rs_obj).into()
+    let js_organization_id = JsValue::from_str(rs_obj.organization_id.as_ref());
+    Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
+    let js_device_id = JsValue::from_str(rs_obj.device_id.as_ref());
+    Reflect::set(&js_obj, &"deviceId".into(), &js_device_id)?;
+    let js_device_label = match rs_obj.device_label {
+        Some(val) => JsValue::from_str(val.as_ref()),
+        None => JsValue::NULL,
     };
-    Reflect::set(&js_obj, &"email".into(), &js_email)?;
-    let js_label = {
-        let custom_getter = |obj| {
-            fn access(obj: &libparsec::HumanHandle) -> &str {
-                obj.label()
-            }
-            access(obj)
-        };
-        custom_getter(&rs_obj).into()
+    Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
+    let js_user_id = JsValue::from_str(rs_obj.user_id.as_ref());
+    Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
+    let js_profile = JsValue::from_str(enum_user_profile_rs_to_js(rs_obj.profile));
+    Reflect::set(&js_obj, &"profile".into(), &js_profile)?;
+    let js_human_handle = match rs_obj.human_handle {
+        Some(val) => struct_human_handle_rs_to_js(val)?,
+        None => JsValue::NULL,
     };
-    Reflect::set(&js_obj, &"label".into(), &js_label)?;
+    Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
     Ok(js_obj)
 }
 
@@ -2256,6 +2359,23 @@ fn variant_client_workspace_share_error_rs_to_js(
     Ok(js_obj)
 }
 
+// ClientInfoError
+
+#[allow(dead_code)]
+fn variant_client_info_error_rs_to_js(
+    rs_obj: libparsec::ClientInfoError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientInfoError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceStorageCacheSize
 
 #[allow(dead_code)]
@@ -3445,6 +3565,31 @@ pub fn clientWorkspaceShare(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_workspace_share_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_info
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientInfo(client: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::client_info(client).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_client_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_info_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

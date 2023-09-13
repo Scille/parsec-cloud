@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 mod create;
+mod error;
 mod merge;
 mod message;
 // mod reencryption;
@@ -8,6 +9,7 @@ mod share;
 mod sync;
 
 pub use create::*;
+pub use error::*;
 pub use message::*;
 // pub use reencryption::*;
 pub use share::*;

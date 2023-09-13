@@ -10,6 +10,12 @@ export type Result<T, E = Error> =
   | { ok: false; error: E }
 
 
+export interface HumanHandle {
+    email: string
+    label: string
+}
+
+
 export interface ClientConfig {
     configDir: string
     dataBaseDir: string
@@ -18,9 +24,13 @@ export interface ClientConfig {
 }
 
 
-export interface HumanHandle {
-    email: string
-    label: string
+export interface ClientInfo {
+    organizationId: string
+    deviceId: string
+    deviceLabel: string | null
+    userId: string
+    profile: UserProfile
+    humanHandle: HumanHandle | null
 }
 
 
@@ -361,6 +371,15 @@ export type ClientWorkspaceShareError =
   | ClientWorkspaceShareErrorUnknownRecipientOrWorkspace
   | ClientWorkspaceShareErrorUnknownWorkspace
   | ClientWorkspaceShareErrorWorkspaceInMaintenance
+
+
+// ClientInfoError
+export interface ClientInfoErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type ClientInfoError =
+  | ClientInfoErrorInternal
 
 
 // WorkspaceStorageCacheSize
@@ -752,6 +771,9 @@ export function clientWorkspaceShare(
     recipient: string,
     role: RealmRole | null
 ): Promise<Result<null, ClientWorkspaceShareError>>
+export function clientInfo(
+    client: number
+): Promise<Result<ClientInfo, ClientInfoError>>
 export function claimerGreeterAbortOperation(
     handle: number
 ): Promise<Result<null, ClaimerGreeterAbortOperationError>>
