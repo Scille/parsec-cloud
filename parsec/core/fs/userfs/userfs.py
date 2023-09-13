@@ -328,6 +328,7 @@ class UserFS:
             self.remote_devices_manager,
         )
 
+        self._archiving_lock = trio.Lock()
         self._archiving_configuration_timestamp = self.device.time_provider.now()
         self._archiving_configuration: defaultdict[
             EntryID, tuple[RealmArchivingConfiguration, DateTime | None]
@@ -1017,76 +1018,81 @@ class UserFS:
             raise FSError(f"Error while trying to set vlob group roles in backend: {rep}")
 
     async def update_archiving_status(self) -> DateTime | None:
-        rep = await self.backend_cmds.archiving_config()
+        async with self._archiving_lock:
+            rep = await self.backend_cmds.archiving_config()
 
-        # Authenticated's archiving_config command has been introduced in API v2.10/3.4
-        # So a cheap trick to keep backward compatibility here is to
-        # stick with the default archiving config (i.e. the realm is available)
-        if isinstance(rep, ArchivingConfigRepUnknownStatus) and rep.status == "unknown_command":
-            return None
+            # Authenticated's archiving_config command has been introduced in API v2.10/3.4
+            # So a cheap trick to keep backward compatibility here is to
+            # stick with the default archiving config (i.e. the realm is available)
+            if isinstance(rep, ArchivingConfigRepUnknownStatus) and rep.status == "unknown_command":
+                return None
 
-        if not isinstance(rep, ArchivingConfigRepOk):
-            raise FSError(f"Error while fetching archiving config: {rep}")
+            if not isinstance(rep, ArchivingConfigRepOk):
+                raise FSError(f"Error while fetching archiving config: {rep}")
 
-        # Take a time reference before sending events
-        old_archiving_configuration_timestamp = self._archiving_configuration_timestamp
-        self._archiving_configuration_timestamp = self.device.time_provider.now()
+            # Take a time reference before sending events
+            old_archiving_configuration_timestamp = self._archiving_configuration_timestamp
+            self._archiving_configuration_timestamp = self.device.time_provider.now()
 
-        # Loop over workspaces
-        for status in rep.archiving_config:
-            workspace_id = EntryID.from_bytes(status.realm_id.bytes)
-            is_deleted = status.configuration.is_deleted(self._archiving_configuration_timestamp)
-            previous_configuration, previous_configured_on = self._archiving_configuration[
-                workspace_id
-            ]
-            previous_is_deleted = previous_configuration.is_deleted(
-                old_archiving_configuration_timestamp
-            )
+            # Loop over workspaces
+            for status in rep.archiving_config:
+                workspace_id = EntryID.from_bytes(status.realm_id.bytes)
+                is_deleted = status.configuration.is_deleted(
+                    self._archiving_configuration_timestamp
+                )
+                previous_configuration, previous_configured_on = self._archiving_configuration[
+                    workspace_id
+                ]
+                previous_is_deleted = previous_configuration.is_deleted(
+                    old_archiving_configuration_timestamp
+                )
 
-            # Compare previous and current state
-            # Note that the deletion status is also compared in order to send
-            # `ARCHIVING_UPDATED` event when the deletion date of a workspace
-            # is reached.
-            previous_state = (
-                previous_configuration,
-                previous_configured_on,
-                previous_is_deleted,
-            )
-            current_state = (
-                status.configuration,
-                status.configured_on,
-                is_deleted,
-            )
-            if previous_state == current_state:
-                continue
+                # Compare previous and current state
+                # Note that the deletion status is also compared in order to send
+                # `ARCHIVING_UPDATED` event when the deletion date of a workspace
+                # is reached.
+                previous_state = (
+                    previous_configuration,
+                    previous_configured_on,
+                    previous_is_deleted,
+                )
+                current_state = (
+                    status.configuration,
+                    status.configured_on,
+                    is_deleted,
+                )
+                if previous_state == current_state:
+                    continue
 
-            # Update state and send events
-            self._archiving_configuration[workspace_id] = (
-                status.configuration,
-                status.configured_on,
-            )
-            # Note: `is_deleted` is provided as part of the event
-            # in order to avoid issues with non-monotonic clocks
-            self.event_bus.send(
-                CoreEvent.ARCHIVING_UPDATED,
-                workspace_id=workspace_id,
-                configuration=status.configuration,
-                configured_on=status.configured_on,
-                is_deleted=is_deleted,
-            )
+                # Update state and send events
+                self._archiving_configuration[workspace_id] = (
+                    status.configuration,
+                    status.configured_on,
+                )
+                # Note: `is_deleted` is provided as part of the event
+                # in order to avoid issues with non-monotonic clocks
+                self.event_bus.send(
+                    CoreEvent.ARCHIVING_UPDATED,
+                    workspace_id=workspace_id,
+                    configuration=status.configuration,
+                    configured_on=status.configured_on,
+                    is_deleted=is_deleted,
+                )
 
-        # Find next deletion date
-        result: DateTime | None = None
-        for configuration, _ in self._archiving_configuration.values():
-            if not configuration.is_deletion_planned():
-                continue
-            if configuration.is_deleted(self._archiving_configuration_timestamp):
-                continue
-            if result is None:
-                result = configuration.deletion_date
-            else:
-                result = min(result, configuration.deletion_date)
-        return result
+            # Find next deletion date so the monitor can call `update_archiving_status`
+            # when this date is met. This allow for sending `ARCHIVING_UPDATED` events
+            # when a workspace status becomes `deleted`.
+            result: DateTime | None = None
+            for configuration, _ in self._archiving_configuration.values():
+                if not configuration.is_deletion_planned():
+                    continue
+                if configuration.is_deleted(self._archiving_configuration_timestamp):
+                    continue
+                if result is None:
+                    result = configuration.deletion_date
+                else:
+                    result = min(result, configuration.deletion_date)
+            return result
 
     async def process_last_messages(self) -> Sequence[Tuple[int, Exception]]:
         """
