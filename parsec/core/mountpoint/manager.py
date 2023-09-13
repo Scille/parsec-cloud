@@ -257,7 +257,7 @@ class MountpointManager:
             raise MountpointAlreadyMounted(f"Workspace `{workspace_id.hex}` already mounted.")
 
         if (workspace_id, timestamp) in self._mounting_events:
-            raise MountpointAlreadyMounted(f"Workspace `{workspace_id.hex}` is beening mounted.")
+            raise MountpointAlreadyMounted(f"Workspace `{workspace_id.hex}` is being mounted.")
 
         # Set a mounting event to prevent race conditions
         mounting = trio.Event()
