@@ -57,7 +57,7 @@ jobs:
           NEED_CHECK_python: ${{ github.ref == 'refs/heads/master' || steps.changes.outputs.python-jobs == 'true' }}
           # Basically we want to only check the python code style when we modify a file that ins't related to the parsec server (e.g.: bindings/generator/generate.py)
           # Thus don't require to run the python test.
-          NEED_CHECK_python_style_only: ${{ steps.changes.outputs.python-jobs == 'false' || steps.changes.outputs.any-python-files == 'true' }}
+          NEED_CHECK_python_style_only: ${{ steps.changes.outputs.python-jobs == 'false' && steps.changes.outputs.any-python-files == 'true' }}
 
   # Github PR merging is configured to only require this job to pass
   ci-is-happy:
