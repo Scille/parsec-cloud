@@ -16,14 +16,14 @@ describe('Password Input', () => {
 
   it('should emit a signal when input changes', async () => {
     const ionInput = wrapper.findComponent(IonInput);
-    ionInput.vm.$emit('ionInput', {target: {value: 'P@ssw0rd'}});
+    ionInput.vm.$emit('ionInput', {target: {value: 'P@ssw0rd.'}});
     expect(wrapper.emitted('change')?.length).to.equal(1);
-    expect(wrapper.emitted('change')?.at(0)).to.have.same.members(['P@ssw0rd']);
+    expect(wrapper.emitted('change')?.at(0)).to.have.same.members(['P@ssw0rd.']);
   });
 
   it('should emit enter when Enter key is pressed', async () => {
     // Setting a value
-    (wrapper.vm as any).passwordRef = 'P@ssw0rd';
+    (wrapper.vm as any).passwordRef = 'P@ssw0rd.';
     const ionInput = wrapper.findComponent(IonInput);
     await ionInput.trigger('keyup.enter');
     expect(wrapper.emitted('enter')?.length).to.equal(1);

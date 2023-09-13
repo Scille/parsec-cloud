@@ -85,7 +85,10 @@ export async function login(device: AvailableDevice, password: string): Promise<
     return await libparsec.clientStart(clientConfig, parsecEventCallback, strategy);
   } else {
     return new Promise<Result<Handle, ClientStartError>>((resolve, _reject) => {
-      resolve({ok: true, value: DEFAULT_HANDLE });
+      if (password === 'P@ssw0rd.' || password === 'AVeryL0ngP@ssw0rd') {
+        resolve({ok: true, value: DEFAULT_HANDLE });
+      }
+      resolve({ok: false, error: {tag: 'LoadDeviceDecryptionFailed', error: 'WrongPassword'}});
     });
   }
 }

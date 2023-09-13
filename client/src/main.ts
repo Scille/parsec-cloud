@@ -45,8 +45,6 @@ async function setupApp(): Promise<void> {
   const storageManager = new StorageManager();
   await storageManager.create();
 
-  const notificationCenter = new NotificationCenter();
-
   const config = await storageManager.retrieveConfig();
 
   /* I18n variables */
@@ -100,6 +98,9 @@ async function setupApp(): Promise<void> {
       },
     },
   });
+
+  const {t} = i18n.global;
+  const notificationCenter = new NotificationCenter(t);
 
   const app = createApp(App)
     .use(IonicVue, {

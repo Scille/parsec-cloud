@@ -3,7 +3,7 @@
 describe('Check workspace sharing modal', () => {
   beforeEach(() => {
     cy.visitApp();
-    cy.login('Boby', 'P@ssw0rd');
+    cy.login('Boby', 'P@ssw0rd.');
     cy.get('.card').eq(1).find('.shared-group').click();
     cy.get('.workspace-sharing-modal').find('ion-title').contains('Share this workspace');
   });

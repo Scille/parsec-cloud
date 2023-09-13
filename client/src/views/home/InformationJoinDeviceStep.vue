@@ -1,10 +1,9 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ms-informative-text
-    :icon="caretForward"
-    :text="$t('ClaimDeviceModal.subtitles.claimDevice')"
-  />
+  <ms-informative-text>
+    {{ $t('ClaimDeviceModal.subtitles.claimDevice') }}
+  </ms-informative-text>
   <div class="info-device">
     <div class="content">
       <img

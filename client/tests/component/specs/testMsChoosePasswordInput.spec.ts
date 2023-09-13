@@ -19,14 +19,14 @@ describe('Choose password', () => {
     expect(await wrapper.vm.areFieldsCorrect()).to.be.false;
 
     const ionInputs = wrapper.findAllComponents(IonInput);
-    ionInputs[0].vm.$emit('ionInput', {target: {value: 'P@ssw0rd'}});
-    expect(wrapper.vm.password).to.equal('P@ssw0rd');
+    ionInputs[0].vm.$emit('ionInput', {target: {value: 'P@ssw0rd.'}});
+    expect(wrapper.vm.password).to.equal('P@ssw0rd.');
 
     // Confirmation is not filled, not valid
     expect(await wrapper.vm.areFieldsCorrect()).to.be.false;
 
-    ionInputs[1].vm.$emit('ionInput', {target: {value: 'P@ssw0rd'}});
-    expect(wrapper.vm.passwordConfirm).to.equal('P@ssw0rd');
+    ionInputs[1].vm.$emit('ionInput', {target: {value: 'P@ssw0rd.'}});
+    expect(wrapper.vm.passwordConfirm).to.equal('P@ssw0rd.');
 
     // P@ssw0rd is not strong enough
     expect(await wrapper.vm.areFieldsCorrect()).to.be.false;

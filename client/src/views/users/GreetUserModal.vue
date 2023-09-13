@@ -48,14 +48,12 @@
           v-show="pageStep === GreetUserStep.WaitForGuest"
           class="step"
         >
-          <ms-informative-text
-            :icon="caretForward"
-            :text="$t('UsersPage.greet.subtitles.waitForGuest1')"
-          />
-          <ms-informative-text
-            :icon="caretForward"
-            :text="$t('UsersPage.greet.subtitles.waitForGuest2')"
-          />
+          <ms-informative-text>
+            {{ $t('UsersPage.greet.subtitles.waitForGuest1') }}
+          </ms-informative-text>
+          <ms-informative-text>
+            {{ $t('UsersPage.greet.subtitles.waitForGuest2') }}
+          </ms-informative-text>
         </div>
 
         <!-- give code step -->
@@ -84,10 +82,9 @@
           v-show="pageStep === GreetUserStep.WaitForGuestInfo"
           class="step"
         >
-          <ms-informative-text
-            :text="$t('UsersPage.greet.subtitles.getUserInfo')"
-            :icon="caretForward"
-          />
+          <ms-informative-text>
+            {{ $t('UsersPage.greet.subtitles.getUserInfo') }}
+          </ms-informative-text>
         </div>
 
         <!-- Check guest info step -->
@@ -213,7 +210,7 @@ import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
+import { MsModalResult } from '@/components/core/ms-types';
 import { Profile } from '@/common/mocks';
 import * as Parsec from '@/common/parsec';
 

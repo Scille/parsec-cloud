@@ -93,7 +93,7 @@ import MsGridListToggle from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import { DisplayState } from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import { isAdmin } from '@/common/permissions';
 import { useI18n } from 'vue-i18n';
-import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
+import { MsModalResult } from '@/components/core/ms-types';
 import { createAlert } from '@/components/core/ms-alert/MsAlertConfirmation';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
 import InvitationCard from '@/components/users/InvitationCard.vue';

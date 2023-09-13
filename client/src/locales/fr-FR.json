@@ -52,6 +52,10 @@
             "joinByLink": "Rejoindre par lien",
             "joinByQRcode": "Rejoindre par QR code"
         },
+        "loginNotification": {
+            "title": "Impossible de se connecter !",
+            "message": "Le mot de passe est incorrect !"
+        },
         "noDevices": "Vous n'avez pas d'appareils sur ce téléphone.",
         "howToAddDevices": "Pour ajouter un appareil, invitez-le depuis une organisation existante, ou créez une nouvelle organisation.",
         "pleaseConnectToAnOrganization": "Bienvenue. Veuillez ajouter une organisation pour commencer à utiliser Parsec.",
@@ -521,5 +525,8 @@
         "fixes": "Corrections",
         "misc": "Divers",
         "title": "Journal des modifications"
+    },
+    "Notification": {
+        "nextButton": "Okay !"
     }
 }

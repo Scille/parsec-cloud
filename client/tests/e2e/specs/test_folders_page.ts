@@ -3,7 +3,7 @@
 describe('Check folders page', () => {
   beforeEach(() => {
     cy.visitApp();
-    cy.login('Boby', 'P@ssw0rd');
+    cy.login('Boby', 'P@ssw0rd.');
     cy.get('.workspaces-grid-item').first().click();
   });
 

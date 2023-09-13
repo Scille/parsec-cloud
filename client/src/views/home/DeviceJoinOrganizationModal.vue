@@ -90,8 +90,9 @@
         >
           <ms-informative-text
             :icon="checkmarkCircle"
-            :text="$t('ClaimDeviceModal.subtitles.done')"
-          />
+          >
+            {{ $t('ClaimDeviceModal.subtitles.done') }}
+          </ms-informative-text>
         </div>
       </div>
       <!-- the buttons must be only enabled if all fields are filled in -->
@@ -157,7 +158,7 @@ import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import { AvailableDevice, DeviceFileType } from '@/plugins/libparsec';
-import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
+import { MsModalResult } from '@/components/core/ms-types';
 import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
 import { asyncComputed } from '@/common/asyncComputed';
 

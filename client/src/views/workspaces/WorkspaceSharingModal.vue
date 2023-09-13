@@ -41,7 +41,7 @@ import {
 } from '@ionic/vue';
 import { ref, watch, onUnmounted, onMounted } from 'vue';
 import { getWorkspaceSharingInfo, WorkspaceRole, WorkspaceID } from '@/common/mocks';
-import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
+import { MsModalResult } from '@/components/core/ms-types';
 
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';

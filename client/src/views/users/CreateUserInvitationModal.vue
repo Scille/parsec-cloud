@@ -30,7 +30,7 @@ import {
 import { ref } from 'vue';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
-import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
+import { MsModalResult } from '@/components/core/ms-types';
 import { emailValidator, Validity } from '@/common/validators';
 import { asyncComputed } from '@/common/asyncComputed';
 

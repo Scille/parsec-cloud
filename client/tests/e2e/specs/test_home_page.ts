@@ -26,16 +26,30 @@ describe('Check organization list', () => {
     cy.get('.organization-list-row__col').should('have.length', 5);
   });
 
-  it('Go to login page and enter password', () => {
+  it('Go to login page and enter wrong password', () => {
     cy.contains('Boby McBobFace').click();
     cy.get('.login-button-container > ion-button').should('have.class', 'button-disabled');
     cy.get('#ms-password-input').find('input').invoke('attr', 'type').should('eq', 'password');
-    cy.get('#ms-password-input').find('input').type('P@ssw0rd');
+    cy.get('#ms-password-input').find('input').type('Wr0ngP@ssw0rd.');
     cy.get('.login-button-container > ion-button').should('not.have.class', 'button-disabled');
     cy.get('.login-button-container > ion-button').click();
     cy.get('@configPath').then(($elem) => {
       const orgId = ($elem as unknown as string).split('/').slice(-1)[0];
-      cy.get('@consoleLog').should('have.been.calledWith', `Log in to ${orgId} with password "P@ssw0rd"`);
+      cy.get('@consoleLog').should('have.been.calledWith', `Log in to ${orgId} with password 'Wr0ngP@ssw0rd.'`);
+    });
+    cy.contains('Could not login!');
+  });
+
+  it('Go to login page and enter password', () => {
+    cy.contains('Boby McBobFace').click();
+    cy.get('.login-button-container > ion-button').should('have.class', 'button-disabled');
+    cy.get('#ms-password-input').find('input').invoke('attr', 'type').should('eq', 'password');
+    cy.get('#ms-password-input').find('input').type('P@ssw0rd.');
+    cy.get('.login-button-container > ion-button').should('not.have.class', 'button-disabled');
+    cy.get('.login-button-container > ion-button').click();
+    cy.get('@configPath').then(($elem) => {
+      const orgId = ($elem as unknown as string).split('/').slice(-1)[0];
+      cy.get('@consoleLog').should('have.been.calledWith', `Log in to ${orgId} with password 'P@ssw0rd.'`);
     });
     cy.contains('My workspaces');
   });
@@ -76,12 +90,12 @@ describe('Check organization list', () => {
 
   it('Log into organization with command', () => {
     // Uses Cypress command to simplify the log in part
-    cy.login('Boby', 'P@ssw0rd');
+    cy.login('Boby', 'P@ssw0rd.');
     cy.contains('My workspaces');
   });
 
   it('Log out', () => {
-    cy.login('Boby', 'P@ssw0rd');
+    cy.login('Boby', 'P@ssw0rd.');
     cy.contains('My workspaces');
     cy.get('#profile-button').click();
     cy.get('.popover-viewport').contains('Log out').click();
