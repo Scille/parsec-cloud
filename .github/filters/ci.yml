@@ -14,6 +14,8 @@ rust-python-binding: &rust-python-binding server/src/**
 
 rust-web-binding: &rust-web-binding bindings/web/**
 
+rust-platform-crates: &rust-platform-crates libparsec/crates/platform_*/**
+
 rust-changes: &rust-changes
   - *rust-dependencies-workspace
   - *rust-libparsec
