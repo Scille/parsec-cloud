@@ -2,7 +2,19 @@ name: CI Rust
 
 on:
   workflow_call:
+    inputs:
+      run-wasm-tests:
+        description: Run wasm test
+        required: true
+        default: false
+        type: boolean
   workflow_dispatch:
+    inputs:
+      run-wasm-tests:
+        description: Run wasm test
+        required: true
+        default: false
+        type: boolean
 
 # We set `concurrency` to prevent having this workflow being run on code that is not up-to-date on a PR (a user make multiple push in a quick manner).
 # But on the main branch, we don't want that behavior.
@@ -109,6 +121,7 @@ jobs:
           RUST_LOG: debug
 
       - name: Test platform-async on wasm
+        if: inputs.run-wasm-tests
         run: wasm-pack test --headless --firefox libparsec/crates/platform_async
         timeout-minutes: 10
 

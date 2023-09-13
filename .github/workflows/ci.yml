@@ -30,6 +30,7 @@ jobs:
       rust: ${{ steps.need-check.outputs.rust }}
       python: ${{ steps.need-check.outputs.python }}
       python-style-only: ${{ steps.need-check.outputs.python_style_only }}
+      rust-platform-crates: ${{ steps.need-check.outputs.rust_platform_crates }}
       web: ${{ steps.need-check.outputs.web }}
     steps:
       - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # pin v4.0.0
@@ -58,6 +59,7 @@ jobs:
           # Basically we want to only check the python code style when we modify a file that ins't related to the parsec server (e.g.: bindings/generator/generate.py)
           # Thus don't require to run the python test.
           NEED_CHECK_python_style_only: ${{ steps.changes.outputs.python-jobs == 'false' && steps.changes.outputs.any-python-files == 'true' }}
+          NEED_CHECK_rust_platform_crates: ${{ steps.changes.outputs.rust-platform-crates == 'true' }}
 
   # Github PR merging is configured to only require this job to pass
   ci-is-happy:
@@ -80,7 +82,7 @@ jobs:
           import os
           import json
 
-          NOT_A_JOB = ('python-style-only',)
+          NOT_A_JOB = ('python-style-only', 'rust-platform-crates')
 
           data = json.loads(os.environ["NEEDS"])
 
@@ -186,6 +188,8 @@ jobs:
       - dispatch
     if: needs.dispatch.outputs.rust == 'true'
     uses: ./.github/workflows/ci-rust.yml
+    with:
+      run-wasm-tests: ${{ needs.dispatch.outputs.rust-platform-crates == 'true'}}
 
   web:
     needs:
