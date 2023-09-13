@@ -142,6 +142,17 @@ async def query_update_roles(
     recipient_message: bytes | None,
     now: DateTime,
 ) -> None:
+    # TODO: Concurrency is not managed here.
+    # It would be pointless to use a `FOR UPDATE` when getting the current roles
+    # since it would lock a row that remains unchanged during the transaction, since updating
+    # the a role merely inserts a new row. Plus, we also rely on information from other
+    # tables such as `realm_archiving`, so it's even more complicated to properly lock
+    # information. For instance, having `query_update_archiving` and `query_update_roles`
+    # both locking rows in different tables might end up in a deadlock if the `FOR UPDATE`
+    # locks are not applied with care. A simpler solution might be to use a dedicated lock
+    # for all transactions involving certificates for a given realm (or, for a given
+    # organization).
+
     assert new_role.granted_by is not None
     if new_role.granted_by.user_id == new_role.user_id:
         raise RealmAccessError("Cannot modify our own role")

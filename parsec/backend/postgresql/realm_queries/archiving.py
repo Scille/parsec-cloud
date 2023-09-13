@@ -187,6 +187,17 @@ async def query_update_archiving(
     realm_id = archiving_configuration_request.realm_id
     user_id = archiving_configuration_request.configured_by.user_id
 
+    # TODO: Concurrency is not managed here.
+    # It would be pointless to use a `FOR UPDATE` when getting the archiving configuration
+    # since it would lock a row that remains unchanged during the transaction, since updating
+    # the archiving merely inserts a new row. Plus, we also rely on information from other
+    # tables such as `realm_user_roles`, so it's even more complicated to properly lock
+    # information. For instance, having `query_update_archiving` and `query_update_roles`
+    # both locking rows in different tables might end up in a deadlock if the `FOR UPDATE`
+    # locks are not applied with care. A simpler solution might be to use a dedicated lock
+    # for all transactions involving certificates for a given realm (or, for a given
+    # organization).
+
     # 1. Check that the realm exist
     rep = await conn.fetchrow(
         *_q_check_realm_exist(organization_id=organization_id.str, realm_id=realm_id)
