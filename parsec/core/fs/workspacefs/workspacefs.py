@@ -295,12 +295,16 @@ class WorkspaceFS:
         return configuration.is_archived()
 
     def is_deletion_planned(self) -> DateTime | None:
+        # Note that `is_deleted` and `is_deletion_planned` might both be true
+        # More specifically, `is_deleted` implies `is_deletion_planned`
         configuration, _ = self.get_archiving_configuration()
         if not configuration.is_deletion_planned():
             return None
         return configuration.deletion_date
 
     def is_deleted(self) -> bool:
+        # Note that `is_deleted` and `is_deletion_planned` might both be true
+        # More specifically, `is_deleted` implies `is_deletion_planned`
         configuration, _ = self.get_archiving_configuration()
         return configuration.is_deleted(self.device.time_provider.now())
 

@@ -101,12 +101,16 @@ class Realm:
         return last_configured_archiving.configuration.is_archived()
 
     def is_deletion_planned(self) -> bool:
+        # Note that `is_deleted` and `is_deletion_planned` might both be true
+        # More specifically, `is_deleted` implies `is_deletion_planned`
         last_configured_archiving = self.get_current_configured_archiving()
         if last_configured_archiving is None:
             return False
         return last_configured_archiving.configuration.is_deletion_planned()
 
     def is_deleted(self, now: DateTime) -> bool:
+        # Note that `is_deleted` and `is_deletion_planned` might both be true
+        # More specifically, `is_deleted` implies `is_deletion_planned`
         last_configured_archiving = self.get_current_configured_archiving()
         if last_configured_archiving is None:
             return False
