@@ -4,16 +4,22 @@ from typing import Optional
 
 from .common import (
     DateTime,
+    DeviceID,
+    DeviceLabel,
     EntryName,
     Enum,
     EnumItemUnit,
     ErrorVariant,
     Handle,
+    HumanHandle,
+    OrganizationID,
     Password,
     Path,
     RealmID,
     Result,
+    Structure,
     UserID,
+    UserProfile,
     Variant,
 )
 from .config import ClientConfig
@@ -148,4 +154,24 @@ async def client_workspace_share(
     recipient: UserID,
     role: Optional[RealmRole],
 ) -> Result[None, ClientWorkspaceShareError]:
+    raise NotImplementedError
+
+
+class ClientInfoError(ErrorVariant):
+    class Internal:
+        pass
+
+
+class ClientInfo(Structure):
+    organization_id: OrganizationID
+    device_id: DeviceID
+    device_label: Optional[DeviceLabel]
+    user_id: UserID
+    profile: UserProfile
+    human_handle: Optional[HumanHandle]
+
+
+async def client_info(
+    client: Handle,
+) -> Result[ClientInfo, ClientInfoError,]:
     raise NotImplementedError

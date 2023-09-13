@@ -147,4 +147,8 @@ impl CertificatesOps {
             Err(err @ storage::GetCertificateError::Internal(_)) => Err(err.into()),
         }
     }
+
+    pub async fn get_current_self_profile(&self) -> anyhow::Result<UserProfile> {
+        self.storage.write().await.get_current_self_profile().await
+    }
 }

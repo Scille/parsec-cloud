@@ -8,17 +8,17 @@ export type Result<T, E = Error> =
   | { ok: true; value: T }
   | { ok: false; error: E }
 
+export enum UserProfile {
+    Admin = 'UserProfileAdmin',
+    Outsider = 'UserProfileOutsider',
+    Standard = 'UserProfileStandard',
+}
+
 export enum RealmRole {
     Contributor = 'RealmRoleContributor',
     Manager = 'RealmRoleManager',
     Owner = 'RealmRoleOwner',
     Reader = 'RealmRoleReader',
-}
-
-export enum UserProfile {
-    Admin = 'UserProfileAdmin',
-    Outsider = 'UserProfileOutsider',
-    Standard = 'UserProfileStandard',
 }
 
 export enum DeviceFileType {
@@ -53,17 +53,22 @@ export type BackendOrganizationAddr = string
 export type BackendOrganizationBootstrapAddr = string
 export type BackendInvitationAddr = string
 export type DateTime = string
+export type DeviceID = string
+export type DeviceLabel = string
 export type EntryName = string
 export type Password = string
 export type Path = string
 export type RealmID = string
 export type UserID = string
-export type DeviceID = string
-export type DeviceLabel = string
 export type SASCode = string
 export type SequesterVerifyKeyDer = Uint8Array
 export type Handle = number
 export type CacheSize = number
+
+export interface HumanHandle {
+    email: string
+    label: string
+}
 
 export interface ClientConfig {
     configDir: Path
@@ -72,9 +77,13 @@ export interface ClientConfig {
     workspaceStorageCacheSize: WorkspaceStorageCacheSize
 }
 
-export interface HumanHandle {
-    email: string
-    label: string
+export interface ClientInfo {
+    organizationId: OrganizationID
+    deviceId: DeviceID
+    deviceLabel: DeviceLabel | null
+    userId: UserID
+    profile: UserProfile
+    humanHandle: HumanHandle | null
 }
 
 export interface AvailableDevice {
@@ -386,6 +395,14 @@ export type ClientWorkspaceShareError =
   | ClientWorkspaceShareErrorUnknownRecipientOrWorkspace
   | ClientWorkspaceShareErrorUnknownWorkspace
   | ClientWorkspaceShareErrorWorkspaceInMaintenance
+
+// ClientInfoError
+export interface ClientInfoErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export type ClientInfoError =
+  | ClientInfoErrorInternal
 
 // WorkspaceStorageCacheSize
 export interface WorkspaceStorageCacheSizeCustom {
@@ -762,6 +779,9 @@ export interface LibParsecPlugin {
         recipient: UserID,
         role: RealmRole | null
     ): Promise<Result<null, ClientWorkspaceShareError>>
+    clientInfo(
+        client: number
+    ): Promise<Result<ClientInfo, ClientInfoError>>
     claimerGreeterAbortOperation(
         handle: number
     ): Promise<Result<null, ClaimerGreeterAbortOperationError>>

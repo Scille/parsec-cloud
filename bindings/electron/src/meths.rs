@@ -7,6 +7,30 @@
 #[allow(unused_imports)]
 use neon::{prelude::*, types::buffer::TypedArray};
 
+// UserProfile
+
+#[allow(dead_code)]
+fn enum_user_profile_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    raw_value: &str,
+) -> NeonResult<libparsec::UserProfile> {
+    match raw_value {
+        "UserProfileAdmin" => Ok(libparsec::UserProfile::Admin),
+        "UserProfileOutsider" => Ok(libparsec::UserProfile::Outsider),
+        "UserProfileStandard" => Ok(libparsec::UserProfile::Standard),
+        _ => cx.throw_range_error(format!("Invalid value `{raw_value}` for enum UserProfile")),
+    }
+}
+
+#[allow(dead_code)]
+fn enum_user_profile_rs_to_js(value: libparsec::UserProfile) -> &'static str {
+    match value {
+        libparsec::UserProfile::Admin => "UserProfileAdmin",
+        libparsec::UserProfile::Outsider => "UserProfileOutsider",
+        libparsec::UserProfile::Standard => "UserProfileStandard",
+    }
+}
+
 // RealmRole
 
 #[allow(dead_code)]
@@ -30,30 +54,6 @@ fn enum_realm_role_rs_to_js(value: libparsec::RealmRole) -> &'static str {
         libparsec::RealmRole::Manager => "RealmRoleManager",
         libparsec::RealmRole::Owner => "RealmRoleOwner",
         libparsec::RealmRole::Reader => "RealmRoleReader",
-    }
-}
-
-// UserProfile
-
-#[allow(dead_code)]
-fn enum_user_profile_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    raw_value: &str,
-) -> NeonResult<libparsec::UserProfile> {
-    match raw_value {
-        "UserProfileAdmin" => Ok(libparsec::UserProfile::Admin),
-        "UserProfileOutsider" => Ok(libparsec::UserProfile::Outsider),
-        "UserProfileStandard" => Ok(libparsec::UserProfile::Standard),
-        _ => cx.throw_range_error(format!("Invalid value `{raw_value}` for enum UserProfile")),
-    }
-}
-
-#[allow(dead_code)]
-fn enum_user_profile_rs_to_js(value: libparsec::UserProfile) -> &'static str {
-    match value {
-        libparsec::UserProfile::Admin => "UserProfileAdmin",
-        libparsec::UserProfile::Outsider => "UserProfileOutsider",
-        libparsec::UserProfile::Standard => "UserProfileStandard",
     }
 }
 
@@ -168,6 +168,57 @@ fn enum_os_rs_to_js(value: libparsec::OS) -> &'static str {
     }
 }
 
+// HumanHandle
+
+#[allow(dead_code)]
+fn struct_human_handle_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::HumanHandle> {
+    let email = {
+        let js_val: Handle<JsString> = obj.get(cx, "email")?;
+        js_val.value(cx)
+    };
+    let label = {
+        let js_val: Handle<JsString> = obj.get(cx, "label")?;
+        js_val.value(cx)
+    };
+
+    |email: String, label: String| -> Result<_, String> {
+        libparsec::HumanHandle::new(&email, &label).map_err(|e| e.to_string())
+    }(email, label)
+    .or_else(|e| cx.throw_error(e))
+}
+
+#[allow(dead_code)]
+fn struct_human_handle_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::HumanHandle,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_email = {
+        let custom_getter = |obj| {
+            fn access(obj: &libparsec::HumanHandle) -> &str {
+                obj.email()
+            }
+            access(obj)
+        };
+        JsString::try_new(cx, custom_getter(&rs_obj)).or_throw(cx)?
+    };
+    js_obj.set(cx, "email", js_email)?;
+    let js_label = {
+        let custom_getter = |obj| {
+            fn access(obj: &libparsec::HumanHandle) -> &str {
+                obj.label()
+            }
+            access(obj)
+        };
+        JsString::try_new(cx, custom_getter(&rs_obj)).or_throw(cx)?
+    };
+    js_obj.set(cx, "label", js_label)?;
+    Ok(js_obj)
+}
+
 // ClientConfig
 
 #[allow(dead_code)]
@@ -275,54 +326,109 @@ fn struct_client_config_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// HumanHandle
+// ClientInfo
 
 #[allow(dead_code)]
-fn struct_human_handle_js_to_rs<'a>(
+fn struct_client_info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::HumanHandle> {
-    let email = {
-        let js_val: Handle<JsString> = obj.get(cx, "email")?;
-        js_val.value(cx)
+) -> NeonResult<libparsec::ClientInfo> {
+    let organization_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
+        {
+            match js_val.value(cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
     };
-    let label = {
-        let js_val: Handle<JsString> = obj.get(cx, "label")?;
-        js_val.value(cx)
+    let device_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "deviceId")?;
+        {
+            match js_val.value(cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
     };
-
-    |email: String, label: String| -> Result<_, String> {
-        libparsec::HumanHandle::new(&email, &label).map_err(|e| e.to_string())
-    }(email, label)
-    .or_else(|e| cx.throw_error(e))
+    let device_label = {
+        let js_val: Handle<JsValue> = obj.get(cx, "deviceLabel")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                Some({
+                    match js_val.value(cx).parse() {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                })
+            }
+        }
+    };
+    let user_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "userId")?;
+        {
+            match js_val.value(cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let profile = {
+        let js_val: Handle<JsString> = obj.get(cx, "profile")?;
+        {
+            let js_string = js_val.value(cx);
+            enum_user_profile_js_to_rs(cx, js_string.as_str())?
+        }
+    };
+    let human_handle = {
+        let js_val: Handle<JsValue> = obj.get(cx, "humanHandle")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
+                Some(struct_human_handle_js_to_rs(cx, js_val)?)
+            }
+        }
+    };
+    Ok(libparsec::ClientInfo {
+        organization_id,
+        device_id,
+        device_label,
+        user_id,
+        profile,
+        human_handle,
+    })
 }
 
 #[allow(dead_code)]
-fn struct_human_handle_rs_to_js<'a>(
+fn struct_client_info_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::HumanHandle,
+    rs_obj: libparsec::ClientInfo,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
-    let js_email = {
-        let custom_getter = |obj| {
-            fn access(obj: &libparsec::HumanHandle) -> &str {
-                obj.email()
-            }
-            access(obj)
-        };
-        JsString::try_new(cx, custom_getter(&rs_obj)).or_throw(cx)?
+    let js_organization_id = JsString::try_new(cx, rs_obj.organization_id).or_throw(cx)?;
+    js_obj.set(cx, "organizationId", js_organization_id)?;
+    let js_device_id = JsString::try_new(cx, rs_obj.device_id).or_throw(cx)?;
+    js_obj.set(cx, "deviceId", js_device_id)?;
+    let js_device_label = match rs_obj.device_label {
+        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
     };
-    js_obj.set(cx, "email", js_email)?;
-    let js_label = {
-        let custom_getter = |obj| {
-            fn access(obj: &libparsec::HumanHandle) -> &str {
-                obj.label()
-            }
-            access(obj)
-        };
-        JsString::try_new(cx, custom_getter(&rs_obj)).or_throw(cx)?
+    js_obj.set(cx, "deviceLabel", js_device_label)?;
+    let js_user_id = JsString::try_new(cx, rs_obj.user_id).or_throw(cx)?;
+    js_obj.set(cx, "userId", js_user_id)?;
+    let js_profile =
+        JsString::try_new(cx, enum_user_profile_rs_to_js(rs_obj.profile)).or_throw(cx)?;
+    js_obj.set(cx, "profile", js_profile)?;
+    let js_human_handle = match rs_obj.human_handle {
+        Some(elem) => struct_human_handle_rs_to_js(cx, elem)?.as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
     };
-    js_obj.set(cx, "label", js_label)?;
+    js_obj.set(cx, "humanHandle", js_human_handle)?;
     Ok(js_obj)
 }
 
@@ -2116,6 +2222,25 @@ fn variant_client_workspace_share_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ClientInfoError
+
+#[allow(dead_code)]
+fn variant_client_info_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientInfoError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientInfoError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceStorageCacheSize
 
 #[allow(dead_code)]
@@ -3540,6 +3665,54 @@ fn client_workspace_share(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err = variant_client_workspace_share_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_info
+fn client_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_info(client).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_client_info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_client_info_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -5689,6 +5862,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("clientWorkspaceCreate", client_workspace_create)?;
     cx.export_function("clientWorkspaceRename", client_workspace_rename)?;
     cx.export_function("clientWorkspaceShare", client_workspace_share)?;
+    cx.export_function("clientInfo", client_info)?;
     cx.export_function(
         "claimerGreeterAbortOperation",
         claimer_greeter_abort_operation,

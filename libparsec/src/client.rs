@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 pub use libparsec_client::user_ops::{
-    WorkspaceRenameError as ClientWorkspaceRenameError,
+    ClientInfoError, WorkspaceRenameError as ClientWorkspaceRenameError,
     WorkspaceShareError as ClientWorkspaceShareError,
 };
 use libparsec_types::prelude::*;
@@ -91,7 +91,7 @@ pub enum ClientStopError {
 
 pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
     let (client, events_plugged) = take_and_close_handle(client, |x| match x {
-        crate::handle::HandleItem::Client(client) => Some(client),
+        HandleItem::Client(client) => Some(client),
         _ => None,
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
@@ -119,7 +119,7 @@ pub async fn client_list_workspaces(
     client: Handle,
 ) -> Result<Vec<(RealmID, EntryName)>, ClientListWorkspacesError> {
     let client = borrow_from_handle(client, |x| match x {
-        crate::handle::HandleItem::Client((client, _)) => Some(client.clone()),
+        HandleItem::Client((client, _)) => Some(client.clone()),
         _ => None,
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
@@ -142,7 +142,7 @@ pub async fn client_workspace_create(
     name: EntryName,
 ) -> Result<RealmID, ClientWorkspaceCreateError> {
     let client = borrow_from_handle(client, |x| match x {
-        crate::handle::HandleItem::Client((client, _)) => Some(client.clone()),
+        HandleItem::Client((client, _)) => Some(client.clone()),
         _ => None,
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
@@ -164,7 +164,7 @@ pub async fn client_workspace_rename(
     new_name: EntryName,
 ) -> Result<(), ClientWorkspaceRenameError> {
     let client = borrow_from_handle(client, |x| match x {
-        crate::handle::HandleItem::Client((client, _)) => Some(client.clone()),
+        HandleItem::Client((client, _)) => Some(client.clone()),
         _ => None,
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
@@ -183,7 +183,7 @@ pub async fn client_workspace_share(
     role: Option<RealmRole>,
 ) -> Result<(), ClientWorkspaceShareError> {
     let client = borrow_from_handle(client, |x| match x {
-        crate::handle::HandleItem::Client((client, _)) => Some(client.clone()),
+        HandleItem::Client((client, _)) => Some(client.clone()),
         _ => None,
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
@@ -192,4 +192,30 @@ pub async fn client_workspace_share(
         .user_ops
         .workspace_share(realm_id, &recipient, role)
         .await
+}
+
+pub struct ClientInfo {
+    pub organization_id: OrganizationID,
+    pub device_id: DeviceID,
+    pub device_label: Option<DeviceLabel>,
+    pub user_id: UserID,
+    pub profile: UserProfile,
+    pub human_handle: Option<HumanHandle>,
+}
+
+pub async fn client_info(client: Handle) -> Result<ClientInfo, ClientInfoError> {
+    let client = borrow_from_handle(client, |x| match x {
+        HandleItem::Client((client, _)) => Some(client.clone()),
+        _ => None,
+    })
+    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+
+    Ok(ClientInfo {
+        organization_id: client.organization_id().clone(),
+        device_id: client.device_id().clone(),
+        device_label: client.device_label().cloned(),
+        user_id: client.user_id().clone(),
+        profile: client.profile().await?,
+        human_handle: client.human_handle().cloned(),
+    })
 }
