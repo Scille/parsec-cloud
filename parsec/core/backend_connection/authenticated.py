@@ -10,6 +10,7 @@ from typing import (
     AsyncIterator,
     Awaitable,
     Callable,
+    Iterator,
     List,
     Protocol,
     TypeVar,
@@ -350,8 +351,9 @@ class BackendAuthenticatedConn:
         return self._cmds
 
     @property
-    def all_monitors_task_statuses(self) -> list[MonitorTaskStatus]:
-        return self._prioritized_monitors_task_statuses + self._monitors_task_statuses
+    def all_monitors_task_statuses(self) -> Iterator[MonitorTaskStatus]:
+        yield from self._prioritized_monitors_task_statuses
+        yield from self._monitors_task_statuses
 
     async def set_status(
         self, status: BackendConnStatus, status_exc: Exception | None = None
