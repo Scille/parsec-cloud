@@ -88,7 +88,7 @@ impl CoreEvent {
             CoreEvent::MountpointTrioDeadlockError => "mountpoint.trio_deadlock_error",
             CoreEvent::PkiEnrollmentsUpdated => "pki_enrollment.updated",
             CoreEvent::SharingUpdated => "sharing.updated",
-            CoreEvent::ArchivingUpdated => "sharing.updated",
+            CoreEvent::ArchivingUpdated => "archiving.updated",
             CoreEvent::UserfsSyncRejectedBySequesterService => {
                 "userfs.sync_refused_by_sequester_service"
             }
