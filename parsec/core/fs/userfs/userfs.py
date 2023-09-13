@@ -368,6 +368,7 @@ class UserFS:
                 # In particular, we want to make sure that any workspace available through
                 # `userfs.get_user_manifest().workspaces` is also available through
                 # `userfs.get_workspace(workspace_id)`.
+                # That includes workspaces without role and deleted workspaces.
                 for workspace_entry in self.get_user_manifest().workspaces:
                     await self._load_workspace(workspace_entry.id)
 
@@ -388,20 +389,30 @@ class UserFS:
             raise ValueError("Storage not set")
         return self.storage.get_user_manifest()
 
-    def get_available_workspace_entries(self) -> list[WorkspaceEntry]:
-        """
-        Raises: ValueError
-        """
+    def get_all_workspace_entries(self) -> tuple[list[WorkspaceEntry], list[WorkspaceEntry]]:
         user_manifest = self.get_user_manifest()
-        result = []
+        available_entries = []
+        unavailable_entries = []
         for workspace_entry in user_manifest.workspaces:
+            try:
+                workspace = self.get_workspace(workspace_entry.id)
+            except FSWorkspaceNotFoundError:
+                continue
             if workspace_entry.role is None:
-                continue
-            workspace = self.get_workspace(workspace_entry.id)
-            if workspace.is_deleted():
-                continue
-            result.append(workspace_entry)
-        return result
+                unavailable_entries.append(workspace_entry)
+            elif workspace.is_deleted():
+                unavailable_entries.append(workspace_entry)
+            else:
+                available_entries.append(workspace_entry)
+        return available_entries, unavailable_entries
+
+    def get_available_workspace_entries(self) -> list[WorkspaceEntry]:
+        available_entries, _ = self.get_all_workspace_entries()
+        return available_entries
+
+    def get_unavailable_workspace_entries(self) -> list[WorkspaceEntry]:
+        _, unavailable_entries = self.get_all_workspace_entries()
+        return unavailable_entries
 
     async def set_user_manifest(self, manifest: LocalUserManifest) -> None:
         if self.storage is None:
@@ -410,8 +421,9 @@ class UserFS:
         # Make sure all the workspaces are loaded
         # In particular, we want to make sure that any workspace available through
         # `userfs.get_user_manifest().workspaces` is also available through
-        # `userfs.get_workspace(workspace_id)`. Note that the loading operation
-        # is idempotent, so workspaces do not get reloaded.
+        # `userfs.get_workspace(workspace_id)`.
+        # That includes workspaces without role and deleted workspaces.
+        # Note that the loading operation is idempotent, so workspaces do not get reloaded.
         for workspace_entry in manifest.workspaces:
             await self._load_workspace(workspace_entry.id)
 
@@ -495,6 +507,7 @@ class UserFS:
         # UserFS provides the guarantee that any workspace available through
         # `userfs.get_user_manifest().workspaces` is also available in
         # `self._workspaces`.
+        # That includes workspaces without role and deleted workspaces.
         try:
             workspace = self._workspaces[workspace_id]
         except KeyError:

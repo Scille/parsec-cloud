@@ -431,8 +431,8 @@ async def monitor_sync(
         configured_on: DateTime | None,
         is_deleted: bool,
     ) -> None:
-        # If role have changed we have to reset the sync context given
-        # behavior could have changed a lot (e.g. switching to/from read-only)
+        # If archiving configuration have changed we have to reset the sync context
+        # given behavior could have changed a lot (e.g. switching to/from read-only)
         ctxs.discard(workspace_id)
         if not is_deleted:
             ctx = ctxs.get(workspace_id)

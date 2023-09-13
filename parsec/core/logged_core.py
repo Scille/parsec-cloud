@@ -129,7 +129,8 @@ class LoggedCore:
         return self._backend_conn.status_exc
 
     def find_workspace_from_name(self, workspace_name: EntryName) -> WorkspaceEntry:
-        for workspace in self.user_fs.get_user_manifest().workspaces:
+        # Note: it does not include deleted workspaces
+        for workspace in self.user_fs.get_available_workspace_entries():
             if workspace_name == workspace.name:
                 return workspace
         raise FSWorkspaceNotFoundError(f"Unknown workspace {workspace_name.str}")
