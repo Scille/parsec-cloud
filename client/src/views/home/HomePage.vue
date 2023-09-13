@@ -237,7 +237,9 @@ import { useRouter } from 'vue-router';
 import HomePagePopover from '@/views/home/HomePagePopover.vue';
 import SettingsModal from '@/views/settings/SettingsModal.vue';
 import { Formatters, FormattersKey, StorageManagerKey } from '@/common/injectionKeys';
-import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
+import { MsModalResult } from '@/components/core/ms-types';
+import { NotificationKey } from '@/common/injectionKeys';
+import { NotificationCenter, NotificationLevel, Notification } from '@/services/notificationCenter';
 import { getAppVersion } from '@/common/mocks';
 import AboutModal from '@/views/about/AboutModal.vue';
 import * as Parsec from '@/common/parsec';
@@ -255,6 +257,7 @@ const sortByAsc = ref(true);
 const { timeSince } = inject(FormattersKey)! as Formatters;
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const storageManager: StorageManager = inject(StorageManagerKey)!;
+const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 const isPopoverOpen = ref(false);
 
 const msSelectOptions: MsSelectOption[] = [
@@ -343,16 +346,20 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
   } else {
     storedDeviceDataDict.value[device.slug].lastLogin = DateTime.now();
   }
-  console.log(`Log in to ${device.organizationId} with password "${password}"`);
+  console.log(`Log in to ${device.organizationId} with password '${password}'`);
   await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));
-
-  showOrganizationList.value = true;
 
   const result = await Parsec.login(device, password);
   if (result.ok) {
+    showOrganizationList.value = true;
     router.push({ name: 'workspaces', params: {handle: result.value}});
   } else {
-    console.log('Could not login', result.error);
+    const notification = new Notification({
+      title: t('HomePage.loginNotification.title'),
+      message: t('HomePage.loginNotification.message'),
+      level: NotificationLevel.Error,
+    });
+    notificationCenter.showModal({notification});
   }
 }
 

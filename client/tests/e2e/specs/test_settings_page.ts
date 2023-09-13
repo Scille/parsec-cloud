@@ -3,7 +3,7 @@
 describe('Check settings page', () => {
   beforeEach(() => {
     cy.visitApp('coolorg');
-    cy.login('Boby', 'P@ssw0rd');
+    cy.login('Boby', 'P@ssw0rd.');
     cy.get('#profile-button').click();
     cy.get('.popover-viewport').contains('Settings').click();
   });

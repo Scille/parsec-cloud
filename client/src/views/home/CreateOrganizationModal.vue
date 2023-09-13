@@ -107,10 +107,9 @@
           class="step orga-created"
           v-show="pageStep === CreateOrganizationStep.FinishStep"
         >
-          <ms-informative-text
-            :icon="caretForward"
-            :text="$t('CreateOrganization.organizationCreated')"
-          />
+          <ms-informative-text>
+            {{ $t('CreateOrganization.organizationCreated') }}
+          </ms-informative-text>
         </div>
       </div>
       <!-- the buttons must be only enabled if all fields are filled in -->
@@ -195,7 +194,7 @@ import { OrgInfo } from '@/views/home/SummaryStep.vue';
 import MsSpinner from '@/components/core/ms-spinner/MsSpinner.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
 import { AvailableDevice } from '@/plugins/libparsec';
-import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
+import { MsModalResult } from '@/components/core/ms-types';
 import { organizationValidator, Validity } from '@/common/validators';
 import * as Parsec from '@/common/parsec';
 import { asyncComputed } from '@/common/asyncComputed';

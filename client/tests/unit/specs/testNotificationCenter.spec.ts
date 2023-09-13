@@ -7,11 +7,22 @@ import {
 } from '@/services/notificationCenter';
 import { vi } from 'vitest';
 import { DateTime } from 'luxon';
+import { modalController } from '@ionic/vue';
 
 describe('Notification Center', () => {
+  // mock ComposerTranslation
+  function t(key: string): string {
+    const map = new Map<string, string>([
+      ['Notification.nextButton', 'nextButton'],
+    ]);
+    return map.get(key) as string;
+  }
   let NOTIFS: MsNotification[];
+  let center: NotificationCenter;
 
   beforeEach(() => {
+    center = new NotificationCenter(t);
+
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2000, 1, 1));
     vi.mock('uuid', () => {
@@ -19,6 +30,9 @@ describe('Notification Center', () => {
       v4.mockReturnValue('1234');
       return { v4 };
     });
+    center._createAndPresentModal = vi.fn();
+    const mockModalControllerDismiss = vi.spyOn(modalController, 'dismiss');
+    mockModalControllerDismiss.mockReturnValue(new Promise(vi.fn()));
 
     NOTIFS = [
       {
@@ -53,11 +67,12 @@ describe('Notification Center', () => {
   });
 
   afterEach(() => {
+    center.clear();
     vi.useRealTimers();
   });
 
   it('Check initial state', async () => {
-    const center = new NotificationCenter();
+    const center = new NotificationCenter(t);
 
     expect(center.notifications).to.deep.equal([]);
     expect(center.getNotifications()).to.deep.equal([]);
@@ -65,17 +80,15 @@ describe('Notification Center', () => {
   });
 
   it('Adds notification to list', async () => {
-    const center = new NotificationCenter();
-
     expect(center.notifications).to.deep.equal([]);
-    center.showModal('A', 'B', NotificationLevel.Warning, true, false);
+    center.showModal({notification: NOTIFS[0], addToList: true});
     expect(center.getNotifications()).to.deep.equal(NOTIFS.slice(0, 1));
     expect(center.hasUnreadNotifications()).to.be.true;
 
-    center.showSnackbar('D', NotificationLevel.Info, true, false, {'key': 'value'});
+    center.showSnackbar({notification: NOTIFS[1], addToList: true});
     expect(center.getNotifications()).to.deep.equal(NOTIFS.slice(0, 2));
 
-    center.addToList('E', 'F', NotificationLevel.Error, false);
+    center.addToList(NOTIFS[2]);
     expect(center.getNotifications()).to.deep.equal(NOTIFS);
 
     center.clear();
@@ -84,26 +97,22 @@ describe('Notification Center', () => {
   });
 
   it('Do not add notification to list', async () => {
-    const center = new NotificationCenter();
-
     expect(center.notifications).to.deep.equal([]);
-    center.showModal('A', 'B', NotificationLevel.Warning, false, false);
+    center.showModal({notification: NOTIFS[0]});
     expect(center.getNotifications()).to.deep.equal([]);
     expect(center.hasUnreadNotifications()).to.be.false;
 
-    center.showSnackbar('D', NotificationLevel.Info, false, false, {'key': 'value'});
+    center.showSnackbar({notification: NOTIFS[1]});
     expect(center.getNotifications()).to.deep.equal([]);
 
-    center.addToList('E', 'F', NotificationLevel.Error, false);
+    center.addToList(NOTIFS[2]);
     expect(center.getNotifications()).to.deep.equal(NOTIFS.slice(2, 3));
     expect(center.hasUnreadNotifications()).to.be.true;
   });
 
   it('Mark as read', async () => {
-    const center = new NotificationCenter();
-
     expect(center.hasUnreadNotifications()).to.be.false;
-    center.showModal('A', 'B', NotificationLevel.Warning, true, false);
+    center.showModal({notification: NOTIFS[0], addToList: true});
     expect(center.hasUnreadNotifications()).to.be.true;
     center.markAsRead('1234', true);
     expect(center.hasUnreadNotifications()).to.be.false;

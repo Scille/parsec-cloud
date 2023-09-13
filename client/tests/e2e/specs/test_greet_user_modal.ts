@@ -6,7 +6,7 @@ describe('Greet user into an organization', () => {
 
   beforeEach(() => {
     cy.visitApp();
-    cy.login('Boby', 'P@ssw0rd');
+    cy.login('Boby', 'P@ssw0rd.');
     cy.get('.organization-card__manageBtn').click();
     cy.get('.user-menu__item').eq(2).click();
   });

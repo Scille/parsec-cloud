@@ -58,23 +58,22 @@
           class="step orga-name"
         >
           <div class="orga-name-content">
-            <ms-informative-text
-              :icon="caretForward"
-              :text="$t('JoinOrganization.instructions.start.first')"
-            />
+            <ms-informative-text>
+              {{ $t('JoinOrganization.instructions.start.first') }}
+            </ms-informative-text>
             <ms-informative-text
               v-if="!claimer.greeter"
-              :icon="caretForward"
-              :text="$t('JoinOrganization.instructions.start.second')"
-            />
+            >
+              {{ $t('JoinOrganization.instructions.start.second') }}
+            </ms-informative-text>
             <ms-informative-text
               v-if="claimer.greeter"
-              :icon="caretForward"
-              :text="$t(
+            >
+              {{ $t(
                 'JoinOrganization.instructions.start.greeter',
                 {greeter: claimer.greeter.label, greeterEmail: claimer.greeter.email}
-              )"
-            />
+              ) }}
+            </ms-informative-text>
           </div>
         </div>
 
@@ -126,14 +125,12 @@
           v-show="pageStep === UserJoinOrganizationStep.Finish"
           class="step"
         >
-          <ms-informative-text
-            :icon="caretForward"
-            :text="$t('JoinOrganization.instructions.finish.first')"
-          />
-          <ms-informative-text
-            :icon="caretForward"
-            :text="$t('JoinOrganization.instructions.finish.second')"
-          />
+          <ms-informative-text>
+            {{ $t('JoinOrganization.instructions.finish.first') }}
+          </ms-informative-text>
+          <ms-informative-text>
+            {{ $t('JoinOrganization.instructions.finish.second') }}
+          </ms-informative-text>
         </div>
       </div>
       <!-- the buttons must be only enabled if all fields are filled in -->
@@ -199,10 +196,10 @@ import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
-import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
+import { MsModalResult } from '@/components/core/ms-types';
 import * as Parsec from '@/common/parsec';
 import { NotificationKey } from '@/common/injectionKeys';
-import { NotificationCenter, NotificationLevel } from '@/services/notificationCenter';
+import { Notification, NotificationCenter, NotificationLevel } from '@/services/notificationCenter';
 import { asyncComputed } from '@/common/asyncComputed';
 
 enum UserJoinOrganizationStep {
@@ -343,12 +340,11 @@ async function nextStep(): Promise<void> {
       return;
     }
   } else if (pageStep.value === UserJoinOrganizationStep.Finish) {
-    notificationCenter.showSnackbar(
-      t('JoinOrganization.successMessage'),
-      NotificationLevel.Success,
-      false,
-      true,
-    );
+    const notification = new Notification({
+      message: t('JoinOrganization.successMessage'),
+      level: NotificationLevel.Success,
+    });
+    notificationCenter.showSnackbar({notification, trace: true});
     await modalController.dismiss({ device: claimer.value.device, password: passwordPage.value.password }, MsModalResult.Confirm);
     return;
   }

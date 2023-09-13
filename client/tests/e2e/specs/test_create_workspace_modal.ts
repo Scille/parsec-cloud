@@ -3,7 +3,7 @@
 describe('Check create workspace modal', () => {
   beforeEach(() => {
     cy.visitApp();
-    cy.login('Boby', 'P@ssw0rd');
+    cy.login('Boby', 'P@ssw0rd.');
   });
 
   afterEach(() => {

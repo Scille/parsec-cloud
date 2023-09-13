@@ -27,7 +27,7 @@ import { ref } from 'vue';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { Validity, claimLinkValidator } from '@/common/validators';
 import { modalController } from '@ionic/vue';
-import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
+import { MsModalResult } from '@/components/core/ms-types';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
 import { asyncComputed } from '@/common/asyncComputed';
 
