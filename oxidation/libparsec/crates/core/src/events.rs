@@ -43,6 +43,7 @@ pub enum CoreEvent {
     PkiEnrollmentsUpdated,
     SharingUpdated,
     ArchivingUpdated,
+    ArchivingNextDeletionDate,
 
     // Userfs
     UserfsSyncRejectedBySequesterService,
@@ -89,6 +90,7 @@ impl CoreEvent {
             CoreEvent::PkiEnrollmentsUpdated => "pki_enrollment.updated",
             CoreEvent::SharingUpdated => "sharing.updated",
             CoreEvent::ArchivingUpdated => "archiving.updated",
+            CoreEvent::ArchivingNextDeletionDate => "archiving.next_deletion_date",
             CoreEvent::UserfsSyncRejectedBySequesterService => {
                 "userfs.sync_refused_by_sequester_service"
             }

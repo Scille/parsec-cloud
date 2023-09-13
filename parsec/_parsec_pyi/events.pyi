@@ -40,6 +40,7 @@ class CoreEvent:
     SHARING_UPDATED: CoreEvent
     USERFS_UPDATED: CoreEvent
     ARCHIVING_UPDATED: CoreEvent
+    ARCHIVING_NEXT_DELETION_DATE: CoreEvent
     # Pki enrollment
     PKI_ENROLLMENTS_UPDATED: CoreEvent
     # Invite

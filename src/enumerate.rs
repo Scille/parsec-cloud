@@ -380,6 +380,11 @@ crate::binding_utils::impl_enum_field!(
         libparsec::core::CoreEvent::ArchivingUpdated
     ],
     [
+        "ARCHIVING_NEXT_DELETION_DATE",
+        archiving_next_deletion_date,
+        libparsec::core::CoreEvent::ArchivingNextDeletionDate
+    ],
+    [
         "USERFS_UPDATED",
         userfs_updated,
         libparsec::core::CoreEvent::UserfsUpdated

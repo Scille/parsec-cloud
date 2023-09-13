@@ -153,3 +153,11 @@ def remanence_monitor_event(monkeypatch) -> trio.Event:
         "parsec.core.remanence_monitor.freeze_remanence_monitor_mockpoint", mockpoint
     )
     return event
+
+
+@pytest.fixture
+def allow_instant_deletion(monkeypatch):
+    monkeypatch.setattr(
+        "parsec.backend.realm.RealmConfiguredArchiving.is_valid_archiving_configuration",
+        lambda *args: True,
+    )

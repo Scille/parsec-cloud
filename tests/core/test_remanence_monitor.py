@@ -10,7 +10,7 @@ from parsec._parsec import CoreEvent, EntryName, LocalDevice, RealmArchivingConf
 from parsec.core.fs.exceptions import FSRemanenceManagerStoppedError
 from parsec.core.logged_core import CoreConfig, LoggedCore, UserFS
 from parsec.core.types import DEFAULT_BLOCK_SIZE
-from tests.common import RunningBackend, customize_fixtures
+from tests.common import RunningBackend, customize_fixtures, real_clock_timeout
 
 
 @pytest.mark.trio
@@ -388,14 +388,6 @@ async def test_remanence_monitor_sharing_updated(
     assert info.remote_only_size == 4
 
 
-@pytest.fixture
-def allow_instant_deletion(monkeypatch):
-    monkeypatch.setattr(
-        "parsec.backend.realm.RealmConfiguredArchiving.is_valid_archiving_configuration",
-        lambda *args: True,
-    )
-
-
 @pytest.mark.trio
 @customize_fixtures(workspace_storage_cache_size=DEFAULT_BLOCK_SIZE)
 async def test_remanence_monitor_archiving_updated(
@@ -454,9 +446,16 @@ async def test_remanence_monitor_archiving_updated(
     with alice_core.event_bus.waiter_on(CoreEvent.ARCHIVING_UPDATED) as waiter:
         await bob_workspace.configure_archiving(deletion_planned, now=now)
         await waiter.wait()
-        # Let the event handlers run
-        await trio.sleep(0.01)
-    await alice_core.wait_idle_monitors()
+
+    # Actively wait for the remanence manager to stop
+    async with real_clock_timeout():
+        while alice_workspace.get_remanence_manager_info().is_running:
+            await trio.sleep(0)
+
+    # Actively wait for the block remanence to be disabled
+    async with real_clock_timeout():
+        while alice_workspace.get_remanence_manager_info().is_block_remanent:
+            await trio.sleep(0)
 
     # Check alice info
     info = alice_workspace.get_remanence_manager_info()

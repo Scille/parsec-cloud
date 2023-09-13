@@ -111,26 +111,30 @@ class WorkspaceFS:
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
         get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry | None]],
-        get_archiving_configuration: Callable[
-            [], tuple[RealmArchivingConfiguration, DateTime | None]
-        ],
         device: LocalDevice,
         local_storage: AnyWorkspaceStorage,
         backend_cmds: BackendAuthenticatedCmds | RsBackendAuthenticatedCmds,
         event_bus: EventBus,
         remote_devices_manager: RemoteDevicesManager,
-        preferred_language: str = "en",
+        preferred_language: str,
+        archiving_configuration: RealmArchivingConfiguration,
+        archiving_configured_on: DateTime | None,
     ):
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
         self.get_previous_workspace_entry = get_previous_workspace_entry
-        self.get_archiving_configuration = get_archiving_configuration
         self.device = device
         self.local_storage = local_storage
         self.backend_cmds = backend_cmds
         self.event_bus = event_bus
         self.preferred_language = preferred_language
         self.sync_locks: dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
+
+        # Archiving attributes
+        self._archiving_configuration = archiving_configuration
+        self._archiving_configured_on = archiving_configured_on
+        self._archiving_configuration_timestamp = self.device.time_provider.now()
+
         self.remote_loader = RemoteLoader(
             self.device,
             self.workspace_id,
@@ -176,9 +180,6 @@ class WorkspaceFS:
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
         get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry | None]],
-        get_archiving_configuration: Callable[
-            [], tuple[RealmArchivingConfiguration, DateTime | None]
-        ],
         device: LocalDevice,
         backend_cmds: BackendAuthenticatedCmds | RsBackendAuthenticatedCmds,
         event_bus: EventBus,
@@ -186,6 +187,8 @@ class WorkspaceFS:
         workspace_storage_cache_size: int,
         prevent_sync_pattern: Regex,
         preferred_language: str = "en",
+        archiving_configuration: RealmArchivingConfiguration = RealmArchivingConfiguration.available(),
+        archiving_configured_on: DateTime | None = None,
     ) -> AsyncIterator[WorkspaceFS]:
         async with WorkspaceStorage.run(
             data_base_dir=data_base_dir,
@@ -199,13 +202,14 @@ class WorkspaceFS:
                 workspace_id=workspace_id,
                 get_workspace_entry=get_workspace_entry,
                 get_previous_workspace_entry=get_previous_workspace_entry,
-                get_archiving_configuration=get_archiving_configuration,
                 device=device,
                 local_storage=workspace_storage,
                 backend_cmds=backend_cmds,
                 event_bus=event_bus,
                 remote_devices_manager=remote_devices_manager,
                 preferred_language=preferred_language,
+                archiving_configured_on=archiving_configured_on,
+                archiving_configuration=archiving_configuration,
             )
 
             # Connect the remanence manager
@@ -290,23 +294,23 @@ class WorkspaceFS:
     def is_revoked(self) -> bool:
         return self.get_workspace_entry().role is None
 
+    def get_archiving_configuration(self) -> tuple[RealmArchivingConfiguration, DateTime | None]:
+        return (self._archiving_configuration, self._archiving_configured_on)
+
     def is_archived(self) -> bool:
-        configuration, _ = self.get_archiving_configuration()
-        return configuration.is_archived()
+        return self._archiving_configuration.is_archived()
 
     def is_deletion_planned(self) -> DateTime | None:
         # Note that `is_deleted` and `is_deletion_planned` might both be true
         # More specifically, `is_deleted` implies `is_deletion_planned`
-        configuration, _ = self.get_archiving_configuration()
-        if not configuration.is_deletion_planned():
+        if not self._archiving_configuration.is_deletion_planned():
             return None
-        return configuration.deletion_date
+        return self._archiving_configuration.deletion_date
 
     def is_deleted(self) -> bool:
         # Note that `is_deleted` and `is_deletion_planned` might both be true
         # More specifically, `is_deleted` implies `is_deletion_planned`
-        configuration, _ = self.get_archiving_configuration()
-        return configuration.is_deleted(self.device.time_provider.now())
+        return self._archiving_configuration.is_deleted(self.device.time_provider.now())
 
     async def path_info(self, path: AnyPath) -> dict[str, object]:
         """
@@ -468,6 +472,80 @@ class WorkspaceFS:
             )
         if not isinstance(rep, RealmUpdateArchivingRepOk):
             raise FSRemoteOperationError(str(rep))
+
+        next_deletion_date = self.acknowledge_archiving_configuration(configuration, timestamp)
+        if next_deletion_date is not None:
+            self.event_bus.send(
+                CoreEvent.ARCHIVING_NEXT_DELETION_DATE,
+                workspace_id=self.workspace_id,
+                next_deletion_date=next_deletion_date,
+            )
+
+    def acknowledge_archiving_configuration(
+        self,
+        configuration: RealmArchivingConfiguration,
+        configured_on: DateTime | None,
+    ) -> DateTime | None:
+        # This configuration is older than the one we currently have
+        if (
+            self._archiving_configured_on is not None
+            and configured_on is not None
+            and self._archiving_configured_on > configured_on
+        ):
+            # Return next deletion date if any
+            if (
+                not self._archiving_configuration.is_deletion_planned()
+                or self._archiving_configuration.is_deleted(self._archiving_configuration_timestamp)
+            ):
+                return None
+            return configuration.deletion_date
+
+        # First save the previous state
+        previous_archiving_configuration = self._archiving_configuration
+        previous_archiving_configured_on = self._archiving_configured_on
+        previous_archiving_configuration_timestamp = self._archiving_configuration_timestamp
+
+        # Then set the attributes
+        self._archiving_configuration = configuration
+        self._archiving_configured_on = configured_on
+        self._archiving_configuration_timestamp = self.device.time_provider.now()
+
+        # Get is_deleted status
+        previous_is_deleted = previous_archiving_configuration.is_deleted(
+            previous_archiving_configuration_timestamp
+        )
+        is_deleted = configuration.is_deleted(self._archiving_configuration_timestamp)
+
+        # Compare previous and current state
+        # Note that the deletion status is also compared in order to send
+        # `ARCHIVING_UPDATED` event when the deletion date of a workspace
+        # is reached.
+        previous_state = (
+            previous_archiving_configuration,
+            previous_archiving_configured_on,
+            previous_is_deleted,
+        )
+        current_state = (
+            configuration,
+            configured_on,
+            is_deleted,
+        )
+
+        if previous_state != current_state:
+            # Note: `is_deleted` is provided as part of the event
+            # in order to avoid issues with non-monotonic clocks
+            self.event_bus.send(
+                CoreEvent.ARCHIVING_UPDATED,
+                workspace_id=self.workspace_id,
+                configuration=self._archiving_configuration,
+                configured_on=self._archiving_configured_on,
+                is_deleted=is_deleted,
+            )
+
+        # Return next deletion date if any
+        if not configuration.is_deletion_planned() or is_deleted:
+            return None
+        return configuration.deletion_date
 
     # Versioning
 

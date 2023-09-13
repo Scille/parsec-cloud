@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, cast
 
 import trio
 
-from parsec._parsec import CoreEvent
+from parsec._parsec import CoreEvent, DateTime, EntryID
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.fs import FSBackendOfflineError
 from parsec.core.fs.userfs import UserFS
@@ -26,11 +26,50 @@ async def freeze_archiving_monitor_mockpoint() -> None:
 async def monitor_archiving(
     user_fs: UserFS, event_bus: EventBus, task_status: MonitorTaskStatus
 ) -> None:
-    wakeup = trio.Event()
+    next_deletion = None
+    update_sleep_scope = trio.CancelScope()
+    interrupt_sleep_scope = trio.CancelScope()
+
+    def _update_next_deletion(next_deletion_date: DateTime | None) -> None:
+        nonlocal next_deletion
+        if next_deletion_date is None:
+            return
+        if next_deletion is None:
+            next_deletion = next_deletion_date
+        else:
+            next_deletion = min(next_deletion, next_deletion_date)
+        update_sleep_scope.cancel()
+
+    async def _wait_until_next_deletion() -> None:
+        nonlocal interrupt_sleep_scope, update_sleep_scope, next_deletion
+        try:
+            with interrupt_sleep_scope:
+                while True:
+                    delta = (
+                        max(0.0, next_deletion - user_fs.device.time_provider.now())
+                        if next_deletion is not None
+                        else inf
+                    )
+                    with trio.CancelScope() as update_sleep_scope:
+                        await user_fs.device.time_provider.sleep(delta)
+                    if update_sleep_scope.cancelled_caught:
+                        continue
+                    next_deletion = None
+                    return
+        finally:
+            interrupt_sleep_scope = trio.CancelScope()
 
     def _on_archiving_or_roles_updated(event: CoreEvent, **kwargs: object) -> None:
-        nonlocal wakeup
-        wakeup.set()
+        interrupt_sleep_scope.cancel()
+        # Don't wait for the *actual* awakening to change the status to
+        # avoid having a period of time when the awakening is scheduled but
+        # not yet notified to task_status
+        task_status.awake()
+
+    def _on_archiving_next_deletion_date(
+        event: CoreEvent, workspace_id: EntryID, next_deletion_date: DateTime
+    ) -> None:
+        _update_next_deletion(next_deletion_date)
         # Don't wait for the *actual* awakening to change the status to
         # avoid having a period of time when the awakening is scheduled but
         # not yet notified to task_status
@@ -45,22 +84,19 @@ async def monitor_archiving(
             CoreEvent.BACKEND_REALM_ROLES_UPDATED,
             cast(EventCallback, _on_archiving_or_roles_updated),
         ),
+        (
+            CoreEvent.ARCHIVING_NEXT_DELETION_DATE,
+            cast(EventCallback, _on_archiving_next_deletion_date),
+        ),
     ):
         try:
-            next_deletion = await user_fs.update_archiving_status()
+            _update_next_deletion(await user_fs.update_archiving_status())
             task_status.started()
             while True:
                 task_status.idle()
-                delta = (
-                    max(0.0, next_deletion - user_fs.device.time_provider.now())
-                    if next_deletion is not None
-                    else inf
-                )
-                with trio.move_on_after(delta):
-                    await wakeup.wait()
-                wakeup = trio.Event()
+                await _wait_until_next_deletion()
                 await freeze_archiving_monitor_mockpoint()
-                next_deletion = await user_fs.update_archiving_status()
+                _update_next_deletion(await user_fs.update_archiving_status())
 
         except FSBackendOfflineError as exc:
             raise BackendNotAvailable from exc

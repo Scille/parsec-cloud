@@ -86,18 +86,37 @@ async def alice_core(
 
 
 @pytest.fixture
-async def alice2_core(
+async def alice2_core_factory(
     core_config,
     fixtures_customization,
     initialize_local_user_manifest,
     core_factory: CoreFactory,
     alice2: LocalDevice,
+) -> Callable[[], AsyncContextManager[LoggedCore]]:
+    initialized = False
+
+    @asynccontextmanager
+    async def _alice2_core_factory():
+        nonlocal initialized
+        if not initialized:
+            initial_user_manifest = fixtures_customization.get(
+                "alice2_initial_local_user_manifest", "v1"
+            )
+            await initialize_local_user_manifest(
+                core_config.data_base_dir, alice2, initial_user_manifest=initial_user_manifest
+            )
+            initialized = True
+        async with core_factory(alice2) as core:
+            yield core
+
+    return _alice2_core_factory
+
+
+@pytest.fixture
+async def alice2_core(
+    alice2_core_factory,
 ) -> AsyncContextManager[LoggedCore]:
-    initial_user_manifest = fixtures_customization.get("alice2_initial_local_user_manifest", "v1")
-    await initialize_local_user_manifest(
-        core_config.data_base_dir, alice2, initial_user_manifest=initial_user_manifest
-    )
-    async with core_factory(alice2) as core:
+    async with alice2_core_factory() as core:
         yield core
 
 

@@ -17,12 +17,16 @@ class WorkspaceFSTimestamped(WorkspaceFS):
             self.get_workspace_entry = workspacefs.get_workspace_entry
         else:
             self.get_workspace_entry = self.timestamp_get_entry(workspacefs.get_workspace_entry)
-        self.get_archiving_configuration = workspacefs.get_archiving_configuration
         self.device = workspacefs.device
         self.local_storage = workspacefs.local_storage.to_timestamped(timestamp)
         self.backend_cmds = workspacefs.backend_cmds
         self.event_bus = workspacefs.event_bus
         self.preferred_language = workspacefs.preferred_language
+
+        # Archiving attributes
+        self._archiving_configuration = workspacefs._archiving_configuration
+        self._archiving_configured_on = workspacefs._archiving_configured_on
+        self._archiving_configuration_timestamp = workspacefs._archiving_configuration_timestamp
 
         self.timestamp = timestamp
 
