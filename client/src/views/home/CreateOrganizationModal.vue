@@ -191,7 +191,7 @@ import SummaryStep from '@/views/home/SummaryStep.vue';
 import { OrgInfo } from '@/views/home/SummaryStep.vue';
 import MsSpinner from '@/components/core/ms-spinner/MsSpinner.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
-import { AvailableDevice, DeviceFileType } from '@/plugins/libparsec/definitions';
+import { AvailableDevice, DeviceFileType } from '@/plugins/libparsec';
 import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 import { organizationValidator, Validity } from '@/common/validators';
 

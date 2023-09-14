@@ -5,7 +5,7 @@ import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
 import { mockI18n, getDefaultProvideConfig } from 'tests/component/support/mocks';
 import * as Parsec from '@/common/parsec';
-import { InvitationStatus } from '@/plugins/libparsec/definitions';
+import { InvitationStatus } from '@/plugins/libparsec';
 
 mockI18n();
 
