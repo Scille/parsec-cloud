@@ -40,11 +40,12 @@ export enum InvitationEmailSentStatus {
     Success = 'InvitationEmailSentStatusSuccess',
 }
 
-export enum OS {
-    Android = 'OSAndroid',
-    Linux = 'OSLinux',
-    MacOs = 'OSMacOs',
-    Windows = 'OSWindows',
+export enum Platform {
+    Android = 'PlatformAndroid',
+    Linux = 'PlatformLinux',
+    MacOS = 'PlatformMacOS',
+    Web = 'PlatformWeb',
+    Windows = 'PlatformWindows',
 }
 
 
@@ -943,8 +944,8 @@ export function greeterDeviceInProgress4DoCreate(
     handle: number,
     device_label: string | null
 ): Promise<Result<null, GreetInProgressError>>
-export function getOs(
-): Promise<OS>
+export function getPlatform(
+): Promise<Platform>
 export function testNewTestbed(
     template: string,
     test_server: string | null

@@ -39,11 +39,12 @@ export enum InvitationEmailSentStatus {
     Success = 'InvitationEmailSentStatusSuccess',
 }
 
-export enum OS {
-    Android = 'OSAndroid',
-    Linux = 'OSLinux',
-    MacOs = 'OSMacOs',
-    Windows = 'OSWindows',
+export enum Platform {
+    Android = 'PlatformAndroid',
+    Linux = 'PlatformLinux',
+    MacOS = 'PlatformMacOS',
+    Web = 'PlatformWeb',
+    Windows = 'PlatformWindows',
 }
 export type InvitationToken = string
 export type OrganizationID = string
@@ -912,8 +913,8 @@ export interface LibParsecPlugin {
         handle: number,
         device_label: DeviceLabel | null
     ): Promise<Result<null, GreetInProgressError>>
-    getOs(
-    ): Promise<OS>
+    getPlatform(
+    ): Promise<Platform>
     testNewTestbed(
         template: string,
         test_server: BackendAddr | null

@@ -3,12 +3,13 @@
 from .common import Enum, EnumItemUnit
 
 
-class OS(Enum):
+class Platform(Enum):
     Linux = EnumItemUnit
-    MacOs = EnumItemUnit
+    MacOS = EnumItemUnit
     Windows = EnumItemUnit
     Android = EnumItemUnit
+    Web = EnumItemUnit
 
 
-def get_os() -> OS:
+def get_platform() -> Platform:
     raise NotImplementedError
