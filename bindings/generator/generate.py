@@ -158,11 +158,25 @@ _test_change_case_function("OSSimple", "os_simple", pascal_to_snake_case)
 env.filters["snake2camel"] = snake_to_camel_case
 env.filters["pascal2snake"] = pascal_to_snake_case
 
-for ty in ("struct", "enum", "variant"):
-    for way in ("rs_to_js", "js_to_rs"):
-        env.filters[
-            f"{ty}_{way}_function_name"
-        ] = lambda item, ty=ty, way=way: f"{ty}_{pascal_to_snake_case(item.name)}_{way}"
+env.filters[
+    "struct_rs_to_js_function_name"
+] = lambda item: f"struct_{pascal_to_snake_case(item.name)}_rs_to_js"
+env.filters[
+    "variant_rs_to_js_function_name"
+] = lambda item: f"variant_{pascal_to_snake_case(item.name)}_rs_to_js"
+env.filters[
+    "enum_rs_to_js_function_name"
+] = lambda item: f"enum_{pascal_to_snake_case(item.name)}_rs_to_js"
+
+env.filters[
+    "struct_js_to_rs_function_name"
+] = lambda item: f"struct_{pascal_to_snake_case(item.name)}_js_to_rs"
+env.filters[
+    "variant_js_to_rs_function_name"
+] = lambda item: f"variant_{pascal_to_snake_case(item.name)}_js_to_rs"
+env.filters[
+    "enum_js_to_rs_function_name"
+] = lambda item: f"enum_{pascal_to_snake_case(item.name)}_js_to_rs"
 
 
 def _raise_helper(msg: Any) -> None:
