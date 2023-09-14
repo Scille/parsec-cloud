@@ -2,7 +2,7 @@
 
 import { registerPlugin } from '@capacitor/core';
 
-import type { LibParsecPlugin } from '@/plugins/libparsec/definitions';
+import { LibParsecPlugin } from '@/plugins/libparsec/definitions';
 import { LoadWebLibParsecPlugin } from '@/plugins/libparsec/trampoline';
 
 export const libparsec = registerPlugin<LibParsecPlugin>(
@@ -27,6 +27,8 @@ export const libparsec = registerPlugin<LibParsecPlugin>(
     // In Android, capacitor already knows about the plugin given it has been registered from Java
   },
 );
+
+export * from '@/plugins/libparsec/definitions';
 
 // Global exposition of libparsec for easier debugging with console
 declare global {

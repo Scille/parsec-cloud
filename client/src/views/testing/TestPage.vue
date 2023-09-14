@@ -24,7 +24,7 @@ import {
 } from '@ionic/vue';
 import { ref, onMounted } from 'vue';
 import { libparsec } from '@/plugins/libparsec';
-import { ClientEvent, ClientConfig } from '@/plugins/libparsec/definitions';
+import { ClientEvent, ClientConfig } from '@/plugins/libparsec';
 
 const logs = ref('');
 

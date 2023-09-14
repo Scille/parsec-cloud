@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import {
+  libparsec,
   // Types
   RealmID,
   AvailableDevice,
@@ -32,8 +33,7 @@ import {
   ClientStopError,
   ClaimerRetrieveInfoError,
   ClaimInProgressError,
-} from '@/plugins/libparsec/definitions';
-import { libparsec } from '@/plugins/libparsec';
+} from '@/plugins/libparsec';
 import { getParsecHandle } from '@/router/conditions';
 import { DateTime } from 'luxon';
 
