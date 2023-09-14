@@ -153,17 +153,18 @@ fn enum_invitation_email_sent_status_rs_to_js(
     }
 }
 
-// OS
+// Platform
 
 #[allow(dead_code)]
-fn enum_os_js_to_rs(raw_value: &str) -> Result<libparsec::OS, JsValue> {
+fn enum_platform_js_to_rs(raw_value: &str) -> Result<libparsec::Platform, JsValue> {
     match raw_value {
-        "OSAndroid" => Ok(libparsec::OS::Android),
-        "OSLinux" => Ok(libparsec::OS::Linux),
-        "OSMacOs" => Ok(libparsec::OS::MacOs),
-        "OSWindows" => Ok(libparsec::OS::Windows),
+        "PlatformAndroid" => Ok(libparsec::Platform::Android),
+        "PlatformLinux" => Ok(libparsec::Platform::Linux),
+        "PlatformMacOS" => Ok(libparsec::Platform::MacOS),
+        "PlatformWeb" => Ok(libparsec::Platform::Web),
+        "PlatformWindows" => Ok(libparsec::Platform::Windows),
         _ => {
-            let range_error = RangeError::new("Invalid value for enum OS");
+            let range_error = RangeError::new("Invalid value for enum Platform");
             range_error.set_cause(&JsValue::from(raw_value));
             Err(JsValue::from(range_error))
         }
@@ -171,12 +172,13 @@ fn enum_os_js_to_rs(raw_value: &str) -> Result<libparsec::OS, JsValue> {
 }
 
 #[allow(dead_code)]
-fn enum_os_rs_to_js(value: libparsec::OS) -> &'static str {
+fn enum_platform_rs_to_js(value: libparsec::Platform) -> &'static str {
     match value {
-        libparsec::OS::Android => "OSAndroid",
-        libparsec::OS::Linux => "OSLinux",
-        libparsec::OS::MacOs => "OSMacOs",
-        libparsec::OS::Windows => "OSWindows",
+        libparsec::Platform::Android => "PlatformAndroid",
+        libparsec::Platform::Linux => "PlatformLinux",
+        libparsec::Platform::MacOS => "PlatformMacOS",
+        libparsec::Platform::Web => "PlatformWeb",
+        libparsec::Platform::Windows => "PlatformWindows",
     }
 }
 
@@ -4630,13 +4632,13 @@ pub fn greeterDeviceInProgress4DoCreate(
     })
 }
 
-// get_os
+// get_platform
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn getOs() -> Promise {
+pub fn getPlatform() -> Promise {
     future_to_promise(async move {
-        let ret = libparsec::get_os();
-        Ok(JsValue::from_str(enum_os_rs_to_js(ret)))
+        let ret = libparsec::get_platform();
+        Ok(JsValue::from_str(enum_platform_rs_to_js(ret)))
     })
 }
 

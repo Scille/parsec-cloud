@@ -145,26 +145,31 @@ fn enum_invitation_email_sent_status_rs_to_js(
     }
 }
 
-// OS
+// Platform
 
 #[allow(dead_code)]
-fn enum_os_js_to_rs<'a>(cx: &mut impl Context<'a>, raw_value: &str) -> NeonResult<libparsec::OS> {
+fn enum_platform_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    raw_value: &str,
+) -> NeonResult<libparsec::Platform> {
     match raw_value {
-        "OSAndroid" => Ok(libparsec::OS::Android),
-        "OSLinux" => Ok(libparsec::OS::Linux),
-        "OSMacOs" => Ok(libparsec::OS::MacOs),
-        "OSWindows" => Ok(libparsec::OS::Windows),
-        _ => cx.throw_range_error(format!("Invalid value `{raw_value}` for enum OS")),
+        "PlatformAndroid" => Ok(libparsec::Platform::Android),
+        "PlatformLinux" => Ok(libparsec::Platform::Linux),
+        "PlatformMacOS" => Ok(libparsec::Platform::MacOS),
+        "PlatformWeb" => Ok(libparsec::Platform::Web),
+        "PlatformWindows" => Ok(libparsec::Platform::Windows),
+        _ => cx.throw_range_error(format!("Invalid value `{raw_value}` for enum Platform")),
     }
 }
 
 #[allow(dead_code)]
-fn enum_os_rs_to_js(value: libparsec::OS) -> &'static str {
+fn enum_platform_rs_to_js(value: libparsec::Platform) -> &'static str {
     match value {
-        libparsec::OS::Android => "OSAndroid",
-        libparsec::OS::Linux => "OSLinux",
-        libparsec::OS::MacOs => "OSMacOs",
-        libparsec::OS::Windows => "OSWindows",
+        libparsec::Platform::Android => "PlatformAndroid",
+        libparsec::Platform::Linux => "PlatformLinux",
+        libparsec::Platform::MacOS => "PlatformMacOS",
+        libparsec::Platform::Web => "PlatformWeb",
+        libparsec::Platform::Windows => "PlatformWindows",
     }
 }
 
@@ -5705,10 +5710,10 @@ fn greeter_device_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<J
     Ok(promise)
 }
 
-// get_os
-fn get_os(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    let ret = libparsec::get_os();
-    let js_ret = JsString::try_new(&mut cx, enum_os_rs_to_js(ret)).or_throw(&mut cx)?;
+// get_platform
+fn get_platform(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let ret = libparsec::get_platform();
+    let js_ret = JsString::try_new(&mut cx, enum_platform_rs_to_js(ret)).or_throw(&mut cx)?;
     let (deferred, promise) = cx.promise();
     deferred.resolve(&mut cx, js_ret);
     Ok(promise)
@@ -5967,7 +5972,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         "greeterDeviceInProgress4DoCreate",
         greeter_device_in_progress_4_do_create,
     )?;
-    cx.export_function("getOs", get_os)?;
+    cx.export_function("getPlatform", get_platform)?;
     cx.export_function("testNewTestbed", test_new_testbed)?;
     cx.export_function(
         "testGetTestbedOrganizationId",
