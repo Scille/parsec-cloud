@@ -452,10 +452,8 @@ async def test_remanence_monitor_archiving_updated(
         while alice_workspace.get_remanence_manager_info().is_running:
             await trio.sleep(0)
 
-    # Actively wait for the block remanence to be disabled
-    async with real_clock_timeout():
-        while alice_workspace.get_remanence_manager_info().is_block_remanent:
-            await trio.sleep(0)
+    # Wait for the cleanup to finish
+    await alice_core.wait_idle_monitors()
 
     # Check alice info
     info = alice_workspace.get_remanence_manager_info()

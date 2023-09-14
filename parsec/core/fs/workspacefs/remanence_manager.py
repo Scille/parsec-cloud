@@ -86,6 +86,7 @@ RemanenceJob = Tuple[CoreEvent, Union[ChangesAfterSync, BlockAccess, Set[BlockID
 class RemanenceManagerTask(Enum):
     JOBS = "JOBS"
     DOWNLOADER = "DOWNLOADER"
+    CLEANUP = "CLEANUP"
 
 
 class RemanenceManagerState(Enum):
