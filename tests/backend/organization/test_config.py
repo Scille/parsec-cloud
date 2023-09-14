@@ -123,11 +123,13 @@ async def test_archiving_config_ok(
         RealmArchivingStatus(
             configuration=RealmArchivingConfiguration.available(),
             configured_on=None,
+            configured_by=None,
             realm_id=user_realm_id,
         ),
         RealmArchivingStatus(
             configuration=RealmArchivingConfiguration.available(),
             configured_on=None,
+            configured_by=None,
             realm_id=realm,
         ),
     ]
@@ -141,6 +143,7 @@ async def test_archiving_config_ok(
         RealmArchivingStatus(
             configuration=RealmArchivingConfiguration.archived(),
             configured_on=timestamp,
+            configured_by=alice.device_id,
             realm_id=archived_realm,
         )
     )
@@ -154,6 +157,7 @@ async def test_archiving_config_ok(
         RealmArchivingStatus(
             configuration=RealmArchivingConfiguration.deletion_planned(timestamp),
             configured_on=timestamp,
+            configured_by=alice.device_id,
             realm_id=deleted_realm,
         )
     )
@@ -166,6 +170,7 @@ async def test_archiving_config_ok(
     expected_config[1] = RealmArchivingStatus(
         configuration=RealmArchivingConfiguration.deletion_planned(timestamp.add(days=31)),
         configured_on=timestamp,
+        configured_by=alice.device_id,
         realm_id=realm,
     )
 

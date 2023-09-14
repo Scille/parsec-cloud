@@ -37,6 +37,10 @@
                         "type": "Option<DateTime>"
                     },
                     {
+                        "name": "configured_by",
+                        "type": "Option<DeviceID>"
+                    },
+                    {
                         "name": "configuration",
                         "type": "RealmArchivingConfiguration"
                     }

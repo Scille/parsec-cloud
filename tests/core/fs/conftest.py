@@ -43,7 +43,7 @@ def transactions_factory(
             return workspace_entry
 
         def _get_archiving_config():
-            return RealmArchivingConfiguration.available(), None
+            return RealmArchivingConfiguration.available(), None, None
 
         async def _get_previous_workspace_entry():
             # The tests shouldn't need this yet

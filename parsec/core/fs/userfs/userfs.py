@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from collections import defaultdict
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import (
@@ -329,9 +328,9 @@ class UserFS:
         )
 
         self._archiving_lock = trio.Lock()
-        self._archiving_configuration: defaultdict[
-            EntryID, tuple[RealmArchivingConfiguration, DateTime | None]
-        ] = defaultdict(lambda: (RealmArchivingConfiguration.available(), None))
+        self._archiving_configuration: dict[
+            EntryID, tuple[RealmArchivingConfiguration, DateTime | None, DeviceID | None]
+        ] = {}
 
     @classmethod
     @asynccontextmanager
@@ -462,10 +461,12 @@ class UserFS:
         async def workspace_task(
             task_status: TaskStatus[WorkspaceFS] = trio.TASK_STATUS_IGNORED,
         ) -> None:
-            default = RealmArchivingConfiguration.available(), None
-            archiving_configuration, archiving_configured_on = self._archiving_configuration.pop(
-                workspace_id, default
-            )
+            default = RealmArchivingConfiguration.available(), None, None
+            (
+                archiving_configuration,
+                archiving_configured_on,
+                archiving_configured_by,
+            ) = self._archiving_configuration.pop(workspace_id, default)
 
             async with WorkspaceFS.run(
                 data_base_dir=self.data_base_dir,
@@ -481,6 +482,7 @@ class UserFS:
                 preferred_language=self.preferred_language,
                 archiving_configuration=archiving_configuration,
                 archiving_configured_on=archiving_configured_on,
+                archiving_configured_by=archiving_configured_by,
             ) as workspace:
                 # Workspace is ready
                 task_status.started(workspace)
@@ -1065,6 +1067,7 @@ class UserFS:
                     self._archiving_configuration[workspace_id] = (
                         status.configuration,
                         status.configured_on,
+                        status.configured_by,
                     )
                     is_deleted = status.configuration.is_deleted(self.device.time_provider.now())
                     if status.configuration.is_deletion_planned() and not is_deleted:
@@ -1073,7 +1076,9 @@ class UserFS:
                 # We do know about this workspace, let it acknowledge the configuration
                 else:
                     next_deletion_date = workspacefs.acknowledge_archiving_configuration(
-                        status.configuration, status.configured_on
+                        status.configuration,
+                        status.configured_on,
+                        status.configured_by,
                     )
 
                 # Update the result with the new deletion date

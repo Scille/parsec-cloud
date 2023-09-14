@@ -18,7 +18,7 @@ use crate::{
     api_crypto::VerifyKey,
     binding_utils::BytesWrapper,
     data::{RealmArchivingConfiguration, UsersPerProfileDetailItem},
-    ids::RealmID,
+    ids::{DeviceID, RealmID},
     protocol::{
         error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
         gen_rep, OptionalDateTime, OptionalFloat, Reason,
@@ -389,14 +389,17 @@ impl RealmArchivingStatus {
     fn new(
         realm_id: RealmID,
         configured_on: Option<DateTime>,
+        configured_by: Option<DeviceID>,
         configuration: RealmArchivingConfiguration,
     ) -> PyResult<Self> {
         let realm_id = realm_id.0;
         let configured_on = configured_on.map(|x| x.0);
         let configuration = configuration.0;
+        let configured_by = configured_by.map(|x| x.0);
         Ok(Self(archiving_config::RealmArchivingStatus {
             realm_id,
             configured_on,
+            configured_by,
             configuration,
         }))
     }
@@ -409,6 +412,11 @@ impl RealmArchivingStatus {
     #[getter]
     fn configured_on(&self) -> Option<DateTime> {
         self.0.configured_on.map(DateTime)
+    }
+
+    #[getter]
+    fn configured_by(&self) -> Option<DeviceID> {
+        self.0.configured_by.clone().map(DeviceID)
     }
 
     #[getter]

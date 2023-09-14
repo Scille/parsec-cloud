@@ -6,6 +6,7 @@ from typing import Iterable
 
 from parsec._parsec import (
     DateTime,
+    DeviceID,
     RealmArchivingConfiguration,
     RealmID,
     UsersPerProfileDetailItem,
@@ -118,12 +119,15 @@ class RealmArchivingStatus:
         self,
         realm_id: RealmID,
         configured_on: DateTime | None,
+        configured_by: DeviceID | None,
         configuration: RealmArchivingConfiguration,
     ) -> None: ...
     @property
     def realm_id(self) -> RealmID: ...
     @property
     def configured_on(self) -> DateTime | None: ...
+    @property
+    def configured_by(self) -> DeviceID | None: ...
     @property
     def configuration(self) -> RealmArchivingConfiguration: ...
 

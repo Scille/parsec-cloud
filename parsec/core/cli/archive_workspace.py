@@ -27,7 +27,7 @@ async def _set_workspace_archiving(
 
         workspace = core.find_workspace_from_name(name)
         workspace_fs = core.user_fs.get_workspace(workspace.id)
-        current_configuration, _ = workspace_fs.get_archiving_configuration()
+        current_configuration, _, _ = workspace_fs.get_archiving_configuration()
         if current_configuration == configuration:
             raise click.ClickException(f"This configuration is already applied (`{configuration}`)")
         await workspace_fs.configure_archiving(configuration)

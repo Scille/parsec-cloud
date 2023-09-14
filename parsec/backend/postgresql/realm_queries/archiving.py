@@ -3,13 +3,14 @@ from __future__ import annotations
 
 import triopg
 
-from parsec._parsec import DateTime, RealmArchivingConfiguration, RealmID, RealmRole
+from parsec._parsec import DateTime, DeviceID, RealmArchivingConfiguration, RealmID, RealmRole
 from parsec.api.protocol import OrganizationID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.organization import OrganizationNotFoundError, _q_get_organization
 from parsec.backend.postgresql.utils import (
     Q,
+    q_device,
     q_device_internal_id,
     q_realm,
     q_realm_internal_id,
@@ -79,7 +80,12 @@ INSERT INTO realm_archiving(
 
 _q_get_archiving_configurations = Q(
     f"""
-SELECT DISTINCT ON (realm) realm, configuration, deletion_date, certified_on
+SELECT DISTINCT ON (realm)
+    realm,
+    configuration,
+    deletion_date,
+    certified_on,
+    { q_device(_id="realm_archiving.certified_by", select="device_id") }
 FROM realm_archiving
 WHERE
     realm = ANY($internal_realm_ids)
@@ -115,14 +121,24 @@ async def query_get_archiving_configurations(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     realm_ids: dict[RealmID, int],
-) -> list[tuple[RealmID, RealmArchivingConfiguration, DateTime | None]]:
+) -> list[tuple[RealmID, RealmArchivingConfiguration, DateTime | None, DeviceID | None]]:
     rep = await conn.fetch(*_q_get_archiving_configurations(internal_realm_ids=realm_ids.values()))
-    mapping: dict[int, tuple[RealmArchivingConfiguration, DateTime | None]] = {}
+    mapping: dict[int, tuple[RealmArchivingConfiguration, DateTime | None, DeviceID | None]] = {}
     for item in rep:
-        internal_realm_id, configuration_str, deletion_date, archiving_certified_on = item
+        (
+            internal_realm_id,
+            configuration_str,
+            deletion_date,
+            archiving_certified_on,
+            archiving_certified_by,
+        ) = item
         configuration = RealmArchivingConfiguration.from_str(configuration_str, deletion_date)
-        mapping[internal_realm_id] = (configuration, archiving_certified_on)
-    default = RealmArchivingConfiguration.available(), None
+        mapping[internal_realm_id] = (
+            configuration,
+            archiving_certified_on,
+            DeviceID(archiving_certified_by),
+        )
+    default = RealmArchivingConfiguration.available(), None, None
     return [
         (realm_id, *mapping.get(internal_realm_id, default))
         for realm_id, internal_realm_id in realm_ids.items()

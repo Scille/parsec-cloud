@@ -26,6 +26,7 @@ class WorkspaceFSTimestamped(WorkspaceFS):
         # Archiving attributes
         self._archiving_configuration = workspacefs._archiving_configuration
         self._archiving_configured_on = workspacefs._archiving_configured_on
+        self._archiving_configured_by = workspacefs._archiving_configured_by
         self._archiving_configuration_timestamp = workspacefs._archiving_configuration_timestamp
 
         self.timestamp = timestamp

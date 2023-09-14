@@ -3,6 +3,8 @@
 
 from parsec._parsec import (
     ActiveUsersLimit,
+    ArchivingConfigRepNotFound,
+    ArchivingConfigRepOk,
     OrganizationBootstrapRepAlreadyBootstrapped,
     OrganizationBootstrapRepBadTimestamp,
     OrganizationBootstrapRepInvalidCertification,
@@ -14,6 +16,8 @@ from parsec._parsec import (
     OrganizationStatsRepNotAllowed,
     OrganizationStatsRepNotFound,
     OrganizationStatsRepOk,
+    RealmArchivingConfiguration,
+    RealmArchivingStatus,
     UsersPerProfileDetailItem,
 )
 from parsec.api.data import *
@@ -87,6 +91,51 @@ display("organization_config_rep_full", serialized, [])
 serialized = serializer.rep_dumps(OrganizationConfigRepNotFound())
 serializer.rep_loads(serialized)
 display("organization_config_rep_not_found", serialized, [])
+
+
+################### ArchivingConfig ##################
+
+serializer = archiving_config_serializer
+
+serialized = serializer.req_dumps({"cmd": "archiving_config"})
+serializer.req_loads(serialized)
+display("archiving_config_req", serialized, [])
+
+serialized = serializer.rep_dumps(ArchivingConfigRepOk(archiving_config=[]))
+serializer.rep_loads(serialized)
+display("organization_config_rep_ok_empty", serialized, [])
+
+serialized = serializer.rep_dumps(
+    ArchivingConfigRepOk(
+        archiving_config=[
+            RealmArchivingStatus(
+                realm_id=RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
+                configuration=RealmArchivingConfiguration.available(),
+                configured_by=None,
+                configured_on=None,
+            ),
+            RealmArchivingStatus(
+                realm_id=RealmID.from_hex("2d3353157d7d4e95ad2fdea7b3bd19c6"),
+                configuration=RealmArchivingConfiguration.archived(),
+                configured_by=DeviceID("alice@dev1"),
+                configured_on=DateTime(2000, 1, 2, 1),
+            ),
+            RealmArchivingStatus(
+                realm_id=RealmID.from_hex("3d3353157d7d4e95ad2fdea7b3bd19c7"),
+                configuration=RealmArchivingConfiguration.deletion_planned(DateTime(2000, 1, 2, 3)),
+                configured_by=DeviceID("bob@dev1"),
+                configured_on=DateTime(2000, 1, 2, 2),
+            ),
+        ]
+    )
+)
+serializer.rep_loads(serialized)
+display("organization_config_rep_ok_populated", serialized, [])
+
+serialized = serializer.rep_dumps(ArchivingConfigRepNotFound())
+serializer.rep_loads(serialized)
+display("organization_config_rep_not_found", serialized, [])
+
 
 ################### OrganizationBootstrap ##################
 

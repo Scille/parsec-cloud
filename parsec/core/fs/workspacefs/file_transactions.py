@@ -78,7 +78,7 @@ class FileTransactions:
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
         get_archiving_configuration: Callable[
-            [], tuple[RealmArchivingConfiguration, DateTime | None]
+            [], tuple[RealmArchivingConfiguration, DateTime | None, DeviceID | None]
         ],
         device: LocalDevice,
         local_storage: AnyWorkspaceStorage,

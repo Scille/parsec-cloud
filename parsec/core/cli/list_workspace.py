@@ -19,7 +19,7 @@ from parsec.utils import trio_run
 async def _show_workspace(logged_core: LoggedCore, workspace: WorkspaceFS) -> None:
     entry_id = workspace.workspace_id
     workspace_name = workspace.get_workspace_name()
-    archiving_configuration, configured_on = workspace.get_archiving_configuration()
+    archiving_configuration, configured_on, _ = workspace.get_archiving_configuration()
     remanence_info = workspace.get_remanence_manager_info()
     is_block_remanent = remanence_info.is_block_remanent
     entry = workspace.get_workspace_entry()

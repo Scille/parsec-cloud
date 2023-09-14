@@ -77,9 +77,14 @@ async def test_configure_archiving(
 
     for workspace in (alice_workspace, bob_workspace):
         path = FsPath("/")
-        current_config, current_configured_on = workspace.get_archiving_configuration()
+        (
+            current_config,
+            current_configured_on,
+            current_configured_by,
+        ) = workspace.get_archiving_configuration()
         assert current_config == config
         assert current_configured_on == now
+        assert current_configured_by == alice_workspace.device.device_id
 
         if configuration == "available":
             assert not workspace.is_archived()
@@ -189,7 +194,12 @@ async def test_configure_archiving_require_greater_timestamp(
     config = RealmArchivingConfiguration.deletion_planned(now)
     await alice_workspace.configure_archiving(config, now=now)
     await alice_user_fs.update_archiving_status()
-    current_config, current_configured_on = alice_workspace.get_archiving_configuration()
+    (
+        current_config,
+        current_configured_on,
+        current_configured_by,
+    ) = alice_workspace.get_archiving_configuration()
     updated_now = current_configured_on
+    assert current_configured_by == alice_workspace.device.device_id
     assert now < updated_now <= DateTime.now()
     assert current_config == RealmArchivingConfiguration.deletion_planned(updated_now)

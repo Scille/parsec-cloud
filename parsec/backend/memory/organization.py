@@ -124,12 +124,14 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 status = RealmArchivingStatus(
                     realm_id=realm_id,
                     configured_on=None,
+                    configured_by=None,
                     configuration=RealmArchivingConfiguration.available(),
                 )
             else:
                 status = RealmArchivingStatus(
                     realm_id=realm_id,
                     configured_on=configured_archiving.configured_on,
+                    configured_by=configured_archiving.configured_by,
                     configuration=configured_archiving.configuration,
                 )
             result.append(status)

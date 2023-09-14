@@ -506,6 +506,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                 realm_id,
                 configuration,
                 configured_on,
+                configured_by,
             ) in await realm_queries.query_get_archiving_configurations(
                 conn,
                 id,
@@ -515,6 +516,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                     RealmArchivingStatus(
                         realm_id=realm_id,
                         configured_on=configured_on,
+                        configured_by=configured_by,
                         configuration=configuration,
                     )
                 )

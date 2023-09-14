@@ -16,6 +16,7 @@ from parsec._parsec import (
     CoreEvent,
     CryptoError,
     DateTime,
+    DeviceID,
     EntryID,
     EntryName,
     LocalDevice,
@@ -119,6 +120,7 @@ class WorkspaceFS:
         preferred_language: str,
         archiving_configuration: RealmArchivingConfiguration,
         archiving_configured_on: DateTime | None,
+        archiving_configured_by: DeviceID | None,
     ):
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
@@ -133,6 +135,7 @@ class WorkspaceFS:
         # Archiving attributes
         self._archiving_configuration = archiving_configuration
         self._archiving_configured_on = archiving_configured_on
+        self._archiving_configured_by = archiving_configured_by
         self._archiving_configuration_timestamp = self.device.time_provider.now()
 
         self.remote_loader = RemoteLoader(
@@ -189,6 +192,7 @@ class WorkspaceFS:
         preferred_language: str = "en",
         archiving_configuration: RealmArchivingConfiguration = RealmArchivingConfiguration.available(),
         archiving_configured_on: DateTime | None = None,
+        archiving_configured_by: DeviceID | None = None,
     ) -> AsyncIterator[WorkspaceFS]:
         async with WorkspaceStorage.run(
             data_base_dir=data_base_dir,
@@ -209,6 +213,7 @@ class WorkspaceFS:
                 remote_devices_manager=remote_devices_manager,
                 preferred_language=preferred_language,
                 archiving_configured_on=archiving_configured_on,
+                archiving_configured_by=archiving_configured_by,
                 archiving_configuration=archiving_configuration,
             )
 
@@ -294,8 +299,14 @@ class WorkspaceFS:
     def is_revoked(self) -> bool:
         return self.get_workspace_entry().role is None
 
-    def get_archiving_configuration(self) -> tuple[RealmArchivingConfiguration, DateTime | None]:
-        return (self._archiving_configuration, self._archiving_configured_on)
+    def get_archiving_configuration(
+        self,
+    ) -> tuple[RealmArchivingConfiguration, DateTime | None, DeviceID | None]:
+        return (
+            self._archiving_configuration,
+            self._archiving_configured_on,
+            self._archiving_configured_by,
+        )
 
     def is_archived(self) -> bool:
         return self._archiving_configuration.is_archived()
@@ -473,7 +484,9 @@ class WorkspaceFS:
         if not isinstance(rep, RealmUpdateArchivingRepOk):
             raise FSRemoteOperationError(str(rep))
 
-        next_deletion_date = self.acknowledge_archiving_configuration(configuration, timestamp)
+        next_deletion_date = self.acknowledge_archiving_configuration(
+            configuration, timestamp, self.device.device_id
+        )
         if next_deletion_date is not None:
             self.event_bus.send(
                 CoreEvent.ARCHIVING_NEXT_DELETION_DATE,
@@ -485,6 +498,7 @@ class WorkspaceFS:
         self,
         configuration: RealmArchivingConfiguration,
         configured_on: DateTime | None,
+        configured_by: DeviceID | None,
     ) -> DateTime | None:
         # This configuration is older than the one we currently have
         if (
@@ -508,6 +522,7 @@ class WorkspaceFS:
         # Then set the attributes
         self._archiving_configuration = configuration
         self._archiving_configured_on = configured_on
+        self._archiving_configured_by = configured_by
         self._archiving_configuration_timestamp = self.device.time_provider.now()
 
         # Get is_deleted status

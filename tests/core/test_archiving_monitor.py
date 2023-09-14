@@ -38,6 +38,7 @@ async def test_archiving_monitor(
     assert workspace_alice.get_archiving_configuration() == (
         RealmArchivingConfiguration.available(),
         None,
+        None,
     )
 
     # Alice
@@ -51,7 +52,12 @@ async def test_archiving_monitor(
     assert not workspace_alice.is_deleted()
     assert not workspace_alice.is_deletion_planned()
     assert workspace_alice.is_read_only()
-    assert workspace_alice.get_archiving_configuration() == (archived, configured_on)
+    assert workspace_alice.get_archiving_configuration() == (
+        archived,
+        configured_on,
+        alice.device_id,
+    )
+
     # A new core get the right config
     alice_core_2: LoggedCore
     async with alice2_core_factory() as alice_core_2:
@@ -62,7 +68,11 @@ async def test_archiving_monitor(
         assert not workspace_alice2.is_deleted()
         assert not workspace_alice2.is_deletion_planned()
         assert workspace_alice2.is_read_only()
-        assert workspace_alice2.get_archiving_configuration() == (archived, configured_on)
+        assert workspace_alice2.get_archiving_configuration() == (
+            archived,
+            configured_on,
+            alice.device_id,
+        )
 
         # Change configuration to deletion planned
         configured_on = alice_core.device.time_provider.now()
@@ -79,7 +89,11 @@ async def test_archiving_monitor(
             assert not workspace.is_deleted()
             assert workspace.is_deletion_planned()
             assert workspace.is_read_only()
-            assert workspace.get_archiving_configuration() == (deletion_planned, configured_on)
+            assert workspace.get_archiving_configuration() == (
+                deletion_planned,
+                configured_on,
+                alice2.device_id,
+            )
 
     # Now delete the workspace in 15 minutes
     configured_on = alice_core.device.time_provider.now()
@@ -101,7 +115,11 @@ async def test_archiving_monitor(
             assert not workspace.is_deleted()
             assert workspace.is_deletion_planned()
             assert workspace.is_read_only()
-            assert workspace.get_archiving_configuration() == (deletion_planned, configured_on)
+            assert workspace.get_archiving_configuration() == (
+                deletion_planned,
+                configured_on,
+                alice.device_id,
+            )
 
         # Now both alice wait for the deletion
         with alice_core.event_bus.waiter_on(CoreEvent.ARCHIVING_UPDATED) as waiter1:
@@ -115,7 +133,11 @@ async def test_archiving_monitor(
             assert workspace.is_deleted()
             assert workspace.is_deletion_planned()
             assert workspace.is_read_only()
-            assert workspace.get_archiving_configuration() == (deletion_planned, configured_on)
+            assert workspace.get_archiving_configuration() == (
+                deletion_planned,
+                configured_on,
+                alice.device_id,
+            )
 
     # Alice 2 logs back
     alice_core_2: LoggedCore
@@ -130,4 +152,8 @@ async def test_archiving_monitor(
             assert workspace.is_deleted()
             assert workspace.is_deletion_planned()
             assert workspace.is_read_only()
-            assert workspace.get_archiving_configuration() == (deletion_planned, configured_on)
+            assert workspace.get_archiving_configuration() == (
+                deletion_planned,
+                configured_on,
+                alice.device_id,
+            )
