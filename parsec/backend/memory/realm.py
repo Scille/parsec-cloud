@@ -147,14 +147,17 @@ class MemoryRealmComponent(BaseRealmComponent):
         self,
         organization_id: OrganizationID,
         realm_id: RealmID,
-        now: DateTime,
+        now: DateTime | None,
         allow_deleted: bool = False,
     ) -> Realm:
+        # `now=None` is only allowed when the deletion test is bypassed
+        if now is None:
+            assert allow_deleted
         try:
             realm = self._realms[(organization_id, realm_id)]
         except KeyError:
             raise RealmNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
-        if not allow_deleted and realm.is_deleted(now):
+        if not allow_deleted and now is not None and realm.is_deleted(now):
             raise RealmDeletedError(f"Realm `{realm_id.hex}` has been deleted")
         return realm
 

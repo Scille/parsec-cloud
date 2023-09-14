@@ -328,7 +328,7 @@ class UserFS:
         )
 
         self._archiving_lock = trio.Lock()
-        self._archiving_configuration: dict[
+        self._unacknowledged_archiving_configuration: dict[
             EntryID, tuple[RealmArchivingConfiguration, DateTime | None, DeviceID | None]
         ] = {}
 
@@ -466,7 +466,7 @@ class UserFS:
                 archiving_configuration,
                 archiving_configured_on,
                 archiving_configured_by,
-            ) = self._archiving_configuration.pop(workspace_id, default)
+            ) = self._unacknowledged_archiving_configuration.pop(workspace_id, default)
 
             async with WorkspaceFS.run(
                 data_base_dir=self.data_base_dir,
@@ -1064,7 +1064,7 @@ class UserFS:
                 # to the workspace during its instanciation
                 except FSWorkspaceNotFoundError:
                     next_deletion_date: DateTime | None = None
-                    self._archiving_configuration[workspace_id] = (
+                    self._unacknowledged_archiving_configuration[workspace_id] = (
                         status.configuration,
                         status.configured_on,
                         status.configured_by,

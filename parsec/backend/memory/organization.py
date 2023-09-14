@@ -111,14 +111,13 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
     async def archiving_config(
         self, id: OrganizationID, user: UserID
     ) -> list[RealmArchivingStatus]:
-        unused = DateTime.now()
         if id not in self._organizations:
             raise OrganizationNotFoundError()
         assert self._realm_component is not None
         realms = await self._realm_component.get_realms_for_user(id, user)
         result: list[RealmArchivingStatus] = []
         for realm_id in realms:
-            realm = self._realm_component._get_realm(id, realm_id, unused, allow_deleted=True)
+            realm = self._realm_component._get_realm(id, realm_id, now=None, allow_deleted=True)
             configured_archiving = realm.get_current_configured_archiving()
             if configured_archiving is None:
                 status = RealmArchivingStatus(

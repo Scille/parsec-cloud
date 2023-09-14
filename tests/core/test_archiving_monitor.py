@@ -14,7 +14,7 @@ async def test_archiving_monitor(
     alice: LocalDevice,
     alice2: LocalDevice,
     alice_core: LoggedCore,
-    alice2_core_factory,
+    core_factory,
     monkeypatch,
     allow_instant_deletion,
 ):
@@ -60,8 +60,7 @@ async def test_archiving_monitor(
 
     # A new core get the right config
     alice_core_2: LoggedCore
-    async with alice2_core_factory() as alice_core_2:
-        alice2.time_provider.mock_time(speed=1000.0)
+    async with core_factory(alice2) as alice_core_2:
         await alice_core_2.wait_idle_monitors()
         workspace_alice2 = alice_core_2.user_fs.get_workspace(wid)
         assert workspace_alice2.is_archived()
@@ -104,8 +103,7 @@ async def test_archiving_monitor(
 
     # Alice 2 logs back
     alice_core_2: LoggedCore
-    async with alice2_core_factory() as alice_core_2:
-        alice2.time_provider.mock_time(speed=1000.0)
+    async with core_factory(alice2) as alice_core_2:
         await alice_core_2.wait_idle_monitors()
         workspace_alice2 = alice_core_2.user_fs.get_workspace(wid)
 
@@ -141,8 +139,7 @@ async def test_archiving_monitor(
 
     # Alice 2 logs back
     alice_core_2: LoggedCore
-    async with alice2_core_factory() as alice_core_2:
-        alice2.time_provider.mock_time(speed=1000.0)
+    async with core_factory(alice2) as alice_core_2:
         await alice_core_2.wait_idle_monitors()
         workspace_alice2 = alice_core_2.user_fs.get_workspace(wid)
 

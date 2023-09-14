@@ -457,12 +457,15 @@ async def mountpoint_manager_factory(
     def on_sharing_updated_event(
         event: CoreEvent, new_entry: WorkspaceEntry, previous_entry: WorkspaceEntry | None = None
     ) -> None:
+        new_role = new_entry.role
+        previous_role = previous_entry.role if previous_entry is not None else None
+
         # Workspace revoked
-        if new_entry.role is None and unmount_on_workspace_revoked:
+        if previous_role is not None and new_role is None and unmount_on_workspace_revoked:
             mount_nursery.start_soon(mountpoint_manager.safe_unmount, new_entry.id)
 
         # Workspace shared
-        if previous_entry is None and mount_on_workspace_shared:
+        if previous_role is None and new_role is not None and mount_on_workspace_shared:
             mount_nursery.start_soon(mountpoint_manager.safe_mount, new_entry.id)
 
     def on_archiving_updated_event(
