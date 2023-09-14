@@ -428,6 +428,8 @@ async def test_share_no_manager_right(
             granted_by=alice.device_id,
             granted_on=DateTime(2000, 1, 3),
         ),
+        recipient_message=None,
+        now=DateTime.now(),
     )
     await running_backend.backend.realm.update_roles(
         alice.organization_id,
@@ -439,6 +441,8 @@ async def test_share_no_manager_right(
             granted_by=bob.device_id,
             granted_on=DateTime(2000, 1, 4),
         ),
+        recipient_message=None,
+        now=DateTime.now(),
     )
 
     with pytest.raises(FSSharingNotAllowedError) as exc:

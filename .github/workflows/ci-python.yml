@@ -198,7 +198,7 @@ jobs:
           poetry env info
           if ${{ steps.cache-libparsec.outputs.cache-hit == 'true' }}; then export POETRY_LIBPARSEC_BUILD_STRATEGY=no_build; fi
           python make.py python-ci-install
-        timeout-minutes: 20
+        timeout-minutes: 30
 
       - name: Install pre-commit
         if: startsWith(matrix.os, 'ubuntu-')

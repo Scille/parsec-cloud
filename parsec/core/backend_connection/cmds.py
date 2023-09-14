@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any, Awaitable, Iterable, Union, cast
 
 from parsec._parsec import (
+    ArchivingConfigRep,
     AuthenticatedPingRep,
     BlockCreateRep,
     BlockReadRep,
@@ -53,6 +54,8 @@ from parsec._parsec import (
     RealmStartReencryptionMaintenanceRepBadTimestamp,
     RealmStatsRep,
     RealmStatusRep,
+    RealmUpdateArchivingRep,
+    RealmUpdateArchivingRepBadTimestamp,
     RealmUpdateRolesRep,
     RealmUpdateRolesRepBadTimestamp,
     ReencryptionBatchEntry,
@@ -83,6 +86,7 @@ from parsec.api.protocol import (
     SequesterServiceID,
     UserID,
     VlobID,
+    archiving_config_serializer,
     authenticated_ping_serializer,
     block_create_serializer,
     block_read_serializer,
@@ -120,6 +124,7 @@ from parsec.api.protocol import (
     realm_get_role_certificates_serializer,
     realm_start_reencryption_maintenance_serializer,
     realm_status_serializer,
+    realm_update_archiving_serializer,
     realm_update_roles_serializer,
     shamir_recovery_others_list_serializer,
     shamir_recovery_self_info_serializer,
@@ -185,6 +190,7 @@ COMMAND_RETURN_TYPE = Union[
     RealmStatsRep,
     RealmStatusRep,
     RealmUpdateRolesRep,
+    RealmUpdateArchivingRep,
     UserCreateRep,
     UserGetRep,
     UserRevokeRep,
@@ -253,6 +259,7 @@ async def _send_cmd(
             RealmStartReencryptionMaintenanceRepBadTimestamp,
             VlobCreateRepBadTimestamp,
             VlobUpdateRepBadTimestamp,
+            RealmUpdateArchivingRepBadTimestamp,
         ),
     ):
         raise BackendOutOfBallparkError(rep)
@@ -276,6 +283,13 @@ async def organization_config(transport: Transport) -> OrganizationConfigRep:
     return cast(
         OrganizationConfigRep,
         await _send_cmd(transport, organization_config_serializer, cmd="organization_config"),
+    )
+
+
+async def archiving_config(transport: Transport) -> ArchivingConfigRep:
+    return cast(
+        ArchivingConfigRep,
+        await _send_cmd(transport, archiving_config_serializer, cmd="archiving_config"),
     )
 
 
@@ -505,6 +519,21 @@ async def realm_update_roles(
             cmd="realm_update_roles",
             role_certificate=role_certificate,
             recipient_message=recipient_message,
+        ),
+    )
+
+
+async def realm_update_archiving(
+    transport: Transport,
+    archiving_certificate: bytes,
+) -> RealmUpdateArchivingRep:
+    return cast(
+        RealmUpdateArchivingRep,
+        await _send_cmd(
+            transport,
+            realm_update_archiving_serializer,
+            cmd="realm_update_archiving",
+            archiving_certificate=archiving_certificate,
         ),
     )
 

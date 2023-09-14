@@ -5,10 +5,12 @@ from typing import Tuple
 
 import triopg
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, RealmRole, UserProfile
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.message import send_message
+from parsec.backend.postgresql.realm_queries.archiving import check_archiving_configuration
 from parsec.backend.postgresql.utils import (
     Q,
     q_device_internal_id,
@@ -24,10 +26,11 @@ from parsec.backend.realm import (
     RealmIncompatibleProfileError,
     RealmInMaintenanceError,
     RealmNotFoundError,
-    RealmRoleAlreadyGranted,
+    RealmRoleAlreadyGrantedError,
     RealmRoleRequireGreaterTimestampError,
 )
 from parsec.backend.user import UserAlreadyRevokedError
+from parsec.backend.utils import OperationKind
 
 _q_get_user_profile = Q(
     q_user(organization_id="$organization_id", user_id="$user_id", select="profile, revoked_on")
@@ -102,11 +105,12 @@ AND user_={ q_user_internal_id(organization_id="$organization_id", user_id="$use
 
 _q_set_last_role_change = Q(
     f"""
-INSERT INTO realm_user_change(realm, user_, last_role_change, last_vlob_update)
+INSERT INTO realm_user_change(realm, user_, last_role_change, last_vlob_update, last_archiving_change)
 VALUES (
     { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") },
     { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") },
     $granted_on,
+    NULL,
     NULL
 )
 ON CONFLICT (realm, user_)
@@ -120,6 +124,15 @@ DO UPDATE SET last_role_change = (
 """
 )
 
+_q_get_last_archiving_change = Q(
+    f"""
+SELECT last_archiving_change
+FROM realm_user_change
+WHERE realm={ q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
+AND user_={ q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
+"""
+)
+
 
 @query(in_transaction=True)
 async def query_update_roles(
@@ -127,7 +140,19 @@ async def query_update_roles(
     organization_id: OrganizationID,
     new_role: RealmGrantedRole,
     recipient_message: bytes | None,
+    now: DateTime,
 ) -> None:
+    # TODO: Concurrency is not managed here.
+    # It would be pointless to use a `FOR UPDATE` when getting the current roles
+    # since it would lock a row that remains unchanged during the transaction, since updating
+    # the a role merely inserts a new row. Plus, we also rely on information from other
+    # tables such as `realm_archiving`, so it's even more complicated to properly lock
+    # information. For instance, having `query_update_archiving` and `query_update_roles`
+    # both locking rows in different tables might end up in a deadlock if the `FOR UPDATE`
+    # locks are not applied with care. A simpler solution might be to use a dedicated lock
+    # for all transactions involving certificates for a given realm (or, for a given
+    # organization).
+
     assert new_role.granted_by is not None
     if new_role.granted_by.user_id == new_role.user_id:
         raise RealmAccessError("Cannot modify our own role")
@@ -144,7 +169,16 @@ async def query_update_roles(
     ):
         raise RealmIncompatibleProfileError("User with OUTSIDER profile cannot be MANAGER or OWNER")
 
-    # Make the user is not revoked
+    # Make sure the realm is not deleted
+    await check_archiving_configuration(
+        conn,
+        organization_id,
+        new_role.realm_id,
+        OperationKind.CONFIGURATION,
+        now,
+    )
+
+    # Make sure the user is not revoked
     if rep["revoked_on"]:
         raise UserAlreadyRevokedError(f"User `{new_role.user_id.str}` is revoked")
 
@@ -192,7 +226,21 @@ async def query_update_roles(
         raise RealmAccessError()
 
     if existing_user_role == new_role.role:
-        raise RealmRoleAlreadyGranted()
+        raise RealmRoleAlreadyGrantedError()
+
+    # If the user used to be an owner, check for timestamp causality with the last archiving
+    # certificate they uploaded.
+    if existing_user_role == RealmRole.OWNER:
+        rep = await conn.fetchrow(
+            *_q_get_last_archiving_change(
+                organization_id=organization_id.str,
+                realm_id=new_role.realm_id,
+                user_id=new_role.user_id.str,
+            )
+        )
+        archiving_configured_on: None | DateTime = rep[0] if rep else None
+        if archiving_configured_on is not None and archiving_configured_on >= new_role.granted_on:
+            raise RealmRoleRequireGreaterTimestampError(archiving_configured_on)
 
     # Timestamps for the role certificates of a given user should be strictly increasing
     if last_role_granted_on is not None and last_role_granted_on >= new_role.granted_on:

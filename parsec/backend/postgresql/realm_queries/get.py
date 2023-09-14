@@ -5,6 +5,7 @@ from typing import Dict, List
 
 import triopg
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import (
     DeviceID,
     MaintenanceType,
@@ -13,6 +14,7 @@ from parsec.api.protocol import (
     RealmRole,
     UserID,
 )
+from parsec.backend.postgresql.realm_queries.archiving import check_archiving_configuration
 from parsec.backend.postgresql.utils import (
     Q,
     q_device,
@@ -31,6 +33,7 @@ from parsec.backend.realm import (
     RealmStats,
     RealmStatus,
 )
+from parsec.backend.utils import OperationKind
 
 _q_get_realm_status = Q(
     f"""
@@ -101,7 +104,7 @@ ORDER BY certified_on ASC
 
 _q_get_realms_for_user = Q(
     f"""
-SELECT DISTINCT ON(realm) { q_realm(_id="realm_user_role.realm", select="realm_id") } as realm_id, role
+SELECT DISTINCT ON(realm) realm, { q_realm(_id="realm_user_role.realm", select="realm_id") } as realm_id, role
 FROM  realm_user_role
 WHERE user_ = { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
 ORDER BY realm, certified_on DESC
@@ -133,6 +136,7 @@ async def query_get_status(
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,
+    now: DateTime,
 ) -> RealmStatus:
     ret = await conn.fetchrow(
         *_q_get_realm_status(
@@ -144,6 +148,11 @@ async def query_get_status(
 
     if not ret["has_access"]:
         raise RealmAccessError()
+
+    # Make sure the realm is not deleted
+    await check_archiving_configuration(
+        conn, organization_id, realm_id, OperationKind.CONFIGURATION, now
+    )
 
     return RealmStatus(
         maintenance_type=MaintenanceType.from_str(ret["maintenance_type"])
@@ -163,6 +172,7 @@ async def query_get_stats(
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,
+    now: DateTime,
 ) -> RealmStats:
     ret = await conn.fetchrow(
         *_q_has_realm_access(
@@ -174,6 +184,12 @@ async def query_get_stats(
 
     if not ret["has_access"]:
         raise RealmAccessError()
+
+    # Make sure the realm is not deleted
+    await check_archiving_configuration(
+        conn, organization_id, realm_id, OperationKind.CONFIGURATION, now
+    )
+
     blocks_size_rep = await conn.fetchrow(
         *_q_get_blocks_size_from_realm(organization_id=organization_id.str, realm_id=realm_id)
     )
@@ -189,7 +205,10 @@ async def query_get_stats(
 
 @query()
 async def query_get_current_roles(
-    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, realm_id: RealmID
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    realm_id: RealmID,
+    now: DateTime,
 ) -> Dict[UserID, RealmRole]:
     ret = await conn.fetch(
         *_q_get_current_roles(organization_id=organization_id.str, realm_id=realm_id)
@@ -208,6 +227,7 @@ async def query_get_role_certificates(
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,
+    now: DateTime,
 ) -> List[bytes]:
     ret = await conn.fetch(
         *_q_get_role_certificates(organization_id=organization_id.str, realm_id=realm_id)
@@ -234,12 +254,12 @@ async def query_get_role_certificates(
 @query()
 async def query_get_realms_for_user(
     conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, user: UserID
-) -> dict[RealmID, RealmRole]:
+) -> dict[RealmID, tuple[int, RealmRole]]:
     rep = await conn.fetch(
         *_q_get_realms_for_user(organization_id=organization_id.str, user_id=user.str)
     )
     return {
-        RealmID.from_hex(row["realm_id"]): RealmRole.from_str(row["role"])
+        RealmID.from_hex(row["realm_id"]): (row["realm"], RealmRole.from_str(row["role"]))
         for row in rep
         if row["role"] is not None
     }

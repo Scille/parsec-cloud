@@ -50,12 +50,13 @@ RETURNING index
 
 _q_set_last_vlob_update = Q(
     f"""
-INSERT INTO realm_user_change(realm, user_, last_role_change, last_vlob_update)
+INSERT INTO realm_user_change(realm, user_, last_role_change, last_vlob_update, last_archiving_change)
 VALUES (
     { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") },
     { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") },
     NULL,
-    $timestamp
+    $timestamp,
+    NULL
 )
 ON CONFLICT (realm, user_)
 DO UPDATE SET last_vlob_update = (
@@ -164,11 +165,12 @@ async def query_update(
     version: int,
     timestamp: DateTime,
     blob: bytes,
-    sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
+    sequester_blob: Dict[SequesterServiceID, bytes] | None,
+    now: DateTime,
 ) -> None:
     realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
     await _check_realm_and_write_access(
-        conn, organization_id, author, realm_id, encryption_revision, timestamp
+        conn, organization_id, author, realm_id, encryption_revision, timestamp, now
     )
 
     previous = await conn.fetchrow(
@@ -275,10 +277,11 @@ async def query_create(
     vlob_id: VlobID,
     timestamp: DateTime,
     blob: bytes,
-    sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
+    sequester_blob: Dict[SequesterServiceID, bytes] | None,
+    now: DateTime,
 ) -> None:
     await _check_realm_and_write_access(
-        conn, organization_id, author, realm_id, encryption_revision, timestamp
+        conn, organization_id, author, realm_id, encryption_revision, timestamp, now
     )
 
     # Actually create the vlob

@@ -7,6 +7,7 @@ from parsec._parsec import (
     EventsListenRepOkInviteStatusChanged,
     EventsListenRepOkMessageReceived,
     EventsListenRepOkPinged,
+    EventsListenRepOkRealmArchivingUpdated,
     EventsListenRepOkRealmMaintenanceFinished,
     EventsListenRepOkRealmMaintenanceStarted,
     EventsListenRepOkRealmRolesUpdated,
@@ -93,6 +94,15 @@ serialized = serializer.rep_dumps(
 )
 serializer.rep_loads(serialized)
 display("events_listen_rep_realm_roles_updated_full", serialized, [])
+
+serialized = serializer.rep_dumps(
+    EventsListenRepOkRealmArchivingUpdated(
+        realm_id=RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
+        configuration=RealmArchivingConfiguration.archived(),
+    )
+)
+serializer.rep_loads(serialized)
+display("events_listen_rep_realm_archiving_updated", serialized, [])
 
 serialized = serializer.rep_dumps(EventsListenRepCancelled(reason=None))
 serializer.rep_loads(serialized)

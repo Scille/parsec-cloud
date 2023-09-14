@@ -317,6 +317,7 @@ def backend_data_binder_factory(initial_user_manifest_state):
                     blob=manifest.dump_sign_and_encrypt(
                         author_signkey=author.signing_key, key=author.user_manifest_key
                     ),
+                    now=DateTime.now(),
                 )
                 try:
                     await vlob_create_fn(sequester_blob=None)

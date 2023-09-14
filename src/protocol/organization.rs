@@ -9,7 +9,7 @@ use pyo3::{
 use libparsec::{
     protocol::{
         anonymous_cmds::v2::organization_bootstrap,
-        authenticated_cmds::v2::{organization_config, organization_stats},
+        authenticated_cmds::v2::{archiving_config, organization_config, organization_stats},
     },
     types::{self, Maybe, ProtocolRequest},
 };
@@ -17,11 +17,13 @@ use libparsec::{
 use crate::{
     api_crypto::VerifyKey,
     binding_utils::BytesWrapper,
-    data::UsersPerProfileDetailItem,
+    data::{RealmArchivingConfiguration, UsersPerProfileDetailItem},
+    ids::{DeviceID, RealmID},
     protocol::{
         error::{ProtocolError, ProtocolErrorFields, ProtocolResult},
         gen_rep, OptionalDateTime, OptionalFloat, Reason,
     },
+    time::DateTime,
 };
 
 #[pyclass]
@@ -181,6 +183,34 @@ impl OrganizationConfigReq {
 }
 
 #[pyclass]
+#[derive(Clone)]
+pub(crate) struct ArchivingConfigReq(pub archiving_config::Req);
+
+crate::binding_utils::gen_proto!(ArchivingConfigReq, __repr__);
+crate::binding_utils::gen_proto!(ArchivingConfigReq, __copy__);
+crate::binding_utils::gen_proto!(ArchivingConfigReq, __deepcopy__);
+crate::binding_utils::gen_proto!(ArchivingConfigReq, __richcmp__, eq);
+
+#[pymethods]
+impl ArchivingConfigReq {
+    #[new]
+    fn new() -> PyResult<Self> {
+        Ok(Self(archiving_config::Req))
+    }
+
+    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
+        Ok(PyBytes::new(
+            py,
+            &self.0.clone().dump().map_err(|e| {
+                ProtocolErrorFields(libparsec::protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
+            })?,
+        ))
+    }
+}
+
+#[pyclass]
 #[derive(Debug, Clone)]
 pub(crate) struct ActiveUsersLimit(pub types::ActiveUsersLimit);
 
@@ -247,6 +277,7 @@ impl OrganizationConfigRepOk {
         active_users_limit: ActiveUsersLimit,
         sequester_authority_certificate: Option<BytesWrapper>,
         sequester_services_certificates: Option<Vec<BytesWrapper>>,
+        minimum_archiving_period: u64,
     ) -> PyResult<(Self, OrganizationConfigRep)> {
         crate::binding_utils::unwrap_bytes!(
             sequester_authority_certificate,
@@ -262,6 +293,9 @@ impl OrganizationConfigRepOk {
                 ),
                 sequester_services_certificates: libparsec::types::Maybe::Present(
                     sequester_services_certificates,
+                ),
+                minimum_archiving_period: libparsec::types::Maybe::Present(
+                    minimum_archiving_period,
                 ),
             }),
         ))
@@ -320,6 +354,101 @@ impl OrganizationConfigRepOk {
                     .map(|x| PyTuple::new(py, x.iter().map(|x| PyBytes::new(py, x)))),
                 _ => None,
             },
+            _ => return Err(PyNotImplementedError::new_err("")),
+        })
+    }
+
+    #[getter]
+    fn minimum_archiving_period(_self: PyRef<'_, Self>) -> PyResult<Option<u64>> {
+        Ok(match &_self.as_ref().0 {
+            organization_config::Rep::Ok {
+                minimum_archiving_period: Maybe::Present(x),
+                ..
+            } => Some(*x),
+            organization_config::Rep::Ok {
+                minimum_archiving_period: Maybe::Absent,
+                ..
+            } => None,
+            _ => return Err(PyNotImplementedError::new_err("")),
+        })
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct RealmArchivingStatus(pub archiving_config::RealmArchivingStatus);
+
+crate::binding_utils::gen_proto!(RealmArchivingStatus, __repr__);
+crate::binding_utils::gen_proto!(RealmArchivingStatus, __copy__);
+crate::binding_utils::gen_proto!(RealmArchivingStatus, __deepcopy__);
+crate::binding_utils::gen_proto!(RealmArchivingStatus, __richcmp__, eq);
+
+#[pymethods]
+impl RealmArchivingStatus {
+    #[new]
+    fn new(
+        realm_id: RealmID,
+        configured_on: Option<DateTime>,
+        configured_by: Option<DeviceID>,
+        configuration: RealmArchivingConfiguration,
+    ) -> PyResult<Self> {
+        let realm_id = realm_id.0;
+        let configured_on = configured_on.map(|x| x.0);
+        let configuration = configuration.0;
+        let configured_by = configured_by.map(|x| x.0);
+        Ok(Self(archiving_config::RealmArchivingStatus {
+            realm_id,
+            configured_on,
+            configured_by,
+            configuration,
+        }))
+    }
+
+    #[getter]
+    fn realm_id(&self) -> RealmID {
+        RealmID(self.0.realm_id)
+    }
+
+    #[getter]
+    fn configured_on(&self) -> Option<DateTime> {
+        self.0.configured_on.map(DateTime)
+    }
+
+    #[getter]
+    fn configured_by(&self) -> Option<DeviceID> {
+        self.0.configured_by.clone().map(DeviceID)
+    }
+
+    #[getter]
+    fn configuration(&self) -> RealmArchivingConfiguration {
+        RealmArchivingConfiguration(self.0.configuration)
+    }
+}
+
+gen_rep!(archiving_config, ArchivingConfigRep, { .. }, [NotFound],);
+
+#[pyclass(extends=ArchivingConfigRep)]
+pub(crate) struct ArchivingConfigRepOk;
+
+#[pymethods]
+impl ArchivingConfigRepOk {
+    #[new]
+    fn new(archiving_config: Vec<RealmArchivingStatus>) -> PyResult<(Self, ArchivingConfigRep)> {
+        Ok((
+            Self,
+            ArchivingConfigRep(archiving_config::Rep::Ok {
+                archiving_config: archiving_config.into_iter().map(|x| x.0).collect(),
+            }),
+        ))
+    }
+
+    #[getter]
+    fn archiving_config(_self: PyRef<'_, Self>) -> PyResult<Vec<RealmArchivingStatus>> {
+        Ok(match &_self.as_ref().0 {
+            archiving_config::Rep::Ok { archiving_config } => archiving_config
+                .iter()
+                .map(|x| RealmArchivingStatus(x.clone()))
+                .collect(),
             _ => return Err(PyNotImplementedError::new_err("")),
         })
     }

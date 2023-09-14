@@ -7,6 +7,11 @@ import triopg
 
 from parsec._parsec import DateTime
 from parsec.api.protocol import DeviceID, OrganizationID, RealmID, VlobID
+from parsec.backend.postgresql.realm_queries.archiving import (
+    RealmArchivedError,
+    RealmDeletedError,
+    check_archiving_configuration,
+)
 from parsec.backend.postgresql.realm_queries.maintenance import RealmNotFoundError, get_realm_status
 from parsec.backend.postgresql.utils import (
     Q,
@@ -22,6 +27,8 @@ from parsec.backend.vlob import (
     VlobInMaintenanceError,
     VlobNotFoundError,
     VlobNotInMaintenanceError,
+    VlobRealmArchivedError,
+    VlobRealmDeletedError,
     VlobRealmNotFoundError,
     VlobRequireGreaterTimestampError,
 )
@@ -33,12 +40,21 @@ async def _check_realm(
     realm_id: RealmID,
     encryption_revision: int | None,
     operation_kind: OperationKind,
+    now: DateTime,
 ) -> None:
     # Get the current realm status
     try:
         status = await get_realm_status(conn, organization_id, realm_id)
     except RealmNotFoundError as exc:
         raise VlobRealmNotFoundError(*exc.args) from exc
+
+    # Check archiving status
+    try:
+        await check_archiving_configuration(conn, organization_id, realm_id, operation_kind, now)
+    except RealmArchivedError:
+        raise VlobRealmArchivedError()
+    except RealmDeletedError:
+        raise VlobRealmDeletedError()
 
     # Special case of reading while in reencryption
     if operation_kind == OperationKind.DATA_READ and status.in_reencryption:
@@ -123,9 +139,10 @@ async def _check_realm_and_read_access(
     author: DeviceID,
     realm_id: RealmID,
     encryption_revision: int | None,
+    now: DateTime,
 ) -> None:
     await _check_realm(
-        conn, organization_id, realm_id, encryption_revision, OperationKind.DATA_READ
+        conn, organization_id, realm_id, encryption_revision, OperationKind.DATA_READ, now
     )
     can_read_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR, RealmRole.READER)
     await _check_realm_access(conn, organization_id, realm_id, author, can_read_roles)
@@ -138,13 +155,18 @@ async def _check_realm_and_write_access(
     realm_id: RealmID,
     encryption_revision: int | None,
     timestamp: DateTime,
+    now: DateTime,
 ) -> None:
     await _check_realm(
-        conn, organization_id, realm_id, encryption_revision, OperationKind.DATA_WRITE
+        conn, organization_id, realm_id, encryption_revision, OperationKind.DATA_WRITE, now
     )
     can_write_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
     last_role_granted_on = await _check_realm_access(
-        conn, organization_id, realm_id, author, can_write_roles
+        conn,
+        organization_id,
+        realm_id,
+        author,
+        can_write_roles,
     )
     # Write operations should always occurs strictly after the last change of role for this user
     if last_role_granted_on >= timestamp:

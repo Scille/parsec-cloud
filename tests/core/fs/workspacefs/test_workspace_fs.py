@@ -414,10 +414,24 @@ async def test_path_info_remote_loader_exceptions(
     vanilla_vlob_read = MemoryVlobComponent.read
 
     async def _vlob_read_patched(
-        component, organization_id, author, encryption_revision, vlob_id, version, timestamp
+        component,
+        organization_id,
+        author,
+        encryption_revision,
+        vlob_id,
+        version,
+        timestamp,
+        now,
     ):
         ret = await vanilla_vlob_read(
-            component, organization_id, author, encryption_revision, vlob_id, version, timestamp
+            component,
+            organization_id,
+            author,
+            encryption_revision,
+            vlob_id,
+            version,
+            timestamp,
+            now,
         )
         if vlob_id.hex == manifest.id.hex:
             modified_remote_manifest: Union[

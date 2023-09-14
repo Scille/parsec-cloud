@@ -1,6 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 
+from parsec._parsec import (
+    BlockCreateRepAlreadyExists,
+    BlockCreateRepInMaintenance,
+    BlockCreateRepNotAllowed,
+    BlockCreateRepNotFound,
+    BlockCreateRepOk,
+    BlockCreateRepRealmArchived,
+    BlockCreateRepRealmDeleted,
+    BlockCreateRepTimeout,
+    BlockReadRepInMaintenance,
+    BlockReadRepNotAllowed,
+    BlockReadRepNotFound,
+    BlockReadRepOk,
+    BlockReadRepRealmDeleted,
+    BlockReadRepTimeout,
+)
 from parsec.api.data import *
 from parsec.api.protocol import *
 
@@ -21,29 +37,37 @@ serialized = serializer.req_dumps(
 serializer.req_loads(serialized)
 display("block_create_req", serialized, [])
 
-serialized = serializer.rep_dumps({})
+serialized = serializer.rep_dumps(BlockCreateRepOk())
 serializer.rep_loads(serialized)
 display("block_create_rep", serialized, [])
 
-serialized = serializer.rep_dumps({"status": "already_exists"})
+serialized = serializer.rep_dumps(BlockCreateRepAlreadyExists())
 serializer.rep_loads(serialized)
 display("block_create_rep_already_exists", serialized, [])
 
-serialized = serializer.rep_dumps({"status": "not_found"})
+serialized = serializer.rep_dumps(BlockCreateRepNotFound())
 serializer.rep_loads(serialized)
 display("block_create_rep_not_found", serialized, [])
 
-serialized = serializer.rep_dumps({"status": "timeout"})
+serialized = serializer.rep_dumps(BlockCreateRepTimeout())
 serializer.rep_loads(serialized)
 display("block_create_rep_timeout", serialized, [])
 
-serialized = serializer.rep_dumps({"status": "not_allowed"})
+serialized = serializer.rep_dumps(BlockCreateRepNotAllowed())
 serializer.rep_loads(serialized)
 display("block_create_rep_not_allowed", serialized, [])
 
-serialized = serializer.rep_dumps({"status": "in_maintenance"})
+serialized = serializer.rep_dumps(BlockCreateRepInMaintenance())
 serializer.rep_loads(serialized)
 display("block_create_rep_in_maintenance", serialized, [])
+
+serialized = serializer.rep_dumps(BlockCreateRepRealmArchived())
+serializer.rep_loads(serialized)
+display("block_create_rep_realm_archived", serialized, [])
+
+serialized = serializer.rep_dumps(BlockCreateRepRealmDeleted())
+serializer.rep_loads(serialized)
+display("block_create_rep_realm_deleted", serialized, [])
 
 ################### BlockRead ##################
 
@@ -55,30 +79,26 @@ serialized = serializer.req_dumps(
 serializer.req_loads(serialized)
 display("block_read_req", serialized, [])
 
-serialized = serializer.rep_dumps({"block": b"foobar"})
+serialized = serializer.rep_dumps(BlockReadRepOk(block=b"foobar"))
 serializer.rep_loads(serialized)
 display("block_read_rep", serialized, [])
 
-serialized = serializer.rep_dumps({"status": "not_found"})
+serialized = serializer.rep_dumps(BlockReadRepNotFound())
 serializer.rep_loads(serialized)
 display("block_read_rep_not_found", serialized, [])
 
-serialized = serializer.rep_dumps({"status": "timeout"})
+serialized = serializer.rep_dumps(BlockReadRepTimeout())
 serializer.rep_loads(serialized)
 display("block_read_rep_timeout", serialized, [])
 
-serialized = serializer.rep_dumps({"status": "not_allowed"})
+serialized = serializer.rep_dumps(BlockReadRepNotAllowed())
 serializer.rep_loads(serialized)
 display("block_read_rep_not_allowed", serialized, [])
 
-serialized = serializer.rep_dumps({"status": "in_maintenance"})
+serialized = serializer.rep_dumps(BlockReadRepInMaintenance())
 serializer.rep_loads(serialized)
 display("block_read_rep_in_maintenance", serialized, [])
 
-serialized = serializer.rep_dumps({"status": "invalid_msg_format"})
+serialized = serializer.rep_dumps(BlockReadRepRealmDeleted())
 serializer.rep_loads(serialized)
-display("block_read_rep_invalid_msg_format", serialized, [])
-
-serialized = serializer.rep_dumps({"status": "invalid_msg_format", "reason": "reason"})
-serializer.rep_loads(serialized)
-display("block_read_rep_invalid_msg_format", serialized, [])
+display("block_read_rep_realm_deleted", serialized, [])

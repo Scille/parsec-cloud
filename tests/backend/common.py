@@ -8,6 +8,7 @@ from typing import Callable
 import trio
 
 from parsec._parsec import (
+    ArchivingConfigRepOk,
     AuthenticatedPingRepOk,
     BlockCreateRepOk,
     BlockReadRepOk,
@@ -60,6 +61,7 @@ from parsec._parsec import (
     VlobUpdateRepOk,
 )
 from parsec.api.protocol import (
+    archiving_config_serializer,
     authenticated_ping_serializer,
     block_create_serializer,
     block_read_serializer,
@@ -99,6 +101,7 @@ from parsec.api.protocol import (
     realm_start_reencryption_maintenance_serializer,
     realm_stats_serializer,
     realm_status_serializer,
+    realm_update_archiving_serializer,
     realm_update_roles_serializer,
     shamir_recovery_others_list_serializer,
     shamir_recovery_self_info_serializer,
@@ -251,6 +254,7 @@ class CmdSock:
                     MessageGetRepOk,
                     OrganizationBootstrapRepOk,
                     OrganizationConfigRepOk,
+                    ArchivingConfigRepOk,
                     OrganizationStatsRepOk,
                     PkiEnrollmentAcceptRepOk,
                     PkiEnrollmentInfoRepOk,
@@ -349,6 +353,9 @@ organization_config = CmdSock(
     "organization_config", organization_config_serializer, check_rep_by_default=True
 )
 
+archiving_config = CmdSock(
+    "archiving_config", archiving_config_serializer, check_rep_by_default=True
+)
 
 organization_stats = CmdSock(
     "organization_stats", organization_stats_serializer, check_rep_by_default=True
@@ -416,6 +423,14 @@ realm_update_roles = CmdSock(
     parse_args=lambda self, role_certificate, recipient_message=None: {
         "role_certificate": role_certificate,
         "recipient_message": recipient_message,
+    },
+    check_rep_by_default=True,
+)
+realm_update_archiving = CmdSock(
+    "realm_update_archiving",
+    realm_update_archiving_serializer,
+    parse_args=lambda self, archiving_certificate: {
+        "archiving_certificate": archiving_certificate,
     },
     check_rep_by_default=True,
 )

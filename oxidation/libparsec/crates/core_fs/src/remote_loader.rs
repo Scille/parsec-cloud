@@ -217,6 +217,7 @@ impl UserRemoteLoader {
                 Err(FSError::RemoteManifestNotFound(entry_id))
             }
             vlob_list_versions::Rep::InMaintenance => Err(FSError::WorkspaceInMaintenance),
+            vlob_list_versions::Rep::RealmDeleted => Err(FSError::RealmDeleted),
             vlob_list_versions::Rep::Ok { versions } => Ok(versions),
             vlob_list_versions::Rep::UnknownStatus { .. } => Err(FSError::Custom(format!(
                 "Cannot fetch vlob {entry_id}: {rep:?}"

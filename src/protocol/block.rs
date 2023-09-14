@@ -71,7 +71,9 @@ gen_rep!(
     [NotFound],
     [Timeout],
     [NotAllowed],
-    [InMaintenance]
+    [InMaintenance],
+    [RealmArchived],
+    [RealmDeleted]
 );
 
 #[pyclass(extends=BlockCreateRep)]
@@ -128,6 +130,7 @@ gen_rep!(
     [Timeout],
     [NotAllowed],
     [InMaintenance],
+    [RealmDeleted]
 );
 
 #[pyclass(extends=BlockReadRep)]

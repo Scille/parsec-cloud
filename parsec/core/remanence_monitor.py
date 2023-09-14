@@ -6,11 +6,14 @@ from typing import TYPE_CHECKING, cast
 import structlog
 import trio
 
-from parsec._parsec import CoreEvent, EntryID, WorkspaceEntry
+from parsec._parsec import CoreEvent, DateTime, EntryID, RealmArchivingConfiguration, WorkspaceEntry
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.fs import FSBackendOfflineError, UserFS
 from parsec.core.fs.exceptions import FSWorkspaceNoAccess, FSWorkspaceNotFoundError
-from parsec.core.fs.workspacefs.remanence_manager import RemanenceManagerTaskID
+from parsec.core.fs.workspacefs.remanence_manager import (
+    RemanenceManagerTask,
+    RemanenceManagerTaskID,
+)
 from parsec.event_bus import EventBus, EventCallback
 from parsec.utils import open_service_nursery
 
@@ -34,27 +37,27 @@ async def monitor_remanent_workspaces(
     awake_tasks: set[RemanenceManagerTaskID] = set()
     cancel_scopes: dict[EntryID, trio.CancelScope] = {}
 
-    def _start_remanence_manager(workspace_id: EntryID) -> None:
+    def _idle(task_id: RemanenceManagerTaskID) -> None:
+        awake_tasks.discard(task_id)
+        if not awake_tasks:
+            logger.info(
+                "Remanence monitor workspace idle", workspace_id=task_id[0], task=task_id[1].name
+            )
+            task_status.idle()
+
+    def _awake(task_id: RemanenceManagerTaskID) -> None:
+        logger.info(
+            "Remanence monitor workspace awake", workspace_id=task_id[0], task=task_id[1].name
+        )
+        awake_tasks.add(task_id)
+        task_status.awake()
+
+    def _start_remanence_manager(workspace_id: EntryID) -> bool:
         # Make sure the workspace is available
         try:
             workspace_fs = user_fs.get_workspace(workspace_id)
         except FSWorkspaceNotFoundError:
-            return
-
-        def idle(task_id: RemanenceManagerTaskID) -> None:
-            logger.info(
-                "Remanence monitor workspace idle", workspace_id=task_id[0], task=task_id[1].name
-            )
-            awake_tasks.discard(task_id)
-            if not awake_tasks:
-                task_status.idle()
-
-        def awake(task_id: RemanenceManagerTaskID) -> None:
-            logger.info(
-                "Remanence monitor workspace awake", workspace_id=task_id[0], task=task_id[1].name
-            )
-            awake_tasks.add(task_id)
-            task_status.awake()
+            return False
 
         async def remanent_task() -> None:
             # Already started
@@ -66,7 +69,7 @@ async def monitor_remanent_workspaces(
                     # Possibly block new tasks while testing
                     await freeze_remanence_monitor_mockpoint()
                     # Run task
-                    await workspace_fs.run_remanence_manager(idle, awake)
+                    await workspace_fs.run_remanence_manager(_idle, _awake)
             # Our read rights have been revoked, no reason to collapse the monitor for that
             except FSWorkspaceNoAccess:
                 pass
@@ -76,6 +79,48 @@ async def monitor_remanent_workspaces(
 
         # Schedule task
         nursery.start_soon(remanent_task)
+        return True
+
+    def _on_read_rights_removed(workspace_id: EntryID) -> bool:
+        task_id = (workspace_id, RemanenceManagerTask.CLEANUP)
+
+        # Cancel the remanence manager if it's running
+        if workspace_id in cancel_scopes:
+            cancel_scopes[workspace_id].cancel()
+
+        # Make sure the workspace is available
+        try:
+            workspace_fs = user_fs.get_workspace(workspace_id)
+        except FSWorkspaceNotFoundError:
+            return False
+
+        # TODO: this might be a good place to fully clean up the
+        # blocks from the cache even if the workspace is not block remanent
+        # since the read rights have been revoked.
+        # It might also make sense to remove the manifests here.
+
+        # Nothing to cleanup
+        if not workspace_fs.local_storage.is_block_remanent():
+            return False
+
+        async def cleanup_task() -> None:
+            # Avoid concurrency
+            if task_id in awake_tasks:
+                return
+            # Set task
+            _awake(task_id)
+            try:
+                # Possibly block new tasks while testing
+                await freeze_remanence_monitor_mockpoint()
+                # Disable block remanence to cleanup disk space
+                await workspace_fs.local_storage.disable_block_remanence()
+            # Discard task
+            finally:
+                _idle(task_id)
+
+        # Schedule task
+        nursery.start_soon(cleanup_task)
+        return True
 
     def _on_sharing_updated(
         event: CoreEvent,
@@ -85,10 +130,21 @@ async def monitor_remanent_workspaces(
         # No reader rights
         if new_entry.role is None:
             if new_entry.id in cancel_scopes:
-                cancel_scopes[new_entry.id].cancel()
+                _on_read_rights_removed(new_entry.id)
         # Reader rights have been granted
         elif previous_entry is None or previous_entry.role is None:
             _start_remanence_manager(new_entry.id)
+
+    def _on_archiving_updated(
+        event: CoreEvent,
+        workspace_id: EntryID,
+        configuration: RealmArchivingConfiguration,
+        configured_on: DateTime | None,
+        is_deleted: bool,
+    ) -> None:
+        # No reader rights
+        if is_deleted and workspace_id in cancel_scopes:
+            _on_read_rights_removed(workspace_id)
 
     def _fs_workspace_created(
         event: CoreEvent,
@@ -101,19 +157,28 @@ async def monitor_remanent_workspaces(
         async with open_service_nursery() as nursery:
             with event_bus.connect_in_context(
                 (CoreEvent.SHARING_UPDATED, cast(EventCallback, _on_sharing_updated)),
+                (CoreEvent.ARCHIVING_UPDATED, cast(EventCallback, _on_archiving_updated)),
                 (CoreEvent.FS_WORKSPACE_CREATED, cast(EventCallback, _fs_workspace_created)),
             ):
                 # All workspaces should be processed at startup
-                workspaces = user_fs.get_user_manifest().workspaces
-                if workspaces:
-                    # Each workspace will have it own task that will start awake,
-                    # then switch to idle
-                    for entry in workspaces:
-                        if entry.role is not None:
-                            _start_remanence_manager(entry.id)
-                else:
+                available_workspaces, unavailable_workspaces = user_fs.get_all_workspace_entries()
+
+                # Clean up unavailable workspaces if necessary
+                cleanup_tasks_scheduled = any(
+                    _on_read_rights_removed(entry.id) for entry in unavailable_workspaces
+                )
+
+                # Each workspace will have it own task that will start awake,
+                # then switch to idle
+                manager_tasks_scheduled = any(
+                    _start_remanence_manager(entry.id) for entry in available_workspaces
+                )
+
+                # Set idle status if no task has been scheduled
+                if not manager_tasks_scheduled and not cleanup_tasks_scheduled:
                     task_status.idle()
 
+                # The monitor is now started
                 task_status.started()
                 await trio.sleep_forever()
 

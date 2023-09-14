@@ -9,6 +9,7 @@ from parsec._parsec import (
     VlobPollChangesRepNotAllowed,
     VlobPollChangesRepNotFound,
     VlobPollChangesRepOk,
+    VlobPollChangesRepRealmDeleted,
     VlobUpdateRepNotAllowed,
     VlobUpdateRepOk,
 )
@@ -39,7 +40,7 @@ def realm_generate_certif_and_update_roles_or_fail(next_timestamp):
 
 
 @pytest.mark.trio
-async def test_realm_updated_by_vlob(backend, alice, alice_ws, realm):
+async def test_realm_updated_by_vlob(backend, alice, alice_ws, realm, archive_realm):
     await backend.vlob.create(
         organization_id=alice.organization_id,
         author=alice.device_id,
@@ -48,6 +49,8 @@ async def test_realm_updated_by_vlob(backend, alice, alice_ws, realm):
         vlob_id=VLOB_ID,
         timestamp=NOW,
         blob=b"v1",
+        sequester_blob=None,
+        now=DateTime.now(),
     )
     await backend.vlob.update(
         organization_id=alice.organization_id,
@@ -57,15 +60,25 @@ async def test_realm_updated_by_vlob(backend, alice, alice_ws, realm):
         version=2,
         timestamp=NOW,
         blob=b"v2",
+        sequester_blob=None,
+        now=DateTime.now(),
     )
 
     for last_checkpoint in (0, 1):
         rep = await vlob_poll_changes(alice_ws, realm, last_checkpoint)
         assert rep == VlobPollChangesRepOk({VLOB_ID: 2}, 2)
 
+    # This should still work after the backend has been archived
+    await archive_realm(backend, alice, realm)
+    for last_checkpoint in (0, 1):
+        rep = await vlob_poll_changes(alice_ws, realm, last_checkpoint)
+        assert rep == VlobPollChangesRepOk({VLOB_ID: 2}, 2)
+
 
 @pytest.mark.trio
-async def test_vlob_poll_changes_checkpoint_up_to_date(backend, alice, alice_ws, realm):
+async def test_vlob_poll_changes_checkpoint_up_to_date(
+    backend, alice, alice_ws, realm, archive_realm
+):
     await backend.vlob.create(
         organization_id=alice.organization_id,
         author=alice.device_id,
@@ -74,6 +87,8 @@ async def test_vlob_poll_changes_checkpoint_up_to_date(backend, alice, alice_ws,
         vlob_id=VLOB_ID,
         timestamp=NOW,
         blob=b"v1",
+        sequester_blob=None,
+        now=DateTime.now(),
     )
     await backend.vlob.update(
         organization_id=alice.organization_id,
@@ -83,8 +98,15 @@ async def test_vlob_poll_changes_checkpoint_up_to_date(backend, alice, alice_ws,
         version=2,
         timestamp=NOW,
         blob=b"v2",
+        sequester_blob=None,
+        now=DateTime.now(),
     )
 
+    rep = await vlob_poll_changes(alice_ws, realm, 2)
+    assert rep == VlobPollChangesRepOk({}, 2)
+
+    # This should still work after the backend has been archived
+    await archive_realm(backend, alice, realm)
     rep = await vlob_poll_changes(alice_ws, realm, 2)
     assert rep == VlobPollChangesRepOk({}, 2)
 
@@ -94,6 +116,12 @@ async def test_vlob_poll_changes_not_found(alice_ws):
     rep = await vlob_poll_changes(alice_ws, UNKNOWN_REALM_ID, 0)
     # The reason is no longer generated
     assert isinstance(rep, VlobPollChangesRepNotFound)
+
+
+@pytest.mark.trio
+async def test_vlob_poll_changes_realm_deleted(backend, alice, alice_ws, deleted_realm):
+    rep = await vlob_poll_changes(alice_ws, deleted_realm, 2)
+    assert isinstance(rep, VlobPollChangesRepRealmDeleted)
 
 
 @pytest.mark.trio
@@ -115,6 +143,8 @@ async def test_vlob_poll_changes(
         vlob_id=VLOB_ID,
         timestamp=NOW,
         blob=b"v1",
+        sequester_blob=None,
+        now=DateTime.now(),
     )
 
     # At first only Alice is allowed
@@ -171,6 +201,7 @@ async def test_vlob_poll_changes_during_maintenance(backend, alice, alice_ws, re
         2,
         {alice.user_id: b"whatever"},
         DateTime(2000, 1, 2),
+        now=DateTime.now(),
     )
 
     # It's ok to poll changes while the workspace is being reencrypted

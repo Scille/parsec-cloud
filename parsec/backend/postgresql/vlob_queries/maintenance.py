@@ -5,6 +5,7 @@ from typing import List, Tuple
 
 import triopg
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import DeviceID, OrganizationID, RealmID, VlobID
 from parsec.backend.postgresql.utils import (
     Q,
@@ -126,9 +127,10 @@ async def _check_realm_and_maintenance_access(
     author: DeviceID,
     realm_id: RealmID,
     encryption_revision: int,
+    now: DateTime,
 ) -> None:
     await _check_realm(
-        conn, organization_id, realm_id, encryption_revision, OperationKind.MAINTENANCE
+        conn, organization_id, realm_id, encryption_revision, OperationKind.MAINTENANCE, now
     )
     can_write_roles = (RealmRole.OWNER,)
     await _check_realm_access(conn, organization_id, realm_id, author, can_write_roles)
@@ -142,9 +144,10 @@ async def query_maintenance_get_reencryption_batch(
     realm_id: RealmID,
     encryption_revision: int,
     size: int,
+    now: DateTime,
 ) -> List[Tuple[VlobID, int, bytes]]:
     await _check_realm_and_maintenance_access(
-        conn, organization_id, author, realm_id, encryption_revision
+        conn, organization_id, author, realm_id, encryption_revision, now
     )
     rep = await conn.fetch(
         *_q_maintenance_get_reencryption_batch(
@@ -165,9 +168,10 @@ async def query_maintenance_save_reencryption_batch(
     realm_id: RealmID,
     encryption_revision: int,
     batch: List[Tuple[VlobID, int, bytes]],
+    now: DateTime,
 ) -> Tuple[int, int]:
     await _check_realm_and_maintenance_access(
-        conn, organization_id, author, realm_id, encryption_revision
+        conn, organization_id, author, realm_id, encryption_revision, now
     )
     for vlob_id, version, blob in batch:
         await conn.execute(

@@ -14,11 +14,27 @@ from parsec.core.types import BackendAddr, BackendOrganizationBootstrapAddr
 from parsec.utils import trio_run
 
 
+class Unset:
+    pass
+
+
 async def create_organization_req(
-    organization_id: OrganizationID, backend_addr: BackendAddr, administration_token: str
+    organization_id: OrganizationID,
+    backend_addr: BackendAddr,
+    administration_token: str,
+    user_profile_outsider_allowed: bool | Unset = Unset(),
+    active_users_limit: int | None | Unset = Unset(),
+    minimum_archiving_period: int | Unset = Unset(),
 ) -> str:
     url = backend_addr.to_http_domain_url("/administration/organizations")
-    data = organization_create_req_serializer.dumps({"organization_id": organization_id})
+    values: dict[str, object] = {"organization_id": organization_id}
+    if not isinstance(user_profile_outsider_allowed, Unset):
+        values["user_profile_outsider_allowed"] = user_profile_outsider_allowed
+    if not isinstance(active_users_limit, Unset):
+        values["active_users_limit"] = active_users_limit
+    if not isinstance(minimum_archiving_period, Unset):
+        values["minimum_archiving_period"] = minimum_archiving_period
+    data = organization_create_req_serializer.dumps(values)
 
     rep_data = await http_request(
         url=url,

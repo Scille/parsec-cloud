@@ -17,6 +17,8 @@ from parsec._parsec import (
     RealmStatsReq,
     RealmStatusRep,
     RealmStatusReq,
+    RealmUpdateArchivingRep,
+    RealmUpdateArchivingReq,
     RealmUpdateRolesRep,
     RealmUpdateRolesReq,
 )
@@ -34,6 +36,7 @@ __all__ = (
     "realm_stats_serializer",
     "realm_get_role_certificates_serializer",
     "realm_update_roles_serializer",
+    "realm_update_archiving_serializer",
     "realm_start_reencryption_maintenance_serializer",
     "realm_finish_reencryption_maintenance_serializer",
 )
@@ -54,4 +57,7 @@ realm_start_reencryption_maintenance_serializer = ApiCommandSerializer(
 )
 realm_finish_reencryption_maintenance_serializer = ApiCommandSerializer(
     RealmFinishReencryptionMaintenanceReq, RealmFinishReencryptionMaintenanceRep
+)
+realm_update_archiving_serializer = ApiCommandSerializer(
+    RealmUpdateArchivingReq, RealmUpdateArchivingRep
 )

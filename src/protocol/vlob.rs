@@ -180,6 +180,8 @@ gen_rep!(
         reason: String
     ],
     [Timeout],
+    [RealmArchived],
+    [RealmDeleted],
 );
 
 #[pyclass(extends=VlobCreateRep)]
@@ -262,6 +264,7 @@ gen_rep!(
     [BadVersion],
     [BadEncryptionRevision],
     [InMaintenance],
+    [RealmDeleted],
 );
 
 #[pyclass(extends=VlobReadRep)]
@@ -457,6 +460,8 @@ gen_rep!(
         reason: String
     ],
     [Timeout],
+    [RealmArchived],
+    [RealmDeleted],
 );
 
 #[pyclass(extends=VlobUpdateRep)]
@@ -519,6 +524,7 @@ gen_rep!(
     [NotFound, reason: Reason],
     [NotAllowed],
     [InMaintenance],
+    [RealmDeleted],
 );
 
 #[pyclass(extends=VlobPollChangesRep)]
@@ -603,6 +609,7 @@ gen_rep!(
     [NotFound, reason: Reason],
     [NotAllowed],
     [InMaintenance],
+    [RealmDeleted],
 );
 
 #[pyclass(extends=VlobListVersionsRep)]
@@ -693,6 +700,7 @@ gen_rep!(
     [NotInMaintenance, reason: Reason],
     [BadEncryptionRevision],
     [MaintenanceError, reason: Reason],
+    [RealmDeleted],
 );
 
 #[pyclass(extends=VlobMaintenanceGetReencryptionBatchRep)]
@@ -796,6 +804,7 @@ gen_rep!(
     [NotInMaintenance, reason: Reason],
     [BadEncryptionRevision],
     [MaintenanceError, reason: Reason],
+    [RealmDeleted],
 );
 
 #[pyclass(extends=VlobMaintenanceSaveReencryptionBatchRep)]

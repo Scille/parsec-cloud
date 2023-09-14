@@ -99,6 +99,9 @@ pub enum FSError {
     #[error("Cannot download vlob while the workspace is in maintenance")]
     WorkspaceInMaintenance,
 
+    #[error("Cannot access the workspace, the realm has been deleted")]
+    RealmDeleted,
+
     #[error("Cannot get workspace roles: no read access")]
     WorkspaceNoReadAccess,
 

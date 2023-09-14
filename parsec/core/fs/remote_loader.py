@@ -16,11 +16,14 @@ from parsec._parsec import (
     BlockCreateRepInMaintenance,
     BlockCreateRepNotAllowed,
     BlockCreateRepOk,
+    BlockCreateRepRealmArchived,
+    BlockCreateRepRealmDeleted,
     BlockCreateRepTimeout,
     BlockReadRepInMaintenance,
     BlockReadRepNotAllowed,
     BlockReadRepNotFound,
     BlockReadRepOk,
+    BlockReadRepRealmDeleted,
     ChunkID,
     CoreEvent,
     CryptoError,
@@ -48,6 +51,8 @@ from parsec._parsec import (
     VlobCreateRepInMaintenance,
     VlobCreateRepNotAllowed,
     VlobCreateRepOk,
+    VlobCreateRepRealmArchived,
+    VlobCreateRepRealmDeleted,
     VlobCreateRepRejectedBySequesterService,
     VlobCreateRepRequireGreaterTimestamp,
     VlobCreateRepSequesterInconsistency,
@@ -57,18 +62,22 @@ from parsec._parsec import (
     VlobListVersionsRepNotAllowed,
     VlobListVersionsRepNotFound,
     VlobListVersionsRepOk,
+    VlobListVersionsRepRealmDeleted,
     VlobReadRepBadEncryptionRevision,
     VlobReadRepBadVersion,
     VlobReadRepInMaintenance,
     VlobReadRepNotAllowed,
     VlobReadRepNotFound,
     VlobReadRepOk,
+    VlobReadRepRealmDeleted,
     VlobUpdateRepBadEncryptionRevision,
     VlobUpdateRepBadVersion,
     VlobUpdateRepInMaintenance,
     VlobUpdateRepNotAllowed,
     VlobUpdateRepNotFound,
     VlobUpdateRepOk,
+    VlobUpdateRepRealmArchived,
+    VlobUpdateRepRealmDeleted,
     VlobUpdateRepRejectedBySequesterService,
     VlobUpdateRepRequireGreaterTimestamp,
     VlobUpdateRepSequesterInconsistency,
@@ -105,6 +114,8 @@ from parsec.core.fs.exceptions import (
     FSWorkspaceInMaintenance,
     FSWorkspaceNoReadAccess,
     FSWorkspaceNoWriteAccess,
+    FSWorkspaceRealmArchived,
+    FSWorkspaceRealmDeleted,
 )
 from parsec.core.fs.storage.workspace_storage import AnyWorkspaceStorage
 from parsec.core.remote_devices_manager import RemoteDevicesManager
@@ -125,6 +136,9 @@ MANIFEST_STAMP_AHEAD_US = 100_000  # microseconds, or 0.1 seconds
 # compared to the manifest stamp ahead value, so the certificate updates have
 # priority over manifest updates.
 ROLE_CERTIFICATE_STAMP_AHEAD_US = 500_000  # microseconds, or 0.5 seconds
+
+# Archiving doesn't have to use a value as large 0.5 seconds
+ARCHIVING_CERTIFICATE_STAMP_AHEAD_US = 1_000  # microseconds, or 1 milliseconds
 
 
 class VlobRequireGreaterTimestampError(Exception):
@@ -374,6 +388,8 @@ class PyUserRemoteLoader:
             raise FSWorkspaceInMaintenance(
                 "Cannot download vlob while the workspace is in maintenance"
             )
+        elif isinstance(rep, VlobListVersionsRepRealmDeleted):
+            raise FSWorkspaceRealmDeleted(f"The workspace {self.workspace_id.hex} has been deleted")
         elif not isinstance(rep, VlobListVersionsRepOk):
             raise FSError(f"Cannot fetch vlob {entry_id.hex}: {rep}")
 
@@ -517,6 +533,8 @@ class RemoteLoader(PyUserRemoteLoader):
             raise FSWorkspaceInMaintenance(
                 "Cannot download block while the workspace in maintenance"
             )
+        elif isinstance(rep, BlockReadRepRealmDeleted):
+            raise FSWorkspaceRealmDeleted(f"The workspace {self.workspace_id.hex} has been deleted")
         elif not isinstance(rep, BlockReadRepOk):
             raise FSError(f"Cannot download block: `{rep}`")
 
@@ -593,6 +611,12 @@ class RemoteLoader(PyUserRemoteLoader):
             raise FSWorkspaceInMaintenance("Cannot upload block while the workspace in maintenance")
         elif isinstance(rep, BlockCreateRepTimeout):
             raise FSServerUploadTemporarilyUnavailableError("Temporary failure during block upload")
+        elif isinstance(rep, BlockCreateRepRealmArchived):
+            raise FSWorkspaceRealmArchived(
+                f"The workspace {self.workspace_id.hex} has been archived"
+            )
+        elif isinstance(rep, BlockCreateRepRealmDeleted):
+            raise FSWorkspaceRealmDeleted(f"The workspace {self.workspace_id.hex} has been deleted")
         elif not isinstance(rep, BlockCreateRepOk):
             raise FSError(f"Cannot upload block: {rep}")
 
@@ -693,6 +717,8 @@ class RemoteLoader(PyUserRemoteLoader):
             raise FSWorkspaceInMaintenance(
                 "Cannot download vlob while the workspace is in maintenance"
             )
+        elif isinstance(rep, VlobReadRepRealmDeleted):
+            raise FSWorkspaceRealmDeleted(f"The workspace {self.workspace_id.hex} has been deleted")
         elif not isinstance(rep, VlobReadRepOk):
             raise FSError(f"Cannot fetch vlob {entry_id.hex}: {rep}")
 
@@ -901,6 +927,12 @@ class RemoteLoader(PyUserRemoteLoader):
             )
         elif isinstance(rep, VlobCreateRepTimeout):
             raise FSServerUploadTemporarilyUnavailableError("Temporary failure during vlob upload")
+        elif isinstance(rep, VlobCreateRepRealmArchived):
+            raise FSWorkspaceRealmArchived(
+                f"The workspace {self.workspace_id.hex} has been archived"
+            )
+        elif isinstance(rep, VlobCreateRepRealmDeleted):
+            raise FSWorkspaceRealmDeleted(f"The workspace {self.workspace_id.hex} has been deleted")
         elif not isinstance(rep, VlobCreateRepOk):
             raise FSError(f"Cannot create vlob {entry_id.hex}: {rep}")
 
@@ -965,6 +997,12 @@ class RemoteLoader(PyUserRemoteLoader):
             )
         elif isinstance(rep, VlobUpdateRepTimeout):
             raise FSServerUploadTemporarilyUnavailableError("Temporary failure during vlob upload")
+        elif isinstance(rep, VlobUpdateRepRealmArchived):
+            raise FSWorkspaceRealmArchived(
+                f"The workspace {self.workspace_id.hex} has been archived"
+            )
+        elif isinstance(rep, VlobUpdateRepRealmDeleted):
+            raise FSWorkspaceRealmDeleted(f"The workspace {self.workspace_id.hex} has been deleted")
         elif not isinstance(rep, VlobUpdateRepOk):
             raise FSError(f"Cannot update vlob {entry_id.hex}: {rep}")
 

@@ -12,7 +12,7 @@ from PyQt5.QtGui import QKeyEvent
 from PyQt5.QtWidgets import QWidget
 from structlog import get_logger
 
-from parsec._parsec import CoreEvent, DateTime
+from parsec._parsec import CoreEvent, DateTime, RealmArchivingConfiguration
 from parsec.api.data import EntryName
 from parsec.core.fs import ChangesAfterSync, FsPath, WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import (
@@ -379,6 +379,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.event_bus.connect(
             CoreEvent.SHARING_UPDATED, cast(EventCallback, self._on_sharing_updated)
         )
+        self.event_bus.connect(
+            CoreEvent.ARCHIVING_UPDATED, cast(EventCallback, self._on_archiving_updated)
+        )
 
     def disconnect_all(self) -> None:
         pass
@@ -399,10 +402,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
         ws_entry = self.workspace_fs.get_workspace_entry()
         self.current_user_role = ws_entry.role
+        self.read_only = self.workspace_fs.is_read_only()
         assert self.current_user_role is not None
         self.label_role.setText(get_role_translation(self.current_user_role))
         self.table_files.current_user_role = self.current_user_role
-        if self.current_user_role == WorkspaceRole.READER:
+        self.table_files.read_only = self.read_only
+        if self.read_only:
             self.button_import_folder.hide()
             self.button_import_files.hide()
             self.button_create_folder.hide()
@@ -1326,16 +1331,22 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def _on_sharing_updated(
         self, event: CoreEvent, new_entry: WorkspaceEntry, previous_entry: WorkspaceEntry
     ) -> None:
+        assert new_entry is not None or previous_entry is not None
+        workspace_id = previous_entry.id if previous_entry is not None else new_entry.id
+
         if new_entry is None or new_entry.role is None:
             # Sharing revoked
             show_error(
                 self, T("TEXT_FILE_SHARING_REVOKED_workspace").format(workspace=previous_entry.name)
             )
-            self.back_clicked.emit()
+            if self.workspace_fs is not None and workspace_id == self.workspace_fs.workspace_id:
+                self.back_clicked.emit()
 
         elif previous_entry is not None and previous_entry.role is not None:
-            self.current_user_role = new_entry.role
-            self.label_role.setText(get_role_translation(self.current_user_role))
+            if self.workspace_fs is not None and workspace_id == self.workspace_fs.workspace_id:
+                self.current_user_role = new_entry.role
+                self.read_only = self.workspace_fs.is_read_only()
+                self.label_role.setText(get_role_translation(self.current_user_role))
             if (
                 previous_entry.role != WorkspaceRole.READER
                 and new_entry.role == WorkspaceRole.READER
@@ -1346,6 +1357,22 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                         workspace=previous_entry.name
                     ),
                 )
+
+    def _on_archiving_updated(
+        self,
+        event: CoreEvent,
+        workspace_id: EntryID,
+        configuration: RealmArchivingConfiguration,
+        configured_on: DateTime | None,
+        is_deleted: bool,
+    ) -> None:
+        # Not the corresponding workspace
+        if self.workspace_fs is None or workspace_id != self.workspace_fs.workspace_id:
+            return
+
+        self.read_only = self.workspace_fs.is_read_only()
+        if is_deleted:
+            self.back_clicked.emit()
 
     def _on_reload_timestamped_requested(
         self,

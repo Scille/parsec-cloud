@@ -251,6 +251,8 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<BlockCreateRepTimeout>()?;
     m.add_class::<BlockCreateRepNotAllowed>()?;
     m.add_class::<BlockCreateRepInMaintenance>()?;
+    m.add_class::<BlockCreateRepRealmArchived>()?;
+    m.add_class::<BlockCreateRepRealmDeleted>()?;
     m.add_class::<BlockCreateRepUnknownStatus>()?;
     m.add_class::<BlockReadReq>()?;
     m.add_class::<BlockReadRep>()?;
@@ -259,6 +261,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<BlockReadRepTimeout>()?;
     m.add_class::<BlockReadRepNotAllowed>()?;
     m.add_class::<BlockReadRepInMaintenance>()?;
+    m.add_class::<BlockReadRepRealmDeleted>()?;
     m.add_class::<BlockReadRepUnknownStatus>()?;
 
     // Events
@@ -275,6 +278,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<EventsListenRepOkRealmMaintenanceStarted>()?;
     m.add_class::<EventsListenRepOkRealmVlobsUpdated>()?;
     m.add_class::<EventsListenRepOkRealmRolesUpdated>()?;
+    m.add_class::<EventsListenRepOkRealmArchivingUpdated>()?;
     m.add_class::<EventsListenRepOkPkiEnrollmentUpdated>()?;
     m.add_class::<EventsSubscribeReq>()?;
     m.add_class::<EventsSubscribeRep>()?;
@@ -352,6 +356,12 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<OrganizationConfigRepOk>()?;
     m.add_class::<OrganizationConfigRepNotFound>()?;
     m.add_class::<OrganizationConfigRepUnknownStatus>()?;
+    m.add_class::<ArchivingConfigReq>()?;
+    m.add_class::<ArchivingConfigRep>()?;
+    m.add_class::<ArchivingConfigRepOk>()?;
+    m.add_class::<ArchivingConfigRepNotFound>()?;
+    m.add_class::<ArchivingConfigRepUnknownStatus>()?;
+    m.add_class::<RealmArchivingStatus>()?;
     m.add_class::<ActiveUsersLimit>()?;
 
     // Realm
@@ -369,12 +379,14 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<RealmStatusRepOk>()?;
     m.add_class::<RealmStatusRepNotAllowed>()?;
     m.add_class::<RealmStatusRepNotFound>()?;
+    m.add_class::<RealmStatusRepRealmDeleted>()?;
     m.add_class::<RealmStatusRepUnknownStatus>()?;
     m.add_class::<RealmStatsReq>()?;
     m.add_class::<RealmStatsRep>()?;
     m.add_class::<RealmStatsRepOk>()?;
     m.add_class::<RealmStatsRepNotAllowed>()?;
     m.add_class::<RealmStatsRepNotFound>()?;
+    m.add_class::<RealmStatsRepRealmDeleted>()?;
     m.add_class::<RealmStatsRepUnknownStatus>()?;
     m.add_class::<RealmGetRoleCertificatesReq>()?;
     m.add_class::<RealmGetRoleCertificatesRep>()?;
@@ -395,7 +407,19 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<RealmUpdateRolesRepUserRevoked>()?;
     m.add_class::<RealmUpdateRolesRepRequireGreaterTimestamp>()?;
     m.add_class::<RealmUpdateRolesRepBadTimestamp>()?;
+    m.add_class::<RealmUpdateRolesRepRealmDeleted>()?;
     m.add_class::<RealmUpdateRolesRepUnknownStatus>()?;
+    m.add_class::<RealmUpdateArchivingReq>()?;
+    m.add_class::<RealmUpdateArchivingRep>()?;
+    m.add_class::<RealmUpdateArchivingRepOk>()?;
+    m.add_class::<RealmUpdateArchivingRepNotAllowed>()?;
+    m.add_class::<RealmUpdateArchivingRepInvalidCertification>()?;
+    m.add_class::<RealmUpdateArchivingRepNotFound>()?;
+    m.add_class::<RealmUpdateArchivingRepRealmDeleted>()?;
+    m.add_class::<RealmUpdateArchivingRepArchivingPeriodTooShort>()?;
+    m.add_class::<RealmUpdateArchivingRepRequireGreaterTimestamp>()?;
+    m.add_class::<RealmUpdateArchivingRepBadTimestamp>()?;
+    m.add_class::<RealmUpdateArchivingRepUnknownStatus>()?;
     m.add_class::<RealmStartReencryptionMaintenanceReq>()?;
     m.add_class::<RealmStartReencryptionMaintenanceRep>()?;
     m.add_class::<RealmStartReencryptionMaintenanceRepOk>()?;
@@ -406,6 +430,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<RealmStartReencryptionMaintenanceRepMaintenanceError>()?;
     m.add_class::<RealmStartReencryptionMaintenanceRepInMaintenance>()?;
     m.add_class::<RealmStartReencryptionMaintenanceRepBadTimestamp>()?;
+    m.add_class::<RealmStartReencryptionMaintenanceRepRealmDeleted>()?;
     m.add_class::<RealmStartReencryptionMaintenanceRepUnknownStatus>()?;
     m.add_class::<RealmFinishReencryptionMaintenanceReq>()?;
     m.add_class::<RealmFinishReencryptionMaintenanceRep>()?;
@@ -415,6 +440,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<RealmFinishReencryptionMaintenanceRepBadEncryptionRevision>()?;
     m.add_class::<RealmFinishReencryptionMaintenanceRepNotInMaintenance>()?;
     m.add_class::<RealmFinishReencryptionMaintenanceRepMaintenanceError>()?;
+    m.add_class::<RealmFinishReencryptionMaintenanceRepRealmDeleted>()?;
     m.add_class::<RealmFinishReencryptionMaintenanceRepUnknownStatus>()?;
     m.add_class::<MaintenanceType>()?;
 
@@ -624,6 +650,8 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<VlobCreateRepSequesterInconsistency>()?;
     m.add_class::<VlobCreateRepRejectedBySequesterService>()?;
     m.add_class::<VlobCreateRepTimeout>()?;
+    m.add_class::<VlobCreateRepRealmArchived>()?;
+    m.add_class::<VlobCreateRepRealmDeleted>()?;
     m.add_class::<VlobCreateRepUnknownStatus>()?;
     m.add_class::<VlobReadReq>()?;
     m.add_class::<VlobReadRep>()?;
@@ -633,6 +661,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<VlobReadRepBadVersion>()?;
     m.add_class::<VlobReadRepBadEncryptionRevision>()?;
     m.add_class::<VlobReadRepInMaintenance>()?;
+    m.add_class::<VlobReadRepRealmDeleted>()?;
     m.add_class::<VlobReadRepUnknownStatus>()?;
     m.add_class::<VlobUpdateReq>()?;
     m.add_class::<VlobUpdateRep>()?;
@@ -649,6 +678,8 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<VlobUpdateRepSequesterInconsistency>()?;
     m.add_class::<VlobUpdateRepRejectedBySequesterService>()?;
     m.add_class::<VlobUpdateRepTimeout>()?;
+    m.add_class::<VlobUpdateRepRealmArchived>()?;
+    m.add_class::<VlobUpdateRepRealmDeleted>()?;
     m.add_class::<VlobUpdateRepUnknownStatus>()?;
     m.add_class::<VlobPollChangesReq>()?;
     m.add_class::<VlobPollChangesRep>()?;
@@ -656,6 +687,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<VlobPollChangesRepNotFound>()?;
     m.add_class::<VlobPollChangesRepNotAllowed>()?;
     m.add_class::<VlobPollChangesRepInMaintenance>()?;
+    m.add_class::<VlobPollChangesRepRealmDeleted>()?;
     m.add_class::<VlobPollChangesRepUnknownStatus>()?;
     m.add_class::<VlobListVersionsReq>()?;
     m.add_class::<VlobListVersionsRep>()?;
@@ -663,6 +695,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<VlobListVersionsRepNotFound>()?;
     m.add_class::<VlobListVersionsRepNotAllowed>()?;
     m.add_class::<VlobListVersionsRepInMaintenance>()?;
+    m.add_class::<VlobListVersionsRepRealmDeleted>()?;
     m.add_class::<VlobListVersionsRepUnknownStatus>()?;
     m.add_class::<VlobMaintenanceGetReencryptionBatchReq>()?;
     m.add_class::<VlobMaintenanceGetReencryptionBatchRep>()?;
@@ -672,6 +705,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<VlobMaintenanceGetReencryptionBatchRepNotInMaintenance>()?;
     m.add_class::<VlobMaintenanceGetReencryptionBatchRepBadEncryptionRevision>()?;
     m.add_class::<VlobMaintenanceGetReencryptionBatchRepMaintenanceError>()?;
+    m.add_class::<VlobMaintenanceGetReencryptionBatchRepRealmDeleted>()?;
     m.add_class::<VlobMaintenanceGetReencryptionBatchRepUnknownStatus>()?;
     m.add_class::<VlobMaintenanceSaveReencryptionBatchReq>()?;
     m.add_class::<VlobMaintenanceSaveReencryptionBatchRep>()?;
@@ -681,6 +715,7 @@ pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance>()?;
     m.add_class::<VlobMaintenanceSaveReencryptionBatchRepBadEncryptionRevision>()?;
     m.add_class::<VlobMaintenanceSaveReencryptionBatchRepMaintenanceError>()?;
+    m.add_class::<VlobMaintenanceSaveReencryptionBatchRepRealmDeleted>()?;
     m.add_class::<VlobMaintenanceSaveReencryptionBatchRepUnknownStatus>()?;
     m.add_class::<ReencryptionBatchEntry>()?;
 

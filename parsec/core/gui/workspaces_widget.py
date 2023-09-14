@@ -10,7 +10,13 @@ from PyQt5.QtCore import QDate, QEvent, QObject, Qt, QTime, QTimer, pyqtBoundSig
 from PyQt5.QtWidgets import QAbstractButton, QLabel, QWidget
 from structlog import get_logger
 
-from parsec._parsec import CoreEvent, DateTime, LocalDateTime, WorkspaceEntry
+from parsec._parsec import (
+    CoreEvent,
+    DateTime,
+    LocalDateTime,
+    RealmArchivingConfiguration,
+    WorkspaceEntry,
+)
 from parsec.core.fs import (
     ChangesAfterSync,
     FSBackendOfflineError,
@@ -76,8 +82,7 @@ async def _do_workspace_rename(
 
 async def _do_workspace_list(core: LoggedCore) -> list[WorkspaceFS]:
     workspaces = []
-    user_manifest = core.user_fs.get_user_manifest()
-    available_workspaces = [w for w in user_manifest.workspaces if w.role]
+    available_workspaces = core.user_fs.get_available_workspace_entries()
     for workspace in available_workspaces:
         workspace_id = workspace.id
         workspace_fs = core.user_fs.get_workspace(workspace_id)
@@ -216,6 +221,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         )
         self.event_bus.connect(
             CoreEvent.SHARING_UPDATED, cast(EventCallback, self._on_sharing_updated)
+        )
+        self.event_bus.connect(
+            CoreEvent.ARCHIVING_UPDATED, cast(EventCallback, self._on_archiving_updated)
         )
         self.event_bus.connect(
             CoreEvent.FS_ENTRY_DOWNSYNCED, cast(EventCallback, self._on_entry_downsynced)
@@ -794,6 +802,16 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def _on_sharing_updated(
         self, event: CoreEvent, new_entry: WorkspaceEntry, previous_entry: WorkspaceEntry
+    ) -> None:
+        self.reset()
+
+    def _on_archiving_updated(
+        self,
+        event: CoreEvent,
+        workspace_id: EntryID,
+        configuration: RealmArchivingConfiguration,
+        configured_on: DateTime | None,
+        is_deleted: bool,
     ) -> None:
         self.reset()
 

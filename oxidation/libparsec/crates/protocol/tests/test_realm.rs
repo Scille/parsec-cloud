@@ -245,6 +245,14 @@ fn serde_realm_status_req() {
         reason: Some("foobar".to_owned())
     }
 )]
+#[case::realm_deleted(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   status: "realm_deleted"
+    //
+    &hex!("81a6737461747573ad7265616c6d5f64656c65746564")[..],
+    authenticated_cmds::realm_status::Rep::RealmDeleted
+)]
 fn serde_realm_status_rep(
     #[case] raw: &[u8],
     #[case] expected: authenticated_cmds::realm_status::Rep,
@@ -325,6 +333,14 @@ fn serde_realm_stats_req() {
     authenticated_cmds::realm_stats::Rep::NotFound {
         reason: Some("foobar".to_owned())
     }
+)]
+#[case::realm_deleted(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   status: "realm_deleted"
+    //
+    &hex!("81a6737461747573ad7265616c6d5f64656c65746564")[..],
+    authenticated_cmds::realm_stats::Rep::RealmDeleted
 )]
 fn serde_realm_stats_rep(
     #[case] raw: &[u8],
@@ -620,6 +636,14 @@ fn serde_realm_update_roles_req(
         client_timestamp: Maybe::Present("2000-1-2T01:00:00Z".parse().unwrap()),
     }
 )]
+#[case::realm_deleted(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   status: "realm_deleted"
+    //
+    &hex!("81a6737461747573ad7265616c6d5f64656c65746564")[..],
+    authenticated_cmds::realm_update_roles::Rep::RealmDeleted
+)]
 fn serde_realm_update_roles_rep(
     #[case] raw: &[u8],
     #[case] expected: authenticated_cmds::realm_update_roles::Rep,
@@ -790,6 +814,14 @@ fn serde_realm_start_reencryption_maintenance_req() {
         client_timestamp: Maybe::Present("2000-1-2T01:00:00Z".parse().unwrap()),
     }
 )]
+#[case::realm_deleted(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   status: "realm_deleted"
+    //
+    &hex!("81a6737461747573ad7265616c6d5f64656c65746564")[..],
+    authenticated_cmds::realm_start_reencryption_maintenance::Rep::RealmDeleted
+)]
 fn serde_realm_start_reencryption_maintenance_rep(
     #[case] raw: &[u8],
     #[case] expected: authenticated_cmds::realm_start_reencryption_maintenance::Rep,
@@ -904,6 +936,14 @@ fn serde_realm_finish_reencryption_maintenance_req() {
         reason: Some("foobar".to_owned())
     }
 )]
+#[case::realm_deleted(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   status: "realm_deleted"
+    //
+    &hex!("81a6737461747573ad7265616c6d5f64656c65746564")[..],
+    authenticated_cmds::realm_finish_reencryption_maintenance::Rep::RealmDeleted
+)]
 fn serde_realm_finish_reencryption_maintenance_rep(
     #[case] raw: &[u8],
     #[case] expected: authenticated_cmds::realm_finish_reencryption_maintenance::Rep,
@@ -917,6 +957,138 @@ fn serde_realm_finish_reencryption_maintenance_rep(
 
     let data2 =
         authenticated_cmds::realm_finish_reencryption_maintenance::Rep::load(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
+}
+
+#[parsec_test]
+fn serde_realm_update_archiving_req() {
+    // Generated from Rust implementation (Parsec v2.16.0-rc.3+dev)
+    // Content:
+    //   archiving_certificate: hex!("666f6f626172")
+    //   cmd: "realm_update_archiving"
+    //
+    let raw = hex!(
+        "82a3636d64b67265616c6d5f7570646174655f617263686976696e67b5617263686976696e"
+        "675f6365727469666963617465c406666f6f626172"
+    );
+
+    let expected = authenticated_cmds::AnyCmdReq::RealmUpdateArchiving(
+        authenticated_cmds::realm_update_archiving::Req {
+            archiving_certificate: b"foobar".to_vec(),
+        },
+    );
+
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
+
+    assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
+}
+
+#[parsec_test]
+#[case::ok(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.3+dev)
+    // Content:
+    //   status: "ok"
+    //
+    &hex!("81a6737461747573a26f6b")[..],
+    authenticated_cmds::realm_update_archiving::Rep::Ok
+)]
+#[case::not_allowed(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.3+dev)
+    // Content:
+    //   status: "not_allowed"
+    //
+    &hex!("81a6737461747573ab6e6f745f616c6c6f776564")[..],
+    authenticated_cmds::realm_update_archiving::Rep::NotAllowed
+)]
+#[case::invalid_certification(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.3+dev)
+    // Content:
+    //   status: "invalid_certification"
+    //
+    &hex!("81a6737461747573b5696e76616c69645f63657274696669636174696f6e")[..],
+    authenticated_cmds::realm_update_archiving::Rep::InvalidCertification
+)]
+#[case::not_found(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.3+dev)
+    // Content:
+    //   status: "not_found"
+    //
+    &hex!("81a6737461747573a96e6f745f666f756e64")[..],
+    authenticated_cmds::realm_update_archiving::Rep::NotFound
+)]
+#[case::require_greater_timestamp(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.3+dev)
+    // Content:
+    //   status: "require_greater_timestamp"
+    //   strictly_greater_than: ext(1, 946774800.0)
+    //
+    &hex!(
+        "82a6737461747573b9726571756972655f677265617465725f74696d657374616d70b57374"
+        "726963746c795f677265617465725f7468616ed70141cc375188000000"
+    )[..],
+    authenticated_cmds::realm_update_archiving::Rep::RequireGreaterTimestamp {
+        strictly_greater_than: "2000-1-2T01:00:00Z".parse().unwrap(),
+    }
+)]
+#[case::bad_timestamp(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.3+dev)
+    // Content:
+    //   backend_timestamp: ext(1, 946774800.0)
+    //   ballpark_client_early_offset: 300.0
+    //   ballpark_client_late_offset: 320.0
+    //   client_timestamp: ext(1, 946774800.0)
+    //   status: "bad_timestamp"
+    //
+    &hex!(
+        "85a6737461747573ad6261645f74696d657374616d70b16261636b656e645f74696d657374"
+        "616d70d70141cc375188000000bc62616c6c7061726b5f636c69656e745f6561726c795f6f"
+        "6666736574cb4072c00000000000bb62616c6c7061726b5f636c69656e745f6c6174655f6f"
+        "6666736574cb4074000000000000b0636c69656e745f74696d657374616d70d70141cc3751"
+        "88000000"
+    )[..],
+    authenticated_cmds::realm_update_archiving::Rep::BadTimestamp {
+        ballpark_client_early_offset: 300.,
+        ballpark_client_late_offset: 320.,
+        backend_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+        client_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+    }
+)]
+#[case::realm_deleted(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.3+dev)
+    // Content:
+    //   status: "realm_deleted"
+    //
+    &hex!("81a6737461747573ad7265616c6d5f64656c65746564")[..],
+    authenticated_cmds::realm_update_archiving::Rep::RealmDeleted
+)]
+#[case::archiving_period_too_short(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.3+dev)
+    // Content:
+    //   status: "archiving_period_too_short"
+    //
+    &hex!("81a6737461747573ba617263686976696e675f706572696f645f746f6f5f73686f7274")[..],
+    authenticated_cmds::realm_update_archiving::Rep::ArchivingPeriodTooShort
+)]
+fn serde_realm_update_archiving_rep(
+    #[case] raw: &[u8],
+    #[case] expected: authenticated_cmds::realm_update_archiving::Rep,
+) {
+    let data = authenticated_cmds::realm_update_archiving::Rep::load(raw).unwrap();
+
+    assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::realm_update_archiving::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }

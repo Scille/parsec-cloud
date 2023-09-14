@@ -14,6 +14,7 @@ from parsec._parsec import (
     RealmFinishReencryptionMaintenanceRepNotFound,
     RealmFinishReencryptionMaintenanceRepNotInMaintenance,
     RealmFinishReencryptionMaintenanceRepOk,
+    RealmFinishReencryptionMaintenanceRepRealmDeleted,
     RealmGetRoleCertificatesRepNotAllowed,
     RealmGetRoleCertificatesRepNotFound,
     RealmGetRoleCertificatesRepOk,
@@ -25,12 +26,23 @@ from parsec._parsec import (
     RealmStartReencryptionMaintenanceRepNotFound,
     RealmStartReencryptionMaintenanceRepOk,
     RealmStartReencryptionMaintenanceRepParticipantMismatch,
+    RealmStartReencryptionMaintenanceRepRealmDeleted,
     RealmStatsRepNotAllowed,
     RealmStatsRepNotFound,
     RealmStatsRepOk,
+    RealmStatsRepRealmDeleted,
     RealmStatusRepNotAllowed,
     RealmStatusRepNotFound,
     RealmStatusRepOk,
+    RealmStatusRepRealmDeleted,
+    RealmUpdateArchivingRepArchivingPeriodTooShort,
+    RealmUpdateArchivingRepBadTimestamp,
+    RealmUpdateArchivingRepInvalidCertification,
+    RealmUpdateArchivingRepNotAllowed,
+    RealmUpdateArchivingRepNotFound,
+    RealmUpdateArchivingRepOk,
+    RealmUpdateArchivingRepRealmDeleted,
+    RealmUpdateArchivingRepRequireGreaterTimestamp,
     RealmUpdateRolesRepAlreadyGranted,
     RealmUpdateRolesRepBadTimestamp,
     RealmUpdateRolesRepIncompatibleProfile,
@@ -40,6 +52,7 @@ from parsec._parsec import (
     RealmUpdateRolesRepNotAllowed,
     RealmUpdateRolesRepNotFound,
     RealmUpdateRolesRepOk,
+    RealmUpdateRolesRepRealmDeleted,
     RealmUpdateRolesRepRequireGreaterTimestamp,
     RealmUpdateRolesRepUserRevoked,
 )
@@ -104,7 +117,7 @@ display("realm_status_req", serialized, [])
 serialized = serializer.rep_dumps(
     RealmStatusRepOk(
         in_maintenance=True,
-        maintenance_type=MaintenanceType.REENCRYPTION(),
+        maintenance_type=MaintenanceType.REENCRYPTION,
         maintenance_started_on=None,
         maintenance_started_by=None,
         encryption_revision=8,
@@ -116,7 +129,7 @@ display("realm_status_rep_without", serialized, [])
 serialized = serializer.rep_dumps(
     RealmStatusRepOk(
         in_maintenance=True,
-        maintenance_type=MaintenanceType.GARBAGE_COLLECTION(),
+        maintenance_type=MaintenanceType.GARBAGE_COLLECTION,
         maintenance_started_on=DateTime(2000, 1, 2, 1),
         maintenance_started_by=DeviceID("alice@dev1"),
         encryption_revision=8,
@@ -132,6 +145,10 @@ display("realm_status_rep_not_allowed", serialized, [])
 serialized = serializer.rep_dumps(RealmStatusRepNotFound(reason="foobar"))
 serializer.rep_loads(serialized)
 display("realm_status_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps(RealmStatusRepRealmDeleted())
+serializer.rep_loads(serialized)
+display("realm_status_rep_realm_deleted", serialized, [])
 
 ################### RealmStats ##################
 
@@ -157,6 +174,11 @@ display("realm_stats_rep_not_allowed", serialized, [])
 serialized = serializer.rep_dumps(RealmStatsRepNotFound(reason="foobar"))
 serializer.rep_loads(serialized)
 display("realm_stats_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps(RealmStatsRepRealmDeleted())
+serializer.rep_loads(serialized)
+display("realm_stats_rep_realm_deleted", serialized, [])
+
 
 ################### RealmGetRoleCertificates ##################
 
@@ -261,6 +283,10 @@ serialized = serializer.rep_dumps(
 serializer.rep_loads(serialized)
 display("realm_update_roles_rep_bad_timestamp", serialized, [])
 
+serialized = serializer.rep_dumps(RealmUpdateRolesRepRealmDeleted())
+serializer.rep_loads(serialized)
+display("realm_update_roles_rep_realm_deleted", serialized, [])
+
 ################### RealmStartReencryptionMaintenance ##################
 
 serializer = realm_start_reencryption_maintenance_serializer
@@ -321,6 +347,10 @@ serialized = serializer.rep_dumps(
 serializer.rep_loads(serialized)
 display("realm_start_reencryption_maintenance_rep_bad_timestamp", serialized, [])
 
+serialized = serializer.rep_dumps(RealmStartReencryptionMaintenanceRepRealmDeleted())
+serializer.rep_loads(serialized)
+display("realm_start_reencryption_maintenance_rep_realm_deleted", serialized, [])
+
 ################### RealmFinishReencryptionMaintenance ##################
 
 serializer = realm_finish_reencryption_maintenance_serializer
@@ -362,3 +392,61 @@ serialized = serializer.rep_dumps(
 )
 serializer.rep_loads(serialized)
 display("realm_finish_reencryption_maintenance_rep_maintenance_error", serialized, [])
+
+serialized = serializer.rep_dumps(RealmFinishReencryptionMaintenanceRepRealmDeleted())
+serializer.rep_loads(serialized)
+display("realm_finish_reencryption_maintenance_rep_realm_deleted", serialized, [])
+
+################### RealmUpdateArchiving ##################
+
+serializer = realm_update_archiving_serializer
+
+serialized = serializer.req_dumps(
+    {
+        "cmd": "realm_update_archiving",
+        "archiving_certificate": b"foobar",
+    }
+)
+serializer.req_loads(serialized)
+display("realm_update_archiving_req", serialized, [])
+
+serialized = serializer.rep_dumps(RealmUpdateArchivingRepOk())
+serializer.rep_loads(serialized)
+display("realm_update_archiving_rep", serialized, [])
+
+serialized = serializer.rep_dumps(RealmUpdateArchivingRepNotAllowed())
+serializer.rep_loads(serialized)
+display("realm_update_archiving_rep_not_allowed", serialized, [])
+
+serialized = serializer.rep_dumps(RealmUpdateArchivingRepInvalidCertification())
+serializer.rep_loads(serialized)
+display("realm_update_archiving_rep_invalid_certification", serialized, [])
+
+serialized = serializer.rep_dumps(RealmUpdateArchivingRepNotFound())
+serializer.rep_loads(serialized)
+display("realm_update_archiving_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps(
+    RealmUpdateArchivingRepRequireGreaterTimestamp(strictly_greater_than=DateTime(2000, 1, 2, 1))
+)
+serializer.rep_loads(serialized)
+display("realm_update_archiving_rep_require_greater_timestamp", serialized, [])
+
+serialized = serializer.rep_dumps(
+    RealmUpdateArchivingRepBadTimestamp(
+        ballpark_client_early_offset=300.0,
+        ballpark_client_late_offset=320.0,
+        backend_timestamp=DateTime(2000, 1, 2, 1),
+        client_timestamp=DateTime(2000, 1, 2, 1),
+    )
+)
+serializer.rep_loads(serialized)
+display("realm_update_archiving_rep_bad_timestamp", serialized, [])
+
+serialized = serializer.rep_dumps(RealmUpdateArchivingRepRealmDeleted())
+serializer.rep_loads(serialized)
+display("realm_update_archiving_rep_realm_deleted", serialized, [])
+
+serialized = serializer.rep_dumps(RealmUpdateArchivingRepArchivingPeriodTooShort(reason="foobar"))
+serializer.rep_loads(serialized)
+display("realm_update_archiving_rep_archiving_period_too_short", serialized, [])

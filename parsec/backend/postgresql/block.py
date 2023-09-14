@@ -13,10 +13,17 @@ from parsec.backend.block import (
     BlockError,
     BlockInMaintenanceError,
     BlockNotFoundError,
+    BlockRealmArchivedError,
+    BlockRealmDeletedError,
     BlockStoreError,
 )
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.postgresql.handler import PGHandler
+from parsec.backend.postgresql.realm_queries.archiving import (
+    RealmArchivedError,
+    RealmDeletedError,
+    check_archiving_configuration,
+)
 from parsec.backend.postgresql.realm_queries.maintenance import RealmNotFoundError, get_realm_status
 from parsec.backend.postgresql.utils import (
     Q,
@@ -104,12 +111,21 @@ async def _check_realm(
     organization_id: OrganizationID,
     realm_id: RealmID,
     operation_kind: OperationKind,
+    now: DateTime,
 ) -> None:
     # Fetch the realm status maintenance type
     try:
         status = await get_realm_status(conn, organization_id, realm_id)
     except RealmNotFoundError as exc:
         raise BlockNotFoundError(*exc.args) from exc
+
+    # Check archiving status
+    try:
+        await check_archiving_configuration(conn, organization_id, realm_id, operation_kind, now)
+    except RealmArchivedError:
+        raise BlockRealmArchivedError()
+    except RealmDeletedError:
+        raise BlockRealmDeletedError()
 
     # Special case of reading while in reencryption is authorized
     if operation_kind == OperationKind.DATA_READ and status.in_reencryption:
@@ -126,7 +142,7 @@ class PGBlockComponent(BaseBlockComponent):
         self._blockstore_component = blockstore_component
 
     async def read(
-        self, organization_id: OrganizationID, author: DeviceID, block_id: BlockID
+        self, organization_id: OrganizationID, author: DeviceID, block_id: BlockID, now: DateTime
     ) -> bytes:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             realm_id_uuid = await conn.fetchval(
@@ -137,7 +153,7 @@ class PGBlockComponent(BaseBlockComponent):
             if not realm_id_uuid:
                 raise BlockNotFoundError()
             realm_id = RealmID.from_hex(realm_id_uuid)
-            await _check_realm(conn, organization_id, realm_id, OperationKind.DATA_READ)
+            await _check_realm(conn, organization_id, realm_id, OperationKind.DATA_READ, now)
             ret = await conn.fetchrow(
                 *_q_get_block_meta(
                     organization_id=organization_id.str,
@@ -162,11 +178,11 @@ class PGBlockComponent(BaseBlockComponent):
         block_id: BlockID,
         realm_id: RealmID,
         block: bytes,
-        created_on: DateTime | None = None,
+        now: DateTime,
     ) -> None:
-        created_on = created_on or DateTime.now()
+        created_on = now
         async with self.dbh.pool.acquire() as conn, conn.transaction():
-            await _check_realm(conn, organization_id, realm_id, OperationKind.DATA_WRITE)
+            await _check_realm(conn, organization_id, realm_id, OperationKind.DATA_WRITE, now)
 
             # 1) Check access rights and block unicity
             # Note it's important to check unicity here because blockstore create

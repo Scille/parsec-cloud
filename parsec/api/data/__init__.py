@@ -3,17 +3,15 @@ from __future__ import annotations
 
 from parsec._parsec import (
     DataError,
-    # Certificate
     DeviceCertificate,
-    # Entry
     EntryID,
     EntryName,
-    # Message
     MessageContent,
     PingMessageContent,
     PkiEnrollmentAnswerPayload,
-    # Pki
     PkiEnrollmentSubmitPayload,
+    RealmArchivingCertificate,
+    RealmArchivingConfiguration,
     RealmRoleCertificate,
     RevokedUserCertificate,
     SequesterAuthorityCertificate,
@@ -53,6 +51,8 @@ __all__ = (
     "DeviceCertificate",
     "RevokedUserCertificate",
     "RealmRoleCertificate",
+    "RealmArchivingCertificate",
+    "RealmArchivingConfiguration",
     "SequesterAuthorityCertificate",
     "SequesterServiceCertificate",
     # Invite

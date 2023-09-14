@@ -128,7 +128,8 @@ class PGVlobComponent(BaseVlobComponent):
         vlob_id: VlobID,
         timestamp: DateTime,
         blob: bytes,
-        sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
+        sequester_blob: Dict[SequesterServiceID, bytes] | None,
+        now: DateTime,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             sequester_blob = await self._extract_sequestered_data_and_proceed_webhook(
@@ -151,6 +152,7 @@ class PGVlobComponent(BaseVlobComponent):
                 timestamp,
                 blob,
                 sequester_blob,
+                now,
             )
 
     async def read(
@@ -159,12 +161,13 @@ class PGVlobComponent(BaseVlobComponent):
         author: DeviceID,
         encryption_revision: int,
         vlob_id: VlobID,
-        version: int | None = None,
-        timestamp: DateTime | None = None,
+        version: int | None,
+        timestamp: DateTime | None,
+        now: DateTime,
     ) -> Tuple[int, bytes, DeviceID, DateTime, DateTime]:
         async with self.dbh.pool.acquire() as conn:
             return await query_read(
-                conn, organization_id, author, encryption_revision, vlob_id, version, timestamp
+                conn, organization_id, author, encryption_revision, vlob_id, version, timestamp, now
             )
 
     @retry_on_unique_violation
@@ -177,7 +180,8 @@ class PGVlobComponent(BaseVlobComponent):
         version: int,
         timestamp: DateTime,
         blob: bytes,
-        sequester_blob: Dict[SequesterServiceID, bytes] | None = None,
+        sequester_blob: Dict[SequesterServiceID, bytes] | None,
+        now: DateTime,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             sequester_blob = await self._extract_sequestered_data_and_proceed_webhook(
@@ -200,19 +204,27 @@ class PGVlobComponent(BaseVlobComponent):
                 timestamp,
                 blob,
                 sequester_blob,
+                now,
             )
 
     async def poll_changes(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID, checkpoint: int
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: RealmID,
+        checkpoint: int,
+        now: DateTime,
     ) -> Tuple[int, Dict[VlobID, int]]:
         async with self.dbh.pool.acquire() as conn:
-            return await query_poll_changes(conn, organization_id, author, realm_id, checkpoint)
+            return await query_poll_changes(
+                conn, organization_id, author, realm_id, checkpoint, now
+            )
 
     async def list_versions(
-        self, organization_id: OrganizationID, author: DeviceID, vlob_id: VlobID
+        self, organization_id: OrganizationID, author: DeviceID, vlob_id: VlobID, now: DateTime
     ) -> Dict[int, Tuple[DateTime, DeviceID]]:
         async with self.dbh.pool.acquire() as conn:
-            return await query_list_versions(conn, organization_id, author, vlob_id)
+            return await query_list_versions(conn, organization_id, author, vlob_id, now)
 
     async def maintenance_get_reencryption_batch(
         self,
@@ -221,10 +233,11 @@ class PGVlobComponent(BaseVlobComponent):
         realm_id: RealmID,
         encryption_revision: int,
         size: int,
+        now: DateTime,
     ) -> List[Tuple[VlobID, int, bytes]]:
         async with self.dbh.pool.acquire() as conn:
             return await query_maintenance_get_reencryption_batch(
-                conn, organization_id, author, realm_id, encryption_revision, size
+                conn, organization_id, author, realm_id, encryption_revision, size, now
             )
 
     async def maintenance_save_reencryption_batch(
@@ -234,8 +247,9 @@ class PGVlobComponent(BaseVlobComponent):
         realm_id: RealmID,
         encryption_revision: int,
         batch: List[Tuple[VlobID, int, bytes]],
+        now: DateTime,
     ) -> Tuple[int, int]:
         async with self.dbh.pool.acquire() as conn:
             return await query_maintenance_save_reencryption_batch(
-                conn, organization_id, author, realm_id, encryption_revision, batch
+                conn, organization_id, author, realm_id, encryption_revision, batch, now
             )

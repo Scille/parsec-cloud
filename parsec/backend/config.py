@@ -121,6 +121,7 @@ class BackendConfig:
     organization_spontaneous_bootstrap: bool = False
     organization_initial_active_users_limit: ActiveUsersLimit = ActiveUsersLimit.NO_LIMIT
     organization_initial_user_profile_outsider_allowed: bool = True
+    organization_initial_minimum_archiving_period: int = 2592000  # seconds (i.e 30 days)
 
     @property
     def db_type(self) -> str:

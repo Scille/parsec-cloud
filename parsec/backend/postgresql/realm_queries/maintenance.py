@@ -17,6 +17,7 @@ from parsec.api.protocol import (
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.message import send_message
+from parsec.backend.postgresql.realm_queries.archiving import check_archiving_configuration
 from parsec.backend.postgresql.utils import (
     Q,
     q_device,
@@ -37,6 +38,7 @@ from parsec.backend.realm import (
     RealmParticipantsMismatchError,
     RealmStatus,
 )
+from parsec.backend.utils import OperationKind
 
 _q_get_realm_status = Q(
     q_realm(
@@ -128,8 +130,6 @@ async def _get_realm_role_for_not_revoked(
             if user not in roles:
                 raise RealmNotFoundError(f"User `{user}` doesn't exist")
 
-        return roles
-
     else:
         rep = await conn.fetch(
             *_q_get_realm_role_for_not_revoked(
@@ -137,9 +137,11 @@ async def _get_realm_role_for_not_revoked(
             )
         )
 
-        return {
+        roles = {
             UserID(row["user_id"]): _cook_role(row) for row in rep if _cook_role(row) is not None
         }
+
+    return roles
 
 
 _q_query_start_reencryption_maintenance_update_realm = Q(
@@ -177,6 +179,7 @@ async def query_start_reencryption_maintenance(
     encryption_revision: int,
     per_participant_message: Dict[UserID, bytes],
     timestamp: DateTime,
+    now: DateTime,
 ) -> None:
     # Retrieve realm and make sure it is not under maintenance
     status = await get_realm_status(conn, organization_id, realm_id)
@@ -189,6 +192,11 @@ async def query_start_reencryption_maintenance(
 
     if roles.get(author.user_id) != RealmRole.OWNER:
         raise RealmAccessError()
+
+    # Make sure the realm is not deleted
+    await check_archiving_configuration(
+        conn, organization_id, realm_id, OperationKind.MAINTENANCE, now
+    )
 
     if per_participant_message.keys() ^ roles.keys():
         raise RealmParticipantsMismatchError("Realm participants and message recipients mismatch")
@@ -266,12 +274,17 @@ async def query_finish_reencryption_maintenance(
     author: DeviceID,
     realm_id: RealmID,
     encryption_revision: int,
+    now: DateTime,
 ) -> None:
     # Retrieve realm and make sure it is not under maintenance
     status = await get_realm_status(conn, organization_id, realm_id)
     roles = await _get_realm_role_for_not_revoked(conn, organization_id, realm_id, [author.user_id])
     if roles.get(author.user_id) != RealmRole.OWNER:
         raise RealmAccessError()
+    # Make sure the realm is not deleted
+    await check_archiving_configuration(
+        conn, organization_id, realm_id, OperationKind.MAINTENANCE, now
+    )
     if not status.in_maintenance:
         raise RealmNotInMaintenanceError(f"Realm `{realm_id.hex}` not under maintenance")
     if encryption_revision != status.encryption_revision:

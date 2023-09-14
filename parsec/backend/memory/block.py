@@ -14,10 +14,12 @@ from parsec.backend.block import (
     BlockAlreadyExistsError,
     BlockInMaintenanceError,
     BlockNotFoundError,
+    BlockRealmArchivedError,
+    BlockRealmDeletedError,
     BlockStoreError,
 )
 from parsec.backend.blockstore import BaseBlockStoreComponent
-from parsec.backend.realm import RealmNotFoundError
+from parsec.backend.realm import RealmDeletedError, RealmNotFoundError
 from parsec.backend.utils import OperationKind
 
 if TYPE_CHECKING:
@@ -47,14 +49,22 @@ class MemoryBlockComponent(BaseBlockComponent):
         self._realm_component = realm
 
     def _check_realm_read_access(
-        self, organization_id: OrganizationID, realm_id: RealmID, user_id: UserID
+        self,
+        organization_id: OrganizationID,
+        realm_id: RealmID,
+        user_id: UserID,
+        now: DateTime,
     ) -> None:
-        self._check_realm_access(organization_id, realm_id, user_id, OperationKind.DATA_READ)
+        self._check_realm_access(organization_id, realm_id, user_id, OperationKind.DATA_READ, now)
 
     def _check_realm_write_access(
-        self, organization_id: OrganizationID, realm_id: RealmID, user_id: UserID
+        self,
+        organization_id: OrganizationID,
+        realm_id: RealmID,
+        user_id: UserID,
+        now: DateTime,
     ) -> None:
-        self._check_realm_access(organization_id, realm_id, user_id, OperationKind.DATA_WRITE)
+        self._check_realm_access(organization_id, realm_id, user_id, OperationKind.DATA_WRITE, now)
 
     def _check_realm_access(
         self,
@@ -62,13 +72,20 @@ class MemoryBlockComponent(BaseBlockComponent):
         realm_id: RealmID,
         user_id: UserID,
         operation_kind: OperationKind,
+        now: DateTime,
     ) -> None:
         assert self._realm_component is not None
 
         try:
-            realm = self._realm_component._get_realm(organization_id, realm_id)
+            realm = self._realm_component._get_realm(organization_id, realm_id, now)
         except RealmNotFoundError:
             raise BlockNotFoundError(f"Realm `{realm_id.hex}` doesn't exist")
+        except RealmDeletedError:
+            raise BlockRealmDeletedError(f"Realm `{realm_id.hex}` has been deleted")
+
+        if operation_kind == operation_kind.DATA_WRITE:
+            if realm.is_archived() or realm.is_deletion_planned():
+                raise BlockRealmArchivedError(f"Realm `{realm_id.hex}` is archived")
 
         allowed_roles: Tuple[RealmRole, ...]
         if operation_kind == operation_kind.DATA_READ:
@@ -96,7 +113,11 @@ class MemoryBlockComponent(BaseBlockComponent):
             raise BlockInMaintenanceError(f"Realm `{realm_id.hex}` is currently under maintenance")
 
     async def read(
-        self, organization_id: OrganizationID, author: DeviceID, block_id: BlockID
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        block_id: BlockID,
+        now: DateTime,
     ) -> bytes:
         assert self._blockstore_component is not None
 
@@ -106,7 +127,7 @@ class MemoryBlockComponent(BaseBlockComponent):
         except KeyError:
             raise BlockNotFoundError()
 
-        self._check_realm_read_access(organization_id, blockmeta.realm_id, author.user_id)
+        self._check_realm_read_access(organization_id, blockmeta.realm_id, author.user_id, now)
 
         return await self._blockstore_component.read(organization_id, block_id)
 
@@ -117,12 +138,12 @@ class MemoryBlockComponent(BaseBlockComponent):
         block_id: BlockID,
         realm_id: RealmID,
         block: bytes,
-        created_on: DateTime | None = None,
+        now: DateTime,
     ) -> None:
         assert self._blockstore_component is not None
 
-        created_on = created_on or DateTime.now()
-        self._check_realm_write_access(organization_id, realm_id, author.user_id)
+        created_on = now
+        self._check_realm_write_access(organization_id, realm_id, author.user_id, now)
         if (organization_id, block_id) in self._blockmetas:
             raise BlockAlreadyExistsError()
 

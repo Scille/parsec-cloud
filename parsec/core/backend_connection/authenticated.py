@@ -10,6 +10,7 @@ from typing import (
     AsyncIterator,
     Awaitable,
     Callable,
+    Iterator,
     List,
     Protocol,
     TypeVar,
@@ -29,6 +30,7 @@ from parsec._parsec import (
     EventsListenRepOkMessageReceived,
     EventsListenRepOkPinged,
     EventsListenRepOkPkiEnrollmentUpdated,
+    EventsListenRepOkRealmArchivingUpdated,
     EventsListenRepOkRealmMaintenanceFinished,
     EventsListenRepOkRealmMaintenanceStarted,
     EventsListenRepOkRealmRolesUpdated,
@@ -147,6 +149,7 @@ class BackendAuthenticatedCmds:
     realm_status = expose_cmds_with_retrier(cmds.realm_status)
     realm_get_role_certificates = expose_cmds_with_retrier(cmds.realm_get_role_certificates)
     realm_update_roles = expose_cmds_with_retrier(cmds.realm_update_roles)
+    realm_update_archiving = expose_cmds_with_retrier(cmds.realm_update_archiving)
     realm_start_reencryption_maintenance = expose_cmds_with_retrier(
         cmds.realm_start_reencryption_maintenance
     )
@@ -155,6 +158,7 @@ class BackendAuthenticatedCmds:
     )
     organization_stats = expose_cmds_with_retrier(cmds.organization_stats)
     organization_config = expose_cmds_with_retrier(cmds.organization_config)
+    archiving_config = expose_cmds_with_retrier(cmds.archiving_config)
     pki_enrollment_list = expose_cmds_with_retrier(cmds.pki_enrollment_list)
     pki_enrollment_reject = expose_cmds_with_retrier(cmds.pki_enrollment_reject)
     pki_enrollment_accept = expose_cmds_with_retrier(cmds.pki_enrollment_accept)
@@ -185,6 +189,13 @@ def _handle_event(event_bus: EventBus, rep: EventsListenRep) -> None:
             CoreEvent.BACKEND_REALM_ROLES_UPDATED,
             realm_id=rep.realm_id.to_entry_id(),
             role=rep.role,
+        )
+
+    elif isinstance(rep, EventsListenRepOkRealmArchivingUpdated):
+        event_bus.send(
+            CoreEvent.BACKEND_REALM_ARCHIVING_UPDATED,
+            realm_id=rep.realm_id.to_entry_id(),
+            configuration=rep.configuration,
         )
 
     elif isinstance(rep, EventsListenRepOkRealmVlobsUpdated):
@@ -307,6 +318,7 @@ class BackendAuthenticatedConn:
         )
         self._manager_connect_cancel_scope: trio.CancelScope | None = None
         self._monitors_task_statuses: List[MonitorTaskStatus] = []
+        self._prioritized_monitors_task_statuses: List[MonitorTaskStatus] = []
         self._monitors_idle_event = trio.Event()
         self._monitors_idle_event.set()  # No monitors
         self._backend_connection_failures = 0
@@ -338,6 +350,11 @@ class BackendAuthenticatedConn:
     def cmds(self) -> BackendAuthenticatedCmds | RsBackendAuthenticatedCmds:
         return self._cmds
 
+    @property
+    def all_monitors_task_statuses(self) -> Iterator[MonitorTaskStatus]:
+        yield from self._prioritized_monitors_task_statuses
+        yield from self._monitors_task_statuses
+
     async def set_status(
         self, status: BackendConnStatus, status_exc: Exception | None = None
     ) -> None:
@@ -364,18 +381,25 @@ class BackendAuthenticatedConn:
     def get_organization_config(self) -> OrganizationConfig:
         return self._organization_config
 
-    def register_monitor(self, monitor_id: str, monitor_cb: MonitorCallback) -> None:
+    def register_monitor(
+        self, monitor_id: str, monitor_cb: MonitorCallback, prioritized: bool = False
+    ) -> None:
         if self._started:
             raise RuntimeError("Cannot register monitor once started !")
-        self._monitors_task_statuses.append(
-            MonitorTaskStatus(monitor_cb, partial(self.on_monitor_state_changed, monitor_id))
-        )
+        if prioritized:
+            self._prioritized_monitors_task_statuses.append(
+                MonitorTaskStatus(monitor_cb, partial(self.on_monitor_state_changed, monitor_id))
+            )
+        else:
+            self._monitors_task_statuses.append(
+                MonitorTaskStatus(monitor_cb, partial(self.on_monitor_state_changed, monitor_id))
+            )
 
     def on_monitor_state_changed(self, monitor_id: str, state: MonitorTaskState) -> None:
         logger.info("Monitor state changed", monitor=monitor_id, state=state.name)
         if state == MonitorTaskState.IDLE:
             if all(
-                status.state == MonitorTaskState.IDLE for status in self._monitors_task_statuses
+                status.state == MonitorTaskState.IDLE for status in self.all_monitors_task_statuses
             ):
                 logger.info("All monitors are idle")
                 self._monitors_idle_event.set()
@@ -391,7 +415,7 @@ class BackendAuthenticatedConn:
         await self._monitors_idle_event.wait()
 
     def reset_monitors_status(self) -> None:
-        for monitor_task_status in self._monitors_task_statuses:
+        for monitor_task_status in self.all_monitors_task_statuses:
             monitor_task_status.reset()
         if self._monitors_idle_event.is_set():
             self._monitors_idle_event = trio.Event()
@@ -500,6 +524,12 @@ class BackendAuthenticatedConn:
                     async with open_service_nursery() as monitors_bootstrap_nursery:
                         # Make sure we start from a clean state
                         self.reset_monitors_status()
+
+                        # Run and join prioritized monitors first
+                        for task_status in self._prioritized_monitors_task_statuses:
+                            await monitors_nursery.start(task_status.run_monitor)
+
+                        # Then simply start other monitors
                         for task_status in self._monitors_task_statuses:
                             monitors_bootstrap_nursery.start_soon(
                                 monitors_nursery.start,

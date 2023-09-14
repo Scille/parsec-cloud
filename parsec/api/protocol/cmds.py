@@ -40,6 +40,7 @@ AUTHENTICATED_CMDS = {
     "realm_status",
     "realm_get_role_certificates",
     "realm_update_roles",
+    "realm_update_archiving",
     "realm_start_reencryption_maintenance",
     "realm_finish_reencryption_maintenance",
     # Organization

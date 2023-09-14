@@ -24,6 +24,7 @@ from parsec._parsec_pyi.ids import (
     VlobID,
 )
 from parsec._parsec_pyi.protocol import (
+    ArchivingConfigRep,
     AuthenticatedPingRep,
     BlockCreateRep,
     BlockReadRep,
@@ -55,6 +56,7 @@ from parsec._parsec_pyi.protocol import (
     RealmStartReencryptionMaintenanceRep,
     RealmStatsRep,
     RealmStatusRep,
+    RealmUpdateArchivingRep,
     RealmUpdateRolesRep,
     UserCreateRep,
     UserGetRep,
@@ -152,6 +154,7 @@ class AuthenticatedCmds:
     ) -> InviteNewRep: ...
     async def message_get(self, offset: int) -> MessageGetRep: ...
     async def organization_config(self) -> OrganizationConfigRep: ...
+    async def archiving_config(self) -> ArchivingConfigRep: ...
     async def organization_stats(self) -> OrganizationStatsRep: ...
     async def ping(self, ping: str) -> AuthenticatedPingRep: ...
     async def pki_enrollment_accept(
@@ -192,6 +195,10 @@ class AuthenticatedCmds:
         role_certificate: bytes,
         recipient_message: bytes | None,
     ) -> RealmUpdateRolesRep: ...
+    async def realm_update_archiving(
+        self,
+        archiving_certificate: bytes,
+    ) -> RealmUpdateArchivingRep: ...
     async def user_create(
         self,
         user_certificate: bytes,

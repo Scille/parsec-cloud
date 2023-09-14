@@ -50,10 +50,16 @@ class EntryTransactions(FileTransactions):
     def check_read_rights(self, path: FsPath) -> None:
         if self.get_workspace_entry().role is None:
             raise FSNoAccessError(filename=path)
+        configuration, _, _ = self.get_archiving_configuration()
+        if configuration.is_deleted(self.device.time_provider.now()):
+            raise FSNoAccessError(filename=path)
 
     def check_write_rights(self, path: FsPath) -> None:
         self.check_read_rights(path)
         if self.get_workspace_entry().role not in WRITE_RIGHT_ROLES:
+            raise FSReadOnlyError(filename=path)
+        configuration, _, _ = self.get_archiving_configuration()
+        if not configuration.is_available():
             raise FSReadOnlyError(filename=path)
 
     # Look-up helpers

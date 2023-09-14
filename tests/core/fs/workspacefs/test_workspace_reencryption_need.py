@@ -96,6 +96,8 @@ def test_workspace_reencryption_need(
                     granted_by=author.device_id,
                     granted_on=now,
                 ),
+                recipient_message=None,
+                now=DateTime.now(),
             )
             return certif
 

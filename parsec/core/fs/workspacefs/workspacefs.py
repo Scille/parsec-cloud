@@ -16,6 +16,7 @@ from parsec._parsec import (
     CoreEvent,
     CryptoError,
     DateTime,
+    DeviceID,
     EntryID,
     EntryName,
     LocalDevice,
@@ -23,8 +24,18 @@ from parsec._parsec import (
     LocalFolderManifest,
     LocalWorkspaceManifest,
     MaintenanceType,
+    RealmArchivingCertificate,
+    RealmArchivingConfiguration,
     RealmID,
+    RealmRole,
     RealmStatusRepOk,
+    RealmStatusRepRealmDeleted,
+    RealmUpdateArchivingRepArchivingPeriodTooShort,
+    RealmUpdateArchivingRepNotAllowed,
+    RealmUpdateArchivingRepNotFound,
+    RealmUpdateArchivingRepOk,
+    RealmUpdateArchivingRepRealmDeleted,
+    RealmUpdateArchivingRepRequireGreaterTimestamp,
     Regex,
     UserID,
     WorkspaceEntry,
@@ -43,14 +54,19 @@ from parsec.core.fs.exceptions import (
     FSNotADirectoryError,
     FSRemoteManifestNotFound,
     FSRemoteManifestNotFoundBadVersion,
+    FSRemoteOperationError,
     FSRemoteSyncError,
     FSReshapingRequiredError,
     FSSequesterServiceRejectedError,
+    FSWorkspaceArchivingNotAllowedError,
+    FSWorkspaceArchivingPeriodTooShort,
     FSWorkspaceNoAccess,
+    FSWorkspaceNotFoundError,
+    FSWorkspaceRealmDeleted,
     FSWorkspaceTimestampedTooEarly,
 )
 from parsec.core.fs.path import AnyPath, FsPath
-from parsec.core.fs.remote_loader import RemoteLoader
+from parsec.core.fs.remote_loader import ARCHIVING_CERTIFICATE_STAMP_AHEAD_US, RemoteLoader
 from parsec.core.fs.storage.workspace_storage import AnyWorkspaceStorage, WorkspaceStorage
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.core.fs.workspacefs.remanence_manager import (
@@ -101,7 +117,10 @@ class WorkspaceFS:
         backend_cmds: BackendAuthenticatedCmds | RsBackendAuthenticatedCmds,
         event_bus: EventBus,
         remote_devices_manager: RemoteDevicesManager,
-        preferred_language: str = "en",
+        preferred_language: str,
+        archiving_configuration: RealmArchivingConfiguration,
+        archiving_configured_on: DateTime | None,
+        archiving_configured_by: DeviceID | None,
     ):
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
@@ -112,6 +131,13 @@ class WorkspaceFS:
         self.event_bus = event_bus
         self.preferred_language = preferred_language
         self.sync_locks: dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
+
+        # Archiving attributes
+        self._archiving_configuration = archiving_configuration
+        self._archiving_configured_on = archiving_configured_on
+        self._archiving_configured_by = archiving_configured_by
+        self._archiving_configuration_timestamp = self.device.time_provider.now()
+
         self.remote_loader = RemoteLoader(
             self.device,
             self.workspace_id,
@@ -125,6 +151,7 @@ class WorkspaceFS:
         self.transactions = SyncTransactions(
             self.workspace_id,
             self.get_workspace_entry,
+            self.get_archiving_configuration,
             self.device,
             self.local_storage,
             self.remote_loader,
@@ -163,6 +190,9 @@ class WorkspaceFS:
         workspace_storage_cache_size: int,
         prevent_sync_pattern: Regex,
         preferred_language: str = "en",
+        archiving_configuration: RealmArchivingConfiguration = RealmArchivingConfiguration.available(),
+        archiving_configured_on: DateTime | None = None,
+        archiving_configured_by: DeviceID | None = None,
     ) -> AsyncIterator[WorkspaceFS]:
         async with WorkspaceStorage.run(
             data_base_dir=data_base_dir,
@@ -182,6 +212,9 @@ class WorkspaceFS:
                 event_bus=event_bus,
                 remote_devices_manager=remote_devices_manager,
                 preferred_language=preferred_language,
+                archiving_configured_on=archiving_configured_on,
+                archiving_configured_by=archiving_configured_by,
+                archiving_configuration=archiving_configuration,
             )
 
             # Connect the remanence manager
@@ -257,10 +290,38 @@ class WorkspaceFS:
         return self.get_workspace_entry().encryption_revision
 
     def is_read_only(self) -> bool:
-        return self.get_workspace_entry().role == WorkspaceRole.READER
+        return bool(
+            self.get_workspace_entry().role == WorkspaceRole.READER
+            or self.is_deletion_planned()
+            or self.is_archived()
+        )
 
     def is_revoked(self) -> bool:
         return self.get_workspace_entry().role is None
+
+    def get_archiving_configuration(
+        self,
+    ) -> tuple[RealmArchivingConfiguration, DateTime | None, DeviceID | None]:
+        return (
+            self._archiving_configuration,
+            self._archiving_configured_on,
+            self._archiving_configured_by,
+        )
+
+    def is_archived(self) -> bool:
+        return self._archiving_configuration.is_archived()
+
+    def is_deletion_planned(self) -> DateTime | None:
+        # Note that `is_deleted` and `is_deletion_planned` might both be true
+        # More specifically, `is_deleted` implies `is_deletion_planned`
+        if not self._archiving_configuration.is_deletion_planned():
+            return None
+        return self._archiving_configuration.deletion_date
+
+    def is_deleted(self) -> bool:
+        # Note that `is_deleted` and `is_deletion_planned` might both be true
+        # More specifically, `is_deleted` implies `is_deletion_planned`
+        return self._archiving_configuration.is_deleted(self.device.time_provider.now())
 
     async def path_info(self, path: AnyPath) -> dict[str, object]:
         """
@@ -327,6 +388,9 @@ class WorkspaceFS:
                 f"Cannot retrieve remote status for workspace {self.workspace_id.hex}: {exc}"
             ) from exc
 
+        if isinstance(rep, RealmStatusRepRealmDeleted):
+            raise FSWorkspaceRealmDeleted(f"The workspace {self.workspace_id.hex} has been deleted")
+
         assert isinstance(rep, RealmStatusRepOk)
         reencryption_already_in_progress = (
             rep.in_maintenance and rep.maintenance_type == MaintenanceType.REENCRYPTION
@@ -355,6 +419,148 @@ class WorkspaceFS:
             role_revoked=tuple(role_revoked),
             reencryption_already_in_progress=reencryption_already_in_progress,
         )
+
+    # Archiving
+
+    async def configure_archiving(
+        self,
+        configuration: RealmArchivingConfiguration,
+        timestamp_greater_than: DateTime | None = None,
+        now: DateTime | None = None,
+    ) -> None:
+        # Check current role
+        entry = self.get_workspace_entry()
+        if entry.role != RealmRole.OWNER:
+            raise FSWorkspaceArchivingNotAllowedError(
+                "User must be owner to change the archiving configuration"
+            )
+
+        # Check deletion
+        if self.is_deleted():
+            raise FSWorkspaceRealmDeleted("This workspace has already been deleted")
+
+        # Check deletion date
+        timestamp = now if now is not None else self.device.timestamp()
+        if configuration.is_deletion_planned() and configuration.deletion_date < timestamp:
+            raise FSWorkspaceArchivingPeriodTooShort("Archiving period is negative")
+
+        # Update timestamp if necessary
+        if timestamp_greater_than is not None:
+            timestamp = max(
+                timestamp,
+                timestamp_greater_than.add(microseconds=ARCHIVING_CERTIFICATE_STAMP_AHEAD_US),
+            )
+            if configuration.is_deletion_planned():
+                configuration = configuration.deletion_planned(
+                    max(timestamp, configuration.deletion_date)
+                )
+
+        # Generate and sign certificate
+        certif = RealmArchivingCertificate(
+            author=self.device.device_id,
+            timestamp=timestamp,
+            realm_id=RealmID.from_entry_id(self.workspace_id),
+            configuration=configuration,
+        ).dump_and_sign(self.device.signing_key)
+
+        # Perform server request
+        rep = await self.backend_cmds.realm_update_archiving(certif)
+        if isinstance(rep, RealmUpdateArchivingRepArchivingPeriodTooShort):
+            raise FSWorkspaceArchivingPeriodTooShort("Archiving period is too short")
+        if isinstance(rep, RealmUpdateArchivingRepNotAllowed):
+            raise FSWorkspaceArchivingNotAllowedError(
+                "Changing the archiving configuration is not allowed"
+            )
+        if isinstance(rep, RealmUpdateArchivingRepRequireGreaterTimestamp):
+            return await self.configure_archiving(
+                configuration, timestamp_greater_than=rep.strictly_greater_than, now=now
+            )
+        if isinstance(rep, RealmUpdateArchivingRepRealmDeleted):
+            raise FSWorkspaceRealmDeleted(f"The workspace {self.workspace_id.hex} has been deleted")
+        if isinstance(rep, RealmUpdateArchivingRepNotFound):
+            raise FSWorkspaceNotFoundError(
+                f"The workspace {self.workspace_id.hex} could not be found"
+            )
+        if not isinstance(rep, RealmUpdateArchivingRepOk):
+            raise FSRemoteOperationError(str(rep))
+
+        next_deletion_date = self.acknowledge_archiving_configuration(
+            configuration, timestamp, self.device.device_id
+        )
+        if next_deletion_date is not None:
+            self.event_bus.send(
+                CoreEvent.ARCHIVING_NEXT_DELETION_DATE,
+                workspace_id=self.workspace_id,
+                next_deletion_date=next_deletion_date,
+            )
+
+    def acknowledge_archiving_configuration(
+        self,
+        configuration: RealmArchivingConfiguration,
+        configured_on: DateTime | None,
+        configured_by: DeviceID | None,
+    ) -> DateTime | None:
+        # This configuration is older than the one we currently have
+        if (
+            self._archiving_configured_on is not None
+            and configured_on is not None
+            and self._archiving_configured_on > configured_on
+        ):
+            # Return next deletion date if any
+            if (
+                not self._archiving_configuration.is_deletion_planned()
+                or self._archiving_configuration.is_deleted(self._archiving_configuration_timestamp)
+            ):
+                return None
+            return configuration.deletion_date
+
+        # First save the previous state
+        previous_archiving_configuration = self._archiving_configuration
+        previous_archiving_configured_on = self._archiving_configured_on
+        previous_archiving_configuration_timestamp = self._archiving_configuration_timestamp
+
+        # Then set the attributes
+        self._archiving_configuration = configuration
+        self._archiving_configured_on = configured_on
+        self._archiving_configured_by = configured_by
+        self._archiving_configuration_timestamp = self.device.time_provider.now()
+
+        # Get is_deleted status
+        previous_is_deleted = previous_archiving_configuration.is_deleted(
+            previous_archiving_configuration_timestamp
+        )
+        is_deleted = configuration.is_deleted(self._archiving_configuration_timestamp)
+
+        # Compare previous and current state
+        # Note that the deletion status is also compared in order to send
+        # `ARCHIVING_UPDATED` event when the deletion date of a workspace
+        # is reached.
+        previous_state = (
+            previous_archiving_configuration,
+            previous_archiving_configured_on,
+            previous_is_deleted,
+        )
+        current_state = (
+            configuration,
+            configured_on,
+            is_deleted,
+        )
+
+        if previous_state != current_state:
+            # Note: `is_deleted` is provided as part of the event
+            # in order to avoid issues with non-monotonic clocks
+            self.event_bus.send(
+                CoreEvent.ARCHIVING_UPDATED,
+                workspace_id=self.workspace_id,
+                configuration=self._archiving_configuration,
+                configured_on=self._archiving_configured_on,
+                is_deleted=is_deleted,
+            )
+
+        # Return next deletion date if any
+        if not configuration.is_deletion_planned() or is_deleted:
+            return None
+        return configuration.deletion_date
 
     # Versioning
 

@@ -97,11 +97,14 @@ async def query_read(
     author: DeviceID,
     encryption_revision: int,
     vlob_id: VlobID,
-    version: int | None = None,
-    timestamp: DateTime | None = None,
+    version: int | None,
+    timestamp: DateTime | None,
+    now: DateTime,
 ) -> Tuple[int, bytes, DeviceID, DateTime, DateTime]:
     realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
-    await _check_realm_and_read_access(conn, organization_id, author, realm_id, encryption_revision)
+    await _check_realm_and_read_access(
+        conn, organization_id, author, realm_id, encryption_revision, now
+    )
 
     if version is None:
         if timestamp is None:
@@ -191,8 +194,9 @@ async def query_poll_changes(
     author: DeviceID,
     realm_id: RealmID,
     checkpoint: int,
+    now: DateTime,
 ) -> Tuple[int, Dict[VlobID, int]]:
-    await _check_realm_and_read_access(conn, organization_id, author, realm_id, None)
+    await _check_realm_and_read_access(conn, organization_id, author, realm_id, None, now)
 
     ret = await conn.fetch(
         *_q_poll_changes(
@@ -213,9 +217,10 @@ async def query_list_versions(
     organization_id: OrganizationID,
     author: DeviceID,
     vlob_id: VlobID,
+    now: DateTime,
 ) -> Dict[int, Tuple[DateTime, DeviceID]]:
     realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
-    await _check_realm_and_read_access(conn, organization_id, author, realm_id, None)
+    await _check_realm_and_read_access(conn, organization_id, author, realm_id, None, now)
 
     rows = await conn.fetch(*_q_list_versions(organization_id=organization_id.str, vlob_id=vlob_id))
     assert rows

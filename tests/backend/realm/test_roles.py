@@ -15,6 +15,7 @@ from parsec._parsec import (
     RealmUpdateRolesRepNotAllowed,
     RealmUpdateRolesRepNotFound,
     RealmUpdateRolesRepOk,
+    RealmUpdateRolesRepRealmDeleted,
     RealmUpdateRolesRepRequireGreaterTimestamp,
     RealmUpdateRolesRepUserRevoked,
     VlobCreateRepOk,
@@ -35,6 +36,19 @@ async def test_get_roles_not_found(alice_ws):
     rep = await realm_get_role_certificates(alice_ws, REALM_ID)
     # The reason is no longer generated
     assert isinstance(rep, RealmGetRoleCertificatesRepNotFound)
+
+
+@pytest.mark.trio
+async def test_get_role_certificate_realm_archived(alice_ws, archived_realm):
+    rep = await realm_get_role_certificates(alice_ws, archived_realm)
+    assert isinstance(rep, RealmGetRoleCertificatesRepOk)
+
+
+@pytest.mark.trio
+async def test_get_role_certificate_realm_deleted(alice_ws, deleted_realm):
+    # It is still possible to get the role certificates even if the realm is deleted
+    rep = await realm_get_role_certificates(alice_ws, deleted_realm)
+    assert isinstance(rep, RealmGetRoleCertificatesRepOk)
 
 
 async def _realm_get_clear_role_certifs(sock, realm_id):
@@ -80,6 +94,8 @@ def backend_realm_generate_certif_and_update_roles(next_timestamp):
                 granted_by=author.device_id,
                 granted_on=now,
             ),
+            recipient_message=None,
+            now=DateTime.now(),
         )
         return certif
 
@@ -99,8 +115,9 @@ async def test_update_roles_not_found(
 
 @pytest.mark.trio
 async def test_update_roles_bad_user(
-    alice, mallory, alice_ws, realm, realm_generate_certif_and_update_roles_or_fail
+    alice, mallory, alice_ws, maybe_archived_realm, realm_generate_certif_and_update_roles_or_fail
 ):
+    realm = maybe_archived_realm
     rep = await realm_generate_certif_and_update_roles_or_fail(
         alice_ws, alice, realm, mallory.user_id, RealmRole.MANAGER
     )
@@ -110,8 +127,9 @@ async def test_update_roles_bad_user(
 
 @pytest.mark.trio
 async def test_update_roles_cannot_modify_self(
-    alice, alice_ws, realm, realm_generate_certif_and_update_roles_or_fail
+    alice, alice_ws, maybe_archived_realm, realm_generate_certif_and_update_roles_or_fail
 ):
+    realm = maybe_archived_realm
     rep = await realm_generate_certif_and_update_roles_or_fail(
         alice_ws, alice, realm, alice.user_id, RealmRole.MANAGER
     )
@@ -122,8 +140,9 @@ async def test_update_roles_cannot_modify_self(
 @pytest.mark.trio
 @customize_fixtures(bob_profile=UserProfile.OUTSIDER)
 async def test_update_roles_outsider_is_limited(
-    alice, bob, alice_ws, realm, realm_generate_certif_and_update_roles_or_fail
+    alice, bob, alice_ws, maybe_archived_realm, realm_generate_certif_and_update_roles_or_fail
 ):
+    realm = maybe_archived_realm
     for role, is_allowed in [
         (RealmRole.READER, True),
         (RealmRole.CONTRIBUTOR, True),
@@ -143,8 +162,9 @@ async def test_update_roles_outsider_is_limited(
 @pytest.mark.trio
 @customize_fixtures(alice_profile=UserProfile.OUTSIDER)
 async def test_update_roles_outsider_cannot_share_with(
-    alice, bob, alice_ws, realm, realm_generate_certif_and_update_roles_or_fail
+    alice, bob, alice_ws, maybe_archived_realm, realm_generate_certif_and_update_roles_or_fail
 ):
+    realm = maybe_archived_realm
     rep = await realm_generate_certif_and_update_roles_or_fail(
         alice_ws, alice, realm, bob.user_id, RealmRole.READER
     )
@@ -158,10 +178,11 @@ async def test_remove_role_idempotent(
     alice,
     bob,
     alice_ws,
-    realm,
+    maybe_archived_realm,
     start_with_existing_role,
     realm_generate_certif_and_update_roles_or_fail,
 ):
+    realm = maybe_archived_realm
     if start_with_existing_role:
         with freeze_time("2000-01-03"):
             rep = await realm_generate_certif_and_update_roles_or_fail(
@@ -216,15 +237,24 @@ async def test_remove_role_idempotent(
 
 @pytest.mark.trio
 async def test_update_roles_as_owner(
-    backend, alice, bob, alice_ws, bob_ws, realm, realm_generate_certif_and_update_roles_or_fail
+    backend,
+    alice,
+    bob,
+    alice_ws,
+    bob_ws,
+    maybe_archived_realm,
+    realm_generate_certif_and_update_roles_or_fail,
 ):
+    realm = maybe_archived_realm
     for role in RealmRole.VALUES:
         rep = await realm_generate_certif_and_update_roles_or_fail(
             alice_ws, alice, realm, bob.user_id, role
         )
         assert isinstance(rep, RealmUpdateRolesRepOk)
 
-        roles = await backend.realm.get_current_roles(alice.organization_id, realm)
+        roles = await backend.realm.get_current_roles(
+            alice.organization_id, realm, now=DateTime.now()
+        )
         assert roles == {alice.user_id: RealmRole.OWNER, bob.user_id: role}
 
     # Now remove role
@@ -246,10 +276,11 @@ async def test_update_roles_as_manager(
     bob,
     alice_ws,
     bob_ws,
-    realm,
+    maybe_archived_realm,
     realm_generate_certif_and_update_roles_or_fail,
     backend_realm_generate_certif_and_update_roles,
 ):
+    realm = maybe_archived_realm
     # Vlob realm must have at least one owner, so we need 3 users in total
     # (Zack is owner, Alice is manager and gives role to Bob)
     zack = local_device_factory("zack@dev1")
@@ -267,7 +298,9 @@ async def test_update_roles_as_manager(
         )
         assert isinstance(rep, RealmUpdateRolesRepOk)
 
-        roles = await backend.realm.get_current_roles(alice.organization_id, realm)
+        roles = await backend.realm.get_current_roles(
+            alice.organization_id, realm, now=DateTime.now()
+        )
         assert roles == {
             zack.user_id: RealmRole.OWNER,
             alice.user_id: RealmRole.MANAGER,
@@ -309,11 +342,12 @@ async def test_role_update_not_allowed(
     alice,
     bob,
     alice_ws,
-    realm,
+    maybe_archived_realm,
     alice_role,
     realm_generate_certif_and_update_roles_or_fail,
     backend_realm_generate_certif_and_update_roles,
 ):
+    realm = maybe_archived_realm
     # Vlob realm must have at least one owner, so we need 3 users in total
     # (Zack is owner, Alice gives role to Bob)
     zack = local_device_factory("zack@dev1")
@@ -344,8 +378,15 @@ async def test_role_update_not_allowed(
 
 @pytest.mark.trio
 async def test_remove_role_dont_change_other_realms(
-    backend, alice, bob, alice_ws, realm, bob_realm, realm_generate_certif_and_update_roles_or_fail
+    backend,
+    alice,
+    bob,
+    alice_ws,
+    maybe_archived_realm,
+    bob_realm,
+    realm_generate_certif_and_update_roles_or_fail,
 ):
+    realm = maybe_archived_realm
     # Bob is owner of bob_realm and manager of realm
     rep = await realm_generate_certif_and_update_roles_or_fail(
         alice_ws, alice, realm, bob.user_id, RealmRole.MANAGER
@@ -359,14 +400,22 @@ async def test_remove_role_dont_change_other_realms(
     assert isinstance(rep, RealmUpdateRolesRepOk)
 
     # Bob should still have access to bob_realm
-    roles = await backend.realm.get_current_roles(alice.organization_id, bob_realm)
+    roles = await backend.realm.get_current_roles(
+        alice.organization_id, bob_realm, now=DateTime.now()
+    )
     assert roles == {bob.user_id: RealmRole.OWNER}
 
 
 @pytest.mark.trio
 async def test_role_access_during_maintenance(
-    backend, alice, bob, alice_ws, realm, realm_generate_certif_and_update_roles_or_fail
+    backend,
+    alice,
+    bob,
+    alice_ws,
+    maybe_archived_realm,
+    realm_generate_certif_and_update_roles_or_fail,
 ):
+    realm = maybe_archived_realm
     await backend.realm.start_reencryption_maintenance(
         alice.organization_id,
         alice.device_id,
@@ -374,10 +423,11 @@ async def test_role_access_during_maintenance(
         2,
         {alice.user_id: b"whatever"},
         DateTime(2000, 1, 2),
+        now=DateTime.now(),
     )
 
     # Get roles allowed...
-    roles = await backend.realm.get_current_roles(alice.organization_id, realm)
+    roles = await backend.realm.get_current_roles(alice.organization_id, realm, now=DateTime.now())
     assert roles == {alice.user_id: RealmRole.OWNER}
 
     rep = await realm_get_role_certificates(alice_ws, realm)
@@ -392,8 +442,17 @@ async def test_role_access_during_maintenance(
 
 @pytest.mark.trio
 async def test_get_role_certificates_multiple(
-    backend, alice, bob, adam, bob_ws, realm, backend_realm_generate_certif_and_update_roles
+    backend,
+    alice,
+    bob,
+    adam,
+    bob_ws,
+    maybe_archived_realm,
+    backend_realm_generate_certif_and_update_roles,
+    is_realm_archived,
 ):
+    realm = maybe_archived_realm
+
     # Realm is created on 2000-01-02
 
     with freeze_time("2000-01-03"):
@@ -406,24 +465,32 @@ async def test_get_role_certificates_multiple(
             backend, bob, realm, adam.user_id, RealmRole.MANAGER
         )
 
-    with freeze_time("2000-01-05"):
-        c5 = await backend_realm_generate_certif_and_update_roles(
-            backend, bob, realm, alice.user_id, RealmRole.READER
-        )
+    # This does not work with archived realm since alice archived
+    # the realm after the frozen date
+    if not is_realm_archived:
+        with freeze_time("2000-01-05"):
+            c5 = await backend_realm_generate_certif_and_update_roles(
+                backend, bob, realm, alice.user_id, RealmRole.READER
+            )
 
-    with freeze_time("2000-01-06"):
-        c6 = await backend_realm_generate_certif_and_update_roles(
-            backend, bob, realm, alice.user_id, None
-        )
+        with freeze_time("2000-01-06"):
+            c6 = await backend_realm_generate_certif_and_update_roles(
+                backend, bob, realm, alice.user_id, None
+            )
 
     rep = await realm_get_role_certificates(bob_ws, realm)
     assert isinstance(rep, RealmGetRoleCertificatesRepOk)
-    assert rep.certificates[1:] == (c3, c4, c5, c6)
+    assert rep.certificates[1:] == (c3, c4) if is_realm_archived else (c3, c4, c5, c6)
 
 
 @pytest.mark.trio
 async def test_get_role_certificates_no_longer_allowed(
-    backend, alice, bob, alice_ws, realm, backend_realm_generate_certif_and_update_roles
+    backend,
+    alice,
+    bob,
+    alice_ws,
+    realm,
+    backend_realm_generate_certif_and_update_roles,
 ):
     # Realm is created on 2000-01-02
 
@@ -503,16 +570,57 @@ async def test_update_roles_causality_checks(
 
 
 @pytest.mark.trio
+async def test_update_roles_causality_checks_with_archiving(
+    backend,
+    alice,
+    bob,
+    adam,
+    alice_ws,
+    bob_ws,
+    realm,
+    realm_generate_certif_and_update_roles_or_fail,
+    next_timestamp,
+    archive_realm,
+    plan_realm_deletion,
+):
+    # Grant a role to bob
+    ref1 = next_timestamp()
+    rep = await realm_generate_certif_and_update_roles_or_fail(
+        alice_ws, alice, realm, bob.user_id, RealmRole.OWNER, ref1
+    )
+    assert isinstance(rep, RealmUpdateRolesRepOk)
+
+    ref2 = next_timestamp()
+    await archive_realm(backend, bob, realm, ref2)
+    ref3 = next_timestamp()
+    await plan_realm_deletion(backend, bob, realm, ref3)
+
+    for timestamp in (ref2.subtract(seconds=1), ref3.subtract(seconds=1), ref2, ref3):
+        rep = await realm_generate_certif_and_update_roles_or_fail(
+            alice_ws, alice, realm, bob.user_id, RealmRole.CONTRIBUTOR, timestamp
+        )
+        assert rep == RealmUpdateRolesRepRequireGreaterTimestamp(ref3)
+
+    ref4 = next_timestamp()
+    rep = await realm_generate_certif_and_update_roles_or_fail(
+        alice_ws, alice, realm, bob.user_id, RealmRole.CONTRIBUTOR, ref4
+    )
+    assert isinstance(rep, RealmUpdateRolesRepOk)
+
+
+@pytest.mark.trio
 async def test_update_roles_for_revoked_user(
     backend,
     alice,
     bob,
     alice_ws,
-    realm,
+    maybe_archived_realm,
     realm_generate_certif_and_update_roles_or_fail,
     next_timestamp,
     backend_data_binder,
 ):
+    realm = maybe_archived_realm
+
     # Grant a role to bob
     rep = await realm_generate_certif_and_update_roles_or_fail(
         alice_ws, alice, realm, bob.user_id, RealmRole.MANAGER, next_timestamp()
@@ -533,3 +641,13 @@ async def test_update_roles_for_revoked_user(
         alice_ws, alice, realm, bob.user_id, None, next_timestamp()
     )
     assert isinstance(rep, RealmUpdateRolesRepUserRevoked)
+
+
+@pytest.mark.trio
+async def test_update_roles_realm_deleted(
+    backend, alice, bob, alice_ws, deleted_realm, realm_generate_certif_and_update_roles_or_fail
+):
+    rep = await realm_generate_certif_and_update_roles_or_fail(
+        alice_ws, alice, deleted_realm, bob.user_id, RealmRole.CONTRIBUTOR
+    )
+    assert isinstance(rep, RealmUpdateRolesRepRealmDeleted)

@@ -9,6 +9,7 @@ use libparsec::protocol::authenticated_cmds::v2::{
 use libparsec::types::ProtocolRequest;
 
 use crate::{
+    data::RealmArchivingConfiguration,
     enumerate::{InvitationStatus, RealmRole},
     ids::{InvitationToken, RealmID, VlobID},
     protocol::{
@@ -99,6 +100,11 @@ impl EventsListenRep {
             APIEvent::RealmRolesUpdated { .. } => {
                 Py::new(py, init.add_subclass(EventsListenRepOkRealmRolesUpdated))?.into_py(py)
             }
+            APIEvent::RealmArchivingUpdated { .. } => Py::new(
+                py,
+                init.add_subclass(EventsListenRepOkRealmArchivingUpdated),
+            )?
+            .into_py(py),
             APIEvent::PkiEnrollmentUpdated { .. } => {
                 Py::new(py, init.add_subclass(EventsListenRepOkPkiEnrollmentUpdated))?.into_py(py)
             }
@@ -324,6 +330,45 @@ impl EventsListenRepOkRealmVlobsUpdated {
     fn src_version(_self: PyRef<'_, Self>) -> u64 {
         match &_self.into_super().as_ref().0 {
             events_listen::Rep::Ok(APIEvent::RealmVlobsUpdated { src_version, .. }) => *src_version,
+            _ => unreachable!(),
+        }
+    }
+}
+
+#[pyclass(extends = EventsListenRepOk)]
+#[derive(Clone)]
+pub(crate) struct EventsListenRepOkRealmArchivingUpdated;
+
+#[pymethods]
+impl EventsListenRepOkRealmArchivingUpdated {
+    #[new]
+    fn new(
+        realm_id: RealmID,
+        configuration: RealmArchivingConfiguration,
+    ) -> PyClassInitializer<Self> {
+        let event = events_listen::APIEvent::RealmArchivingUpdated {
+            realm_id: realm_id.0,
+            configuration: configuration.0,
+        };
+        PyClassInitializer::from(EventsListenRepOk::new(event)).add_subclass(Self)
+    }
+
+    #[getter]
+    fn realm_id(_self: PyRef<'_, Self>) -> RealmID {
+        match &_self.into_super().as_ref().0 {
+            events_listen::Rep::Ok(APIEvent::RealmArchivingUpdated { realm_id, .. }) => {
+                RealmID(*realm_id)
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    #[getter]
+    fn configuration(_self: PyRef<'_, Self>) -> RealmArchivingConfiguration {
+        match &_self.into_super().as_ref().0 {
+            events_listen::Rep::Ok(APIEvent::RealmArchivingUpdated { configuration, .. }) => {
+                RealmArchivingConfiguration(*configuration)
+            }
             _ => unreachable!(),
         }
     }

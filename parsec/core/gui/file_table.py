@@ -148,6 +148,7 @@ class FileTable(QTableWidget):
         self.cellDoubleClicked.connect(self.item_double_clicked)
         self.cellClicked.connect(self.item_clicked)
         self.current_user_role = WorkspaceRole.OWNER
+        self.read_only = False
         self.paste_status = PasteStatus(status=PasteStatus.Status.Disabled)
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(34, 34, 34, 25))
@@ -163,6 +164,14 @@ class FileTable(QTableWidget):
     @current_user_role.setter
     def current_user_role(self, role: WorkspaceRole) -> None:
         self._current_user_role = role
+
+    @property
+    def read_only(self) -> bool:
+        return self._read_only
+
+    @read_only.setter
+    def read_only(self, value: bool) -> None:
+        self._read_only = value
 
     def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
@@ -233,7 +242,7 @@ class FileTable(QTableWidget):
         )
 
     def is_read_only(self) -> bool:
-        return self.current_user_role == WorkspaceRole.READER
+        return self.read_only
 
     def show_context_menu(self, pos: QPoint) -> None:
         global_pos = self.mapToGlobal(pos)
@@ -271,8 +280,8 @@ class FileTable(QTableWidget):
                 action.triggered.connect(self.paste_clicked.emit)
                 if self.paste_status.status == PasteStatus.Status.Disabled:
                     action.setDisabled(True)
-            action = menu.addAction(_("ACTION_FILE_MENU_NEW_FOLDER"))
-            action.triggered.connect(self.new_folder_clicked.emit)
+                action = menu.addAction(_("ACTION_FILE_MENU_NEW_FOLDER"))
+                action.triggered.connect(self.new_folder_clicked.emit)
             menu_sort = menu.addMenu(_("ACTION_FILE_MENU_SORT"))
             action = menu_sort.addAction(_("ACTION_FILE_MENU_SORT_BY_CREATED"))
             action.triggered.connect(lambda: self.sort_clicked.emit(Column.CREATED))

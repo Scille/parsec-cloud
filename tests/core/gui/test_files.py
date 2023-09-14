@@ -625,6 +625,7 @@ async def test_drag_and_drop(tmpdir, aqtbot, autoclose_dialog, files_widget_test
 
     # Quick hack to have a read-only workspace ;-)
     f_w.table_files.current_user_role = WorkspaceRole.READER
+    f_w.table_files.read_only = True
 
     _import_file()
 

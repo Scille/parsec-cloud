@@ -11,7 +11,9 @@ from parsec._parsec import (
     ActiveUsersLimit,
     DateTime,
     OrganizationStats,
+    RealmArchivingStatus,
     SequesterVerifyKeyDer,
+    UserID,
     UsersPerProfileDetailItem,
     VerifyKey,
 )
@@ -28,6 +30,7 @@ from parsec.backend.organization import (
     OrganizationNotFoundError,
     SequesterAuthority,
 )
+from parsec.backend.postgresql import realm_queries
 from parsec.backend.postgresql.handler import PGHandler, send_signal
 from parsec.backend.postgresql.user_queries.create import q_create_user
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id
@@ -44,7 +47,8 @@ INSERT INTO organization (
     _created_on,
     _bootstrapped_on,
     is_expired,
-    _expired_on
+    _expired_on,
+    minimum_archiving_period
 )
 VALUES (
     $organization_id,
@@ -54,7 +58,8 @@ VALUES (
     $created_on,
     NULL,
     FALSE,
-    NULL
+    NULL,
+    $minimum_archiving_period
 )
 ON CONFLICT (organization_id) DO
     UPDATE SET
@@ -63,7 +68,8 @@ ON CONFLICT (organization_id) DO
         user_profile_outsider_allowed = EXCLUDED.user_profile_outsider_allowed,
         _created_on = EXCLUDED._created_on,
         is_expired = EXCLUDED.is_expired,
-        _expired_on = EXCLUDED._expired_on
+        _expired_on = EXCLUDED._expired_on,
+        minimum_archiving_period = EXCLUDED.minimum_archiving_period
     WHERE organization.root_verify_key is NULL
 """
 )
@@ -80,7 +86,8 @@ SELECT
     active_users_limit,
     user_profile_outsider_allowed,
     sequester_authority_certificate,
-    sequester_authority_verify_key_der
+    sequester_authority_verify_key_der,
+    minimum_archiving_period
 FROM organization
 WHERE organization_id = $organization_id
 """
@@ -108,7 +115,8 @@ SELECT
     active_users_limit,
     user_profile_outsider_allowed,
     sequester_authority_certificate,
-    sequester_authority_verify_key_der
+    sequester_authority_verify_key_der,
+    minimum_archiving_period
 FROM organization
 WHERE organization_id = $organization_id
 FOR UPDATE
@@ -194,7 +202,10 @@ _q_get_average_realm_creation_date = Q(
 
 @lru_cache()
 def _q_update_factory(
-    with_is_expired: bool, with_active_users_limit: bool, with_user_profile_outsider_allowed: bool
+    with_is_expired: bool,
+    with_active_users_limit: bool,
+    with_user_profile_outsider_allowed: bool,
+    with_minimum_archiving_period: bool,
 ) -> Q:
     fields = []
     if with_is_expired:
@@ -204,6 +215,8 @@ def _q_update_factory(
         fields.append("active_users_limit = $active_users_limit")
     if with_user_profile_outsider_allowed:
         fields.append("user_profile_outsider_allowed = $user_profile_outsider_allowed")
+    if with_minimum_archiving_period:
+        fields.append("minimum_archiving_period = $minimum_archiving_period")
 
     return Q(
         f"""
@@ -262,6 +275,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         bootstrap_token: str,
         active_users_limit: Union[UnsetType, ActiveUsersLimit] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
+        minimum_archiving_period: Union[UnsetType, int] = Unset,
         created_on: DateTime | None = None,
     ) -> None:
         created_on = created_on or DateTime.now()
@@ -271,6 +285,9 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             user_profile_outsider_allowed = (
                 self._config.organization_initial_user_profile_outsider_allowed
             )
+        if minimum_archiving_period is Unset:
+            minimum_archiving_period = self._config.organization_initial_minimum_archiving_period
+
         async with self.dbh.pool.acquire() as conn:
             try:
                 result = await conn.execute(
@@ -282,6 +299,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                         else None,
                         user_profile_outsider_allowed=user_profile_outsider_allowed,
                         created_on=created_on,
+                        minimum_archiving_period=minimum_archiving_period,
                     )
                 )
             except UniqueViolationError:
@@ -335,6 +353,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             user_profile_outsider_allowed=row["user_profile_outsider_allowed"],
             sequester_authority=sequester_authority,
             sequester_services_certificates=sequester_services_certificates,
+            minimum_archiving_period=row["minimum_archiving_period"],
         )
 
     async def bootstrap(
@@ -416,6 +435,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         is_expired: Union[UnsetType, bool] = Unset,
         active_users_limit: Union[UnsetType, ActiveUsersLimit] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
+        minimum_archiving_period: Union[UnsetType, int] = Unset,
     ) -> None:
         """
         Raises:
@@ -427,11 +447,13 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         with_is_expired = is_expired is not Unset
         with_active_users_limit = active_users_limit is not Unset
         with_user_profile_outsider_allowed = user_profile_outsider_allowed is not Unset
+        with_minimum_archiving_period = minimum_archiving_period is not Unset
 
         if (
             not with_is_expired
             and not with_active_users_limit
             and not with_user_profile_outsider_allowed
+            and not with_minimum_archiving_period
         ):
             # Nothing to update, just make sure the organization exists and
             # pretent we actually did an update
@@ -445,11 +467,14 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             fields["active_users_limit"] = active_users_limit.to_int()
         if with_user_profile_outsider_allowed:
             fields["user_profile_outsider_allowed"] = user_profile_outsider_allowed
+        if with_minimum_archiving_period:
+            fields["minimum_archiving_period"] = minimum_archiving_period
 
         q = _q_update_factory(
             with_is_expired=with_is_expired,
             with_active_users_limit=with_active_users_limit,
             with_user_profile_outsider_allowed=with_user_profile_outsider_allowed,
+            with_minimum_archiving_period=with_minimum_archiving_period,
         )
 
         async with self.dbh.pool.acquire() as conn, conn.transaction():
@@ -463,3 +488,36 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
             if with_is_expired and is_expired:
                 await send_signal(conn, BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)
+
+    async def archiving_config(
+        self,
+        id: OrganizationID,
+        user: UserID,
+    ) -> list[RealmArchivingStatus]:
+        async with self.dbh.pool.acquire() as conn:
+            await self._get(conn, id)
+            mapping = await realm_queries.query_get_realms_for_user(conn, id, user)
+            realm_ids = {
+                realm_id: internal_realm_id
+                for (realm_id, (internal_realm_id, _)) in mapping.items()
+            }
+            result = []
+            for (
+                realm_id,
+                configuration,
+                configured_on,
+                configured_by,
+            ) in await realm_queries.query_get_archiving_configurations(
+                conn,
+                id,
+                realm_ids,
+            ):
+                result.append(
+                    RealmArchivingStatus(
+                        realm_id=realm_id,
+                        configured_on=configured_on,
+                        configured_by=configured_by,
+                        configuration=configuration,
+                    )
+                )
+            return result

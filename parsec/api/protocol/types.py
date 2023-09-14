@@ -8,14 +8,17 @@ from marshmallow.fields import Field
 
 from parsec._parsec import (
     ApiVersion,
+    DataError,
+    DateTime,
     DeviceID,
     DeviceLabel,
     HumanHandle,
     OrganizationID,
+    RealmArchivingConfiguration,
     UserID,
     UserProfile,
 )
-from parsec.serde import fields, validate
+from parsec.serde import fields, packb, unpackb, validate
 
 UserIDTypeVar = TypeVar("UserIDTypeVar", bound="UserID")
 DeviceIDTypeVar = TypeVar("DeviceIDTypeVar", bound="DeviceID")
@@ -86,3 +89,26 @@ class ApiVersionField(Field[ApiVersion]):
 
 
 UserProfileField = fields.rust_enum_field_factory(UserProfile)
+
+
+class RealmArchivingConfigurationField(Field[RealmArchivingConfiguration]):
+    def _serialize(
+        self, value: RealmArchivingConfiguration | None, attr: str, obj: object
+    ) -> str | dict[str, DateTime] | None:
+        if value is None:
+            return None
+        return unpackb(value.dump())
+
+    def _deserialize(
+        self, value: object, attr: str, data: dict[str, object]
+    ) -> RealmArchivingConfiguration:
+        if isinstance(value, RealmArchivingConfiguration):
+            return value
+
+        if not isinstance(value, dict):
+            raise ValidationError("Expecting a dict")
+
+        try:
+            return RealmArchivingConfiguration.load(packb(value))
+        except DataError as exc:
+            raise ValidationError(str(exc))

@@ -68,6 +68,7 @@ from parsec.api.protocol.invite import (
 )
 from parsec.api.protocol.message import message_get_serializer
 from parsec.api.protocol.organization import (
+    archiving_config_serializer,
     organization_bootstrap_serializer,
     organization_bootstrap_webhook_serializer,
     organization_config_serializer,
@@ -93,6 +94,7 @@ from parsec.api.protocol.realm import (
     realm_start_reencryption_maintenance_serializer,
     realm_stats_serializer,
     realm_status_serializer,
+    realm_update_archiving_serializer,
     realm_update_roles_serializer,
 )
 from parsec.api.protocol.shamir import (
@@ -110,6 +112,7 @@ from parsec.api.protocol.types import (
     HumanHandleField,
     OrganizationID,
     OrganizationIDField,
+    RealmArchivingConfigurationField,
     UserID,
     UserIDField,
     UserProfileField,
@@ -167,11 +170,13 @@ __all__ = (
     "UserProfile",
     "DeviceLabelField",
     "DeviceLabel",
+    "RealmArchivingConfigurationField",
     # Organization
     "organization_bootstrap_serializer",
     "organization_bootstrap_webhook_serializer",
     "organization_stats_serializer",
     "organization_config_serializer",
+    "archiving_config_serializer",
     # Events
     "events_subscribe_serializer",
     "events_listen_serializer",
@@ -222,6 +227,7 @@ __all__ = (
     "realm_stats_serializer",
     "realm_get_role_certificates_serializer",
     "realm_update_roles_serializer",
+    "realm_update_archiving_serializer",
     "realm_start_reencryption_maintenance_serializer",
     "realm_finish_reencryption_maintenance_serializer",
     # Vlob

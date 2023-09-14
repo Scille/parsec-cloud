@@ -8,6 +8,10 @@ import attr
 
 from parsec._parsec import (
     ActiveUsersLimit,
+    ArchivingConfigRep,
+    ArchivingConfigRepNotFound,
+    ArchivingConfigRepOk,
+    ArchivingConfigReq,
     ClientType,
     DateTime,
     OrganizationBootstrapRep,
@@ -28,7 +32,9 @@ from parsec._parsec import (
     OrganizationStatsRepNotFound,
     OrganizationStatsRepOk,
     OrganizationStatsReq,
+    RealmArchivingStatus,
     SequesterVerifyKeyDer,
+    UserID,
     VerifyKey,
 )
 from parsec.api.data import (
@@ -90,6 +96,7 @@ class Organization:
     bootstrap_token: str
     is_expired: bool
     created_on: DateTime
+    minimum_archiving_period: int
     bootstrapped_on: DateTime | None
     root_verify_key: VerifyKey | None
     user_profile_outsider_allowed: bool
@@ -144,7 +151,25 @@ class BaseOrganizationComponent:
             active_users_limit=organization.active_users_limit,
             sequester_authority_certificate=sequester_authority_certificate,
             sequester_services_certificates=sequester_services_certificates,
+            minimum_archiving_period=organization.minimum_archiving_period,
         )
+
+    @api("archiving_config")
+    @catch_protocol_errors
+    @api_typed_msg_adapter(ArchivingConfigReq, ArchivingConfigRep)
+    async def api_authenticated_archiving_config(
+        self, client_ctx: AuthenticatedClientContext, req: ArchivingConfigReq
+    ) -> ArchivingConfigRep:
+        organization_id = client_ctx.organization_id
+        try:
+            archiving_config = await self.archiving_config(
+                organization_id, client_ctx.device_id.user_id
+            )
+
+        except OrganizationNotFoundError:
+            return ArchivingConfigRepNotFound()
+
+        return ArchivingConfigRepOk(archiving_config)
 
     @api("organization_stats")
     @catch_protocol_errors
@@ -327,6 +352,7 @@ class BaseOrganizationComponent:
         # `None` stands for "no limit"
         active_users_limit: Union[UnsetType, ActiveUsersLimit] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
+        minimum_archiving_period: Union[UnsetType, int] = Unset,
         created_on: DateTime | None = None,
     ) -> None:
         """
@@ -336,6 +362,17 @@ class BaseOrganizationComponent:
         raise NotImplementedError()
 
     async def get(self, id: OrganizationID) -> Organization:
+        """
+        Raises:
+            OrganizationNotFoundError
+        """
+        raise NotImplementedError()
+
+    async def archiving_config(
+        self,
+        id: OrganizationID,
+        user_id: UserID,
+    ) -> list[RealmArchivingStatus]:
         """
         Raises:
             OrganizationNotFoundError

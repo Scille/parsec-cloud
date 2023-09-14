@@ -32,6 +32,8 @@ from parsec.core.fs.exceptions import (
     FSRemoteSyncError,
     FSSharingNotAllowedError,
     FSUserNotFoundError,
+    FSWorkspaceArchivingNotAllowedError,
+    FSWorkspaceArchivingPeriodTooShort,
     FSWorkspaceInMaintenance,
     FSWorkspaceNoAccess,
     FSWorkspaceNoReadAccess,
@@ -39,6 +41,8 @@ from parsec.core.fs.exceptions import (
     FSWorkspaceNotFoundError,
     FSWorkspaceNotInMaintenance,
     FSWorkspaceNoWriteAccess,
+    FSWorkspaceRealmArchived,
+    FSWorkspaceRealmDeleted,
     FSWorkspaceTimestampedTooEarly,
 )
 from parsec.core.fs.path import AnyPath, FsPath
@@ -94,7 +98,11 @@ __all__ = (
     "FSWorkspaceNoWriteAccess",
     "FSWorkspaceNotInMaintenance",
     "FSWorkspaceInMaintenance",
+    "FSWorkspaceRealmArchived",
+    "FSWorkspaceRealmDeleted",
     "FSUserNotFoundError",
     "FSDeviceNotFoundError",
     "FSInvalidTrustchainError",
+    "FSWorkspaceArchivingNotAllowedError",
+    "FSWorkspaceArchivingPeriodTooShort",
 )

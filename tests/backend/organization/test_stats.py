@@ -35,6 +35,8 @@ async def test_organization_stats_data(alice_ws, realm, realm_factory, alice, ba
         vlob_id=VlobID.new(),
         timestamp=DateTime.now(),
         blob=b"1234",
+        sequester_blob=None,
+        now=DateTime.now(),
     )
     stats = await organization_stats(alice_ws)
     assert stats == OrganizationStatsRepOk(
@@ -57,6 +59,7 @@ async def test_organization_stats_data(alice_ws, realm, realm_factory, alice, ba
         block_id=BlockID.new(),
         realm_id=realm,
         block=b"1234",
+        now=DateTime.now(),
     )
     stats = await organization_stats(alice_ws)
     assert stats == OrganizationStatsRepOk(

@@ -1,0 +1,71 @@
+[
+   {
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "realm_update_archiving",
+            "fields": [
+                {
+                    "name": "archiving_certificate",
+                    // Contains a signed RealmArchivingCertificate
+                    "type": "Bytes"
+                }
+            ]
+        },
+        "reps": [
+            // Following return status are similar to `realm_update_roles`
+            {
+                "status": "ok"
+            },
+            {
+                // Returned if the user does not have the `owner` role
+                "status": "not_allowed"
+            },
+            {
+                "status": "invalid_certification"
+            },
+            {
+                "status": "not_found"
+            },
+            {
+                "status": "require_greater_timestamp",
+                "fields": [
+                    {
+                        "name": "strictly_greater_than",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                "status": "bad_timestamp",
+                "fields": [
+                    {
+                        "name": "ballpark_client_early_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "ballpark_client_late_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "backend_timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "client_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            // Those are specific return status
+            {
+                "status": "realm_deleted"
+            },
+            {
+                "status": "archiving_period_too_short"
+            }
+        ]
+    }
+]

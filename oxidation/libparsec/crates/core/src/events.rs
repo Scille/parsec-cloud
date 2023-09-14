@@ -9,6 +9,7 @@ pub enum CoreEvent {
     BackendRealmMaintenanceFinished,
     BackendRealmMaintenanceStarted,
     BackendRealmRolesUpdated,
+    BackendRealmArchivingUpdated,
     BackendRealmVlobsUpdated,
 
     // Fs
@@ -41,6 +42,8 @@ pub enum CoreEvent {
     MountpointUnhandledError,
     PkiEnrollmentsUpdated,
     SharingUpdated,
+    ArchivingUpdated,
+    ArchivingNextDeletionDate,
 
     // Userfs
     UserfsSyncRejectedBySequesterService,
@@ -59,6 +62,7 @@ impl CoreEvent {
             CoreEvent::BackendRealmMaintenanceFinished => "backend.realm.maintenance_finished",
             CoreEvent::BackendRealmMaintenanceStarted => "backend.realm.maintenance_started",
             CoreEvent::BackendRealmRolesUpdated => "backend.realm.roles_updated",
+            CoreEvent::BackendRealmArchivingUpdated => "backend.realm.archiving_updated",
             CoreEvent::BackendRealmVlobsUpdated => "backend.realm.vlobs_updated",
             CoreEvent::FsEntryConfined => "fs.entry.confined",
             CoreEvent::FsEntryDownsynced => "fs.entry.downsynced",
@@ -85,6 +89,8 @@ impl CoreEvent {
             CoreEvent::MountpointTrioDeadlockError => "mountpoint.trio_deadlock_error",
             CoreEvent::PkiEnrollmentsUpdated => "pki_enrollment.updated",
             CoreEvent::SharingUpdated => "sharing.updated",
+            CoreEvent::ArchivingUpdated => "archiving.updated",
+            CoreEvent::ArchivingNextDeletionDate => "archiving.next_deletion_date",
             CoreEvent::UserfsSyncRejectedBySequesterService => {
                 "userfs.sync_refused_by_sequester_service"
             }

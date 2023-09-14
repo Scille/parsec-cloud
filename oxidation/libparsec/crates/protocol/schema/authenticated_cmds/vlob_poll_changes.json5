@@ -45,6 +45,9 @@
             },
             {
                 "status": "in_maintenance"
+            },
+            {
+                "status": "realm_deleted"
             }
         ]
     }

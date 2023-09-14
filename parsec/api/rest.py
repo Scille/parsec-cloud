@@ -37,6 +37,8 @@ class OrganizationCreateReqSchema(BaseSchema):
     user_profile_outsider_allowed = fields.Boolean(required=False, allow_none=False)
     # `None` stands for "no limit" here
     active_users_limit = fields.Integer(required=False, allow_none=True, validate=lambda x: x >= 0)
+    # Introduced in API v2.10/v3.4 (Parsec 2.16+)
+    minimum_archiving_period = fields.Integer(required=False, allow_none=False)
 
 
 class OrganizationCreateRepSchema(BaseSchema):
@@ -60,6 +62,8 @@ class OrganizationConfigRepSchema(BaseSchema):
     user_profile_outsider_allowed = fields.Boolean(required=True)
     # `None` stands for "no limit" here
     active_users_limit = fields.Integer(required=True, allow_none=True)
+    # Introduced in API v2.10/v3.4 (Parsec 2.16+)
+    minimum_archiving_period = fields.Integer(required=False)
 
 
 organization_config_req_serializer = JSONSerializer(OrganizationConfigReqSchema)
@@ -124,6 +128,8 @@ class OrganizationUpdateReqSchema(BaseSchema):
     user_profile_outsider_allowed = fields.Boolean(required=False)
     # `None` stands for "no limit" here
     active_users_limit = fields.Integer(required=False, allow_none=True, validate=lambda x: x >= 0)
+    # Introduced in API v2.10/v3.4 (Parsec 2.16+)
+    minimum_archiving_period = fields.Integer(required=False)
 
 
 class OrganizationUpdateRepSchema(BaseSchema):

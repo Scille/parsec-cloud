@@ -13,6 +13,7 @@ from parsec._parsec import (
     EventsListenRepOkMessageReceived,
     EventsListenRepOkPinged,
     EventsListenRepOkPkiEnrollmentUpdated,
+    EventsListenRepOkRealmArchivingUpdated,
     EventsListenRepOkRealmMaintenanceFinished,
     EventsListenRepOkRealmMaintenanceStarted,
     EventsListenRepOkRealmRolesUpdated,
@@ -102,6 +103,7 @@ class EventsComponent:
                 Type[EventsListenRepOkRealmVlobsUpdated],
                 Type[EventsListenRepOkRealmMaintenanceStarted],
                 Type[EventsListenRepOkRealmMaintenanceFinished],
+                Type[EventsListenRepOkRealmArchivingUpdated],
             ],
             backend_event: BackendEvent,
             organization_id: OrganizationID,
@@ -198,6 +200,11 @@ class EventsComponent:
             client_ctx.event_bus_ctx.connect(
                 BackendEvent.PKI_ENROLLMENTS_UPDATED,
                 _on_pki_enrollment_updated,  # type: ignore[arg-type]
+            )
+
+            client_ctx.event_bus_ctx.connect(
+                BackendEvent.REALM_ARCHIVING_UPDATED,
+                partial(_on_realm_events, EventsListenRepOkRealmArchivingUpdated),
             )
 
             # Final event to keep up to date the list of realm we should listen on

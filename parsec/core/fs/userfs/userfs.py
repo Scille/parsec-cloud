@@ -20,27 +20,33 @@ import trio
 from structlog import get_logger
 from trio_typing import TaskStatus
 
-from parsec._parsec import AuthenticatedCmds as RsBackendAuthenticatedCmds
 from parsec._parsec import (
+    ArchivingConfigRepOk,
+    ArchivingConfigRepUnknownStatus,
     CoreEvent,
     DateTime,
     MessageGetRepOk,
+    RealmArchivingConfiguration,
     RealmCreateRepAlreadyExists,
     RealmCreateRepOk,
     RealmFinishReencryptionMaintenanceRepBadEncryptionRevision,
     RealmFinishReencryptionMaintenanceRepNotAllowed,
     RealmFinishReencryptionMaintenanceRepNotInMaintenance,
     RealmFinishReencryptionMaintenanceRepOk,
+    RealmFinishReencryptionMaintenanceRepRealmDeleted,
     RealmStartReencryptionMaintenanceRepInMaintenance,
     RealmStartReencryptionMaintenanceRepNotAllowed,
     RealmStartReencryptionMaintenanceRepOk,
     RealmStartReencryptionMaintenanceRepParticipantMismatch,
+    RealmStartReencryptionMaintenanceRepRealmDeleted,
     RealmStatusRepNotAllowed,
     RealmStatusRepOk,
+    RealmStatusRepRealmDeleted,
     RealmUpdateRolesRepAlreadyGranted,
     RealmUpdateRolesRepInMaintenance,
     RealmUpdateRolesRepNotAllowed,
     RealmUpdateRolesRepOk,
+    RealmUpdateRolesRepRealmDeleted,
     RealmUpdateRolesRepRequireGreaterTimestamp,
     RealmUpdateRolesRepUserRevoked,
     ReencryptionBatchEntry,
@@ -50,6 +56,8 @@ from parsec._parsec import (
     VlobCreateRepAlreadyExists,
     VlobCreateRepInMaintenance,
     VlobCreateRepOk,
+    VlobCreateRepRealmArchived,
+    VlobCreateRepRealmDeleted,
     VlobCreateRepRejectedBySequesterService,
     VlobCreateRepRequireGreaterTimestamp,
     VlobCreateRepSequesterInconsistency,
@@ -58,21 +66,27 @@ from parsec._parsec import (
     VlobMaintenanceGetReencryptionBatchRepNotAllowed,
     VlobMaintenanceGetReencryptionBatchRepNotInMaintenance,
     VlobMaintenanceGetReencryptionBatchRepOk,
+    VlobMaintenanceGetReencryptionBatchRepRealmDeleted,
     VlobMaintenanceSaveReencryptionBatchRepBadEncryptionRevision,
     VlobMaintenanceSaveReencryptionBatchRepNotAllowed,
     VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance,
     VlobMaintenanceSaveReencryptionBatchRepOk,
+    VlobMaintenanceSaveReencryptionBatchRepRealmDeleted,
     VlobReadRepInMaintenance,
     VlobReadRepOk,
+    VlobReadRepRealmDeleted,
     VlobUpdateRep,
     VlobUpdateRepBadVersion,
     VlobUpdateRepInMaintenance,
     VlobUpdateRepOk,
+    VlobUpdateRepRealmArchived,
+    VlobUpdateRepRealmDeleted,
     VlobUpdateRepRejectedBySequesterService,
     VlobUpdateRepRequireGreaterTimestamp,
     VlobUpdateRepSequesterInconsistency,
     VlobUpdateRepTimeout,
 )
+from parsec._parsec import AuthenticatedCmds as RsBackendAuthenticatedCmds
 from parsec.api.data import (
     DataError,
     MessageContent,
@@ -100,6 +114,8 @@ from parsec.core.fs.exceptions import (
     FSWorkspaceNoAccess,
     FSWorkspaceNotFoundError,
     FSWorkspaceNotInMaintenance,
+    FSWorkspaceRealmArchived,
+    FSWorkspaceRealmDeleted,
 )
 from parsec.core.fs.remote_loader import (
     MANIFEST_STAMP_AHEAD_US,
@@ -171,6 +187,8 @@ class ReencryptionJob:
                 raise FSWorkspaceNoAccess(
                     f"Not allowed to do reencryption maintenance on workspace {workspace_id.hex}: {rep}"
                 )
+            elif isinstance(rep, VlobMaintenanceGetReencryptionBatchRepRealmDeleted):
+                raise FSWorkspaceRealmDeleted(f"The workspace {workspace_id.hex} has been deleted")
             elif not isinstance(rep, VlobMaintenanceGetReencryptionBatchRepOk):
                 raise FSError(
                     f"Cannot do reencryption maintenance on workspace {workspace_id.hex}: {rep}"
@@ -203,6 +221,11 @@ class ReencryptionJob:
                 raise FSWorkspaceNoAccess(
                     f"Not allowed to do reencryption maintenance on workspace {workspace_id.hex}: {rep_maintenance_save_reencryption}"
                 )
+            elif isinstance(
+                rep_maintenance_save_reencryption,
+                VlobMaintenanceSaveReencryptionBatchRepRealmDeleted,
+            ):
+                raise FSWorkspaceRealmDeleted(f"The workspace {workspace_id.hex} has been deleted")
             elif not isinstance(
                 rep_maintenance_save_reencryption, VlobMaintenanceSaveReencryptionBatchRepOk
             ):
@@ -239,6 +262,10 @@ class ReencryptionJob:
                 ):
                     raise FSWorkspaceNoAccess(
                         f"Not allowed to do reencryption maintenance on workspace {workspace_id.hex}: {rep_reencryption_maintenance}"
+                    )
+                elif isinstance(rep, RealmFinishReencryptionMaintenanceRepRealmDeleted):
+                    raise FSWorkspaceRealmDeleted(
+                        f"The workspace {workspace_id.hex} has been deleted"
                     )
                 elif not isinstance(
                     rep_reencryption_maintenance, RealmFinishReencryptionMaintenanceRepOk
@@ -300,6 +327,11 @@ class UserFS:
             self.remote_devices_manager,
         )
 
+        self._archiving_lock = trio.Lock()
+        self._unacknowledged_archiving_configuration: dict[
+            EntryID, tuple[RealmArchivingConfiguration, DateTime | None, DeviceID | None]
+        ] = {}
+
     @classmethod
     @asynccontextmanager
     async def run(
@@ -334,6 +366,7 @@ class UserFS:
                 # In particular, we want to make sure that any workspace available through
                 # `userfs.get_user_manifest().workspaces` is also available through
                 # `userfs.get_workspace(workspace_id)`.
+                # That includes workspaces without role and deleted workspaces.
                 for workspace_entry in self.get_user_manifest().workspaces:
                     await self._load_workspace(workspace_entry.id)
 
@@ -354,6 +387,31 @@ class UserFS:
             raise ValueError("Storage not set")
         return self.storage.get_user_manifest()
 
+    def get_all_workspace_entries(self) -> tuple[list[WorkspaceEntry], list[WorkspaceEntry]]:
+        user_manifest = self.get_user_manifest()
+        available_entries = []
+        unavailable_entries = []
+        for workspace_entry in user_manifest.workspaces:
+            try:
+                workspace = self.get_workspace(workspace_entry.id)
+            except FSWorkspaceNotFoundError:
+                continue
+            if workspace_entry.role is None:
+                unavailable_entries.append(workspace_entry)
+            elif workspace.is_deleted():
+                unavailable_entries.append(workspace_entry)
+            else:
+                available_entries.append(workspace_entry)
+        return available_entries, unavailable_entries
+
+    def get_available_workspace_entries(self) -> list[WorkspaceEntry]:
+        available_entries, _ = self.get_all_workspace_entries()
+        return available_entries
+
+    def get_unavailable_workspace_entries(self) -> list[WorkspaceEntry]:
+        _, unavailable_entries = self.get_all_workspace_entries()
+        return unavailable_entries
+
     async def set_user_manifest(self, manifest: LocalUserManifest) -> None:
         if self.storage is None:
             raise ValueError("Storage not set")
@@ -361,8 +419,9 @@ class UserFS:
         # Make sure all the workspaces are loaded
         # In particular, we want to make sure that any workspace available through
         # `userfs.get_user_manifest().workspaces` is also available through
-        # `userfs.get_workspace(workspace_id)`. Note that the loading operation
-        # is idempotent, so workspaces do not get reloaded.
+        # `userfs.get_workspace(workspace_id)`.
+        # That includes workspaces without role and deleted workspaces.
+        # Note that the loading operation is idempotent, so workspaces do not get reloaded.
         for workspace_entry in manifest.workspaces:
             await self._load_workspace(workspace_entry.id)
 
@@ -402,6 +461,13 @@ class UserFS:
         async def workspace_task(
             task_status: TaskStatus[WorkspaceFS] = trio.TASK_STATUS_IGNORED,
         ) -> None:
+            default = RealmArchivingConfiguration.available(), None, None
+            (
+                archiving_configuration,
+                archiving_configured_on,
+                archiving_configured_by,
+            ) = self._unacknowledged_archiving_configuration.pop(workspace_id, default)
+
             async with WorkspaceFS.run(
                 data_base_dir=self.data_base_dir,
                 workspace_id=workspace_id,
@@ -414,6 +480,9 @@ class UserFS:
                 workspace_storage_cache_size=self.workspace_storage_cache_size,
                 prevent_sync_pattern=self.prevent_sync_pattern,
                 preferred_language=self.preferred_language,
+                archiving_configuration=archiving_configuration,
+                archiving_configured_on=archiving_configured_on,
+                archiving_configured_by=archiving_configured_by,
             ) as workspace:
                 # Workspace is ready
                 task_status.started(workspace)
@@ -442,6 +511,7 @@ class UserFS:
         # UserFS provides the guarantee that any workspace available through
         # `userfs.get_user_manifest().workspaces` is also available in
         # `self._workspaces`.
+        # That includes workspaces without role and deleted workspaces.
         try:
             workspace = self._workspaces[workspace_id]
         except KeyError:
@@ -528,6 +598,10 @@ class UserFS:
         if isinstance(rep, VlobReadRepInMaintenance):
             raise FSWorkspaceInMaintenance(
                 "Cannot access workspace data while it is in maintenance"
+            )
+        elif isinstance(rep, VlobReadRepRealmDeleted):
+            raise FSWorkspaceRealmDeleted(
+                f"The user realm {self.user_manifest_id.hex} has been deleted"
             )
         elif not isinstance(rep, VlobReadRepOk):
             raise FSError(f"Cannot fetch user manifest from backend: {rep}")
@@ -810,6 +884,14 @@ class UserFS:
             )
         elif isinstance(rep, (VlobCreateRepTimeout, VlobUpdateRepTimeout)):
             raise FSServerUploadTemporarilyUnavailableError("Temporary failure during vlob upload")
+        elif isinstance(rep, (VlobCreateRepRealmArchived, VlobUpdateRepRealmArchived)):
+            raise FSWorkspaceRealmArchived(
+                f"The user realm {self.user_manifest_id.hex} has been archived"
+            )
+        elif isinstance(rep, (VlobCreateRepRealmDeleted, VlobUpdateRepRealmDeleted)):
+            raise FSWorkspaceRealmDeleted(
+                f"The user realm {self.user_manifest_id.hex} has been deleted"
+            )
         elif not isinstance(rep, (VlobCreateRepOk, VlobUpdateRepOk)):
             raise FSError(f"Cannot sync user manifest: {rep}")
 
@@ -947,8 +1029,65 @@ class UserFS:
         elif isinstance(rep, RealmUpdateRolesRepAlreadyGranted):
             # Stay idempotent
             return
+        elif isinstance(rep, RealmUpdateRolesRepRealmDeleted):
+            raise FSWorkspaceRealmDeleted(f"The workspace {workspace_id.hex} has been deleted")
         elif not isinstance(rep, RealmUpdateRolesRepOk):
             raise FSError(f"Error while trying to set vlob group roles in backend: {rep}")
+
+    async def update_archiving_status(self) -> DateTime | None:
+        async with self._archiving_lock:
+            rep = await self.backend_cmds.archiving_config()
+
+            # Authenticated's archiving_config command has been introduced in API v2.10/3.4
+            # So a cheap trick to keep backward compatibility here is to
+            # stick with the default archiving config (i.e. the realm is available)
+            if isinstance(rep, ArchivingConfigRepUnknownStatus) and rep.status == "unknown_command":
+                return None
+
+            if not isinstance(rep, ArchivingConfigRepOk):
+                raise FSError(f"Error while fetching archiving config: {rep}")
+
+            # Find next deletion date so the monitor can call `update_archiving_status`
+            # when this date is met. This allow for sending `ARCHIVING_UPDATED` events
+            # when a workspace status becomes `deleted`.
+            result: DateTime | None = None
+
+            # Loop over status
+            for status in rep.archiving_config:
+                # Get the corresponding workspace
+                workspace_id = EntryID.from_bytes(status.realm_id.bytes)
+                try:
+                    workspacefs = self.get_workspace(workspace_id)
+
+                # We don't know about this workspace yet
+                # Keep its configuration in `_archiving_configuration` so it can be passed
+                # to the workspace during its instanciation
+                except FSWorkspaceNotFoundError:
+                    next_deletion_date: DateTime | None = None
+                    self._unacknowledged_archiving_configuration[workspace_id] = (
+                        status.configuration,
+                        status.configured_on,
+                        status.configured_by,
+                    )
+                    is_deleted = status.configuration.is_deleted(self.device.time_provider.now())
+                    if status.configuration.is_deletion_planned() and not is_deleted:
+                        next_deletion_date = status.configuration.deletion_date
+
+                # We do know about this workspace, let it acknowledge the configuration
+                else:
+                    next_deletion_date = workspacefs.acknowledge_archiving_configuration(
+                        status.configuration,
+                        status.configured_on,
+                        status.configured_by,
+                    )
+
+                # Update the result with the new deletion date
+                if next_deletion_date is not None:
+                    result = (
+                        next_deletion_date if result is None else min(result, next_deletion_date)
+                    )
+
+            return result
 
     async def process_last_messages(self) -> Sequence[Tuple[int, Exception]]:
         """
@@ -1253,6 +1392,8 @@ class UserFS:
             raise FSWorkspaceNoAccess(
                 f"Not allowed to start maintenance on workspace {workspace_id.hex}: {rep}"
             )
+        elif isinstance(rep, RealmStartReencryptionMaintenanceRepRealmDeleted):
+            raise FSWorkspaceRealmDeleted(f"The workspace {workspace_id.hex} has been deleted")
         elif not isinstance(rep, RealmStartReencryptionMaintenanceRepOk):
             raise FSError(f"Cannot start maintenance on workspace {workspace_id.hex}: {rep}")
         return True
@@ -1331,6 +1472,8 @@ class UserFS:
 
         if isinstance(rep, RealmStatusRepNotAllowed):
             raise FSWorkspaceNoAccess(f"Not allowed to access workspace {workspace_id.hex}: {rep}")
+        elif isinstance(rep, RealmStatusRepRealmDeleted):
+            raise FSWorkspaceRealmDeleted(f"The workspace {workspace_id.hex} has been deleted")
         elif not isinstance(rep, RealmStatusRepOk):
             raise FSError(f"Error while getting status for workspace {workspace_id.hex}: {rep}")
 

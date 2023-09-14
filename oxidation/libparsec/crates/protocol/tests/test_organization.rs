@@ -3,7 +3,8 @@
 use hex_literal::hex;
 
 use libparsec_protocol::{
-    anonymous_cmds::v2 as anonymous_cmds, authenticated_cmds::v2 as authenticated_cmds,
+    anonymous_cmds::v2 as anonymous_cmds,
+    authenticated_cmds::{v2 as authenticated_cmds, v3::archiving_config::RealmArchivingStatus},
 };
 use libparsec_tests_fixtures::{
     alice, device_certificate, parsec_test, redacted_device_certificate, redacted_user_certificate,
@@ -128,7 +129,57 @@ fn serde_organization_config_req() {
 }
 
 #[parsec_test]
-#[case::ok_with_absent_sequester(
+#[case::ok_with_none_sequester(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   active_users_limit: None
+    //   minimum_archiving_period: 2592000
+    //   sequester_authority_certificate: None
+    //   sequester_services_certificates: None
+    //   status: "ok"
+    //   user_profile_outsider_allowed: false
+    //
+    &hex!(
+        "86a6737461747573a26f6bb26163746976655f75736572735f6c696d6974c0b86d696e696d"
+        "756d5f617263686976696e675f706572696f64ce00278d00bf7365717565737465725f6175"
+        "74686f726974795f6365727469666963617465c0bf7365717565737465725f736572766963"
+        "65735f636572746966696361746573c0bd757365725f70726f66696c655f6f757473696465"
+        "725f616c6c6f776564c2"
+    )[..],
+    authenticated_cmds::organization_config::Rep::Ok {
+        user_profile_outsider_allowed: false,
+        active_users_limit: ActiveUsersLimit::NoLimit,
+        sequester_authority_certificate: Maybe::Present(None),
+        sequester_services_certificates: Maybe::Present(None),
+        minimum_archiving_period: Maybe::Present(2592000),
+    }
+)]
+#[case::ok_with_sequester(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   active_users_limit: 1
+    //   minimum_archiving_period: 2592000
+    //   sequester_authority_certificate: hex!("666f6f626172")
+    //   sequester_services_certificates: [hex!("666f6f"), hex!("626172")]
+    //   status: "ok"
+    //   user_profile_outsider_allowed: false
+    //
+    &hex!(
+        "86a6737461747573a26f6bb26163746976655f75736572735f6c696d697401b86d696e696d"
+        "756d5f617263686976696e675f706572696f64ce00278d00bf7365717565737465725f6175"
+        "74686f726974795f6365727469666963617465c406666f6f626172bf736571756573746572"
+        "5f73657276696365735f63657274696669636174657392c403666f6fc403626172bd757365"
+        "725f70726f66696c655f6f757473696465725f616c6c6f776564c2"
+    )[..],
+    authenticated_cmds::organization_config::Rep::Ok {
+        user_profile_outsider_allowed: false,
+        active_users_limit: ActiveUsersLimit::LimitedTo(1),
+        sequester_authority_certificate: Maybe::Present(Some(b"foobar".to_vec())),
+        sequester_services_certificates: Maybe::Present(Some(vec![b"foo".to_vec(), b"bar".to_vec()])),
+        minimum_archiving_period: Maybe::Present(2592000),
+    }
+)]
+#[case::ok_with_absent_sequester_legacy(
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   active_users_limit: 1
@@ -143,9 +194,10 @@ fn serde_organization_config_req() {
         active_users_limit: ActiveUsersLimit::LimitedTo(1),
         sequester_authority_certificate: Maybe::Absent,
         sequester_services_certificates: Maybe::Absent,
+        minimum_archiving_period: Maybe::Absent,
     }
 )]
-#[case::ok_with_none_sequester(
+#[case::ok_with_none_sequester_legacy(
     // Generated from Rust implementation (Parsec v2.12.1+dev)
     // Content:
     //   active_users_limit: None
@@ -165,9 +217,10 @@ fn serde_organization_config_req() {
         active_users_limit: ActiveUsersLimit::NoLimit,
         sequester_authority_certificate: Maybe::Present(None),
         sequester_services_certificates: Maybe::Present(None),
+        minimum_archiving_period: Maybe::Absent,
     }
 )]
-#[case::ok_with_sequester(
+#[case::ok_with_sequester_legacy(
     // Generated from Python implementation (Parsec v2.11.1+dev)
     // Content:
     //   active_users_limit: 1
@@ -187,6 +240,7 @@ fn serde_organization_config_req() {
         active_users_limit: ActiveUsersLimit::LimitedTo(1),
         sequester_authority_certificate: Maybe::Present(Some(b"foobar".to_vec())),
         sequester_services_certificates: Maybe::Present(Some(vec![b"foo".to_vec(), b"bar".to_vec()])),
+        minimum_archiving_period: Maybe::Absent,
     }
 )]
 #[case::not_found(
@@ -210,6 +264,127 @@ fn serde_organization_config_rep(
     let raw2 = data.dump().unwrap();
 
     let data2 = authenticated_cmds::organization_config::Rep::load(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
+}
+
+#[parsec_test]
+fn serde_archiving_config_req() {
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   cmd: "archiving_config"
+    //
+    let raw = hex!("81a3636d64b0617263686976696e675f636f6e666967");
+
+    let req = authenticated_cmds::archiving_config::Req;
+
+    let expected = authenticated_cmds::AnyCmdReq::ArchivingConfig(req);
+
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
+
+    assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
+}
+
+#[parsec_test]
+#[case::ok_empty(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   archiving_config: []
+    //   status: "ok"
+    //
+    &hex!("82a6737461747573a26f6bb0617263686976696e675f636f6e66696790")[..],
+    authenticated_cmds::archiving_config::Rep::Ok {
+        archiving_config: vec![],
+    }
+)]
+#[parsec_test]
+#[case::ok_populated(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   archiving_config: [
+    //     {
+    //       configuration: {type:"AVAILABLE"}
+    //       configured_by: None
+    //       configured_on: None
+    //       realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
+    //     }
+    //     {
+    //       configuration: {type:"ARCHIVED"}
+    //       configured_by: "alice@dev1"
+    //       configured_on: ext(1, 946774800.0)
+    //       realm_id: ext(2, hex!("2d3353157d7d4e95ad2fdea7b3bd19c6"))
+    //     }
+    //     {
+    //       configuration: {type:"DELETION_PLANNED", deletion_date:ext(1, 946782000.0)}
+    //       configured_by: "alice@dev1"
+    //       configured_on: ext(1, 946778400.0)
+    //       realm_id: ext(2, hex!("3d3353157d7d4e95ad2fdea7b3bd19c7"))
+    //     }
+    //   ]
+    //   status: "ok"
+    //
+    &hex!(
+        "82a6737461747573a26f6bb0617263686976696e675f636f6e6669679384ad636f6e666967"
+        "75726174696f6e81a474797065a9415641494c41424c45ad636f6e666967757265645f6279"
+        "c0ad636f6e666967757265645f6f6ec0a87265616c6d5f6964d8021d3353157d7d4e95ad2f"
+        "dea7b3bd19c584ad636f6e66696775726174696f6e81a474797065a84152434849564544ad"
+        "636f6e666967757265645f6279aa616c6963654064657631ad636f6e666967757265645f6f"
+        "6ed70141cc375188000000a87265616c6d5f6964d8022d3353157d7d4e95ad2fdea7b3bd19"
+        "c684ad636f6e66696775726174696f6e82a474797065b044454c4554494f4e5f504c414e4e"
+        "4544ad64656c6574696f6e5f64617465d70141cc375f98000000ad636f6e66696775726564"
+        "5f6279a8626f624064657631ad636f6e666967757265645f6f6ed70141cc375890000000a8"
+        "7265616c6d5f6964d8023d3353157d7d4e95ad2fdea7b3bd19c7"
+    )[..],
+    authenticated_cmds::archiving_config::Rep::Ok {
+        archiving_config: vec![
+            RealmArchivingStatus {
+                realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
+                configuration: RealmArchivingConfiguration::Available,
+                configured_by: None,
+                configured_on: None,
+            },
+            RealmArchivingStatus {
+                realm_id: RealmID::from_hex("2d3353157d7d4e95ad2fdea7b3bd19c6").unwrap(),
+                configuration: RealmArchivingConfiguration::Archived,
+                configured_by: Some("alice@dev1".parse().unwrap()),
+                configured_on: Some("2000-1-2T01:00:00Z".parse().unwrap()),
+            },
+            RealmArchivingStatus {
+                realm_id: RealmID::from_hex("3d3353157d7d4e95ad2fdea7b3bd19c7").unwrap(),
+                configuration: RealmArchivingConfiguration::DeletionPlanned { deletion_date: "2000-1-2T03:00:00Z".parse().unwrap() },
+                configured_by: Some("bob@dev1".parse().unwrap()),
+                configured_on: Some("2000-1-2T02:00:00Z".parse().unwrap()),
+            },
+        ],
+    }
+)]
+#[case::not_found(
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   status: "not_found"
+    //
+    &hex!("81a6737461747573a96e6f745f666f756e64")[..],
+    authenticated_cmds::archiving_config::Rep::NotFound
+)]
+fn serde_archiving_config_rep(
+    #[case] raw: &[u8],
+    #[case] expected: authenticated_cmds::archiving_config::Rep,
+) {
+    let data = authenticated_cmds::archiving_config::Rep::load(raw).unwrap();
+
+    assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::archiving_config::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }

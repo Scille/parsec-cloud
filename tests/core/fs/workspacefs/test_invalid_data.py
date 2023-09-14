@@ -55,6 +55,8 @@ async def testbed(
                 version=self._next_version,
                 timestamp=options["backend_timestamp"],
                 blob=options["blob"],
+                sequester_blob=None,
+                now=DateTime.now(),
             )
             self._next_version += 1
 
@@ -115,9 +117,9 @@ def backend_disable_vlob_checks(backend):
 
     # Disable checks in the backend to allow invalid data to be stored
 
-    def patched_check_realm_access(organization_id, realm_id, *args, **kwargs):
+    def patched_check_realm_access(organization_id, realm_id, now, *args, **kwargs):
         try:
-            return backend.vlob._realm_component._get_realm(organization_id, realm_id)
+            return backend.vlob._realm_component._get_realm(organization_id, realm_id, now)
         except RealmNotFoundError:
             raise VlobRealmNotFoundError(f"Realm `{realm_id.str}` doesn't exist")
 

@@ -133,6 +133,19 @@
                                 "type": "RequiredOption<RealmRole>"
                             }
                         ]
+                    },                    {
+                        "name": "RealmArchivingUpdated",
+                        "discriminant_value": "realm.archiving_updated",
+                        "fields": [
+                            {
+                                "name": "realm_id",
+                                "type": "RealmID"
+                            },
+                            {
+                                "name": "configuration",
+                                "type": "RealmArchivingConfiguration"
+                            }
+                        ]
                     },
                     {
                         "name": "PkiEnrollmentUpdated",

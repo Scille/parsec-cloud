@@ -11,6 +11,9 @@ from parsec._parsec import (
     ActiveUsersLimit,
     DateTime,
     OrganizationStats,
+    RealmArchivingConfiguration,
+    RealmArchivingStatus,
+    UserID,
     UsersPerProfileDetailItem,
     VerifyKey,
 )
@@ -68,6 +71,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         bootstrap_token: str,
         active_users_limit: Union[UnsetType, ActiveUsersLimit] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
+        minimum_archiving_period: Union[UnsetType, int] = Unset,
         created_on: DateTime | None = None,
     ) -> None:
         created_on = created_on or DateTime.now()
@@ -81,7 +85,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             user_profile_outsider_allowed = (
                 self._config.organization_initial_user_profile_outsider_allowed
             )
-
+        if minimum_archiving_period is Unset:
+            minimum_archiving_period = self._config.organization_initial_minimum_archiving_period
         assert isinstance(active_users_limit, ActiveUsersLimit)
 
         self._organizations[id] = Organization(
@@ -95,12 +100,41 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             user_profile_outsider_allowed=user_profile_outsider_allowed,
             sequester_authority=None,
             sequester_services_certificates=None,
+            minimum_archiving_period=minimum_archiving_period,
         )
 
     async def get(self, id: OrganizationID) -> Organization:
         if id not in self._organizations:
             raise OrganizationNotFoundError()
         return self._organizations[id]
+
+    async def archiving_config(
+        self, id: OrganizationID, user: UserID
+    ) -> list[RealmArchivingStatus]:
+        if id not in self._organizations:
+            raise OrganizationNotFoundError()
+        assert self._realm_component is not None
+        realms = await self._realm_component.get_realms_for_user(id, user)
+        result: list[RealmArchivingStatus] = []
+        for realm_id in realms:
+            realm = self._realm_component._get_realm(id, realm_id, now=None, allow_deleted=True)
+            configured_archiving = realm.get_current_configured_archiving()
+            if configured_archiving is None:
+                status = RealmArchivingStatus(
+                    realm_id=realm_id,
+                    configured_on=None,
+                    configured_by=None,
+                    configuration=RealmArchivingConfiguration.available(),
+                )
+            else:
+                status = RealmArchivingStatus(
+                    realm_id=realm_id,
+                    configured_on=configured_archiving.configured_on,
+                    configured_by=configured_archiving.configured_by,
+                    configuration=configured_archiving.configuration,
+                )
+            result.append(status)
+        return result
 
     async def bootstrap(
         self,
@@ -219,6 +253,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         is_expired: Union[UnsetType, bool] = Unset,
         active_users_limit: Union[UnsetType, ActiveUsersLimit] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
+        minimum_archiving_period: Union[UnsetType, int] = Unset,
     ) -> None:
         """
         Raises:
@@ -237,6 +272,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             organization = organization.evolve(
                 user_profile_outsider_allowed=user_profile_outsider_allowed
             )
+        if minimum_archiving_period is not Unset:
+            organization = organization.evolve(minimum_archiving_period=minimum_archiving_period)
 
         assert isinstance(organization.active_users_limit, ActiveUsersLimit)
         self._organizations[id] = organization

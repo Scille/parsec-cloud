@@ -84,6 +84,8 @@ impl AuthenticatedCmds {
                 AlreadyExists,
                 InMaintenance,
                 NotAllowed,
+                RealmArchived,
+                RealmDeleted,
                 UnknownStatus
             )
         })
@@ -107,6 +109,7 @@ impl AuthenticatedCmds {
                 Timeout,
                 InMaintenance,
                 NotAllowed,
+                RealmDeleted,
                 UnknownStatus
             )
         })
@@ -495,6 +498,24 @@ impl AuthenticatedCmds {
         })
     }
 
+    fn archiving_config(&self) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        FutureIntoCoroutine::from_raw(async move {
+            let req = authenticated_cmds::archiving_config::Req;
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                authenticated_cmds::archiving_config,
+                ArchivingConfigRep,
+                Ok,
+                NotFound,
+                UnknownStatus
+            )
+        })
+    }
+
     fn organization_stats(&self) -> FutureIntoCoroutine {
         let auth_cmds = self.0.clone();
 
@@ -680,6 +701,7 @@ impl AuthenticatedCmds {
                 NotAllowed,
                 BadEncryptionRevision,
                 NotFound,
+                RealmDeleted,
                 UnknownStatus
             )
         })
@@ -747,6 +769,7 @@ impl AuthenticatedCmds {
                 NotFound,
                 Ok,
                 ParticipantMismatch,
+                RealmDeleted,
                 UnknownStatus,
                 "handle_bad_timestamp"
             )
@@ -769,7 +792,8 @@ impl AuthenticatedCmds {
                 Ok,
                 NotAllowed,
                 NotFound,
-                UnknownStatus
+                RealmDeleted,
+                UnknownStatus,
             )
         })
     }
@@ -790,7 +814,8 @@ impl AuthenticatedCmds {
                 Ok,
                 NotAllowed,
                 NotFound,
-                UnknownStatus
+                RealmDeleted,
+                UnknownStatus,
             )
         })
     }
@@ -827,6 +852,36 @@ impl AuthenticatedCmds {
                 InvalidData,
                 UserRevoked,
                 IncompatibleProfile,
+                RealmDeleted,
+                "handle_bad_timestamp"
+            )
+        })
+    }
+
+    fn realm_update_archiving(&self, archiving_certificate: BytesWrapper) -> FutureIntoCoroutine {
+        let auth_cmds = self.0.clone();
+
+        crate::binding_utils::unwrap_bytes!(archiving_certificate);
+
+        FutureIntoCoroutine::from_raw(async move {
+            let req = authenticated_cmds::realm_update_archiving::Req {
+                archiving_certificate,
+            };
+
+            crate::binding_utils::send_command!(
+                auth_cmds,
+                req,
+                authenticated_cmds::realm_update_archiving,
+                RealmUpdateArchivingRep,
+                Ok,
+                NotAllowed,
+                NotFound,
+                RequireGreaterTimestamp,
+                BadTimestamp,
+                UnknownStatus,
+                InvalidCertification,
+                RealmDeleted,
+                ArchivingPeriodTooShort,
                 "handle_bad_timestamp"
             )
         })
@@ -969,6 +1024,8 @@ impl AuthenticatedCmds {
                 RequireGreaterTimestamp,
                 SequesterInconsistency,
                 Timeout,
+                RealmArchived,
+                RealmDeleted,
                 "handle_bad_timestamp"
             )
         })
@@ -991,7 +1048,8 @@ impl AuthenticatedCmds {
                 NotAllowed,
                 InMaintenance,
                 UnknownStatus,
-                NotFound
+                NotFound,
+                RealmDeleted
             )
         })
     }
@@ -1024,6 +1082,7 @@ impl AuthenticatedCmds {
                 NotAllowed,
                 NotFound,
                 NotInMaintenance,
+                RealmDeleted,
                 UnknownStatus
             )
         })
@@ -1058,6 +1117,7 @@ impl AuthenticatedCmds {
                 NotInMaintenance,
                 NotAllowed,
                 NotFound,
+                RealmDeleted,
                 UnknownStatus
             )
         })
@@ -1083,7 +1143,8 @@ impl AuthenticatedCmds {
                 UnknownStatus,
                 InMaintenance,
                 NotAllowed,
-                NotFound
+                NotFound,
+                RealmDeleted
             )
         })
     }
@@ -1120,7 +1181,8 @@ impl AuthenticatedCmds {
                 BadEncryptionRevision,
                 InMaintenance,
                 NotAllowed,
-                NotFound
+                NotFound,
+                RealmDeleted
             )
         })
     }
@@ -1177,6 +1239,8 @@ impl AuthenticatedCmds {
                 RequireGreaterTimestamp,
                 SequesterInconsistency,
                 Timeout,
+                RealmArchived,
+                RealmDeleted,
                 "handle_bad_timestamp"
             )
         })

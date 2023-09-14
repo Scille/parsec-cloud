@@ -38,6 +38,9 @@
                         "type": "NonRequiredOption<String>"
                     }
                 ]
+            },
+            {
+                "status": "realm_deleted"
             }
         ]
     }

@@ -315,6 +315,22 @@ class FSWorkspaceInMaintenance(FSRemoteOperationError):
     pass
 
 
+class FSWorkspaceRealmDeleted(FSWorkspaceNoReadAccess):
+    pass
+
+
+class FSWorkspaceRealmArchived(FSWorkspaceNoWriteAccess):
+    pass
+
+
+class FSWorkspaceArchivingPeriodTooShort(FSRemoteOperationError):
+    pass
+
+
+class FSWorkspaceArchivingNotAllowedError(FSRemoteOperationError):
+    pass
+
+
 # RemoteDevicesManager errors
 
 

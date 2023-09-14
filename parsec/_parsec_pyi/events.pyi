@@ -10,6 +10,7 @@ class CoreEvent:
     BACKEND_REALM_MAINTENANCE_FINISHED: CoreEvent
     BACKEND_REALM_MAINTENANCE_STARTED: CoreEvent
     BACKEND_REALM_ROLES_UPDATED: CoreEvent
+    BACKEND_REALM_ARCHIVING_UPDATED: CoreEvent
     BACKEND_REALM_VLOBS_UPDATED: CoreEvent
     # Fs
     FS_ENTRY_REMOTE_CHANGED: CoreEvent
@@ -38,6 +39,8 @@ class CoreEvent:
     # Others
     SHARING_UPDATED: CoreEvent
     USERFS_UPDATED: CoreEvent
+    ARCHIVING_UPDATED: CoreEvent
+    ARCHIVING_NEXT_DELETION_DATE: CoreEvent
     # Pki enrollment
     PKI_ENROLLMENTS_UPDATED: CoreEvent
     # Invite

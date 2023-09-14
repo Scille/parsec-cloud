@@ -126,3 +126,32 @@ ssc = SequesterServiceCertificate(
     service_label="foo",
 ).dump()
 display("sequester service certificate", ssc, ["zip"])
+
+
+rac_available = RealmArchivingCertificate(
+    author=ALICE.device_id,
+    timestamp=NOW,
+    realm_id=RealmID.from_hex("4486e7cf02d747bd9126679ba58e0474"),
+    configuration=RealmArchivingConfiguration.available(),
+).dump_and_sign(ALICE.signing_key)
+display("realm archiving certificate (available)", rac_available, [ALICE.verify_key, "zip"])
+
+rac_archived = RealmArchivingCertificate(
+    author=ALICE.device_id,
+    timestamp=NOW,
+    realm_id=RealmID.from_hex("4486e7cf02d747bd9126679ba58e0474"),
+    configuration=RealmArchivingConfiguration.archived(),
+).dump_and_sign(ALICE.signing_key)
+display("realm archiving certificate (archived)", rac_archived, [ALICE.verify_key, "zip"])
+
+rac_deletion_planned = RealmArchivingCertificate(
+    author=ALICE.device_id,
+    timestamp=NOW,
+    realm_id=RealmID.from_hex("4486e7cf02d747bd9126679ba58e0474"),
+    configuration=RealmArchivingConfiguration.deletion_planned(NOW.add(days=30)),
+).dump_and_sign(ALICE.signing_key)
+display(
+    "realm archiving certificate (deletion planned)",
+    rac_deletion_planned,
+    [ALICE.verify_key, "zip"],
+)

@@ -13,7 +13,7 @@ from typing import Any, AsyncContextManager, AsyncGenerator, Callable, Sequence,
 import trio
 from structlog import get_logger
 
-from parsec._parsec import CoreEvent, DateTime
+from parsec._parsec import CoreEvent, DateTime, RealmArchivingConfiguration
 from parsec.core.fs import FsPath, UserFS, WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import FSWorkspaceNotFoundError, FSWorkspaceTimestampedTooEarly
 from parsec.core.logged_core import WorkspaceEntry
@@ -99,6 +99,7 @@ class MountpointManager:
         self._runner = runner
         self._nursery = nursery
         self._mountpoint_tasks: dict[tuple[EntryID, DateTime | None], TaskStatus[Any]] = {}
+        self._mounting_events: dict[tuple[EntryID, DateTime | None], trio.Event] = {}
         self._timestamped_workspacefs: dict[EntryID, dict[DateTime, WorkspaceFSTimestamped]] = {}
         self.personal_workspace_base_path = personal_workspace_base_path
         self.personal_workspace_name_regex = (
@@ -213,6 +214,7 @@ class MountpointManager:
                     # Set the mountpoint as mounted THEN send the corresponding event
                     task_status.started(mountpoint_path)
                     self._mountpoint_tasks[key] = task_status
+                    self._mounting_events.pop(key, trio.Event()).set()
                     self.event_bus.send(CoreEvent.MOUNTPOINT_STARTED, **event_kwargs)
 
                     # It is the reponsability of the runner context teardown to wait
@@ -221,6 +223,8 @@ class MountpointManager:
                     # future in which case we'll simply add a `sleep_forever` below.
 
             finally:
+                # Make sure to notify we are done mounting
+                self._mounting_events.pop(key, trio.Event()).set()
                 # Pop the mountpoint task if its ours
                 if self._mountpoint_tasks.get(key) == task_status:
                     del self._mountpoint_tasks[key]
@@ -252,6 +256,13 @@ class MountpointManager:
         if (workspace_id, timestamp) in self._mountpoint_tasks:
             raise MountpointAlreadyMounted(f"Workspace `{workspace_id.hex}` already mounted.")
 
+        if (workspace_id, timestamp) in self._mounting_events:
+            raise MountpointAlreadyMounted(f"Workspace `{workspace_id.hex}` is being mounted.")
+
+        # Set a mounting event to prevent race conditions
+        mounting = trio.Event()
+        self._mounting_events[(workspace_id, timestamp)] = mounting
+
         if timestamp is not None:
             return await self.remount_workspace_new_timestamp(workspace_id, None, timestamp)
 
@@ -263,6 +274,10 @@ class MountpointManager:
     async def unmount_workspace(
         self, workspace_id: EntryID, timestamp: DateTime | None = None
     ) -> None:
+        # Wait for the workspace to stop being mounted
+        while (workspace_id, timestamp) in self._mounting_events:
+            await self._mounting_events[(workspace_id, timestamp)].wait()
+
         if (workspace_id, timestamp) not in self._mountpoint_tasks:
             raise MountpointNotMounted(f"Workspace `{workspace_id.hex}` not mounted.")
 
@@ -329,7 +344,7 @@ class MountpointManager:
         try:
             await self.unmount_workspace(workspace_id, timestamp)
 
-        # The workspace could not be mounted
+        # The workspace could not be unmounted
         # Maybe be a `MountpointAlreadyMounted` or `MountpointNoDriveAvailable`
         except MountpointError:
             pass
@@ -340,9 +355,8 @@ class MountpointManager:
 
     async def safe_mount_all(self, exclude: Sequence[EntryID] = ()) -> None:
         exclude_set = set(exclude)
-        user_manifest = self.user_fs.get_user_manifest()
-        for workspace_entry in user_manifest.workspaces:
-            if workspace_entry.role is None or workspace_entry.id in exclude_set:
+        for workspace_entry in self.user_fs.get_available_workspace_entries():
+            if workspace_entry.id in exclude_set:
                 continue
             await self.safe_mount(workspace_entry.id)
 
@@ -400,6 +414,7 @@ async def mountpoint_manager_factory(
     mount_on_workspace_created: bool = False,
     mount_on_workspace_shared: bool = False,
     unmount_on_workspace_revoked: bool = False,
+    unmount_on_workspace_deleted: bool = False,
     exclude_from_mount_all: frozenset[EntryID] = frozenset(),
     mountpoint_in_directory: bool = False,
     personal_workspace_base_path: Path | None = None,
@@ -433,26 +448,36 @@ async def mountpoint_manager_factory(
     elif sys.platform == "darwin":
         await cleanup_macos_mountpoint_folder(base_mountpoint_path)
 
-    def on_event(
+    def on_workspace_created_event(
         event: CoreEvent, new_entry: WorkspaceEntry, previous_entry: WorkspaceEntry | None = None
     ) -> None:
-        # Workspace created
-        if event == CoreEvent.FS_WORKSPACE_CREATED:
-            if mount_on_workspace_created:
-                mount_nursery.start_soon(mountpoint_manager.safe_mount, new_entry.id)
-            return
+        if mount_on_workspace_created:
+            mount_nursery.start_soon(mountpoint_manager.safe_mount, new_entry.id)
+
+    def on_sharing_updated_event(
+        event: CoreEvent, new_entry: WorkspaceEntry, previous_entry: WorkspaceEntry | None = None
+    ) -> None:
+        new_role = new_entry.role
+        previous_role = previous_entry.role if previous_entry is not None else None
 
         # Workspace revoked
-        if event == CoreEvent.SHARING_UPDATED and new_entry.role is None:
-            if unmount_on_workspace_revoked:
-                mount_nursery.start_soon(mountpoint_manager.safe_unmount, new_entry.id)
-            return
+        if previous_role is not None and new_role is None and unmount_on_workspace_revoked:
+            mount_nursery.start_soon(mountpoint_manager.safe_unmount, new_entry.id)
 
         # Workspace shared
-        if event == CoreEvent.SHARING_UPDATED and previous_entry is None:
-            if mount_on_workspace_shared:
-                mount_nursery.start_soon(mountpoint_manager.safe_mount, new_entry.id)
-            return
+        if previous_role is None and new_role is not None and mount_on_workspace_shared:
+            mount_nursery.start_soon(mountpoint_manager.safe_mount, new_entry.id)
+
+    def on_archiving_updated_event(
+        event: CoreEvent,
+        workspace_id: EntryID,
+        configuration: RealmArchivingConfiguration,
+        configured_on: DateTime | None,
+        is_deleted: bool,
+    ) -> None:
+        # Archiving updated
+        if is_deleted and unmount_on_workspace_deleted:
+            mount_nursery.start_soon(mountpoint_manager.safe_unmount, workspace_id)
 
     # Instantiate the mountpoint manager with its own nursery
     async with open_service_nursery() as nursery:
@@ -473,8 +498,9 @@ async def mountpoint_manager_factory(
             async with open_service_nursery() as mount_nursery:
                 # Setup new workspace events
                 with event_bus.connect_in_context(
-                    (CoreEvent.FS_WORKSPACE_CREATED, on_event),  # type: ignore[arg-type]
-                    (CoreEvent.SHARING_UPDATED, on_event),  # type: ignore[arg-type]
+                    (CoreEvent.FS_WORKSPACE_CREATED, on_workspace_created_event),  # type: ignore[arg-type]
+                    (CoreEvent.SHARING_UPDATED, on_sharing_updated_event),  # type: ignore[arg-type]
+                    (CoreEvent.ARCHIVING_UPDATED, on_archiving_updated_event),  # type: ignore[arg-type]
                 ):
                     # Mount required workspaces
                     if mount_all:

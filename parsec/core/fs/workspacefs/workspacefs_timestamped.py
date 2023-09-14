@@ -23,12 +23,19 @@ class WorkspaceFSTimestamped(WorkspaceFS):
         self.event_bus = workspacefs.event_bus
         self.preferred_language = workspacefs.preferred_language
 
+        # Archiving attributes
+        self._archiving_configuration = workspacefs._archiving_configuration
+        self._archiving_configured_on = workspacefs._archiving_configured_on
+        self._archiving_configured_by = workspacefs._archiving_configured_by
+        self._archiving_configuration_timestamp = workspacefs._archiving_configuration_timestamp
+
         self.timestamp = timestamp
 
         self.remote_loader = workspacefs.remote_loader.to_timestamped(timestamp)
         self.transactions = SyncTransactions(
             self.workspace_id,
             self.get_workspace_entry,
+            self.get_archiving_configuration,
             self.device,
             self.local_storage,
             self.remote_loader,

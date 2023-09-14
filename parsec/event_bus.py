@@ -102,7 +102,7 @@ class EventBus:
 
     @contextmanager
     def waiter_on_first(
-        self, *events: Enum, filter: EventFilterCallback | None = None
+        self, *events: Enum | CoreEvent, filter: EventFilterCallback | None = None
     ) -> Iterator[EventWaiter]:
         ew = EventWaiter(filter)
         for event in events:
