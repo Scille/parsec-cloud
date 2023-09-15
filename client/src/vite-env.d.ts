@@ -9,3 +9,7 @@ declare module '*.vue' {
   const component: DefineComponent<{}, {}, any>;
   export default component;
 }
+
+declare module '@libparsec_trampoline' {
+  export function LoadWebLibParsecPlugin(): Promise<any>;
+}

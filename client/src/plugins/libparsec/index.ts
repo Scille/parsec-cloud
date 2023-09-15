@@ -3,7 +3,7 @@
 import { registerPlugin } from '@capacitor/core';
 
 import { LibParsecPlugin } from '@/plugins/libparsec/definitions';
-import { LoadWebLibParsecPlugin } from '@/plugins/libparsec/trampoline';
+import { LoadWebLibParsecPlugin } from '@libparsec_trampoline';
 
 export const libparsec = registerPlugin<LibParsecPlugin>(
   'LibParsec',
