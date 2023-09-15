@@ -11,7 +11,7 @@
     }"
     :confirm-button="{
       label: $t('UsersPage.CreateUserInvitationModal.create'),
-      disabled: emailValidator(email) !== Validity.Valid,
+      disabled: isDisabled,
       onClick: confirm
     }"
   >
@@ -32,6 +32,7 @@ import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
 import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 import { emailValidator, Validity } from '@/common/validators';
+import { asyncComputed } from '@/common/asyncComputed';
 
 const email = ref('');
 
@@ -42,6 +43,10 @@ function confirm(): Promise<boolean> {
 function cancel(): Promise<boolean> {
   return modalController.dismiss(null, MsModalResult.Cancel);
 }
+
+const isDisabled = asyncComputed(async () => {
+  return await emailValidator(email.value) !== Validity.Valid;
+});
 </script>
 
 <style scoped lang="scss">

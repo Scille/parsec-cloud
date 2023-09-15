@@ -7,7 +7,7 @@
     :close-button-enabled="true"
     :confirm-button="{
       label: $t('JoinByLinkModal.join'),
-      disabled: claimLinkValidator(joinLink) !== Validity.Valid,
+      disabled: !canProgress,
       onClick: confirm
     }"
   >
@@ -29,8 +29,13 @@ import { Validity, claimLinkValidator } from '@/common/validators';
 import { modalController } from '@ionic/vue';
 import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
+import { asyncComputed } from '@/common/asyncComputed';
 
 const joinLink = ref('');
+
+const canProgress = asyncComputed(async () => {
+  return await claimLinkValidator(joinLink.value) === Validity.Valid;
+});
 
 /* by the way pressing Enter won't send the form, you unfortunately have to click the button
 see https://github.com/ionic-team/ionic-framework/issues/19368 */

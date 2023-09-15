@@ -7,6 +7,7 @@
     name="fullname"
     v-model="fullName"
     :disabled="!$props.nameEnabled"
+    @change="$emit('fieldUpdate')"
   />
   <ms-input
     :label="$t('CreateOrganization.email')"
@@ -14,6 +15,7 @@
     v-model="email"
     name="email"
     :disabled="!$props.emailEnabled"
+    @change="$emit('fieldUpdate')"
   />
   <ms-input
     :label="$t('CreateOrganization.deviceNameInputLabel')"
@@ -21,6 +23,7 @@
     v-model="deviceName"
     name="deviceName"
     :disabled="!$props.deviceEnabled"
+    @change="$emit('fieldUpdate')"
   />
 </template>
 
@@ -64,6 +67,10 @@ const deviceName = ref(props.defaultDevice || getDefaultDeviceName());
 const email = ref(props.defaultEmail);
 const fullName = ref(props.defaultName);
 
+defineEmits<{
+  (e: 'fieldUpdate'): void
+}>();
+
 defineExpose({
   areFieldsCorrect,
   deviceName,
@@ -71,12 +78,10 @@ defineExpose({
   fullName,
 });
 
-function areFieldsCorrect(): boolean {
-  return (
-    deviceNameValidator(deviceName.value) === Validity.Valid
-    && emailValidator(email.value) === Validity.Valid
-    && userNameValidator(fullName.value) === Validity.Valid
-  );
+async function areFieldsCorrect(): Promise<boolean> {
+  return await emailValidator(email.value) === Validity.Valid &&
+    await userNameValidator(fullName.value) === Validity.Valid &&
+    await deviceNameValidator(deviceName.value) === Validity.Valid;
 }
 </script>
 

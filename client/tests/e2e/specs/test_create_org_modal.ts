@@ -117,11 +117,6 @@ describe('Create a new organization', () => {
     cy.get('#next-button').contains('Let\'s go!');
     cy.get('#next-button').should('not.have.class', 'button-disabled');
     cy.get('.closeBtn').should('not.be.visible');
-    cy.get('@consoleLog').should(
-      'have.been.calledWith',
-      // eslint-disable-next-line quotes, max-len
-      `Creating org MyOrg, user Banjo <banjo@rare.com>, device my_device, password AVeryL0ngP@ssw0rd, backend parsec://localhost?no_ssl=true`,
-    );
     cy.get('#next-button').click();
     cy.get('.modal-header__title').should('not.exist');
 

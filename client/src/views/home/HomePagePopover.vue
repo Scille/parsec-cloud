@@ -104,7 +104,7 @@ async function openJoinByLinkModal(): Promise<void> {
   if (linkResult.role !== MsModalResult.Confirm) {
     await popoverController.dismiss(null, linkResult.role);
   } else {
-    if (claimUserLinkValidator(linkResult.data) === Validity.Valid) {
+    if (await claimUserLinkValidator(linkResult.data) === Validity.Valid) {
       const modal = await modalController.create({
         component: UserJoinOrganizationModal,
         canDismiss: canDismissModal,
@@ -116,7 +116,7 @@ async function openJoinByLinkModal(): Promise<void> {
       await modal.present();
       const result = await modal.onWillDismiss();
       await popoverController.dismiss(result.data, result.role);
-    } else if (claimDeviceLinkValidator(linkResult.data) === Validity.Valid) {
+    } else if (await claimDeviceLinkValidator(linkResult.data) === Validity.Valid) {
       const modal = await modalController.create({
         component: DeviceJoinOrganizationModal,
         canDismiss: canDismissModal,

@@ -8,6 +8,7 @@ import {
   Result,
   Handle,
   ClientEvent,
+  ClientEventPing,
   DeviceAccessStrategyPassword,
   ClientConfig,
   EntryName,
@@ -24,6 +25,7 @@ import {
   UserOrDeviceClaimInitialInfoUser,
   InvitationEmailSentStatus,
   DeviceFileType,
+  ParsedBackendAddr,
   InvitationStatus,
   ClientStartError,
   ListInvitationsError,
@@ -33,6 +35,11 @@ import {
   ClientStopError,
   ClaimerRetrieveInfoError,
   ClaimInProgressError,
+  BootstrapOrganizationError,
+  ParseBackendAddrError,
+  OrganizationID,
+  BackendAddr,
+  InviteListItem,
 } from '@/plugins/libparsec';
 import { getParsecHandle } from '@/router/conditions';
 import { DateTime } from 'luxon';
@@ -44,6 +51,10 @@ export type WorkspaceName = EntryName;
 
 export interface UserInvitation extends InviteListItemUser {
   date: DateTime
+}
+
+async function _wait(delay: number): Promise<void> {
+  return new Promise((res) => setTimeout(res, delay));
 }
 
 export async function listAvailableDevices(): Promise<Array<AvailableDevice>> {
@@ -158,7 +169,7 @@ export async function listUserInvitations(): Promise<Result<Array<UserInvitation
       return result;
     }
     // No need to add device invitations
-    result.value = result.value.filter((item) => item.tag === 'User');
+    result.value = result.value.filter((item: InviteListItem) => item.tag === 'User');
     // Convert InviteListItemUser to UserInvitation
     result.value = result.value.map((item) => {
       (item as UserInvitation).date = DateTime.fromISO(item.createdOn);
@@ -249,10 +260,6 @@ export class UserClaim {
     }
   }
 
-  async _wait(delay: number): Promise<void> {
-    return new Promise((res) => setTimeout(res, delay));
-  }
-
   async retrieveInfo(invitationLink: string):
   Promise<Result<UserOrDeviceClaimInitialInfoUser, ClaimerRetrieveInfoError>> {
     function eventCallback(event: ClientEvent): void {
@@ -270,7 +277,7 @@ export class UserClaim {
       }
       return result as Result<UserOrDeviceClaimInitialInfoUser, ClaimerRetrieveInfoError>;
     } else {
-      await this._wait(this.MOCK_HOST_WAITING_TIME);
+      await _wait(this.MOCK_HOST_WAITING_TIME);
       this.handle = DEFAULT_HANDLE;
       this.greeter = {
         email: 'gale@waterdeep.faerun',
@@ -357,7 +364,7 @@ export class UserClaim {
       }
       return result;
     } else {
-      await this._wait(this.MOCK_HOST_WAITING_TIME);
+      await _wait(this.MOCK_HOST_WAITING_TIME);
       return new Promise<Result<UserClaimInProgress3Info, ClaimInProgressError>>((resolve, _reject) => {
         resolve({ok: true, value: {
           handle: DEFAULT_HANDLE,
@@ -381,7 +388,7 @@ export class UserClaim {
       this.canceller = null;
       return result;
     } else {
-      await this._wait(this.MOCK_HOST_WAITING_TIME);
+      await _wait(this.MOCK_HOST_WAITING_TIME);
       return new Promise<Result<UserClaimFinalizeInfo, ClaimInProgressError>>((resolve, _reject) => {
         resolve({ok: true, value: {
           handle: DEFAULT_HANDLE,
@@ -419,4 +426,52 @@ export class UserClaim {
       });
     }
   }
+}
+
+export async function createOrganization(
+  backendAddr: BackendAddr, orgName: OrganizationID, userName: string, email: string, password: string, deviceLabel: string,
+): Promise<Result<AvailableDevice, BootstrapOrganizationError>> {
+  function parsecEventCallback(event: ClientEventPing): void {
+    console.log('On event', event);
+  }
+
+  const bootstrapAddr = await libparsec.buildBackendOrganizationBootstrapAddr(backendAddr, orgName);
+
+  if (window.isDesktop()) {
+    const config: ClientConfig = {
+      configDir: window.getConfigDir(),
+      dataBaseDir: window.getDataBaseDir(),
+      mountpointBaseDir: window.getMountpointDir(),
+      workspaceStorageCacheSize: {tag: 'Default'},
+    };
+    return await libparsec.bootstrapOrganization(
+      config,
+      parsecEventCallback,
+      bootstrapAddr,
+      {tag: 'Password', password: password},
+      {label: userName, email: email},
+      deviceLabel,
+      null,
+    );
+  } else {
+    await _wait(500);
+    return new Promise<Result<AvailableDevice, BootstrapOrganizationError>>((resolve, _reject) => {
+      resolve({ok: true, value: {
+        keyFilePath: '/path',
+        organizationId: 'MyOrg',
+        deviceId: 'deviceid',
+        humanHandle: {
+          label: 'A',
+          email: 'a@b.c',
+        },
+        deviceLabel: 'a@b',
+        slug: 'slug',
+        ty: DeviceFileType.Password,
+      }});
+    });
+  }
+}
+
+export async function parseBackendAddr(addr: string): Promise<Result<ParsedBackendAddr, ParseBackendAddrError>> {
+  return await libparsec.parseBackendAddr(addr);
 }

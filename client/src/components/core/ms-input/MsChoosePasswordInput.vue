@@ -75,7 +75,7 @@ defineExpose({
   password,
 });
 
-function areFieldsCorrect(): boolean {
+async function areFieldsCorrect(): Promise<boolean> {
   return passwordStrength.value === PasswordStrength.High && password.value === passwordConfirm.value;
 }
 

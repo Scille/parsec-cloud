@@ -8,6 +8,7 @@
     <ion-radio-group
       v-model="mode"
       class="radio-list"
+      @ion-change="$emit('fieldUpdate')"
     >
       <ion-radio
         class="item-radio radio-list-item"
@@ -57,6 +58,7 @@
       v-model="backendAddr"
       name="serverUrl"
       v-show="mode === ServerMode.Custom"
+      @change="$emit('fieldUpdate')"
     />
   </ion-list>
 </template>
@@ -89,8 +91,13 @@ defineExpose({
   backendAddr,
 });
 
-function areFieldsCorrect(): boolean {
-  return mode.value === ServerMode.SaaS || (mode.value === ServerMode.Custom && backendAddrValidator(backendAddr.value) === Validity.Valid);
+defineEmits<{
+  (e: 'fieldUpdate'): void
+}>();
+
+async function areFieldsCorrect(): Promise<boolean> {
+  return mode.value === ServerMode.SaaS || (mode.value === ServerMode.Custom &&
+    await backendAddrValidator(backendAddr.value) === Validity.Valid);
 }
 </script>
 

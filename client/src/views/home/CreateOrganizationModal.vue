@@ -55,7 +55,10 @@
           v-show="pageStep === CreateOrganizationStep.UserInfoStep"
           class="step user-info"
         >
-          <user-information ref="userInfo" />
+          <user-information
+            ref="userInfo"
+            @field-update="fieldsUpdated = true"
+          />
         </div>
 
         <!-- part 3 (server)-->
@@ -180,7 +183,7 @@ import {
   checkmarkDone,
   close,
 } from 'ionicons/icons';
-import { ref, Ref, computed } from 'vue';
+import { ref, Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
@@ -191,9 +194,11 @@ import SummaryStep from '@/views/home/SummaryStep.vue';
 import { OrgInfo } from '@/views/home/SummaryStep.vue';
 import MsSpinner from '@/components/core/ms-spinner/MsSpinner.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
-import { AvailableDevice, DeviceFileType } from '@/plugins/libparsec';
+import { AvailableDevice } from '@/plugins/libparsec';
 import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 import { organizationValidator, Validity } from '@/common/validators';
+import * as Parsec from '@/common/parsec';
+import { asyncComputed } from '@/common/asyncComputed';
 
 enum CreateOrganizationStep {
   OrgNameStep = 1,
@@ -207,7 +212,7 @@ enum CreateOrganizationStep {
 
 const { t } = useI18n();
 
-const DEFAULT_SAAS_ADDR = 'parsec://saas.parsec.cloud/';
+const DEFAULT_SAAS_ADDR = 'parsec://saas.parsec.cloud';
 
 const pageStep = ref(CreateOrganizationStep.OrgNameStep);
 const orgName = ref('');
@@ -218,6 +223,8 @@ const summaryInfo = ref();
 
 const device: Ref<AvailableDevice | null> = ref(null);
 const orgInfo: Ref<null | OrgInfoValues> = ref(null);
+
+const fieldsUpdated = ref(false);
 
 interface Title {
   title: string,
@@ -280,20 +287,24 @@ function canClose(): boolean {
     CreateOrganizationStep.SpinnerStep, CreateOrganizationStep.FinishStep,
   ].includes(pageStep.value);
 }
-const canGoForward = computed(() => {
+
+const canGoForward = asyncComputed(async () => {
+  // No reason other than making vue watch the variable so that this function is called
+  if (fieldsUpdated.value) {
+    fieldsUpdated.value = false;
+  }
+
   const currentPage = getCurrentStep();
 
   if (pageStep.value === CreateOrganizationStep.FinishStep) {
     return true;
-  }
-  if (pageStep.value === CreateOrganizationStep.OrgNameStep) {
-    return organizationValidator(orgName.value) === Validity.Valid;
-  }
-  if (pageStep.value === CreateOrganizationStep.UserInfoStep
-    || pageStep.value === CreateOrganizationStep.PasswordStep
+  } else if (pageStep.value === CreateOrganizationStep.OrgNameStep) {
+    return await organizationValidator(orgName.value) === Validity.Valid;
+  } else if (pageStep.value === CreateOrganizationStep.PasswordStep
     || pageStep.value === CreateOrganizationStep.ServerStep
+    || pageStep.value === CreateOrganizationStep.UserInfoStep
   ) {
-    return currentPage.value.areFieldsCorrect();
+    return await currentPage.value.areFieldsCorrect();
   }
   if (!currentPage.value) {
     return false;
@@ -332,24 +343,7 @@ function cancelModal(): Promise<boolean> {
   return modalController.dismiss(null, MsModalResult.Cancel);
 }
 
-function createOrg(orgName: string, userName: string, userEmail: string, deviceName: string, backendAddr: string, password: string): void {
-  console.log(
-    `Creating org ${orgName}, user ${userName} <${userEmail}>, device ${deviceName}, password ${password}, backend ${backendAddr}`,
-  );
-  device.value = {
-    organizationId: orgName,
-    humanHandle: { label: userName, email: userEmail },
-    deviceLabel: deviceName,
-    keyFilePath: 'key_file_path',
-    deviceId: 'device1@device1',
-    slug: 'slug1',
-    ty: DeviceFileType.Password,
-  };
-  // Simulate connection to the backend
-  window.setTimeout(nextStep, 2000);
-}
-
-function nextStep(): void {
+async function nextStep(): Promise<void> {
   if (pageStep.value === CreateOrganizationStep.FinishStep) {
     modalController.dismiss({ device: device.value, password: passwordChoice.value.password }, MsModalResult.Confirm);
     return;
@@ -358,14 +352,17 @@ function nextStep(): void {
   }
   if (pageStep.value === CreateOrganizationStep.SpinnerStep) {
     const addr = serverChoice.value.mode === serverChoice.value.ServerMode.SaaS ? DEFAULT_SAAS_ADDR : serverChoice.value.backendAddr;
-    createOrg(
-      orgName.value,
-      userInfo.value.fullName,
-      userInfo.value.email,
-      userInfo.value.deviceName,
-      addr,
-      passwordChoice.value.password,
+
+    const result = await Parsec.createOrganization(
+      addr, orgName.value, userInfo.value.fullName, userInfo.value.email, passwordChoice.value.password, userInfo.value.deviceName,
     );
+    if (result.ok) {
+      device.value = result.value;
+      await nextStep();
+    } else {
+      console.log('Failed to create organization', result.error);
+      pageStep.value = CreateOrganizationStep.SummaryStep;
+    }
   }
 
   if (pageStep.value === CreateOrganizationStep.SummaryStep) {
