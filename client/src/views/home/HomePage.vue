@@ -358,7 +358,7 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
       message: t('HomePage.loginNotification.message'),
       level: NotificationLevel.Error,
     });
-    notificationCenter.showModal({notification});
+    notificationCenter.showToast(notification);
   }
 }
 
