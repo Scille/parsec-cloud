@@ -45,7 +45,7 @@ export enum OS {
     MacOs = 'OSMacOs',
     Windows = 'OSWindows',
 }
-export type EntryID = string
+export type VlobID = string
 export type InvitationToken = string
 export type OrganizationID = string
 export type BackendAddr = string
@@ -58,7 +58,6 @@ export type DeviceLabel = string
 export type EntryName = string
 export type Password = string
 export type Path = string
-export type RealmID = string
 export type UserID = string
 export type SASCode = string
 export type SequesterVerifyKeyDer = Uint8Array
@@ -228,7 +227,7 @@ export interface ParsedBackendAddrOrganizationFileLink {
     port: number
     useSsl: boolean
     organizationId: OrganizationID
-    workspaceId: EntryID
+    workspaceId: VlobID
     encryptedPath: Uint8Array
     encryptedTimestamp: Uint8Array | null
 }
@@ -763,19 +762,19 @@ export interface LibParsecPlugin {
     ): Promise<Result<null, ClientStopError>>
     clientListWorkspaces(
         client: number
-    ): Promise<Result<Array<[RealmID, EntryName]>, ClientListWorkspacesError>>
+    ): Promise<Result<Array<[VlobID, EntryName]>, ClientListWorkspacesError>>
     clientWorkspaceCreate(
         client: number,
         name: EntryName
-    ): Promise<Result<RealmID, ClientWorkspaceCreateError>>
+    ): Promise<Result<VlobID, ClientWorkspaceCreateError>>
     clientWorkspaceRename(
         client: number,
-        realm_id: RealmID,
+        realm_id: VlobID,
         new_name: EntryName
     ): Promise<Result<null, ClientWorkspaceRenameError>>
     clientWorkspaceShare(
         client: number,
-        realm_id: RealmID,
+        realm_id: VlobID,
         recipient: UserID,
         role: RealmRole | null
     ): Promise<Result<null, ClientWorkspaceShareError>>

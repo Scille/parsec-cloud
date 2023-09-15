@@ -1787,12 +1787,12 @@ fn variant_parsed_backend_addr_js_to_rs(
                     .and_then(|s| s.as_string())
                     .ok_or_else(|| TypeError::new("Not a string"))
                     .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<libparsec::EntryID, _> {
-                            libparsec::EntryID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                            libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
                     })
-                    .map_err(|_| TypeError::new("Not a valid EntryID"))?
+                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
             };
             let encrypted_path = {
                 let js_val = Reflect::get(&obj, &"encryptedPath".into())?;
@@ -1996,7 +1996,7 @@ fn variant_parsed_backend_addr_rs_to_js(
             Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
             let js_workspace_id = JsValue::from_str({
                 let custom_to_rs_string =
-                    |x: libparsec::EntryID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(workspace_id) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
@@ -3407,7 +3407,7 @@ pub fn clientListWorkspaces(client: u32) -> Promise {
                             let js_array = Array::new_with_length(2);
                             let js_value = JsValue::from_str({
                                 let custom_to_rs_string =
-                                    |x: libparsec::RealmID| -> Result<String, &'static str> {
+                                    |x: libparsec::VlobID| -> Result<String, &'static str> {
                                         Ok(x.hex())
                                     };
                                 match custom_to_rs_string(x1) {
@@ -3459,7 +3459,7 @@ pub fn clientWorkspaceCreate(client: u32, name: String) -> Promise {
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = JsValue::from_str({
                     let custom_to_rs_string =
-                        |x: libparsec::RealmID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                     match custom_to_rs_string(value) {
                         Ok(ok) => ok,
                         Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
@@ -3486,8 +3486,8 @@ pub fn clientWorkspaceCreate(client: u32, name: String) -> Promise {
 pub fn clientWorkspaceRename(client: u32, realm_id: String, new_name: String) -> Promise {
     future_to_promise(async move {
         let realm_id = {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::RealmID, _> {
-                libparsec::RealmID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             custom_from_rs_string(realm_id).map_err(|e| TypeError::new(e.as_ref()))
         }?;
@@ -3531,8 +3531,8 @@ pub fn clientWorkspaceShare(
 ) -> Promise {
     future_to_promise(async move {
         let realm_id = {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::RealmID, _> {
-                libparsec::RealmID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             custom_from_rs_string(realm_id).map_err(|e| TypeError::new(e.as_ref()))
         }?;
