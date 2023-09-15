@@ -17,14 +17,16 @@ In the same way a given device has to store the information about its role for t
 
 For this reason, it makes sense to add new "realm archiving certificates" (similar to "realm role certificate") to the trust chain, even though the deletion itself is not managed in cryptographically secure way (i.e. any actor with access to the server could remove data).
 
-Similarly, the devices can keep up-to-date with the current workspace status by listening to dedicated events, and explicitly check for the current state when opening a new connection. This is especially convenient for new v3 parsec API that proactively downloads the certificates and store them in a persistent way. However the v2 parsec API is less suited for this as the current behavior for managing realm roles is to add this information to the user manifest which is something we want to avoid for the workspace archiving status (in order to avoid adding more legacy). For this reason, the target here is to adapt the existing APIs in order to ease the transition to the v3 API later on.
+Similarly, the devices can keep up-to-date with the current workspace status by listening to dedicated events, and explicitly check for the current state when opening a new connection. This is especially convenient for new v4 parsec API that proactively downloads the certificates and store them in a persistent way.
+
+However the v2/v3 parsec API is less suited for this as the current behavior for managing realm roles is to add this information to the user manifest which is something we want to avoid for the workspace archiving status (in order to avoid adding more legacy). For this reason, the target here is to adapt the existing APIs in order to ease the transition to the v4 API later on.
 
 More specifically, the following API changes are required:
 
 - Add the new archiving certificate to the data model, representing the current archiving/deletion status
 - Add a authenticated command to upload this certificate for a given realm
 - Add a dedicated event representing a change in the archiving/deletion status
-- Add an authenticated command to get the all the current archiving status at once (this will be used only in API v2 when a new connection is created in order to reach the correct state as soon as the connection becomes available)
+- Add an authenticated command to get the all the current archiving status at once (this will be used only in API v2/v3 when a new connection is created in order to reach the correct state as soon as the connection becomes available)
 - Update the realm commands to return specific status when the realm is not available due to its archiving status
 - Update the organization configuration API to include the minimum archiving period
 
@@ -41,6 +43,7 @@ pub enum RealmArchivingConfiguration {
     Available,
     Archived,
     DeletionPlanned(DateTime),
+}
 ```
 
 This configuration is included in a certificate signed by the owner:
@@ -70,6 +73,7 @@ This configuration is included in a certificate signed by the owner:
 ```
 
 The following constraints should be verified:
+
 - `author` and `timestamp` are verified as any other certificate
 - the user corresponding to `author` must be owner of the realm
 - the deletion date should respect the configured minimum archiving period
@@ -168,9 +172,9 @@ When this command returns successfully, a `REALM_ARCHIVING_UPDATED` event should
 
 Also, an authenticated command is added to get the all the current archiving status at once.
 
-The command will be used in API v2 when a new connection is created in order to reach the correct state as soon as the connection becomes available.
+The command will be used in API v2/v3 when a new connection is created in order to reach the correct state as soon as the connection becomes available.
 
-It's also used in API v2 to fetch to new archiving status when an `ARCHIVING_STATUS_UPDATED` event is received.
+It's also used in API v2/v3 to fetch to new archiving status when an `ARCHIVING_STATUS_UPDATED` event is received.
 
 It is defined as such:
 
@@ -221,7 +225,7 @@ It is defined as such:
 ]
 ```
 
-**Note:** The command does not allow to get the archiving status for a single realm, which would be potentially more efficient to fetch the new archiving status of a freshly updated realm. This is however not a big deal as this is a temporary command for the v2/v3 transition. With v3 API, the certificates will be eagerly downloaded and this is how the device will get the new archiving status.
+**Note:** The command does not allow to get the archiving status for a single realm, which would be potentially more efficient to fetch the new archiving status of a freshly updated realm. This is however not a big deal as this is a temporary command for the v2/v3 transition. With v4 API, the certificates will be eagerly downloaded and this is how the device will get the new archiving status.
 
 In addition, the following commands are updated with new reply status:
 
