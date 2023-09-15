@@ -1,4 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// eslint-disable-next-line spaced-comment
+/// <reference types="vitest" />
 
 import path from 'path';
 import fs from 'fs';
@@ -91,7 +93,10 @@ if (platform === 'web') {
 // 4) Finally configure Vite
 
 // https://vitejs.dev/config/
-const config: UserConfigExport = {
+const config: UserConfigExport = () => ({
+  test: {
+    globals: true,
+  },
   plugins: plugins,
   build: {
     sourcemap: true,
@@ -105,6 +110,6 @@ const config: UserConfigExport = {
     port: 8080,
     hmr: true,
   },
-};
+});
 
 export default defineConfig(config);
