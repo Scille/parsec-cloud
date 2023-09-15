@@ -1,4 +1,7 @@
-// eslint-disable @typescript-eslint/ban-ts-comment
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+
 // @ts-ignore
 // eslint-disable-next-line camelcase
 import init_module from 'libparsec_bindings_web';

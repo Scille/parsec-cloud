@@ -67,30 +67,13 @@ if (platform !== 'web') {
   process.env.VITE_HOME_DIR = '';
 }
 
-// 2) Now that we know the platform, we can create `trampoline.ts` accordingly
-
-const libparsecPluginPath = path.join(__dirname, 'src/plugins/libparsec/');
-const src = path.join(libparsecPluginPath, `trampoline-${platform}.ts.in`);
-const dst = path.join(libparsecPluginPath, 'trampoline.ts');
-
-try {
-  // `readFileSync` will throw an error if `dst` doesn't exist
-  if (Buffer.compare(fs.readFileSync(src), fs.readFileSync(dst))) {
-    throw new Error('Outdated `trampoline.ts`');
-  }
-} catch (error) {
-  // `trampoline.ts` doesn't exist or is outdated, overwrite it
-  console.log(`Copy ${src} -> ${dst}`);
-  fs.copyFileSync(src, dst);
-}
-
-// 3) Add the packaging of the Wasm stuff if the platform requires it
+// 2) Add the packaging of the Wasm stuff if the platform requires it
 
 if (platform === 'web') {
   plugins.push(wasmPack([{path: '../bindings/web/', name: 'libparsec_bindings_web'}]));
 }
 
-// 4) Finally configure Vite
+// 3) Finally configure Vite
 
 // https://vitejs.dev/config/
 const config: UserConfigExport = () => ({
@@ -103,6 +86,7 @@ const config: UserConfigExport = () => ({
   },
   resolve: {
     alias: {
+      '@libparsec_trampoline': path.resolve(__dirname, `./src/plugins/libparsec/trampoline-${platform}.ts`),
       '@': path.resolve(__dirname, './src'),
     },
   },
