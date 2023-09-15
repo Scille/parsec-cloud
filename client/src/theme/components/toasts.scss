@@ -1,0 +1,32 @@
+ion-toast.notification-toast {
+    &.ms-info {
+        --ms-notification-toast-text-color: var(--parsec-color-light-primary-600);
+        --ms-notification-toast-background-color: var(--parsec-color-light-primary-100);
+        --ms-notification-toast-button-color: var(--parsec-color-light-primary-700);
+    }
+
+    &.ms-success {
+        --ms-notification-toast-text-color: var(--parsec-color-light-success-500);
+        --ms-notification-toast-background-color: var(--parsec-color-light-success-100);
+        --ms-notification-toast-button-color: var(--parsec-color-light-success-700);
+    }
+
+    &.ms-warning {
+        --ms-notification-toast-text-color: var(--parsec-color-light-warning-500);
+        --ms-notification-toast-background-color: var(--parsec-color-light-warning-100);
+        --ms-notification-toast-button-color: var(--parsec-color-light-warning-700);
+    }
+
+    &.ms-error {
+        --ms-notification-toast-text-color: var(--parsec-color-light-danger-500);
+        --ms-notification-toast-background-color: var(--parsec-color-light-danger-100);
+        --ms-notification-toast-button-color: var(--parsec-color-light-danger-700);
+    }
+
+    &.ms-info, &.ms-success, &.ms-warning, &.ms-error {
+        --background: var(--ms-notification-toast-background-color);
+        --color: var(--ms-notification-toast-text-color);
+        --button-color: var(--ms-notification-toast-button-color);
+        --box-shadow: 2px 2px 4px 0px var(--parsec-color-light-secondary-contrast);
+    }
+}

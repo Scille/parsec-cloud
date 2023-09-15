@@ -344,7 +344,7 @@ async function nextStep(): Promise<void> {
       message: t('JoinOrganization.successMessage'),
       level: NotificationLevel.Success,
     });
-    notificationCenter.showSnackbar({notification, trace: true});
+    notificationCenter.showToast(notification, {trace: true});
     await modalController.dismiss({ device: claimer.value.device, password: passwordPage.value.password }, MsModalResult.Confirm);
     return;
   }

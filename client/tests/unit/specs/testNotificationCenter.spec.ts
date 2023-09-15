@@ -7,7 +7,7 @@ import {
 } from '@/services/notificationCenter';
 import { vi } from 'vitest';
 import { DateTime } from 'luxon';
-import { modalController } from '@ionic/vue';
+import { modalController, toastController } from '@ionic/vue';
 
 describe('Notification Center', () => {
   // mock ComposerTranslation
@@ -33,6 +33,9 @@ describe('Notification Center', () => {
     center._createAndPresentModal = vi.fn();
     const mockModalControllerDismiss = vi.spyOn(modalController, 'dismiss');
     mockModalControllerDismiss.mockReturnValue(new Promise(vi.fn()));
+    center._createAndPresentToast = vi.fn();
+    const mockToastControllerDismiss = vi.spyOn(toastController, 'dismiss');
+    mockToastControllerDismiss.mockReturnValue(new Promise(vi.fn()));
 
     NOTIFS = [
       {
@@ -81,11 +84,11 @@ describe('Notification Center', () => {
 
   it('Adds notification to list', async () => {
     expect(center.notifications).to.deep.equal([]);
-    center.showModal({notification: NOTIFS[0], addToList: true});
+    center.showModal(NOTIFS[0], {addToList: true});
     expect(center.getNotifications()).to.deep.equal(NOTIFS.slice(0, 1));
     expect(center.hasUnreadNotifications()).to.be.true;
 
-    center.showSnackbar({notification: NOTIFS[1], addToList: true});
+    center.showToast(NOTIFS[1], {addToList: true});
     expect(center.getNotifications()).to.deep.equal(NOTIFS.slice(0, 2));
 
     center.addToList(NOTIFS[2]);
@@ -98,11 +101,11 @@ describe('Notification Center', () => {
 
   it('Do not add notification to list', async () => {
     expect(center.notifications).to.deep.equal([]);
-    center.showModal({notification: NOTIFS[0]});
+    center.showModal(NOTIFS[0]);
     expect(center.getNotifications()).to.deep.equal([]);
     expect(center.hasUnreadNotifications()).to.be.false;
 
-    center.showSnackbar({notification: NOTIFS[1]});
+    center.showToast(NOTIFS[1]);
     expect(center.getNotifications()).to.deep.equal([]);
 
     center.addToList(NOTIFS[2]);
@@ -112,7 +115,7 @@ describe('Notification Center', () => {
 
   it('Mark as read', async () => {
     expect(center.hasUnreadNotifications()).to.be.false;
-    center.showModal({notification: NOTIFS[0], addToList: true});
+    center.showModal(NOTIFS[0], {addToList: true});
     expect(center.hasUnreadNotifications()).to.be.true;
     center.markAsRead('1234', true);
     expect(center.hasUnreadNotifications()).to.be.false;

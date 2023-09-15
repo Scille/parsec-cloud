@@ -37,7 +37,9 @@ describe('Check organization list', () => {
       const orgId = ($elem as unknown as string).split('/').slice(-1)[0];
       cy.get('@consoleLog').should('have.been.calledWith', `Log in to ${orgId} with password 'Wr0ngP@ssw0rd.'`);
     });
-    cy.contains('Could not login!');
+    cy.get('.notification-toast').as('notificationToast').should('exist').should('have.class', 'ms-error');
+    cy.get('@notificationToast').shadow().find('.toast-header').should('contain.text', 'Could not login!');
+    cy.get('@notificationToast').shadow().find('.toast-message').should('contain.text', 'The password is incorrect!');
   });
 
   it('Go to login page and enter password', () => {
