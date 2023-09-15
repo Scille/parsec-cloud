@@ -30,7 +30,7 @@ export async function LoadWebLibParsecPlugin(): Promise<any> {
   //
   // Hence we go with solution 3: prevent use of libparsec from Vitest.
   if (import.meta.env.VITEST) {
-    throw new Error("libparsec is not available with Vitest, use Cypress instead !");
+    throw new Error('libparsec is not available with Vitest, use Cypress instead !');
   }
 
   await init_module();
