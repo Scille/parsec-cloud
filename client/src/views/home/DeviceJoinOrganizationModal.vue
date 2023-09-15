@@ -159,6 +159,7 @@ import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import { AvailableDevice, DeviceFileType } from '@/plugins/libparsec';
 import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
+import { asyncComputed } from '@/common/asyncComputed';
 
 enum DeviceJoinOrganizationStep {
   Information = 0,
@@ -247,9 +248,9 @@ const nextButtonIsVisible = computed(() => {
     || pageStep.value === DeviceJoinOrganizationStep.Finish
   );
 });
-const canGoForward = computed(() => {
+const canGoForward = asyncComputed(async () => {
   if (pageStep.value === DeviceJoinOrganizationStep.Password) {
-    return passwordPage.value.areFieldsCorrect();
+    return await passwordPage.value.areFieldsCorrect();
   }
   return true;
 });

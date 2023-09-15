@@ -110,6 +110,7 @@
             :email-enabled="false"
             :device-enabled="!waitingForHost"
             :name-enabled="!waitingForHost"
+            @field-update="fieldsUpdated = true"
           />
         </div>
         <!-- part 5 (get password)-->
@@ -202,7 +203,7 @@ import { MsModalResult } from '@/components/core/ms-modal/MsModal.vue';
 import * as Parsec from '@/common/parsec';
 import { NotificationKey } from '@/common/injectionKeys';
 import { NotificationCenter, NotificationLevel } from '@/services/notificationCenter';
-import { userInfo } from 'os';
+import { asyncComputed } from '@/common/asyncComputed';
 
 enum UserJoinOrganizationStep {
   WaitForHost = 1,
@@ -220,6 +221,7 @@ const { t } = useI18n();
 const pageStep = ref(UserJoinOrganizationStep.WaitForHost);
 const userInfoPage = ref();
 const passwordPage = ref();
+const fieldsUpdated = ref(false);
 
 const claimer = ref(new Parsec.UserClaim());
 
@@ -306,10 +308,13 @@ const nextButtonIsVisible = computed(() => {
   );
 });
 
-const canGoForward = computed(() => {
-  if (pageStep.value === UserJoinOrganizationStep.GetUserInfo && !userInfoPage.value.areFieldsCorrect()) {
+const canGoForward = asyncComputed(async () => {
+  if (fieldsUpdated.value) {
+    fieldsUpdated.value = false;
+  }
+  if (pageStep.value === UserJoinOrganizationStep.GetUserInfo && !await userInfoPage.value.areFieldsCorrect()) {
     return false;
-  } else if (pageStep.value === UserJoinOrganizationStep.GetPassword && !passwordPage.value.areFieldsCorrect()) {
+  } else if (pageStep.value === UserJoinOrganizationStep.GetPassword && !await passwordPage.value.areFieldsCorrect()) {
     return false;
   }
   return true;
