@@ -181,7 +181,7 @@ async fn upload_manifest(
         let to_sync_um = base_um.to_remote(ops.device.device_id.to_owned(), timestamp);
 
         let signed = to_sync_um.dump_and_sign(&ops.device.signing_key);
-        let ciphered = ops.device.user_manifest_key.encrypt(&signed).into();
+        let ciphered = ops.device.user_realm_key.encrypt(&signed).into();
         let sequester_blob = ops
             .certificates_ops
             .encrypt_for_sequester_services(&signed)

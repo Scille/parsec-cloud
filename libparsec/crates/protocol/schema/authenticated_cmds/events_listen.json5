@@ -123,6 +123,16 @@
                     {
                         "name": "RealmVlobsUpdated",
                         "discriminant_value": "realm_vlobs_updated",
+                        // Unlike for `CertificatesUpdated`, we provide enough context
+                        // to process the event without any additional query to the server.
+                        // This is because vlob related operations are designed to work
+                        // under concurrency (unlike certificates related operations that
+                        // work in strict ordered fashion).
+                        // In other words, considering two vlob modifications:
+                        // - two different vlob are modified, it is fine to fetch the
+                        //   changes in any order
+                        // - the same vlob has been modified twice, it is fine to fetch
+                        //   the change twice (idempotent operation)
                         "fields": [
                             {
                                 "name": "realm_id",
@@ -140,6 +150,11 @@
                                 "name": "src_version",
                                 "type": "Version"
                             }
+                            // TODO: provide the blob if it is small enough ?
+                            // {
+                            //     "name": "blob",
+                            //     "type": "RequiredOption<Bytes>"
+                            // }
                         ]
                     },
                     {

@@ -138,7 +138,7 @@ impl TestbedEnvCache {
             private_key: private_key.to_owned(),
             initial_profile: profile,
             user_manifest_id: user_manifest_id.to_owned(),
-            user_manifest_key: user_manifest_key.to_owned(),
+            user_realm_key: user_manifest_key.to_owned(),
             local_symkey: local_symkey.to_owned(),
             time_provider: TimeProvider::default(),
         });

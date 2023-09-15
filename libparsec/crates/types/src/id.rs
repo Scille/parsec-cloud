@@ -219,17 +219,21 @@ new_uuid_type!(pub InvitationToken);
 new_uuid_type!(pub EnrollmentID);
 impl_from_maybe!(std::collections::HashSet<EntryID>);
 
-// RealmID correspond to user/workspace manifest's EntryID, so conversion is useful
-impl From<EntryID> for RealmID {
-    fn from(value: EntryID) -> Self {
+// User/workspace manifest are store id a vlob with the same ID as the realm they
+// are part of, so conversion is useful
+// Hence there is no need for EntryID <-> RealmID conversion given they are used
+// by different type of manifests: root (i.e. user/workspace) vs child (i.e. file/folder)
+impl From<VlobID> for RealmID {
+    fn from(value: VlobID) -> Self {
         Self(value.0)
     }
 }
-impl From<RealmID> for EntryID {
+impl From<RealmID> for VlobID {
     fn from(value: RealmID) -> Self {
         Self(value.0)
     }
 }
+
 
 // Each entry is stored in vlob, hence there is a EntryID <-> VlobID correspondence
 impl From<EntryID> for VlobID {

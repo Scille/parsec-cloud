@@ -49,6 +49,7 @@ pub enum ValidateMessageError {
     Offline,
     #[error(transparent)]
     InvalidMessage(#[from] InvalidMessageError),
+    // Validating the message may require fetching additional certificates
     #[error(transparent)]
     InvalidCertificate(#[from] InvalidCertificateError),
     #[error(transparent)]
@@ -61,9 +62,9 @@ pub(super) async fn validate_message(
     index: IndexInt,
     sender: &DeviceID,
     timestamp: DateTime,
-    body: &[u8],
+    encrypted: &[u8],
 ) -> Result<MessageContent, ValidateMessageError> {
-    validate_message_internal(ops, certificate_index, index, sender, timestamp, body)
+    validate_message_internal(ops, certificate_index, index, sender, timestamp, encrypted)
         .await
         .map_err(|err| {
             if let ValidateMessageError::InvalidMessage(what) = err {
@@ -86,7 +87,7 @@ async fn validate_message_internal(
     index: IndexInt,
     sender: &DeviceID,
     timestamp: DateTime,
-    body: &[u8],
+    encrypted: &[u8],
 ) -> Result<MessageContent, ValidateMessageError> {
     // 1) Make sure we have all the needed certificates
 
@@ -153,7 +154,7 @@ async fn validate_message_internal(
     // 3) Actually validate the message
 
     let content = MessageContent::decrypt_verify_and_load_for(
-        body,
+        encrypted,
         &ops.device.private_key,
         &sender_certif.verify_key,
         sender,

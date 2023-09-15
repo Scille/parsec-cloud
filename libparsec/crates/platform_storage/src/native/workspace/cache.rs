@@ -28,7 +28,7 @@ impl WorkspaceCacheStorage {
         // Hence `no_populate_start` which breaks the recursion.
         //
         // Also note we don't try to return the `WorkspaceCacheStorage` that has been
-        // use during the populate as it would change the internal state of the
+        // used during the populate as it would change the internal state of the
         // storage (typically caches) depending of if populate has been needed or not.
 
         #[cfg(feature = "test-with-testbed")]

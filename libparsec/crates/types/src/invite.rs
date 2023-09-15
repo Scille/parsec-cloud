@@ -12,7 +12,7 @@ use libparsec_serialization_format::parsec_data;
 
 use crate::{
     self as libparsec_types, data_macros::impl_transparent_data_format_conversion, DataError,
-    DeviceID, DeviceLabel, EntryID, HumanHandle, UserProfile,
+    DeviceID, DeviceLabel, RealmID, HumanHandle, UserProfile,
 };
 
 /*
@@ -328,8 +328,8 @@ pub struct InviteDeviceConfirmation {
     pub human_handle: Option<HumanHandle>,
     pub profile: UserProfile,
     pub private_key: PrivateKey,
-    pub user_manifest_id: EntryID,
-    pub user_manifest_key: SecretKey,
+    pub user_realm_id: RealmID,
+    pub user_realm_key: SecretKey,
     pub root_verify_key: VerifyKey,
 }
 
@@ -338,15 +338,60 @@ parsec_data!("schema/invite/invite_device_confirmation.json5");
 impl_dump_and_encrypt!(InviteDeviceConfirmation);
 impl_decrypt_and_load!(InviteDeviceConfirmation);
 
-impl_transparent_data_format_conversion!(
-    InviteDeviceConfirmation,
-    InviteDeviceConfirmationData,
-    device_id,
-    device_label,
-    human_handle,
-    profile,
-    private_key,
-    user_manifest_id,
-    user_manifest_key,
-    root_verify_key,
-);
+impl From<InviteDeviceConfirmationData> for InviteDeviceConfirmation {
+    fn from(data: InviteDeviceConfirmationData) -> Self {
+        let InviteDeviceConfirmationData{
+            ty: _,
+            device_id,
+            device_label,
+            human_handle,
+            profile,
+            private_key,
+            // For historical reason, we focuse on the user manifest but in fact we refer
+            // to the realm here, so rename `user_manifest_X` -> `user_realm_X`.
+            user_manifest_id: user_realm_id,
+            user_manifest_key: user_realm_key,
+            root_verify_key
+        } = data;
+
+        Self {
+            device_id,
+            device_label,
+            human_handle,
+            profile,
+            private_key,
+            user_realm_id,
+            user_realm_key,
+            root_verify_key,
+        }
+    }
+}
+
+impl From<InviteDeviceConfirmation> for InviteDeviceConfirmationData {
+    fn from(obj: InviteDeviceConfirmation) -> Self {
+        let InviteDeviceConfirmation{
+            device_id,
+            device_label,
+            human_handle,
+            profile,
+            private_key,
+            user_realm_id,
+            user_realm_key,
+            root_verify_key
+        } = obj;
+
+        Self {
+            ty: InviteDeviceConfirmationDataType,
+            device_id,
+            device_label,
+            human_handle,
+            profile,
+            private_key,
+            // For historical reason, we focuse on the user manifest but in fact we refer
+            // to the realm here, so rename `user_manifest_X` -> `user_realm_X`.
+            user_manifest_id: user_realm_id,
+            user_manifest_key: user_realm_key,
+            root_verify_key
+        }
+    }
+}

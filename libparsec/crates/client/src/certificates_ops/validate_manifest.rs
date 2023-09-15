@@ -9,44 +9,44 @@ use super::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum InvalidManifestError {
-    #[error("Manifest from vlob `{vlob_id}` version {version} (create by `{author}` on {timestamp}) is corrupted: {error}")]
+    #[error("Manifest from vlob `{vlob}` version {version} (create by `{author}` on {timestamp}) is corrupted: {error}")]
     Corrupted {
-        vlob_id: EntryID,
+        vlob: VlobID,
         version: VersionInt,
         author: DeviceID,
         timestamp: DateTime,
         error: DataError,
     },
-    #[error("Manifest from vlob `{vlob_id}` version {version} (create by `{author}` on {timestamp}): at that time author didn't exist !")]
+    #[error("Manifest from vlob `{vlob}` version {version} (create by `{author}` on {timestamp}): at that time author didn't exist !")]
     NonExistantAuthor {
-        vlob_id: EntryID,
+        vlob: VlobID,
         version: VersionInt,
         author: DeviceID,
         timestamp: DateTime,
     },
-    #[error("Manifest from vlob `{vlob_id}` version {version} (create by `{author}` on {timestamp}): at that time author was already revoked !")]
+    #[error("Manifest from vlob `{vlob}` version {version} (create by `{author}` on {timestamp}): at that time author was already revoked !")]
     RevokedAuthor {
-        vlob_id: EntryID,
+        vlob: VlobID,
         version: VersionInt,
         author: DeviceID,
         timestamp: DateTime,
     },
-    #[error("Manifest from vlob `{vlob_id}` version {version} (create by `{author}` on {timestamp}): at that time author couldn't write in realm `{realm_id}` given it role was `{author_role:?}`")]
+    #[error("Manifest from vlob `{vlob}` version {version} (create by `{author}` on {timestamp}): at that time author couldn't write in realm `{realm}` given it role was `{author_role:?}`")]
     AuthorRealmRoleCannotWrite {
-        vlob_id: EntryID,
+        vlob: VlobID,
         version: VersionInt,
         author: DeviceID,
         timestamp: DateTime,
-        realm_id: RealmID,
+        realm: RealmID,
         author_role: RealmRole,
     },
-    #[error("Manifest from vlob `{vlob_id}` version {version} (create by `{author}` on {timestamp}): at that time author didn't have access to realm `{realm_id}` and hence couldn't write in it")]
+    #[error("Manifest from vlob `{vlob}` version {version} (create by `{author}` on {timestamp}): at that time author didn't have access to realm `{realm}` and hence couldn't write in it")]
     AuthorNoAccessToRealm {
-        vlob_id: EntryID,
+        vlob: VlobID,
         version: VersionInt,
         author: DeviceID,
         timestamp: DateTime,
-        realm_id: RealmID,
+        realm: RealmID,
     },
 }
 
@@ -70,59 +70,88 @@ pub(super) async fn validate_user_manifest(
     timestamp: DateTime,
     encrypted: &[u8],
 ) -> Result<UserManifest, ValidateManifestError> {
+    let signed = ops.device.private_key.decrypt_from_self(encrypted).map_err(|_| {
+        let what = InvalidManifestError::Corrupted {
+            vlob: ops.device.user_realm_id.into(),
+            version,
+            author: author.to_owned(),
+            timestamp,
+            error: DataError::Decryption,
+        };
+        ValidateManifestError::InvalidManifest(what)
+    })?;
+
     validate_manifest(
         ops,
         certificate_index,
         author,
         version,
         timestamp,
-        encrypted,
-        UserManifest::decrypt_verify_and_load,
+        &signed,
+        UserManifest::verify_and_load,
     )
     .await
 }
 
-#[allow(unused)]
-pub(super) async fn validate_workspace_manifest(
-    ops: &CertificatesOps,
-    certificate_index: IndexInt,
-    author: &DeviceID,
-    version: VersionInt,
-    timestamp: DateTime,
-    encrypted: &[u8],
-) -> Result<WorkspaceManifest, ValidateManifestError> {
-    validate_manifest(
-        ops,
-        certificate_index,
-        author,
-        version,
-        timestamp,
-        encrypted,
-        WorkspaceManifest::decrypt_verify_and_load,
-    )
-    .await
-}
+// #[allow(unused)]
+// pub(super) async fn validate_workspace_manifest(
+//     ops: &CertificatesOps,
+//     certificate_index: IndexInt,
+//     realm: RealmID,
+//     author: &DeviceID,
+//     version: VersionInt,
+//     timestamp: DateTime,
+//     key: &SecretKey,
+//     encrypted: &[u8],
+// ) -> Result<WorkspaceManifest, ValidateManifestError> {
+//     let vlob_id = ops.device.user_manifest_id;
 
-#[allow(unused)]
-pub(super) async fn validate_child_manifest(
-    ops: &CertificatesOps,
-    certificate_index: IndexInt,
-    author: &DeviceID,
-    version: VersionInt,
-    timestamp: DateTime,
-    encrypted: &[u8],
-) -> Result<ChildManifest, ValidateManifestError> {
-    validate_manifest(
-        ops,
-        certificate_index,
-        author,
-        version,
-        timestamp,
-        encrypted,
-        ChildManifest::decrypt_verify_and_load,
-    )
-    .await
-}
+//     let signed = key.decrypt(encrypted).map_err(|_| {
+//         let what = InvalidManifestError::Corrupted {
+//             vlob_id: VlobID::from(*realm),
+//             version,
+//             author: author.to_owned(),
+//             timestamp,
+//             error: DataError::Decryption,
+//         };
+//         ValidateManifestError::InvalidManifest(what)
+//     })?;
+
+//     validate_manifest(
+//         ops,
+//         certificate_index,
+//         author,
+//         version,
+//         timestamp,
+//         key,
+//         encrypted,
+//         WorkspaceManifest::decrypt_verify_and_load,
+//     )
+//     .await
+// }
+
+// #[allow(unused)]
+// pub(super) async fn validate_child_manifest(
+//     ops: &CertificatesOps,
+//     certificate_index: IndexInt,
+//     author: &DeviceID,
+//     version: VersionInt,
+//     timestamp: DateTime,
+//     key: &SecretKey,
+//     encrypted: &[u8],
+// ) -> Result<ChildManifest, ValidateManifestError> {
+//     validate_manifest(
+//         ops,
+//         certificate_index,
+//         author,
+//         version,
+//         timestamp,
+//         key,
+//         encrypted,
+//         ChildManifest::decrypt_verify_and_load,
+//     )
+//     .await
+// }
 
 async fn validate_manifest<M>(
     ops: &CertificatesOps,
@@ -130,10 +159,9 @@ async fn validate_manifest<M>(
     author: &DeviceID,
     version: VersionInt,
     timestamp: DateTime,
-    encrypted: &[u8],
-    decrypt_verify_and_load: impl FnOnce(
+    signed: &[u8],
+    verify_and_load: impl FnOnce(
         &[u8],
-        &SecretKey,
         &VerifyKey,
         &DeviceID,
         DateTime,
@@ -211,7 +239,7 @@ async fn validate_manifest<M>(
 
     let manifest = decrypt_verify_and_load(
         encrypted,
-        &ops.device.user_manifest_key,
+        &ops.device.user_realm_key,
         &author_certif.verify_key,
         author,
         timestamp,

@@ -68,9 +68,9 @@ impl CertificatesOps {
         index: IndexInt,
         sender: &DeviceID,
         timestamp: DateTime,
-        body: &[u8],
+        encrypted: &[u8],
     ) -> Result<MessageContent, ValidateMessageError> {
-        validate_message::validate_message(self, certificate_index, index, sender, timestamp, body)
+        validate_message::validate_message(self, certificate_index, index, sender, timestamp, encrypted)
             .await
     }
 
@@ -88,6 +88,48 @@ impl CertificatesOps {
             author,
             version,
             timestamp,
+            encrypted,
+        )
+        .await
+    }
+
+    pub async fn validate_workspace_manifest(
+        &self,
+        certificate_index: IndexInt,
+        author: &DeviceID,
+        version: VersionInt,
+        timestamp: DateTime,
+        key: &SecretKey,
+        encrypted: &[u8],
+    ) -> Result<WorkspaceManifest, ValidateManifestError> {
+        validate_manifest::validate_workspace_manifest(
+            self,
+            certificate_index,
+            author,
+            version,
+            timestamp,
+            key,
+            encrypted,
+        )
+        .await
+    }
+
+    pub async fn validate_child_manifest(
+        &self,
+        certificate_index: IndexInt,
+        author: &DeviceID,
+        version: VersionInt,
+        timestamp: DateTime,
+        key: &SecretKey,
+        encrypted: &[u8],
+    ) -> Result<ChildManifest, ValidateManifestError> {
+        validate_manifest::validate_child_manifest(
+            self,
+            certificate_index,
+            author,
+            version,
+            timestamp,
+            key,
             encrypted,
         )
         .await

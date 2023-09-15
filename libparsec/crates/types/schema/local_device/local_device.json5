@@ -42,9 +42,17 @@
             // Hack to indicate this field was added in Parsec v1.14, given revision is meaningless for data
             "introduced_in_revision": 114
         },
+        // For historical reason, we focuse on the user manifest but in fact we refer
+        // to the realm here:
+        // - User manifest is stored in a vlob whose ID is the same as the realm containing it
+        // - Encryption key is the same accross the whole realm
+        //
+        // Note those fields are renamed `user_manifest_X` -> `user_realm_X` in the
+        // codebase once deserialized.
         {
             "name": "user_manifest_id",
-            "type": "EntryID"
+            // Used to be `EntryID`, but thoses types are equivalent once serialized
+            "type": "RealmID"
         },
         {
             "name": "user_manifest_key",

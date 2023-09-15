@@ -562,7 +562,7 @@ impl DeviceClaimInProgress3Ctx {
             private_key,
             signing_key,
             user_manifest_id,
-            user_manifest_key,
+            user_realm_key: user_manifest_key,
             local_symkey: SecretKey::generate(),
             time_provider: Default::default(),
         });

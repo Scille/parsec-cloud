@@ -63,7 +63,7 @@ fn load_local_device(key_file: &Path, env: &TestbedEnv) -> Option<Arc<LocalDevic
                 private_key: x.first_user_private_key.clone(),
                 initial_profile: UserProfile::Admin,
                 user_manifest_id: x.first_user_user_manifest_id,
-                user_manifest_key: x.first_user_user_manifest_key.clone(),
+                user_realm_key: x.first_user_user_manifest_key.clone(),
                 local_symkey: x.first_user_local_symkey.clone(),
                 time_provider: TimeProvider::default(),
             }))
@@ -77,7 +77,7 @@ fn load_local_device(key_file: &Path, env: &TestbedEnv) -> Option<Arc<LocalDevic
             private_key: x.private_key.clone(),
             initial_profile: x.initial_profile,
             user_manifest_id: x.user_manifest_id,
-            user_manifest_key: x.user_manifest_key.clone(),
+            user_realm_key: x.user_manifest_key.clone(),
             local_symkey: x.local_symkey.clone(),
             time_provider: TimeProvider::default(),
         })),
@@ -93,7 +93,7 @@ fn load_local_device(key_file: &Path, env: &TestbedEnv) -> Option<Arc<LocalDevic
                         private_key: u.private_key.clone(),
                         initial_profile: u.initial_profile,
                         user_manifest_id: u.user_manifest_id,
-                        user_manifest_key: u.user_manifest_key.clone(),
+                        user_realm_key: u.user_manifest_key.clone(),
                         local_symkey: d.local_symkey.clone(),
                         time_provider: TimeProvider::default(),
                     }))
