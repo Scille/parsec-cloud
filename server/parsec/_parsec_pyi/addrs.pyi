@@ -6,7 +6,7 @@ from typing import Union
 
 from parsec._parsec_pyi.crypto import VerifyKey
 from parsec._parsec_pyi.enumerate import InvitationType
-from parsec._parsec_pyi.ids import EntryID, InvitationToken, OrganizationID
+from parsec._parsec_pyi.ids import InvitationToken, OrganizationID, VlobID
 
 class BackendAddr:
     def __init__(self, hostname: str, port: int | None, use_ssl: bool) -> None: ...
@@ -120,7 +120,7 @@ class BackendOrganizationFileLinkAddr(BackendAddr):
     def __init__(
         self,
         organization_id: OrganizationID,
-        workspace_id: EntryID,
+        workspace_id: VlobID,
         encrypted_path: bytes,
         hostname: str,
         port: int | None,
@@ -139,7 +139,7 @@ class BackendOrganizationFileLinkAddr(BackendAddr):
     @property
     def organization_id(self) -> OrganizationID: ...
     @property
-    def workspace_id(self) -> EntryID: ...
+    def workspace_id(self) -> VlobID: ...
     @property
     def encrypted_path(self) -> bytes: ...
     @property
@@ -155,7 +155,7 @@ class BackendOrganizationFileLinkAddr(BackendAddr):
     def build(
         cls,
         organization_addr: BackendOrganizationAddr,
-        workspace_id: EntryID,
+        workspace_id: VlobID,
         encrypted_path: bytes,
         encrypted_timestamp: bytes | None = None,
     ) -> BackendOrganizationFileLinkAddr: ...

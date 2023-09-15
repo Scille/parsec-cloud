@@ -12,7 +12,7 @@ use super::super::model::{
 pub async fn workspace_storage_non_speculative_init(
     data_base_dir: &Path,
     device: &LocalDevice,
-    realm_id: RealmID,
+    realm_id: VlobID,
 ) -> anyhow::Result<()> {
     // 1) Open the database
 
@@ -27,12 +27,8 @@ pub async fn workspace_storage_non_speculative_init(
     // 3) Populate the database with the workspace manifest
 
     let timestamp = device.now();
-    let manifest = LocalWorkspaceManifest::new(
-        device.device_id.clone(),
-        timestamp,
-        Some(realm_id.into()),
-        false,
-    );
+    let manifest =
+        LocalWorkspaceManifest::new(device.device_id.clone(), timestamp, Some(realm_id), false);
     super::data::db_set_workspace_manifest(&db, device, &manifest).await?;
 
     // 4) All done ! Don't forget to close the database before exiting ;-)

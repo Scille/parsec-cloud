@@ -12,7 +12,7 @@ use libparsec_serialization_format::parsec_data;
 
 use crate::{
     self as libparsec_types, data_macros::impl_transparent_data_format_conversion, DataError,
-    DeviceID, DeviceLabel, EntryID, HumanHandle, UserProfile,
+    DeviceID, DeviceLabel, HumanHandle, UserProfile, VlobID,
 };
 
 /*
@@ -328,7 +328,7 @@ pub struct InviteDeviceConfirmation {
     pub human_handle: Option<HumanHandle>,
     pub profile: UserProfile,
     pub private_key: PrivateKey,
-    pub user_manifest_id: EntryID,
+    pub user_manifest_id: VlobID,
     pub user_manifest_key: SecretKey,
     pub root_verify_key: VerifyKey,
 }

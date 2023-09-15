@@ -14,9 +14,8 @@ use libparsec_serialization_format::parsec_data;
 
 use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion, BlockAccess, BlockID,
-    Blocksize, ChunkID, DataError, DataResult, DateTime, DeviceID, EntryID, EntryName,
-    FileManifest, FolderManifest, IndexInt, RealmID, Regex, UserManifest, WorkspaceEntry,
-    WorkspaceManifest,
+    Blocksize, ChunkID, DataError, DataResult, DateTime, DeviceID, EntryName, FileManifest,
+    FolderManifest, IndexInt, Regex, UserManifest, VlobID, WorkspaceEntry, WorkspaceManifest,
 };
 
 macro_rules! impl_local_manifest_dump_load {
@@ -224,7 +223,7 @@ impl_local_manifest_dump_load!(LocalFileManifest);
 impl LocalFileManifest {
     pub fn new(
         author: DeviceID,
-        parent: EntryID,
+        parent: VlobID,
         timestamp: DateTime,
         blocksize: Blocksize,
     ) -> Self {
@@ -232,7 +231,7 @@ impl LocalFileManifest {
             base: FileManifest {
                 author,
                 timestamp,
-                id: EntryID::default(),
+                id: VlobID::default(),
                 parent,
                 version: 0,
                 created: timestamp,
@@ -354,17 +353,17 @@ pub struct LocalFolderManifest {
     pub base: FolderManifest,
     pub need_sync: bool,
     pub updated: DateTime,
-    pub children: HashMap<EntryName, EntryID>,
+    pub children: HashMap<EntryName, VlobID>,
     // Confined entries are entries that are meant to stay locally and not be added
     // to the uploaded remote manifest when synchronizing. The criteria for being
     // confined is to have a filename that matched the "prevent sync" pattern at the time of
     // the last change (or when a new filter was successfully applied)
-    pub local_confinement_points: HashSet<EntryID>,
+    pub local_confinement_points: HashSet<VlobID>,
     // Filtered entries are entries present in the base manifest that are not exposed
     // locally. We keep track of them to remember that those entries have not been
     // deleted locally and hence should be restored when crafting the remote manifest
     // to upload.
-    pub remote_confinement_points: HashSet<EntryID>,
+    pub remote_confinement_points: HashSet<VlobID>,
 }
 
 parsec_data!("schema/local_manifest/local_folder_manifest.json5");
@@ -383,12 +382,12 @@ impl_transparent_data_format_conversion!(
 impl_local_manifest_dump_load!(LocalFolderManifest);
 
 impl LocalFolderManifest {
-    pub fn new(author: DeviceID, parent: EntryID, timestamp: DateTime) -> Self {
+    pub fn new(author: DeviceID, parent: VlobID, timestamp: DateTime) -> Self {
         Self {
             base: FolderManifest {
                 author,
                 timestamp,
-                id: EntryID::default(),
+                id: VlobID::default(),
                 parent,
                 version: 0,
                 created: timestamp,
@@ -405,7 +404,7 @@ impl LocalFolderManifest {
 
     pub fn evolve_children_and_mark_updated(
         mut self,
-        data: HashMap<EntryName, Option<EntryID>>,
+        data: HashMap<EntryName, Option<VlobID>>,
         prevent_sync_pattern: &Regex,
         timestamp: DateTime,
     ) -> Self {
@@ -629,17 +628,17 @@ pub struct LocalWorkspaceManifest {
     pub base: WorkspaceManifest,
     pub need_sync: bool,
     pub updated: DateTime,
-    pub children: HashMap<EntryName, EntryID>,
+    pub children: HashMap<EntryName, VlobID>,
     // Confined entries are entries that are meant to stay locally and not be added
     // to the uploaded remote manifest when synchronizing. The criteria for being
     // confined is to have a filename that matched the "prevent sync" pattern at the time of
     // the last change (or when a new filter was successfully applied)
-    pub local_confinement_points: HashSet<EntryID>,
+    pub local_confinement_points: HashSet<VlobID>,
     // Filtered entries are entries present in the base manifest that are not exposed
     // locally. We keep track of them to remember that those entries have not been
     // deleted locally and hence should be restored when crafting the remote manifest
     // to upload.
-    pub remote_confinement_points: HashSet<EntryID>,
+    pub remote_confinement_points: HashSet<VlobID>,
     // Speculative placeholders are created when we want to access a workspace
     // but didn't retrieve manifest data from backend yet. This implies:
     // - non-placeholders cannot be speculative
@@ -673,7 +672,7 @@ impl LocalWorkspaceManifest {
     pub fn new(
         author: DeviceID,
         timestamp: DateTime,
-        id: Option<EntryID>,
+        id: Option<VlobID>,
         speculative: bool,
     ) -> Self {
         Self {
@@ -697,7 +696,7 @@ impl LocalWorkspaceManifest {
 
     pub fn evolve_children_and_mark_updated(
         mut self,
-        data: HashMap<EntryName, Option<EntryID>>,
+        data: HashMap<EntryName, Option<VlobID>>,
         prevent_sync_pattern: &Regex,
         timestamp: DateTime,
     ) -> Self {
@@ -952,7 +951,7 @@ impl LocalUserManifest {
     pub fn new(
         author: DeviceID,
         timestamp: DateTime,
-        id: Option<EntryID>,
+        id: Option<VlobID>,
         speculative: bool,
     ) -> Self {
         Self {
@@ -1005,7 +1004,7 @@ impl LocalUserManifest {
         self.workspaces.push(workspace);
     }
 
-    pub fn get_workspace_entry(&self, realm_id: RealmID) -> Option<&WorkspaceEntry> {
+    pub fn get_workspace_entry(&self, realm_id: VlobID) -> Option<&WorkspaceEntry> {
         self.workspaces.iter().find(|w| w.id == realm_id)
     }
 
@@ -1061,7 +1060,7 @@ pub enum LocalChildManifest {
 }
 
 impl LocalChildManifest {
-    pub fn id(&self) -> EntryID {
+    pub fn id(&self) -> VlobID {
         match self {
             Self::File(manifest) => manifest.base.id,
             Self::Folder(manifest) => manifest.base.id,

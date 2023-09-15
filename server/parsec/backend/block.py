@@ -7,7 +7,7 @@ from parsec._parsec import (
     DateTime,
     DeviceID,
     OrganizationID,
-    RealmID,
+    VlobID,
     authenticated_cmds,
 )
 from parsec.backend.client_context import AuthenticatedClientContext
@@ -112,7 +112,7 @@ class BaseBlockComponent:
         organization_id: OrganizationID,
         author: DeviceID,
         block_id: BlockID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         block: bytes,
         created_on: DateTime | None = None,
     ) -> None:

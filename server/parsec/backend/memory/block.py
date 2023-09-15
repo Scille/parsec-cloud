@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Dict, Tuple
 
 import attr
 
-from parsec._parsec import BlockID, DateTime, DeviceID, OrganizationID, RealmID, RealmRole, UserID
+from parsec._parsec import BlockID, DateTime, DeviceID, OrganizationID, RealmRole, UserID, VlobID
 from parsec.backend.block import (
     BaseBlockComponent,
     BlockAccessError,
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 @attr.s(auto_attribs=True)
 class BlockMeta:
-    realm_id: RealmID
+    realm_id: VlobID
     size: int
     created_on: DateTime
 
@@ -46,19 +46,19 @@ class MemoryBlockComponent(BaseBlockComponent):
         self._realm_component = realm
 
     def _check_realm_read_access(
-        self, organization_id: OrganizationID, realm_id: RealmID, user_id: UserID
+        self, organization_id: OrganizationID, realm_id: VlobID, user_id: UserID
     ) -> None:
         self._check_realm_access(organization_id, realm_id, user_id, OperationKind.DATA_READ)
 
     def _check_realm_write_access(
-        self, organization_id: OrganizationID, realm_id: RealmID, user_id: UserID
+        self, organization_id: OrganizationID, realm_id: VlobID, user_id: UserID
     ) -> None:
         self._check_realm_access(organization_id, realm_id, user_id, OperationKind.DATA_WRITE)
 
     def _check_realm_access(
         self,
         organization_id: OrganizationID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         user_id: UserID,
         operation_kind: OperationKind,
     ) -> None:
@@ -114,7 +114,7 @@ class MemoryBlockComponent(BaseBlockComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         block_id: BlockID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         block: bytes,
         created_on: DateTime | None = None,
     ) -> None:

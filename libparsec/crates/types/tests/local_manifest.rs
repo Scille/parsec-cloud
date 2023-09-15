@@ -116,7 +116,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
             base: FileManifest {
                 author: alice.device_id.to_owned(),
                 timestamp: now,
-                id: EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+                id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
                 version: 42,
                 created: now,
                 updated: now,
@@ -145,7 +145,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
                     }
                 ],
                 blocksize: Blocksize::try_from(512).unwrap(),
-                parent: EntryID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
+                parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
                 size: 700,
             },
             blocks: vec![vec![
@@ -291,20 +291,20 @@ fn serde_local_file_manifest_invalid_blocksize() {
             base: FolderManifest {
                 author: alice.device_id.to_owned(),
                 timestamp: now,
-                id: EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+                id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
                 version: 42,
                 created: now,
                 updated: now,
                 children: HashMap::from([
-                    ("wksp1".parse().unwrap(), EntryID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap())
+                    ("wksp1".parse().unwrap(), VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap())
                 ]),
-                parent: EntryID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
+                parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
             },
             children: HashMap::from([
-                ("wksp2".parse().unwrap(), EntryID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap())
+                ("wksp2".parse().unwrap(), VlobID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap())
             ]),
-            local_confinement_points: HashSet::from([EntryID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap()]),
-            remote_confinement_points: HashSet::from([EntryID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap()]),
+            local_confinement_points: HashSet::from([VlobID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap()]),
+            remote_confinement_points: HashSet::from([VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap()]),
             need_sync: true,
         }
     )
@@ -345,17 +345,17 @@ fn serde_local_file_manifest_invalid_blocksize() {
             base: FolderManifest {
                 author: alice.device_id.to_owned(),
                 timestamp: now,
-                id: EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+                id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
                 version: 42,
                 created: now,
                 updated: now,
                 children: HashMap::from([
-                    ("wksp2".parse().unwrap(), EntryID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap())
+                    ("wksp2".parse().unwrap(), VlobID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap())
                 ]),
-                parent: EntryID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
+                parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
             },
             children: HashMap::from([
-                ("wksp2".parse().unwrap(), EntryID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap())
+                ("wksp2".parse().unwrap(), VlobID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap())
             ]),
             local_confinement_points: HashSet::new(),
             remote_confinement_points: HashSet::new(),
@@ -425,19 +425,19 @@ fn serde_local_folder_manifest(
             base: WorkspaceManifest {
                 author: alice.device_id.to_owned(),
                 timestamp: now,
-                id: EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+                id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
                 version: 42,
                 created: now,
                 updated: now,
                 children: HashMap::from([
-                    ("wksp1".parse().unwrap(), EntryID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap())
+                    ("wksp1".parse().unwrap(), VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap())
                 ]),
             },
             children: HashMap::from([
-                ("wksp2".parse().unwrap(), EntryID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap())
+                ("wksp2".parse().unwrap(), VlobID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap())
             ]),
-            local_confinement_points: HashSet::from([EntryID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap()]),
-            remote_confinement_points: HashSet::from([EntryID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap()]),
+            local_confinement_points: HashSet::from([VlobID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap()]),
+            remote_confinement_points: HashSet::from([VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap()]),
             need_sync: true,
             speculative: false,
         }
@@ -481,7 +481,7 @@ fn serde_local_folder_manifest(
             base: WorkspaceManifest {
                 author: alice.device_id.to_owned(),
                 timestamp: now,
-                id: EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+                id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
                 version: 0,
                 created: now,
                 updated: now,
@@ -530,16 +530,16 @@ fn serde_local_folder_manifest(
             base: WorkspaceManifest {
                 author: alice.device_id.to_owned(),
                 timestamp: now,
-                id: EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+                id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
                 version: 42,
                 created: now,
                 updated: now,
                 children: HashMap::from([
-                    ("wksp2".parse().unwrap(), EntryID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap())
+                    ("wksp2".parse().unwrap(), VlobID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap())
                 ]),
             },
             children: HashMap::from([
-                ("wksp2".parse().unwrap(), EntryID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap())
+                ("wksp2".parse().unwrap(), VlobID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap())
             ]),
             local_confinement_points: HashSet::new(),
             remote_confinement_points: HashSet::new(),
@@ -650,7 +650,7 @@ fn serde_local_workspace_manifest(
             base: UserManifest {
                 author: alice.device_id.to_owned(),
                 timestamp: now,
-                id: EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+                id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
                 version: 42,
                 created: now,
                 updated: now,
@@ -658,7 +658,7 @@ fn serde_local_workspace_manifest(
                 workspaces: vec![
                     WorkspaceEntry {
                         name: "wksp1".parse().unwrap(),
-                        id: RealmID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
+                        id: VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
                         key: SecretKey::from(hex!(
                             "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
                         )),
@@ -672,7 +672,7 @@ fn serde_local_workspace_manifest(
             workspaces: vec![
                 WorkspaceEntry {
                     name: "wksp1".parse().unwrap(),
-                    id: RealmID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
+                    id: VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
                     key: SecretKey::from(hex!(
                         "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
                     )),
@@ -683,7 +683,7 @@ fn serde_local_workspace_manifest(
                 },
                 WorkspaceEntry {
                     name: "wksp2".parse().unwrap(),
-                    id: RealmID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap(),
+                    id: VlobID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap(),
                     key: SecretKey::from(hex!(
                         "c21ed3aae92c648cb1b6df8be149ebc872247db0dbd37686ff2d075e2d7505cc"
                     )),
@@ -763,7 +763,7 @@ fn serde_local_workspace_manifest(
             base: UserManifest {
                 author: alice.device_id.to_owned(),
                 timestamp: now,
-                id: EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+                id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
                 version: 42,
                 created: now,
                 updated: now,
@@ -771,7 +771,7 @@ fn serde_local_workspace_manifest(
                 workspaces: vec![
                     WorkspaceEntry {
                         name: "wksp1".parse().unwrap(),
-                        id: RealmID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
+                        id: VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
                         key: SecretKey::from(hex!(
                             "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
                         )),
@@ -785,7 +785,7 @@ fn serde_local_workspace_manifest(
             workspaces: vec![
                 WorkspaceEntry {
                     name: "wksp1".parse().unwrap(),
-                    id: RealmID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
+                    id: VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
                     key: SecretKey::from(hex!(
                         "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
                     )),
@@ -838,7 +838,7 @@ fn serde_local_workspace_manifest(
             base: UserManifest {
                 author: alice.device_id.to_owned(),
                 timestamp: now,
-                id: EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+                id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
                 version: 0,
                 created: now,
                 updated: now,
@@ -889,7 +889,7 @@ fn serde_local_workspace_manifest(
             base: UserManifest {
                 author: alice.device_id.to_owned(),
                 timestamp: now,
-                id: EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+                id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
                 version: 0,
                 created: now,
                 updated: now,
@@ -1041,7 +1041,7 @@ fn chunk_is_block() {
 #[rstest]
 fn local_file_manifest_new(timestamp: DateTime) {
     let author = DeviceID::default();
-    let parent = EntryID::default();
+    let parent = VlobID::default();
     let blocksize = Blocksize::try_from(512).unwrap();
     let lfm = LocalFileManifest::new(author.clone(), parent, timestamp, blocksize);
 
@@ -1064,7 +1064,7 @@ fn local_file_manifest_new(timestamp: DateTime) {
 #[rstest]
 fn local_file_manifest_is_reshaped(timestamp: DateTime) {
     let author = DeviceID::default();
-    let parent = EntryID::default();
+    let parent = VlobID::default();
     let blocksize = Blocksize::try_from(512).unwrap();
     let mut lfm = LocalFileManifest::new(author, parent, timestamp, blocksize);
 
@@ -1118,8 +1118,8 @@ fn local_file_manifest_from_remote(timestamp: DateTime, #[case] input: (u64, Vec
     let fm = FileManifest {
         author: DeviceID::default(),
         timestamp,
-        id: EntryID::default(),
-        parent: EntryID::default(),
+        id: VlobID::default(),
+        parent: VlobID::default(),
         version: 0,
         created: timestamp,
         updated: timestamp,
@@ -1150,7 +1150,7 @@ fn local_file_manifest_to_remote(timestamp: DateTime) {
     let t2 = t1.add_us(1);
     let t3 = t2.add_us(1);
     let author = DeviceID::default();
-    let parent = EntryID::default();
+    let parent = VlobID::default();
     let blocksize = Blocksize::try_from(512).unwrap();
     let mut lfm = LocalFileManifest::new(author, parent, t1, blocksize);
 
@@ -1190,8 +1190,8 @@ fn local_file_manifest_match_remote(timestamp: DateTime) {
     let fm = FileManifest {
         author: DeviceID::default(),
         timestamp,
-        id: EntryID::default(),
-        parent: EntryID::default(),
+        id: VlobID::default(),
+        parent: VlobID::default(),
         version: 0,
         created: timestamp,
         updated: timestamp,
@@ -1228,7 +1228,7 @@ fn local_file_manifest_match_remote(timestamp: DateTime) {
 #[rstest]
 fn local_folder_manifest_new(timestamp: DateTime) {
     let author = DeviceID::default();
-    let parent = EntryID::default();
+    let parent = VlobID::default();
     let lfm = LocalFolderManifest::new(author.clone(), parent, timestamp);
 
     assert_eq!(lfm.base.author, author);
@@ -1253,7 +1253,7 @@ fn local_folder_manifest_new(timestamp: DateTime) {
 ))]
 #[case::children_filtered((
     HashMap::from([
-        ("file1.png".parse().unwrap(), EntryID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
+        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
     ]),
     HashMap::new(),
     1,
@@ -1261,10 +1261,10 @@ fn local_folder_manifest_new(timestamp: DateTime) {
 ))]
 #[case::children((
     HashMap::from([
-        ("file1.png".parse().unwrap(), EntryID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
+        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
     ]),
     HashMap::from([
-        ("file1.png".parse().unwrap(), EntryID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
+        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
     ]),
     0,
     ".mp4",
@@ -1272,8 +1272,8 @@ fn local_folder_manifest_new(timestamp: DateTime) {
 fn local_folder_manifest_from_remote(
     timestamp: DateTime,
     #[case] input: (
-        HashMap<EntryName, EntryID>,
-        HashMap<EntryName, EntryID>,
+        HashMap<EntryName, VlobID>,
+        HashMap<EntryName, VlobID>,
         usize,
         &str,
     ),
@@ -1282,8 +1282,8 @@ fn local_folder_manifest_from_remote(
     let fm = FolderManifest {
         author: DeviceID::default(),
         timestamp,
-        id: EntryID::default(),
-        parent: EntryID::default(),
+        id: VlobID::default(),
+        parent: VlobID::default(),
         version: 0,
         created: timestamp,
         updated: timestamp,
@@ -1304,7 +1304,7 @@ fn local_folder_manifest_from_remote(
 #[case::empty(HashMap::new(), HashMap::new(), HashMap::new(), 0, 0, false, "")]
 #[case::children_filtered(
     HashMap::from([
-        ("file1.png".parse().unwrap(), EntryID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
+        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
     ]),
     HashMap::new(),
     HashMap::new(),
@@ -1315,11 +1315,11 @@ fn local_folder_manifest_from_remote(
 )]
 #[case::children(
     HashMap::from([
-        ("file1.png".parse().unwrap(), EntryID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
+        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
     ]),
     HashMap::new(),
     HashMap::from([
-        ("file1.png".parse().unwrap(), EntryID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
+        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
     ]),
     0,
     0,
@@ -1328,14 +1328,14 @@ fn local_folder_manifest_from_remote(
 )]
 #[case::children_merged(
     HashMap::from([
-        ("file1.png".parse().unwrap(), EntryID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
+        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
     ]),
     HashMap::from([
-        ("file2.mp4".parse().unwrap(), EntryID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
+        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
     ]),
     HashMap::from([
-        ("file1.png".parse().unwrap(), EntryID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap()),
-        ("file2.mp4".parse().unwrap(), EntryID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap()),
+        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap()),
+        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap()),
     ]),
     0,
     1,
@@ -1345,10 +1345,10 @@ fn local_folder_manifest_from_remote(
 #[case::need_sync(
     HashMap::new(),
     HashMap::from([
-        ("file2.mp4".parse().unwrap(), EntryID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
+        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
     ]),
     HashMap::from([
-        ("file2.mp4".parse().unwrap(), EntryID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap()),
+        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap()),
     ]),
     0,
     0,
@@ -1357,9 +1357,9 @@ fn local_folder_manifest_from_remote(
 )]
 fn local_folder_manifest_from_remote_with_local_context(
     timestamp: DateTime,
-    #[case] children: HashMap<EntryName, EntryID>,
-    #[case] local_children: HashMap<EntryName, EntryID>,
-    #[case] expected_children: HashMap<EntryName, EntryID>,
+    #[case] children: HashMap<EntryName, VlobID>,
+    #[case] local_children: HashMap<EntryName, VlobID>,
+    #[case] expected_children: HashMap<EntryName, VlobID>,
     #[case] filtered: usize,
     #[case] merged: usize,
     #[case] need_sync: bool,
@@ -1368,8 +1368,8 @@ fn local_folder_manifest_from_remote_with_local_context(
     let fm = FolderManifest {
         author: DeviceID::default(),
         timestamp,
-        id: EntryID::default(),
-        parent: EntryID::default(),
+        id: VlobID::default(),
+        parent: VlobID::default(),
         version: 0,
         created: timestamp,
         updated: timestamp,
@@ -1405,11 +1405,11 @@ fn local_folder_manifest_to_remote(timestamp: DateTime) {
     let t1 = timestamp;
     let t2 = t1.add_us(1);
     let author = DeviceID::default();
-    let parent = EntryID::default();
+    let parent = VlobID::default();
     let mut lfm = LocalFolderManifest::new(author, parent, t1);
 
     lfm.children
-        .insert("file1.png".parse().unwrap(), EntryID::default());
+        .insert("file1.png".parse().unwrap(), VlobID::default());
     lfm.updated = t2;
 
     let author = DeviceID::default();
@@ -1430,8 +1430,8 @@ fn local_folder_manifest_match_remote(timestamp: DateTime) {
     let fm = FolderManifest {
         author: DeviceID::default(),
         timestamp,
-        id: EntryID::default(),
-        parent: EntryID::default(),
+        id: VlobID::default(),
+        parent: VlobID::default(),
         version: 0,
         created: timestamp,
         updated: timestamp,
@@ -1455,10 +1455,10 @@ fn local_folder_manifest_match_remote(timestamp: DateTime) {
 #[case::no_data(
     HashMap::new(),
     HashMap::from([
-        ("file2.mp4".parse().unwrap(), EntryID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
+        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
     ]),
     HashMap::from([
-        ("file2.mp4".parse().unwrap(), EntryID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
+        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
     ]),
     0,
     false,
@@ -1466,15 +1466,15 @@ fn local_folder_manifest_match_remote(timestamp: DateTime) {
 )]
 #[case::data(
     HashMap::from([
-        ("file1.png".parse().unwrap(), Some(EntryID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())),
-        ("file2.mp4".parse().unwrap(), Some(EntryID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())),
+        ("file1.png".parse().unwrap(), Some(VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())),
+        ("file2.mp4".parse().unwrap(), Some(VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())),
     ]),
     HashMap::from([
-        ("file2.mp4".parse().unwrap(), EntryID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
+        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
     ]),
     HashMap::from([
-        ("file1.png".parse().unwrap(), EntryID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap()),
-        ("file2.mp4".parse().unwrap(), EntryID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap()),
+        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap()),
+        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap()),
     ]),
     1,
     true,
@@ -1482,9 +1482,9 @@ fn local_folder_manifest_match_remote(timestamp: DateTime) {
 )]
 fn local_folder_manifest_evolve_children_and_mark_updated(
     timestamp: DateTime,
-    #[case] data: HashMap<EntryName, Option<EntryID>>,
-    #[case] children: HashMap<EntryName, EntryID>,
-    #[case] expected_children: HashMap<EntryName, EntryID>,
+    #[case] data: HashMap<EntryName, Option<VlobID>>,
+    #[case] children: HashMap<EntryName, VlobID>,
+    #[case] expected_children: HashMap<EntryName, VlobID>,
     #[case] merged: usize,
     #[case] need_sync: bool,
     #[case] regex: &str,
@@ -1494,8 +1494,8 @@ fn local_folder_manifest_evolve_children_and_mark_updated(
     let fm = FolderManifest {
         author: DeviceID::default(),
         timestamp,
-        id: EntryID::default(),
-        parent: EntryID::default(),
+        id: VlobID::default(),
+        parent: VlobID::default(),
         version: 0,
         created: timestamp,
         updated: timestamp,
@@ -1528,8 +1528,8 @@ fn local_folder_manifest_apply_prevent_sync_pattern(timestamp: DateTime) {
     let fm = FolderManifest {
         author: DeviceID::default(),
         timestamp,
-        id: EntryID::default(),
-        parent: EntryID::default(),
+        id: VlobID::default(),
+        parent: VlobID::default(),
         version: 0,
         created: timestamp,
         updated: timestamp,
@@ -1557,7 +1557,7 @@ fn local_folder_manifest_apply_prevent_sync_pattern(timestamp: DateTime) {
 #[rstest]
 fn local_workspace_manifest_new(timestamp: DateTime) {
     let author = DeviceID::default();
-    let id = EntryID::default();
+    let id = VlobID::default();
     let speculative = false;
     let lwm = LocalWorkspaceManifest::new(author.clone(), timestamp, Some(id), speculative);
 
@@ -1584,7 +1584,7 @@ fn local_workspace_manifest_new(timestamp: DateTime) {
 ))]
 #[case::children_filtered((
     HashMap::from([
-        ("file1.png".parse().unwrap(), EntryID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
+        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
     ]),
     HashMap::new(),
     1,
@@ -1592,10 +1592,10 @@ fn local_workspace_manifest_new(timestamp: DateTime) {
 ))]
 #[case::children((
     HashMap::from([
-        ("file1.png".parse().unwrap(), EntryID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
+        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
     ]),
     HashMap::from([
-        ("file1.png".parse().unwrap(), EntryID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
+        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
     ]),
     0,
     ".mp4",
@@ -1603,8 +1603,8 @@ fn local_workspace_manifest_new(timestamp: DateTime) {
 fn local_workspace_manifest_from_remote(
     timestamp: DateTime,
     #[case] input: (
-        HashMap<EntryName, EntryID>,
-        HashMap<EntryName, EntryID>,
+        HashMap<EntryName, VlobID>,
+        HashMap<EntryName, VlobID>,
         usize,
         &str,
     ),
@@ -1613,7 +1613,7 @@ fn local_workspace_manifest_from_remote(
     let wm = WorkspaceManifest {
         author: DeviceID::default(),
         timestamp,
-        id: EntryID::default(),
+        id: VlobID::default(),
         version: 0,
         created: timestamp,
         updated: timestamp,
@@ -1636,7 +1636,7 @@ fn local_workspace_manifest_from_remote(
 #[case::empty(HashMap::new(), HashMap::new(), HashMap::new(), 0, 0, false, "")]
 #[case::children_filtered(
     HashMap::from([
-        ("file1.png".parse().unwrap(), EntryID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
+        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
     ]),
     HashMap::new(),
     HashMap::new(),
@@ -1647,11 +1647,11 @@ fn local_workspace_manifest_from_remote(
 )]
 #[case::children(
     HashMap::from([
-        ("file1.png".parse().unwrap(), EntryID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
+        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
     ]),
     HashMap::new(),
     HashMap::from([
-        ("file1.png".parse().unwrap(), EntryID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
+        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
     ]),
     0,
     0,
@@ -1660,14 +1660,14 @@ fn local_workspace_manifest_from_remote(
 )]
 #[case::children_merged(
     HashMap::from([
-        ("file1.png".parse().unwrap(), EntryID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
+        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
     ]),
     HashMap::from([
-        ("file2.mp4".parse().unwrap(), EntryID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
+        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
     ]),
     HashMap::from([
-        ("file1.png".parse().unwrap(), EntryID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap()),
-        ("file2.mp4".parse().unwrap(), EntryID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap()),
+        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap()),
+        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap()),
     ]),
     0,
     1,
@@ -1677,10 +1677,10 @@ fn local_workspace_manifest_from_remote(
 #[case::need_sync(
     HashMap::new(),
     HashMap::from([
-        ("file2.mp4".parse().unwrap(), EntryID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
+        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
     ]),
     HashMap::from([
-        ("file2.mp4".parse().unwrap(), EntryID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap()),
+        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap()),
     ]),
     0,
     0,
@@ -1689,9 +1689,9 @@ fn local_workspace_manifest_from_remote(
 )]
 fn local_workspace_manifest_from_remote_with_local_context(
     timestamp: DateTime,
-    #[case] children: HashMap<EntryName, EntryID>,
-    #[case] local_children: HashMap<EntryName, EntryID>,
-    #[case] expected_children: HashMap<EntryName, EntryID>,
+    #[case] children: HashMap<EntryName, VlobID>,
+    #[case] local_children: HashMap<EntryName, VlobID>,
+    #[case] expected_children: HashMap<EntryName, VlobID>,
     #[case] filtered: usize,
     #[case] merged: usize,
     #[case] need_sync: bool,
@@ -1700,7 +1700,7 @@ fn local_workspace_manifest_from_remote_with_local_context(
     let wm = WorkspaceManifest {
         author: DeviceID::default(),
         timestamp,
-        id: EntryID::default(),
+        id: VlobID::default(),
         version: 0,
         created: timestamp,
         updated: timestamp,
@@ -1738,12 +1738,12 @@ fn local_workspace_manifest_to_remote(timestamp: DateTime) {
     let t1 = timestamp;
     let t2 = t1.add_us(1);
     let author = DeviceID::default();
-    let id = EntryID::default();
+    let id = VlobID::default();
     let speculative = false;
     let mut lwm = LocalWorkspaceManifest::new(author, t1, Some(id), speculative);
 
     lwm.children
-        .insert("file1.png".parse().unwrap(), EntryID::default());
+        .insert("file1.png".parse().unwrap(), VlobID::default());
     lwm.updated = t2;
 
     let author = DeviceID::default();
@@ -1763,7 +1763,7 @@ fn local_workspace_manifest_match_remote(timestamp: DateTime) {
     let wm = WorkspaceManifest {
         author: DeviceID::default(),
         timestamp,
-        id: EntryID::default(),
+        id: VlobID::default(),
         version: 0,
         created: timestamp,
         updated: timestamp,
@@ -1788,10 +1788,10 @@ fn local_workspace_manifest_match_remote(timestamp: DateTime) {
 #[case::no_data(
     HashMap::new(),
     HashMap::from([
-        ("file2.mp4".parse().unwrap(), EntryID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
+        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
     ]),
     HashMap::from([
-        ("file2.mp4".parse().unwrap(), EntryID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
+        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
     ]),
     0,
     false,
@@ -1799,15 +1799,15 @@ fn local_workspace_manifest_match_remote(timestamp: DateTime) {
 )]
 #[case::data(
     HashMap::from([
-        ("file1.png".parse().unwrap(), Some(EntryID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())),
-        ("file2.mp4".parse().unwrap(), Some(EntryID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())),
+        ("file1.png".parse().unwrap(), Some(VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())),
+        ("file2.mp4".parse().unwrap(), Some(VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())),
     ]),
     HashMap::from([
-        ("file2.mp4".parse().unwrap(), EntryID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
+        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
     ]),
     HashMap::from([
-        ("file1.png".parse().unwrap(), EntryID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap()),
-        ("file2.mp4".parse().unwrap(), EntryID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap()),
+        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap()),
+        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap()),
     ]),
     1,
     true,
@@ -1815,9 +1815,9 @@ fn local_workspace_manifest_match_remote(timestamp: DateTime) {
 )]
 fn local_workspace_manifest_evolve_children_and_mark_updated(
     timestamp: DateTime,
-    #[case] data: HashMap<EntryName, Option<EntryID>>,
-    #[case] children: HashMap<EntryName, EntryID>,
-    #[case] expected_children: HashMap<EntryName, EntryID>,
+    #[case] data: HashMap<EntryName, Option<VlobID>>,
+    #[case] children: HashMap<EntryName, VlobID>,
+    #[case] expected_children: HashMap<EntryName, VlobID>,
     #[case] merged: usize,
     #[case] need_sync: bool,
     #[case] regex: &str,
@@ -1826,7 +1826,7 @@ fn local_workspace_manifest_evolve_children_and_mark_updated(
     let wm = WorkspaceManifest {
         author: DeviceID::default(),
         timestamp,
-        id: EntryID::default(),
+        id: VlobID::default(),
         version: 0,
         created: timestamp,
         updated: timestamp,
@@ -1860,7 +1860,7 @@ fn local_workspace_manifest_apply_prevent_sync_pattern(timestamp: DateTime) {
     let wm = WorkspaceManifest {
         author: DeviceID::default(),
         timestamp,
-        id: EntryID::default(),
+        id: VlobID::default(),
         version: 0,
         created: timestamp,
         updated: timestamp,
@@ -1889,7 +1889,7 @@ fn local_workspace_manifest_apply_prevent_sync_pattern(timestamp: DateTime) {
 #[rstest]
 fn local_user_manifest_new(timestamp: DateTime) {
     let author = DeviceID::default();
-    let id = EntryID::default();
+    let id = VlobID::default();
     let speculative = false;
     let lum = LocalUserManifest::new(author.clone(), timestamp, Some(id), speculative);
 
@@ -1914,7 +1914,7 @@ fn local_user_manifest_from_remote(timestamp: DateTime, #[case] input: (u64, Vec
     let um = UserManifest {
         author: DeviceID::default(),
         timestamp,
-        id: EntryID::default(),
+        id: VlobID::default(),
         version: 0,
         created: timestamp,
         updated: timestamp,
@@ -1936,7 +1936,7 @@ fn local_user_manifest_to_remote(timestamp: DateTime) {
     let t2 = t1.add_us(1);
     let t3 = t2.add_us(1);
     let author = DeviceID::default();
-    let id = EntryID::default();
+    let id = VlobID::default();
     let speculative = false;
     let mut lum = LocalUserManifest::new(author, t1, Some(id), speculative);
 
@@ -1961,7 +1961,7 @@ fn local_user_manifest_match_remote(timestamp: DateTime) {
     let um = UserManifest {
         author: DeviceID::default(),
         timestamp,
-        id: EntryID::default(),
+        id: VlobID::default(),
         version: 0,
         created: timestamp,
         updated: timestamp,

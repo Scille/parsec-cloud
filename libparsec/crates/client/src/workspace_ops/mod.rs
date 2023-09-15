@@ -37,13 +37,13 @@ pub struct WorkspaceOps {
     #[allow(unused)]
     event_bus: EventBus,
     #[allow(unused)]
-    realm_id: RealmID,
+    realm_id: VlobID,
 }
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceOpsError {
     #[error("Unknown workspace `{0}`")]
-    UnknownWorkspace(RealmID),
+    UnknownWorkspace(VlobID),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -58,7 +58,7 @@ impl WorkspaceOps {
         cmds: Arc<AuthenticatedCmds>,
         certificates_ops: Arc<CertificatesOps>,
         event_bus: EventBus,
-        realm_id: RealmID,
+        realm_id: VlobID,
     ) -> Result<Self, anyhow::Error> {
         // TODO: handle errors
         let data_storage =

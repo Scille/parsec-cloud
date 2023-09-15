@@ -16,10 +16,10 @@ from parsec._parsec import (
     HumanHandle,
     OrganizationID,
     PublicKey,
-    RealmID,
     UserID,
     UserProfile,
     VerifyKey,
+    VlobID,
 )
 from parsec.backend.invite import Invitation
 from parsec.event_bus import EventBusConnectionContext
@@ -93,7 +93,7 @@ class AuthenticatedClientContext(BaseClientContext):
         self.send_events_channel, self.receive_events_channel = trio.open_memory_channel[
             tuple[str, BackendEvent]
         ](AUTHENTICATED_CLIENT_CHANNEL_SIZE)
-        self.realms: Set[RealmID] = set()
+        self.realms: Set[VlobID] = set()
         self.events_subscribed = False
 
     def __repr__(self) -> str:

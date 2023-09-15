@@ -54,7 +54,7 @@ enum WorkspaceShareDoServerCommandOutcome {
 
 pub async fn workspace_share(
     ops: &UserOps,
-    realm_id: RealmID,
+    realm_id: VlobID,
     recipient: &UserID,
     role: Option<RealmRole>,
 ) -> Result<(), WorkspaceShareError> {

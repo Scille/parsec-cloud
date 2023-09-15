@@ -158,10 +158,8 @@ macro_rules! impl_crc_hash_for_uuid_based {
     };
 }
 
-impl_crc_hash_for_uuid_based!(EntryID);
-impl_crc_hash_for_uuid_based!(BlockID);
-impl_crc_hash_for_uuid_based!(RealmID);
 impl_crc_hash_for_uuid_based!(VlobID);
+impl_crc_hash_for_uuid_based!(BlockID);
 impl_crc_hash_for_uuid_based!(ChunkID);
 impl_crc_hash_for_uuid_based!(SequesterServiceID);
 impl_crc_hash_for_uuid_based!(InvitationToken);

@@ -15,12 +15,12 @@ from .common import (
     OrganizationID,
     Password,
     Path,
-    RealmID,
     Result,
     Structure,
     UserID,
     UserProfile,
     Variant,
+    VlobID,
 )
 from .config import ClientConfig
 from .events import OnClientEventCallback
@@ -78,7 +78,7 @@ class ClientListWorkspacesError(ErrorVariant):
 
 async def client_list_workspaces(
     client: Handle,
-) -> Result[list[tuple[RealmID, EntryName]], ClientListWorkspacesError]:
+) -> Result[list[tuple[VlobID, EntryName]], ClientListWorkspacesError]:
     raise NotImplementedError
 
 
@@ -90,7 +90,7 @@ class ClientWorkspaceCreateError(ErrorVariant):
 async def client_workspace_create(
     client: Handle,
     name: EntryName,
-) -> Result[RealmID, ClientWorkspaceCreateError]:
+) -> Result[VlobID, ClientWorkspaceCreateError]:
     raise NotImplementedError
 
 
@@ -104,7 +104,7 @@ class ClientWorkspaceRenameError(ErrorVariant):
 
 async def client_workspace_rename(
     client: Handle,
-    realm_id: RealmID,
+    realm_id: VlobID,
     new_name: EntryName,
 ) -> Result[None, ClientWorkspaceRenameError]:
     raise NotImplementedError
@@ -150,7 +150,7 @@ class ClientWorkspaceShareError(ErrorVariant):
 
 async def client_workspace_share(
     client: Handle,
-    realm_id: RealmID,
+    realm_id: VlobID,
     recipient: UserID,
     role: Optional[RealmRole],
 ) -> Result[None, ClientWorkspaceShareError]:

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from parsec._parsec_pyi.crypto import PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey
-from parsec._parsec_pyi.ids import DeviceID, EntryID
+from parsec._parsec_pyi.ids import DeviceID, VlobID
 from parsec._parsec_pyi.manifest import EntryName
 from parsec._parsec_pyi.time import DateTime
 
@@ -33,7 +33,7 @@ class SharingGrantedMessageContent(MessageContent):
         author: DeviceID,
         timestamp: DateTime,
         name: EntryName,
-        id: EntryID,
+        id: VlobID,
         encryption_revision: int,
         encrypted_on: DateTime,
         key: SecretKey,
@@ -41,7 +41,7 @@ class SharingGrantedMessageContent(MessageContent):
     @property
     def name(self) -> EntryName: ...
     @property
-    def id(self) -> EntryID: ...
+    def id(self) -> VlobID: ...
     @property
     def encryption_revision(self) -> int: ...
     @property
@@ -55,7 +55,7 @@ class SharingReencryptedMessageContent(MessageContent):
         author: DeviceID,
         timestamp: DateTime,
         name: EntryName,
-        id: EntryID,
+        id: VlobID,
         encryption_revision: int,
         encrypted_on: DateTime,
         key: SecretKey,
@@ -63,7 +63,7 @@ class SharingReencryptedMessageContent(MessageContent):
     @property
     def name(self) -> EntryName: ...
     @property
-    def id(self) -> EntryID: ...
+    def id(self) -> VlobID: ...
     @property
     def encryption_revision(self) -> int: ...
     @property
@@ -76,10 +76,10 @@ class SharingRevokedMessageContent(MessageContent):
         self,
         author: DeviceID,
         timestamp: DateTime,
-        id: EntryID,
+        id: VlobID,
     ) -> None: ...
     @property
-    def id(self) -> EntryID: ...
+    def id(self) -> VlobID: ...
 
 class PingMessageContent(MessageContent):
     def __init__(

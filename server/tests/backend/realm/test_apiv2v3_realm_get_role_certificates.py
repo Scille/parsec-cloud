@@ -9,7 +9,6 @@ from parsec._parsec import (
 )
 from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import (
-    RealmID,
     RealmRole,
     VlobID,
 )
@@ -26,7 +25,7 @@ RealmUpdateRolesRepInMaintenance = authenticated_cmds.v3.realm_update_roles
 
 NOW = DateTime(2000, 1, 1)
 VLOB_ID = VlobID.from_hex("00000000000000000000000000000001")
-REALM_ID = RealmID.from_hex("0000000000000000000000000000000A")
+REALM_ID = VlobID.from_hex("0000000000000000000000000000000A")
 
 
 @pytest.mark.trio

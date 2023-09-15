@@ -13,9 +13,9 @@ from parsec._parsec import (
     DateTime,
     DeviceID,
     OrganizationID,
-    RealmID,
     UserID,
     UserProfile,
+    VlobID,
 )
 from parsec.backend.realm import (
     BaseRealmComponent,
@@ -81,7 +81,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         self._message_component: MemoryMessageComponent | None = None
         self._vlob_component: MemoryVlobComponent | None = None
         self._block_component: MemoryBlockComponent | None = None
-        self._realms: Dict[Tuple[OrganizationID, RealmID], Realm] = {}
+        self._realms: Dict[Tuple[OrganizationID, VlobID], Realm] = {}
         self._maintenance_reencryption_is_finished_hook = None
 
     def register_components(
@@ -97,7 +97,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         self._vlob_component = vlob
         self._block_component = block
 
-    def _get_realm(self, organization_id: OrganizationID, realm_id: RealmID) -> Realm:
+    def _get_realm(self, organization_id: OrganizationID, realm_id: VlobID) -> Realm:
         try:
             return self._realms[(organization_id, realm_id)]
         except KeyError:
@@ -133,7 +133,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             raise RealmAlreadyExistsError()
 
     async def get_status(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: VlobID
     ) -> RealmStatus:
         realm = self._get_realm(organization_id, realm_id)
         if author.user_id not in realm.roles:
@@ -141,7 +141,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         return realm.status
 
     async def get_stats(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: VlobID
     ) -> RealmStats:
         assert self._block_component is not None
         assert self._vlob_component is not None
@@ -162,7 +162,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         return RealmStats(blocks_size=blocks_size, vlobs_size=vlobs_size)
 
     async def get_current_roles(
-        self, organization_id: OrganizationID, realm_id: RealmID
+        self, organization_id: OrganizationID, realm_id: VlobID
     ) -> Dict[UserID, RealmRole]:
         realm = self._get_realm(organization_id, realm_id)
         roles: Dict[UserID, RealmRole] = {}
@@ -174,7 +174,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         return roles
 
     async def get_role_certificates(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: VlobID
     ) -> List[bytes]:
         realm = self._get_realm(organization_id, realm_id)
         if author.user_id not in realm.roles:
@@ -290,7 +290,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         encryption_revision: int,
         per_participant_message: Dict[UserID, bytes],
         timestamp: DateTime,
@@ -345,7 +345,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         encryption_revision: int,
     ) -> None:
         assert self._vlob_component is not None
@@ -380,7 +380,7 @@ class MemoryRealmComponent(BaseRealmComponent):
 
     async def get_realms_for_user(
         self, organization_id: OrganizationID, user: UserID
-    ) -> Dict[RealmID, RealmRole]:
+    ) -> Dict[VlobID, RealmRole]:
         user_realms = {}
         for (realm_org_id, realm_id), realm in self._realms.items():
             if realm_org_id != organization_id:

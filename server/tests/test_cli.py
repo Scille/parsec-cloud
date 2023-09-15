@@ -31,7 +31,7 @@ from parsec._parsec import (
     BackendOrganizationAddr,
     DateTime,
 )
-from parsec.api.protocol import RealmID
+from parsec.api.protocol import VlobID
 from parsec.backend.postgresql import MigrationItem
 from parsec.backend.sequester import (
     SequesterServiceAlreadyDisabledError,
@@ -464,7 +464,7 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
                 f"backend sequester update_service {common_args} --enable --service {service_id}",
             )
 
-        async def export_service(service_id: str, realm: RealmID, path: str) -> CliResult:
+        async def export_service(service_id: str, realm: VlobID, path: str) -> CliResult:
             return await _cli_invoke_in_thread(
                 runner,
                 f"backend sequester export_realm {common_args} --service {service_id} --realm {realm.hex} --output {path} -b MOCKED",

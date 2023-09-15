@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from parsec._parsec import RealmID
+from parsec._parsec import VlobID
 
 class Req:
-    def __init__(self, realm_id: RealmID) -> None: ...
+    def __init__(self, realm_id: VlobID) -> None: ...
     def dump(self) -> bytes: ...
     @property
-    def realm_id(self) -> RealmID: ...
+    def realm_id(self) -> VlobID: ...
 
 class Rep:
     @staticmethod

@@ -11,7 +11,7 @@ use url::Url;
 
 use libparsec_crypto::VerifyKey;
 
-use crate::{EntryID, InvitationToken, InvitationType, OrganizationID};
+use crate::{InvitationToken, InvitationType, OrganizationID, VlobID};
 
 const PARSEC_SCHEME: &str = "parsec";
 const PARSEC_SSL_DEFAULT_PORT: u16 = 443;
@@ -679,7 +679,7 @@ impl BackendOrganizationBootstrapAddr {
 pub struct BackendOrganizationFileLinkAddr {
     base: BaseBackendAddr,
     organization_id: OrganizationID,
-    workspace_id: EntryID,
+    workspace_id: VlobID,
     encrypted_path: Vec<u8>,
     encrypted_timestamp: Option<Vec<u8>>,
 }
@@ -690,7 +690,7 @@ impl BackendOrganizationFileLinkAddr {
     pub fn new(
         backend_addr: impl Into<BackendAddr>,
         organization_id: OrganizationID,
-        workspace_id: EntryID,
+        workspace_id: VlobID,
         encrypted_path: Vec<u8>,
         encrypted_timestamp: Option<Vec<u8>>,
     ) -> Self {
@@ -741,7 +741,7 @@ impl BackendOrganizationFileLinkAddr {
                 .get("workspace_id")
                 .ok_or(AddrError::MissingParam("workspace_id"))
                 .and_then(|v| {
-                    EntryID::from_hex(v).map_err(|e| AddrError::InvalidParamValue {
+                    VlobID::from_hex(v).map_err(|e| AddrError::InvalidParamValue {
                         param: "workspace_id",
                         value: v.to_string(),
                         help: e.to_string(),
@@ -787,7 +787,7 @@ impl BackendOrganizationFileLinkAddr {
         &self.organization_id
     }
 
-    pub fn workspace_id(&self) -> EntryID {
+    pub fn workspace_id(&self) -> VlobID {
         self.workspace_id
     }
 

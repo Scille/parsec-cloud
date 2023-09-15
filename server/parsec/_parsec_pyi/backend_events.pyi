@@ -7,7 +7,6 @@ from parsec._parsec import (
     InvitationStatus,
     InvitationToken,
     OrganizationID,
-    RealmID,
     RealmRole,
     UserID,
     UserProfile,
@@ -108,13 +107,13 @@ class BackendEventRealmMaintenanceFinished(BackendEvent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         encryption_revision: int,
     ) -> None: ...
     @property
     def author(self) -> DeviceID: ...
     @property
-    def realm_id(self) -> RealmID: ...
+    def realm_id(self) -> VlobID: ...
     @property
     def encryption_revision(self) -> int: ...
 
@@ -123,13 +122,13 @@ class BackendEventRealmMaintenanceStarted(BackendEvent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         encryption_revision: int,
     ) -> None: ...
     @property
     def author(self) -> DeviceID: ...
     @property
-    def realm_id(self) -> RealmID: ...
+    def realm_id(self) -> VlobID: ...
     @property
     def encryption_revision(self) -> int: ...
 
@@ -138,7 +137,7 @@ class BackendEventRealmVlobsUpdated(BackendEvent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         checkpoint: int,
         src_id: VlobID,
         src_version: int,
@@ -146,7 +145,7 @@ class BackendEventRealmVlobsUpdated(BackendEvent):
     @property
     def author(self) -> DeviceID: ...
     @property
-    def realm_id(self) -> RealmID: ...
+    def realm_id(self) -> VlobID: ...
     @property
     def checkpoint(self) -> int: ...
     @property
@@ -159,14 +158,14 @@ class BackendEventRealmRolesUpdated(BackendEvent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         user: UserID,
         role: RealmRole | None,
     ) -> None: ...
     @property
     def author(self) -> DeviceID: ...
     @property
-    def realm_id(self) -> RealmID: ...
+    def realm_id(self) -> VlobID: ...
     @property
     def user(self) -> UserID: ...
     @property

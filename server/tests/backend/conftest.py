@@ -13,7 +13,6 @@ from parsec.api.protocol import (
     InvitationType,
     InvitedClientHandshake,
     OrganizationID,
-    RealmID,
     RealmRole,
     VlobID,
 )
@@ -141,7 +140,7 @@ async def anonymous_backend_ws(backend_asgi_app, backend_anonymous_ws_factory, c
 @pytest.fixture
 def realm_factory(next_timestamp):
     async def _realm_factory(backend, author, realm_id=None, now=None):
-        realm_id = realm_id or RealmID.new()
+        realm_id = realm_id or VlobID.new()
         now = now or next_timestamp()
         certif = RealmRoleCertificate.build_realm_root_certif(
             author=author.device_id, timestamp=now, realm_id=realm_id
@@ -166,7 +165,7 @@ def realm_factory(next_timestamp):
 
 @pytest.fixture
 async def realm(backend, alice, realm_factory):
-    realm_id = RealmID.from_hex("A0000000000000000000000000000000")
+    realm_id = VlobID.from_hex("A0000000000000000000000000000000")
     return await realm_factory(backend, alice, realm_id, DateTime(2000, 1, 2))
 
 
@@ -213,11 +212,11 @@ async def vlob_atoms(vlobs):
 
 @pytest.fixture
 async def other_realm(backend, alice, realm_factory):
-    realm_id = RealmID.from_hex("B0000000000000000000000000000000")
+    realm_id = VlobID.from_hex("B0000000000000000000000000000000")
     return await realm_factory(backend, alice, realm_id, DateTime(2000, 1, 2))
 
 
 @pytest.fixture
 async def bob_realm(backend, bob, realm_factory):
-    realm_id = RealmID.from_hex("C0000000000000000000000000000000")
+    realm_id = VlobID.from_hex("C0000000000000000000000000000000")
     return await realm_factory(backend, bob, realm_id, DateTime(2000, 1, 2))

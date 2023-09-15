@@ -11,9 +11,9 @@ from parsec._parsec import (
     DateTime,
     DeviceID,
     OrganizationID,
-    RealmID,
     RealmRole,
     UserID,
+    VlobID,
 )
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.message import send_message
@@ -49,7 +49,7 @@ _q_get_realm_status = Q(
 
 
 async def get_realm_status(
-    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, realm_id: RealmID
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, realm_id: VlobID
 ) -> RealmStatus:
     rep = await conn.fetchrow(
         *_q_get_realm_status(organization_id=organization_id.str, realm_id=realm_id)
@@ -104,7 +104,7 @@ ORDER BY user_, certified_on DESC
 async def _get_realm_role_for_not_revoked(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
-    realm_id: RealmID,
+    realm_id: VlobID,
     users: List[UserID] | None = None,
 ) -> dict[UserID, RealmRole | None]:
     now = DateTime.now()
@@ -174,7 +174,7 @@ async def query_start_reencryption_maintenance(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
-    realm_id: RealmID,
+    realm_id: VlobID,
     encryption_revision: int,
     per_participant_message: Dict[UserID, bytes],
     timestamp: DateTime,
@@ -266,7 +266,7 @@ async def query_finish_reencryption_maintenance(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
-    realm_id: RealmID,
+    realm_id: VlobID,
     encryption_revision: int,
 ) -> None:
     # Retrieve realm and make sure it is not under maintenance

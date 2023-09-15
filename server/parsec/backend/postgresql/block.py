@@ -4,7 +4,7 @@ from __future__ import annotations
 import triopg
 from triopg.exceptions import UniqueViolationError
 
-from parsec._parsec import BlockID, DateTime, DeviceID, OrganizationID, RealmID
+from parsec._parsec import BlockID, DateTime, DeviceID, OrganizationID, VlobID
 from parsec.backend.block import (
     BaseBlockComponent,
     BlockAccessError,
@@ -101,7 +101,7 @@ VALUES (
 async def _check_realm(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
-    realm_id: RealmID,
+    realm_id: VlobID,
     operation_kind: OperationKind,
 ) -> None:
     # Fetch the realm status maintenance type
@@ -135,7 +135,7 @@ class PGBlockComponent(BaseBlockComponent):
             )
             if not realm_id_uuid:
                 raise BlockNotFoundError()
-            realm_id = RealmID.from_hex(realm_id_uuid)
+            realm_id = VlobID.from_hex(realm_id_uuid)
             await _check_realm(conn, organization_id, realm_id, OperationKind.DATA_READ)
             ret = await conn.fetchrow(
                 *_q_get_block_meta(
@@ -159,7 +159,7 @@ class PGBlockComponent(BaseBlockComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         block_id: BlockID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         block: bytes,
         created_on: DateTime | None = None,
     ) -> None:

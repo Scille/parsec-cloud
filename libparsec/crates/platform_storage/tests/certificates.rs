@@ -99,7 +99,7 @@ async fn get_last_index(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
 
     let device_id = &alice.device_id;
     let user_id = alice.device_id.user_id();
-    let realm_id = RealmID::from_hex("fe15ca8ad55140d08b4951f26f7073d5").unwrap();
+    let realm_id = VlobID::from_hex("fe15ca8ad55140d08b4951f26f7073d5").unwrap();
     let service_id = SequesterServiceID::from_hex("a065170f3b6649f997ec14dbe36c5c13").unwrap();
 
     let t1 = timestamps.next();
@@ -164,7 +164,7 @@ async fn get_timestamp_bounds(mut timestamps: TimestampGenerator, env: &TestbedE
 
     let user_id = alice.device_id.user_id();
     let device_id = &alice.device_id;
-    let realm_id = RealmID::from_hex("fe15ca8ad55140d08b4951f26f7073d5").unwrap();
+    let realm_id = VlobID::from_hex("fe15ca8ad55140d08b4951f26f7073d5").unwrap();
     let service_id = SequesterServiceID::from_hex("a065170f3b6649f997ec14dbe36c5c13").unwrap();
 
     let t1 = timestamps.next();
@@ -324,8 +324,8 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
     let user_id = alice.device_id.user_id();
     let other_user_id = &"bob".parse::<UserID>().unwrap();
     let device_id = &alice.device_id;
-    let realm_id = RealmID::from_hex("fe15ca8ad55140d08b4951f26f7073d5").unwrap();
-    let other_realm_id = RealmID::from_hex("810d8d137b934985b62627042058aee4").unwrap();
+    let realm_id = VlobID::from_hex("fe15ca8ad55140d08b4951f26f7073d5").unwrap();
+    let other_realm_id = VlobID::from_hex("810d8d137b934985b62627042058aee4").unwrap();
     let service_id1 = SequesterServiceID::from_hex("a065170f3b6649f997ec14dbe36c5c13").unwrap();
     let service_id2 = SequesterServiceID::from_hex("fc93467e47ec48a2b654fe8bf28fe7ea").unwrap();
 
@@ -581,7 +581,7 @@ async fn add_already_existing_index(mut timestamps: TimestampGenerator, env: &Te
 
     let user_id = alice.device_id.user_id();
     let device_id = &alice.device_id;
-    let realm_id = RealmID::from_hex("fe15ca8ad55140d08b4951f26f7073d5").unwrap();
+    let realm_id = VlobID::from_hex("fe15ca8ad55140d08b4951f26f7073d5").unwrap();
     let service_id = SequesterServiceID::from_hex("a065170f3b6649f997ec14dbe36c5c13").unwrap();
 
     let t1 = timestamps.next();
@@ -658,7 +658,7 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
 
     let user_id = alice.device_id.user_id();
     let device_id = &alice.device_id;
-    let realm_id = RealmID::from_hex("fe15ca8ad55140d08b4951f26f7073d5").unwrap();
+    let realm_id = VlobID::from_hex("fe15ca8ad55140d08b4951f26f7073d5").unwrap();
     let service_id = SequesterServiceID::from_hex("a065170f3b6649f997ec14dbe36c5c13").unwrap();
 
     // Add certificates

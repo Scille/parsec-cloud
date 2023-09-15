@@ -4,7 +4,7 @@ from typing import Optional
 
 import pytest
 
-from parsec._parsec import BlockID, DateTime, RealmID, RealmRole, VlobID
+from parsec._parsec import BlockID, DateTime, RealmRole, VlobID
 from parsec.api.protocol.types import UserProfile
 from parsec.backend.app import BackendApp
 from parsec.backend.realm import RealmGrantedRole
@@ -151,7 +151,7 @@ async def test_stats(
         dtx3 = DateTime(2000, i, 3)
         dtx4 = DateTime(2000, i, 4)
         for _ in range(2):
-            realm_id = RealmID.new()
+            realm_id = VlobID.new()
             await backend.realm.create(
                 organization_id=org.organization_id,
                 self_granted_role=RealmGrantedRole(
@@ -221,7 +221,7 @@ async def test_stats(
     await backend.realm.create(
         organization_id=org.organization_id,
         self_granted_role=RealmGrantedRole(
-            realm_id=RealmID.new(),
+            realm_id=VlobID.new(),
             user_id=org_d1.user_id,
             certificate=b"<whatever>",
             role=RealmRole.OWNER,

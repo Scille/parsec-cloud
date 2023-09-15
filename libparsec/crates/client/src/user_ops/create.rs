@@ -10,7 +10,7 @@ use super::UserOps;
 pub(super) async fn workspace_create(
     ops: &UserOps,
     name: EntryName,
-) -> Result<RealmID, anyhow::Error> {
+) -> Result<VlobID, anyhow::Error> {
     let (updater, mut user_manifest) = ops.storage.for_update().await;
 
     let timestamp = ops.device.time_provider.now();
@@ -48,14 +48,14 @@ pub(super) async fn workspace_create(
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceRenameError {
     #[error("Unknown workspace `{0}`")]
-    UnknownWorkspace(RealmID),
+    UnknownWorkspace(VlobID),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
 
 pub(super) async fn workspace_rename(
     ops: &UserOps,
-    realm_id: RealmID,
+    realm_id: VlobID,
     new_name: EntryName,
 ) -> Result<(), WorkspaceRenameError> {
     let (updater, mut user_manifest) = ops.storage.for_update().await;

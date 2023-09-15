@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from parsec._parsec import RealmID, ReencryptionBatchEntry
+from parsec._parsec import ReencryptionBatchEntry, VlobID
 
 class Req:
     def __init__(
-        self, realm_id: RealmID, encryption_revision: int, batch: list[ReencryptionBatchEntry]
+        self, realm_id: VlobID, encryption_revision: int, batch: list[ReencryptionBatchEntry]
     ) -> None: ...
     def dump(self) -> bytes: ...
     @property
-    def realm_id(self) -> RealmID: ...
+    def realm_id(self) -> VlobID: ...
     @property
     def encryption_revision(self) -> int: ...
     @property

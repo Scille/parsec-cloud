@@ -34,7 +34,7 @@ pub(super) fn get_user_data_storage_db_relative_path(device: &LocalDevice) -> Pa
 /// Path relative to config dir
 pub(super) fn get_workspace_data_storage_db_relative_path(
     device: &LocalDevice,
-    realm_id: &RealmID,
+    realm_id: &VlobID,
 ) -> PathBuf {
     let slug = device.slug();
     PathBuf::from_iter([
@@ -48,7 +48,7 @@ pub(super) fn get_workspace_data_storage_db_relative_path(
 /// Path relative to config dir
 pub(super) fn get_workspace_cache_storage_db_relative_path(
     device: &LocalDevice,
-    realm_id: &RealmID,
+    realm_id: &VlobID,
 ) -> PathBuf {
     let slug = device.slug();
     PathBuf::from_iter([

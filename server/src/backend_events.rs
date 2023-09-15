@@ -4,8 +4,8 @@ use pyo3::{exceptions::PyValueError, prelude::*, types::PyBytes};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    BytesWrapper, DeviceID, InvitationStatus, InvitationToken, OrganizationID, RealmID, RealmRole,
-    UserID, UserProfile, VlobID,
+    BytesWrapper, DeviceID, InvitationStatus, InvitationToken, OrganizationID, RealmRole, UserID,
+    UserProfile, VlobID,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -56,21 +56,21 @@ enum RawBackendEvent {
     RealmMaintenanceFinished {
         organization_id: libparsec::low_level::types::OrganizationID,
         author: libparsec::low_level::types::DeviceID,
-        realm_id: libparsec::low_level::types::RealmID,
+        realm_id: libparsec::low_level::types::VlobID,
         encryption_revision: u64,
     },
     #[serde(rename = "realm.maintenance_started")]
     RealmMaintenanceStarted {
         organization_id: libparsec::low_level::types::OrganizationID,
         author: libparsec::low_level::types::DeviceID,
-        realm_id: libparsec::low_level::types::RealmID,
+        realm_id: libparsec::low_level::types::VlobID,
         encryption_revision: u64,
     },
     #[serde(rename = "realm.vlobs_updated")]
     RealmVlobsUpdated {
         organization_id: libparsec::low_level::types::OrganizationID,
         author: libparsec::low_level::types::DeviceID,
-        realm_id: libparsec::low_level::types::RealmID,
+        realm_id: libparsec::low_level::types::VlobID,
         checkpoint: u64,
         src_id: libparsec::low_level::types::VlobID,
         src_version: u64,
@@ -79,7 +79,7 @@ enum RawBackendEvent {
     RealmRolesUpdated {
         organization_id: libparsec::low_level::types::OrganizationID,
         author: libparsec::low_level::types::DeviceID,
-        realm_id: libparsec::low_level::types::RealmID,
+        realm_id: libparsec::low_level::types::VlobID,
         user: libparsec::low_level::types::UserID,
         role: Option<libparsec::low_level::types::RealmRole>,
     },
@@ -528,7 +528,7 @@ impl BackendEventRealmMaintenanceFinished {
     fn new(
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         encryption_revision: u64,
     ) -> PyResult<(Self, BackendEvent)> {
         Ok((
@@ -553,9 +553,9 @@ impl BackendEventRealmMaintenanceFinished {
     }
 
     #[getter]
-    fn realm_id(_self: PyRef<Self>) -> PyResult<RealmID> {
+    fn realm_id(_self: PyRef<Self>) -> PyResult<VlobID> {
         match &_self.into_super().0 {
-            RawBackendEvent::RealmMaintenanceFinished { realm_id, .. } => Ok(RealmID(*realm_id)),
+            RawBackendEvent::RealmMaintenanceFinished { realm_id, .. } => Ok(VlobID(*realm_id)),
             _ => unreachable!(),
         }
     }
@@ -586,7 +586,7 @@ impl BackendEventRealmMaintenanceStarted {
     fn new(
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         encryption_revision: u64,
     ) -> PyResult<(Self, BackendEvent)> {
         Ok((
@@ -609,9 +609,9 @@ impl BackendEventRealmMaintenanceStarted {
     }
 
     #[getter]
-    fn realm_id(_self: PyRef<Self>) -> PyResult<RealmID> {
+    fn realm_id(_self: PyRef<Self>) -> PyResult<VlobID> {
         match &_self.into_super().0 {
-            RawBackendEvent::RealmMaintenanceStarted { realm_id, .. } => Ok(RealmID(*realm_id)),
+            RawBackendEvent::RealmMaintenanceStarted { realm_id, .. } => Ok(VlobID(*realm_id)),
             _ => unreachable!(),
         }
     }
@@ -642,7 +642,7 @@ impl BackendEventRealmVlobsUpdated {
     fn new(
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         checkpoint: u64,
         src_id: VlobID,
         src_version: u64,
@@ -669,9 +669,9 @@ impl BackendEventRealmVlobsUpdated {
     }
 
     #[getter]
-    fn realm_id(_self: PyRef<Self>) -> PyResult<RealmID> {
+    fn realm_id(_self: PyRef<Self>) -> PyResult<VlobID> {
         match &_self.into_super().0 {
-            RawBackendEvent::RealmVlobsUpdated { realm_id, .. } => Ok(RealmID(*realm_id)),
+            RawBackendEvent::RealmVlobsUpdated { realm_id, .. } => Ok(VlobID(*realm_id)),
             _ => unreachable!(),
         }
     }
@@ -715,7 +715,7 @@ impl BackendEventRealmRolesUpdated {
     fn new(
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         user: UserID,
         role: Option<RealmRole>,
     ) -> PyResult<(Self, BackendEvent)> {
@@ -740,9 +740,9 @@ impl BackendEventRealmRolesUpdated {
     }
 
     #[getter]
-    fn realm_id(_self: PyRef<Self>) -> PyResult<RealmID> {
+    fn realm_id(_self: PyRef<Self>) -> PyResult<VlobID> {
         match &_self.into_super().0 {
-            RawBackendEvent::RealmRolesUpdated { realm_id, .. } => Ok(RealmID(*realm_id)),
+            RawBackendEvent::RealmRolesUpdated { realm_id, .. } => Ok(VlobID(*realm_id)),
             _ => unreachable!(),
         }
     }

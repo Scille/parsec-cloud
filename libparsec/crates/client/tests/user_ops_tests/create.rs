@@ -54,7 +54,7 @@ async fn rename_unknown_id(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let user_ops = user_ops_factory(env, &alice).await;
 
-    let bad_wid = RealmID::default();
+    let bad_wid = VlobID::default();
 
     let outcome = user_ops
         .workspace_rename(bad_wid, "wksp1'".parse().unwrap())

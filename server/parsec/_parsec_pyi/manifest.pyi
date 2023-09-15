@@ -8,12 +8,12 @@ from parsec._parsec import (
     BlockID,
     DateTime,
     DeviceID,
-    EntryID,
     HashDigest,
     RealmRole,
     SecretKey,
     SigningKey,
     VerifyKey,
+    VlobID,
 )
 from parsec.types import FrozenDict
 
@@ -37,7 +37,7 @@ class WorkspaceEntry:
     def __init__(
         self,
         name: EntryName,
-        id: EntryID,
+        id: VlobID,
         key: SecretKey,
         encryption_revision: int,
         encrypted_on: DateTime,
@@ -45,7 +45,7 @@ class WorkspaceEntry:
         legacy_role_cache_value: RealmRole | None,
     ) -> None: ...
     @property
-    def id(self) -> EntryID: ...
+    def id(self) -> VlobID: ...
     @property
     def name(self) -> EntryName: ...
     @property
@@ -82,19 +82,19 @@ class FolderManifest:
         self,
         author: DeviceID,
         timestamp: DateTime,
-        id: EntryID,
-        parent: EntryID,
+        id: VlobID,
+        parent: VlobID,
         version: int,
         created: DateTime,
         updated: DateTime,
-        children: FrozenDict[EntryName, EntryID],
+        children: FrozenDict[EntryName, VlobID],
     ) -> None: ...
     @property
     def author(self) -> DeviceID: ...
     @property
-    def id(self) -> EntryID: ...
+    def id(self) -> VlobID: ...
     @property
-    def parent(self) -> EntryID: ...
+    def parent(self) -> VlobID: ...
     @property
     def version(self) -> int: ...
     @property
@@ -104,7 +104,7 @@ class FolderManifest:
     @property
     def updated(self) -> DateTime: ...
     @property
-    def children(self) -> FrozenDict[EntryName, EntryID]: ...
+    def children(self) -> FrozenDict[EntryName, VlobID]: ...
     def evolve(self, **kwargs: Any) -> FolderManifest: ...
     def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
     def dump_sign_and_encrypt(self, author_signkey: SigningKey, key: SecretKey) -> bytes: ...
@@ -116,7 +116,7 @@ class FolderManifest:
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: DateTime,
-        expected_id: EntryID | None = None,
+        expected_id: VlobID | None = None,
         expected_version: int | None = None,
     ) -> FolderManifest: ...
 
@@ -125,8 +125,8 @@ class FileManifest:
         self,
         author: DeviceID,
         timestamp: DateTime,
-        id: EntryID,
-        parent: EntryID,
+        id: VlobID,
+        parent: VlobID,
         version: int,
         created: DateTime,
         updated: DateTime,
@@ -137,9 +137,9 @@ class FileManifest:
     @property
     def author(self) -> DeviceID: ...
     @property
-    def id(self) -> EntryID: ...
+    def id(self) -> VlobID: ...
     @property
-    def parent(self) -> EntryID: ...
+    def parent(self) -> VlobID: ...
     @property
     def version(self) -> int: ...
     @property
@@ -165,7 +165,7 @@ class FileManifest:
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: DateTime,
-        expected_id: EntryID | None = None,
+        expected_id: VlobID | None = None,
         expected_version: int | None = None,
     ) -> FileManifest: ...
 
@@ -174,16 +174,16 @@ class WorkspaceManifest:
         self,
         author: DeviceID,
         timestamp: DateTime,
-        id: EntryID,
+        id: VlobID,
         version: int,
         created: DateTime,
         updated: DateTime,
-        children: FrozenDict[EntryName, EntryID],
+        children: FrozenDict[EntryName, VlobID],
     ) -> None: ...
     @property
     def author(self) -> DeviceID: ...
     @property
-    def id(self) -> EntryID: ...
+    def id(self) -> VlobID: ...
     @property
     def version(self) -> int: ...
     @property
@@ -193,7 +193,7 @@ class WorkspaceManifest:
     @property
     def updated(self) -> DateTime: ...
     @property
-    def children(self) -> FrozenDict[EntryName, EntryID]: ...
+    def children(self) -> FrozenDict[EntryName, VlobID]: ...
     def evolve(self, **kwargs: Any) -> WorkspaceManifest: ...
     def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
     def dump_sign_and_encrypt(self, author_signkey: SigningKey, key: SecretKey) -> bytes: ...
@@ -205,7 +205,7 @@ class WorkspaceManifest:
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: DateTime,
-        expected_id: EntryID | None = None,
+        expected_id: VlobID | None = None,
         expected_version: int | None = None,
     ) -> WorkspaceManifest: ...
     @classmethod
@@ -215,7 +215,7 @@ class WorkspaceManifest:
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: DateTime,
-        expected_id: EntryID | None = None,
+        expected_id: VlobID | None = None,
         expected_version: int | None = None,
     ) -> WorkspaceManifest: ...
 
@@ -224,7 +224,7 @@ class UserManifest:
         self,
         author: DeviceID,
         timestamp: DateTime,
-        id: EntryID,
+        id: VlobID,
         version: int,
         created: DateTime,
         updated: DateTime,
@@ -234,7 +234,7 @@ class UserManifest:
     @property
     def author(self) -> DeviceID: ...
     @property
-    def id(self) -> EntryID: ...
+    def id(self) -> VlobID: ...
     @property
     def version(self) -> int: ...
     @property
@@ -258,10 +258,10 @@ class UserManifest:
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: DateTime,
-        expected_id: EntryID | None = None,
+        expected_id: VlobID | None = None,
         expected_version: int | None = None,
     ) -> UserManifest: ...
-    def get_workspace_entry(self, workspace_id: EntryID) -> WorkspaceEntry | None: ...
+    def get_workspace_entry(self, workspace_id: VlobID) -> WorkspaceEntry | None: ...
 
 def child_manifest_decrypt_verify_and_load(
     encrypted: bytes,
@@ -269,7 +269,7 @@ def child_manifest_decrypt_verify_and_load(
     author_verify_key: VerifyKey,
     expected_author: DeviceID,
     expected_timestamp: DateTime,
-    expected_id: EntryID | None = None,
+    expected_id: VlobID | None = None,
     expected_version: int | None = None,
 ) -> ChildManifest: ...
 def child_manifest_verify_and_load(
@@ -277,6 +277,6 @@ def child_manifest_verify_and_load(
     author_verify_key: VerifyKey,
     expected_author: DeviceID,
     expected_timestamp: DateTime,
-    expected_id: EntryID | None = None,
+    expected_id: VlobID | None = None,
     expected_version: int | None = None,
 ) -> ChildManifest: ...

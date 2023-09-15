@@ -8,7 +8,7 @@ use pyo3::{
 };
 use std::str::FromStr;
 
-use crate::{BytesWrapper, EntryID, InvitationToken, InvitationType, OrganizationID, VerifyKey};
+use crate::{BytesWrapper, InvitationToken, InvitationType, OrganizationID, VerifyKey, VlobID};
 
 crate::binding_utils::gen_py_wrapper_class!(
     BackendAddr,
@@ -435,7 +435,7 @@ impl BackendOrganizationFileLinkAddr {
     #[pyo3(signature = (organization_id, workspace_id, encrypted_path, encrypted_timestamp = None, **py_kwargs))]
     fn new(
         organization_id: OrganizationID,
-        workspace_id: EntryID,
+        workspace_id: VlobID,
         encrypted_path: BytesWrapper,
         encrypted_timestamp: Option<BytesWrapper>,
         py_kwargs: Option<&PyDict>,
@@ -509,8 +509,8 @@ impl BackendOrganizationFileLinkAddr {
     }
 
     #[getter]
-    fn workspace_id(&self) -> EntryID {
-        EntryID(self.0.workspace_id())
+    fn workspace_id(&self) -> VlobID {
+        VlobID(self.0.workspace_id())
     }
 
     #[getter]
@@ -562,7 +562,7 @@ impl BackendOrganizationFileLinkAddr {
     fn build(
         _cls: &PyType,
         organization_addr: BackendOrganizationAddr,
-        workspace_id: EntryID,
+        workspace_id: VlobID,
         encrypted_path: BytesWrapper,
         encrypted_timestamp: Option<BytesWrapper>,
     ) -> Self {

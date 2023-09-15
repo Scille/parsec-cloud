@@ -24,7 +24,7 @@
         },
         {
             "name": "user_manifest_id",
-            "type": "EntryID"
+            "type": "VlobID"
         },
         {
             "name": "user_manifest_key",

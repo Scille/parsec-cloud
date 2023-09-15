@@ -52,8 +52,8 @@ macro_rules! gen_uuid {
 }
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
-    EntryID,
-    libparsec::low_level::types::EntryID,
+    VlobID,
+    libparsec::low_level::types::VlobID,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -62,7 +62,7 @@ crate::binding_utils::gen_py_wrapper_class_for_id!(
     __hash__,
 );
 
-gen_uuid!(EntryID);
+gen_uuid!(VlobID);
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
     BlockID,
@@ -76,54 +76,6 @@ crate::binding_utils::gen_py_wrapper_class_for_id!(
 );
 
 gen_uuid!(BlockID);
-
-crate::binding_utils::gen_py_wrapper_class_for_id!(
-    RealmID,
-    libparsec::low_level::types::RealmID,
-    __repr__,
-    __copy__,
-    __deepcopy__,
-    __str__,
-    __richcmp__ ord,
-    __hash__,
-);
-
-gen_uuid!(RealmID);
-
-#[pymethods]
-impl RealmID {
-    fn to_entry_id(&self) -> EntryID {
-        EntryID(libparsec::low_level::types::EntryID::from(*self.0))
-    }
-    #[classmethod]
-    fn from_entry_id(_cls: &PyType, id: EntryID) -> Self {
-        Self(libparsec::low_level::types::RealmID::from(*id.0))
-    }
-}
-
-crate::binding_utils::gen_py_wrapper_class_for_id!(
-    VlobID,
-    libparsec::low_level::types::VlobID,
-    __repr__,
-    __copy__,
-    __deepcopy__,
-    __str__,
-    __richcmp__ ord,
-    __hash__,
-);
-
-gen_uuid!(VlobID);
-
-#[pymethods]
-impl VlobID {
-    fn to_entry_id(&self) -> EntryID {
-        EntryID(libparsec::low_level::types::EntryID::from(*self.0))
-    }
-    #[classmethod]
-    fn from_entry_id(_cls: &PyType, id: EntryID) -> Self {
-        Self(libparsec::low_level::types::VlobID::from(*id.0))
-    }
-}
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
     ChunkID,

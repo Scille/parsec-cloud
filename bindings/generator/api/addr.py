@@ -3,7 +3,6 @@
 from typing import Optional
 
 from .common import (
-    EntryID,
     ErrorVariant,
     InvitationToken,
     OrganizationID,
@@ -12,6 +11,7 @@ from .common import (
     StrBasedType,
     U32BasedType,
     Variant,
+    VlobID,
 )
 
 
@@ -58,7 +58,7 @@ class ParsedBackendAddr(Variant):
         port: U32BasedType
         use_ssl: bool
         organization_id: OrganizationID
-        workspace_id: EntryID
+        workspace_id: VlobID
         encrypted_path: bytes
         encrypted_timestamp: Optional[bytes]
 

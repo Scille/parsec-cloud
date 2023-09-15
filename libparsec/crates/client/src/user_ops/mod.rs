@@ -73,7 +73,7 @@ impl UserOps {
     // For readability, we define the public interface here and let the actual
     // implementation in separated submodules
 
-    pub fn list_workspaces(&self) -> Vec<(RealmID, EntryName)> {
+    pub fn list_workspaces(&self) -> Vec<(VlobID, EntryName)> {
         let user_manifest = self.storage.get_user_manifest();
         user_manifest
             .workspaces
@@ -93,13 +93,13 @@ impl UserOps {
         sync::sync(self).await
     }
 
-    pub async fn workspace_create(&self, name: EntryName) -> Result<RealmID, anyhow::Error> {
+    pub async fn workspace_create(&self, name: EntryName) -> Result<VlobID, anyhow::Error> {
         create::workspace_create(self, name).await
     }
 
     pub async fn workspace_rename(
         &self,
-        realm_id: RealmID,
+        realm_id: VlobID,
         new_name: EntryName,
     ) -> Result<(), WorkspaceRenameError> {
         create::workspace_rename(self, realm_id, new_name).await
@@ -107,7 +107,7 @@ impl UserOps {
 
     pub async fn workspace_share(
         &self,
-        realm_id: RealmID,
+        realm_id: VlobID,
         recipient: &UserID,
         role: Option<RealmRole>,
     ) -> Result<(), WorkspaceShareError> {
@@ -116,14 +116,14 @@ impl UserOps {
 
     pub async fn workspace_start_reencryption(
         &self,
-        _realm_id: &RealmID,
+        _realm_id: &VlobID,
     ) -> Result<ReencryptionJob, anyhow::Error> {
         todo!()
     }
 
     pub async fn workspace_continue_reencryption(
         &self,
-        _realm_id: &RealmID,
+        _realm_id: &VlobID,
     ) -> Result<ReencryptionJob, anyhow::Error> {
         todo!()
     }

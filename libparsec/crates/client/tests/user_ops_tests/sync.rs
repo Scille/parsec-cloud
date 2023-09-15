@@ -45,7 +45,7 @@ async fn sync_non_placeholder(env: &TestbedEnv) {
         &env.discriminant_dir,
         move |req: authenticated_cmds::latest::vlob_update::Req| {
             p_assert_eq!(req.encryption_revision, 1);
-            p_assert_eq!(req.vlob_id, alice.user_manifest_id.into());
+            p_assert_eq!(req.vlob_id, alice.user_manifest_id);
             p_assert_eq!(req.version, 2);
             assert!(req.sequester_blob.is_none());
 
@@ -104,7 +104,7 @@ async fn sync_placeholder(#[case] is_speculative: bool, env: &TestbedEnv) {
                     &req.role_certificate,
                     &alice.verify_key(),
                     CertificateSignerRef::User(&alice.device_id),
-                    Some(alice.user_manifest_id.into()),
+                    Some(alice.user_manifest_id),
                     Some(alice.user_id()),
                 )
                 .unwrap();
@@ -113,8 +113,8 @@ async fn sync_placeholder(#[case] is_speculative: bool, env: &TestbedEnv) {
         },
         // 2) `vlob_create`
         move |req: authenticated_cmds::latest::vlob_create::Req| {
-            p_assert_eq!(req.realm_id, alice.user_manifest_id.into());
-            p_assert_eq!(req.vlob_id, alice.user_manifest_id.into());
+            p_assert_eq!(req.realm_id, alice.user_manifest_id);
+            p_assert_eq!(req.vlob_id, alice.user_manifest_id);
             authenticated_cmds::latest::vlob_create::Rep::Ok {}
         },
     );

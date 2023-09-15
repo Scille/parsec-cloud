@@ -5,7 +5,7 @@ from typing import Tuple
 
 import triopg
 
-from parsec._parsec import DateTime, DeviceID, OrganizationID, RealmID, VlobID
+from parsec._parsec import DateTime, DeviceID, OrganizationID, VlobID
 from parsec.backend.postgresql.realm_queries.maintenance import RealmNotFoundError, get_realm_status
 from parsec.backend.postgresql.utils import (
     Q,
@@ -29,7 +29,7 @@ from parsec.backend.vlob import (
 async def _check_realm(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
-    realm_id: RealmID,
+    realm_id: VlobID,
     encryption_revision: int | None,
     operation_kind: OperationKind,
 ) -> None:
@@ -95,7 +95,7 @@ WHERE user_._id = { q_user_internal_id(organization_id="$organization_id", user_
 async def _check_realm_access(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
-    realm_id: RealmID,
+    realm_id: VlobID,
     author: DeviceID,
     allowed_roles: Tuple[RealmRole, ...],
 ) -> DateTime:
@@ -120,7 +120,7 @@ async def _check_realm_and_read_access(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
-    realm_id: RealmID,
+    realm_id: VlobID,
     encryption_revision: int | None,
 ) -> None:
     await _check_realm(
@@ -134,7 +134,7 @@ async def _check_realm_and_write_access(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
-    realm_id: RealmID,
+    realm_id: VlobID,
     encryption_revision: int | None,
     timestamp: DateTime,
 ) -> None:
@@ -174,19 +174,19 @@ LIMIT 1
 
 async def _get_realm_id_from_vlob_id(
     conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, vlob_id: VlobID
-) -> RealmID:
+) -> VlobID:
     realm_id_uuid = await conn.fetchval(
         *_q_get_realm_id_from_vlob_id(organization_id=organization_id.str, vlob_id=vlob_id)
     )
     if not realm_id_uuid:
         raise VlobNotFoundError(f"Vlob `{vlob_id.hex}` doesn't exist")
-    return RealmID.from_hex(realm_id_uuid)
+    return VlobID.from_hex(realm_id_uuid)
 
 
 async def _get_last_role_granted_on(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
-    realm_id: RealmID,
+    realm_id: VlobID,
     author: DeviceID,
 ) -> DateTime | None:
     rep = await conn.fetchrow(

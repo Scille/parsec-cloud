@@ -5,7 +5,6 @@ import pytest
 
 from parsec.api.protocol import (
     BlockID,
-    RealmID,
     RealmStatsRepNotAllowed,
     RealmStatsRepNotFound,
     RealmStatsRepOk,
@@ -13,7 +12,7 @@ from parsec.api.protocol import (
 )
 from tests.backend.common import block_create, realm_stats, vlob_create
 
-REALM_ID_FAKE = RealmID.from_hex("00000000-0000-0000-0000-000000000001")
+REALM_ID_FAKE = VlobID.from_hex("00000000-0000-0000-0000-000000000001")
 
 
 @pytest.mark.trio

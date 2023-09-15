@@ -11,7 +11,6 @@ from parsec._parsec import (
     DateTime,
     DeviceID,
     OrganizationID,
-    RealmID,
     ReencryptionBatchEntry,
     SequesterServiceID,
     VlobID,
@@ -577,7 +576,7 @@ class BaseVlobComponent:
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         encryption_revision: int,
         vlob_id: VlobID,
         timestamp: DateTime,
@@ -642,7 +641,7 @@ class BaseVlobComponent:
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         checkpoint: int,
     ) -> Tuple[int, Dict[VlobID, int]]:
         """
@@ -668,7 +667,7 @@ class BaseVlobComponent:
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         encryption_revision: int,
         size: int,
     ) -> List[Tuple[VlobID, int, bytes]]:
@@ -685,7 +684,7 @@ class BaseVlobComponent:
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         encryption_revision: int,
         batch: List[Tuple[VlobID, int, bytes]],
     ) -> Tuple[int, int]:

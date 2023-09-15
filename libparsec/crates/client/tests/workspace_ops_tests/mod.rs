@@ -18,7 +18,7 @@ use libparsec_types::prelude::*;
 pub(crate) async fn workspace_ops_factory(
     env: &TestbedEnv,
     device: &Arc<LocalDevice>,
-    realm_id: RealmID,
+    realm_id: VlobID,
 ) -> WorkspaceOps {
     let config = Arc::new(ClientConfig {
         config_dir: env.discriminant_dir.clone(),
@@ -55,9 +55,9 @@ pub(crate) async fn workspace_ops_factory(
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn entry_info(env: &TestbedEnv) {
-    let realm_id = RealmID::from_hex("f0000000000000000000000000000002").unwrap();
-    let foo_id = EntryID::from_hex("f0000000000000000000000000000003").unwrap();
-    let bar_txt_id = EntryID::from_hex("f0000000000000000000000000000005").unwrap();
+    let realm_id = VlobID::from_hex("f0000000000000000000000000000002").unwrap();
+    let foo_id = VlobID::from_hex("f0000000000000000000000000000003").unwrap();
+    let bar_txt_id = VlobID::from_hex("f0000000000000000000000000000005").unwrap();
 
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(env, &alice, realm_id).await;
@@ -78,7 +78,7 @@ async fn entry_info(env: &TestbedEnv) {
             children,
         }
         if confinement_point.is_none() &&
-        id == realm_id.into() &&
+        id == realm_id &&
         created == "2000-01-07T00:00:00Z".parse().unwrap() &&
         updated == "2000-01-07T00:00:00Z".parse().unwrap() &&
         base_version == 1 &&

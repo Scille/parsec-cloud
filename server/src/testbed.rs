@@ -7,12 +7,12 @@ use pyo3::{
 use std::sync::Arc;
 
 use crate::{
-    BlockID, DateTime, DeviceCertificate, DeviceID, DeviceLabel, EntryID, FileManifest,
-    FolderManifest, HumanHandle, PrivateKey, RealmID, RealmRole, RealmRoleCertificate,
-    RevokedUserCertificate, SecretKey, SequesterAuthorityCertificate, SequesterPrivateKeyDer,
-    SequesterPublicKeyDer, SequesterServiceCertificate, SequesterServiceID, SequesterSigningKeyDer,
-    SequesterVerifyKeyDer, SigningKey, UserCertificate, UserID, UserManifest, UserProfile,
-    UserUpdateCertificate, VlobID, WorkspaceManifest,
+    BlockID, DateTime, DeviceCertificate, DeviceID, DeviceLabel, FileManifest, FolderManifest,
+    HumanHandle, PrivateKey, RealmRole, RealmRoleCertificate, RevokedUserCertificate, SecretKey,
+    SequesterAuthorityCertificate, SequesterPrivateKeyDer, SequesterPublicKeyDer,
+    SequesterServiceCertificate, SequesterServiceID, SequesterSigningKeyDer, SequesterVerifyKeyDer,
+    SigningKey, UserCertificate, UserID, UserManifest, UserProfile, UserUpdateCertificate, VlobID,
+    WorkspaceManifest,
 };
 
 #[pyclass]
@@ -77,7 +77,7 @@ event_wrapper!(
         first_user_private_key: PrivateKey,
         first_user_first_device_label: Option<DeviceLabel>,
         first_user_first_device_signing_key: SigningKey,
-        first_user_user_manifest_id: EntryID,
+        first_user_user_manifest_id: VlobID,
         first_user_user_manifest_key: SecretKey,
         first_user_local_symkey: SecretKey,
         first_user_local_password: &'static str,
@@ -132,7 +132,7 @@ event_wrapper!(
         first_device_label: Option<DeviceLabel>,
         first_device_signing_key: SigningKey,
         initial_profile: &'static PyObject,
-        user_manifest_id: EntryID,
+        user_manifest_id: VlobID,
         user_manifest_key: SecretKey,
         local_symkey: SecretKey,
         local_password: &'static str,
@@ -221,7 +221,7 @@ event_wrapper!(
     [
         timestamp: DateTime,
         author: DeviceID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         realm_key: SecretKey,
         certificate: RealmRoleCertificate,
         raw_redacted_certificate: Py<PyBytes>,
@@ -240,7 +240,7 @@ event_wrapper!(
     [
         timestamp: DateTime,
         author: DeviceID,
-        realm: RealmID,
+        realm: VlobID,
         user: UserID,
         role: Option<&'static PyObject>,
         recipient_message: Py<PyBytes>,
@@ -267,7 +267,7 @@ event_wrapper!(
     [
         timestamp: DateTime,
         author: DeviceID,
-        realm: RealmID,
+        realm: VlobID,
         encryption_revision: libparsec::low_level::types::IndexInt,
         per_participant_message: Py<PyList>,
     ],
@@ -284,7 +284,7 @@ event_wrapper!(
     [
         timestamp: DateTime,
         author: DeviceID,
-        realm: RealmID,
+        realm: VlobID,
         encryption_revision: libparsec::low_level::types::IndexInt,
     ],
     |_py, x: &TestbedEventFinishRealmReencryption| -> PyResult<String> {
@@ -319,7 +319,7 @@ event_wrapper!(
 
 event_wrapper!(
     TestbedEventCreateOrUpdateFolderManifestVlob,
-    [realm: RealmID, manifest: FolderManifest,],
+    [realm: VlobID, manifest: FolderManifest,],
     |_py, x: &TestbedEventCreateOrUpdateFolderManifestVlob| -> PyResult<String> {
         Ok(format!(
             "timestamp={:?}, author={:?}, realm={:?}, vlob={:?}, version={:?}",
@@ -334,7 +334,7 @@ event_wrapper!(
 
 event_wrapper!(
     TestbedEventCreateOrUpdateFileManifestVlob,
-    [realm: RealmID, manifest: FileManifest,],
+    [realm: VlobID, manifest: FileManifest,],
     |_py, x: &TestbedEventCreateOrUpdateFileManifestVlob| -> PyResult<String> {
         Ok(format!(
             "timestamp={:?}, author={:?}, realm={:?}, vlob={:?}, version={:?}",
@@ -352,7 +352,7 @@ event_wrapper!(
     [
         timestamp: DateTime,
         author: DeviceID,
-        realm: RealmID,
+        realm: VlobID,
         encryption_revision: libparsec::low_level::types::IndexInt,
         vlob_id: VlobID,
         version: libparsec::low_level::types::VersionInt,
@@ -372,7 +372,7 @@ event_wrapper!(
     [
         timestamp: DateTime,
         author: DeviceID,
-        realm: RealmID,
+        realm: VlobID,
         block_id: BlockID,
         cleartext_block: Py<PyBytes>,
         encrypted_block: Py<PyBytes>,
@@ -390,7 +390,7 @@ event_wrapper!(
     [
         timestamp: DateTime,
         author: DeviceID,
-        realm: RealmID,
+        realm: VlobID,
         block_id: BlockID,
         encrypted_block: Py<PyBytes>,
     ],

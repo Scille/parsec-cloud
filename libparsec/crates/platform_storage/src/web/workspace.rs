@@ -7,7 +7,7 @@ use libparsec_types::prelude::*;
 pub async fn workspace_storage_non_speculative_init(
     _data_base_dir: &Path,
     _device: &LocalDevice,
-    _workspace_id: RealmID,
+    _workspace_id: VlobID,
 ) -> anyhow::Result<()> {
     todo!()
 }
@@ -61,7 +61,7 @@ impl WorkspaceDataStorageChildManifestUpdater {
 
 #[derive(Debug)]
 pub struct WorkspaceDataStorage {
-    pub realm_id: RealmID,
+    pub realm_id: VlobID,
     pub device: Arc<LocalDevice>,
 }
 
@@ -75,15 +75,15 @@ pub enum GetChildManifestError {
 
 #[derive(Debug)]
 pub struct NeedSyncEntries {
-    pub local: Vec<EntryID>,
-    pub remote: Vec<EntryID>,
+    pub local: Vec<VlobID>,
+    pub remote: Vec<VlobID>,
 }
 
 impl WorkspaceDataStorage {
     pub async fn start(
         _data_base_dir: &Path,
         _device: Arc<LocalDevice>,
-        _realm_id: RealmID,
+        _realm_id: VlobID,
     ) -> anyhow::Result<Self> {
         todo!();
     }
@@ -91,7 +91,7 @@ impl WorkspaceDataStorage {
     pub(crate) async fn no_populate_start(
         _data_base_dir: &Path,
         _device: Arc<LocalDevice>,
-        _realm_id: RealmID,
+        _realm_id: VlobID,
     ) -> anyhow::Result<Self> {
         todo!();
     }
@@ -116,7 +116,7 @@ impl WorkspaceDataStorage {
 
     pub async fn for_update_child_manifest(
         &self,
-        _entry_id: EntryID,
+        _entry_id: VlobID,
     ) -> Result<
         (
             WorkspaceDataStorageChildManifestUpdater,
@@ -186,7 +186,7 @@ impl WorkspaceDataStorage {
     pub async fn update_realm_checkpoint(
         &self,
         _new_checkpoint: IndexInt,
-        _changed_vlobs: Vec<(EntryID, VersionInt)>,
+        _changed_vlobs: Vec<(VlobID, VersionInt)>,
     ) -> Result<(), anyhow::Error> {
         todo!();
     }
@@ -203,15 +203,12 @@ impl WorkspaceDataStorage {
 
     pub async fn get_child_manifest(
         &self,
-        _entry_id: EntryID,
+        _entry_id: VlobID,
     ) -> Result<ArcLocalChildManifest, GetChildManifestError> {
         todo!();
     }
 
-    pub async fn ensure_manifest_persistent(
-        &self,
-        _entry_id: EntryID,
-    ) -> Result<(), anyhow::Error> {
+    pub async fn ensure_manifest_persistent(&self, _entry_id: VlobID) -> Result<(), anyhow::Error> {
         todo!();
     }
 }
@@ -222,7 +219,7 @@ impl WorkspaceDataStorage {
 
 #[derive(Debug)]
 pub struct WorkspaceCacheStorage {
-    pub realm_id: RealmID,
+    pub realm_id: VlobID,
     pub device: Arc<LocalDevice>,
 }
 
@@ -231,7 +228,7 @@ impl WorkspaceCacheStorage {
         _data_base_dir: &Path,
         _cache_size: u64,
         _device: Arc<LocalDevice>,
-        _realm_id: RealmID,
+        _realm_id: VlobID,
     ) -> anyhow::Result<Self> {
         todo!();
     }
@@ -240,7 +237,7 @@ impl WorkspaceCacheStorage {
         _data_base_dir: &Path,
         _cache_size: u64,
         _device: Arc<LocalDevice>,
-        _realm_id: RealmID,
+        _realm_id: VlobID,
     ) -> anyhow::Result<Self> {
         todo!();
     }

@@ -8,7 +8,6 @@ from parsec._parsec import (
 )
 from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import (
-    RealmID,
     RealmRole,
     RealmUpdateRolesRepAlreadyGranted,
     RealmUpdateRolesRepIncompatibleProfile,
@@ -28,7 +27,7 @@ from tests.backend.common import realm_update_roles, vlob_create
 from tests.common import customize_fixtures, freeze_time
 
 VLOB_ID = VlobID.from_hex("00000000000000000000000000000001")
-REALM_ID = RealmID.from_hex("0000000000000000000000000000000A")
+REALM_ID = VlobID.from_hex("0000000000000000000000000000000A")
 
 
 async def _realm_get_clear_role_certifs(backend, device, realm_id):

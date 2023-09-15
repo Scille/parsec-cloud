@@ -22,8 +22,8 @@ use libparsec_platform_storage::workspace::{
 /// Hence this helper that strip duplication before doing the compare
 fn assert_need_sync(
     need_sync: NeedSyncEntries,
-    expected_local: &[EntryID],
-    expected_remote: &[EntryID],
+    expected_local: &[VlobID],
+    expected_remote: &[VlobID],
 ) {
     let expected_local = HashSet::<_>::from_iter(expected_local);
     let expected_remote = HashSet::<_>::from_iter(expected_remote);
@@ -97,17 +97,9 @@ async fn get_need_sync_entries_at_startup(#[case] with_local_changes: bool, env:
         .unwrap();
 
     let need_sync = storage.get_need_sync_entries().await.unwrap();
-    let expected_remote = [
-        realm_id.into(),
-        folder_child_id.into(),
-        file_child_id.into(),
-    ];
+    let expected_remote = [realm_id, folder_child_id, file_child_id];
     let expected_local = if with_local_changes {
-        vec![
-            realm_id.into(),
-            folder_child_id.into(),
-            file_child_id.into(),
-        ]
+        vec![realm_id, folder_child_id, file_child_id]
     } else {
         vec![]
     };
@@ -117,13 +109,12 @@ async fn get_need_sync_entries_at_startup(#[case] with_local_changes: bool, env:
 #[parsec_test(testbed = "minimal")]
 async fn get_need_sync_entries_workspace(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
-    let workspace_id = EntryID::from_hex("aa0000000000000000000000000000ff").unwrap();
-    let child_id = EntryID::from_hex("aa0000000000000000000000000000ee").unwrap();
+    let workspace_id = VlobID::from_hex("aa0000000000000000000000000000ff").unwrap();
+    let child_id = VlobID::from_hex("aa0000000000000000000000000000ee").unwrap();
 
-    let storage =
-        WorkspaceDataStorage::start(&env.discriminant_dir, alice.clone(), workspace_id.into())
-            .await
-            .unwrap();
+    let storage = WorkspaceDataStorage::start(&env.discriminant_dir, alice.clone(), workspace_id)
+        .await
+        .unwrap();
 
     // 1) Get from pristine storage, workspace manifest is a placeholder and hence must be synced
 
@@ -196,8 +187,8 @@ async fn get_need_sync_entries_child(#[case] update_delayed_flush: bool, env: &T
     let realm_id = init_realm_id.unwrap();
 
     let alice = env.local_device("alice@dev1");
-    let child1_id = EntryID::from_hex("aa0000000000000000000000000000ee").unwrap();
-    let child2_id = EntryID::from_hex("aa0000000000000000000000000000dd").unwrap();
+    let child1_id = VlobID::from_hex("aa0000000000000000000000000000ee").unwrap();
+    let child2_id = VlobID::from_hex("aa0000000000000000000000000000dd").unwrap();
 
     let storage = WorkspaceDataStorage::start(&env.discriminant_dir, alice.clone(), realm_id)
         .await
@@ -224,7 +215,7 @@ async fn get_need_sync_entries_child(#[case] update_delayed_flush: bool, env: &T
                 author: alice.device_id.clone(),
                 timestamp,
                 id: child2_id,
-                parent: realm_id.into(),
+                parent: realm_id,
                 version: 0,
                 created: timestamp,
                 updated: timestamp,
@@ -326,7 +317,7 @@ async fn get_need_sync_entries_child(#[case] update_delayed_flush: bool, env: &T
 #[parsec_test(testbed = "minimal")]
 async fn workspace_manifest(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
-    let realm_id = RealmID::from_hex("aa0000000000000000000000000000ff").unwrap();
+    let realm_id = VlobID::from_hex("aa0000000000000000000000000000ff").unwrap();
 
     let storage = WorkspaceDataStorage::start(&env.discriminant_dir, alice.clone(), realm_id)
         .await
@@ -341,7 +332,7 @@ async fn workspace_manifest(env: &TestbedEnv) {
         base: WorkspaceManifest {
             author: alice.device_id.clone(),
             timestamp: workspace_manifest.updated,
-            id: realm_id.into(),
+            id: realm_id,
             version: 0,
             created: workspace_manifest.updated,
             updated: workspace_manifest.updated,
@@ -388,7 +379,7 @@ async fn workspace_manifest(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal")]
 async fn non_speculative_init(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
-    let realm_id = RealmID::from_hex("aa0000000000000000000000000000ff").unwrap();
+    let realm_id = VlobID::from_hex("aa0000000000000000000000000000ff").unwrap();
 
     // 1) Initialize the database
 
@@ -407,7 +398,7 @@ async fn non_speculative_init(env: &TestbedEnv) {
         base: WorkspaceManifest {
             author: alice.device_id.clone(),
             timestamp: workspace_manifest.updated,
-            id: realm_id.into(),
+            id: realm_id,
             version: 0,
             created: workspace_manifest.updated,
             updated: workspace_manifest.updated,

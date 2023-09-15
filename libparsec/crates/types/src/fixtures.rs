@@ -11,8 +11,8 @@ use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
 
 use crate::{
     BackendOrganizationAddr, CertificateSignerOwned, DeviceCertificate, DeviceID, DeviceLabel,
-    Duration, EntryID, HumanHandle, LocalDevice, OrganizationID, TimeProvider, UserCertificate,
-    UserID, UserProfile,
+    Duration, HumanHandle, LocalDevice, OrganizationID, TimeProvider, UserCertificate, UserID,
+    UserProfile, VlobID,
 };
 // Re-expose `DateTime` to simplify use of `timestamp` fixture
 pub use crate::DateTime;
@@ -25,7 +25,7 @@ pub struct Device {
     pub signing_key: SigningKey,
     pub private_key: PrivateKey,
     pub profile: UserProfile,
-    pub user_manifest_id: EntryID,
+    pub user_manifest_id: VlobID,
     pub user_manifest_key: SecretKey,
     pub local_symkey: SecretKey,
     pub time_provider: TimeProvider,
@@ -109,7 +109,7 @@ pub fn alice(coolorg: &Organization) -> Device {
             "74e860967fd90d063ebd64fb1ba6824c4c010099dd37508b7f2875a5db2ef8c9"
         )),
         profile: UserProfile::Admin,
-        user_manifest_id: EntryID::from_hex("a4031e8bcdd84df8ae12bd3d05e6e20f").unwrap(),
+        user_manifest_id: VlobID::from_hex("a4031e8bcdd84df8ae12bd3d05e6e20f").unwrap(),
         user_manifest_key: SecretKey::from(hex!(
             "26bf35a98c1e54e90215e154af92a1af2d1142cdd0dba25b990426b0b30b0f9a"
         )),
@@ -135,7 +135,7 @@ pub fn bob(coolorg: &Organization) -> Device {
             "16767ec446f2611f971c36f19c2dc11614d853475ac395d6c1d70ba46d07dd49"
         )),
         profile: UserProfile::Standard,
-        user_manifest_id: EntryID::from_hex("71568d41afcb4e2380b3d164ace4fb85").unwrap(),
+        user_manifest_id: VlobID::from_hex("71568d41afcb4e2380b3d164ace4fb85").unwrap(),
         user_manifest_key: SecretKey::from(hex!(
             "65de53d2c6cd965aa53a1ba5cc7e54b331419e6103466121996fa99a97197a48"
         )),
@@ -159,7 +159,7 @@ pub fn mallory(coolorg: &Organization) -> Device {
         signing_key: SigningKey::generate(),
         private_key: PrivateKey::generate(),
         profile: UserProfile::Standard,
-        user_manifest_id: EntryID::default(),
+        user_manifest_id: VlobID::default(),
         user_manifest_key: SecretKey::generate(),
         local_symkey: SecretKey::generate(),
         time_provider: TimeProvider::default(),

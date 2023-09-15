@@ -8,7 +8,7 @@ use libparsec_serialization_format::parsec_data;
 
 use crate::{
     self as libparsec_types, BackendOrganizationAddr, DateTime, DeviceID, DeviceLabel, DeviceName,
-    EntryID, HumanHandle, Maybe, OrganizationID, TimeProvider, UserID, UserProfile,
+    HumanHandle, Maybe, OrganizationID, TimeProvider, UserID, UserProfile, VlobID,
 };
 
 pub fn local_device_slug(
@@ -36,7 +36,7 @@ pub struct LocalDevice {
     /// Profile the user had at enrollment time, use `CertificateOps::get_current_self_profile`
     /// instead of relying on this.
     pub initial_profile: UserProfile,
-    pub user_manifest_id: EntryID,
+    pub user_manifest_id: VlobID,
     pub user_manifest_key: SecretKey,
     pub local_symkey: SecretKey,
     pub time_provider: TimeProvider,
@@ -60,7 +60,7 @@ impl LocalDevice {
             signing_key: signing_key.unwrap_or_else(SigningKey::generate),
             private_key: private_key.unwrap_or_else(PrivateKey::generate),
             initial_profile,
-            user_manifest_id: EntryID::default(),
+            user_manifest_id: VlobID::default(),
             user_manifest_key: SecretKey::generate(),
             local_symkey: SecretKey::generate(),
             time_provider: TimeProvider::default(),

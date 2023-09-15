@@ -5,11 +5,10 @@ import sqlite3
 
 import pytest
 
-from parsec._parsec import DateTime, HashDigest, SecretKey, SequesterPrivateKeyDer
+from parsec._parsec import DateTime, HashDigest, SecretKey, SequesterPrivateKeyDer, VlobID
 from parsec.api.data import (
     BlockAccess,
     DeviceCertificate,
-    EntryID,
     EntryName,
     FileManifest,
     FolderManifest,
@@ -21,11 +20,9 @@ from parsec.api.data import (
 from parsec.api.protocol import (
     BlockID,
     OrganizationID,
-    RealmID,
     RealmRole,
     SequesterServiceID,
     UserProfile,
-    VlobID,
 )
 from parsec.backend.postgresql.sequester_export import (
     OUTPUT_DB_INIT_QUERY,
@@ -67,7 +64,7 @@ async def test_sequester_export_full_run(
     )
 
     # Populate: Realm
-    realm1 = RealmID.new()
+    realm1 = VlobID.new()
     await backend.realm.create(
         organization_id=coolorg.organization_id,
         self_granted_role=RealmGrantedRole(
@@ -278,7 +275,7 @@ async def test_sequester_export_full_run(
         await exporter.export_blocks()
 
     # Exporting a different realm on the same database export should fail
-    realm2 = RealmID.new()
+    realm2 = VlobID.new()
     await backend.realm.create(
         organization_id=coolorg.organization_id,
         self_granted_role=RealmGrantedRole(
@@ -411,7 +408,7 @@ async def test_sequester_export_full_run(
             pass
     # Unknown realm
     with pytest.raises(RealmExporterInputError):
-        async with RealmExporter.run(**{**default_args, "realm_id": RealmID.new()}):
+        async with RealmExporter.run(**{**default_args, "realm_id": VlobID.new()}):
             pass
     # Unknown sequester service
     with pytest.raises(RealmExporterInputError):
@@ -428,7 +425,7 @@ async def test_sequester_export_full_run(
 @pytest.mark.trio
 async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, alice, bob, adam):
     output_db_path = tmp_path / "export.sqlite"
-    realm1 = RealmID.new()
+    realm1 = VlobID.new()
     # Don't use such a small key size in real world, this is only for test !
     # (RSA key generation gets ~10x slower between 1024 and 4096)
     service_decryption_key, service_encryption_key = SequesterPrivateKeyDer.generate_pair(1024)
@@ -598,12 +595,12 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
     con.executemany("INSERT INTO block(_id, block_id, data, author) VALUES (?, ?, ?, ?)", blocks)
 
     # Populate `vlob` table
-    workspace_id = realm1.to_entry_id()
-    file1 = EntryID.new()
-    file2 = EntryID.new()
-    folder1 = EntryID.new()
-    folder2 = EntryID.new()
-    folder3 = EntryID.new()
+    workspace_id = realm1
+    file1 = VlobID.new()
+    file2 = VlobID.new()
+    folder1 = VlobID.new()
+    folder2 = VlobID.new()
+    folder3 = VlobID.new()
     workspace_manifest_v1 = WorkspaceManifest(
         author=alice.device_id,
         timestamp=DateTime(2000, 3, 1),

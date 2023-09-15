@@ -11,7 +11,7 @@ import pytest
 import trio
 import triopg
 
-from parsec._parsec import ActiveUsersLimit, DateTime, EntryID
+from parsec._parsec import ActiveUsersLimit, DateTime, VlobID
 from parsec.backend.cli.run import RetryPolicy, _run_backend
 from parsec.backend.config import BackendConfig, PostgreSQLBlockStoreConfig
 from parsec.backend.postgresql.handler import handle_datetime, handle_integer, handle_uuid
@@ -306,7 +306,7 @@ async def test_rust_datetime_correctly_serialized(postgresql_url, backend_factor
 @pytest.mark.postgresql
 async def test_rust_uuid_correctly_serialized(postgresql_url, backend_factory):
     id_py = uuid4()
-    id_rs = EntryID.from_hex(id_py.hex)
+    id_rs = VlobID.from_hex(id_py.hex)
 
     async with triopg.connect(postgresql_url) as vanilla_conn:
         async with triopg.connect(postgresql_url) as patched_conn:
@@ -340,10 +340,10 @@ async def test_rust_uuid_correctly_serialized(postgresql_url, backend_factory):
             # Retrieve hex inserted by patched
             from_patched_to_rs = await patched_conn.fetchval("SELECT id FROM uuid WHERE _id = 1")
 
-            # Test that we can retrieve our EntryIDs
+            # Test that we can retrieve our UUIDs
             # because deserializer doesn't know which ID
-            from_vanilla_to_rs = EntryID.from_hex(from_vanilla_to_rs)
-            from_patched_to_rs = EntryID.from_hex(from_patched_to_rs)
+            from_vanilla_to_rs = VlobID.from_hex(from_vanilla_to_rs)
+            from_patched_to_rs = VlobID.from_hex(from_patched_to_rs)
 
             assert from_vanilla_to_py == from_patched_to_py
             assert from_vanilla_to_rs == from_patched_to_rs

@@ -66,9 +66,9 @@ class SpiedEvent:
     # without implementing some specific magic in the binding
     # itself.
     # Instead, we try to let the ANY class do the comparaison.
-    # So, calls that were EntryID.__eq__(self, ANY) (which causes
-    # problems because ANY cannot be converted to EntryID) become
-    # ANY.__eq__(self, EntryID) instead.
+    # So, calls that were VlobID.__eq__(self, ANY) (which causes
+    # problems because ANY cannot be converted to VlobID) become
+    # ANY.__eq__(self, VlobID) instead.
     def __eq__(self, other):
         ret = True
 

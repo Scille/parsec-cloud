@@ -185,7 +185,7 @@ pub(super) async fn process_last_messages(
 async fn process_message_sharing_granted(
     ops: &UserOps,
     name: EntryName,
-    id: RealmID,
+    id: VlobID,
     encryption_revision: IndexInt,
     encrypted_on: DateTime,
     key: SecretKey,

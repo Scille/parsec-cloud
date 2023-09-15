@@ -13,11 +13,11 @@
         },
         {
             "name": "id",
-            "type": "EntryID"
+            "type": "VlobID"
         },
         {
             "name": "parent",
-            "type": "EntryID"
+            "type": "VlobID"
         },
         {
             "name": "version",

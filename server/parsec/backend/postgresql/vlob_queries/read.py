@@ -5,7 +5,7 @@ from typing import Dict, Tuple
 
 import triopg
 
-from parsec._parsec import DateTime, DeviceID, OrganizationID, RealmID, VlobID
+from parsec._parsec import DateTime, DeviceID, OrganizationID, VlobID
 from parsec.backend.postgresql.utils import (
     Q,
     q_device,
@@ -188,7 +188,7 @@ async def query_poll_changes(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
-    realm_id: RealmID,
+    realm_id: VlobID,
     checkpoint: int,
 ) -> Tuple[int, Dict[VlobID, int]]:
     await _check_realm_and_read_access(conn, organization_id, author, realm_id, None)
