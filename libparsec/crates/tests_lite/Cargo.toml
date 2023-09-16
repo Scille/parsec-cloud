@@ -9,10 +9,13 @@ version.workspace = true
 repository.workspace = true
 
 [features]
-
+# crates depending directly on use most likely doesn't need this `parsec_test`
+# (they directly uses `test`/`rstest` instead).
+# Basically only `libparsec_tests_fixtures` needs to enable this.
+parsec_test_macro = ["libparsec_tests_macros"]
 
 [dependencies]
-libparsec_tests_macros = { workspace = true }
+libparsec_tests_macros = { workspace = true, optional = true }
 
 env_logger = { workspace = true, features = ["auto-color", "humantime", "regex"] }
 log = { workspace = true }

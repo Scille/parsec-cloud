@@ -32,6 +32,7 @@ pub use pretty_assertions::{
 
 // Export our own stuff
 
+#[cfg(feature = "parsec_test_macro")]
 pub use libparsec_tests_macros::parsec_test;
 
 pub mod prelude {
