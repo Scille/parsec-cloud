@@ -13,6 +13,7 @@ repository.workspace = true
 [features]
 # Remember kid: RustCrypto is used if `use-sodiumoxide` is not set !
 use-sodiumoxide = ["libparsec_crypto/use-sodiumoxide"]
+vendored-openssl = ["libparsec_crypto/vendored-openssl"]
 python-bindings-support = [
     "libparsec_serialization_format/python-bindings-support"
 ]

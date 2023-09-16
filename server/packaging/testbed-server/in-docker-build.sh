@@ -31,7 +31,10 @@ poetry --directory ./server export --output requirements.txt --with=main,testbed
 pip install -r ./requirements.txt
 # ...and our project
 # Compile in CI mode to reduce size while still retain `test-utils` feature
-POETRY_LIBPARSEC_BUILD_PROFILE=ci pip install ./server
+# Also don't bundle OpenSSL shared library (it is already in the Docker image !)
+POETRY_LIBPARSEC_BUILD_PROFILE=ci \
+POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false \
+pip install ./server
 
 # Boto3/Botocore are pretty big dependencies and won't be used (given the testbed
 # server only uses the memory storage)

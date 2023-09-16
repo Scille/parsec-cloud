@@ -10,6 +10,7 @@ repository.workspace = true
 
 [features]
 test-unsecure-but-fast-secretkey-from-password = []
+vendored-openssl = ["openssl/vendored"]
 use-sodiumoxide = [
     "dep:sodiumoxide",
     "dep:libsodium-sys",
@@ -51,7 +52,32 @@ zeroize = { workspace = true, features = ["alloc"] }
 
 sodiumoxide = { workspace = true, optional = true, features = ["std", "serde"] }
 libsodium-sys = { workspace = true, optional = true }
-openssl = { workspace = true, optional = true, features = ["vendored"] }
+# A word about vendoring. In Parsec, OpenSSL is used for two different things:
+# - Provide X509 support when Rust-Crypto is not used (aka "openssl-for-parsec")
+# - Provide SSL support when doing web request stuff (aka "openssl-for-reqwest")
+#
+# "openssl-for-parsec" support is why the dependence is specified here.
+# "openssl-for-reqwest", however, is only needed on Linux (reqwest uses the
+# OS's SSL implementation, which on Linux *is* OpensSSL).
+#
+# On top of that non-Linux platforms don't provide an OpenSSL we can rely on,
+# hence we must vendor it when we need "openssl-for-parsec".
+#
+# On Linux on the other hand we have the choice: to vendor or not ?
+# Not-vendoring would make things consistent with the other platform regarding
+# "openssl-for-reqwest", however it complexifies packaging (e.g. by default
+# maturin bundles extra shared libraries, which defeat the purpose of not
+# vendoring !)
+#
+# So in the end what we do is:
+# - On non-Linux platform it a no-brainer: vendor when "openssl-for-parsec"
+#   is needed (only way to have openssl) and don't vendor if it's not (openssl
+#   useless in this case)
+# - On Linux, we don't vendor in dev/ci (for faster build)
+# - For release on Linux, we expose the `vendored-openssl` to fit the packager's
+#   needs (e.g. Docker image already ships openssl so no need to vendor, wheel
+#   distributed on pypi requires vendoring to comply with manylinux)
+openssl = { workspace = true, optional = true }
 
 #
 # RustCrypto stuff
@@ -122,3 +148,9 @@ rstest = { workspace = true, features = ["async-timeout"] }
 
 getrandom_01 = { workspace = true, features = ["wasm-bindgen"] }  # Optional rustcrypto dep
 getrandom_02 = { workspace = true, features = ["js"] }  # Optional rustcrypto dep
+
+[target.'cfg(target_os = "macos")'.dependencies]
+openssl = { workspace = true, optional = true, features = ["vendored"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+openssl = { workspace = true, optional = true, features = ["vendored"] }

@@ -122,12 +122,19 @@ before-all = "bash {project}/misc/setup-rust.sh"
 before-build = "python -m pip install -U pip"
 test-command = "parsec --version"
 
+[tool.cibuildwheel.linux]
+# perl-IPC-Cmd needed to build openssl
+before-all = "yum install -y perl-IPC-Cmd && bash {project}/misc/setup-rust.sh"
+
 [tool.cibuildwheel.environment]
 # As it name suggests, `misc/setup-rust.sh` (run during cibuildwheel's before-all) will
 # install Rust if it is not already available. In this case, Rust bin dir was previously
 # non-existent and hence $PATH don't know about it (and maturin will fail when calling cargo).
 # For this reason we force $PATH to contain Rust bin dir.
 PATH = "$PATH:$HOME/.cargo/bin"
+# A wheel cannot make assumption on the host it is going to run on, hence it
+# has to bundle any extra shared libraries dependencies (so in our case openssl)
+LIBPARSEC_FORCE_VENDORED_OPENSSL = "true"
 
 [tool.ruff]
 line-length = 100
