@@ -4,9 +4,9 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use rstest::rstest;
 use std::str::FromStr;
 
+use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 
 #[test]
@@ -24,16 +24,16 @@ fn device_label_bad_size() {
 #[case("三国")]
 fn organization_id_user_id_and_device_name(#[case] raw: &str) {
     let organization_id = OrganizationID::from_str(raw).unwrap();
-    assert_eq!(organization_id.to_string(), raw);
-    assert_eq!(organization_id, OrganizationID::from_str(raw).unwrap());
+    p_assert_eq!(organization_id.to_string(), raw);
+    p_assert_eq!(organization_id, OrganizationID::from_str(raw).unwrap());
 
     let user_id = UserID::from_str(raw).unwrap();
-    assert_eq!(user_id.to_string(), raw);
-    assert_eq!(user_id, UserID::from_str(raw).unwrap());
+    p_assert_eq!(user_id.to_string(), raw);
+    p_assert_eq!(user_id, UserID::from_str(raw).unwrap());
 
     let device_name = DeviceName::from_str(raw).unwrap();
-    assert_eq!(device_name.to_string(), raw);
-    assert_eq!(device_name, DeviceName::from_str(raw).unwrap());
+    p_assert_eq!(device_name.to_string(), raw);
+    p_assert_eq!(device_name, DeviceName::from_str(raw).unwrap());
 }
 
 #[rstest]
@@ -56,9 +56,9 @@ fn device_id(#[case] raw: &str) {
     let (user_id, device_name) = raw.split_once('@').unwrap();
     let device_id = DeviceID::from_str(raw).unwrap();
 
-    assert_eq!(device_id, DeviceID::from_str(raw).unwrap());
-    assert_eq!(device_id.user_id(), &UserID::from_str(user_id).unwrap());
-    assert_eq!(
+    p_assert_eq!(device_id, DeviceID::from_str(raw).unwrap());
+    p_assert_eq!(device_id.user_id(), &UserID::from_str(user_id).unwrap());
+    p_assert_eq!(
         device_id.device_name(),
         &DeviceName::from_str(device_name).unwrap()
     );

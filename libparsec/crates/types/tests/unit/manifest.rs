@@ -1,9 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use hex_literal::hex;
-use rstest::rstest;
-
 use libparsec_crypto::{SecretKey, SigningKey};
+use libparsec_tests_lite::prelude::*;
 
 use crate::{
     fixtures::{alice, Device},
@@ -42,7 +40,7 @@ use crate::{
 fn invalid_deserialize_data(#[case] data: &[u8], #[case] error: DataError) {
     let manifest = ChildManifest::deserialize_data(data);
 
-    assert_eq!(manifest, Err(error));
+    p_assert_eq!(manifest, Err(error));
 }
 
 #[rstest]
@@ -102,7 +100,7 @@ fn dump_load(alice: &Device) {
         .verify(&alice.device_id, now, Some(id), Some(0))
         .is_ok());
 
-    assert_eq!(
+    p_assert_eq!(
         FileManifest::verify_and_load(
             &signed,
             &alice.verify_key(),
@@ -114,7 +112,7 @@ fn dump_load(alice: &Device) {
         .unwrap(),
         expected_file_manifest
     );
-    assert_eq!(
+    p_assert_eq!(
         FileManifest::decrypt_verify_and_load(
             &signed_encrypted,
             &alice.local_symkey,
@@ -129,7 +127,7 @@ fn dump_load(alice: &Device) {
     );
 
     // Also test ChildManifest
-    assert_eq!(
+    p_assert_eq!(
         ChildManifest::decrypt_verify_and_load(
             &signed_encrypted,
             &alice.local_symkey,
@@ -144,7 +142,7 @@ fn dump_load(alice: &Device) {
     );
 
     // Also test round trip
-    assert_eq!(
+    p_assert_eq!(
         FileManifest::verify_and_load(
             &expected_file_manifest.dump_and_sign(&alice.signing_key),
             &alice.verify_key(),
@@ -156,7 +154,7 @@ fn dump_load(alice: &Device) {
         .unwrap(),
         expected_file_manifest
     );
-    assert_eq!(
+    p_assert_eq!(
         FileManifest::decrypt_verify_and_load(
             &expected_file_manifest.dump_sign_and_encrypt(&alice.signing_key, &alice.local_symkey),
             &alice.local_symkey,
@@ -216,7 +214,7 @@ fn invalid_load(alice: &Device) {
     let expected_version = 1;
 
     // Check that the compression is incorrect
-    assert_eq!(
+    p_assert_eq!(
         FileManifest::decrypt_verify_and_load(
             &dummy_without_compression,
             &alice.local_symkey,
@@ -230,7 +228,7 @@ fn invalid_load(alice: &Device) {
     );
 
     // Check that the serialization is incorrect
-    assert_eq!(
+    p_assert_eq!(
         FileManifest::decrypt_verify_and_load(
             &dummy,
             &alice.local_symkey,
@@ -244,7 +242,7 @@ fn invalid_load(alice: &Device) {
     );
 
     // Check that the encryption is incorrect
-    assert_eq!(
+    p_assert_eq!(
         FileManifest::decrypt_verify_and_load(
             &data,
             &SecretKey::generate(),
@@ -258,7 +256,7 @@ fn invalid_load(alice: &Device) {
     );
 
     // Check that the signature is incorrect
-    assert_eq!(
+    p_assert_eq!(
         FileManifest::decrypt_verify_and_load(
             &data,
             &alice.local_symkey,
@@ -272,7 +270,7 @@ fn invalid_load(alice: &Device) {
     );
 
     // Check that the author is incorrect
-    assert_eq!(
+    p_assert_eq!(
         FileManifest::decrypt_verify_and_load(
             &data,
             &alice.local_symkey,
@@ -289,7 +287,7 @@ fn invalid_load(alice: &Device) {
     );
 
     // Check that the timestamp is incorrect
-    assert_eq!(
+    p_assert_eq!(
         FileManifest::decrypt_verify_and_load(
             &data,
             &alice.local_symkey,
@@ -306,7 +304,7 @@ fn invalid_load(alice: &Device) {
     );
 
     // Check that the id is incorrect
-    assert_eq!(
+    p_assert_eq!(
         FileManifest::decrypt_verify_and_load(
             &data,
             &alice.local_symkey,
@@ -323,7 +321,7 @@ fn invalid_load(alice: &Device) {
     );
 
     // Check that the version is incorrect
-    assert_eq!(
+    p_assert_eq!(
         FileManifest::decrypt_verify_and_load(
             &data,
             &alice.local_symkey,

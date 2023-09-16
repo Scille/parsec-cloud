@@ -47,13 +47,10 @@ rstest = { workspace = true, optional = true }
 
 [dev-dependencies]
 libparsec_types = { workspace = true, features = ["test-fixtures"] }
+libparsec_tests_lite = { workspace = true }
 
-# `assert_matches!()` requires `unstable` feature
-pretty_assertions = { workspace = true, features = ["std", "unstable"] }
 serde_test = { workspace = true }
-hex-literal = { workspace = true }
 rstest_reuse = { workspace = true }
-rstest = { workspace = true, features = ["async-timeout"] }
 
 [build-dependencies]
 glob = { workspace = true }

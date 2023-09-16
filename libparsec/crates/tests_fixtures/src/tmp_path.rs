@@ -2,8 +2,9 @@
 
 use std::path::PathBuf;
 
-use libparsec_tests_lite::rstest::fixture;
 use uuid::Uuid;
+
+use libparsec_tests_lite::prelude::*;
 
 /// A temporary path that will be removed on drop.
 pub struct TmpPath(PathBuf);

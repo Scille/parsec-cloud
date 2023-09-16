@@ -1,8 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use hex_literal::hex;
-use rstest::rstest;
-
+use libparsec_tests_lite::prelude::*;
 use libparsec_types::fixtures::{bob, Device};
 use libparsec_types::prelude::*;
 
@@ -102,13 +100,13 @@ fn serde_invite_user_data(
 
     let data = InviteUserData::decrypt_and_load(encrypted, &key).unwrap();
 
-    assert_eq!(data, expected);
+    p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let encrypted2 = data.dump_and_encrypt(&key);
     // Note we cannot just compare with `data` due to signature and keys order
     let data2 = InviteUserData::decrypt_and_load(&encrypted2, &key).unwrap();
-    assert_eq!(data2, expected);
+    p_assert_eq!(data2, expected);
 }
 
 #[rstest]
@@ -211,13 +209,13 @@ fn serde_invite_user_confirmation(
 
     let data = InviteUserConfirmation::decrypt_and_load(encrypted, &key).unwrap();
 
-    assert_eq!(data, expected);
+    p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let encrypted2 = data.dump_and_encrypt(&key);
     // Note we cannot just compare with `data` due to signature and keys order
     let data2 = InviteUserConfirmation::decrypt_and_load(&encrypted2, &key).unwrap();
-    assert_eq!(data2, expected);
+    p_assert_eq!(data2, expected);
 }
 
 #[rstest]
@@ -265,13 +263,13 @@ fn serde_invite_device_data(
 
     let data = InviteDeviceData::decrypt_and_load(encrypted, &key).unwrap();
 
-    assert_eq!(data, expected);
+    p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let encrypted2 = data.dump_and_encrypt(&key);
     // Note we cannot just compare with `data` due to signature and keys order
     let data2 = InviteDeviceData::decrypt_and_load(&encrypted2, &key).unwrap();
-    assert_eq!(data2, expected);
+    p_assert_eq!(data2, expected);
 }
 
 #[rstest]
@@ -400,11 +398,11 @@ fn serde_invite_device_confirmation(
 
     let data = InviteDeviceConfirmation::decrypt_and_load(encrypted, &key).unwrap();
 
-    assert_eq!(data, expected);
+    p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let encrypted2 = data.dump_and_encrypt(&key);
     // Note we cannot just compare with `data` due to signature and keys order
     let data2 = InviteDeviceConfirmation::decrypt_and_load(&encrypted2, &key).unwrap();
-    assert_eq!(data2, expected);
+    p_assert_eq!(data2, expected);
 }

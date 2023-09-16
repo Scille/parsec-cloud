@@ -1,9 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use hex_literal::hex;
-use rstest::rstest;
 use std::{collections::HashMap, str::FromStr};
 
+use libparsec_tests_lite::prelude::*;
 use libparsec_types::fixtures::{alice, Device};
 use libparsec_types::prelude::*;
 
@@ -64,13 +63,13 @@ fn serde_pki_enrollment_answer_payload(
     #[case] expected: PkiEnrollmentAnswerPayload,
 ) {
     let data = PkiEnrollmentAnswerPayload::load(raw).unwrap();
-    assert_eq!(data, expected);
+    p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw = data.dump();
     let data = PkiEnrollmentAnswerPayload::load(&raw).unwrap();
 
-    assert_eq!(data, expected);
+    p_assert_eq!(data, expected);
 }
 
 #[rstest]
@@ -100,13 +99,13 @@ fn serde_pki_enrollment_submit_payload(
     #[case] expected: PkiEnrollmentSubmitPayload,
 ) {
     let data = PkiEnrollmentSubmitPayload::load(raw).unwrap();
-    assert_eq!(data, expected);
+    p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw = data.dump();
     let data = PkiEnrollmentSubmitPayload::load(&raw).unwrap();
 
-    assert_eq!(data, expected);
+    p_assert_eq!(data, expected);
 }
 
 #[rstest]
@@ -248,11 +247,11 @@ fn serde_local_pending_enrollment(
     let expected = generate_expected(alice);
 
     let data = LocalPendingEnrollment::load(raw).unwrap();
-    assert_eq!(data, expected);
+    p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw = data.dump();
     let data = LocalPendingEnrollment::load(&raw).unwrap();
 
-    assert_eq!(data, expected);
+    p_assert_eq!(data, expected);
 }

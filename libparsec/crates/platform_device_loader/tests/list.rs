@@ -4,8 +4,6 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use hex_literal::hex;
-
 use libparsec_platform_device_loader::list_available_devices;
 use libparsec_testbed::TestbedEnv;
 use libparsec_tests_fixtures::prelude::*;

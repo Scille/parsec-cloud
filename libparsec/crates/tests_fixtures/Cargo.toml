@@ -34,7 +34,7 @@ test-with-unsecure-but-fast-secretkey-from-password = [
 
 [dependencies]
 libparsec_types = { workspace = true, features = [ "test-fixtures", "test-mock-time" ] }
-libparsec_tests_lite = { workspace = true }
+libparsec_tests_lite = { workspace = true, features = ["parsec_test_macro"] }
 libparsec_testbed = { workspace = true }
 # Enable testbed support in crates here
 libparsec_client_connection = { workspace = true, optional = true }

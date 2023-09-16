@@ -3,8 +3,6 @@
 // `allow-unwrap-in-test` don't behave as expected, see:
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
-
-use hex_literal::hex;
 use std::collections::HashMap;
 
 use libparsec_protocol::authenticated_cmds::v3 as authenticated_cmds;

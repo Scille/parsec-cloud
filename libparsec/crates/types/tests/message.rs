@@ -4,9 +4,7 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use hex_literal::hex;
-use rstest::rstest;
-
+use libparsec_tests_lite::prelude::*;
 use libparsec_types::fixtures::{alice, bob, Device};
 use libparsec_types::prelude::*;
 
@@ -55,7 +53,7 @@ fn serde_sharing_granted_message(alice: &Device, bob: &Device) {
     )
     .unwrap();
 
-    assert_eq!(message, expected);
+    p_assert_eq!(message, expected);
 
     // Also test serialization round trip
     let data2 = message.dump_sign_and_encrypt_for(&alice.signing_key, &bob.public_key());
@@ -68,7 +66,7 @@ fn serde_sharing_granted_message(alice: &Device, bob: &Device) {
         timestamp,
     )
     .unwrap();
-    assert_eq!(message2, expected);
+    p_assert_eq!(message2, expected);
 }
 
 #[rstest]
@@ -116,7 +114,7 @@ fn serde_sharing_reencrypted_message(alice: &Device, bob: &Device) {
     )
     .unwrap();
 
-    assert_eq!(message, expected);
+    p_assert_eq!(message, expected);
 
     // Also test serialization round trip
     let data2 = message.dump_sign_and_encrypt_for(&alice.signing_key, &bob.public_key());
@@ -129,7 +127,7 @@ fn serde_sharing_reencrypted_message(alice: &Device, bob: &Device) {
         timestamp,
     )
     .unwrap();
-    assert_eq!(message2, expected);
+    p_assert_eq!(message2, expected);
 }
 
 #[rstest]
@@ -165,7 +163,7 @@ fn serde_sharing_revoked_message(alice: &Device, bob: &Device) {
     )
     .unwrap();
 
-    assert_eq!(message, expected);
+    p_assert_eq!(message, expected);
 
     // Also test serialization round trip
     let data2 = message.dump_sign_and_encrypt_for(&alice.signing_key, &bob.public_key());
@@ -178,7 +176,7 @@ fn serde_sharing_revoked_message(alice: &Device, bob: &Device) {
         timestamp,
     )
     .unwrap();
-    assert_eq!(message2, expected);
+    p_assert_eq!(message2, expected);
 }
 
 #[rstest]
@@ -213,7 +211,7 @@ fn serde_ping_message(alice: &Device, bob: &Device) {
     )
     .unwrap();
 
-    assert_eq!(message, expected);
+    p_assert_eq!(message, expected);
 
     // Also test serialization round trip
     let data2 = message.dump_sign_and_encrypt_for(&alice.signing_key, &bob.public_key());
@@ -226,5 +224,5 @@ fn serde_ping_message(alice: &Device, bob: &Device) {
         timestamp,
     )
     .unwrap();
-    assert_eq!(message2, expected);
+    p_assert_eq!(message2, expected);
 }

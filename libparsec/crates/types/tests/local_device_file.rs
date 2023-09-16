@@ -4,9 +4,7 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use hex_literal::hex;
-use rstest::rstest;
-
+use libparsec_tests_lite::prelude::*;
 use libparsec_types::fixtures::{alice, Device};
 use libparsec_types::prelude::*;
 
@@ -74,7 +72,7 @@ fn password_protected_device_file(alice: &Device) {
     };
 
     let file_device = rmp_serde::from_slice::<DeviceFilePassword>(&filedata).unwrap();
-    assert_eq!(file_device, expected);
+    p_assert_eq!(file_device, expected);
 
     // TODO: Test ciphertext decryption
 }
@@ -141,7 +139,7 @@ fn recovery_device_file(alice: &Device) {
     };
 
     let file_device = rmp_serde::from_slice::<DeviceFileRecovery>(&filedata).unwrap();
-    assert_eq!(file_device, expected);
+    p_assert_eq!(file_device, expected);
 
     // TODO: Test ciphertext decryption
 }
@@ -231,14 +229,14 @@ fn smartcard_device_file(alice: &Device) {
 
     let device = DeviceFile::load(&raw).unwrap();
 
-    assert_eq!(device, expected);
+    p_assert_eq!(device, expected);
 
     // Also test roundtrip
 
     let raw2 = device.dump();
     let device2 = DeviceFile::load(&raw2).unwrap();
 
-    assert_eq!(device2, expected);
+    p_assert_eq!(device2, expected);
 }
 
 #[test]
@@ -259,13 +257,13 @@ fn available_device() {
         ty: DeviceFileType::Password,
     };
 
-    assert_eq!(
+    p_assert_eq!(
         available.slughash(),
         "57f426e7a3cd5dc4a5d19fb8a83addb9112a65d12a13e2f72dd1fdfb9a8a4971"
     );
-    assert_eq!(available.user_display(), "John Doe <john@example.com>");
-    assert_eq!(available.short_user_display(), "John Doe");
-    assert_eq!(available.device_display(), "MyPc");
+    p_assert_eq!(available.user_display(), "John Doe <john@example.com>");
+    p_assert_eq!(available.short_user_display(), "John Doe");
+    p_assert_eq!(available.device_display(), "MyPc");
 
     let available_legacy = AvailableDevice {
         key_file_path: "/foo/bar".into(),
@@ -277,13 +275,13 @@ fn available_device() {
         ty: DeviceFileType::Password,
     };
 
-    assert_eq!(
+    p_assert_eq!(
         available_legacy.slughash(),
         "35e1d5ceb858ea3fd89973e084105d2bd928de10047cdd6d0037259030954ca1"
     );
-    assert_eq!(available_legacy.user_display(), "john");
-    assert_eq!(available_legacy.short_user_display(), "john");
-    assert_eq!(available_legacy.device_display(), "mypc");
+    p_assert_eq!(available_legacy.user_display(), "john");
+    p_assert_eq!(available_legacy.short_user_display(), "john");
+    p_assert_eq!(available_legacy.device_display(), "mypc");
 }
 
 #[rstest]
@@ -415,7 +413,7 @@ fn available_device() {
 )]
 fn serde_legacy_device_file(#[case] raw: &[u8], #[case] expected: LegacyDeviceFile) {
     let device = LegacyDeviceFile::load(raw).unwrap();
-    assert_eq!(device, expected);
+    p_assert_eq!(device, expected);
 
     // We don't need to test roundtrip because we will never save this file again !
     // It will be saved with the good one :)

@@ -1,7 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use hex_literal::hex;
-
 use libparsec_protocol::{
     authenticated_cmds::v3 as authenticated_cmds, invited_cmds::v3 as invited_cmds,
 };

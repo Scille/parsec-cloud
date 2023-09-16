@@ -4,6 +4,7 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
+use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 
 type Part = (Box<dyn Fn(DateTime) -> u32>, i64);
@@ -12,13 +13,13 @@ type Part = (Box<dyn Fn(DateTime) -> u32>, i64);
 fn datetime() {
     let dt = DateTime::from_ymd_hms_us(2000, 1, 2, 12, 30, 45, 123456).unwrap();
 
-    assert_eq!(dt.year(), 2000);
-    assert_eq!(dt.month(), 1);
-    assert_eq!(dt.day(), 2);
-    assert_eq!(dt.hour(), 12);
-    assert_eq!(dt.minute(), 30);
-    assert_eq!(dt.second(), 45);
-    assert_eq!(dt.microsecond(), 123456);
+    p_assert_eq!(dt.year(), 2000);
+    p_assert_eq!(dt.month(), 1);
+    p_assert_eq!(dt.day(), 2);
+    p_assert_eq!(dt.hour(), 12);
+    p_assert_eq!(dt.minute(), 30);
+    p_assert_eq!(dt.second(), 45);
+    p_assert_eq!(dt.microsecond(), 123456);
 
     let parts: [Part; 5] = [
         (Box::new(|dt: DateTime| dt.microsecond()), 1),
@@ -29,26 +30,26 @@ fn datetime() {
     ];
 
     for (f, us) in parts {
-        assert_eq!(f(dt.add_us(us)), f(dt) + 1);
-        assert_eq!(f(dt.add_us(-us)), f(dt) - 1);
+        p_assert_eq!(f(dt.add_us(us)), f(dt) + 1);
+        p_assert_eq!(f(dt.add_us(-us)), f(dt) - 1);
     }
 
-    assert_eq!(dt, dt);
-    assert_ne!(dt.add_us(1), dt);
-    assert_eq!(dt.add_us(1).add_us(-1), dt);
+    p_assert_eq!(dt, dt);
+    p_assert_ne!(dt.add_us(1), dt);
+    p_assert_eq!(dt.add_us(1).add_us(-1), dt);
 
     assert!(dt < dt.add_us(1));
     assert!(dt > dt.add_us(-1));
     assert!(dt <= dt);
     assert!(dt >= dt);
 
-    assert_eq!(dt - dt.add_us(-1), Duration::microseconds(1));
+    p_assert_eq!(dt - dt.add_us(-1), Duration::microseconds(1));
 
-    assert_eq!(dt.to_rfc3339(), "2000-01-02T12:30:45.123456Z");
-    assert_eq!(DateTime::from_rfc3339(&dt.to_rfc3339()).unwrap(), dt);
+    p_assert_eq!(dt.to_rfc3339(), "2000-01-02T12:30:45.123456Z");
+    p_assert_eq!(DateTime::from_rfc3339(&dt.to_rfc3339()).unwrap(), dt);
 
-    assert_eq!(dt.get_f64_with_us_precision(), 946816245.123456);
-    assert_eq!(
+    p_assert_eq!(dt.get_f64_with_us_precision(), 946816245.123456);
+    p_assert_eq!(
         DateTime::from_f64_with_us_precision(dt.get_f64_with_us_precision()),
         dt
     );

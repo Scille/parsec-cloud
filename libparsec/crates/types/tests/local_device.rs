@@ -1,8 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use hex_literal::hex;
-use rstest::rstest;
-
+use libparsec_tests_lite::prelude::*;
 use libparsec_types::fixtures::{alice, Device};
 use libparsec_types::prelude::*;
 
@@ -209,22 +207,22 @@ fn serde_local_device_data(
 
     let manifest = LocalDevice::decrypt_and_load(data, &key).unwrap();
 
-    assert_eq!(manifest, expected);
+    p_assert_eq!(manifest, expected);
 
     // Also test serialization round trip
     let data2 = manifest.dump_and_encrypt(&key);
 
     // Note we cannot just compare with `data` due to signature and keys order
     let manifest2 = LocalDevice::decrypt_and_load(&data2, &key).unwrap();
-    assert_eq!(manifest2, expected);
+    p_assert_eq!(manifest2, expected);
 }
 
 #[rstest]
 fn slug(alice: &Device) {
     let local_device = alice.local_device();
 
-    assert_eq!(local_device.slug(), "f78292422e#CoolOrg#alice@dev1");
-    assert_eq!(
+    p_assert_eq!(local_device.slug(), "f78292422e#CoolOrg#alice@dev1");
+    p_assert_eq!(
         local_device.slughash(),
         "a9172f17141ae27ab662d312869169b36fc9d036e88605a9682c98f372c3041b"
     );

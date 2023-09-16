@@ -4,9 +4,7 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use hex_literal::hex;
-use rstest::rstest;
-
+use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 
 #[test]
@@ -26,11 +24,11 @@ fn generate_sas_codes() {
     let (claimer_sas, greeter_sas) =
         SASCode::generate_sas_codes(&claimer_nonce, &greeter_nonce, &shared_secret_key);
 
-    assert_eq!(claimer_sas.as_ref(), "25PA");
-    assert_eq!(greeter_sas.as_ref(), "KBWM");
+    p_assert_eq!(claimer_sas.as_ref(), "25PA");
+    p_assert_eq!(greeter_sas.as_ref(), "KBWM");
 
-    assert_eq!(claimer_sas, "25PA".parse().unwrap());
-    assert_eq!(greeter_sas, "KBWM".parse().unwrap());
+    p_assert_eq!(claimer_sas, "25PA".parse().unwrap());
+    p_assert_eq!(greeter_sas, "KBWM".parse().unwrap());
 }
 
 #[rstest]
@@ -39,5 +37,5 @@ fn generate_sas_codes() {
 #[case::max(2u32.pow(20) - 1, Ok("9999".parse().unwrap()))]
 #[case::too_large(2u32.pow(20), Err("Provided integer is too large"))]
 fn sas_code_from_int(#[case] val: u32, #[case] result: Result<SASCode, &'static str>) {
-    assert_eq!(SASCode::try_from(val), result);
+    p_assert_eq!(SASCode::try_from(val), result);
 }
