@@ -41,7 +41,7 @@ struct Cache {
     user_update_certificates: HashMap<UserID, PerUserAllUserUpdates>,
     revoked_user_certificates: HashMap<UserID, PerUserMaybeUserRevoked>,
     device_certificates: HashMap<DeviceID, (IndexInt, Arc<DeviceCertificate>)>,
-    realm_certificates: HashMap<RealmID, PerRealmAllRoles>,
+    realm_certificates: HashMap<VlobID, PerRealmAllRoles>,
     sequester_service_certificates: ScalarCache<Vec<(IndexInt, Arc<SequesterServiceCertificate>)>>,
     sequester_authority_certificate: ScalarCache<(IndexInt, Arc<SequesterAuthorityCertificate>)>,
     per_certificate_index_timestamp_bounds: HashMap<IndexInt, (DateTime, DateTime)>,
@@ -673,7 +673,7 @@ impl CertificatesCachedStorage {
     pub async fn get_realm_certificates(
         &self,
         up_to: UpTo,
-        realm_id: RealmID,
+        realm_id: VlobID,
     ) -> Result<Vec<Arc<RealmRoleCertificate>>, anyhow::Error> {
         let maybe = {
             let guard = self.cache.lock().expect("Mutex is poisoned");
@@ -728,7 +728,7 @@ impl CertificatesCachedStorage {
         &self,
         up_to: UpTo,
         user_id: &UserID,
-        realm_id: RealmID,
+        realm_id: VlobID,
     ) -> Result<Option<Arc<RealmRoleCertificate>>, anyhow::Error> {
         let roles = self.get_realm_certificates(up_to, realm_id).await?;
         let user_role = roles.into_iter().find(|certif| certif.user_id == *user_id);

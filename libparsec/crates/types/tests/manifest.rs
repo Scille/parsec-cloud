@@ -65,8 +65,8 @@ fn serde_file_manifest(alice: &Device) {
     let expected = FileManifest {
         author: alice.device_id.to_owned(),
         timestamp: now,
-        id: EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
-        parent: EntryID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
+        id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+        parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
         version: 42,
         created: now,
         updated: now,
@@ -205,19 +205,19 @@ fn serde_folder_manifest(alice: &Device) {
     let expected = FolderManifest {
         author: alice.device_id.to_owned(),
         timestamp: now,
-        id: EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
-        parent: EntryID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
+        id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+        parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
         version: 42,
         created: now,
         updated: now,
         children: HashMap::from([
             (
                 "wksp1".parse().unwrap(),
-                EntryID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
+                VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
             ),
             (
                 "wksp2".parse().unwrap(),
-                EntryID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap(),
+                VlobID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap(),
             ),
         ]),
     };
@@ -284,18 +284,18 @@ fn serde_workspace_manifest(alice: &Device) {
     let expected = WorkspaceManifest {
         author: alice.device_id.to_owned(),
         timestamp: now,
-        id: EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+        id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
         version: 42,
         created: now,
         updated: now,
         children: HashMap::from([
             (
                 "wksp1".parse().unwrap(),
-                EntryID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
+                VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
             ),
             (
                 "wksp2".parse().unwrap(),
-                EntryID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap(),
+                VlobID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap(),
             ),
         ]),
     };
@@ -383,7 +383,7 @@ fn serde_user_manifest(alice: &Device) {
     let expected = UserManifest {
         author: alice.device_id.to_owned(),
         timestamp: now,
-        id: EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+        id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
         version: 42,
         created: now,
         updated: now,
@@ -391,7 +391,7 @@ fn serde_user_manifest(alice: &Device) {
         workspaces: vec![
             WorkspaceEntry {
                 name: "wksp1".parse().unwrap(),
-                id: RealmID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
+                id: VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
                 key: SecretKey::from(hex!(
                     "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
                 )),
@@ -402,7 +402,7 @@ fn serde_user_manifest(alice: &Device) {
             },
             WorkspaceEntry {
                 name: "wksp2".parse().unwrap(),
-                id: RealmID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap(),
+                id: VlobID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap(),
                 key: SecretKey::from(hex!(
                     "c21ed3aae92c648cb1b6df8be149ebc872247db0dbd37686ff2d075e2d7505cc"
                 )),
@@ -445,7 +445,7 @@ fn serde_user_manifest(alice: &Device) {
 
 #[rstest]
 #[case::valid(None, None, None, None, None)]
-#[case::valid_id(None, None, Some(EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap()), None, None)]
+#[case::valid_id(None, None, Some(VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap()), None, None)]
 #[case::valid_version(None, None, None, Some(42), None)]
 #[case::invalid_dev_id(
     Some("maurice@pc1"),
@@ -464,7 +464,7 @@ fn serde_user_manifest(alice: &Device) {
 #[case::invalid_id(
     None,
     None,
-    Some(EntryID::from_hex("6b398b3dc6804bb784bb07b0d7038c63").unwrap()),
+    Some(VlobID::from_hex("6b398b3dc6804bb784bb07b0d7038c63").unwrap()),
     None,
     Some("Invalid entry ID: expected `6b398b3d-c680-4bb7-84bb-07b0d7038c63`, got `87c6b5fd-3b45-4c94-bab5-1d6af1c6930b`".to_string())
 )]
@@ -473,12 +473,12 @@ fn file_manifest_verify(
     alice: &Device,
     #[case] expected_author: Option<&str>,
     #[case] expected_timestamp: Option<DateTime>,
-    #[case] expected_id: Option<EntryID>,
+    #[case] expected_id: Option<VlobID>,
     #[case] expected_version: Option<u32>,
     #[case] expected_result: Option<String>,
 ) {
     let now = "2021-12-04T11:50:43.208821Z".parse::<DateTime>().unwrap();
-    let id = EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap();
+    let id = VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap();
     let version = 42;
 
     let expected_author = expected_author
@@ -492,7 +492,7 @@ fn file_manifest_verify(
         author: alice.device_id.to_owned(),
         timestamp: now,
         id,
-        parent: EntryID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
+        parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
         version,
         created: now,
         updated: now,

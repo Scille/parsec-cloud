@@ -2,8 +2,8 @@
 
 use libparsec_types::{
     thiserror, BackendAddr, BackendInvitationAddr, BackendOrganizationBootstrapAddr,
-    BackendOrganizationFileLinkAddr, BackendPkiEnrollmentAddr, EntryID, InvitationToken,
-    InvitationType, OrganizationID,
+    BackendOrganizationFileLinkAddr, BackendPkiEnrollmentAddr, InvitationToken, InvitationType,
+    OrganizationID, VlobID,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -30,7 +30,7 @@ pub enum ParsedBackendAddr {
         port: u32,
         use_ssl: bool,
         organization_id: OrganizationID,
-        workspace_id: EntryID,
+        workspace_id: VlobID,
         encrypted_path: Vec<u8>,
         encrypted_timestamp: Option<Vec<u8>>,
     },

@@ -13,11 +13,11 @@
         },
         {
             "name": "id",
-            "type": "EntryID"
+            "type": "VlobID"
         },
         {
             "name": "parent",
-            "type": "EntryID"
+            "type": "VlobID"
         },
         {
             "name": "version",
@@ -33,7 +33,7 @@
         },
         {
             "name": "children",
-            "type": "Map<EntryName, EntryID>"
+            "type": "Map<EntryName, VlobID>"
         }
     ]
 }

@@ -408,7 +408,7 @@ fn file_link_addr_bad_workspace(
                 AddrError::InvalidParamValue {
                     param: "workspace_id",
                     value: bad_workspace.to_string(),
-                    help: "Invalid EntryID".to_string(),
+                    help: "Invalid VlobID".to_string(),
                 },
             );
         }

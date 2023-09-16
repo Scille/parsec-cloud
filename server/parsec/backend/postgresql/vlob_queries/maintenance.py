@@ -5,7 +5,7 @@ from typing import List, Tuple
 
 import triopg
 
-from parsec._parsec import DeviceID, OrganizationID, RealmID, VlobID
+from parsec._parsec import DeviceID, OrganizationID, VlobID
 from parsec.backend.postgresql.utils import (
     Q,
     q_organization_internal_id,
@@ -124,7 +124,7 @@ async def _check_realm_and_maintenance_access(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
-    realm_id: RealmID,
+    realm_id: VlobID,
     encryption_revision: int,
 ) -> None:
     await _check_realm(
@@ -139,7 +139,7 @@ async def query_maintenance_get_reencryption_batch(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
-    realm_id: RealmID,
+    realm_id: VlobID,
     encryption_revision: int,
     size: int,
 ) -> List[Tuple[VlobID, int, bytes]]:
@@ -162,7 +162,7 @@ async def query_maintenance_save_reencryption_batch(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
-    realm_id: RealmID,
+    realm_id: VlobID,
     encryption_revision: int,
     batch: List[Tuple[VlobID, int, bytes]],
 ) -> Tuple[int, int]:

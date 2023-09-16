@@ -18,12 +18,12 @@ from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import (
     ApiV2V3_RealmGetRoleCertificatesRepNotAllowed,
     ApiV2V3_RealmGetRoleCertificatesRepOk,
-    RealmID,
     RealmRole,
     RealmUpdateRolesRepAlreadyGranted,
     RealmUpdateRolesRepInvalidData,
     RealmUpdateRolesRepNotAllowed,
     RealmUpdateRolesRepOk,
+    VlobID,
 )
 from parsec.backend.asgi import app_factory
 from parsec.backend.realm import RealmGrantedRole
@@ -70,7 +70,7 @@ def test_shuffle_roles(
             await self.backend_data_binder.bind_organization(self.org, device)
 
             # Create realm
-            self.realm_id = RealmID.new()
+            self.realm_id = VlobID.new()
             now = next_timestamp()
             certif = RealmRoleCertificate.build_realm_root_certif(
                 author=device.device_id, timestamp=now, realm_id=self.realm_id

@@ -92,7 +92,7 @@ fn serde_events_listen_req() {
         "ad2fdea7b3bd19c5a6737461747573a26f6b"
     )[..],
     authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::RealmMaintenanceFinished{
-        realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
+        realm_id: VlobID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
         encryption_revision: 0,
     })
 )]
@@ -109,7 +109,7 @@ fn serde_events_listen_req() {
         "2fdea7b3bd19c5a6737461747573a26f6b"
     )[..],
     authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::RealmMaintenanceStarted {
-        realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
+        realm_id: VlobID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
         encryption_revision: 0,
     })
 )]
@@ -129,7 +129,7 @@ fn serde_events_listen_req() {
         "a26f6b"
     )[..],
     authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::RealmVlobsUpdated {
-        realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
+        realm_id: VlobID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
         checkpoint: 0,
         src_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
         src_version: 0,
@@ -148,7 +148,7 @@ fn serde_events_listen_req() {
         "a87265616c6d5f6964d8021d3353157d7d4e95ad2fdea7b3bd19c5a4726f6c65c0"
     )[..],
     authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::RealmRolesUpdated {
-        realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
+        realm_id: VlobID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
         role: None,
     })
 )]
@@ -165,7 +165,7 @@ fn serde_events_listen_req() {
         "6b"
     )[..],
     authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::RealmRolesUpdated {
-        realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
+        realm_id: VlobID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
         role: Some(RealmRole::Owner),
     })
 )]

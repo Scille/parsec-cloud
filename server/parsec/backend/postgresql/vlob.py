@@ -5,7 +5,7 @@ from typing import Dict, List, Tuple
 
 import triopg
 
-from parsec._parsec import DateTime, DeviceID, OrganizationID, RealmID, SequesterServiceID, VlobID
+from parsec._parsec import DateTime, DeviceID, OrganizationID, SequesterServiceID, VlobID
 from parsec.backend.organization import SequesterAuthority
 from parsec.backend.postgresql.handler import PGHandler, retry_on_unique_violation
 from parsec.backend.postgresql.sequester import get_sequester_authority, get_sequester_services
@@ -121,7 +121,7 @@ class PGVlobComponent(BaseVlobComponent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         encryption_revision: int,
         vlob_id: VlobID,
         timestamp: DateTime,
@@ -203,7 +203,7 @@ class PGVlobComponent(BaseVlobComponent):
             )
 
     async def poll_changes(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID, checkpoint: int
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: VlobID, checkpoint: int
     ) -> Tuple[int, Dict[VlobID, int]]:
         async with self.dbh.pool.acquire() as conn:
             return await query_poll_changes(conn, organization_id, author, realm_id, checkpoint)
@@ -218,7 +218,7 @@ class PGVlobComponent(BaseVlobComponent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         encryption_revision: int,
         size: int,
     ) -> List[Tuple[VlobID, int, bytes]]:
@@ -231,7 +231,7 @@ class PGVlobComponent(BaseVlobComponent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         encryption_revision: int,
         batch: List[Tuple[VlobID, int, bytes]],
     ) -> Tuple[int, int]:

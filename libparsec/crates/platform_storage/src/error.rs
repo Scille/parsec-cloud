@@ -10,7 +10,7 @@ pub enum StorageError {
     InvalidRegexPattern(String, RegexError),
     #[error("{0}")]
     Internal(DynError),
-    #[error("Invalid entry id used for {used_as}: {error}")]
+    #[error("Invalid entry ID used for {used_as}: {error}")]
     InvalidEntryID {
         used_as: &'static str,
         error: &'static str,
@@ -20,7 +20,7 @@ pub enum StorageError {
     #[error("Block {0} not found in storage")]
     LocalBlockIDMiss(BlockID),
     #[error("Entry {0} not found in storage")]
-    LocalEntryIDMiss(EntryID),
+    LocalEntryIDMiss(VlobID),
     // TODO: needed ? or merge into Internal ?
     #[error("{0}")]
     Crypto(CryptoError),

@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DateTime, RealmID, SequesterServiceID, VlobID
+from parsec._parsec import DateTime, SequesterServiceID, VlobID
 
 class Req:
     def __init__(
         self,
-        realm_id: RealmID,
+        realm_id: VlobID,
         encryption_revision: int,
         vlob_id: VlobID,
         timestamp: DateTime,
@@ -16,7 +16,7 @@ class Req:
     ) -> None: ...
     def dump(self) -> bytes: ...
     @property
-    def realm_id(self) -> RealmID: ...
+    def realm_id(self) -> VlobID: ...
     @property
     def encryption_revision(self) -> int: ...
     @property

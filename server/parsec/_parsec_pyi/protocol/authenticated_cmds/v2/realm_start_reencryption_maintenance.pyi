@@ -2,19 +2,19 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DateTime, RealmID, UserID
+from parsec._parsec import DateTime, UserID, VlobID
 
 class Req:
     def __init__(
         self,
-        realm_id: RealmID,
+        realm_id: VlobID,
         encryption_revision: int,
         timestamp: DateTime,
         per_participant_message: dict[UserID, bytes],
     ) -> None: ...
     def dump(self) -> bytes: ...
     @property
-    def realm_id(self) -> RealmID: ...
+    def realm_id(self) -> VlobID: ...
     @property
     def encryption_revision(self) -> int: ...
     @property

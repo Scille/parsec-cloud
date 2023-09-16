@@ -9,7 +9,6 @@ from parsec._parsec import (
     CryptoError,
     DateTime,
     OrganizationID,
-    RealmID,
     SequesterServiceID,
     VlobID,
 )
@@ -167,7 +166,7 @@ class MemorySequesterComponent(BaseSequesterComponent):
         self,
         organization_id: OrganizationID,
         service_id: SequesterServiceID,
-        realm_id: RealmID,
+        realm_id: VlobID,
     ) -> List[Tuple[VlobID, int, bytes]]:
         assert self._vlob_component is not None
 

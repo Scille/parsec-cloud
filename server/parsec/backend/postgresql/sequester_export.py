@@ -9,7 +9,7 @@ from typing import AsyncGenerator, NewType, Tuple, cast
 import trio
 import triopg
 
-from parsec._parsec import BlockID, OrganizationID, RealmID, SequesterServiceID, VlobID
+from parsec._parsec import BlockID, OrganizationID, SequesterServiceID, VlobID
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.postgresql import PGHandler
 
@@ -111,7 +111,7 @@ CREATE TABLE device (
 
 async def _init_output_db(
     organization_id: OrganizationID,
-    realm_id: RealmID,
+    realm_id: VlobID,
     service_id: SequesterServiceID,
     output_db_path: Path,
     input_conn: triopg._triopg.TrioConnectionProxy,
@@ -298,7 +298,7 @@ class RealmExporter:
     def __init__(
         self,
         organization_id: OrganizationID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         service_id: SequesterServiceID,
         output_db_path: Path,
         input_dbh: PGHandler,
@@ -316,7 +316,7 @@ class RealmExporter:
     async def run(
         cls,
         organization_id: OrganizationID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         service_id: SequesterServiceID,
         output_db_path: Path,
         input_dbh: PGHandler,
@@ -531,7 +531,7 @@ LIMIT $4
                     (
                         row["_id"],
                         # Must convert `block_id`` fields from UUID to bytes given SQLite doesn't handle the former
-                        RealmID.from_hex(row["block_id"]).bytes,
+                        VlobID.from_hex(row["block_id"]).bytes,
                         block,
                         row["author"],
                     )

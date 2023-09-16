@@ -132,7 +132,7 @@ impl TestbedTemplateBuilderCounters {
         self.current_certificate_index += 1;
         self.current_certificate_index
     }
-    pub fn next_entry_id(&mut self) -> EntryID {
+    pub fn next_entry_id(&mut self) -> VlobID {
         self.current_entry_id += 1;
         self.current_entry_id.to_be_bytes().into()
     }
@@ -312,7 +312,7 @@ impl<'a> TestbedEventNewUserBuilder<'a> {
     impl_customize_field_meth!(human_handle, Option<HumanHandle>);
     impl_customize_field_meth!(first_device_label, Option<DeviceLabel>);
     impl_customize_field_meth!(initial_profile, UserProfile);
-    impl_customize_field_meth!(user_manifest_id, EntryID);
+    impl_customize_field_meth!(user_manifest_id, VlobID);
     impl_customize_field_meth!(local_password, &'static str);
 }
 
@@ -377,7 +377,7 @@ impl TestbedTemplateBuilder {
                 _ => unreachable!(),
             };
         let mut event = TestbedEventNewRealm::from_builder(self, user);
-        event.realm_id = realm_id.into();
+        event.realm_id = realm_id;
         event.realm_key = realm_key;
         self.events.push(TestbedEvent::NewRealm(event));
         TestbedEventNewRealmBuilder { builder: self }
@@ -440,7 +440,7 @@ impl<'a> TestbedEventNewRealmBuilder<'a> {
         self,
     ) -> TestbedEventCreateOrUpdateUserManifestVlobBuilder<'a> {
         let user = self.get_event().author.user_id().to_owned();
-        let expected = self.get_event().realm_id.into();
+        let expected = self.get_event().realm_id;
         let event = TestbedEventCreateOrUpdateUserManifestVlob::from_builder(self.builder, user);
         assert_eq!(event.manifest.id, expected);
 
@@ -462,7 +462,7 @@ impl<'a> TestbedEventNewRealmBuilder<'a> {
             device,
             realm,
         );
-        assert_eq!(event.manifest.id, realm.into());
+        assert_eq!(event.manifest.id, realm);
 
         self.builder
             .events
@@ -479,7 +479,7 @@ impl<'a> TestbedEventNewRealmBuilder<'a> {
 
 impl_event_builder!(
     ShareRealm,
-    [realm: RealmID, user: UserID, role: Option<RealmRole>]
+    [realm: VlobID, user: UserID, role: Option<RealmRole>]
 );
 
 impl<'a> TestbedEventShareRealmBuilder<'a> {
@@ -504,7 +504,7 @@ impl<'a> TestbedEventShareRealmBuilder<'a> {
  * TestbedEventStartRealmReencryptionBuilder
  */
 
-impl_event_builder!(StartRealmReencryption, [realm: RealmID]);
+impl_event_builder!(StartRealmReencryption, [realm: VlobID]);
 
 impl<'a> TestbedEventStartRealmReencryptionBuilder<'a> {
     impl_customize_field_meth!(author, DeviceID);
@@ -515,7 +515,7 @@ impl<'a> TestbedEventStartRealmReencryptionBuilder<'a> {
  * TestbedEventFinishRealmReencryptionBuilder
  */
 
-impl_event_builder!(FinishRealmReencryption, [realm: RealmID]);
+impl_event_builder!(FinishRealmReencryption, [realm: VlobID]);
 
 impl<'a> TestbedEventFinishRealmReencryptionBuilder<'a> {
     impl_customize_field_meth!(author, DeviceID);
@@ -533,7 +533,7 @@ impl_event_builder!(CreateOrUpdateUserManifestVlob, [user: UserID]);
 
 impl_event_builder!(
     CreateOrUpdateWorkspaceManifestVlob,
-    [device: DeviceID, realm: RealmID]
+    [device: DeviceID, realm: VlobID]
 );
 
 /*
@@ -542,7 +542,7 @@ impl_event_builder!(
 
 impl_event_builder!(
     CreateOrUpdateFileManifestVlob,
-    [device: DeviceID, realm: RealmID, vlob: Option<VlobID>]
+    [device: DeviceID, realm: VlobID, vlob: Option<VlobID>]
 );
 
 /*
@@ -551,7 +551,7 @@ impl_event_builder!(
 
 impl_event_builder!(
     CreateOrUpdateFolderManifestVlob,
-    [device: DeviceID, realm: RealmID, vlob: Option<VlobID>]
+    [device: DeviceID, realm: VlobID, vlob: Option<VlobID>]
 );
 
 /*
@@ -560,7 +560,7 @@ impl_event_builder!(
 
 impl_event_builder!(
     CreateBlock,
-    [device: DeviceID, realm: RealmID, cleartext_block: Bytes]
+    [device: DeviceID, realm: VlobID, cleartext_block: Bytes]
 );
 
 impl<'a> TestbedEventCreateBlockBuilder<'a> {
@@ -586,7 +586,7 @@ impl_event_builder!(
     CreateOpaqueBlock,
     [
         device: DeviceID,
-        realm: RealmID,
+        realm: VlobID,
         block_id: BlockID,
         encrypted_block: Bytes
     ]
@@ -622,7 +622,7 @@ impl_event_builder!(UserStorageLocalUpdate, [device: DeviceID]);
 
 impl_event_builder!(
     WorkspaceCacheStorageFetchBlock,
-    [device: DeviceID, realm: RealmID, block: BlockID]
+    [device: DeviceID, realm: VlobID, block: BlockID]
 );
 
 /*
@@ -633,7 +633,7 @@ impl_event_builder!(
     WorkspaceDataStorageFetchWorkspaceVlob,
     [
         device: DeviceID,
-        realm: RealmID,
+        realm: VlobID,
         prevent_sync_pattern: Option<Regex>,
     ]
 );
@@ -644,7 +644,7 @@ impl_event_builder!(
 
 impl_event_builder!(
     WorkspaceDataStorageFetchFileVlob,
-    [device: DeviceID, realm: RealmID, vlob: VlobID]
+    [device: DeviceID, realm: VlobID, vlob: VlobID]
 );
 
 /*
@@ -655,7 +655,7 @@ impl_event_builder!(
     WorkspaceDataStorageFetchFolderVlob,
     [
         device: DeviceID,
-        realm: RealmID,
+        realm: VlobID,
         vlob: VlobID,
         prevent_sync_pattern: Option<Regex>
     ]
@@ -667,7 +667,7 @@ impl_event_builder!(
 
 impl_event_builder!(
     WorkspaceDataStorageFetchRealmCheckpoint,
-    [device: DeviceID, realm: RealmID]
+    [device: DeviceID, realm: VlobID]
 );
 
 /*
@@ -676,7 +676,7 @@ impl_event_builder!(
 
 impl_event_builder!(
     WorkspaceDataStorageLocalWorkspaceManifestUpdate,
-    [device: DeviceID, realm: RealmID]
+    [device: DeviceID, realm: VlobID]
 );
 
 /*
@@ -685,7 +685,7 @@ impl_event_builder!(
 
 impl_event_builder!(
     WorkspaceDataStorageLocalFolderManifestUpdate,
-    [device: DeviceID, realm: RealmID, vlob: VlobID]
+    [device: DeviceID, realm: VlobID, vlob: VlobID]
 );
 
 /*
@@ -694,5 +694,5 @@ impl_event_builder!(
 
 impl_event_builder!(
     WorkspaceDataStorageLocalFileManifestUpdate,
-    [device: DeviceID, realm: RealmID, vlob: VlobID]
+    [device: DeviceID, realm: VlobID, vlob: VlobID]
 );

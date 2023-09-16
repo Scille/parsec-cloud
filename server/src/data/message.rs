@@ -8,8 +8,8 @@ use pyo3::{
 };
 
 use crate::{
-    DataExc, DateTime, DeviceID, EntryName, PrivateKey, PublicKey, RealmID, SecretKey, SigningKey,
-    VerifyKey,
+    DataExc, DateTime, DeviceID, EntryName, PrivateKey, PublicKey, SecretKey, SigningKey,
+    VerifyKey, VlobID,
 };
 
 use libparsec::low_level::types::IndexInt;
@@ -127,7 +127,7 @@ impl SharingGrantedMessageContent {
         author: DeviceID,
         timestamp: DateTime,
         name: EntryName,
-        id: RealmID,
+        id: VlobID,
         encryption_revision: IndexInt,
         encrypted_on: DateTime,
         key: SecretKey,
@@ -159,9 +159,9 @@ impl SharingGrantedMessageContent {
     }
 
     #[getter]
-    fn id(_self: PyRef<'_, Self>) -> PyResult<RealmID> {
+    fn id(_self: PyRef<'_, Self>) -> PyResult<VlobID> {
         Ok(match _self.as_ref().0 {
-            libparsec::low_level::types::MessageContent::SharingGranted { id, .. } => RealmID(id),
+            libparsec::low_level::types::MessageContent::SharingGranted { id, .. } => VlobID(id),
             _ => return Err(PyNotImplementedError::new_err("")),
         })
     }
@@ -208,7 +208,7 @@ impl SharingReencryptedMessageContent {
         author: DeviceID,
         timestamp: DateTime,
         name: EntryName,
-        id: RealmID,
+        id: VlobID,
         encryption_revision: IndexInt,
         encrypted_on: DateTime,
         key: SecretKey,
@@ -240,10 +240,10 @@ impl SharingReencryptedMessageContent {
     }
 
     #[getter]
-    fn id(_self: PyRef<'_, Self>) -> PyResult<RealmID> {
+    fn id(_self: PyRef<'_, Self>) -> PyResult<VlobID> {
         Ok(match _self.as_ref().0 {
             libparsec::low_level::types::MessageContent::SharingReencrypted { id, .. } => {
-                RealmID(id)
+                VlobID(id)
             }
             _ => return Err(PyNotImplementedError::new_err("")),
         })
@@ -288,7 +288,7 @@ pub(crate) struct SharingRevokedMessageContent;
 #[pymethods]
 impl SharingRevokedMessageContent {
     #[new]
-    fn new(author: DeviceID, timestamp: DateTime, id: RealmID) -> PyResult<(Self, MessageContent)> {
+    fn new(author: DeviceID, timestamp: DateTime, id: VlobID) -> PyResult<(Self, MessageContent)> {
         Ok((
             Self,
             MessageContent(
@@ -302,9 +302,9 @@ impl SharingRevokedMessageContent {
     }
 
     #[getter]
-    fn id(_self: PyRef<'_, Self>) -> PyResult<RealmID> {
+    fn id(_self: PyRef<'_, Self>) -> PyResult<VlobID> {
         Ok(match _self.as_ref().0 {
-            libparsec::low_level::types::MessageContent::SharingRevoked { id, .. } => RealmID(id),
+            libparsec::low_level::types::MessageContent::SharingRevoked { id, .. } => VlobID(id),
             _ => return Err(PyNotImplementedError::new_err("")),
         })
     }

@@ -16,13 +16,13 @@ from parsec._parsec import (
     DateTime,
     HumanHandle,
     OrganizationID,
-    RealmID,
     SequesterPrivateKeyDer,
     SequesterPublicKeyDer,
     SequesterServiceID,
     SequesterSigningKeyDer,
     SequesterVerifyKeyDer,
     UserID,
+    VlobID,
 )
 from parsec.api.data import DataError, SequesterServiceCertificate
 from parsec.backend.blockstore import blockstore_factory
@@ -546,13 +546,13 @@ async def _human_accesses(
             user_granted_roles.append(granted_role)
 
         humans: Dict[
-            HumanHandle | None, List[Tuple[User, Dict[RealmID, List[RealmGrantedRole]]]]
+            HumanHandle | None, List[Tuple[User, Dict[VlobID, List[RealmGrantedRole]]]]
         ] = {
             None: []
         }  # Non-human are all stored in `None` key
         for user in users:
             human_users = humans.setdefault(user.human_handle, [])
-            per_user_per_realm_granted_role: Dict[RealmID, List[RealmGrantedRole]] = {}
+            per_user_per_realm_granted_role: Dict[VlobID, List[RealmGrantedRole]] = {}
             for granted_role in per_user_granted_roles.get(user.user_id, []):
                 realm_granted_roles = per_user_per_realm_granted_role.setdefault(
                     granted_role.realm_id, []
@@ -589,7 +589,7 @@ async def _human_accesses(
         #       2000-01-01T00:00:00Z: Access READER granted
 
         def _display_user(
-            user: User, per_realm_granted_role: dict[RealmID, list[RealmGrantedRole]], indent: int
+            user: User, per_realm_granted_role: dict[VlobID, list[RealmGrantedRole]], indent: int
         ) -> None:
             base_indent = "\t" * indent
             display_user = click.style(user.user_id, fg="green")
@@ -640,7 +640,7 @@ async def _export_realm(
     db_config: BackendDbConfig,
     blockstore_config: BaseBlockStoreConfig,
     organization_id: OrganizationID,
-    realm_id: RealmID,
+    realm_id: VlobID,
     service_id: SequesterServiceID,
     output: Path,
 ) -> None:
@@ -735,7 +735,7 @@ async def _export_realm(
 
 @click.command(short_help="Export a realm to consult it with a sequester service key")
 @click.option("--organization", type=OrganizationID, required=True)
-@click.option("--realm", type=RealmID.from_hex, required=True)
+@click.option("--realm", type=VlobID.from_hex, required=True)
 @click.option(
     "--service",
     type=SequesterServiceID.from_hex,
@@ -749,7 +749,7 @@ async def _export_realm(
 @debug_config_options
 def export_realm(
     organization: OrganizationID,
-    realm: RealmID,
+    realm: VlobID,
     service: SequesterServiceID,
     output: Path,
     db: str,

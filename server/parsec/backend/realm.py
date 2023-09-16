@@ -9,10 +9,10 @@ from parsec._parsec import (
     DateTime,
     DeviceID,
     OrganizationID,
-    RealmID,
     RealmRole,
     UserID,
     UserProfile,
+    VlobID,
     authenticated_cmds,
 )
 from parsec.api.data import DataError, RealmRoleCertificate
@@ -113,7 +113,7 @@ class RealmGrantedRole:
         return attr.evolve(self, **kwargs)
 
     certificate: bytes
-    realm_id: RealmID
+    realm_id: VlobID
     user_id: UserID
     role: RealmRole | None
     granted_by: DeviceID | None
@@ -436,7 +436,7 @@ class BaseRealmComponent:
         raise NotImplementedError()
 
     async def get_status(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: VlobID
     ) -> RealmStatus:
         """
         Raises:
@@ -446,7 +446,7 @@ class BaseRealmComponent:
         raise NotImplementedError()
 
     async def get_stats(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: VlobID
     ) -> RealmStats:
         """
         Raises:
@@ -456,7 +456,7 @@ class BaseRealmComponent:
         raise NotImplementedError()
 
     async def get_current_roles(
-        self, organization_id: OrganizationID, realm_id: RealmID
+        self, organization_id: OrganizationID, realm_id: VlobID
     ) -> Dict[UserID, RealmRole]:
         """
         Raises:
@@ -465,7 +465,7 @@ class BaseRealmComponent:
         raise NotImplementedError()
 
     async def get_role_certificates(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: VlobID
     ) -> List[bytes]:
         """
         Raises:
@@ -493,7 +493,7 @@ class BaseRealmComponent:
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         encryption_revision: int,
         per_participant_message: Dict[UserID, bytes],
         timestamp: DateTime,
@@ -511,7 +511,7 @@ class BaseRealmComponent:
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: RealmID,
+        realm_id: VlobID,
         encryption_revision: int,
     ) -> None:
         """
@@ -524,7 +524,7 @@ class BaseRealmComponent:
 
     async def get_realms_for_user(
         self, organization_id: OrganizationID, user: UserID
-    ) -> Dict[RealmID, RealmRole]:
+    ) -> Dict[VlobID, RealmRole]:
         """
         Raises: Nothing !
         """

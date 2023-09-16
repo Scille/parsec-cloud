@@ -14,7 +14,7 @@ async fn bad_start(tmp_path: TmpPath, alice: &Device) {
     let not_a_dir_path = tmp_path.join("foo.txt");
     std::fs::File::create(&not_a_dir_path).unwrap();
 
-    let realm_id = RealmID::default();
+    let realm_id = VlobID::default();
 
     p_assert_matches!(
         WorkspaceCacheStorage::start(

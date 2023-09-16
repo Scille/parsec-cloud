@@ -14,7 +14,6 @@ from parsec.api.protocol import (
     ApiV2V3_VlobReadRepNotAllowed,
     ApiV2V3_VlobReadRepNotFound,
     ApiV2V3_VlobReadRepOk,
-    RealmID,
     RealmRole,
     RealmUpdateRolesRepOk,
     VlobCreateRepAlreadyExists,
@@ -113,7 +112,7 @@ async def test_create_but_already_exists(alice_ws, realm):
 
 @pytest.mark.trio
 async def test_create_but_unknown_realm(alice_ws):
-    bad_realm_id = RealmID.new()
+    bad_realm_id = VlobID.new()
     blob = b"Initial commit."
 
     rep = await vlob_create(alice_ws, bad_realm_id, VLOB_ID, blob, check_rep=False)

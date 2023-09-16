@@ -8,7 +8,7 @@
             "fields": [
                 {
                     "name": "realm_id",
-                    "type": "RealmID"
+                    "type": "VlobID"
                 }
             ]
         },

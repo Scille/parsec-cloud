@@ -10,7 +10,7 @@ use std::{
 };
 
 use chrono::Utc;
-use libparsec_types::{EntryID, EntryName, FileDescriptor};
+use libparsec_types::{EntryName, FileDescriptor, VlobID};
 
 use crate::{
     EntryInfo, EntryInfoType, MountpointError, MountpointInterface, MountpointResult, WriteMode,
@@ -38,7 +38,7 @@ impl Default for MountpointManager {
             PathBuf::from("/"),
             (
                 EntryInfo {
-                    id: EntryID::default(),
+                    id: VlobID::default(),
                     ty: EntryInfoType::Dir,
                     created: now,
                     updated: now,
@@ -185,7 +185,7 @@ impl MountpointInterface for MountpointManager {
 
         let data = Arc::new(Mutex::new(vec![]));
 
-        let id = EntryID::default();
+        let id = VlobID::default();
         let now = Utc::now();
         let fd = self.create_file_descriptor(FileData {
             path: path.into(),
@@ -265,7 +265,7 @@ impl MountpointInterface for MountpointManager {
         Ok(())
     }
 
-    fn file_resize(&self, _path: &Path, _len: u64) -> EntryID {
+    fn file_resize(&self, _path: &Path, _len: u64) -> VlobID {
         todo!("UNIX only")
     }
 
@@ -377,7 +377,7 @@ impl MountpointInterface for MountpointManager {
             return Err(MountpointError::NameCollision);
         }
 
-        let id = EntryID::default();
+        let id = VlobID::default();
         let now = Utc::now();
 
         let (parent, _) = entries

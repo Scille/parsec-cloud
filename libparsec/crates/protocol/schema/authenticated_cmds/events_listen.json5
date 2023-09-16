@@ -98,7 +98,7 @@
                         "fields": [
                             {
                                 "name": "realm_id",
-                                "type": "RealmID"
+                                "type": "VlobID"
                             },
                             {
                                 "name": "encryption_revision",
@@ -112,7 +112,7 @@
                         "fields": [
                             {
                                 "name": "realm_id",
-                                "type": "RealmID"
+                                "type": "VlobID"
                             },
                             {
                                 "name": "encryption_revision",
@@ -126,7 +126,7 @@
                         "fields": [
                             {
                                 "name": "realm_id",
-                                "type": "RealmID"
+                                "type": "VlobID"
                             },
                             {
                                 "name": "checkpoint",
@@ -226,7 +226,7 @@
                         "fields": [
                             {
                                 "name": "realm_id",
-                                "type": "RealmID"
+                                "type": "VlobID"
                             },
                             {
                                 "name": "encryption_revision",
@@ -240,7 +240,7 @@
                         "fields": [
                             {
                                 "name": "realm_id",
-                                "type": "RealmID"
+                                "type": "VlobID"
                             },
                             {
                                 "name": "encryption_revision",
@@ -254,7 +254,7 @@
                         "fields": [
                             {
                                 "name": "realm_id",
-                                "type": "RealmID"
+                                "type": "VlobID"
                             },
                             {
                                 "name": "checkpoint",
@@ -276,7 +276,7 @@
                         "fields": [
                             {
                                 "name": "realm_id",
-                                "type": "RealmID"
+                                "type": "VlobID"
                             },
                             {
                                 "name": "role",

@@ -7,14 +7,14 @@ use super::WorkspaceOps;
 
 async fn get_child_manifest(
     ops: &WorkspaceOps,
-    entry_id: EntryID,
+    entry_id: VlobID,
 ) -> anyhow::Result<ArcLocalChildManifest> {
     match ops.data_storage.get_child_manifest(entry_id).await {
         Ok(manifest) => Ok(manifest),
         Err(GetChildManifestError::Internal(err)) => Err(err),
         Err(GetChildManifestError::NotFound) => {
             // TODO: remote loader !
-            // remote_manifest = await self.remote_loader.load_manifest(cast(EntryID, exc.id))
+            // remote_manifest = await self.remote_loader.load_manifest(cast(VlobID, exc.id))
             // return local_manifest_from_remote(
             //     remote_manifest, prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern()
             // )
@@ -29,8 +29,8 @@ pub enum EntryInfo {
         /// The confinement point corresponds to the entry id of the parent folderish
         /// manifest that contains a child with a confined name in the path leading
         /// to our entry.
-        confinement_point: Option<EntryID>,
-        id: EntryID,
+        confinement_point: Option<VlobID>,
+        id: VlobID,
         created: DateTime,
         updated: DateTime,
         base_version: VersionInt,
@@ -43,8 +43,8 @@ pub enum EntryInfo {
         /// The confinement point corresponds to the entry id of the parent folderish
         /// manifest that contains a child with a confined name in the path leading
         /// to our entry.
-        confinement_point: Option<EntryID>,
-        id: EntryID,
+        confinement_point: Option<VlobID>,
+        id: VlobID,
         created: DateTime,
         updated: DateTime,
         base_version: VersionInt,
@@ -55,13 +55,13 @@ pub enum EntryInfo {
 }
 
 struct FsPathResolution {
-    entry_id: EntryID,
+    entry_id: VlobID,
     /// The confinement point corresponds to the entry id of the folderish manifest
     /// (i.e. file or workspace manifest) that contains a child with a confined name
     /// in the corresponding path.
     ///
     /// If the entry is not confined, the confinement point is `None`.
-    confinement_point: Option<EntryID>,
+    confinement_point: Option<VlobID>,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -96,7 +96,7 @@ async fn resolve_path(
                 let confinement_point = manifest
                     .local_confinement_points
                     .contains(child_entry_id)
-                    .then_some(ops.realm_id.into());
+                    .then_some(ops.realm_id);
                 FsPathResolution {
                     entry_id: *child_entry_id,
                     confinement_point,
@@ -135,7 +135,7 @@ async fn resolve_path(
 
     Ok(match parent {
         Parent::Root => FsPathResolution {
-            entry_id: ops.realm_id.into(),
+            entry_id: ops.realm_id,
             confinement_point: None,
         },
         Parent::Child(resolution) => resolution,

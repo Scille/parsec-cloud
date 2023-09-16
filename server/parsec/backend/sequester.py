@@ -6,7 +6,7 @@ from typing import Any, List, Tuple
 
 import attr
 
-from parsec._parsec import DateTime, OrganizationID, RealmID, SequesterServiceID, VlobID
+from parsec._parsec import DateTime, OrganizationID, SequesterServiceID, VlobID
 
 
 class SequesterError(Exception):
@@ -171,7 +171,7 @@ class BaseSequesterComponent:
         self,
         organization_id: OrganizationID,
         service_id: SequesterServiceID,
-        realm_id: RealmID,
+        realm_id: VlobID,
     ) -> List[Tuple[VlobID, int, bytes]]:
         """
         Dump all vlobs in a given realm.

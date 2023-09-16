@@ -81,7 +81,7 @@ async fn create_realm_in_server(ops: &UserOps) -> Result<(), SyncError> {
         let certif = RealmRoleCertificate::new_root(
             ops.device.device_id.to_owned(),
             timestamp,
-            ops.device.user_manifest_id.into(),
+            ops.device.user_manifest_id,
         )
         .dump_and_sign(&ops.device.signing_key);
 
@@ -192,10 +192,10 @@ async fn upload_manifest(
         return if to_sync_um.version == 1 {
             use authenticated_cmds::latest::vlob_create::{Rep, Req};
             let req = Req {
-                realm_id: ops.device.user_manifest_id.into(),
+                realm_id: ops.device.user_manifest_id,
                 // Always 1 given user manifest realm is never reencrypted
                 encryption_revision: 1,
-                vlob_id: ops.device.user_manifest_id.into(),
+                vlob_id: ops.device.user_manifest_id,
                 timestamp,
                 blob: ciphered,
                 sequester_blob,
@@ -246,7 +246,7 @@ async fn upload_manifest(
             let req = Req {
                 // Always 1 given user manifest realm is never reencrypted
                 encryption_revision: 1,
-                vlob_id: ops.device.user_manifest_id.into(),
+                vlob_id: ops.device.user_manifest_id,
                 version: to_sync_um.version,
                 timestamp,
                 blob: ciphered,

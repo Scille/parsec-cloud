@@ -80,9 +80,9 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<UserProfile>()?;
 
     m.add_class::<OrganizationID>()?;
-    m.add_class::<EntryID>()?;
+    m.add_class::<VlobID>()?;
     m.add_class::<BlockID>()?;
-    m.add_class::<RealmID>()?;
+    m.add_class::<VlobID>()?;
     m.add_class::<VlobID>()?;
     m.add_class::<ChunkID>()?;
     m.add_class::<SequesterServiceID>()?;

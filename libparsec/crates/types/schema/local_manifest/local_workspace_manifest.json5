@@ -16,7 +16,7 @@
         },
         {
             "name": "children",
-            "type": "Map<EntryName, EntryID>"
+            "type": "Map<EntryName, VlobID>"
         },
         {
             // Added in Parsec v1.15
@@ -25,7 +25,7 @@
             // confined is to have a filename that matched the "prevent sync" pattern at the time of
             // the last change (or when a new filter was successfully applied)
             "name": "local_confinement_points",
-            "type": "Set<EntryID>",
+            "type": "Set<VlobID>",
             // Hack to indicate this field was added in Parsec v1.15, given revision is meaningless for data
             "introduced_in_revision": 115
         },
@@ -36,7 +36,7 @@
             // deleted locally and hence should be restored when crafting the remote manifest
             // to upload.
             "name": "remote_confinement_points",
-            "type": "Set<EntryID>",
+            "type": "Set<VlobID>",
             // Hack to indicate this field was added in Parsec v1.15, given revision is meaningless for data
             "introduced_in_revision": 115
         },

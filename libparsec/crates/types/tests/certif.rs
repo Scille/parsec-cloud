@@ -96,7 +96,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
         author: CertificateSignerOwned::User(alice.device_id.clone()),
         timestamp,
         user_id: bob.user_id().to_owned(),
-        realm_id: RealmID::from_hex("604784450642426b91eb89242f54fa52").unwrap(),
+        realm_id: VlobID::from_hex("604784450642426b91eb89242f54fa52").unwrap(),
         role: Some(RealmRole::Owner),
     };
     assert_eq!(
@@ -105,7 +105,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
             "RealmRoleCertificate {",
             " author: User(DeviceID(\"alice@dev1\")),",
             " timestamp: DateTime(\"2020-01-01T00:00:00Z\"),",
-            " realm_id: RealmID(60478445-0642-426b-91eb-89242f54fa52),",
+            " realm_id: VlobID(60478445-0642-426b-91eb-89242f54fa52),",
             " user_id: UserID(\"bob\"),",
             " role: Some(Owner)",
             " }",
@@ -781,7 +781,7 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
     let expected = RealmRoleCertificate {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
-        realm_id: RealmID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
+        realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
         user_id: bob.user_id().to_owned(),
         role: Some(RealmRole::Owner),
     };
@@ -864,7 +864,7 @@ fn serde_realm_role_certificate_no_role(alice: &Device, bob: &Device) {
     let expected = RealmRoleCertificate {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
-        realm_id: RealmID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
+        realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
         user_id: bob.user_id().to_owned(),
         role: None,
         // role: Some(RealmRole::Owner),

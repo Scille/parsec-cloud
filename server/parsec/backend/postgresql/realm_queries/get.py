@@ -8,9 +8,9 @@ import triopg
 from parsec._parsec import (
     DeviceID,
     OrganizationID,
-    RealmID,
     RealmRole,
     UserID,
+    VlobID,
 )
 from parsec.backend.postgresql.utils import (
     Q,
@@ -132,7 +132,7 @@ async def query_get_status(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
-    realm_id: RealmID,
+    realm_id: VlobID,
 ) -> RealmStatus:
     ret = await conn.fetchrow(
         *_q_get_realm_status(
@@ -162,7 +162,7 @@ async def query_get_stats(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
-    realm_id: RealmID,
+    realm_id: VlobID,
 ) -> RealmStats:
     ret = await conn.fetchrow(
         *_q_has_realm_access(
@@ -189,7 +189,7 @@ async def query_get_stats(
 
 @query()
 async def query_get_current_roles(
-    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, realm_id: RealmID
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, realm_id: VlobID
 ) -> Dict[UserID, RealmRole]:
     ret = await conn.fetch(
         *_q_get_current_roles(organization_id=organization_id.str, realm_id=realm_id)
@@ -207,7 +207,7 @@ async def query_get_role_certificates(
     conn: triopg._triopg.TrioConnectionProxy,
     organization_id: OrganizationID,
     author: DeviceID,
-    realm_id: RealmID,
+    realm_id: VlobID,
 ) -> List[bytes]:
     ret = await conn.fetch(
         *_q_get_role_certificates(organization_id=organization_id.str, realm_id=realm_id)
@@ -234,12 +234,12 @@ async def query_get_role_certificates(
 @query()
 async def query_get_realms_for_user(
     conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, user: UserID
-) -> dict[RealmID, RealmRole]:
+) -> dict[VlobID, RealmRole]:
     rep = await conn.fetch(
         *_q_get_realms_for_user(organization_id=organization_id.str, user_id=user.str)
     )
     return {
-        RealmID.from_hex(row["realm_id"]): RealmRole.from_str(row["role"])
+        VlobID.from_hex(row["realm_id"]): RealmRole.from_str(row["role"])
         for row in rep
         if row["role"] is not None
     }
@@ -258,7 +258,7 @@ async def query_dump_realms_granted_roles(
         granted_roles.append(
             RealmGrantedRole(
                 certificate=row["certificate"],
-                realm_id=RealmID.from_hex(row["realm_id"]),
+                realm_id=VlobID.from_hex(row["realm_id"]),
                 user_id=UserID(row["user_id"]),
                 role=RealmRole.from_str(row["role"]),
                 granted_by=DeviceID(row["granted_by"]),

@@ -209,39 +209,13 @@ macro_rules! new_string_based_id_type {
     };
 }
 
-new_uuid_type!(pub EntryID);
-new_uuid_type!(pub BlockID);
-new_uuid_type!(pub RealmID);
 new_uuid_type!(pub VlobID);
+new_uuid_type!(pub BlockID);
 new_uuid_type!(pub ChunkID);
 new_uuid_type!(pub SequesterServiceID);
 new_uuid_type!(pub InvitationToken);
 new_uuid_type!(pub EnrollmentID);
-impl_from_maybe!(std::collections::HashSet<EntryID>);
-
-// RealmID correspond to user/workspace manifest's EntryID, so conversion is useful
-impl From<EntryID> for RealmID {
-    fn from(value: EntryID) -> Self {
-        Self(value.0)
-    }
-}
-impl From<RealmID> for EntryID {
-    fn from(value: RealmID) -> Self {
-        Self(value.0)
-    }
-}
-
-// Each entry is stored in vlob, hence there is a EntryID <-> VlobID correspondence
-impl From<EntryID> for VlobID {
-    fn from(value: EntryID) -> Self {
-        Self(value.0)
-    }
-}
-impl From<VlobID> for EntryID {
-    fn from(value: VlobID) -> Self {
-        Self(value.0)
-    }
-}
+impl_from_maybe!(std::collections::HashSet<VlobID>);
 
 // ChunkID are often created from file BlockID, so conversion is useful
 impl From<BlockID> for ChunkID {

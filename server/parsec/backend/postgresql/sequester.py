@@ -10,7 +10,6 @@ from parsec._parsec import (
     CryptoError,
     DateTime,
     OrganizationID,
-    RealmID,
     SequesterServiceID,
     SequesterVerifyKeyDer,
     VlobID,
@@ -383,7 +382,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
             )
 
     async def dump_realm(
-        self, organization_id: OrganizationID, service_id: SequesterServiceID, realm_id: RealmID
+        self, organization_id: OrganizationID, service_id: SequesterServiceID, realm_id: VlobID
     ) -> List[Tuple[VlobID, int, bytes]]:
         async with self.dbh.pool.acquire() as conn:
             # Check organization and service exists

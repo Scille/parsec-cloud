@@ -25,9 +25,9 @@ enum StorageKind {
     #[allow(dead_code)]
     User,
     #[allow(dead_code)]
-    WorkspaceData(RealmID),
+    WorkspaceData(VlobID),
     #[allow(dead_code)]
-    WorkspaceCache(RealmID),
+    WorkspaceCache(VlobID),
 }
 
 struct ComponentStore {
@@ -256,7 +256,7 @@ pub(crate) async fn maybe_populate_user_storage(data_base_dir: &Path, device: Ar
 pub(crate) async fn maybe_populate_workspace_data_storage(
     data_base_dir: &Path,
     device: Arc<LocalDevice>,
-    realm_id: RealmID,
+    realm_id: VlobID,
 ) {
     if let Some(store) = test_get_testbed_component_store::<ComponentStore>(
         data_base_dir,
@@ -400,7 +400,7 @@ pub(crate) async fn maybe_populate_workspace_data_storage(
 pub(crate) async fn maybe_populate_workspace_cache_storage(
     data_base_dir: &Path,
     device: Arc<LocalDevice>,
-    realm_id: RealmID,
+    realm_id: VlobID,
 ) {
     if let Some(store) = test_get_testbed_component_store::<ComponentStore>(
         data_base_dir,

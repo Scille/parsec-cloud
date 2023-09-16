@@ -19,8 +19,8 @@ use crate as libparsec_types;
 use crate::data_macros::impl_transparent_data_format_conversion;
 use crate::{DataError, DataResult};
 use crate::{
-    DateTime, DeviceID, DeviceLabel, HumanHandle, RealmID, RealmRole, SequesterServiceID, UserID,
-    UserProfile,
+    DateTime, DeviceID, DeviceLabel, HumanHandle, RealmRole, SequesterServiceID, UserID,
+    UserProfile, VlobID,
 };
 
 fn load<T>(compressed: &[u8]) -> DataResult<T>
@@ -489,7 +489,7 @@ pub struct RealmRoleCertificate {
     pub author: CertificateSignerOwned,
     pub timestamp: DateTime,
 
-    pub realm_id: RealmID,
+    pub realm_id: VlobID,
     pub user_id: UserID,
     // Set to None if role removed
     pub role: Option<RealmRole>, // TODO: use a custom type instead
@@ -500,7 +500,7 @@ impl_unsecure_dump!(RealmRoleCertificate);
 impl_dump_and_sign!(RealmRoleCertificate);
 
 impl RealmRoleCertificate {
-    pub fn new_root(author: DeviceID, timestamp: DateTime, realm_id: RealmID) -> Self {
+    pub fn new_root(author: DeviceID, timestamp: DateTime, realm_id: VlobID) -> Self {
         let user_id = author.user_id().to_owned();
         Self {
             author: CertificateSignerOwned::User(author),
@@ -515,7 +515,7 @@ impl RealmRoleCertificate {
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: CertificateSignerRef<'_>,
-        expected_realm_id: Option<RealmID>,
+        expected_realm_id: Option<VlobID>,
         expected_user_id: Option<&UserID>,
     ) -> DataResult<Self> {
         let r = verify_and_load::<Self>(signed, author_verify_key)?;

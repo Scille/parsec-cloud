@@ -6,7 +6,7 @@ use thiserror::Error;
 
 use libparsec_crypto::CryptoError;
 
-use crate::{DateTime, DeviceFileType, DeviceID, EntryID, HumanHandle, RealmID, UserID};
+use crate::{DateTime, DeviceFileType, DeviceID, HumanHandle, UserID, VlobID};
 
 #[derive(Error, Debug)]
 pub enum RegexError {
@@ -71,7 +71,7 @@ pub enum DataError {
     },
 
     #[error("Invalid realm ID: expected `{expected}`, got `{got}`")]
-    UnexpectedRealmID { expected: RealmID, got: RealmID },
+    UnexpectedRealmID { expected: VlobID, got: VlobID },
 
     #[error("Invalid user ID: expected `{expected}`, got `{got}`")]
     UnexpectedUserID { expected: UserID, got: UserID },
@@ -87,7 +87,7 @@ pub enum DataError {
     UnexpectedTimestamp { expected: DateTime, got: DateTime },
 
     #[error("Invalid entry ID: expected `{expected}`, got `{got}`")]
-    UnexpectedId { expected: EntryID, got: EntryID },
+    UnexpectedId { expected: VlobID, got: VlobID },
 
     #[error("Invalid version: expected `{expected}`, got `{got}`")]
     UnexpectedVersion { expected: u32, got: u32 },

@@ -13,7 +13,6 @@ from parsec.api.protocol import (
     ApiV2V3_APIEventRealmVlobsUpdated,
     ApiV2V3_EventsListenRepNoEvents,
     ApiV2V3_EventsListenRepOk,
-    RealmID,
     RealmRole,
     VlobID,
 )
@@ -24,7 +23,7 @@ NOW = DateTime(2000, 1, 3)
 VLOB_ID = VlobID.from_hex("00000000000000000000000000000001")
 OTHER_VLOB_ID = VlobID.from_hex("00000000000000000000000000000002")
 YET_ANOTHER_VLOB_ID = VlobID.from_hex("00000000000000000000000000000003")
-REALM_ID = RealmID.from_hex("0000000000000000000000000000000A")
+REALM_ID = VlobID.from_hex("0000000000000000000000000000000A")
 
 
 @pytest.mark.trio
@@ -212,7 +211,7 @@ async def test_vlobs_updated_event_not_participant(backend, alice_ws, bob, bob_r
 async def test_vlobs_updated_event_realm_created_after_subscribe(
     backend, alice_ws, alice, alice2, realm_created_by_self
 ):
-    realm_id = RealmID.from_hex("0000000000000000000000000000000A")
+    realm_id = VlobID.from_hex("0000000000000000000000000000000A")
     await apiv2v3_events_subscribe(alice_ws)
 
     # New realm, should get events anyway

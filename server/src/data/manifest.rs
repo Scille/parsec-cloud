@@ -9,8 +9,8 @@ use pyo3::{
 use std::{collections::HashMap, num::NonZeroU64};
 
 use crate::{
-    BlockID, DataResult, DateTime, DeviceID, EntryID, EntryNameResult, HashDigest, RealmID,
-    RealmRole, SecretKey, SigningKey, VerifyKey,
+    BlockID, DataResult, DateTime, DeviceID, EntryNameResult, HashDigest, RealmRole, SecretKey,
+    SigningKey, VerifyKey, VlobID,
 };
 use libparsec::low_level::types::{ChildManifest, IndexInt};
 
@@ -53,7 +53,7 @@ impl WorkspaceEntry {
     #[new]
     #[pyo3(signature = (id, name, key, encryption_revision, encrypted_on, legacy_role_cache_timestamp, legacy_role_cache_value))]
     fn new(
-        id: RealmID,
+        id: VlobID,
         name: EntryName,
         key: SecretKey,
         encryption_revision: u64,
@@ -76,7 +76,7 @@ impl WorkspaceEntry {
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
-            [id: RealmID, "id"],
+            [id: VlobID, "id"],
             [name: EntryName, "name"],
             [key: SecretKey, "key"],
             [encryption_revision: IndexInt, "encryption_revision"],
@@ -128,8 +128,8 @@ impl WorkspaceEntry {
     }
 
     #[getter]
-    fn id(&self) -> PyResult<RealmID> {
-        Ok(RealmID(self.0.id))
+    fn id(&self) -> PyResult<VlobID> {
+        Ok(VlobID(self.0.id))
     }
 
     #[getter]
@@ -272,8 +272,8 @@ impl FileManifest {
     fn new(
         author: DeviceID,
         timestamp: DateTime,
-        id: EntryID,
-        parent: EntryID,
+        id: VlobID,
+        parent: VlobID,
         version: u32,
         created: DateTime,
         updated: DateTime,
@@ -325,7 +325,7 @@ impl FileManifest {
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
         expected_timestamp: DateTime,
-        expected_id: Option<EntryID>,
+        expected_id: Option<VlobID>,
         expected_version: Option<u32>,
     ) -> DataResult<Self> {
         Ok(
@@ -348,8 +348,8 @@ impl FileManifest {
             py_kwargs,
             [author: DeviceID, "author"],
             [timestamp: DateTime, "timestamp"],
-            [id: EntryID, "id"],
-            [parent: EntryID, "parent"],
+            [id: VlobID, "id"],
+            [parent: VlobID, "parent"],
             [version: u32, "version"],
             [created: DateTime, "created"],
             [updated: DateTime, "updated"],
@@ -401,13 +401,13 @@ impl FileManifest {
     }
 
     #[getter]
-    fn id(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.id))
+    fn id(&self) -> PyResult<VlobID> {
+        Ok(VlobID(self.0.id))
     }
 
     #[getter]
-    fn parent(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.parent))
+    fn parent(&self) -> PyResult<VlobID> {
+        Ok(VlobID(self.0.parent))
     }
 
     #[getter]
@@ -469,12 +469,12 @@ impl FolderManifest {
     fn new(
         author: DeviceID,
         timestamp: DateTime,
-        id: EntryID,
-        parent: EntryID,
+        id: VlobID,
+        parent: VlobID,
         version: u32,
         created: DateTime,
         updated: DateTime,
-        children: HashMap<EntryName, EntryID>,
+        children: HashMap<EntryName, VlobID>,
     ) -> PyResult<Self> {
         Ok(Self(libparsec::low_level::types::FolderManifest {
             author: author.0,
@@ -520,7 +520,7 @@ impl FolderManifest {
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
         expected_timestamp: DateTime,
-        expected_id: Option<EntryID>,
+        expected_id: Option<VlobID>,
         expected_version: Option<u32>,
     ) -> DataResult<Self> {
         Ok(
@@ -543,12 +543,12 @@ impl FolderManifest {
             py_kwargs,
             [author: DeviceID, "author"],
             [timestamp: DateTime, "timestamp"],
-            [id: EntryID, "id"],
-            [parent: EntryID, "parent"],
+            [id: VlobID, "id"],
+            [parent: VlobID, "parent"],
             [version: u32, "version"],
             [created: DateTime, "created"],
             [updated: DateTime, "updated"],
-            [children: HashMap<EntryName, EntryID>, "children"],
+            [children: HashMap<EntryName, VlobID>, "children"],
         );
 
         let mut r = self.0.clone();
@@ -587,13 +587,13 @@ impl FolderManifest {
     }
 
     #[getter]
-    fn id(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.id))
+    fn id(&self) -> PyResult<VlobID> {
+        Ok(VlobID(self.0.id))
     }
 
     #[getter]
-    fn parent(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.parent))
+    fn parent(&self) -> PyResult<VlobID> {
+        Ok(VlobID(self.0.parent))
     }
 
     #[getter]
@@ -622,7 +622,7 @@ impl FolderManifest {
 
         for (k, v) in &self.0.children {
             let en = EntryName(k.clone()).into_py(py);
-            let me = EntryID(*v).into_py(py);
+            let me = VlobID(*v).into_py(py);
             let _ = d.set_item(en, me);
         }
         Ok(d)
@@ -645,11 +645,11 @@ impl WorkspaceManifest {
     fn new(
         author: DeviceID,
         timestamp: DateTime,
-        id: EntryID,
+        id: VlobID,
         version: u32,
         created: DateTime,
         updated: DateTime,
-        children: HashMap<EntryName, EntryID>,
+        children: HashMap<EntryName, VlobID>,
     ) -> PyResult<Self> {
         Ok(Self(libparsec::low_level::types::WorkspaceManifest {
             author: author.0,
@@ -694,7 +694,7 @@ impl WorkspaceManifest {
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
         expected_timestamp: DateTime,
-        expected_id: Option<EntryID>,
+        expected_id: Option<VlobID>,
         expected_version: Option<u32>,
     ) -> DataResult<Self> {
         Ok(
@@ -719,7 +719,7 @@ impl WorkspaceManifest {
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
         expected_timestamp: DateTime,
-        expected_id: Option<EntryID>,
+        expected_id: Option<VlobID>,
         expected_version: Option<u32>,
     ) -> DataResult<Self> {
         Ok(
@@ -741,11 +741,11 @@ impl WorkspaceManifest {
             py_kwargs,
             [author: DeviceID, "author"],
             [timestamp: DateTime, "timestamp"],
-            [id: EntryID, "id"],
+            [id: VlobID, "id"],
             [version: u32, "version"],
             [created: DateTime, "created"],
             [updated: DateTime, "updated"],
-            [children: HashMap<EntryName, EntryID>, "children"],
+            [children: HashMap<EntryName, VlobID>, "children"],
         );
 
         let mut r = self.0.clone();
@@ -781,8 +781,8 @@ impl WorkspaceManifest {
     }
 
     #[getter]
-    fn id(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.id))
+    fn id(&self) -> PyResult<VlobID> {
+        Ok(VlobID(self.0.id))
     }
 
     #[getter]
@@ -811,7 +811,7 @@ impl WorkspaceManifest {
 
         for (k, v) in &self.0.children {
             let en = EntryName(k.clone()).into_py(py);
-            let me = EntryID(*v).into_py(py);
+            let me = VlobID(*v).into_py(py);
             let _ = d.set_item(en, me);
         }
         Ok(d)
@@ -835,7 +835,7 @@ impl UserManifest {
     fn new(
         author: DeviceID,
         timestamp: DateTime,
-        id: EntryID,
+        id: VlobID,
         version: u32,
         created: DateTime,
         updated: DateTime,
@@ -883,7 +883,7 @@ impl UserManifest {
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
         expected_timestamp: DateTime,
-        expected_id: Option<EntryID>,
+        expected_id: Option<VlobID>,
         expected_version: Option<u32>,
     ) -> DataResult<Self> {
         Ok(
@@ -906,7 +906,7 @@ impl UserManifest {
             py_kwargs,
             [author: DeviceID, "author"],
             [timestamp: DateTime, "timestamp"],
-            [id: EntryID, "id"],
+            [id: VlobID, "id"],
             [version: u32, "version"],
             [created: DateTime, "created"],
             [updated: DateTime, "updated"],
@@ -944,7 +944,7 @@ impl UserManifest {
         Ok(Self(r))
     }
 
-    fn get_workspace_entry(&self, workspace_id: RealmID) -> PyResult<Option<WorkspaceEntry>> {
+    fn get_workspace_entry(&self, workspace_id: VlobID) -> PyResult<Option<WorkspaceEntry>> {
         Ok(self
             .0
             .get_workspace_entry(workspace_id.0)
@@ -958,8 +958,8 @@ impl UserManifest {
     }
 
     #[getter]
-    fn id(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.id))
+    fn id(&self) -> PyResult<VlobID> {
+        Ok(VlobID(self.0.id))
     }
 
     #[getter]
@@ -1009,7 +1009,7 @@ pub(crate) fn child_manifest_decrypt_verify_and_load(
     author_verify_key: &VerifyKey,
     expected_author: &DeviceID,
     expected_timestamp: DateTime,
-    expected_id: Option<EntryID>,
+    expected_id: Option<VlobID>,
     expected_version: Option<u32>,
 ) -> DataResult<PyObject> {
     Ok(ChildManifest::decrypt_verify_and_load(
@@ -1031,7 +1031,7 @@ pub(crate) fn child_manifest_verify_and_load(
     author_verify_key: &VerifyKey,
     expected_author: &DeviceID,
     expected_timestamp: DateTime,
-    expected_id: Option<EntryID>,
+    expected_id: Option<VlobID>,
     expected_version: Option<u32>,
 ) -> DataResult<PyObject> {
     Ok(ChildManifest::verify_and_load(

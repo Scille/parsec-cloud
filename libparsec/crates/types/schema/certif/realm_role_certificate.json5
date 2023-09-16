@@ -12,7 +12,7 @@
         },
         {
             "name": "realm_id",
-            "type": "RealmID"
+            "type": "VlobID"
         },
         {
             "name": "user_id",

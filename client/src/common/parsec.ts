@@ -3,7 +3,7 @@
 import {
   libparsec,
   // Types
-  RealmID,
+  VlobID,
   AvailableDevice,
   Result,
   Handle,
@@ -46,7 +46,7 @@ import { DateTime } from 'luxon';
 
 const DEFAULT_HANDLE = 42;
 
-export type WorkspaceID = RealmID;
+export type WorkspaceID = VlobID;
 export type WorkspaceName = EntryName;
 
 export interface UserInvitation extends InviteListItemUser {

@@ -16,9 +16,9 @@ from parsec._parsec_pyi.ids import (
     DeviceID,
     DeviceLabel,
     HumanHandle,
-    RealmID,
     SequesterServiceID,
     UserID,
+    VlobID,
 )
 from parsec._parsec_pyi.time import DateTime
 
@@ -147,7 +147,7 @@ class RealmRoleCertificate:
         self,
         author: DeviceID | None,
         timestamp: DateTime,
-        realm_id: RealmID,
+        realm_id: VlobID,
         user_id: UserID,
         role: RealmRole | None,
     ) -> None: ...
@@ -156,7 +156,7 @@ class RealmRoleCertificate:
     @property
     def timestamp(self) -> DateTime: ...
     @property
-    def realm_id(self) -> RealmID: ...
+    def realm_id(self) -> VlobID: ...
     @property
     def user_id(self) -> UserID: ...
     @property
@@ -168,7 +168,7 @@ class RealmRoleCertificate:
         signed: bytes,
         author_verify_key: VerifyKey,
         expected_author: DeviceID | None = None,
-        expected_realm: RealmID | None = None,
+        expected_realm: VlobID | None = None,
         expected_user: UserID | None = None,
     ) -> RealmRoleCertificate: ...
     def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
@@ -176,7 +176,7 @@ class RealmRoleCertificate:
     def unsecure_load(cls, signed: bytes) -> RealmRoleCertificate: ...
     @classmethod
     def build_realm_root_certif(
-        cls, author: DeviceID, timestamp: DateTime, realm_id: RealmID
+        cls, author: DeviceID, timestamp: DateTime, realm_id: VlobID
     ) -> RealmRoleCertificate: ...
 
 class SequesterAuthorityCertificate:

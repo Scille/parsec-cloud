@@ -78,7 +78,7 @@ mod child_manifests {
 
     #[derive(Debug)]
     pub(super) struct ChildManifestsLock {
-        per_manifest_lock: Vec<(EntryID, EntryLockState)>,
+        per_manifest_lock: Vec<(VlobID, EntryLockState)>,
     }
 
     pub(super) enum ChildManifestLockTakeOutcome<'a> {
@@ -98,7 +98,7 @@ mod child_manifests {
 
         pub(super) fn take<'a>(
             &mut self,
-            entry_id: EntryID,
+            entry_id: VlobID,
             storage: &'a WorkspaceDataStorage,
         ) -> ChildManifestLockTakeOutcome<'a> {
             match self
@@ -141,7 +141,7 @@ mod child_manifests {
     #[derive(Debug)]
     pub struct WorkspaceDataStorageChildManifestUpdater<'a> {
         storage: &'a WorkspaceDataStorage,
-        entry_id: EntryID,
+        entry_id: VlobID,
     }
 
     impl<'a> Drop for WorkspaceDataStorageChildManifestUpdater<'a> {
@@ -251,17 +251,17 @@ struct ManifestsCache {
     // - if the cache is present, it always correspond to the latest value (so the cache
     //   should always be preferred over data coming from the database)
     // - each cache entry can be "taken" for write access. In this mode
-    child_manifests: HashMap<EntryID, ArcLocalChildManifest>,
+    child_manifests: HashMap<VlobID, ArcLocalChildManifest>,
     // Just like for workspace manifest, each child manifest has a dedicated async lock
     // to prevent concurrent update (ensuring consistency between cache and database).
     lock_update_child_manifests: ChildManifestsLock,
-    work_ahead_of_db_to_commit: Vec<EntryID>,
+    work_ahead_of_db_to_commit: Vec<VlobID>,
     work_ahead_of_db_to_delete: Vec<ChunkID>,
 }
 
 #[derive(Debug)]
 pub struct WorkspaceDataStorage {
-    pub realm_id: RealmID,
+    pub realm_id: VlobID,
     pub device: Arc<LocalDevice>,
     db: LocalDatabase,
     cache: Mutex<ManifestsCache>,
@@ -287,15 +287,15 @@ pub enum GetChildManifestError {
 
 #[derive(Debug)]
 pub struct NeedSyncEntries {
-    pub local: Vec<EntryID>,
-    pub remote: Vec<EntryID>,
+    pub local: Vec<VlobID>,
+    pub remote: Vec<VlobID>,
 }
 
 impl WorkspaceDataStorage {
     pub async fn start(
         data_base_dir: &Path,
         device: Arc<LocalDevice>,
-        realm_id: RealmID,
+        realm_id: VlobID,
     ) -> anyhow::Result<Self> {
         // `maybe_populate_workspace_data_storage` needs to start a `WorkspaceDataStorage`,
         // leading to a recursive call which is not support for async functions.
@@ -319,7 +319,7 @@ impl WorkspaceDataStorage {
     pub(crate) async fn no_populate_start(
         data_base_dir: &Path,
         device: Arc<LocalDevice>,
-        realm_id: RealmID,
+        realm_id: VlobID,
     ) -> anyhow::Result<Self> {
         // 1) Open the database
 
@@ -366,7 +366,7 @@ impl WorkspaceDataStorage {
     async fn load_workspace_manifest(
         db: &LocalDatabase,
         device: &LocalDevice,
-        realm_id: RealmID,
+        realm_id: VlobID,
     ) -> DatabaseResult<Arc<LocalWorkspaceManifest>> {
         let ret = db_get_workspace_manifest(db, device, realm_id).await;
 
@@ -383,7 +383,7 @@ impl WorkspaceDataStorage {
             let manifest = Arc::new(LocalWorkspaceManifest::new(
                 device.device_id.clone(),
                 timestamp,
-                Some(realm_id.into()),
+                Some(realm_id),
                 true,
             ));
 
@@ -424,7 +424,7 @@ impl WorkspaceDataStorage {
 
     pub async fn for_update_child_manifest(
         &self,
-        entry_id: EntryID,
+        entry_id: VlobID,
     ) -> Result<
         (
             WorkspaceDataStorageChildManifestUpdater,
@@ -522,7 +522,7 @@ impl WorkspaceDataStorage {
     pub async fn update_realm_checkpoint(
         &self,
         new_checkpoint: IndexInt,
-        changed_vlobs: Vec<(EntryID, VersionInt)>,
+        changed_vlobs: Vec<(VlobID, VersionInt)>,
     ) -> Result<(), anyhow::Error> {
         // We need to take into account the not-yet-flushed manifests, (e.g. otherwise
         // an already fetched manifest will appear in the remote entry list if it has
@@ -569,7 +569,7 @@ impl WorkspaceDataStorage {
 
     pub async fn get_child_manifest(
         &self,
-        entry_id: EntryID,
+        entry_id: VlobID,
     ) -> Result<ArcLocalChildManifest, GetChildManifestError> {
         // First lookup in the cache
         let maybe_manifest = self
@@ -618,10 +618,7 @@ impl WorkspaceDataStorage {
     }
 
     // TODO: rename this given we flush everything at once ?
-    pub async fn ensure_manifest_persistent(
-        &self,
-        _entry_id: EntryID,
-    ) -> Result<(), anyhow::Error> {
+    pub async fn ensure_manifest_persistent(&self, _entry_id: VlobID) -> Result<(), anyhow::Error> {
         self.flush_work_ahead_of_db().await
     }
 
@@ -756,9 +753,9 @@ async fn db_flush_work_ahead(
 pub async fn db_get_workspace_manifest(
     db: &LocalDatabase,
     device: &LocalDevice,
-    realm_id: RealmID,
+    realm_id: VlobID,
 ) -> DatabaseResult<Arc<LocalWorkspaceManifest>> {
-    let ciphered = db_get_manifest(db, realm_id.into()).await?;
+    let ciphered = db_get_manifest(db, realm_id).await?;
 
     LocalWorkspaceManifest::decrypt_and_load(&ciphered, &device.local_symkey)
         .map(Arc::new)
@@ -768,7 +765,7 @@ pub async fn db_get_workspace_manifest(
 pub async fn db_get_child_manifest(
     db: &LocalDatabase,
     device: &LocalDevice,
-    id: EntryID,
+    id: VlobID,
 ) -> DatabaseResult<ArcLocalChildManifest> {
     let ciphered = db_get_manifest(db, id).await?;
 
@@ -781,7 +778,7 @@ pub async fn db_get_child_manifest(
     }
 }
 
-async fn db_get_manifest(db: &LocalDatabase, id: EntryID) -> DatabaseResult<Vec<u8>> {
+async fn db_get_manifest(db: &LocalDatabase, id: VlobID) -> DatabaseResult<Vec<u8>> {
     let id = *id;
     db.exec(move |conn| {
         use super::super::model::vlobs;
@@ -827,7 +824,7 @@ async fn db_set_folder_manifest(
 
 async fn db_set_manifest(
     db: &LocalDatabase,
-    id: EntryID,
+    id: VlobID,
     base_version: VersionInt,
     need_sync: bool,
     blob: Vec<u8>,
@@ -965,7 +962,7 @@ async fn db_get_realm_checkpoint(db: &LocalDatabase) -> DatabaseResult<IndexInt>
 async fn db_update_realm_checkpoint(
     db: &LocalDatabase,
     new_checkpoint: IndexInt,
-    changed_vlobs: Vec<(EntryID, VersionInt)>,
+    changed_vlobs: Vec<(VlobID, VersionInt)>,
 ) -> DatabaseResult<()> {
     // There is little trick related to how we store `changed_vlobs` here:
     // we only store the remote version for vlobs already present in the database.
@@ -1050,7 +1047,7 @@ async fn db_get_need_sync_entries(db: &LocalDatabase) -> DatabaseResult<NeedSync
     let mut remote_changes = vec![];
     let mut local_changes = vec![];
     for (manifest_id, need_sync, base_version, remote_version) in rows {
-        let manifest_id = EntryID::try_from(manifest_id.as_slice())
+        let manifest_id = VlobID::try_from(manifest_id.as_slice())
             .map_err(|_| DatabaseError::InvalidData(DataError::Serialization))?;
 
         if need_sync {

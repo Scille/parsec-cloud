@@ -58,7 +58,7 @@ async fn testbed_support(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal")]
 async fn operations(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
-    let realm_id = RealmID::default();
+    let realm_id = VlobID::default();
 
     let cache_storage =
         WorkspaceCacheStorage::start(&env.discriminant_dir, 100, alice.clone(), realm_id)
@@ -89,7 +89,7 @@ async fn operations(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal")]
 async fn unknown_id(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
-    let realm_id = RealmID::default();
+    let realm_id = VlobID::default();
 
     let cache_storage =
         WorkspaceCacheStorage::start(&env.discriminant_dir, 100, alice.clone(), realm_id)
@@ -110,7 +110,7 @@ async fn unknown_id(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal")]
 async fn cleanup(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
-    let realm_id = RealmID::default();
+    let realm_id = VlobID::default();
     // Cache size is enough for 2 blocks, but not for 3
     let cache_size = *DEFAULT_BLOCK_SIZE * 2 + 1;
 

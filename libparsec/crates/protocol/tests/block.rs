@@ -26,7 +26,7 @@ fn serde_block_create_req() {
 
     let req = authenticated_cmds::block_create::Req {
         block_id: BlockID::from_hex("57c629b69d6c4abbaf651cafa46dbc93").unwrap(),
-        realm_id: RealmID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
+        realm_id: VlobID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
         block: b"foobar".as_ref().into(),
     };
 

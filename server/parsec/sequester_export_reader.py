@@ -14,16 +14,15 @@ from parsec._parsec import (
     DateTime,
     DeviceCertificate,
     DeviceID,
-    EntryID,
     EntryName,
     FileManifest,
     FolderManifest,
-    RealmID,
     RealmRoleCertificate,
     RevokedUserCertificate,
     SequesterPrivateKeyDer,
     UserCertificate,
     VerifyKey,
+    VlobID,
     WorkspaceManifest,
     child_manifest_verify_and_load,
 )
@@ -56,7 +55,7 @@ class InconsistentWorkspaceError(RealmExportReaderError):
 @dataclass
 class RealmExportDb:
     con: sqlite3.Connection
-    realm_id: RealmID
+    realm_id: VlobID
     root_verify_key: VerifyKey
 
     @classmethod
@@ -90,7 +89,7 @@ class RealmExportDb:
                 f"Unsupported realm export database format: got version `{db_version}` but only version `{REALM_EXPORT_DB_VERSION}` is accepted"
             )
         try:
-            realm_id = RealmID.from_bytes(db_realm_id)
+            realm_id = VlobID.from_bytes(db_realm_id)
         except ValueError as exc:
             raise InvalidRealmExportDatabaseError(
                 f"Invalid realm export database: cannot parse realm ID"
@@ -183,7 +182,7 @@ class WorkspaceExport:
 
     M = TypeVar("M", WorkspaceManifest, ChildManifest)
 
-    def load_manifest(self, manifest_id: EntryID, verify_and_load: Callable[..., M]) -> M:
+    def load_manifest(self, manifest_id: VlobID, verify_and_load: Callable[..., M]) -> M:
         # Convert datetime to integer timestamp with us precision (format used in sqlite dump).
         filter_timestamp = int(self.filter_on_date.timestamp() * 1000000)
         row = self.db.con.execute(
@@ -228,9 +227,7 @@ class WorkspaceExport:
             ) from exc
 
     def load_workspace_manifest(self) -> WorkspaceManifest:
-        manifest = self.load_manifest(
-            self.db.realm_id.to_entry_id(), WorkspaceManifest.verify_and_load
-        )
+        manifest = self.load_manifest(self.db.realm_id, WorkspaceManifest.verify_and_load)
         if not isinstance(manifest, WorkspaceManifest):
             raise InconsistentWorkspaceError(
                 f"Vlob with realm id is expected to contain a Workspace manifest, but actually contained {manifest}"
@@ -238,7 +235,7 @@ class WorkspaceExport:
         return manifest
 
     def extract_children(
-        self, output: Path, fs_path: PurePath, children: Mapping[EntryName, EntryID]
+        self, output: Path, fs_path: PurePath, children: Mapping[EntryName, VlobID]
     ) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
         """
         Raises nothing (errors are passed through `on_progress` callback)

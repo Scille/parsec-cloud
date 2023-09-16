@@ -13,7 +13,7 @@
         },
         {
             "name": "id",
-            "type": "EntryID"
+            "type": "VlobID"
         },
         {
             "name": "version",

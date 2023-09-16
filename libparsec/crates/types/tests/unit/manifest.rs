@@ -7,7 +7,7 @@ use libparsec_crypto::{SecretKey, SigningKey};
 
 use crate::{
     fixtures::{alice, Device},
-    Blocksize, ChildManifest, DataError, EntryID, FileManifest,
+    Blocksize, ChildManifest, DataError, FileManifest, VlobID,
 };
 
 #[rstest]
@@ -82,8 +82,8 @@ fn dump_load(alice: &Device) {
     );
 
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
-    let parent = EntryID::from_hex("09e679aa6e1147fbaa5580073202fc7f").unwrap();
-    let id = EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap();
+    let parent = VlobID::from_hex("09e679aa6e1147fbaa5580073202fc7f").unwrap();
+    let id = VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap();
 
     let expected_file_manifest = FileManifest {
         author: alice.device_id.clone(),
@@ -197,7 +197,7 @@ fn invalid_load(alice: &Device) {
         "d4b644954559695f0c61219e0551edec7123466a20e9"
     );
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
-    let id = EntryID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap();
+    let id = VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap();
 
     let dummy_without_compression = hex!(
         "d6e76bcf3b749f3b5e70f2e17ccb4a397c382921bea368c57cca7000ada6bcfad4622fdce6"
@@ -212,7 +212,7 @@ fn invalid_load(alice: &Device) {
     );
     let expected_author = "bob@dev1".parse().unwrap();
     let expected_timestamp = "2021-12-04T11:50:43.000000Z".parse().unwrap();
-    let expected_id = EntryID::from_hex("09e679aa6e1147fbaa5580073202fc7f").unwrap();
+    let expected_id = VlobID::from_hex("09e679aa6e1147fbaa5580073202fc7f").unwrap();
     let expected_version = 1;
 
     // Check that the compression is incorrect

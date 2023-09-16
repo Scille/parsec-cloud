@@ -117,7 +117,7 @@ pub enum ClientListWorkspacesError {
 
 pub async fn client_list_workspaces(
     client: Handle,
-) -> Result<Vec<(RealmID, EntryName)>, ClientListWorkspacesError> {
+) -> Result<Vec<(VlobID, EntryName)>, ClientListWorkspacesError> {
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client((client, _)) => Some(client.clone()),
         _ => None,
@@ -140,7 +140,7 @@ pub enum ClientWorkspaceCreateError {
 pub async fn client_workspace_create(
     client: Handle,
     name: EntryName,
-) -> Result<RealmID, ClientWorkspaceCreateError> {
+) -> Result<VlobID, ClientWorkspaceCreateError> {
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client((client, _)) => Some(client.clone()),
         _ => None,
@@ -160,7 +160,7 @@ pub async fn client_workspace_create(
 
 pub async fn client_workspace_rename(
     client: Handle,
-    realm_id: RealmID,
+    realm_id: VlobID,
     new_name: EntryName,
 ) -> Result<(), ClientWorkspaceRenameError> {
     let client = borrow_from_handle(client, |x| match x {
@@ -178,7 +178,7 @@ pub async fn client_workspace_rename(
 
 pub async fn client_workspace_share(
     client: Handle,
-    realm_id: RealmID,
+    realm_id: VlobID,
     recipient: UserID,
     role: Option<RealmRole>,
 ) -> Result<(), ClientWorkspaceShareError> {

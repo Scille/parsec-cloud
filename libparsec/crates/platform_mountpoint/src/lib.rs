@@ -12,7 +12,7 @@ use std::{collections::HashMap, path::Path};
 #[cfg(target_os = "windows")]
 pub use windows::mount;
 
-use libparsec_types::{EntryID, EntryName, FileDescriptor};
+use libparsec_types::{EntryName, FileDescriptor, VlobID};
 
 pub(crate) use error::{MountpointError, MountpointResult};
 pub use memfs::MountpointManager;
@@ -42,13 +42,13 @@ pub(crate) enum WriteMode {
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub(crate) struct EntryInfo {
-    id: EntryID,
+    id: VlobID,
     ty: EntryInfoType,
     created: DateTime<Utc>,
     updated: DateTime<Utc>,
     size: u64,
     need_sync: bool,
-    children: HashMap<EntryName, EntryID>,
+    children: HashMap<EntryName, VlobID>,
 }
 
 pub(crate) trait MountpointInterface {
@@ -76,7 +76,7 @@ pub(crate) trait MountpointInterface {
     fn file_create(&self, path: &Path, open: bool) -> MountpointResult<FileDescriptor>;
     fn file_open(&self, path: &Path, write_mode: bool) -> MountpointResult<Option<FileDescriptor>>;
     fn file_delete(&self, path: &Path) -> MountpointResult<()>;
-    fn file_resize(&self, path: &Path, len: u64) -> EntryID;
+    fn file_resize(&self, path: &Path, len: u64) -> VlobID;
 
     // File descriptor transactions
 

@@ -14,12 +14,10 @@ from parsec._parsec import (
     DateTime,
     DeviceID,
     DeviceLabel,
-    EntryID,
     HumanHandle,
     OrganizationID,
     PrivateKey,
     PublicKey,
-    RealmID,
     RealmRole,
     SecretKey,
     SigningKey,
@@ -52,7 +50,7 @@ class LocalDevice:
     signing_key: SigningKey
     private_key: PrivateKey
     profile: UserProfile
-    user_manifest_id: EntryID
+    user_manifest_id: VlobID
     user_manifest_key: SecretKey
     local_symkey: SecretKey
 
@@ -98,7 +96,7 @@ class LocalDevice:
             signing_key=signing_key or SigningKey.generate(),
             private_key=private_key or PrivateKey.generate(),
             profile=profile,
-            user_manifest_id=EntryID.new(),
+            user_manifest_id=VlobID.new(),
             user_manifest_key=SecretKey.generate(),
             local_symkey=SecretKey.generate(),
         )
@@ -308,8 +306,8 @@ def backend_data_binder_factory(initial_user_manifest_state):
                 author = device
             else:
                 author = self.get_device(device.organization_id, manifest.author)
-            realm_id = RealmID.from_entry_id(author.user_manifest_id)
-            vlob_id = VlobID.from_entry_id(author.user_manifest_id)
+            realm_id = author.user_manifest_id
+            vlob_id = author.user_manifest_id
 
             with self.backend.event_bus.listen() as spy:
                 # The realm needs to be created strictly before the manifest timestamp

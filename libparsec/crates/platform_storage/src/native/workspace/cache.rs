@@ -10,7 +10,7 @@ use super::super::model::get_workspace_cache_storage_db_relative_path;
 
 #[derive(Debug)]
 pub struct WorkspaceCacheStorage {
-    pub realm_id: RealmID,
+    pub realm_id: VlobID,
     pub device: Arc<LocalDevice>,
     db: LocalDatabase,
     cache_size: u64,
@@ -21,7 +21,7 @@ impl WorkspaceCacheStorage {
         data_base_dir: &Path,
         cache_size: u64,
         device: Arc<LocalDevice>,
-        realm_id: RealmID,
+        realm_id: VlobID,
     ) -> anyhow::Result<Self> {
         // `maybe_populate_workspace_cache_storage` needs to start a `WorkspaceCacheStorage`,
         // leading to a recursive call which is not support for async functions.
@@ -54,7 +54,7 @@ impl WorkspaceCacheStorage {
         data_base_dir: &Path,
         cache_size: u64,
         device: Arc<LocalDevice>,
-        realm_id: RealmID,
+        realm_id: VlobID,
     ) -> anyhow::Result<Self> {
         // 1) Open the database
 

@@ -839,9 +839,7 @@ fn quote_type_as_fn_getter_ret_type(ty: &FieldType) -> TokenStream {
         FieldType::BlockID => quote! { crate::ids::BlockID },
         FieldType::DeviceID => quote! { crate::ids::DeviceID },
         FieldType::OrganizationID => quote! { crate::ids::OrganizationID },
-        FieldType::EntryID => quote! { crate::ids::EntryID },
         FieldType::UserID => quote! { crate::ids::UserID },
-        FieldType::RealmID => quote! { crate::ids::RealmID },
         FieldType::VlobID => quote! { crate::ids::VlobID },
         FieldType::EnrollmentID => quote! { crate::ids::EnrollmentID },
         FieldType::SequesterServiceID => quote! { crate::ids::SequesterServiceID },
@@ -963,9 +961,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         FieldType::BlockID => quote! { crate::ids::BlockID(#field_path.to_owned()) },
         FieldType::DeviceID => quote! { crate::ids::DeviceID(#field_path.to_owned()) },
         FieldType::OrganizationID => quote! { crate::ids::OrganizationID(#field_path.to_owned()) },
-        FieldType::EntryID => quote! { crate::ids::EntryID(#field_path.to_owned()) },
         FieldType::UserID => quote! { crate::ids::UserID(#field_path.to_owned()) },
-        FieldType::RealmID => quote! { crate::ids::RealmID(#field_path.to_owned()) },
         FieldType::VlobID => quote! { crate::ids::VlobID(#field_path.to_owned()) },
         FieldType::EnrollmentID => quote! { crate::ids::EnrollmentID(#field_path.to_owned()) },
         FieldType::SequesterServiceID => {
@@ -1080,9 +1076,7 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::BlockID => quote! { crate::ids::BlockID },
         FieldType::DeviceID => quote! { crate::ids::DeviceID },
         FieldType::OrganizationID => quote! { crate::ids::OrganizationID },
-        FieldType::EntryID => quote! { crate::ids::EntryID },
         FieldType::UserID => quote! { crate::ids::UserID },
-        FieldType::RealmID => quote! { crate::ids::RealmID },
         FieldType::VlobID => quote! { crate::ids::VlobID },
         FieldType::EnrollmentID => quote! { crate::ids::EnrollmentID },
         FieldType::SequesterServiceID => quote! { crate::ids::SequesterServiceID },
@@ -1207,9 +1201,7 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
         | FieldType::BlockID
         | FieldType::DeviceID
         | FieldType::OrganizationID
-        | FieldType::EntryID
         | FieldType::UserID
-        | FieldType::RealmID
         | FieldType::VlobID
         | FieldType::EnrollmentID
         | FieldType::SequesterServiceID

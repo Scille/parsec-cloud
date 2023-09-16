@@ -8,10 +8,8 @@ from parsec._parsec import (
     DeviceCertificate,
     DeviceID,
     DeviceLabel,
-    EntryID,
     HumanHandle,
     PrivateKey,
-    RealmID,
     RealmRole,
     RealmRoleCertificate,
     RevokedUserCertificate,
@@ -58,7 +56,7 @@ class TestbedEventBootstrapOrganization:
     first_user_private_key: PrivateKey
     first_user_first_device_label: DeviceLabel | None
     first_user_first_device_signing_key: SigningKey
-    first_user_user_manifest_id: EntryID
+    first_user_user_manifest_id: VlobID
     first_user_user_manifest_key: SecretKey
     first_user_local_symkey: SecretKey
     first_user_local_password: str
@@ -94,7 +92,7 @@ class TestbedEventNewUser:
     first_device_label: DeviceLabel | None
     first_device_signing_key: SigningKey
     initial_profile: UserProfile
-    user_manifest_id: EntryID
+    user_manifest_id: VlobID
     user_manifest_key: SecretKey
     local_symkey: SecretKey
     local_password: str
@@ -142,7 +140,7 @@ class TestbedEventRevokeUser:
 class TestbedEventNewRealm:
     timestamp: DateTime
     author: DeviceID
-    realm_id: RealmID
+    realm_id: VlobID
     realm_key: SecretKey
 
     certificate: RealmRoleCertificate
@@ -152,7 +150,7 @@ class TestbedEventNewRealm:
 class TestbedEventShareRealm:
     timestamp: DateTime
     author: DeviceID
-    realm: RealmID
+    realm: VlobID
     user: UserID
     role: RealmRole | None
     recipient_message: bytes | None
@@ -164,20 +162,20 @@ class TestbedEventShareRealm:
 class TestbedEventStartRealmReencryption:
     timestamp: DateTime
     author: DeviceID
-    realm: RealmID
+    realm: VlobID
     encryption_revision: int
     per_participant_message: list[tuple[UserID, bytes]]
 
 class TestbedEventFinishRealmReencryption:
     timestamp: DateTime
     author: DeviceID
-    realm: RealmID
+    realm: VlobID
     encryption_revision: int
 
 class TestbedEventNewVlob:
     timestamp: DateTime
     author: DeviceID
-    realm: RealmID
+    realm: VlobID
     encryption_revision: int
     vlob_id: VlobID
     blob: bytes
@@ -186,7 +184,7 @@ class TestbedEventNewVlob:
 class TestbedEventUpdateVlob:
     timestamp: DateTime
     author: DeviceID
-    realm: RealmID
+    realm: VlobID
     encryption_revision: int
     vlob: VlobID
     version: int
@@ -196,7 +194,7 @@ class TestbedEventUpdateVlob:
 class TestbedEventNewBlock:
     timestamp: DateTime
     author: DeviceID
-    realm: RealmID
+    realm: VlobID
     block_id: BlockID
     block: bytes
 

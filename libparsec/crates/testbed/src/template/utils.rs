@@ -69,7 +69,7 @@ pub(super) fn non_revoked_admins(events: &[TestbedEvent]) -> impl Iterator<Item 
 
 pub(super) fn non_revoked_realm_owners(
     events: &[TestbedEvent],
-    realm: RealmID,
+    realm: VlobID,
 ) -> impl Iterator<Item = &DeviceID> {
     non_revoked_users(events).filter(move |device_id| {
         let user_id = device_id.user_id();
@@ -92,7 +92,7 @@ pub(super) fn non_revoked_realm_owners(
 
 pub(super) fn non_revoked_realm_members(
     events: &[TestbedEvent],
-    realm: RealmID,
+    realm: VlobID,
 ) -> impl Iterator<Item = (&DeviceID, RealmRole)> {
     non_revoked_users(events).filter_map(move |device_id| {
         let user_id = device_id.user_id();
@@ -110,7 +110,7 @@ pub(super) fn non_revoked_realm_members(
 
 pub(super) fn assert_realm_member_has_read_access(
     events: &[TestbedEvent],
-    realm: RealmID,
+    realm: VlobID,
     user: &UserID,
 ) {
     let has_read_access = events
@@ -135,7 +135,7 @@ pub(super) fn assert_realm_member_has_read_access(
 
 pub(super) fn assert_realm_member_has_write_access(
     events: &[TestbedEvent],
-    realm: RealmID,
+    realm: VlobID,
     user: &UserID,
 ) {
     let has_read_access = events
@@ -237,7 +237,7 @@ pub(super) fn assert_device_exists<'a>(
     creation_event.unwrap_or_else(|| panic!("Device {} doesn't exist", device))
 }
 
-pub(super) fn assert_realm_exists(events: &[TestbedEvent], realm: RealmID) {
+pub(super) fn assert_realm_exists(events: &[TestbedEvent], realm: VlobID) {
     events
         .iter()
         .rev()
@@ -247,7 +247,7 @@ pub(super) fn assert_realm_exists(events: &[TestbedEvent], realm: RealmID) {
 
 pub(super) fn assert_realm_exists_and_under_reencryption(
     events: &[TestbedEvent],
-    realm: &RealmID,
+    realm: &VlobID,
 ) -> IndexInt {
     let outcome = events
         .iter()
@@ -269,7 +269,7 @@ pub(super) fn assert_realm_exists_and_under_reencryption(
 
 pub(super) fn assert_realm_exists_and_not_under_reencryption(
     events: &[TestbedEvent],
-    realm: RealmID,
+    realm: VlobID,
 ) -> IndexInt {
     let outcome = events
         .iter()

@@ -13,9 +13,9 @@ from parsec.api.protocol import (
     ApiV2V3_EventsListenRepNoEvents,
     ApiV2V3_EventsListenRepOk,
     RealmCreateRepOk,
-    RealmID,
     RealmRole,
     RealmUpdateRolesRepOk,
+    VlobID,
 )
 from tests.backend.common import (
     apiv2v3_events_listen_nowait,
@@ -29,7 +29,7 @@ from tests.backend.common import (
 async def test_realm_create(backend, alice, alice_ws):
     await apiv2v3_events_subscribe(alice_ws)
 
-    realm_id = RealmID.from_hex("C0000000000000000000000000000000")
+    realm_id = VlobID.from_hex("C0000000000000000000000000000000")
     certif = RealmRoleCertificate.build_realm_root_certif(
         author=alice.device_id, timestamp=DateTime.now(), realm_id=realm_id
     ).dump_and_sign(alice.signing_key)

@@ -9,7 +9,7 @@ use serde_with::serde_as;
 
 use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
 
-use crate::{DataError, DateTime, DeviceID, EntryName, IndexInt, RealmID};
+use crate::{DataError, DateTime, DeviceID, EntryName, IndexInt, VlobID};
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -21,7 +21,7 @@ pub enum MessageContent {
         timestamp: DateTime,
 
         name: EntryName,
-        id: RealmID,
+        id: VlobID,
         encryption_revision: IndexInt,
         encrypted_on: DateTime,
         key: SecretKey,
@@ -40,7 +40,7 @@ pub enum MessageContent {
         // interchangeably, which avoid possible concurrency issues when a sharing
         // occurs right before a reencryption.
         name: EntryName,
-        id: RealmID,
+        id: VlobID,
         encryption_revision: IndexInt,
         encrypted_on: DateTime,
         key: SecretKey,
@@ -51,7 +51,7 @@ pub enum MessageContent {
         author: DeviceID,
         timestamp: DateTime,
 
-        id: RealmID,
+        id: VlobID,
     },
 
     #[serde(rename = "ping")]

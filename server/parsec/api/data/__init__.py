@@ -4,8 +4,6 @@ from __future__ import annotations
 from parsec._parsec import (
     DataError,
     DeviceCertificate,
-    # Entry
-    EntryID,
     EntryName,
     # Message
     MessageContent,
@@ -23,6 +21,8 @@ from parsec._parsec import (
     SharingRevokedMessageContent,
     UserCertificate,
     UserUpdateCertificate,
+    # Entry
+    VlobID,
 )
 from parsec.api.data.manifest import (
     BlockAccess,
@@ -38,7 +38,7 @@ __all__ = (
     # Base
     "DataError",
     # Entry
-    "EntryID",
+    "VlobID",
     "EntryName",
     # Certifs
     "UserCertificate",

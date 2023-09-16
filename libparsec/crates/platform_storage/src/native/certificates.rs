@@ -64,7 +64,7 @@ fn device_certificate_filters(
 }
 
 fn realm_role_certificate_filters(
-    realm_id: RealmID,
+    realm_id: VlobID,
     user_id: UserID,
 ) -> (&'static str, Option<String>, Option<String>) {
     let filter1 = Some(realm_id.hex());
@@ -74,7 +74,7 @@ fn realm_role_certificate_filters(
 
 /// Get all realm role certificates for a given realm
 fn get_realm_certificates_filters(
-    realm_id: RealmID,
+    realm_id: VlobID,
 ) -> (&'static str, Option<String>, Option<String>) {
     let filter1 = Some(realm_id.hex());
     let filter2 = None;
@@ -201,7 +201,7 @@ impl CertificatesStorage {
         &self,
         index: IndexInt,
         timestamp: DateTime,
-        realm_id: RealmID,
+        realm_id: VlobID,
         user_id: UserID,
         encrypted: Vec<u8>,
     ) -> anyhow::Result<()> {
@@ -268,7 +268,7 @@ impl CertificatesStorage {
     // Get all realm role certificates for a given realm
     pub async fn get_realm_certificates(
         &self,
-        realm_id: RealmID,
+        realm_id: VlobID,
     ) -> anyhow::Result<Vec<(IndexInt, Vec<u8>)>> {
         let (ty, filter1, filter2) = get_realm_certificates_filters(realm_id);
         self.get_multiple_certificates(ty, filter1, filter2).await

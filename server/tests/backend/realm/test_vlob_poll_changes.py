@@ -8,7 +8,6 @@ from parsec._parsec import (
 )
 from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import (
-    RealmID,
     RealmRole,
     RealmUpdateRolesRepOk,
     VlobID,
@@ -24,7 +23,7 @@ NOW = DateTime(2000, 1, 3)
 VLOB_ID = VlobID.from_hex("00000000000000000000000000000001")
 OTHER_VLOB_ID = VlobID.from_hex("00000000000000000000000000000002")
 YET_ANOTHER_VLOB_ID = VlobID.from_hex("00000000000000000000000000000003")
-UNKNOWN_REALM_ID = RealmID.from_hex("0000000000000000000000000000000F")
+UNKNOWN_REALM_ID = VlobID.from_hex("0000000000000000000000000000000F")
 
 
 @pytest.fixture

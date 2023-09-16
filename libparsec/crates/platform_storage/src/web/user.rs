@@ -5,8 +5,8 @@ use std::{path::Path, sync::Arc};
 use libparsec_types::prelude::*;
 
 pub struct NeedSyncEntries {
-    pub remote: Vec<EntryID>,
-    pub local: Vec<EntryID>,
+    pub remote: Vec<VlobID>,
+    pub local: Vec<VlobID>,
 }
 
 #[derive(Debug)]

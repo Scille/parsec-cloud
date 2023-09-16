@@ -15,7 +15,7 @@ use crate::{
     api_crypto::{PublicKey, SequesterPublicKeyDer, SequesterVerifyKeyDer, SigningKey, VerifyKey},
     data::DataResult,
     enumerate::{RealmRole, UserProfile},
-    ids::{DeviceID, DeviceLabel, HumanHandle, RealmID, SequesterServiceID, UserID},
+    ids::{DeviceID, DeviceLabel, HumanHandle, SequesterServiceID, UserID, VlobID},
     time::DateTime,
 };
 
@@ -532,7 +532,7 @@ impl RealmRoleCertificate {
     fn new(
         author: Option<DeviceID>,
         timestamp: DateTime,
-        realm_id: RealmID,
+        realm_id: VlobID,
         user_id: UserID,
         role: Option<RealmRole>,
     ) -> PyResult<Self> {
@@ -556,7 +556,7 @@ impl RealmRoleCertificate {
             py_kwargs,
             [author: Option<DeviceID>, "author"],
             [timestamp: DateTime, "timestamp"],
-            [realm_id: RealmID, "realm_id"],
+            [realm_id: VlobID, "realm_id"],
             [user_id: UserID, "user_id"],
             [role: Option<RealmRole>, "role"],
         );
@@ -592,7 +592,7 @@ impl RealmRoleCertificate {
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: Option<&DeviceID>,
-        expected_realm: Option<RealmID>,
+        expected_realm: Option<VlobID>,
         expected_user: Option<&UserID>,
     ) -> DataResult<Self> {
         Ok(
@@ -630,7 +630,7 @@ impl RealmRoleCertificate {
         _cls: &PyType,
         author: DeviceID,
         timestamp: DateTime,
-        realm_id: RealmID,
+        realm_id: VlobID,
     ) -> Self {
         Self(Arc::new(
             libparsec::low_level::types::RealmRoleCertificate {
@@ -657,7 +657,7 @@ impl RealmRoleCertificate {
     }
 
     #[getter]
-    fn realm_id(&self) -> RealmID {
+    fn realm_id(&self) -> VlobID {
         self.0.realm_id.into()
     }
 

@@ -1635,8 +1635,8 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
             let workspace_id = {
                 let js_val: Handle<JsString> = obj.get(cx, "workspaceId")?;
                 {
-                    let custom_from_rs_string = |s: String| -> Result<libparsec::EntryID, _> {
-                        libparsec::EntryID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                        libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                     };
                     match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
@@ -1834,7 +1834,7 @@ fn variant_parsed_backend_addr_rs_to_js<'a>(
             js_obj.set(cx, "organizationId", js_organization_id)?;
             let js_workspace_id = JsString::try_new(cx, {
                 let custom_to_rs_string =
-                    |x: libparsec::EntryID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(workspace_id) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
@@ -3393,56 +3393,61 @@ fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_list_workspaces(client).await;
 
-        let ret = libparsec::client_list_workspaces(
-            client,
-        ).await;
-
-        deferred.settle_with(&channel, move |mut cx| {
-            let js_ret = match ret {
-            Ok(ok) => {
-                let js_obj = JsObject::new(&mut cx);
-                let js_tag = JsBoolean::new(&mut cx, true);
-                js_obj.set(&mut cx, "ok", js_tag)?;
-                let js_value = {
-                    // JsArray::new allocates with `undefined` value, that's why we `set` value
-                    let js_array = JsArray::new(&mut cx, ok.len() as u32);
-                    for (i, elem) in ok.into_iter().enumerate() {
-                        let js_elem = {
-                            let (x1, x2) = elem;
-                            let js_array = JsArray::new(&mut cx, 2);
-                            let js_value = JsString::try_new(&mut cx,{
-                                let custom_to_rs_string = |x: libparsec::RealmID| -> Result<String, &'static str> { Ok(x.hex()) };
-                                match custom_to_rs_string(x1) {
-                                    Ok(ok) => ok,
-                                    Err(err) => return cx.throw_type_error(err),
-                                }
-                            }).or_throw(&mut cx)?;
-                            js_array.set(&mut cx, 1, js_value)?;
-                            let js_value = JsString::try_new(&mut cx,x2).or_throw(&mut cx)?;
-                            js_array.set(&mut cx, 2, js_value)?;
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            // JsArray::new allocates with `undefined` value, that's why we `set` value
+                            let js_array = JsArray::new(&mut cx, ok.len() as u32);
+                            for (i, elem) in ok.into_iter().enumerate() {
+                                let js_elem = {
+                                    let (x1, x2) = elem;
+                                    let js_array = JsArray::new(&mut cx, 2);
+                                    let js_value = JsString::try_new(&mut cx, {
+                                        let custom_to_rs_string =
+                                            |x: libparsec::VlobID| -> Result<String, &'static str> {
+                                                Ok(x.hex())
+                                            };
+                                        match custom_to_rs_string(x1) {
+                                            Ok(ok) => ok,
+                                            Err(err) => return cx.throw_type_error(err),
+                                        }
+                                    })
+                                    .or_throw(&mut cx)?;
+                                    js_array.set(&mut cx, 1, js_value)?;
+                                    let js_value =
+                                        JsString::try_new(&mut cx, x2).or_throw(&mut cx)?;
+                                    js_array.set(&mut cx, 2, js_value)?;
+                                    js_array
+                                };
+                                js_array.set(&mut cx, i as u32, js_elem)?;
+                            }
                             js_array
                         };
-                        js_array.set(&mut cx, i as u32, js_elem)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
                     }
-                    js_array
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_client_list_workspaces_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
                 };
-                js_obj.set(&mut cx, "value", js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = cx.empty_object();
-                let js_tag = JsBoolean::new(&mut cx, false);
-                js_obj.set(&mut cx, "ok", js_tag)?;
-                let js_err = variant_client_list_workspaces_error_rs_to_js(&mut cx, err)?;
-                js_obj.set(&mut cx, "error", js_err)?;
-                js_obj
-            }
-        };
-            Ok(js_ret)
+                Ok(js_ret)
+            });
         });
-    });
 
     Ok(promise)
 }
@@ -3489,7 +3494,7 @@ fn client_workspace_create(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_value = JsString::try_new(&mut cx, {
                             let custom_to_rs_string =
-                                |x: libparsec::RealmID| -> Result<String, &'static str> {
+                                |x: libparsec::VlobID| -> Result<String, &'static str> {
                                     Ok(x.hex())
                                 };
                             match custom_to_rs_string(ok) {
@@ -3532,8 +3537,8 @@ fn client_workspace_rename(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let realm_id = {
         let js_val = cx.argument::<JsString>(1)?;
         {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::RealmID, _> {
-                libparsec::RealmID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
@@ -3608,8 +3613,8 @@ fn client_workspace_share(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let realm_id = {
         let js_val = cx.argument::<JsString>(1)?;
         {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::RealmID, _> {
-                libparsec::RealmID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,

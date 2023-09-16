@@ -11,7 +11,7 @@ use super::{
 pub enum InvalidManifestError {
     #[error("Manifest from vlob `{vlob_id}` version {version} (create by `{author}` on {timestamp}) is corrupted: {error}")]
     Corrupted {
-        vlob_id: EntryID,
+        vlob_id: VlobID,
         version: VersionInt,
         author: DeviceID,
         timestamp: DateTime,
@@ -19,34 +19,34 @@ pub enum InvalidManifestError {
     },
     #[error("Manifest from vlob `{vlob_id}` version {version} (create by `{author}` on {timestamp}): at that time author didn't exist !")]
     NonExistantAuthor {
-        vlob_id: EntryID,
+        vlob_id: VlobID,
         version: VersionInt,
         author: DeviceID,
         timestamp: DateTime,
     },
     #[error("Manifest from vlob `{vlob_id}` version {version} (create by `{author}` on {timestamp}): at that time author was already revoked !")]
     RevokedAuthor {
-        vlob_id: EntryID,
+        vlob_id: VlobID,
         version: VersionInt,
         author: DeviceID,
         timestamp: DateTime,
     },
     #[error("Manifest from vlob `{vlob_id}` version {version} (create by `{author}` on {timestamp}): at that time author couldn't write in realm `{realm_id}` given it role was `{author_role:?}`")]
     AuthorRealmRoleCannotWrite {
-        vlob_id: EntryID,
+        vlob_id: VlobID,
         version: VersionInt,
         author: DeviceID,
         timestamp: DateTime,
-        realm_id: RealmID,
+        realm_id: VlobID,
         author_role: RealmRole,
     },
     #[error("Manifest from vlob `{vlob_id}` version {version} (create by `{author}` on {timestamp}): at that time author didn't have access to realm `{realm_id}` and hence couldn't write in it")]
     AuthorNoAccessToRealm {
-        vlob_id: EntryID,
+        vlob_id: VlobID,
         version: VersionInt,
         author: DeviceID,
         timestamp: DateTime,
-        realm_id: RealmID,
+        realm_id: VlobID,
     },
 }
 
@@ -137,11 +137,11 @@ async fn validate_manifest<M>(
         &VerifyKey,
         &DeviceID,
         DateTime,
-        Option<EntryID>,
+        Option<VlobID>,
         Option<VersionInt>,
     ) -> DataResult<M>,
 ) -> Result<M, ValidateManifestError> {
-    let realm_id = ops.device.user_manifest_id.into();
+    let realm_id = ops.device.user_manifest_id;
 
     // 1) Make sure we have all the needed certificates
 

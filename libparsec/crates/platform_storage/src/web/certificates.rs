@@ -69,7 +69,7 @@ impl CertificatesStorage {
         &self,
         _index: IndexInt,
         _timestamp: DateTime,
-        _realm_id: RealmID,
+        _realm_id: VlobID,
         _user_id: UserID,
         _encrypted: Vec<u8>,
     ) -> anyhow::Result<()> {
@@ -126,7 +126,7 @@ impl CertificatesStorage {
     // Get all realm role certificates for a given realm
     pub async fn get_realm_certificates(
         &self,
-        _realm_id: RealmID,
+        _realm_id: VlobID,
     ) -> anyhow::Result<Vec<(IndexInt, Vec<u8>)>> {
         todo!()
     }

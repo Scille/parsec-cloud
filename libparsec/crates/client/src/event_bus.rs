@@ -195,15 +195,15 @@ impl_events!(
     },
     RealmMaintenanceStarted {
         encryption_revision: IndexInt,
-        realm_id: RealmID
+        realm_id: VlobID
     },
     RealmMaintenanceFinished {
         encryption_revision: IndexInt,
-        realm_id: RealmID
+        realm_id: VlobID
     },
     RealmVlobsUpdated {
         checkpoint: IndexInt,
-        realm_id: RealmID,
+        realm_id: VlobID,
         src_id: VlobID,
         src_version: VersionInt
     },

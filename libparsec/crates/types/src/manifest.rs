@@ -17,8 +17,8 @@ use libparsec_serialization_format::parsec_data;
 
 use crate::{
     self as libparsec_types, data_macros::impl_transparent_data_format_conversion, BlockID,
-    DataError, DataResult, DateTime, DeviceID, EntryID, EntryNameError, FsPathError, IndexInt,
-    RealmID, SizeInt, VersionInt,
+    DataError, DataResult, DateTime, DeviceID, EntryNameError, FsPathError, IndexInt, SizeInt,
+    VersionInt, VlobID,
 };
 
 pub const DEFAULT_BLOCK_SIZE: Blocksize = Blocksize(512 * 1024); // 512 KB
@@ -56,7 +56,7 @@ macro_rules! impl_manifest_dump_load {
                 author_verify_key: &VerifyKey,
                 expected_author: &DeviceID,
                 expected_timestamp: DateTime,
-                expected_id: Option<EntryID>,
+                expected_id: Option<VlobID>,
                 expected_version: Option<VersionInt>,
             ) -> DataResult<Self> {
                 let signed = key.decrypt(encrypted).map_err(|_| DataError::Decryption)?;
@@ -78,7 +78,7 @@ macro_rules! impl_manifest_dump_load {
                 author_verify_key: &VerifyKey,
                 expected_author: &DeviceID,
                 expected_timestamp: DateTime,
-                expected_id: Option<EntryID>,
+                expected_id: Option<VlobID>,
                 expected_version: Option<VersionInt>,
             ) -> DataResult<Self> {
                 let compressed = author_verify_key
@@ -107,7 +107,7 @@ macro_rules! impl_manifest_dump_load {
                 &self,
                 expected_author: &DeviceID,
                 expected_timestamp: DateTime,
-                expected_id: Option<EntryID>,
+                expected_id: Option<VlobID>,
                 expected_version: Option<VersionInt>,
             ) -> DataResult<()> {
                 if self.author != *expected_author {
@@ -399,7 +399,7 @@ impl std::str::FromStr for FsPath {
 #[serde_as]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct WorkspaceEntry {
-    pub id: RealmID,
+    pub id: VlobID,
     pub name: EntryName,
     pub key: SecretKey,
     pub encryption_revision: IndexInt,
@@ -416,7 +416,7 @@ pub struct WorkspaceEntry {
 
 impl WorkspaceEntry {
     pub fn new(
-        id: RealmID,
+        id: VlobID,
         name: EntryName,
         key: SecretKey,
         encryption_revision: IndexInt,
@@ -435,7 +435,7 @@ impl WorkspaceEntry {
 
     pub fn generate(name: EntryName, timestamp: DateTime) -> Self {
         Self {
-            id: RealmID::default(),
+            id: VlobID::default(),
             name,
             key: SecretKey::generate(),
             encryption_revision: 1,
@@ -515,8 +515,8 @@ pub struct FileManifest {
     pub author: DeviceID,
     pub timestamp: DateTime,
 
-    pub id: EntryID,
-    pub parent: EntryID,
+    pub id: VlobID,
+    pub parent: VlobID,
     // Version 0 means the data is not synchronized
     pub version: VersionInt,
     pub created: DateTime,
@@ -578,13 +578,13 @@ pub struct FolderManifest {
     pub author: DeviceID,
     pub timestamp: DateTime,
 
-    pub id: EntryID,
-    pub parent: EntryID,
+    pub id: VlobID,
+    pub parent: VlobID,
     // Version 0 means the data is not synchronized
     pub version: VersionInt,
     pub created: DateTime,
     pub updated: DateTime,
-    pub children: HashMap<EntryName, EntryID>,
+    pub children: HashMap<EntryName, VlobID>,
 }
 
 impl_manifest_dump_load!(FolderManifest);
@@ -614,12 +614,12 @@ pub struct WorkspaceManifest {
     pub author: DeviceID,
     pub timestamp: DateTime,
 
-    pub id: EntryID,
+    pub id: VlobID,
     // Version 0 means the data is not synchronized
     pub version: VersionInt,
     pub created: DateTime,
     pub updated: DateTime,
-    pub children: HashMap<EntryName, EntryID>,
+    pub children: HashMap<EntryName, VlobID>,
 }
 
 parsec_data!("schema/manifest/workspace_manifest.json5");
@@ -648,7 +648,7 @@ pub struct UserManifest {
     pub author: DeviceID,
     pub timestamp: DateTime,
 
-    pub id: EntryID,
+    pub id: VlobID,
     // Version 0 means the data is not synchronized
     pub version: VersionInt,
     pub created: DateTime,
@@ -658,7 +658,7 @@ pub struct UserManifest {
 }
 
 impl UserManifest {
-    pub fn get_workspace_entry(&self, realm_id: RealmID) -> Option<&WorkspaceEntry> {
+    pub fn get_workspace_entry(&self, realm_id: VlobID) -> Option<&WorkspaceEntry> {
         self.workspaces.iter().find(|x| x.id == realm_id)
     }
 }
@@ -698,7 +698,7 @@ impl ChildManifest {
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
         expected_timestamp: DateTime,
-        expected_id: Option<EntryID>,
+        expected_id: Option<VlobID>,
         expected_version: Option<VersionInt>,
     ) -> DataResult<Self> {
         let signed = key.decrypt(encrypted).map_err(|_| DataError::Decryption)?;
@@ -718,7 +718,7 @@ impl ChildManifest {
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
         expected_timestamp: DateTime,
-        expected_id: Option<EntryID>,
+        expected_id: Option<VlobID>,
         expected_version: Option<VersionInt>,
     ) -> DataResult<Self> {
         let compressed = author_verify_key

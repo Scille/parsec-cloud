@@ -161,19 +161,14 @@ class EntryName(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, _> { s.parse::<libparsec::EntryName>().map_err(|e| e.to_string()) }"
 
 
-# EntryID, RealmID and InvitationToken, are defined as strings (instead of
+# VlobID and InvitationToken, are defined as strings (instead of
 # Uint8Array) so that the Typescript code only manipulates strings without
 # conversion or parsing.
 
 
-class EntryID(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<libparsec::EntryID, _> { libparsec::EntryID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = "|x: libparsec::EntryID| -> Result<String, &'static str> { Ok(x.hex()) }"
-
-
-class RealmID(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<libparsec::RealmID, _> { libparsec::RealmID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = "|x: libparsec::RealmID| -> Result<String, &'static str> { Ok(x.hex()) }"
+class VlobID(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<libparsec::VlobID, _> { libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = "|x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) }"
 
 
 class InvitationToken(StrBasedType):
