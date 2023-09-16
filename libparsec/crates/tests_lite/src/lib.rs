@@ -3,6 +3,10 @@
 // Reexport 3rd parties needed by `parsec_test` macro
 
 pub use env_logger;
+// In theory we'd like to expose rstest internal `#[rstest]` and `#[fixture]`
+// attributes, however we must instead expose the module with it original name
+// (hence shadowing the `#[rstest]` attribute).
+// This is due to how some of rstest features are implemented (e.g. magic conversions).
 pub use rstest;
 #[cfg(not(target_arch = "wasm32"))]
 pub use tokio;
@@ -32,4 +36,6 @@ pub use libparsec_tests_macros::parsec_test;
 
 pub mod prelude {
     pub use super::*;
+    // Here we can expose the actual stuff we care in rstest !
+    pub use rstest::{fixture, rstest};
 }
