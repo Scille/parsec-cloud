@@ -4,9 +4,7 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use hex_literal::hex;
-use pretty_assertions::{assert_eq, assert_matches};
-use rstest::rstest;
+use libparsec_tests_lite::prelude::*;
 
 use libparsec_types::fixtures::{alice, bob, timestamp, Device};
 use libparsec_types::prelude::*;
@@ -24,7 +22,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
         public_key: bob.public_key(),
         profile: UserProfile::Standard,
     };
-    assert_eq!(
+    p_assert_eq!(
         format!("{:?}", user_certificate),
         concat!(
             "UserCertificate {",
@@ -45,7 +43,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
         device_label: bob.device_label.clone(),
         verify_key: bob.verify_key(),
     };
-    assert_eq!(
+    p_assert_eq!(
         format!("{:?}", device_certificate),
         concat!(
             "DeviceCertificate {",
@@ -63,7 +61,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
         timestamp,
         user_id: bob.user_id().to_owned(),
     };
-    assert_eq!(
+    p_assert_eq!(
         format!("{:?}", revoked_user_certificate),
         concat!(
             "RevokedUserCertificate {",
@@ -80,7 +78,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
         user_id: bob.user_id().to_owned(),
         new_profile: UserProfile::Outsider,
     };
-    assert_eq!(
+    p_assert_eq!(
         format!("{:?}", user_update_certificate),
         concat!(
             "UserUpdateCertificate {",
@@ -99,7 +97,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
         realm_id: VlobID::from_hex("604784450642426b91eb89242f54fa52").unwrap(),
         role: Some(RealmRole::Owner),
     };
-    assert_eq!(
+    p_assert_eq!(
         format!("{:?}", realm_role_certificate),
         concat!(
             "RealmRoleCertificate {",
@@ -124,7 +122,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
         )
         .unwrap(),
     };
-    assert_eq!(
+    p_assert_eq!(
         format!("{:?}", sequester_authority_certificate),
         concat!(
             "SequesterAuthorityCertificate {",
@@ -148,7 +146,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
         )
         .unwrap(),
     };
-    assert_eq!(
+    p_assert_eq!(
         format!("{:?}", sequester_service_certificate),
         concat!(
             "SequesterServiceCertificate {",
@@ -199,14 +197,14 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
         None,
     )
     .unwrap();
-    assert_eq!(certif, expected);
+    p_assert_eq!(certif, expected);
 
     let unsecure_certif = UserCertificate::unsecure_load(data.clone()).unwrap();
-    assert_eq!(
+    p_assert_eq!(
         unsecure_certif.author(),
         &CertificateSignerOwned::User(alice.device_id.clone())
     );
-    assert_eq!(
+    p_assert_eq!(
         unsecure_certif
             .verify_signature(&alice.verify_key())
             .unwrap(),
@@ -214,7 +212,7 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
     );
 
     let unsecure_certif = UserCertificate::unsecure_load(data).unwrap();
-    assert_eq!(
+    p_assert_eq!(
         unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
         expected
     );
@@ -230,14 +228,14 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
         None,
     )
     .unwrap();
-    assert_eq!(certif2, expected);
+    p_assert_eq!(certif2, expected);
 
     // Test invalid data
-    assert_matches!(
+    p_assert_matches!(
         UserCertificate::unsecure_load(b"dummy".to_vec().into()),
         Err(DataError::Signature)
     );
-    assert_matches!(
+    p_assert_matches!(
         UserCertificate::verify_and_load(
             b"dummy",
             &alice.verify_key(),
@@ -287,14 +285,14 @@ fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
         None,
     )
     .unwrap();
-    assert_eq!(certif, expected);
+    p_assert_eq!(certif, expected);
 
     let unsecure_certif = UserCertificate::unsecure_load(data.clone()).unwrap();
-    assert_eq!(
+    p_assert_eq!(
         unsecure_certif.author(),
         &CertificateSignerOwned::User(alice.device_id.clone())
     );
-    assert_eq!(
+    p_assert_eq!(
         unsecure_certif
             .verify_signature(&alice.verify_key())
             .unwrap(),
@@ -302,7 +300,7 @@ fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
     );
 
     let unsecure_certif = UserCertificate::unsecure_load(data).unwrap();
-    assert_eq!(
+    p_assert_eq!(
         unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
         expected
     );
@@ -318,7 +316,7 @@ fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
         None,
     )
     .unwrap();
-    assert_eq!(certif2, expected);
+    p_assert_eq!(certif2, expected);
 }
 
 #[rstest]
@@ -379,16 +377,16 @@ fn serde_user_certificate_legacy_format(alice: &Device, bob: &Device) {
             None,
         )
         .unwrap();
-        assert_eq!(&certif, expected);
+        p_assert_eq!(&certif, expected);
 
         let data = Bytes::from(data.as_ref().to_vec());
 
         let unsecure_certif = UserCertificate::unsecure_load(data.clone()).unwrap();
-        assert_eq!(
+        p_assert_eq!(
             unsecure_certif.author(),
             &CertificateSignerOwned::User(alice.device_id.clone())
         );
-        assert_eq!(
+        p_assert_eq!(
             unsecure_certif
                 .verify_signature(&alice.verify_key())
                 .unwrap(),
@@ -396,7 +394,7 @@ fn serde_user_certificate_legacy_format(alice: &Device, bob: &Device) {
         );
 
         let unsecure_certif = UserCertificate::unsecure_load(data).unwrap();
-        assert_eq!(
+        p_assert_eq!(
             unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
             *expected
         );
@@ -441,14 +439,14 @@ fn serde_device_certificate(alice: &Device, bob: &Device) {
         None,
     )
     .unwrap();
-    assert_eq!(certif, expected);
+    p_assert_eq!(certif, expected);
 
     let unsecure_certif = DeviceCertificate::unsecure_load(data.clone()).unwrap();
-    assert_eq!(
+    p_assert_eq!(
         unsecure_certif.author(),
         &CertificateSignerOwned::User(alice.device_id.clone())
     );
-    assert_eq!(
+    p_assert_eq!(
         unsecure_certif
             .verify_signature(&alice.verify_key())
             .unwrap(),
@@ -456,7 +454,7 @@ fn serde_device_certificate(alice: &Device, bob: &Device) {
     );
 
     let unsecure_certif = DeviceCertificate::unsecure_load(data).unwrap();
-    assert_eq!(
+    p_assert_eq!(
         unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
         expected
     );
@@ -471,14 +469,14 @@ fn serde_device_certificate(alice: &Device, bob: &Device) {
         None,
     )
     .unwrap();
-    assert_eq!(certif2, expected);
+    p_assert_eq!(certif2, expected);
 
     // Test invalid data
-    assert_matches!(
+    p_assert_matches!(
         DeviceCertificate::unsecure_load(b"dummy".to_vec().into()),
         Err(DataError::Signature)
     );
-    assert_matches!(
+    p_assert_matches!(
         DeviceCertificate::verify_and_load(
             b"dummy",
             &alice.verify_key(),
@@ -524,14 +522,14 @@ fn serde_device_certificate_redacted(alice: &Device, bob: &Device) {
         None,
     )
     .unwrap();
-    assert_eq!(certif, expected);
+    p_assert_eq!(certif, expected);
 
     let unsecure_certif = DeviceCertificate::unsecure_load(data.clone()).unwrap();
-    assert_eq!(
+    p_assert_eq!(
         unsecure_certif.author(),
         &CertificateSignerOwned::User(alice.device_id.clone())
     );
-    assert_eq!(
+    p_assert_eq!(
         unsecure_certif
             .verify_signature(&alice.verify_key())
             .unwrap(),
@@ -539,7 +537,7 @@ fn serde_device_certificate_redacted(alice: &Device, bob: &Device) {
     );
 
     let unsecure_certif = DeviceCertificate::unsecure_load(data).unwrap();
-    assert_eq!(
+    p_assert_eq!(
         unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
         expected
     );
@@ -554,7 +552,7 @@ fn serde_device_certificate_redacted(alice: &Device, bob: &Device) {
         None,
     )
     .unwrap();
-    assert_eq!(certif2, expected);
+    p_assert_eq!(certif2, expected);
 }
 
 #[rstest]
@@ -590,14 +588,14 @@ fn serde_device_certificate_legacy_format(alice: &Device, bob: &Device) {
         None,
     )
     .unwrap();
-    assert_eq!(certif, expected);
+    p_assert_eq!(certif, expected);
 
     let unsecure_certif = DeviceCertificate::unsecure_load(data.clone()).unwrap();
-    assert_eq!(
+    p_assert_eq!(
         unsecure_certif.author(),
         &CertificateSignerOwned::User(alice.device_id.clone())
     );
-    assert_eq!(
+    p_assert_eq!(
         unsecure_certif
             .verify_signature(&alice.verify_key())
             .unwrap(),
@@ -605,7 +603,7 @@ fn serde_device_certificate_legacy_format(alice: &Device, bob: &Device) {
     );
 
     let unsecure_certif = DeviceCertificate::unsecure_load(data).unwrap();
-    assert_eq!(
+    p_assert_eq!(
         unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
         expected
     );
@@ -634,8 +632,8 @@ fn serde_revoked_user_certificate(alice: &Device, bob: &Device) {
     };
 
     let unsecure_certif = RevokedUserCertificate::unsecure_load(data.clone()).unwrap();
-    assert_eq!(unsecure_certif.author(), &alice.device_id);
-    assert_eq!(
+    p_assert_eq!(unsecure_certif.author(), &alice.device_id);
+    p_assert_eq!(
         unsecure_certif
             .verify_signature(&alice.verify_key())
             .unwrap(),
@@ -643,7 +641,7 @@ fn serde_revoked_user_certificate(alice: &Device, bob: &Device) {
     );
 
     let unsecure_certif = RevokedUserCertificate::unsecure_load(data.clone()).unwrap();
-    assert_eq!(
+    p_assert_eq!(
         unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
         expected
     );
@@ -651,7 +649,7 @@ fn serde_revoked_user_certificate(alice: &Device, bob: &Device) {
     let certif =
         RevokedUserCertificate::verify_and_load(&data, &alice.verify_key(), &alice.device_id, None)
             .unwrap();
-    assert_eq!(certif, expected);
+    p_assert_eq!(certif, expected);
 
     // Also test serialization round trip
     let data2 = expected.dump_and_sign(&alice.signing_key);
@@ -663,14 +661,14 @@ fn serde_revoked_user_certificate(alice: &Device, bob: &Device) {
         None,
     )
     .unwrap();
-    assert_eq!(certif2, expected);
+    p_assert_eq!(certif2, expected);
 
     // Test invalid data
-    assert_matches!(
+    p_assert_matches!(
         RevokedUserCertificate::unsecure_load(b"dummy".to_vec().into()),
         Err(DataError::Signature)
     );
-    assert_matches!(
+    p_assert_matches!(
         RevokedUserCertificate::verify_and_load(
             b"dummy",
             &alice.verify_key(),
@@ -707,8 +705,8 @@ fn serde_user_update_certificate(alice: &Device, bob: &Device) {
     };
 
     let unsecure_certif = UserUpdateCertificate::unsecure_load(data.clone()).unwrap();
-    assert_eq!(unsecure_certif.author(), &alice.device_id);
-    assert_eq!(
+    p_assert_eq!(unsecure_certif.author(), &alice.device_id);
+    p_assert_eq!(
         unsecure_certif
             .verify_signature(&alice.verify_key())
             .unwrap(),
@@ -716,7 +714,7 @@ fn serde_user_update_certificate(alice: &Device, bob: &Device) {
     );
 
     let unsecure_certif = UserUpdateCertificate::unsecure_load(data.clone()).unwrap();
-    assert_eq!(
+    p_assert_eq!(
         unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
         expected
     );
@@ -724,7 +722,7 @@ fn serde_user_update_certificate(alice: &Device, bob: &Device) {
     let certif =
         UserUpdateCertificate::verify_and_load(&data, &alice.verify_key(), &alice.device_id, None)
             .unwrap();
-    assert_eq!(certif, expected);
+    p_assert_eq!(certif, expected);
 
     // Also test serialization round trip
     let data2 = expected.dump_and_sign(&alice.signing_key);
@@ -732,14 +730,14 @@ fn serde_user_update_certificate(alice: &Device, bob: &Device) {
     let certif2 =
         UserUpdateCertificate::verify_and_load(&data2, &alice.verify_key(), &alice.device_id, None)
             .unwrap();
-    assert_eq!(certif2, expected);
+    p_assert_eq!(certif2, expected);
 
     // Test invalid data
-    assert_matches!(
+    p_assert_matches!(
         UserUpdateCertificate::unsecure_load(b"dummy".to_vec().into()),
         Err(DataError::Signature)
     );
-    assert_matches!(
+    p_assert_matches!(
         UserUpdateCertificate::verify_and_load(
             b"dummy",
             &alice.verify_key(),
@@ -785,14 +783,14 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
         user_id: bob.user_id().to_owned(),
         role: Some(RealmRole::Owner),
     };
-    assert_eq!(certif, expected);
+    p_assert_eq!(certif, expected);
 
     let unsecure_certif = RealmRoleCertificate::unsecure_load(data.clone()).unwrap();
-    assert_eq!(
+    p_assert_eq!(
         unsecure_certif.author(),
         &CertificateSignerOwned::User(alice.device_id.clone())
     );
-    assert_eq!(
+    p_assert_eq!(
         unsecure_certif
             .verify_signature(&alice.verify_key())
             .unwrap(),
@@ -800,7 +798,7 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
     );
 
     let unsecure_certif = RealmRoleCertificate::unsecure_load(data).unwrap();
-    assert_eq!(
+    p_assert_eq!(
         unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
         expected
     );
@@ -816,14 +814,14 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
         None,
     )
     .unwrap();
-    assert_eq!(certif2, expected);
+    p_assert_eq!(certif2, expected);
 
     // Test invalid data
-    assert_matches!(
+    p_assert_matches!(
         RealmRoleCertificate::unsecure_load(b"dummy".to_vec().into()),
         Err(DataError::Signature)
     );
-    assert_matches!(
+    p_assert_matches!(
         RealmRoleCertificate::verify_and_load(
             b"dummy",
             &alice.verify_key(),
@@ -869,7 +867,7 @@ fn serde_realm_role_certificate_no_role(alice: &Device, bob: &Device) {
         role: None,
         // role: Some(RealmRole::Owner),
     };
-    assert_eq!(certif, expected);
+    p_assert_eq!(certif, expected);
 
     // Also test serialization round trip
     let data2 = expected.dump_and_sign(&alice.signing_key);
@@ -882,7 +880,7 @@ fn serde_realm_role_certificate_no_role(alice: &Device, bob: &Device) {
         None,
     )
     .unwrap();
-    assert_eq!(certif2, expected);
+    p_assert_eq!(certif2, expected);
 }
 
 #[rstest]
@@ -927,10 +925,10 @@ fn serde_sequester_authority_certificate(alice: &Device) {
         )
         .unwrap(),
     };
-    assert_eq!(certif, expected);
+    p_assert_eq!(certif, expected);
 
     let unsecure_certif = SequesterAuthorityCertificate::unsecure_load(data).unwrap();
-    assert_eq!(
+    p_assert_eq!(
         unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
         expected
     );
@@ -940,14 +938,14 @@ fn serde_sequester_authority_certificate(alice: &Device) {
     // Note we cannot just compare with `data` due to signature and keys order
     let certif2 =
         SequesterAuthorityCertificate::verify_and_load(&data2, &alice.verify_key()).unwrap();
-    assert_eq!(certif2, expected);
+    p_assert_eq!(certif2, expected);
 
     // Test invalid data
-    assert_matches!(
+    p_assert_matches!(
         SequesterAuthorityCertificate::unsecure_load(b"dummy".to_vec().into()),
         Err(DataError::Signature)
     );
-    assert_matches!(
+    p_assert_matches!(
         SequesterAuthorityCertificate::verify_and_load(b"dummy", &alice.verify_key()),
         Err(DataError::Signature)
     );
@@ -996,16 +994,16 @@ fn serde_sequester_service_certificate() {
         )
         .unwrap(),
     };
-    assert_eq!(certif, expected);
+    p_assert_eq!(certif, expected);
 
     // Also test serialization round trip
     let data2 = expected.dump();
     // Note we cannot just compare with `data` due to signature and keys order
     let certif2 = SequesterServiceCertificate::load(&data2).unwrap();
-    assert_eq!(certif2, expected);
+    p_assert_eq!(certif2, expected);
 
     // Test invalid data
-    assert_matches!(
+    p_assert_matches!(
         SequesterServiceCertificate::unsecure_load(b"dummy".to_vec().into()),
         Err(DataError::Signature)
     );

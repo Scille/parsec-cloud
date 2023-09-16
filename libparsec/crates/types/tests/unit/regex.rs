@@ -5,7 +5,7 @@ use std::{
     path::Path,
 };
 
-use rstest::rstest;
+use libparsec_tests_lite::prelude::*;
 
 use crate::regex::Regex;
 

@@ -6,13 +6,12 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::too_many_arguments, clippy::unwrap_used)]
 
-use hex_literal::hex;
-use rstest::rstest;
 use std::{
     collections::{HashMap, HashSet},
     num::NonZeroU64,
 };
 
+use libparsec_tests_lite::prelude::*;
 use libparsec_types::fixtures::{alice, timestamp, Device};
 use libparsec_types::prelude::*;
 
@@ -195,14 +194,14 @@ fn serde_local_file_manifest(
 
     let manifest = LocalFileManifest::decrypt_and_load(data, &key).unwrap();
 
-    assert_eq!(manifest, expected);
+    p_assert_eq!(manifest, expected);
 
     // Also test serialization round trip
     let data2 = manifest.dump_and_encrypt(&key);
     // Note we cannot just compare with `data` due to encryption and keys order
     let manifest2 = LocalFileManifest::decrypt_and_load(&data2, &key).unwrap();
 
-    assert_eq!(manifest2, expected);
+    p_assert_eq!(manifest2, expected);
 }
 
 #[rstest]
@@ -374,14 +373,14 @@ fn serde_local_folder_manifest(
 
     let manifest = LocalFolderManifest::decrypt_and_load(data, &key).unwrap();
 
-    assert_eq!(manifest, expected);
+    p_assert_eq!(manifest, expected);
 
     // Also test serialization round trip
     let data2 = manifest.dump_and_encrypt(&key);
     // Note we cannot just compare with `data` due to encryption and keys order
     let manifest2 = LocalFolderManifest::decrypt_and_load(&data2, &key).unwrap();
 
-    assert_eq!(manifest2, expected);
+    p_assert_eq!(manifest2, expected);
 }
 
 #[rstest]
@@ -559,14 +558,14 @@ fn serde_local_workspace_manifest(
 
     let manifest = LocalWorkspaceManifest::decrypt_and_load(data, &key).unwrap();
 
-    assert_eq!(manifest, expected);
+    p_assert_eq!(manifest, expected);
 
     // Also test serialization round trip
     let data2 = manifest.dump_and_encrypt(&key);
     // Note we cannot just compare with `data` due to encryption and keys order
     let manifest2 = LocalWorkspaceManifest::decrypt_and_load(&data2, &key).unwrap();
 
-    assert_eq!(manifest2, expected);
+    p_assert_eq!(manifest2, expected);
 }
 
 #[rstest]
@@ -910,30 +909,30 @@ fn serde_local_user_manifest(
 
     let manifest = LocalUserManifest::decrypt_and_load(data, &key).unwrap();
 
-    assert_eq!(manifest, expected);
+    p_assert_eq!(manifest, expected);
 
     // Also test serialization round trip
     let data2 = manifest.dump_and_encrypt(&key);
     // Note we cannot just compare with `data` due to encryption and keys order
     let manifest2 = LocalUserManifest::decrypt_and_load(&data2, &key).unwrap();
 
-    assert_eq!(manifest2, expected);
+    p_assert_eq!(manifest2, expected);
 }
 
 #[rstest]
 fn chunk_new() {
     let chunk = Chunk::new(1, NonZeroU64::try_from(5).unwrap());
 
-    assert_eq!(chunk.start, 1);
-    assert_eq!(chunk.stop, NonZeroU64::try_from(5).unwrap());
-    assert_eq!(chunk.raw_offset, 1);
-    assert_eq!(chunk.raw_size, NonZeroU64::try_from(4).unwrap());
-    assert_eq!(chunk.access, None);
+    p_assert_eq!(chunk.start, 1);
+    p_assert_eq!(chunk.stop, NonZeroU64::try_from(5).unwrap());
+    p_assert_eq!(chunk.raw_offset, 1);
+    p_assert_eq!(chunk.raw_size, NonZeroU64::try_from(4).unwrap());
+    p_assert_eq!(chunk.access, None);
 
-    assert_eq!(chunk, 1);
+    p_assert_eq!(chunk, 1);
     assert!(chunk < 2);
     assert!(chunk > 0);
-    assert_ne!(chunk, Chunk::new(1, NonZeroU64::try_from(5).unwrap()));
+    p_assert_ne!(chunk, Chunk::new(1, NonZeroU64::try_from(5).unwrap()));
 }
 
 #[rstest]
@@ -942,18 +941,18 @@ fn chunk_evolve_as_block() {
     let id = chunk.id;
     let block = chunk.evolve_as_block(&[]).unwrap();
 
-    assert_eq!(block.id, id);
-    assert_eq!(block.start, 1);
-    assert_eq!(block.stop, NonZeroU64::try_from(5).unwrap());
-    assert_eq!(block.raw_offset, 1);
-    assert_eq!(block.raw_size, NonZeroU64::try_from(4).unwrap());
-    assert_eq!(*block.access.as_ref().unwrap().id, *id);
-    assert_eq!(block.access.as_ref().unwrap().offset, 1);
-    assert_eq!(
+    p_assert_eq!(block.id, id);
+    p_assert_eq!(block.start, 1);
+    p_assert_eq!(block.stop, NonZeroU64::try_from(5).unwrap());
+    p_assert_eq!(block.raw_offset, 1);
+    p_assert_eq!(block.raw_size, NonZeroU64::try_from(4).unwrap());
+    p_assert_eq!(*block.access.as_ref().unwrap().id, *id);
+    p_assert_eq!(block.access.as_ref().unwrap().offset, 1);
+    p_assert_eq!(
         block.access.as_ref().unwrap().size,
         NonZeroU64::try_from(4).unwrap()
     );
-    assert_eq!(
+    p_assert_eq!(
         block.access.as_ref().unwrap().digest,
         HashDigest::from_data(&[])
     );
@@ -968,7 +967,7 @@ fn chunk_evolve_as_block() {
 
     let chunk = Chunk::from_block_access(block_access);
     let block = chunk.clone().evolve_as_block(&[]).unwrap();
-    assert_eq!(chunk, block);
+    p_assert_eq!(chunk, block);
 
     let chunk = Chunk {
         id,
@@ -980,7 +979,7 @@ fn chunk_evolve_as_block() {
     };
 
     let err = chunk.evolve_as_block(&[]).unwrap_err();
-    assert_eq!(err, "This chunk is not aligned");
+    p_assert_eq!(err, "This chunk is not aligned");
 }
 
 #[rstest]
@@ -1045,20 +1044,20 @@ fn local_file_manifest_new(timestamp: DateTime) {
     let blocksize = Blocksize::try_from(512).unwrap();
     let lfm = LocalFileManifest::new(author.clone(), parent, timestamp, blocksize);
 
-    assert_eq!(lfm.base.author, author);
-    assert_eq!(lfm.base.timestamp, timestamp);
-    assert_eq!(lfm.base.parent, parent);
-    assert_eq!(lfm.base.version, 0);
-    assert_eq!(lfm.base.created, timestamp);
-    assert_eq!(lfm.base.updated, timestamp);
-    assert_eq!(lfm.base.blocksize, blocksize);
-    assert_eq!(lfm.base.size, 0);
-    assert_eq!(lfm.base.blocks.len(), 0);
+    p_assert_eq!(lfm.base.author, author);
+    p_assert_eq!(lfm.base.timestamp, timestamp);
+    p_assert_eq!(lfm.base.parent, parent);
+    p_assert_eq!(lfm.base.version, 0);
+    p_assert_eq!(lfm.base.created, timestamp);
+    p_assert_eq!(lfm.base.updated, timestamp);
+    p_assert_eq!(lfm.base.blocksize, blocksize);
+    p_assert_eq!(lfm.base.size, 0);
+    p_assert_eq!(lfm.base.blocks.len(), 0);
     assert!(lfm.need_sync);
-    assert_eq!(lfm.updated, timestamp);
-    assert_eq!(lfm.blocksize, blocksize);
-    assert_eq!(lfm.size, 0);
-    assert_eq!(lfm.blocks.len(), 0);
+    p_assert_eq!(lfm.updated, timestamp);
+    p_assert_eq!(lfm.blocksize, blocksize);
+    p_assert_eq!(lfm.size, 0);
+    p_assert_eq!(lfm.blocks.len(), 0);
 }
 
 #[rstest]
@@ -1130,12 +1129,12 @@ fn local_file_manifest_from_remote(timestamp: DateTime, #[case] input: (u64, Vec
 
     let lfm = LocalFileManifest::from_remote(fm.clone());
 
-    assert_eq!(lfm.base, fm);
+    p_assert_eq!(lfm.base, fm);
     assert!(!lfm.need_sync);
-    assert_eq!(lfm.updated, timestamp);
-    assert_eq!(lfm.size, size);
-    assert_eq!(lfm.blocksize, Blocksize::try_from(512).unwrap());
-    assert_eq!(
+    p_assert_eq!(lfm.updated, timestamp);
+    p_assert_eq!(lfm.size, size);
+    p_assert_eq!(lfm.blocksize, Blocksize::try_from(512).unwrap());
+    p_assert_eq!(
         lfm.blocks,
         blocks
             .into_iter()
@@ -1173,16 +1172,16 @@ fn local_file_manifest_to_remote(timestamp: DateTime) {
     let author = DeviceID::default();
     let fm = lfm.to_remote(author.clone(), t3).unwrap();
 
-    assert_eq!(fm.author, author);
-    assert_eq!(fm.timestamp, t3);
-    assert_eq!(fm.id, lfm.base.id);
-    assert_eq!(fm.parent, lfm.base.parent);
-    assert_eq!(fm.version, lfm.base.version + 1);
-    assert_eq!(fm.created, lfm.base.created);
-    assert_eq!(fm.updated, lfm.updated);
-    assert_eq!(fm.size, lfm.size);
-    assert_eq!(fm.blocksize, lfm.blocksize);
-    assert_eq!(fm.blocks, vec![block_access]);
+    p_assert_eq!(fm.author, author);
+    p_assert_eq!(fm.timestamp, t3);
+    p_assert_eq!(fm.id, lfm.base.id);
+    p_assert_eq!(fm.parent, lfm.base.parent);
+    p_assert_eq!(fm.version, lfm.base.version + 1);
+    p_assert_eq!(fm.created, lfm.base.created);
+    p_assert_eq!(fm.updated, lfm.updated);
+    p_assert_eq!(fm.size, lfm.size);
+    p_assert_eq!(fm.blocksize, lfm.blocksize);
+    p_assert_eq!(fm.blocks, vec![block_access]);
 }
 
 #[rstest]
@@ -1231,17 +1230,17 @@ fn local_folder_manifest_new(timestamp: DateTime) {
     let parent = VlobID::default();
     let lfm = LocalFolderManifest::new(author.clone(), parent, timestamp);
 
-    assert_eq!(lfm.base.author, author);
-    assert_eq!(lfm.base.timestamp, timestamp);
-    assert_eq!(lfm.base.parent, parent);
-    assert_eq!(lfm.base.version, 0);
-    assert_eq!(lfm.base.created, timestamp);
-    assert_eq!(lfm.base.updated, timestamp);
+    p_assert_eq!(lfm.base.author, author);
+    p_assert_eq!(lfm.base.timestamp, timestamp);
+    p_assert_eq!(lfm.base.parent, parent);
+    p_assert_eq!(lfm.base.version, 0);
+    p_assert_eq!(lfm.base.created, timestamp);
+    p_assert_eq!(lfm.base.updated, timestamp);
     assert!(lfm.need_sync);
-    assert_eq!(lfm.updated, timestamp);
-    assert_eq!(lfm.children.len(), 0);
-    assert_eq!(lfm.local_confinement_points.len(), 0);
-    assert_eq!(lfm.remote_confinement_points.len(), 0);
+    p_assert_eq!(lfm.updated, timestamp);
+    p_assert_eq!(lfm.children.len(), 0);
+    p_assert_eq!(lfm.local_confinement_points.len(), 0);
+    p_assert_eq!(lfm.remote_confinement_points.len(), 0);
 }
 
 #[rstest]
@@ -1292,12 +1291,12 @@ fn local_folder_manifest_from_remote(
 
     let lfm = LocalFolderManifest::from_remote(fm.clone(), &Regex::from_regex_str(regex).unwrap());
 
-    assert_eq!(lfm.base, fm);
+    p_assert_eq!(lfm.base, fm);
     assert!(!lfm.need_sync);
-    assert_eq!(lfm.updated, timestamp);
-    assert_eq!(lfm.children, expected_children);
-    assert_eq!(lfm.local_confinement_points.len(), 0);
-    assert_eq!(lfm.remote_confinement_points.len(), filtered);
+    p_assert_eq!(lfm.updated, timestamp);
+    p_assert_eq!(lfm.children, expected_children);
+    p_assert_eq!(lfm.local_confinement_points.len(), 0);
+    p_assert_eq!(lfm.remote_confinement_points.len(), filtered);
 }
 
 #[rstest]
@@ -1392,12 +1391,12 @@ fn local_folder_manifest_from_remote_with_local_context(
         timestamp,
     );
 
-    assert_eq!(lfm.base, fm);
-    assert_eq!(lfm.need_sync, need_sync);
-    assert_eq!(lfm.updated, timestamp);
-    assert_eq!(lfm.children, expected_children);
-    assert_eq!(lfm.local_confinement_points.len(), merged);
-    assert_eq!(lfm.remote_confinement_points.len(), filtered);
+    p_assert_eq!(lfm.base, fm);
+    p_assert_eq!(lfm.need_sync, need_sync);
+    p_assert_eq!(lfm.updated, timestamp);
+    p_assert_eq!(lfm.children, expected_children);
+    p_assert_eq!(lfm.local_confinement_points.len(), merged);
+    p_assert_eq!(lfm.remote_confinement_points.len(), filtered);
 }
 
 #[rstest]
@@ -1415,14 +1414,14 @@ fn local_folder_manifest_to_remote(timestamp: DateTime) {
     let author = DeviceID::default();
     let fm = lfm.to_remote(author.clone(), timestamp);
 
-    assert_eq!(fm.author, author);
-    assert_eq!(fm.timestamp, timestamp);
-    assert_eq!(fm.id, lfm.base.id);
-    assert_eq!(fm.parent, lfm.base.parent);
-    assert_eq!(fm.version, lfm.base.version + 1);
-    assert_eq!(fm.created, lfm.base.created);
-    assert_eq!(fm.updated, lfm.updated);
-    assert_eq!(fm.children, lfm.children);
+    p_assert_eq!(fm.author, author);
+    p_assert_eq!(fm.timestamp, timestamp);
+    p_assert_eq!(fm.id, lfm.base.id);
+    p_assert_eq!(fm.parent, lfm.base.parent);
+    p_assert_eq!(fm.version, lfm.base.version + 1);
+    p_assert_eq!(fm.created, lfm.base.created);
+    p_assert_eq!(fm.updated, lfm.updated);
+    p_assert_eq!(fm.children, lfm.children);
 }
 
 #[rstest]
@@ -1512,12 +1511,12 @@ fn local_folder_manifest_evolve_children_and_mark_updated(
     }
     .evolve_children_and_mark_updated(data, &prevent_sync_pattern, timestamp);
 
-    assert_eq!(lfm.base, fm);
-    assert_eq!(lfm.need_sync, need_sync);
-    assert_eq!(lfm.updated, timestamp);
-    assert_eq!(lfm.children, expected_children);
-    assert_eq!(lfm.local_confinement_points.len(), merged);
-    assert_eq!(lfm.remote_confinement_points.len(), 0);
+    p_assert_eq!(lfm.base, fm);
+    p_assert_eq!(lfm.need_sync, need_sync);
+    p_assert_eq!(lfm.updated, timestamp);
+    p_assert_eq!(lfm.children, expected_children);
+    p_assert_eq!(lfm.local_confinement_points.len(), merged);
+    p_assert_eq!(lfm.remote_confinement_points.len(), 0);
 }
 
 // TODO
@@ -1546,12 +1545,12 @@ fn local_folder_manifest_apply_prevent_sync_pattern(timestamp: DateTime) {
     }
     .apply_prevent_sync_pattern(&prevent_sync_pattern, timestamp);
 
-    assert_eq!(lfm.base, fm);
+    p_assert_eq!(lfm.base, fm);
     assert!(!lfm.need_sync);
-    assert_eq!(lfm.updated, timestamp);
-    assert_eq!(lfm.children, HashMap::new());
-    assert_eq!(lfm.local_confinement_points, HashSet::new());
-    assert_eq!(lfm.remote_confinement_points, HashSet::new());
+    p_assert_eq!(lfm.updated, timestamp);
+    p_assert_eq!(lfm.children, HashMap::new());
+    p_assert_eq!(lfm.local_confinement_points, HashSet::new());
+    p_assert_eq!(lfm.remote_confinement_points, HashSet::new());
 }
 
 #[rstest]
@@ -1561,18 +1560,18 @@ fn local_workspace_manifest_new(timestamp: DateTime) {
     let speculative = false;
     let lwm = LocalWorkspaceManifest::new(author.clone(), timestamp, Some(id), speculative);
 
-    assert_eq!(lwm.base.id, id);
-    assert_eq!(lwm.base.author, author);
-    assert_eq!(lwm.base.timestamp, timestamp);
-    assert_eq!(lwm.base.version, 0);
-    assert_eq!(lwm.base.created, timestamp);
-    assert_eq!(lwm.base.updated, timestamp);
+    p_assert_eq!(lwm.base.id, id);
+    p_assert_eq!(lwm.base.author, author);
+    p_assert_eq!(lwm.base.timestamp, timestamp);
+    p_assert_eq!(lwm.base.version, 0);
+    p_assert_eq!(lwm.base.created, timestamp);
+    p_assert_eq!(lwm.base.updated, timestamp);
     assert!(lwm.need_sync);
-    assert_eq!(lwm.updated, timestamp);
-    assert_eq!(lwm.children.len(), 0);
-    assert_eq!(lwm.local_confinement_points.len(), 0);
-    assert_eq!(lwm.remote_confinement_points.len(), 0);
-    assert_eq!(lwm.speculative, speculative);
+    p_assert_eq!(lwm.updated, timestamp);
+    p_assert_eq!(lwm.children.len(), 0);
+    p_assert_eq!(lwm.local_confinement_points.len(), 0);
+    p_assert_eq!(lwm.remote_confinement_points.len(), 0);
+    p_assert_eq!(lwm.speculative, speculative);
 }
 
 #[rstest]
@@ -1623,12 +1622,12 @@ fn local_workspace_manifest_from_remote(
     let lwm =
         LocalWorkspaceManifest::from_remote(wm.clone(), &Regex::from_regex_str(regex).unwrap());
 
-    assert_eq!(lwm.base, wm);
+    p_assert_eq!(lwm.base, wm);
     assert!(!lwm.need_sync);
-    assert_eq!(lwm.updated, timestamp);
-    assert_eq!(lwm.children, expected_children);
-    assert_eq!(lwm.local_confinement_points.len(), 0);
-    assert_eq!(lwm.remote_confinement_points.len(), filtered);
+    p_assert_eq!(lwm.updated, timestamp);
+    p_assert_eq!(lwm.children, expected_children);
+    p_assert_eq!(lwm.local_confinement_points.len(), 0);
+    p_assert_eq!(lwm.remote_confinement_points.len(), filtered);
     assert!(!lwm.speculative);
 }
 
@@ -1724,12 +1723,12 @@ fn local_workspace_manifest_from_remote_with_local_context(
         timestamp,
     );
 
-    assert_eq!(lwm.base, wm);
-    assert_eq!(lwm.need_sync, need_sync);
-    assert_eq!(lwm.updated, timestamp);
-    assert_eq!(lwm.children, expected_children);
-    assert_eq!(lwm.local_confinement_points.len(), merged);
-    assert_eq!(lwm.remote_confinement_points.len(), filtered);
+    p_assert_eq!(lwm.base, wm);
+    p_assert_eq!(lwm.need_sync, need_sync);
+    p_assert_eq!(lwm.updated, timestamp);
+    p_assert_eq!(lwm.children, expected_children);
+    p_assert_eq!(lwm.local_confinement_points.len(), merged);
+    p_assert_eq!(lwm.remote_confinement_points.len(), filtered);
     assert!(!lwm.speculative);
 }
 
@@ -1749,13 +1748,13 @@ fn local_workspace_manifest_to_remote(timestamp: DateTime) {
     let author = DeviceID::default();
     let wm = lwm.to_remote(author.clone(), timestamp);
 
-    assert_eq!(wm.author, author);
-    assert_eq!(wm.timestamp, timestamp);
-    assert_eq!(wm.id, lwm.base.id);
-    assert_eq!(wm.version, lwm.base.version + 1);
-    assert_eq!(wm.created, lwm.base.created);
-    assert_eq!(wm.updated, lwm.updated);
-    assert_eq!(wm.children, lwm.children);
+    p_assert_eq!(wm.author, author);
+    p_assert_eq!(wm.timestamp, timestamp);
+    p_assert_eq!(wm.id, lwm.base.id);
+    p_assert_eq!(wm.version, lwm.base.version + 1);
+    p_assert_eq!(wm.created, lwm.base.created);
+    p_assert_eq!(wm.updated, lwm.updated);
+    p_assert_eq!(wm.children, lwm.children);
 }
 
 #[rstest]
@@ -1844,12 +1843,12 @@ fn local_workspace_manifest_evolve_children_and_mark_updated(
     }
     .evolve_children_and_mark_updated(data, &prevent_sync_pattern, timestamp);
 
-    assert_eq!(lwm.base, wm);
-    assert_eq!(lwm.need_sync, need_sync);
-    assert_eq!(lwm.updated, timestamp);
-    assert_eq!(lwm.children, expected_children);
-    assert_eq!(lwm.local_confinement_points.len(), merged);
-    assert_eq!(lwm.remote_confinement_points.len(), 0);
+    p_assert_eq!(lwm.base, wm);
+    p_assert_eq!(lwm.need_sync, need_sync);
+    p_assert_eq!(lwm.updated, timestamp);
+    p_assert_eq!(lwm.children, expected_children);
+    p_assert_eq!(lwm.local_confinement_points.len(), merged);
+    p_assert_eq!(lwm.remote_confinement_points.len(), 0);
 }
 
 // TODO
@@ -1878,12 +1877,12 @@ fn local_workspace_manifest_apply_prevent_sync_pattern(timestamp: DateTime) {
     }
     .apply_prevent_sync_pattern(&prevent_sync_pattern, timestamp);
 
-    assert_eq!(lwm.base, wm);
+    p_assert_eq!(lwm.base, wm);
     assert!(!lwm.need_sync);
-    assert_eq!(lwm.updated, timestamp);
-    assert_eq!(lwm.children, HashMap::new());
-    assert_eq!(lwm.local_confinement_points, HashSet::new());
-    assert_eq!(lwm.remote_confinement_points, HashSet::new());
+    p_assert_eq!(lwm.updated, timestamp);
+    p_assert_eq!(lwm.children, HashMap::new());
+    p_assert_eq!(lwm.local_confinement_points, HashSet::new());
+    p_assert_eq!(lwm.remote_confinement_points, HashSet::new());
 }
 
 #[rstest]
@@ -1893,16 +1892,16 @@ fn local_user_manifest_new(timestamp: DateTime) {
     let speculative = false;
     let lum = LocalUserManifest::new(author.clone(), timestamp, Some(id), speculative);
 
-    assert_eq!(lum.base.id, id);
-    assert_eq!(lum.base.author, author);
-    assert_eq!(lum.base.timestamp, timestamp);
-    assert_eq!(lum.base.version, 0);
-    assert_eq!(lum.base.created, timestamp);
-    assert_eq!(lum.base.updated, timestamp);
+    p_assert_eq!(lum.base.id, id);
+    p_assert_eq!(lum.base.author, author);
+    p_assert_eq!(lum.base.timestamp, timestamp);
+    p_assert_eq!(lum.base.version, 0);
+    p_assert_eq!(lum.base.created, timestamp);
+    p_assert_eq!(lum.base.updated, timestamp);
     assert!(lum.need_sync);
-    assert_eq!(lum.updated, timestamp);
-    assert_eq!(lum.workspaces.len(), 0);
-    assert_eq!(lum.speculative, speculative);
+    p_assert_eq!(lum.updated, timestamp);
+    p_assert_eq!(lum.workspaces.len(), 0);
+    p_assert_eq!(lum.speculative, speculative);
 }
 
 #[rstest]
@@ -1924,10 +1923,10 @@ fn local_user_manifest_from_remote(timestamp: DateTime, #[case] input: (u64, Vec
 
     let lum = LocalUserManifest::from_remote(um.clone());
 
-    assert_eq!(lum.base, um);
+    p_assert_eq!(lum.base, um);
     assert!(!lum.need_sync);
-    assert_eq!(lum.updated, timestamp);
-    assert_eq!(lum.workspaces, um.workspaces);
+    p_assert_eq!(lum.updated, timestamp);
+    p_assert_eq!(lum.workspaces, um.workspaces);
 }
 
 #[rstest]
@@ -1947,13 +1946,13 @@ fn local_user_manifest_to_remote(timestamp: DateTime) {
     let author = DeviceID::default();
     let um = lum.to_remote(author.clone(), timestamp);
 
-    assert_eq!(um.author, author);
-    assert_eq!(um.timestamp, timestamp);
-    assert_eq!(um.id, lum.base.id);
-    assert_eq!(um.version, lum.base.version + 1);
-    assert_eq!(um.created, lum.base.created);
-    assert_eq!(um.updated, lum.updated);
-    assert_eq!(um.workspaces, lum.workspaces);
+    p_assert_eq!(um.author, author);
+    p_assert_eq!(um.timestamp, timestamp);
+    p_assert_eq!(um.id, lum.base.id);
+    p_assert_eq!(um.version, lum.base.version + 1);
+    p_assert_eq!(um.created, lum.base.created);
+    p_assert_eq!(um.updated, lum.updated);
+    p_assert_eq!(um.workspaces, lum.workspaces);
 }
 
 #[rstest]

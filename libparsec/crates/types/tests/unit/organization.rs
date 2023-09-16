@@ -2,7 +2,7 @@
 
 use std::cmp::Ordering;
 
-use rstest::rstest;
+use libparsec_tests_lite::prelude::*;
 
 use super::ActiveUsersLimit;
 
@@ -38,5 +38,5 @@ fn active_users_limit_ord(
     #[case] rhs: ActiveUsersLimit,
     #[case] expected: Ordering,
 ) {
-    assert_eq!(lhs.cmp(&rhs), expected)
+    p_assert_eq!(lhs.cmp(&rhs), expected)
 }

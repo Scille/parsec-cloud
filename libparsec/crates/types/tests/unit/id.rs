@@ -1,7 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use super::*;
-use rstest::rstest;
+
+use libparsec_tests_lite::prelude::*;
 
 #[test]
 fn from_str() {
@@ -31,8 +32,8 @@ fn from_str() {
 #[case::empty_label("foo@example.com", "", false)]
 #[case::too_long_label("foo@example.com", &"x".repeat(256), false)]
 fn human_handle(#[case] email: &str, #[case] label: &str, #[case] is_ok: bool) {
-    assert_eq!(HumanHandle::new(email, label).is_ok(), is_ok);
-    assert_eq!(
+    p_assert_eq!(HumanHandle::new(email, label).is_ok(), is_ok);
+    p_assert_eq!(
         HumanHandle::from_str(&format!("{label} <{email}>")).is_ok(),
         is_ok
     );

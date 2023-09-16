@@ -6,8 +6,7 @@
 
 use std::str::FromStr;
 
-use pretty_assertions::assert_eq;
-use rstest::rstest;
+use libparsec_tests_lite::prelude::*;
 use rstest_reuse::{self, apply, template};
 use serde_test::{assert_tokens, Token};
 
@@ -49,10 +48,10 @@ macro_rules! impl_testbed_common {
             let expected_addr: $addr_type = expected_url.parse().unwrap();
 
             // Compare the strings
-            assert_eq!(addr.to_url().as_str(), expected_url);
+            p_assert_eq!(addr.to_url().as_str(), expected_url);
 
             // Also compare the objects
-            assert_eq!(addr, expected_addr);
+            p_assert_eq!(addr, expected_addr);
 
             // Test serde
             // `Token::Str` requires `&'static str` but we have a regular `&str` here...
@@ -62,17 +61,17 @@ macro_rules! impl_testbed_common {
         }
         fn assert_addr_err(&self, url: &str, err_msg: AddrError) {
             let ret = url.parse::<$addr_type>();
-            assert_eq!(ret, Err(err_msg));
+            p_assert_eq!(ret, Err(err_msg));
         }
         fn assert_redirection_addr_ok(&self, redirection_url: &str, expected_url: &str) {
             // From redirection scheme
             let expected_addr: $addr_type = expected_url.parse().unwrap();
             let addr = <$addr_type>::from_http_redirection(redirection_url).unwrap();
-            assert_eq!(addr, expected_addr);
+            p_assert_eq!(addr, expected_addr);
 
             // From any
             let addr2 = <$addr_type>::from_any(redirection_url).unwrap();
-            assert_eq!(addr2, expected_addr);
+            p_assert_eq!(addr2, expected_addr);
         }
         fn to_redirection_url(&self, url: &str) -> String {
             let addr: $addr_type = url.parse().unwrap();
@@ -215,7 +214,7 @@ fn good_addr(testbed: &dyn Testbed) {
 fn backend_addr_to_http_domain_url(value: &str, path: Option<&str>, expected: &str) {
     let addr: BackendAddr = value.parse().unwrap();
     let result = addr.to_http_url_with_path(path);
-    assert_eq!(result.as_str(), expected);
+    p_assert_eq!(result.as_str(), expected);
 }
 
 #[apply(all_addr)]
@@ -280,7 +279,7 @@ fn addr_with_unicode_organization_id(testbed: &dyn Testbed) {
     let org_name_percent_quoted = "%E5%BA%B7%E7%86%99%E5%B8%9D";
     let url = testbed.url().replace(ORG, org_name_percent_quoted);
     testbed.assert_addr_ok(&url);
-    assert_eq!(testbed.get_organization_id(&url), org_name);
+    p_assert_eq!(testbed.get_organization_id(&url), org_name);
 }
 
 #[apply(addr_with_org)]
@@ -335,7 +334,7 @@ fn bootstrap_addr_unicode_token() {
     testbed.assert_addr_ok(&url);
 
     let addr: BackendOrganizationBootstrapAddr = url.parse().unwrap();
-    assert_eq!(addr.token(), Some(token));
+    p_assert_eq!(addr.token(), Some(token));
 }
 
 // Unlike for `BackendInvitationAddr`, here token is not required to be an UUID
@@ -360,12 +359,12 @@ fn bootstrap_addr_no_token() {
     // Token param present in the url but with an empty value
     testbed.assert_addr_ok_with_expected(&url_with, &url_without);
     let addr: BackendOrganizationBootstrapAddr = url_with.parse().unwrap();
-    assert_eq!(addr.token(), None);
+    p_assert_eq!(addr.token(), None);
 
     // Token param not present in the url
     testbed.assert_addr_ok(&url_without);
     let addr: BackendOrganizationBootstrapAddr = url_without.parse().unwrap();
-    assert_eq!(addr.token(), None);
+    p_assert_eq!(addr.token(), None);
 }
 
 #[rstest]
@@ -463,7 +462,7 @@ fn file_link_addr_get_encrypted_path() {
         .replace(ENCRYPTED_PATH, serialized_encrypted_path);
 
     let addr: BackendOrganizationFileLinkAddr = url.parse().unwrap();
-    assert_eq!(addr.encrypted_path(), encrypted_path);
+    p_assert_eq!(addr.encrypted_path(), encrypted_path);
 }
 
 #[rstest]
@@ -530,11 +529,11 @@ fn invitation_addr_types() {
 
     let url = testbed.url().replace(INVITATION_TYPE, "claim_user");
     let addr: BackendInvitationAddr = url.parse().unwrap();
-    assert_eq!(addr.invitation_type(), InvitationType::User);
+    p_assert_eq!(addr.invitation_type(), InvitationType::User);
 
     let url = testbed.url().replace(INVITATION_TYPE, "claim_device");
     let addr: BackendInvitationAddr = url.parse().unwrap();
-    assert_eq!(addr.invitation_type(), InvitationType::Device);
+    p_assert_eq!(addr.invitation_type(), InvitationType::Device);
 }
 
 #[rstest]
@@ -555,10 +554,10 @@ fn invitation_addr_to_redirection(#[values("http", "https")] redirection_scheme:
         .url()
         .replacen("parsec", redirection_scheme, 1)
         .replace(ORG, &format!("redirect/{}", ORG));
-    assert_eq!(redirection_url, expected_redirection_url);
+    p_assert_eq!(redirection_url, expected_redirection_url);
 
     let addr2 = BackendInvitationAddr::from_http_redirection(&redirection_url).unwrap();
-    assert_eq!(addr2, addr);
+    p_assert_eq!(addr2, addr);
 }
 
 #[apply(all_addr)]
@@ -579,7 +578,7 @@ fn addr_to_redirection(testbed: &dyn Testbed, #[values("http", "https")] redirec
         .url()
         .replacen("parsec", redirection_scheme, 1)
         .replace(DOMAIN, &format!("{}/redirect", DOMAIN));
-    assert_eq!(redirection_url, expected_redirection_url);
+    p_assert_eq!(redirection_url, expected_redirection_url);
 
     testbed.assert_redirection_addr_ok(&redirection_url, &url);
 }
@@ -588,34 +587,34 @@ macro_rules! test_redirection {
     ($addr_type:ty, $parsec_url:literal, $stable_parsec_url:literal, $redirection_url:literal, $stable_redirection_url:literal $(,)?) => {
         // From parsec scheme
         let addr: $addr_type = $parsec_url.parse().unwrap();
-        assert_eq!(addr.clone().to_url().as_str(), $stable_parsec_url);
-        assert_eq!(
+        p_assert_eq!(addr.clone().to_url().as_str(), $stable_parsec_url);
+        p_assert_eq!(
             addr.clone().to_http_redirection_url().as_str(),
             $stable_redirection_url
         );
 
         // From redirection scheme
         let addr2 = <$addr_type>::from_http_redirection($redirection_url).unwrap();
-        assert_eq!(&addr2, &addr);
-        assert_eq!(addr2.clone().to_url().as_str(), $stable_parsec_url);
-        assert_eq!(
+        p_assert_eq!(&addr2, &addr);
+        p_assert_eq!(addr2.clone().to_url().as_str(), $stable_parsec_url);
+        p_assert_eq!(
             addr2.clone().to_http_redirection_url().as_str(),
             $stable_redirection_url
         );
 
         // From any
         let addr3 = <$addr_type>::from_any($parsec_url).unwrap();
-        assert_eq!(&addr3, &addr);
-        assert_eq!(addr3.clone().to_url().as_str(), $stable_parsec_url);
-        assert_eq!(
+        p_assert_eq!(&addr3, &addr);
+        p_assert_eq!(addr3.clone().to_url().as_str(), $stable_parsec_url);
+        p_assert_eq!(
             addr3.clone().to_http_redirection_url().as_str(),
             $stable_redirection_url
         );
 
         let addr4 = <$addr_type>::from_any($redirection_url).unwrap();
-        assert_eq!(&addr4, &addr);
-        assert_eq!(addr4.clone().to_url().as_str(), $stable_parsec_url);
-        assert_eq!(
+        p_assert_eq!(&addr4, &addr);
+        p_assert_eq!(addr4.clone().to_url().as_str(), $stable_parsec_url);
+        p_assert_eq!(
             addr4.clone().to_http_redirection_url().as_str(),
             $stable_redirection_url
         );
@@ -694,9 +693,9 @@ fn faulty_addr_redirection(#[case] raw_url: &str) {
 #[case("parsec://foo:42?no_ssl=false&dummy=foo", 42, true)]
 fn backend_addr_good(#[case] url: &str, #[case] port: u16, #[case] use_ssl: bool) {
     let addr = BackendAddr::from_str(url).unwrap();
-    assert_eq!(addr.hostname(), "foo");
-    assert_eq!(addr.port(), port);
-    assert_eq!(addr.use_ssl(), use_ssl);
+    p_assert_eq!(addr.hostname(), "foo");
+    p_assert_eq!(addr.port(), port);
+    p_assert_eq!(addr.use_ssl(), use_ssl);
 }
 
 #[rstest]
@@ -729,7 +728,7 @@ fn backend_addr_good(#[case] url: &str, #[case] port: u16, #[case] use_ssl: bool
     }
 )]
 fn backend_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
-    assert_eq!(BackendAddr::from_str(url).unwrap_err(), msg);
+    p_assert_eq!(BackendAddr::from_str(url).unwrap_err(), msg);
 }
 
 #[rstest]
@@ -751,14 +750,14 @@ fn backend_organization_addr_good(
     let backend_addr = BackendAddr::from_str(base_url).unwrap();
     let addr = BackendOrganizationAddr::new(backend_addr, org.clone(), verify_key.clone());
 
-    assert_eq!(addr.hostname(), "foo");
-    assert_eq!(addr.port(), port);
-    assert_eq!(addr.use_ssl(), use_ssl);
-    assert_eq!(addr.organization_id(), &org);
-    assert_eq!(addr.root_verify_key(), &verify_key);
+    p_assert_eq!(addr.hostname(), "foo");
+    p_assert_eq!(addr.port(), port);
+    p_assert_eq!(addr.use_ssl(), use_ssl);
+    p_assert_eq!(addr.organization_id(), &org);
+    p_assert_eq!(addr.root_verify_key(), &verify_key);
 
     let addr2 = BackendOrganizationAddr::from_str(addr.to_url().as_str()).unwrap();
-    assert_eq!(addr, addr2);
+    p_assert_eq!(addr, addr2);
 }
 
 #[rstest]
@@ -784,7 +783,7 @@ fn backend_organization_addr_good(
     AddrError::InvalidOrganizationID
 )]
 fn backend_organization_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
-    assert_eq!(BackendOrganizationAddr::from_str(url).unwrap_err(), msg);
+    p_assert_eq!(BackendOrganizationAddr::from_str(url).unwrap_err(), msg);
 }
 
 #[rstest]
@@ -807,21 +806,21 @@ fn backend_organization_bootstrap_addr_good(
     let addr =
         BackendOrganizationBootstrapAddr::new(backend_addr, org.clone(), Some("token-123".into()));
 
-    assert_eq!(addr.hostname(), "foo");
-    assert_eq!(addr.port(), port);
-    assert_eq!(addr.use_ssl(), use_ssl);
-    assert_eq!(addr.organization_id(), &org);
-    assert_eq!(addr.token().unwrap(), "token-123");
+    p_assert_eq!(addr.hostname(), "foo");
+    p_assert_eq!(addr.port(), port);
+    p_assert_eq!(addr.use_ssl(), use_ssl);
+    p_assert_eq!(addr.organization_id(), &org);
+    p_assert_eq!(addr.token().unwrap(), "token-123");
 
     let addr2 = BackendOrganizationBootstrapAddr::from_str(addr.to_url().as_str()).unwrap();
-    assert_eq!(addr, addr2);
+    p_assert_eq!(addr, addr2);
 
     let org_addr = addr.generate_organization_addr(verify_key.clone());
-    assert_eq!(org_addr.root_verify_key(), &verify_key);
-    assert_eq!(org_addr.hostname(), addr.hostname());
-    assert_eq!(org_addr.port(), addr.port());
-    assert_eq!(org_addr.use_ssl(), addr.use_ssl());
-    assert_eq!(org_addr.organization_id(), addr.organization_id());
+    p_assert_eq!(org_addr.root_verify_key(), &verify_key);
+    p_assert_eq!(org_addr.hostname(), addr.hostname());
+    p_assert_eq!(org_addr.port(), addr.port());
+    p_assert_eq!(org_addr.use_ssl(), addr.use_ssl());
+    p_assert_eq!(org_addr.organization_id(), addr.organization_id());
 }
 
 #[rstest]
@@ -857,7 +856,7 @@ fn backend_organization_bootstrap_addr_good(
     AddrError::InvalidOrganizationID
 )]
 fn backend_organization_bootstrap_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
-    assert_eq!(
+    p_assert_eq!(
         BackendOrganizationBootstrapAddr::from_str(url).unwrap_err(),
         msg
     );

@@ -6,9 +6,7 @@
 
 use std::{collections::HashMap, num::NonZeroU64, str::FromStr};
 
-use hex_literal::hex;
-use rstest::rstest;
-
+use libparsec_tests_lite::prelude::*;
 use libparsec_types::fixtures::{alice, Device};
 use libparsec_types::prelude::*;
 
@@ -109,7 +107,7 @@ fn serde_file_manifest(alice: &Device) {
     )
     .unwrap();
 
-    assert_eq!(manifest, expected);
+    p_assert_eq!(manifest, expected);
 
     // Also test serialization round trip
     let data2 = manifest.dump_sign_and_encrypt(&alice.signing_key, &key);
@@ -124,7 +122,7 @@ fn serde_file_manifest(alice: &Device) {
         None,
     )
     .unwrap();
-    assert_eq!(manifest2, expected);
+    p_assert_eq!(manifest2, expected);
 }
 
 #[rstest]
@@ -233,7 +231,7 @@ fn serde_folder_manifest(alice: &Device) {
     )
     .unwrap();
 
-    assert_eq!(manifest, expected);
+    p_assert_eq!(manifest, expected);
 
     // Also test serialization round trip
     let data2 = manifest.dump_sign_and_encrypt(&alice.signing_key, &key);
@@ -248,7 +246,7 @@ fn serde_folder_manifest(alice: &Device) {
         None,
     )
     .unwrap();
-    assert_eq!(manifest2, expected);
+    p_assert_eq!(manifest2, expected);
 }
 
 #[rstest]
@@ -311,7 +309,7 @@ fn serde_workspace_manifest(alice: &Device) {
     )
     .unwrap();
 
-    assert_eq!(manifest, expected);
+    p_assert_eq!(manifest, expected);
 
     // Also test serialization round trip
     let data2 = manifest.dump_sign_and_encrypt(&alice.signing_key, &key);
@@ -326,7 +324,7 @@ fn serde_workspace_manifest(alice: &Device) {
         None,
     )
     .unwrap();
-    assert_eq!(manifest2, expected);
+    p_assert_eq!(manifest2, expected);
 }
 
 #[rstest]
@@ -425,7 +423,7 @@ fn serde_user_manifest(alice: &Device) {
     )
     .unwrap();
 
-    assert_eq!(manifest, expected);
+    p_assert_eq!(manifest, expected);
 
     // Also test serialization round trip
     let data2 = manifest.dump_sign_and_encrypt(&alice.signing_key, &key);
@@ -440,7 +438,7 @@ fn serde_user_manifest(alice: &Device) {
         None,
     )
     .unwrap();
-    assert_eq!(manifest2, expected);
+    p_assert_eq!(manifest2, expected);
 }
 
 #[rstest]
@@ -501,7 +499,7 @@ fn file_manifest_verify(
         blocks: vec![],
     };
 
-    assert_eq!(
+    p_assert_eq!(
         manifest
             .verify(
                 &expected_author,
