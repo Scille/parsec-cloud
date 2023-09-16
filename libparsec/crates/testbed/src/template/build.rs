@@ -312,7 +312,7 @@ impl<'a> TestbedEventNewUserBuilder<'a> {
     impl_customize_field_meth!(human_handle, Option<HumanHandle>);
     impl_customize_field_meth!(first_device_label, Option<DeviceLabel>);
     impl_customize_field_meth!(initial_profile, UserProfile);
-    impl_customize_field_meth!(user_manifest_id, VlobID);
+    impl_customize_field_meth!(user_realm_id, VlobID);
     impl_customize_field_meth!(local_password, &'static str);
 }
 
@@ -370,10 +370,10 @@ impl TestbedTemplateBuilder {
         let (realm_id, realm_key) =
             match super::utils::assert_user_exists_and_not_revoked(&self.events, &user) {
                 TestbedEvent::BootstrapOrganization(x) => (
-                    x.first_user_user_manifest_id,
-                    x.first_user_user_manifest_key.clone(),
+                    x.first_user_user_realm_id,
+                    x.first_user_user_realm_key.clone(),
                 ),
-                TestbedEvent::NewUser(x) => (x.user_manifest_id, x.user_manifest_key.clone()),
+                TestbedEvent::NewUser(x) => (x.user_realm_id, x.user_realm_key.clone()),
                 _ => unreachable!(),
             };
         let mut event = TestbedEventNewRealm::from_builder(self, user);

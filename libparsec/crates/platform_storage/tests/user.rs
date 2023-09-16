@@ -96,7 +96,7 @@ async fn operations(timestamp: DateTime, env: &TestbedEnv) {
         base: UserManifest {
             author: alice.device_id.clone(),
             timestamp: initial_user_manifest.updated,
-            id: alice.user_manifest_id,
+            id: alice.user_realm_id,
             version: 0,
             created: initial_user_manifest.updated,
             updated: initial_user_manifest.updated,
@@ -115,7 +115,7 @@ async fn operations(timestamp: DateTime, env: &TestbedEnv) {
         base: UserManifest {
             author: alice.device_id.clone(),
             timestamp,
-            id: alice.user_manifest_id,
+            id: alice.user_realm_id,
             version: 1,
             created: timestamp,
             updated: timestamp,
@@ -171,7 +171,7 @@ async fn non_speculative_init(env: &TestbedEnv) {
         base: UserManifest {
             author: alice.device_id.clone(),
             timestamp: user_manifest.updated,
-            id: alice.user_manifest_id,
+            id: alice.user_realm_id,
             version: 0,
             created: user_manifest.updated,
             updated: user_manifest.updated,

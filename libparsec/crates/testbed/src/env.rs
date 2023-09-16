@@ -61,7 +61,7 @@ impl TestbedEnvCache {
 
         // Not found, must generate it
 
-        let (human_handle, private_key, profile, user_manifest_id, user_manifest_key) = env
+        let (human_handle, private_key, profile, user_realm_id, user_realm_key) = env
             .template
             .events
             .iter()
@@ -70,30 +70,30 @@ impl TestbedEnvCache {
                     first_user_device_id: candidate,
                     first_user_human_handle: human_handle,
                     first_user_private_key: private_key,
-                    first_user_user_manifest_id: user_manifest_id,
-                    first_user_user_manifest_key: user_manifest_key,
+                    first_user_user_realm_id: user_realm_id,
+                    first_user_user_realm_key: user_realm_key,
                     ..
                 }) if candidate.user_id() == device_id.user_id() => Some((
                     human_handle,
                     private_key,
                     UserProfile::Admin,
-                    user_manifest_id,
-                    user_manifest_key,
+                    user_realm_id,
+                    user_realm_key,
                 )),
                 TestbedEvent::NewUser(TestbedEventNewUser {
                     device_id: candidate,
                     human_handle,
                     private_key,
                     initial_profile,
-                    user_manifest_id,
-                    user_manifest_key,
+                    user_realm_id,
+                    user_realm_key,
                     ..
                 }) if candidate.user_id() == device_id.user_id() => Some((
                     human_handle,
                     private_key,
                     *initial_profile,
-                    user_manifest_id,
-                    user_manifest_key,
+                    user_realm_id,
+                    user_realm_key,
                 )),
                 _ => None,
             })
@@ -137,8 +137,8 @@ impl TestbedEnvCache {
             signing_key: signing_key.to_owned(),
             private_key: private_key.to_owned(),
             initial_profile: profile,
-            user_manifest_id: user_manifest_id.to_owned(),
-            user_manifest_key: user_manifest_key.to_owned(),
+            user_realm_id: user_realm_id.to_owned(),
+            user_realm_key: user_realm_key.to_owned(),
             local_symkey: local_symkey.to_owned(),
             time_provider: TimeProvider::default(),
         });

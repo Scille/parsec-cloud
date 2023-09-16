@@ -25,8 +25,8 @@ pub struct Device {
     pub signing_key: SigningKey,
     pub private_key: PrivateKey,
     pub profile: UserProfile,
-    pub user_manifest_id: VlobID,
-    pub user_manifest_key: SecretKey,
+    pub user_realm_id: VlobID,
+    pub user_realm_key: SecretKey,
     pub local_symkey: SecretKey,
     pub time_provider: TimeProvider,
 }
@@ -61,8 +61,8 @@ impl Device {
             signing_key: self.signing_key.to_owned(),
             private_key: self.private_key.to_owned(),
             initial_profile: self.profile.to_owned(),
-            user_manifest_id: self.user_manifest_id.to_owned(),
-            user_manifest_key: self.user_manifest_key.to_owned(),
+            user_realm_id: self.user_realm_id.to_owned(),
+            user_realm_key: self.user_realm_key.to_owned(),
             local_symkey: self.local_symkey.to_owned(),
             time_provider: self.time_provider.clone(),
         }
@@ -109,8 +109,8 @@ pub fn alice(coolorg: &Organization) -> Device {
             "74e860967fd90d063ebd64fb1ba6824c4c010099dd37508b7f2875a5db2ef8c9"
         )),
         profile: UserProfile::Admin,
-        user_manifest_id: VlobID::from_hex("a4031e8bcdd84df8ae12bd3d05e6e20f").unwrap(),
-        user_manifest_key: SecretKey::from(hex!(
+        user_realm_id: VlobID::from_hex("a4031e8bcdd84df8ae12bd3d05e6e20f").unwrap(),
+        user_realm_key: SecretKey::from(hex!(
             "26bf35a98c1e54e90215e154af92a1af2d1142cdd0dba25b990426b0b30b0f9a"
         )),
         local_symkey: SecretKey::from(hex!(
@@ -135,8 +135,8 @@ pub fn bob(coolorg: &Organization) -> Device {
             "16767ec446f2611f971c36f19c2dc11614d853475ac395d6c1d70ba46d07dd49"
         )),
         profile: UserProfile::Standard,
-        user_manifest_id: VlobID::from_hex("71568d41afcb4e2380b3d164ace4fb85").unwrap(),
-        user_manifest_key: SecretKey::from(hex!(
+        user_realm_id: VlobID::from_hex("71568d41afcb4e2380b3d164ace4fb85").unwrap(),
+        user_realm_key: SecretKey::from(hex!(
             "65de53d2c6cd965aa53a1ba5cc7e54b331419e6103466121996fa99a97197a48"
         )),
         local_symkey: SecretKey::from(hex!(
@@ -159,8 +159,8 @@ pub fn mallory(coolorg: &Organization) -> Device {
         signing_key: SigningKey::generate(),
         private_key: PrivateKey::generate(),
         profile: UserProfile::Standard,
-        user_manifest_id: VlobID::default(),
-        user_manifest_key: SecretKey::generate(),
+        user_realm_id: VlobID::default(),
+        user_realm_key: SecretKey::generate(),
         local_symkey: SecretKey::generate(),
         time_provider: TimeProvider::default(),
     }

@@ -178,7 +178,7 @@ impl UserStorage {
             let manifest = Arc::new(LocalUserManifest::new(
                 device.device_id.clone(),
                 timestamp,
-                Some(device.user_manifest_id),
+                Some(device.user_realm_id),
                 true,
             ));
 
@@ -211,7 +211,7 @@ pub async fn user_storage_non_speculative_init(
     let manifest = Arc::new(LocalUserManifest::new(
         device.device_id.clone(),
         timestamp,
-        Some(device.user_manifest_id),
+        Some(device.user_realm_id),
         false,
     ));
 
@@ -227,14 +227,14 @@ async fn db_get_user_manifest(
     db: &LocalDatabase,
     device: &LocalDevice,
 ) -> DatabaseResult<Arc<LocalUserManifest>> {
-    let user_manifest_id = *device.user_manifest_id;
+    let user_realm_id = *device.user_realm_id;
 
     let ciphered = db
         .exec(move |conn| {
             use super::model::vlobs;
             vlobs::table
                 .select(vlobs::blob)
-                .filter(vlobs::vlob_id.eq(user_manifest_id.as_ref()))
+                .filter(vlobs::vlob_id.eq(user_realm_id.as_ref()))
                 .first::<Vec<u8>>(conn)
         })
         .await?;
@@ -315,7 +315,7 @@ async fn db_update_realm_checkpoint(
 ) -> DatabaseResult<()> {
     use super::model::{realm_checkpoint, vlobs, NewRealmCheckpoint};
 
-    let user_manifest_id = *device.user_manifest_id;
+    let user_realm_id = *device.user_realm_id;
     let new_realm_checkpoint = NewRealmCheckpoint {
         _id: 0,
         checkpoint: new_checkpoint,
@@ -324,7 +324,7 @@ async fn db_update_realm_checkpoint(
     db.exec(move |conn| {
         conn.immediate_transaction(|conn| {
             if let Some(remote_version) = user_vlob_remote_version {
-                diesel::update(vlobs::table.filter(vlobs::vlob_id.eq(user_manifest_id.as_ref())))
+                diesel::update(vlobs::table.filter(vlobs::vlob_id.eq(user_realm_id.as_ref())))
                     .set(vlobs::remote_version.eq(remote_version as i64))
                     .execute(conn)?;
             }

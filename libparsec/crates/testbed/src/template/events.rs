@@ -328,8 +328,8 @@ pub struct TestbedEventBootstrapOrganization {
     pub first_user_first_device_certificate_index: IndexInt,
     pub first_user_first_device_label: Option<DeviceLabel>,
     pub first_user_first_device_signing_key: SigningKey,
-    pub first_user_user_manifest_id: VlobID,
-    pub first_user_user_manifest_key: SecretKey,
+    pub first_user_user_realm_id: VlobID,
+    pub first_user_user_realm_key: SecretKey,
     pub first_user_local_symkey: SecretKey,
     pub first_user_local_password: &'static str,
     cache: Arc<
@@ -375,8 +375,8 @@ impl CrcHash for TestbedEventBootstrapOrganization {
         self.first_user_first_device_certificate_index
             .crc_hash(state);
         self.first_user_first_device_signing_key.crc_hash(state);
-        self.first_user_user_manifest_id.crc_hash(state);
-        self.first_user_user_manifest_key.crc_hash(state);
+        self.first_user_user_realm_id.crc_hash(state);
+        self.first_user_user_realm_key.crc_hash(state);
         self.first_user_local_symkey.crc_hash(state);
         self.first_user_local_password.crc_hash(state);
     }
@@ -427,8 +427,8 @@ impl TestbedEventBootstrapOrganization {
             first_user_first_device_certificate_index,
             first_user_first_device_label: Some(device_label),
             first_user_first_device_signing_key: builder.counters.next_signing_key(),
-            first_user_user_manifest_id: builder.counters.next_entry_id(),
-            first_user_user_manifest_key: builder.counters.next_secret_key(),
+            first_user_user_realm_id: builder.counters.next_entry_id(),
+            first_user_user_realm_key: builder.counters.next_secret_key(),
             first_user_local_symkey: builder.counters.next_secret_key(),
             first_user_local_password: "P@ssw0rd.",
             cache: Arc::default(),
@@ -625,8 +625,8 @@ pub struct TestbedEventNewUser {
     pub first_device_label: Option<DeviceLabel>,
     pub first_device_signing_key: SigningKey,
     pub initial_profile: UserProfile,
-    pub user_manifest_id: VlobID,
-    pub user_manifest_key: SecretKey,
+    pub user_realm_id: VlobID,
+    pub user_realm_key: SecretKey,
     pub local_symkey: SecretKey,
     pub local_password: &'static str,
     cache: Arc<Mutex<(TestbedEventCertificatesCache, TestbedEventCertificatesCache)>>,
@@ -660,8 +660,8 @@ impl CrcHash for TestbedEventNewUser {
         }
         self.first_device_signing_key.crc_hash(state);
         self.initial_profile.crc_hash(state);
-        self.user_manifest_id.crc_hash(state);
-        self.user_manifest_key.crc_hash(state);
+        self.user_realm_id.crc_hash(state);
+        self.user_realm_key.crc_hash(state);
         self.local_symkey.crc_hash(state);
         self.local_password.crc_hash(state);
     }
@@ -714,8 +714,8 @@ impl TestbedEventNewUser {
             first_device_certificate_index,
             first_device_label: Some(device_label),
             first_device_signing_key: builder.counters.next_signing_key(),
-            user_manifest_id: builder.counters.next_entry_id(),
-            user_manifest_key: builder.counters.next_secret_key(),
+            user_realm_id: builder.counters.next_entry_id(),
+            user_realm_key: builder.counters.next_secret_key(),
             local_symkey: builder.counters.next_secret_key(),
             local_password: "P@ssw0rd.",
             cache: Arc::default(),
@@ -1372,13 +1372,10 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
                 TestbedEvent::BootstrapOrganization(x)
                     if x.first_user_device_id.user_id() == &user =>
                 {
-                    Some((
-                        x.first_user_device_id.clone(),
-                        x.first_user_user_manifest_id,
-                    ))
+                    Some((x.first_user_device_id.clone(), x.first_user_user_realm_id))
                 }
                 TestbedEvent::NewUser(x) if x.device_id.user_id() == &user => {
-                    Some((x.device_id.clone(), x.user_manifest_id))
+                    Some((x.device_id.clone(), x.user_realm_id))
                 }
                 _ => None,
             })
@@ -1963,27 +1960,27 @@ impl TestbedEventUserStorageFetchUserVlob {
         // anything in the server
         utils::assert_device_exists(&builder.events, &device);
 
-        let user_manifest_id = builder
+        let user_realm_id = builder
             .events
             .iter()
             .find_map(|e| match e {
                 TestbedEvent::BootstrapOrganization(x)
                     if x.first_user_device_id.user_id() == device.user_id() =>
                 {
-                    Some(x.first_user_user_manifest_id)
+                    Some(x.first_user_user_realm_id)
                 }
                 TestbedEvent::NewUser(x) if x.device_id.user_id() == device.user_id() => {
-                    Some(x.user_manifest_id)
+                    Some(x.user_realm_id)
                 }
                 _ => None,
             })
             .expect("User existence already checked");
 
         let local_manifest = builder.events.iter().rev().find_map(|e| match e {
-            TestbedEvent::CreateOrUpdateUserManifestVlob(x) if x.manifest.id == user_manifest_id && x.manifest.author.user_id() == device.user_id() => {
+            TestbedEvent::CreateOrUpdateUserManifestVlob(x) if x.manifest.id == user_realm_id && x.manifest.author.user_id() == device.user_id() => {
                 Some(Arc::new(LocalUserManifest::from_remote((*x.manifest).clone())))
             }
-            TestbedEvent::CreateOrUpdateOpaqueVlob(x) if x.realm == user_manifest_id && x.vlob_id == user_manifest_id => {
+            TestbedEvent::CreateOrUpdateOpaqueVlob(x) if x.realm == user_realm_id && x.vlob_id == user_realm_id => {
                 panic!("Last user vlob create/update for user {} is opaque, cannot deduce what to put in the local user storage !", device.user_id());
             }
             _ => None,
@@ -2020,17 +2017,17 @@ impl TestbedEventUserStorageFetchRealmCheckpoint {
         // anything in the server
         utils::assert_device_exists(&builder.events, &device);
 
-        let user_manifest_id = builder
+        let user_realm_id = builder
             .events
             .iter()
             .find_map(|e| match e {
                 TestbedEvent::BootstrapOrganization(x)
                     if x.first_user_device_id.user_id() == device.user_id() =>
                 {
-                    Some(x.first_user_user_manifest_id)
+                    Some(x.first_user_user_realm_id)
                 }
                 TestbedEvent::NewUser(x) if x.device_id.user_id() == device.user_id() => {
-                    Some(x.user_manifest_id)
+                    Some(x.user_realm_id)
                 }
                 _ => None,
             })
@@ -2045,8 +2042,8 @@ impl TestbedEventUserStorageFetchRealmCheckpoint {
                 remote_user_manifest_version = Some(x.manifest.version);
                 acc + 1
             }
-            TestbedEvent::CreateOrUpdateOpaqueVlob(x) if x.realm == user_manifest_id => {
-                if x.vlob_id == user_manifest_id {
+            TestbedEvent::CreateOrUpdateOpaqueVlob(x) if x.realm == user_realm_id => {
+                if x.vlob_id == user_realm_id {
                     remote_user_manifest_version = Some(x.version);
                 }
                 acc + 1
@@ -2112,17 +2109,17 @@ impl TestbedEventUserStorageLocalUpdate {
             .unwrap_or_else(|| {
                 // No previous local user manifest, create one
 
-                let user_manifest_id = builder
+                let user_realm_id = builder
                     .events
                     .iter()
                     .find_map(|e| match e {
                         TestbedEvent::BootstrapOrganization(x)
                             if x.first_user_device_id.user_id() == device.user_id() =>
                         {
-                            Some(x.first_user_user_manifest_id)
+                            Some(x.first_user_user_realm_id)
                         }
                         TestbedEvent::NewUser(x) if x.device_id.user_id() == device.user_id() => {
-                            Some(x.user_manifest_id)
+                            Some(x.user_realm_id)
                         }
                         _ => None,
                     })
@@ -2131,7 +2128,7 @@ impl TestbedEventUserStorageLocalUpdate {
                 Arc::new(LocalUserManifest::new(
                     device.clone(),
                     timestamp,
-                    user_manifest_id.into(),
+                    user_realm_id.into(),
                     false,
                 ))
             });

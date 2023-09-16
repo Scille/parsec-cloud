@@ -39,7 +39,7 @@ pub(super) async fn workspace_create(
         .await?;
     updater.set_user_manifest(user_manifest).await?;
     // TODO: handle events
-    // ops.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=ops.user_manifest_id)
+    // ops.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=ops.user_realm_id)
     // ops.event_bus.send(CoreEvent.FS_WORKSPACE_CREATED, new_entry=workspace_entry)
 
     Ok(workspace_id)
@@ -74,7 +74,7 @@ pub(super) async fn workspace_rename(
             .await
             .map_err(WorkspaceRenameError::Internal)?;
         // TODO: handle events
-        // ops.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=ops.user_manifest_id)
+        // ops.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=ops.user_realm_id)
     } else {
         return Err(WorkspaceRenameError::UnknownWorkspace(realm_id.to_owned()));
     }

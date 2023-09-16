@@ -88,8 +88,8 @@ def correct_addr(
             signing_key=to_correct.signing_key,
             private_key=to_correct.private_key,
             profile=to_correct.profile,
-            user_manifest_id=to_correct.user_manifest_id,
-            user_manifest_key=to_correct.user_manifest_key,
+            user_realm_id=to_correct.user_realm_id,
+            user_realm_key=to_correct.user_realm_key,
             local_symkey=to_correct.local_symkey,
         )
     elif isinstance(to_correct, OrganizationFullData):

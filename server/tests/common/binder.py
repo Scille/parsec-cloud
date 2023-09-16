@@ -50,8 +50,8 @@ class LocalDevice:
     signing_key: SigningKey
     private_key: PrivateKey
     profile: UserProfile
-    user_manifest_id: VlobID
-    user_manifest_key: SecretKey
+    user_realm_id: VlobID
+    user_realm_key: SecretKey
     local_symkey: SecretKey
 
     @property
@@ -96,8 +96,8 @@ class LocalDevice:
             signing_key=signing_key or SigningKey.generate(),
             private_key=private_key or PrivateKey.generate(),
             profile=profile,
-            user_manifest_id=VlobID.new(),
-            user_manifest_key=SecretKey.generate(),
+            user_realm_id=VlobID.new(),
+            user_realm_key=SecretKey.generate(),
             local_symkey=SecretKey.generate(),
         )
 
@@ -135,7 +135,7 @@ class InitialUserManifestState:
             remote_user_manifest = UserManifest(
                 author=device.device_id,
                 timestamp=timestamp,
-                id=device.user_manifest_id,
+                id=device.user_realm_id,
                 version=1,
                 created=timestamp,
                 updated=timestamp,
@@ -306,8 +306,8 @@ def backend_data_binder_factory(initial_user_manifest_state):
                 author = device
             else:
                 author = self.get_device(device.organization_id, manifest.author)
-            realm_id = author.user_manifest_id
-            vlob_id = author.user_manifest_id
+            realm_id = author.user_realm_id
+            vlob_id = author.user_realm_id
 
             with self.backend.event_bus.listen() as spy:
                 # The realm needs to be created strictly before the manifest timestamp
@@ -339,7 +339,7 @@ def backend_data_binder_factory(initial_user_manifest_state):
                     vlob_id=vlob_id,
                     timestamp=manifest.timestamp,
                     blob=manifest.dump_sign_and_encrypt(
-                        author_signkey=author.signing_key, key=author.user_manifest_key
+                        author_signkey=author.signing_key, key=author.user_realm_key
                     ),
                 )
                 try:

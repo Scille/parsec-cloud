@@ -36,8 +36,8 @@ pub struct LocalDevice {
     /// Profile the user had at enrollment time, use `CertificateOps::get_current_self_profile`
     /// instead of relying on this.
     pub initial_profile: UserProfile,
-    pub user_manifest_id: VlobID,
-    pub user_manifest_key: SecretKey,
+    pub user_realm_id: VlobID,
+    pub user_realm_key: SecretKey,
     pub local_symkey: SecretKey,
     pub time_provider: TimeProvider,
 }
@@ -60,8 +60,8 @@ impl LocalDevice {
             signing_key: signing_key.unwrap_or_else(SigningKey::generate),
             private_key: private_key.unwrap_or_else(PrivateKey::generate),
             initial_profile,
-            user_manifest_id: VlobID::default(),
-            user_manifest_key: SecretKey::generate(),
+            user_realm_id: VlobID::default(),
+            user_realm_key: SecretKey::generate(),
             local_symkey: SecretKey::generate(),
             time_provider: TimeProvider::default(),
         }
@@ -214,8 +214,10 @@ impl TryFrom<LocalDeviceData> for LocalDevice {
             signing_key: data.signing_key,
             private_key: data.private_key,
             initial_profile,
-            user_manifest_id: data.user_manifest_id,
-            user_manifest_key: data.user_manifest_key,
+            // For historical reason, we focus on the user manifest but in fact we
+            // refer to the realm here, so rename `user_manifest_*` -> `user_realm_*`.
+            user_realm_id: data.user_manifest_id,
+            user_realm_key: data.user_manifest_key,
             local_symkey: data.local_symkey,
             time_provider: TimeProvider::default(),
         })
@@ -235,8 +237,10 @@ impl From<LocalDevice> for LocalDeviceData {
             private_key: obj.private_key,
             profile: Maybe::Present(obj.initial_profile),
             is_admin,
-            user_manifest_id: obj.user_manifest_id,
-            user_manifest_key: obj.user_manifest_key,
+            // For historical reason, we focus on the user manifest but in fact we
+            // refer to the realm here, so rename `user_manifest_*` -> `user_realm_*`.
+            user_manifest_id: obj.user_realm_id,
+            user_manifest_key: obj.user_realm_key,
             local_symkey: obj.local_symkey,
         }
     }

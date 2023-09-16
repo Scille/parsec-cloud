@@ -176,7 +176,7 @@ pub(super) async fn process_last_messages(
         );
         updater.set_user_manifest(user_manifest).await?;
         // TODO: event
-        // ops.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=ops.user_manifest_id)
+        // ops.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=ops.user_realm_id)
     }
 
     Ok(())
