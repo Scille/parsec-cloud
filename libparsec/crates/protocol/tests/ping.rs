@@ -4,8 +4,6 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use hex_literal::hex;
-
 use libparsec_protocol::{
     authenticated_cmds::v3 as authenticated_cmds, invited_cmds::v3 as invited_cmds,
 };

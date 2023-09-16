@@ -4,8 +4,6 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use hex_literal::hex;
-
 // wrap this in each test function
 // macro qui contient une closure
 use super::authenticated_cmds;
