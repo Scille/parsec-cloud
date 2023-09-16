@@ -81,7 +81,7 @@ async fn create_realm_in_server(ops: &UserOps) -> Result<(), SyncError> {
         let certif = RealmRoleCertificate::new_root(
             ops.device.device_id.to_owned(),
             timestamp,
-            ops.device.user_manifest_id,
+            ops.device.user_realm_id,
         )
         .dump_and_sign(&ops.device.signing_key);
 
@@ -181,7 +181,7 @@ async fn upload_manifest(
         let to_sync_um = base_um.to_remote(ops.device.device_id.to_owned(), timestamp);
 
         let signed = to_sync_um.dump_and_sign(&ops.device.signing_key);
-        let ciphered = ops.device.user_manifest_key.encrypt(&signed).into();
+        let ciphered = ops.device.user_realm_key.encrypt(&signed).into();
         let sequester_blob = ops
             .certificates_ops
             .encrypt_for_sequester_services(&signed)
@@ -192,10 +192,10 @@ async fn upload_manifest(
         return if to_sync_um.version == 1 {
             use authenticated_cmds::latest::vlob_create::{Rep, Req};
             let req = Req {
-                realm_id: ops.device.user_manifest_id,
+                realm_id: ops.device.user_realm_id,
                 // Always 1 given user manifest realm is never reencrypted
                 encryption_revision: 1,
-                vlob_id: ops.device.user_manifest_id,
+                vlob_id: ops.device.user_realm_id,
                 timestamp,
                 blob: ciphered,
                 sequester_blob,
@@ -246,7 +246,7 @@ async fn upload_manifest(
             let req = Req {
                 // Always 1 given user manifest realm is never reencrypted
                 encryption_revision: 1,
-                vlob_id: ops.device.user_manifest_id,
+                vlob_id: ops.device.user_realm_id,
                 version: to_sync_um.version,
                 timestamp,
                 blob: ciphered,
@@ -333,7 +333,7 @@ async fn outbound_sync_inner(ops: &UserOps) -> Result<OutboundSyncOutcome, SyncE
             }
 
             // TODO: events
-            // self.event_bus.send(CoreEvent.FS_ENTRY_SYNCED, id=self.user_manifest_id)
+            // self.event_bus.send(CoreEvent.FS_ENTRY_SYNCED, id=self.user_realm_id)
 
             Ok(OutboundSyncOutcome::Done)
         }
@@ -385,7 +385,7 @@ async fn find_last_valid_manifest(
                 return Err(SyncError::Internal(
                     anyhow::anyhow!(
                         "Server sent us vlob `{}` with version {} but now complains version {} we ask for doesn't exist",
-                        ops.device.user_manifest_id,
+                        ops.device.user_realm_id,
                         last_version,
                         candidate_version
                     )
@@ -494,7 +494,7 @@ async fn fetch_remote_user_manifest(
         encryption_revision: 1,
         timestamp: None,
         version,
-        vlob_id: VlobID::from(ops.device.user_manifest_id.as_ref().to_owned()),
+        vlob_id: VlobID::from(ops.device.user_realm_id.as_ref().to_owned()),
     };
 
     let rep = ops.cmds.send(req).await?;

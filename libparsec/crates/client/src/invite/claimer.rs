@@ -538,8 +538,8 @@ impl DeviceClaimInProgress3Ctx {
             human_handle,
             profile,
             private_key,
-            user_manifest_id,
-            user_manifest_key,
+            user_realm_id,
+            user_realm_key,
             root_verify_key,
             ..
         } = InviteDeviceConfirmation::decrypt_and_load(&payload, &self.0.shared_secret_key)
@@ -561,8 +561,8 @@ impl DeviceClaimInProgress3Ctx {
             initial_profile: profile,
             private_key,
             signing_key,
-            user_manifest_id,
-            user_manifest_key,
+            user_realm_id,
+            user_realm_key,
             local_symkey: SecretKey::generate(),
             time_provider: Default::default(),
         });

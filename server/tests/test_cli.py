@@ -340,8 +340,8 @@ async def cli_with_running_backend_testbed(backend_asgi_app, *devices):
                 signing_key=device.signing_key,
                 private_key=device.private_key,
                 profile=device.profile,
-                user_manifest_id=device.user_manifest_id,
-                user_manifest_key=device.user_manifest_key,
+                user_realm_id=device.user_realm_id,
+                user_realm_key=device.user_realm_key,
                 local_symkey=device.local_symkey,
             )
 

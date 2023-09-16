@@ -22,6 +22,13 @@
             "name": "private_key",
             "type": "PrivateKey"
         },
+        // For historical reason, we focus on the user manifest but in fact we refer
+        // to the realm here:
+        // - User manifest is stored in a vlob whose ID is the same as the realm containing it
+        // - Encryption key is the same across the whole realm
+        //
+        // Note those fields are renamed `user_manifest_*` -> `user_realm_*` in the
+        // codebase once deserialized.
         {
             "name": "user_manifest_id",
             "type": "VlobID"

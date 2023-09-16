@@ -132,8 +132,8 @@ def local_device_factory(coolorg):
         )
         if parent_device is not None:
             device.private_key = parent_device.private_key
-            device.user_manifest_id = parent_device.user_manifest_id
-            device.user_manifest_key = parent_device.user_manifest_key
+            device.user_realm_id = parent_device.user_realm_id
+            device.user_realm_key = parent_device.user_realm_key
         org_devices.append(device)
         return device
 

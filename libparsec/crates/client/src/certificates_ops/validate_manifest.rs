@@ -141,7 +141,7 @@ async fn validate_manifest<M>(
         Option<VersionInt>,
     ) -> DataResult<M>,
 ) -> Result<M, ValidateManifestError> {
-    let realm_id = ops.device.user_manifest_id;
+    let realm_id = ops.device.user_realm_id;
 
     // 1) Make sure we have all the needed certificates
 
@@ -169,7 +169,7 @@ async fn validate_manifest<M>(
         // Doesn't exist at the considered index :(
         Err(GetCertificateError::NonExisting | GetCertificateError::ExistButTooRecent { .. }) => {
             let what = InvalidManifestError::NonExistantAuthor {
-                vlob_id: ops.device.user_manifest_id,
+                vlob_id: ops.device.user_realm_id,
                 version,
                 author: author.to_owned(),
                 timestamp,
@@ -195,7 +195,7 @@ async fn validate_manifest<M>(
         // Revoked :(
         Ok(Some(_)) => {
             let what = InvalidManifestError::RevokedAuthor {
-                vlob_id: ops.device.user_manifest_id,
+                vlob_id: ops.device.user_realm_id,
                 version,
                 author: author.to_owned(),
                 timestamp,
@@ -211,16 +211,16 @@ async fn validate_manifest<M>(
 
     let manifest = decrypt_verify_and_load(
         encrypted,
-        &ops.device.user_manifest_key,
+        &ops.device.user_realm_key,
         &author_certif.verify_key,
         author,
         timestamp,
-        Some(ops.device.user_manifest_id),
+        Some(ops.device.user_realm_id),
         Some(version),
     )
     .map_err(|error| {
         let what = InvalidManifestError::Corrupted {
-            vlob_id: ops.device.user_manifest_id,
+            vlob_id: ops.device.user_realm_id,
             version,
             author: author.to_owned(),
             timestamp,
@@ -242,7 +242,7 @@ async fn validate_manifest<M>(
         // The author wasn't part of the realm :(
         None => {
             let what = InvalidManifestError::AuthorNoAccessToRealm {
-                vlob_id: ops.device.user_manifest_id,
+                vlob_id: ops.device.user_realm_id,
                 version,
                 author: author.to_owned(),
                 timestamp,
@@ -254,7 +254,7 @@ async fn validate_manifest<M>(
         // The author doesn't have write access to the realm :(
         Some(role) => {
             let what = InvalidManifestError::AuthorRealmRoleCannotWrite {
-                vlob_id: ops.device.user_manifest_id,
+                vlob_id: ops.device.user_realm_id,
                 version,
                 author: author.to_owned(),
                 timestamp,

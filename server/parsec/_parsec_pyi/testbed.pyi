@@ -56,8 +56,8 @@ class TestbedEventBootstrapOrganization:
     first_user_private_key: PrivateKey
     first_user_first_device_label: DeviceLabel | None
     first_user_first_device_signing_key: SigningKey
-    first_user_user_manifest_id: VlobID
-    first_user_user_manifest_key: SecretKey
+    first_user_user_realm_id: VlobID
+    first_user_user_realm_key: SecretKey
     first_user_local_symkey: SecretKey
     first_user_local_password: str
 
@@ -92,8 +92,8 @@ class TestbedEventNewUser:
     first_device_label: DeviceLabel | None
     first_device_signing_key: SigningKey
     initial_profile: UserProfile
-    user_manifest_id: VlobID
-    user_manifest_key: SecretKey
+    user_realm_id: VlobID
+    user_realm_key: SecretKey
     local_symkey: SecretKey
     local_password: str
 

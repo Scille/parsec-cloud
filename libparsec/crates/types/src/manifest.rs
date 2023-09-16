@@ -614,6 +614,7 @@ pub struct WorkspaceManifest {
     pub author: DeviceID,
     pub timestamp: DateTime,
 
+    // Note that, by convention, workspace manifest is identified by the realm ID
     pub id: VlobID,
     // Version 0 means the data is not synchronized
     pub version: VersionInt,
@@ -648,6 +649,7 @@ pub struct UserManifest {
     pub author: DeviceID,
     pub timestamp: DateTime,
 
+    // Note that, by convention, user manifest is identified by the realm ID
     pub id: VlobID,
     // Version 0 means the data is not synchronized
     pub version: VersionInt,

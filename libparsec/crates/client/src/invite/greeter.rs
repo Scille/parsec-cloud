@@ -979,8 +979,8 @@ impl DeviceGreetInProgress4Ctx {
             human_handle: self.device.human_handle.clone(),
             profile: self.device.initial_profile,
             private_key: self.device.private_key.clone(),
-            user_manifest_id: self.device.user_manifest_id,
-            user_manifest_key: self.device.user_manifest_key.clone(),
+            user_realm_id: self.device.user_realm_id,
+            user_realm_key: self.device.user_realm_key.clone(),
             root_verify_key: self.device.root_verify_key().clone(),
         }
         .dump_and_encrypt(&self.shared_secret_key)
