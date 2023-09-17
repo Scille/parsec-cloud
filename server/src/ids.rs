@@ -10,14 +10,14 @@ macro_rules! gen_uuid {
         impl $class {
             #[classmethod]
             fn from_bytes(_cls: &::pyo3::types::PyType, bytes: &[u8]) -> PyResult<Self> {
-                libparsec::low_level::types::$class::try_from(bytes)
+                libparsec_types::$class::try_from(bytes)
                     .map(Self)
                     .map_err(::pyo3::exceptions::PyValueError::new_err)
             }
 
             #[classmethod]
             fn from_hex(_cls: &::pyo3::types::PyType, hex: &str) -> PyResult<Self> {
-                libparsec::low_level::types::$class::from_hex(hex)
+                libparsec_types::$class::from_hex(hex)
                     .map(Self)
                     .map_err(::pyo3::exceptions::PyValueError::new_err)
             }
@@ -25,7 +25,7 @@ macro_rules! gen_uuid {
             #[classmethod]
             #[pyo3(name = "new")]
             fn default(_cls: &::pyo3::types::PyType) -> Self {
-                Self(libparsec::low_level::types::$class::default())
+                Self(libparsec_types::$class::default())
             }
 
             #[getter]
@@ -53,7 +53,7 @@ macro_rules! gen_uuid {
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
     VlobID,
-    libparsec::low_level::types::VlobID,
+    libparsec_types::VlobID,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -66,7 +66,7 @@ gen_uuid!(VlobID);
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
     BlockID,
-    libparsec::low_level::types::BlockID,
+    libparsec_types::BlockID,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -79,7 +79,7 @@ gen_uuid!(BlockID);
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
     ChunkID,
-    libparsec::low_level::types::ChunkID,
+    libparsec_types::ChunkID,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -94,13 +94,13 @@ gen_uuid!(ChunkID);
 impl ChunkID {
     #[classmethod]
     fn from_block_id(_cls: &PyType, id: BlockID) -> Self {
-        Self(libparsec::low_level::types::ChunkID::from(*id.0))
+        Self(libparsec_types::ChunkID::from(*id.0))
     }
 }
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
     SequesterServiceID,
-    libparsec::low_level::types::SequesterServiceID,
+    libparsec_types::SequesterServiceID,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -112,7 +112,7 @@ gen_uuid!(SequesterServiceID);
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
     InvitationToken,
-    libparsec::low_level::types::InvitationToken,
+    libparsec_types::InvitationToken,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -124,7 +124,7 @@ gen_uuid!(InvitationToken);
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
     EnrollmentID,
-    libparsec::low_level::types::EnrollmentID,
+    libparsec_types::EnrollmentID,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -138,7 +138,7 @@ gen_uuid!(EnrollmentID);
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
     OrganizationID,
-    libparsec::low_level::types::OrganizationID,
+    libparsec_types::OrganizationID,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -154,7 +154,7 @@ impl OrganizationID {
         if let Ok(organization_id) = organization_id.extract::<Self>() {
             Ok(organization_id)
         } else if let Ok(organization_id) = organization_id.extract::<&str>() {
-            match organization_id.parse::<libparsec::low_level::types::OrganizationID>() {
+            match organization_id.parse::<libparsec_types::OrganizationID>() {
                 Ok(organization_id) => Ok(Self(organization_id)),
                 Err(err) => Err(PyValueError::new_err(err)),
             }
@@ -171,7 +171,7 @@ impl OrganizationID {
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
     UserID,
-    libparsec::low_level::types::UserID,
+    libparsec_types::UserID,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -187,7 +187,7 @@ impl UserID {
         if let Ok(user_id) = user_id.extract::<Self>() {
             Ok(user_id)
         } else if let Ok(user_id) = user_id.extract::<&str>() {
-            match user_id.parse::<libparsec::low_level::types::UserID>() {
+            match user_id.parse::<libparsec_types::UserID>() {
                 Ok(user_id) => Ok(Self(user_id)),
                 Err(err) => Err(PyValueError::new_err(err)),
             }
@@ -212,7 +212,7 @@ impl UserID {
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
     DeviceName,
-    libparsec::low_level::types::DeviceName,
+    libparsec_types::DeviceName,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -228,7 +228,7 @@ impl DeviceName {
         if let Ok(device_name) = device_name.extract::<Self>() {
             Ok(device_name)
         } else if let Ok(device_name) = device_name.extract::<&str>() {
-            match device_name.parse::<libparsec::low_level::types::DeviceName>() {
+            match device_name.parse::<libparsec_types::DeviceName>() {
                 Ok(device_name) => Ok(Self(device_name)),
                 Err(err) => Err(PyValueError::new_err(err)),
             }
@@ -245,13 +245,13 @@ impl DeviceName {
     #[classmethod]
     #[pyo3(name = "new")]
     fn class_new(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(libparsec::low_level::types::DeviceName::default()))
+        Ok(Self(libparsec_types::DeviceName::default()))
     }
 }
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
     DeviceLabel,
-    libparsec::low_level::types::DeviceLabel,
+    libparsec_types::DeviceLabel,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -267,7 +267,7 @@ impl DeviceLabel {
         if let Ok(device_label) = device_label.extract::<Self>() {
             Ok(device_label)
         } else if let Ok(device_label) = device_label.extract::<&str>() {
-            match device_label.parse::<libparsec::low_level::types::DeviceLabel>() {
+            match device_label.parse::<libparsec_types::DeviceLabel>() {
                 Ok(device_label) => Ok(Self(device_label)),
                 Err(err) => Err(PyValueError::new_err(err)),
             }
@@ -284,7 +284,7 @@ impl DeviceLabel {
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
     DeviceID,
-    libparsec::low_level::types::DeviceID,
+    libparsec_types::DeviceID,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -300,7 +300,7 @@ impl DeviceID {
         if let Ok(device_id) = device_id.extract::<Self>() {
             Ok(device_id)
         } else if let Ok(device_id) = device_id.extract::<&str>() {
-            match device_id.parse::<libparsec::low_level::types::DeviceID>() {
+            match device_id.parse::<libparsec_types::DeviceID>() {
                 Ok(device_id) => Ok(Self(device_id)),
                 Err(err) => Err(PyValueError::new_err(err)),
             }
@@ -327,13 +327,13 @@ impl DeviceID {
     #[classmethod]
     #[pyo3(name = "new")]
     fn class_new(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(libparsec::low_level::types::DeviceID::default()))
+        Ok(Self(libparsec_types::DeviceID::default()))
     }
 }
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
     HumanHandle,
-    libparsec::low_level::types::HumanHandle,
+    libparsec_types::HumanHandle,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -346,7 +346,7 @@ crate::binding_utils::gen_py_wrapper_class_for_id!(
 impl HumanHandle {
     #[new]
     pub fn new(email: &str, label: &str) -> PyResult<Self> {
-        match libparsec::low_level::types::HumanHandle::new(email, label) {
+        match libparsec_types::HumanHandle::new(email, label) {
             Ok(human_handle) => Ok(Self(human_handle)),
             Err(err) => Err(PyValueError::new_err(err)),
         }

@@ -22,25 +22,23 @@ pub(crate) fn mock_time(time: &PyAny) -> PyResult<()> {
 
     #[cfg(feature = "test-utils")]
     {
-        use libparsec::low_level::types::MockedTime;
-        libparsec::low_level::types::DateTime::mock_time(
-            if let Ok(dt) = time.extract::<DateTime>() {
-                MockedTime::FrozenTime(dt.0)
-            } else if let Ok(us) = time.extract::<i64>() {
-                MockedTime::ShiftedTime { microseconds: us }
-            } else if time.is_none() {
-                MockedTime::RealTime
-            } else {
-                return Err(pyo3::exceptions::PyTypeError::new_err("Invalid field time"));
-            },
-        );
+        use libparsec_types::MockedTime;
+        libparsec_types::DateTime::mock_time(if let Ok(dt) = time.extract::<DateTime>() {
+            MockedTime::FrozenTime(dt.0)
+        } else if let Ok(us) = time.extract::<i64>() {
+            MockedTime::ShiftedTime { microseconds: us }
+        } else if time.is_none() {
+            MockedTime::RealTime
+        } else {
+            return Err(pyo3::exceptions::PyTypeError::new_err("Invalid field time"));
+        });
         Ok(())
     }
 }
 
 crate::binding_utils::gen_py_wrapper_class!(
     TimeProvider,
-    libparsec::low_level::types::TimeProvider,
+    libparsec_types::TimeProvider,
     __repr__,
     __copy__,
 );
@@ -49,7 +47,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 impl TimeProvider {
     #[new]
     fn new() -> PyResult<Self> {
-        Ok(Self(libparsec::low_level::types::TimeProvider::default()))
+        Ok(Self(libparsec_types::TimeProvider::default()))
     }
 
     pub fn now(&self) -> PyResult<DateTime> {
@@ -87,9 +85,7 @@ impl TimeProvider {
         let time_provider = self.0.clone();
         let coroutine = FutureIntoCoroutine::from(async move {
             time_provider
-                .sleep(libparsec::low_level::types::Duration::microseconds(
-                    (time * 1e6) as i64,
-                ))
+                .sleep(libparsec_types::Duration::microseconds((time * 1e6) as i64))
                 .await;
             Ok(())
         });
@@ -131,7 +127,7 @@ impl TimeProvider {
 
         #[cfg(feature = "test-utils")]
         {
-            use libparsec::low_level::types::MockedTime;
+            use libparsec_types::MockedTime;
             let mock_config = match (freeze, shift, speed, realtime) {
                 (None, None, None, true) => MockedTime::RealTime,
                 (Some(dt), None, None, false) => MockedTime::FrozenTime(dt.0),
@@ -162,7 +158,7 @@ impl TimeProvider {
 
 crate::binding_utils::gen_py_wrapper_class!(
     DateTime,
-    libparsec::low_level::types::DateTime,
+    libparsec_types::DateTime,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -184,7 +180,7 @@ impl DateTime {
         second: u32,
         microsecond: u32,
     ) -> PyResult<Self> {
-        libparsec::low_level::types::DateTime::from_ymd_hms_us(
+        libparsec_types::DateTime::from_ymd_hms_us(
             year,
             month,
             day,
@@ -235,7 +231,7 @@ impl DateTime {
 
     #[classmethod]
     fn now(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(libparsec::low_level::types::DateTime::now_legacy()))
+        Ok(Self(libparsec_types::DateTime::now_legacy()))
     }
 
     fn timestamp(&self) -> PyResult<f64> {
@@ -244,14 +240,14 @@ impl DateTime {
 
     #[classmethod]
     fn from_timestamp(_cls: &PyType, ts: f64) -> PyResult<Self> {
-        Ok(Self(
-            libparsec::low_level::types::DateTime::from_f64_with_us_precision(ts),
-        ))
+        Ok(Self(libparsec_types::DateTime::from_f64_with_us_precision(
+            ts,
+        )))
     }
 
     #[classmethod]
     fn from_rfc3339(_cls: &PyType, value: &str) -> PyResult<Self> {
-        libparsec::low_level::types::DateTime::from_rfc3339(value)
+        libparsec_types::DateTime::from_rfc3339(value)
             .map(Self)
             .map_err(|e| PyValueError::new_err(format!("Invalid rfc3339 date `{}`: {}", value, e)))
     }
@@ -308,7 +304,7 @@ impl DateTime {
 
 crate::binding_utils::gen_py_wrapper_class!(
     LocalDateTime,
-    libparsec::low_level::types::LocalDateTime,
+    libparsec_types::LocalDateTime,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -330,7 +326,7 @@ impl LocalDateTime {
         second: u32,
         microsecond: u32,
     ) -> PyResult<Self> {
-        libparsec::low_level::types::LocalDateTime::from_ymd_hms_us(
+        libparsec_types::LocalDateTime::from_ymd_hms_us(
             year,
             month,
             day,
@@ -381,7 +377,7 @@ impl LocalDateTime {
     #[classmethod]
     fn from_timestamp(_cls: &PyType, ts: f64) -> PyResult<Self> {
         Ok(Self(
-            libparsec::low_level::types::LocalDateTime::from_f64_with_us_precision(ts),
+            libparsec_types::LocalDateTime::from_f64_with_us_precision(ts),
         ))
     }
 

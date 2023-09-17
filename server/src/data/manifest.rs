@@ -12,11 +12,11 @@ use crate::{
     BlockID, DataResult, DateTime, DeviceID, EntryNameResult, HashDigest, RealmRole, SecretKey,
     SigningKey, VerifyKey, VlobID,
 };
-use libparsec::low_level::types::{ChildManifest, IndexInt};
+use libparsec_types::{ChildManifest, IndexInt};
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
     EntryName,
-    libparsec::low_level::types::EntryName,
+    libparsec_types::EntryName,
     __str__,
     __richcmp__ ord,
     __hash__,
@@ -26,7 +26,7 @@ crate::binding_utils::gen_py_wrapper_class_for_id!(
 impl EntryName {
     #[new]
     fn new(name: &str) -> EntryNameResult<Self> {
-        Ok(libparsec::low_level::types::EntryName::try_from(name).map(Self)?)
+        Ok(libparsec_types::EntryName::try_from(name).map(Self)?)
     }
 
     fn __repr__(&self) -> PyResult<String> {
@@ -41,7 +41,7 @@ impl EntryName {
 
 crate::binding_utils::gen_py_wrapper_class!(
     WorkspaceEntry,
-    libparsec::low_level::types::WorkspaceEntry,
+    libparsec_types::WorkspaceEntry,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -61,7 +61,7 @@ impl WorkspaceEntry {
         legacy_role_cache_timestamp: DateTime,
         legacy_role_cache_value: Option<RealmRole>,
     ) -> PyResult<Self> {
-        Ok(Self(libparsec::low_level::types::WorkspaceEntry {
+        Ok(Self(libparsec_types::WorkspaceEntry {
             id: id.0,
             name: name.0,
             key: key.0,
@@ -121,7 +121,7 @@ impl WorkspaceEntry {
     #[classmethod]
     #[pyo3(name = "new")]
     fn class_new(_cls: &PyType, name: &EntryName, timestamp: DateTime) -> PyResult<Self> {
-        Ok(Self(libparsec::low_level::types::WorkspaceEntry::generate(
+        Ok(Self(libparsec_types::WorkspaceEntry::generate(
             name.0.to_owned(),
             timestamp.0,
         )))
@@ -165,7 +165,7 @@ impl WorkspaceEntry {
 
 crate::binding_utils::gen_py_wrapper_class!(
     BlockAccess,
-    libparsec::low_level::types::BlockAccess,
+    libparsec_types::BlockAccess,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -183,7 +183,7 @@ impl BlockAccess {
         size: u64,
         digest: HashDigest,
     ) -> PyResult<Self> {
-        Ok(Self(libparsec::low_level::types::BlockAccess {
+        Ok(Self(libparsec_types::BlockAccess {
             id: id.0,
             key: key.0,
             offset,
@@ -257,7 +257,7 @@ impl BlockAccess {
 
 crate::binding_utils::gen_py_wrapper_class!(
     FileManifest,
-    libparsec::low_level::types::FileManifest,
+    libparsec_types::FileManifest,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -281,7 +281,7 @@ impl FileManifest {
         blocksize: u64,
         blocks: Vec<BlockAccess>,
     ) -> PyResult<Self> {
-        Ok(Self(libparsec::low_level::types::FileManifest {
+        Ok(Self(libparsec_types::FileManifest {
             author: author.0,
             timestamp: timestamp.0,
             id: id.0,
@@ -290,7 +290,7 @@ impl FileManifest {
             created: created.0,
             updated: updated.0,
             size,
-            blocksize: libparsec::low_level::types::Blocksize::try_from(blocksize)
+            blocksize: libparsec_types::Blocksize::try_from(blocksize)
                 .map_err(|_| PyValueError::new_err("Invalid `blocksize` field"))?,
             blocks: blocks.into_iter().map(|b| b.0).collect(),
         }))
@@ -328,18 +328,16 @@ impl FileManifest {
         expected_id: Option<VlobID>,
         expected_version: Option<u32>,
     ) -> DataResult<Self> {
-        Ok(
-            libparsec::low_level::types::FileManifest::decrypt_verify_and_load(
-                encrypted,
-                &key.0,
-                &author_verify_key.0,
-                &expected_author.0,
-                expected_timestamp.0,
-                expected_id.map(|id| id.0),
-                expected_version,
-            )
-            .map(Self)?,
+        Ok(libparsec_types::FileManifest::decrypt_verify_and_load(
+            encrypted,
+            &key.0,
+            &author_verify_key.0,
+            &expected_author.0,
+            expected_timestamp.0,
+            expected_id.map(|id| id.0),
+            expected_version,
         )
+        .map(Self)?)
     }
 
     #[pyo3(signature = (**py_kwargs))]
@@ -385,7 +383,7 @@ impl FileManifest {
             r.size = v;
         }
         if let Some(v) = blocksize {
-            r.blocksize = libparsec::low_level::types::Blocksize::try_from(v)
+            r.blocksize = libparsec_types::Blocksize::try_from(v)
                 .map_err(|_| PyValueError::new_err("Invalid `blocksize` field"))?;
         }
         if let Some(v) = blocks {
@@ -454,7 +452,7 @@ impl FileManifest {
 
 crate::binding_utils::gen_py_wrapper_class!(
     FolderManifest,
-    libparsec::low_level::types::FolderManifest,
+    libparsec_types::FolderManifest,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -476,7 +474,7 @@ impl FolderManifest {
         updated: DateTime,
         children: HashMap<EntryName, VlobID>,
     ) -> PyResult<Self> {
-        Ok(Self(libparsec::low_level::types::FolderManifest {
+        Ok(Self(libparsec_types::FolderManifest {
             author: author.0,
             timestamp: timestamp.0,
             version,
@@ -523,18 +521,16 @@ impl FolderManifest {
         expected_id: Option<VlobID>,
         expected_version: Option<u32>,
     ) -> DataResult<Self> {
-        Ok(
-            libparsec::low_level::types::FolderManifest::decrypt_verify_and_load(
-                encrypted,
-                &key.0,
-                &author_verify_key.0,
-                &expected_author.0,
-                expected_timestamp.0,
-                expected_id.map(|id| id.0),
-                expected_version,
-            )
-            .map(Self)?,
+        Ok(libparsec_types::FolderManifest::decrypt_verify_and_load(
+            encrypted,
+            &key.0,
+            &author_verify_key.0,
+            &expected_author.0,
+            expected_timestamp.0,
+            expected_id.map(|id| id.0),
+            expected_version,
         )
+        .map(Self)?)
     }
 
     #[pyo3(signature = (**py_kwargs))]
@@ -631,7 +627,7 @@ impl FolderManifest {
 
 crate::binding_utils::gen_py_wrapper_class!(
     WorkspaceManifest,
-    libparsec::low_level::types::WorkspaceManifest,
+    libparsec_types::WorkspaceManifest,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -651,7 +647,7 @@ impl WorkspaceManifest {
         updated: DateTime,
         children: HashMap<EntryName, VlobID>,
     ) -> PyResult<Self> {
-        Ok(Self(libparsec::low_level::types::WorkspaceManifest {
+        Ok(Self(libparsec_types::WorkspaceManifest {
             author: author.0,
             timestamp: timestamp.0,
             id: id.0,
@@ -697,18 +693,16 @@ impl WorkspaceManifest {
         expected_id: Option<VlobID>,
         expected_version: Option<u32>,
     ) -> DataResult<Self> {
-        Ok(
-            libparsec::low_level::types::WorkspaceManifest::decrypt_verify_and_load(
-                encrypted,
-                &key.0,
-                &author_verify_key.0,
-                &expected_author.0,
-                expected_timestamp.0,
-                expected_id.map(|id| id.0),
-                expected_version,
-            )
-            .map(Self)?,
+        Ok(libparsec_types::WorkspaceManifest::decrypt_verify_and_load(
+            encrypted,
+            &key.0,
+            &author_verify_key.0,
+            &expected_author.0,
+            expected_timestamp.0,
+            expected_id.map(|id| id.0),
+            expected_version,
         )
+        .map(Self)?)
     }
 
     #[classmethod]
@@ -722,17 +716,15 @@ impl WorkspaceManifest {
         expected_id: Option<VlobID>,
         expected_version: Option<u32>,
     ) -> DataResult<Self> {
-        Ok(
-            libparsec::low_level::types::WorkspaceManifest::verify_and_load(
-                signed,
-                &author_verify_key.0,
-                &expected_author.0,
-                expected_timestamp.0,
-                expected_id.map(|id| id.0),
-                expected_version,
-            )
-            .map(Self)?,
+        Ok(libparsec_types::WorkspaceManifest::verify_and_load(
+            signed,
+            &author_verify_key.0,
+            &expected_author.0,
+            expected_timestamp.0,
+            expected_id.map(|id| id.0),
+            expected_version,
         )
+        .map(Self)?)
     }
 
     #[pyo3(signature = (**py_kwargs))]
@@ -820,7 +812,7 @@ impl WorkspaceManifest {
 
 crate::binding_utils::gen_py_wrapper_class!(
     UserManifest,
-    libparsec::low_level::types::UserManifest,
+    libparsec_types::UserManifest,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -842,7 +834,7 @@ impl UserManifest {
         last_processed_message: u64,
         workspaces: Vec<WorkspaceEntry>,
     ) -> PyResult<Self> {
-        Ok(Self(libparsec::low_level::types::UserManifest {
+        Ok(Self(libparsec_types::UserManifest {
             author: author.0,
             timestamp: timestamp.0,
             id: id.0,
@@ -886,18 +878,16 @@ impl UserManifest {
         expected_id: Option<VlobID>,
         expected_version: Option<u32>,
     ) -> DataResult<Self> {
-        Ok(
-            libparsec::low_level::types::UserManifest::decrypt_verify_and_load(
-                encrypted,
-                &key.0,
-                &author_verify_key.0,
-                &expected_author.0,
-                expected_timestamp.0,
-                expected_id.map(|id| id.0),
-                expected_version,
-            )
-            .map(Self)?,
+        Ok(libparsec_types::UserManifest::decrypt_verify_and_load(
+            encrypted,
+            &key.0,
+            &author_verify_key.0,
+            &expected_author.0,
+            expected_timestamp.0,
+            expected_id.map(|id| id.0),
+            expected_version,
         )
+        .map(Self)?)
     }
 
     #[pyo3(signature = (**py_kwargs))]

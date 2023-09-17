@@ -13,79 +13,79 @@ use crate::{
 enum RawBackendEvent {
     #[serde(rename = "certificates.updated")]
     CertificatesUpdated {
-        organization_id: libparsec::low_level::types::OrganizationID,
-        index: libparsec::low_level::types::IndexInt,
+        organization_id: libparsec_types::OrganizationID,
+        index: libparsec_types::IndexInt,
     },
     #[serde(rename = "invite.conduit_updated")]
     InviteConduitUpdated {
-        organization_id: libparsec::low_level::types::OrganizationID,
-        token: libparsec::low_level::types::InvitationToken,
+        organization_id: libparsec_types::OrganizationID,
+        token: libparsec_types::InvitationToken,
     },
     #[serde(rename = "user.profile_updated_or_revoked")]
     UserProfileUpdatedOrRevoked {
-        organization_id: libparsec::low_level::types::OrganizationID,
-        user_id: libparsec::low_level::types::UserID,
-        profile: Option<libparsec::low_level::types::UserProfile>,
+        organization_id: libparsec_types::OrganizationID,
+        user_id: libparsec_types::UserID,
+        profile: Option<libparsec_types::UserProfile>,
     },
     #[serde(rename = "organization.expired")]
     OrganizationExpired {
-        organization_id: libparsec::low_level::types::OrganizationID,
+        organization_id: libparsec_types::OrganizationID,
     },
     #[serde(rename = "pinged")]
     Pinged {
-        organization_id: libparsec::low_level::types::OrganizationID,
-        author: libparsec::low_level::types::DeviceID,
+        organization_id: libparsec_types::OrganizationID,
+        author: libparsec_types::DeviceID,
         ping: String,
     },
     #[serde(rename = "message.received")]
     MessageReceived {
-        organization_id: libparsec::low_level::types::OrganizationID,
-        author: libparsec::low_level::types::DeviceID,
-        recipient: libparsec::low_level::types::UserID,
+        organization_id: libparsec_types::OrganizationID,
+        author: libparsec_types::DeviceID,
+        recipient: libparsec_types::UserID,
         index: u64,
         message: Vec<u8>,
     },
     #[serde(rename = "invite.status_changed")]
     InviteStatusChanged {
-        organization_id: libparsec::low_level::types::OrganizationID,
-        greeter: libparsec::low_level::types::UserID,
-        token: libparsec::low_level::types::InvitationToken,
-        status: libparsec::low_level::types::InvitationStatus,
+        organization_id: libparsec_types::OrganizationID,
+        greeter: libparsec_types::UserID,
+        token: libparsec_types::InvitationToken,
+        status: libparsec_types::InvitationStatus,
     },
     #[serde(rename = "realm.maintenance_finished")]
     RealmMaintenanceFinished {
-        organization_id: libparsec::low_level::types::OrganizationID,
-        author: libparsec::low_level::types::DeviceID,
-        realm_id: libparsec::low_level::types::VlobID,
+        organization_id: libparsec_types::OrganizationID,
+        author: libparsec_types::DeviceID,
+        realm_id: libparsec_types::VlobID,
         encryption_revision: u64,
     },
     #[serde(rename = "realm.maintenance_started")]
     RealmMaintenanceStarted {
-        organization_id: libparsec::low_level::types::OrganizationID,
-        author: libparsec::low_level::types::DeviceID,
-        realm_id: libparsec::low_level::types::VlobID,
+        organization_id: libparsec_types::OrganizationID,
+        author: libparsec_types::DeviceID,
+        realm_id: libparsec_types::VlobID,
         encryption_revision: u64,
     },
     #[serde(rename = "realm.vlobs_updated")]
     RealmVlobsUpdated {
-        organization_id: libparsec::low_level::types::OrganizationID,
-        author: libparsec::low_level::types::DeviceID,
-        realm_id: libparsec::low_level::types::VlobID,
+        organization_id: libparsec_types::OrganizationID,
+        author: libparsec_types::DeviceID,
+        realm_id: libparsec_types::VlobID,
         checkpoint: u64,
-        src_id: libparsec::low_level::types::VlobID,
+        src_id: libparsec_types::VlobID,
         src_version: u64,
     },
     #[serde(rename = "realm.roles_updated")]
     RealmRolesUpdated {
-        organization_id: libparsec::low_level::types::OrganizationID,
-        author: libparsec::low_level::types::DeviceID,
-        realm_id: libparsec::low_level::types::VlobID,
-        user: libparsec::low_level::types::UserID,
-        role: Option<libparsec::low_level::types::RealmRole>,
+        organization_id: libparsec_types::OrganizationID,
+        author: libparsec_types::DeviceID,
+        realm_id: libparsec_types::VlobID,
+        user: libparsec_types::UserID,
+        role: Option<libparsec_types::RealmRole>,
     },
     #[serde(rename = "pki_enrollment.updated")]
     PkiEnrollmentUpdated {
-        organization_id: libparsec::low_level::types::OrganizationID,
+        organization_id: libparsec_types::OrganizationID,
     },
 }
 

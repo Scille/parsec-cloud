@@ -12,14 +12,14 @@ use crate::{
     VerifyKey, VlobID,
 };
 
-use libparsec::low_level::types::IndexInt;
+use libparsec_types::IndexInt;
 
 #[pyclass(subclass)]
 #[derive(Clone)]
-pub(crate) struct MessageContent(pub libparsec::low_level::types::MessageContent);
+pub(crate) struct MessageContent(pub libparsec_types::MessageContent);
 
-impl From<libparsec::low_level::types::MessageContent> for MessageContent {
-    fn from(value: libparsec::low_level::types::MessageContent) -> Self {
+impl From<libparsec_types::MessageContent> for MessageContent {
+    fn from(value: libparsec_types::MessageContent) -> Self {
         Self(value)
     }
 }
@@ -34,36 +34,32 @@ impl MessageContent {
     #[getter]
     fn author(&self) -> PyResult<DeviceID> {
         Ok(match &self.0 {
-            libparsec::low_level::types::MessageContent::SharingGranted { author, .. } => {
+            libparsec_types::MessageContent::SharingGranted { author, .. } => {
                 DeviceID(author.clone())
             }
-            libparsec::low_level::types::MessageContent::SharingReencrypted { author, .. } => {
+            libparsec_types::MessageContent::SharingReencrypted { author, .. } => {
                 DeviceID(author.clone())
             }
-            libparsec::low_level::types::MessageContent::SharingRevoked { author, .. } => {
+            libparsec_types::MessageContent::SharingRevoked { author, .. } => {
                 DeviceID(author.clone())
             }
-            libparsec::low_level::types::MessageContent::Ping { author, .. } => {
-                DeviceID(author.clone())
-            }
+            libparsec_types::MessageContent::Ping { author, .. } => DeviceID(author.clone()),
         })
     }
 
     #[getter]
     fn timestamp(&self) -> PyResult<DateTime> {
         Ok(match self.0 {
-            libparsec::low_level::types::MessageContent::SharingGranted { timestamp, .. } => {
+            libparsec_types::MessageContent::SharingGranted { timestamp, .. } => {
                 DateTime(timestamp)
             }
-            libparsec::low_level::types::MessageContent::SharingReencrypted {
-                timestamp, ..
-            } => DateTime(timestamp),
-            libparsec::low_level::types::MessageContent::SharingRevoked { timestamp, .. } => {
+            libparsec_types::MessageContent::SharingReencrypted { timestamp, .. } => {
                 DateTime(timestamp)
             }
-            libparsec::low_level::types::MessageContent::Ping { timestamp, .. } => {
+            libparsec_types::MessageContent::SharingRevoked { timestamp, .. } => {
                 DateTime(timestamp)
             }
+            libparsec_types::MessageContent::Ping { timestamp, .. } => DateTime(timestamp),
         })
     }
 
@@ -77,7 +73,7 @@ impl MessageContent {
         expected_timestamp: DateTime,
         py: Python,
     ) -> PyResult<PyObject> {
-        let msg = libparsec::low_level::types::MessageContent::decrypt_verify_and_load_for(
+        let msg = libparsec_types::MessageContent::decrypt_verify_and_load_for(
             ciphered,
             &recipient_privkey.0,
             &author_verify_key.0,
@@ -87,16 +83,16 @@ impl MessageContent {
         .map_err(DataExc::from)?;
 
         Ok(match msg {
-            libparsec::low_level::types::MessageContent::SharingGranted { .. } => {
+            libparsec_types::MessageContent::SharingGranted { .. } => {
                 crate::binding_utils::py_object!(msg, Self, SharingGrantedMessageContent, py)?
             }
-            libparsec::low_level::types::MessageContent::SharingReencrypted { .. } => {
+            libparsec_types::MessageContent::SharingReencrypted { .. } => {
                 crate::binding_utils::py_object!(msg, Self, SharingReencryptedMessageContent, py)?
             }
-            libparsec::low_level::types::MessageContent::SharingRevoked { .. } => {
+            libparsec_types::MessageContent::SharingRevoked { .. } => {
                 crate::binding_utils::py_object!(msg, Self, SharingRevokedMessageContent, py)?
             }
-            libparsec::low_level::types::MessageContent::Ping { .. } => {
+            libparsec_types::MessageContent::Ping { .. } => {
                 crate::binding_utils::py_object!(msg, Self, PingMessageContent, py)?
             }
         })
@@ -134,26 +130,22 @@ impl SharingGrantedMessageContent {
     ) -> PyResult<(Self, MessageContent)> {
         Ok((
             Self,
-            MessageContent(
-                libparsec::low_level::types::MessageContent::SharingGranted {
-                    author: author.0,
-                    timestamp: timestamp.0,
-                    name: name.0,
-                    id: id.0,
-                    encryption_revision,
-                    encrypted_on: encrypted_on.0,
-                    key: key.0,
-                },
-            ),
+            MessageContent(libparsec_types::MessageContent::SharingGranted {
+                author: author.0,
+                timestamp: timestamp.0,
+                name: name.0,
+                id: id.0,
+                encryption_revision,
+                encrypted_on: encrypted_on.0,
+                key: key.0,
+            }),
         ))
     }
 
     #[getter]
     fn name(_self: PyRef<'_, Self>) -> PyResult<EntryName> {
         Ok(match &_self.as_ref().0 {
-            libparsec::low_level::types::MessageContent::SharingGranted { name, .. } => {
-                EntryName(name.clone())
-            }
+            libparsec_types::MessageContent::SharingGranted { name, .. } => EntryName(name.clone()),
             _ => return Err(PyNotImplementedError::new_err("")),
         })
     }
@@ -161,7 +153,7 @@ impl SharingGrantedMessageContent {
     #[getter]
     fn id(_self: PyRef<'_, Self>) -> PyResult<VlobID> {
         Ok(match _self.as_ref().0 {
-            libparsec::low_level::types::MessageContent::SharingGranted { id, .. } => VlobID(id),
+            libparsec_types::MessageContent::SharingGranted { id, .. } => VlobID(id),
             _ => return Err(PyNotImplementedError::new_err("")),
         })
     }
@@ -169,7 +161,7 @@ impl SharingGrantedMessageContent {
     #[getter]
     fn encryption_revision(_self: PyRef<'_, Self>) -> PyResult<IndexInt> {
         Ok(match _self.as_ref().0 {
-            libparsec::low_level::types::MessageContent::SharingGranted {
+            libparsec_types::MessageContent::SharingGranted {
                 encryption_revision,
                 ..
             } => encryption_revision,
@@ -180,9 +172,9 @@ impl SharingGrantedMessageContent {
     #[getter]
     fn encrypted_on(_self: PyRef<'_, Self>) -> PyResult<DateTime> {
         Ok(match _self.as_ref().0 {
-            libparsec::low_level::types::MessageContent::SharingGranted {
-                encrypted_on, ..
-            } => DateTime(encrypted_on),
+            libparsec_types::MessageContent::SharingGranted { encrypted_on, .. } => {
+                DateTime(encrypted_on)
+            }
             _ => return Err(PyNotImplementedError::new_err("")),
         })
     }
@@ -190,9 +182,7 @@ impl SharingGrantedMessageContent {
     #[getter]
     fn key(_self: PyRef<'_, Self>) -> PyResult<SecretKey> {
         Ok(match &_self.as_ref().0 {
-            libparsec::low_level::types::MessageContent::SharingGranted { key, .. } => {
-                SecretKey(key.clone())
-            }
+            libparsec_types::MessageContent::SharingGranted { key, .. } => SecretKey(key.clone()),
             _ => return Err(PyNotImplementedError::new_err("")),
         })
     }
@@ -215,24 +205,22 @@ impl SharingReencryptedMessageContent {
     ) -> PyResult<(Self, MessageContent)> {
         Ok((
             Self,
-            MessageContent(
-                libparsec::low_level::types::MessageContent::SharingReencrypted {
-                    author: author.0,
-                    timestamp: timestamp.0,
-                    name: name.0,
-                    id: id.0,
-                    encryption_revision,
-                    encrypted_on: encrypted_on.0,
-                    key: key.0,
-                },
-            ),
+            MessageContent(libparsec_types::MessageContent::SharingReencrypted {
+                author: author.0,
+                timestamp: timestamp.0,
+                name: name.0,
+                id: id.0,
+                encryption_revision,
+                encrypted_on: encrypted_on.0,
+                key: key.0,
+            }),
         ))
     }
 
     #[getter]
     fn name(_self: PyRef<'_, Self>) -> PyResult<EntryName> {
         Ok(match &_self.as_ref().0 {
-            libparsec::low_level::types::MessageContent::SharingReencrypted { name, .. } => {
+            libparsec_types::MessageContent::SharingReencrypted { name, .. } => {
                 EntryName(name.clone())
             }
             _ => return Err(PyNotImplementedError::new_err("")),
@@ -242,9 +230,7 @@ impl SharingReencryptedMessageContent {
     #[getter]
     fn id(_self: PyRef<'_, Self>) -> PyResult<VlobID> {
         Ok(match _self.as_ref().0 {
-            libparsec::low_level::types::MessageContent::SharingReencrypted { id, .. } => {
-                VlobID(id)
-            }
+            libparsec_types::MessageContent::SharingReencrypted { id, .. } => VlobID(id),
             _ => return Err(PyNotImplementedError::new_err("")),
         })
     }
@@ -252,7 +238,7 @@ impl SharingReencryptedMessageContent {
     #[getter]
     fn encryption_revision(_self: PyRef<'_, Self>) -> PyResult<IndexInt> {
         Ok(match _self.as_ref().0 {
-            libparsec::low_level::types::MessageContent::SharingReencrypted {
+            libparsec_types::MessageContent::SharingReencrypted {
                 encryption_revision,
                 ..
             } => encryption_revision,
@@ -263,10 +249,9 @@ impl SharingReencryptedMessageContent {
     #[getter]
     fn encrypted_on(_self: PyRef<'_, Self>) -> PyResult<DateTime> {
         Ok(match _self.as_ref().0 {
-            libparsec::low_level::types::MessageContent::SharingReencrypted {
-                encrypted_on,
-                ..
-            } => DateTime(encrypted_on),
+            libparsec_types::MessageContent::SharingReencrypted { encrypted_on, .. } => {
+                DateTime(encrypted_on)
+            }
             _ => return Err(PyNotImplementedError::new_err("")),
         })
     }
@@ -274,7 +259,7 @@ impl SharingReencryptedMessageContent {
     #[getter]
     fn key(_self: PyRef<'_, Self>) -> PyResult<SecretKey> {
         Ok(match &_self.as_ref().0 {
-            libparsec::low_level::types::MessageContent::SharingReencrypted { key, .. } => {
+            libparsec_types::MessageContent::SharingReencrypted { key, .. } => {
                 SecretKey(key.clone())
             }
             _ => return Err(PyNotImplementedError::new_err("")),
@@ -291,20 +276,18 @@ impl SharingRevokedMessageContent {
     fn new(author: DeviceID, timestamp: DateTime, id: VlobID) -> PyResult<(Self, MessageContent)> {
         Ok((
             Self,
-            MessageContent(
-                libparsec::low_level::types::MessageContent::SharingRevoked {
-                    author: author.0,
-                    timestamp: timestamp.0,
-                    id: id.0,
-                },
-            ),
+            MessageContent(libparsec_types::MessageContent::SharingRevoked {
+                author: author.0,
+                timestamp: timestamp.0,
+                id: id.0,
+            }),
         ))
     }
 
     #[getter]
     fn id(_self: PyRef<'_, Self>) -> PyResult<VlobID> {
         Ok(match _self.as_ref().0 {
-            libparsec::low_level::types::MessageContent::SharingRevoked { id, .. } => VlobID(id),
+            libparsec_types::MessageContent::SharingRevoked { id, .. } => VlobID(id),
             _ => return Err(PyNotImplementedError::new_err("")),
         })
     }
@@ -323,7 +306,7 @@ impl PingMessageContent {
     ) -> PyResult<(Self, MessageContent)> {
         Ok((
             Self,
-            MessageContent(libparsec::low_level::types::MessageContent::Ping {
+            MessageContent(libparsec_types::MessageContent::Ping {
                 author: author.0,
                 timestamp: timestamp.0,
                 ping,
@@ -334,9 +317,7 @@ impl PingMessageContent {
     #[getter]
     fn ping<'py>(_self: PyRef<'py, Self>, py: Python<'py>) -> PyResult<&'py PyString> {
         Ok(match &_self.as_ref().0 {
-            libparsec::low_level::types::MessageContent::Ping { ping, .. } => {
-                PyString::new(py, ping)
-            }
+            libparsec_types::MessageContent::Ping { ping, .. } => PyString::new(py, ping),
             _ => return Err(PyNotImplementedError::new_err("")),
         })
     }

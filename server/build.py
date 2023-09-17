@@ -77,7 +77,9 @@ def build() -> None:
     #
     # However we want to disable this feature for some packagings (e.g. Docker, Snap)
     # given they provide a image that already ships with the correct openssl (in this
-    # case bundling would only mean ending up with two copies of the same lib)
+    # case bundling would only mean ending up with two copies of the same lib).
+    # We also want to disable this on CI given we build and run on the same machine
+    # (so bundling increases needlessly the cache size).
     bundle_extra_so = (
         os.environ.get("POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES", "true").lower() == "true"
     )

@@ -7,9 +7,7 @@ use pyo3::{
     types::{PyBytes, PyDict, PyType},
 };
 
-use libparsec::low_level::types::{
-    CertificateSignerOwned, CertificateSignerRef, UnsecureSkipValidationReason,
-};
+use libparsec_types::{CertificateSignerOwned, CertificateSignerRef, UnsecureSkipValidationReason};
 
 use crate::{
     api_crypto::{PublicKey, SequesterPublicKeyDer, SequesterVerifyKeyDer, SigningKey, VerifyKey},
@@ -21,7 +19,7 @@ use crate::{
 
 crate::binding_utils::gen_py_wrapper_class!(
     UserCertificate,
-    Arc<libparsec::low_level::types::UserCertificate>,
+    Arc<libparsec_types::UserCertificate>,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -40,19 +38,17 @@ impl UserCertificate {
         public_key: PublicKey,
         profile: UserProfile,
     ) -> PyResult<Self> {
-        Ok(Self(Arc::new(
-            libparsec::low_level::types::UserCertificate {
-                author: match author {
-                    Some(device_id) => CertificateSignerOwned::User(device_id.0),
-                    None => CertificateSignerOwned::Root,
-                },
-                timestamp: timestamp.0,
-                user_id: user_id.0,
-                human_handle: human_handle.map(|human_handle| human_handle.0),
-                public_key: public_key.0,
-                profile: profile.0,
+        Ok(Self(Arc::new(libparsec_types::UserCertificate {
+            author: match author {
+                Some(device_id) => CertificateSignerOwned::User(device_id.0),
+                None => CertificateSignerOwned::Root,
             },
-        )))
+            timestamp: timestamp.0,
+            user_id: user_id.0,
+            human_handle: human_handle.map(|human_handle| human_handle.0),
+            public_key: public_key.0,
+            profile: profile.0,
+        })))
     }
 
     #[pyo3(signature = (**py_kwargs))]
@@ -104,19 +100,17 @@ impl UserCertificate {
         expected_user: Option<&UserID>,
         expected_human_handle: Option<&HumanHandle>,
     ) -> DataResult<Self> {
-        Ok(
-            libparsec::low_level::types::UserCertificate::verify_and_load(
-                signed,
-                &author_verify_key.0,
-                match expected_author {
-                    Some(device_id) => CertificateSignerRef::User(&device_id.0),
-                    None => CertificateSignerRef::Root,
-                },
-                expected_user.map(|x| &x.0),
-                expected_human_handle.map(|x| &x.0),
-            )
-            .map(|x| Self(Arc::new(x)))?,
+        Ok(libparsec_types::UserCertificate::verify_and_load(
+            signed,
+            &author_verify_key.0,
+            match expected_author {
+                Some(device_id) => CertificateSignerRef::User(&device_id.0),
+                None => CertificateSignerRef::Root,
+            },
+            expected_user.map(|x| &x.0),
+            expected_human_handle.map(|x| &x.0),
         )
+        .map(|x| Self(Arc::new(x)))?)
     }
 
     fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
@@ -126,7 +120,7 @@ impl UserCertificate {
     #[classmethod]
     fn unsecure_load(_cls: &PyType, signed: &[u8]) -> DataResult<Self> {
         Ok(
-            libparsec::low_level::types::UserCertificate::unsecure_load(signed.to_vec().into())
+            libparsec_types::UserCertificate::unsecure_load(signed.to_vec().into())
                 .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
                 .map(|x| Self(Arc::new(x)))?,
         )
@@ -134,7 +128,7 @@ impl UserCertificate {
 
     #[getter]
     fn is_admin(&self) -> bool {
-        self.0.profile == libparsec::low_level::types::UserProfile::Admin
+        self.0.profile == libparsec_types::UserProfile::Admin
     }
 
     #[getter]
@@ -173,7 +167,7 @@ impl UserCertificate {
 
 crate::binding_utils::gen_py_wrapper_class!(
     DeviceCertificate,
-    Arc<libparsec::low_level::types::DeviceCertificate>,
+    Arc<libparsec_types::DeviceCertificate>,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -191,18 +185,16 @@ impl DeviceCertificate {
         device_label: Option<DeviceLabel>,
         verify_key: VerifyKey,
     ) -> PyResult<Self> {
-        Ok(Self(Arc::new(
-            libparsec::low_level::types::DeviceCertificate {
-                author: match author {
-                    Some(device_id) => CertificateSignerOwned::User(device_id.0),
-                    None => CertificateSignerOwned::Root,
-                },
-                timestamp: timestamp.0,
-                device_id: device_id.0,
-                device_label: device_label.map(|x| x.0),
-                verify_key: verify_key.0,
+        Ok(Self(Arc::new(libparsec_types::DeviceCertificate {
+            author: match author {
+                Some(device_id) => CertificateSignerOwned::User(device_id.0),
+                None => CertificateSignerOwned::Root,
             },
-        )))
+            timestamp: timestamp.0,
+            device_id: device_id.0,
+            device_label: device_label.map(|x| x.0),
+            verify_key: verify_key.0,
+        })))
     }
 
     #[pyo3(signature = (**py_kwargs))]
@@ -249,18 +241,16 @@ impl DeviceCertificate {
         expected_author: Option<&DeviceID>,
         expected_device: Option<&DeviceID>,
     ) -> DataResult<Self> {
-        Ok(
-            libparsec::low_level::types::DeviceCertificate::verify_and_load(
-                signed,
-                &author_verify_key.0,
-                match &expected_author {
-                    Some(device_id) => CertificateSignerRef::User(&device_id.0),
-                    None => CertificateSignerRef::Root,
-                },
-                expected_device.map(|x| &x.0),
-            )
-            .map(|x| Self(Arc::new(x)))?,
+        Ok(libparsec_types::DeviceCertificate::verify_and_load(
+            signed,
+            &author_verify_key.0,
+            match &expected_author {
+                Some(device_id) => CertificateSignerRef::User(&device_id.0),
+                None => CertificateSignerRef::Root,
+            },
+            expected_device.map(|x| &x.0),
         )
+        .map(|x| Self(Arc::new(x)))?)
     }
 
     fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
@@ -270,7 +260,7 @@ impl DeviceCertificate {
     #[classmethod]
     fn unsecure_load(_cls: &PyType, signed: &[u8]) -> DataResult<Self> {
         Ok(
-            libparsec::low_level::types::DeviceCertificate::unsecure_load(signed.to_vec().into())
+            libparsec_types::DeviceCertificate::unsecure_load(signed.to_vec().into())
                 .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
                 .map(|x| Self(Arc::new(x)))?,
         )
@@ -307,7 +297,7 @@ impl DeviceCertificate {
 
 crate::binding_utils::gen_py_wrapper_class!(
     RevokedUserCertificate,
-    Arc<libparsec::low_level::types::RevokedUserCertificate>,
+    Arc<libparsec_types::RevokedUserCertificate>,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -319,13 +309,11 @@ impl RevokedUserCertificate {
     #[new]
     #[pyo3(signature = (author, timestamp, user_id))]
     fn new(author: DeviceID, timestamp: DateTime, user_id: UserID) -> PyResult<Self> {
-        Ok(Self(Arc::new(
-            libparsec::low_level::types::RevokedUserCertificate {
-                author: author.0,
-                timestamp: timestamp.0,
-                user_id: user_id.0,
-            },
-        )))
+        Ok(Self(Arc::new(libparsec_types::RevokedUserCertificate {
+            author: author.0,
+            timestamp: timestamp.0,
+            user_id: user_id.0,
+        })))
     }
 
     #[pyo3(signature = (**py_kwargs))]
@@ -361,15 +349,13 @@ impl RevokedUserCertificate {
         expected_author: &DeviceID,
         expected_user: Option<&UserID>,
     ) -> DataResult<Self> {
-        Ok(
-            libparsec::low_level::types::RevokedUserCertificate::verify_and_load(
-                signed,
-                &author_verify_key.0,
-                &expected_author.0,
-                expected_user.map(|x| &x.0),
-            )
-            .map(|x| Self(Arc::new(x)))?,
+        Ok(libparsec_types::RevokedUserCertificate::verify_and_load(
+            signed,
+            &author_verify_key.0,
+            &expected_author.0,
+            expected_user.map(|x| &x.0),
         )
+        .map(|x| Self(Arc::new(x)))?)
     }
 
     fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
@@ -379,11 +365,9 @@ impl RevokedUserCertificate {
     #[classmethod]
     fn unsecure_load(_cls: &PyType, signed: &[u8]) -> DataResult<Self> {
         Ok(
-            libparsec::low_level::types::RevokedUserCertificate::unsecure_load(
-                signed.to_vec().into(),
-            )
-            .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
-            .map(|x| Self(Arc::new(x)))?,
+            libparsec_types::RevokedUserCertificate::unsecure_load(signed.to_vec().into())
+                .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
+                .map(|x| Self(Arc::new(x)))?,
         )
     }
 
@@ -405,7 +389,7 @@ impl RevokedUserCertificate {
 
 crate::binding_utils::gen_py_wrapper_class!(
     UserUpdateCertificate,
-    Arc<libparsec::low_level::types::UserUpdateCertificate>,
+    Arc<libparsec_types::UserUpdateCertificate>,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -422,14 +406,12 @@ impl UserUpdateCertificate {
         user_id: UserID,
         new_profile: UserProfile,
     ) -> PyResult<Self> {
-        Ok(Self(Arc::new(
-            libparsec::low_level::types::UserUpdateCertificate {
-                author: author.0,
-                timestamp: timestamp.0,
-                user_id: user_id.0,
-                new_profile: new_profile.0,
-            },
-        )))
+        Ok(Self(Arc::new(libparsec_types::UserUpdateCertificate {
+            author: author.0,
+            timestamp: timestamp.0,
+            user_id: user_id.0,
+            new_profile: new_profile.0,
+        })))
     }
 
     #[pyo3(signature = (**py_kwargs))]
@@ -469,15 +451,13 @@ impl UserUpdateCertificate {
         expected_author: &DeviceID,
         expected_user: Option<&UserID>,
     ) -> DataResult<Self> {
-        Ok(
-            libparsec::low_level::types::UserUpdateCertificate::verify_and_load(
-                signed,
-                &author_verify_key.0,
-                &expected_author.0,
-                expected_user.map(|x| &x.0),
-            )
-            .map(|x| Self(Arc::new(x)))?,
+        Ok(libparsec_types::UserUpdateCertificate::verify_and_load(
+            signed,
+            &author_verify_key.0,
+            &expected_author.0,
+            expected_user.map(|x| &x.0),
         )
+        .map(|x| Self(Arc::new(x)))?)
     }
 
     fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
@@ -487,11 +467,9 @@ impl UserUpdateCertificate {
     #[classmethod]
     fn unsecure_load(_cls: &PyType, signed: &[u8]) -> DataResult<Self> {
         Ok(
-            libparsec::low_level::types::UserUpdateCertificate::unsecure_load(
-                signed.to_vec().into(),
-            )
-            .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
-            .map(|x| Self(Arc::new(x)))?,
+            libparsec_types::UserUpdateCertificate::unsecure_load(signed.to_vec().into())
+                .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
+                .map(|x| Self(Arc::new(x)))?,
         )
     }
 
@@ -518,7 +496,7 @@ impl UserUpdateCertificate {
 
 crate::binding_utils::gen_py_wrapper_class!(
     RealmRoleCertificate,
-    Arc<libparsec::low_level::types::RealmRoleCertificate>,
+    Arc<libparsec_types::RealmRoleCertificate>,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -536,18 +514,16 @@ impl RealmRoleCertificate {
         user_id: UserID,
         role: Option<RealmRole>,
     ) -> PyResult<Self> {
-        Ok(Self(Arc::new(
-            libparsec::low_level::types::RealmRoleCertificate {
-                timestamp: timestamp.0,
-                author: match author {
-                    Some(device_id) => CertificateSignerOwned::User(device_id.0),
-                    None => CertificateSignerOwned::Root,
-                },
-                realm_id: realm_id.0,
-                user_id: user_id.0,
-                role: role.map(|x| x.0),
+        Ok(Self(Arc::new(libparsec_types::RealmRoleCertificate {
+            timestamp: timestamp.0,
+            author: match author {
+                Some(device_id) => CertificateSignerOwned::User(device_id.0),
+                None => CertificateSignerOwned::Root,
             },
-        )))
+            realm_id: realm_id.0,
+            user_id: user_id.0,
+            role: role.map(|x| x.0),
+        })))
     }
 
     #[pyo3(signature = (**py_kwargs))]
@@ -595,19 +571,17 @@ impl RealmRoleCertificate {
         expected_realm: Option<VlobID>,
         expected_user: Option<&UserID>,
     ) -> DataResult<Self> {
-        Ok(
-            libparsec::low_level::types::RealmRoleCertificate::verify_and_load(
-                signed,
-                &author_verify_key.0,
-                match &expected_author {
-                    Some(device_id) => CertificateSignerRef::User(&device_id.0),
-                    None => CertificateSignerRef::Root,
-                },
-                expected_realm.map(|x| x.0),
-                expected_user.map(|x| &x.0),
-            )
-            .map(|x| Self(Arc::new(x)))?,
+        Ok(libparsec_types::RealmRoleCertificate::verify_and_load(
+            signed,
+            &author_verify_key.0,
+            match &expected_author {
+                Some(device_id) => CertificateSignerRef::User(&device_id.0),
+                None => CertificateSignerRef::Root,
+            },
+            expected_realm.map(|x| x.0),
+            expected_user.map(|x| &x.0),
         )
+        .map(|x| Self(Arc::new(x)))?)
     }
 
     fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
@@ -617,11 +591,9 @@ impl RealmRoleCertificate {
     #[classmethod]
     fn unsecure_load(_cls: &PyType, signed: &[u8]) -> DataResult<Self> {
         Ok(
-            libparsec::low_level::types::RealmRoleCertificate::unsecure_load(
-                signed.to_vec().into(),
-            )
-            .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
-            .map(|x| Self(Arc::new(x)))?,
+            libparsec_types::RealmRoleCertificate::unsecure_load(signed.to_vec().into())
+                .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
+                .map(|x| Self(Arc::new(x)))?,
         )
     }
 
@@ -632,15 +604,13 @@ impl RealmRoleCertificate {
         timestamp: DateTime,
         realm_id: VlobID,
     ) -> Self {
-        Self(Arc::new(
-            libparsec::low_level::types::RealmRoleCertificate {
-                user_id: author.0.user_id().clone(),
-                author: CertificateSignerOwned::User(author.0),
-                timestamp: timestamp.0,
-                realm_id: realm_id.0,
-                role: Some(libparsec::low_level::types::RealmRole::Owner),
-            },
-        ))
+        Self(Arc::new(libparsec_types::RealmRoleCertificate {
+            user_id: author.0.user_id().clone(),
+            author: CertificateSignerOwned::User(author.0),
+            timestamp: timestamp.0,
+            realm_id: realm_id.0,
+            role: Some(libparsec_types::RealmRole::Owner),
+        }))
     }
 
     #[getter]
@@ -674,7 +644,7 @@ impl RealmRoleCertificate {
 
 crate::binding_utils::gen_py_wrapper_class!(
     SequesterAuthorityCertificate,
-    Arc<libparsec::low_level::types::SequesterAuthorityCertificate>,
+    Arc<libparsec_types::SequesterAuthorityCertificate>,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -685,12 +655,10 @@ crate::binding_utils::gen_py_wrapper_class!(
 impl SequesterAuthorityCertificate {
     #[new]
     fn new(timestamp: DateTime, verify_key_der: SequesterVerifyKeyDer) -> Self {
-        Self(Arc::new(
-            libparsec::low_level::types::SequesterAuthorityCertificate {
-                timestamp: timestamp.0,
-                verify_key_der: verify_key_der.0,
-            },
-        ))
+        Self(Arc::new(libparsec_types::SequesterAuthorityCertificate {
+            timestamp: timestamp.0,
+            verify_key_der: verify_key_der.0,
+        }))
     }
 
     #[classmethod]
@@ -700,7 +668,7 @@ impl SequesterAuthorityCertificate {
         author_verify_key: &VerifyKey,
     ) -> DataResult<Self> {
         Ok(
-            libparsec::low_level::types::SequesterAuthorityCertificate::verify_and_load(
+            libparsec_types::SequesterAuthorityCertificate::verify_and_load(
                 signed,
                 &author_verify_key.0,
             )
@@ -725,7 +693,7 @@ impl SequesterAuthorityCertificate {
 
 crate::binding_utils::gen_py_wrapper_class!(
     SequesterServiceCertificate,
-    Arc<libparsec::low_level::types::SequesterServiceCertificate>,
+    Arc<libparsec_types::SequesterServiceCertificate>,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -741,22 +709,17 @@ impl SequesterServiceCertificate {
         service_label: String,
         encryption_key_der: SequesterPublicKeyDer,
     ) -> Self {
-        Self(Arc::new(
-            libparsec::low_level::types::SequesterServiceCertificate {
-                timestamp: timestamp.0,
-                service_id: service_id.0,
-                service_label,
-                encryption_key_der: encryption_key_der.0,
-            },
-        ))
+        Self(Arc::new(libparsec_types::SequesterServiceCertificate {
+            timestamp: timestamp.0,
+            service_id: service_id.0,
+            service_label,
+            encryption_key_der: encryption_key_der.0,
+        }))
     }
 
     #[classmethod]
     fn load(_cls: &PyType, data: &[u8]) -> DataResult<Self> {
-        Ok(
-            libparsec::low_level::types::SequesterServiceCertificate::load(data)
-                .map(|x| Self(Arc::new(x)))?,
-        )
+        Ok(libparsec_types::SequesterServiceCertificate::load(data).map(|x| Self(Arc::new(x)))?)
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {

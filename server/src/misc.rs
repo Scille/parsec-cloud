@@ -11,7 +11,7 @@ use crate::{ProtocolErrorFields, ProtocolResult};
 
 crate::binding_utils::gen_py_wrapper_class!(
     ApiVersion,
-    libparsec::low_level::types::ApiVersion,
+    libparsec_types::ApiVersion,
     __str__,
     __copy__,
     __deepcopy__,
@@ -23,38 +23,34 @@ crate::binding_utils::gen_py_wrapper_class!(
 impl ApiVersion {
     #[new]
     fn new(version: u32, revision: u32) -> Self {
-        Self(libparsec::low_level::types::ApiVersion { version, revision })
+        Self(libparsec_types::ApiVersion { version, revision })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
             &self.0.clone().dump().map_err(|e| {
-                ProtocolErrorFields(
-                    libparsec::low_level::protocol::ProtocolError::EncodingError {
-                        exc: e.to_string(),
-                    },
-                )
+                ProtocolErrorFields(libparsec_protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
             })?,
         ))
     }
 
     #[classmethod]
     fn from_bytes(_cls: &PyType, bytes: &[u8]) -> ProtocolResult<Self> {
-        Ok(Self(
-            libparsec::low_level::types::ApiVersion::load(bytes).map_err(|err| {
-                ProtocolErrorFields(
-                    libparsec::low_level::protocol::ProtocolError::EncodingError {
-                        exc: err.to_string(),
-                    },
-                )
-            })?,
-        ))
+        Ok(Self(libparsec_types::ApiVersion::load(bytes).map_err(
+            |err| {
+                ProtocolErrorFields(libparsec_protocol::ProtocolError::EncodingError {
+                    exc: err.to_string(),
+                })
+            },
+        )?))
     }
 
     #[classmethod]
     fn from_str(_cls: &PyType, version_str: &str) -> PyResult<Self> {
-        libparsec::low_level::types::ApiVersion::try_from(version_str)
+        libparsec_types::ApiVersion::try_from(version_str)
             .map(Self)
             .map_err(PyValueError::new_err)
     }
@@ -72,36 +68,35 @@ impl ApiVersion {
     #[classattr]
     #[pyo3(name = "API_V1_VERSION")]
     fn api_v1_version() -> Self {
-        const API_V1_VERSION: ApiVersion = Self(*libparsec::low_level::protocol::API_V1_VERSION);
+        const API_V1_VERSION: ApiVersion = Self(*libparsec_protocol::API_V1_VERSION);
         API_V1_VERSION
     }
 
     #[classattr]
     #[pyo3(name = "API_V2_VERSION")]
     fn api_v2_version() -> Self {
-        const API_V2_VERSION: ApiVersion = Self(*libparsec::low_level::protocol::API_V2_VERSION);
+        const API_V2_VERSION: ApiVersion = Self(*libparsec_protocol::API_V2_VERSION);
         API_V2_VERSION
     }
 
     #[classattr]
     #[pyo3(name = "API_V3_VERSION")]
     fn api_v3_version() -> Self {
-        const API_V3_VERSION: ApiVersion = Self(*libparsec::low_level::protocol::API_V3_VERSION);
+        const API_V3_VERSION: ApiVersion = Self(*libparsec_protocol::API_V3_VERSION);
         API_V3_VERSION
     }
 
     #[classattr]
     #[pyo3(name = "API_V4_VERSION")]
     fn api_v4_version() -> Self {
-        const API_V4_VERSION: ApiVersion = Self(*libparsec::low_level::protocol::API_V4_VERSION);
+        const API_V4_VERSION: ApiVersion = Self(*libparsec_protocol::API_V4_VERSION);
         API_V4_VERSION
     }
 
     #[classattr]
     #[pyo3(name = "API_LATEST_VERSION")]
     fn api_version_number() -> Self {
-        const API_LATEST_VERSION: ApiVersion =
-            Self(*libparsec::low_level::protocol::API_LATEST_VERSION);
+        const API_LATEST_VERSION: ApiVersion = Self(*libparsec_protocol::API_LATEST_VERSION);
         API_LATEST_VERSION
     }
 }

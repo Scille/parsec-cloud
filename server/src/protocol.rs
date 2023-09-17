@@ -8,7 +8,7 @@ use pyo3::{
     IntoPy, PyAny, PyErr, PyObject, PyResult, Python,
 };
 
-use libparsec::low_level::serialization_format::python_bindings_parsec_protocol_cmds_family;
+use libparsec_serialization_format::python_bindings_parsec_protocol_cmds_family;
 
 /*
  * ProtocolError
@@ -18,7 +18,7 @@ create_exception!(_parsec, ProtocolError, PyException);
 
 crate::binding_utils::gen_py_wrapper_class!(
     ProtocolErrorFields,
-    libparsec::low_level::protocol::ProtocolError,
+    libparsec_protocol::ProtocolError,
     __repr__,
     __str__, // Needed for python's exceptions
     __copy__,
@@ -31,7 +31,7 @@ impl ProtocolErrorFields {
     #[classmethod]
     #[pyo3(name = "EncodingError")]
     fn encoding_error(_cls: &PyType, exc: String) -> Self {
-        Self(libparsec::low_level::protocol::ProtocolError::EncodingError { exc })
+        Self(libparsec_protocol::ProtocolError::EncodingError { exc })
     }
 
     #[classattr]
@@ -40,7 +40,7 @@ impl ProtocolErrorFields {
         lazy_static::lazy_static! {
             static ref VALUE: PyObject = {
                 Python::with_gil(|py| {
-                    ProtocolErrorFields(libparsec::low_level::protocol::ProtocolError::NotHandled).into_py(py)
+                    ProtocolErrorFields(libparsec_protocol::ProtocolError::NotHandled).into_py(py)
                 })
             };
         }
@@ -51,15 +51,15 @@ impl ProtocolErrorFields {
     #[classmethod]
     #[pyo3(name = "BadRequest")]
     fn bad_request(_cls: &PyType, exc: String) -> Self {
-        Self(libparsec::low_level::protocol::ProtocolError::BadRequest { exc })
+        Self(libparsec_protocol::ProtocolError::BadRequest { exc })
     }
 
     #[getter]
     fn exc(&self) -> PyResult<&str> {
         match &self.0 {
-            libparsec::low_level::protocol::ProtocolError::EncodingError { exc } => Ok(exc),
-            libparsec::low_level::protocol::ProtocolError::DecodingError { exc } => Ok(exc),
-            libparsec::low_level::protocol::ProtocolError::BadRequest { exc } => Ok(exc),
+            libparsec_protocol::ProtocolError::EncodingError { exc } => Ok(exc),
+            libparsec_protocol::ProtocolError::DecodingError { exc } => Ok(exc),
+            libparsec_protocol::ProtocolError::BadRequest { exc } => Ok(exc),
             _ => Err(PyAttributeError::new_err("No such attribute `exc`")),
         }
     }
@@ -79,7 +79,7 @@ pub(crate) type ProtocolResult<T> = Result<T, ProtocolErrorFields>;
 
 crate::binding_utils::gen_py_wrapper_class!(
     ReencryptionBatchEntry,
-    libparsec::low_level::types::ReencryptionBatchEntry,
+    libparsec_types::ReencryptionBatchEntry,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -96,7 +96,7 @@ impl ReencryptionBatchEntry {
     ) -> PyResult<Self> {
         crate::binding_utils::unwrap_bytes!(blob);
         let vlob_id = vlob_id.0;
-        Ok(Self(libparsec::low_level::types::ReencryptionBatchEntry {
+        Ok(Self(libparsec_types::ReencryptionBatchEntry {
             vlob_id,
             version,
             blob,
@@ -125,7 +125,7 @@ impl ReencryptionBatchEntry {
 
 crate::binding_utils::gen_py_wrapper_class!(
     ActiveUsersLimit,
-    libparsec::low_level::types::ActiveUsersLimit,
+    libparsec_types::ActiveUsersLimit,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -137,7 +137,7 @@ impl ActiveUsersLimit {
     #[classmethod]
     #[pyo3(name = "LimitedTo")]
     fn limited_to(_cls: &PyType, user_count_limit: u64) -> Self {
-        Self(libparsec::low_level::types::ActiveUsersLimit::LimitedTo(
+        Self(libparsec_types::ActiveUsersLimit::LimitedTo(
             user_count_limit,
         ))
     }
@@ -148,7 +148,7 @@ impl ActiveUsersLimit {
         lazy_static::lazy_static! {
             static ref VALUE: PyObject = {
                 Python::with_gil(|py| {
-                    ActiveUsersLimit(libparsec::low_level::types::ActiveUsersLimit::NoLimit)
+                    ActiveUsersLimit(libparsec_types::ActiveUsersLimit::NoLimit)
                         .into_py(py)
                 })
             };
@@ -168,10 +168,10 @@ impl ActiveUsersLimit {
 
     fn to_int(&self) -> Option<u64> {
         match self.0 {
-            libparsec::low_level::types::ActiveUsersLimit::LimitedTo(user_count_limit) => {
+            libparsec_types::ActiveUsersLimit::LimitedTo(user_count_limit) => {
                 Some(user_count_limit)
             }
-            libparsec::low_level::types::ActiveUsersLimit::NoLimit => None,
+            libparsec_types::ActiveUsersLimit::NoLimit => None,
         }
     }
 }

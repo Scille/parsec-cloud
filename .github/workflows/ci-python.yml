@@ -112,7 +112,7 @@ jobs:
       # Hence if we have a cache hit we know that there is no need for a rebuild !
       - name: Setup cache-key
         id: cache-key
-        run: echo "key=ubuntu-20.04-${{ hashFiles('server/src/**', 'server/Cargo.toml', 'libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-libparsec-python-${{ env.python-version }}" >> $GITHUB_OUTPUT
+        run: echo "key=libparsec-ubuntu-20.04-${{ hashFiles( 'make.py', 'server/build.py', 'server/src/**', 'server/Cargo.toml', 'libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock'  ) }}-no-bundle-extra-shared-libraries" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Restore libparsec if Rust hasn't been modified
@@ -124,6 +124,8 @@ jobs:
           path: |
             server/parsec/_parsec.*.pyd
             server/parsec/_parsec.*.so
+            # Note `server/parsec.libs/` is not included since we are going to build
+            # with POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false (see below)
         timeout-minutes: 2
 
       - name: Setup Rust toolchain
@@ -152,8 +154,17 @@ jobs:
           poetry --directory ./server env info
           if ${{ env.SKIP_EXT_BUILD }}; then export POETRY_LIBPARSEC_BUILD_STRATEGY=no_build; fi
           python make.py python-ci-install
+
+          # Make sure POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false worked
+          if [ -n "$( ls -A ./server/parsec.libs 2>/dev/null )" ];
+          then
+            echo "::error::Extra libs disabled but parsec.libs/ is not empty :/ (contains: $( echo ./server/parsec.libs/* | xargs ))"
+            exit 1
+          fi
         env:
           SKIP_EXT_BUILD: ${{ steps.cache-libparsec.outputs.cache-hit == 'true' || inputs.style-only }}
+          # No need to bundle given we compile and run on the same machine
+          POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES: false
         timeout-minutes: 20
 
       - name: Install pre-commit

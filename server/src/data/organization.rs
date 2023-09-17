@@ -9,7 +9,7 @@ use crate::{ActiveUsersLimit, BytesWrapper, UsersPerProfileDetailItem};
 
 crate::binding_utils::gen_py_wrapper_class!(
     OrganizationStats,
-    libparsec::low_level::types::OrganizationStats,
+    libparsec_types::OrganizationStats,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -27,7 +27,7 @@ impl OrganizationStats {
         metadata_size: u64,
         users_per_profile_detail: Vec<UsersPerProfileDetailItem>,
     ) -> Self {
-        Self(libparsec::low_level::types::OrganizationStats {
+        Self(libparsec_types::OrganizationStats {
             users,
             active_users,
             realms,
@@ -76,7 +76,7 @@ impl OrganizationStats {
 
 crate::binding_utils::gen_py_wrapper_class!(
     OrganizationConfig,
-    libparsec::low_level::types::OrganizationConfig,
+    libparsec_types::OrganizationConfig,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -93,7 +93,7 @@ impl OrganizationConfig {
         sequester_services: Option<Vec<BytesWrapper>>,
     ) -> Self {
         crate::binding_utils::unwrap_bytes!(sequester_authority, sequester_services);
-        Self(libparsec::low_level::types::OrganizationConfig {
+        Self(libparsec_types::OrganizationConfig {
             user_profile_outsider_allowed,
             active_users_limit: active_users_limit.0,
             sequester_authority,

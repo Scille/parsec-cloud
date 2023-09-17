@@ -18,7 +18,7 @@ use crate::{
 #[pyclass]
 #[derive(Clone)]
 pub(crate) struct TestbedTemplateContent {
-    template: Arc<libparsec::low_level::testbed::TestbedTemplate>,
+    template: Arc<libparsec_testbed::TestbedTemplate>,
     #[pyo3(get)]
     id: &'static str,
     #[pyo3(get)]
@@ -268,7 +268,7 @@ event_wrapper!(
         timestamp: DateTime,
         author: DeviceID,
         realm: VlobID,
-        encryption_revision: libparsec::low_level::types::IndexInt,
+        encryption_revision: libparsec_types::IndexInt,
         per_participant_message: Py<PyList>,
     ],
     |_py, x: &TestbedEventStartRealmReencryption| -> PyResult<String> {
@@ -285,7 +285,7 @@ event_wrapper!(
         timestamp: DateTime,
         author: DeviceID,
         realm: VlobID,
-        encryption_revision: libparsec::low_level::types::IndexInt,
+        encryption_revision: libparsec_types::IndexInt,
     ],
     |_py, x: &TestbedEventFinishRealmReencryption| -> PyResult<String> {
         Ok(format!(
@@ -353,9 +353,9 @@ event_wrapper!(
         timestamp: DateTime,
         author: DeviceID,
         realm: VlobID,
-        encryption_revision: libparsec::low_level::types::IndexInt,
+        encryption_revision: libparsec_types::IndexInt,
         vlob_id: VlobID,
-        version: libparsec::low_level::types::VersionInt,
+        version: libparsec_types::VersionInt,
         blob: Py<PyBytes>,
         sequester_blob: PyObject,
     ],
@@ -407,7 +407,7 @@ pub(crate) fn test_get_testbed_template(
     py: Python,
     id: &str,
 ) -> PyResult<Option<TestbedTemplateContent>> {
-    match libparsec::low_level::testbed::test_get_template(id) {
+    match libparsec_testbed::test_get_template(id) {
         None => Ok(None),
         Some(template) => {
             let events = {
@@ -425,25 +425,25 @@ pub(crate) fn test_get_testbed_template(
                     .certificates()
                     .map(|certif| {
                         let py_certif = match certif.certificate {
-                            libparsec::low_level::types::AnyArcCertificate::User(c) => {
+                            libparsec_types::AnyArcCertificate::User(c) => {
                                 UserCertificate::from(c).into_py(py)
                             }
-                            libparsec::low_level::types::AnyArcCertificate::Device(c) => {
+                            libparsec_types::AnyArcCertificate::Device(c) => {
                                 DeviceCertificate::from(c).into_py(py)
                             }
-                            libparsec::low_level::types::AnyArcCertificate::UserUpdate(c) => {
+                            libparsec_types::AnyArcCertificate::UserUpdate(c) => {
                                 UserUpdateCertificate::from(c).into_py(py)
                             }
-                            libparsec::low_level::types::AnyArcCertificate::RevokedUser(c) => {
+                            libparsec_types::AnyArcCertificate::RevokedUser(c) => {
                                 RevokedUserCertificate::from(c).into_py(py)
                             }
-                            libparsec::low_level::types::AnyArcCertificate::RealmRole(c) => {
+                            libparsec_types::AnyArcCertificate::RealmRole(c) => {
                                 RealmRoleCertificate::from(c).into_py(py)
                             }
-                            libparsec::low_level::types::AnyArcCertificate::SequesterAuthority(
-                                c,
-                            ) => SequesterAuthorityCertificate::from(c).into_py(py),
-                            libparsec::low_level::types::AnyArcCertificate::SequesterService(c) => {
+                            libparsec_types::AnyArcCertificate::SequesterAuthority(c) => {
+                                SequesterAuthorityCertificate::from(c).into_py(py)
+                            }
+                            libparsec_types::AnyArcCertificate::SequesterService(c) => {
                                 SequesterServiceCertificate::from(c).into_py(py)
                             }
                         };
@@ -467,8 +467,8 @@ pub(crate) fn test_get_testbed_template(
 
 fn event_to_pyobject(
     py: Python,
-    template: &libparsec::low_level::testbed::TestbedTemplate,
-    event: &libparsec::low_level::testbed::TestbedEvent,
+    template: &libparsec_testbed::TestbedTemplate,
+    event: &libparsec_testbed::TestbedEvent,
 ) -> PyResult<Option<PyObject>> {
     macro_rules! single_certificate {
         ($py: expr, $event: expr, $template: expr, $name: ident) => {{
@@ -480,7 +480,7 @@ fn event_to_pyobject(
             let raw_redacted = PyBytes::new($py, &certif.raw_redacted).into_py($py);
             let wrapped_certif = paste::paste! {
                 [< $name Certificate >]::from(match &certif.certificate {
-                    libparsec::low_level::types::AnyArcCertificate::$name(x) => x.to_owned(),
+                    libparsec_types::AnyArcCertificate::$name(x) => x.to_owned(),
                     _ => unreachable!(),
                 })
             };
@@ -489,7 +489,7 @@ fn event_to_pyobject(
     }
 
     Ok(match event {
-        libparsec::low_level::testbed::TestbedEvent::BootstrapOrganization(x) => {
+        libparsec_testbed::TestbedEvent::BootstrapOrganization(x) => {
             let mut certifs = x.certificates(template);
             let (user_certif, device_certif, sequester_authority_certif) =
                 match (certifs.next(), certifs.next(), certifs.next()) {
@@ -529,9 +529,7 @@ fn event_to_pyobject(
                 first_user_local_password: x.first_user_local_password,
                 sequester_authority_certificate: sequester_authority_certif.as_ref().map(|x| {
                     SequesterAuthorityCertificate::from(match &x.certificate {
-                        libparsec::low_level::types::AnyArcCertificate::SequesterAuthority(x) => {
-                            x.to_owned()
-                        }
+                        libparsec_types::AnyArcCertificate::SequesterAuthority(x) => x.to_owned(),
                         _ => unreachable!(),
                     })
                 }),
@@ -539,7 +537,7 @@ fn event_to_pyobject(
                     .as_ref()
                     .map(|x| PyBytes::new(py, &x.raw).into_py(py)),
                 first_user_certificate: UserCertificate::from(match &user_certif.certificate {
-                    libparsec::low_level::types::AnyArcCertificate::User(x) => x.to_owned(),
+                    libparsec_types::AnyArcCertificate::User(x) => x.to_owned(),
                     _ => unreachable!(),
                 }),
                 first_user_raw_certificate: PyBytes::new(py, &user_certif.raw).into_py(py),
@@ -548,7 +546,7 @@ fn event_to_pyobject(
                 first_user_first_device_certificate: DeviceCertificate::from(match &device_certif
                     .certificate
                 {
-                    libparsec::low_level::types::AnyArcCertificate::Device(x) => x.to_owned(),
+                    libparsec_types::AnyArcCertificate::Device(x) => x.to_owned(),
                     _ => unreachable!(),
                 }),
                 first_user_first_device_raw_certificate: PyBytes::new(py, &device_certif.raw)
@@ -562,7 +560,7 @@ fn event_to_pyobject(
             Some(obj.into_py(py))
         }
 
-        libparsec::low_level::testbed::TestbedEvent::NewSequesterService(x) => {
+        libparsec_testbed::TestbedEvent::NewSequesterService(x) => {
             let (certificate, raw_certificate, raw_redacted_certificate) =
                 single_certificate!(py, x, template, SequesterService);
             let obj = TestbedEventNewSequesterService {
@@ -578,7 +576,7 @@ fn event_to_pyobject(
             Some(obj.into_py(py))
         }
 
-        libparsec::low_level::testbed::TestbedEvent::NewUser(x) => {
+        libparsec_testbed::TestbedEvent::NewUser(x) => {
             let (user_certif, device_certif) = {
                 let mut certifs = x.certificates(template);
                 (
@@ -603,7 +601,7 @@ fn event_to_pyobject(
                 user_raw_redacted_certificate: PyBytes::new(py, &user_certif.raw_redacted)
                     .into_py(py),
                 user_certificate: UserCertificate::from(match &user_certif.certificate {
-                    libparsec::low_level::types::AnyArcCertificate::User(x) => x.to_owned(),
+                    libparsec_types::AnyArcCertificate::User(x) => x.to_owned(),
                     _ => unreachable!(),
                 }),
                 first_device_raw_certificate: PyBytes::new(py, &device_certif.raw).into_py(py),
@@ -614,7 +612,7 @@ fn event_to_pyobject(
                 .into_py(py),
                 first_device_certificate: DeviceCertificate::from(
                     match &device_certif.certificate {
-                        libparsec::low_level::types::AnyArcCertificate::Device(x) => x.to_owned(),
+                        libparsec_types::AnyArcCertificate::Device(x) => x.to_owned(),
                         _ => unreachable!(),
                     },
                 ),
@@ -622,7 +620,7 @@ fn event_to_pyobject(
             Some(obj.into_py(py))
         }
 
-        libparsec::low_level::testbed::TestbedEvent::NewDevice(x) => {
+        libparsec_testbed::TestbedEvent::NewDevice(x) => {
             let (certificate, raw_certificate, raw_redacted_certificate) =
                 single_certificate!(py, x, template, Device);
             let obj = TestbedEventNewDevice {
@@ -640,7 +638,7 @@ fn event_to_pyobject(
             Some(obj.into_py(py))
         }
 
-        libparsec::low_level::testbed::TestbedEvent::UpdateUserProfile(x) => {
+        libparsec_testbed::TestbedEvent::UpdateUserProfile(x) => {
             let (certificate, raw_certificate, raw_redacted_certificate) =
                 single_certificate!(py, x, template, UserUpdate);
             let obj = TestbedEventUpdateUserProfile {
@@ -655,7 +653,7 @@ fn event_to_pyobject(
             Some(obj.into_py(py))
         }
 
-        libparsec::low_level::testbed::TestbedEvent::RevokeUser(x) => {
+        libparsec_testbed::TestbedEvent::RevokeUser(x) => {
             let (certificate, raw_certificate, raw_redacted_certificate) =
                 single_certificate!(py, x, template, RevokedUser);
             let obj = TestbedEventRevokeUser {
@@ -669,7 +667,7 @@ fn event_to_pyobject(
             Some(obj.into_py(py))
         }
 
-        libparsec::low_level::testbed::TestbedEvent::NewRealm(x) => {
+        libparsec_testbed::TestbedEvent::NewRealm(x) => {
             let (certificate, raw_certificate, raw_redacted_certificate) =
                 single_certificate!(py, x, template, RealmRole);
             let obj = TestbedEventNewRealm {
@@ -684,7 +682,7 @@ fn event_to_pyobject(
             Some(obj.into_py(py))
         }
 
-        libparsec::low_level::testbed::TestbedEvent::ShareRealm(x) => {
+        libparsec_testbed::TestbedEvent::ShareRealm(x) => {
             let (certificate, raw_certificate, raw_redacted_certificate) =
                 single_certificate!(py, x, template, RealmRole);
             let recipient_message = x.recipient_message(template);
@@ -702,7 +700,7 @@ fn event_to_pyobject(
             Some(obj.into_py(py))
         }
 
-        libparsec::low_level::testbed::TestbedEvent::StartRealmReencryption(x) => {
+        libparsec_testbed::TestbedEvent::StartRealmReencryption(x) => {
             let per_participant_message = x.per_participant_message(template);
             let obj = TestbedEventStartRealmReencryption {
                 timestamp: x.timestamp.into(),
@@ -727,7 +725,7 @@ fn event_to_pyobject(
             Some(obj.into_py(py))
         }
 
-        libparsec::low_level::testbed::TestbedEvent::FinishRealmReencryption(x) => {
+        libparsec_testbed::TestbedEvent::FinishRealmReencryption(x) => {
             let obj = TestbedEventFinishRealmReencryption {
                 timestamp: x.timestamp.into(),
                 author: x.author.clone().into(),
@@ -737,14 +735,14 @@ fn event_to_pyobject(
             Some(obj.into_py(py))
         }
 
-        libparsec::low_level::testbed::TestbedEvent::CreateOrUpdateUserManifestVlob(x) => {
+        libparsec_testbed::TestbedEvent::CreateOrUpdateUserManifestVlob(x) => {
             let obj = TestbedEventCreateOrUpdateUserManifestVlob {
                 manifest: UserManifest::from((*x.manifest).clone()),
             };
             Some(obj.into_py(py))
         }
 
-        libparsec::low_level::testbed::TestbedEvent::CreateOrUpdateOpaqueVlob(x) => {
+        libparsec_testbed::TestbedEvent::CreateOrUpdateOpaqueVlob(x) => {
             let sequester_blob = match &x.sequester_blob {
                 None => py.None().into_py(py),
                 Some(sequester_blob) => {
@@ -771,7 +769,7 @@ fn event_to_pyobject(
             Some(obj.into_py(py))
         }
 
-        libparsec::low_level::testbed::TestbedEvent::CreateOpaqueBlock(x) => {
+        libparsec_testbed::TestbedEvent::CreateOpaqueBlock(x) => {
             let obj = TestbedEventCreateOpaqueBlock {
                 timestamp: x.timestamp.into(),
                 author: x.author.clone().into(),

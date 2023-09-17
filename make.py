@@ -23,16 +23,16 @@ from typing import Iterable, Union
 MAYBE_FORCE_VENDORED_OPENSSL = ""
 if sys.platform == "linux":
     if os.environ.get("LIBPARSEC_FORCE_VENDORED_OPENSSL", "false").lower() == "true":
-        MAYBE_FORCE_VENDORED_OPENSSL = "--features libparsec/vendored-openssl"
+        MAYBE_FORCE_VENDORED_OPENSSL = "--features vendored-openssl"
 
 PYTHON_RELEASE_CARGO_FLAGS = (
-    f"--profile=release --features libparsec/use-sodiumoxide {MAYBE_FORCE_VENDORED_OPENSSL}"
+    f"--profile=release --features use-sodiumoxide {MAYBE_FORCE_VENDORED_OPENSSL}"
 )
 PYTHON_DEV_CARGO_FLAGS = "--profile=dev-python --features test-utils"
 PYTHON_CI_CARGO_FLAGS = "--profile=ci-python --features test-utils"
 
 ELECTRON_RELEASE_CARGO_FLAGS = (
-    f"--profile=release --features libparsec/use-sodiumoxide {MAYBE_FORCE_VENDORED_OPENSSL}"
+    f"--profile=release --features use-sodiumoxide {MAYBE_FORCE_VENDORED_OPENSSL}"
 )
 ELECTRON_DEV_CARGO_FLAGS = "--profile=dev --features test-utils"
 ELECTRON_CI_CARGO_FLAGS = "--profile=ci-rust --features test-utils"

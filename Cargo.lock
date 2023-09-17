@@ -1998,7 +1998,11 @@ version = "0.0.0"
 dependencies = [
  "futures",
  "lazy_static",
- "libparsec",
+ "libparsec_crypto",
+ "libparsec_protocol",
+ "libparsec_serialization_format",
+ "libparsec_testbed",
+ "libparsec_types",
  "paste",
  "pyo3",
  "regex",
