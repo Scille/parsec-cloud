@@ -34,7 +34,7 @@ fn quote_cmds_family(family: &GenCmdsFamily) -> TokenStream {
 
             use ::pyo3::prelude::*;
             use ::pyo3::types::*;
-            use libparsec::low_level::types::ProtocolRequest;
+            use libparsec_types::ProtocolRequest;
             use crate::*;
             use super::*;
 
@@ -66,7 +66,7 @@ fn quote_versioned_cmds(
     let versioned_cmds_mod_name = format_ident!("{}", versioned_cmds_mod_name_as_str);
     let py_module_path_as_str = &format!("parsec._parsec.{}.v{}", family.name, version);
     let protocol_versioned_cmds_path =
-        quote! { libparsec::low_level::protocol::#family_mod_name::#versioned_cmds_mod_name };
+        quote! { libparsec_protocol::#family_mod_name::#versioned_cmds_mod_name };
 
     let (cmds_populate_codes, cmds_impl_codes): (Vec<TokenStream>, Vec<TokenStream>) = cmds
         .iter()
@@ -106,7 +106,7 @@ fn quote_versioned_cmds(
                 #[staticmethod]
                 fn load(py: Python, raw: &[u8]) -> ProtocolResult<PyObject> {
                     let cmd = #protocol_versioned_cmds_path::AnyCmdReq::load(raw).map_err(|e| {
-                        ProtocolErrorFields(libparsec::low_level::protocol::ProtocolError::DecodingError {
+                        ProtocolErrorFields(libparsec_protocol::ProtocolError::DecodingError {
                             exc: e.to_string(),
                         })
                     })?;
@@ -128,8 +128,7 @@ fn quote_cmd(family: &GenCmdsFamily, version: u32, cmd: &GenCmd) -> (TokenStream
     let version_name = format_ident!("v{}", version);
     let cmd_mod_name_as_str = &cmd.cmd;
     let cmd_mod_name = format_ident!("{}", cmd_mod_name_as_str);
-    let protocol_path =
-        quote! { libparsec::low_level::protocol::#family_name::#version_name::#cmd_mod_name };
+    let protocol_path = quote! { libparsec_protocol::#family_name::#version_name::#cmd_mod_name };
 
     match &cmd.spec {
         GenCmdSpec::ReusedFromVersion {
@@ -276,8 +275,8 @@ fn quote_reps(
                         let conversion = quote_type_as_fn_getter_conversion(&access_field_path, &f.ty);
                         quote! {
                             match x {
-                                libparsec::low_level::types::Maybe::Present(x) => Ok(#conversion),
-                                libparsec::low_level::types::Maybe::Absent => Err(PyAttributeError::new_err("")),
+                                libparsec_types::Maybe::Present(x) => Ok(#conversion),
+                                libparsec_types::Maybe::Absent => Err(PyAttributeError::new_err("")),
                             }
                         }
                     } else {
@@ -343,7 +342,7 @@ fn quote_reps(
             #[staticmethod]
             fn load<'py>(py: Python<'py>, raw: &[u8]) -> PyResult<PyObject> {
                 let rep = #protocol_path::Rep::load(raw).map_err(|e| {
-                    ProtocolErrorFields(libparsec::low_level::protocol::ProtocolError::DecodingError {
+                    ProtocolErrorFields(libparsec_protocol::ProtocolError::DecodingError {
                         exc: e.to_string(),
                     })
                 })?;
@@ -360,7 +359,7 @@ fn quote_reps(
                 Ok(PyBytes::new(
                     py,
                     &self.0.dump().map_err(|e| {
-                        ProtocolErrorFields(libparsec::low_level::protocol::ProtocolError::EncodingError {
+                        ProtocolErrorFields(libparsec_protocol::ProtocolError::EncodingError {
                             exc: e.to_string(),
                         })
                     })?,
@@ -447,7 +446,7 @@ fn quote_req(
                         Ok(PyBytes::new(
                             py,
                             &self.0.dump().map_err(|e| {
-                                ProtocolErrorFields(libparsec::low_level::protocol::ProtocolError::EncodingError {
+                                ProtocolErrorFields(libparsec_protocol::ProtocolError::EncodingError {
                                     exc: e.to_string(),
                                 })
                             })?,
@@ -476,8 +475,8 @@ fn quote_req(
                     let conversion = quote_type_as_fn_getter_conversion(&access_field_path, &field.ty);
                     quote! {
                         match &self.0.#field_name {
-                            libparsec::low_level::types::Maybe::Present(x) => Ok(#conversion),
-                            libparsec::low_level::types::Maybe::Absent => Err(PyAttributeError::new_err("")),
+                            libparsec_types::Maybe::Present(x) => Ok(#conversion),
+                            libparsec_types::Maybe::Absent => Err(PyAttributeError::new_err("")),
                         }
                     }
                 } else {
@@ -528,7 +527,7 @@ fn quote_req(
                         Ok(PyBytes::new(
                             py,
                             &self.0.dump().map_err(|e| {
-                                ProtocolErrorFields(libparsec::low_level::protocol::ProtocolError::EncodingError {
+                                ProtocolErrorFields(libparsec_protocol::ProtocolError::EncodingError {
                                     exc: e.to_string(),
                                 })
                             })?,
@@ -623,8 +622,8 @@ fn quote_nested_type(
                         let conversion = quote_type_as_fn_getter_conversion(&access_field_path, &f.ty);
                         quote! {
                             match x {
-                                libparsec::low_level::types::Maybe::Present(x) => Ok(#conversion),
-                                libparsec::low_level::types::Maybe::Absent => Err(PyAttributeError::new_err("")),
+                                libparsec_types::Maybe::Present(x) => Ok(#conversion),
+                                libparsec_types::Maybe::Absent => Err(PyAttributeError::new_err("")),
                             }
                         }
                     } else {
@@ -733,8 +732,8 @@ fn quote_nested_type(
                     let conversion = quote_type_as_fn_getter_conversion(&access_field_path, &field.ty);
                     quote! {
                         match &self.0.#field_name {
-                            libparsec::low_level::types::Maybe::Present(x) => Ok(#conversion),
-                            libparsec::low_level::types::Maybe::Absent => Err(PyAttributeError::new_err("")),
+                            libparsec_types::Maybe::Present(x) => Ok(#conversion),
+                            libparsec_types::Maybe::Absent => Err(PyAttributeError::new_err("")),
                         }
                     }
                 } else {
@@ -1109,7 +1108,7 @@ fn quote_field_as_fn_new_conversion(field: &GenCmdField) -> TokenStream {
     let field_name = format_ident!("{}", field.name);
     let conversion = internal_quote_field_as_fn_new_conversion(&field_name, &field.ty);
     if field.added_in_minor_revision {
-        quote! { let #field_name = libparsec::low_level::types::Maybe::Present(#conversion); }
+        quote! { let #field_name = libparsec_types::Maybe::Present(#conversion); }
     } else if conversion.to_string() == field.name {
         // No conversion
         quote! {}
@@ -1177,7 +1176,7 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
             }
         }
         FieldType::IntegerBetween1And100 => {
-            quote! { libparsec::low_level::types::IntegerBetween1And100::try_from(#field_name).map_err(PyValueError::new_err)? }
+            quote! { libparsec_types::IntegerBetween1And100::try_from(#field_name).map_err(PyValueError::new_err)? }
         }
         FieldType::NonZeroInteger => {
             quote! { ::std::num::NonZeroU64::try_from(#field_name).map_err(PyValueError::new_err)? }

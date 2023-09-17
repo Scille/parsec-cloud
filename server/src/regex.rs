@@ -6,7 +6,7 @@ use pyo3::{exceptions::PyValueError, pyclass, pymethods, types::PyType, PyResult
 
 crate::binding_utils::gen_py_wrapper_class!(
     Regex,
-    libparsec::low_level::types::Regex,
+    libparsec_types::Regex,
     __repr__,
     __str__,
     __richcmp__ eq,
@@ -16,21 +16,21 @@ crate::binding_utils::gen_py_wrapper_class!(
 impl Regex {
     #[classmethod]
     fn from_file(_cls: &PyType, path: &str) -> PyResult<Self> {
-        libparsec::low_level::types::Regex::from_file(Path::new(path))
+        libparsec_types::Regex::from_file(Path::new(path))
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
 
     #[classmethod]
     fn from_raw_regexes(_cls: &PyType, raw_regexes: Vec<&str>) -> PyResult<Self> {
-        libparsec::low_level::types::Regex::from_raw_regexes(&raw_regexes)
+        libparsec_types::Regex::from_raw_regexes(&raw_regexes)
             .map(Regex)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
 
     #[classmethod]
     fn from_glob_pattern(_cls: &PyType, glob_pattern: &str) -> PyResult<Self> {
-        libparsec::low_level::types::Regex::from_glob_pattern(glob_pattern)
+        libparsec_types::Regex::from_glob_pattern(glob_pattern)
             .map(Regex)
             .map_err(|err| {
                 PyValueError::new_err(format!(
@@ -42,7 +42,7 @@ impl Regex {
 
     #[classmethod]
     fn from_regex_str(_cls: &PyType, regex_str: &str) -> PyResult<Self> {
-        libparsec::low_level::types::Regex::from_regex_str(regex_str)
+        libparsec_types::Regex::from_regex_str(regex_str)
             .map(Regex)
             .map_err(|err| {
                 PyValueError::new_err(format!(
@@ -97,7 +97,7 @@ mod test {
                 continue;
             }
 
-            let sub_regex_str = libparsec::low_level::types::Regex::from_glob_pattern(line.trim())
+            let sub_regex_str = libparsec_types::Regex::from_glob_pattern(line.trim())
                 .unwrap()
                 .to_string();
 

@@ -29,7 +29,7 @@ pub(crate) fn add_mod(py: Python, m: &PyModule) -> PyResult<()> {
 
 crate::binding_utils::gen_py_wrapper_class!(
     HashDigest,
-    libparsec::low_level::types::HashDigest,
+    libparsec_types::HashDigest,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -40,7 +40,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 impl HashDigest {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
-        libparsec::low_level::crypto::HashDigest::try_from(data)
+        libparsec_crypto::HashDigest::try_from(data)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -54,9 +54,7 @@ impl HashDigest {
             Ok(x) => unsafe { x.as_bytes() },
             Err(_) => data.extract::<&PyBytes>(py)?.as_bytes(),
         };
-        Ok(Self(libparsec::low_level::crypto::HashDigest::from_data(
-            bytes,
-        )))
+        Ok(Self(libparsec_crypto::HashDigest::from_data(bytes)))
     }
 
     #[getter]
@@ -71,7 +69,7 @@ impl HashDigest {
 
 crate::binding_utils::gen_py_wrapper_class!(
     SigningKey,
-    libparsec::low_level::types::SigningKey,
+    libparsec_types::SigningKey,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -82,7 +80,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 impl SigningKey {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
-        libparsec::low_level::crypto::SigningKey::try_from(data)
+        libparsec_crypto::SigningKey::try_from(data)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -94,7 +92,7 @@ impl SigningKey {
 
     #[classmethod]
     fn generate(_cls: &PyType) -> Self {
-        Self(libparsec::low_level::crypto::SigningKey::generate())
+        Self(libparsec_crypto::SigningKey::generate())
     }
 
     /// Return the signature + the signed data
@@ -114,7 +112,7 @@ impl SigningKey {
 
 crate::binding_utils::gen_py_wrapper_class!(
     VerifyKey,
-    libparsec::low_level::types::VerifyKey,
+    libparsec_types::VerifyKey,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -125,7 +123,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 impl VerifyKey {
     #[new]
     pub fn new(data: &[u8]) -> PyResult<Self> {
-        libparsec::low_level::crypto::VerifyKey::try_from(data)
+        libparsec_crypto::VerifyKey::try_from(data)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -143,10 +141,8 @@ impl VerifyKey {
     fn verify_with_signature(&self, signature: &[u8], message: &[u8]) -> PyResult<()> {
         self.0
             .verify_with_signature(
-                <&[u8; libparsec::low_level::crypto::SigningKey::SIGNATURE_SIZE]>::try_from(
-                    signature,
-                )
-                .map_err(|_| CryptoError::new_err("Invalid signature size"))?,
+                <&[u8; libparsec_crypto::SigningKey::SIGNATURE_SIZE]>::try_from(signature)
+                    .map_err(|_| CryptoError::new_err("Invalid signature size"))?,
                 message,
             )
             .map_err(|_| CryptoError::new_err("Signature was forged or corrupt"))
@@ -158,7 +154,7 @@ impl VerifyKey {
         py: Python<'py>,
         signed: &[u8],
     ) -> PyResult<&'py PyBytes> {
-        let (_, message) = libparsec::low_level::crypto::VerifyKey::unsecure_unwrap(signed)
+        let (_, message) = libparsec_crypto::VerifyKey::unsecure_unwrap(signed)
             .map_err(|_| CryptoError::new_err("Signature was forged or corrupt"))?;
         Ok(PyBytes::new(py, message))
     }
@@ -174,7 +170,7 @@ impl VerifyKey {
 
 crate::binding_utils::gen_py_wrapper_class!(
     SecretKey,
-    libparsec::low_level::types::SecretKey,
+    libparsec_types::SecretKey,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -185,14 +181,14 @@ crate::binding_utils::gen_py_wrapper_class!(
 impl SecretKey {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
-        libparsec::low_level::crypto::SecretKey::try_from(data)
+        libparsec_crypto::SecretKey::try_from(data)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
 
     #[classmethod]
     fn generate(_cls: &PyType) -> Self {
-        Self(libparsec::low_level::crypto::SecretKey::generate())
+        Self(libparsec_crypto::SecretKey::generate())
     }
 
     #[getter]
@@ -224,39 +220,33 @@ impl SecretKey {
 
     #[classmethod]
     fn generate_salt<'py>(_cls: &PyType, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(
-            py,
-            &libparsec::low_level::crypto::SecretKey::generate_salt(),
-        )
+        PyBytes::new(py, &libparsec_crypto::SecretKey::generate_salt())
     }
 
     #[classmethod]
     fn from_password(_cls: &PyType, password: &str, salt: &[u8]) -> PyResult<Self> {
-        libparsec::low_level::crypto::SecretKey::from_password(&password.to_owned().into(), salt)
+        libparsec_crypto::SecretKey::from_password(&password.to_owned().into(), salt)
             .map(Self)
             .map_err(|err| CryptoError::new_err(err.to_string()))
     }
 
     #[classmethod]
     fn generate_recovery_passphrase(_cls: &PyType) -> (String, Self) {
-        let (passphrase, key) =
-            libparsec::low_level::crypto::SecretKey::generate_recovery_passphrase();
+        let (passphrase, key) = libparsec_crypto::SecretKey::generate_recovery_passphrase();
         (passphrase.to_string(), Self(key))
     }
 
     #[classmethod]
     fn from_recovery_passphrase(_cls: &PyType, passphrase: &str) -> PyResult<Self> {
-        libparsec::low_level::crypto::SecretKey::from_recovery_passphrase(
-            passphrase.to_owned().into(),
-        )
-        .map(Self)
-        .map_err(|err| CryptoError::new_err(err.to_string()))
+        libparsec_crypto::SecretKey::from_recovery_passphrase(passphrase.to_owned().into())
+            .map(Self)
+            .map_err(|err| CryptoError::new_err(err.to_string()))
     }
 }
 
 crate::binding_utils::gen_py_wrapper_class!(
     PrivateKey,
-    libparsec::low_level::types::PrivateKey,
+    libparsec_types::PrivateKey,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -267,21 +257,19 @@ crate::binding_utils::gen_py_wrapper_class!(
 impl PrivateKey {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
-        libparsec::low_level::crypto::PrivateKey::try_from(data)
+        libparsec_crypto::PrivateKey::try_from(data)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
 
     #[classmethod]
     fn generate(_cls: &PyType) -> Self {
-        PrivateKey(libparsec::low_level::crypto::PrivateKey::generate())
+        PrivateKey(libparsec_crypto::PrivateKey::generate())
     }
 
     #[getter]
     fn public_key(&self) -> PublicKey {
-        PublicKey(libparsec::low_level::crypto::PrivateKey::public_key(
-            &self.0,
-        ))
+        PublicKey(libparsec_crypto::PrivateKey::public_key(&self.0))
     }
 
     fn decrypt_from_self<'py>(&self, py: Python<'py>, ciphered: &[u8]) -> PyResult<&'py PyBytes> {
@@ -302,7 +290,7 @@ impl PrivateKey {
 
 crate::binding_utils::gen_py_wrapper_class!(
     PublicKey,
-    libparsec::low_level::types::PublicKey,
+    libparsec_types::PublicKey,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -313,7 +301,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 impl PublicKey {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
-        libparsec::low_level::crypto::PublicKey::try_from(data)
+        libparsec_crypto::PublicKey::try_from(data)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -336,7 +324,7 @@ impl PublicKey {
 
 crate::binding_utils::gen_py_wrapper_class!(
     SequesterPrivateKeyDer,
-    libparsec::low_level::types::SequesterPrivateKeyDer,
+    libparsec_types::SequesterPrivateKeyDer,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -346,7 +334,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 impl SequesterPrivateKeyDer {
     #[new]
     pub fn new(data: &[u8]) -> PyResult<Self> {
-        libparsec::low_level::crypto::SequesterPrivateKeyDer::try_from(data)
+        libparsec_crypto::SequesterPrivateKeyDer::try_from(data)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -358,17 +346,17 @@ impl SequesterPrivateKeyDer {
         size_in_bits: usize,
     ) -> PyResult<(Self, SequesterPublicKeyDer)> {
         let (priv_key, pub_key) =
-            libparsec::low_level::crypto::SequesterPrivateKeyDer::generate_pair(
-                match size_in_bits {
-                    1024 => libparsec::low_level::crypto::SequesterKeySize::_1024Bits,
-                    2048 => libparsec::low_level::crypto::SequesterKeySize::_2048Bits,
-                    3072 => libparsec::low_level::crypto::SequesterKeySize::_3072Bits,
-                    4096 => libparsec::low_level::crypto::SequesterKeySize::_4096Bits,
-                    _ => return Err(PyValueError::new_err(
+            libparsec_crypto::SequesterPrivateKeyDer::generate_pair(match size_in_bits {
+                1024 => libparsec_crypto::SequesterKeySize::_1024Bits,
+                2048 => libparsec_crypto::SequesterKeySize::_2048Bits,
+                3072 => libparsec_crypto::SequesterKeySize::_3072Bits,
+                4096 => libparsec_crypto::SequesterKeySize::_4096Bits,
+                _ => {
+                    return Err(PyValueError::new_err(
                         "Invalid argument: size_in_bits must be equal to 1024 | 2048 | 3072 | 4096",
-                    )),
-                },
-            );
+                    ))
+                }
+            });
         Ok((Self(priv_key), SequesterPublicKeyDer(pub_key)))
     }
 
@@ -382,7 +370,7 @@ impl SequesterPrivateKeyDer {
 
     #[classmethod]
     fn load_pem(_cls: &PyType, s: &str) -> PyResult<Self> {
-        libparsec::low_level::crypto::SequesterPrivateKeyDer::load_pem(s)
+        libparsec_crypto::SequesterPrivateKeyDer::load_pem(s)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -397,7 +385,7 @@ impl SequesterPrivateKeyDer {
 
 crate::binding_utils::gen_py_wrapper_class!(
     SequesterPublicKeyDer,
-    libparsec::low_level::types::SequesterPublicKeyDer,
+    libparsec_types::SequesterPublicKeyDer,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -408,7 +396,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 impl SequesterPublicKeyDer {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
-        libparsec::low_level::crypto::SequesterPublicKeyDer::try_from(data)
+        libparsec_crypto::SequesterPublicKeyDer::try_from(data)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -423,7 +411,7 @@ impl SequesterPublicKeyDer {
 
     #[classmethod]
     fn load_pem(_cls: &PyType, s: &str) -> PyResult<Self> {
-        libparsec::low_level::crypto::SequesterPublicKeyDer::load_pem(s)
+        libparsec_crypto::SequesterPublicKeyDer::load_pem(s)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -435,7 +423,7 @@ impl SequesterPublicKeyDer {
 
 crate::binding_utils::gen_py_wrapper_class!(
     SequesterSigningKeyDer,
-    libparsec::low_level::types::SequesterSigningKeyDer,
+    libparsec_types::SequesterSigningKeyDer,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -445,7 +433,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 impl SequesterSigningKeyDer {
     #[new]
     pub fn new(data: &[u8]) -> PyResult<Self> {
-        libparsec::low_level::crypto::SequesterSigningKeyDer::try_from(data)
+        libparsec_crypto::SequesterSigningKeyDer::try_from(data)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -457,17 +445,17 @@ impl SequesterSigningKeyDer {
         size_in_bits: usize,
     ) -> PyResult<(Self, SequesterVerifyKeyDer)> {
         let (priv_key, pub_key) =
-            libparsec::low_level::crypto::SequesterSigningKeyDer::generate_pair(
-                match size_in_bits {
-                    1024 => libparsec::low_level::crypto::SequesterKeySize::_1024Bits,
-                    2048 => libparsec::low_level::crypto::SequesterKeySize::_2048Bits,
-                    3072 => libparsec::low_level::crypto::SequesterKeySize::_3072Bits,
-                    4096 => libparsec::low_level::crypto::SequesterKeySize::_4096Bits,
-                    _ => return Err(PyValueError::new_err(
+            libparsec_crypto::SequesterSigningKeyDer::generate_pair(match size_in_bits {
+                1024 => libparsec_crypto::SequesterKeySize::_1024Bits,
+                2048 => libparsec_crypto::SequesterKeySize::_2048Bits,
+                3072 => libparsec_crypto::SequesterKeySize::_3072Bits,
+                4096 => libparsec_crypto::SequesterKeySize::_4096Bits,
+                _ => {
+                    return Err(PyValueError::new_err(
                         "Invalid argument: size_in_bits must be equal to 1024 | 2048 | 3072 | 4096",
-                    )),
-                },
-            );
+                    ))
+                }
+            });
         Ok((Self(priv_key), SequesterVerifyKeyDer(pub_key)))
     }
 
@@ -481,7 +469,7 @@ impl SequesterSigningKeyDer {
 
     #[classmethod]
     fn load_pem(_cls: &PyType, s: &str) -> PyResult<Self> {
-        libparsec::low_level::crypto::SequesterSigningKeyDer::load_pem(s)
+        libparsec_crypto::SequesterSigningKeyDer::load_pem(s)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -493,7 +481,7 @@ impl SequesterSigningKeyDer {
 
 crate::binding_utils::gen_py_wrapper_class!(
     SequesterVerifyKeyDer,
-    libparsec::low_level::types::SequesterVerifyKeyDer,
+    libparsec_types::SequesterVerifyKeyDer,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -503,7 +491,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 impl SequesterVerifyKeyDer {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
-        libparsec::low_level::crypto::SequesterVerifyKeyDer::try_from(data)
+        libparsec_crypto::SequesterVerifyKeyDer::try_from(data)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -518,7 +506,7 @@ impl SequesterVerifyKeyDer {
 
     #[classmethod]
     fn load_pem(_cls: &PyType, s: &str) -> PyResult<Self> {
-        libparsec::low_level::crypto::SequesterVerifyKeyDer::load_pem(s)
+        libparsec_crypto::SequesterVerifyKeyDer::load_pem(s)
             .map(Self)
             .map_err(|err| PyValueError::new_err(err.to_string()))
     }
@@ -533,5 +521,5 @@ impl SequesterVerifyKeyDer {
 
 #[pyfunction]
 pub(crate) fn generate_nonce(py: Python<'_>) -> &PyBytes {
-    PyBytes::new(py, &libparsec::low_level::crypto::generate_nonce())
+    PyBytes::new(py, &libparsec_crypto::generate_nonce())
 }

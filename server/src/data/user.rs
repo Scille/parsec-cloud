@@ -6,7 +6,7 @@ use crate::enumerate::UserProfile;
 
 crate::binding_utils::gen_py_wrapper_class!(
     UsersPerProfileDetailItem,
-    libparsec::low_level::types::UsersPerProfileDetailItem,
+    libparsec_types::UsersPerProfileDetailItem,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -17,13 +17,11 @@ crate::binding_utils::gen_py_wrapper_class!(
 impl UsersPerProfileDetailItem {
     #[new]
     fn new(profile: UserProfile, active: u64, revoked: u64) -> PyResult<Self> {
-        Ok(Self(
-            libparsec::low_level::types::UsersPerProfileDetailItem {
-                profile: profile.0,
-                active,
-                revoked,
-            },
-        ))
+        Ok(Self(libparsec_types::UsersPerProfileDetailItem {
+            profile: profile.0,
+            active,
+            revoked,
+        }))
     }
 
     #[getter]

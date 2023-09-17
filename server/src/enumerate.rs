@@ -15,101 +15,61 @@ use crate::{ProtocolErrorFields, ProtocolResult};
 
 crate::binding_utils::gen_py_wrapper_class_for_enum!(
     InvitationStatus,
-    libparsec::low_level::types::InvitationStatus,
-    [
-        "IDLE",
-        idle,
-        libparsec::low_level::types::InvitationStatus::Idle
-    ],
-    [
-        "READY",
-        ready,
-        libparsec::low_level::types::InvitationStatus::Ready
-    ],
+    libparsec_types::InvitationStatus,
+    ["IDLE", idle, libparsec_types::InvitationStatus::Idle],
+    ["READY", ready, libparsec_types::InvitationStatus::Ready],
     [
         "DELETED",
         deleted,
-        libparsec::low_level::types::InvitationStatus::Deleted
+        libparsec_types::InvitationStatus::Deleted
     ]
 );
 
 crate::binding_utils::gen_py_wrapper_class_for_enum!(
     InvitationType,
-    libparsec::low_level::types::InvitationType,
-    [
-        "DEVICE",
-        device,
-        libparsec::low_level::types::InvitationType::Device
-    ],
-    [
-        "USER",
-        user,
-        libparsec::low_level::types::InvitationType::User
-    ]
+    libparsec_types::InvitationType,
+    ["DEVICE", device, libparsec_types::InvitationType::Device],
+    ["USER", user, libparsec_types::InvitationType::User]
 );
 
 crate::binding_utils::gen_py_wrapper_class_for_enum!(
     RealmRole,
-    libparsec::low_level::types::RealmRole,
-    [
-        "OWNER",
-        owner,
-        libparsec::low_level::types::RealmRole::Owner
-    ],
-    [
-        "MANAGER",
-        manager,
-        libparsec::low_level::types::RealmRole::Manager
-    ],
+    libparsec_types::RealmRole,
+    ["OWNER", owner, libparsec_types::RealmRole::Owner],
+    ["MANAGER", manager, libparsec_types::RealmRole::Manager],
     [
         "CONTRIBUTOR",
         contributor,
-        libparsec::low_level::types::RealmRole::Contributor
+        libparsec_types::RealmRole::Contributor
     ],
-    [
-        "READER",
-        reader,
-        libparsec::low_level::types::RealmRole::Reader
-    ]
+    ["READER", reader, libparsec_types::RealmRole::Reader]
 );
 
 crate::binding_utils::gen_py_wrapper_class_for_enum!(
     UserProfile,
-    libparsec::low_level::types::UserProfile,
-    [
-        "ADMIN",
-        admin,
-        libparsec::low_level::types::UserProfile::Admin
-    ],
-    [
-        "STANDARD",
-        standard,
-        libparsec::low_level::types::UserProfile::Standard
-    ],
-    [
-        "OUTSIDER",
-        outsider,
-        libparsec::low_level::types::UserProfile::Outsider
-    ]
+    libparsec_types::UserProfile,
+    ["ADMIN", admin, libparsec_types::UserProfile::Admin],
+    ["STANDARD", standard, libparsec_types::UserProfile::Standard],
+    ["OUTSIDER", outsider, libparsec_types::UserProfile::Outsider]
 );
 
 crate::binding_utils::gen_py_wrapper_class_for_enum!(
     DeviceFileType,
-    libparsec::low_level::types::DeviceFileType,
+    libparsec_types::DeviceFileType,
     [
         "PASSWORD",
         password,
-        libparsec::low_level::types::DeviceFileType::Password
+        libparsec_types::DeviceFileType::Password
     ],
     [
         "SMARTCARD",
         smartcard,
-        libparsec::low_level::types::DeviceFileType::Smartcard
+        libparsec_types::DeviceFileType::Smartcard
     ],
     [
         "RECOVERY",
         recovery,
-        libparsec::low_level::types::DeviceFileType::Recovery
+        libparsec_types::DeviceFileType::Recovery
     ]
 );
 
@@ -119,11 +79,9 @@ impl DeviceFileType {
         Ok(PyBytes::new(
             py,
             &self.0.dump().map_err(|e| {
-                ProtocolErrorFields(
-                    libparsec::low_level::protocol::ProtocolError::EncodingError {
-                        exc: e.to_string(),
-                    },
-                )
+                ProtocolErrorFields(libparsec_protocol::ProtocolError::EncodingError {
+                    exc: e.to_string(),
+                })
             })?,
         ))
     }
@@ -131,7 +89,7 @@ impl DeviceFileType {
     #[classmethod]
     pub fn load(_cls: &PyType, bytes: &[u8]) -> PyResult<&'static PyObject> {
         Ok(Self::convert(
-            libparsec::low_level::types::DeviceFileType::load(bytes)
+            libparsec_types::DeviceFileType::load(bytes)
                 .map_err(|_| PyValueError::new_err("Failed to deserialize"))?,
         ))
     }

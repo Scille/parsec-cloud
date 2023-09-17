@@ -14,7 +14,7 @@ use crate::{
 
 crate::binding_utils::gen_py_wrapper_class!(
     PkiEnrollmentAnswerPayload,
-    libparsec::low_level::types::PkiEnrollmentAnswerPayload,
+    libparsec_types::PkiEnrollmentAnswerPayload,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -32,7 +32,7 @@ impl PkiEnrollmentAnswerPayload {
         profile: UserProfile,
         root_verify_key: VerifyKey,
     ) -> Self {
-        Self(libparsec::low_level::types::PkiEnrollmentAnswerPayload {
+        Self(libparsec_types::PkiEnrollmentAnswerPayload {
             device_id: device_id.0,
             device_label: device_label.map(|x| x.0),
             human_handle: human_handle.map(|x| x.0),
@@ -68,7 +68,7 @@ impl PkiEnrollmentAnswerPayload {
 
     #[classmethod]
     fn load(_cls: &PyType, raw: &[u8]) -> DataResult<Self> {
-        Ok(libparsec::low_level::types::PkiEnrollmentAnswerPayload::load(raw).map(Self)?)
+        Ok(libparsec_types::PkiEnrollmentAnswerPayload::load(raw).map(Self)?)
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
@@ -78,7 +78,7 @@ impl PkiEnrollmentAnswerPayload {
 
 crate::binding_utils::gen_py_wrapper_class!(
     PkiEnrollmentSubmitPayload,
-    libparsec::low_level::types::PkiEnrollmentSubmitPayload,
+    libparsec_types::PkiEnrollmentSubmitPayload,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -93,7 +93,7 @@ impl PkiEnrollmentSubmitPayload {
         public_key: PublicKey,
         requested_device_label: DeviceLabel,
     ) -> Self {
-        Self(libparsec::low_level::types::PkiEnrollmentSubmitPayload {
+        Self(libparsec_types::PkiEnrollmentSubmitPayload {
             verify_key: verify_key.0,
             public_key: public_key.0,
             requested_device_label: requested_device_label.0,
@@ -117,7 +117,7 @@ impl PkiEnrollmentSubmitPayload {
 
     #[classmethod]
     fn load(_cls: &PyType, raw: &[u8]) -> DataResult<Self> {
-        Ok(libparsec::low_level::types::PkiEnrollmentSubmitPayload::load(raw).map(Self)?)
+        Ok(libparsec_types::PkiEnrollmentSubmitPayload::load(raw).map(Self)?)
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
@@ -127,7 +127,7 @@ impl PkiEnrollmentSubmitPayload {
 
 crate::binding_utils::gen_py_wrapper_class!(
     X509Certificate,
-    libparsec::low_level::types::X509Certificate,
+    libparsec_types::X509Certificate,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -145,7 +145,7 @@ impl X509Certificate {
         certificate_id: Option<String>,
     ) -> Self {
         crate::binding_utils::unwrap_bytes!(der_x509_certificate, certificate_sha1);
-        Self(libparsec::low_level::types::X509Certificate {
+        Self(libparsec_types::X509Certificate {
             issuer,
             subject,
             der_x509_certificate,
@@ -234,7 +234,7 @@ impl X509Certificate {
 
 crate::binding_utils::gen_py_wrapper_class!(
     LocalPendingEnrollment,
-    libparsec::low_level::types::LocalPendingEnrollment,
+    libparsec_types::LocalPendingEnrollment,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -254,7 +254,7 @@ impl LocalPendingEnrollment {
         ciphertext: BytesWrapper,
     ) -> Self {
         crate::binding_utils::unwrap_bytes!(encrypted_key, ciphertext);
-        Self(libparsec::low_level::types::LocalPendingEnrollment {
+        Self(libparsec_types::LocalPendingEnrollment {
             x509_certificate: x509_certificate.0,
             addr: addr.0,
             submitted_on: submitted_on.0,
@@ -267,7 +267,7 @@ impl LocalPendingEnrollment {
 
     #[classmethod]
     fn load(_cls: &PyType, raw: &[u8]) -> DataResult<Self> {
-        Ok(libparsec::low_level::types::LocalPendingEnrollment::load(raw).map(Self)?)
+        Ok(libparsec_types::LocalPendingEnrollment::load(raw).map(Self)?)
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
@@ -295,7 +295,7 @@ impl LocalPendingEnrollment {
             .extract::<&str>()
             .map(Path::new)
             .expect("Unreachable");
-        Ok(libparsec::low_level::types::LocalPendingEnrollment::load_from_path(path).map(Self)?)
+        Ok(libparsec_types::LocalPendingEnrollment::load_from_path(path).map(Self)?)
     }
 
     #[classmethod]
@@ -311,7 +311,7 @@ impl LocalPendingEnrollment {
             .map(Path::new)
             .expect("Unreachable");
         Ok(
-            libparsec::low_level::types::LocalPendingEnrollment::load_from_enrollment_id(
+            libparsec_types::LocalPendingEnrollment::load_from_enrollment_id(
                 config_dir,
                 enrollment_id.0,
             )
@@ -332,7 +332,7 @@ impl LocalPendingEnrollment {
             .map(Path::new)
             .expect("Unreachable");
         Ok(
-            libparsec::low_level::types::LocalPendingEnrollment::remove_from_enrollment_id(
+            libparsec_types::LocalPendingEnrollment::remove_from_enrollment_id(
                 config_dir,
                 enrollment_id.0,
             )?,
@@ -347,7 +347,7 @@ impl LocalPendingEnrollment {
             .extract::<&str>()
             .map(Path::new)
             .expect("Unreachable");
-        libparsec::low_level::types::LocalPendingEnrollment::list(config_dir)
+        libparsec_types::LocalPendingEnrollment::list(config_dir)
             .into_iter()
             .map(Self)
             .collect()
