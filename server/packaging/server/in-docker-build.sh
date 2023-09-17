@@ -30,7 +30,10 @@ poetry --directory ./server export --output requirements.txt --with=main
 pip install -r ./requirements.txt
 # ...and our project
 # Compile in release mode
-POETRY_LIBPARSEC_BUILD_PROFILE=release pip install ./server
+# Also don't bundle OpenSSL shared library (it is already in the Docker image !)
+POETRY_LIBPARSEC_BUILD_PROFILE=release \
+POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false \
+pip install ./server
 
 # Basic to see if the wheel look like it's well built.
 (cd / && /work/venv/bin/python -m parsec.cli --version)

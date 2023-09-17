@@ -26,7 +26,10 @@ libparsec_platform_async = { workspace = true }
 
 eventsource-stream = { workspace = true, features = ["std"] }
 # Used to send HTTP request to the server.
-reqwest = { workspace = true, features = ["native-tls-vendored", "stream"] }
+# Note reqwest default to using the native SSL implementation.
+# When packing the application there is nothing special for Windows/MacOS,
+# on Linux however we have to specify our snap depends on the openssl package.
+reqwest = { workspace = true, features = ["stream"] }
 futures = { workspace = true }
 # Use abstract crypto primitive, to allow to sign request.
 # Used to encoded binary data.

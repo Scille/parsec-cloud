@@ -15,12 +15,25 @@ import textwrap
 from pathlib import Path
 from typing import Iterable, Union
 
-PYTHON_RELEASE_CARGO_FLAGS = "--profile=release --features libparsec/use-sodiumoxide"
+# Depending on packer's needs, we may or may not want to vendor OpenSSL
+# (e.g. Docker image already ships openssl so no need to vendor, wheel
+# distributed on pypi requires vendoring to comply with manylinux)
+# This is only needed for Linux as other OSs don't provide OpenSSL (and
+# hence it obviously must be vendored anytime we need it).
+MAYBE_FORCE_VENDORED_OPENSSL = ""
+if sys.platform == "linux":
+    if os.environ.get("LIBPARSEC_FORCE_VENDORED_OPENSSL", "false").lower() == "true":
+        MAYBE_FORCE_VENDORED_OPENSSL = "--features libparsec/vendored-openssl"
+
+PYTHON_RELEASE_CARGO_FLAGS = (
+    f"--profile=release --features libparsec/use-sodiumoxide {MAYBE_FORCE_VENDORED_OPENSSL}"
+)
 PYTHON_DEV_CARGO_FLAGS = "--profile=dev-python --features test-utils"
 PYTHON_CI_CARGO_FLAGS = "--profile=ci-python --features test-utils"
 
-ELECTRON_RELEASE_CARGO_FLAGS = "--profile=release"
-ELECTRON_RELEASE_SODIUM_CARGO_FLAGS = "--profile=release --features libparsec/use-sodiumoxide"
+ELECTRON_RELEASE_CARGO_FLAGS = (
+    f"--profile=release --features libparsec/use-sodiumoxide {MAYBE_FORCE_VENDORED_OPENSSL}"
+)
 ELECTRON_DEV_CARGO_FLAGS = "--profile=dev --features test-utils"
 ELECTRON_CI_CARGO_FLAGS = "--profile=ci-rust --features test-utils"
 
@@ -200,8 +213,6 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
     ("electron-ci-libparsec-cargo-flags",): Echo(ELECTRON_CI_CARGO_FLAGS),
     # Flags used in `bindings/electron/scripts/build.js`
     ("electron-release-libparsec-cargo-flags",): Echo(ELECTRON_RELEASE_CARGO_FLAGS),
-    # Flags used in `bindings/electron/scripts/build.js`
-    ("electron-release-sodium-libparsec-cargo-flags",): Echo(ELECTRON_RELEASE_SODIUM_CARGO_FLAGS),
     # Flags used in `bindings/electron/scripts/build.js`
     ("electron-dev-libparsec-cargo-flags",): Echo(ELECTRON_DEV_CARGO_FLAGS),
     #

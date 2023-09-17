@@ -68,6 +68,20 @@ def build() -> None:
     )
     cargo_flags = ret.stdout.decode("ascii").strip()
 
+    # When building with manylinux compatibility, maturin bundles the external shared
+    # libraries and use patchelf to modify `_parsec.so` so that it only those ones
+    # get loaded (and not e.g. the version potentially provided by the OS).
+    #
+    # So far in Parsec, we only have OpenSSL (so libssl.so + libcrypto.so) that falls
+    # in this case.
+    #
+    # However we want to disable this feature for some packagings (e.g. Docker, Snap)
+    # given they provide a image that already ships with the correct openssl (in this
+    # case bundling would only mean ending up with two copies of the same lib)
+    bundle_extra_so = (
+        os.environ.get("POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES", "true").lower() == "true"
+    )
+
     # Maturin provides two commands to compile the Rust code as a Python native module:
     # - `maturin develop` that only compile the native module
     # - `maturin build` that generates an entire wheel of the project
@@ -79,9 +93,12 @@ def build() -> None:
     # native module and discard the rest !
 
     with tempfile.TemporaryDirectory() as distdir:
-        run(
-            f"maturin build --locked {cargo_flags} --manifest-path {BASEDIR / 'Cargo.toml'} --interpreter {PYTHON_EXECUTABLE_PATH} --out {distdir}"
-        )
+        cmd = f"maturin build --locked {cargo_flags} --manifest-path {BASEDIR / 'Cargo.toml'} --interpreter {PYTHON_EXECUTABLE_PATH} --out {distdir}"
+
+        if not bundle_extra_so:
+            cmd += " --compatibility linux"
+
+        run(cmd)
 
         outputs = list(pathlib.Path(distdir).iterdir())
         if len(outputs) != 1:
@@ -91,6 +108,11 @@ def build() -> None:
         display(f"extracting {wheel_path}:{libparsec_path} -> {BASEDIR / libparsec_path}")
         with zipfile.ZipFile(wheel_path) as wheel:
             wheel.extract(libparsec_path, path=BASEDIR)
+            # Also include bundled extra shared libraries if any
+            for item in wheel.namelist():
+                if item.startswith("parsec.libs/"):
+                    display(f"extracting {wheel_path}:{item} -> {BASEDIR / item}")
+                    wheel.extract(item, path=BASEDIR)
 
 
 if __name__ == "__main__":
