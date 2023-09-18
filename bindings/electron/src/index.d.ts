@@ -9,6 +9,44 @@ export type Result<T, E = Error> =
   | { ok: true; value: T }
   | { ok: false; error: E }
 
+export enum UserProfile {
+    Admin = 'UserProfileAdmin',
+    Outsider = 'UserProfileOutsider',
+    Standard = 'UserProfileStandard',
+}
+
+export enum RealmRole {
+    Contributor = 'RealmRoleContributor',
+    Manager = 'RealmRoleManager',
+    Owner = 'RealmRoleOwner',
+    Reader = 'RealmRoleReader',
+}
+
+export enum DeviceFileType {
+    Password = 'DeviceFileTypePassword',
+    Recovery = 'DeviceFileTypeRecovery',
+    Smartcard = 'DeviceFileTypeSmartcard',
+}
+
+export enum InvitationStatus {
+    Deleted = 'InvitationStatusDeleted',
+    Idle = 'InvitationStatusIdle',
+    Ready = 'InvitationStatusReady',
+}
+
+export enum InvitationEmailSentStatus {
+    BadRecipient = 'InvitationEmailSentStatusBadRecipient',
+    NotAvailable = 'InvitationEmailSentStatusNotAvailable',
+    Success = 'InvitationEmailSentStatusSuccess',
+}
+
+export enum OS {
+    Android = 'OSAndroid',
+    Linux = 'OSLinux',
+    MacOs = 'OSMacOs',
+    Windows = 'OSWindows',
+}
+
 
 export interface HumanHandle {
     email: string

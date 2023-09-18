@@ -48,6 +48,18 @@ Uint8Array
 export type Result<T, E = Error> =
   | { ok: true; value: T }
   | { ok: false; error: E }
+
+{# Simple enum #}
+{% for enum in api.enums %}
+export enum {{ enum.name }} {
+{% for variant_name in enum.member_names %}
+    {{ variant_name }} = '{{ enum.name + variant_name }}',
+{% endfor -%}
+}
+{% if not loop.last %}
+
+{% endif %}
+{% endfor %}
 {# Structures #}
 {% for struct in api.structs %}
 
