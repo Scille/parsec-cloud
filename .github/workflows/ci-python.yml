@@ -137,7 +137,7 @@ jobs:
         timeout-minutes: 5
 
       - name: Retrieve Rust cache
-        uses: Swatinem/rust-cache@e207df5d269b42b69c8bc5101da26f7d31feddb4 # pin v2.6.2
+        uses: Swatinem/rust-cache@a95ba195448af2da9b00fb742d14ffaaf3c21f43 # pin v2.7.0
         if: (!inputs.style-only) && steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
