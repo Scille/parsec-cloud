@@ -21,6 +21,7 @@ pub struct OrganizationConfig {
     pub sequester_authority: Option<Vec<u8>>,
     // TODO: Should this be `SequesterServiceCertificate` instead of bytes?
     pub sequester_services: Option<Vec<Vec<u8>>>,
+    pub minimum_archiving_period: u64,
 }
 
 impl OrganizationConfig {

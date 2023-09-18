@@ -91,6 +91,7 @@ impl OrganizationConfig {
         active_users_limit: ActiveUsersLimit,
         sequester_authority: Option<BytesWrapper>,
         sequester_services: Option<Vec<BytesWrapper>>,
+        minimum_archiving_period: u64,
     ) -> Self {
         crate::binding_utils::unwrap_bytes!(sequester_authority, sequester_services);
         Self(libparsec::types::OrganizationConfig {
@@ -98,6 +99,7 @@ impl OrganizationConfig {
             active_users_limit: active_users_limit.0,
             sequester_authority,
             sequester_services,
+            minimum_archiving_period,
         })
     }
 
@@ -125,6 +127,11 @@ impl OrganizationConfig {
             .sequester_services
             .as_ref()
             .map(|x| PyTuple::new(py, x.iter().map(|bytes| PyBytes::new(py, bytes))))
+    }
+
+    #[getter]
+    fn minimum_archiving_period(&self) -> u64 {
+        self.0.minimum_archiving_period
     }
 
     #[getter]
