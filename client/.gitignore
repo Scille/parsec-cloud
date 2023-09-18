@@ -42,3 +42,6 @@ npm-debug.log*
 /tests/e2e/videos
 # Vite pre-build deps
 /.vite/deps
+/test-results/
+/playwright-report/
+/playwright/.cache/

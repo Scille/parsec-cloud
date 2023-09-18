@@ -53,6 +53,11 @@ import { Base64 } from '@/common/base64';
 import { Events } from '@/services/eventDistributor';
 import Vue3Lottie from 'vue3-lottie';
 
+enum AppState {
+  Ready = 'ready',
+  Initializing = 'initializing',
+}
+
 async function setupApp(): Promise<void> {
   const storageManager = new StorageManager();
   await storageManager.create();
@@ -101,7 +106,7 @@ async function setupApp(): Promise<void> {
     const configDir = await libparsec.getDefaultConfigDir();
     const dataBaseDir = await libparsec.getDefaultDataBaseDir();
     const mountpointBaseDir = await libparsec.getDefaultMountpointBaseDir();
-    const isDesktop = !('Cypress' in window) && isPlatform('electron');
+    const isDesktop = !('TESTING' in window) && !('Cypress' in window) && isPlatform('electron');
     const platform = await libparsec.getPlatform();
     const isLinux = isDesktop && platform === Platform.Linux;
 
@@ -120,15 +125,15 @@ async function setupApp(): Promise<void> {
       (i18n.global.locale as any).value = locale;
     }
     app.mount('#app');
-    appElem.setAttribute('app-state', 'ready');
+    appElem.setAttribute('app-state', AppState.Ready);
   };
 
   // We can start the app with different cases :
   // - dev with a testbed Parsec server with the default devices
   // - dev or prod where devices are fetched from the local storage
-  // - tests with Cypress where the testbed instantiation is done by Cypress
-  if ('Cypress' in window) {
-    // Cypress handle the testbed and provides the configPath
+  // - tests with Playwright where the testbed instantiation is done by Playwright
+  if (('TESTING' in window && window.TESTING) || 'Cypress' in window) {
+    //  handle the testbed and provides the configPath
     window.nextStageHook = (): any => {
       return [libparsec, nextStage];
     };
@@ -153,7 +158,7 @@ async function setupApp(): Promise<void> {
     nextStage(); // Fire-and-forget call
   }
   // Only set the attribute once nextStageHook has been set
-  appElem.setAttribute('app-state', 'initializing');
+  appElem.setAttribute('app-state', AppState.Initializing);
 
   if (import.meta.env.VITE_APP_TEST_MODE?.toLowerCase() === 'true') {
     const x = async (): Promise<void> => {

@@ -144,3 +144,15 @@ jobs:
           TESTBED_SERVER_URL: parsec3://localhost:6777?no_ssl=true
         working-directory: client
         timeout-minutes: 20
+
+      - name: Install Playwright dependencies
+        run: npx playwright install
+        working-directory: client
+        timeout-minutes: 5
+
+      - name: Playwright E2E tests
+        run: npm run pw:e2e:headless
+        env:
+          TESTBED_SERVER_URL: parsec3://localhost:6777?no_ssl=true
+        working-directory: client
+        timeout-minutes: 20
