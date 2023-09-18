@@ -46,16 +46,31 @@ async def alice_backend_conn(alice, event_bus_factory, running_backend_ready):
 
 
 @pytest.mark.trio
-@pytest.mark.parametrize("apiv22_organization_cmd_supported", (True, False))
+@pytest.mark.parametrize(
+    "api_version",
+    ("2.1", "2.2", "2.8", "2.10"),
+)
 async def test_init_with_backend_online(
-    running_backend, event_bus, alice, apiv22_organization_cmd_supported
+    running_backend,
+    event_bus,
+    alice,
+    api_version,
 ):
     monitor_initialized = False
     monitor_teardown = False
 
     # Mock organization config command
     async def _mocked_organization_config(client_ctx, msg):
-        if apiv22_organization_cmd_supported:
+        if api_version == "2.1":
+            # Backend with API support <2.2, the client should be able to fallback
+            return {"status": "unknown_command"}
+        if api_version == "2.2":
+            return {
+                "user_profile_outsider_allowed": True,
+                "active_users_limit": None,
+                "status": "ok",
+            }
+        if api_version == "2.8":
             return {
                 "user_profile_outsider_allowed": True,
                 "active_users_limit": None,
@@ -63,9 +78,16 @@ async def test_init_with_backend_online(
                 "sequester_services_certificates": None,
                 "status": "ok",
             }
-        else:
-            # Backend with API support <2.2, the client should be able to fallback
-            return {"status": "unknown_command"}
+        if api_version == "2.10":
+            return {
+                "user_profile_outsider_allowed": True,
+                "active_users_limit": None,
+                "sequester_authority_certificate": None,
+                "sequester_services_certificates": None,
+                "minimum_archiving_period": 2592000,
+                "status": "ok",
+            }
+        assert False
 
     _mocked_organization_config._api_info = running_backend.backend.apis[ClientType.AUTHENTICATED][
         "organization_config"
@@ -95,8 +117,16 @@ async def test_init_with_backend_online(
         active_users_limit=ActiveUsersLimit.NO_LIMIT,
         sequester_authority=None,
         sequester_services=None,
+        minimum_archiving_period=0,
     )
     assert conn.get_organization_config() == default_organization_config
+
+    # Check attribute access
+    assert conn.get_organization_config().user_profile_outsider_allowed is False
+    assert conn.get_organization_config().active_users_limit == ActiveUsersLimit.NO_LIMIT
+    assert conn.get_organization_config().sequester_authority is None
+    assert conn.get_organization_config().sequester_services is None
+    assert conn.get_organization_config().minimum_archiving_period == 0
 
     conn.register_monitor("my monitor", _monitor)
     with event_bus.listen() as spy:
@@ -118,17 +148,27 @@ async def test_init_with_backend_online(
             assert not monitor_teardown
 
             # Test organization config retrieval
-            if apiv22_organization_cmd_supported:
+            if api_version == "2.1":
+                # Default value
+                assert conn.get_organization_config() == default_organization_config
+            elif api_version in ("2.2", "2.8"):
                 assert conn.get_organization_config() == OrganizationConfig(
                     user_profile_outsider_allowed=True,
                     active_users_limit=ActiveUsersLimit.NO_LIMIT,
                     sequester_authority=None,
                     sequester_services=None,
+                    minimum_archiving_period=0,
+                )
+            elif api_version in ("2.10"):
+                assert conn.get_organization_config() == OrganizationConfig(
+                    user_profile_outsider_allowed=True,
+                    active_users_limit=ActiveUsersLimit.NO_LIMIT,
+                    sequester_authority=None,
+                    sequester_services=None,
+                    minimum_archiving_period=2592000,
                 )
             else:
-                # Default value
-                assert conn.get_organization_config() == default_organization_config
-
+                assert False
             # Test command
             rep = await conn.cmds.ping("foo")
             assert rep == AuthenticatedPingRepOk("foo")
@@ -154,6 +194,7 @@ async def test_init_with_backend_offline(event_bus, alice):
         active_users_limit=ActiveUsersLimit.NO_LIMIT,
         sequester_authority=None,
         sequester_services=None,
+        minimum_archiving_period=0,
     )
     assert conn.get_organization_config() == default_organization_config
 

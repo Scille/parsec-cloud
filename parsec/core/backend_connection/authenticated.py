@@ -65,6 +65,15 @@ logger = get_logger()
 DESYNC_RETRY_TIME = 10  # seconds
 
 
+# On the client side, the default minimum archiving period is simply 0.
+# It's used in two cases:
+# - The server is too old to support workspace archiving
+# - The client is offline.
+# Note that this value is different from the initial minimum archiving period
+# set when creating a new organization, which is 30 days.
+DEFAULT_MINIMUM_ARCHIVING_PERIOD = 0
+
+
 BackendConnStatus = Enum("BackendConnStatus", "READY LOST INITIALIZING REFUSED CRASHED DESYNC")
 
 
@@ -331,6 +340,7 @@ class BackendAuthenticatedConn:
             active_users_limit=ActiveUsersLimit.NO_LIMIT,
             sequester_authority=None,
             sequester_services=None,
+            minimum_archiving_period=DEFAULT_MINIMUM_ARCHIVING_PERIOD,
         )
         self.event_bus = event_bus
         self.max_cooldown = max_cooldown
@@ -504,15 +514,24 @@ class BackendAuthenticatedConn:
                     )
 
             else:
+                # Workspace archiving has been introduced in API v2.10/3.4
+                # so the `minimum_archiving_period` field might be absent
+                minimum_archiving_period = (
+                    DEFAULT_MINIMUM_ARCHIVING_PERIOD
+                    if rep.minimum_archiving_period is None
+                    else rep.minimum_archiving_period
+                )
                 # `organization_config` also provide sequester configuration, however
                 # we just ignore it (the remote_loader will lazily load the config
                 # the first time it tries a manifest upload with the wrong config)
                 self._organization_config = OrganizationConfig(
                     user_profile_outsider_allowed=rep.user_profile_outsider_allowed,
                     active_users_limit=rep.active_users_limit,
-                    # Sequester introduced in APIv2.8/3.2
+                    # Sequester introduced in API v2.8/3.2
                     sequester_authority=rep.sequester_authority_certificate,
                     sequester_services=rep.sequester_services_certificates,
+                    # Workspace archiving introduced in API v2.10/3.4
+                    minimum_archiving_period=minimum_archiving_period,
                 )
 
             rep = await cmds.events_subscribe(transport)
