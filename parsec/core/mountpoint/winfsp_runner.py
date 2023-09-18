@@ -272,18 +272,20 @@ async def winfsp_mountpoint_runner(
             yield mountpoint_path
 
             # Start recording `sharing.updated` events
-            with event_bus.waiter_on_first(
-                CoreEvent.SHARING_UPDATED, CoreEvent.ARCHIVING_UPDATED
-            ) as waiter:
+            with event_bus.waiter_on(CoreEvent.SHARING_UPDATED) as waiter:
                 # Loop over `sharing.updated` event
                 while True:
                     # Restart the mountpoint with the right read_only flag if necessary
-                    # Don't bother with restarting if the workspace has been revoked
-                    # It's the manager's responsibility to unmount the workspace in this case
+                    # Don't bother with restarting if the workspace has been:
+                    # - revoked
+                    # - archived
+                    # - planned for deletion
+                    # It's the manager's responsibility to unmount the workspace in those cases
                     if (
                         workspace_fs.is_read_only() != fs.volume_params["read_only_volume"]
                         and not workspace_fs.is_revoked()
-                        and not workspace_fs.is_deleted()
+                        and not workspace_fs.is_archived()
+                        and not workspace_fs.is_deletion_planned()
                     ):
                         restart = partial(fs.restart, read_only_volume=workspace_fs.is_read_only())
                         await trio.to_thread.run_sync(restart)
