@@ -171,8 +171,8 @@ import { UserAction } from '@/views/users/UserContextMenu.vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import { MockUser, getMockUsers } from '@/common/mocks';
 import CreateUserInvitationModal from '@/views/users/CreateUserInvitationModal.vue';
-import * as Parsec from '@/common/parsec';
 import { routerNavigateTo } from '@/router';
+import { inviteUser as parsecInviteUser } from '@/parsec';
 
 const displayView = ref(DisplayState.List);
 const userList: Ref<MockUser[]> = ref([]);
@@ -229,7 +229,7 @@ async function inviteUser(): Promise<void> {
   const { data, role } = await modal.onWillDismiss();
 
   if (role === 'confirm') {
-    const result = await Parsec.inviteUser(data);
+    const result = await parsecInviteUser(data);
 
     if (result.ok) {
       console.log('Invite successful', result.value);

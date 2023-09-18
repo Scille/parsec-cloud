@@ -134,11 +134,11 @@ import { useI18n } from 'vue-i18n';
 import { ref, Ref, onMounted, computed } from 'vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import { routerNavigateTo } from '@/router';
-import * as Parsec from '@/common/parsec';
+import { WorkspaceID, WorkspaceName, listWorkspaces as parsecListWorkspaces, createWorkspace as parsecCreateWorkspace } from '@/parsec';
 
 const { t } = useI18n();
 const sortBy = ref('name');
-const workspaceList: Ref<Array<[Parsec.WorkspaceID, Parsec.WorkspaceName]>> = ref([]);
+const workspaceList: Ref<Array<[WorkspaceID, WorkspaceName]>> = ref([]);
 const workspacesInfo: Ref<MockWorkspace[]> = ref([]);
 const displayView = ref(DisplayState.Grid);
 
@@ -147,7 +147,7 @@ onMounted(async (): Promise<void> => {
 });
 
 async function refreshWorkspacesList(): Promise<void> {
-  const result = await Parsec.listWorkspaces();
+  const result = await parsecListWorkspaces();
   if (result.ok) {
     workspaceList.value = result.value;
     for (const workspace of workspaceList.value) {
@@ -194,7 +194,7 @@ async function openCreateWorkspaceModal(): Promise<void> {
   const { data, role } = await modal.onWillDismiss();
 
   if (role === 'confirm') {
-    const result = await Parsec.createWorkspace(data);
+    const result = await parsecCreateWorkspace(data);
     if (result.ok) {
       await refreshWorkspacesList();
     } else {

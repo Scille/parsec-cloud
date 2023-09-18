@@ -63,15 +63,15 @@ import {
 } from '@ionic/vue';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
 import { defineProps, inject } from 'vue';
-import * as Parsec from '@/common/parsec';
+import { UserInvitation } from '@/parsec';
 
 defineProps<{
-  invitation: Parsec.UserInvitation,
+  invitation: UserInvitation,
 }>();
 
 defineEmits<{
-  (e: 'rejectUser', invitation: Parsec.UserInvitation) : void,
-  (e: 'greetUser', invitation: Parsec.UserInvitation) : void,
+  (e: 'rejectUser', invitation: UserInvitation) : void,
+  (e: 'greetUser', invitation: UserInvitation) : void,
 }>();
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

@@ -44,7 +44,7 @@ import { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
 import { useRouter } from 'vue-router';
 import { routerNavigateTo } from '@/router';
 import { useI18n } from 'vue-i18n';
-import * as Parsec from '@/common/parsec';
+import { logout as parsecLogout } from '@/parsec';
 
 const isPopoverOpen = ref(false);
 const chevron = ref();
@@ -78,7 +78,7 @@ async function openPopover(ev: Event): Promise<void> {
       return;
     }
     if (value.data.option === ProfilePopoverOption.LogOut) {
-      const result = await Parsec.logout();
+      const result = await parsecLogout();
       if (!result.ok) {
         console.log('Failed to logout');
       } else {

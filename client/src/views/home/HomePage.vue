@@ -228,7 +228,6 @@ import MsPasswordInput from '@/components/core/ms-input/MsPasswordInput.vue';
 import MsSearchInput from '@/components/core/ms-input/MsSearchInput.vue';
 import MsSelect from '@/components/core/ms-select/MsSelect.vue';
 import { MsSelectChangeEvent, MsSelectOption } from '@/components/core/ms-select/MsSelectOption';
-import { AvailableDevice } from '@/plugins/libparsec';
 import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
 import { mockLastLogin } from '@/common/mocks';
 import { StoredDeviceData, StorageManager } from '@/services/storageManager';
@@ -242,7 +241,7 @@ import { NotificationKey } from '@/common/injectionKeys';
 import { NotificationCenter, NotificationLevel, Notification } from '@/services/notificationCenter';
 import { getAppVersion } from '@/common/mocks';
 import AboutModal from '@/views/about/AboutModal.vue';
-import * as Parsec from '@/common/parsec';
+import { listAvailableDevices as parsecListAvailableDevices, login as parsecLogin, AvailableDevice } from '@/parsec';
 
 const router = useRouter();
 const { t } = useI18n();
@@ -311,7 +310,7 @@ const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
 onMounted(async (): Promise<void> => {
   await mockLastLogin(storageManager);
 
-  deviceList.value = await Parsec.listAvailableDevices();
+  deviceList.value = await parsecListAvailableDevices();
 
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
 });
@@ -349,7 +348,7 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
   console.log(`Log in to ${device.organizationId} with password '${password}'`);
   await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));
 
-  const result = await Parsec.login(device, password);
+  const result = await parsecLogin(device, password);
   if (result.ok) {
     showOrganizationList.value = true;
     router.push({ name: 'workspaces', params: {handle: result.value}});

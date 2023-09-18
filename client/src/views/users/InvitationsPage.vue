@@ -98,11 +98,16 @@ import { createAlert } from '@/components/core/ms-alert/MsAlertConfirmation';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
 import InvitationCard from '@/components/users/InvitationCard.vue';
 import InvitationListItem from '@/components/users/InvitationListItem.vue';
-import * as Parsec from '@/common/parsec';
 import CreateUserInvitationModal from '@/views/users/CreateUserInvitationModal.vue';
 import { isRoute } from '@/router/conditions';
+import {
+  UserInvitation,
+  listUserInvitations as parsecListUserInvitations,
+  inviteUser as parsecInviteUser,
+  cancelInvitation as parsecCancelInvitation,
+} from '@/parsec';
 
-const invitations: Ref<Parsec.UserInvitation[]> = ref([]);
+const invitations: Ref<UserInvitation[]> = ref([]);
 
 const { t } = useI18n();
 
@@ -115,7 +120,7 @@ onUpdated(async () => {
 });
 
 async function refreshInvitationsList(): Promise<void> {
-  const result = await Parsec.listUserInvitations();
+  const result = await parsecListUserInvitations();
   if (result.ok) {
     console.log('List invitations successful', result.value);
     invitations.value = result.value;
@@ -134,7 +139,7 @@ async function inviteUser(): Promise<void> {
   const { data, role } = await modal.onWillDismiss();
 
   if (role === 'confirm') {
-    const result = await Parsec.inviteUser(data);
+    const result = await parsecInviteUser(data);
 
     if (result.ok) {
       console.log('Invite user successful', result.value);
@@ -161,7 +166,7 @@ async function canDismissModal(_data?: any, modalRole?: string): Promise<boolean
   return role === MsModalResult.Confirm;
 }
 
-async function greetUser(invitation: Parsec.UserInvitation): Promise<void> {
+async function greetUser(invitation: UserInvitation): Promise<void> {
   const modal = await modalController.create({
     component: GreetUserModal,
     canDismiss: canDismissModal,
@@ -174,8 +179,8 @@ async function greetUser(invitation: Parsec.UserInvitation): Promise<void> {
   await modal.onWillDismiss();
 }
 
-async function rejectUser(invitation: Parsec.UserInvitation) : Promise<void> {
-  const result = await Parsec.cancelInvitation(invitation.token);
+async function rejectUser(invitation: UserInvitation) : Promise<void> {
+  const result = await parsecCancelInvitation(invitation.token);
 
   if (result.ok) {
     await refreshInvitationsList();
