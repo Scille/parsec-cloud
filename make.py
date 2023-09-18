@@ -32,7 +32,7 @@ PYTHON_DEV_CARGO_FLAGS = "--profile=dev-python --features test-utils"
 PYTHON_CI_CARGO_FLAGS = "--profile=ci-python --features test-utils"
 
 ELECTRON_RELEASE_CARGO_FLAGS = (
-    f"--profile=release --features use-sodiumoxide {MAYBE_FORCE_VENDORED_OPENSSL}"
+    f"--profile=release --features libparsec/use-sodiumoxide {MAYBE_FORCE_VENDORED_OPENSSL}"
 )
 ELECTRON_DEV_CARGO_FLAGS = "--profile=dev --features test-utils"
 ELECTRON_CI_CARGO_FLAGS = "--profile=ci-rust --features test-utils"
