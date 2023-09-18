@@ -45,9 +45,9 @@ export enum OS {
     MacOs = 'OSMacOs',
     Windows = 'OSWindows',
 }
-export type VlobID = string
 export type InvitationToken = string
 export type OrganizationID = string
+export type VlobID = string
 export type BackendAddr = string
 export type BackendOrganizationAddr = string
 export type BackendOrganizationBootstrapAddr = string
