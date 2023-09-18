@@ -58,7 +58,7 @@ libsodium-sys = { workspace = true, optional = true }
 #
 # "openssl-for-parsec" support is why the dependence is specified here.
 # "openssl-for-reqwest", however, is only needed on Linux (reqwest uses the
-# OS's SSL implementation, which on Linux *is* OpensSSL).
+# OS's SSL implementation, we consider it to be provided by OpenSSL).
 #
 # On top of that non-Linux platforms don't provide an OpenSSL we can rely on,
 # hence we must vendor it when we need "openssl-for-parsec".
