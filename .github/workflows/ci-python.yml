@@ -37,7 +37,7 @@ env:
   # much slower (postgresql tests runs in ~9mn on 12 vs ~36mn on 14 !)
   postgresql-version: 12
 
-  permissions:
+permissions:
   contents: read
 
 jobs:
@@ -112,7 +112,7 @@ jobs:
       # Hence if we have a cache hit we know that there is no need for a rebuild !
       - name: Setup cache-key
         id: cache-key
-        run: echo "key=libparsec-ubuntu-20.04-${{ hashFiles( 'make.py', 'server/build.py', 'server/src/**', 'server/Cargo.toml', 'libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock'  ) }}-no-bundle-extra-shared-libraries" >> $GITHUB_OUTPUT
+        run: echo "key=libparsec-ubuntu-20.04-${{ hashFiles('make.py', 'server/build.py', 'server/src/**', 'server/Cargo.toml', 'libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-no-bundle-extra-shared-libraries" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Restore libparsec if Rust hasn't been modified
@@ -156,9 +156,9 @@ jobs:
           python make.py python-ci-install
 
           # Make sure POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false worked
-          if [ -n "$( ls -A ./server/parsec.libs 2>/dev/null )" ];
+          if [ -d "./server/parsec.libs" ] && [ -n "$(ls -A ./server/parsec.libs)" ];
           then
-            echo "::error::Extra libs disabled but parsec.libs/ is not empty :/ (contains: $( echo ./server/parsec.libs/* | xargs ))"
+            echo "::error title=Directory './server/parsec.libs' is not empty::Extra libs disabled but './server/parsec.libs/' is not empty: " ./server/parsec.libs/*
             exit 1
           fi
         env:
