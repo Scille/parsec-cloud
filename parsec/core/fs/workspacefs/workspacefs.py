@@ -455,6 +455,9 @@ class WorkspaceFS:
                     max(timestamp, configuration.deletion_date)
                 )
 
+        # Make sure the realm has been created
+        await self._create_realm_if_needed()
+
         # Generate and sign certificate
         certif = RealmArchivingCertificate(
             author=self.device.device_id,
