@@ -54,6 +54,7 @@ if (platform === 'web') {
 // https://vitejs.dev/config/
 const config: UserConfigExport = () => ({
   test: {
+    include: ['tests/component/specs/*.spec.ts', 'tests/unit/specs/*.spec.ts'],
     setupFiles: [path.resolve(__dirname, './tests/component/support/setup.ts')],
     server: {
       deps: {

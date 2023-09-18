@@ -2,7 +2,7 @@
 
 <template>
   <ion-page>
-    <ion-header>
+    <ion-header id="connected-header">
       <ion-toolbar class="topbar">
         <!-- icon visible when menu is hidden -->
         <ion-buttons slot="start">
