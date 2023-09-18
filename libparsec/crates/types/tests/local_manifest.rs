@@ -1289,7 +1289,8 @@ fn local_folder_manifest_from_remote(
         children,
     };
 
-    let lfm = LocalFolderManifest::from_remote(fm.clone(), &Regex::from_regex_str(regex).unwrap());
+    let lfm =
+        LocalFolderManifest::from_remote(fm.clone(), Some(&Regex::from_regex_str(regex).unwrap()));
 
     p_assert_eq!(lfm.base, fm);
     assert!(!lfm.need_sync);
@@ -1386,7 +1387,7 @@ fn local_folder_manifest_from_remote_with_local_context(
 
     let lfm = LocalFolderManifest::from_remote_with_local_context(
         fm.clone(),
-        &Regex::from_regex_str(regex).unwrap(),
+        Some(&Regex::from_regex_str(regex).unwrap()),
         &lfm,
         timestamp,
     );
@@ -1509,7 +1510,7 @@ fn local_folder_manifest_evolve_children_and_mark_updated(
         local_confinement_points: HashSet::new(),
         remote_confinement_points: HashSet::new(),
     }
-    .evolve_children_and_mark_updated(data, &prevent_sync_pattern, timestamp);
+    .evolve_children_and_mark_updated(data, Some(&prevent_sync_pattern), timestamp);
 
     p_assert_eq!(lfm.base, fm);
     p_assert_eq!(lfm.need_sync, need_sync);
@@ -1543,7 +1544,7 @@ fn local_folder_manifest_apply_prevent_sync_pattern(timestamp: DateTime) {
         local_confinement_points: HashSet::new(),
         remote_confinement_points: HashSet::new(),
     }
-    .apply_prevent_sync_pattern(&prevent_sync_pattern, timestamp);
+    .apply_prevent_sync_pattern(Some(&prevent_sync_pattern), timestamp);
 
     p_assert_eq!(lfm.base, fm);
     assert!(!lfm.need_sync);
