@@ -358,6 +358,13 @@ class MountpointManager:
         for workspace_entry in self.user_fs.get_available_workspace_entries():
             if workspace_entry.id in exclude_set:
                 continue
+            workspace_fs = self.user_fs.get_workspace(workspace_entry.id)
+            # Do not mount archived workspaces unless we're asked to
+            if workspace_fs.is_archived():
+                continue
+            # Do not mount deletion-planned workspaces unless we're asked to
+            if workspace_fs.is_deletion_planned():
+                continue
             await self.safe_mount(workspace_entry.id)
 
     async def safe_unmount_all(self) -> None:
@@ -414,7 +421,8 @@ async def mountpoint_manager_factory(
     mount_on_workspace_created: bool = False,
     mount_on_workspace_shared: bool = False,
     unmount_on_workspace_revoked: bool = False,
-    unmount_on_workspace_deleted: bool = False,
+    unmount_on_workspace_archived: bool = False,
+    unmount_on_workspace_deletion_planned: bool = False,
     exclude_from_mount_all: frozenset[EntryID] = frozenset(),
     mountpoint_in_directory: bool = False,
     personal_workspace_base_path: Path | None = None,
@@ -475,8 +483,9 @@ async def mountpoint_manager_factory(
         configured_on: DateTime | None,
         is_deleted: bool,
     ) -> None:
-        # Archiving updated
-        if is_deleted and unmount_on_workspace_deleted:
+        if configuration.is_archived() and unmount_on_workspace_archived:
+            mount_nursery.start_soon(mountpoint_manager.safe_unmount, workspace_id)
+        if configuration.is_deletion_planned() and unmount_on_workspace_deletion_planned:
             mount_nursery.start_soon(mountpoint_manager.safe_unmount, workspace_id)
 
     # Instantiate the mountpoint manager with its own nursery
