@@ -1,14 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// `allow-unwrap-in-test` don't behave as expected, see:
-// https://github.com/rust-lang/rust-clippy/issues/11119
-#![allow(clippy::unwrap_used)]
-
 use std::sync::Arc;
 
-use libparsec_client::{Client, ClientConfig, EventBus, WorkspaceStorageCacheSize};
 use libparsec_client_connection::{protocol, test_register_send_hook, ProxyConfig};
 use libparsec_tests_fixtures::prelude::*;
+
+use crate::{Client, ClientConfig, EventBus, WorkspaceStorageCacheSize};
 
 #[parsec_test(testbed = "minimal")]
 async fn base(env: &TestbedEnv) {

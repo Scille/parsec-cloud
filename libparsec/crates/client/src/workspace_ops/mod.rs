@@ -96,3 +96,8 @@ impl WorkspaceOps {
         entry_transactions::entry_info(self, path).await
     }
 }
+
+#[cfg(test)]
+#[path = "../../tests/unit/workspace_ops/mod.rs"]
+#[allow(clippy::unwrap_used)]
+mod tests;

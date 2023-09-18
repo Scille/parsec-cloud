@@ -2,15 +2,16 @@
 
 use std::sync::{Arc, Mutex};
 
-use libparsec_client::{
-    claimer_retrieve_info, ClientConfig, ProxyConfig, UserOrDeviceClaimInitialCtx,
-    WorkspaceStorageCacheSize,
-};
 use libparsec_client_connection::{
     protocol, test_register_send_hook, test_register_sequence_of_send_hooks,
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
+
+use crate::{
+    claimer_retrieve_info, ClientConfig, ProxyConfig, UserOrDeviceClaimInitialCtx,
+    WorkspaceStorageCacheSize,
+};
 
 #[parsec_test(testbed = "minimal")]
 async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {

@@ -2,13 +2,14 @@
 
 use std::sync::Arc;
 
-use libparsec_client::{
-    certificates_ops::CertificatesOps, user_ops::UserOps, ClientConfig, EventBus,
-    WorkspaceStorageCacheSize,
-};
 use libparsec_client_connection::{AuthenticatedCmds, ProxyConfig};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
+
+use crate::{
+    certificates_ops::CertificatesOps, user_ops::UserOps, ClientConfig, EventBus,
+    WorkspaceStorageCacheSize,
+};
 
 pub(crate) async fn user_ops_factory(env: &TestbedEnv, device: &Arc<LocalDevice>) -> UserOps {
     let config = Arc::new(ClientConfig {

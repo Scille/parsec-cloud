@@ -1,11 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_client::user_ops::WorkspaceShareError;
 use libparsec_client_connection::{protocol::authenticated_cmds, test_register_send_hook};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::utils::user_ops_factory;
+use super::utils::user_ops_factory;
+use crate::user_ops::WorkspaceShareError;
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn to_unknown_user(env: &TestbedEnv) {
