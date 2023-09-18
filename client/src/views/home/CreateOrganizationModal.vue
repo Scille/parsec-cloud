@@ -193,10 +193,9 @@ import SummaryStep from '@/views/home/SummaryStep.vue';
 import { OrgInfo } from '@/views/home/SummaryStep.vue';
 import MsSpinner from '@/components/core/ms-spinner/MsSpinner.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
-import { AvailableDevice } from '@/plugins/libparsec';
+import { AvailableDevice, createOrganization as parsecCreateOrganization } from '@/parsec';
 import { MsModalResult } from '@/components/core/ms-types';
 import { organizationValidator, Validity } from '@/common/validators';
-import * as Parsec from '@/common/parsec';
 import { asyncComputed } from '@/common/asyncComputed';
 
 enum CreateOrganizationStep {
@@ -352,7 +351,7 @@ async function nextStep(): Promise<void> {
   if (pageStep.value === CreateOrganizationStep.SpinnerStep) {
     const addr = serverChoice.value.mode === serverChoice.value.ServerMode.SaaS ? DEFAULT_SAAS_ADDR : serverChoice.value.backendAddr;
 
-    const result = await Parsec.createOrganization(
+    const result = await parsecCreateOrganization(
       addr, orgName.value, userInfo.value.fullName, userInfo.value.email, passwordChoice.value.password, userInfo.value.deviceName,
     );
     if (result.ok) {

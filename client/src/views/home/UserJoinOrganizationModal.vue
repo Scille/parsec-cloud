@@ -186,7 +186,6 @@ import {
 
 import {
   close,
-  caretForward,
 } from 'ionicons/icons';
 import { ref, computed, onMounted, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -197,10 +196,10 @@ import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordIn
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import { MsModalResult } from '@/components/core/ms-types';
-import * as Parsec from '@/common/parsec';
 import { NotificationKey } from '@/common/injectionKeys';
 import { Notification, NotificationCenter, NotificationLevel } from '@/services/notificationCenter';
 import { asyncComputed } from '@/common/asyncComputed';
+import { UserClaim } from '@/parsec';
 
 enum UserJoinOrganizationStep {
   WaitForHost = 1,
@@ -220,7 +219,7 @@ const userInfoPage = ref();
 const passwordPage = ref();
 const fieldsUpdated = ref(false);
 
-const claimer = ref(new Parsec.UserClaim());
+const claimer = ref(new UserClaim());
 
 const props = defineProps<{
   invitationLink: string

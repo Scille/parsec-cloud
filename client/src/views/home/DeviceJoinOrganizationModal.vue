@@ -157,8 +157,8 @@ import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
-import { AvailableDevice, DeviceFileType } from '@/plugins/libparsec';
 import { MsModalResult } from '@/components/core/ms-types';
+import { AvailableDevice, DeviceFileType } from '@/parsec';
 import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
 import { asyncComputed } from '@/common/asyncComputed';
 

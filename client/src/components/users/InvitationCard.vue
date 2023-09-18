@@ -44,15 +44,15 @@ import {
   time,
 } from 'ionicons/icons';
 import { defineProps } from 'vue';
-import * as Parsec from '@/common/parsec';
+import { UserInvitation } from '@/parsec';
 
 defineProps<{
-  invitation: Parsec.UserInvitation,
+  invitation: UserInvitation,
 }>();
 
 defineEmits<{
-  (e: 'rejectUser', invitation: Parsec.UserInvitation) : void,
-  (e: 'greetUser', invitation: Parsec.UserInvitation) : void,
+  (e: 'rejectUser', invitation: UserInvitation) : void,
+  (e: 'greetUser', invitation: UserInvitation) : void,
 }>();
 </script>
 

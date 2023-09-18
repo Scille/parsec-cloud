@@ -3,7 +3,7 @@
 // cSpell:disable
 
 import { DateTime } from 'luxon';
-import { AvailableDevice, Handle, DeviceFileType } from '@/plugins/libparsec';
+import { AvailableDevice, Handle, DeviceFileType } from '@/parsec';
 import { StorageManager } from '@/services/storageManager';
 import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
 

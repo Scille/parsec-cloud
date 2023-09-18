@@ -4,14 +4,13 @@ import InvitationCard from '@/components/users/InvitationCard.vue';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
 import { mockI18n, getDefaultProvideConfig } from 'tests/component/support/mocks';
-import * as Parsec from '@/common/parsec';
-import { InvitationStatus } from '@/plugins/libparsec';
+import { InvitationStatus, UserInvitation } from '@/parsec';
 
 mockI18n();
 
 describe('User Invitation Card', () => {
   it('Display invitation', () => {
-    const INVITATION: Parsec.UserInvitation = {
+    const INVITATION: UserInvitation = {
       tag: 'User',
       token: '1234',
       createdOn: DateTime.now().toISO() || '',

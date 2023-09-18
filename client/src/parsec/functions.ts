@@ -2,56 +2,49 @@
 
 import {
   libparsec,
-  // Types
-  VlobID,
-  AvailableDevice,
-  Result,
-  Handle,
-  ClientEvent,
-  ClientEventPing,
-  DeviceAccessStrategyPassword,
-  ClientConfig,
-  EntryName,
-  InvitationToken,
-  NewUserInvitationError,
-  NewDeviceInvitationError,
-  InviteListItemUser,
-  UserClaimInProgress1Info,
-  UserClaimInProgress2Info,
-  UserClaimInProgress3Info,
-  UserClaimFinalizeInfo,
-  SASCode,
-  HumanHandle,
-  UserOrDeviceClaimInitialInfoUser,
-  InvitationEmailSentStatus,
-  DeviceFileType,
-  ParsedBackendAddr,
-  InvitationStatus,
-  ClientStartError,
-  ListInvitationsError,
-  DeleteInvitationError,
-  ClientListWorkspacesError,
-  ClientWorkspaceCreateError,
-  ClientStopError,
-  ClaimerRetrieveInfoError,
-  ClaimInProgressError,
-  BootstrapOrganizationError,
-  ParseBackendAddrError,
-  OrganizationID,
-  BackendAddr,
   InviteListItem,
 } from '@/plugins/libparsec';
+import {
+  AvailableDevice,
+  ClientConfig,
+  DeviceAccessStrategyPassword,
+  ClientEvent,
+  Handle,
+  ClientStartError,
+  Result,
+  DEFAULT_HANDLE,
+  ClientStopError,
+  UserInvitation,
+  WorkspaceID,
+  WorkspaceName,
+  InvitationToken,
+  InvitationEmailSentStatus,
+  NewUserInvitationError,
+  ClientListWorkspacesError,
+  ClientWorkspaceCreateError,
+  UserClaimInProgress3Info,
+  ClaimInProgressError,
+  UserOrDeviceClaimInitialInfoUser,
+  UserClaimInProgress1Info,
+  UserClaimInProgress2Info,
+  UserClaimFinalizeInfo,
+  InvitationStatus,
+  ListInvitationsError,
+  NewDeviceInvitationError,
+  DeleteInvitationError,
+  SASCode,
+  HumanHandle,
+  ClaimerRetrieveInfoError,
+  BootstrapOrganizationError,
+  OrganizationID,
+  DeviceFileType,
+  ParsedBackendAddr,
+  BackendAddr,
+  ClientEventPing,
+  ParseBackendAddrError,
+} from '@/parsec/types';
 import { getParsecHandle } from '@/router/conditions';
 import { DateTime } from 'luxon';
-
-const DEFAULT_HANDLE = 42;
-
-export type WorkspaceID = VlobID;
-export type WorkspaceName = EntryName;
-
-export interface UserInvitation extends InviteListItemUser {
-  date: DateTime
-}
 
 async function _wait(delay: number): Promise<void> {
   return new Promise((res) => setTimeout(res, delay));

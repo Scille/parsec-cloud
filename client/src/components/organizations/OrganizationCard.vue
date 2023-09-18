@@ -30,7 +30,7 @@ import {
   IonCardTitle,
   IonCardSubtitle,
 } from '@ionic/vue';
-import { AvailableDevice } from '@/plugins/libparsec';
+import { AvailableDevice } from '@/parsec';
 
 defineProps<{
   device: AvailableDevice

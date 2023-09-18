@@ -264,10 +264,10 @@ import { getMockDevices } from '@/common/mocks';
 import { isOrganizationManagementRoute, isSpecificWorkspaceRoute, isUserRoute } from '@/router/conditions';
 import { isAdmin, isOutsider } from '@/common/permissions';
 import { routerNavigateTo } from '@/router';
-import * as Parsec from '@/common/parsec';
+import { WorkspaceID, WorkspaceName, listWorkspaces as parsecListWorkspaces } from '@/parsec';
 
 let device: any = {};
-const workspaces: Ref<Array<[Parsec.WorkspaceID, Parsec.WorkspaceName]>> = ref([]);
+const workspaces: Ref<Array<[WorkspaceID, WorkspaceName]>> = ref([]);
 
 const currentRoute = useRoute();
 const splitPane = ref();
@@ -304,7 +304,7 @@ onMounted(async () => {
     });
     gesture.enable();
   }
-  const result = await Parsec.listWorkspaces();
+  const result = await parsecListWorkspaces();
   if (result.ok) {
     workspaces.value = result.value;
   } else {
