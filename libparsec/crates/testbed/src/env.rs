@@ -284,7 +284,13 @@ pub async fn test_new_testbed(
             .await
             .expect("Cannot communicate with testbed server");
         if response.status() != StatusCode::OK {
-            panic!("Bad response status from testbed server: {:?}", response);
+            let url = response.url().to_owned();
+            let status = response.status();
+            let body = response.text().await.unwrap_or("".to_owned());
+            panic!(
+                "POST {}: bad response from testbed server: {}\n{}",
+                url, status, body
+            );
         }
         let (organization_id, server_template_crc) = {
             let response_body = response

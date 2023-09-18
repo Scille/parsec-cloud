@@ -72,6 +72,22 @@ async def _run_server(
 
             asgi = asgi_app_factory(backend)
 
+            # Testbed server often run in background, so it output on crash is often
+            # not visible (e.g. on the CI). Hence it's convenient to have the client
+            # print the stacktrace on our behalf.
+            # Note the testbed server is only meant to be run for tests and on a local
+            # local machine so this has no security implication.
+            @asgi.errorhandler(500)
+            def _on_500(e):
+                import traceback
+
+                msg = traceback.format_exception(
+                    type(e.original_exception),
+                    e.original_exception,
+                    e.original_exception.__traceback__,
+                )
+                return "".join(msg), 500
+
             # Add CORS handling
             @asgi.after_request
             def _add_cors(response):
