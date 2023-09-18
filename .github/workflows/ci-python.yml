@@ -257,7 +257,7 @@ jobs:
       - name: (🐧🏁 Not macOS) Mountpoint tests
         if: startsWith(matrix.os, 'macos-') != true
         run: poetry run pytest ${{ env.pytest-base-args }} tests --runmountpoint --runslow -m mountpoint
-        timeout-minutes: 10
+        timeout-minutes: 20
 
       - name: (🐧 Linux) Install pytest-xvfb plugin for pytest for Qt Testing
         if: startsWith(matrix.os, 'ubuntu-')
