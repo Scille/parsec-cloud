@@ -46,6 +46,7 @@ import {
   UserInfo,
   ClientInfoError,
   UserProfile,
+  GetWorkspaceNameError,
 } from '@/parsec/types';
 import { getParsecHandle } from '@/router/conditions';
 import { DateTime } from 'luxon';
@@ -514,4 +515,32 @@ export async function isAdmin(): Promise<boolean> {
 
 export async function isOutsider(): Promise<boolean> {
   return await getUserProfile() === UserProfile.Outsider;
+}
+
+export async function getWorkspaceName(workspaceId: WorkspaceID): Promise<Result<WorkspaceName, GetWorkspaceNameError>> {
+  const handle = getParsecHandle();
+
+  if (handle !== null && window.isDesktop()) {
+    const result = await libparsec.clientListWorkspaces(handle);
+    if (result.ok) {
+      const workspace = result.value.find((tuple) => {
+        if (tuple[0] === workspaceId) {
+          return true;
+        }
+        return false;
+      });
+      if (workspace) {
+        return new Promise<Result<WorkspaceName, GetWorkspaceNameError>>((resolve, _reject) => {
+          resolve({ok: true, value: workspace[1]});
+        });
+      }
+    }
+    return new Promise<Result<WorkspaceID, GetWorkspaceNameError>>((resolve, _reject) => {
+      resolve({ok: false, error: {tag: 'NotFound'}});
+    });
+  } else {
+    return new Promise<Result<WorkspaceID, GetWorkspaceNameError>>((resolve, _reject) => {
+      resolve({ok: true, value: 'My Workspace'});
+    });
+  }
 }

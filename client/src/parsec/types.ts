@@ -65,6 +65,10 @@ enum BackendAddrType {
   PkiEnrollment = 'PkiEnrollment',
 }
 
+interface GetWorkspaceNameError {
+  tag: 'NotFound'
+}
+
 export {
   UserInvitation,
   WorkspaceID,
@@ -111,4 +115,5 @@ export {
   ClientListWorkspacesError,
   ClientWorkspaceCreateError,
   ClientInfoError,
+  GetWorkspaceNameError,
 };
