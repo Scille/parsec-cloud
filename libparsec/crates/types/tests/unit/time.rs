@@ -12,7 +12,10 @@ fn datetime_deserialize_has_microsecond_precision() {
     let expected_timestamp_nanos = 1638618643208820000;
 
     let dt: DateTime = rmp_serde::from_slice(serialized).unwrap();
-    p_assert_eq!(dt.as_ref().timestamp_nanos(), expected_timestamp_nanos);
+    p_assert_eq!(
+        dt.as_ref().timestamp_nanos_opt(),
+        Some(expected_timestamp_nanos)
+    );
 
     // Round trip
     let serialized2 = rmp_serde::to_vec_named(&dt).unwrap();
