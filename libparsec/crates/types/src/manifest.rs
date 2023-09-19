@@ -376,8 +376,10 @@ impl std::str::FromStr for FsPath {
             return Err(FsPathError::NotAbsolute);
         }
 
-        let mut parts = vec![];
-        for item in s.split('/') {
+        let splitted = s.split('/');
+        let size_hint = splitted.size_hint();
+        let mut parts = Vec::with_capacity(size_hint.1.unwrap_or(size_hint.0));
+        for item in splitted {
             match item {
                 "." | "" => (),
                 ".." => {
