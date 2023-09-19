@@ -124,18 +124,19 @@ import {
   notifications,
 } from 'ionicons/icons';
 import { useI18n } from 'vue-i18n';
+import { onMounted, computed, Ref, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import ProfileHeader from '@/views/header/ProfileHeader.vue';
 import useSidebarMenu from '@/services/sidebarMenu';
-import { computed, Ref, ref, onMounted } from 'vue';
 import { parse as parsePath } from '@/common/path';
 import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
 import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import { hasHistory, isDocumentRoute } from '@/router/conditions';
-import { getUserInfo, UserInfo } from '@/parsec';
+import { getUserInfo, UserInfo, WorkspaceName, getWorkspaceName, WorkspaceID } from '@/parsec';
 
 const currentRoute = useRoute();
+const workspaceName: Ref<WorkspaceName> = ref('');
 const { t } = useI18n();
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
 const userInfo: Ref<UserInfo | null> = ref(null);
@@ -149,10 +150,14 @@ onMounted(async () => {
   }
 });
 
-// Dummy temporary function
-function mockGetWorkspaceName(workspaceId: string): string {
-  return `Workspace ${workspaceId}`;
-}
+onMounted(async () => {
+  const result = await getWorkspaceName(currentRoute.params.workspaceId as WorkspaceID);
+  if (result.ok) {
+    workspaceName.value = result.value;
+  } else {
+    console.log('Could not get workspace name', result.error);
+  }
+});
 
 function getTitleForRoute(): string {
   const route = currentRoute.name;
@@ -203,7 +208,7 @@ const fullPath = computed(() => {
         if (workspacePath[i] === '/') {
           finalPath.push({
             id: i + 1,
-            display: mockGetWorkspaceName(currentRoute.params.workspaceId as string),
+            display: workspaceName.value,
             name: 'folder',
             query: { path: '/' },
             params: currentRoute.params,
