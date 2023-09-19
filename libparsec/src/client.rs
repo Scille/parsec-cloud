@@ -10,7 +10,9 @@ use libparsec_types::prelude::*;
 pub use libparsec_types::{DeviceAccessStrategy, RealmRole};
 
 use crate::{
-    handle::{borrow_from_handle, register_handle, take_and_close_handle, Handle, HandleItem},
+    handle::{
+        borrow_from_handle, register_handle_with_init, take_and_close_handle, Handle, HandleItem,
+    },
     ClientConfig, ClientEvent, OnEventCallbackPlugged,
 };
 
@@ -20,6 +22,8 @@ use crate::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum ClientStartError {
+    #[error("This client is already running")]
+    DeviceAlreadyRunning,
     #[error(transparent)]
     LoadDeviceInvalidPath(anyhow::Error),
     #[error("Cannot deserialize file content")]
@@ -61,20 +65,35 @@ pub async fn client_start(
     access: DeviceAccessStrategy,
 ) -> Result<Handle, ClientStartError> {
     let config: Arc<libparsec_client::ClientConfig> = config.into();
-    // TODO
-    let events_plugged = OnEventCallbackPlugged::new(on_event_callback);
 
     // 1) Load the device
 
     let device = libparsec_platform_device_loader::load_device(&config.config_dir, &access).await?;
 
-    // 2) Actually start the client
+    // 2) Make sure another client is not running this device
 
-    let client = libparsec_client::Client::start(config, events_plugged.event_bus.clone(), device)
+    let slug = device.slug();
+    let initializing =
+        register_handle_with_init(HandleItem::StartingClient { slug: slug.clone() }, |item| {
+            match item {
+                HandleItem::Client { client, .. } if client.device_slug() == slug => false,
+                HandleItem::StartingClient { slug: candidate } if *candidate == slug => false,
+                _ => true,
+            }
+        })
+        .map_err(|_| ClientStartError::DeviceAlreadyRunning)?;
+
+    // 3) Actually start the client
+
+    let on_event = OnEventCallbackPlugged::new(on_event_callback);
+    let client = libparsec_client::Client::start(config, on_event.event_bus.clone(), device)
         .await
         .map_err(ClientStartError::Internal)?;
 
-    let handle = register_handle(HandleItem::Client((Arc::new(client), events_plugged)));
+    let handle = initializing.initialized(HandleItem::Client {
+        client: Arc::new(client),
+        on_event,
+    });
 
     Ok(handle)
 }
@@ -90,8 +109,8 @@ pub enum ClientStopError {
 }
 
 pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
-    let (client, events_plugged) = take_and_close_handle(client, |x| match x {
-        HandleItem::Client(client) => Some(client),
+    let (client, on_event) = take_and_close_handle(client, |x| match x {
+        HandleItem::Client { client, on_event } => Some((client, on_event)),
         _ => None,
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
@@ -100,7 +119,7 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
 
     // Wait until after the client is close to disconnect to the event bus to ensure
     // we don't miss events fired during client teardown
-    drop(events_plugged);
+    drop(on_event);
 
     Ok(())
 }
@@ -119,7 +138,7 @@ pub async fn client_list_workspaces(
     client: Handle,
 ) -> Result<Vec<(VlobID, EntryName)>, ClientListWorkspacesError> {
     let client = borrow_from_handle(client, |x| match x {
-        HandleItem::Client((client, _)) => Some(client.clone()),
+        HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
@@ -142,7 +161,7 @@ pub async fn client_workspace_create(
     name: EntryName,
 ) -> Result<VlobID, ClientWorkspaceCreateError> {
     let client = borrow_from_handle(client, |x| match x {
-        HandleItem::Client((client, _)) => Some(client.clone()),
+        HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
@@ -164,7 +183,7 @@ pub async fn client_workspace_rename(
     new_name: EntryName,
 ) -> Result<(), ClientWorkspaceRenameError> {
     let client = borrow_from_handle(client, |x| match x {
-        HandleItem::Client((client, _)) => Some(client.clone()),
+        HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
@@ -183,7 +202,7 @@ pub async fn client_workspace_share(
     role: Option<RealmRole>,
 ) -> Result<(), ClientWorkspaceShareError> {
     let client = borrow_from_handle(client, |x| match x {
-        HandleItem::Client((client, _)) => Some(client.clone()),
+        HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
@@ -205,7 +224,7 @@ pub struct ClientInfo {
 
 pub async fn client_info(client: Handle) -> Result<ClientInfo, ClientInfoError> {
     let client = borrow_from_handle(client, |x| match x {
-        HandleItem::Client((client, _)) => Some(client.clone()),
+        HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;

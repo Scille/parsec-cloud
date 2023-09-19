@@ -587,7 +587,7 @@ pub async fn client_new_user_invitation(
     send_email: bool,
 ) -> Result<(InvitationToken, InvitationEmailSentStatus), NewUserInvitationError> {
     let client = borrow_from_handle(client, |x| match x {
-        HandleItem::Client((client, _)) => Some(client.clone()),
+        HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
@@ -601,7 +601,7 @@ pub async fn client_new_device_invitation(
 ) -> Result<(InvitationToken, libparsec_client::InvitationEmailSentStatus), NewDeviceInvitationError>
 {
     let client = borrow_from_handle(client, |x| match x {
-        HandleItem::Client((client, _)) => Some(client.clone()),
+        HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
@@ -614,7 +614,7 @@ pub async fn client_delete_invitation(
     token: InvitationToken,
 ) -> Result<(), DeleteInvitationError> {
     let client = borrow_from_handle(client, |x| match x {
-        HandleItem::Client((client, _)) => Some(client.clone()),
+        HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
@@ -628,7 +628,7 @@ pub async fn client_list_invitations(
     client: Handle,
 ) -> Result<Vec<libparsec_client::InviteListItem>, ListInvitationsError> {
     let client = borrow_from_handle(client, |x| match x {
-        HandleItem::Client((client, _)) => Some(client.clone()),
+        HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
@@ -647,7 +647,7 @@ pub async fn client_start_user_invitation_greet(
     token: InvitationToken,
 ) -> Result<UserGreetInitialInfo, ClientStartInvitationGreetError> {
     let client = borrow_from_handle(client, |x| match x {
-        HandleItem::Client((client, _)) => Some(client.clone()),
+        HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
@@ -664,7 +664,7 @@ pub async fn client_start_device_invitation_greet(
     token: InvitationToken,
 ) -> Result<DeviceGreetInitialInfo, ClientStartInvitationGreetError> {
     let client = borrow_from_handle(client, |x| match x {
-        HandleItem::Client((client, _)) => Some(client.clone()),
+        HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;

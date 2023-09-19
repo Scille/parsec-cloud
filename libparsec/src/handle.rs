@@ -10,7 +10,13 @@ pub(crate) enum RegisteredHandleItem {
 }
 
 pub(crate) enum HandleItem {
-    Client((Arc<libparsec_client::Client>, crate::OnEventCallbackPlugged)),
+    StartingClient {
+        slug: String,
+    },
+    Client {
+        client: Arc<libparsec_client::Client>,
+        on_event: crate::OnEventCallbackPlugged,
+    },
 
     UserGreetInitial(libparsec_client::UserGreetInitialCtx),
     DeviceGreetInitial(libparsec_client::DeviceGreetInitialCtx),
@@ -36,6 +42,74 @@ pub(crate) enum HandleItem {
 }
 
 static HANDLES: OnceLock<Mutex<Vec<RegisteredHandleItem>>> = OnceLock::new();
+
+pub(crate) struct InitializingGuard {
+    handle: Handle,
+    started: bool,
+}
+
+impl InitializingGuard {
+    pub fn initialized(mut self, initialized: HandleItem) -> u32 {
+        let mut guard = HANDLES
+            .get_or_init(Default::default)
+            .lock()
+            .expect("Mutex is poisoned");
+
+        // Replace the handle item by the new one
+        if let Some(RegisteredHandleItem::Running(item)) = guard.get_mut(self.handle as usize) {
+            *item = initialized;
+        }
+
+        // Prevent the drop from closing our handle !
+        self.started = true;
+
+        self.handle
+    }
+}
+
+impl Drop for InitializingGuard {
+    fn drop(&mut self) {
+        if self.started {
+            return;
+        }
+
+        // The guard has been dropped without finalizing the start, there is nothing
+        // to do but to close the handle (otherwise it will block any new start attempt)
+        let mut guard = HANDLES
+            .get_or_init(Default::default)
+            .lock()
+            .expect("Mutex is poisoned");
+
+        if let Some(maybe_running) = guard.get_mut(self.handle as usize) {
+            *maybe_running = RegisteredHandleItem::Closed;
+        }
+    }
+}
+
+pub(crate) fn register_handle_with_init(
+    initializing: HandleItem,
+    precondition: impl Fn(&HandleItem) -> bool,
+) -> Result<InitializingGuard, ()> {
+    let mut guard = HANDLES
+        .get_or_init(Default::default)
+        .lock()
+        .expect("Mutex is poisoned");
+
+    let precondition_failed = !guard.iter().all(|maybe_running| match maybe_running {
+        RegisteredHandleItem::Running(item) => precondition(item),
+        RegisteredHandleItem::Closed => true,
+    });
+    if precondition_failed {
+        return Err(());
+    }
+
+    let handle = guard.len() as u32;
+    guard.push(RegisteredHandleItem::Running(initializing));
+    Ok(InitializingGuard {
+        handle,
+        started: false,
+    })
+}
 
 pub(crate) fn register_handle(item: HandleItem) -> Handle {
     let mut guard = HANDLES
