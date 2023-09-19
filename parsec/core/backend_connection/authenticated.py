@@ -71,7 +71,7 @@ DESYNC_RETRY_TIME = 10  # seconds
 # - The client is offline.
 # Note that this value is different from the initial minimum archiving period
 # set when creating a new organization, which is 30 days.
-DEFAULT_MINIMUM_ARCHIVING_PERIOD = 0
+DEFAULT_MINIMUM_ARCHIVING_PERIOD = 0  # seconds
 
 
 BackendConnStatus = Enum("BackendConnStatus", "READY LOST INITIALIZING REFUSED CRASHED DESYNC")
