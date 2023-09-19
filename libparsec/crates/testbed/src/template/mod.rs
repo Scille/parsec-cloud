@@ -16,6 +16,8 @@ use crc_hash::CrcHash;
 pub struct TestbedTemplate {
     pub id: &'static str,
     pub events: Vec<TestbedEvent>,
+    // Stuff is useful store provide arbitrary things (e.g. IDs) from the template to the test
+    pub stuff: Vec<(&'static str, &'static (dyn std::any::Any + Send + Sync))>,
     build_counters: TestbedTemplateBuilderCounters,
 }
 
@@ -29,6 +31,26 @@ impl std::fmt::Debug for TestbedTemplate {
 }
 
 impl TestbedTemplate {
+    pub fn get_stuff<T>(&self, key: &'static str) -> &'static T {
+        let (_, value_any) = self
+            .stuff
+            .iter()
+            .find(|(k, _)| *k == key)
+            .unwrap_or_else(|| {
+                let available_stuff: Vec<_> = self.stuff.iter().map(|(k, _)| k).collect();
+                panic!(
+                    "Key `{}` is not among the stuff (available keys: {:?})",
+                    key, available_stuff
+                );
+            });
+        value_any.downcast_ref::<T>().unwrap_or_else(|| {
+            panic!(
+                "Key `{}` is among the stuff, but you got it type wrong :'(",
+                key
+            );
+        })
+    }
+
     pub fn from_builder(id: &'static str) -> TestbedTemplateBuilder {
         TestbedTemplateBuilder::new(id)
     }
@@ -67,6 +89,26 @@ impl TestbedTemplate {
                 .expect("Not a sequestered organization"),
             _ => unreachable!(),
         }
+    }
+
+    pub fn sequester_services_public_key(
+        &self,
+    ) -> Option<impl Iterator<Item = (&SequesterServiceID, &SequesterPublicKeyDer)>> {
+        match self
+            .events
+            .first()
+            .expect("Organization is not bootstrapped")
+        {
+            TestbedEvent::BootstrapOrganization(x) => {
+                x.sequester_authority.as_ref()?;
+            }
+            _ => unreachable!(),
+        }
+
+        Some(self.events.iter().filter_map(|e| match e {
+            TestbedEvent::NewSequesterService(x) => Some((&x.id, &x.encryption_public_key)),
+            _ => None,
+        }))
     }
 
     pub fn device_signing_key<'a>(&'a self, device_id: &DeviceID) -> &'a SigningKey {

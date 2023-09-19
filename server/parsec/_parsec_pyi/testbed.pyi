@@ -172,31 +172,22 @@ class TestbedEventFinishRealmReencryption:
     realm: VlobID
     encryption_revision: int
 
-class TestbedEventNewVlob:
+class TestbedEventCreateOrUpdateOpaqueVlob:
     timestamp: DateTime
     author: DeviceID
     realm: VlobID
     encryption_revision: int
     vlob_id: VlobID
-    blob: bytes
-    sequester_blob: dict[SequesterServiceID, bytes] | None
-
-class TestbedEventUpdateVlob:
-    timestamp: DateTime
-    author: DeviceID
-    realm: VlobID
-    encryption_revision: int
-    vlob: VlobID
     version: int
-    blob: bytes
-    sequester_blob: dict[SequesterServiceID, bytes] | None
+    encrypted: bytes
+    sequestered: dict[SequesterServiceID, bytes] | None
 
-class TestbedEventNewBlock:
+class TestbedEventCreateOpaqueBlock:
     timestamp: DateTime
     author: DeviceID
     realm: VlobID
     block_id: BlockID
-    block: bytes
+    encrypted: bytes
 
 TestbedEvent = (
     TestbedEventBootstrapOrganization
@@ -209,7 +200,6 @@ TestbedEvent = (
     | TestbedEventShareRealm
     | TestbedEventStartRealmReencryption
     | TestbedEventFinishRealmReencryption
-    | TestbedEventNewVlob
-    | TestbedEventUpdateVlob
-    | TestbedEventNewBlock
+    | TestbedEventCreateOrUpdateOpaqueVlob
+    | TestbedEventCreateOpaqueBlock
 )

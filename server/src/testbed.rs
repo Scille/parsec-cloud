@@ -7,12 +7,11 @@ use pyo3::{
 use std::sync::Arc;
 
 use crate::{
-    BlockID, DateTime, DeviceCertificate, DeviceID, DeviceLabel, FileManifest, FolderManifest,
-    HumanHandle, PrivateKey, RealmRole, RealmRoleCertificate, RevokedUserCertificate, SecretKey,
+    BlockID, DateTime, DeviceCertificate, DeviceID, DeviceLabel, HumanHandle, PrivateKey,
+    RealmRole, RealmRoleCertificate, RevokedUserCertificate, SecretKey,
     SequesterAuthorityCertificate, SequesterPrivateKeyDer, SequesterPublicKeyDer,
     SequesterServiceCertificate, SequesterServiceID, SequesterSigningKeyDer, SequesterVerifyKeyDer,
-    SigningKey, UserCertificate, UserID, UserManifest, UserProfile, UserUpdateCertificate, VlobID,
-    WorkspaceManifest,
+    SigningKey, UserCertificate, UserID, UserProfile, UserUpdateCertificate, VlobID,
 };
 
 #[pyclass]
@@ -296,58 +295,6 @@ event_wrapper!(
 );
 
 event_wrapper!(
-    TestbedEventCreateOrUpdateUserManifestVlob,
-    [manifest: UserManifest,],
-    |_py, x: &TestbedEventCreateOrUpdateUserManifestVlob| -> PyResult<String> {
-        Ok(format!(
-            "timestamp={:?}, author={:?}, version={:?}",
-            &x.manifest.0.timestamp, &x.manifest.0.author, &x.manifest.0.version
-        ))
-    }
-);
-
-event_wrapper!(
-    TestbedEventCreateOrUpdateWorkspaceManifestVlob,
-    [manifest: WorkspaceManifest,],
-    |_py, x: &TestbedEventCreateOrUpdateWorkspaceManifestVlob| -> PyResult<String> {
-        Ok(format!(
-            "timestamp={:?}, author={:?}, realm={:?}, version={:?}",
-            &x.manifest.0.timestamp, &x.manifest.0.author, &x.manifest.0.id, &x.manifest.0.version
-        ))
-    }
-);
-
-event_wrapper!(
-    TestbedEventCreateOrUpdateFolderManifestVlob,
-    [realm: VlobID, manifest: FolderManifest,],
-    |_py, x: &TestbedEventCreateOrUpdateFolderManifestVlob| -> PyResult<String> {
-        Ok(format!(
-            "timestamp={:?}, author={:?}, realm={:?}, vlob={:?}, version={:?}",
-            &x.manifest.0.timestamp,
-            &x.manifest.0.author,
-            &x.realm.0,
-            &x.manifest.0.id,
-            &x.manifest.0.version
-        ))
-    }
-);
-
-event_wrapper!(
-    TestbedEventCreateOrUpdateFileManifestVlob,
-    [realm: VlobID, manifest: FileManifest,],
-    |_py, x: &TestbedEventCreateOrUpdateFileManifestVlob| -> PyResult<String> {
-        Ok(format!(
-            "timestamp={:?}, author={:?}, realm={:?}, vlob={:?}, version={:?}",
-            &x.manifest.0.timestamp,
-            &x.manifest.0.author,
-            &x.realm.0,
-            &x.manifest.0.id,
-            &x.manifest.0.version
-        ))
-    }
-);
-
-event_wrapper!(
     TestbedEventCreateOrUpdateOpaqueVlob,
     [
         timestamp: DateTime,
@@ -356,31 +303,13 @@ event_wrapper!(
         encryption_revision: libparsec_types::IndexInt,
         vlob_id: VlobID,
         version: libparsec_types::VersionInt,
-        blob: Py<PyBytes>,
-        sequester_blob: PyObject,
+        encrypted: Py<PyBytes>,
+        sequestered: PyObject,
     ],
     |_py, x: &TestbedEventCreateOrUpdateOpaqueVlob| -> PyResult<String> {
         Ok(format!(
             "timestamp={:?}, author={:?}, realm={:?}, vlob={:?}, version={:?}",
             x.timestamp.0, x.author.0, x.realm.0, x.vlob_id.0, x.version
-        ))
-    }
-);
-
-event_wrapper!(
-    TestbedEventCreateBlock,
-    [
-        timestamp: DateTime,
-        author: DeviceID,
-        realm: VlobID,
-        block_id: BlockID,
-        cleartext_block: Py<PyBytes>,
-        encrypted_block: Py<PyBytes>,
-    ],
-    |_py, x: &TestbedEventCreateBlock| -> PyResult<String> {
-        Ok(format!(
-            "timestamp={:?}, author={:?}, realm={:?}, block={:?}",
-            x.timestamp.0, x.author.0, x.realm.0, x.block_id.0,
         ))
     }
 );
@@ -392,7 +321,7 @@ event_wrapper!(
         author: DeviceID,
         realm: VlobID,
         block_id: BlockID,
-        encrypted_block: Py<PyBytes>,
+        encrypted: Py<PyBytes>,
     ],
     |_py, x: &TestbedEventCreateOpaqueBlock| -> PyResult<String> {
         Ok(format!(
@@ -735,19 +664,12 @@ fn event_to_pyobject(
             Some(obj.into_py(py))
         }
 
-        libparsec_testbed::TestbedEvent::CreateOrUpdateUserManifestVlob(x) => {
-            let obj = TestbedEventCreateOrUpdateUserManifestVlob {
-                manifest: UserManifest::from((*x.manifest).clone()),
-            };
-            Some(obj.into_py(py))
-        }
-
         libparsec_testbed::TestbedEvent::CreateOrUpdateOpaqueVlob(x) => {
-            let sequester_blob = match &x.sequester_blob {
+            let sequestered = match &x.sequestered {
                 None => py.None().into_py(py),
-                Some(sequester_blob) => {
+                Some(sequestered) => {
                     let pyobj = PyDict::new(py);
-                    for (id, blob) in sequester_blob {
+                    for (id, blob) in sequestered {
                         pyobj.set_item(
                             SequesterServiceID::from(id.to_owned()).into_py(py),
                             PyBytes::new(py, blob),
@@ -763,8 +685,116 @@ fn event_to_pyobject(
                 encryption_revision: x.encryption_revision,
                 version: x.version,
                 vlob_id: x.vlob_id.into(),
-                blob: PyBytes::new(py, &x.encrypted).into(),
-                sequester_blob,
+                encrypted: PyBytes::new(py, &x.encrypted).into(),
+                sequestered,
+            };
+            Some(obj.into_py(py))
+        }
+
+        libparsec_testbed::TestbedEvent::CreateOrUpdateUserManifestVlob(x) => {
+            let sequestered = match x.sequestered(template) {
+                None => py.None().into_py(py),
+                Some(sequestered) => {
+                    let pyobj = PyDict::new(py);
+                    for (id, blob) in sequestered {
+                        pyobj.set_item(
+                            SequesterServiceID::from(id.to_owned()).into_py(py),
+                            PyBytes::new(py, &blob),
+                        )?;
+                    }
+                    pyobj.into_py(py)
+                }
+            };
+            let obj = TestbedEventCreateOrUpdateOpaqueVlob {
+                timestamp: x.manifest.timestamp.into(),
+                author: x.manifest.author.clone().into(),
+                realm: x.manifest.id.into(),
+                encryption_revision: 1,
+                version: x.manifest.version,
+                vlob_id: x.manifest.id.into(),
+                encrypted: PyBytes::new(py, &x.encrypted(template)).into(),
+                sequestered,
+            };
+            Some(obj.into_py(py))
+        }
+
+        libparsec_testbed::TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(x) => {
+            let sequestered = match x.sequestered(template) {
+                None => py.None().into_py(py),
+                Some(sequestered) => {
+                    let pyobj = PyDict::new(py);
+                    for (id, blob) in sequestered {
+                        pyobj.set_item(
+                            SequesterServiceID::from(id.to_owned()).into_py(py),
+                            PyBytes::new(py, &blob),
+                        )?;
+                    }
+                    pyobj.into_py(py)
+                }
+            };
+            let obj = TestbedEventCreateOrUpdateOpaqueVlob {
+                timestamp: x.manifest.timestamp.into(),
+                author: x.manifest.author.clone().into(),
+                realm: x.manifest.id.into(),
+                encryption_revision: 1,
+                version: x.manifest.version,
+                vlob_id: x.manifest.id.into(),
+                encrypted: PyBytes::new(py, &x.encrypted(template)).into(),
+                sequestered,
+            };
+            Some(obj.into_py(py))
+        }
+
+        libparsec_testbed::TestbedEvent::CreateOrUpdateFileManifestVlob(x) => {
+            let sequestered = match x.sequestered(template) {
+                None => py.None().into_py(py),
+                Some(sequestered) => {
+                    let pyobj = PyDict::new(py);
+                    for (id, blob) in sequestered {
+                        pyobj.set_item(
+                            SequesterServiceID::from(id.to_owned()).into_py(py),
+                            PyBytes::new(py, &blob),
+                        )?;
+                    }
+                    pyobj.into_py(py)
+                }
+            };
+            let obj = TestbedEventCreateOrUpdateOpaqueVlob {
+                timestamp: x.manifest.timestamp.into(),
+                author: x.manifest.author.clone().into(),
+                realm: x.realm.into(),
+                encryption_revision: 1,
+                version: x.manifest.version,
+                vlob_id: x.manifest.id.into(),
+                encrypted: PyBytes::new(py, &x.encrypted(template)).into(),
+                sequestered,
+            };
+            Some(obj.into_py(py))
+        }
+
+        libparsec_testbed::TestbedEvent::CreateOrUpdateFolderManifestVlob(x) => {
+            let sequestered = match x.sequestered(template) {
+                None => py.None().into_py(py),
+                Some(sequestered) => {
+                    let pyobj = PyDict::new(py);
+                    for (id, blob) in sequestered {
+                        pyobj.set_item(
+                            SequesterServiceID::from(id.to_owned()).into_py(py),
+                            PyBytes::new(py, &blob),
+                        )?;
+                    }
+                    pyobj.into_py(py)
+                }
+            };
+            let obj = TestbedEventCreateOrUpdateOpaqueVlob {
+                timestamp: x.manifest.timestamp.into(),
+                author: x.manifest.author.clone().into(),
+                realm: x.realm.into(),
+                encryption_revision: 1,
+                version: x.manifest.version,
+                vlob_id: x.manifest.id.into(),
+                encrypted: PyBytes::new(py, &x.encrypted(template)).into(),
+                sequestered,
             };
             Some(obj.into_py(py))
         }
@@ -775,7 +805,18 @@ fn event_to_pyobject(
                 author: x.author.clone().into(),
                 realm: x.realm.into(),
                 block_id: x.block_id.into(),
-                encrypted_block: PyBytes::new(py, &x.encrypted_block).into(),
+                encrypted: PyBytes::new(py, &x.encrypted).into(),
+            };
+            Some(obj.into_py(py))
+        }
+
+        libparsec_testbed::TestbedEvent::CreateBlock(x) => {
+            let obj = TestbedEventCreateOpaqueBlock {
+                timestamp: x.timestamp.into(),
+                author: x.author.clone().into(),
+                realm: x.realm.into(),
+                block_id: x.block_id.into(),
+                encrypted: PyBytes::new(py, &x.encrypted(template)).into(),
             };
             Some(obj.into_py(py))
         }

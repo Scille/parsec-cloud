@@ -108,16 +108,24 @@ async def _run_server(
                     template_org_id, template_crc = template_id_to_org_id_and_crc[template]
                 except KeyError:
                     async with load_template_lock:
-                        # If it exists, template has not been loaded yet
-                        template_content = testbed.test_get_testbed_template(template)
+                        # Ensure the template hasn't been loaded while we were waiting for the lock
+                        try:
+                            template_org_id, template_crc = template_id_to_org_id_and_crc[template]
 
-                        if not template_content:
-                            # No template with the given id
-                            return await make_response(b"unknown template", 404)
+                        except KeyError:
+                            # If it exists, template has not been loaded yet
+                            template_content = testbed.test_get_testbed_template(template)
 
-                        template_crc = template_content.compute_crc()
-                        template_org_id = await backend.test_load_template(template_content)
-                        template_id_to_org_id_and_crc[template] = (template_org_id, template_crc)
+                            if not template_content:
+                                # No template with the given id
+                                return await make_response(b"unknown template", 404)
+
+                            template_crc = template_content.compute_crc()
+                            template_org_id = await backend.test_load_template(template_content)
+                            template_id_to_org_id_and_crc[template] = (
+                                template_org_id,
+                                template_crc,
+                            )
 
                 org_count += 1
                 new_org_id = OrganizationID(f"Org{org_count}")

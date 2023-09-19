@@ -73,20 +73,24 @@ impl<T: CrcHash> CrcHash for Vec<T> {
     }
 }
 
-impl<A: CrcHash, B: CrcHash> CrcHash for HashMap<A, B> {
+impl<A: CrcHash + std::cmp::Ord, B: CrcHash> CrcHash for HashMap<A, B> {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
         hasher.update(b"HashMap");
-        for (k, v) in self.iter() {
+        let mut items: Vec<_> = self.iter().collect();
+        items.sort_unstable_by(|(a, _), (b, _)| a.partial_cmp(b).unwrap());
+        for (k, v) in items {
             k.crc_hash(hasher);
             v.crc_hash(hasher);
         }
     }
 }
 
-impl<T: CrcHash> CrcHash for HashSet<T> {
+impl<T: CrcHash + std::cmp::Ord> CrcHash for HashSet<T> {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
         hasher.update(b"HashSet");
-        for v in self.iter() {
+        let mut items: Vec<_> = self.iter().collect();
+        items.sort_unstable();
+        for v in items {
             v.crc_hash(hasher);
         }
     }

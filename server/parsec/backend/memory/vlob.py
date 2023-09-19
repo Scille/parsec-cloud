@@ -136,7 +136,9 @@ class MemoryVlobComponent(BaseVlobComponent):
         self._realm_component: MemoryRealmComponent | None = None
         self._sequester_component: MemorySequesterComponent | None = None
         self._vlobs: Dict[Tuple[OrganizationID, VlobID], Vlob] = {}
-        self._per_realm_changes: Dict[Tuple[OrganizationID, VlobID], Changes] = defaultdict(Changes)
+        self._per_realm_changes: defaultdict[Tuple[OrganizationID, VlobID], Changes] = defaultdict(
+            Changes
+        )
 
     def register_components(
         self,
@@ -628,8 +630,11 @@ class MemoryVlobComponent(BaseVlobComponent):
             for (candidate_org_id, vlob_id), vlob in self._vlobs.items()
             if candidate_org_id != id
         }
-        self._per_realm_changes = {
-            (candidate_org_id, realm_id): changes
-            for (candidate_org_id, realm_id), changes in self._per_realm_changes.items()
-            if candidate_org_id != id
-        }
+        self._per_realm_changes = defaultdict(
+            Changes,
+            (
+                ((candidate_org_id, realm_id), changes)
+                for (candidate_org_id, realm_id), changes in self._per_realm_changes.items()
+                if candidate_org_id != id
+            ),
+        )

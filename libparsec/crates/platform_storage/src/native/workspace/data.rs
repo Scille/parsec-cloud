@@ -173,6 +173,7 @@ mod child_manifests {
     }
 
     impl<'a> WorkspaceDataStorageChildManifestUpdater<'a> {
+        /// If nothing to remove, use `[].into_iter()` for `to_remove` param.
         /// `delay_flush` is to be used when the file is opened (given then the `flush`
         /// syscall should be used to guarantee the data are persistent)
         pub async fn set_file_manifest(
