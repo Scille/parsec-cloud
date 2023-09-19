@@ -69,7 +69,11 @@ impl DateTime {
 
     // Don't implement this as `Into<f64>` to prevent misunderstanding on precision
     pub fn get_f64_with_us_precision(&self) -> f64 {
-        let ts_us = self.0.timestamp_nanos() / 1000;
+        let ts_us = self
+            .0
+            .timestamp_nanos_opt()
+            .expect("Value out of range for a timestamp with nanosecond precision")
+            / 1000;
         ts_us as f64 / 1e6
     }
 
@@ -573,7 +577,11 @@ impl LocalDateTime {
 
     // Don't implement this as `Into<f64>` to keep it private
     pub fn get_f64_with_us_precision(&self) -> f64 {
-        let ts_us = self.0.timestamp_nanos() / 1000;
+        let ts_us = self
+            .0
+            .timestamp_nanos_opt()
+            .expect("Value out of range for a timestamp with nanosecond precision")
+            / 1000;
         ts_us as f64 / 1e6
     }
 
