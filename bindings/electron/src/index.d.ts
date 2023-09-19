@@ -959,3 +959,21 @@ export function testGetTestbedBootstrapOrganizationAddr(
 export function testDropTestbed(
     path: string
 ): Promise<null>
+export function validateEntryName(
+    raw: string
+): Promise<boolean>
+export function validatePath(
+    raw: string
+): Promise<boolean>
+export function validateHumanHandleLabel(
+    raw: string
+): Promise<boolean>
+export function validateEmail(
+    raw: string
+): Promise<boolean>
+export function validateDeviceLabel(
+    raw: string
+): Promise<boolean>
+export function validateInvitationToken(
+    raw: string
+): Promise<boolean>

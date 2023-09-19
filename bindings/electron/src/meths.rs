@@ -5858,6 +5858,84 @@ fn test_drop_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// validate_entry_name
+fn validate_entry_name(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let raw = {
+        let js_val = cx.argument::<JsString>(0)?;
+        js_val.value(&mut cx)
+    };
+    let ret = libparsec::validate_entry_name(&raw);
+    let js_ret = JsBoolean::new(&mut cx, ret);
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// validate_path
+fn validate_path(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let raw = {
+        let js_val = cx.argument::<JsString>(0)?;
+        js_val.value(&mut cx)
+    };
+    let ret = libparsec::validate_path(&raw);
+    let js_ret = JsBoolean::new(&mut cx, ret);
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// validate_human_handle_label
+fn validate_human_handle_label(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let raw = {
+        let js_val = cx.argument::<JsString>(0)?;
+        js_val.value(&mut cx)
+    };
+    let ret = libparsec::validate_human_handle_label(&raw);
+    let js_ret = JsBoolean::new(&mut cx, ret);
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// validate_email
+fn validate_email(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let raw = {
+        let js_val = cx.argument::<JsString>(0)?;
+        js_val.value(&mut cx)
+    };
+    let ret = libparsec::validate_email(&raw);
+    let js_ret = JsBoolean::new(&mut cx, ret);
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// validate_device_label
+fn validate_device_label(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let raw = {
+        let js_val = cx.argument::<JsString>(0)?;
+        js_val.value(&mut cx)
+    };
+    let ret = libparsec::validate_device_label(&raw);
+    let js_ret = JsBoolean::new(&mut cx, ret);
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// validate_invitation_token
+fn validate_invitation_token(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let raw = {
+        let js_val = cx.argument::<JsString>(0)?;
+        js_val.value(&mut cx)
+    };
+    let ret = libparsec::validate_invitation_token(&raw);
+    let js_ret = JsBoolean::new(&mut cx, ret);
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
 pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("parseBackendAddr", parse_backend_addr)?;
     cx.export_function(
@@ -5983,5 +6061,11 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         test_get_testbed_bootstrap_organization_addr,
     )?;
     cx.export_function("testDropTestbed", test_drop_testbed)?;
+    cx.export_function("validateEntryName", validate_entry_name)?;
+    cx.export_function("validatePath", validate_path)?;
+    cx.export_function("validateHumanHandleLabel", validate_human_handle_label)?;
+    cx.export_function("validateEmail", validate_email)?;
+    cx.export_function("validateDeviceLabel", validate_device_label)?;
+    cx.export_function("validateInvitationToken", validate_invitation_token)?;
     Ok(())
 }

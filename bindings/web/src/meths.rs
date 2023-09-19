@@ -4735,3 +4735,63 @@ pub fn testDropTestbed(path: String) -> Promise {
         Ok(JsValue::NULL)
     })
 }
+
+// validate_entry_name
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn validateEntryName(raw: String) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::validate_entry_name(&raw);
+        Ok(ret.into())
+    })
+}
+
+// validate_path
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn validatePath(raw: String) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::validate_path(&raw);
+        Ok(ret.into())
+    })
+}
+
+// validate_human_handle_label
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn validateHumanHandleLabel(raw: String) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::validate_human_handle_label(&raw);
+        Ok(ret.into())
+    })
+}
+
+// validate_email
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn validateEmail(raw: String) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::validate_email(&raw);
+        Ok(ret.into())
+    })
+}
+
+// validate_device_label
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn validateDeviceLabel(raw: String) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::validate_device_label(&raw);
+        Ok(ret.into())
+    })
+}
+
+// validate_invitation_token
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn validateInvitationToken(raw: String) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::validate_invitation_token(&raw);
+        Ok(ret.into())
+    })
+}
