@@ -12,7 +12,7 @@
           id="button-invite-user"
           :button-label="$t('UsersPage.inviteUser')"
           @click="inviteUser()"
-          v-show="isAdmin()"
+          v-show="isAdmin"
         />
         <div class="right-side">
           <ms-grid-list-toggle
@@ -86,12 +86,11 @@ import {
 import {
   personAdd,
 } from 'ionicons/icons';
-import { onUpdated, ref, Ref } from 'vue';
+import { onUpdated, ref, Ref, onMounted } from 'vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import MsActionBarButton from '@/components/core/ms-action-bar/MsActionBarButton.vue';
 import MsGridListToggle from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import { DisplayState } from '@/components/core/ms-toggle/MsGridListToggle.vue';
-import { isAdmin } from '@/common/permissions';
 import { useI18n } from 'vue-i18n';
 import { MsModalResult } from '@/components/core/ms-types';
 import { createAlert } from '@/components/core/ms-alert/MsAlertConfirmation';
@@ -105,13 +104,17 @@ import {
   listUserInvitations as parsecListUserInvitations,
   inviteUser as parsecInviteUser,
   cancelInvitation as parsecCancelInvitation,
+  isAdmin as parsecIsAdmin,
 } from '@/parsec';
 
 const invitations: Ref<UserInvitation[]> = ref([]);
-
 const { t } = useI18n();
-
 const displayView = ref(DisplayState.List);
+const isAdmin = ref(false);
+
+onMounted(async () => {
+  isAdmin.value = await parsecIsAdmin();
+});
 
 onUpdated(async () => {
   if (isRoute('invitations')) {

@@ -4,6 +4,7 @@ import {
   libparsec,
   InviteListItem,
 } from '@/plugins/libparsec';
+
 import {
   AvailableDevice,
   ClientConfig,
@@ -42,6 +43,9 @@ import {
   BackendAddr,
   ClientEventPing,
   ParseBackendAddrError,
+  UserInfo,
+  ClientInfoError,
+  UserProfile,
 } from '@/parsec/types';
 import { getParsecHandle } from '@/router/conditions';
 import { DateTime } from 'luxon';
@@ -470,4 +474,44 @@ export async function createOrganization(
 
 export async function parseBackendAddr(addr: string): Promise<Result<ParsedBackendAddr, ParseBackendAddrError>> {
   return await libparsec.parseBackendAddr(addr);
+}
+
+export async function getUserInfo(): Promise<Result<UserInfo, ClientInfoError>> {
+  const handle = getParsecHandle();
+
+  if (handle !== null && window.isDesktop()) {
+    return await libparsec.clientInfo(handle);
+  } else {
+    return new Promise<Result<UserInfo, ClientInfoError>>((resolve, _reject) => {
+      resolve({ok: true, value: {
+        organizationId: 'MyOrg',
+        deviceId: 'a@b',
+        deviceLabel: 'My Device',
+        userId: 'userid',
+        profile: UserProfile.Admin,
+        humanHandle: {
+          email: 'user@host.com',
+          label: 'Gordon Freeman',
+        },
+      }});
+    });
+  }
+}
+
+export async function getUserProfile(): Promise<UserProfile | null> {
+  const result = await getUserInfo();
+
+  if (result.ok) {
+    return result.value.profile;
+  } else {
+    return null;
+  }
+}
+
+export async function isAdmin(): Promise<boolean> {
+  return await getUserProfile() === UserProfile.Admin;
+}
+
+export async function isOutsider(): Promise<boolean> {
+  return await getUserProfile() === UserProfile.Outsider;
 }

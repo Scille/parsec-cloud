@@ -13,7 +13,7 @@
             id="button-invite-user"
             :button-label="$t('UsersPage.inviteUser')"
             @click="inviteUser()"
-            v-show="isAdmin()"
+            v-show="isAdmin"
           />
         </div>
         <!-- revoke or view common workspace -->
@@ -24,7 +24,7 @@
             id="button-revoke-user"
             :button-label="$t('UsersPage.userContextMenu.actionRevoke', selectedUsersCount)"
             @click="revokeSelectedUsers()"
-            v-show="isAdmin()"
+            v-show="isAdmin"
           />
           <ms-action-bar-button
             :icon="eye"
@@ -125,7 +125,7 @@
               :icon="personRemove"
               id="button-revoke-user"
               @click="revokeSelectedUsers()"
-              v-show="isAdmin()"
+              v-show="isAdmin"
             />
             <ms-action-bar-button
               v-show="selectedUsersCount === 1"
@@ -163,7 +163,6 @@ import {
 import UserListItem from '@/components/users/UserListItem.vue';
 import UserCard from '@/components/users/UserCard.vue';
 import MsActionBarButton from '@/components/core/ms-action-bar/MsActionBarButton.vue';
-import { isAdmin } from '@/common/permissions';
 import MsGridListToggle from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import { DisplayState } from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import UserContextMenu from '@/views/users/UserContextMenu.vue';
@@ -172,12 +171,13 @@ import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import { MockUser, getMockUsers } from '@/common/mocks';
 import CreateUserInvitationModal from '@/views/users/CreateUserInvitationModal.vue';
 import { routerNavigateTo } from '@/router';
-import { inviteUser as parsecInviteUser } from '@/parsec';
+import { inviteUser as parsecInviteUser, isAdmin as parsecIsAdmin } from '@/parsec';
 
 const displayView = ref(DisplayState.List);
 const userList: Ref<MockUser[]> = ref([]);
 const userListItemRefs: Ref<typeof UserListItem[]> = ref([]);
 const userGridItemRefs: Ref<typeof UserCard[]> = ref([]);
+const isAdmin = ref(false);
 
 const allUsersSelected = computed({
   get: (): boolean => selectedUsersCount.value === userList.value.length,
@@ -325,6 +325,7 @@ function resetSelection(): void {
 }
 
 onMounted(async (): Promise<void> => {
+  isAdmin.value = await parsecIsAdmin();
   userList.value = await getMockUsers();
 });
 </script>

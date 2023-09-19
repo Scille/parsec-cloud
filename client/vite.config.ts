@@ -3,7 +3,6 @@
 /// <reference types="vitest" />
 
 import path from 'path';
-import fs from 'fs';
 import { defineConfig, PluginOption, UserConfigExport } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import topLevelAwait from 'vite-plugin-top-level-await';

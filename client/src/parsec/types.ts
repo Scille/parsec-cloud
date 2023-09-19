@@ -37,12 +37,15 @@ import type {
   OrganizationID,
   BackendAddr,
   ParsedBackendAddrInvitationUser,
+  ClientInfo as UserInfo,
+  ClientInfoError,
 } from '@/plugins/libparsec';
 // Enums have to be imported separately
 import {
   DeviceFileType,
   InvitationEmailSentStatus,
   InvitationStatus,
+  UserProfile,
 } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
@@ -90,6 +93,8 @@ export {
   UserOrDeviceClaimInitialInfoUser,
   ParsedBackendAddrInvitationUser,
   BackendAddrType,
+  UserInfo,
+  UserProfile,
 };
 
 export {
@@ -105,4 +110,5 @@ export {
   DeleteInvitationError,
   ClientListWorkspacesError,
   ClientWorkspaceCreateError,
+  ClientInfoError,
 };

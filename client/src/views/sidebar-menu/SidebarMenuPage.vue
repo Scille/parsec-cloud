@@ -23,14 +23,14 @@
               <ion-card-header class="organization-card__header">
                 <div class="organization-card__container">
                   <ion-avatar class="orga-avatar">
-                    <span>{{ device.organizationId?.substring(0, 2) }}</span>
+                    <span>{{ userInfo ? userInfo.organizationId.substring(0, 2) : '' }}</span>
                   </ion-avatar>
                   <div class="orga-text">
                     <ion-card-subtitle class="caption-info">
                       {{ $t('HomePage.organizationActionSheet.header') }}
                     </ion-card-subtitle>
                     <ion-card-title class="title-h4">
-                      {{ device.organizationId }}
+                      {{ userInfo?.organizationId }}
                     </ion-card-title>
                   </div>
                 </div>
@@ -63,14 +63,16 @@
 
               <div
                 class="organization-card__manageBtn"
-                v-show="!isOutsider()"
+                v-show="userInfo && userInfo.profile != UserProfile.Outsider"
                 @click="routerNavigateTo('activeUsers')"
               >
                 <ion-text
                   class="subtitles-sm"
                   button
                 >
-                  {{ isAdmin() ? $t('SideMenu.manageOrganization') : $t('SideMenu.organizationInfo') }}
+                  {{ userInfo && userInfo.profile === UserProfile.Admin ?
+                    $t('SideMenu.manageOrganization') :
+                    $t('SideMenu.organizationInfo') }}
                 </ion-text>
               </div>
             </ion-card>
@@ -93,7 +95,9 @@
                 />
               </ion-button>
               <ion-label class="title-h3">
-                {{ isAdmin() ? $t('SideMenu.manageOrganization') : $t('SideMenu.organizationInfo') }}
+                {{ userInfo && userInfo.profile === UserProfile.Admin ?
+                  $t('SideMenu.manageOrganization') :
+                  $t('SideMenu.organizationInfo') }}
               </ion-label>
             </div>
           </div>
@@ -172,7 +176,7 @@
                   <ion-label>{{ $t('SideMenu.revokedUsers') }}</ion-label>
                 </ion-item>
                 <ion-item
-                  v-show="isAdmin()"
+                  v-show="userInfo && userInfo.profile === UserProfile.Admin"
                   lines="none"
                   button
                   class="user-menu__item body"
@@ -186,7 +190,7 @@
             <!-- storage -->
             <ion-list
               class="storage"
-              v-show="isAdmin()"
+              v-show="userInfo && userInfo.profile === UserProfile.Admin"
             >
               <ion-item
                 lines="none"
@@ -260,19 +264,24 @@ import { WatchStopHandle, onMounted, onUnmounted, ref, watch, Ref } from 'vue';
 import { createGesture } from '@ionic/vue';
 import { useRoute } from 'vue-router';
 import useSidebarMenu from '@/services/sidebarMenu';
-import { getMockDevices } from '@/common/mocks';
 import { isOrganizationManagementRoute, isSpecificWorkspaceRoute, isUserRoute } from '@/router/conditions';
-import { isAdmin, isOutsider } from '@/common/permissions';
 import { routerNavigateTo } from '@/router';
-import { WorkspaceID, WorkspaceName, listWorkspaces as parsecListWorkspaces } from '@/parsec';
+import {
+  WorkspaceID,
+  WorkspaceName,
+  listWorkspaces as parsecListWorkspaces,
+  getUserInfo as parsecGetUserInfo,
+  UserInfo,
+  UserProfile,
+} from '@/parsec';
 
-let device: any = {};
 const workspaces: Ref<Array<[WorkspaceID, WorkspaceName]>> = ref([]);
 
 const currentRoute = useRoute();
 const splitPane = ref();
 const divider = ref();
 const { defaultWidth, initialWidth, computedWidth, wasReset } = useSidebarMenu();
+const userInfo: Ref<UserInfo | null> = ref(null);
 
 // watching wasReset value
 const unwatch: WatchStopHandle = watch(wasReset, (value) => {
@@ -293,7 +302,13 @@ function navigateToWorkspaceList(): void {
 }
 
 onMounted(async () => {
-  device = getMockDevices(1)[0];
+  const infoResult = await parsecGetUserInfo();
+
+  if (infoResult.ok) {
+    userInfo.value = infoResult.value;
+  } else {
+    console.log('Failed to get user info', infoResult.error);
+  }
 
   if (divider.value) {
     const gesture = createGesture({

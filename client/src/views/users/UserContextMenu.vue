@@ -3,7 +3,10 @@
 <template>
   <ion-content id="user-context-menu">
     <ion-list class="menu-list">
-      <ion-item-group class="group" v-if="!isRevoked">
+      <ion-item-group
+        class="group"
+        v-if="!isRevoked"
+      >
         <ion-item
           class="group-title caption-caption"
         >
