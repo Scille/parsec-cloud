@@ -214,7 +214,7 @@ pub async fn client_info(client: Handle) -> Result<ClientInfo, ClientInfoError> 
         organization_id: client.organization_id().clone(),
         device_id: client.device_id().clone(),
         device_label: client.device_label().cloned(),
-        user_id: client.user_id().clone(),
+        user_id: client.device_id().user_id().clone(),
         profile: client.profile().await?,
         human_handle: client.human_handle().cloned(),
     })

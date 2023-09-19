@@ -45,16 +45,20 @@ impl Client {
         self.device.organization_id()
     }
 
+    pub fn device_slug(&self) -> String {
+        self.device.slug()
+    }
+
+    pub fn device_slughash(&self) -> String {
+        self.device.slughash()
+    }
+
     pub fn device_id(&self) -> &DeviceID {
         &self.device.device_id
     }
 
     pub fn device_label(&self) -> Option<&DeviceLabel> {
         self.device.device_label.as_ref()
-    }
-
-    pub fn user_id(&self) -> &UserID {
-        self.device.user_id()
     }
 
     pub fn human_handle(&self) -> Option<&HumanHandle> {

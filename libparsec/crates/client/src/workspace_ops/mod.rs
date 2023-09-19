@@ -53,6 +53,10 @@ pub enum WorkspaceOpsError {
 pub struct ReencryptionJob {}
 
 impl WorkspaceOps {
+    pub fn realm_id(&self) -> VlobID {
+        self.realm_id
+    }
+
     pub async fn start(
         config: Arc<ClientConfig>,
         device: Arc<LocalDevice>,

@@ -3,4 +3,4 @@
 mod create;
 mod share;
 mod sync;
-pub(crate) mod utils;
+mod utils;
