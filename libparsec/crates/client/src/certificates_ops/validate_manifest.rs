@@ -9,44 +9,47 @@ use super::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum InvalidManifestError {
-    #[error("Manifest from vlob `{vlob_id}` version {version} (create by `{author}` on {timestamp}) is corrupted: {error}")]
+    #[error("Manifest from vlob `{vlob}` version {version} (in realm {realm}, create by `{author}` on {timestamp}) is corrupted: {error}")]
     Corrupted {
-        vlob_id: VlobID,
+        realm: VlobID,
+        vlob: VlobID,
         version: VersionInt,
         author: DeviceID,
         timestamp: DateTime,
         error: DataError,
     },
-    #[error("Manifest from vlob `{vlob_id}` version {version} (create by `{author}` on {timestamp}): at that time author didn't exist !")]
+    #[error("Manifest from vlob `{vlob}` version {version} (in realm {realm}, create by `{author}` on {timestamp}): at that time author didn't exist !")]
     NonExistantAuthor {
-        vlob_id: VlobID,
+        realm: VlobID,
+        vlob: VlobID,
         version: VersionInt,
         author: DeviceID,
         timestamp: DateTime,
     },
-    #[error("Manifest from vlob `{vlob_id}` version {version} (create by `{author}` on {timestamp}): at that time author was already revoked !")]
+    #[error("Manifest from vlob `{vlob}` version {version} (in realm {realm}, create by `{author}` on {timestamp}): at that time author was already revoked !")]
     RevokedAuthor {
-        vlob_id: VlobID,
+        realm: VlobID,
+        vlob: VlobID,
         version: VersionInt,
         author: DeviceID,
         timestamp: DateTime,
     },
-    #[error("Manifest from vlob `{vlob_id}` version {version} (create by `{author}` on {timestamp}): at that time author couldn't write in realm `{realm_id}` given it role was `{author_role:?}`")]
+    #[error("Manifest from vlob `{vlob}` version {version} (in realm {realm}, create by `{author}` on {timestamp}): at that time author couldn't write in the realm given it role was `{author_role:?}`")]
     AuthorRealmRoleCannotWrite {
-        vlob_id: VlobID,
+        realm: VlobID,
+        vlob: VlobID,
         version: VersionInt,
         author: DeviceID,
         timestamp: DateTime,
-        realm_id: VlobID,
         author_role: RealmRole,
     },
-    #[error("Manifest from vlob `{vlob_id}` version {version} (create by `{author}` on {timestamp}): at that time author didn't have access to realm `{realm_id}` and hence couldn't write in it")]
+    #[error("Manifest from vlob `{vlob}` version {version} (in realm {realm}, create by `{author}` on {timestamp}): at that time author didn't have access to the realm and hence couldn't write in it")]
     AuthorNoAccessToRealm {
-        vlob_id: VlobID,
+        realm: VlobID,
+        vlob: VlobID,
         version: VersionInt,
         author: DeviceID,
         timestamp: DateTime,
-        realm_id: VlobID,
     },
 }
 
@@ -70,8 +73,15 @@ pub(super) async fn validate_user_manifest(
     timestamp: DateTime,
     encrypted: &[u8],
 ) -> Result<UserManifest, ValidateManifestError> {
+    let realm_id = ops.device.user_realm_id;
+    let realm_key = &ops.device.user_realm_key;
+    let vlob_id = ops.device.user_realm_id;
+
     validate_manifest(
         ops,
+        realm_id,
+        realm_key,
+        vlob_id,
         certificate_index,
         author,
         version,
@@ -82,17 +92,24 @@ pub(super) async fn validate_user_manifest(
     .await
 }
 
-#[allow(unused)]
+#[allow(clippy::too_many_arguments)]
 pub(super) async fn validate_workspace_manifest(
     ops: &CertificatesOps,
+    realm_id: VlobID,
+    realm_key: &SecretKey,
     certificate_index: IndexInt,
     author: &DeviceID,
     version: VersionInt,
     timestamp: DateTime,
     encrypted: &[u8],
 ) -> Result<WorkspaceManifest, ValidateManifestError> {
+    let vlob_id = realm_id;
+
     validate_manifest(
         ops,
+        realm_id,
+        realm_key,
+        vlob_id,
         certificate_index,
         author,
         version,
@@ -103,9 +120,12 @@ pub(super) async fn validate_workspace_manifest(
     .await
 }
 
-#[allow(unused)]
+#[allow(clippy::too_many_arguments)]
 pub(super) async fn validate_child_manifest(
     ops: &CertificatesOps,
+    realm_id: VlobID,
+    realm_key: &SecretKey,
+    vlob_id: VlobID,
     certificate_index: IndexInt,
     author: &DeviceID,
     version: VersionInt,
@@ -114,6 +134,9 @@ pub(super) async fn validate_child_manifest(
 ) -> Result<ChildManifest, ValidateManifestError> {
     validate_manifest(
         ops,
+        realm_id,
+        realm_key,
+        vlob_id,
         certificate_index,
         author,
         version,
@@ -124,8 +147,12 @@ pub(super) async fn validate_child_manifest(
     .await
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn validate_manifest<M>(
     ops: &CertificatesOps,
+    realm_id: VlobID,
+    realm_key: &SecretKey,
+    vlob_id: VlobID,
     certificate_index: IndexInt,
     author: &DeviceID,
     version: VersionInt,
@@ -141,8 +168,6 @@ async fn validate_manifest<M>(
         Option<VersionInt>,
     ) -> DataResult<M>,
 ) -> Result<M, ValidateManifestError> {
-    let realm_id = ops.device.user_realm_id;
-
     // 1) Make sure we have all the needed certificates
 
     let storage = super::poll::ensure_certificates_available_and_read_lock(ops, certificate_index)
@@ -169,7 +194,8 @@ async fn validate_manifest<M>(
         // Doesn't exist at the considered index :(
         Err(GetCertificateError::NonExisting | GetCertificateError::ExistButTooRecent { .. }) => {
             let what = InvalidManifestError::NonExistantAuthor {
-                vlob_id: ops.device.user_realm_id,
+                realm: realm_id,
+                vlob: vlob_id,
                 version,
                 author: author.to_owned(),
                 timestamp,
@@ -195,7 +221,8 @@ async fn validate_manifest<M>(
         // Revoked :(
         Ok(Some(_)) => {
             let what = InvalidManifestError::RevokedAuthor {
-                vlob_id: ops.device.user_realm_id,
+                realm: realm_id,
+                vlob: vlob_id,
                 version,
                 author: author.to_owned(),
                 timestamp,
@@ -211,16 +238,17 @@ async fn validate_manifest<M>(
 
     let manifest = decrypt_verify_and_load(
         encrypted,
-        &ops.device.user_realm_key,
+        realm_key,
         &author_certif.verify_key,
         author,
         timestamp,
-        Some(ops.device.user_realm_id),
+        Some(vlob_id),
         Some(version),
     )
     .map_err(|error| {
         let what = InvalidManifestError::Corrupted {
-            vlob_id: ops.device.user_realm_id,
+            realm: realm_id,
+            vlob: vlob_id,
             version,
             author: author.to_owned(),
             timestamp,
@@ -242,11 +270,11 @@ async fn validate_manifest<M>(
         // The author wasn't part of the realm :(
         None => {
             let what = InvalidManifestError::AuthorNoAccessToRealm {
-                vlob_id: ops.device.user_realm_id,
+                realm: realm_id,
+                vlob: vlob_id,
                 version,
                 author: author.to_owned(),
                 timestamp,
-                realm_id,
             };
             return Err(ValidateManifestError::InvalidManifest(what));
         }
@@ -254,11 +282,11 @@ async fn validate_manifest<M>(
         // The author doesn't have write access to the realm :(
         Some(role) => {
             let what = InvalidManifestError::AuthorRealmRoleCannotWrite {
-                vlob_id: ops.device.user_realm_id,
+                realm: realm_id,
+                vlob: vlob_id,
                 version,
                 author: author.to_owned(),
                 timestamp,
-                realm_id,
                 author_role: role,
             };
             return Err(ValidateManifestError::InvalidManifest(what));

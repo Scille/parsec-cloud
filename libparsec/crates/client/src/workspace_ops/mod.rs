@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 mod entry_transactions;
+mod fetch;
 
 pub use entry_transactions::*;
 
@@ -36,8 +37,8 @@ pub struct WorkspaceOps {
     certificates_ops: Arc<CertificatesOps>,
     #[allow(unused)]
     event_bus: EventBus,
-    #[allow(unused)]
     realm_id: VlobID,
+    realm_key: SecretKey,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -59,6 +60,7 @@ impl WorkspaceOps {
         certificates_ops: Arc<CertificatesOps>,
         event_bus: EventBus,
         realm_id: VlobID,
+        realm_key: SecretKey,
     ) -> Result<Self, anyhow::Error> {
         // TODO: handle errors
         let data_storage =
@@ -79,6 +81,7 @@ impl WorkspaceOps {
             certificates_ops,
             event_bus,
             realm_id,
+            realm_key,
         })
     }
 
@@ -96,3 +99,8 @@ impl WorkspaceOps {
         entry_transactions::entry_info(self, path).await
     }
 }
+
+#[cfg(test)]
+#[path = "../../tests/unit/workspace_ops/mod.rs"]
+#[allow(clippy::unwrap_used)]
+mod tests;

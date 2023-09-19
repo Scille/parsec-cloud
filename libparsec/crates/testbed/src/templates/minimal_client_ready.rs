@@ -20,27 +20,32 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
 
     // 2) Create workspace's realm
 
-    let (wksp1_realm_id, wksp1_realm_key, realm_timestamp) = builder
+    let (wksp1_id, wksp1_key, realm_timestamp) = builder
         .new_realm("alice")
         .map(|e| (e.realm_id, e.realm_key.clone(), e.timestamp));
+
+    builder.store_stuff("wksp1_id", &wksp1_id);
+    builder.store_stuff("wksp1_key", &wksp1_key);
 
     // 3) Create `/foo`'s vlob
 
     let foo_id = builder
-        .create_or_update_folder_manifest_vlob("alice@dev1", wksp1_realm_id, None)
+        .create_or_update_folder_manifest_vlob("alice@dev1", wksp1_id, None)
         .map(|e| e.manifest.id);
+
+    builder.store_stuff("wksp1_foo_id", &foo_id);
 
     // 4) Create `/bar.txt`'s vlob & block
 
     let bar_txt_content = b"hello world";
 
     let bar_txt_block_access = builder
-        .create_block("alice@dev1", wksp1_realm_id, bar_txt_content.as_ref())
+        .create_block("alice@dev1", wksp1_id, bar_txt_content.as_ref())
         .as_block_access(0);
     let bar_txt_block_id = bar_txt_block_access.id;
 
     let bar_txt_id = builder
-        .create_or_update_file_manifest_vlob("alice@dev1", wksp1_realm_id, None)
+        .create_or_update_file_manifest_vlob("alice@dev1", wksp1_id, None)
         .customize(|e| {
             let manifest = Arc::make_mut(&mut e.manifest);
             manifest.size = bar_txt_block_access.size.get();
@@ -48,10 +53,12 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
         })
         .map(|e| e.manifest.id);
 
+    builder.store_stuff("wksp1_bar_txt_id", &bar_txt_id);
+
     // 5) Add `/foo` & `/bar.txt` entries to the workspace manifest
 
     builder
-        .create_or_update_workspace_manifest_vlob("alice@dev1", wksp1_realm_id)
+        .create_or_update_workspace_manifest_vlob("alice@dev1", wksp1_id)
         .customize(|e| {
             let manifest = Arc::make_mut(&mut e.manifest);
             manifest.children.insert("foo".parse().unwrap(), foo_id);
@@ -69,9 +76,9 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
             Arc::make_mut(&mut e.manifest)
                 .workspaces
                 .push(WorkspaceEntry::new(
-                    wksp1_realm_id,
+                    wksp1_id,
                     "wksp1".parse().unwrap(),
-                    wksp1_realm_key,
+                    wksp1_key,
                     1,
                     realm_timestamp,
                 ))
@@ -87,18 +94,18 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
     let prevent_sync_pattern = Regex(vec![]);
     builder.workspace_data_storage_fetch_workspace_vlob(
         "alice@dev1",
-        wksp1_realm_id,
+        wksp1_id,
         prevent_sync_pattern.clone(),
     );
     builder.workspace_data_storage_fetch_folder_vlob(
         "alice@dev1",
-        wksp1_realm_id,
+        wksp1_id,
         foo_id,
         prevent_sync_pattern,
     );
-    builder.workspace_data_storage_fetch_file_vlob("alice@dev1", wksp1_realm_id, bar_txt_id);
-    builder.workspace_cache_storage_fetch_block("alice@dev1", wksp1_realm_id, bar_txt_block_id);
-    builder.workspace_data_storage_fetch_realm_checkpoint("alice@dev1", wksp1_realm_id);
+    builder.workspace_data_storage_fetch_file_vlob("alice@dev1", wksp1_id, bar_txt_id);
+    builder.workspace_cache_storage_fetch_block("alice@dev1", wksp1_id, bar_txt_block_id);
+    builder.workspace_data_storage_fetch_realm_checkpoint("alice@dev1", wksp1_id);
 
     builder.finalize()
 }

@@ -1,9 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::sync::Arc;
+
 use libparsec_platform_storage::workspace::GetChildManifestError;
 use libparsec_types::prelude::*;
 
-use super::WorkspaceOps;
+use super::{fetch::fetch_remote_child_manifest, WorkspaceOps};
 
 async fn get_child_manifest(
     ops: &WorkspaceOps,
@@ -13,12 +15,39 @@ async fn get_child_manifest(
         Ok(manifest) => Ok(manifest),
         Err(GetChildManifestError::Internal(err)) => Err(err),
         Err(GetChildManifestError::NotFound) => {
-            // TODO: remote loader !
-            // remote_manifest = await self.remote_loader.load_manifest(cast(VlobID, exc.id))
-            // return local_manifest_from_remote(
-            //     remote_manifest, prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern()
-            // )
-            todo!()
+            let remote_manifest = fetch_remote_child_manifest(ops, entry_id, None).await?;
+
+            // Must save our manifest in the storage
+            let (updater, expect_missing_manifest) =
+                ops.data_storage.for_update_child_manifest(entry_id).await?;
+            match expect_missing_manifest {
+                // Plot twist: a concurrent operation has inserted the manifest in the storage !
+                // TODO: we could be trying to update the existing data with the brand new one
+                // however this would most likely do nothing (as the concurrent version must based
+                // on very recent data)
+                Some(local_manifest) => Ok(local_manifest),
+
+                // As expected the storage didn't contain the manifest, it's up to us to store it then !
+                None => {
+                    let local_manifest = match remote_manifest {
+                        ChildManifest::File(remote_manifest) => {
+                            let manifest =
+                                Arc::new(LocalFileManifest::from_remote(remote_manifest));
+                            updater
+                                .set_file_manifest(manifest.clone(), false, [].into_iter())
+                                .await?;
+                            ArcLocalChildManifest::File(manifest)
+                        }
+                        ChildManifest::Folder(remote_manifest) => {
+                            let manifest =
+                                Arc::new(LocalFolderManifest::from_remote(remote_manifest, None));
+                            updater.set_folder_manifest(manifest.clone()).await?;
+                            ArcLocalChildManifest::Folder(manifest)
+                        }
+                    };
+                    Ok(local_manifest)
+                }
+            }
         }
     }
 }

@@ -72,6 +72,22 @@ async def _run_server(
 
             asgi = asgi_app_factory(backend)
 
+            # Testbed server often run in background, so it output on crash is often
+            # not visible (e.g. on the CI). Hence it's convenient to have the client
+            # print the stacktrace on our behalf.
+            # Note the testbed server is only meant to be run for tests and on a local
+            # local machine so this has no security implication.
+            @asgi.errorhandler(500)
+            def _on_500(e):
+                import traceback
+
+                msg = traceback.format_exception(
+                    type(e.original_exception),
+                    e.original_exception,
+                    e.original_exception.__traceback__,
+                )
+                return "".join(msg), 500
+
             # Add CORS handling
             @asgi.after_request
             def _add_cors(response):
@@ -92,16 +108,24 @@ async def _run_server(
                     template_org_id, template_crc = template_id_to_org_id_and_crc[template]
                 except KeyError:
                     async with load_template_lock:
-                        # If it exists, template has not been loaded yet
-                        template_content = testbed.test_get_testbed_template(template)
+                        # Ensure the template hasn't been loaded while we were waiting for the lock
+                        try:
+                            template_org_id, template_crc = template_id_to_org_id_and_crc[template]
 
-                        if not template_content:
-                            # No template with the given id
-                            return await make_response(b"unknown template", 404)
+                        except KeyError:
+                            # If it exists, template has not been loaded yet
+                            template_content = testbed.test_get_testbed_template(template)
 
-                        template_crc = template_content.compute_crc()
-                        template_org_id = await backend.test_load_template(template_content)
-                        template_id_to_org_id_and_crc[template] = (template_org_id, template_crc)
+                            if not template_content:
+                                # No template with the given id
+                                return await make_response(b"unknown template", 404)
+
+                            template_crc = template_content.compute_crc()
+                            template_org_id = await backend.test_load_template(template_content)
+                            template_id_to_org_id_and_crc[template] = (
+                                template_org_id,
+                                template_crc,
+                            )
 
                 org_count += 1
                 new_org_id = OrganizationID(f"Org{org_count}")

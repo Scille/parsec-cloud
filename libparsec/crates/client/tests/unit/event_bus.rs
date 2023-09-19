@@ -1,13 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// `allow-unwrap-in-test` don't behave as expected, see:
-// https://github.com/rust-lang/rust-clippy/issues/11119
-#![allow(clippy::unwrap_used)]
-
 use std::sync::{Arc, Mutex};
 
-use libparsec_client::{EventBus, EventPing};
 use libparsec_tests_fixtures::*;
+
+use crate::{EventBus, EventPing};
 
 #[test]
 fn debug_format() {

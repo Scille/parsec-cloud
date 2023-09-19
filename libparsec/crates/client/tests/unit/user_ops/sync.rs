@@ -6,7 +6,7 @@ use libparsec_client_connection::{
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::utils::user_ops_factory;
+use super::utils::user_ops_factory;
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn sync_non_placeholder(env: &TestbedEnv) {

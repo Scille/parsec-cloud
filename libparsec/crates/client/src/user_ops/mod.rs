@@ -128,3 +128,8 @@ impl UserOps {
         todo!()
     }
 }
+
+#[cfg(test)]
+#[path = "../../tests/unit/user_ops/mod.rs"]
+#[allow(clippy::unwrap_used)]
+mod tests;

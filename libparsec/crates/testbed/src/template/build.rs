@@ -175,7 +175,10 @@ impl TestbedTemplateBuilderCounters {
 
 pub struct TestbedTemplateBuilder {
     pub(super) id: &'static str,
+    pub(super) allow_server_side_events: bool,
     pub(super) events: Vec<TestbedEvent>,
+    // Stuff is useful store provide arbitrary things (e.g. IDs) from the template to the test
+    pub stuff: Vec<(&'static str, &'static (dyn std::any::Any + Send + Sync))>,
     pub(super) counters: TestbedTemplateBuilderCounters,
 }
 
@@ -183,23 +186,71 @@ impl TestbedTemplateBuilder {
     pub(crate) fn new(id: &'static str) -> Self {
         Self {
             id,
+            allow_server_side_events: true,
             events: vec![],
+            stuff: vec![],
             counters: TestbedTemplateBuilderCounters::default(),
         }
     }
 
-    pub(crate) fn new_from_template(id: &'static str, template: &TestbedTemplate) -> Self {
+    pub(crate) fn new_from_template(
+        id: &'static str,
+        template: &TestbedTemplate,
+        allow_server_side_events: bool,
+    ) -> Self {
         Self {
             id,
+            allow_server_side_events,
             events: template.events.clone(),
+            stuff: vec![],
             counters: template.build_counters.clone(),
         }
+    }
+
+    pub fn store_stuff(
+        &mut self,
+        key: &'static str,
+        obj: &(impl std::any::Any + Clone + Send + Sync),
+    ) {
+        let boxed = Box::new(obj.to_owned());
+        // It's no big deal to leak the data here: the template is kept until the end
+        // of the program anyway (and the amount of leak is negligeable).
+        // On the other hand it allows to provide the stuff as `&'static Foo` which
+        // is convenient.
+        self.stuff.push((key, Box::leak(boxed)));
+    }
+
+    /// Remove events you're not happy with (use it in conjuction with `TestbedEnv::customize`)
+    ///
+    /// You are only able to remove client-side events, as server-side ones depend
+    /// on each other (e.g. removing NewUser that creates a device used in ShareRealm).
+    pub fn filter_client_storage_events(&mut self, filter: fn(&TestbedEvent) -> bool) {
+        let events = std::mem::take(&mut self.events);
+        let only_client_side_filter = |e: &TestbedEvent| match e {
+            // Only allow client-side events to be filtered
+            e @ (TestbedEvent::CertificatesStorageFetchCertificates(_)
+            | TestbedEvent::UserStorageFetchUserVlob(_)
+            | TestbedEvent::UserStorageFetchRealmCheckpoint(_)
+            | TestbedEvent::UserStorageLocalUpdate(_)
+            | TestbedEvent::WorkspaceDataStorageFetchWorkspaceVlob(_)
+            | TestbedEvent::WorkspaceDataStorageFetchFileVlob(_)
+            | TestbedEvent::WorkspaceDataStorageFetchFolderVlob(_)
+            | TestbedEvent::WorkspaceCacheStorageFetchBlock(_)
+            | TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(_)
+            | TestbedEvent::WorkspaceDataStorageLocalFolderManifestUpdate(_)
+            | TestbedEvent::WorkspaceDataStorageLocalFileManifestUpdate(_)
+            | TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(_)) => filter(e),
+            // Server side events are kept no matter what
+            _ => true,
+        };
+        self.events = events.into_iter().filter(only_client_side_filter).collect();
     }
 
     pub fn finalize(self) -> Arc<TestbedTemplate> {
         Arc::new(TestbedTemplate {
             id: self.id,
             events: self.events,
+            stuff: self.stuff,
             build_counters: self.counters,
         })
     }
@@ -246,7 +297,11 @@ macro_rules! impl_event_builder {
                 pub fn [< $name:snake >](&mut self $( $(, $param: impl TryInto<$param_type>)* )? ) -> [< TestbedEvent $name Builder >]<'_> {
                     $( $( let $param: $param_type = $param.try_into().unwrap_or_else(|_| panic!(concat!("Invalid value for param ", stringify!($param)))); )* )?
                     let event = [< TestbedEvent $name >]::from_builder(self $( $(, $param)* )? );
-                    self.events.push(TestbedEvent::$name(event));
+                    let event = TestbedEvent::$name(event);
+                    if !self.allow_server_side_events && !event.is_client_side() {
+                        panic!("Testbed connects to an actual server, hence server-side events cannot be added: {:?}", event);
+                    }
+                    self.events.push(event);
                     [< TestbedEvent $name Builder >] { builder: self }
                 }
             }
@@ -560,20 +615,20 @@ impl_event_builder!(
 
 impl_event_builder!(
     CreateBlock,
-    [device: DeviceID, realm: VlobID, cleartext_block: Bytes]
+    [device: DeviceID, realm: VlobID, cleartext: Bytes]
 );
 
 impl<'a> TestbedEventCreateBlockBuilder<'a> {
     pub fn as_block_access(self, offset: SizeInt) -> BlockAccess {
         let event = self.get_event();
-        let size = std::num::NonZeroU64::new(event.cleartext_block.len() as u64)
-            .expect("block is not empty");
+        let size =
+            std::num::NonZeroU64::new(event.cleartext.len() as u64).expect("block is not empty");
         BlockAccess {
             id: event.block_id,
             key: event.block_key.clone(),
             offset,
             size,
-            digest: HashDigest::from_data(&event.cleartext_block),
+            digest: HashDigest::from_data(&event.cleartext),
         }
     }
 }

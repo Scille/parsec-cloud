@@ -336,3 +336,8 @@ where
         B::disconnect(&self.event_bus, self.ptr);
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/event_bus.rs"]
+#[allow(clippy::unwrap_used)]
+mod tests;

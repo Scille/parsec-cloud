@@ -173,6 +173,7 @@ mod child_manifests {
     }
 
     impl<'a> WorkspaceDataStorageChildManifestUpdater<'a> {
+        /// If nothing to remove, use `[].into_iter()` for `to_remove` param.
         /// `delay_flush` is to be used when the file is opened (given then the `flush`
         /// syscall should be used to guarantee the data are persistent)
         pub async fn set_file_manifest(
@@ -269,11 +270,11 @@ pub struct WorkspaceDataStorage {
     /// This is needed to ensure the manifest in cache stays in sync with the content of the database.
     lock_update_workspace_manifest: AsyncMutex<()>,
     /// A lock held to prevent concurrent update on the changed not-yet-flushed-to-database
-    /// Flush operation first take the "work ahead of db" and clear it from the cache
+    /// Flush operation first takes the "work ahead of db" and clear it from the cache
     /// structure. This means we really don't want concurrent flush, especially given
     /// database operation may fail (in such case the work is stored back in cache, but
     /// the concurrent flush may have save to database changes that are dependant on the
-    /// one that failed !)
+    /// ones that failed !)
     lock_flush_work_ahead_of_db: AsyncMutex<()>,
 }
 

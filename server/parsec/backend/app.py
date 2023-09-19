@@ -265,37 +265,37 @@ class BackendApp:
                     realm_id=event.realm,
                     encryption_revision=event.encryption_revision,
                 )
-            elif isinstance(event, testbed.TestbedEventNewVlob):
-                await self.vlob.create(
-                    organization_id=org_id,
-                    author=event.author,
-                    realm_id=event.realm,
-                    encryption_revision=event.encryption_revision,
-                    vlob_id=event.vlob_id,
-                    timestamp=event.timestamp,
-                    blob=event.blob,
-                    sequester_blob=event.sequester_blob,
-                )
-            elif isinstance(event, testbed.TestbedEventUpdateVlob):
-                await self.vlob.update(
-                    organization_id=org_id,
-                    author=event.author,
-                    encryption_revision=event.encryption_revision,
-                    vlob_id=event.vlob,
-                    version=event.version,
-                    timestamp=event.timestamp,
-                    blob=event.blob,
-                    sequester_blob=event.sequester_blob,
-                )
-            else:
-                assert isinstance(event, testbed.TestbedEventNewBlock)
+            elif isinstance(event, testbed.TestbedEventCreateOpaqueBlock):
                 await self.block.create(
                     organization_id=org_id,
                     author=event.author,
-                    block_id=event.block_id,
                     realm_id=event.realm,
-                    block=event.block,
+                    block_id=event.block_id,
                     created_on=event.timestamp,
+                    block=event.encrypted,
                 )
+            elif isinstance(event, testbed.TestbedEventCreateOrUpdateOpaqueVlob):
+                if event.version == 1:
+                    await self.vlob.create(
+                        organization_id=org_id,
+                        author=event.author,
+                        realm_id=event.realm,
+                        encryption_revision=event.encryption_revision,
+                        vlob_id=event.vlob_id,
+                        timestamp=event.timestamp,
+                        blob=event.encrypted,
+                        sequester_blob=event.sequestered,
+                    )
+                else:
+                    await self.vlob.update(
+                        organization_id=org_id,
+                        author=event.author,
+                        encryption_revision=event.encryption_revision,
+                        vlob_id=event.vlob_id,
+                        version=event.version,
+                        timestamp=event.timestamp,
+                        blob=event.encrypted,
+                        sequester_blob=event.sequestered,
+                    )
 
         return org_id

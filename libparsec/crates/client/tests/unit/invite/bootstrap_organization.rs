@@ -2,20 +2,21 @@
 
 use std::sync::Arc;
 
-use libparsec_client::{
-    bootstrap_organization, test_organization_bootstrap_finalize_ctx_factory,
-    BootstrapOrganizationError, Client, ClientConfig, EventBus,
-};
 use libparsec_client_connection::ProxyConfig;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
+
+use crate::{
+    bootstrap_organization, test_organization_bootstrap_finalize_ctx_factory,
+    BootstrapOrganizationError, Client, ClientConfig, EventBus, WorkspaceStorageCacheSize,
+};
 
 fn make_config(env: &TestbedEnv) -> Arc<ClientConfig> {
     Arc::new(ClientConfig {
         config_dir: env.discriminant_dir.clone(),
         data_base_dir: env.discriminant_dir.clone(),
         mountpoint_base_dir: env.discriminant_dir.clone(),
-        workspace_storage_cache_size: libparsec_client::WorkspaceStorageCacheSize::Default,
+        workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
         proxy: ProxyConfig::default(),
     })
 }

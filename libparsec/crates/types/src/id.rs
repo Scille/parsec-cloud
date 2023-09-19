@@ -28,7 +28,7 @@ macro_rules! impl_debug_from_display {
 
 macro_rules! new_uuid_type {
     (pub $name:ident) => {
-        #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Hash)]
+        #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
         pub struct $name(::uuid::Uuid);
 
         impl $name {

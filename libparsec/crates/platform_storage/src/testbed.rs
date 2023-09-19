@@ -422,7 +422,7 @@ pub(crate) async fn maybe_populate_workspace_cache_storage(
                     TestbedEvent::WorkspaceCacheStorageFetchBlock(x)
                         if x.device == device.device_id && x.realm == realm_id =>
                     {
-                        (x.block_id, &x.cleartext_block)
+                        (x.block_id, &x.cleartext)
                     }
                     _ => continue,
                 };

@@ -203,7 +203,7 @@ impl RealmRole {
  * EntryName
  */
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Hash)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[serde(try_from = "&str", into = "String")]
 pub struct EntryName(String);
 

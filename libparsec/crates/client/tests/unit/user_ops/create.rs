@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_client::user_ops::WorkspaceRenameError;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::utils::user_ops_factory;
+use super::utils::user_ops_factory;
+use crate::user_ops::WorkspaceRenameError;
 
 #[parsec_test(testbed = "minimal")]
 async fn list_create_rename(env: &TestbedEnv) {

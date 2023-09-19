@@ -226,15 +226,28 @@ impl TestbedEnv {
         guard.is_some()
     }
 
+    /// Customize the env testbed
+    ///
+    /// ```
+    /// let new_env = env.customize(|builder| {
+    ///   // Add any events you want
+    ///   builder.new_user("bob");
+    ///   builder.new_user_realm("bob");
+    ///   // Clear client storages (certificate, user, workspace data&cache)
+    ///   builder.filter_client_storage_events(|_event| true);
+    /// });
+    /// // `env` can still be used to access stuff, but it will be missing the new
+    /// // items, so the best is to just shadow it with `new_env`.
+    /// ```
     /// Be careful env is going to be duplicated under the hood to apply the customization.
     /// Hence only the last call of `customize` with be taken into account.
     pub fn customize(&self, cb: impl FnOnce(&mut TestbedTemplateBuilder)) -> Arc<TestbedEnv> {
-        assert!(
-            matches!(self.kind, TestbedKind::ClientOnly),
-            "Cannot customize the template on server side !"
+        let allow_server_side_events = matches!(self.kind, TestbedKind::ClientOnly);
+        let mut builder = TestbedTemplateBuilder::new_from_template(
+            "custom",
+            &self.template,
+            allow_server_side_events,
         );
-
-        let mut builder = TestbedTemplateBuilder::new_from_template("custom", &self.template);
         cb(&mut builder);
 
         // Retrieve current testbed env in the global store...
@@ -284,7 +297,13 @@ pub async fn test_new_testbed(
             .await
             .expect("Cannot communicate with testbed server");
         if response.status() != StatusCode::OK {
-            panic!("Bad response status from testbed server: {:?}", response);
+            let url = response.url().to_owned();
+            let status = response.status();
+            let body = response.text().await.unwrap_or("".to_owned());
+            panic!(
+                "POST {}: bad response from testbed server: {}\n{}",
+                url, status, body
+            );
         }
         let (organization_id, server_template_crc) = {
             let response_body = response

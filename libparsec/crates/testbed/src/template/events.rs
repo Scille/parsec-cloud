@@ -303,6 +303,41 @@ impl TestbedEvent {
             _ => TestbedEventCertificatesIterator::Other,
         }
     }
+
+    pub fn is_client_side(&self) -> bool {
+        match self {
+            TestbedEvent::BootstrapOrganization(_)
+            | TestbedEvent::NewSequesterService(_)
+            | TestbedEvent::NewUser(_)
+            | TestbedEvent::NewDevice(_)
+            | TestbedEvent::UpdateUserProfile(_)
+            | TestbedEvent::RevokeUser(_)
+            | TestbedEvent::NewRealm(_)
+            | TestbedEvent::ShareRealm(_)
+            | TestbedEvent::StartRealmReencryption(_)
+            | TestbedEvent::FinishRealmReencryption(_)
+            | TestbedEvent::CreateOrUpdateUserManifestVlob(_)
+            | TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(_)
+            | TestbedEvent::CreateOrUpdateFileManifestVlob(_)
+            | TestbedEvent::CreateOrUpdateFolderManifestVlob(_)
+            | TestbedEvent::CreateOrUpdateOpaqueVlob(_)
+            | TestbedEvent::CreateBlock(_)
+            | TestbedEvent::CreateOpaqueBlock(_) => false,
+
+            TestbedEvent::CertificatesStorageFetchCertificates(_)
+            | TestbedEvent::UserStorageFetchUserVlob(_)
+            | TestbedEvent::UserStorageFetchRealmCheckpoint(_)
+            | TestbedEvent::UserStorageLocalUpdate(_)
+            | TestbedEvent::WorkspaceDataStorageFetchWorkspaceVlob(_)
+            | TestbedEvent::WorkspaceDataStorageFetchFileVlob(_)
+            | TestbedEvent::WorkspaceDataStorageFetchFolderVlob(_)
+            | TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(_)
+            | TestbedEvent::WorkspaceCacheStorageFetchBlock(_)
+            | TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(_)
+            | TestbedEvent::WorkspaceDataStorageLocalFolderManifestUpdate(_)
+            | TestbedEvent::WorkspaceDataStorageLocalFileManifestUpdate(_) => true,
+        }
+    }
 }
 
 /*
@@ -1340,6 +1375,7 @@ impl TestbedEventFinishRealmReencryption {
 pub struct TestbedEventCreateOrUpdateVlobCache {
     pub signed: Bytes,
     pub encrypted: Bytes,
+    pub sequestered: Option<Vec<(SequesterServiceID, Bytes)>>,
 }
 
 #[derive(Clone)]
@@ -1430,6 +1466,13 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
         self.cache(template).encrypted
     }
 
+    pub fn sequestered(
+        &self,
+        template: &TestbedTemplate,
+    ) -> Option<Vec<(SequesterServiceID, Bytes)>> {
+        self.cache(template).sequestered
+    }
+
     fn cache(&self, template: &TestbedTemplate) -> TestbedEventCreateOrUpdateVlobCache {
         let populate = || {
             let author_signkey = template.device_signing_key(&self.manifest.author);
@@ -1437,8 +1480,16 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
 
             let signed: Bytes = self.manifest.dump_and_sign(author_signkey).into();
             let encrypted = local_symkey.encrypt(&signed).into();
+            let sequestered = template.sequester_services_public_key().map(|iter| {
+                iter.map(|(id, pubkey)| (id.to_owned(), Bytes::from(pubkey.encrypt(&signed))))
+                    .collect()
+            });
 
-            TestbedEventCreateOrUpdateVlobCache { signed, encrypted }
+            TestbedEventCreateOrUpdateVlobCache {
+                signed,
+                encrypted,
+                sequestered,
+            }
         };
         let mut guard = self.cache.lock().expect("Mutex is poisoned");
         guard.populated(populate).to_owned()
@@ -1534,6 +1585,13 @@ impl TestbedEventCreateOrUpdateWorkspaceManifestVlob {
         self.cache(template).encrypted
     }
 
+    pub fn sequestered(
+        &self,
+        template: &TestbedTemplate,
+    ) -> Option<Vec<(SequesterServiceID, Bytes)>> {
+        self.cache(template).sequestered
+    }
+
     fn cache(&self, template: &TestbedTemplate) -> TestbedEventCreateOrUpdateVlobCache {
         let populate = || {
             let author_signkey = template.device_signing_key(&self.manifest.author);
@@ -1541,8 +1599,16 @@ impl TestbedEventCreateOrUpdateWorkspaceManifestVlob {
 
             let signed: Bytes = self.manifest.dump_and_sign(author_signkey).into();
             let encrypted = local_symkey.encrypt(&signed).into();
+            let sequestered = template.sequester_services_public_key().map(|iter| {
+                iter.map(|(id, pubkey)| (id.to_owned(), Bytes::from(pubkey.encrypt(&signed))))
+                    .collect()
+            });
 
-            TestbedEventCreateOrUpdateVlobCache { signed, encrypted }
+            TestbedEventCreateOrUpdateVlobCache {
+                signed,
+                encrypted,
+                sequestered,
+            }
         };
         let mut guard = self.cache.lock().expect("Mutex is poisoned");
         guard.populated(populate).to_owned()
@@ -1652,6 +1718,13 @@ impl TestbedEventCreateOrUpdateFolderManifestVlob {
         self.cache(template).encrypted
     }
 
+    pub fn sequestered(
+        &self,
+        template: &TestbedTemplate,
+    ) -> Option<Vec<(SequesterServiceID, Bytes)>> {
+        self.cache(template).sequestered
+    }
+
     fn cache(&self, template: &TestbedTemplate) -> TestbedEventCreateOrUpdateVlobCache {
         let populate = || {
             let author_signkey = template.device_signing_key(&self.manifest.author);
@@ -1659,8 +1732,16 @@ impl TestbedEventCreateOrUpdateFolderManifestVlob {
 
             let signed: Bytes = self.manifest.dump_and_sign(author_signkey).into();
             let encrypted = local_symkey.encrypt(&signed).into();
+            let sequestered = template.sequester_services_public_key().map(|iter| {
+                iter.map(|(id, pubkey)| (id.to_owned(), Bytes::from(pubkey.encrypt(&signed))))
+                    .collect()
+            });
 
-            TestbedEventCreateOrUpdateVlobCache { signed, encrypted }
+            TestbedEventCreateOrUpdateVlobCache {
+                signed,
+                encrypted,
+                sequestered,
+            }
         };
         let mut guard = self.cache.lock().expect("Mutex is poisoned");
         guard.populated(populate).to_owned()
@@ -1788,6 +1869,13 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
         self.cache(template).encrypted
     }
 
+    pub fn sequestered(
+        &self,
+        template: &TestbedTemplate,
+    ) -> Option<Vec<(SequesterServiceID, Bytes)>> {
+        self.cache(template).sequestered
+    }
+
     fn cache(&self, template: &TestbedTemplate) -> TestbedEventCreateOrUpdateVlobCache {
         let populate = || {
             let author_signkey = template.device_signing_key(&self.manifest.author);
@@ -1795,8 +1883,16 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
 
             let signed: Bytes = self.manifest.dump_and_sign(author_signkey).into();
             let encrypted = local_symkey.encrypt(&signed).into();
+            let sequestered = template.sequester_services_public_key().map(|iter| {
+                iter.map(|(id, pubkey)| (id.to_owned(), Bytes::from(pubkey.encrypt(&signed))))
+                    .collect()
+            });
 
-            TestbedEventCreateOrUpdateVlobCache { signed, encrypted }
+            TestbedEventCreateOrUpdateVlobCache {
+                signed,
+                encrypted,
+                sequestered,
+            }
         };
         let mut guard = self.cache.lock().expect("Mutex is poisoned");
         guard.populated(populate).to_owned()
@@ -1818,13 +1914,18 @@ no_certificate_event!(
         version: VersionInt,
         signed: Bytes,
         encrypted: Bytes,
-        sequester_blob: Option<Vec<(SequesterServiceID, Bytes)>>,
+        sequestered: Option<Vec<(SequesterServiceID, Bytes)>>,
     ]
 );
 
 /*
  * TestbedEventCreateBlock
  */
+
+#[derive(Clone)]
+pub struct TestbedEventCreateBlockCache {
+    pub encrypted: Bytes,
+}
 
 no_certificate_event!(
     TestbedEventCreateBlock,
@@ -1834,9 +1935,9 @@ no_certificate_event!(
         realm: VlobID,
         block_id: BlockID,
         block_key: SecretKey,
-        cleartext_block: Bytes,
-        encrypted_block: Bytes,
-    ]
+        cleartext: Bytes,
+    ],
+    cache: Arc<Mutex<TestbedEventCacheEntry<TestbedEventCreateBlockCache>>>,
 );
 
 impl TestbedEventCreateBlock {
@@ -1844,7 +1945,7 @@ impl TestbedEventCreateBlock {
         builder: &mut TestbedTemplateBuilder,
         author: DeviceID,
         realm: VlobID,
-        cleartext_block: Bytes,
+        cleartext: Bytes,
     ) -> Self {
         // 1) Consistency checks
 
@@ -1857,7 +1958,6 @@ impl TestbedEventCreateBlock {
 
         let block_id = BlockID::from(*builder.counters.next_entry_id());
         let block_key = builder.counters.next_secret_key();
-        let encrypted_block = block_key.encrypt(&cleartext_block).into();
 
         let timestamp = builder.counters.next_timestamp();
         Self {
@@ -1866,9 +1966,18 @@ impl TestbedEventCreateBlock {
             realm,
             block_id,
             block_key,
-            cleartext_block,
-            encrypted_block,
+            cleartext,
+            cache: Arc::default(),
         }
+    }
+
+    pub fn encrypted(&self, _template: &TestbedTemplate) -> Bytes {
+        let populate = || {
+            let encrypted = self.block_key.encrypt(&self.cleartext).into();
+            TestbedEventCreateBlockCache { encrypted }
+        };
+        let mut guard = self.cache.lock().expect("Mutex is poisoned");
+        guard.populated(populate).to_owned().encrypted
     }
 }
 
@@ -1883,7 +1992,7 @@ no_certificate_event!(
         author: DeviceID,
         realm: VlobID,
         block_id: BlockID,
-        encrypted_block: Bytes,
+        encrypted: Bytes,
     ]
 );
 
@@ -1893,7 +2002,7 @@ impl TestbedEventCreateOpaqueBlock {
         author: DeviceID,
         realm: VlobID,
         block_id: BlockID,
-        encrypted_block: Bytes,
+        encrypted: Bytes,
     ) -> Self {
         // 1) Consistency checks
 
@@ -1910,7 +2019,7 @@ impl TestbedEventCreateOpaqueBlock {
             author,
             realm,
             block_id,
-            encrypted_block,
+            encrypted,
         }
     }
 }
@@ -2221,9 +2330,6 @@ impl TestbedEventWorkspaceDataStorageFetchFolderVlob {
         vlob: VlobID,
         prevent_sync_pattern: Option<Regex>,
     ) -> Self {
-        let prevent_sync_pattern =
-            prevent_sync_pattern.unwrap_or_else(|| Regex::from_regex_str("").unwrap());
-
         // 1) Consistency checks
 
         utils::assert_organization_bootstrapped(&builder.events);
@@ -2238,7 +2344,7 @@ impl TestbedEventWorkspaceDataStorageFetchFolderVlob {
                 if x.realm == realm && x.manifest.id == vlob => {
                 Some(Arc::new(LocalFolderManifest::from_remote(
                     (*x.manifest).clone(),
-                    &prevent_sync_pattern,
+                    prevent_sync_pattern.as_ref(),
                 )))
             }
             TestbedEvent::CreateOrUpdateOpaqueVlob(x)
@@ -2400,7 +2506,7 @@ no_certificate_event!(
         device: DeviceID,
         realm: VlobID,
         block_id: BlockID,
-        cleartext_block: Bytes,
+        cleartext: Bytes,
     ]
 );
 
@@ -2420,12 +2526,12 @@ impl TestbedEventWorkspaceCacheStorageFetchBlock {
         utils::assert_realm_exists(&builder.events, realm);
         utils::assert_realm_member_has_read_access(&builder.events, realm, device.user_id());
 
-        let cleartext_block = builder.events.iter().rev().find_map(|e| match e {
+        let cleartext = builder.events.iter().rev().find_map(|e| match e {
             TestbedEvent::CreateOpaqueBlock(x) if x.realm == realm && x.block_id == block => {
                 panic!("Block {} is opaque, cannot deduce what to put in the local workspace data storage !", block);
             }
             TestbedEvent::CreateBlock(x) if x.realm == realm && x.block_id == block => {
-                Some(x.cleartext_block.clone())
+                Some(x.cleartext.clone())
             }
             _ => None,
         }).unwrap_or_else( || panic!("Block {} doesn't exist", block));
@@ -2436,7 +2542,7 @@ impl TestbedEventWorkspaceCacheStorageFetchBlock {
             device,
             realm,
             block_id: block,
-            cleartext_block,
+            cleartext,
         }
     }
 }

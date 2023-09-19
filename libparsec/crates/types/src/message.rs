@@ -64,18 +64,14 @@ pub enum MessageContent {
 }
 
 impl MessageContent {
-    pub fn decrypt_verify_and_load_for(
-        ciphered: &[u8],
-        recipient_privkey: &PrivateKey,
+    pub fn verify_and_load_for(
+        signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
         expected_timestamp: DateTime,
     ) -> Result<MessageContent, DataError> {
-        let signed = recipient_privkey
-            .decrypt_from_self(ciphered)
-            .map_err(|_| DataError::Decryption)?;
         let compressed = author_verify_key
-            .verify(&signed)
+            .verify(signed)
             .map_err(|_| DataError::Signature)?;
         let mut serialized = vec![];
         ZlibDecoder::new(compressed)
@@ -110,6 +106,24 @@ impl MessageContent {
         } else {
             Ok(data)
         }
+    }
+
+    pub fn decrypt_verify_and_load_for(
+        ciphered: &[u8],
+        recipient_privkey: &PrivateKey,
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+        expected_timestamp: DateTime,
+    ) -> Result<MessageContent, DataError> {
+        let signed = recipient_privkey
+            .decrypt_from_self(ciphered)
+            .map_err(|_| DataError::Decryption)?;
+        Self::verify_and_load_for(
+            &signed,
+            author_verify_key,
+            expected_author,
+            expected_timestamp,
+        )
     }
 
     pub fn dump_and_sign(&self, author_signkey: &SigningKey) -> Vec<u8> {

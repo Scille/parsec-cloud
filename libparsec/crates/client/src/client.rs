@@ -190,3 +190,8 @@ impl Drop for Client {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/client.rs"]
+#[allow(clippy::unwrap_used)]
+mod tests;
