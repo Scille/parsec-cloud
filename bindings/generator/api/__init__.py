@@ -9,3 +9,4 @@ from .events import *  # noqa: F403
 from .invite import *  # noqa: F403
 from .platform import *  # noqa: F403
 from .testbed import *  # noqa: F403
+from .validation import *  # noqa: F403

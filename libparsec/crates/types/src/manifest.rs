@@ -207,6 +207,27 @@ impl RealmRole {
 #[serde(try_from = "&str", into = "String")]
 pub struct EntryName(String);
 
+impl EntryName {
+    /// Stick to UNIX filesystem philosophy:
+    /// - no `.` or `..` name
+    /// - no `/` or null byte in the name
+    /// - max 255 bytes long name
+    pub fn is_valid(raw: &str) -> Result<(), EntryNameError> {
+        if raw.len() >= 256 {
+            Err(EntryNameError::NameTooLong)
+        } else if raw.is_empty()
+            || raw == "."
+            || raw == ".."
+            || raw.find('/').is_some()
+            || raw.find('\x00').is_some()
+        {
+            Err(EntryNameError::InvalidName)
+        } else {
+            Ok(())
+        }
+    }
+}
+
 impl std::convert::AsRef<str> for EntryName {
     #[inline]
     fn as_ref(&self) -> &str {
@@ -235,22 +256,7 @@ impl TryFrom<&str> for EntryName {
     fn try_from(id: &str) -> Result<Self, Self::Error> {
         let id: String = id.nfc().collect();
 
-        // Stick to UNIX filesystem philosophy:
-        // - no `.` or `..` name
-        // - no `/` or null byte in the name
-        // - max 255 bytes long name
-        if id.len() >= 256 {
-            Err(Self::Error::NameTooLong)
-        } else if id.is_empty()
-            || id == "."
-            || id == ".."
-            || id.find('/').is_some()
-            || id.find('\x00').is_some()
-        {
-            Err(Self::Error::InvalidName)
-        } else {
-            Ok(Self(id))
-        }
+        Self::is_valid(&id).map(|_| Self(id))
     }
 }
 

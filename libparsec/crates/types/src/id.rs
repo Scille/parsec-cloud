@@ -157,6 +157,23 @@ macro_rules! new_string_based_id_type {
             }
         }
 
+        impl $name {
+            const BYTES_SIZE: usize = $bytes_size;
+
+            fn pattern() -> &'static Regex {
+                lazy_static! {
+                    static ref PATTERN: Regex = Regex::new($pattern)
+                        .expect("`pattern` should be a valid regular expression");
+                }
+                &PATTERN
+            }
+
+            /// Validate that the input is contained in [`Self::BYTES_SIZE`] and match the regex provided by [`Self::pattern`].
+            pub fn is_valid(input: &str) -> bool {
+                input.len() <= Self::BYTES_SIZE && Self::pattern().is_match(input)
+            }
+        }
+
         impl std::convert::AsRef<str> for $name {
             #[inline]
             fn as_ref(&self) -> &str {
@@ -178,12 +195,8 @@ macro_rules! new_string_based_id_type {
 
             fn try_from(s: &str) -> Result<Self, Self::Error> {
                 let id: String = s.nfc().collect();
-                lazy_static! {
-                    static ref PATTERN: Regex = Regex::new($pattern)
-                        .expect("`pattern` should be a valid regular expression");
-                }
-                // ID must respect regex AND be contained within $bytes_size bytes
-                if PATTERN.is_match(&id) && id.len() <= $bytes_size {
+
+                if Self::is_valid(&id) {
                     Ok(Self(id))
                 } else {
                     Err(concat!("Invalid ", stringify!($name)))
@@ -414,19 +427,10 @@ impl HumanHandle {
         let label = label.nfc().collect::<String>();
         let display = format!("{label} <{email}>");
 
-        if !EmailAddress::is_valid(&email, None) || email.len() >= 255 {
+        if !Self::email_is_valid(email.as_str()) {
             return Err("Invalid email address");
         }
-        // According to https://www.rfc-editor.org/rfc/rfc5322#section-3.2.3, these special characters are not allowed
-        if label.is_empty()
-            || label.len() >= 255
-            || label.chars().any(|c| {
-                matches!(
-                    c,
-                    '<' | '>' | '@' | ',' | ':' | ';' | '\\' | '"' | '[' | ']'
-                )
-            })
-        {
+        if !Self::label_is_valid(label.as_str()) {
             return Err("Invalid label");
         }
 
@@ -435,6 +439,22 @@ impl HumanHandle {
             label,
             display,
         })
+    }
+
+    pub fn email_is_valid(email: &str) -> bool {
+        EmailAddress::is_valid(email, None) && email.len() < 255
+    }
+
+    pub fn label_is_valid(label: &str) -> bool {
+        !label.is_empty()
+            && label.len() < 255
+            && !label.chars().any(|c| {
+                matches!(
+                    c,
+                    // According to https://www.rfc-editor.org/rfc/rfc5322#section-3.2.3, these special characters are not allowed
+                    '<' | '>' | '@' | ',' | ':' | ';' | '\\' | '"' | '[' | ']'
+                )
+            })
     }
 
     pub fn email(&self) -> &str {

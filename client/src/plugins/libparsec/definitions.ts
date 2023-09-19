@@ -928,4 +928,22 @@ export interface LibParsecPlugin {
     testDropTestbed(
         path: Path
     ): Promise<null>
+    validateEntryName(
+        raw: string
+    ): Promise<boolean>
+    validatePath(
+        raw: string
+    ): Promise<boolean>
+    validateHumanHandleLabel(
+        raw: string
+    ): Promise<boolean>
+    validateEmail(
+        raw: string
+    ): Promise<boolean>
+    validateDeviceLabel(
+        raw: string
+    ): Promise<boolean>
+    validateInvitationToken(
+        raw: string
+    ): Promise<boolean>
 }
