@@ -173,21 +173,6 @@ const selectedUsersCount = computed(() => {
   }
 });
 
-function getSelectedUsers(): MockUser[] {
-  const selectedUsers: MockUser[] = [];
-
-  if (displayView.value === DisplayState.List) {
-    for (const item of userListItemRefs.value) {
-      selectedUsers.push(item.getUser());
-    }
-  } else {
-    for (const item of userGridItemRefs.value) {
-      selectedUsers.push(item.getUser());
-    }
-  }
-  return selectedUsers;
-}
-
 function viewCommonWorkspace(): void {
   console.log('View common workspace clicked');
 }

@@ -4,7 +4,7 @@
   <ion-list class="container">
     <ion-item class="container__item profile-email">
       <ion-text class="body-sm">
-        {{ firstname }} {{ lastname }}
+        {{ name }}
       </ion-text>
     </ion-item>
     <ion-item
@@ -92,15 +92,11 @@ import {
   helpCircle,
   logOut,
 } from 'ionicons/icons';
-import { useI18n } from 'vue-i18n';
 import { popoverController } from '@ionic/core';
 import { getAppVersion } from '@/common/mocks';
 
-const { t } = useI18n();
-
 defineProps<{
-  firstname: string
-  lastname: string
+  name: string
 }>();
 
 function onOptionClick(option: ProfilePopoverOption): void {

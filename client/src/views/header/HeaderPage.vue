@@ -89,8 +89,7 @@
 
           <profile-header
             id="profile-button"
-            :firstname="'toto'"
-            :lastname="'toto'"
+            :name="userInfo && userInfo.humanHandle ? userInfo.humanHandle.label : ''"
             class="profile-header"
           />
         </ion-buttons>
@@ -128,16 +127,27 @@ import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import ProfileHeader from '@/views/header/ProfileHeader.vue';
 import useSidebarMenu from '@/services/sidebarMenu';
-import { computed } from 'vue';
+import { computed, Ref, ref, onMounted } from 'vue';
 import { parse as parsePath } from '@/common/path';
 import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
 import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import { hasHistory, isDocumentRoute } from '@/router/conditions';
+import { getUserInfo, UserInfo } from '@/parsec';
 
 const currentRoute = useRoute();
 const { t } = useI18n();
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
+const userInfo: Ref<UserInfo | null> = ref(null);
+
+onMounted(async () => {
+  const result = await getUserInfo();
+  if (result.ok) {
+    userInfo.value = result.value;
+  } else {
+    console.log('Could not get user info', result.error);
+  }
+});
 
 // Dummy temporary function
 function mockGetWorkspaceName(workspaceId: string): string {
