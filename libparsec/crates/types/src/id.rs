@@ -405,6 +405,11 @@ impl FromStr for HumanHandle {
 
 impl HumanHandle {
     pub fn new(email: &str, label: &str) -> Result<Self, &'static str> {
+        // A word about `<string>.nfc()`: In the unicode code we have multiple forms to represent the same glyph.
+        // We have 2 notable forms _Normalization From canonical Decomposition_ (NFD) and _Normalization From canonical Composition_ (NFC)
+        // For example: the `small letter A with acute` (á) would be encoded in NFD as `small letter a + acute accent` as for NFC `small letter a with acute`.
+        //
+        // So we need to normalize the string to have consistant comparison latter on.
         let email = email.nfc().collect::<String>();
         let label = label.nfc().collect::<String>();
         let display = format!("{label} <{email}>");
