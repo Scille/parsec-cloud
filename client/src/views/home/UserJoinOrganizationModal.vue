@@ -210,7 +210,7 @@ enum UserJoinOrganizationStep {
   Finish = 6,
 }
 
-const notificationCenter = inject(NotificationKey) as NotificationCenter;
+const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 
 const { t } = useI18n();
 
