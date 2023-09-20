@@ -11,7 +11,7 @@
     }"
     :confirm-button="{
       label: $t('WorkspacesPage.CreateWorkspaceModal.create'),
-      disabled: !workspaceName,
+      disabled: !validWorkspaceName,
       onClick: confirm
     }"
   >
@@ -31,8 +31,13 @@ import { ref } from 'vue';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
 import { MsModalResult } from '@/components/core/ms-types';
+import { asyncComputed } from '@/common/asyncComputed';
+import { isValidWorkspaceName } from '@/parsec';
 
 const workspaceName = ref('');
+const validWorkspaceName = asyncComputed(async () => {
+  return await isValidWorkspaceName(workspaceName.value);
+});
 
 function confirm(): Promise<boolean> {
   return modalController.dismiss(workspaceName.value, MsModalResult.Confirm);

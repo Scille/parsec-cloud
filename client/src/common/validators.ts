@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { parseBackendAddr, BackendAddrType } from '@/parsec';
+import { parseBackendAddr, BackendAddrType, isValidUserName, isValidEmail, isValidDeviceName, isValidWorkspaceName } from '@/parsec';
 
 export enum Validity {
   Invalid = 0,
@@ -20,7 +20,7 @@ export const emailValidator: IValidator = async function(value: string) {
   if (!value.includes('@') || value.length === 0) {
     return Validity.Intermediate;
   }
-  return value.match(/^[^\s]+@[^\s]+(\.[^\s]+)?$/i) ? Validity.Valid : Validity.Invalid;
+  return await isValidEmail(value) ? Validity.Valid : Validity.Invalid;
 };
 
 export const deviceNameValidator: IValidator = async function(value: string) {
@@ -28,17 +28,23 @@ export const deviceNameValidator: IValidator = async function(value: string) {
   if (value.length === 0) {
     return Validity.Intermediate;
   }
-  return value.match(/^[a-z0-9_-]{1,32}$/i) ? Validity.Valid : Validity.Invalid;
+  return await isValidDeviceName(value) ? Validity.Valid : Validity.Invalid;
 };
 
 export const userNameValidator: IValidator = async function(value: string) {
   value = value.trim();
   if (value.length === 0) {
     return Validity.Intermediate;
-  } else if (value.length > 128) {
-    return Validity.Invalid;
   }
-  return Validity.Valid;
+  return await isValidUserName(value) ? Validity.Valid : Validity.Invalid;
+};
+
+export const workspaceNameValidator: IValidator = async function(value: string) {
+  value = value.trim();
+  if (value.length === 0) {
+    return Validity.Intermediate;
+  }
+  return await isValidWorkspaceName(value) ? Validity.Valid : Validity.Invalid;
 };
 
 export const backendAddrValidator: IValidator = async function(value: string) {
