@@ -36,42 +36,156 @@ pub fn req() {
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
-    assert_eq!(data, expected);
+    p_assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = if let authenticated_cmds::AnyCmdReq::VlobRead(data) = data {
-        data.dump().unwrap()
-    } else {
+    let authenticated_cmds::AnyCmdReq::VlobRead(req2) = data else {
         unreachable!()
     };
 
+    let raw2 = req2.dump().unwrap();
+
     let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
-    assert_eq!(data2, expected);
+    p_assert_eq!(data2, expected);
 }
 
 // Responses
 
 pub fn rep_ok() {
-    // TODO #4545: Implement test
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   author: "alice@dev1"
+    //   timestamp: ext(1, 946774800.0)
+    //   version: 8
+    //   author_last_role_granted_on: ext(1, 946774800.0)
+    //   blob: hex!("666f6f626172")
+    //   status: "ok"
+    let raw = hex!(
+        "86a6617574686f72aa616c6963654064657631bb617574686f725f6c6173745f726f6c655f"
+        "6772616e7465645f6f6ed70141cc375188000000a4626c6f62c406666f6f626172a6737461"
+        "747573a26f6ba974696d657374616d70d70141cc375188000000a776657273696f6e08"
+    );
+
+    let expected = authenticated_cmds::vlob_read::Rep::Ok {
+        version: 8,
+        blob: b"foobar".as_ref().into(),
+        author: "alice@dev1".parse().unwrap(),
+        timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+        author_last_role_granted_on: "2000-1-2T01:00:00Z".parse().unwrap(),
+    };
+
+    let data = authenticated_cmds::vlob_read::Rep::load(&raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::vlob_read::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
 }
 
 pub fn rep_not_found() {
-    // TODO #4545: Implement test
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   reason: "foobar"
+    //   status: "not_found"
+    let raw = hex!("82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64");
+
+    let expected = authenticated_cmds::vlob_read::Rep::NotFound {
+        reason: Some("foobar".to_owned()),
+    };
+
+    let data = authenticated_cmds::vlob_read::Rep::load(&raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::vlob_read::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
 }
 
 pub fn rep_not_allowed() {
-    // TODO #4545: Implement test
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   status: "not_allowed"
+    let raw = hex!("81a6737461747573ab6e6f745f616c6c6f776564");
+
+    let expected = authenticated_cmds::vlob_read::Rep::NotAllowed;
+
+    let data = authenticated_cmds::vlob_read::Rep::load(&raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::vlob_read::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
 }
 
 pub fn rep_bad_version() {
-    // TODO #4545: Implement test
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   status: "bad_version"
+    let raw = hex!("81a6737461747573ab6261645f76657273696f6e");
+
+    let expected = authenticated_cmds::vlob_read::Rep::BadVersion;
+
+    let data = authenticated_cmds::vlob_read::Rep::load(&raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::vlob_read::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
 }
 
 pub fn rep_bad_encryption_revision() {
-    // TODO #4545: Implement test
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   status: "bad_encryption_revision"
+    let raw = hex!("81a6737461747573b76261645f656e6372797074696f6e5f7265766973696f6e");
+
+    let expected = authenticated_cmds::vlob_read::Rep::BadEncryptionRevision;
+
+    let data = authenticated_cmds::vlob_read::Rep::load(&raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::vlob_read::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
 }
 
 pub fn rep_in_maintenance() {
-    // TODO #4545: Implement test
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   status: "in_maintenance
+    let raw = hex!("81a6737461747573ae696e5f6d61696e74656e616e6365");
+
+    let expected = authenticated_cmds::vlob_read::Rep::InMaintenance;
+
+    let data = authenticated_cmds::vlob_read::Rep::load(&raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::vlob_read::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
 }
