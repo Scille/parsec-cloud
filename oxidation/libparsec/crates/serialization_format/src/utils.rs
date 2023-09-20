@@ -85,6 +85,7 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "SequesterVerifyKeyDer" => "libparsec_types::SequesterVerifyKeyDer",
                 "SequesterPublicKeyDer" => "libparsec_types::SequesterPublicKeyDer",
                 "DateTime" => "libparsec_types::DateTime",
+                "DurationInSeconds" => "u64", // TODO: implement serializer for libparsec_types::Duration
                 "BlockID" => "libparsec_types::BlockID",
                 "DeviceID" => "libparsec_types::DeviceID",
                 "OrganizationID" => "libparsec_types::OrganizationID",
