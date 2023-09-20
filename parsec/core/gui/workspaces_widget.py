@@ -81,17 +81,10 @@ async def _do_workspace_rename(
 
 
 async def _do_workspace_list(core: LoggedCore) -> list[WorkspaceFS]:
-    workspaces = []
-    available_workspaces = core.user_fs.get_available_workspace_entries()
-    for workspace in available_workspaces:
-        workspace_id = workspace.id
-        workspace_fs = core.user_fs.get_workspace(workspace_id)
-        workspaces.append(workspace_fs)
+    available_workspaces = core.user_fs.get_available_workspaces()
     workspaces_timestamped_dict = await core.mountpoint_manager.get_timestamped_mounted()
-    for (workspace_id, timestamp), workspace_fs in workspaces_timestamped_dict.items():
-        workspaces.append(workspace_fs)
-
-    return workspaces
+    timestamped_workspaces: list[WorkspaceFS] = list(workspaces_timestamped_dict.values())
+    return available_workspaces + timestamped_workspaces
 
 
 async def _do_workspace_mount(

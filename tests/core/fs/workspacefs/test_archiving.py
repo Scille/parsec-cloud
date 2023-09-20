@@ -123,12 +123,12 @@ async def test_configure_archiving(
 
     # Test get_available_workspace_entries
     for user_fs in (alice_user_fs, bob_user_fs):
-        available_entries = user_fs.get_available_workspace_entries()
+        available_workspaces = user_fs.get_available_workspaces()
         if configuration == "deleted":
-            assert available_entries == []
+            assert available_workspaces == []
         elif configuration in ["available", "archived", "deletion_planned"]:
-            (entry,) = available_entries
-            assert entry.name == EntryName("w")
+            (workspace,) = available_workspaces
+            assert workspace.get_workspace_name() == EntryName("w")
         else:
             assert False
 

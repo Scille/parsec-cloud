@@ -355,17 +355,16 @@ class MountpointManager:
 
     async def safe_mount_all(self, exclude: Sequence[EntryID] = ()) -> None:
         exclude_set = set(exclude)
-        for workspace_entry in self.user_fs.get_available_workspace_entries():
-            if workspace_entry.id in exclude_set:
+        for workspace in self.user_fs.get_available_workspaces():
+            if workspace.workspace_id in exclude_set:
                 continue
-            workspace_fs = self.user_fs.get_workspace(workspace_entry.id)
             # Do not mount archived workspaces unless we're asked to
-            if workspace_fs.is_archived():
+            if workspace.is_archived():
                 continue
             # Do not mount deletion-planned workspaces unless we're asked to
-            if workspace_fs.is_deletion_planned():
+            if workspace.is_deletion_planned():
                 continue
-            await self.safe_mount(workspace_entry.id)
+            await self.safe_mount(workspace.workspace_id)
 
     async def safe_unmount_all(self) -> None:
         for workspace_id, timestamp in list(self._mountpoint_tasks.keys()):

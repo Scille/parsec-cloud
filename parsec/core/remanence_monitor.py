@@ -161,17 +161,19 @@ async def monitor_remanent_workspaces(
                 (CoreEvent.FS_WORKSPACE_CREATED, cast(EventCallback, _fs_workspace_created)),
             ):
                 # All workspaces should be processed at startup
-                available_workspaces, unavailable_workspaces = user_fs.get_all_workspace_entries()
+                available_workspaces, unavailable_workspaces = user_fs.get_all_workspaces()
 
                 # Clean up unavailable workspaces if necessary
                 cleanup_tasks_scheduled = any(
-                    _on_read_rights_removed(entry.id) for entry in unavailable_workspaces
+                    _on_read_rights_removed(workspace.workspace_id)
+                    for workspace in unavailable_workspaces
                 )
 
                 # Each workspace will have it own task that will start awake,
                 # then switch to idle
                 manager_tasks_scheduled = any(
-                    _start_remanence_manager(entry.id) for entry in available_workspaces
+                    _start_remanence_manager(workspace.workspace_id)
+                    for workspace in available_workspaces
                 )
 
                 # Set idle status if no task has been scheduled

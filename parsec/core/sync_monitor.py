@@ -489,8 +489,8 @@ async def monitor_sync(
         assert ctx is not None
         await _ctx_action(ctx, "bootstrap")
         # Init workspaces sync context
-        for entry in user_fs.get_available_workspace_entries():
-            ctx = ctxs.get(entry.id)
+        for workspace in user_fs.get_available_workspaces():
+            ctx = ctxs.get(workspace.workspace_id)
             if ctx:
                 await _ctx_action(ctx, "bootstrap")
 
