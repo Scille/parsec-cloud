@@ -2,30 +2,20 @@
 
 use super::authenticated_cmds;
 
+use super::super::v3::block_read as compat;
+
 // Request
 
-pub fn req() {
-    // TODO #4545: Implement test
-}
+pub use compat::req;
 
 // Responses
 
-pub fn rep_ok() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_ok;
 
-pub fn rep_not_found() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_not_found;
 
-pub fn rep_timeout() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_timeout;
 
-pub fn rep_not_allowed() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_not_allowed;
 
-pub fn rep_in_maintenance() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_in_maintenance;
