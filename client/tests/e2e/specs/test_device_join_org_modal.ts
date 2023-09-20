@@ -78,12 +78,12 @@ describe('Claim new device', () => {
     checkStepper(0);
 
     cy.get('ion-modal').find('.button-choice').as('choiceButtons').should('have.length', 4);
-    cy.get('@choiceButtons').eq(0).contains('ABCD');
-    cy.get('@choiceButtons').eq(1).contains('EFGH');
-    cy.get('@choiceButtons').eq(2).contains('IJKL');
-    cy.get('@choiceButtons').eq(3).contains('MNOP');
+    cy.get('@choiceButtons').eq(0).contains('5MNO');
+    cy.get('@choiceButtons').eq(1).contains('6PQR');
+    cy.get('@choiceButtons').eq(2).contains('7STU');
+    cy.get('@choiceButtons').eq(3).contains('8VWX');
     cy.get('ion-modal').find('.button-clear').contains('None of the codes');
-    cy.get('@choiceButtons').eq(1).click();
+    cy.get('@choiceButtons').eq(2).click();
 
     // Page with one code, guest SAS code
     cy.get('.label-waiting').should('be.visible');
@@ -92,18 +92,20 @@ describe('Claim new device', () => {
     // Waiting for the host to enter the code
     cy.wait(WAIT_TIME);
 
-    // Page with two inputs, device new password
+    // Page with 3 inputs (password, confirmPassword and deviceName)
     checkStepper(2);
 
     cy.get('@modalTitle').contains('Create a password');
     cy.get('@modalSubtitle').contains('Finally, create a password for your new device.');
 
-    cy.get('#get-password').find('ion-input').as('inputs').should('have.length', 2);
+    cy.get('#get-password').find('ion-input').as('inputs').should('have.length', 3);
     cy.get('#next-button').should('have.attr', 'disabled');
     cy.get('#next-button').contains('Confirm password');
     cy.get('@inputs').eq(0).find('input').type('Password23;-$aze');
     cy.get('#next-button').should('have.attr', 'disabled');
     cy.get('@inputs').eq(1).find('input').type('Password23;-$aze');
+    cy.get('#next-button').should('have.attr', 'disabled');
+    cy.get('@inputs').eq(2).find('input').type('my_device');
     cy.get('#next-button').should('not.have.attr', 'disabled');
     cy.get('#next-button').click();
 

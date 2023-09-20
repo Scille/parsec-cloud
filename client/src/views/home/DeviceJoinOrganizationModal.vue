@@ -62,7 +62,7 @@
           class="step"
         >
           <sas-code-choice
-            :choices="['ABCD', 'EFGH', 'IJKL', 'MNOP']"
+            :choices="claimer.SASCodeChoices"
             @select="selectHostSas($event)"
           />
         </div>
@@ -72,7 +72,9 @@
           v-show="pageStep === DeviceJoinOrganizationStep.ProvideGuestCode"
           class="step guest-code"
         >
-          <sas-code-provide :code="'ABCD'" />
+          <sas-code-provide
+            :code="claimer.guestSASCode"
+          />
         </div>
 
         <!-- part 4 (get password)-->
@@ -82,6 +84,12 @@
           id="get-password"
         >
           <ms-choose-password-input ref="passwordPage" />
+          <ms-input
+            :label="$t('CreateOrganization.deviceNameInputLabel')"
+            :placeholder="$t('CreateOrganization.deviceNamePlaceholder')"
+            v-model="deviceName"
+            name="deviceName"
+          />
         </div>
         <!-- part 5 (finish the process)-->
         <div
@@ -150,7 +158,7 @@ import {
   close,
   checkmarkCircle,
 } from 'ionicons/icons';
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
 import MsWizardStepper from '@/components/core/ms-stepper/MsWizardStepper.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
@@ -158,9 +166,15 @@ import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import { MsModalResult } from '@/components/core/ms-types';
-import { AvailableDevice, DeviceFileType } from '@/parsec';
+import MsInput from '@/components/core/ms-input/MsInput.vue';
 import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
 import { asyncComputed } from '@/common/asyncComputed';
+import { DeviceClaim } from '@/parsec';
+import { Notification, NotificationCenter, NotificationLevel } from '@/services/notificationCenter';
+import { NotificationKey } from '@/common/injectionKeys';
+import { Validity, deviceNameValidator } from '@/common/validators';
+
+const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 
 enum DeviceJoinOrganizationStep {
   Information = 0,
@@ -170,36 +184,19 @@ enum DeviceJoinOrganizationStep {
   Finish = 4,
 }
 
-const OTHER_USER_WAITING_TIME = 300;
-
 const { t } = useI18n();
 
 const pageStep = ref(DeviceJoinOrganizationStep.Information);
+const deviceName = ref();
 const passwordPage = ref();
 
-let newDevice: AvailableDevice | null = null;
+const claimer = ref(new DeviceClaim());
 
 const props = defineProps<{
   invitationLink: string
 }>();
 
-interface ClaimDeviceLink {
-  backendAddr: string,
-  token: string,
-  org: string
-}
-
-// Will be done in Rust
-function parseInvitationLink(link: string): ClaimDeviceLink {
-  return {
-    backendAddr: link,
-    token: 'aaa',
-    org: 'My Org',
-  };
-}
-
-const claimDeviceLink = parseInvitationLink(props.invitationLink);
-const waitingForHost = ref(false);
+const waitingForHost = ref(true);
 
 interface Title {
   title: string,
@@ -226,8 +223,24 @@ const titles = new Map<DeviceJoinOrganizationStep, Title>([[
   }],
 ]);
 
-function selectHostSas(_code: string | null): void {
-  nextStep();
+async function selectHostSas(selectedCode: string | null): Promise<void> {
+  if (selectedCode && selectedCode === claimer.value.correctSASCode) {
+    console.log('Good choice selected, next step');
+    const result = await claimer.value.signifyTrust();
+    if (result.ok) {
+      nextStep();
+    } else {
+      console.log('Signify trust failed', result.error);
+    }
+  } else {
+    if (!selectedCode) {
+      console.log('None selected, back to beginning');
+    } else {
+      console.log('Invalid selected, back to beginning');
+    }
+    await claimer.value.abort();
+    pageStep.value = DeviceJoinOrganizationStep.Information;
+  }
 }
 
 function getNextButtonText(): string {
@@ -244,58 +257,47 @@ function getNextButtonText(): string {
 
 const nextButtonIsVisible = computed(() => {
   return (
-    pageStep.value === DeviceJoinOrganizationStep.Information
-    || pageStep.value === DeviceJoinOrganizationStep.Password
+    pageStep.value === DeviceJoinOrganizationStep.Information && !waitingForHost.value
+    || pageStep.value === DeviceJoinOrganizationStep.Password && !waitingForHost.value
     || pageStep.value === DeviceJoinOrganizationStep.Finish
   );
 });
+
 const canGoForward = asyncComputed(async () => {
   if (pageStep.value === DeviceJoinOrganizationStep.Password) {
-    return await passwordPage.value.areFieldsCorrect();
+    return await passwordPage.value.areFieldsCorrect() && await deviceNameValidator(deviceName.value) === Validity.Valid;
   }
   return true;
 });
 
-function cancelModal(): Promise<boolean> {
-  if (pageStep.value === DeviceJoinOrganizationStep.Finish) {
-    return modalController.dismiss({ device: newDevice, password: passwordPage.value.password }, MsModalResult.Confirm);
-  } else {
-    return modalController.dismiss(null, MsModalResult.Cancel);
-  }
+async function cancelModal(): Promise<boolean> {
+  await claimer.value.abort();
+  return modalController.dismiss(null, MsModalResult.Cancel);
 }
 
-function mockCreateDevice(): AvailableDevice {
-  const humanHandle = {
-    label: 'Louis Dark',
-    email: 'louis@dark.co',
-  };
-  const deviceName = 'myDevice';
-  console.log(
-    `Creating device ${claimDeviceLink?.org}, user ${humanHandle}, device ${deviceName}, backend ${props.invitationLink}`,
-  );
-  const device: AvailableDevice = {
-    organizationId: claimDeviceLink?.org || '',
-    humanHandle: humanHandle,
-    deviceLabel: deviceName,
-    keyFilePath: 'key_file_path',
-    deviceId: 'device1@device1',
-    slug: 'slug1',
-    ty: DeviceFileType.Password,
-  };
-
-  return device;
-}
-
-function mockSaveDeviceWithPassword(_device: AvailableDevice | null, _password: string): void {
-  console.log(`Saving device with password ${passwordPage.value.password}`);
-}
-
-function nextStep(): void {
+async function nextStep(): Promise<void> {
   if (pageStep.value === DeviceJoinOrganizationStep.Password) {
-    newDevice = mockCreateDevice();
-    mockSaveDeviceWithPassword(newDevice, passwordPage.value.password);
+    waitingForHost.value = true;
+    const doClaimResult = await claimer.value.doClaim(
+      deviceName.value,
+    );
+    if (doClaimResult.ok) {
+      waitingForHost.value = false;
+      const result = await claimer.value.finalize(passwordPage.value.password);
+      if (!result.ok) {
+        console.log('Failed to finalize', result.error);
+      }
+    } else {
+      console.log('Do claim failed', doClaimResult.error);
+      return;
+    }
   } else if (pageStep.value === DeviceJoinOrganizationStep.Finish) {
-    modalController.dismiss({ device: newDevice, password: passwordPage.value.password }, MsModalResult.Confirm);
+    const notification = new Notification({
+      message: t('JoinOrganization.successMessage'),
+      level: NotificationLevel.Success,
+    });
+    notificationCenter.showToast(notification, {trace: true});
+    await modalController.dismiss({ device: claimer.value.device, password: passwordPage.value.password }, MsModalResult.Confirm);
     return;
   }
 
@@ -303,27 +305,30 @@ function nextStep(): void {
 
   if (pageStep.value === DeviceJoinOrganizationStep.ProvideGuestCode) {
     waitingForHost.value = true;
-    window.setTimeout(hostHasEnteredCode, OTHER_USER_WAITING_TIME);
+    const result = await claimer.value.waitHostTrust();
+    if (result.ok) {
+      waitingForHost.value = false;
+      pageStep.value += 1;
+    } else {
+      console.log('Wait peer trust failed', result.error);
+    }
   }
 }
 
-function hostHasEnteredCode(): void {
-  waitingForHost.value = false;
-  nextStep();
-}
+onMounted(async () => {
+  const retrieveResult = await claimer.value.retrieveInfo(props.invitationLink);
 
-onMounted(() => {
-  claimerRetrieveInfo();
+  if (retrieveResult.ok) {
+    const waitResult = await claimer.value.initialWaitHost();
+    if (waitResult.ok) {
+      waitingForHost.value = false;
+    } else {
+      console.log('Wait host failed', waitResult.error);
+    }
+  } else {
+    console.log('Failed to retrieve info', retrieveResult.error);
+  }
 });
-
-function claimerInfoRetrieved(): void {
-  waitingForHost.value = false;
-}
-
-function claimerRetrieveInfo(): void {
-  // Simulate host starting the process
-  window.setTimeout(claimerInfoRetrieved, OTHER_USER_WAITING_TIME);
-}
 </script>
 
 <style scoped lang="scss">

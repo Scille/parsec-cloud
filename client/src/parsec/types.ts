@@ -1,8 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
-
 import type {
+  DeviceLabel,
   VlobID as WorkspaceID,
   AvailableDevice,
   Result,
@@ -20,9 +19,14 @@ import type {
   UserClaimInProgress2Info,
   UserClaimInProgress3Info,
   UserClaimFinalizeInfo,
+  DeviceClaimFinalizeInfo,
+  DeviceClaimInProgress1Info,
+  DeviceClaimInProgress2Info,
+  DeviceClaimInProgress3Info,
   SASCode,
   HumanHandle,
   UserOrDeviceClaimInitialInfoUser,
+  UserOrDeviceClaimInitialInfoDevice,
   ParsedBackendAddr,
   ClientStartError,
   ListInvitationsError,
@@ -49,8 +53,6 @@ import {
 } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
-const DEFAULT_HANDLE = 42;
-
 interface UserInvitation extends InviteListItemUser {
   date: DateTime
 }
@@ -70,11 +72,11 @@ interface GetWorkspaceNameError {
 }
 
 export {
+  DeviceLabel,
   UserInvitation,
   WorkspaceID,
   WorkspaceName,
   AvailableDevice,
-  DEFAULT_HANDLE,
   ClientConfig,
   Result,
   DeviceAccessStrategyPassword,
@@ -94,7 +96,12 @@ export {
   UserClaimInProgress2Info,
   UserClaimInProgress3Info,
   UserClaimFinalizeInfo,
+  DeviceClaimFinalizeInfo,
+  DeviceClaimInProgress1Info,
+  DeviceClaimInProgress2Info,
+  DeviceClaimInProgress3Info,
   UserOrDeviceClaimInitialInfoUser,
+  UserOrDeviceClaimInitialInfoDevice,
   ParsedBackendAddrInvitationUser,
   BackendAddrType,
   UserInfo,

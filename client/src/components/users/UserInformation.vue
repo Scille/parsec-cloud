@@ -86,5 +86,4 @@ async function areFieldsCorrect(): Promise<boolean> {
 </script>
 
 <style scoped lang="scss">
-
 </style>
