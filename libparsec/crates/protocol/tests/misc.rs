@@ -64,3 +64,39 @@ fn serde_invalid_type_deserialization(#[case] raw: &[u8], #[case] expected: &str
         .to_string();
     assert_eq!(err, expected)
 }
+
+#[parsec_test]
+fn authenticated_load_response() {
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   pong: "pong"
+    //   status: "ok"
+    let raw = hex!("82a4706f6e67a4706f6e67a6737461747573a26f6b");
+
+    let rep = authenticated_cmds::ping::Req::load_response(&raw).unwrap();
+
+    assert_eq!(
+        rep,
+        authenticated_cmds::ping::Rep::Ok {
+            pong: "pong".to_owned(),
+        }
+    )
+}
+
+#[parsec_test]
+fn invited_load_response() {
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   pong: "pong"
+    //   status: "ok"
+    let raw = hex!("82a4706f6e67a4706f6e67a6737461747573a26f6b");
+
+    let rep = invited_cmds::ping::Req::load_response(&raw).unwrap();
+
+    assert_eq!(
+        rep,
+        invited_cmds::ping::Rep::Ok {
+            pong: "pong".to_owned(),
+        }
+    )
+}
