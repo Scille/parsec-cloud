@@ -130,9 +130,9 @@ class LoggedCore:
 
     def find_workspace_from_name(self, workspace_name: EntryName) -> WorkspaceEntry:
         # Note: it does not include deleted workspaces
-        for workspace in self.user_fs.get_available_workspace_entries():
-            if workspace_name == workspace.name:
-                return workspace
+        for workspace in self.user_fs.get_available_workspaces():
+            if workspace_name == workspace.get_workspace_name():
+                return workspace.get_workspace_entry()
         raise FSWorkspaceNotFoundError(f"Unknown workspace {workspace_name.str}")
 
     async def find_humans(

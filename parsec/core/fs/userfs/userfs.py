@@ -387,30 +387,30 @@ class UserFS:
             raise ValueError("Storage not set")
         return self.storage.get_user_manifest()
 
-    def get_all_workspace_entries(self) -> tuple[list[WorkspaceEntry], list[WorkspaceEntry]]:
+    def get_all_workspaces(self) -> tuple[list[WorkspaceFS], list[WorkspaceFS]]:
         user_manifest = self.get_user_manifest()
-        available_entries = []
-        unavailable_entries = []
+        available_workspaces: list[WorkspaceFS] = []
+        unavailable_workspaces: list[WorkspaceFS] = []
         for workspace_entry in user_manifest.workspaces:
             try:
                 workspace = self.get_workspace(workspace_entry.id)
             except FSWorkspaceNotFoundError:
                 continue
             if workspace_entry.role is None:
-                unavailable_entries.append(workspace_entry)
+                unavailable_workspaces.append(workspace)
             elif workspace.is_deleted():
-                unavailable_entries.append(workspace_entry)
+                unavailable_workspaces.append(workspace)
             else:
-                available_entries.append(workspace_entry)
-        return available_entries, unavailable_entries
+                available_workspaces.append(workspace)
+        return available_workspaces, unavailable_workspaces
 
-    def get_available_workspace_entries(self) -> list[WorkspaceEntry]:
-        available_entries, _ = self.get_all_workspace_entries()
-        return available_entries
+    def get_available_workspaces(self) -> list[WorkspaceFS]:
+        available_workspaces, _ = self.get_all_workspaces()
+        return available_workspaces
 
-    def get_unavailable_workspace_entries(self) -> list[WorkspaceEntry]:
-        _, unavailable_entries = self.get_all_workspace_entries()
-        return unavailable_entries
+    def get_unavailable_workspaces(self) -> list[WorkspaceFS]:
+        _, unavailable_workspaces = self.get_all_workspaces()
+        return unavailable_workspaces
 
     async def set_user_manifest(self, manifest: LocalUserManifest) -> None:
         if self.storage is None:

@@ -75,9 +75,7 @@ async def _list_workspaces(config: CoreConfig, device: LocalDevice) -> None:
         # Force the archiving status to update
         await core.user_fs.update_archiving_status()
 
-        entries = core.user_fs.get_available_workspace_entries()
-        for entry in entries:
-            workspace = core.user_fs.get_workspace(entry.id)
+        for workspace in core.user_fs.get_available_workspaces():
             await _show_workspace(core, workspace)
 
 
