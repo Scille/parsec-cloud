@@ -150,6 +150,7 @@ async function refreshWorkspacesList(): Promise<void> {
   const result = await parsecListWorkspaces();
   if (result.ok) {
     workspaceList.value = result.value;
+    workspacesInfo.value = [];
     for (const workspace of workspaceList.value) {
       const info = await getWorkspaceInfo(workspace[0]);
       if (info) {
