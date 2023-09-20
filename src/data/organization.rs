@@ -91,9 +91,11 @@ impl OrganizationConfig {
         active_users_limit: ActiveUsersLimit,
         sequester_authority: Option<BytesWrapper>,
         sequester_services: Option<Vec<BytesWrapper>>,
-        minimum_archiving_period: u64,
+        minimum_archiving_period: i64,
     ) -> Self {
         crate::binding_utils::unwrap_bytes!(sequester_authority, sequester_services);
+        let minimum_archiving_period =
+            libparsec::types::Duration::seconds(minimum_archiving_period);
         Self(libparsec::types::OrganizationConfig {
             user_profile_outsider_allowed,
             active_users_limit: active_users_limit.0,
@@ -130,8 +132,8 @@ impl OrganizationConfig {
     }
 
     #[getter]
-    fn minimum_archiving_period(&self) -> u64 {
-        self.0.minimum_archiving_period
+    fn minimum_archiving_period(&self) -> i64 {
+        self.0.minimum_archiving_period.num_seconds()
     }
 
     #[getter]

@@ -32,7 +32,7 @@
                     },
                     {
                         "name": "minimum_archiving_period",
-                        "type": "UnsignedInteger", // In seconds
+                        "type": "DurationInSeconds",
                         "introduced_in": "2.10"
                     }
                 ]
