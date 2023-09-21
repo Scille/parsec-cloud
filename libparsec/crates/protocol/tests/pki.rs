@@ -9,31 +9,6 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 #[parsec_test]
-fn serde_authenticated_pki_enrollment_list_req() {
-    // Generated from Python implementation (Parsec v2.14.0)
-    // Content:
-    //   cmd: "pki_enrollment_list"
-    let bytes = &hex!("81a3636d64b3706b695f656e726f6c6c6d656e745f6c697374")[..];
-    let expected = authenticated_cmds::AnyCmdReq::PkiEnrollmentList(
-        authenticated_cmds::pki_enrollment_list::Req {},
-    );
-
-    let data = authenticated_cmds::AnyCmdReq::load(bytes).unwrap();
-
-    assert_eq!(data, expected);
-
-    // check roundtrip ...
-    let raw2 = if let authenticated_cmds::AnyCmdReq::PkiEnrollmentList(data) = data {
-        data.dump().unwrap()
-    } else {
-        unreachable!()
-    };
-
-    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
-    assert_eq!(data2, expected);
-}
-
-#[parsec_test]
 fn serde_authenticated_pki_enrollment_accep_req() {
     // Generated from Python implementation (Parsec v2.14.0)
     // Content:
@@ -136,68 +111,6 @@ fn serde_authenticated_accept_pki_rep() {
         authenticated_cmds::pki_enrollment_accept::Rep::load(&raw).unwrap(),
         expected
     )
-}
-
-#[parsec_test]
-#[case::ok_one_element(
-    // Generated from Python implementation (Parsec v2.14.0)
-    // Content:
-    //   enrollments: [
-    //     {
-    //       enrollment_id: ext(2, hex!("e1fe88bd0f054261887a6c8039710b40"))
-    //       submit_payload: hex!("3c64756d6d793e")
-    //       submit_payload_signature: hex!("3c7369676e61747572653e")
-    //       submitted_on: ext(1, 1668594983.390001)
-    //       submitter_der_x509_certificate: hex!("3c78353039206365727469663e")
-    //     }
-    //   ]
-    //   status: "ok"
-    &hex!(
-        "82ab656e726f6c6c6d656e74739185be7375626d69747465725f6465725f783530395f6365"
-        "727469666963617465c40d3c78353039206365727469663eac7375626d69747465645f6f6e"
-        "d70141d8dd2f49d8f5c7ad656e726f6c6c6d656e745f6964d802e1fe88bd0f054261887a6c"
-        "8039710b40b87375626d69745f7061796c6f61645f7369676e6174757265c40b3c7369676e"
-        "61747572653eae7375626d69745f7061796c6f6164c4073c64756d6d793ea6737461747573"
-        "a26f6b"
-    ),
-    authenticated_cmds::pki_enrollment_list::Rep::Ok {
-            enrollments: vec![authenticated_cmds::pki_enrollment_list::PkiEnrollmentListItem {
-                enrollment_id: EnrollmentID::from_hex("e1fe88bd0f054261887a6c8039710b40").unwrap(),
-                submit_payload: hex!("3c64756d6d793e").as_ref().into(),
-                submit_payload_signature: hex!("3c7369676e61747572653e").as_ref().into(),
-                submitted_on: DateTime::from_f64_with_us_precision(1668594983.390001f64),
-                submitter_der_x509_certificate: hex!("3c78353039206365727469663e").as_ref().into(),
-            }],
-        }
-)]
-#[case::ok_empty_list(
-    // Generated from Python implementation (Parsec v2.14.0)
-    // Content:
-    //   enrollments: []
-    //   status: "ok"
-    &hex!("82ab656e726f6c6c6d656e747390a6737461747573a26f6b")[..],
-    authenticated_cmds::pki_enrollment_list::Rep::Ok { enrollments: Vec::new() }
-)]
-#[case::not_allowed(
-    // Generated from Python implementation (Parsec v2.14.0)
-    // Content:
-    //   reason: "oof"
-    //   status: "not_allowed"
-    &hex!("82a6726561736f6ea36f6f66a6737461747573ab6e6f745f616c6c6f776564")[..],
-    authenticated_cmds::pki_enrollment_list::Rep::NotAllowed { reason: Some("oof".to_string()) }
-)]
-fn serde_authenticated_list_pki_rep(
-    #[case] bytes: &[u8],
-    #[case] expected: authenticated_cmds::pki_enrollment_list::Rep,
-) {
-    let data = authenticated_cmds::pki_enrollment_list::Rep::load(bytes).unwrap();
-    assert_eq!(data, expected);
-
-    let raw_data = data.dump().unwrap();
-    assert_eq!(
-        authenticated_cmds::pki_enrollment_list::Rep::load(&raw_data).unwrap(),
-        expected
-    );
 }
 
 #[parsec_test]
