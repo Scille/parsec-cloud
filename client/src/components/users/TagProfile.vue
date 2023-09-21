@@ -14,21 +14,21 @@
 <script setup lang="ts">
 import { IonChip, IonLabel } from '@ionic/vue';
 import { defineProps } from 'vue';
-import { Profile } from '@/common/mocks';
+import { UserProfile } from '@/parsec';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 
 defineProps<{
-  profile: Profile
+  profile: UserProfile
 }>();
 
-function translateProfile(profile: Profile): string {
-  if (profile === Profile.Admin) {
+function translateProfile(profile: UserProfile): string {
+  if (profile === UserProfile.Admin) {
     return t('UsersPage.profile.admin');
-  } else if (profile === Profile.Standard) {
+  } else if (profile === UserProfile.Standard) {
     return t('UsersPage.profile.standard');
-  } else if (profile === Profile.Outsider) {
+  } else if (profile === UserProfile.Outsider) {
     return t('UsersPage.profile.outsider');
   }
   return '';

@@ -180,6 +180,7 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
   });
   await modal.present();
   await modal.onWillDismiss();
+  await refreshInvitationsList();
 }
 
 async function rejectUser(invitation: UserInvitation) : Promise<void> {

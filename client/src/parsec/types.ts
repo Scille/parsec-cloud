@@ -43,6 +43,13 @@ import type {
   ParsedBackendAddrInvitationUser,
   ClientInfo as UserInfo,
   ClientInfoError,
+  ClientStartInvitationGreetError,
+  UserGreetInitialInfo,
+  UserGreetInProgress1Info,
+  GreetInProgressError,
+  UserGreetInProgress2Info,
+  UserGreetInProgress3Info,
+  UserGreetInProgress4Info,
 } from '@/plugins/libparsec';
 // Enums have to be imported separately
 import {
@@ -106,6 +113,11 @@ export {
   BackendAddrType,
   UserInfo,
   UserProfile,
+  UserGreetInitialInfo,
+  UserGreetInProgress1Info,
+  UserGreetInProgress2Info,
+  UserGreetInProgress3Info,
+  UserGreetInProgress4Info,
 };
 
 export {
@@ -123,4 +135,6 @@ export {
   ClientCreateWorkspaceError,
   ClientInfoError,
   GetWorkspaceNameError,
+  ClientStartInvitationGreetError,
+  GreetInProgressError,
 };

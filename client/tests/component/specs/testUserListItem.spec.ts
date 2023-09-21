@@ -1,10 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import UserListItem from '@/components/users/UserListItem.vue';
-import { MockUser, Profile } from '@/common/mocks';
+import { MockUser } from '@/common/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
 import { mockI18n, getDefaultProvideConfig } from 'tests/component/support/mocks';
+import { UserProfile } from '@/parsec';
 
 mockI18n();
 
@@ -16,7 +17,7 @@ describe('User List Item', () => {
       email: 'john.smith@gmail.com',
       avatar: 'unused',
       joined: DateTime.now(),
-      profile: Profile.Standard,
+      profile: UserProfile.Standard,
       revoked: false,
     };
 
@@ -31,7 +32,7 @@ describe('User List Item', () => {
           TagProfile: {
             template: '{{ profile }}',
             props: {
-              profile: Profile,
+              profile: UserProfile,
             },
           },
         },
@@ -43,7 +44,7 @@ describe('User List Item', () => {
     // currently using the first two letters for the avatar, (Jo) John Smith
     expect(wrapper.get('.user-name__label').text()).to.equal('JoJohn Smith');
     expect(wrapper.get('.user-email__label').text()).to.equal('john.smith@gmail.com');
-    expect(wrapper.get('.user-profile').text()).to.equal('standard');
+    expect(wrapper.get('.user-profile').text()).to.equal('UserProfileStandard');
     expect(wrapper.get('.user-join-label').text()).to.equal('One minute ago');
     wrapper.trigger('click');
     expect(wrapper.emitted('click')?.length).to.equal(1);
