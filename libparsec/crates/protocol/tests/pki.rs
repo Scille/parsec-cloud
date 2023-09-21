@@ -11,51 +11,6 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 #[parsec_test]
-fn serde_anonymous_pki_enrollment_submit_req() {
-    // Generated from Python implementation (Parsec v2.14.0+dev)
-    // Content:
-    //   cmd: "pki_enrollment_submit"
-    //   enrollment_id: ext(2, hex!("34556b1fcabe496dafb64a69ca932666"))
-    //   force: false
-    //   submit_payload: hex!("64756d6d79")
-    //   submit_payload_signature: hex!("64756d6d79")
-    //   submitter_der_x509_certificate: hex!("64756d6d79")
-    //   submitter_der_x509_certificate_email: "mail@mail.com"
-    let bytes = &hex!(
-        "87a3636d64b5706b695f656e726f6c6c6d656e745f7375626d6974ad656e726f6c6c6d656e"
-        "745f6964d80234556b1fcabe496dafb64a69ca932666a5666f726365c2ae7375626d69745f"
-        "7061796c6f6164c40564756d6d79b87375626d69745f7061796c6f61645f7369676e617475"
-        "7265c40564756d6d79be7375626d69747465725f6465725f783530395f6365727469666963"
-        "617465c40564756d6d79d9247375626d69747465725f6465725f783530395f636572746966"
-        "69636174655f656d61696cad6d61696c406d61696c2e636f6d"
-    )[..];
-    let expected = anonymous_cmds::AnyCmdReq::PkiEnrollmentSubmit(
-        anonymous_cmds::pki_enrollment_submit::Req {
-            enrollment_id: EnrollmentID::from_hex("34556b1fcabe496dafb64a69ca932666").unwrap(),
-            force: false,
-            submit_payload: hex!("64756d6d79").as_ref().into(),
-            submit_payload_signature: hex!("64756d6d79").as_ref().into(),
-            submitter_der_x509_certificate: hex!("64756d6d79").as_ref().into(),
-            submitter_der_x509_certificate_email: Some("mail@mail.com".to_string()),
-        },
-    );
-
-    let data = anonymous_cmds::AnyCmdReq::load(bytes).unwrap();
-
-    assert_eq!(data, expected);
-
-    // roundtrip check ...
-    let raw2 = if let anonymous_cmds::AnyCmdReq::PkiEnrollmentSubmit(data) = data {
-        data.dump().unwrap()
-    } else {
-        unreachable!()
-    };
-
-    let data2 = anonymous_cmds::AnyCmdReq::load(&raw2).unwrap();
-    assert_eq!(data2, expected);
-}
-
-#[parsec_test]
 fn serde_anonymous_pki_enrollment_info_req() {
     // Generated from Python implementation (Parsec v2.14.0+dev)
     // Content:
@@ -83,25 +38,6 @@ fn serde_anonymous_pki_enrollment_info_req() {
 
     let data2 = anonymous_cmds::AnyCmdReq::load(&raw2).unwrap();
     assert_eq!(data2, expected);
-}
-
-#[parsec_test]
-fn serde_anonymous_pki_enrollment_submit_rep() {
-    // Generated from Python implementation (Parsec v2.14.0+dev)
-    // Content:
-    //   status: "ok"
-    //   submitted_on: ext(1, 1668767275.338466)
-    let bytes = &hex!("82a6737461747573a26f6bac7375626d69747465645f6f6ed70141d8ddd78ad5a96d")[..];
-    let expected = anonymous_cmds::pki_enrollment_submit::Rep::Ok {
-        submitted_on: DateTime::from_f64_with_us_precision(1668767275.338466),
-    };
-
-    let data = anonymous_cmds::pki_enrollment_submit::Rep::load(bytes).unwrap();
-    assert_eq!(data, expected);
-
-    let raw_again = data.dump().unwrap();
-    let data_again = anonymous_cmds::pki_enrollment_submit::Rep::load(&raw_again).unwrap();
-    assert_eq!(data_again, expected);
 }
 
 #[parsec_test]

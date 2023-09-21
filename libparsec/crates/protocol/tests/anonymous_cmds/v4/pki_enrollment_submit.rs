@@ -1,35 +1,27 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+#![allow(clippy::duplicate_mod)]
+
+// The compat module allows to re-use tests from previous major API
+#[path = "../v3/pki_enrollment_submit.rs"]
+mod compat;
+
 use super::anonymous_cmds;
 
 // Request
 
-pub fn req() {
-    // TODO #4545: Implement test
-}
+pub use compat::req;
 
 // Responses
 
-pub fn rep_ok() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_ok;
 
-pub fn rep_already_submitted() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_already_submitted;
 
-pub fn rep_id_already_used() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_id_already_used;
 
-pub fn rep_email_already_used() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_email_already_used;
 
-pub fn rep_already_enrolled() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_already_enrolled;
 
-pub fn rep_invalid_payload_data() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_invalid_payload_data;
