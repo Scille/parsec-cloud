@@ -1,55 +1,37 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+#![allow(clippy::duplicate_mod)]
+
+// The compat module allows to re-use tests from previous major API
+#[path = "../v3/realm_update_roles.rs"]
+mod compat;
+
 use super::authenticated_cmds;
 
 // Request
 
-pub fn req() {
-    // TODO #4545: Implement test
-}
+pub use compat::req;
 
 // Responses
 
-pub fn rep_ok() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_ok;
 
-pub fn rep_not_allowed() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_not_allowed;
 
-pub fn rep_invalid_certification() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_invalid_certification;
 
-pub fn rep_invalid_data() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_invalid_data;
 
-pub fn rep_already_granted() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_already_granted;
 
-pub fn rep_incompatible_profile() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_incompatible_profile;
 
-pub fn rep_not_found() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_not_found;
 
-pub fn rep_in_maintenance() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_in_maintenance;
 
-pub fn rep_user_revoked() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_user_revoked;
 
-pub fn rep_require_greater_timestamp() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_require_greater_timestamp;
 
-pub fn rep_bad_timestamp() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_bad_timestamp;
