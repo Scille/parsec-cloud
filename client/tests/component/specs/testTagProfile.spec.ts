@@ -6,7 +6,7 @@ import { mockI18n, getDefaultProvideConfig } from 'tests/component/support/mocks
 mockI18n();
 
 import TagProfile from '@/components/users/TagProfile.vue';
-import { Profile } from '@/common/mocks';
+import { UserProfile } from '@/parsec';
 import { mount } from '@vue/test-utils';
 
 describe('User Avatar', () => {
@@ -14,7 +14,7 @@ describe('User Avatar', () => {
   it('Display avatar for user', () => {
     const wrapper = mount(TagProfile, {
       props: {
-        profile: Profile.Outsider,
+        profile: UserProfile.Outsider,
       },
       global: {
         provide: getDefaultProvideConfig(),

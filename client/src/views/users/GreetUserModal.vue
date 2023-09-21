@@ -62,7 +62,7 @@
           class="step"
         >
           <sas-code-provide
-            :code="'ABCD'"
+            :code="greeter.hostSASCode"
           />
         </div>
 
@@ -72,7 +72,7 @@
           class="step"
         >
           <sas-code-choice
-            :choices="['ABCD', 'EFGH', 'IJKL', 'MNOP']"
+            :choices="greeter.SASCodeChoices"
             @select="selectGuestSas"
           />
         </div>
@@ -93,9 +93,9 @@
           class="step user-info-page"
         >
           <user-information
-            :default-email="invitation.claimerEmail"
-            :default-name="'Name Entered By The Guest'"
-            :default-device="'Device-given-by-the-guest'"
+            :default-email="''"
+            :default-name="''"
+            :default-device="''"
             :email-enabled="false"
             ref="guestInfoPage"
           />
@@ -107,13 +107,13 @@
               :placeholder="t('UsersPage.greet.profilePlaceholder')"
               v-model="profile"
             >
-              <ion-select-option :value="Profile.Admin">
+              <ion-select-option :value="UserProfile.Admin">
                 {{ $t('UsersPage.profile.admin') }}
               </ion-select-option>
-              <ion-select-option :value="Profile.Standard">
+              <ion-select-option :value="UserProfile.Standard">
                 {{ $t('UsersPage.profile.standard') }}
               </ion-select-option>
-              <ion-select-option :value="Profile.Outsider">
+              <ion-select-option :value="UserProfile.Outsider">
                 {{ $t('UsersPage.profile.outsider') }}
               </ion-select-option>
             </ion-select>
@@ -123,21 +123,21 @@
         <!-- Final Step -->
         <div
           v-show="pageStep === GreetUserStep.Summary"
-          v-if="userInfo"
+          v-if="guestInfoPage"
           class="step final-step"
         >
           <div class="final-step__name">
             <user-avatar-name
-              :user-name="userInfo.name"
-              :user-avatar="userInfo.name"
+              :user-name="guestInfoPage?.fullName"
+              :user-avatar="guestInfoPage?.fullName"
             />
           </div>
           <div>
-            {{ userInfo.email }}
+            {{ guestInfoPage?.email }}
           </div>
           <div class="user-profile">
             <tag-profile
-              :profile="userInfo.profile"
+              :profile="profile ? profile : UserProfile.Outsider"
             />
           </div>
         </div>
@@ -199,7 +199,6 @@ import {
 
 import {
   close,
-  caretForward,
 } from 'ionicons/icons';
 import { ref, Ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -211,8 +210,7 @@ import UserInformation from '@/components/users/UserInformation.vue';
 import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { MsModalResult } from '@/components/core/ms-types';
-import { Profile } from '@/common/mocks';
-import { UserInvitation } from '@/parsec';
+import { UserInvitation, UserGreet, UserProfile } from '@/parsec';
 
 enum GreetUserStep {
   WaitForGuest = 1,
@@ -223,28 +221,18 @@ enum GreetUserStep {
   Summary = 6,
 }
 
-// Used to simulate host interaction
-const OTHER_USER_WAITING_TIME = 500;
-
 const { t } = useI18n();
 
 const pageStep = ref(GreetUserStep.WaitForGuest);
 
-defineProps<{
+const props = defineProps<{
   invitation: UserInvitation
 }>();
 
-const profile: Ref<Profile | null> = ref(null);
-const guestInfoPage = ref(null);
+const profile: Ref<UserProfile | null> = ref(null);
+const guestInfoPage: Ref<typeof UserInformation | null> = ref(null);
 const waitingForGuest = ref(true);
-const userInfo :Ref<UserInfo | null> = ref(null);
-
-interface UserInfo {
-  name: string,
-  email: string,
-  device: string,
-  profile: Profile,
-}
+const greeter = ref(new UserGreet());
 
 function getTitleAndSubtitle(): [string, string] {
   if (pageStep.value === GreetUserStep.WaitForGuest) {
@@ -258,7 +246,12 @@ function getTitleAndSubtitle(): [string, string] {
   } else if (pageStep.value === GreetUserStep.CheckGuestInfo) {
     return [t('UsersPage.greet.titles.contactDetails'), t('UsersPage.greet.subtitles.checkUserInfo')];
   } else if (pageStep.value === GreetUserStep.Summary) {
-    return [t('UsersPage.greet.titles.summary'), t('UsersPage.greet.subtitles.summary', {name: userInfo.value ? userInfo.value.name : ''})];
+    return [
+      t('UsersPage.greet.titles.summary'),
+      t('UsersPage.greet.subtitles.summary',
+        {name: guestInfoPage.value ? guestInfoPage.value.fullName : ''},
+      ),
+    ];
   }
   return ['', ''];
 }
@@ -274,8 +267,45 @@ function getNextButtonText(): string {
   return '';
 }
 
-function selectGuestSas(_code: string | null): void {
-  nextStep();
+async function selectGuestSas(code: string | null): Promise<void> {
+  if (!code) {
+    console.log('No code entered');
+    await abort();
+    return;
+  }
+  if (code === greeter.value.correctSASCode) {
+    const result = await greeter.value.signifyTrust();
+    if (result.ok) {
+      await nextStep();
+    } else {
+      console.log('Signify trust failed', result.error);
+      await abort();
+    }
+  } else {
+    await abort();
+    console.log('Incorrect code entered');
+  }
+}
+
+async function abort(): Promise<void> {
+  await greeter.value.abort();
+  pageStep.value = GreetUserStep.WaitForGuest;
+  await startProcess();
+}
+
+async function startProcess(): Promise<void> {
+  waitingForGuest.value = true;
+  const result = await greeter.value.startGreet(props.invitation.token);
+  if (result.ok) {
+    waitingForGuest.value = false;
+  } else {
+    console.log('Start greet failed', result.error);
+    return;
+  }
+  const codeResult = await greeter.value.initialWaitGuest();
+  if (!codeResult.ok) {
+    console.log('Failed to get host sas code', codeResult.error);
+  }
 }
 
 function getStepperIndex(): number {
@@ -316,52 +346,53 @@ function cancelModal(): Promise<boolean> {
   return modalController.dismiss(null, MsModalResult.Cancel);
 }
 
-function nextStep(): void {
+async function nextStep(): Promise<void> {
   if (pageStep.value === GreetUserStep.Summary) {
     modalController.dismiss({}, MsModalResult.Confirm);
     return;
   } else if (pageStep.value === GreetUserStep.CheckGuestInfo && guestInfoPage.value && profile.value) {
-    userInfo.value = {
-      name: (guestInfoPage.value as typeof UserInformation).fullName,
-      email: (guestInfoPage.value as typeof UserInformation).email,
-      device: (guestInfoPage.value as typeof UserInformation).deviceName,
-      profile: profile.value,
-    };
+    const result = await greeter.value.createUser(
+      {label: guestInfoPage.value.fullName, email: guestInfoPage.value.email},
+      guestInfoPage.value.deviceName,
+      profile.value,
+    );
+    if (!result.ok) {
+      console.log('Failed to create user', result.error);
+      return;
+    }
   }
 
   pageStep.value = pageStep.value + 1;
 
   if (pageStep.value === GreetUserStep.ProvideHostSasCode) {
     waitingForGuest.value = true;
-    window.setTimeout(guestHasEnteredCode, OTHER_USER_WAITING_TIME);
+    const result = await greeter.value.waitGuestTrust();
+    waitingForGuest.value = false;
+    if (result.ok) {
+      await nextStep();
+    } else {
+      console.log('Wait guest trust failed', result.error);
+    }
   } else if (pageStep.value === GreetUserStep.WaitForGuestInfo) {
     waitingForGuest.value = true;
-    window.setTimeout(guestHasProvidedInfo, OTHER_USER_WAITING_TIME);
+    const result = await greeter.value.getClaimRequests();
+    waitingForGuest.value = false;
+    if (guestInfoPage.value) {
+      guestInfoPage.value.fullName = greeter.value.requestedHumanHandle?.label;
+      guestInfoPage.value.email = greeter.value.requestedHumanHandle?.email;
+      guestInfoPage.value.deviceName = greeter.value.requestedDeviceLabel;
+    }
+    if (result.ok) {
+      await nextStep();
+    } else {
+      console.log('Get claim request has failed', result.error);
+    }
   }
 }
 
-function guestHasProvidedInfo(): void {
-  waitingForGuest.value = false;
-  nextStep();
-}
-
-function guestHasEnteredCode(): void {
-  waitingForGuest.value = false;
-  nextStep();
-}
-
-onMounted(() => {
-  waitForGuest();
+onMounted(async () => {
+  await startProcess();
 });
-
-function guestArrived(): void {
-  waitingForGuest.value = false;
-}
-
-function waitForGuest(): void {
-  // Simulate guest starting the process
-  window.setTimeout(guestArrived, OTHER_USER_WAITING_TIME);
-}
 </script>
 
 <style scoped lang="scss">

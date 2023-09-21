@@ -2,7 +2,7 @@
 
 describe('Greet user into an organization', () => {
 
-  const WAIT_TIME = 1000;
+  const WAIT_TIME = 500;
 
   beforeEach(() => {
     cy.visitApp();
@@ -51,15 +51,13 @@ describe('Greet user into an organization', () => {
     cy.get('.greet-organization-modal').find('.ms-wizard-stepper').as('stepper');
     checkStepper(0);
     cy.get('@title').contains('Share your code');
-    cy.get('.greet-organization-modal').find('.caption-code').contains('ABCD');
-    cy.get('@footer').find('ion-spinner').should('exist');
-    cy.get('@footer').find('ion-spinner').should('be.visible');
+    cy.get('.greet-organization-modal').find('.caption-code').contains('2DEF');
     cy.get('@nextButton').should('not.be.visible');
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('Get guest code');
     cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').should('have.length', 4);
     checkStepper(1);
-    cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').eq(0).click();
+    cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').eq(1).click();
     cy.get('@title').contains('Contact details');
     cy.get('@footer').find('ion-spinner').should('be.visible');
     cy.get('@nextButton').should('not.be.visible');
@@ -76,7 +74,7 @@ describe('Greet user into an organization', () => {
     cy.get('ion-alert').find('.select-interface-option').should('have.length', 3);
     cy.get('ion-alert').find('.select-interface-option').eq(1).click();
     cy.get('ion-alert').find('.alert-button-group').find('button').eq(1).click();
-    cy.get('@select').find('input').should('have.value', 'standard');
+    cy.get('@select').find('input').should('have.value', 'UserProfileStandard');
     cy.get('@nextButton').should('not.have.attr', 'disabled');
     cy.get('@nextButton').click();
     cy.get('@title').contains('User has been added successfully!');

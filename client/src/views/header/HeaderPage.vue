@@ -142,20 +142,20 @@ const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarM
 const userInfo: Ref<UserInfo | null> = ref(null);
 
 onMounted(async () => {
+  if (currentRoute.params.workspaceId) {
+    const result = await getWorkspaceName(currentRoute.params.workspaceId as WorkspaceID);
+    if (result.ok) {
+      workspaceName.value = result.value;
+    } else {
+      console.log('Could not get workspace name', result.error);
+    }
+  }
+
   const result = await getUserInfo();
   if (result.ok) {
     userInfo.value = result.value;
   } else {
     console.log('Could not get user info', result.error);
-  }
-});
-
-onMounted(async () => {
-  const result = await getWorkspaceName(currentRoute.params.workspaceId as WorkspaceID);
-  if (result.ok) {
-    workspaceName.value = result.value;
-  } else {
-    console.log('Could not get workspace name', result.error);
   }
 });
 

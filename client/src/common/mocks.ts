@@ -3,7 +3,7 @@
 // cSpell:disable
 
 import { DateTime } from 'luxon';
-import { AvailableDevice, Handle, DeviceFileType } from '@/parsec';
+import { AvailableDevice, Handle, DeviceFileType, UserProfile } from '@/parsec';
 import { StorageManager } from '@/services/storageManager';
 import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
 
@@ -231,24 +231,18 @@ export async function getWorkspaceSharingInfo(workspaceId: WorkspaceID): Promise
   return sharingInfo;
 }
 
-export enum Profile {
-  Admin = 'administrator',
-  Standard = 'standard',
-  Outsider = 'outsider',
-}
-
 export interface MockUser {
   id: string,
   name: string,
   email: string,
   avatar: string,
   joined: DateTime,
-  profile: Profile,
+  profile: UserProfile,
   revoked: boolean
 }
 
-export function getCurrentUserProfile(_handle: Handle): Profile {
-  return Profile.Admin;
+export function getCurrentUserProfile(_handle: Handle): UserProfile {
+  return UserProfile.Admin;
 }
 
 const MOCK_USERS: MockUser[] = [
@@ -258,7 +252,7 @@ const MOCK_USERS: MockUser[] = [
     email: 'cernd@gmail.com',
     avatar: 'ce',
     joined: DateTime.fromISO('2023-05-10T08:00:00'),
-    profile: Profile.Standard,
+    profile: UserProfile.Standard,
     revoked: false,
   },
   {
@@ -267,7 +261,7 @@ const MOCK_USERS: MockUser[] = [
     email: 'val@gmail.com',
     avatar: 'vc',
     joined: DateTime.fromISO('2022-01-10T08:00:00'),
-    profile: Profile.Standard,
+    profile: UserProfile.Standard,
     revoked: false,
   },
   {
@@ -276,7 +270,7 @@ const MOCK_USERS: MockUser[] = [
     email: 'drozrt@gmail.com',
     avatar: 'dd',
     joined: DateTime.fromISO('2023-04-10T08:00:00'),
-    profile: Profile.Admin,
+    profile: UserProfile.Admin,
     revoked: false,
   },
   {
@@ -285,7 +279,7 @@ const MOCK_USERS: MockUser[] = [
     email: 'coloia@gmail.com',
     avatar: 'ch',
     joined: DateTime.fromISO('2023-04-10T08:00:00'),
-    profile: Profile.Outsider,
+    profile: UserProfile.Outsider,
     revoked: false,
   },
 ];
@@ -297,7 +291,7 @@ const MOCK_REVOKED_USERS: MockUser[] = [
     email: 'steve@gmail.com',
     avatar: 'st',
     joined: DateTime.fromISO('2023-05-10T08:00:00'),
-    profile: Profile.Standard,
+    profile: UserProfile.Standard,
     revoked: true,
   },
   {
@@ -306,7 +300,7 @@ const MOCK_REVOKED_USERS: MockUser[] = [
     email: 'alex@gmail.com',
     avatar: 'al',
     joined: DateTime.fromISO('2022-01-10T08:00:00'),
-    profile: Profile.Standard,
+    profile: UserProfile.Standard,
     revoked: true,
   },
   {
@@ -315,7 +309,7 @@ const MOCK_REVOKED_USERS: MockUser[] = [
     email: 'notch@gmail.com',
     avatar: 'no',
     joined: DateTime.fromISO('2023-04-10T08:00:00'),
-    profile: Profile.Admin,
+    profile: UserProfile.Admin,
     revoked: true,
   },
   {
@@ -324,7 +318,7 @@ const MOCK_REVOKED_USERS: MockUser[] = [
     email: 'herobrine@gmail.com',
     avatar: 'he',
     joined: DateTime.fromISO('2023-04-10T08:00:00'),
-    profile: Profile.Outsider,
+    profile: UserProfile.Outsider,
     revoked: true,
   },
 ];
