@@ -12,58 +12,6 @@ use wasm_bindgen::JsCast;
 #[allow(unused_imports)]
 use wasm_bindgen_futures::*;
 
-// UserProfile
-
-#[allow(dead_code)]
-fn enum_user_profile_js_to_rs(raw_value: &str) -> Result<libparsec::UserProfile, JsValue> {
-    match raw_value {
-        "UserProfileAdmin" => Ok(libparsec::UserProfile::Admin),
-        "UserProfileOutsider" => Ok(libparsec::UserProfile::Outsider),
-        "UserProfileStandard" => Ok(libparsec::UserProfile::Standard),
-        _ => {
-            let range_error = RangeError::new("Invalid value for enum UserProfile");
-            range_error.set_cause(&JsValue::from(raw_value));
-            Err(JsValue::from(range_error))
-        }
-    }
-}
-
-#[allow(dead_code)]
-fn enum_user_profile_rs_to_js(value: libparsec::UserProfile) -> &'static str {
-    match value {
-        libparsec::UserProfile::Admin => "UserProfileAdmin",
-        libparsec::UserProfile::Outsider => "UserProfileOutsider",
-        libparsec::UserProfile::Standard => "UserProfileStandard",
-    }
-}
-
-// RealmRole
-
-#[allow(dead_code)]
-fn enum_realm_role_js_to_rs(raw_value: &str) -> Result<libparsec::RealmRole, JsValue> {
-    match raw_value {
-        "RealmRoleContributor" => Ok(libparsec::RealmRole::Contributor),
-        "RealmRoleManager" => Ok(libparsec::RealmRole::Manager),
-        "RealmRoleOwner" => Ok(libparsec::RealmRole::Owner),
-        "RealmRoleReader" => Ok(libparsec::RealmRole::Reader),
-        _ => {
-            let range_error = RangeError::new("Invalid value for enum RealmRole");
-            range_error.set_cause(&JsValue::from(raw_value));
-            Err(JsValue::from(range_error))
-        }
-    }
-}
-
-#[allow(dead_code)]
-fn enum_realm_role_rs_to_js(value: libparsec::RealmRole) -> &'static str {
-    match value {
-        libparsec::RealmRole::Contributor => "RealmRoleContributor",
-        libparsec::RealmRole::Manager => "RealmRoleManager",
-        libparsec::RealmRole::Owner => "RealmRoleOwner",
-        libparsec::RealmRole::Reader => "RealmRoleReader",
-    }
-}
-
 // DeviceFileType
 
 #[allow(dead_code)]
@@ -86,33 +34,6 @@ fn enum_device_file_type_rs_to_js(value: libparsec::DeviceFileType) -> &'static 
         libparsec::DeviceFileType::Password => "DeviceFileTypePassword",
         libparsec::DeviceFileType::Recovery => "DeviceFileTypeRecovery",
         libparsec::DeviceFileType::Smartcard => "DeviceFileTypeSmartcard",
-    }
-}
-
-// InvitationStatus
-
-#[allow(dead_code)]
-fn enum_invitation_status_js_to_rs(
-    raw_value: &str,
-) -> Result<libparsec::InvitationStatus, JsValue> {
-    match raw_value {
-        "InvitationStatusDeleted" => Ok(libparsec::InvitationStatus::Deleted),
-        "InvitationStatusIdle" => Ok(libparsec::InvitationStatus::Idle),
-        "InvitationStatusReady" => Ok(libparsec::InvitationStatus::Ready),
-        _ => {
-            let range_error = RangeError::new("Invalid value for enum InvitationStatus");
-            range_error.set_cause(&JsValue::from(raw_value));
-            Err(JsValue::from(range_error))
-        }
-    }
-}
-
-#[allow(dead_code)]
-fn enum_invitation_status_rs_to_js(value: libparsec::InvitationStatus) -> &'static str {
-    match value {
-        libparsec::InvitationStatus::Deleted => "InvitationStatusDeleted",
-        libparsec::InvitationStatus::Idle => "InvitationStatusIdle",
-        libparsec::InvitationStatus::Ready => "InvitationStatusReady",
     }
 }
 
@@ -153,6 +74,33 @@ fn enum_invitation_email_sent_status_rs_to_js(
     }
 }
 
+// InvitationStatus
+
+#[allow(dead_code)]
+fn enum_invitation_status_js_to_rs(
+    raw_value: &str,
+) -> Result<libparsec::InvitationStatus, JsValue> {
+    match raw_value {
+        "InvitationStatusDeleted" => Ok(libparsec::InvitationStatus::Deleted),
+        "InvitationStatusIdle" => Ok(libparsec::InvitationStatus::Idle),
+        "InvitationStatusReady" => Ok(libparsec::InvitationStatus::Ready),
+        _ => {
+            let range_error = RangeError::new("Invalid value for enum InvitationStatus");
+            range_error.set_cause(&JsValue::from(raw_value));
+            Err(JsValue::from(range_error))
+        }
+    }
+}
+
+#[allow(dead_code)]
+fn enum_invitation_status_rs_to_js(value: libparsec::InvitationStatus) -> &'static str {
+    match value {
+        libparsec::InvitationStatus::Deleted => "InvitationStatusDeleted",
+        libparsec::InvitationStatus::Idle => "InvitationStatusIdle",
+        libparsec::InvitationStatus::Ready => "InvitationStatusReady",
+    }
+}
+
 // Platform
 
 #[allow(dead_code)]
@@ -182,56 +130,186 @@ fn enum_platform_rs_to_js(value: libparsec::Platform) -> &'static str {
     }
 }
 
-// HumanHandle
+// RealmRole
 
 #[allow(dead_code)]
-fn struct_human_handle_js_to_rs(obj: JsValue) -> Result<libparsec::HumanHandle, JsValue> {
-    let email = {
-        let js_val = Reflect::get(&obj, &"email".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-    };
-    let label = {
-        let js_val = Reflect::get(&obj, &"label".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-    };
-
-    |email: String, label: String| -> Result<_, String> {
-        libparsec::HumanHandle::new(&email, &label).map_err(|e| e.to_string())
-    }(email, label)
-    .map_err(|e| e.into())
+fn enum_realm_role_js_to_rs(raw_value: &str) -> Result<libparsec::RealmRole, JsValue> {
+    match raw_value {
+        "RealmRoleContributor" => Ok(libparsec::RealmRole::Contributor),
+        "RealmRoleManager" => Ok(libparsec::RealmRole::Manager),
+        "RealmRoleOwner" => Ok(libparsec::RealmRole::Owner),
+        "RealmRoleReader" => Ok(libparsec::RealmRole::Reader),
+        _ => {
+            let range_error = RangeError::new("Invalid value for enum RealmRole");
+            range_error.set_cause(&JsValue::from(raw_value));
+            Err(JsValue::from(range_error))
+        }
+    }
 }
 
 #[allow(dead_code)]
-fn struct_human_handle_rs_to_js(rs_obj: libparsec::HumanHandle) -> Result<JsValue, JsValue> {
+fn enum_realm_role_rs_to_js(value: libparsec::RealmRole) -> &'static str {
+    match value {
+        libparsec::RealmRole::Contributor => "RealmRoleContributor",
+        libparsec::RealmRole::Manager => "RealmRoleManager",
+        libparsec::RealmRole::Owner => "RealmRoleOwner",
+        libparsec::RealmRole::Reader => "RealmRoleReader",
+    }
+}
+
+// UserProfile
+
+#[allow(dead_code)]
+fn enum_user_profile_js_to_rs(raw_value: &str) -> Result<libparsec::UserProfile, JsValue> {
+    match raw_value {
+        "UserProfileAdmin" => Ok(libparsec::UserProfile::Admin),
+        "UserProfileOutsider" => Ok(libparsec::UserProfile::Outsider),
+        "UserProfileStandard" => Ok(libparsec::UserProfile::Standard),
+        _ => {
+            let range_error = RangeError::new("Invalid value for enum UserProfile");
+            range_error.set_cause(&JsValue::from(raw_value));
+            Err(JsValue::from(range_error))
+        }
+    }
+}
+
+#[allow(dead_code)]
+fn enum_user_profile_rs_to_js(value: libparsec::UserProfile) -> &'static str {
+    match value {
+        libparsec::UserProfile::Admin => "UserProfileAdmin",
+        libparsec::UserProfile::Outsider => "UserProfileOutsider",
+        libparsec::UserProfile::Standard => "UserProfileStandard",
+    }
+}
+
+// AvailableDevice
+
+#[allow(dead_code)]
+fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::AvailableDevice, JsValue> {
+    let key_file_path = {
+        let js_val = Reflect::get(&obj, &"keyFilePath".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string =
+                    |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid Path"))?
+    };
+    let organization_id = {
+        let js_val = Reflect::get(&obj, &"organizationId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+            .parse()
+            .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
+    };
+    let device_id = {
+        let js_val = Reflect::get(&obj, &"deviceId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+            .parse()
+            .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+    };
+    let human_handle = {
+        let js_val = Reflect::get(&obj, &"humanHandle".into())?;
+        if js_val.is_null() {
+            None
+        } else {
+            Some(struct_human_handle_js_to_rs(js_val)?)
+        }
+    };
+    let device_label = {
+        let js_val = Reflect::get(&obj, &"deviceLabel".into())?;
+        if js_val.is_null() {
+            None
+        } else {
+            Some(
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+                    .parse()
+                    .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?,
+            )
+        }
+    };
+    let slug = {
+        let js_val = Reflect::get(&obj, &"slug".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+    };
+    let ty = {
+        let js_val = Reflect::get(&obj, &"ty".into())?;
+        {
+            let raw_string = js_val.as_string().ok_or_else(|| {
+                let type_error = TypeError::new("value is not a string");
+                type_error.set_cause(&js_val);
+                JsValue::from(type_error)
+            })?;
+            enum_device_file_type_js_to_rs(raw_string.as_str())
+        }?
+    };
+    Ok(libparsec::AvailableDevice {
+        key_file_path,
+        organization_id,
+        device_id,
+        human_handle,
+        device_label,
+        slug,
+        ty,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_available_device_rs_to_js(
+    rs_obj: libparsec::AvailableDevice,
+) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_email = {
-        let custom_getter = |obj| {
-            fn access(obj: &libparsec::HumanHandle) -> &str {
-                obj.email()
-            }
-            access(obj)
+    let js_key_file_path = JsValue::from_str({
+        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+            path.into_os_string()
+                .into_string()
+                .map_err(|_| "Path contains non-utf8 characters")
         };
-        custom_getter(&rs_obj).into()
+        match custom_to_rs_string(rs_obj.key_file_path) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"keyFilePath".into(), &js_key_file_path)?;
+    let js_organization_id = JsValue::from_str(rs_obj.organization_id.as_ref());
+    Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
+    let js_device_id = JsValue::from_str(rs_obj.device_id.as_ref());
+    Reflect::set(&js_obj, &"deviceId".into(), &js_device_id)?;
+    let js_human_handle = match rs_obj.human_handle {
+        Some(val) => struct_human_handle_rs_to_js(val)?,
+        None => JsValue::NULL,
     };
-    Reflect::set(&js_obj, &"email".into(), &js_email)?;
-    let js_label = {
-        let custom_getter = |obj| {
-            fn access(obj: &libparsec::HumanHandle) -> &str {
-                obj.label()
-            }
-            access(obj)
-        };
-        custom_getter(&rs_obj).into()
+    Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
+    let js_device_label = match rs_obj.device_label {
+        Some(val) => JsValue::from_str(val.as_ref()),
+        None => JsValue::NULL,
     };
-    Reflect::set(&js_obj, &"label".into(), &js_label)?;
+    Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
+    let js_slug = rs_obj.slug.into();
+    Reflect::set(&js_obj, &"slug".into(), &js_slug)?;
+    let js_ty = JsValue::from_str(enum_device_file_type_rs_to_js(rs_obj.ty));
+    Reflect::set(&js_obj, &"ty".into(), &js_ty)?;
     Ok(js_obj)
 }
 
@@ -452,143 +530,12 @@ fn struct_client_info_rs_to_js(rs_obj: libparsec::ClientInfo) -> Result<JsValue,
     Ok(js_obj)
 }
 
-// AvailableDevice
+// DeviceClaimFinalizeInfo
 
 #[allow(dead_code)]
-fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::AvailableDevice, JsValue> {
-    let key_file_path = {
-        let js_val = Reflect::get(&obj, &"keyFilePath".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))
-            .and_then(|x| {
-                let custom_from_rs_string =
-                    |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid Path"))?
-    };
-    let organization_id = {
-        let js_val = Reflect::get(&obj, &"organizationId".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
-            .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
-    };
-    let device_id = {
-        let js_val = Reflect::get(&obj, &"deviceId".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
-            .map_err(|_| TypeError::new("Not a valid DeviceID"))?
-    };
-    let human_handle = {
-        let js_val = Reflect::get(&obj, &"humanHandle".into())?;
-        if js_val.is_null() {
-            None
-        } else {
-            Some(struct_human_handle_js_to_rs(js_val)?)
-        }
-    };
-    let device_label = {
-        let js_val = Reflect::get(&obj, &"deviceLabel".into())?;
-        if js_val.is_null() {
-            None
-        } else {
-            Some(
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
-                    .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?,
-            )
-        }
-    };
-    let slug = {
-        let js_val = Reflect::get(&obj, &"slug".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-    };
-    let ty = {
-        let js_val = Reflect::get(&obj, &"ty".into())?;
-        {
-            let raw_string = js_val.as_string().ok_or_else(|| {
-                let type_error = TypeError::new("value is not a string");
-                type_error.set_cause(&js_val);
-                JsValue::from(type_error)
-            })?;
-            enum_device_file_type_js_to_rs(raw_string.as_str())
-        }?
-    };
-    Ok(libparsec::AvailableDevice {
-        key_file_path,
-        organization_id,
-        device_id,
-        human_handle,
-        device_label,
-        slug,
-        ty,
-    })
-}
-
-#[allow(dead_code)]
-fn struct_available_device_rs_to_js(
-    rs_obj: libparsec::AvailableDevice,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_key_file_path = JsValue::from_str({
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.key_file_path) {
-            Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-        }
-        .as_ref()
-    });
-    Reflect::set(&js_obj, &"keyFilePath".into(), &js_key_file_path)?;
-    let js_organization_id = JsValue::from_str(rs_obj.organization_id.as_ref());
-    Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
-    let js_device_id = JsValue::from_str(rs_obj.device_id.as_ref());
-    Reflect::set(&js_obj, &"deviceId".into(), &js_device_id)?;
-    let js_human_handle = match rs_obj.human_handle {
-        Some(val) => struct_human_handle_rs_to_js(val)?,
-        None => JsValue::NULL,
-    };
-    Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
-    let js_device_label = match rs_obj.device_label {
-        Some(val) => JsValue::from_str(val.as_ref()),
-        None => JsValue::NULL,
-    };
-    Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
-    let js_slug = rs_obj.slug.into();
-    Reflect::set(&js_obj, &"slug".into(), &js_slug)?;
-    let js_ty = JsValue::from_str(enum_device_file_type_rs_to_js(rs_obj.ty));
-    Reflect::set(&js_obj, &"ty".into(), &js_ty)?;
-    Ok(js_obj)
-}
-
-// UserClaimInProgress1Info
-
-#[allow(dead_code)]
-fn struct_user_claim_in_progress1_info_js_to_rs(
+fn struct_device_claim_finalize_info_js_to_rs(
     obj: JsValue,
-) -> Result<libparsec::UserClaimInProgress1Info, JsValue> {
+) -> Result<libparsec::DeviceClaimFinalizeInfo, JsValue> {
     let handle = {
         let js_val = Reflect::get(&obj, &"handle".into())?;
         {
@@ -602,66 +549,16 @@ fn struct_user_claim_in_progress1_info_js_to_rs(
             v as u32
         }
     };
-    let greeter_sas = {
-        let js_val = Reflect::get(&obj, &"greeterSas".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
-            .map_err(|_| TypeError::new("Not a valid SASCode"))?
-    };
-    let greeter_sas_choices = {
-        let js_val = Reflect::get(&obj, &"greeterSasChoices".into())?;
-        {
-            let js_val = js_val
-                .dyn_into::<Array>()
-                .map_err(|_| TypeError::new("Not an array"))?;
-            let mut converted = Vec::with_capacity(js_val.length() as usize);
-            for x in js_val.iter() {
-                let x_converted = x
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
-                    .map_err(|_| TypeError::new("Not a valid SASCode"))?;
-                converted.push(x_converted);
-            }
-            converted
-        }
-    };
-    Ok(libparsec::UserClaimInProgress1Info {
-        handle,
-        greeter_sas,
-        greeter_sas_choices,
-    })
+    Ok(libparsec::DeviceClaimFinalizeInfo { handle })
 }
 
 #[allow(dead_code)]
-fn struct_user_claim_in_progress1_info_rs_to_js(
-    rs_obj: libparsec::UserClaimInProgress1Info,
+fn struct_device_claim_finalize_info_rs_to_js(
+    rs_obj: libparsec::DeviceClaimFinalizeInfo,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
     Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-    let js_greeter_sas = JsValue::from_str(rs_obj.greeter_sas.as_ref());
-    Reflect::set(&js_obj, &"greeterSas".into(), &js_greeter_sas)?;
-    let js_greeter_sas_choices = {
-        // Array::new_with_length allocates with `undefined` value, that's why we `set` value
-        let js_array = Array::new_with_length(rs_obj.greeter_sas_choices.len() as u32);
-        for (i, elem) in rs_obj.greeter_sas_choices.into_iter().enumerate() {
-            let js_elem = JsValue::from_str(elem.as_ref());
-            js_array.set(i as u32, js_elem);
-        }
-        js_array.into()
-    };
-    Reflect::set(
-        &js_obj,
-        &"greeterSasChoices".into(),
-        &js_greeter_sas_choices,
-    )?;
     Ok(js_obj)
 }
 
@@ -747,53 +644,6 @@ fn struct_device_claim_in_progress1_info_rs_to_js(
     Ok(js_obj)
 }
 
-// UserClaimInProgress2Info
-
-#[allow(dead_code)]
-fn struct_user_claim_in_progress2_info_js_to_rs(
-    obj: JsValue,
-) -> Result<libparsec::UserClaimInProgress2Info, JsValue> {
-    let handle = {
-        let js_val = Reflect::get(&obj, &"handle".into())?;
-        {
-            let v = js_val
-                .dyn_into::<Number>()
-                .map_err(|_| TypeError::new("Not a number"))?
-                .value_of();
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                return Err(JsValue::from(TypeError::new("Not an u32 number")));
-            }
-            v as u32
-        }
-    };
-    let claimer_sas = {
-        let js_val = Reflect::get(&obj, &"claimerSas".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
-            .map_err(|_| TypeError::new("Not a valid SASCode"))?
-    };
-    Ok(libparsec::UserClaimInProgress2Info {
-        handle,
-        claimer_sas,
-    })
-}
-
-#[allow(dead_code)]
-fn struct_user_claim_in_progress2_info_rs_to_js(
-    rs_obj: libparsec::UserClaimInProgress2Info,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_handle = JsValue::from(rs_obj.handle);
-    Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-    let js_claimer_sas = JsValue::from_str(rs_obj.claimer_sas.as_ref());
-    Reflect::set(&js_obj, &"claimerSas".into(), &js_claimer_sas)?;
-    Ok(js_obj)
-}
-
 // DeviceClaimInProgress2Info
 
 #[allow(dead_code)]
@@ -841,38 +691,6 @@ fn struct_device_claim_in_progress2_info_rs_to_js(
     Ok(js_obj)
 }
 
-// UserClaimInProgress3Info
-
-#[allow(dead_code)]
-fn struct_user_claim_in_progress3_info_js_to_rs(
-    obj: JsValue,
-) -> Result<libparsec::UserClaimInProgress3Info, JsValue> {
-    let handle = {
-        let js_val = Reflect::get(&obj, &"handle".into())?;
-        {
-            let v = js_val
-                .dyn_into::<Number>()
-                .map_err(|_| TypeError::new("Not a number"))?
-                .value_of();
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                return Err(JsValue::from(TypeError::new("Not an u32 number")));
-            }
-            v as u32
-        }
-    };
-    Ok(libparsec::UserClaimInProgress3Info { handle })
-}
-
-#[allow(dead_code)]
-fn struct_user_claim_in_progress3_info_rs_to_js(
-    rs_obj: libparsec::UserClaimInProgress3Info,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_handle = JsValue::from(rs_obj.handle);
-    Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-    Ok(js_obj)
-}
-
 // DeviceClaimInProgress3Info
 
 #[allow(dead_code)]
@@ -902,6 +720,312 @@ fn struct_device_claim_in_progress3_info_rs_to_js(
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
     Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
+    Ok(js_obj)
+}
+
+// DeviceGreetInProgress1Info
+
+#[allow(dead_code)]
+fn struct_device_greet_in_progress1_info_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::DeviceGreetInProgress1Info, JsValue> {
+    let handle = {
+        let js_val = Reflect::get(&obj, &"handle".into())?;
+        {
+            let v = js_val
+                .dyn_into::<Number>()
+                .map_err(|_| TypeError::new("Not a number"))?
+                .value_of();
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                return Err(JsValue::from(TypeError::new("Not an u32 number")));
+            }
+            v as u32
+        }
+    };
+    let greeter_sas = {
+        let js_val = Reflect::get(&obj, &"greeterSas".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+            .parse()
+            .map_err(|_| TypeError::new("Not a valid SASCode"))?
+    };
+    Ok(libparsec::DeviceGreetInProgress1Info {
+        handle,
+        greeter_sas,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_device_greet_in_progress1_info_rs_to_js(
+    rs_obj: libparsec::DeviceGreetInProgress1Info,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_handle = JsValue::from(rs_obj.handle);
+    Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
+    let js_greeter_sas = JsValue::from_str(rs_obj.greeter_sas.as_ref());
+    Reflect::set(&js_obj, &"greeterSas".into(), &js_greeter_sas)?;
+    Ok(js_obj)
+}
+
+// DeviceGreetInProgress2Info
+
+#[allow(dead_code)]
+fn struct_device_greet_in_progress2_info_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::DeviceGreetInProgress2Info, JsValue> {
+    let handle = {
+        let js_val = Reflect::get(&obj, &"handle".into())?;
+        {
+            let v = js_val
+                .dyn_into::<Number>()
+                .map_err(|_| TypeError::new("Not a number"))?
+                .value_of();
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                return Err(JsValue::from(TypeError::new("Not an u32 number")));
+            }
+            v as u32
+        }
+    };
+    let claimer_sas = {
+        let js_val = Reflect::get(&obj, &"claimerSas".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+            .parse()
+            .map_err(|_| TypeError::new("Not a valid SASCode"))?
+    };
+    let claimer_sas_choices = {
+        let js_val = Reflect::get(&obj, &"claimerSasChoices".into())?;
+        {
+            let js_val = js_val
+                .dyn_into::<Array>()
+                .map_err(|_| TypeError::new("Not an array"))?;
+            let mut converted = Vec::with_capacity(js_val.length() as usize);
+            for x in js_val.iter() {
+                let x_converted = x
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+                    .parse()
+                    .map_err(|_| TypeError::new("Not a valid SASCode"))?;
+                converted.push(x_converted);
+            }
+            converted
+        }
+    };
+    Ok(libparsec::DeviceGreetInProgress2Info {
+        handle,
+        claimer_sas,
+        claimer_sas_choices,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_device_greet_in_progress2_info_rs_to_js(
+    rs_obj: libparsec::DeviceGreetInProgress2Info,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_handle = JsValue::from(rs_obj.handle);
+    Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
+    let js_claimer_sas = JsValue::from_str(rs_obj.claimer_sas.as_ref());
+    Reflect::set(&js_obj, &"claimerSas".into(), &js_claimer_sas)?;
+    let js_claimer_sas_choices = {
+        // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+        let js_array = Array::new_with_length(rs_obj.claimer_sas_choices.len() as u32);
+        for (i, elem) in rs_obj.claimer_sas_choices.into_iter().enumerate() {
+            let js_elem = JsValue::from_str(elem.as_ref());
+            js_array.set(i as u32, js_elem);
+        }
+        js_array.into()
+    };
+    Reflect::set(
+        &js_obj,
+        &"claimerSasChoices".into(),
+        &js_claimer_sas_choices,
+    )?;
+    Ok(js_obj)
+}
+
+// DeviceGreetInProgress3Info
+
+#[allow(dead_code)]
+fn struct_device_greet_in_progress3_info_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::DeviceGreetInProgress3Info, JsValue> {
+    let handle = {
+        let js_val = Reflect::get(&obj, &"handle".into())?;
+        {
+            let v = js_val
+                .dyn_into::<Number>()
+                .map_err(|_| TypeError::new("Not a number"))?
+                .value_of();
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                return Err(JsValue::from(TypeError::new("Not an u32 number")));
+            }
+            v as u32
+        }
+    };
+    Ok(libparsec::DeviceGreetInProgress3Info { handle })
+}
+
+#[allow(dead_code)]
+fn struct_device_greet_in_progress3_info_rs_to_js(
+    rs_obj: libparsec::DeviceGreetInProgress3Info,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_handle = JsValue::from(rs_obj.handle);
+    Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
+    Ok(js_obj)
+}
+
+// DeviceGreetInProgress4Info
+
+#[allow(dead_code)]
+fn struct_device_greet_in_progress4_info_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::DeviceGreetInProgress4Info, JsValue> {
+    let handle = {
+        let js_val = Reflect::get(&obj, &"handle".into())?;
+        {
+            let v = js_val
+                .dyn_into::<Number>()
+                .map_err(|_| TypeError::new("Not a number"))?
+                .value_of();
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                return Err(JsValue::from(TypeError::new("Not an u32 number")));
+            }
+            v as u32
+        }
+    };
+    let requested_device_label = {
+        let js_val = Reflect::get(&obj, &"requestedDeviceLabel".into())?;
+        if js_val.is_null() {
+            None
+        } else {
+            Some(
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+                    .parse()
+                    .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?,
+            )
+        }
+    };
+    Ok(libparsec::DeviceGreetInProgress4Info {
+        handle,
+        requested_device_label,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_device_greet_in_progress4_info_rs_to_js(
+    rs_obj: libparsec::DeviceGreetInProgress4Info,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_handle = JsValue::from(rs_obj.handle);
+    Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
+    let js_requested_device_label = match rs_obj.requested_device_label {
+        Some(val) => JsValue::from_str(val.as_ref()),
+        None => JsValue::NULL,
+    };
+    Reflect::set(
+        &js_obj,
+        &"requestedDeviceLabel".into(),
+        &js_requested_device_label,
+    )?;
+    Ok(js_obj)
+}
+
+// DeviceGreetInitialInfo
+
+#[allow(dead_code)]
+fn struct_device_greet_initial_info_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::DeviceGreetInitialInfo, JsValue> {
+    let handle = {
+        let js_val = Reflect::get(&obj, &"handle".into())?;
+        {
+            let v = js_val
+                .dyn_into::<Number>()
+                .map_err(|_| TypeError::new("Not a number"))?
+                .value_of();
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                return Err(JsValue::from(TypeError::new("Not an u32 number")));
+            }
+            v as u32
+        }
+    };
+    Ok(libparsec::DeviceGreetInitialInfo { handle })
+}
+
+#[allow(dead_code)]
+fn struct_device_greet_initial_info_rs_to_js(
+    rs_obj: libparsec::DeviceGreetInitialInfo,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_handle = JsValue::from(rs_obj.handle);
+    Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
+    Ok(js_obj)
+}
+
+// HumanHandle
+
+#[allow(dead_code)]
+fn struct_human_handle_js_to_rs(obj: JsValue) -> Result<libparsec::HumanHandle, JsValue> {
+    let email = {
+        let js_val = Reflect::get(&obj, &"email".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+    };
+    let label = {
+        let js_val = Reflect::get(&obj, &"label".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+    };
+
+    |email: String, label: String| -> Result<_, String> {
+        libparsec::HumanHandle::new(&email, &label).map_err(|e| e.to_string())
+    }(email, label)
+    .map_err(|e| e.into())
+}
+
+#[allow(dead_code)]
+fn struct_human_handle_rs_to_js(rs_obj: libparsec::HumanHandle) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_email = {
+        let custom_getter = |obj| {
+            fn access(obj: &libparsec::HumanHandle) -> &str {
+                obj.email()
+            }
+            access(obj)
+        };
+        custom_getter(&rs_obj).into()
+    };
+    Reflect::set(&js_obj, &"email".into(), &js_email)?;
+    let js_label = {
+        let custom_getter = |obj| {
+            fn access(obj: &libparsec::HumanHandle) -> &str {
+                obj.label()
+            }
+            access(obj)
+        };
+        custom_getter(&rs_obj).into()
+    };
+    Reflect::set(&js_obj, &"label".into(), &js_label)?;
     Ok(js_obj)
 }
 
@@ -937,12 +1061,12 @@ fn struct_user_claim_finalize_info_rs_to_js(
     Ok(js_obj)
 }
 
-// DeviceClaimFinalizeInfo
+// UserClaimInProgress1Info
 
 #[allow(dead_code)]
-fn struct_device_claim_finalize_info_js_to_rs(
+fn struct_user_claim_in_progress1_info_js_to_rs(
     obj: JsValue,
-) -> Result<libparsec::DeviceClaimFinalizeInfo, JsValue> {
+) -> Result<libparsec::UserClaimInProgress1Info, JsValue> {
     let handle = {
         let js_val = Reflect::get(&obj, &"handle".into())?;
         {
@@ -956,25 +1080,75 @@ fn struct_device_claim_finalize_info_js_to_rs(
             v as u32
         }
     };
-    Ok(libparsec::DeviceClaimFinalizeInfo { handle })
+    let greeter_sas = {
+        let js_val = Reflect::get(&obj, &"greeterSas".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+            .parse()
+            .map_err(|_| TypeError::new("Not a valid SASCode"))?
+    };
+    let greeter_sas_choices = {
+        let js_val = Reflect::get(&obj, &"greeterSasChoices".into())?;
+        {
+            let js_val = js_val
+                .dyn_into::<Array>()
+                .map_err(|_| TypeError::new("Not an array"))?;
+            let mut converted = Vec::with_capacity(js_val.length() as usize);
+            for x in js_val.iter() {
+                let x_converted = x
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+                    .parse()
+                    .map_err(|_| TypeError::new("Not a valid SASCode"))?;
+                converted.push(x_converted);
+            }
+            converted
+        }
+    };
+    Ok(libparsec::UserClaimInProgress1Info {
+        handle,
+        greeter_sas,
+        greeter_sas_choices,
+    })
 }
 
 #[allow(dead_code)]
-fn struct_device_claim_finalize_info_rs_to_js(
-    rs_obj: libparsec::DeviceClaimFinalizeInfo,
+fn struct_user_claim_in_progress1_info_rs_to_js(
+    rs_obj: libparsec::UserClaimInProgress1Info,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
     Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
+    let js_greeter_sas = JsValue::from_str(rs_obj.greeter_sas.as_ref());
+    Reflect::set(&js_obj, &"greeterSas".into(), &js_greeter_sas)?;
+    let js_greeter_sas_choices = {
+        // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+        let js_array = Array::new_with_length(rs_obj.greeter_sas_choices.len() as u32);
+        for (i, elem) in rs_obj.greeter_sas_choices.into_iter().enumerate() {
+            let js_elem = JsValue::from_str(elem.as_ref());
+            js_array.set(i as u32, js_elem);
+        }
+        js_array.into()
+    };
+    Reflect::set(
+        &js_obj,
+        &"greeterSasChoices".into(),
+        &js_greeter_sas_choices,
+    )?;
     Ok(js_obj)
 }
 
-// UserGreetInitialInfo
+// UserClaimInProgress2Info
 
 #[allow(dead_code)]
-fn struct_user_greet_initial_info_js_to_rs(
+fn struct_user_claim_in_progress2_info_js_to_rs(
     obj: JsValue,
-) -> Result<libparsec::UserGreetInitialInfo, JsValue> {
+) -> Result<libparsec::UserClaimInProgress2Info, JsValue> {
     let handle = {
         let js_val = Reflect::get(&obj, &"handle".into())?;
         {
@@ -988,25 +1162,40 @@ fn struct_user_greet_initial_info_js_to_rs(
             v as u32
         }
     };
-    Ok(libparsec::UserGreetInitialInfo { handle })
+    let claimer_sas = {
+        let js_val = Reflect::get(&obj, &"claimerSas".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+            .parse()
+            .map_err(|_| TypeError::new("Not a valid SASCode"))?
+    };
+    Ok(libparsec::UserClaimInProgress2Info {
+        handle,
+        claimer_sas,
+    })
 }
 
 #[allow(dead_code)]
-fn struct_user_greet_initial_info_rs_to_js(
-    rs_obj: libparsec::UserGreetInitialInfo,
+fn struct_user_claim_in_progress2_info_rs_to_js(
+    rs_obj: libparsec::UserClaimInProgress2Info,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
     Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
+    let js_claimer_sas = JsValue::from_str(rs_obj.claimer_sas.as_ref());
+    Reflect::set(&js_obj, &"claimerSas".into(), &js_claimer_sas)?;
     Ok(js_obj)
 }
 
-// DeviceGreetInitialInfo
+// UserClaimInProgress3Info
 
 #[allow(dead_code)]
-fn struct_device_greet_initial_info_js_to_rs(
+fn struct_user_claim_in_progress3_info_js_to_rs(
     obj: JsValue,
-) -> Result<libparsec::DeviceGreetInitialInfo, JsValue> {
+) -> Result<libparsec::UserClaimInProgress3Info, JsValue> {
     let handle = {
         let js_val = Reflect::get(&obj, &"handle".into())?;
         {
@@ -1020,12 +1209,12 @@ fn struct_device_greet_initial_info_js_to_rs(
             v as u32
         }
     };
-    Ok(libparsec::DeviceGreetInitialInfo { handle })
+    Ok(libparsec::UserClaimInProgress3Info { handle })
 }
 
 #[allow(dead_code)]
-fn struct_device_greet_initial_info_rs_to_js(
-    rs_obj: libparsec::DeviceGreetInitialInfo,
+fn struct_user_claim_in_progress3_info_rs_to_js(
+    rs_obj: libparsec::UserClaimInProgress3Info,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
@@ -1071,53 +1260,6 @@ fn struct_user_greet_in_progress1_info_js_to_rs(
 #[allow(dead_code)]
 fn struct_user_greet_in_progress1_info_rs_to_js(
     rs_obj: libparsec::UserGreetInProgress1Info,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_handle = JsValue::from(rs_obj.handle);
-    Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-    let js_greeter_sas = JsValue::from_str(rs_obj.greeter_sas.as_ref());
-    Reflect::set(&js_obj, &"greeterSas".into(), &js_greeter_sas)?;
-    Ok(js_obj)
-}
-
-// DeviceGreetInProgress1Info
-
-#[allow(dead_code)]
-fn struct_device_greet_in_progress1_info_js_to_rs(
-    obj: JsValue,
-) -> Result<libparsec::DeviceGreetInProgress1Info, JsValue> {
-    let handle = {
-        let js_val = Reflect::get(&obj, &"handle".into())?;
-        {
-            let v = js_val
-                .dyn_into::<Number>()
-                .map_err(|_| TypeError::new("Not a number"))?
-                .value_of();
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                return Err(JsValue::from(TypeError::new("Not an u32 number")));
-            }
-            v as u32
-        }
-    };
-    let greeter_sas = {
-        let js_val = Reflect::get(&obj, &"greeterSas".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
-            .map_err(|_| TypeError::new("Not a valid SASCode"))?
-    };
-    Ok(libparsec::DeviceGreetInProgress1Info {
-        handle,
-        greeter_sas,
-    })
-}
-
-#[allow(dead_code)]
-fn struct_device_greet_in_progress1_info_rs_to_js(
-    rs_obj: libparsec::DeviceGreetInProgress1Info,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
@@ -1209,88 +1351,6 @@ fn struct_user_greet_in_progress2_info_rs_to_js(
     Ok(js_obj)
 }
 
-// DeviceGreetInProgress2Info
-
-#[allow(dead_code)]
-fn struct_device_greet_in_progress2_info_js_to_rs(
-    obj: JsValue,
-) -> Result<libparsec::DeviceGreetInProgress2Info, JsValue> {
-    let handle = {
-        let js_val = Reflect::get(&obj, &"handle".into())?;
-        {
-            let v = js_val
-                .dyn_into::<Number>()
-                .map_err(|_| TypeError::new("Not a number"))?
-                .value_of();
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                return Err(JsValue::from(TypeError::new("Not an u32 number")));
-            }
-            v as u32
-        }
-    };
-    let claimer_sas = {
-        let js_val = Reflect::get(&obj, &"claimerSas".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
-            .map_err(|_| TypeError::new("Not a valid SASCode"))?
-    };
-    let claimer_sas_choices = {
-        let js_val = Reflect::get(&obj, &"claimerSasChoices".into())?;
-        {
-            let js_val = js_val
-                .dyn_into::<Array>()
-                .map_err(|_| TypeError::new("Not an array"))?;
-            let mut converted = Vec::with_capacity(js_val.length() as usize);
-            for x in js_val.iter() {
-                let x_converted = x
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
-                    .map_err(|_| TypeError::new("Not a valid SASCode"))?;
-                converted.push(x_converted);
-            }
-            converted
-        }
-    };
-    Ok(libparsec::DeviceGreetInProgress2Info {
-        handle,
-        claimer_sas,
-        claimer_sas_choices,
-    })
-}
-
-#[allow(dead_code)]
-fn struct_device_greet_in_progress2_info_rs_to_js(
-    rs_obj: libparsec::DeviceGreetInProgress2Info,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_handle = JsValue::from(rs_obj.handle);
-    Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-    let js_claimer_sas = JsValue::from_str(rs_obj.claimer_sas.as_ref());
-    Reflect::set(&js_obj, &"claimerSas".into(), &js_claimer_sas)?;
-    let js_claimer_sas_choices = {
-        // Array::new_with_length allocates with `undefined` value, that's why we `set` value
-        let js_array = Array::new_with_length(rs_obj.claimer_sas_choices.len() as u32);
-        for (i, elem) in rs_obj.claimer_sas_choices.into_iter().enumerate() {
-            let js_elem = JsValue::from_str(elem.as_ref());
-            js_array.set(i as u32, js_elem);
-        }
-        js_array.into()
-    };
-    Reflect::set(
-        &js_obj,
-        &"claimerSasChoices".into(),
-        &js_claimer_sas_choices,
-    )?;
-    Ok(js_obj)
-}
-
 // UserGreetInProgress3Info
 
 #[allow(dead_code)]
@@ -1316,38 +1376,6 @@ fn struct_user_greet_in_progress3_info_js_to_rs(
 #[allow(dead_code)]
 fn struct_user_greet_in_progress3_info_rs_to_js(
     rs_obj: libparsec::UserGreetInProgress3Info,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_handle = JsValue::from(rs_obj.handle);
-    Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-    Ok(js_obj)
-}
-
-// DeviceGreetInProgress3Info
-
-#[allow(dead_code)]
-fn struct_device_greet_in_progress3_info_js_to_rs(
-    obj: JsValue,
-) -> Result<libparsec::DeviceGreetInProgress3Info, JsValue> {
-    let handle = {
-        let js_val = Reflect::get(&obj, &"handle".into())?;
-        {
-            let v = js_val
-                .dyn_into::<Number>()
-                .map_err(|_| TypeError::new("Not a number"))?
-                .value_of();
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                return Err(JsValue::from(TypeError::new("Not an u32 number")));
-            }
-            v as u32
-        }
-    };
-    Ok(libparsec::DeviceGreetInProgress3Info { handle })
-}
-
-#[allow(dead_code)]
-fn struct_device_greet_in_progress3_info_rs_to_js(
-    rs_obj: libparsec::DeviceGreetInProgress3Info,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
@@ -1433,12 +1461,12 @@ fn struct_user_greet_in_progress4_info_rs_to_js(
     Ok(js_obj)
 }
 
-// DeviceGreetInProgress4Info
+// UserGreetInitialInfo
 
 #[allow(dead_code)]
-fn struct_device_greet_in_progress4_info_js_to_rs(
+fn struct_user_greet_initial_info_js_to_rs(
     obj: JsValue,
-) -> Result<libparsec::DeviceGreetInProgress4Info, JsValue> {
+) -> Result<libparsec::UserGreetInitialInfo, JsValue> {
     let handle = {
         let js_val = Reflect::get(&obj, &"handle".into())?;
         {
@@ -1452,44 +1480,1005 @@ fn struct_device_greet_in_progress4_info_js_to_rs(
             v as u32
         }
     };
-    let requested_device_label = {
-        let js_val = Reflect::get(&obj, &"requestedDeviceLabel".into())?;
-        if js_val.is_null() {
-            None
-        } else {
-            Some(
+    Ok(libparsec::UserGreetInitialInfo { handle })
+}
+
+#[allow(dead_code)]
+fn struct_user_greet_initial_info_rs_to_js(
+    rs_obj: libparsec::UserGreetInitialInfo,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_handle = JsValue::from(rs_obj.handle);
+    Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
+    Ok(js_obj)
+}
+
+// BootstrapOrganizationError
+
+#[allow(dead_code)]
+fn variant_bootstrap_organization_error_rs_to_js(
+    rs_obj: libparsec::BootstrapOrganizationError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::BootstrapOrganizationError::AlreadyUsedToken { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AlreadyUsedToken".into())?;
+        }
+        libparsec::BootstrapOrganizationError::BadTimestamp {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"BadTimestamp".into())?;
+            let js_server_timestamp = JsValue::from_str({
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339())
+                    };
+                match custom_to_rs_string(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
+            let js_client_timestamp = JsValue::from_str({
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339())
+                    };
+                match custom_to_rs_string(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
+            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientEarlyOffset".into(),
+                &js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientLateOffset".into(),
+                &js_ballpark_client_late_offset,
+            )?;
+        }
+        libparsec::BootstrapOrganizationError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+        libparsec::BootstrapOrganizationError::InvalidToken { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"InvalidToken".into())?;
+        }
+        libparsec::BootstrapOrganizationError::Offline { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
+        }
+        libparsec::BootstrapOrganizationError::SaveDeviceError { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SaveDeviceError".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// CancelError
+
+#[allow(dead_code)]
+fn variant_cancel_error_rs_to_js(rs_obj: libparsec::CancelError) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::CancelError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+        libparsec::CancelError::NotBound { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"NotBound".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClaimInProgressError
+
+#[allow(dead_code)]
+fn variant_claim_in_progress_error_rs_to_js(
+    rs_obj: libparsec::ClaimInProgressError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClaimInProgressError::ActiveUsersLimitReached { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"ActiveUsersLimitReached".into())?;
+        }
+        libparsec::ClaimInProgressError::AlreadyUsed { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AlreadyUsed".into())?;
+        }
+        libparsec::ClaimInProgressError::Cancelled { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Cancelled".into())?;
+        }
+        libparsec::ClaimInProgressError::CorruptedConfirmation { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"CorruptedConfirmation".into())?;
+        }
+        libparsec::ClaimInProgressError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+        libparsec::ClaimInProgressError::NotFound { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"NotFound".into())?;
+        }
+        libparsec::ClaimInProgressError::Offline { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
+        }
+        libparsec::ClaimInProgressError::PeerReset { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"PeerReset".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClaimerGreeterAbortOperationError
+
+#[allow(dead_code)]
+fn variant_claimer_greeter_abort_operation_error_rs_to_js(
+    rs_obj: libparsec::ClaimerGreeterAbortOperationError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClaimerGreeterAbortOperationError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClaimerRetrieveInfoError
+
+#[allow(dead_code)]
+fn variant_claimer_retrieve_info_error_rs_to_js(
+    rs_obj: libparsec::ClaimerRetrieveInfoError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClaimerRetrieveInfoError::AlreadyUsed { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AlreadyUsed".into())?;
+        }
+        libparsec::ClaimerRetrieveInfoError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+        libparsec::ClaimerRetrieveInfoError::NotFound { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"NotFound".into())?;
+        }
+        libparsec::ClaimerRetrieveInfoError::Offline { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientEvent
+
+#[allow(dead_code)]
+fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    match tag {
+        tag if tag == JsValue::from_str("Ping") => {
+            let ping = {
+                let js_val = Reflect::get(&obj, &"ping".into())?;
                 js_val
                     .dyn_into::<JsString>()
                     .ok()
                     .and_then(|s| s.as_string())
                     .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
-                    .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?,
-            )
+            };
+            Ok(libparsec::ClientEvent::Ping { ping })
         }
-    };
-    Ok(libparsec::DeviceGreetInProgress4Info {
-        handle,
-        requested_device_label,
-    })
+        _ => Err(JsValue::from(TypeError::new("Object is not a ClientEvent"))),
+    }
 }
 
 #[allow(dead_code)]
-fn struct_device_greet_in_progress4_info_rs_to_js(
-    rs_obj: libparsec::DeviceGreetInProgress4Info,
+fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::ClientEvent::Ping { ping, .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Ping".into())?;
+            let js_ping = ping.into();
+            Reflect::set(&js_obj, &"ping".into(), &js_ping)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientInfoError
+
+#[allow(dead_code)]
+fn variant_client_info_error_rs_to_js(
+    rs_obj: libparsec::ClientInfoError,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_handle = JsValue::from(rs_obj.handle);
-    Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-    let js_requested_device_label = match rs_obj.requested_device_label {
-        Some(val) => JsValue::from_str(val.as_ref()),
-        None => JsValue::NULL,
-    };
-    Reflect::set(
-        &js_obj,
-        &"requestedDeviceLabel".into(),
-        &js_requested_device_label,
-    )?;
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientInfoError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientListWorkspacesError
+
+#[allow(dead_code)]
+fn variant_client_list_workspaces_error_rs_to_js(
+    rs_obj: libparsec::ClientListWorkspacesError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientListWorkspacesError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientStartError
+
+#[allow(dead_code)]
+fn variant_client_start_error_rs_to_js(
+    rs_obj: libparsec::ClientStartError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientStartError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+        libparsec::ClientStartError::LoadDeviceDecryptionFailed { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"LoadDeviceDecryptionFailed".into())?;
+        }
+        libparsec::ClientStartError::LoadDeviceInvalidData { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"LoadDeviceInvalidData".into())?;
+        }
+        libparsec::ClientStartError::LoadDeviceInvalidPath { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"LoadDeviceInvalidPath".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientStartInvitationGreetError
+
+#[allow(dead_code)]
+fn variant_client_start_invitation_greet_error_rs_to_js(
+    rs_obj: libparsec::ClientStartInvitationGreetError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientStartInvitationGreetError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientStopError
+
+#[allow(dead_code)]
+fn variant_client_stop_error_rs_to_js(
+    rs_obj: libparsec::ClientStopError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientStopError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientWorkspaceCreateError
+
+#[allow(dead_code)]
+fn variant_client_workspace_create_error_rs_to_js(
+    rs_obj: libparsec::ClientWorkspaceCreateError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientWorkspaceCreateError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientWorkspaceRenameError
+
+#[allow(dead_code)]
+fn variant_client_workspace_rename_error_rs_to_js(
+    rs_obj: libparsec::ClientWorkspaceRenameError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientWorkspaceRenameError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+        libparsec::ClientWorkspaceRenameError::UnknownWorkspace { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"UnknownWorkspace".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientWorkspaceShareError
+
+#[allow(dead_code)]
+fn variant_client_workspace_share_error_rs_to_js(
+    rs_obj: libparsec::ClientWorkspaceShareError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientWorkspaceShareError::BadTimestamp {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"BadTimestamp".into())?;
+            let js_server_timestamp = JsValue::from_str({
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339())
+                    };
+                match custom_to_rs_string(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
+            let js_client_timestamp = JsValue::from_str({
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339())
+                    };
+                match custom_to_rs_string(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
+            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientEarlyOffset".into(),
+                &js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientLateOffset".into(),
+                &js_ballpark_client_late_offset,
+            )?;
+        }
+        libparsec::ClientWorkspaceShareError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+        libparsec::ClientWorkspaceShareError::NotAllowed { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"NotAllowed".into())?;
+        }
+        libparsec::ClientWorkspaceShareError::Offline { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
+        }
+        libparsec::ClientWorkspaceShareError::OutsiderCannotBeManagerOrOwner { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"OutsiderCannotBeManagerOrOwner".into(),
+            )?;
+        }
+        libparsec::ClientWorkspaceShareError::RevokedRecipient { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"RevokedRecipient".into())?;
+        }
+        libparsec::ClientWorkspaceShareError::ShareToSelf { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"ShareToSelf".into())?;
+        }
+        libparsec::ClientWorkspaceShareError::UnknownRecipient { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"UnknownRecipient".into())?;
+        }
+        libparsec::ClientWorkspaceShareError::UnknownRecipientOrWorkspace { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"UnknownRecipientOrWorkspace".into(),
+            )?;
+        }
+        libparsec::ClientWorkspaceShareError::UnknownWorkspace { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"UnknownWorkspace".into())?;
+        }
+        libparsec::ClientWorkspaceShareError::WorkspaceInMaintenance { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"WorkspaceInMaintenance".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// DeleteInvitationError
+
+#[allow(dead_code)]
+fn variant_delete_invitation_error_rs_to_js(
+    rs_obj: libparsec::DeleteInvitationError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::DeleteInvitationError::AlreadyDeleted { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AlreadyDeleted".into())?;
+        }
+        libparsec::DeleteInvitationError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+        libparsec::DeleteInvitationError::NotFound { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"NotFound".into())?;
+        }
+        libparsec::DeleteInvitationError::Offline { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// DeviceAccessStrategy
+
+#[allow(dead_code)]
+fn variant_device_access_strategy_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::DeviceAccessStrategy, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    match tag {
+        tag if tag == JsValue::from_str("Password") => {
+            let password = {
+                let js_val = Reflect::get(&obj, &"password".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string =
+                            |s: String| -> Result<_, String> { Ok(s.into()) };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid Password"))?
+            };
+            let key_file = {
+                let js_val = Reflect::get(&obj, &"keyFile".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
+                            Ok(std::path::PathBuf::from(s))
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid Path"))?
+            };
+            Ok(libparsec::DeviceAccessStrategy::Password { password, key_file })
+        }
+        tag if tag == JsValue::from_str("Smartcard") => {
+            let key_file = {
+                let js_val = Reflect::get(&obj, &"keyFile".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
+                            Ok(std::path::PathBuf::from(s))
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid Path"))?
+            };
+            Ok(libparsec::DeviceAccessStrategy::Smartcard { key_file })
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a DeviceAccessStrategy",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_device_access_strategy_rs_to_js(
+    rs_obj: libparsec::DeviceAccessStrategy,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::DeviceAccessStrategy::Password {
+            password, key_file, ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Password".into())?;
+            let js_password = JsValue::from_str(password.as_ref());
+            Reflect::set(&js_obj, &"password".into(), &js_password)?;
+            let js_key_file = JsValue::from_str({
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(key_file) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
+        }
+        libparsec::DeviceAccessStrategy::Smartcard { key_file, .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Smartcard".into())?;
+            let js_key_file = JsValue::from_str({
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(key_file) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// DeviceSaveStrategy
+
+#[allow(dead_code)]
+fn variant_device_save_strategy_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::DeviceSaveStrategy, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    match tag {
+        tag if tag == JsValue::from_str("Password") => {
+            let password = {
+                let js_val = Reflect::get(&obj, &"password".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string =
+                            |s: String| -> Result<_, String> { Ok(s.into()) };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid Password"))?
+            };
+            Ok(libparsec::DeviceSaveStrategy::Password { password })
+        }
+        tag if tag == JsValue::from_str("Smartcard") => {
+            Ok(libparsec::DeviceSaveStrategy::Smartcard {})
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a DeviceSaveStrategy",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_device_save_strategy_rs_to_js(
+    rs_obj: libparsec::DeviceSaveStrategy,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::DeviceSaveStrategy::Password { password, .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Password".into())?;
+            let js_password = JsValue::from_str(password.as_ref());
+            Reflect::set(&js_obj, &"password".into(), &js_password)?;
+        }
+        libparsec::DeviceSaveStrategy::Smartcard { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Smartcard".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// GreetInProgressError
+
+#[allow(dead_code)]
+fn variant_greet_in_progress_error_rs_to_js(
+    rs_obj: libparsec::GreetInProgressError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::GreetInProgressError::ActiveUsersLimitReached { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"ActiveUsersLimitReached".into())?;
+        }
+        libparsec::GreetInProgressError::AlreadyUsed { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AlreadyUsed".into())?;
+        }
+        libparsec::GreetInProgressError::BadTimestamp {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"BadTimestamp".into())?;
+            let js_server_timestamp = JsValue::from_str({
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339())
+                    };
+                match custom_to_rs_string(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
+            let js_client_timestamp = JsValue::from_str({
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339())
+                    };
+                match custom_to_rs_string(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
+            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientEarlyOffset".into(),
+                &js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientLateOffset".into(),
+                &js_ballpark_client_late_offset,
+            )?;
+        }
+        libparsec::GreetInProgressError::Cancelled { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Cancelled".into())?;
+        }
+        libparsec::GreetInProgressError::CorruptedInviteUserData { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"CorruptedInviteUserData".into())?;
+        }
+        libparsec::GreetInProgressError::DeviceAlreadyExists { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"DeviceAlreadyExists".into())?;
+        }
+        libparsec::GreetInProgressError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+        libparsec::GreetInProgressError::NonceMismatch { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"NonceMismatch".into())?;
+        }
+        libparsec::GreetInProgressError::NotFound { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"NotFound".into())?;
+        }
+        libparsec::GreetInProgressError::Offline { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
+        }
+        libparsec::GreetInProgressError::PeerReset { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"PeerReset".into())?;
+        }
+        libparsec::GreetInProgressError::UserAlreadyExists { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"UserAlreadyExists".into())?;
+        }
+        libparsec::GreetInProgressError::UserCreateNotAllowed { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"UserCreateNotAllowed".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// InviteListItem
+
+#[allow(dead_code)]
+fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteListItem, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    match tag {
+        tag if tag == JsValue::from_str("Device") => {
+            let token = {
+                let js_val = Reflect::get(&obj, &"token".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string =
+                            |s: String| -> Result<libparsec::InvitationToken, _> {
+                                libparsec::InvitationToken::from_hex(s.as_str())
+                                    .map_err(|e| e.to_string())
+                            };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
+            };
+            let created_on = {
+                let js_val = Reflect::get(&obj, &"createdOn".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid DateTime"))?
+            };
+            let status = {
+                let js_val = Reflect::get(&obj, &"status".into())?;
+                {
+                    let raw_string = js_val.as_string().ok_or_else(|| {
+                        let type_error = TypeError::new("value is not a string");
+                        type_error.set_cause(&js_val);
+                        JsValue::from(type_error)
+                    })?;
+                    enum_invitation_status_js_to_rs(raw_string.as_str())
+                }?
+            };
+            Ok(libparsec::InviteListItem::Device {
+                token,
+                created_on,
+                status,
+            })
+        }
+        tag if tag == JsValue::from_str("User") => {
+            let token = {
+                let js_val = Reflect::get(&obj, &"token".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string =
+                            |s: String| -> Result<libparsec::InvitationToken, _> {
+                                libparsec::InvitationToken::from_hex(s.as_str())
+                                    .map_err(|e| e.to_string())
+                            };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
+            };
+            let created_on = {
+                let js_val = Reflect::get(&obj, &"createdOn".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid DateTime"))?
+            };
+            let claimer_email = {
+                let js_val = Reflect::get(&obj, &"claimerEmail".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let status = {
+                let js_val = Reflect::get(&obj, &"status".into())?;
+                {
+                    let raw_string = js_val.as_string().ok_or_else(|| {
+                        let type_error = TypeError::new("value is not a string");
+                        type_error.set_cause(&js_val);
+                        JsValue::from(type_error)
+                    })?;
+                    enum_invitation_status_js_to_rs(raw_string.as_str())
+                }?
+            };
+            Ok(libparsec::InviteListItem::User {
+                token,
+                created_on,
+                claimer_email,
+                status,
+            })
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a InviteListItem",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_invite_list_item_rs_to_js(
+    rs_obj: libparsec::InviteListItem,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::InviteListItem::Device {
+            token,
+            created_on,
+            status,
+            ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Device".into())?;
+            let js_token = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(token) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"token".into(), &js_token)?;
+            let js_created_on = JsValue::from_str({
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339())
+                    };
+                match custom_to_rs_string(created_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
+            let js_status = JsValue::from_str(enum_invitation_status_rs_to_js(status));
+            Reflect::set(&js_obj, &"status".into(), &js_status)?;
+        }
+        libparsec::InviteListItem::User {
+            token,
+            created_on,
+            claimer_email,
+            status,
+            ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"User".into())?;
+            let js_token = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(token) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"token".into(), &js_token)?;
+            let js_created_on = JsValue::from_str({
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339())
+                    };
+                match custom_to_rs_string(created_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
+            let js_claimer_email = claimer_email.into();
+            Reflect::set(&js_obj, &"claimerEmail".into(), &js_claimer_email)?;
+            let js_status = JsValue::from_str(enum_invitation_status_rs_to_js(status));
+            Reflect::set(&js_obj, &"status".into(), &js_status)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ListInvitationsError
+
+#[allow(dead_code)]
+fn variant_list_invitations_error_rs_to_js(
+    rs_obj: libparsec::ListInvitationsError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ListInvitationsError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+        libparsec::ListInvitationsError::Offline { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// NewDeviceInvitationError
+
+#[allow(dead_code)]
+fn variant_new_device_invitation_error_rs_to_js(
+    rs_obj: libparsec::NewDeviceInvitationError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::NewDeviceInvitationError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+        libparsec::NewDeviceInvitationError::Offline { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
+        }
+        libparsec::NewDeviceInvitationError::SendEmailToUserWithoutEmail { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SendEmailToUserWithoutEmail".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// NewUserInvitationError
+
+#[allow(dead_code)]
+fn variant_new_user_invitation_error_rs_to_js(
+    rs_obj: libparsec::NewUserInvitationError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::NewUserInvitationError::AlreadyMember { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AlreadyMember".into())?;
+        }
+        libparsec::NewUserInvitationError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+        libparsec::NewUserInvitationError::NotAllowed { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"NotAllowed".into())?;
+        }
+        libparsec::NewUserInvitationError::Offline { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
+        }
+    }
     Ok(js_obj)
 }
 
@@ -2039,637 +3028,6 @@ fn variant_parsed_backend_addr_rs_to_js(
     Ok(js_obj)
 }
 
-// CancelError
-
-#[allow(dead_code)]
-fn variant_cancel_error_rs_to_js(rs_obj: libparsec::CancelError) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::CancelError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
-        }
-        libparsec::CancelError::NotBound { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NotBound".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// DeviceAccessStrategy
-
-#[allow(dead_code)]
-fn variant_device_access_strategy_js_to_rs(
-    obj: JsValue,
-) -> Result<libparsec::DeviceAccessStrategy, JsValue> {
-    let tag = Reflect::get(&obj, &"tag".into())?;
-    match tag {
-        tag if tag == JsValue::from_str("Password") => {
-            let password = {
-                let js_val = Reflect::get(&obj, &"password".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string =
-                            |s: String| -> Result<_, String> { Ok(s.into()) };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid Password"))?
-            };
-            let key_file = {
-                let js_val = Reflect::get(&obj, &"keyFile".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
-                            Ok(std::path::PathBuf::from(s))
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid Path"))?
-            };
-            Ok(libparsec::DeviceAccessStrategy::Password { password, key_file })
-        }
-        tag if tag == JsValue::from_str("Smartcard") => {
-            let key_file = {
-                let js_val = Reflect::get(&obj, &"keyFile".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
-                            Ok(std::path::PathBuf::from(s))
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid Path"))?
-            };
-            Ok(libparsec::DeviceAccessStrategy::Smartcard { key_file })
-        }
-        _ => Err(JsValue::from(TypeError::new(
-            "Object is not a DeviceAccessStrategy",
-        ))),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_device_access_strategy_rs_to_js(
-    rs_obj: libparsec::DeviceAccessStrategy,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    match rs_obj {
-        libparsec::DeviceAccessStrategy::Password {
-            password, key_file, ..
-        } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Password".into())?;
-            let js_password = JsValue::from_str(password.as_ref());
-            Reflect::set(&js_obj, &"password".into(), &js_password)?;
-            let js_key_file = JsValue::from_str({
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
-        }
-        libparsec::DeviceAccessStrategy::Smartcard { key_file, .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Smartcard".into())?;
-            let js_key_file = JsValue::from_str({
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// ClientStartError
-
-#[allow(dead_code)]
-fn variant_client_start_error_rs_to_js(
-    rs_obj: libparsec::ClientStartError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::ClientStartError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
-        }
-        libparsec::ClientStartError::LoadDeviceDecryptionFailed { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"LoadDeviceDecryptionFailed".into())?;
-        }
-        libparsec::ClientStartError::LoadDeviceInvalidData { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"LoadDeviceInvalidData".into())?;
-        }
-        libparsec::ClientStartError::LoadDeviceInvalidPath { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"LoadDeviceInvalidPath".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// ClientStopError
-
-#[allow(dead_code)]
-fn variant_client_stop_error_rs_to_js(
-    rs_obj: libparsec::ClientStopError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::ClientStopError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// ClientListWorkspacesError
-
-#[allow(dead_code)]
-fn variant_client_list_workspaces_error_rs_to_js(
-    rs_obj: libparsec::ClientListWorkspacesError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::ClientListWorkspacesError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// ClientWorkspaceCreateError
-
-#[allow(dead_code)]
-fn variant_client_workspace_create_error_rs_to_js(
-    rs_obj: libparsec::ClientWorkspaceCreateError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::ClientWorkspaceCreateError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// ClientWorkspaceRenameError
-
-#[allow(dead_code)]
-fn variant_client_workspace_rename_error_rs_to_js(
-    rs_obj: libparsec::ClientWorkspaceRenameError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::ClientWorkspaceRenameError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
-        }
-        libparsec::ClientWorkspaceRenameError::UnknownWorkspace { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"UnknownWorkspace".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// ClientWorkspaceShareError
-
-#[allow(dead_code)]
-fn variant_client_workspace_share_error_rs_to_js(
-    rs_obj: libparsec::ClientWorkspaceShareError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::ClientWorkspaceShareError::BadTimestamp {
-            server_timestamp,
-            client_timestamp,
-            ballpark_client_early_offset,
-            ballpark_client_late_offset,
-            ..
-        } => {
-            Reflect::set(&js_obj, &"tag".into(), &"BadTimestamp".into())?;
-            let js_server_timestamp = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(server_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
-            let js_client_timestamp = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(client_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
-            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
-            Reflect::set(
-                &js_obj,
-                &"ballparkClientEarlyOffset".into(),
-                &js_ballpark_client_early_offset,
-            )?;
-            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
-            Reflect::set(
-                &js_obj,
-                &"ballparkClientLateOffset".into(),
-                &js_ballpark_client_late_offset,
-            )?;
-        }
-        libparsec::ClientWorkspaceShareError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
-        }
-        libparsec::ClientWorkspaceShareError::NotAllowed { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NotAllowed".into())?;
-        }
-        libparsec::ClientWorkspaceShareError::Offline { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
-        }
-        libparsec::ClientWorkspaceShareError::OutsiderCannotBeManagerOrOwner { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"OutsiderCannotBeManagerOrOwner".into(),
-            )?;
-        }
-        libparsec::ClientWorkspaceShareError::RevokedRecipient { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"RevokedRecipient".into())?;
-        }
-        libparsec::ClientWorkspaceShareError::ShareToSelf { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"ShareToSelf".into())?;
-        }
-        libparsec::ClientWorkspaceShareError::UnknownRecipient { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"UnknownRecipient".into())?;
-        }
-        libparsec::ClientWorkspaceShareError::UnknownRecipientOrWorkspace { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"UnknownRecipientOrWorkspace".into(),
-            )?;
-        }
-        libparsec::ClientWorkspaceShareError::UnknownWorkspace { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"UnknownWorkspace".into())?;
-        }
-        libparsec::ClientWorkspaceShareError::WorkspaceInMaintenance { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"WorkspaceInMaintenance".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// ClientInfoError
-
-#[allow(dead_code)]
-fn variant_client_info_error_rs_to_js(
-    rs_obj: libparsec::ClientInfoError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::ClientInfoError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// WorkspaceStorageCacheSize
-
-#[allow(dead_code)]
-fn variant_workspace_storage_cache_size_js_to_rs(
-    obj: JsValue,
-) -> Result<libparsec::WorkspaceStorageCacheSize, JsValue> {
-    let tag = Reflect::get(&obj, &"tag".into())?;
-    match tag {
-        tag if tag == JsValue::from_str("Custom") => {
-            let size = {
-                let js_val = Reflect::get(&obj, &"size".into())?;
-                {
-                    let v = js_val
-                        .dyn_into::<Number>()
-                        .map_err(|_| TypeError::new("Not a number"))?
-                        .value_of();
-                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
-                    }
-                    v as u32
-                }
-            };
-            Ok(libparsec::WorkspaceStorageCacheSize::Custom { size })
-        }
-        tag if tag == JsValue::from_str("Default") => {
-            Ok(libparsec::WorkspaceStorageCacheSize::Default {})
-        }
-        _ => Err(JsValue::from(TypeError::new(
-            "Object is not a WorkspaceStorageCacheSize",
-        ))),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_workspace_storage_cache_size_rs_to_js(
-    rs_obj: libparsec::WorkspaceStorageCacheSize,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    match rs_obj {
-        libparsec::WorkspaceStorageCacheSize::Custom { size, .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Custom".into())?;
-            let js_size = JsValue::from(size);
-            Reflect::set(&js_obj, &"size".into(), &js_size)?;
-        }
-        libparsec::WorkspaceStorageCacheSize::Default { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Default".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// ClientEvent
-
-#[allow(dead_code)]
-fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent, JsValue> {
-    let tag = Reflect::get(&obj, &"tag".into())?;
-    match tag {
-        tag if tag == JsValue::from_str("Ping") => {
-            let ping = {
-                let js_val = Reflect::get(&obj, &"ping".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-            };
-            Ok(libparsec::ClientEvent::Ping { ping })
-        }
-        _ => Err(JsValue::from(TypeError::new("Object is not a ClientEvent"))),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    match rs_obj {
-        libparsec::ClientEvent::Ping { ping, .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Ping".into())?;
-            let js_ping = ping.into();
-            Reflect::set(&js_obj, &"ping".into(), &js_ping)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// ClaimerGreeterAbortOperationError
-
-#[allow(dead_code)]
-fn variant_claimer_greeter_abort_operation_error_rs_to_js(
-    rs_obj: libparsec::ClaimerGreeterAbortOperationError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::ClaimerGreeterAbortOperationError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// DeviceSaveStrategy
-
-#[allow(dead_code)]
-fn variant_device_save_strategy_js_to_rs(
-    obj: JsValue,
-) -> Result<libparsec::DeviceSaveStrategy, JsValue> {
-    let tag = Reflect::get(&obj, &"tag".into())?;
-    match tag {
-        tag if tag == JsValue::from_str("Password") => {
-            let password = {
-                let js_val = Reflect::get(&obj, &"password".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string =
-                            |s: String| -> Result<_, String> { Ok(s.into()) };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid Password"))?
-            };
-            Ok(libparsec::DeviceSaveStrategy::Password { password })
-        }
-        tag if tag == JsValue::from_str("Smartcard") => {
-            Ok(libparsec::DeviceSaveStrategy::Smartcard {})
-        }
-        _ => Err(JsValue::from(TypeError::new(
-            "Object is not a DeviceSaveStrategy",
-        ))),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_device_save_strategy_rs_to_js(
-    rs_obj: libparsec::DeviceSaveStrategy,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    match rs_obj {
-        libparsec::DeviceSaveStrategy::Password { password, .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Password".into())?;
-            let js_password = JsValue::from_str(password.as_ref());
-            Reflect::set(&js_obj, &"password".into(), &js_password)?;
-        }
-        libparsec::DeviceSaveStrategy::Smartcard { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Smartcard".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// BootstrapOrganizationError
-
-#[allow(dead_code)]
-fn variant_bootstrap_organization_error_rs_to_js(
-    rs_obj: libparsec::BootstrapOrganizationError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::BootstrapOrganizationError::AlreadyUsedToken { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AlreadyUsedToken".into())?;
-        }
-        libparsec::BootstrapOrganizationError::BadTimestamp {
-            server_timestamp,
-            client_timestamp,
-            ballpark_client_early_offset,
-            ballpark_client_late_offset,
-            ..
-        } => {
-            Reflect::set(&js_obj, &"tag".into(), &"BadTimestamp".into())?;
-            let js_server_timestamp = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(server_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
-            let js_client_timestamp = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(client_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
-            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
-            Reflect::set(
-                &js_obj,
-                &"ballparkClientEarlyOffset".into(),
-                &js_ballpark_client_early_offset,
-            )?;
-            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
-            Reflect::set(
-                &js_obj,
-                &"ballparkClientLateOffset".into(),
-                &js_ballpark_client_late_offset,
-            )?;
-        }
-        libparsec::BootstrapOrganizationError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
-        }
-        libparsec::BootstrapOrganizationError::InvalidToken { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"InvalidToken".into())?;
-        }
-        libparsec::BootstrapOrganizationError::Offline { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
-        }
-        libparsec::BootstrapOrganizationError::SaveDeviceError { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"SaveDeviceError".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// ClaimerRetrieveInfoError
-
-#[allow(dead_code)]
-fn variant_claimer_retrieve_info_error_rs_to_js(
-    rs_obj: libparsec::ClaimerRetrieveInfoError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::ClaimerRetrieveInfoError::AlreadyUsed { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AlreadyUsed".into())?;
-        }
-        libparsec::ClaimerRetrieveInfoError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
-        }
-        libparsec::ClaimerRetrieveInfoError::NotFound { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NotFound".into())?;
-        }
-        libparsec::ClaimerRetrieveInfoError::Offline { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// ClaimInProgressError
-
-#[allow(dead_code)]
-fn variant_claim_in_progress_error_rs_to_js(
-    rs_obj: libparsec::ClaimInProgressError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::ClaimInProgressError::ActiveUsersLimitReached { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"ActiveUsersLimitReached".into())?;
-        }
-        libparsec::ClaimInProgressError::AlreadyUsed { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AlreadyUsed".into())?;
-        }
-        libparsec::ClaimInProgressError::Cancelled { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Cancelled".into())?;
-        }
-        libparsec::ClaimInProgressError::CorruptedConfirmation { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"CorruptedConfirmation".into())?;
-        }
-        libparsec::ClaimInProgressError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
-        }
-        libparsec::ClaimInProgressError::NotFound { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NotFound".into())?;
-        }
-        libparsec::ClaimInProgressError::Offline { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
-        }
-        libparsec::ClaimInProgressError::PeerReset { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"PeerReset".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
 // UserOrDeviceClaimInitialInfo
 
 #[allow(dead_code)]
@@ -2824,433 +3182,150 @@ fn variant_user_or_device_claim_initial_info_rs_to_js(
     Ok(js_obj)
 }
 
-// NewUserInvitationError
+// WorkspaceStorageCacheSize
 
 #[allow(dead_code)]
-fn variant_new_user_invitation_error_rs_to_js(
-    rs_obj: libparsec::NewUserInvitationError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::NewUserInvitationError::AlreadyMember { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AlreadyMember".into())?;
-        }
-        libparsec::NewUserInvitationError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
-        }
-        libparsec::NewUserInvitationError::NotAllowed { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NotAllowed".into())?;
-        }
-        libparsec::NewUserInvitationError::Offline { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// NewDeviceInvitationError
-
-#[allow(dead_code)]
-fn variant_new_device_invitation_error_rs_to_js(
-    rs_obj: libparsec::NewDeviceInvitationError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::NewDeviceInvitationError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
-        }
-        libparsec::NewDeviceInvitationError::Offline { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
-        }
-        libparsec::NewDeviceInvitationError::SendEmailToUserWithoutEmail { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"SendEmailToUserWithoutEmail".into(),
-            )?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// DeleteInvitationError
-
-#[allow(dead_code)]
-fn variant_delete_invitation_error_rs_to_js(
-    rs_obj: libparsec::DeleteInvitationError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::DeleteInvitationError::AlreadyDeleted { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AlreadyDeleted".into())?;
-        }
-        libparsec::DeleteInvitationError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
-        }
-        libparsec::DeleteInvitationError::NotFound { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NotFound".into())?;
-        }
-        libparsec::DeleteInvitationError::Offline { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// InviteListItem
-
-#[allow(dead_code)]
-fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteListItem, JsValue> {
+fn variant_workspace_storage_cache_size_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::WorkspaceStorageCacheSize, JsValue> {
     let tag = Reflect::get(&obj, &"tag".into())?;
     match tag {
-        tag if tag == JsValue::from_str("Device") => {
-            let token = {
-                let js_val = Reflect::get(&obj, &"token".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string =
-                            |s: String| -> Result<libparsec::InvitationToken, _> {
-                                libparsec::InvitationToken::from_hex(s.as_str())
-                                    .map_err(|e| e.to_string())
-                            };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
-            };
-            let created_on = {
-                let js_val = Reflect::get(&obj, &"createdOn".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, String> {
-                            libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DateTime"))?
-            };
-            let status = {
-                let js_val = Reflect::get(&obj, &"status".into())?;
+        tag if tag == JsValue::from_str("Custom") => {
+            let size = {
+                let js_val = Reflect::get(&obj, &"size".into())?;
                 {
-                    let raw_string = js_val.as_string().ok_or_else(|| {
-                        let type_error = TypeError::new("value is not a string");
-                        type_error.set_cause(&js_val);
-                        JsValue::from(type_error)
-                    })?;
-                    enum_invitation_status_js_to_rs(raw_string.as_str())
-                }?
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                    }
+                    v as u32
+                }
             };
-            Ok(libparsec::InviteListItem::Device {
-                token,
-                created_on,
-                status,
-            })
+            Ok(libparsec::WorkspaceStorageCacheSize::Custom { size })
         }
-        tag if tag == JsValue::from_str("User") => {
-            let token = {
-                let js_val = Reflect::get(&obj, &"token".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string =
-                            |s: String| -> Result<libparsec::InvitationToken, _> {
-                                libparsec::InvitationToken::from_hex(s.as_str())
-                                    .map_err(|e| e.to_string())
-                            };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
-            };
-            let created_on = {
-                let js_val = Reflect::get(&obj, &"createdOn".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, String> {
-                            libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DateTime"))?
-            };
-            let claimer_email = {
-                let js_val = Reflect::get(&obj, &"claimerEmail".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-            };
-            let status = {
-                let js_val = Reflect::get(&obj, &"status".into())?;
-                {
-                    let raw_string = js_val.as_string().ok_or_else(|| {
-                        let type_error = TypeError::new("value is not a string");
-                        type_error.set_cause(&js_val);
-                        JsValue::from(type_error)
-                    })?;
-                    enum_invitation_status_js_to_rs(raw_string.as_str())
-                }?
-            };
-            Ok(libparsec::InviteListItem::User {
-                token,
-                created_on,
-                claimer_email,
-                status,
-            })
+        tag if tag == JsValue::from_str("Default") => {
+            Ok(libparsec::WorkspaceStorageCacheSize::Default {})
         }
         _ => Err(JsValue::from(TypeError::new(
-            "Object is not a InviteListItem",
+            "Object is not a WorkspaceStorageCacheSize",
         ))),
     }
 }
 
 #[allow(dead_code)]
-fn variant_invite_list_item_rs_to_js(
-    rs_obj: libparsec::InviteListItem,
+fn variant_workspace_storage_cache_size_rs_to_js(
+    rs_obj: libparsec::WorkspaceStorageCacheSize,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
-        libparsec::InviteListItem::Device {
-            token,
-            created_on,
-            status,
-            ..
-        } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Device".into())?;
-            let js_token = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(token) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"token".into(), &js_token)?;
-            let js_created_on = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(created_on) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
-            let js_status = JsValue::from_str(enum_invitation_status_rs_to_js(status));
-            Reflect::set(&js_obj, &"status".into(), &js_status)?;
+        libparsec::WorkspaceStorageCacheSize::Custom { size, .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Custom".into())?;
+            let js_size = JsValue::from(size);
+            Reflect::set(&js_obj, &"size".into(), &js_size)?;
         }
-        libparsec::InviteListItem::User {
-            token,
-            created_on,
-            claimer_email,
-            status,
-            ..
-        } => {
-            Reflect::set(&js_obj, &"tag".into(), &"User".into())?;
-            let js_token = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(token) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"token".into(), &js_token)?;
-            let js_created_on = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(created_on) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
-            let js_claimer_email = claimer_email.into();
-            Reflect::set(&js_obj, &"claimerEmail".into(), &js_claimer_email)?;
-            let js_status = JsValue::from_str(enum_invitation_status_rs_to_js(status));
-            Reflect::set(&js_obj, &"status".into(), &js_status)?;
+        libparsec::WorkspaceStorageCacheSize::Default { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Default".into())?;
         }
     }
     Ok(js_obj)
 }
 
-// ListInvitationsError
-
-#[allow(dead_code)]
-fn variant_list_invitations_error_rs_to_js(
-    rs_obj: libparsec::ListInvitationsError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::ListInvitationsError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
-        }
-        libparsec::ListInvitationsError::Offline { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// ClientStartInvitationGreetError
-
-#[allow(dead_code)]
-fn variant_client_start_invitation_greet_error_rs_to_js(
-    rs_obj: libparsec::ClientStartInvitationGreetError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::ClientStartInvitationGreetError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// GreetInProgressError
-
-#[allow(dead_code)]
-fn variant_greet_in_progress_error_rs_to_js(
-    rs_obj: libparsec::GreetInProgressError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::GreetInProgressError::ActiveUsersLimitReached { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"ActiveUsersLimitReached".into())?;
-        }
-        libparsec::GreetInProgressError::AlreadyUsed { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AlreadyUsed".into())?;
-        }
-        libparsec::GreetInProgressError::BadTimestamp {
-            server_timestamp,
-            client_timestamp,
-            ballpark_client_early_offset,
-            ballpark_client_late_offset,
-            ..
-        } => {
-            Reflect::set(&js_obj, &"tag".into(), &"BadTimestamp".into())?;
-            let js_server_timestamp = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(server_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
-            let js_client_timestamp = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(client_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
-            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
-            Reflect::set(
-                &js_obj,
-                &"ballparkClientEarlyOffset".into(),
-                &js_ballpark_client_early_offset,
-            )?;
-            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
-            Reflect::set(
-                &js_obj,
-                &"ballparkClientLateOffset".into(),
-                &js_ballpark_client_late_offset,
-            )?;
-        }
-        libparsec::GreetInProgressError::Cancelled { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Cancelled".into())?;
-        }
-        libparsec::GreetInProgressError::CorruptedInviteUserData { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"CorruptedInviteUserData".into())?;
-        }
-        libparsec::GreetInProgressError::DeviceAlreadyExists { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"DeviceAlreadyExists".into())?;
-        }
-        libparsec::GreetInProgressError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
-        }
-        libparsec::GreetInProgressError::NonceMismatch { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NonceMismatch".into())?;
-        }
-        libparsec::GreetInProgressError::NotFound { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NotFound".into())?;
-        }
-        libparsec::GreetInProgressError::Offline { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
-        }
-        libparsec::GreetInProgressError::PeerReset { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"PeerReset".into())?;
-        }
-        libparsec::GreetInProgressError::UserAlreadyExists { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"UserAlreadyExists".into())?;
-        }
-        libparsec::GreetInProgressError::UserCreateNotAllowed { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"UserCreateNotAllowed".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// parse_backend_addr
+// bootstrap_organization
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn parseBackendAddr(url: String) -> Promise {
+pub fn bootstrapOrganization(
+    config: Object,
+    on_event_callback: Function,
+    bootstrap_organization_addr: String,
+    save_strategy: Object,
+    human_handle: Option<Object>,
+    device_label: Option<String>,
+    sequester_authority_verify_key: Option<Uint8Array>,
+) -> Promise {
     future_to_promise(async move {
-        let ret = libparsec::parse_backend_addr(&url);
+        let config = config.into();
+        let config = struct_client_config_js_to_rs(config)?;
+
+        let on_event_callback = std::sync::Arc::new(move |event: libparsec::ClientEvent| {
+            // TODO: Better error handling here (log error ?)
+            let js_event =
+                variant_client_event_rs_to_js(event).expect("event type conversion error");
+            on_event_callback
+                .call1(&JsValue::NULL, &js_event)
+                .expect("error in event callback");
+        }) as std::sync::Arc<dyn Fn(libparsec::ClientEvent)>;
+
+        let bootstrap_organization_addr = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::BackendOrganizationBootstrapAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(bootstrap_organization_addr)
+                .map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let save_strategy = save_strategy.into();
+        let save_strategy = variant_device_save_strategy_js_to_rs(save_strategy)?;
+
+        let human_handle = match human_handle {
+            Some(human_handle) => {
+                let human_handle = human_handle.into();
+                let human_handle = struct_human_handle_js_to_rs(human_handle)?;
+
+                Some(human_handle)
+            }
+            None => None,
+        };
+
+        let device_label = match device_label {
+            Some(device_label) => {
+                let device_label = device_label
+                    .parse()
+                    .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceLabel")))?;
+
+                Some(device_label)
+            }
+            None => None,
+        };
+
+        let sequester_authority_verify_key = match sequester_authority_verify_key {
+            Some(sequester_authority_verify_key) => {
+                let sequester_authority_verify_key = sequester_authority_verify_key
+                    .to_vec()
+                    .as_slice()
+                    .try_into()
+                    .map_err(|_| {
+                        JsValue::from(TypeError::new("Not a valid SequesterVerifyKeyDer"))
+                    })?;
+
+                Some(sequester_authority_verify_key)
+            }
+            None => None,
+        };
+
+        let ret = libparsec::bootstrap_organization(
+            config,
+            on_event_callback,
+            bootstrap_organization_addr,
+            save_strategy,
+            human_handle,
+            device_label,
+            sequester_authority_verify_key,
+        )
+        .await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = variant_parsed_backend_addr_rs_to_js(value)?;
+                let js_value = struct_available_device_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_parse_backend_addr_error_rs_to_js(err)?;
+                let js_err = variant_bootstrap_organization_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -3312,49 +3387,27 @@ pub fn cancel(canceller: u32) -> Promise {
     })
 }
 
-// new_canceller
+// claimer_device_finalize_save_local_device
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn newCanceller() -> Promise {
+pub fn claimerDeviceFinalizeSaveLocalDevice(handle: u32, save_strategy: Object) -> Promise {
     future_to_promise(async move {
-        let ret = libparsec::new_canceller();
-        Ok(JsValue::from(ret))
-    })
-}
+        let save_strategy = save_strategy.into();
+        let save_strategy = variant_device_save_strategy_js_to_rs(save_strategy)?;
 
-// client_start
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn clientStart(config: Object, on_event_callback: Function, access: Object) -> Promise {
-    future_to_promise(async move {
-        let config = config.into();
-        let config = struct_client_config_js_to_rs(config)?;
-
-        let on_event_callback = std::sync::Arc::new(move |event: libparsec::ClientEvent| {
-            // TODO: Better error handling here (log error ?)
-            let js_event =
-                variant_client_event_rs_to_js(event).expect("event type conversion error");
-            on_event_callback
-                .call1(&JsValue::NULL, &js_event)
-                .expect("error in event callback");
-        }) as std::sync::Arc<dyn Fn(libparsec::ClientEvent)>;
-
-        let access = access.into();
-        let access = variant_device_access_strategy_js_to_rs(access)?;
-
-        let ret = libparsec::client_start(config, on_event_callback, access).await;
+        let ret = libparsec::claimer_device_finalize_save_local_device(handle, save_strategy).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from(value);
+                let js_value = struct_available_device_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_client_start_error_rs_to_js(err)?;
+                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -3362,12 +3415,133 @@ pub fn clientStart(config: Object, on_event_callback: Function, access: Object) 
     })
 }
 
-// client_stop
+// claimer_device_in_progress_1_do_signify_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn clientStop(client: u32) -> Promise {
+pub fn claimerDeviceInProgress1DoSignifyTrust(canceller: u32, handle: u32) -> Promise {
     future_to_promise(async move {
-        let ret = libparsec::client_stop(client).await;
+        let ret = libparsec::claimer_device_in_progress_1_do_signify_trust(canceller, handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_device_claim_in_progress2_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// claimer_device_in_progress_2_do_wait_peer_trust
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn claimerDeviceInProgress2DoWaitPeerTrust(canceller: u32, handle: u32) -> Promise {
+    future_to_promise(async move {
+        let ret =
+            libparsec::claimer_device_in_progress_2_do_wait_peer_trust(canceller, handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_device_claim_in_progress3_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// claimer_device_in_progress_3_do_claim
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn claimerDeviceInProgress3DoClaim(
+    canceller: u32,
+    handle: u32,
+    requested_device_label: Option<String>,
+) -> Promise {
+    future_to_promise(async move {
+        let requested_device_label = match requested_device_label {
+            Some(requested_device_label) => {
+                let requested_device_label = requested_device_label
+                    .parse()
+                    .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceLabel")))?;
+
+                Some(requested_device_label)
+            }
+            None => None,
+        };
+
+        let ret = libparsec::claimer_device_in_progress_3_do_claim(
+            canceller,
+            handle,
+            requested_device_label,
+        )
+        .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_device_claim_finalize_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// claimer_device_initial_do_wait_peer
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn claimerDeviceInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::claimer_device_initial_do_wait_peer(canceller, handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_device_claim_in_progress1_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// claimer_greeter_abort_operation
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn claimerGreeterAbortOperation(handle: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::claimer_greeter_abort_operation(handle);
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -3382,7 +3556,302 @@ pub fn clientStop(client: u32) -> Promise {
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_client_stop_error_rs_to_js(err)?;
+                let js_err = variant_claimer_greeter_abort_operation_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// claimer_retrieve_info
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn claimerRetrieveInfo(config: Object, on_event_callback: Function, addr: String) -> Promise {
+    future_to_promise(async move {
+        let config = config.into();
+        let config = struct_client_config_js_to_rs(config)?;
+
+        let on_event_callback = std::sync::Arc::new(move |event: libparsec::ClientEvent| {
+            // TODO: Better error handling here (log error ?)
+            let js_event =
+                variant_client_event_rs_to_js(event).expect("event type conversion error");
+            on_event_callback
+                .call1(&JsValue::NULL, &js_event)
+                .expect("error in event callback");
+        }) as std::sync::Arc<dyn Fn(libparsec::ClientEvent)>;
+
+        let addr = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::BackendInvitationAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::claimer_retrieve_info(config, on_event_callback, addr).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = variant_user_or_device_claim_initial_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_claimer_retrieve_info_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// claimer_user_finalize_save_local_device
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn claimerUserFinalizeSaveLocalDevice(handle: u32, save_strategy: Object) -> Promise {
+    future_to_promise(async move {
+        let save_strategy = save_strategy.into();
+        let save_strategy = variant_device_save_strategy_js_to_rs(save_strategy)?;
+
+        let ret = libparsec::claimer_user_finalize_save_local_device(handle, save_strategy).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_available_device_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// claimer_user_in_progress_1_do_signify_trust
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn claimerUserInProgress1DoSignifyTrust(canceller: u32, handle: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::claimer_user_in_progress_1_do_signify_trust(canceller, handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_user_claim_in_progress2_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// claimer_user_in_progress_2_do_wait_peer_trust
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn claimerUserInProgress2DoWaitPeerTrust(canceller: u32, handle: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::claimer_user_in_progress_2_do_wait_peer_trust(canceller, handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_user_claim_in_progress3_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// claimer_user_in_progress_3_do_claim
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn claimerUserInProgress3DoClaim(
+    canceller: u32,
+    handle: u32,
+    requested_device_label: Option<String>,
+    requested_human_handle: Option<Object>,
+) -> Promise {
+    future_to_promise(async move {
+        let requested_device_label = match requested_device_label {
+            Some(requested_device_label) => {
+                let requested_device_label = requested_device_label
+                    .parse()
+                    .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceLabel")))?;
+
+                Some(requested_device_label)
+            }
+            None => None,
+        };
+
+        let requested_human_handle = match requested_human_handle {
+            Some(requested_human_handle) => {
+                let requested_human_handle = requested_human_handle.into();
+                let requested_human_handle = struct_human_handle_js_to_rs(requested_human_handle)?;
+
+                Some(requested_human_handle)
+            }
+            None => None,
+        };
+
+        let ret = libparsec::claimer_user_in_progress_3_do_claim(
+            canceller,
+            handle,
+            requested_device_label,
+            requested_human_handle,
+        )
+        .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_user_claim_finalize_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// claimer_user_initial_do_wait_peer
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn claimerUserInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::claimer_user_initial_do_wait_peer(canceller, handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_user_claim_in_progress1_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_delete_invitation
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientDeleteInvitation(client: u32, token: String) -> Promise {
+    future_to_promise(async move {
+        let token = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
+                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(token).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::client_delete_invitation(client, token).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_delete_invitation_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_info
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientInfo(client: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::client_info(client).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_client_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_info_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_list_invitations
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientListInvitations(client: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::client_list_invitations(client).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(value.len() as u32);
+                    for (i, elem) in value.into_iter().enumerate() {
+                        let js_elem = variant_invite_list_item_rs_to_js(elem)?;
+                        js_array.set(i as u32, js_elem);
+                    }
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_list_invitations_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -3436,6 +3905,224 @@ pub fn clientListWorkspaces(client: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_list_workspaces_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_new_device_invitation
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientNewDeviceInvitation(client: u32, send_email: bool) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::client_new_device_invitation(client, send_email).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let (x1, x2) = value;
+                    let js_array = Array::new_with_length(2);
+                    let js_value = JsValue::from_str({
+                        let custom_to_rs_string =
+                            |x: libparsec::InvitationToken| -> Result<String, &'static str> {
+                                Ok(x.hex())
+                            };
+                        match custom_to_rs_string(x1) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        }
+                        .as_ref()
+                    });
+                    js_array.push(&js_value);
+                    let js_value =
+                        JsValue::from_str(enum_invitation_email_sent_status_rs_to_js(x2));
+                    js_array.push(&js_value);
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_new_device_invitation_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_new_user_invitation
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientNewUserInvitation(client: u32, claimer_email: String, send_email: bool) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::client_new_user_invitation(client, claimer_email, send_email).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let (x1, x2) = value;
+                    let js_array = Array::new_with_length(2);
+                    let js_value = JsValue::from_str({
+                        let custom_to_rs_string =
+                            |x: libparsec::InvitationToken| -> Result<String, &'static str> {
+                                Ok(x.hex())
+                            };
+                        match custom_to_rs_string(x1) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        }
+                        .as_ref()
+                    });
+                    js_array.push(&js_value);
+                    let js_value =
+                        JsValue::from_str(enum_invitation_email_sent_status_rs_to_js(x2));
+                    js_array.push(&js_value);
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_new_user_invitation_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_start
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientStart(config: Object, on_event_callback: Function, access: Object) -> Promise {
+    future_to_promise(async move {
+        let config = config.into();
+        let config = struct_client_config_js_to_rs(config)?;
+
+        let on_event_callback = std::sync::Arc::new(move |event: libparsec::ClientEvent| {
+            // TODO: Better error handling here (log error ?)
+            let js_event =
+                variant_client_event_rs_to_js(event).expect("event type conversion error");
+            on_event_callback
+                .call1(&JsValue::NULL, &js_event)
+                .expect("error in event callback");
+        }) as std::sync::Arc<dyn Fn(libparsec::ClientEvent)>;
+
+        let access = access.into();
+        let access = variant_device_access_strategy_js_to_rs(access)?;
+
+        let ret = libparsec::client_start(config, on_event_callback, access).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from(value);
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_start_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_start_device_invitation_greet
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientStartDeviceInvitationGreet(client: u32, token: String) -> Promise {
+    future_to_promise(async move {
+        let token = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
+                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(token).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::client_start_device_invitation_greet(client, token).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_device_greet_initial_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_start_invitation_greet_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_start_user_invitation_greet
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientStartUserInvitationGreet(client: u32, token: String) -> Promise {
+    future_to_promise(async move {
+        let token = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
+                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(token).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::client_start_user_invitation_greet(client, token).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_user_greet_initial_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_start_invitation_greet_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_stop
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientStop(client: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::client_stop(client).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_stop_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -3574,24 +4261,35 @@ pub fn clientWorkspaceShare(
     })
 }
 
-// client_info
+// get_platform
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn clientInfo(client: u32) -> Promise {
+pub fn getPlatform() -> Promise {
     future_to_promise(async move {
-        let ret = libparsec::client_info(client).await;
+        let ret = libparsec::get_platform();
+        Ok(JsValue::from_str(enum_platform_rs_to_js(ret)))
+    })
+}
+
+// greeter_device_in_progress_1_do_wait_peer_trust
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn greeterDeviceInProgress1DoWaitPeerTrust(canceller: u32, handle: u32) -> Promise {
+    future_to_promise(async move {
+        let ret =
+            libparsec::greeter_device_in_progress_1_do_wait_peer_trust(canceller, handle).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_client_info_rs_to_js(value)?;
+                let js_value = struct_device_greet_in_progress2_info_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_client_info_error_rs_to_js(err)?;
+                let js_err = variant_greet_in_progress_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -3599,27 +4297,24 @@ pub fn clientInfo(client: u32) -> Promise {
     })
 }
 
-// claimer_greeter_abort_operation
+// greeter_device_in_progress_2_do_signify_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn claimerGreeterAbortOperation(handle: u32) -> Promise {
+pub fn greeterDeviceInProgress2DoSignifyTrust(canceller: u32, handle: u32) -> Promise {
     future_to_promise(async move {
-        let ret = libparsec::claimer_greeter_abort_operation(handle);
+        let ret = libparsec::greeter_device_in_progress_2_do_signify_trust(canceller, handle).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = {
-                    let _ = value;
-                    JsValue::null()
-                };
+                let js_value = struct_device_greet_in_progress3_info_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_claimer_greeter_abort_operation_error_rs_to_js(err)?;
+                let js_err = variant_greet_in_progress_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -3627,75 +4322,41 @@ pub fn claimerGreeterAbortOperation(handle: u32) -> Promise {
     })
 }
 
-// list_available_devices
+// greeter_device_in_progress_3_do_get_claim_requests
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn listAvailableDevices(path: String) -> Promise {
+pub fn greeterDeviceInProgress3DoGetClaimRequests(canceller: u32, handle: u32) -> Promise {
     future_to_promise(async move {
-        let path = {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-
-        let ret = libparsec::list_available_devices(&path).await;
-        Ok({
-            // Array::new_with_length allocates with `undefined` value, that's why we `set` value
-            let js_array = Array::new_with_length(ret.len() as u32);
-            for (i, elem) in ret.into_iter().enumerate() {
-                let js_elem = struct_available_device_rs_to_js(elem)?;
-                js_array.set(i as u32, js_elem);
+        let ret =
+            libparsec::greeter_device_in_progress_3_do_get_claim_requests(canceller, handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_device_greet_in_progress4_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
             }
-            js_array.into()
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_greet_in_progress_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
         })
     })
 }
 
-// bootstrap_organization
+// greeter_device_in_progress_4_do_create
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn bootstrapOrganization(
-    config: Object,
-    on_event_callback: Function,
-    bootstrap_organization_addr: String,
-    save_strategy: Object,
-    human_handle: Option<Object>,
+pub fn greeterDeviceInProgress4DoCreate(
+    canceller: u32,
+    handle: u32,
     device_label: Option<String>,
-    sequester_authority_verify_key: Option<Uint8Array>,
 ) -> Promise {
     future_to_promise(async move {
-        let config = config.into();
-        let config = struct_client_config_js_to_rs(config)?;
-
-        let on_event_callback = std::sync::Arc::new(move |event: libparsec::ClientEvent| {
-            // TODO: Better error handling here (log error ?)
-            let js_event =
-                variant_client_event_rs_to_js(event).expect("event type conversion error");
-            on_event_callback
-                .call1(&JsValue::NULL, &js_event)
-                .expect("error in event callback");
-        }) as std::sync::Arc<dyn Fn(libparsec::ClientEvent)>;
-
-        let bootstrap_organization_addr = {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::BackendOrganizationBootstrapAddr::from_any(&s).map_err(|e| e.to_string())
-            };
-            custom_from_rs_string(bootstrap_organization_addr)
-                .map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-        let save_strategy = save_strategy.into();
-        let save_strategy = variant_device_save_strategy_js_to_rs(save_strategy)?;
-
-        let human_handle = match human_handle {
-            Some(human_handle) => {
-                let human_handle = human_handle.into();
-                let human_handle = struct_human_handle_js_to_rs(human_handle)?;
-
-                Some(human_handle)
-            }
-            None => None,
-        };
-
         let device_label = match device_label {
             Some(device_label) => {
                 let device_label = device_label
@@ -3707,502 +4368,9 @@ pub fn bootstrapOrganization(
             None => None,
         };
 
-        let sequester_authority_verify_key = match sequester_authority_verify_key {
-            Some(sequester_authority_verify_key) => {
-                let sequester_authority_verify_key = sequester_authority_verify_key
-                    .to_vec()
-                    .as_slice()
-                    .try_into()
-                    .map_err(|_| {
-                        JsValue::from(TypeError::new("Not a valid SequesterVerifyKeyDer"))
-                    })?;
-
-                Some(sequester_authority_verify_key)
-            }
-            None => None,
-        };
-
-        let ret = libparsec::bootstrap_organization(
-            config,
-            on_event_callback,
-            bootstrap_organization_addr,
-            save_strategy,
-            human_handle,
-            device_label,
-            sequester_authority_verify_key,
-        )
-        .await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_available_device_rs_to_js(value)?;
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_bootstrap_organization_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// claimer_retrieve_info
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn claimerRetrieveInfo(config: Object, on_event_callback: Function, addr: String) -> Promise {
-    future_to_promise(async move {
-        let config = config.into();
-        let config = struct_client_config_js_to_rs(config)?;
-
-        let on_event_callback = std::sync::Arc::new(move |event: libparsec::ClientEvent| {
-            // TODO: Better error handling here (log error ?)
-            let js_event =
-                variant_client_event_rs_to_js(event).expect("event type conversion error");
-            on_event_callback
-                .call1(&JsValue::NULL, &js_event)
-                .expect("error in event callback");
-        }) as std::sync::Arc<dyn Fn(libparsec::ClientEvent)>;
-
-        let addr = {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::BackendInvitationAddr::from_any(&s).map_err(|e| e.to_string())
-            };
-            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-        let ret = libparsec::claimer_retrieve_info(config, on_event_callback, addr).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = variant_user_or_device_claim_initial_info_rs_to_js(value)?;
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_claimer_retrieve_info_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// claimer_user_initial_do_wait_peer
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn claimerUserInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
-        let ret = libparsec::claimer_user_initial_do_wait_peer(canceller, handle).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_user_claim_in_progress1_info_rs_to_js(value)?;
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// claimer_device_initial_do_wait_peer
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn claimerDeviceInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
-        let ret = libparsec::claimer_device_initial_do_wait_peer(canceller, handle).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_device_claim_in_progress1_info_rs_to_js(value)?;
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// claimer_user_in_progress_1_do_signify_trust
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn claimerUserInProgress1DoSignifyTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
-        let ret = libparsec::claimer_user_in_progress_1_do_signify_trust(canceller, handle).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_user_claim_in_progress2_info_rs_to_js(value)?;
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// claimer_device_in_progress_1_do_signify_trust
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn claimerDeviceInProgress1DoSignifyTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
-        let ret = libparsec::claimer_device_in_progress_1_do_signify_trust(canceller, handle).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_device_claim_in_progress2_info_rs_to_js(value)?;
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// claimer_user_in_progress_2_do_wait_peer_trust
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn claimerUserInProgress2DoWaitPeerTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
-        let ret = libparsec::claimer_user_in_progress_2_do_wait_peer_trust(canceller, handle).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_user_claim_in_progress3_info_rs_to_js(value)?;
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// claimer_device_in_progress_2_do_wait_peer_trust
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn claimerDeviceInProgress2DoWaitPeerTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
         let ret =
-            libparsec::claimer_device_in_progress_2_do_wait_peer_trust(canceller, handle).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_device_claim_in_progress3_info_rs_to_js(value)?;
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// claimer_user_in_progress_3_do_claim
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn claimerUserInProgress3DoClaim(
-    canceller: u32,
-    handle: u32,
-    requested_device_label: Option<String>,
-    requested_human_handle: Option<Object>,
-) -> Promise {
-    future_to_promise(async move {
-        let requested_device_label = match requested_device_label {
-            Some(requested_device_label) => {
-                let requested_device_label = requested_device_label
-                    .parse()
-                    .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceLabel")))?;
-
-                Some(requested_device_label)
-            }
-            None => None,
-        };
-
-        let requested_human_handle = match requested_human_handle {
-            Some(requested_human_handle) => {
-                let requested_human_handle = requested_human_handle.into();
-                let requested_human_handle = struct_human_handle_js_to_rs(requested_human_handle)?;
-
-                Some(requested_human_handle)
-            }
-            None => None,
-        };
-
-        let ret = libparsec::claimer_user_in_progress_3_do_claim(
-            canceller,
-            handle,
-            requested_device_label,
-            requested_human_handle,
-        )
-        .await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_user_claim_finalize_info_rs_to_js(value)?;
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// claimer_device_in_progress_3_do_claim
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn claimerDeviceInProgress3DoClaim(
-    canceller: u32,
-    handle: u32,
-    requested_device_label: Option<String>,
-) -> Promise {
-    future_to_promise(async move {
-        let requested_device_label = match requested_device_label {
-            Some(requested_device_label) => {
-                let requested_device_label = requested_device_label
-                    .parse()
-                    .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceLabel")))?;
-
-                Some(requested_device_label)
-            }
-            None => None,
-        };
-
-        let ret = libparsec::claimer_device_in_progress_3_do_claim(
-            canceller,
-            handle,
-            requested_device_label,
-        )
-        .await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_device_claim_finalize_info_rs_to_js(value)?;
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// claimer_user_finalize_save_local_device
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn claimerUserFinalizeSaveLocalDevice(handle: u32, save_strategy: Object) -> Promise {
-    future_to_promise(async move {
-        let save_strategy = save_strategy.into();
-        let save_strategy = variant_device_save_strategy_js_to_rs(save_strategy)?;
-
-        let ret = libparsec::claimer_user_finalize_save_local_device(handle, save_strategy).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_available_device_rs_to_js(value)?;
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// claimer_device_finalize_save_local_device
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn claimerDeviceFinalizeSaveLocalDevice(handle: u32, save_strategy: Object) -> Promise {
-    future_to_promise(async move {
-        let save_strategy = save_strategy.into();
-        let save_strategy = variant_device_save_strategy_js_to_rs(save_strategy)?;
-
-        let ret = libparsec::claimer_device_finalize_save_local_device(handle, save_strategy).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_available_device_rs_to_js(value)?;
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// client_new_user_invitation
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn clientNewUserInvitation(client: u32, claimer_email: String, send_email: bool) -> Promise {
-    future_to_promise(async move {
-        let ret = libparsec::client_new_user_invitation(client, claimer_email, send_email).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = {
-                    let (x1, x2) = value;
-                    let js_array = Array::new_with_length(2);
-                    let js_value = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |x: libparsec::InvitationToken| -> Result<String, &'static str> {
-                                Ok(x.hex())
-                            };
-                        match custom_to_rs_string(x1) {
-                            Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                        }
-                        .as_ref()
-                    });
-                    js_array.push(&js_value);
-                    let js_value =
-                        JsValue::from_str(enum_invitation_email_sent_status_rs_to_js(x2));
-                    js_array.push(&js_value);
-                    js_array.into()
-                };
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_new_user_invitation_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// client_new_device_invitation
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn clientNewDeviceInvitation(client: u32, send_email: bool) -> Promise {
-    future_to_promise(async move {
-        let ret = libparsec::client_new_device_invitation(client, send_email).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = {
-                    let (x1, x2) = value;
-                    let js_array = Array::new_with_length(2);
-                    let js_value = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |x: libparsec::InvitationToken| -> Result<String, &'static str> {
-                                Ok(x.hex())
-                            };
-                        match custom_to_rs_string(x1) {
-                            Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                        }
-                        .as_ref()
-                    });
-                    js_array.push(&js_value);
-                    let js_value =
-                        JsValue::from_str(enum_invitation_email_sent_status_rs_to_js(x2));
-                    js_array.push(&js_value);
-                    js_array.into()
-                };
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_new_device_invitation_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// client_delete_invitation
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn clientDeleteInvitation(client: u32, token: String) -> Promise {
-    future_to_promise(async move {
-        let token = {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
-                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
-            };
-            custom_from_rs_string(token).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-        let ret = libparsec::client_delete_invitation(client, token).await;
+            libparsec::greeter_device_in_progress_4_do_create(canceller, handle, device_label)
+                .await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -4211,126 +4379,6 @@ pub fn clientDeleteInvitation(client: u32, token: String) -> Promise {
                     let _ = value;
                     JsValue::null()
                 };
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_delete_invitation_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// client_list_invitations
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn clientListInvitations(client: u32) -> Promise {
-    future_to_promise(async move {
-        let ret = libparsec::client_list_invitations(client).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = {
-                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
-                    let js_array = Array::new_with_length(value.len() as u32);
-                    for (i, elem) in value.into_iter().enumerate() {
-                        let js_elem = variant_invite_list_item_rs_to_js(elem)?;
-                        js_array.set(i as u32, js_elem);
-                    }
-                    js_array.into()
-                };
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_list_invitations_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// client_start_user_invitation_greet
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn clientStartUserInvitationGreet(client: u32, token: String) -> Promise {
-    future_to_promise(async move {
-        let token = {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
-                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
-            };
-            custom_from_rs_string(token).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-        let ret = libparsec::client_start_user_invitation_greet(client, token).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_user_greet_initial_info_rs_to_js(value)?;
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_client_start_invitation_greet_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// client_start_device_invitation_greet
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn clientStartDeviceInvitationGreet(client: u32, token: String) -> Promise {
-    future_to_promise(async move {
-        let token = {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
-                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
-            };
-            custom_from_rs_string(token).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-        let ret = libparsec::client_start_device_invitation_greet(client, token).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_device_greet_initial_info_rs_to_js(value)?;
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_client_start_invitation_greet_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// greeter_user_initial_do_wait_peer
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn greeterUserInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
-        let ret = libparsec::greeter_user_initial_do_wait_peer(canceller, handle).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_user_greet_in_progress1_info_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -4395,32 +4443,6 @@ pub fn greeterUserInProgress1DoWaitPeerTrust(canceller: u32, handle: u32) -> Pro
     })
 }
 
-// greeter_device_in_progress_1_do_wait_peer_trust
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn greeterDeviceInProgress1DoWaitPeerTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
-        let ret =
-            libparsec::greeter_device_in_progress_1_do_wait_peer_trust(canceller, handle).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_device_greet_in_progress2_info_rs_to_js(value)?;
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_greet_in_progress_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
 // greeter_user_in_progress_2_do_signify_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -4432,31 +4454,6 @@ pub fn greeterUserInProgress2DoSignifyTrust(canceller: u32, handle: u32) -> Prom
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = struct_user_greet_in_progress3_info_rs_to_js(value)?;
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_greet_in_progress_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// greeter_device_in_progress_2_do_signify_trust
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn greeterDeviceInProgress2DoSignifyTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
-        let ret = libparsec::greeter_device_in_progress_2_do_signify_trust(canceller, handle).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_device_greet_in_progress3_info_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -4483,32 +4480,6 @@ pub fn greeterUserInProgress3DoGetClaimRequests(canceller: u32, handle: u32) -> 
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = struct_user_greet_in_progress4_info_rs_to_js(value)?;
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_greet_in_progress_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// greeter_device_in_progress_3_do_get_claim_requests
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn greeterDeviceInProgress3DoGetClaimRequests(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
-        let ret =
-            libparsec::greeter_device_in_progress_3_do_get_claim_requests(canceller, handle).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_device_greet_in_progress4_info_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -4587,37 +4558,17 @@ pub fn greeterUserInProgress4DoCreate(
     })
 }
 
-// greeter_device_in_progress_4_do_create
+// greeter_user_initial_do_wait_peer
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn greeterDeviceInProgress4DoCreate(
-    canceller: u32,
-    handle: u32,
-    device_label: Option<String>,
-) -> Promise {
+pub fn greeterUserInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
     future_to_promise(async move {
-        let device_label = match device_label {
-            Some(device_label) => {
-                let device_label = device_label
-                    .parse()
-                    .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceLabel")))?;
-
-                Some(device_label)
-            }
-            None => None,
-        };
-
-        let ret =
-            libparsec::greeter_device_in_progress_4_do_create(canceller, handle, device_label)
-                .await;
+        let ret = libparsec::greeter_user_initial_do_wait_peer(canceller, handle).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = {
-                    let _ = value;
-                    JsValue::null()
-                };
+                let js_value = struct_user_greet_in_progress1_info_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -4632,13 +4583,121 @@ pub fn greeterDeviceInProgress4DoCreate(
     })
 }
 
-// get_platform
+// list_available_devices
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn getPlatform() -> Promise {
+pub fn listAvailableDevices(path: String) -> Promise {
     future_to_promise(async move {
-        let ret = libparsec::get_platform();
-        Ok(JsValue::from_str(enum_platform_rs_to_js(ret)))
+        let path = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::list_available_devices(&path).await;
+        Ok({
+            // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+            let js_array = Array::new_with_length(ret.len() as u32);
+            for (i, elem) in ret.into_iter().enumerate() {
+                let js_elem = struct_available_device_rs_to_js(elem)?;
+                js_array.set(i as u32, js_elem);
+            }
+            js_array.into()
+        })
+    })
+}
+
+// new_canceller
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn newCanceller() -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::new_canceller();
+        Ok(JsValue::from(ret))
+    })
+}
+
+// parse_backend_addr
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn parseBackendAddr(url: String) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::parse_backend_addr(&url);
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = variant_parsed_backend_addr_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_parse_backend_addr_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// test_drop_testbed
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn testDropTestbed(path: String) -> Promise {
+    future_to_promise(async move {
+        let path = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        libparsec::test_drop_testbed(&path).await;
+        Ok(JsValue::NULL)
+    })
+}
+
+// test_get_testbed_bootstrap_organization_addr
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn testGetTestbedBootstrapOrganizationAddr(discriminant_dir: String) -> Promise {
+    future_to_promise(async move {
+        let discriminant_dir = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(discriminant_dir).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::test_get_testbed_bootstrap_organization_addr(&discriminant_dir);
+        Ok(match ret {
+            Some(val) => JsValue::from_str({
+                let custom_to_rs_string = |addr: libparsec::BackendOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+                match custom_to_rs_string(val) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            }),
+            None => JsValue::NULL,
+        })
+    })
+}
+
+// test_get_testbed_organization_id
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn testGetTestbedOrganizationId(discriminant_dir: String) -> Promise {
+    future_to_promise(async move {
+        let discriminant_dir = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(discriminant_dir).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::test_get_testbed_organization_id(&discriminant_dir);
+        Ok(match ret {
+            Some(val) => JsValue::from_str(val.as_ref()),
+            None => JsValue::NULL,
+        })
     })
 }
 
@@ -4677,91 +4736,12 @@ pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise 
     })
 }
 
-// test_get_testbed_organization_id
+// validate_device_label
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn testGetTestbedOrganizationId(discriminant_dir: String) -> Promise {
+pub fn validateDeviceLabel(raw: String) -> Promise {
     future_to_promise(async move {
-        let discriminant_dir = {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(discriminant_dir).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-        let ret = libparsec::test_get_testbed_organization_id(&discriminant_dir);
-        Ok(match ret {
-            Some(val) => JsValue::from_str(val.as_ref()),
-            None => JsValue::NULL,
-        })
-    })
-}
-
-// test_get_testbed_bootstrap_organization_addr
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn testGetTestbedBootstrapOrganizationAddr(discriminant_dir: String) -> Promise {
-    future_to_promise(async move {
-        let discriminant_dir = {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(discriminant_dir).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-        let ret = libparsec::test_get_testbed_bootstrap_organization_addr(&discriminant_dir);
-        Ok(match ret {
-            Some(val) => JsValue::from_str({
-                let custom_to_rs_string = |addr: libparsec::BackendOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
-                match custom_to_rs_string(val) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            }),
-            None => JsValue::NULL,
-        })
-    })
-}
-
-// test_drop_testbed
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn testDropTestbed(path: String) -> Promise {
-    future_to_promise(async move {
-        let path = {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-
-        libparsec::test_drop_testbed(&path).await;
-        Ok(JsValue::NULL)
-    })
-}
-
-// validate_entry_name
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn validateEntryName(raw: String) -> Promise {
-    future_to_promise(async move {
-        let ret = libparsec::validate_entry_name(&raw);
-        Ok(ret.into())
-    })
-}
-
-// validate_path
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn validatePath(raw: String) -> Promise {
-    future_to_promise(async move {
-        let ret = libparsec::validate_path(&raw);
-        Ok(ret.into())
-    })
-}
-
-// validate_human_handle_label
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn validateHumanHandleLabel(raw: String) -> Promise {
-    future_to_promise(async move {
-        let ret = libparsec::validate_human_handle_label(&raw);
+        let ret = libparsec::validate_device_label(&raw);
         Ok(ret.into())
     })
 }
@@ -4776,12 +4756,22 @@ pub fn validateEmail(raw: String) -> Promise {
     })
 }
 
-// validate_device_label
+// validate_entry_name
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn validateDeviceLabel(raw: String) -> Promise {
+pub fn validateEntryName(raw: String) -> Promise {
     future_to_promise(async move {
-        let ret = libparsec::validate_device_label(&raw);
+        let ret = libparsec::validate_entry_name(&raw);
+        Ok(ret.into())
+    })
+}
+
+// validate_human_handle_label
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn validateHumanHandleLabel(raw: String) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::validate_human_handle_label(&raw);
         Ok(ret.into())
     })
 }
@@ -4792,6 +4782,16 @@ pub fn validateDeviceLabel(raw: String) -> Promise {
 pub fn validateInvitationToken(raw: String) -> Promise {
     future_to_promise(async move {
         let ret = libparsec::validate_invitation_token(&raw);
+        Ok(ret.into())
+    })
+}
+
+// validate_path
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn validatePath(raw: String) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::validate_path(&raw);
         Ok(ret.into())
     })
 }

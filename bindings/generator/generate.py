@@ -532,30 +532,30 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             )
 
     return ApiSpecs(
-        str_based_types=[
+        str_based_types=sorted(
             item.__name__
             for item in api_items.values()
             if isinstance(item, type) and issubclass(item, StrBasedType)
-        ],
-        bytes_based_types=[
+        ),
+        bytes_based_types=sorted(
             item.__name__
             for item in api_items.values()
             if isinstance(item, type) and issubclass(item, BytesBasedType)
-        ],
-        i32_based_types=[
+        ),
+        i32_based_types=sorted(
             item.__name__
             for item in api_items.values()
             if isinstance(item, type) and issubclass(item, I32BasedType)
-        ],
-        u32_based_types=[
+        ),
+        u32_based_types=sorted(
             item.__name__
             for item in api_items.values()
             if isinstance(item, type) and issubclass(item, U32BasedType)
-        ],
-        enums=enums,
-        variants=variants,
-        structs=structs,
-        meths=meths,
+        ),
+        enums=sorted(enums, key=lambda v: v.name),
+        variants=sorted(variants, key=lambda v: v.name),
+        structs=sorted(structs, key=lambda v: v.name),
+        meths=sorted(meths, key=lambda v: v.name),
         rust_code_to_inject=getattr(api_module, "BINDING_ELECTRON_METHS_INJECT_RUST_CODE", None),
     )
 
