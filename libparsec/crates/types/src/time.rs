@@ -113,6 +113,16 @@ impl DateTime {
         self.into()
     }
 
+    pub fn timestamp_millis(&self) -> i64 {
+        self.0.timestamp_millis()
+    }
+
+    pub fn from_timestamp_millis(millis: i64) -> Option<Self> {
+        let naive_dt = chrono::NaiveDateTime::from_timestamp_millis(millis)?;
+        let dt = chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(naive_dt, chrono::Utc);
+        Some(Self(dt))
+    }
+
     // TODO: remove me and only rely on TimeProvider instead !
     #[cfg(not(feature = "test-mock-time"))]
     #[inline]

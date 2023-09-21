@@ -24,6 +24,7 @@ META_TYPES = [
     "StrBasedType",
     "BytesBasedType",
     "I32BasedType",
+    "I64BasedType",
     "U32BasedType",
     "Variant",
     "VariantItemTuple",
@@ -52,6 +53,10 @@ class BytesBasedType(bytes):
 
 
 class I32BasedType(int):
+    ...
+
+
+class I64BasedType(int):
     ...
 
 
@@ -227,10 +232,28 @@ class BaseTypeInUse:
             )
 
         elif isinstance(param, type) and issubclass(param, I32BasedType):
-            return NumberBasedTypeInUse(name=param.__name__, type="i32")
+            return NumberBasedTypeInUse(
+                name=param.__name__,
+                type="i32",
+                custom_from_rs_number=getattr(param, "custom_from_rs_number", None),
+                custom_to_rs_number=getattr(param, "custom_to_rs_number", None),
+            )
+
+        elif isinstance(param, type) and issubclass(param, I64BasedType):
+            return NumberBasedTypeInUse(
+                name=param.__name__,
+                type="i64",
+                custom_from_rs_number=getattr(param, "custom_from_rs_number", None),
+                custom_to_rs_number=getattr(param, "custom_to_rs_number", None),
+            )
 
         elif isinstance(param, type) and issubclass(param, U32BasedType):
-            return NumberBasedTypeInUse(name=param.__name__, type="u32")
+            return NumberBasedTypeInUse(
+                name=param.__name__,
+                type="u32",
+                custom_from_rs_number=getattr(param, "custom_from_rs_number", None),
+                custom_to_rs_number=getattr(param, "custom_to_rs_number", None),
+            )
 
         else:
             typespec = TYPES_DB.get(param)
@@ -341,6 +364,8 @@ class NumberBasedTypeInUse(BaseTypeInUse):
     kind = "number_based"
     type: str
     name: str
+    custom_from_rs_number: str | None = None
+    custom_to_rs_number: str | None = None
 
 
 @dataclass
@@ -539,7 +564,8 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
         number_based_types=[
             item.__name__
             for item in api_items.values()
-            if isinstance(item, type) and issubclass(item, (I32BasedType, U32BasedType))
+            if isinstance(item, type)
+            and issubclass(item, (I32BasedType, I64BasedType, U32BasedType))
         ],
         enums=enums,
         variants=variants,

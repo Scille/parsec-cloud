@@ -353,8 +353,8 @@ export type ClientWorkspaceRenameError =
 export interface ClientWorkspaceShareErrorBadTimestamp {
     tag: "BadTimestamp"
     error: string
-    server_timestamp: string
-    client_timestamp: string
+    server_timestamp: number
+    client_timestamp: number
     ballpark_client_early_offset: number
     ballpark_client_late_offset: number
 }
@@ -473,8 +473,8 @@ export interface BootstrapOrganizationErrorAlreadyUsedToken {
 export interface BootstrapOrganizationErrorBadTimestamp {
     tag: "BadTimestamp"
     error: string
-    server_timestamp: string
-    client_timestamp: string
+    server_timestamp: number
+    client_timestamp: number
     ballpark_client_early_offset: number
     ballpark_client_late_offset: number
 }
@@ -661,13 +661,13 @@ export type DeleteInvitationError =
 export interface InviteListItemDevice {
     tag: "Device"
     token: string
-    created_on: string
+    created_on: number
     status: InvitationStatus
 }
 export interface InviteListItemUser {
     tag: "User"
     token: string
-    created_on: string
+    created_on: number
     claimer_email: string
     status: InvitationStatus
 }
@@ -711,8 +711,8 @@ export interface GreetInProgressErrorAlreadyUsed {
 export interface GreetInProgressErrorBadTimestamp {
     tag: "BadTimestamp"
     error: string
-    server_timestamp: string
-    client_timestamp: string
+    server_timestamp: number
+    client_timestamp: number
     ballpark_client_early_offset: number
     ballpark_client_late_offset: number
 }

@@ -110,7 +110,15 @@ JsString
     if v < ({{ ty }}::MIN as f64) || ({{ ty }}::MAX as f64) < v {
         cx.throw_type_error("Not an {{ ty }} number")?
     }
+{% if type.custom_from_rs_number %}
+    let custom_from_rs_number = {{ type.custom_from_rs_number }};
+    match custom_from_rs_number(v as {{ ty }}) {
+        Ok(v) => v,
+        Err(e) => return cx.throw_type_error(e),
+    }
+{% else %}
     v as {{ ty }}
+{% endif %}
 }
 {%- elif type.kind == "str" -%}
 {{ js_val }}.value({{ mut_cx_ref }})
@@ -270,7 +278,17 @@ match {{ rs_value }} {
 {%- elif type.kind == "bool" -%}
 JsBoolean::new({{ mut_cx_ref }}, {{ rs_value }})
 {%- elif type.kind in ("number_based") -%}
+{%- if type.custom_to_rs_number -%}
+{
+    let custom_to_rs_number = {{ type.custom_to_rs_number }};
+    match custom_to_rs_number({{ rs_value }}) {
+        Ok(value) => JsNumber::new({{ mut_cx_ref }}, value as f64),
+        Err(e) => return cx.throw_type_error(e),
+    }
+}
+{% else %}
 JsNumber::new({{ mut_cx_ref }}, {{ rs_value }} as f64)
+{% endif %}
 {%- elif type.kind == "float" -%}
 JsNumber::new({{ mut_cx_ref }}, {{ rs_value }})
 {%- elif type.kind == "str" -%}

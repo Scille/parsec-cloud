@@ -84,6 +84,10 @@ class I32BasedType:
     pass
 
 
+class I64BasedType:
+    pass
+
+
 class U32BasedType:
     pass
 
@@ -131,10 +135,10 @@ class HumanHandle(Structure):
     """
 
 
-class DateTime(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = (
-        "|dt: libparsec::DateTime| -> Result<String, &'static str> { Ok(dt.to_rfc3339()) }"
+class DateTime(I64BasedType):
+    custom_from_rs_number = '|n: i64| -> Result<_, &\'static str> { libparsec::DateTime::from_timestamp_millis(n).ok_or("Invalid timestamp value") }'
+    custom_to_rs_number = (
+        "|dt: libparsec::DateTime| -> Result<i64, &'static str> { Ok(dt.timestamp_millis()) }"
     )
 
 

@@ -10,13 +10,14 @@ mockI18n();
 
 describe('User Invitation List Item', () => {
   it('Display invitation', () => {
+    const now = DateTime.now();
     const INVITATION: UserInvitation = {
       tag: 'User',
       token: '1234',
-      createdOn: DateTime.now().toISO() || '',
+      createdOn: now.toUTC().toMillis(),
       claimerEmail: 'dung.eater@lands-between',
       status: InvitationStatus.Ready,
-      date: DateTime.now(),
+      date: now,
     };
 
     const wrapper = mount(InvitationListItem, {

@@ -2146,29 +2146,25 @@ fn variant_client_workspace_share_error_rs_to_js<'a>(
         } => {
             let js_tag = JsString::try_new(cx, "BadTimestamp").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_server_timestamp = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(server_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+            let js_server_timestamp = {
+                let custom_to_rs_number = |dt: libparsec::DateTime| -> Result<i64, &'static str> {
+                    Ok(dt.timestamp_millis())
+                };
+                match custom_to_rs_number(server_timestamp) {
+                    Ok(value) => JsNumber::new(cx, value as f64),
+                    Err(e) => return cx.throw_type_error(e),
                 }
-            })
-            .or_throw(cx)?;
+            };
             js_obj.set(cx, "serverTimestamp", js_server_timestamp)?;
-            let js_client_timestamp = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(client_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+            let js_client_timestamp = {
+                let custom_to_rs_number = |dt: libparsec::DateTime| -> Result<i64, &'static str> {
+                    Ok(dt.timestamp_millis())
+                };
+                match custom_to_rs_number(client_timestamp) {
+                    Ok(value) => JsNumber::new(cx, value as f64),
+                    Err(e) => return cx.throw_type_error(e),
                 }
-            })
-            .or_throw(cx)?;
+            };
             js_obj.set(cx, "clientTimestamp", js_client_timestamp)?;
             let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
             js_obj.set(
@@ -2422,29 +2418,25 @@ fn variant_bootstrap_organization_error_rs_to_js<'a>(
         } => {
             let js_tag = JsString::try_new(cx, "BadTimestamp").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_server_timestamp = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(server_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+            let js_server_timestamp = {
+                let custom_to_rs_number = |dt: libparsec::DateTime| -> Result<i64, &'static str> {
+                    Ok(dt.timestamp_millis())
+                };
+                match custom_to_rs_number(server_timestamp) {
+                    Ok(value) => JsNumber::new(cx, value as f64),
+                    Err(e) => return cx.throw_type_error(e),
                 }
-            })
-            .or_throw(cx)?;
+            };
             js_obj.set(cx, "serverTimestamp", js_server_timestamp)?;
-            let js_client_timestamp = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(client_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+            let js_client_timestamp = {
+                let custom_to_rs_number = |dt: libparsec::DateTime| -> Result<i64, &'static str> {
+                    Ok(dt.timestamp_millis())
+                };
+                match custom_to_rs_number(client_timestamp) {
+                    Ok(value) => JsNumber::new(cx, value as f64),
+                    Err(e) => return cx.throw_type_error(e),
                 }
-            })
-            .or_throw(cx)?;
+            };
             js_obj.set(cx, "clientTimestamp", js_client_timestamp)?;
             let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
             js_obj.set(
@@ -2813,14 +2805,19 @@ fn variant_invite_list_item_js_to_rs<'a>(
                 }
             };
             let created_on = {
-                let js_val: Handle<JsString> = obj.get(cx, "createdOn")?;
+                let js_val: Handle<JsNumber> = obj.get(cx, "createdOn")?;
                 {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
+                    let v = js_val.value(cx);
+                    if v < (i64::MIN as f64) || (i64::MAX as f64) < v {
+                        cx.throw_type_error("Not an i64 number")?
+                    }
+                    let custom_from_rs_number = |n: i64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_millis(n)
+                            .ok_or("Invalid timestamp value")
                     };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
+                    match custom_from_rs_number(v as i64) {
+                        Ok(v) => v,
+                        Err(e) => return cx.throw_type_error(e),
                     }
                 }
             };
@@ -2853,14 +2850,19 @@ fn variant_invite_list_item_js_to_rs<'a>(
                 }
             };
             let created_on = {
-                let js_val: Handle<JsString> = obj.get(cx, "createdOn")?;
+                let js_val: Handle<JsNumber> = obj.get(cx, "createdOn")?;
                 {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
+                    let v = js_val.value(cx);
+                    if v < (i64::MIN as f64) || (i64::MAX as f64) < v {
+                        cx.throw_type_error("Not an i64 number")?
+                    }
+                    let custom_from_rs_number = |n: i64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_millis(n)
+                            .ok_or("Invalid timestamp value")
                     };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
+                    match custom_from_rs_number(v as i64) {
+                        Ok(v) => v,
+                        Err(e) => return cx.throw_type_error(e),
                     }
                 }
             };
@@ -2911,17 +2913,15 @@ fn variant_invite_list_item_rs_to_js<'a>(
             })
             .or_throw(cx)?;
             js_obj.set(cx, "token", js_token)?;
-            let js_created_on = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(created_on) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+            let js_created_on = {
+                let custom_to_rs_number = |dt: libparsec::DateTime| -> Result<i64, &'static str> {
+                    Ok(dt.timestamp_millis())
+                };
+                match custom_to_rs_number(created_on) {
+                    Ok(value) => JsNumber::new(cx, value as f64),
+                    Err(e) => return cx.throw_type_error(e),
                 }
-            })
-            .or_throw(cx)?;
+            };
             js_obj.set(cx, "createdOn", js_created_on)?;
             let js_status =
                 JsString::try_new(cx, enum_invitation_status_rs_to_js(status)).or_throw(cx)?;
@@ -2946,17 +2946,15 @@ fn variant_invite_list_item_rs_to_js<'a>(
             })
             .or_throw(cx)?;
             js_obj.set(cx, "token", js_token)?;
-            let js_created_on = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(created_on) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+            let js_created_on = {
+                let custom_to_rs_number = |dt: libparsec::DateTime| -> Result<i64, &'static str> {
+                    Ok(dt.timestamp_millis())
+                };
+                match custom_to_rs_number(created_on) {
+                    Ok(value) => JsNumber::new(cx, value as f64),
+                    Err(e) => return cx.throw_type_error(e),
                 }
-            })
-            .or_throw(cx)?;
+            };
             js_obj.set(cx, "createdOn", js_created_on)?;
             let js_claimer_email = JsString::try_new(cx, claimer_email).or_throw(cx)?;
             js_obj.set(cx, "claimerEmail", js_claimer_email)?;
@@ -3038,29 +3036,25 @@ fn variant_greet_in_progress_error_rs_to_js<'a>(
         } => {
             let js_tag = JsString::try_new(cx, "BadTimestamp").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_server_timestamp = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(server_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+            let js_server_timestamp = {
+                let custom_to_rs_number = |dt: libparsec::DateTime| -> Result<i64, &'static str> {
+                    Ok(dt.timestamp_millis())
+                };
+                match custom_to_rs_number(server_timestamp) {
+                    Ok(value) => JsNumber::new(cx, value as f64),
+                    Err(e) => return cx.throw_type_error(e),
                 }
-            })
-            .or_throw(cx)?;
+            };
             js_obj.set(cx, "serverTimestamp", js_server_timestamp)?;
-            let js_client_timestamp = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(client_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+            let js_client_timestamp = {
+                let custom_to_rs_number = |dt: libparsec::DateTime| -> Result<i64, &'static str> {
+                    Ok(dt.timestamp_millis())
+                };
+                match custom_to_rs_number(client_timestamp) {
+                    Ok(value) => JsNumber::new(cx, value as f64),
+                    Err(e) => return cx.throw_type_error(e),
                 }
-            })
-            .or_throw(cx)?;
+            };
             js_obj.set(cx, "clientTimestamp", js_client_timestamp)?;
             let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
             js_obj.set(

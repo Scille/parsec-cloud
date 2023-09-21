@@ -173,26 +173,27 @@ export async function listUserInvitations(): Promise<Result<Array<UserInvitation
     result.value = result.value.filter((item: InviteListItem) => item.tag === 'User');
     // Convert InviteListItemUser to UserInvitation
     result.value = result.value.map((item) => {
-      (item as UserInvitation).date = DateTime.fromISO(item.createdOn);
+      (item as UserInvitation).date = DateTime.fromMillis(item.createdOn, { zone: 'UTC' });
       return item;
     });
     return result as any;
   } else {
     return new Promise<Result<Array<UserInvitation>, ListInvitationsError>>((resolve, _reject) => {
+      const now = DateTime.now();
       const ret: Array<UserInvitation> = [{
         tag: 'User',
         token: '1234',
-        createdOn: DateTime.now().toISO() || '',
+        createdOn: now.toUTC().toMillis(),
         claimerEmail: 'shadowheart@swordcoast.faerun',
         status: InvitationStatus.Ready,
-        date: DateTime.now(),
+        date: now,
       }, {
         tag: 'User',
         token: '5678',
-        createdOn: DateTime.now().toISO() || '',
+        createdOn: now.toUTC().toMillis(),
         claimerEmail: 'gale@waterdeep.faerun',
         status: InvitationStatus.Ready,
-        date: DateTime.now(),
+        date: now,
       }];
       resolve({ ok: true, value: ret });
     });

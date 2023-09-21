@@ -53,7 +53,6 @@ export type BackendAddr = string
 export type BackendOrganizationAddr = string
 export type BackendOrganizationBootstrapAddr = string
 export type BackendInvitationAddr = string
-export type DateTime = string
 export type DeviceID = string
 export type DeviceLabel = string
 export type EntryName = string
@@ -63,6 +62,7 @@ export type UserID = string
 export type SASCode = string
 export type SequesterVerifyKeyDer = Uint8Array
 export type Handle = number
+export type DateTime = number
 export type CacheSize = number
 
 export interface HumanHandle {
@@ -338,8 +338,8 @@ export type ClientWorkspaceRenameError =
 export interface ClientWorkspaceShareErrorBadTimestamp {
     tag: 'BadTimestamp'
     error: string
-    serverTimestamp: DateTime
-    clientTimestamp: DateTime
+    serverTimestamp: number
+    clientTimestamp: number
     ballparkClientEarlyOffset: number
     ballparkClientLateOffset: number
 }
@@ -452,8 +452,8 @@ export interface BootstrapOrganizationErrorAlreadyUsedToken {
 export interface BootstrapOrganizationErrorBadTimestamp {
     tag: 'BadTimestamp'
     error: string
-    serverTimestamp: DateTime
-    clientTimestamp: DateTime
+    serverTimestamp: number
+    clientTimestamp: number
     ballparkClientEarlyOffset: number
     ballparkClientLateOffset: number
 }
@@ -633,13 +633,13 @@ export type DeleteInvitationError =
 export interface InviteListItemDevice {
     tag: 'Device'
     token: InvitationToken
-    createdOn: DateTime
+    createdOn: number
     status: InvitationStatus
 }
 export interface InviteListItemUser {
     tag: 'User'
     token: InvitationToken
-    createdOn: DateTime
+    createdOn: number
     claimerEmail: string
     status: InvitationStatus
 }
@@ -680,8 +680,8 @@ export interface GreetInProgressErrorAlreadyUsed {
 export interface GreetInProgressErrorBadTimestamp {
     tag: 'BadTimestamp'
     error: string
-    serverTimestamp: DateTime
-    clientTimestamp: DateTime
+    serverTimestamp: number
+    clientTimestamp: number
     ballparkClientEarlyOffset: number
     ballparkClientLateOffset: number
 }
