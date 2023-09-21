@@ -9,35 +9,22 @@ export type Result<T, E = Error> =
   | { ok: true; value: T }
   | { ok: false; error: E }
 
-export enum UserProfile {
-    Admin = 'UserProfileAdmin',
-    Outsider = 'UserProfileOutsider',
-    Standard = 'UserProfileStandard',
-}
-
-export enum RealmRole {
-    Contributor = 'RealmRoleContributor',
-    Manager = 'RealmRoleManager',
-    Owner = 'RealmRoleOwner',
-    Reader = 'RealmRoleReader',
-}
-
 export enum DeviceFileType {
     Password = 'DeviceFileTypePassword',
     Recovery = 'DeviceFileTypeRecovery',
     Smartcard = 'DeviceFileTypeSmartcard',
 }
 
-export enum InvitationStatus {
-    Deleted = 'InvitationStatusDeleted',
-    Idle = 'InvitationStatusIdle',
-    Ready = 'InvitationStatusReady',
-}
-
 export enum InvitationEmailSentStatus {
     BadRecipient = 'InvitationEmailSentStatusBadRecipient',
     NotAvailable = 'InvitationEmailSentStatusNotAvailable',
     Success = 'InvitationEmailSentStatusSuccess',
+}
+
+export enum InvitationStatus {
+    Deleted = 'InvitationStatusDeleted',
+    Idle = 'InvitationStatusIdle',
+    Ready = 'InvitationStatusReady',
 }
 
 export enum Platform {
@@ -48,10 +35,28 @@ export enum Platform {
     Windows = 'PlatformWindows',
 }
 
+export enum RealmRole {
+    Contributor = 'RealmRoleContributor',
+    Manager = 'RealmRoleManager',
+    Owner = 'RealmRoleOwner',
+    Reader = 'RealmRoleReader',
+}
 
-export interface HumanHandle {
-    email: string
-    label: string
+export enum UserProfile {
+    Admin = 'UserProfileAdmin',
+    Outsider = 'UserProfileOutsider',
+    Standard = 'UserProfileStandard',
+}
+
+
+export interface AvailableDevice {
+    keyFilePath: string
+    organizationId: string
+    deviceId: string
+    humanHandle: HumanHandle | null
+    deviceLabel: string | null
+    slug: string
+    ty: DeviceFileType
 }
 
 
@@ -73,25 +78,70 @@ export interface ClientInfo {
 }
 
 
-export interface AvailableDevice {
-    keyFilePath: string
-    organizationId: string
-    deviceId: string
-    humanHandle: HumanHandle | null
-    deviceLabel: string | null
-    slug: string
-    ty: DeviceFileType
+export interface DeviceClaimFinalizeInfo {
+    handle: number
 }
 
 
-export interface UserClaimInProgress1Info {
+export interface DeviceClaimInProgress1Info {
     handle: number
     greeterSas: string
     greeterSasChoices: Array<string>
 }
 
 
-export interface DeviceClaimInProgress1Info {
+export interface DeviceClaimInProgress2Info {
+    handle: number
+    claimerSas: string
+}
+
+
+export interface DeviceClaimInProgress3Info {
+    handle: number
+}
+
+
+export interface DeviceGreetInProgress1Info {
+    handle: number
+    greeterSas: string
+}
+
+
+export interface DeviceGreetInProgress2Info {
+    handle: number
+    claimerSas: string
+    claimerSasChoices: Array<string>
+}
+
+
+export interface DeviceGreetInProgress3Info {
+    handle: number
+}
+
+
+export interface DeviceGreetInProgress4Info {
+    handle: number
+    requestedDeviceLabel: string | null
+}
+
+
+export interface DeviceGreetInitialInfo {
+    handle: number
+}
+
+
+export interface HumanHandle {
+    email: string
+    label: string
+}
+
+
+export interface UserClaimFinalizeInfo {
+    handle: number
+}
+
+
+export interface UserClaimInProgress1Info {
     handle: number
     greeterSas: string
     greeterSasChoices: Array<string>
@@ -104,49 +154,12 @@ export interface UserClaimInProgress2Info {
 }
 
 
-export interface DeviceClaimInProgress2Info {
-    handle: number
-    claimerSas: string
-}
-
-
 export interface UserClaimInProgress3Info {
     handle: number
 }
 
 
-export interface DeviceClaimInProgress3Info {
-    handle: number
-}
-
-
-export interface UserClaimFinalizeInfo {
-    handle: number
-}
-
-
-export interface DeviceClaimFinalizeInfo {
-    handle: number
-}
-
-
-export interface UserGreetInitialInfo {
-    handle: number
-}
-
-
-export interface DeviceGreetInitialInfo {
-    handle: number
-}
-
-
 export interface UserGreetInProgress1Info {
-    handle: number
-    greeterSas: string
-}
-
-
-export interface DeviceGreetInProgress1Info {
     handle: number
     greeterSas: string
 }
@@ -159,19 +172,7 @@ export interface UserGreetInProgress2Info {
 }
 
 
-export interface DeviceGreetInProgress2Info {
-    handle: number
-    claimerSas: string
-    claimerSasChoices: Array<string>
-}
-
-
 export interface UserGreetInProgress3Info {
-    handle: number
-}
-
-
-export interface DeviceGreetInProgress3Info {
     handle: number
 }
 
@@ -183,76 +184,47 @@ export interface UserGreetInProgress4Info {
 }
 
 
-export interface DeviceGreetInProgress4Info {
+export interface UserGreetInitialInfo {
     handle: number
-    requestedDeviceLabel: string | null
 }
 
 
-// ParseBackendAddrError
-export interface ParseBackendAddrErrorInvalidUrl {
-    tag: "InvalidUrl"
+// BootstrapOrganizationError
+export interface BootstrapOrganizationErrorAlreadyUsedToken {
+    tag: "AlreadyUsedToken"
     error: string
 }
-export type ParseBackendAddrError =
-  | ParseBackendAddrErrorInvalidUrl
-
-
-// ParsedBackendAddr
-export interface ParsedBackendAddrBase {
-    tag: "Base"
-    hostname: string
-    port: number
-    use_ssl: boolean
+export interface BootstrapOrganizationErrorBadTimestamp {
+    tag: "BadTimestamp"
+    error: string
+    server_timestamp: string
+    client_timestamp: string
+    ballpark_client_early_offset: number
+    ballpark_client_late_offset: number
 }
-export interface ParsedBackendAddrInvitationDevice {
-    tag: "InvitationDevice"
-    hostname: string
-    port: number
-    use_ssl: boolean
-    organization_id: string
-    token: string
+export interface BootstrapOrganizationErrorInternal {
+    tag: "Internal"
+    error: string
 }
-export interface ParsedBackendAddrInvitationUser {
-    tag: "InvitationUser"
-    hostname: string
-    port: number
-    use_ssl: boolean
-    organization_id: string
-    token: string
+export interface BootstrapOrganizationErrorInvalidToken {
+    tag: "InvalidToken"
+    error: string
 }
-export interface ParsedBackendAddrOrganizationBootstrap {
-    tag: "OrganizationBootstrap"
-    hostname: string
-    port: number
-    use_ssl: boolean
-    organization_id: string
-    token: string | null
+export interface BootstrapOrganizationErrorOffline {
+    tag: "Offline"
+    error: string
 }
-export interface ParsedBackendAddrOrganizationFileLink {
-    tag: "OrganizationFileLink"
-    hostname: string
-    port: number
-    use_ssl: boolean
-    organization_id: string
-    workspace_id: string
-    encrypted_path: Uint8Array
-    encrypted_timestamp: Uint8Array | null
+export interface BootstrapOrganizationErrorSaveDeviceError {
+    tag: "SaveDeviceError"
+    error: string
 }
-export interface ParsedBackendAddrPkiEnrollment {
-    tag: "PkiEnrollment"
-    hostname: string
-    port: number
-    use_ssl: boolean
-    organization_id: string
-}
-export type ParsedBackendAddr =
-  | ParsedBackendAddrBase
-  | ParsedBackendAddrInvitationDevice
-  | ParsedBackendAddrInvitationUser
-  | ParsedBackendAddrOrganizationBootstrap
-  | ParsedBackendAddrOrganizationFileLink
-  | ParsedBackendAddrPkiEnrollment
+export type BootstrapOrganizationError =
+  | BootstrapOrganizationErrorAlreadyUsedToken
+  | BootstrapOrganizationErrorBadTimestamp
+  | BootstrapOrganizationErrorInternal
+  | BootstrapOrganizationErrorInvalidToken
+  | BootstrapOrganizationErrorOffline
+  | BootstrapOrganizationErrorSaveDeviceError
 
 
 // CancelError
@@ -269,19 +241,108 @@ export type CancelError =
   | CancelErrorNotBound
 
 
-// DeviceAccessStrategy
-export interface DeviceAccessStrategyPassword {
-    tag: "Password"
-    password: string
-    key_file: string
+// ClaimInProgressError
+export interface ClaimInProgressErrorActiveUsersLimitReached {
+    tag: "ActiveUsersLimitReached"
+    error: string
 }
-export interface DeviceAccessStrategySmartcard {
-    tag: "Smartcard"
-    key_file: string
+export interface ClaimInProgressErrorAlreadyUsed {
+    tag: "AlreadyUsed"
+    error: string
 }
-export type DeviceAccessStrategy =
-  | DeviceAccessStrategyPassword
-  | DeviceAccessStrategySmartcard
+export interface ClaimInProgressErrorCancelled {
+    tag: "Cancelled"
+    error: string
+}
+export interface ClaimInProgressErrorCorruptedConfirmation {
+    tag: "CorruptedConfirmation"
+    error: string
+}
+export interface ClaimInProgressErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClaimInProgressErrorNotFound {
+    tag: "NotFound"
+    error: string
+}
+export interface ClaimInProgressErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface ClaimInProgressErrorPeerReset {
+    tag: "PeerReset"
+    error: string
+}
+export type ClaimInProgressError =
+  | ClaimInProgressErrorActiveUsersLimitReached
+  | ClaimInProgressErrorAlreadyUsed
+  | ClaimInProgressErrorCancelled
+  | ClaimInProgressErrorCorruptedConfirmation
+  | ClaimInProgressErrorInternal
+  | ClaimInProgressErrorNotFound
+  | ClaimInProgressErrorOffline
+  | ClaimInProgressErrorPeerReset
+
+
+// ClaimerGreeterAbortOperationError
+export interface ClaimerGreeterAbortOperationErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type ClaimerGreeterAbortOperationError =
+  | ClaimerGreeterAbortOperationErrorInternal
+
+
+// ClaimerRetrieveInfoError
+export interface ClaimerRetrieveInfoErrorAlreadyUsed {
+    tag: "AlreadyUsed"
+    error: string
+}
+export interface ClaimerRetrieveInfoErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClaimerRetrieveInfoErrorNotFound {
+    tag: "NotFound"
+    error: string
+}
+export interface ClaimerRetrieveInfoErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type ClaimerRetrieveInfoError =
+  | ClaimerRetrieveInfoErrorAlreadyUsed
+  | ClaimerRetrieveInfoErrorInternal
+  | ClaimerRetrieveInfoErrorNotFound
+  | ClaimerRetrieveInfoErrorOffline
+
+
+// ClientEvent
+export interface ClientEventPing {
+    tag: "Ping"
+    ping: string
+}
+export type ClientEvent =
+  | ClientEventPing
+
+
+// ClientInfoError
+export interface ClientInfoErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type ClientInfoError =
+  | ClientInfoErrorInternal
+
+
+// ClientListWorkspacesError
+export interface ClientListWorkspacesErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type ClientListWorkspacesError =
+  | ClientListWorkspacesErrorInternal
 
 
 // ClientStartError
@@ -308,6 +369,15 @@ export type ClientStartError =
   | ClientStartErrorLoadDeviceInvalidPath
 
 
+// ClientStartInvitationGreetError
+export interface ClientStartInvitationGreetErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type ClientStartInvitationGreetError =
+  | ClientStartInvitationGreetErrorInternal
+
+
 // ClientStopError
 export interface ClientStopErrorInternal {
     tag: "Internal"
@@ -315,15 +385,6 @@ export interface ClientStopErrorInternal {
 }
 export type ClientStopError =
   | ClientStopErrorInternal
-
-
-// ClientListWorkspacesError
-export interface ClientListWorkspacesErrorInternal {
-    tag: "Internal"
-    error: string
-}
-export type ClientListWorkspacesError =
-  | ClientListWorkspacesErrorInternal
 
 
 // ClientWorkspaceCreateError
@@ -412,227 +473,6 @@ export type ClientWorkspaceShareError =
   | ClientWorkspaceShareErrorWorkspaceInMaintenance
 
 
-// ClientInfoError
-export interface ClientInfoErrorInternal {
-    tag: "Internal"
-    error: string
-}
-export type ClientInfoError =
-  | ClientInfoErrorInternal
-
-
-// WorkspaceStorageCacheSize
-export interface WorkspaceStorageCacheSizeCustom {
-    tag: "Custom"
-    size: number
-}
-export interface WorkspaceStorageCacheSizeDefault {
-    tag: "Default"
-}
-export type WorkspaceStorageCacheSize =
-  | WorkspaceStorageCacheSizeCustom
-  | WorkspaceStorageCacheSizeDefault
-
-
-// ClientEvent
-export interface ClientEventPing {
-    tag: "Ping"
-    ping: string
-}
-export type ClientEvent =
-  | ClientEventPing
-
-
-// ClaimerGreeterAbortOperationError
-export interface ClaimerGreeterAbortOperationErrorInternal {
-    tag: "Internal"
-    error: string
-}
-export type ClaimerGreeterAbortOperationError =
-  | ClaimerGreeterAbortOperationErrorInternal
-
-
-// DeviceSaveStrategy
-export interface DeviceSaveStrategyPassword {
-    tag: "Password"
-    password: string
-}
-export interface DeviceSaveStrategySmartcard {
-    tag: "Smartcard"
-}
-export type DeviceSaveStrategy =
-  | DeviceSaveStrategyPassword
-  | DeviceSaveStrategySmartcard
-
-
-// BootstrapOrganizationError
-export interface BootstrapOrganizationErrorAlreadyUsedToken {
-    tag: "AlreadyUsedToken"
-    error: string
-}
-export interface BootstrapOrganizationErrorBadTimestamp {
-    tag: "BadTimestamp"
-    error: string
-    server_timestamp: string
-    client_timestamp: string
-    ballpark_client_early_offset: number
-    ballpark_client_late_offset: number
-}
-export interface BootstrapOrganizationErrorInternal {
-    tag: "Internal"
-    error: string
-}
-export interface BootstrapOrganizationErrorInvalidToken {
-    tag: "InvalidToken"
-    error: string
-}
-export interface BootstrapOrganizationErrorOffline {
-    tag: "Offline"
-    error: string
-}
-export interface BootstrapOrganizationErrorSaveDeviceError {
-    tag: "SaveDeviceError"
-    error: string
-}
-export type BootstrapOrganizationError =
-  | BootstrapOrganizationErrorAlreadyUsedToken
-  | BootstrapOrganizationErrorBadTimestamp
-  | BootstrapOrganizationErrorInternal
-  | BootstrapOrganizationErrorInvalidToken
-  | BootstrapOrganizationErrorOffline
-  | BootstrapOrganizationErrorSaveDeviceError
-
-
-// ClaimerRetrieveInfoError
-export interface ClaimerRetrieveInfoErrorAlreadyUsed {
-    tag: "AlreadyUsed"
-    error: string
-}
-export interface ClaimerRetrieveInfoErrorInternal {
-    tag: "Internal"
-    error: string
-}
-export interface ClaimerRetrieveInfoErrorNotFound {
-    tag: "NotFound"
-    error: string
-}
-export interface ClaimerRetrieveInfoErrorOffline {
-    tag: "Offline"
-    error: string
-}
-export type ClaimerRetrieveInfoError =
-  | ClaimerRetrieveInfoErrorAlreadyUsed
-  | ClaimerRetrieveInfoErrorInternal
-  | ClaimerRetrieveInfoErrorNotFound
-  | ClaimerRetrieveInfoErrorOffline
-
-
-// ClaimInProgressError
-export interface ClaimInProgressErrorActiveUsersLimitReached {
-    tag: "ActiveUsersLimitReached"
-    error: string
-}
-export interface ClaimInProgressErrorAlreadyUsed {
-    tag: "AlreadyUsed"
-    error: string
-}
-export interface ClaimInProgressErrorCancelled {
-    tag: "Cancelled"
-    error: string
-}
-export interface ClaimInProgressErrorCorruptedConfirmation {
-    tag: "CorruptedConfirmation"
-    error: string
-}
-export interface ClaimInProgressErrorInternal {
-    tag: "Internal"
-    error: string
-}
-export interface ClaimInProgressErrorNotFound {
-    tag: "NotFound"
-    error: string
-}
-export interface ClaimInProgressErrorOffline {
-    tag: "Offline"
-    error: string
-}
-export interface ClaimInProgressErrorPeerReset {
-    tag: "PeerReset"
-    error: string
-}
-export type ClaimInProgressError =
-  | ClaimInProgressErrorActiveUsersLimitReached
-  | ClaimInProgressErrorAlreadyUsed
-  | ClaimInProgressErrorCancelled
-  | ClaimInProgressErrorCorruptedConfirmation
-  | ClaimInProgressErrorInternal
-  | ClaimInProgressErrorNotFound
-  | ClaimInProgressErrorOffline
-  | ClaimInProgressErrorPeerReset
-
-
-// UserOrDeviceClaimInitialInfo
-export interface UserOrDeviceClaimInitialInfoDevice {
-    tag: "Device"
-    handle: number
-    greeter_user_id: string
-    greeter_human_handle: HumanHandle | null
-}
-export interface UserOrDeviceClaimInitialInfoUser {
-    tag: "User"
-    handle: number
-    claimer_email: string
-    greeter_user_id: string
-    greeter_human_handle: HumanHandle | null
-}
-export type UserOrDeviceClaimInitialInfo =
-  | UserOrDeviceClaimInitialInfoDevice
-  | UserOrDeviceClaimInitialInfoUser
-
-
-// NewUserInvitationError
-export interface NewUserInvitationErrorAlreadyMember {
-    tag: "AlreadyMember"
-    error: string
-}
-export interface NewUserInvitationErrorInternal {
-    tag: "Internal"
-    error: string
-}
-export interface NewUserInvitationErrorNotAllowed {
-    tag: "NotAllowed"
-    error: string
-}
-export interface NewUserInvitationErrorOffline {
-    tag: "Offline"
-    error: string
-}
-export type NewUserInvitationError =
-  | NewUserInvitationErrorAlreadyMember
-  | NewUserInvitationErrorInternal
-  | NewUserInvitationErrorNotAllowed
-  | NewUserInvitationErrorOffline
-
-
-// NewDeviceInvitationError
-export interface NewDeviceInvitationErrorInternal {
-    tag: "Internal"
-    error: string
-}
-export interface NewDeviceInvitationErrorOffline {
-    tag: "Offline"
-    error: string
-}
-export interface NewDeviceInvitationErrorSendEmailToUserWithoutEmail {
-    tag: "SendEmailToUserWithoutEmail"
-    error: string
-}
-export type NewDeviceInvitationError =
-  | NewDeviceInvitationErrorInternal
-  | NewDeviceInvitationErrorOffline
-  | NewDeviceInvitationErrorSendEmailToUserWithoutEmail
-
-
 // DeleteInvitationError
 export interface DeleteInvitationErrorAlreadyDeleted {
     tag: "AlreadyDeleted"
@@ -657,46 +497,32 @@ export type DeleteInvitationError =
   | DeleteInvitationErrorOffline
 
 
-// InviteListItem
-export interface InviteListItemDevice {
-    tag: "Device"
-    token: string
-    created_on: string
-    status: InvitationStatus
+// DeviceAccessStrategy
+export interface DeviceAccessStrategyPassword {
+    tag: "Password"
+    password: string
+    key_file: string
 }
-export interface InviteListItemUser {
-    tag: "User"
-    token: string
-    created_on: string
-    claimer_email: string
-    status: InvitationStatus
+export interface DeviceAccessStrategySmartcard {
+    tag: "Smartcard"
+    key_file: string
 }
-export type InviteListItem =
-  | InviteListItemDevice
-  | InviteListItemUser
+export type DeviceAccessStrategy =
+  | DeviceAccessStrategyPassword
+  | DeviceAccessStrategySmartcard
 
 
-// ListInvitationsError
-export interface ListInvitationsErrorInternal {
-    tag: "Internal"
-    error: string
+// DeviceSaveStrategy
+export interface DeviceSaveStrategyPassword {
+    tag: "Password"
+    password: string
 }
-export interface ListInvitationsErrorOffline {
-    tag: "Offline"
-    error: string
+export interface DeviceSaveStrategySmartcard {
+    tag: "Smartcard"
 }
-export type ListInvitationsError =
-  | ListInvitationsErrorInternal
-  | ListInvitationsErrorOffline
-
-
-// ClientStartInvitationGreetError
-export interface ClientStartInvitationGreetErrorInternal {
-    tag: "Internal"
-    error: string
-}
-export type ClientStartInvitationGreetError =
-  | ClientStartInvitationGreetErrorInternal
+export type DeviceSaveStrategy =
+  | DeviceSaveStrategyPassword
+  | DeviceSaveStrategySmartcard
 
 
 // GreetInProgressError
@@ -772,9 +598,189 @@ export type GreetInProgressError =
   | GreetInProgressErrorUserCreateNotAllowed
 
 
-export function parseBackendAddr(
-    url: string
-): Promise<Result<ParsedBackendAddr, ParseBackendAddrError>>
+// InviteListItem
+export interface InviteListItemDevice {
+    tag: "Device"
+    token: string
+    created_on: string
+    status: InvitationStatus
+}
+export interface InviteListItemUser {
+    tag: "User"
+    token: string
+    created_on: string
+    claimer_email: string
+    status: InvitationStatus
+}
+export type InviteListItem =
+  | InviteListItemDevice
+  | InviteListItemUser
+
+
+// ListInvitationsError
+export interface ListInvitationsErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ListInvitationsErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type ListInvitationsError =
+  | ListInvitationsErrorInternal
+  | ListInvitationsErrorOffline
+
+
+// NewDeviceInvitationError
+export interface NewDeviceInvitationErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface NewDeviceInvitationErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface NewDeviceInvitationErrorSendEmailToUserWithoutEmail {
+    tag: "SendEmailToUserWithoutEmail"
+    error: string
+}
+export type NewDeviceInvitationError =
+  | NewDeviceInvitationErrorInternal
+  | NewDeviceInvitationErrorOffline
+  | NewDeviceInvitationErrorSendEmailToUserWithoutEmail
+
+
+// NewUserInvitationError
+export interface NewUserInvitationErrorAlreadyMember {
+    tag: "AlreadyMember"
+    error: string
+}
+export interface NewUserInvitationErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface NewUserInvitationErrorNotAllowed {
+    tag: "NotAllowed"
+    error: string
+}
+export interface NewUserInvitationErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type NewUserInvitationError =
+  | NewUserInvitationErrorAlreadyMember
+  | NewUserInvitationErrorInternal
+  | NewUserInvitationErrorNotAllowed
+  | NewUserInvitationErrorOffline
+
+
+// ParseBackendAddrError
+export interface ParseBackendAddrErrorInvalidUrl {
+    tag: "InvalidUrl"
+    error: string
+}
+export type ParseBackendAddrError =
+  | ParseBackendAddrErrorInvalidUrl
+
+
+// ParsedBackendAddr
+export interface ParsedBackendAddrBase {
+    tag: "Base"
+    hostname: string
+    port: number
+    use_ssl: boolean
+}
+export interface ParsedBackendAddrInvitationDevice {
+    tag: "InvitationDevice"
+    hostname: string
+    port: number
+    use_ssl: boolean
+    organization_id: string
+    token: string
+}
+export interface ParsedBackendAddrInvitationUser {
+    tag: "InvitationUser"
+    hostname: string
+    port: number
+    use_ssl: boolean
+    organization_id: string
+    token: string
+}
+export interface ParsedBackendAddrOrganizationBootstrap {
+    tag: "OrganizationBootstrap"
+    hostname: string
+    port: number
+    use_ssl: boolean
+    organization_id: string
+    token: string | null
+}
+export interface ParsedBackendAddrOrganizationFileLink {
+    tag: "OrganizationFileLink"
+    hostname: string
+    port: number
+    use_ssl: boolean
+    organization_id: string
+    workspace_id: string
+    encrypted_path: Uint8Array
+    encrypted_timestamp: Uint8Array | null
+}
+export interface ParsedBackendAddrPkiEnrollment {
+    tag: "PkiEnrollment"
+    hostname: string
+    port: number
+    use_ssl: boolean
+    organization_id: string
+}
+export type ParsedBackendAddr =
+  | ParsedBackendAddrBase
+  | ParsedBackendAddrInvitationDevice
+  | ParsedBackendAddrInvitationUser
+  | ParsedBackendAddrOrganizationBootstrap
+  | ParsedBackendAddrOrganizationFileLink
+  | ParsedBackendAddrPkiEnrollment
+
+
+// UserOrDeviceClaimInitialInfo
+export interface UserOrDeviceClaimInitialInfoDevice {
+    tag: "Device"
+    handle: number
+    greeter_user_id: string
+    greeter_human_handle: HumanHandle | null
+}
+export interface UserOrDeviceClaimInitialInfoUser {
+    tag: "User"
+    handle: number
+    claimer_email: string
+    greeter_user_id: string
+    greeter_human_handle: HumanHandle | null
+}
+export type UserOrDeviceClaimInitialInfo =
+  | UserOrDeviceClaimInitialInfoDevice
+  | UserOrDeviceClaimInitialInfoUser
+
+
+// WorkspaceStorageCacheSize
+export interface WorkspaceStorageCacheSizeCustom {
+    tag: "Custom"
+    size: number
+}
+export interface WorkspaceStorageCacheSizeDefault {
+    tag: "Default"
+}
+export type WorkspaceStorageCacheSize =
+  | WorkspaceStorageCacheSizeCustom
+  | WorkspaceStorageCacheSizeDefault
+
+
+export function bootstrapOrganization(
+    config: ClientConfig,
+    on_event_callback: (event: ClientEvent) => void,
+    bootstrap_organization_addr: string,
+    save_strategy: DeviceSaveStrategy,
+    human_handle: HumanHandle | null,
+    device_label: string | null,
+    sequester_authority_verify_key: Uint8Array | null
+): Promise<Result<AvailableDevice, BootstrapOrganizationError>>
 export function buildBackendOrganizationBootstrapAddr(
     addr: string,
     organization_id: string
@@ -782,19 +788,95 @@ export function buildBackendOrganizationBootstrapAddr(
 export function cancel(
     canceller: number
 ): Promise<Result<null, CancelError>>
-export function newCanceller(
-): Promise<number>
+export function claimerDeviceFinalizeSaveLocalDevice(
+    handle: number,
+    save_strategy: DeviceSaveStrategy
+): Promise<Result<AvailableDevice, ClaimInProgressError>>
+export function claimerDeviceInProgress1DoSignifyTrust(
+    canceller: number,
+    handle: number
+): Promise<Result<DeviceClaimInProgress2Info, ClaimInProgressError>>
+export function claimerDeviceInProgress2DoWaitPeerTrust(
+    canceller: number,
+    handle: number
+): Promise<Result<DeviceClaimInProgress3Info, ClaimInProgressError>>
+export function claimerDeviceInProgress3DoClaim(
+    canceller: number,
+    handle: number,
+    requested_device_label: string | null
+): Promise<Result<DeviceClaimFinalizeInfo, ClaimInProgressError>>
+export function claimerDeviceInitialDoWaitPeer(
+    canceller: number,
+    handle: number
+): Promise<Result<DeviceClaimInProgress1Info, ClaimInProgressError>>
+export function claimerGreeterAbortOperation(
+    handle: number
+): Promise<Result<null, ClaimerGreeterAbortOperationError>>
+export function claimerRetrieveInfo(
+    config: ClientConfig,
+    on_event_callback: (event: ClientEvent) => void,
+    addr: string
+): Promise<Result<UserOrDeviceClaimInitialInfo, ClaimerRetrieveInfoError>>
+export function claimerUserFinalizeSaveLocalDevice(
+    handle: number,
+    save_strategy: DeviceSaveStrategy
+): Promise<Result<AvailableDevice, ClaimInProgressError>>
+export function claimerUserInProgress1DoSignifyTrust(
+    canceller: number,
+    handle: number
+): Promise<Result<UserClaimInProgress2Info, ClaimInProgressError>>
+export function claimerUserInProgress2DoWaitPeerTrust(
+    canceller: number,
+    handle: number
+): Promise<Result<UserClaimInProgress3Info, ClaimInProgressError>>
+export function claimerUserInProgress3DoClaim(
+    canceller: number,
+    handle: number,
+    requested_device_label: string | null,
+    requested_human_handle: HumanHandle | null
+): Promise<Result<UserClaimFinalizeInfo, ClaimInProgressError>>
+export function claimerUserInitialDoWaitPeer(
+    canceller: number,
+    handle: number
+): Promise<Result<UserClaimInProgress1Info, ClaimInProgressError>>
+export function clientDeleteInvitation(
+    client: number,
+    token: string
+): Promise<Result<null, DeleteInvitationError>>
+export function clientInfo(
+    client: number
+): Promise<Result<ClientInfo, ClientInfoError>>
+export function clientListInvitations(
+    client: number
+): Promise<Result<Array<InviteListItem>, ListInvitationsError>>
+export function clientListWorkspaces(
+    client: number
+): Promise<Result<Array<[string, string]>, ClientListWorkspacesError>>
+export function clientNewDeviceInvitation(
+    client: number,
+    send_email: boolean
+): Promise<Result<[string, InvitationEmailSentStatus], NewDeviceInvitationError>>
+export function clientNewUserInvitation(
+    client: number,
+    claimer_email: string,
+    send_email: boolean
+): Promise<Result<[string, InvitationEmailSentStatus], NewUserInvitationError>>
 export function clientStart(
     config: ClientConfig,
     on_event_callback: (event: ClientEvent) => void,
     access: DeviceAccessStrategy
 ): Promise<Result<number, ClientStartError>>
+export function clientStartDeviceInvitationGreet(
+    client: number,
+    token: string
+): Promise<Result<DeviceGreetInitialInfo, ClientStartInvitationGreetError>>
+export function clientStartUserInvitationGreet(
+    client: number,
+    token: string
+): Promise<Result<UserGreetInitialInfo, ClientStartInvitationGreetError>>
 export function clientStop(
     client: number
 ): Promise<Result<null, ClientStopError>>
-export function clientListWorkspaces(
-    client: number
-): Promise<Result<Array<[string, string]>, ClientListWorkspacesError>>
 export function clientWorkspaceCreate(
     client: number,
     name: string
@@ -810,100 +892,25 @@ export function clientWorkspaceShare(
     recipient: string,
     role: RealmRole | null
 ): Promise<Result<null, ClientWorkspaceShareError>>
-export function clientInfo(
-    client: number
-): Promise<Result<ClientInfo, ClientInfoError>>
-export function claimerGreeterAbortOperation(
-    handle: number
-): Promise<Result<null, ClaimerGreeterAbortOperationError>>
-export function listAvailableDevices(
-    path: string
-): Promise<Array<AvailableDevice>>
-export function bootstrapOrganization(
-    config: ClientConfig,
-    on_event_callback: (event: ClientEvent) => void,
-    bootstrap_organization_addr: string,
-    save_strategy: DeviceSaveStrategy,
-    human_handle: HumanHandle | null,
-    device_label: string | null,
-    sequester_authority_verify_key: Uint8Array | null
-): Promise<Result<AvailableDevice, BootstrapOrganizationError>>
-export function claimerRetrieveInfo(
-    config: ClientConfig,
-    on_event_callback: (event: ClientEvent) => void,
-    addr: string
-): Promise<Result<UserOrDeviceClaimInitialInfo, ClaimerRetrieveInfoError>>
-export function claimerUserInitialDoWaitPeer(
+export function getPlatform(
+): Promise<Platform>
+export function greeterDeviceInProgress1DoWaitPeerTrust(
     canceller: number,
     handle: number
-): Promise<Result<UserClaimInProgress1Info, ClaimInProgressError>>
-export function claimerDeviceInitialDoWaitPeer(
+): Promise<Result<DeviceGreetInProgress2Info, GreetInProgressError>>
+export function greeterDeviceInProgress2DoSignifyTrust(
     canceller: number,
     handle: number
-): Promise<Result<DeviceClaimInProgress1Info, ClaimInProgressError>>
-export function claimerUserInProgress1DoSignifyTrust(
+): Promise<Result<DeviceGreetInProgress3Info, GreetInProgressError>>
+export function greeterDeviceInProgress3DoGetClaimRequests(
     canceller: number,
     handle: number
-): Promise<Result<UserClaimInProgress2Info, ClaimInProgressError>>
-export function claimerDeviceInProgress1DoSignifyTrust(
-    canceller: number,
-    handle: number
-): Promise<Result<DeviceClaimInProgress2Info, ClaimInProgressError>>
-export function claimerUserInProgress2DoWaitPeerTrust(
-    canceller: number,
-    handle: number
-): Promise<Result<UserClaimInProgress3Info, ClaimInProgressError>>
-export function claimerDeviceInProgress2DoWaitPeerTrust(
-    canceller: number,
-    handle: number
-): Promise<Result<DeviceClaimInProgress3Info, ClaimInProgressError>>
-export function claimerUserInProgress3DoClaim(
+): Promise<Result<DeviceGreetInProgress4Info, GreetInProgressError>>
+export function greeterDeviceInProgress4DoCreate(
     canceller: number,
     handle: number,
-    requested_device_label: string | null,
-    requested_human_handle: HumanHandle | null
-): Promise<Result<UserClaimFinalizeInfo, ClaimInProgressError>>
-export function claimerDeviceInProgress3DoClaim(
-    canceller: number,
-    handle: number,
-    requested_device_label: string | null
-): Promise<Result<DeviceClaimFinalizeInfo, ClaimInProgressError>>
-export function claimerUserFinalizeSaveLocalDevice(
-    handle: number,
-    save_strategy: DeviceSaveStrategy
-): Promise<Result<AvailableDevice, ClaimInProgressError>>
-export function claimerDeviceFinalizeSaveLocalDevice(
-    handle: number,
-    save_strategy: DeviceSaveStrategy
-): Promise<Result<AvailableDevice, ClaimInProgressError>>
-export function clientNewUserInvitation(
-    client: number,
-    claimer_email: string,
-    send_email: boolean
-): Promise<Result<[string, InvitationEmailSentStatus], NewUserInvitationError>>
-export function clientNewDeviceInvitation(
-    client: number,
-    send_email: boolean
-): Promise<Result<[string, InvitationEmailSentStatus], NewDeviceInvitationError>>
-export function clientDeleteInvitation(
-    client: number,
-    token: string
-): Promise<Result<null, DeleteInvitationError>>
-export function clientListInvitations(
-    client: number
-): Promise<Result<Array<InviteListItem>, ListInvitationsError>>
-export function clientStartUserInvitationGreet(
-    client: number,
-    token: string
-): Promise<Result<UserGreetInitialInfo, ClientStartInvitationGreetError>>
-export function clientStartDeviceInvitationGreet(
-    client: number,
-    token: string
-): Promise<Result<DeviceGreetInitialInfo, ClientStartInvitationGreetError>>
-export function greeterUserInitialDoWaitPeer(
-    canceller: number,
-    handle: number
-): Promise<Result<UserGreetInProgress1Info, GreetInProgressError>>
+    device_label: string | null
+): Promise<Result<null, GreetInProgressError>>
 export function greeterDeviceInitialDoWaitPeer(
     canceller: number,
     handle: number
@@ -912,26 +919,14 @@ export function greeterUserInProgress1DoWaitPeerTrust(
     canceller: number,
     handle: number
 ): Promise<Result<UserGreetInProgress2Info, GreetInProgressError>>
-export function greeterDeviceInProgress1DoWaitPeerTrust(
-    canceller: number,
-    handle: number
-): Promise<Result<DeviceGreetInProgress2Info, GreetInProgressError>>
 export function greeterUserInProgress2DoSignifyTrust(
     canceller: number,
     handle: number
 ): Promise<Result<UserGreetInProgress3Info, GreetInProgressError>>
-export function greeterDeviceInProgress2DoSignifyTrust(
-    canceller: number,
-    handle: number
-): Promise<Result<DeviceGreetInProgress3Info, GreetInProgressError>>
 export function greeterUserInProgress3DoGetClaimRequests(
     canceller: number,
     handle: number
 ): Promise<Result<UserGreetInProgress4Info, GreetInProgressError>>
-export function greeterDeviceInProgress3DoGetClaimRequests(
-    canceller: number,
-    handle: number
-): Promise<Result<DeviceGreetInProgress4Info, GreetInProgressError>>
 export function greeterUserInProgress4DoCreate(
     canceller: number,
     handle: number,
@@ -939,41 +934,46 @@ export function greeterUserInProgress4DoCreate(
     device_label: string | null,
     profile: UserProfile
 ): Promise<Result<null, GreetInProgressError>>
-export function greeterDeviceInProgress4DoCreate(
+export function greeterUserInitialDoWaitPeer(
     canceller: number,
-    handle: number,
-    device_label: string | null
-): Promise<Result<null, GreetInProgressError>>
-export function getPlatform(
-): Promise<Platform>
+    handle: number
+): Promise<Result<UserGreetInProgress1Info, GreetInProgressError>>
+export function listAvailableDevices(
+    path: string
+): Promise<Array<AvailableDevice>>
+export function newCanceller(
+): Promise<number>
+export function parseBackendAddr(
+    url: string
+): Promise<Result<ParsedBackendAddr, ParseBackendAddrError>>
+export function testDropTestbed(
+    path: string
+): Promise<null>
+export function testGetTestbedBootstrapOrganizationAddr(
+    discriminant_dir: string
+): Promise<string | null>
+export function testGetTestbedOrganizationId(
+    discriminant_dir: string
+): Promise<string | null>
 export function testNewTestbed(
     template: string,
     test_server: string | null
 ): Promise<string>
-export function testGetTestbedOrganizationId(
-    discriminant_dir: string
-): Promise<string | null>
-export function testGetTestbedBootstrapOrganizationAddr(
-    discriminant_dir: string
-): Promise<string | null>
-export function testDropTestbed(
-    path: string
-): Promise<null>
-export function validateEntryName(
-    raw: string
-): Promise<boolean>
-export function validatePath(
-    raw: string
-): Promise<boolean>
-export function validateHumanHandleLabel(
+export function validateDeviceLabel(
     raw: string
 ): Promise<boolean>
 export function validateEmail(
     raw: string
 ): Promise<boolean>
-export function validateDeviceLabel(
+export function validateEntryName(
+    raw: string
+): Promise<boolean>
+export function validateHumanHandleLabel(
     raw: string
 ): Promise<boolean>
 export function validateInvitationToken(
+    raw: string
+): Promise<boolean>
+export function validatePath(
     raw: string
 ): Promise<boolean>
