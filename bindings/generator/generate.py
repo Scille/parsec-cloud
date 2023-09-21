@@ -227,10 +227,10 @@ class BaseTypeInUse:
             )
 
         elif isinstance(param, type) and issubclass(param, I32BasedType):
-            return I32BasedTypeInUse(name=param.__name__)
+            return NumberBasedTypeInUse(name=param.__name__, type="i32")
 
         elif isinstance(param, type) and issubclass(param, U32BasedType):
-            return U32BasedTypeInUse(name=param.__name__)
+            return NumberBasedTypeInUse(name=param.__name__, type="u32")
 
         else:
             typespec = TYPES_DB.get(param)
@@ -337,14 +337,9 @@ class BytesBasedTypeInUse(BaseTypeInUse):
 
 
 @dataclass
-class I32BasedTypeInUse(BaseTypeInUse):
-    kind = "i32_based"
-    name: str
-
-
-@dataclass
-class U32BasedTypeInUse(BaseTypeInUse):
-    kind = "u32_based"
+class NumberBasedTypeInUse(BaseTypeInUse):
+    kind = "number_based"
+    type: str
     name: str
 
 
@@ -372,8 +367,7 @@ class MethSpec:
 class ApiSpecs:
     str_based_types: List[str]
     bytes_based_types: List[str]
-    i32_based_types: List[str]
-    u32_based_types: List[str]
+    number_based_types: List[str]
     meths: List[MethSpec]
     structs: List[StructSpec]
     variants: List[VariantSpec]
@@ -542,15 +536,10 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             for item in api_items.values()
             if isinstance(item, type) and issubclass(item, BytesBasedType)
         ],
-        i32_based_types=[
+        number_based_types=[
             item.__name__
             for item in api_items.values()
-            if isinstance(item, type) and issubclass(item, I32BasedType)
-        ],
-        u32_based_types=[
-            item.__name__
-            for item in api_items.values()
-            if isinstance(item, type) and issubclass(item, U32BasedType)
+            if isinstance(item, type) and issubclass(item, (I32BasedType, U32BasedType))
         ],
         enums=enums,
         variants=variants,

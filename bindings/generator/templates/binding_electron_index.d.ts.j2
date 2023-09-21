@@ -22,7 +22,7 @@ Array<{{ render_type(t.elem) }}>
 null
 {%- elif t.kind == "bool" -%}
 boolean
-{%- elif t.kind in ("i32_based", "u32_based", "float") -%}
+{%- elif t.kind in ("number_based", "float") -%}
 number
 {%- elif t.kind in ("str", "str_based") -%}
 string
