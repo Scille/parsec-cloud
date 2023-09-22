@@ -1,15 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+#![allow(clippy::duplicate_mod)]
+
 use super::authenticated_cmds;
+
+#[path = "../v3/invite_list.rs"]
+mod compat;
 
 // Request
 
-pub fn req() {
-    // TODO #4545: Implement test
-}
+pub use compat::req;
 
 // Responses
 
-pub fn rep_ok() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_ok;
