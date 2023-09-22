@@ -4,9 +4,7 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use libparsec_protocol::{
-    authenticated_cmds::v3 as authenticated_cmds, invited_cmds::v3 as invited_cmds,
-};
+use libparsec_protocol::authenticated_cmds::v3 as authenticated_cmds;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -184,80 +182,6 @@ fn serde_invite_3a_greeter_wait_peer_trust_rep(
     let raw2 = data.dump().unwrap();
 
     let data2 = authenticated_cmds::invite_3a_greeter_wait_peer_trust::Rep::load(&raw2).unwrap();
-
-    assert_eq!(data2, expected);
-}
-
-#[parsec_test]
-fn serde_invite_3b_claimer_wait_peer_trust_req() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   cmd: "invite_3b_claimer_wait_peer_trust"
-    let raw = hex!(
-        "81a3636d64d921696e766974655f33625f636c61696d65725f776169745f706565725f7472"
-        "757374"
-    );
-
-    let req = invited_cmds::invite_3b_claimer_wait_peer_trust::Req;
-
-    let expected = invited_cmds::AnyCmdReq::Invite3bClaimerWaitPeerTrust(req);
-
-    let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
-
-    assert_eq!(data, expected);
-
-    // Also test serialization round trip
-    let raw2 = if let invited_cmds::AnyCmdReq::Invite3bClaimerWaitPeerTrust(data) = data {
-        data.dump().unwrap()
-    } else {
-        unreachable!()
-    };
-
-    let data2 = invited_cmds::AnyCmdReq::load(&raw2).unwrap();
-
-    assert_eq!(data2, expected);
-}
-
-#[parsec_test]
-#[case::ok(
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   status: "ok"
-    &hex!(
-        "81a6737461747573a26f6b"
-    )[..],
-    invited_cmds::invite_3b_claimer_wait_peer_trust::Rep::Ok
-)]
-#[case::not_found(
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   status: "not_found"
-    &hex!(
-        "81a6737461747573a96e6f745f666f756e64"
-    )[..],
-    invited_cmds::invite_3b_claimer_wait_peer_trust::Rep::NotFound
-)]
-#[case::invalid_state(
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   status: "invalid_state"
-    &hex!(
-        "81a6737461747573ad696e76616c69645f7374617465"
-    )[..],
-    invited_cmds::invite_3b_claimer_wait_peer_trust::Rep::InvalidState
-)]
-fn serde_invite_3b_claimer_wait_peer_trust_rep(
-    #[case] raw: &[u8],
-    #[case] expected: invited_cmds::invite_3b_claimer_wait_peer_trust::Rep,
-) {
-    let data = invited_cmds::invite_3b_claimer_wait_peer_trust::Rep::load(raw).unwrap();
-
-    assert_eq!(data, expected);
-
-    // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
-
-    let data2 = invited_cmds::invite_3b_claimer_wait_peer_trust::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }

@@ -1,27 +1,23 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+#![allow(clippy::duplicate_mod)]
+
+// The compat module allows to re-use tests from previous major API
+#[path = "../v3/invite_3b_claimer_wait_peer_trust.rs"]
+mod compat;
+
 use super::invited_cmds;
 
 // Request
 
-pub fn req() {
-    // TODO #4545: Implement test
-}
+pub use compat::req;
 
 // Responses
 
-pub fn rep_ok() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_ok;
 
-pub fn rep_already_deleted() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_already_deleted;
 
-pub fn rep_not_found() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_not_found;
 
-pub fn rep_invalid_state() {
-    // TODO #4545: Implement test
-}
+pub use compat::rep_invalid_state;
