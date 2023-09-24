@@ -20,7 +20,7 @@
         "electron:release": "npm run build && electron-builder build --config ./electron-builder.config.json --publish never"
     },
     "dependencies": {
-        "@capacitor-community/electron": "^4.1.2",
+        "@capacitor-community/electron": "^5.0.1",
         "chokidar": "~3.5.2",
         "electron-is-dev": "~2.0.0",
         "electron-serve": "~1.1.0",
