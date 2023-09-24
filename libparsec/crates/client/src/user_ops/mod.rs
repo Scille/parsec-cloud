@@ -72,8 +72,7 @@ impl UserOps {
     }
 
     /// Low-level access, should be only needed for tests
-    #[cfg(test)]
-    pub(crate) fn test_get_user_manifest(&self) -> Arc<LocalUserManifest> {
+    pub(crate) fn get_user_manifest(&self) -> Arc<LocalUserManifest> {
         self.storage.get_user_manifest()
     }
 

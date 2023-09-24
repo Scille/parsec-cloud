@@ -35,7 +35,7 @@ async fn simple(env: &TestbedEnv) {
     let user_ops = user_ops_factory(env, &alice).await;
 
     let (w_id, w_name, w_key) = {
-        let user_manifest = user_ops.test_get_user_manifest();
+        let user_manifest = user_ops.get_user_manifest();
         let w_entry = &user_manifest.workspaces[0];
         (w_entry.id, w_entry.name.clone(), w_entry.key.clone())
     };
