@@ -107,21 +107,21 @@ impl UserOps {
         create::create_workspace(self, name).await
     }
 
-    pub async fn workspace_rename(
+    pub async fn rename_workspace(
         &self,
         realm_id: VlobID,
         new_name: EntryName,
-    ) -> Result<(), WorkspaceRenameError> {
-        create::workspace_rename(self, realm_id, new_name).await
+    ) -> Result<(), RenameWorkspaceError> {
+        create::rename_workspace(self, realm_id, new_name).await
     }
 
-    pub async fn workspace_share(
+    pub async fn share_workspace(
         &self,
         realm_id: VlobID,
         recipient: &UserID,
         role: Option<RealmRole>,
-    ) -> Result<(), WorkspaceShareError> {
-        share::workspace_share(self, realm_id, recipient, role).await
+    ) -> Result<(), ShareWorkspaceError> {
+        share::share_workspace(self, realm_id, recipient, role).await
     }
 
     pub async fn workspace_start_reencryption(

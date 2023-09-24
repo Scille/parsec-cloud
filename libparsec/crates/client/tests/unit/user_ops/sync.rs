@@ -22,7 +22,7 @@ async fn sync_non_placeholder(env: &TestbedEnv) {
     // Do a change requiring a sync
 
     user_ops
-        .workspace_rename(wid, "new_name".parse().unwrap())
+        .rename_workspace(wid, "new_name".parse().unwrap())
         .await
         .unwrap();
 

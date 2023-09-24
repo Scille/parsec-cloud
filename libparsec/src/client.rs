@@ -3,8 +3,8 @@
 use std::sync::Arc;
 
 pub use libparsec_client::user_ops::{
-    ClientInfoError, WorkspaceRenameError as ClientWorkspaceRenameError,
-    WorkspaceShareError as ClientWorkspaceShareError,
+    ClientInfoError, RenameWorkspaceError as ClientRenameWorkspaceError,
+    ShareWorkspaceError as ClientShareWorkspaceError,
 };
 use libparsec_types::prelude::*;
 pub use libparsec_types::{DeviceAccessStrategy, RealmRole};
@@ -151,15 +151,15 @@ pub async fn client_list_workspaces(
  */
 
 #[derive(Debug, thiserror::Error)]
-pub enum ClientWorkspaceCreateError {
+pub enum ClientCreateWorkspaceError {
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
 
-pub async fn client_workspace_create(
+pub async fn client_create_workspace(
     client: Handle,
     name: EntryName,
-) -> Result<VlobID, ClientWorkspaceCreateError> {
+) -> Result<VlobID, ClientCreateWorkspaceError> {
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
@@ -168,7 +168,7 @@ pub async fn client_workspace_create(
 
     client
         .user_ops
-        .workspace_create(name)
+        .create_workspace(name)
         .await
         .map_err(|err| err.into())
 }
@@ -177,30 +177,30 @@ pub async fn client_workspace_create(
  * Client rename workspace
  */
 
-pub async fn client_workspace_rename(
+pub async fn client_rename_workspace(
     client: Handle,
     realm_id: VlobID,
     new_name: EntryName,
-) -> Result<(), ClientWorkspaceRenameError> {
+) -> Result<(), ClientRenameWorkspaceError> {
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
-    client.user_ops.workspace_rename(realm_id, new_name).await
+    client.user_ops.rename_workspace(realm_id, new_name).await
 }
 
 /*
  * Client share workspace
  */
 
-pub async fn client_workspace_share(
+pub async fn client_share_workspace(
     client: Handle,
     realm_id: VlobID,
     recipient: UserID,
     role: Option<RealmRole>,
-) -> Result<(), ClientWorkspaceShareError> {
+) -> Result<(), ClientShareWorkspaceError> {
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
@@ -209,7 +209,7 @@ pub async fn client_workspace_share(
 
     client
         .user_ops
-        .workspace_share(realm_id, &recipient, role)
+        .share_workspace(realm_id, &recipient, role)
         .await
 }
 

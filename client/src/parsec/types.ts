@@ -28,7 +28,7 @@ import type {
   ListInvitationsError,
   DeleteInvitationError,
   ClientListWorkspacesError,
-  ClientWorkspaceCreateError,
+  ClientCreateWorkspaceError,
   ClientStopError,
   ClaimerRetrieveInfoError,
   ClaimInProgressError,
@@ -113,7 +113,7 @@ export {
   ParseBackendAddrError,
   DeleteInvitationError,
   ClientListWorkspacesError,
-  ClientWorkspaceCreateError,
+  ClientCreateWorkspaceError,
   ClientInfoError,
   GetWorkspaceNameError,
 };

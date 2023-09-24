@@ -60,13 +60,13 @@ async fn base(env: &TestbedEnv) {
 
     let wid = client
         .user_ops
-        .workspace_create("wksp1".parse().unwrap())
+        .create_workspace("wksp1".parse().unwrap())
         .await
         .unwrap();
 
     client
         .user_ops
-        .workspace_rename(wid, "wksp1'".parse().unwrap())
+        .rename_workspace(wid, "wksp1'".parse().unwrap())
         .await
         .unwrap();
 
