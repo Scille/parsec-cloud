@@ -220,4 +220,12 @@ impl CertificatesOps {
     pub async fn get_current_self_profile(&self) -> anyhow::Result<UserProfile> {
         self.storage.write().await.get_current_self_profile().await
     }
+
+    pub async fn get_current_self_realm_roles(&self) -> anyhow::Result<Vec<(VlobID, RealmRole)>> {
+        self.storage
+            .write()
+            .await
+            .get_current_self_realm_roles()
+            .await
+    }
 }
