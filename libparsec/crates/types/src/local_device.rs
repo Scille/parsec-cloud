@@ -90,7 +90,7 @@ impl LocalDevice {
     /// and the device ID, although it shouldn't be assumed that this information
     /// can be recovered from the slug as this might change in the future.
     ///
-    /// The purpose of the slog is simply to tell whether `LocalDevice` and
+    /// The purpose of the slug is simply to tell whether `LocalDevice` and
     /// `AvailableDevice` objects corresponds to the same device.
     pub fn slug(&self) -> String {
         local_device_slug(
