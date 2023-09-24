@@ -71,6 +71,26 @@ async def client_stop(client: Handle) -> Result[None, ClientStopError]:
     raise NotImplementedError
 
 
+class ClientInfoError(ErrorVariant):
+    class Internal:
+        pass
+
+
+class ClientInfo(Structure):
+    organization_id: OrganizationID
+    device_id: DeviceID
+    device_label: Optional[DeviceLabel]
+    user_id: UserID
+    profile: UserProfile
+    human_handle: Optional[HumanHandle]
+
+
+async def client_info(
+    client: Handle,
+) -> Result[ClientInfo, ClientInfoError,]:
+    raise NotImplementedError
+
+
 class ClientListWorkspacesError(ErrorVariant):
     class Internal:
         pass
@@ -153,25 +173,5 @@ async def client_share_workspace(
     realm_id: VlobID,
     recipient: UserID,
     role: Optional[RealmRole],
-    raise NotImplementedError
-
-
-class ClientInfoError(ErrorVariant):
-    class Internal:
-        pass
-
-
-class ClientInfo(Structure):
-    organization_id: OrganizationID
-    device_id: DeviceID
-    device_label: Optional[DeviceLabel]
-    user_id: UserID
-    profile: UserProfile
-    human_handle: Optional[HumanHandle]
-
-
-async def client_info(
-    client: Handle,
-) -> Result[ClientInfo, ClientInfoError,]:
 ) -> Result[None, ClientShareWorkspaceError]:
     raise NotImplementedError
