@@ -42,10 +42,15 @@ pub(super) async fn fetch_remote_child_manifest(
 ) -> Result<ChildManifest, FetchRemoteManifestError> {
     let data = fetch_vlob(ops, vlob_id, version).await?;
 
+    let realm_key = {
+        let guard = ops.user_dependant_config.lock().expect("Mutex is poisoned");
+        guard.realm_key.clone()
+    };
+
     ops.certificates_ops
         .validate_child_manifest(
             ops.realm_id,
-            &ops.realm_key,
+            &realm_key,
             vlob_id,
             data.certificate_index,
             &data.expected_author,
@@ -76,10 +81,15 @@ pub(super) async fn fetch_remote_workspace_manifest(
     let vlob_id = ops.realm_id;
     let data = fetch_vlob(ops, vlob_id, version).await?;
 
+    let realm_key = {
+        let guard = ops.user_dependant_config.lock().expect("Mutex is poisoned");
+        guard.realm_key.clone()
+    };
+
     ops.certificates_ops
         .validate_workspace_manifest(
             ops.realm_id,
-            &ops.realm_key,
+            &realm_key,
             data.certificate_index,
             &data.expected_author,
             data.expected_version,

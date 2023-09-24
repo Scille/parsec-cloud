@@ -10,6 +10,7 @@ mod invite;
 mod platform;
 mod testbed;
 mod validation;
+mod workspace;
 
 pub use addr::*;
 pub use cancel::*;
@@ -20,6 +21,7 @@ pub use invite::*;
 pub use platform::*;
 pub use testbed::*;
 pub use validation::*;
+pub use workspace::*;
 
 pub async fn list_available_devices(config_dir: &std::path::Path) -> Vec<AvailableDevice> {
     libparsec_platform_device_loader::list_available_devices(config_dir).await

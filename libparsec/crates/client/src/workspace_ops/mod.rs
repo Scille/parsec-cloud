@@ -5,7 +5,10 @@ mod fetch;
 
 pub use entry_transactions::*;
 
-use std::sync::Arc;
+use std::{
+    ops::DerefMut,
+    sync::{Arc, Mutex},
+};
 
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_storage::workspace::{WorkspaceCacheStorage, WorkspaceDataStorage};
@@ -13,6 +16,12 @@ use libparsec_types::prelude::*;
 
 use crate::{certificates_ops::CertificatesOps, event_bus::EventBus, ClientConfig};
 
+#[derive(Debug)]
+pub(crate) struct UserDependantConfig {
+    pub realm_key: SecretKey,
+    pub user_role: RealmRole,
+    pub workspace_name: EntryName,
+}
 
 #[derive(Debug)]
 pub struct WorkspaceOps {
@@ -29,7 +38,7 @@ pub struct WorkspaceOps {
     #[allow(unused)]
     event_bus: EventBus,
     realm_id: VlobID,
-    realm_key: SecretKey,
+    user_dependant_config: Mutex<UserDependantConfig>,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -57,7 +66,7 @@ impl WorkspaceOps {
         certificates_ops: Arc<CertificatesOps>,
         event_bus: EventBus,
         realm_id: VlobID,
-        realm_key: SecretKey,
+        user_dependant_config: UserDependantConfig,
     ) -> Result<Self, anyhow::Error> {
         // TODO: handle errors
         let data_storage =
@@ -78,7 +87,7 @@ impl WorkspaceOps {
             certificates_ops,
             event_bus,
             realm_id,
-            realm_key,
+            user_dependant_config: Mutex::new(user_dependant_config),
         })
     }
 
@@ -94,6 +103,17 @@ impl WorkspaceOps {
             .context("Cannot stop data storage")?;
         self.cache_storage.stop().await;
         Ok(())
+    }
+
+    pub(crate) fn update_user_dependant_config(
+        &self,
+        updater: impl FnOnce(&mut UserDependantConfig),
+    ) {
+        let mut guard = self
+            .user_dependant_config
+            .lock()
+            .expect("Mutex is poisoned");
+        updater(guard.deref_mut());
     }
 
     /*
