@@ -736,7 +736,7 @@ impl CertificatesCachedStorage {
     }
 
     /// Get the current (i.e. at the given index) role for this user in each
-    /// realm it is part of
+    /// realm it is (or used to be) part of
     pub async fn get_user_realms_roles(
         &self,
         up_to: UpTo,
