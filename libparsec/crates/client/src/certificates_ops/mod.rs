@@ -29,8 +29,14 @@ pub struct CertificatesOps {
     storage: RwLock<storage::CertificatesCachedStorage>,
 }
 
+// For readability, we define the public interface here and let the actual
+// implementation in separated submodules
 impl CertificatesOps {
-    pub async fn start(
+    /*
+     * Crate-only interface (used by client, opses and monitors)
+     */
+
+    pub(crate) async fn start(
         config: Arc<ClientConfig>,
         device: Arc<LocalDevice>,
         event_bus: EventBus,
@@ -48,21 +54,25 @@ impl CertificatesOps {
         })
     }
 
-    pub async fn stop(&self) {
+    /// Stop the underlying storage (and flush whatever data is not yet on disk)
+    ///
+    /// Once stopped, it can still theoretically be used (i.e. `stop` doesn't
+    /// consume `self`), but will do nothing but return stopped error.
+    pub(crate) async fn stop(&self) {
         self.storage.read().await.stop().await;
     }
 
     // For readability, we define the public interface here and let the actual
     // implementation in separated submodules
 
-    pub async fn poll_server_for_new_certificates(
+    pub(crate) async fn poll_server_for_new_certificates(
         &self,
         latest_known_index: Option<IndexInt>,
     ) -> Result<IndexInt, PollServerError> {
         poll::poll_server_for_new_certificates(self, latest_known_index).await
     }
 
-    pub async fn validate_message(
+    pub(crate) async fn validate_message(
         &self,
         certificate_index: IndexInt,
         index: IndexInt,
@@ -81,7 +91,7 @@ impl CertificatesOps {
         .await
     }
 
-    pub async fn validate_user_manifest(
+    pub(crate) async fn validate_user_manifest(
         &self,
         certificate_index: IndexInt,
         author: &DeviceID,
@@ -101,7 +111,7 @@ impl CertificatesOps {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub async fn validate_workspace_manifest(
+    pub(crate) async fn validate_workspace_manifest(
         &self,
         realm_id: VlobID,
         realm_key: &SecretKey,
@@ -125,7 +135,7 @@ impl CertificatesOps {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub async fn validate_child_manifest(
+    pub(crate) async fn validate_child_manifest(
         &self,
         realm_id: VlobID,
         realm_key: &SecretKey,
@@ -149,8 +159,6 @@ impl CertificatesOps {
         )
         .await
     }
-
-    // Semi-public interface
 
     pub(crate) async fn encrypt_for_user(
         &self,
@@ -204,6 +212,10 @@ impl CertificatesOps {
             Err(err @ storage::GetCertificateError::Internal(_)) => Err(err.into()),
         }
     }
+
+    /*
+     * Public interface
+     */
 
     pub async fn get_current_self_profile(&self) -> anyhow::Result<UserProfile> {
         self.storage.write().await.get_current_self_profile().await

@@ -13,15 +13,6 @@ use libparsec_types::prelude::*;
 
 use crate::{certificates_ops::CertificatesOps, event_bus::EventBus, ClientConfig};
 
-// enum WorkspaceOpsState {
-//     /// Default mode: read & write operations are allowed
-//     ReadWrite,
-//     /// User has a reduced role in this workspace: only read operations are allowed
-//     ReadOnly,
-//     /// The workspace is under reencryption: only read operations are allowed
-//     WaitForReencryption,
-//     HelpWithReencryption,
-// }
 
 #[derive(Debug)]
 pub struct WorkspaceOps {
@@ -52,12 +43,14 @@ pub enum WorkspaceOpsError {
 #[derive(Debug)]
 pub struct ReencryptionJob {}
 
+// For readability, we define the public interface here and let the actual
+// implementation in separated submodules
 impl WorkspaceOps {
-    pub fn realm_id(&self) -> VlobID {
-        self.realm_id
-    }
+    /*
+     * Crate-only interface (used by client, opses and monitors)
+     */
 
-    pub async fn start(
+    pub(crate) async fn start(
         config: Arc<ClientConfig>,
         device: Arc<LocalDevice>,
         cmds: Arc<AuthenticatedCmds>,
@@ -89,7 +82,11 @@ impl WorkspaceOps {
         })
     }
 
-    pub async fn stop(&self) -> anyhow::Result<()> {
+    /// Stop the underlying storage (and flush whatever data is not yet on disk)
+    ///
+    /// Once stopped, it can still theoretically be used (i.e. `stop` doesn't
+    /// consume `self`), but will do nothing but return stopped error.
+    pub(crate) async fn stop(&self) -> anyhow::Result<()> {
         // TODO: is the storages teardown order important ?
         self.data_storage
             .stop()
@@ -99,7 +96,15 @@ impl WorkspaceOps {
         Ok(())
     }
 
-    pub async fn entry_info(&self, path: &FsPath) -> anyhow::Result<EntryInfo> {
+    /*
+     * Public interface
+     */
+
+    pub fn realm_id(&self) -> VlobID {
+        self.realm_id
+    }
+
+    pub async fn entry_info(&self, path: &FsPath) -> Result<EntryInfo, EntryInfoError> {
         entry_transactions::entry_info(self, path).await
     }
 }

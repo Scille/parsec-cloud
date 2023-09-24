@@ -40,8 +40,14 @@ pub struct UserOps {
 #[derive(Debug)]
 pub struct ReencryptionJob {}
 
+// For readability, we define the public interface here and let the actual
+// implementation in separated submodules
 impl UserOps {
-    pub async fn start(
+    /*
+     * Crate-only interface (used by client, opses and monitors)
+     */
+
+    pub(crate) async fn start(
         config: Arc<ClientConfig>,
         device: Arc<LocalDevice>,
         cmds: Arc<AuthenticatedCmds>,
@@ -61,7 +67,7 @@ impl UserOps {
         })
     }
 
-    pub async fn stop(&self) {
+    pub(crate) async fn stop(&self) {
         self.storage.stop().await;
     }
 
@@ -71,8 +77,22 @@ impl UserOps {
         self.storage.get_user_manifest()
     }
 
-    // For readability, we define the public interface here and let the actual
-    // implementation in separated submodules
+    #[allow(unused)]
+    pub(crate) async fn process_last_messages(
+        &self,
+        latest_known_index: Option<IndexInt>,
+    ) -> Result<(), ProcessLastMessagesError> {
+        message::process_last_messages(self, latest_known_index).await
+    }
+
+    #[allow(unused)]
+    pub(crate) async fn sync(&self) -> Result<(), SyncError> {
+        sync::sync(self).await
+    }
+
+    /*
+     * Public interface
+     */
 
     pub fn list_workspaces(&self) -> Vec<(VlobID, EntryName)> {
         let user_manifest = self.storage.get_user_manifest();
@@ -83,19 +103,8 @@ impl UserOps {
             .collect()
     }
 
-    pub async fn process_last_messages(
-        &self,
-        latest_known_index: Option<IndexInt>,
-    ) -> Result<(), ProcessLastMessagesError> {
-        message::process_last_messages(self, latest_known_index).await
-    }
-
-    pub async fn sync(&self) -> Result<(), SyncError> {
-        sync::sync(self).await
-    }
-
-    pub async fn workspace_create(&self, name: EntryName) -> Result<VlobID, anyhow::Error> {
-        create::workspace_create(self, name).await
+    pub async fn create_workspace(&self, name: EntryName) -> Result<VlobID, anyhow::Error> {
+        create::create_workspace(self, name).await
     }
 
     pub async fn workspace_rename(
