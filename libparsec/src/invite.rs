@@ -253,8 +253,8 @@ pub fn claimer_greeter_abort_operation(
         | HandleItem::UserGreetInProgress3(_)
         | HandleItem::DeviceGreetInProgress3(_)
         | HandleItem::UserGreetInProgress4(_)
-        | HandleItem::DeviceGreetInProgress4(_) => Some(()),
-        _ => None,
+        | HandleItem::DeviceGreetInProgress4(_) => Ok(()),
+        invalid => Err(invalid),
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle").into())
 }
@@ -279,8 +279,8 @@ pub async fn claimer_user_initial_do_wait_peer(
 ) -> Result<UserClaimInProgress1Info, ClaimInProgressError> {
     let work = async {
         let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::UserClaimInitial(ctx) => Some(ctx),
-            _ => None,
+            HandleItem::UserClaimInitial(ctx) => Ok(ctx),
+            invalid => Err(invalid),
         })
         .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
@@ -310,8 +310,8 @@ pub async fn claimer_device_initial_do_wait_peer(
 ) -> Result<DeviceClaimInProgress1Info, ClaimInProgressError> {
     let work = async {
         let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::DeviceClaimInitial(ctx) => Some(ctx),
-            _ => None,
+            HandleItem::DeviceClaimInitial(ctx) => Ok(ctx),
+            invalid => Err(invalid),
         })
         .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
@@ -352,8 +352,8 @@ pub async fn claimer_user_in_progress_1_do_signify_trust(
 ) -> Result<UserClaimInProgress2Info, ClaimInProgressError> {
     let work = async {
         let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::UserClaimInProgress1(ctx) => Some(ctx),
-            _ => None,
+            HandleItem::UserClaimInProgress1(ctx) => Ok(ctx),
+            invalid => Err(invalid),
         })
         .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
@@ -381,8 +381,8 @@ pub async fn claimer_device_in_progress_1_do_signify_trust(
 ) -> Result<DeviceClaimInProgress2Info, ClaimInProgressError> {
     let work = async {
         let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::DeviceClaimInProgress1(ctx) => Some(ctx),
-            _ => None,
+            HandleItem::DeviceClaimInProgress1(ctx) => Ok(ctx),
+            invalid => Err(invalid),
         })
         .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
@@ -419,8 +419,8 @@ pub async fn claimer_user_in_progress_2_do_wait_peer_trust(
 ) -> Result<UserClaimInProgress3Info, ClaimInProgressError> {
     let work = async {
         let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::UserClaimInProgress2(ctx) => Some(ctx),
-            _ => None,
+            HandleItem::UserClaimInProgress2(ctx) => Ok(ctx),
+            invalid => Err(invalid),
         })
         .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
@@ -444,8 +444,8 @@ pub async fn claimer_device_in_progress_2_do_wait_peer_trust(
 ) -> Result<DeviceClaimInProgress3Info, ClaimInProgressError> {
     let work = async {
         let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::DeviceClaimInProgress2(ctx) => Some(ctx),
-            _ => None,
+            HandleItem::DeviceClaimInProgress2(ctx) => Ok(ctx),
+            invalid => Err(invalid),
         })
         .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
@@ -478,8 +478,8 @@ pub async fn claimer_user_in_progress_3_do_claim(
 ) -> Result<UserClaimFinalizeInfo, ClaimInProgressError> {
     let work = async {
         let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::UserClaimInProgress3(ctx) => Some(ctx),
-            _ => None,
+            HandleItem::UserClaimInProgress3(ctx) => Ok(ctx),
+            invalid => Err(invalid),
         })
         .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
@@ -506,8 +506,8 @@ pub async fn claimer_device_in_progress_3_do_claim(
 ) -> Result<DeviceClaimFinalizeInfo, ClaimInProgressError> {
     let work = async {
         let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::DeviceClaimInProgress3(ctx) => Some(ctx),
-            _ => None,
+            HandleItem::DeviceClaimInProgress3(ctx) => Ok(ctx),
+            invalid => Err(invalid),
         })
         .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
@@ -537,8 +537,8 @@ pub async fn claimer_user_finalize_save_local_device(
     save_strategy: DeviceSaveStrategy,
 ) -> Result<AvailableDevice, ClaimInProgressError> {
     let ctx = take_and_close_handle(handle, |x| match x {
-        HandleItem::UserClaimFinalize(ctx) => Some(ctx),
-        _ => None,
+        HandleItem::UserClaimFinalize(ctx) => Ok(ctx),
+        invalid => Err(invalid),
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
@@ -557,8 +557,8 @@ pub async fn claimer_device_finalize_save_local_device(
     save_strategy: DeviceSaveStrategy,
 ) -> Result<AvailableDevice, ClaimInProgressError> {
     let ctx = take_and_close_handle(handle, |x| match x {
-        HandleItem::DeviceClaimFinalize(ctx) => Some(ctx),
-        _ => None,
+        HandleItem::DeviceClaimFinalize(ctx) => Ok(ctx),
+        invalid => Err(invalid),
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
@@ -770,8 +770,8 @@ pub async fn greeter_user_initial_do_wait_peer(
 ) -> Result<UserGreetInProgress1Info, GreetInProgressError> {
     let work = async {
         let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::UserGreetInitial(ctx) => Some(ctx),
-            _ => None,
+            HandleItem::UserGreetInitial(ctx) => Ok(ctx),
+            invalid => Err(invalid),
         })
         .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
@@ -799,8 +799,8 @@ pub async fn greeter_device_initial_do_wait_peer(
 ) -> Result<DeviceGreetInProgress1Info, GreetInProgressError> {
     let work = async {
         let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::DeviceGreetInitial(ctx) => Some(ctx),
-            _ => None,
+            HandleItem::DeviceGreetInitial(ctx) => Ok(ctx),
+            invalid => Err(invalid),
         })
         .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
@@ -838,8 +838,8 @@ pub async fn greeter_user_in_progress_1_do_wait_peer_trust(
 ) -> Result<UserGreetInProgress2Info, GreetInProgressError> {
     let work = async {
         let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::UserGreetInProgress1(ctx) => Some(ctx),
-            _ => None,
+            HandleItem::UserGreetInProgress1(ctx) => Ok(ctx),
+            invalid => Err(invalid),
         })
         .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
@@ -869,8 +869,8 @@ pub async fn greeter_device_in_progress_1_do_wait_peer_trust(
 ) -> Result<DeviceGreetInProgress2Info, GreetInProgressError> {
     let work = async {
         let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::DeviceGreetInProgress1(ctx) => Some(ctx),
-            _ => None,
+            HandleItem::DeviceGreetInProgress1(ctx) => Ok(ctx),
+            invalid => Err(invalid),
         })
         .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
@@ -912,8 +912,8 @@ pub async fn greeter_user_in_progress_2_do_signify_trust(
 ) -> Result<UserGreetInProgress3Info, GreetInProgressError> {
     let work = async {
         let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::UserGreetInProgress2(ctx) => Some(ctx),
-            _ => None,
+            HandleItem::UserGreetInProgress2(ctx) => Ok(ctx),
+            invalid => Err(invalid),
         })
         .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
@@ -937,8 +937,8 @@ pub async fn greeter_device_in_progress_2_do_signify_trust(
 ) -> Result<DeviceGreetInProgress3Info, GreetInProgressError> {
     let work = async {
         let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::DeviceGreetInProgress2(ctx) => Some(ctx),
-            _ => None,
+            HandleItem::DeviceGreetInProgress2(ctx) => Ok(ctx),
+            invalid => Err(invalid),
         })
         .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
@@ -970,8 +970,8 @@ pub async fn greeter_user_in_progress_3_do_get_claim_requests(
 ) -> Result<UserGreetInProgress4Info, GreetInProgressError> {
     let work = async {
         let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::UserGreetInProgress3(ctx) => Some(ctx),
-            _ => None,
+            HandleItem::UserGreetInProgress3(ctx) => Ok(ctx),
+            invalid => Err(invalid),
         })
         .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
@@ -1001,8 +1001,8 @@ pub async fn greeter_device_in_progress_3_do_get_claim_requests(
 ) -> Result<DeviceGreetInProgress4Info, GreetInProgressError> {
     let work = async {
         let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::DeviceGreetInProgress3(ctx) => Some(ctx),
-            _ => None,
+            HandleItem::DeviceGreetInProgress3(ctx) => Ok(ctx),
+            invalid => Err(invalid),
         })
         .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
@@ -1044,8 +1044,8 @@ pub async fn greeter_user_in_progress_4_do_create(
 ) -> Result<(), GreetInProgressError> {
     let work = async {
         let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::UserGreetInProgress4(ctx) => Some(ctx),
-            _ => None,
+            HandleItem::UserGreetInProgress4(ctx) => Ok(ctx),
+            invalid => Err(invalid),
         })
         .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
@@ -1069,8 +1069,8 @@ pub async fn greeter_device_in_progress_4_do_create(
 ) -> Result<(), GreetInProgressError> {
     let work = async {
         let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::DeviceGreetInProgress4(ctx) => Some(ctx),
-            _ => None,
+            HandleItem::DeviceGreetInProgress4(ctx) => Ok(ctx),
+            invalid => Err(invalid),
         })
         .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
