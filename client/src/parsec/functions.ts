@@ -22,7 +22,7 @@ import {
   InvitationEmailSentStatus,
   NewUserInvitationError,
   ClientListWorkspacesError,
-  ClientWorkspaceCreateError,
+  ClientCreateWorkspaceError,
   UserClaimInProgress3Info,
   ClaimInProgressError,
   UserOrDeviceClaimInitialInfoUser,
@@ -136,13 +136,13 @@ export async function listWorkspaces(): Promise<Result<Array<[WorkspaceID, Works
   }
 }
 
-export async function createWorkspace(name: WorkspaceName): Promise<Result<WorkspaceID, ClientWorkspaceCreateError>> {
+export async function createWorkspace(name: WorkspaceName): Promise<Result<WorkspaceID, ClientCreateWorkspaceError>> {
   const handle = getParsecHandle();
 
   if (handle !== null && window.isDesktop()) {
-    return await libparsec.clientWorkspaceCreate(handle, name);
+    return await libparsec.clientCreateWorkspace(handle, name);
   } else {
-    return new Promise<Result<WorkspaceID, ClientWorkspaceCreateError>>((resolve, _reject) => {
+    return new Promise<Result<WorkspaceID, ClientCreateWorkspaceError>>((resolve, _reject) => {
       resolve({ ok: true, value: '1337' });
     });
   }

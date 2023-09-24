@@ -2,20 +2,65 @@
 
 use std::sync::Arc;
 
-use libparsec_platform_storage::workspace::GetChildManifestError;
+use libparsec_platform_storage::workspace::GetChildManifestError as StorageGetChildManifestError;
 use libparsec_types::prelude::*;
 
-use super::{fetch::fetch_remote_child_manifest, WorkspaceOps};
+use super::{
+    fetch::{fetch_remote_child_manifest, FetchRemoteManifestError},
+    WorkspaceOps,
+};
+use crate::certificates_ops::{InvalidCertificateError, InvalidManifestError};
+
+#[derive(Debug, thiserror::Error)]
+pub enum GetChildManifestError {
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error("This manifest doesn't exist")]
+    NotFound,
+    #[error("Not allowed to access this realm")]
+    NotAllowed,
+    #[error(transparent)]
+    InvalidCertificate(#[from] InvalidCertificateError),
+    #[error(transparent)]
+    InvalidManifest(#[from] InvalidManifestError),
+    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    BadTimestamp {
+        server_timestamp: DateTime,
+        client_timestamp: DateTime,
+        ballpark_client_early_offset: f64,
+        ballpark_client_late_offset: f64,
+    },
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
 
 async fn get_child_manifest(
     ops: &WorkspaceOps,
     entry_id: VlobID,
-) -> anyhow::Result<ArcLocalChildManifest> {
+) -> Result<ArcLocalChildManifest, GetChildManifestError> {
     match ops.data_storage.get_child_manifest(entry_id).await {
         Ok(manifest) => Ok(manifest),
-        Err(GetChildManifestError::Internal(err)) => Err(err),
-        Err(GetChildManifestError::NotFound) => {
-            let remote_manifest = fetch_remote_child_manifest(ops, entry_id, None).await?;
+        Err(StorageGetChildManifestError::Internal(err)) => Err(err.into()),
+        Err(StorageGetChildManifestError::NotFound) => {
+            let remote_manifest = fetch_remote_child_manifest(ops, entry_id, None)
+                .await
+                .map_err(|error| match error {
+                    FetchRemoteManifestError::Offline => GetChildManifestError::Offline,
+                    FetchRemoteManifestError::NotFound => GetChildManifestError::NotFound,
+                    FetchRemoteManifestError::NotAllowed => GetChildManifestError::NotAllowed,
+                    FetchRemoteManifestError::InvalidCertificate(x) => {
+                        GetChildManifestError::InvalidCertificate(x)
+                    }
+                    FetchRemoteManifestError::InvalidManifest(x) => {
+                        GetChildManifestError::InvalidManifest(x)
+                    }
+                    FetchRemoteManifestError::Internal(x) => GetChildManifestError::Internal(x),
+                    FetchRemoteManifestError::BadVersion => {
+                        // We provided `None` as version (hence `Internal` error is returned
+                        // if the server responds with a `bad_version` status)
+                        unreachable!()
+                    }
+                })?;
 
             // Must save our manifest in the storage
             let (updater, expect_missing_manifest) =
@@ -97,8 +142,21 @@ struct FsPathResolution {
 pub enum EntryIDFromPathError {
     #[error("Path doesn't exist")]
     NotFound,
-    #[error("Path contains a file among it non-final elements")]
-    TraverseFile,
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error("Not allowed to access this realm")]
+    NotAllowed,
+    #[error(transparent)]
+    InvalidCertificate(#[from] InvalidCertificateError),
+    #[error(transparent)]
+    InvalidManifest(#[from] InvalidManifestError),
+    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    BadTimestamp {
+        server_timestamp: DateTime,
+        client_timestamp: DateTime,
+        ballpark_client_early_offset: f64,
+        ballpark_client_late_offset: f64,
+    },
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -118,14 +176,17 @@ async fn resolve_path(
         let resolution = match parent {
             Parent::Root => {
                 let manifest = ops.data_storage.get_workspace_manifest();
+
                 let child_entry_id = manifest
                     .children
                     .get(child_name)
                     .ok_or(EntryIDFromPathError::NotFound)?;
+
                 let confinement_point = manifest
                     .local_confinement_points
                     .contains(child_entry_id)
                     .then_some(ops.realm_id);
+
                 FsPathResolution {
                     entry_id: *child_entry_id,
                     confinement_point,
@@ -133,18 +194,51 @@ async fn resolve_path(
             }
 
             Parent::Child(parent) => {
-                let manifest = get_child_manifest(ops, parent.entry_id).await?;
+                let manifest = get_child_manifest(ops, parent.entry_id)
+                    .await
+                    .map_err(|err| match err {
+                        GetChildManifestError::Offline => EntryIDFromPathError::Offline,
+                        GetChildManifestError::NotFound => EntryIDFromPathError::NotFound,
+                        GetChildManifestError::NotAllowed => EntryIDFromPathError::NotAllowed,
+                        GetChildManifestError::InvalidCertificate(x) => {
+                            EntryIDFromPathError::InvalidCertificate(x)
+                        }
+                        GetChildManifestError::InvalidManifest(x) => {
+                            EntryIDFromPathError::InvalidManifest(x)
+                        }
+                        GetChildManifestError::BadTimestamp {
+                            server_timestamp,
+                            client_timestamp,
+                            ballpark_client_early_offset,
+                            ballpark_client_late_offset,
+                        } => EntryIDFromPathError::BadTimestamp {
+                            server_timestamp,
+                            client_timestamp,
+                            ballpark_client_early_offset,
+                            ballpark_client_late_offset,
+                        },
+                        GetChildManifestError::Internal(x) => x
+                            .context(format!(
+                                "Cannot get manifest (vlob id: {})",
+                                parent.entry_id
+                            ))
+                            .into(),
+                    })?;
+
                 let (children, local_confinement_points) = match &manifest {
                     ArcLocalChildManifest::File(_) => {
-                        return Err(EntryIDFromPathError::TraverseFile);
+                        // Cannot continue to resolve the path !
+                        return Err(EntryIDFromPathError::NotFound);
                     }
                     ArcLocalChildManifest::Folder(manifest) => {
                         (&manifest.children, &manifest.local_confinement_points)
                     }
                 };
+
                 let child_entry_id = children
                     .get(child_name)
                     .ok_or(EntryIDFromPathError::NotFound)?;
+
                 // Top-most confinement point shadows child ones if any
                 let confinement_point = match parent.confinement_point {
                     confinement_point @ Some(_) => confinement_point,
@@ -152,6 +246,7 @@ async fn resolve_path(
                         .contains(child_entry_id)
                         .then_some(parent.entry_id),
                 };
+
                 FsPathResolution {
                     entry_id: *child_entry_id,
                     confinement_point,
@@ -171,7 +266,33 @@ async fn resolve_path(
     })
 }
 
-pub(super) async fn entry_info(ops: &WorkspaceOps, path: &FsPath) -> anyhow::Result<EntryInfo> {
+#[derive(Debug, thiserror::Error)]
+pub enum EntryInfoError {
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error("Path doesn't exist")]
+    NotFound,
+    #[error("Not allowed to access this realm")]
+    NotAllowed,
+    #[error(transparent)]
+    InvalidCertificate(#[from] InvalidCertificateError),
+    #[error(transparent)]
+    InvalidManifest(#[from] InvalidManifestError),
+    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    BadTimestamp {
+        server_timestamp: DateTime,
+        client_timestamp: DateTime,
+        ballpark_client_early_offset: f64,
+        ballpark_client_late_offset: f64,
+    },
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub(super) async fn entry_info(
+    ops: &WorkspaceOps,
+    path: &FsPath,
+) -> Result<EntryInfo, EntryInfoError> {
     // Special case for /
     if path.is_root() {
         let manifest = ops.data_storage.get_workspace_manifest();
@@ -200,8 +321,52 @@ pub(super) async fn entry_info(ops: &WorkspaceOps, path: &FsPath) -> anyhow::Res
         return Ok(info);
     }
 
-    let resolution = resolve_path(ops, path).await?;
-    let manifest = get_child_manifest(ops, resolution.entry_id).await?;
+    let resolution = resolve_path(ops, path).await.map_err(|err| match err {
+        EntryIDFromPathError::NotFound => EntryInfoError::NotFound,
+        EntryIDFromPathError::Offline => EntryInfoError::Offline,
+        EntryIDFromPathError::NotAllowed => EntryInfoError::NotAllowed,
+        EntryIDFromPathError::InvalidCertificate(x) => EntryInfoError::InvalidCertificate(x),
+        EntryIDFromPathError::InvalidManifest(x) => EntryInfoError::InvalidManifest(x),
+        EntryIDFromPathError::BadTimestamp {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+        } => EntryInfoError::BadTimestamp {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+        },
+        EntryIDFromPathError::Internal(x) => x.context("Cannot resolve path").into(),
+    })?;
+
+    let manifest = get_child_manifest(ops, resolution.entry_id)
+        .await
+        .map_err(|err| match err {
+            GetChildManifestError::Offline => EntryInfoError::Offline,
+            GetChildManifestError::NotFound => EntryInfoError::NotFound,
+            GetChildManifestError::NotAllowed => EntryInfoError::NotAllowed,
+            GetChildManifestError::InvalidCertificate(x) => EntryInfoError::InvalidCertificate(x),
+            GetChildManifestError::InvalidManifest(x) => EntryInfoError::InvalidManifest(x),
+            GetChildManifestError::BadTimestamp {
+                server_timestamp,
+                client_timestamp,
+                ballpark_client_early_offset,
+                ballpark_client_late_offset,
+            } => EntryInfoError::BadTimestamp {
+                server_timestamp,
+                client_timestamp,
+                ballpark_client_early_offset,
+                ballpark_client_late_offset,
+            },
+            GetChildManifestError::Internal(x) => x
+                .context(format!(
+                    "Cannot get manifest (vlob id: {})",
+                    resolution.entry_id
+                ))
+                .into(),
+        })?;
 
     let info = match manifest {
         ArcLocalChildManifest::File(m) => EntryInfo::File {

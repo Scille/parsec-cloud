@@ -43,6 +43,9 @@ class DeviceAccessStrategy(Variant):
 
 
 class ClientStartError(ErrorVariant):
+    class DeviceAlreadyRunning:
+        pass
+
     class LoadDeviceInvalidPath:
         pass
 
@@ -71,6 +74,26 @@ async def client_stop(client: Handle) -> Result[None, ClientStopError]:
     raise NotImplementedError
 
 
+class ClientInfoError(ErrorVariant):
+    class Internal:
+        pass
+
+
+class ClientInfo(Structure):
+    organization_id: OrganizationID
+    device_id: DeviceID
+    device_label: Optional[DeviceLabel]
+    user_id: UserID
+    profile: UserProfile
+    human_handle: Optional[HumanHandle]
+
+
+async def client_info(
+    client: Handle,
+) -> Result[ClientInfo, ClientInfoError,]:
+    raise NotImplementedError
+
+
 class ClientListWorkspacesError(ErrorVariant):
     class Internal:
         pass
@@ -82,19 +105,19 @@ async def client_list_workspaces(
     raise NotImplementedError
 
 
-class ClientWorkspaceCreateError(ErrorVariant):
+class ClientCreateWorkspaceError(ErrorVariant):
     class Internal:
         pass
 
 
-async def client_workspace_create(
+async def client_create_workspace(
     client: Handle,
     name: EntryName,
-) -> Result[VlobID, ClientWorkspaceCreateError]:
+) -> Result[VlobID, ClientCreateWorkspaceError]:
     raise NotImplementedError
 
 
-class ClientWorkspaceRenameError(ErrorVariant):
+class ClientRenameWorkspaceError(ErrorVariant):
     class UnknownWorkspace:
         pass
 
@@ -102,15 +125,15 @@ class ClientWorkspaceRenameError(ErrorVariant):
         pass
 
 
-async def client_workspace_rename(
+async def client_rename_workspace(
     client: Handle,
     realm_id: VlobID,
     new_name: EntryName,
-) -> Result[None, ClientWorkspaceRenameError]:
+) -> Result[None, ClientRenameWorkspaceError]:
     raise NotImplementedError
 
 
-class ClientWorkspaceShareError(ErrorVariant):
+class ClientShareWorkspaceError(ErrorVariant):
     class ShareToSelf:
         pass
 
@@ -148,30 +171,10 @@ class ClientWorkspaceShareError(ErrorVariant):
         pass
 
 
-async def client_workspace_share(
+async def client_share_workspace(
     client: Handle,
     realm_id: VlobID,
     recipient: UserID,
     role: Optional[RealmRole],
-) -> Result[None, ClientWorkspaceShareError]:
-    raise NotImplementedError
-
-
-class ClientInfoError(ErrorVariant):
-    class Internal:
-        pass
-
-
-class ClientInfo(Structure):
-    organization_id: OrganizationID
-    device_id: DeviceID
-    device_label: Optional[DeviceLabel]
-    user_id: UserID
-    profile: UserProfile
-    human_handle: Optional[HumanHandle]
-
-
-async def client_info(
-    client: Handle,
-) -> Result[ClientInfo, ClientInfoError,]:
+) -> Result[None, ClientShareWorkspaceError]:
     raise NotImplementedError

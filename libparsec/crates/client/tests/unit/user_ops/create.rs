@@ -4,7 +4,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::user_ops_factory;
-use crate::user_ops::WorkspaceRenameError;
+use crate::user_ops::RenameWorkspaceError;
 
 #[parsec_test(testbed = "minimal")]
 async fn list_create_rename(env: &TestbedEnv) {
@@ -14,7 +14,7 @@ async fn list_create_rename(env: &TestbedEnv) {
     p_assert_eq!(user_ops.list_workspaces(), vec![]);
 
     let wid1 = user_ops
-        .workspace_create("wksp1".parse().unwrap())
+        .create_workspace("wksp1".parse().unwrap())
         .await
         .unwrap();
 
@@ -24,7 +24,7 @@ async fn list_create_rename(env: &TestbedEnv) {
     );
 
     user_ops
-        .workspace_rename(wid1, "wksp1'".parse().unwrap())
+        .rename_workspace(wid1, "wksp1'".parse().unwrap())
         .await
         .unwrap();
 
@@ -34,7 +34,7 @@ async fn list_create_rename(env: &TestbedEnv) {
     );
 
     let wid2 = user_ops
-        .workspace_create("wksp2".parse().unwrap())
+        .create_workspace("wksp2".parse().unwrap())
         .await
         .unwrap();
 
@@ -57,12 +57,12 @@ async fn rename_unknown_id(env: &TestbedEnv) {
     let bad_wid = VlobID::default();
 
     let outcome = user_ops
-        .workspace_rename(bad_wid, "wksp1'".parse().unwrap())
+        .rename_workspace(bad_wid, "wksp1'".parse().unwrap())
         .await;
 
     p_assert_matches!(
         outcome,
-        Err(WorkspaceRenameError::UnknownWorkspace(wid))
+        Err(RenameWorkspaceError::UnknownWorkspace(wid))
         if wid == bad_wid
     );
 

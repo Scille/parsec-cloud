@@ -23,6 +23,8 @@ pub enum SyncError {
     InMaintenance,
     #[error(transparent)]
     InvalidCertificate(#[from] InvalidCertificateError),
+    // Note `InvalidManifest` here, this is because we self-repair in case of invalid
+    // user manifest (given otherwise the client would be stuck for good !)
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
     BadTimestamp {
         server_timestamp: DateTime,
@@ -397,7 +399,7 @@ async fn find_last_valid_manifest(
         }
     }
 
-    // It seems the last valid manifest is the one we already got
+    // It seems the last valid manifest is the one we already have
     let manifest = local_manifest.base.clone();
     Ok(manifest)
 }

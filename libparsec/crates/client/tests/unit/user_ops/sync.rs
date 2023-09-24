@@ -22,12 +22,12 @@ async fn sync_non_placeholder(env: &TestbedEnv) {
     // Do a change requiring a sync
 
     user_ops
-        .workspace_rename(wid, "new_name".parse().unwrap())
+        .rename_workspace(wid, "new_name".parse().unwrap())
         .await
         .unwrap();
 
     // Check the user manifest is need sync
-    let user_manifest = user_ops.test_get_user_manifest();
+    let user_manifest = user_ops.get_user_manifest();
     p_assert_eq!(user_manifest.need_sync, true);
     p_assert_eq!(user_manifest.speculative, false);
     p_assert_eq!(user_manifest.base.version, 1);
@@ -56,7 +56,7 @@ async fn sync_non_placeholder(env: &TestbedEnv) {
     user_ops.sync().await.unwrap();
 
     // Check the user manifest is not longer need sync
-    let user_manifest = user_ops.test_get_user_manifest();
+    let user_manifest = user_ops.get_user_manifest();
     p_assert_eq!(user_manifest.need_sync, false);
     p_assert_eq!(user_manifest.speculative, false);
     p_assert_eq!(user_manifest.base.version, 2);
@@ -87,7 +87,7 @@ async fn sync_placeholder(#[case] is_speculative: bool, env: &TestbedEnv) {
     let user_ops = user_ops_factory(env, &alice).await;
 
     // Check the user manifest is need sync
-    let user_manifest = user_ops.test_get_user_manifest();
+    let user_manifest = user_ops.get_user_manifest();
     p_assert_eq!(user_manifest.need_sync, true);
     p_assert_eq!(user_manifest.speculative, is_speculative);
     p_assert_eq!(user_manifest.base.version, 0);
@@ -122,7 +122,7 @@ async fn sync_placeholder(#[case] is_speculative: bool, env: &TestbedEnv) {
     user_ops.sync().await.unwrap();
 
     // Check the user manifest is no longer need sync
-    let user_manifest = user_ops.test_get_user_manifest();
+    let user_manifest = user_ops.get_user_manifest();
     p_assert_eq!(user_manifest.need_sync, false);
     p_assert_eq!(user_manifest.speculative, false);
     p_assert_eq!(user_manifest.base.version, 1);

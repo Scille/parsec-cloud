@@ -1666,6 +1666,23 @@ fn variant_claimer_retrieve_info_error_rs_to_js(
     Ok(js_obj)
 }
 
+// ClientCreateWorkspaceError
+
+#[allow(dead_code)]
+fn variant_client_create_workspace_error_rs_to_js(
+    rs_obj: libparsec::ClientCreateWorkspaceError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientCreateWorkspaceError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientEvent
 
 #[allow(dead_code)]
@@ -1734,6 +1751,123 @@ fn variant_client_list_workspaces_error_rs_to_js(
     Ok(js_obj)
 }
 
+// ClientRenameWorkspaceError
+
+#[allow(dead_code)]
+fn variant_client_rename_workspace_error_rs_to_js(
+    rs_obj: libparsec::ClientRenameWorkspaceError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientRenameWorkspaceError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+        libparsec::ClientRenameWorkspaceError::UnknownWorkspace { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"UnknownWorkspace".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientShareWorkspaceError
+
+#[allow(dead_code)]
+fn variant_client_share_workspace_error_rs_to_js(
+    rs_obj: libparsec::ClientShareWorkspaceError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientShareWorkspaceError::BadTimestamp {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"BadTimestamp".into())?;
+            let js_server_timestamp = JsValue::from_str({
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339())
+                    };
+                match custom_to_rs_string(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
+            let js_client_timestamp = JsValue::from_str({
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339())
+                    };
+                match custom_to_rs_string(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
+            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientEarlyOffset".into(),
+                &js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientLateOffset".into(),
+                &js_ballpark_client_late_offset,
+            )?;
+        }
+        libparsec::ClientShareWorkspaceError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+        libparsec::ClientShareWorkspaceError::NotAllowed { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"NotAllowed".into())?;
+        }
+        libparsec::ClientShareWorkspaceError::Offline { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
+        }
+        libparsec::ClientShareWorkspaceError::OutsiderCannotBeManagerOrOwner { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"OutsiderCannotBeManagerOrOwner".into(),
+            )?;
+        }
+        libparsec::ClientShareWorkspaceError::RevokedRecipient { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"RevokedRecipient".into())?;
+        }
+        libparsec::ClientShareWorkspaceError::ShareToSelf { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"ShareToSelf".into())?;
+        }
+        libparsec::ClientShareWorkspaceError::UnknownRecipient { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"UnknownRecipient".into())?;
+        }
+        libparsec::ClientShareWorkspaceError::UnknownRecipientOrWorkspace { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"UnknownRecipientOrWorkspace".into(),
+            )?;
+        }
+        libparsec::ClientShareWorkspaceError::UnknownWorkspace { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"UnknownWorkspace".into())?;
+        }
+        libparsec::ClientShareWorkspaceError::WorkspaceInMaintenance { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"WorkspaceInMaintenance".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientStartError
 
 #[allow(dead_code)]
@@ -1744,6 +1878,9 @@ fn variant_client_start_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        libparsec::ClientStartError::DeviceAlreadyRunning { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"DeviceAlreadyRunning".into())?;
+        }
         libparsec::ClientStartError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
         }
@@ -1789,140 +1926,6 @@ fn variant_client_stop_error_rs_to_js(
     match rs_obj {
         libparsec::ClientStopError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// ClientWorkspaceCreateError
-
-#[allow(dead_code)]
-fn variant_client_workspace_create_error_rs_to_js(
-    rs_obj: libparsec::ClientWorkspaceCreateError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::ClientWorkspaceCreateError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// ClientWorkspaceRenameError
-
-#[allow(dead_code)]
-fn variant_client_workspace_rename_error_rs_to_js(
-    rs_obj: libparsec::ClientWorkspaceRenameError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::ClientWorkspaceRenameError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
-        }
-        libparsec::ClientWorkspaceRenameError::UnknownWorkspace { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"UnknownWorkspace".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// ClientWorkspaceShareError
-
-#[allow(dead_code)]
-fn variant_client_workspace_share_error_rs_to_js(
-    rs_obj: libparsec::ClientWorkspaceShareError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::ClientWorkspaceShareError::BadTimestamp {
-            server_timestamp,
-            client_timestamp,
-            ballpark_client_early_offset,
-            ballpark_client_late_offset,
-            ..
-        } => {
-            Reflect::set(&js_obj, &"tag".into(), &"BadTimestamp".into())?;
-            let js_server_timestamp = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(server_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
-            let js_client_timestamp = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(client_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
-            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
-            Reflect::set(
-                &js_obj,
-                &"ballparkClientEarlyOffset".into(),
-                &js_ballpark_client_early_offset,
-            )?;
-            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
-            Reflect::set(
-                &js_obj,
-                &"ballparkClientLateOffset".into(),
-                &js_ballpark_client_late_offset,
-            )?;
-        }
-        libparsec::ClientWorkspaceShareError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
-        }
-        libparsec::ClientWorkspaceShareError::NotAllowed { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NotAllowed".into())?;
-        }
-        libparsec::ClientWorkspaceShareError::Offline { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
-        }
-        libparsec::ClientWorkspaceShareError::OutsiderCannotBeManagerOrOwner { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"OutsiderCannotBeManagerOrOwner".into(),
-            )?;
-        }
-        libparsec::ClientWorkspaceShareError::RevokedRecipient { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"RevokedRecipient".into())?;
-        }
-        libparsec::ClientWorkspaceShareError::ShareToSelf { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"ShareToSelf".into())?;
-        }
-        libparsec::ClientWorkspaceShareError::UnknownRecipient { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"UnknownRecipient".into())?;
-        }
-        libparsec::ClientWorkspaceShareError::UnknownRecipientOrWorkspace { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"UnknownRecipientOrWorkspace".into(),
-            )?;
-        }
-        libparsec::ClientWorkspaceShareError::UnknownWorkspace { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"UnknownWorkspace".into())?;
-        }
-        libparsec::ClientWorkspaceShareError::WorkspaceInMaintenance { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"WorkspaceInMaintenance".into())?;
         }
     }
     Ok(js_obj)
@@ -3767,6 +3770,45 @@ pub fn claimerUserInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
     })
 }
 
+// client_create_workspace
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientCreateWorkspace(client: u32, name: String) -> Promise {
+    future_to_promise(async move {
+        let name = {
+            let custom_from_rs_string = |s: String| -> Result<_, _> {
+                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(name).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::client_create_workspace(client, name).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from_str({
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(value) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    }
+                    .as_ref()
+                });
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_create_workspace_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
 // client_delete_invitation
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -4000,6 +4042,98 @@ pub fn clientNewUserInvitation(client: u32, claimer_email: String, send_email: b
     })
 }
 
+// client_rename_workspace
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientRenameWorkspace(client: u32, realm_id: String, new_name: String) -> Promise {
+    future_to_promise(async move {
+        let realm_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(realm_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let new_name = {
+            let custom_from_rs_string = |s: String| -> Result<_, _> {
+                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(new_name).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::client_rename_workspace(client, realm_id, new_name).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_rename_workspace_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_share_workspace
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientShareWorkspace(
+    client: u32,
+    realm_id: String,
+    recipient: String,
+    role: Option<String>,
+) -> Promise {
+    future_to_promise(async move {
+        let realm_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(realm_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let recipient = recipient
+            .parse()
+            .map_err(|_| JsValue::from(TypeError::new("Not a valid UserID")))?;
+
+        let role = match role {
+            Some(role) => {
+                let role = enum_realm_role_js_to_rs(&role)?;
+
+                Some(role)
+            }
+            None => None,
+        };
+
+        let ret = libparsec::client_share_workspace(client, realm_id, recipient, role).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_share_workspace_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
 // client_start
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -4123,137 +4257,6 @@ pub fn clientStop(client: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_stop_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// client_workspace_create
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn clientWorkspaceCreate(client: u32, name: String) -> Promise {
-    future_to_promise(async move {
-        let name = {
-            let custom_from_rs_string = |s: String| -> Result<_, _> {
-                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
-            };
-            custom_from_rs_string(name).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-        let ret = libparsec::client_workspace_create(client, name).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from_str({
-                    let custom_to_rs_string =
-                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                    match custom_to_rs_string(value) {
-                        Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                    }
-                    .as_ref()
-                });
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_client_workspace_create_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// client_workspace_rename
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn clientWorkspaceRename(client: u32, realm_id: String, new_name: String) -> Promise {
-    future_to_promise(async move {
-        let realm_id = {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
-                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
-            };
-            custom_from_rs_string(realm_id).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-        let new_name = {
-            let custom_from_rs_string = |s: String| -> Result<_, _> {
-                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
-            };
-            custom_from_rs_string(new_name).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-        let ret = libparsec::client_workspace_rename(client, realm_id, new_name).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = {
-                    let _ = value;
-                    JsValue::null()
-                };
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_client_workspace_rename_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// client_workspace_share
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn clientWorkspaceShare(
-    client: u32,
-    realm_id: String,
-    recipient: String,
-    role: Option<String>,
-) -> Promise {
-    future_to_promise(async move {
-        let realm_id = {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
-                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
-            };
-            custom_from_rs_string(realm_id).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-        let recipient = recipient
-            .parse()
-            .map_err(|_| JsValue::from(TypeError::new("Not a valid UserID")))?;
-
-        let role = match role {
-            Some(role) => {
-                let role = enum_realm_role_js_to_rs(&role)?;
-
-                Some(role)
-            }
-            None => None,
-        };
-
-        let ret = libparsec::client_workspace_share(client, realm_id, recipient, role).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = {
-                    let _ = value;
-                    JsValue::null()
-                };
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_client_workspace_share_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

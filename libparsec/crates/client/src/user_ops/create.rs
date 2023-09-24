@@ -7,7 +7,7 @@ use libparsec_types::prelude::*;
 
 use super::UserOps;
 
-pub(super) async fn workspace_create(
+pub(super) async fn create_workspace(
     ops: &UserOps,
     name: EntryName,
 ) -> Result<VlobID, anyhow::Error> {
@@ -46,18 +46,18 @@ pub(super) async fn workspace_create(
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum WorkspaceRenameError {
+pub enum RenameWorkspaceError {
     #[error("Unknown workspace `{0}`")]
     UnknownWorkspace(VlobID),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
 
-pub(super) async fn workspace_rename(
+pub(super) async fn rename_workspace(
     ops: &UserOps,
     realm_id: VlobID,
     new_name: EntryName,
-) -> Result<(), WorkspaceRenameError> {
+) -> Result<(), RenameWorkspaceError> {
     let (updater, mut user_manifest) = ops.storage.for_update().await;
 
     if let Some(workspace_entry) = user_manifest.get_workspace_entry(realm_id) {
@@ -72,11 +72,11 @@ pub(super) async fn workspace_rename(
         updater
             .set_user_manifest(user_manifest)
             .await
-            .map_err(WorkspaceRenameError::Internal)?;
+            .map_err(RenameWorkspaceError::Internal)?;
         // TODO: handle events
         // ops.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=ops.user_realm_id)
     } else {
-        return Err(WorkspaceRenameError::UnknownWorkspace(realm_id.to_owned()));
+        return Err(RenameWorkspaceError::UnknownWorkspace(realm_id.to_owned()));
     }
 
     Ok(())

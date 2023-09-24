@@ -7,7 +7,7 @@ use super::UserOps;
 use crate::EventTooMuchDriftWithServerClock;
 
 #[derive(Debug, thiserror::Error)]
-pub enum WorkspaceShareError {
+pub enum ShareWorkspaceError {
     #[error("Cannot share with oneself")]
     ShareToSelf,
     #[error("Unknown workspace")]
@@ -38,7 +38,7 @@ pub enum WorkspaceShareError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ConnectionError> for WorkspaceShareError {
+impl From<ConnectionError> for ShareWorkspaceError {
     fn from(value: ConnectionError) -> Self {
         match value {
             ConnectionError::NoResponse(_) => Self::Offline,
@@ -52,21 +52,21 @@ enum WorkspaceShareDoServerCommandOutcome {
     RequireGreaterTimestamp(DateTime),
 }
 
-pub async fn workspace_share(
+pub async fn share_workspace(
     ops: &UserOps,
     realm_id: VlobID,
     recipient: &UserID,
     role: Option<RealmRole>,
-) -> Result<(), WorkspaceShareError> {
+) -> Result<(), ShareWorkspaceError> {
     if ops.device.device_id.user_id() == recipient {
-        return Err(WorkspaceShareError::ShareToSelf);
+        return Err(ShareWorkspaceError::ShareToSelf);
     }
 
     let um = ops.storage.get_user_manifest();
 
     let workspace_entry = um
         .get_workspace_entry(realm_id)
-        .ok_or_else(|| WorkspaceShareError::UnknownWorkspace)?;
+        .ok_or_else(|| ShareWorkspaceError::UnknownWorkspace)?;
 
     // Make sure the workspace is not a placeholder
     // TODO !
@@ -115,7 +115,7 @@ async fn workspace_share_do_server_command(
     recipient: &UserID,
     role: Option<RealmRole>,
     timestamp: DateTime,
-) -> Result<WorkspaceShareDoServerCommandOutcome, WorkspaceShareError> {
+) -> Result<WorkspaceShareDoServerCommandOutcome, ShareWorkspaceError> {
     // 1) Build the sharing message for recipient
 
     let encrypted_message = {
@@ -143,7 +143,7 @@ async fn workspace_share_do_server_command(
             .encrypt_for_user(recipient, &signed_message)
             .await?
         {
-            None => return Err(WorkspaceShareError::UnknownRecipient),
+            None => return Err(ShareWorkspaceError::UnknownRecipient),
             Some(encrypted) => encrypted,
         }
     };
@@ -183,17 +183,17 @@ async fn workspace_share_do_server_command(
                 ),
             )
         }
-        Rep::InMaintenance => Err(WorkspaceShareError::WorkspaceInMaintenance),
-        Rep::NotAllowed { .. } => Err(WorkspaceShareError::NotAllowed),
-        Rep::IncompatibleProfile { .. } => Err(WorkspaceShareError::OutsiderCannotBeManagerOrOwner),
-        Rep::UserRevoked => Err(WorkspaceShareError::RevokedRecipient),
+        Rep::InMaintenance => Err(ShareWorkspaceError::WorkspaceInMaintenance),
+        Rep::NotAllowed { .. } => Err(ShareWorkspaceError::NotAllowed),
+        Rep::IncompatibleProfile { .. } => Err(ShareWorkspaceError::OutsiderCannotBeManagerOrOwner),
+        Rep::UserRevoked => Err(ShareWorkspaceError::RevokedRecipient),
         Rep::NotFound { .. } => {
             // TODO: replace this generic `not_found` status by something more precise
             // to know what is not found !
 
             // This should never occur given we have already retrieve the user on our side,
             // and we have made sure the workspace exists in the server.
-            Err(WorkspaceShareError::UnknownRecipientOrWorkspace)
+            Err(ShareWorkspaceError::UnknownRecipientOrWorkspace)
         }
         Rep::BadTimestamp {
             backend_timestamp,
@@ -210,7 +210,7 @@ async fn workspace_share_do_server_command(
             };
             ops.event_bus.send(&event);
 
-            Err(WorkspaceShareError::BadTimestamp {
+            Err(ShareWorkspaceError::BadTimestamp {
                 server_timestamp: backend_timestamp,
                 client_timestamp,
                 ballpark_client_early_offset,

@@ -36,7 +36,7 @@ pub fn new_canceller() -> Handle {
     guard.push(Canceller::Free(
         libparsec_platform_async::event::Event::new(),
     ));
-    handle as u32
+    handle as Handle
 }
 
 pub(crate) struct CancelListenGuard(Handle);

@@ -5,7 +5,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::user_ops_factory;
-use crate::user_ops::WorkspaceShareError;
+use crate::user_ops::ShareWorkspaceError;
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn to_unknown_user(env: &TestbedEnv) {
@@ -16,9 +16,9 @@ async fn to_unknown_user(env: &TestbedEnv) {
     let wid = user_ops.list_workspaces()[0].0;
 
     let outcome = user_ops
-        .workspace_share(wid, &"bob".parse().unwrap(), Some(RealmRole::Contributor))
+        .share_workspace(wid, &"bob".parse().unwrap(), Some(RealmRole::Contributor))
         .await;
-    p_assert_matches!(outcome, Err(WorkspaceShareError::UnknownRecipient));
+    p_assert_matches!(outcome, Err(ShareWorkspaceError::UnknownRecipient));
 
     user_ops.stop().await;
 }
@@ -35,7 +35,7 @@ async fn simple(env: &TestbedEnv) {
     let user_ops = user_ops_factory(env, &alice).await;
 
     let (w_id, w_name, w_key) = {
-        let user_manifest = user_ops.test_get_user_manifest();
+        let user_manifest = user_ops.get_user_manifest();
         let w_entry = &user_manifest.workspaces[0];
         (w_entry.id, w_entry.name.clone(), w_entry.key.clone())
     };
@@ -88,7 +88,7 @@ async fn simple(env: &TestbedEnv) {
     );
 
     user_ops
-        .workspace_share(w_id, &"bob".parse().unwrap(), Some(RealmRole::Contributor))
+        .share_workspace(w_id, &"bob".parse().unwrap(), Some(RealmRole::Contributor))
         .await
         .unwrap();
 
@@ -110,7 +110,7 @@ async fn simple(env: &TestbedEnv) {
 
 //     // Create a workspace but don't sync it...
 //     let wid = user_ops
-//         .workspace_create("wksp2".parse().unwrap())
+//         .create_workspace("wksp2".parse().unwrap())
 //         .await
 //         .unwrap();
 
@@ -175,7 +175,7 @@ async fn simple(env: &TestbedEnv) {
 //     );
 
 //     // ...and share it, which should trigger it sync before anything else
-//     user_ops.workspace_share(wid, &"bob".parse().unwrap(), Some(RealmRole::Contributor)).await.unwrap();
+//     user_ops.share_workspace(wid, &"bob".parse().unwrap(), Some(RealmRole::Contributor)).await.unwrap();
 
 //     user_ops.stop().await;
 // }

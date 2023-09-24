@@ -6,8 +6,9 @@ use libparsec_client_connection::{AuthenticatedCmds, ProxyConfig};
 use libparsec_types::prelude::*;
 
 use crate::{
-    certificates_ops::CertificatesOps, workspace_ops::WorkspaceOps, ClientConfig, EventBus,
-    WorkspaceStorageCacheSize,
+    certificates_ops::CertificatesOps,
+    workspace_ops::{UserDependantConfig, WorkspaceOps},
+    ClientConfig, EventBus, WorkspaceStorageCacheSize,
 };
 
 pub(crate) async fn workspace_ops_factory(
@@ -44,7 +45,11 @@ pub(crate) async fn workspace_ops_factory(
         certificates_ops,
         event_bus,
         realm_id,
-        realm_key,
+        UserDependantConfig {
+            realm_key,
+            user_role: RealmRole::Owner,
+            workspace_name: "wksp1".parse().unwrap(),
+        },
     )
     .await
     .unwrap()

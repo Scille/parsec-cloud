@@ -318,6 +318,15 @@ export type ClaimerRetrieveInfoError =
   | ClaimerRetrieveInfoErrorOffline
 
 
+// ClientCreateWorkspaceError
+export interface ClientCreateWorkspaceErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type ClientCreateWorkspaceError =
+  | ClientCreateWorkspaceErrorInternal
+
+
 // ClientEvent
 export interface ClientEventPing {
     tag: "Ping"
@@ -345,7 +354,88 @@ export type ClientListWorkspacesError =
   | ClientListWorkspacesErrorInternal
 
 
+// ClientRenameWorkspaceError
+export interface ClientRenameWorkspaceErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientRenameWorkspaceErrorUnknownWorkspace {
+    tag: "UnknownWorkspace"
+    error: string
+}
+export type ClientRenameWorkspaceError =
+  | ClientRenameWorkspaceErrorInternal
+  | ClientRenameWorkspaceErrorUnknownWorkspace
+
+
+// ClientShareWorkspaceError
+export interface ClientShareWorkspaceErrorBadTimestamp {
+    tag: "BadTimestamp"
+    error: string
+    server_timestamp: string
+    client_timestamp: string
+    ballpark_client_early_offset: number
+    ballpark_client_late_offset: number
+}
+export interface ClientShareWorkspaceErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientShareWorkspaceErrorNotAllowed {
+    tag: "NotAllowed"
+    error: string
+}
+export interface ClientShareWorkspaceErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface ClientShareWorkspaceErrorOutsiderCannotBeManagerOrOwner {
+    tag: "OutsiderCannotBeManagerOrOwner"
+    error: string
+}
+export interface ClientShareWorkspaceErrorRevokedRecipient {
+    tag: "RevokedRecipient"
+    error: string
+}
+export interface ClientShareWorkspaceErrorShareToSelf {
+    tag: "ShareToSelf"
+    error: string
+}
+export interface ClientShareWorkspaceErrorUnknownRecipient {
+    tag: "UnknownRecipient"
+    error: string
+}
+export interface ClientShareWorkspaceErrorUnknownRecipientOrWorkspace {
+    tag: "UnknownRecipientOrWorkspace"
+    error: string
+}
+export interface ClientShareWorkspaceErrorUnknownWorkspace {
+    tag: "UnknownWorkspace"
+    error: string
+}
+export interface ClientShareWorkspaceErrorWorkspaceInMaintenance {
+    tag: "WorkspaceInMaintenance"
+    error: string
+}
+export type ClientShareWorkspaceError =
+  | ClientShareWorkspaceErrorBadTimestamp
+  | ClientShareWorkspaceErrorInternal
+  | ClientShareWorkspaceErrorNotAllowed
+  | ClientShareWorkspaceErrorOffline
+  | ClientShareWorkspaceErrorOutsiderCannotBeManagerOrOwner
+  | ClientShareWorkspaceErrorRevokedRecipient
+  | ClientShareWorkspaceErrorShareToSelf
+  | ClientShareWorkspaceErrorUnknownRecipient
+  | ClientShareWorkspaceErrorUnknownRecipientOrWorkspace
+  | ClientShareWorkspaceErrorUnknownWorkspace
+  | ClientShareWorkspaceErrorWorkspaceInMaintenance
+
+
 // ClientStartError
+export interface ClientStartErrorDeviceAlreadyRunning {
+    tag: "DeviceAlreadyRunning"
+    error: string
+}
 export interface ClientStartErrorInternal {
     tag: "Internal"
     error: string
@@ -363,6 +453,7 @@ export interface ClientStartErrorLoadDeviceInvalidPath {
     error: string
 }
 export type ClientStartError =
+  | ClientStartErrorDeviceAlreadyRunning
   | ClientStartErrorInternal
   | ClientStartErrorLoadDeviceDecryptionFailed
   | ClientStartErrorLoadDeviceInvalidData
@@ -385,92 +476,6 @@ export interface ClientStopErrorInternal {
 }
 export type ClientStopError =
   | ClientStopErrorInternal
-
-
-// ClientWorkspaceCreateError
-export interface ClientWorkspaceCreateErrorInternal {
-    tag: "Internal"
-    error: string
-}
-export type ClientWorkspaceCreateError =
-  | ClientWorkspaceCreateErrorInternal
-
-
-// ClientWorkspaceRenameError
-export interface ClientWorkspaceRenameErrorInternal {
-    tag: "Internal"
-    error: string
-}
-export interface ClientWorkspaceRenameErrorUnknownWorkspace {
-    tag: "UnknownWorkspace"
-    error: string
-}
-export type ClientWorkspaceRenameError =
-  | ClientWorkspaceRenameErrorInternal
-  | ClientWorkspaceRenameErrorUnknownWorkspace
-
-
-// ClientWorkspaceShareError
-export interface ClientWorkspaceShareErrorBadTimestamp {
-    tag: "BadTimestamp"
-    error: string
-    server_timestamp: string
-    client_timestamp: string
-    ballpark_client_early_offset: number
-    ballpark_client_late_offset: number
-}
-export interface ClientWorkspaceShareErrorInternal {
-    tag: "Internal"
-    error: string
-}
-export interface ClientWorkspaceShareErrorNotAllowed {
-    tag: "NotAllowed"
-    error: string
-}
-export interface ClientWorkspaceShareErrorOffline {
-    tag: "Offline"
-    error: string
-}
-export interface ClientWorkspaceShareErrorOutsiderCannotBeManagerOrOwner {
-    tag: "OutsiderCannotBeManagerOrOwner"
-    error: string
-}
-export interface ClientWorkspaceShareErrorRevokedRecipient {
-    tag: "RevokedRecipient"
-    error: string
-}
-export interface ClientWorkspaceShareErrorShareToSelf {
-    tag: "ShareToSelf"
-    error: string
-}
-export interface ClientWorkspaceShareErrorUnknownRecipient {
-    tag: "UnknownRecipient"
-    error: string
-}
-export interface ClientWorkspaceShareErrorUnknownRecipientOrWorkspace {
-    tag: "UnknownRecipientOrWorkspace"
-    error: string
-}
-export interface ClientWorkspaceShareErrorUnknownWorkspace {
-    tag: "UnknownWorkspace"
-    error: string
-}
-export interface ClientWorkspaceShareErrorWorkspaceInMaintenance {
-    tag: "WorkspaceInMaintenance"
-    error: string
-}
-export type ClientWorkspaceShareError =
-  | ClientWorkspaceShareErrorBadTimestamp
-  | ClientWorkspaceShareErrorInternal
-  | ClientWorkspaceShareErrorNotAllowed
-  | ClientWorkspaceShareErrorOffline
-  | ClientWorkspaceShareErrorOutsiderCannotBeManagerOrOwner
-  | ClientWorkspaceShareErrorRevokedRecipient
-  | ClientWorkspaceShareErrorShareToSelf
-  | ClientWorkspaceShareErrorUnknownRecipient
-  | ClientWorkspaceShareErrorUnknownRecipientOrWorkspace
-  | ClientWorkspaceShareErrorUnknownWorkspace
-  | ClientWorkspaceShareErrorWorkspaceInMaintenance
 
 
 // DeleteInvitationError
@@ -839,6 +844,10 @@ export function claimerUserInitialDoWaitPeer(
     canceller: number,
     handle: number
 ): Promise<Result<UserClaimInProgress1Info, ClaimInProgressError>>
+export function clientCreateWorkspace(
+    client: number,
+    name: string
+): Promise<Result<string, ClientCreateWorkspaceError>>
 export function clientDeleteInvitation(
     client: number,
     token: string
@@ -861,6 +870,17 @@ export function clientNewUserInvitation(
     claimer_email: string,
     send_email: boolean
 ): Promise<Result<[string, InvitationEmailSentStatus], NewUserInvitationError>>
+export function clientRenameWorkspace(
+    client: number,
+    realm_id: string,
+    new_name: string
+): Promise<Result<null, ClientRenameWorkspaceError>>
+export function clientShareWorkspace(
+    client: number,
+    realm_id: string,
+    recipient: string,
+    role: RealmRole | null
+): Promise<Result<null, ClientShareWorkspaceError>>
 export function clientStart(
     config: ClientConfig,
     on_event_callback: (event: ClientEvent) => void,
@@ -877,21 +897,6 @@ export function clientStartUserInvitationGreet(
 export function clientStop(
     client: number
 ): Promise<Result<null, ClientStopError>>
-export function clientWorkspaceCreate(
-    client: number,
-    name: string
-): Promise<Result<string, ClientWorkspaceCreateError>>
-export function clientWorkspaceRename(
-    client: number,
-    realm_id: string,
-    new_name: string
-): Promise<Result<null, ClientWorkspaceRenameError>>
-export function clientWorkspaceShare(
-    client: number,
-    realm_id: string,
-    recipient: string,
-    role: RealmRole | null
-): Promise<Result<null, ClientWorkspaceShareError>>
 export function getPlatform(
 ): Promise<Platform>
 export function greeterDeviceInProgress1DoWaitPeerTrust(
