@@ -56,7 +56,7 @@ jobs:
         ports:
           - 6777:6777
     steps:
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # pin v4.0.0
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # pin v4.1.0
         timeout-minutes: 5
 
       - uses: actions-rust-lang/setup-rust-toolchain@f3c84ee10bf5a86e7a5d607d487bf17d57670965 # pin v1.5.0
@@ -76,7 +76,7 @@ jobs:
         timeout-minutes: 5
 
       # Install cargo nextest command
-      - uses: taiki-e/install-action@2358ab643982f73276ef3aef08759c6cc3693530 # pin v2.18.13
+      - uses: taiki-e/install-action@5b205dd5b807eef56fdbfeedeedcee63c5d44090 # pin v2.18.16
         with:
           tool: nextest@0.9.54,wasm-pack@0.11.0
 
@@ -149,7 +149,7 @@ jobs:
     timeout-minutes: 60
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # pin v4.0.0
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # pin v4.1.0
         timeout-minutes: 5
 
       - uses: actions-rust-lang/setup-rust-toolchain@f3c84ee10bf5a86e7a5d607d487bf17d57670965 # pin v1.5.0
@@ -188,7 +188,7 @@ jobs:
           mv 'D:/a/_temp/winfsp-tests-x64.exe' 'C:/Program Files (x86)/WinFsp/bin/'
 
       # Install cargo nextest command
-      - uses: taiki-e/install-action@2358ab643982f73276ef3aef08759c6cc3693530 # pin v2.18.13
+      - uses: taiki-e/install-action@5b205dd5b807eef56fdbfeedeedcee63c5d44090 # pin v2.18.16
         with:
           tool: nextest@0.9.54
 
