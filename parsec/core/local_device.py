@@ -13,6 +13,7 @@ from parsec._parsec import (
     DeviceFile,
     DeviceFileType,
     LocalDeviceAlreadyExistsError,
+    LocalDeviceCryptoError,
     LocalDeviceError,
     LocalDeviceNotFoundError,
     LocalDeviceValidationError,
@@ -27,12 +28,35 @@ DEVICE_FILE_SUFFIX = ".keys"
 # .psrk stands for ps(parsec)r(recovery)k(key)
 RECOVERY_DEVICE_FILE_SUFFIX = ".psrk"
 
+# Re-expose exceptions from `parsec._parsec``
+__all__ = [
+    "AvailableDevice",
+    "DeviceFile",
+    "DeviceFileType",
+    "LocalDeviceAlreadyExistsError",
+    "LocalDeviceError",
+    "LocalDeviceCryptoError",
+    "LocalDeviceNotFoundError",
+    "LocalDeviceValidationError",
+    "LocalDeviceCertificatePinCodeUnavailableError",
+    "LocalDeviceCertificateNotFoundError",
+    "get_available_device",
+    "get_key_file",
+    "get_default_key_file",
+    "get_recovery_device_file_name",
+    "get_devices_dir",
+    "load_device_file",
+    "is_smartcard_extension_available",
+    "load_device_with_smartcard_sync",
+    "load_device_with_smartcard",
+    "save_device_with_smartcard_in_config",
+]
+
 
 class LocalDeviceCertificatePinCodeUnavailableError(LocalDeviceError):
     """Used in parsec-extensions and in the GUI for smartcard devices."""
 
 
-# TODO: Move me to `parsec-extensions`.
 class LocalDeviceCertificateNotFoundError(LocalDeviceError):
     """Used in parsec-extensions for smartcard devices."""
 
