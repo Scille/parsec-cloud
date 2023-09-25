@@ -74,6 +74,19 @@ updates:
   ##########
 
   - package-ecosystem: pip
+    directory: /docs
+    schedule:
+      interval: monthly
+    pull-request-branch-name:
+      separator: "-"
+    groups:
+      parsec-docs:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 1
+    rebase-strategy: disabled
+
+  - package-ecosystem: pip
     directory: /server
     ignore:
       - dependency-name: toastedmarshmallow
