@@ -57,7 +57,7 @@ jobs:
     outputs:
       wheel-version: ${{ steps.version.outputs.full }}
     steps:
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # pin v4.0.0
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # pin v4.1.0
         timeout-minutes: 5
 
       - uses: ./.github/actions/setup-python-poetry
@@ -102,7 +102,7 @@ jobs:
         run: python3 misc/version_updater.py --tool parsec --version ${{ steps.version.outputs.full }}
 
       - name: Build wheel
-        uses: pypa/cibuildwheel@39a63b5912f086dd459cf6fcb13dcdd3fe3bc24d  # pin v2.15.0
+        uses: pypa/cibuildwheel@a873dd9cbf9e3c4c73a1fd11ac31cf835f6eb502  # pin v2.16.0
         with:
           package-dir: server
           output-dir: dist
@@ -139,7 +139,7 @@ jobs:
         run: python server/packaging/wheel/wheel_it.py ./server --output dist --skip-wheel
 
       # Install syft
-      - uses: taiki-e/install-action@2358ab643982f73276ef3aef08759c6cc3693530 # pin v2.18.13
+      - uses: taiki-e/install-action@5b205dd5b807eef56fdbfeedeedcee63c5d44090 # pin v2.18.16
         with:
           tool: syft@0.84.0
 
