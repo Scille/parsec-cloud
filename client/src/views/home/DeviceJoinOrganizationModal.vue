@@ -187,7 +187,7 @@ enum DeviceJoinOrganizationStep {
 const { t } = useI18n();
 
 const pageStep = ref(DeviceJoinOrganizationStep.Information);
-const deviceName = ref();
+const deviceName = ref('');
 const passwordPage = ref();
 
 const claimer = ref(new DeviceClaim());
@@ -265,7 +265,8 @@ const nextButtonIsVisible = computed(() => {
 
 const canGoForward = asyncComputed(async () => {
   if (pageStep.value === DeviceJoinOrganizationStep.Password) {
-    return await passwordPage.value.areFieldsCorrect() && await deviceNameValidator(deviceName.value) === Validity.Valid;
+    const validDeviceName = await deviceNameValidator(deviceName.value);
+    return await passwordPage.value.areFieldsCorrect() && validDeviceName === Validity.Valid;
   }
   return true;
 });
