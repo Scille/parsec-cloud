@@ -5,8 +5,8 @@ import { mockI18n, getDefaultProvideConfig } from 'tests/component/support/mocks
 mockI18n();
 
 import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
-import { WorkspaceRole } from '@/common/mocks';
 import { mount } from '@vue/test-utils';
+import { WorkspaceRole } from '@/parsec';
 
 describe('User Avatar', () => {
   it('Display avatar for user', () => {

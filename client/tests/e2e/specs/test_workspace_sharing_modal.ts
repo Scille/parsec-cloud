@@ -13,16 +13,16 @@ describe('Check workspace sharing modal', () => {
   });
 
   it('Checks initial status', () => {
-    cy.get('ion-list').find('.content').should('have.length', 12);
+    cy.get('ion-list').find('.content').should('have.length', 5);
     cy.get('ion-list').find('.person-name').first().contains('Me');
     cy.get('ion-list').find('.filter-button').first().should('have.class', 'button-disabled');
     // cspell:disable-next-line
-    cy.get('ion-list').find('.person-name').eq(1).contains('Korgan Bloodaxe');
+    cy.get('ion-list').find('.person-name').eq(1).contains('User1');
     cy.get('ion-list').find('.content').eq(1).find('.filter-button').contains('Contributor');
     // cspell:disable-next-line
-    cy.get('ion-list').find('.person-name').last().contains('Yoshimo');
+    cy.get('ion-list').find('.person-name').last().contains('User4');
     cy.get('ion-list').find('.content').last().find('.filter-button').contains('Not shared');
-    cy.get('ion-list').find('.content').eq(2).find('.filter-button').contains('Owner');
+    cy.get('ion-list').find('.content').eq(3).find('.filter-button').contains('Owner');
 
     cy.get('ion-list').find('.content').eq(1).find('.filter-button').click();
     cy.get('.popover-viewport').find('ion-item').eq(0).contains('Reader');
@@ -41,21 +41,19 @@ describe('Check workspace sharing modal', () => {
     cy.get('.popover-viewport').find('ion-item').eq(0).click();
     cy.get('ion-list').find('.content').eq(4).find('.filter-button').contains('Reader');
     // cspell:disable-next-line
-    cy.get('@consoleLog').should('have.been.calledWith', 'Update user Cernd role to reader');
+    cy.get('@consoleLog').should('have.been.calledWith', 'Update user User4 role to RealmRoleReader');
   });
 
   it('Filter users', () => {
-    cy.get('ion-modal').find('ion-list').find('.content').should('have.length', 12);
+    cy.get('ion-modal').find('ion-list').find('.content').should('have.length', 5);
     cy.get('ion-modal').find('ion-input').as('searchInput');
     cy.get('@searchInput').find('input').type('a');
-    cy.get('ion-modal').find('ion-list').find('.content').should('have.length', 7);
-    // Check upper-case too
-    cy.get('@searchInput').find('input').type('L');
     cy.get('ion-modal').find('ion-list').find('.content').should('have.length', 2);
-    // cspell:disable-next-line
-    cy.get('ion-list').find('.person-name').first().contains('Valygar Corthala');
-    // cspell:disable-next-line
-    cy.get('ion-list').find('.person-name').last().contains('Nalia De\'Arnise');
+    // Check upper-case too
+    cy.get('@searchInput').find('input').type('n');
+    cy.get('ion-modal').find('ion-list').find('.content').should('have.length', 2);
+    cy.get('ion-list').find('.person-name').first().contains('Me');
+    cy.get('ion-list').find('.person-name').last().contains('Another User');
   });
 
   it('Close modal', () => {

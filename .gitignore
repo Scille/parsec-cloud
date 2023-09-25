@@ -107,3 +107,6 @@ target/
 .cspellcache
 
 node_modules
+
+# So that each dev can set up their own env if so desired
+client/.env

@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits, Ref, ref } from 'vue';
+import { defineProps, defineEmits, Ref, ref, onUpdated } from 'vue';
 import {
   IonButton,
   IonIcon,
@@ -60,6 +60,11 @@ async function openPopover(ev: Event): Promise<void> {
   await popover.present();
   onDidDismissPopover(popover);
 }
+
+onUpdated(() => {
+  selectedOption.value = props.defaultOption ? getOptionByKey(props.options, props.defaultOption): undefined;
+  labelRef.value = selectedOption.value?.label || props.label;
+});
 
 async function onDidDismissPopover(popover: any): Promise<void> {
   const { data } = await popover.onDidDismiss();

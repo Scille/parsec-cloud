@@ -6,23 +6,23 @@
   >
     <user-avatar-name
       class="user"
-      :user-avatar="$props.user"
-      :user-name="$props.user"
+      :user-avatar="user"
+      :user-name="user"
     />
 
     <ms-select
       class="select"
       :options="options"
       :disabled="disabled"
-      :default-option="$props.role || NOT_SHARED_KEY"
-      @change="$emit('roleUpdate', $props.user, getRoleFromString($event.option.key))"
+      :default-option="role ? role : NOT_SHARED_KEY"
+      @change="$emit('roleUpdate', user, getRoleFromString($event.option.key))"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 import { defineProps, defineEmits } from 'vue';
-import { WorkspaceRole } from '@/common/mocks';
+import { WorkspaceRole } from '@/parsec';
 import MsSelect from '@/components/core/ms-select/MsSelect.vue';
 import { Ref, ref } from 'vue';
 import { useI18n } from 'vue-i18n';

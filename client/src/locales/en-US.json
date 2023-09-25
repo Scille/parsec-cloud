@@ -178,7 +178,8 @@
             "Manager": "Manager",
             "Owner": "Owner",
             "NotShared": "Not shared"
-        }
+        },
+        "currentUserLabel": "Me"
     },
     "SettingsPage": {
         "pageTitle": "Settings",

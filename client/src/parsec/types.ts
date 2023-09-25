@@ -50,6 +50,7 @@ import type {
   UserGreetInProgress2Info,
   UserGreetInProgress3Info,
   UserGreetInProgress4Info,
+  UserID,
 } from '@/plugins/libparsec';
 // Enums have to be imported separately
 import {
@@ -57,11 +58,27 @@ import {
   InvitationEmailSentStatus,
   InvitationStatus,
   UserProfile,
+  RealmRole as WorkspaceRole,
 } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
 interface UserInvitation extends InviteListItemUser {
   date: DateTime
+}
+
+interface WorkspaceInfo {
+  id: WorkspaceID,
+  name: WorkspaceName,
+  role: WorkspaceRole,
+  availableOffline: boolean,
+  sharingInfo: Array<[UserID, WorkspaceRole | null]>,
+  size: number;
+  lastUpdated: DateTime;
+}
+
+interface WorkspaceInfoError {
+  tag: 'Error',
+  error: string,
 }
 
 enum BackendAddrType {
@@ -72,10 +89,6 @@ enum BackendAddrType {
   OrganizationBootstrap = 'OrganizationBootstrap',
   OrganizationFileLink = 'OrganizationFileLink',
   PkiEnrollment = 'PkiEnrollment',
-}
-
-interface GetWorkspaceNameError {
-  tag: 'NotFound'
 }
 
 export {
@@ -118,6 +131,9 @@ export {
   UserGreetInProgress2Info,
   UserGreetInProgress3Info,
   UserGreetInProgress4Info,
+  WorkspaceRole,
+  UserID,
+  WorkspaceInfo,
 };
 
 export {
@@ -134,7 +150,7 @@ export {
   ClientListWorkspacesError,
   ClientCreateWorkspaceError,
   ClientInfoError,
-  GetWorkspaceNameError,
   ClientStartInvitationGreetError,
   GreetInProgressError,
+  WorkspaceInfoError,
 };

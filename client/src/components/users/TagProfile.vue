@@ -14,8 +14,8 @@
 <script setup lang="ts">
 import { IonChip, IonLabel } from '@ionic/vue';
 import { defineProps } from 'vue';
-import { UserProfile } from '@/parsec';
 import { useI18n } from 'vue-i18n';
+import { UserProfile } from '@/parsec';
 
 const { t } = useI18n();
 

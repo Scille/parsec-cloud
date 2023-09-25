@@ -210,7 +210,7 @@ import UserInformation from '@/components/users/UserInformation.vue';
 import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { MsModalResult } from '@/components/core/ms-types';
-import { UserInvitation, UserGreet, UserProfile } from '@/parsec';
+import { UserProfile, UserInvitation, UserGreet } from '@/parsec';
 
 enum GreetUserStep {
   WaitForGuest = 1,

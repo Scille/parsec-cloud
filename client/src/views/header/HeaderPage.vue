@@ -133,29 +133,29 @@ import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
 import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import { hasHistory, isDocumentRoute } from '@/router/conditions';
-import { getUserInfo, UserInfo, WorkspaceName, getWorkspaceName, WorkspaceID } from '@/parsec';
+import { getUserInfo, UserInfo, getWorkspaceInfo, WorkspaceInfo, WorkspaceID } from '@/parsec';
 
 const currentRoute = useRoute();
-const workspaceName: Ref<WorkspaceName> = ref('');
+const workspaceInfo: Ref<WorkspaceInfo | null> = ref(null);
 const { t } = useI18n();
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
 const userInfo: Ref<UserInfo | null> = ref(null);
 
 onMounted(async () => {
-  if (currentRoute.params.workspaceId) {
-    const result = await getWorkspaceName(currentRoute.params.workspaceId as WorkspaceID);
-    if (result.ok) {
-      workspaceName.value = result.value;
-    } else {
-      console.log('Could not get workspace name', result.error);
-    }
-  }
-
   const result = await getUserInfo();
   if (result.ok) {
     userInfo.value = result.value;
   } else {
     console.log('Could not get user info', result.error);
+  }
+
+  if (currentRoute.name === 'folder' && currentRoute.params.workspaceId) {
+    const result = await getWorkspaceInfo(currentRoute.params.workspaceId as WorkspaceID);
+    if (result.ok) {
+      workspaceInfo.value = result.value;
+    } else {
+      console.log('Could not get workspace info', result.error);
+    }
   }
 });
 
@@ -208,7 +208,7 @@ const fullPath = computed(() => {
         if (workspacePath[i] === '/') {
           finalPath.push({
             id: i + 1,
-            display: workspaceName.value,
+            display: workspaceInfo.value ? workspaceInfo.value.name : '',
             name: 'folder',
             query: { path: '/' },
             params: currentRoute.params,

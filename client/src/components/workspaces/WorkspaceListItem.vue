@@ -38,7 +38,7 @@
     <div class="workspace-users">
       <avatar-group
         class="shared-group"
-        :people="getSharedWith(workspace)"
+        :people="workspace.sharingInfo.map((info) => info[0])"
         :max-display="2"
         @click.stop="$emit('shareClick', $event, workspace)"
       />
@@ -47,7 +47,7 @@
     <!-- last update -->
     <div class="workspace-lastUpdate">
       <ion-label class="label-last-update cell">
-        {{ timeSince(workspace.lastUpdate, '--', 'short') }}
+        {{ timeSince(workspace.lastUpdated, '--', 'short') }}
       </ion-label>
     </div>
 
@@ -86,20 +86,20 @@ import {
 import { ref, inject } from 'vue';
 import { IonIcon, IonButton, IonItem, IonLabel } from '@ionic/vue';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
-import { MockWorkspace, getSharedWith } from '@/common/mocks';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
+import { WorkspaceInfo } from '@/parsec';
 
 const isSelected = ref(false);
 
 defineProps<{
-  workspace: MockWorkspace
+  workspace: WorkspaceInfo
 }>();
 
 defineEmits<{
-  (e: 'click', event: Event, workspace: MockWorkspace): void
-  (e: 'menuClick', event: Event, workspace: MockWorkspace): void
-  (e: 'shareClick', event: Event, workspace: MockWorkspace): void
+  (e: 'click', event: Event, workspace: WorkspaceInfo): void
+  (e: 'menuClick', event: Event, workspace: WorkspaceInfo): void
+  (e: 'shareClick', event: Event, workspace: WorkspaceInfo): void
 }>();
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

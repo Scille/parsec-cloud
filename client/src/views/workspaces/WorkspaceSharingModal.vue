@@ -20,7 +20,12 @@
         />
         <ion-list class="user-list">
           <workspace-user-role
-            v-for="entry in userRoles.entries()"
+            :disabled="true"
+            :user="$t('WorkspaceSharing.currentUserLabel')"
+            :role="workspaceInfo ? workspaceInfo.role : null"
+          />
+          <workspace-user-role
+            v-for="entry in userRoles"
             :key="entry[0]"
             :disabled="entry[0] === 'Me'"
             :user="entry[0]"
@@ -39,10 +44,9 @@ import {
   IonList,
   modalController,
 } from '@ionic/vue';
-import { ref, watch, onUnmounted, onMounted } from 'vue';
-import { getWorkspaceSharingInfo, WorkspaceRole, WorkspaceID } from '@/common/mocks';
+import { ref, watch, onUnmounted, onMounted, Ref } from 'vue';
 import { MsModalResult } from '@/components/core/ms-types';
-
+import { WorkspaceID, WorkspaceRole, getWorkspaceInfo, UserID, WorkspaceInfo } from '@/parsec';
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
@@ -53,25 +57,38 @@ const props = defineProps<{
   workspaceId: WorkspaceID
 }>();
 
-const userRoles = ref(new Map<string, WorkspaceRole | null>());
+const workspaceInfo: Ref<WorkspaceInfo | null> = ref(null);
+const userRoles: Ref<Array<[UserID, WorkspaceRole | null]>> = ref([]);
 
 // Would prefere to use a computed instead of a watch but
 // Vue doesn't handle async in computed.
 const unwatchSearch = watch(search, async() => {
-  const allRoles = await getWorkspaceSharingInfo(props.workspaceId);
-  const roles = new Map<string, WorkspaceRole | null>();
-  const lowerCaseSearch = search.value.toLocaleLowerCase();
+  const result = await getWorkspaceInfo(props.workspaceId);
+  const roles: Array<[UserID, WorkspaceRole | null]> = [];
 
-  for (const entry of allRoles) {
-    if (entry[0].toLocaleLowerCase().includes(lowerCaseSearch)) {
-      roles.set(entry[0], entry[1]);
+  if (result.ok) {
+    const lowerCaseSearch = search.value.toLocaleLowerCase();
+    workspaceInfo.value = result.value;
+    for (const entry of result.value.sharingInfo) {
+      if (entry[0].toLocaleLowerCase().includes(lowerCaseSearch)) {
+        roles.push([entry[0], entry[1]]);
+      }
     }
+  } else {
+    console.log(`Could not get workspace info for ${props.workspaceId}`, result.error);
   }
   userRoles.value = roles;
 });
 
 onMounted(async () => {
-  userRoles.value = await getWorkspaceSharingInfo(props.workspaceId);
+  const result = await getWorkspaceInfo(props.workspaceId);
+
+  if (result.ok) {
+    workspaceInfo.value = result.value;
+    userRoles.value = result.value.sharingInfo;
+  } else {
+    console.log(`Could not get workspace info for ${props.workspaceId}`, result.error);
+  }
 });
 
 onUnmounted(() => {

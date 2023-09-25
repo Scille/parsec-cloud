@@ -36,7 +36,9 @@ import {
   UserInfo,
   ClientInfoError,
   UserProfile,
-  GetWorkspaceNameError,
+  WorkspaceInfo,
+  WorkspaceInfoError,
+  WorkspaceRole,
 } from '@/parsec/types';
 import { getParsecHandle } from '@/router/conditions';
 import { DateTime } from 'luxon';
@@ -97,7 +99,14 @@ export async function listWorkspaces(): Promise<Result<Array<[WorkspaceID, Works
   const handle = getParsecHandle();
 
   if (handle !== null && window.isDesktop()) {
-    return await libparsec.clientListWorkspaces(handle);
+    const result = await libparsec.clientListWorkspaces(handle);
+    if (result.ok) {
+      console.log('XXX', result.value);
+      return new Promise<Result<Array<[WorkspaceID, WorkspaceName]>, ClientListWorkspacesError>>((resolve, _reject) => {
+        resolve({ok: true, value: result.value});
+      });
+    }
+    return result;
   } else {
     return new Promise<Result<Array<[WorkspaceID, WorkspaceName]>, ClientListWorkspacesError>>((resolve, _reject) => {
       resolve({
@@ -277,34 +286,6 @@ export async function isOutsider(): Promise<boolean> {
   return await getUserProfile() === UserProfile.Outsider;
 }
 
-export async function getWorkspaceName(workspaceId: WorkspaceID): Promise<Result<WorkspaceName, GetWorkspaceNameError>> {
-  const handle = getParsecHandle();
-
-  if (handle !== null && window.isDesktop()) {
-    const result = await libparsec.clientListWorkspaces(handle);
-    if (result.ok) {
-      const workspace = result.value.find((tuple) => {
-        if (tuple[0] === workspaceId) {
-          return true;
-        }
-        return false;
-      });
-      if (workspace) {
-        return new Promise<Result<WorkspaceName, GetWorkspaceNameError>>((resolve, _reject) => {
-          resolve({ok: true, value: workspace[1]});
-        });
-      }
-    }
-    return new Promise<Result<WorkspaceID, GetWorkspaceNameError>>((resolve, _reject) => {
-      resolve({ok: false, error: {tag: 'NotFound'}});
-    });
-  } else {
-    return new Promise<Result<WorkspaceID, GetWorkspaceNameError>>((resolve, _reject) => {
-      resolve({ok: true, value: 'My Workspace'});
-    });
-  }
-}
-
 export async function isValidWorkspaceName(name: string): Promise<boolean> {
   return await libparsec.validateEntryName(name);
 }
@@ -327,4 +308,55 @@ export async function isValidDeviceName(name: string): Promise<boolean> {
 
 export async function isValidInvitationToken(token: string): Promise<boolean> {
   return await libparsec.validateInvitationToken(token);
+}
+
+export async function getWorkspaceInfo(workspaceId: WorkspaceID): Promise<Result<WorkspaceInfo, WorkspaceInfoError>> {
+  const handle = getParsecHandle();
+  if (handle !== null && window.isDesktop()) {
+    const result = await libparsec.clientListWorkspaces(handle);
+    if (result.ok) {
+      const workspace = result.value.find((tuple) => {
+        if (tuple[0] === workspaceId) {
+          return true;
+        }
+        return false;
+      });
+      if (workspace) {
+        // Get sharing info
+        return new Promise<Result<WorkspaceInfo, WorkspaceInfoError>>((resolve, _reject) => {
+          resolve({ok: true, value: {
+            id: workspace[0],
+            name: workspace[1],
+            // Replace this
+            role: WorkspaceRole.Owner,
+            // Replace this
+            availableOffline: false,
+            // Fill this
+            sharingInfo: [],
+            // Replace this
+            lastUpdated: DateTime.now(),
+            // Replace this
+            size: 0,
+          }});
+        });
+      }
+    }
+    return new Promise<Result<WorkspaceInfo, WorkspaceInfoError>>((resolve, _reject) => {
+      resolve({ok: false, error: {tag: 'Error', error: 'NotFound'}});
+    });
+  } else {
+    return new Promise<Result<WorkspaceInfo, WorkspaceInfoError>>((resolve, _reject) => {
+      resolve({ok: true, value: {
+        id: workspaceId,
+        name: `My Workspace ${workspaceId}`,
+        role: WorkspaceRole.Manager,
+        availableOffline: true,
+        sharingInfo: [
+          ['User1', WorkspaceRole.Contributor], ['User2', WorkspaceRole.Reader], ['Another User', WorkspaceRole.Owner], ['User4', null],
+        ],
+        lastUpdated: DateTime.now(),
+        size: 0,
+      }});
+    });
+  }
 }

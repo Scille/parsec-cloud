@@ -229,7 +229,6 @@ import MsSearchInput from '@/components/core/ms-input/MsSearchInput.vue';
 import MsSelect from '@/components/core/ms-select/MsSelect.vue';
 import { MsSelectChangeEvent, MsSelectOption } from '@/components/core/ms-select/MsSelectOption';
 import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
-import { mockLastLogin } from '@/common/mocks';
 import { StoredDeviceData, StorageManager } from '@/services/storageManager';
 import { DateTime } from 'luxon';
 import { useRouter } from 'vue-router';
@@ -308,10 +307,7 @@ const filteredDevices = computed(() => {
 const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
 
 onMounted(async (): Promise<void> => {
-  await mockLastLogin(storageManager);
-
   deviceList.value = await parsecListAvailableDevices();
-
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
 });
 
@@ -345,7 +341,6 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
   } else {
     storedDeviceDataDict.value[device.slug].lastLogin = DateTime.now();
   }
-  console.log(`Log in to ${device.organizationId} with password '${password}'`);
   await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));
 
   const result = await parsecLogin(device, password);
@@ -386,6 +381,8 @@ async function openPopover(ev: Event): Promise<void> {
   const result = await popover.onWillDismiss();
   if (result.role === MsModalResult.Confirm) {
     login(result.data.device, result.data.password);
+    deviceList.value = await parsecListAvailableDevices();
+    storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
   }
 }
 

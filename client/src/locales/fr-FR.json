@@ -177,7 +177,8 @@
             "Manager": "Gérant",
             "Owner": "Propriétaire",
             "NotShared": "Non partagé"
-        }
+        },
+        "currentUserLabel": "Moi"
     },
     "SettingsPage": {
         "pageTitle": "Paramètres",

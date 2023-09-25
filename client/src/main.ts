@@ -209,9 +209,6 @@ function getDefaultDataBaseDir(): string {
 }
 
 function getDefaultConfigDir(): string {
-  if (window.testbedPath) {
-    return window.testbedPath;
-  }
   if (isDesktop()) {
     if (import.meta.env.VITE_OPERATING_SYSTEM === 'win32') {
       return Path.join(import.meta.env.VITE_CONFIG_DIR, 'parsec/config');
@@ -225,7 +222,6 @@ function getDefaultConfigDir(): string {
 declare global {
   interface Window {
     nextStageHook: () => [any, (configPath: string, locale?: string) => Promise<void>],
-    testbedPath: string | null,
     getConfigDir: () => string,
     getDataBaseDir: () => string,
     getMountpointDir: () => string,
