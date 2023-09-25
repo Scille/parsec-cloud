@@ -78,7 +78,7 @@ cryptography = "^41.0.3"
 winfspy = { version = "^0.8", extras = ["test"], markers = "platform_system=='Windows'" }
 psutil = "^5.9"
 poetry-lock-package = ">=0.4.4,<0.6.0"
-docutils = "0.18.1"
+docutils = "0.20.1"
 Babel = "^2.10"
 
 ruff = "0.0.291"
