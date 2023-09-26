@@ -545,20 +545,21 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
 {% endfor %}
 {# Call actual function #}
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
 
 {% if meth.return_type is none %}
-        libparsec::{{ meth.name }}(
+        crate::capture_backtrace!(tx, libparsec::{{ meth.name }}(
 {% else %}
-        let ret = libparsec::{{ meth.name }}(
+        let ret = crate::capture_backtrace!(tx, libparsec::{{ meth.name }}(
 {% endif %}
 {% for param_name, param_type in meth.params.items() %}
             {{ maybe_ref(param_name, param_type) }},
 {% endfor %}
-        ).await;
+        ).await);
 
         deferred.settle_with(&channel, move |mut cx| {
 {% if meth.return_type is none %}
@@ -569,6 +570,8 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
             Ok(js_ret)
         });
     });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
