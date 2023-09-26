@@ -42,11 +42,18 @@
           {{ fileSize(workspace.size) }}
         </ion-text>
         <avatar-group
+          v-show="getSharedWith(workspace).length > 0"
           class="shared-group"
           :people="getSharedWith(workspace)"
           :max-display="2"
           @click.stop="$emit('shareClick', $event, workspace)"
         />
+        <ion-label
+          v-show="getSharedWith(workspace).length === 0"
+          @click.stop="$emit('shareClick', $event, workspace)"
+        >
+          {{ $t('WorkspacesPage.Workspace.notShared') }}
+        </ion-label>
       </div>
     </div>
   </div>
@@ -59,7 +66,7 @@ import {
   cloudDone,
   cloudOffline,
 } from 'ionicons/icons';
-import { IonAvatar, IonIcon, IonText, IonTitle } from '@ionic/vue';
+import { IonAvatar, IonIcon, IonText, IonTitle, IonLabel } from '@ionic/vue';
 import { inject } from 'vue';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
 import { MockWorkspace, getSharedWith } from '@/common/mocks';

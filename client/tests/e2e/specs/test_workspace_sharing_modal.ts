@@ -48,12 +48,12 @@ describe('Check workspace sharing modal', () => {
     cy.get('ion-modal').find('ion-list').find('.content').should('have.length', 12);
     cy.get('ion-modal').find('ion-input').as('searchInput');
     cy.get('@searchInput').find('input').type('a');
-    cy.get('ion-modal').find('ion-list').find('.content').should('have.length', 7);
+    cy.get('ion-modal').find('ion-list').find('.content').should('have.length', 8);
     // Check upper-case too
     cy.get('@searchInput').find('input').type('L');
-    cy.get('ion-modal').find('ion-list').find('.content').should('have.length', 2);
+    cy.get('ion-modal').find('ion-list').find('.content').should('have.length', 3);
     // cspell:disable-next-line
-    cy.get('ion-list').find('.person-name').first().contains('Valygar Corthala');
+    cy.get('ion-list').find('.person-name').first().contains('Me');
     // cspell:disable-next-line
     cy.get('ion-list').find('.person-name').last().contains('Nalia De\'Arnise');
   });
