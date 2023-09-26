@@ -16,7 +16,7 @@ describe('Search Input', () => {
 
   it('should emit a signal when input changes', async () => {
     const ionInput = wrapper.findComponent(IonInput);
-    ionInput.vm.$emit('ionInput', {detail: {value: 'Search string'}});
+    ionInput.vm.$emit('ionInput', {target: {value: 'Search string'}});
     expect(wrapper.emitted('change')?.length).to.equal(1);
     expect(wrapper.emitted('change')?.at(0)).to.have.same.members(['Search string']);
   });

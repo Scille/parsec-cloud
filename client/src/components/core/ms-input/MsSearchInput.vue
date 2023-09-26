@@ -13,9 +13,10 @@
       id="ms-search-input"
       class="ms-search-input form-input"
       v-model="searchRef"
+      :value="modelValue"
       :placeholder="label"
       :clear-input="true"
-      @ion-input="$emit('change', $event.detail.value)"
+      @ion-input="onChange($event.target.value)"
       @keyup.enter="onEnterPress()"
       mode="ios"
     />
@@ -30,6 +31,7 @@ import { search } from 'ionicons/icons';
 
 defineProps<{
   label: string
+  modelValue?: string
 }>();
 
 const searchRef = ref('');
@@ -37,12 +39,18 @@ const searchRef = ref('');
 const emits = defineEmits<{
   (e: 'change', value: string): void
   (e: 'enter'): void
+  (e: 'update:modelValue', value: string): void
 }>();
 
 function onEnterPress() : void {
   if (searchRef.value.length > 0) {
     emits('enter');
   }
+}
+
+function onChange(value: any): void {
+  emits('update:modelValue', value);
+  emits('change', value);
 }
 </script>
 
