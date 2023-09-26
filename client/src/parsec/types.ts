@@ -57,6 +57,7 @@ import {
   InvitationEmailSentStatus,
   InvitationStatus,
   UserProfile,
+  RealmRole as WorkspaceRole,
 } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
@@ -118,6 +119,7 @@ export {
   UserGreetInProgress2Info,
   UserGreetInProgress3Info,
   UserGreetInProgress4Info,
+  WorkspaceRole,
 };
 
 export {

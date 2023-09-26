@@ -3,7 +3,7 @@
 // cSpell:disable
 
 import { DateTime } from 'luxon';
-import { AvailableDevice, Handle, DeviceFileType, UserProfile } from '@/parsec';
+import { AvailableDevice, Handle, DeviceFileType, UserProfile, WorkspaceRole, WorkspaceID, WorkspaceName } from '@/parsec';
 import { StorageManager } from '@/services/storageManager';
 import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
 
@@ -89,16 +89,6 @@ export function pathInfo(_path: string, random = false): MockFile {
   }
   return fixedPathInfo();
 }
-
-export enum WorkspaceRole {
-  Owner = 'owner',
-  Manager = 'manager',
-  Contributor = 'contributor',
-  Reader = 'reader',
-}
-
-export type WorkspaceName = string;
-export type WorkspaceID = string;
 
 export function getSharedWith(workspace: MockWorkspace): string[] {
   const people = [];

@@ -41,7 +41,7 @@ describe('Check workspace sharing modal', () => {
     cy.get('.popover-viewport').find('ion-item').eq(0).click();
     cy.get('ion-list').find('.content').eq(4).find('.filter-button').contains('Reader');
     // cspell:disable-next-line
-    cy.get('@consoleLog').should('have.been.calledWith', 'Update user Cernd role to reader');
+    cy.get('@consoleLog').should('have.been.calledWith', 'Update user Cernd role to RealmRoleReader');
   });
 
   it('Filter users', () => {
