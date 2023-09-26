@@ -60,7 +60,7 @@
             <ms-search-input
               :label="t('HomePage.organizationList.search')"
               v-if="showOrganizationList"
-              @change="onSearchChange($event)"
+              v-model="orgSearchString"
               id="ms-search-input"
             />
             <ion-button
@@ -159,7 +159,7 @@
                         <organization-card :device="selectedDevice" />
                         <ms-password-input
                           :label="$t('HomePage.organizationLogin.passwordLabel')"
-                          @change="onPasswordChange($event)"
+                          v-model="password"
                           @enter="onLoginClick()"
                           id="ms-password-input"
                         />
@@ -222,7 +222,7 @@ import {
   logIn,
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { useI18n } from 'vue-i18n';
-import { onMounted, ref, toRaw, computed, inject, Ref } from 'vue';
+import { onMounted, ref, toRaw, computed, inject, Ref, onUpdated } from 'vue';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import MsPasswordInput from '@/components/core/ms-input/MsPasswordInput.vue';
 import MsSearchInput from '@/components/core/ms-input/MsSearchInput.vue';
@@ -241,6 +241,7 @@ import { NotificationCenter, NotificationLevel, Notification } from '@/services/
 import { getAppVersion } from '@/common/mocks';
 import AboutModal from '@/views/about/AboutModal.vue';
 import { listAvailableDevices as parsecListAvailableDevices, login as parsecLogin, AvailableDevice } from '@/parsec';
+import { isLoggedIn } from '@/router/conditions';
 
 const router = useRouter();
 const { t } = useI18n();
@@ -307,17 +308,18 @@ const filteredDevices = computed(() => {
 const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
 
 onMounted(async (): Promise<void> => {
-  deviceList.value = await parsecListAvailableDevices();
-
-  storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
+  await refreshDeviceList();
 });
 
-function onPasswordChange(pwd: string): void {
-  password.value = pwd;
-}
+onUpdated(async () => {
+  if (!isLoggedIn()) {
+    await refreshDeviceList();
+  }
+});
 
-function onSearchChange(search: string): void {
-  orgSearchString.value = search;
+async function refreshDeviceList(): Promise<void> {
+  deviceList.value = await parsecListAvailableDevices();
+  storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
 }
 
 function onMsSelectChange(event: MsSelectChangeEvent): void {
