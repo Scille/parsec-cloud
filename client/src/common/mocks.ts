@@ -162,14 +162,12 @@ const WORKSPACE_SHARING_INFO: Array<[WorkspaceID, Map<string, WorkspaceRole | nu
   [
     '1',
     new Map<string, WorkspaceRole | null>([
-      ['Me', WorkspaceRole.Contributor],
       ['Cernd', WorkspaceRole.Reader],
       ['Valygar Corthala', WorkspaceRole.Owner],
     ]),
   ], [
     '2',
     new Map<string, WorkspaceRole | null>([
-      ['Me', WorkspaceRole.Contributor],
       ['Korgan Bloodaxe', WorkspaceRole.Contributor],
       ['Anomen Delryn', WorkspaceRole.Contributor],
       ['Nalia De\'Arnise', WorkspaceRole.Owner],
@@ -179,18 +177,15 @@ const WORKSPACE_SHARING_INFO: Array<[WorkspaceID, Map<string, WorkspaceRole | nu
   ], [
     '3',
     new Map<string, WorkspaceRole | null>([
-      ['Me', WorkspaceRole.Owner],
       ['Imoen', WorkspaceRole.Owner],
     ]),
   ], [
     '4',
     new Map<string, WorkspaceRole | null>([
-      ['Me', WorkspaceRole.Owner],
     ]),
   ], [
     '5',
     new Map<string, WorkspaceRole | null>([
-      ['Me', WorkspaceRole.Reader],
       ['Korgan Bloodaxe', WorkspaceRole.Contributor],
       ['Drizzt Do\'Urden', WorkspaceRole.Owner],
       ['Viconia', WorkspaceRole.Owner],

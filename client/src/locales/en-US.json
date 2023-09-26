@@ -172,6 +172,7 @@
         "searchPlaceholder": "e.g.: John Smith",
         "valid": "Valid",
         "cancel": "Cancel",
+        "currentUserLabel": "Me",
         "roles": {
             "Reader": "Reader",
             "Contributor": "Contributor",
@@ -235,7 +236,8 @@
         },
         "Workspace": {
             "sharedWith": "Not shared | One person | {count} people",
-            "lastUpdate": "Last updated:"
+            "lastUpdate": "Last updated:",
+            "notShared": "Not shared"
         },
         "viewDisplay": {
             "grid": "grid",

@@ -20,6 +20,11 @@
         />
         <ion-list class="user-list">
           <workspace-user-role
+            :disabled="true"
+            :user="$t('WorkspaceSharing.currentUserLabel')"
+            :role="ownRole"
+          />
+          <workspace-user-role
             v-for="entry in userRoles.entries()"
             :key="entry[0]"
             :disabled="entry[0] === 'Me'"
@@ -51,7 +56,8 @@ import MsInput from '@/components/core/ms-input/MsInput.vue';
 const search = ref('');
 
 const props = defineProps<{
-  workspaceId: WorkspaceID
+  workspaceId: WorkspaceID,
+  ownRole: WorkspaceRole | null,
 }>();
 
 const userRoles = ref(new Map<string, WorkspaceRole | null>());

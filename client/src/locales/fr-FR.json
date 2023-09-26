@@ -171,6 +171,7 @@
         "searchPlaceholder": "ex : Jean Martin",
         "valid": "Valider",
         "cancel": "Annuler",
+        "currentUserLabel": "Moi",
         "roles": {
             "Reader": "Lecteur",
             "Contributor": "Contributeur",
@@ -234,7 +235,8 @@
         },
         "Workspace": {
             "sharedWith": "Non partagé | Une personne | {count} personnes",
-            "lastUpdate": "Dernière modification :"
+            "lastUpdate": "Dernière modification :",
+            "notShared": "Non partagé"
         },
         "viewDisplay": {
             "grid": "grille",

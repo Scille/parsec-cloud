@@ -213,6 +213,7 @@ async function onWorkspaceShareClick(_: Event, workspace: MockWorkspace): Promis
     component: WorkspaceSharingModal,
     componentProps: {
       workspaceId: workspace.id,
+      ownRole: workspace.role,
     },
     cssClass: 'workspace-sharing-modal',
   });

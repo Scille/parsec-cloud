@@ -37,11 +37,18 @@
     <!-- user avatars -->
     <div class="workspace-users">
       <avatar-group
+        v-show="getSharedWith(workspace).length > 0"
         class="shared-group"
         :people="getSharedWith(workspace)"
         :max-display="2"
         @click.stop="$emit('shareClick', $event, workspace)"
       />
+      <ion-label
+        v-show="getSharedWith(workspace).length === 0"
+        @click.stop="$emit('shareClick', $event, workspace)"
+      >
+        {{ $t('WorkspacesPage.Workspace.notShared') }}
+      </ion-label>
     </div>
 
     <!-- last update -->
