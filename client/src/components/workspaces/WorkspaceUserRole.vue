@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
 import { defineProps, defineEmits } from 'vue';
-import { WorkspaceRole } from '@/common/mocks';
+import { WorkspaceRole } from '@/parsec';
 import MsSelect from '@/components/core/ms-select/MsSelect.vue';
 import { Ref, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
