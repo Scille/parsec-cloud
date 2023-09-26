@@ -229,7 +229,6 @@ import MsSearchInput from '@/components/core/ms-input/MsSearchInput.vue';
 import MsSelect from '@/components/core/ms-select/MsSelect.vue';
 import { MsSelectChangeEvent, MsSelectOption } from '@/components/core/ms-select/MsSelectOption';
 import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
-import { mockLastLogin } from '@/common/mocks';
 import { StoredDeviceData, StorageManager } from '@/services/storageManager';
 import { DateTime } from 'luxon';
 import { useRouter } from 'vue-router';
@@ -308,8 +307,6 @@ const filteredDevices = computed(() => {
 const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
 
 onMounted(async (): Promise<void> => {
-  await mockLastLogin(storageManager);
-
   deviceList.value = await parsecListAvailableDevices();
 
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
