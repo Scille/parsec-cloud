@@ -2272,6 +2272,33 @@ fn variant_client_start_invitation_greet_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ClientStartWorkspaceError
+
+#[allow(dead_code)]
+fn variant_client_start_workspace_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientStartWorkspaceError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientStartWorkspaceError::AlreadyStarted { .. } => {
+            let js_tag = JsString::try_new(cx, "AlreadyStarted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientStartWorkspaceError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientStartWorkspaceError::NoAccess { .. } => {
+            let js_tag = JsString::try_new(cx, "NoAccess").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientStopError
 
 #[allow(dead_code)]
@@ -2465,6 +2492,382 @@ fn variant_device_save_strategy_rs_to_js<'a>(
         libparsec::DeviceSaveStrategy::Smartcard { .. } => {
             let js_tag = JsString::try_new(cx, "Smartcard").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// EntryInfo
+
+#[allow(dead_code)]
+fn variant_entry_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::EntryInfo> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "File" => {
+            let confinement_point = {
+                let js_val: Handle<JsValue> = obj.get(cx, "confinementPoint")?;
+                {
+                    if js_val.is_a::<JsNull, _>(cx) {
+                        None
+                    } else {
+                        let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                        Some({
+                            let custom_from_rs_string =
+                                |s: String| -> Result<libparsec::VlobID, _> {
+                                    libparsec::VlobID::from_hex(s.as_str())
+                                        .map_err(|e| e.to_string())
+                                };
+                            match custom_from_rs_string(js_val.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        })
+                    }
+                }
+            };
+            let id = {
+                let js_val: Handle<JsString> = obj.get(cx, "id")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                        libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let created = {
+                let js_val: Handle<JsString> = obj.get(cx, "created")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let updated = {
+                let js_val: Handle<JsString> = obj.get(cx, "updated")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let base_version = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "baseVersion")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    v as u32
+                }
+            };
+            let is_placeholder = {
+                let js_val: Handle<JsBoolean> = obj.get(cx, "isPlaceholder")?;
+                js_val.value(cx)
+            };
+            let need_sync = {
+                let js_val: Handle<JsBoolean> = obj.get(cx, "needSync")?;
+                js_val.value(cx)
+            };
+            let size = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "size")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
+                        cx.throw_type_error("Not an u64 number")?
+                    }
+                    v as u64
+                }
+            };
+            Ok(libparsec::EntryInfo::File {
+                confinement_point,
+                id,
+                created,
+                updated,
+                base_version,
+                is_placeholder,
+                need_sync,
+                size,
+            })
+        }
+        "Folder" => {
+            let confinement_point = {
+                let js_val: Handle<JsValue> = obj.get(cx, "confinementPoint")?;
+                {
+                    if js_val.is_a::<JsNull, _>(cx) {
+                        None
+                    } else {
+                        let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                        Some({
+                            let custom_from_rs_string =
+                                |s: String| -> Result<libparsec::VlobID, _> {
+                                    libparsec::VlobID::from_hex(s.as_str())
+                                        .map_err(|e| e.to_string())
+                                };
+                            match custom_from_rs_string(js_val.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        })
+                    }
+                }
+            };
+            let id = {
+                let js_val: Handle<JsString> = obj.get(cx, "id")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                        libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let created = {
+                let js_val: Handle<JsString> = obj.get(cx, "created")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let updated = {
+                let js_val: Handle<JsString> = obj.get(cx, "updated")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let base_version = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "baseVersion")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    v as u32
+                }
+            };
+            let is_placeholder = {
+                let js_val: Handle<JsBoolean> = obj.get(cx, "isPlaceholder")?;
+                js_val.value(cx)
+            };
+            let need_sync = {
+                let js_val: Handle<JsBoolean> = obj.get(cx, "needSync")?;
+                js_val.value(cx)
+            };
+            let children = {
+                let js_val: Handle<JsArray> = obj.get(cx, "children")?;
+                {
+                    let size = js_val.len(cx);
+                    let mut v = Vec::with_capacity(size as usize);
+                    for i in 0..size {
+                        let js_item: Handle<JsString> = js_val.get(cx, i)?;
+                        v.push({
+                            let custom_from_rs_string = |s: String| -> Result<_, _> {
+                                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_string(js_item.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        });
+                    }
+                    v
+                }
+            };
+            Ok(libparsec::EntryInfo::Folder {
+                confinement_point,
+                id,
+                created,
+                updated,
+                base_version,
+                is_placeholder,
+                need_sync,
+                children,
+            })
+        }
+        _ => cx.throw_type_error("Object is not a EntryInfo"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_entry_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::EntryInfo,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::EntryInfo::File {
+            confinement_point,
+            id,
+            created,
+            updated,
+            base_version,
+            is_placeholder,
+            need_sync,
+            size,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "File").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_confinement_point = match confinement_point {
+                Some(elem) => JsString::try_new(cx, {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(elem) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                })
+                .or_throw(cx)?
+                .as_value(cx),
+                None => JsNull::new(cx).as_value(cx),
+            };
+            js_obj.set(cx, "confinementPoint", js_confinement_point)?;
+            let js_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "id", js_id)?;
+            let js_created = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339())
+                    };
+                match custom_to_rs_string(created) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "created", js_created)?;
+            let js_updated = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339())
+                    };
+                match custom_to_rs_string(updated) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "updated", js_updated)?;
+            let js_base_version = JsNumber::new(cx, base_version as f64);
+            js_obj.set(cx, "baseVersion", js_base_version)?;
+            let js_is_placeholder = JsBoolean::new(cx, is_placeholder);
+            js_obj.set(cx, "isPlaceholder", js_is_placeholder)?;
+            let js_need_sync = JsBoolean::new(cx, need_sync);
+            js_obj.set(cx, "needSync", js_need_sync)?;
+            let js_size = JsNumber::new(cx, size as f64);
+            js_obj.set(cx, "size", js_size)?;
+        }
+        libparsec::EntryInfo::Folder {
+            confinement_point,
+            id,
+            created,
+            updated,
+            base_version,
+            is_placeholder,
+            need_sync,
+            children,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "Folder").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_confinement_point = match confinement_point {
+                Some(elem) => JsString::try_new(cx, {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(elem) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                })
+                .or_throw(cx)?
+                .as_value(cx),
+                None => JsNull::new(cx).as_value(cx),
+            };
+            js_obj.set(cx, "confinementPoint", js_confinement_point)?;
+            let js_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "id", js_id)?;
+            let js_created = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339())
+                    };
+                match custom_to_rs_string(created) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "created", js_created)?;
+            let js_updated = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339())
+                    };
+                match custom_to_rs_string(updated) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "updated", js_updated)?;
+            let js_base_version = JsNumber::new(cx, base_version as f64);
+            js_obj.set(cx, "baseVersion", js_base_version)?;
+            let js_is_placeholder = JsBoolean::new(cx, is_placeholder);
+            js_obj.set(cx, "isPlaceholder", js_is_placeholder)?;
+            let js_need_sync = JsBoolean::new(cx, need_sync);
+            js_obj.set(cx, "needSync", js_need_sync)?;
+            let js_children = {
+                // JsArray::new allocates with `undefined` value, that's why we `set` value
+                let js_array = JsArray::new(cx, children.len() as u32);
+                for (i, elem) in children.into_iter().enumerate() {
+                    let js_elem = JsString::try_new(cx, elem).or_throw(cx)?;
+                    js_array.set(cx, i as u32, js_elem)?;
+                }
+                js_array
+            };
+            js_obj.set(cx, "children", js_children)?;
         }
     }
     Ok(js_obj)
@@ -3460,6 +3863,110 @@ fn variant_user_or_device_claim_initial_info_rs_to_js<'a>(
                 None => JsNull::new(cx).as_value(cx),
             };
             js_obj.set(cx, "greeterHumanHandle", js_greeter_human_handle)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceEntryInfoError
+
+#[allow(dead_code)]
+fn variant_workspace_entry_info_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceEntryInfoError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceEntryInfoError::BadTimestamp {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "BadTimestamp").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_server_timestamp = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339())
+                    };
+                match custom_to_rs_string(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "serverTimestamp", js_server_timestamp)?;
+            let js_client_timestamp = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
+                        Ok(dt.to_rfc3339())
+                    };
+                match custom_to_rs_string(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "clientTimestamp", js_client_timestamp)?;
+            let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
+            js_obj.set(
+                cx,
+                "ballparkClientEarlyOffset",
+                js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = JsNumber::new(cx, ballpark_client_late_offset);
+            js_obj.set(
+                cx,
+                "ballparkClientLateOffset",
+                js_ballpark_client_late_offset,
+            )?;
+        }
+        libparsec::WorkspaceEntryInfoError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceEntryInfoError::InvalidCertificate { .. } => {
+            let js_tag = JsString::try_new(cx, "InvalidCertificate").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceEntryInfoError::InvalidManifest { .. } => {
+            let js_tag = JsString::try_new(cx, "InvalidManifest").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceEntryInfoError::NotAllowed { .. } => {
+            let js_tag = JsString::try_new(cx, "NotAllowed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceEntryInfoError::NotFound { .. } => {
+            let js_tag = JsString::try_new(cx, "NotFound").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceEntryInfoError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "Offline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceStopError
+
+#[allow(dead_code)]
+fn variant_workspace_stop_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceStopError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceStopError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
         }
     }
     Ok(js_obj)
@@ -5497,6 +6004,66 @@ fn client_start_user_invitation_greet(mut cx: FunctionContext) -> JsResult<JsPro
     Ok(promise)
 }
 
+// client_start_workspace
+fn client_start_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let realm_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_start_workspace(client, realm_id).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsNumber::new(&mut cx, ok as f64);
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_client_start_workspace_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // client_stop
 fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let client = {
@@ -6501,6 +7068,118 @@ fn validate_path(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// workspace_entry_info
+fn workspace_entry_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let path = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_entry_info(workspace, &path).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = variant_entry_info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_entry_info_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// workspace_stop
+fn workspace_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_stop(workspace).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_stop_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("bootstrapOrganization", bootstrap_organization)?;
     cx.export_function(
@@ -6574,6 +7253,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         "clientStartUserInvitationGreet",
         client_start_user_invitation_greet,
     )?;
+    cx.export_function("clientStartWorkspace", client_start_workspace)?;
     cx.export_function("clientStop", client_stop)?;
     cx.export_function("getPlatform", get_platform)?;
     cx.export_function(
@@ -6635,5 +7315,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("validateHumanHandleLabel", validate_human_handle_label)?;
     cx.export_function("validateInvitationToken", validate_invitation_token)?;
     cx.export_function("validatePath", validate_path)?;
+    cx.export_function("workspaceEntryInfo", workspace_entry_info)?;
+    cx.export_function("workspaceStop", workspace_stop)?;
     Ok(())
 }

@@ -527,6 +527,25 @@ export type ClientStartInvitationGreetError =
   | ClientStartInvitationGreetErrorInternal
 
 
+// ClientStartWorkspaceError
+export interface ClientStartWorkspaceErrorAlreadyStarted {
+    tag: "AlreadyStarted"
+    error: string
+}
+export interface ClientStartWorkspaceErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientStartWorkspaceErrorNoAccess {
+    tag: "NoAccess"
+    error: string
+}
+export type ClientStartWorkspaceError =
+  | ClientStartWorkspaceErrorAlreadyStarted
+  | ClientStartWorkspaceErrorInternal
+  | ClientStartWorkspaceErrorNoAccess
+
+
 // ClientStopError
 export interface ClientStopErrorInternal {
     tag: "Internal"
@@ -586,6 +605,34 @@ export interface DeviceSaveStrategySmartcard {
 export type DeviceSaveStrategy =
   | DeviceSaveStrategyPassword
   | DeviceSaveStrategySmartcard
+
+
+// EntryInfo
+export interface EntryInfoFile {
+    tag: "File"
+    confinement_point: string | null
+    id: string
+    created: string
+    updated: string
+    base_version: number
+    is_placeholder: boolean
+    need_sync: boolean
+    size: number
+}
+export interface EntryInfoFolder {
+    tag: "Folder"
+    confinement_point: string | null
+    id: string
+    created: string
+    updated: string
+    base_version: number
+    is_placeholder: boolean
+    need_sync: boolean
+    children: Array<string>
+}
+export type EntryInfo =
+  | EntryInfoFile
+  | EntryInfoFolder
 
 
 // GreetInProgressError
@@ -822,6 +869,58 @@ export type UserOrDeviceClaimInitialInfo =
   | UserOrDeviceClaimInitialInfoUser
 
 
+// WorkspaceEntryInfoError
+export interface WorkspaceEntryInfoErrorBadTimestamp {
+    tag: "BadTimestamp"
+    error: string
+    server_timestamp: string
+    client_timestamp: string
+    ballpark_client_early_offset: number
+    ballpark_client_late_offset: number
+}
+export interface WorkspaceEntryInfoErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface WorkspaceEntryInfoErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface WorkspaceEntryInfoErrorInvalidManifest {
+    tag: "InvalidManifest"
+    error: string
+}
+export interface WorkspaceEntryInfoErrorNotAllowed {
+    tag: "NotAllowed"
+    error: string
+}
+export interface WorkspaceEntryInfoErrorNotFound {
+    tag: "NotFound"
+    error: string
+}
+export interface WorkspaceEntryInfoErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type WorkspaceEntryInfoError =
+  | WorkspaceEntryInfoErrorBadTimestamp
+  | WorkspaceEntryInfoErrorInternal
+  | WorkspaceEntryInfoErrorInvalidCertificate
+  | WorkspaceEntryInfoErrorInvalidManifest
+  | WorkspaceEntryInfoErrorNotAllowed
+  | WorkspaceEntryInfoErrorNotFound
+  | WorkspaceEntryInfoErrorOffline
+
+
+// WorkspaceStopError
+export interface WorkspaceStopErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type WorkspaceStopError =
+  | WorkspaceStopErrorInternal
+
+
 // WorkspaceStorageCacheSize
 export interface WorkspaceStorageCacheSizeCustom {
     tag: "Custom"
@@ -964,6 +1063,10 @@ export function clientStartUserInvitationGreet(
     client: number,
     token: string
 ): Promise<Result<UserGreetInitialInfo, ClientStartInvitationGreetError>>
+export function clientStartWorkspace(
+    client: number,
+    realm_id: string
+): Promise<Result<number, ClientStartWorkspaceError>>
 export function clientStop(
     client: number
 ): Promise<Result<null, ClientStopError>>
@@ -1052,3 +1155,10 @@ export function validateInvitationToken(
 export function validatePath(
     raw: string
 ): Promise<boolean>
+export function workspaceEntryInfo(
+    workspace: number,
+    path: string
+): Promise<Result<EntryInfo, WorkspaceEntryInfoError>>
+export function workspaceStop(
+    workspace: number
+): Promise<Result<null, WorkspaceStopError>>
