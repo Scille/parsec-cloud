@@ -85,10 +85,10 @@ export interface ClientConfig {
 export interface ClientInfo {
     organizationId: OrganizationID
     deviceId: DeviceID
-    deviceLabel: DeviceLabel | null
     userId: UserID
-    profile: UserProfile
+    deviceLabel: DeviceLabel | null
     humanHandle: HumanHandle | null
+    currentProfile: UserProfile
 }
 
 export interface DeviceClaimFinalizeInfo {
@@ -181,6 +181,12 @@ export interface UserGreetInProgress4Info {
 
 export interface UserGreetInitialInfo {
     handle: number
+}
+
+export interface WorkspaceInfo {
+    id: VlobID
+    name: EntryName
+    selfRole: RealmRole
 }
 
 // BootstrapOrganizationError
@@ -829,7 +835,7 @@ export interface LibParsecPlugin {
     ): Promise<Result<Array<InviteListItem>, ListInvitationsError>>
     clientListWorkspaces(
         client: number
-    ): Promise<Result<Array<[VlobID, EntryName]>, ClientListWorkspacesError>>
+    ): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>>
     clientNewDeviceInvitation(
         client: number,
         send_email: boolean

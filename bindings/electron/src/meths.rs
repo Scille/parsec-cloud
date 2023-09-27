@@ -430,6 +430,15 @@ fn struct_client_info_js_to_rs<'a>(
             }
         }
     };
+    let user_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "userId")?;
+        {
+            match js_val.value(cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
     let device_label = {
         let js_val: Handle<JsValue> = obj.get(cx, "deviceLabel")?;
         {
@@ -446,22 +455,6 @@ fn struct_client_info_js_to_rs<'a>(
             }
         }
     };
-    let user_id = {
-        let js_val: Handle<JsString> = obj.get(cx, "userId")?;
-        {
-            match js_val.value(cx).parse() {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let profile = {
-        let js_val: Handle<JsString> = obj.get(cx, "profile")?;
-        {
-            let js_string = js_val.value(cx);
-            enum_user_profile_js_to_rs(cx, js_string.as_str())?
-        }
-    };
     let human_handle = {
         let js_val: Handle<JsValue> = obj.get(cx, "humanHandle")?;
         {
@@ -473,13 +466,20 @@ fn struct_client_info_js_to_rs<'a>(
             }
         }
     };
+    let current_profile = {
+        let js_val: Handle<JsString> = obj.get(cx, "currentProfile")?;
+        {
+            let js_string = js_val.value(cx);
+            enum_user_profile_js_to_rs(cx, js_string.as_str())?
+        }
+    };
     Ok(libparsec::ClientInfo {
         organization_id,
         device_id,
-        device_label,
         user_id,
-        profile,
+        device_label,
         human_handle,
+        current_profile,
     })
 }
 
@@ -493,21 +493,21 @@ fn struct_client_info_rs_to_js<'a>(
     js_obj.set(cx, "organizationId", js_organization_id)?;
     let js_device_id = JsString::try_new(cx, rs_obj.device_id).or_throw(cx)?;
     js_obj.set(cx, "deviceId", js_device_id)?;
+    let js_user_id = JsString::try_new(cx, rs_obj.user_id).or_throw(cx)?;
+    js_obj.set(cx, "userId", js_user_id)?;
     let js_device_label = match rs_obj.device_label {
         Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
         None => JsNull::new(cx).as_value(cx),
     };
     js_obj.set(cx, "deviceLabel", js_device_label)?;
-    let js_user_id = JsString::try_new(cx, rs_obj.user_id).or_throw(cx)?;
-    js_obj.set(cx, "userId", js_user_id)?;
-    let js_profile =
-        JsString::try_new(cx, enum_user_profile_rs_to_js(rs_obj.profile)).or_throw(cx)?;
-    js_obj.set(cx, "profile", js_profile)?;
     let js_human_handle = match rs_obj.human_handle {
         Some(elem) => struct_human_handle_rs_to_js(cx, elem)?.as_value(cx),
         None => JsNull::new(cx).as_value(cx),
     };
     js_obj.set(cx, "humanHandle", js_human_handle)?;
+    let js_current_profile =
+        JsString::try_new(cx, enum_user_profile_rs_to_js(rs_obj.current_profile)).or_throw(cx)?;
+    js_obj.set(cx, "currentProfile", js_current_profile)?;
     Ok(js_obj)
 }
 
@@ -1406,6 +1406,75 @@ fn struct_user_greet_initial_info_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
     js_obj.set(cx, "handle", js_handle)?;
+    Ok(js_obj)
+}
+
+// WorkspaceInfo
+
+#[allow(dead_code)]
+fn struct_workspace_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::WorkspaceInfo> {
+    let id = {
+        let js_val: Handle<JsString> = obj.get(cx, "id")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let name = {
+        let js_val: Handle<JsString> = obj.get(cx, "name")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, _> {
+                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let self_role = {
+        let js_val: Handle<JsString> = obj.get(cx, "selfRole")?;
+        {
+            let js_string = js_val.value(cx);
+            enum_realm_role_js_to_rs(cx, js_string.as_str())?
+        }
+    };
+    Ok(libparsec::WorkspaceInfo {
+        id,
+        name,
+        self_role,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_workspace_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceInfo,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "id", js_id)?;
+    let js_name = JsString::try_new(cx, rs_obj.name).or_throw(cx)?;
+    js_obj.set(cx, "name", js_name)?;
+    let js_self_role =
+        JsString::try_new(cx, enum_realm_role_rs_to_js(rs_obj.self_role)).or_throw(cx)?;
+    js_obj.set(cx, "selfRole", js_self_role)?;
     Ok(js_obj)
 }
 
@@ -4381,26 +4450,7 @@ fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
                             // JsArray::new allocates with `undefined` value, that's why we `set` value
                             let js_array = JsArray::new(&mut cx, ok.len() as u32);
                             for (i, elem) in ok.into_iter().enumerate() {
-                                let js_elem = {
-                                    let (x1, x2) = elem;
-                                    let js_array = JsArray::new(&mut cx, 2);
-                                    let js_value = JsString::try_new(&mut cx, {
-                                        let custom_to_rs_string =
-                                            |x: libparsec::VlobID| -> Result<String, &'static str> {
-                                                Ok(x.hex())
-                                            };
-                                        match custom_to_rs_string(x1) {
-                                            Ok(ok) => ok,
-                                            Err(err) => return cx.throw_type_error(err),
-                                        }
-                                    })
-                                    .or_throw(&mut cx)?;
-                                    js_array.set(&mut cx, 1, js_value)?;
-                                    let js_value =
-                                        JsString::try_new(&mut cx, x2).or_throw(&mut cx)?;
-                                    js_array.set(&mut cx, 2, js_value)?;
-                                    js_array
-                                };
+                                let js_elem = struct_workspace_info_rs_to_js(&mut cx, elem)?;
                                 js_array.set(&mut cx, i as u32, js_elem)?;
                             }
                             js_array

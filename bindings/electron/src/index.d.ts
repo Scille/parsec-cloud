@@ -71,10 +71,10 @@ export interface ClientConfig {
 export interface ClientInfo {
     organizationId: string
     deviceId: string
-    deviceLabel: string | null
     userId: string
-    profile: UserProfile
+    deviceLabel: string | null
     humanHandle: HumanHandle | null
+    currentProfile: UserProfile
 }
 
 
@@ -186,6 +186,13 @@ export interface UserGreetInProgress4Info {
 
 export interface UserGreetInitialInfo {
     handle: number
+}
+
+
+export interface WorkspaceInfo {
+    id: string
+    name: string
+    selfRole: RealmRole
 }
 
 
@@ -860,7 +867,7 @@ export function clientListInvitations(
 ): Promise<Result<Array<InviteListItem>, ListInvitationsError>>
 export function clientListWorkspaces(
     client: number
-): Promise<Result<Array<[string, string]>, ClientListWorkspacesError>>
+): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>>
 export function clientNewDeviceInvitation(
     client: number,
     send_email: boolean

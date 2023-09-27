@@ -451,6 +451,16 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
             .parse()
             .map_err(|_| TypeError::new("Not a valid DeviceID"))?
     };
+    let user_id = {
+        let js_val = Reflect::get(&obj, &"userId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+            .parse()
+            .map_err(|_| TypeError::new("Not a valid UserID"))?
+    };
     let device_label = {
         let js_val = Reflect::get(&obj, &"deviceLabel".into())?;
         if js_val.is_null() {
@@ -467,18 +477,16 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
             )
         }
     };
-    let user_id = {
-        let js_val = Reflect::get(&obj, &"userId".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
-            .map_err(|_| TypeError::new("Not a valid UserID"))?
+    let human_handle = {
+        let js_val = Reflect::get(&obj, &"humanHandle".into())?;
+        if js_val.is_null() {
+            None
+        } else {
+            Some(struct_human_handle_js_to_rs(js_val)?)
+        }
     };
-    let profile = {
-        let js_val = Reflect::get(&obj, &"profile".into())?;
+    let current_profile = {
+        let js_val = Reflect::get(&obj, &"currentProfile".into())?;
         {
             let raw_string = js_val.as_string().ok_or_else(|| {
                 let type_error = TypeError::new("value is not a string");
@@ -488,21 +496,13 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
             enum_user_profile_js_to_rs(raw_string.as_str())
         }?
     };
-    let human_handle = {
-        let js_val = Reflect::get(&obj, &"humanHandle".into())?;
-        if js_val.is_null() {
-            None
-        } else {
-            Some(struct_human_handle_js_to_rs(js_val)?)
-        }
-    };
     Ok(libparsec::ClientInfo {
         organization_id,
         device_id,
-        device_label,
         user_id,
-        profile,
+        device_label,
         human_handle,
+        current_profile,
     })
 }
 
@@ -513,20 +513,20 @@ fn struct_client_info_rs_to_js(rs_obj: libparsec::ClientInfo) -> Result<JsValue,
     Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
     let js_device_id = JsValue::from_str(rs_obj.device_id.as_ref());
     Reflect::set(&js_obj, &"deviceId".into(), &js_device_id)?;
+    let js_user_id = JsValue::from_str(rs_obj.user_id.as_ref());
+    Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
     let js_device_label = match rs_obj.device_label {
         Some(val) => JsValue::from_str(val.as_ref()),
         None => JsValue::NULL,
     };
     Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
-    let js_user_id = JsValue::from_str(rs_obj.user_id.as_ref());
-    Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
-    let js_profile = JsValue::from_str(enum_user_profile_rs_to_js(rs_obj.profile));
-    Reflect::set(&js_obj, &"profile".into(), &js_profile)?;
     let js_human_handle = match rs_obj.human_handle {
         Some(val) => struct_human_handle_rs_to_js(val)?,
         None => JsValue::NULL,
     };
     Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
+    let js_current_profile = JsValue::from_str(enum_user_profile_rs_to_js(rs_obj.current_profile));
+    Reflect::set(&js_obj, &"currentProfile".into(), &js_current_profile)?;
     Ok(js_obj)
 }
 
@@ -1490,6 +1490,78 @@ fn struct_user_greet_initial_info_rs_to_js(
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
     Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
+    Ok(js_obj)
+}
+
+// WorkspaceInfo
+
+#[allow(dead_code)]
+fn struct_workspace_info_js_to_rs(obj: JsValue) -> Result<libparsec::WorkspaceInfo, JsValue> {
+    let id = {
+        let js_val = Reflect::get(&obj, &"id".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                    libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid VlobID"))?
+    };
+    let name = {
+        let js_val = Reflect::get(&obj, &"name".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, _> {
+                    s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid EntryName"))?
+    };
+    let self_role = {
+        let js_val = Reflect::get(&obj, &"selfRole".into())?;
+        {
+            let raw_string = js_val.as_string().ok_or_else(|| {
+                let type_error = TypeError::new("value is not a string");
+                type_error.set_cause(&js_val);
+                JsValue::from(type_error)
+            })?;
+            enum_realm_role_js_to_rs(raw_string.as_str())
+        }?
+    };
+    Ok(libparsec::WorkspaceInfo {
+        id,
+        name,
+        self_role,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_workspace_info_rs_to_js(rs_obj: libparsec::WorkspaceInfo) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"id".into(), &js_id)?;
+    let js_name = JsValue::from_str(rs_obj.name.as_ref());
+    Reflect::set(&js_obj, &"name".into(), &js_name)?;
+    let js_self_role = JsValue::from_str(enum_realm_role_rs_to_js(rs_obj.self_role));
+    Reflect::set(&js_obj, &"selfRole".into(), &js_self_role)?;
     Ok(js_obj)
 }
 
@@ -3915,27 +3987,7 @@ pub fn clientListWorkspaces(client: u32) -> Promise {
                     // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                     let js_array = Array::new_with_length(value.len() as u32);
                     for (i, elem) in value.into_iter().enumerate() {
-                        let js_elem = {
-                            let (x1, x2) = elem;
-                            let js_array = Array::new_with_length(2);
-                            let js_value = JsValue::from_str({
-                                let custom_to_rs_string =
-                                    |x: libparsec::VlobID| -> Result<String, &'static str> {
-                                        Ok(x.hex())
-                                    };
-                                match custom_to_rs_string(x1) {
-                                    Ok(ok) => ok,
-                                    Err(err) => {
-                                        return Err(JsValue::from(TypeError::new(err.as_ref())))
-                                    }
-                                }
-                                .as_ref()
-                            });
-                            js_array.push(&js_value);
-                            let js_value = JsValue::from_str(x2.as_ref());
-                            js_array.push(&js_value);
-                            js_array.into()
-                        };
+                        let js_elem = struct_workspace_info_rs_to_js(elem)?;
                         js_array.set(i as u32, js_elem);
                     }
                     js_array.into()
