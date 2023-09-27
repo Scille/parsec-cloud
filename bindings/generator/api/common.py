@@ -88,6 +88,14 @@ class U32BasedType:
     pass
 
 
+class I64BasedType:
+    pass
+
+
+class U64BasedType:
+    pass
+
+
 class CustomConversionType:
     pass
 
@@ -95,6 +103,22 @@ class CustomConversionType:
 #
 # Common types
 #
+
+
+class Integer(I64BasedType):
+    pass
+
+
+class VersionInt(U32BasedType):
+    pass
+
+
+class SizeInt(U64BasedType):
+    pass
+
+
+class IndexInt(U64BasedType):
+    pass
 
 
 class Handle(U32BasedType):

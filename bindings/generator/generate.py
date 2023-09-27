@@ -25,6 +25,8 @@ META_TYPES = [
     "BytesBasedType",
     "I32BasedType",
     "U32BasedType",
+    "I64BasedType",
+    "U64BasedType",
     "Variant",
     "VariantItemTuple",
     "VariantItemUnit",
@@ -56,6 +58,18 @@ class I32BasedType(int):
 
 
 class U32BasedType(int):
+    ...
+
+
+# TODO: Should improve i64/u64 conversion checks, as Javascript represents
+# numbers as IEEE-754 64bits float (so with only 53bits precision for integer)
+
+
+class I64BasedType(int):
+    ...
+
+
+class U64BasedType(int):
     ...
 
 
@@ -232,6 +246,12 @@ class BaseTypeInUse:
         elif isinstance(param, type) and issubclass(param, U32BasedType):
             return U32BasedTypeInUse(name=param.__name__)
 
+        elif isinstance(param, type) and issubclass(param, I64BasedType):
+            return I64BasedTypeInUse(name=param.__name__)
+
+        elif isinstance(param, type) and issubclass(param, U64BasedType):
+            return U64BasedTypeInUse(name=param.__name__)
+
         else:
             typespec = TYPES_DB.get(param)
             assert (
@@ -349,6 +369,18 @@ class U32BasedTypeInUse(BaseTypeInUse):
 
 
 @dataclass
+class I64BasedTypeInUse(BaseTypeInUse):
+    kind = "i64_based"
+    name: str
+
+
+@dataclass
+class U64BasedTypeInUse(BaseTypeInUse):
+    kind = "u64_based"
+    name: str
+
+
+@dataclass
 class EnumSpec(BaseTypeInUse):
     kind = "enum"
     member_names: list[str]
@@ -374,6 +406,8 @@ class ApiSpecs:
     bytes_based_types: List[str]
     i32_based_types: List[str]
     u32_based_types: List[str]
+    i64_based_types: List[str]
+    u64_based_types: List[str]
     meths: List[MethSpec]
     structs: List[StructSpec]
     variants: List[VariantSpec]
@@ -551,6 +585,16 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             item.__name__
             for item in api_items.values()
             if isinstance(item, type) and issubclass(item, U32BasedType)
+        ),
+        i64_based_types=sorted(
+            item.__name__
+            for item in api_items.values()
+            if isinstance(item, type) and issubclass(item, I64BasedType)
+        ),
+        u64_based_types=sorted(
+            item.__name__
+            for item in api_items.values()
+            if isinstance(item, type) and issubclass(item, U64BasedType)
         ),
         enums=sorted(enums, key=lambda v: v.name),
         variants=sorted(variants, key=lambda v: v.name),

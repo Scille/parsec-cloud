@@ -19,7 +19,7 @@ JsValue
 JsNull
 {%- elif type.kind == "bool" -%}
 JsBoolean
-{%- elif type.kind in ("i32_based", "u32_based", "float") -%}
+{%- elif type.kind in ("i32_based", "u32_based", "i64_based", "u64_based", "float") -%}
 JsNumber
 {%- elif type.kind in ("str", "str_based") -%}
 JsString
@@ -118,6 +118,22 @@ JsString
         cx.throw_type_error("Not an u32 number")?
     }
     v as u32
+}
+{%- elif type.kind == "i64_based" -%}
+{
+    let v = {{ js_val }}.value({{ mut_cx_ref }});
+    if v < (i64::MIN as f64) || (i64::MAX as f64) < v {
+        cx.throw_type_error("Not an i64 number")?
+    }
+    v as i64
+}
+{%- elif type.kind == "u64_based" -%}
+{
+    let v = {{ js_val }}.value({{ mut_cx_ref }});
+    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
+        cx.throw_type_error("Not an u64 number")?
+    }
+    v as u64
 }
 {%- elif type.kind == "str" -%}
 {{ js_val }}.value({{ mut_cx_ref }})
@@ -276,7 +292,7 @@ match {{ rs_value }} {
 }
 {%- elif type.kind == "bool" -%}
 JsBoolean::new({{ mut_cx_ref }}, {{ rs_value }})
-{%- elif type.kind in ("i32_based", "u32_based") -%}
+{%- elif type.kind in ("i32_based", "u32_based", "i64_based", "u64_based") -%}
 JsNumber::new({{ mut_cx_ref }}, {{ rs_value }} as f64)
 {%- elif type.kind == "float" -%}
 JsNumber::new({{ mut_cx_ref }}, {{ rs_value }})
