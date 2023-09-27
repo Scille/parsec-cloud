@@ -16,7 +16,7 @@ async fn to_unknown_user(env: &TestbedEnv) {
     let wid = user_ops.list_workspaces()[0].0;
 
     let outcome = user_ops
-        .share_workspace(wid, &"bob".parse().unwrap(), Some(RealmRole::Contributor))
+        .share_workspace(wid, "bob".parse().unwrap(), Some(RealmRole::Contributor))
         .await;
     p_assert_matches!(outcome, Err(ShareWorkspaceError::UnknownRecipient));
 
@@ -88,7 +88,7 @@ async fn simple(env: &TestbedEnv) {
     );
 
     user_ops
-        .share_workspace(w_id, &"bob".parse().unwrap(), Some(RealmRole::Contributor))
+        .share_workspace(w_id, "bob".parse().unwrap(), Some(RealmRole::Contributor))
         .await
         .unwrap();
 

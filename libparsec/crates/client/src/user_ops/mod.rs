@@ -117,7 +117,7 @@ impl UserOps {
     pub async fn share_workspace(
         &self,
         realm_id: VlobID,
-        recipient: &UserID,
+        recipient: UserID,
         role: Option<RealmRole>,
     ) -> Result<(), ShareWorkspaceError> {
         share::share_workspace(self, realm_id, recipient, role).await

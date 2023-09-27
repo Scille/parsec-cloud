@@ -1,12 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
-use libparsec_platform_async::lock::RwLockReadGuard;
 use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    add::add_certificates_batch, storage::CertificatesCachedStorage, AddCertificateError,
+    add::add_certificates_batch, store::CertificatesStoreReadGuard, AddCertificateError,
     CertificatesOps, InvalidCertificateError, MaybeRedactedSwitch,
 };
 
@@ -41,19 +40,13 @@ impl From<AddCertificateError> for PollServerError {
 pub(super) async fn ensure_certificates_available_and_read_lock(
     ops: &CertificatesOps,
     certificate_index: IndexInt,
-) -> Result<RwLockReadGuard<CertificatesCachedStorage>, PollServerError> {
+) -> Result<CertificatesStoreReadGuard, PollServerError> {
     loop {
         poll_server_for_new_certificates(ops, Some(certificate_index)).await?;
-        let storage = ops.storage.read().await;
-        let last_index = ops
-            .storage
-            .read()
-            .await
-            .get_last_certificate_index()
-            .await?
-            .unwrap_or(0);
+        let store = ops.store.for_read().await;
+        let last_index = store.get_last_certificate_index().await?;
         if last_index >= certificate_index {
-            return Ok(storage);
+            return Ok(store);
         }
     }
 }
@@ -66,8 +59,8 @@ pub(super) async fn poll_server_for_new_certificates(
         // 1) Retrieve the last certificate index when are currently aware of
 
         let last_index = ops
-            .storage
-            .read()
+            .store
+            .for_read()
             .await
             .get_last_certificate_index()
             .await?;
@@ -75,12 +68,11 @@ pub(super) async fn poll_server_for_new_certificates(
         // `latest_known_index` is useful to detect outdated `CertificatesUpdated`
         // events given the server has already been polled in the meantime.
         let offset = match (&last_index, latest_known_index) {
-            (Some(last_index), Some(latest_known_index)) if *last_index >= latest_known_index => {
+            (last_index, Some(latest_known_index)) if *last_index >= latest_known_index => {
                 return Ok(*last_index)
             }
             // Certificate index starts at 1, so can be used as-is as offset
-            (None, _) => 0,
-            (Some(last_index), _) => *last_index,
+            (last_index, _) => *last_index,
         };
 
         // 2) We are missing some certificates, time to ask the server about them...
@@ -105,9 +97,9 @@ pub(super) async fn poll_server_for_new_certificates(
         // time here to avoid concurrency access changing certificate and breaking
         // the deterministic order certificate must be added on.
 
-        let mut storage = ops.storage.write().await;
+        let store = ops.store.for_write().await;
 
-        let new_offset = storage.get_last_certificate_index().await?.unwrap_or(0);
+        let new_offset = store.get_last_certificate_index().await?;
         let final_index = offset + certificates.len() as IndexInt;
 
         let certificates = match offset.cmp(&new_offset) {
@@ -124,7 +116,7 @@ pub(super) async fn poll_server_for_new_certificates(
             std::cmp::Ordering::Greater => continue,
         };
 
-        let outcome = add_certificates_batch(ops, &mut storage, new_offset, certificates).await?;
+        let outcome = add_certificates_batch(ops, &store, new_offset, certificates).await?;
         match outcome {
             MaybeRedactedSwitch::NoSwitch => (),
             // Unlike other profiles, Outsider is required to use the redacted
