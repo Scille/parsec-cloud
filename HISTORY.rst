@@ -5,6 +5,23 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.16.0-rc.5 (2023-09-27)
+--------------------------------
+
+Features
+~~~~~~~~
+
+* Add support for archiving workspaces and planning their deletion.  (`#5061
+  <https://github.com/Scille/parsec-cloud/issues/5061>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Fixed an issue on MacOS where a file would be deleted when trying to save it
+  from some specific native softwares.  (`#2330
+  <https://github.com/Scille/parsec-cloud/issues/2330>`__)
+
+
 Parsec v2.16.0-rc.4 (2023-08-25)
 --------------------------------
 

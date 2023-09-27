@@ -1,1 +1,0 @@
-Fixed an issue on MacOS where a file would be deleted when trying to save it from some specific native softwares.
