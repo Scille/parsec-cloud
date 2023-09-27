@@ -10,3 +10,4 @@ from .invite import *  # noqa: F403
 from .platform import *  # noqa: F403
 from .testbed import *  # noqa: F403
 from .validation import *  # noqa: F403
+from .workspace import *  # noqa: F403
