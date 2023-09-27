@@ -208,6 +208,12 @@ export interface WorkspaceInfo {
     selfRole: RealmRole
 }
 
+export interface WorkspaceUserAccessInfo {
+    userId: UserID
+    humanHandle: HumanHandle | null
+    role: RealmRole
+}
+
 // BootstrapOrganizationError
 export interface BootstrapOrganizationErrorAlreadyUsedToken {
     tag: 'AlreadyUsedToken'
@@ -384,6 +390,14 @@ export interface ClientListUsersErrorInternal {
 }
 export type ClientListUsersError =
   | ClientListUsersErrorInternal
+
+// ClientListWorkspaceUsersError
+export interface ClientListWorkspaceUsersErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export type ClientListWorkspaceUsersError =
+  | ClientListWorkspaceUsersErrorInternal
 
 // ClientListWorkspacesError
 export interface ClientListWorkspacesErrorInternal {
@@ -988,6 +1002,10 @@ export interface LibParsecPlugin {
         client: number,
         skip_revoked: boolean
     ): Promise<Result<Array<UserInfo>, ClientListUsersError>>
+    clientListWorkspaceUsers(
+        client: number,
+        realm_id: VlobID
+    ): Promise<Result<Array<WorkspaceUserAccessInfo>, ClientListWorkspaceUsersError>>
     clientListWorkspaces(
         client: number
     ): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>>

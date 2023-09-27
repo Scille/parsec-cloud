@@ -3,7 +3,10 @@
 use std::sync::Arc;
 
 pub use libparsec_client::{
-    certificates_ops::{DeviceInfo, GetUserDeviceError as ClientGetUserDeviceError, UserInfo},
+    certificates_ops::{
+        DeviceInfo, GetUserDeviceError as ClientGetUserDeviceError, UserInfo,
+        WorkspaceUserAccessInfo,
+    },
     user_ops::{
         ClientInfoError, RenameWorkspaceError as ClientRenameWorkspaceError,
         ShareWorkspaceError as ClientShareWorkspaceError,
@@ -303,6 +306,33 @@ pub async fn client_get_user_device(
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
     client.certificates_ops.get_user_device(device).await
+}
+
+/*
+ * List workspace's users
+ */
+
+#[derive(Debug, thiserror::Error)]
+pub enum ClientListWorkspaceUsersError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub async fn client_list_workspace_users(
+    client: Handle,
+    realm_id: VlobID,
+) -> Result<Vec<WorkspaceUserAccessInfo>, ClientListWorkspaceUsersError> {
+    let client = borrow_from_handle(client, |x| match x {
+        HandleItem::Client { client, .. } => Some(client.clone()),
+        _ => None,
+    })
+    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+
+    client
+        .certificates_ops
+        .list_workspace_users(realm_id)
+        .await
+        .map_err(|err| err.into())
 }
 
 /*
