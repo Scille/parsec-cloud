@@ -20,7 +20,7 @@ use crate::handle::{
  */
 
 #[derive(Debug, thiserror::Error)]
-pub enum ClientWorkspaceStartError {
+pub enum ClientStartWorkspaceError {
     #[error("Cannot start workspace: no access")]
     NoAccess,
     // We cannot just be idempotent and return the existing handle here: this is because
@@ -32,23 +32,23 @@ pub enum ClientWorkspaceStartError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<libparsec_client::ClientStartWorkspaceError> for ClientWorkspaceStartError {
+impl From<libparsec_client::ClientStartWorkspaceError> for ClientStartWorkspaceError {
     fn from(value: libparsec_client::ClientStartWorkspaceError) -> Self {
         match value {
             libparsec_client::ClientStartWorkspaceError::NoAccess => {
-                ClientWorkspaceStartError::NoAccess
+                ClientStartWorkspaceError::NoAccess
             }
             libparsec_client::ClientStartWorkspaceError::Internal(e) => {
-                ClientWorkspaceStartError::Internal(e)
+                ClientStartWorkspaceError::Internal(e)
             }
         }
     }
 }
 
-pub async fn client_workspace_start(
+pub async fn client_start_workspace(
     client: Handle,
     realm_id: VlobID,
-) -> Result<Handle, ClientWorkspaceStartError> {
+) -> Result<Handle, ClientStartWorkspaceError> {
     // 1. Check if the workspace isn't already started (or starting)
 
     enum RegisterFailed {
@@ -86,7 +86,7 @@ pub async fn client_workspace_start(
         match outcome {
             Ok(initializing) => break initializing,
             Err(RegisterFailed::AlreadyRegistered) => {
-                return Err(ClientWorkspaceStartError::AlreadyStarted)
+                return Err(ClientStartWorkspaceError::AlreadyStarted)
             }
             // Wait for concurrent operation to finish before retrying
             Err(RegisterFailed::ConcurrentRegister(listener)) => listener.await,
@@ -119,12 +119,12 @@ pub async fn client_workspace_start(
  */
 
 #[derive(Debug, thiserror::Error)]
-pub enum ClientWorkspaceStopError {
+pub enum WorkspaceStopError {
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
 
-pub async fn workspace_stop(workspace: Handle) -> Result<(), ClientWorkspaceStopError> {
+pub async fn workspace_stop(workspace: Handle) -> Result<(), WorkspaceStopError> {
     let (client_handle, realm_id) = take_and_close_handle(workspace, |x| match x {
         HandleItem::Workspace {
             client,
@@ -151,7 +151,7 @@ pub async fn workspace_stop(workspace: Handle) -> Result<(), ClientWorkspaceStop
     client
         .stop_workspace(realm_id)
         .await
-        .map_err(ClientWorkspaceStopError::Internal)
+        .map_err(WorkspaceStopError::Internal)
 }
 
 /*

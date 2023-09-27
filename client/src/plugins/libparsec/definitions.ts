@@ -54,6 +54,7 @@ export type DateTime = string
 export type DeviceID = string
 export type DeviceLabel = string
 export type EntryName = string
+export type FsPath = string
 export type InvitationToken = string
 export type OrganizationID = string
 export type Password = string
@@ -64,6 +65,7 @@ export type VlobID = string
 export type SequesterVerifyKeyDer = Uint8Array
 export type CacheSize = number
 export type Handle = number
+export type VersionInt = number
 
 export interface AvailableDevice {
     keyFilePath: Path
@@ -502,6 +504,24 @@ export interface ClientStartInvitationGreetErrorInternal {
 export type ClientStartInvitationGreetError =
   | ClientStartInvitationGreetErrorInternal
 
+// ClientStartWorkspaceError
+export interface ClientStartWorkspaceErrorAlreadyStarted {
+    tag: 'AlreadyStarted'
+    error: string
+}
+export interface ClientStartWorkspaceErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export interface ClientStartWorkspaceErrorNoAccess {
+    tag: 'NoAccess'
+    error: string
+}
+export type ClientStartWorkspaceError =
+  | ClientStartWorkspaceErrorAlreadyStarted
+  | ClientStartWorkspaceErrorInternal
+  | ClientStartWorkspaceErrorNoAccess
+
 // ClientStopError
 export interface ClientStopErrorInternal {
     tag: 'Internal'
@@ -558,6 +578,33 @@ export interface DeviceSaveStrategySmartcard {
 export type DeviceSaveStrategy =
   | DeviceSaveStrategyPassword
   | DeviceSaveStrategySmartcard
+
+// EntryInfo
+export interface EntryInfoFile {
+    tag: 'File'
+    confinementPoint: VlobID | null
+    id: VlobID
+    created: DateTime
+    updated: DateTime
+    baseVersion: number
+    isPlaceholder: boolean
+    needSync: boolean
+    size: number
+}
+export interface EntryInfoFolder {
+    tag: 'Folder'
+    confinementPoint: VlobID | null
+    id: VlobID
+    created: DateTime
+    updated: DateTime
+    baseVersion: number
+    isPlaceholder: boolean
+    needSync: boolean
+    children: Array<EntryName>
+}
+export type EntryInfo =
+  | EntryInfoFile
+  | EntryInfoFolder
 
 // GreetInProgressError
 export interface GreetInProgressErrorActiveUsersLimitReached {
@@ -785,6 +832,56 @@ export type UserOrDeviceClaimInitialInfo =
   | UserOrDeviceClaimInitialInfoDevice
   | UserOrDeviceClaimInitialInfoUser
 
+// WorkspaceEntryInfoError
+export interface WorkspaceEntryInfoErrorBadTimestamp {
+    tag: 'BadTimestamp'
+    error: string
+    serverTimestamp: DateTime
+    clientTimestamp: DateTime
+    ballparkClientEarlyOffset: number
+    ballparkClientLateOffset: number
+}
+export interface WorkspaceEntryInfoErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export interface WorkspaceEntryInfoErrorInvalidCertificate {
+    tag: 'InvalidCertificate'
+    error: string
+}
+export interface WorkspaceEntryInfoErrorInvalidManifest {
+    tag: 'InvalidManifest'
+    error: string
+}
+export interface WorkspaceEntryInfoErrorNotAllowed {
+    tag: 'NotAllowed'
+    error: string
+}
+export interface WorkspaceEntryInfoErrorNotFound {
+    tag: 'NotFound'
+    error: string
+}
+export interface WorkspaceEntryInfoErrorOffline {
+    tag: 'Offline'
+    error: string
+}
+export type WorkspaceEntryInfoError =
+  | WorkspaceEntryInfoErrorBadTimestamp
+  | WorkspaceEntryInfoErrorInternal
+  | WorkspaceEntryInfoErrorInvalidCertificate
+  | WorkspaceEntryInfoErrorInvalidManifest
+  | WorkspaceEntryInfoErrorNotAllowed
+  | WorkspaceEntryInfoErrorNotFound
+  | WorkspaceEntryInfoErrorOffline
+
+// WorkspaceStopError
+export interface WorkspaceStopErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export type WorkspaceStopError =
+  | WorkspaceStopErrorInternal
+
 // WorkspaceStorageCacheSize
 export interface WorkspaceStorageCacheSizeCustom {
     tag: 'Custom'
@@ -927,6 +1024,10 @@ export interface LibParsecPlugin {
         client: number,
         token: InvitationToken
     ): Promise<Result<UserGreetInitialInfo, ClientStartInvitationGreetError>>
+    clientStartWorkspace(
+        client: number,
+        realm_id: VlobID
+    ): Promise<Result<number, ClientStartWorkspaceError>>
     clientStop(
         client: number
     ): Promise<Result<null, ClientStopError>>
@@ -1015,4 +1116,11 @@ export interface LibParsecPlugin {
     validatePath(
         raw: string
     ): Promise<boolean>
+    workspaceEntryInfo(
+        workspace: number,
+        path: FsPath
+    ): Promise<Result<EntryInfo, WorkspaceEntryInfoError>>
+    workspaceStop(
+        workspace: number
+    ): Promise<Result<null, WorkspaceStopError>>
 }
