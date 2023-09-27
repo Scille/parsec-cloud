@@ -99,9 +99,15 @@ class ClientListWorkspacesError(ErrorVariant):
         pass
 
 
+class WorkspaceInfo(Structure):
+    id: VlobID
+    name: EntryName
+    self_role: RealmRole
+
+
 async def client_list_workspaces(
     client: Handle,
-) -> Result[list[tuple[VlobID, EntryName]], ClientListWorkspacesError]:
+) -> Result[list[WorkspaceInfo], ClientListWorkspacesError]:
     raise NotImplementedError
 
 
