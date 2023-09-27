@@ -287,7 +287,9 @@ mod mock_time {
 mod time_provider {
 
     #[derive(Default, Debug, Clone, PartialEq, Eq)]
-    pub struct TimeProvider;
+    // Avoid having an unit struct here otherwise clippy will complain about
+    // `TimeProvider::default()`
+    pub struct TimeProvider(());
 
     impl TimeProvider {
         pub fn now(&self) -> super::DateTime {

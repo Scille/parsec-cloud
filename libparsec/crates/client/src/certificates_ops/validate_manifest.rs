@@ -2,10 +2,7 @@
 
 use libparsec_types::prelude::*;
 
-use super::{
-    storage::{GetCertificateError, UpTo},
-    CertificatesOps, InvalidCertificateError, PollServerError,
-};
+use super::{CertificatesOps, GetCertificateError, InvalidCertificateError, PollServerError, UpTo};
 
 #[derive(Debug, thiserror::Error)]
 pub enum InvalidManifestError {
@@ -170,7 +167,7 @@ async fn validate_manifest<M>(
 ) -> Result<M, ValidateManifestError> {
     // 1) Make sure we have all the needed certificates
 
-    let storage = super::poll::ensure_certificates_available_and_read_lock(ops, certificate_index)
+    let store = super::poll::ensure_certificates_available_and_read_lock(ops, certificate_index)
         .await
         .map_err(|err| match err {
             PollServerError::Offline => ValidateManifestError::Offline,
@@ -184,8 +181,8 @@ async fn validate_manifest<M>(
 
     // 2.1) Check device exists (this also imply the user exists)
 
-    let author_certif = match storage
-        .get_device_certificate(UpTo::Index(certificate_index), author)
+    let author_certif = match store
+        .get_device_certificate(UpTo::Index(certificate_index), author.to_owned())
         .await
     {
         // Exists, as expected :)
@@ -211,8 +208,8 @@ async fn validate_manifest<M>(
 
     // 2.2) Check author is not revoked
 
-    match storage
-        .get_revoked_user_certificate(UpTo::Index(certificate_index), author.user_id())
+    match store
+        .get_revoked_user_certificate(UpTo::Index(certificate_index), author.user_id().clone())
         .await
     {
         // Not revoked at the considered index, as we expected :)
@@ -259,8 +256,12 @@ async fn validate_manifest<M>(
 
     // 4) Finally we have to check the manifest content is consistent with the system
     // (i.e. the author had the right to create this manifest)
-    let author_role = storage
-        .get_user_realm_role(UpTo::Index(certificate_index), author.user_id(), realm_id)
+    let author_role = store
+        .get_user_realm_role(
+            UpTo::Index(certificate_index),
+            author.user_id().to_owned(),
+            realm_id,
+        )
         .await?
         .and_then(|certif| certif.role);
     match author_role {

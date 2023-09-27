@@ -50,6 +50,7 @@ import type {
   UserGreetInProgress2Info,
   UserGreetInProgress3Info,
   UserGreetInProgress4Info,
+  WorkspaceInfo,
 } from '@/plugins/libparsec';
 // Enums have to be imported separately
 import {
@@ -120,6 +121,7 @@ export {
   UserGreetInProgress3Info,
   UserGreetInProgress4Info,
   WorkspaceRole,
+  WorkspaceInfo,
 };
 
 export {

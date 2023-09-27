@@ -55,10 +55,10 @@ enum WorkspaceShareDoServerCommandOutcome {
 pub async fn share_workspace(
     ops: &UserOps,
     realm_id: VlobID,
-    recipient: &UserID,
+    recipient: UserID,
     role: Option<RealmRole>,
 ) -> Result<(), ShareWorkspaceError> {
-    if ops.device.device_id.user_id() == recipient {
+    if *ops.device.device_id.user_id() == recipient {
         return Err(ShareWorkspaceError::ShareToSelf);
     }
 
@@ -94,8 +94,14 @@ pub async fn share_workspace(
 
     let mut timestamp = ops.device.time_provider.now();
     loop {
-        match workspace_share_do_server_command(ops, workspace_entry, recipient, role, timestamp)
-            .await?
+        match workspace_share_do_server_command(
+            ops,
+            workspace_entry,
+            recipient.clone(),
+            role,
+            timestamp,
+        )
+        .await?
         {
             WorkspaceShareDoServerCommandOutcome::Done => break,
             WorkspaceShareDoServerCommandOutcome::RequireGreaterTimestamp(
@@ -112,7 +118,7 @@ pub async fn share_workspace(
 async fn workspace_share_do_server_command(
     ops: &UserOps,
     workspace_entry: &WorkspaceEntry,
-    recipient: &UserID,
+    recipient: UserID,
     role: Option<RealmRole>,
     timestamp: DateTime,
 ) -> Result<WorkspaceShareDoServerCommandOutcome, ShareWorkspaceError> {
@@ -140,7 +146,7 @@ async fn workspace_share_do_server_command(
 
         match ops
             .certificates_ops
-            .encrypt_for_user(recipient, &signed_message)
+            .encrypt_for_user(recipient.clone(), &signed_message)
             .await?
         {
             None => return Err(ShareWorkspaceError::UnknownRecipient),
@@ -154,7 +160,7 @@ async fn workspace_share_do_server_command(
         author: CertificateSignerOwned::User(ops.device.device_id.clone()),
         timestamp,
         realm_id: workspace_entry.id,
-        user_id: recipient.to_owned(),
+        user_id: recipient,
         role,
     }
     .dump_and_sign(&ops.device.signing_key);

@@ -2,12 +2,11 @@
 
 use std::sync::Arc;
 
-use libparsec_platform_async::lock::RwLockWriteGuard;
 use libparsec_types::prelude::*;
 
 use super::{
-    storage::{CertificatesCachedStorage, GetCertificateError, GetTimestampBoundsError, UpTo},
-    CertificatesOps,
+    store::{CertificatesStoreWriteGuard, GetTimestampBoundsError, UpTo},
+    CertificatesOps, GetCertificateError,
 };
 use crate::event_bus::EventInvalidCertificate;
 
@@ -108,19 +107,40 @@ pub enum MaybeRedactedSwitch {
 
 pub(super) async fn add_certificates_batch<'a>(
     ops: &'a CertificatesOps,
-    storage: &mut RwLockWriteGuard<'a, CertificatesCachedStorage>,
+    store: &CertificatesStoreWriteGuard<'a>,
     last_index: IndexInt,
     certificates: impl Iterator<Item = Bytes>,
 ) -> Result<MaybeRedactedSwitch, AddCertificateError> {
-    let initial_self_profile = storage.get_current_self_profile().await?;
+    let initial_self_profile = store.get_current_self_profile().await?;
 
-    for (serialized, certificate_index) in certificates.zip(last_index + 1..) {
+    // TODO: use batch to insert the certificates in SQLite saves a huge amount of time
+    // However this is tricky given a given certificate depends on the previous ones
+    // for it validation, but now they could be either in SQLite or in the to-be-inserted
+    // batch !
+    // A solution to avoid this would be to have `CertificateStore::for_write` opens a
+    // SQLite transaction, this way inserting here would be cheap.
+
+    // TODO
+    // // Storing the certificates in batch (i.e. in a single SQL transaction) avoids
+    // // much of the ACID overhead
+    // const STORAGE_BATCH_SIZE: usize = 999;
+    // let mut to_insert_in_db_first_index = last_index + 1;
+    // let mut to_insert_in_db = {
+    //     let capacity = std::cmp::min(STORAGE_BATCH_SIZE, certificates.size_hint().0);
+    //     Vec::with_capacity(capacity)
+    // };
+
+    for (signed, certificate_index) in certificates.zip(last_index + 1..) {
         // Start by validating the certificate and, if something goes wrong, send
         // the invalid certificate event
 
-        let any_cooked = validate_certificate(ops, storage, certificate_index, serialized.clone())
+        let any_cooked = validate_certificate(ops, store, certificate_index, signed.clone())
             .await
-            // Here we send the event in case the certificate was invalid
+            // If a certificate is invalid we exit without any further validation.
+            // Note for simplicity we also skip sending to the storage the current
+            // batch of valid certificates (this means some operations that could have
+            // been processed will end up with an "invalid certificate" error instead,
+            // this is no big deal)
             .map_err(|err| {
                 if let AddCertificateError::InvalidCertificate(what) = err {
                     let event = EventInvalidCertificate(what);
@@ -152,7 +172,7 @@ pub(super) async fn add_certificates_batch<'a>(
                         // So we clear the storage and don't try to go any further given
                         // the index is no longer the right one (we must instead re-poll
                         // the server to get certificates from index 0)
-                        storage.forget_all_certificates().await?;
+                        store.forget_all_certificates().await?;
                         return Ok(MaybeRedactedSwitch::Switched);
                     }
                     // Switching profile without Outsider involved
@@ -161,46 +181,24 @@ pub(super) async fn add_certificates_batch<'a>(
             }
         }
 
-        // At last we can insert the certificate
+        // Actually insert the certificate !
+        store
+            .add_next_certificate(certificate_index, &any_cooked, &signed)
+            .await?;
 
-        match any_cooked {
-            AnyArcCertificate::User(cooked) => {
-                storage
-                    .add_user_certificate(certificate_index, cooked, serialized)
-                    .await?;
-            }
-            AnyArcCertificate::Device(cooked) => {
-                storage
-                    .add_device_certificate(certificate_index, cooked, serialized)
-                    .await?;
-            }
-            AnyArcCertificate::UserUpdate(cooked) => {
-                storage
-                    .add_user_update_certificate(certificate_index, cooked, serialized)
-                    .await?;
-            }
-            AnyArcCertificate::RevokedUser(cooked) => {
-                storage
-                    .add_revoked_user_certificate(certificate_index, cooked, serialized)
-                    .await?;
-            }
-            AnyArcCertificate::RealmRole(cooked) => {
-                storage
-                    .add_realm_role_certificate(certificate_index, cooked, serialized)
-                    .await?;
-            }
-            AnyArcCertificate::SequesterAuthority(cooked) => {
-                storage
-                    .add_sequester_authority_certificate(certificate_index, cooked, serialized)
-                    .await?;
-            }
-            AnyArcCertificate::SequesterService(cooked) => {
-                storage
-                    .add_sequester_service_certificate(certificate_index, cooked, serialized)
-                    .await?;
-            }
-        }
+        // TODO
+        // // Add to the batch, and actually do the insertion if the batch is full
+        // to_insert_in_db.push((any_cooked, signed));
+        // if to_insert_in_db.len() >= STORAGE_BATCH_SIZE {
+        //     store.add_certificates_batch(to_insert_in_db_first_index, &to_insert_in_db).await?;
+        //     to_insert_in_db_first_index += to_insert_in_db.len() as IndexInt;
+        //     to_insert_in_db.clear();
+        // }
     }
+
+    // TODO
+    // // Special case for the last batch
+    // store.add_certificates_batch(to_insert_in_db_first_index, &to_insert_in_db).await?;
 
     Ok(MaybeRedactedSwitch::NoSwitch)
 }
@@ -209,13 +207,13 @@ pub(super) async fn add_certificates_batch<'a>(
 /// and it global consistency with the others certificates.
 async fn validate_certificate<'a>(
     ops: &'a CertificatesOps,
-    storage: &mut RwLockWriteGuard<'a, CertificatesCachedStorage>,
+    store: &CertificatesStoreWriteGuard<'a>,
     index: IndexInt,
-    certificate: Bytes,
+    signed: Bytes,
 ) -> Result<AnyArcCertificate, AddCertificateError> {
     // 1) Deserialize the certificate first, as this doesn't need a lock on the storage
 
-    let unsecure = match AnyCertificate::unsecure_load(certificate) {
+    let unsecure = match AnyCertificate::unsecure_load(signed) {
         Ok(unsecure) => unsecure,
         Err(error) => {
             // No information can be extracted from the binary data...
@@ -234,7 +232,7 @@ async fn validate_certificate<'a>(
     // Special case for the first index given there is no previous one to retrieve !
     let current_index = if index == 1 {
         // Ensure index 1 doesn't already exists
-        match storage.get_timestamp_bounds(1).await {
+        match store.get_timestamp_bounds(1).await {
             Err(GetTimestampBoundsError::NonExisting) => {
                 // As expected !
                 0
@@ -254,7 +252,7 @@ async fn validate_certificate<'a>(
         }
     } else {
         let guessed_current_index = index - 1;
-        match storage.get_timestamp_bounds(guessed_current_index).await {
+        match store.get_timestamp_bounds(guessed_current_index).await {
             Ok((_, Some(_))) => {
                 // We already know some certificates with an higher index, hence this certificate
                 // cannot be added without breaking causality !
@@ -268,11 +266,7 @@ async fn validate_certificate<'a>(
             Err(GetTimestampBoundsError::NonExisting) => {
                 // We have a hole between the our last index and the one of the certificate to add.
                 let hint = unsecure.hint();
-                let expected_index = storage
-                    .get_last_certificate_index()
-                    .await?
-                    .unwrap_or_default()
-                    + 1;
+                let expected_index = store.get_last_certificate_index().await? + 1;
                 let what = InvalidCertificateError::InvalidIndex {
                     hint,
                     certificate_index: index,
@@ -315,7 +309,7 @@ async fn validate_certificate<'a>(
                 @internal,
                 Device,
                 $unsecure,
-                $unsecure.author()
+                $unsecure.author().to_owned()
             )
             .map(|(certif, serialized)| (Arc::new(certif), serialized))
             .map_err(|what| {
@@ -338,7 +332,7 @@ async fn validate_certificate<'a>(
         // Internal macro implementation stuff
 
         (@internal, Device, $unsecure:ident, $author:expr) => {
-            match storage.get_device_certificate(UpTo::Index(index), $author).await {
+            match store.get_device_certificate(UpTo::Index(index), $author).await {
                 Ok(author_certif) => $unsecure
                     .verify_signature(&author_certif.verify_key)
                     .map_err(|(unsecure, error)| {
@@ -389,7 +383,7 @@ async fn validate_certificate<'a>(
                         @internal,
                         Device,
                         $unsecure,
-                        author
+                        author.to_owned()
                     )
                 }
             }
@@ -402,7 +396,7 @@ async fn validate_certificate<'a>(
             let (cooked, _) = verify_certificate_signature!(DeviceOrRoot, unsecure)?;
 
             // 4) The certificate is valid, last check is the consistency with other certificates
-            check_user_certificate_consistency(ops, storage, current_index, &cooked).await?;
+            check_user_certificate_consistency(ops, store, current_index, &cooked).await?;
 
             Ok(AnyArcCertificate::User(cooked))
         }
@@ -410,7 +404,7 @@ async fn validate_certificate<'a>(
             let (cooked, _) = verify_certificate_signature!(DeviceOrRoot, unsecure)?;
 
             // 4) The certificate is valid, last check is the consistency with other certificates
-            check_device_certificate_consistency(ops, storage, current_index, &cooked).await?;
+            check_device_certificate_consistency(ops, store, current_index, &cooked).await?;
 
             Ok(AnyArcCertificate::Device(cooked))
         }
@@ -418,8 +412,7 @@ async fn validate_certificate<'a>(
             let (cooked, _) = verify_certificate_signature!(Device, unsecure)?;
 
             // 4) The certificate is valid, last check is the consistency with other certificates
-            check_revoked_user_certificate_consistency(ops, storage, current_index, &cooked)
-                .await?;
+            check_revoked_user_certificate_consistency(ops, store, current_index, &cooked).await?;
 
             Ok(AnyArcCertificate::RevokedUser(cooked))
         }
@@ -427,7 +420,7 @@ async fn validate_certificate<'a>(
             let (cooked, _) = verify_certificate_signature!(Device, unsecure)?;
 
             // 4) The certificate is valid, last check is the consistency with other certificates
-            check_user_update_certificate_consistency(ops, storage, current_index, &cooked).await?;
+            check_user_update_certificate_consistency(ops, store, current_index, &cooked).await?;
 
             Ok(AnyArcCertificate::UserUpdate(cooked))
         }
@@ -435,7 +428,7 @@ async fn validate_certificate<'a>(
             let (cooked, _) = verify_certificate_signature!(DeviceOrRoot, unsecure)?;
 
             // 4) The certificate is valid, last check is the consistency with other certificates
-            check_realm_role_certificate_consistency(storage, current_index, &cooked).await?;
+            check_realm_role_certificate_consistency(store, current_index, &cooked).await?;
 
             Ok(AnyArcCertificate::RealmRole(cooked))
         }
@@ -452,7 +445,7 @@ async fn validate_certificate<'a>(
                 })?;
 
             // 4) The certificate is valid, last check is the consistency with other certificates
-            check_sequester_authority_certificate_consistency(ops, storage, current_index, &cooked)
+            check_sequester_authority_certificate_consistency(ops, store, current_index, &cooked)
                 .await?;
 
             Ok(AnyArcCertificate::SequesterAuthority(cooked))
@@ -460,7 +453,7 @@ async fn validate_certificate<'a>(
 
         UnsecureAnyCertificate::SequesterService(unsecure) => {
             // Sequester services can only be signed by authority
-            let (cooked, _) = match storage
+            let (cooked, _) = match store
                 .get_sequester_authority_certificate(UpTo::Index(current_index))
                 .await
             {
@@ -498,8 +491,7 @@ async fn validate_certificate<'a>(
             }?;
 
             // 4) The certificate is valid, last check is the consistency with other certificates
-            check_sequester_service_certificate_consistency(storage, current_index, &cooked)
-                .await?;
+            check_sequester_service_certificate_consistency(store, current_index, &cooked).await?;
 
             Ok(AnyArcCertificate::SequesterService(cooked))
         }
@@ -507,13 +499,13 @@ async fn validate_certificate<'a>(
 }
 
 async fn check_user_exists<'a>(
-    storage: &mut RwLockWriteGuard<'a, CertificatesCachedStorage>,
+    store: &CertificatesStoreWriteGuard<'a>,
     up_to_index: IndexInt,
     user_id: &UserID,
     mk_hint: impl FnOnce() -> String,
 ) -> Result<Arc<UserCertificate>, AddCertificateError> {
-    match storage
-        .get_user_certificate(UpTo::Index(up_to_index), user_id)
+    match store
+        .get_user_certificate(UpTo::Index(up_to_index), user_id.to_owned())
         .await
     {
         // User exists as we expected :)
@@ -547,13 +539,13 @@ async fn check_user_exists<'a>(
 }
 
 async fn check_user_not_revoked<'a>(
-    storage: &mut RwLockWriteGuard<'a, CertificatesCachedStorage>,
+    store: &CertificatesStoreWriteGuard<'a>,
     up_to_index: IndexInt,
     user_id: &UserID,
     mk_hint: impl FnOnce() -> String,
 ) -> Result<(), AddCertificateError> {
-    match storage
-        .get_revoked_user_certificate(UpTo::Index(up_to_index), user_id)
+    match store
+        .get_revoked_user_certificate(UpTo::Index(up_to_index), user_id.to_owned())
         .await?
     {
         // Not revoked, as expected :)
@@ -577,14 +569,14 @@ async fn check_user_not_revoked<'a>(
 /// so what's left is checking it is not revoked and (optionally) it profile
 async fn check_author_not_revoked_and_profile<'a>(
     ops: &'a CertificatesOps,
-    storage: &mut RwLockWriteGuard<'a, CertificatesCachedStorage>,
+    store: &CertificatesStoreWriteGuard<'a>,
     up_to_index: IndexInt,
     author: &UserID,
     author_must_be_admin: bool,
     mk_hint: impl FnOnce() -> String + std::marker::Copy,
 ) -> Result<(), AddCertificateError> {
-    match storage
-        .get_revoked_user_certificate(UpTo::Index(up_to_index), author)
+    match store
+        .get_revoked_user_certificate(UpTo::Index(up_to_index), author.to_owned())
         .await?
     {
         // Not revoked, as expected :)
@@ -602,7 +594,7 @@ async fn check_author_not_revoked_and_profile<'a>(
     }
 
     if author_must_be_admin {
-        match get_user_profile(storage, up_to_index, author, mk_hint, None).await {
+        match get_user_profile(store, up_to_index, author, mk_hint, None).await {
             Ok(profile) => {
                 if profile != UserProfile::Admin {
                     let hint = mk_hint();
@@ -641,24 +633,24 @@ async fn check_author_not_revoked_and_profile<'a>(
 }
 
 async fn get_user_profile<'a>(
-    storage: &mut RwLockWriteGuard<'a, CertificatesCachedStorage>,
+    store: &CertificatesStoreWriteGuard<'a>,
     up_to_index: IndexInt,
     user_id: &UserID,
     mk_hint: impl FnOnce() -> String,
     already_fetched_user_certificate: Option<Arc<UserCertificate>>,
 ) -> Result<UserProfile, AddCertificateError> {
     // Updates are ordered by index, so last one contains the current profile
-    let updates = storage
-        .get_user_update_certificates(UpTo::Index(up_to_index), user_id)
+    let maybe_update = store
+        .get_last_user_update_certificate(UpTo::Index(up_to_index), user_id.to_owned())
         .await?;
-    if let Some(last_update) = updates.last() {
+    if let Some(last_update) = maybe_update {
         return Ok(last_update.new_profile);
     }
 
     // No updates, the current profile is the one specified in the user certificate
     let user_certificate = match already_fetched_user_certificate {
         Some(user_certificate) => user_certificate,
-        None => check_user_exists(storage, up_to_index, user_id, mk_hint).await?,
+        None => check_user_exists(store, up_to_index, user_id, mk_hint).await?,
     };
 
     Ok(user_certificate.profile)
@@ -666,7 +658,7 @@ async fn get_user_profile<'a>(
 
 async fn check_user_certificate_consistency<'a>(
     ops: &'a CertificatesOps,
-    storage: &mut RwLockWriteGuard<'a, CertificatesCachedStorage>,
+    store: &CertificatesStoreWriteGuard<'a>,
     current_index: IndexInt,
     cooked: &UserCertificate,
 ) -> Result<(), AddCertificateError> {
@@ -677,7 +669,7 @@ async fn check_user_certificate_consistency<'a>(
     if let CertificateSignerOwned::User(author) = &cooked.author {
         check_author_not_revoked_and_profile(
             ops,
-            storage,
+            store,
             current_index,
             author.user_id(),
             true,
@@ -691,8 +683,8 @@ async fn check_user_certificate_consistency<'a>(
 
     // 2) Make sure the user doesn't already exists
 
-    match storage
-        .get_user_certificate(UpTo::Index(current_index), &cooked.user_id)
+    match store
+        .get_user_certificate(UpTo::Index(current_index), cooked.user_id.clone())
         .await
     {
         // This user doesn't already exist, this is what we expected :)
@@ -737,7 +729,7 @@ async fn check_user_certificate_consistency<'a>(
 
 async fn check_revoked_user_certificate_consistency<'a>(
     ops: &'a CertificatesOps,
-    storage: &mut RwLockWriteGuard<'a, CertificatesCachedStorage>,
+    store: &CertificatesStoreWriteGuard<'a>,
     current_index: IndexInt,
     cooked: &RevokedUserCertificate,
 ) -> Result<(), AddCertificateError> {
@@ -755,7 +747,7 @@ async fn check_revoked_user_certificate_consistency<'a>(
 
     check_author_not_revoked_and_profile(
         ops,
-        storage,
+        store,
         current_index,
         cooked.author.user_id(),
         true,
@@ -765,18 +757,18 @@ async fn check_revoked_user_certificate_consistency<'a>(
 
     // 3) Make sure the user exists
 
-    check_user_exists(storage, current_index, &cooked.user_id, mk_hint).await?;
+    check_user_exists(store, current_index, &cooked.user_id, mk_hint).await?;
 
     // 4) Make sure the user is not already revoked
 
-    check_user_not_revoked(storage, current_index, &cooked.user_id, mk_hint).await?;
+    check_user_not_revoked(store, current_index, &cooked.user_id, mk_hint).await?;
 
     Ok(())
 }
 
 async fn check_user_update_certificate_consistency<'a>(
     ops: &'a CertificatesOps,
-    storage: &mut RwLockWriteGuard<'a, CertificatesCachedStorage>,
+    store: &CertificatesStoreWriteGuard<'a>,
     current_index: IndexInt,
     cooked: &UserUpdateCertificate,
 ) -> Result<(), AddCertificateError> {
@@ -794,7 +786,7 @@ async fn check_user_update_certificate_consistency<'a>(
 
     check_author_not_revoked_and_profile(
         ops,
-        storage,
+        store,
         current_index,
         cooked.author.user_id(),
         true,
@@ -805,16 +797,16 @@ async fn check_user_update_certificate_consistency<'a>(
     // 3) Make sure the user exists
 
     let user_certificate =
-        check_user_exists(storage, current_index, &cooked.user_id, mk_hint).await?;
+        check_user_exists(store, current_index, &cooked.user_id, mk_hint).await?;
 
     // 4) Make sure the user is not already revoked
 
-    check_user_not_revoked(storage, current_index, &cooked.user_id, mk_hint).await?;
+    check_user_not_revoked(store, current_index, &cooked.user_id, mk_hint).await?;
 
     // 5) Make sure the user doesn't already have this profile
 
     let user_current_profile = get_user_profile(
-        storage,
+        store,
         current_index,
         &cooked.user_id,
         mk_hint,
@@ -829,15 +821,15 @@ async fn check_user_update_certificate_consistency<'a>(
 
     // 6) If user is downgraded to Outsider, it should not be Owner/Manager of any shared realm
     if cooked.new_profile == UserProfile::Outsider {
-        for certif in storage
+        for certif in store
             .get_user_realms_roles(UpTo::Index(current_index), cooked.user_id.clone())
             .await?
         {
             match certif.role {
                 // Outsider can be owner only if the workspace is not shared
                 Some(RealmRole::Owner) => {
-                    let roles = storage
-                        .get_realm_certificates(UpTo::Index(current_index), certif.realm_id)
+                    let roles = store
+                        .get_realm_roles(UpTo::Index(current_index), certif.realm_id)
                         .await?;
                     // If the workspace is not shared, there should be only a single certificate
                     // (given one cannot change it own role !)
@@ -863,7 +855,7 @@ async fn check_user_update_certificate_consistency<'a>(
 
 async fn check_device_certificate_consistency<'a>(
     ops: &'a CertificatesOps,
-    storage: &mut RwLockWriteGuard<'a, CertificatesCachedStorage>,
+    store: &CertificatesStoreWriteGuard<'a>,
     current_index: IndexInt,
     cooked: &DeviceCertificate,
 ) -> Result<(), AddCertificateError> {
@@ -876,7 +868,7 @@ async fn check_device_certificate_consistency<'a>(
         CertificateSignerOwned::User(author) if author.user_id() == user_id => {
             check_author_not_revoked_and_profile(
                 ops,
-                storage,
+                store,
                 current_index,
                 author.user_id(),
                 false,
@@ -889,7 +881,7 @@ async fn check_device_certificate_consistency<'a>(
         CertificateSignerOwned::User(author) => {
             check_author_not_revoked_and_profile(
                 ops,
-                storage,
+                store,
                 current_index,
                 author.user_id(),
                 true,
@@ -908,16 +900,16 @@ async fn check_device_certificate_consistency<'a>(
 
     // 2) Make sure the user exists
 
-    check_user_exists(storage, current_index, user_id, mk_hint).await?;
+    check_user_exists(store, current_index, user_id, mk_hint).await?;
 
     // 3) Make sure the user is not already revoked
 
-    check_user_not_revoked(storage, current_index, user_id, mk_hint).await?;
+    check_user_not_revoked(store, current_index, user_id, mk_hint).await?;
 
     // 4) Make sure this device doesn't already exist
 
-    match storage
-        .get_device_certificate(UpTo::Index(current_index), &cooked.device_id)
+    match store
+        .get_device_certificate(UpTo::Index(current_index), cooked.device_id.to_owned())
         .await
     {
         // This device doesn't already exist, this is what we expected :)
@@ -954,7 +946,7 @@ async fn check_device_certificate_consistency<'a>(
 }
 
 async fn check_realm_role_certificate_consistency<'a>(
-    storage: &mut RwLockWriteGuard<'a, CertificatesCachedStorage>,
+    store: &CertificatesStoreWriteGuard<'a>,
     current_index: IndexInt,
     cooked: &RealmRoleCertificate,
 ) -> Result<(), AddCertificateError> {
@@ -976,8 +968,8 @@ async fn check_realm_role_certificate_consistency<'a>(
         }
     };
 
-    let realm_current_roles = storage
-        .get_realm_certificates(UpTo::Index(current_index), cooked.realm_id)
+    let realm_current_roles = store
+        .get_realm_roles(UpTo::Index(current_index), cooked.realm_id)
         .await?;
 
     // 1) Check author's realm role and if certificate is self-signed
@@ -1071,16 +1063,16 @@ async fn check_realm_role_certificate_consistency<'a>(
     // 2) Make sure the user exists
 
     let user_certificate =
-        check_user_exists(storage, current_index, &cooked.user_id, mk_hint).await?;
+        check_user_exists(store, current_index, &cooked.user_id, mk_hint).await?;
 
     // 3) Make sure the user is not already revoked
 
-    check_user_not_revoked(storage, current_index, &cooked.user_id, mk_hint).await?;
+    check_user_not_revoked(store, current_index, &cooked.user_id, mk_hint).await?;
 
     // 3) An Outsider user can  Make sure the user's profile is compatible with the realm and it given role
 
     let profile = get_user_profile(
-        storage,
+        store,
         current_index,
         &cooked.user_id,
         mk_hint,
@@ -1111,13 +1103,13 @@ async fn check_realm_role_certificate_consistency<'a>(
 
 async fn check_sequester_authority_certificate_consistency<'a>(
     ops: &CertificatesOps,
-    storage: &mut RwLockWriteGuard<'a, CertificatesCachedStorage>,
+    store: &CertificatesStoreWriteGuard<'a>,
     current_index: IndexInt,
     cooked: &SequesterAuthorityCertificate,
 ) -> Result<(), AddCertificateError> {
     // 1) Make sure the authority doesn't already exist
 
-    match storage
+    match store
         .get_sequester_authority_certificate(UpTo::Index(current_index))
         .await
     {
@@ -1159,7 +1151,7 @@ async fn check_sequester_authority_certificate_consistency<'a>(
 }
 
 async fn check_sequester_service_certificate_consistency<'a>(
-    storage: &mut RwLockWriteGuard<'a, CertificatesCachedStorage>,
+    store: &CertificatesStoreWriteGuard<'a>,
     current_index: IndexInt,
     cooked: &SequesterServiceCertificate,
 ) -> Result<(), AddCertificateError> {
@@ -1168,7 +1160,7 @@ async fn check_sequester_service_certificate_consistency<'a>(
 
     // 1) Make sure the service doesn't already exist
 
-    let existing_services = storage
+    let existing_services = store
         .get_sequester_service_certificates(UpTo::Index(current_index))
         .await?;
     for existing_service in existing_services {

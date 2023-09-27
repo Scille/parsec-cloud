@@ -2,9 +2,12 @@
 
 use std::sync::Arc;
 
-pub use libparsec_client::user_ops::{
-    ClientInfoError, RenameWorkspaceError as ClientRenameWorkspaceError,
-    ShareWorkspaceError as ClientShareWorkspaceError,
+pub use libparsec_client::{
+    certificates_ops::{DeviceInfo, GetUserDeviceError as ClientGetUserDeviceError, UserInfo},
+    user_ops::{
+        ClientInfoError, RenameWorkspaceError as ClientRenameWorkspaceError,
+        ShareWorkspaceError as ClientShareWorkspaceError,
+    },
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
@@ -202,10 +205,10 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
 pub struct ClientInfo {
     pub organization_id: OrganizationID,
     pub device_id: DeviceID,
-    pub device_label: Option<DeviceLabel>,
     pub user_id: UserID,
-    pub profile: UserProfile,
+    pub device_label: Option<DeviceLabel>,
     pub human_handle: Option<HumanHandle>,
+    pub current_profile: UserProfile,
 }
 
 pub async fn client_info(client: Handle) -> Result<ClientInfo, ClientInfoError> {
@@ -218,11 +221,88 @@ pub async fn client_info(client: Handle) -> Result<ClientInfo, ClientInfoError> 
     Ok(ClientInfo {
         organization_id: client.organization_id().clone(),
         device_id: client.device_id().clone(),
-        device_label: client.device_label().cloned(),
         user_id: client.device_id().user_id().clone(),
-        profile: client.profile().await?,
+        device_label: client.device_label().cloned(),
         human_handle: client.human_handle().cloned(),
+        current_profile: client
+            .profile()
+            .await
+            .map_err(|e| e.context("Cannot retrieve profile"))?,
     })
+}
+
+/*
+ * List users
+ */
+
+#[derive(Debug, thiserror::Error)]
+pub enum ClientListUsersError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+// TODO: order by user name (asc/desc), offset/limit
+pub async fn client_list_users(
+    client: Handle,
+    skip_revoked: bool,
+    // offset: Option<usize>,
+    // limit: Option<usize>,
+) -> Result<Vec<UserInfo>, ClientListUsersError> {
+    let client = borrow_from_handle(client, |x| match x {
+        HandleItem::Client { client, .. } => Some(client.clone()),
+        _ => None,
+    })
+    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+
+    client
+        .certificates_ops
+        .list_users(skip_revoked, None, None)
+        .await
+        .map_err(ClientListUsersError::Internal)
+}
+
+/*
+ * List user devices
+ */
+
+#[derive(Debug, thiserror::Error)]
+pub enum ClientListUserDevicesError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub async fn client_list_user_devices(
+    client: Handle,
+    user: UserID,
+) -> Result<Vec<DeviceInfo>, ClientListUserDevicesError> {
+    let client = borrow_from_handle(client, |x| match x {
+        HandleItem::Client { client, .. } => Some(client.clone()),
+        _ => None,
+    })
+    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+
+    client
+        .certificates_ops
+        .list_user_devices(user)
+        .await
+        .map_err(|err| err.into())
+}
+
+/*
+ * get user device
+ */
+
+pub async fn client_get_user_device(
+    client: Handle,
+    device: DeviceID,
+) -> Result<(UserInfo, DeviceInfo), ClientGetUserDeviceError> {
+    let client = borrow_from_handle(client, |x| match x {
+        HandleItem::Client { client, .. } => Some(client.clone()),
+        _ => None,
+    })
+    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+
+    client.certificates_ops.get_user_device(device).await
 }
 
 /*
@@ -235,16 +315,54 @@ pub enum ClientListWorkspacesError {
     Internal(#[from] anyhow::Error),
 }
 
+pub struct WorkspaceInfo {
+    pub id: VlobID,
+    pub name: EntryName,
+    pub self_role: RealmRole,
+}
+
 pub async fn client_list_workspaces(
     client: Handle,
-) -> Result<Vec<(VlobID, EntryName)>, ClientListWorkspacesError> {
+) -> Result<Vec<WorkspaceInfo>, ClientListWorkspacesError> {
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
-    Ok(client.user_ops.list_workspaces())
+    let realms_roles = client
+        .certificates_ops
+        .get_current_self_realms_roles()
+        .await
+        .map_err(|e| e.context("Cannot retrieve self realms roles"))?;
+    let workspaces_entries = client.user_ops.list_workspaces();
+
+    // Only keep the workspaces that are actually accessible:
+    // - an entry is present in the user manifest
+    // - we currently have access to the related realm according to the certificates
+
+    let infos = workspaces_entries
+        .into_iter()
+        .filter_map(|(id, name)| {
+            let maybe_role =
+                realms_roles.iter().find_map(
+                    |(x_id, x_role)| {
+                        if *x_id == id {
+                            Some(*x_role)
+                        } else {
+                            None
+                        }
+                    },
+                );
+            maybe_role.map(|self_role| WorkspaceInfo {
+                id,
+                name,
+                self_role,
+            })
+        })
+        .collect();
+
+    Ok(infos)
 }
 
 /*
@@ -310,6 +428,6 @@ pub async fn client_share_workspace(
 
     client
         .user_ops
-        .share_workspace(realm_id, &recipient, role)
+        .share_workspace(realm_id, recipient, role)
         .await
 }

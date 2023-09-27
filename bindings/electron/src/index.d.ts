@@ -71,10 +71,10 @@ export interface ClientConfig {
 export interface ClientInfo {
     organizationId: string
     deviceId: string
-    deviceLabel: string | null
     userId: string
-    profile: UserProfile
+    deviceLabel: string | null
     humanHandle: HumanHandle | null
+    currentProfile: UserProfile
 }
 
 
@@ -127,6 +127,14 @@ export interface DeviceGreetInProgress4Info {
 
 export interface DeviceGreetInitialInfo {
     handle: number
+}
+
+
+export interface DeviceInfo {
+    id: string
+    deviceLabel: string | null
+    createdOn: string
+    createdBy: string | null
 }
 
 
@@ -186,6 +194,24 @@ export interface UserGreetInProgress4Info {
 
 export interface UserGreetInitialInfo {
     handle: number
+}
+
+
+export interface UserInfo {
+    id: string
+    humanHandle: HumanHandle | null
+    currentProfile: UserProfile
+    createdOn: string
+    createdBy: string | null
+    revokedOn: string | null
+    revokedBy: string | null
+}
+
+
+export interface WorkspaceInfo {
+    id: string
+    name: string
+    selfRole: RealmRole
 }
 
 
@@ -336,6 +362,20 @@ export type ClientEvent =
   | ClientEventPing
 
 
+// ClientGetUserDeviceError
+export interface ClientGetUserDeviceErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientGetUserDeviceErrorNonExisting {
+    tag: "NonExisting"
+    error: string
+}
+export type ClientGetUserDeviceError =
+  | ClientGetUserDeviceErrorInternal
+  | ClientGetUserDeviceErrorNonExisting
+
+
 // ClientInfoError
 export interface ClientInfoErrorInternal {
     tag: "Internal"
@@ -343,6 +383,24 @@ export interface ClientInfoErrorInternal {
 }
 export type ClientInfoError =
   | ClientInfoErrorInternal
+
+
+// ClientListUserDevicesError
+export interface ClientListUserDevicesErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type ClientListUserDevicesError =
+  | ClientListUserDevicesErrorInternal
+
+
+// ClientListUsersError
+export interface ClientListUsersErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type ClientListUsersError =
+  | ClientListUsersErrorInternal
 
 
 // ClientListWorkspacesError
@@ -852,15 +910,27 @@ export function clientDeleteInvitation(
     client: number,
     token: string
 ): Promise<Result<null, DeleteInvitationError>>
+export function clientGetUserDevice(
+    client: number,
+    device: string
+): Promise<Result<[UserInfo, DeviceInfo], ClientGetUserDeviceError>>
 export function clientInfo(
     client: number
 ): Promise<Result<ClientInfo, ClientInfoError>>
 export function clientListInvitations(
     client: number
 ): Promise<Result<Array<InviteListItem>, ListInvitationsError>>
+export function clientListUserDevices(
+    client: number,
+    user: string
+): Promise<Result<Array<DeviceInfo>, ClientListUserDevicesError>>
+export function clientListUsers(
+    client: number,
+    skip_revoked: boolean
+): Promise<Result<Array<UserInfo>, ClientListUsersError>>
 export function clientListWorkspaces(
     client: number
-): Promise<Result<Array<[string, string]>, ClientListWorkspacesError>>
+): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>>
 export function clientNewDeviceInvitation(
     client: number,
     send_email: boolean

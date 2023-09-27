@@ -72,7 +72,7 @@ JsString
 {%- for value in type.values -%}
     {
         let js_item: Handle<{{ ts_type(value) }}> = {{ js_val }}.get({{ mut_cx_ref }}, {{ loop.index }})?;
-        {{ render_downcasted_js_to_rs(js_value, value, mut_cx_ref) | indent(8) }}
+        {{ render_downcasted_js_to_rs("js_val", value, mut_cx_ref) | indent(8) }}
     }
     {{ ", " if not loop.last else "" -}}
 {%- endfor -%}

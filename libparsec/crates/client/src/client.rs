@@ -255,7 +255,10 @@ impl Client {
         // 3. Actually start the workspace
 
         let user_role = {
-            let available_realms = self.certificates_ops.get_current_self_realm_roles().await?;
+            let available_realms = self
+                .certificates_ops
+                .get_current_self_realms_roles()
+                .await?;
             let found = available_realms.into_iter().find_map(|(x_realm_id, role)| {
                 if x_realm_id == realm_id {
                     Some(role)
@@ -344,7 +347,10 @@ impl Client {
             guard.deref().clone()
         };
 
-        let available_realms = self.certificates_ops.get_current_self_realm_roles().await?;
+        let available_realms = self
+            .certificates_ops
+            .get_current_self_realms_roles()
+            .await?;
         let user_manifest = self.user_ops.get_user_manifest();
 
         let mut still_started_workspace_opses = Vec::with_capacity(workspace_opses.len());

@@ -85,10 +85,10 @@ export interface ClientConfig {
 export interface ClientInfo {
     organizationId: OrganizationID
     deviceId: DeviceID
-    deviceLabel: DeviceLabel | null
     userId: UserID
-    profile: UserProfile
+    deviceLabel: DeviceLabel | null
     humanHandle: HumanHandle | null
+    currentProfile: UserProfile
 }
 
 export interface DeviceClaimFinalizeInfo {
@@ -132,6 +132,13 @@ export interface DeviceGreetInProgress4Info {
 
 export interface DeviceGreetInitialInfo {
     handle: number
+}
+
+export interface DeviceInfo {
+    id: DeviceID
+    deviceLabel: DeviceLabel | null
+    createdOn: DateTime
+    createdBy: DeviceID | null
 }
 
 export interface HumanHandle {
@@ -181,6 +188,22 @@ export interface UserGreetInProgress4Info {
 
 export interface UserGreetInitialInfo {
     handle: number
+}
+
+export interface UserInfo {
+    id: UserID
+    humanHandle: HumanHandle | null
+    currentProfile: UserProfile
+    createdOn: DateTime
+    createdBy: DeviceID | null
+    revokedOn: DateTime | null
+    revokedBy: DeviceID | null
+}
+
+export interface WorkspaceInfo {
+    id: VlobID
+    name: EntryName
+    selfRole: RealmRole
 }
 
 // BootstrapOrganizationError
@@ -323,6 +346,19 @@ export interface ClientEventPing {
 export type ClientEvent =
   | ClientEventPing
 
+// ClientGetUserDeviceError
+export interface ClientGetUserDeviceErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export interface ClientGetUserDeviceErrorNonExisting {
+    tag: 'NonExisting'
+    error: string
+}
+export type ClientGetUserDeviceError =
+  | ClientGetUserDeviceErrorInternal
+  | ClientGetUserDeviceErrorNonExisting
+
 // ClientInfoError
 export interface ClientInfoErrorInternal {
     tag: 'Internal'
@@ -330,6 +366,22 @@ export interface ClientInfoErrorInternal {
 }
 export type ClientInfoError =
   | ClientInfoErrorInternal
+
+// ClientListUserDevicesError
+export interface ClientListUserDevicesErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export type ClientListUserDevicesError =
+  | ClientListUserDevicesErrorInternal
+
+// ClientListUsersError
+export interface ClientListUsersErrorInternal {
+    tag: 'Internal'
+    error: string
+}
+export type ClientListUsersError =
+  | ClientListUsersErrorInternal
 
 // ClientListWorkspacesError
 export interface ClientListWorkspacesErrorInternal {
@@ -821,15 +873,27 @@ export interface LibParsecPlugin {
         client: number,
         token: InvitationToken
     ): Promise<Result<null, DeleteInvitationError>>
+    clientGetUserDevice(
+        client: number,
+        device: DeviceID
+    ): Promise<Result<[UserInfo, DeviceInfo], ClientGetUserDeviceError>>
     clientInfo(
         client: number
     ): Promise<Result<ClientInfo, ClientInfoError>>
     clientListInvitations(
         client: number
     ): Promise<Result<Array<InviteListItem>, ListInvitationsError>>
+    clientListUserDevices(
+        client: number,
+        user: UserID
+    ): Promise<Result<Array<DeviceInfo>, ClientListUserDevicesError>>
+    clientListUsers(
+        client: number,
+        skip_revoked: boolean
+    ): Promise<Result<Array<UserInfo>, ClientListUsersError>>
     clientListWorkspaces(
         client: number
-    ): Promise<Result<Array<[VlobID, EntryName]>, ClientListWorkspacesError>>
+    ): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>>
     clientNewDeviceInvitation(
         client: number,
         send_email: boolean

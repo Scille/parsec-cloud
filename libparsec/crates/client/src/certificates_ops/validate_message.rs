@@ -2,10 +2,7 @@
 
 use libparsec_types::prelude::*;
 
-use super::{
-    storage::{GetCertificateError, UpTo},
-    CertificatesOps, InvalidCertificateError, PollServerError,
-};
+use super::{CertificatesOps, GetCertificateError, InvalidCertificateError, PollServerError, UpTo};
 use crate::event_bus::EventInvalidMessage;
 
 #[derive(Debug, thiserror::Error)]
@@ -90,7 +87,7 @@ async fn validate_message_internal(
 ) -> Result<MessageContent, ValidateMessageError> {
     // 1) Make sure we have all the needed certificates
 
-    let storage = super::poll::ensure_certificates_available_and_read_lock(ops, certificate_index)
+    let store = super::poll::ensure_certificates_available_and_read_lock(ops, certificate_index)
         .await
         .map_err(|err| match err {
             PollServerError::Offline => ValidateMessageError::Offline,
@@ -104,8 +101,8 @@ async fn validate_message_internal(
 
     // 2.1) Check device exists (this also imply the user exists)
 
-    let sender_certif = match storage
-        .get_device_certificate(UpTo::Index(certificate_index), sender)
+    let sender_certif = match store
+        .get_device_certificate(UpTo::Index(certificate_index), sender.to_owned())
         .await
     {
         // Exists, as expected :)
@@ -129,8 +126,8 @@ async fn validate_message_internal(
 
     // 2.2) Check user is not revoked
 
-    match storage
-        .get_revoked_user_certificate(UpTo::Index(certificate_index), sender.user_id())
+    match store
+        .get_revoked_user_certificate(UpTo::Index(certificate_index), sender.user_id().to_owned())
         .await
     {
         // Not revoked at the considered index, as we expected :)
@@ -193,7 +190,7 @@ async fn validate_message_internal(
             // So the only check we have is to retrieve this certificate, if this succeed
             // we are guaranteed the sender was part of the realm with sufficient role
             // to share it with us !
-            let certif_as_expected = match storage.get_certificate(certificate_index).await {
+            let certif_as_expected = match store.get_any_certificate(certificate_index).await {
                 Ok(certif) => {
                     if let AnyArcCertificate::RealmRole(certif) = certif {
                         let mut as_expected = true;
@@ -241,8 +238,12 @@ async fn validate_message_internal(
         } => {
             // No certificate is generated for reencryption, so we only check the
             // role of the sender
-            let author_is_owner = storage
-                .get_user_realm_role(UpTo::Index(certificate_index), author.user_id(), *id)
+            let author_is_owner = store
+                .get_user_realm_role(
+                    UpTo::Index(certificate_index),
+                    author.user_id().to_owned(),
+                    *id,
+                )
                 .await?
                 .map(|certif| certif.role == Some(RealmRole::Owner))
                 .unwrap_or(false);

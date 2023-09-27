@@ -38,9 +38,9 @@ impl<T> TestbedEventCacheEntry<T> {
 pub struct TestbedTemplateEventCertificate {
     pub certificate_index: IndexInt,
     pub certificate: AnyArcCertificate,
-    pub raw: Bytes,
-    // `raw_redacted` is the same than `raw` if the certificate has no redacted flavour
-    pub raw_redacted: Bytes,
+    pub signed: Bytes,
+    // `signed_redacted` is the same than `signed` if the certificate has no redacted flavour
+    pub signed_redacted: Bytes,
 }
 
 type TestbedEventCertificatesCache = TestbedEventCacheEntry<TestbedTemplateEventCertificate>;
@@ -492,12 +492,12 @@ impl TestbedEventBootstrapOrganization {
                             timestamp: self.timestamp,
                             verify_key_der: sequester_authority.verify_key.clone(),
                         };
-                        let raw: Bytes = certif.dump_and_sign(&self.root_signing_key).into();
+                        let signed: Bytes = certif.dump_and_sign(&self.root_signing_key).into();
                         TestbedTemplateEventCertificate {
                             certificate_index: sequester_authority.certificate_index,
                             certificate: AnyArcCertificate::SequesterAuthority(Arc::new(certif)),
-                            raw_redacted: raw.clone(),
-                            raw,
+                            signed_redacted: signed.clone(),
+                            signed,
                         }
                     };
                     Some(guard.0.populated(populate).to_owned())
@@ -514,19 +514,19 @@ impl TestbedEventBootstrapOrganization {
                             public_key: self.first_user_private_key.public_key(),
                             profile: UserProfile::Admin,
                         };
-                        let raw_redacted: Bytes =
+                        let signed_redacted: Bytes =
                             certif.dump_and_sign(&self.root_signing_key).into();
-                        let raw = if self.first_user_human_handle.is_some() {
+                        let signed = if self.first_user_human_handle.is_some() {
                             certif.human_handle = self.first_user_human_handle.to_owned();
                             certif.dump_and_sign(&self.root_signing_key).into()
                         } else {
-                            raw_redacted.clone()
+                            signed_redacted.clone()
                         };
                         TestbedTemplateEventCertificate {
                             certificate: AnyArcCertificate::User(Arc::new(certif)),
                             certificate_index: self.first_user_certificate_index,
-                            raw,
-                            raw_redacted,
+                            signed,
+                            signed_redacted,
                         }
                     };
                     Some(guard.1.populated(populate).to_owned())
@@ -542,19 +542,19 @@ impl TestbedEventBootstrapOrganization {
                             device_label: None,
                             verify_key: self.first_user_first_device_signing_key.verify_key(),
                         };
-                        let raw_redacted: Bytes =
+                        let signed_redacted: Bytes =
                             certif.dump_and_sign(&self.root_signing_key).into();
-                        let raw = if self.first_user_first_device_label.is_some() {
+                        let signed = if self.first_user_first_device_label.is_some() {
                             certif.device_label = self.first_user_first_device_label.to_owned();
                             certif.dump_and_sign(&self.root_signing_key).into()
                         } else {
-                            raw_redacted.clone()
+                            signed_redacted.clone()
                         };
                         TestbedTemplateEventCertificate {
                             certificate: AnyArcCertificate::Device(Arc::new(certif)),
                             certificate_index: self.first_user_first_device_certificate_index,
-                            raw,
-                            raw_redacted,
+                            signed,
+                            signed_redacted,
                         }
                     };
                     Some(guard.2.populated(populate).to_owned())
@@ -586,15 +586,15 @@ single_certificate_event!(
             service_label: e.label.clone(),
             encryption_key_der: e.encryption_public_key.clone(),
         };
-        let raw: Bytes = t
+        let signed: Bytes = t
             .sequester_authority_signing_key()
             .sign(&certif.dump())
             .into();
         TestbedTemplateEventCertificate {
             certificate: AnyArcCertificate::SequesterService(Arc::new(certif)),
             certificate_index: e.certificate_index,
-            raw_redacted: raw.clone(),
-            raw,
+            signed_redacted: signed.clone(),
+            signed,
         }
     },
     no_hash
@@ -777,19 +777,19 @@ impl TestbedEventNewUser {
                             public_key: self.private_key.public_key(),
                             profile: self.initial_profile,
                         };
-                        let raw_redacted: Bytes = certif.dump_and_sign(author_signkey).into();
-                        let raw = if self.human_handle.is_some() {
+                        let signed_redacted: Bytes = certif.dump_and_sign(author_signkey).into();
+                        let signed = if self.human_handle.is_some() {
                             certif.human_handle = self.human_handle.clone();
                             certif.dump_and_sign(author_signkey).into()
                         } else {
-                            raw_redacted.clone()
+                            signed_redacted.clone()
                         };
 
                         TestbedTemplateEventCertificate {
                             certificate: AnyArcCertificate::User(Arc::new(certif)),
                             certificate_index: self.user_certificate_index,
-                            raw,
-                            raw_redacted,
+                            signed,
+                            signed_redacted,
                         }
                     };
                     guard.0.populated(populate).to_owned()
@@ -807,19 +807,19 @@ impl TestbedEventNewUser {
                             device_label: None,
                             verify_key: self.first_device_signing_key.verify_key(),
                         };
-                        let raw_redacted: Bytes = certif.dump_and_sign(author_signkey).into();
-                        let raw = if self.first_device_label.is_some() {
+                        let signed_redacted: Bytes = certif.dump_and_sign(author_signkey).into();
+                        let signed = if self.first_device_label.is_some() {
                             certif.device_label = self.first_device_label.clone();
                             certif.dump_and_sign(author_signkey).into()
                         } else {
-                            raw_redacted.clone()
+                            signed_redacted.clone()
                         };
 
                         TestbedTemplateEventCertificate {
                             certificate: AnyArcCertificate::Device(Arc::new(certif)),
                             certificate_index: self.first_device_certificate_index,
-                            raw,
-                            raw_redacted,
+                            signed,
+                            signed_redacted,
                         }
                     };
                     guard.1.populated(populate).to_owned()
@@ -855,18 +855,18 @@ single_certificate_event!(
             device_label: None,
             verify_key: e.signing_key.verify_key(),
         };
-        let raw_redacted: Bytes = certif.dump_and_sign(author_signkey).into();
-        let raw = if e.device_label.is_some() {
+        let signed_redacted: Bytes = certif.dump_and_sign(author_signkey).into();
+        let signed = if e.device_label.is_some() {
             certif.device_label = e.device_label.clone();
             certif.dump_and_sign(author_signkey).into()
         } else {
-            raw_redacted.clone()
+            signed_redacted.clone()
         };
         TestbedTemplateEventCertificate {
             certificate: AnyArcCertificate::Device(Arc::new(certif)),
             certificate_index: e.certificate_index,
-            raw,
-            raw_redacted,
+            signed,
+            signed_redacted,
         }
     },
     no_hash
@@ -945,12 +945,12 @@ single_certificate_event!(
             user_id: e.user.clone(),
             new_profile: e.profile,
         };
-        let raw: Bytes = certif.dump_and_sign(author_signkey).into();
+        let signed: Bytes = certif.dump_and_sign(author_signkey).into();
         TestbedTemplateEventCertificate {
             certificate: AnyArcCertificate::UserUpdate(Arc::new(certif)),
             certificate_index: e.certificate_index,
-            raw_redacted: raw.clone(),
-            raw,
+            signed_redacted: signed.clone(),
+            signed,
         }
     }
 );
@@ -1003,12 +1003,12 @@ single_certificate_event!(
             timestamp: e.timestamp,
             user_id: e.user.clone(),
         };
-        let raw: Bytes = certif.dump_and_sign(author_signkey).into();
+        let signed: Bytes = certif.dump_and_sign(author_signkey).into();
         TestbedTemplateEventCertificate {
             certificate: AnyArcCertificate::RevokedUser(Arc::new(certif)),
             certificate_index: e.certificate_index,
-            raw_redacted: raw.clone(),
-            raw,
+            signed_redacted: signed.clone(),
+            signed,
         }
     }
 );
@@ -1059,12 +1059,12 @@ single_certificate_event!(
             realm_id: e.realm_id,
             role: Some(RealmRole::Owner),
         };
-        let raw: Bytes = certif.dump_and_sign(author_signkey).into();
+        let signed: Bytes = certif.dump_and_sign(author_signkey).into();
         TestbedTemplateEventCertificate {
             certificate: AnyArcCertificate::RealmRole(Arc::new(certif)),
             certificate_index: e.certificate_index,
-            raw_redacted: raw.clone(),
-            raw,
+            signed_redacted: signed.clone(),
+            signed,
         }
     }
 );
@@ -1102,7 +1102,7 @@ impl TestbedEventNewRealm {
 #[derive(Clone)]
 pub struct TestbedEventShareRealmRecipientMessage {
     pub message: Arc<MessageContent>,
-    pub raw: Bytes,
+    pub signed: Bytes,
 }
 
 #[derive(Clone)]
@@ -1207,12 +1207,12 @@ impl TestbedEventShareRealm {
                 realm_id: self.realm,
                 role: self.role,
             };
-            let raw: Bytes = certif.dump_and_sign(author_signkey).into();
+            let signed: Bytes = certif.dump_and_sign(author_signkey).into();
             TestbedTemplateEventCertificate {
                 certificate: AnyArcCertificate::RealmRole(Arc::new(certif)),
                 certificate_index: self.certificate_index,
-                raw_redacted: raw.clone(),
-                raw,
+                signed_redacted: signed.clone(),
+                signed,
             }
         };
 
@@ -1238,10 +1238,10 @@ impl TestbedEventShareRealm {
             });
             let author_signkey = template.device_signing_key(&self.author);
             let recipient_pubkey = template.user_private_key(&self.user).public_key();
-            let raw = message
+            let signed = message
                 .dump_sign_and_encrypt_for(author_signkey, &recipient_pubkey)
                 .into();
-            TestbedEventShareRealmRecipientMessage { message, raw }
+            TestbedEventShareRealmRecipientMessage { message, signed }
         };
         let mut guard = self.cache.lock().expect("Mutex is poisoned");
         guard.1.populated(populate).to_owned()

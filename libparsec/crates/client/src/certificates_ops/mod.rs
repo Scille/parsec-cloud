@@ -2,22 +2,54 @@
 
 mod add;
 mod poll;
-mod storage;
+mod store;
 mod validate_manifest;
 mod validate_message;
 
 pub use add::{AddCertificateError, InvalidCertificateError, MaybeRedactedSwitch};
 pub use poll::PollServerError;
+pub use store::{GetCertificateError, UpTo};
 pub use validate_manifest::{InvalidManifestError, ValidateManifestError};
 pub use validate_message::{InvalidMessageError, ValidateMessageError};
 
 use std::{collections::HashMap, sync::Arc};
 
 use libparsec_client_connection::AuthenticatedCmds;
-use libparsec_platform_async::lock::RwLock;
 use libparsec_types::prelude::*;
 
 use crate::{event_bus::EventBus, ClientConfig};
+
+pub struct UserInfo {
+    pub id: UserID,
+    pub human_handle: Option<HumanHandle>,
+    pub current_profile: UserProfile,
+    pub created_on: DateTime,
+    // `None` if signed by root verify key (i.e. the user that bootstrapped the organization)
+    pub created_by: Option<DeviceID>,
+    /// Note that we might consider a user revoked even though our current time is still
+    /// below the revocation timestamp. This is because there is no clear causality between
+    /// our time and the production of the revocation timestamp (as it might have been produced
+    /// by another device). So we simply consider a user revoked if a revocation timestamp has
+    /// been issued.
+    pub revoked_on: Option<DateTime>,
+    pub revoked_by: Option<DeviceID>,
+}
+
+pub struct DeviceInfo {
+    pub id: DeviceID,
+    pub device_label: Option<DeviceLabel>,
+    pub created_on: DateTime,
+    // `None` if signed by root verify key (i.e. the user that bootstrapped the organization)
+    pub created_by: Option<DeviceID>,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum GetUserDeviceError {
+    #[error("No user/device with this device ID")]
+    NonExisting,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
 
 #[derive(Debug)]
 pub struct CertificatesOps {
@@ -26,7 +58,7 @@ pub struct CertificatesOps {
     device: Arc<LocalDevice>,
     event_bus: EventBus,
     cmds: Arc<AuthenticatedCmds>,
-    storage: RwLock<storage::CertificatesCachedStorage>,
+    store: store::CertificatesStore,
 }
 
 // For readability, we define the public interface here and let the actual
@@ -42,15 +74,13 @@ impl CertificatesOps {
         event_bus: EventBus,
         cmds: Arc<AuthenticatedCmds>,
     ) -> anyhow::Result<Self> {
-        let storage =
-            storage::CertificatesCachedStorage::start(&config.data_base_dir, device.clone())
-                .await?;
+        let store = store::CertificatesStore::start(&config.data_base_dir, device.clone()).await?;
         Ok(Self {
             config,
             device,
             event_bus,
             cmds,
-            storage: RwLock::new(storage),
+            store,
         })
     }
 
@@ -59,7 +89,7 @@ impl CertificatesOps {
     /// Once stopped, it can still theoretically be used (i.e. `stop` doesn't
     /// consume `self`), but will do nothing but return stopped error.
     pub(crate) async fn stop(&self) {
-        self.storage.read().await.stop().await;
+        self.store.stop().await;
     }
 
     // For readability, we define the public interface here and let the actual
@@ -162,55 +192,53 @@ impl CertificatesOps {
 
     pub(crate) async fn encrypt_for_user(
         &self,
-        user_id: &UserID,
+        user_id: UserID,
         data: &[u8],
     ) -> anyhow::Result<Option<Vec<u8>>> {
-        let guard = self.storage.read().await;
-        match guard
-            .get_user_certificate(storage::UpTo::Current, user_id)
-            .await
-        {
-            Ok(certif) => Ok(Some(certif.public_key.encrypt_for_self(data))),
-            Err(storage::GetCertificateError::NonExisting) => Ok(None),
-            Err(storage::GetCertificateError::ExistButTooRecent { .. }) => {
-                unreachable!()
-            }
-            Err(err @ storage::GetCertificateError::Internal(_)) => Err(err.into()),
-        }
+        let store = self.store.for_read().await;
+        let recipient_certif = match store.get_user_certificate(UpTo::Current, user_id).await {
+            Ok(certif) => certif,
+            Err(
+                GetCertificateError::NonExisting | GetCertificateError::ExistButTooRecent { .. },
+            ) => return Ok(None),
+            Err(GetCertificateError::Internal(err)) => return Err(err),
+        };
+
+        let encrypted = recipient_certif.public_key.encrypt_for_self(data);
+
+        Ok(Some(encrypted))
     }
 
     pub(crate) async fn encrypt_for_sequester_services(
         &self,
         data: &[u8],
     ) -> anyhow::Result<Option<HashMap<SequesterServiceID, Bytes>>> {
-        let guard = self.storage.read().await;
-        match guard
-            .get_sequester_authority_certificate(storage::UpTo::Current)
+        let store = self.store.for_read().await;
+        match store
+            .get_sequester_authority_certificate(UpTo::Current)
             .await
         {
-            Ok(_) => {
-                let services = guard
-                    .get_sequester_service_certificates(storage::UpTo::Current)
-                    .await?;
-                let per_service_encrypted = services
-                    .map(|service| {
-                        (
-                            service.service_id,
-                            service.encryption_key_der.encrypt(data).into(),
-                        )
-                    })
-                    .collect();
-                Ok(Some(per_service_encrypted))
-            }
-            Err(storage::GetCertificateError::NonExisting) => {
-                // Not a sequestered organization
-                Ok(None)
-            }
-            Err(storage::GetCertificateError::ExistButTooRecent { .. }) => {
-                unreachable!()
-            }
-            Err(err @ storage::GetCertificateError::Internal(_)) => Err(err.into()),
+            Ok(_) => (),
+            // The organization is not sequestered (and `ExistButTooRecent` should never occur !)
+            Err(GetCertificateError::NonExisting) => return Ok(None),
+            Err(GetCertificateError::ExistButTooRecent { .. }) => unreachable!(),
+            Err(GetCertificateError::Internal(err)) => return Err(err),
         }
+
+        let services = store
+            .get_sequester_service_certificates(UpTo::Current)
+            .await?;
+        let per_service_encrypted = services
+            .into_iter()
+            .map(|service| {
+                (
+                    service.service_id,
+                    service.encryption_key_der.encrypt(data).into(),
+                )
+            })
+            .collect();
+
+        Ok(Some(per_service_encrypted))
     }
 
     /*
@@ -218,14 +246,188 @@ impl CertificatesOps {
      */
 
     pub async fn get_current_self_profile(&self) -> anyhow::Result<UserProfile> {
-        self.storage.write().await.get_current_self_profile().await
+        let store = self.store.for_read().await;
+        store.get_current_self_profile().await
     }
 
-    pub async fn get_current_self_realm_roles(&self) -> anyhow::Result<Vec<(VlobID, RealmRole)>> {
-        self.storage
-            .write()
+    pub async fn get_current_self_realms_roles(
+        &self,
+    ) -> anyhow::Result<HashMap<VlobID, RealmRole>> {
+        // TODO: cache !
+        let store = self.store.for_read().await;
+        let certifs = store
+            .get_user_realms_roles(UpTo::Current, self.device.user_id().to_owned())
+            .await?;
+
+        let mut roles = HashMap::new();
+        // Replay the history of all changes
+        for certif in certifs {
+            match certif.role {
+                None => {
+                    roles.remove(&certif.realm_id);
+                }
+                Some(role) => {
+                    roles.insert(certif.realm_id, role);
+                }
+            }
+        }
+
+        Ok(roles)
+    }
+
+    pub async fn list_users(
+        &self,
+        skip_revoked: bool,
+        offset: Option<usize>,
+        limit: Option<usize>,
+    ) -> anyhow::Result<Vec<UserInfo>> {
+        let store = self.store.for_read().await;
+        let certifs = store
+            .get_user_certificates(UpTo::Current, offset, limit)
+            .await?;
+
+        let mut infos = Vec::with_capacity(certifs.len());
+        for certif in certifs {
+            let maybe_revoked = store
+                .get_revoked_user_certificate(UpTo::Current, certif.user_id.clone())
+                .await?;
+            if skip_revoked && maybe_revoked.is_some() {
+                continue;
+            }
+            let (revoked_on, revoked_by) = match maybe_revoked {
+                None => (None, None),
+                Some(certif) => (Some(certif.timestamp), Some(certif.author.to_owned())),
+            };
+
+            let maybe_update = store
+                .get_last_user_update_certificate(UpTo::Current, certif.user_id.clone())
+                .await?;
+            let current_profile = match maybe_update {
+                Some(update) => update.new_profile,
+                None => certif.profile,
+            };
+
+            let created_by = match &certif.author {
+                CertificateSignerOwned::User(author) => Some(author.to_owned()),
+                CertificateSignerOwned::Root => None,
+            };
+
+            let info = UserInfo {
+                id: certif.user_id.to_owned(),
+                human_handle: certif.human_handle.to_owned(),
+                current_profile,
+                created_on: certif.timestamp,
+                created_by,
+                revoked_on,
+                revoked_by,
+            };
+            infos.push(info);
+        }
+
+        Ok(infos)
+    }
+
+    pub async fn list_user_devices(&self, user_id: UserID) -> anyhow::Result<Vec<DeviceInfo>> {
+        let store = self.store.for_read().await;
+        let certifs = store
+            .get_user_devices_certificates(UpTo::Current, user_id)
+            .await?;
+
+        let items = certifs
+            .into_iter()
+            .map(|certif| {
+                let created_by = match &certif.author {
+                    CertificateSignerOwned::User(author) => Some(author.to_owned()),
+                    CertificateSignerOwned::Root => None,
+                };
+
+                DeviceInfo {
+                    id: certif.device_id.to_owned(),
+                    device_label: certif.device_label.to_owned(),
+                    created_on: certif.timestamp,
+                    created_by,
+                }
+            })
+            .collect();
+
+        Ok(items)
+    }
+
+    pub async fn get_user_device(
+        &self,
+        device_id: DeviceID,
+    ) -> Result<(UserInfo, DeviceInfo), GetUserDeviceError> {
+        let store = self.store.for_read().await;
+
+        let user_id = device_id.user_id().to_owned();
+
+        let user_certif = match store
+            .get_user_certificate(UpTo::Current, user_id.clone())
             .await
-            .get_current_self_realm_roles()
+        {
+            Ok(certif) => certif,
+            Err(GetCertificateError::ExistButTooRecent { .. }) => unreachable!(),
+            Err(GetCertificateError::NonExisting) => return Err(GetUserDeviceError::NonExisting),
+            Err(GetCertificateError::Internal(err)) => {
+                return Err(GetUserDeviceError::Internal(err))
+            }
+        };
+
+        let user_created_by = match &user_certif.author {
+            CertificateSignerOwned::User(author) => Some(author.to_owned()),
+            CertificateSignerOwned::Root => None,
+        };
+
+        let maybe_revoked = store
+            .get_revoked_user_certificate(UpTo::Current, user_id.clone())
+            .await?;
+        let (revoked_on, revoked_by) = match maybe_revoked {
+            None => (None, None),
+            Some(certif) => (Some(certif.timestamp), Some(certif.author.to_owned())),
+        };
+
+        let maybe_update = store
+            .get_last_user_update_certificate(UpTo::Current, user_id.clone())
+            .await?;
+        let current_profile = match maybe_update {
+            Some(update) => update.new_profile,
+            None => user_certif.profile,
+        };
+
+        let user_info = UserInfo {
+            id: user_id,
+            human_handle: user_certif.human_handle.to_owned(),
+            current_profile,
+            created_on: user_certif.timestamp,
+            created_by: user_created_by,
+            revoked_on,
+            revoked_by,
+        };
+
+        let device_certif = match store
+            .get_device_certificate(UpTo::Current, device_id.clone())
             .await
+        {
+            Ok(certif) => certif,
+            Err(GetCertificateError::ExistButTooRecent { .. }) => unreachable!(),
+            Err(GetCertificateError::NonExisting) => return Err(GetUserDeviceError::NonExisting),
+            Err(GetCertificateError::Internal(err)) => {
+                return Err(GetUserDeviceError::Internal(err))
+            }
+        };
+
+        let device_created_by = match &device_certif.author {
+            CertificateSignerOwned::User(author) => Some(author.to_owned()),
+            CertificateSignerOwned::Root => None,
+        };
+
+        let device_info = DeviceInfo {
+            id: device_id,
+            device_label: device_certif.device_label.to_owned(),
+            created_on: device_certif.timestamp,
+            created_by: device_created_by,
+        };
+
+        Ok((user_info, device_info))
     }
 }

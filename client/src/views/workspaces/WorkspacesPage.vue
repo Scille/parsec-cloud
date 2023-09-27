@@ -134,11 +134,11 @@ import { useI18n } from 'vue-i18n';
 import { ref, Ref, onMounted, computed } from 'vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import { routerNavigateTo } from '@/router';
-import { WorkspaceID, WorkspaceName, listWorkspaces as parsecListWorkspaces, createWorkspace as parsecCreateWorkspace } from '@/parsec';
+import { WorkspaceInfo, listWorkspaces as parsecListWorkspaces, createWorkspace as parsecCreateWorkspace } from '@/parsec';
 
 const { t } = useI18n();
 const sortBy = ref('name');
-const workspaceList: Ref<Array<[WorkspaceID, WorkspaceName]>> = ref([]);
+const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
 const workspacesInfo: Ref<MockWorkspace[]> = ref([]);
 const displayView = ref(DisplayState.Grid);
 
@@ -152,7 +152,7 @@ async function refreshWorkspacesList(): Promise<void> {
     workspaceList.value = result.value;
     workspacesInfo.value = [];
     for (const workspace of workspaceList.value) {
-      const info = await getWorkspaceInfo(workspace[0]);
+      const info = await getWorkspaceInfo(workspace.id);
       if (info) {
         workspacesInfo.value.push(info);
       }
