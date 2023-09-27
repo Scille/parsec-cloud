@@ -3,8 +3,6 @@
 import {
   libparsec,
   InviteListItem,
-  WorkspaceInfo,
-  RealmRole,
 } from '@/plugins/libparsec';
 
 import {
@@ -36,9 +34,16 @@ import {
   ClientEventPing,
   ParseBackendAddrError,
   UserInfo,
+  ClientInfo,
   ClientInfoError,
   UserProfile,
   GetWorkspaceNameError,
+  ClientListUsersError,
+  WorkspaceInfo,
+  WorkspaceRole,
+  DeviceInfo,
+  ClientListUserDevicesError,
+  UserID,
 } from '@/parsec/types';
 import { getParsecHandle } from '@/router/conditions';
 import { DateTime } from 'luxon';
@@ -104,12 +109,12 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
     return new Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>>((resolve, _reject) => {
       resolve({
         ok: true, value: [
-          {'id': '1', 'name': 'Trademeet', 'selfRole': RealmRole.Owner},
-          {'id': '2', 'name': 'The Copper Coronet', 'selfRole': RealmRole.Manager},
-          {'id': '3', 'name': 'The Asylum', 'selfRole': RealmRole.Contributor},
-          {'id': '4', 'name': 'Druid Grove', 'selfRole': RealmRole.Reader},
+          {'id': '1', 'name': 'Trademeet', 'selfRole': WorkspaceRole.Owner},
+          {'id': '2', 'name': 'The Copper Coronet', 'selfRole': WorkspaceRole.Manager},
+          {'id': '3', 'name': 'The Asylum', 'selfRole': WorkspaceRole.Contributor},
+          {'id': '4', 'name': 'Druid Grove', 'selfRole': WorkspaceRole.Reader},
           // cspell:disable-next-line
-          {'id': '5', 'name': 'Menzoberranzan', 'selfRole': RealmRole.Owner},
+          {'id': '5', 'name': 'Menzoberranzan', 'selfRole': WorkspaceRole.Owner},
         ],
       });
     });
@@ -240,17 +245,17 @@ export async function parseBackendAddr(addr: string): Promise<Result<ParsedBacke
   return await libparsec.parseBackendAddr(addr);
 }
 
-export async function getUserInfo(): Promise<Result<UserInfo, ClientInfoError>> {
+export async function getClientInfo(): Promise<Result<ClientInfo, ClientInfoError>> {
   const handle = getParsecHandle();
 
   if (handle !== null && window.isDesktop()) {
     return await libparsec.clientInfo(handle);
   } else {
-    return new Promise<Result<UserInfo, ClientInfoError>>((resolve, _reject) => {
+    return new Promise<Result<ClientInfo, ClientInfoError>>((resolve, _reject) => {
       resolve({ok: true, value: {
         organizationId: 'MyOrg',
-        deviceId: 'a@b',
-        deviceLabel: 'My Device',
+        deviceId: 'device1',
+        deviceLabel: 'My First Device',
         userId: 'userid',
         currentProfile: UserProfile.Admin,
         humanHandle: {
@@ -262,8 +267,8 @@ export async function getUserInfo(): Promise<Result<UserInfo, ClientInfoError>> 
   }
 }
 
-export async function getUserProfile(): Promise<UserProfile | null> {
-  const result = await getUserInfo();
+export async function getClientProfile(): Promise<UserProfile | null> {
+  const result = await getClientInfo();
 
   if (result.ok) {
     return result.value.currentProfile;
@@ -273,11 +278,11 @@ export async function getUserProfile(): Promise<UserProfile | null> {
 }
 
 export async function isAdmin(): Promise<boolean> {
-  return await getUserProfile() === UserProfile.Admin;
+  return await getClientProfile() === UserProfile.Admin;
 }
 
 export async function isOutsider(): Promise<boolean> {
-  return await getUserProfile() === UserProfile.Outsider;
+  return await getClientProfile() === UserProfile.Outsider;
 }
 
 export async function getWorkspaceName(workspaceId: WorkspaceID): Promise<Result<WorkspaceName, GetWorkspaceNameError>> {
@@ -330,4 +335,85 @@ export async function isValidDeviceName(name: string): Promise<boolean> {
 
 export async function isValidInvitationToken(token: string): Promise<boolean> {
   return await libparsec.validateInvitationToken(token);
+}
+
+export async function listUsers(skipRevoked = true): Promise<Result<Array<UserInfo>, ClientListUsersError>> {
+  const handle = getParsecHandle();
+
+  if (handle !== null && window.isDesktop()) {
+    const result = await libparsec.clientListUsers(handle, skipRevoked);
+    if (result.ok) {
+      result.value.map((item) => {
+        (item as UserInfo).isRevoked = (): boolean => item.revokedOn !== null;
+        return item;
+      });
+    }
+    return result as any as Promise<Result<Array<UserInfo>, ClientListUsersError>>;
+  } else {
+    return new Promise<Result<Array<UserInfo>, ClientListUsersError>>((resolve, _reject) => {
+      const value: Array<UserInfo> = [{
+        id: 'id1',
+        // cspell:disable-next-line
+        humanHandle: {label: 'Cernd', email: 'cernd@gmail.com'},
+        currentProfile: UserProfile.Standard,
+        createdOn: 'date',
+        createdBy: 'device',
+        revokedOn: null,
+        revokedBy: null,
+        isRevoked: (): boolean => false,
+      }, {
+        id: 'id2',
+        // cspell:disable-next-line
+        humanHandle: {label: 'Jaheira', email: 'jaheira@gmail.com'},
+        currentProfile: UserProfile.Admin,
+        createdOn: 'date',
+        createdBy: 'device',
+        revokedOn: null,
+        revokedBy: null,
+        isRevoked: (): boolean => false,
+      }];
+      if (!skipRevoked) {
+        value.push({
+          id: 'id3',
+          // cspell:disable-next-line
+          humanHandle: {label: 'Valygar Corthala', email: 'val@gmail.com'},
+          currentProfile: UserProfile.Standard,
+          createdOn: 'date',
+          createdBy: 'device',
+          revokedOn: 'date',
+          revokedBy: 'device',
+          isRevoked: (): boolean => true,
+        });
+      }
+      resolve({ok: true, value: value});
+    });
+  }
+}
+
+export async function listUserDevices(user: UserID): Promise<Result<Array<DeviceInfo>, ClientListUserDevicesError>> {
+  const handle = getParsecHandle();
+
+  if (handle !== null && window.isDesktop()) {
+    const result = await libparsec.clientListUserDevices(handle, user);
+    if (result.ok) {
+      result.value.map((item) => {
+        return item;
+      });
+    }
+    return result as any as Promise<Result<Array<DeviceInfo>, ClientListUserDevicesError>>;
+  } else {
+    return new Promise<Result<Array<DeviceInfo>, ClientListUserDevicesError>>((resolve, _reject) => {
+      resolve({ok: true, value: [{
+        id: 'device1',
+        deviceLabel: 'My First Device',
+        createdOn: 'now',
+        createdBy: 'some_device',
+      }, {
+        id: 'device2',
+        deviceLabel: 'My Second Device',
+        createdOn: 'now',
+        createdBy: 'device1',
+      }]});
+    });
+  }
 }

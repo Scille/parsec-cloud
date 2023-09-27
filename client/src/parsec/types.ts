@@ -42,7 +42,7 @@ import type {
   OrganizationID,
   BackendAddr,
   ParsedBackendAddrInvitationUser,
-  ClientInfo as UserInfo,
+  ClientInfo,
   ClientInfoError,
   ClientStartInvitationGreetError,
   UserGreetInitialInfo,
@@ -52,6 +52,11 @@ import type {
   UserGreetInProgress3Info,
   UserGreetInProgress4Info,
   WorkspaceInfo,
+  UserInfo as ParsecUserInfo,
+  ClientListUsersError,
+  DeviceInfo as ParsecDeviceInfo,
+  ClientListUserDevicesError,
+  UserID,
 } from '@/plugins/libparsec';
 // Enums have to be imported separately
 import {
@@ -65,6 +70,12 @@ import {
 interface UserInvitation extends InviteListItemUser {
   date: DateTime
 }
+
+interface UserInfo extends ParsecUserInfo {
+  isRevoked: () => boolean
+}
+
+type DeviceInfo = ParsecDeviceInfo
 
 enum BackendAddrType {
   Invalid = 'InvalidUrl',
@@ -123,6 +134,9 @@ export {
   UserGreetInProgress4Info,
   WorkspaceRole,
   WorkspaceInfo,
+  ClientInfo,
+  DeviceInfo,
+  UserID,
 };
 
 export {
@@ -142,4 +156,6 @@ export {
   GetWorkspaceNameError,
   ClientStartInvitationGreetError,
   GreetInProgressError,
+  ClientListUsersError,
+  ClientListUserDevicesError,
 };

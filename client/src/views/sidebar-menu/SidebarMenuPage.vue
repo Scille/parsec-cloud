@@ -268,8 +268,8 @@ import { isOrganizationManagementRoute, isSpecificWorkspaceRoute, isUserRoute } 
 import { routerNavigateTo } from '@/router';
 import {
   listWorkspaces as parsecListWorkspaces,
-  getUserInfo as parsecGetUserInfo,
-  UserInfo,
+  getClientInfo as parsecGetClientInfo,
+  ClientInfo,
   UserProfile,
   WorkspaceInfo,
 } from '@/parsec';
@@ -280,7 +280,7 @@ const currentRoute = useRoute();
 const splitPane = ref();
 const divider = ref();
 const { defaultWidth, initialWidth, computedWidth, wasReset } = useSidebarMenu();
-const userInfo: Ref<UserInfo | null> = ref(null);
+const userInfo: Ref<ClientInfo | null> = ref(null);
 
 // watching wasReset value
 const unwatch: WatchStopHandle = watch(wasReset, (value) => {
@@ -301,7 +301,7 @@ function navigateToWorkspaceList(): void {
 }
 
 onMounted(async () => {
-  const infoResult = await parsecGetUserInfo();
+  const infoResult = await parsecGetClientInfo();
 
   if (infoResult.ok) {
     userInfo.value = infoResult.value;

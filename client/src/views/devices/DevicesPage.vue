@@ -25,11 +25,11 @@
           >
             <ion-item
               v-for="device in devices"
-              :key="device.slug"
+              :key="device.id"
             >
               <device-card
-                :label="device.label || ''"
-                :is-current="true"
+                :label="device.deviceLabel || ''"
+                :is-current="isCurrent(device)"
               />
             </ion-item>
           </ion-list>
@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, Ref, onMounted, inject } from 'vue';
 import { add } from 'ionicons/icons';
 import {
   IonButton,
@@ -52,8 +52,41 @@ import {
   IonText,
 } from '@ionic/vue';
 import DeviceCard from '@/components/devices/DeviceCard.vue';
+import { listUserDevices as parsecListUserDevices, getClientInfo as parsecGetClientInfo, DeviceInfo, ClientInfo } from '@/parsec';
+import { NotificationKey } from '@/common/injectionKeys';
+import { NotificationCenter, NotificationLevel, Notification } from '@/services/notificationCenter';
 
-const devices = ref([{label: 'A Mock Device', slug: 1}]);
+const notificationCenter: NotificationCenter = inject(NotificationKey)!;
+const devices: Ref<DeviceInfo[]> = ref([]);
+const clientInfo: Ref<ClientInfo | null> = ref(null) ;
+
+onMounted(async () => {
+  const clientResult = await parsecGetClientInfo();
+
+  if (clientResult.ok) {
+    clientInfo.value = clientResult.value;
+    const result = await parsecListUserDevices(clientResult.value.userId);
+    if (result.ok) {
+      devices.value = result.value;
+    } else {
+      notificationCenter.showToast(new Notification({
+        message: 'Failed to retrieve devices',
+        level: NotificationLevel.Error,
+      }));
+      console.log('Could not list devices', result.error);
+    }
+  } else {
+    notificationCenter.showToast(new Notification({
+      message: 'Failed to retrieve devices',
+      level: NotificationLevel.Error,
+    }));
+    console.log('Could not get client info', clientResult.error);
+  }
+});
+
+function isCurrent(info: DeviceInfo): boolean {
+  return info.id === clientInfo.value?.deviceId;
+}
 
 function onAddDeviceClick(): void {
   console.log('Add device clicked');

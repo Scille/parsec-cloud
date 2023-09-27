@@ -141,10 +141,10 @@ import { DisplayState } from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import UserContextMenu from '@/views/users/UserContextMenu.vue';
 import { UserAction } from '@/views/users/UserContextMenu.vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
-import { MockUser, getMockRevokedUsers } from '@/common/mocks';
+import { UserInfo, listUsers as parsecListUsers } from '@/parsec';
 
 const displayView = ref(DisplayState.List);
-const userList: Ref<MockUser[]> = ref([]);
+const userList: Ref<UserInfo[]> = ref([]);
 const userListItemRefs: Ref<typeof UserListItem[]> = ref([]);
 const userGridItemRefs: Ref<typeof UserCard[]> = ref([]);
 
@@ -160,7 +160,7 @@ const indeterminateState = computed({
 
 const filteredUsers = computed(() => {
   const revokedUsers = userList.value.filter((user) => {
-    return user.revoked === true;
+    return user.isRevoked();
   });
   return revokedUsers;
 });
@@ -177,7 +177,7 @@ function viewCommonWorkspace(): void {
   console.log('View common workspace clicked');
 }
 
-function onUserSelect(_user: MockUser, _selected: boolean): void {
+function onUserSelect(_user: UserInfo, _selected: boolean): void {
   if (selectedUsersCount.value === 0) {
     selectAllUsers(false);
   }
@@ -205,11 +205,11 @@ function selectAllUsers(checked: boolean): void {
   }
 }
 
-function details(user: MockUser): void {
-  console.log(`Show details on user ${user.name}`);
+function details(user: UserInfo): void {
+  console.log(`Show details on user ${user.humanHandle?.label}`);
 }
 
-async function openUserContextMenu(event: Event, user: MockUser): Promise<void> {
+async function openUserContextMenu(event: Event, user: UserInfo): Promise<void> {
   const popover = await popoverController
     .create({
       component: UserContextMenu,
@@ -220,13 +220,13 @@ async function openUserContextMenu(event: Event, user: MockUser): Promise<void> 
       dismissOnSelect: true,
       reference: 'event',
       componentProps: {
-        isRevoked: user.revoked,
+        isRevoked: user.isRevoked(),
       },
     });
   await popover.present();
 
   const { data } = await popover.onDidDismiss();
-  const actions = new Map<UserAction, (user: MockUser) => void>([
+  const actions = new Map<UserAction, (user: UserInfo) => void>([
     [UserAction.Details, details],
   ]);
 
@@ -246,7 +246,12 @@ function resetSelection(): void {
 }
 
 onMounted(async (): Promise<void> => {
-  userList.value = await getMockRevokedUsers();
+  const result = await parsecListUsers(false);
+  if (result.ok) {
+    userList.value = result.value;
+  } else {
+    console.log('Failed to list users', result.error);
+  }
 });
 </script>
 
