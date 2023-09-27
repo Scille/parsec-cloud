@@ -13,7 +13,7 @@ use libparsec_testbed::{
 use libparsec_types::prelude::*;
 
 use crate::{
-    certificates::CertificatesStorage,
+    certificates::{AddCertificateData, CertificatesStorage},
     user::UserStorage,
     workspace::{WorkspaceCacheStorage, WorkspaceDataStorage},
 };
@@ -42,6 +42,11 @@ fn store_factory(_env: &TestbedEnv) -> Arc<dyn Any + Send + Sync> {
 
 #[allow(unused)]
 pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, device: &LocalDevice) {
+    let disabled = std::env::var("TESTBED_DISABLE_POPULATE_CERTIFICATE_STORAGE").is_ok();
+    if disabled {
+        return;
+    }
+
     if let Some(store) = test_get_testbed_component_store::<ComponentStore>(
         data_base_dir,
         STORE_ENTRY_KEY,
@@ -76,98 +81,19 @@ pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, dev
                     .await
                     .unwrap();
 
-                for certif in env.template.certificates().take(up_to_index as usize) {
-                    let to_encrypt = if need_redacted {
-                        &certif.raw_redacted
+                let certifs = env.template.certificates().take(up_to_index as usize);
+                for (offset, certif) in certifs.enumerate() {
+                    let signed = if need_redacted {
+                        &certif.signed_redacted
                     } else {
-                        &certif.raw
+                        &certif.signed
                     };
-                    match certif.certificate {
-                        AnyArcCertificate::User(c) => {
-                            let encrypted = device.local_symkey.encrypt(to_encrypt);
-                            storage
-                                .add_user_certificate(
-                                    certif.certificate_index,
-                                    c.timestamp,
-                                    c.user_id.clone(),
-                                    encrypted,
-                                )
-                                .await
-                                .unwrap();
-                        }
-                        AnyArcCertificate::RevokedUser(c) => {
-                            let encrypted = device.local_symkey.encrypt(to_encrypt);
-                            storage
-                                .add_revoked_user_certificate(
-                                    certif.certificate_index,
-                                    c.timestamp,
-                                    c.user_id.clone(),
-                                    encrypted,
-                                )
-                                .await
-                                .unwrap();
-                        }
-                        AnyArcCertificate::UserUpdate(c) => {
-                            let encrypted = device.local_symkey.encrypt(to_encrypt);
-                            storage
-                                .add_user_update_certificate(
-                                    certif.certificate_index,
-                                    c.timestamp,
-                                    c.user_id.clone(),
-                                    encrypted,
-                                )
-                                .await
-                                .unwrap();
-                        }
-                        AnyArcCertificate::Device(c) => {
-                            let encrypted = device.local_symkey.encrypt(to_encrypt);
-                            storage
-                                .add_device_certificate(
-                                    certif.certificate_index,
-                                    c.timestamp,
-                                    c.device_id.clone(),
-                                    encrypted,
-                                )
-                                .await
-                                .unwrap();
-                        }
-                        AnyArcCertificate::RealmRole(c) => {
-                            let encrypted = device.local_symkey.encrypt(to_encrypt);
-                            storage
-                                .add_realm_role_certificate(
-                                    certif.certificate_index,
-                                    c.timestamp,
-                                    c.realm_id,
-                                    c.user_id.clone(),
-                                    encrypted,
-                                )
-                                .await
-                                .unwrap();
-                        }
-                        AnyArcCertificate::SequesterAuthority(c) => {
-                            let encrypted = device.local_symkey.encrypt(to_encrypt);
-                            storage
-                                .add_sequester_authority_certificate(
-                                    certif.certificate_index,
-                                    c.timestamp,
-                                    encrypted,
-                                )
-                                .await
-                                .unwrap();
-                        }
-                        AnyArcCertificate::SequesterService(c) => {
-                            let encrypted = device.local_symkey.encrypt(to_encrypt);
-                            storage
-                                .add_sequester_service_certificate(
-                                    certif.certificate_index,
-                                    c.timestamp,
-                                    c.service_id,
-                                    encrypted,
-                                )
-                                .await
-                                .unwrap();
-                        }
-                    };
+                    let encrypted = device.local_symkey.encrypt(signed);
+                    let data = AddCertificateData::from_certif(&certif.certificate, encrypted);
+                    storage
+                        .add_next_certificate(1 + offset as IndexInt, data)
+                        .await
+                        .unwrap();
                 }
 
                 storage.stop().await;

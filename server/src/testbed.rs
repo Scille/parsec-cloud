@@ -378,8 +378,8 @@ pub(crate) fn test_get_testbed_template(
                         };
                         (
                             py_certif,
-                            PyBytes::new(py, &certif.raw),
-                            PyBytes::new(py, &certif.raw_redacted),
+                            PyBytes::new(py, &certif.signed),
+                            PyBytes::new(py, &certif.signed_redacted),
                         )
                     })
                     .collect::<Vec<_>>(),
@@ -405,8 +405,8 @@ fn event_to_pyobject(
                 .certificates($template)
                 .next()
                 .expect("Must be present");
-            let raw = PyBytes::new($py, &certif.raw).into_py($py);
-            let raw_redacted = PyBytes::new($py, &certif.raw_redacted).into_py($py);
+            let raw = PyBytes::new($py, &certif.signed).into_py($py);
+            let raw_redacted = PyBytes::new($py, &certif.signed_redacted).into_py($py);
             let wrapped_certif = paste::paste! {
                 [< $name Certificate >]::from(match &certif.certificate {
                     libparsec_types::AnyArcCertificate::$name(x) => x.to_owned(),
@@ -464,13 +464,13 @@ fn event_to_pyobject(
                 }),
                 sequester_authority_raw_certificate: sequester_authority_certif
                     .as_ref()
-                    .map(|x| PyBytes::new(py, &x.raw).into_py(py)),
+                    .map(|x| PyBytes::new(py, &x.signed).into_py(py)),
                 first_user_certificate: UserCertificate::from(match &user_certif.certificate {
                     libparsec_types::AnyArcCertificate::User(x) => x.to_owned(),
                     _ => unreachable!(),
                 }),
-                first_user_raw_certificate: PyBytes::new(py, &user_certif.raw).into_py(py),
-                first_user_raw_redacted_certificate: PyBytes::new(py, &user_certif.raw_redacted)
+                first_user_raw_certificate: PyBytes::new(py, &user_certif.signed).into_py(py),
+                first_user_raw_redacted_certificate: PyBytes::new(py, &user_certif.signed_redacted)
                     .into_py(py),
                 first_user_first_device_certificate: DeviceCertificate::from(match &device_certif
                     .certificate
@@ -478,11 +478,11 @@ fn event_to_pyobject(
                     libparsec_types::AnyArcCertificate::Device(x) => x.to_owned(),
                     _ => unreachable!(),
                 }),
-                first_user_first_device_raw_certificate: PyBytes::new(py, &device_certif.raw)
+                first_user_first_device_raw_certificate: PyBytes::new(py, &device_certif.signed)
                     .into_py(py),
                 first_user_first_device_raw_redacted_certificate: PyBytes::new(
                     py,
-                    &device_certif.raw_redacted,
+                    &device_certif.signed_redacted,
                 )
                 .into_py(py),
             };
@@ -526,17 +526,17 @@ fn event_to_pyobject(
                 user_realm_key: x.user_realm_key.clone().into(),
                 local_symkey: x.local_symkey.clone().into(),
                 local_password: x.local_password,
-                user_raw_certificate: PyBytes::new(py, &user_certif.raw).into_py(py),
-                user_raw_redacted_certificate: PyBytes::new(py, &user_certif.raw_redacted)
+                user_raw_certificate: PyBytes::new(py, &user_certif.signed).into_py(py),
+                user_raw_redacted_certificate: PyBytes::new(py, &user_certif.signed_redacted)
                     .into_py(py),
                 user_certificate: UserCertificate::from(match &user_certif.certificate {
                     libparsec_types::AnyArcCertificate::User(x) => x.to_owned(),
                     _ => unreachable!(),
                 }),
-                first_device_raw_certificate: PyBytes::new(py, &device_certif.raw).into_py(py),
+                first_device_raw_certificate: PyBytes::new(py, &device_certif.signed).into_py(py),
                 first_device_raw_redacted_certificate: PyBytes::new(
                     py,
-                    &device_certif.raw_redacted,
+                    &device_certif.signed_redacted,
                 )
                 .into_py(py),
                 first_device_certificate: DeviceCertificate::from(
@@ -621,7 +621,7 @@ fn event_to_pyobject(
                 realm: x.realm.into(),
                 user: x.user.clone().into(),
                 role: x.role.map(RealmRole::convert),
-                recipient_message: PyBytes::new(py, &recipient_message.raw).into_py(py),
+                recipient_message: PyBytes::new(py, &recipient_message.signed).into_py(py),
                 raw_certificate,
                 raw_redacted_certificate,
                 certificate,
