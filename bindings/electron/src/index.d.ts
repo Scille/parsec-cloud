@@ -215,6 +215,13 @@ export interface WorkspaceInfo {
 }
 
 
+export interface WorkspaceUserAccessInfo {
+    userId: string
+    humanHandle: HumanHandle | null
+    role: RealmRole
+}
+
+
 // BootstrapOrganizationError
 export interface BootstrapOrganizationErrorAlreadyUsedToken {
     tag: "AlreadyUsedToken"
@@ -401,6 +408,15 @@ export interface ClientListUsersErrorInternal {
 }
 export type ClientListUsersError =
   | ClientListUsersErrorInternal
+
+
+// ClientListWorkspaceUsersError
+export interface ClientListWorkspaceUsersErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type ClientListWorkspaceUsersError =
+  | ClientListWorkspaceUsersErrorInternal
 
 
 // ClientListWorkspacesError
@@ -1027,6 +1043,10 @@ export function clientListUsers(
     client: number,
     skip_revoked: boolean
 ): Promise<Result<Array<UserInfo>, ClientListUsersError>>
+export function clientListWorkspaceUsers(
+    client: number,
+    realm_id: string
+): Promise<Result<Array<WorkspaceUserAccessInfo>, ClientListWorkspaceUsersError>>
 export function clientListWorkspaces(
     client: number
 ): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>>

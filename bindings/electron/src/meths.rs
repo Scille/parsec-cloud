@@ -1738,6 +1738,65 @@ fn struct_workspace_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// WorkspaceUserAccessInfo
+
+#[allow(dead_code)]
+fn struct_workspace_user_access_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::WorkspaceUserAccessInfo> {
+    let user_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "userId")?;
+        {
+            match js_val.value(cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let human_handle = {
+        let js_val: Handle<JsValue> = obj.get(cx, "humanHandle")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
+                Some(struct_human_handle_js_to_rs(cx, js_val)?)
+            }
+        }
+    };
+    let role = {
+        let js_val: Handle<JsString> = obj.get(cx, "role")?;
+        {
+            let js_string = js_val.value(cx);
+            enum_realm_role_js_to_rs(cx, js_string.as_str())?
+        }
+    };
+    Ok(libparsec::WorkspaceUserAccessInfo {
+        user_id,
+        human_handle,
+        role,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_workspace_user_access_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceUserAccessInfo,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_user_id = JsString::try_new(cx, rs_obj.user_id).or_throw(cx)?;
+    js_obj.set(cx, "userId", js_user_id)?;
+    let js_human_handle = match rs_obj.human_handle {
+        Some(elem) => struct_human_handle_rs_to_js(cx, elem)?.as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "humanHandle", js_human_handle)?;
+    let js_role = JsString::try_new(cx, enum_realm_role_rs_to_js(rs_obj.role)).or_throw(cx)?;
+    js_obj.set(cx, "role", js_role)?;
+    Ok(js_obj)
+}
+
 // BootstrapOrganizationError
 
 #[allow(dead_code)]
@@ -2068,6 +2127,25 @@ fn variant_client_list_users_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::ClientListUsersError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientListWorkspaceUsersError
+
+#[allow(dead_code)]
+fn variant_client_list_workspace_users_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientListWorkspaceUsersError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientListWorkspaceUsersError::Internal { .. } => {
             let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
@@ -5436,6 +5514,76 @@ fn client_list_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// client_list_workspace_users
+fn client_list_workspace_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let realm_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_list_workspace_users(client, realm_id).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            // JsArray::new allocates with `undefined` value, that's why we `set` value
+                            let js_array = JsArray::new(&mut cx, ok.len() as u32);
+                            for (i, elem) in ok.into_iter().enumerate() {
+                                let js_elem =
+                                    struct_workspace_user_access_info_rs_to_js(&mut cx, elem)?;
+                                js_array.set(&mut cx, i as u32, js_elem)?;
+                            }
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_client_list_workspace_users_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // client_list_workspaces
 fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let client = {
@@ -7239,6 +7387,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("clientListInvitations", client_list_invitations)?;
     cx.export_function("clientListUserDevices", client_list_user_devices)?;
     cx.export_function("clientListUsers", client_list_users)?;
+    cx.export_function("clientListWorkspaceUsers", client_list_workspace_users)?;
     cx.export_function("clientListWorkspaces", client_list_workspaces)?;
     cx.export_function("clientNewDeviceInvitation", client_new_device_invitation)?;
     cx.export_function("clientNewUserInvitation", client_new_user_invitation)?;

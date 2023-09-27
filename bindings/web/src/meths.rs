@@ -1822,6 +1822,65 @@ fn struct_workspace_info_rs_to_js(rs_obj: libparsec::WorkspaceInfo) -> Result<Js
     Ok(js_obj)
 }
 
+// WorkspaceUserAccessInfo
+
+#[allow(dead_code)]
+fn struct_workspace_user_access_info_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::WorkspaceUserAccessInfo, JsValue> {
+    let user_id = {
+        let js_val = Reflect::get(&obj, &"userId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+            .parse()
+            .map_err(|_| TypeError::new("Not a valid UserID"))?
+    };
+    let human_handle = {
+        let js_val = Reflect::get(&obj, &"humanHandle".into())?;
+        if js_val.is_null() {
+            None
+        } else {
+            Some(struct_human_handle_js_to_rs(js_val)?)
+        }
+    };
+    let role = {
+        let js_val = Reflect::get(&obj, &"role".into())?;
+        {
+            let raw_string = js_val.as_string().ok_or_else(|| {
+                let type_error = TypeError::new("value is not a string");
+                type_error.set_cause(&js_val);
+                JsValue::from(type_error)
+            })?;
+            enum_realm_role_js_to_rs(raw_string.as_str())
+        }?
+    };
+    Ok(libparsec::WorkspaceUserAccessInfo {
+        user_id,
+        human_handle,
+        role,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_workspace_user_access_info_rs_to_js(
+    rs_obj: libparsec::WorkspaceUserAccessInfo,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_user_id = JsValue::from_str(rs_obj.user_id.as_ref());
+    Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
+    let js_human_handle = match rs_obj.human_handle {
+        Some(val) => struct_human_handle_rs_to_js(val)?,
+        None => JsValue::NULL,
+    };
+    Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
+    let js_role = JsValue::from_str(enum_realm_role_rs_to_js(rs_obj.role));
+    Reflect::set(&js_obj, &"role".into(), &js_role)?;
+    Ok(js_obj)
+}
+
 // BootstrapOrganizationError
 
 #[allow(dead_code)]
@@ -2111,6 +2170,23 @@ fn variant_client_list_users_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::ClientListUsersError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientListWorkspaceUsersError
+
+#[allow(dead_code)]
+fn variant_client_list_workspace_users_error_rs_to_js(
+    rs_obj: libparsec::ClientListWorkspaceUsersError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientListWorkspaceUsersError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
         }
     }
@@ -4915,6 +4991,45 @@ pub fn clientListUsers(client: u32, skip_revoked: bool) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_list_users_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_list_workspace_users
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientListWorkspaceUsers(client: u32, realm_id: String) -> Promise {
+    future_to_promise(async move {
+        let realm_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(realm_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::client_list_workspace_users(client, realm_id).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(value.len() as u32);
+                    for (i, elem) in value.into_iter().enumerate() {
+                        let js_elem = struct_workspace_user_access_info_rs_to_js(elem)?;
+                        js_array.set(i as u32, js_elem);
+                    }
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_list_workspace_users_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
