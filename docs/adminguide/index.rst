@@ -13,3 +13,4 @@ Administrator Guide
     installation
     stats_server
     stats_organization
+    hosting/index

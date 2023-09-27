@@ -27,9 +27,11 @@ fooo
 Goku
 Kryza
 Leblond
+mailhog
 Manraj
 Mcalice
 michu
+MINIO
 Moiron
 murcielago
 mypc
