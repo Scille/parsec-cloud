@@ -35,15 +35,15 @@
       <ion-avatar class="card-content-avatar">
         <user-avatar-name
           class="user-avatar large"
-          :user-avatar="user.name"
+          :user-avatar="user.humanHandle ? user.humanHandle.label : ''"
         />
       </ion-avatar>
       <ion-text class="user-name body">
-        {{ user.name }}
+        {{ user.humanHandle?.label }}
       </ion-text>
       <ion-title class="user-profile body-lg">
         <tag-profile
-          :profile="user.profile"
+          :profile="user.currentProfile"
         />
       </ion-title>
     </div>
@@ -64,24 +64,24 @@ import {
   IonCheckbox,
 } from '@ionic/vue';
 import { defineProps } from 'vue';
-import { MockUser } from '@/common/mocks';
+import { UserInfo } from '@/parsec';
 import { defineEmits, defineExpose, ref } from 'vue';
 
 const isHovered = ref(false);
 const isSelected = ref(false);
 
 defineEmits<{
-  (e: 'click', event: Event, user: MockUser): void,
-  (e: 'menuClick', event: Event, user: MockUser): void,
-  (e: 'select', user: MockUser, selected: boolean): void
+  (e: 'click', event: Event, user: UserInfo): void,
+  (e: 'menuClick', event: Event, user: UserInfo): void,
+  (e: 'select', user: UserInfo, selected: boolean): void
 }>();
 
 const props = defineProps<{
-  user: MockUser,
+  user: UserInfo,
   showCheckbox: boolean
 }>();
 
-function getUser(): MockUser {
+function getUser(): UserInfo {
   return props.user;
 }
 

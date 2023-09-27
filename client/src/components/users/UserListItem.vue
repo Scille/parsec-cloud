@@ -29,8 +29,8 @@
       <ion-label class="user-name__label cell">
         <user-avatar-name
           class="main-cell"
-          :user-avatar="user.name"
-          :user-name="user.name"
+          :user-avatar="user.humanHandle ? user.humanHandle.label : ''"
+          :user-name="user.humanHandle?.label"
         />
       </ion-label>
     </div>
@@ -38,14 +38,14 @@
     <!-- user mail -->
     <div class="user-email">
       <ion-label class="user-email__label cell">
-        {{ user.email }}
+        {{ user.humanHandle ? user.humanHandle.email : '' }}
       </ion-label>
     </div>
 
     <!-- user profile -->
     <div class="user-profile">
       <tag-profile
-        :profile="user.profile"
+        :profile="user.currentProfile"
       />
     </div>
 
@@ -54,7 +54,8 @@
       <ion-label
         class="user-join-label cell"
       >
-        {{ timeSince(user.joined, '--', 'short') }}
+        {{ user.createdOn }}
+        <!-- {{ timeSince(user, '--', 'short') }} -->
       </ion-label>
     </div>
 
@@ -86,27 +87,27 @@ import {
 import {
   ellipsisHorizontal,
 } from 'ionicons/icons';
-import { MockUser } from '@/common/mocks';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
 import { inject, ref } from 'vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import TagProfile from '@/components/users/TagProfile.vue';
+import { UserInfo } from '@/parsec';
 
 const isHovered = ref(false);
 const isSelected = ref(false);
 
 const props = defineProps<{
-  user: MockUser,
+  user: UserInfo,
   showCheckbox: boolean
 }>();
 
 defineEmits<{
-  (e: 'click', event: Event, user: MockUser): void,
-  (e: 'menuClick', event: Event, user: MockUser): void,
-  (e: 'select', user: MockUser, selected: boolean): void
+  (e: 'click', event: Event, user: UserInfo): void,
+  (e: 'menuClick', event: Event, user: UserInfo): void,
+  (e: 'select', user: UserInfo, selected: boolean): void
 }>();
 
-function getUser(): MockUser {
+function getUser(): UserInfo {
   return props.user;
 }
 

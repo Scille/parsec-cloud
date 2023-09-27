@@ -1,24 +1,24 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import UserCard from '@/components/users/UserCard.vue';
-import { MockUser } from '@/common/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
 import { mockI18n, getDefaultProvideConfig } from 'tests/component/support/mocks';
-import { UserProfile } from '@/parsec';
+import { UserProfile, UserInfo } from '@/parsec';
 
 mockI18n();
 
 describe('User Card', () => {
   it('Display item for user', () => {
-    const USER: MockUser = {
+    const USER: UserInfo = {
       id: '0',
-      name: 'John Smith',
-      email: 'john.smith@gmail.com',
-      avatar: 'unused',
-      joined: DateTime.now(),
-      profile: UserProfile.Standard,
-      revoked: false,
+      humanHandle: {label: 'John Smith', email: 'john.smith@gmail.com'},
+      currentProfile: UserProfile.Standard,
+      createdOn: 'date',
+      createdBy: 'device',
+      revokedOn: null,
+      revokedBy: null,
+      isRevoked: () => false,
     };
 
     const wrapper = mount(UserCard, {

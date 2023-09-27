@@ -73,7 +73,7 @@
               <ion-label class="user-list-header__label cell-title label-space" />
             </ion-list-header>
             <user-list-item
-              v-for="user in filteredUsers"
+              v-for="user in userList"
               :key="user.id"
               :user="user"
               :show-checkbox="selectedUsersCount > 0 || allUsersSelected"
@@ -89,7 +89,7 @@
         >
           <ion-item
             class="users-grid-item"
-            v-for="user in filteredUsers"
+            v-for="user in userList"
             :key="user.id"
           >
             <user-card
@@ -168,13 +168,12 @@ import { DisplayState } from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import UserContextMenu from '@/views/users/UserContextMenu.vue';
 import { UserAction } from '@/views/users/UserContextMenu.vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
-import { MockUser, getMockUsers } from '@/common/mocks';
 import CreateUserInvitationModal from '@/views/users/CreateUserInvitationModal.vue';
 import { routerNavigateTo } from '@/router';
-import { inviteUser as parsecInviteUser, isAdmin as parsecIsAdmin } from '@/parsec';
+import { inviteUser as parsecInviteUser, isAdmin as parsecIsAdmin, listUsers as parsecListUsers, UserInfo } from '@/parsec';
 
 const displayView = ref(DisplayState.List);
-const userList: Ref<MockUser[]> = ref([]);
+const userList: Ref<UserInfo[]> = ref([]);
 const userListItemRefs: Ref<typeof UserListItem[]> = ref([]);
 const userGridItemRefs: Ref<typeof UserCard[]> = ref([]);
 const isAdmin = ref(false);
@@ -189,13 +188,6 @@ const indeterminateState = computed({
   set: (_val) => _val,
 });
 
-const filteredUsers = computed(() => {
-  const revokedUsers = userList.value.filter((user) => {
-    return user.revoked === false;
-  });
-  return revokedUsers;
-});
-
 const selectedUsersCount = computed(() => {
   if (displayView.value === DisplayState.List) {
     return userListItemRefs.value.filter((item) => item.isSelected).length;
@@ -204,8 +196,8 @@ const selectedUsersCount = computed(() => {
   }
 });
 
-function getSelectedUsers(): MockUser[] {
-  const selectedUsers: MockUser[] = [];
+function getSelectedUsers(): UserInfo[] {
+  const selectedUsers: UserInfo[] = [];
 
   if (displayView.value === DisplayState.List) {
     for (const item of userListItemRefs.value) {
@@ -245,7 +237,7 @@ function viewCommonWorkspace(): void {
   console.log('View common workspace clicked');
 }
 
-function onUserSelect(_user: MockUser, _selected: boolean): void {
+function onUserSelect(_user: UserInfo, _selected: boolean): void {
   if (selectedUsersCount.value === 0) {
     selectAllUsers(false);
   }
@@ -273,12 +265,12 @@ function selectAllUsers(checked: boolean): void {
   }
 }
 
-function revokeUser(user: MockUser): void {
-  console.log(`Revoke user ${user.name}`);
+function revokeUser(user: UserInfo): void {
+  console.log(`Revoke user ${user.humanHandle?.label}`);
 }
 
-function details(user: MockUser): void {
-  console.log(`Show details on user ${user.name}`);
+function details(user: UserInfo): void {
+  console.log(`Show details on user ${user.humanHandle?.label}`);
 }
 
 function revokeSelectedUsers(): void {
@@ -287,7 +279,7 @@ function revokeSelectedUsers(): void {
   }
 }
 
-async function openUserContextMenu(event: Event, user: MockUser): Promise<void> {
+async function openUserContextMenu(event: Event, user: UserInfo): Promise<void> {
   const popover = await popoverController
     .create({
       component: UserContextMenu,
@@ -298,13 +290,13 @@ async function openUserContextMenu(event: Event, user: MockUser): Promise<void> 
       dismissOnSelect: true,
       reference: 'event',
       componentProps: {
-        isRevoked: user.revoked,
+        isRevoked: user.isRevoked(),
       },
     });
   await popover.present();
 
   const { data } = await popover.onDidDismiss();
-  const actions = new Map<UserAction, (user: MockUser) => void>([
+  const actions = new Map<UserAction, (user: UserInfo) => void>([
     [UserAction.Revoke, revokeUser],
     [UserAction.Details, details],
   ]);
@@ -326,7 +318,12 @@ function resetSelection(): void {
 
 onMounted(async (): Promise<void> => {
   isAdmin.value = await parsecIsAdmin();
-  userList.value = await getMockUsers();
+  const result = await parsecListUsers();
+  if (result.ok) {
+    userList.value = result.value;
+  } else {
+    console.log('Could not list users', result.error);
+  }
 });
 </script>
 

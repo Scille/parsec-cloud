@@ -133,13 +133,13 @@ import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
 import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import { hasHistory, isDocumentRoute } from '@/router/conditions';
-import { getUserInfo, UserInfo, WorkspaceName, getWorkspaceName, WorkspaceID } from '@/parsec';
+import { getClientInfo, ClientInfo, WorkspaceName, getWorkspaceName, WorkspaceID } from '@/parsec';
 
 const currentRoute = useRoute();
 const workspaceName: Ref<WorkspaceName> = ref('');
 const { t } = useI18n();
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
-const userInfo: Ref<UserInfo | null> = ref(null);
+const userInfo: Ref<ClientInfo | null> = ref(null);
 
 onMounted(async () => {
   if (currentRoute.params.workspaceId) {
@@ -151,7 +151,7 @@ onMounted(async () => {
     }
   }
 
-  const result = await getUserInfo();
+  const result = await getClientInfo();
   if (result.ok) {
     userInfo.value = result.value;
   } else {
