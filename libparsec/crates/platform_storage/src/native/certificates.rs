@@ -11,121 +11,17 @@ use std::path::Path;
 
 use libparsec_types::prelude::*;
 
+use crate::certificates::AddCertificateData;
 use super::db::{LocalDatabase, VacuumMode};
 use super::model::get_certificates_storage_db_relative_path;
 
-// Values for `certificate_type` column in `certificates` table
-// Note the fact their value is similar to the `type` field in certificates, this
-// is purely for simplicity as the two are totally decorrelated.
-const USER_CERTIFICATE_TYPE: &str = "user_certificate";
-const DEVICE_CERTIFICATE_TYPE: &str = "device_certificate";
-const REVOKED_USER_CERTIFICATE_TYPE: &str = "revoked_user_certificate";
-const USER_UPDATE_CERTIFICATE_TYPE: &str = "user_update_certificate";
-const REALM_ROLE_CERTIFICATE_TYPE: &str = "realm_role_certificate";
-const SEQUESTER_AUTHORITY_CERTIFICATE_TYPE: &str = "sequester_authority_certificate";
-const SEQUESTER_SERVICE_CERTIFICATE_TYPE: &str = "sequester_service_certificate";
-
 #[derive(Debug)]
-pub struct CertificatesStorage {
+pub(crate) struct PlatformCertificatesStorage {
     db: LocalDatabase,
 }
 
-fn user_certificate_filters(user_id: UserID) -> (&'static str, Option<String>, Option<String>) {
-    let filter1 = Some(user_id.into());
-    let filter2 = None;
-    (USER_CERTIFICATE_TYPE, filter1, filter2)
-}
-
-fn revoked_user_certificate_filters(
-    user_id: UserID,
-) -> (&'static str, Option<String>, Option<String>) {
-    let filter1 = Some(user_id.into());
-    let filter2 = None;
-    (REVOKED_USER_CERTIFICATE_TYPE, filter1, filter2)
-}
-
-fn user_update_certificate_filters(
-    user_id: UserID,
-) -> (&'static str, Option<String>, Option<String>) {
-    let filter1 = Some(user_id.into());
-    let filter2 = None;
-    (USER_UPDATE_CERTIFICATE_TYPE, filter1, filter2)
-}
-
-fn device_certificate_filters(
-    device_id: DeviceID,
-) -> (&'static str, Option<String>, Option<String>) {
-    let (user_id, device_name) = device_id.into();
-    // DeviceName is already unique enough, so we provide it as first filter
-    // to speed up database lookup
-    let filter1 = Some(device_name.into());
-    let filter2 = Some(user_id.into());
-    (DEVICE_CERTIFICATE_TYPE, filter1, filter2)
-}
-
-fn realm_role_certificate_filters(
-    realm_id: VlobID,
-    user_id: UserID,
-) -> (&'static str, Option<String>, Option<String>) {
-    let filter1 = Some(realm_id.hex());
-    let filter2 = Some(user_id.into());
-    (REALM_ROLE_CERTIFICATE_TYPE, filter1, filter2)
-}
-
-/// Get all realm role certificates for a given realm
-fn get_realm_certificates_filters(
-    realm_id: VlobID,
-) -> (&'static str, Option<String>, Option<String>) {
-    let filter1 = Some(realm_id.hex());
-    let filter2 = None;
-    (REALM_ROLE_CERTIFICATE_TYPE, filter1, filter2)
-}
-
-/// Get all realm role certificates for a given user
-fn get_user_realms_certificates_filters(
-    user_id: UserID,
-) -> (&'static str, Option<String>, Option<String>) {
-    let filter1 = None;
-    let filter2 = Some(user_id.into());
-    (REALM_ROLE_CERTIFICATE_TYPE, filter1, filter2)
-}
-
-fn sequester_authority_certificate_filters() -> (&'static str, Option<String>, Option<String>) {
-    (SEQUESTER_AUTHORITY_CERTIFICATE_TYPE, None, None)
-}
-
-fn sequester_service_certificate_filters(
-    service_id: SequesterServiceID,
-) -> (&'static str, Option<String>, Option<String>) {
-    let filter1 = Some(service_id.hex());
-    let filter2 = None;
-    (SEQUESTER_SERVICE_CERTIFICATE_TYPE, filter1, filter2)
-}
-
-// Get all sequester service certificates
-fn get_sequester_service_certificates_filters() -> (&'static str, Option<String>, Option<String>) {
-    let filter1 = None;
-    let filter2 = None;
-    (SEQUESTER_SERVICE_CERTIFICATE_TYPE, filter1, filter2)
-}
-
-impl CertificatesStorage {
-    pub async fn start(data_base_dir: &Path, device: &LocalDevice) -> anyhow::Result<Self> {
-        // `maybe_populate_certificate_storage` needs to start a `CertificatesStorage`,
-        // leading to a recursive call which is not support for async functions.
-        // Hence `no_populate_start` which breaks the recursion.
-        //
-        // Also note we don't try to return the `CertificatesStorage` that has been
-        // use during the populate as it would change the internal state of the
-        // storage (typically caches) depending of if populate has been needed or not.
-
-        #[cfg(feature = "test-with-testbed")]
-        crate::testbed::maybe_populate_certificate_storage(data_base_dir, device).await;
-
-        Self::no_populate_start(data_base_dir, device).await
-    }
-
-    pub(crate) async fn no_populate_start(
+impl PlatformCertificatesStorage {
+    pub async fn no_populate_start(
         data_base_dir: &Path,
         device: &LocalDevice,
     ) -> anyhow::Result<Self> {
@@ -147,154 +43,6 @@ impl CertificatesStorage {
 
     pub async fn stop(&self) {
         self.db.close().await
-    }
-
-    pub async fn add_user_certificate(
-        &self,
-        index: IndexInt,
-        timestamp: DateTime,
-        user_id: UserID,
-        encrypted: Vec<u8>,
-    ) -> anyhow::Result<()> {
-        let (ty, filter1, filter2) = user_certificate_filters(user_id);
-        self.add_certificate(ty, index, timestamp, filter1, filter2, encrypted)
-            .await
-    }
-
-    pub async fn add_revoked_user_certificate(
-        &self,
-        index: IndexInt,
-        timestamp: DateTime,
-        user_id: UserID,
-        encrypted: Vec<u8>,
-    ) -> anyhow::Result<()> {
-        let (ty, filter1, filter2) = revoked_user_certificate_filters(user_id);
-        self.add_certificate(ty, index, timestamp, filter1, filter2, encrypted)
-            .await
-    }
-
-    pub async fn add_user_update_certificate(
-        &self,
-        index: IndexInt,
-        timestamp: DateTime,
-        user_id: UserID,
-        encrypted: Vec<u8>,
-    ) -> anyhow::Result<()> {
-        let (ty, filter1, filter2) = user_update_certificate_filters(user_id);
-        self.add_certificate(ty, index, timestamp, filter1, filter2, encrypted)
-            .await
-    }
-
-    pub async fn add_device_certificate(
-        &self,
-        index: IndexInt,
-        timestamp: DateTime,
-        device_id: DeviceID,
-        encrypted: Vec<u8>,
-    ) -> anyhow::Result<()> {
-        let (ty, filter1, filter2) = device_certificate_filters(device_id);
-        self.add_certificate(ty, index, timestamp, filter1, filter2, encrypted)
-            .await
-    }
-
-    pub async fn add_realm_role_certificate(
-        &self,
-        index: IndexInt,
-        timestamp: DateTime,
-        realm_id: VlobID,
-        user_id: UserID,
-        encrypted: Vec<u8>,
-    ) -> anyhow::Result<()> {
-        let (ty, filter1, filter2) = realm_role_certificate_filters(realm_id, user_id);
-        self.add_certificate(ty, index, timestamp, filter1, filter2, encrypted)
-            .await
-    }
-
-    pub async fn add_sequester_authority_certificate(
-        &self,
-        index: IndexInt,
-        timestamp: DateTime,
-        encrypted: Vec<u8>,
-    ) -> anyhow::Result<()> {
-        let (ty, filter1, filter2) = sequester_authority_certificate_filters();
-        self.add_certificate(ty, index, timestamp, filter1, filter2, encrypted)
-            .await
-    }
-
-    pub async fn add_sequester_service_certificate(
-        &self,
-        index: IndexInt,
-        timestamp: DateTime,
-        service_id: SequesterServiceID,
-        encrypted: Vec<u8>,
-    ) -> anyhow::Result<()> {
-        let (ty, filter1, filter2) = sequester_service_certificate_filters(service_id);
-        self.add_certificate(ty, index, timestamp, filter1, filter2, encrypted)
-            .await
-    }
-
-    pub async fn get_user_certificate(
-        &self,
-        user_id: UserID,
-    ) -> anyhow::Result<Option<(IndexInt, Vec<u8>)>> {
-        let (ty, filter1, filter2) = user_certificate_filters(user_id);
-        self.get_single_certificate(ty, filter1, filter2).await
-    }
-
-    pub async fn get_revoked_user_certificate(
-        &self,
-        user_id: UserID,
-    ) -> anyhow::Result<Option<(IndexInt, Vec<u8>)>> {
-        let (ty, filter1, filter2) = revoked_user_certificate_filters(user_id);
-        self.get_single_certificate(ty, filter1, filter2).await
-    }
-
-    pub async fn get_user_update_certificates(
-        &self,
-        user_id: UserID,
-    ) -> anyhow::Result<Vec<(IndexInt, Vec<u8>)>> {
-        let (ty, filter1, filter2) = user_update_certificate_filters(user_id);
-        self.get_multiple_certificates(ty, filter1, filter2).await
-    }
-
-    pub async fn get_device_certificate(
-        &self,
-        device_id: DeviceID,
-    ) -> anyhow::Result<Option<(IndexInt, Vec<u8>)>> {
-        let (ty, filter1, filter2) = device_certificate_filters(device_id);
-        self.get_single_certificate(ty, filter1, filter2).await
-    }
-
-    // Get all realm role certificates for a given realm
-    pub async fn get_realm_certificates(
-        &self,
-        realm_id: VlobID,
-    ) -> anyhow::Result<Vec<(IndexInt, Vec<u8>)>> {
-        let (ty, filter1, filter2) = get_realm_certificates_filters(realm_id);
-        self.get_multiple_certificates(ty, filter1, filter2).await
-    }
-
-    // Get all realm role certificates for a given user
-    pub async fn get_user_realms_certificates(
-        &self,
-        user_id: UserID,
-    ) -> anyhow::Result<Vec<(IndexInt, Vec<u8>)>> {
-        let (ty, filter1, filter2) = get_user_realms_certificates_filters(user_id);
-        self.get_multiple_certificates(ty, filter1, filter2).await
-    }
-
-    pub async fn get_sequester_authority_certificate(
-        &self,
-    ) -> anyhow::Result<Option<(IndexInt, Vec<u8>)>> {
-        let (ty, filter1, filter2) = sequester_authority_certificate_filters();
-        self.get_single_certificate(ty, filter1, filter2).await
-    }
-
-    pub async fn get_sequester_service_certificates(
-        &self,
-    ) -> anyhow::Result<Vec<(IndexInt, Vec<u8>)>> {
-        let (ty, filter1, filter2) = get_sequester_service_certificates_filters();
-        self.get_multiple_certificates(ty, filter1, filter2).await
     }
 
     pub async fn get_certificate(&self, index: IndexInt) -> anyhow::Result<Option<Vec<u8>>> {
@@ -402,47 +150,51 @@ impl CertificatesStorage {
             .map_err(|err| err.into())
     }
 
-    async fn add_certificate(
+    pub async fn add_single_certificate(
         &self,
-        certificate_type: &'static str,
-        index: IndexInt,
-        timestamp: DateTime,
-        filter1: Option<String>,
-        filter2: Option<String>,
-        encrypted: Vec<u8>,
+        data: AddCertificateData,
     ) -> anyhow::Result<()> {
-        let index_as_i64 = i64::try_from(index)?;
+        self.add_multiple_certificates(vec![data]).await
+    }
 
+    pub async fn add_multiple_certificates(
+        &self,
+        items: Vec<AddCertificateData>,
+    ) -> anyhow::Result<()> {
         self.db
             .exec(move |conn| {
-                let filter1 = filter1.as_deref();
-                let filter2 = filter2.as_deref();
-
                 // IMMEDIATE transaction means we start right away a write transaction
                 // (instead of default DEFERRED mode of which waits until the first database
                 // access and determine read/write transaction depending on the sql statement)
                 conn.immediate_transaction(|conn| {
-                    let new_certificate = super::model::NewCertificate {
-                        certificate_index: index_as_i64,
-                        certificate: &encrypted,
-                        certificate_timestamp: timestamp.into(),
-                        certificate_type,
-                        filter1,
-                        filter2,
-                    };
+                    for data in items {
+                        let index_as_i64 = i64::try_from(data.index).map_err(
+                            |e| diesel::result::Error::SerializationError(anyhow::anyhow!("index overflow: {}", e).into())
+                        )?;
+                        let new_certificate = super::model::NewCertificate {
+                            certificate_index: index_as_i64,
+                            certificate: &data.encrypted,
+                            certificate_timestamp: data.timestamp.into(),
+                            certificate_type: data.certificate_type,
+                            filter1: data.filter1.as_deref(),
+                            filter2: data.filter2.as_deref(),
+                        };
 
-                    let query = {
-                        use super::model::certificates::dsl::*;
-                        diesel::insert_into(certificates).values(new_certificate)
-                    };
-                    query.execute(conn).map(|_| ())
+                        let query = {
+                            use super::model::certificates::dsl::*;
+                            diesel::insert_into(certificates).values(new_certificate)
+                        };
+                        query.execute(conn).map(|_| ())?
+                    }
+
+                    Ok(())
                 })
             })
             .await
             .map_err(|err| err.into())
     }
 
-    async fn get_single_certificate(
+    pub async fn get_single_certificate(
         &self,
         certificate_type: &'static str,
         filter1: Option<String>,
@@ -483,7 +235,7 @@ impl CertificatesStorage {
         }
     }
 
-    async fn get_multiple_certificates(
+    pub async fn get_multiple_certificates(
         &self,
         certificate_type: &'static str,
         filter1: Option<String>,

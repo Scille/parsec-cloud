@@ -1,10 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// `allow-unwrap-in-test` don't behave as expected, see:
-// https://github.com/rust-lang/rust-clippy/issues/11119
-#![allow(clippy::unwrap_used)]
-
-use libparsec_platform_storage::certificates::CertificatesStorage;
+use super::CertificatesStorage;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -331,7 +327,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
 
     // Try with no certificates in the database...
 
-    p_assert_eq!(storage.get_certificate(1).await.unwrap(), None);
+    p_assert_eq!(storage.platform.get_certificate(1).await.unwrap(), None);
     p_assert_eq!(
         storage
             .get_user_certificate(user_id.to_owned())
@@ -483,10 +479,10 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
     // ...and access them !
 
     p_assert_eq!(
-        storage.get_certificate(1).await.unwrap(),
+        storage.platform.get_certificate(1).await.unwrap(),
         Some(b"user".to_vec())
     );
-    p_assert_eq!(storage.get_certificate(42).await.unwrap(), None);
+    p_assert_eq!(storage.platform.get_certificate(42).await.unwrap(), None);
     p_assert_eq!(
         storage
             .get_user_certificate(user_id.to_owned())
@@ -698,7 +694,7 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
             storage.get_timestamp_bounds(index).await.unwrap(),
             (None, None)
         );
-        p_assert_eq!(storage.get_certificate(index).await.unwrap(), None);
+        p_assert_eq!(storage.platform.get_certificate(index).await.unwrap(), None);
     }
     p_assert_eq!(
         storage
