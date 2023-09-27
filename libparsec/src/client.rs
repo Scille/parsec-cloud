@@ -2,9 +2,12 @@
 
 use std::sync::Arc;
 
-pub use libparsec_client::user_ops::{
-    ClientInfoError, RenameWorkspaceError as ClientRenameWorkspaceError,
-    ShareWorkspaceError as ClientShareWorkspaceError,
+pub use libparsec_client::{
+    certificates_ops::{DeviceInfo, GetUserDeviceError as ClientGetUserDeviceError, UserInfo},
+    user_ops::{
+        ClientInfoError, RenameWorkspaceError as ClientRenameWorkspaceError,
+        ShareWorkspaceError as ClientShareWorkspaceError,
+    },
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
@@ -229,6 +232,80 @@ pub async fn client_info(client: Handle) -> Result<ClientInfo, ClientInfoError> 
 }
 
 /*
+ * List users
+ */
+
+#[derive(Debug, thiserror::Error)]
+pub enum ClientListUsersError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+// TODO: order by user name (asc/desc), offset/limit
+pub async fn client_list_users(
+    client: Handle,
+    skip_revoked: bool,
+    // offset: Option<usize>,
+    // limit: Option<usize>,
+) -> Result<Vec<UserInfo>, ClientListUsersError> {
+    let client = borrow_from_handle(client, |x| match x {
+        HandleItem::Client { client, .. } => Some(client.clone()),
+        _ => None,
+    })
+    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+
+    client
+        .certificates_ops
+        .list_users(skip_revoked, None, None)
+        .await
+        .map_err(ClientListUsersError::Internal)
+}
+
+/*
+ * List user devices
+ */
+
+#[derive(Debug, thiserror::Error)]
+pub enum ClientListUserDevicesError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub async fn client_list_user_devices(
+    client: Handle,
+    user: UserID,
+) -> Result<Vec<DeviceInfo>, ClientListUserDevicesError> {
+    let client = borrow_from_handle(client, |x| match x {
+        HandleItem::Client { client, .. } => Some(client.clone()),
+        _ => None,
+    })
+    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+
+    client
+        .certificates_ops
+        .list_user_devices(user)
+        .await
+        .map_err(|err| err.into())
+}
+
+/*
+ * get user device
+ */
+
+pub async fn client_get_user_device(
+    client: Handle,
+    device: DeviceID,
+) -> Result<(UserInfo, DeviceInfo), ClientGetUserDeviceError> {
+    let client = borrow_from_handle(client, |x| match x {
+        HandleItem::Client { client, .. } => Some(client.clone()),
+        _ => None,
+    })
+    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+
+    client.certificates_ops.get_user_device(device).await
+}
+
+/*
  * List workspaces
  */
 
@@ -351,6 +428,6 @@ pub async fn client_share_workspace(
 
     client
         .user_ops
-        .share_workspace(realm_id, &recipient, role)
+        .share_workspace(realm_id, recipient, role)
         .await
 }

@@ -94,6 +94,64 @@ async def client_info(
     raise NotImplementedError
 
 
+class UserInfo(Structure):
+    id: UserID
+    human_handle: Optional[HumanHandle]
+    current_profile: UserProfile
+    created_on: DateTime
+    created_by: Optional[DeviceID]
+    revoked_on: Optional[DateTime]
+    revoked_by: Optional[DeviceID]
+
+
+class DeviceInfo(Structure):
+    id: DeviceID
+    device_label: Optional[DeviceLabel]
+    created_on: DateTime
+    created_by: Optional[DeviceID]
+
+
+class ClientListUsersError(ErrorVariant):
+    class Internal:
+        pass
+
+
+async def client_list_users(
+    client: Handle,
+    skip_revoked: bool,
+    # offset: Optional[int],
+    # limit: Optional[int],
+) -> Result[list[UserInfo], ClientListUsersError]:
+    raise NotImplementedError
+
+
+class ClientListUserDevicesError(ErrorVariant):
+    class Internal:
+        pass
+
+
+async def client_list_user_devices(
+    client: Handle,
+    user: UserID,
+) -> Result[list[DeviceInfo], ClientListUserDevicesError]:
+    raise NotImplementedError
+
+
+class ClientGetUserDeviceError(ErrorVariant):
+    class NonExisting:
+        pass
+
+    class Internal:
+        pass
+
+
+async def client_get_user_device(
+    client: Handle,
+    device: DeviceID,
+) -> Result[tuple[UserInfo, DeviceInfo], ClientGetUserDeviceError]:
+    raise NotImplementedError
+
+
 class ClientListWorkspacesError(ErrorVariant):
     class Internal:
         pass
