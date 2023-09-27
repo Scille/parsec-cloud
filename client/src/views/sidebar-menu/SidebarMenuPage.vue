@@ -63,14 +63,14 @@
 
               <div
                 class="organization-card__manageBtn"
-                v-show="userInfo && userInfo.profile != UserProfile.Outsider"
+                v-show="userInfo && userInfo.currentProfile != UserProfile.Outsider"
                 @click="routerNavigateTo('activeUsers')"
               >
                 <ion-text
                   class="subtitles-sm"
                   button
                 >
-                  {{ userInfo && userInfo.profile === UserProfile.Admin ?
+                  {{ userInfo && userInfo.currentProfile === UserProfile.Admin ?
                     $t('SideMenu.manageOrganization') :
                     $t('SideMenu.organizationInfo') }}
                 </ion-text>
@@ -95,7 +95,7 @@
                 />
               </ion-button>
               <ion-label class="title-h3">
-                {{ userInfo && userInfo.profile === UserProfile.Admin ?
+                {{ userInfo && userInfo.currentProfile === UserProfile.Admin ?
                   $t('SideMenu.manageOrganization') :
                   $t('SideMenu.organizationInfo') }}
               </ion-label>
@@ -123,16 +123,16 @@
                 lines="none"
                 button
                 v-for="workspace in workspaces"
-                :key="workspace[0]"
-                @click="navigateToWorkspace(workspace[0])"
-                :class="isSpecificWorkspaceRoute(workspace[0]) ? 'item-selected' : 'item-not-selected'"
+                :key="workspace.id"
+                @click="navigateToWorkspace(workspace.id)"
+                :class="isSpecificWorkspaceRoute(workspace.id) ? 'item-selected' : 'item-not-selected'"
                 class="sidebar-item"
               >
                 <ion-icon
                   :icon="business"
                   slot="start"
                 />
-                <ion-label>{{ workspace[1] }}</ion-label>
+                <ion-label>{{ workspace.name }}</ion-label>
               </ion-item>
             </ion-list>
             <!-- list of workspaces -->
@@ -176,7 +176,7 @@
                   <ion-label>{{ $t('SideMenu.revokedUsers') }}</ion-label>
                 </ion-item>
                 <ion-item
-                  v-show="userInfo && userInfo.profile === UserProfile.Admin"
+                  v-show="userInfo && userInfo.currentProfile === UserProfile.Admin"
                   lines="none"
                   button
                   class="user-menu__item body"
@@ -190,7 +190,7 @@
             <!-- storage -->
             <ion-list
               class="storage"
-              v-show="userInfo && userInfo.profile === UserProfile.Admin"
+              v-show="userInfo && userInfo.currentProfile === UserProfile.Admin"
             >
               <ion-item
                 lines="none"
@@ -267,15 +267,14 @@ import useSidebarMenu from '@/services/sidebarMenu';
 import { isOrganizationManagementRoute, isSpecificWorkspaceRoute, isUserRoute } from '@/router/conditions';
 import { routerNavigateTo } from '@/router';
 import {
-  WorkspaceID,
-  WorkspaceName,
   listWorkspaces as parsecListWorkspaces,
   getUserInfo as parsecGetUserInfo,
   UserInfo,
   UserProfile,
+  WorkspaceInfo,
 } from '@/parsec';
 
-const workspaces: Ref<Array<[WorkspaceID, WorkspaceName]>> = ref([]);
+const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
 
 const currentRoute = useRoute();
 const splitPane = ref();

@@ -3,6 +3,8 @@
 import {
   libparsec,
   InviteListItem,
+  WorkspaceInfo,
+  RealmRole,
 } from '@/plugins/libparsec';
 
 import {
@@ -93,21 +95,21 @@ export async function inviteUser(email: string): Promise<Result<[InvitationToken
   }
 }
 
-export async function listWorkspaces(): Promise<Result<Array<[WorkspaceID, WorkspaceName]>, ClientListWorkspacesError>> {
+export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>> {
   const handle = getParsecHandle();
 
   if (handle !== null && window.isDesktop()) {
     return await libparsec.clientListWorkspaces(handle);
   } else {
-    return new Promise<Result<Array<[WorkspaceID, WorkspaceName]>, ClientListWorkspacesError>>((resolve, _reject) => {
+    return new Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>>((resolve, _reject) => {
       resolve({
         ok: true, value: [
-          ['1', 'Trademeet'],
-          ['2', 'The Copper Coronet'],
-          ['3', 'The Asylum'],
-          ['4', 'Druid Grove'],
+          {'id': '1', 'name': 'Trademeet', 'selfRole': RealmRole.Owner},
+          {'id': '2', 'name': 'The Copper Coronet', 'selfRole': RealmRole.Manager},
+          {'id': '3', 'name': 'The Asylum', 'selfRole': RealmRole.Contributor},
+          {'id': '4', 'name': 'Druid Grove', 'selfRole': RealmRole.Reader},
           // cspell:disable-next-line
-          ['5', 'Menzoberranzan'],
+          {'id': '5', 'name': 'Menzoberranzan', 'selfRole': RealmRole.Owner},
         ],
       });
     });
@@ -249,7 +251,7 @@ export async function getUserInfo(): Promise<Result<UserInfo, ClientInfoError>> 
         deviceId: 'a@b',
         deviceLabel: 'My Device',
         userId: 'userid',
-        profile: UserProfile.Admin,
+        currentProfile: UserProfile.Admin,
         humanHandle: {
           email: 'user@host.com',
           label: 'Gordon Freeman',
@@ -263,7 +265,7 @@ export async function getUserProfile(): Promise<UserProfile | null> {
   const result = await getUserInfo();
 
   if (result.ok) {
-    return result.value.profile;
+    return result.value.currentProfile;
   } else {
     return null;
   }
@@ -283,15 +285,15 @@ export async function getWorkspaceName(workspaceId: WorkspaceID): Promise<Result
   if (handle !== null && window.isDesktop()) {
     const result = await libparsec.clientListWorkspaces(handle);
     if (result.ok) {
-      const workspace = result.value.find((tuple) => {
-        if (tuple[0] === workspaceId) {
+      const workspace = result.value.find((info) => {
+        if (info.id === workspaceId) {
           return true;
         }
         return false;
       });
       if (workspace) {
         return new Promise<Result<WorkspaceName, GetWorkspaceNameError>>((resolve, _reject) => {
-          resolve({ok: true, value: workspace[1]});
+          resolve({ok: true, value: workspace.name});
         });
       }
     }
