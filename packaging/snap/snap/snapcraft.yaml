@@ -1,5 +1,5 @@
 name: parsec
-version: 2.16.0-rc.5
+version: 2.16.0-rc.5+dev
 summary: Secure cloud framework # 79 char long summary
 description: |
   Parsec is an open-source cloud-based application that allow simple yet
