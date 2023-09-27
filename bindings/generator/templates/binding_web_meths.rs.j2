@@ -193,18 +193,29 @@ if {{ js_val }}.is_null() {
     }
     converted
 }
+{%- elif type.kind == "tuple" -%}
+(
+{%- for value in type.values -%}
+    {
+        {% set value_var_name = "js_x" ~ loop.index %}
+        let {{ value_var_name }} = Reflect::get_u32(&{{ js_val }}, {{ loop.index }})?;
+        {{ render_js_value_to_rs(value_var_name, value) | indent(8) }}
+    }
+    {{ ", " if not loop.last else "" -}}
+{%- endfor -%}
+)
 {%- elif type.kind == "struct" -%}
 {{ struct_js_to_rs_function_name(type) }}({{ js_val }})?
 {%- elif type.kind == "variant" -%}
 {{ variant_js_to_rs_function_name(type) }}({{ js_val }})?
 {%- elif type.kind == "result" -%}
-    match Reflect::get(&obj, &"ok".into())?.as_bool() {
+    match Reflect::get(&{{ js_val }}, &"ok".into())?.as_bool() {
         Some(true) => {
-            let js_value = Reflect::get(&obj, &"value".into())?;
+            let js_value = Reflect::get(&{{ js_val }}, &"value".into())?;
             Ok({{ render_js_value_to_rs("js_value", type.ok) }})
         }
         Some(false) => {
-            let js_error = Reflect::get(&obj, &"error".into())?;
+            let js_error = Reflect::get(&{{ js_val }}, &"error".into())?;
             Err({{ render_js_value_to_rs("js_error", type.err) }})
         }
         None => {
