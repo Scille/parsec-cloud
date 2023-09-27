@@ -373,6 +373,20 @@ impl FsPath {
     }
 }
 
+impl std::fmt::Display for FsPath {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.is_root() {
+            f.write_str("/")?;
+        } else {
+            for part in self.parts() {
+                f.write_str("/")?;
+                f.write_str(part.as_ref())?;
+            }
+        }
+        Ok(())
+    }
+}
+
 impl std::str::FromStr for FsPath {
     type Err = FsPathError;
 
