@@ -118,6 +118,7 @@ ignorePaths:
   - "**/bindings/web/src/meths.rs"
   - "**/bindings/electron/src/meths.rs"
   - "**/*.svg"
+  - "**/*.excalidraw"
   - "**/default_pattern.ignore"
   - "**/docs/figures/*.svg"
   - "**/windows-icon-handler/**/*.vcxproj"
