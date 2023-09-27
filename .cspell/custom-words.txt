@@ -43,6 +43,7 @@ BUILDKIT
 buildscript
 bxsalsa
 cachekey
+CAcreateserial
 CAFILE
 camelcase
 capacitorjs
@@ -210,6 +211,7 @@ jvmargs
 keepattributes
 keepclassmembers
 KeyFile
+keyout
 keysyms
 latexmk
 LATEXMKOPTS
@@ -331,6 +333,7 @@ Niño
 nlookup
 nmspc
 nocapture
+noenc
 NONCEBYTES
 nonextensible
 nonstopmode
@@ -357,8 +360,8 @@ onboarded
 oneof
 oneofschema
 Onone
-OpsLimit
 opses
+OpsLimit
 ORGANIZATIONID
 orgid
 ORGNAME
