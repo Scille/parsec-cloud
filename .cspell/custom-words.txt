@@ -131,6 +131,7 @@ endmacro
 enmascarado
 eurosys
 everytime
+excalidraw
 exceptiongroup
 excrepr
 executemany
