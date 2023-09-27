@@ -115,7 +115,7 @@ pub(super) async fn add_certificates_batch<'a>(
 
     // TODO: use batch to insert the certificates in SQLite saves a huge amount of time
     // However this is tricky given a given certificate depends on the previous ones
-    // for it validation, but now they could be either in SQLite or in the to-be-inserted
+    // for its validation, but now they could be either in SQLite or in the to-be-inserted
     // batch !
     // A solution to avoid this would be to have `CertificateStore::for_write` opens a
     // SQLite transaction, this way inserting here would be cheap.
