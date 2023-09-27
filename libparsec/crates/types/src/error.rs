@@ -23,22 +23,6 @@ pub enum RegexError {
 
 pub type RegexResult<T> = Result<T, RegexError>;
 
-#[derive(Error, Debug)]
-pub enum EntryNameError {
-    #[error("Name too long")]
-    NameTooLong,
-    #[error("Invalid name")]
-    InvalidName,
-}
-
-#[derive(Error, Debug)]
-pub enum FsPathError {
-    #[error("Path must be absolute")]
-    NotAbsolute,
-    #[error(transparent)]
-    InvalidEntry(#[from] EntryNameError),
-}
-
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum DataError {
     #[error("Invalid encryption")]
