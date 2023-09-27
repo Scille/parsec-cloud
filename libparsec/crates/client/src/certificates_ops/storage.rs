@@ -37,7 +37,7 @@ type PerRealmAllRoles = Arc<Vec<(IndexInt, Arc<RealmRoleCertificate>)>>;
 #[derive(Debug, Default)]
 struct Cache {
     current_self_profile: ScalarCache<UserProfile>,
-    current_self_realm_roles: ScalarCache<Vec<(VlobID, RealmRole)>>,
+    current_self_realms_roles: ScalarCache<Vec<(VlobID, RealmRole)>>,
     user_certificates: HashMap<UserID, (IndexInt, Arc<UserCertificate>)>,
     user_update_certificates: HashMap<UserID, PerUserAllUserUpdates>,
     revoked_user_certificates: HashMap<UserID, PerUserMaybeUserRevoked>,
@@ -152,12 +152,12 @@ impl CertificatesCachedStorage {
         Ok(profile)
     }
 
-    pub async fn get_current_self_realm_roles(
+    pub async fn get_current_self_realms_roles(
         &mut self,
     ) -> anyhow::Result<Vec<(VlobID, RealmRole)>> {
         {
             let guard = self.cache.lock().expect("Mutex is poisoned");
-            if let ScalarCache::Present(realm_roles) = &guard.current_self_realm_roles {
+            if let ScalarCache::Present(realm_roles) = &guard.current_self_realms_roles {
                 return Ok(realm_roles.to_owned());
             }
         }
@@ -174,7 +174,7 @@ impl CertificatesCachedStorage {
             .collect();
 
         let mut guard = self.cache.lock().expect("Mutex is poisoned");
-        guard.current_self_realm_roles.set(realm_roles.clone());
+        guard.current_self_realms_roles.set(realm_roles.clone());
 
         Ok(realm_roles)
     }

@@ -221,11 +221,11 @@ impl CertificatesOps {
         self.storage.write().await.get_current_self_profile().await
     }
 
-    pub async fn get_current_self_realm_roles(&self) -> anyhow::Result<Vec<(VlobID, RealmRole)>> {
+    pub async fn get_current_self_realms_roles(&self) -> anyhow::Result<Vec<(VlobID, RealmRole)>> {
         self.storage
             .write()
             .await
-            .get_current_self_realm_roles()
+            .get_current_self_realms_roles()
             .await
     }
 }
