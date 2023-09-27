@@ -82,15 +82,15 @@ class ClientInfoError(ErrorVariant):
 class ClientInfo(Structure):
     organization_id: OrganizationID
     device_id: DeviceID
-    device_label: Optional[DeviceLabel]
     user_id: UserID
-    profile: UserProfile
+    device_label: Optional[DeviceLabel]
     human_handle: Optional[HumanHandle]
+    current_profile: UserProfile
 
 
 async def client_info(
     client: Handle,
-) -> Result[ClientInfo, ClientInfoError,]:
+) -> Result[ClientInfo, ClientInfoError]:
     raise NotImplementedError
 
 

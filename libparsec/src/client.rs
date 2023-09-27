@@ -202,10 +202,10 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
 pub struct ClientInfo {
     pub organization_id: OrganizationID,
     pub device_id: DeviceID,
-    pub device_label: Option<DeviceLabel>,
     pub user_id: UserID,
-    pub profile: UserProfile,
+    pub device_label: Option<DeviceLabel>,
     pub human_handle: Option<HumanHandle>,
+    pub current_profile: UserProfile,
 }
 
 pub async fn client_info(client: Handle) -> Result<ClientInfo, ClientInfoError> {
@@ -218,10 +218,13 @@ pub async fn client_info(client: Handle) -> Result<ClientInfo, ClientInfoError> 
     Ok(ClientInfo {
         organization_id: client.organization_id().clone(),
         device_id: client.device_id().clone(),
-        device_label: client.device_label().cloned(),
         user_id: client.device_id().user_id().clone(),
-        profile: client.profile().await?,
+        device_label: client.device_label().cloned(),
         human_handle: client.human_handle().cloned(),
+        current_profile: client
+            .profile()
+            .await
+            .map_err(|e| e.context("Cannot retrieve profile"))?,
     })
 }
 
