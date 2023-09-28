@@ -50,7 +50,6 @@ export type BackendAddr = string
 export type BackendInvitationAddr = string
 export type BackendOrganizationAddr = string
 export type BackendOrganizationBootstrapAddr = string
-export type DateTime = string
 export type DeviceID = string
 export type DeviceLabel = string
 export type EntryName = string
@@ -63,9 +62,16 @@ export type SASCode = string
 export type UserID = string
 export type VlobID = string
 export type SequesterVerifyKeyDer = Uint8Array
+export type I32 = number
 export type CacheSize = number
 export type Handle = number
+export type U32 = number
 export type VersionInt = number
+export type I64 = number
+export type IndexInt = number
+export type SizeInt = number
+export type U64 = number
+export type { DateTime } from 'luxon'; import type { DateTime } from 'luxon';
 
 export interface AvailableDevice {
     keyFilePath: Path
@@ -94,46 +100,46 @@ export interface ClientInfo {
 }
 
 export interface DeviceClaimFinalizeInfo {
-    handle: number
+    handle: Handle
 }
 
 export interface DeviceClaimInProgress1Info {
-    handle: number
+    handle: Handle
     greeterSas: SASCode
     greeterSasChoices: Array<SASCode>
 }
 
 export interface DeviceClaimInProgress2Info {
-    handle: number
+    handle: Handle
     claimerSas: SASCode
 }
 
 export interface DeviceClaimInProgress3Info {
-    handle: number
+    handle: Handle
 }
 
 export interface DeviceGreetInProgress1Info {
-    handle: number
+    handle: Handle
     greeterSas: SASCode
 }
 
 export interface DeviceGreetInProgress2Info {
-    handle: number
+    handle: Handle
     claimerSas: SASCode
     claimerSasChoices: Array<SASCode>
 }
 
 export interface DeviceGreetInProgress3Info {
-    handle: number
+    handle: Handle
 }
 
 export interface DeviceGreetInProgress4Info {
-    handle: number
+    handle: Handle
     requestedDeviceLabel: DeviceLabel | null
 }
 
 export interface DeviceGreetInitialInfo {
-    handle: number
+    handle: Handle
 }
 
 export interface DeviceInfo {
@@ -149,47 +155,47 @@ export interface HumanHandle {
 }
 
 export interface UserClaimFinalizeInfo {
-    handle: number
+    handle: Handle
 }
 
 export interface UserClaimInProgress1Info {
-    handle: number
+    handle: Handle
     greeterSas: SASCode
     greeterSasChoices: Array<SASCode>
 }
 
 export interface UserClaimInProgress2Info {
-    handle: number
+    handle: Handle
     claimerSas: SASCode
 }
 
 export interface UserClaimInProgress3Info {
-    handle: number
+    handle: Handle
 }
 
 export interface UserGreetInProgress1Info {
-    handle: number
+    handle: Handle
     greeterSas: SASCode
 }
 
 export interface UserGreetInProgress2Info {
-    handle: number
+    handle: Handle
     claimerSas: SASCode
     claimerSasChoices: Array<SASCode>
 }
 
 export interface UserGreetInProgress3Info {
-    handle: number
+    handle: Handle
 }
 
 export interface UserGreetInProgress4Info {
-    handle: number
+    handle: Handle
     requestedHumanHandle: HumanHandle | null
     requestedDeviceLabel: DeviceLabel | null
 }
 
 export interface UserGreetInitialInfo {
-    handle: number
+    handle: Handle
 }
 
 export interface UserInfo {
@@ -600,10 +606,10 @@ export interface EntryInfoFile {
     id: VlobID
     created: DateTime
     updated: DateTime
-    baseVersion: number
+    baseVersion: VersionInt
     isPlaceholder: boolean
     needSync: boolean
-    size: number
+    size: SizeInt
 }
 export interface EntryInfoFolder {
     tag: 'Folder'
@@ -611,7 +617,7 @@ export interface EntryInfoFolder {
     id: VlobID
     created: DateTime
     updated: DateTime
-    baseVersion: number
+    baseVersion: VersionInt
     isPlaceholder: boolean
     needSync: boolean
     children: Array<EntryName>
@@ -776,13 +782,13 @@ export type ParseBackendAddrError =
 export interface ParsedBackendAddrBase {
     tag: 'Base'
     hostname: string
-    port: number
+    port: U32
     useSsl: boolean
 }
 export interface ParsedBackendAddrInvitationDevice {
     tag: 'InvitationDevice'
     hostname: string
-    port: number
+    port: U32
     useSsl: boolean
     organizationId: OrganizationID
     token: InvitationToken
@@ -790,7 +796,7 @@ export interface ParsedBackendAddrInvitationDevice {
 export interface ParsedBackendAddrInvitationUser {
     tag: 'InvitationUser'
     hostname: string
-    port: number
+    port: U32
     useSsl: boolean
     organizationId: OrganizationID
     token: InvitationToken
@@ -798,7 +804,7 @@ export interface ParsedBackendAddrInvitationUser {
 export interface ParsedBackendAddrOrganizationBootstrap {
     tag: 'OrganizationBootstrap'
     hostname: string
-    port: number
+    port: U32
     useSsl: boolean
     organizationId: OrganizationID
     token: string | null
@@ -806,7 +812,7 @@ export interface ParsedBackendAddrOrganizationBootstrap {
 export interface ParsedBackendAddrOrganizationFileLink {
     tag: 'OrganizationFileLink'
     hostname: string
-    port: number
+    port: U32
     useSsl: boolean
     organizationId: OrganizationID
     workspaceId: VlobID
@@ -816,7 +822,7 @@ export interface ParsedBackendAddrOrganizationFileLink {
 export interface ParsedBackendAddrPkiEnrollment {
     tag: 'PkiEnrollment'
     hostname: string
-    port: number
+    port: U32
     useSsl: boolean
     organizationId: OrganizationID
 }
@@ -831,13 +837,13 @@ export type ParsedBackendAddr =
 // UserOrDeviceClaimInitialInfo
 export interface UserOrDeviceClaimInitialInfoDevice {
     tag: 'Device'
-    handle: number
+    handle: Handle
     greeterUserId: UserID
     greeterHumanHandle: HumanHandle | null
 }
 export interface UserOrDeviceClaimInitialInfoUser {
     tag: 'User'
-    handle: number
+    handle: Handle
     claimerEmail: string
     greeterUserId: UserID
     greeterHumanHandle: HumanHandle | null
@@ -899,7 +905,7 @@ export type WorkspaceStopError =
 // WorkspaceStorageCacheSize
 export interface WorkspaceStorageCacheSizeCustom {
     tag: 'Custom'
-    size: number
+    size: CacheSize
 }
 export interface WorkspaceStorageCacheSizeDefault {
     tag: 'Default'
@@ -923,31 +929,31 @@ export interface LibParsecPlugin {
         organization_id: OrganizationID
     ): Promise<BackendOrganizationBootstrapAddr>
     cancel(
-        canceller: number
+        canceller: Handle
     ): Promise<Result<null, CancelError>>
     claimerDeviceFinalizeSaveLocalDevice(
-        handle: number,
+        handle: Handle,
         save_strategy: DeviceSaveStrategy
     ): Promise<Result<AvailableDevice, ClaimInProgressError>>
     claimerDeviceInProgress1DoSignifyTrust(
-        canceller: number,
-        handle: number
+        canceller: Handle,
+        handle: Handle
     ): Promise<Result<DeviceClaimInProgress2Info, ClaimInProgressError>>
     claimerDeviceInProgress2DoWaitPeerTrust(
-        canceller: number,
-        handle: number
+        canceller: Handle,
+        handle: Handle
     ): Promise<Result<DeviceClaimInProgress3Info, ClaimInProgressError>>
     claimerDeviceInProgress3DoClaim(
-        canceller: number,
-        handle: number,
+        canceller: Handle,
+        handle: Handle,
         requested_device_label: DeviceLabel | null
     ): Promise<Result<DeviceClaimFinalizeInfo, ClaimInProgressError>>
     claimerDeviceInitialDoWaitPeer(
-        canceller: number,
-        handle: number
+        canceller: Handle,
+        handle: Handle
     ): Promise<Result<DeviceClaimInProgress1Info, ClaimInProgressError>>
     claimerGreeterAbortOperation(
-        handle: number
+        handle: Handle
     ): Promise<Result<null, ClaimerGreeterAbortOperationError>>
     claimerRetrieveInfo(
         config: ClientConfig,
@@ -955,76 +961,76 @@ export interface LibParsecPlugin {
         addr: BackendInvitationAddr
     ): Promise<Result<UserOrDeviceClaimInitialInfo, ClaimerRetrieveInfoError>>
     claimerUserFinalizeSaveLocalDevice(
-        handle: number,
+        handle: Handle,
         save_strategy: DeviceSaveStrategy
     ): Promise<Result<AvailableDevice, ClaimInProgressError>>
     claimerUserInProgress1DoSignifyTrust(
-        canceller: number,
-        handle: number
+        canceller: Handle,
+        handle: Handle
     ): Promise<Result<UserClaimInProgress2Info, ClaimInProgressError>>
     claimerUserInProgress2DoWaitPeerTrust(
-        canceller: number,
-        handle: number
+        canceller: Handle,
+        handle: Handle
     ): Promise<Result<UserClaimInProgress3Info, ClaimInProgressError>>
     claimerUserInProgress3DoClaim(
-        canceller: number,
-        handle: number,
+        canceller: Handle,
+        handle: Handle,
         requested_device_label: DeviceLabel | null,
         requested_human_handle: HumanHandle | null
     ): Promise<Result<UserClaimFinalizeInfo, ClaimInProgressError>>
     claimerUserInitialDoWaitPeer(
-        canceller: number,
-        handle: number
+        canceller: Handle,
+        handle: Handle
     ): Promise<Result<UserClaimInProgress1Info, ClaimInProgressError>>
     clientCreateWorkspace(
-        client: number,
+        client: Handle,
         name: EntryName
     ): Promise<Result<VlobID, ClientCreateWorkspaceError>>
     clientDeleteInvitation(
-        client: number,
+        client: Handle,
         token: InvitationToken
     ): Promise<Result<null, DeleteInvitationError>>
     clientGetUserDevice(
-        client: number,
+        client: Handle,
         device: DeviceID
     ): Promise<Result<[UserInfo, DeviceInfo], ClientGetUserDeviceError>>
     clientInfo(
-        client: number
+        client: Handle
     ): Promise<Result<ClientInfo, ClientInfoError>>
     clientListInvitations(
-        client: number
+        client: Handle
     ): Promise<Result<Array<InviteListItem>, ListInvitationsError>>
     clientListUserDevices(
-        client: number,
+        client: Handle,
         user: UserID
     ): Promise<Result<Array<DeviceInfo>, ClientListUserDevicesError>>
     clientListUsers(
-        client: number,
+        client: Handle,
         skip_revoked: boolean
     ): Promise<Result<Array<UserInfo>, ClientListUsersError>>
     clientListWorkspaceUsers(
-        client: number,
+        client: Handle,
         realm_id: VlobID
     ): Promise<Result<Array<WorkspaceUserAccessInfo>, ClientListWorkspaceUsersError>>
     clientListWorkspaces(
-        client: number
+        client: Handle
     ): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>>
     clientNewDeviceInvitation(
-        client: number,
+        client: Handle,
         send_email: boolean
     ): Promise<Result<[InvitationToken, InvitationEmailSentStatus], NewDeviceInvitationError>>
     clientNewUserInvitation(
-        client: number,
+        client: Handle,
         claimer_email: string,
         send_email: boolean
     ): Promise<Result<[InvitationToken, InvitationEmailSentStatus], NewUserInvitationError>>
     clientRenameWorkspace(
-        client: number,
+        client: Handle,
         realm_id: VlobID,
         new_name: EntryName
     ): Promise<Result<null, ClientRenameWorkspaceError>>
     clientShareWorkspace(
-        client: number,
+        client: Handle,
         realm_id: VlobID,
         recipient: UserID,
         role: RealmRole | null
@@ -1033,73 +1039,73 @@ export interface LibParsecPlugin {
         config: ClientConfig,
         on_event_callback: (event: ClientEvent) => void,
         access: DeviceAccessStrategy
-    ): Promise<Result<number, ClientStartError>>
+    ): Promise<Result<Handle, ClientStartError>>
     clientStartDeviceInvitationGreet(
-        client: number,
+        client: Handle,
         token: InvitationToken
     ): Promise<Result<DeviceGreetInitialInfo, ClientStartInvitationGreetError>>
     clientStartUserInvitationGreet(
-        client: number,
+        client: Handle,
         token: InvitationToken
     ): Promise<Result<UserGreetInitialInfo, ClientStartInvitationGreetError>>
     clientStartWorkspace(
-        client: number,
+        client: Handle,
         realm_id: VlobID
-    ): Promise<Result<number, ClientStartWorkspaceError>>
+    ): Promise<Result<Handle, ClientStartWorkspaceError>>
     clientStop(
-        client: number
+        client: Handle
     ): Promise<Result<null, ClientStopError>>
     getPlatform(
     ): Promise<Platform>
     greeterDeviceInProgress1DoWaitPeerTrust(
-        canceller: number,
-        handle: number
+        canceller: Handle,
+        handle: Handle
     ): Promise<Result<DeviceGreetInProgress2Info, GreetInProgressError>>
     greeterDeviceInProgress2DoSignifyTrust(
-        canceller: number,
-        handle: number
+        canceller: Handle,
+        handle: Handle
     ): Promise<Result<DeviceGreetInProgress3Info, GreetInProgressError>>
     greeterDeviceInProgress3DoGetClaimRequests(
-        canceller: number,
-        handle: number
+        canceller: Handle,
+        handle: Handle
     ): Promise<Result<DeviceGreetInProgress4Info, GreetInProgressError>>
     greeterDeviceInProgress4DoCreate(
-        canceller: number,
-        handle: number,
+        canceller: Handle,
+        handle: Handle,
         device_label: DeviceLabel | null
     ): Promise<Result<null, GreetInProgressError>>
     greeterDeviceInitialDoWaitPeer(
-        canceller: number,
-        handle: number
+        canceller: Handle,
+        handle: Handle
     ): Promise<Result<DeviceGreetInProgress1Info, GreetInProgressError>>
     greeterUserInProgress1DoWaitPeerTrust(
-        canceller: number,
-        handle: number
+        canceller: Handle,
+        handle: Handle
     ): Promise<Result<UserGreetInProgress2Info, GreetInProgressError>>
     greeterUserInProgress2DoSignifyTrust(
-        canceller: number,
-        handle: number
+        canceller: Handle,
+        handle: Handle
     ): Promise<Result<UserGreetInProgress3Info, GreetInProgressError>>
     greeterUserInProgress3DoGetClaimRequests(
-        canceller: number,
-        handle: number
+        canceller: Handle,
+        handle: Handle
     ): Promise<Result<UserGreetInProgress4Info, GreetInProgressError>>
     greeterUserInProgress4DoCreate(
-        canceller: number,
-        handle: number,
+        canceller: Handle,
+        handle: Handle,
         human_handle: HumanHandle | null,
         device_label: DeviceLabel | null,
         profile: UserProfile
     ): Promise<Result<null, GreetInProgressError>>
     greeterUserInitialDoWaitPeer(
-        canceller: number,
-        handle: number
+        canceller: Handle,
+        handle: Handle
     ): Promise<Result<UserGreetInProgress1Info, GreetInProgressError>>
     listAvailableDevices(
         path: Path
     ): Promise<Array<AvailableDevice>>
     newCanceller(
-    ): Promise<number>
+    ): Promise<Handle>
     parseBackendAddr(
         url: string
     ): Promise<Result<ParsedBackendAddr, ParseBackendAddrError>>
@@ -1135,10 +1141,10 @@ export interface LibParsecPlugin {
         raw: string
     ): Promise<boolean>
     workspaceEntryInfo(
-        workspace: number,
+        workspace: Handle,
         path: FsPath
     ): Promise<Result<EntryInfo, WorkspaceEntryInfoError>>
     workspaceStop(
-        workspace: number
+        workspace: Handle
     ): Promise<Result<null, WorkspaceStopError>>
 }
