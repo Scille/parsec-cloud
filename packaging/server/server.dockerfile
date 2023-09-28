@@ -33,7 +33,10 @@ FROM python:3.9-slim
 LABEL org.opencontainers.image.source=https://github.com/Scille/parsec-cloud
 LABEL org.opencontainers.image.description="Run the Parsec backend server."
 
-USER 1234:1234
+RUN groupadd --gid=1234 parsec && useradd --home-dir=/home/parsec --create-home --uid=1234 --gid=1234 parsec
+
+USER parsec:parsec
+
 WORKDIR /backend
 
 COPY --chown=1234:1234 --from=builder /work/venv /backend/venv
