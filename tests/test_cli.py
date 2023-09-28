@@ -925,7 +925,7 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend_asg
 
             first_line, *other_lines = result.output.splitlines()
             match = re.match(r"^Found ([0-9]+) pending enrollment\(s\):", first_line)
-            assert match
+            assert match, first_line
             enrollments_count = int(match.group(1))
             # Just retrieve the enrollment ID
             enrollments = []
