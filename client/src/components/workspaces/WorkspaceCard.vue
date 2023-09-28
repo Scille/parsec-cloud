@@ -34,7 +34,7 @@
 
       <ion-text class="card-content-last-update caption-caption">
         <span>{{ $t('WorkspacesPage.Workspace.lastUpdate') }}</span>
-        <span>{{ timeSince(workspace.lastUpdate, '--', 'short') }}</span>
+        <span>{{ timeSince(workspace.lastUpdated, '--', 'short') }}</span>
       </ion-text>
 
       <div class="workspace-info">
@@ -42,14 +42,14 @@
           {{ fileSize(workspace.size) }}
         </ion-text>
         <avatar-group
-          v-show="getSharedWith(workspace).length > 0"
+          v-show="workspace.sharing.length > 0"
           class="shared-group"
-          :people="getSharedWith(workspace)"
+          :people="workspace.sharing.map((item) => item[0].humanHandle.label)"
           :max-display="2"
           @click.stop="$emit('shareClick', $event, workspace)"
         />
         <ion-label
-          v-show="getSharedWith(workspace).length === 0"
+          v-show="workspace.sharing.length === 0"
           @click.stop="$emit('shareClick', $event, workspace)"
         >
           {{ $t('WorkspacesPage.Workspace.notShared') }}
@@ -69,17 +69,17 @@ import {
 import { IonAvatar, IonIcon, IonText, IonTitle, IonLabel } from '@ionic/vue';
 import { inject } from 'vue';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
-import { MockWorkspace, getSharedWith } from '@/common/mocks';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
+import { WorkspaceInfo } from '@/parsec';
 
 defineProps<{
-  workspace: MockWorkspace
+  workspace: WorkspaceInfo
 }>();
 
 defineEmits<{
-  (e: 'click', event: Event, workspace: MockWorkspace): void
-  (e: 'menuClick', event: Event, workspace: MockWorkspace): void
-  (e: 'shareClick', event: Event, workspace: MockWorkspace): void
+  (e: 'click', event: Event, workspace: WorkspaceInfo): void
+  (e: 'menuClick', event: Event, workspace: WorkspaceInfo): void
+  (e: 'shareClick', event: Event, workspace: WorkspaceInfo): void
 }>();
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

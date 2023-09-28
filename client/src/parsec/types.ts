@@ -51,12 +51,14 @@ import type {
   UserGreetInProgress2Info,
   UserGreetInProgress3Info,
   UserGreetInProgress4Info,
-  WorkspaceInfo,
   UserInfo as ParsecUserInfo,
   ClientListUsersError,
   DeviceInfo,
   ClientListUserDevicesError,
   UserID,
+  WorkspaceInfo as ParsecWorkspaceInfo,
+  ClientListWorkspaceUsersError,
+  ClientShareWorkspaceError,
 } from '@/plugins/libparsec';
 // Enums have to be imported separately
 import {
@@ -83,6 +85,18 @@ enum BackendAddrType {
 
 interface GetWorkspaceNameError {
   tag: 'NotFound'
+}
+
+interface UserTuple {
+  id: UserID,
+  humanHandle: HumanHandle,
+}
+
+interface WorkspaceInfo extends ParsecWorkspaceInfo {
+  sharing: Array<[UserTuple, WorkspaceRole | null]>,
+  size: number,
+  lastUpdated: DateTime,
+  availableOffline: boolean,
 }
 
 export {
@@ -130,6 +144,7 @@ export {
   WorkspaceInfo,
   ClientInfo,
   DeviceInfo,
+  UserTuple,
   UserID,
 };
 
@@ -152,4 +167,6 @@ export {
   GreetInProgressError,
   ClientListUsersError,
   ClientListUserDevicesError,
+  ClientListWorkspaceUsersError,
+  ClientShareWorkspaceError,
 };

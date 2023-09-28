@@ -19,6 +19,6 @@ describe('User Avatar', () => {
       },
     });
 
-    expect(wrapper.get('.tag').text()).to.equal('WorkspacesPage.role.manager');
+    expect(wrapper.get('.tag').text()).to.equal('workspaceRoles.manager');
   });
 });

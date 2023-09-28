@@ -3,8 +3,7 @@
 // cSpell:disable
 
 import { DateTime } from 'luxon';
-import { AvailableDevice, Handle, DeviceFileType, UserProfile, WorkspaceRole, WorkspaceID, WorkspaceName } from '@/parsec';
-import { StorageManager } from '@/services/storageManager';
+import { Handle, UserProfile } from '@/parsec';
 import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
 
 export function getAppVersion(): string {
@@ -88,132 +87,6 @@ export function pathInfo(_path: string, random = false): MockFile {
     return randomPathInfo();
   }
   return fixedPathInfo();
-}
-
-export function getSharedWith(workspace: MockWorkspace): string[] {
-  const people = [];
-  for (const [key, value] of workspace.sharingInfo) {
-    if (value) {
-      people.push(key);
-    }
-  }
-  return people;
-}
-
-export interface MockWorkspace {
-  id: WorkspaceID;
-  name: WorkspaceName;
-  sharingInfo: Map<string, WorkspaceRole | null>,
-  size: number;
-  role: WorkspaceRole;
-  availableOffline: boolean;
-  lastUpdate: DateTime;
-}
-
-const MOCK_WORKSPACES: MockWorkspace[] = [
-  {
-    id: '1',
-    name: 'Trademeet',
-    sharingInfo: new Map(),
-    size: 60_817_408,
-    role: WorkspaceRole.Contributor,
-    availableOffline: false,
-    lastUpdate: DateTime.fromISO('2023-05-10T08:00:00'),
-  },
-  {
-    id: '2',
-    name: 'The Copper Coronet',
-    sharingInfo: new Map(),
-    size: 8_589_934_592,
-    role: WorkspaceRole.Contributor,
-    availableOffline: true,
-    lastUpdate: DateTime.fromISO('2023-05-08T12:00:00'),
-  },
-  {
-    id: '3',
-    name: 'The Asylum',
-    sharingInfo: new Map(),
-    size: 628_097_024,
-    role: WorkspaceRole.Owner,
-    availableOffline: true,
-    lastUpdate: DateTime.fromISO('2023-04-07T12:00:00'),
-  },
-  {
-    id: '4',
-    name: 'Druid Grove',
-    sharingInfo: new Map(),
-    size: 33_382,
-    role: WorkspaceRole.Owner,
-    availableOffline: false,
-    lastUpdate: DateTime.fromISO('2023-05-07T02:00:00'),
-  },
-  {
-    id: '5',
-    name: 'Menzoberranzan',
-    sharingInfo: new Map(),
-    size: 4_214_402_531,
-    role: WorkspaceRole.Reader,
-    availableOffline: true,
-    lastUpdate: DateTime.fromISO('2023-05-09T08:00:00'),
-  },
-];
-
-const WORKSPACE_SHARING_INFO: Array<[WorkspaceID, Map<string, WorkspaceRole | null>]> = [
-  [
-    '1',
-    new Map<string, WorkspaceRole | null>([
-      ['Cernd', WorkspaceRole.Reader],
-      ['Valygar Corthala', WorkspaceRole.Owner],
-    ]),
-  ], [
-    '2',
-    new Map<string, WorkspaceRole | null>([
-      ['Korgan Bloodaxe', WorkspaceRole.Contributor],
-      ['Anomen Delryn', WorkspaceRole.Contributor],
-      ['Nalia De\'Arnise', WorkspaceRole.Owner],
-      ['Viconia', WorkspaceRole.Owner],
-      ['Yoshimo', WorkspaceRole.Reader],
-    ]),
-  ], [
-    '3',
-    new Map<string, WorkspaceRole | null>([
-      ['Imoen', WorkspaceRole.Owner],
-    ]),
-  ], [
-    '4',
-    new Map<string, WorkspaceRole | null>([
-    ]),
-  ], [
-    '5',
-    new Map<string, WorkspaceRole | null>([
-      ['Korgan Bloodaxe', WorkspaceRole.Contributor],
-      ['Drizzt Do\'Urden', WorkspaceRole.Owner],
-      ['Viconia', WorkspaceRole.Owner],
-    ]),
-  ],
-];
-
-export async function getWorkspaceInfo(workspaceId: WorkspaceID): Promise<MockWorkspace | null> {
-  const workspace = MOCK_WORKSPACES.find((item) => item.id === workspaceId);
-
-  if (!workspace) {
-    return null;
-  }
-  workspace.sharingInfo = await getWorkspaceSharingInfo(workspaceId);
-  return workspace;
-}
-
-export async function getWorkspaceSharingInfo(workspaceId: WorkspaceID): Promise<Map<string, WorkspaceRole | null>> {
-  const elem: [WorkspaceID, Map<string, WorkspaceRole | null>] | undefined = WORKSPACE_SHARING_INFO.find((item) => item[0] === workspaceId);
-  const sharingInfo = elem ? elem[1] : new Map<string, WorkspaceRole | null>();
-
-  for (const user of await getUsers()) {
-    if (!sharingInfo.get(user)) {
-      sharingInfo.set(user, null);
-    }
-  }
-
-  return sharingInfo;
 }
 
 export async function getUsers(): Promise<string[]> {

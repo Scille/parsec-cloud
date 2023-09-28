@@ -1,12 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { MockWorkspace } from '@/common/mocks';
 import { mount, VueWrapper } from '@vue/test-utils';
 import { DateTime } from 'luxon';
 import { mockI18n, getDefaultProvideConfig } from 'tests/component/support/mocks';
 import { IonAvatar } from '@ionic/vue';
 import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
-import { WorkspaceRole } from '@/parsec';
+import { WorkspaceRole, WorkspaceInfo } from '@/parsec';
 
 mockI18n();
 
@@ -14,19 +13,23 @@ describe('Workspace List Item', () => {
 
   let wrapper: VueWrapper;
 
-  const WORKSPACE: MockWorkspace = {
+  const WORKSPACE: WorkspaceInfo = {
     id: 'id1',
     name: 'My Workspace',
-    sharingInfo: new Map<string, WorkspaceRole | null>([
-      ['AUser', WorkspaceRole.Contributor],
-      ['BUser', WorkspaceRole.Reader],
-      ['CUser', WorkspaceRole.Owner],
-      ['DUSer', WorkspaceRole.Manager],
-    ]),
+    sharing: [
+      // cspell:disable-next-line
+      [{id: 'auser', humanHandle: {label: 'AUser', email: 'usera@gmail.com'}}, WorkspaceRole.Contributor],
+      // cspell:disable-next-line
+      [{id: 'buser', humanHandle: {label: 'BUser', email: 'userb@gmail.com'}}, WorkspaceRole.Reader],
+      // cspell:disable-next-line
+      [{id: 'cuser', humanHandle: {label: 'CUser', email: 'userc@gmail.com'}}, WorkspaceRole.Owner],
+      // cspell:disable-next-line
+      [{id: 'duser', humanHandle: {label: 'DUser', email: 'userd@gmail.com'}}, WorkspaceRole.Manager],
+    ],
     size: 60_817_408,
-    role: WorkspaceRole.Reader,
+    selfRole: WorkspaceRole.Reader,
     availableOffline: true,
-    lastUpdate: DateTime.fromISO('2023-05-08T12:00:00'),
+    lastUpdated: DateTime.fromISO('2023-05-08T12:00:00'),
   };
 
   beforeEach(() => {

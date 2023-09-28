@@ -37,7 +37,8 @@ declare global {
     interface Chainable {
       visitApp(template?: 'coolorg' | 'empty'): Chainable<string>
       dropTestbed(): Chainable<null>
-      login(userName: string, password: string): Chainable<null>
+      login(userName: string, password: string): Chainable<null>,
+      checkToastMessage(expectedMessage: string): Chainable<null>,
     }
   }
 }
@@ -89,4 +90,9 @@ Cypress.Commands.add('dropTestbed', () => {
       await window.libparsec.testDropTestbed(configPath as unknown as string);
     });
   });
+});
+
+Cypress.Commands.add('checkToastMessage', (expectedMessage) => {
+  cy.get('.notification-toast').shadow().find('.toast-message').first().contains(expectedMessage);
+  cy.get('.notification-toast').shadow().find('.toast-button-confirm').first().click();
 });
