@@ -959,12 +959,13 @@ fn struct_device_info_js_to_rs<'a>(
         }
     };
     let created_on = {
-        let js_val: Handle<JsString> = obj.get(cx, "createdOn")?;
+        let js_val: Handle<JsNumber> = obj.get(cx, "createdOn")?;
         {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
+            let v = js_val.value(cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                Ok(libparsec::DateTime::from_f64_with_us_precision(n))
             };
-            match custom_from_rs_string(js_val.value(cx)) {
+            match custom_from_rs_f64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -1007,15 +1008,15 @@ fn struct_device_info_rs_to_js<'a>(
         None => JsNull::new(cx).as_value(cx),
     };
     js_obj.set(cx, "deviceLabel", js_device_label)?;
-    let js_created_on = JsString::try_new(cx, {
-        let custom_to_rs_string =
-            |dt: libparsec::DateTime| -> Result<String, &'static str> { Ok(dt.to_rfc3339()) };
-        match custom_to_rs_string(rs_obj.created_on) {
+    let js_created_on = JsNumber::new(cx, {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok(dt.get_f64_with_us_precision())
+        };
+        match custom_to_rs_f64(rs_obj.created_on) {
             Ok(ok) => ok,
             Err(err) => return cx.throw_type_error(err),
         }
-    })
-    .or_throw(cx)?;
+    });
     js_obj.set(cx, "createdOn", js_created_on)?;
     let js_created_by = match rs_obj.created_by {
         Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
@@ -1543,12 +1544,13 @@ fn struct_user_info_js_to_rs<'a>(
         }
     };
     let created_on = {
-        let js_val: Handle<JsString> = obj.get(cx, "createdOn")?;
+        let js_val: Handle<JsNumber> = obj.get(cx, "createdOn")?;
         {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
+            let v = js_val.value(cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                Ok(libparsec::DateTime::from_f64_with_us_precision(n))
             };
-            match custom_from_rs_string(js_val.value(cx)) {
+            match custom_from_rs_f64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -1576,12 +1578,13 @@ fn struct_user_info_js_to_rs<'a>(
             if js_val.is_a::<JsNull, _>(cx) {
                 None
             } else {
-                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                let js_val = js_val.downcast_or_throw::<JsNumber, _>(cx)?;
                 Some({
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
                     };
-                    match custom_from_rs_string(js_val.value(cx)) {
+                    match custom_from_rs_f64(v) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -1632,15 +1635,15 @@ fn struct_user_info_rs_to_js<'a>(
     let js_current_profile =
         JsString::try_new(cx, enum_user_profile_rs_to_js(rs_obj.current_profile)).or_throw(cx)?;
     js_obj.set(cx, "currentProfile", js_current_profile)?;
-    let js_created_on = JsString::try_new(cx, {
-        let custom_to_rs_string =
-            |dt: libparsec::DateTime| -> Result<String, &'static str> { Ok(dt.to_rfc3339()) };
-        match custom_to_rs_string(rs_obj.created_on) {
+    let js_created_on = JsNumber::new(cx, {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok(dt.get_f64_with_us_precision())
+        };
+        match custom_to_rs_f64(rs_obj.created_on) {
             Ok(ok) => ok,
             Err(err) => return cx.throw_type_error(err),
         }
-    })
-    .or_throw(cx)?;
+    });
     js_obj.set(cx, "createdOn", js_created_on)?;
     let js_created_by = match rs_obj.created_by {
         Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
@@ -1648,15 +1651,15 @@ fn struct_user_info_rs_to_js<'a>(
     };
     js_obj.set(cx, "createdBy", js_created_by)?;
     let js_revoked_on = match rs_obj.revoked_on {
-        Some(elem) => JsString::try_new(cx, {
-            let custom_to_rs_string =
-                |dt: libparsec::DateTime| -> Result<String, &'static str> { Ok(dt.to_rfc3339()) };
-            match custom_to_rs_string(elem) {
+        Some(elem) => JsNumber::new(cx, {
+            let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                Ok(dt.get_f64_with_us_precision())
+            };
+            match custom_to_rs_f64(elem) {
                 Ok(ok) => ok,
                 Err(err) => return cx.throw_type_error(err),
             }
         })
-        .or_throw(cx)?
         .as_value(cx),
         None => JsNull::new(cx).as_value(cx),
     };
@@ -1738,6 +1741,65 @@ fn struct_workspace_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// WorkspaceUserAccessInfo
+
+#[allow(dead_code)]
+fn struct_workspace_user_access_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::WorkspaceUserAccessInfo> {
+    let user_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "userId")?;
+        {
+            match js_val.value(cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let human_handle = {
+        let js_val: Handle<JsValue> = obj.get(cx, "humanHandle")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
+                Some(struct_human_handle_js_to_rs(cx, js_val)?)
+            }
+        }
+    };
+    let role = {
+        let js_val: Handle<JsString> = obj.get(cx, "role")?;
+        {
+            let js_string = js_val.value(cx);
+            enum_realm_role_js_to_rs(cx, js_string.as_str())?
+        }
+    };
+    Ok(libparsec::WorkspaceUserAccessInfo {
+        user_id,
+        human_handle,
+        role,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_workspace_user_access_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceUserAccessInfo,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_user_id = JsString::try_new(cx, rs_obj.user_id).or_throw(cx)?;
+    js_obj.set(cx, "userId", js_user_id)?;
+    let js_human_handle = match rs_obj.human_handle {
+        Some(elem) => struct_human_handle_rs_to_js(cx, elem)?.as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "humanHandle", js_human_handle)?;
+    let js_role = JsString::try_new(cx, enum_realm_role_rs_to_js(rs_obj.role)).or_throw(cx)?;
+    js_obj.set(cx, "role", js_role)?;
+    Ok(js_obj)
+}
+
 // BootstrapOrganizationError
 
 #[allow(dead_code)]
@@ -1762,29 +1824,25 @@ fn variant_bootstrap_organization_error_rs_to_js<'a>(
         } => {
             let js_tag = JsString::try_new(cx, "BadTimestamp").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_server_timestamp = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(server_timestamp) {
+            let js_server_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
                 }
-            })
-            .or_throw(cx)?;
+            });
             js_obj.set(cx, "serverTimestamp", js_server_timestamp)?;
-            let js_client_timestamp = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(client_timestamp) {
+            let js_client_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
                 }
-            })
-            .or_throw(cx)?;
+            });
             js_obj.set(cx, "clientTimestamp", js_client_timestamp)?;
             let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
             js_obj.set(
@@ -2075,6 +2133,25 @@ fn variant_client_list_users_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ClientListWorkspaceUsersError
+
+#[allow(dead_code)]
+fn variant_client_list_workspace_users_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientListWorkspaceUsersError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientListWorkspaceUsersError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientListWorkspacesError
 
 #[allow(dead_code)]
@@ -2137,29 +2214,25 @@ fn variant_client_share_workspace_error_rs_to_js<'a>(
         } => {
             let js_tag = JsString::try_new(cx, "BadTimestamp").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_server_timestamp = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(server_timestamp) {
+            let js_server_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
                 }
-            })
-            .or_throw(cx)?;
+            });
             js_obj.set(cx, "serverTimestamp", js_server_timestamp)?;
-            let js_client_timestamp = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(client_timestamp) {
+            let js_client_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
                 }
-            })
-            .or_throw(cx)?;
+            });
             js_obj.set(cx, "clientTimestamp", js_client_timestamp)?;
             let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
             js_obj.set(
@@ -2541,24 +2614,26 @@ fn variant_entry_info_js_to_rs<'a>(
                 }
             };
             let created = {
-                let js_val: Handle<JsString> = obj.get(cx, "created")?;
+                let js_val: Handle<JsNumber> = obj.get(cx, "created")?;
                 {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
                     };
-                    match custom_from_rs_string(js_val.value(cx)) {
+                    match custom_from_rs_f64(v) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
                 }
             };
             let updated = {
-                let js_val: Handle<JsString> = obj.get(cx, "updated")?;
+                let js_val: Handle<JsNumber> = obj.get(cx, "updated")?;
                 {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
                     };
-                    match custom_from_rs_string(js_val.value(cx)) {
+                    match custom_from_rs_f64(v) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -2638,24 +2713,26 @@ fn variant_entry_info_js_to_rs<'a>(
                 }
             };
             let created = {
-                let js_val: Handle<JsString> = obj.get(cx, "created")?;
+                let js_val: Handle<JsNumber> = obj.get(cx, "created")?;
                 {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
                     };
-                    match custom_from_rs_string(js_val.value(cx)) {
+                    match custom_from_rs_f64(v) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
                 }
             };
             let updated = {
-                let js_val: Handle<JsString> = obj.get(cx, "updated")?;
+                let js_val: Handle<JsNumber> = obj.get(cx, "updated")?;
                 {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
                     };
-                    match custom_from_rs_string(js_val.value(cx)) {
+                    match custom_from_rs_f64(v) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -2758,29 +2835,25 @@ fn variant_entry_info_rs_to_js<'a>(
             })
             .or_throw(cx)?;
             js_obj.set(cx, "id", js_id)?;
-            let js_created = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(created) {
+            let js_created = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                match custom_to_rs_f64(created) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
                 }
-            })
-            .or_throw(cx)?;
+            });
             js_obj.set(cx, "created", js_created)?;
-            let js_updated = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(updated) {
+            let js_updated = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                match custom_to_rs_f64(updated) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
                 }
-            })
-            .or_throw(cx)?;
+            });
             js_obj.set(cx, "updated", js_updated)?;
             let js_base_version = JsNumber::new(cx, base_version as f64);
             js_obj.set(cx, "baseVersion", js_base_version)?;
@@ -2828,29 +2901,25 @@ fn variant_entry_info_rs_to_js<'a>(
             })
             .or_throw(cx)?;
             js_obj.set(cx, "id", js_id)?;
-            let js_created = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(created) {
+            let js_created = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                match custom_to_rs_f64(created) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
                 }
-            })
-            .or_throw(cx)?;
+            });
             js_obj.set(cx, "created", js_created)?;
-            let js_updated = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(updated) {
+            let js_updated = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                match custom_to_rs_f64(updated) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
                 }
-            })
-            .or_throw(cx)?;
+            });
             js_obj.set(cx, "updated", js_updated)?;
             let js_base_version = JsNumber::new(cx, base_version as f64);
             js_obj.set(cx, "baseVersion", js_base_version)?;
@@ -2901,29 +2970,25 @@ fn variant_greet_in_progress_error_rs_to_js<'a>(
         } => {
             let js_tag = JsString::try_new(cx, "BadTimestamp").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_server_timestamp = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(server_timestamp) {
+            let js_server_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
                 }
-            })
-            .or_throw(cx)?;
+            });
             js_obj.set(cx, "serverTimestamp", js_server_timestamp)?;
-            let js_client_timestamp = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(client_timestamp) {
+            let js_client_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
                 }
-            })
-            .or_throw(cx)?;
+            });
             js_obj.set(cx, "clientTimestamp", js_client_timestamp)?;
             let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
             js_obj.set(
@@ -3007,12 +3072,13 @@ fn variant_invite_list_item_js_to_rs<'a>(
                 }
             };
             let created_on = {
-                let js_val: Handle<JsString> = obj.get(cx, "createdOn")?;
+                let js_val: Handle<JsNumber> = obj.get(cx, "createdOn")?;
                 {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
                     };
-                    match custom_from_rs_string(js_val.value(cx)) {
+                    match custom_from_rs_f64(v) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -3047,12 +3113,13 @@ fn variant_invite_list_item_js_to_rs<'a>(
                 }
             };
             let created_on = {
-                let js_val: Handle<JsString> = obj.get(cx, "createdOn")?;
+                let js_val: Handle<JsNumber> = obj.get(cx, "createdOn")?;
                 {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
                     };
-                    match custom_from_rs_string(js_val.value(cx)) {
+                    match custom_from_rs_f64(v) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -3105,17 +3172,15 @@ fn variant_invite_list_item_rs_to_js<'a>(
             })
             .or_throw(cx)?;
             js_obj.set(cx, "token", js_token)?;
-            let js_created_on = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(created_on) {
+            let js_created_on = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                match custom_to_rs_f64(created_on) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
                 }
-            })
-            .or_throw(cx)?;
+            });
             js_obj.set(cx, "createdOn", js_created_on)?;
             let js_status =
                 JsString::try_new(cx, enum_invitation_status_rs_to_js(status)).or_throw(cx)?;
@@ -3140,17 +3205,15 @@ fn variant_invite_list_item_rs_to_js<'a>(
             })
             .or_throw(cx)?;
             js_obj.set(cx, "token", js_token)?;
-            let js_created_on = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(created_on) {
+            let js_created_on = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                match custom_to_rs_f64(created_on) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
                 }
-            })
-            .or_throw(cx)?;
+            });
             js_obj.set(cx, "createdOn", js_created_on)?;
             let js_claimer_email = JsString::try_new(cx, claimer_email).or_throw(cx)?;
             js_obj.set(cx, "claimerEmail", js_claimer_email)?;
@@ -3888,29 +3951,25 @@ fn variant_workspace_entry_info_error_rs_to_js<'a>(
         } => {
             let js_tag = JsString::try_new(cx, "BadTimestamp").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_server_timestamp = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(server_timestamp) {
+            let js_server_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
                 }
-            })
-            .or_throw(cx)?;
+            });
             js_obj.set(cx, "serverTimestamp", js_server_timestamp)?;
-            let js_client_timestamp = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(client_timestamp) {
+            let js_client_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
                 }
-            })
-            .or_throw(cx)?;
+            });
             js_obj.set(cx, "clientTimestamp", js_client_timestamp)?;
             let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
             js_obj.set(
@@ -5436,6 +5495,76 @@ fn client_list_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// client_list_workspace_users
+fn client_list_workspace_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let realm_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_list_workspace_users(client, realm_id).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            // JsArray::new allocates with `undefined` value, that's why we `set` value
+                            let js_array = JsArray::new(&mut cx, ok.len() as u32);
+                            for (i, elem) in ok.into_iter().enumerate() {
+                                let js_elem =
+                                    struct_workspace_user_access_info_rs_to_js(&mut cx, elem)?;
+                                js_array.set(&mut cx, i as u32, js_elem)?;
+                            }
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_client_list_workspace_users_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // client_list_workspaces
 fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let client = {
@@ -5521,37 +5650,37 @@ fn client_new_device_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> 
 
         deferred.settle_with(&channel, move |mut cx| {
             let js_ret = match ret {
-            Ok(ok) => {
-                let js_obj = JsObject::new(&mut cx);
-                let js_tag = JsBoolean::new(&mut cx, true);
-                js_obj.set(&mut cx, "ok", js_tag)?;
-                let js_value = {
-                    let (x1, x2) = ok;
-                    let js_array = JsArray::new(&mut cx, 2);
-                    let js_value = JsString::try_new(&mut cx,{
-                        let custom_to_rs_string = |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
-                        match custom_to_rs_string(x1) {
-                            Ok(ok) => ok,
-                            Err(err) => return cx.throw_type_error(err),
-                        }
-                    }).or_throw(&mut cx)?;
-                    js_array.set(&mut cx, 1, js_value)?;
-                    let js_value = JsString::try_new(&mut cx, enum_invitation_email_sent_status_rs_to_js(x2)).or_throw(&mut cx)?;
-                    js_array.set(&mut cx, 2, js_value)?;
-                    js_array
-                };
-                js_obj.set(&mut cx, "value", js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = cx.empty_object();
-                let js_tag = JsBoolean::new(&mut cx, false);
-                js_obj.set(&mut cx, "ok", js_tag)?;
-                let js_err = variant_new_device_invitation_error_rs_to_js(&mut cx, err)?;
-                js_obj.set(&mut cx, "error", js_err)?;
-                js_obj
-            }
-        };
+    Ok(ok) => {
+        let js_obj = JsObject::new(&mut cx);
+        let js_tag = JsBoolean::new(&mut cx, true);
+        js_obj.set(&mut cx, "ok", js_tag)?;
+        let js_value = {
+    let (x1, x2) = ok;
+    let js_array = JsArray::new(&mut cx, 2);
+    let js_value = JsString::try_new(&mut cx,{
+    let custom_to_rs_string = |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+    match custom_to_rs_string(x1) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err),
+    }
+}).or_throw(&mut cx)?;
+    js_array.set(&mut cx, 1, js_value)?;
+    let js_value = JsString::try_new(&mut cx, enum_invitation_email_sent_status_rs_to_js(x2)).or_throw(&mut cx)?;
+    js_array.set(&mut cx, 2, js_value)?;
+    js_array
+};
+        js_obj.set(&mut cx, "value", js_value)?;
+        js_obj
+    }
+    Err(err) => {
+        let js_obj = cx.empty_object();
+        let js_tag = JsBoolean::new(&mut cx, false);
+        js_obj.set(&mut cx, "ok", js_tag)?;
+        let js_err = variant_new_device_invitation_error_rs_to_js(&mut cx, err)?;
+        js_obj.set(&mut cx, "error", js_err)?;
+        js_obj
+    }
+};
             Ok(js_ret)
         });
     });
@@ -5593,37 +5722,37 @@ fn client_new_user_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
         deferred.settle_with(&channel, move |mut cx| {
             let js_ret = match ret {
-            Ok(ok) => {
-                let js_obj = JsObject::new(&mut cx);
-                let js_tag = JsBoolean::new(&mut cx, true);
-                js_obj.set(&mut cx, "ok", js_tag)?;
-                let js_value = {
-                    let (x1, x2) = ok;
-                    let js_array = JsArray::new(&mut cx, 2);
-                    let js_value = JsString::try_new(&mut cx,{
-                        let custom_to_rs_string = |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
-                        match custom_to_rs_string(x1) {
-                            Ok(ok) => ok,
-                            Err(err) => return cx.throw_type_error(err),
-                        }
-                    }).or_throw(&mut cx)?;
-                    js_array.set(&mut cx, 1, js_value)?;
-                    let js_value = JsString::try_new(&mut cx, enum_invitation_email_sent_status_rs_to_js(x2)).or_throw(&mut cx)?;
-                    js_array.set(&mut cx, 2, js_value)?;
-                    js_array
-                };
-                js_obj.set(&mut cx, "value", js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = cx.empty_object();
-                let js_tag = JsBoolean::new(&mut cx, false);
-                js_obj.set(&mut cx, "ok", js_tag)?;
-                let js_err = variant_new_user_invitation_error_rs_to_js(&mut cx, err)?;
-                js_obj.set(&mut cx, "error", js_err)?;
-                js_obj
-            }
-        };
+    Ok(ok) => {
+        let js_obj = JsObject::new(&mut cx);
+        let js_tag = JsBoolean::new(&mut cx, true);
+        js_obj.set(&mut cx, "ok", js_tag)?;
+        let js_value = {
+    let (x1, x2) = ok;
+    let js_array = JsArray::new(&mut cx, 2);
+    let js_value = JsString::try_new(&mut cx,{
+    let custom_to_rs_string = |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+    match custom_to_rs_string(x1) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err),
+    }
+}).or_throw(&mut cx)?;
+    js_array.set(&mut cx, 1, js_value)?;
+    let js_value = JsString::try_new(&mut cx, enum_invitation_email_sent_status_rs_to_js(x2)).or_throw(&mut cx)?;
+    js_array.set(&mut cx, 2, js_value)?;
+    js_array
+};
+        js_obj.set(&mut cx, "value", js_value)?;
+        js_obj
+    }
+    Err(err) => {
+        let js_obj = cx.empty_object();
+        let js_tag = JsBoolean::new(&mut cx, false);
+        js_obj.set(&mut cx, "ok", js_tag)?;
+        let js_err = variant_new_user_invitation_error_rs_to_js(&mut cx, err)?;
+        js_obj.set(&mut cx, "error", js_err)?;
+        js_obj
+    }
+};
             Ok(js_ret)
         });
     });
@@ -6898,17 +7027,17 @@ fn test_get_testbed_bootstrap_organization_addr(mut cx: FunctionContext) -> JsRe
     };
     let ret = libparsec::test_get_testbed_bootstrap_organization_addr(&discriminant_dir);
     let js_ret = match ret {
-        Some(elem) => {
-            JsString::try_new(&mut cx,{
-                let custom_to_rs_string = |addr: libparsec::BackendOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
-                match custom_to_rs_string(elem) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            }).or_throw(&mut cx)?.as_value(&mut cx)
-        }
-        None => JsNull::new(&mut cx).as_value(&mut cx),
-    };
+    Some(elem) => {
+        JsString::try_new(&mut cx,{
+    let custom_to_rs_string = |addr: libparsec::BackendOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+    match custom_to_rs_string(elem) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err),
+    }
+}).or_throw(&mut cx)?.as_value(&mut cx)
+    }
+    None => JsNull::new(&mut cx).as_value(&mut cx),
+};
     let (deferred, promise) = cx.promise();
     deferred.resolve(&mut cx, js_ret);
     Ok(promise)
@@ -7239,6 +7368,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("clientListInvitations", client_list_invitations)?;
     cx.export_function("clientListUserDevices", client_list_user_devices)?;
     cx.export_function("clientListUsers", client_list_users)?;
+    cx.export_function("clientListWorkspaceUsers", client_list_workspace_users)?;
     cx.export_function("clientListWorkspaces", client_list_workspaces)?;
     cx.export_function("clientNewDeviceInvitation", client_new_device_invitation)?;
     cx.export_function("clientNewUserInvitation", client_new_user_invitation)?;

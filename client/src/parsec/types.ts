@@ -7,6 +7,7 @@ import type {
   Result,
   Handle,
   ClientEvent,
+  DateTime,
   ClientEventPing,
   DeviceAccessStrategyPassword,
   ClientConfig,
@@ -60,7 +61,6 @@ import {
   UserProfile,
   RealmRole as WorkspaceRole,
 } from '@/plugins/libparsec';
-import { DateTime } from 'luxon';
 
 interface UserInvitation extends InviteListItemUser {
   date: DateTime
@@ -91,6 +91,7 @@ export {
   DeviceAccessStrategyPassword,
   ClientEvent,
   Handle,
+  DateTime,
   ClientEventPing,
   InvitationStatus,
   ParsedBackendAddr,

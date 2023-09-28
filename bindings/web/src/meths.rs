@@ -1008,18 +1008,14 @@ fn struct_device_info_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceInfo, Js
     };
     let created_on = {
         let js_val = Reflect::get(&obj, &"createdOn".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))
-            .and_then(|x| {
-                let custom_from_rs_string = |s: String| -> Result<_, String> {
-                    libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
-                };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid DateTime"))?
+        {
+            let v = js_val.dyn_into::<Number>()?.value_of();
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+            };
+            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            v
+        }
     };
     let created_by = {
         let js_val = Reflect::get(&obj, &"createdBy".into())?;
@@ -1055,15 +1051,16 @@ fn struct_device_info_rs_to_js(rs_obj: libparsec::DeviceInfo) -> Result<JsValue,
         None => JsValue::NULL,
     };
     Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
-    let js_created_on = JsValue::from_str({
-        let custom_to_rs_string =
-            |dt: libparsec::DateTime| -> Result<String, &'static str> { Ok(dt.to_rfc3339()) };
-        match custom_to_rs_string(rs_obj.created_on) {
+    let js_created_on = {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok(dt.get_f64_with_us_precision())
+        };
+        let v = match custom_to_rs_f64(rs_obj.created_on) {
             Ok(ok) => ok,
             Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-        }
-        .as_ref()
-    });
+        };
+        JsValue::from(v)
+    };
     Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
     let js_created_by = match rs_obj.created_by {
         Some(val) => JsValue::from_str(val.as_ref()),
@@ -1625,18 +1622,14 @@ fn struct_user_info_js_to_rs(obj: JsValue) -> Result<libparsec::UserInfo, JsValu
     };
     let created_on = {
         let js_val = Reflect::get(&obj, &"createdOn".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))
-            .and_then(|x| {
-                let custom_from_rs_string = |s: String| -> Result<_, String> {
-                    libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
-                };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid DateTime"))?
+        {
+            let v = js_val.dyn_into::<Number>()?.value_of();
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+            };
+            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            v
+        }
     };
     let created_by = {
         let js_val = Reflect::get(&obj, &"createdBy".into())?;
@@ -1659,20 +1652,14 @@ fn struct_user_info_js_to_rs(obj: JsValue) -> Result<libparsec::UserInfo, JsValu
         if js_val.is_null() {
             None
         } else {
-            Some(
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, String> {
-                            libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DateTime"))?,
-            )
+            Some({
+                let v = js_val.dyn_into::<Number>()?.value_of();
+                let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                    Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+                };
+                let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                v
+            })
         }
     };
     let revoked_by = {
@@ -1714,15 +1701,16 @@ fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsV
     Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
     let js_current_profile = JsValue::from_str(enum_user_profile_rs_to_js(rs_obj.current_profile));
     Reflect::set(&js_obj, &"currentProfile".into(), &js_current_profile)?;
-    let js_created_on = JsValue::from_str({
-        let custom_to_rs_string =
-            |dt: libparsec::DateTime| -> Result<String, &'static str> { Ok(dt.to_rfc3339()) };
-        match custom_to_rs_string(rs_obj.created_on) {
+    let js_created_on = {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok(dt.get_f64_with_us_precision())
+        };
+        let v = match custom_to_rs_f64(rs_obj.created_on) {
             Ok(ok) => ok,
             Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-        }
-        .as_ref()
-    });
+        };
+        JsValue::from(v)
+    };
     Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
     let js_created_by = match rs_obj.created_by {
         Some(val) => JsValue::from_str(val.as_ref()),
@@ -1730,15 +1718,16 @@ fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsV
     };
     Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
     let js_revoked_on = match rs_obj.revoked_on {
-        Some(val) => JsValue::from_str({
-            let custom_to_rs_string =
-                |dt: libparsec::DateTime| -> Result<String, &'static str> { Ok(dt.to_rfc3339()) };
-            match custom_to_rs_string(val) {
+        Some(val) => {
+            let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                Ok(dt.get_f64_with_us_precision())
+            };
+            let v = match custom_to_rs_f64(val) {
                 Ok(ok) => ok,
                 Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-            }
-            .as_ref()
-        }),
+            };
+            JsValue::from(v)
+        }
         None => JsValue::NULL,
     };
     Reflect::set(&js_obj, &"revokedOn".into(), &js_revoked_on)?;
@@ -1822,6 +1811,65 @@ fn struct_workspace_info_rs_to_js(rs_obj: libparsec::WorkspaceInfo) -> Result<Js
     Ok(js_obj)
 }
 
+// WorkspaceUserAccessInfo
+
+#[allow(dead_code)]
+fn struct_workspace_user_access_info_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::WorkspaceUserAccessInfo, JsValue> {
+    let user_id = {
+        let js_val = Reflect::get(&obj, &"userId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+            .parse()
+            .map_err(|_| TypeError::new("Not a valid UserID"))?
+    };
+    let human_handle = {
+        let js_val = Reflect::get(&obj, &"humanHandle".into())?;
+        if js_val.is_null() {
+            None
+        } else {
+            Some(struct_human_handle_js_to_rs(js_val)?)
+        }
+    };
+    let role = {
+        let js_val = Reflect::get(&obj, &"role".into())?;
+        {
+            let raw_string = js_val.as_string().ok_or_else(|| {
+                let type_error = TypeError::new("value is not a string");
+                type_error.set_cause(&js_val);
+                JsValue::from(type_error)
+            })?;
+            enum_realm_role_js_to_rs(raw_string.as_str())
+        }?
+    };
+    Ok(libparsec::WorkspaceUserAccessInfo {
+        user_id,
+        human_handle,
+        role,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_workspace_user_access_info_rs_to_js(
+    rs_obj: libparsec::WorkspaceUserAccessInfo,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_user_id = JsValue::from_str(rs_obj.user_id.as_ref());
+    Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
+    let js_human_handle = match rs_obj.human_handle {
+        Some(val) => struct_human_handle_rs_to_js(val)?,
+        None => JsValue::NULL,
+    };
+    Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
+    let js_role = JsValue::from_str(enum_realm_role_rs_to_js(rs_obj.role));
+    Reflect::set(&js_obj, &"role".into(), &js_role)?;
+    Ok(js_obj)
+}
+
 // BootstrapOrganizationError
 
 #[allow(dead_code)]
@@ -1843,29 +1891,27 @@ fn variant_bootstrap_organization_error_rs_to_js(
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"BadTimestamp".into())?;
-            let js_server_timestamp = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(server_timestamp) {
+            let js_server_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
+                };
+                JsValue::from(v)
+            };
             Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
-            let js_client_timestamp = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(client_timestamp) {
+            let js_client_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
+                };
+                JsValue::from(v)
+            };
             Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
             let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
             Reflect::set(
@@ -2117,6 +2163,23 @@ fn variant_client_list_users_error_rs_to_js(
     Ok(js_obj)
 }
 
+// ClientListWorkspaceUsersError
+
+#[allow(dead_code)]
+fn variant_client_list_workspace_users_error_rs_to_js(
+    rs_obj: libparsec::ClientListWorkspaceUsersError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientListWorkspaceUsersError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientListWorkspacesError
 
 #[allow(dead_code)]
@@ -2172,29 +2235,27 @@ fn variant_client_share_workspace_error_rs_to_js(
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"BadTimestamp".into())?;
-            let js_server_timestamp = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(server_timestamp) {
+            let js_server_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
+                };
+                JsValue::from(v)
+            };
             Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
-            let js_client_timestamp = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(client_timestamp) {
+            let js_client_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
+                };
+                JsValue::from(v)
+            };
             Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
             let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
             Reflect::set(
@@ -2572,33 +2633,25 @@ fn variant_entry_info_js_to_rs(obj: JsValue) -> Result<libparsec::EntryInfo, JsV
             };
             let created = {
                 let js_val = Reflect::get(&obj, &"created".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, String> {
-                            libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DateTime"))?
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
             };
             let updated = {
                 let js_val = Reflect::get(&obj, &"updated".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, String> {
-                            libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DateTime"))?
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
             };
             let base_version = {
                 let js_val = Reflect::get(&obj, &"baseVersion".into())?;
@@ -2692,33 +2745,25 @@ fn variant_entry_info_js_to_rs(obj: JsValue) -> Result<libparsec::EntryInfo, JsV
             };
             let created = {
                 let js_val = Reflect::get(&obj, &"created".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, String> {
-                            libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DateTime"))?
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
             };
             let updated = {
                 let js_val = Reflect::get(&obj, &"updated".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, String> {
-                            libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DateTime"))?
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
             };
             let base_version = {
                 let js_val = Reflect::get(&obj, &"baseVersion".into())?;
@@ -2826,29 +2871,27 @@ fn variant_entry_info_rs_to_js(rs_obj: libparsec::EntryInfo) -> Result<JsValue, 
                 .as_ref()
             });
             Reflect::set(&js_obj, &"id".into(), &js_id)?;
-            let js_created = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(created) {
+            let js_created = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(created) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
+                };
+                JsValue::from(v)
+            };
             Reflect::set(&js_obj, &"created".into(), &js_created)?;
-            let js_updated = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(updated) {
+            let js_updated = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(updated) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
+                };
+                JsValue::from(v)
+            };
             Reflect::set(&js_obj, &"updated".into(), &js_updated)?;
             let js_base_version = JsValue::from(base_version);
             Reflect::set(&js_obj, &"baseVersion".into(), &js_base_version)?;
@@ -2894,29 +2937,27 @@ fn variant_entry_info_rs_to_js(rs_obj: libparsec::EntryInfo) -> Result<JsValue, 
                 .as_ref()
             });
             Reflect::set(&js_obj, &"id".into(), &js_id)?;
-            let js_created = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(created) {
+            let js_created = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(created) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
+                };
+                JsValue::from(v)
+            };
             Reflect::set(&js_obj, &"created".into(), &js_created)?;
-            let js_updated = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(updated) {
+            let js_updated = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(updated) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
+                };
+                JsValue::from(v)
+            };
             Reflect::set(&js_obj, &"updated".into(), &js_updated)?;
             let js_base_version = JsValue::from(base_version);
             Reflect::set(&js_obj, &"baseVersion".into(), &js_base_version)?;
@@ -2963,29 +3004,27 @@ fn variant_greet_in_progress_error_rs_to_js(
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"BadTimestamp".into())?;
-            let js_server_timestamp = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(server_timestamp) {
+            let js_server_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
+                };
+                JsValue::from(v)
+            };
             Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
-            let js_client_timestamp = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(client_timestamp) {
+            let js_client_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
+                };
+                JsValue::from(v)
+            };
             Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
             let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
             Reflect::set(
@@ -3060,18 +3099,14 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
             };
             let created_on = {
                 let js_val = Reflect::get(&obj, &"createdOn".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, String> {
-                            libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DateTime"))?
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
             };
             let status = {
                 let js_val = Reflect::get(&obj, &"status".into())?;
@@ -3110,18 +3145,14 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
             };
             let created_on = {
                 let js_val = Reflect::get(&obj, &"createdOn".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, String> {
-                            libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string())
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DateTime"))?
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
             };
             let claimer_email = {
                 let js_val = Reflect::get(&obj, &"claimerEmail".into())?;
@@ -3178,17 +3209,16 @@ fn variant_invite_list_item_rs_to_js(
                 .as_ref()
             });
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
-            let js_created_on = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(created_on) {
+            let js_created_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(created_on) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
+                };
+                JsValue::from(v)
+            };
             Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
             let js_status = JsValue::from_str(enum_invitation_status_rs_to_js(status));
             Reflect::set(&js_obj, &"status".into(), &js_status)?;
@@ -3211,17 +3241,16 @@ fn variant_invite_list_item_rs_to_js(
                 .as_ref()
             });
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
-            let js_created_on = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(created_on) {
+            let js_created_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(created_on) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
+                };
+                JsValue::from(v)
+            };
             Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
             let js_claimer_email = claimer_email.into();
             Reflect::set(&js_obj, &"claimerEmail".into(), &js_claimer_email)?;
@@ -4023,29 +4052,27 @@ fn variant_workspace_entry_info_error_rs_to_js(
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"BadTimestamp".into())?;
-            let js_server_timestamp = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(server_timestamp) {
+            let js_server_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
+                };
+                JsValue::from(v)
+            };
             Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
-            let js_client_timestamp = JsValue::from_str({
-                let custom_to_rs_string =
-                    |dt: libparsec::DateTime| -> Result<String, &'static str> {
-                        Ok(dt.to_rfc3339())
-                    };
-                match custom_to_rs_string(client_timestamp) {
+            let js_client_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
+                };
+                JsValue::from(v)
+            };
             Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
             let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
             Reflect::set(
@@ -4915,6 +4942,45 @@ pub fn clientListUsers(client: u32, skip_revoked: bool) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_list_users_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_list_workspace_users
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientListWorkspaceUsers(client: u32, realm_id: String) -> Promise {
+    future_to_promise(async move {
+        let realm_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(realm_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::client_list_workspace_users(client, realm_id).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(value.len() as u32);
+                    for (i, elem) in value.into_iter().enumerate() {
+                        let js_elem = struct_workspace_user_access_info_rs_to_js(elem)?;
+                        js_array.set(i as u32, js_elem);
+                    }
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_list_workspace_users_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

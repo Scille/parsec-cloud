@@ -31,7 +31,7 @@ u32
 i64
 {%- elif type.kind == "u64_based" -%}
 u64
-{%- elif type.kind == "float" -%}
+{%- elif type.kind in ("f64_based", "float") -%}
 f64
 {%- elif type.kind in ("str", "str_based") -%}
 String
@@ -58,7 +58,7 @@ String
 {% elif type.kind == "optional" %}
 let {{ param_name }} = match {{ param_name }} {
     Some({{ param_name }}) => {
-        {{ render_function_param_cooking(param_name, type.elem) | indent(8) }}
+        {{ render_function_param_cooking(param_name, type.elem) }}
         Some({{ param_name }})
     }
     None => None,
@@ -89,13 +89,24 @@ let {{ param_name }} =
     JsValue::from(TypeError::new("Not a valid {{ type.name }}"))
 })?;
 {% endif %}
+{% elif type.kind == "f64_based" %}
+let {{ param_name }} =
+{% if type.custom_from_rs_f64 -%}
+{
+    let custom_from_rs_f64 = {{ type.custom_from_rs_f64 }};
+    custom_from_rs_f64(&{{ param_name }}.to_vec())
+        .map_err(|e| TypeError::new(e.as_ref()))
+}?;
+{%- else -%}
+{{ param_name }}
+{% endif %}
 {% elif type.kind in ("struct", "variant", "result") %}
 let {{ param_name }} = {{ param_name }}.into();
 let {{ param_name }} = {{ render_js_value_to_rs(param_name, type) }};
 {% elif type.kind == "list" %}
 let mut {{ param_name }}_converted = Vec::with_capacity({{ param_name }}.len());
 for x in {{ param_name }}.iter() {
-    {{ render_function_param_cooking("x", type.elem) | indent }}
+    {{ render_function_param_cooking("x", type.elem) }}
     {{ param_name }}_converted.push(x);
 }
 let {{ param_name }} = {{ param_name }}_converted;
@@ -174,6 +185,15 @@ if {{ js_val }}.is_null() {
     }
     v as u64
 }
+{%- elif type.kind == "f64_based" -%}
+{
+    let v = {{ js_val }}.dyn_into::<Number>()?.value_of();
+{% if type.custom_from_rs_f64 %}
+    let custom_from_rs_f64 = {{ type.custom_from_rs_f64 }};
+    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+{% endif %}
+    v
+}
 {%- elif type.kind == "float" -%}
 {{ js_val }}.dyn_into::<Number>()?.value_of()
 {%- elif type.kind == "str" -%}
@@ -208,7 +228,7 @@ if {{ js_val }}.is_null() {
         .map_err(|_| TypeError::new("Not an array"))?;
     let mut converted = Vec::with_capacity(js_val.length() as usize);
     for x in {{ js_val }}.iter() {
-        let x_converted = {{ render_js_value_to_rs("x", type.elem) | indent(8) }};
+        let x_converted = {{ render_js_value_to_rs("x", type.elem) }};
         converted.push(x_converted);
     }
     converted
@@ -219,7 +239,7 @@ if {{ js_val }}.is_null() {
     {
         {% set value_var_name = "js_x" ~ loop.index %}
         let {{ value_var_name }} = Reflect::get_u32(&{{ js_val }}, {{ loop.index }})?;
-        {{ render_js_value_to_rs(value_var_name, value) | indent(8) }}
+        {{ render_js_value_to_rs(value_var_name, value) }}
     }
     {{ ", " if not loop.last else "" -}}
 {%- endfor -%}
@@ -272,6 +292,19 @@ match {{ rs_value }} {
 }
 {%- elif type.kind in ("i32_based", "u32_based", "i64_based", "u64_based") -%}
 JsValue::from({{ rs_value }})
+{%- elif type.kind == "f64_based" -%}
+{%- if type.custom_to_rs_f64 %}
+{
+    let custom_to_rs_f64 = {{ type.custom_to_rs_f64 }};
+    let v = match custom_to_rs_f64({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+    };
+    JsValue::from(v)
+}
+{% else -%}
+JsValue::from({{ rs_value }})
+{%- endif -%}
 {%- elif type.kind == "str_based" -%}
 JsValue::from_str({%- if type.custom_to_rs_string -%}
 {
@@ -305,7 +338,7 @@ JsValue::from(Uint8Array::from({%- if type.custom_to_rs_bytes -%}
     // Array::new_with_length allocates with `undefined` value, that's why we `set` value
     let js_array = Array::new_with_length({{ rs_value }}.len() as u32);
     for (i, elem) in {{ rs_value }}.into_iter().enumerate() {
-        let js_elem = {{ render_rs_to_js_value("elem", type.elem) | indent(8) }};
+        let js_elem = {{ render_rs_to_js_value("elem", type.elem) }};
         js_array.set(i as u32, js_elem);
     }
     js_array.into()
@@ -321,7 +354,7 @@ JsValue::from(Uint8Array::from({%- if type.custom_to_rs_bytes -%}
     let js_array = Array::new_with_length({{ type.values | length }});
     {%- for value in type.values -%}
         {% set value_var_name = "x" ~ loop.index %}
-        let js_value = {{ render_rs_to_js_value(value_var_name, value) | indent(8) }};
+        let js_value = {{ render_rs_to_js_value(value_var_name, value) }};
         js_array.push(&js_value);
     {%- endfor -%}
     js_array.into()
@@ -331,14 +364,14 @@ match {{ rs_value }} {
     Ok(value) => {
         let js_obj = Object::new().into();
         Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-        let js_value = {{ render_rs_to_js_value("value", type.ok) | indent(8) }};
+        let js_value = {{ render_rs_to_js_value("value", type.ok) }};
         Reflect::set(&js_obj, &"value".into(), &js_value)?;
         js_obj
     }
     Err(err) => {
         let js_obj = Object::new().into();
         Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-        let js_err = {{ render_rs_to_js_value("err", type.err) | indent(8) }};
+        let js_err = {{ render_rs_to_js_value("err", type.err) }};
         Reflect::set(&js_obj, &"error".into(), &js_err)?;
         js_obj
     }
@@ -370,7 +403,7 @@ fn {{ struct_js_to_rs_function_name(struct) }}(obj: JsValue) -> Result<libparsec
 {% for attr_name, attr_type in struct.attributes.items() %}
     let {{ attr_name }} = {
         let js_val = Reflect::get(&obj, &"{{ attr_name | snake2camel }}".into())?;
-        {{ render_js_value_to_rs("js_val", attr_type) | indent(8) }}
+        {{ render_js_value_to_rs("js_val", attr_type) }}
     };
 {% endfor %}
 {% if struct.custom_init is none %}
@@ -391,11 +424,11 @@ fn {{ struct_rs_to_js_function_name(struct) }}(rs_obj: libparsec::{{ struct.name
 {% for attr_name, attr_type in struct.attributes.items() %}
 {% set custom_getter = struct.custom_getters.get(attr_name) %}
 {% if custom_getter is none %}
-    let js_{{ attr_name }} = {{ render_rs_to_js_value("rs_obj.%s" % attr_name, attr_type) | indent }};
+    let js_{{ attr_name }} = {{ render_rs_to_js_value("rs_obj.%s" % attr_name, attr_type) }};
 {% else %}
     let js_{{ attr_name }} = {
         let custom_getter = {{ custom_getter }};
-        {{ render_rs_to_js_value("custom_getter(&rs_obj)", attr_type) | indent }}
+        {{ render_rs_to_js_value("custom_getter(&rs_obj)", attr_type) }}
     };
 {% endif %}
     Reflect::set(&js_obj, &"{{ attr_name | snake2camel }}".into(), &js_{{ attr_name }})?;
@@ -424,7 +457,7 @@ fn {{ variant_js_to_rs_function_name(variant) }}(obj: JsValue) -> Result<libpars
 {% for attr_name, attr_type in value.struct.attributes.items() %}
             let {{ attr_name }} = {
                 let js_val = Reflect::get(&obj, &"{{ attr_name | snake2camel }}".into())?;
-                {{ render_js_value_to_rs("js_val", attr_type) | indent(20) }}
+                {{ render_js_value_to_rs("js_val", attr_type) }}
             };
 {% endfor %}
             Ok(libparsec::{{ variant.name }}::{{ value.name }} {
@@ -434,7 +467,7 @@ fn {{ variant_js_to_rs_function_name(variant) }}(obj: JsValue) -> Result<libpars
 {% for attr_type in value.tuple %}
             let x{{ loop.index }} = {
                 let js_val = Reflect::get(&obj, &"x{{ loop.index }}".into())?;
-                {{ render_js_value_to_rs("js_val", attr_type) | indent(20) }}
+                {{ render_js_value_to_rs("js_val", attr_type) }}
             };
 {% endfor %}
             Ok(libparsec::{{ variant.name }}::{{ value.name }} (
@@ -469,7 +502,7 @@ fn {{ variant_rs_to_js_function_name(variant) }}(rs_obj: libparsec::{{ variant.n
         libparsec::{{ variant.name }}::{{ value.name }}{ {{ value.struct.attributes.keys() |join(',') }} {{ "," if value.struct.attributes else "" }} .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"{{ value.name }}".into())?;
 {% for attr_name, attr_type in value.struct.attributes.items() %}
-            let js_{{ attr_name }} = {{ render_rs_to_js_value(attr_name, attr_type) | indent(12) }};
+            let js_{{ attr_name }} = {{ render_rs_to_js_value(attr_name, attr_type) }};
             Reflect::set(&js_obj, &"{{ attr_name | snake2camel }}".into(), &js_{{ attr_name }})?;
 {% endfor %}
         }
@@ -477,7 +510,7 @@ fn {{ variant_rs_to_js_function_name(variant) }}(rs_obj: libparsec::{{ variant.n
         libparsec::{{ variant.name }}::{{ value.name }}( {% for _ in value.tuple %}x{{ loop.index }},{% endfor %} .. ) => {
             Reflect::set(&js_obj, &"tag".into(), &"{{ value.name }}".into())?;
 {% for attr_type in value.tuple %}
-            let js_x{{ loop.index }} = {{ render_rs_to_js_value("x%s" % loop.index, attr_type) | indent(16) }};
+            let js_x{{ loop.index }} = {{ render_rs_to_js_value("x%s" % loop.index, attr_type) }};
             Reflect::set(&js_obj, &"x{{ loop.index }}".into(), &js_x{{ loop.index }}.into())?;
 {% endfor %}
         }
@@ -509,7 +542,7 @@ pub fn {{ meth.name | snake2camel }}(
     future_to_promise(async move {
 {# Cook param if needed (typically for string-based types) #}
 {% for param_name, param_type in meth.params.items() %}
-        {{ render_function_param_cooking(param_name, param_type) | indent(8) }}
+        {{ render_function_param_cooking(param_name, param_type) }}
 {% endfor %}
 {# Call actual function #}
 {% if meth.return_type is none %}
@@ -525,7 +558,7 @@ pub fn {{ meth.name | snake2camel }}(
 {% if meth.return_type is none %}
         Ok(JsValue::NULL)
 {% else %}
-        Ok({{ render_rs_to_js_value("ret", meth.return_type) | indent(8) }})
+        Ok({{ render_rs_to_js_value("ret", meth.return_type) }})
 {% endif %}
     })
 }
@@ -543,7 +576,7 @@ pub fn {{ meth.name | snake2camel }}(
     future_to_promise(async move {
 {# Cook param if needed (typically for string-based types) #}
 {%- for param_name, param_type in meth.params.items() %}
-        {{ render_function_param_cooking(param_name, param_type) | indent(8) }}
+        {{ render_function_param_cooking(param_name, param_type) }}
 {%- endfor %}
 {# Call actual function #}
 {% if meth.return_type is none %}
@@ -559,7 +592,7 @@ pub fn {{ meth.name | snake2camel }}(
 {% if meth.return_type is none %}
         Ok(JsValue::NULL)
 {% else %}
-        Ok({{ render_rs_to_js_value("ret", meth.return_type) | indent(8) }})
+        Ok({{ render_rs_to_js_value("ret", meth.return_type) }})
 {% endif %}
     })
 }

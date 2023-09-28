@@ -152,6 +152,24 @@ async def client_get_user_device(
     raise NotImplementedError
 
 
+class WorkspaceUserAccessInfo(Structure):
+    user_id: UserID
+    human_handle: Optional[HumanHandle]
+    role: RealmRole
+
+
+class ClientListWorkspaceUsersError(ErrorVariant):
+    class Internal:
+        pass
+
+
+async def client_list_workspace_users(
+    client: Handle,
+    realm_id: VlobID,
+) -> Result[list[WorkspaceUserAccessInfo], ClientListWorkspaceUsersError]:
+    raise NotImplementedError
+
+
 class ClientListWorkspacesError(ErrorVariant):
     class Internal:
         pass

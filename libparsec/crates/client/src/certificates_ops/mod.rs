@@ -43,6 +43,12 @@ pub struct DeviceInfo {
     pub created_by: Option<DeviceID>,
 }
 
+pub struct WorkspaceUserAccessInfo {
+    pub user_id: UserID,
+    pub human_handle: Option<HumanHandle>,
+    pub role: RealmRole,
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum GetUserDeviceError {
     #[error("No user/device with this device ID")]
@@ -429,5 +435,59 @@ impl CertificatesOps {
         };
 
         Ok((user_info, device_info))
+    }
+
+    /// List users currently part of the given workspace (i.e. user not revoked
+    /// and with a valid role)
+    pub async fn list_workspace_users(
+        &self,
+        realm_id: VlobID,
+    ) -> anyhow::Result<Vec<WorkspaceUserAccessInfo>> {
+        let store = self.store.for_read().await;
+        let role_certifs = store.get_realm_roles(UpTo::Current, realm_id).await?;
+
+        let mut infos = HashMap::with_capacity(role_certifs.len());
+        for role_certif in role_certifs {
+            // Ignore user that have lost their access
+            let role = match role_certif.role {
+                None => {
+                    infos.remove(&role_certif.user_id);
+                    continue;
+                }
+                Some(role) => role,
+            };
+            let user_id = role_certif.user_id.clone();
+
+            // Ignore revoked users
+            let maybe_revoked = store
+                .get_revoked_user_certificate(UpTo::Current, user_id.clone())
+                .await?;
+            if maybe_revoked.is_some() {
+                continue;
+            }
+
+            let user_certif = match store
+                .get_user_certificate(UpTo::Current, user_id.clone())
+                .await
+            {
+                Ok(user_certif) => user_certif,
+                // We got the user ID from the certificate store, it is guaranteed to
+                // be present !
+                Err(
+                    GetCertificateError::NonExisting
+                    | GetCertificateError::ExistButTooRecent { .. },
+                ) => unreachable!(),
+                Err(GetCertificateError::Internal(err)) => return Err(err),
+            };
+
+            let user_info = WorkspaceUserAccessInfo {
+                user_id: user_id.clone(),
+                human_handle: user_certif.human_handle.to_owned(),
+                role,
+            };
+            infos.insert(user_id, user_info);
+        }
+
+        Ok(infos.into_values().collect())
     }
 }
