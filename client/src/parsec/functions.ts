@@ -153,7 +153,8 @@ export async function listUserInvitations(): Promise<Result<Array<UserInvitation
     result.value = result.value.filter((item: InviteListItem) => item.tag === 'User');
     // Convert InviteListItemUser to UserInvitation
     result.value = result.value.map((item) => {
-      (item as UserInvitation).date = DateTime.fromISO(item.createdOn);
+      // @ts-expect-error: Actual f64 to Luxon's Datetime conversion
+      (item as UserInvitation).date = DateTime.fromSeconds(item.createdOn);
       return item;
     });
     return result as any;
@@ -162,14 +163,14 @@ export async function listUserInvitations(): Promise<Result<Array<UserInvitation
       const ret: Array<UserInvitation> = [{
         tag: 'User',
         token: '1234',
-        createdOn: DateTime.now().toISO() || '',
+        createdOn: DateTime.now(),
         claimerEmail: 'shadowheart@swordcoast.faerun',
         status: InvitationStatus.Ready,
         date: DateTime.now(),
       }, {
         tag: 'User',
         token: '5678',
-        createdOn: DateTime.now().toISO() || '',
+        createdOn: DateTime.now(),
         claimerEmail: 'gale@waterdeep.faerun',
         status: InvitationStatus.Ready,
         date: DateTime.now(),

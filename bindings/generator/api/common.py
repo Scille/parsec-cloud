@@ -163,10 +163,12 @@ class HumanHandle(Structure):
     """
 
 
-class DateTime(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = (
-        "|dt: libparsec::DateTime| -> Result<String, &'static str> { Ok(dt.to_rfc3339()) }"
+class DateTime(F64BasedType):
+    custom_from_rs_f64 = """|n: f64| -> Result<_, &'static str> { Ok(libparsec::DateTime::from_f64_with_us_precision(n)) }"""
+    custom_to_rs_f64 = "|dt: libparsec::DateTime| -> Result<f64, &'static str> { Ok(dt.get_f64_with_us_precision()) }"
+    # We use Luxon's Datetime type on client side
+    custom_ts_type_declaration = (
+        "export type { DateTime } from 'luxon'; import type { DateTime } from 'luxon';"
     )
 
 

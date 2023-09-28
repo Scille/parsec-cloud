@@ -13,7 +13,7 @@ describe('User Invitation List Item', () => {
     const INVITATION: UserInvitation = {
       tag: 'User',
       token: '1234',
-      createdOn: DateTime.now().toISO() || '',
+      createdOn: DateTime.now(),
       claimerEmail: 'dung.eater@lands-between',
       status: InvitationStatus.Ready,
       date: DateTime.now(),
