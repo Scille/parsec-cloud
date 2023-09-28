@@ -113,7 +113,19 @@ class CustomConversionType:
 #
 
 
-class Integer(I64BasedType):
+class I32(I32BasedType):
+    pass
+
+
+class U32(U32BasedType):
+    pass
+
+
+class I64(I64BasedType):
+    pass
+
+
+class U64(U64BasedType):
     pass
 
 

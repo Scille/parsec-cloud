@@ -3,13 +3,13 @@
 from typing import Optional
 
 from .common import (
+    U32,
     ErrorVariant,
     InvitationToken,
     OrganizationID,
     Ref,
     Result,
     StrBasedType,
-    U32BasedType,
     Variant,
     VlobID,
 )
@@ -43,19 +43,19 @@ class ParseBackendAddrError(ErrorVariant):
 class ParsedBackendAddr(Variant):
     class Base:
         hostname: str
-        port: U32BasedType
+        port: U32
         use_ssl: bool
 
     class OrganizationBootstrap:
         hostname: str
-        port: U32BasedType
+        port: U32
         use_ssl: bool
         organization_id: OrganizationID
         token: Optional[str]
 
     class OrganizationFileLink:
         hostname: str
-        port: U32BasedType
+        port: U32
         use_ssl: bool
         organization_id: OrganizationID
         workspace_id: VlobID
@@ -64,21 +64,21 @@ class ParsedBackendAddr(Variant):
 
     class InvitationUser:
         hostname: str
-        port: U32BasedType
+        port: U32
         use_ssl: bool
         organization_id: OrganizationID
         token: InvitationToken
 
     class InvitationDevice:
         hostname: str
-        port: U32BasedType
+        port: U32
         use_ssl: bool
         organization_id: OrganizationID
         token: InvitationToken
 
     class PkiEnrollment:
         hostname: str
-        port: U32BasedType
+        port: U32
         use_ssl: bool
         organization_id: OrganizationID
 
