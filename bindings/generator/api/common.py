@@ -79,19 +79,27 @@ class BytesBasedType:
     pass
 
 
-# A type that should be converted from/into int
+# A type that should be converted from/into f64
+class F64BasedType:
+    pass
+
+
+# Types that should be converted into f64 on js side, but from i32 on rs side
 class I32BasedType:
     pass
 
 
+# Types that should be converted into f64 on js side, but from u32 on rs side
 class U32BasedType:
     pass
 
 
+# Types that should be converted into f64 on js side, but from i64 on rs side
 class I64BasedType:
     pass
 
 
+# Types that should be converted into f64 on js side, but from u64 on rs side
 class U64BasedType:
     pass
 

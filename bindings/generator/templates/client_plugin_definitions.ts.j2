@@ -22,11 +22,11 @@ Array<{{ render_type(t.elem) }}>
 null
 {%- elif t.kind == "bool" -%}
 boolean
-{%- elif t.kind in ("i32_based", "u32_based", "i64_based", "u64_based", "float") -%}
+{%- elif t.kind == "float" -%}
 number
 {%- elif t.kind == "str" -%}
 string
-{%- elif t.kind in ("str_based", "bytes_based") -%}
+{%- elif t.kind in ("str_based", "bytes_based", "i32_based", "u32_based", "i64_based", "u64_based", "f64_based") -%}
 {{ t.name }}
 {%- elif t.kind == "bytes" -%}
 Uint8Array
@@ -62,19 +62,28 @@ export enum {{ enum.name }} {
 {% endif %}
 {% endfor %}
 {# Str-based types #}
-{% for type_name in api.str_based_types %}
-export type {{ type_name }} = string
+{% for type in api.str_based_types %}
+{% if type.custom_ts_type_declaration  %}
+{{ type.custom_ts_type_declaration }}
+{% else %}
+export type {{ type.name }} = string
+{% endif %}
 {% endfor %}
 {# Bytes-based types #}
-{% for type_name in api.bytes_based_types %}
-export type {{ type_name }} = Uint8Array
+{% for type in api.bytes_based_types %}
+{% if type.custom_ts_type_declaration  %}
+{{ type.custom_ts_type_declaration }}
+{% else %}
+export type {{ type.name }} = Uint8Array
+{% endif %}
 {% endfor %}
-{# Int-based types #}
-{% for type_name in api.i32_based_types %}
-export type {{ type_name }} = number
-{% endfor %}
-{% for type_name in api.u32_based_types %}
-export type {{ type_name }} = number
+{# Number-based types #}
+{% for type in api.i32_based_types + api.u32_based_types + api.i64_based_types + api.u64_based_types + api.f64_based_types %}
+{% if type.custom_ts_type_declaration %}
+{{ type.custom_ts_type_declaration }}
+{% else %}
+export type {{ type.name }} = number
+{% endif %}
 {% endfor %}
 {# Structures #}
 {% for struct in api.structs %}

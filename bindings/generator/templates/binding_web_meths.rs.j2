@@ -31,7 +31,7 @@ u32
 i64
 {%- elif type.kind == "u64_based" -%}
 u64
-{%- elif type.kind == "float" -%}
+{%- elif type.kind in ("f64_based", "float") -%}
 f64
 {%- elif type.kind in ("str", "str_based") -%}
 String
@@ -88,6 +88,17 @@ let {{ param_name }} =
 {{ param_name }}.to_vec().as_slice().try_into().map_err(|_| {
     JsValue::from(TypeError::new("Not a valid {{ type.name }}"))
 })?;
+{% endif %}
+{% elif type.kind == "f64_based" %}
+let {{ param_name }} =
+{% if type.custom_from_rs_f64 -%}
+{
+    let custom_from_rs_f64 = {{ type.custom_from_rs_f64 }};
+    custom_from_rs_f64(&{{ param_name }}.to_vec())
+        .map_err(|e| TypeError::new(e.as_ref()))
+}?;
+{%- else -%}
+{{ param_name }}
 {% endif %}
 {% elif type.kind in ("struct", "variant", "result") %}
 let {{ param_name }} = {{ param_name }}.into();
@@ -173,6 +184,15 @@ if {{ js_val }}.is_null() {
         return Err(JsValue::from(TypeError::new("Not an u64 number")));
     }
     v as u64
+}
+{%- elif type.kind == "f64_based" -%}
+{
+    let v = {{ js_val }}.dyn_into::<Number>()?.value_of();
+{% if type.custom_from_rs_f64 %}
+    let custom_from_rs_f64 = {{ type.custom_from_rs_f64 }};
+    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+{% endif %}
+    v
 }
 {%- elif type.kind == "float" -%}
 {{ js_val }}.dyn_into::<Number>()?.value_of()
@@ -272,6 +292,19 @@ match {{ rs_value }} {
 }
 {%- elif type.kind in ("i32_based", "u32_based", "i64_based", "u64_based") -%}
 JsValue::from({{ rs_value }})
+{%- elif type.kind == "f64_based" -%}
+{%- if type.custom_to_rs_f64 %}
+{
+    let custom_to_rs_f64 = {{ type.custom_to_rs_f64 }};
+    let v = match custom_to_rs_f64({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+    };
+    JsValue::from(v)
+}
+{% else -%}
+JsValue::from({{ rs_value }})
+{%- endif -%}
 {%- elif type.kind == "str_based" -%}
 JsValue::from_str({%- if type.custom_to_rs_string -%}
 {
