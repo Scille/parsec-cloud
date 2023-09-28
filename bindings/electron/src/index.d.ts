@@ -633,7 +633,7 @@ export interface EntryInfoFile {
     base_version: number
     is_placeholder: boolean
     need_sync: boolean
-    size: number
+    size: BigInt
 }
 export interface EntryInfoFolder {
     tag: "Folder"

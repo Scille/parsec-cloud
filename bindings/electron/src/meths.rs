@@ -2658,7 +2658,7 @@ fn variant_entry_info_js_to_rs<'a>(
                 js_val.value(cx)
             };
             let size = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "size")?;
+                let js_val: Handle<BigInt> = obj.get(cx, "size")?;
                 {
                     let v = js_val.value(cx);
                     if v < (u64::MIN as f64) || (u64::MAX as f64) < v {

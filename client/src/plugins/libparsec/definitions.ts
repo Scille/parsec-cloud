@@ -67,11 +67,11 @@ export type CacheSize = number
 export type Handle = number
 export type U32 = number
 export type VersionInt = number
-export type I64 = number
-export type IndexInt = number
-export type SizeInt = number
-export type U64 = number
 export type { DateTime } from 'luxon'; import type { DateTime } from 'luxon';
+export type I64 = bigint
+export type IndexInt = bigint
+export type SizeInt = bigint
+export type U64 = bigint
 
 export interface AvailableDevice {
     keyFilePath: Path

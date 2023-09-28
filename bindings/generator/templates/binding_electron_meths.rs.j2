@@ -19,8 +19,10 @@ JsValue
 JsNull
 {%- elif type.kind == "bool" -%}
 JsBoolean
-{%- elif type.kind in ("i32_based", "u32_based", "i64_based", "u64_based", "f64_based", "float") -%}
+{%- elif type.kind in ("i32_based", "u32_based", "f64_based", "float") -%}
 JsNumber
+{%- elif type.kind in ("i64_based", "u64_based") -%}
+BigInt
 {%- elif type.kind in ("str", "str_based") -%}
 JsString
 {%- elif type.kind in ("bytes", "bytes_based") -%}

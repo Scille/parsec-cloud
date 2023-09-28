@@ -2682,16 +2682,12 @@ fn variant_entry_info_js_to_rs(obj: JsValue) -> Result<libparsec::EntryInfo, JsV
             };
             let size = {
                 let js_val = Reflect::get(&obj, &"size".into())?;
-                {
-                    let v = js_val
-                        .dyn_into::<Number>()
-                        .map_err(|_| TypeError::new("Not a number"))?
-                        .value_of();
-                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                        return Err(JsValue::from(TypeError::new("Not an u64 number")));
-                    }
-                    v as u64
-                }
+                js_val
+                    .dyn_into::<BigInt>()
+                    .map_err(|_| TypeError::new("Not a number"))
+                    .and_then(|v| {
+                        u64::try_from(v).map_err(|_| TypeError::new("Not an u64 number"))
+                    })?
             };
             Ok(libparsec::EntryInfo::File {
                 confinement_point,

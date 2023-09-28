@@ -78,11 +78,18 @@ export type {{ type.name }} = Uint8Array
 {% endif %}
 {% endfor %}
 {# Number-based types #}
-{% for type in api.i32_based_types + api.u32_based_types + api.i64_based_types + api.u64_based_types + api.f64_based_types %}
+{% for type in api.i32_based_types + api.u32_based_types + api.f64_based_types %}
 {% if type.custom_ts_type_declaration %}
 {{ type.custom_ts_type_declaration }}
 {% else %}
 export type {{ type.name }} = number
+{% endif %}
+{% endfor %}
+{% for type in api.i64_based_types + api.u64_based_types %}
+{% if type.custom_ts_type_declaration %}
+{{ type.custom_ts_type_declaration }}
+{% else %}
+export type {{ type.name }} = bigint
 {% endif %}
 {% endfor %}
 {# Structures #}
