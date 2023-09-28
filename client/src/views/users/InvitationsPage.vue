@@ -125,7 +125,6 @@ onUpdated(async () => {
 async function refreshInvitationsList(): Promise<void> {
   const result = await parsecListUserInvitations();
   if (result.ok) {
-    console.log('List invitations successful', result.value);
     invitations.value = result.value;
   } else {
     console.log('Failed to list invitations', result.error);

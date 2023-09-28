@@ -49,13 +49,12 @@
       />
     </div>
 
-    <!-- user size -->
+    <!-- user joined on -->
     <div class="user-join">
       <ion-label
         class="user-join-label cell"
       >
-        {{ user.createdOn }}
-        <!-- {{ timeSince(user, '--', 'short') }} -->
+        {{ timeSince(user.createdOn, '--', 'short') }}
       </ion-label>
     </div>
 

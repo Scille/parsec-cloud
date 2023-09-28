@@ -20,7 +20,7 @@
       <ion-label
         class="cell invitation-label"
       >
-        <span>{{ timeSince(invitation.date, '--', 'short') }}</span>
+        <span>{{ timeSince(invitation.createdOn, '--', 'short') }}</span>
       </ion-label>
     </div>
 

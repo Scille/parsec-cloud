@@ -14,7 +14,7 @@ describe('User Card', () => {
       id: '0',
       humanHandle: {label: 'John Smith', email: 'john.smith@gmail.com'},
       currentProfile: UserProfile.Standard,
-      createdOn: 'date',
+      createdOn: DateTime.now(),
       createdBy: 'device',
       revokedOn: null,
       revokedBy: null,

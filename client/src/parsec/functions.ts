@@ -158,8 +158,7 @@ export async function listUserInvitations(): Promise<Result<Array<UserInvitation
     result.value = result.value.filter((item: InviteListItem) => item.tag === 'User');
     // Convert InviteListItemUser to UserInvitation
     result.value = result.value.map((item) => {
-      // @ts-expect-error: Actual f64 to Luxon's Datetime conversion
-      (item as UserInvitation).date = DateTime.fromSeconds(item.createdOn);
+      item.createdOn = DateTime.fromMillis(item.createdOn as any as number);
       return item;
     });
     return result as any;
@@ -171,14 +170,12 @@ export async function listUserInvitations(): Promise<Result<Array<UserInvitation
         createdOn: DateTime.now(),
         claimerEmail: 'shadowheart@swordcoast.faerun',
         status: InvitationStatus.Ready,
-        date: DateTime.now(),
       }, {
         tag: 'User',
         token: '5678',
         createdOn: DateTime.now(),
         claimerEmail: 'gale@waterdeep.faerun',
         status: InvitationStatus.Ready,
-        date: DateTime.now(),
       }];
       resolve({ ok: true, value: ret });
     });
@@ -344,6 +341,10 @@ export async function listUsers(skipRevoked = true): Promise<Result<Array<UserIn
     const result = await libparsec.clientListUsers(handle, skipRevoked);
     if (result.ok) {
       result.value.map((item) => {
+        item.createdOn = DateTime.fromMillis(item.createdOn as any as number);
+        if (item.revokedOn) {
+          item.revokedOn = DateTime.fromMillis(item.revokedOn as any as number);
+        }
         (item as UserInfo).isRevoked = (): boolean => item.revokedOn !== null;
         return item;
       });
@@ -356,7 +357,7 @@ export async function listUsers(skipRevoked = true): Promise<Result<Array<UserIn
         // cspell:disable-next-line
         humanHandle: {label: 'Cernd', email: 'cernd@gmail.com'},
         currentProfile: UserProfile.Standard,
-        createdOn: 'date',
+        createdOn: DateTime.now(),
         createdBy: 'device',
         revokedOn: null,
         revokedBy: null,
@@ -366,7 +367,7 @@ export async function listUsers(skipRevoked = true): Promise<Result<Array<UserIn
         // cspell:disable-next-line
         humanHandle: {label: 'Jaheira', email: 'jaheira@gmail.com'},
         currentProfile: UserProfile.Admin,
-        createdOn: 'date',
+        createdOn: DateTime.now(),
         createdBy: 'device',
         revokedOn: null,
         revokedBy: null,
@@ -378,9 +379,9 @@ export async function listUsers(skipRevoked = true): Promise<Result<Array<UserIn
           // cspell:disable-next-line
           humanHandle: {label: 'Valygar Corthala', email: 'val@gmail.com'},
           currentProfile: UserProfile.Standard,
-          createdOn: 'date',
+          createdOn: DateTime.now(),
           createdBy: 'device',
-          revokedOn: 'date',
+          revokedOn: DateTime.now(),
           revokedBy: 'device',
           isRevoked: (): boolean => true,
         });
@@ -397,6 +398,7 @@ export async function listUserDevices(user: UserID): Promise<Result<Array<Device
     const result = await libparsec.clientListUserDevices(handle, user);
     if (result.ok) {
       result.value.map((item) => {
+        item.createdOn = DateTime.fromMillis(item.createdOn as any as number);
         return item;
       });
     }
@@ -406,12 +408,12 @@ export async function listUserDevices(user: UserID): Promise<Result<Array<Device
       resolve({ok: true, value: [{
         id: 'device1',
         deviceLabel: 'My First Device',
-        createdOn: 'now',
+        createdOn: DateTime.now(),
         createdBy: 'some_device',
       }, {
         id: 'device2',
         deviceLabel: 'My Second Device',
-        createdOn: 'now',
+        createdOn: DateTime.now(),
         createdBy: 'device1',
       }]});
     });
