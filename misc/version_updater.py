@@ -7,7 +7,6 @@ Helper that help changing the version of a tool across the repository.
 import enum
 import glob
 import re
-import sys
 from argparse import ArgumentParser
 from dataclasses import dataclass
 from fileinput import FileInput
@@ -249,8 +248,7 @@ def check_tool_version(filename: Path, raw_regexes: RawRegexes, version: str) ->
                         f"{filename}:{effective_line}:{effective_col_start}: Wrong version detected, got `{matched_part}` but expected `{expected_line}`"
                     )
 
-    match_errors = does_every_regex_where_used(filename, matched)
-    errors.extend(match_errors)
+    errors += does_every_regex_where_used(filename, matched)
     return errors
 
 
@@ -285,31 +283,21 @@ def does_every_regex_where_used(filename: Path, have_matched: Dict[str, bool]) -
     return errors
 
 
-def check_tool(tool: Tool, version: str, update: bool) -> Dict[Path, List[str]]:
-    errors = {}
-
-    check_or_update: Callable[[Path, RawRegexes, str], List[str]] = update_tool_version
-    if not update:
-        check_or_update = check_tool_version
-
+def check_tool(tool: Tool, version: str, update: bool) -> List[str]:
+    errors = []
     for filename, tools_in_file in FILES_WITH_VERSION_INFO.items():
         regexes = tools_in_file.get(tool, None)
         if regexes is None:
             continue
 
         for glob_file in glob.glob(str(filename), recursive=True):
-            file = ROOT_DIR / glob_file
-            files_errors = check_or_update(file, regexes, version)
-            if files_errors:
-                errors[file] = files_errors
+            file = Path(glob_file)
+            if update:
+                errors += update_tool_version(file, regexes, version)
+            else:
+                errors += check_tool_version(file, regexes, version)
 
     return errors
-
-
-def handle_errors(errors: Dict[Tool, Dict[Path, List[str]]]) -> None:
-    for tool, tool_errors in errors.items():
-        for filename, file_errors in tool_errors.items():
-            print("\n".join(file_errors), file=sys.stderr)
 
 
 if __name__ == "__main__":
@@ -333,22 +321,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
     failed = False
 
-    errors: Dict[Tool, Dict[Path, List[str]]] = {}
+    errors: List[str] = []
 
     if args.tool is not None:
         tool = Tool(args.tool)
         tool_version: str = args.version or TOOLS_VERSION[tool]
 
-        tool_errors = check_tool(tool, tool_version, update=not args.check)
-        for file, file_errors in tool_errors.items():
-            errors.setdefault(tool, {}).setdefault(file, []).extend(file_errors)
+        errors += check_tool(tool, tool_version, update=not args.check)
     else:
         for tool in Tool:
-            tool_errors = check_tool(tool, TOOLS_VERSION[tool], update=not args.check)
-
-            for file, file_errors in tool_errors.items():
-                errors.setdefault(tool, {}).setdefault(file, []).extend(file_errors)
+            errors += check_tool(tool, TOOLS_VERSION[tool], update=not args.check)
 
     if errors:
-        handle_errors(errors)
-        exit(1)
+        raise SystemExit("\n".join(errors))

@@ -10,7 +10,7 @@ from importlib import import_module
 from inspect import isclass, iscoroutinefunction, isfunction, signature
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, List, Tuple, Union, get_args
+from typing import Any, Callable, Iterable, List, Tuple, TypeVar, Union, get_args
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
@@ -23,6 +23,7 @@ META_TYPES = [
     "Ref",
     "StrBasedType",
     "BytesBasedType",
+    "F64BasedType",
     "I32BasedType",
     "U32BasedType",
     "I64BasedType",
@@ -50,6 +51,10 @@ class StrBasedType(str):
 
 
 class BytesBasedType(bytes):
+    ...
+
+
+class F64BasedType(float):
     ...
 
 
@@ -240,6 +245,13 @@ class BaseTypeInUse:
                 custom_to_rs_bytes=getattr(param, "custom_to_rs_bytes", None),
             )
 
+        elif isinstance(param, type) and issubclass(param, F64BasedType):
+            return F64BasedTypeInUse(
+                name=param.__name__,
+                custom_from_rs_f64=getattr(param, "custom_from_rs_f64", None),
+                custom_to_rs_f64=getattr(param, "custom_to_rs_f64", None),
+            )
+
         elif isinstance(param, type) and issubclass(param, I32BasedType):
             return I32BasedTypeInUse(name=param.__name__)
 
@@ -336,7 +348,6 @@ class RefTypeInUse(BaseTypeInUse):
 class StrBasedTypeInUse(BaseTypeInUse):
     kind = "str_based"
     name: str
-
     # If set, custom_from_rs_string/custom_to_rs_string contains a Rust closure snippet
     # `fn (String) -> Result<X, AsRef<str>>`
     custom_from_rs_string: str | None = None
@@ -348,12 +359,22 @@ class StrBasedTypeInUse(BaseTypeInUse):
 class BytesBasedTypeInUse(BaseTypeInUse):
     kind = "bytes_based"
     name: str
-
     # If set, custom_from_rs_bytes/custom_to_rs_bytes contains a Rust closure snippet
     # `fn (&[u8]) -> Result<X, AsRef<str>>`
     custom_from_rs_bytes: str | None = None
     # `fn (&X) -> Result<Vec<u8>, AsRef<str>>`
     custom_to_rs_bytes: str | None = None
+
+
+@dataclass
+class F64BasedTypeInUse(BaseTypeInUse):
+    kind = "f64_based"
+    name: str
+    # If set, custom_from_rs_f64/custom_to_rs_f64 contains a Rust closure snippet
+    # `fn (&[u8]) -> Result<X, AsRef<str>>`
+    custom_from_rs_f64: str | None = None
+    # `fn (&X) -> Result<Vec<u8>, AsRef<str>>`
+    custom_to_rs_f64: str | None = None
 
 
 @dataclass
@@ -401,13 +422,20 @@ class MethSpec:
 
 
 @dataclass
+class BasedTypeSpec:
+    name: str
+    custom_ts_type_declaration: str | None
+
+
+@dataclass
 class ApiSpecs:
-    str_based_types: List[str]
-    bytes_based_types: List[str]
-    i32_based_types: List[str]
-    u32_based_types: List[str]
-    i64_based_types: List[str]
-    u64_based_types: List[str]
+    str_based_types: List[BasedTypeSpec]
+    bytes_based_types: List[BasedTypeSpec]
+    f64_based_types: List[BasedTypeSpec]
+    i32_based_types: List[BasedTypeSpec]
+    u32_based_types: List[BasedTypeSpec]
+    i64_based_types: List[BasedTypeSpec]
+    u64_based_types: List[BasedTypeSpec]
     meths: List[MethSpec]
     structs: List[StructSpec]
     variants: List[VariantSpec]
@@ -565,41 +593,51 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
                 )
             )
 
+    T = TypeVar("T", BasedTypeSpec, EnumSpec, VariantSpec, StructSpec, MethSpec)
+
+    def sorted_by_name(items: Iterable[T]) -> List[T]:
+        return sorted(items, key=lambda x: x.name)
+
     return ApiSpecs(
-        str_based_types=sorted(
-            item.__name__
+        str_based_types=sorted_by_name(
+            BasedTypeSpec(item.__name__, getattr(item, "custom_ts_type_declaration", None))
             for item in api_items.values()
             if isinstance(item, type) and issubclass(item, StrBasedType)
         ),
-        bytes_based_types=sorted(
-            item.__name__
+        bytes_based_types=sorted_by_name(
+            BasedTypeSpec(item.__name__, getattr(item, "custom_ts_type_declaration", None))
             for item in api_items.values()
             if isinstance(item, type) and issubclass(item, BytesBasedType)
         ),
-        i32_based_types=sorted(
-            item.__name__
+        f64_based_types=sorted_by_name(
+            BasedTypeSpec(item.__name__, getattr(item, "custom_ts_type_declaration", None))
+            for item in api_items.values()
+            if isinstance(item, type) and issubclass(item, F64BasedType)
+        ),
+        i32_based_types=sorted_by_name(
+            BasedTypeSpec(item.__name__, getattr(item, "custom_ts_type_declaration", None))
             for item in api_items.values()
             if isinstance(item, type) and issubclass(item, I32BasedType)
         ),
-        u32_based_types=sorted(
-            item.__name__
+        u32_based_types=sorted_by_name(
+            BasedTypeSpec(item.__name__, getattr(item, "custom_ts_type_declaration", None))
             for item in api_items.values()
             if isinstance(item, type) and issubclass(item, U32BasedType)
         ),
-        i64_based_types=sorted(
-            item.__name__
+        i64_based_types=sorted_by_name(
+            BasedTypeSpec(item.__name__, getattr(item, "custom_ts_type_declaration", None))
             for item in api_items.values()
             if isinstance(item, type) and issubclass(item, I64BasedType)
         ),
-        u64_based_types=sorted(
-            item.__name__
+        u64_based_types=sorted_by_name(
+            BasedTypeSpec(item.__name__, getattr(item, "custom_ts_type_declaration", None))
             for item in api_items.values()
             if isinstance(item, type) and issubclass(item, U64BasedType)
         ),
-        enums=sorted(enums, key=lambda v: v.name),
-        variants=sorted(variants, key=lambda v: v.name),
-        structs=sorted(structs, key=lambda v: v.name),
-        meths=sorted(meths, key=lambda v: v.name),
+        enums=sorted_by_name(enums),
+        variants=sorted_by_name(variants),
+        structs=sorted_by_name(structs),
+        meths=sorted_by_name(meths),
         rust_code_to_inject=getattr(api_module, "BINDING_ELECTRON_METHS_INJECT_RUST_CODE", None),
     )
 

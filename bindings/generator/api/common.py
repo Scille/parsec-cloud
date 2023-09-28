@@ -79,19 +79,27 @@ class BytesBasedType:
     pass
 
 
-# A type that should be converted from/into int
+# A type that should be converted from/into f64
+class F64BasedType:
+    pass
+
+
+# Types that should be converted into f64 on js side, but from i32 on rs side
 class I32BasedType:
     pass
 
 
+# Types that should be converted into f64 on js side, but from u32 on rs side
 class U32BasedType:
     pass
 
 
+# Types that should be converted into f64 on js side, but from i64 on rs side
 class I64BasedType:
     pass
 
 
+# Types that should be converted into f64 on js side, but from u64 on rs side
 class U64BasedType:
     pass
 
@@ -105,7 +113,19 @@ class CustomConversionType:
 #
 
 
-class Integer(I64BasedType):
+class I32(I32BasedType):
+    pass
+
+
+class U32(U32BasedType):
+    pass
+
+
+class I64(I64BasedType):
+    pass
+
+
+class U64(U64BasedType):
     pass
 
 
@@ -155,10 +175,12 @@ class HumanHandle(Structure):
     """
 
 
-class DateTime(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::DateTime::from_rfc3339(&s).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = (
-        "|dt: libparsec::DateTime| -> Result<String, &'static str> { Ok(dt.to_rfc3339()) }"
+class DateTime(F64BasedType):
+    custom_from_rs_f64 = """|n: f64| -> Result<_, &'static str> { Ok(libparsec::DateTime::from_f64_with_us_precision(n)) }"""
+    custom_to_rs_f64 = "|dt: libparsec::DateTime| -> Result<f64, &'static str> { Ok(dt.get_f64_with_us_precision()) }"
+    # We use Luxon's Datetime type on client side
+    custom_ts_type_declaration = (
+        "export type { DateTime } from 'luxon'; import type { DateTime } from 'luxon';"
     )
 
 

@@ -19,7 +19,7 @@ JsValue
 JsNull
 {%- elif type.kind == "bool" -%}
 JsBoolean
-{%- elif type.kind in ("i32_based", "u32_based", "i64_based", "u64_based", "float") -%}
+{%- elif type.kind in ("i32_based", "u32_based", "i64_based", "u64_based", "f64_based", "float") -%}
 JsNumber
 {%- elif type.kind in ("str", "str_based") -%}
 JsString
@@ -63,7 +63,7 @@ JsString
     let mut v = Vec::with_capacity(size as usize);
     for i in 0..size {
         let js_item: Handle<{{ ts_type(type.elem) }}> = {{ js_val }}.get({{ mut_cx_ref }}, i)?;
-        v.push({{ render_downcasted_js_to_rs("js_item", type.elem, mut_cx_ref) | indent(8) }});
+        v.push({{ render_downcasted_js_to_rs("js_item", type.elem, mut_cx_ref) }});
     }
     v
 }
@@ -72,7 +72,7 @@ JsString
 {%- for value in type.values -%}
     {
         let js_item: Handle<{{ ts_type(value) }}> = {{ js_val }}.get({{ mut_cx_ref }}, {{ loop.index }})?;
-        {{ render_downcasted_js_to_rs("js_val", value, mut_cx_ref) | indent(8) }}
+        {{ render_downcasted_js_to_rs("js_val", value, mut_cx_ref) }}
     }
     {{ ", " if not loop.last else "" -}}
 {%- endfor -%}
@@ -84,7 +84,7 @@ JsString
     } else {
         let {{ js_val }} = {{ js_val }}.downcast_or_throw::<{{ ts_type(type.elem) }}, _>({{ mut_cx_ref }})?;
         Some(
-            {{ render_downcasted_js_to_rs("js_val", type.elem, mut_cx_ref) | indent(12) }}
+            {{ render_downcasted_js_to_rs("js_val", type.elem, mut_cx_ref) }}
         )
     }
 }
@@ -92,10 +92,10 @@ JsString
 {
     if {{ js_val }}.get::<JsBoolean, _, _>({{ mut_cx_ref }}, "ok")?.value() {
         let js_val = {{ js_val }}.get::<{{ ts_type(type.ok) }}, _, _>({{ mut_cx_ref }}, "value")?;
-        {{ render_downcasted_js_to_rs("js_val", type.ok, mut_cx_ref) | indent(8) }}
+        {{ render_downcasted_js_to_rs("js_val", type.ok, mut_cx_ref) }}
     } else {
         let js_val = {{ js_val }}.get::<{{ ts_type(type.err) }}, _, _>({{ mut_cx_ref }}, "error")?;
-        {{ render_downcasted_js_to_rs("js_val", type.err, mut_cx_ref) | indent(8) }}
+        {{ render_downcasted_js_to_rs("js_val", type.err, mut_cx_ref) }}
     }
 }
 {%- elif type.kind == "none" -%}
@@ -135,6 +135,19 @@ JsString
     }
     v as u64
 }
+{%- elif type.kind == "f64_based" -%}
+{
+    let v = {{ js_val }}.value({{ mut_cx_ref }});
+    {% if type.custom_from_rs_f64 -%}
+    let custom_from_rs_f64 = {{ type.custom_from_rs_f64 }};
+    match custom_from_rs_f64(v) {
+        Ok(val) => val,
+        Err(err) => return cx.throw_type_error(err),
+    }
+}
+{%- else -%}
+{{ js_val }}.value({{ mut_cx_ref }})
+{%- endif %}
 {%- elif type.kind == "str" -%}
 {{ js_val }}.value({{ mut_cx_ref }})
 {%- elif type.kind == "str_based" -%}
@@ -237,7 +250,7 @@ std::sync::Arc::new(
     // JsArray::new allocates with `undefined` value, that's why we `set` value
     let js_array = JsArray::new({{ mut_cx_ref }}, {{ rs_value }}.len() as u32);
     for (i, elem) in {{ rs_value }}.into_iter().enumerate() {
-        let js_elem = {{ render_rs_to_js("elem", type.elem, mut_cx_ref) | indent(8) }};
+        let js_elem = {{ render_rs_to_js("elem", type.elem, mut_cx_ref) }};
         js_array.set({{ mut_cx_ref }}, i as u32, js_elem)?;
     }
     js_array
@@ -253,7 +266,7 @@ std::sync::Arc::new(
     let js_array = JsArray::new({{ mut_cx_ref }}, {{ type.values | length }});
 {% for value in type.values -%}
     {% set value_var_name = "x" ~ loop.index %}
-    let js_value = {{ render_rs_to_js(value_var_name, value, mut_cx_ref) | indent(4) }};
+    let js_value = {{ render_rs_to_js(value_var_name, value, mut_cx_ref) }};
     js_array.set({{ mut_cx_ref }}, {{ loop.index }}, js_value)?;
 {% endfor %}
     js_array
@@ -261,7 +274,7 @@ std::sync::Arc::new(
 {%- elif type.kind == "optional" -%}
 match {{ rs_value }} {
     Some(elem) => {
-        {{ render_rs_to_js("elem", type.elem, mut_cx_ref) | indent(8) }}.as_value({{ mut_cx_ref }})
+        {{ render_rs_to_js("elem", type.elem, mut_cx_ref) }}.as_value({{ mut_cx_ref }})
     }
     None => JsNull::new({{ mut_cx_ref }}).as_value({{ mut_cx_ref }}),
 }
@@ -271,7 +284,7 @@ match {{ rs_value }} {
         let js_obj = JsObject::new({{ mut_cx_ref }});
         let js_tag = JsBoolean::new({{ mut_cx_ref }}, true);
         js_obj.set({{ mut_cx_ref }}, "ok", js_tag)?;
-        let js_value = {{ render_rs_to_js("ok", type.ok, mut_cx_ref) | indent(8) }};
+        let js_value = {{ render_rs_to_js("ok", type.ok, mut_cx_ref) }};
         js_obj.set({{ mut_cx_ref }}, "value", js_value)?;
         js_obj
     }
@@ -279,7 +292,7 @@ match {{ rs_value }} {
         let js_obj = cx.empty_object();
         let js_tag = JsBoolean::new({{ mut_cx_ref }}, false);
         js_obj.set({{ mut_cx_ref }}, "ok", js_tag)?;
-        let js_err = {{ render_rs_to_js("err", type.err, mut_cx_ref) | indent(8) }};
+        let js_err = {{ render_rs_to_js("err", type.err, mut_cx_ref) }};
         js_obj.set({{ mut_cx_ref }}, "error", js_err)?;
         js_obj
     }
@@ -292,8 +305,22 @@ match {{ rs_value }} {
 }
 {%- elif type.kind == "bool" -%}
 JsBoolean::new({{ mut_cx_ref }}, {{ rs_value }})
-{%- elif type.kind in ("i32_based", "u32_based", "i64_based", "u64_based") -%}
+{%- elif type.kind in ("i32_based", "u32_based", "u64_based", "i64_based") -%}
 JsNumber::new({{ mut_cx_ref }}, {{ rs_value }} as f64)
+{%- elif type.kind == "f64_based" -%}
+{%- if type.custom_to_rs_f64 -%}
+JsNumber::new({{ mut_cx_ref }},
+{
+    let custom_to_rs_f64 = {{ type.custom_to_rs_f64 }};
+    match custom_to_rs_f64({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err),
+    }
+}
+{%- else -%}
+{{ rs_value }}
+{%- endif -%}
+)
 {%- elif type.kind == "float" -%}
 JsNumber::new({{ mut_cx_ref }}, {{ rs_value }})
 {%- elif type.kind == "str" -%}
@@ -371,7 +398,7 @@ fn {{ struct_js_to_rs_function_name(struct) }}<'a>(
 {% for attr_name, attr_type in struct.attributes.items() %}
     let {{ attr_name }} = {
         let js_val: Handle<{{ ts_type(attr_type) }}> = obj.get(cx, "{{ attr_name | snake2camel }}")?;
-        {{ render_downcasted_js_to_rs("js_val", attr_type, mut_cx_ref="cx") | indent(8) }}
+        {{ render_downcasted_js_to_rs("js_val", attr_type, mut_cx_ref="cx") }}
     };
 {% endfor %}
 {% if struct.custom_init is none %}
@@ -395,11 +422,11 @@ fn {{ struct_rs_to_js_function_name(struct) }}<'a>(
 {% for attr_name, attr_type in struct.attributes.items() %}
 {% set custom_getter = struct.custom_getters.get(attr_name) %}
 {% if custom_getter is none %}
-    let js_{{ attr_name }} = {{ render_rs_to_js("rs_obj.%s" % attr_name, attr_type, mut_cx_ref="cx") | indent }};
+    let js_{{ attr_name }} = {{ render_rs_to_js("rs_obj.%s" % attr_name, attr_type, mut_cx_ref="cx") }};
 {% else %}
     let js_{{ attr_name }} = {
         let custom_getter = {{ custom_getter }};
-        {{ render_rs_to_js("custom_getter(&rs_obj)", attr_type, mut_cx_ref="cx") | indent }}
+        {{ render_rs_to_js("custom_getter(&rs_obj)", attr_type, mut_cx_ref="cx") }}
     };
 {% endif %}
     js_obj.set(cx, "{{ attr_name | snake2camel }}", js_{{ attr_name }})?;
@@ -432,7 +459,7 @@ fn {{ variant_js_to_rs_function_name(variant) }}<'a>(
 {% for attr_name, attr_type in value.struct.attributes.items() %}
             let {{ attr_name }} = {
                 let js_val: Handle<{{ ts_type(attr_type) }}> = obj.get(cx, "{{ attr_name | snake2camel }}")?;
-                {{ render_downcasted_js_to_rs("js_val", attr_type, mut_cx_ref="cx") | indent(16) }}
+                {{ render_downcasted_js_to_rs("js_val", attr_type, mut_cx_ref="cx") }}
             };
 {% endfor %}
             Ok(libparsec::{{ variant.name }}::{{ value.name }} {
@@ -442,7 +469,7 @@ fn {{ variant_js_to_rs_function_name(variant) }}<'a>(
 {% for attr_type in value.tuple %}
             let x{{ loop.index }} = {
                 let js_val: Handle<{{ ts_type(attr_type) }}> = obj.get(cx, "x{{ loop.index }}")?;
-                {{ render_downcasted_js_to_rs("js_val", attr_type, mut_cx_ref="cx") | indent(16) }}
+                {{ render_downcasted_js_to_rs("js_val", attr_type, mut_cx_ref="cx") }}
             };
 {% endfor %}
             Ok(libparsec::{{ variant.name }}::{{ value.name }} (
@@ -479,7 +506,7 @@ fn {{ variant_rs_to_js_function_name(variant) }}<'a>(
             let js_tag = JsString::try_new(cx, "{{ value.name }}").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
 {% for attr_name, attr_type in value.struct.attributes.items() %}
-        let js_{{ attr_name }} = {{ render_rs_to_js(attr_name, attr_type, mut_cx_ref="cx") | indent(12) }};
+        let js_{{ attr_name }} = {{ render_rs_to_js(attr_name, attr_type, mut_cx_ref="cx") }};
         js_obj.set(cx, "{{ attr_name | snake2camel }}", js_{{ attr_name }})?;
 {% endfor %}
         }
@@ -488,7 +515,7 @@ fn {{ variant_rs_to_js_function_name(variant) }}<'a>(
             let js_tag = JsString::try_new(cx, "{{ value.name }}").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
 {% for attr_type in value.tuple %}
-            let js_x{{ loop.index }} = {{ render_rs_to_js("x%s" % loop.index, attr_type, mut_cx_ref="cx") | indent(16) }};
+            let js_x{{ loop.index }} = {{ render_rs_to_js("x%s" % loop.index, attr_type, mut_cx_ref="cx") }};
             js_obj.set(cx, "x{{ loop.index }}", js_x{{ loop.index }})?;
 {% endfor %}
         }
@@ -545,7 +572,7 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
         Some(v) => {
             match v.downcast::<{{ ts_type(param_type.elem) }}, _>(&mut cx) {
                 Ok(js_val) => {
-                    Some({{ render_downcasted_js_to_rs("js_val", param_type.elem) | indent(20) }})
+                    Some({{ render_downcasted_js_to_rs("js_val", param_type.elem) }})
                 }
                 Err(_) => None,
             }
@@ -555,7 +582,7 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
 {% else %}
     let {{ param_name }} = {
         let js_val = cx.argument::<{{ ts_type(param_type) }}>({{ loop.index0 }})?;
-        {{ render_downcasted_js_to_rs("js_val", param_type) | indent(8) }}
+        {{ render_downcasted_js_to_rs("js_val", param_type) }}
     };
 {% endif %}
 {% endfor %}
@@ -580,7 +607,7 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
 {% if meth.return_type is none %}
             let js_ret = cx.null();
 {% else %}
-            let js_ret = {{ render_rs_to_js("ret", meth.return_type) | indent(8) }};
+            let js_ret = {{ render_rs_to_js("ret", meth.return_type) }};
 {% endif %}
             Ok(js_ret)
         });
@@ -600,7 +627,7 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
         Some(v) => {
             match v.downcast::<{{ ts_type(param_type.elem) }}, _>(&mut cx) {
                 Ok(js_val) => {
-                    Some({{ render_downcasted_js_to_rs("js_val", param_type.elem) | indent(20) }})
+                    Some({{ render_downcasted_js_to_rs("js_val", param_type.elem) }})
                 }
                 Err(_) => None,
             }
@@ -610,7 +637,7 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
 {% else %}
     let {{ param_name }} = {
         let js_val = cx.argument::<{{ ts_type(param_type) }}>({{ loop.index0 }})?;
-        {{ render_downcasted_js_to_rs("js_val", param_type) | indent(8) }}
+        {{ render_downcasted_js_to_rs("js_val", param_type) }}
     };
 {% endif %}
 {% endfor %}
@@ -628,7 +655,7 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
 {% if meth.return_type is none %}
     let js_ret = cx.null();
 {% else %}
-    let js_ret = {{ render_rs_to_js("ret", meth.return_type) | indent }};
+    let js_ret = {{ render_rs_to_js("ret", meth.return_type) }};
 {% endif %}
 {# Resolve promise #}
     let (deferred, promise) = cx.promise();
