@@ -44,6 +44,9 @@ import {
   DeviceInfo,
   ClientListUserDevicesError,
   UserID,
+  UserTuple,
+  ClientListWorkspaceUsersError,
+  ClientShareWorkspaceError,
 } from '@/parsec/types';
 import { getParsecHandle } from '@/router/conditions';
 import { DateTime } from 'luxon';
@@ -104,19 +107,50 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
   const handle = getParsecHandle();
 
   if (handle !== null && window.isDesktop()) {
-    return await libparsec.clientListWorkspaces(handle);
-  } else {
-    return new Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>>((resolve, _reject) => {
-      resolve({
-        ok: true, value: [
-          {'id': '1', 'name': 'Trademeet', 'selfRole': WorkspaceRole.Owner},
-          {'id': '2', 'name': 'The Copper Coronet', 'selfRole': WorkspaceRole.Manager},
-          {'id': '3', 'name': 'The Asylum', 'selfRole': WorkspaceRole.Contributor},
-          {'id': '4', 'name': 'Druid Grove', 'selfRole': WorkspaceRole.Reader},
-          // cspell:disable-next-line
-          {'id': '5', 'name': 'Menzoberranzan', 'selfRole': WorkspaceRole.Owner},
-        ],
+    const result = await libparsec.clientListWorkspaces(handle);
+
+    if (result.ok) {
+      const returnValue: Array<WorkspaceInfo> = [];
+      for (let i = 0; i < result.value.length; i++) {
+        const sharingResult = await getWorkspaceSharing(result.value[i].id, false);
+        const info: WorkspaceInfo = {
+          id: result.value[i].id,
+          name: result.value[i].name,
+          selfRole: result.value[i].selfRole,
+          sharing: [],
+          size: 0,
+          lastUpdated: DateTime.now(),
+          availableOffline: false,
+        };
+        if (sharingResult.ok) {
+          info.sharing = sharingResult.value;
+        }
+        returnValue.push(info);
+      }
+      return new Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>>((resolve, _reject) => {
+        resolve({ok: true, value: returnValue});
       });
+    } else {
+      return result;
+    }
+  } else {
+    const value: Array<WorkspaceInfo> = [{
+      'id': '1', 'name': 'Trademeet', 'selfRole': WorkspaceRole.Owner, size: 934_583, lastUpdated: DateTime.now().minus(2000),
+      availableOffline: false, sharing: [],
+    }, {
+      'id': '2', 'name': 'The Copper Coronet', 'selfRole': WorkspaceRole.Manager, size: 3_489_534_274, lastUpdated: DateTime.now(),
+      availableOffline: false, sharing: [],
+    }];
+
+    for (let i = 0; i < value.length; i++) {
+      const result = await getWorkspaceSharing(value[i].id, false);
+      if (result.ok) {
+        value[i].sharing = result.value;
+      }
+    }
+
+    return new Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>>((resolve, _reject) => {
+      resolve({ok: true, value: value});
     });
   }
 }
@@ -305,7 +339,13 @@ export async function getWorkspaceName(workspaceId: WorkspaceID): Promise<Result
     });
   } else {
     return new Promise<Result<WorkspaceID, GetWorkspaceNameError>>((resolve, _reject) => {
-      resolve({ok: true, value: 'My Workspace'});
+      if (workspaceId === '1') {
+        resolve({ok: true, value: 'Trademeet'});
+      } else if (workspaceId === '2') {
+        resolve({ok: true, value: 'The Copper Coronet'});
+      } else {
+        resolve({ok: true, value: 'My Workspace'});
+      }
     });
   }
 }
@@ -391,6 +431,55 @@ export async function listUsers(skipRevoked = true): Promise<Result<Array<UserIn
   }
 }
 
+export async function getWorkspaceSharing(workspaceId: WorkspaceID, includeAllUsers = false):
+  Promise<Result<Array<[UserTuple, WorkspaceRole | null]>, ClientListWorkspaceUsersError>> {
+  const handle = getParsecHandle();
+
+  if (handle !== null && window.isDesktop()) {
+    const result = await libparsec.clientListWorkspaceUsers(handle, workspaceId);
+    if (result.ok) {
+      const value: Array<[UserTuple, WorkspaceRole | null]> = [];
+
+      for (const sharing of result.value) {
+        value.push([{id: sharing.userId, humanHandle: sharing.humanHandle || {label: sharing.userId, email: ''}}, sharing.role]);
+      }
+      if (includeAllUsers) {
+        const usersResult = await libparsec.clientListUsers(handle, true);
+        if (usersResult.ok) {
+          for (const user of usersResult.value) {
+            if (!value.find((item) => item[0].id === user.id)) {
+              value.push([{id: user.id, humanHandle: user.humanHandle || {label: user.id, email: ''}}, null]);
+            }
+          }
+        }
+      }
+      return new Promise<Result<Array<[UserTuple, WorkspaceRole | null]>, ClientListWorkspaceUsersError>>((resolve, _reject) => {
+        resolve({ok: true, value: value});
+      });
+    }
+    return new Promise<Result<Array<[UserTuple, WorkspaceRole | null]>, ClientListWorkspaceUsersError>>((resolve, _reject) => {
+      resolve({ok: false, error: result.error});
+    });
+  } else {
+    const value: Array<[UserTuple, WorkspaceRole | null]> = [[
+      // cspell:disable-next-line
+      {id: '1', humanHandle: {label: 'Korgan Bloodaxe', email: 'korgan@gmail.com'}}, WorkspaceRole.Reader,
+    ], [
+      // cspell:disable-next-line
+      {id: '2', humanHandle: {label: 'Cernd', email: 'cernd@gmail.com'}}, WorkspaceRole.Contributor,
+    ]];
+
+    if (includeAllUsers) {
+      // cspell:disable-next-line
+      value.push([{id: '3', humanHandle: {label: 'Jaheira', email: 'jaheira@gmail.com'}}, null]);
+    }
+
+    return new Promise<Result<Array<[UserTuple, WorkspaceRole | null]>, ClientListWorkspaceUsersError>>((resolve, _reject) => {
+      resolve({ok: true, value: value});
+    });
+  }
+}
+
 export async function listUserDevices(user: UserID): Promise<Result<Array<DeviceInfo>, ClientListUserDevicesError>> {
   const handle = getParsecHandle();
 
@@ -416,6 +505,19 @@ export async function listUserDevices(user: UserID): Promise<Result<Array<Device
         createdOn: DateTime.now(),
         createdBy: 'device1',
       }]});
+    });
+  }
+}
+
+export async function shareWorkspace(workspaceId: WorkspaceID, userId: UserID, role: WorkspaceRole | null):
+  Promise<Result<null, ClientShareWorkspaceError>> {
+  const handle = getParsecHandle();
+
+  if (handle !== null && window.isDesktop()) {
+    return await libparsec.clientShareWorkspace(handle, workspaceId, userId, role);
+  } else {
+    return new Promise<Result<null, ClientShareWorkspaceError>>((resolve, _reject) => {
+      resolve({ok: true, value: null});
     });
   }
 }

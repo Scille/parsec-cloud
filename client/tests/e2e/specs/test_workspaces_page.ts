@@ -15,54 +15,55 @@ describe('Check workspaces page', () => {
     cy.get('#workspace-filter-select').contains('Name');
     cy.get('#workspaces-ms-action-bar').find('#grid-view').should('have.attr', 'disabled');
     cy.get('#workspaces-ms-action-bar').find('#list-view').should('not.have.attr', 'disabled');
-    cy.get('.card').should('have.length', 5);
+    cy.get('.card').should('have.length', 2);
     cy.get('.workspace-list-item').should('have.length', 0);
-    cy.get('.card').first().contains('Druid Grove');
+    cy.get('.card').first().contains('The Copper Coronet');
+    cy.get('.card').last().contains('Trademeet');
   });
 
   it('Sort workspaces in grid view', () => {
-    cy.get('.card').first().contains('Druid Grove');
+    cy.get('.card').first().contains('The Copper Coronet');
     cy.get('.card').last().contains('Trademeet');
     cy.get('#workspace-filter-select').click();
     cy.get('.popover-viewport').contains('Size').click();
-    cy.get('.card').first().contains('Druid Grove');
+    cy.get('.card').first().contains('Trademeet');
     cy.get('.card').last().contains('The Copper Coronet');
     cy.get('#workspace-filter-select').click();
     cy.get('.popover-viewport').contains('Last update').click();
     cy.get('#workspace-filter-select').contains('Last update');
-    cy.get('.card').first().contains('Trademeet');
-    cy.get('.card').last().contains('The Asylum');
+    cy.get('.card').first().contains('The Copper Coronet');
+    cy.get('.card').last().contains('Trademeet');
   });
 
   it('Switch views', () => {
-    cy.get('.card').should('have.length', 5);
+    cy.get('.card').should('have.length', 2);
     cy.get('#workspaces-ms-action-bar').find('#list-view').click();
     cy.get('#workspaces-ms-action-bar').find('#grid-view').should('not.have.attr', 'disabled');
     cy.get('#workspaces-ms-action-bar').find('#list-view').should('have.attr', 'disabled');
     cy.get('.card').should('have.length', 0);
-    cy.get('.workspace-list-item').should('have.length', 5);
+    cy.get('.workspace-list-item').should('have.length', 2);
   });
 
   it('Sort workspaces in list view', () => {
     cy.get('#workspaces-ms-action-bar').find('#list-view').click();
-    cy.get('.workspace-list-item').should('have.length', 5);
-    cy.get('.workspace-list-item').first().contains('Druid Grove');
+    cy.get('.workspace-list-item').should('have.length', 2);
+    cy.get('.workspace-list-item').first().contains('The Copper Coronet');
     cy.get('.workspace-list-item').last().contains('Trademeet');
     cy.get('#workspace-filter-select').click();
     cy.get('.popover-viewport').contains('Size').click();
-    cy.get('.workspace-list-item').first().contains('Druid Grove');
+    cy.get('.workspace-list-item').first().contains('Trademeet');
     cy.get('.workspace-list-item').last().contains('The Copper Coronet');
     cy.get('#workspace-filter-select').click();
     cy.get('.popover-viewport').contains('Last update').click();
     cy.get('#workspace-filter-select').contains('Last update');
-    cy.get('.workspace-list-item').first().contains('Trademeet');
-    cy.get('.workspace-list-item').last().contains('The Asylum');
+    cy.get('.workspace-list-item').first().contains('The Copper Coronet');
+    cy.get('.workspace-list-item').last().contains('Trademeet');
   });
 
   it('Navigate into a workspace', () => {
     function checkListWorkspaceSelectedItem(workspaceName: string): void {
-      cy.get('.list-workspaces').find('.sidebar-item').as('workspaceItems').should('have.length', 5);
-      for (let i = 0; i < 5; i++) {
+      cy.get('.list-workspaces').find('.sidebar-item').as('workspaceItems').should('have.length', 2);
+      for (let i = 0; i < 2; i++) {
         cy.get('@workspaceItems').eq(i).as('currentWorkspace').find('ion-label').then((label) => {
           if (label.get(0).innerText === workspaceName) {
             cy.get('@currentWorkspace').should('have.class', 'item-selected');
@@ -76,7 +77,7 @@ describe('Check workspaces page', () => {
     checkListWorkspaceSelectedItem('Trademeet');
     cy.get('.file-list-item').should('have.length.at.least', 1);
     cy.get('.topbar-left').find('ion-button.back-button').click();
-    cy.get('.card').should('have.length', 5);
+    cy.get('.card').should('have.length', 2);
   });
 
   it('Open workspace menu in grid view', () => {

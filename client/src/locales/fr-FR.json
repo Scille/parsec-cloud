@@ -8,6 +8,13 @@
         "license": "BUSL-1.1",
         "licenseLink": "https://spdx.org/licenses/BUSL-1.1.html"
     },
+    "workspaceRoles": {
+        "reader": "Lecteur",
+        "contributor": "Contributeur",
+        "manager": "Gérant",
+        "owner": "Propriétaire",
+        "none": "Non partagé"
+    },
     "HomePage": {
         "topbar": {
             "settings": "Paramètres",
@@ -171,14 +178,7 @@
         "searchPlaceholder": "ex : Jean Martin",
         "valid": "Valider",
         "cancel": "Annuler",
-        "currentUserLabel": "Moi",
-        "roles": {
-            "Reader": "Lecteur",
-            "Contributor": "Contributeur",
-            "Manager": "Gérant",
-            "Owner": "Propriétaire",
-            "NotShared": "Non partagé"
-        }
+        "currentUserLabel": "Moi"
     },
     "SettingsPage": {
         "pageTitle": "Paramètres",

@@ -21,13 +21,12 @@
         <ion-list class="user-list">
           <workspace-user-role
             :disabled="true"
-            :user="$t('WorkspaceSharing.currentUserLabel')"
+            :user="{id: 'FAKE', humanHandle: {label: $t('WorkspaceSharing.currentUserLabel'), email: ''}}"
             :role="ownRole"
           />
           <workspace-user-role
-            v-for="entry in userRoles.entries()"
-            :key="entry[0]"
-            :disabled="entry[0] === 'Me'"
+            v-for="entry in userRoles"
+            :key="entry[0].id"
             :user="entry[0]"
             :role="entry[1]"
             @role-update="updateUserRole"
@@ -44,49 +43,82 @@ import {
   IonList,
   modalController,
 } from '@ionic/vue';
-import { ref, watch, onUnmounted, onMounted } from 'vue';
-import { getWorkspaceSharingInfo } from '@/common/mocks';
+import { ref, Ref, watch, onUnmounted, onMounted, inject } from 'vue';
 import { MsModalResult } from '@/components/core/ms-types';
-import { WorkspaceID, WorkspaceRole } from '@/parsec';
-
+import { WorkspaceID, WorkspaceRole, getWorkspaceSharing, UserTuple, shareWorkspace } from '@/parsec';
+import { NotificationKey } from '@/common/injectionKeys';
+import { NotificationCenter, Notification, NotificationLevel } from '@/services/notificationCenter';
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
+import { useI18n } from 'vue-i18n';
+import { translateWorkspaceRole } from '@/common/translations';
 
+const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 const search = ref('');
+const { t } = useI18n();
 
 const props = defineProps<{
   workspaceId: WorkspaceID,
   ownRole: WorkspaceRole | null,
 }>();
 
-const userRoles = ref(new Map<string, WorkspaceRole | null>());
+const userRoles: Ref<Array<[UserTuple, WorkspaceRole | null]>> = ref([]);
 
 // Would prefere to use a computed instead of a watch but
 // Vue doesn't handle async in computed.
 const unwatchSearch = watch(search, async() => {
-  const allRoles = await getWorkspaceSharingInfo(props.workspaceId);
-  const roles = new Map<string, WorkspaceRole | null>();
-  const lowerCaseSearch = search.value.toLocaleLowerCase();
+  const result = await getWorkspaceSharing(props.workspaceId, true);
 
-  for (const entry of allRoles) {
-    if (entry[0].toLocaleLowerCase().includes(lowerCaseSearch)) {
-      roles.set(entry[0], entry[1]);
+  if (result.ok) {
+    const roles: Array<[UserTuple, WorkspaceRole | null]> = [];
+    const lowerCaseSearch = search.value.toLocaleLowerCase();
+
+    for (const entry of result.value) {
+      if (entry[0].humanHandle.label.toLocaleLowerCase().includes(lowerCaseSearch)) {
+        roles.push(entry);
+      }
     }
+    userRoles.value = roles;
+  } else {
+    console.log('Could not get workspace sharing info');
   }
-  userRoles.value = roles;
 });
 
 onMounted(async () => {
-  userRoles.value = await getWorkspaceSharingInfo(props.workspaceId);
+  const result = await getWorkspaceSharing(props.workspaceId, true);
+
+  if (result.ok) {
+    userRoles.value = result.value;
+  } else {
+    console.log('Could not get workspace sharing info');
+  }
 });
 
 onUnmounted(() => {
   unwatchSearch();
 });
 
-async function updateUserRole(user: string, role: WorkspaceRole | null): Promise<void> {
-  console.log(`Update user ${user} role to ${role}`);
+async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Promise<void> {
+  const result = await shareWorkspace(props.workspaceId, user.id, role);
+  if (result.ok) {
+    if (!role) {
+      notificationCenter.showToast(
+        new Notification({message: `The workspace is no longer shared with ${user.humanHandle.label}.`, level: NotificationLevel.Success}),
+      );
+    } else {
+      notificationCenter.showToast(
+        new Notification({
+          message: `${user.humanHandle.label}'s role has been updated to ${translateWorkspaceRole(t, role)}.`,
+          level: NotificationLevel.Success,
+        }),
+      );
+    }
+  } else {
+    notificationCenter.showToast(
+      new Notification({message: `Failed to update ${user.humanHandle.label}'s role.`, level: NotificationLevel.Error}),
+    );
+  }
 }
 
 function cancel(): Promise<boolean> {

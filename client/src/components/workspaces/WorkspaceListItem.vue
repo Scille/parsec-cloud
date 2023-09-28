@@ -30,21 +30,21 @@
     <!-- role user -->
     <div class="workspace-role">
       <workspace-tag-role
-        :role="workspace.role"
+        :role="workspace.selfRole"
       />
     </div>
 
     <!-- user avatars -->
     <div class="workspace-users">
       <avatar-group
-        v-show="getSharedWith(workspace).length > 0"
+        v-show="workspace.sharing.length > 0"
         class="shared-group"
-        :people="getSharedWith(workspace)"
+        :people="workspace.sharing.map((item) => item[0].humanHandle.label)"
         :max-display="2"
         @click.stop="$emit('shareClick', $event, workspace)"
       />
       <ion-label
-        v-show="getSharedWith(workspace).length === 0"
+        v-show="workspace.sharing.length === 0"
         @click.stop="$emit('shareClick', $event, workspace)"
       >
         {{ $t('WorkspacesPage.Workspace.notShared') }}
@@ -54,7 +54,7 @@
     <!-- last update -->
     <div class="workspace-lastUpdate">
       <ion-label class="label-last-update cell">
-        {{ timeSince(workspace.lastUpdate, '--', 'short') }}
+        {{ timeSince(workspace.lastUpdated, '--', 'short') }}
       </ion-label>
     </div>
 
@@ -93,20 +93,20 @@ import {
 import { ref, inject } from 'vue';
 import { IonIcon, IonButton, IonItem, IonLabel } from '@ionic/vue';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
-import { MockWorkspace, getSharedWith } from '@/common/mocks';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
+import { WorkspaceInfo } from '@/parsec';
 
 const isSelected = ref(false);
 
 defineProps<{
-  workspace: MockWorkspace
+  workspace: WorkspaceInfo
 }>();
 
 defineEmits<{
-  (e: 'click', event: Event, workspace: MockWorkspace): void
-  (e: 'menuClick', event: Event, workspace: MockWorkspace): void
-  (e: 'shareClick', event: Event, workspace: MockWorkspace): void
+  (e: 'click', event: Event, workspace: WorkspaceInfo): void
+  (e: 'menuClick', event: Event, workspace: WorkspaceInfo): void
+  (e: 'shareClick', event: Event, workspace: WorkspaceInfo): void
 }>();
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

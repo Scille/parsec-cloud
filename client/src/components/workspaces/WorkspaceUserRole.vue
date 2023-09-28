@@ -6,16 +6,16 @@
   >
     <user-avatar-name
       class="user"
-      :user-avatar="$props.user"
-      :user-name="$props.user"
+      :user-avatar="user.humanHandle.label"
+      :user-name="user.humanHandle.label"
     />
 
     <ms-select
       class="select"
       :options="options"
       :disabled="disabled"
-      :default-option="$props.role || NOT_SHARED_KEY"
-      @change="$emit('roleUpdate', $props.user, getRoleFromString($event.option.key))"
+      :default-option="role || NOT_SHARED_KEY"
+      @change="$emit('roleUpdate', user, getRoleFromString($event.option.key))"
     />
   </div>
 </template>
@@ -28,27 +28,29 @@ import { Ref, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { MsSelectOption } from '@/components/core/ms-select/MsSelectOption';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
+import { UserTuple } from '@/parsec';
+import { translateWorkspaceRole } from '@/common/translations';
 
 const { t } = useI18n();
 
 defineProps<{
-  user: string
+  user: UserTuple
   role: WorkspaceRole | null
   disabled?: boolean
 }>();
 
 defineEmits<{
-  (e: 'roleUpdate', user: string, newRole: WorkspaceRole | null): void
+  (e: 'roleUpdate', user: UserTuple, newRole: WorkspaceRole | null): void
 }>();
 
 const NOT_SHARED_KEY = 'not_shared';
 
 const options: Ref<MsSelectOption[]> = ref([
-  { key:  WorkspaceRole.Reader, label: t('WorkspaceSharing.roles.Reader') },
-  { key: WorkspaceRole.Contributor, label: t('WorkspaceSharing.roles.Contributor') },
-  { key: WorkspaceRole.Manager, label: t('WorkspaceSharing.roles.Manager') },
-  { key: WorkspaceRole.Owner, label: t('WorkspaceSharing.roles.Owner') },
-  { key: NOT_SHARED_KEY, label: t('WorkspaceSharing.roles.NotShared') },
+  { key:  WorkspaceRole.Reader, label: translateWorkspaceRole(t, WorkspaceRole.Reader) },
+  { key: WorkspaceRole.Contributor, label: translateWorkspaceRole(t, WorkspaceRole.Contributor) },
+  { key: WorkspaceRole.Manager, label: translateWorkspaceRole(t, WorkspaceRole.Manager) },
+  { key: WorkspaceRole.Owner, label: translateWorkspaceRole(t, WorkspaceRole.Owner) },
+  { key: NOT_SHARED_KEY, label: translateWorkspaceRole(t, null) },
 ]);
 
 function getRoleFromString(role: string): WorkspaceRole | null {

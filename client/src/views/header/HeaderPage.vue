@@ -124,7 +124,7 @@ import {
   notifications,
 } from 'ionicons/icons';
 import { useI18n } from 'vue-i18n';
-import { onMounted, computed, Ref, ref } from 'vue';
+import { onMounted, computed, Ref, ref, watch, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import ProfileHeader from '@/views/header/ProfileHeader.vue';
 import useSidebarMenu from '@/services/sidebarMenu';
@@ -141,8 +141,8 @@ const { t } = useI18n();
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 
-onMounted(async () => {
-  if (currentRoute.params.workspaceId) {
+const unwatchRoute = watch(currentRoute,  async (newRoute, _oldRoute) => {
+  if (newRoute.params.workspaceId) {
     const result = await getWorkspaceName(currentRoute.params.workspaceId as WorkspaceID);
     if (result.ok) {
       workspaceName.value = result.value;
@@ -150,13 +150,19 @@ onMounted(async () => {
       console.log('Could not get workspace name', result.error);
     }
   }
+});
 
+onMounted(async () => {
   const result = await getClientInfo();
   if (result.ok) {
     userInfo.value = result.value;
   } else {
     console.log('Could not get user info', result.error);
   }
+});
+
+onUnmounted(async () => {
+  unwatchRoute();
 });
 
 function getTitleForRoute(): string {

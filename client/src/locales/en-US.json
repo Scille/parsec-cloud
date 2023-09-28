@@ -8,6 +8,13 @@
         "license": "BUSL-1.1",
         "licenseLink": "https://spdx.org/licenses/BUSL-1.1.html"
     },
+    "workspaceRoles": {
+        "reader": "Reader",
+        "contributor": "Contributor",
+        "manager": "Manager",
+        "owner": "Owner",
+        "none": "Not shared"
+    },
     "HomePage": {
         "topbar": {
             "settings": "Settings",
@@ -172,14 +179,7 @@
         "searchPlaceholder": "e.g.: John Smith",
         "valid": "Valid",
         "cancel": "Cancel",
-        "currentUserLabel": "Me",
-        "roles": {
-            "Reader": "Reader",
-            "Contributor": "Contributor",
-            "Manager": "Manager",
-            "Owner": "Owner",
-            "NotShared": "Not shared"
-        }
+        "currentUserLabel": "Me"
     },
     "SettingsPage": {
         "pageTitle": "Settings",

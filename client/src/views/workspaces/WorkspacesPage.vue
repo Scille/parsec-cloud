@@ -120,7 +120,6 @@ import {
 } from 'ionicons/icons';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
-import { MockWorkspace, getWorkspaceInfo } from '@/common/mocks';
 import WorkspaceContextMenu from '@/views/workspaces/WorkspaceContextMenu.vue';
 import { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
@@ -134,12 +133,15 @@ import { useI18n } from 'vue-i18n';
 import { ref, Ref, onMounted, computed } from 'vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import { routerNavigateTo } from '@/router';
-import { WorkspaceInfo, listWorkspaces as parsecListWorkspaces, createWorkspace as parsecCreateWorkspace } from '@/parsec';
+import {
+  WorkspaceInfo,
+  listWorkspaces as parsecListWorkspaces,
+  createWorkspace as parsecCreateWorkspace,
+} from '@/parsec';
 
 const { t } = useI18n();
 const sortBy = ref('name');
 const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
-const workspacesInfo: Ref<MockWorkspace[]> = ref([]);
 const displayView = ref(DisplayState.Grid);
 
 onMounted(async (): Promise<void> => {
@@ -150,26 +152,19 @@ async function refreshWorkspacesList(): Promise<void> {
   const result = await parsecListWorkspaces();
   if (result.ok) {
     workspaceList.value = result.value;
-    workspacesInfo.value = [];
-    for (const workspace of workspaceList.value) {
-      const info = await getWorkspaceInfo(workspace.id);
-      if (info) {
-        workspacesInfo.value.push(info);
-      }
-    }
   } else {
     console.log('Could not list workspaces', result.error);
   }
 }
 
 const filteredWorkspaces = computed(() => {
-  return Array.from(workspacesInfo.value).sort((a: MockWorkspace, b: MockWorkspace) => {
+  return Array.from(workspaceList.value).sort((a: WorkspaceInfo, b: WorkspaceInfo) => {
     if (sortBy.value === 'name') {
       return a.name.localeCompare(b.name);
     } else if (sortBy.value === 'size') {
       return a.size - b.size;
     } else if (sortBy.value === 'lastUpdated') {
-      return b.lastUpdate.diff(a.lastUpdate).milliseconds;
+      return b.lastUpdated.diff(a.lastUpdated).milliseconds;
     }
     return 0;
   });
@@ -204,16 +199,16 @@ async function openCreateWorkspaceModal(): Promise<void> {
   }
 }
 
-function onWorkspaceClick(_event: Event, workspace: MockWorkspace): void {
+function onWorkspaceClick(_event: Event, workspace: WorkspaceInfo): void {
   routerNavigateTo('folder', {workspaceId: workspace.id}, {path: '/'});
 }
 
-async function onWorkspaceShareClick(_: Event, workspace: MockWorkspace): Promise<void> {
+async function onWorkspaceShareClick(_: Event, workspace: WorkspaceInfo): Promise<void> {
   const modal = await modalController.create({
     component: WorkspaceSharingModal,
     componentProps: {
       workspaceId: workspace.id,
-      ownRole: workspace.role,
+      ownRole: workspace.selfRole,
     },
     cssClass: 'workspace-sharing-modal',
   });
@@ -221,7 +216,7 @@ async function onWorkspaceShareClick(_: Event, workspace: MockWorkspace): Promis
   await modal.onWillDismiss();
 }
 
-async function openWorkspaceContextMenu(event: Event, workspace: MockWorkspace): Promise<void> {
+async function openWorkspaceContextMenu(event: Event, workspace: WorkspaceInfo): Promise<void> {
   const popover = await popoverController
     .create({
       component: WorkspaceContextMenu,
