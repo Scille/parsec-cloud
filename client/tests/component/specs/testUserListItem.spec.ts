@@ -14,7 +14,7 @@ describe('User List Item', () => {
       id: '0',
       humanHandle: {label: 'John Smith', email: 'john.smith@gmail.com'},
       currentProfile: UserProfile.Standard,
-      createdOn: 'One minute ago',
+      createdOn: DateTime.now(),
       createdBy: 'device',
       revokedOn: null,
       revokedBy: null,

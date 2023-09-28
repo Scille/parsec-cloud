@@ -15,7 +15,7 @@ import type {
   InvitationToken,
   NewUserInvitationError,
   NewDeviceInvitationError,
-  InviteListItemUser,
+  InviteListItemUser as UserInvitation,
   UserClaimInProgress1Info,
   UserClaimInProgress2Info,
   UserClaimInProgress3Info,
@@ -54,7 +54,7 @@ import type {
   WorkspaceInfo,
   UserInfo as ParsecUserInfo,
   ClientListUsersError,
-  DeviceInfo as ParsecDeviceInfo,
+  DeviceInfo,
   ClientListUserDevicesError,
   UserID,
 } from '@/plugins/libparsec';
@@ -67,15 +67,9 @@ import {
   RealmRole as WorkspaceRole,
 } from '@/plugins/libparsec';
 
-interface UserInvitation extends InviteListItemUser {
-  date: DateTime
-}
-
 interface UserInfo extends ParsecUserInfo {
   isRevoked: () => boolean
 }
-
-type DeviceInfo = ParsecDeviceInfo
 
 enum BackendAddrType {
   Invalid = 'InvalidUrl',

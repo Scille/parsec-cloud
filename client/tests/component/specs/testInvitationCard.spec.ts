@@ -16,7 +16,6 @@ describe('User Invitation Card', () => {
       createdOn: DateTime.now(),
       claimerEmail: 'dung.eater@lands-between',
       status: InvitationStatus.Ready,
-      date: DateTime.now(),
     };
 
     const wrapper = mount(InvitationCard, {
