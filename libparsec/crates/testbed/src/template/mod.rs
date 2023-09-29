@@ -111,7 +111,7 @@ impl TestbedTemplate {
         }))
     }
 
-    pub fn device_signing_key<'a>(&'a self, device_id: &DeviceID) -> &'a SigningKey {
+    pub fn device_signing_key(&self, device_id: &DeviceID) -> &SigningKey {
         self.events
             .iter()
             .find_map(|e| match e {
@@ -135,7 +135,7 @@ impl TestbedTemplate {
             .expect("Device doesn't exist")
     }
 
-    pub fn device_local_symkey<'a>(&'a self, device_id: &DeviceID) -> &'a SecretKey {
+    pub fn device_local_symkey(&self, device_id: &DeviceID) -> &SecretKey {
         self.events
             .iter()
             .find_map(|e| match e {
@@ -159,7 +159,7 @@ impl TestbedTemplate {
             .expect("Device doesn't exist")
     }
 
-    pub fn user_private_key<'a>(&'a self, user_id: &UserID) -> &'a PrivateKey {
+    pub fn user_private_key(&self, user_id: &UserID) -> &PrivateKey {
         self.events
             .iter()
             .find_map(|e| match e {
