@@ -126,6 +126,12 @@
             "create": "Créer l'organisation",
             "done": "Terminer",
             "modify": "Modifier"
+        },
+        "errors": {
+            "badTimestamp": "Le temps de votre ordinateur est différent du temps du serveur. Veuillez vérifier votre horloge et vous assurer qu'elle est à jour (l'horloge de votre machine est {clientTime}, l'horloge du serveur est {serverTime}).",
+            "offline": "Impossible de contacter le serveur. Veuillez vérifier que vous êtes connecté(e) à internet.",
+            "alreadyExists": "Ce nom d'organisation n'est pas disponible, veuillez en choisir un autre.",
+            "generic": "Impossible de créer l'organisation (raison: {reason})."
         }
     },
     "JoinByLinkModal": {

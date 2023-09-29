@@ -47,6 +47,7 @@ import {
   UserTuple,
   ClientListWorkspaceUsersError,
   ClientShareWorkspaceError,
+  CreateOrganizationError,
 } from '@/parsec/types';
 import { getParsecHandle } from '@/router/conditions';
 import { DateTime } from 'luxon';
@@ -244,7 +245,7 @@ export async function createOrganization(
       mountpointBaseDir: window.getMountpointDir(),
       workspaceStorageCacheSize: {tag: 'Default'},
     };
-    return await libparsec.bootstrapOrganization(
+    const result = await libparsec.bootstrapOrganization(
       config,
       parsecEventCallback,
       bootstrapAddr,
@@ -253,6 +254,11 @@ export async function createOrganization(
       deviceLabel,
       null,
     );
+    if (!result.ok && result.error.tag === CreateOrganizationError.BadTimestamp) {
+      result.error.clientTimestamp = DateTime.fromSeconds(result.error.clientTimestamp as any as number);
+      result.error.serverTimestamp = DateTime.fromSeconds(result.error.serverTimestamp as any as number);
+    }
+    return result;
   } else {
     await wait(MOCK_WAITING_TIME);
     return new Promise<Result<AvailableDevice, BootstrapOrganizationError>>((resolve, _reject) => {

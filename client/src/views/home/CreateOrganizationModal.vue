@@ -182,7 +182,7 @@ import {
   checkmarkDone,
   close,
 } from 'ionicons/icons';
-import { ref, Ref } from 'vue';
+import { ref, Ref, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
@@ -193,10 +193,13 @@ import SummaryStep from '@/views/home/SummaryStep.vue';
 import { OrgInfo } from '@/views/home/SummaryStep.vue';
 import MsSpinner from '@/components/core/ms-spinner/MsSpinner.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
-import { AvailableDevice, createOrganization as parsecCreateOrganization } from '@/parsec';
+import { AvailableDevice, createOrganization as parsecCreateOrganization, CreateOrganizationError } from '@/parsec';
 import { MsModalResult } from '@/components/core/ms-types';
 import { organizationValidator, Validity } from '@/common/validators';
 import { asyncComputed } from '@/common/asyncComputed';
+import { NotificationCenter, Notification, NotificationLevel } from '@/services/notificationCenter';
+import { NotificationKey } from '@/common/injectionKeys';
+import { DateTime } from 'luxon';
 
 enum CreateOrganizationStep {
   OrgNameStep = 1,
@@ -208,10 +211,11 @@ enum CreateOrganizationStep {
   FinishStep = 7,
 }
 
-const { t } = useI18n();
+const { t, d } = useI18n();
 
 const DEFAULT_SAAS_ADDR = 'parsec://saas.parsec.cloud';
 
+const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 const pageStep = ref(CreateOrganizationStep.OrgNameStep);
 const orgName = ref('');
 const userInfo = ref();
@@ -342,6 +346,7 @@ function cancelModal(): Promise<boolean> {
 }
 
 async function nextStep(): Promise<void> {
+  console.log(d(DateTime.now().toJSDate(), 'long'));
   if (pageStep.value === CreateOrganizationStep.FinishStep) {
     modalController.dismiss({ device: device.value, password: passwordChoice.value.password }, MsModalResult.Confirm);
     return;
@@ -358,8 +363,31 @@ async function nextStep(): Promise<void> {
       device.value = result.value;
       await nextStep();
     } else {
-      console.log('Failed to create organization', result.error);
-      pageStep.value = CreateOrganizationStep.SummaryStep;
+      let message = '';
+      if (result.error.tag === CreateOrganizationError.AlreadyUsedToken) {
+        message = t('CreateOrganization.errors.alreadyExists');
+        pageStep.value = CreateOrganizationStep.OrgNameStep;
+      } else if (result.error.tag === CreateOrganizationError.Offline) {
+        message = t('CreateOrganization.errors.offline');
+        pageStep.value = CreateOrganizationStep.SummaryStep;
+      } else if (result.error.tag === CreateOrganizationError.BadTimestamp) {
+        console.log(d(DateTime.now().toJSDate(), 'long'));
+
+        message = t(
+          'CreateOrganization.errors.badTimestamp', {
+            clientTime: d(result.error.clientTimestamp.toJSDate(), 'long'),
+            serverTime: d(result.error.serverTimestamp.toJSDate(), 'long'),
+          },
+        );
+        pageStep.value = CreateOrganizationStep.SummaryStep;
+      } else {
+        message = t('CreateOrganization.errors.generic', {reason: result.error.tag});
+        pageStep.value = CreateOrganizationStep.SummaryStep;
+      }
+      notificationCenter.showToast(new Notification({
+        message: message,
+        level: NotificationLevel.Error,
+      }));
     }
   }
 
