@@ -105,9 +105,9 @@ pub enum MaybeRedactedSwitch {
     NoSwitch,
 }
 
-pub(super) async fn add_certificates_batch<'a>(
-    ops: &'a CertificatesOps,
-    store: &CertificatesStoreWriteGuard<'a>,
+pub(super) async fn add_certificates_batch(
+    ops: &CertificatesOps,
+    store: &CertificatesStoreWriteGuard<'_>,
     last_index: IndexInt,
     certificates: impl Iterator<Item = Bytes>,
 ) -> Result<MaybeRedactedSwitch, AddCertificateError> {
@@ -205,9 +205,9 @@ pub(super) async fn add_certificates_batch<'a>(
 
 /// Validate the given certificate by both checking it content (format, signature, etc.)
 /// and it global consistency with the others certificates.
-async fn validate_certificate<'a>(
-    ops: &'a CertificatesOps,
-    store: &CertificatesStoreWriteGuard<'a>,
+async fn validate_certificate(
+    ops: &CertificatesOps,
+    store: &CertificatesStoreWriteGuard<'_>,
     index: IndexInt,
     signed: Bytes,
 ) -> Result<AnyArcCertificate, AddCertificateError> {
@@ -498,8 +498,8 @@ async fn validate_certificate<'a>(
     }
 }
 
-async fn check_user_exists<'a>(
-    store: &CertificatesStoreWriteGuard<'a>,
+async fn check_user_exists(
+    store: &CertificatesStoreWriteGuard<'_>,
     up_to_index: IndexInt,
     user_id: &UserID,
     mk_hint: impl FnOnce() -> String,
@@ -538,8 +538,8 @@ async fn check_user_exists<'a>(
     }
 }
 
-async fn check_user_not_revoked<'a>(
-    store: &CertificatesStoreWriteGuard<'a>,
+async fn check_user_not_revoked(
+    store: &CertificatesStoreWriteGuard<'_>,
     up_to_index: IndexInt,
     user_id: &UserID,
     mk_hint: impl FnOnce() -> String,
@@ -567,9 +567,9 @@ async fn check_user_not_revoked<'a>(
 
 /// Admin existence has already been checked while fetching it device's verify key,
 /// so what's left is checking it is not revoked and (optionally) it profile
-async fn check_author_not_revoked_and_profile<'a>(
-    ops: &'a CertificatesOps,
-    store: &CertificatesStoreWriteGuard<'a>,
+async fn check_author_not_revoked_and_profile(
+    ops: &CertificatesOps,
+    store: &CertificatesStoreWriteGuard<'_>,
     up_to_index: IndexInt,
     author: &UserID,
     author_must_be_admin: bool,
@@ -632,8 +632,8 @@ async fn check_author_not_revoked_and_profile<'a>(
     Ok(())
 }
 
-async fn get_user_profile<'a>(
-    store: &CertificatesStoreWriteGuard<'a>,
+async fn get_user_profile(
+    store: &CertificatesStoreWriteGuard<'_>,
     up_to_index: IndexInt,
     user_id: &UserID,
     mk_hint: impl FnOnce() -> String,
@@ -656,9 +656,9 @@ async fn get_user_profile<'a>(
     Ok(user_certificate.profile)
 }
 
-async fn check_user_certificate_consistency<'a>(
-    ops: &'a CertificatesOps,
-    store: &CertificatesStoreWriteGuard<'a>,
+async fn check_user_certificate_consistency(
+    ops: &CertificatesOps,
+    store: &CertificatesStoreWriteGuard<'_>,
     current_index: IndexInt,
     cooked: &UserCertificate,
 ) -> Result<(), AddCertificateError> {
@@ -727,9 +727,9 @@ async fn check_user_certificate_consistency<'a>(
     Ok(())
 }
 
-async fn check_revoked_user_certificate_consistency<'a>(
-    ops: &'a CertificatesOps,
-    store: &CertificatesStoreWriteGuard<'a>,
+async fn check_revoked_user_certificate_consistency(
+    ops: &CertificatesOps,
+    store: &CertificatesStoreWriteGuard<'_>,
     current_index: IndexInt,
     cooked: &RevokedUserCertificate,
 ) -> Result<(), AddCertificateError> {
@@ -766,9 +766,9 @@ async fn check_revoked_user_certificate_consistency<'a>(
     Ok(())
 }
 
-async fn check_user_update_certificate_consistency<'a>(
-    ops: &'a CertificatesOps,
-    store: &CertificatesStoreWriteGuard<'a>,
+async fn check_user_update_certificate_consistency(
+    ops: &CertificatesOps,
+    store: &CertificatesStoreWriteGuard<'_>,
     current_index: IndexInt,
     cooked: &UserUpdateCertificate,
 ) -> Result<(), AddCertificateError> {
@@ -853,9 +853,9 @@ async fn check_user_update_certificate_consistency<'a>(
     Ok(())
 }
 
-async fn check_device_certificate_consistency<'a>(
-    ops: &'a CertificatesOps,
-    store: &CertificatesStoreWriteGuard<'a>,
+async fn check_device_certificate_consistency(
+    ops: &CertificatesOps,
+    store: &CertificatesStoreWriteGuard<'_>,
     current_index: IndexInt,
     cooked: &DeviceCertificate,
 ) -> Result<(), AddCertificateError> {
@@ -945,8 +945,8 @@ async fn check_device_certificate_consistency<'a>(
     Ok(())
 }
 
-async fn check_realm_role_certificate_consistency<'a>(
-    store: &CertificatesStoreWriteGuard<'a>,
+async fn check_realm_role_certificate_consistency(
+    store: &CertificatesStoreWriteGuard<'_>,
     current_index: IndexInt,
     cooked: &RealmRoleCertificate,
 ) -> Result<(), AddCertificateError> {
@@ -1101,9 +1101,9 @@ async fn check_realm_role_certificate_consistency<'a>(
     Ok(())
 }
 
-async fn check_sequester_authority_certificate_consistency<'a>(
+async fn check_sequester_authority_certificate_consistency(
     ops: &CertificatesOps,
-    store: &CertificatesStoreWriteGuard<'a>,
+    store: &CertificatesStoreWriteGuard<'_>,
     current_index: IndexInt,
     cooked: &SequesterAuthorityCertificate,
 ) -> Result<(), AddCertificateError> {
@@ -1150,8 +1150,8 @@ async fn check_sequester_authority_certificate_consistency<'a>(
     Ok(())
 }
 
-async fn check_sequester_service_certificate_consistency<'a>(
-    store: &CertificatesStoreWriteGuard<'a>,
+async fn check_sequester_service_certificate_consistency(
+    store: &CertificatesStoreWriteGuard<'_>,
     current_index: IndexInt,
     cooked: &SequesterServiceCertificate,
 ) -> Result<(), AddCertificateError> {

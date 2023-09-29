@@ -26,16 +26,11 @@ pub use libparsec_platform_storage::certificates::{
 };
 use libparsec_types::prelude::*;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 enum ScalarCache<T> {
+    #[default]
     Miss,
     Present(T),
-}
-
-impl<T> Default for ScalarCache<T> {
-    fn default() -> Self {
-        Self::Miss
-    }
 }
 
 impl<T> ScalarCache<T> {
@@ -140,7 +135,7 @@ impl<'a> CertificatesStoreWriteGuard<'a> {
         &self,
         index: IndexInt,
     ) -> Result<(DateTime, Option<DateTime>), GetTimestampBoundsError> {
-        get_timestamp_bounds(self.store, index).await
+        self.store.storage.get_timestamp_bounds(index).await
     }
 
     #[allow(unused)]
@@ -325,7 +320,7 @@ impl<'a> CertificatesStoreReadGuard<'a> {
         &self,
         index: IndexInt,
     ) -> Result<(DateTime, Option<DateTime>), GetTimestampBoundsError> {
-        get_timestamp_bounds(self.store, index).await
+        self.store.storage.get_timestamp_bounds(index).await
     }
 
     pub async fn get_any_certificate(
@@ -499,13 +494,6 @@ async fn get_current_user_profile(
     guard.per_user_profile.insert(user_id, profile);
 
     Ok(profile)
-}
-
-async fn get_timestamp_bounds(
-    store: &CertificatesStore,
-    index: IndexInt,
-) -> Result<(DateTime, Option<DateTime>), GetTimestampBoundsError> {
-    store.storage.get_timestamp_bounds(index).await
 }
 
 async fn get_any_certificate(
