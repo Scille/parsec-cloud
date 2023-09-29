@@ -158,7 +158,7 @@ export async function listUserInvitations(): Promise<Result<Array<UserInvitation
     result.value = result.value.filter((item: InviteListItem) => item.tag === 'User');
     // Convert InviteListItemUser to UserInvitation
     result.value = result.value.map((item) => {
-      item.createdOn = DateTime.fromMillis(item.createdOn as any as number);
+      item.createdOn = DateTime.fromSeconds(item.createdOn as any as number);
       return item;
     });
     return result as any;
@@ -341,9 +341,9 @@ export async function listUsers(skipRevoked = true): Promise<Result<Array<UserIn
     const result = await libparsec.clientListUsers(handle, skipRevoked);
     if (result.ok) {
       result.value.map((item) => {
-        item.createdOn = DateTime.fromMillis(item.createdOn as any as number);
+        item.createdOn = DateTime.fromSeconds(item.createdOn as any as number);
         if (item.revokedOn) {
-          item.revokedOn = DateTime.fromMillis(item.revokedOn as any as number);
+          item.revokedOn = DateTime.fromSeconds(item.revokedOn as any as number);
         }
         (item as UserInfo).isRevoked = (): boolean => item.revokedOn !== null;
         return item;
@@ -398,7 +398,7 @@ export async function listUserDevices(user: UserID): Promise<Result<Array<Device
     const result = await libparsec.clientListUserDevices(handle, user);
     if (result.ok) {
       result.value.map((item) => {
-        item.createdOn = DateTime.fromMillis(item.createdOn as any as number);
+        item.createdOn = DateTime.fromSeconds(item.createdOn as any as number);
         return item;
       });
     }
