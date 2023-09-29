@@ -147,13 +147,10 @@ pub(crate) fn filter_close_handles(
     let mut guard = get_handles();
 
     for (handle, maybe_running) in guard.iter_mut().skip(start_at as usize).enumerate() {
-        match maybe_running {
-            RegisteredHandleItem::Open(item) => {
-                if let FilterCloseHandle::Close = filter(handle as Handle, item) {
-                    *maybe_running = RegisteredHandleItem::Closed;
-                }
+        if let RegisteredHandleItem::Open(item) = maybe_running {
+            if let FilterCloseHandle::Close = filter(handle as Handle, item) {
+                *maybe_running = RegisteredHandleItem::Closed;
             }
-            RegisteredHandleItem::Closed => todo!(),
         }
     }
 }

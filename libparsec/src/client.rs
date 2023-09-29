@@ -191,7 +191,7 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
         });
         // Note there is no risk (in theory it least !) to end up in an infinite
         // loop here: the client's handle is closed so no new workspace start
-        // commands cannot be issued and we only process the remaining ones.
+        // commands can be issued and we only process the remaining ones.
         match maybe_wait {
             Some(listener) => listener.await,
             None => break,
