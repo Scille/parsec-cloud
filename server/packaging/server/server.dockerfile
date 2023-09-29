@@ -43,5 +43,5 @@ WORKDIR /backend
 COPY --chown=1234:1234 --from=builder /work/venv /backend/venv
 
 EXPOSE 6777
-ENTRYPOINT ["/backend/venv/bin/python", "parsec", "backend"]
+ENTRYPOINT ["/backend/venv/bin/python", "/backend/venv/bin/parsec", "backend"]
 CMD ["run", "--port=6777"]
