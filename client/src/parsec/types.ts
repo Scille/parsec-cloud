@@ -83,6 +83,15 @@ enum BackendAddrType {
   PkiEnrollment = 'PkiEnrollment',
 }
 
+enum CreateOrganizationError {
+  AlreadyUsedToken = 'AlreadyUsedToken',
+  BadTimestamp = 'BadTimestamp',
+  Internal = 'Internal',
+  InvalidToken = 'InvalidToken',
+  Offline = 'Offline',
+  SaveDevice = 'SaveDeviceError',
+}
+
 interface GetWorkspaceNameError {
   tag: 'NotFound'
 }
@@ -165,8 +174,9 @@ export {
   GetWorkspaceNameError,
   ClientStartInvitationGreetError,
   GreetInProgressError,
-  ClientListUsersError,
+  CreateOrganizationError,
   ClientListUserDevicesError,
   ClientListWorkspaceUsersError,
   ClientShareWorkspaceError,
+  ClientListUsersError,
 };

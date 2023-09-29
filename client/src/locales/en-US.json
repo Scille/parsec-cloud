@@ -127,6 +127,12 @@
             "create": "Create organization",
             "done": "Let's go!",
             "modify": "Edit"
+        },
+        "errors": {
+            "badTimestamp": "The time of your machine differs from the server. Please check your clock and make sure it is up-to-date (your machine's time is {clientTime}, server time is {serverTime}).",
+            "offline": "Could not contact the server. Make sure you're connected to the internet.",
+            "alreadyExists": "This organization name is not available, please chose another one.",
+            "generic": "Failed to create the organization (reason: {reason})."
         }
     },
     "JoinByLinkModal": {
