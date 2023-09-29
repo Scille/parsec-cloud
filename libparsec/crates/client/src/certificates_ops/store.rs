@@ -26,16 +26,11 @@ pub use libparsec_platform_storage::certificates::{
 };
 use libparsec_types::prelude::*;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 enum ScalarCache<T> {
+    #[default]
     Miss,
     Present(T),
-}
-
-impl<T> Default for ScalarCache<T> {
-    fn default() -> Self {
-        Self::Miss
-    }
 }
 
 impl<T> ScalarCache<T> {
