@@ -16,7 +16,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/package-python.yml
-      - packaging
+      - packaging/**
       - build.py
       - pyproject.toml
 

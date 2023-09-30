@@ -11,6 +11,7 @@ from hashlib import sha256
 from pathlib import Path
 from typing import Optional
 from urllib.request import urlopen
+from zipfile import ZipFile
 
 # Fully-qualified path for the executable should be used with subprocess to
 # avoid unreliability (especially when running from within a virtualenv)
@@ -50,8 +51,37 @@ def run(cmd, **kwargs):
     return ret
 
 
+def pep440ify(src_dir: Path, version: str, releaser={}) -> str:
+    # Use `Version`` helper from `misc/releaser.py`
+    # Hackish but good enough given this release process will be outdated soon
+    if not releaser:
+        releaser_path = src_dir / "misc" / "releaser.py"
+        releaser["__file__"] = releaser_path.absolute()
+        content = releaser_path.read_text()
+        content = content.replace("import version_updater", "pass")
+        exec(content, releaser)
+    Version = releaser["Version"]
+    return Version.parse(version).to_pep440()
+
+
+def filter_parsec_cloud_from_constraints_file(path: Path) -> None:
+    skip = False
+    new_content = []
+    for line in path.read_text().splitlines():
+        if not skip and line.startswith("parsec-cloud"):
+            skip = True
+        if skip and not line.endswith("\\"):
+            skip = False
+        if not skip:
+            new_content.append(line)
+    path.write_text("\n".join(new_content))
+
+
 def main(
-    src_dir: Path, include_parsec_ext: Optional[Path] = None, wheel_it_dir: Optional[Path] = None
+    src_dir: Path,
+    include_parsec_ext: Optional[Path] = None,
+    wheel_it_dir: Optional[Path] = None,
+    force_refresh_pyinstaller_venv: bool = False,
 ):
     BUILD_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -73,13 +103,16 @@ def main(
                 f"Found Parsec wheel {program_wheel} but could not determine it version"
             )
         display(f"Parsec wheel is: {program_wheel}")
-        program_version = f"v{match.group(1)}"
+        with ZipFile(program_wheel) as zip_file:
+            with zip_file.open("parsec/_version.py") as inner_file:
+                _version_content = inner_file.read()
     else:
-        exec((src_dir / "parsec/_version.py").read_text(), global_dict)
-        program_version = global_dict.get("__version__")
-    assert program_version.startswith("v")
-    program_version_without_v_prefix = program_version[1:]
-    display(f"### Detected Parsec version {program_version} ###")
+        _version_content = (src_dir / "parsec/_version.py").read_text()
+
+    exec(_version_content, global_dict)
+    program_version = global_dict.get("__version__")
+    wheel_program_version = pep440ify(src_dir, program_version)
+    display(f"### Detected Parsec version {program_version} (wheel {wheel_program_version}) ###")
 
     winfsp_installer = BUILD_DIR / WINFSP_URL.rsplit("/", 1)[1]
     if not winfsp_installer.is_file():
@@ -102,16 +135,14 @@ def main(
 
     # Generate program wheel and constraints on dependencies
     if wheel_it_dir is not None:
-        program_wheel = next(
-            wheel_it_dir.glob(f"parsec_cloud-{program_version_without_v_prefix}*.whl"), None
-        )
+        program_wheel = next(wheel_it_dir.glob(f"parsec_cloud-{wheel_program_version}*.whl"), None)
         program_constraints = wheel_it_dir / "constraints.txt"
         if not program_wheel or not program_constraints.exists():
             raise SystemExit(f"Cannot retrieve wheel file and/or constraints.txt in {wheel_it_dir}")
 
     else:
         program_wheel = next(
-            DEFAULT_WHEEL_IT_DIR.glob(f"parsec_cloud-{program_version_without_v_prefix}*.whl"), None
+            DEFAULT_WHEEL_IT_DIR.glob(f"parsec_cloud-{wheel_program_version}*.whl"), None
         )
         program_constraints = DEFAULT_WHEEL_IT_DIR / "constraints.txt"
         if not program_wheel or not program_constraints.exists():
@@ -120,21 +151,52 @@ def main(
                 f"{ tools_python } { src_dir / 'packaging/wheel/wheel_it.py' } { src_dir } --output-dir { DEFAULT_WHEEL_IT_DIR }"
             )
             program_wheel = next(
-                DEFAULT_WHEEL_IT_DIR.glob(f"parsec_cloud-{program_version_without_v_prefix}*.whl")
+                DEFAULT_WHEEL_IT_DIR.glob(f"parsec_cloud-{wheel_program_version}*.whl")
             )
+
+    # `parsec-ext` wheel is fast to build, so build it everytime
+    parsec_ext_wheel = parsec_ext_constraints = None
+    if include_parsec_ext:
+        actual_wheel_it_dir = (wheel_it_dir or DEFAULT_WHEEL_IT_DIR).absolute()
+        parsec_ext_constraints = actual_wheel_it_dir / "parsec-ext-constraints.txt"
+        for path in actual_wheel_it_dir.glob(f"parsec_ext-*.whl"):
+            display(f"### Remove older {path.name} wheel ###")
+            path.unlink()
+        if parsec_ext_constraints.exists():
+            display(f"### Remove older parsec-ext constraints file ###")
+            parsec_ext_constraints.unlink()
+        display("### Generate new parsec-ext wheel ###")
+        run(
+            f"{python} -m pip wheel {include_parsec_ext} --wheel-dir {actual_wheel_it_dir} --use-pep517 --no-deps"
+        )
+        display("### Generate new parsec-ext constraints file ###")
+        run(
+            f"poetry export --no-interaction --format constraints.txt --output parsec-ext-constraints.txt",
+            cwd=include_parsec_ext,
+        )
+        shutil.move(include_parsec_ext / "parsec-ext-constraints.txt", actual_wheel_it_dir)
+        parsec_ext_wheel = next(DEFAULT_WHEEL_IT_DIR.glob(f"parsec_ext-*.whl"))
+        # Filter parsec-cloud entry from the constraints since we're using the new wheel
+        assert parsec_ext_constraints.exists()
+        filter_parsec_cloud_from_constraints_file(parsec_ext_constraints)
 
     # Bootstrap PyInstaller virtualenv containing both pyinstaller, parsec & it dependencies
     pyinstaller_venv_dir = BUILD_DIR / "pyinstaller_venv"
     pyinstaller_python = pyinstaller_venv_dir / "Scripts/python.exe"
-    if not pyinstaller_venv_dir.is_dir() or True:
+    if not pyinstaller_venv_dir.is_dir() or force_refresh_pyinstaller_venv:
+        if pyinstaller_venv_dir.exists():
+            shutil.rmtree(pyinstaller_venv_dir)
         display("### Installing program & PyInstaller in temporary virtualenv ###")
         run(f"{ python } -m venv {pyinstaller_venv_dir}")
         run(f"{ pyinstaller_python } -m pip install pip wheel --upgrade")
         # First install PyInstaller, note it version & dependencies are pinned in the constraints file
         # TODO: `--use-deprecated=legacy-resolver` is needed due to a bug in pip
         # see: https://github.com/pypa/pip/issues/9243
+        constraints = f"--constraint { program_constraints }"
+        if include_parsec_ext:
+            constraints += f" --constraint { parsec_ext_constraints }"
         run(
-            f"{ pyinstaller_python } -m pip install pyinstaller --constraint { program_constraints } --use-deprecated=legacy-resolver"
+            f"{ pyinstaller_python } -m pip install pyinstaller { constraints } --use-deprecated=legacy-resolver"
         )
         # Pip is very picky when installing with hashes, hence it requires to have
         # all the wheels with hash (so including our program wheel we've just generated).
@@ -146,14 +208,17 @@ def main(
             f"{ program_wheel.absolute() }[core]; --hash=sha256:{program_wheel_hash}\n"
         )
         if include_parsec_ext is not None:
-            pyinstaller_venv_requirements_data += f"{include_parsec_ext}\n"
+            program_parsec_ext_wheel_hash = sha256(parsec_ext_wheel.read_bytes()).hexdigest()
+            pyinstaller_venv_requirements_data += (
+                f"{parsec_ext_wheel.absolute()}; --hash=sha256:{program_parsec_ext_wheel_hash}\n"
+            )
         pyinstaller_venv_requirements.write_text(pyinstaller_venv_requirements_data)
         # Now do the actual install, note the constraint file that ensures
         # parsec_ext won't mess with parsec dependencies
         # TODO: `--use-deprecated=legacy-resolver` is needed due to a bug in pip
         # see: https://github.com/pypa/pip/issues/9644#issuecomment-813432613
         run(
-            f"{ pyinstaller_python } -m pip install --requirement { pyinstaller_venv_requirements } --constraint { program_constraints }  --use-deprecated=legacy-resolver"
+            f"{ pyinstaller_python } -m pip install --requirement { pyinstaller_venv_requirements } {constraints }  --use-deprecated=legacy-resolver"
         )
 
     pyinstaller_build = BUILD_DIR / "pyinstaller_build"
@@ -266,6 +331,7 @@ if __name__ == "__main__":
     parser.add_argument("--disable-check-python", action="store_true")
     parser.add_argument("--include-parsec-ext", type=Path)
     parser.add_argument("--wheel-it-dir", type=Path)
+    parser.add_argument("--force-refresh-pyinstaller-venv", "-f", action="store_true")
     args = parser.parse_args()
     if not args.disable_check_python:
         check_python_version()
@@ -273,4 +339,5 @@ if __name__ == "__main__":
         src_dir=args.src_dir,
         include_parsec_ext=args.include_parsec_ext,
         wheel_it_dir=args.wheel_it_dir,
+        force_refresh_pyinstaller_venv=args.force_refresh_pyinstaller_venv,
     )
