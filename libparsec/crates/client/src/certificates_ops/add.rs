@@ -974,87 +974,83 @@ async fn check_realm_role_certificate_consistency(
 
     // 1) Check author's realm role and if certificate is self-signed
 
-    match realm_current_roles.is_empty() {
+    if realm_current_roles.is_empty() {
         // 1.a) The realm is a new one, so certificate must be self-signed with a OWNER role
-        true => {
-            if author.user_id() != &cooked.user_id {
-                let hint = mk_hint();
-                let what = InvalidCertificateError::RealmFirstRoleMustBeSelfSigned { hint };
-                return Err(AddCertificateError::InvalidCertificate(what));
-            }
-
-            if cooked.role != Some(RealmRole::Owner) {
-                let hint = mk_hint();
-                let what = InvalidCertificateError::RealmFirstRoleMustBeOwner { hint };
-                return Err(AddCertificateError::InvalidCertificate(what));
-            }
+        if author.user_id() != &cooked.user_id {
+            let hint = mk_hint();
+            let what = InvalidCertificateError::RealmFirstRoleMustBeSelfSigned { hint };
+            return Err(AddCertificateError::InvalidCertificate(what));
         }
 
+        if cooked.role != Some(RealmRole::Owner) {
+            let hint = mk_hint();
+            let what = InvalidCertificateError::RealmFirstRoleMustBeOwner { hint };
+            return Err(AddCertificateError::InvalidCertificate(what));
+        }
+    } else {
         // 1.b) The realm already exists, so certificate cannot be self-signed and
         // author must have a sufficient role
-        false => {
-            let author_current_role = match realm_current_roles
-                .iter()
-                .find(|role| &role.user_id == author.user_id())
-                .and_then(|role| role.role)
-            {
-                // As expected, author currently has a role :)
-                Some(author_current_role) => author_current_role,
-                // Author never had role, or it role got revoked :(
-                None => {
-                    let hint = mk_hint();
-                    let what = InvalidCertificateError::RealmAuthorHasNoRole { hint };
-                    return Err(AddCertificateError::InvalidCertificate(what));
-                }
-            };
+        let author_current_role = match realm_current_roles
+            .iter()
+            .find(|role| &role.user_id == author.user_id())
+            .and_then(|role| role.role)
+        {
+            // As expected, author currently has a role :)
+            Some(author_current_role) => author_current_role,
+            // Author never had role, or it role got revoked :(
+            None => {
+                let hint = mk_hint();
+                let what = InvalidCertificateError::RealmAuthorHasNoRole { hint };
+                return Err(AddCertificateError::InvalidCertificate(what));
+            }
+        };
 
-            let user_current_role = realm_current_roles
-                .iter()
-                .find(|role| role.user_id == cooked.user_id)
-                .and_then(|role| role.role);
-            let user_new_role = cooked.role;
-            match (user_current_role, user_new_role) {
-                // Cannot remove the role if the user already doesn't have one !
-                (None, None) => {
+        let user_current_role = realm_current_roles
+            .iter()
+            .find(|role| role.user_id == cooked.user_id)
+            .and_then(|role| role.role);
+        let user_new_role = cooked.role;
+        match (user_current_role, user_new_role) {
+            // Cannot remove the role if the user already doesn't have one !
+            (None, None) => {
+                let hint = mk_hint();
+                let what = InvalidCertificateError::ContentAlreadyExists { hint };
+                return Err(AddCertificateError::InvalidCertificate(what));
+            }
+            // The certificate must provide a new role !
+            (Some(current_role), Some(new_role)) if current_role == new_role => {
+                let hint = mk_hint();
+                let what = InvalidCertificateError::ContentAlreadyExists { hint };
+                return Err(AddCertificateError::InvalidCertificate(what));
+            }
+            // Only an Owner can give/remove Owner/Manager roles
+            (Some(RealmRole::Owner), _)
+            | (Some(RealmRole::Manager), _)
+            | (_, Some(RealmRole::Owner))
+            | (_, Some(RealmRole::Manager)) => {
+                if author_current_role != RealmRole::Owner {
                     let hint = mk_hint();
-                    let what = InvalidCertificateError::ContentAlreadyExists { hint };
+                    let what = InvalidCertificateError::RealmAuthorNotOwner {
+                        hint,
+                        author_role: author_current_role,
+                    };
                     return Err(AddCertificateError::InvalidCertificate(what));
                 }
-                // The certificate must provide a new role !
-                (Some(current_role), Some(new_role)) if current_role == new_role => {
+            }
+            // Owner and Manager can both give/remove Reader/Contributor roles
+            (Some(RealmRole::Reader), _)
+            | (Some(RealmRole::Contributor), _)
+            | (_, Some(RealmRole::Reader))
+            | (_, Some(RealmRole::Contributor)) => {
+                if author_current_role != RealmRole::Owner
+                    && author_current_role != RealmRole::Manager
+                {
                     let hint = mk_hint();
-                    let what = InvalidCertificateError::ContentAlreadyExists { hint };
+                    let what = InvalidCertificateError::RealmAuthorNotOwnerOrManager {
+                        hint,
+                        author_role: author_current_role,
+                    };
                     return Err(AddCertificateError::InvalidCertificate(what));
-                }
-                // Only an Owner can give/remove Owner/Manager roles
-                (Some(RealmRole::Owner), _)
-                | (Some(RealmRole::Manager), _)
-                | (_, Some(RealmRole::Owner))
-                | (_, Some(RealmRole::Manager)) => {
-                    if author_current_role != RealmRole::Owner {
-                        let hint = mk_hint();
-                        let what = InvalidCertificateError::RealmAuthorNotOwner {
-                            hint,
-                            author_role: author_current_role,
-                        };
-                        return Err(AddCertificateError::InvalidCertificate(what));
-                    }
-                }
-                // Owner and Manager can both give/remove Reader/Contributor roles
-                (Some(RealmRole::Reader), _)
-                | (Some(RealmRole::Contributor), _)
-                | (_, Some(RealmRole::Reader))
-                | (_, Some(RealmRole::Contributor)) => {
-                    if author_current_role != RealmRole::Owner
-                        && author_current_role != RealmRole::Manager
-                    {
-                        let hint = mk_hint();
-                        let what = InvalidCertificateError::RealmAuthorNotOwnerOrManager {
-                            hint,
-                            author_role: author_current_role,
-                        };
-                        return Err(AddCertificateError::InvalidCertificate(what));
-                    }
                 }
             }
         }
