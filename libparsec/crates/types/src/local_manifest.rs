@@ -697,7 +697,7 @@ impl LocalWorkspaceManifest {
     pub fn evolve_children_and_mark_updated(
         mut self,
         data: HashMap<EntryName, Option<VlobID>>,
-        prevent_sync_pattern: &Regex,
+        prevent_sync_pattern: Option<&Regex>,
         timestamp: DateTime,
     ) -> Self {
         let mut actually_updated = false;
@@ -729,7 +729,7 @@ impl LocalWorkspaceManifest {
         // Deal with additions second
         for (name, entry_id) in data.into_iter() {
             if let Some(entry_id) = entry_id {
-                if prevent_sync_pattern.is_match(name.as_ref()) {
+                if prevent_sync_pattern.is_some_and(|p| p.is_match(name.as_ref())) {
                     self.local_confinement_points.insert(entry_id);
                 } else {
                     actually_updated = true;
@@ -763,7 +763,7 @@ impl LocalWorkspaceManifest {
     fn restore_local_confinement_points(
         self,
         other: &Self,
-        prevent_sync_pattern: &Regex,
+        prevent_sync_pattern: Option<&Regex>,
         timestamp: DateTime,
     ) -> Self {
         // Using self.remote_confinement_points is useful to restore entries that were present locally
@@ -796,12 +796,12 @@ impl LocalWorkspaceManifest {
         )
     }
 
-    fn filter_remote_entries(mut self, prevent_sync_pattern: &Regex) -> Self {
+    fn filter_remote_entries(mut self, prevent_sync_pattern: Option<&Regex>) -> Self {
         let remote_confinement_points: HashSet<_> = self
             .children
             .iter()
             .filter_map(|(name, entry_id)| {
-                if prevent_sync_pattern.is_match(name.as_ref()) {
+                if prevent_sync_pattern.is_some_and(|p| p.is_match(name.as_ref())) {
                     Some(*entry_id)
                 } else {
                     None
@@ -836,7 +836,7 @@ impl LocalWorkspaceManifest {
 
     pub fn apply_prevent_sync_pattern(
         &self,
-        prevent_sync_pattern: &Regex,
+        prevent_sync_pattern: Option<&Regex>,
         timestamp: DateTime,
     ) -> Self {
         let result = self.clone();
@@ -851,7 +851,7 @@ impl LocalWorkspaceManifest {
             .restore_local_confinement_points(self, prevent_sync_pattern, timestamp)
     }
 
-    pub fn from_remote(remote: WorkspaceManifest, prevent_sync_pattern: &Regex) -> Self {
+    pub fn from_remote(remote: WorkspaceManifest, prevent_sync_pattern: Option<&Regex>) -> Self {
         let updated = remote.updated;
         let children = remote.children.clone();
 
@@ -869,7 +869,7 @@ impl LocalWorkspaceManifest {
 
     pub fn from_remote_with_local_context(
         remote: WorkspaceManifest,
-        prevent_sync_pattern: &Regex,
+        prevent_sync_pattern: Option<&Regex>,
         local_manifest: &Self,
         timestamp: DateTime,
     ) -> Self {

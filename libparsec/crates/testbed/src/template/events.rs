@@ -2272,9 +2272,6 @@ impl TestbedEventWorkspaceDataStorageFetchWorkspaceVlob {
         realm: VlobID,
         prevent_sync_pattern: Option<Regex>,
     ) -> Self {
-        let prevent_sync_pattern =
-            prevent_sync_pattern.unwrap_or_else(|| Regex::from_regex_str("").unwrap());
-
         // 1) Consistency checks
 
         utils::assert_organization_bootstrapped(&builder.events);
@@ -2289,7 +2286,7 @@ impl TestbedEventWorkspaceDataStorageFetchWorkspaceVlob {
                 if x.manifest.id == realm => {
                 Some(Arc::new(LocalWorkspaceManifest::from_remote(
                     (*x.manifest).clone(),
-                    &prevent_sync_pattern,
+                    prevent_sync_pattern.as_ref(),
                 )))
             }
             TestbedEvent::CreateOrUpdateOpaqueVlob(x)

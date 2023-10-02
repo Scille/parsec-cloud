@@ -1620,8 +1620,10 @@ fn local_workspace_manifest_from_remote(
         children,
     };
 
-    let lwm =
-        LocalWorkspaceManifest::from_remote(wm.clone(), &Regex::from_regex_str(regex).unwrap());
+    let lwm = LocalWorkspaceManifest::from_remote(
+        wm.clone(),
+        Some(&Regex::from_regex_str(regex).unwrap()),
+    );
 
     p_assert_eq!(lwm.base, wm);
     assert!(!lwm.need_sync);
@@ -1719,7 +1721,7 @@ fn local_workspace_manifest_from_remote_with_local_context(
 
     let lwm = LocalWorkspaceManifest::from_remote_with_local_context(
         wm.clone(),
-        &Regex::from_regex_str(regex).unwrap(),
+        Some(&Regex::from_regex_str(regex).unwrap()),
         &lwm,
         timestamp,
     );
@@ -1842,7 +1844,7 @@ fn local_workspace_manifest_evolve_children_and_mark_updated(
         remote_confinement_points: HashSet::new(),
         speculative: false,
     }
-    .evolve_children_and_mark_updated(data, &prevent_sync_pattern, timestamp);
+    .evolve_children_and_mark_updated(data, Some(&prevent_sync_pattern), timestamp);
 
     p_assert_eq!(lwm.base, wm);
     p_assert_eq!(lwm.need_sync, need_sync);
@@ -1876,7 +1878,7 @@ fn local_workspace_manifest_apply_prevent_sync_pattern(timestamp: DateTime) {
         remote_confinement_points: HashSet::new(),
         speculative: false,
     }
-    .apply_prevent_sync_pattern(&prevent_sync_pattern, timestamp);
+    .apply_prevent_sync_pattern(Some(&prevent_sync_pattern), timestamp);
 
     p_assert_eq!(lwm.base, wm);
     assert!(!lwm.need_sync);
