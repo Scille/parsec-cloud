@@ -3,7 +3,7 @@
 use libparsec_types::prelude::*;
 
 use super::{CertificatesOps, GetCertificateError, InvalidCertificateError, PollServerError, UpTo};
-use crate::event_bus::EventInvalidMessage;
+use crate::{certificates_ops::store::CertificatesStoreReadExt, event_bus::EventInvalidMessage};
 
 #[derive(Debug, thiserror::Error)]
 pub enum InvalidMessageError {
