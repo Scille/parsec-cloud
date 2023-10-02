@@ -258,7 +258,7 @@ impl CertificatesOps {
 
     pub async fn get_current_self_realms_roles(
         &self,
-    ) -> anyhow::Result<HashMap<VlobID, RealmRole>> {
+    ) -> anyhow::Result<HashMap<VlobID, Option<RealmRole>>> {
         // TODO: cache !
         let store = self.store.for_read().await;
         let certifs = store
@@ -268,14 +268,7 @@ impl CertificatesOps {
         let mut roles = HashMap::new();
         // Replay the history of all changes
         for certif in certifs {
-            match certif.role {
-                None => {
-                    roles.remove(&certif.realm_id);
-                }
-                Some(role) => {
-                    roles.insert(certif.realm_id, role);
-                }
-            }
+            roles.insert(certif.realm_id, certif.role);
         }
 
         Ok(roles)

@@ -11,6 +11,7 @@ pub use libparsec_client::{
         ClientInfoError, RenameWorkspaceError as ClientRenameWorkspaceError,
         ShareWorkspaceError as ClientShareWorkspaceError,
     },
+    WorkspaceInfo,
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
@@ -23,6 +24,14 @@ use crate::{
     },
     ClientConfig, ClientEvent, OnEventCallbackPlugged,
 };
+
+fn borrow_client(client: Handle) -> anyhow::Result<Arc<libparsec_client::Client>> {
+    borrow_from_handle(client, |x| match x {
+        HandleItem::Client { client, .. } => Some(client.clone()),
+        _ => None,
+    })
+    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))
+}
 
 /*
  * Start
@@ -215,11 +224,7 @@ pub struct ClientInfo {
 }
 
 pub async fn client_info(client: Handle) -> Result<ClientInfo, ClientInfoError> {
-    let client = borrow_from_handle(client, |x| match x {
-        HandleItem::Client { client, .. } => Some(client.clone()),
-        _ => None,
-    })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+    let client = borrow_client(client)?;
 
     Ok(ClientInfo {
         organization_id: client.organization_id().clone(),
@@ -251,11 +256,7 @@ pub async fn client_list_users(
     // offset: Option<usize>,
     // limit: Option<usize>,
 ) -> Result<Vec<UserInfo>, ClientListUsersError> {
-    let client = borrow_from_handle(client, |x| match x {
-        HandleItem::Client { client, .. } => Some(client.clone()),
-        _ => None,
-    })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+    let client = borrow_client(client)?;
 
     client
         .certificates_ops
@@ -278,11 +279,7 @@ pub async fn client_list_user_devices(
     client: Handle,
     user: UserID,
 ) -> Result<Vec<DeviceInfo>, ClientListUserDevicesError> {
-    let client = borrow_from_handle(client, |x| match x {
-        HandleItem::Client { client, .. } => Some(client.clone()),
-        _ => None,
-    })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+    let client = borrow_client(client)?;
 
     client
         .certificates_ops
@@ -299,11 +296,7 @@ pub async fn client_get_user_device(
     client: Handle,
     device: DeviceID,
 ) -> Result<(UserInfo, DeviceInfo), ClientGetUserDeviceError> {
-    let client = borrow_from_handle(client, |x| match x {
-        HandleItem::Client { client, .. } => Some(client.clone()),
-        _ => None,
-    })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+    let client = borrow_client(client)?;
 
     client.certificates_ops.get_user_device(device).await
 }
@@ -322,11 +315,7 @@ pub async fn client_list_workspace_users(
     client: Handle,
     realm_id: VlobID,
 ) -> Result<Vec<WorkspaceUserAccessInfo>, ClientListWorkspaceUsersError> {
-    let client = borrow_from_handle(client, |x| match x {
-        HandleItem::Client { client, .. } => Some(client.clone()),
-        _ => None,
-    })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+    let client = borrow_client(client)?;
 
     client
         .certificates_ops
@@ -345,54 +334,12 @@ pub enum ClientListWorkspacesError {
     Internal(#[from] anyhow::Error),
 }
 
-pub struct WorkspaceInfo {
-    pub id: VlobID,
-    pub name: EntryName,
-    pub self_role: RealmRole,
-}
-
 pub async fn client_list_workspaces(
     client: Handle,
 ) -> Result<Vec<WorkspaceInfo>, ClientListWorkspacesError> {
-    let client = borrow_from_handle(client, |x| match x {
-        HandleItem::Client { client, .. } => Some(client.clone()),
-        _ => None,
-    })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+    let client = borrow_client(client)?;
 
-    let realms_roles = client
-        .certificates_ops
-        .get_current_self_realms_roles()
-        .await
-        .map_err(|e| e.context("Cannot retrieve self realms roles"))?;
-    let workspaces_entries = client.user_ops.list_workspaces();
-
-    // Only keep the workspaces that are actually accessible:
-    // - an entry is present in the user manifest
-    // - we currently have access to the related realm according to the certificates
-
-    let infos = workspaces_entries
-        .into_iter()
-        .filter_map(|(id, name)| {
-            let maybe_role =
-                realms_roles.iter().find_map(
-                    |(x_id, x_role)| {
-                        if *x_id == id {
-                            Some(*x_role)
-                        } else {
-                            None
-                        }
-                    },
-                );
-            maybe_role.map(|self_role| WorkspaceInfo {
-                id,
-                name,
-                self_role,
-            })
-        })
-        .collect();
-
-    Ok(infos)
+    client.list_workspaces().await.map_err(|err| err.into())
 }
 
 /*
@@ -409,11 +356,7 @@ pub async fn client_create_workspace(
     client: Handle,
     name: EntryName,
 ) -> Result<VlobID, ClientCreateWorkspaceError> {
-    let client = borrow_from_handle(client, |x| match x {
-        HandleItem::Client { client, .. } => Some(client.clone()),
-        _ => None,
-    })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+    let client = borrow_client(client)?;
 
     client
         .user_ops
@@ -431,11 +374,7 @@ pub async fn client_rename_workspace(
     realm_id: VlobID,
     new_name: EntryName,
 ) -> Result<(), ClientRenameWorkspaceError> {
-    let client = borrow_from_handle(client, |x| match x {
-        HandleItem::Client { client, .. } => Some(client.clone()),
-        _ => None,
-    })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+    let client = borrow_client(client)?;
 
     client.user_ops.rename_workspace(realm_id, new_name).await
 }
@@ -450,11 +389,7 @@ pub async fn client_share_workspace(
     recipient: UserID,
     role: Option<RealmRole>,
 ) -> Result<(), ClientShareWorkspaceError> {
-    let client = borrow_from_handle(client, |x| match x {
-        HandleItem::Client { client, .. } => Some(client.clone()),
-        _ => None,
-    })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+    let client = borrow_client(client)?;
 
     client
         .user_ops
