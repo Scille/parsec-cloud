@@ -49,7 +49,7 @@ import {
   ClientShareWorkspaceError,
   CreateOrganizationError,
 } from '@/parsec/types';
-import { getParsecHandle } from '@/router/conditions';
+import { getParsecHandle } from '@/parsec/routing';
 import { DateTime } from 'luxon';
 import { DEFAULT_HANDLE, MOCK_WAITING_TIME, getClientConfig, wait } from '@/parsec/internals';
 
@@ -293,7 +293,7 @@ export async function getClientInfo(): Promise<Result<ClientInfo, ClientInfoErro
         organizationId: 'MyOrg',
         deviceId: 'device1',
         deviceLabel: 'My First Device',
-        userId: 'userid',
+        userId: 'me',
         currentProfile: UserProfile.Admin,
         humanHandle: {
           email: 'user@host.com',
@@ -302,24 +302,6 @@ export async function getClientInfo(): Promise<Result<ClientInfo, ClientInfoErro
       }});
     });
   }
-}
-
-export async function getClientProfile(): Promise<UserProfile | null> {
-  const result = await getClientInfo();
-
-  if (result.ok) {
-    return result.value.currentProfile;
-  } else {
-    return null;
-  }
-}
-
-export async function isAdmin(): Promise<boolean> {
-  return await getClientProfile() === UserProfile.Admin;
-}
-
-export async function isOutsider(): Promise<boolean> {
-  return await getClientProfile() === UserProfile.Outsider;
 }
 
 export async function getWorkspaceName(workspaceId: WorkspaceID): Promise<Result<WorkspaceName, GetWorkspaceNameError>> {
@@ -412,6 +394,18 @@ export async function listUsers(skipRevoked = true): Promise<Result<Array<UserIn
         id: 'id2',
         // cspell:disable-next-line
         humanHandle: {label: 'Jaheira', email: 'jaheira@gmail.com'},
+        currentProfile: UserProfile.Admin,
+        createdOn: DateTime.now(),
+        createdBy: 'device',
+        revokedOn: null,
+        revokedBy: null,
+        isRevoked: (): boolean => false,
+      }, {
+        id: 'me',
+        humanHandle: {
+          email: 'user@host.com',
+          label: 'Gordon Freeman',
+        },
         currentProfile: UserProfile.Admin,
         createdOn: DateTime.now(),
         createdBy: 'device',

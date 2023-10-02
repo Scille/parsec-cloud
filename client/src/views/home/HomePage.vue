@@ -241,7 +241,7 @@ import { NotificationCenter, NotificationLevel, Notification } from '@/services/
 import { getAppVersion } from '@/common/mocks';
 import AboutModal from '@/views/about/AboutModal.vue';
 import { listAvailableDevices as parsecListAvailableDevices, login as parsecLogin, AvailableDevice } from '@/parsec';
-import { isLoggedIn } from '@/router/conditions';
+import { isLoggedIn } from '@/parsec';
 
 const router = useRouter();
 const { t } = useI18n();
