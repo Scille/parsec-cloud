@@ -17,7 +17,7 @@ use std::{collections::HashMap, sync::Arc};
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_types::prelude::*;
 
-use crate::{event_bus::EventBus, ClientConfig};
+use crate::{certificates_ops::store::CertificatesStoreReadExt, event_bus::EventBus, ClientConfig};
 
 pub struct UserInfo {
     pub id: UserID,

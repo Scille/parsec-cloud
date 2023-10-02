@@ -13,6 +13,7 @@
 //! the storage contains all certificates up to a certain index. Here again we
 //! need to prevent concurrent write operations (as it may clear remove certificates)
 
+use async_trait::async_trait;
 use std::{
     collections::HashMap,
     path::Path,
@@ -99,144 +100,345 @@ impl CertificatesStore {
     }
 }
 
-pub(crate) struct CertificatesStoreWriteGuard<'a> {
-    _guard: RwLockWriteGuard<'a, ()>,
-    store: &'a CertificatesStore,
-}
+#[async_trait]
+pub(crate) trait CertificatesStoreReadExt {
+    fn store(&self) -> &CertificatesStore;
 
-impl<'a> CertificatesStoreWriteGuard<'a> {
-    pub async fn get_last_certificate_index(&self) -> anyhow::Result<IndexInt> {
-        get_last_certificate_index(self.store).await
+    async fn get_last_certificate_index(&self) -> anyhow::Result<IndexInt> {
+        {
+            let guard = self
+                .store()
+                .current_view_cache
+                .lock()
+                .expect("Mutex is poisoned !");
+            if let ScalarCache::Present(index) = &guard.last_index {
+                return Ok(*index);
+            }
+        }
+
+        // Cache miss !
+
+        let index = self
+            .store()
+            .storage
+            .get_last_index()
+            .await
+            .map(|maybe| match maybe {
+                None => 0,
+                Some((index, _)) => index,
+            })?;
+        let mut guard = self
+            .store()
+            .current_view_cache
+            .lock()
+            .expect("Mutex is poisoned !");
+
+        guard.last_index.set(index);
+
+        Ok(index)
     }
 
-    pub async fn get_current_self_profile(&self) -> anyhow::Result<UserProfile> {
+    async fn get_current_self_profile(&self) -> anyhow::Result<UserProfile> {
         let maybe_update = get_last_user_update_certificate(
-            self.store,
+            self.store(),
             UpTo::Current,
-            self.store.device.user_id().to_owned(),
+            self.store().device.user_id().to_owned(),
         )
         .await?;
         let profile = match maybe_update {
             Some(update) => update.new_profile,
-            None => self.store.device.initial_profile,
+            None => self.store().device.initial_profile,
         };
         Ok(profile)
     }
 
-    #[allow(unused)]
-    pub async fn get_current_user_profile(
+    async fn get_current_user_profile(
         &self,
         user_id: UserID,
     ) -> Result<UserProfile, GetCertificateError> {
-        get_current_user_profile(self.store, user_id).await
+        {
+            let guard = self
+                .store()
+                .current_view_cache
+                .lock()
+                .expect("Mutex is poisoned !");
+            if let Some(profile) = guard.per_user_profile.get(&user_id) {
+                return Ok(*profile);
+            }
+        }
+
+        // Cache miss !
+
+        let profile = {
+            let maybe_user_update =
+                get_last_user_update_certificate(self.store(), UpTo::Current, user_id.clone())
+                    .await?;
+            if let Some(user_update) = maybe_user_update {
+                return Ok(user_update.new_profile);
+            }
+            // The user has never been modified
+            if user_id == *self.store().device.user_id() {
+                self.store().device.initial_profile
+            } else {
+                let certif =
+                    get_user_certificate(self.store(), UpTo::Current, user_id.clone()).await?;
+                certif.profile
+            }
+        };
+        let mut guard = self
+            .store()
+            .current_view_cache
+            .lock()
+            .expect("Mutex is poisoned !");
+
+        guard.per_user_profile.insert(user_id, profile);
+
+        Ok(profile)
     }
 
-    pub async fn get_timestamp_bounds(
+    async fn get_timestamp_bounds(
         &self,
         index: IndexInt,
     ) -> Result<(DateTime, Option<DateTime>), GetTimestampBoundsError> {
-        self.store.storage.get_timestamp_bounds(index).await
+        self.store().storage.get_timestamp_bounds(index).await
     }
 
-    #[allow(unused)]
-    pub async fn get_any_certificate(
+    async fn get_any_certificate(
         &self,
         index: IndexInt,
     ) -> Result<AnyArcCertificate, GetCertificateError> {
-        get_any_certificate(self.store, index).await
+        let data = self
+            .store()
+            .storage
+            .get_any_certificate_encrypted(index)
+            .await?;
+
+        let certif = data
+            .decrypt_and_load(&self.store().device.local_symkey)
+            .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
+
+        Ok(certif)
     }
 
-    pub async fn get_user_certificate(
+    async fn get_user_certificate(
         &self,
         up_to: UpTo,
         user_id: UserID,
     ) -> Result<Arc<UserCertificate>, GetCertificateError> {
-        get_user_certificate(self.store, up_to, user_id).await
+        get_user_certificate(self.store(), up_to, user_id).await
     }
 
-    #[allow(unused)]
-    pub async fn get_user_certificates(
+    async fn get_user_certificates(
         &self,
         up_to: UpTo,
         offset: Option<usize>,
         limit: Option<usize>,
     ) -> anyhow::Result<Vec<Arc<UserCertificate>>> {
-        get_user_certificates(self.store, up_to, offset, limit).await
+        let query = GetCertificateQuery::users_certificates();
+        get_certificates(
+            self.store(),
+            query,
+            up_to,
+            offset,
+            limit,
+            UserCertificate::unsecure_load,
+            UnsecureUserCertificate::skip_validation,
+        )
+        .await
     }
 
-    pub async fn get_last_user_update_certificate(
+    async fn get_last_user_update_certificate(
         &self,
         up_to: UpTo,
         user_id: UserID,
     ) -> anyhow::Result<Option<Arc<UserUpdateCertificate>>> {
-        get_last_user_update_certificate(self.store, up_to, user_id).await
+        get_last_user_update_certificate(self.store(), up_to, user_id).await
     }
 
-    pub async fn get_device_certificate(
+    async fn get_device_certificate(
         &self,
         up_to: UpTo,
         device_id: DeviceID,
     ) -> Result<Arc<DeviceCertificate>, GetCertificateError> {
-        get_device_certificate(self.store, up_to, device_id).await
+        let query = GetCertificateQuery::device_certificate(device_id);
+        let (_, encrypted) = self
+            .store()
+            .storage
+            .get_certificate_encrypted(query, up_to)
+            .await?;
+
+        Ok(get_certificate_from_encrypted(
+            self.store(),
+            &encrypted,
+            DeviceCertificate::unsecure_load,
+            UnsecureDeviceCertificate::skip_validation,
+        )
+        .await?)
     }
 
-    #[allow(unused)]
-    pub async fn get_user_devices_certificates(
+    async fn get_user_devices_certificates(
         &self,
         up_to: UpTo,
         user_id: UserID,
     ) -> anyhow::Result<Vec<Arc<DeviceCertificate>>> {
-        get_user_devices_certificates(self.store, up_to, user_id).await
+        let query = GetCertificateQuery::user_device_certificates(user_id);
+        get_certificates(
+            self.store(),
+            query,
+            up_to,
+            None,
+            None,
+            DeviceCertificate::unsecure_load,
+            UnsecureDeviceCertificate::skip_validation,
+        )
+        .await
     }
 
-    pub async fn get_revoked_user_certificate(
+    async fn get_revoked_user_certificate(
         &self,
         up_to: UpTo,
         user_id: UserID,
     ) -> anyhow::Result<Option<Arc<RevokedUserCertificate>>> {
-        get_revoked_user_certificate(self.store, up_to, user_id).await
+        let query = GetCertificateQuery::revoked_user_certificate(user_id);
+        let encrypted = match self
+            .store()
+            .storage
+            .get_certificate_encrypted(query, up_to)
+            .await
+        {
+            Ok((_, encrypted)) => encrypted,
+            Err(
+                GetCertificateError::NonExisting | GetCertificateError::ExistButTooRecent { .. },
+            ) => return Ok(None),
+            Err(GetCertificateError::Internal(err)) => return Err(err),
+        };
+
+        get_certificate_from_encrypted(
+            self.store(),
+            &encrypted,
+            RevokedUserCertificate::unsecure_load,
+            UnsecureRevokedUserCertificate::skip_validation,
+        )
+        .await
+        .map(Some)
     }
 
-    pub async fn get_realm_roles(
+    async fn get_realm_roles(
         &self,
         up_to: UpTo,
         realm_id: VlobID,
     ) -> anyhow::Result<Vec<Arc<RealmRoleCertificate>>> {
-        get_realm_roles(self.store, up_to, realm_id).await
+        let query = GetCertificateQuery::realm_role_certificates(realm_id);
+        get_certificates(
+            self.store(),
+            query,
+            up_to,
+            None,
+            None,
+            RealmRoleCertificate::unsecure_load,
+            UnsecureRealmRoleCertificate::skip_validation,
+        )
+        .await
     }
 
-    #[allow(unused)]
-    pub async fn get_user_realm_role(
+    async fn get_user_realm_role(
         &self,
         up_to: UpTo,
         user_id: UserID,
         realm_id: VlobID,
     ) -> anyhow::Result<Option<Arc<RealmRoleCertificate>>> {
-        get_user_realm_role(self.store, up_to, user_id, realm_id).await
+        let query = GetCertificateQuery::realm_role_certificate(realm_id, user_id);
+        let encrypted = match self
+            .store()
+            .storage
+            .get_certificate_encrypted(query, up_to)
+            .await
+        {
+            Ok((_, encrypted)) => encrypted,
+            Err(
+                GetCertificateError::NonExisting | GetCertificateError::ExistButTooRecent { .. },
+            ) => return Ok(None),
+            Err(GetCertificateError::Internal(err)) => return Err(err),
+        };
+
+        get_certificate_from_encrypted(
+            self.store(),
+            &encrypted,
+            RealmRoleCertificate::unsecure_load,
+            UnsecureRealmRoleCertificate::skip_validation,
+        )
+        .await
+        .map(Some)
     }
 
-    pub async fn get_user_realms_roles(
+    async fn get_user_realms_roles(
         &self,
         up_to: UpTo,
         user_id: UserID,
     ) -> anyhow::Result<Vec<Arc<RealmRoleCertificate>>> {
-        get_user_realms_roles(self.store, up_to, user_id).await
+        let query = GetCertificateQuery::user_realm_role_certificates(user_id);
+        get_certificates(
+            self.store(),
+            query,
+            up_to,
+            None,
+            None,
+            RealmRoleCertificate::unsecure_load,
+            UnsecureRealmRoleCertificate::skip_validation,
+        )
+        .await
     }
 
-    pub async fn get_sequester_authority_certificate(
+    async fn get_sequester_authority_certificate(
         &self,
         up_to: UpTo,
     ) -> Result<Arc<SequesterAuthorityCertificate>, GetCertificateError> {
-        get_sequester_authority_certificate(self.store, up_to).await
+        let query = GetCertificateQuery::sequester_authority_certificate();
+        let (_, encrypted) = self
+            .store()
+            .storage
+            .get_certificate_encrypted(query, up_to)
+            .await?;
+
+        Ok(get_certificate_from_encrypted(
+            self.store(),
+            &encrypted,
+            SequesterAuthorityCertificate::unsecure_load,
+            UnsecureSequesterAuthorityCertificate::skip_validation,
+        )
+        .await?)
     }
 
-    pub async fn get_sequester_service_certificates(
+    async fn get_sequester_service_certificates(
         &self,
         up_to: UpTo,
     ) -> anyhow::Result<Vec<Arc<SequesterServiceCertificate>>> {
-        get_sequester_service_certificates(self.store, up_to).await
+        let query = GetCertificateQuery::sequester_service_certificates();
+        get_certificates(
+            self.store(),
+            query,
+            up_to,
+            None,
+            None,
+            SequesterServiceCertificate::unsecure_load,
+            UnsecureSequesterServiceCertificate::skip_validation,
+        )
+        .await
     }
+}
 
+pub(crate) struct CertificatesStoreWriteGuard<'a> {
+    _guard: RwLockWriteGuard<'a, ()>,
+    store: &'a CertificatesStore,
+}
+
+impl<'a> CertificatesStoreReadExt for CertificatesStoreWriteGuard<'a> {
+    fn store(&self) -> &CertificatesStore {
+        self.store
+    }
+}
+
+impl<'a> CertificatesStoreWriteGuard<'a> {
     pub async fn forget_all_certificates(&self) -> anyhow::Result<()> {
         self.store.storage.forget_all_certificates().await?;
         self.store
@@ -288,225 +490,10 @@ pub(crate) struct CertificatesStoreReadGuard<'a> {
     store: &'a CertificatesStore,
 }
 
-impl<'a> CertificatesStoreReadGuard<'a> {
-    pub async fn get_last_certificate_index(&self) -> anyhow::Result<IndexInt> {
-        get_last_certificate_index(self.store).await
+impl<'a> CertificatesStoreReadExt for CertificatesStoreReadGuard<'a> {
+    fn store(&self) -> &CertificatesStore {
+        self.store
     }
-
-    pub async fn get_current_self_profile(&self) -> anyhow::Result<UserProfile> {
-        let maybe_update = get_last_user_update_certificate(
-            self.store,
-            UpTo::Current,
-            self.store.device.user_id().to_owned(),
-        )
-        .await?;
-        let profile = match maybe_update {
-            Some(update) => update.new_profile,
-            None => self.store.device.initial_profile,
-        };
-        Ok(profile)
-    }
-
-    #[allow(unused)]
-    pub async fn get_current_user_profile(
-        &self,
-        user_id: UserID,
-    ) -> Result<UserProfile, GetCertificateError> {
-        get_current_user_profile(self.store, user_id).await
-    }
-
-    #[allow(unused)]
-    pub async fn get_timestamp_bounds(
-        &self,
-        index: IndexInt,
-    ) -> Result<(DateTime, Option<DateTime>), GetTimestampBoundsError> {
-        self.store.storage.get_timestamp_bounds(index).await
-    }
-
-    pub async fn get_any_certificate(
-        &self,
-        index: IndexInt,
-    ) -> Result<AnyArcCertificate, GetCertificateError> {
-        get_any_certificate(self.store, index).await
-    }
-
-    #[allow(unused)]
-    pub async fn get_user_certificate(
-        &self,
-        up_to: UpTo,
-        user_id: UserID,
-    ) -> Result<Arc<UserCertificate>, GetCertificateError> {
-        get_user_certificate(self.store, up_to, user_id).await
-    }
-
-    pub async fn get_user_certificates(
-        &self,
-        up_to: UpTo,
-        offset: Option<usize>,
-        limit: Option<usize>,
-    ) -> anyhow::Result<Vec<Arc<UserCertificate>>> {
-        get_user_certificates(self.store, up_to, offset, limit).await
-    }
-
-    #[allow(unused)]
-    pub async fn get_last_user_update_certificate(
-        &self,
-        up_to: UpTo,
-        user_id: UserID,
-    ) -> anyhow::Result<Option<Arc<UserUpdateCertificate>>> {
-        get_last_user_update_certificate(self.store, up_to, user_id).await
-    }
-
-    pub async fn get_device_certificate(
-        &self,
-        up_to: UpTo,
-        device_id: DeviceID,
-    ) -> Result<Arc<DeviceCertificate>, GetCertificateError> {
-        get_device_certificate(self.store, up_to, device_id).await
-    }
-
-    pub async fn get_user_devices_certificates(
-        &self,
-        up_to: UpTo,
-        user_id: UserID,
-    ) -> anyhow::Result<Vec<Arc<DeviceCertificate>>> {
-        get_user_devices_certificates(self.store, up_to, user_id).await
-    }
-
-    pub async fn get_revoked_user_certificate(
-        &self,
-        up_to: UpTo,
-        user_id: UserID,
-    ) -> anyhow::Result<Option<Arc<RevokedUserCertificate>>> {
-        get_revoked_user_certificate(self.store, up_to, user_id).await
-    }
-
-    #[allow(unused)]
-    pub async fn get_realm_roles(
-        &self,
-        up_to: UpTo,
-        realm_id: VlobID,
-    ) -> anyhow::Result<Vec<Arc<RealmRoleCertificate>>> {
-        get_realm_roles(self.store, up_to, realm_id).await
-    }
-
-    pub async fn get_user_realm_role(
-        &self,
-        up_to: UpTo,
-        user_id: UserID,
-        realm_id: VlobID,
-    ) -> anyhow::Result<Option<Arc<RealmRoleCertificate>>> {
-        get_user_realm_role(self.store, up_to, user_id, realm_id).await
-    }
-
-    #[allow(unused)]
-    pub async fn get_user_realms_roles(
-        &self,
-        up_to: UpTo,
-        user_id: UserID,
-    ) -> anyhow::Result<Vec<Arc<RealmRoleCertificate>>> {
-        get_user_realms_roles(self.store, up_to, user_id).await
-    }
-
-    #[allow(unused)]
-    pub async fn get_sequester_authority_certificate(
-        &self,
-        up_to: UpTo,
-    ) -> Result<Arc<SequesterAuthorityCertificate>, GetCertificateError> {
-        get_sequester_authority_certificate(self.store, up_to).await
-    }
-
-    #[allow(unused)]
-    pub async fn get_sequester_service_certificates(
-        &self,
-        up_to: UpTo,
-    ) -> anyhow::Result<Vec<Arc<SequesterServiceCertificate>>> {
-        get_sequester_service_certificates(self.store, up_to).await
-    }
-}
-
-async fn get_last_certificate_index(store: &CertificatesStore) -> anyhow::Result<IndexInt> {
-    {
-        let guard = store
-            .current_view_cache
-            .lock()
-            .expect("Mutex is poisoned !");
-        if let ScalarCache::Present(index) = &guard.last_index {
-            return Ok(*index);
-        }
-    }
-
-    // Cache miss !
-
-    let index = store
-        .storage
-        .get_last_index()
-        .await
-        .map(|maybe| match maybe {
-            None => 0,
-            Some((index, _)) => index,
-        })?;
-    let mut guard = store
-        .current_view_cache
-        .lock()
-        .expect("Mutex is poisoned !");
-
-    guard.last_index.set(index);
-
-    Ok(index)
-}
-
-async fn get_current_user_profile(
-    store: &CertificatesStore,
-    user_id: UserID,
-) -> Result<UserProfile, GetCertificateError> {
-    {
-        let guard = store
-            .current_view_cache
-            .lock()
-            .expect("Mutex is poisoned !");
-        if let Some(profile) = guard.per_user_profile.get(&user_id) {
-            return Ok(*profile);
-        }
-    }
-
-    // Cache miss !
-
-    let profile = {
-        let maybe_user_update =
-            get_last_user_update_certificate(store, UpTo::Current, user_id.clone()).await?;
-        if let Some(user_update) = maybe_user_update {
-            return Ok(user_update.new_profile);
-        }
-        // The user has never been modified
-        if user_id == *store.device.user_id() {
-            store.device.initial_profile
-        } else {
-            let certif = get_user_certificate(store, UpTo::Current, user_id.clone()).await?;
-            certif.profile
-        }
-    };
-    let mut guard = store
-        .current_view_cache
-        .lock()
-        .expect("Mutex is poisoned !");
-
-    guard.per_user_profile.insert(user_id, profile);
-
-    Ok(profile)
-}
-
-async fn get_any_certificate(
-    store: &CertificatesStore,
-    index: IndexInt,
-) -> Result<AnyArcCertificate, GetCertificateError> {
-    let data = store.storage.get_any_certificate_encrypted(index).await?;
-
-    let certif = data
-        .decrypt_and_load(&store.device.local_symkey)
-        .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
-
-    Ok(certif)
 }
 
 async fn get_user_certificate(
@@ -532,37 +519,6 @@ async fn get_user_certificate(
     let certif = unsecure.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage);
 
     Ok(Arc::new(certif))
-}
-
-async fn get_user_certificates(
-    store: &CertificatesStore,
-    up_to: UpTo,
-    offset: Option<usize>,
-    limit: Option<usize>,
-) -> anyhow::Result<Vec<Arc<UserCertificate>>> {
-    let query = GetCertificateQuery::users_certificates();
-    let items = store
-        .storage
-        .get_multiple_certificates_encrypted(query, up_to, offset, limit)
-        .await?;
-
-    let mut certifs = Vec::with_capacity(items.len());
-    for (_, encrypted) in items {
-        let signed = store
-            .device
-            .local_symkey
-            .decrypt(&encrypted)
-            .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
-
-        let unsecure = UserCertificate::unsecure_load(signed.into())
-            .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
-
-        let certif = unsecure.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage);
-
-        certifs.push(Arc::new(certif));
-    }
-
-    Ok(certifs)
 }
 
 async fn get_last_user_update_certificate(
@@ -595,227 +551,47 @@ async fn get_last_user_update_certificate(
     Ok(Some(Arc::new(certif)))
 }
 
-async fn get_device_certificate(
+async fn get_certificates<T, U>(
     store: &CertificatesStore,
+    query: GetCertificateQuery,
     up_to: UpTo,
-    device_id: DeviceID,
-) -> Result<Arc<DeviceCertificate>, GetCertificateError> {
-    let query = GetCertificateQuery::device_certificate(device_id);
-    let (_, encrypted) = store
+    offset: Option<usize>,
+    limit: Option<usize>,
+    unsecure_load: fn(Bytes) -> DataResult<U>,
+    skip_validation: fn(U, UnsecureSkipValidationReason) -> T,
+) -> anyhow::Result<Vec<Arc<T>>> {
+    let items = store
         .storage
-        .get_certificate_encrypted(query, up_to)
+        .get_multiple_certificates_encrypted(query, up_to, offset, limit)
         .await?;
 
+    let mut certifs = Vec::with_capacity(items.len());
+    for (_, encrypted) in items {
+        let certif =
+            get_certificate_from_encrypted(store, &encrypted, unsecure_load, skip_validation)
+                .await?;
+        certifs.push(certif);
+    }
+
+    Ok(certifs)
+}
+
+async fn get_certificate_from_encrypted<T, U>(
+    store: &CertificatesStore,
+    encrypted: &[u8],
+    unsecure_load: fn(Bytes) -> DataResult<U>,
+    skip_validation: fn(U, UnsecureSkipValidationReason) -> T,
+) -> anyhow::Result<Arc<T>> {
     let signed = store
         .device
         .local_symkey
-        .decrypt(&encrypted)
+        .decrypt(encrypted)
         .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
 
-    let unsecure = DeviceCertificate::unsecure_load(signed.into())
+    let unsecure = unsecure_load(signed.into())
         .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
 
-    let certif = unsecure.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage);
+    let certif = skip_validation(unsecure, UnsecureSkipValidationReason::DataFromLocalStorage);
 
     Ok(Arc::new(certif))
-}
-
-async fn get_user_devices_certificates(
-    store: &CertificatesStore,
-    up_to: UpTo,
-    user_id: UserID,
-) -> anyhow::Result<Vec<Arc<DeviceCertificate>>> {
-    let query = GetCertificateQuery::user_device_certificates(user_id);
-    let items = store
-        .storage
-        .get_multiple_certificates_encrypted(query, up_to, None, None)
-        .await?;
-
-    let mut certifs = Vec::with_capacity(items.len());
-    for (_, encrypted) in items {
-        let signed = store
-            .device
-            .local_symkey
-            .decrypt(&encrypted)
-            .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
-
-        let unsecure = DeviceCertificate::unsecure_load(signed.into())
-            .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
-
-        let certif = unsecure.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage);
-
-        certifs.push(Arc::new(certif));
-    }
-
-    Ok(certifs)
-}
-
-async fn get_revoked_user_certificate(
-    store: &CertificatesStore,
-    up_to: UpTo,
-    user_id: UserID,
-) -> anyhow::Result<Option<Arc<RevokedUserCertificate>>> {
-    let query = GetCertificateQuery::revoked_user_certificate(user_id);
-    let encrypted = match store.storage.get_certificate_encrypted(query, up_to).await {
-        Ok((_, encrypted)) => encrypted,
-        Err(GetCertificateError::NonExisting | GetCertificateError::ExistButTooRecent { .. }) => {
-            return Ok(None)
-        }
-        Err(GetCertificateError::Internal(err)) => return Err(err),
-    };
-
-    let signed = store
-        .device
-        .local_symkey
-        .decrypt(&encrypted)
-        .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
-
-    let unsecure = RevokedUserCertificate::unsecure_load(signed.into())
-        .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
-
-    let certif = unsecure.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage);
-
-    Ok(Some(Arc::new(certif)))
-}
-
-async fn get_realm_roles(
-    store: &CertificatesStore,
-    up_to: UpTo,
-    realm_id: VlobID,
-) -> anyhow::Result<Vec<Arc<RealmRoleCertificate>>> {
-    let query = GetCertificateQuery::realm_role_certificates(realm_id);
-    let items = store
-        .storage
-        .get_multiple_certificates_encrypted(query, up_to, None, None)
-        .await?;
-
-    let mut certifs = Vec::with_capacity(items.len());
-    for (_, encrypted) in items {
-        let signed = store
-            .device
-            .local_symkey
-            .decrypt(&encrypted)
-            .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
-
-        let unsecure = RealmRoleCertificate::unsecure_load(signed.into())
-            .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
-
-        let certif = unsecure.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage);
-
-        certifs.push(Arc::new(certif));
-    }
-
-    Ok(certifs)
-}
-
-async fn get_user_realm_role(
-    store: &CertificatesStore,
-    up_to: UpTo,
-    user_id: UserID,
-    realm_id: VlobID,
-) -> anyhow::Result<Option<Arc<RealmRoleCertificate>>> {
-    let query = GetCertificateQuery::realm_role_certificate(realm_id, user_id);
-    let encrypted = match store.storage.get_certificate_encrypted(query, up_to).await {
-        Ok((_, encrypted)) => encrypted,
-        Err(GetCertificateError::NonExisting | GetCertificateError::ExistButTooRecent { .. }) => {
-            return Ok(None)
-        }
-        Err(GetCertificateError::Internal(err)) => return Err(err),
-    };
-
-    let signed = store
-        .device
-        .local_symkey
-        .decrypt(&encrypted)
-        .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
-
-    let unsecure = RealmRoleCertificate::unsecure_load(signed.into())
-        .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
-
-    let certif = unsecure.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage);
-
-    Ok(Some(Arc::new(certif)))
-}
-
-async fn get_user_realms_roles(
-    store: &CertificatesStore,
-    up_to: UpTo,
-    user_id: UserID,
-) -> anyhow::Result<Vec<Arc<RealmRoleCertificate>>> {
-    let query = GetCertificateQuery::user_realm_role_certificates(user_id);
-    let items = store
-        .storage
-        .get_multiple_certificates_encrypted(query, up_to, None, None)
-        .await?;
-
-    let mut certifs = Vec::with_capacity(items.len());
-    for (_, encrypted) in items {
-        let signed = store
-            .device
-            .local_symkey
-            .decrypt(&encrypted)
-            .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
-
-        let unsecure = RealmRoleCertificate::unsecure_load(signed.into())
-            .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
-
-        let certif = unsecure.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage);
-
-        certifs.push(Arc::new(certif));
-    }
-
-    Ok(certifs)
-}
-
-async fn get_sequester_authority_certificate(
-    store: &CertificatesStore,
-    up_to: UpTo,
-) -> Result<Arc<SequesterAuthorityCertificate>, GetCertificateError> {
-    let query = GetCertificateQuery::sequester_authority_certificate();
-    let (_, encrypted) = store
-        .storage
-        .get_certificate_encrypted(query, up_to)
-        .await?;
-
-    let signed = store
-        .device
-        .local_symkey
-        .decrypt(&encrypted)
-        .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
-
-    let unsecure = SequesterAuthorityCertificate::unsecure_load(signed.into())
-        .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
-
-    let certif = unsecure.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage);
-
-    Ok(Arc::new(certif))
-}
-
-async fn get_sequester_service_certificates(
-    store: &CertificatesStore,
-    up_to: UpTo,
-) -> anyhow::Result<Vec<Arc<SequesterServiceCertificate>>> {
-    let query = GetCertificateQuery::sequester_service_certificates();
-    let items = store
-        .storage
-        .get_multiple_certificates_encrypted(query, up_to, None, None)
-        .await?;
-
-    let mut certifs = Vec::with_capacity(items.len());
-    for (_, encrypted) in items {
-        let signed = store
-            .device
-            .local_symkey
-            .decrypt(&encrypted)
-            .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
-
-        let unsecure = SequesterServiceCertificate::unsecure_load(signed.into())
-            .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
-
-        let certif = unsecure.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage);
-
-        certifs.push(Arc::new(certif));
-    }
-
-    Ok(certifs)
 }

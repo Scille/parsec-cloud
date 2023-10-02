@@ -8,7 +8,9 @@ use super::{
     store::{CertificatesStoreWriteGuard, GetTimestampBoundsError, UpTo},
     CertificatesOps, GetCertificateError,
 };
-use crate::event_bus::EventInvalidCertificate;
+use crate::{
+    certificates_ops::store::CertificatesStoreReadExt, event_bus::EventInvalidCertificate,
+};
 
 #[derive(Debug, thiserror::Error)]
 pub enum InvalidCertificateError {
