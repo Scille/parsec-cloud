@@ -51,6 +51,7 @@ words:
 ignoreWords:
   - ABCDEFGHJKLMNPQRSTUVWXYZ
   - Aaaaaand
+  - AIAA
   - ApiV
   - Assss
   - Crefreshiconhandler

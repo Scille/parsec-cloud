@@ -3,7 +3,6 @@
 use std::str::FromStr;
 
 use rand::{seq::SliceRandom, Rng};
-use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 
@@ -63,15 +62,15 @@ impl ToString for InvitationType {
  * SASCode
  */
 
-// SAS code is composed of 4 hexadecimal characters
+// (Note I/1 and 0/O are skipped to avoid visual confusion)
 const SAS_CODE_CHARS: &[u8; 32] = b"ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-const SAS_CODE_PATTERN: &str = "^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{4}$";
 const SAS_CODE_LEN: usize = 4;
 const SAS_CODE_BITS: usize = 20;
 const SAS_CODE_MASK: usize = (1 << SAS_CODE_BITS) - 1;
 const SAS_SUBCODE_BITS: usize = 5;
 const SAS_SUBCODE_MASK: usize = (1 << SAS_SUBCODE_BITS) - 1;
 
+/// SAS code is composed of 4 hexadecimal characters
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Hash)]
 pub struct SASCode(String);
 
@@ -85,11 +84,9 @@ impl FromStr for SASCode {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        lazy_static! {
-            static ref PATTERN: Regex = Regex::new(SAS_CODE_PATTERN)
-                .expect("`SAS_CODE_PATTERN` should be a valid regular expression");
-        }
-        if PATTERN.is_match(s) {
+        let valid = s.len() == 4 && s.as_bytes().iter().all(|c| SAS_CODE_CHARS.contains(c));
+
+        if valid {
             Ok(Self(s.to_string()))
         } else {
             Err("Invalid SAS code")
