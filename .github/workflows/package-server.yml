@@ -102,7 +102,7 @@ jobs:
         run: python3 misc/version_updater.py --tool parsec --version ${{ steps.version.outputs.full }}
 
       - name: Build wheel
-        uses: pypa/cibuildwheel@a873dd9cbf9e3c4c73a1fd11ac31cf835f6eb502  # pin v2.16.0
+        uses: pypa/cibuildwheel@7da7df1efc530f07d1945c00934b8cfd34be0d50  # pin v2.16.1
         with:
           package-dir: server
           output-dir: dist
@@ -139,7 +139,7 @@ jobs:
         run: python server/packaging/wheel/wheel_it.py ./server --output dist --skip-wheel
 
       # Install syft
-      - uses: taiki-e/install-action@5b205dd5b807eef56fdbfeedeedcee63c5d44090 # pin v2.18.16
+      - uses: taiki-e/install-action@57aaba576a0253b74662df51e62715622f02127b # pin v2.19.2
         with:
           tool: syft@0.84.0
 
