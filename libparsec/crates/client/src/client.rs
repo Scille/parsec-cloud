@@ -39,6 +39,13 @@ pub enum ClientStopWorkspaceError {
     Internal(#[from] anyhow::Error),
 }
 
+#[derive(Debug)]
+pub struct WorkspaceInfo {
+    pub id: VlobID,
+    pub name: EntryName,
+    pub self_role: RealmRole,
+}
+
 mod workspaces_ops {
     // Rust allows access of private field of structures defined in the same module.
     // So we define this stuff in it own sub-module to prevent messing with the internals.
@@ -259,14 +266,12 @@ impl Client {
                 .certificates_ops
                 .get_current_self_realms_roles()
                 .await?;
-            let found = available_realms.into_iter().find_map(|(x_realm_id, role)| {
-                if x_realm_id == realm_id {
-                    Some(role)
-                } else {
-                    None
-                }
-            });
-            found.ok_or(ClientStartWorkspaceError::NoAccess)?
+            match available_realms.get(&realm_id) {
+                // Never had access, or no longer have access
+                None | Some(None) => return Err(ClientStartWorkspaceError::NoAccess),
+                // Currently have access
+                Some(Some(role)) => *role,
+            }
         };
 
         let user_manifest = self.user_ops.get_user_manifest();
@@ -356,13 +361,10 @@ impl Client {
         let mut still_started_workspace_opses = Vec::with_capacity(workspace_opses.len());
         for workspace_ops in workspace_opses {
             let maybe_entry = user_manifest.get_workspace_entry(workspace_ops.realm_id());
-            let maybe_role = available_realms.iter().find_map(|(realm_id, role)| {
-                if workspace_ops.realm_id() == *realm_id {
-                    Some(*role)
-                } else {
-                    None
-                }
-            });
+            let maybe_role = available_realms
+                .get(&workspace_ops.realm_id())
+                .cloned()
+                .flatten();
 
             match (maybe_entry, maybe_role) {
                 (Some(entry), Some(role)) => {
@@ -390,8 +392,43 @@ impl Client {
         Ok(())
     }
 
-    pub fn list_workspaces_opses(&self) -> Vec<Arc<WorkspaceOps>> {
-        self.workspaces_ops.list()
+    pub async fn list_workspaces(&self) -> anyhow::Result<Vec<WorkspaceInfo>> {
+        let realms_roles = self
+            .certificates_ops
+            .get_current_self_realms_roles()
+            .await
+            .map_err(|e| e.context("Cannot retrieve self realms roles"))?;
+        let workspaces_entries = self.user_ops.list_workspaces();
+
+        // Only keep the workspaces that are actually accessible:
+        // - an entry is present in the user manifest
+        // - we currently have access to the related realm
+        let infos = workspaces_entries
+            .into_iter()
+            .filter_map(|(id, name)| {
+                let self_role = match realms_roles.get(&id).cloned() {
+                    // Currently have access to the realm
+                    Some(Some(role)) => role,
+                    // No longer have access to the realm
+                    Some(None) => return None,
+                    // There is two reason for having an entry but no certificates:
+                    // 1. user manifest's data are invalid :(
+                    // 2. we have just created workspace and haven't synced it yet
+                    //
+                    // Here we always consider we are in case 2 (hence our role is
+                    // always OWNER): case 1 is highly unlikely and returning the wrong
+                    // role won't do much harm anyway (as server enforce access).
+                    None => RealmRole::Owner,
+                };
+                Some(WorkspaceInfo {
+                    id,
+                    name,
+                    self_role,
+                })
+            })
+            .collect();
+
+        Ok(infos)
     }
 
     pub async fn new_user_invitation(

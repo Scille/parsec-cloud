@@ -11,6 +11,7 @@ pub use libparsec_client::{
         ClientInfoError, RenameWorkspaceError as ClientRenameWorkspaceError,
         ShareWorkspaceError as ClientShareWorkspaceError,
     },
+    WorkspaceInfo,
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
@@ -333,50 +334,12 @@ pub enum ClientListWorkspacesError {
     Internal(#[from] anyhow::Error),
 }
 
-pub struct WorkspaceInfo {
-    pub id: VlobID,
-    pub name: EntryName,
-    pub self_role: RealmRole,
-}
-
 pub async fn client_list_workspaces(
     client: Handle,
 ) -> Result<Vec<WorkspaceInfo>, ClientListWorkspacesError> {
     let client = borrow_client(client)?;
 
-    let realms_roles = client
-        .certificates_ops
-        .get_current_self_realms_roles()
-        .await
-        .map_err(|e| e.context("Cannot retrieve self realms roles"))?;
-    let workspaces_entries = client.user_ops.list_workspaces();
-
-    // Only keep the workspaces that are actually accessible:
-    // - an entry is present in the user manifest
-    // - we currently have access to the related realm according to the certificates
-
-    let infos = workspaces_entries
-        .into_iter()
-        .filter_map(|(id, name)| {
-            let maybe_role =
-                realms_roles.iter().find_map(
-                    |(x_id, x_role)| {
-                        if *x_id == id {
-                            Some(*x_role)
-                        } else {
-                            None
-                        }
-                    },
-                );
-            maybe_role.map(|self_role| WorkspaceInfo {
-                id,
-                name,
-                self_role,
-            })
-        })
-        .collect();
-
-    Ok(infos)
+    client.list_workspaces().await.map_err(|err| err.into())
 }
 
 /*
