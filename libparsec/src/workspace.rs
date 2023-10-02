@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::sync::Arc;
+
 pub use libparsec_client::{
     user_ops::{
         ClientInfoError, RenameWorkspaceError as ClientWorkspaceRenameError,
@@ -14,6 +16,16 @@ pub use libparsec_types::{DeviceAccessStrategy, RealmRole};
 use crate::handle::{
     borrow_from_handle, register_handle_with_init, take_and_close_handle, Handle, HandleItem,
 };
+
+fn borrow_workspace(
+    workspace: Handle,
+) -> anyhow::Result<Arc<libparsec_client::workspace_ops::WorkspaceOps>> {
+    borrow_from_handle(workspace, |x| match x {
+        HandleItem::Workspace { workspace_ops, .. } => Some(workspace_ops.clone()),
+        _ => None,
+    })
+    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))
+}
 
 /*
  * Client start workspace
@@ -115,7 +127,7 @@ pub async fn client_start_workspace(
 }
 
 /*
- * Client stop workspace
+ * Stop workspace
  */
 
 #[derive(Debug, thiserror::Error)]
@@ -155,18 +167,14 @@ pub async fn workspace_stop(workspace: Handle) -> Result<(), WorkspaceStopError>
 }
 
 /*
- * Client workspace entry info
+ * Workspace entry info
  */
 
 pub async fn workspace_entry_info(
     workspace: Handle,
     path: &FsPath,
 ) -> Result<EntryInfo, WorkspaceEntryInfoError> {
-    let workspace = borrow_from_handle(workspace, |x| match x {
-        HandleItem::Workspace { workspace_ops, .. } => Some(workspace_ops.clone()),
-        _ => None,
-    })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+    let workspace = borrow_workspace(workspace)?;
 
     workspace.entry_info(path).await
 }
