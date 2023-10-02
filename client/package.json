@@ -28,12 +28,12 @@
         "electron:release": "npm run electron:copy && cd electron && npm run electron:release"
     },
     "dependencies": {
-        "@capacitor-community/electron": "^4.1.2",
-        "@capacitor/android": "^5.4.0",
+        "@capacitor-community/electron": "^5.0.1",
+        "@capacitor/android": "^5.4.1",
         "@capacitor/app": "^5.0.6",
-        "@capacitor/core": "^5.2.1",
+        "@capacitor/core": "^5.4.1",
         "@capacitor/haptics": "^5.0.6",
-        "@capacitor/ios": "^5.4.0",
+        "@capacitor/ios": "^5.4.1",
         "@capacitor/keyboard": "^5.0.6",
         "@capacitor/splash-screen": "^5.0.6",
         "@capacitor/status-bar": "^5.0.6",
@@ -48,7 +48,7 @@
         "vue-router": "^4.2.2"
     },
     "devDependencies": {
-        "@capacitor/cli": "^5.4.0",
+        "@capacitor/cli": "^5.4.1",
         "@intlify/eslint-plugin-vue-i18n": "^2.0.0",
         "@ionic/cli": "^7.1.1",
         "@types/luxon": "^3.2.0",
