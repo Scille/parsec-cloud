@@ -11,31 +11,31 @@ describe('Check active users page', () => {
     cy.dropTestbed();
   });
 
-  // it('Checks initial status', () => {
-  //   cy.get('.back-organization').find('ion-label').contains('Manage my organization');
-  //   cy.get('.sidebar').find('.users').find('ion-item').first().contains('Users');
-  //   cy.get('.sidebar').find('.users').find('ion-item').first().should('have.class', 'item-selected');
-  //   cy.get('.sidebar').find('.user-menu').find('ion-item').as('userItems').should('have.length', 3);
-  //   cy.get('@userItems').eq(0).contains('Active');
-  //   cy.get('@userItems').eq(0).should('have.class', 'user-menu-selected');
-  //   cy.get('#activate-users-ms-action-bar').find('#grid-view').should('not.have.attr', 'disabled');
-  //   cy.get('#activate-users-ms-action-bar').find('#list-view').should('have.attr', 'disabled');
-  //   cy.get('#activate-users-ms-action-bar').find('#button-invite-user').contains('Invite a user');
-  //   cy.get('.user-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
-  //   cy.get('.users-container').find('.user-list-item').as('userItems').should('have.length', 3);
-  //   cy.get('@userItems').eq(0).should('have.class', 'item-disabled');
-  //   cy.get('@userItems').eq(1).find('ion-checkbox').should('not.be.visible');
-  //   // cspell:disable-next-line
-  //   cy.get('@userItems').eq(1).find('.person-name').contains('Cernd');
-  //   // cspell:disable-next-line
-  //   cy.get('@userItems').eq(1).find('.user-email__label').contains('cernd@gmail.com');
-  //   cy.get('@userItems').eq(1).find('.label-profile').contains('Standard');
-  //   // cspell:disable-next-line
-  //   cy.get('@userItems').eq(2).find('.person-name').contains('Jaheira');
-  //   // cspell:disable-next-line
-  //   cy.get('@userItems').eq(2).find('.user-email__label').contains('jaheira@gmail.com');
-  //   cy.get('@userItems').eq(2).find('.label-profile').contains('Admin');
-  // });
+  it('Checks initial status', () => {
+    cy.get('.back-organization').find('ion-label').contains('Manage my organization');
+    cy.get('.sidebar').find('.users').find('ion-item').first().contains('Users');
+    cy.get('.sidebar').find('.users').find('ion-item').first().should('have.class', 'item-selected');
+    cy.get('.sidebar').find('.user-menu').find('ion-item').as('userItems').should('have.length', 3);
+    cy.get('@userItems').eq(0).contains('Active');
+    cy.get('@userItems').eq(0).should('have.class', 'user-menu-selected');
+    cy.get('#activate-users-ms-action-bar').find('#grid-view').should('not.have.attr', 'disabled');
+    cy.get('#activate-users-ms-action-bar').find('#list-view').should('have.attr', 'disabled');
+    cy.get('#activate-users-ms-action-bar').find('#button-invite-user').contains('Invite a user');
+    cy.get('.user-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
+    cy.get('.users-container').find('.user-list-item').as('userItems').should('have.length', 3);
+    cy.get('@userItems').eq(0).should('have.class', 'item-disabled');
+    cy.get('@userItems').eq(1).find('ion-checkbox').should('not.be.visible');
+    // cspell:disable-next-line
+    cy.get('@userItems').eq(1).find('.person-name').contains('Cernd');
+    // cspell:disable-next-line
+    cy.get('@userItems').eq(1).find('.user-email__label').contains('cernd@gmail.com');
+    cy.get('@userItems').eq(1).find('.label-profile').contains('Standard');
+    // cspell:disable-next-line
+    cy.get('@userItems').eq(2).find('.person-name').contains('Jaheira');
+    // cspell:disable-next-line
+    cy.get('@userItems').eq(2).find('.user-email__label').contains('jaheira@gmail.com');
+    cy.get('@userItems').eq(2).find('.label-profile').contains('Admin');
+  });
 
   it('Tests selection', () => {
     function checkChecked(checked: boolean): void {
@@ -83,16 +83,16 @@ describe('Check active users page', () => {
     cy.get('.user-footer__container').contains('3 users');
   });
 
-  // it('Tests context menu', () => {
-  //   cy.get('.users-container').find('.user-list-item').as('userItems').should('have.length', 3);
-  //   cy.get('.user-context-menu').should('not.exist');
-  //   cy.get('@userItems').eq(2).find('.user-options').find('ion-button').click();
-  //   cy.get('.user-context-menu').should('exist');
-  //   cy.get('.user-context-menu').find('.menu-list').find('ion-item').as('menuItems').should('have.length', 4);
-  //   // 0 is title, 1 is revoke button
-  //   cy.get('@menuItems').eq(1).contains('Revoke');
-  //   cy.get('@menuItems').eq(1).click();
-  //   // cspell:disable-next-line
-  //   cy.get('@consoleLog').should('have.been.calledWith', 'Revoke user Jaheira');
-  // });
+  it('Tests context menu', () => {
+    cy.get('.users-container').find('.user-list-item').as('userItems').should('have.length', 3);
+    cy.get('.user-context-menu').should('not.exist');
+    cy.get('@userItems').eq(2).find('.user-options').find('ion-button').click();
+    cy.get('.user-context-menu').should('exist');
+    cy.get('.user-context-menu').find('.menu-list').find('ion-item').as('menuItems').should('have.length', 4);
+    // 0 is title, 1 is revoke button
+    cy.get('@menuItems').eq(1).contains('Revoke');
+    cy.get('@menuItems').eq(1).click();
+    // cspell:disable-next-line
+    cy.get('@consoleLog').should('have.been.calledWith', 'Revoke user Jaheira');
+  });
 });
