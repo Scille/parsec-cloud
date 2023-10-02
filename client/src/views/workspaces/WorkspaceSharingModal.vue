@@ -54,6 +54,7 @@ import MsInput from '@/components/core/ms-input/MsInput.vue';
 import { useI18n } from 'vue-i18n';
 import { translateWorkspaceRole } from '@/common/translations';
 
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 const search = ref('');
 const { t } = useI18n();
@@ -68,31 +69,36 @@ const userRoles: Ref<Array<[UserTuple, WorkspaceRole | null]>> = ref([]);
 // Would prefere to use a computed instead of a watch but
 // Vue doesn't handle async in computed.
 const unwatchSearch = watch(search, async() => {
-  const result = await getWorkspaceSharing(props.workspaceId, true);
-
-  if (result.ok) {
-    const roles: Array<[UserTuple, WorkspaceRole | null]> = [];
-    const lowerCaseSearch = search.value.toLocaleLowerCase();
-
-    for (const entry of result.value) {
-      if (entry[0].humanHandle.label.toLocaleLowerCase().includes(lowerCaseSearch)) {
-        roles.push(entry);
-      }
-    }
-    userRoles.value = roles;
-  } else {
-    console.log('Could not get workspace sharing info');
-  }
+  await refreshSharingInfo(search.value);
 });
 
-onMounted(async () => {
+async function refreshSharingInfo(searchString = ''): Promise<void> {
   const result = await getWorkspaceSharing(props.workspaceId, true);
 
   if (result.ok) {
-    userRoles.value = result.value;
+    if (searchString !== '') {
+      const roles: Array<[UserTuple, WorkspaceRole | null]> = [];
+      const lowerCaseSearch = search.value.toLocaleLowerCase();
+
+      for (const entry of result.value) {
+        if (entry[0].humanHandle.label.toLocaleLowerCase().includes(lowerCaseSearch)) {
+          roles.push(entry);
+        }
+      }
+      userRoles.value = roles;
+    } else {
+      userRoles.value = result.value;
+    }
   } else {
-    console.log('Could not get workspace sharing info');
+    notificationCenter.showToast(new Notification({
+      message: t('WorkspaceSharing.listFailure'),
+      level: NotificationLevel.Error,
+    }));
   }
+}
+
+onMounted(async () => {
+  await refreshSharingInfo();
 });
 
 onUnmounted(() => {
@@ -103,21 +109,21 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
   const result = await shareWorkspace(props.workspaceId, user.id, role);
   if (result.ok) {
     if (!role) {
-      notificationCenter.showToast(
-        new Notification({message: `The workspace is no longer shared with ${user.humanHandle.label}.`, level: NotificationLevel.Success}),
-      );
+      notificationCenter.showToast(new Notification({
+        message: t('WorkspaceSharing.unshareSuccess', {user: user.humanHandle.label}),
+        level: NotificationLevel.Success,
+      }));
     } else {
-      notificationCenter.showToast(
-        new Notification({
-          message: `${user.humanHandle.label}'s role has been updated to ${translateWorkspaceRole(t, role)}.`,
-          level: NotificationLevel.Success,
-        }),
-      );
+      notificationCenter.showToast(new Notification({
+        message: t('WorkspaceSharing.updateRoleSuccess', {user: user.humanHandle.label, role: translateWorkspaceRole(t, role)}),
+        level: NotificationLevel.Success,
+      }));
     }
   } else {
-    notificationCenter.showToast(
-      new Notification({message: `Failed to update ${user.humanHandle.label}'s role.`, level: NotificationLevel.Error}),
-    );
+    notificationCenter.showToast(new Notification({
+      message: t('WorkspaceSharing.updateRoleFailure', {user: user.humanHandle.label}),
+      level: NotificationLevel.Error,
+    }));
   }
 }
 

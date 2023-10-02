@@ -431,23 +431,34 @@ export async function listUsers(skipRevoked = true): Promise<Result<Array<UserIn
   }
 }
 
-export async function getWorkspaceSharing(workspaceId: WorkspaceID, includeAllUsers = false):
+export async function getWorkspaceSharing(workspaceId: WorkspaceID, includeAllUsers = false, includeSelf = false):
   Promise<Result<Array<[UserTuple, WorkspaceRole | null]>, ClientListWorkspaceUsersError>> {
   const handle = getParsecHandle();
 
   if (handle !== null && window.isDesktop()) {
+    let selfId: UserID | null = null;
+
+    if (!includeSelf) {
+      const clientResult = await getClientInfo();
+      if (clientResult.ok) {
+        selfId = clientResult.value.userId;
+      }
+    }
+
     const result = await libparsec.clientListWorkspaceUsers(handle, workspaceId);
     if (result.ok) {
       const value: Array<[UserTuple, WorkspaceRole | null]> = [];
 
       for (const sharing of result.value) {
-        value.push([{id: sharing.userId, humanHandle: sharing.humanHandle || {label: sharing.userId, email: ''}}, sharing.role]);
+        if (includeSelf || (!includeSelf && selfId !== sharing.userId)) {
+          value.push([{id: sharing.userId, humanHandle: sharing.humanHandle || {label: sharing.userId, email: ''}}, sharing.role]);
+        }
       }
       if (includeAllUsers) {
         const usersResult = await libparsec.clientListUsers(handle, true);
         if (usersResult.ok) {
           for (const user of usersResult.value) {
-            if (!value.find((item) => item[0].id === user.id)) {
+            if (!value.find((item) => item[0].id === user.id) && (includeSelf || (!includeSelf && user.id !== selfId))) {
               value.push([{id: user.id, humanHandle: user.humanHandle || {label: user.id, email: ''}}, null]);
             }
           }
@@ -468,6 +479,10 @@ export async function getWorkspaceSharing(workspaceId: WorkspaceID, includeAllUs
       // cspell:disable-next-line
       {id: '2', humanHandle: {label: 'Cernd', email: 'cernd@gmail.com'}}, WorkspaceRole.Contributor,
     ]];
+
+    if (includeSelf) {
+      value.push([{id: 'me', humanHandle: {email: 'user@host.com', label: 'Gordon Freeman'}}, WorkspaceRole.Owner]);
+    }
 
     if (includeAllUsers) {
       // cspell:disable-next-line
