@@ -185,7 +185,11 @@
         "searchPlaceholder": "e.g.: John Smith",
         "valid": "Valid",
         "cancel": "Cancel",
-        "currentUserLabel": "Me"
+        "currentUserLabel": "Me",
+        "unshareSuccess": "The workspace is no longer shared with {user}.",
+        "updateRoleSuccess": "{user}'s role has been updated to {role}.",
+        "updateRoleFailure": "Could not update {user}'s role.",
+        "listFailure": "Could not get the sharing information for this workspace."
     },
     "SettingsPage": {
         "pageTitle": "Settings",
@@ -221,6 +225,9 @@
         "user": "user",
         "itemCount": "No items | 1 item | {count} items",
         "noWorkspaces": "You haven't created a workspace, and no workspace has been shared with you yet.",
+        "listError": "Could not list the workspaces.",
+        "newWorkspaceError": "Could not create the new workspace.",
+        "newWorkspaceSuccess": "The new workspace '{workspace}' has been created!",
         "workspaceContextMenu": {
             "titleOffline": "Offline",
             "titleManage": "Manage workspace",

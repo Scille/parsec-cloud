@@ -184,7 +184,11 @@
         "searchPlaceholder": "ex : Jean Martin",
         "valid": "Valider",
         "cancel": "Annuler",
-        "currentUserLabel": "Moi"
+        "currentUserLabel": "Moi",
+        "unshareSuccess": "L'espace de travail n'est plus partagé avec {user}.",
+        "updateRoleSuccess": "Le rôle de {user} a été changé en {role}.",
+        "updateRoleFailure": "Impossible de modifier le rôle de {user}.",
+        "listFailure": "Impossible de récupérer les informations de partage de cet espace de travail."
     },
     "SettingsPage": {
         "pageTitle": "Paramètres",
@@ -220,6 +224,9 @@
         "user": "utilisateur",
         "itemCount": "Aucun élément | 1 élément | {count} éléments",
         "noWorkspaces": "Vous n'avez pas encore créé d'espace de travail, et aucun espace de travail n'a été partagé avec vous.",
+        "listError": "Impossible de lister les espaces de travail.",
+        "newWorkspaceError": "Impossible de créer le nouvel espace de travail.",
+        "newWorkspaceSuccess": "Le nouvel espace de travail '{workspace}' a été créé !",
         "workspaceContextMenu": {
             "titleOffline": "Hors Connexion",
             "titleManage": "Gestion de l'espace",

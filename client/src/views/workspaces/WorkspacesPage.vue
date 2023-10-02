@@ -130,7 +130,7 @@ import { MsSelectChangeEvent, MsSelectOption } from '@/components/core/ms-select
 import MsGridListToggle from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import { DisplayState } from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import { useI18n } from 'vue-i18n';
-import { ref, Ref, onMounted, computed } from 'vue';
+import { ref, Ref, onMounted, computed, inject } from 'vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import { routerNavigateTo } from '@/router';
 import {
@@ -138,11 +138,14 @@ import {
   listWorkspaces as parsecListWorkspaces,
   createWorkspace as parsecCreateWorkspace,
 } from '@/parsec';
+import { NotificationCenter, Notification, NotificationKey, NotificationLevel } from '@/services/notificationCenter';
 
 const { t } = useI18n();
 const sortBy = ref('name');
 const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
 const displayView = ref(DisplayState.Grid);
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 
 onMounted(async (): Promise<void> => {
   await refreshWorkspacesList();
@@ -153,7 +156,10 @@ async function refreshWorkspacesList(): Promise<void> {
   if (result.ok) {
     workspaceList.value = result.value;
   } else {
-    console.log('Could not list workspaces', result.error);
+    notificationCenter.showToast(new Notification({
+      message: t('WorkspacesPage.listError'),
+      level: NotificationLevel.Error,
+    }));
   }
 }
 
@@ -190,11 +196,19 @@ async function openCreateWorkspaceModal(): Promise<void> {
   const { data, role } = await modal.onWillDismiss();
 
   if (role === 'confirm') {
-    const result = await parsecCreateWorkspace(data);
+    const workspaceName = data;
+    const result = await parsecCreateWorkspace(workspaceName);
     if (result.ok) {
+      notificationCenter.showToast(new Notification({
+        message: t('WorkspacesPage.newWorkspaceSuccess', {workspace: workspaceName}),
+        level: NotificationLevel.Success,
+      }));
       await refreshWorkspacesList();
     } else {
-      console.log('Could not create a new workspace', result.error);
+      notificationCenter.showToast(new Notification({
+        message: t('WorkspacesPage.newWorkspaceError'),
+        level: NotificationLevel.Error,
+      }));
     }
   }
 }
