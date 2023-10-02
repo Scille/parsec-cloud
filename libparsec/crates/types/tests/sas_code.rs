@@ -39,3 +39,22 @@ fn generate_sas_codes() {
 fn sas_code_from_int(#[case] val: u32, #[case] result: Result<SASCode, &'static str>) {
     p_assert_eq!(SASCode::try_from(val), result);
 }
+
+#[test]
+fn sas_code_from_str_good() {
+    p_assert_eq!("AAAA".parse::<SASCode>().unwrap().as_ref(), "AAAA");
+    p_assert_eq!("9999".parse::<SASCode>().unwrap().as_ref(), "9999");
+}
+
+#[rstest]
+#[case::too_short("AAA")]
+#[case::too_long("AAAAA")]
+#[case::bad_char_i("AIAA")]
+#[case::bad_char_1("AA1A")]
+#[case::bad_char_bang("#AAA")]
+fn sas_code_from_str_bad(#[case] val: &str) {
+    p_assert_matches!(
+        val.parse::<SASCode>(),
+        Err(err) if err == "Invalid SAS code"
+    )
+}
