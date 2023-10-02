@@ -8,6 +8,7 @@ use super::{
     add::add_certificates_batch, store::CertificatesStoreReadGuard, AddCertificateError,
     CertificatesOps, InvalidCertificateError, MaybeRedactedSwitch,
 };
+use crate::certificates_ops::store::CertificatesStoreReadExt;
 
 #[derive(Debug, thiserror::Error)]
 pub enum PollServerError {

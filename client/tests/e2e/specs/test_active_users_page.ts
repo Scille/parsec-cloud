@@ -22,35 +22,35 @@ describe('Check active users page', () => {
     cy.get('#activate-users-ms-action-bar').find('#list-view').should('have.attr', 'disabled');
     cy.get('#activate-users-ms-action-bar').find('#button-invite-user').contains('Invite a user');
     cy.get('.user-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
-    cy.get('.users-container').find('.user-list-item').as('userItems').should('have.length', 2);
-    cy.get('@userItems').eq(0).find('ion-checkbox').should('not.be.visible');
+    cy.get('.users-container').find('.user-list-item').as('userItems').should('have.length', 3);
+    cy.get('@userItems').eq(0).should('have.class', 'item-disabled');
+    cy.get('@userItems').eq(1).find('ion-checkbox').should('not.be.visible');
     // cspell:disable-next-line
-    cy.get('@userItems').eq(0).find('.person-name').contains('Cernd');
+    cy.get('@userItems').eq(1).find('.person-name').contains('Cernd');
     // cspell:disable-next-line
-    cy.get('@userItems').eq(0).find('.user-email__label').contains('cernd@gmail.com');
-    cy.get('@userItems').eq(0).find('.label-profile').contains('Standard');
+    cy.get('@userItems').eq(1).find('.user-email__label').contains('cernd@gmail.com');
+    cy.get('@userItems').eq(1).find('.label-profile').contains('Standard');
     // cspell:disable-next-line
-    cy.get('@userItems').eq(1).find('.person-name').contains('Jaheira');
+    cy.get('@userItems').eq(2).find('.person-name').contains('Jaheira');
     // cspell:disable-next-line
-    cy.get('@userItems').eq(1).find('.user-email__label').contains('jaheira@gmail.com');
-    cy.get('@userItems').eq(1).find('.label-profile').contains('Admin');
-
+    cy.get('@userItems').eq(2).find('.user-email__label').contains('jaheira@gmail.com');
+    cy.get('@userItems').eq(2).find('.label-profile').contains('Admin');
   });
 
   it('Tests selection', () => {
     function checkChecked(checked: boolean): void {
-      for (let i = 0; i < 2; i++) {
+      for (let i = 1; i < 3; i++) {
         cy.get('@userItems').eq(i).find('ion-checkbox').should(checked ? 'be.visible' : 'not.be.visible');
         cy.get('@userItems').eq(i).find('ion-checkbox').should(checked ? 'have.class' : 'not.have.class', 'checkbox-checked');
       }
     }
 
     cy.get('#activate-users-ms-action-bar').find('#button-invite-user').contains('Invite a user');
-    cy.get('.users-container').find('.user-list-item').as('userItems').should('have.length', 2);
+    cy.get('.users-container').find('.user-list-item').as('userItems').should('have.length', 3);
     // All unchecked by default
     checkChecked(false);
 
-    cy.get('.user-footer__container').contains('2 users');
+    cy.get('.user-footer__container').contains('3 users');
     cy.get('.user-footer__container').find('#button-revoke-user').should('not.exist');
 
     // Select all
@@ -62,8 +62,8 @@ describe('Check active users page', () => {
     cy.get('#activate-users-ms-action-bar').find('#button-invite-user').should('not.exist');
     cy.get('#activate-users-ms-action-bar').find('#button-revoke-user').contains('Revoke these users');
 
-    // Deselect [1], only [0] is selected
-    cy.get('@userItems').eq(1).find('ion-checkbox').click();
+    // Deselect [2], only [1] is selected
+    cy.get('@userItems').eq(2).find('ion-checkbox').click();
     cy.get('#activate-users-ms-action-bar').find('#button-revoke-user').contains('Revoke this user');
     cy.get('#activate-users-ms-action-bar').find('#button-common-workspaces').contains('See common workspaces');
     cy.get('.user-footer__container').find('#button-revoke-user').should('exist');
@@ -80,13 +80,13 @@ describe('Check active users page', () => {
     // Deselect all
     cy.get('.user-list-header').find('ion-checkbox').click();
     checkChecked(false);
-    cy.get('.user-footer__container').contains('2 users');
+    cy.get('.user-footer__container').contains('3 users');
   });
 
   it('Tests context menu', () => {
-    cy.get('.users-container').find('.user-list-item').as('userItems').should('have.length', 2);
+    cy.get('.users-container').find('.user-list-item').as('userItems').should('have.length', 3);
     cy.get('.user-context-menu').should('not.exist');
-    cy.get('@userItems').eq(1).find('.user-options').find('ion-button').click();
+    cy.get('@userItems').eq(2).find('.user-options').find('ion-button').click();
     cy.get('.user-context-menu').should('exist');
     cy.get('.user-context-menu').find('.menu-list').find('ion-item').as('menuItems').should('have.length', 4);
     // 0 is title, 1 is revoke button

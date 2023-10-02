@@ -13,6 +13,9 @@ import {
   closeCircle,
 } from 'ionicons/icons';
 
+// Re-export so everything can be imported from this file
+export { NotificationKey } from '@/common/injectionKeys';
+
 export enum NotificationLevel {
   Info = 'INFO',
   Success = 'SUCCESS',

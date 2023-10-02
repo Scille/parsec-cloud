@@ -3,6 +3,7 @@
 use libparsec_types::prelude::*;
 
 use super::{CertificatesOps, GetCertificateError, InvalidCertificateError, PollServerError, UpTo};
+use crate::certificates_ops::store::CertificatesStoreReadExt;
 
 #[derive(Debug, thiserror::Error)]
 pub enum InvalidManifestError {

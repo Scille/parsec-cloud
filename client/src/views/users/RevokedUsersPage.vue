@@ -26,63 +26,68 @@
       </ms-action-bar>
       <!-- users -->
       <div class="users-container">
-        <div v-if="displayView === DisplayState.List">
-          <ion-list>
-            <ion-list-header
-              class="user-list-header"
-              lines="full"
-            >
-              <ion-label class="user-list-header__label label-selected">
-                <ion-checkbox
-                  aria-label=""
-                  class="checkbox"
-                  @ion-change="selectAllUsers($event.detail.checked)"
-                  v-model="allUsersSelected"
-                  :indeterminate="indeterminateState"
-                />
-              </ion-label>
-              <ion-label class="user-list-header__label cell-title label-name">
-                {{ $t('UsersPage.listDisplayTitles.name') }}
-              </ion-label>
-              <ion-label class="user-list-header__label cell-title label-email">
-                {{ $t('UsersPage.listDisplayTitles.email') }}
-              </ion-label>
-              <ion-label class="user-list-header__label cell-title label-profile">
-                {{ $t('UsersPage.listDisplayTitles.profile') }}
-              </ion-label>
-              <ion-label class="user-list-header__label cell-title label-joined-on">
-                {{ $t('UsersPage.listDisplayTitles.joinedOn') }}
-              </ion-label>
-              <ion-label class="user-list-header__label cell-title label-space" />
-            </ion-list-header>
-            <user-list-item
+        <div v-if="filteredUsers.length === 0">
+          {{ $t('UsersPage.revokedEmptyList') }}
+        </div>
+        <div v-else>
+          <div v-if="displayView === DisplayState.List">
+            <ion-list>
+              <ion-list-header
+                class="user-list-header"
+                lines="full"
+              >
+                <ion-label class="user-list-header__label label-selected">
+                  <ion-checkbox
+                    aria-label=""
+                    class="checkbox"
+                    @ion-change="selectAllUsers($event.detail.checked)"
+                    v-model="allUsersSelected"
+                    :indeterminate="indeterminateState"
+                  />
+                </ion-label>
+                <ion-label class="user-list-header__label cell-title label-name">
+                  {{ $t('UsersPage.listDisplayTitles.name') }}
+                </ion-label>
+                <ion-label class="user-list-header__label cell-title label-email">
+                  {{ $t('UsersPage.listDisplayTitles.email') }}
+                </ion-label>
+                <ion-label class="user-list-header__label cell-title label-profile">
+                  {{ $t('UsersPage.listDisplayTitles.profile') }}
+                </ion-label>
+                <ion-label class="user-list-header__label cell-title label-joined-on">
+                  {{ $t('UsersPage.listDisplayTitles.joinedOn') }}
+                </ion-label>
+                <ion-label class="user-list-header__label cell-title label-space" />
+              </ion-list-header>
+              <user-list-item
+                v-for="user in filteredUsers"
+                :key="user.id"
+                :user="user"
+                :show-checkbox="selectedUsersCount > 0 || allUsersSelected"
+                @menu-click="openUserContextMenu($event, user)"
+                @select="onUserSelect"
+                ref="userListItemRefs"
+              />
+            </ion-list>
+          </div>
+          <div
+            v-else
+            class="users-container-grid"
+          >
+            <ion-item
+              class="users-grid-item"
               v-for="user in filteredUsers"
               :key="user.id"
-              :user="user"
-              :show-checkbox="selectedUsersCount > 0 || allUsersSelected"
-              @menu-click="openUserContextMenu($event, user)"
-              @select="onUserSelect"
-              ref="userListItemRefs"
-            />
-          </ion-list>
-        </div>
-        <div
-          v-else
-          class="users-container-grid"
-        >
-          <ion-item
-            class="users-grid-item"
-            v-for="user in filteredUsers"
-            :key="user.id"
-          >
-            <user-card
-              ref="userGridItemRefs"
-              :user="user"
-              :show-checkbox="selectedUsersCount > 0 || allUsersSelected"
-              @menu-click="openUserContextMenu($event, user)"
-              @select="onUserSelect"
-            />
-          </ion-item>
+            >
+              <user-card
+                ref="userGridItemRefs"
+                :user="user"
+                :show-checkbox="selectedUsersCount > 0 || allUsersSelected"
+                @menu-click="openUserContextMenu($event, user)"
+                @select="onUserSelect"
+              />
+            </ion-item>
+          </div>
         </div>
       </div>
       <div class="user-footer">
@@ -118,7 +123,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref, computed, onMounted } from 'vue';
+import { ref, Ref, computed, onMounted, inject } from 'vue';
 import {
   IonContent,
   IonItem,
@@ -142,11 +147,16 @@ import UserContextMenu from '@/views/users/UserContextMenu.vue';
 import { UserAction } from '@/views/users/UserContextMenu.vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import { UserInfo, listUsers as parsecListUsers } from '@/parsec';
+import { NotificationCenter, NotificationKey, NotificationLevel, Notification } from '@/services/notificationCenter';
+import { useI18n } from 'vue-i18n';
 
 const displayView = ref(DisplayState.List);
 const userList: Ref<UserInfo[]> = ref([]);
 const userListItemRefs: Ref<typeof UserListItem[]> = ref([]);
 const userGridItemRefs: Ref<typeof UserCard[]> = ref([]);
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const notificationCenter: NotificationCenter = inject(NotificationKey)!;
+const { t } = useI18n();
 
 const allUsersSelected = computed({
   get: (): boolean => selectedUsersCount.value === userList.value.length,
@@ -245,13 +255,20 @@ function resetSelection(): void {
   userGridItemRefs.value = [];
 }
 
-onMounted(async (): Promise<void> => {
+async function refreshUserList(): Promise<void> {
   const result = await parsecListUsers(false);
   if (result.ok) {
     userList.value = result.value;
   } else {
-    console.log('Failed to list users', result.error);
+    notificationCenter.showToast(new Notification({
+      message: t('UsersPage.listRevokedUsersFailed'),
+      level: NotificationLevel.Error,
+    }));
   }
+}
+
+onMounted(async (): Promise<void> => {
+  await refreshUserList();
 });
 </script>
 
