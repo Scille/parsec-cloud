@@ -19,7 +19,7 @@ import {
   UserProfile,
 } from '@/parsec/types';
 import { wait, MOCK_WAITING_TIME, DEFAULT_HANDLE } from '@/parsec/internals';
-import { getParsecHandle } from '@/router/conditions';
+import { getParsecHandle } from '@/parsec/routing';
 
 export class UserGreet {
   handle: Handle | null;

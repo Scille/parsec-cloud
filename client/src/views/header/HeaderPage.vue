@@ -132,8 +132,7 @@ import { parse as parsePath } from '@/common/path';
 import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
 import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
-import { hasHistory, isDocumentRoute } from '@/router/conditions';
-import { getClientInfo, ClientInfo, WorkspaceName, getWorkspaceName, WorkspaceID } from '@/parsec';
+import { getClientInfo, ClientInfo, WorkspaceName, getWorkspaceName, WorkspaceID, hasHistory, isDocumentRoute } from '@/parsec';
 
 const currentRoute = useRoute();
 const workspaceName: Ref<WorkspaceName> = ref('');

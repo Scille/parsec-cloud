@@ -425,6 +425,8 @@
             "standard": "Standard",
             "outsider": "Externe"
         },
+        "emptyList": "Aucun utilisateur à afficher.",
+        "listUsersFailed": "Impossible d'obtenir la liste des utilisateurs. Veuillez vérifier votre connexion internet.",
         "userSelectedCount": "Aucun utilisateur sélectionné | 1 utilisateur sélectionné | {count} utilisateurs sélectionnés",
         "userContextMenu": {
             "titleRemove": "Suppression",
@@ -469,7 +471,8 @@
             "email": "Email",
             "date": "Invitation date",
             "status": "Statut",
-            "noInvitations": "Aucune invitation en cours"
+            "noInvitations": "Aucune invitation en cours",
+            "inviteFailed": "Échec de l'invitation. Veuillez vérifier votre connexion internet."
         },
         "CreateUserInvitationModal": {
             "pageTitle": "Inviter un nouvel utilisateur",

@@ -264,7 +264,7 @@ import { WatchStopHandle, onMounted, onUnmounted, ref, watch, Ref } from 'vue';
 import { createGesture } from '@ionic/vue';
 import { useRoute } from 'vue-router';
 import useSidebarMenu from '@/services/sidebarMenu';
-import { isOrganizationManagementRoute, isSpecificWorkspaceRoute, isUserRoute } from '@/router/conditions';
+import { isOrganizationManagementRoute, isSpecificWorkspaceRoute, isUserRoute } from '@/parsec';
 import { routerNavigateTo } from '@/router';
 import {
   listWorkspaces as parsecListWorkspaces,

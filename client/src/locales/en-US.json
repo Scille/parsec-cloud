@@ -426,6 +426,10 @@
             "standard": "Standard",
             "outsider": "Outsider"
         },
+        "emptyList": "No users to display.",
+        "listUsersFailed": "Could not retrieve the users list. Please make sure you're connected to the internet.",
+        "revokedEmptyList": "No revoked users to display.",
+        "listRevokedUsersFailed": "Could not retrieve the revoked users list. Please make sure you're connected to the internet.",
         "userSelectedCount": "No user selected | 1 user selected | {count} users selected",
         "userContextMenu": {
             "titleRemove": "Deletion",
@@ -470,7 +474,8 @@
             "email": "Email",
             "date": "Invitation date",
             "status": "Status",
-            "noInvitations": "No pending invitations"
+            "noInvitations": "No pending invitations",
+            "inviteFailed": "Invitation failed. Please make sure you're connected to the internet."
         },
         "CreateUserInvitationModal": {
             "pageTitle": "Invite a new user",

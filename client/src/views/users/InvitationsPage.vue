@@ -86,7 +86,7 @@ import {
 import {
   personAdd,
 } from 'ionicons/icons';
-import { onUpdated, ref, Ref, onMounted } from 'vue';
+import { onUpdated, ref, Ref, onMounted, inject } from 'vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import MsActionBarButton from '@/components/core/ms-action-bar/MsActionBarButton.vue';
 import MsGridListToggle from '@/components/core/ms-toggle/MsGridListToggle.vue';
@@ -98,22 +98,26 @@ import GreetUserModal from '@/views/users/GreetUserModal.vue';
 import InvitationCard from '@/components/users/InvitationCard.vue';
 import InvitationListItem from '@/components/users/InvitationListItem.vue';
 import CreateUserInvitationModal from '@/views/users/CreateUserInvitationModal.vue';
-import { isRoute } from '@/router/conditions';
 import {
+  isRoute,
   UserInvitation,
   listUserInvitations as parsecListUserInvitations,
   inviteUser as parsecInviteUser,
   cancelInvitation as parsecCancelInvitation,
   isAdmin as parsecIsAdmin,
 } from '@/parsec';
+import { NotificationCenter, NotificationKey, NotificationLevel, Notification } from '@/services/notificationCenter';
 
 const invitations: Ref<UserInvitation[]> = ref([]);
 const { t } = useI18n();
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 
 onMounted(async () => {
   isAdmin.value = await parsecIsAdmin();
+  await refreshInvitationsList();
 });
 
 onUpdated(async () => {
@@ -127,7 +131,10 @@ async function refreshInvitationsList(): Promise<void> {
   if (result.ok) {
     invitations.value = result.value;
   } else {
-    console.log('Failed to list invitations', result.error);
+    notificationCenter.showToast(new Notification({
+      message: t('UsersPage.inviteFailed'),
+      level: NotificationLevel.Error,
+    }));
   }
 }
 
