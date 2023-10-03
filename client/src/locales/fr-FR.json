@@ -63,8 +63,8 @@
             "title": "Impossible de se connecter !",
             "message": "Le mot de passe est incorrect !"
         },
-        "noDevices": "Vous n'avez pas d'appareils sur ce téléphone.",
-        "howToAddDevices": "Pour ajouter un appareil, invitez-le depuis une organisation existante, ou créez une nouvelle organisation.",
+        "noDevices": "Vous n'avez pas d'organisations sur cet appareil.",
+        "howToAddDevices": "Créez une nouvelle organisation ou faites vous inviter dans une organisation existante.",
         "pleaseConnectToAnOrganization": "Bienvenue. Veuillez ajouter une organisation pour commencer à utiliser Parsec.",
         "createOrganization": "Créer une organisation",
         "joinByLink": "Rejoindre par lien",

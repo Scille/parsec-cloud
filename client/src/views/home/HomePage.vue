@@ -62,6 +62,7 @@
               v-if="showOrganizationList"
               v-model="orgSearchString"
               id="ms-search-input"
+              v-show="deviceList.length >= 2"
             />
             <ion-button
               @click="isPopoverOpen = !isPopoverOpen; openPopover($event)"
@@ -93,54 +94,64 @@
               v-if="showOrganizationList"
               class="right-side-container"
             >
-              <ion-card-content class="organization-container">
-                <ion-card-title class="organization-filter">
-                  <!-- No use in showing the sort/filter options for less than 2 devices -->
-                  <template v-if="deviceList.length > 2">
-                    <ms-select
-                      id="organization-filter-select"
-                      label="t('HomePage.organizationList.labelSortBy')"
-                      :options="msSelectOptions"
-                      default-option="organization"
-                      :sort-by-labels="msSelectSortByLabels"
-                      @change="onMsSelectChange($event)"
-                    />
-                  </template>
-                </ion-card-title>
-                <ion-grid class="organization-list">
-                  <ion-row class="organization-list-row">
-                    <ion-col
-                      v-for="device in filteredDevices"
-                      :key="device.slug"
-                      class="organization-list-row__col"
-                    >
-                      <ion-card
-                        button
-                        class="organization-card"
-                        @click="onOrganizationCardClick(device)"
+              <div v-if="deviceList.length === 0">
+                <ion-card-content class="organization-container">
+                  <ion-card-title>
+                    {{ $t('HomePage.noDevices') }}
+                  </ion-card-title>
+                  {{ $t('HomePage.howToAddDevices') }}
+                </ion-card-content>
+              </div>
+              <div v-if="deviceList.length > 0">
+                <ion-card-content class="organization-container">
+                  <ion-card-title class="organization-filter">
+                    <!-- No use in showing the sort/filter options for less than 2 devices -->
+                    <template v-if="deviceList.length >= 2">
+                      <ms-select
+                        id="organization-filter-select"
+                        label="t('HomePage.organizationList.labelSortBy')"
+                        :options="msSelectOptions"
+                        default-option="organization"
+                        :sort-by-labels="msSelectSortByLabels"
+                        @change="onMsSelectChange($event)"
+                      />
+                    </template>
+                  </ion-card-title>
+                  <ion-grid class="organization-list">
+                    <ion-row class="organization-list-row">
+                      <ion-col
+                        v-for="device in filteredDevices"
+                        :key="device.slug"
+                        class="organization-list-row__col"
                       >
-                        <ion-card-content class="card-content">
-                          <ion-grid>
-                            <organization-card
-                              :device="device"
-                              class="card-content__body"
-                            />
-                            <ion-row class="card-content__footer">
-                              <ion-col size="auto">
-                                <p>{{ $t('HomePage.organizationList.lastLogin') }}</p>
-                                <p>
-                                  {{ device.slug in storedDeviceDataDict ?
-                                    timeSince(storedDeviceDataDict[device.slug].lastLogin, '--') : '--' }}
-                                </p>
-                              </ion-col>
-                            </ion-row>
-                          </ion-grid>
-                        </ion-card-content>
-                      </ion-card>
-                    </ion-col>
-                  </ion-row>
-                </ion-grid>
-              </ion-card-content>
+                        <ion-card
+                          button
+                          class="organization-card"
+                          @click="onOrganizationCardClick(device)"
+                        >
+                          <ion-card-content class="card-content">
+                            <ion-grid>
+                              <organization-card
+                                :device="device"
+                                class="card-content__body"
+                              />
+                              <ion-row class="card-content__footer">
+                                <ion-col size="auto">
+                                  <p>{{ $t('HomePage.organizationList.lastLogin') }}</p>
+                                  <p>
+                                    {{ device.slug in storedDeviceDataDict ?
+                                      timeSince(storedDeviceDataDict[device.slug].lastLogin, '--') : '--' }}
+                                  </p>
+                                </ion-col>
+                              </ion-row>
+                            </ion-grid>
+                          </ion-card-content>
+                        </ion-card>
+                      </ion-col>
+                    </ion-row>
+                  </ion-grid>
+                </ion-card-content>
+              </div>
             </ion-card>
             <!-- after animation -->
             <ion-card
