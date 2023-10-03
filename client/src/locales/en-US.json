@@ -63,8 +63,8 @@
             "title": "Could not login!",
             "message": "The password is incorrect!"
         },
-        "noDevices": "You have no devices on this phone.",
-        "howToAddDevices": "To add a device, invite it from an existing organization, or create a new organization.",
+        "noDevices": "You don't have any organization on this device.",
+        "howToAddDevices": "Create a new organization or get invited into an existing one.",
         "pleaseConnectToAnOrganization": "Welcome. Please add an organization to start using Parsec.",
         "createOrganization": "Create an organization",
         "joinByLink": "Join by link",
