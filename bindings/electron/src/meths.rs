@@ -4186,6 +4186,7 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
         None => None,
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -4193,16 +4194,19 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::bootstrap_organization(
-                config,
-                on_event_callback,
-                bootstrap_organization_addr,
-                save_strategy,
-                human_handle,
-                device_label,
-                sequester_authority_verify_key,
-            )
-            .await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::bootstrap_organization(
+                    config,
+                    on_event_callback,
+                    bootstrap_organization_addr,
+                    save_strategy,
+                    human_handle,
+                    device_label,
+                    sequester_authority_verify_key,
+                )
+                .await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -4226,6 +4230,8 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -4327,6 +4333,7 @@ fn claimer_device_finalize_save_local_device(mut cx: FunctionContext) -> JsResul
         variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -4334,8 +4341,10 @@ fn claimer_device_finalize_save_local_device(mut cx: FunctionContext) -> JsResul
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret =
-                libparsec::claimer_device_finalize_save_local_device(handle, save_strategy).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::claimer_device_finalize_save_local_device(handle, save_strategy,).await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -4359,6 +4368,8 @@ fn claimer_device_finalize_save_local_device(mut cx: FunctionContext) -> JsResul
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -4386,6 +4397,7 @@ fn claimer_device_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsR
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -4393,8 +4405,10 @@ fn claimer_device_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsR
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret =
-                libparsec::claimer_device_in_progress_1_do_signify_trust(canceller, handle).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::claimer_device_in_progress_1_do_signify_trust(canceller, handle,).await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -4418,6 +4432,8 @@ fn claimer_device_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsR
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -4445,6 +4461,7 @@ fn claimer_device_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> J
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -4452,8 +4469,11 @@ fn claimer_device_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> J
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret =
-                libparsec::claimer_device_in_progress_2_do_wait_peer_trust(canceller, handle).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::claimer_device_in_progress_2_do_wait_peer_trust(canceller, handle,)
+                    .await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -4477,6 +4497,8 @@ fn claimer_device_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> J
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -4516,6 +4538,7 @@ fn claimer_device_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<Js
         None => None,
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -4523,12 +4546,15 @@ fn claimer_device_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<Js
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::claimer_device_in_progress_3_do_claim(
-                canceller,
-                handle,
-                requested_device_label,
-            )
-            .await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::claimer_device_in_progress_3_do_claim(
+                    canceller,
+                    handle,
+                    requested_device_label,
+                )
+                .await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -4552,6 +4578,8 @@ fn claimer_device_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<Js
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -4579,6 +4607,7 @@ fn claimer_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPr
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -4586,7 +4615,10 @@ fn claimer_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPr
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::claimer_device_initial_do_wait_peer(canceller, handle).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::claimer_device_initial_do_wait_peer(canceller, handle,).await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -4610,6 +4642,8 @@ fn claimer_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPr
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -4719,6 +4753,7 @@ fn claimer_retrieve_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -4726,7 +4761,10 @@ fn claimer_retrieve_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::claimer_retrieve_info(config, on_event_callback, addr).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::claimer_retrieve_info(config, on_event_callback, addr,).await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -4752,6 +4790,8 @@ fn claimer_retrieve_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
             });
         });
 
+    crate::handle_backtrace!(rx, cx);
+
     Ok(promise)
 }
 
@@ -4772,6 +4812,7 @@ fn claimer_user_finalize_save_local_device(mut cx: FunctionContext) -> JsResult<
         variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -4779,8 +4820,10 @@ fn claimer_user_finalize_save_local_device(mut cx: FunctionContext) -> JsResult<
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret =
-                libparsec::claimer_user_finalize_save_local_device(handle, save_strategy).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::claimer_user_finalize_save_local_device(handle, save_strategy,).await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -4804,6 +4847,8 @@ fn claimer_user_finalize_save_local_device(mut cx: FunctionContext) -> JsResult<
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -4831,6 +4876,7 @@ fn claimer_user_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsRes
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -4838,8 +4884,10 @@ fn claimer_user_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsRes
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret =
-                libparsec::claimer_user_in_progress_1_do_signify_trust(canceller, handle).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::claimer_user_in_progress_1_do_signify_trust(canceller, handle,).await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -4863,6 +4911,8 @@ fn claimer_user_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsRes
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -4890,6 +4940,7 @@ fn claimer_user_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -4897,8 +4948,10 @@ fn claimer_user_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret =
-                libparsec::claimer_user_in_progress_2_do_wait_peer_trust(canceller, handle).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::claimer_user_in_progress_2_do_wait_peer_trust(canceller, handle,).await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -4922,6 +4975,8 @@ fn claimer_user_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -4968,6 +5023,7 @@ fn claimer_user_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPr
         None => None,
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -4975,13 +5031,16 @@ fn claimer_user_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPr
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::claimer_user_in_progress_3_do_claim(
-                canceller,
-                handle,
-                requested_device_label,
-                requested_human_handle,
-            )
-            .await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::claimer_user_in_progress_3_do_claim(
+                    canceller,
+                    handle,
+                    requested_device_label,
+                    requested_human_handle,
+                )
+                .await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -5005,6 +5064,8 @@ fn claimer_user_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPr
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -5032,6 +5093,7 @@ fn claimer_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -5039,7 +5101,10 @@ fn claimer_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::claimer_user_initial_do_wait_peer(canceller, handle).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::claimer_user_initial_do_wait_peer(canceller, handle,).await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -5063,6 +5128,8 @@ fn claimer_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -5092,6 +5159,7 @@ fn client_create_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -5099,7 +5167,10 @@ fn client_create_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_create_workspace(client, name).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::client_create_workspace(client, name,).await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -5134,6 +5205,8 @@ fn client_create_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
             });
         });
 
+    crate::handle_backtrace!(rx, cx);
+
     Ok(promise)
 }
 
@@ -5162,6 +5235,7 @@ fn client_delete_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -5169,7 +5243,10 @@ fn client_delete_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_delete_invitation(client, token).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::client_delete_invitation(client, token,).await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -5197,6 +5274,8 @@ fn client_delete_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -5279,6 +5358,7 @@ fn client_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -5286,7 +5366,7 @@ fn client_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_info(client).await;
+            let ret = crate::capture_backtrace!(tx, libparsec::client_info(client,).await);
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -5311,6 +5391,8 @@ fn client_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
             });
         });
 
+    crate::handle_backtrace!(rx, cx);
+
     Ok(promise)
 }
 
@@ -5327,6 +5409,7 @@ fn client_list_invitations(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -5334,7 +5417,8 @@ fn client_list_invitations(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_list_invitations(client).await;
+            let ret =
+                crate::capture_backtrace!(tx, libparsec::client_list_invitations(client,).await);
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -5366,6 +5450,8 @@ fn client_list_invitations(mut cx: FunctionContext) -> JsResult<JsPromise> {
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -5578,6 +5664,7 @@ fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -5585,7 +5672,8 @@ fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_list_workspaces(client).await;
+            let ret =
+                crate::capture_backtrace!(tx, libparsec::client_list_workspaces(client,).await);
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -5618,6 +5706,8 @@ fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
             });
         });
 
+    crate::handle_backtrace!(rx, cx);
+
     Ok(promise)
 }
 
@@ -5638,15 +5728,16 @@ fn client_new_device_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> 
         js_val.value(&mut cx)
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
 
-        let ret = libparsec::client_new_device_invitation(
+        let ret = crate::capture_backtrace!(tx, libparsec::client_new_device_invitation(
             client,
             send_email,
-        ).await;
+        ).await);
 
         deferred.settle_with(&channel, move |mut cx| {
             let js_ret = match ret {
@@ -5685,6 +5776,8 @@ fn client_new_device_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> 
         });
     });
 
+    crate::handle_backtrace!(rx, cx);
+
     Ok(promise)
 }
 
@@ -5709,16 +5802,17 @@ fn client_new_user_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
         js_val.value(&mut cx)
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
 
-        let ret = libparsec::client_new_user_invitation(
+        let ret = crate::capture_backtrace!(tx, libparsec::client_new_user_invitation(
             client,
             claimer_email,
             send_email,
-        ).await;
+        ).await);
 
         deferred.settle_with(&channel, move |mut cx| {
             let js_ret = match ret {
@@ -5756,6 +5850,8 @@ fn client_new_user_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
             Ok(js_ret)
         });
     });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -5797,6 +5893,7 @@ fn client_rename_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -5804,7 +5901,10 @@ fn client_rename_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_rename_workspace(client, realm_id, new_name).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::client_rename_workspace(client, realm_id, new_name,).await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -5832,6 +5932,8 @@ fn client_rename_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -5880,6 +5982,7 @@ fn client_share_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
         None => None,
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -5887,7 +5990,10 @@ fn client_share_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_share_workspace(client, realm_id, recipient, role).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::client_share_workspace(client, realm_id, recipient, role,).await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -5915,6 +6021,8 @@ fn client_share_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -5976,6 +6084,7 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
         variant_device_access_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -5983,7 +6092,10 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_start(config, on_event_callback, access).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::client_start(config, on_event_callback, access,).await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -6007,6 +6119,8 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -6036,6 +6150,7 @@ fn client_start_device_invitation_greet(mut cx: FunctionContext) -> JsResult<JsP
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -6043,7 +6158,10 @@ fn client_start_device_invitation_greet(mut cx: FunctionContext) -> JsResult<JsP
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_start_device_invitation_greet(client, token).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::client_start_device_invitation_greet(client, token,).await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -6068,6 +6186,8 @@ fn client_start_device_invitation_greet(mut cx: FunctionContext) -> JsResult<JsP
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -6097,6 +6217,7 @@ fn client_start_user_invitation_greet(mut cx: FunctionContext) -> JsResult<JsPro
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -6104,7 +6225,10 @@ fn client_start_user_invitation_greet(mut cx: FunctionContext) -> JsResult<JsPro
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_start_user_invitation_greet(client, token).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::client_start_user_invitation_greet(client, token,).await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -6129,6 +6253,8 @@ fn client_start_user_invitation_greet(mut cx: FunctionContext) -> JsResult<JsPro
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -6206,6 +6332,7 @@ fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -6213,7 +6340,7 @@ fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_stop(client).await;
+            let ret = crate::capture_backtrace!(tx, libparsec::client_stop(client,).await);
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -6241,6 +6368,8 @@ fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -6277,6 +6406,7 @@ fn greeter_device_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> J
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -6284,8 +6414,11 @@ fn greeter_device_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> J
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret =
-                libparsec::greeter_device_in_progress_1_do_wait_peer_trust(canceller, handle).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::greeter_device_in_progress_1_do_wait_peer_trust(canceller, handle,)
+                    .await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -6309,6 +6442,8 @@ fn greeter_device_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> J
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -6336,6 +6471,7 @@ fn greeter_device_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsR
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -6343,8 +6479,10 @@ fn greeter_device_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsR
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret =
-                libparsec::greeter_device_in_progress_2_do_signify_trust(canceller, handle).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::greeter_device_in_progress_2_do_signify_trust(canceller, handle,).await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -6368,6 +6506,8 @@ fn greeter_device_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsR
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -6397,6 +6537,7 @@ fn greeter_device_in_progress_3_do_get_claim_requests(
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -6404,9 +6545,11 @@ fn greeter_device_in_progress_3_do_get_claim_requests(
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret =
-                libparsec::greeter_device_in_progress_3_do_get_claim_requests(canceller, handle)
-                    .await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::greeter_device_in_progress_3_do_get_claim_requests(canceller, handle,)
+                    .await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -6430,6 +6573,8 @@ fn greeter_device_in_progress_3_do_get_claim_requests(
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -6469,6 +6614,7 @@ fn greeter_device_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<J
         None => None,
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -6476,9 +6622,11 @@ fn greeter_device_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<J
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret =
-                libparsec::greeter_device_in_progress_4_do_create(canceller, handle, device_label)
-                    .await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::greeter_device_in_progress_4_do_create(canceller, handle, device_label,)
+                    .await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -6507,6 +6655,8 @@ fn greeter_device_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<J
             });
         });
 
+    crate::handle_backtrace!(rx, cx);
+
     Ok(promise)
 }
 
@@ -6533,6 +6683,7 @@ fn greeter_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPr
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -6540,7 +6691,10 @@ fn greeter_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPr
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::greeter_device_initial_do_wait_peer(canceller, handle).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::greeter_device_initial_do_wait_peer(canceller, handle,).await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -6564,6 +6718,8 @@ fn greeter_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPr
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -6591,6 +6747,7 @@ fn greeter_user_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -6598,8 +6755,10 @@ fn greeter_user_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret =
-                libparsec::greeter_user_in_progress_1_do_wait_peer_trust(canceller, handle).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::greeter_user_in_progress_1_do_wait_peer_trust(canceller, handle,).await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -6623,6 +6782,8 @@ fn greeter_user_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -6650,6 +6811,7 @@ fn greeter_user_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsRes
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -6657,8 +6819,10 @@ fn greeter_user_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsRes
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret =
-                libparsec::greeter_user_in_progress_2_do_signify_trust(canceller, handle).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::greeter_user_in_progress_2_do_signify_trust(canceller, handle,).await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -6682,6 +6846,8 @@ fn greeter_user_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsRes
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -6711,6 +6877,7 @@ fn greeter_user_in_progress_3_do_get_claim_requests(
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -6718,9 +6885,11 @@ fn greeter_user_in_progress_3_do_get_claim_requests(
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret =
-                libparsec::greeter_user_in_progress_3_do_get_claim_requests(canceller, handle)
-                    .await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::greeter_user_in_progress_3_do_get_claim_requests(canceller, handle,)
+                    .await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -6744,6 +6913,8 @@ fn greeter_user_in_progress_3_do_get_claim_requests(
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -6797,6 +6968,7 @@ fn greeter_user_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<JsP
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -6804,14 +6976,17 @@ fn greeter_user_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<JsP
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::greeter_user_in_progress_4_do_create(
-                canceller,
-                handle,
-                human_handle,
-                device_label,
-                profile,
-            )
-            .await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::greeter_user_in_progress_4_do_create(
+                    canceller,
+                    handle,
+                    human_handle,
+                    device_label,
+                    profile,
+                )
+                .await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -6840,6 +7015,8 @@ fn greeter_user_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<JsP
             });
         });
 
+    crate::handle_backtrace!(rx, cx);
+
     Ok(promise)
 }
 
@@ -6866,6 +7043,7 @@ fn greeter_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -6873,7 +7051,10 @@ fn greeter_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::greeter_user_initial_do_wait_peer(canceller, handle).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::greeter_user_initial_do_wait_peer(canceller, handle,).await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -6898,6 +7079,8 @@ fn greeter_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
             });
         });
 
+    crate::handle_backtrace!(rx, cx);
+
     Ok(promise)
 }
 
@@ -6915,6 +7098,7 @@ fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -6922,7 +7106,8 @@ fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::list_available_devices(&path).await;
+            let ret =
+                crate::capture_backtrace!(tx, libparsec::list_available_devices(&path,).await);
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = {
@@ -6937,6 +7122,8 @@ fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -6994,6 +7181,7 @@ fn test_drop_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -7001,13 +7189,15 @@ fn test_drop_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            libparsec::test_drop_testbed(&path).await;
+            crate::capture_backtrace!(tx, libparsec::test_drop_testbed(&path,).await);
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = cx.null();
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
@@ -7090,6 +7280,7 @@ fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
         None => None,
     };
     let channel = cx.channel();
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
@@ -7097,7 +7288,10 @@ fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::test_new_testbed(&template, test_server.as_ref()).await;
+            let ret = crate::capture_backtrace!(
+                tx,
+                libparsec::test_new_testbed(&template, test_server.as_ref(),).await
+            );
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = JsString::try_new(&mut cx, {
@@ -7115,6 +7309,8 @@ fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
                 Ok(js_ret)
             });
         });
+
+    crate::handle_backtrace!(rx, cx);
 
     Ok(promise)
 }
