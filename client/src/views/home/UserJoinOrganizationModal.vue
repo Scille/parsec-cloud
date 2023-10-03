@@ -196,8 +196,7 @@ import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordIn
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import { MsModalResult } from '@/components/core/ms-types';
-import { NotificationKey } from '@/common/injectionKeys';
-import { Notification, NotificationCenter, NotificationLevel } from '@/services/notificationCenter';
+import { Notification, NotificationCenter, NotificationLevel, NotificationKey } from '@/services/notificationCenter';
 import { asyncComputed } from '@/common/asyncComputed';
 import { UserClaim } from '@/parsec';
 
@@ -210,6 +209,7 @@ enum UserJoinOrganizationStep {
   Finish = 6,
 }
 
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 
 const { t } = useI18n();
@@ -259,24 +259,27 @@ const titles = new Map<UserJoinOrganizationStep, Title>([
   ],
 ]);
 
+async function showErrorAndRestart(message: string): Promise<void> {
+  await notificationCenter.showToast(new Notification({
+    message: message,
+    level: NotificationLevel.Error,
+  }));
+  await restartProcess();
+}
+
 async function selectHostSas(selectedCode: string | null): Promise<void> {
   if (!selectedCode) {
-    console.log('None selected, back to beginning');
-    await claimer.value.abort();
-    pageStep.value = UserJoinOrganizationStep.WaitForHost;
+    await showErrorAndRestart(t('JoinOrganization.errors.noneCodeSelected'));
   } else {
     if (selectedCode === claimer.value.correctSASCode) {
-      console.log('Good choice selected, next step');
       const result = await claimer.value.signifyTrust();
       if (result.ok) {
-        nextStep();
+        await nextStep();
       } else {
-        console.log('Signify trust failed', result.error);
+        await showErrorAndRestart(t('JoinOrganization.errors.unexpected', {reason: result.error.tag}));
       }
     } else {
-      console.log('Invalid selected, back to beginning');
-      await claimer.value.abort();
-      pageStep.value = UserJoinOrganizationStep.WaitForHost;
+      await showErrorAndRestart(t('JoinOrganization.errors.invalidCodeSelected'));
     }
   }
 }
@@ -325,25 +328,31 @@ async function nextStep(): Promise<void> {
   if (pageStep.value === UserJoinOrganizationStep.GetPassword) {
     const result = await claimer.value.finalize(passwordPage.value.password);
     if (!result.ok) {
-      console.log('Failed to finalize', result.error);
+      // Error here is quite bad because the user has been created in the organization
+      // but we fail to save the device. Don't really know what to do here.
+      // So we just keep the dialog as is, they can click the button again, hoping it will work.
+      await notificationCenter.showToast(new Notification({
+        message: t('JoinOrganization.errors.saveDeviceFailed'),
+        level: NotificationLevel.Error,
+      }));
+      return;
     }
   } else if (pageStep.value === UserJoinOrganizationStep.GetUserInfo) {
     waitingForHost.value = true;
     const result = await claimer.value.doClaim(
       userInfoPage.value.deviceName, userInfoPage.value.fullName, userInfoPage.value.email,
     );
-    if (result.ok) {
-      waitingForHost.value = false;
-    } else {
-      console.log('Do claim failed', result.error);
+    if (!result.ok) {
+      await showErrorAndRestart(t('JoinOrganization.errors.sendUserInfoFailed'));
       return;
     }
+    waitingForHost.value = false;
   } else if (pageStep.value === UserJoinOrganizationStep.Finish) {
     const notification = new Notification({
       message: t('JoinOrganization.successMessage'),
       level: NotificationLevel.Success,
     });
-    notificationCenter.showToast(notification, {trace: true});
+    await notificationCenter.showToast(notification, {trace: true});
     await modalController.dismiss({ device: claimer.value.device, password: passwordPage.value.password }, MsModalResult.Confirm);
     return;
   }
@@ -357,27 +366,49 @@ async function nextStep(): Promise<void> {
       waitingForHost.value = false;
       pageStep.value += 1;
     } else {
-      console.log('Wait peer trust failed', result.error);
+      await showErrorAndRestart(t('JoinOrganization.errors.unexpected', {reason: result.error.tag}));
     }
   }
 }
 
-onMounted(async () => {
+async function startProcess(): Promise<void> {
+  pageStep.value = UserJoinOrganizationStep.WaitForHost;
+  waitingForHost.value = true;
   const retrieveResult = await claimer.value.retrieveInfo(props.invitationLink);
 
-  if (retrieveResult.ok) {
-    if (userInfoPage.value) {
-      userInfoPage.value.email = retrieveResult.value.claimerEmail;
-    }
-    const waitResult = await claimer.value.initialWaitHost();
-    if (waitResult.ok) {
-      waitingForHost.value = false;
-    } else {
-      console.log('Wait host failed', waitResult.error);
-    }
-  } else {
-    console.log('Failed to retrieve info', retrieveResult.error);
+  if (!retrieveResult.ok) {
+    await notificationCenter.showModal(new Notification({
+      message: t('JoinOrganization.errors.startFailed'),
+      level: NotificationLevel.Error,
+    }));
+    await cancelModal();
+    return;
   }
+  if (userInfoPage.value) {
+    userInfoPage.value.email = retrieveResult.value.claimerEmail;
+  }
+  const waitResult = await claimer.value.initialWaitHost();
+  if (!waitResult.ok) {
+    await notificationCenter.showModal(new Notification({
+      message: t('JoinOrganization.errors.startFailed'),
+      level: NotificationLevel.Error,
+    }));
+    await cancelModal();
+    return;
+  }
+
+  waitingForHost.value = false;
+}
+
+async function restartProcess(): Promise<void> {
+  if (pageStep.value !== UserJoinOrganizationStep.WaitForHost) {
+    await claimer.value.abort();
+  }
+  await startProcess();
+}
+
+onMounted(async () => {
+  await startProcess();
 });
 </script>
 
