@@ -169,6 +169,14 @@ impl FsPath {
         self.parts.last()
     }
 
+    pub fn is_root(&self) -> bool {
+        self.parts.is_empty()
+    }
+
+    pub fn parts(&self) -> &[EntryName] {
+        &self.parts
+    }
+
     pub fn parent(&self) -> FsPath {
         if self.parts.is_empty() {
             self.clone()
@@ -178,12 +186,21 @@ impl FsPath {
         }
     }
 
-    pub fn is_root(&self) -> bool {
-        self.parts.is_empty()
+    pub fn join(&self, child: EntryName) -> Self {
+        let mut parts = Vec::with_capacity(self.parts.len() + 1);
+        parts.extend_from_slice(&self.parts);
+        parts.push(child);
+        Self { parts }
     }
 
-    pub fn parts(&self) -> &[EntryName] {
-        &self.parts
+    pub fn into_child(mut self, child: EntryName) -> Self {
+        self.parts.push(child);
+        self
+    }
+
+    pub fn into_parent(mut self) -> (Self, Option<EntryName>) {
+        let child = self.parts.pop();
+        (self, child)
     }
 
     pub fn with_mountpoint(self, mountpoint: &std::path::Path) -> std::path::PathBuf {
