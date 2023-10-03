@@ -416,6 +416,14 @@
             "getUserInfo": "Veuillez saisir vos coordonnées pour accéder à l'organisation.",
             "getPassword": "Veuillez choisir un mot de passe pour finalement l'enrôlement.",
             "finish": ""
+        },
+        "errors": {
+            "saveDeviceFailed": "Impossible de sauvegarder les informations. Veuillez réessayer.",
+            "sendUserInfoFailed": "Échec de l'envoi des informations à l'hôte. Veuillez redémarrer le processus.",
+            "noneCodeSelected": "Si aucun des codes proposés n'était le bon, il peut s'agir d'un soucis de sécurité. Veuillez redémarrer le processus.",
+            "unexpected": "Une erreur imprévue est survenue (raison: {reason}).",
+            "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
+            "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que le lien d'invitation est correct et que vous êtes connecté(e) à internet."
         }
     },
     "UsersPage": {
