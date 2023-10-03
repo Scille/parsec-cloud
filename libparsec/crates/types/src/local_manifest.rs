@@ -16,6 +16,7 @@ use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion, BlockAccess, BlockID,
     Blocksize, ChunkID, DataError, DataResult, DateTime, DeviceID, EntryName, FileManifest,
     FolderManifest, IndexInt, Regex, UserManifest, VlobID, WorkspaceEntry, WorkspaceManifest,
+    DEFAULT_BLOCK_SIZE,
 };
 
 macro_rules! impl_local_manifest_dump_load {
@@ -221,12 +222,7 @@ impl From<LocalFileManifest> for LocalFileManifestData {
 impl_local_manifest_dump_load!(LocalFileManifest);
 
 impl LocalFileManifest {
-    pub fn new(
-        author: DeviceID,
-        parent: VlobID,
-        timestamp: DateTime,
-        blocksize: Blocksize,
-    ) -> Self {
+    pub fn new(author: DeviceID, parent: VlobID, timestamp: DateTime) -> Self {
         Self {
             base: FileManifest {
                 author,
@@ -236,13 +232,13 @@ impl LocalFileManifest {
                 version: 0,
                 created: timestamp,
                 updated: timestamp,
-                blocksize,
+                blocksize: DEFAULT_BLOCK_SIZE,
                 size: 0,
                 blocks: vec![],
             },
             need_sync: true,
             updated: timestamp,
-            blocksize,
+            blocksize: DEFAULT_BLOCK_SIZE,
             size: 0,
             blocks: vec![],
         }

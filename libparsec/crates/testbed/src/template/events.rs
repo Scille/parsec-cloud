@@ -2683,7 +2683,7 @@ impl TestbedEventWorkspaceDataStorageLocalFolderManifestUpdate {
                 })
             })
             .unwrap_or_else(|| {
-                // No previous local workspace manifest, create one
+                // No previous local manifest, create one
                 Arc::new(LocalFolderManifest::new(device.clone(), realm, timestamp))
             });
 
@@ -2760,13 +2760,8 @@ impl TestbedEventWorkspaceDataStorageLocalFileManifestUpdate {
                 })
             })
             .unwrap_or_else(|| {
-                // No previous local workspace manifest, create one
-                Arc::new(LocalFileManifest::new(
-                    device.clone(),
-                    realm,
-                    timestamp,
-                    Blocksize::try_from(512).expect("valid block size"),
-                ))
+                // No previous local manifest, create one
+                Arc::new(LocalFileManifest::new(device.clone(), realm, timestamp))
             });
 
         // 2) Actual creation

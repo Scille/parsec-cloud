@@ -1041,8 +1041,7 @@ fn chunk_is_block() {
 fn local_file_manifest_new(timestamp: DateTime) {
     let author = DeviceID::default();
     let parent = VlobID::default();
-    let blocksize = Blocksize::try_from(512).unwrap();
-    let lfm = LocalFileManifest::new(author.clone(), parent, timestamp, blocksize);
+    let lfm = LocalFileManifest::new(author.clone(), parent, timestamp);
 
     p_assert_eq!(lfm.base.author, author);
     p_assert_eq!(lfm.base.timestamp, timestamp);
@@ -1050,12 +1049,12 @@ fn local_file_manifest_new(timestamp: DateTime) {
     p_assert_eq!(lfm.base.version, 0);
     p_assert_eq!(lfm.base.created, timestamp);
     p_assert_eq!(lfm.base.updated, timestamp);
-    p_assert_eq!(lfm.base.blocksize, blocksize);
+    p_assert_eq!(lfm.base.blocksize, Blocksize::try_from(512 * 1024).unwrap());
     p_assert_eq!(lfm.base.size, 0);
     p_assert_eq!(lfm.base.blocks.len(), 0);
     assert!(lfm.need_sync);
     p_assert_eq!(lfm.updated, timestamp);
-    p_assert_eq!(lfm.blocksize, blocksize);
+    p_assert_eq!(lfm.blocksize, Blocksize::try_from(512 * 1024).unwrap());
     p_assert_eq!(lfm.size, 0);
     p_assert_eq!(lfm.blocks.len(), 0);
 }
@@ -1064,8 +1063,7 @@ fn local_file_manifest_new(timestamp: DateTime) {
 fn local_file_manifest_is_reshaped(timestamp: DateTime) {
     let author = DeviceID::default();
     let parent = VlobID::default();
-    let blocksize = Blocksize::try_from(512).unwrap();
-    let mut lfm = LocalFileManifest::new(author, parent, timestamp, blocksize);
+    let mut lfm = LocalFileManifest::new(author, parent, timestamp);
 
     assert!(lfm.is_reshaped());
 
@@ -1150,8 +1148,7 @@ fn local_file_manifest_to_remote(timestamp: DateTime) {
     let t3 = t2.add_us(1);
     let author = DeviceID::default();
     let parent = VlobID::default();
-    let blocksize = Blocksize::try_from(512).unwrap();
-    let mut lfm = LocalFileManifest::new(author, parent, t1, blocksize);
+    let mut lfm = LocalFileManifest::new(author, parent, t1);
 
     let block = Chunk {
         id: ChunkID::default(),
