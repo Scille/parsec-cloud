@@ -11,14 +11,12 @@
           <ion-card-title class="card-title subtitles-normal">
             {{ device.organizationId }}
           </ion-card-title>
-          <ion-card-subtitle>
-            <p class="subtitles-sm">
-              {{ device.humanHandle && device.humanHandle.label || device.deviceId }}
-            </p>
-          </ion-card-subtitle>
         </div>
       </div>
     </ion-card-header>
+    <ion-card-content>
+      {{ device.humanHandle && device.humanHandle.label || device.deviceId }}
+    </ion-card-content>
   </ion-card>
 </template>
 
@@ -28,7 +26,7 @@ import {
   IonAvatar,
   IonCardHeader,
   IonCardTitle,
-  IonCardSubtitle,
+  IonCardContent,
 } from '@ionic/vue';
 import { AvailableDevice } from '@/parsec';
 
@@ -51,6 +49,7 @@ defineProps<{
 
   .organization-info {
     display: flex;
+    align-items: center;
     flex-direction: row;
     gap: .5rem;
 
@@ -70,6 +69,12 @@ defineProps<{
 
     .card-title {
       color: var(--parsec-color-light-primary-700);
+    }
+
+    .card-subtitle {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 }
