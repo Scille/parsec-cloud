@@ -2819,11 +2819,11 @@ files = [
 ]
 
 [extras]
-backend = ["async_generator", "boto3", "botocore", "hypercorn", "jinja2", "pbr", "python-swiftclient", "quart", "quart-trio", "trio-asyncio", "triopg"]
+backend = ["async_generator", "boto3", "botocore", "hypercorn", "jinja2", "pbr", "python-swiftclient", "quart", "quart-trio", "trio-asyncio", "triopg", "werkzeug"]
 core = ["PyQt5", "fusepy", "packaging", "psutil", "pypac", "pyqt5-sip", "qrcode", "qtrio", "winfspy", "zxcvbn"]
 parsec-ext-deps = ["asn1crypto", "certvalidator", "oscrypto"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.9.10"
-content-hash = "8fe424a31bb33f7f37e9527684c14ba67095e7e9dc5c635859eb709824e87687"
+content-hash = "bf8ae80e92bd64913daf3daf47b1a1738807a50886ea60e00dc88d6747ccd9d4"
