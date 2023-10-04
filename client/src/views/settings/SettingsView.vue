@@ -67,11 +67,13 @@
               </ion-item>
               <!-- change theme -->
               <!-- dropdown needs to be change depending on this issue : https://github.com/Scille/parsec-cloud/issues/4527 -->
+              <!-- this changes are here to force 'light' theme till the dark theme is existing -->
               <ion-item>
                 <ion-select
                   interface="popover"
-                  :value="config.theme"
+                  :value="'light' ? 'light' : config.theme"
                   :label="$t('SettingsPage.theme.label')"
+                  :disabled="true"
                   @ion-change="changeTheme($event.detail.value)"
                 >
                   <ion-select-option value="dark">
