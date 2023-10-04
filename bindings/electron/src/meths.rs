@@ -203,7 +203,10 @@ fn struct_available_device_js_to_rs<'a>(
     let device_id = {
         let js_val: Handle<JsString> = obj.get(cx, "deviceId")?;
         {
-            match js_val.value(cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -279,7 +282,16 @@ fn struct_available_device_rs_to_js<'a>(
     js_obj.set(cx, "keyFilePath", js_key_file_path)?;
     let js_organization_id = JsString::try_new(cx, rs_obj.organization_id).or_throw(cx)?;
     js_obj.set(cx, "organizationId", js_organization_id)?;
-    let js_device_id = JsString::try_new(cx, rs_obj.device_id).or_throw(cx)?;
+    let js_device_id = JsString::try_new(cx, {
+        let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
+            Ok(device_id.to_string())
+        };
+        match custom_to_rs_string(rs_obj.device_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
     js_obj.set(cx, "deviceId", js_device_id)?;
     let js_human_handle = match rs_obj.human_handle {
         Some(elem) => struct_human_handle_rs_to_js(cx, elem)?.as_value(cx),
@@ -424,7 +436,10 @@ fn struct_client_info_js_to_rs<'a>(
     let device_id = {
         let js_val: Handle<JsString> = obj.get(cx, "deviceId")?;
         {
-            match js_val.value(cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -491,7 +506,16 @@ fn struct_client_info_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     let js_organization_id = JsString::try_new(cx, rs_obj.organization_id).or_throw(cx)?;
     js_obj.set(cx, "organizationId", js_organization_id)?;
-    let js_device_id = JsString::try_new(cx, rs_obj.device_id).or_throw(cx)?;
+    let js_device_id = JsString::try_new(cx, {
+        let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
+            Ok(device_id.to_string())
+        };
+        match custom_to_rs_string(rs_obj.device_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
     js_obj.set(cx, "deviceId", js_device_id)?;
     let js_user_id = JsString::try_new(cx, rs_obj.user_id).or_throw(cx)?;
     js_obj.set(cx, "userId", js_user_id)?;
@@ -936,7 +960,10 @@ fn struct_device_info_js_to_rs<'a>(
     let id = {
         let js_val: Handle<JsString> = obj.get(cx, "id")?;
         {
-            match js_val.value(cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -979,7 +1006,10 @@ fn struct_device_info_js_to_rs<'a>(
             } else {
                 let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
                 Some({
-                    match js_val.value(cx).parse() {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -1001,7 +1031,16 @@ fn struct_device_info_rs_to_js<'a>(
     rs_obj: libparsec::DeviceInfo,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
-    let js_id = JsString::try_new(cx, rs_obj.id).or_throw(cx)?;
+    let js_id = JsString::try_new(cx, {
+        let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
+            Ok(device_id.to_string())
+        };
+        match custom_to_rs_string(rs_obj.id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
     js_obj.set(cx, "id", js_id)?;
     let js_device_label = match rs_obj.device_label {
         Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
@@ -1019,7 +1058,17 @@ fn struct_device_info_rs_to_js<'a>(
     });
     js_obj.set(cx, "createdOn", js_created_on)?;
     let js_created_by = match rs_obj.created_by {
-        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+        Some(elem) => JsString::try_new(cx, {
+            let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
+                Ok(device_id.to_string())
+            };
+            match custom_to_rs_string(elem) {
+                Ok(ok) => ok,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        })
+        .or_throw(cx)?
+        .as_value(cx),
         None => JsNull::new(cx).as_value(cx),
     };
     js_obj.set(cx, "createdBy", js_created_by)?;
@@ -1564,7 +1613,10 @@ fn struct_user_info_js_to_rs<'a>(
             } else {
                 let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
                 Some({
-                    match js_val.value(cx).parse() {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -1600,7 +1652,10 @@ fn struct_user_info_js_to_rs<'a>(
             } else {
                 let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
                 Some({
-                    match js_val.value(cx).parse() {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -1646,7 +1701,17 @@ fn struct_user_info_rs_to_js<'a>(
     });
     js_obj.set(cx, "createdOn", js_created_on)?;
     let js_created_by = match rs_obj.created_by {
-        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+        Some(elem) => JsString::try_new(cx, {
+            let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
+                Ok(device_id.to_string())
+            };
+            match custom_to_rs_string(elem) {
+                Ok(ok) => ok,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        })
+        .or_throw(cx)?
+        .as_value(cx),
         None => JsNull::new(cx).as_value(cx),
     };
     js_obj.set(cx, "createdBy", js_created_by)?;
@@ -1665,7 +1730,17 @@ fn struct_user_info_rs_to_js<'a>(
     };
     js_obj.set(cx, "revokedOn", js_revoked_on)?;
     let js_revoked_by = match rs_obj.revoked_by {
-        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+        Some(elem) => JsString::try_new(cx, {
+            let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
+                Ok(device_id.to_string())
+            };
+            match custom_to_rs_string(elem) {
+                Ok(ok) => ok,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        })
+        .or_throw(cx)?
+        .as_value(cx),
         None => JsNull::new(cx).as_value(cx),
     };
     js_obj.set(cx, "revokedBy", js_revoked_by)?;
@@ -2570,13 +2645,13 @@ fn variant_device_save_strategy_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// EntryInfo
+// EntryStat
 
 #[allow(dead_code)]
-fn variant_entry_info_js_to_rs<'a>(
+fn variant_entry_stat_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::EntryInfo> {
+) -> NeonResult<libparsec::EntryStat> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
         "File" => {
@@ -2667,7 +2742,7 @@ fn variant_entry_info_js_to_rs<'a>(
                     v as u64
                 }
             };
-            Ok(libparsec::EntryInfo::File {
+            Ok(libparsec::EntryStat::File {
                 confinement_point,
                 id,
                 created,
@@ -2776,7 +2851,7 @@ fn variant_entry_info_js_to_rs<'a>(
                     v
                 }
             };
-            Ok(libparsec::EntryInfo::Folder {
+            Ok(libparsec::EntryStat::Folder {
                 confinement_point,
                 id,
                 created,
@@ -2787,18 +2862,18 @@ fn variant_entry_info_js_to_rs<'a>(
                 children,
             })
         }
-        _ => cx.throw_type_error("Object is not a EntryInfo"),
+        _ => cx.throw_type_error("Object is not a EntryStat"),
     }
 }
 
 #[allow(dead_code)]
-fn variant_entry_info_rs_to_js<'a>(
+fn variant_entry_stat_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::EntryInfo,
+    rs_obj: libparsec::EntryStat,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
-        libparsec::EntryInfo::File {
+        libparsec::EntryStat::File {
             confinement_point,
             id,
             created,
@@ -2864,7 +2939,7 @@ fn variant_entry_info_rs_to_js<'a>(
             let js_size = JsNumber::new(cx, size as f64);
             js_obj.set(cx, "size", js_size)?;
         }
-        libparsec::EntryInfo::Folder {
+        libparsec::EntryStat::Folder {
             confinement_point,
             id,
             created,
@@ -3931,18 +4006,18 @@ fn variant_user_or_device_claim_initial_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// WorkspaceEntryInfoError
+// WorkspaceFsOperationError
 
 #[allow(dead_code)]
-fn variant_workspace_entry_info_error_rs_to_js<'a>(
+fn variant_workspace_fs_operation_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::WorkspaceEntryInfoError,
+    rs_obj: libparsec::WorkspaceFsOperationError,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::WorkspaceEntryInfoError::BadTimestamp {
+        libparsec::WorkspaceFsOperationError::BadTimestamp {
             server_timestamp,
             client_timestamp,
             ballpark_client_early_offset,
@@ -3984,28 +4059,52 @@ fn variant_workspace_entry_info_error_rs_to_js<'a>(
                 js_ballpark_client_late_offset,
             )?;
         }
-        libparsec::WorkspaceEntryInfoError::Internal { .. } => {
+        libparsec::WorkspaceFsOperationError::CannotRenameRoot { .. } => {
+            let js_tag = JsString::try_new(cx, "CannotRenameRoot").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFsOperationError::EntryExists { .. } => {
+            let js_tag = JsString::try_new(cx, "EntryExists").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFsOperationError::EntryNotFound { .. } => {
+            let js_tag = JsString::try_new(cx, "EntryNotFound").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFsOperationError::FolderNotEmpty { .. } => {
+            let js_tag = JsString::try_new(cx, "FolderNotEmpty").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFsOperationError::Internal { .. } => {
             let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::WorkspaceEntryInfoError::InvalidCertificate { .. } => {
+        libparsec::WorkspaceFsOperationError::InvalidCertificate { .. } => {
             let js_tag = JsString::try_new(cx, "InvalidCertificate").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::WorkspaceEntryInfoError::InvalidManifest { .. } => {
+        libparsec::WorkspaceFsOperationError::InvalidManifest { .. } => {
             let js_tag = JsString::try_new(cx, "InvalidManifest").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::WorkspaceEntryInfoError::NotAllowed { .. } => {
-            let js_tag = JsString::try_new(cx, "NotAllowed").or_throw(cx)?;
+        libparsec::WorkspaceFsOperationError::IsAFolder { .. } => {
+            let js_tag = JsString::try_new(cx, "IsAFolder").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::WorkspaceEntryInfoError::NotFound { .. } => {
-            let js_tag = JsString::try_new(cx, "NotFound").or_throw(cx)?;
+        libparsec::WorkspaceFsOperationError::NoRealmAccess { .. } => {
+            let js_tag = JsString::try_new(cx, "NoRealmAccess").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::WorkspaceEntryInfoError::Offline { .. } => {
+        libparsec::WorkspaceFsOperationError::NotAFolder { .. } => {
+            let js_tag = JsString::try_new(cx, "NotAFolder").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFsOperationError::Offline { .. } => {
             let js_tag = JsString::try_new(cx, "Offline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFsOperationError::ReadOnlyRealm { .. } => {
+            let js_tag = JsString::try_new(cx, "ReadOnlyRealm").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -5216,7 +5315,10 @@ fn client_get_user_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let device = {
         let js_val = cx.argument::<JsString>(1)?;
         {
-            match js_val.value(&mut cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -7197,8 +7299,8 @@ fn validate_path(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
-// workspace_entry_info
-fn workspace_entry_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
+// workspace_create_file
+fn workspace_create_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -7229,7 +7331,7 @@ fn workspace_entry_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::workspace_entry_info(workspace, &path).await;
+            let ret = libparsec::workspace_create_file(workspace, &path).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -7237,7 +7339,17 @@ fn workspace_entry_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = variant_entry_info_rs_to_js(&mut cx, ok)?;
+                        let js_value = JsString::try_new(&mut cx, {
+                            let custom_to_rs_string =
+                                |x: libparsec::VlobID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(ok) {
+                                Ok(ok) => ok,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        })
+                        .or_throw(&mut cx)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -7245,7 +7357,544 @@ fn workspace_entry_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_workspace_entry_info_error_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_workspace_fs_operation_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// workspace_create_folder
+fn workspace_create_folder(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let path = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_create_folder(workspace, &path).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsString::try_new(&mut cx, {
+                            let custom_to_rs_string =
+                                |x: libparsec::VlobID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(ok) {
+                                Ok(ok) => ok,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        })
+                        .or_throw(&mut cx)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_fs_operation_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// workspace_create_folder_all
+fn workspace_create_folder_all(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let path = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_create_folder_all(workspace, &path).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsString::try_new(&mut cx, {
+                            let custom_to_rs_string =
+                                |x: libparsec::VlobID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(ok) {
+                                Ok(ok) => ok,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        })
+                        .or_throw(&mut cx)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_fs_operation_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// workspace_remove_entry
+fn workspace_remove_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let path = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_remove_entry(workspace, &path).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_fs_operation_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// workspace_remove_file
+fn workspace_remove_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let path = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_remove_file(workspace, &path).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_fs_operation_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// workspace_remove_folder
+fn workspace_remove_folder(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let path = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_remove_folder(workspace, &path).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_fs_operation_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// workspace_remove_folder_all
+fn workspace_remove_folder_all(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let path = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_remove_folder_all(workspace, &path).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_fs_operation_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// workspace_rename_entry
+fn workspace_rename_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let path = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let new_name = {
+        let js_val = cx.argument::<JsString>(2)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, _> {
+                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let overwrite = {
+        let js_val = cx.argument::<JsBoolean>(3)?;
+        js_val.value(&mut cx)
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::workspace_rename_entry(workspace, &path, new_name, overwrite).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_fs_operation_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// workspace_stat_entry
+fn workspace_stat_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            v as u32
+        }
+    };
+    let path = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_stat_entry(workspace, &path).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = variant_entry_stat_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_fs_operation_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -7445,7 +8094,15 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("validateHumanHandleLabel", validate_human_handle_label)?;
     cx.export_function("validateInvitationToken", validate_invitation_token)?;
     cx.export_function("validatePath", validate_path)?;
-    cx.export_function("workspaceEntryInfo", workspace_entry_info)?;
+    cx.export_function("workspaceCreateFile", workspace_create_file)?;
+    cx.export_function("workspaceCreateFolder", workspace_create_folder)?;
+    cx.export_function("workspaceCreateFolderAll", workspace_create_folder_all)?;
+    cx.export_function("workspaceRemoveEntry", workspace_remove_entry)?;
+    cx.export_function("workspaceRemoveFile", workspace_remove_file)?;
+    cx.export_function("workspaceRemoveFolder", workspace_remove_folder)?;
+    cx.export_function("workspaceRemoveFolderAll", workspace_remove_folder_all)?;
+    cx.export_function("workspaceRenameEntry", workspace_rename_entry)?;
+    cx.export_function("workspaceStatEntry", workspace_stat_entry)?;
     cx.export_function("workspaceStop", workspace_stop)?;
     Ok(())
 }

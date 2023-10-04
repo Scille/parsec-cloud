@@ -216,8 +216,13 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
             .map_err(|_| TypeError::new("Not a valid DeviceID"))?
     };
     let human_handle = {
@@ -294,7 +299,16 @@ fn struct_available_device_rs_to_js(
     Reflect::set(&js_obj, &"keyFilePath".into(), &js_key_file_path)?;
     let js_organization_id = JsValue::from_str(rs_obj.organization_id.as_ref());
     Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
-    let js_device_id = JsValue::from_str(rs_obj.device_id.as_ref());
+    let js_device_id = JsValue::from_str({
+        let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
+            Ok(device_id.to_string())
+        };
+        match custom_to_rs_string(rs_obj.device_id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
     Reflect::set(&js_obj, &"deviceId".into(), &js_device_id)?;
     let js_human_handle = match rs_obj.human_handle {
         Some(val) => struct_human_handle_rs_to_js(val)?,
@@ -447,8 +461,13 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
             .map_err(|_| TypeError::new("Not a valid DeviceID"))?
     };
     let user_id = {
@@ -511,7 +530,16 @@ fn struct_client_info_rs_to_js(rs_obj: libparsec::ClientInfo) -> Result<JsValue,
     let js_obj = Object::new().into();
     let js_organization_id = JsValue::from_str(rs_obj.organization_id.as_ref());
     Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
-    let js_device_id = JsValue::from_str(rs_obj.device_id.as_ref());
+    let js_device_id = JsValue::from_str({
+        let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
+            Ok(device_id.to_string())
+        };
+        match custom_to_rs_string(rs_obj.device_id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
     Reflect::set(&js_obj, &"deviceId".into(), &js_device_id)?;
     let js_user_id = JsValue::from_str(rs_obj.user_id.as_ref());
     Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
@@ -986,8 +1014,13 @@ fn struct_device_info_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceInfo, Js
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
             .map_err(|_| TypeError::new("Not a valid DeviceID"))?
     };
     let device_label = {
@@ -1027,8 +1060,13 @@ fn struct_device_info_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceInfo, Js
                     .dyn_into::<JsString>()
                     .ok()
                     .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
                     .map_err(|_| TypeError::new("Not a valid DeviceID"))?,
             )
         }
@@ -1044,7 +1082,16 @@ fn struct_device_info_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceInfo, Js
 #[allow(dead_code)]
 fn struct_device_info_rs_to_js(rs_obj: libparsec::DeviceInfo) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_id = JsValue::from_str(rs_obj.id.as_ref());
+    let js_id = JsValue::from_str({
+        let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
+            Ok(device_id.to_string())
+        };
+        match custom_to_rs_string(rs_obj.id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
     Reflect::set(&js_obj, &"id".into(), &js_id)?;
     let js_device_label = match rs_obj.device_label {
         Some(val) => JsValue::from_str(val.as_ref()),
@@ -1063,7 +1110,16 @@ fn struct_device_info_rs_to_js(rs_obj: libparsec::DeviceInfo) -> Result<JsValue,
     };
     Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
     let js_created_by = match rs_obj.created_by {
-        Some(val) => JsValue::from_str(val.as_ref()),
+        Some(val) => JsValue::from_str({
+            let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
+                Ok(device_id.to_string())
+            };
+            match custom_to_rs_string(val) {
+                Ok(ok) => ok,
+                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            }
+            .as_ref()
+        }),
         None => JsValue::NULL,
     };
     Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
@@ -1641,8 +1697,13 @@ fn struct_user_info_js_to_rs(obj: JsValue) -> Result<libparsec::UserInfo, JsValu
                     .dyn_into::<JsString>()
                     .ok()
                     .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
                     .map_err(|_| TypeError::new("Not a valid DeviceID"))?,
             )
         }
@@ -1672,8 +1733,13 @@ fn struct_user_info_js_to_rs(obj: JsValue) -> Result<libparsec::UserInfo, JsValu
                     .dyn_into::<JsString>()
                     .ok()
                     .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
                     .map_err(|_| TypeError::new("Not a valid DeviceID"))?,
             )
         }
@@ -1713,7 +1779,16 @@ fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsV
     };
     Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
     let js_created_by = match rs_obj.created_by {
-        Some(val) => JsValue::from_str(val.as_ref()),
+        Some(val) => JsValue::from_str({
+            let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
+                Ok(device_id.to_string())
+            };
+            match custom_to_rs_string(val) {
+                Ok(ok) => ok,
+                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            }
+            .as_ref()
+        }),
         None => JsValue::NULL,
     };
     Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
@@ -1732,7 +1807,16 @@ fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsV
     };
     Reflect::set(&js_obj, &"revokedOn".into(), &js_revoked_on)?;
     let js_revoked_by = match rs_obj.revoked_by {
-        Some(val) => JsValue::from_str(val.as_ref()),
+        Some(val) => JsValue::from_str({
+            let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
+                Ok(device_id.to_string())
+            };
+            match custom_to_rs_string(val) {
+                Ok(ok) => ok,
+                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            }
+            .as_ref()
+        }),
         None => JsValue::NULL,
     };
     Reflect::set(&js_obj, &"revokedBy".into(), &js_revoked_by)?;
@@ -2586,10 +2670,10 @@ fn variant_device_save_strategy_rs_to_js(
     Ok(js_obj)
 }
 
-// EntryInfo
+// EntryStat
 
 #[allow(dead_code)]
-fn variant_entry_info_js_to_rs(obj: JsValue) -> Result<libparsec::EntryInfo, JsValue> {
+fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsValue> {
     let tag = Reflect::get(&obj, &"tag".into())?;
     match tag {
         tag if tag == JsValue::from_str("File") => {
@@ -2693,7 +2777,7 @@ fn variant_entry_info_js_to_rs(obj: JsValue) -> Result<libparsec::EntryInfo, JsV
                     v as u64
                 }
             };
-            Ok(libparsec::EntryInfo::File {
+            Ok(libparsec::EntryStat::File {
                 confinement_point,
                 id,
                 created,
@@ -2817,7 +2901,7 @@ fn variant_entry_info_js_to_rs(obj: JsValue) -> Result<libparsec::EntryInfo, JsV
                     converted
                 }
             };
-            Ok(libparsec::EntryInfo::Folder {
+            Ok(libparsec::EntryStat::Folder {
                 confinement_point,
                 id,
                 created,
@@ -2828,15 +2912,15 @@ fn variant_entry_info_js_to_rs(obj: JsValue) -> Result<libparsec::EntryInfo, JsV
                 children,
             })
         }
-        _ => Err(JsValue::from(TypeError::new("Object is not a EntryInfo"))),
+        _ => Err(JsValue::from(TypeError::new("Object is not a EntryStat"))),
     }
 }
 
 #[allow(dead_code)]
-fn variant_entry_info_rs_to_js(rs_obj: libparsec::EntryInfo) -> Result<JsValue, JsValue> {
+fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
-        libparsec::EntryInfo::File {
+        libparsec::EntryStat::File {
             confinement_point,
             id,
             created,
@@ -2902,7 +2986,7 @@ fn variant_entry_info_rs_to_js(rs_obj: libparsec::EntryInfo) -> Result<JsValue, 
             let js_size = JsValue::from(size);
             Reflect::set(&js_obj, &"size".into(), &js_size)?;
         }
-        libparsec::EntryInfo::Folder {
+        libparsec::EntryStat::Folder {
             confinement_point,
             id,
             created,
@@ -4034,17 +4118,17 @@ fn variant_user_or_device_claim_initial_info_rs_to_js(
     Ok(js_obj)
 }
 
-// WorkspaceEntryInfoError
+// WorkspaceFsOperationError
 
 #[allow(dead_code)]
-fn variant_workspace_entry_info_error_rs_to_js(
-    rs_obj: libparsec::WorkspaceEntryInfoError,
+fn variant_workspace_fs_operation_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceFsOperationError,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::WorkspaceEntryInfoError::BadTimestamp {
+        libparsec::WorkspaceFsOperationError::BadTimestamp {
             server_timestamp,
             client_timestamp,
             ballpark_client_early_offset,
@@ -4087,23 +4171,41 @@ fn variant_workspace_entry_info_error_rs_to_js(
                 &js_ballpark_client_late_offset,
             )?;
         }
-        libparsec::WorkspaceEntryInfoError::Internal { .. } => {
+        libparsec::WorkspaceFsOperationError::CannotRenameRoot { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"CannotRenameRoot".into())?;
+        }
+        libparsec::WorkspaceFsOperationError::EntryExists { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"EntryExists".into())?;
+        }
+        libparsec::WorkspaceFsOperationError::EntryNotFound { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"EntryNotFound".into())?;
+        }
+        libparsec::WorkspaceFsOperationError::FolderNotEmpty { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"FolderNotEmpty".into())?;
+        }
+        libparsec::WorkspaceFsOperationError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
         }
-        libparsec::WorkspaceEntryInfoError::InvalidCertificate { .. } => {
+        libparsec::WorkspaceFsOperationError::InvalidCertificate { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"InvalidCertificate".into())?;
         }
-        libparsec::WorkspaceEntryInfoError::InvalidManifest { .. } => {
+        libparsec::WorkspaceFsOperationError::InvalidManifest { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"InvalidManifest".into())?;
         }
-        libparsec::WorkspaceEntryInfoError::NotAllowed { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NotAllowed".into())?;
+        libparsec::WorkspaceFsOperationError::IsAFolder { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"IsAFolder".into())?;
         }
-        libparsec::WorkspaceEntryInfoError::NotFound { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NotFound".into())?;
+        libparsec::WorkspaceFsOperationError::NoRealmAccess { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"NoRealmAccess".into())?;
         }
-        libparsec::WorkspaceEntryInfoError::Offline { .. } => {
+        libparsec::WorkspaceFsOperationError::NotAFolder { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"NotAFolder".into())?;
+        }
+        libparsec::WorkspaceFsOperationError::Offline { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
+        }
+        libparsec::WorkspaceFsOperationError::ReadOnlyRealm { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"ReadOnlyRealm".into())?;
         }
     }
     Ok(js_obj)
@@ -4789,10 +4891,12 @@ pub fn clientDeleteInvitation(client: u32, token: String) -> Promise {
 #[wasm_bindgen]
 pub fn clientGetUserDevice(client: u32, device: String) -> Promise {
     future_to_promise(async move {
-        let device = device
-            .parse()
-            .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceID")))?;
-
+        let device = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(device).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
         let ret = libparsec::client_get_user_device(client, device).await;
         Ok(match ret {
             Ok(value) => {
@@ -5897,10 +6001,10 @@ pub fn validatePath(raw: String) -> Promise {
     })
 }
 
-// workspace_entry_info
+// workspace_create_file
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceEntryInfo(workspace: u32, path: String) -> Promise {
+pub fn workspaceCreateFile(workspace: u32, path: String) -> Promise {
     future_to_promise(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
@@ -5909,19 +6013,326 @@ pub fn workspaceEntryInfo(workspace: u32, path: String) -> Promise {
             custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
-        let ret = libparsec::workspace_entry_info(workspace, &path).await;
+        let ret = libparsec::workspace_create_file(workspace, &path).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = variant_entry_info_rs_to_js(value)?;
+                let js_value = JsValue::from_str({
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(value) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    }
+                    .as_ref()
+                });
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_entry_info_error_rs_to_js(err)?;
+                let js_err = variant_workspace_fs_operation_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_create_folder
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceCreateFolder(workspace: u32, path: String) -> Promise {
+    future_to_promise(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::workspace_create_folder(workspace, &path).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from_str({
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(value) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    }
+                    .as_ref()
+                });
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_fs_operation_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_create_folder_all
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceCreateFolderAll(workspace: u32, path: String) -> Promise {
+    future_to_promise(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::workspace_create_folder_all(workspace, &path).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from_str({
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(value) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    }
+                    .as_ref()
+                });
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_fs_operation_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_remove_entry
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceRemoveEntry(workspace: u32, path: String) -> Promise {
+    future_to_promise(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::workspace_remove_entry(workspace, &path).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_fs_operation_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_remove_file
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceRemoveFile(workspace: u32, path: String) -> Promise {
+    future_to_promise(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::workspace_remove_file(workspace, &path).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_fs_operation_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_remove_folder
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceRemoveFolder(workspace: u32, path: String) -> Promise {
+    future_to_promise(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::workspace_remove_folder(workspace, &path).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_fs_operation_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_remove_folder_all
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceRemoveFolderAll(workspace: u32, path: String) -> Promise {
+    future_to_promise(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::workspace_remove_folder_all(workspace, &path).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_fs_operation_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_rename_entry
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceRenameEntry(
+    workspace: u32,
+    path: String,
+    new_name: String,
+    overwrite: bool,
+) -> Promise {
+    future_to_promise(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let new_name = {
+            let custom_from_rs_string = |s: String| -> Result<_, _> {
+                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(new_name).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::workspace_rename_entry(workspace, &path, new_name, overwrite).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_fs_operation_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_stat_entry
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceStatEntry(workspace: u32, path: String) -> Promise {
+    future_to_promise(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::workspace_stat_entry(workspace, &path).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = variant_entry_stat_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_fs_operation_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

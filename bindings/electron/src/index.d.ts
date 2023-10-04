@@ -623,8 +623,8 @@ export type DeviceSaveStrategy =
   | DeviceSaveStrategySmartcard
 
 
-// EntryInfo
-export interface EntryInfoFile {
+// EntryStat
+export interface EntryStatFile {
     tag: "File"
     confinement_point: string | null
     id: string
@@ -635,7 +635,7 @@ export interface EntryInfoFile {
     need_sync: boolean
     size: number
 }
-export interface EntryInfoFolder {
+export interface EntryStatFolder {
     tag: "Folder"
     confinement_point: string | null
     id: string
@@ -646,9 +646,9 @@ export interface EntryInfoFolder {
     need_sync: boolean
     children: Array<string>
 }
-export type EntryInfo =
-  | EntryInfoFile
-  | EntryInfoFolder
+export type EntryStat =
+  | EntryStatFile
+  | EntryStatFolder
 
 
 // GreetInProgressError
@@ -885,8 +885,8 @@ export type UserOrDeviceClaimInitialInfo =
   | UserOrDeviceClaimInitialInfoUser
 
 
-// WorkspaceEntryInfoError
-export interface WorkspaceEntryInfoErrorBadTimestamp {
+// WorkspaceFsOperationError
+export interface WorkspaceFsOperationErrorBadTimestamp {
     tag: "BadTimestamp"
     error: string
     server_timestamp: number
@@ -894,38 +894,68 @@ export interface WorkspaceEntryInfoErrorBadTimestamp {
     ballpark_client_early_offset: number
     ballpark_client_late_offset: number
 }
-export interface WorkspaceEntryInfoErrorInternal {
+export interface WorkspaceFsOperationErrorCannotRenameRoot {
+    tag: "CannotRenameRoot"
+    error: string
+}
+export interface WorkspaceFsOperationErrorEntryExists {
+    tag: "EntryExists"
+    error: string
+}
+export interface WorkspaceFsOperationErrorEntryNotFound {
+    tag: "EntryNotFound"
+    error: string
+}
+export interface WorkspaceFsOperationErrorFolderNotEmpty {
+    tag: "FolderNotEmpty"
+    error: string
+}
+export interface WorkspaceFsOperationErrorInternal {
     tag: "Internal"
     error: string
 }
-export interface WorkspaceEntryInfoErrorInvalidCertificate {
+export interface WorkspaceFsOperationErrorInvalidCertificate {
     tag: "InvalidCertificate"
     error: string
 }
-export interface WorkspaceEntryInfoErrorInvalidManifest {
+export interface WorkspaceFsOperationErrorInvalidManifest {
     tag: "InvalidManifest"
     error: string
 }
-export interface WorkspaceEntryInfoErrorNotAllowed {
-    tag: "NotAllowed"
+export interface WorkspaceFsOperationErrorIsAFolder {
+    tag: "IsAFolder"
     error: string
 }
-export interface WorkspaceEntryInfoErrorNotFound {
-    tag: "NotFound"
+export interface WorkspaceFsOperationErrorNoRealmAccess {
+    tag: "NoRealmAccess"
     error: string
 }
-export interface WorkspaceEntryInfoErrorOffline {
+export interface WorkspaceFsOperationErrorNotAFolder {
+    tag: "NotAFolder"
+    error: string
+}
+export interface WorkspaceFsOperationErrorOffline {
     tag: "Offline"
     error: string
 }
-export type WorkspaceEntryInfoError =
-  | WorkspaceEntryInfoErrorBadTimestamp
-  | WorkspaceEntryInfoErrorInternal
-  | WorkspaceEntryInfoErrorInvalidCertificate
-  | WorkspaceEntryInfoErrorInvalidManifest
-  | WorkspaceEntryInfoErrorNotAllowed
-  | WorkspaceEntryInfoErrorNotFound
-  | WorkspaceEntryInfoErrorOffline
+export interface WorkspaceFsOperationErrorReadOnlyRealm {
+    tag: "ReadOnlyRealm"
+    error: string
+}
+export type WorkspaceFsOperationError =
+  | WorkspaceFsOperationErrorBadTimestamp
+  | WorkspaceFsOperationErrorCannotRenameRoot
+  | WorkspaceFsOperationErrorEntryExists
+  | WorkspaceFsOperationErrorEntryNotFound
+  | WorkspaceFsOperationErrorFolderNotEmpty
+  | WorkspaceFsOperationErrorInternal
+  | WorkspaceFsOperationErrorInvalidCertificate
+  | WorkspaceFsOperationErrorInvalidManifest
+  | WorkspaceFsOperationErrorIsAFolder
+  | WorkspaceFsOperationErrorNoRealmAccess
+  | WorkspaceFsOperationErrorNotAFolder
+  | WorkspaceFsOperationErrorOffline
+  | WorkspaceFsOperationErrorReadOnlyRealm
 
 
 // WorkspaceStopError
@@ -1175,10 +1205,44 @@ export function validateInvitationToken(
 export function validatePath(
     raw: string
 ): Promise<boolean>
-export function workspaceEntryInfo(
+export function workspaceCreateFile(
     workspace: number,
     path: string
-): Promise<Result<EntryInfo, WorkspaceEntryInfoError>>
+): Promise<Result<string, WorkspaceFsOperationError>>
+export function workspaceCreateFolder(
+    workspace: number,
+    path: string
+): Promise<Result<string, WorkspaceFsOperationError>>
+export function workspaceCreateFolderAll(
+    workspace: number,
+    path: string
+): Promise<Result<string, WorkspaceFsOperationError>>
+export function workspaceRemoveEntry(
+    workspace: number,
+    path: string
+): Promise<Result<null, WorkspaceFsOperationError>>
+export function workspaceRemoveFile(
+    workspace: number,
+    path: string
+): Promise<Result<null, WorkspaceFsOperationError>>
+export function workspaceRemoveFolder(
+    workspace: number,
+    path: string
+): Promise<Result<null, WorkspaceFsOperationError>>
+export function workspaceRemoveFolderAll(
+    workspace: number,
+    path: string
+): Promise<Result<null, WorkspaceFsOperationError>>
+export function workspaceRenameEntry(
+    workspace: number,
+    path: string,
+    new_name: string,
+    overwrite: boolean
+): Promise<Result<null, WorkspaceFsOperationError>>
+export function workspaceStatEntry(
+    workspace: number,
+    path: string
+): Promise<Result<EntryStat, WorkspaceFsOperationError>>
 export function workspaceStop(
     workspace: number
 ): Promise<Result<null, WorkspaceStopError>>
