@@ -1,6 +1,6 @@
 FROM python:3.9 as builder
 
-WORKDIR /work
+WORKDIR /server
 
 # Map source, cannot just do `ADD --link . .` otherwise modifying the current
 # file will invalidate the cache.
@@ -37,11 +37,14 @@ RUN groupadd --gid=1234 parsec && useradd --home-dir=/home/parsec --create-home 
 
 USER parsec:parsec
 
-WORKDIR /backend
+# Important: Use the same name as the builder so the venv scripts can run
+WORKDIR /server
 
-COPY --chown=1234:1234 --from=builder /work/venv /backend/venv
+COPY --chown=1234:1234 --from=builder /server/venv /server/venv
 
 EXPOSE 6777
 
-ENTRYPOINT ["/backend/venv/bin/python", "parsec", "backend"]
+ENV PATH "/server/venv/bin:$PATH"
+ENV PYTHONWARNINGS "ignore:::quart_trio.app"
+ENTRYPOINT ["parsec", "backend"]
 CMD ["run", "--port=6777"]
