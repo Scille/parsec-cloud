@@ -19,6 +19,7 @@
       :label="$t('WorkspacesPage.CreateWorkspaceModal.label')"
       :placeholder="$t('WorkspacesPage.CreateWorkspaceModal.placeholder')"
       v-model="workspaceName"
+      @keyup.enter="confirm()"
     />
   </ms-modal>
 </template>
