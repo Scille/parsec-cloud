@@ -200,7 +200,7 @@ import {
 import {
   close,
 } from 'ionicons/icons';
-import { ref, Ref, computed, onMounted } from 'vue';
+import { ref, Ref, computed, onMounted, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
 import MsWizardStepper from '@/components/core/ms-stepper/MsWizardStepper.vue';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
@@ -211,6 +211,7 @@ import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { MsModalResult } from '@/components/core/ms-types';
 import { UserInvitation, UserGreet, UserProfile } from '@/parsec';
+import { NotificationCenter, NotificationKey, Notification, NotificationLevel } from '@/services/notificationCenter';
 
 enum GreetUserStep {
   WaitForGuest = 1,
@@ -224,7 +225,6 @@ enum GreetUserStep {
 const { t } = useI18n();
 
 const pageStep = ref(GreetUserStep.WaitForGuest);
-
 const props = defineProps<{
   invitation: UserInvitation
 }>();
@@ -233,6 +233,8 @@ const profile: Ref<UserProfile | null> = ref(null);
 const guestInfoPage: Ref<typeof UserInformation | null> = ref(null);
 const waitingForGuest = ref(true);
 const greeter = ref(new UserGreet());
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 
 function getTitleAndSubtitle(): [string, string] {
   if (pageStep.value === GreetUserStep.WaitForGuest) {
@@ -269,8 +271,7 @@ function getNextButtonText(): string {
 
 async function selectGuestSas(code: string | null): Promise<void> {
   if (!code) {
-    console.log('No code entered');
-    await abort();
+    await showErrorAndRestart(t('UsersPage.greet.errors.noneCodeSelected'));
     return;
   }
   if (code === greeter.value.correctSASCode) {
@@ -278,33 +279,40 @@ async function selectGuestSas(code: string | null): Promise<void> {
     if (result.ok) {
       await nextStep();
     } else {
-      console.log('Signify trust failed', result.error);
-      await abort();
+      await showErrorAndRestart(t('UsersPage.greet.errors.unexpected', {reason: result.error.tag}));
     }
   } else {
-    await abort();
-    console.log('Incorrect code entered');
+    await showErrorAndRestart(t('UsersPage.greet.errors.invalidCodeSelected'));
   }
 }
 
-async function abort(): Promise<void> {
-  await greeter.value.abort();
-  pageStep.value = GreetUserStep.WaitForGuest;
+async function restartProcess(): Promise<void> {
+  if (pageStep.value !== GreetUserStep.WaitForGuest) {
+    await greeter.value.abort();
+  }
   await startProcess();
 }
 
 async function startProcess(): Promise<void> {
+  pageStep.value = GreetUserStep.WaitForGuest;
   waitingForGuest.value = true;
   const result = await greeter.value.startGreet(props.invitation.token);
-  if (result.ok) {
-    waitingForGuest.value = false;
-  } else {
-    console.log('Start greet failed', result.error);
+  if (!result.ok) {
+    await notificationCenter.showToast(new Notification({
+      message: t('UsersPage.greet.errors.startFailed'),
+      level: NotificationLevel.Error,
+    }));
+    await cancelModal();
     return;
   }
+  waitingForGuest.value = false;
   const codeResult = await greeter.value.initialWaitGuest();
   if (!codeResult.ok) {
-    console.log('Failed to get host sas code', codeResult.error);
+    await notificationCenter.showToast(new Notification({
+      message: t('UsersPage.greet.errors.startFailed'),
+      level: NotificationLevel.Error,
+    }));
+    await cancelModal();
   }
 }
 
@@ -342,13 +350,26 @@ const canGoForward = computed(() => {
   return false;
 });
 
-function cancelModal(): Promise<boolean> {
+async function cancelModal(): Promise<boolean> {
+  await greeter.value.abort();
   return modalController.dismiss(null, MsModalResult.Cancel);
+}
+
+async function showErrorAndRestart(message: string): Promise<void> {
+  notificationCenter.showToast(new Notification({
+    message: message,
+    level: NotificationLevel.Error,
+  }));
+  await restartProcess();
 }
 
 async function nextStep(): Promise<void> {
   if (pageStep.value === GreetUserStep.Summary) {
-    modalController.dismiss({}, MsModalResult.Confirm);
+    await modalController.dismiss({}, MsModalResult.Confirm);
+    await notificationCenter.showToast(new Notification({
+      message: t('UsersPage.greet.success', {user: guestInfoPage.value?.fullName}),
+      level: NotificationLevel.Success,
+    }));
     return;
   } else if (pageStep.value === GreetUserStep.CheckGuestInfo && guestInfoPage.value && profile.value) {
     const result = await greeter.value.createUser(
@@ -357,7 +378,7 @@ async function nextStep(): Promise<void> {
       profile.value,
     );
     if (!result.ok) {
-      console.log('Failed to create user', result.error);
+      await showErrorAndRestart(t('UsersPage.greet.errors.createUserFailed'));
       return;
     }
   }
@@ -371,21 +392,19 @@ async function nextStep(): Promise<void> {
     if (result.ok) {
       await nextStep();
     } else {
-      console.log('Wait guest trust failed', result.error);
+      await showErrorAndRestart(t('UsersPage.greet.errors.unexpected', {reason: result.error.tag}));
     }
   } else if (pageStep.value === GreetUserStep.WaitForGuestInfo) {
     waitingForGuest.value = true;
     const result = await greeter.value.getClaimRequests();
     waitingForGuest.value = false;
-    if (guestInfoPage.value) {
+    if (result.ok && guestInfoPage.value) {
       guestInfoPage.value.fullName = greeter.value.requestedHumanHandle?.label;
       guestInfoPage.value.email = greeter.value.requestedHumanHandle?.email;
       guestInfoPage.value.deviceName = greeter.value.requestedDeviceLabel;
-    }
-    if (result.ok) {
       await nextStep();
     } else {
-      console.log('Get claim request has failed', result.error);
+      await showErrorAndRestart(t('UsersPage.greet.errors.retrieveUserInfoFailed'));
     }
   }
 }

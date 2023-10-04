@@ -260,7 +260,7 @@ const titles = new Map<UserJoinOrganizationStep, Title>([
 ]);
 
 async function showErrorAndRestart(message: string): Promise<void> {
-  await notificationCenter.showToast(new Notification({
+  notificationCenter.showToast(new Notification({
     message: message,
     level: NotificationLevel.Error,
   }));
@@ -331,7 +331,7 @@ async function nextStep(): Promise<void> {
       // Error here is quite bad because the user has been created in the organization
       // but we fail to save the device. Don't really know what to do here.
       // So we just keep the dialog as is, they can click the button again, hoping it will work.
-      await notificationCenter.showToast(new Notification({
+      notificationCenter.showToast(new Notification({
         message: t('JoinOrganization.errors.saveDeviceFailed'),
         level: NotificationLevel.Error,
       }));
@@ -352,7 +352,7 @@ async function nextStep(): Promise<void> {
       message: t('JoinOrganization.successMessage'),
       level: NotificationLevel.Success,
     });
-    await notificationCenter.showToast(notification, {trace: true});
+    notificationCenter.showToast(notification, {trace: true});
     await modalController.dismiss({ device: claimer.value.device, password: passwordPage.value.password }, MsModalResult.Confirm);
     return;
   }

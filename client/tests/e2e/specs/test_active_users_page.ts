@@ -18,6 +18,7 @@ describe('Check active users page', () => {
     cy.get('.sidebar').find('.user-menu').find('ion-item').as('userItems').should('have.length', 3);
     cy.get('@userItems').eq(0).contains('Active');
     cy.get('@userItems').eq(0).should('have.class', 'user-menu-selected');
+    cy.get('.topbar-left__title').find('.title-h2').contains('Active users');
     cy.get('#activate-users-ms-action-bar').find('#grid-view').should('not.have.attr', 'disabled');
     cy.get('#activate-users-ms-action-bar').find('#list-view').should('have.attr', 'disabled');
     cy.get('#activate-users-ms-action-bar').find('#button-invite-user').contains('Invite a user');
@@ -94,5 +95,17 @@ describe('Check active users page', () => {
     cy.get('@menuItems').eq(1).click();
     // cspell:disable-next-line
     cy.get('@consoleLog').should('have.been.calledWith', 'Revoke user Jaheira');
+  });
+
+  it('Invite from active user page', () => {
+    cy.get('.topbar-left__title').find('.title-h2').contains('Active users');
+    cy.get('#activate-users-ms-action-bar').find('#button-invite-user').contains('Invite a user').click();
+    cy.wait(500);
+    cy.get('.topbar-left__title').find('.title-h2').contains('Invitations');
+    cy.get('.create-user-invitation-modal').find('#next-button').as('inviteButton').should('have.attr', 'disabled');
+    cy.get('.create-user-invitation-modal').find('ion-input').find('input').type('gordon.freeman@blackmesa.nm');
+    cy.get('@inviteButton').should('not.have.attr', 'disabled');
+    cy.get('@inviteButton').click();
+    cy.checkToastMessage('An invitation to join the organization has been sent to gordon.freeman@blackmesa.nm.');
   });
 });

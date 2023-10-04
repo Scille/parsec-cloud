@@ -86,7 +86,7 @@ import {
 import {
   personAdd,
 } from 'ionicons/icons';
-import { onUpdated, ref, Ref, onMounted, inject } from 'vue';
+import { onUpdated, ref, Ref, onMounted, inject, watch, onUnmounted } from 'vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import MsActionBarButton from '@/components/core/ms-action-bar/MsActionBarButton.vue';
 import MsGridListToggle from '@/components/core/ms-toggle/MsGridListToggle.vue';
@@ -105,8 +105,12 @@ import {
   inviteUser as parsecInviteUser,
   cancelInvitation as parsecCancelInvitation,
   isAdmin as parsecIsAdmin,
+  InviteUserError,
+  InvitationEmailSentStatus,
+  DeleteInviteError,
 } from '@/parsec';
 import { NotificationCenter, NotificationKey, NotificationLevel, Notification } from '@/services/notificationCenter';
+import { useRoute } from 'vue-router';
 
 const invitations: Ref<UserInvitation[]> = ref([]);
 const { t } = useI18n();
@@ -114,10 +118,20 @@ const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
+const currentRoute = useRoute();
+
+const routeUnwatch = watch(currentRoute, async (newRoute) => {
+  if (newRoute.query.openInvite) {
+    await inviteUser();
+  }
+});
 
 onMounted(async () => {
   isAdmin.value = await parsecIsAdmin();
   await refreshInvitationsList();
+  if (currentRoute.query.openInvite) {
+    await inviteUser();
+  }
 });
 
 onUpdated(async () => {
@@ -126,13 +140,17 @@ onUpdated(async () => {
   }
 });
 
+onUnmounted(() => {
+  routeUnwatch();
+});
+
 async function refreshInvitationsList(): Promise<void> {
   const result = await parsecListUserInvitations();
   if (result.ok) {
     invitations.value = result.value;
   } else {
     notificationCenter.showToast(new Notification({
-      message: t('UsersPage.inviteFailed'),
+      message: t('UsersPage.invitation.invitationsListFailed'),
       level: NotificationLevel.Error,
     }));
   }
@@ -143,18 +161,49 @@ async function inviteUser(): Promise<void> {
     component: CreateUserInvitationModal,
     cssClass: 'create-user-invitation-modal',
   });
-  modal.present();
+  await modal.present();
 
   const { data, role } = await modal.onWillDismiss();
 
   if (role === 'confirm') {
-    const result = await parsecInviteUser(data);
+    const email = data;
+    const result = await parsecInviteUser(email);
 
     if (result.ok) {
-      console.log('Invite user successful', result.value);
       await refreshInvitationsList();
+      if (result.value[1] === InvitationEmailSentStatus.Success) {
+        await notificationCenter.showToast(new Notification({
+          message: t('UsersPage.invitation.inviteSuccessMailSent', {email: email}),
+          level: NotificationLevel.Success,
+        }));
+      } else {
+        await notificationCenter.showToast(new Notification({
+          message: t('UsersPage.invitation.inviteSuccessNoMail', {email: email}),
+          level: NotificationLevel.Success,
+        }));
+      }
     } else {
-      console.log(`Failed to invite ${data}`, result.error);
+      if (result.error.tag === InviteUserError.AlreadyMember) {
+        await notificationCenter.showToast(new Notification({
+          message: t('UsersPage.invitation.inviteFailedAlreadyMember'),
+          level: NotificationLevel.Error,
+        }));
+      } else if (result.error.tag === InviteUserError.Offline) {
+        await notificationCenter.showToast(new Notification({
+          message: t('UsersPage.invitation.inviteFailedOffline'),
+          level: NotificationLevel.Error,
+        }));
+      } else if (result.error.tag === InviteUserError.NotAllowed) {
+        await notificationCenter.showToast(new Notification({
+          message: t('UsersPage.invitation.inviteFailedNotAllowed'),
+          level: NotificationLevel.Error,
+        }));
+      } else {
+        await notificationCenter.showToast(new Notification({
+          message: t('UsersPage.invitation.inviteFailedUnknown', {reason: result.error.tag}),
+          level: NotificationLevel.Error,
+        }));
+      }
     }
   }
 }
@@ -193,9 +242,22 @@ async function rejectUser(invitation: UserInvitation) : Promise<void> {
   const result = await parsecCancelInvitation(invitation.token);
 
   if (result.ok) {
+    await notificationCenter.showToast(new Notification({
+      message: t('UsersPage.invitation.cancelSuccess'),
+      level: NotificationLevel.Success,
+    }));
     await refreshInvitationsList();
   } else {
-    console.log('Could not cancel the invitation');
+    // In both those cases we can just refresh the list and the invitation should disappear, no need
+    // to warn the user.
+    if (result.error.tag === DeleteInviteError.NotFound || result.error.tag === DeleteInviteError.AlreadyDeleted) {
+      await refreshInvitationsList();
+    } else {
+      await notificationCenter.showToast(new Notification({
+        message: t('UsersPage.invitation.cancelFailed'),
+        level: NotificationLevel.Error,
+      }));
+    }
   }
 }
 </script>
