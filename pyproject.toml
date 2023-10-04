@@ -52,7 +52,7 @@ h11 = ">=0.13,<0.15"
 toastedmarshmallow = "0.2.6" # updating causes consistency problem in test
 trio = "^0.22"
 trio_typing = "^0.7"
-sentry-sdk = "^1.5"
+sentry-sdk = ">=1.13.0,<1.26.0"
 structlog = ">=21.5,<23.0"
 # colorama = "^0.4.4  # structlog colored output"
 async_exit_stack = "^1.0"
@@ -65,6 +65,7 @@ jinja2 = { version="^3.0", optional=true }
 # Quart
 quart-trio = { version="^0.10.0", optional=true }
 quart = { version="^0.18.1", optional=true }
+werkzeug = { version=">=2.2.3,<3.0.0", optional=true } # Pin werkzeug for compatibility with quart
 hypercorn = { version="^0.13.2", optional=true }
 # PostgreSQL
 triopg = { version="^0.6", optional=true }
@@ -100,6 +101,7 @@ backend = [
     "jinja2",
     "quart-trio",
     "quart",
+    "werkzeug",
     "hypercorn",
     "triopg",
     "trio-asyncio",
