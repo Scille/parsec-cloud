@@ -254,6 +254,7 @@ function getTitleIcon(): string {
 
 .ms-modal-content {
   --background: transparent;
+  overflow: auto;
 }
 
 .ms-modal-footer {
