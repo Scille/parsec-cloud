@@ -129,7 +129,7 @@ async fn get_need_sync_entries_workspace(env: &TestbedEnv) {
         manifest.base.version = 1;
         manifest.need_sync = false;
     }
-    updater.set_workspace_manifest(manifest).await.unwrap();
+    updater.update_workspace_manifest(manifest).await.unwrap();
 
     let need_sync = storage.get_need_sync_entries().await.unwrap();
     assert_need_sync(need_sync, &[], &[]);
@@ -152,7 +152,7 @@ async fn get_need_sync_entries_workspace(env: &TestbedEnv) {
         let manifest = Arc::make_mut(&mut manifest);
         manifest.need_sync = true;
     }
-    updater.set_workspace_manifest(manifest).await.unwrap();
+    updater.update_workspace_manifest(manifest).await.unwrap();
 
     let need_sync = storage.get_need_sync_entries().await.unwrap();
     assert_need_sync(need_sync, &[workspace_id], &[workspace_id]);
@@ -165,7 +165,7 @@ async fn get_need_sync_entries_workspace(env: &TestbedEnv) {
         manifest.base.version = 2;
         manifest.need_sync = false;
     }
-    updater.set_workspace_manifest(manifest).await.unwrap();
+    updater.update_workspace_manifest(manifest).await.unwrap();
 
     let need_sync = storage.get_need_sync_entries().await.unwrap();
     assert_need_sync(need_sync, &[], &[]);
@@ -231,7 +231,7 @@ async fn get_need_sync_entries_child(#[case] update_delayed_flush: bool, env: &T
         })
     };
     updater
-        .set_file_manifest(manifest, update_delayed_flush, [].into_iter())
+        .update_as_file_manifest(manifest, update_delayed_flush, [].into_iter())
         .await
         .unwrap();
 
@@ -253,7 +253,7 @@ async fn get_need_sync_entries_child(#[case] update_delayed_flush: bool, env: &T
         }
     };
     updater
-        .set_file_manifest(manifest, update_delayed_flush, [].into_iter())
+        .update_as_file_manifest(manifest, update_delayed_flush, [].into_iter())
         .await
         .unwrap();
 
@@ -284,7 +284,7 @@ async fn get_need_sync_entries_child(#[case] update_delayed_flush: bool, env: &T
         }
     };
     updater
-        .set_file_manifest(manifest, update_delayed_flush, [].into_iter())
+        .update_as_file_manifest(manifest, update_delayed_flush, [].into_iter())
         .await
         .unwrap();
 
@@ -306,7 +306,7 @@ async fn get_need_sync_entries_child(#[case] update_delayed_flush: bool, env: &T
         }
     };
     updater
-        .set_file_manifest(manifest, update_delayed_flush, [].into_iter())
+        .update_as_file_manifest(manifest, update_delayed_flush, [].into_iter())
         .await
         .unwrap();
 
@@ -357,7 +357,7 @@ async fn workspace_manifest(env: &TestbedEnv) {
         m.need_sync = false;
     }
     let expected = manifest.clone();
-    updater.set_workspace_manifest(manifest).await.unwrap();
+    updater.update_workspace_manifest(manifest).await.unwrap();
 
     // 3) Get back workspace manifest
 

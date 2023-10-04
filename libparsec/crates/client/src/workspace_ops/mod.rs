@@ -1,9 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-mod entry_transactions;
 mod fetch;
-
-pub use entry_transactions::*;
+mod transactions;
 
 use std::{
     ops::DerefMut,
@@ -14,6 +12,7 @@ use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_storage::workspace::{WorkspaceCacheStorage, WorkspaceDataStorage};
 use libparsec_types::prelude::*;
 
+pub use self::transactions::*;
 use crate::{certificates_ops::CertificatesOps, event_bus::EventBus, ClientConfig};
 
 #[derive(Debug)]
@@ -124,8 +123,54 @@ impl WorkspaceOps {
         self.realm_id
     }
 
-    pub async fn entry_info(&self, path: &FsPath) -> Result<EntryInfo, EntryInfoError> {
-        entry_transactions::entry_info(self, path).await
+    pub async fn stat_entry(&self, path: &FsPath) -> Result<EntryStat, FsOperationError> {
+        transactions::stat_entry(self, path).await
+    }
+
+    pub async fn rename_entry(
+        &self,
+        path: &FsPath,
+        new_name: EntryName,
+        overwrite: bool,
+    ) -> Result<(), FsOperationError> {
+        transactions::rename_entry(self, path, new_name, overwrite).await
+    }
+
+    pub async fn create_folder(&self, path: &FsPath) -> Result<VlobID, FsOperationError> {
+        transactions::create_folder(self, path).await
+    }
+
+    pub async fn create_folder_all(&self, _path: &FsPath) -> Result<VlobID, FsOperationError> {
+        // TODO: this is high level (non-atomic) stuff: should implement it here
+        todo!()
+    }
+
+    pub async fn create_file(&self, path: &FsPath) -> Result<VlobID, FsOperationError> {
+        transactions::create_file(self, path).await
+    }
+
+    pub async fn remove_entry(&self, path: &FsPath) -> Result<(), FsOperationError> {
+        transactions::remove_entry(self, path, RemoveEntryExpect::Anything).await
+    }
+
+    pub async fn remove_file(&self, path: &FsPath) -> Result<(), FsOperationError> {
+        transactions::remove_entry(self, path, RemoveEntryExpect::File).await
+    }
+
+    pub async fn remove_folder(&self, path: &FsPath) -> Result<(), FsOperationError> {
+        transactions::remove_entry(self, path, RemoveEntryExpect::EmptyFolder).await
+    }
+
+    pub async fn remove_folder_all(&self, path: &FsPath) -> Result<(), FsOperationError> {
+        transactions::remove_entry(self, path, RemoveEntryExpect::Folder).await
+    }
+
+    pub async fn resize_file(&self, path: &FsPath, size: usize) -> Result<(), FsOperationError> {
+        transactions::resize_file(self, path, size).await
+    }
+
+    pub async fn open_file(&self, path: &FsPath) -> Result<OpenedFile, FsOperationError> {
+        transactions::open_file(self, path).await
     }
 }
 

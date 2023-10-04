@@ -277,7 +277,7 @@ pub(crate) async fn maybe_populate_workspace_data_storage(
                         .for_update_workspace_manifest()
                         .await
                         .0
-                        .set_workspace_manifest(manifest)
+                        .update_workspace_manifest(manifest)
                         .await
                         .unwrap();
                 }
@@ -290,7 +290,7 @@ pub(crate) async fn maybe_populate_workspace_data_storage(
                         .await
                         .unwrap()
                         .0
-                        .set_folder_manifest(manifest)
+                        .update_as_folder_manifest(manifest)
                         .await
                         .unwrap();
                 }
@@ -303,7 +303,7 @@ pub(crate) async fn maybe_populate_workspace_data_storage(
                         .await
                         .unwrap()
                         .0
-                        .set_file_manifest(manifest, false, [].into_iter())
+                        .update_as_file_manifest(manifest, false, [].into_iter())
                         .await
                         .unwrap();
                 }
