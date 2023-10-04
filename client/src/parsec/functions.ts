@@ -54,7 +54,90 @@ import { DateTime } from 'luxon';
 import { DEFAULT_HANDLE, MOCK_WAITING_TIME, getClientConfig, wait } from '@/parsec/internals';
 
 export async function listAvailableDevices(): Promise<Array<AvailableDevice>> {
-  return await libparsec.listAvailableDevices(window.getConfigDir());
+  // return await libparsec.listAvailableDevices(window.getConfigDir());
+  const result = await libparsec.listAvailableDevices(window.getConfigDir());
+  result.push({
+    keyFilePath: '/',
+    organizationId: 'MegaChibre',
+    deviceId: 'x',
+    humanHandle: {'label': 'Gros Penis', email: 'gros.penis@gmail.com'},
+    deviceLabel: 'b',
+    slug: 'a',
+    ty: DeviceFileType.Password,
+  });
+  result.push({
+    keyFilePath: '/',
+    organizationId: 'MegaChibre',
+    deviceId: 'x',
+    humanHandle: {'label': 'Gros Penis', email: 'gros.penis@gmail.com'},
+    deviceLabel: 'b',
+    slug: 'a',
+    ty: DeviceFileType.Password,
+  });
+  result.push({
+    keyFilePath: '/',
+    organizationId: 'MegaChibre',
+    deviceId: 'x',
+    humanHandle: {'label': 'Gros Penis', email: 'gros.penis@gmail.com'},
+    deviceLabel: 'b',
+    slug: 'a',
+    ty: DeviceFileType.Password,
+  });
+  result.push({
+    keyFilePath: '/',
+    organizationId: 'A_Long_Org_Name',
+    deviceId: 'x',
+    humanHandle: {'label': 'Gros Penis', email: 'gros.penis@gmail.com'},
+    deviceLabel: 'b',
+    slug: 'a',
+    ty: DeviceFileType.Password,
+  });
+  result.push({
+    keyFilePath: '/',
+    organizationId: 'Biroutte',
+    deviceId: 'x',
+    humanHandle: {'label': 'Gros Penis', email: 'gros.penis@gmail.com'},
+    deviceLabel: 'b',
+    slug: 'a',
+    ty: DeviceFileType.Password,
+  });
+  result.push({
+    keyFilePath: '/',
+    organizationId: 'Clarinette-Baveuse',
+    deviceId: 'x',
+    humanHandle: {'label': 'JoueurDePipeau', email: 'gros.penis@gmail.com'},
+    deviceLabel: 'b',
+    slug: 'a',
+    ty: DeviceFileType.Password,
+  });
+  result.push({
+    keyFilePath: '/',
+    organizationId: 'Andouillette_de_Calcif',
+    deviceId: 'x',
+    humanHandle: {'label': 'Big Andouillette', email: 'gros.penis@gmail.com'},
+    deviceLabel: 'b',
+    slug: 'a',
+    ty: DeviceFileType.Password,
+  });
+  result.push({
+    keyFilePath: '/',
+    organizationId: 'BigJohnson',
+    deviceId: 'x',
+    humanHandle: {'label': 'Gros Penis', email: 'gros.penis@gmail.com'},
+    deviceLabel: 'b',
+    slug: 'a',
+    ty: DeviceFileType.Password,
+  });
+  result.push({
+    keyFilePath: '/',
+    organizationId: 'GroßeSchwanz',
+    deviceId: 'x',
+    humanHandle: {'label': 'Gros Penis', email: 'gros.penis@gmail.com'},
+    deviceLabel: 'b',
+    slug: 'a',
+    ty: DeviceFileType.Password,
+  });
+  return result;
 }
 
 export async function login(device: AvailableDevice, password: string): Promise<Result<Handle, ClientStartError>> {

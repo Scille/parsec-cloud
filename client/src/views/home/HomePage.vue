@@ -94,15 +94,15 @@
               v-if="showOrganizationList"
               class="right-side-container"
             >
-              <div v-if="deviceList.length === 0">
+              <template v-if="deviceList.length === 0">
                 <ion-card-content class="organization-container">
                   <ion-card-title>
                     {{ $t('HomePage.noDevices') }}
                   </ion-card-title>
                   {{ $t('HomePage.howToAddDevices') }}
                 </ion-card-content>
-              </div>
-              <div v-if="deviceList.length > 0">
+              </template>
+              <template v-if="deviceList.length > 0">
                 <ion-card-content class="organization-container">
                   <ion-card-title class="organization-filter">
                     <!-- No use in showing the sort/filter options for less than 2 devices -->
@@ -123,6 +123,7 @@
                         v-for="device in filteredDevices"
                         :key="device.slug"
                         class="organization-list-row__col"
+                        size="2"
                       >
                         <ion-card
                           button
@@ -151,7 +152,7 @@
                     </ion-row>
                   </ion-grid>
                 </ion-card-content>
-              </div>
+              </template>
             </ion-card>
             <!-- after animation -->
             <ion-card
@@ -502,6 +503,7 @@ async function openSettingsModal(): Promise<void> {
   z-index: -5;
 
   .right-side-container {
+    height: inherit;
     margin-inline: 0px;
     margin-top: 0px;
     margin-bottom: 0px;
@@ -549,6 +551,7 @@ async function openSettingsModal(): Promise<void> {
 
 .organization-container {
   padding: 1.5rem 3.5rem 0;
+  height: 100%;
 
   .organization-filter {
     display: flex;
@@ -557,18 +560,15 @@ async function openSettingsModal(): Promise<void> {
   }
 
   .organization-list {
-    max-height: 30em;
+    max-height: 80%;
     overflow-y: auto;
-    --ion-grid-columns: 3;
+    --ion-grid-columns: 6;
   }
 
   .organization-list-row {
-    gap: 1rem;
-
     &__col {
       display: flex;
       align-items: center;
-      padding: 0;
     }
   }
 
@@ -581,6 +581,7 @@ async function openSettingsModal(): Promise<void> {
     margin-inline: 0;
     margin-top: 0;
     margin-bottom: 0;
+    width: 100%;
 
     &:hover {
       box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
