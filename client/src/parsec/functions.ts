@@ -478,6 +478,36 @@ export async function getWorkspaceSharing(workspaceId: WorkspaceID, includeAllUs
     ], [
       // cspell:disable-next-line
       {id: '2', humanHandle: {label: 'Cernd', email: 'cernd@gmail.com'}}, WorkspaceRole.Contributor,
+    ], [
+      // cspell:disable-next-line
+      {id: '3', humanHandle: {label: 'Cernd', email: 'cernd@gmail.com'}}, WorkspaceRole.Contributor,
+    ], [
+      // cspell:disable-next-line
+      {id: '4', humanHandle: {label: 'Cernd', email: 'cernd@gmail.com'}}, WorkspaceRole.Contributor,
+    ], [
+      // cspell:disable-next-line
+      {id: '5', humanHandle: {label: 'Cernd', email: 'cernd@gmail.com'}}, WorkspaceRole.Contributor,
+    ], [
+      // cspell:disable-next-line
+      {id: '6', humanHandle: {label: 'Cernd', email: 'cernd@gmail.com'}}, WorkspaceRole.Contributor,
+    ], [
+      // cspell:disable-next-line
+      {id: '7', humanHandle: {label: 'Cernd', email: 'cernd@gmail.com'}}, WorkspaceRole.Contributor,
+    ], [
+      // cspell:disable-next-line
+      {id: '8', humanHandle: {label: 'Cernd', email: 'cernd@gmail.com'}}, WorkspaceRole.Contributor,
+    ], [
+      // cspell:disable-next-line
+      {id: '9', humanHandle: {label: 'Cernd', email: 'cernd@gmail.com'}}, WorkspaceRole.Contributor,
+    ], [
+      // cspell:disable-next-line
+      {id: '10', humanHandle: {label: 'Cernd', email: 'cernd@gmail.com'}}, WorkspaceRole.Contributor,
+    ], [
+      // cspell:disable-next-line
+      {id: '11', humanHandle: {label: 'Cernd', email: 'cernd@gmail.com'}}, WorkspaceRole.Contributor,
+    ], [
+      // cspell:disable-next-line
+      {id: '12', humanHandle: {label: 'Cernd', email: 'cernd@gmail.com'}}, WorkspaceRole.Contributor,
     ]];
 
     if (includeSelf) {

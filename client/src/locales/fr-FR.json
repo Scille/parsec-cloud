@@ -80,6 +80,7 @@
         "serverDescription": "Serveur de l'organisation",
         "useParsecServer": "Utiliser le serveur PARSEC principal",
         "useMyOwnServer": "Je dispose de mon propre serveur PARSEC",
+        "saas": "Parsec SaaS",
         "acceptTOS": {
             "label": "En utilisant le serveur PARSEC, j'accepte les",
             "tos": "Conditions Générales de Vente et d'Utilisation ",
@@ -442,6 +443,8 @@
         },
         "emptyList": "Aucun utilisateur à afficher.",
         "listUsersFailed": "Impossible d'obtenir la liste des utilisateurs. Veuillez vérifier votre connexion internet.",
+        "revokedEmptyList": "Aucun utilisateur révoqué",
+        "listRevokedUsersFailed": "Impossible de récupérer la liste des utilisateurs révoqués. Veuillez vérifier votre connexion internet.",
         "userSelectedCount": "Aucun utilisateur sélectionné | 1 utilisateur sélectionné | {count} utilisateurs sélectionnés",
         "userContextMenu": {
             "titleRemove": "Suppression",
@@ -477,7 +480,16 @@
                 "finish": "Terminer",
                 "approve": "Approuver"
             },
-            "profilePlaceholder": "Choisissez un profil"
+            "profilePlaceholder": "Choisissez un profil",
+            "errors": {
+                "noneCodeSelected": "Si aucun des codes proposés n'était le bon, il peut s'agir d'un soucis de sécurité. Veuillez redémarrer le processus.",
+                "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
+                "unexpected": "Une erreur imprévue est survenue (raison : {reason}).",
+                "startFailed": "Impossible de démarrer le processus. Veuillez vérifier votre connexion internet.",
+                "createUserFailed": "Impossible de créer le nouvel utilisateur. Veuillez redémarrer le processus.",
+                "retrieveUserInfoFailed": "Échec de la récupération des informations de l'invité. Veuillez redémarrer le processus."
+            },
+            "success": "L'utilisateur {user} a rejoint l'organisation !"
         },
         "invitation": {
             "greetUser":"Accueillir",
@@ -487,7 +499,15 @@
             "date": "Invitation date",
             "status": "Statut",
             "noInvitations": "Aucune invitation en cours",
-            "inviteFailed": "Échec de l'invitation. Veuillez vérifier votre connexion internet."
+            "invitationsListFailed": "Impossible de lister les invitations. Veuillez vérifier votre connexion internet.",
+            "inviteSuccessMailSent": "Une invitation à rejoindre l'organisation a été envoyé à {email}.",
+            "inviteSuccessNoMail": "L'invitation a été créée mais l'email n'a pas pu être envoyé. Veuillez transmettre le lien d'invitation manuellement.",
+            "inviteFailedAlreadyMember": "Cet email est déjà utilisé par un membre de cette organisation.",
+            "inviteFailedOffline": "Impossible de contacter le serveur. Veuillez vérifier votre connexion internet.",
+            "inviteFailedNotAllowed": "Seuls les administrateurs peuvent inviter de nouvelles personnes à rejoindre l'organisation.",
+            "inviteFailedUnknown": "Une erreur imprévue est survenue (raison : {reason}).",
+            "cancelSuccess": "L'invitation a été annulée.",
+            "cancelFailed": "Impossible d'annuler l'invitation. Veuillez vérifier votre connexion internet."
         },
         "CreateUserInvitationModal": {
             "pageTitle": "Inviter un nouvel utilisateur",

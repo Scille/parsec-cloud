@@ -480,7 +480,16 @@
                 "finish": "Finish",
                 "approve": "Approve"
             },
-            "profilePlaceholder": "Choose a profile"
+            "profilePlaceholder": "Choose a profile",
+            "errors": {
+                "noneCodeSelected": "If you didn't see the right code, it could be a security concern. Please restart the process.",
+                "invalidCodeSelected": "You didn't select the right code. Please restart the process.",
+                "unexpected": "An unexpected error occured (reason: {reason}).",
+                "startFailed": "Failed to start the process. Please make sure you are connected to the internet.",
+                "createUserFailed": "Failed to create the new user. Please restart the process.",
+                "retrieveUserInfoFailed": "Failed to retrieve guest's information. Please restart the process."
+            },
+            "success": "The user {user} has joined the organization!"
         },
         "invitation": {
             "greetUser":"Greet",
@@ -490,7 +499,15 @@
             "date": "Invitation date",
             "status": "Status",
             "noInvitations": "No pending invitations",
-            "inviteFailed": "Invitation failed. Please make sure you're connected to the internet."
+            "invitationsListFailed": "Failed to list the invitations. Make you you're connected to the internet.",
+            "inviteSuccessMailSent": "An invitation to join the organization has been sent to {email}.",
+            "inviteSuccessNoMail": "The invitation was successfully created but we couldn't sent an email to {email}. You will have to forward the invitation link yourself.",
+            "inviteFailedAlreadyMember": "This email is already used by a member of this organization.",
+            "inviteFailedOffline": "Could not reach the server. Please make sure you're connected to the internet.",
+            "inviteFailedNotAllowed": "Only administrators can invite new people into the organization.",
+            "inviteFailedUnknown": "An unexpected error occured, please try again (reason: {reason}).",
+            "cancelSuccess": "The invitation has been cancelled.",
+            "cancelFailed": "Could not cancel the invitation. Make sure you're connected to the internet."
         },
         "CreateUserInvitationModal": {
             "pageTitle": "Invite a new user",

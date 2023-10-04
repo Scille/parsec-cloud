@@ -197,6 +197,8 @@ import {
   getClientInfo as parsecGetClientInfo,
   UserProfile,
   UserID,
+  InvitationEmailSentStatus,
+  InviteUserError,
 } from '@/parsec';
 import { NotificationCenter, Notification, NotificationLevel, NotificationKey } from '@/services/notificationCenter';
 import { useI18n } from 'vue-i18n';
@@ -247,25 +249,7 @@ function getSelectedUsers(): UserInfo[] {
 }
 
 async function inviteUser(): Promise<void> {
-  const modal = await modalController.create({
-    component: CreateUserInvitationModal,
-    cssClass: 'create-user-invitation-modal',
-  });
-  modal.present();
-
-  const { data, role } = await modal.onWillDismiss();
-
-  if (role === 'confirm') {
-    const result = await parsecInviteUser(data);
-
-    if (result.ok) {
-      console.log('Invite successful', result.value);
-      // Redirect to invitations page
-      routerNavigateTo('invitations');
-    } else {
-      console.log(`Failed to invite ${data}`, result.error);
-    }
-  }
+  routerNavigateTo('invitations', {}, {openInvite: true});
 }
 
 function viewCommonWorkspace(): void {

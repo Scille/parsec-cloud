@@ -83,4 +83,41 @@ describe('Greet user into an organization', () => {
     cy.get('@nextButton').click();
     cy.get('.greet-organization-modal').should('not.exist');
   });
+
+  it('Select wrong code', () => {
+    cy.get('.invitation-list').find('.invitation-list-item').find('.button-default').eq(0).click();
+    cy.get('.greet-organization-modal').should('exist');
+    cy.wait(WAIT_TIME);
+    cy.get('.greet-organization-modal').find('#next-button').as('nextButton').click();
+    cy.get('.greet-organization-modal').find('.modal-footer').as('footer');
+    cy.get('.greet-organization-modal').find('.modal-header').find('.modal-header__title').as('title');
+    cy.get('@title').contains('Share your code');
+    cy.wait(WAIT_TIME);
+    cy.get('@title').contains('Get guest code');
+    cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').should('have.length', 4);
+    cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').eq(0).click();
+    cy.checkToastMessage('You didn\'t select the right code. Please restart the process.');
+    cy.wait(WAIT_TIME);
+    cy.get('@title').contains('Onboard a new user');
+    cy.get('@nextButton').contains('Start');
+    cy.get('@nextButton').should('not.have.attr', 'disabled');
+  });
+
+  it('Select none code', () => {
+    cy.get('.invitation-list').find('.invitation-list-item').find('.button-default').eq(0).click();
+    cy.get('.greet-organization-modal').should('exist');
+    cy.wait(WAIT_TIME);
+    cy.get('.greet-organization-modal').find('#next-button').as('nextButton').click();
+    cy.get('.greet-organization-modal').find('.modal-footer').as('footer');
+    cy.get('.greet-organization-modal').find('.modal-header').find('.modal-header__title').as('title');
+    cy.get('@title').contains('Share your code');
+    cy.wait(WAIT_TIME);
+    cy.get('@title').contains('Get guest code');
+    cy.get('.greet-organization-modal').find('ion-grid').find('.button-clear').contains('None of the codes').click();
+    cy.checkToastMessage('If you didn\'t see the right code, it could be a security concern. Please restart the process.');
+    cy.wait(WAIT_TIME);
+    cy.get('@title').contains('Onboard a new user');
+    cy.get('@nextButton').contains('Start');
+    cy.get('@nextButton').should('not.have.attr', 'disabled');
+  });
 });

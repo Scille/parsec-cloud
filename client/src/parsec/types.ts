@@ -92,6 +92,20 @@ enum CreateOrganizationError {
   SaveDevice = 'SaveDeviceError',
 }
 
+enum InviteUserError {
+  AlreadyMember = 'AlreadyMember',
+  Internal = 'Internal',
+  NotAllowed = 'NotAllowed',
+  Offline = 'Offline',
+}
+
+enum DeleteInviteError {
+  AlreadyDeleted = 'AlreadyDeleted',
+  Internal = 'Internal',
+  NotFound = 'NotFound',
+  Offline = 'Offline',
+}
+
 interface GetWorkspaceNameError {
   tag: 'NotFound'
 }
@@ -179,4 +193,6 @@ export {
   ClientListWorkspaceUsersError,
   ClientShareWorkspaceError,
   ClientListUsersError,
+  InviteUserError,
+  DeleteInviteError,
 };
