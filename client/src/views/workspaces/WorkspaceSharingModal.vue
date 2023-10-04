@@ -137,20 +137,16 @@ function cancel(): Promise<boolean> {
 .ms-modal {
   display: flex;
   flex-direction: column;
-  height: -webkit-fill-available;
+  max-height: 45em;
 
   .inner-content {
-    max-height: none;
+    overflow-y: auto;
     height: 100%;
   }
 }
 </style>
 
 <style scoped lang="scss">
-.modal {
-  padding: 2.5rem;
-}
-
 .user-list {
   padding: .5rem;
 }

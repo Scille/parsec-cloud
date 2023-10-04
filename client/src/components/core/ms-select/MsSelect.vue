@@ -9,6 +9,7 @@
     :disabled="disabled"
   >
     <ion-icon
+      class="ms-select-icon"
       slot="end"
       :icon="swapVertical"
     />
@@ -88,5 +89,8 @@ async function onDidDismissPopover(popover: any): Promise<void> {
     color: var(--parsec-color-light-primary-700);
     font-weight: bold;
   }
+}
+.ms-select-icon {
+  margin-left: .5em;
 }
 </style>
