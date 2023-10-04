@@ -281,8 +281,6 @@ impl_from_maybe!(Option<DeviceLabel>);
 pub struct DeviceID {
     user_id: UserID,
     device_name: DeviceName,
-    // Cache the display str
-    display: String,
 }
 
 impl Default for DeviceID {
@@ -298,13 +296,9 @@ impl_debug_from_display!(DeviceID);
 // Note: Display is used for Serialization !
 impl std::fmt::Display for DeviceID {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        self.display.fmt(f)
-    }
-}
-
-impl AsRef<str> for DeviceID {
-    fn as_ref(&self) -> &str {
-        &self.display
+        self.user_id.fmt(f)?;
+        f.write_str("@")?;
+        self.device_name.fmt(f)
     }
 }
 
@@ -332,11 +326,9 @@ impl FromStr for DeviceID {
 
 impl DeviceID {
     pub fn new(user_id: UserID, device_name: DeviceName) -> Self {
-        let display = format!("{}@{}", user_id, device_name);
         Self {
             user_id,
             device_name,
-            display,
         }
     }
     pub fn user_id(&self) -> &UserID {

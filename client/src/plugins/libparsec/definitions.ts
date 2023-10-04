@@ -599,8 +599,8 @@ export type DeviceSaveStrategy =
   | DeviceSaveStrategyPassword
   | DeviceSaveStrategySmartcard
 
-// EntryInfo
-export interface EntryInfoFile {
+// EntryStat
+export interface EntryStatFile {
     tag: 'File'
     confinementPoint: VlobID | null
     id: VlobID
@@ -611,7 +611,7 @@ export interface EntryInfoFile {
     needSync: boolean
     size: SizeInt
 }
-export interface EntryInfoFolder {
+export interface EntryStatFolder {
     tag: 'Folder'
     confinementPoint: VlobID | null
     id: VlobID
@@ -622,9 +622,9 @@ export interface EntryInfoFolder {
     needSync: boolean
     children: Array<EntryName>
 }
-export type EntryInfo =
-  | EntryInfoFile
-  | EntryInfoFolder
+export type EntryStat =
+  | EntryStatFile
+  | EntryStatFolder
 
 // GreetInProgressError
 export interface GreetInProgressErrorActiveUsersLimitReached {
@@ -852,8 +852,8 @@ export type UserOrDeviceClaimInitialInfo =
   | UserOrDeviceClaimInitialInfoDevice
   | UserOrDeviceClaimInitialInfoUser
 
-// WorkspaceEntryInfoError
-export interface WorkspaceEntryInfoErrorBadTimestamp {
+// WorkspaceFsOperationError
+export interface WorkspaceFsOperationErrorBadTimestamp {
     tag: 'BadTimestamp'
     error: string
     serverTimestamp: DateTime
@@ -861,38 +861,68 @@ export interface WorkspaceEntryInfoErrorBadTimestamp {
     ballparkClientEarlyOffset: number
     ballparkClientLateOffset: number
 }
-export interface WorkspaceEntryInfoErrorInternal {
+export interface WorkspaceFsOperationErrorCannotRenameRoot {
+    tag: 'CannotRenameRoot'
+    error: string
+}
+export interface WorkspaceFsOperationErrorEntryExists {
+    tag: 'EntryExists'
+    error: string
+}
+export interface WorkspaceFsOperationErrorEntryNotFound {
+    tag: 'EntryNotFound'
+    error: string
+}
+export interface WorkspaceFsOperationErrorFolderNotEmpty {
+    tag: 'FolderNotEmpty'
+    error: string
+}
+export interface WorkspaceFsOperationErrorInternal {
     tag: 'Internal'
     error: string
 }
-export interface WorkspaceEntryInfoErrorInvalidCertificate {
+export interface WorkspaceFsOperationErrorInvalidCertificate {
     tag: 'InvalidCertificate'
     error: string
 }
-export interface WorkspaceEntryInfoErrorInvalidManifest {
+export interface WorkspaceFsOperationErrorInvalidManifest {
     tag: 'InvalidManifest'
     error: string
 }
-export interface WorkspaceEntryInfoErrorNotAllowed {
-    tag: 'NotAllowed'
+export interface WorkspaceFsOperationErrorIsAFolder {
+    tag: 'IsAFolder'
     error: string
 }
-export interface WorkspaceEntryInfoErrorNotFound {
-    tag: 'NotFound'
+export interface WorkspaceFsOperationErrorNoRealmAccess {
+    tag: 'NoRealmAccess'
     error: string
 }
-export interface WorkspaceEntryInfoErrorOffline {
+export interface WorkspaceFsOperationErrorNotAFolder {
+    tag: 'NotAFolder'
+    error: string
+}
+export interface WorkspaceFsOperationErrorOffline {
     tag: 'Offline'
     error: string
 }
-export type WorkspaceEntryInfoError =
-  | WorkspaceEntryInfoErrorBadTimestamp
-  | WorkspaceEntryInfoErrorInternal
-  | WorkspaceEntryInfoErrorInvalidCertificate
-  | WorkspaceEntryInfoErrorInvalidManifest
-  | WorkspaceEntryInfoErrorNotAllowed
-  | WorkspaceEntryInfoErrorNotFound
-  | WorkspaceEntryInfoErrorOffline
+export interface WorkspaceFsOperationErrorReadOnlyRealm {
+    tag: 'ReadOnlyRealm'
+    error: string
+}
+export type WorkspaceFsOperationError =
+  | WorkspaceFsOperationErrorBadTimestamp
+  | WorkspaceFsOperationErrorCannotRenameRoot
+  | WorkspaceFsOperationErrorEntryExists
+  | WorkspaceFsOperationErrorEntryNotFound
+  | WorkspaceFsOperationErrorFolderNotEmpty
+  | WorkspaceFsOperationErrorInternal
+  | WorkspaceFsOperationErrorInvalidCertificate
+  | WorkspaceFsOperationErrorInvalidManifest
+  | WorkspaceFsOperationErrorIsAFolder
+  | WorkspaceFsOperationErrorNoRealmAccess
+  | WorkspaceFsOperationErrorNotAFolder
+  | WorkspaceFsOperationErrorOffline
+  | WorkspaceFsOperationErrorReadOnlyRealm
 
 // WorkspaceStopError
 export interface WorkspaceStopErrorInternal {
@@ -1140,10 +1170,44 @@ export interface LibParsecPlugin {
     validatePath(
         raw: string
     ): Promise<boolean>
-    workspaceEntryInfo(
+    workspaceCreateFile(
         workspace: Handle,
         path: FsPath
-    ): Promise<Result<EntryInfo, WorkspaceEntryInfoError>>
+    ): Promise<Result<VlobID, WorkspaceFsOperationError>>
+    workspaceCreateFolder(
+        workspace: Handle,
+        path: FsPath
+    ): Promise<Result<VlobID, WorkspaceFsOperationError>>
+    workspaceCreateFolderAll(
+        workspace: Handle,
+        path: FsPath
+    ): Promise<Result<VlobID, WorkspaceFsOperationError>>
+    workspaceRemoveEntry(
+        workspace: Handle,
+        path: FsPath
+    ): Promise<Result<null, WorkspaceFsOperationError>>
+    workspaceRemoveFile(
+        workspace: Handle,
+        path: FsPath
+    ): Promise<Result<null, WorkspaceFsOperationError>>
+    workspaceRemoveFolder(
+        workspace: Handle,
+        path: FsPath
+    ): Promise<Result<null, WorkspaceFsOperationError>>
+    workspaceRemoveFolderAll(
+        workspace: Handle,
+        path: FsPath
+    ): Promise<Result<null, WorkspaceFsOperationError>>
+    workspaceRenameEntry(
+        workspace: Handle,
+        path: FsPath,
+        new_name: EntryName,
+        overwrite: boolean
+    ): Promise<Result<null, WorkspaceFsOperationError>>
+    workspaceStatEntry(
+        workspace: Handle,
+        path: FsPath
+    ): Promise<Result<EntryStat, WorkspaceFsOperationError>>
     workspaceStop(
         workspace: Handle
     ): Promise<Result<null, WorkspaceStopError>>

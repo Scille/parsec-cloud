@@ -29,10 +29,41 @@ pub struct WorkspaceDataStorageWorkspaceManifestUpdater<'a> {
 }
 
 impl<'a> WorkspaceDataStorageWorkspaceManifestUpdater<'a> {
-    pub async fn set_workspace_manifest(
+    /// Create a brand new manifest (in order to add it as child).
+    ///
+    /// Never use this method to update an existing file manifest as it ignores
+    /// the work-ahead-of-db items (hence data may end up in an invalid state) !
+    pub async fn new_child_file_manifest(
+        &self,
+        manifest: Arc<LocalFileManifest>,
+    ) -> anyhow::Result<()> {
+        // This method is only to add a child to our workspace manifest
+        assert_eq!(manifest.base.parent, self.storage.realm_id);
+        assert_ne!(manifest.base.id, self.storage.realm_id);
+
+        db_and_cache_set_file_manifest(self.storage, manifest).await
+    }
+
+    /// Create a brand new manifest (in order to add it as child).
+    pub async fn new_child_folder_manifest(
+        &self,
+        manifest: Arc<LocalFolderManifest>,
+    ) -> anyhow::Result<()> {
+        // This method is only to add a child to our workspace manifest
+        assert_eq!(manifest.base.parent, self.storage.realm_id);
+        assert_ne!(manifest.base.id, self.storage.realm_id);
+
+        db_and_cache_set_folder_manifest(self.storage, manifest).await
+    }
+
+    pub async fn update_workspace_manifest(
         self,
         manifest: Arc<LocalWorkspaceManifest>,
     ) -> anyhow::Result<()> {
+        // Must update the database first then the cache given the former could fail.
+        // If such, a concurrent read operation would now be using an invalid version
+        // of the workspace manifest.
+
         db_set_workspace_manifest(&self.storage.db, &self.storage.device, &manifest).await?;
 
         self.storage
@@ -110,7 +141,11 @@ mod child_manifests {
                 None => {
                     self.per_manifest_lock
                         .push((entry_id, EntryLockState::Taken));
-                    let updater = WorkspaceDataStorageChildManifestUpdater { entry_id, storage };
+                    let updater = WorkspaceDataStorageChildManifestUpdater {
+                        entry_id,
+                        storage,
+                        is_folder_manifest: None,
+                    };
                     // It's official: we are now the one and only updating this manifest !
                     ChildManifestLockTakeOutcome::Taken(updater)
                 }
@@ -142,6 +177,9 @@ mod child_manifests {
     pub struct WorkspaceDataStorageChildManifestUpdater<'a> {
         storage: &'a WorkspaceDataStorage,
         entry_id: VlobID,
+        // None means we don't know yet the type of the manifest (i.e. it
+        // has not been created yet)
+        pub(super) is_folder_manifest: Option<bool>,
     }
 
     impl<'a> Drop for WorkspaceDataStorageChildManifestUpdater<'a> {
@@ -173,15 +211,54 @@ mod child_manifests {
     }
 
     impl<'a> WorkspaceDataStorageChildManifestUpdater<'a> {
+        /// Create a brand new manifest (in order to add it as child).
+        ///
+        /// Never use this method to update an existing file manifest as it ignores
+        /// the work-ahead-of-db items (hence data may end up in an invalid state) !
+        pub async fn new_child_file_manifest(
+            &self,
+            manifest: Arc<LocalFileManifest>,
+        ) -> anyhow::Result<()> {
+            // This method is only to add a child to our folder manifest
+            assert!(self.is_folder_manifest.unwrap_or(true));
+            assert_eq!(manifest.base.parent, self.entry_id);
+            assert_ne!(manifest.base.id, self.entry_id);
+
+            db_and_cache_set_file_manifest(self.storage, manifest).await
+        }
+
+        /// Create a brand new manifest (in order to add it as child).
+        pub async fn new_child_folder_manifest(
+            &self,
+            manifest: Arc<LocalFolderManifest>,
+        ) -> anyhow::Result<()> {
+            // This method is only to add a child to our folder manifest
+            assert!(self.is_folder_manifest.unwrap_or(true));
+            assert_eq!(manifest.base.parent, self.entry_id);
+            assert_ne!(manifest.base.id, self.entry_id);
+
+            db_and_cache_set_folder_manifest(self.storage, manifest).await
+        }
+
+        /// Update the given manifest as file.
+        ///
+        /// A manifest entry is supposed to always point to the same type of manifest,
+        /// it is the caller responsibility to make sure it updates with the right
+        ///
         /// If nothing to remove, use `[].into_iter()` for `to_remove` param.
+        ///
         /// `delay_flush` is to be used when the file is opened (given then the `flush`
         /// syscall should be used to guarantee the data are persistent)
-        pub async fn set_file_manifest(
+        pub async fn update_as_file_manifest(
             self,
             manifest: Arc<LocalFileManifest>,
             delay_flush: bool,
             to_remove: impl Iterator<Item = ChunkID>,
         ) -> Result<(), anyhow::Error> {
+            // A manifest should never change it type or it parents
+            assert!(!self.is_folder_manifest.unwrap_or(false));
+            assert_eq!(manifest.base.id, self.entry_id);
+
             {
                 let mut guard = self.storage.cache.lock().expect("Mutex is poisoned");
 
@@ -215,24 +292,15 @@ mod child_manifests {
             }
         }
 
-        pub async fn set_folder_manifest(
+        pub async fn update_as_folder_manifest(
             self,
             manifest: Arc<LocalFolderManifest>,
         ) -> anyhow::Result<()> {
-            // We store the new manifest first in database then in cache: doing the other
-            // way around would mean a concurrent read could take the new manifest value
-            // from the cache, only to have the database update fail (hence most likely
-            // cancelling the update, hence leaving the concurrent read with a now invalid
-            // manifest !)
+            // A manifest should never change it type or it parent
+            assert!(self.is_folder_manifest.unwrap_or(true));
+            assert_eq!(manifest.base.id, self.entry_id);
 
-            db_set_folder_manifest(&self.storage.db, &self.storage.device, &manifest).await?;
-
-            let mut guard = self.storage.cache.lock().expect("Mutex is poisoned");
-            guard
-                .child_manifests
-                .insert(self.entry_id, ArcLocalChildManifest::Folder(manifest));
-
-            Ok(())
+            db_and_cache_set_folder_manifest(self.storage, manifest).await
         }
     }
 }
@@ -445,10 +513,18 @@ impl WorkspaceDataStorage {
                     listener.await;
                 }
                 // Finally it's our turn to update the manifest !
-                ChildManifestLockTakeOutcome::Taken(updater) => {
+                ChildManifestLockTakeOutcome::Taken(mut updater) => {
                     let maybe_manifest = match self.get_child_manifest(entry_id).await {
-                        Ok(manifest) => Some(manifest),
-                        Err(GetChildManifestError::NotFound) => None,
+                        Ok(manifest) => {
+                            let is_folder_manifest =
+                                matches!(manifest, ArcLocalChildManifest::Folder(_));
+                            updater.is_folder_manifest = Some(is_folder_manifest);
+                            Some(manifest)
+                        }
+                        Err(GetChildManifestError::NotFound) => {
+                            updater.is_folder_manifest = None;
+                            None
+                        }
                         // Here updater's drop will release the update lock automatically ;-)
                         Err(err) => return Err(err.into()),
                     };
@@ -682,6 +758,46 @@ impl WorkspaceDataStorage {
     }
 }
 
+async fn db_and_cache_set_folder_manifest(
+    storage: &WorkspaceDataStorage,
+    manifest: Arc<LocalFolderManifest>,
+) -> anyhow::Result<()> {
+    // We store the new manifest first in database then in cache: doing the other
+    // way around would mean a concurrent read could take the new manifest value
+    // from the cache, only to have the database update fail (hence most likely
+    // cancelling the update, hence leaving the concurrent read with a now invalid
+    // manifest !)
+
+    db_set_folder_manifest(&storage.db, &storage.device, &manifest).await?;
+
+    let mut guard = storage.cache.lock().expect("Mutex is poisoned");
+    guard
+        .child_manifests
+        .insert(manifest.base.id, ArcLocalChildManifest::Folder(manifest));
+
+    Ok(())
+}
+
+async fn db_and_cache_set_file_manifest(
+    storage: &WorkspaceDataStorage,
+    manifest: Arc<LocalFileManifest>,
+) -> anyhow::Result<()> {
+    // We store the new manifest first in database then in cache: doing the other
+    // way around would mean a concurrent read could take the new manifest value
+    // from the cache, only to have the database update fail (hence most likely
+    // cancelling the update, hence leaving the concurrent read with a now invalid
+    // manifest !)
+
+    db_set_file_manifest(&storage.db, &storage.device, &manifest).await?;
+
+    let mut guard = storage.cache.lock().expect("Mutex is poisoned");
+    guard
+        .child_manifests
+        .insert(manifest.base.id, ArcLocalChildManifest::File(manifest));
+
+    Ok(())
+}
+
 /*
  * Database operations
  */
@@ -811,6 +927,22 @@ async fn db_set_folder_manifest(
     db: &LocalDatabase,
     device: &LocalDevice,
     manifest: &LocalFolderManifest,
+) -> DatabaseResult<()> {
+    let blob = manifest.dump_and_encrypt(&device.local_symkey);
+    db_set_manifest(
+        db,
+        manifest.base.id,
+        manifest.base.version,
+        manifest.need_sync,
+        blob,
+    )
+    .await
+}
+
+async fn db_set_file_manifest(
+    db: &LocalDatabase,
+    device: &LocalDevice,
+    manifest: &LocalFileManifest,
 ) -> DatabaseResult<()> {
     let blob = manifest.dump_and_encrypt(&device.local_symkey);
     db_set_manifest(

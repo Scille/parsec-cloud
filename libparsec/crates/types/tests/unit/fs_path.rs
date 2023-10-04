@@ -132,3 +132,43 @@ fn fs_path_with_mountpoint() {
         base_path.join("foo/bar")
     )
 }
+
+#[test]
+fn fs_path_join() {
+    let fs_path = "/".parse::<FsPath>().unwrap();
+
+    let fs_path2 = fs_path.join("foo".parse().unwrap());
+    p_assert_eq!(fs_path, "/".parse().unwrap());
+    p_assert_eq!(fs_path2, "/foo".parse().unwrap());
+
+    let fs_path3 = fs_path2.join("bar".parse().unwrap());
+    p_assert_eq!(fs_path3, "/foo/bar".parse().unwrap());
+}
+
+#[test]
+fn fs_path_into_parent() {
+    let fs_path = "/foo/bar".parse::<FsPath>().unwrap();
+
+    let (fs_path, child) = fs_path.into_parent();
+    p_assert_eq!(fs_path, "/foo".parse().unwrap());
+    p_assert_eq!(child, Some("bar".parse().unwrap()));
+
+    let (fs_path, child) = fs_path.into_parent();
+    p_assert_eq!(fs_path, "/".parse().unwrap());
+    p_assert_eq!(child, Some("foo".parse().unwrap()));
+
+    let (fs_path, child) = fs_path.into_parent();
+    p_assert_eq!(fs_path, "/".parse().unwrap());
+    p_assert_eq!(child, None);
+}
+
+#[test]
+fn fs_path_into_child() {
+    let fs_path = "/".parse::<FsPath>().unwrap();
+
+    let fs_path = fs_path.into_child("foo".parse().unwrap());
+    p_assert_eq!(fs_path, "/foo".parse().unwrap());
+
+    let fs_path = fs_path.into_child("bar".parse().unwrap());
+    p_assert_eq!(fs_path, "/foo/bar".parse().unwrap());
+}

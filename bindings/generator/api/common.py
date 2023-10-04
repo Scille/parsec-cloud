@@ -154,7 +154,10 @@ class UserID(StrBasedType):
 
 
 class DeviceID(StrBasedType):
-    pass
+    custom_from_rs_string = "|s: String| -> Result<_, String> { s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string()) }"
+    custom_to_rs_string = (
+        "|device_id: libparsec::DeviceID| -> Result<_, &'static str> { Ok(device_id.to_string()) }"
+    )
 
 
 class DeviceLabel(StrBasedType):

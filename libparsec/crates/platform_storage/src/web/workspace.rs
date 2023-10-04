@@ -20,7 +20,26 @@ pub async fn workspace_storage_non_speculative_init(
 pub struct WorkspaceDataStorageWorkspaceManifestUpdater {}
 
 impl WorkspaceDataStorageWorkspaceManifestUpdater {
-    pub async fn set_workspace_manifest(
+    /// Create a brand new manifest (in order to add it as child).
+    ///
+    /// Never use this method to update an existing file manifest as it ignores
+    /// the work-ahead-of-db items (hence data may end up in an invalid state) !
+    pub async fn new_child_file_manifest(
+        &self,
+        _manifest: Arc<LocalFileManifest>,
+    ) -> anyhow::Result<()> {
+        todo!();
+    }
+
+    /// Create a brand new manifest (in order to add it as child).
+    pub async fn new_child_folder_manifest(
+        &self,
+        _manifest: Arc<LocalFolderManifest>,
+    ) -> anyhow::Result<()> {
+        todo!();
+    }
+
+    pub async fn update_workspace_manifest(
         self,
         _manifest: Arc<LocalWorkspaceManifest>,
     ) -> anyhow::Result<()> {
@@ -36,22 +55,48 @@ impl WorkspaceDataStorageWorkspaceManifestUpdater {
 pub struct WorkspaceDataStorageChildManifestUpdater {}
 
 impl WorkspaceDataStorageChildManifestUpdater {
+    /// Create a brand new manifest (in order to add it as child).
+    ///
+    /// Never use this method to update an existing file manifest as it ignores
+    /// the work-ahead-of-db items (hence data may end up in an invalid state) !
+    pub async fn new_child_file_manifest(
+        &self,
+        _manifest: Arc<LocalFileManifest>,
+    ) -> anyhow::Result<()> {
+        todo!()
+    }
+
+    /// Create a brand new manifest (in order to add it as child).
+    pub async fn new_child_folder_manifest(
+        &self,
+        _manifest: Arc<LocalFolderManifest>,
+    ) -> anyhow::Result<()> {
+        todo!()
+    }
+
+    /// Update the given manifest as file.
+    ///
+    /// A manifest entry is supposed to always point to the same type of manifest,
+    /// it is the caller responsibility to make sure it updates with the right
+    ///
+    /// If nothing to remove, use `[].into_iter()` for `to_remove` param.
+    ///
     /// `delay_flush` is to be used when the file is opened (given then the `flush`
     /// syscall should be used to guarantee the data are persistent)
-    pub async fn set_file_manifest(
+    pub async fn update_as_file_manifest(
         self,
         _manifest: Arc<LocalFileManifest>,
         _delay_flush: bool,
         _to_remove: impl Iterator<Item = ChunkID>,
     ) -> Result<(), anyhow::Error> {
-        todo!();
+        todo!()
     }
 
-    pub async fn set_folder_manifest(
+    pub async fn update_as_folder_manifest(
         self,
         _manifest: Arc<LocalFolderManifest>,
     ) -> anyhow::Result<()> {
-        todo!();
+        todo!()
     }
 }
 

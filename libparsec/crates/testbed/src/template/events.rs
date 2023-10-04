@@ -2272,9 +2272,6 @@ impl TestbedEventWorkspaceDataStorageFetchWorkspaceVlob {
         realm: VlobID,
         prevent_sync_pattern: Option<Regex>,
     ) -> Self {
-        let prevent_sync_pattern =
-            prevent_sync_pattern.unwrap_or_else(|| Regex::from_regex_str("").unwrap());
-
         // 1) Consistency checks
 
         utils::assert_organization_bootstrapped(&builder.events);
@@ -2289,7 +2286,7 @@ impl TestbedEventWorkspaceDataStorageFetchWorkspaceVlob {
                 if x.manifest.id == realm => {
                 Some(Arc::new(LocalWorkspaceManifest::from_remote(
                     (*x.manifest).clone(),
-                    &prevent_sync_pattern,
+                    prevent_sync_pattern.as_ref(),
                 )))
             }
             TestbedEvent::CreateOrUpdateOpaqueVlob(x)
@@ -2686,7 +2683,7 @@ impl TestbedEventWorkspaceDataStorageLocalFolderManifestUpdate {
                 })
             })
             .unwrap_or_else(|| {
-                // No previous local workspace manifest, create one
+                // No previous local manifest, create one
                 Arc::new(LocalFolderManifest::new(device.clone(), realm, timestamp))
             });
 
@@ -2763,13 +2760,8 @@ impl TestbedEventWorkspaceDataStorageLocalFileManifestUpdate {
                 })
             })
             .unwrap_or_else(|| {
-                // No previous local workspace manifest, create one
-                Arc::new(LocalFileManifest::new(
-                    device.clone(),
-                    realm,
-                    timestamp,
-                    Blocksize::try_from(512).expect("valid block size"),
-                ))
+                // No previous local manifest, create one
+                Arc::new(LocalFileManifest::new(device.clone(), realm, timestamp))
             });
 
         // 2) Actual creation

@@ -7,7 +7,7 @@ pub use libparsec_client::{
         ClientInfoError, RenameWorkspaceError as ClientWorkspaceRenameError,
         ShareWorkspaceError as ClientWorkspaceShareError,
     },
-    workspace_ops::{EntryInfo, EntryInfoError as WorkspaceEntryInfoError},
+    workspace_ops::{EntryStat, FsOperationError as WorkspaceFsOperationError},
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
@@ -167,14 +167,88 @@ pub async fn workspace_stop(workspace: Handle) -> Result<(), WorkspaceStopError>
 }
 
 /*
- * Workspace entry info
+ * Workspace FS operations
  */
 
-pub async fn workspace_entry_info(
+pub async fn workspace_stat_entry(
     workspace: Handle,
     path: &FsPath,
-) -> Result<EntryInfo, WorkspaceEntryInfoError> {
+) -> Result<EntryStat, WorkspaceFsOperationError> {
     let workspace = borrow_workspace(workspace)?;
 
-    workspace.entry_info(path).await
+    workspace.stat_entry(path).await
+}
+
+pub async fn workspace_rename_entry(
+    workspace: Handle,
+    path: &FsPath,
+    new_name: EntryName,
+    overwrite: bool,
+) -> Result<(), WorkspaceFsOperationError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.rename_entry(path, new_name, overwrite).await
+}
+
+pub async fn workspace_create_folder(
+    workspace: Handle,
+    path: &FsPath,
+) -> Result<VlobID, WorkspaceFsOperationError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.create_folder(path).await
+}
+
+pub async fn workspace_create_folder_all(
+    workspace: Handle,
+    path: &FsPath,
+) -> Result<VlobID, WorkspaceFsOperationError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.create_folder_all(path).await
+}
+
+pub async fn workspace_create_file(
+    workspace: Handle,
+    path: &FsPath,
+) -> Result<VlobID, WorkspaceFsOperationError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.create_file(path).await
+}
+
+pub async fn workspace_remove_entry(
+    workspace: Handle,
+    path: &FsPath,
+) -> Result<(), WorkspaceFsOperationError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.remove_entry(path).await
+}
+
+pub async fn workspace_remove_file(
+    workspace: Handle,
+    path: &FsPath,
+) -> Result<(), WorkspaceFsOperationError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.remove_file(path).await
+}
+
+pub async fn workspace_remove_folder(
+    workspace: Handle,
+    path: &FsPath,
+) -> Result<(), WorkspaceFsOperationError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.remove_folder(path).await
+}
+
+pub async fn workspace_remove_folder_all(
+    workspace: Handle,
+    path: &FsPath,
+) -> Result<(), WorkspaceFsOperationError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.remove_folder_all(path).await
 }

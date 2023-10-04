@@ -4,12 +4,12 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
-use crate::workspace_ops::EntryInfo;
+use crate::workspace_ops::EntryStat;
 
 #[parsec_test(testbed = "minimal_client_ready", with_server)]
 #[case::with_local_cache(true)]
 #[case::without_local_cache(false)]
-async fn entry_info(#[case] local_cache: bool, env: &TestbedEnv) {
+async fn stat_entry(#[case] local_cache: bool, env: &TestbedEnv) {
     let wksp1_id: &VlobID = env.template.get_stuff("wksp1_id");
     let wksp1_key: &SecretKey = env.template.get_stuff("wksp1_key");
     let wksp1_foo_id: &VlobID = env.template.get_stuff("wksp1_foo_id");
@@ -40,10 +40,10 @@ async fn entry_info(#[case] local_cache: bool, env: &TestbedEnv) {
 
     // Workspace
 
-    let info = ops.entry_info(&"/".parse().unwrap()).await.unwrap();
+    let info = ops.stat_entry(&"/".parse().unwrap()).await.unwrap();
     p_assert_matches!(
         info,
-        EntryInfo::Folder{
+        EntryStat::Folder{
             confinement_point,
             id,
             created,
@@ -65,10 +65,10 @@ async fn entry_info(#[case] local_cache: bool, env: &TestbedEnv) {
 
     // Folder
 
-    let info = ops.entry_info(&"/foo".parse().unwrap()).await.unwrap();
+    let info = ops.stat_entry(&"/foo".parse().unwrap()).await.unwrap();
     p_assert_matches!(
         info,
-        EntryInfo::Folder{
+        EntryStat::Folder{
             confinement_point,
             id,
             created,
@@ -90,10 +90,10 @@ async fn entry_info(#[case] local_cache: bool, env: &TestbedEnv) {
 
     // File
 
-    let info = ops.entry_info(&"/bar.txt".parse().unwrap()).await.unwrap();
+    let info = ops.stat_entry(&"/bar.txt".parse().unwrap()).await.unwrap();
     p_assert_matches!(
         info,
-        EntryInfo::File{
+        EntryStat::File{
             confinement_point,
             id,
             created,
@@ -115,7 +115,7 @@ async fn entry_info(#[case] local_cache: bool, env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
-async fn entry_info_on_speculative_workspace(env: &TestbedEnv) {
+async fn stat_entry_on_speculative_workspace(env: &TestbedEnv) {
     let wksp1_id: &VlobID = env.template.get_stuff("wksp1_id");
     let wksp1_key: &SecretKey = env.template.get_stuff("wksp1_key");
 
@@ -141,10 +141,10 @@ async fn entry_info_on_speculative_workspace(env: &TestbedEnv) {
     )
     .await;
 
-    let info = ops.entry_info(&"/".parse().unwrap()).await.unwrap();
+    let info = ops.stat_entry(&"/".parse().unwrap()).await.unwrap();
     p_assert_matches!(
         info,
-        EntryInfo::Folder{
+        EntryStat::Folder{
             confinement_point,
             id,
             created,

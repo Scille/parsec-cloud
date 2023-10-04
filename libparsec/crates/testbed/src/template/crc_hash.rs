@@ -140,6 +140,7 @@ macro_rules! impl_crc_hash_for_str_based {
     ($name:ident) => {
         impl CrcHash for $name {
             fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+                hasher.update(stringify!($name).as_bytes());
                 self.as_ref().crc_hash(hasher)
             }
         }
@@ -147,15 +148,24 @@ macro_rules! impl_crc_hash_for_str_based {
 }
 
 impl_crc_hash_for_str_based!(UserID);
-impl_crc_hash_for_str_based!(DeviceID);
+impl_crc_hash_for_str_based!(DeviceName);
 impl_crc_hash_for_str_based!(HumanHandle);
 impl_crc_hash_for_str_based!(DeviceLabel);
 impl_crc_hash_for_str_based!(EntryName);
+
+impl CrcHash for DeviceID {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"DeviceID");
+        self.user_id().crc_hash(hasher);
+        self.device_name().crc_hash(hasher);
+    }
+}
 
 macro_rules! impl_crc_hash_for_uuid_based {
     ($name:ident) => {
         impl CrcHash for $name {
             fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+                hasher.update(stringify!($name).as_bytes());
                 hasher.update(self.as_bytes())
             }
         }
@@ -171,12 +181,14 @@ impl_crc_hash_for_uuid_based!(EnrollmentID);
 
 impl CrcHash for DateTime {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"DateTime");
         hasher.update(&self.get_f64_with_us_precision().to_le_bytes());
     }
 }
 
 impl CrcHash for UserProfile {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"UserProfile");
         match self {
             UserProfile::Admin => hasher.update(b"Admin"),
             UserProfile::Standard => hasher.update(b"Standard"),
@@ -187,6 +199,7 @@ impl CrcHash for UserProfile {
 
 impl CrcHash for RealmRole {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"RealmRole");
         match self {
             RealmRole::Owner => hasher.update(b"Owner"),
             RealmRole::Manager => hasher.update(b"Manager"),
@@ -198,48 +211,56 @@ impl CrcHash for RealmRole {
 
 impl CrcHash for SecretKey {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"SecretKey");
         hasher.update(self.as_ref());
     }
 }
 
 impl CrcHash for HashDigest {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"HashDigest");
         hasher.update(self.as_ref());
     }
 }
 
 impl CrcHash for SigningKey {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"SigningKey");
         hasher.update(self.as_ref());
     }
 }
 
 impl CrcHash for PrivateKey {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"PrivateKey");
         hasher.update(self.as_ref());
     }
 }
 
 impl CrcHash for SequesterPrivateKeyDer {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"SequesterPrivateKeyDer");
         hasher.update(&self.dump());
     }
 }
 
 impl CrcHash for SequesterPublicKeyDer {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"SequesterPublicKeyDer");
         hasher.update(&self.dump());
     }
 }
 
 impl CrcHash for SequesterSigningKeyDer {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"SequesterSigningKeyDer");
         hasher.update(&self.dump());
     }
 }
 
 impl CrcHash for SequesterVerifyKeyDer {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"SequesterVerifyKeyDer");
         hasher.update(&self.dump());
     }
 }

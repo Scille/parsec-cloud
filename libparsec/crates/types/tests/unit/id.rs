@@ -38,3 +38,26 @@ fn human_handle(#[case] email: &str, #[case] label: &str, #[case] is_ok: bool) {
         is_ok
     );
 }
+
+#[test]
+fn device_id_to_user_id_and_device_name() {
+    let device_id = "john@pc1".parse::<DeviceID>().unwrap();
+
+    let (user_id, device_name) = device_id.into();
+
+    p_assert_eq!(user_id, "john".parse::<UserID>().unwrap());
+
+    p_assert_eq!(device_name, "pc1".parse::<DeviceName>().unwrap());
+}
+
+#[test]
+fn display() {
+    let user_id = "john".parse::<UserID>().unwrap();
+    p_assert_eq!(format!("{}", user_id), "john");
+
+    let device_name = "pc1".parse::<DeviceName>().unwrap();
+    p_assert_eq!(format!("{}", device_name), "pc1");
+
+    let device_id = "john@pc1".parse::<DeviceID>().unwrap();
+    p_assert_eq!(format!("{}", device_id), "john@pc1");
+}
