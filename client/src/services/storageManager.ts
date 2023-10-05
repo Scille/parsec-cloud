@@ -20,9 +20,10 @@ export class StorageManager {
   static STORED_DEVICE_DATA_KEY = 'devicesData';
   static STORED_CONFIG_KEY = 'config';
 
+  // TODO: CHANGE BACK THEME TO SYSTEM WHEN DARK MODE WILL BE HERE: https://github.com/Scille/parsec-cloud/issues/5427
   static DEFAULT_CONFIG: Config = {
     locale: '',
-    theme: 'system',
+    theme: 'light',
     enableTelemetry: true,
     minimizeToTray: true,
     meteredConnection: false,
