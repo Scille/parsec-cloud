@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { DateTime } from 'luxon';
-import { FormattersKey } from '@/common/injectionKeys';
+import { FormattersKey, NotificationKey } from '@/common/injectionKeys';
 import { vi } from 'vitest';
 import { config } from '@vue/test-utils';
 
@@ -13,12 +13,19 @@ function mockFileSize(_size: number): string {
   return '1MB';
 }
 
-function getDefaultProvideConfig(timeSince = mockTimeSince, fileSize = mockFileSize): any {
+async function mockShowToast(_notif: Notification): Promise<void> {
+  // Do nothing
+}
+
+function getDefaultProvideConfig(timeSince = mockTimeSince, fileSize = mockFileSize, showToast = mockShowToast): any {
   const provide: any = {};
 
   provide[FormattersKey] = {
     'timeSince': timeSince,
     'fileSize': fileSize,
+  };
+  provide[NotificationKey] = {
+    'showToast': showToast,
   };
 
   return provide;
