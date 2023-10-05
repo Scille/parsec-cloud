@@ -70,12 +70,6 @@ defineProps<{
     .card-title {
       color: var(--parsec-color-light-primary-700);
     }
-
-    .card-subtitle {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
   }
 }
 </style>
