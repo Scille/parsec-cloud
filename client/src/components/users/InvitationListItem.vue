@@ -36,6 +36,13 @@
       <ion-buttons class="invitation-action-buttons">
         <ion-button
           fill="clear"
+          @click.stop="copyLink(invitation)"
+        >
+          {{ $t('UsersPage.invitation.copyLink') }}
+        </ion-button>
+
+        <ion-button
+          fill="clear"
           class="danger"
           @click.stop="$emit('rejectUser', invitation)"
         >
@@ -63,7 +70,9 @@ import {
 } from '@ionic/vue';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
 import { defineProps, inject } from 'vue';
-import { UserInvitation } from '@/parsec';
+import { UserInvitation, getClientInfo } from '@/parsec';
+import { Notification, NotificationCenter, NotificationKey, NotificationLevel } from '@/services/notificationCenter';
+import { useI18n } from 'vue-i18n';
 
 defineProps<{
   invitation: UserInvitation,
@@ -76,6 +85,29 @@ defineEmits<{
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const { timeSince } = inject(FormattersKey)! as Formatters;
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const notificationCenter: NotificationCenter = inject(NotificationKey)!;
+const { t } = useI18n();
+
+async function copyLink(invitation: UserInvitation): Promise<void> {
+  // Need to change that once the binding has a good way to
+  // create an invitation link.
+  const TMP_ADDR = 'parsec://v3-pre-alpha.parsec.cloud';
+  const result = await getClientInfo();
+  if (!result.ok) {
+    notificationCenter.showToast(new Notification({
+      message: t('UsersPage.invitation.orgInfoFailed'),
+      level: NotificationLevel.Error,
+    }));
+    return;
+  }
+  const link = `${TMP_ADDR}/${result.value.organizationId}?action=claim_user&token=${invitation.token}`;
+  await navigator.clipboard.writeText(link);
+  notificationCenter.showToast(new Notification({
+    message: t('UsersPage.invitation.linkCopiedToClipboard'),
+    level: NotificationLevel.Info,
+  }));
+}
 </script>
 
 <style scoped lang="scss">
