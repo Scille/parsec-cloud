@@ -2,6 +2,7 @@
 
 from typing import Optional
 
+from .addr import BackendOrganizationAddr
 from .common import (
     DateTime,
     DeviceID,
@@ -80,6 +81,7 @@ class ClientInfoError(ErrorVariant):
 
 
 class ClientInfo(Structure):
+    organization_addr: BackendOrganizationAddr
     organization_id: OrganizationID
     device_id: DeviceID
     user_id: UserID

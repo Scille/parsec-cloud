@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 pub use libparsec_client::{
     user_ops::{
-        ClientInfoError, RenameWorkspaceError as ClientWorkspaceRenameError,
+        RenameWorkspaceError as ClientWorkspaceRenameError,
         ShareWorkspaceError as ClientWorkspaceShareError,
     },
     workspace_ops::{EntryStat, FsOperationError as WorkspaceFsOperationError},

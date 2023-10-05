@@ -35,16 +35,32 @@ class BackendInvitationAddr(StrBasedType):
     custom_to_rs_string = "|addr: libparsec::BackendInvitationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
 
 
+class BackendOrganizationFileLinkAddr(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::BackendOrganizationFileLinkAddr::from_any(&s).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = "|addr: libparsec::BackendOrganizationFileLinkAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
+
+
+class BackendPkiEnrollmentAddr(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::BackendPkiEnrollmentAddr::from_any(&s).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = "|addr: libparsec::BackendPkiEnrollmentAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
+
+
 class ParseBackendAddrError(ErrorVariant):
     class InvalidUrl:
         pass
 
 
 class ParsedBackendAddr(Variant):
-    class Base:
+    class Server:
         hostname: str
         port: U32
         use_ssl: bool
+
+    class Organization:
+        hostname: str
+        port: U32
+        use_ssl: bool
+        organization_id: OrganizationID
 
     class OrganizationBootstrap:
         hostname: str

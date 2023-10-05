@@ -50,6 +50,8 @@ export type BackendAddr = string
 export type BackendInvitationAddr = string
 export type BackendOrganizationAddr = string
 export type BackendOrganizationBootstrapAddr = string
+export type BackendOrganizationFileLinkAddr = string
+export type BackendPkiEnrollmentAddr = string
 export type DeviceID = string
 export type DeviceLabel = string
 export type EntryName = string
@@ -91,6 +93,7 @@ export interface ClientConfig {
 }
 
 export interface ClientInfo {
+    organizationAddr: BackendOrganizationAddr
     organizationId: OrganizationID
     deviceId: DeviceID
     userId: UserID
@@ -152,6 +155,12 @@ export interface DeviceInfo {
 export interface HumanHandle {
     email: string
     label: string
+}
+
+export interface NewInvitationInfo {
+    addr: BackendInvitationAddr
+    token: InvitationToken
+    emailSentStatus: InvitationEmailSentStatus
 }
 
 export interface UserClaimFinalizeInfo {
@@ -779,12 +788,6 @@ export type ParseBackendAddrError =
   | ParseBackendAddrErrorInvalidUrl
 
 // ParsedBackendAddr
-export interface ParsedBackendAddrBase {
-    tag: 'Base'
-    hostname: string
-    port: U32
-    useSsl: boolean
-}
 export interface ParsedBackendAddrInvitationDevice {
     tag: 'InvitationDevice'
     hostname: string
@@ -800,6 +803,13 @@ export interface ParsedBackendAddrInvitationUser {
     useSsl: boolean
     organizationId: OrganizationID
     token: InvitationToken
+}
+export interface ParsedBackendAddrOrganization {
+    tag: 'Organization'
+    hostname: string
+    port: U32
+    useSsl: boolean
+    organizationId: OrganizationID
 }
 export interface ParsedBackendAddrOrganizationBootstrap {
     tag: 'OrganizationBootstrap'
@@ -826,13 +836,20 @@ export interface ParsedBackendAddrPkiEnrollment {
     useSsl: boolean
     organizationId: OrganizationID
 }
+export interface ParsedBackendAddrServer {
+    tag: 'Server'
+    hostname: string
+    port: U32
+    useSsl: boolean
+}
 export type ParsedBackendAddr =
-  | ParsedBackendAddrBase
   | ParsedBackendAddrInvitationDevice
   | ParsedBackendAddrInvitationUser
+  | ParsedBackendAddrOrganization
   | ParsedBackendAddrOrganizationBootstrap
   | ParsedBackendAddrOrganizationFileLink
   | ParsedBackendAddrPkiEnrollment
+  | ParsedBackendAddrServer
 
 // UserOrDeviceClaimInitialInfo
 export interface UserOrDeviceClaimInitialInfoDevice {
@@ -1048,12 +1065,12 @@ export interface LibParsecPlugin {
     clientNewDeviceInvitation(
         client: Handle,
         send_email: boolean
-    ): Promise<Result<[InvitationToken, InvitationEmailSentStatus], NewDeviceInvitationError>>
+    ): Promise<Result<NewInvitationInfo, NewDeviceInvitationError>>
     clientNewUserInvitation(
         client: Handle,
         claimer_email: string,
         send_email: boolean
-    ): Promise<Result<[InvitationToken, InvitationEmailSentStatus], NewUserInvitationError>>
+    ): Promise<Result<NewInvitationInfo, NewUserInvitationError>>
     clientRenameWorkspace(
         client: Handle,
         realm_id: VlobID,

@@ -319,11 +319,17 @@ class NewUserInvitationError(ErrorVariant):
         pass
 
 
+class NewInvitationInfo(Structure):
+    addr: BackendInvitationAddr
+    token: InvitationToken
+    email_sent_status: InvitationEmailSentStatus
+
+
 async def client_new_user_invitation(
     client: Handle,
     claimer_email: str,
     send_email: bool,
-) -> Result[tuple[InvitationToken, InvitationEmailSentStatus], NewUserInvitationError,]:
+) -> Result[NewInvitationInfo, NewUserInvitationError,]:
     raise NotImplementedError
 
 
@@ -341,7 +347,7 @@ class NewDeviceInvitationError(ErrorVariant):
 async def client_new_device_invitation(
     client: Handle,
     send_email: bool,
-) -> Result[tuple[InvitationToken, InvitationEmailSentStatus], NewDeviceInvitationError,]:
+) -> Result[NewInvitationInfo, NewDeviceInvitationError,]:
     raise NotImplementedError
 
 

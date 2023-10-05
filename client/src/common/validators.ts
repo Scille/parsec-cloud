@@ -54,7 +54,19 @@ export const backendAddrValidator: IValidator = async function(value: string) {
   }
   const result = await parseBackendAddr(value);
   if (result.ok) {
-    return (result.value.tag === BackendAddrType.Base ? Validity.Valid : Validity.Invalid);
+    return (result.value.tag === BackendAddrType.Server ? Validity.Valid : Validity.Invalid);
+  }
+  return Validity.Invalid;
+};
+
+export const backendOrganizationAddrValidator: IValidator = async function(value: string) {
+  value = value.trim();
+  if (value.length === 0) {
+    return Validity.Intermediate;
+  }
+  const result = await parseBackendAddr(value);
+  if (result.ok) {
+    return (result.value.tag === BackendAddrType.Organization ? Validity.Valid : Validity.Invalid);
   }
   return Validity.Invalid;
 };

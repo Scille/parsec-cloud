@@ -8,7 +8,7 @@ pub use libparsec_client::{
         WorkspaceUserAccessInfo,
     },
     user_ops::{
-        ClientInfoError, RenameWorkspaceError as ClientRenameWorkspaceError,
+        RenameWorkspaceError as ClientRenameWorkspaceError,
         ShareWorkspaceError as ClientShareWorkspaceError,
     },
     WorkspaceInfo,
@@ -215,6 +215,7 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
  */
 
 pub struct ClientInfo {
+    pub organization_addr: BackendOrganizationAddr,
     pub organization_id: OrganizationID,
     pub device_id: DeviceID,
     pub user_id: UserID,
@@ -223,10 +224,17 @@ pub struct ClientInfo {
     pub current_profile: UserProfile,
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum ClientInfoError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
 pub async fn client_info(client: Handle) -> Result<ClientInfo, ClientInfoError> {
     let client = borrow_client(client)?;
 
     Ok(ClientInfo {
+        organization_addr: client.organization_addr().clone(),
         organization_id: client.organization_id().clone(),
         device_id: client.device_id().clone(),
         user_id: client.device_id().user_id().clone(),

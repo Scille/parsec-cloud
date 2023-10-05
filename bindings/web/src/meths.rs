@@ -445,6 +445,21 @@ fn struct_client_config_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsVa
 
 #[allow(dead_code)]
 fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, JsValue> {
+    let organization_addr = {
+        let js_val = Reflect::get(&obj, &"organizationAddr".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::BackendOrganizationAddr::from_any(&s).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid BackendOrganizationAddr"))?
+    };
     let organization_id = {
         let js_val = Reflect::get(&obj, &"organizationId".into())?;
         js_val
@@ -516,6 +531,7 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
         }?
     };
     Ok(libparsec::ClientInfo {
+        organization_addr,
         organization_id,
         device_id,
         user_id,
@@ -528,6 +544,18 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
 #[allow(dead_code)]
 fn struct_client_info_rs_to_js(rs_obj: libparsec::ClientInfo) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
+    let js_organization_addr = JsValue::from_str({
+        let custom_to_rs_string =
+            |addr: libparsec::BackendOrganizationAddr| -> Result<String, &'static str> {
+                Ok(addr.to_url().into())
+            };
+        match custom_to_rs_string(rs_obj.organization_addr) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"organizationAddr".into(), &js_organization_addr)?;
     let js_organization_id = JsValue::from_str(rs_obj.organization_id.as_ref());
     Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
     let js_device_id = JsValue::from_str({
@@ -1176,6 +1204,94 @@ fn struct_human_handle_rs_to_js(rs_obj: libparsec::HumanHandle) -> Result<JsValu
         custom_getter(&rs_obj).into()
     };
     Reflect::set(&js_obj, &"label".into(), &js_label)?;
+    Ok(js_obj)
+}
+
+// NewInvitationInfo
+
+#[allow(dead_code)]
+fn struct_new_invitation_info_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::NewInvitationInfo, JsValue> {
+    let addr = {
+        let js_val = Reflect::get(&obj, &"addr".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::BackendInvitationAddr::from_any(&s).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid BackendInvitationAddr"))?
+    };
+    let token = {
+        let js_val = Reflect::get(&obj, &"token".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
+                    libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
+    };
+    let email_sent_status = {
+        let js_val = Reflect::get(&obj, &"emailSentStatus".into())?;
+        {
+            let raw_string = js_val.as_string().ok_or_else(|| {
+                let type_error = TypeError::new("value is not a string");
+                type_error.set_cause(&js_val);
+                JsValue::from(type_error)
+            })?;
+            enum_invitation_email_sent_status_js_to_rs(raw_string.as_str())
+        }?
+    };
+    Ok(libparsec::NewInvitationInfo {
+        addr,
+        token,
+        email_sent_status,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_new_invitation_info_rs_to_js(
+    rs_obj: libparsec::NewInvitationInfo,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_addr = JsValue::from_str({
+        let custom_to_rs_string =
+            |addr: libparsec::BackendInvitationAddr| -> Result<String, &'static str> {
+                Ok(addr.to_url().into())
+            };
+        match custom_to_rs_string(rs_obj.addr) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"addr".into(), &js_addr)?;
+    let js_token = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.token) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"token".into(), &js_token)?;
+    let js_email_sent_status = JsValue::from_str(enum_invitation_email_sent_status_rs_to_js(
+        rs_obj.email_sent_status,
+    ));
+    Reflect::set(&js_obj, &"emailSentStatus".into(), &js_email_sent_status)?;
     Ok(js_obj)
 }
 
@@ -3443,41 +3559,6 @@ fn variant_parsed_backend_addr_js_to_rs(
 ) -> Result<libparsec::ParsedBackendAddr, JsValue> {
     let tag = Reflect::get(&obj, &"tag".into())?;
     match tag {
-        tag if tag == JsValue::from_str("Base") => {
-            let hostname = {
-                let js_val = Reflect::get(&obj, &"hostname".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-            };
-            let port = {
-                let js_val = Reflect::get(&obj, &"port".into())?;
-                {
-                    let v = js_val
-                        .dyn_into::<Number>()
-                        .map_err(|_| TypeError::new("Not a number"))?
-                        .value_of();
-                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
-                    }
-                    v as u32
-                }
-            };
-            let use_ssl = {
-                let js_val = Reflect::get(&obj, &"useSsl".into())?;
-                js_val
-                    .dyn_into::<Boolean>()
-                    .map_err(|_| TypeError::new("Not a boolean"))?
-                    .value_of()
-            };
-            Ok(libparsec::ParsedBackendAddr::Base {
-                hostname,
-                port,
-                use_ssl,
-            })
-        }
         tag if tag == JsValue::from_str("InvitationDevice") => {
             let hostname = {
                 let js_val = Reflect::get(&obj, &"hostname".into())?;
@@ -3604,6 +3685,52 @@ fn variant_parsed_backend_addr_js_to_rs(
                 use_ssl,
                 organization_id,
                 token,
+            })
+        }
+        tag if tag == JsValue::from_str("Organization") => {
+            let hostname = {
+                let js_val = Reflect::get(&obj, &"hostname".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let port = {
+                let js_val = Reflect::get(&obj, &"port".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                    }
+                    v as u32
+                }
+            };
+            let use_ssl = {
+                let js_val = Reflect::get(&obj, &"useSsl".into())?;
+                js_val
+                    .dyn_into::<Boolean>()
+                    .map_err(|_| TypeError::new("Not a boolean"))?
+                    .value_of()
+            };
+            let organization_id = {
+                let js_val = Reflect::get(&obj, &"organizationId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+                    .parse()
+                    .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
+            };
+            Ok(libparsec::ParsedBackendAddr::Organization {
+                hostname,
+                port,
+                use_ssl,
+                organization_id,
             })
         }
         tag if tag == JsValue::from_str("OrganizationBootstrap") => {
@@ -3797,6 +3924,41 @@ fn variant_parsed_backend_addr_js_to_rs(
                 organization_id,
             })
         }
+        tag if tag == JsValue::from_str("Server") => {
+            let hostname = {
+                let js_val = Reflect::get(&obj, &"hostname".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let port = {
+                let js_val = Reflect::get(&obj, &"port".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                    }
+                    v as u32
+                }
+            };
+            let use_ssl = {
+                let js_val = Reflect::get(&obj, &"useSsl".into())?;
+                js_val
+                    .dyn_into::<Boolean>()
+                    .map_err(|_| TypeError::new("Not a boolean"))?
+                    .value_of()
+            };
+            Ok(libparsec::ParsedBackendAddr::Server {
+                hostname,
+                port,
+                use_ssl,
+            })
+        }
         _ => Err(JsValue::from(TypeError::new(
             "Object is not a ParsedBackendAddr",
         ))),
@@ -3809,20 +3971,6 @@ fn variant_parsed_backend_addr_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
-        libparsec::ParsedBackendAddr::Base {
-            hostname,
-            port,
-            use_ssl,
-            ..
-        } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Base".into())?;
-            let js_hostname = hostname.into();
-            Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
-            let js_port = JsValue::from(port);
-            Reflect::set(&js_obj, &"port".into(), &js_port)?;
-            let js_use_ssl = use_ssl.into();
-            Reflect::set(&js_obj, &"useSsl".into(), &js_use_ssl)?;
-        }
         libparsec::ParsedBackendAddr::InvitationDevice {
             hostname,
             port,
@@ -3878,6 +4026,23 @@ fn variant_parsed_backend_addr_rs_to_js(
                 .as_ref()
             });
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
+        }
+        libparsec::ParsedBackendAddr::Organization {
+            hostname,
+            port,
+            use_ssl,
+            organization_id,
+            ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Organization".into())?;
+            let js_hostname = hostname.into();
+            Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
+            let js_port = JsValue::from(port);
+            Reflect::set(&js_obj, &"port".into(), &js_port)?;
+            let js_use_ssl = use_ssl.into();
+            Reflect::set(&js_obj, &"useSsl".into(), &js_use_ssl)?;
+            let js_organization_id = JsValue::from_str(organization_id.as_ref());
+            Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
         }
         libparsec::ParsedBackendAddr::OrganizationBootstrap {
             hostname,
@@ -3959,6 +4124,20 @@ fn variant_parsed_backend_addr_rs_to_js(
             Reflect::set(&js_obj, &"useSsl".into(), &js_use_ssl)?;
             let js_organization_id = JsValue::from_str(organization_id.as_ref());
             Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
+        }
+        libparsec::ParsedBackendAddr::Server {
+            hostname,
+            port,
+            use_ssl,
+            ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"Server".into())?;
+            let js_hostname = hostname.into();
+            Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
+            let js_port = JsValue::from(port);
+            Reflect::set(&js_obj, &"port".into(), &js_port)?;
+            let js_use_ssl = use_ssl.into();
+            Reflect::set(&js_obj, &"useSsl".into(), &js_use_ssl)?;
         }
     }
     Ok(js_obj)
@@ -5135,26 +5314,7 @@ pub fn clientNewDeviceInvitation(client: u32, send_email: bool) -> Promise {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = {
-                    let (x1, x2) = value;
-                    let js_array = Array::new_with_length(2);
-                    let js_value = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |x: libparsec::InvitationToken| -> Result<String, &'static str> {
-                                Ok(x.hex())
-                            };
-                        match custom_to_rs_string(x1) {
-                            Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                        }
-                        .as_ref()
-                    });
-                    js_array.push(&js_value);
-                    let js_value =
-                        JsValue::from_str(enum_invitation_email_sent_status_rs_to_js(x2));
-                    js_array.push(&js_value);
-                    js_array.into()
-                };
+                let js_value = struct_new_invitation_info_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -5179,26 +5339,7 @@ pub fn clientNewUserInvitation(client: u32, claimer_email: String, send_email: b
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = {
-                    let (x1, x2) = value;
-                    let js_array = Array::new_with_length(2);
-                    let js_value = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |x: libparsec::InvitationToken| -> Result<String, &'static str> {
-                                Ok(x.hex())
-                            };
-                        match custom_to_rs_string(x1) {
-                            Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                        }
-                        .as_ref()
-                    });
-                    js_array.push(&js_value);
-                    let js_value =
-                        JsValue::from_str(enum_invitation_email_sent_status_rs_to_js(x2));
-                    js_array.push(&js_value);
-                    js_array.into()
-                };
+                let js_value = struct_new_invitation_info_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }

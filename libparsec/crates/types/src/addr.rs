@@ -123,10 +123,12 @@ macro_rules! impl_common_stuff {
     };
     ($name:ty, _internal_) => {
         impl $name {
+            /// Returns a `parsec://` url
             pub fn to_url(&self) -> Url {
                 self._to_url(self.base.to_url())
             }
 
+            /// Returns a http redirection url (i.e. `http(s)://<domain>/redirect/<path>`)
             pub fn to_http_redirection_url(&self) -> Url {
                 let mut url = self.base.to_http_url(None);
                 url.path_segments_mut()
@@ -135,13 +137,14 @@ macro_rules! impl_common_stuff {
                 self._to_url(url)
             }
 
+            /// Accept both `parsec://` and http redirection url
             pub fn from_any(url: &str) -> Result<Self, AddrError> {
                 // End with parsec:// parsing given it error message is the
                 // more interesting to return
                 Self::from_http_redirection(url).or_else(|_| url.parse())
             }
 
-            /// Create a new Addr from a raw http url that must have `/redirect` as prefix of its path.
+            /// Create from a http redirection url (i.e. `http(s)://<domain>/redirect/<path>`)
             pub fn from_http_redirection(url: &str) -> Result<Self, AddrError> {
                 let parsed = ParsecUrlAsHTTPScheme::from_http_redirection(url)?;
                 Self::_from_url(&parsed)
