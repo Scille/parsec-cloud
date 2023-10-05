@@ -581,32 +581,61 @@ pub use libparsec_client::{
     NewDeviceInvitationError, NewUserInvitationError,
 };
 
+pub struct NewInvitationInfo {
+    pub addr: BackendInvitationAddr,
+    pub token: InvitationToken,
+    pub email_sent_status: InvitationEmailSentStatus,
+}
+
 pub async fn client_new_user_invitation(
     client: Handle,
     claimer_email: String,
     send_email: bool,
-) -> Result<(InvitationToken, InvitationEmailSentStatus), NewUserInvitationError> {
+) -> Result<NewInvitationInfo, NewUserInvitationError> {
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
-    client.new_user_invitation(claimer_email, send_email).await
+    let (token, email_sent_status) = client
+        .new_user_invitation(claimer_email, send_email)
+        .await?;
+
+    Ok(NewInvitationInfo {
+        addr: BackendInvitationAddr::new(
+            client.organization_addr().to_owned(),
+            client.organization_id().to_owned(),
+            InvitationType::User,
+            token,
+        ),
+        token,
+        email_sent_status,
+    })
 }
 
 pub async fn client_new_device_invitation(
     client: Handle,
     send_email: bool,
-) -> Result<(InvitationToken, libparsec_client::InvitationEmailSentStatus), NewDeviceInvitationError>
-{
+) -> Result<NewInvitationInfo, NewDeviceInvitationError> {
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
-    client.new_device_invitation(send_email).await
+    let (token, email_sent_status) = client.new_device_invitation(send_email).await?;
+
+    Ok(NewInvitationInfo {
+        addr: BackendInvitationAddr::new(
+            client.organization_addr().to_owned(),
+            client.organization_id().to_owned(),
+            InvitationType::Device,
+            token,
+        ),
+        token,
+        email_sent_status,
+    })
 }
 
 pub async fn client_delete_invitation(

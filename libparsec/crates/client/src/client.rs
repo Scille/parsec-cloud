@@ -125,6 +125,10 @@ impl Debug for Client {
 }
 
 impl Client {
+    pub fn organization_addr(&self) -> &BackendOrganizationAddr {
+        &self.device.organization_addr
+    }
+
     pub fn organization_id(&self) -> &OrganizationID {
         self.device.organization_id()
     }
