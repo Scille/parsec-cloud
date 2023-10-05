@@ -96,7 +96,12 @@ export async function inviteUser(email: string): Promise<Result<[InvitationToken
   const handle = getParsecHandle();
 
   if (handle !== null && window.isDesktop()) {
-    return await libparsec.clientNewUserInvitation(handle, email, true);
+    const ret = await libparsec.clientNewUserInvitation(handle, email, true);
+    if (ret.ok) {
+      return {ok: true, value: [ret.value.token, ret.value.emailSentStatus] };
+    } else {
+      return ret;
+    }
   } else {
     return new Promise<Result<[InvitationToken, InvitationEmailSentStatus], NewUserInvitationError>>((resolve, _reject) => {
       resolve({ ok: true, value: ['1234', InvitationEmailSentStatus.Success] });
@@ -173,7 +178,12 @@ export async function inviteDevice(sendEmail: boolean):
   const handle = getParsecHandle();
 
   if (handle !== null && window.isDesktop()) {
-    return await libparsec.clientNewDeviceInvitation(handle, sendEmail);
+    const ret = await libparsec.clientNewDeviceInvitation(handle, sendEmail);
+    if (ret.ok) {
+      return {ok: true, value: [ret.value.token, ret.value.emailSentStatus] };
+    } else {
+      return ret;
+    }
   }
   return new Promise<Result<[InvitationToken, InvitationEmailSentStatus], NewDeviceInvitationError>>((resolve, _reject) => {
     resolve({ ok: true, value: ['1234', InvitationEmailSentStatus.Success] });
@@ -290,6 +300,7 @@ export async function getClientInfo(): Promise<Result<ClientInfo, ClientInfoErro
   } else {
     return new Promise<Result<ClientInfo, ClientInfoError>>((resolve, _reject) => {
       resolve({ok: true, value: {
+        organizationAddr: 'parsec://example.com/MyOrg',
         organizationId: 'MyOrg',
         deviceId: 'device1',
         deviceLabel: 'My First Device',

@@ -75,7 +75,8 @@ interface UserInfo extends ParsecUserInfo {
 
 enum BackendAddrType {
   Invalid = 'InvalidUrl',
-  Base = 'Base',
+  Server = 'Server',
+  Organization = 'Organization',
   InvitationUser = 'InvitationUser',
   InvitationDevice = 'InvitationDevice',
   OrganizationBootstrap = 'OrganizationBootstrap',
