@@ -5,46 +5,13 @@ use std::sync::Arc;
 use libparsec_platform_storage::workspace::GetChildManifestError as StorageGetChildManifestError;
 use libparsec_types::prelude::*;
 
-use super::super::{
-    fetch::{fetch_remote_child_manifest, FetchRemoteManifestError},
-    WorkspaceOps,
-};
-use crate::certificates_ops::{InvalidCertificateError, InvalidManifestError};
-
-#[derive(Debug, thiserror::Error)]
-pub enum FsOperationError {
-    #[error("Cannot reach the server")]
-    Offline,
-    #[error("Path already exists")]
-    EntryExists,
-    #[error("Path doesn't exist")]
-    EntryNotFound,
-    #[error("Path points to a folder")]
-    IsAFolder,
-    #[error("Root path cannot be renamed")]
-    CannotRenameRoot,
-    #[error("Path doesn't point to a folder")]
-    NotAFolder,
-    #[error("Path points to a non-empty folder")]
-    FolderNotEmpty,
-    #[error("No longer allowed to access this workspace")]
-    NoRealmAccess,
-    #[error("Only have read access on this workspace")]
-    ReadOnlyRealm,
-    #[error(transparent)]
-    InvalidCertificate(#[from] InvalidCertificateError),
-    #[error(transparent)]
-    InvalidManifest(#[from] InvalidManifestError),
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
-    BadTimestamp {
-        server_timestamp: DateTime,
-        client_timestamp: DateTime,
-        ballpark_client_early_offset: f64,
-        ballpark_client_late_offset: f64,
+use super::{
+    super::{
+        fetch::{fetch_remote_child_manifest, FetchRemoteManifestError},
+        WorkspaceOps,
     },
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-}
+    FsOperationError,
+};
 
 pub(super) fn check_write_access(ops: &WorkspaceOps) -> Result<(), FsOperationError> {
     let config = ops.user_dependant_config.lock().expect("Mutex is poisoned");
