@@ -68,9 +68,30 @@ pub async fn share_workspace(
         .get_workspace_entry(realm_id)
         .ok_or_else(|| ShareWorkspaceError::UnknownWorkspace)?;
 
-    // Make sure the workspace is not a placeholder
-    // TODO !
-    // await ops._workspace_minimal_sync(workspace_entry)
+    // In we have just created the workspace, it's possible it corresponding realm
+    // hasn't been created yet on the server...
+    ops.certificates_ops
+        .ensure_realms_created(&[workspace_entry.id])
+        .await
+        .map_err(|err| match err {
+            crate::certificates_ops::EnsureRealmsCreatedError::Offline => {
+                ShareWorkspaceError::Offline
+            }
+            crate::certificates_ops::EnsureRealmsCreatedError::BadTimestamp {
+                server_timestamp,
+                client_timestamp,
+                ballpark_client_early_offset,
+                ballpark_client_late_offset,
+            } => ShareWorkspaceError::BadTimestamp {
+                server_timestamp,
+                client_timestamp,
+                ballpark_client_early_offset,
+                ballpark_client_late_offset,
+            },
+            crate::certificates_ops::EnsureRealmsCreatedError::Internal(err) => err
+                .context("Cannot create the workspace on the server")
+                .into(),
+        })?;
 
     // Workspace sharing involves multiple checks:
     // - recipient should not be revoked

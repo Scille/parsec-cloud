@@ -6,19 +6,14 @@ use libparsec_client_connection::{protocol::authenticated_cmds, ConnectionError}
 use libparsec_types::prelude::*;
 
 use super::UserOps;
-use crate::{
-    certificates_ops::{
-        InvalidCertificateError, InvalidManifestError, PollServerError, ValidateManifestError,
-    },
-    EventTooMuchDriftWithServerClock,
+use crate::certificates_ops::{
+    InvalidCertificateError, InvalidManifestError, PollServerError, ValidateManifestError,
 };
 
 #[derive(Debug, thiserror::Error)]
 pub enum SyncError {
     #[error("Cannot reach the server")]
     Offline,
-    #[error("Server is temporary unable to do the sync")]
-    TemporaryUnavailable,
     #[error("Cannot sync during realm maintenance")]
     InMaintenance,
     #[error(transparent)]
@@ -77,96 +72,6 @@ pub async fn sync(ops: &UserOps) -> Result<(), SyncError> {
     }
 }
 
-async fn create_realm_in_server(ops: &UserOps) -> Result<(), SyncError> {
-    let mut timestamp = ops.device.now();
-    loop {
-        let certif = RealmRoleCertificate::new_root(
-            ops.device.device_id.to_owned(),
-            timestamp,
-            ops.device.user_realm_id,
-        )
-        .dump_and_sign(&ops.device.signing_key);
-
-        use authenticated_cmds::latest::realm_create::{Rep, Req};
-
-        let req = Req {
-            role_certificate: certif.into(),
-        };
-
-        let rep = ops.cmds.send(req).await?;
-
-        return match rep {
-            Rep::Ok => Ok(()),
-            // It's possible a previous attempt to create this realm
-            // succeeded but we didn't receive the confirmation, hence
-            // we play idempotent here.
-            Rep::AlreadyExists => Ok(()),
-            Rep::RequireGreaterTimestamp {
-                strictly_greater_than,
-            } => {
-                timestamp = std::cmp::max(strictly_greater_than, ops.device.time_provider.now());
-                continue;
-            }
-            Rep::BadTimestamp {
-                backend_timestamp,
-                ballpark_client_early_offset,
-                ballpark_client_late_offset,
-                client_timestamp,
-                ..
-            } => {
-                let event = EventTooMuchDriftWithServerClock {
-                    backend_timestamp,
-                    ballpark_client_early_offset,
-                    ballpark_client_late_offset,
-                    client_timestamp,
-                };
-                ops.event_bus.send(&event);
-
-                Err(SyncError::BadTimestamp {
-                    server_timestamp: backend_timestamp,
-                    client_timestamp,
-                    ballpark_client_early_offset,
-                    ballpark_client_late_offset,
-                })
-            }
-            bad_rep @ (Rep::InvalidData { .. }
-            | Rep::InvalidCertification { .. }
-            | Rep::NotFound { .. }
-            | Rep::UnknownStatus { .. }) => {
-                Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
-            }
-        };
-    }
-}
-
-async fn workspace_minimal_sync(
-    _ops: &UserOps,
-    _workspace_entry: &WorkspaceEntry,
-) -> Result<(), SyncError> {
-    // Ensure the workspace is usable from outside the local device:
-    // - realm is created on the server
-    // - initial version of the workspace manifest has been uploaded to the server
-    //
-    // In theory, only realm creation is strictly needed for minimal_sync of the
-    // workspace: given each device starts using the workspace by creating a
-    // speculative placeholder workspace manifest, any of them could sync
-    // it placeholder which would become the initial workspace manifest.
-    // However we keep the workspace manifest upload as part of the minimal
-    // sync for compatibility reason (Parsec <= 2.4.2 download the workspace
-    // manifest instead of starting with a speculative placeholder).
-
-    // workspace = self.get_workspace(workspace_entry.id)
-    // try:
-    //     await workspace.minimal_sync(workspace_entry.id)
-    // except FSWorkspaceNoAccess:
-    //     # Not having full access on the workspace is a proof it is owned
-    //     # by somebody else, hence minimal sync is not needed.
-    //     pass
-
-    // TODO
-    Ok(())
-}
-
 enum UploadManifestOutcome {
     Success(UserManifest),
     VersionConflict,
@@ -214,7 +119,9 @@ async fn upload_manifest(
                         std::cmp::max(strictly_greater_than, ops.device.time_provider.now());
                     continue;
                 }
-                Rep::Timeout => Err(SyncError::TemporaryUnavailable),
+                // Timeout is about sequester service webhook not being available, no need
+                // for a custom handling of such an exotic error
+                Rep::Timeout => Err(SyncError::Offline),
                 Rep::SequesterInconsistency { .. } => {
                     // Sequester services must have been concurrently modified in our back,
                     // update and retry
@@ -266,7 +173,9 @@ async fn upload_manifest(
                         std::cmp::max(strictly_greater_than, ops.device.time_provider.now());
                     continue;
                 }
-                Rep::Timeout => Err(SyncError::TemporaryUnavailable),
+                // Timeout is about sequester service webhook not being available, no need
+                // for a custom handling of such an exotic error
+                Rep::Timeout => Err(SyncError::Offline),
                 Rep::SequesterInconsistency { .. } => {
                     // Sequester services must have been concurrently modified in our back,
                     // update and retry
@@ -313,15 +222,54 @@ async fn outbound_sync_inner(ops: &UserOps) -> Result<OutboundSyncOutcome, SyncE
         return Ok(OutboundSyncOutcome::Done);
     }
 
-    // Make sure the corresponding realm has been created in the backend
+    // If the user manifest's vlob has already been synced we know the realm exists,
+    // otherwise we have to make sure it is the case !
     if base_um.base.version == 0 {
-        create_realm_in_server(ops).await?;
+        ops.certificates_ops
+            .ensure_realms_created(&[ops.device.user_realm_id])
+            .await
+            .map_err(|err| match err {
+                crate::certificates_ops::EnsureRealmsCreatedError::Offline => SyncError::Offline,
+                crate::certificates_ops::EnsureRealmsCreatedError::BadTimestamp {
+                    server_timestamp,
+                    client_timestamp,
+                    ballpark_client_early_offset,
+                    ballpark_client_late_offset,
+                } => SyncError::BadTimestamp {
+                    server_timestamp,
+                    client_timestamp,
+                    ballpark_client_early_offset,
+                    ballpark_client_late_offset,
+                },
+                crate::certificates_ops::EnsureRealmsCreatedError::Internal(err) => err
+                    .context("Cannot create the workspace on the server")
+                    .into(),
+            })?;
     }
 
-    // Sync placeholders
-    for w in &base_um.workspaces {
-        workspace_minimal_sync(ops, w).await?;
-    }
+    // In we have just created a workspace, it's possible it corresponding realm
+    // hasn't been created yet on the server...
+    let workspaces_ids: Vec<_> = base_um.workspaces.iter().map(|e| e.id).collect();
+    ops.certificates_ops
+        .ensure_realms_created(&workspaces_ids)
+        .await
+        .map_err(|err| match err {
+            crate::certificates_ops::EnsureRealmsCreatedError::Offline => SyncError::Offline,
+            crate::certificates_ops::EnsureRealmsCreatedError::BadTimestamp {
+                server_timestamp,
+                client_timestamp,
+                ballpark_client_early_offset,
+                ballpark_client_late_offset,
+            } => SyncError::BadTimestamp {
+                server_timestamp,
+                client_timestamp,
+                ballpark_client_early_offset,
+                ballpark_client_late_offset,
+            },
+            crate::certificates_ops::EnsureRealmsCreatedError::Internal(err) => err
+                .context("Cannot create the workspace on the server")
+                .into(),
+        })?;
 
     match upload_manifest(ops, &base_um).await? {
         UploadManifestOutcome::VersionConflict => Ok(OutboundSyncOutcome::InboundSyncNeeded),
