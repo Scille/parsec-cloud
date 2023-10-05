@@ -16,7 +16,7 @@ export PATH="/root/.local/bin:$PATH"
 poetry --version
 
 # Install parsec in virtual env
-python -m venv venv
+python3.9 -m venv venv
 . ./venv/bin/activate
 
 # Installing the Python project is a bit tricky:
