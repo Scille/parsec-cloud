@@ -69,6 +69,7 @@ export interface ClientConfig {
 
 
 export interface ClientInfo {
+    organizationAddr: string
     organizationId: string
     deviceId: string
     userId: string
@@ -141,6 +142,13 @@ export interface DeviceInfo {
 export interface HumanHandle {
     email: string
     label: string
+}
+
+
+export interface NewInvitationInfo {
+    addr: string
+    token: string
+    emailSentStatus: InvitationEmailSentStatus
 }
 
 
@@ -810,12 +818,6 @@ export type ParseBackendAddrError =
 
 
 // ParsedBackendAddr
-export interface ParsedBackendAddrBase {
-    tag: "Base"
-    hostname: string
-    port: number
-    use_ssl: boolean
-}
 export interface ParsedBackendAddrInvitationDevice {
     tag: "InvitationDevice"
     hostname: string
@@ -831,6 +833,13 @@ export interface ParsedBackendAddrInvitationUser {
     use_ssl: boolean
     organization_id: string
     token: string
+}
+export interface ParsedBackendAddrOrganization {
+    tag: "Organization"
+    hostname: string
+    port: number
+    use_ssl: boolean
+    organization_id: string
 }
 export interface ParsedBackendAddrOrganizationBootstrap {
     tag: "OrganizationBootstrap"
@@ -857,13 +866,20 @@ export interface ParsedBackendAddrPkiEnrollment {
     use_ssl: boolean
     organization_id: string
 }
+export interface ParsedBackendAddrServer {
+    tag: "Server"
+    hostname: string
+    port: number
+    use_ssl: boolean
+}
 export type ParsedBackendAddr =
-  | ParsedBackendAddrBase
   | ParsedBackendAddrInvitationDevice
   | ParsedBackendAddrInvitationUser
+  | ParsedBackendAddrOrganization
   | ParsedBackendAddrOrganizationBootstrap
   | ParsedBackendAddrOrganizationFileLink
   | ParsedBackendAddrPkiEnrollment
+  | ParsedBackendAddrServer
 
 
 // UserOrDeviceClaimInitialInfo
@@ -1083,12 +1099,12 @@ export function clientListWorkspaces(
 export function clientNewDeviceInvitation(
     client: number,
     send_email: boolean
-): Promise<Result<[string, InvitationEmailSentStatus], NewDeviceInvitationError>>
+): Promise<Result<NewInvitationInfo, NewDeviceInvitationError>>
 export function clientNewUserInvitation(
     client: number,
     claimer_email: string,
     send_email: boolean
-): Promise<Result<[string, InvitationEmailSentStatus], NewUserInvitationError>>
+): Promise<Result<NewInvitationInfo, NewUserInvitationError>>
 export function clientRenameWorkspace(
     client: number,
     realm_id: string,

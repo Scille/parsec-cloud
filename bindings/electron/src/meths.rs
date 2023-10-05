@@ -424,6 +424,18 @@ fn struct_client_info_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::ClientInfo> {
+    let organization_addr = {
+        let js_val: Handle<JsString> = obj.get(cx, "organizationAddr")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::BackendOrganizationAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
     let organization_id = {
         let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
         {
@@ -489,6 +501,7 @@ fn struct_client_info_js_to_rs<'a>(
         }
     };
     Ok(libparsec::ClientInfo {
+        organization_addr,
         organization_id,
         device_id,
         user_id,
@@ -504,6 +517,18 @@ fn struct_client_info_rs_to_js<'a>(
     rs_obj: libparsec::ClientInfo,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
+    let js_organization_addr = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |addr: libparsec::BackendOrganizationAddr| -> Result<String, &'static str> {
+                Ok(addr.to_url().into())
+            };
+        match custom_to_rs_string(rs_obj.organization_addr) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "organizationAddr", js_organization_addr)?;
     let js_organization_id = JsString::try_new(cx, rs_obj.organization_id).or_throw(cx)?;
     js_obj.set(cx, "organizationId", js_organization_id)?;
     let js_device_id = JsString::try_new(cx, {
@@ -1123,6 +1148,88 @@ fn struct_human_handle_rs_to_js<'a>(
         JsString::try_new(cx, custom_getter(&rs_obj)).or_throw(cx)?
     };
     js_obj.set(cx, "label", js_label)?;
+    Ok(js_obj)
+}
+
+// NewInvitationInfo
+
+#[allow(dead_code)]
+fn struct_new_invitation_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::NewInvitationInfo> {
+    let addr = {
+        let js_val: Handle<JsString> = obj.get(cx, "addr")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::BackendInvitationAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let token = {
+        let js_val: Handle<JsString> = obj.get(cx, "token")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
+                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let email_sent_status = {
+        let js_val: Handle<JsString> = obj.get(cx, "emailSentStatus")?;
+        {
+            let js_string = js_val.value(cx);
+            enum_invitation_email_sent_status_js_to_rs(cx, js_string.as_str())?
+        }
+    };
+    Ok(libparsec::NewInvitationInfo {
+        addr,
+        token,
+        email_sent_status,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_new_invitation_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::NewInvitationInfo,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_addr = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |addr: libparsec::BackendInvitationAddr| -> Result<String, &'static str> {
+                Ok(addr.to_url().into())
+            };
+        match custom_to_rs_string(rs_obj.addr) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "addr", js_addr)?;
+    let js_token = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.token) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "token", js_token)?;
+    let js_email_sent_status = JsString::try_new(
+        cx,
+        enum_invitation_email_sent_status_rs_to_js(rs_obj.email_sent_status),
+    )
+    .or_throw(cx)?;
+    js_obj.set(cx, "emailSentStatus", js_email_sent_status)?;
     Ok(js_obj)
 }
 
@@ -3409,31 +3516,6 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
 ) -> NeonResult<libparsec::ParsedBackendAddr> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
-        "Base" => {
-            let hostname = {
-                let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
-                js_val.value(cx)
-            };
-            let port = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "port")?;
-                {
-                    let v = js_val.value(cx);
-                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                        cx.throw_type_error("Not an u32 number")?
-                    }
-                    v as u32
-                }
-            };
-            let use_ssl = {
-                let js_val: Handle<JsBoolean> = obj.get(cx, "useSsl")?;
-                js_val.value(cx)
-            };
-            Ok(libparsec::ParsedBackendAddr::Base {
-                hostname,
-                port,
-                use_ssl,
-            })
-        }
         "InvitationDevice" => {
             let hostname = {
                 let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
@@ -3532,6 +3614,41 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                 use_ssl,
                 organization_id,
                 token,
+            })
+        }
+        "Organization" => {
+            let hostname = {
+                let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
+                js_val.value(cx)
+            };
+            let port = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "port")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    v as u32
+                }
+            };
+            let use_ssl = {
+                let js_val: Handle<JsBoolean> = obj.get(cx, "useSsl")?;
+                js_val.value(cx)
+            };
+            let organization_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
+                {
+                    match js_val.value(cx).parse() {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::ParsedBackendAddr::Organization {
+                hostname,
+                port,
+                use_ssl,
+                organization_id,
             })
         }
         "OrganizationBootstrap" => {
@@ -3681,6 +3798,31 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                 organization_id,
             })
         }
+        "Server" => {
+            let hostname = {
+                let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
+                js_val.value(cx)
+            };
+            let port = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "port")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    v as u32
+                }
+            };
+            let use_ssl = {
+                let js_val: Handle<JsBoolean> = obj.get(cx, "useSsl")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::ParsedBackendAddr::Server {
+                hostname,
+                port,
+                use_ssl,
+            })
+        }
         _ => cx.throw_type_error("Object is not a ParsedBackendAddr"),
     }
 }
@@ -3692,21 +3834,6 @@ fn variant_parsed_backend_addr_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
-        libparsec::ParsedBackendAddr::Base {
-            hostname,
-            port,
-            use_ssl,
-            ..
-        } => {
-            let js_tag = JsString::try_new(cx, "Base").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
-            js_obj.set(cx, "hostname", js_hostname)?;
-            let js_port = JsNumber::new(cx, port as f64);
-            js_obj.set(cx, "port", js_port)?;
-            let js_use_ssl = JsBoolean::new(cx, use_ssl);
-            js_obj.set(cx, "useSsl", js_use_ssl)?;
-        }
         libparsec::ParsedBackendAddr::InvitationDevice {
             hostname,
             port,
@@ -3764,6 +3891,24 @@ fn variant_parsed_backend_addr_rs_to_js<'a>(
             })
             .or_throw(cx)?;
             js_obj.set(cx, "token", js_token)?;
+        }
+        libparsec::ParsedBackendAddr::Organization {
+            hostname,
+            port,
+            use_ssl,
+            organization_id,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "Organization").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
+            js_obj.set(cx, "hostname", js_hostname)?;
+            let js_port = JsNumber::new(cx, port as f64);
+            js_obj.set(cx, "port", js_port)?;
+            let js_use_ssl = JsBoolean::new(cx, use_ssl);
+            js_obj.set(cx, "useSsl", js_use_ssl)?;
+            let js_organization_id = JsString::try_new(cx, organization_id).or_throw(cx)?;
+            js_obj.set(cx, "organizationId", js_organization_id)?;
         }
         libparsec::ParsedBackendAddr::OrganizationBootstrap {
             hostname,
@@ -3859,6 +4004,21 @@ fn variant_parsed_backend_addr_rs_to_js<'a>(
             js_obj.set(cx, "useSsl", js_use_ssl)?;
             let js_organization_id = JsString::try_new(cx, organization_id).or_throw(cx)?;
             js_obj.set(cx, "organizationId", js_organization_id)?;
+        }
+        libparsec::ParsedBackendAddr::Server {
+            hostname,
+            port,
+            use_ssl,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "Server").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
+            js_obj.set(cx, "hostname", js_hostname)?;
+            let js_port = JsNumber::new(cx, port as f64);
+            js_obj.set(cx, "port", js_port)?;
+            let js_use_ssl = JsBoolean::new(cx, use_ssl);
+            js_obj.set(cx, "useSsl", js_use_ssl)?;
         }
     }
     Ok(js_obj)
@@ -5743,49 +5903,34 @@ fn client_new_device_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> 
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_new_device_invitation(client, send_email).await;
 
-        let ret = libparsec::client_new_device_invitation(
-            client,
-            send_email,
-        ).await;
-
-        deferred.settle_with(&channel, move |mut cx| {
-            let js_ret = match ret {
-    Ok(ok) => {
-        let js_obj = JsObject::new(&mut cx);
-        let js_tag = JsBoolean::new(&mut cx, true);
-        js_obj.set(&mut cx, "ok", js_tag)?;
-        let js_value = {
-    let (x1, x2) = ok;
-    let js_array = JsArray::new(&mut cx, 2);
-    let js_value = JsString::try_new(&mut cx,{
-    let custom_to_rs_string = |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
-    match custom_to_rs_string(x1) {
-        Ok(ok) => ok,
-        Err(err) => return cx.throw_type_error(err),
-    }
-}).or_throw(&mut cx)?;
-    js_array.set(&mut cx, 1, js_value)?;
-    let js_value = JsString::try_new(&mut cx, enum_invitation_email_sent_status_rs_to_js(x2)).or_throw(&mut cx)?;
-    js_array.set(&mut cx, 2, js_value)?;
-    js_array
-};
-        js_obj.set(&mut cx, "value", js_value)?;
-        js_obj
-    }
-    Err(err) => {
-        let js_obj = cx.empty_object();
-        let js_tag = JsBoolean::new(&mut cx, false);
-        js_obj.set(&mut cx, "ok", js_tag)?;
-        let js_err = variant_new_device_invitation_error_rs_to_js(&mut cx, err)?;
-        js_obj.set(&mut cx, "error", js_err)?;
-        js_obj
-    }
-};
-            Ok(js_ret)
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_new_invitation_info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_new_device_invitation_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
         });
-    });
 
     Ok(promise)
 }
@@ -5814,50 +5959,35 @@ fn client_new_user_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let (deferred, promise) = cx.promise();
 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::client_new_user_invitation(client, claimer_email, send_email).await;
 
-        let ret = libparsec::client_new_user_invitation(
-            client,
-            claimer_email,
-            send_email,
-        ).await;
-
-        deferred.settle_with(&channel, move |mut cx| {
-            let js_ret = match ret {
-    Ok(ok) => {
-        let js_obj = JsObject::new(&mut cx);
-        let js_tag = JsBoolean::new(&mut cx, true);
-        js_obj.set(&mut cx, "ok", js_tag)?;
-        let js_value = {
-    let (x1, x2) = ok;
-    let js_array = JsArray::new(&mut cx, 2);
-    let js_value = JsString::try_new(&mut cx,{
-    let custom_to_rs_string = |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
-    match custom_to_rs_string(x1) {
-        Ok(ok) => ok,
-        Err(err) => return cx.throw_type_error(err),
-    }
-}).or_throw(&mut cx)?;
-    js_array.set(&mut cx, 1, js_value)?;
-    let js_value = JsString::try_new(&mut cx, enum_invitation_email_sent_status_rs_to_js(x2)).or_throw(&mut cx)?;
-    js_array.set(&mut cx, 2, js_value)?;
-    js_array
-};
-        js_obj.set(&mut cx, "value", js_value)?;
-        js_obj
-    }
-    Err(err) => {
-        let js_obj = cx.empty_object();
-        let js_tag = JsBoolean::new(&mut cx, false);
-        js_obj.set(&mut cx, "ok", js_tag)?;
-        let js_err = variant_new_user_invitation_error_rs_to_js(&mut cx, err)?;
-        js_obj.set(&mut cx, "error", js_err)?;
-        js_obj
-    }
-};
-            Ok(js_ret)
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_new_invitation_info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_new_user_invitation_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
         });
-    });
 
     Ok(promise)
 }
