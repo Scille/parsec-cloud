@@ -52,6 +52,23 @@ pub(crate) async fn remove_entry(
                 return Err(FsOperationError::IsAFolder)
             }
 
+            // A word about removing non-empty folder:
+            //
+            // Here we only remove the target directory and call it a day. However on
+            // most of other programs (e.g. Rust's `std::fs::delete_folder_all`,
+            // Python's `shutil.rmtree`) this is implemented as a recursive operation
+            // deleting all children first then parent until the actual directory to delete
+            // is reached.
+            //
+            // This is because the other programs at application are talking to a
+            // filesystem through the OS while we are directly talking to our filesystem
+            // here. The OS doesn't (cannot ?) provide a "remove dir even if it not empty"
+            // syscall given it cannot be an atomic operation on most filesystem (e.g. on
+            // ext3 the filenames are hashed and put into hash tree leading to the inode,
+            // hence it is not possible to find back the children of a given path).
+            //
+            // On the other hand, Parsec's filesystem architecture makes trivial to
+            // remove a non-empty folder, hence here we are ;-)
             (RemoveEntryExpect::Folder, Some(ArcLocalChildManifest::Folder(_))) => (),
             (RemoveEntryExpect::EmptyFolder, Some(ArcLocalChildManifest::Folder(child))) => {
                 if !child.children.is_empty() {
