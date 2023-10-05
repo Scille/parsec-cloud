@@ -189,7 +189,27 @@ impl PlatformCertificatesStorage {
                 // (instead of default DEFERRED mode of which waits until the first database
                 // access and determine read/write transaction depending on the sql statement)
                 conn.immediate_transaction(|conn| {
-                    let index_as_i64 = index_as_i64;
+                    use super::model::certificates::dsl::*;
+                    use diesel::result::{DatabaseErrorKind, Error};
+
+                    let next_index = certificates
+                        .select(certificate_index)
+                        .order_by(certificate_index.desc())
+                        .limit(1)
+                        .get_result::<i64>(conn)
+                        .unwrap_or_default()
+                        + 1;
+
+                    // TODO: Remove this check for batch
+                    if index_as_i64 != next_index {
+                        return Ok(Err(Error::DatabaseError(
+                            DatabaseErrorKind::Unknown,
+                            Box::new(format!(
+                                "Invalid certificate index, found: {index} expected: {next_index}"
+                            )),
+                        )));
+                    }
+
                     let new_certificate = super::model::NewCertificate {
                         certificate_index: index_as_i64,
                         certificate: &data.encrypted,
@@ -199,14 +219,14 @@ impl PlatformCertificatesStorage {
                         filter2: data.filter2.as_deref(),
                     };
 
-                    let query = {
-                        use super::model::certificates::dsl::*;
-                        diesel::insert_into(certificates).values(new_certificate)
-                    };
-                    query.execute(conn).map(|_| ())
+                    diesel::insert_into(certificates)
+                        .values(new_certificate)
+                        .execute(conn)?;
+
+                    Ok(Ok(()))
                 })
             })
-            .await
+            .await?
             .map_err(|err| err.into())
     }
 
