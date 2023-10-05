@@ -51,17 +51,14 @@ def run(cmd, **kwargs):
     return ret
 
 
-def pep440ify(src_dir: Path, version: str, releaser={}) -> str:
-    # Use `Version`` helper from `misc/releaser.py`
-    # Hackish but good enough given this release process will be outdated soon
-    if not releaser:
-        releaser_path = src_dir / "misc" / "releaser.py"
-        releaser["__file__"] = releaser_path.absolute()
-        content = releaser_path.read_text()
-        content = content.replace("import version_updater", "pass")
-        exec(content, releaser)
-    Version = releaser["Version"]
-    return Version.parse(version).to_pep440()
+def pep440ify(src_dir: Path, version: str) -> str:
+    misc_directory = str((src_dir / "misc").absolute())
+    try:
+        sys.path.append(misc_directory)
+        releaser = __import__("releaser")
+        return releaser.Version.parse(version).to_pep440()
+    finally:
+        sys.path.remove(misc_directory)
 
 
 def main(
