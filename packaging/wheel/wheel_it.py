@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import argparse
-import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -23,7 +22,12 @@ def run(cmd, **kwargs):
     return ret
 
 
-def main(program_source: Path, output_dir: Path, skip_wheel: bool = False):
+def main(
+    program_source: Path,
+    output_dir: Path,
+    skip_wheel: bool = False,
+    with_parsec_ext_deps: bool = False,
+):
     output_dir.mkdir(exist_ok=True)
 
     core_requirements = output_dir / "core-requirements.txt"
@@ -31,12 +35,17 @@ def main(program_source: Path, output_dir: Path, skip_wheel: bool = False):
     all_requirements = output_dir / "all-requirements.txt"
     constraints = output_dir / "constraints.txt"
 
+    # Include parsec-ext with the core if needed
+    core_extras = "--extras core"
+    if with_parsec_ext_deps:
+        core_extras += " --extras parsec-ext-deps"
+
     # poetry export has a --output option, but it always consider the file relative to
     # the project directory !
     # On top of that we cannot use stdout because poetry may print random `Creating virtualenv`
     # if we are not already within a virtualenv (please poetry, add a --no-venv option !!!)
     run(
-        f"{poetry} export --no-interaction --extras core --format requirements.txt --output wheel_it-core-requirements.txt",
+        f"{poetry} export --no-interaction {core_extras} --format requirements.txt --output wheel_it-core-requirements.txt",
         cwd=program_source,
     )
     shutil.move(program_source / "wheel_it-core-requirements.txt", core_requirements)
@@ -46,17 +55,15 @@ def main(program_source: Path, output_dir: Path, skip_wheel: bool = False):
     )
     shutil.move(program_source / "wheel_it-backend-requirements.txt", backend_requirements)
     run(
-        f"{poetry} export --no-interaction --with dev --extras core --extras backend --format requirements.txt --output wheel_it-dev-requirements.txt",
+        f"{poetry} export --no-interaction --with dev {core_extras} --extras backend --format requirements.txt --output wheel_it-dev-requirements.txt",
         cwd=program_source,
     )
     shutil.move(program_source / "wheel_it-dev-requirements.txt", all_requirements)
-
-    # Unlike requirements, constraint file cannot have extras
-    # See https://github.com/pypa/pip/issues/8210
-    constraints_data = []
-    for line in all_requirements.read_text(encoding="utf8").splitlines():
-        constraints_data.append(re.sub(r"\[.*\]", "", line))
-    constraints.write_text("\n".join(constraints_data), encoding="utf8")
+    run(
+        f"{poetry} export --no-interaction --with dev {core_extras} --extras backend --format constraints.txt --output wheel_it-dev-constraints.txt",
+        cwd=program_source,
+    )
+    shutil.move(program_source / "wheel_it-dev-constraints.txt", constraints)
 
     if not skip_wheel:
         # Finally generate the wheel, note we don't use Poetry for the job because
@@ -73,6 +80,11 @@ if __name__ == "__main__":
     parser.add_argument("program_source", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--skip-wheel", action="store_true", help="Skip build wheel")
-
+    parser.add_argument("--with-parsec-ext-deps", action="store_true")
     args = parser.parse_args()
-    main(program_source=args.program_source, output_dir=args.output_dir, skip_wheel=args.skip_wheel)
+    main(
+        program_source=args.program_source,
+        output_dir=args.output_dir,
+        skip_wheel=args.skip_wheel,
+        with_parsec_ext_deps=args.with_parsec_ext_deps,
+    )

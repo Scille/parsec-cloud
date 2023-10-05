@@ -64,19 +64,6 @@ def pep440ify(src_dir: Path, version: str, releaser={}) -> str:
     return Version.parse(version).to_pep440()
 
 
-def filter_parsec_cloud_from_constraints_file(path: Path) -> None:
-    skip = False
-    new_content = []
-    for line in path.read_text().splitlines():
-        if not skip and line.startswith("parsec-cloud"):
-            skip = True
-        if skip and not line.endswith("\\"):
-            skip = False
-        if not skip:
-            new_content.append(line)
-    path.write_text("\n".join(new_content))
-
-
 def main(
     src_dir: Path,
     include_parsec_ext: Optional[Path] = None,
@@ -147,38 +134,26 @@ def main(
         program_constraints = DEFAULT_WHEEL_IT_DIR / "constraints.txt"
         if not program_wheel or not program_constraints.exists():
             display("### Generate program wheel and constraints on dependencies ###")
+            with_parsec_ext_deps = "--with-parsec-ext-deps" if include_parsec_ext else ""
             run(
-                f"{ tools_python } { src_dir / 'packaging/wheel/wheel_it.py' } { src_dir } --output-dir { DEFAULT_WHEEL_IT_DIR }"
+                f"{ tools_python } { src_dir / 'packaging/wheel/wheel_it.py' } { src_dir } --output-dir { DEFAULT_WHEEL_IT_DIR } {with_parsec_ext_deps}"
             )
             program_wheel = next(
                 DEFAULT_WHEEL_IT_DIR.glob(f"parsec_cloud-{wheel_program_version}*.whl")
             )
 
     # `parsec-ext` wheel is fast to build, so build it everytime
-    parsec_ext_wheel = parsec_ext_constraints = None
+    parsec_ext_wheel = None
     if include_parsec_ext:
         actual_wheel_it_dir = (wheel_it_dir or DEFAULT_WHEEL_IT_DIR).absolute()
-        parsec_ext_constraints = actual_wheel_it_dir / "parsec-ext-constraints.txt"
         for path in actual_wheel_it_dir.glob(f"parsec_ext-*.whl"):
             display(f"### Remove older {path.name} wheel ###")
             path.unlink()
-        if parsec_ext_constraints.exists():
-            display(f"### Remove older parsec-ext constraints file ###")
-            parsec_ext_constraints.unlink()
         display("### Generate new parsec-ext wheel ###")
         run(
             f"{python} -m pip wheel {include_parsec_ext} --wheel-dir {actual_wheel_it_dir} --use-pep517 --no-deps"
         )
-        display("### Generate new parsec-ext constraints file ###")
-        run(
-            f"poetry export --no-interaction --format constraints.txt --output parsec-ext-constraints.txt",
-            cwd=include_parsec_ext,
-        )
-        shutil.move(include_parsec_ext / "parsec-ext-constraints.txt", actual_wheel_it_dir)
-        parsec_ext_wheel = next(DEFAULT_WHEEL_IT_DIR.glob(f"parsec_ext-*.whl"))
-        # Filter parsec-cloud entry from the constraints since we're using the new wheel
-        assert parsec_ext_constraints.exists()
-        filter_parsec_cloud_from_constraints_file(parsec_ext_constraints)
+        parsec_ext_wheel = next(actual_wheel_it_dir.glob(f"parsec_ext-*.whl"))
 
     # Bootstrap PyInstaller virtualenv containing both pyinstaller, parsec & it dependencies
     pyinstaller_venv_dir = BUILD_DIR / "pyinstaller_venv"
@@ -193,8 +168,6 @@ def main(
         # TODO: `--use-deprecated=legacy-resolver` is needed due to a bug in pip
         # see: https://github.com/pypa/pip/issues/9243
         constraints = f"--constraint { program_constraints }"
-        if include_parsec_ext:
-            constraints += f" --constraint { parsec_ext_constraints }"
         run(
             f"{ pyinstaller_python } -m pip install pyinstaller { constraints } --use-deprecated=legacy-resolver"
         )
@@ -204,10 +177,12 @@ def main(
         # with it
         pyinstaller_venv_requirements = BUILD_DIR / "pyinstaller_venv_requirements.txt"
         program_wheel_hash = sha256(program_wheel.read_bytes()).hexdigest()
+        core_extras = "core,parsec-ext-deps" if include_parsec_ext else "core"
         pyinstaller_venv_requirements_data = (
-            f"{ program_wheel.absolute() }[core]; --hash=sha256:{program_wheel_hash}\n"
+            f"{ program_wheel.absolute() }[{core_extras}]; --hash=sha256:{program_wheel_hash}\n"
         )
         if include_parsec_ext is not None:
+            assert parsec_ext_wheel is not None
             program_parsec_ext_wheel_hash = sha256(parsec_ext_wheel.read_bytes()).hexdigest()
             pyinstaller_venv_requirements_data += (
                 f"{parsec_ext_wheel.absolute()}; --hash=sha256:{program_parsec_ext_wheel_hash}\n"
