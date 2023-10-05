@@ -28,18 +28,14 @@ python -m venv venv
 # already installed.
 
 # Only install backend extras, core and dev are not necessary
-poetry --directory ./server export --output requirements.txt --extras backend
-# Install the dependencies...
-pip install -r ./requirements.txt
-# ...and our project
-# Compile in CI mode to reduce size while still retain `test-utils` feature
-# Also don't bundle OpenSSL shared library (it is already in the Docker image !)
+poetry export --output requirements.txt --extras backend
+
+# Install the dependencies
+pip install -r requirements.txt
+
+# And install our project (release mode, no need for PyQt)
 POETRY_LIBPARSEC_BUILD_PROFILE=release \
 POETRY_PYQT_BUILD_STRATEGY=no_build \
 pip install .
-
-# Boto3/Botocore are pretty big dependencies and won't be used (given the testbed
-# server only uses the memory storage)
-rm -rf ./venv/lib/python3.9/site-packages/{boto3,botocore,pip,setuptools}
 
 (cd / && /server/venv/bin/parsec --version)

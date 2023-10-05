@@ -33,18 +33,22 @@ FROM python:3.9-slim
 LABEL org.opencontainers.image.source=https://github.com/Scille/parsec-cloud
 LABEL org.opencontainers.image.description="Run the Parsec backend server."
 
+# Create parsec user and group
 RUN groupadd --gid=1234 parsec && useradd --home-dir=/home/parsec --create-home --uid=1234 --gid=1234 parsec
-
 USER parsec:parsec
 
-# Important: Use the same name as the builder so the venv scripts can run
+# Copy the venv from the builder
+# Important: Use the same path as the builder so the venv scripts can run
 WORKDIR /server
-
 COPY --chown=1234:1234 --from=builder /server/venv /server/venv
 
-EXPOSE 6777
-
+# Add venv/bin to PATH to make `parsec` available
 ENV PATH "/server/venv/bin:$PATH"
+
+# Suppress those annoying TrioDeprecationWarnings
 ENV PYTHONWARNINGS "ignore:::quart_trio.app"
+
+# Define entry point
+EXPOSE 6777
 ENTRYPOINT ["parsec", "backend"]
 CMD ["run", "--port=6777"]
