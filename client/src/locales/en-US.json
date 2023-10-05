@@ -507,7 +507,10 @@
             "inviteFailedNotAllowed": "Only administrators can invite new people into the organization.",
             "inviteFailedUnknown": "An unexpected error occured, please try again (reason: {reason}).",
             "cancelSuccess": "The invitation has been cancelled.",
-            "cancelFailed": "Could not cancel the invitation. Make sure you're connected to the internet."
+            "cancelFailed": "Could not cancel the invitation. Make sure you're connected to the internet.",
+            "orgInfoFailed": "Could not retrieve the link. Please make sure you're connected to the internet.",
+            "linkCopiedToClipboard": "The link has been copied to the clipboard.",
+            "copyLink": "Copy the link"
         },
         "CreateUserInvitationModal": {
             "pageTitle": "Invite a new user",

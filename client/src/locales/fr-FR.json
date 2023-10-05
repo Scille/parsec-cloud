@@ -507,7 +507,10 @@
             "inviteFailedNotAllowed": "Seuls les administrateurs peuvent inviter de nouvelles personnes à rejoindre l'organisation.",
             "inviteFailedUnknown": "Une erreur imprévue est survenue (raison : {reason}).",
             "cancelSuccess": "L'invitation a été annulée.",
-            "cancelFailed": "Impossible d'annuler l'invitation. Veuillez vérifier votre connexion internet."
+            "cancelFailed": "Impossible d'annuler l'invitation. Veuillez vérifier votre connexion internet.",
+            "orgInfoFailed": "Impossible de récupérer le lien. Veuillez vérifier votre connexion internet.",
+            "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
+            "copyLink": "Copier le lien"
         },
         "CreateUserInvitationModal": {
             "pageTitle": "Inviter un nouvel utilisateur",
