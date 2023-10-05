@@ -3,7 +3,7 @@ services:
   parsec:
     build:
       context: .
-      dockerfile: packaging/docker/Dockerfile
+      dockerfile: packaging/server/server.dockerfile
     environment:
       - PARSEC_HOST=0.0.0.0
       - PARSEC_DB=postgresql://parsec@postgres/parsec?password=DBPASS  # Change db password for prod

@@ -230,8 +230,8 @@ def collapse_exception_group(exception_group: BaseExceptionGroup[E]) -> Exceptio
         result.__dict__.update(pick.__dict__)
         result.args = pick.args
         # Replicate the exception group inner state
-        result._message = exception_group._message
-        result._exceptions = exception_group._exceptions
+        result._message = exception_group.message
+        result._exceptions = exception_group.exceptions
         result.__cause__ = exception_group.__cause__
         result.__context__ = exception_group.__context__
         result.__traceback__ = exception_group.__traceback__
