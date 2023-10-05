@@ -200,9 +200,9 @@ function getDefaultMountpointDir(): string {
 function getDefaultDataBaseDir(): string {
   if (isDesktop()) {
     if (import.meta.env.VITE_OPERATING_SYSTEM === 'win32') {
-      return Path.join(import.meta.env.VITE_DATA_DIR, 'parsec/data');
+      return Path.join(import.meta.env.VITE_DATA_DIR, 'parsec3/data');
     } else {
-      return Path.join(import.meta.env.VITE_DATA_DIR, 'parsec');
+      return Path.join(import.meta.env.VITE_DATA_DIR, 'parsec3');
     }
   }
   return '';
@@ -214,9 +214,9 @@ function getDefaultConfigDir(): string {
   }
   if (isDesktop()) {
     if (import.meta.env.VITE_OPERATING_SYSTEM === 'win32') {
-      return Path.join(import.meta.env.VITE_CONFIG_DIR, 'parsec/config');
+      return Path.join(import.meta.env.VITE_CONFIG_DIR, 'parsec3/config');
     } else {
-      return Path.join(import.meta.env.VITE_CONFIG_DIR, 'parsec');
+      return Path.join(import.meta.env.VITE_CONFIG_DIR, 'parsec3');
     }
   }
   return '';
