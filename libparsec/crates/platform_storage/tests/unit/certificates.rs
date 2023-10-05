@@ -798,3 +798,52 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
     )
     .await;
 }
+
+#[parsec_test(testbed = "minimal")]
+async fn prohibit_skipping_indexes(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+
+    let storage = CertificatesStorage::start(&env.discriminant_dir, &alice)
+        .await
+        .unwrap();
+
+    let t1 = timestamps.next();
+    let data = AddCertificateData::from_user_certificate(
+        b"<encrypted>".to_vec(),
+        t1,
+        alice.device_id.user_id().clone(),
+    );
+
+    // Try with no certificates skipping 1 index
+    storage.add_next_certificate(2, data).await.unwrap_err();
+
+    let t2 = timestamps.next();
+    let data = AddCertificateData::from_user_certificate(
+        b"<encrypted>".to_vec(),
+        t2,
+        alice.device_id.user_id().clone(),
+    );
+
+    // Valid
+    storage.add_next_certificate(1, data).await.unwrap();
+
+    let t3 = timestamps.next();
+    let data = AddCertificateData::from_user_certificate(
+        b"<encrypted>".to_vec(),
+        t3,
+        alice.device_id.user_id().clone(),
+    );
+
+    // Try with certificate skipping 1 index
+    storage.add_next_certificate(3, data).await.unwrap_err();
+
+    let t4 = timestamps.next();
+    let data = AddCertificateData::from_user_certificate(
+        b"<encrypted>".to_vec(),
+        t4,
+        alice.device_id.user_id().clone(),
+    );
+
+    // Try with previous index
+    storage.add_next_certificate(1, data).await.unwrap_err();
+}
