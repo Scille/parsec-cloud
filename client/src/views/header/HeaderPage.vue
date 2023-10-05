@@ -62,7 +62,10 @@
           slot="primary"
           class="topbar-right"
         >
-          <div class="topbar-button__list">
+          <div
+            v-show="false"
+            class="topbar-button__list"
+          >
             <ion-button
               v-if="!isPlatform('mobile')"
               slot="icon-only"
