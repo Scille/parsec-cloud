@@ -8,6 +8,7 @@
     v-model="fullName"
     :disabled="!$props.nameEnabled"
     @change="$emit('fieldUpdate')"
+    @on-enter-keyup="$emit('onEnterKeyup', fullName)"
   />
   <ms-input
     :label="$t('CreateOrganization.email')"
@@ -16,6 +17,7 @@
     name="email"
     :disabled="!$props.emailEnabled"
     @change="$emit('fieldUpdate')"
+    @on-enter-keyup="$emit('onEnterKeyup', email)"
   />
   <ms-input
     :label="$t('CreateOrganization.deviceNameInputLabel')"
@@ -24,6 +26,7 @@
     name="deviceName"
     :disabled="!$props.deviceEnabled"
     @change="$emit('fieldUpdate')"
+    @on-enter-keyup="$emit('onEnterKeyup', deviceName)"
   />
 </template>
 
@@ -69,6 +72,7 @@ const fullName = ref(props.defaultName);
 
 defineEmits<{
   (e: 'fieldUpdate'): void
+  (e: 'onEnterKeyup', value: string): void
 }>();
 
 defineExpose({

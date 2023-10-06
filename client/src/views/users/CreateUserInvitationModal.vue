@@ -19,6 +19,7 @@
       :label="$t('UsersPage.CreateUserInvitationModal.label')"
       :placeholder="$t('UsersPage.CreateUserInvitationModal.placeholder')"
       v-model="email"
+      @on-enter-keyup="confirm()"
     />
   </ms-modal>
 </template>
@@ -36,8 +37,11 @@ import { asyncComputed } from '@/common/asyncComputed';
 
 const email = ref('');
 
-function confirm(): Promise<boolean> {
-  return modalController.dismiss(email.value, MsModalResult.Confirm);
+async function confirm(): Promise<boolean> {
+  if (isDisabled.value) {
+    return new Promise(() => false);
+  }
+  return await modalController.dismiss(email.value, MsModalResult.Confirm);
 }
 
 function cancel(): Promise<boolean> {

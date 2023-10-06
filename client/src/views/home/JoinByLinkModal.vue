@@ -18,6 +18,7 @@
       v-model="joinLink"
       id="link-orga-input"
       type="url"
+      @on-enter-keyup="confirm()"
     />
   </ms-modal>
 </template>
@@ -40,6 +41,9 @@ const canProgress = asyncComputed(async () => {
 /* by the way pressing Enter won't send the form, you unfortunately have to click the button
 see https://github.com/ionic-team/ionic-framework/issues/19368 */
 async function confirm(): Promise<boolean> {
+  if (!canProgress.value) {
+    return new Promise(() => false);
+  }
   return await modalController.dismiss(joinLink.value.trim(), MsModalResult.Confirm);
 }
 </script>

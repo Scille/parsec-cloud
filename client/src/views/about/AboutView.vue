@@ -38,7 +38,7 @@
             class="link"
           >
             <img
-              src="@/assets/images/logo-scille.png"
+              src="@/assets/images/Logo/logo_column_gradient.svg"
               alt="Scille logo"
             >
             <span>{{ $t('app.developer') }}</span>

@@ -19,7 +19,7 @@
       :label="$t('WorkspacesPage.CreateWorkspaceModal.label')"
       :placeholder="$t('WorkspacesPage.CreateWorkspaceModal.placeholder')"
       v-model="workspaceName"
-      @keyup.enter="confirm()"
+      @on-enter-keyup="confirm()"
     />
   </ms-modal>
 </template>
@@ -40,8 +40,11 @@ const validWorkspaceName = asyncComputed(async () => {
   return await isValidWorkspaceName(workspaceName.value);
 });
 
-function confirm(): Promise<boolean> {
-  return modalController.dismiss(workspaceName.value, MsModalResult.Confirm);
+async function confirm(): Promise<boolean> {
+  if (!validWorkspaceName.value) {
+    return new Promise(() => false);
+  }
+  return await modalController.dismiss(workspaceName.value, MsModalResult.Confirm);
 }
 
 function cancel(): Promise<boolean> {

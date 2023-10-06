@@ -83,12 +83,16 @@
           class="step"
           id="get-password"
         >
-          <ms-choose-password-input ref="passwordPage" />
+          <ms-choose-password-input
+            ref="passwordPage"
+            @on-enter-keyup="nextStep()"
+          />
           <ms-input
             :label="$t('CreateOrganization.deviceNameInputLabel')"
             :placeholder="$t('CreateOrganization.deviceNamePlaceholder')"
             v-model="deviceName"
             name="deviceName"
+            @on-enter-keyup="nextStep()"
           />
         </div>
         <!-- part 5 (finish the process)-->
@@ -277,6 +281,9 @@ async function cancelModal(): Promise<boolean> {
 }
 
 async function nextStep(): Promise<void> {
+  if (!canGoForward.value) {
+    return;
+  }
   if (pageStep.value === DeviceJoinOrganizationStep.Password) {
     waitingForHost.value = true;
     const doClaimResult = await claimer.value.doClaim(

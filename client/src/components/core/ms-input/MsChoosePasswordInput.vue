@@ -20,6 +20,7 @@
         v-model="password"
         name="password"
         @change="onPasswordChange()"
+        @on-enter-keyup="$emit('onEnterKeyup', password)"
       />
     </div>
     <div class="ms-password-inputs-container">
@@ -27,6 +28,7 @@
         :label="$t('Password.confirmPassword')"
         v-model="passwordConfirm"
         name="confirmPassword"
+        @on-enter-keyup="$emit('onEnterKeyup', passwordConfirm)"
       />
       <span
         class="form-helperText"
@@ -69,6 +71,10 @@ import { PasswordStrength, getPasswordStrength, getPasswordStrengthText } from '
 const password = ref('');
 const passwordConfirm = ref('');
 const passwordStrength = ref(PasswordStrength.None);
+
+defineEmits<{
+  (e: 'onEnterKeyup', value: string): void
+}>();
 
 defineExpose({
   areFieldsCorrect,

@@ -1,8 +1,8 @@
 {
     "app": {
         "name": "Parsec Cloud",
-        "developer": "Scille",
-        "developerLink": "https://scille.eu",
+        "developer": "Parsec Cloud",
+        "developerLink": "https://parsec.cloud",
         "projectLink": "https://parsec.cloud",
         "projectSources": "https://github.com/Scille/parsec-cloud",
         "license": "BUSL-1.1",

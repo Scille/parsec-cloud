@@ -98,6 +98,7 @@
             :default-device="''"
             :email-enabled="false"
             ref="guestInfoPage"
+            @on-enter-keyup="nextStep()"
           />
           <ion-item class="input-container">
             <ion-select
@@ -354,6 +355,9 @@ async function showErrorAndRestart(message: string): Promise<void> {
 }
 
 async function nextStep(): Promise<void> {
+  if (!canGoForward.value) {
+    return;
+  }
   if (pageStep.value === GreetUserStep.Summary) {
     notificationCenter.showToast(new Notification({
       message: t('UsersPage.greet.success', {user: guestInfoPage.value?.fullName}),

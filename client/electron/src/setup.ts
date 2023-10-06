@@ -195,7 +195,9 @@ export class ElectronCapacitorApp {
       function isAuthorizedUrl(url: string): boolean {
         return [
           'https://my.parsec.cloud/',
-          'https://parsec.cloud/'
+          'https://parsec.cloud/',
+          'https://github.com/Scille/',
+          'https://spdx.org/licenses/',
         ].some((prefix) => url.startsWith(prefix));
       }
 

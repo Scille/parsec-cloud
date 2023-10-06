@@ -52,7 +52,7 @@ defineProps<{
 
 const emits = defineEmits<{
   (e: 'change', value: string): void
-  (e: 'enter'): void
+  (e: 'onEnterKeyup', value: string): void
   (e: 'update:modelValue', value: string): void
 }>();
 
@@ -66,7 +66,7 @@ function onChange(value: any) : void {
 
 function onEnterPress() : void {
   if (passwordRef.value.length > 0) {
-    emits('enter');
+    emits('onEnterKeyup', passwordRef.value);
   }
 }
 </script>
