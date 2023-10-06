@@ -10,6 +10,7 @@ Visual Studio installer). You can use `Visual Studio` to build these two dlls __
 or invoke `msbuild` from the command line (you have to manually add `msbuild` to your `PATH`).
 
 ```shell
+set PATH=C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin;%PATH%
 msbuild -maxCpuCount -property:Configuration=Release .\windows-icon-handler\windows-icon-handler.sln
 ```
 
