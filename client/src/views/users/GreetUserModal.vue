@@ -287,9 +287,7 @@ async function selectGuestSas(code: string | null): Promise<void> {
 }
 
 async function restartProcess(): Promise<void> {
-  if (pageStep.value !== GreetUserStep.WaitForGuest) {
-    await greeter.value.abort();
-  }
+  await greeter.value.abort();
   await startProcess();
 }
 
@@ -306,14 +304,6 @@ async function startProcess(): Promise<void> {
     return;
   }
   waitingForGuest.value = false;
-  const codeResult = await greeter.value.initialWaitGuest();
-  if (!codeResult.ok) {
-    await notificationCenter.showToast(new Notification({
-      message: t('UsersPage.greet.errors.startFailed'),
-      level: NotificationLevel.Error,
-    }));
-    await cancelModal();
-  }
 }
 
 function getStepperIndex(): number {
@@ -365,11 +355,11 @@ async function showErrorAndRestart(message: string): Promise<void> {
 
 async function nextStep(): Promise<void> {
   if (pageStep.value === GreetUserStep.Summary) {
-    await modalController.dismiss({}, MsModalResult.Confirm);
-    await notificationCenter.showToast(new Notification({
+    notificationCenter.showToast(new Notification({
       message: t('UsersPage.greet.success', {user: guestInfoPage.value?.fullName}),
       level: NotificationLevel.Success,
     }));
+    await modalController.dismiss({}, MsModalResult.Confirm);
     return;
   } else if (pageStep.value === GreetUserStep.CheckGuestInfo && guestInfoPage.value && profile.value) {
     const result = await greeter.value.createUser(
@@ -379,6 +369,12 @@ async function nextStep(): Promise<void> {
     );
     if (!result.ok) {
       await showErrorAndRestart(t('UsersPage.greet.errors.createUserFailed'));
+      return;
+    }
+  } else if (pageStep.value === GreetUserStep.WaitForGuest) {
+    const result = await greeter.value.initialWaitGuest();
+    if (!result.ok) {
+      await showErrorAndRestart(t('UsersPage.greet.errors.startFailed'));
       return;
     }
   }

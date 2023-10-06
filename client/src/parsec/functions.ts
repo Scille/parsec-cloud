@@ -104,7 +104,7 @@ export async function inviteUser(email: string): Promise<Result<[InvitationToken
     }
   } else {
     return new Promise<Result<[InvitationToken, InvitationEmailSentStatus], NewUserInvitationError>>((resolve, _reject) => {
-      resolve({ ok: true, value: ['1234', InvitationEmailSentStatus.Success] });
+      resolve({ ok: true, value: ['12346565645645654645645645645645', InvitationEmailSentStatus.Success] });
     });
   }
 }
@@ -211,13 +211,13 @@ export async function listUserInvitations(): Promise<Result<Array<UserInvitation
     return new Promise<Result<Array<UserInvitation>, ListInvitationsError>>((resolve, _reject) => {
       const ret: Array<UserInvitation> = [{
         tag: 'User',
-        token: '1234',
+        token: '12346565645645654645645645645645',
         createdOn: DateTime.now(),
         claimerEmail: 'shadowheart@swordcoast.faerun',
         status: InvitationStatus.Ready,
       }, {
         tag: 'User',
-        token: '5678',
+        token: '32346565645645654645645645645645',
         createdOn: DateTime.now(),
         claimerEmail: 'gale@waterdeep.faerun',
         status: InvitationStatus.Ready,

@@ -161,7 +161,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref, computed, onMounted, inject } from 'vue';
+import { ref, Ref, computed, onMounted, inject, watch, onUnmounted } from 'vue';
 import {
   IonContent,
   IonItem,
@@ -172,7 +172,6 @@ import {
   IonCheckbox,
   IonText,
   popoverController,
-  modalController,
 } from '@ionic/vue';
 import {
   personRemove,
@@ -187,21 +186,18 @@ import { DisplayState } from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import UserContextMenu from '@/views/users/UserContextMenu.vue';
 import { UserAction } from '@/views/users/UserContextMenu.vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
-import CreateUserInvitationModal from '@/views/users/CreateUserInvitationModal.vue';
 import { routerNavigateTo } from '@/router';
 import {
-  inviteUser as parsecInviteUser,
   listUsers as parsecListUsers,
   UserInfo,
   ClientInfo,
   getClientInfo as parsecGetClientInfo,
   UserProfile,
   UserID,
-  InvitationEmailSentStatus,
-  InviteUserError,
 } from '@/parsec';
 import { NotificationCenter, Notification, NotificationLevel, NotificationKey } from '@/services/notificationCenter';
 import { useI18n } from 'vue-i18n';
+import { useRoute } from 'vue-router';
 
 const displayView = ref(DisplayState.List);
 const userList: Ref<UserInfo[]> = ref([]);
@@ -212,6 +208,7 @@ const clientInfo: Ref<ClientInfo | null> = ref(null);
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 const { t } = useI18n();
+const currentRoute = useRoute();
 
 const allUsersSelected = computed({
   // -1 to exclude the current user
@@ -351,6 +348,12 @@ async function refreshUserList(): Promise<void> {
   }
 }
 
+const routeUnwatch = watch(currentRoute, async (newRoute) => {
+  if (newRoute.query.refresh) {
+    await refreshUserList();
+  }
+});
+
 onMounted(async (): Promise<void> => {
   const result = await parsecGetClientInfo();
 
@@ -359,6 +362,10 @@ onMounted(async (): Promise<void> => {
     isAdmin.value = clientInfo.value.currentProfile === UserProfile.Admin;
   }
   await refreshUserList();
+});
+
+onUnmounted(async () => {
+  routeUnwatch();
 });
 </script>
 

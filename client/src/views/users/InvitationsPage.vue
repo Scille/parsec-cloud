@@ -111,6 +111,7 @@ import {
 } from '@/parsec';
 import { NotificationCenter, NotificationKey, NotificationLevel, Notification } from '@/services/notificationCenter';
 import { useRoute } from 'vue-router';
+import { routerNavigateTo } from '@/router';
 
 const invitations: Ref<UserInvitation[]> = ref([]);
 const { t } = useI18n();
@@ -227,15 +228,19 @@ async function canDismissModal(_data?: any, modalRole?: string): Promise<boolean
 async function greetUser(invitation: UserInvitation): Promise<void> {
   const modal = await modalController.create({
     component: GreetUserModal,
-    canDismiss: canDismissModal,
+    canDismiss: true,
     cssClass: 'greet-organization-modal',
     componentProps: {
       invitation: invitation,
     },
   });
   await modal.present();
-  await modal.onWillDismiss();
+  const modalResult = await modal.onWillDismiss();
+  await modal.dismiss();
   await refreshInvitationsList();
+  if (modalResult.role === MsModalResult.Confirm) {
+    routerNavigateTo('activeUsers', {}, {refresh: true});
+  }
 }
 
 async function rejectUser(invitation: UserInvitation) : Promise<void> {

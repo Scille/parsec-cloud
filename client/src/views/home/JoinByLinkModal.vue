@@ -39,8 +39,8 @@ const canProgress = asyncComputed(async () => {
 
 /* by the way pressing Enter won't send the form, you unfortunately have to click the button
 see https://github.com/ionic-team/ionic-framework/issues/19368 */
-function confirm(): Promise<boolean> {
-  return modalController.dismiss(joinLink.value.trim(), MsModalResult.Confirm);
+async function confirm(): Promise<boolean> {
+  return await modalController.dismiss(joinLink.value.trim(), MsModalResult.Confirm);
 }
 </script>
 
