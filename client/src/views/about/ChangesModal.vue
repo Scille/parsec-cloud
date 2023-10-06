@@ -17,7 +17,7 @@
               {{ $t('app.name') }} v{{ versionChange.version }}
             </ion-text>
             <ion-text class="version-date body">
-              {{ versionChange.date }}
+              {{ $d(versionChange.date.toJSDate(), 'long') }}
             </ion-text>
           </div>
 
@@ -147,9 +147,9 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.modal {
-  padding: 2.5rem;
-  height: 40em;
+.container {
+  margin: 0 1em;
+  overflow-x: hidden;
 }
 
 .version {

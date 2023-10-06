@@ -110,6 +110,7 @@
             :device-enabled="!waitingForHost"
             :name-enabled="!waitingForHost"
             @field-update="fieldsUpdated = true"
+            @on-enter-keyup="nextStep()"
           />
         </div>
         <!-- part 5 (get password)-->
@@ -118,7 +119,10 @@
           class="step"
           id="get-password"
         >
-          <ms-choose-password-input ref="passwordPage" />
+          <ms-choose-password-input
+            ref="passwordPage"
+            @on-enter-keyup="nextStep()"
+          />
         </div>
         <!-- part 6 (finish the process)-->
         <div
@@ -325,6 +329,9 @@ async function cancelModal(): Promise<boolean> {
 }
 
 async function nextStep(): Promise<void> {
+  if (!canGoForward.value) {
+    return;
+  }
   if (pageStep.value === UserJoinOrganizationStep.GetPassword) {
     const result = await claimer.value.finalize(passwordPage.value.password);
     if (!result.ok) {

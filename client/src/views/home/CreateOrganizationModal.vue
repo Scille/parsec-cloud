@@ -47,6 +47,7 @@
             name="organization"
             id="org-name-input"
             v-model="orgName"
+            @on-enter-keyup="nextStep()"
           />
         </div>
 
@@ -58,6 +59,7 @@
           <user-information
             ref="userInfo"
             @field-update="fieldsUpdated = true"
+            @on-enter-keyup="nextStep()"
           />
         </div>
 
@@ -74,7 +76,10 @@
           class="step org-password"
           v-show="pageStep === CreateOrganizationStep.PasswordStep"
         >
-          <ms-choose-password-input ref="passwordChoice" />
+          <ms-choose-password-input
+            ref="passwordChoice"
+            @on-enter-keyup="nextStep()"
+          />
         </div>
 
         <!-- part 5 (summary) -->
@@ -178,7 +183,6 @@ import {
 import {
   chevronForward,
   chevronBack,
-  caretForward,
   checkmarkDone,
   close,
 } from 'ionicons/icons';
@@ -346,7 +350,9 @@ function cancelModal(): Promise<boolean> {
 }
 
 async function nextStep(): Promise<void> {
-  console.log(d(DateTime.now().toJSDate(), 'long'));
+  if (!canGoForward.value) {
+    return;
+  }
   if (pageStep.value === CreateOrganizationStep.FinishStep) {
     modalController.dismiss({ device: device.value, password: passwordChoice.value.password }, MsModalResult.Confirm);
     return;

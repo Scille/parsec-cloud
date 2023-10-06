@@ -172,7 +172,7 @@
                         <ms-password-input
                           :label="$t('HomePage.organizationLogin.passwordLabel')"
                           v-model="password"
-                          @enter="onLoginClick()"
+                          @on-enter-keyup="onLoginClick()"
                           id="ms-password-input"
                         />
                         <ion-button
@@ -621,6 +621,7 @@ async function openSettingsModal(): Promise<void> {
   align-items: center;
   justify-content: center;
   flex-grow: 1;
+  max-height: 80%;
 
   .organization-container {
     max-width: 62.5rem;

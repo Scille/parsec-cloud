@@ -26,13 +26,13 @@ describe('Password Input', () => {
     (wrapper.vm as any).passwordRef = 'P@ssw0rd.';
     const ionInput = wrapper.findComponent(IonInput);
     await ionInput.trigger('keyup.enter');
-    expect(wrapper.emitted('enter')?.length).to.equal(1);
+    expect(wrapper.emitted('onEnterKeyup')?.length).to.equal(1);
   });
 
   it('should not emit enter when input is empty', async () => {
     const ionInput = wrapper.findComponent(IonInput);
     await ionInput.trigger('keyup.enter');
-    expect(wrapper.emitted('enter')).to.be.undefined;
+    expect(wrapper.emitted('onEnterKeyup')).to.be.undefined;
   });
 
   it('should toggle password visibility button icon and password input type on password visibility button click', async () => {

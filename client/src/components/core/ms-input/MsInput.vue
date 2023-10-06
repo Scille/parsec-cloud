@@ -21,6 +21,7 @@
         :placeholder="$props.placeholder"
         :value="modelValue"
         @ion-input="$emit('update:modelValue', $event.detail.value); $emit('change', $event.detail.value)"
+        @keyup.enter="$emit('onEnterKeyup', $event.detail.value);"
         :disabled="$props.disabled"
       />
     </ion-item>
@@ -52,6 +53,7 @@ defineProps<{
 defineEmits<{
   (e: 'update:modelValue', value: string): void
   (e: 'change', value: string): void
+  (e: 'onEnterKeyup', value: string): void
 }>();
 </script>
 
