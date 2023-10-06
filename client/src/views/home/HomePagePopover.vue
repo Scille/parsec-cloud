@@ -107,7 +107,7 @@ async function openJoinByLinkModal(): Promise<void> {
     if (await claimUserLinkValidator(linkResult.data) === Validity.Valid) {
       const modal = await modalController.create({
         component: UserJoinOrganizationModal,
-        canDismiss: canDismissModal,
+        canDismiss: true,
         cssClass: 'join-organization-modal',
         componentProps: {
           invitationLink: linkResult.data,
@@ -115,11 +115,12 @@ async function openJoinByLinkModal(): Promise<void> {
       });
       await modal.present();
       const result = await modal.onWillDismiss();
+      await modal.dismiss();
       await popoverController.dismiss(result.data, result.role);
     } else if (await claimDeviceLinkValidator(linkResult.data) === Validity.Valid) {
       const modal = await modalController.create({
         component: DeviceJoinOrganizationModal,
-        canDismiss: canDismissModal,
+        canDismiss: true,
         cssClass: 'join-organization-modal',
         componentProps: {
           invitationLink: linkResult.data,
@@ -127,6 +128,7 @@ async function openJoinByLinkModal(): Promise<void> {
       });
       await modal.present();
       const result = await modal.onWillDismiss();
+      await modal.dismiss();
       await popoverController.dismiss(result.data, result.role);
     } else {
       console.error('Invalid data gotten from link, should never happen');

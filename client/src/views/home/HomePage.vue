@@ -396,7 +396,7 @@ async function openPopover(ev: Event): Promise<void> {
   await popover.present();
   const result = await popover.onWillDismiss();
   if (result.role === MsModalResult.Confirm) {
-    login(result.data.device, result.data.password);
+    await login(result.data.device, result.data.password);
   }
 }
 
