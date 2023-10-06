@@ -327,7 +327,7 @@ pub async fn test_new_testbed(
         let template_crc = template.compute_crc();
         assert_eq!(
             template_crc, server_template_crc,
-            "CRC mismatch in template ! Check your server version. Maybe run `./make r` ?"
+            "CRC mismatch in template ! Check your server version. Maybe run `./make.py python-dev-rebuild` ?"
         );
 
         (
