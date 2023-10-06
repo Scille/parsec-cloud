@@ -114,11 +114,12 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
         timestamp,
         verify_key_der: SequesterVerifyKeyDer::try_from(
             &hex!(
-        "30819f300d06092a864886f70d010101050003818d0030818902818100b2dc00a3c3b5c689"
-        "b069f3f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256cc660d5084782738a"
-        "3045d75b584c1943bc04c7123d68ac0cef253b4ee8d79bd09da19162dcc083662269b7b62c"
-        "b38582f8a30219047b087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66f7ee18303195"
-        "f3bcc72ab57207ebfd0203010001")[..],
+                "30819f300d06092a864886f70d010101050003818d0030818902818100b2dc00a3c3b5c689"
+                "b069f3f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256cc660d5084782738a"
+                "3045d75b584c1943bc04c7123d68ac0cef253b4ee8d79bd09da19162dcc083662269b7b62c"
+                "b38582f8a30219047b087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66f7ee18303195"
+                "f3bcc72ab57207ebfd0203010001"
+            )[..],
         )
         .unwrap(),
     };
@@ -138,11 +139,12 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
         service_label: "foo".into(),
         encryption_key_der: SequesterPublicKeyDer::try_from(
             &hex!(
-        "30819f300d06092a864886f70d010101050003818d0030818902818100b2dc00a3c3b5c689"
-        "b069f3f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256cc660d5084782738a"
-        "3045d75b584c1943bc04c7123d68ac0cef253b4ee8d79bd09da19162dcc083662269b7b62c"
-        "b38582f8a30219047b087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66f7ee18303195"
-        "f3bcc72ab57207ebfd0203010001")[..],
+                "30819f300d06092a864886f70d010101050003818d0030818902818100b2dc00a3c3b5c689"
+                "b069f3f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256cc660d5084782738a"
+                "3045d75b584c1943bc04c7123d68ac0cef253b4ee8d79bd09da19162dcc083662269b7b62c"
+                "b38582f8a30219047b087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66f7ee18303195"
+                "f3bcc72ab57207ebfd0203010001"
+            )[..],
         )
         .unwrap(),
     };
@@ -917,11 +919,12 @@ fn serde_sequester_authority_certificate(alice: &Device) {
         timestamp: "2000-01-02T01:00:00Z".parse().unwrap(),
         verify_key_der: SequesterVerifyKeyDer::try_from(
             &hex!(
-        "30819f300d06092a864886f70d010101050003818d0030818902818100b2dc00a3c3b5c689"
-        "b069f3f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256cc660d5084782738a"
-        "3045d75b584c1943bc04c7123d68ac0cef253b4ee8d79bd09da19162dcc083662269b7b62c"
-        "b38582f8a30219047b087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66f7ee18303195"
-        "f3bcc72ab57207ebfd0203010001")[..],
+                "30819f300d06092a864886f70d010101050003818d0030818902818100b2dc00a3c3b5c689"
+                "b069f3f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256cc660d5084782738a"
+                "3045d75b584c1943bc04c7123d68ac0cef253b4ee8d79bd09da19162dcc083662269b7b62c"
+                "b38582f8a30219047b087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66f7ee18303195"
+                "f3bcc72ab57207ebfd0203010001"
+            )[..],
         )
         .unwrap(),
     };
@@ -986,11 +989,12 @@ fn serde_sequester_service_certificate() {
         service_label: "foo".into(),
         encryption_key_der: SequesterPublicKeyDer::try_from(
             &hex!(
-        "30819f300d06092a864886f70d010101050003818d0030818902818100b2dc00a3c3b5c689"
-        "b069f3f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256cc660d5084782738a"
-        "3045d75b584c1943bc04c7123d68ac0cef253b4ee8d79bd09da19162dcc083662269b7b62c"
-        "b38582f8a30219047b087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66f7ee18303195"
-        "f3bcc72ab57207ebfd0203010001")[..],
+                "30819f300d06092a864886f70d010101050003818d0030818902818100b2dc00a3c3b5c689"
+                "b069f3f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256cc660d5084782738a"
+                "3045d75b584c1943bc04c7123d68ac0cef253b4ee8d79bd09da19162dcc083662269b7b62c"
+                "b38582f8a30219047b087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66f7ee18303195"
+                "f3bcc72ab57207ebfd0203010001"
+            )[..],
         )
         .unwrap(),
     };
