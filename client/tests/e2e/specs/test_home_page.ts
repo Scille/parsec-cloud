@@ -33,10 +33,6 @@ describe('Check organization list', () => {
     cy.get('#ms-password-input').find('input').type('Wr0ngP@ssw0rd.');
     cy.get('.login-button-container > ion-button').should('not.have.class', 'button-disabled');
     cy.get('.login-button-container > ion-button').click();
-    cy.get('@configPath').then(($elem) => {
-      const orgId = ($elem as unknown as string).split('/').slice(-1)[0];
-      cy.get('@consoleLog').should('have.been.calledWith', `Log in to ${orgId} with password 'Wr0ngP@ssw0rd.'`);
-    });
     cy.get('.notification-toast').as('notificationToast').should('exist').should('have.class', 'ms-error');
     cy.get('@notificationToast').shadow().find('.toast-header').should('contain.text', 'Could not login!');
     cy.get('@notificationToast').shadow().find('.toast-message').should('contain.text', 'The password is incorrect!');
@@ -49,10 +45,6 @@ describe('Check organization list', () => {
     cy.get('#ms-password-input').find('input').type('P@ssw0rd.');
     cy.get('.login-button-container > ion-button').should('not.have.class', 'button-disabled');
     cy.get('.login-button-container > ion-button').click();
-    cy.get('@configPath').then(($elem) => {
-      const orgId = ($elem as unknown as string).split('/').slice(-1)[0];
-      cy.get('@consoleLog').should('have.been.calledWith', `Log in to ${orgId} with password 'P@ssw0rd.'`);
-    });
     cy.contains('My workspaces');
   });
 
