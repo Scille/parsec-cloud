@@ -99,6 +99,7 @@
             :email-enabled="false"
             ref="guestInfoPage"
             @on-enter-keyup="nextStep()"
+            @field-update="updateCanGoForward"
           />
           <ion-item class="input-container">
             <ion-select
@@ -201,7 +202,7 @@ import {
 import {
   close,
 } from 'ionicons/icons';
-import { ref, Ref, computed, onMounted, inject } from 'vue';
+import { ref, Ref, computed, onMounted, inject, watch, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import MsWizardStepper from '@/components/core/ms-stepper/MsWizardStepper.vue';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
@@ -232,6 +233,7 @@ const props = defineProps<{
 
 const profile: Ref<UserProfile | null> = ref(null);
 const guestInfoPage: Ref<typeof UserInformation | null> = ref(null);
+const canGoForward = ref(false);
 const waitingForGuest = ref(true);
 const greeter = ref(new UserGreet());
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -257,6 +259,18 @@ function getTitleAndSubtitle(): [string, string] {
     ];
   }
   return ['', ''];
+}
+
+const unwatchProfile = watch(profile, async () => {
+  await updateCanGoForward();
+});
+
+async function updateCanGoForward(): Promise<void> {
+  if (pageStep.value === GreetUserStep.CheckGuestInfo) {
+    canGoForward.value = guestInfoPage.value && profile.value && await guestInfoPage.value.areFieldsCorrect() && profile.value !== null;
+  } else {
+    canGoForward.value = true;
+  }
 }
 
 function getNextButtonText(): string {
@@ -304,6 +318,7 @@ async function startProcess(): Promise<void> {
     await cancelModal();
     return;
   }
+  await updateCanGoForward();
   waitingForGuest.value = false;
 }
 
@@ -330,17 +345,6 @@ const nextButtonIsVisible = computed(() => {
   return true;
 });
 
-const canGoForward = computed(() => {
-  if (pageStep.value === GreetUserStep.CheckGuestInfo && guestInfoPage.value && profile.value) {
-    return (guestInfoPage.value as any).areFieldsCorrect() && profile.value !== null;
-  } else if (pageStep.value === GreetUserStep.WaitForGuest && waitingForGuest.value === false) {
-    return true;
-  } else if (pageStep.value === GreetUserStep.Summary) {
-    return true;
-  }
-  return false;
-});
-
 async function cancelModal(): Promise<boolean> {
   await greeter.value.abort();
   return modalController.dismiss(null, MsModalResult.Cancel);
@@ -355,6 +359,7 @@ async function showErrorAndRestart(message: string): Promise<void> {
 }
 
 async function nextStep(): Promise<void> {
+  await updateCanGoForward();
   if (!canGoForward.value) {
     return;
   }
@@ -385,6 +390,8 @@ async function nextStep(): Promise<void> {
 
   pageStep.value = pageStep.value + 1;
 
+  await updateCanGoForward();
+
   if (pageStep.value === GreetUserStep.ProvideHostSasCode) {
     waitingForGuest.value = true;
     const result = await greeter.value.waitGuestTrust();
@@ -411,6 +418,10 @@ async function nextStep(): Promise<void> {
 
 onMounted(async () => {
   await startProcess();
+});
+
+onUnmounted(async () => {
+  unwatchProfile();
 });
 </script>
 
