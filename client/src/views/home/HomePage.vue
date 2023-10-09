@@ -356,7 +356,6 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
   } else {
     storedDeviceDataDict.value[device.slug].lastLogin = DateTime.now();
   }
-  console.log(`Log in to ${device.organizationId} with password '${password}'`);
   await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));
 
   const result = await parsecLogin(device, password);

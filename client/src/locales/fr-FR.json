@@ -366,7 +366,7 @@
         "passwordLevelLow": "Faible",
         "passwordLevelMedium": "Moyen",
         "passwordLevelHigh": "Fort",
-        "passwordCriteria": "Assurez-vous qu'il comporte au moins 15 caractères OU au moins 8 caractères comprenant un chiffre et une lettre minuscule.",
+        "passwordCriteria": "Assurez-vous qu'il correspond à un niveau fort : éviter les répétitions, les mots trop communs et les suites.",
         "noMatch": "Ne correspondent pas"
     },
     "SasCodeChoice": {

@@ -377,8 +377,6 @@ async function nextStep(): Promise<void> {
         message = t('CreateOrganization.errors.offline');
         pageStep.value = CreateOrganizationStep.SummaryStep;
       } else if (result.error.tag === CreateOrganizationError.BadTimestamp) {
-        console.log(d(DateTime.now().toJSDate(), 'long'));
-
         message = t(
           'CreateOrganization.errors.badTimestamp', {
             clientTime: d(result.error.clientTimestamp.toJSDate(), 'long'),
