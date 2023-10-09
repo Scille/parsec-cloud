@@ -302,7 +302,7 @@ const canGoForward = asyncComputed(async () => {
 
   const currentPage = getCurrentStep();
 
-  if (pageStep.value === CreateOrganizationStep.FinishStep) {
+  if (pageStep.value === CreateOrganizationStep.FinishStep || pageStep.value === CreateOrganizationStep.SpinnerStep) {
     return true;
   } else if (pageStep.value === CreateOrganizationStep.OrgNameStep) {
     return await organizationValidator(orgName.value) === Validity.Valid;
