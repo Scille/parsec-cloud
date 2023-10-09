@@ -17,7 +17,7 @@
               {{ $t('app.name') }} v{{ versionChange.version }}
             </ion-text>
             <ion-text class="version-date body">
-              {{ $d(versionChange.date.toJSDate(), 'long') }}
+              {{ $d(versionChange.date.toJSDate(), 'short') }}
             </ion-text>
           </div>
 
