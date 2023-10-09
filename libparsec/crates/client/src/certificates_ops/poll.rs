@@ -5,8 +5,8 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    add::add_certificates_batch, store::CertificatesStoreReadGuard, AddCertificateError,
-    CertificatesOps, InvalidCertificateError, MaybeRedactedSwitch,
+    store::CertificatesStoreReadGuard, AddCertificateError, CertificatesOps,
+    InvalidCertificateError, MaybeRedactedSwitch,
 };
 use crate::certificates_ops::store::CertificatesStoreReadExt;
 
@@ -117,7 +117,9 @@ pub(super) async fn poll_server_for_new_certificates(
             std::cmp::Ordering::Greater => continue,
         };
 
-        let outcome = add_certificates_batch(ops, &store, new_offset, certificates).await?;
+        let outcome = ops
+            .add_certificates_batch(&store, new_offset, certificates)
+            .await?;
         match outcome {
             MaybeRedactedSwitch::NoSwitch => (),
             // Unlike other profiles, Outsider is required to use the redacted

@@ -22,7 +22,9 @@ use std::{collections::HashMap, sync::Arc};
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_types::prelude::*;
 
-use crate::{event_bus::EventBus, ClientConfig};
+use crate::{
+    certificates_ops::store::CertificatesStoreWriteGuard, event_bus::EventBus, ClientConfig,
+};
 
 #[derive(Debug)]
 pub struct CertificatesOps {
@@ -63,6 +65,15 @@ impl CertificatesOps {
     /// consume `self`), but will do nothing but return stopped error.
     pub(crate) async fn stop(&self) {
         self.store.stop().await;
+    }
+
+    pub(crate) async fn add_certificates_batch(
+        &self,
+        store: &CertificatesStoreWriteGuard<'_>,
+        last_index: IndexInt,
+        certificates: impl Iterator<Item = Bytes>,
+    ) -> Result<MaybeRedactedSwitch, AddCertificateError> {
+        add::add_certificates_batch(self, store, last_index, certificates).await
     }
 
     // For readability, we define the public interface here and let the actual
