@@ -21,7 +21,7 @@ describe('Check about page', () => {
     cy.get('@keys').eq(2).contains('License');
     cy.get('@keys').eq(3).contains('Project');
     cy.get('@values').eq(0).contains(/Parsec Cloud v[\da-z.-]+/);
-    cy.get('@values').eq(1).contains('Scille');
+    cy.get('@values').eq(1).contains('Parsec Cloud');
     cy.get('@values').eq(2).contains('BUSL-1.1');
     cy.get('@values').eq(3).contains('GitHub');
     cy.get('.update-container').find('#notuptodate').contains('A new version is available.');
