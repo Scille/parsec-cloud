@@ -266,7 +266,9 @@ const unwatchProfile = watch(profile, async () => {
 });
 
 async function updateCanGoForward(): Promise<void> {
-  if (pageStep.value === GreetUserStep.CheckGuestInfo) {
+  if (pageStep.value === GreetUserStep.WaitForGuest && waitingForGuest.value === true) {
+    canGoForward.value = false;
+  } else if (pageStep.value === GreetUserStep.CheckGuestInfo) {
     canGoForward.value = guestInfoPage.value && profile.value && await guestInfoPage.value.areFieldsCorrect() && profile.value !== null;
   } else {
     canGoForward.value = true;
@@ -311,15 +313,24 @@ async function startProcess(): Promise<void> {
   waitingForGuest.value = true;
   const result = await greeter.value.startGreet(props.invitation.token);
   if (!result.ok) {
-    await notificationCenter.showToast(new Notification({
+    notificationCenter.showToast(new Notification({
       message: t('UsersPage.greet.errors.startFailed'),
       level: NotificationLevel.Error,
     }));
     await cancelModal();
     return;
   }
-  await updateCanGoForward();
+  const waitResult = await greeter.value.initialWaitGuest();
+  if (!waitResult.ok) {
+    notificationCenter.showToast(new Notification({
+      message: t('UsersPage.greet.errors.startFailed'),
+      level: NotificationLevel.Error,
+    }));
+    await cancelModal();
+    return;
+  }
   waitingForGuest.value = false;
+  await updateCanGoForward();
 }
 
 function getStepperIndex(): number {
@@ -378,12 +389,6 @@ async function nextStep(): Promise<void> {
     );
     if (!result.ok) {
       await showErrorAndRestart(t('UsersPage.greet.errors.createUserFailed'));
-      return;
-    }
-  } else if (pageStep.value === GreetUserStep.WaitForGuest) {
-    const result = await greeter.value.initialWaitGuest();
-    if (!result.ok) {
-      await showErrorAndRestart(t('UsersPage.greet.errors.startFailed'));
       return;
     }
   }
