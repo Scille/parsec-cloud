@@ -144,8 +144,8 @@ const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarM
 const userInfo: Ref<ClientInfo | null> = ref(null);
 
 const unwatchRoute = watch(currentRoute,  async (newRoute, _oldRoute) => {
-  if (newRoute.params.workspaceId) {
-    const result = await getWorkspaceName(currentRoute.params.workspaceId as WorkspaceID);
+  if (newRoute.query && newRoute.query.workspaceId) {
+    const result = await getWorkspaceName(newRoute.query.workspaceId as WorkspaceID);
     if (result.ok) {
       workspaceName.value = result.value;
     } else {

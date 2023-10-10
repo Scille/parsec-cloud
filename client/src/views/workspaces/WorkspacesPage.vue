@@ -123,7 +123,6 @@ import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
 import WorkspaceContextMenu from '@/views/workspaces/WorkspaceContextMenu.vue';
 import { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
-import CreateWorkspaceModal from '@/views/workspaces/CreateWorkspaceModal.vue';
 import MsSelect from '@/components/core/ms-select/MsSelect.vue';
 import MsActionBarButton from '@/components/core/ms-action-bar/MsActionBarButton.vue';
 import { MsSelectChangeEvent, MsSelectOption } from '@/components/core/ms-select/MsSelectOption';
@@ -132,13 +131,15 @@ import { DisplayState } from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import { useI18n } from 'vue-i18n';
 import { ref, Ref, onMounted, computed, inject } from 'vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
-import { routerNavigateTo } from '@/router';
+import { routerNavigateToWorkspace } from '@/router';
 import {
   WorkspaceInfo,
   listWorkspaces as parsecListWorkspaces,
   createWorkspace as parsecCreateWorkspace,
 } from '@/parsec';
 import { NotificationCenter, Notification, NotificationKey, NotificationLevel } from '@/services/notificationCenter';
+import { getText } from '@/components/core/ms-modal/MsTextInputModal.vue';
+import { workspaceNameValidator } from '@/common/validators';
 
 const { t } = useI18n();
 const sortBy = ref('name');
@@ -187,16 +188,16 @@ function onMsSelectChange(event: MsSelectChangeEvent): void {
 }
 
 async function openCreateWorkspaceModal(): Promise<void> {
-  const modal = await modalController.create({
-    component: CreateWorkspaceModal,
-    cssClass: 'create-workspace-modal',
+  const workspaceName = await getText({
+    title: t('WorkspacesPage.CreateWorkspaceModal.pageTitle'),
+    trim: true,
+    validator: workspaceNameValidator,
+    inputLabel: t('WorkspacesPage.CreateWorkspaceModal.label'),
+    placeholder: t('WorkspacesPage.CreateWorkspaceModal.placeholder'),
+    okButtonText: t('WorkspacesPage.CreateWorkspaceModal.create'),
   });
-  modal.present();
 
-  const { data, role } = await modal.onWillDismiss();
-
-  if (role === 'confirm') {
-    const workspaceName = data;
+  if (workspaceName) {
     const result = await parsecCreateWorkspace(workspaceName);
     if (result.ok) {
       notificationCenter.showToast(new Notification({
@@ -214,7 +215,7 @@ async function openCreateWorkspaceModal(): Promise<void> {
 }
 
 function onWorkspaceClick(_event: Event, workspace: WorkspaceInfo): void {
-  routerNavigateTo('folder', {workspaceId: workspace.id}, {path: '/'});
+  routerNavigateToWorkspace(workspace.id);
 }
 
 async function onWorkspaceShareClick(_: Event, workspace: WorkspaceInfo): Promise<void> {

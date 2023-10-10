@@ -1,6 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { parseBackendAddr, BackendAddrType, isValidUserName, isValidEmail, isValidDeviceName, isValidWorkspaceName } from '@/parsec';
+import {
+  parseBackendAddr,
+  BackendAddrType,
+  isValidUserName,
+  isValidEmail,
+  isValidDeviceName,
+  isValidWorkspaceName,
+  isValidEntryName,
+} from '@/parsec';
 
 export enum Validity {
   Invalid = 0,
@@ -8,7 +16,7 @@ export enum Validity {
   Valid = 2,
 }
 
-interface IValidator {
+export interface IValidator {
   (value: string): Promise<Validity>
 }
 
@@ -45,6 +53,14 @@ export const workspaceNameValidator: IValidator = async function(value: string) 
     return Validity.Intermediate;
   }
   return await isValidWorkspaceName(value) ? Validity.Valid : Validity.Invalid;
+};
+
+export const entryNameValidator: IValidator = async function(value: string) {
+  value = value.trim();
+  if (value.length === 0) {
+    return Validity.Intermediate;
+  }
+  return await isValidEntryName(value) ? Validity.Valid : Validity.Invalid;
 };
 
 export const backendAddrValidator: IValidator = async function(value: string) {

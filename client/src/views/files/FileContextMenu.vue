@@ -45,6 +45,17 @@
 
         <ion-item
           button
+          @click="onClick(FileAction.Delete)"
+          class="group-item"
+        >
+          <ion-icon :icon="trashBin" />
+          <ion-label class="body">
+            {{ $t('FoldersPage.fileContextMenu.actionDelete') }}
+          </ion-label>
+        </ion-item>
+
+        <ion-item
+          button
           @click="onClick(FileAction.OpenInExplorer)"
           class="group-item"
         >
@@ -115,6 +126,7 @@ export enum FileAction {
   Rename,
   MoveTo,
   MakeACopy,
+  Delete,
   OpenInExplorer,
   ShowHistory,
   Download,
@@ -134,10 +146,11 @@ import {
   download,
   time,
   open,
+  trashBin,
 } from 'ionicons/icons';
 
-function onClick(action: FileAction): Promise<boolean> {
-  return popoverController.dismiss({'action': action});
+async function onClick(action: FileAction): Promise<boolean> {
+  return await popoverController.dismiss({'action': action});
 }
 </script>
 

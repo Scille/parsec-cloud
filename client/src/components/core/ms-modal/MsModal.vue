@@ -150,7 +150,7 @@ import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 const modal: Ref<HTMLDivElement | null> = ref(null);
 const props = defineProps<MsModalConfig>();
 defineEmits<{
-  (e: 'onEnterKeyup', value: string): void
+  (e: 'onEnterKeyup'): void
 }>();
 
 onMounted(() => {

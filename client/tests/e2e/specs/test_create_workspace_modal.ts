@@ -12,7 +12,7 @@ describe('Check create workspace modal', () => {
 
   it('Open create workspace modal', () => {
     cy.get('#button-new-workspace').click();
-    cy.get('.create-workspace-modal').should('exist');
+    cy.get('.text-input-modal').should('exist');
     cy.get('.ms-modal-header__title').contains('Create a new workspace');
     cy.get('.ion-page').find('.closeBtn').should('exist');
     cy.get('ion-input').should('be.visible');
@@ -23,11 +23,11 @@ describe('Check create workspace modal', () => {
 
   it('Create workspace', () => {
     cy.get('#button-new-workspace').click();
-    cy.get('.create-workspace-modal').should('exist');
+    cy.get('.text-input-modal').should('exist');
     cy.get('.input').eq(0).find('input').type('MyWorkspace');
     cy.get('#next-button').should('not.be.disabled');
     cy.get('#next-button').click();
-    cy.get('.create-workspace-modal').should('not.exist');
+    cy.get('.text-input-modal').should('not.exist');
   });
 
   it('Close modal', () => {

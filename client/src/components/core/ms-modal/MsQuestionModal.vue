@@ -8,6 +8,7 @@
     :close-button-enabled="false"
     :cancel-button="{disabled: false, label: $t('QuestionModal.no'), onClick: onNo}"
     :confirm-button="{disabled: false, label: $t('QuestionModal.yes'), onClick: onYes}"
+    @on-enter-keyup="onYes"
   />
 </template>
 

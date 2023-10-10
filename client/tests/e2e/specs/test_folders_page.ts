@@ -35,7 +35,9 @@ describe('Check folders page', () => {
 
   it('Create new folder', () => {
     cy.get('#button-new-folder').contains('New folder').click();
-    cy.get('@consoleLog').should('have.been.calledWith', 'Create folder clicked');
+    cy.get('.text-input-modal').find('ion-input').find('input').type('MyFolder');
+    cy.get('.text-input-modal').find('#next-button').click();
+    cy.get('@consoleLog').should('have.been.calledWith', 'New folder MyFolder created');
   });
 
   it('Import files', () => {
@@ -45,17 +47,18 @@ describe('Check folders page', () => {
 
   function checkMenuItems(): void {
     cy.get('#file-context-menu').should('be.visible');
-    cy.get('#file-context-menu').find('ion-item').as('menuItems').should('have.length', 10);
+    cy.get('#file-context-menu').find('ion-item').as('menuItems').should('have.length', 11);
     cy.get('@menuItems').eq(0).contains('Manage file');
     cy.get('@menuItems').eq(1).contains('Rename');
     cy.get('@menuItems').eq(2).contains('Move to');
     cy.get('@menuItems').eq(3).contains('Make a copy');
-    cy.get('@menuItems').eq(4).contains('Open in explorer');
-    cy.get('@menuItems').eq(5).contains('History');
-    cy.get('@menuItems').eq(6).contains('Download');
-    cy.get('@menuItems').eq(7).contains('Details');
-    cy.get('@menuItems').eq(8).contains('Collaboration');
-    cy.get('@menuItems').eq(9).contains('Copy link');
+    cy.get('@menuItems').eq(4).contains('Delete');
+    cy.get('@menuItems').eq(5).contains('Open in explorer');
+    cy.get('@menuItems').eq(6).contains('History');
+    cy.get('@menuItems').eq(7).contains('Download');
+    cy.get('@menuItems').eq(8).contains('Details');
+    cy.get('@menuItems').eq(9).contains('Collaboration');
+    cy.get('@menuItems').eq(10).contains('Copy link');
   }
 
   it('Open file menu in list view', () => {
@@ -85,7 +88,7 @@ describe('Check folders page', () => {
     cy.get('.file-list-item').eq(0).find('ion-checkbox').click();
     cy.get('.file-list-item').eq(0).find('ion-checkbox').should('not.have.class', 'checkbox-checked');
     cy.get('.file-list-item').eq(1).find('ion-checkbox').should('not.be.visible');
-    cy.get('.folder-footer').contains('2 items');
+    cy.get('.folder-footer').contains('3 items');
   });
 
   it('Tests select all files', () => {
@@ -93,7 +96,7 @@ describe('Check folders page', () => {
     // Select all
     cy.get('.folder-list-header').find('ion-checkbox').click();
     cy.get('.folder-list-header').find('ion-checkbox').should('have.class', 'checkbox-checked');
-    cy.get('.folder-footer').contains('2 selected items');
+    cy.get('.folder-footer').contains('3 selected items');
     cy.get('.file-list-item').eq(0).find('ion-checkbox').should('have.class', 'checkbox-checked');
     cy.get('.file-list-item').eq(1).find('ion-checkbox').should('have.class', 'checkbox-checked');
     // Unselect all
@@ -101,15 +104,15 @@ describe('Check folders page', () => {
     cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
     cy.get('.file-list-item').eq(0).find('ion-checkbox').should('not.be.visible');
     cy.get('.file-list-item').eq(1).find('ion-checkbox').should('not.be.visible');
-    cy.get('.folder-footer').contains('2 items');
+    cy.get('.folder-footer').contains('3 items');
 
     // Select all, unselect first file
     cy.get('.folder-list-header').find('ion-checkbox').click();
     cy.get('.folder-list-header').find('ion-checkbox').should('have.class', 'checkbox-checked');
-    cy.get('.folder-footer').contains('2 selected items');
+    cy.get('.folder-footer').contains('3 selected items');
     cy.get('.file-list-item').eq(0).find('ion-checkbox').click();
     cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
     cy.get('.file-list-item').eq(0).find('ion-checkbox').should('not.have.class', 'checkbox-checked');
-    cy.get('.folder-footer').contains('1 selected item');
+    cy.get('.folder-footer').contains('2 selected item');
   });
 });

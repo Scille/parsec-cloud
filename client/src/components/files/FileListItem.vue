@@ -42,27 +42,31 @@
     </div>
 
     <!-- updated by -->
-    <div class="file-updatedBy">
+    <!-- Can't get the information right now, maybe later -->
+    <div
+      class="file-updatedBy"
+      v-if="false"
+    >
       <user-avatar-name
-        :user-avatar="file.updater"
-        :user-name="file.updater"
+        :user-avatar="file.id"
+        :user-name="file.id"
       />
     </div>
 
     <!-- last update -->
     <div class="file-lastUpdate">
       <ion-label class="label-last-update cell">
-        {{ timeSince(file.lastUpdate, '--', 'short') }}
+        {{ timeSince(file.updated, '--', 'short') }}
       </ion-label>
     </div>
 
     <!-- file size -->
     <div class="file-size">
       <ion-label
-        v-show="file.type === 'file'"
+        v-show="file.isFile()"
         class="label-size cell"
       >
-        {{ fileSize(file.size) }}
+        {{ fileSize((file as EntryStatFile).size) }}
       </ion-label>
     </div>
 
@@ -94,21 +98,21 @@ import {
 import { ref, inject } from 'vue';
 import { IonIcon, IonButton, IonItem, IonLabel, IonCheckbox } from '@ionic/vue';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
-import { MockFile } from '@/common/mocks';
+import { EntryStat, EntryStatFile } from '@/parsec';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 
 const isHovered = ref(false);
 const isSelected = ref(false);
 
 const props = defineProps<{
-  file: MockFile
+  file: EntryStat
   showCheckbox: boolean
 }>();
 
 defineEmits<{
-  (e: 'click', event: Event, file: MockFile): void
-  (e: 'menuClick', event: Event, file: MockFile): void
-  (e: 'select', file: MockFile, selected: boolean): void
+  (e: 'click', event: Event, file: EntryStat): void
+  (e: 'menuClick', event: Event, file: EntryStat): void
+  (e: 'select', file: EntryStat, selected: boolean): void
 }>();
 
 defineExpose({
@@ -121,14 +125,14 @@ defineExpose({
 const { timeSince, fileSize } = inject(FormattersKey)! as Formatters;
 
 function getFileIcon(): string {
-  if (props.file.type === 'folder') {
+  if (!props.file.isFile()) {
     return folder;
   }
   return document;
 }
 
 function isFileSynced(): boolean {
-  return true;
+  return !props.file.needSync;
 }
 </script>
 

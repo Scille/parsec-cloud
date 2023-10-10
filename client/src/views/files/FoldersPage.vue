@@ -108,7 +108,7 @@
               <ion-label class="folder-list-header__label label-space" />
             </ion-list-header>
             <file-list-item
-              v-for="child in folderInfo.children"
+              v-for="child in children"
               :key="child.id"
               :file="child"
               :show-checkbox="selectedFilesCount > 0 || allFilesSelected"
@@ -125,7 +125,7 @@
         >
           <ion-item
             class="folder-grid-item"
-            v-for="child in folderInfo.children"
+            v-for="child in children"
             :key="child.id"
           >
             <file-card
@@ -143,7 +143,8 @@
             class="text title-h5"
             v-if="selectedFilesCount === 0"
           >
-            {{ $t('FoldersPage.itemCount', { count: folderInfo.children.length }, folderInfo.children.length) }}
+            {{ $t('FoldersPage.itemCount', { count: children.length }, children.length)
+            }}
           </ion-text>
           <ion-text
             class="text title-h5"
@@ -195,8 +196,7 @@ import {
   informationCircle,
 } from 'ionicons/icons';
 import { useRoute } from 'vue-router';
-import { computed, ref, Ref } from 'vue';
-import { MockFile, pathInfo } from '@/common/mocks';
+import { computed, ref, Ref, inject, watch, onUnmounted, onMounted } from 'vue';
 import MsActionBarButton from '@/components/core/ms-action-bar/MsActionBarButton.vue';
 import MsGridListToggle from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import { DisplayState } from '@/components/core/ms-toggle/MsGridListToggle.vue';
@@ -207,51 +207,113 @@ import { routerNavigateTo } from '@/router';
 import { FileAction } from '@/views/files/FileContextMenu.vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import FileUploadModal from '@/views/files/FileUploadModal.vue';
+import { NotificationCenter, Notification, NotificationKey, NotificationLevel } from '@/services/notificationCenter';
+import * as parsec from '@/parsec';
+import { join as pathJoin } from '@/common/path';
+import { useI18n } from 'vue-i18n';
+import { getText } from '@/components/core/ms-modal/MsTextInputModal.vue';
+import { entryNameValidator } from '@/common/validators';
+import { Answer, askQuestion } from '@/components/core/ms-modal/MsQuestionModal.vue';
 
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 const fileItemRefs: Ref<typeof FileListItem[]> = ref([]);
 const allFilesSelected = ref(false);
 const currentRoute = useRoute();
-
-// Use computed so the variables will automatically update when the route changes
-const path = computed(() => {
-  return currentRoute.query.path ?? '/';
+const unwatchRoute = watch(currentRoute, async (newRoute) => {
+  if (newRoute.query && newRoute.query.path !== currentPath.value) {
+    currentPath.value = newRoute.query.path as string;
+  }
+  if (currentPath.value) {
+    await listFolder();
+  }
 });
-const workspaceId = computed(() => {
-  return currentRoute.params.workspaceId;
+const currentPath = ref('/');
+const workspaceHandle = computed(() => {
+  return currentRoute.params.workspaceHandle;
 });
-const folderInfo = computed((): MockFile => {
-  return pathInfo(path.value.toString());
-});
+const folderInfo: Ref<parsec.EntryStatFolder | null> = ref(null) ;
+const children: Ref<Array<parsec.EntryStat>> = ref([]);
 const selectedFilesCount = computed(() => {
   const count = fileItemRefs.value.filter((item) => item.isSelected).length;
   return count;
 });
 const displayView = ref(DisplayState.List);
+const { t } = useI18n();
 
-function onFileSelect(_file: MockFile, _selected: boolean): void {
+onMounted(async () => {
+  await listFolder();
+});
+
+onUnmounted(async () => {
+  unwatchRoute();
+});
+
+async function listFolder(): Promise<void> {
+  const result = await parsec.entryStat(currentPath.value);
+  if (result.ok) {
+    folderInfo.value = result.value as parsec.EntryStatFolder;
+    children.value = [];
+    for (const childName of (result.value as parsec.EntryStatFolder).children) {
+      const childPath = pathJoin(currentPath.value, childName);
+      const fileResult = await parsec.entryStat(childPath);
+      if (fileResult.ok) {
+        children.value.push(fileResult.value);
+      }
+    }
+  } else {
+    notificationCenter.showToast(new Notification({
+      message: t('FoldersPage.errors.listFailed', {path: currentPath.value}),
+      level: NotificationLevel.Error,
+    }));
+  }
+}
+
+function onFileSelect(_file: parsec.EntryStat, _selected: boolean): void {
   console.log('File Selected');
   if (selectedFilesCount.value === 0) {
     allFilesSelected.value = false;
     selectAllFiles(false);
   }
   // check global checkbox if all files are selected
-  if (selectedFilesCount.value === folderInfo.value.children.length) {
+  if (selectedFilesCount.value === children.value.length) {
     allFilesSelected.value = true;
   } else {
     allFilesSelected.value = false;
   }
 }
 
-function onFileClick(_event: Event, file: MockFile): void {
-  console.log('File Click');
-  if (file.type === 'folder') {
-    const newPath = (path.value.toString().endsWith('/')) ? `${path.value}${file.name}` : `${path.value}/${file.name}`;
-    routerNavigateTo('folder', {workspaceId: workspaceId.value}, {path: newPath});
+function onFileClick(_event: Event, file: parsec.EntryStat): void {
+  if (!file.isFile()) {
+    const newPath = pathJoin(currentPath.value, file.name);
+    routerNavigateTo('folder', {workspaceHandle: workspaceHandle.value}, {path: newPath, workspaceId: currentRoute.query.workspaceId});
   }
 }
 
-function createFolder(): void {
-  console.log('Create folder clicked');
+async function createFolder(): Promise<void> {
+  const folderName = await getText({
+    title: t('FoldersPage.CreateFolderModal.title'),
+    trim: true,
+    validator: entryNameValidator,
+    inputLabel: t('FoldersPage.CreateFolderModal.label'),
+    placeholder: t('FoldersPage.CreateFolderModal.placeholder'),
+    okButtonText: t('FoldersPage.CreateFolderModal.create'),
+  });
+
+  if (!folderName) {
+    return;
+  }
+  const folderPath = pathJoin(currentPath.value, folderName);
+  const result = await parsec.createFolder(folderPath);
+  if (!result.ok) {
+    notificationCenter.showToast(new Notification({
+      message: t('FoldersPage.errors.createFolderFailed', {name: folderName}),
+      level: NotificationLevel.Error,
+    }));
+  } else {
+    console.log(`New folder ${folderName} created`);
+  }
+  await listFolder();
 }
 
 async function importFiles(): Promise<void> {
@@ -259,7 +321,7 @@ async function importFiles(): Promise<void> {
     component: FileUploadModal,
     cssClass: 'file-upload-modal',
     componentProps: {
-      currentPath: path.value.toString(),
+      currentPath: currentPath.value.toString(),
     },
   });
   await modal.present();
@@ -277,60 +339,102 @@ function selectAllFiles(checked: boolean): void {
   }
 }
 
-function actionOnSelectedFile(action: (file: MockFile) => void): void {
+async function actionOnSelectedFile(action: (file: parsec.EntryStat) => Promise<void>): Promise<void> {
   const selected = fileItemRefs.value.find((item) => item.isSelected);
 
   if (!selected) {
     return;
   }
-  action(selected.props.file);
+  await action(selected.props.file);
 }
 
-function actionOnSelectedFiles(action: (file: MockFile) => void): void {
+async function actionOnSelectedFiles(action: (file: parsec.EntryStat) => Promise<void>): Promise<void> {
   const selected = fileItemRefs.value.filter((item) => item.isSelected);
 
   for (const item of selected) {
-    action(item.props.file);
+    await action(item.props.file);
   }
 }
 
-function renameFile(file: MockFile): void {
-  console.log('Rename file', file);
+async function renameFile(file: parsec.EntryStat): Promise<void> {
+  const newName = await getText({
+    title: file.isFile() ? t('FoldersPage.RenameModal.fileTitle') : t('FoldersPage.RenameModal.folderTitle'),
+    trim: true,
+    validator: entryNameValidator,
+    inputLabel: file.isFile() ? t('FoldersPage.RenameModal.fileLabel') : t('FoldersPage.RenameModal.folderLabel'),
+    placeholder: file.isFile() ? t('FoldersPage.RenameModal.filePlaceholder') : t('FoldersPage.RenameModal.folderPlaceholder'),
+    okButtonText: t('FoldersPage.RenameModal.rename'),
+    defaultValue: file.name,
+  });
+
+  if (!newName) {
+    return;
+  }
+  const filePath = pathJoin(currentPath.value, file.name);
+  const result = await parsec.rename(filePath, newName);
+  if (!result.ok) {
+    notificationCenter.showToast(new Notification({
+      message: t('FoldersPage.errors.renameFailed', {name: file.name}),
+      level: NotificationLevel.Error,
+    }));
+  } else {
+    console.log(`File ${file.name} renamed to ${newName}`);
+  }
+  await listFolder();
 }
 
-function copyLink(file: MockFile): void {
+async function copyLink(file: parsec.EntryStat): Promise<void> {
   console.log('Get file link', file);
 }
 
-function deleteFile(file: MockFile): void {
-  console.log('Delete file', file);
+async function deleteFile(file: parsec.EntryStat): Promise<void> {
+  const answer = await askQuestion(
+    file.isFile() ?
+      t('FoldersPage.deleteOneFileQuestion', {name: file.name}) :
+      t('FoldersPage.deleteOneFolderQuestion', {name: file.name}),
+  );
+
+  if (answer === Answer.No) {
+    return;
+  }
+  const filePath = pathJoin(currentPath.value, file.name);
+  const result = await parsec.deleteFile(filePath);
+  if (!result.ok) {
+    notificationCenter.showToast(new Notification({
+      message: t('FoldersPage.errors.deleteFailed', {name: file.name}),
+      level: NotificationLevel.Error,
+    }));
+  } else {
+    console.log(`File ${file.name} deleted`);
+  }
+  await listFolder();
 }
 
-function moveTo(file: MockFile): void {
+async function moveTo(file: parsec.EntryStat): Promise<void> {
   console.log('Move file', file);
 }
 
-function showDetails(file: MockFile): void {
+async function showDetails(file: parsec.EntryStat): Promise<void> {
   console.log('Show details', file);
 }
 
-function makeACopy(file: MockFile): void {
+async function makeACopy(file: parsec.EntryStat): Promise<void> {
   console.log('Make a copy', file);
 }
 
-function download(file: MockFile): void {
+async function download(file: parsec.EntryStat): Promise<void> {
   console.log('Download', file);
 }
 
-function showHistory(file: MockFile): void {
+async function showHistory(file: parsec.EntryStat): Promise<void> {
   console.log('Show history', file);
 }
 
-function openInExplorer(file: MockFile): void {
+async function openInExplorer(file: parsec.EntryStat): Promise<void> {
   console.log('Open in explorer', file);
 }
 
-async function openFileContextMenu(event: Event, file: MockFile): Promise<void> {
+async function openFileContextMenu(event: Event, file: parsec.EntryStat): Promise<void> {
   console.log('File Menu');
   const popover = await popoverController
     .create({
@@ -350,7 +454,7 @@ async function openFileContextMenu(event: Event, file: MockFile): Promise<void> 
     return;
   }
 
-  const actions = new Map<FileAction, (file: MockFile) => void>([
+  const actions = new Map<FileAction, (file: parsec.EntryStat) => Promise<void>>([
     [FileAction.Rename, renameFile],
     [FileAction.MoveTo, moveTo],
     [FileAction.MakeACopy, makeACopy],
@@ -359,15 +463,16 @@ async function openFileContextMenu(event: Event, file: MockFile): Promise<void> 
     [FileAction.Download, download],
     [FileAction.ShowDetails, showDetails],
     [FileAction.CopyLink, copyLink],
+    [FileAction.Delete, deleteFile],
   ]);
 
   const fn = actions.get(data.action);
   if (fn) {
-    fn(file);
+    await fn(file);
   }
 }
 
-function resetSelection(): void {
+async function resetSelection(): Promise<void> {
   fileItemRefs.value = [];
   allFilesSelected.value = false;
 }
