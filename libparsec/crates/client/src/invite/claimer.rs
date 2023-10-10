@@ -482,11 +482,8 @@ impl UserClaimInProgress3Ctx {
 
         let addr = self.0.cmds.addr();
 
-        let organization_addr = BackendOrganizationAddr::new(
-            addr.clone(),
-            addr.organization_id().clone(),
-            root_verify_key,
-        );
+        let organization_addr =
+            BackendOrganizationAddr::new(addr, addr.organization_id().clone(), root_verify_key);
 
         let new_local_device = Arc::new(LocalDevice::generate_new_device(
             organization_addr,
@@ -547,11 +544,8 @@ impl DeviceClaimInProgress3Ctx {
 
         let addr = self.0.cmds.addr();
 
-        let organization_addr = BackendOrganizationAddr::new(
-            addr.clone(),
-            addr.organization_id().clone(),
-            root_verify_key,
-        );
+        let organization_addr =
+            BackendOrganizationAddr::new(addr, addr.organization_id().clone(), root_verify_key);
 
         let new_local_device = Arc::new(LocalDevice {
             organization_addr,

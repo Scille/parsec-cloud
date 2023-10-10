@@ -604,7 +604,7 @@ pub async fn client_new_user_invitation(
 
     Ok(NewInvitationInfo {
         addr: BackendInvitationAddr::new(
-            client.organization_addr().to_owned(),
+            client.organization_addr(),
             client.organization_id().to_owned(),
             InvitationType::User,
             token,
@@ -628,7 +628,7 @@ pub async fn client_new_device_invitation(
 
     Ok(NewInvitationInfo {
         addr: BackendInvitationAddr::new(
-            client.organization_addr().to_owned(),
+            client.organization_addr(),
             client.organization_id().to_owned(),
             InvitationType::Device,
             token,
