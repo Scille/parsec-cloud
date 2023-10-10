@@ -651,18 +651,80 @@ pub async fn client_delete_invitation(
     client.delete_invitation(token).await
 }
 
-pub use libparsec_client::InviteListItem;
+// pub use libparsec_client::InviteListItem;
+
+pub enum InviteListItem {
+    User {
+        addr: BackendInvitationAddr,
+        token: InvitationToken,
+        created_on: DateTime,
+        claimer_email: String,
+        status: InvitationStatus,
+    },
+    Device {
+        addr: BackendInvitationAddr,
+        token: InvitationToken,
+        created_on: DateTime,
+        status: InvitationStatus,
+    },
+}
 
 pub async fn client_list_invitations(
     client: Handle,
-) -> Result<Vec<libparsec_client::InviteListItem>, ListInvitationsError> {
+) -> Result<Vec<InviteListItem>, ListInvitationsError> {
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
     })
     .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
 
-    client.list_invitations().await
+    let items = client
+        .list_invitations()
+        .await?
+        .into_iter()
+        .map(|item| match item {
+            libparsec_client::InviteListItem::User {
+                claimer_email,
+                created_on,
+                status,
+                token,
+            } => {
+                let addr = BackendInvitationAddr::new(
+                    client.organization_addr(),
+                    client.organization_id().to_owned(),
+                    InvitationType::User,
+                    token,
+                );
+                InviteListItem::User {
+                    addr,
+                    claimer_email,
+                    created_on,
+                    status,
+                    token,
+                }
+            }
+            libparsec_client::InviteListItem::Device {
+                created_on,
+                status,
+                token,
+            } => {
+                let addr = BackendInvitationAddr::new(
+                    client.organization_addr(),
+                    client.organization_id().to_owned(),
+                    InvitationType::Device,
+                    token,
+                );
+                InviteListItem::Device {
+                    addr,
+                    created_on,
+                    status,
+                    token,
+                }
+            }
+        })
+        .collect();
+
+    Ok(items)
 }
 
 #[derive(Debug, thiserror::Error)]

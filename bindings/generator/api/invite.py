@@ -374,12 +374,14 @@ async def client_delete_invitation(
 
 class InviteListItem(Variant):
     class User:
+        addr: BackendInvitationAddr
         token: InvitationToken
         created_on: DateTime
         claimer_email: str
         status: InvitationStatus
 
     class Device:
+        addr: BackendInvitationAddr
         token: InvitationToken
         created_on: DateTime
         status: InvitationStatus
