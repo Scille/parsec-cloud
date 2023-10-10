@@ -250,3 +250,8 @@ impl CertificatesOps {
         realm_creation::ensure_realms_created(self, realms_ids).await
     }
 }
+
+#[cfg(test)]
+#[path = "../../tests/unit/certificates_ops/mod.rs"]
+#[allow(clippy::unwrap_used)]
+mod tests;
