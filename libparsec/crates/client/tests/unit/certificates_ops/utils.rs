@@ -6,7 +6,10 @@ use libparsec_client_connection::{AuthenticatedCmds, ProxyConfig};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::{certificates_ops::CertificatesOps, ClientConfig, EventBus, WorkspaceStorageCacheSize};
+use crate::{
+    certificates_ops::{store::CertificatesStore, CertificatesOps},
+    ClientConfig, EventBus, WorkspaceStorageCacheSize,
+};
 
 pub(crate) async fn certificates_ops_factory(
     env: &TestbedEnv,
@@ -24,6 +27,15 @@ pub(crate) async fn certificates_ops_factory(
         AuthenticatedCmds::new(&config.config_dir, device.clone(), config.proxy.clone()).unwrap(),
     );
     CertificatesOps::start(config.clone(), device.clone(), event_bus, cmds)
+        .await
+        .unwrap()
+}
+
+pub(crate) async fn certificates_store_factory(
+    env: &TestbedEnv,
+    device: &Arc<LocalDevice>,
+) -> CertificatesStore {
+    CertificatesStore::start(&env.discriminant_dir, device.clone())
         .await
         .unwrap()
 }
