@@ -30,7 +30,6 @@ fn borrow_client(client: Handle) -> anyhow::Result<Arc<libparsec_client::Client>
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
     })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))
 }
 
 /*
@@ -39,8 +38,6 @@ fn borrow_client(client: Handle) -> anyhow::Result<Arc<libparsec_client::Client>
 
 #[derive(Debug, thiserror::Error)]
 pub enum ClientStartError {
-    #[error("This client is already running")]
-    DeviceAlreadyRunning,
     #[error(transparent)]
     LoadDeviceInvalidPath(anyhow::Error),
     #[error("Cannot deserialize file content")]
@@ -92,7 +89,7 @@ pub async fn client_start(
     let slug = device.slug();
 
     enum RegisterFailed {
-        AlreadyRegistered,
+        AlreadyRegistered(Handle),
         ConcurrentRegister(EventListener),
     }
 
@@ -102,9 +99,9 @@ pub async fn client_start(
                 slug: slug.clone(),
                 to_wake_on_done: vec![],
             },
-            |item| match item {
+            |handle, item| match item {
                 HandleItem::Client { client, .. } if client.device_slug() == slug => {
-                    Err(RegisterFailed::AlreadyRegistered)
+                    Err(RegisterFailed::AlreadyRegistered(handle))
                 }
                 HandleItem::StartingClient {
                     slug: x_slug,
@@ -121,8 +118,9 @@ pub async fn client_start(
 
         match outcome {
             Ok(initializing) => break initializing,
-            Err(RegisterFailed::AlreadyRegistered) => {
-                return Err(ClientStartError::DeviceAlreadyRunning)
+            Err(RegisterFailed::AlreadyRegistered(handle)) => {
+                // Go idempotent here
+                return Ok(handle);
             }
             // Wait for concurrent operation to finish before retrying
             Err(RegisterFailed::ConcurrentRegister(listener)) => listener.await,
@@ -164,8 +162,7 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
         // On top of that is simplify the start logic (given it guarantees nothing will
         // concurrently close the handle)
         invalid => Err(invalid),
-    })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+    })?;
 
     // Note stopping the client also stop all it related workspace ops
     client.stop().await;

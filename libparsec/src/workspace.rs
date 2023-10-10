@@ -24,7 +24,6 @@ fn borrow_workspace(
         HandleItem::Workspace { workspace_ops, .. } => Some(workspace_ops.clone()),
         _ => None,
     })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))
 }
 
 /*
@@ -35,11 +34,6 @@ fn borrow_workspace(
 pub enum ClientStartWorkspaceError {
     #[error("Cannot start workspace: no access")]
     NoAccess,
-    // We cannot just be idempotent and return the existing handle here: this is because
-    // the routine that originally started the workspace can arbitrary decide to stop it,
-    // at which point it becomes illegal to use the handle (resulting in an internal error)
-    #[error("Workspace already started")]
-    AlreadyStarted,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -64,7 +58,7 @@ pub async fn client_start_workspace(
     // 1. Check if the workspace isn't already started (or starting)
 
     enum RegisterFailed {
-        AlreadyRegistered,
+        AlreadyRegistered(Handle),
         ConcurrentRegister(EventListener),
     }
     let initializing = loop {
@@ -74,12 +68,12 @@ pub async fn client_start_workspace(
                 realm_id,
                 to_wake_on_done: vec![],
             },
-            |item| match item {
+            |handle, item| match item {
                 HandleItem::Workspace {
                     client: x_client,
                     workspace_ops: x_workspace_ops,
                 } if *x_client == client && x_workspace_ops.realm_id() == realm_id => {
-                    Err(RegisterFailed::AlreadyRegistered)
+                    Err(RegisterFailed::AlreadyRegistered(handle))
                 }
                 HandleItem::StartingWorkspace {
                     client: x_client,
@@ -97,8 +91,9 @@ pub async fn client_start_workspace(
 
         match outcome {
             Ok(initializing) => break initializing,
-            Err(RegisterFailed::AlreadyRegistered) => {
-                return Err(ClientStartWorkspaceError::AlreadyStarted)
+            Err(RegisterFailed::AlreadyRegistered(handle)) => {
+                // Go idempotent here
+                return Ok(handle);
             }
             // Wait for concurrent operation to finish before retrying
             Err(RegisterFailed::ConcurrentRegister(listener)) => listener.await,
@@ -111,8 +106,7 @@ pub async fn client_start_workspace(
     let client = borrow_from_handle(client_handle, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
-    })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+    })?;
 
     let workspace_ops = client.start_workspace(realm_id).await?;
 
@@ -148,16 +142,11 @@ pub async fn workspace_stop(workspace: Handle) -> Result<(), WorkspaceStopError>
         // On top of that is simplify the start logic (given it guarantees nothing will
         // concurrently close the handle)
         invalid => Err(invalid),
-    })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+    })?;
 
     let client = borrow_from_handle(client_handle, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
-    })
-    .ok_or_else(|| {
-        // TODO: log error here, this is not expected to happen !
-        anyhow::anyhow!("Invalid handle")
     })?;
 
     client

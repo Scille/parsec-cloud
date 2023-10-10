@@ -44,9 +44,6 @@ class DeviceAccessStrategy(Variant):
 
 
 class ClientStartError(ErrorVariant):
-    class DeviceAlreadyRunning:
-        pass
-
     class LoadDeviceInvalidPath:
         pass
 

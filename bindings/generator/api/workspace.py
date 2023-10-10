@@ -21,9 +21,6 @@ class ClientStartWorkspaceError(ErrorVariant):
     class NoAccess:
         pass
 
-    class AlreadyStarted:
-        pass
-
     class Internal:
         pass
 

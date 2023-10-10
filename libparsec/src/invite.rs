@@ -256,7 +256,7 @@ pub fn claimer_greeter_abort_operation(
         | HandleItem::DeviceGreetInProgress4(_) => Ok(()),
         invalid => Err(invalid),
     })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle").into())
+    .map_err(|err| err.into())
 }
 
 pub enum UserOrDeviceClaimInitialInfo {
@@ -281,8 +281,7 @@ pub async fn claimer_user_initial_do_wait_peer(
         let ctx = take_and_close_handle(handle, |x| match x {
             HandleItem::UserClaimInitial(ctx) => Ok(ctx),
             invalid => Err(invalid),
-        })
-        .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+        })?;
 
         let ctx = ctx.do_wait_peer().await?;
         let greeter_sas_choices = ctx.generate_greeter_sas_choices(4);
@@ -312,8 +311,7 @@ pub async fn claimer_device_initial_do_wait_peer(
         let ctx = take_and_close_handle(handle, |x| match x {
             HandleItem::DeviceClaimInitial(ctx) => Ok(ctx),
             invalid => Err(invalid),
-        })
-        .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+        })?;
 
         let ctx = ctx.do_wait_peer().await?;
         let greeter_sas_choices = ctx.generate_greeter_sas_choices(4);
@@ -354,8 +352,7 @@ pub async fn claimer_user_in_progress_1_do_signify_trust(
         let ctx = take_and_close_handle(handle, |x| match x {
             HandleItem::UserClaimInProgress1(ctx) => Ok(ctx),
             invalid => Err(invalid),
-        })
-        .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+        })?;
 
         let ctx = ctx.do_signify_trust().await?;
         let claimer_sas = ctx.claimer_sas().to_owned();
@@ -383,8 +380,7 @@ pub async fn claimer_device_in_progress_1_do_signify_trust(
         let ctx = take_and_close_handle(handle, |x| match x {
             HandleItem::DeviceClaimInProgress1(ctx) => Ok(ctx),
             invalid => Err(invalid),
-        })
-        .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+        })?;
 
         let ctx = ctx.do_signify_trust().await?;
         let claimer_sas = ctx.claimer_sas().to_owned();
@@ -421,8 +417,7 @@ pub async fn claimer_user_in_progress_2_do_wait_peer_trust(
         let ctx = take_and_close_handle(handle, |x| match x {
             HandleItem::UserClaimInProgress2(ctx) => Ok(ctx),
             invalid => Err(invalid),
-        })
-        .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+        })?;
 
         let ctx = ctx.do_wait_peer_trust().await?;
 
@@ -446,8 +441,7 @@ pub async fn claimer_device_in_progress_2_do_wait_peer_trust(
         let ctx = take_and_close_handle(handle, |x| match x {
             HandleItem::DeviceClaimInProgress2(ctx) => Ok(ctx),
             invalid => Err(invalid),
-        })
-        .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+        })?;
 
         let ctx = ctx.do_wait_peer_trust().await?;
 
@@ -480,8 +474,7 @@ pub async fn claimer_user_in_progress_3_do_claim(
         let ctx = take_and_close_handle(handle, |x| match x {
             HandleItem::UserClaimInProgress3(ctx) => Ok(ctx),
             invalid => Err(invalid),
-        })
-        .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+        })?;
 
         let ctx = ctx
             .do_claim_user(requested_device_label, requested_human_handle)
@@ -508,8 +501,7 @@ pub async fn claimer_device_in_progress_3_do_claim(
         let ctx = take_and_close_handle(handle, |x| match x {
             HandleItem::DeviceClaimInProgress3(ctx) => Ok(ctx),
             invalid => Err(invalid),
-        })
-        .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+        })?;
 
         let ctx = ctx.do_claim_device(requested_device_label).await?;
 
@@ -539,8 +531,7 @@ pub async fn claimer_user_finalize_save_local_device(
     let ctx = take_and_close_handle(handle, |x| match x {
         HandleItem::UserClaimFinalize(ctx) => Ok(ctx),
         invalid => Err(invalid),
-    })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+    })?;
 
     let access = {
         let key_file = ctx.get_default_key_file();
@@ -559,8 +550,7 @@ pub async fn claimer_device_finalize_save_local_device(
     let ctx = take_and_close_handle(handle, |x| match x {
         HandleItem::DeviceClaimFinalize(ctx) => Ok(ctx),
         invalid => Err(invalid),
-    })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+    })?;
 
     let access = {
         let key_file = ctx.get_default_key_file();
@@ -595,8 +585,7 @@ pub async fn client_new_user_invitation(
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
-    })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+    })?;
 
     let (token, email_sent_status) = client
         .new_user_invitation(claimer_email, send_email)
@@ -621,8 +610,7 @@ pub async fn client_new_device_invitation(
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
-    })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+    })?;
 
     let (token, email_sent_status) = client.new_device_invitation(send_email).await?;
 
@@ -645,8 +633,7 @@ pub async fn client_delete_invitation(
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
-    })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+    })?;
 
     client.delete_invitation(token).await
 }
@@ -675,8 +662,7 @@ pub async fn client_list_invitations(
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
-    })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+    })?;
 
     let items = client
         .list_invitations()
@@ -740,8 +726,7 @@ pub async fn client_start_user_invitation_greet(
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
-    })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+    })?;
 
     let ctx = client.start_user_invitation_greet(token);
 
@@ -757,8 +742,7 @@ pub async fn client_start_device_invitation_greet(
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
-    })
-    .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+    })?;
 
     let ctx = client.start_device_invitation_greet(token);
 
@@ -863,8 +847,7 @@ pub async fn greeter_user_initial_do_wait_peer(
         let ctx = take_and_close_handle(handle, |x| match x {
             HandleItem::UserGreetInitial(ctx) => Ok(ctx),
             invalid => Err(invalid),
-        })
-        .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+        })?;
 
         let ctx = ctx.do_wait_peer().await?;
         let greeter_sas = ctx.greeter_sas().to_owned();
@@ -892,8 +875,7 @@ pub async fn greeter_device_initial_do_wait_peer(
         let ctx = take_and_close_handle(handle, |x| match x {
             HandleItem::DeviceGreetInitial(ctx) => Ok(ctx),
             invalid => Err(invalid),
-        })
-        .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+        })?;
 
         let ctx = ctx.do_wait_peer().await?;
         let greeter_sas = ctx.greeter_sas().to_owned();
@@ -931,8 +913,7 @@ pub async fn greeter_user_in_progress_1_do_wait_peer_trust(
         let ctx = take_and_close_handle(handle, |x| match x {
             HandleItem::UserGreetInProgress1(ctx) => Ok(ctx),
             invalid => Err(invalid),
-        })
-        .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+        })?;
 
         let ctx = ctx.do_wait_peer_trust().await?;
         let claimer_sas = ctx.claimer_sas().to_owned();
@@ -962,8 +943,7 @@ pub async fn greeter_device_in_progress_1_do_wait_peer_trust(
         let ctx = take_and_close_handle(handle, |x| match x {
             HandleItem::DeviceGreetInProgress1(ctx) => Ok(ctx),
             invalid => Err(invalid),
-        })
-        .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+        })?;
 
         let ctx = ctx.do_wait_peer_trust().await?;
         let claimer_sas = ctx.claimer_sas().to_owned();
@@ -1005,8 +985,7 @@ pub async fn greeter_user_in_progress_2_do_signify_trust(
         let ctx = take_and_close_handle(handle, |x| match x {
             HandleItem::UserGreetInProgress2(ctx) => Ok(ctx),
             invalid => Err(invalid),
-        })
-        .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+        })?;
 
         let ctx = ctx.do_signify_trust().await?;
 
@@ -1030,8 +1009,7 @@ pub async fn greeter_device_in_progress_2_do_signify_trust(
         let ctx = take_and_close_handle(handle, |x| match x {
             HandleItem::DeviceGreetInProgress2(ctx) => Ok(ctx),
             invalid => Err(invalid),
-        })
-        .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+        })?;
 
         let ctx = ctx.do_signify_trust().await?;
 
@@ -1063,8 +1041,7 @@ pub async fn greeter_user_in_progress_3_do_get_claim_requests(
         let ctx = take_and_close_handle(handle, |x| match x {
             HandleItem::UserGreetInProgress3(ctx) => Ok(ctx),
             invalid => Err(invalid),
-        })
-        .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+        })?;
 
         let ctx = ctx.do_get_claim_requests().await?;
         let requested_human_handle = ctx.requested_human_handle.clone();
@@ -1094,8 +1071,7 @@ pub async fn greeter_device_in_progress_3_do_get_claim_requests(
         let ctx = take_and_close_handle(handle, |x| match x {
             HandleItem::DeviceGreetInProgress3(ctx) => Ok(ctx),
             invalid => Err(invalid),
-        })
-        .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+        })?;
 
         let ctx = ctx.do_get_claim_requests().await?;
         let requested_device_label = ctx.requested_device_label.clone();
@@ -1137,8 +1113,7 @@ pub async fn greeter_user_in_progress_4_do_create(
         let ctx = take_and_close_handle(handle, |x| match x {
             HandleItem::UserGreetInProgress4(ctx) => Ok(ctx),
             invalid => Err(invalid),
-        })
-        .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+        })?;
 
         ctx.do_create_new_user(device_label, human_handle, profile)
             .await?;
@@ -1162,8 +1137,7 @@ pub async fn greeter_device_in_progress_4_do_create(
         let ctx = take_and_close_handle(handle, |x| match x {
             HandleItem::DeviceGreetInProgress4(ctx) => Ok(ctx),
             invalid => Err(invalid),
-        })
-        .ok_or_else(|| anyhow::anyhow!("Invalid handle"))?;
+        })?;
 
         ctx.do_create_new_device(device_label).await?;
 
