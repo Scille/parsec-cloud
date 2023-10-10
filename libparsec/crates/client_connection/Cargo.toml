@@ -33,7 +33,7 @@ reqwest = { workspace = true, features = ["stream"] }
 futures = { workspace = true }
 # Use abstract crypto primitive, to allow to sign request.
 # Used to encoded binary data.
-base64 = { workspace = true, features = ["std"] }
+data-encoding = { workspace = true, features = ["std"] }
 chrono = { workspace = true, features = ["clock"] }
 thiserror = { workspace = true }
 # Reqwest's response body is returned as Bytes
