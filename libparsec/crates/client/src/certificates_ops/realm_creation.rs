@@ -41,11 +41,16 @@ pub async fn ensure_realms_created(
     let roles = ops.get_current_self_realms_roles().await?;
     for realm_id in realms_ids {
         if roles.contains_key(realm_id) {
+            // If we have a role certificate, then the realm must exist on the server
             continue;
         }
         // We never had a role for the given realm, it can mean two things:
-        // - The role is very new and the certificate ops hasn't processed it yet
-        // -
+        // - The role is very new and we haven't processed the corresponding certificate
+        //   yet
+        // - There is no role certificate because we are the creator of a workspace and
+        //   so far haven't synced
+        // Given we cannot tell in which case we are, it is now time to try to create
+        // the realm.
         create_realm_idempotent(ops, *realm_id).await?;
     }
     Ok(())
