@@ -2522,9 +2522,6 @@ fn variant_client_start_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::ClientStartError::DeviceAlreadyRunning { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"DeviceAlreadyRunning".into())?;
-        }
         libparsec::ClientStartError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
         }
@@ -2568,9 +2565,6 @@ fn variant_client_start_workspace_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::ClientStartWorkspaceError::AlreadyStarted { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AlreadyStarted".into())?;
-        }
         libparsec::ClientStartWorkspaceError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
         }
@@ -3280,6 +3274,22 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
     let tag = Reflect::get(&obj, &"tag".into())?;
     match tag {
         tag if tag == JsValue::from_str("Device") => {
+            let addr = {
+                let js_val = Reflect::get(&obj, &"addr".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::BackendInvitationAddr::from_any(&s)
+                                .map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid BackendInvitationAddr"))?
+            };
             let token = {
                 let js_val = Reflect::get(&obj, &"token".into())?;
                 js_val
@@ -3320,12 +3330,29 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                 }?
             };
             Ok(libparsec::InviteListItem::Device {
+                addr,
                 token,
                 created_on,
                 status,
             })
         }
         tag if tag == JsValue::from_str("User") => {
+            let addr = {
+                let js_val = Reflect::get(&obj, &"addr".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::BackendInvitationAddr::from_any(&s)
+                                .map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid BackendInvitationAddr"))?
+            };
             let token = {
                 let js_val = Reflect::get(&obj, &"token".into())?;
                 js_val
@@ -3374,6 +3401,7 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                 }?
             };
             Ok(libparsec::InviteListItem::User {
+                addr,
                 token,
                 created_on,
                 claimer_email,
@@ -3393,12 +3421,25 @@ fn variant_invite_list_item_rs_to_js(
     let js_obj = Object::new().into();
     match rs_obj {
         libparsec::InviteListItem::Device {
+            addr,
             token,
             created_on,
             status,
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"Device".into())?;
+            let js_addr = JsValue::from_str({
+                let custom_to_rs_string =
+                    |addr: libparsec::BackendInvitationAddr| -> Result<String, &'static str> {
+                        Ok(addr.to_url().into())
+                    };
+                match custom_to_rs_string(addr) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"addr".into(), &js_addr)?;
             let js_token = JsValue::from_str({
                 let custom_to_rs_string =
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
@@ -3424,6 +3465,7 @@ fn variant_invite_list_item_rs_to_js(
             Reflect::set(&js_obj, &"status".into(), &js_status)?;
         }
         libparsec::InviteListItem::User {
+            addr,
             token,
             created_on,
             claimer_email,
@@ -3431,6 +3473,18 @@ fn variant_invite_list_item_rs_to_js(
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"User".into())?;
+            let js_addr = JsValue::from_str({
+                let custom_to_rs_string =
+                    |addr: libparsec::BackendInvitationAddr| -> Result<String, &'static str> {
+                        Ok(addr.to_url().into())
+                    };
+                match custom_to_rs_string(addr) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"addr".into(), &js_addr)?;
             let js_token = JsValue::from_str({
                 let custom_to_rs_string =
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };

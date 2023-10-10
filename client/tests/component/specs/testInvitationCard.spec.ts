@@ -12,6 +12,7 @@ describe('User Invitation Card', () => {
   it('Display invitation', () => {
     const INVITATION: UserInvitation = {
       tag: 'User',
+      addr: 'parsec://parsec.example.com/MyOrg?action=claim_user&token=1234',
       token: '1234',
       createdOn: DateTime.now(),
       claimerEmail: 'dung.eater@lands-between',

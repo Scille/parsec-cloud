@@ -51,7 +51,7 @@ pub async fn bootstrap_organization(
     let organization_id = addr.organization_id().clone();
 
     let organization_addr =
-        BackendOrganizationAddr::new(addr.clone(), organization_id, root_verify_key.clone());
+        BackendOrganizationAddr::new(&addr, organization_id, root_verify_key.clone());
 
     let device = Arc::new(LocalDevice::generate_new_device(
         organization_addr,

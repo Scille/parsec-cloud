@@ -6,6 +6,7 @@ use libparsec_platform_async::event::Event;
 use libparsec_types::prelude::*;
 
 pub type Handle = u32;
+const INVALID_HANDLE_ERROR_MSG: &str = "Invalid Handle";
 
 pub(crate) enum RegisteredHandleItem {
     Open(HandleItem),
@@ -109,13 +110,13 @@ impl Drop for InitializingGuard {
 
 pub(crate) fn register_handle_with_init<E>(
     initializing: HandleItem,
-    precondition: impl Fn(&mut HandleItem) -> Result<(), E>,
+    precondition: impl Fn(Handle, &mut HandleItem) -> Result<(), E>,
 ) -> Result<InitializingGuard, E> {
     let mut guard = get_handles();
 
-    for maybe_running in guard.iter_mut() {
+    for (handle, maybe_running) in guard.iter_mut().enumerate() {
         if let RegisteredHandleItem::Open(item) = maybe_running {
-            precondition(item)?;
+            precondition(handle as Handle, item)?;
         }
     }
 
@@ -158,36 +159,39 @@ pub(crate) fn filter_close_handles(
 pub(crate) fn take_and_close_handle<T>(
     handle: Handle,
     mut mapper: impl FnMut(HandleItem) -> Result<T, HandleItem>,
-) -> Option<T> {
+) -> anyhow::Result<T> {
     let mut guard = get_handles();
 
-    guard.get_mut(handle as usize).and_then(|maybe_running| {
-        match maybe_running {
-            RegisteredHandleItem::Closed => None,
-            RegisteredHandleItem::Open(_) => {
-                let item = std::mem::replace(maybe_running, RegisteredHandleItem::Closed);
-                let outcome = match item {
-                    RegisteredHandleItem::Open(item) => mapper(item),
-                    _ => unreachable!(), // Already checked
-                };
-                match outcome {
-                    // The handle pointed to a valid running item, but which type was
-                    // unexpected, the close is hence cancelled !
-                    Err(item) => {
-                        *maybe_running = RegisteredHandleItem::Open(item);
-                        None
+    guard
+        .get_mut(handle as usize)
+        .and_then(|maybe_running| {
+            match maybe_running {
+                RegisteredHandleItem::Closed => None,
+                RegisteredHandleItem::Open(_) => {
+                    let item = std::mem::replace(maybe_running, RegisteredHandleItem::Closed);
+                    let outcome = match item {
+                        RegisteredHandleItem::Open(item) => mapper(item),
+                        _ => unreachable!(), // Already checked
+                    };
+                    match outcome {
+                        // The handle pointed to a valid running item, but which type was
+                        // unexpected, the close is hence cancelled !
+                        Err(item) => {
+                            *maybe_running = RegisteredHandleItem::Open(item);
+                            None
+                        }
+                        Ok(ret) => Some(ret),
                     }
-                    Ok(ret) => Some(ret),
                 }
             }
-        }
-    })
+        })
+        .ok_or_else(|| anyhow::anyhow!(INVALID_HANDLE_ERROR_MSG))
 }
 
 pub(crate) fn borrow_from_handle<T>(
     handle: Handle,
     mapper: impl Fn(&mut HandleItem) -> Option<T>,
-) -> Option<T> {
+) -> anyhow::Result<T> {
     let mut guard = get_handles();
 
     guard
@@ -196,4 +200,5 @@ pub(crate) fn borrow_from_handle<T>(
             RegisteredHandleItem::Closed => None,
             RegisteredHandleItem::Open(item) => mapper(item),
         })
+        .ok_or_else(|| anyhow::anyhow!(INVALID_HANDLE_ERROR_MSG))
 }

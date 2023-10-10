@@ -514,10 +514,6 @@ export type ClientShareWorkspaceError =
 
 
 // ClientStartError
-export interface ClientStartErrorDeviceAlreadyRunning {
-    tag: "DeviceAlreadyRunning"
-    error: string
-}
 export interface ClientStartErrorInternal {
     tag: "Internal"
     error: string
@@ -535,7 +531,6 @@ export interface ClientStartErrorLoadDeviceInvalidPath {
     error: string
 }
 export type ClientStartError =
-  | ClientStartErrorDeviceAlreadyRunning
   | ClientStartErrorInternal
   | ClientStartErrorLoadDeviceDecryptionFailed
   | ClientStartErrorLoadDeviceInvalidData
@@ -552,10 +547,6 @@ export type ClientStartInvitationGreetError =
 
 
 // ClientStartWorkspaceError
-export interface ClientStartWorkspaceErrorAlreadyStarted {
-    tag: "AlreadyStarted"
-    error: string
-}
 export interface ClientStartWorkspaceErrorInternal {
     tag: "Internal"
     error: string
@@ -565,7 +556,6 @@ export interface ClientStartWorkspaceErrorNoAccess {
     error: string
 }
 export type ClientStartWorkspaceError =
-  | ClientStartWorkspaceErrorAlreadyStarted
   | ClientStartWorkspaceErrorInternal
   | ClientStartWorkspaceErrorNoAccess
 
@@ -735,12 +725,14 @@ export type GreetInProgressError =
 // InviteListItem
 export interface InviteListItemDevice {
     tag: "Device"
+    addr: string
     token: string
     created_on: number
     status: InvitationStatus
 }
 export interface InviteListItemUser {
     tag: "User"
+    addr: string
     token: string
     created_on: number
     claimer_email: string

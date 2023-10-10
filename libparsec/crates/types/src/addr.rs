@@ -119,6 +119,13 @@ macro_rules! impl_common_stuff {
                 BackendAddr { base: value.base }
             }
         }
+        impl From<&$name> for BackendAddr {
+            fn from(value: &$name) -> Self {
+                BackendAddr {
+                    base: value.base.to_owned(),
+                }
+            }
+        }
         impl_common_stuff!($name, _internal_);
     };
     ($name:ty, _internal_) => {
