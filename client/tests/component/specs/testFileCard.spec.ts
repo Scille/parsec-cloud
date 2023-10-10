@@ -1,24 +1,28 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { MockFile } from '@/common/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
 import { mockI18n, getDefaultProvideConfig } from 'tests/component/support/mocks';
 import FileCard from '@/components/files/FileCard.vue';
+import { EntryStatFile, EntryStatFolder, FileType } from '@/parsec';
 
 mockI18n();
 
 describe('File Card Item', () => {
 
   it('Display item for file', () => {
-    const FILE: MockFile = {
-      id: '0',
-      name: 'A File.txt',
-      type: 'file',
+    const FILE: EntryStatFile = {
+      tag: FileType.File,
+      confinementPoint: null,
+      id: '67',
+      created: DateTime.now(),
+      updated: DateTime.now(),
+      baseVersion: 1,
+      isPlaceholder: false,
+      needSync: false,
       size: 43_297_832_478,
-      lastUpdate: DateTime.now(),
-      updater: 'Gordon Freeman',
-      children: [],
+      name: 'A File.txt',
+      isFile: (): boolean => true,
     };
 
     const wrapper = mount(FileCard, {
@@ -41,30 +45,18 @@ describe('File Card Item', () => {
   });
 
   it('Display item for folder', () => {
-    const FOLDER: MockFile = {
-      id: '0',
+    const FOLDER: EntryStatFolder= {
+      tag: FileType.Folder,
+      confinementPoint: null,
+      id: '67',
+      created: DateTime.now(),
+      updated: DateTime.now(),
+      baseVersion: 1,
+      isPlaceholder: false,
+      needSync: false,
       name: 'A Folder',
-      type: 'folder',
-      size: 0,
-      lastUpdate: DateTime.now(),
-      updater: 'Gordon Freeman',
-      children: [{
-        id: '1',
-        name: 'A File.txt',
-        type: 'file',
-        size: 8_932_472_384,
-        lastUpdate: DateTime.now(),
-        updater: 'Gordon Freeman',
-        children: [],
-      }, {
-        id: '2',
-        name: 'Another File.png',
-        type: 'file',
-        size: 239_029_484,
-        lastUpdate: DateTime.now(),
-        updater: 'Gordon Freeman',
-        children: [],
-      }],
+      isFile: (): boolean => false,
+      children: ['A File.txt', 'Another File.png'],
     };
 
     const wrapper = mount(FileCard, {

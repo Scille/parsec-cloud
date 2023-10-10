@@ -7,3 +7,6 @@ export * from '@/parsec/claim_user';
 export * from '@/parsec/claim_device';
 export * from '@/parsec/greet_user';
 export * from '@/parsec/routing';
+export * from '@/parsec/validation';
+export * from '@/parsec/workspace';
+export * from '@/parsec/file';

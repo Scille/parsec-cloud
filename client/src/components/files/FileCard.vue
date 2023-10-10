@@ -19,7 +19,7 @@
       <ion-avatar class="card-content-icons">
         <ion-icon
           class="card-content-icons__item"
-          :icon="file.type === 'folder' ? folder : document"
+          :icon="file.isFile() ? document : folder"
         />
         <ion-icon
           class="cloud-overlay"
@@ -34,7 +34,7 @@
 
       <ion-text class="card-content-last-update caption-caption">
         <span>{{ $t('FoldersPage.File.lastUpdate') }}</span>
-        <span>{{ timeSince(file.lastUpdate, '--', 'short') }}</span>
+        <span>{{ timeSince(file.updated, '--', 'short') }}</span>
       </ion-text>
     </div>
   </div>
@@ -51,22 +51,22 @@ import {
 import { IonAvatar, IonIcon, IonText, IonTitle } from '@ionic/vue';
 import { inject } from 'vue';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
-import { MockFile } from '@/common/mocks';
+import { EntryStat } from '@/parsec';
 
-defineProps<{
-  file: MockFile
+const props = defineProps<{
+  file: EntryStat
 }>();
 
 defineEmits<{
-  (e: 'click', event: Event, file: MockFile): void
-  (e: 'menuClick', event: Event, file: MockFile): void
+  (e: 'click', event: Event, file: EntryStat): void
+  (e: 'menuClick', event: Event, file: EntryStat): void
 }>();
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const { timeSince } = inject(FormattersKey)! as Formatters;
 
 function isFileSynced(): boolean {
-  return true;
+  return !props.file.needSync;
 }
 </script>
 

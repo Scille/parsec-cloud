@@ -148,6 +148,10 @@
         "yes": "Yes",
         "no": "No"
     },
+    "TextInputModal": {
+        "ok": "Ok",
+        "cancel": "Cancel"
+    },
     "MenuPage": {
         "documents": "Documents",
         "myOrganization": "My organization",
@@ -306,7 +310,30 @@
             "maxSize": "Maximale size: 25Mb",
             "or": "or",
             "browse": "Browse"
-        }
+        },
+        "errors": {
+            "deleteFailed": "Failed to delete `{name}`",
+            "renameFailed": "Failed to rename `{name}`",
+            "createFolderFailed": "Failed to create new folder `{name}`",
+            "listFailed": "Failed to list folder `{path}`"
+        },
+        "CreateFolderModal": {
+            "title": "Create a new folder",
+            "label": "Folder name",
+            "placeholder": "My folder",
+            "create": "Create"
+        },
+        "RenameModal": {
+            "fileTitle": "Rename a file",
+            "fileLabel": "File name",
+            "filePlaceholder": "My file",
+            "rename": "Rename",
+            "folderTitle": "Rename a folder",
+            "folderLabel": "Folder name",
+            "folderPlaceholder": "My folder"
+        },
+        "deleteOneFileQuestion": "Are you sure you want to delete the file `{name}`?",
+        "deleteOneFolderQuestion": "Are you sure you want to delete the folder `{name}`?"
     },
     "OrganizationPage": {
         "pageTitle": "My organization",

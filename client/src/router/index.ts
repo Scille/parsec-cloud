@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { startWorkspace, WorkspaceID } from '@/parsec';
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
 
@@ -31,7 +32,7 @@ const routes: Array<RouteRecordRaw> = [
             component: () => import('@/views/workspaces/WorkspacesPage.vue'),
           },
           {
-            path: '/:handle(\\d+)/workspaces/:workspaceId([a-z0-9]+)',
+            path: '/:handle(\\d+)/workspaces/:workspaceHandle(\\d+)',
             name: 'folder',
             component: () => import('@/views/files/FoldersPage.vue'),
           },
@@ -106,5 +107,15 @@ export function routerNavigateTo(routeName: string, params: any | null = null, q
     name: routeName,
     params: params,
     query: query,
+  });
+}
+
+export function routerNavigateToWorkspace(workspaceId: WorkspaceID, path = '/'): void {
+  startWorkspace(workspaceId).then((result) => {
+    if (result.ok) {
+      routerNavigateTo('folder', {workspaceHandle: result.value}, {path: path, workspaceId: workspaceId});
+    } else {
+      console.log(`Failed to navigate to workspace: ${result.error}`);
+    }
   });
 }

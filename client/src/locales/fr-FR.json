@@ -148,6 +148,10 @@
         "yes": "Oui",
         "no": "Non"
     },
+    "TextInputModal": {
+        "ok": "Ok",
+        "cancel": "Annuler"
+    },
     "MenuPage": {
         "documents": "Documents",
         "myOrganization": "Mon organisation",
@@ -274,7 +278,7 @@
         }
     },
     "FoldersPage": {
-        "createFolder": "New folder",
+        "createFolder": "Nouveau dossier",
         "import": "Import",
         "itemCount": "Aucun élément | U1n élément | {count} éléments",
         "itemSelectedCount": "Aucun élément sélectionné | 1 élément sélectionné | {count} éléments sélectionnés",
@@ -306,7 +310,30 @@
             "maxSize": "Taille maximale : 25Mo",
             "or": "ou",
             "browse": "Parcourir"
-        }
+        },
+        "errors": {
+            "deleteFailed": "Impossible de supprimer `{name}`",
+            "renameFailed": "Impossible de renommer `{name}`",
+            "createFolderFailed": "Impossible de créer le dossier `{name}`",
+            "listFailed": "Impossible de lister le contenu du dossier `{path}`"
+        },
+        "CreateFolderModal": {
+            "title": "Créer un nouveau dossier",
+            "label": "Nom du dossier",
+            "placeholder": "Mon dossier",
+            "create": "Créer"
+        },
+        "RenameModal": {
+            "fileTitle": "Renommer un fichier",
+            "fileLabel": "Nom du fichier",
+            "filePlaceholder": "Mon fichier",
+            "rename": "Renommer",
+            "folderTitle": "Renommer un dossier",
+            "folderLabel": "Nom du dossier",
+            "folderPlaceholder": "Mon dossier"
+        },
+        "deleteOneFileQuestion": "Êtes-vous sûr(e) de vouloir supprimer le fichier `{name}` ?",
+        "deleteOneFolderQuestion": "Êtes-vous sûr(e) de vouloir supprimer le dossier `{name}` ?"
     },
     "OrganizationPage": {
         "pageTitle": "Mon organisation",

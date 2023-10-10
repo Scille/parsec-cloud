@@ -1,13 +1,22 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import router from '@/router';
-import { Handle } from '@/parsec';
+import { Handle, WorkspaceHandle } from '@/parsec';
 
 export function getParsecHandle(): Handle | null {
   const currentRoute = router.currentRoute.value;
 
   if (currentRoute && currentRoute.params && 'handle' in currentRoute.params) {
     return parseInt(currentRoute.params.handle as string);
+  }
+  return null;
+}
+
+export function getWorkspaceHandle(): WorkspaceHandle | null {
+  const currentRoute = router.currentRoute.value;
+
+  if (currentRoute && currentRoute.name === 'folder' && currentRoute.params && 'workspaceHandle' in currentRoute.params) {
+    return parseInt(currentRoute.params.workspaceHandle as string);
   }
   return null;
 }
@@ -56,5 +65,5 @@ export function isUserRoute(): boolean {
 
 export function isSpecificWorkspaceRoute(workspaceId: string): boolean {
   const currentRoute = router.currentRoute.value;
-  return currentRoute.params.workspaceId === workspaceId;
+  return currentRoute.query && currentRoute.query.workspaceId === workspaceId;
 }

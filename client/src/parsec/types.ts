@@ -59,6 +59,13 @@ import type {
   WorkspaceInfo as ParsecWorkspaceInfo,
   ClientListWorkspaceUsersError,
   ClientShareWorkspaceError,
+  ClientStartWorkspaceError,
+  FsPath,
+  VlobID as FileID,
+  WorkspaceFsOperationError,
+  EntryName,
+  EntryStatFolder as ParsecEntryStatFolder,
+  EntryStatFile as ParsecEntryStatFile,
 } from '@/plugins/libparsec';
 // Enums have to be imported separately
 import {
@@ -69,9 +76,25 @@ import {
   RealmRole as WorkspaceRole,
 } from '@/plugins/libparsec';
 
+type WorkspaceHandle = number;
+
 interface UserInfo extends ParsecUserInfo {
   isRevoked: () => boolean
 }
+
+interface EntryStatFolder extends ParsecEntryStatFolder {
+  isFile: () => boolean
+  name: EntryName
+}
+
+interface EntryStatFile extends ParsecEntryStatFile {
+  isFile: () => boolean
+  name: EntryName
+}
+
+type EntryStat =
+  | EntryStatFile
+  | EntryStatFolder;
 
 enum BackendAddrType {
   Invalid = 'InvalidUrl',
@@ -107,6 +130,28 @@ enum DeleteInviteError {
   Offline = 'Offline',
 }
 
+enum FsOperationError {
+  BadTimestamp = 'BadTimestamp',
+  CannotRenameRoot = 'CannotRenameRoot',
+  EntryExists = 'EntryExists',
+  EntryNotFound = 'EntryNotFound',
+  FolderNotEmpty = 'FolderNotEmpty',
+  Internal = 'Internal',
+  InvalidCertificate = 'InvalidCertificate',
+  InvalidManifest = 'InvalidManifest',
+  IsAFolder = 'IsAFolder',
+  NoRealmAccess = 'NoRealmAccess',
+  NotAFolder = 'NotAFolder',
+  Offline = 'Offline',
+  ReadOnlyRealm = 'ReadOnlyRealm',
+  NotFound = 'NotFound',
+}
+
+enum FileType {
+  Folder = 'Folder',
+  File = 'File',
+}
+
 interface GetWorkspaceNameError {
   tag: 'NotFound'
 }
@@ -134,7 +179,6 @@ export {
   DeviceAccessStrategyPassword,
   ClientEvent,
   Handle,
-  DateTime,
   ClientEventPing,
   InvitationStatus,
   ParsedBackendAddr,
@@ -170,6 +214,14 @@ export {
   DeviceInfo,
   UserTuple,
   UserID,
+  WorkspaceHandle,
+  FsPath,
+  FileID,
+  EntryName,
+  EntryStatFolder,
+  EntryStatFile,
+  FileType,
+  EntryStat,
 };
 
 export {
@@ -186,7 +238,6 @@ export {
   ClientListWorkspacesError,
   ClientCreateWorkspaceError,
   ClientInfoError,
-  GetWorkspaceNameError,
   ClientStartInvitationGreetError,
   GreetInProgressError,
   CreateOrganizationError,
@@ -196,4 +247,8 @@ export {
   ClientListUsersError,
   InviteUserError,
   DeleteInviteError,
+  ClientStartWorkspaceError,
+  FsOperationError,
+  WorkspaceFsOperationError,
+  GetWorkspaceNameError,
 };
