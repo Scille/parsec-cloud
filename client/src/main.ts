@@ -37,7 +37,7 @@ import { isPlatform } from '@ionic/vue';
 
 /* Theme variables */
 import '@/theme/global.scss';
-import { libparsec } from '@/plugins/libparsec';
+import { Platform, libparsec } from '@/plugins/libparsec';
 import { NotificationCenter } from '@/services/notificationCenter';
 
 async function setupApp(): Promise<void> {
@@ -143,11 +143,19 @@ async function setupApp(): Promise<void> {
   const nextStage = async (configPath?: string, locale?: string): Promise<void> => {
     await router.isReady();
 
-    window.getConfigDir = getDefaultConfigDir;
-    window.getDataBaseDir = getDefaultDataBaseDir;
-    window.getMountpointDir = getDefaultMountpointDir;
-    window.isDesktop = isDesktop;
-    window.isLinux = isLinux;
+    const configDir = await libparsec.getDefaultConfigDir();
+    const dataBaseDir = await libparsec.getDefaultDataBaseDir();
+    const mountpointBaseDir = await libparsec.getDefaultMountpointBaseDir();
+    const isDesktop = !('Cypress' in window) && isPlatform('electron');
+    const platform = await libparsec.getPlatform();
+    const isLinux = isDesktop && platform === Platform.Linux;
+
+    window.getConfigDir = (): string => configDir;
+    window.getDataBaseDir = (): string => dataBaseDir;
+    window.getMountpointBaseDir = (): string => mountpointBaseDir;
+    window.getPlatform = (): Platform => platform;
+    window.isDesktop = (): boolean => isDesktop;
+    window.isLinux = (): boolean => isLinux;
 
     if (configPath) {
       window.getConfigDir = (): string => configPath;
@@ -182,53 +190,14 @@ async function setupApp(): Promise<void> {
   }
 }
 
-function isDesktop(): boolean {
-  return !('Cypress' in window) && isPlatform('electron');
-}
-
-function isLinux(): boolean {
-  return isDesktop() && import.meta.env.VITE_OPERATING_SYSTEM === 'linux';
-}
-
-function getDefaultMountpointDir(): string {
-  if (isDesktop()) {
-    return Path.join(import.meta.env.VITE_HOME_DIR, 'Parsec');
-  }
-  return '';
-}
-
-function getDefaultDataBaseDir(): string {
-  if (isDesktop()) {
-    if (import.meta.env.VITE_OPERATING_SYSTEM === 'win32') {
-      return Path.join(import.meta.env.VITE_DATA_DIR, 'parsec3/data');
-    } else {
-      return Path.join(import.meta.env.VITE_DATA_DIR, 'parsec3');
-    }
-  }
-  return '';
-}
-
-function getDefaultConfigDir(): string {
-  if (window.testbedPath) {
-    return window.testbedPath;
-  }
-  if (isDesktop()) {
-    if (import.meta.env.VITE_OPERATING_SYSTEM === 'win32') {
-      return Path.join(import.meta.env.VITE_CONFIG_DIR, 'parsec3/config');
-    } else {
-      return Path.join(import.meta.env.VITE_CONFIG_DIR, 'parsec3');
-    }
-  }
-  return '';
-}
-
 declare global {
   interface Window {
     nextStageHook: () => [any, (configPath: string, locale?: string) => Promise<void>],
     testbedPath: string | null,
     getConfigDir: () => string,
     getDataBaseDir: () => string,
-    getMountpointDir: () => string,
+    getMountpointBaseDir: () => string,
+    getPlatform: () => Platform,
     isDesktop: () => boolean,
     isLinux: () => boolean,
   }

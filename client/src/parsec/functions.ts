@@ -254,7 +254,7 @@ export async function createOrganization(
     const config: ClientConfig = {
       configDir: window.getConfigDir(),
       dataBaseDir: window.getDataBaseDir(),
-      mountpointBaseDir: window.getMountpointDir(),
+      mountpointBaseDir: window.getMountpointBaseDir(),
       workspaceStorageCacheSize: {tag: 'Default'},
     };
     const result = await libparsec.bootstrapOrganization(

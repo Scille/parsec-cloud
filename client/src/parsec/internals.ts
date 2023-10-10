@@ -13,7 +13,7 @@ export function getClientConfig(): ClientConfig {
   return {
     configDir: window.getConfigDir(),
     dataBaseDir: window.getDataBaseDir(),
-    mountpointBaseDir: window.getMountpointDir(),
+    mountpointBaseDir: window.getMountpointBaseDir(),
     workspaceStorageCacheSize: {tag: 'Default'},
   };
 }
