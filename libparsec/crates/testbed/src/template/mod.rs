@@ -227,4 +227,11 @@ impl TestbedTemplate {
             .iter()
             .flat_map(|event| event.certificates(self))
     }
+
+    pub fn certificates_rev(&self) -> impl Iterator<Item = TestbedTemplateEventCertificate> + '_ {
+        self.events
+            .iter()
+            .rev()
+            .flat_map(|event| event.certificates(self))
+    }
 }
