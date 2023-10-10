@@ -125,27 +125,29 @@ describe('Create a new organization', () => {
     cy.get('.card').should('have.length', 2);
   });
 
-  it('Close with X button', () => {
-    cy.get('#create-organization-button').click();
-    cy.get('.popover-viewport').find('ion-item').first().click();
-    cy.get('.create-organization-modal').find('.modal-header__title').contains('Create an organization');
-    cy.get('.closeBtn').should('be.visible');
-    cy.get('.closeBtn').click();
-    cy.get('ion-alert').contains('Are you sure?');
+  // Uncomment when https://github.com/Scille/parsec-cloud/issues/5429 is done.
 
-    // Cancel
-    cy.get('ion-alert').get('.alert-button-role-cancel').click();
-    cy.get('ion-alert').should('not.exist');
-    cy.get('.create-organization-modal').should('exist');
+  // it('Close with X button', () => {
+  //   cy.get('#create-organization-button').click();
+  //   cy.get('.popover-viewport').find('ion-item').first().click();
+  //   cy.get('.create-organization-modal').find('.modal-header__title').contains('Create an organization');
+  //   cy.get('.closeBtn').should('be.visible');
+  //   cy.get('.closeBtn').click();
+  //   cy.get('ion-alert').contains('Are you sure?');
 
-    cy.get('.closeBtn').click();
-    cy.get('ion-alert').contains('Are you sure?');
+  //   // Cancel
+  //   cy.get('ion-alert').get('.alert-button-role-cancel').click();
+  //   cy.get('ion-alert').should('not.exist');
+  //   cy.get('.create-organization-modal').should('exist');
 
-    // Confirm
-    cy.get('.alert-button-role-confirm').click();
-    cy.get('ion-alert').should('not.exist');
-    cy.get('.create-organization-modal').should('not.exist');
-  });
+  //   cy.get('.closeBtn').click();
+  //   cy.get('ion-alert').contains('Are you sure?');
+
+  //   // Confirm
+  //   cy.get('.alert-button-role-confirm').click();
+  //   cy.get('ion-alert').should('not.exist');
+  //   cy.get('.create-organization-modal').should('not.exist');
+  // });
 
   it('Can go to the previous page', () => {
     function goToPage(page: number): void {

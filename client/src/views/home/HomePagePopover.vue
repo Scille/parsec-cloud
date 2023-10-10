@@ -54,7 +54,6 @@ import {
   mail,
 } from 'ionicons/icons';
 
-import { createAlert } from '@/components/core/ms-alert/MsAlertConfirmation';
 import CreateOrganizationModal from '@/views/home/CreateOrganizationModal.vue';
 import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
 import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModal.vue';
@@ -68,7 +67,7 @@ const { t } = useI18n();
 async function openCreateOrganizationModal(): Promise<void> {
   const modal = await modalController.create({
     component: CreateOrganizationModal,
-    canDismiss: canDismissModal,
+    canDismiss: true,
     cssClass: 'create-organization-modal',
   });
   await modal.present();
@@ -76,20 +75,22 @@ async function openCreateOrganizationModal(): Promise<void> {
   await popoverController.dismiss(data, role);
 }
 
-async function canDismissModal(data?: any, modalRole?: string): Promise<boolean> {
-  if (modalRole === MsModalResult.Confirm) {
-    return true;
-  }
-  const alert = await createAlert(
-    t('MsAlertConfirmation.areYouSure'),
-    t('MsAlertConfirmation.infoNotSaved'),
-    t('MsAlertConfirmation.cancel'),
-    t('MsAlertConfirmation.ok'),
-  );
-  await alert.present();
-  const { role } = await alert.onDidDismiss();
-  return role === MsModalResult.Confirm;
-}
+// Commented until https://github.com/Scille/parsec-cloud/issues/5429
+
+// async function canDismissModal(data?: any, modalRole?: string): Promise<boolean> {
+//   if (modalRole === MsModalResult.Confirm) {
+//     return true;
+//   }
+//   const alert = await createAlert(
+//     t('MsAlertConfirmation.areYouSure'),
+//     t('MsAlertConfirmation.infoNotSaved'),
+//     t('MsAlertConfirmation.cancel'),
+//     t('MsAlertConfirmation.ok'),
+//   );
+//   await alert.present();
+//   const { role } = await alert.onDidDismiss();
+//   return role === MsModalResult.Confirm;
+// }
 
 async function openJoinByLinkModal(): Promise<void> {
   const linkModal = await modalController.create({
