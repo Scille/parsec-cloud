@@ -3,5 +3,6 @@
 mod add_common;
 mod add_device_certificate;
 mod add_user_certificate;
+mod add_user_revoked_certificate;
 mod store;
 mod utils;
