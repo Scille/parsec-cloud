@@ -38,18 +38,21 @@ import {
   popoverController,
 }from '@ionic/vue';
 import { chevronDown, personCircle } from 'ionicons/icons';
-import { defineProps, ref } from 'vue';
+import { defineProps, ref, inject } from 'vue';
 import ProfileHeaderPopover from '@/views/header/ProfileHeaderPopover.vue';
 import { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
 import { useRouter } from 'vue-router';
 import { routerNavigateTo } from '@/router';
 import { useI18n } from 'vue-i18n';
 import { logout as parsecLogout } from '@/parsec';
+import { askQuestion, Answer } from '@/components/core/ms-modal/MsQuestionModal.vue';
+import { NotificationCenter, Notification, NotificationKey, NotificationLevel } from '@/services/notificationCenter';
 
 const isPopoverOpen = ref(false);
 const chevron = ref();
 const router = useRouter();
-
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 const { t } = useI18n();
 
 const props = defineProps<{
@@ -76,11 +79,18 @@ async function openPopover(ev: Event): Promise<void> {
       return;
     }
     if (value.data.option === ProfilePopoverOption.LogOut) {
-      const result = await parsecLogout();
-      if (!result.ok) {
-        console.log('Failed to logout');
-      } else {
-        router.replace({ name: 'home' });
+      const answer = await askQuestion(t('HomePage.topbar.logoutConfirm'));
+
+      if (answer === Answer.Yes) {
+        const result = await parsecLogout();
+        if (!result.ok) {
+          notificationCenter.showToast(new Notification({
+            message: t('HomePage.topbar.logoutFailed'),
+            level: NotificationLevel.Error,
+          }));
+        } else {
+          router.replace({ name: 'home' });
+        }
       }
     } else if (value.data.option === ProfilePopoverOption.Settings) {
       routerNavigateTo('settings');

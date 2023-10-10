@@ -20,7 +20,9 @@
             "settings": "Settings",
             "logout": "Log out",
             "help": "Help and feedback",
-            "myDevices": "My devices"
+            "myDevices": "My devices",
+            "logoutConfirm": "Are you sure you want to log out?",
+            "logoutFailed": "Could not log out."
         },
         "organizationList": {
             "title": "Your organizations",
@@ -142,11 +144,7 @@
         "urlPlaceholder": "parsec://hote:port/organization?action=action&...",
         "join": "Join"
     },
-    "MsAlertConfirmation": {
-        "areYouSure": "Are you sure?",
-        "infoNotSaved": "If you have filled in any information, it will not be saved.",
-        "ok": "OK",
-        "cancel": "Cancel",
+    "QuestionModal": {
         "yes": "Yes",
         "no": "No"
     },

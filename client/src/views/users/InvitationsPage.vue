@@ -93,7 +93,6 @@ import MsGridListToggle from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import { DisplayState } from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import { useI18n } from 'vue-i18n';
 import { MsModalResult } from '@/components/core/ms-types';
-import { createAlert } from '@/components/core/ms-alert/MsAlertConfirmation';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
 import InvitationCard from '@/components/users/InvitationCard.vue';
 import InvitationListItem from '@/components/users/InvitationListItem.vue';
@@ -209,21 +208,23 @@ async function inviteUser(): Promise<void> {
   }
 }
 
-async function canDismissModal(_data?: any, modalRole?: string): Promise<boolean> {
-  if (modalRole === MsModalResult.Confirm) {
-    return true;
-  }
+// Commented until https://github.com/Scille/parsec-cloud/issues/5429
 
-  const alert = await createAlert(
-    t('MsAlertConfirmation.areYouSure'),
-    t('MsAlertConfirmation.infoNotSaved'),
-    t('MsAlertConfirmation.cancel'),
-    t('MsAlertConfirmation.ok'),
-  );
-  await alert.present();
-  const { role } = await alert.onDidDismiss();
-  return role === MsModalResult.Confirm;
-}
+// async function canDismissModal(_data?: any, modalRole?: string): Promise<boolean> {
+//   if (modalRole === MsModalResult.Confirm) {
+//     return true;
+//   }
+
+//   const alert = await createAlert(
+//     t('MsAlertConfirmation.areYouSure'),
+//     t('MsAlertConfirmation.infoNotSaved'),
+//     t('MsAlertConfirmation.cancel'),
+//     t('MsAlertConfirmation.ok'),
+//   );
+//   await alert.present();
+//   const { role } = await alert.onDidDismiss();
+//   return role === MsModalResult.Confirm;
+// }
 
 async function greetUser(invitation: UserInvitation): Promise<void> {
   const modal = await modalController.create({

@@ -20,7 +20,9 @@
             "settings": "Paramètres",
             "logout": "Déconnexion",
             "help": "Aide et commentaires",
-            "myDevices": "Mes appareils"
+            "myDevices": "Mes appareils",
+            "logoutConfirm": "Êtes-vous sur(e) de vouloir vous déconnecter ?",
+            "logoutFailed": "Impossible de se déconnecter."
         },
         "organizationList": {
             "title": "Vos organisations",
@@ -142,11 +144,7 @@
         "urlPlaceholder": "parsec://hote:port/organisation?action=action&...",
         "join": "Rejoindre"
     },
-    "MsAlertConfirmation": {
-        "areYouSure": "Êtes-vous sûr ?",
-        "infoNotSaved": "Si vous avez rempli des informations, elles ne seront pas sauvegardées.",
-        "ok": "OK",
-        "cancel": "Annuler",
+    "QuestionModal": {
         "yes": "Oui",
         "no": "Non"
     },
