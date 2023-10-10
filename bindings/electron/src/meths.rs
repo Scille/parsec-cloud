@@ -6521,6 +6521,66 @@ fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// get_default_config_dir
+fn get_default_config_dir(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let ret = libparsec::get_default_config_dir();
+    let js_ret = JsString::try_new(&mut cx, {
+        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+            path.into_os_string()
+                .into_string()
+                .map_err(|_| "Path contains non-utf8 characters")
+        };
+        match custom_to_rs_string(ret) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(&mut cx)?;
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// get_default_data_base_dir
+fn get_default_data_base_dir(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let ret = libparsec::get_default_data_base_dir();
+    let js_ret = JsString::try_new(&mut cx, {
+        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+            path.into_os_string()
+                .into_string()
+                .map_err(|_| "Path contains non-utf8 characters")
+        };
+        match custom_to_rs_string(ret) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(&mut cx)?;
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// get_default_mountpoint_base_dir
+fn get_default_mountpoint_base_dir(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let ret = libparsec::get_default_mountpoint_base_dir();
+    let js_ret = JsString::try_new(&mut cx, {
+        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+            path.into_os_string()
+                .into_string()
+                .map_err(|_| "Path contains non-utf8 characters")
+        };
+        match custom_to_rs_string(ret) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(&mut cx)?;
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
 // get_platform
 fn get_platform(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let ret = libparsec::get_platform();
@@ -8208,6 +8268,12 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("clientStartWorkspace", client_start_workspace)?;
     cx.export_function("clientStop", client_stop)?;
+    cx.export_function("getDefaultConfigDir", get_default_config_dir)?;
+    cx.export_function("getDefaultDataBaseDir", get_default_data_base_dir)?;
+    cx.export_function(
+        "getDefaultMountpointBaseDir",
+        get_default_mountpoint_base_dir,
+    )?;
     cx.export_function("getPlatform", get_platform)?;
     cx.export_function(
         "greeterDeviceInProgress1DoWaitPeerTrust",

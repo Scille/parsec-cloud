@@ -5661,6 +5661,69 @@ pub fn clientStop(client: u32) -> Promise {
     })
 }
 
+// get_default_config_dir
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn getDefaultConfigDir() -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::get_default_config_dir();
+        Ok(JsValue::from_str({
+            let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                path.into_os_string()
+                    .into_string()
+                    .map_err(|_| "Path contains non-utf8 characters")
+            };
+            match custom_to_rs_string(ret) {
+                Ok(ok) => ok,
+                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            }
+            .as_ref()
+        }))
+    })
+}
+
+// get_default_data_base_dir
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn getDefaultDataBaseDir() -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::get_default_data_base_dir();
+        Ok(JsValue::from_str({
+            let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                path.into_os_string()
+                    .into_string()
+                    .map_err(|_| "Path contains non-utf8 characters")
+            };
+            match custom_to_rs_string(ret) {
+                Ok(ok) => ok,
+                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            }
+            .as_ref()
+        }))
+    })
+}
+
+// get_default_mountpoint_base_dir
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn getDefaultMountpointBaseDir() -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::get_default_mountpoint_base_dir();
+        Ok(JsValue::from_str({
+            let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                path.into_os_string()
+                    .into_string()
+                    .map_err(|_| "Path contains non-utf8 characters")
+            };
+            match custom_to_rs_string(ret) {
+                Ok(ok) => ok,
+                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            }
+            .as_ref()
+        }))
+    })
+}
+
 // get_platform
 #[allow(non_snake_case)]
 #[wasm_bindgen]
