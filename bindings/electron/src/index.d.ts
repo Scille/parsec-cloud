@@ -1128,6 +1128,12 @@ export function clientStartWorkspace(
 export function clientStop(
     client: number
 ): Promise<Result<null, ClientStopError>>
+export function getDefaultConfigDir(
+): Promise<string>
+export function getDefaultDataBaseDir(
+): Promise<string>
+export function getDefaultMountpointBaseDir(
+): Promise<string>
 export function getPlatform(
 ): Promise<Platform>
 export function greeterDeviceInProgress1DoWaitPeerTrust(

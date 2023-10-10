@@ -1094,6 +1094,12 @@ export interface LibParsecPlugin {
     clientStop(
         client: Handle
     ): Promise<Result<null, ClientStopError>>
+    getDefaultConfigDir(
+    ): Promise<Path>
+    getDefaultDataBaseDir(
+    ): Promise<Path>
+    getDefaultMountpointBaseDir(
+    ): Promise<Path>
     getPlatform(
     ): Promise<Platform>
     greeterDeviceInProgress1DoWaitPeerTrust(
