@@ -277,6 +277,131 @@ impl TestbedEnv {
             .unwrap_or_else(|_| panic!("Invalid DeviceID !"));
         self.seal_and(|cache| cache.local_device(self, device_id))
     }
+
+    pub fn get_user_certificate(
+        &self,
+        user_id: impl TryInto<UserID>,
+    ) -> (Arc<UserCertificate>, Bytes) {
+        let user_id = user_id
+            .try_into()
+            .unwrap_or_else(|_| panic!("Invalid UserID !"));
+
+        self.template
+            .certificates()
+            .find_map(|event| match event.certificate {
+                AnyArcCertificate::User(certif) if certif.user_id == user_id => {
+                    Some((certif, event.signed))
+                }
+                _ => None,
+            })
+            .unwrap()
+    }
+
+    pub fn get_device_certificate(
+        &self,
+        device_id: impl TryInto<DeviceID>,
+    ) -> (Arc<DeviceCertificate>, Bytes) {
+        let device_id = device_id
+            .try_into()
+            .unwrap_or_else(|_| panic!("Invalid DeviceID !"));
+
+        self.template
+            .certificates()
+            .find_map(|event| match event.certificate {
+                AnyArcCertificate::Device(certif) if certif.device_id == device_id => {
+                    Some((certif, event.signed))
+                }
+                _ => None,
+            })
+            .unwrap()
+    }
+
+    pub fn get_revoked_certificate(
+        &self,
+        user_id: impl TryInto<UserID>,
+    ) -> (Arc<RevokedUserCertificate>, Bytes) {
+        let user_id = user_id
+            .try_into()
+            .unwrap_or_else(|_| panic!("Invalid UserID !"));
+
+        self.template
+            .certificates()
+            .find_map(|event| match event.certificate {
+                AnyArcCertificate::RevokedUser(certif) if certif.user_id == user_id => {
+                    Some((certif, event.signed))
+                }
+                _ => None,
+            })
+            .unwrap()
+    }
+
+    pub fn get_last_realm_role_certificate(
+        &self,
+        user_id: impl TryInto<UserID>,
+        realm_id: VlobID,
+    ) -> (Arc<RealmRoleCertificate>, Bytes) {
+        let user_id = user_id
+            .try_into()
+            .unwrap_or_else(|_| panic!("Invalid UserID !"));
+
+        self.template
+            .certificates_rev()
+            .find_map(|event| match event.certificate {
+                AnyArcCertificate::RealmRole(certif)
+                    if certif.user_id == user_id && certif.realm_id == realm_id =>
+                {
+                    Some((certif, event.signed))
+                }
+                _ => None,
+            })
+            .unwrap()
+    }
+
+    pub fn get_last_user_update_certificate(
+        &self,
+        user_id: impl TryInto<UserID>,
+    ) -> (Arc<UserUpdateCertificate>, Bytes) {
+        let user_id = user_id
+            .try_into()
+            .unwrap_or_else(|_| panic!("Invalid UserID !"));
+
+        self.template
+            .certificates_rev()
+            .find_map(|event| match event.certificate {
+                AnyArcCertificate::UserUpdate(certif) if certif.user_id == user_id => {
+                    Some((certif, event.signed))
+                }
+                _ => None,
+            })
+            .unwrap()
+    }
+
+    pub fn get_sequester_authority_certificate(
+        &self,
+    ) -> (Arc<SequesterAuthorityCertificate>, Bytes) {
+        self.template
+            .certificates()
+            .find_map(|event| match event.certificate {
+                AnyArcCertificate::SequesterAuthority(certif) => Some((certif, event.signed)),
+                _ => None,
+            })
+            .unwrap()
+    }
+
+    pub fn get_sequester_service_certificate(
+        &self,
+        service_id: SequesterServiceID,
+    ) -> (Arc<SequesterServiceCertificate>, Bytes) {
+        self.template
+            .certificates()
+            .find_map(|event| match event.certificate {
+                AnyArcCertificate::SequesterService(certif) if certif.service_id == service_id => {
+                    Some((certif, event.signed))
+                }
+                _ => None,
+            })
+            .unwrap()
+    }
 }
 
 /// `test_new_testbed` should be called when a test starts (and be followed
