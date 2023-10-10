@@ -19,8 +19,8 @@ macro_rules! impl_secret_key {
 
                 let key = Self::generate();
 
-                let mut b32 =
-                    ::base32::encode(::base32::Alphabet::RFC4648 { padding: false }, key.as_ref());
+                // Note the "nopad" encoding variant to skip trailing `=`
+                let mut b32 = ::data_encoding::BASE32_NOPAD.encode(key.as_ref());
 
                 // Add `-` grouping separators
                 let passphrase = b32
@@ -36,7 +36,6 @@ macro_rules! impl_secret_key {
                 (passphrase.into(), key)
             }
 
-            /// `passphrase` parameter is passed mutable so that we zeroize it once used.
             pub fn from_recovery_passphrase(
                 mut passphrase: crate::SecretKeyPassphrase,
             ) -> crate::CryptoResult<Self> {
@@ -62,16 +61,18 @@ macro_rules! impl_secret_key {
                         .collect::<String>();
 
                     // Note we have stripped any `=` padding character that may have been
-                    // present (`::base32::decode` works just fine without them)
+                    // present (hence the "nopad" in `BASE32_NOPAD` bellow)
 
                     Zeroizing::new(b32)
                 };
 
                 // Actual base32 decoding
                 let rawkey = {
-                    let rawkey =
-                        ::base32::decode(::base32::Alphabet::RFC4648 { padding: true }, &b32)
-                            .expect("Always valid base32 payload");
+                    // Return an empty rawkey if the decoding failed, this will be
+                    // handled in the final conversion.
+                    let rawkey = ::data_encoding::BASE32_NOPAD
+                        .decode(b32.as_ref())
+                        .unwrap_or_else(|_| vec![]);
 
                     Zeroizing::new(rawkey)
                 };

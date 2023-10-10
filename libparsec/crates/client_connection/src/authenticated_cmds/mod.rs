@@ -32,8 +32,8 @@
 
 pub(crate) mod sse;
 
-use base64::prelude::{Engine, BASE64_STANDARD};
 use bytes::Bytes;
+use data_encoding::BASE64;
 use eventsource_stream::Eventsource;
 use reqwest::{
     header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
@@ -91,7 +91,7 @@ impl AuthenticatedCmds {
         let send_hook = get_send_hook(_config_dir);
 
         let author_header_value =
-            HeaderValue::from_str(&BASE64_STANDARD.encode(device.device_id.to_string().as_bytes()))
+            HeaderValue::from_str(&BASE64.encode(device.device_id.to_string().as_bytes()))
                 .expect("base64 shouldn't contain invalid char");
 
         Self {
@@ -269,7 +269,7 @@ fn sign_request(
 ) -> RequestBuilder {
     let timestamp = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
     let signature = signing_key.sign_only_signature(body);
-    let signature = BASE64_STANDARD.encode(signature);
+    let signature = BASE64.encode(&signature);
 
     let mut authorization_headers = HeaderMap::with_capacity(4);
 

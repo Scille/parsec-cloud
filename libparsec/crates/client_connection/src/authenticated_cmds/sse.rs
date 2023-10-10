@@ -2,7 +2,7 @@
 
 use std::{fmt::Debug, marker::PhantomData, task::Poll, time::Duration};
 
-use base64::prelude::{Engine, BASE64_STANDARD};
+use data_encoding::BASE64;
 use eventsource_stream::{Event, EventStreamError};
 use libparsec_platform_async::stream::Stream;
 use reqwest::{header::HeaderValue, StatusCode};
@@ -109,8 +109,8 @@ where
 {
     let message = match event.event.as_ref() {
         "missed_events" => Ok(SSEResponseOrMissedEvents::MissedEvents),
-        "message" => BASE64_STANDARD
-            .decode(event.data.as_str())
+        "message" => BASE64
+            .decode(event.data.as_bytes())
             .map_err(|_| ConnectionError::BadContent)
             .and_then(|raw| {
                 T::api_load_response(raw.as_ref()).map_err(|_| ConnectionError::BadContent)

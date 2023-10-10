@@ -42,7 +42,7 @@ serde = { workspace = true, features = ["derive"] }
 serde_bytes = { workspace = true, features = ["std"] }
 hex = { workspace = true, features = ["std"] }
 thiserror = { workspace = true }
-base32 = { workspace = true }
+data-encoding = { workspace = true, features = ["alloc"] }
 # `alloc` feature is required to properly erase struct containing vec/string
 zeroize = { workspace = true, features = ["alloc"] }
 
