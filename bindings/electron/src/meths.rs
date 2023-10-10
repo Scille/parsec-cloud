@@ -2484,10 +2484,6 @@ fn variant_client_start_error_rs_to_js<'a>(
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::ClientStartError::DeviceAlreadyRunning { .. } => {
-            let js_tag = JsString::try_new(cx, "DeviceAlreadyRunning").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
         libparsec::ClientStartError::Internal { .. } => {
             let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -2538,10 +2534,6 @@ fn variant_client_start_workspace_error_rs_to_js<'a>(
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::ClientStartWorkspaceError::AlreadyStarted { .. } => {
-            let js_tag = JsString::try_new(cx, "AlreadyStarted").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
         libparsec::ClientStartWorkspaceError::Internal { .. } => {
             let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -3239,6 +3231,18 @@ fn variant_invite_list_item_js_to_rs<'a>(
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
         "Device" => {
+            let addr = {
+                let js_val: Handle<JsString> = obj.get(cx, "addr")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::BackendInvitationAddr::from_any(&s).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
             let token = {
                 let js_val: Handle<JsString> = obj.get(cx, "token")?;
                 {
@@ -3274,12 +3278,25 @@ fn variant_invite_list_item_js_to_rs<'a>(
                 }
             };
             Ok(libparsec::InviteListItem::Device {
+                addr,
                 token,
                 created_on,
                 status,
             })
         }
         "User" => {
+            let addr = {
+                let js_val: Handle<JsString> = obj.get(cx, "addr")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::BackendInvitationAddr::from_any(&s).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
             let token = {
                 let js_val: Handle<JsString> = obj.get(cx, "token")?;
                 {
@@ -3319,6 +3336,7 @@ fn variant_invite_list_item_js_to_rs<'a>(
                 }
             };
             Ok(libparsec::InviteListItem::User {
+                addr,
                 token,
                 created_on,
                 claimer_email,
@@ -3337,6 +3355,7 @@ fn variant_invite_list_item_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     match rs_obj {
         libparsec::InviteListItem::Device {
+            addr,
             token,
             created_on,
             status,
@@ -3344,6 +3363,18 @@ fn variant_invite_list_item_rs_to_js<'a>(
         } => {
             let js_tag = JsString::try_new(cx, "Device").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
+            let js_addr = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |addr: libparsec::BackendInvitationAddr| -> Result<String, &'static str> {
+                        Ok(addr.to_url().into())
+                    };
+                match custom_to_rs_string(addr) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "addr", js_addr)?;
             let js_token = JsString::try_new(cx, {
                 let custom_to_rs_string =
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
@@ -3369,6 +3400,7 @@ fn variant_invite_list_item_rs_to_js<'a>(
             js_obj.set(cx, "status", js_status)?;
         }
         libparsec::InviteListItem::User {
+            addr,
             token,
             created_on,
             claimer_email,
@@ -3377,6 +3409,18 @@ fn variant_invite_list_item_rs_to_js<'a>(
         } => {
             let js_tag = JsString::try_new(cx, "User").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
+            let js_addr = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |addr: libparsec::BackendInvitationAddr| -> Result<String, &'static str> {
+                        Ok(addr.to_url().into())
+                    };
+                match custom_to_rs_string(addr) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "addr", js_addr)?;
             let js_token = JsString::try_new(cx, {
                 let custom_to_rs_string =
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
