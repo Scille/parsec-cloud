@@ -102,6 +102,7 @@ pub enum AddCertificateError {
     Internal(#[from] anyhow::Error),
 }
 
+#[derive(Debug)]
 pub enum MaybeRedactedSwitch {
     Switched,
     NoSwitch,
