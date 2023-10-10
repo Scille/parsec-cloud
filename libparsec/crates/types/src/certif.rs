@@ -673,6 +673,8 @@ impl UnsecureSequesterServiceCertificate {
 impl SequesterServiceCertificate {
     pub fn unsecure_load(signed: Bytes) -> DataResult<UnsecureSequesterServiceCertificate> {
         let (_, compressed) =
+            // TODO: It should be SequesterVerifyKeyDer instead, but the signature
+            // need the key size
             VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
         let unsecure = load::<SequesterServiceCertificate>(compressed)?;
         Ok(UnsecureSequesterServiceCertificate { signed, unsecure })
@@ -694,7 +696,7 @@ impl_transparent_data_format_conversion!(
  * AnyCertificate
  */
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AnyArcCertificate {
     User(Arc<UserCertificate>),
     Device(Arc<DeviceCertificate>),
@@ -729,6 +731,7 @@ pub enum UnsecureAnyCertificate {
 }
 
 impl AnyCertificate {
+    // TODO: `VerifyKey::unsecure_unwrap` is invalid for `SequesterServiceCertificate`
     pub fn unsecure_load(signed: Bytes) -> Result<UnsecureAnyCertificate, DataError> {
         let (_, compressed) =
             VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;

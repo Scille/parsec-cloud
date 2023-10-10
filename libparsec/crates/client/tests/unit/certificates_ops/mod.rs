@@ -2,4 +2,5 @@
 
 mod add_common;
 mod add_user_certificate;
+mod store;
 mod utils;
