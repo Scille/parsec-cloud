@@ -31,3 +31,46 @@ impl From<ClientConfig> for libparsec_client::ClientConfig {
         }
     }
 }
+
+pub fn get_default_data_base_dir() -> PathBuf {
+    #[cfg(target_arch = "wasm32")]
+    {
+        PathBuf::from("")
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let mut path = dirs::data_dir().expect("Could not determine base data directory");
+        // TODO: temporary name to avoid clashing with stable parsec
+        path.push("parsec-v3-alpha");
+        path
+    }
+}
+
+pub fn get_default_config_dir() -> PathBuf {
+    #[cfg(target_arch = "wasm32")]
+    {
+        PathBuf::from("")
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        // TODO: check MacOS path correspond to Parsec v2
+        let mut path = dirs::config_dir().expect("Could not determine base config directory");
+        // TODO: temporary name to avoid clashing with stable parsec
+        path.push("parsec-v3-alpha");
+        path
+    }
+}
+
+pub fn get_default_mountpoint_base_dir() -> PathBuf {
+    #[cfg(target_arch = "wasm32")]
+    {
+        PathBuf::from("")
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let mut path = dirs::home_dir().expect("Could not determine home directory");
+        // TODO: temporary name to avoid clashing with stable parsec
+        path.push("Parsec v3 Alpha");
+        path
+    }
+}
