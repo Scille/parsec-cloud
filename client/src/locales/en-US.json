@@ -315,7 +315,7 @@
             "deleteFailed": "Failed to delete `{name}`",
             "renameFailed": "Failed to rename `{name}`",
             "createFolderFailed": "Failed to create new folder `{name}`",
-            "listFailed": "Failed to list folder `{path}`"
+            "listFailed": "Failed to list the content of the folder `{path}`"
         },
         "CreateFolderModal": {
             "title": "Create a new folder",
