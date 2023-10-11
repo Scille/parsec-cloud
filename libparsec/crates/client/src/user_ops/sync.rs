@@ -6,8 +6,11 @@ use libparsec_client_connection::{protocol::authenticated_cmds, ConnectionError}
 use libparsec_types::prelude::*;
 
 use super::UserOps;
-use crate::certificates_ops::{
-    InvalidCertificateError, InvalidManifestError, PollServerError, ValidateManifestError,
+use crate::{
+    certificates_ops::{
+        InvalidCertificateError, InvalidManifestError, PollServerError, ValidateManifestError,
+    },
+    EventUserOpsSynced,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -65,8 +68,11 @@ impl From<ConnectionError> for FetchRemoteUserManifestError {
 
 pub async fn sync(ops: &UserOps) -> Result<(), SyncError> {
     let user_manifest = ops.storage.get_user_manifest();
+
     if user_manifest.need_sync {
-        outbound_sync(ops).await
+        outbound_sync(ops).await?;
+        ops.event_bus.send(&EventUserOpsSynced);
+        Ok(())
     } else {
         inbound_sync(ops).await
     }
@@ -282,14 +288,15 @@ async fn outbound_sync_inner(ops: &UserOps) -> Result<OutboundSyncOutcome, SyncE
                 updater.set_user_manifest(Arc::new(merged_um)).await?;
             }
 
-            // TODO: events
-            // self.event_bus.send(CoreEvent.FS_ENTRY_SYNCED, id=self.user_realm_id)
-
             Ok(OutboundSyncOutcome::Done)
         }
     }
 }
 
+/// Upload local changes to the server.
+///
+/// This also requires to download and merge any remote changes. Hence the
+/// client is fully synchronized with the server once this function returns.
 async fn outbound_sync(ops: &UserOps) -> Result<(), SyncError> {
     loop {
         match outbound_sync_inner(ops).await? {
@@ -352,6 +359,10 @@ async fn find_last_valid_manifest(
     Ok(manifest)
 }
 
+/// Download and merge remote changes from the server.
+///
+/// If the client contains local changes, an outbound sync is still needed to
+/// have the client fully synchronized with the server.
 async fn inbound_sync(ops: &UserOps) -> Result<(), SyncError> {
     // Retrieve remote
     let target_um = match fetch_remote_user_manifest(ops, None).await {

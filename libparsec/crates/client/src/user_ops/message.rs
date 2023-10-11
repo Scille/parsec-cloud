@@ -9,6 +9,7 @@ use libparsec_types::prelude::*;
 use super::{merge::merge_workspace_entry, UserOps};
 use crate::certificates_ops::{InvalidCertificateError, ValidateMessageError};
 use crate::event_bus::EventPing;
+use crate::EventUserOpsNeedSync;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ProcessLastMessagesError {
@@ -175,8 +176,7 @@ pub(super) async fn process_last_messages(
             ops.device.time_provider.now(),
         );
         updater.set_user_manifest(user_manifest).await?;
-        // TODO: event
-        // ops.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=ops.user_realm_id)
+        ops.event_bus.send(&EventUserOpsNeedSync);
     }
 
     Ok(())
@@ -220,8 +220,7 @@ async fn process_message_sharing_granted(
         .evolve_workspaces_and_mark_updated(workspace_entry, timestamp);
 
     updater.set_user_manifest(user_manifest).await?;
-    // TODO: events
-    // ops.event_bus.send(CoreEvent.USERFS_UPDATED)
+    ops.event_bus.send(&EventUserOpsNeedSync);
     //
     // if not already_existing_entry:
     //     # TODO: remove this event ?

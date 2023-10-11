@@ -91,6 +91,10 @@ impl UserOps {
      * Public interface
      */
 
+    pub fn realm_id(&self) -> VlobID {
+        self.device.user_realm_id
+    }
+
     pub fn list_workspaces(&self) -> Vec<(VlobID, EntryName)> {
         let user_manifest = self.storage.get_user_manifest();
         user_manifest

@@ -6,6 +6,7 @@ use libparsec_platform_storage::workspace::workspace_storage_non_speculative_ini
 use libparsec_types::prelude::*;
 
 use super::UserOps;
+use crate::event_bus::{EventUserOpsNeedSync, EventUserOpsWorkspaceCreated};
 
 pub(super) async fn create_workspace(
     ops: &UserOps,
@@ -14,7 +15,7 @@ pub(super) async fn create_workspace(
     let (updater, mut user_manifest) = ops.storage.for_update().await;
 
     let timestamp = ops.device.time_provider.now();
-    let workspace_entry = WorkspaceEntry::generate(name, timestamp);
+    let workspace_entry = WorkspaceEntry::generate(name.clone(), timestamp);
     let workspace_id = workspace_entry.id;
 
     // `Arc::make_mut` clones user manifest before we modify it
@@ -37,10 +38,13 @@ pub(super) async fn create_workspace(
     // it corresponding realm in the backend !
     workspace_storage_non_speculative_init(&ops.config.data_base_dir, &ops.device, workspace_id)
         .await?;
+
     updater.set_user_manifest(user_manifest).await?;
-    // TODO: handle events
-    // ops.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=ops.user_realm_id)
-    // ops.event_bus.send(CoreEvent.FS_WORKSPACE_CREATED, new_entry=workspace_entry)
+    ops.event_bus.send(&EventUserOpsNeedSync);
+    ops.event_bus.send(&EventUserOpsWorkspaceCreated {
+        id: workspace_id,
+        name,
+    });
 
     Ok(workspace_id)
 }
@@ -73,8 +77,7 @@ pub(super) async fn rename_workspace(
             .set_user_manifest(user_manifest)
             .await
             .map_err(RenameWorkspaceError::Internal)?;
-        // TODO: handle events
-        // ops.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=ops.user_realm_id)
+        ops.event_bus.send(&EventUserOpsNeedSync);
     } else {
         return Err(RenameWorkspaceError::UnknownWorkspace(realm_id.to_owned()));
     }
