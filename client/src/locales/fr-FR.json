@@ -282,6 +282,7 @@
         "import": "Import",
         "itemCount": "Aucun élément | U1n élément | {count} éléments",
         "itemSelectedCount": "Aucun élément sélectionné | 1 élément sélectionné | {count} éléments sélectionnés",
+        "emptyFolder": "Ce dossier est vide.",
         "listDisplayTitles": {
             "name": "Nom",
             "updatedBy": "Modifié par",
