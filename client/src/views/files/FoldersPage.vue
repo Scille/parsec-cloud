@@ -80,7 +80,11 @@
         </div>
       </ms-action-bar>
       <div class="folder-container">
-        <div v-if="displayView === DisplayState.List">
+        <div v-if="children.length === 0">
+          {{ $t('FoldersPage.emptyFolder') }}
+        </div>
+
+        <div v-if="children.length && displayView === DisplayState.List">
           <ion-list>
             <ion-list-header
               class="folder-list-header"
@@ -120,7 +124,7 @@
           </ion-list>
         </div>
         <div
-          v-else
+          v-if="children.length && displayView === DisplayState.Grid"
           class="folders-container-grid"
         >
           <ion-item
@@ -398,7 +402,7 @@ async function deleteFile(file: parsec.EntryStat): Promise<void> {
     return;
   }
   const filePath = pathJoin(currentPath.value, file.name);
-  const result = await parsec.deleteFile(filePath);
+  const result = file.isFile() ? await parsec.deleteFile(filePath) : await parsec.deleteFolder(filePath);
   if (!result.ok) {
     notificationCenter.showToast(new Notification({
       message: t('FoldersPage.errors.deleteFailed', {name: file.name}),

@@ -33,7 +33,7 @@ export async function createFolder(path: FsPath): Promise<Result<FileID, Workspa
   const workspaceHandle = getWorkspaceHandle();
 
   if (clientHandle && workspaceHandle && window.isDesktop()) {
-    return await libparsec.workspaceCreateFolderAll(workspaceHandle, path);
+    return await libparsec.workspaceCreateFolder(workspaceHandle, path);
   } else {
     return {ok: true, value: '7'};
   }
@@ -55,7 +55,7 @@ export async function deleteFolder(path: FsPath): Promise<Result<null, Workspace
   const workspaceHandle = getWorkspaceHandle();
 
   if (clientHandle && workspaceHandle && window.isDesktop()) {
-    return await libparsec.workspaceRemoveFolderAll(workspaceHandle, path);
+    return await libparsec.workspaceRemoveFolder(workspaceHandle, path);
   } else {
     return {ok: true, value: null};
   }
