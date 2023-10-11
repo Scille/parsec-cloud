@@ -3,6 +3,7 @@
 <template>
   <ms-modal
     :title="$props.title"
+    :subtitle="$props.subtitle"
     :close-button-enabled="true"
     :cancel-button="{
       label: $t('TextInputModal.cancel'),
@@ -29,6 +30,7 @@ import MsTextInputModal from '@/components/core/ms-modal/MsTextInputModal.vue';
 
 export interface GetTextOptions {
   title: string,
+  subtitle?: string,
   trim?: boolean,
   validator?: IValidator,
   inputLabel?: string,
@@ -44,6 +46,7 @@ export async function getTextInputFromUser(options: GetTextOptions): Promise<str
     cssClass: 'text-input-modal',
     componentProps: {
       title: options.title,
+      subtitle: options.subtitle,
       trim: options.trim,
       validator: options.validator,
       inputLabel: options.inputLabel,

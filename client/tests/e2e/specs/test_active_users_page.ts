@@ -102,8 +102,8 @@ describe('Check active users page', () => {
     cy.get('#activate-users-ms-action-bar').find('#button-invite-user').contains('Invite a user').click();
     cy.wait(500);
     cy.get('.topbar-left__title').find('.title-h2').contains('Invitations');
-    cy.get('.create-user-invitation-modal').find('#next-button').as('inviteButton').should('have.attr', 'disabled');
-    cy.get('.create-user-invitation-modal').find('ion-input').find('input').type('gordon.freeman@blackmesa.nm');
+    cy.get('.text-input-modal').find('#next-button').as('inviteButton').should('have.attr', 'disabled');
+    cy.get('.text-input-modal').find('ion-input').find('input').type('gordon.freeman@blackmesa.nm');
     cy.get('@inviteButton').should('not.have.attr', 'disabled');
     cy.get('@inviteButton').click();
     cy.checkToastMessage('An invitation to join the organization has been sent to gordon.freeman@blackmesa.nm.');

@@ -19,18 +19,18 @@ describe('User join an organization', () => {
     cy.get('.popover-viewport').find('ion-item').last().contains('Join');
     cy.get('.popover-viewport').find('ion-item').last().click();
 
-    cy.get('.join-by-link-modal').should('exist');
-    cy.get('.join-by-link-modal').find('ion-title').contains('Join by link');
-    cy.get('.join-by-link-modal').find('ion-footer ion-button').as('joinButton').contains('Join');
+    cy.get('.text-input-modal').should('exist');
+    cy.get('.text-input-modal').find('ion-title').contains('Join by link');
+    cy.get('.text-input-modal').find('#next-button').as('joinButton').contains('Join');
     cy.get('@joinButton').should('have.attr', 'disabled');
 
     cy.wait(WAIT_TIME);
-    cy.get('.join-by-link-modal').find('ion-input').find('input').type(INVITATION_LINK);
+    cy.get('.text-input-modal').find('ion-input').find('input').type(INVITATION_LINK);
 
     cy.get('@joinButton').should('not.have.attr', 'disabled');
     cy.get('@joinButton').click();
 
-    cy.get('.join-by-link-modal').should('not.exist');
+    cy.get('.text-input-modal').should('not.exist');
     cy.get('.join-organization-modal').should('exist');
     cy.get('.modal-header__title').contains('Welcome to Parsec!');
 
@@ -60,8 +60,8 @@ describe('User join an organization', () => {
     cy.get('#create-organization-button').click();
     cy.get('.popover-viewport').find('ion-item').last().click();
     cy.wait(WAIT_TIME);
-    cy.get('.join-by-link-modal').find('ion-input').find('input').type(INVITATION_LINK);
-    cy.get('.join-by-link-modal').find('ion-footer ion-button').click();
+    cy.get('.text-input-modal').find('ion-input').find('input').type(INVITATION_LINK);
+    cy.get('.text-input-modal').find('#next-button').click();
 
     cy.get('.join-organization-modal').should('exist');
     cy.get('.modal-header__title').as('modalTitle').contains('Welcome to Parsec!');
