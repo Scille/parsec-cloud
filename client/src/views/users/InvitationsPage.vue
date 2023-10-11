@@ -96,7 +96,6 @@ import { MsModalResult } from '@/components/core/ms-types';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
 import InvitationCard from '@/components/users/InvitationCard.vue';
 import InvitationListItem from '@/components/users/InvitationListItem.vue';
-import CreateUserInvitationModal from '@/views/users/CreateUserInvitationModal.vue';
 import {
   isRoute,
   UserInvitation,
@@ -111,6 +110,8 @@ import {
 import { NotificationCenter, NotificationKey, NotificationLevel, Notification } from '@/services/notificationCenter';
 import { useRoute } from 'vue-router';
 import { routerNavigateTo } from '@/router';
+import { getTextInputFromUser } from '@/components/core/ms-modal/MsTextInputModal.vue';
+import { emailValidator } from '@/common/validators';
 
 const invitations: Ref<UserInvitation[]> = ref([]);
 const { t } = useI18n();
@@ -157,53 +158,55 @@ async function refreshInvitationsList(): Promise<void> {
 }
 
 async function inviteUser(): Promise<void> {
-  const modal = await modalController.create({
-    component: CreateUserInvitationModal,
-    cssClass: 'create-user-invitation-modal',
+  const email = await getTextInputFromUser({
+    title: t('UsersPage.CreateUserInvitationModal.pageTitle'),
+    trim: true,
+    validator: emailValidator,
+    inputLabel: t('UsersPage.CreateUserInvitationModal.label'),
+    placeholder: t('UsersPage.CreateUserInvitationModal.placeholder'),
+    okButtonText: t('UsersPage.CreateUserInvitationModal.create'),
   });
-  await modal.present();
 
-  const { data, role } = await modal.onWillDismiss();
+  if (!email) {
+    return;
+  }
 
-  if (role === 'confirm') {
-    const email = data;
-    const result = await parsecInviteUser(email);
+  const result = await parsecInviteUser(email);
 
-    if (result.ok) {
-      await refreshInvitationsList();
-      if (result.value.emailSentStatus === InvitationEmailSentStatus.Success) {
-        await notificationCenter.showToast(new Notification({
-          message: t('UsersPage.invitation.inviteSuccessMailSent', {email: email}),
-          level: NotificationLevel.Success,
-        }));
-      } else {
-        await notificationCenter.showToast(new Notification({
-          message: t('UsersPage.invitation.inviteSuccessNoMail', {email: email}),
-          level: NotificationLevel.Success,
-        }));
-      }
+  if (result.ok) {
+    await refreshInvitationsList();
+    if (result.value.emailSentStatus === InvitationEmailSentStatus.Success) {
+      await notificationCenter.showToast(new Notification({
+        message: t('UsersPage.invitation.inviteSuccessMailSent', {email: email}),
+        level: NotificationLevel.Success,
+      }));
     } else {
-      if (result.error.tag === InviteUserError.AlreadyMember) {
-        await notificationCenter.showToast(new Notification({
-          message: t('UsersPage.invitation.inviteFailedAlreadyMember'),
-          level: NotificationLevel.Error,
-        }));
-      } else if (result.error.tag === InviteUserError.Offline) {
-        await notificationCenter.showToast(new Notification({
-          message: t('UsersPage.invitation.inviteFailedOffline'),
-          level: NotificationLevel.Error,
-        }));
-      } else if (result.error.tag === InviteUserError.NotAllowed) {
-        await notificationCenter.showToast(new Notification({
-          message: t('UsersPage.invitation.inviteFailedNotAllowed'),
-          level: NotificationLevel.Error,
-        }));
-      } else {
-        await notificationCenter.showToast(new Notification({
-          message: t('UsersPage.invitation.inviteFailedUnknown', {reason: result.error.tag}),
-          level: NotificationLevel.Error,
-        }));
-      }
+      await notificationCenter.showToast(new Notification({
+        message: t('UsersPage.invitation.inviteSuccessNoMail', {email: email}),
+        level: NotificationLevel.Success,
+      }));
+    }
+  } else {
+    if (result.error.tag === InviteUserError.AlreadyMember) {
+      await notificationCenter.showToast(new Notification({
+        message: t('UsersPage.invitation.inviteFailedAlreadyMember'),
+        level: NotificationLevel.Error,
+      }));
+    } else if (result.error.tag === InviteUserError.Offline) {
+      await notificationCenter.showToast(new Notification({
+        message: t('UsersPage.invitation.inviteFailedOffline'),
+        level: NotificationLevel.Error,
+      }));
+    } else if (result.error.tag === InviteUserError.NotAllowed) {
+      await notificationCenter.showToast(new Notification({
+        message: t('UsersPage.invitation.inviteFailedNotAllowed'),
+        level: NotificationLevel.Error,
+      }));
+    } else {
+      await notificationCenter.showToast(new Notification({
+        message: t('UsersPage.invitation.inviteFailedUnknown', {reason: result.error.tag}),
+        level: NotificationLevel.Error,
+      }));
     }
   }
 }

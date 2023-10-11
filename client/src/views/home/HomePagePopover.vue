@@ -57,10 +57,10 @@ import {
 import CreateOrganizationModal from '@/views/home/CreateOrganizationModal.vue';
 import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
 import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModal.vue';
-import JoinByLinkModal from '@/views/home/JoinByLinkModal.vue';
-import { claimUserLinkValidator, claimDeviceLinkValidator, Validity } from '@/common/validators';
+import { claimUserLinkValidator, claimDeviceLinkValidator, Validity, claimLinkValidator } from '@/common/validators';
 import { useI18n } from 'vue-i18n';
 import { MsModalResult } from '@/components/core/ms-types';
+import { getTextInputFromUser } from '@/components/core/ms-modal/MsTextInputModal.vue';
 
 const { t } = useI18n();
 
@@ -93,48 +93,50 @@ async function openCreateOrganizationModal(): Promise<void> {
 // }
 
 async function openJoinByLinkModal(): Promise<void> {
-  const linkModal = await modalController.create({
-    component: JoinByLinkModal,
-    canDismiss: true,
-    cssClass: 'join-by-link-modal',
+  const link = await getTextInputFromUser({
+    title: t('JoinByLinkModal.pageTitle'),
+    subtitle: t('JoinByLinkModal.pleaseEnterUrl'),
+    trim: true,
+    validator: claimLinkValidator,
+    inputLabel: t('JoinOrganization.linkFormLabel'),
+    placeholder: t('JoinOrganization.linkFormPlaceholder'),
+    okButtonText: t('JoinByLinkModal.join'),
   });
-  await linkModal.present();
-  const linkResult = await linkModal.onWillDismiss();
-  await linkModal.dismiss();
 
-  if (linkResult.role !== MsModalResult.Confirm) {
-    await popoverController.dismiss(null, linkResult.role);
+  if (!link) {
+    await popoverController.dismiss(null, MsModalResult.Cancel);
+    return;
+  }
+
+  if (await claimUserLinkValidator(link) === Validity.Valid) {
+    const modal = await modalController.create({
+      component: UserJoinOrganizationModal,
+      canDismiss: true,
+      cssClass: 'join-organization-modal',
+      componentProps: {
+        invitationLink: link,
+      },
+    });
+    await modal.present();
+    const result = await modal.onWillDismiss();
+    await modal.dismiss();
+    await popoverController.dismiss(result.data, result.role);
+  } else if (await claimDeviceLinkValidator(link) === Validity.Valid) {
+    const modal = await modalController.create({
+      component: DeviceJoinOrganizationModal,
+      canDismiss: true,
+      cssClass: 'join-organization-modal',
+      componentProps: {
+        invitationLink: link,
+      },
+    });
+    await modal.present();
+    const result = await modal.onWillDismiss();
+    await modal.dismiss();
+    await popoverController.dismiss(result.data, result.role);
   } else {
-    if (await claimUserLinkValidator(linkResult.data) === Validity.Valid) {
-      const modal = await modalController.create({
-        component: UserJoinOrganizationModal,
-        canDismiss: true,
-        cssClass: 'join-organization-modal',
-        componentProps: {
-          invitationLink: linkResult.data,
-        },
-      });
-      await modal.present();
-      const result = await modal.onWillDismiss();
-      await modal.dismiss();
-      await popoverController.dismiss(result.data, result.role);
-    } else if (await claimDeviceLinkValidator(linkResult.data) === Validity.Valid) {
-      const modal = await modalController.create({
-        component: DeviceJoinOrganizationModal,
-        canDismiss: true,
-        cssClass: 'join-organization-modal',
-        componentProps: {
-          invitationLink: linkResult.data,
-        },
-      });
-      await modal.present();
-      const result = await modal.onWillDismiss();
-      await modal.dismiss();
-      await popoverController.dismiss(result.data, result.role);
-    } else {
-      console.error('Invalid data gotten from link, should never happen');
-      await popoverController.dismiss(null, 'cancel');
-    }
+    console.error('Invalid data gotten from link, should never happen');
+    await popoverController.dismiss(null, MsModalResult.Cancel);
   }
 }
 </script>

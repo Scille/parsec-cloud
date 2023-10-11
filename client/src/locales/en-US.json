@@ -405,7 +405,7 @@
         "start": "Start",
         "waitingForHost": "(Waiting for the host)",
         "linkFormLabel": "Invitation link",
-        "linkFormPlaceholder": "parsec://invitation/...",
+        "linkFormPlaceholder": "parsec://example.com/Org?...",
         "successMessage": "You successfully joined the organization.",
         "stepTitles": {
             "GetHostCode": "Host code",

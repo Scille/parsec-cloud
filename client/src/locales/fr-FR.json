@@ -405,7 +405,7 @@
         "start": "Démarrer",
         "waitingForHost": "(En attente de l'hôte)",
         "linkFormLabel": "Lien d'invitation",
-        "linkFormPlaceholder": "parsec://invitation/...",
+        "linkFormPlaceholder": "parsec://exemple.com/Org?...",
         "successMessage": "Vous avez rejoint l'organisation.",
         "stepTitles": {
             "GetHostCode": "Code hôte",
