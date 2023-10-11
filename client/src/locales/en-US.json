@@ -519,10 +519,9 @@
         "invitation": {
             "greetUser":"Greet",
             "rejectUser": "Reject",
-            "waiting": "Waiting",
-            "email": "Email",
-            "date": "Invitation date",
-            "status": "Status",
+            "emailTitle": "Email",
+            "dateTitle": "Invitation date",
+            "statusTitle": "Status",
             "noInvitations": "No pending invitations",
             "invitationsListFailed": "Failed to list the invitations. Make you you're connected to the internet.",
             "inviteSuccessMailSent": "An invitation to join the organization has been sent to {email}.",
@@ -535,7 +534,12 @@
             "cancelFailed": "Could not cancel the invitation. Make sure you're connected to the internet.",
             "orgInfoFailed": "Could not retrieve the link. Please make sure you're connected to the internet.",
             "linkCopiedToClipboard": "The link has been copied to the clipboard.",
-            "copyLink": "Copy the link"
+            "copyLink": "Copy the link",
+            "status": {
+                "ready": "Ready",
+                "idle": "Idle",
+                "deleted": "Deleted"
+            }
         },
         "CreateUserInvitationModal": {
             "pageTitle": "Invite a new user",

@@ -519,10 +519,9 @@
         "invitation": {
             "greetUser":"Accueillir",
             "rejectUser": "Refuser",
-            "waiting": "En attente",
-            "email": "Email",
-            "date": "Invitation date",
-            "status": "Statut",
+            "emailTitle": "Email",
+            "dateTitle": "Invitation date",
+            "statusTitle": "Statut",
             "noInvitations": "Aucune invitation en cours",
             "invitationsListFailed": "Impossible de lister les invitations. Veuillez vérifier votre connexion internet.",
             "inviteSuccessMailSent": "Une invitation à rejoindre l'organisation a été envoyé à {email}.",
@@ -535,7 +534,12 @@
             "cancelFailed": "Impossible d'annuler l'invitation. Veuillez vérifier votre connexion internet.",
             "orgInfoFailed": "Impossible de récupérer le lien. Veuillez vérifier votre connexion internet.",
             "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
-            "copyLink": "Copier le lien"
+            "copyLink": "Copier le lien",
+            "status": {
+                "ready": "Prête",
+                "idle": "Inactive",
+                "deleted": "Supprimée"
+            }
         },
         "CreateUserInvitationModal": {
             "pageTitle": "Inviter un nouvel utilisateur",

@@ -33,13 +33,13 @@
               lines="full"
             >
               <ion-label class="invitation-list-header__label cell-title label-email">
-                {{ $t('UsersPage.invitation.email') }}
+                {{ $t('UsersPage.invitation.emailTitle') }}
               </ion-label>
               <ion-label class="invitation-list-header__label cell-title label-date">
-                {{ $t('UsersPage.invitation.date') }}
+                {{ $t('UsersPage.invitation.dateTitle') }}
               </ion-label>
               <ion-label class="invitation-list-header__label cell-title label-status">
-                {{ $t('UsersPage.invitation.status') }}
+                {{ $t('UsersPage.invitation.statusTitle') }}
               </ion-label>
               <ion-label class="invitation-list-header__label cell-title label-space" />
             </ion-list-header>

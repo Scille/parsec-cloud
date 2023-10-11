@@ -29,7 +29,7 @@ describe('User Invitation List Item', () => {
       },
     });
 
-    expect(wrapper.get('.invitation-status').text()).to.equal('UsersPage.invitation.waiting');
+    expect(wrapper.get('.invitation-status').text()).to.equal('UsersPage.invitation.status.ready');
     expect(wrapper.get('.invitation-email').text()).to.equal('dung.eater@lands-between');
     const buttons = wrapper.findAll('ion-button');
     expect(buttons.at(0)?.text()).to.equal('UsersPage.invitation.copyLink');

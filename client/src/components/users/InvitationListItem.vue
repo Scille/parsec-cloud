@@ -27,7 +27,7 @@
     <!-- invitation status -->
     <div class="invitation-status">
       <ion-text class="cell">
-        {{ $t('UsersPage.invitation.waiting') }}
+        {{ translateInvitationStatus($t, $props.invitation.status) }}
       </ion-text>
     </div>
 
@@ -73,6 +73,7 @@ import { defineProps, inject } from 'vue';
 import { UserInvitation } from '@/parsec';
 import { Notification, NotificationCenter, NotificationKey, NotificationLevel } from '@/services/notificationCenter';
 import { useI18n } from 'vue-i18n';
+import { translateInvitationStatus } from '@/common/translations';
 
 defineProps<{
   invitation: UserInvitation,

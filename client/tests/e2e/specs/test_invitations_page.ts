@@ -13,7 +13,7 @@ describe('Check invitations page', () => {
     cy.get('.invitation-list').find('.invitation-list-item').as('invitations').should('have.length', 2);
     // cspell:disable-next-line
     cy.get('@invitations').eq(0).find('.invitation-email').contains('shadowheart@swordcoast.faerun');
-    cy.get('@invitations').eq(0).find('.invitation-status').contains('Waiting');
+    cy.get('@invitations').eq(0).find('.invitation-status').contains('Ready');
   });
 
   it('Create new invitation', () => {
@@ -24,5 +24,17 @@ describe('Check invitations page', () => {
     cy.get('@inviteButton').should('not.have.attr', 'disabled');
     cy.get('@inviteButton').click();
     cy.checkToastMessage('An invitation to join the organization has been sent to gordon.freeman@blackmesa.nm.');
+  });
+
+  it('Check copy link button', () => {
+    cy.get('.invitation-list').find('.invitation-list-item').as('invitations').should('have.length', 2);
+    cy.get('@invitations').eq(0).find('.invitation-email').contains('shadowheart@swordcoast.faerun');
+    cy.get('@invitations').eq(0).find('ion-button').eq(0).click();
+    cy.checkToastMessage('The link has been copied to the clipboard.');
+    cy.window().then((win) => {
+      win.navigator.clipboard.readText().then((text) => {
+        expect(text).to.eq('parsec://parsec.example.com/MyOrg?action=claim_device&token=12346565645645654645645645645645');
+      });
+    });
   });
 });
