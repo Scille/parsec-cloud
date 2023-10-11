@@ -1014,6 +1014,7 @@ async fn check_realm_role_certificate_consistency(
             .find(|role| role.user_id == cooked.user_id)
             .and_then(|role| role.role);
         let user_new_role = cooked.role;
+
         match (user_current_role, user_new_role) {
             // Cannot remove the role if the user already doesn't have one !
             (None, None) => {
@@ -1079,6 +1080,10 @@ async fn check_realm_role_certificate_consistency(
         Some(user_certificate),
     )
     .await?;
+
+    // TODO: Something goes wrong there: Outsider should not be allowed to be
+    // MANAGER/OWNER of a shared realm (see share_realm_with_outsider test).
+
     match profile {
         UserProfile::Standard | UserProfile::Admin => (),
         // OUTSIDER user:
