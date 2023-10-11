@@ -37,7 +37,7 @@ export interface GetTextOptions {
   defaultValue?: string,
 }
 
-export async function getText(options: GetTextOptions): Promise<string | null> {
+export async function getTextInputFromUser(options: GetTextOptions): Promise<string | null> {
   const modal = await modalController.create({
     component: MsTextInputModal,
     canDismiss: true,
