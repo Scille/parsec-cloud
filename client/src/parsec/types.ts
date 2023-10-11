@@ -66,6 +66,7 @@ import type {
   EntryName,
   EntryStatFolder as ParsecEntryStatFolder,
   EntryStatFile as ParsecEntryStatFile,
+  NewInvitationInfo,
 } from '@/plugins/libparsec';
 // Enums have to be imported separately
 import {
@@ -222,6 +223,7 @@ export {
   EntryStatFile,
   FileType,
   EntryStat,
+  NewInvitationInfo,
 };
 
 export {

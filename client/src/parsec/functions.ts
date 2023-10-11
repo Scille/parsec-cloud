@@ -38,6 +38,7 @@ import {
   ClientListUserDevicesError,
   UserID,
   CreateOrganizationError,
+  NewInvitationInfo,
 } from '@/parsec/types';
 import { getParsecHandle } from '@/parsec/routing';
 import { DateTime } from 'luxon';
@@ -82,20 +83,17 @@ export async function logout(): Promise<Result<null, ClientStopError>> {
   }
 }
 
-export async function inviteUser(email: string): Promise<Result<[InvitationToken, InvitationEmailSentStatus], NewUserInvitationError>> {
+export async function inviteUser(email: string): Promise<Result<NewInvitationInfo, NewUserInvitationError>> {
   const handle = getParsecHandle();
 
   if (handle !== null && window.isDesktop()) {
-    const ret = await libparsec.clientNewUserInvitation(handle, email, true);
-    if (ret.ok) {
-      return {ok: true, value: [ret.value.token, ret.value.emailSentStatus] };
-    } else {
-      return ret;
-    }
+    return await libparsec.clientNewUserInvitation(handle, email, true);
   } else {
-    return new Promise<Result<[InvitationToken, InvitationEmailSentStatus], NewUserInvitationError>>((resolve, _reject) => {
-      resolve({ ok: true, value: ['12346565645645654645645645645645', InvitationEmailSentStatus.Success] });
-    });
+    return { ok: true, value: {
+      token: '12346565645645654645645645645645',
+      emailSentStatus: InvitationEmailSentStatus.Success,
+      addr: 'parsec://parsec.example.com/Org',
+    }};
   }
 }
 
