@@ -6,7 +6,7 @@
       :icon="time"
     />
     <ion-text class="caption-caption">
-      {{ $t('UsersPage.invitation.waiting') }}
+      {{ translateInvitationStatus($t, $props.invitation.status) }}
     </ion-text>
   </div>
   <ion-label
@@ -45,6 +45,7 @@ import {
 } from 'ionicons/icons';
 import { defineProps } from 'vue';
 import { UserInvitation } from '@/parsec';
+import { translateInvitationStatus } from '@/common/translations';
 
 defineProps<{
   invitation: UserInvitation,
