@@ -83,11 +83,15 @@ enum ConnectionState {
 }
 
 impl ConnectionMonitor {
+    /// Connection monitor must be the last monitor to start !
     pub async fn start(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) -> Self {
         let worker = spawn(async move {
             let mut state = ConnectionState::Offline;
             let mut last_event_id: Option<String> = None;
             let mut backoff = RateLimiter::new();
+
+            // As last monitor to start, we send this event to wake up all the other monitors
+            event_bus.send(&EventMissedServerEvents);
 
             loop {
                 backoff.wait().await;
@@ -117,8 +121,23 @@ impl ConnectionMonitor {
                                 SSEResponseOrMissedEvents::MissedEvents => {
                                     event_bus.send(&EventMissedServerEvents);
                                 }
+
                                 SSEResponseOrMissedEvents::Response(rep) => {
-                                    handle_sse_response(&mut state, &event_bus, rep);
+                                    if ConnectionState::Offline == state {
+                                        event_bus.send(&EventOnline);
+                                        state = ConnectionState::Online;
+                                    }
+
+                                    match rep {
+                                        Rep::Ok(event) => dispatch_api_event(event, &event_bus),
+                                        // Unexpected error status
+                                        rep => {
+                                            log::warn!(
+                                                "`events_listen` unexpected error response: {:?}",
+                                                rep
+                                            );
+                                        }
+                                    };
                                 }
                             }
                         }
@@ -177,21 +196,6 @@ fn handle_sse_error(
             ControlFlow::Break(())
         }
     }
-}
-
-fn handle_sse_response(state: &mut ConnectionState, event_bus: &EventBus, rep: Rep) {
-    if &ConnectionState::Offline == state {
-        event_bus.send(&EventOnline);
-        *state = ConnectionState::Online;
-    }
-
-    match rep {
-        Rep::Ok(event) => dispatch_api_event(event, event_bus),
-        // Unexpected error status
-        rep => {
-            log::warn!("`events_listen` unexpected error response: {:?}", rep);
-        }
-    };
 }
 
 impl Drop for ConnectionMonitor {

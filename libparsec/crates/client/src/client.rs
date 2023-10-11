@@ -21,7 +21,9 @@ use crate::{
     config::ClientConfig,
     connection_monitor::ConnectionMonitor,
     event_bus::EventBus,
+    messages_monitor::MessagesMonitor,
     user_ops::UserOps,
+    user_sync_monitor::UserSyncMonitor,
     workspace_ops::{UserDependantConfig, WorkspaceOps},
 };
 
@@ -110,10 +112,12 @@ pub struct Client {
     pub(crate) event_bus: EventBus,
     pub(crate) cmds: Arc<AuthenticatedCmds>,
     pub certificates_ops: Arc<CertificatesOps>,
-    pub user_ops: UserOps,
+    pub user_ops: Arc<UserOps>,
     pub(crate) workspaces_ops: WorkspaceOpsStore,
     connection_monitor: ConnectionMonitor,
     certificates_monitor: CertificatesMonitor,
+    messages_monitor: MessagesMonitor,
+    user_sync_monitor: UserSyncMonitor,
 }
 
 impl Debug for Client {
@@ -179,18 +183,22 @@ impl Client {
             )
             .await?,
         );
-        let user_ops = UserOps::start(
-            config.clone(),
-            device.clone(),
-            cmds.clone(),
-            certificates_ops.clone(),
-            event_bus.clone(),
-        )
-        .await?;
+        let user_ops = Arc::new(
+            UserOps::start(
+                config.clone(),
+                device.clone(),
+                cmds.clone(),
+                certificates_ops.clone(),
+                event_bus.clone(),
+            )
+            .await?,
+        );
 
-        let certifs_monitor =
+        let certificates_monitor =
             CertificatesMonitor::start(certificates_ops.clone(), event_bus.clone()).await;
-        // Start the connection monitors last, as it send events to others
+        let messages_monitor = MessagesMonitor::start(user_ops.clone(), event_bus.clone()).await;
+        let user_sync_monitor = UserSyncMonitor::start(user_ops.clone(), event_bus.clone()).await;
+        // Start the connection monitors last, as it send the initial event that wakeup to others
         let connection_monitor = ConnectionMonitor::start(cmds.clone(), event_bus.clone()).await;
 
         let client = Self {
@@ -203,7 +211,9 @@ impl Client {
             user_ops,
             workspaces_ops: WorkspaceOpsStore::new(),
             connection_monitor,
-            certificates_monitor: certifs_monitor,
+            certificates_monitor,
+            messages_monitor,
+            user_sync_monitor,
         };
 
         Ok(client)

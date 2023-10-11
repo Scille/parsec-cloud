@@ -183,9 +183,17 @@ impl_events!(
         sender: DeviceID,
         reason: InvalidMessageError,
     },
+    UserOpsSynced,
+    UserOpsNeedSync,
+    UserOpsWorkspaceCreated {
+        name: EntryName,
+        id: VlobID,
+    },
     // Events related to monitors
     CertificatesMonitorCrashed(anyhow::Error),
+    MessagesMonitorCrashed(anyhow::Error),
     InvalidCertificate(crate::certificates_ops::InvalidCertificateError),
+    UserSyncMonitorCrashed(anyhow::Error),
     // Re-publishing of `events_listen`
     CertificatesUpdated { index: IndexInt },
     MessageReceived { index: IndexInt },

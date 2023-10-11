@@ -23,8 +23,9 @@ impl CertificatesMonitor {
             NewCertificate(IndexInt),
             MissedServerEvents,
         }
+        // Channel starts empty, hence the monitor will stay idle until the connection
+        // monitor triggers it initial `EventMissedServerEvents` event
         let (tx, rx) = channel::unbounded::<Action>();
-        let _ = tx.send(Action::MissedServerEvents);
 
         let events_connection_lifetime = (
             {
