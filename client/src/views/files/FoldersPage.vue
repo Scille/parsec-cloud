@@ -211,7 +211,7 @@ import { NotificationCenter, Notification, NotificationKey, NotificationLevel } 
 import * as parsec from '@/parsec';
 import { join as pathJoin } from '@/common/path';
 import { useI18n } from 'vue-i18n';
-import { getText } from '@/components/core/ms-modal/MsTextInputModal.vue';
+import { getTextInputFromUser } from '@/components/core/ms-modal/MsTextInputModal.vue';
 import { entryNameValidator } from '@/common/validators';
 import { Answer, askQuestion } from '@/components/core/ms-modal/MsQuestionModal.vue';
 
@@ -291,7 +291,7 @@ function onFileClick(_event: Event, file: parsec.EntryStat): void {
 }
 
 async function createFolder(): Promise<void> {
-  const folderName = await getText({
+  const folderName = await getTextInputFromUser({
     title: t('FoldersPage.CreateFolderModal.title'),
     trim: true,
     validator: entryNameValidator,
@@ -357,7 +357,7 @@ async function actionOnSelectedFiles(action: (file: parsec.EntryStat) => Promise
 }
 
 async function renameFile(file: parsec.EntryStat): Promise<void> {
-  const newName = await getText({
+  const newName = await getTextInputFromUser({
     title: file.isFile() ? t('FoldersPage.RenameModal.fileTitle') : t('FoldersPage.RenameModal.folderTitle'),
     trim: true,
     validator: entryNameValidator,

@@ -138,7 +138,7 @@ import {
   createWorkspace as parsecCreateWorkspace,
 } from '@/parsec';
 import { NotificationCenter, Notification, NotificationKey, NotificationLevel } from '@/services/notificationCenter';
-import { getText } from '@/components/core/ms-modal/MsTextInputModal.vue';
+import { getTextInputFromUser } from '@/components/core/ms-modal/MsTextInputModal.vue';
 import { workspaceNameValidator } from '@/common/validators';
 
 const { t } = useI18n();
@@ -188,7 +188,7 @@ function onMsSelectChange(event: MsSelectChangeEvent): void {
 }
 
 async function openCreateWorkspaceModal(): Promise<void> {
-  const workspaceName = await getText({
+  const workspaceName = await getTextInputFromUser({
     title: t('WorkspacesPage.CreateWorkspaceModal.pageTitle'),
     trim: true,
     validator: workspaceNameValidator,
