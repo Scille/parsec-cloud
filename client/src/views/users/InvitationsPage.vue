@@ -171,7 +171,7 @@ async function inviteUser(): Promise<void> {
 
     if (result.ok) {
       await refreshInvitationsList();
-      if (result.value[1] === InvitationEmailSentStatus.Success) {
+      if (result.value.emailSentStatus === InvitationEmailSentStatus.Success) {
         await notificationCenter.showToast(new Notification({
           message: t('UsersPage.invitation.inviteSuccessMailSent', {email: email}),
           level: NotificationLevel.Success,
