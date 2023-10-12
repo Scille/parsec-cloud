@@ -6,14 +6,17 @@ Contributing to Parsec is welcome! We love open source and community collaborati
 
 The guidelines here give some tips on how to best contribute. Please try to follow these. It's short, quick and easy. This will ensure a smooth process. Thanks again for contributing!
 
-**Quick Links**
+## Summary
 
-* [Filing Issues](#filing-issues)
-* [Filing Bugs](#filing-bugs)
-* [Filing Features](#filing-features)
-* [Contributing Code](#contributing-code)
-* [Contributing Documentation](#contributing-documentation)
-* [Acknowledgement](#acknowledgement)
+- [Summary](#summary)
+- [Filing Issues](#filing-issues)
+  - [Filing Bugs](#filing-bugs)
+  - [Filing Features](#filing-features)
+- [Contributing Code](#contributing-code)
+  - [Send us a Contributor Assignment Agreement](#send-us-a-contributor-assignment-agreement)
+    - [What we need you to do](#what-we-need-you-to-do)
+- [Contributing Documentation](#contributing-documentation)
+- [Acknowledgement](#acknowledgement)
 
 ## Filing Issues
 
@@ -27,8 +30,7 @@ Use the following link to [Create a bug report](https://github.com/Scille/parsec
 
 Please fill in the required fields and add any extra information that might help us understand the issue.
 
-
-> A bug issue should also be only about **one thing** - if you have found multiple related things, please file multiple issues and link the issues (cross referencing by mentioning the related issues in the descriptions - that will make GitHub automatically add respective links).
+> A bug issue should also be only about **one thing** - if you have found multiple related things, please file multiple issues and link the issues (cross-referencing by mentioning the related issues in the descriptions - that will make GitHub automatically add respective links).
 
 ### Filing Features
 
@@ -44,14 +46,39 @@ When proposing a new **feature**, please provide the following:
 
 We use the Fork & Pull Model. This means that you fork the repo, make changes to your fork, and then make a pull request here on the main repo.
 
-> This [article on GitHub](https://help.github.com/articles/using-pull-requests) gives more detailed information on how the process works.
+> This article [Create a branch for an issue] gives more detailed information on how the process works.
 
-1. All development happens on GitHub and we use the usual fork the repository, branch-per-issue, [pull request](https://help.github.com/articles/using-pull-requests) and merge workflow, also known as [GitHub Flow](https://guides.github.com/introduction/flow/).
-2. A necessary **requirement** is that an issue needs to exist first. That is, a PR is always for a specific issue. The branch should be name like this: `<descriptive_name>_issue<NNN>`.
-3. Another prerequisite (for merging code) is that you have [signed and sent us a contributor agreement](#send-us-a-contributor-assignment-agreement). This only needs to be done once, but we cannot merge code until we have received a CAA.
-4. Further, we have a CI system in place running the whole set of unit tests for Parsec on various platforms. The CI system will be triggered automatically when you do a PR. A necessary condition for a PR to be merged that all of our tests run green.
-5. An issue branch from a PR must be rebased to the **master** branch before merging. We don't have a policy (currently) regarding squashing - that is, you can leave your commits or squash them, but rebasing is necessary.
+1. All development happens on GitHub and we use the usual fork the repository, branch-per-issue, [pull request] and merge workflow, also known as [GitHub Flow].
+
+2. A necessary **requirement** is that an issue needs to exist first. That is, a PR is always for a specific issue.
+
+   We suggest that you create a branch on your fork with the following format:
+
+   ```jinja
+   {{ ISSUE_ID }}-{{ DESCRIPTIVE_NAME }}
+   ```
+
+   That format is alike to the branch created using [Create a branch for an issue] (if you're a maintainer of a project).
+
+3. Another prerequisite (for merging code) is that you have [signed and sent us a contributor agreement](#send-us-a-contributor-assignment-agreement).
+   This only needs to be done once, but we cannot merge code until we have received a CAA.
+
+4. Further, we have a CI system in place running the whole set of unit tests for Parsec on various platforms.
+   A necessary condition for a PR to be merged that all of our required workflow to be green.
+
+5. A branch must be rebased to the **master** branch before merging.
+
+   You can squash your commits into a single one if you want (with a nice commit title & message is best :yum:).
+
+   **BUT** Never correct conflict in your branch using a merge commit:
+
+   > Since we use the rebase strategy to merge branch, you merge commit that fix the conflict will be removed during the rebase.
+
 6. If your branch doesn't run green on our CI, or your branch becomes stale, because other things were merged in between, you are responsible for fixing thing on your branch first.
+
+[pull request]: https://help.github.com/articles/using-pull-requests
+[Github Flow]: https://docs.github.com/en/issues/tracking-your-work-with-issues/creating-a-branch-for-an-issue
+[Create a branch for an issue]: https://docs.github.com/en/issues/tracking-your-work-with-issues/creating-a-branch-for-an-issue
 
 ### Send us a Contributor Assignment Agreement
 
