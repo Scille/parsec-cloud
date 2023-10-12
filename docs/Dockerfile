@@ -1,3 +1,5 @@
+# cspell:words inotify
+
 FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -27,7 +29,8 @@ RUN apt-get update \
     latexmk \
     ca-certificates \
     curl \
-    git
+    git \
+    inotify-tools
 
 RUN mkdir /data && chown parsec:parsec /data
 
