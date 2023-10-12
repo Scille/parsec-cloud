@@ -4,7 +4,6 @@ version = "0.0.0"
 description = "Parsec documentation"
 authors = ["Scille SAS <contact@scille.fr>"]
 license = "BUSL-1.1"
-readme = "../README.rst"
 packages = [
     { include = "conf.py" }
 ]
