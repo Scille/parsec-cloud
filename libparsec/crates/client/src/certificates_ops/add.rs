@@ -816,6 +816,7 @@ async fn check_user_update_certificate_consistency(
         Some(user_certificate),
     )
     .await?;
+
     if user_current_profile == cooked.new_profile {
         let hint = mk_hint();
         let what = InvalidCertificateError::ContentAlreadyExists { hint };
