@@ -326,6 +326,7 @@ async function importFiles(): Promise<void> {
   });
   await modal.present();
   await modal.onWillDismiss();
+  await listFolder();
 }
 
 function selectAllFiles(checked: boolean): void {

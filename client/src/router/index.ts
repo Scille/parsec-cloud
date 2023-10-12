@@ -115,7 +115,7 @@ export function routerNavigateToWorkspace(workspaceId: WorkspaceID, path = '/'):
     if (result.ok) {
       routerNavigateTo('folder', {workspaceHandle: result.value}, {path: path, workspaceId: workspaceId});
     } else {
-      console.log(`Failed to navigate to workspace: ${result.error}`);
+      console.log(`Failed to navigate to workspace: ${result.error.tag}`);
     }
   });
 }
