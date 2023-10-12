@@ -49,6 +49,12 @@
             v-model="orgName"
             @on-enter-keyup="nextStep()"
           />
+
+          <ion-text
+            class="subtitles-sm org-name-criteria"
+          >
+            {{ $t('CreateOrganization.organizationNameCriteria') }}
+          </ion-text>
         </div>
 
         <!-- part 2 (user info)-->
@@ -203,7 +209,6 @@ import { organizationValidator, Validity } from '@/common/validators';
 import { asyncComputed } from '@/common/asyncComputed';
 import { NotificationCenter, Notification, NotificationLevel } from '@/services/notificationCenter';
 import { NotificationKey } from '@/common/injectionKeys';
-import { DateTime } from 'luxon';
 
 enum CreateOrganizationStep {
   OrgNameStep = 1,
@@ -219,6 +224,7 @@ const { t, d } = useI18n();
 
 const DEFAULT_SAAS_ADDR = 'parsec://saas.parsec.cloud';
 
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 const pageStep = ref(CreateOrganizationStep.OrgNameStep);
 const orgName = ref('');
@@ -426,6 +432,10 @@ function onUpdateRequested(info: OrgInfo): void {
 .org-name {
   display: flex;
   flex-direction: column;
+}
+
+.org-name-criteria {
+  color: var(--parsec-color-light-secondary-grey);
 }
 
 .org-server {

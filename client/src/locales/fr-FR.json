@@ -78,6 +78,7 @@
         "email": "E-mail",
         "emailPlaceholder": "jean.martin{'@'}exemple.com",
         "organizationName": "Nom de l'organisation",
+        "organizationNameCriteria": "Lettres, chiffres, tirets et tirets bas seulement. Aucun espace. Limité à 32 symboles.",
         "organizationNamePlaceholder": "MonOrganisation",
         "serverDescription": "Serveur de l'organisation",
         "useParsecServer": "Utiliser le serveur PARSEC principal",
