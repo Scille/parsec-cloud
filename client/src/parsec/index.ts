@@ -10,3 +10,4 @@ export * from '@/parsec/routing';
 export * from '@/parsec/validation';
 export * from '@/parsec/workspace';
 export * from '@/parsec/file';
+export * from '@/parsec/environment';

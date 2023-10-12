@@ -24,6 +24,7 @@ export async function askQuestion(title: string, subtitle?: string): Promise<Ans
   const modal = await modalController.create({
     component: MsQuestionModal,
     canDismiss: true,
+    backdropDismiss: false,
     cssClass: 'question-modal',
     componentProps: {
       title: title,

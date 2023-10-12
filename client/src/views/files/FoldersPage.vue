@@ -25,31 +25,31 @@
             id="button-rename"
             :button-label="$t('FoldersPage.fileContextMenu.actionRename')"
             :icon="pencil"
-            @click="actionOnSelectedFile(renameFile)"
+            @click="renameEntries(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-copy-link"
             :button-label="$t('FoldersPage.fileContextMenu.actionCopyLink')"
             :icon="link"
-            @click="actionOnSelectedFile(copyLink)"
+            @click="copyLink(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-move-to"
             :button-label="$t('FoldersPage.fileContextMenu.actionMoveTo')"
             :icon="arrowRedo"
-            @click="actionOnSelectedFile(moveTo)"
+            @click="moveEntriesTo(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-delete"
             :button-label="$t('FoldersPage.fileContextMenu.actionDelete')"
             :icon="trashBin"
-            @click="actionOnSelectedFile(deleteFile)"
+            @click="deleteEntries(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-delete"
             :button-label="$t('FoldersPage.fileContextMenu.actionDetails')"
             :icon="informationCircle"
-            @click="actionOnSelectedFile(showDetails)"
+            @click="showDetails(getSelectedEntries())"
           />
         </div>
         <div v-else>
@@ -57,19 +57,19 @@
             id="button-moveto"
             :button-label="$t('FoldersPage.fileContextMenu.actionMoveTo')"
             :icon="arrowRedo"
-            @click="actionOnSelectedFiles(moveTo)"
+            @click="moveEntriesTo(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-makeacopy"
             :button-label="$t('FoldersPage.fileContextMenu.actionMakeACopy')"
             :icon="copy"
-            @click="actionOnSelectedFiles(makeACopy)"
+            @click="copyEntries(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-delete"
             :button-label="$t('FoldersPage.fileContextMenu.actionDelete')"
             :icon="trashBin"
-            @click="actionOnSelectedFiles(deleteFile)"
+            @click="deleteEntries(getSelectedEntries())"
           />
         </div>
         <div class="right-side">
@@ -152,7 +152,7 @@
           </ion-text>
           <ion-text
             class="text title-h5"
-            v-if="selectedFilesCount !== 0"
+            v-if="selectedFilesCount > 0"
           >
             {{ $t('FoldersPage.itemSelectedCount', { count: selectedFilesCount }, selectedFilesCount) }}
           </ion-text>
@@ -160,14 +160,14 @@
             class="shortcuts-btn"
             id="button-move-to"
             :icon="arrowRedo"
-            @click="actionOnSelectedFile(moveTo)"
+            @click="moveEntriesTo(getSelectedEntries())"
             v-if="selectedFilesCount >= 1"
           />
           <ms-action-bar-button
             class="shortcuts-btn"
             id="button-delete"
             :icon="trashBin"
-            @click="actionOnSelectedFile(deleteFile)"
+            @click="deleteEntries(getSelectedEntries())"
             v-if="selectedFilesCount >= 1"
           />
         </div>
@@ -218,6 +218,8 @@ import { useI18n } from 'vue-i18n';
 import { getTextInputFromUser } from '@/components/core/ms-modal/MsTextInputModal.vue';
 import { entryNameValidator } from '@/common/validators';
 import { Answer, askQuestion } from '@/components/core/ms-modal/MsQuestionModal.vue';
+import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
+import { Console } from 'console';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
@@ -258,6 +260,7 @@ async function listFolder(): Promise<void> {
   if (result.ok) {
     folderInfo.value = result.value as parsec.EntryStatFolder;
     children.value = [];
+    allFilesSelected.value = false;
     for (const childName of (result.value as parsec.EntryStatFolder).children) {
       const childPath = pathJoin(currentPath.value, childName);
       const fileResult = await parsec.entryStat(childPath);
@@ -336,107 +339,150 @@ async function importFiles(): Promise<void> {
 function selectAllFiles(checked: boolean): void {
   for (const item of fileItemRefs.value || []) {
     item.isSelected = checked;
-    if (checked) {
-      item.showCheckbox = true;
+    item.showCheckbox = checked;
+  }
+  allFilesSelected.value = checked;
+}
+
+function getSelectedEntries(): parsec.EntryStat[] {
+  if (!fileItemRefs.value) {
+    return [];
+  }
+  return fileItemRefs.value.filter((item) => item.isSelected).map((item) => item.props.file);
+}
+
+async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
+  if (entries.length === 0) {
+    return;
+  } else if (entries.length === 1) {
+    const entry = entries[0];
+    const answer = await askQuestion(
+      entry.isFile() ?
+        t('FoldersPage.deleteOneFileQuestion', {name: entry.name}) :
+        t('FoldersPage.deleteOneFolderQuestion', {name: entry.name}),
+    );
+
+    if (answer === Answer.No) {
+      return;
+    }
+    const path = pathJoin(currentPath.value, entry.name);
+    const result = entry.isFile() ? await parsec.deleteFile(path) : await parsec.deleteFolder(path);
+    if (!result.ok) {
+      notificationCenter.showToast(new Notification({
+        message: t('FoldersPage.errors.deleteFailed', {name: entry.name}),
+        level: NotificationLevel.Error,
+      }));
     } else {
-      item.showCheckbox = false;
+      console.log(`File ${entry.name} deleted`);
+    }
+  } else {
+    const answer = await askQuestion(
+      t('FoldersPage.deleteMultipleQuestion', {count: entries.length}),
+    );
+    if (answer === Answer.No) {
+      return;
+    }
+    let errorsEncountered = 0;
+    for (const entry of entries) {
+      const path = pathJoin(currentPath.value, entry.name);
+      const result = entry.isFile() ? await parsec.deleteFile(path) : await parsec.deleteFolder(path);
+      if (!result.ok) {
+        errorsEncountered += 1;
+      }
+    }
+    if (errorsEncountered > 0) {
+      notificationCenter.showToast(new Notification({
+        message: errorsEncountered === entries.length ?
+          t('FoldersPage.errors.deleteMultipleAllFailed') :
+          t('FoldersPage.errors.deleteMultipleSomeFailed'),
+        level: NotificationLevel.Error,
+      }));
+    } else {
+      console.log(`${entries.length} entries deleted`);
     }
   }
+  await listFolder();
 }
 
-async function actionOnSelectedFile(action: (file: parsec.EntryStat) => Promise<void>): Promise<void> {
-  const selected = fileItemRefs.value.find((item) => item.isSelected);
-
-  if (!selected) {
+async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
+  if (entries.length === 0) {
     return;
   }
-  await action(selected.props.file);
-}
-
-async function actionOnSelectedFiles(action: (file: parsec.EntryStat) => Promise<void>): Promise<void> {
-  const selected = fileItemRefs.value.filter((item) => item.isSelected);
-
-  for (const item of selected) {
-    await action(item.props.file);
-  }
-}
-
-async function renameFile(file: parsec.EntryStat): Promise<void> {
+  const entry = entries[0];
   const newName = await getTextInputFromUser({
-    title: file.isFile() ? t('FoldersPage.RenameModal.fileTitle') : t('FoldersPage.RenameModal.folderTitle'),
+    title: entry.isFile() ? t('FoldersPage.RenameModal.fileTitle') : t('FoldersPage.RenameModal.folderTitle'),
     trim: true,
     validator: entryNameValidator,
-    inputLabel: file.isFile() ? t('FoldersPage.RenameModal.fileLabel') : t('FoldersPage.RenameModal.folderLabel'),
-    placeholder: file.isFile() ? t('FoldersPage.RenameModal.filePlaceholder') : t('FoldersPage.RenameModal.folderPlaceholder'),
+    inputLabel: entry.isFile() ? t('FoldersPage.RenameModal.fileLabel') : t('FoldersPage.RenameModal.folderLabel'),
+    placeholder: entry.isFile() ? t('FoldersPage.RenameModal.filePlaceholder') : t('FoldersPage.RenameModal.folderPlaceholder'),
     okButtonText: t('FoldersPage.RenameModal.rename'),
-    defaultValue: file.name,
+    defaultValue: entry.name,
   });
 
   if (!newName) {
     return;
   }
-  const filePath = pathJoin(currentPath.value, file.name);
+  const filePath = pathJoin(currentPath.value, entry.name);
   const result = await parsec.rename(filePath, newName);
   if (!result.ok) {
     notificationCenter.showToast(new Notification({
-      message: t('FoldersPage.errors.renameFailed', {name: file.name}),
+      message: t('FoldersPage.errors.renameFailed', {name: entry.name}),
       level: NotificationLevel.Error,
     }));
   } else {
-    console.log(`File ${file.name} renamed to ${newName}`);
+    console.log(`File ${entry.name} renamed to ${newName}`);
   }
   await listFolder();
 }
 
-async function copyLink(file: parsec.EntryStat): Promise<void> {
-  console.log('Get file link', file);
-}
-
-async function deleteFile(file: parsec.EntryStat): Promise<void> {
-  const answer = await askQuestion(
-    file.isFile() ?
-      t('FoldersPage.deleteOneFileQuestion', {name: file.name}) :
-      t('FoldersPage.deleteOneFolderQuestion', {name: file.name}),
-  );
-
-  if (answer === Answer.No) {
+async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
+  if (entries.length !== 1) {
     return;
   }
-  const filePath = pathJoin(currentPath.value, file.name);
-  const result = file.isFile() ? await parsec.deleteFile(filePath) : await parsec.deleteFolder(filePath);
-  if (!result.ok) {
-    notificationCenter.showToast(new Notification({
-      message: t('FoldersPage.errors.deleteFailed', {name: file.name}),
-      level: NotificationLevel.Error,
-    }));
-  } else {
-    console.log(`File ${file.name} deleted`);
+  console.log('Get file link', entries[0]);
+}
+
+async function moveEntriesTo(entries: parsec.EntryStat[]): Promise<void> {
+  console.log('Move entries', entries);
+}
+
+async function showDetails(entries: parsec.EntryStat[]): Promise<void> {
+  if (entries.length !== 1) {
+    return;
   }
-  await listFolder();
+  const entry = entries[0];
+  const modal = await modalController.create({
+    component: FileDetailsModal,
+    cssClass: 'file-details-modal',
+    componentProps: {
+      entry: entry,
+      path: pathJoin(currentPath.value, entry.name),
+    },
+  });
+  await modal.present();
+  await modal.onWillDismiss();
 }
 
-async function moveTo(file: parsec.EntryStat): Promise<void> {
-  console.log('Move file', file);
+async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
+  console.log('Make a copy', entries);
 }
 
-async function showDetails(file: parsec.EntryStat): Promise<void> {
-  console.log('Show details', file);
+async function downloadEntries(entries: parsec.EntryStat[]): Promise<void> {
+  console.log('Download', entries);
 }
 
-async function makeACopy(file: parsec.EntryStat): Promise<void> {
-  console.log('Make a copy', file);
+async function showHistory(entries: parsec.EntryStat[]): Promise<void> {
+  if (entries.length !== 1) {
+    return;
+  }
+  console.log('Show history', entries[0]);
 }
 
-async function download(file: parsec.EntryStat): Promise<void> {
-  console.log('Download', file);
-}
-
-async function showHistory(file: parsec.EntryStat): Promise<void> {
-  console.log('Show history', file);
-}
-
-async function openInExplorer(file: parsec.EntryStat): Promise<void> {
-  console.log('Open in explorer', file);
+async function openInExplorer(entries: parsec.EntryStat[]): Promise<void> {
+  if (entries.length !== 1) {
+    return;
+  }
+  console.log('Open in explorer', entries[0]);
 }
 
 async function openFileContextMenu(event: Event, file: parsec.EntryStat): Promise<void> {
@@ -459,21 +505,21 @@ async function openFileContextMenu(event: Event, file: parsec.EntryStat): Promis
     return;
   }
 
-  const actions = new Map<FileAction, (file: parsec.EntryStat) => Promise<void>>([
-    [FileAction.Rename, renameFile],
-    [FileAction.MoveTo, moveTo],
-    [FileAction.MakeACopy, makeACopy],
+  const actions = new Map<FileAction, (file: parsec.EntryStat[]) => Promise<void>>([
+    [FileAction.Rename, renameEntries],
+    [FileAction.MoveTo, moveEntriesTo],
+    [FileAction.MakeACopy, copyEntries],
     [FileAction.OpenInExplorer, openInExplorer],
     [FileAction.ShowHistory, showHistory],
-    [FileAction.Download, download],
+    [FileAction.Download, downloadEntries],
     [FileAction.ShowDetails, showDetails],
     [FileAction.CopyLink, copyLink],
-    [FileAction.Delete, deleteFile],
+    [FileAction.Delete, deleteEntries],
   ]);
 
   const fn = actions.get(data.action);
   if (fn) {
-    await fn(file);
+    await fn([file]);
   }
 }
 
