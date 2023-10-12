@@ -1658,6 +1658,7 @@ dependencies = [
  "percent-encoding",
  "rand 0.8.5",
  "regex",
+ "regex-syntax",
  "rmp-serde",
  "rstest",
  "rstest_reuse",
