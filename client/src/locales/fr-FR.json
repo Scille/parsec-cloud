@@ -280,7 +280,7 @@
     "FoldersPage": {
         "createFolder": "Nouveau dossier",
         "import": "Import",
-        "itemCount": "Aucun élément | U1n élément | {count} éléments",
+        "itemCount": "Aucun élément | Un élément | {count} éléments",
         "itemSelectedCount": "Aucun élément sélectionné | 1 élément sélectionné | {count} éléments sélectionnés",
         "emptyFolder": "Ce dossier est vide.",
         "listDisplayTitles": {
