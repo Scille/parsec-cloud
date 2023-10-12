@@ -2,8 +2,8 @@
 
 <template>
   <ms-modal
-    :title="$props.title"
-    :subtitle="$props.subtitle"
+    :title="title"
+    :subtitle="subtitle"
     :close-button-enabled="true"
     :cancel-button="{
       label: $t('TextInputModal.cancel'),
@@ -11,14 +11,14 @@
       onClick: cancel
     }"
     :confirm-button="{
-      label: $props.okButtonText || $t('TextInputModal.ok'),
+      label: okButtonText || $t('TextInputModal.ok'),
       disabled: !textIsValid,
       onClick: confirm
     }"
   >
     <ms-input
-      :label="$props.inputLabel || ''"
-      :placeholder="$props.placeholder || ''"
+      :label="inputLabel || ''"
+      :placeholder="placeholder || ''"
       v-model="text"
       @on-enter-keyup="confirm()"
     />
