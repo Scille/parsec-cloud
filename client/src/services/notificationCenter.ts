@@ -3,15 +3,10 @@
 import { DateTime } from 'luxon';
 import { v4 as uuid4 } from 'uuid';
 import MsAlertModal, { MsAlertModalConfig } from '@/components/core/ms-modal/MsAlertModal.vue';
-import { modalController, toastController } from '@ionic/vue';
+import { modalController } from '@ionic/vue';
 import { ComposerTranslation } from 'vue-i18n';
 import { MsModalResult, MsTheme } from '@/components/core/ms-types';
-import {
-  informationCircle,
-  checkmarkCircle,
-  warning,
-  closeCircle,
-} from 'ionicons/icons';
+import { ToastManager } from '@/services/toastManager';
 
 // Re-export so everything can be imported from this file
 export { NotificationKey } from '@/common/injectionKeys';
@@ -57,14 +52,15 @@ export interface NotificationOptions {
   trace?: boolean
 }
 
-const DEFAULT_NOTIFICATION_DURATION = 10000;
+const DEFAULT_NOTIFICATION_DURATION = 5000;
 
 export class NotificationCenter {
   notifications: Notification[];
 
-  constructor(public t: ComposerTranslation) {
+  constructor(public t: ComposerTranslation, public toastManager: ToastManager) {
     this.notifications = [];
     this.t = t;
+    this.toastManager = toastManager;
   }
 
   async showModal(
@@ -114,44 +110,15 @@ export class NotificationCenter {
       this._trace(notification);
     }
 
-    const result = await this._createAndPresentToast({
+    const result = await this.toastManager.createAndPresent({
       theme: this._getMsTheme(notification.level),
-      icon: this._getToastIcon(notification.level),
       message: notification.message,
       title: notification.title,
+      duration: DEFAULT_NOTIFICATION_DURATION,
     });
     if (result && result.role === 'confirm') {
       this.markAsRead(notification.id);
     }
-  }
-
-  async _createAndPresentToast(toastConfig: {
-    title?: string,
-    icon: string,
-    message: string,
-    theme: MsTheme,
-  }): Promise<any> {
-    const toast = await toastController.create({
-      header: toastConfig.title,
-      message: toastConfig.message,
-      cssClass: [
-        'notification-toast',
-        toastConfig.theme,
-      ],
-      mode: 'ios',
-      duration: DEFAULT_NOTIFICATION_DURATION,
-      icon: toastConfig.icon,
-      buttons: [
-        {
-          text: this.t('Notification.nextButton'),
-          role: 'confirm',
-          side: 'end',
-        },
-      ],
-    });
-
-    await toast.present();
-    return toast.onWillDismiss();
   }
 
   private _getMsTheme(notificationLevel: NotificationLevel): MsTheme {
@@ -164,19 +131,6 @@ export class NotificationCenter {
         return MsTheme.Warning;
       case NotificationLevel.Error:
         return MsTheme.Error;
-    }
-  }
-
-  private _getToastIcon(notificationLevel: NotificationLevel): string {
-    switch(notificationLevel) {
-      case NotificationLevel.Info:
-        return informationCircle;
-      case NotificationLevel.Success:
-        return checkmarkCircle;
-      case NotificationLevel.Warning:
-        return warning;
-      case NotificationLevel.Error:
-        return closeCircle;
     }
   }
 
