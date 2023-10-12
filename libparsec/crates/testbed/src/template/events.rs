@@ -1152,11 +1152,13 @@ impl TestbedEventShareRealm {
     pub(super) fn from_builder(
         builder: &mut TestbedTemplateBuilder,
         realm: VlobID,
-        user: UserID,
+        user: impl TryInto<UserID>,
         role: Option<RealmRole>,
     ) -> Self {
         // 1) Consistency checks
-
+        let user = user
+            .try_into()
+            .unwrap_or_else(|_| panic!("Invalid UserID !"));
         utils::assert_organization_bootstrapped(&builder.events);
         let author = utils::non_revoked_realm_owners(&builder.events, realm)
             .find(|author| author.user_id() != &user)

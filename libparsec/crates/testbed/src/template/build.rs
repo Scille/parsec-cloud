@@ -449,7 +449,7 @@ impl<'a> TestbedEventNewRealmBuilder<'a> {
 
     pub fn then_share_with(
         self,
-        user: UserID,
+        user: impl TryInto<UserID>,
         role: Option<RealmRole>,
     ) -> TestbedEventShareRealmBuilder<'a> {
         let realm = self.get_event().realm_id;
