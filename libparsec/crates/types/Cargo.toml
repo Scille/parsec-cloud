@@ -33,6 +33,7 @@ data-encoding = { workspace = true, features = ["std"] }
 url = { workspace = true }
 percent-encoding = { workspace = true, features = ["alloc"] }
 regex = { workspace = true, features = ["std", "perf", "unicode"] }
+regex-syntax = { workspace = true, features = ["unicode-perl"] }
 unicode-normalization = { workspace = true, features = ["std"] }
 paste = { workspace = true }
 flate2 = { workspace = true, features = ["rust_backend"] }

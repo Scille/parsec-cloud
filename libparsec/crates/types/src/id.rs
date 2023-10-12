@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use email_address_parser::EmailAddress;
-use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::{DeserializeFromStr, SerializeDisplay};
 use std::convert::TryFrom;
@@ -145,7 +144,7 @@ macro_rules! new_uuid_type {
 }
 
 macro_rules! new_string_based_id_type {
-    (pub $name:ident, $bytes_size:expr, $pattern:expr) => {
+    (pub $name:ident, $match_fn:expr) => {
         #[derive(
             Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq, Hash, PartialOrd, Ord,
         )]
@@ -154,23 +153,6 @@ macro_rules! new_string_based_id_type {
         impl Default for $name {
             fn default() -> Self {
                 Self(uuid::Uuid::new_v4().as_simple().to_string())
-            }
-        }
-
-        impl $name {
-            const BYTES_SIZE: usize = $bytes_size;
-
-            fn pattern() -> &'static Regex {
-                lazy_static! {
-                    static ref PATTERN: Regex = Regex::new($pattern)
-                        .expect("`pattern` should be a valid regular expression");
-                }
-                &PATTERN
-            }
-
-            /// Validate that the input is contained in [`Self::BYTES_SIZE`] and match the regex provided by [`Self::pattern`].
-            pub fn is_valid(input: &str) -> bool {
-                input.len() <= Self::BYTES_SIZE && Self::pattern().is_match(input)
             }
         }
 
@@ -196,7 +178,7 @@ macro_rules! new_string_based_id_type {
             fn try_from(s: &str) -> Result<Self, Self::Error> {
                 let id: String = s.nfc().collect();
 
-                if Self::is_valid(&id) {
+                if $match_fn(&id) {
                     Ok(Self(id))
                 } else {
                     Err(concat!("Invalid ", stringify!($name)))
@@ -242,17 +224,28 @@ impl From<ChunkID> for BlockID {
     }
 }
 
+// Equivalent to pattern "^[\w\-]{1,32}$" on 32 bytes
+#[inline]
+fn match_legacy_id(id: &str) -> bool {
+    // `str::len` returns the number of bytes
+    let bytes_size = id.len();
+
+    let is_valid_char = |c: char| c == '-' || regex_syntax::is_word_character(c);
+
+    (1..=32).contains(&bytes_size) && id.chars().all(is_valid_char)
+}
+
 /*
  * OrganizationID
  */
 
-new_string_based_id_type!(pub OrganizationID, 32, r"^[\w\-]{1,32}$");
+new_string_based_id_type!(pub OrganizationID, match_legacy_id);
 
 /*
  * UserID
  */
 
-new_string_based_id_type!(pub UserID, 32, r"^[\w\-]{1,32}$");
+new_string_based_id_type!(pub UserID, match_legacy_id);
 
 impl UserID {
     pub fn to_device_id(&self, device_name: DeviceName) -> DeviceID {
@@ -264,13 +257,22 @@ impl UserID {
  * DeviceName
  */
 
-new_string_based_id_type!(pub DeviceName, 32, r"^[\w\-]{1,32}$");
+new_string_based_id_type!(pub DeviceName, match_legacy_id);
 
 /*
  * DeviceLabel
 */
 
-new_string_based_id_type!(pub DeviceLabel, 255, r"^.+$");
+// Equivalent to pattern r"^.+$" (i.e. at least 1 character) on 255 bytes
+#[inline]
+fn match_device_label(id: &str) -> bool {
+    // `str::len` returns the number of bytes
+    let bytes_size = id.len();
+
+    (1..=255).contains(&bytes_size)
+}
+
+new_string_based_id_type!(pub DeviceLabel, match_device_label);
 impl_from_maybe!(Option<DeviceLabel>);
 
 /*
