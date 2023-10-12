@@ -4,7 +4,7 @@
   <div class="container">
     <div class="import-drag-drop">
       <ion-img
-        src="../src/assets/images/image_import.svg"
+        src="@/assets/images/image_import.svg"
       />
       <ion-text class="import-drag-drop__title title-h3">
         {{ $t('FoldersPage.importModal.dragAndDrop') }}
@@ -50,8 +50,8 @@ import {
 } from '@ionic/vue';
 import { ref, onMounted, onUnmounted } from 'vue';
 
-defineEmits<{
-  (e: 'filesImport', entries: FileSystemEntry[]): void
+const emits = defineEmits<{
+  (e: 'filesImport', entries: File[]): void
 }>();
 
 const hiddenInput = ref();
@@ -65,7 +65,12 @@ onUnmounted(() => {
 });
 
 function onInputChange(_event: any): void {
-  console.log('Input', hiddenInput.value.webkitEntries);
+  // Would love to use `hiddenInput.value.webkitEntries` instead but it returns
+  // an empty list (may be browser dependant).
+  // So we have to use `.files` instead, which is a worst API.
+  if (hiddenInput.value.files.length > 0) {
+    emits('filesImport', hiddenInput.value.files);
+  }
 }
 
 function importButtonClick(): void {

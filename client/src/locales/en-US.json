@@ -78,6 +78,7 @@
         "email": "Email",
         "emailPlaceholder": "john.smith{'@'}example.com",
         "organizationName": "Organization name",
+        "organizationNameCriteria": "Letters, digits, underscores and hyphens only. No spaces. Limited to 32 characters.",
         "organizationNamePlaceholder": "MyOrganization",
         "serverDescription": "Organization server",
         "useParsecServer": "Use the main PARSEC server",

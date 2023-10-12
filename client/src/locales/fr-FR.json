@@ -78,6 +78,7 @@
         "email": "E-mail",
         "emailPlaceholder": "jean.martin{'@'}exemple.com",
         "organizationName": "Nom de l'organisation",
+        "organizationNameCriteria": "Lettres, chiffres, tirets et tirets bas seulement. Aucun espace. Limité à 32 symboles.",
         "organizationNamePlaceholder": "MonOrganisation",
         "serverDescription": "Serveur de l'organisation",
         "useParsecServer": "Utiliser le serveur PARSEC principal",
@@ -280,7 +281,7 @@
     "FoldersPage": {
         "createFolder": "Nouveau dossier",
         "import": "Import",
-        "itemCount": "Aucun élément | U1n élément | {count} éléments",
+        "itemCount": "Aucun élément | Un élément | {count} éléments",
         "itemSelectedCount": "Aucun élément sélectionné | 1 élément sélectionné | {count} éléments sélectionnés",
         "emptyFolder": "Ce dossier est vide.",
         "listDisplayTitles": {
