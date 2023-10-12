@@ -31,7 +31,7 @@ import { formatTimeSince } from '@/common/date';
 import { formatFileSize } from '@/common/filesize';
 import { StorageManager } from '@/services/storageManager';
 import { DateTime } from 'luxon';
-import { FormattersKey, StorageManagerKey, NotificationKey } from '@/common/injectionKeys';
+import { FormattersKey, StorageManagerKey, NotificationKey, ToastManagerKey } from '@/common/injectionKeys';
 import * as Path from '@/common/path';
 import { isPlatform } from '@ionic/vue';
 
@@ -39,6 +39,7 @@ import { isPlatform } from '@ionic/vue';
 import '@/theme/global.scss';
 import { Platform, libparsec } from '@/plugins/libparsec';
 import { NotificationCenter } from '@/services/notificationCenter';
+import { ToastManager } from '@/services/toastManager';
 
 async function setupApp(): Promise<void> {
 
@@ -99,8 +100,9 @@ async function setupApp(): Promise<void> {
     },
   });
 
-  const {t} = i18n.global;
-  const notificationCenter = new NotificationCenter(t);
+  const { t } = i18n.global;
+  const toastManager = new ToastManager(t);
+  const notificationCenter = new NotificationCenter(t, toastManager);
 
   const app = createApp(App)
     .use(IonicVue, {
@@ -121,6 +123,7 @@ async function setupApp(): Promise<void> {
   });
   app.provide(StorageManagerKey, storageManager);
   app.provide(NotificationKey, notificationCenter);
+  app.provide(ToastManagerKey, toastManager);
 
   // We can start the app with different cases :
   // - dev with a testbed Parsec server with the default devices
