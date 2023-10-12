@@ -75,6 +75,7 @@ import {
   InvitationStatus,
   UserProfile,
   RealmRole as WorkspaceRole,
+  Platform,
 } from '@/plugins/libparsec';
 
 type WorkspaceHandle = number;
@@ -224,6 +225,7 @@ export {
   FileType,
   EntryStat,
   NewInvitationInfo,
+  Platform,
 };
 
 export {

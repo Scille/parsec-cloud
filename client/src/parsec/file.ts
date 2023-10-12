@@ -111,7 +111,7 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
       return {ok: true, value: {
         tag: FileType.Folder,
         confinementPoint: null,
-        id: '67',
+        id: '68',
         created: DateTime.now(),
         updated: DateTime.now(),
         baseVersion: 1,

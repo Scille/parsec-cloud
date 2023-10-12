@@ -317,7 +317,9 @@
             "deleteFailed": "Failed to delete `{name}`",
             "renameFailed": "Failed to rename `{name}`",
             "createFolderFailed": "Failed to create new folder `{name}`",
-            "listFailed": "Failed to list the content of the folder `{path}`"
+            "listFailed": "Failed to list the content of the folder `{path}`",
+            "deleteMultipleAllFailed": "Failed to delete all entries.",
+            "deleteMultipleSomeFailed": "Some entries could not be deleted."
         },
         "CreateFolderModal": {
             "title": "Create a new folder",
@@ -335,7 +337,25 @@
             "folderPlaceholder": "My folder"
         },
         "deleteOneFileQuestion": "Are you sure you want to delete the file `{name}`?",
-        "deleteOneFolderQuestion": "Are you sure you want to delete the folder `{name}`?"
+        "deleteOneFolderQuestion": "Are you sure you want to delete the folder `{name}`?",
+        "deleteMultipleQuestion": "Are you sure you want to delete these {count} elements?"
+    },
+    "FileDetails": {
+        "title": "Details on {name}",
+        "stats": {
+            "type": "Type",
+            "file": "File",
+            "folder": "Folder",
+            "created": "Created on",
+            "updated": "Updated on",
+            "version": "Version",
+            "isSynced": "Is synchronized",
+            "yes": "Yes",
+            "no": "No",
+            "id": "Id",
+            "size": "Size",
+            "path": "Path"
+        }
     },
     "OrganizationPage": {
         "pageTitle": "My organization",

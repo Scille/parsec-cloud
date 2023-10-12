@@ -56,6 +56,7 @@
 
         <ion-item
           button
+          v-show="isDesktop()"
           @click="onClick(FileAction.OpenInExplorer)"
           class="group-item"
         >
@@ -78,6 +79,7 @@
 
         <ion-item
           button
+          v-show="!isDesktop()"
           @click="onClick(FileAction.Download)"
           class="group-item"
         >
@@ -148,6 +150,7 @@ import {
   open,
   trashBin,
 } from 'ionicons/icons';
+import { isDesktop } from '@/parsec';
 
 async function onClick(action: FileAction): Promise<boolean> {
   return await popoverController.dismiss({'action': action});
