@@ -1,0 +1,37 @@
+name: 🚀 | Feature request
+description: >
+  Request a new feature
+title: "[🚀 | Feature request]: "
+labels:
+  - B-Triage
+  - C-Feature-Request
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Parsec! Please make sure that a similar request does not already exist in the [issues list](https://github.com/Scille/parsec-cloud/issues).
+  - type: textarea
+    id: problem-description
+    attributes:
+      label: What you would like to accomplish
+      description: |
+        Describe the problem you are trying to solve with this feature request,
+        why it is needed and why it is important for you.
+  - type: textarea
+    id: feature-description
+    attributes:
+      label: How the feature should work
+      description: |
+        Describe the desired behavior and how the users would use it.
+        If possible, include links, schemas or design draft to help understand the feature request.
+    validations:
+      required: true
+  - type: textarea
+    id: considered-alternative
+    attributes:
+      label: Describe alternatives you have considered
+      description: |
+        If applicable, describe alternative solutions you have considered and why they are not sufficient,
+        why this feature instead of another one?
+    validations:
+      required: false
