@@ -1,8 +1,6 @@
+$schema: https://json.schemastore.org/github-issue-config.json
 blank_issues_enabled: true
 contact_links:
   - name: Check the docs
     url: https://docs.parsec.cloud/en/latest/
     about: You may found what you're searching for in the documentation
-  - name: Create a new release
-    url: https://github.com/Scille/parsec-cloud/actions/release-starter.yml
-    about: For maintainer only ! Create a new release
