@@ -23,11 +23,10 @@ An issue is either a **bug** (an unexpected / unwanted behavior of the software 
 
 ### Filing Bugs
 
-If you file a **bug issue**, please provide at least the following information:
+Use the following link to [Create a bug report](https://github.com/Scille/parsec-cloud/issues/new?template=bug-report.yml&title=[%F0%9F%90%9B+|+Bug]%3A+).
 
-1. version of Parsec (either by doing `parsec --versions`, by getting it from the GUI, or by providing the git tag if you work from the sources)
-2. error/log output (eg a traceback)
-3. steps to reproduce the issue
+Please fill in the required fields and add any extra information that might help us understand the issue.
+
 
 > A bug issue should also be only about **one thing** - if you have found multiple related things, please file multiple issues and link the issues (cross referencing by mentioning the related issues in the descriptions - that will make GitHub automatically add respective links).
 
