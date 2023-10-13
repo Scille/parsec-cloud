@@ -14,11 +14,6 @@ package-lock.json       @Scille/js-code-owners
 *.scss                  @Scille/js-code-owners
 *.html                  @Scille/js-code-owners
 
-# The bindings folder contains rust code that is used by the `web`, `electron` & `android`.
-# The responsibility is shared between the js & rust teams.
-/bindings/              @Scille/js-code-owners @Scille/rust-code-owners
-
-
 # Rust team is responsible for the rust code.
 /libparsec/             @Scille/rust-code-owners
 rust-toolchain.toml     @Scille/rust-code-owners
@@ -27,6 +22,10 @@ Cargo.lock              @Scille/rust-code-owners
 *.rs                    @Scille/rust-code-owners
 # For now only rust code use json schema
 /json_schema            @Scille/rust-code-owners
+
+# The bindings folder contains rust code that is used by the `web`, `electron` & `android`.
+# The responsibility is shared between the js & rust teams.
+/bindings/              @Scille/js-code-owners @Scille/rust-code-owners
 
 # The /server/src contains rust binding that is used by the python code.
 # So the responsibility is shared between rust & python teams.
