@@ -9,19 +9,19 @@ import {
   EntryStatFolder,
   EntryStatFile,
   EntryName,
-  FsOperationError,
   FileType,
   EntryStat,
 } from '@/parsec/types';
 import { getParsecHandle, getWorkspaceHandle } from '@/parsec/routing';
 import { DateTime } from 'luxon';
 import { parse as pathParse } from '@/common/path';
+import { needsMocks } from '@/parsec/environment';
 
 export async function createFile(path: FsPath): Promise<Result<FileID, WorkspaceFsOperationError>> {
   const clientHandle = getParsecHandle();
   const workspaceHandle = getWorkspaceHandle();
 
-  if (clientHandle && workspaceHandle && window.isDesktop()) {
+  if (clientHandle && workspaceHandle && !needsMocks()) {
     return await libparsec.workspaceCreateFile(workspaceHandle, path);
   } else {
     return {ok: true, value: '42'};
@@ -32,7 +32,7 @@ export async function createFolder(path: FsPath): Promise<Result<FileID, Workspa
   const clientHandle = getParsecHandle();
   const workspaceHandle = getWorkspaceHandle();
 
-  if (clientHandle && workspaceHandle && window.isDesktop()) {
+  if (clientHandle && workspaceHandle && !needsMocks()) {
     return await libparsec.workspaceCreateFolder(workspaceHandle, path);
   } else {
     return {ok: true, value: '7'};
@@ -43,7 +43,7 @@ export async function deleteFile(path: FsPath): Promise<Result<null, WorkspaceFs
   const clientHandle = getParsecHandle();
   const workspaceHandle = getWorkspaceHandle();
 
-  if (clientHandle && workspaceHandle && window.isDesktop()) {
+  if (clientHandle && workspaceHandle && !needsMocks()) {
     return await libparsec.workspaceRemoveFile(workspaceHandle, path);
   } else {
     return {ok: true, value: null};
@@ -54,7 +54,7 @@ export async function deleteFolder(path: FsPath): Promise<Result<null, Workspace
   const clientHandle = getParsecHandle();
   const workspaceHandle = getWorkspaceHandle();
 
-  if (clientHandle && workspaceHandle && window.isDesktop()) {
+  if (clientHandle && workspaceHandle && !needsMocks()) {
     return await libparsec.workspaceRemoveFolder(workspaceHandle, path);
   } else {
     return {ok: true, value: null};
@@ -65,7 +65,7 @@ export async function rename(path: FsPath, newName: EntryName): Promise<Result<n
   const clientHandle = getParsecHandle();
   const workspaceHandle = getWorkspaceHandle();
 
-  if (clientHandle && workspaceHandle && window.isDesktop()) {
+  if (clientHandle && workspaceHandle && !needsMocks()) {
     return await libparsec.workspaceRenameEntry(workspaceHandle, path, newName, true);
   } else {
     return {ok: true, value: null};
@@ -78,7 +78,7 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
 
   const parsedPath = pathParse(path);
 
-  if (clientHandle && workspaceHandle && window.isDesktop()) {
+  if (clientHandle && workspaceHandle && !needsMocks()) {
     const result = await libparsec.workspaceStatEntry(workspaceHandle, path);
     if (result.ok) {
       result.value.created = DateTime.fromSeconds(result.value.created as any as number);
