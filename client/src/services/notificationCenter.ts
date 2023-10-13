@@ -49,18 +49,23 @@ export class Notification {
 
 export interface NotificationOptions {
   addToList?: boolean,
-  trace?: boolean
+  trace?: boolean,
+}
+
+export interface NotificationToastOptions extends NotificationOptions {
+  duration?: number,
 }
 
 const DEFAULT_NOTIFICATION_DURATION = 5000;
 
 export class NotificationCenter {
   notifications: Notification[];
+  toastManager: ToastManager;
 
-  constructor(public t: ComposerTranslation, public toastManager: ToastManager) {
+  constructor(public t: ComposerTranslation) {
     this.notifications = [];
     this.t = t;
-    this.toastManager = toastManager;
+    this.toastManager = new ToastManager(this.t);
   }
 
   async showModal(
@@ -101,7 +106,7 @@ export class NotificationCenter {
 
   async showToast(
     notification: Notification,
-    options?: NotificationOptions,
+    options?: NotificationToastOptions,
   ): Promise<void> {
     if (options && options.addToList) {
       this.addToList(notification);
@@ -110,15 +115,16 @@ export class NotificationCenter {
       this._trace(notification);
     }
 
-    const result = await this.toastManager.createAndPresent({
+    this.toastManager.createAndPresent({
       theme: this._getMsTheme(notification.level),
       message: notification.message,
       title: notification.title,
       duration: DEFAULT_NOTIFICATION_DURATION,
+    }).then(async (result) => {
+      if (result && result.role === 'confirm') {
+        this.markAsRead(notification.id);
+      }
     });
-    if (result && result.role === 'confirm') {
-      this.markAsRead(notification.id);
-    }
   }
 
   private _getMsTheme(notificationLevel: NotificationLevel): MsTheme {

@@ -33,7 +33,8 @@ describe('Notification Center', () => {
     center._createAndPresentModal = vi.fn();
     const mockModalControllerDismiss = vi.spyOn(modalController, 'dismiss');
     mockModalControllerDismiss.mockReturnValue(new Promise(vi.fn()));
-    center._createAndPresentToast = vi.fn();
+    const mockToastManagerCreateAndPresent = vi.spyOn(center.toastManager, 'createAndPresent');
+    mockToastManagerCreateAndPresent.mockReturnValue(new Promise(vi.fn()));
     const mockToastControllerDismiss = vi.spyOn(toastController, 'dismiss');
     mockToastControllerDismiss.mockReturnValue(new Promise(vi.fn()));
 
