@@ -10,11 +10,9 @@ export interface Formatters {
 const FormattersKey = 'formatters';
 const StorageManagerKey = 'storageManager';
 const NotificationKey = 'notification';
-const ToastManagerKey = 'toastManager';
 
 export {
   FormattersKey,
   StorageManagerKey,
   NotificationKey,
-  ToastManagerKey,
 };

@@ -10,9 +10,6 @@ import {
 } from 'ionicons/icons';
 import { ComposerTranslation } from 'vue-i18n';
 
-// Re-export so everything can be imported from this file
-export { ToastManagerKey } from '@/common/injectionKeys';
-
 const DEFAULT_TOAST_DURATION = 3000;
 
 export class ToastManager {
