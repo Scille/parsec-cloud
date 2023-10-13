@@ -1,23 +1,28 @@
 name: 🐛 | Bug Report
-description: >
-  File a bug report
+description: Submit a bug report
 title: "[🐛 | Bug]: "
 labels:
   - bug
   - triage
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Parsec! Please fill in the required fields below and add any extra
+        information that can help us understand the issue.
   - type: input
     id: version
     attributes:
-      label: Version
-      description: What version of our software are you running ?
-      placeholder: version
+      label: "Parsec version tested on:"
+      description: You can find it in Parsec GUI title bar (or by running `parsec.cli --version` in a terminal).
+      placeholder: 2.15.0
     validations:
       required: true
   - type: dropdown
     id: platform
     attributes:
-      label: What platforms you were running our software when the bug happened ?
+      label: "Platforms tested on:"
+      description: On which platforms have you seen the problem?
       multiple: true
       options:
         - Windows
@@ -30,16 +35,14 @@ body:
   - type: textarea
     id: what-happened
     attributes:
-      label: What happened ?
-      description: Also tell us, what did you expect to happen ?
-      placeholder: Tell us what you see !
+      label: "Bug description:"
+      description: >
+        Give a clear description of what happened. If possible, include the steps to reproduce the bug
+        and any other information that can help us understand the issue.
     validations:
       required: true
   - type: textarea
     id: more-info
     attributes:
-      label: Relevant output
-      description: When the bug happened, Can you include the error message (if any) and/or a screenshot (if possible) ?
-  - type: markdown
-    attributes:
-      value: Thanks for completing our bug report !
+      label: "Relevant output:"
+      description: If possible, include any error messages, log output or screenshot.
