@@ -1,6 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import {
+  DeviceSaveStrategyTag,
+  UserOrDeviceClaimInitialInfoTag,
   libparsec,
 } from '@/plugins/libparsec';
 
@@ -98,7 +100,7 @@ export class DeviceClaim {
         label: 'Gale Dekarios',
       };
       return {ok: true, value: {
-        tag: 'Device',
+        tag: UserOrDeviceClaimInitialInfoTag.Device,
         handle: DEFAULT_HANDLE,
         greeterUserId: '1234',
         greeterHumanHandle: {
@@ -203,8 +205,11 @@ export class DeviceClaim {
   Promise<Result<AvailableDevice, ClaimInProgressError>> {
     this._assertState(true, false);
     if (!needsMocks()) {
+      const result = await libparsec.claimerDeviceFinalizeSaveLocalDevice(
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const result = await libparsec.claimerDeviceFinalizeSaveLocalDevice(this.handle!, {tag: 'Password', password: password});
+        this.handle!,
+        { tag: DeviceSaveStrategyTag.Password, password: password },
+      );
       if (result.ok) {
         this.device = result.value;
       }

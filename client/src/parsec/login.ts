@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { libparsec } from '@/plugins/libparsec';
+import { ClientStartErrorTag, DeviceAccessStrategyTag, libparsec } from '@/plugins/libparsec';
 
 import {
   AvailableDevice,
@@ -30,7 +30,7 @@ export async function login(device: AvailableDevice, password: string): Promise<
   if (!needsMocks()) {
     const clientConfig = getClientConfig();
     const strategy: DeviceAccessStrategyPassword = {
-      tag: 'Password',
+      tag: DeviceAccessStrategyTag.Password,
       password: password,
       keyFile: device.keyFilePath,
     };
@@ -39,7 +39,7 @@ export async function login(device: AvailableDevice, password: string): Promise<
     if (password === 'P@ssw0rd.' || password === 'AVeryL0ngP@ssw0rd') {
       return {ok: true, value: DEFAULT_HANDLE };
     }
-    return {ok: false, error: {tag: 'LoadDeviceDecryptionFailed', error: 'WrongPassword'}};
+    return {ok: false, error: {tag: ClientStartErrorTag.LoadDeviceDecryptionFailed, error: 'WrongPassword'}};
   }
 }
 

@@ -23,7 +23,7 @@ import {
   IonTitle,
 } from '@ionic/vue';
 import { ref, onMounted } from 'vue';
-import { libparsec } from '@/plugins/libparsec';
+import { libparsec, DeviceSaveStrategyTag, WorkspaceStorageCacheSizeTag, BootstrapOrganizationErrorTag } from '@/plugins/libparsec';
 import { ClientEvent, ClientConfig } from '@/plugins/libparsec';
 
 const logs = ref('');
@@ -87,7 +87,7 @@ async function testBootstrapOrganization(): Promise<void> {
     dataBaseDir: configPath,
     mountpointBaseDir: configPath,
     workspaceStorageCacheSize: {
-      tag: 'Default',
+      tag: WorkspaceStorageCacheSizeTag.Default,
     },
   };
 
@@ -107,7 +107,7 @@ async function testBootstrapOrganization(): Promise<void> {
       onEventCallback,
       bootstrapAddr,
       {
-        tag: 'Password',
+        tag: DeviceSaveStrategyTag.Password,
         password: 'P@ssw0rd.',
       },
       humanHandle,
@@ -132,7 +132,7 @@ async function testBootstrapOrganization(): Promise<void> {
       onEventCallback,
       bootstrapAddr,
       {
-        tag: 'Password',
+        tag: DeviceSaveStrategyTag.Password,
         password: 'P@ssw0rd.',
       },
       null,
@@ -145,7 +145,7 @@ async function testBootstrapOrganization(): Promise<void> {
 
       case false:
         switch (outcome.error.tag) {
-          case 'AlreadyUsedToken':
+          case BootstrapOrganizationErrorTag.AlreadyUsedToken:
             break;
 
           default:

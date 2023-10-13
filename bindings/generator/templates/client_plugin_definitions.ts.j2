@@ -98,9 +98,15 @@ export interface {{ struct.name }} {
 {% for variant in api.variants %}
 
 // {{ variant.name }}
+export enum {{ variant.name }}Tag {
+{% for value in variant.values %}
+    {{ value.name }} = '{{ variant.name }}{{ value.name }}',
+{% endfor %}
+}
+
 {% for variant_value in variant.values %}
 export interface {{ variant.name }}{{ variant_value.name }} {
-    tag: '{{ variant_value.name }}'
+    tag: {{ variant.name }}Tag.{{ variant_value.name }}
 {% if variant.is_error_variant %}
     error: string
 {% endif %}

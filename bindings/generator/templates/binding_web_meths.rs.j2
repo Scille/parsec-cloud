@@ -450,9 +450,10 @@ fn {{ struct_rs_to_js_function_name(struct) }}(rs_obj: libparsec::{{ struct.name
 #[allow(dead_code)]
 fn {{ variant_js_to_rs_function_name(variant) }}(obj: JsValue) -> Result<libparsec::{{ variant.name }}, JsValue> {
     let tag = Reflect::get(&obj, &"tag".into())?;
-    match tag {
+    let tag = tag.as_string().ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
 {% for value in variant.values %}
-        tag if tag == JsValue::from_str("{{ value.name }}") => {
+        "{{ variant.name }}{{ value.name }}" => {
 {% if value.is_struct %}
 {% for attr_name, attr_type in value.struct.attributes.items() %}
             let {{ attr_name }} = {
@@ -500,7 +501,7 @@ fn {{ variant_rs_to_js_function_name(variant) }}(rs_obj: libparsec::{{ variant.n
 {% for value in variant.values %}
 {% if value.is_struct %}
         libparsec::{{ variant.name }}::{{ value.name }}{ {{ value.struct.attributes.keys() |join(',') }} {{ "," if value.struct.attributes else "" }} .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"{{ value.name }}".into())?;
+            Reflect::set(&js_obj, &"tag".into(), &"{{ variant.name }}{{ value.name }}".into())?;
 {% for attr_name, attr_type in value.struct.attributes.items() %}
             let js_{{ attr_name }} = {{ render_rs_to_js_value(attr_name, attr_type) }};
             Reflect::set(&js_obj, &"{{ attr_name | snake2camel }}".into(), &js_{{ attr_name }})?;
