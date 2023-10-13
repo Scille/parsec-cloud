@@ -8,6 +8,10 @@ export function isDesktop(): boolean {
   return window.isDesktop();
 }
 
+export function isCypress(): boolean {
+  return 'Cypress' in window;
+}
+
 export function isWeb(): boolean {
   return window.getPlatform() === Platform.Web;
 }
@@ -26,4 +30,11 @@ export function isWindows(): boolean {
 
 export function isMacOS(): boolean {
   return window.getPlatform() === Platform.MacOS;
+}
+
+// Whether or not module functions should return mock values.
+// Currently, this can be used on web, since the bindings are not fully
+// implemented, but it could also prove useful when in a testing environment.
+export function needsMocks(): boolean {
+  return !isDesktop() || isCypress();
 }

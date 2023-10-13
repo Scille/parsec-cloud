@@ -18,13 +18,14 @@ import {
   ClientStartWorkspaceError,
 } from '@/parsec/types';
 import { getParsecHandle } from '@/parsec/routing';
-import { getClientInfo } from '@/parsec/functions';
+import { getClientInfo } from '@/parsec/login';
 import { DateTime } from 'luxon';
+import { needsMocks } from '@/parsec/environment';
 
 export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>> {
   const handle = getParsecHandle();
 
-  if (handle !== null && window.isDesktop()) {
+  if (handle !== null && !needsMocks()) {
     const result = await libparsec.clientListWorkspaces(handle);
 
     if (result.ok) {
@@ -72,7 +73,7 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
 export async function createWorkspace(name: WorkspaceName): Promise<Result<WorkspaceID, ClientCreateWorkspaceError>> {
   const handle = getParsecHandle();
 
-  if (handle !== null && window.isDesktop()) {
+  if (handle !== null && !needsMocks()) {
     return await libparsec.clientCreateWorkspace(handle, name);
   } else {
     return { ok: true, value: '1337' };
@@ -82,7 +83,7 @@ export async function createWorkspace(name: WorkspaceName): Promise<Result<Works
 export async function getWorkspaceName(workspaceId: WorkspaceID): Promise<Result<WorkspaceName, GetWorkspaceNameError>> {
   const handle = getParsecHandle();
 
-  if (handle !== null && window.isDesktop()) {
+  if (handle !== null && !needsMocks()) {
     const result = await libparsec.clientListWorkspaces(handle);
     if (result.ok) {
       const workspace = result.value.find((info) => {
@@ -111,7 +112,7 @@ export async function getWorkspaceSharing(workspaceId: WorkspaceID, includeAllUs
   Promise<Result<Array<[UserTuple, WorkspaceRole | null]>, ClientListWorkspaceUsersError>> {
   const handle = getParsecHandle();
 
-  if (handle !== null && window.isDesktop()) {
+  if (handle !== null && !needsMocks()) {
     let selfId: UserID | null = null;
 
     if (!includeSelf) {
@@ -169,7 +170,7 @@ export async function shareWorkspace(workspaceId: WorkspaceID, userId: UserID, r
   Promise<Result<null, ClientShareWorkspaceError>> {
   const handle = getParsecHandle();
 
-  if (handle !== null && window.isDesktop()) {
+  if (handle !== null && !needsMocks()) {
     return await libparsec.clientShareWorkspace(handle, workspaceId, userId, role);
   } else {
     return {ok: true, value: null};
@@ -179,7 +180,7 @@ export async function shareWorkspace(workspaceId: WorkspaceID, userId: UserID, r
 export async function startWorkspace(workspaceId: WorkspaceID): Promise<Result<WorkspaceHandle, ClientStartWorkspaceError>> {
   const handle = getParsecHandle();
 
-  if (handle !== null && window.isDesktop()) {
+  if (handle !== null && !needsMocks()) {
     return await libparsec.clientStartWorkspace(handle, workspaceId);
   } else {
     return {ok: true, value: 1337};
@@ -189,7 +190,7 @@ export async function startWorkspace(workspaceId: WorkspaceID): Promise<Result<W
 export async function stopWorkspace(workspaceHandle: WorkspaceHandle): Promise<Result<null, WorkspaceStopError>> {
   const handle = getParsecHandle();
 
-  if (handle !== null && window.isDesktop()) {
+  if (handle !== null && !needsMocks()) {
     return await libparsec.workspaceStop(workspaceHandle);
   } else {
     return {ok: true, value: null};

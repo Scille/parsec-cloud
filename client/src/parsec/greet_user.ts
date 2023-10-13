@@ -20,6 +20,7 @@ import {
 } from '@/parsec/types';
 import { wait, MOCK_WAITING_TIME, DEFAULT_HANDLE } from '@/parsec/internals';
 import { getParsecHandle } from '@/parsec/routing';
+import { needsMocks } from '@/parsec/environment';
 
 export class UserGreet {
   handle: Handle | null;
@@ -41,10 +42,10 @@ export class UserGreet {
   }
 
   async abort(): Promise<void> {
-    if (this.canceller !== null && window.isDesktop()) {
+    if (this.canceller !== null && !needsMocks()) {
       libparsec.cancel(this.canceller);
     }
-    if (this.handle !== null && window.isDesktop()) {
+    if (this.handle !== null && !needsMocks()) {
       libparsec.claimerGreeterAbortOperation(this.handle);
     }
     this.canceller = null;
@@ -70,7 +71,7 @@ export class UserGreet {
   async startGreet(token: InvitationToken): Promise<Result<UserGreetInitialInfo, ClientStartInvitationGreetError>> {
     const clientHandle = getParsecHandle();
 
-    if (clientHandle !== null && window.isDesktop()) {
+    if (clientHandle !== null && !needsMocks()) {
       const result = await libparsec.clientStartUserInvitationGreet(clientHandle, token);
 
       if (result.ok) {
@@ -80,15 +81,13 @@ export class UserGreet {
     } else {
       this.handle = DEFAULT_HANDLE;
       await wait(MOCK_WAITING_TIME);
-      return new Promise<Result<UserGreetInitialInfo, ClientStartInvitationGreetError>>((resolve, _reject) => {
-        resolve({ok: true, value: {handle: DEFAULT_HANDLE}});
-      });
+      return {ok: true, value: {handle: DEFAULT_HANDLE}};
     }
   }
 
   async initialWaitGuest(): Promise<Result<UserGreetInProgress1Info, GreetInProgressError>> {
     this._assertState(true, false);
-    if (window.isDesktop()) {
+    if (!needsMocks()) {
       this.canceller = await libparsec.newCanceller();
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const result = await libparsec.greeterUserInitialDoWaitPeer(this.canceller, this.handle!);
@@ -100,15 +99,13 @@ export class UserGreet {
       return result;
     } else {
       this.hostSASCode = '2EDF';
-      return new Promise<Result<UserGreetInProgress1Info, GreetInProgressError>>((resolve, _reject) => {
-        resolve({ok: true, value: {handle: DEFAULT_HANDLE, greeterSas: this.hostSASCode}});
-      });
+      return {ok: true, value: {handle: DEFAULT_HANDLE, greeterSas: this.hostSASCode}};
     }
   }
 
   async waitGuestTrust(): Promise<Result<UserGreetInProgress2Info, GreetInProgressError>> {
     this._assertState(true, false);
-    if (window.isDesktop()) {
+    if (!needsMocks()) {
       this.canceller = await libparsec.newCanceller();
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const result = await libparsec.greeterUserInProgress1DoWaitPeerTrust(this.canceller, this.handle!);
@@ -123,17 +120,13 @@ export class UserGreet {
       await wait(MOCK_WAITING_TIME);
       this.SASCodeChoices = ['1ABC', '2DEF', '3GHI', '4JKL'];
       this.correctSASCode = '2DEF';
-      return new Promise<Result<UserGreetInProgress2Info, GreetInProgressError>>((resolve, _reject) => {
-        resolve({
-          ok: true, value: {handle: DEFAULT_HANDLE, claimerSasChoices: this.SASCodeChoices, claimerSas: this.correctSASCode},
-        });
-      });
+      return {ok: true, value: {handle: DEFAULT_HANDLE, claimerSasChoices: this.SASCodeChoices, claimerSas: this.correctSASCode}};
     }
   }
 
   async signifyTrust(): Promise<Result<UserGreetInProgress3Info, GreetInProgressError>> {
     this._assertState(true, false);
-    if (window.isDesktop()) {
+    if (!needsMocks()) {
       this.canceller = await libparsec.newCanceller();
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const result = await libparsec.greeterUserInProgress2DoSignifyTrust(this.canceller, this.handle!);
@@ -143,17 +136,13 @@ export class UserGreet {
       }
       return result;
     } else {
-      return new Promise<Result<UserGreetInProgress3Info, GreetInProgressError>>((resolve, _reject) => {
-        resolve({
-          ok: true, value: {handle: DEFAULT_HANDLE},
-        });
-      });
+      return {ok: true, value: {handle: DEFAULT_HANDLE}};
     }
   }
 
   async getClaimRequests(): Promise<Result<UserGreetInProgress4Info, GreetInProgressError>> {
     this._assertState(true, false);
-    if (window.isDesktop()) {
+    if (!needsMocks()) {
       this.canceller = await libparsec.newCanceller();
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const result = await libparsec.greeterUserInProgress3DoGetClaimRequests(this.canceller, this.handle!);
@@ -171,21 +160,17 @@ export class UserGreet {
         email: 'gordon.freeman@blackmesa.nm',
       };
       this.requestedDeviceLabel = 'My Device';
-      return new Promise<Result<UserGreetInProgress4Info, GreetInProgressError>>((resolve, _reject) => {
-        resolve({
-          ok: true, value: {
-            handle: DEFAULT_HANDLE,
-            requestedDeviceLabel: this.requestedDeviceLabel,
-            requestedHumanHandle: this.requestedHumanHandle,
-          },
-        });
-      });
+      return {ok: true, value: {
+        handle: DEFAULT_HANDLE,
+        requestedDeviceLabel: this.requestedDeviceLabel,
+        requestedHumanHandle: this.requestedHumanHandle,
+      }};
     }
   }
 
   async createUser(humanHandle: HumanHandle, deviceLabel: DeviceLabel, profile: UserProfile): Promise<Result<null, GreetInProgressError>> {
     this._assertState(true, false);
-    if (window.isDesktop()) {
+    if (!needsMocks()) {
       this.canceller = await libparsec.newCanceller();
       const result = await libparsec.greeterUserInProgress4DoCreate(
         this.canceller,
@@ -200,11 +185,7 @@ export class UserGreet {
       return result;
     } else {
       this.handle = null;
-      return new Promise<Result<null, GreetInProgressError>>((resolve, _reject) => {
-        resolve({
-          ok: true, value: null,
-        });
-      });
+      return {ok: true, value: null};
     }
   }
 }
