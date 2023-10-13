@@ -203,7 +203,7 @@ import SummaryStep from '@/views/home/SummaryStep.vue';
 import { OrgInfo } from '@/views/home/SummaryStep.vue';
 import MsSpinner from '@/components/core/ms-spinner/MsSpinner.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
-import { AvailableDevice, createOrganization as parsecCreateOrganization, CreateOrganizationError } from '@/parsec';
+import { AvailableDevice, createOrganization as parsecCreateOrganization, BootstrapOrganizationErrorTag } from '@/parsec';
 import { MsModalResult } from '@/components/core/ms-types';
 import { organizationValidator, Validity } from '@/common/validators';
 import { asyncComputed } from '@/common/asyncComputed';
@@ -376,23 +376,32 @@ async function nextStep(): Promise<void> {
       await nextStep();
     } else {
       let message = '';
-      if (result.error.tag === CreateOrganizationError.AlreadyUsedToken) {
-        message = t('CreateOrganization.errors.alreadyExists');
-        pageStep.value = CreateOrganizationStep.OrgNameStep;
-      } else if (result.error.tag === CreateOrganizationError.Offline) {
-        message = t('CreateOrganization.errors.offline');
-        pageStep.value = CreateOrganizationStep.SummaryStep;
-      } else if (result.error.tag === CreateOrganizationError.BadTimestamp) {
-        message = t(
-          'CreateOrganization.errors.badTimestamp', {
-            clientTime: d(result.error.clientTimestamp.toJSDate(), 'long'),
-            serverTime: d(result.error.serverTimestamp.toJSDate(), 'long'),
-          },
-        );
-        pageStep.value = CreateOrganizationStep.SummaryStep;
-      } else {
-        message = t('CreateOrganization.errors.generic', {reason: result.error.tag});
-        pageStep.value = CreateOrganizationStep.SummaryStep;
+      switch (result.error.tag) {
+        case BootstrapOrganizationErrorTag.AlreadyUsedToken:
+          message = t('CreateOrganization.errors.alreadyExists');
+          pageStep.value = CreateOrganizationStep.OrgNameStep;
+          break;
+
+        case BootstrapOrganizationErrorTag.Offline:
+          message = t('CreateOrganization.errors.offline');
+          pageStep.value = CreateOrganizationStep.SummaryStep;
+          break;
+
+        case BootstrapOrganizationErrorTag.BadTimestamp:
+          message = t(
+            'CreateOrganization.errors.badTimestamp',
+            {
+              clientTime: d(result.error.clientTimestamp.toJSDate(), 'long'),
+              serverTime: d(result.error.serverTimestamp.toJSDate(), 'long'),
+            },
+          );
+          pageStep.value = CreateOrganizationStep.SummaryStep;
+          break;
+
+        default:
+          message = t('CreateOrganization.errors.generic', { reason: result.error.tag });
+          pageStep.value = CreateOrganizationStep.SummaryStep;
+          break;
       }
       notificationCenter.showToast(new Notification({
         message: message,

@@ -2081,7 +2081,11 @@ fn variant_bootstrap_organization_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::BootstrapOrganizationError::AlreadyUsedToken { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AlreadyUsedToken".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"BootstrapOrganizationErrorAlreadyUsedToken".into(),
+            )?;
         }
         libparsec::BootstrapOrganizationError::BadTimestamp {
             server_timestamp,
@@ -2090,7 +2094,11 @@ fn variant_bootstrap_organization_error_rs_to_js(
             ballpark_client_late_offset,
             ..
         } => {
-            Reflect::set(&js_obj, &"tag".into(), &"BadTimestamp".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"BootstrapOrganizationErrorBadTimestamp".into(),
+            )?;
             let js_server_timestamp = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
                     Ok(dt.get_f64_with_us_precision())
@@ -2127,16 +2135,32 @@ fn variant_bootstrap_organization_error_rs_to_js(
             )?;
         }
         libparsec::BootstrapOrganizationError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"BootstrapOrganizationErrorInternal".into(),
+            )?;
         }
         libparsec::BootstrapOrganizationError::InvalidToken { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"InvalidToken".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"BootstrapOrganizationErrorInvalidToken".into(),
+            )?;
         }
         libparsec::BootstrapOrganizationError::Offline { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"BootstrapOrganizationErrorOffline".into(),
+            )?;
         }
         libparsec::BootstrapOrganizationError::SaveDeviceError { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"SaveDeviceError".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"BootstrapOrganizationErrorSaveDeviceError".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -2151,10 +2175,10 @@ fn variant_cancel_error_rs_to_js(rs_obj: libparsec::CancelError) -> Result<JsVal
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::CancelError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(&js_obj, &"tag".into(), &"CancelErrorInternal".into())?;
         }
         libparsec::CancelError::NotBound { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NotBound".into())?;
+            Reflect::set(&js_obj, &"tag".into(), &"CancelErrorNotBound".into())?;
         }
     }
     Ok(js_obj)
@@ -2171,28 +2195,60 @@ fn variant_claim_in_progress_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::ClaimInProgressError::ActiveUsersLimitReached { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"ActiveUsersLimitReached".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimInProgressErrorActiveUsersLimitReached".into(),
+            )?;
         }
         libparsec::ClaimInProgressError::AlreadyUsed { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AlreadyUsed".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimInProgressErrorAlreadyUsed".into(),
+            )?;
         }
         libparsec::ClaimInProgressError::Cancelled { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Cancelled".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimInProgressErrorCancelled".into(),
+            )?;
         }
         libparsec::ClaimInProgressError::CorruptedConfirmation { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"CorruptedConfirmation".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimInProgressErrorCorruptedConfirmation".into(),
+            )?;
         }
         libparsec::ClaimInProgressError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimInProgressErrorInternal".into(),
+            )?;
         }
         libparsec::ClaimInProgressError::NotFound { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NotFound".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimInProgressErrorNotFound".into(),
+            )?;
         }
         libparsec::ClaimInProgressError::Offline { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimInProgressErrorOffline".into(),
+            )?;
         }
         libparsec::ClaimInProgressError::PeerReset { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"PeerReset".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimInProgressErrorPeerReset".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -2209,7 +2265,11 @@ fn variant_claimer_greeter_abort_operation_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::ClaimerGreeterAbortOperationError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimerGreeterAbortOperationErrorInternal".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -2226,16 +2286,32 @@ fn variant_claimer_retrieve_info_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::ClaimerRetrieveInfoError::AlreadyUsed { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AlreadyUsed".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimerRetrieveInfoErrorAlreadyUsed".into(),
+            )?;
         }
         libparsec::ClaimerRetrieveInfoError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimerRetrieveInfoErrorInternal".into(),
+            )?;
         }
         libparsec::ClaimerRetrieveInfoError::NotFound { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NotFound".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimerRetrieveInfoErrorNotFound".into(),
+            )?;
         }
         libparsec::ClaimerRetrieveInfoError::Offline { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimerRetrieveInfoErrorOffline".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -2252,7 +2328,11 @@ fn variant_client_create_workspace_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::ClientCreateWorkspaceError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientCreateWorkspaceErrorInternal".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -2263,8 +2343,11 @@ fn variant_client_create_workspace_error_rs_to_js(
 #[allow(dead_code)]
 fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent, JsValue> {
     let tag = Reflect::get(&obj, &"tag".into())?;
-    match tag {
-        tag if tag == JsValue::from_str("Ping") => {
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "ClientEventPing" => {
             let ping = {
                 let js_val = Reflect::get(&obj, &"ping".into())?;
                 js_val
@@ -2284,7 +2367,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
     let js_obj = Object::new().into();
     match rs_obj {
         libparsec::ClientEvent::Ping { ping, .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Ping".into())?;
+            Reflect::set(&js_obj, &"tag".into(), &"ClientEventPing".into())?;
             let js_ping = ping.into();
             Reflect::set(&js_obj, &"ping".into(), &js_ping)?;
         }
@@ -2303,10 +2386,18 @@ fn variant_client_get_user_device_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::ClientGetUserDeviceError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientGetUserDeviceErrorInternal".into(),
+            )?;
         }
         libparsec::ClientGetUserDeviceError::NonExisting { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NonExisting".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientGetUserDeviceErrorNonExisting".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -2323,7 +2414,7 @@ fn variant_client_info_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::ClientInfoError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(&js_obj, &"tag".into(), &"ClientInfoErrorInternal".into())?;
         }
     }
     Ok(js_obj)
@@ -2340,7 +2431,11 @@ fn variant_client_list_user_devices_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::ClientListUserDevicesError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientListUserDevicesErrorInternal".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -2357,7 +2452,11 @@ fn variant_client_list_users_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::ClientListUsersError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientListUsersErrorInternal".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -2374,7 +2473,11 @@ fn variant_client_list_workspace_users_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::ClientListWorkspaceUsersError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientListWorkspaceUsersErrorInternal".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -2391,7 +2494,11 @@ fn variant_client_list_workspaces_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::ClientListWorkspacesError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientListWorkspacesErrorInternal".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -2408,10 +2515,18 @@ fn variant_client_rename_workspace_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::ClientRenameWorkspaceError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRenameWorkspaceErrorInternal".into(),
+            )?;
         }
         libparsec::ClientRenameWorkspaceError::UnknownWorkspace { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"UnknownWorkspace".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRenameWorkspaceErrorUnknownWorkspace".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -2434,7 +2549,11 @@ fn variant_client_share_workspace_error_rs_to_js(
             ballpark_client_late_offset,
             ..
         } => {
-            Reflect::set(&js_obj, &"tag".into(), &"BadTimestamp".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientShareWorkspaceErrorBadTimestamp".into(),
+            )?;
             let js_server_timestamp = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
                     Ok(dt.get_f64_with_us_precision())
@@ -2471,42 +2590,74 @@ fn variant_client_share_workspace_error_rs_to_js(
             )?;
         }
         libparsec::ClientShareWorkspaceError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientShareWorkspaceErrorInternal".into(),
+            )?;
         }
         libparsec::ClientShareWorkspaceError::NotAllowed { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NotAllowed".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientShareWorkspaceErrorNotAllowed".into(),
+            )?;
         }
         libparsec::ClientShareWorkspaceError::Offline { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientShareWorkspaceErrorOffline".into(),
+            )?;
         }
         libparsec::ClientShareWorkspaceError::OutsiderCannotBeManagerOrOwner { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"OutsiderCannotBeManagerOrOwner".into(),
+                &"ClientShareWorkspaceErrorOutsiderCannotBeManagerOrOwner".into(),
             )?;
         }
         libparsec::ClientShareWorkspaceError::RevokedRecipient { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"RevokedRecipient".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientShareWorkspaceErrorRevokedRecipient".into(),
+            )?;
         }
         libparsec::ClientShareWorkspaceError::ShareToSelf { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"ShareToSelf".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientShareWorkspaceErrorShareToSelf".into(),
+            )?;
         }
         libparsec::ClientShareWorkspaceError::UnknownRecipient { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"UnknownRecipient".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientShareWorkspaceErrorUnknownRecipient".into(),
+            )?;
         }
         libparsec::ClientShareWorkspaceError::UnknownRecipientOrWorkspace { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"UnknownRecipientOrWorkspace".into(),
+                &"ClientShareWorkspaceErrorUnknownRecipientOrWorkspace".into(),
             )?;
         }
         libparsec::ClientShareWorkspaceError::UnknownWorkspace { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"UnknownWorkspace".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientShareWorkspaceErrorUnknownWorkspace".into(),
+            )?;
         }
         libparsec::ClientShareWorkspaceError::WorkspaceInMaintenance { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"WorkspaceInMaintenance".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientShareWorkspaceErrorWorkspaceInMaintenance".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -2523,16 +2674,28 @@ fn variant_client_start_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::ClientStartError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(&js_obj, &"tag".into(), &"ClientStartErrorInternal".into())?;
         }
         libparsec::ClientStartError::LoadDeviceDecryptionFailed { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"LoadDeviceDecryptionFailed".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartErrorLoadDeviceDecryptionFailed".into(),
+            )?;
         }
         libparsec::ClientStartError::LoadDeviceInvalidData { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"LoadDeviceInvalidData".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartErrorLoadDeviceInvalidData".into(),
+            )?;
         }
         libparsec::ClientStartError::LoadDeviceInvalidPath { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"LoadDeviceInvalidPath".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartErrorLoadDeviceInvalidPath".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -2549,7 +2712,11 @@ fn variant_client_start_invitation_greet_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::ClientStartInvitationGreetError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartInvitationGreetErrorInternal".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -2566,10 +2733,18 @@ fn variant_client_start_workspace_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::ClientStartWorkspaceError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartWorkspaceErrorInternal".into(),
+            )?;
         }
         libparsec::ClientStartWorkspaceError::NoAccess { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NoAccess".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartWorkspaceErrorNoAccess".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -2586,7 +2761,7 @@ fn variant_client_stop_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::ClientStopError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(&js_obj, &"tag".into(), &"ClientStopErrorInternal".into())?;
         }
     }
     Ok(js_obj)
@@ -2603,16 +2778,32 @@ fn variant_delete_invitation_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::DeleteInvitationError::AlreadyDeleted { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AlreadyDeleted".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"DeleteInvitationErrorAlreadyDeleted".into(),
+            )?;
         }
         libparsec::DeleteInvitationError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"DeleteInvitationErrorInternal".into(),
+            )?;
         }
         libparsec::DeleteInvitationError::NotFound { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NotFound".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"DeleteInvitationErrorNotFound".into(),
+            )?;
         }
         libparsec::DeleteInvitationError::Offline { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"DeleteInvitationErrorOffline".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -2625,8 +2816,11 @@ fn variant_device_access_strategy_js_to_rs(
     obj: JsValue,
 ) -> Result<libparsec::DeviceAccessStrategy, JsValue> {
     let tag = Reflect::get(&obj, &"tag".into())?;
-    match tag {
-        tag if tag == JsValue::from_str("Password") => {
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "DeviceAccessStrategyPassword" => {
             let password = {
                 let js_val = Reflect::get(&obj, &"password".into())?;
                 js_val
@@ -2658,7 +2852,7 @@ fn variant_device_access_strategy_js_to_rs(
             };
             Ok(libparsec::DeviceAccessStrategy::Password { password, key_file })
         }
-        tag if tag == JsValue::from_str("Smartcard") => {
+        "DeviceAccessStrategySmartcard" => {
             let key_file = {
                 let js_val = Reflect::get(&obj, &"keyFile".into())?;
                 js_val
@@ -2691,7 +2885,11 @@ fn variant_device_access_strategy_rs_to_js(
         libparsec::DeviceAccessStrategy::Password {
             password, key_file, ..
         } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Password".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"DeviceAccessStrategyPassword".into(),
+            )?;
             let js_password = JsValue::from_str(password.as_ref());
             Reflect::set(&js_obj, &"password".into(), &js_password)?;
             let js_key_file = JsValue::from_str({
@@ -2709,7 +2907,11 @@ fn variant_device_access_strategy_rs_to_js(
             Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
         }
         libparsec::DeviceAccessStrategy::Smartcard { key_file, .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Smartcard".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"DeviceAccessStrategySmartcard".into(),
+            )?;
             let js_key_file = JsValue::from_str({
                 let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
                     path.into_os_string()
@@ -2735,8 +2937,11 @@ fn variant_device_save_strategy_js_to_rs(
     obj: JsValue,
 ) -> Result<libparsec::DeviceSaveStrategy, JsValue> {
     let tag = Reflect::get(&obj, &"tag".into())?;
-    match tag {
-        tag if tag == JsValue::from_str("Password") => {
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "DeviceSaveStrategyPassword" => {
             let password = {
                 let js_val = Reflect::get(&obj, &"password".into())?;
                 js_val
@@ -2753,9 +2958,7 @@ fn variant_device_save_strategy_js_to_rs(
             };
             Ok(libparsec::DeviceSaveStrategy::Password { password })
         }
-        tag if tag == JsValue::from_str("Smartcard") => {
-            Ok(libparsec::DeviceSaveStrategy::Smartcard {})
-        }
+        "DeviceSaveStrategySmartcard" => Ok(libparsec::DeviceSaveStrategy::Smartcard {}),
         _ => Err(JsValue::from(TypeError::new(
             "Object is not a DeviceSaveStrategy",
         ))),
@@ -2769,12 +2972,16 @@ fn variant_device_save_strategy_rs_to_js(
     let js_obj = Object::new().into();
     match rs_obj {
         libparsec::DeviceSaveStrategy::Password { password, .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Password".into())?;
+            Reflect::set(&js_obj, &"tag".into(), &"DeviceSaveStrategyPassword".into())?;
             let js_password = JsValue::from_str(password.as_ref());
             Reflect::set(&js_obj, &"password".into(), &js_password)?;
         }
         libparsec::DeviceSaveStrategy::Smartcard { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Smartcard".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"DeviceSaveStrategySmartcard".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -2785,8 +2992,11 @@ fn variant_device_save_strategy_rs_to_js(
 #[allow(dead_code)]
 fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsValue> {
     let tag = Reflect::get(&obj, &"tag".into())?;
-    match tag {
-        tag if tag == JsValue::from_str("File") => {
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "EntryStatFile" => {
             let confinement_point = {
                 let js_val = Reflect::get(&obj, &"confinementPoint".into())?;
                 if js_val.is_null() {
@@ -2898,7 +3108,7 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                 size,
             })
         }
-        tag if tag == JsValue::from_str("Folder") => {
+        "EntryStatFolder" => {
             let confinement_point = {
                 let js_val = Reflect::get(&obj, &"confinementPoint".into())?;
                 if js_val.is_null() {
@@ -3041,7 +3251,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
             size,
             ..
         } => {
-            Reflect::set(&js_obj, &"tag".into(), &"File".into())?;
+            Reflect::set(&js_obj, &"tag".into(), &"EntryStatFile".into())?;
             let js_confinement_point = match confinement_point {
                 Some(val) => JsValue::from_str({
                     let custom_to_rs_string =
@@ -3107,7 +3317,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
             children,
             ..
         } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Folder".into())?;
+            Reflect::set(&js_obj, &"tag".into(), &"EntryStatFolder".into())?;
             let js_confinement_point = match confinement_point {
                 Some(val) => JsValue::from_str({
                     let custom_to_rs_string =
@@ -3185,10 +3395,18 @@ fn variant_greet_in_progress_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::GreetInProgressError::ActiveUsersLimitReached { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"ActiveUsersLimitReached".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"GreetInProgressErrorActiveUsersLimitReached".into(),
+            )?;
         }
         libparsec::GreetInProgressError::AlreadyUsed { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AlreadyUsed".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"GreetInProgressErrorAlreadyUsed".into(),
+            )?;
         }
         libparsec::GreetInProgressError::BadTimestamp {
             server_timestamp,
@@ -3197,7 +3415,11 @@ fn variant_greet_in_progress_error_rs_to_js(
             ballpark_client_late_offset,
             ..
         } => {
-            Reflect::set(&js_obj, &"tag".into(), &"BadTimestamp".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"GreetInProgressErrorBadTimestamp".into(),
+            )?;
             let js_server_timestamp = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
                     Ok(dt.get_f64_with_us_precision())
@@ -3234,34 +3456,74 @@ fn variant_greet_in_progress_error_rs_to_js(
             )?;
         }
         libparsec::GreetInProgressError::Cancelled { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Cancelled".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"GreetInProgressErrorCancelled".into(),
+            )?;
         }
         libparsec::GreetInProgressError::CorruptedInviteUserData { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"CorruptedInviteUserData".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"GreetInProgressErrorCorruptedInviteUserData".into(),
+            )?;
         }
         libparsec::GreetInProgressError::DeviceAlreadyExists { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"DeviceAlreadyExists".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"GreetInProgressErrorDeviceAlreadyExists".into(),
+            )?;
         }
         libparsec::GreetInProgressError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"GreetInProgressErrorInternal".into(),
+            )?;
         }
         libparsec::GreetInProgressError::NonceMismatch { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NonceMismatch".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"GreetInProgressErrorNonceMismatch".into(),
+            )?;
         }
         libparsec::GreetInProgressError::NotFound { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NotFound".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"GreetInProgressErrorNotFound".into(),
+            )?;
         }
         libparsec::GreetInProgressError::Offline { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"GreetInProgressErrorOffline".into(),
+            )?;
         }
         libparsec::GreetInProgressError::PeerReset { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"PeerReset".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"GreetInProgressErrorPeerReset".into(),
+            )?;
         }
         libparsec::GreetInProgressError::UserAlreadyExists { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"UserAlreadyExists".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"GreetInProgressErrorUserAlreadyExists".into(),
+            )?;
         }
         libparsec::GreetInProgressError::UserCreateNotAllowed { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"UserCreateNotAllowed".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"GreetInProgressErrorUserCreateNotAllowed".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -3272,8 +3534,11 @@ fn variant_greet_in_progress_error_rs_to_js(
 #[allow(dead_code)]
 fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteListItem, JsValue> {
     let tag = Reflect::get(&obj, &"tag".into())?;
-    match tag {
-        tag if tag == JsValue::from_str("Device") => {
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "InviteListItemDevice" => {
             let addr = {
                 let js_val = Reflect::get(&obj, &"addr".into())?;
                 js_val
@@ -3336,7 +3601,7 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                 status,
             })
         }
-        tag if tag == JsValue::from_str("User") => {
+        "InviteListItemUser" => {
             let addr = {
                 let js_val = Reflect::get(&obj, &"addr".into())?;
                 js_val
@@ -3427,7 +3692,7 @@ fn variant_invite_list_item_rs_to_js(
             status,
             ..
         } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Device".into())?;
+            Reflect::set(&js_obj, &"tag".into(), &"InviteListItemDevice".into())?;
             let js_addr = JsValue::from_str({
                 let custom_to_rs_string =
                     |addr: libparsec::BackendInvitationAddr| -> Result<String, &'static str> {
@@ -3472,7 +3737,7 @@ fn variant_invite_list_item_rs_to_js(
             status,
             ..
         } => {
-            Reflect::set(&js_obj, &"tag".into(), &"User".into())?;
+            Reflect::set(&js_obj, &"tag".into(), &"InviteListItemUser".into())?;
             let js_addr = JsValue::from_str({
                 let custom_to_rs_string =
                     |addr: libparsec::BackendInvitationAddr| -> Result<String, &'static str> {
@@ -3526,10 +3791,18 @@ fn variant_list_invitations_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::ListInvitationsError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ListInvitationsErrorInternal".into(),
+            )?;
         }
         libparsec::ListInvitationsError::Offline { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ListInvitationsErrorOffline".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -3546,16 +3819,24 @@ fn variant_new_device_invitation_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::NewDeviceInvitationError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"NewDeviceInvitationErrorInternal".into(),
+            )?;
         }
         libparsec::NewDeviceInvitationError::Offline { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"NewDeviceInvitationErrorOffline".into(),
+            )?;
         }
         libparsec::NewDeviceInvitationError::SendEmailToUserWithoutEmail { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"SendEmailToUserWithoutEmail".into(),
+                &"NewDeviceInvitationErrorSendEmailToUserWithoutEmail".into(),
             )?;
         }
     }
@@ -3573,16 +3854,32 @@ fn variant_new_user_invitation_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::NewUserInvitationError::AlreadyMember { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AlreadyMember".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"NewUserInvitationErrorAlreadyMember".into(),
+            )?;
         }
         libparsec::NewUserInvitationError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"NewUserInvitationErrorInternal".into(),
+            )?;
         }
         libparsec::NewUserInvitationError::NotAllowed { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NotAllowed".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"NewUserInvitationErrorNotAllowed".into(),
+            )?;
         }
         libparsec::NewUserInvitationError::Offline { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"NewUserInvitationErrorOffline".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -3599,7 +3896,11 @@ fn variant_parse_backend_addr_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::ParseBackendAddrError::InvalidUrl { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"InvalidUrl".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ParseBackendAddrErrorInvalidUrl".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -3612,8 +3913,11 @@ fn variant_parsed_backend_addr_js_to_rs(
     obj: JsValue,
 ) -> Result<libparsec::ParsedBackendAddr, JsValue> {
     let tag = Reflect::get(&obj, &"tag".into())?;
-    match tag {
-        tag if tag == JsValue::from_str("InvitationDevice") => {
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "ParsedBackendAddrInvitationDevice" => {
             let hostname = {
                 let js_val = Reflect::get(&obj, &"hostname".into())?;
                 js_val
@@ -3677,7 +3981,7 @@ fn variant_parsed_backend_addr_js_to_rs(
                 token,
             })
         }
-        tag if tag == JsValue::from_str("InvitationUser") => {
+        "ParsedBackendAddrInvitationUser" => {
             let hostname = {
                 let js_val = Reflect::get(&obj, &"hostname".into())?;
                 js_val
@@ -3741,7 +4045,7 @@ fn variant_parsed_backend_addr_js_to_rs(
                 token,
             })
         }
-        tag if tag == JsValue::from_str("Organization") => {
+        "ParsedBackendAddrOrganization" => {
             let hostname = {
                 let js_val = Reflect::get(&obj, &"hostname".into())?;
                 js_val
@@ -3787,7 +4091,7 @@ fn variant_parsed_backend_addr_js_to_rs(
                 organization_id,
             })
         }
-        tag if tag == JsValue::from_str("OrganizationBootstrap") => {
+        "ParsedBackendAddrOrganizationBootstrap" => {
             let hostname = {
                 let js_val = Reflect::get(&obj, &"hostname".into())?;
                 js_val
@@ -3848,7 +4152,7 @@ fn variant_parsed_backend_addr_js_to_rs(
                 token,
             })
         }
-        tag if tag == JsValue::from_str("OrganizationFileLink") => {
+        "ParsedBackendAddrOrganizationFileLink" => {
             let hostname = {
                 let js_val = Reflect::get(&obj, &"hostname".into())?;
                 js_val
@@ -3932,7 +4236,7 @@ fn variant_parsed_backend_addr_js_to_rs(
                 encrypted_timestamp,
             })
         }
-        tag if tag == JsValue::from_str("PkiEnrollment") => {
+        "ParsedBackendAddrPkiEnrollment" => {
             let hostname = {
                 let js_val = Reflect::get(&obj, &"hostname".into())?;
                 js_val
@@ -3978,7 +4282,7 @@ fn variant_parsed_backend_addr_js_to_rs(
                 organization_id,
             })
         }
-        tag if tag == JsValue::from_str("Server") => {
+        "ParsedBackendAddrServer" => {
             let hostname = {
                 let js_val = Reflect::get(&obj, &"hostname".into())?;
                 js_val
@@ -4033,7 +4337,11 @@ fn variant_parsed_backend_addr_rs_to_js(
             token,
             ..
         } => {
-            Reflect::set(&js_obj, &"tag".into(), &"InvitationDevice".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ParsedBackendAddrInvitationDevice".into(),
+            )?;
             let js_hostname = hostname.into();
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
@@ -4061,7 +4369,11 @@ fn variant_parsed_backend_addr_rs_to_js(
             token,
             ..
         } => {
-            Reflect::set(&js_obj, &"tag".into(), &"InvitationUser".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ParsedBackendAddrInvitationUser".into(),
+            )?;
             let js_hostname = hostname.into();
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
@@ -4088,7 +4400,11 @@ fn variant_parsed_backend_addr_rs_to_js(
             organization_id,
             ..
         } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Organization".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ParsedBackendAddrOrganization".into(),
+            )?;
             let js_hostname = hostname.into();
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
@@ -4106,7 +4422,11 @@ fn variant_parsed_backend_addr_rs_to_js(
             token,
             ..
         } => {
-            Reflect::set(&js_obj, &"tag".into(), &"OrganizationBootstrap".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ParsedBackendAddrOrganizationBootstrap".into(),
+            )?;
             let js_hostname = hostname.into();
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
@@ -4131,7 +4451,11 @@ fn variant_parsed_backend_addr_rs_to_js(
             encrypted_timestamp,
             ..
         } => {
-            Reflect::set(&js_obj, &"tag".into(), &"OrganizationFileLink".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ParsedBackendAddrOrganizationFileLink".into(),
+            )?;
             let js_hostname = hostname.into();
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
@@ -4169,7 +4493,11 @@ fn variant_parsed_backend_addr_rs_to_js(
             organization_id,
             ..
         } => {
-            Reflect::set(&js_obj, &"tag".into(), &"PkiEnrollment".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ParsedBackendAddrPkiEnrollment".into(),
+            )?;
             let js_hostname = hostname.into();
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
@@ -4185,7 +4513,7 @@ fn variant_parsed_backend_addr_rs_to_js(
             use_ssl,
             ..
         } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Server".into())?;
+            Reflect::set(&js_obj, &"tag".into(), &"ParsedBackendAddrServer".into())?;
             let js_hostname = hostname.into();
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
@@ -4204,8 +4532,11 @@ fn variant_user_or_device_claim_initial_info_js_to_rs(
     obj: JsValue,
 ) -> Result<libparsec::UserOrDeviceClaimInitialInfo, JsValue> {
     let tag = Reflect::get(&obj, &"tag".into())?;
-    match tag {
-        tag if tag == JsValue::from_str("Device") => {
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "UserOrDeviceClaimInitialInfoDevice" => {
             let handle = {
                 let js_val = Reflect::get(&obj, &"handle".into())?;
                 {
@@ -4243,7 +4574,7 @@ fn variant_user_or_device_claim_initial_info_js_to_rs(
                 greeter_human_handle,
             })
         }
-        tag if tag == JsValue::from_str("User") => {
+        "UserOrDeviceClaimInitialInfoUser" => {
             let handle = {
                 let js_val = Reflect::get(&obj, &"handle".into())?;
                 {
@@ -4308,7 +4639,11 @@ fn variant_user_or_device_claim_initial_info_rs_to_js(
             greeter_human_handle,
             ..
         } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Device".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"UserOrDeviceClaimInitialInfoDevice".into(),
+            )?;
             let js_handle = JsValue::from(handle);
             Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
             let js_greeter_user_id = JsValue::from_str(greeter_user_id.as_ref());
@@ -4330,7 +4665,11 @@ fn variant_user_or_device_claim_initial_info_rs_to_js(
             greeter_human_handle,
             ..
         } => {
-            Reflect::set(&js_obj, &"tag".into(), &"User".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"UserOrDeviceClaimInitialInfoUser".into(),
+            )?;
             let js_handle = JsValue::from(handle);
             Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
             let js_claimer_email = claimer_email.into();
@@ -4368,7 +4707,11 @@ fn variant_workspace_fs_operation_error_rs_to_js(
             ballpark_client_late_offset,
             ..
         } => {
-            Reflect::set(&js_obj, &"tag".into(), &"BadTimestamp".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFsOperationErrorBadTimestamp".into(),
+            )?;
             let js_server_timestamp = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
                     Ok(dt.get_f64_with_us_precision())
@@ -4405,40 +4748,88 @@ fn variant_workspace_fs_operation_error_rs_to_js(
             )?;
         }
         libparsec::WorkspaceFsOperationError::CannotRenameRoot { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"CannotRenameRoot".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFsOperationErrorCannotRenameRoot".into(),
+            )?;
         }
         libparsec::WorkspaceFsOperationError::EntryExists { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"EntryExists".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFsOperationErrorEntryExists".into(),
+            )?;
         }
         libparsec::WorkspaceFsOperationError::EntryNotFound { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"EntryNotFound".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFsOperationErrorEntryNotFound".into(),
+            )?;
         }
         libparsec::WorkspaceFsOperationError::FolderNotEmpty { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"FolderNotEmpty".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFsOperationErrorFolderNotEmpty".into(),
+            )?;
         }
         libparsec::WorkspaceFsOperationError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFsOperationErrorInternal".into(),
+            )?;
         }
         libparsec::WorkspaceFsOperationError::InvalidCertificate { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"InvalidCertificate".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFsOperationErrorInvalidCertificate".into(),
+            )?;
         }
         libparsec::WorkspaceFsOperationError::InvalidManifest { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"InvalidManifest".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFsOperationErrorInvalidManifest".into(),
+            )?;
         }
         libparsec::WorkspaceFsOperationError::IsAFolder { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"IsAFolder".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFsOperationErrorIsAFolder".into(),
+            )?;
         }
         libparsec::WorkspaceFsOperationError::NoRealmAccess { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NoRealmAccess".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFsOperationErrorNoRealmAccess".into(),
+            )?;
         }
         libparsec::WorkspaceFsOperationError::NotAFolder { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"NotAFolder".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFsOperationErrorNotAFolder".into(),
+            )?;
         }
         libparsec::WorkspaceFsOperationError::Offline { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Offline".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFsOperationErrorOffline".into(),
+            )?;
         }
         libparsec::WorkspaceFsOperationError::ReadOnlyRealm { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"ReadOnlyRealm".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFsOperationErrorReadOnlyRealm".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -4455,7 +4846,7 @@ fn variant_workspace_stop_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         libparsec::WorkspaceStopError::Internal { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Internal".into())?;
+            Reflect::set(&js_obj, &"tag".into(), &"WorkspaceStopErrorInternal".into())?;
         }
     }
     Ok(js_obj)
@@ -4468,8 +4859,11 @@ fn variant_workspace_storage_cache_size_js_to_rs(
     obj: JsValue,
 ) -> Result<libparsec::WorkspaceStorageCacheSize, JsValue> {
     let tag = Reflect::get(&obj, &"tag".into())?;
-    match tag {
-        tag if tag == JsValue::from_str("Custom") => {
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "WorkspaceStorageCacheSizeCustom" => {
             let size = {
                 let js_val = Reflect::get(&obj, &"size".into())?;
                 {
@@ -4485,9 +4879,7 @@ fn variant_workspace_storage_cache_size_js_to_rs(
             };
             Ok(libparsec::WorkspaceStorageCacheSize::Custom { size })
         }
-        tag if tag == JsValue::from_str("Default") => {
-            Ok(libparsec::WorkspaceStorageCacheSize::Default {})
-        }
+        "WorkspaceStorageCacheSizeDefault" => Ok(libparsec::WorkspaceStorageCacheSize::Default {}),
         _ => Err(JsValue::from(TypeError::new(
             "Object is not a WorkspaceStorageCacheSize",
         ))),
@@ -4501,12 +4893,20 @@ fn variant_workspace_storage_cache_size_rs_to_js(
     let js_obj = Object::new().into();
     match rs_obj {
         libparsec::WorkspaceStorageCacheSize::Custom { size, .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Custom".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceStorageCacheSizeCustom".into(),
+            )?;
             let js_size = JsValue::from(size);
             Reflect::set(&js_obj, &"size".into(), &js_size)?;
         }
         libparsec::WorkspaceStorageCacheSize::Default { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"Default".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceStorageCacheSizeDefault".into(),
+            )?;
         }
     }
     Ok(js_obj)

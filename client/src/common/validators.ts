@@ -2,13 +2,13 @@
 
 import {
   parseBackendAddr,
-  BackendAddrType,
   isValidUserName,
   isValidEmail,
   isValidDeviceName,
   isValidWorkspaceName,
   isValidEntryName,
 } from '@/parsec';
+import { ParsedBackendAddrTag } from '@/plugins/libparsec';
 
 export enum Validity {
   Invalid = 0,
@@ -70,7 +70,7 @@ export const backendAddrValidator: IValidator = async function(value: string) {
   }
   const result = await parseBackendAddr(value);
   if (result.ok) {
-    return (result.value.tag === BackendAddrType.Server ? Validity.Valid : Validity.Invalid);
+    return (result.value.tag === ParsedBackendAddrTag.Server ? Validity.Valid : Validity.Invalid);
   }
   return Validity.Invalid;
 };
@@ -82,7 +82,7 @@ export const backendOrganizationAddrValidator: IValidator = async function(value
   }
   const result = await parseBackendAddr(value);
   if (result.ok) {
-    return (result.value.tag === BackendAddrType.Organization ? Validity.Valid : Validity.Invalid);
+    return (result.value.tag === ParsedBackendAddrTag.Organization ? Validity.Valid : Validity.Invalid);
   }
   return Validity.Invalid;
 };
@@ -102,8 +102,8 @@ export const claimLinkValidator: IValidator = async function(value: string) {
   }
   const result = await parseBackendAddr(value);
   if (result.ok) {
-    return (result.value.tag === BackendAddrType.InvitationUser ||
-      result.value.tag === BackendAddrType.InvitationDevice ? Validity.Valid : Validity.Invalid);
+    return (result.value.tag === ParsedBackendAddrTag.InvitationUser ||
+      result.value.tag === ParsedBackendAddrTag.InvitationDevice ? Validity.Valid : Validity.Invalid);
   }
   return Validity.Invalid;
 };
@@ -115,7 +115,7 @@ export const claimUserLinkValidator: IValidator = async function(value: string) 
   }
   const result = await parseBackendAddr(value);
   if (result.ok) {
-    return (result.value.tag === BackendAddrType.InvitationUser ? Validity.Valid : Validity.Invalid);
+    return (result.value.tag === ParsedBackendAddrTag.InvitationUser ? Validity.Valid : Validity.Invalid);
   }
   return Validity.Invalid;
 };
@@ -127,7 +127,7 @@ export const claimDeviceLinkValidator: IValidator = async function(value: string
   }
   const result = await parseBackendAddr(value);
   if (result.ok) {
-    return (result.value.tag === BackendAddrType.InvitationDevice ? Validity.Valid : Validity.Invalid);
+    return (result.value.tag === ParsedBackendAddrTag.InvitationDevice ? Validity.Valid : Validity.Invalid);
   }
   return Validity.Invalid;
 };

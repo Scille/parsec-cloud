@@ -230,12 +230,21 @@ export interface WorkspaceUserAccessInfo {
 }
 
 // BootstrapOrganizationError
+export enum BootstrapOrganizationErrorTag {
+    AlreadyUsedToken = 'BootstrapOrganizationErrorAlreadyUsedToken',
+    BadTimestamp = 'BootstrapOrganizationErrorBadTimestamp',
+    Internal = 'BootstrapOrganizationErrorInternal',
+    InvalidToken = 'BootstrapOrganizationErrorInvalidToken',
+    Offline = 'BootstrapOrganizationErrorOffline',
+    SaveDeviceError = 'BootstrapOrganizationErrorSaveDeviceError',
+}
+
 export interface BootstrapOrganizationErrorAlreadyUsedToken {
-    tag: 'AlreadyUsedToken'
+    tag: BootstrapOrganizationErrorTag.AlreadyUsedToken
     error: string
 }
 export interface BootstrapOrganizationErrorBadTimestamp {
-    tag: 'BadTimestamp'
+    tag: BootstrapOrganizationErrorTag.BadTimestamp
     error: string
     serverTimestamp: DateTime
     clientTimestamp: DateTime
@@ -243,19 +252,19 @@ export interface BootstrapOrganizationErrorBadTimestamp {
     ballparkClientLateOffset: number
 }
 export interface BootstrapOrganizationErrorInternal {
-    tag: 'Internal'
+    tag: BootstrapOrganizationErrorTag.Internal
     error: string
 }
 export interface BootstrapOrganizationErrorInvalidToken {
-    tag: 'InvalidToken'
+    tag: BootstrapOrganizationErrorTag.InvalidToken
     error: string
 }
 export interface BootstrapOrganizationErrorOffline {
-    tag: 'Offline'
+    tag: BootstrapOrganizationErrorTag.Offline
     error: string
 }
 export interface BootstrapOrganizationErrorSaveDeviceError {
-    tag: 'SaveDeviceError'
+    tag: BootstrapOrganizationErrorTag.SaveDeviceError
     error: string
 }
 export type BootstrapOrganizationError =
@@ -267,12 +276,17 @@ export type BootstrapOrganizationError =
   | BootstrapOrganizationErrorSaveDeviceError
 
 // CancelError
+export enum CancelErrorTag {
+    Internal = 'CancelErrorInternal',
+    NotBound = 'CancelErrorNotBound',
+}
+
 export interface CancelErrorInternal {
-    tag: 'Internal'
+    tag: CancelErrorTag.Internal
     error: string
 }
 export interface CancelErrorNotBound {
-    tag: 'NotBound'
+    tag: CancelErrorTag.NotBound
     error: string
 }
 export type CancelError =
@@ -280,36 +294,47 @@ export type CancelError =
   | CancelErrorNotBound
 
 // ClaimInProgressError
+export enum ClaimInProgressErrorTag {
+    ActiveUsersLimitReached = 'ClaimInProgressErrorActiveUsersLimitReached',
+    AlreadyUsed = 'ClaimInProgressErrorAlreadyUsed',
+    Cancelled = 'ClaimInProgressErrorCancelled',
+    CorruptedConfirmation = 'ClaimInProgressErrorCorruptedConfirmation',
+    Internal = 'ClaimInProgressErrorInternal',
+    NotFound = 'ClaimInProgressErrorNotFound',
+    Offline = 'ClaimInProgressErrorOffline',
+    PeerReset = 'ClaimInProgressErrorPeerReset',
+}
+
 export interface ClaimInProgressErrorActiveUsersLimitReached {
-    tag: 'ActiveUsersLimitReached'
+    tag: ClaimInProgressErrorTag.ActiveUsersLimitReached
     error: string
 }
 export interface ClaimInProgressErrorAlreadyUsed {
-    tag: 'AlreadyUsed'
+    tag: ClaimInProgressErrorTag.AlreadyUsed
     error: string
 }
 export interface ClaimInProgressErrorCancelled {
-    tag: 'Cancelled'
+    tag: ClaimInProgressErrorTag.Cancelled
     error: string
 }
 export interface ClaimInProgressErrorCorruptedConfirmation {
-    tag: 'CorruptedConfirmation'
+    tag: ClaimInProgressErrorTag.CorruptedConfirmation
     error: string
 }
 export interface ClaimInProgressErrorInternal {
-    tag: 'Internal'
+    tag: ClaimInProgressErrorTag.Internal
     error: string
 }
 export interface ClaimInProgressErrorNotFound {
-    tag: 'NotFound'
+    tag: ClaimInProgressErrorTag.NotFound
     error: string
 }
 export interface ClaimInProgressErrorOffline {
-    tag: 'Offline'
+    tag: ClaimInProgressErrorTag.Offline
     error: string
 }
 export interface ClaimInProgressErrorPeerReset {
-    tag: 'PeerReset'
+    tag: ClaimInProgressErrorTag.PeerReset
     error: string
 }
 export type ClaimInProgressError =
@@ -323,28 +348,39 @@ export type ClaimInProgressError =
   | ClaimInProgressErrorPeerReset
 
 // ClaimerGreeterAbortOperationError
+export enum ClaimerGreeterAbortOperationErrorTag {
+    Internal = 'ClaimerGreeterAbortOperationErrorInternal',
+}
+
 export interface ClaimerGreeterAbortOperationErrorInternal {
-    tag: 'Internal'
+    tag: ClaimerGreeterAbortOperationErrorTag.Internal
     error: string
 }
 export type ClaimerGreeterAbortOperationError =
   | ClaimerGreeterAbortOperationErrorInternal
 
 // ClaimerRetrieveInfoError
+export enum ClaimerRetrieveInfoErrorTag {
+    AlreadyUsed = 'ClaimerRetrieveInfoErrorAlreadyUsed',
+    Internal = 'ClaimerRetrieveInfoErrorInternal',
+    NotFound = 'ClaimerRetrieveInfoErrorNotFound',
+    Offline = 'ClaimerRetrieveInfoErrorOffline',
+}
+
 export interface ClaimerRetrieveInfoErrorAlreadyUsed {
-    tag: 'AlreadyUsed'
+    tag: ClaimerRetrieveInfoErrorTag.AlreadyUsed
     error: string
 }
 export interface ClaimerRetrieveInfoErrorInternal {
-    tag: 'Internal'
+    tag: ClaimerRetrieveInfoErrorTag.Internal
     error: string
 }
 export interface ClaimerRetrieveInfoErrorNotFound {
-    tag: 'NotFound'
+    tag: ClaimerRetrieveInfoErrorTag.NotFound
     error: string
 }
 export interface ClaimerRetrieveInfoErrorOffline {
-    tag: 'Offline'
+    tag: ClaimerRetrieveInfoErrorTag.Offline
     error: string
 }
 export type ClaimerRetrieveInfoError =
@@ -354,28 +390,41 @@ export type ClaimerRetrieveInfoError =
   | ClaimerRetrieveInfoErrorOffline
 
 // ClientCreateWorkspaceError
+export enum ClientCreateWorkspaceErrorTag {
+    Internal = 'ClientCreateWorkspaceErrorInternal',
+}
+
 export interface ClientCreateWorkspaceErrorInternal {
-    tag: 'Internal'
+    tag: ClientCreateWorkspaceErrorTag.Internal
     error: string
 }
 export type ClientCreateWorkspaceError =
   | ClientCreateWorkspaceErrorInternal
 
 // ClientEvent
+export enum ClientEventTag {
+    Ping = 'ClientEventPing',
+}
+
 export interface ClientEventPing {
-    tag: 'Ping'
+    tag: ClientEventTag.Ping
     ping: string
 }
 export type ClientEvent =
   | ClientEventPing
 
 // ClientGetUserDeviceError
+export enum ClientGetUserDeviceErrorTag {
+    Internal = 'ClientGetUserDeviceErrorInternal',
+    NonExisting = 'ClientGetUserDeviceErrorNonExisting',
+}
+
 export interface ClientGetUserDeviceErrorInternal {
-    tag: 'Internal'
+    tag: ClientGetUserDeviceErrorTag.Internal
     error: string
 }
 export interface ClientGetUserDeviceErrorNonExisting {
-    tag: 'NonExisting'
+    tag: ClientGetUserDeviceErrorTag.NonExisting
     error: string
 }
 export type ClientGetUserDeviceError =
@@ -383,52 +432,77 @@ export type ClientGetUserDeviceError =
   | ClientGetUserDeviceErrorNonExisting
 
 // ClientInfoError
+export enum ClientInfoErrorTag {
+    Internal = 'ClientInfoErrorInternal',
+}
+
 export interface ClientInfoErrorInternal {
-    tag: 'Internal'
+    tag: ClientInfoErrorTag.Internal
     error: string
 }
 export type ClientInfoError =
   | ClientInfoErrorInternal
 
 // ClientListUserDevicesError
+export enum ClientListUserDevicesErrorTag {
+    Internal = 'ClientListUserDevicesErrorInternal',
+}
+
 export interface ClientListUserDevicesErrorInternal {
-    tag: 'Internal'
+    tag: ClientListUserDevicesErrorTag.Internal
     error: string
 }
 export type ClientListUserDevicesError =
   | ClientListUserDevicesErrorInternal
 
 // ClientListUsersError
+export enum ClientListUsersErrorTag {
+    Internal = 'ClientListUsersErrorInternal',
+}
+
 export interface ClientListUsersErrorInternal {
-    tag: 'Internal'
+    tag: ClientListUsersErrorTag.Internal
     error: string
 }
 export type ClientListUsersError =
   | ClientListUsersErrorInternal
 
 // ClientListWorkspaceUsersError
+export enum ClientListWorkspaceUsersErrorTag {
+    Internal = 'ClientListWorkspaceUsersErrorInternal',
+}
+
 export interface ClientListWorkspaceUsersErrorInternal {
-    tag: 'Internal'
+    tag: ClientListWorkspaceUsersErrorTag.Internal
     error: string
 }
 export type ClientListWorkspaceUsersError =
   | ClientListWorkspaceUsersErrorInternal
 
 // ClientListWorkspacesError
+export enum ClientListWorkspacesErrorTag {
+    Internal = 'ClientListWorkspacesErrorInternal',
+}
+
 export interface ClientListWorkspacesErrorInternal {
-    tag: 'Internal'
+    tag: ClientListWorkspacesErrorTag.Internal
     error: string
 }
 export type ClientListWorkspacesError =
   | ClientListWorkspacesErrorInternal
 
 // ClientRenameWorkspaceError
+export enum ClientRenameWorkspaceErrorTag {
+    Internal = 'ClientRenameWorkspaceErrorInternal',
+    UnknownWorkspace = 'ClientRenameWorkspaceErrorUnknownWorkspace',
+}
+
 export interface ClientRenameWorkspaceErrorInternal {
-    tag: 'Internal'
+    tag: ClientRenameWorkspaceErrorTag.Internal
     error: string
 }
 export interface ClientRenameWorkspaceErrorUnknownWorkspace {
-    tag: 'UnknownWorkspace'
+    tag: ClientRenameWorkspaceErrorTag.UnknownWorkspace
     error: string
 }
 export type ClientRenameWorkspaceError =
@@ -436,8 +510,22 @@ export type ClientRenameWorkspaceError =
   | ClientRenameWorkspaceErrorUnknownWorkspace
 
 // ClientShareWorkspaceError
+export enum ClientShareWorkspaceErrorTag {
+    BadTimestamp = 'ClientShareWorkspaceErrorBadTimestamp',
+    Internal = 'ClientShareWorkspaceErrorInternal',
+    NotAllowed = 'ClientShareWorkspaceErrorNotAllowed',
+    Offline = 'ClientShareWorkspaceErrorOffline',
+    OutsiderCannotBeManagerOrOwner = 'ClientShareWorkspaceErrorOutsiderCannotBeManagerOrOwner',
+    RevokedRecipient = 'ClientShareWorkspaceErrorRevokedRecipient',
+    ShareToSelf = 'ClientShareWorkspaceErrorShareToSelf',
+    UnknownRecipient = 'ClientShareWorkspaceErrorUnknownRecipient',
+    UnknownRecipientOrWorkspace = 'ClientShareWorkspaceErrorUnknownRecipientOrWorkspace',
+    UnknownWorkspace = 'ClientShareWorkspaceErrorUnknownWorkspace',
+    WorkspaceInMaintenance = 'ClientShareWorkspaceErrorWorkspaceInMaintenance',
+}
+
 export interface ClientShareWorkspaceErrorBadTimestamp {
-    tag: 'BadTimestamp'
+    tag: ClientShareWorkspaceErrorTag.BadTimestamp
     error: string
     serverTimestamp: DateTime
     clientTimestamp: DateTime
@@ -445,43 +533,43 @@ export interface ClientShareWorkspaceErrorBadTimestamp {
     ballparkClientLateOffset: number
 }
 export interface ClientShareWorkspaceErrorInternal {
-    tag: 'Internal'
+    tag: ClientShareWorkspaceErrorTag.Internal
     error: string
 }
 export interface ClientShareWorkspaceErrorNotAllowed {
-    tag: 'NotAllowed'
+    tag: ClientShareWorkspaceErrorTag.NotAllowed
     error: string
 }
 export interface ClientShareWorkspaceErrorOffline {
-    tag: 'Offline'
+    tag: ClientShareWorkspaceErrorTag.Offline
     error: string
 }
 export interface ClientShareWorkspaceErrorOutsiderCannotBeManagerOrOwner {
-    tag: 'OutsiderCannotBeManagerOrOwner'
+    tag: ClientShareWorkspaceErrorTag.OutsiderCannotBeManagerOrOwner
     error: string
 }
 export interface ClientShareWorkspaceErrorRevokedRecipient {
-    tag: 'RevokedRecipient'
+    tag: ClientShareWorkspaceErrorTag.RevokedRecipient
     error: string
 }
 export interface ClientShareWorkspaceErrorShareToSelf {
-    tag: 'ShareToSelf'
+    tag: ClientShareWorkspaceErrorTag.ShareToSelf
     error: string
 }
 export interface ClientShareWorkspaceErrorUnknownRecipient {
-    tag: 'UnknownRecipient'
+    tag: ClientShareWorkspaceErrorTag.UnknownRecipient
     error: string
 }
 export interface ClientShareWorkspaceErrorUnknownRecipientOrWorkspace {
-    tag: 'UnknownRecipientOrWorkspace'
+    tag: ClientShareWorkspaceErrorTag.UnknownRecipientOrWorkspace
     error: string
 }
 export interface ClientShareWorkspaceErrorUnknownWorkspace {
-    tag: 'UnknownWorkspace'
+    tag: ClientShareWorkspaceErrorTag.UnknownWorkspace
     error: string
 }
 export interface ClientShareWorkspaceErrorWorkspaceInMaintenance {
-    tag: 'WorkspaceInMaintenance'
+    tag: ClientShareWorkspaceErrorTag.WorkspaceInMaintenance
     error: string
 }
 export type ClientShareWorkspaceError =
@@ -498,20 +586,27 @@ export type ClientShareWorkspaceError =
   | ClientShareWorkspaceErrorWorkspaceInMaintenance
 
 // ClientStartError
+export enum ClientStartErrorTag {
+    Internal = 'ClientStartErrorInternal',
+    LoadDeviceDecryptionFailed = 'ClientStartErrorLoadDeviceDecryptionFailed',
+    LoadDeviceInvalidData = 'ClientStartErrorLoadDeviceInvalidData',
+    LoadDeviceInvalidPath = 'ClientStartErrorLoadDeviceInvalidPath',
+}
+
 export interface ClientStartErrorInternal {
-    tag: 'Internal'
+    tag: ClientStartErrorTag.Internal
     error: string
 }
 export interface ClientStartErrorLoadDeviceDecryptionFailed {
-    tag: 'LoadDeviceDecryptionFailed'
+    tag: ClientStartErrorTag.LoadDeviceDecryptionFailed
     error: string
 }
 export interface ClientStartErrorLoadDeviceInvalidData {
-    tag: 'LoadDeviceInvalidData'
+    tag: ClientStartErrorTag.LoadDeviceInvalidData
     error: string
 }
 export interface ClientStartErrorLoadDeviceInvalidPath {
-    tag: 'LoadDeviceInvalidPath'
+    tag: ClientStartErrorTag.LoadDeviceInvalidPath
     error: string
 }
 export type ClientStartError =
@@ -521,20 +616,29 @@ export type ClientStartError =
   | ClientStartErrorLoadDeviceInvalidPath
 
 // ClientStartInvitationGreetError
+export enum ClientStartInvitationGreetErrorTag {
+    Internal = 'ClientStartInvitationGreetErrorInternal',
+}
+
 export interface ClientStartInvitationGreetErrorInternal {
-    tag: 'Internal'
+    tag: ClientStartInvitationGreetErrorTag.Internal
     error: string
 }
 export type ClientStartInvitationGreetError =
   | ClientStartInvitationGreetErrorInternal
 
 // ClientStartWorkspaceError
+export enum ClientStartWorkspaceErrorTag {
+    Internal = 'ClientStartWorkspaceErrorInternal',
+    NoAccess = 'ClientStartWorkspaceErrorNoAccess',
+}
+
 export interface ClientStartWorkspaceErrorInternal {
-    tag: 'Internal'
+    tag: ClientStartWorkspaceErrorTag.Internal
     error: string
 }
 export interface ClientStartWorkspaceErrorNoAccess {
-    tag: 'NoAccess'
+    tag: ClientStartWorkspaceErrorTag.NoAccess
     error: string
 }
 export type ClientStartWorkspaceError =
@@ -542,28 +646,39 @@ export type ClientStartWorkspaceError =
   | ClientStartWorkspaceErrorNoAccess
 
 // ClientStopError
+export enum ClientStopErrorTag {
+    Internal = 'ClientStopErrorInternal',
+}
+
 export interface ClientStopErrorInternal {
-    tag: 'Internal'
+    tag: ClientStopErrorTag.Internal
     error: string
 }
 export type ClientStopError =
   | ClientStopErrorInternal
 
 // DeleteInvitationError
+export enum DeleteInvitationErrorTag {
+    AlreadyDeleted = 'DeleteInvitationErrorAlreadyDeleted',
+    Internal = 'DeleteInvitationErrorInternal',
+    NotFound = 'DeleteInvitationErrorNotFound',
+    Offline = 'DeleteInvitationErrorOffline',
+}
+
 export interface DeleteInvitationErrorAlreadyDeleted {
-    tag: 'AlreadyDeleted'
+    tag: DeleteInvitationErrorTag.AlreadyDeleted
     error: string
 }
 export interface DeleteInvitationErrorInternal {
-    tag: 'Internal'
+    tag: DeleteInvitationErrorTag.Internal
     error: string
 }
 export interface DeleteInvitationErrorNotFound {
-    tag: 'NotFound'
+    tag: DeleteInvitationErrorTag.NotFound
     error: string
 }
 export interface DeleteInvitationErrorOffline {
-    tag: 'Offline'
+    tag: DeleteInvitationErrorTag.Offline
     error: string
 }
 export type DeleteInvitationError =
@@ -573,13 +688,18 @@ export type DeleteInvitationError =
   | DeleteInvitationErrorOffline
 
 // DeviceAccessStrategy
+export enum DeviceAccessStrategyTag {
+    Password = 'DeviceAccessStrategyPassword',
+    Smartcard = 'DeviceAccessStrategySmartcard',
+}
+
 export interface DeviceAccessStrategyPassword {
-    tag: 'Password'
+    tag: DeviceAccessStrategyTag.Password
     password: Password
     keyFile: Path
 }
 export interface DeviceAccessStrategySmartcard {
-    tag: 'Smartcard'
+    tag: DeviceAccessStrategyTag.Smartcard
     keyFile: Path
 }
 export type DeviceAccessStrategy =
@@ -587,20 +707,30 @@ export type DeviceAccessStrategy =
   | DeviceAccessStrategySmartcard
 
 // DeviceSaveStrategy
+export enum DeviceSaveStrategyTag {
+    Password = 'DeviceSaveStrategyPassword',
+    Smartcard = 'DeviceSaveStrategySmartcard',
+}
+
 export interface DeviceSaveStrategyPassword {
-    tag: 'Password'
+    tag: DeviceSaveStrategyTag.Password
     password: Password
 }
 export interface DeviceSaveStrategySmartcard {
-    tag: 'Smartcard'
+    tag: DeviceSaveStrategyTag.Smartcard
 }
 export type DeviceSaveStrategy =
   | DeviceSaveStrategyPassword
   | DeviceSaveStrategySmartcard
 
 // EntryStat
+export enum EntryStatTag {
+    File = 'EntryStatFile',
+    Folder = 'EntryStatFolder',
+}
+
 export interface EntryStatFile {
-    tag: 'File'
+    tag: EntryStatTag.File
     confinementPoint: VlobID | null
     id: VlobID
     created: DateTime
@@ -611,7 +741,7 @@ export interface EntryStatFile {
     size: SizeInt
 }
 export interface EntryStatFolder {
-    tag: 'Folder'
+    tag: EntryStatTag.Folder
     confinementPoint: VlobID | null
     id: VlobID
     created: DateTime
@@ -626,16 +756,32 @@ export type EntryStat =
   | EntryStatFolder
 
 // GreetInProgressError
+export enum GreetInProgressErrorTag {
+    ActiveUsersLimitReached = 'GreetInProgressErrorActiveUsersLimitReached',
+    AlreadyUsed = 'GreetInProgressErrorAlreadyUsed',
+    BadTimestamp = 'GreetInProgressErrorBadTimestamp',
+    Cancelled = 'GreetInProgressErrorCancelled',
+    CorruptedInviteUserData = 'GreetInProgressErrorCorruptedInviteUserData',
+    DeviceAlreadyExists = 'GreetInProgressErrorDeviceAlreadyExists',
+    Internal = 'GreetInProgressErrorInternal',
+    NonceMismatch = 'GreetInProgressErrorNonceMismatch',
+    NotFound = 'GreetInProgressErrorNotFound',
+    Offline = 'GreetInProgressErrorOffline',
+    PeerReset = 'GreetInProgressErrorPeerReset',
+    UserAlreadyExists = 'GreetInProgressErrorUserAlreadyExists',
+    UserCreateNotAllowed = 'GreetInProgressErrorUserCreateNotAllowed',
+}
+
 export interface GreetInProgressErrorActiveUsersLimitReached {
-    tag: 'ActiveUsersLimitReached'
+    tag: GreetInProgressErrorTag.ActiveUsersLimitReached
     error: string
 }
 export interface GreetInProgressErrorAlreadyUsed {
-    tag: 'AlreadyUsed'
+    tag: GreetInProgressErrorTag.AlreadyUsed
     error: string
 }
 export interface GreetInProgressErrorBadTimestamp {
-    tag: 'BadTimestamp'
+    tag: GreetInProgressErrorTag.BadTimestamp
     error: string
     serverTimestamp: DateTime
     clientTimestamp: DateTime
@@ -643,43 +789,43 @@ export interface GreetInProgressErrorBadTimestamp {
     ballparkClientLateOffset: number
 }
 export interface GreetInProgressErrorCancelled {
-    tag: 'Cancelled'
+    tag: GreetInProgressErrorTag.Cancelled
     error: string
 }
 export interface GreetInProgressErrorCorruptedInviteUserData {
-    tag: 'CorruptedInviteUserData'
+    tag: GreetInProgressErrorTag.CorruptedInviteUserData
     error: string
 }
 export interface GreetInProgressErrorDeviceAlreadyExists {
-    tag: 'DeviceAlreadyExists'
+    tag: GreetInProgressErrorTag.DeviceAlreadyExists
     error: string
 }
 export interface GreetInProgressErrorInternal {
-    tag: 'Internal'
+    tag: GreetInProgressErrorTag.Internal
     error: string
 }
 export interface GreetInProgressErrorNonceMismatch {
-    tag: 'NonceMismatch'
+    tag: GreetInProgressErrorTag.NonceMismatch
     error: string
 }
 export interface GreetInProgressErrorNotFound {
-    tag: 'NotFound'
+    tag: GreetInProgressErrorTag.NotFound
     error: string
 }
 export interface GreetInProgressErrorOffline {
-    tag: 'Offline'
+    tag: GreetInProgressErrorTag.Offline
     error: string
 }
 export interface GreetInProgressErrorPeerReset {
-    tag: 'PeerReset'
+    tag: GreetInProgressErrorTag.PeerReset
     error: string
 }
 export interface GreetInProgressErrorUserAlreadyExists {
-    tag: 'UserAlreadyExists'
+    tag: GreetInProgressErrorTag.UserAlreadyExists
     error: string
 }
 export interface GreetInProgressErrorUserCreateNotAllowed {
-    tag: 'UserCreateNotAllowed'
+    tag: GreetInProgressErrorTag.UserCreateNotAllowed
     error: string
 }
 export type GreetInProgressError =
@@ -698,15 +844,20 @@ export type GreetInProgressError =
   | GreetInProgressErrorUserCreateNotAllowed
 
 // InviteListItem
+export enum InviteListItemTag {
+    Device = 'InviteListItemDevice',
+    User = 'InviteListItemUser',
+}
+
 export interface InviteListItemDevice {
-    tag: 'Device'
+    tag: InviteListItemTag.Device
     addr: BackendInvitationAddr
     token: InvitationToken
     createdOn: DateTime
     status: InvitationStatus
 }
 export interface InviteListItemUser {
-    tag: 'User'
+    tag: InviteListItemTag.User
     addr: BackendInvitationAddr
     token: InvitationToken
     createdOn: DateTime
@@ -718,12 +869,17 @@ export type InviteListItem =
   | InviteListItemUser
 
 // ListInvitationsError
+export enum ListInvitationsErrorTag {
+    Internal = 'ListInvitationsErrorInternal',
+    Offline = 'ListInvitationsErrorOffline',
+}
+
 export interface ListInvitationsErrorInternal {
-    tag: 'Internal'
+    tag: ListInvitationsErrorTag.Internal
     error: string
 }
 export interface ListInvitationsErrorOffline {
-    tag: 'Offline'
+    tag: ListInvitationsErrorTag.Offline
     error: string
 }
 export type ListInvitationsError =
@@ -731,16 +887,22 @@ export type ListInvitationsError =
   | ListInvitationsErrorOffline
 
 // NewDeviceInvitationError
+export enum NewDeviceInvitationErrorTag {
+    Internal = 'NewDeviceInvitationErrorInternal',
+    Offline = 'NewDeviceInvitationErrorOffline',
+    SendEmailToUserWithoutEmail = 'NewDeviceInvitationErrorSendEmailToUserWithoutEmail',
+}
+
 export interface NewDeviceInvitationErrorInternal {
-    tag: 'Internal'
+    tag: NewDeviceInvitationErrorTag.Internal
     error: string
 }
 export interface NewDeviceInvitationErrorOffline {
-    tag: 'Offline'
+    tag: NewDeviceInvitationErrorTag.Offline
     error: string
 }
 export interface NewDeviceInvitationErrorSendEmailToUserWithoutEmail {
-    tag: 'SendEmailToUserWithoutEmail'
+    tag: NewDeviceInvitationErrorTag.SendEmailToUserWithoutEmail
     error: string
 }
 export type NewDeviceInvitationError =
@@ -749,20 +911,27 @@ export type NewDeviceInvitationError =
   | NewDeviceInvitationErrorSendEmailToUserWithoutEmail
 
 // NewUserInvitationError
+export enum NewUserInvitationErrorTag {
+    AlreadyMember = 'NewUserInvitationErrorAlreadyMember',
+    Internal = 'NewUserInvitationErrorInternal',
+    NotAllowed = 'NewUserInvitationErrorNotAllowed',
+    Offline = 'NewUserInvitationErrorOffline',
+}
+
 export interface NewUserInvitationErrorAlreadyMember {
-    tag: 'AlreadyMember'
+    tag: NewUserInvitationErrorTag.AlreadyMember
     error: string
 }
 export interface NewUserInvitationErrorInternal {
-    tag: 'Internal'
+    tag: NewUserInvitationErrorTag.Internal
     error: string
 }
 export interface NewUserInvitationErrorNotAllowed {
-    tag: 'NotAllowed'
+    tag: NewUserInvitationErrorTag.NotAllowed
     error: string
 }
 export interface NewUserInvitationErrorOffline {
-    tag: 'Offline'
+    tag: NewUserInvitationErrorTag.Offline
     error: string
 }
 export type NewUserInvitationError =
@@ -772,16 +941,30 @@ export type NewUserInvitationError =
   | NewUserInvitationErrorOffline
 
 // ParseBackendAddrError
+export enum ParseBackendAddrErrorTag {
+    InvalidUrl = 'ParseBackendAddrErrorInvalidUrl',
+}
+
 export interface ParseBackendAddrErrorInvalidUrl {
-    tag: 'InvalidUrl'
+    tag: ParseBackendAddrErrorTag.InvalidUrl
     error: string
 }
 export type ParseBackendAddrError =
   | ParseBackendAddrErrorInvalidUrl
 
 // ParsedBackendAddr
+export enum ParsedBackendAddrTag {
+    InvitationDevice = 'ParsedBackendAddrInvitationDevice',
+    InvitationUser = 'ParsedBackendAddrInvitationUser',
+    Organization = 'ParsedBackendAddrOrganization',
+    OrganizationBootstrap = 'ParsedBackendAddrOrganizationBootstrap',
+    OrganizationFileLink = 'ParsedBackendAddrOrganizationFileLink',
+    PkiEnrollment = 'ParsedBackendAddrPkiEnrollment',
+    Server = 'ParsedBackendAddrServer',
+}
+
 export interface ParsedBackendAddrInvitationDevice {
-    tag: 'InvitationDevice'
+    tag: ParsedBackendAddrTag.InvitationDevice
     hostname: string
     port: U32
     useSsl: boolean
@@ -789,7 +972,7 @@ export interface ParsedBackendAddrInvitationDevice {
     token: InvitationToken
 }
 export interface ParsedBackendAddrInvitationUser {
-    tag: 'InvitationUser'
+    tag: ParsedBackendAddrTag.InvitationUser
     hostname: string
     port: U32
     useSsl: boolean
@@ -797,14 +980,14 @@ export interface ParsedBackendAddrInvitationUser {
     token: InvitationToken
 }
 export interface ParsedBackendAddrOrganization {
-    tag: 'Organization'
+    tag: ParsedBackendAddrTag.Organization
     hostname: string
     port: U32
     useSsl: boolean
     organizationId: OrganizationID
 }
 export interface ParsedBackendAddrOrganizationBootstrap {
-    tag: 'OrganizationBootstrap'
+    tag: ParsedBackendAddrTag.OrganizationBootstrap
     hostname: string
     port: U32
     useSsl: boolean
@@ -812,7 +995,7 @@ export interface ParsedBackendAddrOrganizationBootstrap {
     token: string | null
 }
 export interface ParsedBackendAddrOrganizationFileLink {
-    tag: 'OrganizationFileLink'
+    tag: ParsedBackendAddrTag.OrganizationFileLink
     hostname: string
     port: U32
     useSsl: boolean
@@ -822,14 +1005,14 @@ export interface ParsedBackendAddrOrganizationFileLink {
     encryptedTimestamp: Uint8Array | null
 }
 export interface ParsedBackendAddrPkiEnrollment {
-    tag: 'PkiEnrollment'
+    tag: ParsedBackendAddrTag.PkiEnrollment
     hostname: string
     port: U32
     useSsl: boolean
     organizationId: OrganizationID
 }
 export interface ParsedBackendAddrServer {
-    tag: 'Server'
+    tag: ParsedBackendAddrTag.Server
     hostname: string
     port: U32
     useSsl: boolean
@@ -844,14 +1027,19 @@ export type ParsedBackendAddr =
   | ParsedBackendAddrServer
 
 // UserOrDeviceClaimInitialInfo
+export enum UserOrDeviceClaimInitialInfoTag {
+    Device = 'UserOrDeviceClaimInitialInfoDevice',
+    User = 'UserOrDeviceClaimInitialInfoUser',
+}
+
 export interface UserOrDeviceClaimInitialInfoDevice {
-    tag: 'Device'
+    tag: UserOrDeviceClaimInitialInfoTag.Device
     handle: Handle
     greeterUserId: UserID
     greeterHumanHandle: HumanHandle | null
 }
 export interface UserOrDeviceClaimInitialInfoUser {
-    tag: 'User'
+    tag: UserOrDeviceClaimInitialInfoTag.User
     handle: Handle
     claimerEmail: string
     greeterUserId: UserID
@@ -862,8 +1050,24 @@ export type UserOrDeviceClaimInitialInfo =
   | UserOrDeviceClaimInitialInfoUser
 
 // WorkspaceFsOperationError
+export enum WorkspaceFsOperationErrorTag {
+    BadTimestamp = 'WorkspaceFsOperationErrorBadTimestamp',
+    CannotRenameRoot = 'WorkspaceFsOperationErrorCannotRenameRoot',
+    EntryExists = 'WorkspaceFsOperationErrorEntryExists',
+    EntryNotFound = 'WorkspaceFsOperationErrorEntryNotFound',
+    FolderNotEmpty = 'WorkspaceFsOperationErrorFolderNotEmpty',
+    Internal = 'WorkspaceFsOperationErrorInternal',
+    InvalidCertificate = 'WorkspaceFsOperationErrorInvalidCertificate',
+    InvalidManifest = 'WorkspaceFsOperationErrorInvalidManifest',
+    IsAFolder = 'WorkspaceFsOperationErrorIsAFolder',
+    NoRealmAccess = 'WorkspaceFsOperationErrorNoRealmAccess',
+    NotAFolder = 'WorkspaceFsOperationErrorNotAFolder',
+    Offline = 'WorkspaceFsOperationErrorOffline',
+    ReadOnlyRealm = 'WorkspaceFsOperationErrorReadOnlyRealm',
+}
+
 export interface WorkspaceFsOperationErrorBadTimestamp {
-    tag: 'BadTimestamp'
+    tag: WorkspaceFsOperationErrorTag.BadTimestamp
     error: string
     serverTimestamp: DateTime
     clientTimestamp: DateTime
@@ -871,51 +1075,51 @@ export interface WorkspaceFsOperationErrorBadTimestamp {
     ballparkClientLateOffset: number
 }
 export interface WorkspaceFsOperationErrorCannotRenameRoot {
-    tag: 'CannotRenameRoot'
+    tag: WorkspaceFsOperationErrorTag.CannotRenameRoot
     error: string
 }
 export interface WorkspaceFsOperationErrorEntryExists {
-    tag: 'EntryExists'
+    tag: WorkspaceFsOperationErrorTag.EntryExists
     error: string
 }
 export interface WorkspaceFsOperationErrorEntryNotFound {
-    tag: 'EntryNotFound'
+    tag: WorkspaceFsOperationErrorTag.EntryNotFound
     error: string
 }
 export interface WorkspaceFsOperationErrorFolderNotEmpty {
-    tag: 'FolderNotEmpty'
+    tag: WorkspaceFsOperationErrorTag.FolderNotEmpty
     error: string
 }
 export interface WorkspaceFsOperationErrorInternal {
-    tag: 'Internal'
+    tag: WorkspaceFsOperationErrorTag.Internal
     error: string
 }
 export interface WorkspaceFsOperationErrorInvalidCertificate {
-    tag: 'InvalidCertificate'
+    tag: WorkspaceFsOperationErrorTag.InvalidCertificate
     error: string
 }
 export interface WorkspaceFsOperationErrorInvalidManifest {
-    tag: 'InvalidManifest'
+    tag: WorkspaceFsOperationErrorTag.InvalidManifest
     error: string
 }
 export interface WorkspaceFsOperationErrorIsAFolder {
-    tag: 'IsAFolder'
+    tag: WorkspaceFsOperationErrorTag.IsAFolder
     error: string
 }
 export interface WorkspaceFsOperationErrorNoRealmAccess {
-    tag: 'NoRealmAccess'
+    tag: WorkspaceFsOperationErrorTag.NoRealmAccess
     error: string
 }
 export interface WorkspaceFsOperationErrorNotAFolder {
-    tag: 'NotAFolder'
+    tag: WorkspaceFsOperationErrorTag.NotAFolder
     error: string
 }
 export interface WorkspaceFsOperationErrorOffline {
-    tag: 'Offline'
+    tag: WorkspaceFsOperationErrorTag.Offline
     error: string
 }
 export interface WorkspaceFsOperationErrorReadOnlyRealm {
-    tag: 'ReadOnlyRealm'
+    tag: WorkspaceFsOperationErrorTag.ReadOnlyRealm
     error: string
 }
 export type WorkspaceFsOperationError =
@@ -934,20 +1138,29 @@ export type WorkspaceFsOperationError =
   | WorkspaceFsOperationErrorReadOnlyRealm
 
 // WorkspaceStopError
+export enum WorkspaceStopErrorTag {
+    Internal = 'WorkspaceStopErrorInternal',
+}
+
 export interface WorkspaceStopErrorInternal {
-    tag: 'Internal'
+    tag: WorkspaceStopErrorTag.Internal
     error: string
 }
 export type WorkspaceStopError =
   | WorkspaceStopErrorInternal
 
 // WorkspaceStorageCacheSize
+export enum WorkspaceStorageCacheSizeTag {
+    Custom = 'WorkspaceStorageCacheSizeCustom',
+    Default = 'WorkspaceStorageCacheSizeDefault',
+}
+
 export interface WorkspaceStorageCacheSizeCustom {
-    tag: 'Custom'
+    tag: WorkspaceStorageCacheSizeTag.Custom
     size: CacheSize
 }
 export interface WorkspaceStorageCacheSizeDefault {
-    tag: 'Default'
+    tag: WorkspaceStorageCacheSizeTag.Default
 }
 export type WorkspaceStorageCacheSize =
   | WorkspaceStorageCacheSizeCustom

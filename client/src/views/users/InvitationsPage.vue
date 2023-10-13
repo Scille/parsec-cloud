@@ -103,9 +103,9 @@ import {
   inviteUser as parsecInviteUser,
   cancelInvitation as parsecCancelInvitation,
   isAdmin as parsecIsAdmin,
-  InviteUserError,
   InvitationEmailSentStatus,
-  DeleteInviteError,
+  InvitationErrorTag,
+  DeleteInvitationErrorTag,
 } from '@/parsec';
 import { NotificationCenter, NotificationKey, NotificationLevel, Notification } from '@/services/notificationCenter';
 import { useRoute } from 'vue-router';
@@ -187,27 +187,26 @@ async function inviteUser(): Promise<void> {
       }));
     }
   } else {
-    if (result.error.tag === InviteUserError.AlreadyMember) {
-      await notificationCenter.showToast(new Notification({
-        message: t('UsersPage.invitation.inviteFailedAlreadyMember'),
-        level: NotificationLevel.Error,
-      }));
-    } else if (result.error.tag === InviteUserError.Offline) {
-      await notificationCenter.showToast(new Notification({
-        message: t('UsersPage.invitation.inviteFailedOffline'),
-        level: NotificationLevel.Error,
-      }));
-    } else if (result.error.tag === InviteUserError.NotAllowed) {
-      await notificationCenter.showToast(new Notification({
-        message: t('UsersPage.invitation.inviteFailedNotAllowed'),
-        level: NotificationLevel.Error,
-      }));
-    } else {
-      await notificationCenter.showToast(new Notification({
-        message: t('UsersPage.invitation.inviteFailedUnknown', {reason: result.error.tag}),
-        level: NotificationLevel.Error,
-      }));
+    let message = '';
+    switch (result.error.tag) {
+      case InvitationErrorTag.AlreadyMember:
+        message = t('UsersPage.invitation.inviteFailedAlreadyMember');
+        break;
+      case InvitationErrorTag.Offline:
+        message = t('UsersPage.invitation.inviteFailedOffline');
+        break;
+      case InvitationErrorTag.NotAllowed:
+        message = t('UsersPage.invitation.inviteFailedNotAllowed');
+        break;
+      default:
+        message = t('UsersPage.invitation.inviteFailedUnknown', { reason: result.error.tag });
+        break;
     }
+
+    await notificationCenter.showToast(new Notification({
+      message,
+      level: NotificationLevel.Error,
+    }));
   }
 }
 
@@ -259,7 +258,7 @@ async function rejectUser(invitation: UserInvitation) : Promise<void> {
   } else {
     // In both those cases we can just refresh the list and the invitation should disappear, no need
     // to warn the user.
-    if (result.error.tag === DeleteInviteError.NotFound || result.error.tag === DeleteInviteError.AlreadyDeleted) {
+    if (result.error.tag === DeleteInvitationErrorTag.NotFound || result.error.tag === DeleteInvitationErrorTag.AlreadyDeleted) {
       await refreshInvitationsList();
     } else {
       await notificationCenter.showToast(new Notification({

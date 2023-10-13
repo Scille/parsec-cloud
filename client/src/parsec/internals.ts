@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { ClientConfig } from '@/parsec/types';
+import { WorkspaceStorageCacheSizeTag } from '@/plugins/libparsec';
 
 export const MOCK_WAITING_TIME = 500;
 export const DEFAULT_HANDLE = 42;
@@ -14,6 +15,6 @@ export function getClientConfig(): ClientConfig {
     configDir: window.getConfigDir(),
     dataBaseDir: window.getDataBaseDir(),
     mountpointBaseDir: window.getMountpointBaseDir(),
-    workspaceStorageCacheSize: {tag: 'Default'},
+    workspaceStorageCacheSize: { tag: WorkspaceStorageCacheSizeTag.Default },
   };
 }

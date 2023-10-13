@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { libparsec, InviteListItem } from '@/plugins/libparsec';
+import { libparsec, InviteListItem, InviteListItemTag } from '@/plugins/libparsec';
 import { getParsecHandle } from '@/parsec/routing';
 import { DateTime } from 'luxon';
 import { needsMocks } from '@/parsec/environment';
@@ -56,7 +56,7 @@ export async function listUserInvitations(): Promise<Result<Array<UserInvitation
       return result;
     }
     // No need to add device invitations
-    result.value = result.value.filter((item: InviteListItem) => item.tag === 'User');
+    result.value = result.value.filter((item: InviteListItem) => item.tag === InviteListItemTag.User);
     // Convert InviteListItemUser to UserInvitation
     result.value = result.value.map((item) => {
       item.createdOn = DateTime.fromSeconds(item.createdOn as any as number);
@@ -66,14 +66,14 @@ export async function listUserInvitations(): Promise<Result<Array<UserInvitation
   } else {
     return new Promise<Result<Array<UserInvitation>, ListInvitationsError>>((resolve, _reject) => {
       const ret: Array<UserInvitation> = [{
-        tag: 'User',
+        tag: InviteListItemTag.User,
         addr: 'parsec://parsec.example.com/MyOrg?action=claim_device&token=12346565645645654645645645645645',
         token: '12346565645645654645645645645645',
         createdOn: DateTime.now(),
         claimerEmail: 'shadowheart@swordcoast.faerun',
         status: InvitationStatus.Ready,
       }, {
-        tag: 'User',
+        tag: InviteListItemTag.User,
         addr: 'parsec://parsec.example.com/MyOrg?action=claim_user&token=32346565645645654645645645645645',
         token: '32346565645645654645645645645645',
         createdOn: DateTime.now(),

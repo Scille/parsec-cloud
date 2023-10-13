@@ -1994,7 +1994,8 @@ fn variant_bootstrap_organization_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::BootstrapOrganizationError::AlreadyUsedToken { .. } => {
-            let js_tag = JsString::try_new(cx, "AlreadyUsedToken").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "BootstrapOrganizationErrorAlreadyUsedToken").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::BootstrapOrganizationError::BadTimestamp {
@@ -2004,7 +2005,8 @@ fn variant_bootstrap_organization_error_rs_to_js<'a>(
             ballpark_client_late_offset,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "BadTimestamp").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "BootstrapOrganizationErrorBadTimestamp").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_server_timestamp = JsNumber::new(cx, {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -2040,19 +2042,22 @@ fn variant_bootstrap_organization_error_rs_to_js<'a>(
             )?;
         }
         libparsec::BootstrapOrganizationError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "BootstrapOrganizationErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::BootstrapOrganizationError::InvalidToken { .. } => {
-            let js_tag = JsString::try_new(cx, "InvalidToken").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "BootstrapOrganizationErrorInvalidToken").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::BootstrapOrganizationError::Offline { .. } => {
-            let js_tag = JsString::try_new(cx, "Offline").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "BootstrapOrganizationErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::BootstrapOrganizationError::SaveDeviceError { .. } => {
-            let js_tag = JsString::try_new(cx, "SaveDeviceError").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "BootstrapOrganizationErrorSaveDeviceError").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -2071,11 +2076,11 @@ fn variant_cancel_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::CancelError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "CancelErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::CancelError::NotBound { .. } => {
-            let js_tag = JsString::try_new(cx, "NotBound").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "CancelErrorNotBound").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -2094,35 +2099,37 @@ fn variant_claim_in_progress_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::ClaimInProgressError::ActiveUsersLimitReached { .. } => {
-            let js_tag = JsString::try_new(cx, "ActiveUsersLimitReached").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ClaimInProgressErrorActiveUsersLimitReached")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClaimInProgressError::AlreadyUsed { .. } => {
-            let js_tag = JsString::try_new(cx, "AlreadyUsed").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ClaimInProgressErrorAlreadyUsed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClaimInProgressError::Cancelled { .. } => {
-            let js_tag = JsString::try_new(cx, "Cancelled").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ClaimInProgressErrorCancelled").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClaimInProgressError::CorruptedConfirmation { .. } => {
-            let js_tag = JsString::try_new(cx, "CorruptedConfirmation").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "ClaimInProgressErrorCorruptedConfirmation").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClaimInProgressError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ClaimInProgressErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClaimInProgressError::NotFound { .. } => {
-            let js_tag = JsString::try_new(cx, "NotFound").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ClaimInProgressErrorNotFound").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClaimInProgressError::Offline { .. } => {
-            let js_tag = JsString::try_new(cx, "Offline").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ClaimInProgressErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClaimInProgressError::PeerReset { .. } => {
-            let js_tag = JsString::try_new(cx, "PeerReset").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ClaimInProgressErrorPeerReset").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -2141,7 +2148,8 @@ fn variant_claimer_greeter_abort_operation_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::ClaimerGreeterAbortOperationError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "ClaimerGreeterAbortOperationErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -2160,19 +2168,20 @@ fn variant_claimer_retrieve_info_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::ClaimerRetrieveInfoError::AlreadyUsed { .. } => {
-            let js_tag = JsString::try_new(cx, "AlreadyUsed").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "ClaimerRetrieveInfoErrorAlreadyUsed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClaimerRetrieveInfoError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ClaimerRetrieveInfoErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClaimerRetrieveInfoError::NotFound { .. } => {
-            let js_tag = JsString::try_new(cx, "NotFound").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ClaimerRetrieveInfoErrorNotFound").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClaimerRetrieveInfoError::Offline { .. } => {
-            let js_tag = JsString::try_new(cx, "Offline").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ClaimerRetrieveInfoErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -2191,7 +2200,8 @@ fn variant_client_create_workspace_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::ClientCreateWorkspaceError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "ClientCreateWorkspaceErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -2207,7 +2217,7 @@ fn variant_client_event_js_to_rs<'a>(
 ) -> NeonResult<libparsec::ClientEvent> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
-        "Ping" => {
+        "ClientEventPing" => {
             let ping = {
                 let js_val: Handle<JsString> = obj.get(cx, "ping")?;
                 js_val.value(cx)
@@ -2226,7 +2236,7 @@ fn variant_client_event_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     match rs_obj {
         libparsec::ClientEvent::Ping { ping, .. } => {
-            let js_tag = JsString::try_new(cx, "Ping").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ClientEventPing").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_ping = JsString::try_new(cx, ping).or_throw(cx)?;
             js_obj.set(cx, "ping", js_ping)?;
@@ -2247,11 +2257,12 @@ fn variant_client_get_user_device_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::ClientGetUserDeviceError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ClientGetUserDeviceErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClientGetUserDeviceError::NonExisting { .. } => {
-            let js_tag = JsString::try_new(cx, "NonExisting").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "ClientGetUserDeviceErrorNonExisting").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -2270,7 +2281,7 @@ fn variant_client_info_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::ClientInfoError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ClientInfoErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -2289,7 +2300,8 @@ fn variant_client_list_user_devices_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::ClientListUserDevicesError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "ClientListUserDevicesErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -2308,7 +2320,7 @@ fn variant_client_list_users_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::ClientListUsersError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ClientListUsersErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -2327,7 +2339,8 @@ fn variant_client_list_workspace_users_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::ClientListWorkspaceUsersError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "ClientListWorkspaceUsersErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -2346,7 +2359,7 @@ fn variant_client_list_workspaces_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::ClientListWorkspacesError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ClientListWorkspacesErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -2365,11 +2378,13 @@ fn variant_client_rename_workspace_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::ClientRenameWorkspaceError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "ClientRenameWorkspaceErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClientRenameWorkspaceError::UnknownWorkspace { .. } => {
-            let js_tag = JsString::try_new(cx, "UnknownWorkspace").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "ClientRenameWorkspaceErrorUnknownWorkspace").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -2394,7 +2409,8 @@ fn variant_client_share_workspace_error_rs_to_js<'a>(
             ballpark_client_late_offset,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "BadTimestamp").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "ClientShareWorkspaceErrorBadTimestamp").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_server_timestamp = JsNumber::new(cx, {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -2430,43 +2446,55 @@ fn variant_client_share_workspace_error_rs_to_js<'a>(
             )?;
         }
         libparsec::ClientShareWorkspaceError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ClientShareWorkspaceErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClientShareWorkspaceError::NotAllowed { .. } => {
-            let js_tag = JsString::try_new(cx, "NotAllowed").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "ClientShareWorkspaceErrorNotAllowed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClientShareWorkspaceError::Offline { .. } => {
-            let js_tag = JsString::try_new(cx, "Offline").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ClientShareWorkspaceErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClientShareWorkspaceError::OutsiderCannotBeManagerOrOwner { .. } => {
-            let js_tag = JsString::try_new(cx, "OutsiderCannotBeManagerOrOwner").or_throw(cx)?;
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientShareWorkspaceErrorOutsiderCannotBeManagerOrOwner",
+            )
+            .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClientShareWorkspaceError::RevokedRecipient { .. } => {
-            let js_tag = JsString::try_new(cx, "RevokedRecipient").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "ClientShareWorkspaceErrorRevokedRecipient").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClientShareWorkspaceError::ShareToSelf { .. } => {
-            let js_tag = JsString::try_new(cx, "ShareToSelf").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "ClientShareWorkspaceErrorShareToSelf").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClientShareWorkspaceError::UnknownRecipient { .. } => {
-            let js_tag = JsString::try_new(cx, "UnknownRecipient").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "ClientShareWorkspaceErrorUnknownRecipient").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClientShareWorkspaceError::UnknownRecipientOrWorkspace { .. } => {
-            let js_tag = JsString::try_new(cx, "UnknownRecipientOrWorkspace").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "ClientShareWorkspaceErrorUnknownRecipientOrWorkspace")
+                    .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClientShareWorkspaceError::UnknownWorkspace { .. } => {
-            let js_tag = JsString::try_new(cx, "UnknownWorkspace").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "ClientShareWorkspaceErrorUnknownWorkspace").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClientShareWorkspaceError::WorkspaceInMaintenance { .. } => {
-            let js_tag = JsString::try_new(cx, "WorkspaceInMaintenance").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ClientShareWorkspaceErrorWorkspaceInMaintenance")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -2485,19 +2513,22 @@ fn variant_client_start_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::ClientStartError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ClientStartErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClientStartError::LoadDeviceDecryptionFailed { .. } => {
-            let js_tag = JsString::try_new(cx, "LoadDeviceDecryptionFailed").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "ClientStartErrorLoadDeviceDecryptionFailed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClientStartError::LoadDeviceInvalidData { .. } => {
-            let js_tag = JsString::try_new(cx, "LoadDeviceInvalidData").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "ClientStartErrorLoadDeviceInvalidData").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClientStartError::LoadDeviceInvalidPath { .. } => {
-            let js_tag = JsString::try_new(cx, "LoadDeviceInvalidPath").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "ClientStartErrorLoadDeviceInvalidPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -2516,7 +2547,8 @@ fn variant_client_start_invitation_greet_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::ClientStartInvitationGreetError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "ClientStartInvitationGreetErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -2535,11 +2567,11 @@ fn variant_client_start_workspace_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::ClientStartWorkspaceError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ClientStartWorkspaceErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClientStartWorkspaceError::NoAccess { .. } => {
-            let js_tag = JsString::try_new(cx, "NoAccess").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ClientStartWorkspaceErrorNoAccess").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -2558,7 +2590,7 @@ fn variant_client_stop_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::ClientStopError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ClientStopErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -2577,19 +2609,20 @@ fn variant_delete_invitation_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::DeleteInvitationError::AlreadyDeleted { .. } => {
-            let js_tag = JsString::try_new(cx, "AlreadyDeleted").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "DeleteInvitationErrorAlreadyDeleted").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::DeleteInvitationError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "DeleteInvitationErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::DeleteInvitationError::NotFound { .. } => {
-            let js_tag = JsString::try_new(cx, "NotFound").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "DeleteInvitationErrorNotFound").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::DeleteInvitationError::Offline { .. } => {
-            let js_tag = JsString::try_new(cx, "Offline").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "DeleteInvitationErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -2605,7 +2638,7 @@ fn variant_device_access_strategy_js_to_rs<'a>(
 ) -> NeonResult<libparsec::DeviceAccessStrategy> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
-        "Password" => {
+        "DeviceAccessStrategyPassword" => {
             let password = {
                 let js_val: Handle<JsString> = obj.get(cx, "password")?;
                 {
@@ -2629,7 +2662,7 @@ fn variant_device_access_strategy_js_to_rs<'a>(
             };
             Ok(libparsec::DeviceAccessStrategy::Password { password, key_file })
         }
-        "Smartcard" => {
+        "DeviceAccessStrategySmartcard" => {
             let key_file = {
                 let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
                 {
@@ -2657,7 +2690,7 @@ fn variant_device_access_strategy_rs_to_js<'a>(
         libparsec::DeviceAccessStrategy::Password {
             password, key_file, ..
         } => {
-            let js_tag = JsString::try_new(cx, "Password").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "DeviceAccessStrategyPassword").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_password = JsString::try_new(cx, password).or_throw(cx)?;
             js_obj.set(cx, "password", js_password)?;
@@ -2676,7 +2709,7 @@ fn variant_device_access_strategy_rs_to_js<'a>(
             js_obj.set(cx, "keyFile", js_key_file)?;
         }
         libparsec::DeviceAccessStrategy::Smartcard { key_file, .. } => {
-            let js_tag = JsString::try_new(cx, "Smartcard").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "DeviceAccessStrategySmartcard").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_key_file = JsString::try_new(cx, {
                 let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
@@ -2705,7 +2738,7 @@ fn variant_device_save_strategy_js_to_rs<'a>(
 ) -> NeonResult<libparsec::DeviceSaveStrategy> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
-        "Password" => {
+        "DeviceSaveStrategyPassword" => {
             let password = {
                 let js_val: Handle<JsString> = obj.get(cx, "password")?;
                 {
@@ -2718,7 +2751,7 @@ fn variant_device_save_strategy_js_to_rs<'a>(
             };
             Ok(libparsec::DeviceSaveStrategy::Password { password })
         }
-        "Smartcard" => Ok(libparsec::DeviceSaveStrategy::Smartcard {}),
+        "DeviceSaveStrategySmartcard" => Ok(libparsec::DeviceSaveStrategy::Smartcard {}),
         _ => cx.throw_type_error("Object is not a DeviceSaveStrategy"),
     }
 }
@@ -2731,13 +2764,13 @@ fn variant_device_save_strategy_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     match rs_obj {
         libparsec::DeviceSaveStrategy::Password { password, .. } => {
-            let js_tag = JsString::try_new(cx, "Password").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "DeviceSaveStrategyPassword").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_password = JsString::try_new(cx, password).or_throw(cx)?;
             js_obj.set(cx, "password", js_password)?;
         }
         libparsec::DeviceSaveStrategy::Smartcard { .. } => {
-            let js_tag = JsString::try_new(cx, "Smartcard").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "DeviceSaveStrategySmartcard").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -2753,7 +2786,7 @@ fn variant_entry_stat_js_to_rs<'a>(
 ) -> NeonResult<libparsec::EntryStat> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
-        "File" => {
+        "EntryStatFile" => {
             let confinement_point = {
                 let js_val: Handle<JsValue> = obj.get(cx, "confinementPoint")?;
                 {
@@ -2852,7 +2885,7 @@ fn variant_entry_stat_js_to_rs<'a>(
                 size,
             })
         }
-        "Folder" => {
+        "EntryStatFolder" => {
             let confinement_point = {
                 let js_val: Handle<JsValue> = obj.get(cx, "confinementPoint")?;
                 {
@@ -2983,7 +3016,7 @@ fn variant_entry_stat_rs_to_js<'a>(
             size,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "File").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "EntryStatFile").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_confinement_point = match confinement_point {
                 Some(elem) => JsString::try_new(cx, {
@@ -3049,7 +3082,7 @@ fn variant_entry_stat_rs_to_js<'a>(
             children,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "Folder").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "EntryStatFolder").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_confinement_point = match confinement_point {
                 Some(elem) => JsString::try_new(cx, {
@@ -3128,11 +3161,12 @@ fn variant_greet_in_progress_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::GreetInProgressError::ActiveUsersLimitReached { .. } => {
-            let js_tag = JsString::try_new(cx, "ActiveUsersLimitReached").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "GreetInProgressErrorActiveUsersLimitReached")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::GreetInProgressError::AlreadyUsed { .. } => {
-            let js_tag = JsString::try_new(cx, "AlreadyUsed").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "GreetInProgressErrorAlreadyUsed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::GreetInProgressError::BadTimestamp {
@@ -3142,7 +3176,7 @@ fn variant_greet_in_progress_error_rs_to_js<'a>(
             ballpark_client_late_offset,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "BadTimestamp").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "GreetInProgressErrorBadTimestamp").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_server_timestamp = JsNumber::new(cx, {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -3178,43 +3212,47 @@ fn variant_greet_in_progress_error_rs_to_js<'a>(
             )?;
         }
         libparsec::GreetInProgressError::Cancelled { .. } => {
-            let js_tag = JsString::try_new(cx, "Cancelled").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "GreetInProgressErrorCancelled").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::GreetInProgressError::CorruptedInviteUserData { .. } => {
-            let js_tag = JsString::try_new(cx, "CorruptedInviteUserData").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "GreetInProgressErrorCorruptedInviteUserData")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::GreetInProgressError::DeviceAlreadyExists { .. } => {
-            let js_tag = JsString::try_new(cx, "DeviceAlreadyExists").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "GreetInProgressErrorDeviceAlreadyExists").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::GreetInProgressError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "GreetInProgressErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::GreetInProgressError::NonceMismatch { .. } => {
-            let js_tag = JsString::try_new(cx, "NonceMismatch").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "GreetInProgressErrorNonceMismatch").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::GreetInProgressError::NotFound { .. } => {
-            let js_tag = JsString::try_new(cx, "NotFound").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "GreetInProgressErrorNotFound").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::GreetInProgressError::Offline { .. } => {
-            let js_tag = JsString::try_new(cx, "Offline").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "GreetInProgressErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::GreetInProgressError::PeerReset { .. } => {
-            let js_tag = JsString::try_new(cx, "PeerReset").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "GreetInProgressErrorPeerReset").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::GreetInProgressError::UserAlreadyExists { .. } => {
-            let js_tag = JsString::try_new(cx, "UserAlreadyExists").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "GreetInProgressErrorUserAlreadyExists").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::GreetInProgressError::UserCreateNotAllowed { .. } => {
-            let js_tag = JsString::try_new(cx, "UserCreateNotAllowed").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "GreetInProgressErrorUserCreateNotAllowed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -3230,7 +3268,7 @@ fn variant_invite_list_item_js_to_rs<'a>(
 ) -> NeonResult<libparsec::InviteListItem> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
-        "Device" => {
+        "InviteListItemDevice" => {
             let addr = {
                 let js_val: Handle<JsString> = obj.get(cx, "addr")?;
                 {
@@ -3284,7 +3322,7 @@ fn variant_invite_list_item_js_to_rs<'a>(
                 status,
             })
         }
-        "User" => {
+        "InviteListItemUser" => {
             let addr = {
                 let js_val: Handle<JsString> = obj.get(cx, "addr")?;
                 {
@@ -3361,7 +3399,7 @@ fn variant_invite_list_item_rs_to_js<'a>(
             status,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "Device").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "InviteListItemDevice").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_addr = JsString::try_new(cx, {
                 let custom_to_rs_string =
@@ -3407,7 +3445,7 @@ fn variant_invite_list_item_rs_to_js<'a>(
             status,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "User").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "InviteListItemUser").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_addr = JsString::try_new(cx, {
                 let custom_to_rs_string =
@@ -3463,11 +3501,11 @@ fn variant_list_invitations_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::ListInvitationsError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ListInvitationsErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ListInvitationsError::Offline { .. } => {
-            let js_tag = JsString::try_new(cx, "Offline").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ListInvitationsErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -3486,15 +3524,17 @@ fn variant_new_device_invitation_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::NewDeviceInvitationError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "NewDeviceInvitationErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::NewDeviceInvitationError::Offline { .. } => {
-            let js_tag = JsString::try_new(cx, "Offline").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "NewDeviceInvitationErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::NewDeviceInvitationError::SendEmailToUserWithoutEmail { .. } => {
-            let js_tag = JsString::try_new(cx, "SendEmailToUserWithoutEmail").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "NewDeviceInvitationErrorSendEmailToUserWithoutEmail")
+                    .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -3513,19 +3553,20 @@ fn variant_new_user_invitation_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::NewUserInvitationError::AlreadyMember { .. } => {
-            let js_tag = JsString::try_new(cx, "AlreadyMember").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "NewUserInvitationErrorAlreadyMember").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::NewUserInvitationError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "NewUserInvitationErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::NewUserInvitationError::NotAllowed { .. } => {
-            let js_tag = JsString::try_new(cx, "NotAllowed").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "NewUserInvitationErrorNotAllowed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::NewUserInvitationError::Offline { .. } => {
-            let js_tag = JsString::try_new(cx, "Offline").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "NewUserInvitationErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -3544,7 +3585,7 @@ fn variant_parse_backend_addr_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::ParseBackendAddrError::InvalidUrl { .. } => {
-            let js_tag = JsString::try_new(cx, "InvalidUrl").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ParseBackendAddrErrorInvalidUrl").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -3560,7 +3601,7 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
 ) -> NeonResult<libparsec::ParsedBackendAddr> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
-        "InvitationDevice" => {
+        "ParsedBackendAddrInvitationDevice" => {
             let hostname = {
                 let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
                 js_val.value(cx)
@@ -3610,7 +3651,7 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                 token,
             })
         }
-        "InvitationUser" => {
+        "ParsedBackendAddrInvitationUser" => {
             let hostname = {
                 let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
                 js_val.value(cx)
@@ -3660,7 +3701,7 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                 token,
             })
         }
-        "Organization" => {
+        "ParsedBackendAddrOrganization" => {
             let hostname = {
                 let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
                 js_val.value(cx)
@@ -3695,7 +3736,7 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                 organization_id,
             })
         }
-        "OrganizationBootstrap" => {
+        "ParsedBackendAddrOrganizationBootstrap" => {
             let hostname = {
                 let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
                 js_val.value(cx)
@@ -3742,7 +3783,7 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                 token,
             })
         }
-        "OrganizationFileLink" => {
+        "ParsedBackendAddrOrganizationFileLink" => {
             let hostname = {
                 let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
                 js_val.value(cx)
@@ -3807,7 +3848,7 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                 encrypted_timestamp,
             })
         }
-        "PkiEnrollment" => {
+        "ParsedBackendAddrPkiEnrollment" => {
             let hostname = {
                 let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
                 js_val.value(cx)
@@ -3842,7 +3883,7 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                 organization_id,
             })
         }
-        "Server" => {
+        "ParsedBackendAddrServer" => {
             let hostname = {
                 let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
                 js_val.value(cx)
@@ -3886,7 +3927,7 @@ fn variant_parsed_backend_addr_rs_to_js<'a>(
             token,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "InvitationDevice").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ParsedBackendAddrInvitationDevice").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
             js_obj.set(cx, "hostname", js_hostname)?;
@@ -3915,7 +3956,7 @@ fn variant_parsed_backend_addr_rs_to_js<'a>(
             token,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "InvitationUser").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ParsedBackendAddrInvitationUser").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
             js_obj.set(cx, "hostname", js_hostname)?;
@@ -3943,7 +3984,7 @@ fn variant_parsed_backend_addr_rs_to_js<'a>(
             organization_id,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "Organization").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ParsedBackendAddrOrganization").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
             js_obj.set(cx, "hostname", js_hostname)?;
@@ -3962,7 +4003,8 @@ fn variant_parsed_backend_addr_rs_to_js<'a>(
             token,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "OrganizationBootstrap").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "ParsedBackendAddrOrganizationBootstrap").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
             js_obj.set(cx, "hostname", js_hostname)?;
@@ -3988,7 +4030,8 @@ fn variant_parsed_backend_addr_rs_to_js<'a>(
             encrypted_timestamp,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "OrganizationFileLink").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "ParsedBackendAddrOrganizationFileLink").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
             js_obj.set(cx, "hostname", js_hostname)?;
@@ -4038,7 +4081,7 @@ fn variant_parsed_backend_addr_rs_to_js<'a>(
             organization_id,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "PkiEnrollment").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ParsedBackendAddrPkiEnrollment").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
             js_obj.set(cx, "hostname", js_hostname)?;
@@ -4055,7 +4098,7 @@ fn variant_parsed_backend_addr_rs_to_js<'a>(
             use_ssl,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "Server").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ParsedBackendAddrServer").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
             js_obj.set(cx, "hostname", js_hostname)?;
@@ -4077,7 +4120,7 @@ fn variant_user_or_device_claim_initial_info_js_to_rs<'a>(
 ) -> NeonResult<libparsec::UserOrDeviceClaimInitialInfo> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
-        "Device" => {
+        "UserOrDeviceClaimInitialInfoDevice" => {
             let handle = {
                 let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
                 {
@@ -4114,7 +4157,7 @@ fn variant_user_or_device_claim_initial_info_js_to_rs<'a>(
                 greeter_human_handle,
             })
         }
-        "User" => {
+        "UserOrDeviceClaimInitialInfoUser" => {
             let handle = {
                 let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
                 {
@@ -4173,7 +4216,8 @@ fn variant_user_or_device_claim_initial_info_rs_to_js<'a>(
             greeter_human_handle,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "Device").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "UserOrDeviceClaimInitialInfoDevice").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_handle = JsNumber::new(cx, handle as f64);
             js_obj.set(cx, "handle", js_handle)?;
@@ -4192,7 +4236,7 @@ fn variant_user_or_device_claim_initial_info_rs_to_js<'a>(
             greeter_human_handle,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "User").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "UserOrDeviceClaimInitialInfoUser").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_handle = JsNumber::new(cx, handle as f64);
             js_obj.set(cx, "handle", js_handle)?;
@@ -4228,7 +4272,8 @@ fn variant_workspace_fs_operation_error_rs_to_js<'a>(
             ballpark_client_late_offset,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "BadTimestamp").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceFsOperationErrorBadTimestamp").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_server_timestamp = JsNumber::new(cx, {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -4264,51 +4309,61 @@ fn variant_workspace_fs_operation_error_rs_to_js<'a>(
             )?;
         }
         libparsec::WorkspaceFsOperationError::CannotRenameRoot { .. } => {
-            let js_tag = JsString::try_new(cx, "CannotRenameRoot").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceFsOperationErrorCannotRenameRoot").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceFsOperationError::EntryExists { .. } => {
-            let js_tag = JsString::try_new(cx, "EntryExists").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceFsOperationErrorEntryExists").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceFsOperationError::EntryNotFound { .. } => {
-            let js_tag = JsString::try_new(cx, "EntryNotFound").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceFsOperationErrorEntryNotFound").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceFsOperationError::FolderNotEmpty { .. } => {
-            let js_tag = JsString::try_new(cx, "FolderNotEmpty").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceFsOperationErrorFolderNotEmpty").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceFsOperationError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "WorkspaceFsOperationErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceFsOperationError::InvalidCertificate { .. } => {
-            let js_tag = JsString::try_new(cx, "InvalidCertificate").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "WorkspaceFsOperationErrorInvalidCertificate")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceFsOperationError::InvalidManifest { .. } => {
-            let js_tag = JsString::try_new(cx, "InvalidManifest").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceFsOperationErrorInvalidManifest").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceFsOperationError::IsAFolder { .. } => {
-            let js_tag = JsString::try_new(cx, "IsAFolder").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceFsOperationErrorIsAFolder").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceFsOperationError::NoRealmAccess { .. } => {
-            let js_tag = JsString::try_new(cx, "NoRealmAccess").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceFsOperationErrorNoRealmAccess").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceFsOperationError::NotAFolder { .. } => {
-            let js_tag = JsString::try_new(cx, "NotAFolder").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceFsOperationErrorNotAFolder").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceFsOperationError::Offline { .. } => {
-            let js_tag = JsString::try_new(cx, "Offline").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "WorkspaceFsOperationErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceFsOperationError::ReadOnlyRealm { .. } => {
-            let js_tag = JsString::try_new(cx, "ReadOnlyRealm").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceFsOperationErrorReadOnlyRealm").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -4327,7 +4382,7 @@ fn variant_workspace_stop_error_rs_to_js<'a>(
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
         libparsec::WorkspaceStopError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "Internal").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "WorkspaceStopErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -4343,7 +4398,7 @@ fn variant_workspace_storage_cache_size_js_to_rs<'a>(
 ) -> NeonResult<libparsec::WorkspaceStorageCacheSize> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
-        "Custom" => {
+        "WorkspaceStorageCacheSizeCustom" => {
             let size = {
                 let js_val: Handle<JsNumber> = obj.get(cx, "size")?;
                 {
@@ -4356,7 +4411,7 @@ fn variant_workspace_storage_cache_size_js_to_rs<'a>(
             };
             Ok(libparsec::WorkspaceStorageCacheSize::Custom { size })
         }
-        "Default" => Ok(libparsec::WorkspaceStorageCacheSize::Default {}),
+        "WorkspaceStorageCacheSizeDefault" => Ok(libparsec::WorkspaceStorageCacheSize::Default {}),
         _ => cx.throw_type_error("Object is not a WorkspaceStorageCacheSize"),
     }
 }
@@ -4369,13 +4424,13 @@ fn variant_workspace_storage_cache_size_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     match rs_obj {
         libparsec::WorkspaceStorageCacheSize::Custom { size, .. } => {
-            let js_tag = JsString::try_new(cx, "Custom").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "WorkspaceStorageCacheSizeCustom").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_size = JsNumber::new(cx, size as f64);
             js_obj.set(cx, "size", js_size)?;
         }
         libparsec::WorkspaceStorageCacheSize::Default { .. } => {
-            let js_tag = JsString::try_new(cx, "Default").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "WorkspaceStorageCacheSizeDefault").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }

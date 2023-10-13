@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { libparsec } from '@/plugins/libparsec';
+import { BootstrapOrganizationErrorTag, DeviceSaveStrategyTag, WorkspaceStorageCacheSizeTag, libparsec } from '@/plugins/libparsec';
 
 import {
   AvailableDevice,
@@ -13,7 +13,6 @@ import {
   BackendAddr,
   ClientEventPing,
   ParseBackendAddrError,
-  CreateOrganizationError,
 } from '@/parsec/types';
 import { DateTime } from 'luxon';
 import { MOCK_WAITING_TIME, wait } from '@/parsec/internals';
@@ -34,18 +33,18 @@ export async function createOrganization(
       configDir: window.getConfigDir(),
       dataBaseDir: window.getDataBaseDir(),
       mountpointBaseDir: window.getMountpointBaseDir(),
-      workspaceStorageCacheSize: {tag: 'Default'},
+      workspaceStorageCacheSize: { tag: WorkspaceStorageCacheSizeTag.Default },
     };
     const result = await libparsec.bootstrapOrganization(
       config,
       parsecEventCallback,
       bootstrapAddr,
-      {tag: 'Password', password: password},
+      {tag: DeviceSaveStrategyTag.Password, password: password},
       {label: userName, email: email},
       deviceLabel,
       null,
     );
-    if (!result.ok && result.error.tag === CreateOrganizationError.BadTimestamp) {
+    if (!result.ok && result.error.tag === BootstrapOrganizationErrorTag.BadTimestamp) {
       result.error.clientTimestamp = DateTime.fromSeconds(result.error.clientTimestamp as any as number);
       result.error.serverTimestamp = DateTime.fromSeconds(result.error.serverTimestamp as any as number);
     }
