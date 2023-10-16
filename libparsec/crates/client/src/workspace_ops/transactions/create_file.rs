@@ -34,6 +34,7 @@ pub(crate) async fn create_file(
         mut_parent.children.insert(child_name.to_owned(), child_id);
         // TODO: sync pattern
         mut_parent.updated = now;
+        mut_parent.need_sync = true;
 
         updater.new_child_file_manifest(new_child).await?;
         updater.update_workspace_manifest(parent).await?;
@@ -64,6 +65,7 @@ pub(crate) async fn create_file(
         mut_parent.children.insert(child_name.to_owned(), child_id);
         // TODO: sync pattern
         mut_parent.updated = now;
+        mut_parent.need_sync = true;
 
         updater.new_child_file_manifest(new_child).await?;
         updater.update_as_folder_manifest(parent).await?;

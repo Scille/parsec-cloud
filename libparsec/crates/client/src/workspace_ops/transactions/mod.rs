@@ -11,6 +11,7 @@ mod remove_entry;
 mod rename_entry;
 mod resize_file;
 mod stat_entry;
+mod sync_root;
 mod utils;
 
 pub(crate) use create_file::*;
@@ -20,6 +21,7 @@ pub(crate) use remove_entry::*;
 pub(crate) use rename_entry::*;
 pub(crate) use resize_file::*;
 pub(crate) use stat_entry::*;
+pub(crate) use sync_root::*;
 use utils::*;
 
 pub use stat_entry::EntryStat;
