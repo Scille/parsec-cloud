@@ -309,7 +309,7 @@ impl Client {
                 self.event_bus.clone(),
                 realm_id,
                 UserDependantConfig {
-                    realm_key,
+                    realm_key: Arc::new(realm_key),
                     user_role,
                     workspace_name: workspace_label,
                 },
@@ -383,7 +383,7 @@ impl Client {
             match (maybe_entry, maybe_role) {
                 (Some(entry), Some(role)) => {
                     workspace_ops.update_user_dependant_config(|config| {
-                        config.realm_key = entry.key.to_owned();
+                        config.realm_key = Arc::new(entry.key.to_owned());
                         config.workspace_name = entry.name.to_owned();
                         config.user_role = role;
                     });

@@ -18,7 +18,7 @@ use crate::{certificates_ops::CertificatesOps, event_bus::EventBus, ClientConfig
 
 #[derive(Debug)]
 pub(crate) struct UserDependantConfig {
-    pub realm_key: SecretKey,
+    pub realm_key: Arc<SecretKey>,
     pub user_role: RealmRole,
     pub workspace_name: EntryName,
 }
