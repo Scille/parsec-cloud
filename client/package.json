@@ -28,7 +28,7 @@
         "electron:release": "npm run electron:copy && cd electron && npm run electron:release"
     },
     "dependencies": {
-        "@capacitor-community/electron": "^4.1.2",
+        "@capacitor-community/electron": "^5.0.1",
         "@capacitor/android": "^5.4.0",
         "@capacitor/app": "^5.0.6",
         "@capacitor/core": "^5.2.1",
