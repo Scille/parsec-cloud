@@ -171,9 +171,6 @@ wasm-bindgen = { version = "0.2.87", default-features = false }
 web-sys = { version = "0.3.64", default-features = false }
 winfsp_build = { version = "0.1.1", default-features = false }
 winfsp_wrs = { git = "https://github.com/Scille/winfsp_wrs.git", rev = "debed94", default-features = false }
-# Using a non-stable version is exceptionally allowed since no significant changes
-# were made from the last stable version to this major pre-release version.
-# TODO: bump to a stable version.
 x25519-dalek = { version = "2.0.0", default-features = false }
 zeroize = { version = "1.6.0", default-features = false }
 
