@@ -5,12 +5,24 @@ import functools
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, AsyncIterator, Awaitable, Callable, NoReturn, Type, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    AsyncIterator,
+    Awaitable,
+    Callable,
+    Generator,
+    NoReturn,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 import trio
 from structlog import get_logger
 from trio_typing import TaskStatus
-from typing_extensions import Concatenate, ParamSpec
+from typing_extensions import ParamSpec
 
 from parsec._parsec import (
     BlockID,
@@ -60,6 +72,7 @@ __all__ = [
 
 P = ParamSpec("P")
 R = TypeVar("R")
+T = TypeVar("T")
 
 
 async def workspace_storage_non_speculative_init(
@@ -78,31 +91,70 @@ async def workspace_storage_non_speculative_init(
         )
 
 
-def manage_operational_error(
-    func: Callable[Concatenate[WorkspaceStorage, P], Awaitable[R]]
-) -> Callable[Concatenate[WorkspaceStorage, P], Awaitable[R]]:
-    @functools.wraps(func)
-    async def wrapper(self: WorkspaceStorage, *args: P.args, **kwargs: P.kwargs) -> R:
-        if not hasattr(self, "rs_instance"):
-            raise FSLocalStorageClosedError("Service is closed")
-        try:
-            return await func(self, *args, **kwargs)
-        except FSLocalStorageOperationalError as exc:
-            print(
-                f"[{manage_operational_error.__name__}] local storage op error: `{exc}`({type(exc).__name__})"
-            )
-            await self._send_abort(exc)
-            raise exc
+class WrappedAwaitable(Awaitable[R]):
+    def __init__(self, wrapped: WrappedRustStorage, result: Awaitable[R]):
+        self.wrapped = wrapped
+        self.result = result
 
-    return wrapper
+    def __await__(self) -> Generator[Any, None, R]:
+        try:
+            return (yield from self.result.__await__())
+        except FSLocalStorageOperationalError as exc:
+            self.wrapped.abort(exc)
+            raise
+
+
+class WrappedRustStorage:
+    def __init__(
+        self, rs_workspace_storage: _RsWorkspaceStorage, abort: Callable[[Exception], None]
+    ):
+        self._rs_workspace_storage: _RsWorkspaceStorage | None = rs_workspace_storage
+        self._abort: Callable[[Exception], None] | None = abort
+
+    def disable(self) -> None:
+        self._rs_workspace_storage = None
+        self._abort = None
+
+    def abort(self, exception: Exception) -> None:
+        if self._abort is not None:
+            self._abort(exception)
+
+    def __dir__(self) -> list[str]:
+        return sorted(set(dir(type(self)) + list(self.__dict__) + dir(self._rs_workspace_storage)))
+
+    def __getattr__(self, key: str) -> Any:
+        # Checked for closed storage
+        if self._rs_workspace_storage is None:
+            raise FSLocalStorageClosedError("Service is closed")
+
+        # Get the attribute from the rust instance
+        result = getattr(self._rs_workspace_storage, key)
+        if callable(result):
+            return self._wrap_method(result)
+        return result
+
+    def _wrap_method(self, method: Callable[P, R]) -> Callable[P, R]:
+        @functools.wraps(method)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            try:
+                maybe_awaitable = method(*args, **kwargs)
+            except FSLocalStorageOperationalError as exc:
+                self.abort(exc)
+                raise
+            if isinstance(maybe_awaitable, Awaitable):
+                return cast(R, WrappedAwaitable(self, maybe_awaitable))
+            return maybe_awaitable
+
+        return wrapper
 
 
 class WorkspaceStorage:
-    def __init__(self, rs_instance: _RsWorkspaceStorage):
-        self.rs_instance = rs_instance
+    def __init__(self, rs_workspace_storage: _RsWorkspaceStorage):
+        self.rs_instance = WrappedRustStorage(rs_workspace_storage, self._send_abort)
         # Locking structures
         self.locking_tasks: dict[EntryID, trio.lowlevel.Task] = {}
         self.entry_locks: dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
+        self._abort_service_send_channel: trio.MemorySendChannel[Exception]
 
     @property
     def device(self) -> LocalDevice:
@@ -124,15 +176,15 @@ class WorkspaceStorage:
                     raise item
 
         async with open_service_nursery() as nursery:
-            async with await nursery.start(_service_abort_task) as self._abort_service_send_channel:
+            self._abort_service_send_channel = await nursery.start(_service_abort_task)
+            async with self._abort_service_send_channel:
                 yield
             nursery.cancel_scope.cancel()
 
-    async def _send_abort(self, exception: Exception) -> None:
+    def _send_abort(self, exception: Exception) -> None:
         # Send the exception to be raised in the `run` context
         try:
-            assert self._abort_service_send_channel is not None
-            await self._abort_service_send_channel.send(exception)
+            self._abort_service_send_channel.send_nowait(exception)
         # The service has already exited
         except trio.BrokenResourceError:
             pass
@@ -152,7 +204,7 @@ class WorkspaceStorage:
         # During the init phase we open the connections to the database in the tokio runner.
         # If at that moment we were canceled by trio, we would leak those database connections.
         with trio.CancelScope(shield=True):
-            rs_instance = await _RsWorkspaceStorage.new(
+            rs_workspace_storage = await _RsWorkspaceStorage.new(
                 data_base_dir=data_base_dir,
                 device=device,
                 workspace_id=workspace_id,
@@ -160,9 +212,8 @@ class WorkspaceStorage:
                 cache_size=cache_size,
                 data_vacuum_threshold=data_vacuum_threshold,
             )
-
         try:
-            instance = cls(rs_instance)
+            instance = cls(rs_workspace_storage)
 
             async with instance._service_abort_context():
                 # Load "prevent sync" pattern
@@ -170,20 +221,16 @@ class WorkspaceStorage:
 
                 yield instance
         finally:
-            # Dirty canary to ensure no concurrent operation could be run by a rogue
-            # coroutine (which may add need-to-be-flushed data to cache right after
-            # `clear_memory_cache` as been called -__-')
-            # In theory structured concurrency prevent us from failling into this trap
-            # however better be extra-careful !
-            instance.rs_instance = None  # type: ignore[assignment]
+            # Disable the access to the rust storage before performing the flush and close operations
+            # This prevent other tasks from interfering with this process.
+            instance.rs_instance.disable()
 
             with trio.CancelScope(shield=True):
-                await rs_instance.clear_memory_cache(flush=True)
-                await rs_instance.close_connections()
+                await rs_workspace_storage.clear_memory_cache(flush=True)
+                await rs_workspace_storage.close_connections()
 
     # Helpers
 
-    @manage_operational_error
     async def clear_memory_cache(self, flush: bool = True) -> None:
         return await self.rs_instance.clear_memory_cache(flush)
 
@@ -213,7 +260,6 @@ class WorkspaceStorage:
     def create_file_descriptor(self, manifest: LocalFileManifest) -> FileDescriptor:
         return FileDescriptor(self.rs_instance.create_file_descriptor(manifest))
 
-    @manage_operational_error
     async def load_file_descriptor(self, fd: PseudoFileDescriptor) -> LocalFileManifest:
         return await self.rs_instance.load_file_descriptor(fd)
 
@@ -222,33 +268,26 @@ class WorkspaceStorage:
 
     # Block interface
 
-    @manage_operational_error
     async def set_clean_block(self, block_id: BlockID, blocks: bytes) -> set[BlockID]:
         return await self.rs_instance.set_clean_block(block_id, blocks)
 
-    @manage_operational_error
     async def clear_clean_block(self, block_id: BlockID) -> None:
         return await self.rs_instance.clear_clean_block(block_id)
 
-    @manage_operational_error
     async def get_dirty_block(self, block_id: BlockID) -> bytes:
         return await self.rs_instance.get_dirty_block(block_id)
 
-    @manage_operational_error
     async def is_clean_block(self, block_id: BlockID) -> bool:
         return await self.rs_instance.is_clean_block(block_id)
 
     # Chunk interface
 
-    @manage_operational_error
     async def get_chunk(self, chunk_id: ChunkID) -> bytes:
         return await self.rs_instance.get_chunk(chunk_id)
 
-    @manage_operational_error
     async def set_chunk(self, chunk_id: ChunkID, block: bytes) -> None:
         return await self.rs_instance.set_chunk(chunk_id, block)
 
-    @manage_operational_error
     async def clear_chunk(self, chunk_id: ChunkID, miss_ok: bool = False) -> None:
         return await self.rs_instance.clear_chunk(chunk_id, miss_ok)
 
@@ -260,7 +299,6 @@ class WorkspaceStorage:
     def get_prevent_sync_pattern_fully_applied(self) -> bool:
         return self.rs_instance.get_prevent_sync_pattern_fully_applied()
 
-    @manage_operational_error
     async def set_prevent_sync_pattern(self, pattern: Regex) -> None:
         """set the "prevent sync" pattern for the corresponding workspace
 
@@ -269,7 +307,6 @@ class WorkspaceStorage:
         """
         return await self.rs_instance.set_prevent_sync_pattern(pattern)
 
-    @manage_operational_error
     async def mark_prevent_sync_pattern_fully_applied(self, pattern: Regex) -> None:
         """Mark the provided pattern as fully applied.
 
@@ -290,11 +327,9 @@ class WorkspaceStorage:
     def get_workspace_manifest(self) -> LocalWorkspaceManifest:
         return self.rs_instance.get_workspace_manifest()
 
-    @manage_operational_error
     async def get_manifest(self, entry_id: EntryID) -> AnyLocalManifest:
         return await self.rs_instance.get_manifest(entry_id)
 
-    @manage_operational_error
     async def set_manifest(
         self,
         entry_id: EntryID,
@@ -307,7 +342,6 @@ class WorkspaceStorage:
             self._check_lock_status(entry_id)
         await self.rs_instance.set_manifest(entry_id, manifest, cache_only, removed_ids)
 
-    @manage_operational_error
     async def set_workspace_manifest(
         self,
         manifest: LocalWorkspaceManifest,
@@ -315,23 +349,19 @@ class WorkspaceStorage:
         self._check_lock_status(manifest.id)
         return await self.rs_instance.set_workspace_manifest(manifest)
 
-    @manage_operational_error
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         self._check_lock_status(entry_id)
         await self.rs_instance.ensure_manifest_persistent(entry_id)
 
-    @manage_operational_error
     async def clear_manifest(self, entry_id: EntryID) -> None:
         self._check_lock_status(entry_id)
         await self.rs_instance.clear_manifest(entry_id)
 
     # Checkpoint interface
 
-    @manage_operational_error
     async def get_realm_checkpoint(self) -> int:
         return await self.rs_instance.get_realm_checkpoint()
 
-    @manage_operational_error
     async def update_realm_checkpoint(
         self, new_checkpoint: int, change_vlobs: dict[EntryID, int]
     ) -> None:
@@ -340,7 +370,6 @@ class WorkspaceStorage:
     async def get_need_sync_entries(self) -> tuple[set[EntryID], set[EntryID]]:
         return await self.rs_instance.get_need_sync_entries()
 
-    @manage_operational_error
     async def run_vacuum(self) -> None:
         return await self.rs_instance.run_vacuum()
 
@@ -382,15 +411,15 @@ class WorkspaceStorageSnapshot:
 
     def __init__(
         self,
-        workspace_storage: _RsWorkspaceStorage | _RsWorkspaceStorageSnapshot,
+        workspace_storage: WrappedRustStorage | _RsWorkspaceStorageSnapshot,
         timestamp: DateTime,
     ):
-        assert isinstance(workspace_storage, (_RsWorkspaceStorage, _RsWorkspaceStorageSnapshot))
-
-        if isinstance(workspace_storage, _RsWorkspaceStorage):
+        if isinstance(workspace_storage, WrappedRustStorage):
             rs_instance = workspace_storage.to_timestamp()
         elif isinstance(workspace_storage, _RsWorkspaceStorageSnapshot):
             rs_instance = workspace_storage
+        else:
+            assert False
 
         self.timestamp = timestamp
         self.rs_instance: _RsWorkspaceStorageSnapshot = rs_instance
