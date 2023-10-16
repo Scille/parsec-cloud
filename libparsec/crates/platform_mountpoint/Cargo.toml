@@ -15,10 +15,20 @@ winfsp_wrs = { workspace = true }
 once_cell = { workspace = true }
 regex = { workspace = true }
 
+[target.'cfg(target_os = "linux")'.dependencies]
+fuser = { workspace = true, features = ["libfuse"] }
+libc = { workspace = true }
+
 [dependencies]
 libparsec_types = { workspace = true }
 chrono = { workspace = true }
 thiserror = { workspace = true }
+
+[dev-dependencies]
+libparsec_tests_lite = { workspace = true }
+libparsec_tests_fixtures = { workspace = true }
+env_logger = { workspace = true }
+ctrlc = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.build-dependencies]
 winfsp_build = { workspace = true }

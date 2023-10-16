@@ -1,28 +1,32 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 #![doc = include_str!("../README.md")]
+#![cfg(not(target_os = "macos"))]
 
 mod error;
 mod memfs;
+#[cfg(target_os = "linux")]
+mod unix;
 #[cfg(target_os = "windows")]
 mod windows;
 
 use chrono::{DateTime, Utc};
 use std::{collections::HashMap, path::Path};
+#[cfg(target_os = "linux")]
+pub(crate) use unix as platform;
 #[cfg(target_os = "windows")]
-pub use windows::mount;
+pub(crate) use windows as platform;
 
-use libparsec_types::{EntryName, FileDescriptor, VlobID};
+use libparsec_types::{anyhow, EntryName, FileDescriptor, VlobID};
 
-pub(crate) use error::{MountpointError, MountpointResult};
-pub use memfs::MountpointManager;
+pub use error::{MountpointError, MountpointResult};
+pub use memfs::MemFS;
 
-// TODO: remove me once ParsecEntryInfo is used
-#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub(crate) enum EntryInfoType {
+pub enum EntryInfoType {
     Dir,
     File,
+    // TODO: Implement Icon Handler
     /// Special Parsec type for icon overlay handler
     ParsecEntryInfo,
 }
@@ -30,28 +34,60 @@ pub(crate) enum EntryInfoType {
 /// - Normal: write normally from offset to offset + data.len().
 /// - Constrained: write from offset without exceeding the file size limit.
 /// - StartEOF: write starting at end of file.
-// Remove me once fuse use WriteMode
-#[allow(dead_code)]
-pub(crate) enum WriteMode {
+pub enum WriteMode {
     Normal,
+    // Used only by Windows
     Constrained,
+    // Used only by Windows
     StartEOF,
 }
 
-// TODO: remove me once fuse is implemented
-#[allow(dead_code)]
 #[derive(Debug, Clone)]
-pub(crate) struct EntryInfo {
-    id: VlobID,
-    ty: EntryInfoType,
-    created: DateTime<Utc>,
-    updated: DateTime<Utc>,
-    size: u64,
-    need_sync: bool,
-    children: HashMap<EntryName, VlobID>,
+pub struct EntryInfo {
+    pub id: VlobID,
+    pub ty: EntryInfoType,
+    pub created: DateTime<Utc>,
+    pub updated: DateTime<Utc>,
+    pub size: u64,
+    pub need_sync: bool,
+    pub children: HashMap<EntryName, VlobID>,
 }
 
-pub(crate) trait MountpointInterface {
+impl EntryInfo {
+    fn new(id: VlobID, ty: EntryInfoType, now: DateTime<Utc>) -> Self {
+        Self {
+            id,
+            ty,
+            created: now,
+            updated: now,
+            size: 0,
+            need_sync: false,
+            children: HashMap::new(),
+        }
+    }
+}
+
+pub(crate) struct FileSystemWrapper<T: MountpointInterface> {
+    interface: T,
+    #[cfg(target_os = "linux")]
+    pub(crate) buffer: std::sync::Mutex<Vec<u8>>,
+    #[cfg(target_os = "linux")]
+    pub(crate) inode_manager: crate::unix::InodeManager,
+}
+
+impl<T: MountpointInterface> FileSystemWrapper<T> {
+    fn new(interface: T) -> Self {
+        Self {
+            interface,
+            #[cfg(target_os = "linux")]
+            buffer: Default::default(),
+            #[cfg(target_os = "linux")]
+            inode_manager: Default::default(),
+        }
+    }
+}
+
+pub trait MountpointInterface {
     // Rights check
     fn check_read_rights(&self, path: &Path) -> MountpointResult<()>;
     fn check_write_rights(&self, path: &Path) -> MountpointResult<()>;
@@ -76,7 +112,6 @@ pub(crate) trait MountpointInterface {
     fn file_create(&self, path: &Path, open: bool) -> MountpointResult<FileDescriptor>;
     fn file_open(&self, path: &Path, write_mode: bool) -> MountpointResult<Option<FileDescriptor>>;
     fn file_delete(&self, path: &Path) -> MountpointResult<()>;
-    fn file_resize(&self, path: &Path, len: u64) -> VlobID;
 
     // File descriptor transactions
 
@@ -96,4 +131,33 @@ pub(crate) trait MountpointInterface {
     ) -> MountpointResult<usize>;
     fn fd_resize(&self, fd: FileDescriptor, len: u64, truncate_only: bool) -> MountpointResult<()>;
     fn fd_flush(&self, fd: FileDescriptor);
+}
+
+pub struct FileSystemMounted<T: MountpointInterface> {
+    #[cfg(target_os = "windows")]
+    fs: winfsp_wrs::FileSystem<FileSystemWrapper<T>>,
+    #[cfg(target_os = "linux")]
+    unmounter: fuser::SessionUnmounter,
+    #[cfg(target_os = "linux")]
+    mountpoint: std::path::PathBuf,
+    #[cfg(target_os = "linux")]
+    phantom: std::marker::PhantomData<T>,
+}
+
+impl<T: MountpointInterface + Send + 'static> FileSystemMounted<T> {
+    pub fn mount(mountpoint: &Path, interface: T) -> anyhow::Result<Self> {
+        platform::mount(mountpoint, interface)
+    }
+
+    #[cfg_attr(target_os = "windows", allow(unused_mut))]
+    pub fn stop(mut self) {
+        #[cfg(target_os = "windows")]
+        self.fs.stop();
+        #[cfg(target_os = "linux")]
+        {
+            let _ = self.unmounter.unmount();
+            // We do the same as WinFSP: remove the directory
+            let _ = std::fs::remove_dir(self.mountpoint);
+        }
+    }
 }

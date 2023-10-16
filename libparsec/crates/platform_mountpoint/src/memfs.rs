@@ -3,13 +3,13 @@
 // 1) it's useful to validate platform specific code against a simple memfs
 // 2) we don't put it in the tests so that we can also create a binary for interactive testing
 
+use chrono::Utc;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
 
-use chrono::Utc;
 use libparsec_types::{EntryName, FileDescriptor, VlobID};
 
 use crate::{
@@ -18,7 +18,7 @@ use crate::{
 
 type Entries = Mutex<HashMap<PathBuf, (EntryInfo, Option<Arc<Mutex<Vec<u8>>>>)>>;
 
-pub struct MountpointManager {
+pub struct MemFS {
     entries: Entries,
     fd_counter: Mutex<u32>,
     open_fds: Mutex<HashMap<FileDescriptor, FileData>>,
@@ -29,7 +29,7 @@ struct FileData {
     data: Arc<Mutex<Vec<u8>>>,
 }
 
-impl Default for MountpointManager {
+impl Default for MemFS {
     fn default() -> Self {
         let mut entries = HashMap::new();
         let now = Utc::now();
@@ -37,15 +37,7 @@ impl Default for MountpointManager {
         entries.insert(
             PathBuf::from("/"),
             (
-                EntryInfo {
-                    id: VlobID::default(),
-                    ty: EntryInfoType::Dir,
-                    created: now,
-                    updated: now,
-                    size: 0,
-                    need_sync: false,
-                    children: HashMap::new(),
-                },
+                EntryInfo::new(VlobID::default(), EntryInfoType::Dir, now),
                 None,
             ),
         );
@@ -58,7 +50,7 @@ impl Default for MountpointManager {
     }
 }
 
-impl MountpointManager {
+impl MemFS {
     fn get_next_fd(&self) -> FileDescriptor {
         let mut fd_counter = self.fd_counter.lock().expect("Mutex is poisoned");
         *fd_counter += 1;
@@ -79,7 +71,7 @@ impl MountpointManager {
     }
 }
 
-impl MountpointInterface for MountpointManager {
+impl MountpointInterface for MemFS {
     fn check_read_rights(&self, _path: &Path) -> MountpointResult<()> {
         Ok(())
     }
@@ -104,8 +96,8 @@ impl MountpointInterface for MountpointManager {
         overwrite: bool,
     ) -> MountpointResult<()> {
         let mut entries = self.entries.lock().expect("Mutex is poisoned");
-        let source_str = source.to_str().expect("Non utf8 source");
-        let destination_str = destination.to_str().expect("Non utf8 destination");
+        let source_str = source.to_str().ok_or(MountpointError::NotFound)?;
+        let destination_str = destination.to_str().ok_or(MountpointError::InvalidName)?;
         let root = Path::new("/");
 
         // Source is root
@@ -128,8 +120,10 @@ impl MountpointInterface for MountpointManager {
 
         let iter_entries = entries
             .keys()
-            .map(|path| path.to_str().expect("Non utf8 path").to_string())
-            .filter(|path| path.starts_with(source_str))
+            .filter_map(|path| match path.to_str() {
+                Some(path) if path.starts_with(source_str) => Some(path.to_string()),
+                _ => None,
+            })
             .collect::<Vec<String>>();
 
         for entry_path in iter_entries {
@@ -146,16 +140,13 @@ impl MountpointInterface for MountpointManager {
             .ok_or(MountpointError::NotFound)?;
         let id = parent
             .children
-            .remove(
-                &EntryName::try_from(
-                    source
-                        .file_name()
-                        .expect("Contains a name")
-                        .to_str()
-                        .expect("Non utf8 name"),
-                )
-                .expect("Should be a valid EntryName"),
-            )
+            .remove(&EntryName::try_from(
+                source
+                    .file_name()
+                    .ok_or(MountpointError::InvalidName)?
+                    .to_str()
+                    .ok_or(MountpointError::InvalidName)?,
+            )?)
             .ok_or(MountpointError::NotFound)?;
 
         let (parent, _) = entries
@@ -165,11 +156,10 @@ impl MountpointInterface for MountpointManager {
             EntryName::try_from(
                 destination
                     .file_name()
-                    .expect("Contains a name")
+                    .ok_or(MountpointError::InvalidName)?
                     .to_str()
-                    .expect("Non utf8 name"),
-            )
-            .expect("Should be a valid EntryName"),
+                    .ok_or(MountpointError::InvalidName)?,
+            )?,
             id,
         );
 
@@ -198,26 +188,16 @@ impl MountpointInterface for MountpointManager {
 
         let file_name = path
             .file_name()
-            .expect("Contains a name")
+            .ok_or(MountpointError::InvalidName)?
             .to_str()
-            .expect("Non utf8 name");
-        parent.children.insert(
-            EntryName::try_from(file_name).expect("Should be a valid EntryName"),
-            id,
-        );
+            .ok_or(MountpointError::InvalidName)?;
+
+        parent.children.insert(EntryName::try_from(file_name)?, id);
 
         entries.insert(
             path.to_path_buf(),
             (
-                EntryInfo {
-                    id,
-                    ty: EntryInfoType::File,
-                    created: now,
-                    updated: now,
-                    size: 0,
-                    need_sync: false,
-                    children: HashMap::new(),
-                },
+                EntryInfo::new(VlobID::default(), EntryInfoType::File, now),
                 Some(data),
             ),
         );
@@ -250,23 +230,17 @@ impl MountpointInterface for MountpointManager {
         let (parent, _) = entries
             .get_mut(path.parent().expect("Can't be root"))
             .ok_or(MountpointError::NotFound)?;
-        parent.children.remove(
-            &EntryName::try_from(
-                path.file_name()
-                    .expect("Contains a name")
-                    .to_str()
-                    .expect("Non utf8 name"),
-            )
-            .expect("Should be a valid EntryName"),
-        );
+
+        parent.children.remove(&EntryName::try_from(
+            path.file_name()
+                .ok_or(MountpointError::InvalidName)?
+                .to_str()
+                .ok_or(MountpointError::InvalidName)?,
+        )?);
 
         entries.remove(path).ok_or(MountpointError::NotFound)?;
 
         Ok(())
-    }
-
-    fn file_resize(&self, _path: &Path, _len: u64) -> VlobID {
-        todo!("UNIX only")
     }
 
     fn fd_close(&self, fd: FileDescriptor) {
@@ -383,31 +357,20 @@ impl MountpointInterface for MountpointManager {
         let (parent, _) = entries
             .get_mut(path.parent().expect("Can't be root"))
             .ok_or(MountpointError::NotFound)?;
+
         parent.children.insert(
             EntryName::try_from(
                 path.file_name()
-                    .expect("Contains a name")
+                    .ok_or(MountpointError::InvalidName)?
                     .to_str()
-                    .expect("Non utf8 name"),
-            )
-            .expect("Should be a valid EntryName"),
+                    .ok_or(MountpointError::InvalidName)?,
+            )?,
             id,
         );
 
         entries.insert(
             path.to_path_buf(),
-            (
-                EntryInfo {
-                    id,
-                    ty: EntryInfoType::Dir,
-                    created: now,
-                    updated: now,
-                    size: 0,
-                    need_sync: false,
-                    children: HashMap::new(),
-                },
-                None,
-            ),
+            (EntryInfo::new(id, EntryInfoType::Dir, now), None),
         );
 
         Ok(())
@@ -423,15 +386,13 @@ impl MountpointInterface for MountpointManager {
         let (parent, _) = entries
             .get_mut(path.parent().expect("Can't be root"))
             .ok_or(MountpointError::NotFound)?;
-        parent.children.remove(
-            &EntryName::try_from(
-                path.file_name()
-                    .expect("Contains a name")
-                    .to_str()
-                    .expect("Non utf8 name"),
-            )
-            .expect("Should be a valid EntryName"),
-        );
+
+        parent.children.remove(&EntryName::try_from(
+            path.file_name()
+                .ok_or(MountpointError::InvalidName)?
+                .to_str()
+                .ok_or(MountpointError::InvalidName)?,
+        )?);
 
         entries.remove(path).ok_or(MountpointError::NotFound)?;
 
