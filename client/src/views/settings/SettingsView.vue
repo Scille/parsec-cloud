@@ -158,6 +158,7 @@ const { locale } = useI18n();
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const storageManager = inject(StorageManagerKey)! as StorageManager;
 const config = ref<Config>(structuredClone(StorageManager.DEFAULT_CONFIG));
+let justLoaded = false;
 
 enum SettingsTabs {
   General = 'General',
@@ -165,11 +166,12 @@ enum SettingsTabs {
 }
 const settingTab = ref(SettingsTabs.General);
 
-const configUnwatch = watch(config, async (_, oldConfig) => {
+const configUnwatch = watch(config, async (newConfig) => {
   // No point in saving a config we just loaded
-  if (JSON.stringify(toRaw(oldConfig)) !== JSON.stringify(StorageManager.DEFAULT_CONFIG)) {
-    await storageManager.storeConfig(toRaw(config.value));
+  if (!justLoaded) {
+    await storageManager.storeConfig(toRaw(newConfig));
   }
+  justLoaded = false;
 }, { deep: true });
 
 async function changeLang(selectedLang: string): Promise<void> {
@@ -183,6 +185,7 @@ async function changeTheme(selectedTheme: string): Promise<void> {
 }
 
 onMounted(async (): Promise<void> => {
+  justLoaded = true;
   config.value = await storageManager.retrieveConfig();
 
   if (!config.value.theme) {
