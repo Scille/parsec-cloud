@@ -139,7 +139,7 @@ jobs:
         run: python server/packaging/wheel/wheel_it.py ./server --output dist --skip-wheel
 
       # Install syft
-      - uses: taiki-e/install-action@f6df2ed02b5d67ca6f4081800ff74835e62fb83c # pin v2.20.1
+      - uses: taiki-e/install-action@47d27149ff6b3422864ec504071d5cc7873d642e # pin v2.20.3
         with:
           tool: syft@0.84.0
 
