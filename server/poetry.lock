@@ -888,12 +888,12 @@ files = [
 
 [[package]]
 name = "editorconfig-checker"
-version = "2.7.2"
+version = "2.7.3"
 description = "Python wrapper around invoking editorconfig-checker (https://github.com/editorconfig-checker/editorconfig-checker)"
 optional = false
 python-versions = ">=2.7"
 files = [
-    {file = "editorconfig-checker-2.7.2.tar.gz", hash = "sha256:43598be8601d157bc9ad5e4304d96dcabfd905fe6fb801f01636bb03f1b71e85"},
+    {file = "editorconfig-checker-2.7.3.tar.gz", hash = "sha256:69261f55585f0a4897b5534806bd170289d11b4825137411c1e9e5f2c1c5dbc2"},
 ]
 
 [[package]]
@@ -2152,4 +2152,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.9.10"
-content-hash = "cf123cce9f3fe6a8611980d871603118222a13d43d2d1643a4c4ce563b8e5e94"
+content-hash = "3e6722cd54f978966f5c5a86dd2423be6e7bf1e72f80b2d1b6b44a2500262479"
