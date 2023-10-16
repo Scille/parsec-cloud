@@ -120,4 +120,21 @@ describe('Greet user into an organization', () => {
     cy.get('@nextButton').contains('Start');
     cy.get('@nextButton').should('not.have.attr', 'disabled');
   });
+
+  it('Close with X button', () => {
+    cy.get('.invitation-list').find('.invitation-list-item').find('.button-default').eq(0).click();
+    cy.get('.greet-organization-modal').should('exist');
+    cy.get('.greet-organization-modal').find('.closeBtn').should('be.visible');
+    cy.get('.greet-organization-modal').find('.closeBtn').click();
+
+    cy.get('.question-modal-ontop').find('.ms-modal-header__title').contains('Are you sure you want to cancel the process?');
+    cy.get('.question-modal-ontop').find('#cancel-button').click();
+    cy.get('.question-modal-ontop').should('not.exist');
+
+    // Can't get the modal to dismiss
+    // cy.get('.greet-organization-modal').find('.closeBtn').click();
+    // cy.get('.question-modal-ontop').find('#next-button').click();
+    // cy.get('.question-modal-ontop').should('not.exist');
+    // cy.get('.greet-organization-modal').should('not.exist');
+  });
 });

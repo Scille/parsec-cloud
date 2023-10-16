@@ -177,7 +177,9 @@ import { DeviceClaim } from '@/parsec';
 import { Notification, NotificationCenter, NotificationLevel } from '@/services/notificationCenter';
 import { NotificationKey } from '@/common/injectionKeys';
 import { Validity, deviceNameValidator } from '@/common/validators';
+import { askQuestion, Answer } from '@/components/core/ms-modal/MsQuestionModal.vue';
 
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 
 enum DeviceJoinOrganizationStep {
@@ -276,8 +278,16 @@ const canGoForward = asyncComputed(async () => {
 });
 
 async function cancelModal(): Promise<boolean> {
-  await claimer.value.abort();
-  return modalController.dismiss(null, MsModalResult.Cancel);
+  const answer = await askQuestion(
+    t('ClaimDeviceModal.cancelConfirm'),
+    t('ClaimDeviceModal.cancelConfirmSubtitle'),
+  );
+
+  if (answer === Answer.Yes) {
+    await claimer.value.abort();
+    return modalController.dismiss(null, MsModalResult.Cancel);
+  }
+  return false;
 }
 
 async function nextStep(): Promise<void> {

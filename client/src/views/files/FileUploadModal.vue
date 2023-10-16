@@ -3,7 +3,7 @@
 <template>
   <ms-modal
     :title="$t('FoldersPage.importModal.title')"
-    :close-button-enabled="true"
+    :close-button="{visible: true}"
   >
     <div class="modal-content inner-content">
       <file-drop-zone

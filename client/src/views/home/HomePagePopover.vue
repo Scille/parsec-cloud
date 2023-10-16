@@ -68,29 +68,13 @@ async function openCreateOrganizationModal(): Promise<void> {
   const modal = await modalController.create({
     component: CreateOrganizationModal,
     canDismiss: true,
+    backdropDismiss: false,
     cssClass: 'create-organization-modal',
   });
   await modal.present();
   const { data, role } = await modal.onWillDismiss();
   await popoverController.dismiss(data, role);
 }
-
-// Commented until https://github.com/Scille/parsec-cloud/issues/5429
-
-// async function canDismissModal(data?: any, modalRole?: string): Promise<boolean> {
-//   if (modalRole === MsModalResult.Confirm) {
-//     return true;
-//   }
-//   const alert = await createAlert(
-//     t('MsAlertConfirmation.areYouSure'),
-//     t('MsAlertConfirmation.infoNotSaved'),
-//     t('MsAlertConfirmation.cancel'),
-//     t('MsAlertConfirmation.ok'),
-//   );
-//   await alert.present();
-//   const { role } = await alert.onDidDismiss();
-//   return role === MsModalResult.Confirm;
-// }
 
 async function openJoinByLinkModal(): Promise<void> {
   const link = await getTextInputFromUser({
@@ -112,6 +96,7 @@ async function openJoinByLinkModal(): Promise<void> {
     const modal = await modalController.create({
       component: UserJoinOrganizationModal,
       canDismiss: true,
+      backdropDismiss: false,
       cssClass: 'join-organization-modal',
       componentProps: {
         invitationLink: link,
@@ -125,6 +110,7 @@ async function openJoinByLinkModal(): Promise<void> {
     const modal = await modalController.create({
       component: DeviceJoinOrganizationModal,
       canDismiss: true,
+      backdropDismiss: false,
       cssClass: 'join-organization-modal',
       componentProps: {
         invitationLink: link,

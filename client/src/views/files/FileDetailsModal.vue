@@ -4,7 +4,7 @@
   <ion-page class="modal">
     <ms-modal
       :title="$t('FileDetails.title', {name: entry.name})"
-      :close-button-enabled="true"
+      :close-button="{visible: true}"
     >
       <div class="file-info">
         <!-- Entry type -->

@@ -3,7 +3,7 @@
 <template>
   <ms-modal
     :title="$t('SettingsPage.pageTitle')"
-    :close-button-enabled="true"
+    :close-button="{visible: true}"
   >
     <settings-view />
   </ms-modal>

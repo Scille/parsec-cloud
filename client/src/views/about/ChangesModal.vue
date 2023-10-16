@@ -4,7 +4,7 @@
   <ion-page class="modal">
     <ms-modal
       :title="$t('Changelog.title')"
-      :close-button-enabled="true"
+      :close-button="{visible: true}"
     >
       <div>
         <div

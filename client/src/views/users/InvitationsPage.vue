@@ -210,28 +210,11 @@ async function inviteUser(): Promise<void> {
   }
 }
 
-// Commented until https://github.com/Scille/parsec-cloud/issues/5429
-
-// async function canDismissModal(_data?: any, modalRole?: string): Promise<boolean> {
-//   if (modalRole === MsModalResult.Confirm) {
-//     return true;
-//   }
-
-//   const alert = await createAlert(
-//     t('MsAlertConfirmation.areYouSure'),
-//     t('MsAlertConfirmation.infoNotSaved'),
-//     t('MsAlertConfirmation.cancel'),
-//     t('MsAlertConfirmation.ok'),
-//   );
-//   await alert.present();
-//   const { role } = await alert.onDidDismiss();
-//   return role === MsModalResult.Confirm;
-// }
-
 async function greetUser(invitation: UserInvitation): Promise<void> {
   const modal = await modalController.create({
     component: GreetUserModal,
     canDismiss: true,
+    backdropDismiss: false,
     cssClass: 'greet-organization-modal',
     componentProps: {
       invitation: invitation,

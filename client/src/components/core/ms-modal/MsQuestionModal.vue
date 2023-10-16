@@ -5,7 +5,7 @@
     :title="title"
     :subtitle="subtitle"
     :title-icon="helpCircle"
-    :close-button-enabled="false"
+    :close-button="{visible: false}"
     :cancel-button="{disabled: false, label: $t('QuestionModal.no'), onClick: onNo}"
     :confirm-button="{disabled: false, label: $t('QuestionModal.yes'), onClick: onYes}"
     @on-enter-keyup="onYes"
@@ -21,11 +21,17 @@ export enum Answer {
 }
 
 export async function askQuestion(title: string, subtitle?: string): Promise<Answer> {
+  const top = await modalController.getTop();
+  if (top) {
+    top.classList.add('overlapped-modal');
+  }
+
   const modal = await modalController.create({
     component: MsQuestionModal,
     canDismiss: true,
     backdropDismiss: false,
-    cssClass: 'question-modal',
+    // Different if a modal is already opened
+    cssClass: top ? 'question-modal-ontop' : 'question-modal',
     componentProps: {
       title: title,
       subtitle: subtitle,
@@ -33,6 +39,11 @@ export async function askQuestion(title: string, subtitle?: string): Promise<Ans
   });
   await modal.present();
   const result = await modal.onWillDismiss();
+  await modal.dismiss();
+
+  if (top) {
+    top.classList.remove('overlapped-modal');
+  }
   return result.role === MsModalResult.Confirm ? Answer.Yes : Answer.No;
 }
 </script>
@@ -51,7 +62,8 @@ defineProps<{
 }>();
 
 async function onYes(): Promise<boolean> {
-  return await modalController.dismiss(null, MsModalResult.Confirm);
+  const res = await modalController.dismiss(null, MsModalResult.Confirm);
+  return res;
 }
 
 async function onNo(): Promise<boolean> {
@@ -61,5 +73,13 @@ async function onNo(): Promise<boolean> {
 
 <style lang="scss" scoped>
 .question-modal {
+}
+
+// eslint-disable-next-line vue-scoped-css/no-unused-selector
+.question-modal-ontop {
+  // eslint-disable-next-line vue-scoped-css/no-unused-selector
+  .modal {
+    background-color: green;
+  }
 }
 </style>

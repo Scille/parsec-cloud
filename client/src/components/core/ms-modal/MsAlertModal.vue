@@ -5,7 +5,7 @@
     :title="title"
     :subtitle="message"
     :theme="theme"
-    :close-button-enabled="false"
+    :close-button="{visible: false}"
     :confirm-button="{disabled: false, label: $t('Notification.nextButton'), onClick: confirm}"
     @on-enter-keyup="confirm()"
   />
@@ -26,10 +26,20 @@ import { MsTheme, MsModalResult } from '@/components/core/ms-types';
 
 defineProps<MsAlertModalConfig>();
 
-function confirm(): Promise<boolean> {
+async function confirm(): Promise<boolean> {
   return modalController.dismiss(null, MsModalResult.Confirm);
 }
 </script>
 
 <style lang="scss" scoped>
+.notification-modal {
+}
+
+// eslint-disable-next-line vue-scoped-css/no-unused-selector
+.notification-modal-ontop {
+  // eslint-disable-next-line vue-scoped-css/no-unused-selector
+  .modal {
+    background-color: green;
+  }
+}
 </style>

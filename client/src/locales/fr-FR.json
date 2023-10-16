@@ -147,7 +147,9 @@
             "offline": "Impossible de contacter le serveur. Veuillez vérifier que vous êtes connecté(e) à internet.",
             "alreadyExists": "Ce nom d'organisation n'est pas disponible, veuillez en choisir un autre.",
             "generic": "Impossible de créer l'organisation (raison: {reason})."
-        }
+        },
+        "cancelConfirm": "Êtes-vous sûr(e) de vouloir annuler le processus ?",
+        "cancelConfirmSubtitle": "Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut."
     },
     "JoinByLinkModal": {
         "pageTitle": "Rejoindre par lien",
@@ -499,7 +501,9 @@
             "unexpected": "Une erreur imprévue est survenue (raison: {reason}).",
             "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
             "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que le lien d'invitation est correct et que vous êtes connecté(e) à internet."
-        }
+        },
+        "cancelConfirm": "Êtes-vous sûr(e) de vouloir annuler le processus ?",
+        "cancelConfirmSubtitle": "Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut."
     },
     "UsersPage": {
         "listDisplayTitles": {
@@ -563,7 +567,9 @@
                 "createUserFailed": "Impossible de créer le nouvel utilisateur. Veuillez redémarrer le processus.",
                 "retrieveUserInfoFailed": "Échec de la récupération des informations de l'invité. Veuillez redémarrer le processus."
             },
-            "success": "L'utilisateur {user} a rejoint l'organisation !"
+            "success": "L'utilisateur {user} a rejoint l'organisation !",
+            "cancelConfirm": "Êtes-vous sûr(e) de vouloir annuler le processus ?",
+            "cancelConfirmSubtitle": "Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut."
         },
         "invitation": {
             "greetUser":"Accueillir",
@@ -646,7 +652,9 @@
         "currentDevice": "Cet appareil",
         "newDevice": "Votre nouvel appareil",
         "connected": "Connecté",
-        "deviceName": "Nom de l'appareil"
+        "deviceName": "Nom de l'appareil",
+        "cancelConfirm": "Êtes-vous sûr(e) de vouloir annuler le processus ?",
+        "cancelConfirmSubtitle": "Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut."
     },
     "Changelog": {
         "features": "Fonctionnalités",

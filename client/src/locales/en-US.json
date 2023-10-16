@@ -147,7 +147,9 @@
             "offline": "Could not contact the server. Make sure you're connected to the internet.",
             "alreadyExists": "This organization name is not available, please chose another one.",
             "generic": "Failed to create the organization (reason: {reason})."
-        }
+        },
+        "cancelConfirm": "Are you sure you want to cancel the process?",
+        "cancelConfirmSubtitle": "Information will not be saved, you will have to restart."
     },
     "JoinByLinkModal": {
         "pageTitle": "Join by link",
@@ -499,7 +501,9 @@
             "unexpected": "An unexpected error occured (reason: {reason}).",
             "invalidCodeSelected": "You didn't select the right code. Please restart the process.",
             "startFailed": "Failed to start the process. Please make sure the link is correct and that you are connected to the internet."
-        }
+        },
+        "cancelConfirm": "Are you sure you want to cancel the process?",
+        "cancelConfirmSubtitle": "Information will not be saved, you will have to restart."
     },
     "UsersPage": {
         "listDisplayTitles": {
@@ -563,7 +567,9 @@
                 "createUserFailed": "Failed to create the new user. Please restart the process.",
                 "retrieveUserInfoFailed": "Failed to retrieve guest's information. Please restart the process."
             },
-            "success": "The user {user} has joined the organization!"
+            "success": "The user {user} has joined the organization!",
+            "cancelConfirm": "Are you sure you want to cancel the process?",
+            "cancelConfirmSubtitle": "Information will not be saved, you will have to restart."
         },
         "invitation": {
             "greetUser":"Greet",
@@ -646,7 +652,9 @@
         "currentDevice": "Actual device",
         "newDevice": "Your new device",
         "connected": "Connected",
-        "deviceName": "Device name"
+        "deviceName": "Device name",
+        "cancelConfirm": "Are you sure you want to cancel the process?",
+        "cancelConfirmSubtitle": "Information will not be saved, you will have to restart."
     },
     "Changelog": {
         "features": "Features",

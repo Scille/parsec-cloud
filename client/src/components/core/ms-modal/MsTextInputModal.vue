@@ -4,7 +4,7 @@
   <ms-modal
     :title="title"
     :subtitle="subtitle"
-    :close-button-enabled="true"
+    :close-button="{visible: true}"
     :cancel-button="{
       label: $t('TextInputModal.cancel'),
       disabled: false,
@@ -57,6 +57,7 @@ export async function getTextInputFromUser(options: GetTextOptions): Promise<str
   });
   await modal.present();
   const result = await modal.onWillDismiss();
+  await modal.dismiss();
   return (result.role === MsModalResult.Confirm ? result.data : null);
 }
 </script>

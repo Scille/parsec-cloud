@@ -13,11 +13,12 @@
       <ion-buttons
         slot="end"
         class="closeBtn-container"
-        v-if="closeButtonEnabled"
+        v-if="closeButton"
       >
         <ion-button
+          v-show="closeButton.visible"
           slot="icon-only"
-          @click="cancel()"
+          @click="closeButton.onClick ? closeButton.onClick() : cancel()"
           class="closeBtn"
         >
           <ion-icon
@@ -107,18 +108,19 @@ export interface MsModalConfig {
   titleIcon?: string,
   theme?: MsTheme,
   subtitle?: string,
-  closeButtonEnabled: boolean,
+  closeButton?: {
+    visible: boolean,
+    onClick?: () => Promise<boolean>,
+  },
   cancelButton?: {
     disabled: boolean,
     label: string,
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    onClick?: Function,
+    onClick?: () => Promise<boolean>,
   },
   confirmButton?: {
     disabled: boolean,
     label: string,
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    onClick?: Function,
+    onClick?: () => Promise<boolean>,
   },
 }
 </script>
@@ -160,10 +162,11 @@ onMounted(() => {
   }, 100);
 });
 
-function cancel(): Promise<boolean> {
+async function cancel(): Promise<boolean> {
   return modalController.dismiss(null, MsModalResult.Cancel);
 }
-function confirm(): Promise<boolean> {
+
+async function confirm(): Promise<boolean> {
   return modalController.dismiss(null, MsModalResult.Confirm);
 }
 
@@ -255,6 +258,10 @@ function getTitleIcon(): string {
 .ms-modal-content {
   --background: transparent;
   overflow: auto;
+}
+
+.ms-alert-modal-header__text {
+  color: var(--parsec-color-light-secondary-grey);
 }
 
 .ms-modal-footer {

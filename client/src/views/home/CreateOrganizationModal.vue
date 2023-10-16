@@ -207,8 +207,8 @@ import { AvailableDevice, createOrganization as parsecCreateOrganization, Bootst
 import { MsModalResult } from '@/components/core/ms-types';
 import { organizationValidator, Validity } from '@/common/validators';
 import { asyncComputed } from '@/common/asyncComputed';
-import { NotificationCenter, Notification, NotificationLevel } from '@/services/notificationCenter';
-import { NotificationKey } from '@/common/injectionKeys';
+import { NotificationCenter, Notification, NotificationLevel, NotificationKey } from '@/services/notificationCenter';
+import { askQuestion, Answer } from '@/components/core/ms-modal/MsQuestionModal.vue';
 
 enum CreateOrganizationStep {
   OrgNameStep = 1,
@@ -351,8 +351,16 @@ function getCurrentStep(): Ref<any> {
   }
 }
 
-function cancelModal(): Promise<boolean> {
-  return modalController.dismiss(null, MsModalResult.Cancel);
+async function cancelModal(): Promise<boolean> {
+  const answer = await askQuestion(
+    t('CreateOrganization.cancelConfirm'),
+    t('CreateOrganization.cancelConfirmSubtitle'),
+  );
+
+  if (answer === Answer.Yes) {
+    return await modalController.dismiss(null, MsModalResult.Cancel);
+  }
+  return false;
 }
 
 async function nextStep(): Promise<void> {
