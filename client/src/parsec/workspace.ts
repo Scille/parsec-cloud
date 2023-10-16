@@ -16,6 +16,7 @@ import {
   UserID,
   WorkspaceHandle,
   ClientStartWorkspaceError,
+  GetWorkspaceNameErrorTag,
 } from '@/parsec/types';
 import { getParsecHandle } from '@/parsec/routing';
 import { getClientInfo } from '@/parsec/login';
@@ -96,7 +97,7 @@ export async function getWorkspaceName(workspaceId: WorkspaceID): Promise<Result
         return {ok: true, value: workspace.name};
       }
     }
-    return {ok: false, error: {tag: 'NotFound'}};
+    return {ok: false, error: {tag: GetWorkspaceNameErrorTag.NotFound}};
   } else {
     if (workspaceId === '1') {
       return {ok: true, value: 'Trademeet'};
