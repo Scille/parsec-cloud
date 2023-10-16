@@ -2,18 +2,33 @@
 
 use thiserror::Error;
 
+use libparsec_types::EntryNameError;
+
 #[derive(Debug, Error)]
-pub(crate) enum MountpointError {
+pub enum MountpointError {
     #[error("Access denied")]
     AccessDenied,
     #[error("Dir is not empty")]
     DirNotEmpty,
     #[error("End of file")]
     EndOfFile,
+    #[error("Invalid name")]
+    InvalidName,
     #[error("Name collision")]
     NameCollision,
+    #[error("Name too long")]
+    NameTooLong,
     #[error("Not found")]
     NotFound,
 }
 
-pub(crate) type MountpointResult<T> = Result<T, MountpointError>;
+pub type MountpointResult<T> = Result<T, MountpointError>;
+
+impl From<EntryNameError> for MountpointError {
+    fn from(value: EntryNameError) -> Self {
+        match value {
+            EntryNameError::NameTooLong => Self::NameTooLong,
+            EntryNameError::InvalidName => Self::InvalidName,
+        }
+    }
+}

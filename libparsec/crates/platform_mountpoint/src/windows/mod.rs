@@ -19,7 +19,9 @@ use winfsp_wrs::{
 
 use libparsec_types::prelude::*;
 
-use crate::{EntryInfo, EntryInfoType, MountpointInterface, MountpointManager, WriteMode};
+use crate::{
+    EntryInfo, EntryInfoType, FileSystemMounted, FileSystemWrapper, MountpointInterface, WriteMode,
+};
 
 /// we currently don't support arbitrary security descriptor and instead use only this one
 /// https://docs.microsoft.com/fr-fr/windows/desktop/SecAuthZ/security-descriptor-string-format
@@ -156,7 +158,7 @@ impl From<WinWriteMode> for WriteMode {
     }
 }
 
-impl FileSystemContext for MountpointManager {
+impl<T: MountpointInterface> FileSystemContext for FileSystemWrapper<T> {
     // In WinFSP, both file and directory are called `FileContext`.
     type FileContext = Arc<Mutex<Context>>;
 
@@ -180,7 +182,7 @@ impl FileSystemContext for MountpointManager {
     ) -> Result<(FileAttributes, PSecurityDescriptor, bool), NTSTATUS> {
         let path = PathBuf::from(file_name.to_os_string());
 
-        let entry_info = self.entry_info(&path)?;
+        let entry_info = self.interface.entry_info(&path)?;
         Ok((
             FileAttributes::from(&entry_info),
             SECURITY_DESCRIPTOR.as_ptr(),
@@ -197,10 +199,10 @@ impl FileSystemContext for MountpointManager {
         let write_mode = granted_access.is(FileAccessRights::file_write_data());
         let path = PathBuf::from(file_name.to_os_string());
 
-        let fd = self.file_open(&path, write_mode)?;
+        let fd = self.interface.file_open(&path, write_mode)?;
 
         if !write_mode && is_entry_info_path(&path) {
-            let need_sync = self.entry_info(&path)?.need_sync;
+            let need_sync = self.interface.entry_info(&path)?.need_sync;
             return Ok(Arc::new(Mutex::new(Context::Info(ParsecEntryInfo {
                 path,
                 encoded: format!("{{\"need_sync\":{need_sync}}}"),
@@ -216,7 +218,7 @@ impl FileSystemContext for MountpointManager {
 
     fn get_file_info(&self, file_context: Self::FileContext) -> Result<FileInfo, NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
-        let entry_info = self.entry_info(fc.path())?;
+        let entry_info = self.interface.entry_info(fc.path())?;
         Ok(FileInfo::from(&entry_info))
     }
 
@@ -228,15 +230,15 @@ impl FileSystemContext for MountpointManager {
         let fc = file_context.lock().expect("Mutex is poisoned");
         let mut entries = vec![];
         let path = fc.path();
-        let stat = self.entry_info(path)?;
+        let stat = self.interface.entry_info(path)?;
 
         // NOTE: The "." and ".." directories should ONLY be included
         // if the queried directory is not root
 
-        if fc.path() != Path::new("/") {
+        if fc.path() != Path::new("/") && marker.is_none() {
             entries.push((u16cstr!(".").into(), FileInfo::from(&stat)));
             let parent_path = fc.path().parent().expect("FileContext can't be root");
-            let parent_stat = self.entry_info(parent_path)?;
+            let parent_stat = self.interface.entry_info(parent_path)?;
             entries.push((u16cstr!("..").into(), FileInfo::from(&parent_stat)));
         }
 
@@ -253,7 +255,7 @@ impl FileSystemContext for MountpointManager {
                 .skip(1)
             {
                 let child_path = fc.path().join(child_name.as_ref());
-                let child_stat = self.entry_info(&child_path)?;
+                let child_stat = self.interface.entry_info(&child_path)?;
                 entries.push((
                     U16CString::from_str(child_name).expect("Contains a nul value"),
                     FileInfo::from(&child_stat),
@@ -262,7 +264,7 @@ impl FileSystemContext for MountpointManager {
         } else {
             for child_name in stat.children.keys() {
                 let child_path = fc.path().join(child_name.as_ref());
-                let child_stat = self.entry_info(&child_path)?;
+                let child_stat = self.interface.entry_info(&child_path)?;
                 entries.push((
                     U16CString::from_str(child_name).expect("Contains a nul value"),
                     FileInfo::from(&child_stat),
@@ -306,10 +308,10 @@ impl FileSystemContext for MountpointManager {
                 .create_options
                 .is(CreateOptions::file_directory_file())
             {
-                self.dir_create(&path)?;
+                self.interface.dir_create(&path)?;
                 Context::Dir(Dir { path })
             } else {
-                let fd = self.file_create(&path, true)?;
+                let fd = self.interface.file_create(&path, true)?;
                 Context::File(File { path, fd })
             },
         )))
@@ -326,7 +328,7 @@ impl FileSystemContext for MountpointManager {
         let fc = file_context.lock().expect("Mutex is poisoned");
 
         if let Context::File(file) = fc.deref() {
-            self.fd_resize(file.fd, allocation_size, true)?;
+            self.interface.fd_resize(file.fd, allocation_size, true)?;
         }
 
         Ok(())
@@ -341,10 +343,10 @@ impl FileSystemContext for MountpointManager {
         let fc = file_context.lock().expect("Mutex is poisoned");
         match (fc.deref(), flags.is(CleanupFlags::delete())) {
             (Context::File(file), true) => {
-                let _ = self.file_delete(&file.path);
+                let _ = self.interface.file_delete(&file.path);
             }
             (Context::Dir(dir), true) => {
-                let _ = self.dir_delete(&dir.path);
+                let _ = self.interface.dir_delete(&dir.path);
             }
             _ => (),
         }
@@ -353,7 +355,7 @@ impl FileSystemContext for MountpointManager {
     fn close(&self, file_context: Self::FileContext) {
         let fc = file_context.lock().expect("Mutex is poisoned");
         if let Context::File(file) = fc.deref() {
-            self.fd_close(file.fd)
+            self.interface.fd_close(file.fd)
         }
     }
 
@@ -366,7 +368,7 @@ impl FileSystemContext for MountpointManager {
         let fc = file_context.lock().expect("Mutex is poisoned");
 
         Ok(match fc.deref() {
-            Context::File(file) => self.fd_read(file.fd, buffer, offset)?,
+            Context::File(file) => self.interface.fd_read(file.fd, buffer, offset)?,
             Context::Info(info) => info.read(buffer, offset as usize),
             Context::Dir(_) => unreachable!(),
         })
@@ -384,7 +386,7 @@ impl FileSystemContext for MountpointManager {
         let mode = WriteMode::from(mode);
 
         if let Context::File(file) = fc.deref() {
-            Ok(self.fd_write(file.fd, buffer, offset, mode)?)
+            Ok(self.interface.fd_write(file.fd, buffer, offset, mode)?)
         } else {
             Err(STATUS_NOT_IMPLEMENTED)
         }
@@ -394,7 +396,7 @@ impl FileSystemContext for MountpointManager {
         let fc = file_context.lock().expect("Mutex is poisoned");
 
         if let Context::File(file) = fc.deref() {
-            self.fd_flush(file.fd);
+            self.interface.fd_flush(file.fd);
         }
 
         Ok(())
@@ -421,7 +423,8 @@ impl FileSystemContext for MountpointManager {
         let fc = file_context.lock().expect("Mutex is poisoned");
 
         if let Context::File(file) = fc.deref() {
-            self.fd_resize(file.fd, new_size, set_allocation_size)?;
+            self.interface
+                .fd_resize(file.fd, new_size, set_allocation_size)?;
         }
 
         Ok(())
@@ -436,7 +439,8 @@ impl FileSystemContext for MountpointManager {
     ) -> Result<(), NTSTATUS> {
         let path = PathBuf::from(file_name.to_os_string());
         let new_path = PathBuf::from(new_file_name.to_os_string());
-        self.entry_rename(&path, &new_path, replace_if_exists)?;
+        self.interface
+            .entry_rename(&path, &new_path, replace_if_exists)?;
         Ok(())
     }
 
@@ -454,7 +458,7 @@ impl FileSystemContext for MountpointManager {
         _delete_file: bool,
     ) -> Result<(), NTSTATUS> {
         let path = PathBuf::from(file_name.to_os_string());
-        let stat = self.entry_info(&path)?;
+        let stat = self.interface.entry_info(&path)?;
 
         if path == Path::new("/") {
             return Err(STATUS_RESOURCEMANAGER_READ_ONLY);
@@ -466,7 +470,13 @@ impl FileSystemContext for MountpointManager {
     }
 }
 
-pub fn mount(mountpoint: &Path) -> anyhow::Result<FileSystem<MountpointManager>> {
+pub fn mount<T: MountpointInterface>(
+    mountpoint: &Path,
+    interface: T,
+) -> anyhow::Result<FileSystemMounted<T>> {
+    let fs_wrapper = FileSystemWrapper::new(interface);
+    let name = U16CString::from_os_str(mountpoint.file_name().unwrap_or_default())
+        .expect("Unreachable, valid OsStr");
     let mountpoint =
         U16CString::from_os_str(mountpoint.as_os_str()).expect("Unreachable, valid OsStr");
     let mut volume_params = VolumeParams::default();
@@ -482,14 +492,17 @@ pub fn mount(mountpoint: &Path) -> anyhow::Result<FileSystem<MountpointManager>>
         .set_unicode_on_disk(true)
         .set_persistent_acls(true)
         .set_post_cleanup_when_modified_only(true)
-        .set_file_system_name(&mountpoint)
-        .set_prefix(u16cstr!(""));
+        .set_file_system_name(&name)
+        .map_err(|_| anyhow::anyhow!("Invalid file system name {name:?}"))?
+        .set_prefix(u16cstr!(""))
+        .expect("Unreachable");
 
     let params = Params {
         volume_params,
         ..Default::default()
     };
 
-    FileSystem::new(params, Some(&mountpoint), MountpointManager::default())
+    FileSystem::new(params, Some(&mountpoint), fs_wrapper)
+        .map(|fs| FileSystemMounted { fs })
         .map_err(|status| anyhow::anyhow!("Failed to init FileSystem {status}"))
 }

@@ -152,6 +152,7 @@ freeline
 Freepik
 freethreaded
 fromjson
+fsyncdir
 fusepy
 fusermount
 fuzzer
@@ -169,6 +170,7 @@ GetRandom
 gloo
 gradlew
 grapheq
+gtod
 guce
 guci
 hashdigest
@@ -194,6 +196,8 @@ ifnewer
 ijkl
 imgconverter
 inversed
+iodepth
+ioengine
 ionicons
 iqmp
 itemsoverlay
@@ -324,6 +328,7 @@ newsfragment
 newsfragments
 nextest
 Niño
+nlookup
 nmspc
 nocapture
 NONCEBYTES
@@ -479,6 +484,7 @@ rustflags
 rustfmt
 rustup
 rwfile
+rwmixread
 salsabox
 SaltBytes
 saltlen
@@ -576,6 +582,8 @@ UNFINISHPAGE
 unhexlify
 Unmarshal
 unmock
+unmounter
+Unmounter
 unpackb
 unsync
 unwinify

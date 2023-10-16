@@ -3,14 +3,14 @@
 #[cfg(target_os = "windows")]
 #[test]
 fn winfsp_tests() {
-    use libparsec_platform_mountpoint::mount;
+    use libparsec_platform_mountpoint::{FileSystemMounted, MemFS};
     use std::{path::Path, process::Command};
 
     let (tx, rx) = std::sync::mpsc::channel();
 
     let handle = std::thread::spawn(move || {
         winfsp_wrs::init().expect("Can't init WinFSP");
-        let fs = mount(Path::new("Z:")).unwrap();
+        let fs = FileSystemMounted::mount(Path::new("Z:"), MemFS::default()).unwrap();
         rx.recv().unwrap();
         fs.stop();
     });

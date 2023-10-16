@@ -75,6 +75,15 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/master' }}
         timeout-minutes: 5
 
+      # Install fuse
+      - name: Install fuse
+        shell: bash
+        run: |
+          until sudo apt-get -y install fuse3 libfuse3-dev; do
+            echo "Fail to install APT package retrying ...";
+          done
+        timeout-minutes: 5
+
       # Install cargo nextest command
       - uses: taiki-e/install-action@47d27149ff6b3422864ec504071d5cc7873d642e # pin v2.20.3
         with:
