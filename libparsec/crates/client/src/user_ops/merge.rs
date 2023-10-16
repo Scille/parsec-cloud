@@ -126,12 +126,15 @@ fn merge_workspace_entries(
 }
 
 pub(super) fn merge_local_user_manifests(
-    diverged: &LocalUserManifest,
-    target: UserManifest,
-) -> LocalUserManifest {
-    // Sanity checks, called is responsible to handle them properly !
-    assert_eq!(diverged.base.id, target.id);
-    assert!(target.version > diverged.base.version);
+    local: &LocalUserManifest,
+    remote: UserManifest,
+) -> Option<LocalUserManifest> {
+    // Sanity check (caller is responsible for this !)
+    assert_eq!(local.base.id, remote.id);
+
+    if remote.version <= local.base.version {
+        return None;
+    }
 
     // `created` should never change, so in theory we should have
     // `diverged.base.created == target.base.created`, but there is no strict
@@ -139,29 +142,27 @@ pub(super) fn merge_local_user_manifests(
     // so we have no choice but to accept whatever value remote provides.
 
     let (workspaces, need_sync) = merge_workspace_entries(
-        &diverged.base.workspaces,
-        &diverged.workspaces,
-        &target.workspaces,
+        &local.base.workspaces,
+        &local.workspaces,
+        &remote.workspaces,
     );
 
-    let last_processed_message = std::cmp::max(
-        diverged.last_processed_message,
-        target.last_processed_message,
-    );
-    let need_sync = need_sync || last_processed_message != target.last_processed_message;
+    let last_processed_message =
+        std::cmp::max(local.last_processed_message, remote.last_processed_message);
+    let need_sync = need_sync || last_processed_message != remote.last_processed_message;
 
     let updated = if !need_sync {
-        target.updated
+        remote.updated
     } else {
-        std::cmp::max(target.updated, diverged.updated)
+        std::cmp::max(remote.updated, local.updated)
     };
 
-    LocalUserManifest {
-        base: target,
+    Some(LocalUserManifest {
+        base: remote,
         need_sync,
         updated,
         last_processed_message,
         workspaces,
         speculative: false,
-    }
+    })
 }

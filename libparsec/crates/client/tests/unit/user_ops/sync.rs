@@ -13,11 +13,17 @@ async fn sync_non_placeholder(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let user_ops = user_ops_factory(env, &alice).await;
 
-    let wid = user_ops
-        .list_workspaces()
+    // Sanity check
+    let user_manifest = user_ops.get_user_manifest();
+    p_assert_eq!(user_manifest.need_sync, false);
+    p_assert_eq!(user_manifest.speculative, false);
+    p_assert_eq!(user_manifest.base.version, 1);
+    p_assert_eq!(user_manifest.workspaces, user_manifest.base.workspaces);
+    let wid = user_manifest
+        .workspaces
         .first()
         .expect("Template contains one workspace")
-        .0;
+        .id;
 
     // Do a change requiring a sync
 

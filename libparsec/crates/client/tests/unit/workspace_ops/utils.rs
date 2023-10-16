@@ -46,7 +46,7 @@ pub(crate) async fn workspace_ops_factory(
         event_bus,
         realm_id,
         UserDependantConfig {
-            realm_key,
+            realm_key: Arc::new(realm_key),
             user_role: RealmRole::Owner,
             workspace_name: "wksp1".parse().unwrap(),
         },

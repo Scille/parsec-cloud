@@ -5,12 +5,9 @@ use std::sync::Arc;
 use libparsec_client_connection::{protocol::authenticated_cmds, ConnectionError};
 use libparsec_types::prelude::*;
 
-use super::UserOps;
-use crate::{
-    certificates_ops::{
-        InvalidCertificateError, InvalidManifestError, PollServerError, ValidateManifestError,
-    },
-    EventUserOpsSynced,
+use super::super::WorkspaceOps;
+use crate::certificates_ops::{
+    InvalidCertificateError, InvalidManifestError, PollServerError, ValidateManifestError,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -44,10 +41,10 @@ impl From<ConnectionError> for SyncError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum FetchRemoteUserManifestError {
+pub enum FetchRemoteManifestError {
     #[error("Cannot reach the server")]
     Offline,
-    #[error("Server has no such version for this user manifest")]
+    #[error("Server has no such version for this manifest")]
     BadVersion,
     #[error(transparent)]
     InvalidCertificate(#[from] InvalidCertificateError),
@@ -57,7 +54,7 @@ pub enum FetchRemoteUserManifestError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ConnectionError> for FetchRemoteUserManifestError {
+impl From<ConnectionError> for FetchRemoteManifestError {
     fn from(value: ConnectionError) -> Self {
         match value {
             ConnectionError::NoResponse(_) => Self::Offline,
@@ -66,34 +63,35 @@ impl From<ConnectionError> for FetchRemoteUserManifestError {
     }
 }
 
-pub async fn sync(ops: &UserOps) -> Result<(), SyncError> {
-    let user_manifest = ops.storage.get_user_manifest();
+pub async fn sync_root(ops: &WorkspaceOps) -> Result<(), SyncError> {
+    let workspace_manifest = ops.data_storage.get_workspace_manifest();
 
-    if user_manifest.need_sync {
-        outbound_sync(ops).await?;
-        ops.event_bus.send(&EventUserOpsSynced);
+    if workspace_manifest.need_sync {
+        outbound_sync_root(ops).await?;
+        // TODO: event
+        // ops.event_bus.send(&EventWorkspaceOpsSynced);
         Ok(())
     } else {
-        inbound_sync(ops).await
+        inbound_sync_root(ops).await
     }
 }
 
 enum UploadManifestOutcome {
-    Success(UserManifest),
+    Success(WorkspaceManifest),
     VersionConflict,
 }
 
 async fn upload_manifest(
-    ops: &UserOps,
-    base_um: &LocalUserManifest,
+    ops: &WorkspaceOps,
+    base_wm: &LocalWorkspaceManifest,
 ) -> Result<UploadManifestOutcome, SyncError> {
     let mut timestamp = ops.device.now();
 
     loop {
         // Build vlob
-        let to_sync_um = base_um.to_remote(ops.device.device_id.to_owned(), timestamp);
+        let to_sync_wm = base_wm.to_remote(ops.device.device_id.to_owned(), timestamp);
 
-        let signed = to_sync_um.dump_and_sign(&ops.device.signing_key);
+        let signed = to_sync_wm.dump_and_sign(&ops.device.signing_key);
         let ciphered = ops.device.user_realm_key.encrypt(&signed).into();
         let sequester_blob = ops
             .certificates_ops
@@ -102,20 +100,20 @@ async fn upload_manifest(
 
         // Sync the vlob with server
 
-        return if to_sync_um.version == 1 {
+        return if to_sync_wm.version == 1 {
             use authenticated_cmds::latest::vlob_create::{Rep, Req};
             let req = Req {
-                realm_id: ops.device.user_realm_id,
+                realm_id: ops.realm_id,
                 // Always 1 given user manifest realm is never reencrypted
                 encryption_revision: 1,
-                vlob_id: ops.device.user_realm_id,
+                vlob_id: ops.realm_id,
                 timestamp,
                 blob: ciphered,
                 sequester_blob,
             };
             let rep = ops.cmds.send(req).await?;
             match rep {
-                Rep::Ok => Ok(UploadManifestOutcome::Success(to_sync_um)),
+                Rep::Ok => Ok(UploadManifestOutcome::Success(to_sync_wm)),
                 Rep::AlreadyExists { .. } => Ok(UploadManifestOutcome::VersionConflict),
                 Rep::InMaintenance => Err(SyncError::InMaintenance),
                 Rep::RequireGreaterTimestamp {
@@ -161,15 +159,15 @@ async fn upload_manifest(
             let req = Req {
                 // Always 1 given user manifest realm is never reencrypted
                 encryption_revision: 1,
-                vlob_id: ops.device.user_realm_id,
-                version: to_sync_um.version,
+                vlob_id: ops.realm_id,
+                version: to_sync_wm.version,
                 timestamp,
                 blob: ciphered,
                 sequester_blob,
             };
             let rep = ops.cmds.send(req).await?;
             match rep {
-                Rep::Ok => Ok(UploadManifestOutcome::Success(to_sync_um)),
+                Rep::Ok => Ok(UploadManifestOutcome::Success(to_sync_wm)),
                 Rep::BadVersion => Ok(UploadManifestOutcome::VersionConflict),
                 Rep::InMaintenance => Err(SyncError::InMaintenance),
                 Rep::RequireGreaterTimestamp {
@@ -222,17 +220,17 @@ enum OutboundSyncOutcome {
     InboundSyncNeeded,
 }
 
-async fn outbound_sync_inner(ops: &UserOps) -> Result<OutboundSyncOutcome, SyncError> {
-    let base_um = ops.storage.get_user_manifest();
-    if !base_um.need_sync {
+async fn outbound_sync_root_inner(ops: &WorkspaceOps) -> Result<OutboundSyncOutcome, SyncError> {
+    let base_wm = ops.data_storage.get_workspace_manifest();
+    if !base_wm.need_sync {
         return Ok(OutboundSyncOutcome::Done);
     }
 
-    // If the user manifest's vlob has already been synced we know the realm exists,
+    // If the manifest's vlob has already been synced we know the realm exists,
     // otherwise we have to make sure it is the case !
-    if base_um.base.version == 0 {
+    if base_wm.base.version == 0 {
         ops.certificates_ops
-            .ensure_realms_created(&[ops.device.user_realm_id])
+            .ensure_realms_created(&[ops.realm_id])
             .await
             .map_err(|err| match err {
                 crate::certificates_ops::EnsureRealmsCreatedError::Offline => SyncError::Offline,
@@ -253,39 +251,21 @@ async fn outbound_sync_inner(ops: &UserOps) -> Result<OutboundSyncOutcome, SyncE
             })?;
     }
 
-    // In we have just created a workspace, it's possible it corresponding realm
-    // hasn't been created yet on the server...
-    let workspaces_ids: Vec<_> = base_um.workspaces.iter().map(|e| e.id).collect();
-    ops.certificates_ops
-        .ensure_realms_created(&workspaces_ids)
-        .await
-        .map_err(|err| match err {
-            crate::certificates_ops::EnsureRealmsCreatedError::Offline => SyncError::Offline,
-            crate::certificates_ops::EnsureRealmsCreatedError::BadTimestamp {
-                server_timestamp,
-                client_timestamp,
-                ballpark_client_early_offset,
-                ballpark_client_late_offset,
-            } => SyncError::BadTimestamp {
-                server_timestamp,
-                client_timestamp,
-                ballpark_client_early_offset,
-                ballpark_client_late_offset,
-            },
-            crate::certificates_ops::EnsureRealmsCreatedError::Internal(err) => err
-                .context("Cannot create the workspace on the server")
-                .into(),
-        })?;
-
-    match upload_manifest(ops, &base_um).await? {
+    match upload_manifest(ops, &base_wm).await? {
         UploadManifestOutcome::VersionConflict => Ok(OutboundSyncOutcome::InboundSyncNeeded),
-        UploadManifestOutcome::Success(remote_um) => {
+        UploadManifestOutcome::Success(remote_wm) => {
             // Merge back the manifest in local
-            let (updater, local_um) = ops.storage.for_update().await;
+            let (updater, local_wm) = ops.data_storage.for_update_workspace_manifest().await;
             // Final merge could have been achieved by a concurrent operation
-            if let Some(merged_um) = super::merge::merge_local_user_manifests(&local_um, remote_um)
-            {
-                updater.set_user_manifest(Arc::new(merged_um)).await?;
+            if let Some(merged_wm) = super::super::merge::merge_local_workspace_manifests(
+                &ops.device.device_id,
+                ops.device.now(),
+                &local_wm,
+                remote_wm,
+            ) {
+                updater
+                    .update_workspace_manifest(Arc::new(merged_wm))
+                    .await?;
             }
 
             Ok(OutboundSyncOutcome::Done)
@@ -297,48 +277,48 @@ async fn outbound_sync_inner(ops: &UserOps) -> Result<OutboundSyncOutcome, SyncE
 ///
 /// This also requires to download and merge any remote changes. Hence the
 /// client is fully synchronized with the server once this function returns.
-async fn outbound_sync(ops: &UserOps) -> Result<(), SyncError> {
+async fn outbound_sync_root(ops: &WorkspaceOps) -> Result<(), SyncError> {
     loop {
-        match outbound_sync_inner(ops).await? {
+        match outbound_sync_root_inner(ops).await? {
             OutboundSyncOutcome::Done => return Ok(()),
             OutboundSyncOutcome::InboundSyncNeeded => {
                 // Concurrency error, fetch and merge remote changes before
                 // retrying the sync
-                inbound_sync(ops).await?;
+                inbound_sync_root(ops).await?;
             }
         }
     }
 }
 
 async fn find_last_valid_manifest(
-    ops: &UserOps,
+    ops: &WorkspaceOps,
     last_version: VersionInt,
-) -> Result<UserManifest, SyncError> {
-    let local_manifest = ops.storage.get_user_manifest();
+) -> Result<WorkspaceManifest, SyncError> {
+    let local_manifest = ops.data_storage.get_workspace_manifest();
     let local_base_version = local_manifest.base.version;
 
     for candidate_version in (local_base_version + 1..last_version).rev() {
-        match fetch_remote_user_manifest(ops, Some(candidate_version)).await {
+        match fetch_remote_workspace_manifest(ops, Some(candidate_version)).await {
             // Finally found a valid manifest !
             Ok(manifest) => {
                 return Ok(manifest)
             },
 
             // Yet another invalid manifest, just skip it
-            Err(FetchRemoteUserManifestError::InvalidManifest(_)) => continue,
+            Err(FetchRemoteManifestError::InvalidManifest(_)) => continue,
 
             // Errors that prevent us from continuing :(
 
-            Err(FetchRemoteUserManifestError::Offline) => {
+            Err(FetchRemoteManifestError::Offline) => {
                 return Err(SyncError::Offline)
             }
-            Err(FetchRemoteUserManifestError::InvalidCertificate(err)) => {
+            Err(FetchRemoteManifestError::InvalidCertificate(err)) => {
                 return Err(SyncError::InvalidCertificate(err))
             },
             // The version we sent was lower than the one of the invalid manifest previously
             // sent by the server, so this error should not occur in theory (unless the server
             // have just done a rollback, but this is very unlikely !)
-            Err(FetchRemoteUserManifestError::BadVersion) => {
+            Err(FetchRemoteManifestError::BadVersion) => {
                 return Err(SyncError::Internal(
                     anyhow::anyhow!(
                         "Server sent us vlob `{}` with version {} but now complains version {} we ask for doesn't exist",
@@ -348,7 +328,7 @@ async fn find_last_valid_manifest(
                     )
                 ))
             },
-            Err(err @ FetchRemoteUserManifestError::Internal(_)) => {
+            Err(err @ FetchRemoteManifestError::Internal(_)) => {
                 return Err(SyncError::Internal(err.into()))
             }
         }
@@ -363,15 +343,15 @@ async fn find_last_valid_manifest(
 ///
 /// If the client contains local changes, an outbound sync is still needed to
 /// have the client fully synchronized with the server.
-async fn inbound_sync(ops: &UserOps) -> Result<(), SyncError> {
+async fn inbound_sync_root(ops: &WorkspaceOps) -> Result<(), SyncError> {
     // Retrieve remote
-    let target_um = match fetch_remote_user_manifest(ops, None).await {
+    let remote_wm = match fetch_remote_workspace_manifest(ops, None).await {
         Ok(manifest) => manifest,
 
         // The last version of the manifest appear to be invalid (uploaded by
         // a buggy Parsec client ?), however we cannot just fail here otherwise
         // the system would be stuck for good !
-        Err(FetchRemoteUserManifestError::InvalidManifest(err)) => {
+        Err(FetchRemoteManifestError::InvalidManifest(err)) => {
             // Try to find the last valid version of the manifest and continue
             // from there
 
@@ -399,47 +379,54 @@ async fn inbound_sync(ops: &UserOps) -> Result<(), SyncError> {
 
         // We couldn't validate the manifest due to an invalid certificate
         // provided by the server. Hence there is nothing more we can do :(
-        Err(FetchRemoteUserManifestError::InvalidCertificate(err)) => {
+        Err(FetchRemoteManifestError::InvalidCertificate(err)) => {
             return Err(SyncError::InvalidCertificate(err));
         }
 
-        Err(FetchRemoteUserManifestError::Offline) => {
+        Err(FetchRemoteManifestError::Offline) => {
             return Err(SyncError::Offline);
         }
 
         // We didn't specified a `version` argument in the request
-        Err(FetchRemoteUserManifestError::BadVersion) => {
+        Err(FetchRemoteManifestError::BadVersion) => {
             unreachable!()
         }
 
         // D'Oh :/
-        Err(err @ FetchRemoteUserManifestError::Internal(_)) => {
+        Err(err @ FetchRemoteManifestError::Internal(_)) => {
             return Err(SyncError::Internal(err.into()))
         }
     };
 
     // New things in remote, merge is needed
-    let (updater, diverged_um) = ops.storage.for_update().await;
+    let (updater, local_wm) = ops.data_storage.for_update_workspace_manifest().await;
     // Note merge may end up with nothing to sync, typically if the remote version is
     // already the one local is based on
-    if let Some(merged_um) = super::merge::merge_local_user_manifests(&diverged_um, target_um) {
-        updater.set_user_manifest(Arc::new(merged_um)).await?;
+    if let Some(merged_wm) = super::super::merge::merge_local_workspace_manifests(
+        &ops.device.device_id,
+        ops.device.now(),
+        &local_wm,
+        remote_wm,
+    ) {
+        updater
+            .update_workspace_manifest(Arc::new(merged_wm))
+            .await?;
     }
 
     // TODO: we used to send a SHARING_UPDATED event here, however it would simpler
     // to send such event from the CertificatesOps (i.e. when a realm role certificate
     // is added). The downside of this approach is we don't have the guarantee that
-    // UserOps have processed the changes (e.g. GUI receive an event about an new
+    // WorkspaceOps have processed the changes (e.g. GUI receive an event about an new
     // workspace shared with us, but got an error when trying to get the workspace
-    // from UserOps...)
+    // from WorkspaceOps...)
 
     Ok(())
 }
 
-async fn fetch_remote_user_manifest(
-    ops: &UserOps,
+async fn fetch_remote_workspace_manifest(
+    ops: &WorkspaceOps,
     version: Option<VersionInt>,
-) -> Result<UserManifest, FetchRemoteUserManifestError> {
+) -> Result<WorkspaceManifest, FetchRemoteManifestError> {
     use authenticated_cmds::latest::vlob_read::{Rep, Req};
 
     let req = Req {
@@ -447,7 +434,7 @@ async fn fetch_remote_user_manifest(
         encryption_revision: 1,
         timestamp: None,
         version,
-        vlob_id: VlobID::from(ops.device.user_realm_id.as_ref().to_owned()),
+        vlob_id: ops.realm_id,
     };
 
     let rep = ops.cmds.send(req).await?;
@@ -458,11 +445,19 @@ async fn fetch_remote_user_manifest(
                 Some(version) => version,
                 None => version_according_to_server,
             };
-            ops.certificates_ops.validate_user_manifest(certificate_index, &expected_author, expected_version, expected_timestamp, &blob).await
+            let realm_key = {
+                let config = ops.user_dependant_config.lock().expect("Mutex is poisoned");
+                config.realm_key.clone()
+            };
+            ops.certificates_ops.validate_workspace_manifest(
+                ops.realm_id,
+                &realm_key,
+                certificate_index, &expected_author, expected_version, expected_timestamp, &blob
+            ).await
         }
         // Expected errors
         Rep::BadVersion if version.is_some() => {
-            return Err(FetchRemoteUserManifestError::BadVersion);
+            return Err(FetchRemoteManifestError::BadVersion);
         }
         // Unexpected errors :(
         rep @ (
@@ -484,14 +479,12 @@ async fn fetch_remote_user_manifest(
 
     outcome.map_err(|err| match err {
         ValidateManifestError::InvalidCertificate(err) => {
-            FetchRemoteUserManifestError::InvalidCertificate(err)
+            FetchRemoteManifestError::InvalidCertificate(err)
         }
         ValidateManifestError::InvalidManifest(err) => {
-            FetchRemoteUserManifestError::InvalidManifest(err)
+            FetchRemoteManifestError::InvalidManifest(err)
         }
-        ValidateManifestError::Offline => FetchRemoteUserManifestError::Offline,
-        err @ ValidateManifestError::Internal(_) => {
-            FetchRemoteUserManifestError::Internal(err.into())
-        }
+        ValidateManifestError::Offline => FetchRemoteManifestError::Offline,
+        err @ ValidateManifestError::Internal(_) => FetchRemoteManifestError::Internal(err.into()),
     })
 }

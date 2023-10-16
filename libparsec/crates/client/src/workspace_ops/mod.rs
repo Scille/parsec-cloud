@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 mod fetch;
+mod merge;
 mod transactions;
 
 use std::{
@@ -17,7 +18,7 @@ use crate::{certificates_ops::CertificatesOps, event_bus::EventBus, ClientConfig
 
 #[derive(Debug)]
 pub(crate) struct UserDependantConfig {
-    pub realm_key: SecretKey,
+    pub realm_key: Arc<SecretKey>,
     pub user_role: RealmRole,
     pub workspace_name: EntryName,
 }
@@ -171,6 +172,10 @@ impl WorkspaceOps {
 
     pub async fn open_file(&self, path: &FsPath) -> Result<OpenedFile, FsOperationError> {
         transactions::open_file(self, path).await
+    }
+
+    pub async fn sync(&self) -> Result<(), SyncError> {
+        transactions::sync_root(self).await
     }
 }
 
