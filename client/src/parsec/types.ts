@@ -126,8 +126,12 @@ type EntryStat =
   | EntryStatFile
   | EntryStatFolder;
 
+enum GetWorkspaceNameErrorTag {
+  NotFound = 'NotFound',
+}
+
 interface GetWorkspaceNameError {
-  tag: 'NotFound'
+  tag: GetWorkspaceNameErrorTag.NotFound,
 }
 
 interface UserTuple {
@@ -155,6 +159,7 @@ export {
   DateTime,
   WorkspaceRole,
   GetWorkspaceNameError,
+  GetWorkspaceNameErrorTag,
   UserID,
   HumanHandle,
 };
