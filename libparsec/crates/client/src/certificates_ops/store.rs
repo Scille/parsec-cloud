@@ -11,7 +11,7 @@
 //! certificates is done in a atomic way.
 //! On top of that, some read operations (the validation ones) work with the assumption
 //! the storage contains all certificates up to a certain index. Here again we
-//! need to prevent concurrent write operations (as it may clear remove certificates)
+//! need to prevent concurrent write operations (as it may remove certificates)
 
 use async_trait::async_trait;
 use std::{
