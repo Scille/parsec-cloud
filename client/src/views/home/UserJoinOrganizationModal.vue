@@ -203,6 +203,7 @@ import { MsModalResult } from '@/components/core/ms-types';
 import { Notification, NotificationCenter, NotificationLevel, NotificationKey } from '@/services/notificationCenter';
 import { asyncComputed } from '@/common/asyncComputed';
 import { UserClaim } from '@/parsec';
+import { askQuestion, Answer } from '@/components/core/ms-modal/MsQuestionModal.vue';
 
 enum UserJoinOrganizationStep {
   WaitForHost = 1,
@@ -324,8 +325,16 @@ const canGoForward = asyncComputed(async () => {
 });
 
 async function cancelModal(): Promise<boolean> {
-  await claimer.value.abort();
-  return modalController.dismiss(null, MsModalResult.Cancel);
+  const answer = await askQuestion(
+    t('JoinOrganization.cancelConfirm'),
+    t('JoinOrganization.cancelConfirmSubtitle'),
+  );
+
+  if (answer === Answer.Yes) {
+    await claimer.value.abort();
+    return modalController.dismiss(null, MsModalResult.Cancel);
+  }
+  return false;
 }
 
 async function nextStep(): Promise<void> {

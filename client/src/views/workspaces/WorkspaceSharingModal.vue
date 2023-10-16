@@ -4,12 +4,7 @@
   <ion-page class="modal">
     <ms-modal
       :title="$t('WorkspaceSharing.title')"
-      :close-button-enabled="true"
-      :cancel-button="{
-        label: $t('WorkspaceSharing.cancel'),
-        disabled: false,
-        onClick: cancel
-      }"
+      :close-button="{visible: true}"
     >
       <!-- content -->
       <div>
@@ -125,10 +120,6 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
       level: NotificationLevel.Error,
     }));
   }
-}
-
-function cancel(): Promise<boolean> {
-  return modalController.dismiss(userRoles.value, MsModalResult.Cancel);
 }
 </script>
 

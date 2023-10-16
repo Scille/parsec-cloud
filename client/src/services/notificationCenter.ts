@@ -94,14 +94,23 @@ export class NotificationCenter {
   }
 
   async _createAndPresentModal(modalConfig: MsAlertModalConfig): Promise<any> {
+    const top = await modalController.getTop();
+    if (top) {
+      top.classList.add('overlapped-modal');
+    }
+
     const modal = await modalController.create({
       component: MsAlertModal,
       canDismiss: true,
-      cssClass: 'notification-modal',
+      cssClass: top ? 'notification-modal-ontop' : 'notification-modal',
       componentProps: modalConfig,
     });
     await modal.present();
-    return modal.onWillDismiss();
+    const result = await modal.onWillDismiss();
+    if (top) {
+      top.classList.remove('overlapped-modal');
+    }
+    return result;
   }
 
   async showToast(

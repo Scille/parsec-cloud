@@ -214,6 +214,7 @@ import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { MsModalResult } from '@/components/core/ms-types';
 import { UserInvitation, UserGreet, UserProfile } from '@/parsec';
 import { NotificationCenter, NotificationKey, Notification, NotificationLevel } from '@/services/notificationCenter';
+import { Answer, askQuestion } from '@/components/core/ms-modal/MsQuestionModal.vue';
 
 enum GreetUserStep {
   WaitForGuest = 1,
@@ -357,8 +358,16 @@ const nextButtonIsVisible = computed(() => {
 });
 
 async function cancelModal(): Promise<boolean> {
-  await greeter.value.abort();
-  return modalController.dismiss(null, MsModalResult.Cancel);
+  const answer = await askQuestion(
+    t('UsersPage.greet.cancelConfirm'),
+    t('UsersPage.greet.cancelConfirmSubtitle'),
+  );
+
+  if (answer === Answer.Yes) {
+    await greeter.value.abort();
+    return modalController.dismiss(null, MsModalResult.Cancel);
+  }
+  return false;
 }
 
 async function showErrorAndRestart(message: string): Promise<void> {

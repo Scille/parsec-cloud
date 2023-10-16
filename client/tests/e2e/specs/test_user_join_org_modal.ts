@@ -137,19 +137,27 @@ describe('User join an organization', () => {
     cy.get('@modalTitle').contains('You have joined the organization');
 
     cy.get('#next-button').contains('Log In');
-    // Clicking the button causes the modal to close which causes an unknown exception
-    // which causes Cypress to fail the test.
+  });
 
-    // cy.get('#next-button').click();
+  it('Close with X button', () => {
+    cy.get('#create-organization-button').click();
+    cy.get('.popover-viewport').find('ion-item').last().click();
+    cy.wait(WAIT_TIME);
+    cy.get('.text-input-modal').find('ion-input').find('input').type(INVITATION_LINK);
+    cy.get('.text-input-modal').find('#next-button').click();
 
-    // cy.wait(1000);
+    cy.get('.join-organization-modal').should('exist');
+    cy.get('.join-organization-modal').find('.closeBtn').should('be.visible');
+    cy.get('.join-organization-modal').find('.closeBtn').click();
 
-    // cy.get('@configPath').then(() => {
-    //   cy.get('@consoleLog').should('have.been.calledWith', 'Log in to My Org with password "Nihilanth1337"');
-    // });
+    cy.get('.question-modal-ontop').find('.ms-modal-header__title').contains('Are you sure you want to cancel the process?');
+    cy.get('.question-modal-ontop').find('#cancel-button').click();
+    cy.get('.question-modal-ontop').should('not.exist');
 
-    // // Should be logged in on workspace page
-    // cy.get('#button-new-workspace').contains('New workspace');
-    // cy.get('.card').should('have.length', 5);
+    // Can't get the modal to dismiss
+    // cy.get('.join-organization-modal').find('.closeBtn').click();
+    // cy.get('.question-modal-ontop').find('#next-button').click();
+    // cy.get('.question-modal-ontop').should('not.exist');
+    // cy.get('.join-organization-modal').should('not.exist');
   });
 });
