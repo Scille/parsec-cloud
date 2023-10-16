@@ -279,12 +279,12 @@ async fn outbound_sync_inner(ops: &UserOps) -> Result<OutboundSyncOutcome, SyncE
 
     match upload_manifest(ops, &base_um).await? {
         UploadManifestOutcome::VersionConflict => Ok(OutboundSyncOutcome::InboundSyncNeeded),
-        UploadManifestOutcome::Success(synced_um) => {
+        UploadManifestOutcome::Success(remote_um) => {
             // Merge back the manifest in local
-            let (updater, diverged_um) = ops.storage.for_update().await;
+            let (updater, local_um) = ops.storage.for_update().await;
             // Final merge could have been achieved by a concurrent operation
-            if synced_um.version > diverged_um.base.version {
-                let merged_um = super::merge::merge_local_user_manifests(&diverged_um, synced_um);
+            if let Some(merged_um) = super::merge::merge_local_user_manifests(&local_um, remote_um)
+            {
                 updater.set_user_manifest(Arc::new(merged_um)).await?;
             }
 
@@ -418,21 +418,13 @@ async fn inbound_sync(ops: &UserOps) -> Result<(), SyncError> {
         }
     };
 
-    let diverged_um = ops.storage.get_user_manifest();
-    if target_um.version == diverged_um.base.version {
-        // Nothing new
-        return Ok(());
-    }
-
     // New things in remote, merge is needed
     let (updater, diverged_um) = ops.storage.for_update().await;
-    if target_um.version == diverged_um.base.version {
-        // Sync already achieved by a concurrent operation
-        return Ok(());
+    // Note merge may end up with nothing to sync, typically if the remote version is
+    // already the one local is based on
+    if let Some(merged_um) = super::merge::merge_local_user_manifests(&diverged_um, target_um) {
+        updater.set_user_manifest(Arc::new(merged_um)).await?;
     }
-
-    let merged_um = super::merge::merge_local_user_manifests(&diverged_um, target_um);
-    updater.set_user_manifest(Arc::new(merged_um)).await?;
 
     // TODO: we used to send a SHARING_UPDATED event here, however it would simpler
     // to send such event from the CertificatesOps (i.e. when a realm role certificate
