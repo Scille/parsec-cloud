@@ -55,8 +55,8 @@ pub async fn bootstrap_organization(
 
     let device = Arc::new(LocalDevice::generate_new_device(
         organization_addr,
-        None,
         UserProfile::Admin,
+        None,
         human_handle,
         device_label,
         None,
