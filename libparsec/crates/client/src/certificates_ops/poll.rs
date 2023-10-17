@@ -68,12 +68,12 @@ pub(super) async fn poll_server_for_new_certificates(
 
         // `latest_known_index` is useful to detect outdated `CertificatesUpdated`
         // events given the server has already been polled in the meantime.
-        let offset = match (&last_index, latest_known_index) {
-            (last_index, Some(latest_known_index)) if *last_index >= latest_known_index => {
-                return Ok(*last_index)
+        let offset = match (last_index, latest_known_index) {
+            (last_index, Some(latest_known_index)) if last_index >= latest_known_index => {
+                return Ok(last_index)
             }
             // Certificate index starts at 1, so can be used as-is as offset
-            (last_index, _) => *last_index,
+            (last_index, _) => last_index,
         };
 
         // 2) We are missing some certificates, time to ask the server about them...
@@ -120,6 +120,7 @@ pub(super) async fn poll_server_for_new_certificates(
         let outcome = ops
             .add_certificates_batch(&store, new_offset, certificates)
             .await?;
+
         match outcome {
             MaybeRedactedSwitch::NoSwitch => (),
             // Unlike other profiles, Outsider is required to use the redacted

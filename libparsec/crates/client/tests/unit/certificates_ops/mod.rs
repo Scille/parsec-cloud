@@ -7,5 +7,6 @@ mod add_sequester_authority_certificate;
 mod add_user_certificate;
 mod add_user_revoked_certificate;
 mod add_user_update_certificate;
+mod poll;
 mod store;
 mod utils;
