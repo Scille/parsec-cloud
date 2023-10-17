@@ -81,7 +81,7 @@ poetry-lock-package = ">=0.4.4,<0.6.0"
 docutils = "0.18.1"
 Babel = "^2.10"
 
-ruff = "0.0.292"
+ruff = "0.1.0"
 black = "23.9.1"
 mypy = "1.6.0"
 
