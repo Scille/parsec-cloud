@@ -1702,19 +1702,20 @@ dotenv = ["python-dotenv"]
 
 [[package]]
 name = "quart-trio"
-version = "0.10.0"
+version = "0.11.0"
 description = "A Quart extension to provide trio support"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "quart-trio-0.10.0.tar.gz", hash = "sha256:66d4a2f8c3c417741d0e9709e0270edcedfdc26a9daac9e348b374f51c6decf8"},
-    {file = "quart_trio-0.10.0-py3-none-any.whl", hash = "sha256:e22759a5e237f47dfff10a8dad3064d1cb11515c6550bf00f988695a068f7249"},
+    {file = "quart_trio-0.11.0-py3-none-any.whl", hash = "sha256:713dbefc2d671ba44a734fa23cc88298cb3b85f256dd223f61cf00788c9b51bd"},
+    {file = "quart_trio-0.11.0.tar.gz", hash = "sha256:f4b8b18c814d9be41c98b6993230f4816f68d9d2241f1fd8eddddf1e56549718"},
 ]
 
 [package.dependencies]
+exceptiongroup = ">=1.0.0"
 hypercorn = {version = ">=0.12.0", extras = ["trio"]}
-quart = ">=0.18"
-trio = ">=0.9.0"
+quart = ">=0.19"
+trio = ">=0.19.0"
 
 [package.extras]
 docs = ["pydata_sphinx_theme"]
