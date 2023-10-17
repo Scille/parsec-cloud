@@ -22,9 +22,9 @@ pub fn sleep(duration: std::time::Duration) -> impl crate::future::Future<Output
 }
 
 #[derive(Debug)]
-pub struct JoinHandle<T>(tokio::task::JoinHandle<T>);
+pub struct JoinHandle<F>(tokio::task::JoinHandle<F>);
 
-impl<T> JoinHandle<T> {
+impl<F> JoinHandle<F> {
     #[inline(always)]
     pub fn abort(&self) {
         self.0.abort()
@@ -35,8 +35,8 @@ impl<T> JoinHandle<T> {
     }
 }
 
-impl<T> crate::future::Future for JoinHandle<T> {
-    type Output = std::result::Result<T, tokio::task::JoinError>;
+impl<F> crate::future::Future for JoinHandle<F> {
+    type Output = std::result::Result<F, tokio::task::JoinError>;
 
     #[inline(always)]
     fn poll(
@@ -49,10 +49,18 @@ impl<T> crate::future::Future for JoinHandle<T> {
 }
 
 #[inline(always)]
-pub fn spawn<T>(future: T) -> JoinHandle<T::Output>
+pub fn spawn<F>(future: F) -> JoinHandle<F::Output>
 where
-    T: crate::future::Future + Send + 'static,
-    T::Output: Send + 'static,
+    F: crate::future::Future + Send + 'static,
+    F::Output: Send + 'static,
 {
-    JoinHandle(tokio::spawn(future))
+    JoinHandle(tokio::task::spawn(future))
+}
+
+pub fn spawn_local<F>(future: F) -> JoinHandle<F::Output>
+where
+    F: crate::future::Future + 'static,
+    F::Output: 'static,
+{
+    JoinHandle(tokio::task::spawn_local(future))
 }

@@ -9,11 +9,11 @@ pub async fn sleep(duration: std::time::Duration) {
 }
 
 #[derive(Debug)]
-pub struct JoinHandle<T> {
-    phantom: std::marker::PhantomData<T>,
+pub struct JoinHandle<F> {
+    phantom: std::marker::PhantomData<F>,
 }
 
-impl<T> JoinHandle<T> {
+impl<F> JoinHandle<F> {
     #[inline(always)]
     pub fn abort(&self) {
         todo!()
@@ -42,8 +42,8 @@ impl JoinError {
     }
 }
 
-impl<T> crate::future::Future for JoinHandle<T> {
-    type Output = std::result::Result<T, JoinError>;
+impl<F> crate::future::Future for JoinHandle<F> {
+    type Output = std::result::Result<F, JoinError>;
 
     #[inline(always)]
     fn poll(
@@ -55,9 +55,16 @@ impl<T> crate::future::Future for JoinHandle<T> {
 }
 
 #[inline(always)]
-pub fn spawn<T>(_future: T) -> JoinHandle<T::Output>
+pub fn spawn<F>(_future: F) -> JoinHandle<F::Output>
 where
-    T: crate::future::Future,
+    F: crate::future::Future,
+{
+    todo!()
+}
+
+pub fn spawn_local<F>(_future: F) -> JoinHandle<F::Output>
+where
+    F: crate::future::Future,
 {
     todo!()
 }
