@@ -460,7 +460,7 @@ async def logged_core_factory(
             "archiving monitor", partial(monitor_archiving, user_fs, event_bus), prioritized=True
         )
         backend_conn.register_monitor(
-            "messages monitor", partial(monitor_messages, user_fs, event_bus)
+            "messages monitor", partial(monitor_messages, user_fs, event_bus), prioritized=True
         )
         backend_conn.register_monitor("sync monitor", partial(monitor_sync, user_fs, event_bus))
         backend_conn.register_monitor(
