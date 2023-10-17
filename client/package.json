@@ -25,7 +25,8 @@
         "ios:open": "npm run ios:copy && npx cap open ios",
         "electron:copy": "npm run native:build && npx cap copy @capacitor-community/electron",
         "electron:open": "npm run electron:copy && npx cap open @capacitor-community/electron",
-        "electron:release": "npm run electron:copy && cd electron && npm run electron:release"
+        "electron:release": "npm run electron:copy && cd electron && npm run electron:release",
+        "electron:debug": "npm run electron:copy && cd electron && npm run electron:start"
     },
     "dependencies": {
         "@capacitor-community/electron": "^4.1.2",
