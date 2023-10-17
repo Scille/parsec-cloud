@@ -8,7 +8,7 @@ import {
 } from '@capacitor-community/electron';
 import chokidar from 'chokidar';
 import type { MenuItemConstructorOptions } from 'electron';
-import { app, BrowserWindow, Menu, MenuItem, nativeImage, Tray, session } from 'electron';
+import { app, BrowserWindow, Menu, MenuItem, nativeImage, Tray, session, dialog, ipcMain } from 'electron';
 import electronIsDev from 'electron-is-dev';
 import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
@@ -47,13 +47,11 @@ export function setupReloadWatcher(electronCapacitorApp: ElectronCapacitorApp): 
 
 // Define our class to manage our app.
 export class ElectronCapacitorApp {
-  private MainWindow: BrowserWindow | null = null;
+  private MainWindow: BrowserWindow;
   private SplashScreen: CapacitorSplashScreen | null = null;
-  private TrayIcon: Tray | null = null;
+  private TrayIcon: Tray;
   private CapacitorFileConfig: CapacitorElectronConfig;
-  private TrayMenuTemplate: (MenuItem | MenuItemConstructorOptions)[] = [
-    new MenuItem({ label: 'Quit App', role: 'quit' })
-  ];
+  private TrayMenuTemplate: (MenuItem | MenuItemConstructorOptions)[] = [];
   private AppMenuBarMenuTemplate: (MenuItem | MenuItemConstructorOptions)[] = [
     { role: process.platform === 'darwin' ? 'appMenu' : 'fileMenu' },
     { role: 'viewMenu' }
@@ -61,23 +59,30 @@ export class ElectronCapacitorApp {
   private mainWindowState;
   private loadWebApp;
   private customScheme: string;
+  private config: object;
+  public forceClose: boolean;
 
   constructor(
     capacitorFileConfig: CapacitorElectronConfig,
-    trayMenuTemplate?: (MenuItemConstructorOptions | MenuItem)[],
     appMenuBarMenuTemplate?: (MenuItemConstructorOptions | MenuItem)[]
   ) {
     this.CapacitorFileConfig = capacitorFileConfig;
 
     this.customScheme = this.CapacitorFileConfig.electron?.customUrlScheme ?? 'capacitor-electron';
 
-    if (trayMenuTemplate) {
-      this.TrayMenuTemplate = trayMenuTemplate;
-    }
+    this.TrayMenuTemplate = [
+      new MenuItem({ label: 'Quit App', click: () => {
+        this.forceClose = true;
+        app.quit();
+      } }),
+    ];
 
     if (appMenuBarMenuTemplate) {
       this.AppMenuBarMenuTemplate = appMenuBarMenuTemplate;
     }
+
+    this.config = {};
+    this.forceClose = false;
 
     // Setup our web app loader, this lets us load apps like react, vue, and angular without changing their build chains.
     this.loadWebApp = electronServe({
@@ -98,6 +103,27 @@ export class ElectronCapacitorApp {
 
   getCustomURLScheme(): string {
     return this.customScheme;
+  }
+
+  updateConfig(newConfig: object): void {
+    this.config = newConfig;
+
+    this.TrayMenuTemplate = [
+      new MenuItem({
+        label: this.config.hasOwnProperty('locale') && (this.config as any).locale === 'fr-FR' ? 'Quitter' : 'Quit',
+        click: () => {
+          this.forceClose = true;
+          app.quit();
+      } }),
+    ];
+    this.TrayIcon.setContextMenu(Menu.buildFromTemplate(this.TrayMenuTemplate));
+  }
+
+  getTray(): boolean {
+    if ('minimizeToTray' in this.config) {
+      return (this.config as any).minimizeToTray;
+    }
+    return false;
   }
 
   async init(): Promise<void> {
@@ -136,6 +162,22 @@ export class ElectronCapacitorApp {
     this.MainWindow.on('closed', () => {
       if (this.SplashScreen?.getSplashWindow() && !this.SplashScreen.getSplashWindow().isDestroyed()) {
         this.SplashScreen.getSplashWindow().close();
+      }
+    });
+
+    this.MainWindow.on('close', (event) => {
+      const tray = this.getTray();
+
+      if (tray) {
+        if (!this.forceClose) {
+          this.MainWindow.hide();
+          event.preventDefault();
+        }
+      } else {
+        if (!this.forceClose) {
+          this.MainWindow.webContents.send('close-request');
+          event.preventDefault();
+        }
       }
     });
 

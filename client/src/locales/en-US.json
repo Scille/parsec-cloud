@@ -8,6 +8,10 @@
         "license": "BUSL-1.1",
         "licenseLink": "https://spdx.org/licenses/BUSL-1.1.html"
     },
+    "quit": {
+        "title": "Quit the application",
+        "subtitle": "Are you sure you want to quit the application?"
+    },
     "workspaceRoles": {
         "reader": "Reader",
         "contributor": "Contributor",

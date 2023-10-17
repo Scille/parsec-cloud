@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { isElectron } from '@/parsec';
 import { Storage } from '@ionic/storage';
 import { DateTime } from 'luxon';
 
@@ -39,7 +40,13 @@ export class StorageManager {
   }
 
   async create(): Promise<Storage> {
-    return this.internalStore.create();
+    const storage = this.internalStore.create();
+
+    const config = await this.retrieveConfig();
+    if (isElectron()) {
+      window.electronAPI.sendConfig(config);
+    }
+    return storage;
   }
 
   async storeDevicesData(data: {[slug: string]: StoredDeviceData}): Promise<void> {
@@ -84,6 +91,7 @@ export class StorageManager {
       synchroWifiOnly: data.meteredConnection,
       unsyncFiles: data.unsyncFiles,
     });
+    window.electronAPI.sendConfig(data);
   }
 
   async retrieveConfig(): Promise<Config> {

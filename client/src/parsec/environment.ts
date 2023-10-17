@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Platform } from '@/parsec/types';
+import { isPlatform } from '@ionic/vue';
 
 // Vue templates cannot access `window`
 
@@ -37,4 +38,8 @@ export function isMacOS(): boolean {
 // implemented, but it could also prove useful when in a testing environment.
 export function needsMocks(): boolean {
   return !isDesktop() || isCypress();
+}
+
+export function isElectron(): boolean {
+  return isPlatform('electron') && !('Cypress' in window);
 }

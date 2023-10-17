@@ -29,16 +29,17 @@ import '@ionic/vue/css/display.css';
 
 import { formatTimeSince } from '@/common/date';
 import { formatFileSize } from '@/common/filesize';
-import { StorageManager } from '@/services/storageManager';
+import { Config, StorageManager } from '@/services/storageManager';
 import { DateTime } from 'luxon';
 import { FormattersKey, StorageManagerKey, NotificationKey } from '@/common/injectionKeys';
-import * as Path from '@/common/path';
 import { isPlatform } from '@ionic/vue';
 
 /* Theme variables */
 import '@/theme/global.scss';
 import { Platform, libparsec } from '@/plugins/libparsec';
 import { NotificationCenter } from '@/services/notificationCenter';
+import { Answer, askQuestion } from '@/components/core/ms-modal/MsQuestionModal.vue';
+import { isElectron } from '@/parsec';
 
 async function setupApp(): Promise<void> {
 
@@ -188,6 +189,24 @@ async function setupApp(): Promise<void> {
     };
     x();  // Fire-and-forget call
   }
+
+  if (isElectron()) {
+    window.electronAPI.receive('close-request', async (_data: any) => {
+      const answer = await askQuestion(t('quit.title'), t('quit.subtitle'));
+      if (answer === Answer.Yes) {
+        window.electronAPI.closeApp();
+      }
+    });
+  } else {
+    window.electronAPI = {
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      sendConfig: (_config: Config): void => {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      closeApp: (): void => {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      receive: (_channel: string, _f: (data: any) => Promise<void>): void => {},
+    };
+  }
 }
 
 declare global {
@@ -200,6 +219,11 @@ declare global {
     getPlatform: () => Platform,
     isDesktop: () => boolean,
     isLinux: () => boolean,
+    electronAPI: {
+      sendConfig: (config: Config) => void,
+      closeApp: () => void,
+      receive: (channel: string, f: (data: any) => Promise<void>) => void,
+    },
   }
 }
 
