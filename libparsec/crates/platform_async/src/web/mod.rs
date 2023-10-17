@@ -3,9 +3,28 @@
 pub mod oneshot;
 pub mod watch;
 
+use std::pin::Pin;
+
+pub struct Delay {
+    sleep: Pin<Box<gloo_timers::future::TimeoutFuture>>,
+}
+
+impl std::future::Future for Delay {
+    type Output = ();
+
+    fn poll(
+        mut self: Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Self::Output> {
+        self.sleep.as_mut().poll(cx)
+    }
+}
+
 #[inline(always)]
-pub async fn sleep(duration: std::time::Duration) {
-    gloo_timers::future::sleep(duration).await;
+pub fn sleep(duration: std::time::Duration) -> Delay {
+    Delay {
+        sleep: Box::pin(gloo_timers::future::sleep(duration)),
+    }
 }
 
 #[derive(Debug)]

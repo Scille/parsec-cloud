@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::pin::Pin;
+
 pub mod oneshot {
     pub use tokio::sync::oneshot::{
         channel,
@@ -16,9 +18,26 @@ pub mod watch {
     };
 }
 
+pub struct Delay {
+    sleep: Pin<Box<tokio::time::Sleep>>,
+}
+
+impl std::future::Future for Delay {
+    type Output = ();
+
+    fn poll(
+        mut self: Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Self::Output> {
+        self.sleep.as_mut().poll(cx)
+    }
+}
+
 #[inline(always)]
-pub fn sleep(duration: std::time::Duration) -> impl crate::future::Future<Output = ()> {
-    tokio::time::sleep(duration)
+pub fn sleep(duration: std::time::Duration) -> Delay {
+    Delay {
+        sleep: Box::pin(tokio::time::sleep(duration)),
+    }
 }
 
 #[derive(Debug)]
