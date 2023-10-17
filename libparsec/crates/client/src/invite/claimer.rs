@@ -487,8 +487,8 @@ impl UserClaimInProgress3Ctx {
 
         let new_local_device = Arc::new(LocalDevice::generate_new_device(
             organization_addr,
-            Some(device_id),
             profile,
+            Some(device_id),
             human_handle,
             device_label,
             Some(signing_key),

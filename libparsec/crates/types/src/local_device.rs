@@ -45,8 +45,8 @@ pub struct LocalDevice {
 impl LocalDevice {
     pub fn generate_new_device(
         organization_addr: BackendOrganizationAddr,
-        device_id: Option<DeviceID>,
         initial_profile: UserProfile,
+        device_id: Option<DeviceID>,
         human_handle: Option<HumanHandle>,
         device_label: Option<DeviceLabel>,
         signing_key: Option<SigningKey>,
