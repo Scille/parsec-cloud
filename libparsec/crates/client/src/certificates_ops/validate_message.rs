@@ -15,7 +15,7 @@ pub enum InvalidMessageError {
         error: DataError,
     },
     #[error("Message #{index} from `{sender}` at {timestamp}: at that time author didn't exist !")]
-    NonExistantAuthor {
+    NonExistentAuthor {
         index: IndexInt,
         sender: DeviceID,
         timestamp: DateTime,
@@ -110,7 +110,7 @@ async fn validate_message_internal(
 
         // Doesn't exist at the considered index :(
         Err(GetCertificateError::NonExisting | GetCertificateError::ExistButTooRecent { .. }) => {
-            let what = InvalidMessageError::NonExistantAuthor {
+            let what = InvalidMessageError::NonExistentAuthor {
                 index,
                 sender: sender.to_owned(),
                 timestamp,

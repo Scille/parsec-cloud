@@ -377,7 +377,7 @@ async fn inbound_sync(ops: &UserOps) -> Result<(), SyncError> {
 
             let last_version = match err {
                 InvalidManifestError::Corrupted { version, .. } => version,
-                InvalidManifestError::NonExistantAuthor { version, .. } => version,
+                InvalidManifestError::NonExistentAuthor { version, .. } => version,
                 InvalidManifestError::RevokedAuthor { version, .. } => version,
                 InvalidManifestError::AuthorRealmRoleCannotWrite { version, .. } => version,
                 InvalidManifestError::AuthorNoAccessToRealm { version, .. } => version,

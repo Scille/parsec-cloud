@@ -17,7 +17,7 @@ pub enum InvalidManifestError {
         error: Box<DataError>,
     },
     #[error("Manifest from vlob `{vlob}` version {version} (in realm {realm}, create by `{author}` on {timestamp}): at that time author didn't exist !")]
-    NonExistantAuthor {
+    NonExistentAuthor {
         realm: VlobID,
         vlob: VlobID,
         version: VersionInt,
@@ -191,7 +191,7 @@ async fn validate_manifest<M>(
 
         // Doesn't exist at the considered index :(
         Err(GetCertificateError::NonExisting | GetCertificateError::ExistButTooRecent { .. }) => {
-            let what = InvalidManifestError::NonExistantAuthor {
+            let what = InvalidManifestError::NonExistentAuthor {
                 realm: realm_id,
                 vlob: vlob_id,
                 version,
