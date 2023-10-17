@@ -8,8 +8,17 @@ use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
 
+enum FolderModification {
+    Create,
+    Remove,
+    Rename,
+}
+
 #[parsec_test(testbed = "minimal_client_ready")]
-async fn sync_root_non_placeholder(env: &TestbedEnv) {
+#[case::create_entry(FolderModification::Create)]
+#[case::remove_entry(FolderModification::Remove)]
+#[case::rename_entry(FolderModification::Rename)]
+async fn sync_root_non_placeholder(#[case] modification: FolderModification, env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_key: &SecretKey = env.template.get_stuff("wksp1_key");
@@ -33,26 +42,47 @@ async fn sync_root_non_placeholder(env: &TestbedEnv) {
     let base_children = workspace_manifest.children.to_owned();
 
     // Do a change requiring a sync
-
-    wksp1_ops
-        .create_folder(&"/new_folder".parse().unwrap())
-        .await
-        .unwrap();
-
+    let expected_children = match modification {
+        FolderModification::Create => {
+            let new_folder_id = wksp1_ops
+                .create_folder(&"/new_folder".parse().unwrap())
+                .await
+                .unwrap();
+            let mut expected_children = base_children.clone();
+            expected_children.insert("new_folder".parse().unwrap(), new_folder_id);
+            expected_children
+        }
+        FolderModification::Remove => {
+            wksp1_ops
+                .remove_entry(&"/foo".parse().unwrap())
+                .await
+                .unwrap();
+            let mut expected_children = base_children.clone();
+            expected_children.remove(&"foo".parse().unwrap());
+            expected_children
+        }
+        FolderModification::Rename => {
+            wksp1_ops
+                .rename_entry(
+                    &"/foo".parse().unwrap(),
+                    "foo_renamed".parse().unwrap(),
+                    false,
+                )
+                .await
+                .unwrap();
+            let mut expected_children = base_children.clone();
+            let foo_id = expected_children.remove(&"foo".parse().unwrap()).unwrap();
+            expected_children.insert("foo_renamed".parse().unwrap(), foo_id);
+            expected_children
+        }
+    };
     // Check the workspace manifest is need sync
     let workspace_manifest = wksp1_ops.data_storage.get_workspace_manifest();
     p_assert_eq!(workspace_manifest.need_sync, true);
     p_assert_eq!(workspace_manifest.speculative, false);
     p_assert_eq!(workspace_manifest.base.version, 1);
     p_assert_eq!(workspace_manifest.base.children, base_children);
-    p_assert_eq!(workspace_manifest.children.len(), base_children.len() + 1,);
-    assert!(workspace_manifest
-        .children
-        .contains_key(&"new_folder".parse().unwrap()));
-    let new_folder_id = *workspace_manifest
-        .children
-        .get(&"new_folder".parse().unwrap())
-        .unwrap();
+    p_assert_eq!(workspace_manifest.children, expected_children);
 
     // Mock server command `vlob_update`
     test_register_send_hook(
@@ -69,12 +99,6 @@ async fn sync_root_non_placeholder(env: &TestbedEnv) {
     wksp1_ops.sync().await.unwrap();
 
     // Check the user manifest is not longer need sync
-    let expected_children = {
-        let mut children = base_children;
-        children.insert("new_folder".parse().unwrap(), new_folder_id);
-        children
-    };
-
     let workspace_manifest = wksp1_ops.data_storage.get_workspace_manifest();
     p_assert_eq!(workspace_manifest.need_sync, false);
     p_assert_eq!(workspace_manifest.speculative, false);

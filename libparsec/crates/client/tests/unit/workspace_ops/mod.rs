@@ -3,5 +3,5 @@
 mod base;
 mod folder_transactions;
 mod stat_entry;
-mod sync;
+mod sync_root;
 mod utils;
