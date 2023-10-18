@@ -45,7 +45,7 @@ pub enum ClientStopWorkspaceError {
 pub struct WorkspaceInfo {
     pub id: VlobID,
     pub name: EntryName,
-    pub self_role: RealmRole,
+    pub self_current_role: RealmRole,
 }
 
 mod workspaces_ops {
@@ -420,7 +420,7 @@ impl Client {
         let infos = workspaces_entries
             .into_iter()
             .filter_map(|(id, name)| {
-                let self_role = match realms_roles.get(&id).cloned() {
+                let self_current_role = match realms_roles.get(&id).cloned() {
                     // Currently have access to the realm
                     Some(Some(role)) => role,
                     // No longer have access to the realm
@@ -437,7 +437,7 @@ impl Client {
                 Some(WorkspaceInfo {
                     id,
                     name,
-                    self_role,
+                    self_current_role,
                 })
             })
             .collect();

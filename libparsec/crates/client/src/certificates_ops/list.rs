@@ -221,7 +221,7 @@ pub struct WorkspaceUserAccessInfo {
     pub user_id: UserID,
     pub human_handle: Option<HumanHandle>,
     pub current_profile: UserProfile,
-    pub role: RealmRole,
+    pub current_role: RealmRole,
 }
 
 /// List users currently part of the given workspace (i.e. user not revoked
@@ -236,7 +236,7 @@ pub(super) async fn list_workspace_users(
     let mut infos = HashMap::with_capacity(role_certifs.len());
     for role_certif in role_certifs {
         // Ignore user that have lost their access
-        let role = match role_certif.role {
+        let current_role = match role_certif.role {
             None => {
                 infos.remove(&role_certif.user_id);
                 continue;
@@ -271,7 +271,7 @@ pub(super) async fn list_workspace_users(
             .await?
         {
             Some(user_update_certif) => user_update_certif.new_profile,
-            // Profile has never been udpated, use the initial one
+            // Profile has never been updated, use the initial one
             None => user_certif.profile,
         };
 
@@ -279,7 +279,7 @@ pub(super) async fn list_workspace_users(
             user_id: user_id.clone(),
             human_handle: user_certif.human_handle.to_owned(),
             current_profile,
-            role,
+            current_role,
         };
         infos.insert(user_id, user_info);
     }

@@ -155,7 +155,7 @@ class WorkspaceUserAccessInfo(Structure):
     user_id: UserID
     human_handle: Optional[HumanHandle]
     current_profile: UserProfile
-    role: RealmRole
+    current_role: RealmRole
 
 
 class ClientListWorkspaceUsersError(ErrorVariant):
@@ -178,7 +178,7 @@ class ClientListWorkspacesError(ErrorVariant):
 class WorkspaceInfo(Structure):
     id: VlobID
     name: EntryName
-    self_role: RealmRole
+    self_current_role: RealmRole
 
 
 async def client_list_workspaces(
