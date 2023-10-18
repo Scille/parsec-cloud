@@ -17,6 +17,7 @@ import {
   WorkspaceHandle,
   ClientStartWorkspaceError,
   GetWorkspaceNameErrorTag,
+  UserProfile,
 } from '@/parsec/types';
 import { getParsecHandle } from '@/parsec/routing';
 import { getClientInfo } from '@/parsec/login';
@@ -129,7 +130,11 @@ export async function getWorkspaceSharing(workspaceId: WorkspaceID, includeAllUs
 
       for (const sharing of result.value) {
         if (includeSelf || (!includeSelf && selfId !== sharing.userId)) {
-          value.push([{id: sharing.userId, humanHandle: sharing.humanHandle || {label: sharing.userId, email: ''}}, sharing.role]);
+          value.push([
+            // Setting profile to Standard, update when https://github.com/Scille/parsec-cloud/issues/5459 is done
+            {id: sharing.userId, humanHandle: sharing.humanHandle || {label: sharing.userId, email: ''}, profile: UserProfile.Standard},
+            sharing.role,
+          ]);
         }
       }
       if (includeAllUsers) {
@@ -137,7 +142,11 @@ export async function getWorkspaceSharing(workspaceId: WorkspaceID, includeAllUs
         if (usersResult.ok) {
           for (const user of usersResult.value) {
             if (!value.find((item) => item[0].id === user.id) && (includeSelf || (!includeSelf && user.id !== selfId))) {
-              value.push([{id: user.id, humanHandle: user.humanHandle || {label: user.id, email: ''}}, null]);
+              value.push([
+                // Setting profile to Standard, update when https://github.com/Scille/parsec-cloud/issues/5459 is done
+                {id: user.id, humanHandle: user.humanHandle || {label: user.id, email: ''}, profile: UserProfile.Standard},
+                null,
+              ]);
             }
           }
         }
@@ -148,19 +157,22 @@ export async function getWorkspaceSharing(workspaceId: WorkspaceID, includeAllUs
   } else {
     const value: Array<[UserTuple, WorkspaceRole | null]> = [[
       // cspell:disable-next-line
-      {id: '1', humanHandle: {label: 'Korgan Bloodaxe', email: 'korgan@gmail.com'}}, WorkspaceRole.Reader,
+      {id: '1', humanHandle: {label: 'Korgan Bloodaxe', email: 'korgan@gmail.com'}, profile: UserProfile.Standard}, WorkspaceRole.Reader,
     ], [
       // cspell:disable-next-line
-      {id: '2', humanHandle: {label: 'Cernd', email: 'cernd@gmail.com'}}, WorkspaceRole.Contributor,
+      {id: '2', humanHandle: {label: 'Cernd', email: 'cernd@gmail.com'}, profile: UserProfile.Admin}, WorkspaceRole.Contributor,
     ]];
 
     if (includeSelf) {
-      value.push([{id: 'me', humanHandle: {email: 'user@host.com', label: 'Gordon Freeman'}}, WorkspaceRole.Owner]);
+      value.push([
+        {id: 'me', humanHandle: {email: 'user@host.com', label: 'Gordon Freeman'}, profile: UserProfile.Admin},
+        WorkspaceRole.Owner,
+      ]);
     }
 
     if (includeAllUsers) {
       // cspell:disable-next-line
-      value.push([{id: '3', humanHandle: {label: 'Jaheira', email: 'jaheira@gmail.com'}}, null]);
+      value.push([{id: '3', humanHandle: {label: 'Jaheira', email: 'jaheira@gmail.com'}, profile: UserProfile.Outsider}, null]);
     }
 
     return {ok: true, value: value};
@@ -196,4 +208,39 @@ export async function stopWorkspace(workspaceHandle: WorkspaceHandle): Promise<R
   } else {
     return {ok: true, value: null};
   }
+}
+
+export function canChangeRole(
+  clientProfile: UserProfile,
+  userProfile: UserProfile,
+  clientRole: WorkspaceRole | null,
+  userRole: WorkspaceRole | null,
+  targetRole: WorkspaceRole | null,
+): boolean {
+  // Outsiders cannot do anything
+  if (clientProfile === UserProfile.Outsider) {
+    return false;
+  }
+  // Outsiders cannot be set to Managers or Owners
+  if (userProfile === UserProfile.Outsider && (targetRole === WorkspaceRole.Manager || targetRole === WorkspaceRole.Owner)) {
+    return false;
+  }
+  // Contributors or Readers cannot update roles
+  if (clientRole === null || clientRole === WorkspaceRole.Contributor || clientRole === WorkspaceRole.Reader) {
+    return false;
+  }
+  // Cannot change role of an Owner
+  if (userRole === WorkspaceRole.Owner) {
+    return false;
+  }
+  // Managers cannot update the role of other Managers
+  if (clientRole === WorkspaceRole.Manager && userRole === WorkspaceRole.Manager) {
+    return false;
+  }
+  // Managers cannot promote to Owners
+  if (clientRole === WorkspaceRole.Manager && targetRole === WorkspaceRole.Owner) {
+    return false;
+  }
+
+  return true;
 }

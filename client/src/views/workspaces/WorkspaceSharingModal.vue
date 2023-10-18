@@ -21,14 +21,19 @@
         <ion-list class="user-list">
           <workspace-user-role
             :disabled="true"
-            :user="{id: 'FAKE', humanHandle: {label: $t('WorkspaceSharing.currentUserLabel'), email: ''}}"
+            :user="{id: 'FAKE', humanHandle: {label: $t('WorkspaceSharing.currentUserLabel'), email: ''}, profile: UserProfile.Outsider}"
             :role="ownRole"
+            :client-profile="ownProfile"
+            :client-role="ownRole"
           />
           <workspace-user-role
+            :disabled="isSelectDisabled(entry[1])"
             v-for="entry in userRoles"
             :key="entry[0].id"
             :user="entry[0]"
             :role="entry[1]"
+            :client-profile="ownProfile"
+            :client-role="ownRole"
             @role-update="updateUserRole"
           />
         </ion-list>
@@ -45,7 +50,7 @@ import {
 } from '@ionic/vue';
 import { ref, Ref, watch, onUnmounted, onMounted, inject } from 'vue';
 import { MsModalResult } from '@/components/core/ms-types';
-import { WorkspaceID, WorkspaceRole, getWorkspaceSharing, UserTuple, shareWorkspace } from '@/parsec';
+import { WorkspaceID, WorkspaceRole, getWorkspaceSharing, UserTuple, shareWorkspace, UserProfile, getClientProfile } from '@/parsec';
 import { NotificationKey } from '@/common/injectionKeys';
 import { NotificationCenter, Notification, NotificationLevel } from '@/services/notificationCenter';
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
@@ -58,6 +63,7 @@ import { translateWorkspaceRole } from '@/common/translations';
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 const search = ref('');
 const { t } = useI18n();
+let ownProfile = UserProfile.Outsider;
 
 const props = defineProps<{
   workspaceId: WorkspaceID,
@@ -71,6 +77,27 @@ const userRoles: Ref<Array<[UserTuple, WorkspaceRole | null]>> = ref([]);
 const unwatchSearch = watch(search, async() => {
   await refreshSharingInfo(search.value);
 });
+
+function isSelectDisabled(role: WorkspaceRole | null): boolean {
+  // Outsider should not be able to change anything
+  if (ownProfile === UserProfile.Outsider) {
+    return true;
+  }
+  // If our role is not Manager or Owner, can't change anything
+  if (props.ownRole === null || props.ownRole === WorkspaceRole.Reader || props.ownRole === WorkspaceRole.Contributor) {
+    return true;
+  }
+  // If the user's role is Owner, can't change it
+  if (role === WorkspaceRole.Owner) {
+    return true;
+  }
+  // If our own role is Manager and the user's role is Manager, can't change it
+  if (role === WorkspaceRole.Manager && props.ownRole === WorkspaceRole.Manager) {
+    return true;
+  }
+
+  return false;
+}
 
 async function refreshSharingInfo(searchString = ''): Promise<void> {
   const result = await getWorkspaceSharing(props.workspaceId, true);
@@ -98,6 +125,7 @@ async function refreshSharingInfo(searchString = ''): Promise<void> {
 }
 
 onMounted(async () => {
+  ownProfile = await getClientProfile();
   await refreshSharingInfo();
 });
 
@@ -125,6 +153,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
       level: NotificationLevel.Error,
     }));
   }
+  await refreshSharingInfo();
 }
 
 function cancel(): Promise<boolean> {

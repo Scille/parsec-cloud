@@ -18,6 +18,7 @@
     <ion-item
       class="option body"
       :class="{selected: selectedOption?.key === option.key}"
+      :disabled="option.disabled"
       button
       lines="none"
       v-for="option in options"

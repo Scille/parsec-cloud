@@ -24,14 +24,14 @@ describe('Check workspace sharing modal', () => {
     cy.get('ion-list').find('.content').last().find('.filter-button').contains('Not shared');
     cy.get('ion-list').find('.content').eq(2).find('.filter-button').contains('Contributor');
 
-    cy.get('ion-list').find('.content').eq(1).find('.filter-button').click();
+    cy.get('ion-list').find('.content').eq(3).find('.filter-button').click();
     cy.get('.popover-viewport').find('ion-item').eq(0).contains('Reader');
     cy.get('.popover-viewport').find('ion-item').eq(1).contains('Contributor');
-    cy.get('.popover-viewport').find('ion-item').eq(2).contains('Manager');
-    cy.get('.popover-viewport').find('ion-item').eq(3).contains('Owner');
+    cy.get('.popover-viewport').find('ion-item').eq(2).contains('Manager').should('have.class', 'item-disabled');
+    cy.get('.popover-viewport').find('ion-item').eq(3).contains('Owner').should('have.class', 'item-disabled');
     cy.get('.popover-viewport').find('ion-item').eq(4).contains('Not shared');
-    cy.get('.popover-viewport').find('ion-item').eq(0).find('ion-icon').should('have.class', 'checked');
-    cy.get('.popover-viewport').find('ion-item').eq(0).find('ion-icon').should('have.class', 'selected');
+    cy.get('.popover-viewport').find('ion-item').eq(4).find('ion-icon').should('have.class', 'checked');
+    cy.get('.popover-viewport').find('ion-item').eq(4).find('ion-icon').should('have.class', 'selected');
   });
 
   it('Change user role', () => {

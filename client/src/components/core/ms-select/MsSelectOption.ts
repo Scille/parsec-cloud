@@ -2,7 +2,8 @@
 
 export interface MsSelectOption {
   label: string,
-  key: string
+  key: string,
+  disabled?: boolean,
 }
 
 export interface MsSelectSortByLabels {

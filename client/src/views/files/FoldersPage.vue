@@ -219,7 +219,6 @@ import { getTextInputFromUser } from '@/components/core/ms-modal/MsTextInputModa
 import { entryNameValidator } from '@/common/validators';
 import { Answer, askQuestion } from '@/components/core/ms-modal/MsQuestionModal.vue';
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
-import { Console } from 'console';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;

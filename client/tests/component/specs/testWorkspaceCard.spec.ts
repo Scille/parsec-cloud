@@ -5,7 +5,7 @@ import { DateTime } from 'luxon';
 import { mockI18n, getDefaultProvideConfig } from 'tests/component/support/mocks';
 import { IonAvatar } from '@ionic/vue';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
-import { WorkspaceRole, WorkspaceInfo } from '@/parsec';
+import { WorkspaceRole, WorkspaceInfo, UserProfile } from '@/parsec';
 
 mockI18n();
 
@@ -18,13 +18,13 @@ describe('Workspace Card', () => {
     name: 'My Workspace',
     sharing: [
       // cspell:disable-next-line
-      [{id: 'auser', humanHandle: {label: 'AUser', email: 'usera@gmail.com'}}, WorkspaceRole.Contributor],
+      [{id: 'auser', humanHandle: {label: 'AUser', email: 'usera@gmail.com'}, profile: UserProfile.Standard}, WorkspaceRole.Contributor],
       // cspell:disable-next-line
-      [{id: 'buser', humanHandle: {label: 'BUser', email: 'userb@gmail.com'}}, WorkspaceRole.Reader],
+      [{id: 'buser', humanHandle: {label: 'BUser', email: 'userb@gmail.com'}, profile: UserProfile.Standard}, WorkspaceRole.Reader],
       // cspell:disable-next-line
-      [{id: 'cuser', humanHandle: {label: 'CUser', email: 'userc@gmail.com'}}, WorkspaceRole.Owner],
+      [{id: 'cuser', humanHandle: {label: 'CUser', email: 'userc@gmail.com'}, profile: UserProfile.Standard}, WorkspaceRole.Owner],
       // cspell:disable-next-line
-      [{id: 'duser', humanHandle: {label: 'DUser', email: 'userd@gmail.com'}}, WorkspaceRole.Manager],
+      [{id: 'duser', humanHandle: {label: 'DUser', email: 'userd@gmail.com'}, profile: UserProfile.Standard}, WorkspaceRole.Manager],
     ],
     size: 60_817_408,
     selfRole: WorkspaceRole.Reader,
