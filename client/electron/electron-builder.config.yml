@@ -1,7 +1,7 @@
 appId: com.scille.parsec
 
 directories:
-  buildResources: resources
+  buildResources: assets
 
 files:
   - assets/**/*
@@ -18,7 +18,6 @@ nsis:
 
 win:
   target: nsis
-  icon: assets/appIcon.ico
 
 mac:
   category: your.app.category.type
