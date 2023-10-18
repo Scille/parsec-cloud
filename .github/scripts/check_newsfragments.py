@@ -60,15 +60,10 @@ def check_newsfragment(fragment: Path) -> Optional[bool]:
         else:
             data = json.loads(response.read())
             print(f"[{fragment_name}] issue#{id} => {data}")
-            if "pull_request" in data:
-                print(
-                    f"[{fragment_name}] fragment ID correspond to a pull request instead of an issue !"
-                )
+            if data["state"] == "open":
+                return True
             else:
-                if data["state"] == "open":
-                    return True
-                else:
-                    print(f"[{fragment_name}] fragment ID correspond to a closed issue !")
+                print(f"[{fragment_name}] fragment ID correspond to a closed issue/PR !")
         return False
     else:
         return None
