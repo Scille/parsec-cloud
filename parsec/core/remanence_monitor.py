@@ -164,20 +164,20 @@ async def monitor_remanent_workspaces(
                 available_workspaces, unavailable_workspaces = user_fs.get_all_workspaces()
 
                 # Clean up unavailable workspaces if necessary
-                cleanup_tasks_scheduled = any(
+                cleanup_tasks_scheduled = [
                     _on_read_rights_removed(workspace.workspace_id)
                     for workspace in unavailable_workspaces
-                )
+                ]
 
                 # Each workspace will have it own task that will start awake,
                 # then switch to idle
-                manager_tasks_scheduled = any(
+                manager_tasks_scheduled = [
                     _start_remanence_manager(workspace.workspace_id)
                     for workspace in available_workspaces
-                )
+                ]
 
                 # Set idle status if no task has been scheduled
-                if not manager_tasks_scheduled and not cleanup_tasks_scheduled:
+                if not any(manager_tasks_scheduled) and not any(cleanup_tasks_scheduled):
                     task_status.idle()
 
                 # The monitor is now started
