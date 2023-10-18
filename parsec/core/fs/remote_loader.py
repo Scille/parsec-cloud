@@ -710,6 +710,8 @@ class RemoteLoader(PyUserRemoteLoader):
         elif isinstance(rep, VlobReadRepBadVersion):
             raise FSRemoteManifestNotFoundBadVersion(entry_id)
         elif isinstance(rep, VlobReadRepBadEncryptionRevision):
+            # This might happen when the message for a new encryption revision has been processed yet.
+            # This is mitigated by making the message monitor prioritized (i.e running before the other monitors)
             raise FSBadEncryptionRevision(
                 f"Cannot fetch vlob {entry_id.hex}: Bad encryption revision provided"
             )
