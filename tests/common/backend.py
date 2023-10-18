@@ -68,7 +68,7 @@ def unused_tcp_port():
 
 def correct_addr(
     to_correct: Union[BackendAddr, LocalDevice, OrganizationFullData], port: int
-) -> BackendAddr:
+) -> Union[BackendAddr, LocalDevice, OrganizationFullData]:
     """
     Helper to fix a backend address so that it will reach the current server.
     This not needed when using `running_backend` (given in this case the
@@ -601,7 +601,7 @@ class RunningBackend:
     def offline(self, port: Optional[int] = None):
         return self.asgi_app.offline(port or self.addr.port)
 
-    def correct_addr(self, addr: BackendAddr | LocalDevice) -> BackendAddr:
+    def correct_addr(self, addr: BackendAddr | LocalDevice) -> Union[BackendAddr, LocalDevice]:
         return correct_addr(addr, self.addr.port)
 
     async def connection_factory(self) -> trio.abc.Stream:

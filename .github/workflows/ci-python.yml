@@ -285,7 +285,7 @@ jobs:
         timeout-minutes: 20
 
       - name: Hypothesis tests
-        run: poetry run pytest ${{ env.pytest-hypothesis-args }} tests --runslow -m hypothesis --numprocesses auto
+        run: poetry run pytest ${{ env.pytest-hypothesis-args }} tests --runslow -m hypothesis
         timeout-minutes: 30
 
       - name: Slow tests
