@@ -478,13 +478,54 @@ async fn same_realm_id(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal")]
-// TODO: Should not pass
-#[case(RealmRole::Owner)]
-// TODO: Should not pass
-#[case(RealmRole::Manager)]
 #[case(RealmRole::Contributor)]
 #[case(RealmRole::Reader)]
 async fn share_realm_with_outsider(#[case] role: RealmRole, env: &TestbedEnv) {
+    let vlob_id = VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap();
+    let env = env.customize(|builder| {
+        builder
+            .new_user("bob")
+            .with_initial_profile(UserProfile::Outsider);
+        builder
+            .new_user_realm("alice")
+            .customize(|event| event.realm_id = vlob_id)
+            .then_share_with("bob", Some(role));
+    });
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(&env, &alice).await;
+
+    let store = ops.store.for_write().await;
+    let (_, alice_signed) = env.get_user_certificate("alice");
+    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
+    let (_, bob_signed) = env.get_user_certificate("bob");
+    let (_, bob_dev1_signed) = env.get_device_certificate("bob@dev1");
+    let (_, alice_realm_role_signed) = env.get_last_realm_role_certificate("alice", vlob_id);
+    let (_, bob_realm_role_signed) = env.get_last_realm_role_certificate("bob", vlob_id);
+
+    let switch = ops
+        .add_certificates_batch(
+            &store,
+            0,
+            [
+                alice_signed,
+                alice_dev1_signed,
+                bob_signed,
+                bob_dev1_signed,
+                alice_realm_role_signed,
+                bob_realm_role_signed,
+            ]
+            .into_iter(),
+        )
+        .await
+        .unwrap();
+
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch,)
+}
+
+#[parsec_test(testbed = "minimal")]
+#[case(RealmRole::Owner)]
+#[case(RealmRole::Manager)]
+async fn share_realm_privileges_with_outsider(#[case] role: RealmRole, env: &TestbedEnv) {
     let vlob_id = VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap();
     let env = env.customize(|builder| {
         builder

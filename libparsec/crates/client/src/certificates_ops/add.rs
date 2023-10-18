@@ -1081,26 +1081,24 @@ async fn check_realm_role_certificate_consistency(
     )
     .await?;
 
-    // TODO: Something goes wrong there: Outsider should not be allowed to be
-    // MANAGER/OWNER of a shared realm (see share_realm_with_outsider test).
-
     match profile {
-        UserProfile::Standard | UserProfile::Admin => (),
         // OUTSIDER user:
         // - can be READER/COLLABORATOR
         // - cannot be MANAGER
         // - can only be OWNER of not-shared workspaces
-        UserProfile::Outsider => {
+        UserProfile::Outsider
+            if (cooked.role == Some(RealmRole::Owner) && !realm_current_roles.is_empty())
+                || cooked.role == Some(RealmRole::Manager) =>
+        {
             // Given self-signing is only allowed for the first realm role certificate,
             // a workspace with an outsider owner necessarily contains only this first
             // realm role certificate. Hence the only valid situation is if we are
             // currently adding this initial realm role certificate.
-            if !realm_current_roles.is_empty() {
-                let hint = mk_hint();
-                let what = InvalidCertificateError::RealmOutsiderCannotBeOwnerOrManager { hint };
-                return Err(AddCertificateError::InvalidCertificate(what));
-            }
+            let hint = mk_hint();
+            let what = InvalidCertificateError::RealmOutsiderCannotBeOwnerOrManager { hint };
+            return Err(AddCertificateError::InvalidCertificate(what));
         }
+        _ => (),
     }
 
     Ok(())
