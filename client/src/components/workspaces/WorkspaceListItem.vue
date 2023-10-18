@@ -30,7 +30,7 @@
     <!-- role user -->
     <div class="workspace-role">
       <workspace-tag-role
-        :role="workspace.selfRole"
+        :role="workspace.selfCurrentRole"
       />
     </div>
 

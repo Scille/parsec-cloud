@@ -37,7 +37,7 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
         const info: WorkspaceInfo = {
           id: result.value[i].id,
           name: result.value[i].name,
-          selfRole: result.value[i].selfRole,
+          selfCurrentRole: result.value[i].selfCurrentRole,
           sharing: [],
           size: 0,
           lastUpdated: DateTime.now(),
@@ -54,10 +54,10 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
     }
   } else {
     const value: Array<WorkspaceInfo> = [{
-      'id': '1', 'name': 'Trademeet', 'selfRole': WorkspaceRole.Owner, size: 934_583, lastUpdated: DateTime.now().minus(2000),
+      'id': '1', 'name': 'Trademeet', 'selfCurrentRole': WorkspaceRole.Owner, size: 934_583, lastUpdated: DateTime.now().minus(2000),
       availableOffline: false, sharing: [],
     }, {
-      'id': '2', 'name': 'The Copper Coronet', 'selfRole': WorkspaceRole.Manager, size: 3_489_534_274, lastUpdated: DateTime.now(),
+      'id': '2', 'name': 'The Copper Coronet', 'selfCurrentRole': WorkspaceRole.Manager, size: 3_489_534_274, lastUpdated: DateTime.now(),
       availableOffline: false, sharing: [],
     }];
 
@@ -131,9 +131,8 @@ export async function getWorkspaceSharing(workspaceId: WorkspaceID, includeAllUs
       for (const sharing of result.value) {
         if (includeSelf || (!includeSelf && selfId !== sharing.userId)) {
           value.push([
-            // Setting profile to Standard, update when https://github.com/Scille/parsec-cloud/issues/5459 is done
-            {id: sharing.userId, humanHandle: sharing.humanHandle || {label: sharing.userId, email: ''}, profile: UserProfile.Standard},
-            sharing.role,
+            {id: sharing.userId, humanHandle: sharing.humanHandle || {label: sharing.userId, email: ''}, profile: sharing.currentProfile},
+            sharing.currentRole,
           ]);
         }
       }
@@ -143,8 +142,7 @@ export async function getWorkspaceSharing(workspaceId: WorkspaceID, includeAllUs
           for (const user of usersResult.value) {
             if (!value.find((item) => item[0].id === user.id) && (includeSelf || (!includeSelf && user.id !== selfId))) {
               value.push([
-                // Setting profile to Standard, update when https://github.com/Scille/parsec-cloud/issues/5459 is done
-                {id: user.id, humanHandle: user.humanHandle || {label: user.id, email: ''}, profile: UserProfile.Standard},
+                {id: user.id, humanHandle: user.humanHandle || {label: user.id, email: ''}, profile: user.currentProfile},
                 null,
               ]);
             }

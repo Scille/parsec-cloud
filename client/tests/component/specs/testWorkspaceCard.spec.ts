@@ -27,7 +27,7 @@ describe('Workspace Card', () => {
       [{id: 'duser', humanHandle: {label: 'DUser', email: 'userd@gmail.com'}, profile: UserProfile.Standard}, WorkspaceRole.Manager],
     ],
     size: 60_817_408,
-    selfRole: WorkspaceRole.Reader,
+    selfCurrentRole: WorkspaceRole.Reader,
     availableOffline: true,
     lastUpdated: DateTime.fromISO('2023-05-08T12:00:00'),
   };
