@@ -1885,8 +1885,8 @@ fn struct_workspace_info_js_to_rs<'a>(
             }
         }
     };
-    let self_role = {
-        let js_val: Handle<JsString> = obj.get(cx, "selfRole")?;
+    let self_current_role = {
+        let js_val: Handle<JsString> = obj.get(cx, "selfCurrentRole")?;
         {
             let js_string = js_val.value(cx);
             enum_realm_role_js_to_rs(cx, js_string.as_str())?
@@ -1895,7 +1895,7 @@ fn struct_workspace_info_js_to_rs<'a>(
     Ok(libparsec::WorkspaceInfo {
         id,
         name,
-        self_role,
+        self_current_role,
     })
 }
 
@@ -1917,9 +1917,9 @@ fn struct_workspace_info_rs_to_js<'a>(
     js_obj.set(cx, "id", js_id)?;
     let js_name = JsString::try_new(cx, rs_obj.name).or_throw(cx)?;
     js_obj.set(cx, "name", js_name)?;
-    let js_self_role =
-        JsString::try_new(cx, enum_realm_role_rs_to_js(rs_obj.self_role)).or_throw(cx)?;
-    js_obj.set(cx, "selfRole", js_self_role)?;
+    let js_self_current_role =
+        JsString::try_new(cx, enum_realm_role_rs_to_js(rs_obj.self_current_role)).or_throw(cx)?;
+    js_obj.set(cx, "selfCurrentRole", js_self_current_role)?;
     Ok(js_obj)
 }
 
@@ -1950,8 +1950,15 @@ fn struct_workspace_user_access_info_js_to_rs<'a>(
             }
         }
     };
-    let role = {
-        let js_val: Handle<JsString> = obj.get(cx, "role")?;
+    let current_profile = {
+        let js_val: Handle<JsString> = obj.get(cx, "currentProfile")?;
+        {
+            let js_string = js_val.value(cx);
+            enum_user_profile_js_to_rs(cx, js_string.as_str())?
+        }
+    };
+    let current_role = {
+        let js_val: Handle<JsString> = obj.get(cx, "currentRole")?;
         {
             let js_string = js_val.value(cx);
             enum_realm_role_js_to_rs(cx, js_string.as_str())?
@@ -1960,7 +1967,8 @@ fn struct_workspace_user_access_info_js_to_rs<'a>(
     Ok(libparsec::WorkspaceUserAccessInfo {
         user_id,
         human_handle,
-        role,
+        current_profile,
+        current_role,
     })
 }
 
@@ -1977,8 +1985,12 @@ fn struct_workspace_user_access_info_rs_to_js<'a>(
         None => JsNull::new(cx).as_value(cx),
     };
     js_obj.set(cx, "humanHandle", js_human_handle)?;
-    let js_role = JsString::try_new(cx, enum_realm_role_rs_to_js(rs_obj.role)).or_throw(cx)?;
-    js_obj.set(cx, "role", js_role)?;
+    let js_current_profile =
+        JsString::try_new(cx, enum_user_profile_rs_to_js(rs_obj.current_profile)).or_throw(cx)?;
+    js_obj.set(cx, "currentProfile", js_current_profile)?;
+    let js_current_role =
+        JsString::try_new(cx, enum_realm_role_rs_to_js(rs_obj.current_role)).or_throw(cx)?;
+    js_obj.set(cx, "currentRole", js_current_role)?;
     Ok(js_obj)
 }
 

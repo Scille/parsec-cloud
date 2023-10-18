@@ -220,13 +220,14 @@ export interface UserInfo {
 export interface WorkspaceInfo {
     id: VlobID
     name: EntryName
-    selfRole: RealmRole
+    selfCurrentRole: RealmRole
 }
 
 export interface WorkspaceUserAccessInfo {
     userId: UserID
     humanHandle: HumanHandle | null
-    role: RealmRole
+    currentProfile: UserProfile
+    currentRole: RealmRole
 }
 
 // BootstrapOrganizationError

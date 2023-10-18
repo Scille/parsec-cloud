@@ -1973,8 +1973,8 @@ fn struct_workspace_info_js_to_rs(obj: JsValue) -> Result<libparsec::WorkspaceIn
             })
             .map_err(|_| TypeError::new("Not a valid EntryName"))?
     };
-    let self_role = {
-        let js_val = Reflect::get(&obj, &"selfRole".into())?;
+    let self_current_role = {
+        let js_val = Reflect::get(&obj, &"selfCurrentRole".into())?;
         {
             let raw_string = js_val.as_string().ok_or_else(|| {
                 let type_error = TypeError::new("value is not a string");
@@ -1987,7 +1987,7 @@ fn struct_workspace_info_js_to_rs(obj: JsValue) -> Result<libparsec::WorkspaceIn
     Ok(libparsec::WorkspaceInfo {
         id,
         name,
-        self_role,
+        self_current_role,
     })
 }
 
@@ -2006,8 +2006,9 @@ fn struct_workspace_info_rs_to_js(rs_obj: libparsec::WorkspaceInfo) -> Result<Js
     Reflect::set(&js_obj, &"id".into(), &js_id)?;
     let js_name = JsValue::from_str(rs_obj.name.as_ref());
     Reflect::set(&js_obj, &"name".into(), &js_name)?;
-    let js_self_role = JsValue::from_str(enum_realm_role_rs_to_js(rs_obj.self_role));
-    Reflect::set(&js_obj, &"selfRole".into(), &js_self_role)?;
+    let js_self_current_role =
+        JsValue::from_str(enum_realm_role_rs_to_js(rs_obj.self_current_role));
+    Reflect::set(&js_obj, &"selfCurrentRole".into(), &js_self_current_role)?;
     Ok(js_obj)
 }
 
@@ -2035,8 +2036,19 @@ fn struct_workspace_user_access_info_js_to_rs(
             Some(struct_human_handle_js_to_rs(js_val)?)
         }
     };
-    let role = {
-        let js_val = Reflect::get(&obj, &"role".into())?;
+    let current_profile = {
+        let js_val = Reflect::get(&obj, &"currentProfile".into())?;
+        {
+            let raw_string = js_val.as_string().ok_or_else(|| {
+                let type_error = TypeError::new("value is not a string");
+                type_error.set_cause(&js_val);
+                JsValue::from(type_error)
+            })?;
+            enum_user_profile_js_to_rs(raw_string.as_str())
+        }?
+    };
+    let current_role = {
+        let js_val = Reflect::get(&obj, &"currentRole".into())?;
         {
             let raw_string = js_val.as_string().ok_or_else(|| {
                 let type_error = TypeError::new("value is not a string");
@@ -2049,7 +2061,8 @@ fn struct_workspace_user_access_info_js_to_rs(
     Ok(libparsec::WorkspaceUserAccessInfo {
         user_id,
         human_handle,
-        role,
+        current_profile,
+        current_role,
     })
 }
 
@@ -2065,8 +2078,10 @@ fn struct_workspace_user_access_info_rs_to_js(
         None => JsValue::NULL,
     };
     Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
-    let js_role = JsValue::from_str(enum_realm_role_rs_to_js(rs_obj.role));
-    Reflect::set(&js_obj, &"role".into(), &js_role)?;
+    let js_current_profile = JsValue::from_str(enum_user_profile_rs_to_js(rs_obj.current_profile));
+    Reflect::set(&js_obj, &"currentProfile".into(), &js_current_profile)?;
+    let js_current_role = JsValue::from_str(enum_realm_role_rs_to_js(rs_obj.current_role));
+    Reflect::set(&js_obj, &"currentRole".into(), &js_current_role)?;
     Ok(js_obj)
 }
 
