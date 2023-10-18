@@ -220,6 +220,7 @@ pub(super) async fn get_user_device(
 pub struct WorkspaceUserAccessInfo {
     pub user_id: UserID,
     pub human_handle: Option<HumanHandle>,
+    pub current_profile: UserProfile,
     pub role: RealmRole,
 }
 
@@ -265,9 +266,19 @@ pub(super) async fn list_workspace_users(
             Err(GetCertificateError::Internal(err)) => return Err(err),
         };
 
+        let current_profile = match store
+            .get_last_user_update_certificate(UpTo::Current, user_id.clone())
+            .await?
+        {
+            Some(user_update_certif) => user_update_certif.new_profile,
+            // Profile has never been udpated, use the initial one
+            None => user_certif.profile,
+        };
+
         let user_info = WorkspaceUserAccessInfo {
             user_id: user_id.clone(),
             human_handle: user_certif.human_handle.to_owned(),
+            current_profile,
             role,
         };
         infos.insert(user_id, user_info);

@@ -154,6 +154,7 @@ async def client_get_user_device(
 class WorkspaceUserAccessInfo(Structure):
     user_id: UserID
     human_handle: Optional[HumanHandle]
+    current_profile: UserProfile
     role: RealmRole
 
 
