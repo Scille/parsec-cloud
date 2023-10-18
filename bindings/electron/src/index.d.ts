@@ -219,14 +219,15 @@ export interface UserInfo {
 export interface WorkspaceInfo {
     id: string
     name: string
-    selfRole: RealmRole
+    selfCurrentRole: RealmRole
 }
 
 
 export interface WorkspaceUserAccessInfo {
     userId: string
     humanHandle: HumanHandle | null
-    role: RealmRole
+    currentProfile: UserProfile
+    currentRole: RealmRole
 }
 
 
