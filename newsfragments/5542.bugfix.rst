@@ -1,1 +1,0 @@
-Fix a concurrency issue causing connection loss when logging in after a re-encryption.

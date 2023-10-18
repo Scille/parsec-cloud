@@ -5,6 +5,16 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.16.0-rc.7 (2023-10-18)
+--------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix a concurrency issue causing connection loss when logging in after a re-
+  encryption.  (`#5542 <https://github.com/Scille/parsec-cloud/issues/5542>`__)
+
+
 Parsec v2.16.0-rc.6 (2023-10-16)
 --------------------------------
 
