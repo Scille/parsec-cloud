@@ -215,6 +215,8 @@ def pytest_collection_modifyitems(config, items):
             import qtrio
 
             item.add_marker(pytest.mark.trio(run=qtrio.run))
+        if "hypothesis_settings" in getattr(item, "fixturenames", ()):
+            item.add_marker("hypothesis")
 
     # Divide tests into slices of equal size
     slices_to_run, total_slices = config.getoption("--slice-tests")
