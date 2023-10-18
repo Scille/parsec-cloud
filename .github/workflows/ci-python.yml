@@ -22,6 +22,12 @@ env:
     --side-effects-timeout=10
     -vv
     -x
+  pytest-hypothesis-args: >-
+    --durations=10
+    --side-effects-timeout=10
+    -vv
+    -x
+    --hypothesis-max-examples 50
   # TODO: We stick to PostgreSQL 12 for the moment given later versions are
   # much slower (postgresql tests runs in ~9mn on 12 vs ~36mn on 14 !)
   postgresql-version: 12
@@ -279,5 +285,9 @@ jobs:
         timeout-minutes: 20
 
       - name: Hypothesis tests
-        run: poetry run pytest ${{ env.pytest-base-args }} tests --runslow -m slow --numprocesses auto --hypothesis-max-examples 50
-        timeout-minutes: 60
+        run: poetry run pytest ${{ env.pytest-hypothesis-args }} tests --runslow -m hypothesis
+        timeout-minutes: 30
+
+      - name: Slow tests
+        run: poetry run pytest ${{ env.pytest-base-args }} tests --runslow -m "slow and not hypothesis" --numprocesses auto
+        timeout-minutes: 30

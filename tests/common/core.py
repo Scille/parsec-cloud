@@ -168,6 +168,10 @@ def global_core_monitors_freeze(monkeypatch: pytest.MonkeyPatch):
         "parsec.core.remanence_monitor.freeze_remanence_monitor_mockpoint",
         _wait_for_monitor_unfrozen,
     )
+    monkeypatch.setattr(
+        "parsec.core.archiving_monitor.freeze_archiving_monitor_mockpoint",
+        _wait_for_monitor_unfrozen,
+    )
 
     def _global_core_monitors_freeze(frozen: bool):
         nonlocal monitor_are_unfrozen

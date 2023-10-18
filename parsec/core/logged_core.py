@@ -456,11 +456,19 @@ async def logged_core_factory(
         preferred_language=config.gui_language,
         workspace_storage_cache_size=config.workspace_storage_cache_size,
     ) as user_fs:
+        # Archiving monitor is prioritized
+        # This means that non-prioritized monitors have to wait for the archiving monitor to be started
+        # This is necessary to make sure the workspaces expose the correct archiving state.
         backend_conn.register_monitor(
             "archiving monitor", partial(monitor_archiving, user_fs, event_bus), prioritized=True
         )
+        # Messages monitor is prioritized
+        # This means that non-prioritized monitors have to wait for the messages monitor to be started
+        # This is necessary to make sure current rights and encryption revision are correct.
+        # This is especially important when many changes have occured since the last time the device was connected.
+        # See issue #5542: https://github.com/Scille/parsec-cloud/issues/5542
         backend_conn.register_monitor(
-            "messages monitor", partial(monitor_messages, user_fs, event_bus)
+            "messages monitor", partial(monitor_messages, user_fs, event_bus), prioritized=True
         )
         backend_conn.register_monitor("sync monitor", partial(monitor_sync, user_fs, event_bus))
         backend_conn.register_monitor(
