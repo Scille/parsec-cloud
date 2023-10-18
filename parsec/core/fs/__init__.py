@@ -2,14 +2,12 @@
 from __future__ import annotations
 
 from parsec.core.fs.exceptions import (
-    # Remote operation errors
     FSBackendOfflineError,
     FSBadEncryptionRevision,
     FSCrossDeviceError,
     FSDeviceNotFoundError,
     FSDirectoryNotEmptyError,
     FSEndOfFileError,
-    # Generic classes
     FSError,
     FSFileExistsError,
     FSFileNotFoundError,
@@ -18,11 +16,13 @@ from parsec.core.fs.exceptions import (
     FSInvalidTrustchainError,
     FSIsADirectoryError,
     FSLocalOperationError,
+    FSLocalStorageClosedError,
+    FSLocalStorageError,
+    FSLocalStorageOperationalError,
     FSNameTooLongError,
     FSNoAccessError,
     FSNotADirectoryError,
     FSOperationError,
-    # Local operation errors
     FSPermissionError,
     FSReadOnlyError,
     FSRemoteBlockNotFound,
@@ -37,7 +37,6 @@ from parsec.core.fs.exceptions import (
     FSWorkspaceInMaintenance,
     FSWorkspaceNoAccess,
     FSWorkspaceNoReadAccess,
-    # Misc errors
     FSWorkspaceNotFoundError,
     FSWorkspaceNotInMaintenance,
     FSWorkspaceNoWriteAccess,
@@ -71,6 +70,10 @@ __all__ = (
     # Misc errors
     "FSWorkspaceNotFoundError",
     "FSWorkspaceTimestampedTooEarly",
+    # Local storage errors
+    "FSLocalStorageError",
+    "FSLocalStorageOperationalError",
+    "FSLocalStorageClosedError",
     # Local operation errors
     "FSPermissionError",
     "FSNoAccessError",

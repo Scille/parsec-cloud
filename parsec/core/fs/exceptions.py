@@ -7,6 +7,7 @@ Define all the FSError classes, using the following hierarchy:
     FSInternalError (Exception)
     FSError (Exception)
     +-- FSMiscError
+    +-- FSLocalStorageError
     +-- FSOperationError (OSError)
         +-- FSLocalOperationError
         +-- FSRemoteOperationError
@@ -152,14 +153,18 @@ class FSNoSynchronizationRequired(FSInternalError):
     pass
 
 
-class FSLocalStorageClosedError(FSInternalError):
-    pass
-
-
 # Local storage errors
 
 
-class FSLocalStorageOperationalError(FSError):
+class FSLocalStorageError(FSError):
+    pass
+
+
+class FSLocalStorageClosedError(FSLocalStorageError):
+    pass
+
+
+class FSLocalStorageOperationalError(FSLocalStorageError):
     pass
 
 

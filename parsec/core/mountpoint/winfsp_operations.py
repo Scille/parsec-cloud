@@ -21,7 +21,13 @@ from winfspy.plumbing import NTSTATUS, SecurityDescriptor, dt_to_filetime
 
 from parsec._parsec import CoreEvent, DateTime
 from parsec.api.data import EntryID, EntryName
-from parsec.core.fs import FSEndOfFileError, FSLocalOperationError, FsPath, FSRemoteOperationError
+from parsec.core.fs import (
+    FSEndOfFileError,
+    FSLocalOperationError,
+    FSLocalStorageError,
+    FsPath,
+    FSRemoteOperationError,
+)
 from parsec.core.fs.workspacefs.file_transactions import FileDescriptor
 from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess, TrioDealockTimeoutError
@@ -144,6 +150,12 @@ def get_path_and_translate_error(
             timestamp=timestamp,
         )
         raise NTStatusError(exc.ntstatus) from exc
+
+    except FSLocalStorageError as exc:
+        # A local storage error means the storage is either closed or closing
+        # Operational exceptions are re-raised in the storage context
+        # So we can simply ignore it here, no reason to report it
+        raise NTStatusError(NTSTATUS.STATUS_NO_SUCH_DEVICE) from exc
 
     except (Cancelled, RunFinishedError) as exc:
         # WinFSP teardown operation doesn't make sure no concurrent operation
