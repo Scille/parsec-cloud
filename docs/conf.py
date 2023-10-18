@@ -28,6 +28,7 @@ import os
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
+    "sphinx_copybutton",
     "sphinx_rtd_theme",
     # Allow to use svg images in latex build.
     # https://www.sphinx-doc.org/en/master/usage/extensions/imgconverter.html
