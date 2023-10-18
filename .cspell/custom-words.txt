@@ -78,6 +78,7 @@ confdir
 conftest
 Consts
 coordinatorlayout
+copybutton
 coro
 corofn
 Couldnt
