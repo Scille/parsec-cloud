@@ -74,13 +74,14 @@ export async function getClientInfo(): Promise<Result<ClientInfo, ClientInfoErro
   }
 }
 
-export async function getClientProfile(): Promise<UserProfile | null> {
+export async function getClientProfile(): Promise<UserProfile> {
   const result = await getClientInfo();
 
   if (result.ok) {
     return result.value.currentProfile;
   } else {
-    return null;
+    // Outsider is the most restrictive
+    return UserProfile.Outsider;
   }
 }
 

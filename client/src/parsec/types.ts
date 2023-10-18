@@ -100,6 +100,7 @@ import type {
   EntryStatFile as ParsecEntryStatFile,
   UserID,
   HumanHandle,
+  UserProfile,
 } from '@/plugins/libparsec';
 
 import {
@@ -137,6 +138,7 @@ interface GetWorkspaceNameError {
 interface UserTuple {
   id: UserID,
   humanHandle: HumanHandle,
+  profile: UserProfile,
 }
 
 interface WorkspaceInfo extends ParsecWorkspaceInfo {

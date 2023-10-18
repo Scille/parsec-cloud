@@ -21,10 +21,9 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue';
-import { WorkspaceRole } from '@/parsec';
+import { defineProps, defineEmits, computed } from 'vue';
+import { UserProfile, WorkspaceRole, canChangeRole } from '@/parsec';
 import MsSelect from '@/components/core/ms-select/MsSelect.vue';
-import { Ref, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { MsSelectOption } from '@/components/core/ms-select/MsSelectOption';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
@@ -33,10 +32,12 @@ import { translateWorkspaceRole } from '@/common/translations';
 
 const { t } = useI18n();
 
-defineProps<{
+const props = defineProps<{
   user: UserTuple
   role: WorkspaceRole | null
-  disabled?: boolean
+  disabled?: boolean,
+  clientProfile: UserProfile,
+  clientRole: WorkspaceRole | null
 }>();
 
 defineEmits<{
@@ -45,13 +46,24 @@ defineEmits<{
 
 const NOT_SHARED_KEY = 'not_shared';
 
-const options: Ref<MsSelectOption[]> = ref([
-  { key:  WorkspaceRole.Reader, label: translateWorkspaceRole(t, WorkspaceRole.Reader) },
-  { key: WorkspaceRole.Contributor, label: translateWorkspaceRole(t, WorkspaceRole.Contributor) },
-  { key: WorkspaceRole.Manager, label: translateWorkspaceRole(t, WorkspaceRole.Manager) },
-  { key: WorkspaceRole.Owner, label: translateWorkspaceRole(t, WorkspaceRole.Owner) },
-  { key: NOT_SHARED_KEY, label: translateWorkspaceRole(t, null) },
-]);
+const options = computed((): MsSelectOption[] => {
+  return [{
+    key:  WorkspaceRole.Reader, label: translateWorkspaceRole(t, WorkspaceRole.Reader),
+    disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, WorkspaceRole.Reader),
+  }, {
+    key: WorkspaceRole.Contributor, label: translateWorkspaceRole(t, WorkspaceRole.Contributor),
+    disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, WorkspaceRole.Contributor),
+  }, {
+    key: WorkspaceRole.Manager, label: translateWorkspaceRole(t, WorkspaceRole.Manager),
+    disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, WorkspaceRole.Manager),
+  }, {
+    key: WorkspaceRole.Owner, label: translateWorkspaceRole(t, WorkspaceRole.Owner),
+    disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, WorkspaceRole.Owner),
+  }, {
+    key: NOT_SHARED_KEY, label: translateWorkspaceRole(t, null),
+    disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, null),
+  }];
+});
 
 function getRoleFromString(role: string): WorkspaceRole | null {
   if (role === NOT_SHARED_KEY) {
