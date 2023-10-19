@@ -805,10 +805,6 @@ fn quote_type_as_fn_getter_ret_type(ty: &FieldType) -> TokenStream {
             let nested = quote_type_as_fn_getter_ret_type(nested);
             quote! { Option<#nested> }
         }
-        FieldType::Option(nested) => {
-            let nested = quote_type_as_fn_getter_ret_type(nested);
-            quote! { Option<#nested> }
-        }
         FieldType::Tuple(_) => {
             quote! { &'py PyTuple }
         }
@@ -902,11 +898,6 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
             quote! { #field_path.as_ref().map(|y| #nested_conversion) }
         }
         FieldType::NonRequiredOption(nested) => {
-            let nested_name = quote! { y };
-            let nested_conversion = quote_type_as_fn_getter_conversion(&nested_name, nested);
-            quote! { #field_path.as_ref().map(|y| #nested_conversion) }
-        }
-        FieldType::Option(nested) => {
             let nested_name = quote! { y };
             let nested_conversion = quote_type_as_fn_getter_conversion(&nested_name, nested);
             quote! { #field_path.as_ref().map(|y| #nested_conversion) }
@@ -1041,10 +1032,6 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
             let nested = quote_type_as_fn_new_param(nested);
             quote! { Option<#nested> }
         }
-        FieldType::Option(nested) => {
-            let nested = quote_type_as_fn_new_param(nested);
-            quote! { Option<#nested> }
-        }
         FieldType::Tuple(items) => {
             let nested = items.iter().map(quote_type_as_fn_new_param);
             quote! { (#(#nested),*) }
@@ -1151,7 +1138,7 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
             let nested_conversion = internal_quote_field_as_fn_new_conversion(&nested_name, nested);
             quote! { #field_name.map(|x| #nested_conversion) }
         }
-        FieldType::RequiredOption(nested) | FieldType::Option(nested) => {
+        FieldType::RequiredOption(nested) => {
             let nested_name = format_ident!("x");
             let nested_conversion = internal_quote_field_as_fn_new_conversion(&nested_name, nested);
             quote! {

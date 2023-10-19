@@ -5,7 +5,7 @@
         {
             // Claimer ask for device_label, but greeter has final word on this
             "name": "requested_device_label",
-            "type": "Option<DeviceLabel>"
+            "type": "RequiredOption<DeviceLabel>"
         },
         {
             "name": "verify_key",

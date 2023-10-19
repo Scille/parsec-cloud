@@ -19,7 +19,6 @@ macro_rules! generate_field_type_enum {
             // - `NonRequiredOption` => the field can be missing or its value to be null.
             RequiredOption(Box<FieldType>),
             NonRequiredOption(Box<FieldType>),
-            Option(Box<FieldType>),
             Tuple(Vec<FieldType>),
 
             // Custom types
@@ -69,11 +68,6 @@ macro_rules! generate_field_type_enum {
                         let nested = &s["NonRequiredOption<".len()..s.len() - 1];
                         let nested = FieldType::from_json_type(nested.trim(), allowed_extra_types);
                         FieldType::NonRequiredOption(Box::new(nested))
-                    },
-                    (s, _) if s.starts_with("Option<") && s.ends_with(">") => {
-                        let nested = &s["Option<".len()..s.len() - 1];
-                        let nested = FieldType::from_json_type(nested.trim(), allowed_extra_types);
-                        FieldType::Option(Box::new(nested))
                     },
                     (s, _) if s.starts_with("(") && s.ends_with(")") => {
                         let elems = s[1..s.len()-1].split(",");
@@ -144,12 +138,6 @@ macro_rules! generate_field_type_enum {
                             Option<#nested>
                         }
                     }
-                    FieldType::Option(nested) => {
-                        let nested = nested.to_rust_type();
-                        quote!{
-                            Option<#nested>
-                        }
-                    }
                     FieldType::Tuple(elems) => {
                         let elems = elems.iter().map(|e| e.to_rust_type()).collect::<Vec<TokenStream>>();
                         quote!{
@@ -199,12 +187,6 @@ macro_rules! generate_field_type_enum {
                         }
                     }
                     FieldType::NonRequiredOption(nested) => {
-                        let nested = to_serde_as_or_underscore(nested);
-                        quote!{
-                            Option<#nested>
-                        }
-                    }
-                    FieldType::Option(nested) => {
                         let nested = to_serde_as_or_underscore(nested);
                         quote!{
                             Option<#nested>

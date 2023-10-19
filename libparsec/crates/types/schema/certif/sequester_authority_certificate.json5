@@ -5,7 +5,7 @@
         // Override author field to always uses None given this certificate can only be signed by the root key
         {
             "name": "author",
-            "type": "Option<DeviceID>"
+            "type": "RequiredOption<DeviceID>"
         },
         {
             "name": "timestamp",
