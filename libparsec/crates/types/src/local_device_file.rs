@@ -113,7 +113,10 @@ impl DeviceFile {
     }
 }
 
+parsec_data!("schema/local_device/legacy_device_file_password.json5");
+
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[serde(from = "LegacyDeviceFilePasswordData")]
 pub struct LegacyDeviceFilePassword {
     pub salt: Bytes,
     pub ciphertext: Bytes,
@@ -121,21 +124,21 @@ pub struct LegacyDeviceFilePassword {
     pub device_label: Option<DeviceLabel>,
 }
 
-/// Represents a legacy device file. This enum is mandatory because legacy device
-/// files used to be serialized with a `type` field set to `password`. In order to
-/// enforce this property serde's `tag` attribute is set to `type` field here.
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "lowercase")]
-#[serde(tag = "type")]
-pub enum LegacyDeviceFile {
-    Password(LegacyDeviceFilePassword),
-}
-
-impl LegacyDeviceFile {
+impl LegacyDeviceFilePassword {
     pub fn load(serialized: &[u8]) -> Result<Self, &'static str> {
         rmp_serde::from_slice(serialized).map_err(|_| "Invalid serialization")
     }
 }
+
+impl_transparent_data_format_conversion!(
+    LegacyDeviceFilePassword,
+    LegacyDeviceFilePasswordData,
+    salt,
+    ciphertext,
+    human_handle,
+    device_label,
+);
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum DeviceFileType {
