@@ -540,6 +540,7 @@ pub fn {{ meth.name | snake2camel }}(
 {{ param_name }}: {{ function_param_type(param_type) }}{{ "" if loop.last else ", " }}
 {%- endfor -%}
 ) -> Promise {
+    crate::init_sentry();
     future_to_promise(async move {
 {# Cook param if needed (typically for string-based types) #}
 {% for param_name, param_type in meth.params.items() %}
@@ -574,6 +575,7 @@ pub fn {{ meth.name | snake2camel }}(
 {{ param_name }}: {{ function_param_type(param_type) }}{{ "" if loop.last else ", " }}
 {%- endfor -%}
 ) -> Promise {
+    crate::init_sentry();
     future_to_promise(async move {
 {# Cook param if needed (typically for string-based types) #}
 {%- for param_name, param_type in meth.params.items() %}

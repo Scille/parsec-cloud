@@ -565,6 +565,7 @@ fn {{ enum_js_to_rs_function_name(enum) }}<'a>(cx: &mut impl Context<'a>, raw_va
 
 {%- macro render_async_function(meth) %}
 fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
 {# Convert params #}
 {% for param_name, param_type in meth.params.items() %}
 {% if param_type.kind == "optional" %}
@@ -620,6 +621,7 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 {%- macro render_sync_function(meth) %}
 fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
 {# Convert params #}
 {% for param_name, param_type in meth.params.items() %}
 {% if param_type.kind == "optional" %}

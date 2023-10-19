@@ -22,6 +22,8 @@ wasm-bindgen-futures = { workspace = true }
 js-sys = { workspace = true }
 log = { workspace = true }
 console_log = { workspace = true }
+sentry = { workspace = true, features = ["backtrace", "contexts", "debug-images", "panic", "transport"] }
+once_cell = { workspace = true }
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
