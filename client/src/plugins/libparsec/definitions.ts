@@ -79,8 +79,8 @@ export interface AvailableDevice {
     keyFilePath: Path
     organizationId: OrganizationID
     deviceId: DeviceID
-    humanHandle: HumanHandle | null
-    deviceLabel: DeviceLabel | null
+    humanHandle: HumanHandle
+    deviceLabel: DeviceLabel
     slug: string
     ty: DeviceFileType
 }
@@ -97,8 +97,8 @@ export interface ClientInfo {
     organizationId: OrganizationID
     deviceId: DeviceID
     userId: UserID
-    deviceLabel: DeviceLabel | null
-    humanHandle: HumanHandle | null
+    deviceLabel: DeviceLabel
+    humanHandle: HumanHandle
     currentProfile: UserProfile
 }
 
@@ -138,7 +138,7 @@ export interface DeviceGreetInProgress3Info {
 
 export interface DeviceGreetInProgress4Info {
     handle: Handle
-    requestedDeviceLabel: DeviceLabel | null
+    requestedDeviceLabel: DeviceLabel
 }
 
 export interface DeviceGreetInitialInfo {
@@ -147,7 +147,7 @@ export interface DeviceGreetInitialInfo {
 
 export interface DeviceInfo {
     id: DeviceID
-    deviceLabel: DeviceLabel | null
+    deviceLabel: DeviceLabel
     createdOn: DateTime
     createdBy: DeviceID | null
 }
@@ -199,8 +199,8 @@ export interface UserGreetInProgress3Info {
 
 export interface UserGreetInProgress4Info {
     handle: Handle
-    requestedHumanHandle: HumanHandle | null
-    requestedDeviceLabel: DeviceLabel | null
+    requestedHumanHandle: HumanHandle
+    requestedDeviceLabel: DeviceLabel
 }
 
 export interface UserGreetInitialInfo {
@@ -209,7 +209,7 @@ export interface UserGreetInitialInfo {
 
 export interface UserInfo {
     id: UserID
-    humanHandle: HumanHandle | null
+    humanHandle: HumanHandle
     currentProfile: UserProfile
     createdOn: DateTime
     createdBy: DeviceID | null
@@ -225,7 +225,7 @@ export interface WorkspaceInfo {
 
 export interface WorkspaceUserAccessInfo {
     userId: UserID
-    humanHandle: HumanHandle | null
+    humanHandle: HumanHandle
     currentProfile: UserProfile
     currentRole: RealmRole
 }
@@ -1037,14 +1037,14 @@ export interface UserOrDeviceClaimInitialInfoDevice {
     tag: UserOrDeviceClaimInitialInfoTag.Device
     handle: Handle
     greeterUserId: UserID
-    greeterHumanHandle: HumanHandle | null
+    greeterHumanHandle: HumanHandle
 }
 export interface UserOrDeviceClaimInitialInfoUser {
     tag: UserOrDeviceClaimInitialInfoTag.User
     handle: Handle
     claimerEmail: string
     greeterUserId: UserID
-    greeterHumanHandle: HumanHandle | null
+    greeterHumanHandle: HumanHandle
 }
 export type UserOrDeviceClaimInitialInfo =
   | UserOrDeviceClaimInitialInfoDevice
@@ -1173,8 +1173,8 @@ export interface LibParsecPlugin {
         on_event_callback: (event: ClientEvent) => void,
         bootstrap_organization_addr: BackendOrganizationBootstrapAddr,
         save_strategy: DeviceSaveStrategy,
-        human_handle: HumanHandle | null,
-        device_label: DeviceLabel | null,
+        human_handle: HumanHandle,
+        device_label: DeviceLabel,
         sequester_authority_verify_key: SequesterVerifyKeyDer | null
     ): Promise<Result<AvailableDevice, BootstrapOrganizationError>>
     buildBackendOrganizationBootstrapAddr(
@@ -1199,7 +1199,7 @@ export interface LibParsecPlugin {
     claimerDeviceInProgress3DoClaim(
         canceller: Handle,
         handle: Handle,
-        requested_device_label: DeviceLabel | null
+        requested_device_label: DeviceLabel
     ): Promise<Result<DeviceClaimFinalizeInfo, ClaimInProgressError>>
     claimerDeviceInitialDoWaitPeer(
         canceller: Handle,
@@ -1228,8 +1228,8 @@ export interface LibParsecPlugin {
     claimerUserInProgress3DoClaim(
         canceller: Handle,
         handle: Handle,
-        requested_device_label: DeviceLabel | null,
-        requested_human_handle: HumanHandle | null
+        requested_device_label: DeviceLabel,
+        requested_human_handle: HumanHandle
     ): Promise<Result<UserClaimFinalizeInfo, ClaimInProgressError>>
     claimerUserInitialDoWaitPeer(
         canceller: Handle,
@@ -1331,7 +1331,7 @@ export interface LibParsecPlugin {
     greeterDeviceInProgress4DoCreate(
         canceller: Handle,
         handle: Handle,
-        device_label: DeviceLabel | null
+        device_label: DeviceLabel
     ): Promise<Result<null, GreetInProgressError>>
     greeterDeviceInitialDoWaitPeer(
         canceller: Handle,
@@ -1352,8 +1352,8 @@ export interface LibParsecPlugin {
     greeterUserInProgress4DoCreate(
         canceller: Handle,
         handle: Handle,
-        human_handle: HumanHandle | null,
-        device_label: DeviceLabel | null,
+        human_handle: HumanHandle,
+        device_label: DeviceLabel,
         profile: UserProfile
     ): Promise<Result<null, GreetInProgressError>>
     greeterUserInitialDoWaitPeer(
