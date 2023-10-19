@@ -39,8 +39,8 @@ pub async fn bootstrap_organization(
     config: Arc<ClientConfig>,
     event_bus: EventBus,
     addr: BackendOrganizationBootstrapAddr,
-    human_handle: Option<HumanHandle>,
-    device_label: Option<DeviceLabel>,
+    human_handle: HumanHandle,
+    device_label: DeviceLabel,
     sequester_authority_verify_key: Option<SequesterVerifyKeyDer>,
 ) -> Result<OrganizationBootstrapFinalizeCtx, BootstrapOrganizationError> {
     use anonymous_cmds::latest::organization_bootstrap::{Rep, Req};
@@ -56,9 +56,9 @@ pub async fn bootstrap_organization(
     let device = Arc::new(LocalDevice::generate_new_device(
         organization_addr,
         UserProfile::Admin,
-        None,
         human_handle,
         device_label,
+        None,
         None,
         None,
     ));
@@ -69,13 +69,14 @@ pub async fn bootstrap_organization(
             author: CertificateSignerOwned::Root,
             timestamp,
             user_id: device.user_id().to_owned(),
-            human_handle: device.human_handle.clone(),
+            human_handle: MaybeRedacted::Real(device.human_handle.clone()),
             public_key: device.public_key(),
             profile: device.initial_profile,
         };
         let signed = user_certificate.dump_and_sign(&root_signing_key);
 
-        user_certificate.human_handle = None;
+        user_certificate.human_handle =
+            MaybeRedacted::Redacted(HumanHandle::new_redacted(device.user_id()));
         let redacted_signed = user_certificate.dump_and_sign(&root_signing_key);
 
         (signed.into(), redacted_signed.into())
@@ -86,12 +87,13 @@ pub async fn bootstrap_organization(
             author: CertificateSignerOwned::Root,
             timestamp,
             device_id: device.device_id.clone(),
-            device_label: device.device_label.clone(),
+            device_label: MaybeRedacted::Real(device.device_label.clone()),
             verify_key: device.verify_key(),
         };
         let signed = device_certificate.dump_and_sign(&root_signing_key);
 
-        device_certificate.device_label = None;
+        device_certificate.device_label =
+            MaybeRedacted::Redacted(DeviceLabel::new_redacted(device.device_id.device_name()));
         let redacted_signed = device_certificate.dump_and_sign(&root_signing_key);
 
         (signed.into(), redacted_signed.into())
@@ -236,11 +238,8 @@ impl OrganizationBootstrapFinalizeCtx {
             key_file_path,
             organization_id: self.new_local_device.organization_id().to_owned(),
             device_id: self.new_local_device.device_id.clone(),
-            // TODO: this will break if human handle / device label is None,
-            // this is expected and will be overwritten in the next commit squash
-            // *if you see this in the code review, it's time to complain !*
-            device_label: self.new_local_device.device_label.clone().expect("TODO"),
-            human_handle: self.new_local_device.human_handle.clone().expect("TODO"),
+            device_label: self.new_local_device.device_label.clone(),
+            human_handle: self.new_local_device.human_handle.clone(),
             slug: self.new_local_device.slug(),
             ty,
         })

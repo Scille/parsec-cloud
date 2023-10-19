@@ -10,6 +10,8 @@ use unicode_normalization::UnicodeNormalization;
 
 use crate::impl_from_maybe;
 
+const HUMAN_HANDLE_RESERVED_REDACTED_DOMAIN: &str = "redacted.invalid";
+
 macro_rules! impl_debug_from_display {
     ($name:ident) => {
         impl std::fmt::Debug for $name {
@@ -273,7 +275,41 @@ fn match_device_label(id: &str) -> bool {
 }
 
 new_string_based_id_type!(pub DeviceLabel, match_device_label);
+
+impl DeviceLabel {
+    pub fn new_redacted(device_name: &DeviceName) -> Self {
+        Self(device_name.as_ref().to_owned())
+    }
+}
 impl_from_maybe!(Option<DeviceLabel>);
+
+/*
+ * MaybeRedacted (used for DeviceLabel & HumanHandle in certificates)
+ */
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum MaybeRedacted<T> {
+    Real(T),
+    Redacted(T),
+}
+
+impl<T> AsRef<T> for MaybeRedacted<T> {
+    fn as_ref(&self) -> &T {
+        match self {
+            Self::Real(x) => x,
+            Self::Redacted(x) => x,
+        }
+    }
+}
+
+impl<T> From<MaybeRedacted<T>> for Option<T> {
+    fn from(value: MaybeRedacted<T>) -> Self {
+        match value {
+            MaybeRedacted::Real(x) => Some(x),
+            MaybeRedacted::Redacted(_) => None,
+        }
+    }
+}
 
 /*
  * DeviceID
@@ -410,6 +446,28 @@ impl FromStr for HumanHandle {
     }
 }
 
+/// Convert uppercase to lowercase with `_` escaping, useful to convert to lowercase
+/// while retaining identifier unicity
+/// e.g. "Foo" -> "f_oo", "a_A_a" -> "a__a___a"
+fn uncaseify(input: &str) -> String {
+    let mut output = String::with_capacity(input.len() * 2);
+    for c in input.chars() {
+        match c {
+            '_' => {
+                output.push_str("__");
+            }
+            c if c.is_uppercase() => {
+                output.push('_');
+                for cc in c.to_lowercase() {
+                    output.push(cc);
+                }
+            }
+            c => output.push(c),
+        }
+    }
+    output
+}
+
 impl HumanHandle {
     pub fn new(email: &str, label: &str) -> Result<Self, &'static str> {
         // A word about `<string>.nfc()`: In the unicode code we have multiple forms to represent the same glyph.
@@ -435,8 +493,46 @@ impl HumanHandle {
         })
     }
 
+    /// Redacted certificate doesn't provide the real human handle, here we build
+    /// a best effort one from the user ID:
+    ///
+    /// - label is user ID unchanged
+    /// - email is `<uncaseify(user_id)>@redacted.invalid``
+    ///
+    /// Note given user_id is case sensitive and email address is not, `uncaseify`
+    /// is used to do the conversion while retaining ID unicity.
+    pub fn new_redacted(user_id: &UserID) -> Self {
+        let label = user_id.as_ref().nfc().collect::<String>();
+        let email = format!(
+            "{}@{}",
+            &uncaseify(&label),
+            HUMAN_HANDLE_RESERVED_REDACTED_DOMAIN
+        );
+        let display = format!("{label} <{email}>");
+
+        Self {
+            email,
+            label,
+            display,
+        }
+    }
+
+    pub fn uses_redacted_domain(&self) -> bool {
+        matches!(
+            self.email.rsplit_once('@'),
+            Some((_, domain)) if domain == HUMAN_HANDLE_RESERVED_REDACTED_DOMAIN
+        )
+    }
+
     pub fn email_is_valid(email: &str) -> bool {
-        EmailAddress::is_valid(email, None) && email.len() < 255
+        if email.len() < 255 {
+            if let Some(parsed) = EmailAddress::parse(email, None) {
+                if parsed.get_domain() != HUMAN_HANDLE_RESERVED_REDACTED_DOMAIN {
+                    return true;
+                }
+            }
+        }
+        false
     }
 
     pub fn label_is_valid(label: &str) -> bool {

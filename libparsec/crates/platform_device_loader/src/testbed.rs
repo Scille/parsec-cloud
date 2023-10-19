@@ -149,11 +149,8 @@ fn populate_available_devices(config_dir: &Path, env: &TestbedEnv) -> Vec<Availa
                 key_file_path: get_device_key_file(config_dir, device_id),
                 organization_id: env.organization_id.clone(),
                 device_id: device_id.clone(),
-                // TODO: this will break if human handle / device label is None,
-                // this is expected and will be overwritten in the next commit squash
-                // *if you see this in the code review, it's time to complain !*
-                human_handle: human_handle.clone().expect("TODO"),
-                device_label: device_label.clone().expect("TODO"),
+                human_handle: human_handle.clone(),
+                device_label: device_label.clone(),
                 slug: local_device_slug(
                     &env.organization_id,
                     device_id,

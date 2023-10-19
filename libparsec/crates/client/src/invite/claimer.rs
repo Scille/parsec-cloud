@@ -488,9 +488,9 @@ impl UserClaimInProgress3Ctx {
         let new_local_device = Arc::new(LocalDevice::generate_new_device(
             organization_addr,
             profile,
+            human_handle,
+            device_label,
             Some(device_id),
-            Some(human_handle),
-            Some(device_label),
             Some(signing_key),
             Some(private_key),
         ));
@@ -550,8 +550,8 @@ impl DeviceClaimInProgress3Ctx {
         let new_local_device = Arc::new(LocalDevice {
             organization_addr,
             device_id,
-            device_label: Some(device_label),
-            human_handle: Some(human_handle),
+            device_label,
+            human_handle,
             initial_profile: profile,
             private_key,
             signing_key,
@@ -616,11 +616,8 @@ impl UserClaimFinalizeCtx {
             key_file_path,
             organization_id: self.new_local_device.organization_id().to_owned(),
             device_id: self.new_local_device.device_id.clone(),
-            // TODO: this will break if human handle / device label is None,
-            // this is expected and will be overwritten in the next commit squash
-            // *if you see this in the code review, it's time to complain !*
-            device_label: self.new_local_device.device_label.clone().expect("TODO"),
-            human_handle: self.new_local_device.human_handle.clone().expect("TODO"),
+            device_label: self.new_local_device.device_label.clone(),
+            human_handle: self.new_local_device.human_handle.clone(),
             slug: self.new_local_device.slug(),
             ty,
         })
@@ -666,11 +663,8 @@ impl DeviceClaimFinalizeCtx {
             key_file_path,
             organization_id: self.new_local_device.organization_id().to_owned(),
             device_id: self.new_local_device.device_id.clone(),
-            // TODO: this will break if human handle / device label is None,
-            // this is expected and will be overwritten in the next commit squash
-            // *if you see this in the code review, it's time to complain !*
-            device_label: self.new_local_device.device_label.clone().expect("TODO"),
-            human_handle: self.new_local_device.human_handle.clone().expect("TODO"),
+            device_label: self.new_local_device.device_label.clone(),
+            human_handle: self.new_local_device.human_handle.clone(),
             slug: self.new_local_device.slug(),
             ty,
         })

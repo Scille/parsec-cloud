@@ -79,7 +79,6 @@ async fn bad_file_content(tmp_path: TmpPath) {
         "657631a473616c74c40473616c74"
     )
 )]
-// TODO: human handle / device label legacy default not implemented yet !
 #[case::legacy_format(
     // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:

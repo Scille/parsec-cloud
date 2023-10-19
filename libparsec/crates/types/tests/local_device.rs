@@ -196,10 +196,10 @@ fn serde_local_device_data(
     let expected = {
         let mut expected = alice.local_device();
         if !with_device_label {
-            expected.device_label = None;
+            expected.device_label = DeviceLabel::new_redacted(alice.device_id.device_name());
         }
         if !with_human_handle {
-            expected.human_handle = None;
+            expected.human_handle = HumanHandle::new_redacted(alice.user_id());
         }
         expected.initial_profile = user_profile;
         expected

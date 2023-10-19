@@ -216,8 +216,8 @@ pub struct ClientInfo {
     pub organization_id: OrganizationID,
     pub device_id: DeviceID,
     pub user_id: UserID,
-    pub device_label: Option<DeviceLabel>,
-    pub human_handle: Option<HumanHandle>,
+    pub device_label: DeviceLabel,
+    pub human_handle: HumanHandle,
     pub current_profile: UserProfile,
 }
 
@@ -235,8 +235,8 @@ pub async fn client_info(client: Handle) -> Result<ClientInfo, ClientInfoError> 
         organization_id: client.organization_id().clone(),
         device_id: client.device_id().clone(),
         user_id: client.device_id().user_id().clone(),
-        device_label: client.device_label().cloned(),
-        human_handle: client.human_handle().cloned(),
+        device_label: client.device_label().to_owned(),
+        human_handle: client.human_handle().to_owned(),
         current_profile: client
             .profile()
             .await

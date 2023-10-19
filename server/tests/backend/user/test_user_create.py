@@ -27,10 +27,7 @@ from tests.common import customize_fixtures, freeze_time
 
 
 @pytest.mark.trio
-@pytest.mark.parametrize(
-    "profile,with_labels",
-    [(profile, profile != UserProfile.STANDARD) for profile in UserProfile.VALUES],
-)
+@pytest.mark.parametrize("profile", UserProfile.VALUES)
 async def test_user_create_ok(
     backend_asgi_app,
     backend_authenticated_ws_factory,
@@ -38,7 +35,6 @@ async def test_user_create_ok(
     alice,
     mallory,
     profile,
-    with_labels,
 ):
     now = DateTime.now()
     user_certificate = UserCertificate(
@@ -58,9 +54,6 @@ async def test_user_create_ok(
         verify_key=mallory.verify_key,
     )
     redacted_device_certificate = device_certificate.evolve(device_label=None)
-    if not with_labels:
-        user_certificate = redacted_user_certificate
-        device_certificate = redacted_device_certificate
 
     user_certificate = user_certificate.dump_and_sign(alice.signing_key)
     device_certificate = device_certificate.dump_and_sign(alice.signing_key)
@@ -88,7 +81,7 @@ async def test_user_create_ok(
 
     assert backend_user == User(
         user_id=mallory.user_id,
-        human_handle=mallory.human_handle if with_labels else None,
+        human_handle=mallory.human_handle,
         initial_profile=profile,
         user_certificate=user_certificate,
         redacted_user_certificate=redacted_user_certificate,
@@ -97,7 +90,7 @@ async def test_user_create_ok(
     )
     assert backend_device == Device(
         device_id=mallory.device_id,
-        device_label=mallory.device_label if with_labels else None,
+        device_label=mallory.device_label,
         device_certificate=device_certificate,
         redacted_device_certificate=redacted_device_certificate,
         device_certifier=alice.device_id,
@@ -128,7 +121,7 @@ async def test_user_create_nok_active_users_limit_reached(
         author=alice.device_id,
         timestamp=now,
         user_id=mallory.user_id,
-        human_handle=None,
+        human_handle=mallory.human_handle,
         public_key=mallory.public_key,
         profile=UserProfile.STANDARD,
     )
@@ -137,7 +130,7 @@ async def test_user_create_nok_active_users_limit_reached(
         author=alice.device_id,
         timestamp=now,
         device_id=mallory.device_id,
-        device_label=None,
+        device_label=mallory.device_label,
         verify_key=mallory.verify_key,
     )
     redacted_device_certificate = device_certificate.evolve(device_label=None)
@@ -238,6 +231,52 @@ async def test_user_create_invalid_certificate(alice_ws, alice, bob, mallory):
 
 
 @pytest.mark.trio
+async def test_user_redacted_non_redacted_mixed_up(
+    alice_ws,
+    alice,
+    mallory,
+):
+    now = DateTime.now()
+    user_certificate = UserCertificate(
+        author=alice.device_id,
+        timestamp=now,
+        user_id=mallory.user_id,
+        human_handle=mallory.human_handle,
+        public_key=mallory.public_key,
+        profile=UserProfile.STANDARD,
+    )
+    redacted_user_certificate = user_certificate.evolve(human_handle=None)
+    device_certificate = DeviceCertificate(
+        author=alice.device_id,
+        timestamp=now,
+        device_id=mallory.device_id,
+        device_label=mallory.device_label,
+        verify_key=mallory.verify_key,
+    )
+    redacted_device_certificate = device_certificate.evolve(device_label=None)
+
+    user_certificate = user_certificate.dump_and_sign(alice.signing_key)
+    device_certificate = device_certificate.dump_and_sign(alice.signing_key)
+    redacted_user_certificate = redacted_user_certificate.dump_and_sign(alice.signing_key)
+    redacted_device_certificate = redacted_device_certificate.dump_and_sign(alice.signing_key)
+
+    kwargs = {
+        "user_certificate": user_certificate,
+        "device_certificate": device_certificate,
+        "redacted_user_certificate": redacted_user_certificate,
+        "redacted_device_certificate": redacted_device_certificate,
+    }
+    for field, value in [
+        ("user_certificate", redacted_user_certificate),
+        ("device_certificate", redacted_device_certificate),
+        ("redacted_user_certificate", user_certificate),
+        ("redacted_device_certificate", device_certificate),
+    ]:
+        rep = await user_create(alice_ws, **{**kwargs, field: value})
+        assert isinstance(rep, UserCreateRepInvalidData)
+
+
+@pytest.mark.trio
 async def test_user_create_not_matching_user_device(alice_ws, alice, bob, mallory):
     now = DateTime.now()
     user_certificate = UserCertificate(
@@ -273,10 +312,13 @@ async def test_user_create_bad_redacted_device_certificate(alice_ws, alice, mall
         author=alice.device_id,
         timestamp=now,
         user_id=mallory.user_id,
-        human_handle=None,  # Can be used as regular and redacted certificate
+        human_handle=mallory.human_handle,
         public_key=mallory.public_key,
         profile=UserProfile.STANDARD,
-    ).dump_and_sign(alice.signing_key)
+    )
+    redacted_user_certificate = user_certificate.evolve(human_handle=None)
+    redacted_user_certificate = redacted_user_certificate.dump_and_sign(alice.signing_key)
+    user_certificate = user_certificate.dump_and_sign(alice.signing_key)
     device_certificate = DeviceCertificate(
         author=alice.device_id,
         timestamp=now,
@@ -295,7 +337,7 @@ async def test_user_create_bad_redacted_device_certificate(alice_ws, alice, mall
             alice_ws,
             user_certificate=user_certificate,
             device_certificate=device_certificate,
-            redacted_user_certificate=user_certificate,
+            redacted_user_certificate=redacted_user_certificate,
             redacted_device_certificate=bad_redacted_device_certificate.dump_and_sign(
                 alice.signing_key
             ),
@@ -329,7 +371,7 @@ async def test_user_create_bad_redacted_device_certificate(alice_ws, alice, mall
         alice_ws,
         user_certificate=user_certificate,
         device_certificate=device_certificate,
-        redacted_user_certificate=user_certificate,
+        redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=good_redacted_device_certificate.dump_and_sign(
             alice.signing_key
         ),
@@ -344,9 +386,12 @@ async def test_user_create_bad_redacted_user_certificate(alice_ws, alice, mallor
         author=alice.device_id,
         timestamp=now,
         device_id=mallory.device_id,
-        device_label=None,  # Can be used as regular and redacted certificate
+        device_label=mallory.device_label,
         verify_key=mallory.verify_key,
-    ).dump_and_sign(alice.signing_key)
+    )
+    redacted_device_certificate = device_certificate.evolve(device_label=None)
+    redacted_device_certificate = redacted_device_certificate.dump_and_sign(alice.signing_key)
+    device_certificate = device_certificate.dump_and_sign(alice.signing_key)
     user_certificate = UserCertificate(
         author=alice.device_id,
         timestamp=now,
@@ -370,7 +415,7 @@ async def test_user_create_bad_redacted_user_certificate(alice_ws, alice, mallor
             redacted_user_certificate=bad_redacted_user_certificate.dump_and_sign(
                 alice.signing_key
             ),
-            redacted_device_certificate=device_certificate,
+            redacted_device_certificate=redacted_device_certificate,
         )
         assert isinstance(rep, UserCreateRepInvalidData)
 
@@ -402,7 +447,7 @@ async def test_user_create_bad_redacted_user_certificate(alice_ws, alice, mallor
         user_certificate=user_certificate,
         device_certificate=device_certificate,
         redacted_user_certificate=good_redacted_user_certificate.dump_and_sign(alice.signing_key),
-        redacted_device_certificate=device_certificate,
+        redacted_device_certificate=redacted_device_certificate,
     )
     assert isinstance(rep, UserCreateRepOk)
 
@@ -414,24 +459,31 @@ async def test_user_create_already_exists(alice_ws, alice, bob):
         author=alice.device_id,
         timestamp=now,
         user_id=bob.user_id,
-        human_handle=None,
+        human_handle=alice.human_handle,
         public_key=bob.public_key,
         profile=UserProfile.STANDARD,
-    ).dump_and_sign(alice.signing_key)
+    )
+    redacted_user_certificate = user_certificate.evolve(human_handle=None)
     device_certificate = DeviceCertificate(
         author=alice.device_id,
         timestamp=now,
         device_id=bob.device_id,
-        device_label=None,
+        device_label=alice.device_label,
         verify_key=bob.verify_key,
-    ).dump_and_sign(alice.signing_key)
+    )
+    redacted_device_certificate = device_certificate.evolve(device_label=None)
+
+    user_certificate = user_certificate.dump_and_sign(alice.signing_key)
+    redacted_user_certificate = redacted_user_certificate.dump_and_sign(alice.signing_key)
+    device_certificate = device_certificate.dump_and_sign(alice.signing_key)
+    redacted_device_certificate = redacted_device_certificate.dump_and_sign(alice.signing_key)
 
     rep = await user_create(
         alice_ws,
         user_certificate=user_certificate,
         device_certificate=device_certificate,
-        redacted_user_certificate=user_certificate,
-        redacted_device_certificate=device_certificate,
+        redacted_user_certificate=redacted_user_certificate,
+        redacted_device_certificate=redacted_device_certificate,
     )
     assert isinstance(rep, UserCreateRepAlreadyExists)
 

@@ -154,14 +154,32 @@ fn load_legacy_device_file_from_content(
             ))
         })?;
 
+    // `device_label` & `human_handle` fields has been introduced in Parsec v1.14, hence
+    // they may not be present.
+    //
+    // If that's the case, we are in an exotic case (very old device), so we don't
+    // bother much an use the redacted system to obtain device label & human handle.
+    // Of course redacted certificate has nothing to do with this, but it's just
+    // convenient and "good enough" to go this way ;-)
+    //
+    // Note we no longer save in this legacy format: if save is required (e.g. the user
+    // is changing password) it will be done with the newer format. Hence there is no
+    // risk of serializing the human handle email which uses the redacted domain name
+    // (which is reserved and would cause error on deserialization !)
+    let human_handle = match legacy_device.human_handle {
+        Some(human_handle) => human_handle,
+        None => HumanHandle::new_redacted(device_id.user_id()),
+    };
+    let device_label = match legacy_device.device_label {
+        Some(device_label) => device_label,
+        None => DeviceLabel::new_redacted(device_id.device_name()),
+    };
+
     Ok(DeviceFile::Password(DeviceFilePassword {
         salt: legacy_device.salt,
         ciphertext: legacy_device.ciphertext,
-        // TODO: this will break if human handle / device label is None,
-        // this is expected and will be overwritten in the next commit squash
-        // *if you see this in the code review, it's time to complain !*
-        human_handle: legacy_device.human_handle.expect("TODO"),
-        device_label: legacy_device.device_label.expect("TODO"),
+        human_handle,
+        device_label,
         device_id,
         organization_id,
         slug,
@@ -234,11 +252,8 @@ pub async fn save_device(
 
             let file_content = DeviceFile::Password(DeviceFilePassword {
                 ciphertext,
-                // TODO: this will break if human handle / device label is None,
-                // this is expected and will be overwritten in the next commit squash
-                // *if you see this in the code review, it's time to complain !*
-                human_handle: device.human_handle.to_owned().expect("TODO"),
-                device_label: device.device_label.to_owned().expect("TODO"),
+                human_handle: device.human_handle.to_owned(),
+                device_label: device.device_label.to_owned(),
                 device_id: device.device_id.to_owned(),
                 organization_id: device.organization_id().to_owned(),
                 slug: device.slug(),
@@ -338,11 +353,8 @@ pub async fn save_recovery_device(
 
     let file_content = DeviceFile::Recovery(DeviceFileRecovery {
         ciphertext,
-        // TODO: this will break if human handle / device label is None,
-        // this is expected and will be overwritten in the next commit squash
-        // *if you see this in the code review, it's time to complain !*
-        human_handle: device.human_handle.to_owned().expect("TODO"),
-        device_label: device.device_label.to_owned().expect("TODO"),
+        human_handle: device.human_handle.to_owned(),
+        device_label: device.device_label.to_owned(),
         device_id: device.device_id.to_owned(),
         organization_id: device.organization_id().to_owned(),
         slug: device.slug(),

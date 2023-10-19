@@ -22,26 +22,11 @@ fn make_config(env: &TestbedEnv) -> Arc<ClientConfig> {
 }
 
 #[parsec_test(testbed = "empty", with_server)]
-#[case::full_none(false, false, false)]
-#[case::human_handle(true, false, false)]
-#[case::device_label(false, true, false)]
-#[case::sequestered(false, false, true)]
-async fn ok(
-    #[case] with_human_handle: bool,
-    #[case] with_device_label: bool,
-    #[case] sequestered: bool,
-    env: &TestbedEnv,
-) {
-    let human_handle = if with_human_handle {
-        Some("John Doe <john.doe@example.com>".parse().unwrap())
-    } else {
-        None
-    };
-    let device_label = if with_device_label {
-        Some("My Machine".parse().unwrap())
-    } else {
-        None
-    };
+#[case::regular(false)]
+#[case::sequestered(true)]
+async fn ok(#[case] sequestered: bool, env: &TestbedEnv) {
+    let human_handle: HumanHandle = "John Doe <john.doe@example.com>".parse().unwrap();
+    let device_label: DeviceLabel = "My Machine".parse().unwrap();
     let sequester_authority_verify_key = if sequestered {
         let (_, verify_key) = SequesterSigningKeyDer::generate_pair(SequesterKeySize::_1024Bits);
         Some(verify_key)
@@ -88,7 +73,15 @@ async fn ok(
 
     // Finally try to re-use the token
 
-    let outcome = bootstrap_organization(config, event_bus, bootstrap_addr, None, None, None).await;
+    let outcome = bootstrap_organization(
+        config,
+        event_bus,
+        bootstrap_addr,
+        human_handle,
+        device_label,
+        None,
+    )
+    .await;
 
     p_assert_matches!(outcome, Err(BootstrapOrganizationError::AlreadyUsedToken));
 }
@@ -163,7 +156,17 @@ async fn offline(env: &TestbedEnv) {
     );
     let config = make_config(env);
     let event_bus = EventBus::default();
-    let outcome = bootstrap_organization(config, event_bus, bootstrap_addr, None, None, None).await;
+    let human_handle: HumanHandle = "John Doe <john.doe@example.com>".parse().unwrap();
+    let device_label: DeviceLabel = "My Machine".parse().unwrap();
+    let outcome = bootstrap_organization(
+        config,
+        event_bus,
+        bootstrap_addr,
+        human_handle,
+        device_label,
+        None,
+    )
+    .await;
 
     p_assert_matches!(outcome, Err(BootstrapOrganizationError::Offline));
 }
@@ -177,7 +180,17 @@ async fn bad_token(env: &TestbedEnv) {
     );
     let config = make_config(env);
     let event_bus = EventBus::default();
-    let outcome = bootstrap_organization(config, event_bus, bootstrap_addr, None, None, None).await;
+    let human_handle: HumanHandle = "John Doe <john.doe@example.com>".parse().unwrap();
+    let device_label: DeviceLabel = "My Machine".parse().unwrap();
+    let outcome = bootstrap_organization(
+        config,
+        event_bus,
+        bootstrap_addr,
+        human_handle,
+        device_label,
+        None,
+    )
+    .await;
 
     p_assert_matches!(outcome, Err(BootstrapOrganizationError::InvalidToken));
 }

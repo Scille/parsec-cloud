@@ -46,7 +46,7 @@ class WebhooksComponent:
         self,
         organization_id: OrganizationID,
         device_id: DeviceID,
-        device_label: DeviceLabel | None,
+        device_label: DeviceLabel,
         human_email: str | None,
         human_label: str | None,
     ) -> None:

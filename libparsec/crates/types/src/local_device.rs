@@ -29,8 +29,8 @@ pub fn local_device_slug(
 pub struct LocalDevice {
     pub organization_addr: BackendOrganizationAddr,
     pub device_id: DeviceID,
-    pub device_label: Option<DeviceLabel>,
-    pub human_handle: Option<HumanHandle>,
+    pub device_label: DeviceLabel,
+    pub human_handle: HumanHandle,
     pub signing_key: SigningKey,
     pub private_key: PrivateKey,
     /// Profile the user had at enrollment time, use `CertificateOps::get_current_self_profile`
@@ -46,9 +46,9 @@ impl LocalDevice {
     pub fn generate_new_device(
         organization_addr: BackendOrganizationAddr,
         initial_profile: UserProfile,
+        human_handle: HumanHandle,
+        device_label: DeviceLabel,
         device_id: Option<DeviceID>,
-        human_handle: Option<HumanHandle>,
-        device_label: Option<DeviceLabel>,
         signing_key: Option<SigningKey>,
         private_key: Option<PrivateKey>,
     ) -> Self {
@@ -148,24 +148,15 @@ impl LocalDevice {
     }
 
     pub fn user_display(&self) -> &str {
-        match &self.human_handle {
-            Some(human_handle) => human_handle.as_ref(),
-            None => self.user_id().as_ref(),
-        }
+        self.human_handle.as_ref()
     }
 
     pub fn short_user_display(&self) -> &str {
-        match &self.human_handle {
-            Some(human_handle) => human_handle.label(),
-            None => self.user_id().as_ref(),
-        }
+        self.human_handle.label()
     }
 
     pub fn device_display(&self) -> &str {
-        match &self.device_label {
-            Some(device_label) => device_label.as_ref(),
-            None => self.device_id.device_name().as_ref(),
-        }
+        self.device_label.as_ref()
     }
 
     /// This method centralizes the production of current time timestamps for a given device.
@@ -205,12 +196,31 @@ impl TryFrom<LocalDeviceData> for LocalDevice {
             }
         };
 
+        // `device_label` & `human_handle` fields has been introduced in Parsec v1.14,
+        // hence they are basically always here.
+        // If it's not the case, we are in an exotic case (very old device), so we don't
+        // bother much an use the redacted system to obtain device label & human handle.
+        // Of course redacted certificate has nothing to do with this, but it's just
+        // convenient and "good enough" to go this way ;-)
+        let device_label = match data.device_label {
+            Maybe::Absent | Maybe::Present(None) => {
+                DeviceLabel::new_redacted(data.device_id.device_name())
+            }
+            Maybe::Present(Some(device_label)) => device_label,
+        };
+        let human_handle = match data.human_handle {
+            Maybe::Absent | Maybe::Present(None) => {
+                HumanHandle::new_redacted(data.device_id.user_id())
+            }
+            Maybe::Present(Some(human_handle)) => human_handle,
+        };
+
         Ok(Self {
             organization_addr: data.organization_addr,
             device_id: data.device_id,
             // Consider missing field as a `None` value
-            device_label: data.device_label.unwrap_or(None),
-            human_handle: data.human_handle.unwrap_or(None),
+            device_label,
+            human_handle,
             signing_key: data.signing_key,
             private_key: data.private_key,
             initial_profile,
@@ -228,11 +238,22 @@ impl From<LocalDevice> for LocalDeviceData {
     fn from(obj: LocalDevice) -> Self {
         // Handle legacy `is_admin` field
         let is_admin = obj.initial_profile == UserProfile::Admin;
+        // In case the human handle is redacted (i.e. we are dealing with a device
+        // created before Parsec v1.14) we cannot serialize it given then it would
+        // appear as if the human handle is a regular one using the redacted domain,
+        // which is not allowed !
+        let human_handle = {
+            if obj.human_handle.uses_redacted_domain() {
+                Maybe::Absent
+            } else {
+                Maybe::Present(Some(obj.human_handle))
+            }
+        };
         Self {
             organization_addr: obj.organization_addr,
             device_id: obj.device_id,
-            device_label: Maybe::Present(obj.device_label),
-            human_handle: Maybe::Present(obj.human_handle),
+            device_label: Maybe::Present(Some(obj.device_label)),
+            human_handle,
             signing_key: obj.signing_key,
             private_key: obj.private_key,
             profile: Maybe::Present(obj.initial_profile),

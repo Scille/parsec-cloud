@@ -40,7 +40,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
             protocol::invited_cmds::latest::invite_info::Rep::Ok(
                 protocol::invited_cmds::latest::invite_info::UserOrDevice::User {
                     claimer_email: "john@example.com".to_owned(),
-                    greeter_human_handle: alice.human_handle.clone().expect("always present"),
+                    greeter_human_handle: alice.human_handle.clone(),
                     greeter_user_id: alice.user_id().to_owned(),
                 },
             )
@@ -54,10 +54,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
         UserOrDeviceClaimInitialCtx::User(ctx) => {
             p_assert_eq!(ctx.claimer_email, "john@example.com");
             p_assert_eq!(ctx.greeter_user_id(), alice.user_id());
-            p_assert_eq!(
-                ctx.greeter_human_handle(),
-                alice.human_handle.as_ref().expect("always present")
-            );
+            p_assert_eq!(*ctx.greeter_human_handle(), alice.human_handle);
             ctx
         }
         _ => unreachable!(),
@@ -173,13 +170,12 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
     // Step 4: claim user
 
     let requested_device_label: DeviceLabel = "Requested My dev1".parse().unwrap();
-    let requested_human_handle: HumanHandle =
-        "Requested Johny McJohnFace <requested.john@example.com>"
-            .parse()
-            .unwrap();
+    let requested_human_handle: HumanHandle = "Requested John Doe <requested.john@example.com>"
+        .parse()
+        .unwrap();
     let device_id: DeviceID = "john@dev1".parse().unwrap();
     let device_label: DeviceLabel = "My dev1".parse().unwrap();
-    let human_handle: HumanHandle = "Johny McJohnFace <john@example.com>".parse().unwrap();
+    let human_handle: HumanHandle = "John Doe <john@example.com>".parse().unwrap();
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
@@ -236,14 +232,8 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
         *env.organization_addr()
     );
     p_assert_eq!(ctx.new_local_device.device_id, device_id);
-    p_assert_eq!(
-        ctx.new_local_device.device_label,
-        Some(device_label.clone())
-    );
-    p_assert_eq!(
-        ctx.new_local_device.human_handle,
-        Some(human_handle.clone())
-    );
+    p_assert_eq!(ctx.new_local_device.device_label, device_label);
+    p_assert_eq!(ctx.new_local_device.human_handle, human_handle);
     p_assert_eq!(ctx.new_local_device.initial_profile, UserProfile::Standard);
 
     // Step 5: finalize

@@ -30,9 +30,8 @@ def alice_nd(local_device_factory, alice):
 @customize_fixtures(
     alice_profile=UserProfile.OUTSIDER
 )  # Any profile is be allowed to create new devices
-@pytest.mark.parametrize("with_labels", [False, True])
 async def test_device_create_ok(
-    backend_asgi_app, backend_authenticated_ws_factory, alice_ws, alice, alice_nd, with_labels
+    backend_asgi_app, backend_authenticated_ws_factory, alice_ws, alice, alice_nd
 ):
     now = DateTime.now()
     device_certificate = DeviceCertificate(
@@ -43,8 +42,6 @@ async def test_device_create_ok(
         verify_key=alice_nd.verify_key,
     )
     redacted_device_certificate = device_certificate.evolve(device_label=None)
-    if not with_labels:
-        device_certificate = redacted_device_certificate
     device_certificate = device_certificate.dump_and_sign(alice.signing_key)
     redacted_device_certificate = redacted_device_certificate.dump_and_sign(alice.signing_key)
 
@@ -67,7 +64,7 @@ async def test_device_create_ok(
     )
     assert backend_device == Device(
         device_id=alice_nd.device_id,
-        device_label=alice_nd.device_label if with_labels else None,
+        device_label=alice_nd.device_label,
         device_certificate=device_certificate,
         redacted_device_certificate=redacted_device_certificate,
         device_certifier=alice.device_id,
@@ -82,14 +79,14 @@ async def test_device_create_invalid_certified(alice_ws, alice, bob, alice_nd):
         author=alice.device_id,
         timestamp=now,
         device_id=alice_nd.device_id,
-        device_label=None,  # Can be used as regular and redacted certificate
+        device_label=alice_nd.device_label,
         verify_key=alice_nd.verify_key,
     ).dump_and_sign(alice.signing_key)
     bad_device_certificate = DeviceCertificate(
         author=bob.device_id,
         timestamp=now,
         device_id=alice_nd.device_id,
-        device_label=None,  # Can be used as regular and redacted certificate
+        device_label=alice_nd.device_label,
         verify_key=alice_nd.verify_key,
     ).dump_and_sign(bob.signing_key)
 
@@ -111,20 +108,54 @@ async def test_device_create_invalid_certified(alice_ws, alice, bob, alice_nd):
 
 
 @pytest.mark.trio
+async def test_user_redacted_non_redacted_mixed_up(
+    alice_ws,
+    alice,
+    alice_nd,
+):
+    now = DateTime.now()
+    device_certificate = DeviceCertificate(
+        author=alice.device_id,
+        timestamp=now,
+        device_id=alice_nd.device_id,
+        device_label=alice_nd.device_label,
+        verify_key=alice_nd.verify_key,
+    )
+    redacted_device_certificate = device_certificate.evolve(device_label=None)
+
+    device_certificate = device_certificate.dump_and_sign(alice.signing_key)
+    redacted_device_certificate = redacted_device_certificate.dump_and_sign(alice.signing_key)
+
+    kwargs = {
+        "device_certificate": device_certificate,
+        "redacted_device_certificate": redacted_device_certificate,
+    }
+    for field, value in [
+        ("device_certificate", redacted_device_certificate),
+        ("redacted_device_certificate", device_certificate),
+    ]:
+        rep = await device_create(alice_ws, **{**kwargs, field: value})
+        assert isinstance(rep, DeviceCreateRepInvalidData)
+
+
+@pytest.mark.trio
 async def test_device_create_already_exists(alice_ws, alice, alice2):
     now = DateTime.now()
     device_certificate = DeviceCertificate(
         author=alice.device_id,
         timestamp=now,
         device_id=alice2.device_id,
-        device_label=None,
+        device_label=alice2.device_label,
         verify_key=alice2.verify_key,
-    ).dump_and_sign(alice.signing_key)
+    )
+    redacted_device_certificate = device_certificate.evolve(device_label=None)
+    redacted_device_certificate = redacted_device_certificate.dump_and_sign(alice.signing_key)
+    device_certificate = device_certificate.dump_and_sign(alice.signing_key)
 
     rep = await device_create(
         alice_ws,
         device_certificate=device_certificate,
-        redacted_device_certificate=device_certificate,
+        redacted_device_certificate=redacted_device_certificate,
     )
 
     assert isinstance(rep, DeviceCreateRepAlreadyExists)
