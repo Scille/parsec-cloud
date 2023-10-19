@@ -17,8 +17,15 @@ from structlog import get_logger
 
 from parsec._parsec import CoreEvent, DateTime
 from parsec.api.data import EntryID, EntryName
-from parsec.core.fs import FSLocalOperationError, FsPath, FSRemoteOperationError
-from parsec.core.fs.exceptions import FSCrossDeviceError, FSFileNotFoundError, FSReadOnlyError
+from parsec.core.fs import (
+    FSCrossDeviceError,
+    FSFileNotFoundError,
+    FSLocalOperationError,
+    FSLocalStorageError,
+    FsPath,
+    FSReadOnlyError,
+    FSRemoteOperationError,
+)
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess, TrioDealockTimeoutError
 from parsec.core.types import FileDescriptor
 
@@ -91,6 +98,12 @@ def get_path_and_translate_error(
             timestamp=timestamp,
         )
         raise FuseOSError(exc.errno) from exc
+
+    except FSLocalStorageError as exc:
+        # A local storage error means the storage is either closed or closing
+        # Operational exceptions are re-raised in the storage context
+        # So we can simply ignore it here, no reason to report it
+        raise FuseOSError(errno.EACCES) from exc
 
     except TrioDealockTimeoutError as exc:
         # This exception is raised when the trio thread cannot be reached.
