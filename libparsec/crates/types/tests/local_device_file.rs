@@ -328,7 +328,7 @@ fn available_device() {
         "65406578616d706c652e636f6db2416c69636579204d63416c69636546616365a473616c74"
         "c4106f48555e77fd45429cfe26d1dcdd3a8ea474797065a870617373776f7264"
     )[..],
-    LegacyDeviceFile::Password(LegacyDeviceFilePassword {
+    LegacyDeviceFilePassword {
         salt: hex!("6f48555e77fd45429cfe26d1dcdd3a8e").as_ref().into(),
         ciphertext: hex!(
             "92d7b106ad7efbbb5603a41094681bc7c65fff23066e0e0eff8e1db5e626b626f22acd334e5ae3f9"
@@ -348,7 +348,7 @@ fn available_device() {
       ).as_ref().into(),
         human_handle: Some(HumanHandle::new("alice@example.com",  "Alicey McAliceFace").unwrap()),
         device_label: Some("My dev1 machine".parse().unwrap())
-    })
+    }
 )]
 #[case::without_device_label_and_human_handle(
     // Generated from Python implementation (Parsec v2.15.0)
@@ -389,7 +389,7 @@ fn available_device() {
         "5a5667cac313c1fb8cb0107e2b1a1f6224559dc9d052be275865a473616c74c4106f48555e"
         "77fd45429cfe26d1dcdd3a8ea474797065a870617373776f7264"
     )[..],
-    LegacyDeviceFile::Password(LegacyDeviceFilePassword {
+    LegacyDeviceFilePassword {
         salt: hex!("6f48555e77fd45429cfe26d1dcdd3a8e").as_ref().into(),
         ciphertext: hex!(
             "92d7b106ad7efbbb5603a41094681bc7c65fff23066e0e0eff8e1db5e626b626f22acd334e5ae3f9"
@@ -409,10 +409,10 @@ fn available_device() {
         ).as_ref().into(),
         human_handle: None,
         device_label: None,
-    })
+    }
 )]
-fn serde_legacy_device_file(#[case] raw: &[u8], #[case] expected: LegacyDeviceFile) {
-    let device = LegacyDeviceFile::load(raw).unwrap();
+fn serde_legacy_device_file(#[case] raw: &[u8], #[case] expected: LegacyDeviceFilePassword) {
+    let device = LegacyDeviceFilePassword::load(raw).unwrap();
     p_assert_eq!(device, expected);
 
     // We don't need to test roundtrip because we will never save this file again !

@@ -137,8 +137,8 @@ fn load_legacy_device_file_from_content(
     key_file: &Path,
     content: &[u8],
 ) -> Result<DeviceFile, LoadAvailableDeviceFileError> {
-    let LegacyDeviceFile::Password(legacy_device) =
-        LegacyDeviceFile::load(content).map_err(|_| LoadAvailableDeviceFileError::InvalidData)?;
+    let legacy_device = LegacyDeviceFilePassword::load(content)
+        .map_err(|_| LoadAvailableDeviceFileError::InvalidData)?;
 
     // Legacy device slug is their stem, ex: `9d84fbd57a#Org#Zack@PC1.keys`
     let (slug, organization_id, device_id) = key_file
