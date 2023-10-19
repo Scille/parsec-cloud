@@ -62,6 +62,6 @@ async def test_file_history(
         assert hf_w.layout_history.count() == 1
         hb2_w = hf_w.layout_history.itemAt(0).widget()
         assert hb2_w.label_user.text() == "Boby McBobFace"
-        assert hb2_w.label_version.text() == "2"
+        assert hb2_w.label_version.text() == "1.2"
 
     await aqtbot.wait_until(_history_displayed)

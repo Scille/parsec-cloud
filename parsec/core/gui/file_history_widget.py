@@ -18,7 +18,7 @@ from parsec.core.gui.trio_jobs import QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.file_history_button import Ui_FileHistoryButton
 from parsec.core.gui.ui.file_history_widget import Ui_FileHistoryWidget
 from parsec.core.logged_core import LoggedCore
-from parsec.core.types import UserInfo
+from parsec.core.types import EntryID, UserInfo
 
 
 async def _do_workspace_version(
@@ -43,7 +43,7 @@ async def _do_workspace_version(
 class FileHistoryButton(QWidget, Ui_FileHistoryButton):
     def __init__(
         self,
-        version: int,
+        version: str,
         creator: str,
         name: FsPath,
         size: int | None,
@@ -53,7 +53,7 @@ class FileHistoryButton(QWidget, Ui_FileHistoryButton):
     ) -> None:
         super().__init__()
         self.setupUi(self)
-        self.label_version.setText(str(version))
+        self.label_version.setText(version)
         self.label_user.setText(creator)
         self.label_size.setText(get_filesize(size) if size is not None else "")
         self.label_date.setText(format_datetime(timestamp))
@@ -138,7 +138,7 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
 
     def add_history_item(
         self,
-        version: int,
+        version: str,
         path: FsPath,
         creator: str,
         size: int | None,
@@ -167,9 +167,15 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
         if download_limit_reached:
             self.button_load_more_entries.setVisible(False)
         self.versions_job = None
+        version_counter = 0
+        current_id: EntryID | None = None
         for author, version in versions_list:
+            if version.id != current_id:
+                version_counter += 1
+                current_id = version.id
+            version_string = f"{version_counter}.{version.version}"
             self.add_history_item(
-                version=version.version,
+                version=version_string,
                 path=self.path,
                 creator=author.short_user_display,
                 size=version.size,
