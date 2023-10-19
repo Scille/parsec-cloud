@@ -14,10 +14,10 @@
     "main": "build/src/index.js",
     "scripts": {
         "libparsec:copy": "node ./scripts/copy_bindings.js",
-        "build": "npm run libparsec:copy && tsc && electron-rebuild",
+        "build": "npm run libparsec:copy && tsc",
         "electron:start-live": "npm run build && node ./live-runner.js",
         "electron:start": "npm run build && electron --inspect=5858 ./",
-        "electron:release": "npm run build && electron-builder build --config ./electron-builder.config.yml --publish never"
+        "electron:release": "npm run build && npx electron-builder build --config ./electron-builder.config.yml --publish never"
     },
     "dependencies": {
         "@capacitor-community/electron": "^4.1.2",
