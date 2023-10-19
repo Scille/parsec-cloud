@@ -20,7 +20,7 @@
         },
         {
             "name": "certificate_id",
-            "type": "Option<String>"
+            "type": "RequiredOption<String>"
         }
     ]
 }

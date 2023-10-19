@@ -8,11 +8,11 @@
         },
         {
             "name": "device_label",
-            "type": "Option<DeviceLabel>"
+            "type": "RequiredOption<DeviceLabel>"
         },
         {
             "name": "human_handle",
-            "type": "Option<HumanHandle>"
+            "type": "RequiredOption<HumanHandle>"
         },
         {
             "name": "profile",

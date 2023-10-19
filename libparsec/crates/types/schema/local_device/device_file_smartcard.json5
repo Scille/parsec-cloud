@@ -8,11 +8,11 @@
         },
         {
             "name": "human_handle",
-            "type": "Option<HumanHandle>"
+            "type": "RequiredOption<HumanHandle>"
         },
         {
             "name": "device_label",
-            "type": "Option<DeviceLabel>"
+            "type": "RequiredOption<DeviceLabel>"
         },
         {
             "name": "device_id",
@@ -36,7 +36,7 @@
         },
         {
             "name": "certificate_sha1",
-            "type": "Option<Bytes>"
+            "type": "RequiredOption<Bytes>"
         }
     ]
 }

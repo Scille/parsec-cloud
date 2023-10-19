@@ -4,7 +4,7 @@
     "other_fields": [
         {
             "name": "author",
-            "type": "Option<DeviceID>"
+            "type": "RequiredOption<DeviceID>"
         },
         {
             "name": "timestamp",
@@ -20,7 +20,7 @@
         },
         {
             "name": "role",
-            "type": "Option<RealmRole>"
+            "type": "RequiredOption<RealmRole>"
         }
     ]
 }

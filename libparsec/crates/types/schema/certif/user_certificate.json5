@@ -17,7 +17,7 @@
         {
             // Added in Parsec v1.13
             "name": "human_handle",
-            "type": "Option<HumanHandle>",
+            "type": "NonRequiredOption<HumanHandle>",
             // Hack to indicate this field was added in Parsec v1.13, given revision is meaningless for data
             "introduced_in_revision": 113
         },
