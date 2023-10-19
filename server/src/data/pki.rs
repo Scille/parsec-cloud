@@ -27,15 +27,15 @@ impl PkiEnrollmentAnswerPayload {
     #[pyo3(signature = (device_id, device_label, human_handle, profile, root_verify_key))]
     fn new(
         device_id: DeviceID,
-        device_label: Option<DeviceLabel>,
-        human_handle: Option<HumanHandle>,
+        device_label: DeviceLabel,
+        human_handle: HumanHandle,
         profile: UserProfile,
         root_verify_key: VerifyKey,
     ) -> Self {
         Self(libparsec_types::PkiEnrollmentAnswerPayload {
             device_id: device_id.0,
-            device_label: device_label.map(|x| x.0),
-            human_handle: human_handle.map(|x| x.0),
+            device_label: device_label.0,
+            human_handle: human_handle.0,
             profile: profile.0,
             root_verify_key: root_verify_key.0,
         })
@@ -47,13 +47,13 @@ impl PkiEnrollmentAnswerPayload {
     }
 
     #[getter]
-    fn device_label(&self) -> Option<DeviceLabel> {
-        self.0.device_label.clone().map(DeviceLabel)
+    fn device_label(&self) -> DeviceLabel {
+        DeviceLabel(self.0.device_label.clone())
     }
 
     #[getter]
-    fn human_handle(&self) -> Option<HumanHandle> {
-        self.0.human_handle.clone().map(HumanHandle)
+    fn human_handle(&self) -> HumanHandle {
+        HumanHandle(self.0.human_handle.clone())
     }
 
     #[getter]

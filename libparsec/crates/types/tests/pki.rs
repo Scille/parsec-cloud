@@ -6,33 +6,8 @@ use libparsec_tests_lite::prelude::*;
 use libparsec_types::fixtures::{alice, Device};
 use libparsec_types::prelude::*;
 
-#[rstest]
-#[case::without(
-    // Generated from Python implementation (Parsec v2.13.0+dev)
-    // Content:
-    //   type: "pki_enrollment_answer_payload"
-    //   device_id: "alice@dev1"
-    //   device_label: None
-    //   human_handle: None
-    //   profile: "ADMIN"
-    //   root_verify_key: hex!("be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd")
-    //
-    &hex!(
-        "789c6b5b5e50949f969993bad4d1c5d7d36f4d4a6a5966726a7c4e62526ace81f545f9f925"
-        "f165a945996995f1d9a9954714f6699615ebbce959e9f7f63cd7fa2bc2674527273ff87567"
-        "5e46b84ef9c287b5b3f7ae84eacf4c59959803643800f9866b324a7313f3e23312f3527252"
-        "0f2c29a92c48dd5b909d199f9a57949f93939b9a57129f98575c9e5a145f905899939f9802"
-        "00271d4432"
-    )[..],
-    PkiEnrollmentAnswerPayload {
-        device_id: DeviceID::from_str("alice@dev1").unwrap(),
-        device_label: None,
-        human_handle: None,
-        profile: UserProfile::Admin,
-        root_verify_key: VerifyKey::try_from(hex!("be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd")).unwrap()
-    }
-)]
-#[case::full(
+#[test]
+fn serde_pki_enrollment_answer_payload() {
     // Generated from Python implementation (Parsec v2.13.0+dev)
     // Content:
     //   type: "pki_enrollment_answer_payload"
@@ -42,26 +17,27 @@ use libparsec_types::prelude::*;
     //   profile: "ADMIN"
     //   root_verify_key: hex!("be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd")
     //
-    &hex!(
+    let raw = &hex!(
         "789c6b5b99925a96999c1a9f99b22a3107c87000f20dd717e5e797c497a51665a655c667a7"
         "561e51d8a75956acf3a667a5dfdbf35cebaf089f159d9cfce0d79d7919e13ae50b1fd6cede"
         "bb066a4c4e62526ace7adf4a0590310ab989c9199979a9cb0b8af2d3327352973abaf87afa"
         "2d29a92c48dd5b909d199f9a57949f93939b9a57129f98575c9e5a145f905899939f98b226"
         "a33437312f3e23312f252775d24688c3522b12730b7252f592f373373982442a157c93c10c"
         "b7c4e45400b9cd57ac"
-    )[..],
-    PkiEnrollmentAnswerPayload {
+    );
+    let expected = PkiEnrollmentAnswerPayload {
         device_id: DeviceID::from_str("alice@dev1").unwrap(),
-        device_label: Some(DeviceLabel::from_str("My dev1 machine").unwrap()),
-        human_handle: Some(("alice@example.com", "Alicey McAliceFace").try_into().unwrap()),
+        device_label: DeviceLabel::from_str("My dev1 machine").unwrap(),
+        human_handle: ("alice@example.com", "Alicey McAliceFace")
+            .try_into()
+            .unwrap(),
         profile: UserProfile::Admin,
-        root_verify_key: VerifyKey::try_from(hex!("be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd")).unwrap()
-    }
-)]
-fn serde_pki_enrollment_answer_payload(
-    #[case] raw: &[u8],
-    #[case] expected: PkiEnrollmentAnswerPayload,
-) {
+        root_verify_key: VerifyKey::try_from(hex!(
+            "be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd"
+        ))
+        .unwrap(),
+    };
+
     let data = PkiEnrollmentAnswerPayload::load(raw).unwrap();
     p_assert_eq!(data, expected);
 
