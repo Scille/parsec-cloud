@@ -233,8 +233,14 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
         *env.organization_addr()
     );
     p_assert_eq!(ctx.new_local_device.device_id, device_id);
-    p_assert_eq!(ctx.new_local_device.device_label, Some(device_label));
-    p_assert_eq!(ctx.new_local_device.human_handle, Some(human_handle));
+    p_assert_eq!(
+        ctx.new_local_device.device_label,
+        Some(device_label.clone())
+    );
+    p_assert_eq!(
+        ctx.new_local_device.human_handle,
+        Some(human_handle.clone())
+    );
     p_assert_eq!(ctx.new_local_device.initial_profile, UserProfile::Standard);
 
     // Step 5: finalize
@@ -257,8 +263,8 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
             key_file_path: tmp_path.join("device.keys"),
             organization_id: new_local_device.organization_id().to_owned(),
             device_id: new_local_device.device_id.clone(),
-            device_label: new_local_device.device_label.clone(),
-            human_handle: new_local_device.human_handle.clone(),
+            device_label,
+            human_handle,
             slug: new_local_device.slug(),
             ty: DeviceFileType::Password,
         }

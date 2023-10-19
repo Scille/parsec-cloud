@@ -157,8 +157,11 @@ fn load_legacy_device_file_from_content(
     Ok(DeviceFile::Password(DeviceFilePassword {
         salt: legacy_device.salt,
         ciphertext: legacy_device.ciphertext,
-        human_handle: legacy_device.human_handle,
-        device_label: legacy_device.device_label,
+        // TODO: this will break if human handle / device label is None,
+        // this is expected and will be overwritten in the next commit squash
+        // *if you see this in the code review, it's time to complain !*
+        human_handle: legacy_device.human_handle.expect("TODO"),
+        device_label: legacy_device.device_label.expect("TODO"),
         device_id,
         organization_id,
         slug,
@@ -231,8 +234,11 @@ pub async fn save_device(
 
             let file_content = DeviceFile::Password(DeviceFilePassword {
                 ciphertext,
-                human_handle: device.human_handle.to_owned(),
-                device_label: device.device_label.to_owned(),
+                // TODO: this will break if human handle / device label is None,
+                // this is expected and will be overwritten in the next commit squash
+                // *if you see this in the code review, it's time to complain !*
+                human_handle: device.human_handle.to_owned().expect("TODO"),
+                device_label: device.device_label.to_owned().expect("TODO"),
                 device_id: device.device_id.to_owned(),
                 organization_id: device.organization_id().to_owned(),
                 slug: device.slug(),
@@ -332,8 +338,11 @@ pub async fn save_recovery_device(
 
     let file_content = DeviceFile::Recovery(DeviceFileRecovery {
         ciphertext,
-        human_handle: device.human_handle.to_owned(),
-        device_label: device.device_label.to_owned(),
+        // TODO: this will break if human handle / device label is None,
+        // this is expected and will be overwritten in the next commit squash
+        // *if you see this in the code review, it's time to complain !*
+        human_handle: device.human_handle.to_owned().expect("TODO"),
+        device_label: device.device_label.to_owned().expect("TODO"),
         device_id: device.device_id.to_owned(),
         organization_id: device.organization_id().to_owned(),
         slug: device.slug(),
