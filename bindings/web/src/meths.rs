@@ -227,27 +227,17 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
     };
     let human_handle = {
         let js_val = Reflect::get(&obj, &"humanHandle".into())?;
-        if js_val.is_null() {
-            None
-        } else {
-            Some(struct_human_handle_js_to_rs(js_val)?)
-        }
+        struct_human_handle_js_to_rs(js_val)?
     };
     let device_label = {
         let js_val = Reflect::get(&obj, &"deviceLabel".into())?;
-        if js_val.is_null() {
-            None
-        } else {
-            Some(
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
-                    .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?,
-            )
-        }
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+            .parse()
+            .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?
     };
     let slug = {
         let js_val = Reflect::get(&obj, &"slug".into())?;
@@ -310,15 +300,9 @@ fn struct_available_device_rs_to_js(
         .as_ref()
     });
     Reflect::set(&js_obj, &"deviceId".into(), &js_device_id)?;
-    let js_human_handle = match rs_obj.human_handle {
-        Some(val) => struct_human_handle_rs_to_js(val)?,
-        None => JsValue::NULL,
-    };
+    let js_human_handle = struct_human_handle_rs_to_js(rs_obj.human_handle)?;
     Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
-    let js_device_label = match rs_obj.device_label {
-        Some(val) => JsValue::from_str(val.as_ref()),
-        None => JsValue::NULL,
-    };
+    let js_device_label = JsValue::from_str(rs_obj.device_label.as_ref());
     Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
     let js_slug = rs_obj.slug.into();
     Reflect::set(&js_obj, &"slug".into(), &js_slug)?;
@@ -497,27 +481,17 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
     };
     let device_label = {
         let js_val = Reflect::get(&obj, &"deviceLabel".into())?;
-        if js_val.is_null() {
-            None
-        } else {
-            Some(
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
-                    .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?,
-            )
-        }
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+            .parse()
+            .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?
     };
     let human_handle = {
         let js_val = Reflect::get(&obj, &"humanHandle".into())?;
-        if js_val.is_null() {
-            None
-        } else {
-            Some(struct_human_handle_js_to_rs(js_val)?)
-        }
+        struct_human_handle_js_to_rs(js_val)?
     };
     let current_profile = {
         let js_val = Reflect::get(&obj, &"currentProfile".into())?;
@@ -571,15 +545,9 @@ fn struct_client_info_rs_to_js(rs_obj: libparsec::ClientInfo) -> Result<JsValue,
     Reflect::set(&js_obj, &"deviceId".into(), &js_device_id)?;
     let js_user_id = JsValue::from_str(rs_obj.user_id.as_ref());
     Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
-    let js_device_label = match rs_obj.device_label {
-        Some(val) => JsValue::from_str(val.as_ref()),
-        None => JsValue::NULL,
-    };
+    let js_device_label = JsValue::from_str(rs_obj.device_label.as_ref());
     Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
-    let js_human_handle = match rs_obj.human_handle {
-        Some(val) => struct_human_handle_rs_to_js(val)?,
-        None => JsValue::NULL,
-    };
+    let js_human_handle = struct_human_handle_rs_to_js(rs_obj.human_handle)?;
     Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
     let js_current_profile = JsValue::from_str(enum_user_profile_rs_to_js(rs_obj.current_profile));
     Reflect::set(&js_obj, &"currentProfile".into(), &js_current_profile)?;
@@ -961,19 +929,13 @@ fn struct_device_greet_in_progress4_info_js_to_rs(
     };
     let requested_device_label = {
         let js_val = Reflect::get(&obj, &"requestedDeviceLabel".into())?;
-        if js_val.is_null() {
-            None
-        } else {
-            Some(
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
-                    .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?,
-            )
-        }
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+            .parse()
+            .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?
     };
     Ok(libparsec::DeviceGreetInProgress4Info {
         handle,
@@ -988,10 +950,7 @@ fn struct_device_greet_in_progress4_info_rs_to_js(
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
     Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-    let js_requested_device_label = match rs_obj.requested_device_label {
-        Some(val) => JsValue::from_str(val.as_ref()),
-        None => JsValue::NULL,
-    };
+    let js_requested_device_label = JsValue::from_str(rs_obj.requested_device_label.as_ref());
     Reflect::set(
         &js_obj,
         &"requestedDeviceLabel".into(),
@@ -1053,19 +1012,13 @@ fn struct_device_info_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceInfo, Js
     };
     let device_label = {
         let js_val = Reflect::get(&obj, &"deviceLabel".into())?;
-        if js_val.is_null() {
-            None
-        } else {
-            Some(
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
-                    .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?,
-            )
-        }
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+            .parse()
+            .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?
     };
     let created_on = {
         let js_val = Reflect::get(&obj, &"createdOn".into())?;
@@ -1121,10 +1074,7 @@ fn struct_device_info_rs_to_js(rs_obj: libparsec::DeviceInfo) -> Result<JsValue,
         .as_ref()
     });
     Reflect::set(&js_obj, &"id".into(), &js_id)?;
-    let js_device_label = match rs_obj.device_label {
-        Some(val) => JsValue::from_str(val.as_ref()),
-        None => JsValue::NULL,
-    };
+    let js_device_label = JsValue::from_str(rs_obj.device_label.as_ref());
     Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
     let js_created_on = {
         let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -1670,27 +1620,17 @@ fn struct_user_greet_in_progress4_info_js_to_rs(
     };
     let requested_human_handle = {
         let js_val = Reflect::get(&obj, &"requestedHumanHandle".into())?;
-        if js_val.is_null() {
-            None
-        } else {
-            Some(struct_human_handle_js_to_rs(js_val)?)
-        }
+        struct_human_handle_js_to_rs(js_val)?
     };
     let requested_device_label = {
         let js_val = Reflect::get(&obj, &"requestedDeviceLabel".into())?;
-        if js_val.is_null() {
-            None
-        } else {
-            Some(
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
-                    .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?,
-            )
-        }
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+            .parse()
+            .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?
     };
     Ok(libparsec::UserGreetInProgress4Info {
         handle,
@@ -1706,19 +1646,13 @@ fn struct_user_greet_in_progress4_info_rs_to_js(
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
     Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-    let js_requested_human_handle = match rs_obj.requested_human_handle {
-        Some(val) => struct_human_handle_rs_to_js(val)?,
-        None => JsValue::NULL,
-    };
+    let js_requested_human_handle = struct_human_handle_rs_to_js(rs_obj.requested_human_handle)?;
     Reflect::set(
         &js_obj,
         &"requestedHumanHandle".into(),
         &js_requested_human_handle,
     )?;
-    let js_requested_device_label = match rs_obj.requested_device_label {
-        Some(val) => JsValue::from_str(val.as_ref()),
-        None => JsValue::NULL,
-    };
+    let js_requested_device_label = JsValue::from_str(rs_obj.requested_device_label.as_ref());
     Reflect::set(
         &js_obj,
         &"requestedDeviceLabel".into(),
@@ -1775,11 +1709,7 @@ fn struct_user_info_js_to_rs(obj: JsValue) -> Result<libparsec::UserInfo, JsValu
     };
     let human_handle = {
         let js_val = Reflect::get(&obj, &"humanHandle".into())?;
-        if js_val.is_null() {
-            None
-        } else {
-            Some(struct_human_handle_js_to_rs(js_val)?)
-        }
+        struct_human_handle_js_to_rs(js_val)?
     };
     let current_profile = {
         let js_val = Reflect::get(&obj, &"currentProfile".into())?;
@@ -1876,10 +1806,7 @@ fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsV
     let js_obj = Object::new().into();
     let js_id = JsValue::from_str(rs_obj.id.as_ref());
     Reflect::set(&js_obj, &"id".into(), &js_id)?;
-    let js_human_handle = match rs_obj.human_handle {
-        Some(val) => struct_human_handle_rs_to_js(val)?,
-        None => JsValue::NULL,
-    };
+    let js_human_handle = struct_human_handle_rs_to_js(rs_obj.human_handle)?;
     Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
     let js_current_profile = JsValue::from_str(enum_user_profile_rs_to_js(rs_obj.current_profile));
     Reflect::set(&js_obj, &"currentProfile".into(), &js_current_profile)?;
@@ -2030,11 +1957,7 @@ fn struct_workspace_user_access_info_js_to_rs(
     };
     let human_handle = {
         let js_val = Reflect::get(&obj, &"humanHandle".into())?;
-        if js_val.is_null() {
-            None
-        } else {
-            Some(struct_human_handle_js_to_rs(js_val)?)
-        }
+        struct_human_handle_js_to_rs(js_val)?
     };
     let current_profile = {
         let js_val = Reflect::get(&obj, &"currentProfile".into())?;
@@ -2073,10 +1996,7 @@ fn struct_workspace_user_access_info_rs_to_js(
     let js_obj = Object::new().into();
     let js_user_id = JsValue::from_str(rs_obj.user_id.as_ref());
     Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
-    let js_human_handle = match rs_obj.human_handle {
-        Some(val) => struct_human_handle_rs_to_js(val)?,
-        None => JsValue::NULL,
-    };
+    let js_human_handle = struct_human_handle_rs_to_js(rs_obj.human_handle)?;
     Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
     let js_current_profile = JsValue::from_str(enum_user_profile_rs_to_js(rs_obj.current_profile));
     Reflect::set(&js_obj, &"currentProfile".into(), &js_current_profile)?;
@@ -4577,11 +4497,7 @@ fn variant_user_or_device_claim_initial_info_js_to_rs(
             };
             let greeter_human_handle = {
                 let js_val = Reflect::get(&obj, &"greeterHumanHandle".into())?;
-                if js_val.is_null() {
-                    None
-                } else {
-                    Some(struct_human_handle_js_to_rs(js_val)?)
-                }
+                struct_human_handle_js_to_rs(js_val)?
             };
             Ok(libparsec::UserOrDeviceClaimInitialInfo::Device {
                 handle,
@@ -4623,11 +4539,7 @@ fn variant_user_or_device_claim_initial_info_js_to_rs(
             };
             let greeter_human_handle = {
                 let js_val = Reflect::get(&obj, &"greeterHumanHandle".into())?;
-                if js_val.is_null() {
-                    None
-                } else {
-                    Some(struct_human_handle_js_to_rs(js_val)?)
-                }
+                struct_human_handle_js_to_rs(js_val)?
             };
             Ok(libparsec::UserOrDeviceClaimInitialInfo::User {
                 handle,
@@ -4663,10 +4575,7 @@ fn variant_user_or_device_claim_initial_info_rs_to_js(
             Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
             let js_greeter_user_id = JsValue::from_str(greeter_user_id.as_ref());
             Reflect::set(&js_obj, &"greeterUserId".into(), &js_greeter_user_id)?;
-            let js_greeter_human_handle = match greeter_human_handle {
-                Some(val) => struct_human_handle_rs_to_js(val)?,
-                None => JsValue::NULL,
-            };
+            let js_greeter_human_handle = struct_human_handle_rs_to_js(greeter_human_handle)?;
             Reflect::set(
                 &js_obj,
                 &"greeterHumanHandle".into(),
@@ -4691,10 +4600,7 @@ fn variant_user_or_device_claim_initial_info_rs_to_js(
             Reflect::set(&js_obj, &"claimerEmail".into(), &js_claimer_email)?;
             let js_greeter_user_id = JsValue::from_str(greeter_user_id.as_ref());
             Reflect::set(&js_obj, &"greeterUserId".into(), &js_greeter_user_id)?;
-            let js_greeter_human_handle = match greeter_human_handle {
-                Some(val) => struct_human_handle_rs_to_js(val)?,
-                None => JsValue::NULL,
-            };
+            let js_greeter_human_handle = struct_human_handle_rs_to_js(greeter_human_handle)?;
             Reflect::set(
                 &js_obj,
                 &"greeterHumanHandle".into(),
@@ -4935,8 +4841,8 @@ pub fn bootstrapOrganization(
     on_event_callback: Function,
     bootstrap_organization_addr: String,
     save_strategy: Object,
-    human_handle: Option<Object>,
-    device_label: Option<String>,
+    human_handle: Object,
+    device_label: String,
     sequester_authority_verify_key: Option<Uint8Array>,
 ) -> Promise {
     future_to_promise(async move {
@@ -4962,26 +4868,12 @@ pub fn bootstrapOrganization(
         let save_strategy = save_strategy.into();
         let save_strategy = variant_device_save_strategy_js_to_rs(save_strategy)?;
 
-        let human_handle = match human_handle {
-            Some(human_handle) => {
-                let human_handle = human_handle.into();
-                let human_handle = struct_human_handle_js_to_rs(human_handle)?;
+        let human_handle = human_handle.into();
+        let human_handle = struct_human_handle_js_to_rs(human_handle)?;
 
-                Some(human_handle)
-            }
-            None => None,
-        };
-
-        let device_label = match device_label {
-            Some(device_label) => {
-                let device_label = device_label
-                    .parse()
-                    .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceLabel")))?;
-
-                Some(device_label)
-            }
-            None => None,
-        };
+        let device_label = device_label
+            .parse()
+            .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceLabel")))?;
 
         let sequester_authority_verify_key = match sequester_authority_verify_key {
             Some(sequester_authority_verify_key) => {
@@ -5166,19 +5058,12 @@ pub fn claimerDeviceInProgress2DoWaitPeerTrust(canceller: u32, handle: u32) -> P
 pub fn claimerDeviceInProgress3DoClaim(
     canceller: u32,
     handle: u32,
-    requested_device_label: Option<String>,
+    requested_device_label: String,
 ) -> Promise {
     future_to_promise(async move {
-        let requested_device_label = match requested_device_label {
-            Some(requested_device_label) => {
-                let requested_device_label = requested_device_label
-                    .parse()
-                    .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceLabel")))?;
-
-                Some(requested_device_label)
-            }
-            None => None,
-        };
+        let requested_device_label = requested_device_label
+            .parse()
+            .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceLabel")))?;
 
         let ret = libparsec::claimer_device_in_progress_3_do_claim(
             canceller,
@@ -5385,30 +5270,16 @@ pub fn claimerUserInProgress2DoWaitPeerTrust(canceller: u32, handle: u32) -> Pro
 pub fn claimerUserInProgress3DoClaim(
     canceller: u32,
     handle: u32,
-    requested_device_label: Option<String>,
-    requested_human_handle: Option<Object>,
+    requested_device_label: String,
+    requested_human_handle: Object,
 ) -> Promise {
     future_to_promise(async move {
-        let requested_device_label = match requested_device_label {
-            Some(requested_device_label) => {
-                let requested_device_label = requested_device_label
-                    .parse()
-                    .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceLabel")))?;
+        let requested_device_label = requested_device_label
+            .parse()
+            .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceLabel")))?;
 
-                Some(requested_device_label)
-            }
-            None => None,
-        };
-
-        let requested_human_handle = match requested_human_handle {
-            Some(requested_human_handle) => {
-                let requested_human_handle = requested_human_handle.into();
-                let requested_human_handle = struct_human_handle_js_to_rs(requested_human_handle)?;
-
-                Some(requested_human_handle)
-            }
-            None => None,
-        };
+        let requested_human_handle = requested_human_handle.into();
+        let requested_human_handle = struct_human_handle_js_to_rs(requested_human_handle)?;
 
         let ret = libparsec::claimer_user_in_progress_3_do_claim(
             canceller,
@@ -6232,19 +6103,12 @@ pub fn greeterDeviceInProgress3DoGetClaimRequests(canceller: u32, handle: u32) -
 pub fn greeterDeviceInProgress4DoCreate(
     canceller: u32,
     handle: u32,
-    device_label: Option<String>,
+    device_label: String,
 ) -> Promise {
     future_to_promise(async move {
-        let device_label = match device_label {
-            Some(device_label) => {
-                let device_label = device_label
-                    .parse()
-                    .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceLabel")))?;
-
-                Some(device_label)
-            }
-            None => None,
-        };
+        let device_label = device_label
+            .parse()
+            .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceLabel")))?;
 
         let ret =
             libparsec::greeter_device_in_progress_4_do_create(canceller, handle, device_label)
@@ -6378,31 +6242,17 @@ pub fn greeterUserInProgress3DoGetClaimRequests(canceller: u32, handle: u32) -> 
 pub fn greeterUserInProgress4DoCreate(
     canceller: u32,
     handle: u32,
-    human_handle: Option<Object>,
-    device_label: Option<String>,
+    human_handle: Object,
+    device_label: String,
     profile: String,
 ) -> Promise {
     future_to_promise(async move {
-        let human_handle = match human_handle {
-            Some(human_handle) => {
-                let human_handle = human_handle.into();
-                let human_handle = struct_human_handle_js_to_rs(human_handle)?;
+        let human_handle = human_handle.into();
+        let human_handle = struct_human_handle_js_to_rs(human_handle)?;
 
-                Some(human_handle)
-            }
-            None => None,
-        };
-
-        let device_label = match device_label {
-            Some(device_label) => {
-                let device_label = device_label
-                    .parse()
-                    .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceLabel")))?;
-
-                Some(device_label)
-            }
-            None => None,
-        };
+        let device_label = device_label
+            .parse()
+            .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceLabel")))?;
 
         let profile = enum_user_profile_js_to_rs(&profile)?;
 

@@ -213,29 +213,15 @@ fn struct_available_device_js_to_rs<'a>(
         }
     };
     let human_handle = {
-        let js_val: Handle<JsValue> = obj.get(cx, "humanHandle")?;
-        {
-            if js_val.is_a::<JsNull, _>(cx) {
-                None
-            } else {
-                let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
-                Some(struct_human_handle_js_to_rs(cx, js_val)?)
-            }
-        }
+        let js_val: Handle<JsObject> = obj.get(cx, "humanHandle")?;
+        struct_human_handle_js_to_rs(cx, js_val)?
     };
     let device_label = {
-        let js_val: Handle<JsValue> = obj.get(cx, "deviceLabel")?;
+        let js_val: Handle<JsString> = obj.get(cx, "deviceLabel")?;
         {
-            if js_val.is_a::<JsNull, _>(cx) {
-                None
-            } else {
-                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
-                Some({
-                    match js_val.value(cx).parse() {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                })
+            match js_val.value(cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
             }
         }
     };
@@ -293,15 +279,9 @@ fn struct_available_device_rs_to_js<'a>(
     })
     .or_throw(cx)?;
     js_obj.set(cx, "deviceId", js_device_id)?;
-    let js_human_handle = match rs_obj.human_handle {
-        Some(elem) => struct_human_handle_rs_to_js(cx, elem)?.as_value(cx),
-        None => JsNull::new(cx).as_value(cx),
-    };
+    let js_human_handle = struct_human_handle_rs_to_js(cx, rs_obj.human_handle)?;
     js_obj.set(cx, "humanHandle", js_human_handle)?;
-    let js_device_label = match rs_obj.device_label {
-        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
-        None => JsNull::new(cx).as_value(cx),
-    };
+    let js_device_label = JsString::try_new(cx, rs_obj.device_label).or_throw(cx)?;
     js_obj.set(cx, "deviceLabel", js_device_label)?;
     let js_slug = JsString::try_new(cx, rs_obj.slug).or_throw(cx)?;
     js_obj.set(cx, "slug", js_slug)?;
@@ -467,31 +447,17 @@ fn struct_client_info_js_to_rs<'a>(
         }
     };
     let device_label = {
-        let js_val: Handle<JsValue> = obj.get(cx, "deviceLabel")?;
+        let js_val: Handle<JsString> = obj.get(cx, "deviceLabel")?;
         {
-            if js_val.is_a::<JsNull, _>(cx) {
-                None
-            } else {
-                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
-                Some({
-                    match js_val.value(cx).parse() {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                })
+            match js_val.value(cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
             }
         }
     };
     let human_handle = {
-        let js_val: Handle<JsValue> = obj.get(cx, "humanHandle")?;
-        {
-            if js_val.is_a::<JsNull, _>(cx) {
-                None
-            } else {
-                let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
-                Some(struct_human_handle_js_to_rs(cx, js_val)?)
-            }
-        }
+        let js_val: Handle<JsObject> = obj.get(cx, "humanHandle")?;
+        struct_human_handle_js_to_rs(cx, js_val)?
     };
     let current_profile = {
         let js_val: Handle<JsString> = obj.get(cx, "currentProfile")?;
@@ -544,15 +510,9 @@ fn struct_client_info_rs_to_js<'a>(
     js_obj.set(cx, "deviceId", js_device_id)?;
     let js_user_id = JsString::try_new(cx, rs_obj.user_id).or_throw(cx)?;
     js_obj.set(cx, "userId", js_user_id)?;
-    let js_device_label = match rs_obj.device_label {
-        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
-        None => JsNull::new(cx).as_value(cx),
-    };
+    let js_device_label = JsString::try_new(cx, rs_obj.device_label).or_throw(cx)?;
     js_obj.set(cx, "deviceLabel", js_device_label)?;
-    let js_human_handle = match rs_obj.human_handle {
-        Some(elem) => struct_human_handle_rs_to_js(cx, elem)?.as_value(cx),
-        None => JsNull::new(cx).as_value(cx),
-    };
+    let js_human_handle = struct_human_handle_rs_to_js(cx, rs_obj.human_handle)?;
     js_obj.set(cx, "humanHandle", js_human_handle)?;
     let js_current_profile =
         JsString::try_new(cx, enum_user_profile_rs_to_js(rs_obj.current_profile)).or_throw(cx)?;
@@ -907,18 +867,11 @@ fn struct_device_greet_in_progress4_info_js_to_rs<'a>(
         }
     };
     let requested_device_label = {
-        let js_val: Handle<JsValue> = obj.get(cx, "requestedDeviceLabel")?;
+        let js_val: Handle<JsString> = obj.get(cx, "requestedDeviceLabel")?;
         {
-            if js_val.is_a::<JsNull, _>(cx) {
-                None
-            } else {
-                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
-                Some({
-                    match js_val.value(cx).parse() {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                })
+            match js_val.value(cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
             }
         }
     };
@@ -936,10 +889,8 @@ fn struct_device_greet_in_progress4_info_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
     js_obj.set(cx, "handle", js_handle)?;
-    let js_requested_device_label = match rs_obj.requested_device_label {
-        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
-        None => JsNull::new(cx).as_value(cx),
-    };
+    let js_requested_device_label =
+        JsString::try_new(cx, rs_obj.requested_device_label).or_throw(cx)?;
     js_obj.set(cx, "requestedDeviceLabel", js_requested_device_label)?;
     Ok(js_obj)
 }
@@ -995,18 +946,11 @@ fn struct_device_info_js_to_rs<'a>(
         }
     };
     let device_label = {
-        let js_val: Handle<JsValue> = obj.get(cx, "deviceLabel")?;
+        let js_val: Handle<JsString> = obj.get(cx, "deviceLabel")?;
         {
-            if js_val.is_a::<JsNull, _>(cx) {
-                None
-            } else {
-                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
-                Some({
-                    match js_val.value(cx).parse() {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                })
+            match js_val.value(cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
             }
         }
     };
@@ -1067,10 +1011,7 @@ fn struct_device_info_rs_to_js<'a>(
     })
     .or_throw(cx)?;
     js_obj.set(cx, "id", js_id)?;
-    let js_device_label = match rs_obj.device_label {
-        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
-        None => JsNull::new(cx).as_value(cx),
-    };
+    let js_device_label = JsString::try_new(cx, rs_obj.device_label).or_throw(cx)?;
     js_obj.set(cx, "deviceLabel", js_device_label)?;
     let js_created_on = JsNumber::new(cx, {
         let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -1580,29 +1521,15 @@ fn struct_user_greet_in_progress4_info_js_to_rs<'a>(
         }
     };
     let requested_human_handle = {
-        let js_val: Handle<JsValue> = obj.get(cx, "requestedHumanHandle")?;
-        {
-            if js_val.is_a::<JsNull, _>(cx) {
-                None
-            } else {
-                let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
-                Some(struct_human_handle_js_to_rs(cx, js_val)?)
-            }
-        }
+        let js_val: Handle<JsObject> = obj.get(cx, "requestedHumanHandle")?;
+        struct_human_handle_js_to_rs(cx, js_val)?
     };
     let requested_device_label = {
-        let js_val: Handle<JsValue> = obj.get(cx, "requestedDeviceLabel")?;
+        let js_val: Handle<JsString> = obj.get(cx, "requestedDeviceLabel")?;
         {
-            if js_val.is_a::<JsNull, _>(cx) {
-                None
-            } else {
-                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
-                Some({
-                    match js_val.value(cx).parse() {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                })
+            match js_val.value(cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
             }
         }
     };
@@ -1621,15 +1548,11 @@ fn struct_user_greet_in_progress4_info_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
     js_obj.set(cx, "handle", js_handle)?;
-    let js_requested_human_handle = match rs_obj.requested_human_handle {
-        Some(elem) => struct_human_handle_rs_to_js(cx, elem)?.as_value(cx),
-        None => JsNull::new(cx).as_value(cx),
-    };
+    let js_requested_human_handle =
+        struct_human_handle_rs_to_js(cx, rs_obj.requested_human_handle)?;
     js_obj.set(cx, "requestedHumanHandle", js_requested_human_handle)?;
-    let js_requested_device_label = match rs_obj.requested_device_label {
-        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
-        None => JsNull::new(cx).as_value(cx),
-    };
+    let js_requested_device_label =
+        JsString::try_new(cx, rs_obj.requested_device_label).or_throw(cx)?;
     js_obj.set(cx, "requestedDeviceLabel", js_requested_device_label)?;
     Ok(js_obj)
 }
@@ -1682,15 +1605,8 @@ fn struct_user_info_js_to_rs<'a>(
         }
     };
     let human_handle = {
-        let js_val: Handle<JsValue> = obj.get(cx, "humanHandle")?;
-        {
-            if js_val.is_a::<JsNull, _>(cx) {
-                None
-            } else {
-                let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
-                Some(struct_human_handle_js_to_rs(cx, js_val)?)
-            }
-        }
+        let js_val: Handle<JsObject> = obj.get(cx, "humanHandle")?;
+        struct_human_handle_js_to_rs(cx, js_val)?
     };
     let current_profile = {
         let js_val: Handle<JsString> = obj.get(cx, "currentProfile")?;
@@ -1789,10 +1705,7 @@ fn struct_user_info_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     let js_id = JsString::try_new(cx, rs_obj.id).or_throw(cx)?;
     js_obj.set(cx, "id", js_id)?;
-    let js_human_handle = match rs_obj.human_handle {
-        Some(elem) => struct_human_handle_rs_to_js(cx, elem)?.as_value(cx),
-        None => JsNull::new(cx).as_value(cx),
-    };
+    let js_human_handle = struct_human_handle_rs_to_js(cx, rs_obj.human_handle)?;
     js_obj.set(cx, "humanHandle", js_human_handle)?;
     let js_current_profile =
         JsString::try_new(cx, enum_user_profile_rs_to_js(rs_obj.current_profile)).or_throw(cx)?;
@@ -1940,15 +1853,8 @@ fn struct_workspace_user_access_info_js_to_rs<'a>(
         }
     };
     let human_handle = {
-        let js_val: Handle<JsValue> = obj.get(cx, "humanHandle")?;
-        {
-            if js_val.is_a::<JsNull, _>(cx) {
-                None
-            } else {
-                let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
-                Some(struct_human_handle_js_to_rs(cx, js_val)?)
-            }
-        }
+        let js_val: Handle<JsObject> = obj.get(cx, "humanHandle")?;
+        struct_human_handle_js_to_rs(cx, js_val)?
     };
     let current_profile = {
         let js_val: Handle<JsString> = obj.get(cx, "currentProfile")?;
@@ -1980,10 +1886,7 @@ fn struct_workspace_user_access_info_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     let js_user_id = JsString::try_new(cx, rs_obj.user_id).or_throw(cx)?;
     js_obj.set(cx, "userId", js_user_id)?;
-    let js_human_handle = match rs_obj.human_handle {
-        Some(elem) => struct_human_handle_rs_to_js(cx, elem)?.as_value(cx),
-        None => JsNull::new(cx).as_value(cx),
-    };
+    let js_human_handle = struct_human_handle_rs_to_js(cx, rs_obj.human_handle)?;
     js_obj.set(cx, "humanHandle", js_human_handle)?;
     let js_current_profile =
         JsString::try_new(cx, enum_user_profile_rs_to_js(rs_obj.current_profile)).or_throw(cx)?;
@@ -4153,15 +4056,8 @@ fn variant_user_or_device_claim_initial_info_js_to_rs<'a>(
                 }
             };
             let greeter_human_handle = {
-                let js_val: Handle<JsValue> = obj.get(cx, "greeterHumanHandle")?;
-                {
-                    if js_val.is_a::<JsNull, _>(cx) {
-                        None
-                    } else {
-                        let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
-                        Some(struct_human_handle_js_to_rs(cx, js_val)?)
-                    }
-                }
+                let js_val: Handle<JsObject> = obj.get(cx, "greeterHumanHandle")?;
+                struct_human_handle_js_to_rs(cx, js_val)?
             };
             Ok(libparsec::UserOrDeviceClaimInitialInfo::Device {
                 handle,
@@ -4194,15 +4090,8 @@ fn variant_user_or_device_claim_initial_info_js_to_rs<'a>(
                 }
             };
             let greeter_human_handle = {
-                let js_val: Handle<JsValue> = obj.get(cx, "greeterHumanHandle")?;
-                {
-                    if js_val.is_a::<JsNull, _>(cx) {
-                        None
-                    } else {
-                        let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
-                        Some(struct_human_handle_js_to_rs(cx, js_val)?)
-                    }
-                }
+                let js_val: Handle<JsObject> = obj.get(cx, "greeterHumanHandle")?;
+                struct_human_handle_js_to_rs(cx, js_val)?
             };
             Ok(libparsec::UserOrDeviceClaimInitialInfo::User {
                 handle,
@@ -4235,10 +4124,7 @@ fn variant_user_or_device_claim_initial_info_rs_to_js<'a>(
             js_obj.set(cx, "handle", js_handle)?;
             let js_greeter_user_id = JsString::try_new(cx, greeter_user_id).or_throw(cx)?;
             js_obj.set(cx, "greeterUserId", js_greeter_user_id)?;
-            let js_greeter_human_handle = match greeter_human_handle {
-                Some(elem) => struct_human_handle_rs_to_js(cx, elem)?.as_value(cx),
-                None => JsNull::new(cx).as_value(cx),
-            };
+            let js_greeter_human_handle = struct_human_handle_rs_to_js(cx, greeter_human_handle)?;
             js_obj.set(cx, "greeterHumanHandle", js_greeter_human_handle)?;
         }
         libparsec::UserOrDeviceClaimInitialInfo::User {
@@ -4256,10 +4142,7 @@ fn variant_user_or_device_claim_initial_info_rs_to_js<'a>(
             js_obj.set(cx, "claimerEmail", js_claimer_email)?;
             let js_greeter_user_id = JsString::try_new(cx, greeter_user_id).or_throw(cx)?;
             js_obj.set(cx, "greeterUserId", js_greeter_user_id)?;
-            let js_greeter_human_handle = match greeter_human_handle {
-                Some(elem) => struct_human_handle_rs_to_js(cx, elem)?.as_value(cx),
-                None => JsNull::new(cx).as_value(cx),
-            };
+            let js_greeter_human_handle = struct_human_handle_rs_to_js(cx, greeter_human_handle)?;
             js_obj.set(cx, "greeterHumanHandle", js_greeter_human_handle)?;
         }
     }
@@ -4517,24 +4400,18 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
         let js_val = cx.argument::<JsObject>(3)?;
         variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
-    let human_handle = match cx.argument_opt(4) {
-        Some(v) => match v.downcast::<JsObject, _>(&mut cx) {
-            Ok(js_val) => Some(struct_human_handle_js_to_rs(&mut cx, js_val)?),
-            Err(_) => None,
-        },
-        None => None,
+    let human_handle = {
+        let js_val = cx.argument::<JsObject>(4)?;
+        struct_human_handle_js_to_rs(&mut cx, js_val)?
     };
-    let device_label = match cx.argument_opt(5) {
-        Some(v) => match v.downcast::<JsString, _>(&mut cx) {
-            Ok(js_val) => Some({
-                match js_val.value(&mut cx).parse() {
-                    Ok(val) => val,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            }),
-            Err(_) => None,
-        },
-        None => None,
+    let device_label = {
+        let js_val = cx.argument::<JsString>(5)?;
+        {
+            match js_val.value(&mut cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
     };
     let sequester_authority_verify_key = match cx.argument_opt(6) {
         Some(v) => {
@@ -4873,17 +4750,14 @@ fn claimer_device_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<Js
             v as u32
         }
     };
-    let requested_device_label = match cx.argument_opt(2) {
-        Some(v) => match v.downcast::<JsString, _>(&mut cx) {
-            Ok(js_val) => Some({
-                match js_val.value(&mut cx).parse() {
-                    Ok(val) => val,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            }),
-            Err(_) => None,
-        },
-        None => None,
+    let requested_device_label = {
+        let js_val = cx.argument::<JsString>(2)?;
+        {
+            match js_val.value(&mut cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -5318,24 +5192,18 @@ fn claimer_user_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPr
             v as u32
         }
     };
-    let requested_device_label = match cx.argument_opt(2) {
-        Some(v) => match v.downcast::<JsString, _>(&mut cx) {
-            Ok(js_val) => Some({
-                match js_val.value(&mut cx).parse() {
-                    Ok(val) => val,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            }),
-            Err(_) => None,
-        },
-        None => None,
+    let requested_device_label = {
+        let js_val = cx.argument::<JsString>(2)?;
+        {
+            match js_val.value(&mut cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
     };
-    let requested_human_handle = match cx.argument_opt(3) {
-        Some(v) => match v.downcast::<JsObject, _>(&mut cx) {
-            Ok(js_val) => Some(struct_human_handle_js_to_rs(&mut cx, js_val)?),
-            Err(_) => None,
-        },
-        None => None,
+    let requested_human_handle = {
+        let js_val = cx.argument::<JsObject>(3)?;
+        struct_human_handle_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -6859,17 +6727,14 @@ fn greeter_device_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<J
             v as u32
         }
     };
-    let device_label = match cx.argument_opt(2) {
-        Some(v) => match v.downcast::<JsString, _>(&mut cx) {
-            Ok(js_val) => Some({
-                match js_val.value(&mut cx).parse() {
-                    Ok(val) => val,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            }),
-            Err(_) => None,
-        },
-        None => None,
+    let device_label = {
+        let js_val = cx.argument::<JsString>(2)?;
+        {
+            match js_val.value(&mut cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -7173,24 +7038,18 @@ fn greeter_user_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<JsP
             v as u32
         }
     };
-    let human_handle = match cx.argument_opt(2) {
-        Some(v) => match v.downcast::<JsObject, _>(&mut cx) {
-            Ok(js_val) => Some(struct_human_handle_js_to_rs(&mut cx, js_val)?),
-            Err(_) => None,
-        },
-        None => None,
+    let human_handle = {
+        let js_val = cx.argument::<JsObject>(2)?;
+        struct_human_handle_js_to_rs(&mut cx, js_val)?
     };
-    let device_label = match cx.argument_opt(3) {
-        Some(v) => match v.downcast::<JsString, _>(&mut cx) {
-            Ok(js_val) => Some({
-                match js_val.value(&mut cx).parse() {
-                    Ok(val) => val,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            }),
-            Err(_) => None,
-        },
-        None => None,
+    let device_label = {
+        let js_val = cx.argument::<JsString>(3)?;
+        {
+            match js_val.value(&mut cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
     };
     let profile = {
         let js_val = cx.argument::<JsString>(4)?;

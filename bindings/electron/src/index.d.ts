@@ -53,8 +53,8 @@ export interface AvailableDevice {
     keyFilePath: string
     organizationId: string
     deviceId: string
-    humanHandle: HumanHandle | null
-    deviceLabel: string | null
+    humanHandle: HumanHandle
+    deviceLabel: string
     slug: string
     ty: DeviceFileType
 }
@@ -73,8 +73,8 @@ export interface ClientInfo {
     organizationId: string
     deviceId: string
     userId: string
-    deviceLabel: string | null
-    humanHandle: HumanHandle | null
+    deviceLabel: string
+    humanHandle: HumanHandle
     currentProfile: UserProfile
 }
 
@@ -122,7 +122,7 @@ export interface DeviceGreetInProgress3Info {
 
 export interface DeviceGreetInProgress4Info {
     handle: number
-    requestedDeviceLabel: string | null
+    requestedDeviceLabel: string
 }
 
 
@@ -133,7 +133,7 @@ export interface DeviceGreetInitialInfo {
 
 export interface DeviceInfo {
     id: string
-    deviceLabel: string | null
+    deviceLabel: string
     createdOn: number
     createdBy: string | null
 }
@@ -195,8 +195,8 @@ export interface UserGreetInProgress3Info {
 
 export interface UserGreetInProgress4Info {
     handle: number
-    requestedHumanHandle: HumanHandle | null
-    requestedDeviceLabel: string | null
+    requestedHumanHandle: HumanHandle
+    requestedDeviceLabel: string
 }
 
 
@@ -207,7 +207,7 @@ export interface UserGreetInitialInfo {
 
 export interface UserInfo {
     id: string
-    humanHandle: HumanHandle | null
+    humanHandle: HumanHandle
     currentProfile: UserProfile
     createdOn: number
     createdBy: string | null
@@ -225,7 +225,7 @@ export interface WorkspaceInfo {
 
 export interface WorkspaceUserAccessInfo {
     userId: string
-    humanHandle: HumanHandle | null
+    humanHandle: HumanHandle
     currentProfile: UserProfile
     currentRole: RealmRole
 }
@@ -880,14 +880,14 @@ export interface UserOrDeviceClaimInitialInfoDevice {
     tag: "Device"
     handle: number
     greeter_user_id: string
-    greeter_human_handle: HumanHandle | null
+    greeter_human_handle: HumanHandle
 }
 export interface UserOrDeviceClaimInitialInfoUser {
     tag: "User"
     handle: number
     claimer_email: string
     greeter_user_id: string
-    greeter_human_handle: HumanHandle | null
+    greeter_human_handle: HumanHandle
 }
 export type UserOrDeviceClaimInitialInfo =
   | UserOrDeviceClaimInitialInfoDevice
@@ -994,8 +994,8 @@ export function bootstrapOrganization(
     on_event_callback: (event: ClientEvent) => void,
     bootstrap_organization_addr: string,
     save_strategy: DeviceSaveStrategy,
-    human_handle: HumanHandle | null,
-    device_label: string | null,
+    human_handle: HumanHandle,
+    device_label: string,
     sequester_authority_verify_key: Uint8Array | null
 ): Promise<Result<AvailableDevice, BootstrapOrganizationError>>
 export function buildBackendOrganizationBootstrapAddr(
@@ -1020,7 +1020,7 @@ export function claimerDeviceInProgress2DoWaitPeerTrust(
 export function claimerDeviceInProgress3DoClaim(
     canceller: number,
     handle: number,
-    requested_device_label: string | null
+    requested_device_label: string
 ): Promise<Result<DeviceClaimFinalizeInfo, ClaimInProgressError>>
 export function claimerDeviceInitialDoWaitPeer(
     canceller: number,
@@ -1049,8 +1049,8 @@ export function claimerUserInProgress2DoWaitPeerTrust(
 export function claimerUserInProgress3DoClaim(
     canceller: number,
     handle: number,
-    requested_device_label: string | null,
-    requested_human_handle: HumanHandle | null
+    requested_device_label: string,
+    requested_human_handle: HumanHandle
 ): Promise<Result<UserClaimFinalizeInfo, ClaimInProgressError>>
 export function claimerUserInitialDoWaitPeer(
     canceller: number,
@@ -1152,7 +1152,7 @@ export function greeterDeviceInProgress3DoGetClaimRequests(
 export function greeterDeviceInProgress4DoCreate(
     canceller: number,
     handle: number,
-    device_label: string | null
+    device_label: string
 ): Promise<Result<null, GreetInProgressError>>
 export function greeterDeviceInitialDoWaitPeer(
     canceller: number,
@@ -1173,8 +1173,8 @@ export function greeterUserInProgress3DoGetClaimRequests(
 export function greeterUserInProgress4DoCreate(
     canceller: number,
     handle: number,
-    human_handle: HumanHandle | null,
-    device_label: string | null,
+    human_handle: HumanHandle,
+    device_label: string,
     profile: UserProfile
 ): Promise<Result<null, GreetInProgressError>>
 export function greeterUserInitialDoWaitPeer(
