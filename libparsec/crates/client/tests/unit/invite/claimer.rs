@@ -169,9 +169,14 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
 
     // Step 4: claim user
 
-    let requested_device_label = Arc::new(Mutex::new(None)); // Set in first invite_4 hook
-    let requested_human_handle = Arc::new(Mutex::new(None)); // Set in first invite_4 hook
+    let requested_device_label: DeviceLabel = "Requested My dev1".parse().unwrap();
+    let requested_human_handle: HumanHandle =
+        "Requested Johny McJohnFace <requested.john@example.com>"
+            .parse()
+            .unwrap();
     let device_id: DeviceID = "john@dev1".parse().unwrap();
+    let device_label: DeviceLabel = "My dev1".parse().unwrap();
+    let human_handle: HumanHandle = "Johny McJohnFace <john@example.com>".parse().unwrap();
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
@@ -184,13 +189,8 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
                 let in_data =
                     InviteUserData::decrypt_and_load(&req.payload, &shared_secret_key).unwrap();
 
-                let mut guard = requested_device_label.lock().unwrap();
-                p_assert_matches!(*guard, None); // Should be set only once !
-                *guard = Some(in_data.requested_device_label);
-
-                let mut guard = requested_human_handle.lock().unwrap();
-                p_assert_matches!(*guard, None); // Should be set only once !
-                *guard = Some(in_data.requested_human_handle);
+                p_assert_eq!(in_data.requested_device_label, requested_device_label);
+                p_assert_eq!(in_data.requested_human_handle, requested_human_handle);
 
                 protocol::invited_cmds::latest::invite_4_claimer_communicate::Rep::Ok {
                     payload: Bytes::from_static(b""),
@@ -202,13 +202,15 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
             let shared_secret_key = shared_secret_key.clone();
             let root_verify_key = env.organization_addr().root_verify_key().to_owned();
             let device_id = device_id.clone();
+            let device_label = device_label.clone();
+            let human_handle = human_handle.clone();
             move |req: protocol::invited_cmds::latest::invite_4_claimer_communicate::Req| {
                 assert!(req.payload.is_empty());
 
                 let out_payload = InviteUserConfirmation {
                     device_id,
-                    device_label: None,
-                    human_handle: None,
+                    device_label,
+                    human_handle,
                     profile: UserProfile::Standard,
                     root_verify_key,
                 }
@@ -221,23 +223,19 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
         }
     );
 
-    let ctx = ctx.do_claim_user(None, None).await.unwrap();
+    let ctx = ctx
+        .do_claim_user(requested_device_label, requested_human_handle)
+        .await
+        .unwrap();
 
-    let requested_device_label = {
-        let guard = requested_device_label.lock().unwrap();
-        (*guard)
-            .clone()
-            .expect("set during second invite_4_claimer_communicate")
-    };
-    let requested_human_handle = {
-        let guard = requested_human_handle.lock().unwrap();
-        (*guard)
-            .clone()
-            .expect("set during second invite_4_claimer_communicate")
-    };
-
-    p_assert_eq!(requested_device_label, None);
-    p_assert_eq!(requested_human_handle, None);
+    p_assert_eq!(
+        ctx.new_local_device.organization_addr,
+        *env.organization_addr()
+    );
+    p_assert_eq!(ctx.new_local_device.device_id, device_id);
+    p_assert_eq!(ctx.new_local_device.device_label, Some(device_label));
+    p_assert_eq!(ctx.new_local_device.human_handle, Some(human_handle));
+    p_assert_eq!(ctx.new_local_device.initial_profile, UserProfile::Standard);
 
     // Step 5: finalize
 

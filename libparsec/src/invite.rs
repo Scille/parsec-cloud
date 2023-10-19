@@ -95,8 +95,8 @@ pub async fn bootstrap_organization(
 
     bootstrap_organization_addr: BackendOrganizationBootstrapAddr,
     save_strategy: DeviceSaveStrategy,
-    human_handle: Option<HumanHandle>,
-    device_label: Option<DeviceLabel>,
+    human_handle: HumanHandle,
+    device_label: DeviceLabel,
     sequester_authority_verify_key: Option<SequesterVerifyKeyDer>,
 ) -> Result<AvailableDevice, BootstrapOrganizationError> {
     let config: Arc<libparsec_client::ClientConfig> = config.into();
@@ -107,8 +107,8 @@ pub async fn bootstrap_organization(
         config.clone(),
         events_plugged.event_bus,
         bootstrap_organization_addr,
-        human_handle,
-        device_label,
+        Some(human_handle),
+        Some(device_label),
         sequester_authority_verify_key,
     )
     .await?;
@@ -467,8 +467,8 @@ pub struct DeviceClaimInProgress3Info {
 pub async fn claimer_user_in_progress_3_do_claim(
     canceller: Handle,
     handle: Handle,
-    requested_device_label: Option<DeviceLabel>,
-    requested_human_handle: Option<HumanHandle>,
+    requested_device_label: DeviceLabel,
+    requested_human_handle: HumanHandle,
 ) -> Result<UserClaimFinalizeInfo, ClaimInProgressError> {
     let work = async {
         let ctx = take_and_close_handle(handle, |x| match x {
@@ -495,7 +495,7 @@ pub async fn claimer_user_in_progress_3_do_claim(
 pub async fn claimer_device_in_progress_3_do_claim(
     canceller: Handle,
     handle: Handle,
-    requested_device_label: Option<DeviceLabel>,
+    requested_device_label: DeviceLabel,
 ) -> Result<DeviceClaimFinalizeInfo, ClaimInProgressError> {
     let work = async {
         let ctx = take_and_close_handle(handle, |x| match x {
@@ -1093,20 +1093,20 @@ pub async fn greeter_device_in_progress_3_do_get_claim_requests(
 
 pub struct UserGreetInProgress4Info {
     pub handle: Handle,
-    pub requested_device_label: Option<DeviceLabel>,
-    pub requested_human_handle: Option<HumanHandle>,
+    pub requested_device_label: DeviceLabel,
+    pub requested_human_handle: HumanHandle,
 }
 
 pub struct DeviceGreetInProgress4Info {
     pub handle: Handle,
-    pub requested_device_label: Option<DeviceLabel>,
+    pub requested_device_label: DeviceLabel,
 }
 
 pub async fn greeter_user_in_progress_4_do_create(
     canceller: Handle,
     handle: Handle,
-    human_handle: Option<HumanHandle>,
-    device_label: Option<DeviceLabel>,
+    human_handle: HumanHandle,
+    device_label: DeviceLabel,
     profile: UserProfile,
 ) -> Result<(), GreetInProgressError> {
     let work = async {
@@ -1131,7 +1131,7 @@ pub async fn greeter_user_in_progress_4_do_create(
 pub async fn greeter_device_in_progress_4_do_create(
     canceller: Handle,
     handle: Handle,
-    device_label: Option<DeviceLabel>,
+    device_label: DeviceLabel,
 ) -> Result<(), GreetInProgressError> {
     let work = async {
         let ctx = take_and_close_handle(handle, |x| match x {

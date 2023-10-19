@@ -639,8 +639,8 @@ impl DeviceGreetInProgress3Ctx {
 /// Helper to prepare the creation of a new user.
 fn create_new_signed_user_certificates(
     author: &LocalDevice,
-    device_label: Option<DeviceLabel>,
-    human_handle: Option<HumanHandle>,
+    device_label: DeviceLabel,
+    human_handle: HumanHandle,
     profile: UserProfile,
     public_key: PublicKey,
     verify_key: VerifyKey,
@@ -652,7 +652,7 @@ fn create_new_signed_user_certificates(
         author: CertificateSignerOwned::User(author.device_id.clone()),
         timestamp,
         user_id: device_id.user_id().clone(),
-        human_handle: human_handle.clone(),
+        human_handle: Some(human_handle.clone()),
         public_key: public_key.clone(),
         profile,
     };
@@ -670,7 +670,7 @@ fn create_new_signed_user_certificates(
         author: CertificateSignerOwned::User(author.device_id.clone()),
         timestamp,
         device_id: device_id.clone(),
-        device_label: device_label.clone(),
+        device_label: Some(device_label.clone()),
         verify_key: verify_key.clone(),
     };
 
@@ -708,7 +708,7 @@ fn create_new_signed_user_certificates(
 
 fn create_new_signed_device_certificates(
     author: &LocalDevice,
-    device_label: Option<DeviceLabel>,
+    device_label: DeviceLabel,
     verify_key: VerifyKey,
     timestamp: DateTime,
 ) -> (Bytes, Bytes, DeviceID) {
@@ -718,7 +718,7 @@ fn create_new_signed_device_certificates(
         author: CertificateSignerOwned::User(author.device_id.clone()),
         timestamp,
         device_id: device_id.clone(),
-        device_label,
+        device_label: Some(device_label),
         verify_key: verify_key.clone(),
     };
 
@@ -746,8 +746,8 @@ fn create_new_signed_device_certificates(
 #[derive(Debug)]
 pub struct UserGreetInProgress4Ctx {
     pub token: InvitationToken,
-    pub requested_device_label: Option<DeviceLabel>,
-    pub requested_human_handle: Option<HumanHandle>,
+    pub requested_device_label: DeviceLabel,
+    pub requested_human_handle: HumanHandle,
     device: Arc<LocalDevice>,
     public_key: PublicKey,
     verify_key: VerifyKey,
@@ -759,8 +759,8 @@ pub struct UserGreetInProgress4Ctx {
 impl UserGreetInProgress4Ctx {
     pub async fn do_create_new_user(
         self,
-        device_label: Option<DeviceLabel>,
-        human_handle: Option<HumanHandle>,
+        device_label: DeviceLabel,
+        human_handle: HumanHandle,
         profile: UserProfile,
     ) -> Result<(), GreetInProgressError> {
         let mut timestamp = self.device.time_provider.now();
@@ -896,7 +896,7 @@ impl UserGreetInProgress4Ctx {
 #[derive(Debug)]
 pub struct DeviceGreetInProgress4Ctx {
     pub token: InvitationToken,
-    pub requested_device_label: Option<DeviceLabel>,
+    pub requested_device_label: DeviceLabel,
     device: Arc<LocalDevice>,
     verify_key: VerifyKey,
     shared_secret_key: SecretKey,
@@ -908,7 +908,7 @@ pub struct DeviceGreetInProgress4Ctx {
 impl DeviceGreetInProgress4Ctx {
     pub async fn do_create_new_device(
         self,
-        device_label: Option<DeviceLabel>,
+        device_label: DeviceLabel,
     ) -> Result<(), GreetInProgressError> {
         let mut timestamp = self.device.time_provider.now();
         let device_id = loop {
@@ -976,7 +976,11 @@ impl DeviceGreetInProgress4Ctx {
         let payload = InviteDeviceConfirmation {
             device_id,
             device_label,
-            human_handle: self.device.human_handle.clone(),
+            human_handle: self
+                .device
+                .human_handle
+                .clone()
+                .expect("human handle is always configured"),
             profile: self.device.initial_profile,
             private_key: self.device.private_key.clone(),
             user_realm_id: self.device.user_realm_id,
