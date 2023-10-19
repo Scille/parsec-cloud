@@ -264,12 +264,12 @@ pub enum UserOrDeviceClaimInitialInfo {
         handle: Handle,
         claimer_email: String,
         greeter_user_id: UserID,
-        greeter_human_handle: Option<HumanHandle>,
+        greeter_human_handle: HumanHandle,
     },
     Device {
         handle: Handle,
         greeter_user_id: UserID,
-        greeter_human_handle: Option<HumanHandle>,
+        greeter_human_handle: HumanHandle,
     },
 }
 

@@ -161,12 +161,12 @@ class UserOrDeviceClaimInitialInfo(Variant):
         handle: Handle
         claimer_email: str
         greeter_user_id: UserID
-        greeter_human_handle: Optional[HumanHandle]
+        greeter_human_handle: HumanHandle
 
     class Device:
         handle: Handle
         greeter_user_id: UserID
-        greeter_human_handle: Optional[HumanHandle]
+        greeter_human_handle: HumanHandle
 
 
 async def claimer_retrieve_info(

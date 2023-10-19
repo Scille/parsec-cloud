@@ -40,7 +40,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
             protocol::invited_cmds::latest::invite_info::Rep::Ok(
                 protocol::invited_cmds::latest::invite_info::UserOrDevice::User {
                     claimer_email: "john@example.com".to_owned(),
-                    greeter_human_handle: alice.human_handle.clone(),
+                    greeter_human_handle: alice.human_handle.clone().expect("always present"),
                     greeter_user_id: alice.user_id().to_owned(),
                 },
             )
@@ -54,7 +54,10 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
         UserOrDeviceClaimInitialCtx::User(ctx) => {
             p_assert_eq!(ctx.claimer_email, "john@example.com");
             p_assert_eq!(ctx.greeter_user_id(), alice.user_id());
-            p_assert_eq!(ctx.greeter_human_handle(), &alice.human_handle);
+            p_assert_eq!(
+                ctx.greeter_human_handle(),
+                alice.human_handle.as_ref().expect("always present")
+            );
             ctx
         }
         _ => unreachable!(),
