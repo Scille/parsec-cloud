@@ -12,7 +12,7 @@ pub fn alice_user_certif(alice: &Device) -> UserCertificate {
         author: CertificateSignerOwned::Root,
         timestamp: DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, 0).unwrap(),
         user_id: alice.user_id().clone(),
-        human_handle: alice.human_handle.clone(),
+        human_handle: MaybeRedacted::Real(alice.human_handle.clone()),
         public_key: alice.public_key(),
         profile: alice.profile,
     }
@@ -25,7 +25,7 @@ pub fn bob_user_certif(bob: &Device) -> UserCertificate {
         author: CertificateSignerOwned::Root,
         timestamp: DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, 0).unwrap(),
         user_id: bob.user_id().clone(),
-        human_handle: bob.human_handle.clone(),
+        human_handle: MaybeRedacted::Real(bob.human_handle.clone()),
         public_key: bob.public_key(),
         profile: bob.profile,
     }
@@ -38,7 +38,7 @@ pub fn mallory_user_certif(mallory: &Device) -> UserCertificate {
         author: CertificateSignerOwned::Root,
         timestamp: DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, 0).unwrap(),
         user_id: mallory.user_id().clone(),
-        human_handle: mallory.human_handle.clone(),
+        human_handle: MaybeRedacted::Real(mallory.human_handle.clone()),
         public_key: mallory.public_key(),
         profile: mallory.profile,
     }
@@ -51,7 +51,7 @@ pub fn alice_device_certif(alice: &Device) -> DeviceCertificate {
         author: CertificateSignerOwned::Root,
         timestamp: DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, 0).unwrap(),
         device_id: alice.device_id.clone(),
-        device_label: alice.device_label.clone(),
+        device_label: MaybeRedacted::Real(alice.device_label.clone()),
         verify_key: alice.verify_key(),
     }
 }
@@ -63,7 +63,7 @@ pub fn bob_device_certif(bob: &Device) -> DeviceCertificate {
         author: CertificateSignerOwned::Root,
         timestamp: DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, 0).unwrap(),
         device_id: bob.device_id.clone(),
-        device_label: bob.device_label.clone(),
+        device_label: MaybeRedacted::Real(bob.device_label.clone()),
         verify_key: bob.verify_key(),
     }
 }
@@ -75,7 +75,7 @@ pub fn mallory_device_certif(mallory: &Device) -> DeviceCertificate {
         author: CertificateSignerOwned::Root,
         timestamp: DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, 0).unwrap(),
         device_id: mallory.device_id.clone(),
-        device_label: mallory.device_label.clone(),
+        device_label: MaybeRedacted::Real(mallory.device_label.clone()),
         verify_key: mallory.verify_key(),
     }
 }

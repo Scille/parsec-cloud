@@ -216,8 +216,6 @@ async fn list_devices(tmp_path: TmpPath) {
     p_assert_eq!(devices, expected_devices);
 }
 
-// TODO: human handle / device label legacy default not implemented yet !
-#[ignore]
 #[parsec_test]
 async fn list_devices_support_legacy_file_without_labels(tmp_path: TmpPath) {
     // Generated from Rust implementation (Parsec v3.0.0+dev)
@@ -243,16 +241,15 @@ async fn list_devices_support_legacy_file_without_labels(tmp_path: TmpPath) {
         key_file_path,
         organization_id: "Org".parse().unwrap(),
         device_id: "Zack@PC1".parse().unwrap(),
-        // TODO: this will break :(
-        // this is expected and will be overwritten in the next commit squash
-        // *if you see this in the code review, it's time to complain !*
-        human_handle: "dummy".parse().unwrap(),
-        device_label: "dummy".parse().unwrap(),
+        human_handle: HumanHandle::new_redacted(&"Zack".parse().unwrap()),
+        device_label: "PC1".parse().unwrap(),
         slug,
         ty: DeviceFileType::Password,
     };
 
     p_assert_eq!(devices, [expected_device]);
+    p_assert_eq!(devices[0].human_handle.label(), "Zack");
+    p_assert_eq!(devices[0].human_handle.email(), "_zack@redacted.invalid");
 }
 
 #[parsec_test(testbed = "empty")]

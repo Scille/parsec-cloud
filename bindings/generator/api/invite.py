@@ -53,8 +53,8 @@ class AvailableDevice(Structure):
     key_file_path: Path
     organization_id: OrganizationID
     device_id: DeviceID
-    human_handle: Optional[HumanHandle]
-    device_label: Optional[DeviceLabel]
+    human_handle: HumanHandle
+    device_label: DeviceLabel
     slug: str
     ty: DeviceFileType
 
@@ -104,8 +104,8 @@ async def bootstrap_organization(
     on_event_callback: OnClientEventCallback,
     bootstrap_organization_addr: BackendOrganizationBootstrapAddr,
     save_strategy: DeviceSaveStrategy,
-    human_handle: Optional[HumanHandle],
-    device_label: Optional[DeviceLabel],
+    human_handle: HumanHandle,
+    device_label: DeviceLabel,
     sequester_authority_verify_key: Optional[SequesterVerifyKeyDer],
 ) -> Result[AvailableDevice, BootstrapOrganizationError]:
     raise NotImplementedError
@@ -260,8 +260,8 @@ class DeviceClaimFinalizeInfo(Structure):
 async def claimer_user_in_progress_3_do_claim(
     canceller: Handle,
     handle: Handle,
-    requested_device_label: Optional[DeviceLabel],
-    requested_human_handle: Optional[HumanHandle],
+    requested_device_label: DeviceLabel,
+    requested_human_handle: HumanHandle,
 ) -> Result[UserClaimFinalizeInfo, ClaimInProgressError]:
     raise NotImplementedError
 
@@ -269,7 +269,7 @@ async def claimer_user_in_progress_3_do_claim(
 async def claimer_device_in_progress_3_do_claim(
     canceller: Handle,
     handle: Handle,
-    requested_device_label: Optional[DeviceLabel],
+    requested_device_label: DeviceLabel,
 ) -> Result[DeviceClaimFinalizeInfo, ClaimInProgressError]:
     raise NotImplementedError
 
@@ -538,13 +538,13 @@ async def greeter_device_in_progress_2_do_signify_trust(
 
 class UserGreetInProgress4Info(Structure):
     handle: Handle
-    requested_human_handle: Optional[HumanHandle]
-    requested_device_label: Optional[DeviceLabel]
+    requested_human_handle: HumanHandle
+    requested_device_label: DeviceLabel
 
 
 class DeviceGreetInProgress4Info(Structure):
     handle: Handle
-    requested_device_label: Optional[DeviceLabel]
+    requested_device_label: DeviceLabel
 
 
 async def greeter_user_in_progress_3_do_get_claim_requests(
@@ -562,8 +562,8 @@ async def greeter_device_in_progress_3_do_get_claim_requests(
 async def greeter_user_in_progress_4_do_create(
     canceller: Handle,
     handle: Handle,
-    human_handle: Optional[HumanHandle],
-    device_label: Optional[DeviceLabel],
+    human_handle: HumanHandle,
+    device_label: DeviceLabel,
     profile: UserProfile,
 ) -> Result[None, GreetInProgressError]:
     raise NotImplementedError
@@ -572,6 +572,6 @@ async def greeter_user_in_progress_4_do_create(
 async def greeter_device_in_progress_4_do_create(
     canceller: Handle,
     handle: Handle,
-    device_label: Optional[DeviceLabel],
+    device_label: DeviceLabel,
 ) -> Result[None, GreetInProgressError]:
     raise NotImplementedError

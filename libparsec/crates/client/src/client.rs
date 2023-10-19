@@ -149,12 +149,12 @@ impl Client {
         &self.device.device_id
     }
 
-    pub fn device_label(&self) -> Option<&DeviceLabel> {
-        self.device.device_label.as_ref()
+    pub fn device_label(&self) -> &DeviceLabel {
+        &self.device.device_label
     }
 
-    pub fn human_handle(&self) -> Option<&HumanHandle> {
-        self.device.human_handle.as_ref()
+    pub fn human_handle(&self) -> &HumanHandle {
+        &self.device.human_handle
     }
 
     pub async fn profile(&self) -> anyhow::Result<UserProfile> {

@@ -119,7 +119,7 @@ class ConduitListenCtx:
 class UserInvitation:
     TYPE = InvitationType.USER
     greeter_user_id: UserID
-    greeter_human_handle: HumanHandle | None
+    greeter_human_handle: HumanHandle
     claimer_email: str
     token: InvitationToken = attr.ib(factory=InvitationToken.new)
     created_on: DateTime = attr.ib(factory=DateTime.now)
@@ -133,7 +133,7 @@ class UserInvitation:
 class DeviceInvitation:
     TYPE = InvitationType.DEVICE
     greeter_user_id: UserID
-    greeter_human_handle: HumanHandle | None
+    greeter_human_handle: HumanHandle
     token: InvitationToken = attr.ib(factory=InvitationToken.new)
     created_on: DateTime = attr.ib(factory=DateTime.now)
     status: InvitationStatus = InvitationStatus.IDLE
@@ -459,6 +459,16 @@ class BaseInviteComponent:
                 for item in invitations
             ]
         )
+
+    @api
+    async def apiv3_invite_info(
+        self, client_ctx: InvitedClientContext, req: invited_cmds.v3.invite_info.Req
+    ) -> invited_cmds.v3.invite_info.Rep:
+        # `invite_info` command has similar request between APIv3 and v4+
+        # response is slightly different: in APIv4 the human handle field is alway
+        # present while in APIv3 it can be None
+        # In practice this means APIv4 schema is a subset of APIv3 one.
+        return await self.api_invite_info(client_ctx, req)  # type: ignore[return-value, arg-type]
 
     @api
     async def api_invite_info(

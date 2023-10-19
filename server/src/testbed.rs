@@ -72,9 +72,9 @@ event_wrapper!(
         sequester_authority_signing_key: Option<SequesterSigningKeyDer>,
         sequester_authority_verify_key: Option<SequesterVerifyKeyDer>,
         first_user_device_id: DeviceID,
-        first_user_human_handle: Option<HumanHandle>,
+        first_user_human_handle: HumanHandle,
         first_user_private_key: PrivateKey,
-        first_user_first_device_label: Option<DeviceLabel>,
+        first_user_first_device_label: DeviceLabel,
         first_user_first_device_signing_key: SigningKey,
         first_user_user_realm_id: VlobID,
         first_user_user_realm_key: SecretKey,
@@ -126,9 +126,9 @@ event_wrapper!(
         timestamp: DateTime,
         author: DeviceID,
         device_id: DeviceID,
-        human_handle: Option<HumanHandle>,
+        human_handle: HumanHandle,
         private_key: PrivateKey,
-        first_device_label: Option<DeviceLabel>,
+        first_device_label: DeviceLabel,
         first_device_signing_key: SigningKey,
         initial_profile: &'static PyObject,
         user_realm_id: VlobID,
@@ -159,7 +159,7 @@ event_wrapper!(
         timestamp: DateTime,
         author: DeviceID,
         device_id: DeviceID,
-        device_label: Option<DeviceLabel>,
+        device_label: DeviceLabel,
         signing_key: SigningKey,
         local_symkey: SecretKey,
         local_password: &'static str,
@@ -442,12 +442,9 @@ fn event_to_pyobject(
                     .as_ref()
                     .map(|sequester_authority| sequester_authority.verify_key.clone().into()),
                 first_user_device_id: x.first_user_device_id.clone().into(),
-                first_user_human_handle: x.first_user_human_handle.clone().map(HumanHandle::from),
+                first_user_human_handle: x.first_user_human_handle.clone().into(),
                 first_user_private_key: x.first_user_private_key.clone().into(),
-                first_user_first_device_label: x
-                    .first_user_first_device_label
-                    .clone()
-                    .map(DeviceLabel::from),
+                first_user_first_device_label: x.first_user_first_device_label.clone().into(),
                 first_user_first_device_signing_key: x
                     .first_user_first_device_signing_key
                     .clone()
@@ -517,9 +514,9 @@ fn event_to_pyobject(
                 timestamp: x.timestamp.into(),
                 author: x.author.clone().into(),
                 device_id: x.device_id.clone().into(),
-                human_handle: x.human_handle.clone().map(HumanHandle::from),
+                human_handle: x.human_handle.clone().into(),
                 private_key: x.private_key.clone().into(),
-                first_device_label: x.first_device_label.clone().map(DeviceLabel::from),
+                first_device_label: x.first_device_label.clone().into(),
                 first_device_signing_key: x.first_device_signing_key.clone().into(),
                 initial_profile: UserProfile::convert(x.initial_profile),
                 user_realm_id: x.user_realm_id.into(),
@@ -556,7 +553,7 @@ fn event_to_pyobject(
                 timestamp: x.timestamp.into(),
                 author: x.author.clone().into(),
                 device_id: x.device_id.clone().into(),
-                device_label: x.device_label.clone().map(|x| x.into()),
+                device_label: x.device_label.clone().into(),
                 signing_key: x.signing_key.clone().into(),
                 local_symkey: x.local_symkey.clone().into(),
                 local_password: x.local_password,

@@ -545,11 +545,7 @@ async def _human_accesses(
             user_granted_roles = per_user_granted_roles.setdefault(granted_role.user_id, [])
             user_granted_roles.append(granted_role)
 
-        humans: Dict[
-            HumanHandle | None, List[Tuple[User, Dict[VlobID, List[RealmGrantedRole]]]]
-        ] = {
-            None: []
-        }  # Non-human are all stored in `None` key
+        humans: Dict[HumanHandle, List[Tuple[User, Dict[VlobID, List[RealmGrantedRole]]]]] = {}
         for user in users:
             human_users = humans.setdefault(user.human_handle, [])
             per_user_per_realm_granted_role: Dict[VlobID, List[RealmGrantedRole]] = {}
@@ -607,7 +603,6 @@ async def _human_accesses(
                         display_role = f"Access {granted_role.role.str} granted"
                     print(base_indent + f"\t\t{granted_role.granted_on}: {display_role}")
 
-        non_human_users = humans.pop(None)
         print(f"Found {len(humans)} result(s)")
 
         for human_handle, human_users in humans.items():
@@ -616,9 +611,6 @@ async def _human_accesses(
             for user, per_realm_granted_roles in human_users:
                 _display_user(user, per_realm_granted_roles, indent=1)
             print()
-
-        for user, per_realm_granted_roles in non_human_users:
-            _display_user(user, per_realm_granted_roles, indent=0)
 
 
 @click.command(short_help="Get information about user&realm accesses")

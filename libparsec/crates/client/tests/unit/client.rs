@@ -34,12 +34,9 @@ async fn basic_info(env: &TestbedEnv) {
         client.device_slughash().as_str(),
         "7542104c696b8f7c3472f6ae46c63162208e102b36cf2e19d710f37bbfe8bcbb"
     );
-    p_assert_eq!(
-        client.device_label(),
-        Some(&"My dev1 machine".parse().unwrap())
-    );
+    p_assert_eq!(client.device_label(), &"My dev1 machine".parse().unwrap());
     // Cannot compare between `HumanHandle` as it ignores `label` field
-    p_assert_matches!(client.human_handle(), Some(handle) if handle.label() == "Alicey McAliceFace" && handle.email() == "alice@example.com");
+    p_assert_matches!(client.human_handle(), handle if handle.label() == "Alicey McAliceFace" && handle.email() == "alice@example.com");
     p_assert_eq!(client.organization_id(), &"OfflineOrg".parse().unwrap());
     p_assert_matches!(client.profile().await.unwrap(), UserProfile::Admin);
 

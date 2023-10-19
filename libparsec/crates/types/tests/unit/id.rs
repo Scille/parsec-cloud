@@ -28,15 +28,23 @@ fn from_str() {
 #[case::invalid_name_with_backslash("a@b", "hell\\o", false)]
 #[case::switched("John Doe", "john.doe@example.com", false)]
 #[case::empty_email("", "foo", false)]
-#[case::too_long_email(&"x".repeat(256), "foo", false)]
+#[case::max_size_email_and_label(&format!("{}@x.y", "a".repeat(250)), &"x".repeat(254), true)]
+#[case::too_long_email(&"x".repeat(255), "foo", false)]
 #[case::empty_label("foo@example.com", "", false)]
-#[case::too_long_label("foo@example.com", &"x".repeat(256), false)]
+#[case::too_long_label("foo@example.com", &"x".repeat(255), false)]
+#[case::redacted_reserved_domain("john.doe@redacted.invalid", "John Doe", false)]
 fn human_handle(#[case] email: &str, #[case] label: &str, #[case] is_ok: bool) {
     p_assert_eq!(HumanHandle::new(email, label).is_ok(), is_ok);
     p_assert_eq!(
         HumanHandle::from_str(&format!("{label} <{email}>")).is_ok(),
         is_ok
     );
+    if is_ok {
+        let human_handle = HumanHandle::new(email, label).unwrap();
+        p_assert_eq!(human_handle.label(), label);
+        p_assert_eq!(human_handle.email(), email);
+        p_assert_eq!(human_handle.as_ref(), format!("{label} <{email}>"));
+    }
 }
 
 #[test]
@@ -60,4 +68,17 @@ fn display() {
 
     let device_id = "john@pc1".parse::<DeviceID>().unwrap();
     p_assert_eq!(format!("{}", device_id), "john@pc1");
+}
+
+#[rstest]
+#[case::empty("", "")]
+#[case::single("a", "a")]
+#[case::multiple("aaa", "aaa")]
+#[case::underscore("_", "__")]
+#[case::single_uppercase("A", "_a")]
+#[case::multiple_uppercase("AAA", "_a_a_a")]
+#[case::uppercase_and_underscore("_A_", "___a__")]
+#[case::unicode("Δ", "_δ")]
+fn uncaseify_test(#[case] input: &str, #[case] expected: &str) {
+    p_assert_eq!(uncaseify(input), expected)
 }

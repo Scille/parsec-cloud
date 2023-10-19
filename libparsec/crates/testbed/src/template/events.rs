@@ -358,10 +358,10 @@ pub struct TestbedEventBootstrapOrganization {
     pub sequester_authority: Option<TestbedEventBootstrapOrganizationSequesterAuthority>,
     pub first_user_certificate_index: IndexInt,
     pub first_user_device_id: DeviceID,
-    pub first_user_human_handle: Option<HumanHandle>,
+    pub first_user_human_handle: HumanHandle,
     pub first_user_private_key: PrivateKey,
     pub first_user_first_device_certificate_index: IndexInt,
-    pub first_user_first_device_label: Option<DeviceLabel>,
+    pub first_user_first_device_label: DeviceLabel,
     pub first_user_first_device_signing_key: SigningKey,
     pub first_user_user_realm_id: VlobID,
     pub first_user_user_realm_key: SecretKey,
@@ -400,13 +400,9 @@ impl CrcHash for TestbedEventBootstrapOrganization {
         }
         self.first_user_certificate_index.crc_hash(state);
         self.first_user_device_id.crc_hash(state);
-        if let Some(first_user_human_handle) = &self.first_user_human_handle {
-            first_user_human_handle.crc_hash(state);
-        }
+        self.first_user_human_handle.crc_hash(state);
         self.first_user_private_key.crc_hash(state);
-        if let Some(first_user_first_device_label) = &self.first_user_first_device_label {
-            first_user_first_device_label.crc_hash(state);
-        }
+        self.first_user_first_device_label.crc_hash(state);
         self.first_user_first_device_certificate_index
             .crc_hash(state);
         self.first_user_first_device_signing_key.crc_hash(state);
@@ -457,10 +453,10 @@ impl TestbedEventBootstrapOrganization {
             sequester_authority: None,
             first_user_certificate_index,
             first_user_device_id: DeviceID::new(first_user_id, device_name),
-            first_user_human_handle: Some(human_handle),
+            first_user_human_handle: human_handle,
             first_user_private_key: builder.counters.next_private_key(),
             first_user_first_device_certificate_index,
-            first_user_first_device_label: Some(device_label),
+            first_user_first_device_label: device_label,
             first_user_first_device_signing_key: builder.counters.next_signing_key(),
             first_user_user_realm_id: builder.counters.next_entry_id(),
             first_user_user_realm_key: builder.counters.next_secret_key(),
@@ -510,17 +506,18 @@ impl TestbedEventBootstrapOrganization {
                             author: CertificateSignerOwned::Root,
                             timestamp: self.timestamp,
                             user_id: self.first_user_device_id.user_id().to_owned(),
-                            human_handle: None,
+                            human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(
+                                self.first_user_device_id.user_id(),
+                            )),
                             public_key: self.first_user_private_key.public_key(),
                             profile: UserProfile::Admin,
                         };
                         let signed_redacted: Bytes =
                             certif.dump_and_sign(&self.root_signing_key).into();
-                        let signed = if self.first_user_human_handle.is_some() {
-                            certif.human_handle = self.first_user_human_handle.to_owned();
+                        let signed = {
+                            certif.human_handle =
+                                MaybeRedacted::Real(self.first_user_human_handle.to_owned());
                             certif.dump_and_sign(&self.root_signing_key).into()
-                        } else {
-                            signed_redacted.clone()
                         };
                         TestbedTemplateEventCertificate {
                             certificate: AnyArcCertificate::User(Arc::new(certif)),
@@ -539,16 +536,17 @@ impl TestbedEventBootstrapOrganization {
                             author: CertificateSignerOwned::Root,
                             timestamp: self.timestamp,
                             device_id: self.first_user_device_id.to_owned(),
-                            device_label: None,
+                            device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(
+                                self.first_user_device_id.device_name(),
+                            )),
                             verify_key: self.first_user_first_device_signing_key.verify_key(),
                         };
                         let signed_redacted: Bytes =
                             certif.dump_and_sign(&self.root_signing_key).into();
-                        let signed = if self.first_user_first_device_label.is_some() {
-                            certif.device_label = self.first_user_first_device_label.to_owned();
+                        let signed = {
+                            certif.device_label =
+                                MaybeRedacted::Real(self.first_user_first_device_label.to_owned());
                             certif.dump_and_sign(&self.root_signing_key).into()
-                        } else {
-                            signed_redacted.clone()
                         };
                         TestbedTemplateEventCertificate {
                             certificate: AnyArcCertificate::Device(Arc::new(certif)),
@@ -653,11 +651,11 @@ pub struct TestbedEventNewUser {
     pub timestamp: DateTime,
     pub author: DeviceID,
     pub device_id: DeviceID,
-    pub human_handle: Option<HumanHandle>,
+    pub human_handle: HumanHandle,
     pub private_key: PrivateKey,
     pub user_certificate_index: IndexInt,
     pub first_device_certificate_index: IndexInt,
-    pub first_device_label: Option<DeviceLabel>,
+    pub first_device_label: DeviceLabel,
     pub first_device_signing_key: SigningKey,
     pub initial_profile: UserProfile,
     pub user_realm_id: VlobID,
@@ -684,15 +682,11 @@ impl CrcHash for TestbedEventNewUser {
         self.timestamp.crc_hash(state);
         self.author.crc_hash(state);
         self.device_id.crc_hash(state);
-        if let Some(human_handle) = &self.human_handle {
-            human_handle.crc_hash(state);
-        }
+        self.human_handle.crc_hash(state);
         self.private_key.crc_hash(state);
         self.user_certificate_index.crc_hash(state);
         self.first_device_certificate_index.crc_hash(state);
-        if let Some(first_device_label) = &self.first_device_label {
-            first_device_label.crc_hash(state);
-        }
+        self.first_device_label.crc_hash(state);
         self.first_device_signing_key.crc_hash(state);
         self.initial_profile.crc_hash(state);
         self.user_realm_id.crc_hash(state);
@@ -744,10 +738,10 @@ impl TestbedEventNewUser {
             initial_profile: UserProfile::Standard,
             user_certificate_index,
             device_id: DeviceID::new(user_id, device_name),
-            human_handle: Some(human_handle),
+            human_handle,
             private_key: builder.counters.next_private_key(),
             first_device_certificate_index,
-            first_device_label: Some(device_label),
+            first_device_label: device_label,
             first_device_signing_key: builder.counters.next_signing_key(),
             user_realm_id: builder.counters.next_entry_id(),
             user_realm_key: builder.counters.next_secret_key(),
@@ -773,16 +767,16 @@ impl TestbedEventNewUser {
                             author: CertificateSignerOwned::User(self.author.clone()),
                             timestamp: self.timestamp,
                             user_id: self.device_id.user_id().to_owned(),
-                            human_handle: None,
+                            human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(
+                                self.device_id.user_id(),
+                            )),
                             public_key: self.private_key.public_key(),
                             profile: self.initial_profile,
                         };
                         let signed_redacted: Bytes = certif.dump_and_sign(author_signkey).into();
-                        let signed = if self.human_handle.is_some() {
-                            certif.human_handle = self.human_handle.clone();
+                        let signed = {
+                            certif.human_handle = MaybeRedacted::Real(self.human_handle.clone());
                             certif.dump_and_sign(author_signkey).into()
-                        } else {
-                            signed_redacted.clone()
                         };
 
                         TestbedTemplateEventCertificate {
@@ -804,15 +798,16 @@ impl TestbedEventNewUser {
                             author: CertificateSignerOwned::User(self.author.clone()),
                             timestamp: self.timestamp,
                             device_id: self.device_id.clone(),
-                            device_label: None,
+                            device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(
+                                self.device_id.device_name(),
+                            )),
                             verify_key: self.first_device_signing_key.verify_key(),
                         };
                         let signed_redacted: Bytes = certif.dump_and_sign(author_signkey).into();
-                        let signed = if self.first_device_label.is_some() {
-                            certif.device_label = self.first_device_label.clone();
+                        let signed = {
+                            certif.device_label =
+                                MaybeRedacted::Real(self.first_device_label.clone());
                             certif.dump_and_sign(author_signkey).into()
-                        } else {
-                            signed_redacted.clone()
                         };
 
                         TestbedTemplateEventCertificate {
@@ -840,7 +835,7 @@ single_certificate_event!(
         timestamp: DateTime,
         author: DeviceID,
         device_id: DeviceID,
-        device_label: Option<DeviceLabel>,
+        device_label: DeviceLabel,
         signing_key: SigningKey,
         local_symkey: SecretKey,
         local_password: &'static str,
@@ -852,15 +847,13 @@ single_certificate_event!(
             author: CertificateSignerOwned::User(e.author.clone()),
             timestamp: e.timestamp,
             device_id: e.device_id.clone(),
-            device_label: None,
+            device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(e.device_id.device_name())),
             verify_key: e.signing_key.verify_key(),
         };
         let signed_redacted: Bytes = certif.dump_and_sign(author_signkey).into();
-        let signed = if e.device_label.is_some() {
-            certif.device_label = e.device_label.clone();
+        let signed = {
+            certif.device_label = MaybeRedacted::Real(e.device_label.clone());
             certif.dump_and_sign(author_signkey).into()
-        } else {
-            signed_redacted.clone()
         };
         TestbedTemplateEventCertificate {
             certificate: AnyArcCertificate::Device(Arc::new(certif)),
@@ -900,7 +893,7 @@ impl TestbedEventNewDevice {
             timestamp: builder.counters.next_timestamp(),
             author,
             device_id,
-            device_label: Some(device_label),
+            device_label,
             signing_key: builder.counters.next_signing_key(),
             local_symkey: builder.counters.next_secret_key(),
             local_password: "P@ssw0rd.",

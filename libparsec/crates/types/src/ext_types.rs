@@ -164,9 +164,12 @@ impl<T> Maybe<T> {
         matches!(self, Self::Absent)
     }
     pub fn unwrap_or(self, default: T) -> T {
+        self.unwrap_or_else(|| default)
+    }
+    pub fn unwrap_or_else(self, default: impl FnOnce() -> T) -> T {
         match self {
             Self::Present(data) => data,
-            Self::Absent => default,
+            Self::Absent => default(),
         }
     }
 }

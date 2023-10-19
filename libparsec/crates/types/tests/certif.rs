@@ -18,7 +18,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
         author: CertificateSignerOwned::User(alice.device_id.clone()),
         timestamp,
         user_id: bob.user_id().clone(),
-        human_handle: bob.human_handle.clone(),
+        human_handle: MaybeRedacted::Real(bob.human_handle.clone()),
         public_key: bob.public_key(),
         profile: UserProfile::Standard,
     };
@@ -29,7 +29,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
             " author: User(DeviceID(\"alice@dev1\")),",
             " timestamp: DateTime(\"2020-01-01T00:00:00Z\"),",
             " user_id: UserID(\"bob\"),",
-            " human_handle: Some(HumanHandle(\"Boby McBobFace <bob@example.com>\")),",
+            " human_handle: Real(HumanHandle(\"Boby McBobFace <bob@example.com>\")),",
             " public_key: PublicKey(****),",
             " profile: Standard",
             " }",
@@ -40,7 +40,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
         author: CertificateSignerOwned::User(alice.device_id.clone()),
         timestamp,
         device_id: bob.device_id.clone(),
-        device_label: bob.device_label.clone(),
+        device_label: MaybeRedacted::Real(bob.device_label.clone()),
         verify_key: bob.verify_key(),
     };
     p_assert_eq!(
@@ -50,7 +50,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
             " author: User(DeviceID(\"alice@dev1\")),",
             " timestamp: DateTime(\"2020-01-01T00:00:00Z\"),",
             " device_id: DeviceID(\"bob@dev1\"),",
-            " device_label: Some(DeviceLabel(\"My dev1 machine\")),",
+            " device_label: Real(DeviceLabel(\"My dev1 machine\")),",
             " verify_key: VerifyKey(****)",
             " }",
         )
@@ -186,7 +186,7 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         user_id: bob.user_id().to_owned(),
-        human_handle: bob.human_handle.to_owned(),
+        human_handle: MaybeRedacted::Real(bob.human_handle.to_owned()),
         public_key: bob.public_key(),
         profile: bob.profile,
     };
@@ -274,7 +274,7 @@ fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         user_id: bob.user_id().to_owned(),
-        human_handle: None,
+        human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(bob.user_id())),
         public_key: bob.public_key(),
         profile: bob.profile,
     };
@@ -360,7 +360,7 @@ fn serde_user_certificate_legacy_format(alice: &Device, bob: &Device) {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         user_id: bob.user_id().to_owned(),
-        human_handle: None,
+        human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(bob.user_id())),
         public_key: bob.public_key(),
         profile: UserProfile::Admin,
     };
@@ -430,7 +430,7 @@ fn serde_device_certificate(alice: &Device, bob: &Device) {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         device_id: bob.device_id.to_owned(),
-        device_label: bob.device_label.to_owned(),
+        device_label: MaybeRedacted::Real(bob.device_label.to_owned()),
         verify_key: bob.verify_key(),
     };
 
@@ -513,7 +513,9 @@ fn serde_device_certificate_redacted(alice: &Device, bob: &Device) {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         device_id: bob.device_id.to_owned(),
-        device_label: None,
+        device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(
+            bob.device_id.device_name(),
+        )),
         verify_key: bob.verify_key(),
     };
 
@@ -579,7 +581,9 @@ fn serde_device_certificate_legacy_format(alice: &Device, bob: &Device) {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         device_id: bob.device_id.to_owned(),
-        device_label: None,
+        device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(
+            bob.device_id.device_name(),
+        )),
         verify_key: bob.verify_key(),
     };
 

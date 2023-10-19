@@ -107,8 +107,8 @@ pub async fn bootstrap_organization(
         config.clone(),
         events_plugged.event_bus,
         bootstrap_organization_addr,
-        Some(human_handle),
-        Some(device_label),
+        human_handle,
+        device_label,
         sequester_authority_verify_key,
     )
     .await?;

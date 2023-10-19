@@ -220,14 +220,14 @@ class BaseOrganizationComponent:
                 client_timestamp=u_data.timestamp,
             )
 
+        if not ru_data.is_redacted:
+            return anonymous_cmds.latest.organization_bootstrap.RepInvalidData(None)
         if ru_data.evolve(human_handle=u_data.human_handle) != u_data:
             return anonymous_cmds.latest.organization_bootstrap.RepInvalidData(None)
-        if ru_data.human_handle:
-            return anonymous_cmds.latest.organization_bootstrap.RepInvalidData(None)
 
-        if rd_data.evolve(device_label=d_data.device_label) != d_data:
+        if not rd_data.is_redacted:
             return anonymous_cmds.latest.organization_bootstrap.RepInvalidData(None)
-        if rd_data.device_label:
+        if rd_data.evolve(device_label=d_data.device_label) != d_data:
             return anonymous_cmds.latest.organization_bootstrap.RepInvalidData(None)
 
         sequester_authority_certificate = req.sequester_authority_certificate

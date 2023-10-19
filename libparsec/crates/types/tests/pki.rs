@@ -143,7 +143,7 @@ fn serde_pki_enrollment_submit_payload(
             submit_payload: PkiEnrollmentSubmitPayload {
                 verify_key: alice.verify_key(),
                 public_key: alice.public_key(),
-                requested_device_label: alice.device_label.clone().unwrap(),
+                requested_device_label: alice.device_label.clone(),
             },
             encrypted_key: b"foo".as_ref().into(),
             ciphertext: b"foo".as_ref().into(),
@@ -208,7 +208,7 @@ fn serde_pki_enrollment_submit_payload(
             submit_payload: PkiEnrollmentSubmitPayload {
                 verify_key: alice.verify_key(),
                 public_key: alice.public_key(),
-                requested_device_label: alice.device_label.clone().unwrap(),
+                requested_device_label: alice.device_label.clone(),
             },
             encrypted_key: b"foo".as_ref().into(),
             ciphertext: b"foo".as_ref().into(),

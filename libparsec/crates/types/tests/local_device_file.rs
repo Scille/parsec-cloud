@@ -63,14 +63,8 @@ fn password_protected_device_file(alice: &Device) {
         )
         .as_ref()
         .into(),
-        human_handle: alice
-            .human_handle
-            .clone()
-            .expect("alice has a human handle"),
-        device_label: alice
-            .device_label
-            .clone()
-            .expect("alice has a device label"),
+        human_handle: alice.human_handle.clone(),
+        device_label: alice.device_label.clone(),
         device_id: alice.device_id.to_owned(),
         organization_id: alice.organization_id().to_owned(),
         slug: alice.local_device().slug(),
@@ -137,14 +131,8 @@ fn recovery_device_file(alice: &Device) {
         )
         .as_ref()
         .into(),
-        human_handle: alice
-            .human_handle
-            .clone()
-            .expect("alice has a human handle"),
-        device_label: alice
-            .device_label
-            .clone()
-            .expect("alice has a device label"),
+        human_handle: alice.human_handle.clone(),
+        device_label: alice.device_label.clone(),
         device_id: alice.device_id.to_owned(),
         organization_id: alice.organization_id().to_owned(),
         slug: alice.local_device().slug(),
@@ -232,14 +220,8 @@ fn smartcard_device_file(alice: &Device) {
         )
         .as_ref()
         .into(),
-        human_handle: alice
-            .human_handle
-            .clone()
-            .expect("alice has a human handle"),
-        device_label: alice
-            .device_label
-            .clone()
-            .expect("alice has a device label"),
+        human_handle: alice.human_handle.clone(),
+        device_label: alice.device_label.clone(),
         device_id: alice.device_id.clone(),
         organization_id: alice.organization_id().clone(),
         slug: alice.local_device().slug(),

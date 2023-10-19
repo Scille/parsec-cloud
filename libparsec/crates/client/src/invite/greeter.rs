@@ -652,7 +652,7 @@ fn create_new_signed_user_certificates(
         author: CertificateSignerOwned::User(author.device_id.clone()),
         timestamp,
         user_id: device_id.user_id().clone(),
-        human_handle: Some(human_handle.clone()),
+        human_handle: MaybeRedacted::Real(human_handle.clone()),
         public_key: public_key.clone(),
         profile,
     };
@@ -661,7 +661,7 @@ fn create_new_signed_user_certificates(
         author: CertificateSignerOwned::User(author.device_id.clone()),
         timestamp,
         user_id: device_id.user_id().clone(),
-        human_handle: None,
+        human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(device_id.user_id())),
         public_key,
         profile,
     };
@@ -670,7 +670,7 @@ fn create_new_signed_user_certificates(
         author: CertificateSignerOwned::User(author.device_id.clone()),
         timestamp,
         device_id: device_id.clone(),
-        device_label: Some(device_label.clone()),
+        device_label: MaybeRedacted::Real(device_label.clone()),
         verify_key: verify_key.clone(),
     };
 
@@ -678,7 +678,7 @@ fn create_new_signed_user_certificates(
         author: CertificateSignerOwned::User(author.device_id.clone()),
         timestamp,
         device_id: device_id.clone(),
-        device_label: None,
+        device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(device_id.device_name())),
         verify_key,
     };
 
@@ -718,7 +718,7 @@ fn create_new_signed_device_certificates(
         author: CertificateSignerOwned::User(author.device_id.clone()),
         timestamp,
         device_id: device_id.clone(),
-        device_label: Some(device_label),
+        device_label: MaybeRedacted::Real(device_label),
         verify_key: verify_key.clone(),
     };
 
@@ -726,7 +726,7 @@ fn create_new_signed_device_certificates(
         author: CertificateSignerOwned::User(author.device_id.clone()),
         timestamp,
         device_id: device_id.clone(),
-        device_label: None,
+        device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(device_id.device_name())),
         verify_key,
     };
 
@@ -976,11 +976,7 @@ impl DeviceGreetInProgress4Ctx {
         let payload = InviteDeviceConfirmation {
             device_id,
             device_label,
-            human_handle: self
-                .device
-                .human_handle
-                .clone()
-                .expect("human handle is always configured"),
+            human_handle: self.device.human_handle.clone(),
             profile: self.device.initial_profile,
             private_key: self.device.private_key.clone(),
             user_realm_id: self.device.user_realm_id,

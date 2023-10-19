@@ -48,7 +48,7 @@ class Device:
         return DeviceCertificate.unsecure_load(self.device_certificate).verify_key
 
     device_id: DeviceID
-    device_label: DeviceLabel | None
+    device_label: DeviceLabel
     device_certificate: bytes
     redacted_device_certificate: bytes
     device_certifier: DeviceID | None
@@ -78,7 +78,7 @@ class User:
             return self.initial_profile
 
     user_id: UserID
-    human_handle: HumanHandle | None
+    human_handle: HumanHandle
     user_certificate: bytes
     redacted_user_certificate: bytes
     user_certifier: DeviceID | None
@@ -154,27 +154,27 @@ def validate_new_user_certificates(
             "invalid_data", "Device and User must have the same user ID."
         )
 
-    if ru_data.evolve(human_handle=u_data.human_handle) != u_data:
-        raise CertificateValidationError(
-            "invalid_data", "Redacted User certificate differs from User certificate."
-        )
-
-    if ru_data.human_handle:
+    if not ru_data.is_redacted:
         raise CertificateValidationError(
             "invalid_data",
             "Redacted User certificate must not contain a human_handle field.",
+        )
+
+    if not rd_data.is_redacted:
+        raise CertificateValidationError(
+            "invalid_data",
+            "Redacted Device certificate must not contain a device_label field.",
+        )
+
+    if ru_data.evolve(human_handle=u_data.human_handle) != u_data:
+        raise CertificateValidationError(
+            "invalid_data", "Redacted User certificate differs from User certificate."
         )
 
     if rd_data.evolve(device_label=d_data.device_label) != d_data:
         raise CertificateValidationError(
             "invalid_data",
             "Redacted Device certificate differs from Device certificate.",
-        )
-
-    if rd_data.device_label:
-        raise CertificateValidationError(
-            "invalid_data",
-            "Redacted Device certificate must not contain a device_label field.",
         )
 
     user = User(
@@ -230,15 +230,16 @@ def validate_new_device_certificate(
     if data.device_id.user_id != expected_author.user_id:
         raise CertificateValidationError("bad_user_id", "Device must be handled by it own user.")
 
+    if not redacted_data.is_redacted:
+        raise CertificateValidationError(
+            "invalid_data",
+            "Redacted Device certificate must not contain a device_label field.",
+        )
+
     if redacted_data.evolve(device_label=data.device_label) != data:
         raise CertificateValidationError(
             "invalid_data",
             "Redacted Device certificate differs from Device certificate.",
-        )
-    if redacted_data.device_label:
-        raise CertificateValidationError(
-            "invalid_data",
-            "Redacted Device certificate must not contain a device_label field.",
         )
 
     return Device(

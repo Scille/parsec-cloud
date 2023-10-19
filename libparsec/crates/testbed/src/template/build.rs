@@ -344,8 +344,8 @@ impl<'a> TestbedEventBootstrapOrganizationBuilder<'a> {
         })
     }
     impl_customize_field_meth!(first_user_device_id, DeviceID);
-    impl_customize_field_meth!(first_user_human_handle, Option<HumanHandle>);
-    impl_customize_field_meth!(first_user_first_device_label, Option<DeviceLabel>);
+    impl_customize_field_meth!(first_user_human_handle, HumanHandle);
+    impl_customize_field_meth!(first_user_first_device_label, DeviceLabel);
     impl_customize_field_meth!(first_user_local_password, &'static str);
 }
 
@@ -369,8 +369,8 @@ impl_event_builder!(NewUser, [user: UserID]);
 impl<'a> TestbedEventNewUserBuilder<'a> {
     impl_customize_field_meth!(author, DeviceID);
     impl_customize_field_meth!(device_id, DeviceID);
-    impl_customize_field_meth!(human_handle, Option<HumanHandle>);
-    impl_customize_field_meth!(first_device_label, Option<DeviceLabel>);
+    impl_customize_field_meth!(human_handle, HumanHandle);
+    impl_customize_field_meth!(first_device_label, DeviceLabel);
     impl_customize_field_meth!(initial_profile, UserProfile);
     impl_customize_field_meth!(user_realm_id, VlobID);
     impl_customize_field_meth!(local_password, &'static str);
@@ -384,7 +384,7 @@ impl_event_builder!(NewDevice, [user: UserID]);
 
 impl<'a> TestbedEventNewDeviceBuilder<'a> {
     impl_customize_field_meth!(author, DeviceID);
-    impl_customize_field_meth!(device_label, Option<DeviceLabel>);
+    impl_customize_field_meth!(device_label, DeviceLabel);
     impl_customize_field_meth!(local_password, &'static str);
     pub fn with_device_name(self, device_name: DeviceName) -> Self {
         self.customize(|event| {

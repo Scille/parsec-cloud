@@ -38,6 +38,12 @@ impl UserCertificate {
         public_key: PublicKey,
         profile: UserProfile,
     ) -> PyResult<Self> {
+        let human_handle = match human_handle {
+            Some(human_handle) => libparsec_types::MaybeRedacted::Real(human_handle.0),
+            None => libparsec_types::MaybeRedacted::Redacted(
+                libparsec_types::HumanHandle::new_redacted(&user_id.0),
+            ),
+        };
         Ok(Self(Arc::new(libparsec_types::UserCertificate {
             author: match author {
                 Some(device_id) => CertificateSignerOwned::User(device_id.0),
@@ -45,7 +51,7 @@ impl UserCertificate {
             },
             timestamp: timestamp.0,
             user_id: user_id.0,
-            human_handle: human_handle.map(|human_handle| human_handle.0),
+            human_handle,
             public_key: public_key.0,
             profile: profile.0,
         })))
@@ -79,7 +85,12 @@ impl UserCertificate {
             r.user_id = x.0;
         }
         if let Some(x) = human_handle {
-            r.human_handle = x.map(|x| x.0);
+            r.human_handle = match x {
+                None => libparsec_types::MaybeRedacted::Redacted(
+                    libparsec_types::HumanHandle::new_redacted(&r.user_id),
+                ),
+                Some(human_handle) => libparsec_types::MaybeRedacted::Real(human_handle.0),
+            };
         }
         if let Some(x) = public_key {
             r.public_key = x.0;
@@ -150,8 +161,16 @@ impl UserCertificate {
     }
 
     #[getter]
-    fn human_handle(&self) -> Option<HumanHandle> {
-        self.0.human_handle.clone().map(|x| x.into())
+    fn human_handle(&self) -> HumanHandle {
+        self.0.human_handle.as_ref().to_owned().into()
+    }
+
+    #[getter]
+    fn is_redacted(&self) -> bool {
+        matches!(
+            self.0.human_handle,
+            libparsec_types::MaybeRedacted::Redacted(_)
+        )
     }
 
     #[getter]
@@ -185,6 +204,12 @@ impl DeviceCertificate {
         device_label: Option<DeviceLabel>,
         verify_key: VerifyKey,
     ) -> PyResult<Self> {
+        let device_label = match device_label {
+            Some(device_label) => libparsec_types::MaybeRedacted::Real(device_label.0),
+            None => libparsec_types::MaybeRedacted::Real(
+                libparsec_types::DeviceLabel::new_redacted(device_id.0.device_name()),
+            ),
+        };
         Ok(Self(Arc::new(libparsec_types::DeviceCertificate {
             author: match author {
                 Some(device_id) => CertificateSignerOwned::User(device_id.0),
@@ -192,7 +217,7 @@ impl DeviceCertificate {
             },
             timestamp: timestamp.0,
             device_id: device_id.0,
-            device_label: device_label.map(|x| x.0),
+            device_label,
             verify_key: verify_key.0,
         })))
     }
@@ -224,7 +249,12 @@ impl DeviceCertificate {
             r.device_id = x.0;
         }
         if let Some(x) = device_label {
-            r.device_label = x.map(|x| x.0);
+            r.device_label = match x {
+                Some(device_label) => libparsec_types::MaybeRedacted::Real(device_label.0),
+                None => libparsec_types::MaybeRedacted::Redacted(
+                    libparsec_types::DeviceLabel::new_redacted(r.device_id.device_name()),
+                ),
+            };
         }
         if let Some(x) = verify_key {
             r.verify_key = x.0;
@@ -285,8 +315,16 @@ impl DeviceCertificate {
     }
 
     #[getter]
-    fn device_label(&self) -> Option<DeviceLabel> {
-        self.0.device_label.clone().map(DeviceLabel)
+    fn device_label(&self) -> DeviceLabel {
+        self.0.device_label.as_ref().to_owned().into()
+    }
+
+    #[getter]
+    fn is_redacted(&self) -> bool {
+        matches!(
+            self.0.device_label,
+            libparsec_types::MaybeRedacted::Redacted(_)
+        )
     }
 
     #[getter]

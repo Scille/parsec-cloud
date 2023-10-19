@@ -32,7 +32,7 @@ pub(super) async fn get_current_self_realms_roles(
 
 pub struct UserInfo {
     pub id: UserID,
-    pub human_handle: Option<HumanHandle>,
+    pub human_handle: HumanHandle,
     pub current_profile: UserProfile,
     pub created_on: DateTime,
     // `None` if signed by root verify key (i.e. the user that bootstrapped the organization)
@@ -85,7 +85,7 @@ pub(super) async fn list_users(
 
         let info = UserInfo {
             id: certif.user_id.to_owned(),
-            human_handle: certif.human_handle.to_owned(),
+            human_handle: certif.human_handle.as_ref().to_owned(),
             current_profile,
             created_on: certif.timestamp,
             created_by,
@@ -100,7 +100,7 @@ pub(super) async fn list_users(
 
 pub struct DeviceInfo {
     pub id: DeviceID,
-    pub device_label: Option<DeviceLabel>,
+    pub device_label: DeviceLabel,
     pub created_on: DateTime,
     // `None` if signed by root verify key (i.e. the user that bootstrapped the organization)
     pub created_by: Option<DeviceID>,
@@ -125,7 +125,7 @@ pub(super) async fn list_user_devices(
 
             DeviceInfo {
                 id: certif.device_id.to_owned(),
-                device_label: certif.device_label.to_owned(),
+                device_label: certif.device_label.as_ref().to_owned(),
                 created_on: certif.timestamp,
                 created_by,
             }
@@ -184,7 +184,7 @@ pub(super) async fn get_user_device(
 
     let user_info = UserInfo {
         id: user_id,
-        human_handle: user_certif.human_handle.to_owned(),
+        human_handle: user_certif.human_handle.as_ref().to_owned(),
         current_profile,
         created_on: user_certif.timestamp,
         created_by: user_created_by,
@@ -209,7 +209,7 @@ pub(super) async fn get_user_device(
 
     let device_info = DeviceInfo {
         id: device_id,
-        device_label: device_certif.device_label.to_owned(),
+        device_label: device_certif.device_label.as_ref().to_owned(),
         created_on: device_certif.timestamp,
         created_by: device_created_by,
     };
@@ -219,7 +219,7 @@ pub(super) async fn get_user_device(
 
 pub struct WorkspaceUserAccessInfo {
     pub user_id: UserID,
-    pub human_handle: Option<HumanHandle>,
+    pub human_handle: HumanHandle,
     pub current_profile: UserProfile,
     pub current_role: RealmRole,
 }
@@ -277,7 +277,7 @@ pub(super) async fn list_workspace_users(
 
         let user_info = WorkspaceUserAccessInfo {
             user_id: user_id.clone(),
-            human_handle: user_certif.human_handle.to_owned(),
+            human_handle: user_certif.human_handle.as_ref().to_owned(),
             current_profile,
             current_role,
         };

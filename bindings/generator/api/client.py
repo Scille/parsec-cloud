@@ -82,8 +82,8 @@ class ClientInfo(Structure):
     organization_id: OrganizationID
     device_id: DeviceID
     user_id: UserID
-    device_label: Optional[DeviceLabel]
-    human_handle: Optional[HumanHandle]
+    device_label: DeviceLabel
+    human_handle: HumanHandle
     current_profile: UserProfile
 
 
@@ -95,7 +95,7 @@ async def client_info(
 
 class UserInfo(Structure):
     id: UserID
-    human_handle: Optional[HumanHandle]
+    human_handle: HumanHandle
     current_profile: UserProfile
     created_on: DateTime
     created_by: Optional[DeviceID]
@@ -105,7 +105,7 @@ class UserInfo(Structure):
 
 class DeviceInfo(Structure):
     id: DeviceID
-    device_label: Optional[DeviceLabel]
+    device_label: DeviceLabel
     created_on: DateTime
     created_by: Optional[DeviceID]
 
@@ -153,7 +153,7 @@ async def client_get_user_device(
 
 class WorkspaceUserAccessInfo(Structure):
     user_id: UserID
-    human_handle: Optional[HumanHandle]
+    human_handle: HumanHandle
     current_profile: UserProfile
     current_role: RealmRole
 
