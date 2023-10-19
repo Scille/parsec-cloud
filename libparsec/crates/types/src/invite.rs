@@ -234,8 +234,8 @@ macro_rules! impl_decrypt_and_load {
 #[serde(into = "InviteUserDataData", from = "InviteUserDataData")]
 pub struct InviteUserData {
     // Claimer ask for device_label/human_handle, but greeter has final word on this
-    pub requested_device_label: Option<DeviceLabel>,
-    pub requested_human_handle: Option<HumanHandle>,
+    pub requested_device_label: DeviceLabel,
+    pub requested_human_handle: HumanHandle,
     // Note claiming user also imply creating a first device
     pub public_key: PublicKey,
     pub verify_key: VerifyKey,
@@ -266,8 +266,8 @@ impl_transparent_data_format_conversion!(
 )]
 pub struct InviteUserConfirmation {
     pub device_id: DeviceID,
-    pub device_label: Option<DeviceLabel>,
-    pub human_handle: Option<HumanHandle>,
+    pub device_label: DeviceLabel,
+    pub human_handle: HumanHandle,
     pub profile: UserProfile,
     pub root_verify_key: VerifyKey,
 }
@@ -294,7 +294,7 @@ impl_transparent_data_format_conversion!(
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "InviteDeviceDataData", from = "InviteDeviceDataData")]
 pub struct InviteDeviceData {
-    pub requested_device_label: Option<DeviceLabel>,
+    pub requested_device_label: DeviceLabel,
     pub verify_key: VerifyKey,
 }
 
@@ -321,8 +321,8 @@ impl_transparent_data_format_conversion!(
 )]
 pub struct InviteDeviceConfirmation {
     pub device_id: DeviceID,
-    pub device_label: Option<DeviceLabel>,
-    pub human_handle: Option<HumanHandle>,
+    pub device_label: DeviceLabel,
+    pub human_handle: HumanHandle,
     pub profile: UserProfile,
     pub private_key: PrivateKey,
     pub user_realm_id: VlobID,

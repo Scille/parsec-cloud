@@ -446,8 +446,8 @@ pub struct UserClaimInProgress3Ctx(BaseClaimInProgress3Ctx);
 impl UserClaimInProgress3Ctx {
     pub async fn do_claim_user(
         self,
-        requested_device_label: Option<DeviceLabel>,
-        requested_human_handle: Option<HumanHandle>,
+        requested_device_label: DeviceLabel,
+        requested_human_handle: HumanHandle,
     ) -> Result<UserClaimFinalizeCtx, ClaimInProgressError> {
         // User&device keys are generated here and kept in memory until the end of
         // the enrollment process. This mean we can lost it if something goes wrong.
@@ -489,8 +489,8 @@ impl UserClaimInProgress3Ctx {
             organization_addr,
             profile,
             Some(device_id),
-            human_handle,
-            device_label,
+            Some(human_handle),
+            Some(device_label),
             Some(signing_key),
             Some(private_key),
         ));
@@ -508,7 +508,7 @@ pub struct DeviceClaimInProgress3Ctx(BaseClaimInProgress3Ctx);
 impl DeviceClaimInProgress3Ctx {
     pub async fn do_claim_device(
         self,
-        requested_device_label: Option<DeviceLabel>,
+        requested_device_label: DeviceLabel,
     ) -> Result<DeviceClaimFinalizeCtx, ClaimInProgressError> {
         // Device key is generated here and kept in memory until the end of
         // the enrollment process. This mean we can lost it if something goes wrong.
@@ -550,8 +550,8 @@ impl DeviceClaimInProgress3Ctx {
         let new_local_device = Arc::new(LocalDevice {
             organization_addr,
             device_id,
-            device_label,
-            human_handle,
+            device_label: Some(device_label),
+            human_handle: Some(human_handle),
             initial_profile: profile,
             private_key,
             signing_key,
