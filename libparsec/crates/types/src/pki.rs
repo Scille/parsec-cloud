@@ -49,8 +49,8 @@ fn dump<T: Serialize>(data: &T) -> Vec<u8> {
 )]
 pub struct PkiEnrollmentAnswerPayload {
     pub device_id: DeviceID,
-    pub device_label: Option<DeviceLabel>,
-    pub human_handle: Option<HumanHandle>,
+    pub device_label: DeviceLabel,
+    pub human_handle: HumanHandle,
     pub profile: UserProfile,
     pub root_verify_key: VerifyKey,
 }
