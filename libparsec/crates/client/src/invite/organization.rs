@@ -236,8 +236,11 @@ impl OrganizationBootstrapFinalizeCtx {
             key_file_path,
             organization_id: self.new_local_device.organization_id().to_owned(),
             device_id: self.new_local_device.device_id.clone(),
-            device_label: self.new_local_device.device_label.clone(),
-            human_handle: self.new_local_device.human_handle.clone(),
+            // TODO: this will break if human handle / device label is None,
+            // this is expected and will be overwritten in the next commit squash
+            // *if you see this in the code review, it's time to complain !*
+            device_label: self.new_local_device.device_label.clone().expect("TODO"),
+            human_handle: self.new_local_device.human_handle.clone().expect("TODO"),
             slug: self.new_local_device.slug(),
             ty,
         })

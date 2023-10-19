@@ -17,8 +17,8 @@ use crate::{
 #[serde(into = "DeviceFilePasswordData", from = "DeviceFilePasswordData")]
 pub struct DeviceFilePassword {
     pub ciphertext: Bytes,
-    pub human_handle: Option<HumanHandle>,
-    pub device_label: Option<DeviceLabel>,
+    pub human_handle: HumanHandle,
+    pub device_label: DeviceLabel,
     pub device_id: DeviceID,
     pub organization_id: OrganizationID,
     pub slug: String,
@@ -44,8 +44,8 @@ impl_transparent_data_format_conversion!(
 #[serde(into = "DeviceFileRecoveryData", from = "DeviceFileRecoveryData")]
 pub struct DeviceFileRecovery {
     pub ciphertext: Bytes,
-    pub human_handle: Option<HumanHandle>,
-    pub device_label: Option<DeviceLabel>,
+    pub human_handle: HumanHandle,
+    pub device_label: DeviceLabel,
     pub device_id: DeviceID,
     pub organization_id: OrganizationID,
     pub slug: String,
@@ -68,8 +68,8 @@ impl_transparent_data_format_conversion!(
 #[serde(into = "DeviceFileSmartcardData", from = "DeviceFileSmartcardData")]
 pub struct DeviceFileSmartcard {
     pub ciphertext: Bytes,
-    pub human_handle: Option<HumanHandle>,
-    pub device_label: Option<DeviceLabel>,
+    pub human_handle: HumanHandle,
+    pub device_label: DeviceLabel,
     pub device_id: DeviceID,
     pub organization_id: OrganizationID,
     pub slug: String,
@@ -182,33 +182,26 @@ pub struct AvailableDevice {
     pub key_file_path: PathBuf,
     pub organization_id: OrganizationID,
     pub device_id: DeviceID,
-    pub human_handle: Option<HumanHandle>,
-    pub device_label: Option<DeviceLabel>,
+    pub human_handle: HumanHandle,
+    pub device_label: DeviceLabel,
     pub slug: String,
     #[serde(rename = "type")]
     pub ty: DeviceFileType,
 }
 
 impl AvailableDevice {
+    // TODO: remove those fields !
+
     pub fn user_display(&self) -> &str {
-        self.human_handle
-            .as_ref()
-            .map(|x| x.as_ref())
-            .unwrap_or_else(|| self.device_id.user_id().as_ref())
+        self.human_handle.as_ref()
     }
 
     pub fn short_user_display(&self) -> &str {
-        self.human_handle
-            .as_ref()
-            .map(|hh| hh.label())
-            .unwrap_or_else(|| self.device_id.user_id().as_ref())
+        self.human_handle.label()
     }
 
     pub fn device_display(&self) -> &str {
-        self.device_label
-            .as_ref()
-            .map(|x| x.as_ref())
-            .unwrap_or_else(|| self.device_id.device_name().as_ref())
+        self.device_label.as_ref()
     }
 
     /// Return a `sha256` hash of device slug as hex string

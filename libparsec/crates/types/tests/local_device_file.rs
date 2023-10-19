@@ -63,8 +63,14 @@ fn password_protected_device_file(alice: &Device) {
         )
         .as_ref()
         .into(),
-        human_handle: alice.human_handle.to_owned(),
-        device_label: alice.device_label.to_owned(),
+        human_handle: alice
+            .human_handle
+            .clone()
+            .expect("alice has a human handle"),
+        device_label: alice
+            .device_label
+            .clone()
+            .expect("alice has a device label"),
         device_id: alice.device_id.to_owned(),
         organization_id: alice.organization_id().to_owned(),
         slug: alice.local_device().slug(),
@@ -131,8 +137,14 @@ fn recovery_device_file(alice: &Device) {
         )
         .as_ref()
         .into(),
-        human_handle: alice.human_handle.to_owned(),
-        device_label: alice.device_label.to_owned(),
+        human_handle: alice
+            .human_handle
+            .clone()
+            .expect("alice has a human handle"),
+        device_label: alice
+            .device_label
+            .clone()
+            .expect("alice has a device label"),
         device_id: alice.device_id.to_owned(),
         organization_id: alice.organization_id().to_owned(),
         slug: alice.local_device().slug(),
@@ -220,8 +232,14 @@ fn smartcard_device_file(alice: &Device) {
         )
         .as_ref()
         .into(),
-        human_handle: alice.human_handle.clone(),
-        device_label: alice.device_label.clone(),
+        human_handle: alice
+            .human_handle
+            .clone()
+            .expect("alice has a human handle"),
+        device_label: alice
+            .device_label
+            .clone()
+            .expect("alice has a device label"),
         device_id: alice.device_id.clone(),
         organization_id: alice.organization_id().clone(),
         slug: alice.local_device().slug(),
@@ -252,8 +270,8 @@ fn available_device() {
         slug:
             "672d515cbb#CoolOrg#9c50250fa3b644e29f77eeefa53dc37d@9fd3863a3eb240cfaec64904efe5bed3"
                 .to_owned(),
-        human_handle: Some(HumanHandle::new("john@example.com", "John Doe").unwrap()),
-        device_label: Some("MyPc".parse().unwrap()),
+        human_handle: HumanHandle::new("john@example.com", "John Doe").unwrap(),
+        device_label: "MyPc".parse().unwrap(),
         ty: DeviceFileType::Password,
     };
 
@@ -264,24 +282,6 @@ fn available_device() {
     p_assert_eq!(available.user_display(), "John Doe <john@example.com>");
     p_assert_eq!(available.short_user_display(), "John Doe");
     p_assert_eq!(available.device_display(), "MyPc");
-
-    let available_legacy = AvailableDevice {
-        key_file_path: "/foo/bar".into(),
-        organization_id: org,
-        device_id: "john@mypc".parse().unwrap(),
-        slug: "672d515cbb#CoolOrg#john@mypc".to_owned(),
-        human_handle: None,
-        device_label: None,
-        ty: DeviceFileType::Password,
-    };
-
-    p_assert_eq!(
-        available_legacy.slughash(),
-        "35e1d5ceb858ea3fd89973e084105d2bd928de10047cdd6d0037259030954ca1"
-    );
-    p_assert_eq!(available_legacy.user_display(), "john");
-    p_assert_eq!(available_legacy.short_user_display(), "john");
-    p_assert_eq!(available_legacy.device_display(), "mypc");
 }
 
 #[rstest]
