@@ -105,7 +105,7 @@ struct BaseClaimInitialCtx {
     config: Arc<ClientConfig>,
     cmds: Arc<InvitedCmds>,
     greeter_user_id: UserID,
-    greeter_human_handle: Option<HumanHandle>,
+    greeter_human_handle: HumanHandle,
 }
 
 impl BaseClaimInitialCtx {
@@ -202,7 +202,7 @@ impl UserClaimInitialCtx {
         cmds: Arc<InvitedCmds>,
         claimer_email: String,
         greeter_user_id: UserID,
-        greeter_human_handle: Option<HumanHandle>,
+        greeter_human_handle: HumanHandle,
     ) -> Self {
         Self {
             base: BaseClaimInitialCtx {
@@ -219,7 +219,7 @@ impl UserClaimInitialCtx {
         &self.base.greeter_user_id
     }
 
-    pub fn greeter_human_handle(&self) -> &Option<HumanHandle> {
+    pub fn greeter_human_handle(&self) -> &HumanHandle {
         &self.base.greeter_human_handle
     }
 
@@ -236,7 +236,7 @@ impl DeviceClaimInitialCtx {
         config: Arc<ClientConfig>,
         cmds: Arc<InvitedCmds>,
         greeter_user_id: UserID,
-        greeter_human_handle: Option<HumanHandle>,
+        greeter_human_handle: HumanHandle,
     ) -> Self {
         Self(BaseClaimInitialCtx {
             config,
@@ -250,7 +250,7 @@ impl DeviceClaimInitialCtx {
         &self.0.greeter_user_id
     }
 
-    pub fn greeter_human_handle(&self) -> &Option<HumanHandle> {
+    pub fn greeter_human_handle(&self) -> &HumanHandle {
         &self.0.greeter_human_handle
     }
 
