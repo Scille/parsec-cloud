@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from ..v2.vlob_maintenance_save_reencryption_batch import (
+from ..v3.vlob_maintenance_save_reencryption_batch import (
     Rep,
     RepBadEncryptionRevision,
     RepMaintenanceError,

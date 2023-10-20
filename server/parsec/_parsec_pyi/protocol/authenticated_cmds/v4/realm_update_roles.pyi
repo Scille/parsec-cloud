@@ -1,95 +1,35 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from __future__ import annotations
+from ..v3.realm_update_roles import (
+    Rep,
+    RepAlreadyGranted,
+    RepBadTimestamp,
+    RepIncompatibleProfile,
+    RepInMaintenance,
+    RepInvalidCertification,
+    RepInvalidData,
+    RepNotAllowed,
+    RepNotFound,
+    RepOk,
+    RepRequireGreaterTimestamp,
+    RepUnknownStatus,
+    RepUserRevoked,
+    Req,
+)
 
-from parsec._parsec import DateTime
-
-class Req:
-    def __init__(self, role_certificate: bytes, recipient_message: bytes | None) -> None: ...
-    def dump(self) -> bytes: ...
-    @property
-    def role_certificate(self) -> bytes: ...
-    @property
-    def recipient_message(self) -> bytes | None: ...
-
-class Rep:
-    @staticmethod
-    def load(raw: bytes) -> Rep: ...
-    def dump(self) -> bytes: ...
-
-class RepUnknownStatus(Rep):
-    def __init__(self, status: str, reason: str | None) -> None: ...
-    @property
-    def status(self) -> str: ...
-    @property
-    def reason(self) -> str | None: ...
-
-class RepOk(Rep):
-    def __init__(
-        self,
-    ) -> None: ...
-
-class RepNotAllowed(Rep):
-    def __init__(self, reason: str | None) -> None: ...
-    @property
-    def reason(self) -> str | None: ...
-
-class RepInvalidCertification(Rep):
-    def __init__(self, reason: str | None) -> None: ...
-    @property
-    def reason(self) -> str | None: ...
-
-class RepInvalidData(Rep):
-    def __init__(self, reason: str | None) -> None: ...
-    @property
-    def reason(self) -> str | None: ...
-
-class RepAlreadyGranted(Rep):
-    def __init__(
-        self,
-    ) -> None: ...
-
-class RepIncompatibleProfile(Rep):
-    def __init__(self, reason: str | None) -> None: ...
-    @property
-    def reason(self) -> str | None: ...
-
-class RepNotFound(Rep):
-    def __init__(self, reason: str | None) -> None: ...
-    @property
-    def reason(self) -> str | None: ...
-
-class RepInMaintenance(Rep):
-    def __init__(
-        self,
-    ) -> None: ...
-
-class RepUserRevoked(Rep):
-    def __init__(
-        self,
-    ) -> None: ...
-
-class RepRequireGreaterTimestamp(Rep):
-    def __init__(self, strictly_greater_than: DateTime) -> None: ...
-    @property
-    def strictly_greater_than(self) -> DateTime: ...
-
-class RepBadTimestamp(Rep):
-    def __init__(
-        self,
-        reason: str | None,
-        ballpark_client_early_offset: float,
-        ballpark_client_late_offset: float,
-        backend_timestamp: DateTime,
-        client_timestamp: DateTime,
-    ) -> None: ...
-    @property
-    def reason(self) -> str | None: ...
-    @property
-    def ballpark_client_early_offset(self) -> float: ...
-    @property
-    def ballpark_client_late_offset(self) -> float: ...
-    @property
-    def backend_timestamp(self) -> DateTime: ...
-    @property
-    def client_timestamp(self) -> DateTime: ...
+__all__ = [
+    "Req",
+    "Rep",
+    "RepUnknownStatus",
+    "RepOk",
+    "RepNotAllowed",
+    "RepInvalidCertification",
+    "RepInvalidData",
+    "RepAlreadyGranted",
+    "RepIncompatibleProfile",
+    "RepNotFound",
+    "RepInMaintenance",
+    "RepUserRevoked",
+    "RepRequireGreaterTimestamp",
+    "RepBadTimestamp",
+]

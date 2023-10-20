@@ -1,21 +1,63 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from ..v2.realm_status import (
-    MaintenanceType,
-    Rep,
-    RepNotAllowed,
-    RepNotFound,
-    RepOk,
-    RepUnknownStatus,
-    Req,
-)
+from __future__ import annotations
 
-__all__ = [
-    "MaintenanceType",
-    "Req",
-    "Rep",
-    "RepUnknownStatus",
-    "RepOk",
-    "RepNotAllowed",
-    "RepNotFound",
-]
+from parsec._parsec import DateTime, DeviceID, VlobID
+
+class MaintenanceType:
+    VALUES: tuple[MaintenanceType]
+    GARBAGE_COLLECTION: MaintenanceType
+    REENCRYPTION: MaintenanceType
+
+    @classmethod
+    def from_str(cls, value: str) -> MaintenanceType: ...
+    @property
+    def str(self) -> str: ...
+
+class Req:
+    def __init__(self, realm_id: VlobID) -> None: ...
+    def dump(self) -> bytes: ...
+    @property
+    def realm_id(self) -> VlobID: ...
+
+class Rep:
+    @staticmethod
+    def load(raw: bytes) -> Rep: ...
+    def dump(self) -> bytes: ...
+
+class RepUnknownStatus(Rep):
+    def __init__(self, status: str, reason: str | None) -> None: ...
+    @property
+    def status(self) -> str: ...
+    @property
+    def reason(self) -> str | None: ...
+
+class RepOk(Rep):
+    def __init__(
+        self,
+        in_maintenance: bool,
+        maintenance_type: MaintenanceType | None,
+        maintenance_started_on: DateTime | None,
+        maintenance_started_by: DeviceID | None,
+        encryption_revision: int,
+    ) -> None: ...
+    @property
+    def in_maintenance(self) -> bool: ...
+    @property
+    def maintenance_type(self) -> MaintenanceType | None: ...
+    @property
+    def maintenance_started_on(self) -> DateTime | None: ...
+    @property
+    def maintenance_started_by(self) -> DeviceID | None: ...
+    @property
+    def encryption_revision(self) -> int: ...
+
+class RepNotAllowed(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepNotFound(Rep):
+    def __init__(self, reason: str | None) -> None: ...
+    @property
+    def reason(self) -> str | None: ...

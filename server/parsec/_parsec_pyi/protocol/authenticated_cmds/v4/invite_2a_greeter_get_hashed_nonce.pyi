@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from ..v2.invite_2a_greeter_get_hashed_nonce import (
+from ..v3.invite_2a_greeter_get_hashed_nonce import (
     Rep,
     RepAlreadyDeleted,
     RepInvalidState,

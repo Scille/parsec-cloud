@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from ..v2.vlob_list_versions import (
+from ..v3.vlob_list_versions import (
     Rep,
     RepInMaintenance,
     RepNotAllowed,
