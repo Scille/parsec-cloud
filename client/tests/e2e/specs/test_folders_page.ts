@@ -164,4 +164,18 @@ describe('Check folders page', () => {
     cy.get('@values').eq(5).contains(/^Yes|No$/);
     cy.get('@values').eq(6).contains('68');
   });
+
+  it('Tests get file link', () => {
+    cy.get('.file-list-item').last().find('.options-button').click();
+    cy.get('#file-context-menu').find('ion-item').eq(10).contains('Copy link').click();
+    cy.checkToastMessage('The link has been copied to the clipboard.');
+    cy.window().then((win) => {
+      win.navigator.clipboard.readText().then((text) => {
+        expect(text).to.eq(
+          // cspell:disable-next-line
+          'parsec://parsec.cloud/Org?action=file_link&workspace_id=94a350f2f629403db2269c44583f7aa1&path=KEFNEI3939jf39KEFsss',
+        );
+      });
+    });
+  });
 });
