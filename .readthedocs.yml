@@ -10,6 +10,10 @@ build:
   tools:
     python: "3.9"
 
+python:
+  install:
+    - path: docs
+      method: pip
 # Note: Read the docs does not support multiple pdfs generation
 # See https://github.com/readthedocs/readthedocs.org/issues/2045
 # Build our docs in additional formats such as PDF
