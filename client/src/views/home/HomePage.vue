@@ -285,11 +285,11 @@ const msSelectSortByLabels = {
 const filteredDevices = computed(() => {
   return deviceList.value.filter((item) => {
     const lowerSearchString = orgSearchString.value.toLocaleLowerCase();
-    return ((item.humanHandle && item.humanHandle.label || item.deviceId)?.toLocaleLowerCase().includes(lowerSearchString) ||
-      item.organizationId?.toLocaleLowerCase().includes(lowerSearchString));
+    return (item.humanHandle.label.toLocaleLowerCase().includes(lowerSearchString) ||
+      item.organizationId.toLocaleLowerCase().includes(lowerSearchString));
   }).sort((a, b) => {
-    const aLabel = (a.humanHandle && a.humanHandle.label || a.deviceId);
-    const bLabel = (b.humanHandle && b.humanHandle.label || b.deviceId);
+    const aLabel = a.humanHandle.label;
+    const bLabel = b.humanHandle.label;
     if (sortBy.value === 'organization') {
       if (sortByAsc.value) {
         return a.organizationId.localeCompare(b.organizationId);

@@ -135,8 +135,8 @@ async function testBootstrapOrganization(): Promise<void> {
         tag: DeviceSaveStrategyTag.Password,
         password: 'P@ssw0rd.',
       },
-      null,
-      null,
+      availableDevice.humanHandle,
+      availableDevice.deviceLabel,
       null,
     );
     switch (outcome.ok) {

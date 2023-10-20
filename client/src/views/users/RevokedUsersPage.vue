@@ -216,7 +216,7 @@ function selectAllUsers(checked: boolean): void {
 }
 
 function details(user: UserInfo): void {
-  console.log(`Show details on user ${user.humanHandle?.label}`);
+  console.log(`Show details on user ${user.humanHandle.label}`);
 }
 
 async function openUserContextMenu(event: Event, user: UserInfo): Promise<void> {

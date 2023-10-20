@@ -35,11 +35,11 @@
       <ion-avatar class="card-content-avatar">
         <user-avatar-name
           class="user-avatar large"
-          :user-avatar="user.humanHandle ? user.humanHandle.label : ''"
+          :user-avatar="user.humanHandle.label"
         />
       </ion-avatar>
       <ion-text class="user-name body">
-        {{ user.humanHandle?.label }}
+        {{ user.humanHandle.label }}
       </ion-text>
       <ion-title class="user-profile body-lg">
         <tag-profile

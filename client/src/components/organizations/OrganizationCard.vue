@@ -15,7 +15,7 @@
       </div>
     </ion-card-header>
     <ion-card-content>
-      {{ device.humanHandle && device.humanHandle.label || device.deviceId }}
+      {{ device.humanHandle.label }}
     </ion-card-content>
   </ion-card>
 </template>

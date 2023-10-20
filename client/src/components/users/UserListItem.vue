@@ -29,8 +29,8 @@
       <ion-label class="user-name__label cell">
         <user-avatar-name
           class="main-cell"
-          :user-avatar="user.humanHandle ? user.humanHandle.label : ''"
-          :user-name="user.humanHandle?.label"
+          :user-avatar="user.humanHandle.label"
+          :user-name="user.humanHandle.label"
         />
       </ion-label>
     </div>
@@ -38,7 +38,7 @@
     <!-- user mail -->
     <div class="user-email">
       <ion-label class="user-email__label cell">
-        {{ user.humanHandle ? user.humanHandle.email : '' }}
+        {{ user.humanHandle.email }}
       </ion-label>
     </div>
 

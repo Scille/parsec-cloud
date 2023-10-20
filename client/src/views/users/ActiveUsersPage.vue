@@ -282,11 +282,11 @@ function selectAllUsers(checked: boolean): void {
 }
 
 function revokeUser(user: UserInfo): void {
-  console.log(`Revoke user ${user.humanHandle?.label}`);
+  console.log(`Revoke user ${user.humanHandle.label}`);
 }
 
 function details(user: UserInfo): void {
-  console.log(`Show details on user ${user.humanHandle?.label}`);
+  console.log(`Show details on user ${user.humanHandle.label}`);
 }
 
 function revokeSelectedUsers(): void {
