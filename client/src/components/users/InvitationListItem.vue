@@ -74,6 +74,7 @@ import { UserInvitation } from '@/parsec';
 import { Notification, NotificationCenter, NotificationKey, NotificationLevel } from '@/services/notificationCenter';
 import { useI18n } from 'vue-i18n';
 import { translateInvitationStatus } from '@/common/translations';
+import { writeTextToClipboard } from '@/common/clipboard';
 
 defineProps<{
   invitation: UserInvitation,
@@ -91,11 +92,18 @@ const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 const { t } = useI18n();
 
 async function copyLink(invitation: UserInvitation): Promise<void> {
-  await navigator.clipboard.writeText(invitation.addr);
-  notificationCenter.showToast(new Notification({
-    message: t('UsersPage.invitation.linkCopiedToClipboard'),
-    level: NotificationLevel.Info,
-  }));
+  const result = await writeTextToClipboard(invitation.addr);
+  if (result) {
+    notificationCenter.showToast(new Notification({
+      message: t('UsersPage.invitation.linkCopiedToClipboard'),
+      level: NotificationLevel.Info,
+    }));
+  } else {
+    notificationCenter.showToast(new Notification({
+      message: t('UsersPage.invitation.linkNotCopiedToClipboard'),
+      level: NotificationLevel.Error,
+    }));
+  }
 }
 </script>
 

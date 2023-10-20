@@ -21,6 +21,21 @@ describe('Check workspaces page', () => {
     cy.get('.card').last().contains('Trademeet');
   });
 
+  it('Checks submenu', () => {
+    cy.get('.card').eq(0).find('.card-option').click();
+    cy.get('.popover-viewport').find('.menu-list').find('ion-item').as('items').should('have.length', 10);
+    cy.get('@items').eq(0).contains('Offline');
+    cy.get('@items').eq(1).contains('Make it available offline');
+    cy.get('@items').eq(2).contains('Manage workspace');
+    cy.get('@items').eq(3).contains('Rename');
+    cy.get('@items').eq(4).contains('Open in explorer');
+    cy.get('@items').eq(5).contains('History');
+    cy.get('@items').eq(6).contains('Details');
+    cy.get('@items').eq(7).contains('Collaboration');
+    cy.get('@items').eq(8).contains('Copy link');
+    cy.get('@items').eq(9).contains('Sharing and roles');
+  });
+
   it('Sort workspaces in grid view', () => {
     cy.get('.card').first().contains('The Copper Coronet');
     cy.get('.card').last().contains('Trademeet');
@@ -91,5 +106,20 @@ describe('Check workspaces page', () => {
     cy.get('.workspace-options > ion-button').first().click();
     cy.get('.popover-viewport').get('.group-item').should('have.length', 7);
     cy.get('.popover-viewport').get('.group-title').should('have.length', 3);
+  });
+
+  it('Get link to the workspace', () => {
+    cy.get('.card').eq(0).find('.card-option').click();
+    cy.get('.popover-viewport').find('.menu-list').find('ion-item').eq(8).click();
+
+    cy.checkToastMessage('The link has been copied to the clipboard.');
+    cy.window().then((win) => {
+      win.navigator.clipboard.readText().then((text) => {
+        expect(text).to.eq(
+          // cspell:disable-next-line
+          'parsec://parsec.cloud/Org?action=file_link&workspace_id=94a350f2f629403db2269c44583f7aa1&path=KEFNEI3939jf39KEFsss',
+        );
+      });
+    });
   });
 });

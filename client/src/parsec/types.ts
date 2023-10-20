@@ -47,6 +47,7 @@ export type {
   ParsedBackendAddr,
   OrganizationID,
   BackendAddr,
+  BackendOrganizationFileLinkAddr,
   ParsedBackendAddrInvitationUser,
   ClientInfo,
   UserGreetInitialInfo,
@@ -134,6 +135,26 @@ enum GetWorkspaceNameErrorTag {
 interface GetWorkspaceNameError {
   tag: GetWorkspaceNameErrorTag.NotFound,
 }
+
+enum LinkErrorTag {
+  WorkspaceNotFound = 'WorkspaceNotFound',
+  PathNotFound = 'PathNotFound',
+  Internal = 'Internal',
+}
+
+interface LinkErrorWorkspaceNotFound {
+  tag: LinkErrorTag.WorkspaceNotFound
+}
+
+interface LinkErrorPathNotFound {
+  tag: LinkErrorTag.PathNotFound
+}
+
+interface LinkErrorInternal {
+  tag: LinkErrorTag.Internal
+}
+
+export type LinkError = LinkErrorWorkspaceNotFound | LinkErrorPathNotFound | LinkErrorInternal;
 
 interface UserTuple {
   id: UserID,

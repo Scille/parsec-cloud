@@ -219,6 +219,8 @@ import { getTextInputFromUser } from '@/components/core/ms-modal/MsTextInputModa
 import { entryNameValidator } from '@/common/validators';
 import { Answer, askQuestion } from '@/components/core/ms-modal/MsQuestionModal.vue';
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
+import { writeTextToClipboard } from '@/common/clipboard';
+import { getPathLink, WorkspaceHandle, WorkspaceID } from '@/parsec';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
@@ -235,7 +237,10 @@ const unwatchRoute = watch(currentRoute, async (newRoute) => {
 });
 const currentPath = ref('/');
 const workspaceHandle = computed(() => {
-  return currentRoute.params.workspaceHandle;
+  return parseInt(currentRoute.params.workspaceHandle as string) as WorkspaceHandle;
+});
+const workspaceId = computed(() => {
+  return currentRoute.query.workspaceId as WorkspaceID;
 });
 const folderInfo: Ref<parsec.EntryStatFolder | null> = ref(null) ;
 const children: Ref<Array<parsec.EntryStat>> = ref([]);
@@ -438,7 +443,27 @@ async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
   if (entries.length !== 1) {
     return;
   }
-  console.log('Get file link', entries[0]);
+  const entry = entries[0];
+  const filePath = pathJoin(currentPath.value, entry.name);
+  const result = await getPathLink(workspaceId.value, filePath);
+  if (result.ok) {
+    if (!(await writeTextToClipboard(result.value))) {
+      notificationCenter.showToast(new Notification({
+        message: t('FoldersPage.linkNotCopiedToClipboard'),
+        level: NotificationLevel.Error,
+      }));
+    } else {
+      notificationCenter.showToast(new Notification({
+        message: t('FoldersPage.linkCopiedToClipboard'),
+        level: NotificationLevel.Info,
+      }));
+    }
+  } else {
+    notificationCenter.showToast(new Notification({
+      message: t('FoldersPage.getLinkError', {reason: result.error.tag}),
+      level: NotificationLevel.Error,
+    }));
+  }
 }
 
 async function moveEntriesTo(entries: parsec.EntryStat[]): Promise<void> {

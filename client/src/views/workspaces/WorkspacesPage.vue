@@ -136,10 +136,12 @@ import {
   WorkspaceInfo,
   listWorkspaces as parsecListWorkspaces,
   createWorkspace as parsecCreateWorkspace,
+  getPathLink as parsecGetPathLink,
 } from '@/parsec';
 import { NotificationCenter, Notification, NotificationKey, NotificationLevel } from '@/services/notificationCenter';
 import { getTextInputFromUser } from '@/components/core/ms-modal/MsTextInputModal.vue';
 import { workspaceNameValidator } from '@/common/validators';
+import { writeTextToClipboard } from '@/common/clipboard';
 
 const { t } = useI18n();
 const sortBy = ref('name');
@@ -247,7 +249,32 @@ async function openWorkspaceContextMenu(event: Event, workspace: WorkspaceInfo):
   if (data !== undefined) {
     if (data.action === WorkspaceAction.Share) {
       onWorkspaceShareClick(new Event('ignored'), workspace);
+    } else if (data.action === WorkspaceAction.CopyLink) {
+      await copyLinkToClipboard(workspace);
     }
+  }
+}
+
+async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
+  const result = await parsecGetPathLink(workspace.id, '/');
+
+  if (result.ok) {
+    if (!(await writeTextToClipboard(result.value))) {
+      notificationCenter.showToast(new Notification({
+        message: t('WorkspacesPage.linkNotCopiedToClipboard'),
+        level: NotificationLevel.Error,
+      }));
+    } else {
+      notificationCenter.showToast(new Notification({
+        message: t('WorkspacesPage.linkCopiedToClipboard'),
+        level: NotificationLevel.Info,
+      }));
+    }
+  } else {
+    notificationCenter.showToast(new Notification({
+      message: t('WorkspacesPage.getLinkError', {reason: result.error.tag}),
+      level: NotificationLevel.Error,
+    }));
   }
 }
 </script>

@@ -280,7 +280,10 @@
             "manager": "Manager",
             "contributor": "Contributor",
             "reader": "Reader"
-        }
+        },
+        "getLinkError": "Could not get a link to the workspace (reason: {reason}).",
+        "linkCopiedToClipboard": "The link has been copied to the clipboard.",
+        "linkNotCopiedToClipboard":"Could not copy the link to the clipboard."
     },
     "FoldersPage": {
         "createFolder": "New folder",
@@ -342,7 +345,10 @@
         },
         "deleteOneFileQuestion": "Are you sure you want to delete the file `{name}`?",
         "deleteOneFolderQuestion": "Are you sure you want to delete the folder `{name}`?",
-        "deleteMultipleQuestion": "Are you sure you want to delete these {count} elements?"
+        "deleteMultipleQuestion": "Are you sure you want to delete these {count} elements?",
+        "linkNotCopiedToClipboard":"Could not copy the link to the clipboard.",
+        "linkCopiedToClipboard":"The link has been copied to the clipboard.",
+        "getLinkError":"Could not get a link to the workspace (reason: {reason})."
     },
     "FileDetails": {
         "title": "Details on {name}",
@@ -560,6 +566,7 @@
             "cancelFailed": "Could not cancel the invitation. Make sure you're connected to the internet.",
             "orgInfoFailed": "Could not retrieve the link. Please make sure you're connected to the internet.",
             "linkCopiedToClipboard": "The link has been copied to the clipboard.",
+            "linkNotCopiedToClipboard": "Could not copy the link to the clipboard.",
             "copyLink": "Copy the link",
             "status": {
                 "ready": "Ready",

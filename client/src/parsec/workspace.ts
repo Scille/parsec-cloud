@@ -18,6 +18,8 @@ import {
   ClientStartWorkspaceError,
   GetWorkspaceNameErrorTag,
   UserProfile,
+  BackendOrganizationFileLinkAddr,
+  LinkError,
 } from '@/parsec/types';
 import { getParsecHandle } from '@/parsec/routing';
 import { getClientInfo } from '@/parsec/login';
@@ -205,6 +207,24 @@ export async function stopWorkspace(workspaceHandle: WorkspaceHandle): Promise<R
     return await libparsec.workspaceStop(workspaceHandle);
   } else {
     return {ok: true, value: null};
+  }
+}
+
+export async function getPathLink(workspaceId: WorkspaceID, path: string, timestamp: DateTime | null = null):
+  Promise<Result<BackendOrganizationFileLinkAddr, LinkError>> {
+  const handle = getParsecHandle();
+
+  // cspell:disable-next-line
+  let link = 'parsec://parsec.cloud/Org?action=file_link&workspace_id=94a350f2f629403db2269c44583f7aa1&path=KEFNEI3939jf39KEFsss';
+  if (timestamp !== null) {
+    // cspell:disable-next-line
+    link += '&timestamp=JEFHNUJEF39350JFHNsss';
+  }
+  // Both are mocked for now
+  if (handle !== null && !needsMocks()) {
+    return {ok: true, value: link};
+  } else {
+    return {ok: true, value: link};
   }
 }
 
