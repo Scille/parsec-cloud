@@ -28,6 +28,7 @@ Goku
 Kryza
 Leblond
 mailhog
+Malloryy
 Manraj
 Mcalice
 michu
