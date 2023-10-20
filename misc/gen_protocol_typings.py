@@ -437,7 +437,7 @@ class ActiveUsersLimit:
         + ", ".join(f'"{f}"' for f in collected_items.keys())
         + "]\n"
     )
-    (args.output / "__init__.py").write_text(protocol_code, encoding="utf8")
+    (args.output / "__init__.pyi").write_text(protocol_code, encoding="utf8")
 
     for family, versions in collected_items.items():
         ordered_versions = sorted(versions.keys())
@@ -449,7 +449,7 @@ class ActiveUsersLimit:
         family_code += (
             '\n\n__all__ =["latest", ' + ", ".join(f'"{v}"' for v in ordered_versions) + "]\n"
         )
-        (args.output / family / "__init__.py").write_text(family_code, encoding="utf8")
+        (args.output / family / "__init__.pyi").write_text(family_code, encoding="utf8")
 
         for version, cmds in versions.items():
             version_code = """from __future__ import annotations
@@ -468,6 +468,6 @@ class AnyCmdReq:
             version_code += (
                 '\n\n__all__ =["AnyCmdReq", ' + ", ".join(f'"{c}"' for c in cmds_names) + "]\n"
             )
-            (args.output / family / version / "__init__.py").write_text(
+            (args.output / family / version / "__init__.pyi").write_text(
                 version_code, encoding="utf8"
             )
