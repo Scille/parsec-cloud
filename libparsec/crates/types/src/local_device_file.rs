@@ -190,20 +190,6 @@ pub struct AvailableDevice {
 }
 
 impl AvailableDevice {
-    // TODO: remove those fields !
-
-    pub fn user_display(&self) -> &str {
-        self.human_handle.as_ref()
-    }
-
-    pub fn short_user_display(&self) -> &str {
-        self.human_handle.label()
-    }
-
-    pub fn device_display(&self) -> &str {
-        self.device_label.as_ref()
-    }
-
     /// Return a `sha256` hash of device slug as hex string
     pub fn slughash(&self) -> String {
         let mut hasher = Sha256::new();
