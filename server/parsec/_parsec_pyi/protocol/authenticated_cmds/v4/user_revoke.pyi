@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from ..v2.user_revoke import (
+from ..v3.user_revoke import (
     Rep,
     RepAlreadyRevoked,
     RepBadTimestamp,

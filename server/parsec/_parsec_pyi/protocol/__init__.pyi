@@ -33,7 +33,6 @@ class ActiveUsersLimit:
     @classmethod
     def LimitedTo(cls, user_count_limit: int) -> ActiveUsersLimit: ...
     def to_int(self) -> int | None: ...
-
     "Returns the user limit count as an integer or None if there's no limit specified"
 
     def __eq__(self, other: object) -> bool: ...
@@ -46,7 +45,7 @@ class ActiveUsersLimit:
 __all__ = [
     "ReencryptionBatchEntry",
     "ActiveUsersLimit",
+    "authenticated_cmds",
     "anonymous_cmds",
     "invited_cmds",
-    "authenticated_cmds",
 ]

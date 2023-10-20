@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from ..v2.invite_3a_greeter_wait_peer_trust import (
+from ..v3.invite_3a_greeter_wait_peer_trust import (
     Rep,
     RepAlreadyDeleted,
     RepInvalidState,
