@@ -2,6 +2,7 @@
 
 #![doc = include_str!("../README.md")]
 #![cfg(not(target_os = "macos"))]
+#![cfg(not(target_arch = "wasm32"))]
 
 mod error;
 mod memfs;

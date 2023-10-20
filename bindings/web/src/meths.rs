@@ -4924,7 +4924,6 @@ pub fn bootstrapOrganization(
     device_label: Option<String>,
     sequester_authority_verify_key: Option<Uint8Array>,
 ) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let config = config.into();
         let config = struct_client_config_js_to_rs(config)?;
@@ -5017,7 +5016,6 @@ pub fn bootstrapOrganization(
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn buildBackendOrganizationBootstrapAddr(addr: String, organization_id: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let addr = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
@@ -5044,7 +5042,6 @@ pub fn buildBackendOrganizationBootstrapAddr(addr: String, organization_id: Stri
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn cancel(canceller: u32) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::cancel(canceller);
         Ok(match ret {
@@ -5073,7 +5070,6 @@ pub fn cancel(canceller: u32) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerDeviceFinalizeSaveLocalDevice(handle: u32, save_strategy: Object) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let save_strategy = save_strategy.into();
         let save_strategy = variant_device_save_strategy_js_to_rs(save_strategy)?;
@@ -5102,7 +5098,6 @@ pub fn claimerDeviceFinalizeSaveLocalDevice(handle: u32, save_strategy: Object) 
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerDeviceInProgress1DoSignifyTrust(canceller: u32, handle: u32) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::claimer_device_in_progress_1_do_signify_trust(canceller, handle).await;
         Ok(match ret {
@@ -5128,7 +5123,6 @@ pub fn claimerDeviceInProgress1DoSignifyTrust(canceller: u32, handle: u32) -> Pr
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerDeviceInProgress2DoWaitPeerTrust(canceller: u32, handle: u32) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret =
             libparsec::claimer_device_in_progress_2_do_wait_peer_trust(canceller, handle).await;
@@ -5159,7 +5153,6 @@ pub fn claimerDeviceInProgress3DoClaim(
     handle: u32,
     requested_device_label: Option<String>,
 ) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let requested_device_label = match requested_device_label {
             Some(requested_device_label) => {
@@ -5201,7 +5194,6 @@ pub fn claimerDeviceInProgress3DoClaim(
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerDeviceInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::claimer_device_initial_do_wait_peer(canceller, handle).await;
         Ok(match ret {
@@ -5227,7 +5219,6 @@ pub fn claimerDeviceInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerGreeterAbortOperation(handle: u32) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::claimer_greeter_abort_operation(handle);
         Ok(match ret {
@@ -5256,7 +5247,6 @@ pub fn claimerGreeterAbortOperation(handle: u32) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerRetrieveInfo(config: Object, on_event_callback: Function, addr: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let config = config.into();
         let config = struct_client_config_js_to_rs(config)?;
@@ -5300,7 +5290,6 @@ pub fn claimerRetrieveInfo(config: Object, on_event_callback: Function, addr: St
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerUserFinalizeSaveLocalDevice(handle: u32, save_strategy: Object) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let save_strategy = save_strategy.into();
         let save_strategy = variant_device_save_strategy_js_to_rs(save_strategy)?;
@@ -5329,7 +5318,6 @@ pub fn claimerUserFinalizeSaveLocalDevice(handle: u32, save_strategy: Object) ->
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerUserInProgress1DoSignifyTrust(canceller: u32, handle: u32) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::claimer_user_in_progress_1_do_signify_trust(canceller, handle).await;
         Ok(match ret {
@@ -5355,7 +5343,6 @@ pub fn claimerUserInProgress1DoSignifyTrust(canceller: u32, handle: u32) -> Prom
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerUserInProgress2DoWaitPeerTrust(canceller: u32, handle: u32) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::claimer_user_in_progress_2_do_wait_peer_trust(canceller, handle).await;
         Ok(match ret {
@@ -5386,7 +5373,6 @@ pub fn claimerUserInProgress3DoClaim(
     requested_device_label: Option<String>,
     requested_human_handle: Option<Object>,
 ) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let requested_device_label = match requested_device_label {
             Some(requested_device_label) => {
@@ -5439,7 +5425,6 @@ pub fn claimerUserInProgress3DoClaim(
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerUserInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::claimer_user_initial_do_wait_peer(canceller, handle).await;
         Ok(match ret {
@@ -5465,7 +5450,6 @@ pub fn claimerUserInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientCreateWorkspace(client: u32, name: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let name = {
             let custom_from_rs_string = |s: String| -> Result<_, _> {
@@ -5505,7 +5489,6 @@ pub fn clientCreateWorkspace(client: u32, name: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientDeleteInvitation(client: u32, token: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let token = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
@@ -5540,7 +5523,6 @@ pub fn clientDeleteInvitation(client: u32, token: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientGetUserDevice(client: u32, device: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let device = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
@@ -5580,7 +5562,6 @@ pub fn clientGetUserDevice(client: u32, device: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientInfo(client: u32) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::client_info(client).await;
         Ok(match ret {
@@ -5606,7 +5587,6 @@ pub fn clientInfo(client: u32) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientListInvitations(client: u32) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::client_list_invitations(client).await;
         Ok(match ret {
@@ -5640,7 +5620,6 @@ pub fn clientListInvitations(client: u32) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientListUserDevices(client: u32, user: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let user = user
             .parse()
@@ -5678,7 +5657,6 @@ pub fn clientListUserDevices(client: u32, user: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientListUsers(client: u32, skip_revoked: bool) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::client_list_users(client, skip_revoked).await;
         Ok(match ret {
@@ -5712,7 +5690,6 @@ pub fn clientListUsers(client: u32, skip_revoked: bool) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientListWorkspaceUsers(client: u32, realm_id: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let realm_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
@@ -5752,7 +5729,6 @@ pub fn clientListWorkspaceUsers(client: u32, realm_id: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientListWorkspaces(client: u32) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::client_list_workspaces(client).await;
         Ok(match ret {
@@ -5786,7 +5762,6 @@ pub fn clientListWorkspaces(client: u32) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientNewDeviceInvitation(client: u32, send_email: bool) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::client_new_device_invitation(client, send_email).await;
         Ok(match ret {
@@ -5812,7 +5787,6 @@ pub fn clientNewDeviceInvitation(client: u32, send_email: bool) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientNewUserInvitation(client: u32, claimer_email: String, send_email: bool) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::client_new_user_invitation(client, claimer_email, send_email).await;
         Ok(match ret {
@@ -5838,7 +5812,6 @@ pub fn clientNewUserInvitation(client: u32, claimer_email: String, send_email: b
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientRenameWorkspace(client: u32, realm_id: String, new_name: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let realm_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
@@ -5884,7 +5857,6 @@ pub fn clientShareWorkspace(
     recipient: String,
     role: Option<String>,
 ) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let realm_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
@@ -5932,7 +5904,6 @@ pub fn clientShareWorkspace(
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientStart(config: Object, on_event_callback: Function, access: Object) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let config = config.into();
         let config = struct_client_config_js_to_rs(config)?;
@@ -5973,7 +5944,6 @@ pub fn clientStart(config: Object, on_event_callback: Function, access: Object) 
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientStartDeviceInvitationGreet(client: u32, token: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let token = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
@@ -6005,7 +5975,6 @@ pub fn clientStartDeviceInvitationGreet(client: u32, token: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientStartUserInvitationGreet(client: u32, token: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let token = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
@@ -6037,7 +6006,6 @@ pub fn clientStartUserInvitationGreet(client: u32, token: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientStartWorkspace(client: u32, realm_id: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let realm_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
@@ -6069,7 +6037,6 @@ pub fn clientStartWorkspace(client: u32, realm_id: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientStop(client: u32) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::client_stop(client).await;
         Ok(match ret {
@@ -6098,7 +6065,6 @@ pub fn clientStop(client: u32) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn getDefaultConfigDir() -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::get_default_config_dir();
         Ok(JsValue::from_str({
@@ -6120,7 +6086,6 @@ pub fn getDefaultConfigDir() -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn getDefaultDataBaseDir() -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::get_default_data_base_dir();
         Ok(JsValue::from_str({
@@ -6142,7 +6107,6 @@ pub fn getDefaultDataBaseDir() -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn getDefaultMountpointBaseDir() -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::get_default_mountpoint_base_dir();
         Ok(JsValue::from_str({
@@ -6164,7 +6128,6 @@ pub fn getDefaultMountpointBaseDir() -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn getPlatform() -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::get_platform();
         Ok(JsValue::from_str(enum_platform_rs_to_js(ret)))
@@ -6175,7 +6138,6 @@ pub fn getPlatform() -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterDeviceInProgress1DoWaitPeerTrust(canceller: u32, handle: u32) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret =
             libparsec::greeter_device_in_progress_1_do_wait_peer_trust(canceller, handle).await;
@@ -6202,7 +6164,6 @@ pub fn greeterDeviceInProgress1DoWaitPeerTrust(canceller: u32, handle: u32) -> P
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterDeviceInProgress2DoSignifyTrust(canceller: u32, handle: u32) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::greeter_device_in_progress_2_do_signify_trust(canceller, handle).await;
         Ok(match ret {
@@ -6228,7 +6189,6 @@ pub fn greeterDeviceInProgress2DoSignifyTrust(canceller: u32, handle: u32) -> Pr
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterDeviceInProgress3DoGetClaimRequests(canceller: u32, handle: u32) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret =
             libparsec::greeter_device_in_progress_3_do_get_claim_requests(canceller, handle).await;
@@ -6259,7 +6219,6 @@ pub fn greeterDeviceInProgress4DoCreate(
     handle: u32,
     device_label: Option<String>,
 ) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let device_label = match device_label {
             Some(device_label) => {
@@ -6301,7 +6260,6 @@ pub fn greeterDeviceInProgress4DoCreate(
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterDeviceInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::greeter_device_initial_do_wait_peer(canceller, handle).await;
         Ok(match ret {
@@ -6327,7 +6285,6 @@ pub fn greeterDeviceInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterUserInProgress1DoWaitPeerTrust(canceller: u32, handle: u32) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::greeter_user_in_progress_1_do_wait_peer_trust(canceller, handle).await;
         Ok(match ret {
@@ -6353,7 +6310,6 @@ pub fn greeterUserInProgress1DoWaitPeerTrust(canceller: u32, handle: u32) -> Pro
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterUserInProgress2DoSignifyTrust(canceller: u32, handle: u32) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::greeter_user_in_progress_2_do_signify_trust(canceller, handle).await;
         Ok(match ret {
@@ -6379,7 +6335,6 @@ pub fn greeterUserInProgress2DoSignifyTrust(canceller: u32, handle: u32) -> Prom
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterUserInProgress3DoGetClaimRequests(canceller: u32, handle: u32) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret =
             libparsec::greeter_user_in_progress_3_do_get_claim_requests(canceller, handle).await;
@@ -6412,7 +6367,6 @@ pub fn greeterUserInProgress4DoCreate(
     device_label: Option<String>,
     profile: String,
 ) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let human_handle = match human_handle {
             Some(human_handle) => {
@@ -6471,7 +6425,6 @@ pub fn greeterUserInProgress4DoCreate(
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterUserInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::greeter_user_initial_do_wait_peer(canceller, handle).await;
         Ok(match ret {
@@ -6497,7 +6450,6 @@ pub fn greeterUserInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn listAvailableDevices(path: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let path = {
             let custom_from_rs_string =
@@ -6522,7 +6474,6 @@ pub fn listAvailableDevices(path: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn newCanceller() -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::new_canceller();
         Ok(JsValue::from(ret))
@@ -6533,7 +6484,6 @@ pub fn newCanceller() -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn parseBackendAddr(url: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::parse_backend_addr(&url);
         Ok(match ret {
@@ -6559,7 +6509,6 @@ pub fn parseBackendAddr(url: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn testDropTestbed(path: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let path = {
             let custom_from_rs_string =
@@ -6576,7 +6525,6 @@ pub fn testDropTestbed(path: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn testGetTestbedBootstrapOrganizationAddr(discriminant_dir: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let discriminant_dir = {
             let custom_from_rs_string =
@@ -6602,7 +6550,6 @@ pub fn testGetTestbedBootstrapOrganizationAddr(discriminant_dir: String) -> Prom
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn testGetTestbedOrganizationId(discriminant_dir: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let discriminant_dir = {
             let custom_from_rs_string =
@@ -6621,7 +6568,6 @@ pub fn testGetTestbedOrganizationId(discriminant_dir: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let test_server = match test_server {
             Some(test_server) => {
@@ -6657,7 +6603,6 @@ pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise 
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn validateDeviceLabel(raw: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::validate_device_label(&raw);
         Ok(ret.into())
@@ -6668,7 +6613,6 @@ pub fn validateDeviceLabel(raw: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn validateEmail(raw: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::validate_email(&raw);
         Ok(ret.into())
@@ -6679,7 +6623,6 @@ pub fn validateEmail(raw: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn validateEntryName(raw: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::validate_entry_name(&raw);
         Ok(ret.into())
@@ -6690,7 +6633,6 @@ pub fn validateEntryName(raw: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn validateHumanHandleLabel(raw: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::validate_human_handle_label(&raw);
         Ok(ret.into())
@@ -6701,7 +6643,6 @@ pub fn validateHumanHandleLabel(raw: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn validateInvitationToken(raw: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::validate_invitation_token(&raw);
         Ok(ret.into())
@@ -6712,7 +6653,6 @@ pub fn validateInvitationToken(raw: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn validatePath(raw: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::validate_path(&raw);
         Ok(ret.into())
@@ -6723,7 +6663,6 @@ pub fn validatePath(raw: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceCreateFile(workspace: u32, path: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
@@ -6764,7 +6703,6 @@ pub fn workspaceCreateFile(workspace: u32, path: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceCreateFolder(workspace: u32, path: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
@@ -6805,7 +6743,6 @@ pub fn workspaceCreateFolder(workspace: u32, path: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceCreateFolderAll(workspace: u32, path: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
@@ -6846,7 +6783,6 @@ pub fn workspaceCreateFolderAll(workspace: u32, path: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceRemoveEntry(workspace: u32, path: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
@@ -6882,7 +6818,6 @@ pub fn workspaceRemoveEntry(workspace: u32, path: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceRemoveFile(workspace: u32, path: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
@@ -6918,7 +6853,6 @@ pub fn workspaceRemoveFile(workspace: u32, path: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceRemoveFolder(workspace: u32, path: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
@@ -6954,7 +6888,6 @@ pub fn workspaceRemoveFolder(workspace: u32, path: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceRemoveFolderAll(workspace: u32, path: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
@@ -6995,7 +6928,6 @@ pub fn workspaceRenameEntry(
     new_name: String,
     overwrite: bool,
 ) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
@@ -7038,7 +6970,6 @@ pub fn workspaceRenameEntry(
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceStatEntry(workspace: u32, path: String) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
@@ -7071,7 +7002,6 @@ pub fn workspaceStatEntry(workspace: u32, path: String) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceStop(workspace: u32) -> Promise {
-    crate::init_sentry();
     future_to_promise(async move {
         let ret = libparsec::workspace_stop(workspace).await;
         Ok(match ret {

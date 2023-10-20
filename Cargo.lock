@@ -1446,8 +1446,6 @@ dependencies = [
  "js-sys",
  "libparsec",
  "log",
- "once_cell",
- "sentry",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-bindgen-test",
