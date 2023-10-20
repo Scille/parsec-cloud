@@ -433,7 +433,44 @@
         "title": "Your devices",
         "addDevice": "Add",
         "noDevices": "No devices.",
-        "activeDeviceBadge": "Current"
+        "activeDeviceBadge": "Current",
+        "greet": {
+            "steps": {
+                "hostCode": "Host code",
+                "guestCode": "Guest code"
+            },
+            "titles": {
+                "waitForGuest": "Create a new device",
+                "provideHostCode": "Share your code",
+                "getGuestCode": "Get guest code",
+                "deviceDetails": "Waiting for the device information",
+                "summary": "Device created!"
+            },
+            "subtitles": {
+                "provideHostCode": "Click the code below on the guest.",
+                "getGuestCode": "Click on the code that appears on the guest.",
+                "summary": "The device {label} has been created.",
+                "getDeviceInfo": "Waiting for you to fill the information on the guest.",
+                "waitForGuest1": "To create a new device, you need to have Parsec open on both devices. Use the invitation link on your second device to start the process.",
+                "waitForGuest2": "Please don't close this window during the process."
+            },
+            "errors": {
+                "retrieveDeviceInfoFailed": "Could not retrieve the information.",
+                "unexpected": "An unexpected error occured (reason: {reason}).",
+                "createDeviceFailed": "Could not create the device.",
+                "startFailed": "Failed to start the process. Please make sure that you are connected to the internet.",
+                "invalidCodeSelected": "You didn't select the right code. Please restart the process.",
+                "noneCodeSelected": "If you didn't see the right code, it could be a security concern. Please restart the process."
+            },
+            "actions": {
+                "approve": "Approve",
+                "finish": "Finish",
+                "start": "Start"
+            },
+            "success": "The device {label} has been created!",
+            "linkCopiedToClipboard": "The link has been copied to the clipboard.",
+            "copyLink": "Copy invitation link"
+        }
     },
     "Password": {
         "password": "Password",

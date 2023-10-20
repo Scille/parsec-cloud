@@ -55,6 +55,11 @@ export type {
   UserGreetInProgress2Info,
   UserGreetInProgress3Info,
   UserGreetInProgress4Info,
+  DeviceGreetInitialInfo,
+  DeviceGreetInProgress1Info,
+  DeviceGreetInProgress2Info,
+  DeviceGreetInProgress3Info,
+  DeviceGreetInProgress4Info,
   DeviceInfo,
   FsPath,
   VlobID as FileID,
@@ -103,6 +108,7 @@ import type {
   HumanHandle,
   UserProfile,
   VlobID,
+  DeviceInfo,
 } from '@/plugins/libparsec';
 
 import {
@@ -115,6 +121,10 @@ type WorkspaceName = EntryName;
 
 interface UserInfo extends ParsecUserInfo {
   isRevoked: () => boolean
+}
+
+interface OwnDeviceInfo extends DeviceInfo {
+  isCurrent: boolean
 }
 
 interface EntryStatFolder extends ParsecEntryStatFolder {
@@ -198,4 +208,5 @@ export {
   WorkspaceName,
   GetAbsolutePathError,
   GetAbsolutePathErrorTag,
+  OwnDeviceInfo,
 };

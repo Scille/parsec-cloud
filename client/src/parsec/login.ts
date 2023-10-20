@@ -13,10 +13,16 @@ import {
   ClientInfo,
   ClientInfoError,
   UserProfile,
+  DeviceInfo,
+  ClientListUserDevicesError,
+  ClientListUserDevicesErrorTag,
+  OwnDeviceInfo,
 } from '@/parsec/types';
 import { getParsecHandle } from '@/parsec/routing';
 import { DEFAULT_HANDLE, getClientConfig } from '@/parsec/internals';
 import { needsMocks } from '@/parsec/environment';
+import { listUserDevices } from '@/parsec/user';
+import { DateTime } from 'luxon';
 
 export async function listAvailableDevices(): Promise<Array<AvailableDevice>> {
   return await libparsec.listAvailableDevices(window.getConfigDir());
@@ -91,4 +97,39 @@ export async function isAdmin(): Promise<boolean> {
 
 export async function isOutsider(): Promise<boolean> {
   return await getClientProfile() === UserProfile.Outsider;
+}
+
+export async function listOwnDevices(): Promise<Result<Array<OwnDeviceInfo>, ClientListUserDevicesError>> {
+  const handle = getParsecHandle();
+
+  if (handle !== null && !needsMocks()) {
+    const clientResult = await getClientInfo();
+
+    if (clientResult.ok) {
+      const result = await listUserDevices(clientResult.value.userId);
+      if (result.ok) {
+        result.value.map((device) => {
+          (device as OwnDeviceInfo).isCurrent = device.id === clientResult.value.deviceId;
+          return device;
+        });
+      }
+      return result as Result<Array<OwnDeviceInfo>, ClientListUserDevicesError>;
+    } else {
+      return {ok: false, error: {tag: ClientListUserDevicesErrorTag.Internal, error: ''}};
+    }
+  } else {
+    return {ok: true, value: [{
+      id: 'device1',
+      deviceLabel: 'My First Device',
+      createdOn: DateTime.now(),
+      createdBy: 'some_device',
+      isCurrent: true,
+    }, {
+      id: 'device2',
+      deviceLabel: 'My Second Device',
+      createdOn: DateTime.now(),
+      createdBy: 'device1',
+      isCurrent: false,
+    }]};
+  }
 }
