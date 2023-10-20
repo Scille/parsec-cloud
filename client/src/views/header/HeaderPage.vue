@@ -92,7 +92,7 @@
 
           <profile-header
             id="profile-button"
-            :name="userInfo && userInfo.humanHandle ? userInfo.humanHandle.label : ''"
+            :name="userInfo ? userInfo.humanHandle.label : ''"
             class="profile-header"
           />
         </ion-buttons>

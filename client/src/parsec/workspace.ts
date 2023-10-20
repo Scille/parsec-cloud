@@ -133,7 +133,7 @@ export async function getWorkspaceSharing(workspaceId: WorkspaceID, includeAllUs
       for (const sharing of result.value) {
         if (includeSelf || (!includeSelf && selfId !== sharing.userId)) {
           value.push([
-            {id: sharing.userId, humanHandle: sharing.humanHandle || {label: sharing.userId, email: ''}, profile: sharing.currentProfile},
+            {id: sharing.userId, humanHandle: sharing.humanHandle, profile: sharing.currentProfile},
             sharing.currentRole,
           ]);
         }
@@ -144,7 +144,7 @@ export async function getWorkspaceSharing(workspaceId: WorkspaceID, includeAllUs
           for (const user of usersResult.value) {
             if (!value.find((item) => item[0].id === user.id) && (includeSelf || (!includeSelf && user.id !== selfId))) {
               value.push([
-                {id: user.id, humanHandle: user.humanHandle || {label: user.id, email: ''}, profile: user.currentProfile},
+                {id: user.id, humanHandle: user.humanHandle, profile: user.currentProfile},
                 null,
               ]);
             }

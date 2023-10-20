@@ -33,18 +33,4 @@ describe('Organization Card', () => {
     expect(wrapper.find('ion-card-title').text()).to.equal('Black Mesa');
     expect(wrapper.find('ion-card-content').text()).to.equal('Gordon Freeman');
   });
-
-  it('handles empty human handles', () => {
-    DEVICE.humanHandle = null;
-
-    wrapper = mount(OrganizationCard, {
-      props: {
-        device: DEVICE,
-      },
-    });
-
-    expect(wrapper.find('ion-avatar').text()).to.equal('Bl');
-    expect(wrapper.find('ion-card-title').text()).to.equal('Black Mesa');
-    expect(wrapper.find('ion-card-content').text()).to.equal('5ada1b25e8904e9ba238834227a40abf@9700f0fd005e4752a13bcba0042d4703');
-  });
 });

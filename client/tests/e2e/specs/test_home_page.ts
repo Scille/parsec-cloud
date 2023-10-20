@@ -52,7 +52,7 @@ describe('Check organization list', () => {
     cy.get('.organization-list-row__col').as('orgList').should('have.length', 5);
     // Sorted by org name asc by default
     cy.get('@orgList').first().contains('Alicey McAliceFace');
-    cy.get('@orgList').last().contains('mallory');
+    cy.get('@orgList').last().contains('Malloryy McMalloryFace');
     cy.get('#ms-search-input').find('input').type('alice');
     cy.get('@orgList').should('have.length', 2);
     // Only 2 devices shown
@@ -68,7 +68,7 @@ describe('Check organization list', () => {
     cy.get('.option').should('have.length', 4);
     cy.get('.option').first().contains('Ascending').click();
     // Now sorted by user name desc
-    cy.get('@orgList').first().contains('mallory');
+    cy.get('@orgList').first().contains('Malloryy McMalloryFace');
     cy.get('@orgList').last().contains('Alicey McAliceFace');
   });
 

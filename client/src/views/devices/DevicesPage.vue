@@ -28,7 +28,7 @@
               :key="device.id"
             >
               <device-card
-                :label="device.deviceLabel || ''"
+                :label="device.deviceLabel"
                 :is-current="isCurrent(device)"
               />
             </ion-item>
