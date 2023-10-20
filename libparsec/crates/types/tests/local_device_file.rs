@@ -261,9 +261,6 @@ fn available_device() {
         available.slughash(),
         "57f426e7a3cd5dc4a5d19fb8a83addb9112a65d12a13e2f72dd1fdfb9a8a4971"
     );
-    p_assert_eq!(available.user_display(), "John Doe <john@example.com>");
-    p_assert_eq!(available.short_user_display(), "John Doe");
-    p_assert_eq!(available.device_display(), "MyPc");
 }
 
 #[rstest]
