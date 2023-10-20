@@ -29,7 +29,7 @@
             >
               <device-card
                 :label="device.deviceLabel"
-                :is-current="isCurrent(device)"
+                :is-current="device.isCurrent"
               />
             </ion-item>
           </ion-list>
@@ -50,46 +50,48 @@ import {
   IonPage,
   IonContent,
   IonText,
+  modalController,
 } from '@ionic/vue';
 import DeviceCard from '@/components/devices/DeviceCard.vue';
-import { listUserDevices as parsecListUserDevices, getClientInfo as parsecGetClientInfo, DeviceInfo, ClientInfo } from '@/parsec';
+import { listOwnDevices, OwnDeviceInfo } from '@/parsec';
 import { NotificationKey } from '@/common/injectionKeys';
 import { NotificationCenter, NotificationLevel, Notification } from '@/services/notificationCenter';
+import GreetDeviceModal from '@/views/devices/GreetDeviceModal.vue';
+import { MsModalResult } from '@/components/core/ms-types';
 
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
-const devices: Ref<DeviceInfo[]> = ref([]);
-const clientInfo: Ref<ClientInfo | null> = ref(null) ;
+const devices: Ref<OwnDeviceInfo[]> = ref([]);
 
 onMounted(async () => {
-  const clientResult = await parsecGetClientInfo();
+  await refreshDevicesList();
+});
 
-  if (clientResult.ok) {
-    clientInfo.value = clientResult.value;
-    const result = await parsecListUserDevices(clientResult.value.userId);
-    if (result.ok) {
-      devices.value = result.value;
-    } else {
-      notificationCenter.showToast(new Notification({
-        message: 'Failed to retrieve devices',
-        level: NotificationLevel.Error,
-      }));
-      console.log('Could not list devices', result.error);
-    }
+async function refreshDevicesList(): Promise<void> {
+  const result = await listOwnDevices();
+  if (result.ok) {
+    devices.value = result.value;
   } else {
     notificationCenter.showToast(new Notification({
       message: 'Failed to retrieve devices',
       level: NotificationLevel.Error,
     }));
-    console.log('Could not get client info', clientResult.error);
+    console.log('Could not list devices', result.error);
   }
-});
-
-function isCurrent(info: DeviceInfo): boolean {
-  return info.id === clientInfo.value?.deviceId;
 }
 
-function onAddDeviceClick(): void {
-  console.log('Add device clicked');
+async function onAddDeviceClick(): Promise<void> {
+  const modal = await modalController.create({
+    component: GreetDeviceModal,
+    canDismiss: true,
+    cssClass: 'greet-organization-modal',
+  });
+  await modal.present();
+  const modalResult = await modal.onWillDismiss();
+  await modal.dismiss();
+  if (modalResult.role === MsModalResult.Confirm) {
+    await refreshDevicesList();
+  }
 }
 </script>
 
