@@ -57,7 +57,7 @@ jobs:
     outputs:
       wheel-version: ${{ steps.version.outputs.full }}
     steps:
-      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # pin v4.1.0
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
         timeout-minutes: 5
 
       - uses: ./.github/actions/setup-python-poetry
@@ -139,7 +139,7 @@ jobs:
         run: python server/packaging/wheel/wheel_it.py ./server --output dist --skip-wheel
 
       # Install syft
-      - uses: taiki-e/install-action@47d27149ff6b3422864ec504071d5cc7873d642e # pin v2.20.3
+      - uses: taiki-e/install-action@212ce016f02c04bbd7becdef0e0b68b53d80b3ab # pin v2.20.15
         with:
           tool: syft@0.84.0
 

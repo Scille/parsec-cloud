@@ -56,7 +56,7 @@ jobs:
         ports:
           - 6777:6777
     steps:
-      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # pin v4.1.0
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
         timeout-minutes: 5
 
       - uses: actions-rust-lang/setup-rust-toolchain@f3c84ee10bf5a86e7a5d607d487bf17d57670965 # pin v1.5.0
@@ -66,7 +66,7 @@ jobs:
         timeout-minutes: 10
 
       - name: Retrieve Rust cache
-        uses: Swatinem/rust-cache@a95ba195448af2da9b00fb742d14ffaaf3c21f43 # pin v2.7.0
+        uses: Swatinem/rust-cache@3cf7f8cc28d1b4e7d01e3783be10a97d55d483c8 # pin v2.7.1
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
           # cache is only shared between master and the PRs (and not across PRs).
@@ -85,7 +85,7 @@ jobs:
         timeout-minutes: 5
 
       # Install cargo nextest command
-      - uses: taiki-e/install-action@47d27149ff6b3422864ec504071d5cc7873d642e # pin v2.20.3
+      - uses: taiki-e/install-action@212ce016f02c04bbd7becdef0e0b68b53d80b3ab # pin v2.20.15
         with:
           tool: nextest@0.9.54,wasm-pack@0.11.0
 
@@ -158,7 +158,7 @@ jobs:
     timeout-minutes: 60
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # pin v4.1.0
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
         timeout-minutes: 5
 
       - uses: actions-rust-lang/setup-rust-toolchain@f3c84ee10bf5a86e7a5d607d487bf17d57670965 # pin v1.5.0
@@ -168,7 +168,7 @@ jobs:
         timeout-minutes: 10
 
       - name: Retrieve Rust cache
-        uses: Swatinem/rust-cache@a95ba195448af2da9b00fb742d14ffaaf3c21f43 # pin v2.7.0
+        uses: Swatinem/rust-cache@3cf7f8cc28d1b4e7d01e3783be10a97d55d483c8 # pin v2.7.1
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
           # cache is only shared between master and the PRs (and not across PRs).
@@ -197,7 +197,7 @@ jobs:
           mv 'D:/a/_temp/winfsp-tests-x64.exe' 'C:/Program Files (x86)/WinFsp/bin/'
 
       # Install cargo nextest command
-      - uses: taiki-e/install-action@47d27149ff6b3422864ec504071d5cc7873d642e # pin v2.20.3
+      - uses: taiki-e/install-action@212ce016f02c04bbd7becdef0e0b68b53d80b3ab # pin v2.20.15
         with:
           tool: nextest@0.9.54
 

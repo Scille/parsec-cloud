@@ -40,7 +40,7 @@ jobs:
         ports:
           - 6777:6777
     steps:
-      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # pin v4.1.0
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
         timeout-minutes: 5
 
       - uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d  # pin v3.8.1
@@ -94,7 +94,7 @@ jobs:
         timeout-minutes: 5
 
       - name: Retrieve Rust cache
-        uses: Swatinem/rust-cache@a95ba195448af2da9b00fb742d14ffaaf3c21f43 # pin v2.7.0
+        uses: Swatinem/rust-cache@3cf7f8cc28d1b4e7d01e3783be10a97d55d483c8 # pin v2.7.1
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
@@ -105,7 +105,7 @@ jobs:
         timeout-minutes: 5
 
       # Install wasm-pack command
-      - uses: taiki-e/install-action@47d27149ff6b3422864ec504071d5cc7873d642e # pin v2.20.3
+      - uses: taiki-e/install-action@212ce016f02c04bbd7becdef0e0b68b53d80b3ab # pin v2.20.15
         with:
           tool: wasm-pack@${{ env.wasm-pack-version }}
 
