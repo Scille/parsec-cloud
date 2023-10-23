@@ -19,7 +19,7 @@ use libparsec_types::prelude::*;
 use crate::testbed::{get_send_hook, SendHookConfig};
 use crate::{
     error::{ConnectionError, ConnectionResult},
-    SSEConnectionError, SSEEventID, SSEStream, API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
+    SSEConnectionError, SSEStream, API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
 };
 
 use self::sse::EVENT_STREAM_CONTENT_TYPE;
@@ -148,7 +148,7 @@ impl AuthenticatedCmds {
 // SSE method impls
 
 impl AuthenticatedCmds {
-    fn sse_request_builder<T>(&self) -> RequestBuilder
+    fn sse_request_builder<T>(&self, last_event_id: Option<&str>) -> RequestBuilder
     where
         T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
     {
@@ -162,7 +162,7 @@ impl AuthenticatedCmds {
             url
         };
 
-        let mut content_headers = HeaderMap::with_capacity(4);
+        let mut content_headers = HeaderMap::with_capacity(5);
 
         let api_version = api_version_major_to_full(T::API_MAJOR_VERSION);
         let api_version_header_value =
@@ -171,23 +171,40 @@ impl AuthenticatedCmds {
         // No Content-Type as this request is a GET
         content_headers.insert(CONTENT_LENGTH, HeaderValue::from_static("0"));
         content_headers.insert(ACCEPT, HeaderValue::from_static(EVENT_STREAM_CONTENT_TYPE));
+
         let authorization_header_value = HeaderValue::from_str(
             &generate_authorization_header_value(&self.device.device_id, &self.device.signing_key),
         )
         .expect("always valid");
         content_headers.insert(AUTHORIZATION, authorization_header_value);
 
+        if let Some(last_event_id) = last_event_id {
+            // Last event ID is passed as a utf8 string, hence it is possible
+            // (in theory at least) that it cannot be encoded as a header value
+            // (e.g. if it contains NULL bytes).
+            //
+            // In such unlikely case we cannot just ignore the event id and not
+            // send a Last-Event-ID header as it would silently make us miss events.
+            //
+            // Instead we default to a dummy header value (i.e. empty string, so
+            // the server will be forced to send us a `missed_events` event message
+            // (just like if we had provided a very old but valid Last-Event-ID).
+            let value =
+                HeaderValue::from_str(last_event_id).unwrap_or(HeaderValue::from_static(""));
+            content_headers.insert("Last-Event-ID", value);
+        }
+
         self.client.get(url).headers(content_headers)
     }
 
     pub async fn start_sse<T>(
         &self,
-        last_event_id: Option<&SSEEventID>,
+        last_event_id: Option<String>,
     ) -> Result<SSEStream<T>, SSEConnectionError>
     where
         T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
     {
-        let request_builder = self.sse_request_builder::<T>();
+        let request_builder = self.sse_request_builder::<T>(last_event_id.as_deref());
 
         #[cfg(feature = "test-with-testbed")]
         let response = self
@@ -219,10 +236,9 @@ impl AuthenticatedCmds {
             return Err(SSEConnectionError::InvalidContentType(content_type.clone()));
         }
 
-        // log::trace!("Will listen for SSE event at {}", response.url());
         let mut sse_stream = response.bytes_stream().eventsource();
         if let Some(last_event_id) = last_event_id {
-            sse_stream.set_last_event_id(last_event_id.to_str());
+            sse_stream.set_last_event_id(last_event_id);
         }
         let event_source = Box::pin(sse_stream);
 

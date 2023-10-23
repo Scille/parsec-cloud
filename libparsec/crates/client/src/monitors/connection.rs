@@ -3,7 +3,7 @@
 use std::{collections::HashMap, ops::ControlFlow, sync::Arc};
 
 use libparsec_client_connection::{
-    AuthenticatedCmds, ConnectionError, RateLimiter, SSEEventID, SSEResponseOrMissedEvents,
+    AuthenticatedCmds, ConnectionError, RateLimiter, SSEResponseOrMissedEvents,
 };
 use libparsec_platform_async::{pretend_future_is_send_on_web, stream::StreamExt};
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
@@ -179,7 +179,7 @@ enum ConnectionState {
 
 async fn task_future_factory(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) {
     let mut state = ConnectionState::Offline;
-    let mut last_event_id: Option<SSEEventID> = None;
+    let mut last_event_id = None;
     let mut backoff = RateLimiter::new();
 
     // As last monitor to start, we send this event to wake up all the other monitors
@@ -188,7 +188,7 @@ async fn task_future_factory(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) 
     loop {
         backoff.wait().await;
 
-        let mut stream = match cmds.start_sse::<Req>(last_event_id.as_ref()).await {
+        let mut stream = match cmds.start_sse::<Req>(last_event_id.clone()).await {
             Ok(stream) => stream,
             Err(err) => {
                 if handle_sse_error(&mut state, &event_bus, err.into()).is_break() {
@@ -206,8 +206,8 @@ async fn task_future_factory(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) 
                     if let Some(retry) = event.retry {
                         backoff.set_desired_duration(retry)
                     }
-                    if Some(&event.id) != last_event_id.as_ref() {
-                        last_event_id.replace(event.id);
+                    if let Some(event_id) = event.id {
+                        last_event_id.replace(event_id);
                     }
                     match event.message {
                         SSEResponseOrMissedEvents::MissedEvents => {
@@ -231,6 +231,8 @@ async fn task_future_factory(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) 
                                 }
                             };
                         }
+
+                        SSEResponseOrMissedEvents::Empty => (),
                     }
                 }
                 Err(err) => {
