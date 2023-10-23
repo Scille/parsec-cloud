@@ -12,8 +12,6 @@ from parsec._parsec import (
     DateTime,
     EnrollmentID,
     OrganizationID,
-    UserID,
-    UserProfile,
 )
 from parsec.backend.pki import (
     BasePkiEnrollmentComponent,
@@ -344,19 +342,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                             device_id=row["submitter_accepted_device"],
                         )
                     )
-                    user = User(
-                        user_id=UserID(row["user_id"]),
-                        human_handle=None,
-                        initial_profile=UserProfile.from_str(row["profile"]),
-                        user_certificate=row["user_certificate"],
-                        redacted_user_certificate=row["redacted_user_certificate"],
-                        user_certifier=None,
-                        created_on=row["created_on"],
-                        revoked_on=row["revoked_on"],
-                        revoked_user_certificate=row["revoked_user_certificate"],
-                        revoked_user_certifier=None,
-                    )
-                    if not user.is_revoked():
+                    if row["revoked_on"] is None:
                         raise PkiEnrollmentAlreadyEnrolledError(submitted_on)
                 else:
                     assert False
