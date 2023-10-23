@@ -10,3 +10,4 @@ mod add_user_update_certificate;
 mod poll;
 mod store;
 mod utils;
+mod validate_manifest;
