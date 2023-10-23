@@ -307,7 +307,7 @@ class MemoryUserComponent(BaseUserComponent):
         users = [
             *sorted(
                 [res for res in users if res.human_handle is not None],
-                key=lambda r: r.human_handle.label.lower(),  # type: ignore
+                key=lambda r: r.human_handle.label.lower(),
             ),
             *[res for res in users if res.human_handle is None],
         ]
