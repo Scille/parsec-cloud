@@ -54,6 +54,18 @@ LIMIT 1
 """
 )
 
+_q_get_human_handle_from_user_id = Q(
+    f"""
+SELECT
+    human.email,
+    human.label
+FROM human LEFT JOIN user ON human._id = user.human
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+    AND user_.user_id = $user_id
+LIMIT 1
+"""
+)
 
 _q_retrieve_compatible_device_invitation = Q(
     f"""
@@ -474,6 +486,18 @@ async def _do_new_user_invitation(
     return token
 
 
+async def _human_handle_from_user_id(
+    conn: triopg._triopg.TrioConnectionProxy, organization_id: OrganizationID, user_id: UserID
+) -> HumanHandle:
+    row = await conn.fetchrow(
+        _q_get_human_handle_from_user_id(organization_id=organization_id, user_id=user_id)
+    )
+    if row:
+        return HumanHandle(email=row["email"], label=row["label"])
+    else:
+        return HumanHandle.new_redacted(user_id)
+
+
 class PGInviteComponent(BaseInviteComponent):
     def __init__(self, dbh: PGHandler, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -504,9 +528,14 @@ class PGInviteComponent(BaseInviteComponent):
                 claimer_email=claimer_email,
                 created_on=created_on,
             )
+
+            greeter_human_handle = await _human_handle_from_user_id(
+                conn, organization_id=organization_id, user_id=greeter_user_id
+            )
+
         return UserInvitation(
             greeter_user_id=greeter_user_id,
-            greeter_human_handle=None,
+            greeter_human_handle=greeter_human_handle,
             claimer_email=claimer_email,
             token=token,
             created_on=created_on,
@@ -530,9 +559,14 @@ class PGInviteComponent(BaseInviteComponent):
                 claimer_email=None,
                 created_on=created_on,
             )
+
+            greeter_human_handle = await _human_handle_from_user_id(
+                conn, organization_id=organization_id, user_id=greeter_user_id
+            )
+
         return DeviceInvitation(
             greeter_user_id=greeter_user_id,
-            greeter_human_handle=None,
+            greeter_human_handle=greeter_human_handle,
             token=token,
             created_on=created_on,
         )
@@ -559,9 +593,9 @@ class PGInviteComponent(BaseInviteComponent):
         invitations_with_claimer_online = self._claimers_ready[organization_id]
         invitations = []
         for (
-            token_uuid,
+            token_str,
             type,
-            greeter,
+            greeter_user_id_str,
             greeter_human_handle_email,
             greeter_human_handle_label,
             claimer_email,
@@ -569,12 +603,14 @@ class PGInviteComponent(BaseInviteComponent):
             deleted_on,
             deleted_reason,
         ) in rows:
-            token = InvitationToken.from_hex(token_uuid)
-            greeter_human_handle = None
+            greeter_user_id = UserID(greeter_user_id_str)
+            token = InvitationToken.from_hex(token_str)
             if greeter_human_handle_email:
                 greeter_human_handle = HumanHandle(
                     email=greeter_human_handle_email, label=greeter_human_handle_label
                 )
+            else:
+                greeter_human_handle = HumanHandle.new_redacted(greeter_user_id)
 
             if deleted_on:
                 status = InvitationStatus.DELETED
@@ -586,7 +622,7 @@ class PGInviteComponent(BaseInviteComponent):
             invitation: Invitation
             if type == InvitationType.USER.str:
                 invitation = UserInvitation(
-                    greeter_user_id=UserID(greeter),
+                    greeter_user_id=greeter_user_id,
                     greeter_human_handle=greeter_human_handle,
                     claimer_email=claimer_email,
                     token=token,
@@ -595,7 +631,7 @@ class PGInviteComponent(BaseInviteComponent):
                 )
             else:  # Device
                 invitation = DeviceInvitation(
-                    greeter_user_id=UserID(greeter),
+                    greeter_user_id=greeter_user_id,
                     greeter_human_handle=greeter_human_handle,
                     token=token,
                     created_on=created_on,
@@ -614,7 +650,7 @@ class PGInviteComponent(BaseInviteComponent):
 
         (
             type,
-            greeter,
+            greeter_user_id_str,
             greeter_human_handle_email,
             greeter_human_handle_label,
             claimer_email,
@@ -622,19 +658,21 @@ class PGInviteComponent(BaseInviteComponent):
             deleted_on,
             deleted_reason,
         ) = row
+        greeter_user_id = UserID(greeter_user_id_str)
 
         if deleted_on:
             raise InvitationAlreadyDeletedError(token)
 
-        greeter_human_handle = None
         if greeter_human_handle_email:
             greeter_human_handle = HumanHandle(
                 email=greeter_human_handle_email, label=greeter_human_handle_label
             )
+        else:
+            greeter_human_handle = HumanHandle.new_redacted(greeter_user_id)
 
         if type == InvitationType.USER.str:
             return UserInvitation(
-                greeter_user_id=UserID(greeter),
+                greeter_user_id=greeter_user_id,
                 greeter_human_handle=greeter_human_handle,
                 claimer_email=claimer_email,
                 token=token,
@@ -643,7 +681,7 @@ class PGInviteComponent(BaseInviteComponent):
             )
         else:  # Device
             return DeviceInvitation(
-                greeter_user_id=UserID(greeter),
+                greeter_user_id=greeter_user_id,
                 greeter_human_handle=greeter_human_handle,
                 token=token,
                 created_on=created_on,

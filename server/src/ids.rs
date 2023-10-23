@@ -276,6 +276,11 @@ impl DeviceLabel {
         }
     }
 
+    #[staticmethod]
+    fn new_redacted(device_name: DeviceName) -> Self {
+        Self(libparsec_types::DeviceLabel::new_redacted(&device_name.0))
+    }
+
     #[getter]
     fn str(&self) -> PyResult<String> {
         Ok(self.0.to_string())
@@ -350,6 +355,11 @@ impl HumanHandle {
             Ok(human_handle) => Ok(Self(human_handle)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
+    }
+
+    #[staticmethod]
+    fn new_redacted(user_id: UserID) -> Self {
+        Self(libparsec_types::HumanHandle::new_redacted(&user_id.0))
     }
 
     #[getter]

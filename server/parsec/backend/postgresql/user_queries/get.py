@@ -223,9 +223,10 @@ async def _get_user(
     if not row:
         raise UserNotFoundError(user_id)
 
-    human_handle = None
     if row["human_email"]:
         human_handle = HumanHandle(email=row["human_email"], label=row["human_label"])
+    else:
+        human_handle = HumanHandle.new_redacted(user_id)
 
     return User(
         user_id=user_id,
@@ -252,9 +253,14 @@ async def _get_device(
     if not row:
         raise UserNotFoundError(device_id)
 
+    if row["device_label"]:
+        device_label = DeviceLabel(row["device_label"])
+    else:
+        device_label = DeviceLabel.new_redacted(device_id.device_name)
+
     return Device(
         device_id=device_id,
-        device_label=DeviceLabel(row["device_label"]),
+        device_label=device_label,
         device_certificate=row["device_certificate"],
         redacted_device_certificate=row["redacted_device_certificate"],
         device_certifier=DeviceID(row["device_certifier"]),
@@ -303,7 +309,9 @@ async def _get_user_devices(
     return tuple(
         Device(
             device_id=DeviceID(row["device_id"]),
-            device_label=DeviceLabel(row["device_label"]) if row["device_label"] else None,
+            device_label=DeviceLabel(row["device_label"])
+            if row["device_label"]
+            else DeviceLabel.new_redacted(row["device_id"]),
             device_certificate=row["device_certificate"],
             redacted_device_certificate=row["redacted_device_certificate"],
             device_certifier=DeviceID(row["device_certifier"]) if row["device_certifier"] else None,
@@ -388,13 +396,16 @@ async def query_get_user_with_device(
     if not u_row or not d_row:
         raise UserNotFoundError(device_id)
 
-    human_handle = None
     if u_row["human_email"]:
         human_handle = HumanHandle(email=u_row["human_email"], label=u_row["human_label"])
+    else:
+        human_handle = HumanHandle.new_redacted(device_id.user_id)
 
     device = Device(
         device_id=device_id,
-        device_label=DeviceLabel(d_row["device_label"]) if d_row["device_label"] else None,
+        device_label=DeviceLabel(d_row["device_label"])
+        if d_row["device_label"]
+        else DeviceLabel.new_redacted(device_id.device_name),
         device_certificate=d_row["device_certificate"],
         redacted_device_certificate=d_row["redacted_device_certificate"],
         device_certifier=DeviceID(d_row["device_certifier"]) if d_row["device_certifier"] else None,

@@ -79,6 +79,9 @@ CREATE TABLE user_ (
     revoked_user_certificate BYTEA,
     -- NULL if certifier is the Root Verify Key
     revoked_user_certifier INTEGER,
+    -- `human` field has been introduced in Parsec v1.14, hence it is basically always here.
+    -- If it's not the case, we are in an exotic case (very old certificate) and use the redacted
+    -- system to obtain a device label (i.e. label is user_id, email is `<user_id>@redacted.invalid`).
     human INTEGER REFERENCES human (_id),
     redacted_user_certificate BYTEA NOT NULL,
     profile user_profile NOT NULL,
@@ -97,6 +100,9 @@ CREATE TABLE device (
     device_certifier INTEGER REFERENCES device (_id),
     created_on TIMESTAMPTZ NOT NULL,
     redacted_device_certificate BYTEA NOT NULL,
+    -- `device_label` field has been introduced in Parsec v1.14, hence it is basically always here.
+    -- If it's not the case, we are in an exotic case (very old certificate) and use the
+    -- redacted system to obtain a device label (i.e. device name is used).
     device_label VARCHAR(254),
 
     UNIQUE(organization, device_id),
