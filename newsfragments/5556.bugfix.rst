@@ -1,1 +1,0 @@
-Fix a regression causing the offline availability feature to be unavailable for workspaces other than the first one in the list.

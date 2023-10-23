@@ -5,6 +5,19 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.16.0-rc.8 (2023-10-23)
+--------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix a regression causing the offline availability feature to be unavailable
+  for workspaces other than the first one in the list.  (`#5556
+  <https://github.com/Scille/parsec-cloud/issues/5556>`__)
+* Fix confusing numbering of versions in the file history display.  (`#5561
+  <https://github.com/Scille/parsec-cloud/issues/5561>`__)
+
+
 Parsec v2.16.0-rc.7 (2023-10-18)
 --------------------------------
 
