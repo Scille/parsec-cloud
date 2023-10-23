@@ -1580,6 +1580,7 @@ dependencies = [
  "reqwest",
  "reqwest-eventsource",
  "thiserror",
+ "tokio",
 ]
 
 [[package]]

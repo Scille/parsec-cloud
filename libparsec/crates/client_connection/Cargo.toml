@@ -51,3 +51,7 @@ reqwest = { workspace = true, features = ["native-tls"] }
 libparsec_tests_lite = { workspace = true }
 # Note `libparsec_tests_fixtures` enables our `test-with-testbed` feature
 libparsec_tests_fixtures = { workspace = true, features = ["test-with-client-connection-testbed"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
+# Needed by proxy server used for testing SSE
+tokio = { workspace = true, features = ["net"] }

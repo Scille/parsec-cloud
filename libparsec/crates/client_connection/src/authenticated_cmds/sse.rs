@@ -1,10 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{fmt::Debug, marker::PhantomData, str::FromStr, task::Poll, time::Duration};
+use std::{fmt::Debug, marker::PhantomData, task::Poll, time::Duration};
 
 use data_encoding::BASE64;
 use eventsource_stream::{Event, EventStreamError};
-use reqwest::header::HeaderValue;
 
 use libparsec_platform_async::{stream::Stream, BoxStream};
 use libparsec_protocol::API_LATEST_MAJOR_VERSION;
@@ -41,26 +40,9 @@ where
     T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
     T::Response: Debug + PartialEq,
 {
-    pub id: SSEEventID,
+    pub id: Option<String>,
     pub retry: Option<Duration>,
     pub message: SSEResponseOrMissedEvents<T>,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct SSEEventID(HeaderValue);
-
-impl SSEEventID {
-    pub fn to_str(&self) -> &str {
-        self.0.to_str().expect("SSEEventID first originated from a String so converting it back should not cause problem")
-    }
-}
-
-impl FromStr for SSEEventID {
-    type Err = reqwest::header::InvalidHeaderValue;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        reqwest::header::HeaderValue::from_str(s).map(Self)
-    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -70,6 +52,7 @@ where
     T::Response: Debug + PartialEq,
 {
     Response(T::Response),
+    Empty,
     MissedEvents,
 }
 
@@ -106,24 +89,28 @@ where
 {
     println!("event: {:?}", event);
     let message = match event.event.as_ref() {
-        "missed_events" => Ok(SSEResponseOrMissedEvents::MissedEvents),
-        "message" => BASE64
-            .decode(event.data.as_bytes())
-            .map_err(|_| ConnectionError::BadContent)
-            .and_then(|raw| {
-                T::api_load_response(raw.as_ref()).map_err(|_| ConnectionError::BadContent)
-            })
-            .map(SSEResponseOrMissedEvents::Response),
-
-        _ => return std::task::Poll::Pending,
+        "missed_events" => SSEResponseOrMissedEvents::MissedEvents,
+        "message" if event.data.is_empty() => SSEResponseOrMissedEvents::Empty,
+        "message" => {
+            let raw = BASE64
+                .decode(event.data.as_bytes())
+                .map_err(|_| ConnectionError::BadContent)?;
+            let cooked =
+                T::api_load_response(raw.as_ref()).map_err(|_| ConnectionError::BadContent)?;
+            SSEResponseOrMissedEvents::Response(cooked)
+        }
+        // Unknown event should still be returned given it can modify `retry` param
+        _ => SSEResponseOrMissedEvents::Empty,
     };
 
-    std::task::Poll::Ready(message.and_then(|message| {
-        Ok(SSEEvent {
-            id: event.id.parse()?,
-            retry: event.retry,
-            message,
-        })
+    std::task::Poll::Ready(Ok(SSEEvent {
+        id: if event.id.is_empty() {
+            None
+        } else {
+            Some(event.id)
+        },
+        retry: event.retry,
+        message,
     }))
 }
 
