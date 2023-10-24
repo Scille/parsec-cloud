@@ -20,7 +20,7 @@ export enum Answer {
   Yes = 1,
 }
 
-export async function askQuestion(title: string, subtitle?: string): Promise<Answer> {
+export async function askQuestion(title: string, subtitle?: string, redisplayMainModalOnYes = true): Promise<Answer> {
   const top = await modalController.getTop();
   if (top) {
     top.classList.add('overlapped-modal');
@@ -31,7 +31,7 @@ export async function askQuestion(title: string, subtitle?: string): Promise<Ans
     canDismiss: true,
     backdropDismiss: false,
     // Different if a modal is already opened
-    cssClass: top ? 'question-modal-ontop' : 'question-modal',
+    cssClass: 'question-modal',
     componentProps: {
       title: title,
       subtitle: subtitle,
@@ -41,10 +41,20 @@ export async function askQuestion(title: string, subtitle?: string): Promise<Ans
   const result = await modal.onWillDismiss();
   await modal.dismiss();
 
+  const answer = result.role === MsModalResult.Confirm ? Answer.Yes : Answer.No;
+
   if (top) {
-    top.classList.remove('overlapped-modal');
+    if (answer === Answer.No) {
+      top.classList.remove('overlapped-modal');
+    }
+    // In most cases, we use askQuestion to dismiss a main modal process,
+    // If we don't keep the main modal hidden on Yes, there is a disgraceful blink before the dismiss.
+    // It's not really pretty but worst case is you forget to set the argument and the main modal blinks, instead of causing potentiel bugs.
+    if (answer === Answer.Yes && redisplayMainModalOnYes) {
+      top.classList.remove('overlapped-modal');
+    }
   }
-  return result.role === MsModalResult.Confirm ? Answer.Yes : Answer.No;
+  return answer;
 }
 </script>
 
@@ -72,14 +82,4 @@ async function onNo(): Promise<boolean> {
 </script>
 
 <style lang="scss" scoped>
-.question-modal {
-}
-
-// eslint-disable-next-line vue-scoped-css/no-unused-selector
-.question-modal-ontop {
-  // eslint-disable-next-line vue-scoped-css/no-unused-selector
-  .modal {
-    background-color: green;
-  }
-}
 </style>

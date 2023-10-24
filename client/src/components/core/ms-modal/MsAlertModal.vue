@@ -32,14 +32,4 @@ async function confirm(): Promise<boolean> {
 </script>
 
 <style lang="scss" scoped>
-.notification-modal {
-}
-
-// eslint-disable-next-line vue-scoped-css/no-unused-selector
-.notification-modal-ontop {
-  // eslint-disable-next-line vue-scoped-css/no-unused-selector
-  .modal {
-    background-color: green;
-  }
-}
 </style>

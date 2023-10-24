@@ -150,14 +150,14 @@ describe('User join an organization', () => {
     cy.get('.join-organization-modal').find('.closeBtn').should('be.visible');
     cy.get('.join-organization-modal').find('.closeBtn').click();
 
-    cy.get('.question-modal-ontop').find('.ms-modal-header__title').contains('Are you sure you want to cancel the process?');
-    cy.get('.question-modal-ontop').find('#cancel-button').click();
-    cy.get('.question-modal-ontop').should('not.exist');
+    cy.get('.question-modal').find('.ms-modal-header__title').contains('Are you sure you want to cancel the process?');
+    cy.get('.question-modal').find('#cancel-button').click();
+    cy.get('.question-modal').should('not.exist');
 
     // Can't get the modal to dismiss
     // cy.get('.join-organization-modal').find('.closeBtn').click();
-    // cy.get('.question-modal-ontop').find('#next-button').click();
-    // cy.get('.question-modal-ontop').should('not.exist');
+    // cy.get('.question-modal').find('#next-button').click();
+    // cy.get('.question-modal').should('not.exist');
     // cy.get('.join-organization-modal').should('not.exist');
   });
 });

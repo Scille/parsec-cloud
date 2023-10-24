@@ -102,11 +102,13 @@ export class NotificationCenter {
     const modal = await modalController.create({
       component: MsAlertModal,
       canDismiss: true,
-      cssClass: top ? 'notification-modal-ontop' : 'notification-modal',
+      cssClass: 'notification-modal',
       componentProps: modalConfig,
     });
     await modal.present();
     const result = await modal.onWillDismiss();
+    await modal.dismiss();
+
     if (top) {
       top.classList.remove('overlapped-modal');
     }
