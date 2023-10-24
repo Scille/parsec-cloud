@@ -111,7 +111,7 @@ crate::impl_key_debug!(PrivateKey);
 
 impl PartialEq for PrivateKey {
     fn eq(&self, other: &Self) -> bool {
-        self.as_ref() == other.as_ref()
+        self.0 == other.0
     }
 }
 
@@ -134,13 +134,11 @@ impl PrivateKey {
     }
 
     pub fn generate_shared_secret_key(&self, peer_public_key: &PublicKey) -> SecretKey {
-        SecretKey::from(x25519(*self.0.as_bytes(), *peer_public_key.0.as_bytes()))
+        SecretKey::from(x25519(self.0.to_bytes(), peer_public_key.0.to_bytes()))
     }
-}
 
-impl AsRef<[u8]> for PrivateKey {
-    fn as_ref(&self) -> &[u8] {
-        self.0.as_bytes()
+    pub fn to_bytes(&self) -> [u8; KEY_SIZE] {
+        self.0.to_bytes()
     }
 }
 
@@ -171,7 +169,7 @@ impl Serialize for PrivateKey {
     where
         S: serde::Serializer,
     {
-        serializer.serialize_bytes(self.as_ref())
+        serializer.serialize_bytes(&self.0.to_bytes())
     }
 }
 
