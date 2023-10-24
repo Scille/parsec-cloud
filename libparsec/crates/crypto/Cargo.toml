@@ -28,7 +28,6 @@ use-sodiumoxide = [
 #     "dep:getrandom_01",
 #     "dep:getrandom_02",
 #     "dep:lazy_static",
-#     "dep:rand_07",
 #     "dep:rand_08",
 #     "dep:rsa",
 #     "dep:sha1",
@@ -108,7 +107,7 @@ argon2 = { workspace = true, features = ["alloc", "password-hash", "rand"] }  # 
 blake2 = { workspace = true, features = ["std"] }  # Optional rustcrypto dep
 crypto_box = { workspace = true, features = ["std", "salsa20", "rand_core"] }  # Optional rustcrypto dep
 digest = { workspace = true, features = ["core-api"] }  # Optional rustcrypto dep
-ed25519-dalek = { workspace = true, features = ["std", "rand", "u64_backend"] }  # Optional rustcrypto dep
+ed25519-dalek = { workspace = true, features = ["std", "zeroize", "fast", "rand_core"] }  # Optional rustcrypto dep
 generic-array = { workspace = true, features = ["serde"] }  # Optional rustcrypto dep
 lazy_static = { workspace = true } # Optional rustcrypto dep
 rsa = { workspace = true, features = ["std", "pem"] }  # Optional rustcrypto dep
@@ -126,10 +125,6 @@ crypto_secretbox = { workspace = true, features = ["alloc", "getrandom", "salsa2
 # configuring wasm-unknown-unknown web support (see [features] part).
 getrandom_01 = { workspace = true }  # Optional rustcrypto dep
 getrandom_02 = { workspace = true }  # Optional rustcrypto dep
-# On top of that we need to have access to the two version of rand (0.7 and 0.8)
-# to provide the randomness configuration to the crypto functions.
-# rand 0.7 relies on rand_core~=0.5/getrandom~=0.1
-rand_07 = { workspace = true, features = ["std"] }  # Optional rustcrypto dep
 # rand 0.8 relies on rand_core~=0.6/getrandom~=0.2
 rand_08 = { workspace = true, features = ["std", "std_rng"] }  # Optional rustcrypto dep
 

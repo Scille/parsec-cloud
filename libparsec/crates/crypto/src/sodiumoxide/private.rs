@@ -39,7 +39,7 @@ impl PrivateKey {
     }
 
     pub fn generate_shared_secret_key(&self, peer_public_key: &PublicKey) -> SecretKey {
-        let scalar = Scalar(self.as_ref().try_into().unwrap());
+        let scalar = Scalar(self.to_bytes());
         let group_element = GroupElement(peer_public_key.as_ref().try_into().unwrap());
         let mult = scalarmult(&scalar, &group_element).unwrap();
         // TODO: too many copies...
@@ -47,7 +47,7 @@ impl PrivateKey {
         SecretKey::from(x)
     }
 
-    pub fn to_bytes(&self) -> [u8; SECRETKEYBYTES] {
+    pub fn to_bytes(&self) -> [u8; Self::SIZE] {
         self.0 .0
     }
 }
@@ -64,7 +64,7 @@ impl Serialize for PrivateKey {
     where
         S: serde::Serializer,
     {
-        serializer.serialize_bytes(self.as_ref())
+        serializer.serialize_bytes(&self.to_bytes())
     }
 }
 

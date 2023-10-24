@@ -42,6 +42,12 @@ impl SigningKey {
 
         self.0.sign(data).to_bytes()
     }
+
+    pub fn to_bytes(&self) -> [u8; Self::SIZE] {
+        // SecretKey is composed of Seed then PublicKey, we export only seed here
+        <[u8; Self::SIZE]>::try_from(&self.0 .0[..Self::SIZE])
+            .expect("The internal array is > Self::SIZE")
+    }
 }
 
 impl TryFrom<&[u8]> for SigningKey {
@@ -61,14 +67,6 @@ impl From<[u8; Self::SIZE]> for SigningKey {
     }
 }
 
-impl AsRef<[u8]> for SigningKey {
-    #[inline]
-    fn as_ref(&self) -> &[u8] {
-        // SecretKey is composed of Seed then PublicKey, we export only seed here
-        &self.0 .0[..Self::SIZE]
-    }
-}
-
 impl TryFrom<&Bytes> for SigningKey {
     type Error = CryptoError;
     fn try_from(data: &Bytes) -> Result<Self, Self::Error> {
@@ -81,7 +79,7 @@ impl Serialize for SigningKey {
     where
         S: serde::Serializer,
     {
-        serializer.serialize_bytes(self.as_ref())
+        serializer.serialize_bytes(&self.to_bytes())
     }
 }
 
