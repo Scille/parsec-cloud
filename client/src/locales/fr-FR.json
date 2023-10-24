@@ -343,9 +343,12 @@
             "folderLabel": "Nom du dossier",
             "folderPlaceholder": "Mon dossier"
         },
-        "deleteOneFileQuestion": "Êtes-vous sûr(e) de vouloir supprimer le fichier `{name}` ?",
-        "deleteOneFolderQuestion": "Êtes-vous sûr(e) de vouloir supprimer le dossier `{name}` ?",
-        "deleteMultipleQuestion": "Êtes-vous sûr(e) de vouloir supprimer ces {count} éléments ?",
+        "deleteOneFileQuestionTitle": "Suppression d'un fichier",
+        "deleteOneFileQuestionSubtitle": "Êtes-vous sûr(e) de vouloir supprimer le fichier `{name}` ?",
+        "deleteOneFolderQuestionTitle": "Suppression d'un dossier",
+        "deleteOneFolderQuestionSubtitle": "Êtes-vous sûr(e) de vouloir supprimer le dossier `{name}` ?",
+        "deleteMultipleQuestionTitle": "Suppression de plusieurs éléments",
+        "deleteMultipleQuestionSubtitle": "Êtes-vous sûr(e) de vouloir supprimer ces {count} éléments ?",
         "linkNotCopiedToClipboard":"Impossible de copier le lien dans le presse-papier.",
         "linkCopiedToClipboard":"Le lien a été copié dans le presse-papier.",
         "getLinkError":"Impossible de récupérer un lien vers l'espace de travail (raison: {reason})."

@@ -119,7 +119,9 @@ describe('Check folders page', () => {
   it('Tests delete one file', () => {
     cy.get('.file-list-item').first().find('.options-button').click();
     cy.get('#file-context-menu').find('ion-item').eq(4).contains('Delete').click();
-    cy.get('.question-modal').find('ion-title').contains('Are you sure you want to delete the file `File1.txt`?');
+    cy.get('.question-modal').find('.ms-modal-header__title').contains('Delete one file');
+    cy.get('.question-modal').find('.ms-alert-modal-header__text').contains('Are you sure you want to delete the file `File1.txt`?');
+
     cy.get('.question-modal').find('#next-button').click();
     cy.get('.question-modal').should('not.exist');
     cy.get('@consoleLog').should('have.been.called.with', 'File File1.txt deleted');
@@ -128,7 +130,8 @@ describe('Check folders page', () => {
   it('Tests delete multiple files', () => {
     cy.get('.folder-list-header').find('ion-checkbox').click();
     cy.get('#button-delete').contains('Delete').click();
-    cy.get('.question-modal').find('ion-title').contains('Are you sure you want to delete these 3 elements?');
+    cy.get('.question-modal').find('.ms-modal-header__title').contains('Delete multiple elements');
+    cy.get('.question-modal').find('.ms-alert-modal-header__text').contains('Are you sure you want to delete these 3 elements?');
     cy.get('.question-modal').find('#next-button').contains('Yes').click();
     cy.get('.question-modal').should('not.exist');
 
