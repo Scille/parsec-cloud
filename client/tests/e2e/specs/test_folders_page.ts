@@ -53,7 +53,7 @@ describe('Check folders page', () => {
     cy.get('@menuItems').eq(2).contains('Move to');
     cy.get('@menuItems').eq(3).contains('Make a copy');
     cy.get('@menuItems').eq(4).contains('Delete');
-    cy.get('@menuItems').eq(5).contains('Open in explorer');
+    cy.get('@menuItems').eq(5).contains('Open');
     cy.get('@menuItems').eq(6).contains('History');
     cy.get('@menuItems').eq(7).contains('Download');
     cy.get('@menuItems').eq(8).contains('Details');

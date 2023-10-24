@@ -11,6 +11,10 @@ import {
   EntryName,
   FileType,
   EntryStat,
+  EntryID,
+  WorkspaceHandle,
+  GetAbsolutePathError,
+  GetAbsolutePathErrorTag,
 } from '@/parsec/types';
 import { getParsecHandle, getWorkspaceHandle } from '@/parsec/routing';
 import { DateTime } from 'luxon';
@@ -122,5 +126,18 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
         children: ['File1.txt', 'File2.jpeg', 'Dir1'],
       }};
     }
+  }
+}
+
+export async function getAbsolutePath(_workspaceHandle: WorkspaceHandle, entry: EntryStat): Promise<Result<FsPath, GetAbsolutePathError>> {
+  // Helps for tests, will be replaced with bindings
+  if (entry.name === 'f') {
+    return {ok: true, value: './tsconfig.json'};
+  } else if (entry.name === 'd') {
+    return {ok: true, value: './src'};
+  } else if (entry.name === 'e') {
+    return {ok: false, error: {tag: GetAbsolutePathErrorTag.NotFound}};
+  } else {
+    return {ok: true, value: '/unknown'};
   }
 }

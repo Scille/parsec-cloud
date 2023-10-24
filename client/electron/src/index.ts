@@ -3,7 +3,7 @@
 import type { CapacitorElectronConfig } from '@capacitor-community/electron';
 import { getCapacitorElectronConfig, setupElectronDeepLinking } from '@capacitor-community/electron';
 import type { MenuItemConstructorOptions } from 'electron';
-import { app, MenuItem, ipcMain } from 'electron';
+import { app, MenuItem, ipcMain, shell } from 'electron';
 import electronIsDev from 'electron-is-dev';
 import unhandled from 'electron-unhandled';
 // import { autoUpdater } from 'electron-updater';
@@ -75,4 +75,11 @@ ipcMain.on('config-update', (_event, data) => {
 ipcMain.on('close-app', (_event) => {
   myCapacitorApp.forceClose = true;
   app.quit();
+});
+
+ipcMain.on('open-file', async (_event, path: string) => {
+  const result = await shell.openPath(path);
+  if (result !== '') {
+    myCapacitorApp.getMainWindow().webContents.send('open-file-failed', path, result);
+  }
 });

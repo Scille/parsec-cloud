@@ -102,6 +102,7 @@ import type {
   UserID,
   HumanHandle,
   UserProfile,
+  VlobID,
 } from '@/plugins/libparsec';
 
 import {
@@ -109,6 +110,8 @@ import {
 } from '@/plugins/libparsec';
 
 type WorkspaceHandle = number;
+type EntryID = VlobID;
+type WorkspaceName = EntryName;
 
 interface UserInfo extends ParsecUserInfo {
   isRevoked: () => boolean
@@ -134,6 +137,14 @@ enum GetWorkspaceNameErrorTag {
 
 interface GetWorkspaceNameError {
   tag: GetWorkspaceNameErrorTag.NotFound,
+}
+
+enum GetAbsolutePathErrorTag {
+  NotFound = 'NotFound',
+}
+
+interface GetAbsolutePathError {
+  tag: GetAbsolutePathErrorTag.NotFound,
 }
 
 enum LinkErrorTag {
@@ -169,8 +180,6 @@ interface WorkspaceInfo extends ParsecWorkspaceInfo {
   availableOffline: boolean,
 }
 
-export type WorkspaceName = EntryName;
-
 export {
   UserInfo,
   WorkspaceInfo,
@@ -185,4 +194,8 @@ export {
   GetWorkspaceNameErrorTag,
   UserID,
   HumanHandle,
+  EntryID,
+  WorkspaceName,
+  GetAbsolutePathError,
+  GetAbsolutePathErrorTag,
 };

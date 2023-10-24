@@ -56,13 +56,12 @@
 
         <ion-item
           button
-          v-show="isDesktop()"
-          @click="onClick(FileAction.OpenInExplorer)"
+          @click="onClick(FileAction.Open)"
           class="group-item"
         >
           <ion-icon :icon="open" />
           <ion-label class="body">
-            {{ $t('FoldersPage.fileContextMenu.actionOpenInExplorer') }}
+            {{ $t('FoldersPage.fileContextMenu.actionOpen') }}
           </ion-label>
         </ion-item>
 
@@ -129,7 +128,7 @@ export enum FileAction {
   MoveTo,
   MakeACopy,
   Delete,
-  OpenInExplorer,
+  Open,
   ShowHistory,
   Download,
   ShowDetails,

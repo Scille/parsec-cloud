@@ -12,6 +12,10 @@
         "title": "Quitter l'application",
         "subtitle": "Êtes-vous sûr(e) de vouloir quitter l'application ?"
     },
+    "openFile": {
+        "failedTitle": "Impossible d'ouvrir l'élément",
+        "failedSubtitle": "L'élément `{path}` m'a pas pu être ouvert."
+    },
     "workspaceRoles": {
         "reader": "Lecteur",
         "contributor": "Contributeur",
@@ -309,7 +313,7 @@
             "actionRename": "Renommer",
             "actionMoveTo": "Déplacer vers",
             "actionMakeACopy": "Dupliquer vers",
-            "actionOpenInExplorer": "Ouvrir dans l'explorateur",
+            "actionOpen": "Ouvrir",
             "actionHistory": "Historique de versions",
             "actionDownload": "Télécharger",
             "actionDetails": "Détails",
@@ -352,6 +356,13 @@
         "deleteOneFolderQuestionSubtitle": "Êtes-vous sûr(e) de vouloir supprimer le dossier `{name}` ?",
         "deleteMultipleQuestionTitle": "Suppression de plusieurs éléments",
         "deleteMultipleQuestionSubtitle": "Êtes-vous sûr(e) de vouloir supprimer ces {count} éléments ?",
+        "open": {
+            "fileFailedTitle": "Impossible d'ouvrir le fichier",
+            "fileFailedSubtitle": "Le fichier `{name}` n'a pas pu être ouvert.",
+            "folderFailedTitle": "Impossible d'ouvrir le dossier",
+            "folderFailedSubtitle": "Le dossier `{name}` n'a pas pu être ouvert.",
+            "unavailableOnWeb": "Pas (encore) disponible en mode web."
+        },
         "linkNotCopiedToClipboard":"Impossible de copier le lien dans le presse-papier.",
         "linkCopiedToClipboard":"Le lien a été copié dans le presse-papier.",
         "getLinkError":"Impossible de récupérer un lien vers l'espace de travail (raison: {reason})."

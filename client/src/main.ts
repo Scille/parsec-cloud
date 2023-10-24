@@ -192,7 +192,7 @@ async function setupApp(): Promise<void> {
   }
 
   if (isElectron()) {
-    window.electronAPI.receive('close-request', async (_data: any) => {
+    window.electronAPI.receive('close-request', async () => {
       const answer = await askQuestion(t('quit.title'), t('quit.subtitle'));
       if (answer === Answer.Yes) {
         window.electronAPI.closeApp();
@@ -210,6 +210,13 @@ async function setupApp(): Promise<void> {
         }));
       }
     });
+    window.electronAPI.receive('open-file-failed', async (path: string, _error: string) => {
+      notificationCenter.showToast(new Notification({
+        title: t('openFile.failedTitle'),
+        message: t('openFile.failedSubtitle', {path: path}),
+        level: NotificationLevel.Error,
+      }));
+    });
   } else {
     window.electronAPI = {
       // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -217,7 +224,9 @@ async function setupApp(): Promise<void> {
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       closeApp: (): void => {},
       // eslint-disable-next-line @typescript-eslint/no-empty-function
-      receive: (_channel: string, _f: (data: any) => Promise<void>): void => {},
+      receive: (_channel: string, _f: (...args: any[]) => Promise<void>): void => {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      openFile: (_path: string): void => {},
     };
   }
 }
@@ -235,7 +244,8 @@ declare global {
     electronAPI: {
       sendConfig: (config: Config) => void,
       closeApp: () => void,
-      receive: (channel: string, f: (data: any) => Promise<void>) => void,
+      receive: (channel: string, f: (...args: any[]) => Promise<void>) => void,
+      openFile: (path: string) => void,
     },
   }
 }

@@ -18,6 +18,9 @@ process.once('loaded', () => {
     },
     closeApp: () => {
       ipcRenderer.send('close-app');
+    },
+    openFile: (path: string) => {
+      ipcRenderer.send('open-file', path);
     }
   });
 });
