@@ -15,15 +15,19 @@ macro_rules! test_msgpack_serialization {
     ($name:ident, $cls:ident, $data:expr, $serialized:expr) => {
         #[test]
         fn $name() {
-            let data = &$data;
-            let serialized = &$serialized;
+            let raw_data = $data;
+            let expected_obj = $cls::try_from(raw_data.as_ref()).expect(concat!(
+                "Invalid raw data to create the type: ",
+                stringify!($cls)
+            ));
+            let serialized = $serialized;
 
             // bytes should be serialized in msgpack using the bin format family
             // (see. https://github.com/msgpack/msgpack/blob/master/spec.md#bin-format-family)
 
-            let sk: $cls = rmp_serde::from_slice(serialized).unwrap();
+            let sk: $cls = rmp_serde::from_slice(&serialized).unwrap();
 
-            assert_eq!(sk.as_ref(), data);
+            assert_eq!(sk, expected_obj);
 
             let re_serialized = rmp_serde::to_vec(&sk).unwrap();
             assert_eq!(re_serialized, serialized);
@@ -32,11 +36,11 @@ macro_rules! test_msgpack_serialization {
             // deserializes it fine, so we should also handle this just in case
             // (see. https://github.com/msgpack/msgpack/blob/master/spec.md#str-format-family)
 
-            assert!(data.len() < 256);
-            let mut alternative = vec![0xda, 0x00, data.len() as u8];
-            alternative.extend_from_slice(data);
+            assert!(raw_data.len() < 256);
+            let mut alternative = vec![0xda, 0x00, raw_data.len() as u8];
+            alternative.extend_from_slice(&raw_data);
             let sk: $cls = rmp_serde::from_slice(&alternative).unwrap();
-            assert_eq!(sk.as_ref(), data);
+            assert_eq!(sk, expected_obj);
         }
     };
 }

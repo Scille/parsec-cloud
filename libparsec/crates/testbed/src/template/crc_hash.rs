@@ -233,7 +233,7 @@ impl CrcHash for SigningKey {
 impl CrcHash for PrivateKey {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
         hasher.update(b"PrivateKey");
-        hasher.update(self.as_ref());
+        hasher.update(&self.to_bytes());
     }
 }
 

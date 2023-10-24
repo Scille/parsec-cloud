@@ -46,12 +46,9 @@ impl PrivateKey {
         let x: [u8; 32] = mult.as_ref().try_into().unwrap();
         SecretKey::from(x)
     }
-}
 
-impl AsRef<[u8]> for PrivateKey {
-    #[inline]
-    fn as_ref(&self) -> &[u8] {
-        &self.0 .0
+    pub fn to_bytes(&self) -> [u8; SECRETKEYBYTES] {
+        self.0 .0
     }
 }
 

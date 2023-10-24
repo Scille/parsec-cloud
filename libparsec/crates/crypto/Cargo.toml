@@ -106,7 +106,7 @@ openssl = { workspace = true, optional = true }
 
 argon2 = { workspace = true, features = ["alloc", "password-hash", "rand"] }  # Optional rustcrypto dep
 blake2 = { workspace = true, features = ["std"] }  # Optional rustcrypto dep
-crypto_box = { workspace = true, features = ["std"] }  # Optional rustcrypto dep
+crypto_box = { workspace = true, features = ["std", "salsa20", "rand_core"] }  # Optional rustcrypto dep
 digest = { workspace = true, features = ["core-api"] }  # Optional rustcrypto dep
 ed25519-dalek = { workspace = true, features = ["std", "rand", "u64_backend"] }  # Optional rustcrypto dep
 generic-array = { workspace = true, features = ["serde"] }  # Optional rustcrypto dep

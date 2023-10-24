@@ -279,8 +279,8 @@ impl PrivateKey {
         }
     }
 
-    fn encode(&self) -> &[u8] {
-        self.0.as_ref()
+    fn encode(&self) -> [u8; libparsec_types::PrivateKey::SIZE] {
+        self.0.to_bytes()
     }
 
     fn generate_shared_secret_key(&self, peer_public_key: &PublicKey) -> SecretKey {
