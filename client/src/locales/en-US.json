@@ -343,9 +343,12 @@
             "folderLabel": "Folder name",
             "folderPlaceholder": "My folder"
         },
-        "deleteOneFileQuestion": "Are you sure you want to delete the file `{name}`?",
-        "deleteOneFolderQuestion": "Are you sure you want to delete the folder `{name}`?",
-        "deleteMultipleQuestion": "Are you sure you want to delete these {count} elements?",
+        "deleteOneFileQuestionTitle": "Delete one file",
+        "deleteOneFileQuestionSubtitle": "Are you sure you want to delete the file `{name}`?",
+        "deleteOneFolderQuestionTitle": "Delete one folder?",
+        "deleteOneFolderQuestionSubtitle": "Are you sure you want to delete the folder `{name}`?",
+        "deleteMultipleQuestionTitle": "Delete multiple elements",
+        "deleteMultipleQuestionSubtitle": "Are you sure you want to delete these {count} elements?",
         "linkNotCopiedToClipboard":"Could not copy the link to the clipboard.",
         "linkCopiedToClipboard":"The link has been copied to the clipboard.",
         "getLinkError":"Could not get a link to the workspace (reason: {reason})."
