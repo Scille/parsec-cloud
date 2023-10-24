@@ -328,6 +328,7 @@ async function cancelModal(): Promise<boolean> {
   const answer = await askQuestion(
     t('JoinOrganization.cancelConfirm'),
     t('JoinOrganization.cancelConfirmSubtitle'),
+    false,
   );
 
   if (answer === Answer.Yes) {

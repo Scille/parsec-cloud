@@ -281,6 +281,7 @@ async function cancelModal(): Promise<boolean> {
   const answer = await askQuestion(
     t('ClaimDeviceModal.cancelConfirm'),
     t('ClaimDeviceModal.cancelConfirmSubtitle'),
+    false,
   );
 
   if (answer === Answer.Yes) {
