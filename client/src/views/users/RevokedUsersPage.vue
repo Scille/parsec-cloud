@@ -26,7 +26,7 @@
       </ms-action-bar>
       <!-- users -->
       <div class="users-container">
-        <div v-if="filteredUsers.length === 0">
+        <div v-if="userList.length === 0">
           {{ $t('UsersPage.revokedEmptyList') }}
         </div>
         <div v-else>
@@ -60,7 +60,7 @@
                 <ion-label class="user-list-header__label cell-title label-space" />
               </ion-list-header>
               <user-list-item
-                v-for="user in filteredUsers"
+                v-for="user in userList"
                 :key="user.id"
                 :user="user"
                 :show-checkbox="selectedUsersCount > 0 || allUsersSelected"
@@ -76,7 +76,7 @@
           >
             <ion-item
               class="users-grid-item"
-              v-for="user in filteredUsers"
+              v-for="user in userList"
               :key="user.id"
             >
               <user-card
@@ -146,7 +146,7 @@ import { DisplayState } from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import UserContextMenu from '@/views/users/UserContextMenu.vue';
 import { UserAction } from '@/views/users/UserContextMenu.vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
-import { UserInfo, listUsers as parsecListUsers } from '@/parsec';
+import { UserInfo, listRevokedUsers as parsecListRevokedUsers } from '@/parsec';
 import { NotificationCenter, NotificationKey, NotificationLevel, Notification } from '@/services/notificationCenter';
 import { useI18n } from 'vue-i18n';
 
@@ -166,13 +166,6 @@ const allUsersSelected = computed({
 const indeterminateState = computed({
   get: (): boolean => selectedUsersCount.value > 0 && selectedUsersCount.value < userList.value.length,
   set: (_val) => _val,
-});
-
-const filteredUsers = computed(() => {
-  const revokedUsers = userList.value.filter((user) => {
-    return user.isRevoked();
-  });
-  return revokedUsers;
 });
 
 const selectedUsersCount = computed(() => {
@@ -256,7 +249,7 @@ function resetSelection(): void {
 }
 
 async function refreshUserList(): Promise<void> {
-  const result = await parsecListUsers(false);
+  const result = await parsecListRevokedUsers();
   if (result.ok) {
     userList.value = result.value;
   } else {

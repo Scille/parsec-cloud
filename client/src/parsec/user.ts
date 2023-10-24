@@ -82,6 +82,15 @@ export async function listUsers(skipRevoked = true): Promise<Result<Array<UserIn
   }
 }
 
+export async function listRevokedUsers(): Promise<Result<Array<UserInfo>, ClientListUsersError>> {
+  const result = await listUsers(false);
+
+  if (result.ok) {
+    result.value = result.value.filter((user) => user.isRevoked());
+  }
+  return result;
+}
+
 export async function listUserDevices(user: UserID): Promise<Result<Array<DeviceInfo>, ClientListUserDevicesError>> {
   const handle = getParsecHandle();
 
