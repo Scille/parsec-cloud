@@ -4,7 +4,7 @@ import { createApp } from 'vue';
 
 // eslint-disable-next-line no-relative-import-paths/no-relative-import-paths
 import App from './App.vue';
-import router from '@/router';
+import router, { routerNavigateTo } from '@/router';
 
 import { IonicVue } from '@ionic/vue';
 import { createI18n, useI18n } from 'vue-i18n';
@@ -37,9 +37,10 @@ import { isPlatform } from '@ionic/vue';
 /* Theme variables */
 import '@/theme/global.scss';
 import { Platform, libparsec } from '@/plugins/libparsec';
-import { NotificationCenter } from '@/services/notificationCenter';
+import { Notification, NotificationCenter, NotificationLevel } from '@/services/notificationCenter';
 import { Answer, askQuestion } from '@/components/core/ms-modal/MsQuestionModal.vue';
-import { isElectron } from '@/parsec';
+import { isElectron, isHomeRoute } from '@/parsec';
+import { fileLinkValidator, claimLinkValidator, Validity } from '@/common/validators';
 
 async function setupApp(): Promise<void> {
 
@@ -195,6 +196,18 @@ async function setupApp(): Promise<void> {
       const answer = await askQuestion(t('quit.title'), t('quit.subtitle'));
       if (answer === Answer.Yes) {
         window.electronAPI.closeApp();
+      }
+    });
+    window.electronAPI.receive('open-link', async (link: string) => {
+      if (await fileLinkValidator(link) === Validity.Valid || await claimLinkValidator(link) === Validity.Valid) {
+        if (isHomeRoute()) {
+          routerNavigateTo('home', {}, {link: link});
+        }
+      } else {
+        await notificationCenter.showModal(new Notification({
+          message: t('link.invalid'),
+          level: NotificationLevel.Error,
+        }));
       }
     });
   } else {

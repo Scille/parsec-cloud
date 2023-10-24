@@ -276,6 +276,14 @@ export class ElectronCapacitorApp {
           this.MainWindow.webContents.openDevTools();
         }
         CapElectronEventEmitter.emit('CAPELECTRON_DeeplinkListenerInitialized', '');
+        // Send process arguments to renderer
+        if (process.argv.length > 0) {
+          const lastArg = process.argv.at(-1);
+          // We're only interested in potential Parsec links
+          if (lastArg.startsWith('parsec://')) {
+            this.MainWindow.webContents.send('open-link', lastArg);
+          }
+        }
       }, 400);
     });
   }

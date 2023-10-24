@@ -234,7 +234,7 @@ import {
   logIn,
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { useI18n } from 'vue-i18n';
-import { onMounted, ref, toRaw, computed, inject, Ref, onUpdated } from 'vue';
+import { onMounted, ref, toRaw, computed, inject, Ref, onUpdated, onUnmounted, watch } from 'vue';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import MsPasswordInput from '@/components/core/ms-input/MsPasswordInput.vue';
 import MsSearchInput from '@/components/core/ms-input/MsSearchInput.vue';
@@ -243,7 +243,7 @@ import { MsSelectChangeEvent, MsSelectOption } from '@/components/core/ms-select
 import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
 import { StoredDeviceData, StorageManager } from '@/services/storageManager';
 import { DateTime } from 'luxon';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import HomePagePopover from '@/views/home/HomePagePopover.vue';
 import SettingsModal from '@/views/settings/SettingsModal.vue';
 import { Formatters, FormattersKey, StorageManagerKey } from '@/common/injectionKeys';
@@ -256,6 +256,7 @@ import { listAvailableDevices as parsecListAvailableDevices, login as parsecLogi
 import { isLoggedIn } from '@/parsec';
 
 const router = useRouter();
+const currentRoute = useRoute();
 const { t } = useI18n();
 const deviceList: Ref<AvailableDevice[]> = ref([]);
 let selectedDevice: AvailableDevice;
@@ -268,6 +269,7 @@ const sortByAsc = ref(true);
 const { timeSince } = inject(FormattersKey)! as Formatters;
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const storageManager: StorageManager = inject(StorageManagerKey)!;
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 const isPopoverOpen = ref(false);
 
@@ -319,6 +321,12 @@ const filteredDevices = computed(() => {
 
 const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
 
+const routeUnwatch = watch(currentRoute, async (newRoute) => {
+  if (newRoute.query.link) {
+    console.log('HOME PAGE', newRoute.query.link);
+  }
+});
+
 onMounted(async (): Promise<void> => {
   await refreshDeviceList();
 });
@@ -327,6 +335,10 @@ onUpdated(async () => {
   if (!isLoggedIn()) {
     await refreshDeviceList();
   }
+});
+
+onUnmounted(() => {
+  routeUnwatch();
 });
 
 async function refreshDeviceList(): Promise<void> {

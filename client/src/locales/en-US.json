@@ -19,6 +19,9 @@
         "owner": "Owner",
         "none": "Not shared"
     },
+    "link": {
+        "invalid": "The provided link is invalid."
+    },
     "HomePage": {
         "topbar": {
             "settings": "Settings",
