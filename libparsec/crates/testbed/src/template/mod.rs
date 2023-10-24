@@ -32,23 +32,7 @@ impl std::fmt::Debug for TestbedTemplate {
 
 impl TestbedTemplate {
     pub fn get_stuff<T>(&self, key: &'static str) -> &'static T {
-        let (_, value_any) = self
-            .stuff
-            .iter()
-            .find(|(k, _)| *k == key)
-            .unwrap_or_else(|| {
-                let available_stuff: Vec<_> = self.stuff.iter().map(|(k, _)| k).collect();
-                panic!(
-                    "Key `{}` is not among the stuff (available keys: {:?})",
-                    key, available_stuff
-                );
-            });
-        value_any.downcast_ref::<T>().unwrap_or_else(|| {
-            panic!(
-                "Key `{}` is among the stuff, but you got it type wrong :'(",
-                key
-            );
-        })
+        build::get_stuff(&self.stuff, key)
     }
 
     pub fn from_builder(id: &'static str) -> TestbedTemplateBuilder {

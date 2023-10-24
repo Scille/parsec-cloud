@@ -187,6 +187,25 @@ pub struct TestbedTemplateBuilder {
     pub(super) counters: TestbedTemplateBuilderCounters,
 }
 
+pub(super) fn get_stuff<T>(
+    stuff: &[(&'static str, &'static (dyn std::any::Any + Send + Sync))],
+    key: &'static str,
+) -> &'static T {
+    let (_, value_any) = stuff.iter().find(|(k, _)| *k == key).unwrap_or_else(|| {
+        let available_stuff: Vec<_> = stuff.iter().map(|(k, _)| k).collect();
+        panic!(
+            "Key `{}` is not among the stuff (available keys: {:?})",
+            key, available_stuff
+        );
+    });
+    value_any.downcast_ref::<T>().unwrap_or_else(|| {
+        panic!(
+            "Key `{}` is among the stuff, but you got it type wrong :'(",
+            key
+        );
+    })
+}
+
 impl TestbedTemplateBuilder {
     pub(crate) fn new(id: &'static str) -> Self {
         Self {
@@ -223,6 +242,10 @@ impl TestbedTemplateBuilder {
         // On the other hand it allows to provide the stuff as `&'static Foo` which
         // is convenient.
         self.stuff.push((key, Box::leak(boxed)));
+    }
+
+    pub fn get_stuff<T>(&self, key: &'static str) -> &'static T {
+        get_stuff(&self.stuff, key)
     }
 
     /// Remove events you're not happy with (use it in conjuction with `TestbedEnv::customize`)
