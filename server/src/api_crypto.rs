@@ -105,8 +105,8 @@ impl SigningKey {
         PyBytes::new(py, self.0.sign_only_signature(data).as_slice())
     }
 
-    fn encode<'py>(&self, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, self.0.as_ref())
+    fn encode(&self) -> [u8; libparsec_types::SigningKey::SIZE] {
+        self.0.to_bytes()
     }
 }
 

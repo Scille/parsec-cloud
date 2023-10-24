@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use ed25519_dalek::{Keypair, Signature, Signer, Verifier};
+use ed25519_dalek::{Signature, Signer, Verifier};
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
 
@@ -10,25 +10,15 @@ use crate::CryptoError;
  * SigningKey
  */
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(try_from = "&Bytes")]
-pub struct SigningKey(Keypair);
+pub struct SigningKey(ed25519_dalek::SigningKey);
 
 crate::impl_key_debug!(SigningKey);
 
-impl Clone for SigningKey {
-    fn clone(&self) -> Self {
-        Self(
-            Keypair::from_bytes(&self.0.to_bytes()).expect(
-                "The input bytes come from the cloned signing key, which is a valid key size",
-            ),
-        )
-    }
-}
-
 impl PartialEq for SigningKey {
     fn eq(&self, other: &Self) -> bool {
-        self.as_ref() == other.as_ref()
+        self.0.to_bytes() == other.0.to_bytes()
     }
 }
 
@@ -42,11 +32,13 @@ impl SigningKey {
     pub const SIGNATURE_SIZE: usize = ed25519_dalek::SIGNATURE_LENGTH;
 
     pub fn verify_key(&self) -> VerifyKey {
-        VerifyKey(self.0.public)
+        VerifyKey(self.0.verifying_key())
     }
 
     pub fn generate() -> Self {
-        Self(Keypair::generate(&mut rand_07::thread_rng()))
+        Self(ed25519_dalek::SigningKey::generate(
+            &mut rand_08::thread_rng(),
+        ))
     }
 
     /// Sign the message and prefix it with the signature.
@@ -61,31 +53,25 @@ impl SigningKey {
     pub fn sign_only_signature(&self, data: &[u8]) -> [u8; Self::SIGNATURE_SIZE] {
         self.0.sign(data).to_bytes()
     }
-}
 
-impl AsRef<[u8]> for SigningKey {
-    #[inline]
-    fn as_ref(&self) -> &[u8] {
-        self.0.secret.as_bytes()
+    pub fn to_bytes(&self) -> [u8; Self::SIZE] {
+        self.0.to_bytes()
     }
 }
 
 impl TryFrom<&[u8]> for SigningKey {
     type Error = CryptoError;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
-        let sk = ed25519_dalek::SecretKey::from_bytes(data).map_err(|_| Self::Error::DataSize)?;
-        let pk = ed25519_dalek::PublicKey::from(&sk);
-        Ok(Self(Keypair {
-            secret: sk,
-            public: pk,
-        }))
+        ed25519_dalek::SigningKey::try_from(data)
+            .map(Self)
+            .map_err(|_| Self::Error::DataSize)
     }
 }
 
 impl From<[u8; Self::SIZE]> for SigningKey {
     fn from(key: [u8; Self::SIZE]) -> Self {
         // TODO: zero copy
-        Self::try_from(key.as_ref()).expect("Cannot fail because the provided secret key is the expected size of `ed25519_dalek::SecretKey::from_bytes`")
+        Self(ed25519_dalek::SigningKey::from(key))
     }
 }
 
@@ -101,7 +87,7 @@ impl Serialize for SigningKey {
     where
         S: serde::Serializer,
     {
-        serializer.serialize_bytes(self.as_ref())
+        serializer.serialize_bytes(&self.to_bytes())
     }
 }
 
@@ -111,7 +97,7 @@ impl Serialize for SigningKey {
 
 #[derive(Clone, PartialEq, Eq, Deserialize)]
 #[serde(try_from = "&Bytes")]
-pub struct VerifyKey(ed25519_dalek::PublicKey);
+pub struct VerifyKey(ed25519_dalek::VerifyingKey);
 
 crate::impl_key_debug!(VerifyKey);
 
@@ -156,7 +142,7 @@ impl VerifyKey {
         raw_signature: &[u8; SigningKey::SIGNATURE_SIZE],
         message: &[u8],
     ) -> Result<(), CryptoError> {
-        let signature = Signature::from_bytes(raw_signature).map_err(|_| CryptoError::Signature)?;
+        let signature = Signature::from_bytes(raw_signature);
         self.0
             .verify(message, &signature)
             .map_err(|_| CryptoError::SignatureVerification)?;
@@ -174,7 +160,7 @@ impl AsRef<[u8]> for VerifyKey {
 impl TryFrom<&[u8]> for VerifyKey {
     type Error = CryptoError;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
-        ed25519_dalek::PublicKey::from_bytes(data)
+        ed25519_dalek::VerifyingKey::try_from(data)
             .map(Self)
             .map_err(|_| Self::Error::DataSize)
     }

@@ -226,7 +226,7 @@ impl CrcHash for HashDigest {
 impl CrcHash for SigningKey {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
         hasher.update(b"SigningKey");
-        hasher.update(self.as_ref());
+        hasher.update(&self.to_bytes());
     }
 }
 

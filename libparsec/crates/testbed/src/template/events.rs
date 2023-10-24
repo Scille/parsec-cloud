@@ -914,7 +914,7 @@ impl CrcHash for TestbedEventNewDevice {
         self.author.crc_hash(state);
         self.device_id.crc_hash(state);
         self.device_label.crc_hash(state);
-        self.signing_key.as_ref().crc_hash(state);
+        self.signing_key.crc_hash(state);
         self.local_symkey.crc_hash(state);
         self.local_password.crc_hash(state);
         self.certificate_index.crc_hash(state);
