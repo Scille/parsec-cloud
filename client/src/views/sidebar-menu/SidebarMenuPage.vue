@@ -34,8 +34,12 @@
                     </ion-card-title>
                   </div>
                 </div>
-                <!-- new icon to provide -->
-                <div class="organization-card__icon">
+                <!-- Keep it hidden for now since we have no way of switching org -->
+                <div
+                  class="organization-card__icon"
+                  v-show="false"
+                >
+                  <!-- new icon to provide -->
                   <svg
                     width="32"
                     height="32"
