@@ -36,6 +36,11 @@ export function hasHistory(): boolean {
   return previousRoute.startsWith(`/${handle}`);
 }
 
+export function isHomeRoute(): boolean {
+  const currentRoute = router.currentRoute.value;
+  return currentRoute.name === 'home';
+}
+
 export function isDocumentRoute(): boolean {
   const currentRoute = router.currentRoute.value;
 

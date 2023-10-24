@@ -108,6 +108,18 @@ export const claimLinkValidator: IValidator = async function(value: string) {
   return Validity.Invalid;
 };
 
+export const fileLinkValidator: IValidator = async function(value: string) {
+  value = value.trim();
+  if (value.length === 0) {
+    return Validity.Intermediate;
+  }
+  const result = await parseBackendAddr(value);
+  if (result.ok) {
+    return result.value.tag === ParsedBackendAddrTag.OrganizationFileLink ? Validity.Valid : Validity.Invalid;
+  }
+  return Validity.Invalid;
+};
+
 export const claimUserLinkValidator: IValidator = async function(value: string) {
   value = value.trim();
   if (value.length === 0) {

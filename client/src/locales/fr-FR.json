@@ -19,6 +19,9 @@
         "owner": "Propriétaire",
         "none": "Non partagé"
     },
+    "link": {
+        "invalid": "Le lien fourni est invalide."
+    },
     "HomePage": {
         "topbar": {
             "settings": "Paramètres",
