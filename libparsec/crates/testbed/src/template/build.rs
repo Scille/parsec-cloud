@@ -207,7 +207,7 @@ impl TestbedTemplateBuilder {
             id,
             allow_server_side_events,
             events: template.events.clone(),
-            stuff: vec![],
+            stuff: template.stuff.clone(),
             counters: template.build_counters.clone(),
         }
     }
