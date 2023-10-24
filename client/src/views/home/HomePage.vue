@@ -332,6 +332,10 @@ onUpdated(async () => {
 async function refreshDeviceList(): Promise<void> {
   deviceList.value = await parsecListAvailableDevices();
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
+  if (deviceList.value.length === 1) {
+    showOrganizationList.value = false;
+    selectedDevice = deviceList.value[0];
+  }
 }
 
 function onMsSelectChange(event: MsSelectChangeEvent): void {
