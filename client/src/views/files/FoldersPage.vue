@@ -220,7 +220,7 @@ import { entryNameValidator } from '@/common/validators';
 import { Answer, askQuestion } from '@/components/core/ms-modal/MsQuestionModal.vue';
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
 import { writeTextToClipboard } from '@/common/clipboard';
-import { getPathLink, WorkspaceHandle, WorkspaceID } from '@/parsec';
+import { getPathLink, isDesktop, isWeb, WorkspaceHandle, WorkspaceID } from '@/parsec';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
@@ -505,15 +505,36 @@ async function showHistory(entries: parsec.EntryStat[]): Promise<void> {
   console.log('Show history', entries[0]);
 }
 
-async function openInExplorer(entries: parsec.EntryStat[]): Promise<void> {
+async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
   if (entries.length !== 1) {
     return;
   }
-  console.log('Open in explorer', entries[0]);
+  if (isWeb()) {
+    notificationCenter.showModal(new Notification({
+      message: t('FoldersPage.open.unavailableOnWeb'),
+      level: NotificationLevel.Warning,
+    }));
+    return;
+  }
+  const entry = entries[0];
+  const result = await parsec.getAbsolutePath(workspaceHandle.value, entry);
+
+  if (!result.ok) {
+    notificationCenter.showModal(new Notification({
+      title: entry.isFile() ?
+        t('FoldersPage.open.fileFailedTitle') :
+        t('FoldersPage.open.folderFailedTitle'),
+      message: entry.isFile() ?
+        t('FoldersPage.open.fileFailedSubtitle', {name: entry.name}) :
+        t('FoldersPage.open.folderFailedSubtitle', {name: entry.name}),
+      level: NotificationLevel.Error,
+    }));
+  } else {
+    window.electronAPI.openFile(result.value);
+  }
 }
 
 async function openFileContextMenu(event: Event, file: parsec.EntryStat): Promise<void> {
-  console.log('File Menu');
   const popover = await popoverController
     .create({
       component: FileContextMenu,
@@ -536,7 +557,7 @@ async function openFileContextMenu(event: Event, file: parsec.EntryStat): Promis
     [FileAction.Rename, renameEntries],
     [FileAction.MoveTo, moveEntriesTo],
     [FileAction.MakeACopy, copyEntries],
-    [FileAction.OpenInExplorer, openInExplorer],
+    [FileAction.Open, openEntries],
     [FileAction.ShowHistory, showHistory],
     [FileAction.Download, downloadEntries],
     [FileAction.ShowDetails, showDetails],

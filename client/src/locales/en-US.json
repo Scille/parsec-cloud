@@ -12,6 +12,10 @@
         "title": "Quit the application",
         "subtitle": "Are you sure you want to quit the application?"
     },
+    "openFile": {
+        "failedTitle": "Failed to open the element",
+        "failedSubtitle": "Could not open the element at `{path}`."
+    },
     "workspaceRoles": {
         "reader": "Reader",
         "contributor": "Contributor",
@@ -309,7 +313,7 @@
             "actionRename": "Rename",
             "actionMoveTo": "Move to",
             "actionMakeACopy": "Make a copy",
-            "actionOpenInExplorer": "Open in explorer",
+            "actionOpen": "Open",
             "actionHistory": "History",
             "actionDownload": "Download",
             "actionDetails": "Details",
@@ -352,6 +356,13 @@
         "deleteOneFolderQuestionSubtitle": "Are you sure you want to delete the folder `{name}`?",
         "deleteMultipleQuestionTitle": "Delete multiple elements",
         "deleteMultipleQuestionSubtitle": "Are you sure you want to delete these {count} elements?",
+        "open": {
+            "fileFailedTitle": "Failed to open the file",
+            "fileFailedSubtitle": "Could not open file `{name}`",
+            "folderFailedTitle": "Failed to open the folder",
+            "folderFailedSubtitle": "Could not open folder `{name}`",
+            "unavailableOnWeb": "Not available in web mode (yet!)."
+        },
         "linkNotCopiedToClipboard":"Could not copy the link to the clipboard.",
         "linkCopiedToClipboard":"The link has been copied to the clipboard.",
         "getLinkError":"Could not get a link to the workspace (reason: {reason})."
