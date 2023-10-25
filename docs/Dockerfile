@@ -30,6 +30,7 @@ RUN apt-get update \
     ca-certificates \
     curl \
     git \
+    gettext \
     inotify-tools
 
 USER parsec:parsec

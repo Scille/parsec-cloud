@@ -62,9 +62,11 @@ msgid "the same roles of the User profile;"
 msgstr "tous les droits du profil Utilisateur;"
 
 #: ../../roles.rst:28
-msgid "the creation of Users (either with Administrator profile or User profile);"
+msgid ""
+"the creation of Users (either with Administrator profile or User profile);"
 msgstr ""
-"la création d’autres utilisateurs (avec profil Administrateur ou Utilisateur);"
+"la création d’autres utilisateurs (avec profil Administrateur ou "
+"Utilisateur);"
 
 #: ../../roles.rst:29
 msgid "the deletion of Users regardless of their profile."
@@ -72,14 +74,14 @@ msgstr "la suppression d'un Utilisateur quelque soit son profil."
 
 #: ../../roles.rst:33
 msgid ""
-"It is not possible to modify the user's profile: an Administrator will remain "
-"an Administrator; a User will remain a User. Therefore, the user must be "
-"deleted and then re-created in order to allocate him the new profile."
+"It is not possible to modify the user's profile: an Administrator will "
+"remain an Administrator; a User will remain a User. Therefore, the user must "
+"be deleted and then re-created in order to allocate him the new profile."
 msgstr ""
-"Le profil est défini à la création de l'utilisateur et n'est pas modifiable par "
-"la suite: un Administrateur restera un Administrateur ; un Utilisateur restera "
-"un Utilisateur. Il faut donc supprimer l'utilisateur puis le recréer afin de "
-"lui attribuer le nouveau profil."
+"Le profil est défini à la création de l'utilisateur et n'est pas modifiable "
+"par la suite: un Administrateur restera un Administrateur ; un Utilisateur "
+"restera un Utilisateur. Il faut donc supprimer l'utilisateur puis le recréer "
+"afin de lui attribuer le nouveau profil."
 
 #: ../../roles.rst:37
 msgid "Device management"
@@ -87,11 +89,11 @@ msgstr "Gestion des terminaux"
 
 #: ../../roles.rst:39
 msgid ""
-"Only the user, regardless the profile, can create devices for itself. Devices "
-"are clones. The number of devices created by a user is usually small."
+"Only the user, regardless the profile, can create devices for itself. "
+"Devices are clones. The number of devices created by a user is usually small."
 msgstr ""
-"Seul l'utilisateur, quel que soit son profil, peut créer des terminaux pour lui-"
-"même. Les terminaux sont des clones. Le nombre de terminaux créés par un "
+"Seul l'utilisateur, quel que soit son profil, peut créer des terminaux pour "
+"lui-même. Les terminaux sont des clones. Le nombre de terminaux créés par un "
 "utilisateur est généralement faible."
 
 #: ../../roles.rst:41
@@ -99,8 +101,8 @@ msgid ""
 "When a user is deleted, all the associated devices are deleted. It is not "
 "possible to delete a single device."
 msgstr ""
-"Lorsqu'un utilisateur est supprimé, tous les terminaux associés sont supprimés. "
-"Il n'est pas possible de supprimer un seul terminal."
+"Lorsqu'un utilisateur est supprimé, tous les terminaux associés sont "
+"supprimés. Il n'est pas possible de supprimer un seul terminal."
 
 #: ../../roles.rst:45
 msgid "Management of Workspaces and Documents"
@@ -122,11 +124,11 @@ msgstr "Contributeur : dispose des accès en **lecture** et en **écriture**."
 
 #: ../../roles.rst:51
 msgid ""
-"Manager: it has **read** and **write** access and can also **grant roles** with "
-"the exception of the Owner role."
+"Manager: it has **read** and **write** access and can also **grant roles** "
+"with the exception of the Owner role."
 msgstr ""
-"Gérant : dispose d'un accès en **lecture** et en **écriture** et peut également "
-"**accorder des rôles** à l'exception du rôle de Propriétaire."
+"Gérant : dispose d'un accès en **lecture** et en **écriture** et peut "
+"également **accorder des rôles** à l'exception du rôle de Propriétaire."
 
 #: ../../roles.rst:52
 msgid ""
@@ -138,8 +140,8 @@ msgid ""
 msgstr ""
 "Propriétaire : dispose d'un accès en **lecture** et **écriture** et peut "
 "également **accorder des rôles**, y compris le rôle de Propriétaire. Il peut "
-"également **déclencher un ré-encryptage complet de l'Espace de Travail** en cas "
-"de suppression préalable d'un utilisateur (par exemple suite à la compromission "
-"du dispositif d'un utilisateur). Un Espace de Travail peut avoir plusieurs "
-"Propriétaires. Le créateur de l'espace de travail a le rôle de Propriétaire par "
-"défaut."
+"également **déclencher un ré-encryptage complet de l'Espace de Travail** en "
+"cas de suppression préalable d'un utilisateur (par exemple suite à la "
+"compromission du dispositif d'un utilisateur). Un Espace de Travail peut "
+"avoir plusieurs Propriétaires. Le créateur de l'espace de travail a le rôle "
+"de Propriétaire par défaut."
