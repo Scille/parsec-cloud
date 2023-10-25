@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { createApp } from 'vue';
+import * as Sentry from '@sentry/electron';
 
 // eslint-disable-next-line no-relative-import-paths/no-relative-import-paths
 import App from './App.vue';
@@ -110,6 +111,10 @@ async function setupApp(): Promise<void> {
     })
     .use(router)
     .use(i18n);
+
+  if (isElectron()) {
+    Sentry.init({ dsn: 'SENTRY_DSN' });
+  }
 
   app.provide(FormattersKey, {
     'timeSince': (date: DateTime | undefined, defaultValue = '', format = 'long'): string => {
