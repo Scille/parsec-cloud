@@ -288,6 +288,8 @@ playlistformats
 plutil
 PoFile
 positionpoll
+poutils
+powrap
 precommit
 printenv
 printsupport

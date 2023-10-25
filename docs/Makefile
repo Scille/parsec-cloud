@@ -157,6 +157,12 @@ gettext:
 	@echo
 	@echo "Build finished. The message catalogs are in $(BUILDDIR)/locale."
 
+intl-%: gettext
+	( \
+	MODIFIED=$$(sphinx-intl update -p $(BUILDDIR)/locale -l $(subst intl-,,$@) | tee /dev/stderr | grep -e 'Update:' -e 'Create:' | cut -f 2 -d' '); \
+	test -n "$$MODIFIED" && powrap $$MODIFIED || true; \
+	)
+
 changes:
 	$(SPHINXBUILD) -b changes $(ALLSPHINXOPTS) $(BUILDDIR)/changes
 	@echo
