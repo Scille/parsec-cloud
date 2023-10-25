@@ -244,7 +244,7 @@ import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
 import { StoredDeviceData, StorageManager } from '@/services/storageManager';
 import { DateTime } from 'luxon';
 import { useRoute, useRouter } from 'vue-router';
-import HomePagePopover from '@/views/home/HomePagePopover.vue';
+import HomePagePopover, { HomePageAction } from '@/views/home/HomePagePopover.vue';
 import SettingsModal from '@/views/settings/SettingsModal.vue';
 import { Formatters, FormattersKey, StorageManagerKey } from '@/common/injectionKeys';
 import { MsModalResult } from '@/components/core/ms-types';
@@ -254,6 +254,11 @@ import { getAppVersion } from '@/common/mocks';
 import AboutModal from '@/views/about/AboutModal.vue';
 import { listAvailableDevices as parsecListAvailableDevices, login as parsecLogin, AvailableDevice } from '@/parsec';
 import { isLoggedIn } from '@/parsec';
+import CreateOrganizationModal from '@/views/home/CreateOrganizationModal.vue';
+import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
+import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModal.vue';
+import { claimUserLinkValidator, claimDeviceLinkValidator, Validity, claimLinkValidator } from '@/common/validators';
+import { getTextInputFromUser } from '@/components/core/ms-modal/MsTextInputModal.vue';
 
 const router = useRouter();
 const currentRoute = useRoute();
@@ -323,7 +328,7 @@ const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
 
 const routeUnwatch = watch(currentRoute, async (newRoute) => {
   if (newRoute.query.link) {
-    console.log('HOME PAGE', newRoute.query.link);
+    await openJoinByLinkModal(newRoute.query.link as string);
   }
 });
 
@@ -347,6 +352,50 @@ async function refreshDeviceList(): Promise<void> {
   if (deviceList.value.length === 1) {
     showOrganizationList.value = false;
     selectedDevice = deviceList.value[0];
+  }
+}
+
+async function openCreateOrganizationModal(): Promise<void> {
+  const modal = await modalController.create({
+    component: CreateOrganizationModal,
+    canDismiss: true,
+    cssClass: 'create-organization-modal',
+  });
+  await modal.present();
+  const { data, role } = await modal.onWillDismiss();
+  await modal.dismiss();
+
+  if (role === MsModalResult.Confirm) {
+    await login(data.device, data.password);
+  }
+}
+
+async function openJoinByLinkModal(link: string): Promise<void> {
+  let component = null;
+
+  if (await claimUserLinkValidator(link) === Validity.Valid) {
+    component = UserJoinOrganizationModal;
+  } else if (await claimDeviceLinkValidator(link) === Validity.Valid) {
+    component = DeviceJoinOrganizationModal;
+  }
+
+  if (!component) {
+    console.log('Invalid link');
+    return;
+  }
+  const modal = await modalController.create({
+    component: component,
+    canDismiss: true,
+    cssClass: 'join-organization-modal',
+    componentProps: {
+      invitationLink: link,
+    },
+  });
+  await modal.present();
+  const result = await modal.onWillDismiss();
+  await modal.dismiss();
+  if (result.role === MsModalResult.Confirm) {
+    await login(result.data.device, result.data.password);
   }
 }
 
@@ -410,8 +459,26 @@ async function openPopover(ev: Event): Promise<void> {
   });
   await popover.present();
   const result = await popover.onWillDismiss();
-  if (result.role === MsModalResult.Confirm) {
-    await login(result.data.device, result.data.password);
+  await popover.dismiss();
+  if (result.role !== MsModalResult.Confirm) {
+    return;
+  }
+  if (result.data.action === HomePageAction.CreateOrganization) {
+    await openCreateOrganizationModal();
+  } else if (result.data.action === HomePageAction.JoinOrganization) {
+    const link = await getTextInputFromUser({
+      title: t('JoinByLinkModal.pageTitle'),
+      subtitle: t('JoinByLinkModal.pleaseEnterUrl'),
+      trim: true,
+      validator: claimLinkValidator,
+      inputLabel: t('JoinOrganization.linkFormLabel'),
+      placeholder: t('JoinOrganization.linkFormPlaceholder'),
+      okButtonText: t('JoinByLinkModal.join'),
+    });
+
+    if (link) {
+      await openJoinByLinkModal(link);
+    }
   }
 }
 
