@@ -2,6 +2,8 @@
 
 use libparsec_types::prelude::*;
 
+use crate::TestbedEventNewDevice;
+
 use super::{TestbedEvent, TestbedEventBootstrapOrganization, TestbedEventNewUser};
 
 pub(super) fn non_revoked_users(events: &[TestbedEvent]) -> impl Iterator<Item = &DeviceID> {
@@ -178,6 +180,10 @@ pub(super) fn assert_device_exists_and_not_revoked<'a>(
                 ..
             })
             | e @ TestbedEvent::NewUser(TestbedEventNewUser {
+                device_id: candidate,
+                ..
+            }) if candidate == device => return e,
+            e @ TestbedEvent::NewDevice(TestbedEventNewDevice {
                 device_id: candidate,
                 ..
             }) if candidate == device => return e,
