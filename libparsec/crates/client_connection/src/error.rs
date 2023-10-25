@@ -65,6 +65,9 @@ pub enum ConnectionError {
     /// We failed to deserialize ApiVersion
     #[error("Wrong ApiVersion {0}")]
     WrongApiVersion(String),
+
+    #[error("Invalid sse id: {0}")]
+    InvalidSSEId(#[from] reqwest::header::InvalidHeaderValue),
 }
 
 // Custom equality to skip comparison of some fields

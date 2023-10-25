@@ -9,7 +9,9 @@ mod testbed;
 
 pub use anonymous_cmds::AnonymousCmds;
 pub use authenticated_cmds::{
-    sse::{RateLimiter, SSEConnectionError, SSEEvent, SSEResponseOrMissedEvents, SSEStream},
+    sse::{
+        RateLimiter, SSEConnectionError, SSEEvent, SSEEventID, SSEResponseOrMissedEvents, SSEStream,
+    },
     AuthenticatedCmds, PARSEC_AUTH_METHOD,
 };
 pub use error::{ConnectionError, ConnectionResult};
