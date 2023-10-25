@@ -190,6 +190,39 @@ interface WorkspaceInfo extends ParsecWorkspaceInfo {
   availableOffline: boolean,
 }
 
+enum OrganizationInfoErrorTag {
+  Internal = 'Internal',
+  Offline = 'Offline'
+}
+
+interface OrganizationInfoErrorInternal {
+  tag: OrganizationInfoErrorTag.Internal
+}
+
+interface OrganizationInfoErrorOffline{
+  tag: OrganizationInfoErrorTag.Offline
+}
+
+type OrganizationInfoError = OrganizationInfoErrorOffline | OrganizationInfoErrorInternal;
+
+interface OrganizationInfo {
+  users: {
+    revoked: number,
+    total: number,
+    active: number,
+    admins: number,
+    standards: number,
+    outsiders: number,
+  },
+  size: {
+    metadata: number,
+    data: number,
+    total: number,
+  },
+  outsidersAllowed: boolean,
+  userLimit: number,
+}
+
 export {
   UserInfo,
   WorkspaceInfo,
@@ -209,4 +242,7 @@ export {
   GetAbsolutePathError,
   GetAbsolutePathErrorTag,
   OwnDeviceInfo,
+  OrganizationInfo,
+  OrganizationInfoError,
+  OrganizationInfoErrorTag,
 };

@@ -13,10 +13,13 @@ import {
   BackendAddr,
   ClientEventPing,
   ParseBackendAddrError,
+  OrganizationInfo,
+  OrganizationInfoError,
 } from '@/parsec/types';
 import { DateTime } from 'luxon';
 import { MOCK_WAITING_TIME, wait } from '@/parsec/internals';
 import { needsMocks } from '@/parsec/environment';
+import { getParsecHandle } from '@/parsec/routing';
 
 export async function createOrganization(
   backendAddr: BackendAddr, orgName: OrganizationID, userName: string, email: string, password: string, deviceLabel: string,
@@ -68,4 +71,46 @@ export async function createOrganization(
 
 export async function parseBackendAddr(addr: string): Promise<Result<ParsedBackendAddr, ParseBackendAddrError>> {
   return await libparsec.parseBackendAddr(addr);
+}
+
+export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, OrganizationInfoError>> {
+  const handle = getParsecHandle();
+
+  if (handle !== null && !needsMocks()) {
+    return {ok: true, value: {
+      users: {
+        revoked: 2,
+        total: 12,
+        active: 10,
+        admins: 2,
+        standards: 5,
+        outsiders: 3,
+      },
+      size: {
+        metadata: 42_492_122,
+        data: 4_498_394_233_231,
+        total: 4_498_351_741_109,
+      },
+      outsidersAllowed: true,
+      userLimit: -1,
+    }};
+  } else {
+    return {ok: true, value: {
+      users: {
+        revoked: 2,
+        total: 12,
+        active: 10,
+        admins: 2,
+        standards: 5,
+        outsiders: 3,
+      },
+      size: {
+        metadata: 42_492_122,
+        data: 4_498_394_233_231,
+        total: 4_498_351_741_109,
+      },
+      outsidersAllowed: true,
+      userLimit: -1,
+    }};
+  }
 }

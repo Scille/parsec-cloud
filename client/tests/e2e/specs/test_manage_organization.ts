@@ -77,4 +77,41 @@ describe('Check manage org page', () => {
     cy.get('.back-organization').should('not.be.visible');
     cy.get('.topbar-left').contains('My workspaces');
   });
+
+  it('Check org info page', () => {
+    cy.get('.sidebar').find('.organization').find('ion-item').first().contains('Information').click();
+    cy.get('.topbar-left').find('.title-h2').contains('Information');
+    cy.get('.org-info-container').find('h1').contains('Information on MyOrg');
+    cy.get('.org-info-container').find('ion-item').as('items').should('have.length', 10);
+    // Config outsider
+    cy.get('@items').eq(0).find('ion-label').contains('Outsider profile');
+    cy.get('@items').eq(0).find('ion-chip').contains('Allowed');
+    // User limit
+    cy.get('@items').eq(1).find('ion-label').contains('Users limit');
+    cy.get('@items').eq(1).find('ion-chip').contains('Unlimited');
+    // Backend addr
+    cy.get('@items').eq(2).find('ion-label').eq(0).contains('Server address');
+    cy.get('@items').eq(2).find('ion-label').eq(1).contains('parsec://example.com/MyOrg');
+    // Global data
+    cy.get('@items').eq(3).find('ion-label').eq(0).contains('Global data');
+    cy.get('@items').eq(3).find('ion-label').eq(1).contains('4.09 TB');
+    // Meta data
+    cy.get('@items').eq(4).find('ion-label').eq(0).contains('Meta-data');
+    cy.get('@items').eq(4).find('ion-label').eq(1).contains('40.5 MB');
+    // Active users
+    cy.get('@items').eq(5).find('ion-chip').contains('Active');
+    cy.get('@items').eq(5).find('ion-label').contains('10');
+    // Administrators
+    cy.get('@items').eq(6).find('ion-chip').contains('Administrators');
+    cy.get('@items').eq(6).find('ion-label').contains('2');
+    // Standards
+    cy.get('@items').eq(7).find('ion-chip').contains('Standards');
+    cy.get('@items').eq(7).find('ion-label').contains('5');
+    // Outsiders
+    cy.get('@items').eq(8).find('ion-chip').contains('Outsiders');
+    cy.get('@items').eq(8).find('ion-label').contains('3');
+    // Revoked
+    cy.get('@items').eq(9).find('ion-chip').contains('Revoked');
+    cy.get('@items').eq(9).find('ion-label').contains('2');
+  });
 });

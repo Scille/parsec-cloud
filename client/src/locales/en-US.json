@@ -402,6 +402,32 @@
                 "details": "View details",
                 "revoke": "Revoke"
             }
+        },
+        "infoPage": {
+            "getInfoFailed": "Failed to retrieve the information about the organization. Please make sure you're connected to the internet.",
+            "title": "Information on {organizationName}",
+            "users": {
+                "revokedUsers": "Revoked",
+                "outsiderUsers": "Outsiders",
+                "standardUsers": "Standards",
+                "adminUsers": "Administrators",
+                "activeUsers": "Active",
+                "title": "Users"
+            },
+            "size": {
+                "metadata": "Meta-data",
+                "total": "Global data",
+                "title": "Storage"
+            },
+            "configuration": {
+                "outsidersAllowed": "Outsider profile",
+                "userLimit": "Users limit",
+                "unlimited": "Unlimited",
+                "allowed": "Allowed",
+                "forbidden": "Forbidden",
+                "title": "Configuration",
+                "serverAddr": "Server address"
+            }
         }
     },
     "common": {
