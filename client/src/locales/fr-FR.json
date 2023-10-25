@@ -402,6 +402,32 @@
                 "details": "Voir détails",
                 "revoke": "Révoquer"
             }
+        },
+        "infoPage": {
+            "getInfoFailed": "Impossible de récupérer les informations sur l'organisation. Veuillez vérifier votre connexion internet.",
+            "title": "Informations sur {organizationName}",
+            "users": {
+                "revokedUsers": "Révoqués",
+                "outsiderUsers": "Externes",
+                "standardUsers": "Standards",
+                "adminUsers": "Administrateurs",
+                "activeUsers": "Actifs",
+                "title": "Utilisateurs"
+            },
+            "size": {
+                "metadata": "Métadonnées",
+                "total": "Données totales",
+                "title": "Stockage"
+            },
+            "configuration": {
+                "outsidersAllowed": "Profil externe",
+                "userLimit": "Limite d'utilisateur",
+                "unlimited": "Illimitée",
+                "allowed": "Autorisé",
+                "forbidden": "Interdit",
+                "title": "Configuration",
+                "serverAddr": "Adresse du serveur"
+            }
         }
     },
     "common": {
