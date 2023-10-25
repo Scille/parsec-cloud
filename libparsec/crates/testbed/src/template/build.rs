@@ -187,6 +187,25 @@ pub struct TestbedTemplateBuilder {
     pub(super) counters: TestbedTemplateBuilderCounters,
 }
 
+pub(super) fn get_stuff<T>(
+    stuff: &[(&'static str, &'static (dyn std::any::Any + Send + Sync))],
+    key: &'static str,
+) -> &'static T {
+    let (_, value_any) = stuff.iter().find(|(k, _)| *k == key).unwrap_or_else(|| {
+        let available_stuff: Vec<_> = stuff.iter().map(|(k, _)| k).collect();
+        panic!(
+            "Key `{}` is not among the stuff (available keys: {:?})",
+            key, available_stuff
+        );
+    });
+    value_any.downcast_ref::<T>().unwrap_or_else(|| {
+        panic!(
+            "Key `{}` is among the stuff, but you got it type wrong :'(",
+            key
+        );
+    })
+}
+
 impl TestbedTemplateBuilder {
     pub(crate) fn new(id: &'static str) -> Self {
         Self {
@@ -207,7 +226,7 @@ impl TestbedTemplateBuilder {
             id,
             allow_server_side_events,
             events: template.events.clone(),
-            stuff: vec![],
+            stuff: template.stuff.clone(),
             counters: template.build_counters.clone(),
         }
     }
@@ -223,6 +242,10 @@ impl TestbedTemplateBuilder {
         // On the other hand it allows to provide the stuff as `&'static Foo` which
         // is convenient.
         self.stuff.push((key, Box::leak(boxed)));
+    }
+
+    pub fn get_stuff<T>(&self, key: &'static str) -> &'static T {
+        get_stuff(&self.stuff, key)
     }
 
     /// Remove events you're not happy with (use it in conjuction with `TestbedEnv::customize`)
@@ -242,8 +265,8 @@ impl TestbedTemplateBuilder {
             | TestbedEvent::WorkspaceDataStorageFetchFolderVlob(_)
             | TestbedEvent::WorkspaceCacheStorageFetchBlock(_)
             | TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(_)
-            | TestbedEvent::WorkspaceDataStorageLocalFolderManifestUpdate(_)
-            | TestbedEvent::WorkspaceDataStorageLocalFileManifestUpdate(_)
+            | TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(_)
+            | TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(_)
             | TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(_)) => filter(e),
             // Server side events are kept no matter what
             _ => true,
@@ -596,6 +619,30 @@ impl_event_builder!(
     [device: DeviceID, realm: VlobID]
 );
 
+impl<'a> TestbedEventCreateOrUpdateWorkspaceManifestVlobBuilder<'a> {
+    pub fn customize_children(
+        self,
+        children: impl Iterator<Item = (impl TryInto<EntryName>, Option<VlobID>)>,
+    ) -> Self {
+        self.customize(|e| {
+            let manifest = Arc::make_mut(&mut e.manifest);
+            for (entry_name, change) in children {
+                let entry_name = entry_name
+                    .try_into()
+                    .unwrap_or_else(|_| panic!("Not a valid EntryName"));
+                match change {
+                    None => {
+                        manifest.children.remove(&entry_name);
+                    }
+                    Some(id) => {
+                        manifest.children.insert(entry_name, id);
+                    }
+                }
+            }
+        })
+    }
+}
+
 /*
  * TestbedEventCreateOrUpdateFileManifestVlobBuilder
  */
@@ -613,6 +660,30 @@ impl_event_builder!(
     CreateOrUpdateFolderManifestVlob,
     [device: DeviceID, realm: VlobID, vlob: Option<VlobID>]
 );
+
+impl<'a> TestbedEventCreateOrUpdateFolderManifestVlobBuilder<'a> {
+    pub fn customize_children(
+        self,
+        children: impl Iterator<Item = (impl TryInto<EntryName>, Option<VlobID>)>,
+    ) -> Self {
+        self.customize(|e| {
+            let manifest = Arc::make_mut(&mut e.manifest);
+            for (entry_name, change) in children {
+                let entry_name = entry_name
+                    .try_into()
+                    .unwrap_or_else(|_| panic!("Not a valid EntryName"));
+                match change {
+                    None => {
+                        manifest.children.remove(&entry_name);
+                    }
+                    Some(id) => {
+                        manifest.children.insert(entry_name, id);
+                    }
+                }
+            }
+        })
+    }
+}
 
 /*
  * TestbedEventCreateBlockBuilder
@@ -653,31 +724,31 @@ impl_event_builder!(
 );
 
 /*
- * TestbedEventCertificatesStorageFetchCertificates
+ * TestbedEventCertificatesStorageFetchCertificatesBuilder
  */
 
 impl_event_builder!(CertificatesStorageFetchCertificates, [device: DeviceID]);
 
 /*
- * TestbedEventUserStorageFetchUserVlob
+ * TestbedEventUserStorageFetchUserVlobBuilder
  */
 
 impl_event_builder!(UserStorageFetchUserVlob, [device: DeviceID]);
 
 /*
- * TestbedEventUserStorageFetchRealmCheckpoint
+ * TestbedEventUserStorageFetchRealmCheckpointBuilder
  */
 
 impl_event_builder!(UserStorageFetchRealmCheckpoint, [device: DeviceID]);
 
 /*
- * TestbedEventUserStorageLocalUpdate
+ * TestbedEventUserStorageLocalCreateOrUpdateBuilder
  */
 
 impl_event_builder!(UserStorageLocalUpdate, [device: DeviceID]);
 
 /*
- * TestbedEventWorkspaceCacheStorageFetchBlock
+ * TestbedEventWorkspaceCacheStorageFetchBlockBuilder
  */
 
 impl_event_builder!(
@@ -686,7 +757,7 @@ impl_event_builder!(
 );
 
 /*
- * TestbedEventWorkspaceDataStorageFetchWorkspaceVlob
+ * TestbedEventWorkspaceDataStorageFetchWorkspaceVlobBuilder
  */
 
 impl_event_builder!(
@@ -699,7 +770,7 @@ impl_event_builder!(
 );
 
 /*
- * TestbedEventWorkspaceDataStorageFetchFileVlob
+ * TestbedEventWorkspaceDataStorageFetchFileVlobBuilder
  */
 
 impl_event_builder!(
@@ -708,7 +779,7 @@ impl_event_builder!(
 );
 
 /*
- * TestbedEventWorkspaceDataStorageFetchFolderVlob
+ * TestbedEventWorkspaceDataStorageFetchFolderVlobBuilder
  */
 
 impl_event_builder!(
@@ -722,7 +793,7 @@ impl_event_builder!(
 );
 
 /*
- * TestbedEventWorkspaceDataStorageFetchRealmCheckpoint
+ * TestbedEventWorkspaceDataStorageFetchRealmCheckpointBuilder
  */
 
 impl_event_builder!(
@@ -731,7 +802,7 @@ impl_event_builder!(
 );
 
 /*
- * TestbedEventWorkspaceDataStorageLocalWorkspaceManifestUpdate
+ * TestbedEventWorkspaceDataStorageLocalWorkspaceManifestCreateOrUpdateBuilder
  */
 
 impl_event_builder!(
@@ -739,20 +810,68 @@ impl_event_builder!(
     [device: DeviceID, realm: VlobID]
 );
 
+impl<'a> TestbedEventWorkspaceDataStorageLocalWorkspaceManifestUpdateBuilder<'a> {
+    pub fn customize_children(
+        self,
+        children: impl Iterator<Item = (impl TryInto<EntryName>, Option<VlobID>)>,
+    ) -> Self {
+        self.customize(|e| {
+            let manifest = Arc::make_mut(&mut e.local_manifest);
+            for (entry_name, change) in children {
+                let entry_name = entry_name
+                    .try_into()
+                    .unwrap_or_else(|_| panic!("Not a valid EntryName"));
+                match change {
+                    None => {
+                        manifest.children.remove(&entry_name);
+                    }
+                    Some(id) => {
+                        manifest.children.insert(entry_name, id);
+                    }
+                }
+            }
+        })
+    }
+}
+
 /*
- * TestbedEventWorkspaceDataStorageLocalFolderManifestUpdate
+ * TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdateBuilder
  */
 
 impl_event_builder!(
-    WorkspaceDataStorageLocalFolderManifestUpdate,
-    [device: DeviceID, realm: VlobID, vlob: VlobID]
+    WorkspaceDataStorageLocalFolderManifestCreateOrUpdate,
+    [device: DeviceID, realm: VlobID, vlob: Option<VlobID>]
 );
 
+impl<'a> TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdateBuilder<'a> {
+    pub fn customize_children(
+        self,
+        children: impl Iterator<Item = (impl TryInto<EntryName>, Option<VlobID>)>,
+    ) -> Self {
+        self.customize(|e| {
+            let manifest = Arc::make_mut(&mut e.local_manifest);
+            for (entry_name, change) in children {
+                let entry_name = entry_name
+                    .try_into()
+                    .unwrap_or_else(|_| panic!("Not a valid EntryName"));
+                match change {
+                    None => {
+                        manifest.children.remove(&entry_name);
+                    }
+                    Some(id) => {
+                        manifest.children.insert(entry_name, id);
+                    }
+                }
+            }
+        })
+    }
+}
+
 /*
- * TestbedEventWorkspaceDataStorageLocalFileManifestUpdate
+ * TestbedEventWorkspaceDataStorageLocalFileManifestCreateOrUpdateBuilder
  */
 
 impl_event_builder!(
-    WorkspaceDataStorageLocalFileManifestUpdate,
-    [device: DeviceID, realm: VlobID, vlob: VlobID]
+    WorkspaceDataStorageLocalFileManifestCreateOrUpdate,
+    [device: DeviceID, realm: VlobID, vlob: Option<VlobID>]
 );

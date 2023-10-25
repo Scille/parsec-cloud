@@ -73,12 +73,12 @@ async fn get_need_sync_entries_at_startup(#[case] with_local_changes: bool, env:
 
         if with_local_changes {
             builder.workspace_data_storage_local_workspace_manifest_update("alice@dev1", realm_id);
-            builder.workspace_data_storage_local_file_manifest_update(
+            builder.workspace_data_storage_local_file_manifest_create_or_update(
                 "alice@dev1",
                 realm_id,
                 file_child_id,
             );
-            builder.workspace_data_storage_local_folder_manifest_update(
+            builder.workspace_data_storage_local_folder_manifest_create_or_update(
                 "alice@dev1",
                 realm_id,
                 folder_child_id,

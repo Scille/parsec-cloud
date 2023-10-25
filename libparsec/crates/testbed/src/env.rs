@@ -334,6 +334,13 @@ impl TestbedEnv {
             })
             .unwrap()
     }
+    pub fn get_last_realm_certificate_index(&self) -> IndexInt {
+        self.template
+            .certificates_rev()
+            .map(|x| x.certificate_index)
+            .next()
+            .unwrap_or(0)
+    }
 
     pub fn get_last_realm_role_certificate(
         &self,

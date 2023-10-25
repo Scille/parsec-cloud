@@ -55,8 +55,8 @@ async fn stat_entry(#[case] local_cache: bool, env: &TestbedEnv) {
         }
         if confinement_point.is_none() &&
         id == *wksp1_id &&
-        created == "2000-01-07T00:00:00Z".parse().unwrap() &&
-        updated == "2000-01-07T00:00:00Z".parse().unwrap() &&
+        created == "2000-01-09T00:00:00Z".parse().unwrap() &&
+        updated == "2000-01-09T00:00:00Z".parse().unwrap() &&
         base_version == 1 &&
         !is_placeholder &&
         !need_sync &&
@@ -80,12 +80,12 @@ async fn stat_entry(#[case] local_cache: bool, env: &TestbedEnv) {
         }
         if confinement_point.is_none() &&
         id == *wksp1_foo_id &&
-        created == "2000-01-04T00:00:00Z".parse().unwrap() &&
-        updated == "2000-01-04T00:00:00Z".parse().unwrap() &&
+        created == "2000-01-08T00:00:00Z".parse().unwrap() &&
+        updated == "2000-01-08T00:00:00Z".parse().unwrap() &&
         base_version == 1 &&
         !is_placeholder &&
         !need_sync &&
-        children.is_empty()
+        children == ["egg.txt".parse().unwrap(), "spam".parse().unwrap()]
     );
 
     // File
@@ -105,8 +105,8 @@ async fn stat_entry(#[case] local_cache: bool, env: &TestbedEnv) {
         }
         if confinement_point.is_none() &&
         id == *wksp1_bar_txt_id &&
-        created == "2000-01-06T00:00:00Z".parse().unwrap() &&
-        updated == "2000-01-06T00:00:00Z".parse().unwrap() &&
+        created == "2000-01-05T00:00:00Z".parse().unwrap() &&
+        updated == "2000-01-05T00:00:00Z".parse().unwrap() &&
         base_version == 1 &&
         !is_placeholder &&
         !need_sync &&

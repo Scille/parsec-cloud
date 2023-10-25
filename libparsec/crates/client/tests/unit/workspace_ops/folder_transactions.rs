@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::sync::Arc;
+
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -10,8 +12,35 @@ use crate::workspace_ops::EntryStat;
 #[case::root_level(true)]
 #[case::subdir_level(false)]
 async fn good(#[case] root_level: bool, env: &TestbedEnv) {
-    let wksp1_id: &VlobID = env.template.get_stuff("wksp1_id");
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
     let wksp1_key: &SecretKey = env.template.get_stuff("wksp1_key");
+
+    // Remove any sub file/folder from the place we are going to test from
+    env.customize(|builder| {
+        if root_level {
+            builder
+                .create_or_update_workspace_manifest_vlob("alice@dev1", wksp1_id)
+                .customize(|e| {
+                    let manifest = Arc::make_mut(&mut e.manifest);
+                    manifest.children.clear();
+                });
+            builder.workspace_data_storage_fetch_workspace_vlob("alice@dev1", wksp1_id, None);
+        } else {
+            builder
+                .create_or_update_folder_manifest_vlob("alice@dev1", wksp1_id, wksp1_foo_id)
+                .customize(|e| {
+                    let manifest = Arc::make_mut(&mut e.manifest);
+                    manifest.children.clear();
+                });
+            builder.workspace_data_storage_fetch_folder_vlob(
+                "alice@dev1",
+                wksp1_id,
+                wksp1_foo_id,
+                None,
+            );
+        }
+    });
 
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(
@@ -38,13 +67,6 @@ async fn good(#[case] root_level: bool, env: &TestbedEnv) {
                 }
             }
         };
-    }
-
-    if root_level {
-        // Clean the root directory to have the same test result that when using
-        // non-root folder
-        ops.remove_folder(&"/foo".parse().unwrap()).await.unwrap();
-        ops.remove_file(&"/bar.txt".parse().unwrap()).await.unwrap();
     }
 
     // Now let's add folders !
