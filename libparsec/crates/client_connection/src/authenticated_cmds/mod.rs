@@ -50,7 +50,7 @@ use crate::testbed::{get_send_hook, SendHookConfig};
 use crate::{
     authenticated_cmds::sse::check_response,
     error::{ConnectionError, ConnectionResult},
-    SSEConnectionError, SSEStream, API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
+    SSEConnectionError, SSEEventID, SSEStream, API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
 };
 
 use self::sse::EVENT_STREAM_CONTENT_TYPE;
@@ -211,7 +211,7 @@ impl AuthenticatedCmds {
 
     pub async fn start_sse<T>(
         &self,
-        last_event_id: Option<&str>,
+        last_event_id: Option<&SSEEventID>,
     ) -> Result<SSEStream<T>, SSEConnectionError>
     where
         T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
@@ -228,7 +228,7 @@ impl AuthenticatedCmds {
         log::trace!("Will listen for SSE event at {}", response.url());
         let mut sse_stream = response.bytes_stream().eventsource();
         if let Some(last_event_id) = last_event_id {
-            sse_stream.set_last_event_id(last_event_id);
+            sse_stream.set_last_event_id(last_event_id.to_str());
         }
         let event_source = Box::pin(sse_stream);
 

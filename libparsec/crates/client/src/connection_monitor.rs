@@ -3,7 +3,7 @@
 use std::{ops::ControlFlow, sync::Arc};
 
 use libparsec_client_connection::{
-    AuthenticatedCmds, ConnectionError, RateLimiter, SSEResponseOrMissedEvents,
+    AuthenticatedCmds, ConnectionError, RateLimiter, SSEEventID, SSEResponseOrMissedEvents,
 };
 use libparsec_platform_async::{spawn, stream::StreamExt, JoinHandle};
 use libparsec_protocol::authenticated_cmds::v4::events_listen::{APIEvent, Rep, Req};
@@ -87,7 +87,7 @@ impl ConnectionMonitor {
     pub async fn start(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) -> Self {
         let worker = spawn(async move {
             let mut state = ConnectionState::Offline;
-            let mut last_event_id: Option<String> = None;
+            let mut last_event_id: Option<SSEEventID> = None;
             let mut backoff = RateLimiter::new();
 
             // As last monitor to start, we send this event to wake up all the other monitors
@@ -96,7 +96,7 @@ impl ConnectionMonitor {
             loop {
                 backoff.wait().await;
 
-                let mut stream = match cmds.start_sse::<Req>(last_event_id.as_deref()).await {
+                let mut stream = match cmds.start_sse::<Req>(last_event_id.as_ref()).await {
                     Ok(stream) => stream,
                     Err(err) => {
                         if handle_sse_error(&mut state, &event_bus, err.into()).is_break() {

@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{fmt::Debug, marker::PhantomData, task::Poll, time::Duration};
+use std::{fmt::Debug, marker::PhantomData, str::FromStr, task::Poll, time::Duration};
 
 use data_encoding::BASE64;
 use eventsource_stream::{Event, EventStreamError};
@@ -61,9 +61,26 @@ where
     T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
     T::Response: Debug + PartialEq,
 {
-    pub id: String,
+    pub id: SSEEventID,
     pub retry: Option<Duration>,
     pub message: SSEResponseOrMissedEvents<T>,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct SSEEventID(HeaderValue);
+
+impl SSEEventID {
+    pub fn to_str(&self) -> &str {
+        self.0.to_str().expect("SSEEventID first originated from a String so converting it back should not cause problem")
+    }
+}
+
+impl FromStr for SSEEventID {
+    type Err = reqwest::header::InvalidHeaderValue;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        reqwest::header::HeaderValue::from_str(s).map(Self)
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -120,10 +137,12 @@ where
         _ => return std::task::Poll::Pending,
     };
 
-    std::task::Poll::Ready(message.map(|message| SSEEvent {
-        id: event.id,
-        retry: event.retry,
-        message,
+    std::task::Poll::Ready(message.and_then(|message| {
+        Ok(SSEEvent {
+            id: event.id.parse()?,
+            retry: event.retry,
+            message,
+        })
     }))
 }
 
