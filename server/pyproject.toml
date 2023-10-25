@@ -51,9 +51,9 @@ outcome = "^1.1"
 
 jinja2 = { version = "^3.0" }
 # Quart
-quart-trio = { version = "^0.10.0" }
-quart = { version = ">=0.18.4,<0.19.0" }
-werkzeug = "3.0.0"
+quart-trio = "0.10.0"
+quart = "0.18.4"
+werkzeug = "2.3.7"
 hypercorn = { version = ">=0.13.2,<0.15.0" }
 # PostgreSQL
 triopg = { version = "^0.6" }
