@@ -619,6 +619,30 @@ impl_event_builder!(
     [device: DeviceID, realm: VlobID]
 );
 
+impl<'a> TestbedEventCreateOrUpdateWorkspaceManifestVlobBuilder<'a> {
+    pub fn customize_children(
+        self,
+        children: impl Iterator<Item = (impl TryInto<EntryName>, Option<VlobID>)>,
+    ) -> Self {
+        self.customize(|e| {
+            let manifest = Arc::make_mut(&mut e.manifest);
+            for (entry_name, change) in children {
+                let entry_name = entry_name
+                    .try_into()
+                    .unwrap_or_else(|_| panic!("Not a valid EntryName"));
+                match change {
+                    None => {
+                        manifest.children.remove(&entry_name);
+                    }
+                    Some(id) => {
+                        manifest.children.insert(entry_name, id);
+                    }
+                }
+            }
+        })
+    }
+}
+
 /*
  * TestbedEventCreateOrUpdateFileManifestVlobBuilder
  */
@@ -636,6 +660,30 @@ impl_event_builder!(
     CreateOrUpdateFolderManifestVlob,
     [device: DeviceID, realm: VlobID, vlob: Option<VlobID>]
 );
+
+impl<'a> TestbedEventCreateOrUpdateFolderManifestVlobBuilder<'a> {
+    pub fn customize_children(
+        self,
+        children: impl Iterator<Item = (impl TryInto<EntryName>, Option<VlobID>)>,
+    ) -> Self {
+        self.customize(|e| {
+            let manifest = Arc::make_mut(&mut e.manifest);
+            for (entry_name, change) in children {
+                let entry_name = entry_name
+                    .try_into()
+                    .unwrap_or_else(|_| panic!("Not a valid EntryName"));
+                match change {
+                    None => {
+                        manifest.children.remove(&entry_name);
+                    }
+                    Some(id) => {
+                        manifest.children.insert(entry_name, id);
+                    }
+                }
+            }
+        })
+    }
+}
 
 /*
  * TestbedEventCreateBlockBuilder
@@ -762,6 +810,30 @@ impl_event_builder!(
     [device: DeviceID, realm: VlobID]
 );
 
+impl<'a> TestbedEventWorkspaceDataStorageLocalWorkspaceManifestUpdateBuilder<'a> {
+    pub fn customize_children(
+        self,
+        children: impl Iterator<Item = (impl TryInto<EntryName>, Option<VlobID>)>,
+    ) -> Self {
+        self.customize(|e| {
+            let manifest = Arc::make_mut(&mut e.local_manifest);
+            for (entry_name, change) in children {
+                let entry_name = entry_name
+                    .try_into()
+                    .unwrap_or_else(|_| panic!("Not a valid EntryName"));
+                match change {
+                    None => {
+                        manifest.children.remove(&entry_name);
+                    }
+                    Some(id) => {
+                        manifest.children.insert(entry_name, id);
+                    }
+                }
+            }
+        })
+    }
+}
+
 /*
  * TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdateBuilder
  */
@@ -770,6 +842,30 @@ impl_event_builder!(
     WorkspaceDataStorageLocalFolderManifestCreateOrUpdate,
     [device: DeviceID, realm: VlobID, vlob: Option<VlobID>]
 );
+
+impl<'a> TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdateBuilder<'a> {
+    pub fn customize_children(
+        self,
+        children: impl Iterator<Item = (impl TryInto<EntryName>, Option<VlobID>)>,
+    ) -> Self {
+        self.customize(|e| {
+            let manifest = Arc::make_mut(&mut e.local_manifest);
+            for (entry_name, change) in children {
+                let entry_name = entry_name
+                    .try_into()
+                    .unwrap_or_else(|_| panic!("Not a valid EntryName"));
+                match change {
+                    None => {
+                        manifest.children.remove(&entry_name);
+                    }
+                    Some(id) => {
+                        manifest.children.insert(entry_name, id);
+                    }
+                }
+            }
+        })
+    }
+}
 
 /*
  * TestbedEventWorkspaceDataStorageLocalFileManifestCreateOrUpdateBuilder
