@@ -11,6 +11,11 @@ pub enum SequesterKeySize {
     _4096Bits = 4096,
 }
 
+pub(crate) const AT_SIZE: usize = 1;
+pub(crate) const U16_SIZE: usize = 2;
+pub(crate) const SIZE_SCHEME_SIZE: usize = AT_SIZE + U16_SIZE;
+pub(crate) const COLON_SIZE: usize = 1;
+
 /// Here we avoid unnecessary allocation & enforce output has `key_size`
 pub(crate) fn serialize_with_armor(
     output: &[u8],
@@ -21,10 +26,12 @@ pub(crate) fn serialize_with_armor(
     // It is important `output` has a constant size given this
     // is how it is retrieved during decryption
     assert!(output.len() <= key_size_bytes);
-    let mut res = vec![0; algo.len() + 1 + key_size_bytes + data.len()];
+    let mut res = vec![0; algo.len() + SIZE_SCHEME_SIZE + COLON_SIZE + key_size_bytes + data.len()];
 
     let (algorithm_part, others) = res.split_at_mut(algo.len());
-    let (colon, others) = others.split_at_mut(1);
+    let (at, others) = others.split_at_mut(AT_SIZE);
+    let (size, others) = others.split_at_mut(U16_SIZE);
+    let (colon, others) = others.split_at_mut(COLON_SIZE);
     // Here we enforce output has key size with zeros
     // Using RSA, we should end up with a number as big as the key size and
     // provided as big endian bytes.
@@ -43,6 +50,8 @@ pub(crate) fn serialize_with_armor(
     let (output_part, data_part) = others.split_at_mut(output.len());
 
     algorithm_part.copy_from_slice(algo.as_bytes());
+    at[0] = b'@';
+    size.copy_from_slice(&(key_size_bytes as u16).to_le_bytes());
     colon[0] = b':';
     output_part.copy_from_slice(output);
     data_part.copy_from_slice(data);
@@ -61,10 +70,20 @@ pub(crate) fn deserialize_with_armor<'a>(
         .ok_or(CryptoError::Decryption)?;
     let (algorithm, output_and_data) = data.split_at(index + 1);
 
-    if &algorithm[..index] != algo.as_bytes() {
+    let algorithm = if index >= SIZE_SCHEME_SIZE && algorithm[index - SIZE_SCHEME_SIZE] == b'@' {
+        &algorithm[..index - SIZE_SCHEME_SIZE]
+    } else {
+        &algorithm[..index]
+    };
+
+    if algorithm != algo.as_bytes() {
         return Err(CryptoError::Algorithm(
-            String::from_utf8_lossy(&algorithm[..index]).into(),
+            String::from_utf8_lossy(algorithm).into(),
         ));
+    }
+
+    if output_and_data.len() < key_size_bytes {
+        return Err(CryptoError::DataSize);
     }
 
     Ok(output_and_data.split_at(key_size_bytes))

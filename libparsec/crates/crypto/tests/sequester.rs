@@ -8,8 +8,8 @@ use hex_literal::hex;
 use rstest::rstest;
 
 use libparsec_crypto::{
-    SequesterKeySize, SequesterPrivateKeyDer, SequesterPublicKeyDer, SequesterSigningKeyDer,
-    SequesterVerifyKeyDer,
+    CryptoError, SequesterKeySize, SequesterPrivateKeyDer, SequesterPublicKeyDer,
+    SequesterSigningKeyDer, SequesterVerifyKeyDer,
 };
 
 /// Generated with `openssl genrsa -out pkey-1024.pem 1024`
@@ -137,7 +137,8 @@ const PRIVATE_KEY_DER_2048: &[u8] = &hex!(
     "697d84ac2d7816d4083369bad1028180516f3699897d1c0c103813dbe3438a8f6a8a8ac0b8"
     "540f2f47f51ca3dc9d6b95d3ee2a86de1b6f51af94823e6be1715126f3b2406d96522396c0"
     "6625cdfcf6d4e82ef0ef111dc68969f008313249b63b0ef2921fe98eda58703765ededa3ed"
-    "357d390607623cb4329cddf9fe88a957cf49b16c7d14ec2a1e4737e027a526222a");
+    "357d390607623cb4329cddf9fe88a957cf49b16c7d14ec2a1e4737e027a526222a"
+);
 
 const PUBLIC_KEY_PEM_2048: &str = r#"-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApw1bGRmu4ruORNnfvibq
@@ -158,7 +159,109 @@ const PUBLIC_KEY_DER_2048: &[u8] = &hex!(
     "73f75643bea039784163bd4be7fecefa6f31ba0c08a5ec7caaf6a8f9a5601da42a18d1c937"
     "e081672b36fc6ccc3bfeb2a5b6e1cba9ebfce4a49ef734d08ed78900f29eaefb7dc89936ea"
     "8f21aed96be375e2b22b52cc8a6c211cf111f4b27db071d89e5571cf76f17765ab056c3e6d"
-    "349387a3ffd2a6538b13085d6001acecd11c8c43a65e4b24f2dd200897310203010001");
+    "349387a3ffd2a6538b13085d6001acecd11c8c43a65e4b24f2dd200897310203010001"
+);
+
+// Maybe it can be useful to keep the private key for further test ?
+#[allow(unused)]
+const PRIVATE_KEY_DER_4096: &[u8] = &hex!(
+    "30820942020100300d06092a864886f70d01010105000482092c308209280201"
+    "000282020100e87bba35288c9afab387c050fbb9576ddd833fbcd1160ab53bf9"
+    "5344fbdde082c2f3885eebdf3162b57bde590c4930774bed03fad7ce724ae7b3"
+    "7cf0b68600a32f495675048cbfdcc1b6c999fdc8b053b475d257ef275ce7a26c"
+    "e347c338d2da8e6caf0f637605c1ea2b8aaca59a4b53e468af363187e360de3c"
+    "11cbbcdff20e9813667e8c14051900d8f22e96589262e0072616734662945c97"
+    "58f922ef3bed1b8f4a5af5137ac0bada83c77f5b67a2628860e9fd1b67063023"
+    "a26e95c14d210a86ad4ff763fee42f9570c17979ff8a78485bb08dda9cdcc5f7"
+    "22273e979cf2c8e220969799f6a3400ad23058d45a6f19a79e7a8b4e74cbf791"
+    "a26100cb96cf1ad55a5b57ebd238ce5d5e3f0c027f0b7dfa0a04fc2f9bf04a9d"
+    "bfb9bfe1ba559cd51c5ba4173880d96dbd8fa46a891835e51caca4f27e5efbed"
+    "eca946cf75322f20e75728cff6f3ca16620ce0513f34388f83382757722a453f"
+    "736dff8b0f988b1485c274ca9b779ab5f65334e326d544f1782ef1dcd7019d00"
+    "2bc93ded1107cff5f90e33e78cce45d6256be59486221188c9732da081110de2"
+    "569cc1e6654d54e94372e4b0ba2f227c200dfa8f178b2db6e891868c829c5685"
+    "10032c56a9da08fbfee7a22b973ac5f44f91c44bc7596159ef3d6bdf89c4fce0"
+    "a777bd9d186bba8f9ceebe1d8e9a709ffb566a5f58d8a8d93ebdc5b5f4d9c984"
+    "1627ae0b5583020301000102820200469e06a2cd0d60aa144c80f3587325067f"
+    "49b5dba1db432767ef4506e846ae42a9fb158a57b57527d99ea59c80e9de69ee"
+    "4b3171498a311765a814a47d9cd8a6b8df5afeb2821a69710217dcc9c4e32299"
+    "e74c1c5fcda21fce2bab220a3fc17497dc9594640ede92d791a04eef029e2cfe"
+    "6d7a03492a50bc04e5543681c9b89a0c41a059822d369b30b1b566c74e6230dc"
+    "81ef64d46125e290f97c123935580b9eda78a88657036b7596987ec9c5b70611"
+    "4e01ba31a2d8397df7e508183f1e319223f4931cbf68166209cfb54533f49658"
+    "110aa0e785e72dfc8823fcadbb99f5f9650ea70fa7b9ce3ececaa7dae3ae109f"
+    "4756113d2d78b6d81d89a8537883f712a475c354468a8567c1d1308e22c936d1"
+    "4756573e3236b6d37ee8ee5bf65b166658ea36ede73ab7648298f056bc94ba37"
+    "793972701117f92f3def6748d81fed4953b4449dcc6458fab0c26c4161773bfb"
+    "ef25e98f21e9302f2b3703a7540a1199603b8ad6a67dd2de714a7d1e4aa5fcb0"
+    "e0fb7df9a9e105355da2dfadec4d2e121e08d845c567ec21a9d35c3d1368113c"
+    "e1370619ebadd36a6097a4010ba735a3db841757fb3a861698d4a3f44fb4129a"
+    "88aa4c3d8733cdead0c288a751b5d44ba1903519878040505e91115d9af15077"
+    "31ed26805219600a062f3c80fa40199a4764c9610f494cc4057f81b8bef93966"
+    "c5eb4607089e82ccf94976dd32cf910282010100f6f3b806fb948b8499a2a020"
+    "e91aba27aab3f9f93b643a51e1dd26a2255c0b81e4138b9d78b40daf2be303c0"
+    "c0afdce78a82cbb12da19e22b62fdb6a72adf0e02e4ca22ca217687d115fb40b"
+    "8860042417dcfb0385746d53f28e0fd758dabe93081a091cbaa031dc184b745d"
+    "899752dd99ec613c5b9e920558b534cf9bf6aaebc3660fa9a835295125424d23"
+    "bb27f8ebb192eda62c9bff34f590090e8e7ef844550763d098228700548c6b9a"
+    "79fd619b8e48833614f12a7f0bad5b12a6b6082f6833382e75f1466d8dcd0249"
+    "32de2c0755b798ec3f0b97e98d59cc88b87cd19302b6a51958663c4e0350eb98"
+    "10d2d7c8d04053cd10a64a931dd188d73f6d25f90282010100f1004cac523c1b"
+    "2602f8d7e24ba756466a3ee798298eaf29b0e2e7082fa29de81c9bc01839a24d"
+    "07ee337aaad9049c48ff64352f0a4557150584e2683f32436616443ee2ec0b0c"
+    "dba1c320649914ad617d4fdc5d272c2c95eaa3a06e0c6007151441fd09e70e13"
+    "883df616bab8feb0fc0431a4e1b9c6d83753acd66c447c206798b840dc74943c"
+    "80fa481664d663cad0be9a4903d6c01218120bba67ef1f758eb3b633cd9c232c"
+    "9833a88c6f2b49933c80f336ce529552502861eb5ea7ba1ad825550067634925"
+    "5335e0fde35071918dfdc4276cbd8ea5afd2ac461c7a0659b36ec738822867a6"
+    "80fb18fab071f2a31587b7cb237fe0ab1e914edb72c8f3065b02820100228ade"
+    "afe35ad8d518645dff9c7b87946ad537defbc6be3d9bd9424125f6a5096b2cac"
+    "b7bf1d78588b4bfac7686c70fad62e0b6de2131c3a80bf5af29dcde4c686d363"
+    "4fd8f06b462b3af6c53233340114716d8f0588ce8e127c7a8cc5b9fb3437cae4"
+    "81673d671c012df4bdecb404fc483e7f2f612562096b6a155400ddd4f49b6558"
+    "4583e8c3b9bcfb742cce4dfe0c81cf2a7cb6faaf0cea58565bf9e49ab77c2947"
+    "75f301c95e6b7524cbfbca4c6fe4cc11c66bd17bff3f53e54c4b9364bbb4d88d"
+    "403a712047ccb0e363f7c089ea10bc58a09b04f51fcf0cc386503fed54a1e988"
+    "586e3c06ad66db57c8f2797b837455bb2310f421b4485479ce99e99b89028201"
+    "01008127b9ef77bac289e279dda86706ecd39bc8ce70db849e16e7b7123d6ed9"
+    "e56a293ac6fdb4956856e1af3104327da80beee29325fc89209c21730faaf283"
+    "4b5f807b5e805a23a9e66290a1e187b06f2299f79c8f479902e3ecf577dac243"
+    "0c489daca7a110f4983f2185aab4b2c3bbb1b3c5af29515861337562611f70ac"
+    "5ce9680d06a59ecc7a885c9919773cf60a1148b48280ce2bed067d554fb6b78d"
+    "d280818b19c40cf344c8e496657c86644dc5d50d82c79bb66e808ac3bf51e0ed"
+    "79c97068576910ea785859bd9412a85fd4b395d5f392f11b6b6c08a94e81a05b"
+    "9ae2f0714fb56155fb03908dd87b8af58fb4d0210d7a9ee39691312a63ace648"
+    "67950282010049f9be1fa244b6aac2b72d6a348030e5d0ea21ccd1a69122dbb2"
+    "163347232c91226a7112895c38ad224c641ff02d24a5f72280825fdd26b09006"
+    "b806f29cb57ebdab041c3b50e6ec0bd26142002cc778165937ecfa9fa05c2749"
+    "c82cdfa2438e691bdc1296618940a70dabc627ee6ff429d5934ee8706355a956"
+    "c2b9fff1ad4dc42cb543c05bf45c12ec30e9ccb7b587f5e47071977d2cbe0c66"
+    "4db33a3cde0b01d069043f6213d6c85176b15c1aa879bfce942c2a7d24d64e56"
+    "11451790ea4c94cc9bb15c355e6e7f2f8a8f829d804ddd94778fcd5da06ad122"
+    "ee3c405cfc4fb91c57fd13992e7a2918fa867a4ef5cd6d4b662c5efd95823a06"
+    "5ca424135771"
+);
+
+const PUBLIC_KEY_DER_4096: &[u8] = &hex!(
+    "30820222300d06092a864886f70d01010105000382020f003082020a02820201"
+    "00e87bba35288c9afab387c050fbb9576ddd833fbcd1160ab53bf95344fbdde0"
+    "82c2f3885eebdf3162b57bde590c4930774bed03fad7ce724ae7b37cf0b68600"
+    "a32f495675048cbfdcc1b6c999fdc8b053b475d257ef275ce7a26ce347c338d2"
+    "da8e6caf0f637605c1ea2b8aaca59a4b53e468af363187e360de3c11cbbcdff2"
+    "0e9813667e8c14051900d8f22e96589262e0072616734662945c9758f922ef3b"
+    "ed1b8f4a5af5137ac0bada83c77f5b67a2628860e9fd1b67063023a26e95c14d"
+    "210a86ad4ff763fee42f9570c17979ff8a78485bb08dda9cdcc5f722273e979c"
+    "f2c8e220969799f6a3400ad23058d45a6f19a79e7a8b4e74cbf791a26100cb96"
+    "cf1ad55a5b57ebd238ce5d5e3f0c027f0b7dfa0a04fc2f9bf04a9dbfb9bfe1ba"
+    "559cd51c5ba4173880d96dbd8fa46a891835e51caca4f27e5efbedeca946cf75"
+    "322f20e75728cff6f3ca16620ce0513f34388f83382757722a453f736dff8b0f"
+    "988b1485c274ca9b779ab5f65334e326d544f1782ef1dcd7019d002bc93ded11"
+    "07cff5f90e33e78cce45d6256be59486221188c9732da081110de2569cc1e665"
+    "4d54e94372e4b0ba2f227c200dfa8f178b2db6e891868c829c568510032c56a9"
+    "da08fbfee7a22b973ac5f44f91c44bc7596159ef3d6bdf89c4fce0a777bd9d18"
+    "6bba8f9ceebe1d8e9a709ffb566a5f58d8a8d93ebdc5b5f4d9c9841627ae0b55"
+    "830203010001"
+);
 
 #[test]
 fn only_rsa_is_supported() {
@@ -360,4 +463,143 @@ fn verify_with_different_salt_len() {
             .expect("Cannot verify salt94"),
         data
     );
+}
+
+#[rstest]
+#[case(SequesterKeySize::_1024Bits)]
+#[case(SequesterKeySize::_2048Bits)]
+fn sign_unsecure_unwrap(#[case] size_in_bits: SequesterKeySize) {
+    let (signing_key, _verify_key) = SequesterSigningKeyDer::generate_pair(size_in_bits);
+
+    let signed = signing_key.sign(b"foo");
+
+    let (_, data) = SequesterVerifyKeyDer::unsecure_unwrap(&signed).unwrap();
+
+    assert_eq!(data, b"foo");
+}
+
+#[test]
+fn sign_compat_4096_without_size() {
+    let verify_key = SequesterVerifyKeyDer::try_from(PUBLIC_KEY_DER_4096).unwrap();
+
+    let data = b"Hello world";
+
+    let signed = hex!(
+        "5253415353412d5053532d5348413235363ae3e75e17fa9eb458997d42a4ca875ae1448ee8"
+        "90ad851c43d39e77135237850b8b15a2f1dd164c8a2052ec983c164e673c6ad97be19d4e3a"
+        "a9a2a7ae7a69921f235b253f5a4c4b98eea052e9addec763f1b75d17a522dd8d5dc4247d2e"
+        "92d2c0bb65970da272d0433e864454b764877e6175e4efd7900c0c16868db4b825d799ad79"
+        "b4e3346f10ea5566af54300717d32f684142e0057527ae7fc8f4816002223fe085f65b7de4"
+        "3f5ed7ff3b7a4b1a71025cf987ffffc7d0705dbc97ec7c5702635ea32613a5e01e50cbcb02"
+        "cae233ccf328ae1c42fdacde88ae7c24ac811e1846396bd16211addc52a0526515f22b9517"
+        "d464aaf9b7ec7f3d75555d686fdd2c6e58d9c3b3e5d408373da90db011e6e44f9905097fee"
+        "a10342728e81408e05fe784aa0f8549963d2a4ca8b138c4d67b65031434cd020c35d791a60"
+        "c52fb740093264bfb1f989dc2214ba86a9fca98f6ec42eb62fcba384b1a7a9940f1249e923"
+        "185920b244f4398112bc626256481ce575434133914be1e084d5e8c15c922a1269d83bf050"
+        "83d0b35d85fc88eb1dc4935554dfdd174879cb801913799b18d1269efe4649dcb3bb132e69"
+        "7a6dae981f77557d2d23a8ce279fb7029a7da0c88f1c00f5bda5c78f52e95283997ea927b0"
+        "a2c38b033118017b092f470c198ac4762f4564ecd12e474310141282a3b352a20d8a3c59b2"
+        "c653d00c9666ecd9c275232848656c6c6f20776f726c64"
+    );
+
+    assert_eq!(verify_key.verify(&signed).unwrap(), data);
+
+    let (signature, output) = SequesterVerifyKeyDer::unsecure_unwrap(&signed).unwrap();
+
+    assert!(signature.starts_with(b"RSASSA-PSS-SHA256:"));
+    assert_eq!(output, data);
+}
+
+#[test]
+fn sign_compat_4096_with_size() {
+    let verify_key = SequesterVerifyKeyDer::try_from(PUBLIC_KEY_DER_4096).unwrap();
+
+    let data = b"Hello world";
+
+    let signed = hex!(
+        "5253415353412d5053532d5348413235364000023ae3e75e17fa9eb458997d42a4ca875ae1"
+        "448ee890ad851c43d39e77135237850b8b15a2f1dd164c8a2052ec983c164e673c6ad97be1"
+        "9d4e3aa9a2a7ae7a69921f235b253f5a4c4b98eea052e9addec763f1b75d17a522dd8d5dc4"
+        "247d2e92d2c0bb65970da272d0433e864454b764877e6175e4efd7900c0c16868db4b825d7"
+        "99ad79b4e3346f10ea5566af54300717d32f684142e0057527ae7fc8f4816002223fe085f6"
+        "5b7de43f5ed7ff3b7a4b1a71025cf987ffffc7d0705dbc97ec7c5702635ea32613a5e01e50"
+        "cbcb02cae233ccf328ae1c42fdacde88ae7c24ac811e1846396bd16211addc52a0526515f2"
+        "2b9517d464aaf9b7ec7f3d75555d686fdd2c6e58d9c3b3e5d408373da90db011e6e44f9905"
+        "097feea10342728e81408e05fe784aa0f8549963d2a4ca8b138c4d67b65031434cd020c35d"
+        "791a60c52fb740093264bfb1f989dc2214ba86a9fca98f6ec42eb62fcba384b1a7a9940f12"
+        "49e923185920b244f4398112bc626256481ce575434133914be1e084d5e8c15c922a1269d8"
+        "3bf05083d0b35d85fc88eb1dc4935554dfdd174879cb801913799b18d1269efe4649dcb3bb"
+        "132e697a6dae981f77557d2d23a8ce279fb7029a7da0c88f1c00f5bda5c78f52e95283997e"
+        "a927b0a2c38b033118017b092f470c198ac4762f4564ecd12e474310141282a3b352a20d8a"
+        "3c59b2c653d00c9666ecd9c275232848656c6c6f20776f726c64"
+    );
+
+    assert_eq!(verify_key.verify(&signed).unwrap(), data);
+
+    let (signature, output) = SequesterVerifyKeyDer::unsecure_unwrap(&signed).unwrap();
+
+    assert!(signature.starts_with(b"RSASSA-PSS-SHA256@"));
+    assert_eq!(output, data);
+}
+
+#[test]
+fn invalid_signature_with_correct_size_and_data_with_correct_size() {
+    let verify_key = SequesterVerifyKeyDer::try_from(PUBLIC_KEY_DER_1024).unwrap();
+    let signed = [
+        &b"RSASSA-PSS-SHA256@"[..],
+        &128u16.to_le_bytes()[..],
+        &[b':'][..],
+        &[0; 128][..],
+    ]
+    .concat();
+
+    let e = verify_key.verify(&signed).unwrap_err();
+
+    assert_eq!(e, CryptoError::SignatureVerification);
+
+    // This is unsecure, the signature is invalid but the length is correct
+    let (_signature, data) = SequesterVerifyKeyDer::unsecure_unwrap(&signed).unwrap();
+
+    assert_eq!(data, [])
+}
+
+#[test]
+fn invalid_signature_without_size_but_long_data() {
+    let verify_key = SequesterVerifyKeyDer::try_from(PUBLIC_KEY_DER_1024).unwrap();
+    let signed = [0; 1024];
+
+    let e = verify_key.verify(&signed).unwrap_err();
+
+    assert_eq!(e, CryptoError::Decryption);
+
+    // This is unsecure, the signature is invalid but the length is correct
+    let (_signature, data) = SequesterVerifyKeyDer::unsecure_unwrap(&signed).unwrap();
+
+    assert_eq!(data, [0; 494])
+}
+
+#[rstest]
+#[case::empty(b"", CryptoError::Decryption)]
+#[case::only_separator(b":", CryptoError::Algorithm("".into()))]
+#[case::no_signature(b"RSASSA-PSS-SHA256:", CryptoError::DataSize)]
+#[case::signature_too_small(b"RSASSA-PSS-SHA256:\0", CryptoError::DataSize)]
+#[case::missing_algorithm(b"@\0\0:", CryptoError::Algorithm("".into()))]
+#[case::missing_separator(b"RSASSA-PSS-SHA256@\0\0", CryptoError::Decryption)]
+#[case::missing_size(b"RSASSA-PSS-SHA256@:", CryptoError::Algorithm("RSASSA-PSS-SHA256@".into()))]
+#[case::signature_with_correct_size_but_invalid_data(
+    b"RSASSA-PSS-SHA256@\x80\0:",
+    CryptoError::DataSize
+)]
+// Compatibility test: When size is missing in signature, the default RSA key' size is 4096 bits
+#[case::unsecure_unwrap_is_invalid_if_signature_is_too_short(&[0; 529][..], CryptoError::Decryption)]
+fn invalid_signature(#[case] signed: &[u8], #[case] err: CryptoError) {
+    let verify_key = SequesterVerifyKeyDer::try_from(PUBLIC_KEY_DER_1024).unwrap();
+
+    let e = verify_key.verify(signed).unwrap_err();
+
+    assert_eq!(e, err);
+
+    let e = SequesterVerifyKeyDer::unsecure_unwrap(signed).unwrap_err();
+
+    assert_eq!(e, CryptoError::Signature);
 }

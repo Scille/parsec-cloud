@@ -742,10 +742,8 @@ impl UnsecureSequesterServiceCertificate {
 
 impl SequesterServiceCertificate {
     pub fn unsecure_load(signed: Bytes) -> DataResult<UnsecureSequesterServiceCertificate> {
-        let (_, compressed) =
-            // TODO: It should be SequesterVerifyKeyDer instead, but the signature
-            // need the key size
-            VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
+        let (_, compressed) = SequesterVerifyKeyDer::unsecure_unwrap(signed.as_ref())
+            .map_err(|_| DataError::Signature)?;
         let unsecure = load::<SequesterServiceCertificate>(compressed)?;
         Ok(UnsecureSequesterServiceCertificate { signed, unsecure })
     }
@@ -801,10 +799,16 @@ pub enum UnsecureAnyCertificate {
 }
 
 impl AnyCertificate {
-    // TODO: `VerifyKey::unsecure_unwrap` is invalid for `SequesterServiceCertificate`
     pub fn unsecure_load(signed: Bytes) -> Result<UnsecureAnyCertificate, DataError> {
-        let (_, compressed) =
-            VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
+        let compressed = match VerifyKey::unsecure_unwrap(signed.as_ref()) {
+            Ok((_, compressed)) => compressed,
+            Err(_) => {
+                let (_, compressed) = SequesterVerifyKeyDer::unsecure_unwrap(signed.as_ref())
+                    .map_err(|_| DataError::Signature)?;
+                compressed
+            }
+        };
+
         let unsecure = load::<Self>(compressed)?;
         Ok(match unsecure {
             AnyCertificate::User(unsecure) => {

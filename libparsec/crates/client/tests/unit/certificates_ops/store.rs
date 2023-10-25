@@ -231,11 +231,6 @@ async fn add_sequester_authority_certificate(env: &TestbedEnv) {
     p_assert_eq!(got, authority_certif);
 }
 
-// TODO: CertificatesStore doesn't work with SequesterServiceCertificate for
-// the moment, because it is signed with SequesterSigningKeyDer and it try to
-// unsecure_load with VerifyKey, which is wrong. But SequesterVerifyKey need to
-// know the size of the key, because the signature size depends on.
-#[ignore]
 #[parsec_test(testbed = "empty")]
 async fn add_sequester_service_certificate(env: &TestbedEnv) {
     let env = env.customize(|builder| {

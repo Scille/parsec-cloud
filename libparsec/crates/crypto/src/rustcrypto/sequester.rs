@@ -17,7 +17,7 @@ use sha2::Sha256;
 
 use crate::{
     deserialize_with_armor, serialize_with_armor, CryptoError, CryptoResult, SecretKey,
-    SequesterKeySize,
+    SequesterKeySize, COLON_SIZE, SIZE_SCHEME_SIZE,
 };
 
 /*
@@ -292,6 +292,7 @@ impl Serialize for SequesterVerifyKeyDer {
 
 impl SequesterVerifyKeyDer {
     const ALGORITHM: &str = "RSASSA-PSS-SHA256";
+    const DEFAULT_SIGNATURE_SIZE: usize = 4096 / 8;
 
     pub fn size_in_bytes(&self) -> usize {
         self.0.as_ref().n().bits() / 8
@@ -326,5 +327,29 @@ impl SequesterVerifyKeyDer {
             .map_err(|_| CryptoError::SignatureVerification)?;
 
         Ok(data.to_vec())
+    }
+
+    pub fn unsecure_unwrap(signed: &[u8]) -> Result<(&[u8], &[u8]), CryptoError> {
+        if signed.len() <= Self::ALGORITHM.len() {
+            return Err(CryptoError::Signature);
+        }
+
+        let (_algorithm, others) = signed.split_at(Self::ALGORITHM.len());
+
+        let signature_size = match others.first() {
+            // Signature: algo '@' rsa_sign_size ':' rsa_signature
+            Some(b'@') if others.len() >= SIZE_SCHEME_SIZE => {
+                SIZE_SCHEME_SIZE + u16::from_le_bytes([others[1], others[2]]) as usize
+            }
+            // Signature: algo ':' rsa_signature (DEFAULT_SIGNATURE_SIZE)
+            _ => Self::DEFAULT_SIGNATURE_SIZE,
+        } + Self::ALGORITHM.len()
+            + COLON_SIZE;
+
+        if signed.len() < signature_size {
+            return Err(CryptoError::Signature);
+        }
+
+        Ok(signed.split_at(signature_size))
     }
 }
