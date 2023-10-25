@@ -7,103 +7,143 @@ use libparsec_types::prelude::*;
 const FILENAME_CONFLICT_SUFFIX: &str = "Parsec - name conflict";
 const _FILE_CONTENT_CONFLICT_SUFFIX: &str = "Parsec - content conflict";
 
+macro_rules! merge_local_xxx_manifest {
+    (
+        $local_author: ident,
+        $timestamp: ident,
+        $local: ident,
+        $remote: ident,
+        $is_speculative_fn: expr,
+        $local_xxx_manifest_ty: ty
+        $(,)?
+    ) => {
+        {
+            // Sanity checks, caller is responsible to handle them properly !
+            assert_eq!($local.base.id, $remote.id);
+
+            // `created` should never change, so in theory we should have
+            // `local.base.created == remote.base.created`, but there is no strict
+            // guarantee (e.g. remote manifest may have been uploaded by a buggy client)
+            // so we have no choice but to accept whatever value remote provides.
+
+            // TODO
+            // Start by re-applying pattern (idempotent)
+            // if force_apply_pattern and isinstance(
+            //     local_manifest, (LocalFolderManifest, LocalWorkspaceManifest)
+            // ):
+            //     local_manifest = local_manifest.apply_prevent_sync_pattern(prevent_sync_pattern, timestamp)
+
+            // The remote hasn't changed
+            if $remote.version <= $local.base.version {
+                return None;
+            }
+
+            if !$local.need_sync {
+                // Only the remote has changed
+                return Some(<$local_xxx_manifest_ty>::from_remote($remote, None));
+            }
+
+            // Both the remote and the local have changed
+
+            // All the local changes have been successfully uploaded
+            if $local.match_remote(&$remote) {
+                return Some(<$local_xxx_manifest_ty>::from_remote($remote, None));
+            }
+
+            // The remote changes are ours (our current local changes occurs while
+            // we were uploading previous local changes that became the remote changes),
+            // simply acknowledge the remote changes and keep our local changes
+            //
+            // However speculative manifest can lead to a funny behavior:
+            // 1) alice has access to the workspace
+            // 2) alice upload a new remote workspace manifest
+            // 3) alice gets it local storage removed
+            // So next time alice tries to access this workspace she will
+            // creates a speculative workspace manifest.
+            // This speculative manifest will eventually be synced against
+            // the previous remote remote manifest which appears to be remote
+            // changes we know about (given we are the author of it !).
+            // If the speculative flag is not taken into account, we would
+            // consider we have  willingly removed all entries from the remote,
+            // hence uploading a new expunged remote manifest.
+            //
+            // Of course removing local storage is an unlikely situation, but:
+            // - it cannot be ruled out and would produce rare&exotic behavior
+            //   that would be considered as bug :/
+            // - the fixtures and backend data binder system used in the tests
+            //   makes it much more likely
+            if $remote.author == *$local_author && !$is_speculative_fn($local) {
+                let mut new_local = $local.to_owned();
+                new_local.base = $remote;
+                return Some(new_local);
+            }
+
+            // The remote has been updated by some other device
+
+            // Solve the folder conflict
+            let new_children = merge_children(&$local.base.children, &$local.children, &$remote.children);
+
+            // Children merge can end up with nothing to sync.
+            //
+            // This is typically the case when we sync for the first time a workspace
+            // shared with us that we didn't modify:
+            // - the workspace manifest is a speculative placeholder (with arbitrary update&create dates)
+            // - on sync the update date is different than in the remote, so a merge occurs
+            // - given we didn't modify the workspace, the children merge is trivial
+            // So without this check each each user we share the workspace with would
+            // sync a new workspace manifest version with only it updated date changing :/
+            //
+            // Another case where this happen:
+            // - we have local change on our workspace manifest for removing an entry
+            // - we rely on a base workspace manifest in version N
+            // - remote workspace manifest is in version N+1 and already integrate the removal
+            //
+            // /!\ Extra attention should be paid here if we want to add new fields
+            // /!\ with their own sync logic, as this optimization may shadow them!
+
+            if new_children == $remote.children {
+                Some(<$local_xxx_manifest_ty>::from_remote($remote, None))
+            } else {
+                let mut local_from_remote = <$local_xxx_manifest_ty>::from_remote($remote, None);
+                local_from_remote.children = new_children;
+                local_from_remote.updated = $timestamp;
+                local_from_remote.need_sync = true;
+                Some(local_from_remote)
+            }
+        }
+    };
+}
+
+pub(super) fn merge_local_folder_manifests(
+    local_author: &DeviceID,
+    timestamp: DateTime,
+    local: &LocalFolderManifest,
+    remote: FolderManifest,
+) -> Option<LocalFolderManifest> {
+    merge_local_xxx_manifest!(
+        local_author,
+        timestamp,
+        local,
+        remote,
+        |_| false, // Only workspace manifest can be speculative
+        LocalFolderManifest,
+    )
+}
+
 pub(super) fn merge_local_workspace_manifests(
     local_author: &DeviceID,
     timestamp: DateTime,
     local: &LocalWorkspaceManifest,
     remote: WorkspaceManifest,
 ) -> Option<LocalWorkspaceManifest> {
-    // Sanity checks, caller is responsible to handle them properly !
-    assert_eq!(local.base.id, remote.id);
-
-    // `created` should never change, so in theory we should have
-    // `local.base.created == remote.base.created`, but there is no strict
-    // guarantee (e.g. remote manifest may have been uploaded by a buggy client)
-    // so we have no choice but to accept whatever value remote provides.
-
-    // TODO
-    // Start by re-applying pattern (idempotent)
-    // if force_apply_pattern and isinstance(
-    //     local_manifest, (LocalFolderManifest, LocalWorkspaceManifest)
-    // ):
-    //     local_manifest = local_manifest.apply_prevent_sync_pattern(prevent_sync_pattern, timestamp)
-
-    // The remote hasn't changed
-    if remote.version <= local.base.version {
-        return None;
-    }
-
-    if !local.need_sync {
-        // Only the remote has changed
-        return Some(LocalWorkspaceManifest::from_remote(remote, None));
-    }
-
-    // Both the remote and the local have changed
-
-    // All the local changes have been successfully uploaded
-    if local.match_remote(&remote) {
-        return Some(LocalWorkspaceManifest::from_remote(remote, None));
-    }
-
-    // The remote changes are ours (our current local changes occurs while
-    // we were uploading previous local changes that became the remote changes),
-    // simply acknowledge the remote changes and keep our local changes
-    //
-    // However speculative manifest can lead to a funny behavior:
-    // 1) alice has access to the workspace
-    // 2) alice upload a new remote workspace manifest
-    // 3) alice gets it local storage removed
-    // So next time alice tries to access this workspace she will
-    // creates a speculative workspace manifest.
-    // This speculative manifest will eventually be synced against
-    // the previous remote remote manifest which appears to be remote
-    // changes we know about (given we are the author of it !).
-    // If the speculative flag is not taken into account, we would
-    // consider we have  willingly removed all entries from the remote,
-    // hence uploading a new expunged remote manifest.
-    //
-    // Of course removing local storage is an unlikely situation, but:
-    // - it cannot be ruled out and would produce rare&exotic behavior
-    //   that would be considered as bug :/
-    // - the fixtures and backend data binder system used in the tests
-    //   makes it much more likely
-    if remote.author == *local_author && !local.speculative {
-        let mut new_local = local.to_owned();
-        new_local.base = remote;
-        return Some(new_local);
-    }
-
-    // The remote has been updated by some other device
-
-    // Solve the folder conflict
-    let new_children = merge_children(&local.base.children, &local.children, &remote.children);
-
-    // Children merge can end up with nothing to sync.
-    //
-    // This is typically the case when we sync for the first time a workspace
-    // shared with us that we didn't modify:
-    // - the workspace manifest is a speculative placeholder (with arbitrary update&create dates)
-    // - on sync the update date is different than in the remote, so a merge occurs
-    // - given we didn't modify the workspace, the children merge is trivial
-    // So without this check each each user we share the workspace with would
-    // sync a new workspace manifest version with only it updated date changing :/
-    //
-    // Another case where this happen:
-    // - we have local change on our workspace manifest for removing an entry
-    // - we rely on a base workspace manifest in version N
-    // - remote workspace manifest is in version N+1 and already integrate the removal
-    //
-    // /!\ Extra attention should be paid here if we want to add new fields
-    // /!\ with their own sync logic, as this optimization may shadow them!
-
-    if new_children == remote.children {
-        Some(LocalWorkspaceManifest::from_remote(remote, None))
-    } else {
-        let mut local_from_remote = LocalWorkspaceManifest::from_remote(remote, None);
-        local_from_remote.children = new_children;
-        local_from_remote.updated = timestamp;
-        Some(local_from_remote)
-    }
+    merge_local_xxx_manifest!(
+        local_author,
+        timestamp,
+        local,
+        remote,
+        |local: &LocalWorkspaceManifest| local.speculative,
+        LocalWorkspaceManifest,
+    )
 }
 
 fn merge_children(
@@ -151,6 +191,15 @@ fn merge_children(
             (None, None, Some(remote_name)) => {
                 solved_remote_children.insert(remote_name.to_owned(), id);
             }
+
+            // Removed locally but renamed remotely
+            (Some(base_name), None, Some(remote_name)) if base_name != remote_name => {
+                solved_remote_children.insert(remote_name.to_owned(), id);
+            }
+            // Removed remotely but renamed locally
+            (Some(base_name), Some(local_name), None) if base_name != local_name => {
+                solved_remote_children.insert(local_name.to_owned(), id);
+            }
             // Removed locally
             (Some(_), None, _) => {
                 // Note that locally removed children might not be synchronized at this point
@@ -160,15 +209,16 @@ fn merge_children(
                 // Note that we're blindly removing children just because the remote said so
                 // This is OK as long as users have a way to recover their local changes
             }
-            // Name changed locally
+
+            // Renamed locally
             (Some(base_name), Some(local_name), Some(remote_name)) if base_name == remote_name => {
                 solved_local_children.insert(local_name.to_owned(), id);
             }
-            // Name changed remotely
+            // Renamed remotely
             (Some(base_name), Some(local_name), Some(remote_name)) if base_name == local_name => {
                 solved_remote_children.insert(remote_name.to_owned(), id);
             }
-            // Name changed both locally and remotely
+            // Renamed both locally and remotely
             (_, Some(_), Some(remote_name)) => {
                 // In this case, we simply decide that the remote is right since it means
                 // another user managed to upload their change first. Tough luck for the

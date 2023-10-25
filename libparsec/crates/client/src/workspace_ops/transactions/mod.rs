@@ -6,22 +6,24 @@ use crate::certificates_ops::{InvalidCertificateError, InvalidManifestError};
 
 mod create_file;
 mod create_folder;
+mod inbound_sync;
 mod open_file;
+mod outbound_sync;
 mod remove_entry;
 mod rename_entry;
 mod resize_file;
 mod stat_entry;
-mod sync_root;
 mod utils;
 
 pub(crate) use create_file::*;
 pub(crate) use create_folder::*;
+pub(crate) use inbound_sync::*;
 pub(crate) use open_file::*;
+pub(crate) use outbound_sync::*;
 pub(crate) use remove_entry::*;
 pub(crate) use rename_entry::*;
 pub(crate) use resize_file::*;
 pub(crate) use stat_entry::*;
-pub(crate) use sync_root::*;
 use utils::*;
 
 pub use stat_entry::EntryStat;

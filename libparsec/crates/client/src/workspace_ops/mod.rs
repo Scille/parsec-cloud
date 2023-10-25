@@ -116,6 +116,23 @@ impl WorkspaceOps {
         updater(guard.deref_mut());
     }
 
+    /// Download and merge remote changes from the server.
+    ///
+    /// If the client contains local changes, an outbound sync is still needed to
+    /// have the client fully synchronized with the server.
+    pub async fn inbound_sync(&self, entry_id: VlobID) -> Result<InboundSyncOutcome, SyncError> {
+        transactions::inbound_sync(self, entry_id).await
+    }
+
+    /// Upload local changes to the server.
+    ///
+    /// This also requires to download and merge any remote changes. Hence the
+    /// client is fully synchronized with the server once this function returns
+    /// (unless a concurrent local change occured during the sync).
+    pub async fn outbound_sync(&self, entry_id: VlobID) -> Result<(), SyncError> {
+        transactions::outbound_sync(self, entry_id).await
+    }
+
     /*
      * Public interface
      */
@@ -172,10 +189,6 @@ impl WorkspaceOps {
 
     pub async fn open_file(&self, path: &FsPath) -> Result<OpenedFile, FsOperationError> {
         transactions::open_file(self, path).await
-    }
-
-    pub async fn sync(&self) -> Result<(), SyncError> {
-        transactions::sync_root(self).await
     }
 }
 
