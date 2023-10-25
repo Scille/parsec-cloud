@@ -167,11 +167,11 @@ pub enum TestbedEvent {
     WorkspaceDataStorageLocalWorkspaceManifestUpdate(
         TestbedEventWorkspaceDataStorageLocalWorkspaceManifestUpdate,
     ),
-    WorkspaceDataStorageLocalFolderManifestUpdate(
-        TestbedEventWorkspaceDataStorageLocalFolderManifestUpdate,
+    WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(
+        TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdate,
     ),
-    WorkspaceDataStorageLocalFileManifestUpdate(
-        TestbedEventWorkspaceDataStorageLocalFileManifestUpdate,
+    WorkspaceDataStorageLocalFileManifestCreateOrUpdate(
+        TestbedEventWorkspaceDataStorageLocalFileManifestCreateOrUpdate,
     ),
     WorkspaceDataStorageFetchRealmCheckpoint(TestbedEventWorkspaceDataStorageFetchRealmCheckpoint),
 }
@@ -206,8 +206,12 @@ impl CrcHash for TestbedEvent {
             TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(x) => x.crc_hash(hasher),
             TestbedEvent::WorkspaceCacheStorageFetchBlock(x) => x.crc_hash(hasher),
             TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(x) => x.crc_hash(hasher),
-            TestbedEvent::WorkspaceDataStorageLocalFolderManifestUpdate(x) => x.crc_hash(hasher),
-            TestbedEvent::WorkspaceDataStorageLocalFileManifestUpdate(x) => x.crc_hash(hasher),
+            TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(x) => {
+                x.crc_hash(hasher)
+            }
+            TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(x) => {
+                x.crc_hash(hasher)
+            }
         }
     }
 }
@@ -334,8 +338,8 @@ impl TestbedEvent {
             | TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(_)
             | TestbedEvent::WorkspaceCacheStorageFetchBlock(_)
             | TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(_)
-            | TestbedEvent::WorkspaceDataStorageLocalFolderManifestUpdate(_)
-            | TestbedEvent::WorkspaceDataStorageLocalFileManifestUpdate(_) => true,
+            | TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(_)
+            | TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(_) => true,
         }
     }
 }
@@ -2617,11 +2621,11 @@ impl TestbedEventWorkspaceDataStorageLocalWorkspaceManifestUpdate {
 }
 
 /*
- * TestbedEventWorkspaceDataStorageLocalFolderManifestUpdate
+ * TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdate
  */
 
 no_certificate_event!(
-    TestbedEventWorkspaceDataStorageLocalFolderManifestUpdate,
+    TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdate,
     [
         timestamp: DateTime,
         device: DeviceID,
@@ -2630,12 +2634,12 @@ no_certificate_event!(
     ]
 );
 
-impl TestbedEventWorkspaceDataStorageLocalFolderManifestUpdate {
+impl TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdate {
     pub(super) fn from_builder(
         builder: &mut TestbedTemplateBuilder,
         device: DeviceID,
         realm: VlobID,
-        vlob: VlobID,
+        vlob: Option<VlobID>,
     ) -> Self {
         // 1) Consistency checks
 
@@ -2648,39 +2652,51 @@ impl TestbedEventWorkspaceDataStorageLocalFolderManifestUpdate {
 
         let timestamp = builder.counters.next_timestamp();
 
-        let local_manifest = builder
-            .events
-            .iter()
-            .rev()
-            .find_map(|e| {
-                match e {
-                    TestbedEvent::WorkspaceDataStorageFetchFolderVlob(x)
-                        if x.device == device
-                            && x.realm == realm
-                            && x.local_manifest.base.id == vlob =>
-                    {
-                        Some(x.local_manifest.clone())
-                    }
-                    TestbedEvent::WorkspaceDataStorageLocalFolderManifestUpdate(x)
-                        if x.device == device
-                            && x.realm == realm
-                            && x.local_manifest.base.id == vlob =>
-                    {
-                        Some(x.local_manifest.clone())
-                    }
-                    _ => None,
-                }
-                .map(|mut manifest| {
-                    let m = Arc::make_mut(&mut manifest);
-                    m.updated = timestamp;
-                    m.need_sync = true;
-                    manifest
-                })
-            })
-            .unwrap_or_else(|| {
-                // No previous local manifest, create one
-                Arc::new(LocalFolderManifest::new(device.clone(), realm, timestamp))
-            });
+        let local_manifest = match vlob {
+            // Create new local manifest
+            None => {
+                let vlob = builder.counters.next_entry_id();
+                let mut local_manifest = LocalFolderManifest::new(device.clone(), realm, timestamp);
+                local_manifest.base.id = vlob;
+                Arc::new(local_manifest)
+            }
+            // Update existing local manifest
+            Some(vlob) => {
+                let mut local_manifest = builder
+                    .events
+                    .iter()
+                    .rev()
+                    .find_map(|e| match e {
+                        TestbedEvent::WorkspaceDataStorageFetchFolderVlob(x)
+                            if x.device == device
+                                && x.realm == realm
+                                && x.local_manifest.base.id == vlob =>
+                        {
+                            Some(x.local_manifest.clone())
+                        }
+                        TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(x)
+                            if x.device == device
+                                && x.realm == realm
+                                && x.local_manifest.base.id == vlob =>
+                        {
+                            Some(x.local_manifest.clone())
+                        }
+                        _ => None,
+                    })
+                    .unwrap_or_else(|| {
+                        panic!(
+                            "Vlob {} in realm {} doesn't exist on device {} !",
+                            realm, vlob, device
+                        );
+                    });
+
+                let m = Arc::make_mut(&mut local_manifest);
+                m.updated = timestamp;
+                m.need_sync = true;
+
+                local_manifest
+            }
+        };
 
         // 2) Actual creation
 
@@ -2694,11 +2710,11 @@ impl TestbedEventWorkspaceDataStorageLocalFolderManifestUpdate {
 }
 
 /*
- * TestbedEventWorkspaceDataStorageLocalFileManifestUpdate
+ * TestbedEventWorkspaceDataStorageLocalFileManifestCreateOrUpdate
  */
 
 no_certificate_event!(
-    TestbedEventWorkspaceDataStorageLocalFileManifestUpdate,
+    TestbedEventWorkspaceDataStorageLocalFileManifestCreateOrUpdate,
     [
         timestamp: DateTime,
         device: DeviceID,
@@ -2707,12 +2723,12 @@ no_certificate_event!(
     ]
 );
 
-impl TestbedEventWorkspaceDataStorageLocalFileManifestUpdate {
+impl TestbedEventWorkspaceDataStorageLocalFileManifestCreateOrUpdate {
     pub(super) fn from_builder(
         builder: &mut TestbedTemplateBuilder,
         device: DeviceID,
         realm: VlobID,
-        vlob: VlobID,
+        vlob: Option<VlobID>,
     ) -> Self {
         // 1) Consistency checks
 
@@ -2725,39 +2741,51 @@ impl TestbedEventWorkspaceDataStorageLocalFileManifestUpdate {
 
         let timestamp = builder.counters.next_timestamp();
 
-        let local_manifest = builder
-            .events
-            .iter()
-            .rev()
-            .find_map(|e| {
-                match e {
-                    TestbedEvent::WorkspaceDataStorageFetchFileVlob(x)
-                        if x.device == device
-                            && x.realm == realm
-                            && x.local_manifest.base.id == vlob =>
-                    {
-                        Some(x.local_manifest.clone())
+        let local_manifest = match vlob {
+            // Create new local manifest
+            None => {
+                let vlob = builder.counters.next_entry_id();
+                let mut local_manifest = LocalFileManifest::new(device.clone(), realm, timestamp);
+                local_manifest.base.id = vlob;
+                Arc::new(local_manifest)
+            }
+            // Update existing local manifest
+            Some(vlob) => builder
+                .events
+                .iter()
+                .rev()
+                .find_map(|e| {
+                    match e {
+                        TestbedEvent::WorkspaceDataStorageFetchFileVlob(x)
+                            if x.device == device
+                                && x.realm == realm
+                                && x.local_manifest.base.id == vlob =>
+                        {
+                            Some(x.local_manifest.clone())
+                        }
+                        TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(x)
+                            if x.device == device
+                                && x.realm == realm
+                                && x.local_manifest.base.id == vlob =>
+                        {
+                            Some(x.local_manifest.clone())
+                        }
+                        _ => None,
                     }
-                    TestbedEvent::WorkspaceDataStorageLocalFileManifestUpdate(x)
-                        if x.device == device
-                            && x.realm == realm
-                            && x.local_manifest.base.id == vlob =>
-                    {
-                        Some(x.local_manifest.clone())
-                    }
-                    _ => None,
-                }
-                .map(|mut manifest| {
-                    let m = Arc::make_mut(&mut manifest);
-                    m.updated = timestamp;
-                    m.need_sync = true;
-                    manifest
+                    .map(|mut manifest| {
+                        let m = Arc::make_mut(&mut manifest);
+                        m.updated = timestamp;
+                        m.need_sync = true;
+                        manifest
+                    })
                 })
-            })
-            .unwrap_or_else(|| {
-                // No previous local manifest, create one
-                Arc::new(LocalFileManifest::new(device.clone(), realm, timestamp))
-            });
+                .unwrap_or_else(|| {
+                    panic!(
+                        "Vlob {} in realm {} doesn't exist on device {} !",
+                        realm, vlob, device
+                    );
+                }),
+        };
 
         // 2) Actual creation
 

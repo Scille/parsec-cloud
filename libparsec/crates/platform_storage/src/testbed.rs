@@ -226,12 +226,12 @@ pub(crate) async fn maybe_populate_workspace_data_storage(
                     {
                         (Some(x.local_manifest.clone()), None, None, None)
                     }
-                    TestbedEvent::WorkspaceDataStorageLocalFolderManifestUpdate(x)
+                    TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(x)
                         if x.device == device.device_id && x.realm == realm_id =>
                     {
                         (None, Some(x.local_manifest.clone()), None, None)
                     }
-                    TestbedEvent::WorkspaceDataStorageLocalFileManifestUpdate(x)
+                    TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(x)
                         if x.device == device.device_id && x.realm == realm_id =>
                     {
                         (None, None, Some(x.local_manifest.clone()), None)

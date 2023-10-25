@@ -265,8 +265,8 @@ impl TestbedTemplateBuilder {
             | TestbedEvent::WorkspaceDataStorageFetchFolderVlob(_)
             | TestbedEvent::WorkspaceCacheStorageFetchBlock(_)
             | TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(_)
-            | TestbedEvent::WorkspaceDataStorageLocalFolderManifestUpdate(_)
-            | TestbedEvent::WorkspaceDataStorageLocalFileManifestUpdate(_)
+            | TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(_)
+            | TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(_)
             | TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(_)) => filter(e),
             // Server side events are kept no matter what
             _ => true,
@@ -676,31 +676,31 @@ impl_event_builder!(
 );
 
 /*
- * TestbedEventCertificatesStorageFetchCertificates
+ * TestbedEventCertificatesStorageFetchCertificatesBuilder
  */
 
 impl_event_builder!(CertificatesStorageFetchCertificates, [device: DeviceID]);
 
 /*
- * TestbedEventUserStorageFetchUserVlob
+ * TestbedEventUserStorageFetchUserVlobBuilder
  */
 
 impl_event_builder!(UserStorageFetchUserVlob, [device: DeviceID]);
 
 /*
- * TestbedEventUserStorageFetchRealmCheckpoint
+ * TestbedEventUserStorageFetchRealmCheckpointBuilder
  */
 
 impl_event_builder!(UserStorageFetchRealmCheckpoint, [device: DeviceID]);
 
 /*
- * TestbedEventUserStorageLocalUpdate
+ * TestbedEventUserStorageLocalCreateOrUpdateBuilder
  */
 
 impl_event_builder!(UserStorageLocalUpdate, [device: DeviceID]);
 
 /*
- * TestbedEventWorkspaceCacheStorageFetchBlock
+ * TestbedEventWorkspaceCacheStorageFetchBlockBuilder
  */
 
 impl_event_builder!(
@@ -709,7 +709,7 @@ impl_event_builder!(
 );
 
 /*
- * TestbedEventWorkspaceDataStorageFetchWorkspaceVlob
+ * TestbedEventWorkspaceDataStorageFetchWorkspaceVlobBuilder
  */
 
 impl_event_builder!(
@@ -722,7 +722,7 @@ impl_event_builder!(
 );
 
 /*
- * TestbedEventWorkspaceDataStorageFetchFileVlob
+ * TestbedEventWorkspaceDataStorageFetchFileVlobBuilder
  */
 
 impl_event_builder!(
@@ -731,7 +731,7 @@ impl_event_builder!(
 );
 
 /*
- * TestbedEventWorkspaceDataStorageFetchFolderVlob
+ * TestbedEventWorkspaceDataStorageFetchFolderVlobBuilder
  */
 
 impl_event_builder!(
@@ -745,7 +745,7 @@ impl_event_builder!(
 );
 
 /*
- * TestbedEventWorkspaceDataStorageFetchRealmCheckpoint
+ * TestbedEventWorkspaceDataStorageFetchRealmCheckpointBuilder
  */
 
 impl_event_builder!(
@@ -754,7 +754,7 @@ impl_event_builder!(
 );
 
 /*
- * TestbedEventWorkspaceDataStorageLocalWorkspaceManifestUpdate
+ * TestbedEventWorkspaceDataStorageLocalWorkspaceManifestCreateOrUpdateBuilder
  */
 
 impl_event_builder!(
@@ -763,19 +763,19 @@ impl_event_builder!(
 );
 
 /*
- * TestbedEventWorkspaceDataStorageLocalFolderManifestUpdate
+ * TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdateBuilder
  */
 
 impl_event_builder!(
-    WorkspaceDataStorageLocalFolderManifestUpdate,
-    [device: DeviceID, realm: VlobID, vlob: VlobID]
+    WorkspaceDataStorageLocalFolderManifestCreateOrUpdate,
+    [device: DeviceID, realm: VlobID, vlob: Option<VlobID>]
 );
 
 /*
- * TestbedEventWorkspaceDataStorageLocalFileManifestUpdate
+ * TestbedEventWorkspaceDataStorageLocalFileManifestCreateOrUpdateBuilder
  */
 
 impl_event_builder!(
-    WorkspaceDataStorageLocalFileManifestUpdate,
-    [device: DeviceID, realm: VlobID, vlob: VlobID]
+    WorkspaceDataStorageLocalFileManifestCreateOrUpdate,
+    [device: DeviceID, realm: VlobID, vlob: Option<VlobID>]
 );
