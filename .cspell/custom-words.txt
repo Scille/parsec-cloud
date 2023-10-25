@@ -401,6 +401,8 @@ PoFile
 pointsize
 popleft
 positionpoll
+poutils
+powrap
 precommit
 printenv
 printindex
@@ -585,7 +587,6 @@ uncaseify
 uncatched
 unciphered
 UNFINISHPAGE
-uncaseify
 unhexlify
 Unmarshal
 unmock
