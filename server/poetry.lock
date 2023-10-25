@@ -190,13 +190,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.28.69"
-description = "Type annotations for boto3 1.28.69 generated with mypy-boto3-builder 7.19.0"
+version = "1.28.70"
+description = "Type annotations for boto3 1.28.70 generated with mypy-boto3-builder 7.19.0"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "boto3-stubs-1.28.69.tar.gz", hash = "sha256:2bfabb4a3a18b7fe73fedfe8f2d29aac35fecfb37037b9e8991ae48531c6cf3b"},
-    {file = "boto3_stubs-1.28.69-py3-none-any.whl", hash = "sha256:cb3d773bb3efb6699d3df7714a0ae44dd47bbb3a70a7eee8b850eb260176ae83"},
+    {file = "boto3-stubs-1.28.70.tar.gz", hash = "sha256:0c67fd217c9fd0d5688504aa64c5b760bccca9886ce05d675bbc613b568cba28"},
+    {file = "boto3_stubs-1.28.70-py3-none-any.whl", hash = "sha256:6d50983e2535220f3da911ac43e3fd13347d644474b3ebe694c4158c75a3df7f"},
 ]
 
 [package.dependencies]
@@ -242,7 +242,7 @@ batch = ["mypy-boto3-batch (>=1.28.0,<1.29.0)"]
 bedrock = ["mypy-boto3-bedrock (>=1.28.0,<1.29.0)"]
 bedrock-runtime = ["mypy-boto3-bedrock-runtime (>=1.28.0,<1.29.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.28.0,<1.29.0)"]
-boto3 = ["boto3 (==1.28.69)", "botocore (==1.31.69)"]
+boto3 = ["boto3 (==1.28.70)", "botocore (==1.31.70)"]
 braket = ["mypy-boto3-braket (>=1.28.0,<1.29.0)"]
 budgets = ["mypy-boto3-budgets (>=1.28.0,<1.29.0)"]
 ce = ["mypy-boto3-ce (>=1.28.0,<1.29.0)"]
@@ -2071,13 +2071,13 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
 name = "werkzeug"
-version = "2.3.7"
+version = "3.0.1"
 description = "The comprehensive WSGI web application library."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "werkzeug-2.3.7-py3-none-any.whl", hash = "sha256:effc12dba7f3bd72e605ce49807bbe692bd729c3bb122a3b91747a6ae77df528"},
-    {file = "werkzeug-2.3.7.tar.gz", hash = "sha256:2b8c0e447b4b9dbcc85dd97b6eeb4dcbaf6c8b6c3be0bd654e25553e0a2157d8"},
+    {file = "werkzeug-3.0.1-py3-none-any.whl", hash = "sha256:90a285dc0e42ad56b34e696398b8122ee4c681833fb35b8334a095d82c56da10"},
+    {file = "werkzeug-3.0.1.tar.gz", hash = "sha256:507e811ecea72b18a404947aded4b3390e1db8f826b494d76550ef45bb3b1dcc"},
 ]
 
 [package.dependencies]
@@ -2150,4 +2150,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.9.10"
-content-hash = "fe9fb3f4789ece02a33a89d9c15f625ca26641136f6ff7afac9180b16cbacab5"
+content-hash = "b118df272e449671ca5c9fe6ab3933ff1c6f6bd0680d768eda31979ee708d2e3"
