@@ -6,9 +6,22 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use libparsec_platform_async::lock::Mutex as AsyncMutex;
 use libparsec_types::prelude::*;
 
 use crate::certificates_ops::InvalidMessageError;
+
+macro_rules! impl_any_spied_event_type {
+    ($([$event:ident, $event_struct: ident])*) => {
+        #[cfg(test)]
+        #[derive(Debug, Clone)]
+        pub enum AnySpiedEvent {
+            $(
+                $event($event_struct),
+            )*
+        }
+    }
+}
 
 macro_rules! impl_event_bus_internal_and_event_bus_debug {
     ($([$event_struct:ident, $field_on_event_cbs:ident])*) => {
@@ -48,7 +61,7 @@ macro_rules! impl_event_bus_internal_and_event_bus_debug {
 }
 
 macro_rules! impl_broadcastable {
-    ($event_struct:ident, $field_on_event_cbs:ident) => {
+    ($event: ident, $event_struct:ident, $field_on_event_cbs:ident) => {
         impl Broadcastable for $event_struct {
             fn send(&self, event_bus: &EventBusInternal) {
                 let guard = event_bus
@@ -100,13 +113,26 @@ macro_rules! impl_broadcastable {
                     })
                     .map(|index| guard.swap_remove(index));
             }
+            #[cfg(test)]
+            fn to_any_spied_event(&self) -> AnySpiedEvent {
+                let cloned = (*self).clone();
+                AnySpiedEvent::$event(cloned)
+            }
+            #[cfg(test)]
+            fn try_from_any_spied_event(event: &AnySpiedEvent) -> Option<&Self> {
+                match event {
+                    AnySpiedEvent::$event(e) => Some(&e),
+                    _ => None,
+                }
+            }
         }
     };
 }
 
 macro_rules! impl_events {
     // Final step (output contains the list of all events at this point)
-    (@munch () -> ($([$event_struct:ident, $field_on_event_cbs:ident])*)) => {
+    (@munch () -> ($([$event: ident, $event_struct:ident, $field_on_event_cbs:ident])*)) => {
+        impl_any_spied_event_type!($([$event, $event_struct])*);
         impl_event_bus_internal_and_event_bus_debug!($([$event_struct, $field_on_event_cbs])*);
     };
 
@@ -115,8 +141,8 @@ macro_rules! impl_events {
         paste!{
             #[derive(Debug, Clone)]
             pub struct [< Event $event >];
-            impl_broadcastable!([< Event $event >], [< on_ $event:lower _cbs >]);
-            impl_events!(@munch ($($tail)*) -> ($($output)* [[< Event $event >], [< on_ $event:lower _cbs >]]));
+            impl_broadcastable!($event, [< Event $event >], [< on_ $event:lower _cbs >]);
+            impl_events!(@munch ($($tail)*) -> ($($output)* [$event, [< Event $event >], [< on_ $event:lower _cbs >]]));
         }
     };
 
@@ -125,8 +151,8 @@ macro_rules! impl_events {
         paste!{
             #[derive(Debug, Clone)]
             pub struct [< Event $event>]( $(pub $ty),* );
-            impl_broadcastable!([< Event $event >], [< on_ $event:lower _cbs >]);
-            impl_events!(@munch ($($tail)*) -> ($($output)* [[< Event $event >], [< on_ $event:lower _cbs >]]));
+            impl_broadcastable!($event, [< Event $event >], [< on_ $event:lower _cbs >]);
+            impl_events!(@munch ($($tail)*) -> ($($output)* [$event, [< Event $event >], [< on_ $event:lower _cbs >]]));
         }
     };
 
@@ -137,8 +163,8 @@ macro_rules! impl_events {
             pub struct [< Event $event>] {
                 $(pub $id:$ty),*
             }
-            impl_broadcastable!([< Event $event >], [< on_ $event:lower _cbs >]);
-            impl_events!(@munch ($($tail)*) -> ($($output)* [[< Event $event >], [< on_ $event:lower _cbs >]]));
+            impl_broadcastable!($event, [< Event $event >], [< on_ $event:lower _cbs >]);
+            impl_events!(@munch ($($tail)*) -> ($($output)* [$event, [< Event $event >], [< on_ $event:lower _cbs >]]));
         }
     };
 
@@ -196,12 +222,17 @@ impl_events!(
         name: EntryName,
         id: VlobID,
     },
+    WorkspaceOpsOutboundSyncNeeded {
+        realm_id: VlobID,
+        entry_id: VlobID,
+    },
     // Events related to monitors
     CertificatesMonitorCrashed(Arc<anyhow::Error>),
     MessagesMonitorCrashed(Arc<anyhow::Error>),
     InvalidCertificate(crate::certificates_ops::InvalidCertificateError),
     UserSyncMonitorCrashed(Arc<anyhow::Error>),
     WorkspaceInboundSyncMonitorCrashed(Arc<anyhow::Error>),
+    WorkspaceOutboundSyncMonitorCrashed(Arc<anyhow::Error>),
     // Re-publishing of `events_listen`
     CertificatesUpdated { index: IndexInt },
     MessageReceived { index: IndexInt },
@@ -236,6 +267,10 @@ where
         callback: Box<dyn Fn(&Self) + Send>,
     ) -> EventBusConnectionLifetime<Self>;
     fn disconnect(event_bus: &EventBusInternal, ptr: usize);
+    #[cfg(test)]
+    fn to_any_spied_event(&self) -> AnySpiedEvent;
+    #[cfg(test)]
+    fn try_from_any_spied_event(event: &AnySpiedEvent) -> Option<&Self>;
 }
 
 enum ServerState {
@@ -283,27 +318,163 @@ impl ServerStateListener {
     }
 }
 
+#[cfg(test)]
+mod spy {
+    use libparsec_platform_async::event::Event;
+
+    use super::*;
+
+    struct EventBusSpyInternal {
+        events: Vec<AnySpiedEvent>,
+        on_new_event: Option<Event>,
+    }
+
+    #[derive(Clone)]
+    pub struct EventBusSpy {
+        internal: Arc<Mutex<EventBusSpyInternal>>,
+    }
+
+    impl EventBusSpy {
+        pub(super) fn new() -> Self {
+            Self {
+                internal: Arc::new(Mutex::new(EventBusSpyInternal {
+                    events: Default::default(),
+                    on_new_event: None,
+                })),
+            }
+        }
+        pub(super) fn add(&self, event: AnySpiedEvent) {
+            let mut guard = self.internal.lock().expect("Mutex is poisoned");
+            guard.events.push(event);
+            if let Some(on_new_event) = guard.on_new_event.take() {
+                on_new_event.notify(usize::MAX);
+            }
+        }
+
+        /// Return all events that occured so far, useful for dump as last ditch attempt
+        /// during debugging.
+        ///
+        /// In tests, use `EventBusSpy::start_expecting` instead.
+        pub fn events(&self) -> Vec<AnySpiedEvent> {
+            let guard = self.internal.lock().expect("Mutex is poisoned");
+            guard.events.clone()
+        }
+
+        /// Convenient way to ensure some events occured in at a given place.
+        /// Note any non-acknowledged event will cause a panic on drop.
+        pub fn start_expecting(&self) -> EventBusSpyExpectContext {
+            let current_offset = {
+                let guard = self.internal.lock().expect("Mutex is poisoned");
+                guard.events.len()
+            };
+            EventBusSpyExpectContext {
+                acknowledged_offset: current_offset,
+                internal: self.internal.clone(),
+            }
+        }
+    }
+
+    pub struct EventBusSpyExpectContext {
+        acknowledged_offset: usize,
+        internal: Arc<Mutex<EventBusSpyInternal>>,
+    }
+
+    impl EventBusSpyExpectContext {
+        /// Check and mark acknowledged the next event, panic if no
+        /// new event are available.
+        pub fn assert_next<E: Broadcastable>(&mut self, check: impl FnOnce(&E)) {
+            let guard = self.internal.lock().expect("Mutex is poisoned");
+            let not_acknowledged = &guard.events[self.acknowledged_offset..];
+            match not_acknowledged.first() {
+                None => panic!("No new events !"),
+                // Event available, but is it the expected one ?
+                Some(any_event) => {
+                    match E::try_from_any_spied_event(any_event) {
+                        None => panic!("Unexpected event: {:?}", any_event),
+                        // callback is expected to panic if unhappy with the event
+                        Some(event) => check(event),
+                    }
+                }
+            }
+            self.acknowledged_offset += 1;
+        }
+
+        /// Check and mark acknowledged the next event available, block if no
+        /// event are currently available.
+        pub async fn wait_and_assert_next<E: Broadcastable>(&mut self, check: impl FnOnce(&E)) {
+            // 1) Ensure a new event is available, or else wait for one !
+            let maybe_wait_for_event = {
+                let mut guard = self.internal.lock().expect("Mutex is poisoned");
+                if guard.events[self.acknowledged_offset..].is_empty() {
+                    let listener = match &guard.on_new_event {
+                        Some(on_new_event) => on_new_event.listen(),
+                        None => {
+                            let on_new_event = Event::new();
+                            let listener = on_new_event.listen();
+                            guard.on_new_event = Some(on_new_event);
+                            listener
+                        }
+                    };
+                    Some(listener)
+                } else {
+                    None
+                }
+            };
+            if let Some(listener) = maybe_wait_for_event {
+                listener.await;
+            }
+
+            // 2) Assert the new event is what we expect
+            self.assert_next(check);
+        }
+    }
+
+    impl Drop for EventBusSpyExpectContext {
+        fn drop(&mut self) {
+            // If the events mutex is poisoned, that means a panic is already bubbling up
+            if let Ok(guard) = self.internal.lock() {
+                // Ensure all events have been acknowledged
+                let not_acknowledged = &guard.events[self.acknowledged_offset..];
+                if !not_acknowledged.is_empty() {
+                    panic!(
+                        "Event spy expect context hasn't acknowledge all events: {:#?}",
+                        not_acknowledged
+                    )
+                }
+            }
+        }
+    }
+}
+#[cfg(test)]
+pub use spy::{EventBusSpy, EventBusSpyExpectContext};
+
 #[derive(Clone)]
 pub struct EventBus {
     internal: Arc<EventBusInternal>,
-    server_state: Arc<libparsec_platform_async::lock::Mutex<ServerStateListener>>,
+    server_state: Arc<AsyncMutex<ServerStateListener>>,
+    #[cfg(test)]
+    pub spy: EventBusSpy,
 }
 
 impl Default for EventBus {
     fn default() -> Self {
         let internal = Arc::new(EventBusInternal::default());
-        let server_state = Arc::new(libparsec_platform_async::lock::Mutex::new(
-            ServerStateListener::new(&internal),
-        ));
+        let server_state = Arc::new(AsyncMutex::new(ServerStateListener::new(&internal)));
         Self {
             internal,
             server_state,
+            #[cfg(test)]
+            spy: EventBusSpy::new(),
         }
     }
 }
 
 impl EventBus {
     pub fn send(&self, event: &impl Broadcastable) {
+        #[cfg(test)]
+        {
+            self.spy.add(event.to_any_spied_event());
+        }
         event.send(&self.internal);
     }
 
