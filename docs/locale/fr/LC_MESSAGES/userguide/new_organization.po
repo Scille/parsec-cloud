@@ -1,0 +1,169 @@
+# Copyright (C) 2016-2020, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# Parsec dev <dev-parsec@scille.fr>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 2.16.0-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-10-26 11:54+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.13.0\n"
+
+#: ../../userguide/new_organization.rst:6
+msgid "Create your own organization"
+msgstr "Créer votre propre organisation"
+
+#: ../../userguide/new_organization.rst:8
+msgid ""
+"Once installed, the Parsec client must be connected to an organization that "
+"have been created on a Parsec server."
+msgstr ""
+"Une fois installé, le client Parsec doit se connecter à une organisation "
+"ayant été créée sur un serveur Parsec."
+
+#: ../../userguide/new_organization.rst:10
+msgid ""
+"The simplest way to do that is to create one directly from the Parsec "
+"client. It automatically handles all the process securely, and create a "
+"temporary account on the `Parsec SAAS service <https://my.parsec.cloud/>`_, "
+"sending an invitation link to end registration through email."
+msgstr ""
+"La façon la plus simple de faire cela est d'en créer une directement depuis "
+"le client Parsec. Cela prend en charge tout le processus de manière "
+"sécurisée, et crée un compte temporaire sur le `service SAAS Parsec <https://"
+"my.parsec.cloud/>`_ en envoyant par email un lien permettant de terminer "
+"l'inscription."
+
+#: ../../userguide/new_organization.rst:12
+msgid ""
+"Creating an organization is proposed automatically if you have no account "
+"linked to your Parsec client."
+msgstr ""
+"Créer une organisation est proposé automatiquement si aucun compte n'est lié "
+"à votre client Parsec."
+
+#: ../../userguide/new_organization.rst:-1
+msgid "Parsec welcome screen"
+msgstr "L'écran d'accueil de Parsec"
+
+#: ../../userguide/new_organization.rst:18
+msgid ""
+"Otherwise, you can click on `Create an organization` in the Menu of the "
+"login screen."
+msgstr ""
+"Sinon, vous pouvez cliquer sur `Créer une organisation` dans le menu en haut "
+"à gauche de l'écran de connexion."
+
+#: ../../userguide/new_organization.rst:-1
+msgid "Create an organization in menu"
+msgstr "Créer une organisation depuis le menu"
+
+#: ../../userguide/new_organization.rst:26
+msgid ""
+"Another possibility (though more technical) is to host you own Parsec server "
+"and create the organization on it using the Parsec CLI. You can then join "
+"that organization using an organization bootstrap URL. You can read about "
+"this in the `the Hosting server <https://github.com/Scille/parsec-cloud/blob/"
+"master/docs/HOSTING.md>`_ part."
+msgstr ""
+"Une autre possibilité (bien que plus technique) est d'héberger votre propre "
+"serveur Parsec et de créer l'organisation sur celui-ci via la CLI Parsec. "
+"Vous pouvez rejoindre cette organisation en fournissant cet URL de bootstrap "
+"à Parsec. Vous pouvez lire plus à ce sujet dans la partie `Héberger le "
+"serveur <https://github.com/Scille/parsec-cloud/blob/master/docs/HOSTING."
+"md>`_."
+
+#: ../../userguide/new_organization.rst:29
+msgid ""
+"Once you start the process, you are asked for an Email and an Organization "
+"Name. This email address will be used to contact you later."
+msgstr ""
+"Une fois que vous avez démarré le processus, il vous sera demandé un Email "
+"et un Nom d'Organisation. C'est cette adresse email qui sera utilisée pour "
+"vous contacter."
+
+#: ../../userguide/new_organization.rst:-1
+msgid "Organization create process"
+msgstr "Processus de création d'organisation"
+
+#: ../../userguide/new_organization.rst:35
+msgid ""
+"Creating an organization through the Parsec client register yourself as its "
+"first user and device (this step is called the bootstrap). This is why you "
+"must enter your Username, Device name, and your Password."
+msgstr ""
+"Créer une organisation depuis le client Parsec vous enregistre comme son "
+"premier utilisateur et appareil (cette étape est appelée le bootstrap). "
+"C'est pourquoi vous devez entrer votre nom d'utilisateur, d'appareil, et mot "
+"de passe."
+
+#: ../../userguide/new_organization.rst:-1
+msgid "Organization bootstrap process"
+msgstr "Processus de démarrage d'une organisation"
+
+#: ../../userguide/new_organization.rst:41
+msgid "Few key points here:"
+msgstr "Quelques point importants :"
+
+#: ../../userguide/new_organization.rst:43
+msgid ""
+"User name is the name you'll be referenced by from within the organization"
+msgstr ""
+"Le nom d'utilisateur est le nom par lequel vous serez connu au sein de "
+"l'organisation"
+
+#: ../../userguide/new_organization.rst:44
+msgid ""
+"Device name is the name your current hardware will be referenced by (e.g. "
+"people will see the work you've done on this computer as from "
+"``my_user@my_device``)"
+msgstr ""
+"Le nom de terminal servira à vous identifier dans vos modifications (par "
+"exemple les gens verront votre travail sur cet ordinateur comme provenant de "
+"``my_user@my_device``)"
+
+#: ../../userguide/new_organization.rst:46
+msgid ""
+"The password is used to encrypt your user&device private keys on your "
+"computer."
+msgstr ""
+"Le mot de passe est utilisé pour chiffrer vos clés privées d'utilisateur et "
+"de terminal sur votre ordinateur."
+
+#: ../../userguide/new_organization.rst:48
+msgid ""
+"Once this process is completed, you can log-in to the organization you just "
+"created."
+msgstr ""
+"Une fois ce processus complété, vous pouvez vous connecter à l'organisation "
+"que vous venez de créer."
+
+#: ../../userguide/new_organization.rst:52
+msgid ""
+"The keys stored encrypted on your computer are what makes Parsec secure. "
+"Hence there is no way to recover if you lost them (e.g. if you computer is "
+"stolen) or if you forget the password protecting them."
+msgstr ""
+"Les clés stockées sur votre ordinateur assurent la sécurité de Parsec. De ce "
+"fait il n'est pas possible de les récupérer si vous les perdez (par exemple "
+"si votre ordinateur est volé) ou si vous oubliez le mot de passe les "
+"protégeant."
+
+#: ../../userguide/new_organization.rst:56
+msgid ""
+"To avoid losing access to your data you should always have :ref:`multiple "
+"devices <doc_userguide_new_device>` or :ref:`share your workspaces "
+"<doc_userguide_share_data>` with other users."
+msgstr ""
+"Pour éviter de perdre l'accès à vos données, vous devriez toujours avoir :"
+"ref:`plusieurs terminaux <doc_userguide_new_device>` ou bien :ref:`partager "
+"vos espaces de travail <doc_userguide_share_data>` avec d'autre utilisateurs."

@@ -1,7 +1,6 @@
-# SOME DESCRIPTIVE TITLE.
 # Copyright (C) 2016-2020, Scille SAS
 # This file is distributed under the same license as the Parsec package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
+# Parsec dev <dev-parsec@scille.fr>, 2023.
 #
 msgid ""
 msgstr ""
