@@ -23,7 +23,6 @@
         :class="{'popover-is-open': isPopoverOpen}"
         slot="end"
         :icon="chevronDown"
-        ref="chevron"
       />
     </div>
   </ion-item>
@@ -49,7 +48,6 @@ import { askQuestion, Answer } from '@/components/core/ms-modal/MsQuestionModal.
 import { NotificationCenter, Notification, NotificationKey, NotificationLevel } from '@/services/notificationCenter';
 
 const isPopoverOpen = ref(false);
-const chevron = ref();
 const router = useRouter();
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
@@ -72,7 +70,6 @@ async function openPopover(ev: Event): Promise<void> {
   await popover.present();
 
   popover.onDidDismiss().then(async (value) => {
-    chevron.value.$el.style.setProperty('transition', 'transform ease-out 300ms');
     isPopoverOpen.value = false;
 
     if (value.data === undefined) {
@@ -144,9 +141,11 @@ async function openPopover(ev: Event): Promise<void> {
   gap: .1em;
   color: var(--parsec-color-light-secondary-text);
 
-  ion-icon.popover-is-open {
-    transform: rotate(180deg);
+  ion-icon {
     transition: transform ease-out 300ms;
+    &.popover-is-open {
+      transform: rotate(180deg);
+    }
   }
 }
 
