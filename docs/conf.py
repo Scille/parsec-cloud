@@ -37,6 +37,11 @@ extensions = [
 
 # Sphinx-intl config
 locale_dirs = ["locale/"]
+# Configure how pot & po file are generated:
+#
+# - True: squash multiple `.rst` files into a single `.pot` file.
+# - False: 1 `.rst` file = 1 `.pot` file.
+gettext_compact = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
