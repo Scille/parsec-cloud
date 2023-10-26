@@ -5,6 +5,7 @@ use std::sync::Arc;
 use libparsec_types::prelude::*;
 
 use super::{super::WorkspaceOps, check_write_access, resolve_path, FsOperationError};
+use crate::EventWorkspaceOpsOutboundSyncNeeded;
 
 pub(crate) async fn create_file(
     ops: &WorkspaceOps,
@@ -20,8 +21,9 @@ pub(crate) async fn create_file(
     };
 
     // Special case for /
-    let child_id = if parent_path.is_root() {
+    let (parent_id, child_id) = if parent_path.is_root() {
         let (updater, mut parent) = ops.data_storage.for_update_workspace_manifest().await;
+        let parent_id = parent.base.id;
 
         let now = ops.device.time_provider.now();
         let new_child = Arc::new(LocalFileManifest::new(
@@ -39,7 +41,7 @@ pub(crate) async fn create_file(
         updater.new_child_file_manifest(new_child).await?;
         updater.update_workspace_manifest(parent).await?;
 
-        child_id
+        (parent_id, child_id)
     } else {
         let resolution = resolve_path(ops, &parent_path).await?;
 
@@ -53,6 +55,7 @@ pub(crate) async fn create_file(
                 return Err(FsOperationError::EntryNotFound)
             }
         };
+        let parent_id = parent.base.id;
 
         let now = ops.device.time_provider.now();
         let new_child = Arc::new(LocalFileManifest::new(
@@ -70,8 +73,19 @@ pub(crate) async fn create_file(
         updater.new_child_file_manifest(new_child).await?;
         updater.update_as_folder_manifest(parent).await?;
 
-        child_id
+        (parent_id, child_id)
     };
+
+    let event = EventWorkspaceOpsOutboundSyncNeeded {
+        realm_id: ops.realm_id,
+        entry_id: child_id,
+    };
+    ops.event_bus.send(&event);
+    let event = EventWorkspaceOpsOutboundSyncNeeded {
+        realm_id: ops.realm_id,
+        entry_id: parent_id,
+    };
+    ops.event_bus.send(&event);
 
     Ok(child_id)
 }

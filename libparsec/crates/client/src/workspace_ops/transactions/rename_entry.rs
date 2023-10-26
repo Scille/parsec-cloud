@@ -5,6 +5,7 @@ use std::sync::Arc;
 use libparsec_types::prelude::*;
 
 use super::{super::WorkspaceOps, check_write_access, resolve_path, FsOperationError};
+use crate::EventWorkspaceOpsOutboundSyncNeeded;
 
 pub(crate) async fn rename_entry(
     ops: &WorkspaceOps,
@@ -27,7 +28,7 @@ pub(crate) async fn rename_entry(
     }
 
     // Special case for /
-    if parent_path.is_root() {
+    let parent_id = if parent_path.is_root() {
         let (updater, mut parent) = ops.data_storage.for_update_workspace_manifest().await;
         let mut_parent = Arc::make_mut(&mut parent);
 
@@ -51,9 +52,10 @@ pub(crate) async fn rename_entry(
             }
         }
 
+        let parent_id = parent.base.id;
         updater.update_workspace_manifest(parent).await?;
 
-        Ok(())
+        parent_id
     } else {
         let resolution = resolve_path(ops, &parent_path).await?;
 
@@ -89,8 +91,17 @@ pub(crate) async fn rename_entry(
             }
         }
 
+        let parent_id = parent.base.id;
         updater.update_as_folder_manifest(parent).await?;
 
-        Ok(())
-    }
+        parent_id
+    };
+
+    let event = EventWorkspaceOpsOutboundSyncNeeded {
+        realm_id: ops.realm_id,
+        entry_id: parent_id,
+    };
+    ops.event_bus.send(&event);
+
+    Ok(())
 }
