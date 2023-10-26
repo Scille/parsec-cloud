@@ -113,6 +113,7 @@ macro_rules! impl_events {
     // e.g. Foo
     (@munch ( $event:ident, $($tail:tt)* ) -> ($($output:tt)*)) => {
         paste!{
+            #[derive(Debug, Clone)]
             pub struct [< Event $event >];
             impl_broadcastable!([< Event $event >], [< on_ $event:lower _cbs >]);
             impl_events!(@munch ($($tail)*) -> ($($output)* [[< Event $event >], [< on_ $event:lower _cbs >]]));
@@ -122,6 +123,7 @@ macro_rules! impl_events {
     // e.g. Foo(u64)
     (@munch ( $event:ident ( $($ty:ty),* $(,)? ), $($tail:tt)* ) -> ($($output:tt)*)) => {
         paste!{
+            #[derive(Debug, Clone)]
             pub struct [< Event $event>]( $(pub $ty),* );
             impl_broadcastable!([< Event $event >], [< on_ $event:lower _cbs >]);
             impl_events!(@munch ($($tail)*) -> ($($output)* [[< Event $event >], [< on_ $event:lower _cbs >]]));
@@ -131,7 +133,7 @@ macro_rules! impl_events {
     // e.g. Foo{ bar: u64 }
     (@munch ( $event:ident { $($id:ident: $ty:ty),* $(,)? }, $($tail:tt)* ) -> ($($output:tt)*)) => {
         paste!{
-            #[derive(Debug)]
+            #[derive(Debug, Clone)]
             pub struct [< Event $event>] {
                 $(pub $id:$ty),*
             }
@@ -152,15 +154,20 @@ macro_rules! impl_events {
     }
 }
 
+#[derive(Debug, Clone)]
 pub enum IncompatibleServerReason {
     UnsupportedApiVersion {
         api_version: ApiVersion,
         supported_api_versions: Vec<ApiVersion>,
     },
-    Unexpected(anyhow::Error),
+    Unexpected(Arc<anyhow::Error>),
 }
 
 // All those items will be named with a `Event` prefix (e.g. `Foo` => `EventFoo`)
+// Note all errors in the events are wrapped with an `Arc`, this due to`anyhow::Error`
+// not being `Clone`. If you wonder, performance impact should be minimal because:
+// 1) Error-containing events are not often fired
+// 2) `anyhow::Error` itself is just a pointer, so converting it to an Arc is cheap
 impl_events!(
     // Dummy event for tests only
     Ping { ping: String },
@@ -190,10 +197,11 @@ impl_events!(
         id: VlobID,
     },
     // Events related to monitors
-    CertificatesMonitorCrashed(anyhow::Error),
-    MessagesMonitorCrashed(anyhow::Error),
+    CertificatesMonitorCrashed(Arc<anyhow::Error>),
+    MessagesMonitorCrashed(Arc<anyhow::Error>),
     InvalidCertificate(crate::certificates_ops::InvalidCertificateError),
-    UserSyncMonitorCrashed(anyhow::Error),
+    UserSyncMonitorCrashed(Arc<anyhow::Error>),
+    WorkspaceInboundSyncMonitorCrashed(Arc<anyhow::Error>),
     // Re-publishing of `events_listen`
     CertificatesUpdated { index: IndexInt },
     MessageReceived { index: IndexInt },

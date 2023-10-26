@@ -70,7 +70,7 @@ impl CertificatesMonitor {
                             PollServerError::Internal(err) => {
                                 // Unexpected error occured, better stop the monitor
                                 log::warn!("Certificate monitor has crashed: {}", err);
-                                let event = EventCertificatesMonitorCrashed(err);
+                                let event = EventCertificatesMonitorCrashed(Arc::new(err));
                                 event_bus.send(&event);
                                 return;
                             }

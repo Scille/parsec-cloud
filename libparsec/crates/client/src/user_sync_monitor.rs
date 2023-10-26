@@ -88,7 +88,7 @@ impl UserSyncMonitor {
                             SyncError::Internal(err) => {
                                 // Unexpected error occured, better stop the monitor
                                 log::warn!("Certificate monitor has crashed: {}", err);
-                                let event = EventUserSyncMonitorCrashed(err);
+                                let event = EventUserSyncMonitorCrashed(Arc::new(err));
                                 event_bus.send(&event);
                                 return;
                             }

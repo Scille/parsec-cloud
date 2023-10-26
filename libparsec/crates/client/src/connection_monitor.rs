@@ -191,7 +191,8 @@ fn handle_sse_error(
             ControlFlow::Break(())
         }
         err => {
-            let event = EventIncompatibleServer(IncompatibleServerReason::Unexpected(err.into()));
+            let event =
+                EventIncompatibleServer(IncompatibleServerReason::Unexpected(Arc::new(err.into())));
             event_bus.send(&event);
             ControlFlow::Break(())
         }

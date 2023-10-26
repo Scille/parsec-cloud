@@ -12,7 +12,7 @@ use crate::{
     certificates_ops::store::CertificatesStoreReadExt, event_bus::EventInvalidCertificate,
 };
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Clone, thiserror::Error)]
 pub enum InvalidCertificateError {
     #[error("Certificate `{hint}` is corrupted: {error}")]
     Corrupted { hint: String, error: DataError },
