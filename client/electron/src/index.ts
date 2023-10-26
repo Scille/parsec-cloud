@@ -7,11 +7,15 @@ import { app, MenuItem, ipcMain, shell } from 'electron';
 import electronIsDev from 'electron-is-dev';
 import unhandled from 'electron-unhandled';
 // import { autoUpdater } from 'electron-updater';
+import * as Sentry from '@sentry/electron';
 
 import { ElectronCapacitorApp, setupContentSecurityPolicy, setupReloadWatcher } from './setup';
 
 // Graceful handling of unhandled errors.
 unhandled();
+
+// Configure sentry
+Sentry.init({ dsn: 'SENTRY_DSN' });
 
 // Define our menu templates (these are optional)
 const appMenuBarMenuTemplate: (MenuItemConstructorOptions | MenuItem)[] = [
