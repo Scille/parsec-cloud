@@ -18,6 +18,15 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.13.0\n"
 
-#: ../../adminguide/index.rst:7
-msgid "Administrator Guide"
-msgstr "Guide administrateur"
+#: ../../userguide/index.rst:7
+msgid "User Guide"
+msgstr "Guide utilisateur"
+
+#: ../../userguide/index.rst:21
+msgid ""
+"You can also use the simplified `Parsec User Guide [French] <https://parsec."
+"cloud/wp-content/uploads/2022/04/GU-a-jour-Android-new-1.pdf>`_"
+msgstr ""
+"Vous pouvez également utiliser le `Guide d'Utilisation Simplifié Parsec "
+"<https://parsec.cloud/wp-content/uploads/2022/04/GU-a-jour-Android-new-1."
+"pdf>`_"

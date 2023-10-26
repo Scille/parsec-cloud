@@ -1,0 +1,153 @@
+# Copyright (C) 2016-2020, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# Parsec dev <dev-parsec@scille.fr>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 2.16.0-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-10-26 11:54+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.13.0\n"
+
+#: ../../userguide/new_user.rst:6
+msgid "Create new users"
+msgstr "Créer de nouveaux utilisateurs"
+
+#: ../../userguide/new_user.rst:8
+msgid "Now that our organization is ready, we can start inviting new users."
+msgstr ""
+"Maintenant que notre organisation est prête, nous pouvons inviter de "
+"nouveaux utilisateurs."
+
+#: ../../userguide/new_user.rst:10
+msgid ""
+"In Parsec, inviting a user is a critical operation that aims at building "
+"trust toward an unknown user the inviting using has vouched for. For this "
+"reason the operation requires both the invitee and inviting users to be "
+"connected to the Parsec server at the same time."
+msgstr ""
+"Dans Parsec, inviter un utilisateur est une opération critique qui vise à "
+"établir de la confiance envers un utilisateur inconnu par le biais de "
+"l'utilisateur ayant décidé de l'inviter. Pour cette raison cette opération "
+"nécessite que l'utilisateur invité et celui invitant soient tous les deux "
+"connectés au serveur Parsec en même temps."
+
+#: ../../userguide/new_user.rst:13
+msgid "Send invite"
+msgstr "Envoi de l'invitation"
+
+#: ../../userguide/new_user.rst:15
+msgid "Inviting a user is done from the Parsec client:"
+msgstr "Inviter un nouveau terminal se fait via le client Parsec:"
+
+#: ../../userguide/new_user.rst:-1
+msgid "Click on Invite User"
+msgstr "Cliquer sur ``Invite un utilisateur``"
+
+#: ../../userguide/new_user.rst:21
+msgid ""
+"Once started the invitation is pending (note you can cancel it though) and "
+"the invitee must check his emails for an invitation link that has been sent "
+"to him."
+msgstr ""
+"Une fois commencée, l'invitation apparait comme en attente (notez qu'il est "
+"toutefois possible de l'annuler) et l'invité doit recevoir un lien "
+"d'invitation par email."
+
+#: ../../userguide/new_user.rst:23
+msgid ""
+"It's also during this step that is chosen if the invitee will have "
+"administrator rights over the organization. Make sure to double check this "
+"as you won't be able to change that later."
+msgstr ""
+"C'est aussi pendant cette étape qu'il est décidé si l'utilisateur invité "
+"bénéficiera des droits d'administration sur l'organisation. Assurez-vous de "
+"vérifier ce paramètre car il ne sera plus modifiable par la suite."
+
+#: ../../userguide/new_user.rst:27
+msgid "Only an administrator of the organization can invite a new user"
+msgstr ""
+"Seul un administrateur de l'organisation peut inviter de nouveau utilisateurs"
+
+#: ../../userguide/new_user.rst:30
+msgid "Receive invite"
+msgstr "Réception de l'invitation"
+
+#: ../../userguide/new_user.rst:32
+msgid ""
+"The invitee should receive a link by email enabling him to register. "
+"Clicking on the invitation URL should open up the Parsec client. The token "
+"exchange will now start."
+msgstr ""
+"L'invité a du recevoir par email le code lui permettant de s'inscrire. "
+"Cliquer sur cette URL d'activation devrait ouvrir le client Parsec. "
+"L'échange de jeton peut maintenant commencer."
+
+#: ../../userguide/new_user.rst:36
+msgid ""
+"If clicking on the URL doesn't work, you can also use the ``Enter a URL "
+"manually`` dialog."
+msgstr ""
+"Si cliquer sur le lien d'invitation ne fonctionne pas, il est possible "
+"d'utiliser le dialogue ``Enter a URL manually``."
+
+#: ../../userguide/new_user.rst:40
+msgid "Token exchange"
+msgstr "Échange de jetons"
+
+#: ../../userguide/new_user.rst:42
+msgid ""
+"The token exchange is a verification process that aims at ensuring that the "
+"two users are not victim of a `Man-in-the-middle attack <https://en."
+"wikipedia.org/wiki/Man-in-the-middle_attack>`_. You can read more about that "
+"process at the :ref:`Cryptography <doc_cryptography>` section."
+msgstr ""
+"L'échange de jeton est un processus de vérification qui a pour but de "
+"s'assurer que les deux utilisateurs ne sont pas victimes d'une `Attaque de "
+"l'homme du milieu <https://fr.wikipedia.org/wiki/"
+"Attaque_de_l%27homme_du_milieu>`_. Il est possible d'en apprendre plus à la "
+"section :ref:`Cryptography <doc_cryptography>`."
+
+#: ../../userguide/new_user.rst:44
+msgid ""
+"The inviting and the invitee will have to exchange tokens in person or on an "
+"already verified canal. For that, they will both be given a token, or a list "
+"of tokens : the user with the list must click on the token displayed by the "
+"Parsec client of the other user. If the token one of them is given is not "
+"present in the list, it means there is a very high probability that one of "
+"the user is victim of a `Man-in-the-middle attack <https://en.wikipedia.org/"
+"wiki/Man-in-the-middle_attack>`_."
+msgstr ""
+"L'inviteur et l'invité doivent échanger les jetons en personne ou par un "
+"canal considéré comme sûr. Pour cela, ils obtiendront chacun à leur tour un "
+"jeton, ou une liste de jeton : l'utilisateur auquel une liste est présentée "
+"doit cliquer sur le jeton affiché par le client Parsec de l'autre "
+"utilisateur. Si le jeton donné à l'un des deux ne se trouve pas dans la "
+"liste présenté à l'autre, cela signifie qu'il y a une très forte probabilité "
+"que l'un des deux utilisateur soit victime d'une `Attaque de l'homme du "
+"milieu <https://fr.wikipedia.org/wiki/Attaque_de_l%27homme_du_milieu>`_."
+
+#: ../../userguide/new_user.rst:-1
+msgid "Display of a token that has to be transmitted during a token exchange"
+msgstr ""
+"Affichage d'un jeton qui doit être transmis pendant l'échange des jetons"
+
+#: ../../userguide/new_user.rst:-1
+msgid "List of tokens displayed during a token exchange"
+msgstr "La liste des jetons affichés pendant l'échange des jetons"
+
+#: ../../userguide/new_user.rst:54
+msgid ""
+"The invitee user’s Parsec client has been configured and is ready to log in."
+msgstr ""
+"Le client Parsec de l'utilisateur invité a été configuré et est maintenant "
+"prêt à s'authentifier."
