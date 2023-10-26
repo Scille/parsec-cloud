@@ -1,0 +1,177 @@
+# Copyright (C) 2016-2020, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# Parsec dev <dev-parsec@scille.fr>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 2.16.0-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-10-26 11:54+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.13.0\n"
+
+#: ../../userguide/share_data.rst:6
+msgid "Share data"
+msgstr "Partage des données"
+
+#: ../../userguide/share_data.rst:9
+msgid "Create & share workspace"
+msgstr "Créer et partager un espace de travail"
+
+#: ../../userguide/share_data.rst:11
+msgid ""
+"In Parsec, data are stored into workspaces, each workspace having its own "
+"policy for read and write access."
+msgstr ""
+"Dans Parsec, les données sont stockées dans des espaces de travail, chacun "
+"ayant ses propres règles d'accès en lecture et écriture."
+
+#: ../../userguide/share_data.rst:14
+msgid "So before adding data to Parsec we must create a workspace:"
+msgstr ""
+"De fait, avant de pouvoir ajouter des données dans Parsec il faut créer un "
+"espace de travail:"
+
+#: ../../userguide/share_data.rst:-1
+msgid "Creating workspace process"
+msgstr "Processus de création d'un espace de travail"
+
+#: ../../userguide/share_data.rst:20
+msgid ""
+"The creator of the workspace automatically gets the ``Owner`` role, as shown "
+"above, and can then share the workspace with other users."
+msgstr ""
+"Comme montré plus haut, le créateur de l'espace de travail obtient "
+"automatiquement le rôle ``Propriétaire`` et peut aussitôt partager l'espace "
+"de travail avec d'autres utilisateurs."
+
+#: ../../userguide/share_data.rst:-1
+msgid "Sharing workspace process"
+msgstr "Processus de partage d'un espace de travail"
+
+#: ../../userguide/share_data.rst:27
+msgid "Regarding the different sharing roles:"
+msgstr "Concernant les différents rôles de partage disponibles :"
+
+#: ../../userguide/share_data.rst:29
+msgid "Reader: has read-only access to the workspace"
+msgstr "Lecteur: a un accès en lecture seule sur l'espace de travail"
+
+#: ../../userguide/share_data.rst:30
+msgid "Contributor: has read and write access"
+msgstr "Contributeur : a un accès en lecture et écriture"
+
+#: ../../userguide/share_data.rst:31
+msgid ""
+"Manager: same as Contributor and can also Reader and Contributor roles to "
+"other users."
+msgstr ""
+"Gérant : comme le Contributeur, mais en plus donner les rôles Lecteur et "
+"Contributeur à d'autres utilisateurs."
+
+#: ../../userguide/share_data.rst:32
+msgid ""
+"Owner: same as Manager and can also give Manager and Owner roles to other "
+"users. In addition to this, Owners are responsible for maintenance tasks "
+"such as :ref:`workspace re-encryption "
+"<doc_userguide_revoke_user_workspace_re_encryption>`."
+msgstr ""
+"Propriétaire : comme Gérant, mais peut aussi donner les rôles Gérant et "
+"Propriétaire à d'autres utilisateurs. En plus de cela, les Propriétaires "
+"sont responsable des opérations de maintenance comme le :ref:`re-chiffrement "
+"de l'espace de travail <doc_userguide_revoke_user_workspace_re_encryption>`."
+
+#: ../../userguide/share_data.rst:38
+msgid ""
+"Just like a user with a single device is bad because there is no fall-back "
+"if something happens to it, having a workspace with a single user is "
+"dangerous."
+msgstr ""
+"De la même façon qu'un utilisateur avec un seul terminal est une mauvaise "
+"idée car il ne dispose pas de moyen de récupération en cas de problème, "
+"avoir un espace de travail contenant un seul utilisateur est dangereux."
+
+#: ../../userguide/share_data.rst:40
+msgid ""
+"Strong cryptographic security prevent data recovery if the user is lost or "
+"cannot log in. For this reason it is better to share the workspace with "
+"other users."
+msgstr ""
+"Le chiffrement des données empêche toute récupération si cet utilisateur "
+"n'est plus en mesure de se connecter au système. Pour cette raison il est "
+"recommandé de partage l'espace de travail avec d'autres utilisateurs."
+
+#: ../../userguide/share_data.rst:43
+msgid "Upload data"
+msgstr "Importer des données"
+
+#: ../../userguide/share_data.rst:45
+msgid ""
+"Once the workspace is created, it appears in the file explorer as a regular "
+"folder."
+msgstr ""
+"Une fois l'espace de travail créé, il apparait dans l'explorateur de "
+"fichiers comme un répertoire classique."
+
+#: ../../userguide/share_data.rst:49
+msgid ""
+"Although workspaces are mounted by default, they can be unmounted or mounted "
+"back using the toggle at the bottom left of the workspace card. When a "
+"workspace is unmounted, his data are not accessible in Parsec, and it is not "
+"reachable through the regular file explorer of the computer."
+msgstr ""
+"Bien que les Espaces de Travail soient montés par défaut, ils peuvent être "
+"démontés ou remontés en utilisant le bouton en bas à gauche de chaque carte "
+"d'Espace de Travail. Quand un Espace de Travail est démonté, ses données ne "
+"sont pas accessibles dans Parsec, et il n'est pas non plus accessible dans "
+"l'explorateur de fichier par défaut de l'appareil."
+
+#: ../../userguide/share_data.rst
+msgid "workspaces unmounted and mounted"
+msgstr "espaces de travail démontés et montés"
+
+#: ../../userguide/share_data.rst:55
+msgid ""
+"Parsec also proposes its own file manager, accessible when clicking on a "
+"mounted workspace."
+msgstr ""
+"Parsec propose aussi son propre explorateur de fichier, accessible par un "
+"clic sur un Espace de Travail monté."
+
+#: ../../userguide/share_data.rst:-1
+msgid "Parsec in file explorer"
+msgstr "Parsec dans l'explorateur de fichiers"
+
+#: ../../userguide/share_data.rst:61
+msgid ""
+"Data copied from file explorer also appear in the Parsec client. In "
+"addition, the Parsec client also displays the current synchronization state "
+"of each file (showing whether the modifications are only present locally or "
+"they have been synced with the server and hence are visible by everyone with "
+"access to the workspace)."
+msgstr ""
+"Les données copiées depuis l'explorateur de fichiers apparaissent dans le "
+"client Parsec. En plus de ça le client Parsec affiche aussi l'état de la "
+"synchronisation de chaque fichier (c'est à dire si les modifications d'un "
+"fichier sont présentent uniquement en local ou bien si elles ont été "
+"synchronisées avec le serveur Parsec et sont donc visibles par les autres "
+"utilisateurs ayant accès à l'espace de travail)."
+
+#: ../../userguide/share_data.rst:65
+msgid ""
+"Parsec client can work while offline (however only data present locally are "
+"available), synchronization will occur automatically as soon as the "
+"connection with the server is established."
+msgstr ""
+"Le client Parsec est capable de fonctionner sans connexion internet "
+"(toutefois seules les données présentent localement sont disponibles), la "
+"synchronisation se faisant automatiquement dès que la connexion avec le "
+"serveur Parsec est de nouveau disponible."
