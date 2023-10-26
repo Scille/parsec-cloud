@@ -3,19 +3,6 @@
 <template>
   <ion-list class="container">
     <ion-item
-      v-if="sortByLabels"
-      id="sort-order-button"
-      class="option body-small"
-      button
-      @click="onOptionClick()"
-    >
-      {{ sortByAsc ? sortByLabels.asc : sortByLabels.desc }}
-      <ion-icon
-        :icon="sortByAsc ? arrowUp : arrowDown"
-        slot="end"
-      />
-    </ion-item>
-    <ion-item
       class="option body"
       :class="{selected: selectedOption?.key === option.key}"
       :disabled="option.disabled"
@@ -38,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref } from 'vue';
+import { ref } from 'vue';
 import {
   IonList,
   IonItem,
@@ -46,33 +33,25 @@ import {
   popoverController,
 } from '@ionic/vue';
 import {
-  arrowUp,
-  arrowDown,
   checkmark,
 } from 'ionicons/icons';
-import { MsSelectOption, MsSelectSortByLabels, getOptionByKey } from '@/components/core/ms-select/MsSelectOption';
+import { MsDropdownOption, getMsOptionByKey } from '@/components/core/ms-types';
 
 const props = defineProps<{
-  defaultOption?: string
-  options: MsSelectOption[]
-  sortByLabels?: MsSelectSortByLabels
-  sortByAsc: boolean
+  defaultOption?: any
+  options: MsDropdownOption[]
 }>();
 
-const sortByAsc: Ref<boolean> = ref(props.sortByAsc);
 const selectedOption = ref(
-  props.defaultOption ? getOptionByKey(props.options, props.defaultOption) : props.options[0],
+  props.defaultOption ? getMsOptionByKey(props.options, props.defaultOption) : props.options[0],
 );
 
-function onOptionClick(option?: MsSelectOption): void {
+function onOptionClick(option?: MsDropdownOption): void {
   if (option) {
     selectedOption.value = option;
-  } else {
-    sortByAsc.value = !sortByAsc.value;
   }
   popoverController.dismiss({
     option: selectedOption.value,
-    sortByAsc: sortByAsc.value,
   });
 }
 </script>
@@ -89,23 +68,6 @@ function onOptionClick(option?: MsSelectOption): void {
   }
   .checked.selected {
     color: var(--parsec-color-light-primary-700);
-  }
-}
-#sort-order-button {
-  --background: var(--parsec-color-light-secondary-medium);
-  --color: var(--parsec-color-light-secondary-text);
-  --color-hover: var(--parsec-color-light-secondary-text);
-  --border-radius: 25px;
-  width: fit-content;
-  padding-right: 0.5rem;
-  margin-left: auto;
-  margin-bottom: .5rem;
-  --min-height: 2rem;
-
-  ion-icon {
-    margin: 0;
-    padding-left: 0.5rem;
-    font-size: 1.25rem;
   }
 }
 </style>

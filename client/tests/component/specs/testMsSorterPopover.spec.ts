@@ -1,28 +1,28 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { MsSelectOption, MsSelectSortByLabels } from '@/components/core/ms-select/MsSelectOption';
-import MsSelectPopover from '@/components/core/ms-select/MsSelectPopover.vue';
+import { MsSorterOption, MsSorterLabels } from '@/components/core/ms-types';
+import MsSorterPopover from '@/components/core/ms-sorter/MsSorterPopover.vue';
 import { VueWrapper, mount } from '@vue/test-utils';
 
 describe('Select popover', () => {
   let wrapper: VueWrapper;
 
-  const defaultOptions: MsSelectOption[] = [
+  const defaultOptions: MsSorterOption[] = [
     { label: 'Label A', key: '1' },
     { label: 'Label B', key: '2' },
     { label: 'Label C', key: '3' },
   ];
 
-  const defaultSortLabels: MsSelectSortByLabels = {
+  const defaultSortLabels: MsSorterLabels = {
     asc: 'Asc',
     desc: 'Desc',
   };
 
   beforeEach(() => {
-    wrapper = mount(MsSelectPopover, {
+    wrapper = mount(MsSorterPopover, {
       props: {
         options: defaultOptions,
-        sortByLabels: defaultSortLabels,
+        sorterLabels: defaultSortLabels,
         sortByAsc: true,
       },
     });
