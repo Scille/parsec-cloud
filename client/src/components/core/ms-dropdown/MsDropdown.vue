@@ -4,14 +4,15 @@
   <ion-button
     fill="clear"
     @click="openPopover($event)"
-    id="select-popover-button"
+    id="dropdown-popover-button"
     class="filter-button button-medium"
     :disabled="disabled"
   >
     <ion-icon
-      class="ms-select-icon"
+      :class="{'popover-is-open': isPopoverOpen}"
+      class="ms-dropdown-icon"
       slot="end"
-      :icon="swapVertical"
+      :icon="caretDown"
     />
     {{ labelRef }}
   </ion-button>
@@ -24,42 +25,42 @@ import {
   IonIcon,
   popoverController,
 } from '@ionic/vue';
-import { swapVertical } from 'ionicons/icons';
-import MsSelectPopover from '@/components/core/ms-select/MsSelectPopover.vue';
-import { MsSelectOption, MsSelectSortByLabels, getOptionByKey, MsSelectChangeEvent } from '@/components/core/ms-select/MsSelectOption';
+import { caretDown } from 'ionicons/icons';
+import MsDropdownPopover from '@/components/core/ms-dropdown/MsDropdownPopover.vue';
+import { MsDropdownOption, MsDropdownChangeEvent, getMsOptionByKey } from '@/components/core/ms-types';
 
 const props = defineProps<{
-  defaultOption: string
+  defaultOption: any
   label?: string
-  options: MsSelectOption[]
-  sortByLabels?: MsSelectSortByLabels
+  options: MsDropdownOption[]
   disabled?: boolean
 }>();
 
 const emits = defineEmits<{
-  (e: 'change', value: MsSelectChangeEvent): void
+  (e: 'change', value: MsDropdownChangeEvent): void
 }>();
 
-const selectedOption: Ref<MsSelectOption | undefined> = ref(
-  props.defaultOption ? getOptionByKey(props.options, props.defaultOption) : undefined,
+const selectedOption: Ref<MsDropdownOption | undefined> = ref(
+  props.defaultOption ? getMsOptionByKey(props.options, props.defaultOption) : undefined,
 );
-const sortByAsc: Ref<boolean> = ref(true);
 const labelRef = ref(selectedOption.value?.label || props.label);
+const isPopoverOpen = ref(false);
 
 async function openPopover(ev: Event): Promise<void> {
   const popover = await popoverController.create({
-    component: MsSelectPopover,
+    component: MsDropdownPopover,
     componentProps: {
       options: props.options,
       defaultOption: selectedOption.value?.key,
-      sortByLabels: props.sortByLabels,
-      sortByAsc: sortByAsc.value,
     },
     event: ev,
     showBackdrop: false,
   });
+  isPopoverOpen.value = true;
   await popover.present();
-  onDidDismissPopover(popover);
+  await onDidDismissPopover(popover);
+  isPopoverOpen.value = false;
+  await popover.dismiss();
 }
 
 async function onDidDismissPopover(popover: any): Promise<void> {
@@ -67,10 +68,8 @@ async function onDidDismissPopover(popover: any): Promise<void> {
   if (data) {
     labelRef.value = data.option.label;
     selectedOption.value = data.option;
-    sortByAsc.value = data.sortByAsc;
     emits('change', {
       option: data.option,
-      sortByAsc: sortByAsc.value,
     });
   }
 }
@@ -90,7 +89,11 @@ async function onDidDismissPopover(popover: any): Promise<void> {
     font-weight: bold;
   }
 }
-.ms-select-icon {
+.ms-dropdown-icon {
   margin-left: .5em;
+  transition: transform ease-out 300ms;
+  &.popover-is-open {
+    transform: rotate(180deg);
+  }
 }
 </style>

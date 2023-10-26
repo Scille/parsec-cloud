@@ -10,8 +10,8 @@
       :user-name="user.humanHandle.label"
     />
 
-    <ms-select
-      class="select"
+    <ms-dropdown
+      class="dropdown"
       :options="options"
       :disabled="disabled"
       :default-option="role || NOT_SHARED_KEY"
@@ -23,9 +23,9 @@
 <script setup lang="ts">
 import { defineProps, defineEmits, computed } from 'vue';
 import { UserProfile, WorkspaceRole, canChangeRole } from '@/parsec';
-import MsSelect from '@/components/core/ms-select/MsSelect.vue';
+import MsDropdown from '@/components/core/ms-dropdown/MsDropdown.vue';
+import { MsDropdownOption } from '@/components/core/ms-types';
 import { useI18n } from 'vue-i18n';
-import { MsSelectOption } from '@/components/core/ms-select/MsSelectOption';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { UserTuple } from '@/parsec';
 import { translateWorkspaceRole } from '@/common/translations';
@@ -46,7 +46,7 @@ defineEmits<{
 
 const NOT_SHARED_KEY = 'not_shared';
 
-const options = computed((): MsSelectOption[] => {
+const options = computed((): MsDropdownOption[] => {
   return [{
     key:  WorkspaceRole.Reader, label: translateWorkspaceRole(t, WorkspaceRole.Reader),
     disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, WorkspaceRole.Reader),

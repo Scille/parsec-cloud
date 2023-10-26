@@ -14,11 +14,12 @@
           @click="openCreateWorkspaceModal()"
         />
         <div class="right-side">
-          <ms-select
+          <ms-sorter
             id="workspace-filter-select"
-            :options="msSelectOptions"
+            :options="msSorterOptions"
             default-option="name"
-            @change="onMsSelectChange($event)"
+            :sorter-labels="msSorterLabels"
+            @change="onMsSorterChange($event)"
           />
           <ms-grid-list-toggle
             v-model="displayView"
@@ -123,9 +124,9 @@ import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
 import WorkspaceContextMenu from '@/views/workspaces/WorkspaceContextMenu.vue';
 import { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
-import MsSelect from '@/components/core/ms-select/MsSelect.vue';
+import MsSorter from '@/components/core/ms-sorter/MsSorter.vue';
 import MsActionBarButton from '@/components/core/ms-action-bar/MsActionBarButton.vue';
-import { MsSelectChangeEvent, MsSelectOption } from '@/components/core/ms-select/MsSelectOption';
+import { MsSorterChangeEvent, MsSorterOption } from '@/components/core/ms-types';
 import MsGridListToggle from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import { DisplayState } from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import { useI18n } from 'vue-i18n';
@@ -145,10 +146,15 @@ import { writeTextToClipboard } from '@/common/clipboard';
 
 const { t } = useI18n();
 const sortBy = ref('name');
+const sortByAsc = ref(true);
 const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
 const displayView = ref(DisplayState.Grid);
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
+const msSorterLabels = {
+  asc: t('HomePage.organizationList.sortOrderAsc'),
+  desc: t('HomePage.organizationList.sortOrderDesc'),
+};
 
 onMounted(async (): Promise<void> => {
   await refreshWorkspacesList();
@@ -169,24 +175,25 @@ async function refreshWorkspacesList(): Promise<void> {
 const filteredWorkspaces = computed(() => {
   return Array.from(workspaceList.value).sort((a: WorkspaceInfo, b: WorkspaceInfo) => {
     if (sortBy.value === 'name') {
-      return a.name.localeCompare(b.name);
+      return sortByAsc.value ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
     } else if (sortBy.value === 'size') {
-      return a.size - b.size;
+      return sortByAsc.value ? a.size - b.size : b.size - a.size;
     } else if (sortBy.value === 'lastUpdated') {
-      return b.lastUpdated.diff(a.lastUpdated).milliseconds;
+      return sortByAsc.value ? b.lastUpdated.diff(a.lastUpdated).milliseconds : a.lastUpdated.diff(b.lastUpdated).milliseconds;
     }
     return 0;
   });
 });
 
-const msSelectOptions: MsSelectOption[] = [
+const msSorterOptions: MsSorterOption[] = [
   { label: t('WorkspacesPage.sort.sortByName'), key: 'name' },
   { label: t('WorkspacesPage.sort.sortBySize'), key: 'size' },
   { label: t('WorkspacesPage.sort.sortByLastUpdated'), key: 'lastUpdated' },
 ];
 
-function onMsSelectChange(event: MsSelectChangeEvent): void {
+function onMsSorterChange(event: MsSorterChangeEvent): void {
   sortBy.value = event.option.key;
+  sortByAsc.value = event.sortByAsc;
 }
 
 async function openCreateWorkspaceModal(): Promise<void> {
@@ -359,3 +366,4 @@ ion-item::part(native) {
   display: flex;
 }
 </style>
+@/components/core/ms-sort/MsSorterOption

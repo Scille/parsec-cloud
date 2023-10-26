@@ -12,3 +12,31 @@ export enum MsModalResult {
   Cancel = 'cancel',
   Confirm = 'confirm',
 }
+
+interface MsOption {
+  label: string,
+  key: any,
+  disabled?: boolean,
+}
+
+export function getMsOptionByKey(options: MsOption[], key: any): MsOption | undefined {
+  return options.find((option) => {
+    return option.key === key;
+  });
+}
+
+export type MsDropdownOption = MsOption;
+export type MsSorterOption = MsOption;
+
+export interface MsSorterLabels {
+  asc: string,
+  desc: string,
+}
+export interface MsDropdownChangeEvent {
+  option: MsDropdownOption,
+}
+
+export interface MsSorterChangeEvent {
+  option: MsSorterOption,
+  sortByAsc: boolean,
+}

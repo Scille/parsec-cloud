@@ -107,13 +107,13 @@
                   <ion-card-title class="organization-filter">
                     <!-- No use in showing the sort/filter options for less than 2 devices -->
                     <template v-if="deviceList.length >= 2">
-                      <ms-select
+                      <ms-sorter
                         id="organization-filter-select"
                         label="t('HomePage.organizationList.labelSortBy')"
-                        :options="msSelectOptions"
+                        :options="msSorterOptions"
                         default-option="organization"
-                        :sort-by-labels="msSelectSortByLabels"
-                        @change="onMsSelectChange($event)"
+                        :sorter-labels="msSorterLabels"
+                        @change="onMsSorterChange($event)"
                       />
                     </template>
                   </ion-card-title>
@@ -238,8 +238,8 @@ import { onMounted, ref, toRaw, computed, inject, Ref, onUpdated, onUnmounted, w
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import MsPasswordInput from '@/components/core/ms-input/MsPasswordInput.vue';
 import MsSearchInput from '@/components/core/ms-input/MsSearchInput.vue';
-import MsSelect from '@/components/core/ms-select/MsSelect.vue';
-import { MsSelectChangeEvent, MsSelectOption } from '@/components/core/ms-select/MsSelectOption';
+import MsSorter from '@/components/core/ms-sorter/MsSorter.vue';
+import { MsSorterChangeEvent, MsSorterOption } from '@/components/core/ms-types';
 import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
 import { StoredDeviceData, StorageManager } from '@/services/storageManager';
 import { DateTime } from 'luxon';
@@ -278,13 +278,13 @@ const storageManager: StorageManager = inject(StorageManagerKey)!;
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 const isPopoverOpen = ref(false);
 
-const msSelectOptions: MsSelectOption[] = [
+const msSorterOptions: MsSorterOption[] = [
   { label: t('HomePage.organizationList.sortByOrganization'), key: 'organization' },
   { label: t('HomePage.organizationList.sortByUserName'), key: 'user_name' },
   { label: t('HomePage.organizationList.sortByLastLogin'), key: 'last_login' },
 ];
 
-const msSelectSortByLabels = {
+const msSorterLabels = {
   asc: t('HomePage.organizationList.sortOrderAsc'),
   desc: t('HomePage.organizationList.sortOrderDesc'),
 };
@@ -399,7 +399,7 @@ async function openJoinByLinkModal(link: string): Promise<void> {
   }
 }
 
-function onMsSelectChange(event: MsSelectChangeEvent): void {
+function onMsSorterChange(event: MsSorterChangeEvent): void {
   sortBy.value = event.option.key;
   sortByAsc.value = event.sortByAsc;
 }
@@ -756,3 +756,4 @@ async function openSettingsModal(): Promise<void> {
   }
 }
 </style>
+@/components/core/ms-sort/MsSorterOption
