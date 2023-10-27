@@ -23,7 +23,6 @@ pub(crate) struct UserDependantConfig {
     pub workspace_name: EntryName,
 }
 
-#[derive(Debug)]
 pub struct WorkspaceOps {
     #[allow(unused)]
     config: Arc<ClientConfig>,
@@ -39,6 +38,15 @@ pub struct WorkspaceOps {
     event_bus: EventBus,
     realm_id: VlobID,
     user_dependant_config: Mutex<UserDependantConfig>,
+}
+
+impl std::fmt::Debug for WorkspaceOps {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("WorkspaceOps")
+            .field("device", &self.device)
+            .field("realm_id", &self.realm_id)
+            .finish_non_exhaustive()
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
