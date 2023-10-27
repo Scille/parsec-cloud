@@ -1,0 +1,207 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 2.16.0-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-11-10 09:43+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.13.0\n"
+
+#: ../../userguide/recovery_device.rst:7
+msgid "Recover devices"
+msgstr "Récupérer des appareils"
+
+#: ../../userguide/recovery_device.rst:9
+msgid ""
+"A *recovery device* is a backup of an existing device. If you lose access to "
+"Parsec (you forget the password), the recovery device will allow you to "
+"recreate a new device and set a new password."
+msgstr ""
+"Un *appareil de récupération* est une sauvegarde d'un appareil existant. Si "
+"vous perdez accès à Parsec (vous avez oublié votre mots de passe), "
+"L'appareil de récupération vous permet de recréer un nouvel appareil avec un "
+"nouveau mot de passe."
+
+#: ../../userguide/recovery_device.rst:11
+msgid ""
+"In order to `Create a new recovery device`_ or `Use a recovery device`_ you "
+"need to open the recovery device dialog from the main menu:"
+msgstr ""
+"Pour pouvoir `Créer un nouvel appareil de récupération`_ ou d'`Utiliser un "
+"appareil de récupération`_ vous avez besoin d'ouvrir le dialogue de "
+"récupération d'appareil dans le menu principal:"
+
+#: ../../userguide/recovery_device.rst:13
+msgid "Open the ``Recovery device`` menu."
+msgstr "Ouvrir le menu ``Récupération d'appareils``."
+
+#: ../../userguide/recovery_device.rst:15
+msgid ""
+"You need to open the sub-menu then click on ``Recovery device`` option "
+"(alternatively, you can use the shortcut ``Ctrl+I``)."
+msgstr ""
+"Vous avez besoin d'ouvrir le sous-menu puis cliquer sur ``récupération "
+"d'appareil`` (Alternativement, vous pouvez utiliser le raccourci ``Ctrl+I``)."
+
+#: ../../userguide/recovery_device.rst
+#, fuzzy
+msgid "Parsec menu with recovery device option highlighted"
+msgstr "Le menu Parsec avec l'option récupération d'appareil surligné"
+
+#: ../../userguide/recovery_device.rst:20
+msgid "That will open a modal dialog that looks like this:"
+msgstr "Ça va ouvrir un dialogue qui ressemble à ceci:"
+
+#: ../../userguide/recovery_device.rst
+#, fuzzy
+msgid "Parsec recovery device modal"
+msgstr "Dialogue Parsec de récupération d'appareil"
+
+#: ../../userguide/recovery_device.rst:26
+msgid "Create a new recovery device"
+msgstr "Créer un nouvel appareil de récupération"
+
+#: ../../userguide/recovery_device.rst:28
+msgid "In the Device recovery dialog, select ``Create a recovery device``"
+msgstr ""
+"Dans le dialogue de récupération d'appareil, sélectionner ``Créer un "
+"appareil de récupération``"
+
+#: ../../userguide/recovery_device.rst:30
+#: ../../userguide/recovery_device.rst:61
+msgid "From here:"
+msgstr "À partir de là:"
+
+#: ../../userguide/recovery_device.rst:32
+msgid "Select the device you would like to create a recovery device for."
+msgstr ""
+"Sélectionner l'appareil à partir duquel vous voulez créer un appareil de "
+"récupération."
+
+#: ../../userguide/recovery_device.rst:33
+msgid ""
+"Click the ``Select`` button to specify a file to store the recovery device."
+msgstr ""
+"Cliquer sur le bouton ``Choisir`` pour spécifier le fichier où sera "
+"sauvegardé l'appareil de récupération."
+
+#: ../../userguide/recovery_device.rst
+#, fuzzy
+msgid "Create a recovery device modal"
+msgstr "Dialogue de création d'un appareil de récupération"
+
+#: ../../userguide/recovery_device.rst:38
+msgid ""
+"Click ``Next``, you will be prompted to enter the password for the device "
+"you have selected"
+msgstr ""
+"Cliquer sur ``Suivant``, vous serez demandé d'entrer le mot de passe pour "
+"l'appareil que vous avez sélectionné"
+
+#: ../../userguide/recovery_device.rst
+#, fuzzy
+msgid "Create a recovery device re-authenticate modal"
+msgstr ""
+"Dialogue de reconnection pour la création d'un appareil de récupération"
+
+#: ../../userguide/recovery_device.rst:43
+msgid ""
+"After confirmation, the recovery file is created and a passphrase is "
+"displayed. **You need to save the passphrase** as it will not be displayed "
+"again."
+msgstr ""
+"Après confirmation, le fichier de récupération est créé et la phrase de "
+"passe est affichée. **Vous avez besoin de sauvegarder la phrase de passe** "
+"car c'est la seul fois qu'elle sera affichée."
+
+#: ../../userguide/recovery_device.rst
+#, fuzzy
+msgid "Create a recovery device confirmation modal"
+msgstr "Dialogue de confirmation de création d'appareil de récupération"
+
+#: ../../userguide/recovery_device.rst:50
+msgid "The passphrase should be handled carefully like any other password."
+msgstr ""
+"La phrase de passe doit être manipulée comme n'importe quels mot de passe."
+
+#: ../../userguide/recovery_device.rst:52
+msgid ""
+"You can print out the passphrase and put-it in a safe to secure it. "
+"Nevertheless, you should not save it alongside the recovery file."
+msgstr ""
+"Vous pouvez imprimer la phrase de passe et la mettre dans un coffre-fort "
+"pour la sécuriser. Néanmoins, vous ne devez pas la sauvegarder à coté du "
+"fichier de récupération."
+
+#: ../../userguide/recovery_device.rst:57
+msgid "Use a recovery device"
+msgstr "Utiliser un appareil de récupération"
+
+#: ../../userguide/recovery_device.rst:59
+msgid "In the Device recovery dialog, select ``Recover a Device``"
+msgstr ""
+"Dans le dialogue de récupération d'appareil, sélectionner ``Récupérer un "
+"appareil``"
+
+#: ../../userguide/recovery_device.rst:63
+msgid "Select the recovery file of the device you want to recover."
+msgstr ""
+"Sélectionner le fichier de récupération de l'appareil que vous voulez "
+"récupérer."
+
+#: ../../userguide/recovery_device.rst:64
+msgid "Enter the passphrase for the recovery device."
+msgstr "Entrer la phrase de passe de l'appareil de récupération."
+
+#: ../../userguide/recovery_device.rst:65
+msgid "Enter the name of the new device."
+msgstr "Entrer le nom du nouvel appareil."
+
+#: ../../userguide/recovery_device.rst
+#, fuzzy
+msgid "Recover a device modal"
+msgstr "Dialogue de récupération d'appareil"
+
+#: ../../userguide/recovery_device.rst:70
+msgid ""
+"Click ``Next``, you will be prompted to enter a new password and confirm it."
+msgstr ""
+"Cliquer sur ``Suivant``, vous serez demandé d'entrer un nouveau mot de "
+"passe et de le confirmer."
+
+#: ../../userguide/recovery_device.rst
+#, fuzzy
+msgid "Enter the new password for the recovered device modal"
+msgstr ""
+"Dialogue de configuration du nouveau mot de passe pour l'appareil récupéré"
+
+#: ../../userguide/recovery_device.rst:75
+msgid ""
+"A message is displayed to confirm the device has been recovered, you can "
+"click ``Continue``."
+msgstr "Un message est affiché pour confirmer que l'appareil a été récupéré"
+
+#: ../../userguide/recovery_device.rst
+#, fuzzy
+msgid "Device recovered confirmation modal"
+msgstr "Dialogue de confirmation de récupération d'appareil"
+
+#: ../../userguide/recovery_device.rst:80
+msgid ""
+"You can now access Parsec as usual using the new recovered device from the "
+"devices' list"
+msgstr ""
+"Vous pouvez maintenant acceder à Parsec comme d'habitude en utilisant le "
+"nouvel appareil depuis la liste des appareils"

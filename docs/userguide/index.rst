@@ -14,6 +14,7 @@ User Guide
     new_organization
     new_user
     new_device
+    recovery_device
     share_data
     revoke_user
     troubleshooting
