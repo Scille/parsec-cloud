@@ -1,0 +1,49 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 2.16.0-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-10-26 11:54+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.13.0\n"
+
+#: ../../adminguide/stats_organization.rst:6
+msgid "Extract organization statistics"
+msgstr "Extraction des statistiques d'organisation"
+
+#: ../../adminguide/stats_organization.rst:8
+msgid ""
+"In order to extract organization statistics, the administrator needs to "
+"provide :"
+msgstr ""
+"Afin d'extraire les statistiques d'organisation, l'administrateur doit "
+"fournir :"
+
+#: ../../adminguide/stats_organization.rst:10
+msgid ""
+"The parsec metadata server location, through a parsec url ``parsec://"
+"hostname:port``"
+msgstr ""
+"La localisation du serveur de métadonnées, par une url Parsec``parsec://"
+"hostname:port``"
+
+#: ../../adminguide/stats_organization.rst:11
+msgid "The ``administration_token`` configured in the parsec metadata server"
+msgstr ""
+"Le ``administration_token`` configuré dans le serveur de métadonnées Parsec"
+
+#: ../../adminguide/stats_organization.rst:12
+msgid "The organization name"
+msgstr "Le nom d'organisation"
