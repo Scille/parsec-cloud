@@ -220,7 +220,8 @@ import { entryNameValidator } from '@/common/validators';
 import { Answer, askQuestion } from '@/components/core/ms-modal/MsQuestionModal.vue';
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
 import { writeTextToClipboard } from '@/common/clipboard';
-import { getPathLink, isDesktop, isWeb, WorkspaceHandle, WorkspaceID } from '@/parsec';
+import { getPathLink, isWeb, WorkspaceHandle, WorkspaceID } from '@/parsec';
+import { ImportManager, ImportKey, StateData, ImportState } from '@/common/importManager';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
@@ -250,14 +251,24 @@ const selectedFilesCount = computed(() => {
 });
 const displayView = ref(DisplayState.List);
 const { t } = useI18n();
+const importManager = inject(ImportKey) as ImportManager;
+let callbackId: string | null = null;
 
 onMounted(async () => {
+  callbackId = await importManager.registerCallback(onFileImportState);
   await listFolder();
 });
 
 onUnmounted(async () => {
+  if (callbackId) {
+    importManager.removeCallback(callbackId);
+  }
   unwatchRoute();
 });
+
+async function onFileImportState(state: ImportState, data: StateData): Promise<void> {
+  console.log(state, data);
+}
 
 async function listFolder(): Promise<void> {
   const result = await parsec.entryStat(currentPath.value);
@@ -333,11 +344,13 @@ async function importFiles(): Promise<void> {
     cssClass: 'file-upload-modal',
     componentProps: {
       currentPath: currentPath.value.toString(),
+      workspaceHandle: workspaceHandle.value,
+      workspaceId: workspaceId.value,
     },
   });
   await modal.present();
   await modal.onWillDismiss();
-  await listFolder();
+  await modal.dismiss();
 }
 
 function selectAllFiles(checked: boolean): void {
