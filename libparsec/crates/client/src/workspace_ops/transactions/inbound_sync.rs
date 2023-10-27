@@ -66,24 +66,25 @@ pub async fn inbound_sync(
 
 async fn inbound_sync_root(ops: &WorkspaceOps) -> Result<InboundSyncOutcome, SyncError> {
     // Retrieve remote
-    let remote: WorkspaceManifest = match fetch_manifest_with_self_heal(ops, ops.realm_id).await? {
-        FetchWithSelfHealOutcome::LastVersion(manifest) => manifest,
-        FetchWithSelfHealOutcome::SelfHeal {
-            last_version,
-            mut last_valid_manifest,
-        } => {
-            // If we use the manifest as-is, we won't be able to do outbound sync
-            // given the server will always complain a more recent manifest exists
-            // (i.e. the one that is corrupted !).
-            // So we tweak this old manifest into pretending it is the corrupted one.
-            // TODO: what if the server sends the manifest data to client A, but dummy
-            // data to client B ? We would end up with clients not agreeing on what
-            // contains a given version of the manifest...
-            // TODO: send event or warning log ?
-            last_valid_manifest.version = last_version;
-            last_valid_manifest
-        }
-    };
+    let remote: WorkspaceManifest =
+        match fetch_remote_manifest_with_self_heal(ops, ops.realm_id).await? {
+            FetchWithSelfHealOutcome::LastVersion(manifest) => manifest,
+            FetchWithSelfHealOutcome::SelfHeal {
+                last_version,
+                mut last_valid_manifest,
+            } => {
+                // If we use the manifest as-is, we won't be able to do outbound sync
+                // given the server will always complain a more recent manifest exists
+                // (i.e. the one that is corrupted !).
+                // So we tweak this old manifest into pretending it is the corrupted one.
+                // TODO: what if the server sends the manifest data to client A, but dummy
+                // data to client B ? We would end up with clients not agreeing on what
+                // contains a given version of the manifest...
+                // TODO: send event or warning log ?
+                last_valid_manifest.version = last_version;
+                last_valid_manifest
+            }
+        };
 
     // Now merge the remote with the current local manifest
     update_storage_with_remote_root(ops, remote)
@@ -123,7 +124,7 @@ async fn inbound_sync_child(
     entry_id: VlobID,
 ) -> Result<InboundSyncOutcome, SyncError> {
     // Retrieve remote
-    let remote: ChildManifest = match fetch_manifest_with_self_heal(ops, entry_id).await? {
+    let remote: ChildManifest = match fetch_remote_manifest_with_self_heal(ops, entry_id).await? {
         FetchWithSelfHealOutcome::LastVersion(manifest) => manifest,
         FetchWithSelfHealOutcome::SelfHeal {
             last_version,
@@ -336,7 +337,7 @@ enum FetchWithSelfHealOutcome<M> {
     },
 }
 
-async fn fetch_manifest_with_self_heal<M: RemoteManifest>(
+async fn fetch_remote_manifest_with_self_heal<M: RemoteManifest>(
     ops: &WorkspaceOps,
     entry_id: VlobID,
 ) -> Result<FetchWithSelfHealOutcome<M>, SyncError> {
