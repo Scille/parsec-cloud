@@ -78,6 +78,10 @@ TOOLS_VERSION: Dict[Tool, str] = {
 
 FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
     ROOT_DIR
+    / ".github/workflows/ci-docs.yml": {
+        Tool.Poetry: [POETRY_GA_VERSION],
+    },
+    ROOT_DIR
     / ".github/workflows/ci-python.yml": {
         Tool.Poetry: [POETRY_GA_VERSION],
     },

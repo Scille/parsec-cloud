@@ -123,3 +123,21 @@ web-jobs:
   - *rust-web-binding
   - *new-client-dependencies-project
   - *web
+
+########
+# Docs #
+########
+
+docs-jobs:
+  - .github/workflows/ci-docs.yml
+  - docs/adminguide/**
+  - docs/userguide/**
+  - docs/figures/**
+  - docs/_static/**
+  - docs/parsec*.png
+  - docs/locale/**.po
+  - docs/conf.py
+  - docs/pyproject.toml
+  - docs/poetry.lock
+  - docs/Makefile
+  - docs/**.rst
