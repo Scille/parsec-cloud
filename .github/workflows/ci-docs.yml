@@ -1,0 +1,85 @@
+name: CI Docs
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+# We set `concurrency` to prevent having this workflow being run on code that is not up-to-date on a PR (a user make multiple push in a quick manner).
+# But on the main branch, we don't want that behavior.
+# Having the workflow run on each merge commit is something we would like, that could help us where a regression was made and missed by previous checks.
+#
+# For that we use `head_ref` that is only defined on `pull-request` and fallback to `run_id` (this is a counter, so it's value is unique between workflow call).
+concurrency:
+  group: ci-docs-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  python-version: 3.9
+  poetry-version: 1.3.2
+  # Convert sphinx warning into errors.
+  SPHINXOPTS: -W
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    name: Build & Check documentations
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
+        with:
+          sparse-checkout: |
+            .github
+            HISTORY.rst
+            docs
+        timeout-minutes: 2
+
+      - name: Install poetry-${{ env.poetry-version }}
+        run: |
+          set -eux
+          set -o pipefail
+          export POETRY_HOME="$HOME/.poetry"
+          mkdir -p "$POETRY_HOME"
+          if ! curl -sSL https://install.python-poetry.org | python3 - --version=${{ env.poetry-version }}; then
+            tail -n +0 ${{ github.workspace }}/poetry-installer*.log
+            exit 3
+          fi
+          echo "$POETRY_HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Install python-${{ env.python-version }}
+        uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0  # pin v4.6.1
+        id: setup-python
+        with:
+          python-version: ${{ env.python-version }}
+          cache: poetry
+
+      - name: Configure poetry to use the installed python
+        run: poetry --directory ./docs env use ${{ steps.setup-python.outputs.python-path }}
+
+      - name: Install docs deps
+        run: |
+          poetry --directory ./docs env info
+          poetry --directory ./docs install
+        timeout-minutes: 5
+
+      - name: Update translation
+        run: poetry run make --environment-overrides intl-fr
+        working-directory: docs
+        timeout-minutes: 2
+
+      - name: Check if `*.po` were modified
+        run: |
+          if git status --porcelain | grep '**.po'; then
+            # PO files were modified, the step fail
+            exit 1
+          else
+            # NO PO files were modified, the step succeed
+            exit 0
+          fi
+
+      - name: Build html documentation
+        run: poetry run make --environment-overrides html
+        working-directory: docs
+        timeout-minutes: 2
