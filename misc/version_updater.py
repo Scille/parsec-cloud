@@ -132,6 +132,8 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
         Tool.WasmPack: [ReplaceRegex(r"wasm-pack@[0-9.]+", "wasm-pack@{version}")],
     },
     ROOT_DIR
+    / "docs/conf.py": {Tool.Parsec: [ReplaceRegex(r'version = ".*"', 'version = "{version}"')]},
+    ROOT_DIR
     / "licenses/BUSL-Scille.txt": {
         Tool.Parsec: [
             ReplaceRegex(r"^Licensed Work:  Parsec v.*$", "Licensed Work:  Parsec v{version}")

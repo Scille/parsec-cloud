@@ -20,14 +20,6 @@
 import os
 
 
-# Load Parsec version
-def fetch_parsec_version():
-    # Awesome hack to load `__version__`
-    _version_locals = {}
-    exec(open("../parsec/_version.py", encoding="utf-8").read(), _version_locals)
-    return _version_locals["__version__"]
-
-
 # -- General configuration ---------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -73,7 +65,7 @@ copyright = "2016-present, Scille SAS"
 # the built documents.
 #
 # The short X.Y version.
-version = fetch_parsec_version()
+version = "2.16.0-rc.8+dev"
 # The full version, including alpha/beta/rc tags.
 release = version
 
