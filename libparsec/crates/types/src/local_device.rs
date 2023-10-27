@@ -24,7 +24,7 @@ pub fn local_device_slug(
     format!("{}#{}#{}", &hashed_rvk[..10], organization_id, device_id)
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "LocalDeviceData", try_from = "LocalDeviceData")]
 pub struct LocalDevice {
     pub organization_addr: BackendOrganizationAddr,
@@ -40,6 +40,15 @@ pub struct LocalDevice {
     pub user_realm_key: SecretKey,
     pub local_symkey: SecretKey,
     pub time_provider: TimeProvider,
+}
+
+impl std::fmt::Debug for LocalDevice {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("LocalDevice")
+            .field("organization_addr", &self.organization_addr)
+            .field("device_id", &self.device_id)
+            .finish_non_exhaustive()
+    }
 }
 
 impl LocalDevice {
