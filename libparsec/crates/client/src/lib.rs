@@ -9,6 +9,7 @@ mod event_bus;
 mod invite;
 mod messages_monitor;
 mod monitors;
+mod running_workspace;
 pub mod user_ops;
 mod user_sync_monitor;
 pub mod workspace_ops;
