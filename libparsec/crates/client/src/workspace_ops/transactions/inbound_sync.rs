@@ -212,8 +212,9 @@ pub(super) async fn update_storage_with_remote_child(
     }
 }
 
-#[async_trait(?Send)]
-trait RemoteManifest: Sized {
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+pub trait RemoteManifest: Sized {
     type LocalManifest: Sized;
 
     fn extract_base_from_local(local: Self::LocalManifest) -> Self;
@@ -237,7 +238,8 @@ trait RemoteManifest: Sized {
     ) -> Result<Self, ValidateManifestError>;
 }
 
-#[async_trait(?Send)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl RemoteManifest for WorkspaceManifest {
     type LocalManifest = Arc<LocalWorkspaceManifest>;
 
@@ -279,7 +281,8 @@ impl RemoteManifest for WorkspaceManifest {
     }
 }
 
-#[async_trait(?Send)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl RemoteManifest for ChildManifest {
     type LocalManifest = ArcLocalChildManifest;
 
