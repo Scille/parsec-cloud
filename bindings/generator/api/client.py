@@ -179,6 +179,7 @@ class WorkspaceInfo(Structure):
     id: VlobID
     name: EntryName
     self_current_role: RealmRole
+    is_started: bool
 
 
 async def client_list_workspaces(

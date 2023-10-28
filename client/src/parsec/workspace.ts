@@ -44,6 +44,7 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
           size: 0,
           lastUpdated: DateTime.now(),
           availableOffline: false,
+          isStarted: false,
         };
         if (sharingResult.ok) {
           info.sharing = sharingResult.value;
@@ -57,10 +58,10 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
   } else {
     const value: Array<WorkspaceInfo> = [{
       'id': '1', 'name': 'Trademeet', 'selfCurrentRole': WorkspaceRole.Owner, size: 934_583, lastUpdated: DateTime.now().minus(2000),
-      availableOffline: false, sharing: [],
+      availableOffline: false, isStarted: false, sharing: [],
     }, {
       'id': '2', 'name': 'The Copper Coronet', 'selfCurrentRole': WorkspaceRole.Manager, size: 3_489_534_274, lastUpdated: DateTime.now(),
-      availableOffline: false, sharing: [],
+      availableOffline: false, isStarted: false, sharing: [],
     }];
 
     for (let i = 0; i < value.length; i++) {

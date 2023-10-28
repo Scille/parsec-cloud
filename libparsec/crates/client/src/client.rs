@@ -45,6 +45,7 @@ pub struct WorkspaceInfo {
     pub id: VlobID,
     pub name: EntryName,
     pub self_current_role: RealmRole,
+    pub is_started: bool,
 }
 
 // Should not be `Clone` given it manages underlying resources !
@@ -372,6 +373,7 @@ impl Client {
                     id,
                     name,
                     self_current_role,
+                    is_started: self.running_workspaces.get(id).is_some(),
                 })
             })
             .collect();
