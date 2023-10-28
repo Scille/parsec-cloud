@@ -67,11 +67,6 @@ impl From<libparsec_platform_device_loader::LoadDeviceError> for ClientStartErro
 pub async fn client_start(
     config: ClientConfig,
 
-    // Access to the event bus is done through this callback.
-    // Ad-hoc code should be added to the binding system to handle this (hence
-    // why this is passed as a parameter instead of as part of `ClientConfig`:
-    // we can have a simple `if func_name == "client_login"` that does a special
-    // cooking of it last param.
     #[cfg(not(target_arch = "wasm32"))] on_event_callback: Arc<dyn Fn(ClientEvent) + Send + Sync>,
     // On web we run on the JS runtime which is mono-threaded, hence everything is !Send
     #[cfg(target_arch = "wasm32")] on_event_callback: Arc<dyn Fn(ClientEvent)>,
@@ -158,8 +153,8 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
         HandleItem::Client { client, on_event } => Ok((client, on_event)),
         // Note we consider an error if the handle is in `HandleItem::StartingClient` state
         // this is because at that point this is not a legit use of the handle given it
-        // hasn't been yet provided to the caller !
-        // On top of that is simplify the start logic (given it guarantees nothing will
+        // has never been yet provided to the caller in the first place !
+        // On top of that it simplifies the start logic (given it guarantees nothing will
         // concurrently close the handle)
         invalid => Err(invalid),
     })?;
@@ -167,8 +162,8 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
     // Note stopping the client also stop all it related workspace ops
     client.stop().await;
 
-    // Wait until after the client is close to disconnect to the event bus to ensure
-    // we don't miss events fired during client teardown
+    // Wait until after the client is closed to disconnect the event bus to ensure
+    // we don't miss any event fired during client teardown
     drop(on_event);
 
     // Finally cleanup the handles related to the client's workspaces
@@ -178,7 +173,7 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
             HandleItem::Workspace {
                 client: x_client, ..
             } if *x_client == client_handle => FilterCloseHandle::Close,
-            // If something is still starting and will most likely won't go very far
+            // If something is still starting, it will most likely won't go very far
             // (all workspace ops now are stopped), but we have to wait for it anyway
             HandleItem::StartingWorkspace {
                 client: x_client,
