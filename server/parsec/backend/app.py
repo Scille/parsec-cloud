@@ -242,7 +242,7 @@ class BackendApp:
                     new_role=RealmGrantedRole(
                         certificate=event.raw_certificate,
                         realm_id=event.realm,
-                        user_id=event.author.user_id,
+                        user_id=event.user,
                         role=RealmRole.OWNER,
                         granted_by=event.author,
                         granted_on=event.timestamp,
