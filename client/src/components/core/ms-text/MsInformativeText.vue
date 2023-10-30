@@ -21,7 +21,7 @@
 <script setup lang="ts">
 import { IonIcon, IonText } from '@ionic/vue';
 import {
-  caretForward,
+  caretForwardCircle,
   informationCircle,
   checkmarkCircle,
   warning,
@@ -37,7 +37,7 @@ const props = defineProps<{
 function getIcon(): string {
   switch (props.theme) {
     case MsTheme.Basic:
-      return caretForward;
+      return caretForwardCircle;
     case MsTheme.Info:
       return informationCircle;
     case MsTheme.Success:
@@ -47,14 +47,14 @@ function getIcon(): string {
     case MsTheme.Error:
       return closeCircle;
   }
-  return props.icon ?? caretForward;
+  return props.icon ?? caretForwardCircle;
 }
 </script>
 
 <style scoped lang="scss">
 .ms-basic {
   --ms-informative-text-background-color: none;
-  --ms-informative-text-icon-color: var(--parsec-color-light-primary-400);
+  --ms-informative-text-icon-color: var(--parsec-color-light-primary-600);
 }
 
 .ms-info {
