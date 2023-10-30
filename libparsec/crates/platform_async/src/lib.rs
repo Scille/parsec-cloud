@@ -29,10 +29,13 @@ pub enum Either<L, R> {
 }
 
 /// Poor's man version of `tokio::select!`
+///
 /// Doing a select on two futures is the most common case.
 /// Note it is implemented with (with a [futures_lite::future::Or] so first future
 /// is prefered on simultaneous completion).
-/// For more complicated use case, implement by hand a similar code at call site ;-)
+///
+/// This should be okay as long as the futures don't wrap an actual coroutine but
+/// instead correspond to sleep or event wait.
 #[macro_export]
 macro_rules! select2 {
     (
@@ -50,6 +53,46 @@ macro_rules! select2 {
         match f1.or(f2).await {
             $crate::Either::Left(r1) => { $(let $r1 = r1; )?  $e1 }
             $crate::Either::Right(r2) => { $(let $r2 = r2; )? $e2 }
+        }
+        }
+    };
+}
+
+pub enum Select3Outcome<L, C, R> {
+    Left(L),
+    Center(C),
+    Right(R),
+}
+
+/// Poor's man version of `tokio::select!`
+///
+/// Just like for select2, it is implemented with [futures_lite::future::Or] so
+/// it is definitely no fair (first future gets polled much more than the last one).
+///
+/// This should be okay as long as the futures don't wrap an actual coroutine but
+/// instead correspond to sleep or event wait.
+#[macro_export]
+macro_rules! select3 {
+    (
+        $(_)? $($r1:ident)? = $f1:expr => $e1:expr,
+        $(_)? $($r2:ident)? = $f2:expr => $e2:expr,
+        $(_)? $($r3:ident)? = $f3:expr => $e3:expr $(,)?
+    ) => {
+        {
+        use $crate::future::FutureExt;
+        let f1 = async {
+            $crate::Select3Outcome::Left($f1.await)
+        };
+        let f2 = async {
+            $crate::Select3Outcome::Center($f2.await)
+        };
+        let f3 = async {
+            $crate::Select3Outcome::Right($f3.await)
+        };
+        match f1.or(f2).or(f3).await {
+            $crate::Select3Outcome::Left(r1) => { $(let $r1 = r1; )?  $e1 }
+            $crate::Select3Outcome::Center(r2) => { $(let $r2 = r2; )? $e2 }
+            $crate::Select3Outcome::Right(r3) => { $(let $r3 = r3; )? $e3 }
         }
         }
     };
