@@ -1,0 +1,86 @@
+# Copyright (C) 2016-2020, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# Parsec dev <dev-parsec@scille.fr>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 2.16.0-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-10-26 11:54+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.13.0\n"
+
+#: ../../userguide/troubleshooting.rst:6
+msgid "Troubleshooting"
+msgstr ""
+
+#: ../../userguide/troubleshooting.rst:9
+msgid "Excel/Word or another MS Office software says the file name is too long"
+msgstr ""
+
+#: ../../userguide/troubleshooting.rst:13
+msgid ""
+"This error message occurs when you save or open a file if the path to the "
+"file (including the file name) exceeds 218 characters. This limitation "
+"includes three characters representing the drive, the characters in folder "
+"names, the backslash character between folders, and the characters in the "
+"file name."
+msgstr ""
+
+#: ../../userguide/troubleshooting.rst:17
+msgid ""
+"`Error message when you open or save a file in microsoft excel filename "
+"<https://support.microsoft.com/en-us/help/213983/error-message-when-you-open-"
+"or-save-a-file-in-microsoft-excel-filename>`_"
+msgstr ""
+
+#: ../../userguide/troubleshooting.rst:19
+msgid ""
+"So this is a Microsoft issue, and there is nothing Parsec can do about it. "
+"The only solution is to rename the file, or rename one or more folders that "
+"contain the file in order to have shorter names."
+msgstr ""
+
+#: ../../userguide/troubleshooting.rst:22
+msgid "Too many old devices appear in the device selection dropdown"
+msgstr ""
+
+#: ../../userguide/troubleshooting.rst:24
+msgid ""
+"This usually occurs when a user has tried Parsec beta versions in which test "
+"databases could be reset at any time, leaving old devices still registered "
+"on their computer."
+msgstr ""
+
+#: ../../userguide/troubleshooting.rst:26
+msgid "A user can still erase these devices manually though:"
+msgstr ""
+
+#: ../../userguide/troubleshooting.rst:28
+msgid ""
+"**On Windows**, in the explorer's address bar, go to ``%APPDATA%/parsec**`` "
+"(or ``C:\\Users\\<YourUser>\\AppData\\Roaming``, AppData is a hidden "
+"folder). **On Linux**, go to ``~/.config/parsec``."
+msgstr ""
+
+#: ../../userguide/troubleshooting.rst:31
+msgid "Remove unwanted devices in config/devices"
+msgstr ""
+
+#: ../../userguide/troubleshooting.rst:32
+msgid "Remove unwanted devices in data"
+msgstr ""
+
+#: ../../userguide/troubleshooting.rst:36
+msgid ""
+"Be very careful. Deleting a device virtually means deleting the data stored "
+"in that device (since there's no way to decrypt them)."
+msgstr ""

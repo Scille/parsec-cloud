@@ -1,7 +1,6 @@
-# SOME DESCRIPTIVE TITLE.
 # Copyright (C) 2016-2020, Scille SAS
 # This file is distributed under the same license as the Parsec package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
+# Parsec dev <dev-parsec@scille.fr>, 2023.
 #
 msgid ""
 msgstr ""
@@ -33,8 +32,9 @@ msgstr "Développement"
 
 #: ../../index.rst:4
 msgid ""
-"Parsec's documentation is available in several languages and versions. Expand "
-"the \"Read the Docs\" panel at the bottom of the sidebar to see the list."
+"Parsec's documentation is available in several languages and versions. "
+"Expand the \"Read the Docs\" panel at the bottom of the sidebar to see the "
+"list."
 msgstr ""
 "La documentation de Parsec est disponible en plusieurs langues et versions. "
 "Développez le panneau \"Read the Docs\" en bas de la barre latérale pour en "
@@ -50,26 +50,28 @@ msgstr "bannière parsec"
 
 #: ../../index.rst:16
 msgid ""
-"Welcome to the Parsec documentation. If you are new to this documentation, we "
-"recommend that you read the :ref:`introduction page <doc_introduction>` to get "
-"an overview of what this documentation has to offer."
+"Welcome to the Parsec documentation. If you are new to this documentation, "
+"we recommend that you read the :ref:`introduction page <doc_introduction>` "
+"to get an overview of what this documentation has to offer."
 msgstr ""
-"Bienvenue dans la documentation de Parsec. Si c’est votre première visite, nous "
-"vous recommandons de lire la :ref:`page d’introduction <doc_introduction>` pour "
-"avoir un aperçu de ce que cette documentation peut vous apporter."
+"Bienvenue dans la documentation de Parsec. Si c’est votre première visite, "
+"nous vous recommandons de lire la :ref:`page d’introduction "
+"<doc_introduction>` pour avoir un aperçu de ce que cette documentation peut "
+"vous apporter."
 
 #: ../../index.rst:20
 msgid ""
-"The table of contents displayed below and in the sidebar should let you easily "
-"access the documentation for your topic of interest. You can also use the "
-"search function in the top left corner."
+"The table of contents displayed below and in the sidebar should let you "
+"easily access the documentation for your topic of interest. You can also use "
+"the search function in the top left corner."
 msgstr ""
 "La table des matières affichée ci-dessous et dans la barre latérale devrait "
 "vous permettre d'accéder facilement à la documentation relative au sujet qui "
-"vous intéresse. Vous pouvez également utiliser la fonction de recherche située "
-"dans le coin supérieur gauche."
+"vous intéresse. Vous pouvez également utiliser la fonction de recherche "
+"située dans le coin supérieur gauche."
 
 #: ../../index.rst:24
 msgid ""
 "The main documentation for the site is organized into the following sections:"
-msgstr "La documentation principale du site est organisée en plusieurs sections :"
+msgstr ""
+"La documentation principale du site est organisée en plusieurs sections :"

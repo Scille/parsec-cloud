@@ -551,11 +551,14 @@ def convert_newsfragments_to_rst(newsfragments: list[Path]) -> defaultdict[str, 
         # Don't add empty fragments. Still needed to be collected as they will be deleted later
         if type == "empty":
             continue
-        issue_txt = f"{fragment.read_text(encoding='utf8')} (`#{issue_id} <https://github.com/Scille/parsec-cloud/issues/{issue_id}>`__)\n"
+        issue_txt = f"{fragment.read_text(encoding='utf8')}"
         wrapped_issue_txt = textwrap.fill(
             issue_txt, width=80, break_long_words=False, initial_indent="* ", subsequent_indent="  "
         )
-        issues_per_type[type].append(wrapped_issue_txt)
+        issues_per_type[type].append(
+            wrapped_issue_txt
+            + f"\n  (`#{issue_id} <https://github.com/Scille/parsec-cloud/issues/{issue_id}>`__)\n"
+        )
     return issues_per_type
 
 

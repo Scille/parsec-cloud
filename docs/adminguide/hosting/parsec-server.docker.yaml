@@ -1,0 +1,70 @@
+version: "3.8"
+
+services:
+  parsec-postgres:
+    image: postgres:16.0-alpine
+    container_name: parsec-postgres
+    environment:
+      POSTGRES_USER: DB_USER
+      POSTGRES_PASSWORD: DB_PASS
+      POSTGRES_DB: parsec
+    volumes:
+      - parsec-db-data:/var/lib/postgresql/data
+
+  parsec-s3:
+    image: quay.io/minio/minio:RELEASE.2023-09-20T22-49-55Z
+    container_name: parsec-s3
+    command: server --console-address ":9090" --certs-dir /opts/certs /data
+    environment:
+      MINIO_ROOT_USER: S3_ROOT_USER
+      MINIO_ROOT_PASSWORD: S3_ROOT_PASS
+    ports:
+      # Admin console exposed to https://127.0.0.1:9090
+      - 127.0.0.1:9090:9090
+    volumes:
+      - parsec-object-data:/data
+      - ./parsec-s3.key:/opts/certs/private.key:ro
+      - ./parsec-s3.crt:/opts/certs/public.crt:ro
+      - ./custom-ca.crt:/opts/certs/CAs/ca.test.crt:ro
+
+  parsec-smtp:
+    image: mailhog/mailhog:v1.0.1
+    container_name: parsec-smtp
+    ports:
+      - 1025:1025
+      # Web interface exposed to http://127.0.0.1:8025
+      - 127.0.0.1:8025:8025
+
+  parsec-backend:
+    depends_on:
+      - parsec-smtp
+      - parsec-s3
+      - parsec-postgres
+    image: ghcr.io/scille/parsec-cloud/parsec-backend-server:2023-10-11-v2.16.0-rc.5.dev-b33d909
+    container_name: parsec-backend
+    env_file:
+      - parsec.env
+      - parsec-blockstore.env
+      - parsec-db.env
+      - parsec-email.env
+      - parsec-admin-token.env
+    environment:
+      AWS_CA_BUNDLE: /run/secrets/mini-ca-crt
+    secrets:
+      - mini-ca-crt
+      - parsec-pem-crt
+      - parsec-pem-key
+    ports:
+      - 127.0.0.1:6777:6777
+
+volumes:
+  parsec-db-data: {}
+  parsec-object-data: {}
+
+secrets:
+  parsec-pem-crt:
+    file: ./parsec-backend.crt
+  parsec-pem-key:
+    file: ./parsec-backend.key
+  mini-ca-crt:
+    file: ./custom-ca.crt

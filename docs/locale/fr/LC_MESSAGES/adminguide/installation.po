@@ -1,0 +1,36 @@
+# Copyright (C) 2016-2020, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# Parsec dev <dev-parsec@scille.fr>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 2.16.0-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-10-26 11:54+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.13.0\n"
+
+#: ../../adminguide/installation.rst:7
+msgid "Install Linux Parsec client"
+msgstr "Installation du client Linux Parsec"
+
+#: ../../adminguide/installation.rst:9
+msgid ""
+"Administrative operations require the installation of the Snap version of "
+"the Parsec client application. Those operations can be performed on another "
+"machine than the metadata server. You can read more about installation at "
+"the :ref:`Install Parsec Client <doc_userguide_install_client>` section."
+msgstr ""
+"Les opérations administratives nécessite l'installation de la version Snap "
+"du client Parsec. Celles-ci peuvent être exécutées sur une machine "
+"différente du serveur de métadonnées. Plus d'information sur l'installation "
+"sont disponibles dans la section :ref:`Installation du client Parsec "
+"<doc_userguide_install_client>`"

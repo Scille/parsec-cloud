@@ -26,6 +26,7 @@ browserslistrc
 Bsas
 bxsalsa
 cachekey
+CAcreateserial
 CAFILE
 camelcase
 capacitorjs
@@ -141,6 +142,7 @@ jsonify
 JsonSchema
 jvmargs
 KeyFile
+keyout
 keysyms
 latexmk
 LATEXMKOPTS
@@ -242,6 +244,7 @@ newsfragments
 Niño
 nmspc
 nocapture
+noenc
 NONCEBYTES
 noopener
 noreferrer
@@ -262,6 +265,7 @@ onboarded
 oneof
 oneofschema
 Onone
+opses
 OpsLimit
 ORGANIZATIONID
 oscrypt
@@ -284,6 +288,8 @@ playlistformats
 plutil
 PoFile
 positionpoll
+poutils
+powrap
 precommit
 printenv
 printsupport

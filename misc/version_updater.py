@@ -75,6 +75,11 @@ TOOLS_VERSION: Dict[Tool, str] = {
 
 FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
     ROOT_DIR
+    / ".github/workflows/ci-docs.yml": {
+        Tool.Python: [PYTHON_GA_VERSION],
+        Tool.Poetry: [POETRY_GA_VERSION],
+    },
+    ROOT_DIR
     / ".github/workflows/ci-python.yml": {
         Tool.Python: [PYTHON_GA_VERSION],
         Tool.Poetry: [POETRY_GA_VERSION],
@@ -125,6 +130,12 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
         ],
         Tool.Node: [ReplaceRegex(r"Node [0-9.]+", "Node {version}")],
         Tool.WasmPack: [ReplaceRegex(r"wasm-pack@[0-9.]+", "wasm-pack@{version}")],
+    },
+    ROOT_DIR
+    / "docs/conf.py": {Tool.Parsec: [ReplaceRegex(r'version = ".*"', 'version = "{version}"')]},
+    ROOT_DIR
+    / "docs/pyproject.toml": {
+        Tool.Python: [ReplaceRegex(r'^python = "\^[0-9.]+"$', 'python = "^{version}"')]
     },
     ROOT_DIR
     / "licenses/BUSL-Scille.txt": {

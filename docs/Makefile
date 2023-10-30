@@ -1,11 +1,13 @@
 # Makefile for Sphinx documentation
 #
 
+# cspell:words inotifywait
+
 # You can set these variables from the command line.
-SPHINXOPTS    =
-SPHINXBUILD   = sphinx-build
-PAPER         =
-BUILDDIR      = _build
+SPHINXOPTS  ?=
+SPHINXBUILD ?= sphinx-build
+PAPER       ?=
+BUILDDIR    ?= _build
 
 # User-friendly check for sphinx-build
 ifeq ($(shell which $(SPHINXBUILD) >/dev/null 2>&1; echo $$?), 1)
@@ -18,13 +20,14 @@ PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 LATEXMKOPTS     = -interaction=nonstopmode
 # the i18n builder cannot share the environment and doctrees with the others
-I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
+I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS)
 
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  html       to make standalone HTML files"
+	@echo "  watch-html make standalone HTML files and rebuild them on change"
 	@echo "  dirhtml    to make HTML files named index.html in directories"
 	@echo "  singlehtml to make a single large HTML file"
 	@echo "  pickle     to make pickle files"
@@ -54,6 +57,11 @@ html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
+
+watch-html:
+	while inotifywait -e modify -e move -e create -e delete --exclude $(BUILDDIR) --recursive .; do \
+		$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html; \
+	done
 
 dirhtml:
 	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
@@ -145,9 +153,15 @@ info:
 	@echo "makeinfo finished; the Info files are in $(BUILDDIR)/texinfo."
 
 gettext:
-	$(SPHINXBUILD) -b gettext $(I18NSPHINXOPTS) $(BUILDDIR)/locale
+	$(SPHINXBUILD) -b gettext $(I18NSPHINXOPTS) . $(BUILDDIR)/locale
 	@echo
 	@echo "Build finished. The message catalogs are in $(BUILDDIR)/locale."
+
+intl-%: gettext
+	( \
+	MODIFIED=$$(sphinx-intl update -p $(BUILDDIR)/locale -l $(subst intl-,,$@) | tee /dev/stderr | grep -e 'Update:' -e 'Create:' | cut -f 2 -d' '); \
+	test -n "$$MODIFIED" && powrap $$MODIFIED || true; \
+	)
 
 changes:
 	$(SPHINXBUILD) -b changes $(ALLSPHINXOPTS) $(BUILDDIR)/changes

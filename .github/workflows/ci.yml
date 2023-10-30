@@ -30,6 +30,7 @@ jobs:
       rust: ${{ steps.need-check.outputs.rust }}
       python: ${{ steps.need-check.outputs.python }}
       web: ${{ steps.need-check.outputs.web }}
+      docs: ${{ steps.need-check.outputs.docs }}
     steps:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # pin v3.5.2
         timeout-minutes: 5
@@ -53,6 +54,7 @@ jobs:
           NEED_CHECK_rust: ${{ github.ref == 'refs/heads/master' || steps.changes.outputs.rust-jobs == 'true' }}
           NEED_CHECK_web: ${{ github.ref == 'refs/heads/master' || steps.changes.outputs.web-jobs == 'true' }}
           NEED_CHECK_python: ${{ github.ref == 'refs/heads/master' || steps.changes.outputs.python-jobs == 'true' }}
+          NEED_CHECK_docs: ${{ steps.changes.outputs.docs-jobs == 'true' }}
 
   # Github PR merging is configured to only require this job to pass
   ci-is-happy:
@@ -64,6 +66,7 @@ jobs:
       - rust
       - web
       - spelling
+      - docs
     runs-on: ubuntu-latest
     if: always()
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
@@ -75,19 +78,22 @@ jobs:
           import os
           import json
 
-          data = json.loads(os.environ["NEEDS"])
+          needs = json.loads(os.environ["NEEDS"])
 
-          print("NEEDS:", json.dumps(data, indent=4), sep="\n")
+          print("NEEDS:", json.dumps(needs, indent=4), sep="\n")
 
           # Check jobs aren't failed or cancelled.
-          for name, job in data.items():
+          for name, job in needs.items():
             if job["result"] in ("cancelled", "failure"):
               raise ValueError(f"The job `{name}` is in a invalid state: {job['result']}")
 
           # Check required jobs, here we just need to check that the state is `success` and not `skipped`.
-          for job_name, required in data["dispatch"]["outputs"].items():
+          for job_name, required in needs["dispatch"]["outputs"].items():
+            if job_name not in needs:
+              print(f"Job: `{job_name}` isn't required!")
+              continue
             assert required in ("true", "false")
-            job_result = data[job_name]["result"]
+            job_result = needs[job_name]["result"]
             if required == "true" and job_result != "success":
               raise ValueError(
                   f"The required job `{job_name}` should be in a success state but is not (state={job_result})"
@@ -191,3 +197,9 @@ jobs:
       - dispatch
     if: needs.dispatch.outputs.web == 'true'
     uses: ./.github/workflows/ci-web.yml
+
+  docs:
+    needs:
+      - dispatch
+    if: needs.dispatch.outputs.docs
+    uses: ./.github/workflows/ci-docs.yml
