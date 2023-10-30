@@ -7446,6 +7446,19 @@ fn validate_invitation_token(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// validate_organization_id
+fn validate_organization_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let raw = {
+        let js_val = cx.argument::<JsString>(0)?;
+        js_val.value(&mut cx)
+    };
+    let ret = libparsec::validate_organization_id(&raw);
+    let js_ret = JsBoolean::new(&mut cx, ret);
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
 // validate_path
 fn validate_path(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let raw = {
@@ -8259,6 +8272,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("validateEntryName", validate_entry_name)?;
     cx.export_function("validateHumanHandleLabel", validate_human_handle_label)?;
     cx.export_function("validateInvitationToken", validate_invitation_token)?;
+    cx.export_function("validateOrganizationId", validate_organization_id)?;
     cx.export_function("validatePath", validate_path)?;
     cx.export_function("workspaceCreateFile", workspace_create_file)?;
     cx.export_function("workspaceCreateFolder", workspace_create_folder)?;

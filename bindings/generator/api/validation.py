@@ -24,3 +24,7 @@ def validate_device_label(raw: Ref[str]) -> bool:
 
 def validate_invitation_token(raw: Ref[str]) -> bool:
     raise NotImplementedError()
+
+
+def validate_organization_id(raw: Ref[str]) -> bool:
+    raise NotImplementedError()
