@@ -1217,6 +1217,9 @@ export function validateHumanHandleLabel(
 export function validateInvitationToken(
     raw: string
 ): Promise<boolean>
+export function validateOrganizationId(
+    raw: string
+): Promise<boolean>
 export function validatePath(
     raw: string
 ): Promise<boolean>

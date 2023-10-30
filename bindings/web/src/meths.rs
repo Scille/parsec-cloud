@@ -6514,6 +6514,16 @@ pub fn validateInvitationToken(raw: String) -> Promise {
     })
 }
 
+// validate_organization_id
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn validateOrganizationId(raw: String) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::validate_organization_id(&raw);
+        Ok(ret.into())
+    })
+}
+
 // validate_path
 #[allow(non_snake_case)]
 #[wasm_bindgen]

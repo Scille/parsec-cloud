@@ -1396,6 +1396,9 @@ export interface LibParsecPlugin {
     validateInvitationToken(
         raw: string
     ): Promise<boolean>
+    validateOrganizationId(
+        raw: string
+    ): Promise<boolean>
     validatePath(
         raw: string
     ): Promise<boolean>
