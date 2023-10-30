@@ -221,7 +221,7 @@ import { Answer, askQuestion } from '@/components/core/ms-modal/MsQuestionModal.
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
 import { writeTextToClipboard } from '@/common/clipboard';
 import { getPathLink, isWeb, WorkspaceHandle, WorkspaceID } from '@/parsec';
-import { ImportManager, ImportKey, StateData, ImportState } from '@/common/importManager';
+import { ImportManager, ImportManagerKey, StateData, ImportState } from '@/common/importManager';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
@@ -251,7 +251,7 @@ const selectedFilesCount = computed(() => {
 });
 const displayView = ref(DisplayState.List);
 const { t } = useI18n();
-const importManager = inject(ImportKey) as ImportManager;
+const importManager = inject(ImportManagerKey) as ImportManager;
 let callbackId: string | null = null;
 
 onMounted(async () => {

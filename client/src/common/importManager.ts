@@ -45,10 +45,10 @@ export type StateData =
   WriteErrorStateData;
 
 type FileImportCallback = (state: ImportState, data: StateData) => Promise<void>;
-type ImportId = string;
+type ImportID = string;
 
 class ImportData {
-  id: ImportId;
+  id: ImportID;
   file: File;
   path: FsPath;
   workspaceHandle: WorkspaceHandle;
@@ -95,7 +95,7 @@ class ImportManager {
     });
   }
 
-  async cancelImport(id: ImportId): Promise<void> {
+  async cancelImport(id: ImportID): Promise<void> {
     await this.fileMutex.runExclusive(async () => {
       const index = this.importData.findIndex((item) => item.id === id);
       if (index !== -1) {
@@ -127,7 +127,7 @@ class ImportManager {
   }
 
   private async sendState(state: ImportState, data: StateData): Promise<void> {
-    this.cbMutex.runExclusive(async () => {
+    await this.cbMutex.runExclusive(async () => {
       for (const elem of this.callbacks) {
         elem[1](state, data);
       }
@@ -158,9 +158,9 @@ class ImportManager {
       return;
     }
     const fd = await this.mockOpen(data.path, 'w+');
-    // Would love to do it like in the documentation but it does not seem to be
-    // supported in typescript
-    // https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream
+    // Would prefer to use
+    // for await (const chunk of data.file.stream()) {}
+    // instead but it's not available on streams.
 
     let writtenData = 0;
     // eslint-disable-next-line no-constant-condition
@@ -213,7 +213,7 @@ class ImportManager {
 }
 
 export { ImportManager, ImportState, ImportData };
-export { ImportKey } from '@/common/injectionKeys';
+export { ImportManagerKey } from '@/common/injectionKeys';
 
 /*
 

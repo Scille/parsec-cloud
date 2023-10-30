@@ -41,7 +41,7 @@ import { Notification, NotificationCenter, NotificationLevel } from '@/services/
 import { Answer, askQuestion } from '@/components/core/ms-modal/MsQuestionModal.vue';
 import { isElectron, isHomeRoute } from '@/parsec';
 import { fileLinkValidator, claimLinkValidator, Validity } from '@/common/validators';
-import { ImportManager, ImportKey } from '@/common/importManager';
+import { ImportManager, ImportManagerKey } from '@/common/importManager';
 
 async function setupApp(): Promise<void> {
 
@@ -125,7 +125,7 @@ async function setupApp(): Promise<void> {
   });
   app.provide(StorageManagerKey, storageManager);
   app.provide(NotificationKey, notificationCenter);
-  app.provide(ImportKey, importManager);
+  app.provide(ImportManagerKey, importManager);
 
   // We can start the app with different cases :
   // - dev with a testbed Parsec server with the default devices
