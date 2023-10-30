@@ -976,26 +976,27 @@ files = [
 
 [[package]]
 name = "hypercorn"
-version = "0.14.4"
+version = "0.15.0"
 description = "A ASGI Server based on Hyper libraries and inspired by Gunicorn"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "hypercorn-0.14.4-py3-none-any.whl", hash = "sha256:f956200dbf8677684e6e976219ffa6691d6cf795281184b41dbb0b135ab37b8d"},
-    {file = "hypercorn-0.14.4.tar.gz", hash = "sha256:3fa504efc46a271640023c9b88c3184fd64993f47a282e8ae1a13ccb285c2f67"},
+    {file = "hypercorn-0.15.0-py3-none-any.whl", hash = "sha256:5008944999612fd188d7a1ca02e89d20065642b89503020ac392dfed11840730"},
+    {file = "hypercorn-0.15.0.tar.gz", hash = "sha256:d517f68d5dc7afa9a9d50ecefb0f769f466ebe8c1c18d2c2f447a24e763c9a63"},
 ]
 
 [package.dependencies]
-exceptiongroup = {version = ">=1.1.0", optional = true, markers = "python_version < \"3.11\" and extra == \"trio\""}
+exceptiongroup = {version = ">=1.1.0", optional = true, markers = "extra == \"trio\""}
 h11 = "*"
 h2 = ">=3.1.0"
 priority = "*"
+taskgroup = {version = "*", markers = "python_version < \"3.11\""}
 tomli = {version = "*", markers = "python_version < \"3.11\""}
 trio = {version = ">=0.22.0", optional = true, markers = "extra == \"trio\""}
 wsproto = ">=0.14.0"
 
 [package.extras]
-docs = ["pydata_sphinx_theme"]
+docs = ["pydata_sphinx_theme", "sphinxcontrib_mermaid"]
 h3 = ["aioquic (>=0.9.0,<1.0)"]
 trio = ["exceptiongroup (>=1.1.0)", "trio (>=0.22.0)"]
 uvloop = ["uvloop"]
@@ -1865,6 +1866,20 @@ tests = ["freezegun (>=0.2.8)", "pretend", "pytest (>=6.0)", "pytest-asyncio (>=
 typing = ["mypy (>=1.4)", "rich", "twisted"]
 
 [[package]]
+name = "taskgroup"
+version = "0.0.0a4"
+description = "backport of asyncio.TaskGroup, asyncio.Runner and asyncio.timeout"
+optional = false
+python-versions = "*"
+files = [
+    {file = "taskgroup-0.0.0a4-py2.py3-none-any.whl", hash = "sha256:5c1bd0e4c06114e7a4128583ab75c987597d5378a33948a3b74c662b90f61277"},
+    {file = "taskgroup-0.0.0a4.tar.gz", hash = "sha256:eb08902d221e27661950f2a0320ddf3f939f579279996f81fe30779bca3a159c"},
+]
+
+[package.dependencies]
+exceptiongroup = "*"
+
+[[package]]
 name = "toastedmarshmallow"
 version = "0.2.6"
 description = "A JIT implementation for Marshmallow to speed up dumping and loading objects."
@@ -2150,4 +2165,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.9.10"
-content-hash = "fe9fb3f4789ece02a33a89d9c15f625ca26641136f6ff7afac9180b16cbacab5"
+content-hash = "68cb3c117ee9ac869cbb02be8ef53062b7ed1b5d2de55dc0fbe0111311c3c23d"

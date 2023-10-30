@@ -54,7 +54,7 @@ jinja2 = { version = "^3.0" }
 quart-trio = "0.10.0"
 quart = "0.18.4"
 werkzeug = "2.3.7"
-hypercorn = { version = ">=0.13.2,<0.15.0" }
+hypercorn = { version = ">=0.13.2,<0.16.0" }
 # PostgreSQL
 triopg = { version = "^0.6" }
 trio-asyncio = { version = "^0.12" }
