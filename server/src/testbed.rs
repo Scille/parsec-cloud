@@ -249,9 +249,10 @@ event_wrapper!(
     ],
     |py, x: &TestbedEventShareRealm| -> PyResult<String> {
         Ok(format!(
-            "timestamp={:?}, author={:?}, user={:?}, role={}",
+            "timestamp={:?}, author={:?}, realm={:?}, user={:?}, role={}",
             x.timestamp.0,
             x.author.0,
+            x.realm.0,
             x.user.0,
             match &x.role {
                 None => "None",
