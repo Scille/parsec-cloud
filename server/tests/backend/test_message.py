@@ -33,7 +33,7 @@ async def test_message_from_bob_to_alice(backend, alice, bob, alice_rpc):
                 sender=bob.device_id,
                 timestamp=d1,
                 index=1,
-                certificate_index=12,
+                certificate_index=9,
             )
         ],
     )
@@ -50,8 +50,8 @@ async def test_message_get_with_offset(backend, alice, bob, alice_rpc):
     rep = await message_get(alice_rpc, 1)
     assert rep == MessageGetRepOk(
         messages=[
-            Message(body=b"2", sender=bob.device_id, timestamp=d1, index=2, certificate_index=12),
-            Message(body=b"3", sender=bob.device_id, timestamp=d2, index=3, certificate_index=12),
+            Message(body=b"2", sender=bob.device_id, timestamp=d1, index=2, certificate_index=9),
+            Message(body=b"3", sender=bob.device_id, timestamp=d2, index=3, certificate_index=9),
         ],
     )
 
@@ -83,7 +83,7 @@ async def test_message_from_bob_to_alice_multi_backends(
                             sender=bob.device_id,
                             timestamp=d1,
                             index=1,
-                            certificate_index=12,
+                            certificate_index=9,
                         )
                     ],
                 )
