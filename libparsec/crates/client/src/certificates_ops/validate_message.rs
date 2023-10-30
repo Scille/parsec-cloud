@@ -193,17 +193,17 @@ async fn validate_message_internal(
             let certif_as_expected = match store.get_any_certificate(certificate_index).await {
                 Ok(certif) => {
                     if let AnyArcCertificate::RealmRole(certif) = certif {
-                        let mut as_expected = true;
-                        as_expected |= matches!(&certif.author, CertificateSignerOwned::User(certif_author) if certif_author == author);
-                        as_expected |= certif.timestamp == *timestamp;
-                        as_expected |= certif.realm_id == *id;
-                        as_expected |= certif.user_id == *ops.device.user_id();
+                        let mut as_expected = matches!(&certif.author, CertificateSignerOwned::User(certif_author) if certif_author == author)
+                            && certif.timestamp == *timestamp
+                            && certif.realm_id == *id
+                            && certif.user_id == *ops.device.user_id();
                         match &content {
                             MessageContent::SharingRevoked { .. } => {
-                                as_expected |= certif.role.is_none();
+                                // TODO: make a test to enter there
+                                as_expected &= certif.role.is_none();
                             }
                             MessageContent::SharingGranted { .. } => {
-                                as_expected |= certif.role.is_some();
+                                as_expected &= certif.role.is_some();
                             }
                             _ => {
                                 unreachable!()

@@ -9,3 +9,4 @@ mod add_user_revoked_certificate;
 mod add_user_update_certificate;
 mod store;
 mod utils;
+mod validate_message;
