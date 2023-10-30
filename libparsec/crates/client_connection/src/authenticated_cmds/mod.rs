@@ -77,7 +77,7 @@ impl AuthenticatedCmds {
         proxy: ProxyConfig,
     ) -> anyhow::Result<Self> {
         let client = {
-            let builder = reqwest::ClientBuilder::default();
+            let builder = reqwest::ClientBuilder::default().user_agent(crate::CLIENT_USER_AGENT);
             let builder = proxy.configure_http_client(builder);
             builder.build()?
         };
@@ -287,3 +287,7 @@ fn sign_request(
 
     request_builder.headers(authorization_headers)
 }
+
+#[cfg(test)]
+#[path = "../../tests/unit/authenticated.rs"]
+mod tests;

@@ -10,7 +10,10 @@ use std::{
 };
 
 pub use bytes::Bytes;
-pub use reqwest::{header::HeaderMap, Error as RequestError, StatusCode};
+pub use reqwest::{
+    header::{HeaderMap, HeaderValue},
+    Error as RequestError, StatusCode,
+};
 use reqwest::{RequestBuilder, Response};
 
 use libparsec_protocol::API_LATEST_VERSION;
@@ -487,3 +490,7 @@ pub fn test_register_send_hook_async<A, R>(
         })
         .expect("Config dir doesn't correspond to a testbed env");
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/testbed.rs"]
+mod tests;
