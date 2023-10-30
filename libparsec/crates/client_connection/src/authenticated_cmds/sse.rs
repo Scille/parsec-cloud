@@ -231,5 +231,5 @@ impl RateLimiter {
 }
 
 #[cfg(test)]
-#[path = "../../tests/unit/rate_limiter.rs"]
-mod rate_limiter;
+#[path = "../../tests/unit/sse_rate_limiter.rs"]
+mod tests;

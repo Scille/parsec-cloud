@@ -18,6 +18,8 @@ repos:
       - id: end-of-file-fixer
         alias: eof
         exclude_types: [ svg ]
+        # `libparsec/version` must not have a trailing newline !
+        exclude: ^libparsec/version$
 
   - repo: local
     hooks:
