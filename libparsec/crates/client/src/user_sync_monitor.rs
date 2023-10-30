@@ -65,6 +65,8 @@ impl UserSyncMonitor {
                 };
                 // Need a loop here to retry the operation in case the server is not available
                 loop {
+                    // TODO: should use realm checkpoint system ! Currently we always start
+                    // by trying a sync of the user manifest
                     if let Err(err) = user_ops.sync().await {
                         match err {
                             SyncError::Offline => {
