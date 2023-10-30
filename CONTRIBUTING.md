@@ -34,13 +34,11 @@ Please fill in the required fields and add any extra information that might help
 
 ### Filing Features
 
-When proposing a new **feature**, please provide the following:
+Submit your feature request [here](https://github.com/Scille/parsec-cloud/issues/new?assignees=&labels=B-Triage%2CC-Feature-Request&projects=&template=feature-request.yml&title=%5B%F0%9F%9A%80+%7C+Feature+request%5D%3A+).
 
-1. your actual **use case** and your **goals**
-2. *why* this important for you
-3. optionally, a proposed solution
-
-> Describing your use case and goals, rather than only / directly jumping into a specific, concrete proposal for a solution is very important. As this allows us to take into account the bigger picture. If you "only" propose concrete solution, and that doesn't fit in, we might need to reverse engineer your actual use case / goals first to then come up with a solution that fits.
+Take your time when filling the form.
+There are usually many ways to solve a problem: try describing your use case and goals before jumping into specific, concrete proposal for a solution.
+This helps us seeing the big picture. If you "only" propose a concrete solution, and we consider it doesn't fit in, we will need to guess what is your actual use case before coming up with a solution that fits.
 
 ## Contributing Code
 
