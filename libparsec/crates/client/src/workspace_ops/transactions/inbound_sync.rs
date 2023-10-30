@@ -42,6 +42,43 @@ impl From<ConnectionError> for SyncError {
     }
 }
 
+pub async fn refresh_realm_checkpoint(ops: &WorkspaceOps) -> Result<(), SyncError> {
+    let last_checkpoint = ops.data_storage.get_realm_checkpoint().await?;
+
+    let (changes, current_checkpoint) = {
+        use authenticated_cmds::latest::vlob_poll_changes::{Rep, Req};
+        let req = Req {
+            realm_id: ops.realm_id,
+            last_checkpoint,
+        };
+        let rep = ops.cmds.send(req).await?;
+        match rep {
+            Rep::Ok {
+                changes,
+                current_checkpoint,
+            } => (changes.into_iter().collect(), current_checkpoint),
+            Rep::InMaintenance => return Err(SyncError::InMaintenance),
+            // TODO: error handling !
+            Rep::NotAllowed => todo!(),
+            Rep::NotFound { .. } => todo!(),
+            Rep::UnknownStatus { .. } => todo!(),
+        }
+    };
+
+    if last_checkpoint != current_checkpoint {
+        ops.data_storage
+            .update_realm_checkpoint(current_checkpoint, changes)
+            .await?;
+    }
+
+    Ok(())
+}
+
+pub async fn get_need_inbound_sync(ops: &WorkspaceOps) -> anyhow::Result<Vec<VlobID>> {
+    let need_sync = ops.data_storage.get_need_sync_entries().await?;
+    Ok(need_sync.remote)
+}
+
 #[derive(Debug)]
 pub enum InboundSyncOutcome {
     Updated,
@@ -503,6 +540,7 @@ async fn fetch_remote_manifest<M: RemoteManifest>(
             return Err(FetchRemoteManifestError::BadVersion);
         }
         // Unexpected errors :(
+        // TODO: error handling is invalid !
         rep @ (
             // We didn't specified a `version` argument in the request
             Rep::BadVersion |
