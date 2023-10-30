@@ -83,8 +83,14 @@
           </ion-item>
         </div>
       </div>
-      <div class="workspaces-footer title-h5">
-        {{ $t('WorkspacesPage.itemCount', { count: workspaceList.length }, workspaceList.length) }}
+      <div class="workspaces-footer">
+        <div class="folder-footer__container">
+          <ion-text
+            class="text title-h5"
+          >
+            {{ $t('WorkspacesPage.itemCount', { count: workspaceList.length }, workspaceList.length) }}
+          </ion-text>
+        </div>
       </div>
       <ion-fab
         v-if="isPlatform('mobile')"
@@ -338,16 +344,6 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
     margin-left: auto;
     margin-right: 1rem;
   }
-}
-
-.workspaces-footer {
-  width: 100%;
-  left: 0;
-  position: fixed;
-  bottom: 0;
-  text-align: center;
-  color: var(--parsec-color-light-secondary-text);
-  margin-bottom: 2em;
 }
 
 .workspaces-container-grid {
