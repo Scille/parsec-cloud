@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import base64
 import binascii
-from typing import TYPE_CHECKING, Mapping
+from typing import TYPE_CHECKING, Mapping, Optional
 
 from hypercorn.logging import AccessLogAtoms, Logger
 
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 class ParsecLogger(Logger):
     def atoms(
-        self, request: "WWWScope", response: "ResponseSummary", request_time: float
+        self, request: "WWWScope", response: Optional["ResponseSummary"], request_time: float
     ) -> Mapping[str, str]:
         """Create and return an access log atoms dictionary.
         This can be overridden and customised if desired. It should
