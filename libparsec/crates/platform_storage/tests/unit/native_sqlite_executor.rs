@@ -50,7 +50,7 @@ async fn stop_with_multiple_jobs() {
                         // On top of that we may have `executor.exec` calls in-flight
                         // that benefit from this wait to settle down.
                         // There is no guarantee 10ms is enough, but `executor.stop` &
-                        // `executor.exec` only do simple synchronization operations so it1
+                        // `executor.exec` only do simple synchronization operations so it
                         // should be plenty.
                         std::thread::sleep(std::time::Duration::from_millis(10));
                     }
