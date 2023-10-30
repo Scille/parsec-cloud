@@ -1,6 +1,7 @@
 .folder-footer, .user-footer {
   width: 100%;
-  position: fixed;
+  position: absolute;
+  pointer-events: none;
   bottom: 0;
   padding: 1em 0 2.5em;
   text-align: center;
