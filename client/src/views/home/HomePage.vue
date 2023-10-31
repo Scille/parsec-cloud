@@ -35,7 +35,9 @@
                   :icon="informationCircle"
                   size="small"
                 />
-                {{ getAppVersion() }}
+                <span class="version-text">
+                  {{ getAppVersion() }}
+                </span>
               </div>
             </div>
           </div>
@@ -241,12 +243,8 @@ import {
   popoverController,
   modalController,
 } from '@ionic/vue';
-import {
-  chevronBack,
-  cog,
-  logIn,
-  informationCircle,
-} from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
+// We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
+import { chevronBack, cog, logIn, informationCircle } from 'ionicons/icons';
 import { useI18n } from 'vue-i18n';
 import { onMounted, ref, toRaw, computed, inject, Ref, onUpdated, onUnmounted, watch } from 'vue';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
@@ -588,14 +586,19 @@ async function openSettingsModal(): Promise<void> {
     &__version {
       cursor: pointer;
       color: var(--parsec-color-light-secondary-premiere);
-      padding: .5rem;
+      padding: 0.3rem 0.5rem;
       border-radius: var(--parsec-radius-8);
       background-color: var(--parsec-color-light-primary-30-opacity15);
-      border: 2px solid var(--parsec-color-light-primary-30-opacity15);
+      border: 1px solid var(--parsec-color-light-primary-30-opacity15);
       display: flex;
       align-items: center;
-      gap: .5rem;
+      gap: 0.5rem;
       transition: all 150ms linear;
+
+      .version-text {
+        line-height: 0;
+        padding: 0.8rem 0;
+      }
 
       ion-icon {
         font-size: 1.375rem;

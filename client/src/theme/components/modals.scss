@@ -220,4 +220,8 @@ ion-modal .inner-content {
 
 .overlapped-modal {
   visibility: hidden;
+  & ~ ion-modal.modal-default {
+    --backdrop-opacity: var(--ion-backdrop-opacity, 0.32) !important;
+    --box-shadow: var(--parsec-shadow-light) !important;
+  }
 }

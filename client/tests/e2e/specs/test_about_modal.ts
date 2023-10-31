@@ -14,15 +14,15 @@ describe('Check about modal', () => {
   it('Opens the settings dialog', () => {
     cy.get('.about-modal').should('exist');
     cy.get('.about-modal').get('.title-h2').contains('About');
-    cy.get('.about-modal').find('.app-info').find('.app-info-key').as('keys').should('have.length', 4);
-    cy.get('.about-modal').find('.app-info').find('.app-info-value').as('values').should('have.length', 4);
+    cy.get('.about-modal').find('.info-list').find('.app-info-key').as('keys').should('have.length', 4);
+    cy.get('.about-modal').find('.info-list').find('.app-info-value').as('values').should('have.length', 4);
     cy.get('@keys').eq(0).contains('Version');
     cy.get('@keys').eq(1).contains('Developer');
     cy.get('@keys').eq(2).contains('License');
     cy.get('@keys').eq(3).contains('Project');
     cy.get('@values')
       .eq(0)
-      .contains(/Parsec Cloud v[\da-z.-]+/);
+      .contains(/v[\da-z.-]+/);
     cy.get('@values').eq(1).contains('Parsec Cloud');
     cy.get('@values').eq(2).contains('BUSL-1.1');
     cy.get('@values').eq(3).contains('GitHub');

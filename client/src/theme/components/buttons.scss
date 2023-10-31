@@ -56,6 +56,7 @@ ion-button:not(.button-outline):not(.button-clear) {
 /* button outline */
 ion-button.button-outline {
   --border-color: var(--parsec-color-light-primary-500);
+  --background: none;
   --color: var(--parsec-color-light-primary-500);
   --border-color-hover: var(--parsec-color-light-primary-700);
   --color-hover: var(--parsec-color-light-primary-700);
