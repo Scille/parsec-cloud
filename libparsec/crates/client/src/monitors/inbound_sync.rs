@@ -2,7 +2,7 @@
 
 use std::{future::Future, sync::Arc};
 
-use libparsec_platform_async::channel;
+use libparsec_platform_async::{channel, pretend_future_is_send_on_web};
 use libparsec_types::prelude::*;
 
 use super::Monitor;
@@ -130,5 +130,6 @@ pub(crate) async fn inbound_sync_monitor_factory(
         let event_bus = event_bus.clone();
         task_future_factory(event_bus, workspace_ops)
     };
+    let task_future = pretend_future_is_send_on_web(task_future);
     Monitor::start(event_bus, task_future, None).await
 }

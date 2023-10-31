@@ -138,6 +138,7 @@ neon = { version = "0.10", default-features = false }
 once_cell = { version = "1.18.0", default-features = false }
 openssl = { version = "0.10.57", default-features = false }
 paste = { version = "1.0.14", default-features = false }
+pin-project-lite = { version = "0.2.13", default-features = false }
 percent-encoding = { version = "2.3.0", default-features = false }
 pretty_assertions = { version = "1.4.0", default-features = false }
 proc-macro2 = { version = "1.0.69", default-features = false }

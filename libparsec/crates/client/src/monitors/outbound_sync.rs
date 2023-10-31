@@ -2,7 +2,7 @@
 
 use std::{collections::HashMap, future::Future, pin::pin, sync::Arc};
 
-use libparsec_platform_async::{channel, event, select3, spawn};
+use libparsec_platform_async::{channel, event, pretend_future_is_send_on_web, select3, spawn};
 use libparsec_types::prelude::*;
 
 use super::Monitor;
@@ -183,5 +183,6 @@ pub(crate) async fn outbound_sync_monitor_factory(
         let event_bus = event_bus.clone();
         task_future_factory(event_bus, device, workspace_ops)
     };
+    let task_future = pretend_future_is_send_on_web(task_future);
     Monitor::start(event_bus, task_future, Some(stop_cb)).await
 }
