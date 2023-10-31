@@ -23,7 +23,7 @@ fn task_future_factory(
         MissedServerEvents,
     }
     // Channel starts empty, hence the monitor will stay idle until the connection
-    // monitor triggers it initial `EventMissedServerEvents` event
+    // monitor triggers its initial `EventMissedServerEvents` event
     let (tx, rx) = channel::unbounded::<Action>();
 
     let events_connection_lifetime = (
@@ -84,7 +84,7 @@ fn task_future_factory(
 
             // TODO: pretty poor implementation:
             // - the events keep piling up during the sync
-            // - not detection of an already synced entry
+            // - no detection of an already synced entry
             // - no parallelism in sync
             for entry_id in to_sync {
                 // Need a loop here to retry the operation in case the server is not available
