@@ -288,7 +288,7 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
 
 <style lang="scss" scoped>
 .workspaces-container {
-  margin: 2em;
+  margin: 7em 2em 2em;
   background-color: white;
 }
 

@@ -592,7 +592,7 @@ async function resetSelection(): Promise<void> {
 
 <style scoped lang="scss">
 .folder-container {
-  margin: 2em;
+  margin: 7em 2em 2em;
   background-color: white;
 }
 

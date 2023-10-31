@@ -18,6 +18,6 @@ import { IonItemDivider } from '@ionic/vue';
   height: 6em;
   background-color: var(--parsec-color-light-secondary-background);
   border-top: 1px solid var(--parsec-color-light-secondary-light);
-  position: sticky;
+  position: fixed;
 }
 </style>
