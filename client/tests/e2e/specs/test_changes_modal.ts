@@ -15,7 +15,7 @@
 //   });
 
 //   it('Opens the changes modal', () => {
-//     cy.get('.update-container').find('ion-button').eq(1).contains('Show changelog').click();
+//     cy.get('.info-list').find('.changelog-btn').contains('Show changelog').click();
 //     cy.get('.changes-modal').get('.title-h2').contains('Changes');
 //     cy.get('.changes-modal')
 //       .find('.version-title')
@@ -25,7 +25,7 @@
 
 //   it('Close when click X', () => {
 //     cy.get('.changes-modal').should('not.exist');
-//     cy.get('.update-container').find('ion-button').eq(1).contains('Show changelog').click();
+//     cy.get('.info-list').find('.changelog-btn').contains('Show changelog').click();
 //     cy.get('.changes-modal').should('exist');
 //     cy.get('.closeBtn').click();
 //     cy.get('.changes-modal').should('not.exist');
