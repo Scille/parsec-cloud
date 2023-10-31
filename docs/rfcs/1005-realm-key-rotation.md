@@ -52,7 +52,7 @@ The idea is as follow:
 - Remove the whole re-encryption logic: realm vlobs are never reencrypted.
 - Remove the whole message logic (i.e. sending arbitrary message between users, currently
   only used to communicate workspace keys during sharing): we use a special ad-hoc
-  API commands to access the realm's keys and workspace name (see below).
+  API command to access the realm's keys (see below).
 - A realm now has its manifests encrypted with multiple keys, at any time a new
   key can be added.
 - Each key for a given realm has an index.
@@ -62,8 +62,6 @@ The idea is as follow:
 - The "keys-bundle key" is serialized in a `RealmKeysBundleAccess`. This document is for
   each member of the realm with their public key.
 - For sharing a realm, the last `RealmKeysBundleAccess` is encrypted for the new user.
-- For sharing a realm, the workspace name is encrypted for the new user which can
-  fetch it using the `realm_get_workspace_name` API command.
 - Keys-bundle & keys-bundle access are never stored on-disk client-side: they are instead
   lazily fetched from server when needed and kept on RAM.
 - Realm initial key is lazily created by doing the very first key rotation (typically during
@@ -78,9 +76,15 @@ The idea is as follow:
 - Given each key rotation is expected to add a single key to the bundle, the key index is
   also used to identify the key rotation and the keys-bundle.
 - Vlob create/update/read API commands contains a field with the index of the key being used.
-- User manifest no longer stores the realm key, only the realm id and name. The realm keys
+- The name of the workspace is stored in a `RealmNameCertificate` certificate that is
+  provided through the `realm_rename` API command. This allow the name to be global and
+  modifiable by the owner of the realm.
+- User manifest no longer has to store any information about the realms. The realm keys
   are only fetched when needed (i.e. in case of out/in sync) by using the new
   `workspace_get_keys_bundle` API command.
+- In case no `WorkspaceName` is available, then the realm ID is used instead.
+- It is no longer possible to customize the name of a workspace only for oneself (it is
+  possible to re-add this feature later if needed though).
 - `workspace_get_keys_bundle` allows to get previous keys-bundles if any, this is needed
   to self-heal in case the new keys-bundle is corrupted.
 
@@ -89,6 +93,11 @@ The idea is as follow:
 Client-side, the detection of a new certificate automatically triggers a key rotation
 when needed (i.e. user revoked or user role removed).
 This is totally transparent for the end user \o/
+
+On top of that, user manifest is totally empty (no more realm key, workspace name or
+last processed message index). Which means no user synchronization is needed whatsoever \o/
+(user ops is still needed to store the workspace name before the `RealmNameCerficate`
+can be uploaded though)
 
 The elephant in the room is of course compatibility with Parsec v2 (and APIv3). Here we
 go the simple way:
@@ -342,50 +351,71 @@ This brings three benefits:
   it has access to them, but it requires a modified Parsec client.
 - The decryption keys are no longer at rest on the client storage.
 
-### 3.6 - New command: `realm_get_workspace_name`
-
-Workspace name is an info that must be:
-
-1. kept private (i.e. must be unreadable to the server, unlike the realm ID)
-2. shared between all the members of the workspace
-3. non-editable
-
-Point 3 prevent us from using the obvious solution of storing this information as a vlob.
-
-So the solution is instead to encrypte the information separately for each user, and have
-an ad-hoc command to provide it to the client.
-
-The downside is there is no guarantee the data is the same for each user (given it is
-up to the author of the sharing to choose which name to encrypt !). However this is
-considered okay given author doing the sharing is considered trusted.
+### 3.6 - New command: `realm_rename`
 
 ```json5
 [
     {
         "major_versions": [4],
         "req": {
-            "cmd": "realm_get_workspace_name",
+            "cmd": "realm_rename",
             "fields": [
                 {
-                    "name": "realm_id",
-                    "type": "VlobID"
+                    // Signed `RealmNameCertificate` certificate,
+                    // contains realm_id, key_index & encrypted realm name
+                    "name": "realm_name_certificate",
+                    "type": "Bytes"
                 }
             ]
         },
         "reps": [
             {
                 "status": "ok",
-                "fields": [
-                    {
-                        // Signed `RealmWorkspaceName` document encrypted for ourself
-                        "name": "workspace_name",
-                        "type": "Bytes"
-                    }
-                ]
+            },
+            {
+                "status": "invalid_certification",
             },
             {
                 // Realm doesn't exists, or user has no access on it
                 "status": "not_allowed"
+            },
+            {
+                // Returned if the timestamp in the certificate is too far away compared
+                // to server clock.
+                "status": "bad_timestamp",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "NonRequiredOption<String>"
+                    },
+                    {
+                        "name": "ballpark_client_early_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "ballpark_client_late_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "backend_timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "client_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                // Returned if another certificate in the server has a creation date
+                // posterior or equal to our current one.
+                "status": "require_greater_timestamp",
+                "fields": [
+                    {
+                        "name": "strictly_greater_than",
+                        "type": "DateTime"
+                    }
+                ]
             }
         ]
     }
@@ -418,34 +448,22 @@ types.
 ### 4.2 - Existing data: `UserManifest`
 
 Remove `last_processed_message` field.
-Modify `workspaces` field, i.e. the `WorkspaceEntry` nested type:
+Remove `workspaces` field.
 
-```json5
-{
-    "label": "WorkspaceEntry",
-    "fields": [
-        {
-            "name": "id",
-            "type": "VlobID"
-        },
-        {
-            "name": "name",
-            "type": "EntryName"
-        }
-        // Removed fields:
-        // - key
-        // - encryption_revision
-        // - encrypted_on
-        // - role_cached_on
-        // - role_cache_value
-    ]
-}
-```
+In practice, this means the user manifest contains no informations whatsoever.
+Hence it is useless for now, but might be needed in the future (typically for
+storing user-specific configuration should be shared between his devices).
 
 > **Note:**
 >
-> `role_cached_on` and `role_cache_value` are not directly related to this RFC,
-> but given they are no longer in use in Parsec v3, we also remove them.
+> Removing the `workspace` field is possible because all the fields of `WorkspaceEntry`
+> disappeared:
+>
+> - `encryption_revision`/`encrypted_on` meaningless not that re-encryption is no
+>   longer a thing.
+> - `key` is now in the key bundle.
+> - `role_cached_on` and `role_cache_value` are not directly related to this RFC,
+>   but given they are no longer in use in Parsec v3, we can also remove them.
 
 ### 4.3 - New certificate: `realm_key_rotation_certificate`
 
@@ -510,7 +528,63 @@ certificate if there is a gap in key indexes)
 > In a nutshell, those fields allows for future evolution, typically to switch to
 > Chacha20-Poly1305 given it is a more scrutinized algorithm with audited implementations.
 
-### 4.4 - New document `RealmKeysBundle`
+### 4.4 - New certificate `RealmNameCertificate`
+
+This certificate can only be issued by a user with OWNER role on the given realm.
+
+`key_index` must correspond to `KeyRotationCertificate`.
+
+```json5
+{
+    "label": "RealmNameCertificate",
+    "type": "workspace_name_certificate",
+    "other_fields": [
+        {
+            "name": "author",
+            "type": "DeviceID",
+        },
+        {
+            "name": "timestamp",
+            "type": "DateTime"
+        },
+        {
+            "name": "realm_id",
+            "type": "VlobID"
+        },
+        {
+            "name": "key_index",
+            "type": "Index",
+        },
+        {
+            // `EntryName` encrypted with the key
+            "name": "name",
+            "type": "Bytes"
+        }
+    ]
+}
+```
+
+The certificate might be valid while containing invalid data:
+
+- the `name` field cannot be decrypted by the key
+- the decrypted content of `name` is not a valid `EntryName`
+
+In this case, the naming fallback to the realm ID.
+
+> **Note:**
+>
+> This certificate can only be uploaded with `realm_rename` API command, though
+> `realm_create` may seem appropriated to also have it.
+> However this is not the case (i.e. realm creation an realm name certificate upload
+> are not one atomic operation), this is for three reasons:
+>
+> - It simplifies code.
+> - User realm doesn't need realm name, hence this certificate would need to be optional
+>   or set to a dummy value.
+> - This allows legacy (i.e. realm created, but no realm name certificate) to be treated
+>   just like the regular case.
+
+### 4.5 - New document `RealmKeysBundle`
 
 ```json5
 {
@@ -554,7 +628,7 @@ certificate if there is a gap in key indexes)
 > an attack by the server (no signature means the server can craft a keys bundle
 > with the right number of keys, but with all of them invalid)
 
-### 4.5 - New document `RealmKeysBundleAccess`
+### 4.6 - New document `RealmKeysBundleAccess`
 
 ```json5
 {
@@ -577,35 +651,6 @@ certificate if there is a gap in key indexes)
 > Hence forging a `RealmKeysBundleAccess` is possible for the server, but only
 > prevent from accessing `RealmKeysBundle` which also can be done by just returning
 > invalid data in place of the actual encrypted `RealmKeysBundle` data.
-
-### 4.6 - New document `RealmWorkspaceName`
-
-```json5
-{
-    "label": "RealmWorkspaceName",
-    "type": "realm_workspace_name",
-    "other_fields": [
-        {
-            // Author must be equal to the one in the `RealmRoleCertificate`
-            "name": "author",
-            "type": "DeviceID",
-        },
-        {
-            // Timestamp must be equal to the one in the `RealmRoleCertificate`
-            "name": "timestamp",
-            "type": "DateTime"
-        },
-        {
-            "name": "realm_id",
-            "type": "VlobID"
-        },
-        {
-            "name": "workspace_name",
-            "type": "String"
-        }
-    ]
-}
-```
 
 ## 5 - Changes: Server-side
 
@@ -659,29 +704,33 @@ Table `realm`
 `RealmKeyRotationCertificate` should be checked (only OWNER of the realm can create such
 certificate).
 
+`RealmNameCertificate` should be checked (only OWNER of the realm can create such
+certificate).
+
+### 6.1 - Workspace name synchronization & default value
+
+There is no atomicity between realm creation an the upload of the first `RealmNameCertificate`.
+
+Hence a client may end up with a realm without realm name certificate (and in such case the
+name of the realm defaults to the realm ID).
+
+So that any realm OWNER detecting the `RealmNameCertificate` is missing should look in
+it local user manifest if a workspace name is specified, and do a `realm_rename` in
+that case.
+
+This approach has the benefit of transparently handling the legacy (i.e. realm created,
+but no realm name certificate).
+
 ### 6.2 - Workspaces listing
 
-The client has to rely on both user manifest and certificates for this:
+The client has to rely on both the certificates and the local user manifest to get
+the list of workspaces and their corresponding name:
 
-1) Entries present in the user manifest with a corresponding realm role certificate
-   (with non-null role): nominal case.
-2) Entries only present in the user manifest: corresponds to a newly created
-   workspaces that have not yet been synced with the server
-3) No entry in the user manifest, but a realm role certificate (with non-null role)
-   exists: corresponds to a newly shared realm
-
-Case 1 and 2 work just fine: the workspace name is present in the user manifest.
-
-Case 3 requires to go fetch the workspace name document (using the `realm_get_workspace_name`
-command) that was encrypted for us when the realm was shared with our user.
-
-Case 3 should be handle by the user manager:
-
-- On init, the user manager compares the user manifest with the realm role certificates
-  to detect realm with missing entry
-- The user manifest also listens for new certificate events to re-do the check
-- The user manifest then fills the missing entries using `realm_get_keys_bundle` server command
-- When a workspace listing is done, the missing entries are simply ignored
+1) Get all the realm for which the user has a realm role certificate with currently
+   active role.
+2) Get the name from the `RealmNameCertificate` if available and valid.
+3) Otherwise, look in the local user manifest for a workspace name entry.
+4) Otherwise default to the realm ID
 
 ### 6.3 - Fetching keys-bundle
 
@@ -758,7 +807,35 @@ The wait at step 3.1 is here for two reasons:
 `LocalUserManifest` has to be modified to reflect changes in `UserManifest`:
 
 - remove `last_processed_message` field
-- change `workspace` field to use the updated `WorkspaceEntry` type
+- change `workspace` field to use a updated `WorkspaceEntry` type
+
+```json
+{
+  "label": "WorkspaceEntry",
+  "fields": [
+    {
+      "name": "id",
+      "type": "VlobID"
+    },
+    {
+      // `name` used to be a non-optional `EntryName` synchronized field.
+      // Now it has become option (msgpack encoding makes this change backward compatible)
+      // and is a local only field (i.e. never synchronized) that is used to store the
+      // name of the workspace on creation.
+      // This only needed in the brief moment before the `RealmNameCertificate` is uploaded
+      // (which can take some time if e.g. the workspace is created while the client is offline)
+      "name": "name",
+      "type": "RequiredOption<EntryName>"
+    }
+    // Legacy ignored fields
+    // - `key`
+    // - `encryption_revision`
+    // - `encrypted_on`
+    // - `role_cache_timestamp`
+    // - `role`
+  ]
+}
+```
 
 ### 6.7 - Add HTTP `User-Agent` header
 
