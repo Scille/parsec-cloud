@@ -14,8 +14,10 @@ repos:
       - id: mixed-line-ending
         alias: eol
       - id: trailing-whitespace
+        exclude_types: [ svg ]
       - id: end-of-file-fixer
         alias: eof
+        exclude_types: [ svg ]
 
   - repo: local
     hooks:
