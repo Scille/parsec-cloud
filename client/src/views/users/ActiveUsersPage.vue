@@ -371,7 +371,7 @@ onUnmounted(async () => {
 
 <style scoped lang="scss">
 .users-container {
-  margin: 2em;
+  margin: 7em 2em 2em;
 }
 
 .user-list-header {
