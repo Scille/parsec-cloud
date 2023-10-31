@@ -5,99 +5,14 @@ History
 .. towncrier release notes start
 
 
-Parsec v2.16.0-rc.8 (2023-10-23)
---------------------------------
-
-Bugfixes
-~~~~~~~~
-
-* Fix a regression causing the offline availability feature to be unavailable
-  for workspaces other than the first one in the list.
-  (`#5556 <https://github.com/Scille/parsec-cloud/issues/5556>`__)
-* Fix confusing numbering of versions in the file history display.
-  (`#5561 <https://github.com/Scille/parsec-cloud/issues/5561>`__)
-
-
-Parsec v2.16.0-rc.7 (2023-10-18)
---------------------------------
-
-Bugfixes
-~~~~~~~~
-
-* Fix a concurrency issue causing connection loss when logging in after a re-
-  encryption.
-  (`#5542 <https://github.com/Scille/parsec-cloud/issues/5542>`__)
-
-
-Parsec v2.16.0-rc.6 (2023-10-16)
---------------------------------
-
-No significant changes.
-
-
-Parsec v2.16.0-rc.5 (2023-09-27)
---------------------------------
+Parsec v2.16.0 (2023-10-31)
+---------------------------
 
 Features
 ~~~~~~~~
 
 * Add support for archiving workspaces and planning their deletion.
   (`#5061 <https://github.com/Scille/parsec-cloud/issues/5061>`__)
-
-Bugfixes
-~~~~~~~~
-
-* Fixed an issue on MacOS where a file would be deleted when trying to save it
-  from some specific native softwares.
-  (`#2330 <https://github.com/Scille/parsec-cloud/issues/2330>`__)
-
-
-Parsec v2.16.0-rc.4 (2023-08-25)
---------------------------------
-
-No significant changes.
-
-
-Parsec v2.16.0-rc.3 (2023-08-03)
---------------------------------
-
-Improved Documentation
-~~~~~~~~~~~~~~~~~~~~~~
-
-* Add SBOM (Software Bills Of Materials) generation on software packaging. This
-  provides the list of dependencies used to build the software.
-  (`#4770 <https://github.com/Scille/parsec-cloud/issues/4770>`__)
-
-
-Parsec v2.16.0-rc.2 (2023-07-05)
---------------------------------
-
-No significant changes.
-
-
-Parsec v2.16.0-rc.1 (2023-07-05)
---------------------------------
-
-No significant changes.
-
-
-Parsec v2.16.0-rc.0 (2023-06-29)
---------------------------------
-
-Bugfixes
-~~~~~~~~
-
-* On linux, if you're using something other than ubuntu, you may need to install
-  ``libfuse2`` or ``fuse2`` using the package manager of your system.
-  (`#4760 <https://github.com/Scille/parsec-cloud/issues/4760>`__)
-
-
-Parsec v2.16.0-a.0 (2023-06-07)
--------------------------------
-
-Features
-~~~~~~~~
-
 * Add a dialog to manage offline availability for workspaces (i.e a user can now
   choose keep all the data available locally for offline access)
   (`#2266 <https://github.com/Scille/parsec-cloud/issues/2266>`__)
@@ -110,6 +25,20 @@ Features
 Bugfixes
 ~~~~~~~~
 
+* Fix a regression causing the offline availability feature to be unavailable
+  for workspaces other than the first one in the list.
+  (`#5556 <https://github.com/Scille/parsec-cloud/issues/5556>`__)
+* Fix confusing numbering of versions in the file history display.
+  (`#5561 <https://github.com/Scille/parsec-cloud/issues/5561>`__)
+* Fix a concurrency issue causing connection loss when logging in after a re-
+  encryption.
+  (`#5542 <https://github.com/Scille/parsec-cloud/issues/5542>`__)
+* Fixed an issue on MacOS where a file would be deleted when trying to save it
+  from some specific native softwares.
+  (`#2330 <https://github.com/Scille/parsec-cloud/issues/2330>`__)
+* On linux, if you're using something other than ubuntu, you may need to install
+  ``libfuse2`` or ``fuse2`` using the package manager of your system.
+  (`#4760 <https://github.com/Scille/parsec-cloud/issues/4760>`__)
 * Prevent accidental creation of multiple parsec organizations at the same time
   (`#3698 <https://github.com/Scille/parsec-cloud/issues/3698>`__)
 * Accept parenthesis in HumanHandle's label
@@ -137,6 +66,9 @@ Bugfixes
 Improved Documentation
 ~~~~~~~~~~~~~~~~~~~~~~
 
+* Add SBOM (Software Bills Of Materials) generation on software packaging. This
+  provides the list of dependencies used to build the software.
+  (`#4770 <https://github.com/Scille/parsec-cloud/issues/4770>`__)
 * Correct the favicon displayed on the provided documentation at
   <https://docs.parsec.cloud>
   (`#4127 <https://github.com/Scille/parsec-cloud/issues/4127>`__)
