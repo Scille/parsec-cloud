@@ -69,6 +69,8 @@ class MemoryUserComponent(BaseUserComponent):
     def get_current_certificate_index(self, organization_id: OrganizationID) -> int:
         org = self._organizations[organization_id]
 
+        # TODO: store all certificates in a single place to avoid this guess work !
+
         index = len(org.devices)
 
         for user in org.users.values():
@@ -77,8 +79,12 @@ class MemoryUserComponent(BaseUserComponent):
         for (realm_orgid, _), realm in self._realm_component._realms.items():
             if realm_orgid != organization_id:
                 continue
-            for granted_role in realm.granted_roles:
-                index += len((granted_role.granted_on, granted_role.certificate))
+            index += len(realm.granted_roles)
+
+        org_org = self._organization_component._organizations[organization_id]
+        if org_org.sequester_authority:
+            index += 1
+            index += len(org_org.sequester_services_certificates or ())
 
         return index
 

@@ -138,8 +138,8 @@ pub async fn workspace_stop(workspace: Handle) -> Result<(), WorkspaceStopError>
         } => Ok((client, workspace_ops.realm_id())),
         // Note we consider an error if the handle is in `HandleItem::StartingWorkspace` state
         // this is because at that point this is not a legit use of the handle given it
-        // hasn't been yet provided to the caller !
-        // On top of that is simplify the start logic (given it guarantees nothing will
+        // has never been yet provided to the caller in the first place !
+        // On top of that it simplifies the start logic (given it guarantees nothing will
         // concurrently close the handle)
         invalid => Err(invalid),
     })?;

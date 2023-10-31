@@ -2,7 +2,7 @@
 
 use thiserror::Error;
 
-#[derive(Error, Debug, PartialEq, Eq)]
+#[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum CryptoError {
     #[error("Unsupported algorithm: {0}")]
     Algorithm(String),

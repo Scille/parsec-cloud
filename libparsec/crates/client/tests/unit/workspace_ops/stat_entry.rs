@@ -131,7 +131,7 @@ async fn stat_entry_on_speculative_workspace(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
 
     let now: DateTime = "2000-12-31T00:00:00Z".parse().unwrap();
-    alice.time_provider.mock_time(MockedTime::FrozenTime(now));
+    alice.time_provider.mock_time_frozen(now);
 
     let ops = workspace_ops_factory(
         &env.discriminant_dir,

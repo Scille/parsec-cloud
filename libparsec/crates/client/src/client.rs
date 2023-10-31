@@ -4,15 +4,13 @@
 
 use std::{
     fmt::Debug,
-    ops::Deref,
     sync::{
         atomic::{AtomicBool, Ordering},
-        Arc, Mutex,
+        Arc,
     },
 };
 
 use libparsec_client_connection::AuthenticatedCmds;
-use libparsec_platform_async::lock::{Mutex as AsyncMutex, MutexGuard as AsyncMutexGuard};
 use libparsec_types::prelude::*;
 
 use crate::{
@@ -22,6 +20,7 @@ use crate::{
     connection_monitor::ConnectionMonitor,
     event_bus::EventBus,
     messages_monitor::MessagesMonitor,
+    running_workspace::RunningWorkspaces,
     user_ops::UserOps,
     user_sync_monitor::UserSyncMonitor,
     workspace_ops::{UserDependantConfig, WorkspaceOps},
@@ -46,63 +45,8 @@ pub struct WorkspaceInfo {
     pub id: VlobID,
     pub name: EntryName,
     pub self_current_role: RealmRole,
+    pub is_started: bool,
 }
-
-mod workspaces_ops {
-    // Rust allows access of private field of structures defined in the same module.
-    // So we define this stuff in it own sub-module to prevent messing with the internals.
-
-    use super::*;
-
-    /// Workspace ops can be added or removed during the client lifetime (typically when
-    /// the user get access to or is removed from a workspace).
-    ///
-    /// The trick is starting/stopping WorkspaceOps is asynchronous, and we want a read
-    /// write lock (only one write access at a time, and read access at any time, even
-    /// when a write is currently executing).
-    ///
-    /// The structure encapsulates the lock logic to access or modify the list of
-    /// workspace ops available.
-    pub struct WorkspaceOpsStore {
-        /// The refresh lock must be held whenever the item list is modified
-        refresh_lock: AsyncMutex<()>,
-        items: Mutex<Vec<Arc<WorkspaceOps>>>,
-    }
-
-    pub struct WorkspacesForUpdateGuard<'a> {
-        refresh_guard: AsyncMutexGuard<'a, ()>,
-        pub items: &'a Mutex<Vec<Arc<WorkspaceOps>>>,
-    }
-
-    impl WorkspaceOpsStore {
-        pub fn new() -> Self {
-            Self {
-                refresh_lock: AsyncMutex::default(),
-                items: Mutex::default(),
-            }
-        }
-
-        pub fn get(&self, realm_id: VlobID) -> Option<Arc<WorkspaceOps>> {
-            let opses = self.items.lock().expect("Mutex is poisoned");
-            opses.iter().find(|ops| ops.realm_id() == realm_id).cloned()
-        }
-
-        pub fn list(&self) -> Vec<Arc<WorkspaceOps>> {
-            let opses = self.items.lock().expect("Mutex is poisoned");
-            opses.to_owned()
-        }
-
-        pub async fn for_update(&self) -> WorkspacesForUpdateGuard {
-            let refresh_guard = self.refresh_lock.lock().await;
-            // let items = self.items.lock().expect("Mutex is poisoned");
-            WorkspacesForUpdateGuard {
-                refresh_guard,
-                items: &self.items,
-            }
-        }
-    }
-}
-use workspaces_ops::WorkspaceOpsStore;
 
 // Should not be `Clone` given it manages underlying resources !
 pub struct Client {
@@ -113,7 +57,7 @@ pub struct Client {
     pub(crate) cmds: Arc<AuthenticatedCmds>,
     pub certificates_ops: Arc<CertificatesOps>,
     pub user_ops: Arc<UserOps>,
-    pub(crate) workspaces_ops: WorkspaceOpsStore,
+    pub(crate) running_workspaces: RunningWorkspaces,
     connection_monitor: ConnectionMonitor,
     certificates_monitor: CertificatesMonitor,
     messages_monitor: MessagesMonitor,
@@ -209,7 +153,7 @@ impl Client {
             cmds,
             certificates_ops,
             user_ops,
-            workspaces_ops: WorkspaceOpsStore::new(),
+            running_workspaces: RunningWorkspaces::new(),
             connection_monitor,
             certificates_monitor,
             messages_monitor,
@@ -228,15 +172,11 @@ impl Client {
             return;
         }
 
-        let updater = self.workspaces_ops.for_update().await;
-        let workspaces_ops = {
-            let mut workspaces_ops = updater.items.lock().expect("Mutex is poisoned");
-            std::mem::take(&mut *workspaces_ops)
-        };
-        for workspace_ops in workspaces_ops {
+        let updater = self.running_workspaces.for_update().await;
+        for workspace_ops in updater.stop_monitors_and_unregister_all().await {
             let outcome = workspace_ops.stop().await;
-            // If a WorkspaceOps fails to be cleanly stopped we still have to close the
-            // other ones
+
+            // If a workspace ops fails to be cleanly stopped we still have to close the other ones
             if let Err(error) = outcome {
                 // TODO: use event bug to log here !
                 log::warn!(
@@ -257,23 +197,22 @@ impl Client {
         &self,
         realm_id: VlobID,
     ) -> Result<Arc<WorkspaceOps>, ClientStartWorkspaceError> {
-        // 1. Take the update lock, which guarantee the list of workspace won't change in our back
+        // 1. Take the update lock to guarantee the list of started workspace won't change in our back
 
-        let updater = self.workspaces_ops.for_update().await;
+        let updater = self.running_workspaces.for_update().await;
 
         // 2. Check if the workspace is not already started
 
-        {
-            let items = updater.items.lock().expect("Mutex is poisoned");
-            for ops in items.iter() {
-                if ops.realm_id() == realm_id {
-                    // Workspace already started, just return it
-                    return Ok(ops.to_owned());
-                }
-            }
+        if let Some(workspace_ops) = updater.get(realm_id) {
+            return Ok(workspace_ops);
         }
 
         // 3. Actually start the workspace
+
+        // The workspace ops needs a couple of data that may change at anytime (they are
+        // then bundled together as the `UserDependantConfig`).
+        // Updating those data in the workspace opses require holding the workspace
+        // opses store update lock, hence we are protected here against concurrency.
 
         let user_role = {
             let available_realms = self
@@ -300,7 +239,7 @@ impl Client {
             None => return Err(ClientStartWorkspaceError::NoAccess),
         };
 
-        let new_workspace_ops = Arc::new(
+        let workspace_ops = Arc::new(
             WorkspaceOps::start(
                 self.config.clone(),
                 self.device.clone(),
@@ -317,36 +256,32 @@ impl Client {
             .await?,
         );
 
-        // TODO: should start the related workspace monitor here
+        updater
+            .start_monitors_and_register(
+                self.event_bus.clone(),
+                self.device.clone(),
+                workspace_ops.clone(),
+            )
+            .await;
 
-        let mut workspaces_started = updater.items.lock().expect("Mutex is poisoned");
-        workspaces_started.push(new_workspace_ops.clone());
-
-        Ok(new_workspace_ops)
+        Ok(workspace_ops)
     }
 
     pub async fn stop_workspace(&self, realm_id: VlobID) -> anyhow::Result<()> {
-        // 1. Take the update lock, which guarantee the list of workspace won't change in our back
+        // 1. Take the update lock to guarantee the list of started workspaces won't change in our back
 
-        let updater = self.workspaces_ops.for_update().await;
+        let updater = self.running_workspaces.for_update().await;
 
-        // 2. Check if the workspace is not already started
+        // 2. Actual stop
 
-        let ops = {
-            let mut guard = updater.items.lock().expect("Mutex is poisoned");
-            let maybe_started = guard.iter().position(|ops| ops.realm_id() == realm_id);
-            match maybe_started {
-                // The workspace ops is not started, go idempotent
-                None => return Ok(()),
-                // Must stop the workspace ops
-                Some(index) => guard.swap_remove(index),
-            }
+        let workspace_ops = match updater.stop_monitors_and_unregister(realm_id).await {
+            Some(workspace_ops) => workspace_ops,
+            // The workspace ops is not started, go idempotent
+            None => return Ok(()),
         };
 
-        // 3. Actual stop
-
-        // TODO: stop the related workspace monitor ?
-        ops.stop()
+        workspace_ops
+            .stop()
             .await
             .map_err(|e| e.context("Cannot stop workspace ops"))
     }
@@ -354,17 +289,13 @@ impl Client {
     /// This function should typically be called everytime we receive a workspace-related
     /// change from the server (e.g. sharing add/removed).
     pub(crate) async fn refresh_user_dependant_config_in_workspaces(&self) -> anyhow::Result<()> {
-        // 1. Take the update lock, which guarantee the list of workspace won't change in our back
+        // 1. Take the update lock to guarantee the list of started workspace won't change in our back
 
-        let updater = self.workspaces_ops.for_update().await;
+        let updater = self.running_workspaces.for_update().await;
 
-        // 2. For each existing workspace ops, retrieve and update it key (retrieved from
-        // user manifest) and user current role (retrieved from the certificates)
-
-        let workspace_opses = {
-            let guard = updater.items.lock().expect("Mutex is poisoned");
-            guard.deref().clone()
-        };
+        // 2. For each started workspace, retrieve and update it key (retrieved from
+        // user manifest) and user current role (retrieved from the certificates).
+        // And if the key or current role are no longer available, stop the workspace.
 
         let available_realms = self
             .certificates_ops
@@ -372,8 +303,7 @@ impl Client {
             .await?;
         let user_manifest = self.user_ops.get_user_manifest();
 
-        let mut still_started_workspace_opses = Vec::with_capacity(workspace_opses.len());
-        for workspace_ops in workspace_opses {
+        for workspace_ops in updater.list() {
             let maybe_entry = user_manifest.get_workspace_entry(workspace_ops.realm_id());
             let maybe_role = available_realms
                 .get(&workspace_ops.realm_id())
@@ -387,21 +317,26 @@ impl Client {
                         config.workspace_name = entry.name.to_owned();
                         config.user_role = role;
                     });
-                    still_started_workspace_opses.push(workspace_ops);
                 }
-                // We no longer have what it takes to run this workspace !
+                // We no longer have what it takes to run this workspace, so stop it !
                 _ => {
-                    // TODO: log error !
-                    let _ = workspace_ops.stop().await;
-                    // TODO: stop the related workspace monitor ?
+                    updater
+                        .stop_monitors_and_unregister(workspace_ops.realm_id())
+                        .await;
+                    let outcome = workspace_ops.stop().await;
+
+                    // If a WorkspaceOps fails to be cleanly stopped we still have to close the other ones
+                    if let Err(error) = outcome {
+                        // TODO: use event bug to log here !
+                        log::warn!(
+                            "Cannot properly stop workspace ops {}: {}",
+                            workspace_ops.realm_id(),
+                            error
+                        );
+                    }
                 }
             }
         }
-
-        // 3. Finally refresh `workspace_opses` list to remove the now stopped ones
-        // (remember: `updater` lock guarantees the list hasn't concurrently changed)
-        let mut guard = updater.items.lock().expect("Mutex is poisoned");
-        *guard = still_started_workspace_opses;
 
         Ok(())
     }
@@ -438,6 +373,7 @@ impl Client {
                     id,
                     name,
                     self_current_role,
+                    is_started: self.running_workspaces.get(id).is_some(),
                 })
             })
             .collect();

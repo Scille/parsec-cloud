@@ -5,7 +5,7 @@ use libparsec_types::prelude::*;
 use super::{CertificatesOps, GetCertificateError, InvalidCertificateError, PollServerError, UpTo};
 use crate::{certificates_ops::store::CertificatesStoreReadExt, event_bus::EventInvalidMessage};
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Clone, thiserror::Error)]
 pub enum InvalidMessageError {
     #[error("Message #{index} from `{sender}` at {timestamp} is corrupted: {error}")]
     Corrupted {

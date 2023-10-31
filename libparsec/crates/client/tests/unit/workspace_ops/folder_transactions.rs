@@ -6,12 +6,10 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
-use crate::workspace_ops::EntryStat;
+use crate::{workspace_ops::EntryStat, EventWorkspaceOpsOutboundSyncNeeded};
 
 #[parsec_test(testbed = "minimal_client_ready")]
-#[case::root_level(true)]
-#[case::subdir_level(false)]
-async fn good(#[case] root_level: bool, env: &TestbedEnv) {
+async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
     let wksp1_key: &SecretKey = env.template.get_stuff("wksp1_key");
@@ -50,6 +48,7 @@ async fn good(#[case] root_level: bool, env: &TestbedEnv) {
         wksp1_key.to_owned(),
     )
     .await;
+    let mut spy = ops.event_bus.spy.start_expecting();
 
     let base_path: FsPath = if root_level {
         "/".parse().unwrap()
@@ -75,16 +74,30 @@ async fn good(#[case] root_level: bool, env: &TestbedEnv) {
     let dir2 = base_path.join("dir2".parse().unwrap());
     let dir3 = base_path.join("dir3".parse().unwrap());
 
-    ops.create_folder(&dir1).await.unwrap();
-    ops.create_folder(&dir2).await.unwrap();
-    ops.create_folder(&dir3).await.unwrap();
+    macro_rules! create_folder {
+        ($path:expr, $parent_id: ident) => {
+            async {
+                let child_id = ops.create_folder($path).await.unwrap();
+                spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
+                    p_assert_eq!(e.realm_id, wksp1_id);
+                    p_assert_eq!(e.entry_id, child_id);
+                });
+                spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
+                    p_assert_eq!(e.realm_id, wksp1_id);
+                    p_assert_eq!(e.entry_id, $parent_id);
+                });
+                child_id
+            }
+        };
+    }
+    let parent_id = if root_level { wksp1_id } else { wksp1_foo_id };
+    let dir1_id = create_folder!(&dir1, parent_id).await;
+    create_folder!(&dir2, parent_id).await;
+    let dir3_id = create_folder!(&dir3, parent_id).await;
+
     // Add subdirs to know which dir is which once we start renaming them
-    ops.create_folder(&dir1.join("subdir1".parse().unwrap()))
-        .await
-        .unwrap();
-    ops.create_folder(&dir3.join("subdir3".parse().unwrap()))
-        .await
-        .unwrap();
+    create_folder!(&dir1.join("subdir1".parse().unwrap(),), dir1_id).await;
+    create_folder!(&dir3.join("subdir3".parse().unwrap(),), dir3_id).await;
 
     p_assert_eq!(
         ls!(&base_path).await,
@@ -101,6 +114,10 @@ async fn good(#[case] root_level: bool, env: &TestbedEnv) {
     // Remove folder
 
     ops.remove_folder(&dir2).await.unwrap();
+    spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
+        p_assert_eq!(e.realm_id, wksp1_id);
+        p_assert_eq!(e.entry_id, parent_id);
+    });
 
     p_assert_eq!(
         ls!(&base_path).await,
@@ -114,6 +131,10 @@ async fn good(#[case] root_level: bool, env: &TestbedEnv) {
     ops.rename_entry(&dir1, "dir2".parse().unwrap(), false)
         .await
         .unwrap();
+    spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
+        p_assert_eq!(e.realm_id, wksp1_id);
+        p_assert_eq!(e.entry_id, parent_id);
+    });
 
     p_assert_eq!(
         ls!(&base_path).await,
@@ -127,6 +148,10 @@ async fn good(#[case] root_level: bool, env: &TestbedEnv) {
     ops.rename_entry(&dir3, "dir2".parse().unwrap(), true)
         .await
         .unwrap();
+    spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
+        p_assert_eq!(e.realm_id, wksp1_id);
+        p_assert_eq!(e.entry_id, parent_id);
+    });
 
     p_assert_eq!(ls!(&base_path).await, ["dir2".parse().unwrap()]);
     p_assert_eq!(ls!(&dir2).await, ["subdir3".parse().unwrap()]);

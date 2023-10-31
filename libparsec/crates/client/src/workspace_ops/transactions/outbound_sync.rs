@@ -12,6 +12,11 @@ use super::{
 };
 use crate::certificates_ops::PollServerError;
 
+pub async fn get_need_outbound_sync(ops: &WorkspaceOps) -> anyhow::Result<Vec<VlobID>> {
+    let need_sync = ops.data_storage.get_need_sync_entries().await?;
+    Ok(need_sync.local)
+}
+
 pub async fn outbound_sync(ops: &WorkspaceOps, entry_id: VlobID) -> Result<(), SyncError> {
     loop {
         let outcome = if entry_id == ops.realm_id {

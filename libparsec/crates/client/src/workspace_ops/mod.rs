@@ -23,7 +23,6 @@ pub(crate) struct UserDependantConfig {
     pub workspace_name: EntryName,
 }
 
-#[derive(Debug)]
 pub struct WorkspaceOps {
     #[allow(unused)]
     config: Arc<ClientConfig>,
@@ -39,6 +38,15 @@ pub struct WorkspaceOps {
     event_bus: EventBus,
     realm_id: VlobID,
     user_dependant_config: Mutex<UserDependantConfig>,
+}
+
+impl std::fmt::Debug for WorkspaceOps {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("WorkspaceOps")
+            .field("device", &self.device)
+            .field("realm_id", &self.realm_id)
+            .finish_non_exhaustive()
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -78,6 +86,7 @@ impl WorkspaceOps {
             realm_id,
         )
         .await?;
+
         Ok(Self {
             config,
             device,
@@ -124,6 +133,16 @@ impl WorkspaceOps {
         transactions::inbound_sync(self, entry_id).await
     }
 
+    /// Query the server for changes in the workspace since the last checkpoint
+    /// we know about.
+    pub async fn refresh_realm_checkpoint(&self) -> Result<(), SyncError> {
+        transactions::refresh_realm_checkpoint(self).await
+    }
+
+    pub async fn get_need_inbound_sync(&self) -> anyhow::Result<Vec<VlobID>> {
+        transactions::get_need_inbound_sync(self).await
+    }
+
     /// Upload local changes to the server.
     ///
     /// This also requires to download and merge any remote changes. Hence the
@@ -131,6 +150,10 @@ impl WorkspaceOps {
     /// (unless a concurrent local change occured during the sync).
     pub async fn outbound_sync(&self, entry_id: VlobID) -> Result<(), SyncError> {
         transactions::outbound_sync(self, entry_id).await
+    }
+
+    pub async fn get_need_outbound_sync(&self) -> anyhow::Result<Vec<VlobID>> {
+        transactions::get_need_outbound_sync(self).await
     }
 
     /*

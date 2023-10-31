@@ -23,7 +23,7 @@ pub enum RegexError {
 
 pub type RegexResult<T> = Result<T, RegexError>;
 
-#[derive(Error, Debug, PartialEq, Eq)]
+#[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum DataError {
     #[error("Invalid encryption")]
     Decryption,
@@ -79,7 +79,7 @@ pub enum DataError {
 
 pub type DataResult<T> = Result<T, DataError>;
 
-#[derive(Error, Debug, PartialEq, Eq)]
+#[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum PkiEnrollmentLocalPendingError {
     #[error("Cannot read {path}: {exc}")]
     CannotRead { path: PathBuf, exc: String },
@@ -96,7 +96,7 @@ pub enum PkiEnrollmentLocalPendingError {
 
 pub type PkiEnrollmentLocalPendingResult<T> = Result<T, PkiEnrollmentLocalPendingError>;
 
-#[derive(Error, Debug, PartialEq, Eq)]
+#[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum LocalDeviceError {
     #[error("Invalid slug")]
     InvalidSlug,

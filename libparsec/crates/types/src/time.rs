@@ -229,6 +229,9 @@ pub enum MockedTime {
     },
     FasterTime {
         reference: DateTime,
+        /// Offset in microseconds between the reference time and the actual
+        /// time we had before the mock. The speed factor should not impact this
+        /// offset.
         microseconds: i64,
         speed_factor: f64,
     },
@@ -446,7 +449,7 @@ mod time_provider {
             self.0.lock().expect("Mutex is poisoned").now()
         }
 
-        pub fn parent_now_or_realtime(&self) -> DateTime {
+        fn parent_now_or_realtime(&self) -> DateTime {
             self.0
                 .lock()
                 .expect("Mutex is poisoned")
@@ -525,8 +528,33 @@ mod time_provider {
             )))))
         }
 
-        pub fn mock_time(&self, time: MockedTime) {
+        fn mock_time(&self, time: MockedTime) {
             self.0.lock().expect("Mutex is poisoned").mock_time(time);
+        }
+
+        /// Switch back to real time
+        pub fn unmock_time(&self) {
+            self.mock_time(MockedTime::RealTime);
+        }
+
+        pub fn mock_time_frozen(&self, time: DateTime) {
+            self.mock_time(MockedTime::FrozenTime(time));
+        }
+
+        pub fn mock_time_shifted(&self, microseconds: i64) {
+            self.mock_time(MockedTime::ShiftedTime { microseconds });
+        }
+
+        pub fn mock_time_faster(&self, speed_factor: f64) {
+            let reference = self.parent_now_or_realtime();
+            let microseconds = (self.now() - reference)
+                .num_microseconds()
+                .expect("No reason to overflow");
+            self.mock_time(MockedTime::FasterTime {
+                reference,
+                microseconds,
+                speed_factor,
+            });
         }
     }
 }

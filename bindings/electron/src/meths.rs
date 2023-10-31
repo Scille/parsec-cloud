@@ -1805,10 +1805,15 @@ fn struct_workspace_info_js_to_rs<'a>(
             enum_realm_role_js_to_rs(cx, js_string.as_str())?
         }
     };
+    let is_started = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "isStarted")?;
+        js_val.value(cx)
+    };
     Ok(libparsec::WorkspaceInfo {
         id,
         name,
         self_current_role,
+        is_started,
     })
 }
 
@@ -1833,6 +1838,8 @@ fn struct_workspace_info_rs_to_js<'a>(
     let js_self_current_role =
         JsString::try_new(cx, enum_realm_role_rs_to_js(rs_obj.self_current_role)).or_throw(cx)?;
     js_obj.set(cx, "selfCurrentRole", js_self_current_role)?;
+    let js_is_started = JsBoolean::new(cx, rs_obj.is_started);
+    js_obj.set(cx, "isStarted", js_is_started)?;
     Ok(js_obj)
 }
 

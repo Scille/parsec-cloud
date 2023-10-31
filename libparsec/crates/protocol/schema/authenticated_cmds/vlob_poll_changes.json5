@@ -23,7 +23,7 @@
                 "fields": [
                     {
                         "name": "changes",
-                        "type": "Map<VlobID, Index>"
+                        "type": "Map<VlobID, Version>"
                     },
                     {
                         "name": "current_checkpoint",

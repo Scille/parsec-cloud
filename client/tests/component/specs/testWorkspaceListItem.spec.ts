@@ -30,6 +30,7 @@ describe('Workspace List Item', () => {
     selfCurrentRole: WorkspaceRole.Reader,
     availableOffline: true,
     lastUpdated: DateTime.fromISO('2023-05-08T12:00:00'),
+    isStarted: false,
   };
 
   beforeEach(() => {

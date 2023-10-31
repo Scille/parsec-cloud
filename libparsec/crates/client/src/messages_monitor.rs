@@ -66,7 +66,7 @@ impl MessagesMonitor {
                             ProcessLastMessagesError::Internal(err) => {
                                 // Unexpected error occured, better stop the monitor
                                 log::warn!("Certificate monitor has crashed: {}", err);
-                                let event = EventMessagesMonitorCrashed(err);
+                                let event = EventMessagesMonitorCrashed(Arc::new(err));
                                 event_bus.send(&event);
                                 return;
                             }
