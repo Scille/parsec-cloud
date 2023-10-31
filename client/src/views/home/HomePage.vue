@@ -30,6 +30,11 @@
                 class="sidebar-footer__version body"
                 @click="openAboutModal"
               >
+                <ion-icon
+                  slot="start"
+                  :icon="informationCircle"
+                  size="small"
+                />
                 {{ getAppVersion() }}
               </div>
             </div>
@@ -236,8 +241,12 @@ import {
   popoverController,
   modalController,
 } from '@ionic/vue';
-// We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
-import { chevronBack, cog, logIn } from 'ionicons/icons';
+import {
+  chevronBack,
+  cog,
+  logIn,
+  informationCircle,
+} from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { useI18n } from 'vue-i18n';
 import { onMounted, ref, toRaw, computed, inject, Ref, onUpdated, onUnmounted, watch } from 'vue';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
@@ -571,19 +580,30 @@ async function openSettingsModal(): Promise<void> {
 
       .logo-img {
         max-height: 3em;
-        width: 25%;
+        width: 30%;
         height: 100%;
       }
     }
 
     &__version {
       cursor: pointer;
-      color: var(--parsec-color-light-secondary-light);
-      padding: 0.5rem;
-      border-radius: var(--parsec-radius-6);
+      color: var(--parsec-color-light-secondary-premiere);
+      padding: .5rem;
+      border-radius: var(--parsec-radius-8);
+      background-color: var(--parsec-color-light-primary-30-opacity15);
+      border: 2px solid var(--parsec-color-light-primary-30-opacity15);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      transition: all 150ms linear;
+
+      ion-icon {
+        font-size: 1.375rem;
+        color: var(--parsec-color-light-primary-100);
+      }
 
       &:hover {
-        text-decoration: underline;
+        border-color: var(--parsec-color-light-primary-100);
       }
     }
   }
