@@ -109,7 +109,7 @@ async fn inbound_outbound_sync(env: &TestbedEnv) {
                     break;
                 }
                 attempts += 1;
-                if attempts > 1000 {
+                if attempts > 100 {
                     panic!("Timeout after 1s !");
                 }
                 libparsec_platform_async::sleep(std::time::Duration::from_millis(10)).await;
