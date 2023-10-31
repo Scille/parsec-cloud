@@ -59,6 +59,7 @@ FILES_TO_COMMIT_ON_VERSION_CHANGE = [
     PYPROJECT_FILE.absolute(),
     VERSION_UPDATER.absolute(),
     SNAPCRAFT_FILE.absolute(),
+    (PROJECT_DIR / "docs/conf.py").absolute(),
 ]
 
 FRAGMENTS_DIR = PROJECT_DIR / "newsfragments"
