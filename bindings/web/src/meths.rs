@@ -1911,10 +1911,18 @@ fn struct_workspace_info_js_to_rs(obj: JsValue) -> Result<libparsec::WorkspaceIn
             enum_realm_role_js_to_rs(raw_string.as_str())
         }?
     };
+    let is_started = {
+        let js_val = Reflect::get(&obj, &"isStarted".into())?;
+        js_val
+            .dyn_into::<Boolean>()
+            .map_err(|_| TypeError::new("Not a boolean"))?
+            .value_of()
+    };
     Ok(libparsec::WorkspaceInfo {
         id,
         name,
         self_current_role,
+        is_started,
     })
 }
 
@@ -1936,6 +1944,8 @@ fn struct_workspace_info_rs_to_js(rs_obj: libparsec::WorkspaceInfo) -> Result<Js
     let js_self_current_role =
         JsValue::from_str(enum_realm_role_rs_to_js(rs_obj.self_current_role));
     Reflect::set(&js_obj, &"selfCurrentRole".into(), &js_self_current_role)?;
+    let js_is_started = rs_obj.is_started.into();
+    Reflect::set(&js_obj, &"isStarted".into(), &js_is_started)?;
     Ok(js_obj)
 }
 

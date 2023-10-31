@@ -221,6 +221,7 @@ export interface WorkspaceInfo {
     id: VlobID
     name: EntryName
     selfCurrentRole: RealmRole
+    isStarted: boolean
 }
 
 export interface WorkspaceUserAccessInfo {
