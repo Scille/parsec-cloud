@@ -17,7 +17,7 @@ use crate::{
 };
 
 /// A running workspace is composed of two things:
-/// - a workspace ops that provide all the operation to access&modify the workspace
+/// - a workspace ops that provide all the operations to access&modify the workspace
 /// - multiple monitors that react to external events to operate on the workspace
 struct RunningWorkspace {
     ops: Arc<WorkspaceOps>,
@@ -31,7 +31,7 @@ struct RunningWorkspace {
 /// The trick is starting/stopping WorkspaceOps is an asynchronous operation, and
 /// we want other workspace ops to be accessible in the meantime.
 /// We achieve this with a read-write lock:
-/// - only one write access at a time, which correspond to the workspace ops start/stop
+/// - only one write access at a time, which corresponds to the workspace ops start/stop
 /// - read access correspond to accessing an already started workspace ops, and can be
 ///   done at any time, even when a write is currently executing
 ///

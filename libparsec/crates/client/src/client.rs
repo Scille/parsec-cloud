@@ -293,7 +293,7 @@ impl Client {
 
         let updater = self.running_workspaces.for_update().await;
 
-        // 2. For each started workspace, retrieve and update it key (retrieved from
+        // 2. For each started workspace, retrieve and update its key (retrieved from
         // user manifest) and user current role (retrieved from the certificates).
         // And if the key or current role are no longer available, stop the workspace.
 

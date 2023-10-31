@@ -8,8 +8,8 @@ use crate::event_bus::EventBus;
 
 /// A monitor is a background task reacting to external events
 ///
-/// Typical monitor runs a single coroutine that listen on the event bus
-/// and call methods on a ops component
+/// Typical monitor runs a single coroutine that listens on the event bus
+/// and calls methods on a ops component
 pub(crate) struct Monitor {
     task: JoinHandle<()>,
     // The task can itself start additional sub-tasks (e.g. to sync files in parallel),
