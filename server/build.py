@@ -39,11 +39,11 @@ def build() -> None:
         run("patchelf --version")
 
     if sys.platform == "win32":
-        libparsec_path = "parsec/_parsec.cp39-win_amd64.pyd"
+        libparsec_path = "parsec/_parsec.cp312-win_amd64.pyd"
     elif sys.platform == "darwin":
-        libparsec_path = "parsec/_parsec.cpython-39-darwin.so"
+        libparsec_path = "parsec/_parsec.cpython-312-darwin.so"
     else:
-        libparsec_path = "parsec/_parsec.cpython-39-x86_64-linux-gnu.so"
+        libparsec_path = "parsec/_parsec.cpython-312-x86_64-linux-gnu.so"
 
     build_strategy = (
         os.environ.get("POETRY_LIBPARSEC_BUILD_STRATEGY", "always_build").strip().lower()

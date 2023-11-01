@@ -15,7 +15,7 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Operating System :: MacOS",
     "Natural Language :: English",
-    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.12",
 ]
 packages = [{ include = "parsec" }]
 exclude = []
@@ -28,7 +28,7 @@ include = [
 parsec = "parsec.cli:cli"
 
 [tool.poetry.dependencies]
-python = "~3.9.10"
+python = "~3.12.0"
 
 # Base requirements
 
@@ -106,7 +106,7 @@ generate-setup-file = false
 script = "build.py"
 
 [tool.cibuildwheel]
-build = "cp39-{manylinux,macos,win}*"
+build = "cp312-{manylinux,macos,win}*"
 archs = ["auto64"]
 build-verbosity = 3
 before-all = "bash {project}/misc/setup-rust.sh"
@@ -129,7 +129,7 @@ LIBPARSEC_FORCE_VENDORED_OPENSSL = "true"
 
 [tool.ruff]
 line-length = 100
-target-version = "py39"
+target-version = "py312"
 
 select = [
     # Pyflakes
@@ -164,7 +164,7 @@ bindings = "pyo3"
 mypy_path = "$MYPY_CONFIG_FILE_DIR:$MYPY_CONFIG_FILE_DIR/parsec/stubs"
 namespace_packages = true
 explicit_package_bases = true
-python_version = 3.9
+python_version = 3.12
 ignore_errors = false
 show_error_codes = true
 warn_unused_ignores = true

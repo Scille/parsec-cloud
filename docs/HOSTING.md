@@ -24,7 +24,7 @@
 
 ## Requirements
 
-- Python 3.9
+- Python 3.12
 - PostgreSQL >= 10
 
 On top of that, an object storage service is required in order to store the encrypted data blocks.
