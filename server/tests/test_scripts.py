@@ -59,21 +59,3 @@ def run_testenv():
     # Make sure we don't leave a backend running as it messes up with the CI
     finally:
         kill_local_backend()
-
-
-@pytest.mark.slow
-@pytest.mark.xfail(reason="TODO: FIXME !")
-@pytest.mark.skipif(
-    "linux" not in sys.platform,
-    reason="causes a freeze in appveyor for some reasons, and raises a CalledProcessError on MacOS",
-)
-def test_run_testenv(run_testenv):
-    # available_devices = list_available_devices(run_testenv)
-    available_devices = []
-    devices = [(d.human_handle.label, d.device_label.str) for d in available_devices]
-    assert sorted(devices) == [
-        ("Alice", "laptop"),
-        ("Alice", "pc"),
-        ("Bob", "laptop"),
-        ("Toto", "laptop"),
-    ]
