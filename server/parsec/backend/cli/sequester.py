@@ -3,13 +3,13 @@ from __future__ import annotations
 
 import textwrap
 from base64 import b64decode, b64encode
+from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import AsyncGenerator, Dict, List, Tuple
 
 import attr
 import click
-from async_generator import asynccontextmanager
 
 from parsec._parsec import (
     CryptoError,
