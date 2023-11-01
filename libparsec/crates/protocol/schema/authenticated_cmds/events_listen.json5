@@ -26,7 +26,7 @@
                 "variants": [
                     {
                         "name": "Pinged",
-                        "discriminant_value": "pinged",
+                        "discriminant_value": "PINGED",
                         "fields": [
                             {
                                 "name": "ping",
@@ -35,99 +35,118 @@
                         ]
                     },
                     {
-                        "name": "CertificatesUpdated",
-                        "discriminant_value": "certificates_updated",
-                        // It would be easy to provide the content of the certificate here,
-                        // however correctly integrating it on client side is tricky given
-                        // it would act in concurrency with the regular use of `certificate_get`
-                        // command.
-                        //
-                        // Consider the following scenario:
-                        // 1) client send a `certificate_get` command to server
-                        // 2) server send a `certificates_updated` event to client for
-                        //    certificate C3
-                        // 3) client add C3 to it certificates store
-                        // 4) server send the response to `certificate_get`: certificates
-                        //    C1 and C2 should be added by the client
-                        // 5) client detect a causality issue given C1 & C2 are older than
-                        //    C3 which is already stored !
-                        //
-                        // In a nutshell, the server guarantees causality on the order it
-                        // provides the certificates and the client rely on this assumption
-                        // (e.g. to determine an user realm role at a given point in time).
-                        // So the best way to avoid messing with this is to always rely on
-                        // `certificate_get` everytime we detect we need to fetch new stuff.
+                        // This event is always fired first upon SSE connection
+                        "name": "ServerConfig",
+                        "discriminant_value": "SERVER_CONFIG",
                         "fields": [
                             {
-                                // Index is useful to detect we have already polled the
-                                // server for new certificates since this event's inception
-                                "name": "index",
-                                "type": "Index"
+                                "name": "user_profile_outsider_allowed",
+                                "type": "Boolean"
+                            },
+                            {
+                                "name": "active_users_limit",
+                                "type": "ActiveUsersLimit"
                             }
                         ]
                     },
                     {
-                        "name": "MessageReceived",
-                        "discriminant_value": "message_received",
-                        "fields": [
-                            {
-                                // Index is useful to detect we have already polled the
-                                // server for new messages since this event's inception
-                                "name": "index",
-                                "type": "Index"
-                            }
-                        ]
-                    },
-                    {
-                        "name": "InviteStatusChanged",
-                        "discriminant_value": "invite_status_changed",
+                        "name": "Invitation",
+                        "discriminant_value": "INVITATION",
                         "fields": [
                             {
                                 "name": "token",
                                 "type": "InvitationToken"
                             },
                             {
-                                "name": "invitation_status",
+                                "name": "status",
                                 "type": "InvitationStatus"
                             }
                         ]
                     },
                     {
-                        "name": "RealmMaintenanceStarted",
-                        "discriminant_value": "realm_maintenance_started",
+                        "name": "PkiEnrollment",
+                        "discriminant_value": "PKI_ENROLLMENT"
+                    },
+                    // It would be easy to provide the content of the certificate here,
+                    // however correctly integrating it on client side is tricky given
+                    // it would act in concurrency with the regular use of `certificate_get`
+                    // command.
+                    //
+                    // Consider the following scenario:
+                    // 1) client send a `certificate_get` command to server
+                    // 2) server send a `certificates` event to client for
+                    //    certificate C3
+                    // 3) client add C3 to it certificates store
+                    // 4) server send the response to `certificate_get`: certificates
+                    //    C1 and C2 should be added by the client
+                    // 5) client detect a causality issue given C1 & C2 are older than
+                    //    C3 which is already stored !
+                    //
+                    // In a nutshell, the server guarantees causality on the order it
+                    // provides the certificates and the client rely on this assumption
+                    // (e.g. to determine an user realm role at a given point in time).
+                    // So the best way to avoid messing with this is to always rely on
+                    // `certificate_get` everytime we detect we need to fetch new stuff.
+                    {
+                        "name": "CommonCertificate",
+                        "discriminant_value": "COMMON_CERTIFICATE",
                         "fields": [
                             {
-                                "name": "realm_id",
-                                "type": "VlobID"
-                            },
-                            {
-                                "name": "encryption_revision",
-                                "type": "Index"
+                                // Timestamp is useful to detect we have already polled the
+                                // server for new certificates since this event's inception
+                                "name": "timestamp",
+                                "type": "DateTime"
                             }
                         ]
                     },
                     {
-                        "name": "RealmMaintenanceFinished",
-                        "discriminant_value": "realm_maintenance_finished",
+                        "name": "SequesterCertificate",
+                        "discriminant_value": "SEQUESTER_CERTIFICATE",
                         "fields": [
                             {
-                                "name": "realm_id",
-                                "type": "VlobID"
-                            },
-                            {
-                                "name": "encryption_revision",
-                                "type": "Index"
+                                // Timestamp is useful to detect we have already polled the
+                                // server for new certificates since this event's inception
+                                "name": "timestamp",
+                                "type": "DateTime"
                             }
                         ]
                     },
                     {
-                        "name": "RealmVlobsUpdated",
-                        "discriminant_value": "realm_vlobs_updated",
-                       // Unlike for `CertificatesUpdated`, we provide enough context
+                        "name": "ShamirCertificate",
+                        "discriminant_value": "SHAMIR_CERTIFICATE",
+                        "fields": [
+                            {
+                                // Timestamp is useful to detect we have already polled the
+                                // server for new certificates since this event's inception
+                                "name": "timestamp",
+                                "type": "DateTime"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "RealmCertificate",
+                        "discriminant_value": "REALM_CERTIFICATE",
+                        "fields": [
+                            {
+                                // Timestamp is useful to detect we have already polled the
+                                // server for new certificates since this event's inception
+                                "name": "timestamp",
+                                "type": "DateTime"
+                            },
+                            {
+                                "name": "realm_id",
+                                "type": "VlobID"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Vlob",
+                        "discriminant_value": "VLOB",
+                       // Unlike for `XXXCertificate`, we provide enough context
                        // to process the event without any additional query to the server.
                        // This is because vlob related operations are designed to work
                        // under concurrency (unlike certificates related operations that
-                       // work in strict ordered fashion).
+                       // work in a strict ordered fashion).
                        // In other words, considering two vlob modifications:
                        // - two different vlob are modified, it is fine to fetch the
                        //   changes in any order
@@ -139,27 +158,27 @@
                                 "type": "VlobID"
                             },
                             {
-                                "name": "checkpoint",
-                                "type": "Index"
-                            },
-                            {
-                                "name": "src_id",
+                                "name": "vlob_id",
                                 "type": "VlobID"
                             },
                             {
-                                "name": "src_version",
+                                "name": "author",
+                                "type": "DeviceID"
+                            },
+                            {
+                                "name": "timestamp",
+                                "type": "DateTime"
+                            },
+                            {
+                                "name": "version",
                                 "type": "Version"
+                            },
+                            {
+                                // Blob is only provide if it is small enough
+                                "name": "blob",
+                                "type": "RequiredOption<Bytes>"
                             }
-                            // TODO: provide the blob if it is small enough ?
-                            // {
-                            //     "name": "blob",
-                            //     "type": "RequiredOption<Bytes>"
-                            // }
                         ]
-                    },
-                    {
-                        "name": "PkiEnrollmentUpdated",
-                        "discriminant_value": "pki_enrollment_updated"
                     }
                 ]
             }

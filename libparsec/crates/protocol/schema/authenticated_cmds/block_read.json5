@@ -23,16 +23,13 @@
                 ]
             },
             {
-                "status": "not_found"
+                "status": "block_not_found"
             },
             {
-                "status": "timeout"
+                "status": "author_not_allowed"
             },
             {
-                "status": "not_allowed"
-            },
-            {
-                "status": "in_maintenance"
+                "status": "store_unavailable"
             }
         ]
     }

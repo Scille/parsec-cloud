@@ -33,7 +33,7 @@ def run(cmd: str, **kwargs: Any) -> subprocess.CompletedProcess[bytes]:
 
 def build() -> None:
     run(f"{PYTHON_EXECUTABLE_PATH} --version")
-    run(f"maturin --version")
+    run("maturin --version")
 
     if sys.platform == "linux":
         run("patchelf --version")
@@ -49,7 +49,7 @@ def build() -> None:
         os.environ.get("POETRY_LIBPARSEC_BUILD_STRATEGY", "always_build").strip().lower()
     )
     if build_strategy == "no_build":
-        display(f"Skipping maturin build: POETRY_LIBPARSEC_BUILD_STRATEGY set to `no_build`")
+        display("Skipping maturin build: POETRY_LIBPARSEC_BUILD_STRATEGY set to `no_build`")
         return
     elif build_strategy == "build_if_missing" and (BASEDIR / libparsec_path).exists():
         display(

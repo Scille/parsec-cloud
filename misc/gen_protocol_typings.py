@@ -400,7 +400,7 @@ if __name__ == "__main__":
     for to_remove in OUTPUT_PROTOCOL_TYPING_DIR.glob("**/*.pyi"):
         to_remove.unlink()
 
-    print(f"2/4 Generating .pyi files")
+    print("2/4 Generating .pyi files")
 
     # {<family>: {<version>: {<cmd>: [<collected items>]}}}
     collected_items: dict[str, dict[str, dict[str, list[str]]]] = {}
@@ -429,39 +429,15 @@ if __name__ == "__main__":
     for family in collected_items.keys():
         protocol_code += f"from . import {family}\n"
     protocol_code += """
-from parsec._parsec import VlobID
-
-
-class ProtocolErrorFields:
-    @classmethod
-    def NotHandled(cls) -> ProtocolErrorFields: ...
-    @classmethod
-    def BadRequest(cls, exc: str) -> ProtocolErrorFields: ...
-    @property
-    def exc(self) -> ProtocolErrorFields: ...
-
-
-class ProtocolError(BaseException, ProtocolErrorFields): ...
-
-
-class ReencryptionBatchEntry:
-    def __init__(self, vlob_id: VlobID, version: int, blob: bytes) -> None: ...
-    @property
-    def vlob_id(self) -> VlobID: ...
-    @property
-    def version(self) -> int: ...
-    @property
-    def blob(self) -> bytes: ...
-
 
 class ActiveUsersLimit:
     NO_LIMIT: ActiveUsersLimit
 
     @classmethod
-    def FromOptionalInt(cls, count: int | None) -> ActiveUsersLimit: ...
+    def from_maybe_int(cls, count: int | None) -> ActiveUsersLimit: ...
     @classmethod
-    def LimitedTo(cls, user_count_limit: int) -> ActiveUsersLimit: ...
-    def to_int(self) -> int | None: ...
+    def limited_to(cls, user_count_limit: int) -> ActiveUsersLimit: ...
+    def to_maybe_int(self) -> int | None: ...
     "Returns the user limit count as an integer or None if there's no limit specified"
 
     def __eq__(self, other: object) -> bool: ...
@@ -472,7 +448,7 @@ class ActiveUsersLimit:
     def __ne__(self, other: object) -> bool: ...
 """
     protocol_code += (
-        '\n\n__all__ =["ReencryptionBatchEntry", "ActiveUsersLimit", '
+        '\n\n__all__ =["ActiveUsersLimit", '
         + ", ".join(f'"{f}"' for f in collected_items.keys())
         + "]\n"
     )
@@ -515,8 +491,8 @@ class AnyCmdReq:
 
     print(f"3/4 Generating {OUTPUT_TEST_RPC_FILE}")
 
-    # TODO: This is a hack hastly put together, in theory we should have json parsing
-    # sperated from protocol typing generation, which would make the generation of this
+    # TODO: This is a hack hasty put together, in theory we should have json parsing
+    # separated from protocol typing generation, which would make the generation of this
     # code much cleaner...
 
     test_rpc_code_headers = []
@@ -580,7 +556,7 @@ class AnyCmdReq:
     OUTPUT_TEST_RPC_FILE.write_text("\n".join(test_rpc_code), encoding="utf8")
 
     if not arg_skip_style:
-        print(f"4/4 Fix style")
+        print("4/4 Fix style")
         subprocess.call(
             [
                 "pre-commit",

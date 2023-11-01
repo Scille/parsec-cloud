@@ -111,6 +111,18 @@ crate::binding_utils::gen_py_wrapper_class_for_id!(
 gen_uuid!(SequesterServiceID);
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
+    BootstrapToken,
+    libparsec_types::BootstrapToken,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
+gen_uuid!(BootstrapToken);
+
+crate::binding_utils::gen_py_wrapper_class_for_id!(
     InvitationToken,
     libparsec_types::InvitationToken,
     __repr__,

@@ -6,31 +6,23 @@ use pyo3::{
 };
 
 mod addrs;
-mod api_crypto;
-mod backend_events;
 mod binding_utils;
+mod crypto;
 mod data;
 mod enumerate;
 mod ids;
 mod misc;
 mod protocol;
-mod regex;
-mod runtime;
 #[cfg(feature = "test-utils")]
 mod testbed;
 mod time;
 
-pub(crate) use crate::regex::*;
 pub(crate) use addrs::*;
-pub(crate) use api_crypto::*;
-pub(crate) use backend_events::*;
 pub(crate) use binding_utils::*;
-pub(crate) use data::*;
+pub(crate) use crypto::*;
 pub(crate) use enumerate::*;
 pub(crate) use ids::*;
 pub(crate) use misc::*;
-pub(crate) use protocol::*;
-pub(crate) use runtime::*;
 #[cfg(feature = "test-utils")]
 pub(crate) use testbed::*;
 pub(crate) use time::*;
@@ -39,8 +31,8 @@ pub(crate) use time::*;
 #[pymodule]
 #[pyo3(name = "_parsec")]
 fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
-    crate::api_crypto::add_mod(py, m)?;
-    crate::data::add_mod(py, m)?;
+    crate::crypto::add_mod(py, m)?;
+    crate::data::add_mod(m)?;
     crate::protocol::add_mod(py, m)?;
 
     patch_panic_exception_to_inherit_exception(py);
@@ -49,20 +41,6 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
         "PanicException",
         <pyo3::panic::PanicException as pyo3::PyTypeInfo>::type_object(py),
     )?;
-
-    m.add_class::<BackendEvent>()?;
-    m.add_class::<BackendEventCertificatesUpdated>()?;
-    m.add_class::<BackendEventInviteConduitUpdated>()?;
-    m.add_class::<BackendEventUserUpdatedOrRevoked>()?;
-    m.add_class::<BackendEventOrganizationExpired>()?;
-    m.add_class::<BackendEventPinged>()?;
-    m.add_class::<BackendEventMessageReceived>()?;
-    m.add_class::<BackendEventInviteStatusChanged>()?;
-    m.add_class::<BackendEventRealmMaintenanceFinished>()?;
-    m.add_class::<BackendEventRealmMaintenanceStarted>()?;
-    m.add_class::<BackendEventRealmVlobsUpdated>()?;
-    m.add_class::<BackendEventRealmRolesUpdated>()?;
-    m.add_class::<BackendEventPkiEnrollmentUpdated>()?;
 
     m.add_class::<BackendAddr>()?;
     m.add_class::<BackendOrganizationAddr>()?;
@@ -92,23 +70,11 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<DeviceName>()?;
     m.add_class::<DeviceLabel>()?;
     m.add_class::<UserID>()?;
+    m.add_class::<BootstrapToken>()?;
     m.add_class::<InvitationToken>()?;
 
     // Time
-    m.add_function(wrap_pyfunction!(mock_time, m)?)?;
-    m.add_class::<TimeProvider>()?;
     m.add_class::<DateTime>()?;
-    m.add_class::<LocalDateTime>()?;
-
-    // Regex
-    m.add_class::<Regex>()?;
-
-    // Registering ABC classes
-    m.add_class::<FutureIntoCoroutine>()?;
-    let future_into_coroutine_cls = m.getattr("FutureIntoCoroutine")?;
-    py.import("typing")?
-        .getattr("Coroutine")?
-        .call_method1("register", (future_into_coroutine_cls,))?;
 
     // Misc
     m.add_class::<ApiVersion>()?;
@@ -124,6 +90,7 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
         tm.add_class::<TestbedTemplateContent>()?;
         tm.add_class::<TestbedEventBootstrapOrganization>()?;
         tm.add_class::<TestbedEventNewSequesterService>()?;
+        tm.add_class::<TestbedEventRevokeSequesterService>()?;
         tm.add_class::<TestbedEventNewUser>()?;
         tm.add_class::<TestbedEventNewDevice>()?;
         tm.add_class::<TestbedEventUpdateUserProfile>()?;
@@ -132,8 +99,10 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
         tm.add_class::<TestbedEventNewDeviceInvitation>()?;
         tm.add_class::<TestbedEventNewRealm>()?;
         tm.add_class::<TestbedEventShareRealm>()?;
-        tm.add_class::<TestbedEventStartRealmReencryption>()?;
-        tm.add_class::<TestbedEventFinishRealmReencryption>()?;
+        tm.add_class::<TestbedEventRenameRealm>()?;
+        tm.add_class::<TestbedEventRotateKeyRealm>()?;
+        tm.add_class::<TestbedEventArchiveRealm>()?;
+        tm.add_class::<TestbedEventNewShamirRecovery>()?;
         tm.add_class::<TestbedEventCreateOrUpdateOpaqueVlob>()?;
         tm.add_class::<TestbedEventCreateOpaqueBlock>()?;
     }

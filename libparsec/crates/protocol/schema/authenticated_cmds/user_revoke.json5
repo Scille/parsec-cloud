@@ -17,44 +17,22 @@
                 "status": "ok"
             },
             {
-                "status": "not_allowed",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "author_not_allowed"
             },
             {
-                "status": "invalid_certification",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "user_not_found"
             },
             {
-                "status": "not_found"
+                "status": "user_already_revoked"
             },
             {
-                "status": "already_revoked",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "invalid_certificate"
             },
             {
                 // Returned if the timestamp in the certificate is too far away compared
                 // to server clock.
-                "status": "bad_timestamp",
+                "status": "timestamp_out_of_ballpark",
                 "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    },
                     {
                         "name": "ballpark_client_early_offset",
                         "type": "Float"
@@ -64,7 +42,7 @@
                         "type": "Float"
                     },
                     {
-                        "name": "backend_timestamp",
+                        "name": "server_timestamp",
                         "type": "DateTime"
                     },
                     {
@@ -74,7 +52,7 @@
                 ]
             },
             {
-                // Returned if another certificate in the server has a creation date
+                // Returned if another certificate or vlob in the server has a timestamp
                 // posterior or equal to our current one.
                 "status": "require_greater_timestamp",
                 "fields": [

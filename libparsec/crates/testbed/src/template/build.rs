@@ -630,27 +630,6 @@ impl<'a> TestbedEventShareRealmBuilder<'a> {
 }
 
 /*
- * TestbedEventStartRealmReencryptionBuilder
- */
-
-impl_event_builder!(StartRealmReencryption, [realm: VlobID]);
-
-impl<'a> TestbedEventStartRealmReencryptionBuilder<'a> {
-    impl_customize_field_meth!(author, DeviceID);
-    impl_customize_field_meth!(entry_name, EntryName);
-}
-
-/*
- * TestbedEventFinishRealmReencryptionBuilder
- */
-
-impl_event_builder!(FinishRealmReencryption, [realm: VlobID]);
-
-impl<'a> TestbedEventFinishRealmReencryptionBuilder<'a> {
-    impl_customize_field_meth!(author, DeviceID);
-}
-
-/*
  * TestbedEventCreateOrUpdateUserManifestVlobBuilder
  */
 

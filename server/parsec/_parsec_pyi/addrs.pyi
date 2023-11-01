@@ -6,7 +6,7 @@ from typing import Union
 
 from parsec._parsec_pyi.crypto import VerifyKey
 from parsec._parsec_pyi.enumerate import InvitationType
-from parsec._parsec_pyi.ids import InvitationToken, OrganizationID, VlobID
+from parsec._parsec_pyi.ids import BootstrapToken, InvitationToken, OrganizationID, VlobID
 
 class BackendAddr:
     def __init__(self, hostname: str, port: int | None, use_ssl: bool) -> None: ...
@@ -81,7 +81,7 @@ class BackendOrganizationBootstrapAddr(BackendAddr):
     def __init__(
         self,
         organization_id: OrganizationID,
-        token: str | None,
+        token: BootstrapToken | None,
         hostname: str,
         port: int | None,
         use_ssl: bool = True,
@@ -90,7 +90,7 @@ class BackendOrganizationBootstrapAddr(BackendAddr):
     @property
     def organization_id(self) -> OrganizationID: ...
     @property
-    def token(self) -> str: ...
+    def token(self) -> BootstrapToken | None: ...
     @property
     def hostname(self) -> str: ...
     @property
@@ -113,7 +113,7 @@ class BackendOrganizationBootstrapAddr(BackendAddr):
         cls,
         backend_addr: BackendAddr,
         organization_id: OrganizationID,
-        token: str | None = None,
+        token: BootstrapToken | None = None,
     ) -> BackendOrganizationBootstrapAddr: ...
 
 class BackendOrganizationFileLinkAddr(BackendAddr):

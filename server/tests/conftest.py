@@ -4,40 +4,38 @@ from __future__ import annotations
 import logging
 import os
 import re
+from typing import Awaitable, Callable, Generator
 
-import hypothesis
 import pytest
 import structlog
-import trio
-import trio_asyncio
 
-from parsec.backend.config import (
+from parsec.config import (
+    BaseBlockStoreConfig,
     MockedBlockStoreConfig,
     PostgreSQLBlockStoreConfig,
-    RAID0BlockStoreConfig,
-    RAID1BlockStoreConfig,
-    RAID5BlockStoreConfig,
 )
-from parsec.monitoring import TaskMonitoringInstrument
 
-# TODO: needed ?
 # Must be done before the module has any chance to be imported
 pytest.register_assert_rewrite("tests.common.event_bus_spy")
 from tests.common import (
+    LogCaptureFixture,
     asyncio_reset_postgresql_testbed,
     bootstrap_postgresql_testbed,
     get_postgresql_url,
-    get_side_effects_timeout,
     reset_postgresql_testbed,
 )
+from tests.common.patch_httpx import patch_httpx_stream_support
+
+# TODO: Currently httpx ASGI transport only parse the response once it has been totally
+# sent, which doesn't play well with streamed response (i.e. SSE in our case)
+# (see https://github.com/encode/httpx/issues/2186)
+patch_httpx_stream_support()
+
 
 # Pytest hooks
 
 
-def pytest_addoption(parser: pytest.Parser):
-    parser.addoption("--side-effects-timeout", default=get_side_effects_timeout(), type=float)
-    parser.addoption("--hypothesis-max-examples", default=100, type=int)
-    parser.addoption("--hypothesis-derandomize", action="store_true")
+def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption(
         "--postgresql",
         action="store_true",
@@ -57,11 +55,11 @@ def pytest_addoption(parser: pytest.Parser):
         ),
     )
 
-    def _parse_slice_tests(value):
+    def _parse_slice_tests(value: str) -> tuple[list[int], int]:
         try:
-            nums, total = value.split("/")
-            total = int(total)
-            nums = [int(x) for x in nums.split(",")]
+            raw_nums, raw_total = value.split("/")
+            total = int(raw_total)
+            nums = [int(x) for x in raw_nums.split(",")]
             if total >= 1 and all(1 <= x <= total for x in nums):
                 return (nums, total)
         except ValueError:
@@ -76,7 +74,7 @@ def pytest_addoption(parser: pytest.Parser):
     )
 
 
-def pytest_configure(config):
+def pytest_configure(config: pytest.Config) -> None:
     # Configure structlog to redirect everything in logging
     structlog.configure(
         logger_factory=structlog.stdlib.LoggerFactory(),
@@ -97,26 +95,19 @@ def pytest_configure(config):
         pg_url = bootstrap_postgresql_testbed()
         capturemanager = config.pluginmanager.getplugin("capturemanager")
         if capturemanager:
-            capturemanager.suspend(in_=True)
+            capturemanager.suspend(in_=True)  # type: ignore
         print(f"usage: PG_URL={pg_url} py.test --postgresql tests")
         input("Press enter when you're done with...")
         pytest.exit("bye")
     elif config.getoption("--postgresql") and not _is_xdist_master(config):
         bootstrap_postgresql_testbed()
-    # Configure custom side effets timeout
-    if config.getoption("--side-effects-timeout"):
-        import tests.common.trio_clock
-
-        tests.common.trio_clock._set_side_effects_timeout(
-            float(config.getoption("--side-effects-timeout"))
-        )
 
 
-def _is_xdist_master(config):
-    return config.getoption("dist") != "no" and not os.environ.get("PYTEST_XDIST_WORKER")
+def _is_xdist_master(config: pytest.Config) -> bool:
+    return config.getoption("dist") != "no" and not os.environ.get("PYTEST_XDIST_WORKER")  # type: ignore
 
 
-def _patch_caplog():
+def _patch_caplog() -> None:
     from _pytest.logging import LogCaptureFixture
 
     def _remove_colors(msg):
@@ -157,15 +148,15 @@ def _patch_caplog():
 
     def _assert_not_occurred(self, log):
         __tracebackhide__ = True
-        matches_msgs, matches_records = _find(self, log)
+        matches_msgs, _ = _find(self, log)
         assert not matches_msgs
 
-    LogCaptureFixture.assert_occurred = _assert_occurred
-    LogCaptureFixture.assert_occurred_once = _assert_occurred_once
-    LogCaptureFixture.assert_not_occurred = _assert_not_occurred
+    LogCaptureFixture.assert_occurred = _assert_occurred  # type: ignore
+    LogCaptureFixture.assert_occurred_once = _assert_occurred_once  # type: ignore
+    LogCaptureFixture.assert_not_occurred = _assert_not_occurred  # type: ignore
 
 
-def pytest_runtest_setup(item):
+def pytest_runtest_setup(item: pytest.Item) -> None:
     if item.get_closest_marker("slow") and not item.config.getoption("--runslow"):
         pytest.skip("need --runslow option to run")
     if item.get_closest_marker("postgresql"):
@@ -173,13 +164,9 @@ def pytest_runtest_setup(item):
             pytest.skip("need --postgresql option to run")
 
 
-def pytest_collection_modifyitems(config, items):
-    for item in items:
-        if "trio" in item.keywords:
-            item.fixturenames.append("task_monitoring")
-
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     # Divide tests into slices of equal size
-    slices_to_run, total_slices = config.getoption("--slice-tests")
+    slices_to_run, total_slices = config.getoption("--slice-tests")  # type: ignore
     if total_slices > 1:
         # Reorder tests to be deterministic given they will be ran across multiples instances
         # Note this must be done as an in-place update to have it taken into account
@@ -204,126 +191,42 @@ def pytest_collection_modifyitems(config, items):
 
 
 @pytest.fixture(autouse=True)
-def no_logs_gte_error(caplog):
+def no_logs_gte_error(caplog: LogCaptureFixture) -> Generator[None, None, None]:
     yield
-
-    # TODO: Concurrency bug in Hypercorn when the server is teardown while a
-    # client websocket is currently disconnecting
-    # see: https://github.com/Scille/parsec-cloud/issues/2716
-    def skip_hypercorn_buggy_log(record):
-        try:
-            _, exc, _ = record.exc_info
-        except (ValueError, TypeError):
-            exc = None
-
-        if record.name == "asyncio" and isinstance(exc, ConnectionError):
-            return True
-
-        if record.name != "hypercorn.error":
-            return True
-
-        if record.exc_text.endswith(
-            "wsproto.utilities.LocalProtocolError: Connection cannot be closed in state ConnectionState.CLOSED"
-        ):
-            return False
-
-        if record.exc_text.endswith(
-            "trio.BusyResourceError: another task is currently sending data on this SocketStream"
-        ):
-            return False
-
-        if record.exc_text.endswith(
-            "wsproto.utilities.LocalProtocolError: Event CloseConnection(code=1000, reason=None) cannot be sent in state ConnectionState.CLOSED."
-        ):
-            return False
-
-        return True
 
     # The test should use `caplog.assert_occurred_once` to indicate a log was expected,
     # otherwise we consider error logs as *actual* errors.
-    asserted_records = getattr(caplog, "asserted_records", set())
+    asserted_records: set = getattr(caplog, "asserted_records", set())
     errors = [
         record
         for record in caplog.get_records("call")
-        if record.levelno >= logging.ERROR
-        and record not in asserted_records
-        and skip_hypercorn_buggy_log(record)
+        if record.levelno >= logging.ERROR and record not in asserted_records
     ]
 
     assert not errors
-
-
-@pytest.fixture(scope="session")
-def hypothesis_settings(request):
-    return hypothesis.settings(
-        max_examples=request.config.getoption("--hypothesis-max-examples"),
-        derandomize=request.config.getoption("--hypothesis-derandomize"),
-        deadline=None,
-    )
 
 
 # Other main fixtures
 
 
 @pytest.fixture
-async def nursery():
-    # A word about the nursery fixture:
-    # The whole point of trio is to be able to build a graph of coroutines to
-    # simplify teardown. Using a single top level nursery kind of mitigate this
-    # given unrelated coroutines will end up there and be closed all together.
-    # Worst, among those coroutine it could exists a relationship that will be lost
-    # in a more or less subtle way (typically using a factory fixture that use the
-    # default nursery behind the scene).
-    # Bonus points occur if using trio-asyncio that creates yet another hidden
-    # layer of relationship that could end up in cryptic dead lock hardened enough
-    # to survive ^C.
-    # Finally if your still no convinced, factory fixtures not depending on async
-    # fixtures (like nursery is) can be used inside the Hypothesis tests.
-    # I know you love Hypothesis. Checkmate. You won't use this fixture ;-)
-    raise RuntimeError("Bad kitty ! Bad !!!")
-
-
-@pytest.fixture
-def postgresql_url(request):
+def postgresql_url(request: pytest.FixtureRequest) -> str:
     if not request.node.get_closest_marker("postgresql"):
         raise RuntimeError(
             "`postgresql_url` can only be used in tests decorated with `@pytest.mark.postgresql`"
         )
-    return get_postgresql_url()
+    url = get_postgresql_url()
+    assert url is not None
+    return url
 
 
 @pytest.fixture
-async def asyncio_loop(request):
-    # asyncio loop is only needed for triopg
-    if not request.config.getoption("--postgresql"):
-        yield None
-
-    else:
-        # When a ^C happens, trio send a Cancelled exception to each running
-        # coroutine. We must protect this one to avoid deadlock if it is cancelled
-        # before another coroutine that uses trio-asyncio.
-        with trio.CancelScope(shield=True):
-            async with trio_asyncio.open_loop() as loop:
-                yield loop
-
-
-@pytest.fixture
-async def task_monitoring():
-    trio.lowlevel.add_instrument(TaskMonitoringInstrument())
-
-
-@pytest.fixture(scope="session")
-def monitor():
-    from tests.monitor import Monitor
-
-    return Monitor()
-
-
-@pytest.fixture()
-def backend_store(request):
+def db_url(request: pytest.FixtureRequest) -> str:
     if request.config.getoption("--postgresql"):
         reset_postgresql_testbed()
-        return get_postgresql_url()
+        url = get_postgresql_url()
+        assert url is not None
+        return url
 
     elif request.node.get_closest_marker("postgresql"):
         pytest.skip("`Test is postgresql-only")
@@ -333,45 +236,22 @@ def backend_store(request):
 
 
 @pytest.fixture
-def blockstore(backend_store, fixtures_customization):
+def blockstore_config(db_url: str) -> BaseBlockStoreConfig:
     # TODO: allow to test against swift ?
-    if backend_store.startswith("postgresql://"):
-        config = PostgreSQLBlockStoreConfig()
+    if db_url.startswith("postgresql://"):
+        return PostgreSQLBlockStoreConfig()
     else:
-        config = MockedBlockStoreConfig()
-
-    raid = fixtures_customization.get("blockstore_mode", "NO_RAID").upper()
-    if raid == "RAID0":
-        config = RAID0BlockStoreConfig(blockstores=[config, MockedBlockStoreConfig()])
-    elif raid == "RAID1":
-        config = RAID1BlockStoreConfig(blockstores=[config, MockedBlockStoreConfig()])
-    elif raid == "RAID1_PARTIAL_CREATE_OK":
-        config = RAID1BlockStoreConfig(
-            blockstores=[config, MockedBlockStoreConfig()], partial_create_ok=True
-        )
-    elif raid == "RAID5":
-        config = RAID5BlockStoreConfig(
-            blockstores=[config, MockedBlockStoreConfig(), MockedBlockStoreConfig()]
-        )
-    elif raid == "RAID5_PARTIAL_CREATE_OK":
-        config = RAID5BlockStoreConfig(
-            blockstores=[config, MockedBlockStoreConfig(), MockedBlockStoreConfig()],
-            partial_create_ok=True,
-        )
-    else:
-        assert raid == "NO_RAID"
-
-    return config
+        return MockedBlockStoreConfig()
 
 
 @pytest.fixture
 def reset_testbed(
-    request,
-    caplog,
-):
+    request: pytest.FixtureRequest,
+    caplog: LogCaptureFixture,
+) -> Callable[[bool], Awaitable[None]]:
     async def _reset_testbed(keep_logs=False):
         if request.config.getoption("--postgresql"):
-            await trio_asyncio.aio_as_trio(asyncio_reset_postgresql_testbed)
+            await asyncio_reset_postgresql_testbed()
         if not keep_logs:
             caplog.clear()
 

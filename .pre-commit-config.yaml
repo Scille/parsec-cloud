@@ -112,7 +112,7 @@ repos:
   # - lastly, mypy is started
   # So this is similar to what the developer does when running mypy from it dev shell \o/
   #
-  # Now that we use poetry to run mypy, why not also use it for ruff & black !
+  # Now that we use poetry to run mypy, why not also use it for ruff linter & formatter !
   # This have the following benefits:
   # - It prevents going out of sync in tools version between pre-commit-config
   #   and poetry.lock
@@ -125,70 +125,92 @@ repos:
     hooks:
       - id: ruff
         name: ruff (using `poetry run ruff`)
-        entry: poetry --directory ./server run ruff check
+        # Wow this looks ugly ! But there is a reason why:
+        # - Ruff's `extend-exclude` doesn't work if it is not run from it config's folder
+        # - Pre-commit only run script from the repo root directory
+        # - A file passed as parameter is check by Ruff even if it part of `extend-exclude`
+        # - Splitting lines with YAML add heading whitespaces for no reason, and Python
+        #   then complains about indentation :'(
+        #
+        # So (after a lot of pain) we came up with this: a one liner (because YAML)
+        # of a Python script that jumps in the correct directory (because pre-commit)
+        # to run Ruff on the whole codebase (because Ruff).
+        #
+        # Fortunately Ruff is (as cool kids say) blazingly fast, so it's no big
+        # deal to check everything on each run.
+        entry:
+          poetry --directory ./server run python -c 'import os;os.chdir("./server");os.execlp("ruff", "ruff", "check", "--fix", "./parsec", "./tests", "../docs", "../make.py", "../misc");'
         require_serial: true
-        language: system
-        types_or: [ python, pyi ]
-        args:
-          [
-            --config=server/pyproject.toml,
-            --extend-exclude=client/*,
-            --fix,
-          ]
-
-      - id: black
-        name: black (using `poetry run black`)
-        entry: poetry --directory ./server run black
-        require_serial: true
-        language: system
-        types_or: [ python, pyi ]
-        args:
-          [
-            --line-length=100,
-          ]
-
-      - id: mypy
-        name: Mypy (using `poetry run mypy`)
-        entry: poetry --directory ./server run mypy
-        require_serial: true
-        language: system
-        types_or: [ python, pyi ]
-        args:
-          [
-            --config=server/pyproject.toml,
-          ]
-        files: ^(server|misc|bindings/generator)/
-
-  ######
-  # Rust
-
-  - repo: local
-    hooks:
-      - id: fmt
-        name: fmt
-        entry: cargo fmt
-        language: system
-        types: [ rust ]
-        args: [ -- ]
-
-      - id: clippy
-        name: clippy
-        entry: cargo clippy
-        language: system
-        types: [ rust ]
         pass_filenames: false
+        language: system
+        types_or: [ python, pyi ]
+
+      - id: black # Still named `black` as it makes a unique recognizable name
+        name: black (using `poetry run ruff format`)
+        entry: poetry --directory ./server run ruff format
+        require_serial: true
+        language: system
+        types_or: [ python, pyi ]
         args:
           [
-            --workspace,
-            --tests,
-            --bins,
-            --lib,
-            --exclude=libparsec_bindings_android,
-            --exclude=libparsec_bindings_web,
-            --exclude=libparsec_bindings_electron,
-            --,
-            --deny=warnings,
+            --config=server/pyproject.toml,
           ]
+
+      - id: pyright
+        name: Pyright (using `poetry run pyright`)
+        entry: poetry --directory ./server run pyright
+        require_serial: true
+        language: system
+        types_or: [ python, pyi ]
+        args:
+          [
+            --project=server/,
+          ]
+
+      # - id: mypy
+      #   name: Mypy (using `poetry run mypy`)
+      #   entry: poetry --directory ./server run mypy
+      #   require_serial: true
+      #   language: system
+      #   types_or: [ python, pyi ]
+      #   args:
+      #     [
+      #       --config=server/pyproject.toml,
+      #     ]
+      #   files: ^(server|misc|bindings/generator)/
+
+  # ######
+  # # Rust
+
+  # - repo: local
+  #   hooks:
+  #     - id: fmt
+  #       name: fmt
+  #       entry: cargo fmt
+  #       language: system
+  #       types: [ rust ]
+  #       args: [ -- ]
+
+  #     - id: clippy
+  #       name: clippy
+  #       entry: cargo clippy
+  #       language: system
+  #       types: [ rust ]
+  #       pass_filenames: false
+  #       args:
+  #         [
+  #           --workspace,
+  #           --tests,
+  #           --bins,
+  #           --lib,
+  #           --exclude=libparsec_bindings_android,
+  #           --exclude=libparsec_bindings_web,
+  #           --exclude=libparsec_bindings_electron,
+  #           --,
+  #           --deny=warnings,
+  #           --deny=clippy::undocumented_unsafe_blocks,
+  #           --deny=clippy::unwrap_used
+  #         ]
 
   ####
   # Js

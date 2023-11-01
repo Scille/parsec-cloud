@@ -9,13 +9,17 @@ ALLSPHINXOPTS
 alsa
 androideabi
 androidx
+anyio
+appendleft
 aqtbot
+aread
 armv
 arwx
 Asas
 asend
 asgi
 assetimporters
+asynchronousness
 asyncness
 asyncpg
 athrow
@@ -144,6 +148,7 @@ excrepr
 executemany
 executescript
 farn
+fastapi
 fdata
 fetchrow
 fetchval
@@ -195,6 +200,7 @@ HKCU
 HKLM
 Hodi
 htmlcov
+httpx
 humantime
 hypercorn
 icccm
@@ -328,6 +334,7 @@ modindex
 moduleauthor
 moff
 monomorphization
+monothreaded
 mountdir
 mountpoint
 MountPoints
@@ -437,6 +444,7 @@ PyClass
 pydeps
 pydocs
 pyenv
+pydantic
 PyFunction
 pyinstaller
 pylupdate
@@ -625,6 +633,7 @@ userguide
 userspace
 userto
 usertotal
+uvicorn
 vacuum
 Vacuum
 verifykey

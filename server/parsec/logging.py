@@ -15,7 +15,7 @@ from structlog.dev import ConsoleRenderer
 from structlog.processors import JSONRenderer
 from structlog.types import ExcInfo
 
-from parsec import __version__
+from parsec._version import __version__
 
 # Long story short Python's logging is an over-engineering mess, adding
 # structlog and Sentry brings another layer of complexity :/
@@ -110,9 +110,11 @@ def _structlog_to_sentry_processor(
         elif isinstance(v, tuple):
             exc_info = v
         elif v:
-            exc_info = sys.exc_info()
-            if exc_info[0] is None:
-                exc_info = None
+            match sys.exc_info():
+                case (None, None, None):
+                    exc_info = None
+                case exc_info:
+                    pass
         else:
             exc_info = None
 

@@ -1,0 +1,62 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "invite_new_user",
+            "fields": [
+                {
+                    "name": "claimer_email",
+                    "type": "String"
+                },
+                {
+                    "name": "send_email",
+                    "type": "Boolean"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "token",
+                        "type": "InvitationToken"
+                    },
+                    // Field used when the invitation is correctly created but the invitation email cannot be sent
+                    {
+                        "name": "email_sent",
+                        "type": "InvitationEmailSentStatus"
+                    }
+                ]
+            },
+            {
+                "status": "author_not_allowed"
+            },
+            {
+                "status": "claimer_email_already_enrolled"
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "InvitationEmailSentStatus",
+                "variants": [
+                    {
+                        // Also returned when `send_email=false`
+                        "name": "Success",
+                        "discriminant_value": "SUCCESS"
+                    },
+                    {
+                        "name": "ServerUnavailable",
+                        "discriminant_value": "SERVER_UNAVAILABLE"
+                    },
+                    {
+                        "name": "RecipientRefused",
+                        "discriminant_value": "RECIPIENT_REFUSED"
+                    }
+                ]
+            }
+        ]
+    }
+]

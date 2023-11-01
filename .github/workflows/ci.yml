@@ -179,7 +179,7 @@ jobs:
         with:
           config-file: ${{ steps.patched-pre-commit-config.outputs.path }}
         env:
-          SKIP: clippy,fmt,cspell,ruff,black,mypy,eslint
+          SKIP: clippy,fmt,cspell,ruff,black,pyright,eslint
         timeout-minutes: 5
 
   python:

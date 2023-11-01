@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from typing import Any, Generic, TypeVar
+from typing import Any, ClassVar, Generic, TypeVar
 
 #
 # Meta-types
@@ -167,7 +167,7 @@ class DeviceLabel(StrBasedType):
 class HumanHandle(Structure):
     email: str
     label: str
-    custom_getters: dict[str, str] = {
+    custom_getters: ClassVar = {
         "email": "|obj| { fn access(obj: &libparsec::HumanHandle) -> &str { obj.email() } access(obj) }",
         "label": "|obj| { fn access(obj: &libparsec::HumanHandle) -> &str { obj.label() } access(obj) }",
     }

@@ -92,6 +92,7 @@ pub(super) fn non_revoked_realm_owners(
     })
 }
 
+#[allow(unused)]
 pub(super) fn non_revoked_realm_members(
     events: &[TestbedEvent],
     realm: VlobID,
@@ -249,48 +250,4 @@ pub(super) fn assert_realm_exists(events: &[TestbedEvent], realm: VlobID) {
         .rev()
         .find(|e| matches!(e, TestbedEvent::NewRealm(x) if x.realm_id == realm))
         .unwrap_or_else(|| panic!("Realm {} doesn't exist", realm));
-}
-
-pub(super) fn assert_realm_exists_and_under_reencryption(
-    events: &[TestbedEvent],
-    realm: &VlobID,
-) -> IndexInt {
-    let outcome = events
-        .iter()
-        .rev()
-        .find_map(|e| match e {
-            TestbedEvent::StartRealmReencryption(x) if x.realm == *realm => {
-                Some(Some(x.encryption_revision))
-            }
-            TestbedEvent::FinishRealmReencryption(x) if x.realm == *realm => Some(None),
-            TestbedEvent::NewRealm(x) if x.realm_id == *realm => Some(None),
-            _ => None,
-        })
-        .unwrap_or_else(|| panic!("Realm {} doesn't exist", realm));
-    match outcome {
-        None => panic!("Realm {} not currently under reencryption", realm),
-        Some(encryption_revision) => encryption_revision,
-    }
-}
-
-pub(super) fn assert_realm_exists_and_not_under_reencryption(
-    events: &[TestbedEvent],
-    realm: VlobID,
-) -> IndexInt {
-    let outcome = events
-        .iter()
-        .rev()
-        .find_map(|e| match e {
-            TestbedEvent::NewRealm(x) if x.realm_id == realm => Some(Some(1)),
-            TestbedEvent::StartRealmReencryption(x) if x.realm == realm => {
-                Some(Some(x.encryption_revision))
-            }
-            TestbedEvent::FinishRealmReencryption(x) if x.realm == realm => Some(None),
-            _ => None,
-        })
-        .unwrap_or_else(|| panic!("Realm {} doesn't exist", realm));
-    match outcome {
-        None => panic!("Realm {} currently under reencryption", realm),
-        Some(reencryption_revision) => reencryption_revision,
-    }
 }

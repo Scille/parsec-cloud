@@ -18,13 +18,7 @@
                 "unit": "PkiEnrollmentInfoStatus"
             },
             {
-                "status": "not_found",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "enrollment_not_found"
             }
         ],
         "nested_types": [

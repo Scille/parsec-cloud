@@ -4,14 +4,20 @@ use pyo3::{
     prelude::*,
     types::{PyBytes, PyDict, PyList},
 };
+use std::collections::HashMap;
+use std::num::NonZeroU64;
 use std::sync::Arc;
 
 use crate::{
-    BlockID, DateTime, DeviceCertificate, DeviceID, DeviceLabel, HumanHandle, InvitationToken,
-    PrivateKey, RealmRole, RealmRoleCertificate, RevokedUserCertificate, SecretKey,
-    SequesterAuthorityCertificate, SequesterPrivateKeyDer, SequesterPublicKeyDer,
-    SequesterServiceCertificate, SequesterServiceID, SequesterSigningKeyDer, SequesterVerifyKeyDer,
-    SigningKey, UserCertificate, UserID, UserProfile, UserUpdateCertificate, VlobID,
+    data::{
+        DeviceCertificate, RealmArchivingCertificate, RealmKeyRotationCertificate,
+        RealmNameCertificate, RealmRoleCertificate, RevokedUserCertificate,
+        SequesterAuthorityCertificate, SequesterServiceCertificate, SequesterRevokedServiceCertificate, ShamirRecoveryBriefCertificate,
+        ShamirRecoveryShareCertificate, UserCertificate, UserUpdateCertificate,
+    },
+    BlockID, DateTime, DeviceID, DeviceLabel, HumanHandle, InvitationToken, PrivateKey, RealmRole,
+    SecretKey, SequesterPrivateKeyDer, SequesterPublicKeyDer, SequesterServiceID,
+    SequesterSigningKeyDer, SequesterVerifyKeyDer, SigningKey, UserID, UserProfile, VlobID,
 };
 
 #[pyclass]
@@ -112,10 +118,22 @@ event_wrapper!(
         encryption_private_key: SequesterPrivateKeyDer,
         encryption_public_key: SequesterPublicKeyDer,
         certificate: SequesterServiceCertificate,
-        raw_redacted_certificate: Py<PyBytes>,
         raw_certificate: Py<PyBytes>,
     ],
     |_py, x: &TestbedEventNewSequesterService| -> PyResult<String> {
+        Ok(format!("timestamp={:?}, id={:?}", x.timestamp.0, x.id.0))
+    }
+);
+
+event_wrapper!(
+    TestbedEventRevokeSequesterService,
+    [
+        timestamp: DateTime,
+        id: SequesterServiceID,
+        certificate: SequesterRevokedServiceCertificate,
+        raw_certificate: Py<PyBytes>,
+    ],
+    |_py, x: &TestbedEventRevokeSequesterService| -> PyResult<String> {
         Ok(format!("timestamp={:?}, id={:?}", x.timestamp.0, x.id.0))
     }
 );
@@ -183,7 +201,6 @@ event_wrapper!(
         user: UserID,
         profile: &'static PyObject,
         certificate: UserUpdateCertificate,
-        raw_redacted_certificate: Py<PyBytes>,
         raw_certificate: Py<PyBytes>,
     ],
     |py, x: &TestbedEventUpdateUserProfile| -> PyResult<String> {
@@ -204,7 +221,6 @@ event_wrapper!(
         author: DeviceID,
         user: UserID,
         certificate: RevokedUserCertificate,
-        raw_redacted_certificate: Py<PyBytes>,
         raw_certificate: Py<PyBytes>,
     ],
     |_py, x: &TestbedEventRevokeUser| -> PyResult<String> {
@@ -252,9 +268,7 @@ event_wrapper!(
         timestamp: DateTime,
         author: DeviceID,
         realm_id: VlobID,
-        realm_key: SecretKey,
         certificate: RealmRoleCertificate,
-        raw_redacted_certificate: Py<PyBytes>,
         raw_certificate: Py<PyBytes>,
     ],
     |_py, x: &TestbedEventNewRealm| -> PyResult<String> {
@@ -273,9 +287,9 @@ event_wrapper!(
         realm: VlobID,
         user: UserID,
         role: Option<&'static PyObject>,
-        recipient_message: Py<PyBytes>,
+        key_index: Option<libparsec_types::IndexInt>,
+        recipient_keys_bundle_access: Option<Py<PyBytes>>,
         certificate: RealmRoleCertificate,
-        raw_redacted_certificate: Py<PyBytes>,
         raw_certificate: Py<PyBytes>,
     ],
     |py, x: &TestbedEventShareRealm| -> PyResult<String> {
@@ -294,34 +308,85 @@ event_wrapper!(
 );
 
 event_wrapper!(
-    TestbedEventStartRealmReencryption,
+    TestbedEventRenameRealm,
     [
         timestamp: DateTime,
         author: DeviceID,
         realm: VlobID,
-        encryption_revision: libparsec_types::IndexInt,
-        per_participant_message: Py<PyList>,
+        certificate: RealmNameCertificate,
+        raw_certificate: Py<PyBytes>,
     ],
-    |_py, x: &TestbedEventStartRealmReencryption| -> PyResult<String> {
+    |_py, x: &TestbedEventRenameRealm| -> PyResult<String> {
         Ok(format!(
-            "timestamp={:?}, author={:?}, realm={:?}, encryption_revision={}",
-            x.timestamp.0, x.author.0, x.realm.0, x.encryption_revision,
+            "timestamp={:?}, author={:?}, realm={:?}",
+            x.timestamp.0,
+            x.author.0,
+            x.realm.0,
         ))
     }
 );
 
 event_wrapper!(
-    TestbedEventFinishRealmReencryption,
+    TestbedEventRotateKeyRealm,
     [
         timestamp: DateTime,
         author: DeviceID,
         realm: VlobID,
-        encryption_revision: libparsec_types::IndexInt,
+        key_index: u64,
+        per_participant_keys_bundle_access: Py<PyDict>,
+        keys_bundle: Py<PyBytes>,
+        certificate: RealmKeyRotationCertificate,
+        raw_certificate: Py<PyBytes>,
     ],
-    |_py, x: &TestbedEventFinishRealmReencryption| -> PyResult<String> {
+    |_py, x: &TestbedEventRotateKeyRealm| -> PyResult<String> {
         Ok(format!(
-            "timestamp={:?}, author={:?}, realm={:?}, encryption_revision={:?}",
-            x.timestamp.0, x.author.0, x.realm.0, x.encryption_revision,
+            "timestamp={:?}, author={:?}, realm={:?}, key_index={:?}",
+            x.timestamp.0,
+            x.author.0,
+            x.realm.0,
+            x.key_index,
+        ))
+    }
+);
+
+event_wrapper!(
+    TestbedEventArchiveRealm,
+    [
+        timestamp: DateTime,
+        author: DeviceID,
+        realm: VlobID,
+        certificate: RealmArchivingCertificate,
+        raw_certificate: Py<PyBytes>,
+    ],
+    |_py, x: &TestbedEventArchiveRealm| -> PyResult<String> {
+        Ok(format!(
+            "timestamp={:?}, author={:?}, realm={:?}",
+            x.timestamp.0,
+            x.author.0,
+            x.realm.0,
+        ))
+    }
+);
+
+event_wrapper!(
+    TestbedEventNewShamirRecovery,
+    [
+        timestamp: DateTime,
+        author: DeviceID,
+        threshold: NonZeroU64,
+        per_recipient_shares: HashMap<UserID, NonZeroU64>,
+        brief_certificate: ShamirRecoveryBriefCertificate,
+        raw_brief_certificate: Py<PyBytes>,
+        share_certificates: Py<PyList>,
+        raw_share_certificates: Py<PyList>,
+    ],
+    |_py, x: &TestbedEventNewShamirRecovery| -> PyResult<String> {
+        Ok(format!(
+            "timestamp={:?}, author={:?}, threshold={:?}, per_recipient_shares={:?}",
+            x.timestamp.0,
+            x.author.0,
+            x.threshold,
+            x.per_recipient_shares.iter().map(|(k, v)| (k.0.clone(), v)).collect::<HashMap<_, _>>(),
         ))
     }
 );
@@ -332,16 +397,16 @@ event_wrapper!(
         timestamp: DateTime,
         author: DeviceID,
         realm: VlobID,
-        encryption_revision: libparsec_types::IndexInt,
         vlob_id: VlobID,
+        key_index: libparsec_types::IndexInt,
         version: libparsec_types::VersionInt,
         encrypted: Py<PyBytes>,
         sequestered: PyObject,
     ],
     |_py, x: &TestbedEventCreateOrUpdateOpaqueVlob| -> PyResult<String> {
         Ok(format!(
-            "timestamp={:?}, author={:?}, realm={:?}, vlob={:?}, version={:?}",
-            x.timestamp.0, x.author.0, x.realm.0, x.vlob_id.0, x.version
+            "timestamp={:?}, author={:?}, realm={:?}, vlob={:?}, key_index={:?}, version={:?}",
+            x.timestamp.0, x.author.0, x.realm.0, x.vlob_id.0, x.key_index, x.version
         ))
     }
 );
@@ -401,8 +466,26 @@ pub(crate) fn test_get_testbed_template(
                             libparsec_types::AnyArcCertificate::RealmRole(c) => {
                                 RealmRoleCertificate::from(c).into_py(py)
                             }
+                            libparsec_types::AnyArcCertificate::RealmName(c) => {
+                                RealmNameCertificate::from(c).into_py(py)
+                            }
+                            libparsec_types::AnyArcCertificate::RealmKeyRotation(c) => {
+                                RealmKeyRotationCertificate::from(c).into_py(py)
+                            }
+                            libparsec_types::AnyArcCertificate::RealmArchiving(c) => {
+                                RealmArchivingCertificate::from(c).into_py(py)
+                            }
+                            libparsec_types::AnyArcCertificate::ShamirRecoveryBrief(c) => {
+                                ShamirRecoveryBriefCertificate::from(c).into_py(py)
+                            }
+                            libparsec_types::AnyArcCertificate::ShamirRecoveryShare(c) => {
+                                ShamirRecoveryShareCertificate::from(c).into_py(py)
+                            }
                             libparsec_types::AnyArcCertificate::SequesterAuthority(c) => {
                                 SequesterAuthorityCertificate::from(c).into_py(py)
+                            }
+                            libparsec_types::AnyArcCertificate::SequesterRevokedService(c) => {
+                                SequesterRevokedServiceCertificate::from(c).into_py(py)
                             }
                             libparsec_types::AnyArcCertificate::SequesterService(c) => {
                                 SequesterServiceCertificate::from(c).into_py(py)
@@ -438,6 +521,22 @@ fn event_to_pyobject(
                 .next()
                 .expect("Must be present");
             let raw = PyBytes::new($py, &certif.signed).into_py($py);
+            let wrapped_certif = paste::paste! {
+                [< $name Certificate >]::from(match &certif.certificate {
+                    libparsec_types::AnyArcCertificate::$name(x) => x.to_owned(),
+                    _ => unreachable!(),
+                })
+            };
+            (wrapped_certif, raw)
+        }};
+    }
+    macro_rules! single_certificate_with_redacted {
+        ($py: expr, $event: expr, $template: expr, $name: ident) => {{
+            let certif = $event
+                .certificates($template)
+                .next()
+                .expect("Must be present");
+            let raw = PyBytes::new($py, &certif.signed).into_py($py);
             let raw_redacted = PyBytes::new($py, &certif.signed_redacted).into_py($py);
             let wrapped_certif = paste::paste! {
                 [< $name Certificate >]::from(match &certif.certificate {
@@ -448,7 +547,6 @@ fn event_to_pyobject(
             (wrapped_certif, raw, raw_redacted)
         }};
     }
-
     Ok(match event {
         libparsec_testbed::TestbedEvent::BootstrapOrganization(x) => {
             let mut certifs = x.certificates(template);
@@ -519,7 +617,7 @@ fn event_to_pyobject(
         }
 
         libparsec_testbed::TestbedEvent::NewSequesterService(x) => {
-            let (certificate, raw_certificate, raw_redacted_certificate) =
+            let (certificate, raw_certificate) =
                 single_certificate!(py, x, template, SequesterService);
             let obj = TestbedEventNewSequesterService {
                 timestamp: x.timestamp.into(),
@@ -528,7 +626,18 @@ fn event_to_pyobject(
                 encryption_private_key: x.encryption_private_key.clone().into(),
                 encryption_public_key: x.encryption_public_key.clone().into(),
                 raw_certificate,
-                raw_redacted_certificate,
+                certificate,
+            };
+            Some(obj.into_py(py))
+        }
+
+        libparsec_testbed::TestbedEvent::RevokeSequesterService(x) => {
+            let (certificate, raw_certificate) =
+                single_certificate!(py, x, template, SequesterRevokedService);
+            let obj = TestbedEventRevokeSequesterService {
+                timestamp: x.timestamp.into(),
+                id: x.id.into(),
+                raw_certificate,
                 certificate,
             };
             Some(obj.into_py(py))
@@ -580,7 +689,7 @@ fn event_to_pyobject(
 
         libparsec_testbed::TestbedEvent::NewDevice(x) => {
             let (certificate, raw_certificate, raw_redacted_certificate) =
-                single_certificate!(py, x, template, Device);
+                single_certificate_with_redacted!(py, x, template, Device);
             let obj = TestbedEventNewDevice {
                 timestamp: x.timestamp.into(),
                 author: x.author.clone().into(),
@@ -597,29 +706,25 @@ fn event_to_pyobject(
         }
 
         libparsec_testbed::TestbedEvent::UpdateUserProfile(x) => {
-            let (certificate, raw_certificate, raw_redacted_certificate) =
-                single_certificate!(py, x, template, UserUpdate);
+            let (certificate, raw_certificate) = single_certificate!(py, x, template, UserUpdate);
             let obj = TestbedEventUpdateUserProfile {
                 timestamp: x.timestamp.into(),
                 author: x.author.clone().into(),
                 user: x.user.clone().into(),
                 profile: UserProfile::convert(x.profile),
                 raw_certificate,
-                raw_redacted_certificate,
                 certificate,
             };
             Some(obj.into_py(py))
         }
 
         libparsec_testbed::TestbedEvent::RevokeUser(x) => {
-            let (certificate, raw_certificate, raw_redacted_certificate) =
-                single_certificate!(py, x, template, RevokedUser);
+            let (certificate, raw_certificate) = single_certificate!(py, x, template, RevokedUser);
             let obj = TestbedEventRevokeUser {
                 timestamp: x.timestamp.into(),
                 author: x.author.clone().into(),
                 user: x.user.clone().into(),
                 raw_certificate,
-                raw_redacted_certificate,
                 certificate,
             };
             Some(obj.into_py(py))
@@ -645,69 +750,130 @@ fn event_to_pyobject(
         }
 
         libparsec_testbed::TestbedEvent::NewRealm(x) => {
-            let (certificate, raw_certificate, raw_redacted_certificate) =
-                single_certificate!(py, x, template, RealmRole);
+            let (certificate, raw_certificate) = single_certificate!(py, x, template, RealmRole);
             let obj = TestbedEventNewRealm {
                 timestamp: x.timestamp.into(),
                 author: x.author.clone().into(),
                 realm_id: x.realm_id.into(),
-                realm_key: x.realm_key.clone().into(),
                 raw_certificate,
-                raw_redacted_certificate,
                 certificate,
             };
             Some(obj.into_py(py))
         }
 
         libparsec_testbed::TestbedEvent::ShareRealm(x) => {
-            let (certificate, raw_certificate, raw_redacted_certificate) =
-                single_certificate!(py, x, template, RealmRole);
-            let recipient_message = x.recipient_message(template);
+            let (certificate, raw_certificate) = single_certificate!(py, x, template, RealmRole);
             let obj = TestbedEventShareRealm {
                 timestamp: x.timestamp.into(),
                 author: x.author.clone().into(),
                 realm: x.realm.into(),
                 user: x.user.clone().into(),
                 role: x.role.map(RealmRole::convert),
-                recipient_message: PyBytes::new(py, &recipient_message.signed).into_py(py),
+                key_index: x.key_index,
+                recipient_keys_bundle_access: x
+                    .recipient_keys_bundle_access(template)
+                    .map(|x| PyBytes::new(py, &x).into_py(py)),
                 raw_certificate,
-                raw_redacted_certificate,
                 certificate,
             };
             Some(obj.into_py(py))
         }
 
-        libparsec_testbed::TestbedEvent::StartRealmReencryption(x) => {
-            let per_participant_message = x.per_participant_message(template);
-            let obj = TestbedEventStartRealmReencryption {
+        libparsec_testbed::TestbedEvent::RenameRealm(x) => {
+            let (certificate, raw_certificate) = single_certificate!(py, x, template, RealmName);
+            let obj = TestbedEventRenameRealm {
                 timestamp: x.timestamp.into(),
                 author: x.author.clone().into(),
                 realm: x.realm.into(),
-                encryption_revision: x.encryption_revision,
-                per_participant_message: PyList::new(
-                    py,
-                    per_participant_message
-                        .items
-                        .iter()
-                        .map(|(user_id, _, raw)| {
-                            (
-                                UserID::from(user_id.to_owned()).into_py(py),
-                                PyBytes::new(py, raw),
-                            )
-                        })
-                        .collect::<Vec<_>>(),
-                )
-                .into_py(py),
+                raw_certificate,
+                certificate,
             };
             Some(obj.into_py(py))
         }
 
-        libparsec_testbed::TestbedEvent::FinishRealmReencryption(x) => {
-            let obj = TestbedEventFinishRealmReencryption {
+        libparsec_testbed::TestbedEvent::RotateKeyRealm(x) => {
+            let (certificate, raw_certificate) =
+                single_certificate!(py, x, template, RealmKeyRotation);
+            let obj = TestbedEventRotateKeyRealm {
                 timestamp: x.timestamp.into(),
                 author: x.author.clone().into(),
                 realm: x.realm.into(),
-                encryption_revision: x.encryption_revision,
+                per_participant_keys_bundle_access: {
+                    let pyobj = PyDict::new(py);
+                    for (participant, access) in x.per_participant_keys_bundle_access() {
+                        pyobj.set_item(
+                            UserID::from(participant).into_py(py),
+                            PyBytes::new(py, &access),
+                        )?;
+                    }
+                    pyobj.into_py(py)
+                },
+                keys_bundle: PyBytes::new(py, &x.keys_bundle(template)).into_py(py),
+                key_index: x.key_index.into(),
+                raw_certificate,
+                certificate,
+            };
+            Some(obj.into_py(py))
+        }
+
+        libparsec_testbed::TestbedEvent::ArchiveRealm(x) => {
+            let (certificate, raw_certificate) =
+                single_certificate!(py, x, template, RealmArchiving);
+            let obj = TestbedEventArchiveRealm {
+                timestamp: x.timestamp.into(),
+                author: x.author.clone().into(),
+                realm: x.realm.into(),
+                raw_certificate,
+                certificate,
+            };
+            Some(obj.into_py(py))
+        }
+
+        libparsec_testbed::TestbedEvent::NewShamirRecovery(x) => {
+            let mut certifs = x.certificates(template);
+
+            let (brief_certificate, raw_brief_certificate) = {
+                let certif = certifs.next().expect("Must be present");
+                let raw_brief_certificate = PyBytes::new(py, &certif.signed).into_py(py);
+                let brief_certificate =
+                    ShamirRecoveryBriefCertificate::from(match &certif.certificate {
+                        libparsec_types::AnyArcCertificate::ShamirRecoveryBrief(x) => x.to_owned(),
+                        _ => unreachable!(),
+                    });
+                (brief_certificate, raw_brief_certificate)
+            };
+
+            let (share_certificates, raw_share_certificates) = {
+                let share_certificates = PyList::empty(py);
+                let raw_share_certificates = PyList::empty(py);
+                for certif in certifs {
+                    let raw = PyBytes::new(py, &certif.signed);
+                    let wrapped_certif =
+                        ShamirRecoveryShareCertificate::from(match &certif.certificate {
+                            libparsec_types::AnyArcCertificate::ShamirRecoveryShare(x) => {
+                                x.to_owned()
+                            }
+                            _ => unreachable!(),
+                        });
+                    share_certificates.append(wrapped_certif.into_py(py))?;
+                    raw_share_certificates.append(raw)?;
+                }
+                (share_certificates, raw_share_certificates)
+            };
+
+            let obj = TestbedEventNewShamirRecovery {
+                timestamp: x.timestamp.into(),
+                author: x.author.clone().into(),
+                threshold: x.threshold,
+                per_recipient_shares: x
+                    .per_recipient_shares
+                    .iter()
+                    .map(|(k, v)| (k.clone().into(), *v))
+                    .collect(),
+                brief_certificate,
+                raw_brief_certificate,
+                share_certificates: share_certificates.into_py(py),
+                raw_share_certificates: raw_share_certificates.into_py(py),
             };
             Some(obj.into_py(py))
         }
@@ -730,7 +896,7 @@ fn event_to_pyobject(
                 timestamp: x.timestamp.into(),
                 author: x.author.clone().into(),
                 realm: x.realm.into(),
-                encryption_revision: x.encryption_revision,
+                key_index: x.key_index,
                 version: x.version,
                 vlob_id: x.vlob_id.into(),
                 encrypted: PyBytes::new(py, &x.encrypted).into(),
@@ -757,7 +923,7 @@ fn event_to_pyobject(
                 timestamp: x.manifest.timestamp.into(),
                 author: x.manifest.author.clone().into(),
                 realm: x.manifest.id.into(),
-                encryption_revision: 1,
+                key_index: 0,
                 version: x.manifest.version,
                 vlob_id: x.manifest.id.into(),
                 encrypted: PyBytes::new(py, &x.encrypted(template)).into(),
@@ -784,7 +950,7 @@ fn event_to_pyobject(
                 timestamp: x.manifest.timestamp.into(),
                 author: x.manifest.author.clone().into(),
                 realm: x.manifest.id.into(),
-                encryption_revision: 1,
+                key_index: x.key_index,
                 version: x.manifest.version,
                 vlob_id: x.manifest.id.into(),
                 encrypted: PyBytes::new(py, &x.encrypted(template)).into(),
@@ -811,7 +977,7 @@ fn event_to_pyobject(
                 timestamp: x.manifest.timestamp.into(),
                 author: x.manifest.author.clone().into(),
                 realm: x.realm.into(),
-                encryption_revision: 1,
+                key_index: x.key_index,
                 version: x.manifest.version,
                 vlob_id: x.manifest.id.into(),
                 encrypted: PyBytes::new(py, &x.encrypted(template)).into(),
@@ -838,7 +1004,7 @@ fn event_to_pyobject(
                 timestamp: x.manifest.timestamp.into(),
                 author: x.manifest.author.clone().into(),
                 realm: x.realm.into(),
-                encryption_revision: 1,
+                key_index: x.key_index,
                 version: x.manifest.version,
                 vlob_id: x.manifest.id.into(),
                 encrypted: PyBytes::new(py, &x.encrypted(template)).into(),

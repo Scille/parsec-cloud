@@ -48,9 +48,6 @@ COPY --chown=1234:1234 --from=builder /server/venv /server/venv
 # Add venv/bin to PATH to make `parsec` available
 ENV PATH "/server/venv/bin:$PATH"
 
-# Suppress those annoying TrioDeprecationWarnings
-ENV PYTHONWARNINGS "ignore:::quart_trio.app"
-
 # Define entry point
 EXPOSE 6777
 ENTRYPOINT ["parsec", "backend"]

@@ -21,7 +21,7 @@ if (!process.env.CYPRESS_BASE_URL) {
 const BASE_URL = process.env.CYPRESS_BASE_URL;
 process.env.CYPRESS_BASE_URL = undefined; // Clear variable to prevent Cypress from doing voodoo on it
 
-const DEFAULT_TESTBED_SERVER_URL = 'http://localhost:6770/'; // Default port in run_testbed_server.py script
+const DEFAULT_TESTBED_SERVER_URL = 'http://localhost:6770/'; // Default port in testbed server
 if (!process.env.CYPRESS_TESTBED_SERVER_URL) {
   console.log(`\`TESTBED_SERVER_URL\` not set, defaulting to \`${DEFAULT_TESTBED_SERVER_URL}\``);
   process.env.CYPRESS_TESTBED_SERVER_URL = DEFAULT_TESTBED_SERVER_URL;
