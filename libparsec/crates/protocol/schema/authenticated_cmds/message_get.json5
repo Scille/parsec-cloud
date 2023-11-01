@@ -53,53 +53,5 @@
                 ]
             }
         ]
-    },
-    {
-        "major_versions": [
-            3
-        ],
-        "req": {
-            "cmd": "message_get",
-            "fields": [
-                {
-                    "name": "offset",
-                    "type": "Index"
-                }
-            ]
-        },
-        "reps": [
-            {
-                "status": "ok",
-                "fields": [
-                    {
-                        "name": "messages",
-                        "type": "List<Message>"
-                    }
-                ]
-            }
-        ],
-        "nested_types": [
-            {
-                "name": "Message",
-                "fields": [
-                    {
-                        "name": "count",
-                        "type": "Index"
-                    },
-                    {
-                        "name": "sender",
-                        "type": "DeviceID"
-                    },
-                    {
-                        "name": "timestamp",
-                        "type": "DateTime"
-                    },
-                    {
-                        "name": "body",
-                        "type": "Bytes"
-                    }
-                ]
-            }
-        ]
     }
 ]

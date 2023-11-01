@@ -1,25 +1,71 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from ..v3.pki_enrollment_submit import (
-    Rep,
-    RepAlreadyEnrolled,
-    RepAlreadySubmitted,
-    RepEmailAlreadyUsed,
-    RepIdAlreadyUsed,
-    RepInvalidPayloadData,
-    RepOk,
-    RepUnknownStatus,
-    Req,
-)
+from __future__ import annotations
 
-__all__ = [
-    "Req",
-    "Rep",
-    "RepUnknownStatus",
-    "RepOk",
-    "RepAlreadySubmitted",
-    "RepIdAlreadyUsed",
-    "RepEmailAlreadyUsed",
-    "RepAlreadyEnrolled",
-    "RepInvalidPayloadData",
-]
+from parsec._parsec import DateTime, EnrollmentID
+
+class Req:
+    def __init__(
+        self,
+        enrollment_id: EnrollmentID,
+        force: bool,
+        submitter_der_x509_certificate: bytes,
+        submitter_der_x509_certificate_email: str | None,
+        submit_payload_signature: bytes,
+        submit_payload: bytes,
+    ) -> None: ...
+    def dump(self) -> bytes: ...
+    @property
+    def enrollment_id(self) -> EnrollmentID: ...
+    @property
+    def force(self) -> bool: ...
+    @property
+    def submitter_der_x509_certificate(self) -> bytes: ...
+    @property
+    def submitter_der_x509_certificate_email(self) -> str | None: ...
+    @property
+    def submit_payload_signature(self) -> bytes: ...
+    @property
+    def submit_payload(self) -> bytes: ...
+
+class Rep:
+    @staticmethod
+    def load(raw: bytes) -> Rep: ...
+    def dump(self) -> bytes: ...
+
+class RepUnknownStatus(Rep):
+    def __init__(self, status: str, reason: str | None) -> None: ...
+    @property
+    def status(self) -> str: ...
+    @property
+    def reason(self) -> str | None: ...
+
+class RepOk(Rep):
+    def __init__(self, submitted_on: DateTime) -> None: ...
+    @property
+    def submitted_on(self) -> DateTime: ...
+
+class RepAlreadySubmitted(Rep):
+    def __init__(self, submitted_on: DateTime) -> None: ...
+    @property
+    def submitted_on(self) -> DateTime: ...
+
+class RepIdAlreadyUsed(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepEmailAlreadyUsed(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepAlreadyEnrolled(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepInvalidPayloadData(Rep):
+    def __init__(self, reason: str | None) -> None: ...
+    @property
+    def reason(self) -> str | None: ...

@@ -1,7 +1,6 @@
 [
     {
         "major_versions": [
-            3,
             4
         ],
         "req": {
@@ -62,7 +61,6 @@
                 // Returned if the timestamp in the certificate is too far away compared
                 // to server clock.
                 "status": "bad_timestamp",
-                "introduced_in": "4.0",
                 "fields": [
                     {
                         "name": "ballpark_client_early_offset",
@@ -86,7 +84,6 @@
                 // Returned if another certificate in the server has a creation date
                 // posterior or equal to our current one.
                 "status": "require_greater_timestamp",
-                "introduced_in": "4.0",
                 "fields": [
                     {
                         "name": "strictly_greater_than",

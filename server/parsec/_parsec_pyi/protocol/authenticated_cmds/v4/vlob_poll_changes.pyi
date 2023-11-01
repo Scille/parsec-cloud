@@ -1,21 +1,47 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from ..v3.vlob_poll_changes import (
-    Rep,
-    RepInMaintenance,
-    RepNotAllowed,
-    RepNotFound,
-    RepOk,
-    RepUnknownStatus,
-    Req,
-)
+from __future__ import annotations
 
-__all__ = [
-    "Req",
-    "Rep",
-    "RepUnknownStatus",
-    "RepOk",
-    "RepNotAllowed",
-    "RepNotFound",
-    "RepInMaintenance",
-]
+from parsec._parsec import VlobID
+
+class Req:
+    def __init__(self, realm_id: VlobID, last_checkpoint: int) -> None: ...
+    def dump(self) -> bytes: ...
+    @property
+    def realm_id(self) -> VlobID: ...
+    @property
+    def last_checkpoint(self) -> int: ...
+
+class Rep:
+    @staticmethod
+    def load(raw: bytes) -> Rep: ...
+    def dump(self) -> bytes: ...
+
+class RepUnknownStatus(Rep):
+    def __init__(self, status: str, reason: str | None) -> None: ...
+    @property
+    def status(self) -> str: ...
+    @property
+    def reason(self) -> str | None: ...
+
+class RepOk(Rep):
+    def __init__(self, changes: dict[VlobID, int], current_checkpoint: int) -> None: ...
+    @property
+    def changes(self) -> dict[VlobID, int]: ...
+    @property
+    def current_checkpoint(self) -> int: ...
+
+class RepNotAllowed(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepNotFound(Rep):
+    def __init__(self, reason: str | None) -> None: ...
+    @property
+    def reason(self) -> str | None: ...
+
+class RepInMaintenance(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
