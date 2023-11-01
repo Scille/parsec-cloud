@@ -101,9 +101,18 @@ async fn authenticated_sse(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    // Now event are received !
+    // Now event are dispatched to the SSE client...
     send_ping("good 1").await;
 
+    // ...but no matter what, the first event the client receive is always organization config
+    p_assert_eq!(
+        sse.next().await.unwrap().unwrap().message,
+        SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
+            authenticated_cmds::events_listen::APIEvent::ServerConfig { active_users_limit: ActiveUsersLimit::NoLimit, user_profile_outsider_allowed: true }
+        ))
+    );
+
+    // Now the actual event can be received
     p_assert_eq!(
         sse.next().await.unwrap().unwrap().message,
         SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
@@ -175,12 +184,10 @@ async fn invited(env: &TestbedEnv) {
     let cmds = AuthenticatedCmds::new(&env.discriminant_dir, alice.clone(), ProxyConfig::default())
         .unwrap();
     let rep = cmds
-        .send(authenticated_cmds::invite_new::Req(
-            authenticated_cmds::invite_new::UserOrDevice::Device { send_email: false },
-        ))
+        .send(authenticated_cmds::invite_new_device::Req{send_email: false})
         .await;
     let invitation_token = match rep.unwrap() {
-        authenticated_cmds::invite_new::Rep::Ok { token, .. } => token,
+        authenticated_cmds::invite_new_device::Rep::Ok { token, .. } => token,
         _ => panic!("fooo"),
     };
 
@@ -244,9 +251,7 @@ async fn anonymous(env: &TestbedEnv) {
         .await;
     p_assert_eq!(
         rep.unwrap(),
-        anonymous_cmds::pki_enrollment_info::Rep::NotFound {
-            reason: Some("".to_owned())
-        }
+        anonymous_cmds::pki_enrollment_info::Rep::EnrollmentNotFound
     );
 }
 
@@ -339,7 +344,7 @@ async fn high_level_send_hook(env: &TestbedEnv) {
     test_register_send_hook(
         &env.discriminant_dir,
         |_req: anonymous_cmds::pki_enrollment_info::Req| {
-            anonymous_cmds::pki_enrollment_info::Rep::NotFound { reason: None }
+            anonymous_cmds::pki_enrollment_info::Rep::EnrollmentNotFound
         },
     );
 
@@ -357,7 +362,7 @@ async fn high_level_send_hook(env: &TestbedEnv) {
     assert!(
         matches!(
             rep,
-            Ok(anonymous_cmds::pki_enrollment_info::Rep::NotFound { reason: None })
+            Ok(anonymous_cmds::pki_enrollment_info::Rep::EnrollmentNotFound)
         ),
         r#"expected a `NotFound`, but got {rep:?}"#
     );

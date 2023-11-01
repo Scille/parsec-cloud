@@ -134,21 +134,6 @@ pub(crate) fn hash_generic<T: Hash>(value_to_hash: T) -> PyResult<u64> {
     Ok(s.finish())
 }
 
-macro_rules! py_object {
-    ($_self: ident, $class: path, $subclass: path, $py: ident) => {{
-        let initializer = ::pyo3::PyClassInitializer::from(($subclass, $class($_self)));
-        // SAFETY: `PyObjectInit::into_new_object` requires `subtype` used to generate a new object to be the same type
-        // or a sub-type of `T` (the type of `initializer` here).
-        // Here `initializer` is created using the type `<$subclass>` and the same type of `<$subclass>`
-        // will be used as the type of `subtype` in the call of `into_new_object`.
-        unsafe {
-            use ::pyo3::{pyclass_init::PyObjectInit, PyTypeInfo};
-            initializer.into_new_object($py, { use $subclass as base; base::type_object_raw($py) })
-                .map(|ptr| ::pyo3::PyObject::from_owned_ptr($py, ptr))
-        }
-    }};
-}
-
 macro_rules! parse_kwargs_optional {
     ($kwargs: ident $(,[$var: ident $(:$ty: ty)?, $name: literal $(,$function: ident)?])* $(,)?) => {
         $(let mut $var = None;)*
@@ -275,48 +260,6 @@ macro_rules! gen_proto {
     };
 }
 
-macro_rules! create_exception_from {
-    ($name: ident, $py_exc: ident, $rs_err: path) => {
-        ::paste::paste! {
-            ::pyo3::create_exception!(_parsec, [<$name Error>], $py_exc);
-
-            pub(crate) struct [<$name Exc>](Box<$rs_err>);
-
-            impl From<[<$name Exc>]> for ::pyo3::PyErr {
-                fn from(err: [<$name Exc>]) -> Self {
-                    <[<$name Error>]>::new_err(err.0.to_string())
-                }
-            }
-
-            impl From<$rs_err> for [<$name Exc>] {
-                fn from(err: $rs_err) -> Self {
-                    Self(Box::new(err))
-                }
-            }
-
-            impl From<Box<$rs_err>> for [<$name Exc>] {
-                fn from(err: Box<$rs_err>) -> Self {
-                    Self(err)
-                }
-            }
-        }
-    };
-}
-
-macro_rules! create_exception {
-    ($name: ident, $py_exc: ident, $rs_err: path) => {
-        ::paste::paste! {
-            crate::binding_utils::create_exception_from!($name, $py_exc, $rs_err);
-            pub(crate) type [<$name Result>]<T> = Result<T, [<$name Exc>]>;
-        }
-    };
-    ($name: ident, $py_exc: ident, $rs_err: path, no_result_type) => {
-        ::paste::paste! {
-            crate::binding_utils::create_exception_from!($name, $py_exc, $rs_err);
-        }
-    };
-}
-
 macro_rules! gen_py_wrapper_class_for_enum {
     ($class: ident, $wrapped_enum: ty $(,[$pyo3_name: literal, $fn_name: ident, $field_value: path])+  $(,)?) => {
         #[pyclass]
@@ -396,12 +339,9 @@ macro_rules! gen_py_wrapper_class_for_enum {
 }
 
 pub(crate) use _unwrap_bytes;
-pub(crate) use create_exception;
-pub(crate) use create_exception_from;
 pub(crate) use gen_proto;
 pub(crate) use gen_py_wrapper_class;
 pub(crate) use gen_py_wrapper_class_for_enum;
 pub(crate) use gen_py_wrapper_class_for_id;
 pub(crate) use parse_kwargs_optional;
-pub(crate) use py_object;
 pub(crate) use unwrap_bytes;

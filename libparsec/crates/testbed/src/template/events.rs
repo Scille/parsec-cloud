@@ -144,8 +144,6 @@ pub enum TestbedEvent {
     // 2) Client/server interaction events not producing certificates
     NewDeviceInvitation(TestbedEventNewDeviceInvitation),
     NewUserInvitation(TestbedEventNewUserInvitation),
-    StartRealmReencryption(TestbedEventStartRealmReencryption),
-    FinishRealmReencryption(TestbedEventFinishRealmReencryption),
     CreateOrUpdateUserManifestVlob(TestbedEventCreateOrUpdateUserManifestVlob),
     CreateOrUpdateWorkspaceManifestVlob(TestbedEventCreateOrUpdateWorkspaceManifestVlob),
     CreateOrUpdateFileManifestVlob(TestbedEventCreateOrUpdateFileManifestVlob),
@@ -188,8 +186,6 @@ impl CrcHash for TestbedEvent {
             TestbedEvent::NewUserInvitation(x) => x.crc_hash(hasher),
             TestbedEvent::NewRealm(x) => x.crc_hash(hasher),
             TestbedEvent::ShareRealm(x) => x.crc_hash(hasher),
-            TestbedEvent::StartRealmReencryption(x) => x.crc_hash(hasher),
-            TestbedEvent::FinishRealmReencryption(x) => x.crc_hash(hasher),
             TestbedEvent::CreateOrUpdateUserManifestVlob(x) => x.crc_hash(hasher),
             TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(x) => x.crc_hash(hasher),
             TestbedEvent::CreateOrUpdateFileManifestVlob(x) => x.crc_hash(hasher),
@@ -321,8 +317,6 @@ impl TestbedEvent {
             | TestbedEvent::NewUserInvitation(_)
             | TestbedEvent::NewRealm(_)
             | TestbedEvent::ShareRealm(_)
-            | TestbedEvent::StartRealmReencryption(_)
-            | TestbedEvent::FinishRealmReencryption(_)
             | TestbedEvent::CreateOrUpdateUserManifestVlob(_)
             | TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(_)
             | TestbedEvent::CreateOrUpdateFileManifestVlob(_)
@@ -1116,12 +1110,6 @@ impl TestbedEventNewRealm {
  */
 
 #[derive(Clone)]
-pub struct TestbedEventShareRealmRecipientMessage {
-    pub message: Arc<MessageContent>,
-    pub signed: Bytes,
-}
-
-#[derive(Clone)]
 pub struct TestbedEventShareRealm {
     pub timestamp: DateTime,
     pub author: DeviceID,
@@ -1130,15 +1118,8 @@ pub struct TestbedEventShareRealm {
     pub role: Option<RealmRole>,
     pub certificate_index: IndexInt,
     pub realm_entry_name: EntryName,
-    pub realm_encryption_revision: IndexInt,
-    pub realm_encrypted_on: DateTime,
     pub realm_key: SecretKey,
-    cache: Arc<
-        Mutex<(
-            TestbedEventCertificatesCache,
-            TestbedEventCacheEntry<TestbedEventShareRealmRecipientMessage>,
-        )>,
-    >,
+    cache: Arc<Mutex<TestbedEventCertificatesCache>>,
 }
 
 impl_event_debug!(
@@ -1184,17 +1165,12 @@ impl TestbedEventShareRealm {
             .find(|author| author.user_id() != &user)
             .expect("No author available (realm with a single owner ?)")
             .to_owned();
-        let (realm_encryption_revision, realm_encrypted_on, realm_key) = builder
+        let realm_key = builder
             .events
             .iter()
             .rev()
             .find_map(|e| match e {
-                TestbedEvent::NewRealm(x) if x.realm_id == realm => {
-                    Some((1, x.timestamp, x.realm_key.clone()))
-                }
-                TestbedEvent::StartRealmReencryption(x) if x.realm == realm => {
-                    Some((x.encryption_revision, x.timestamp, x.key.clone()))
-                }
+                TestbedEvent::NewRealm(x) if x.realm_id == realm => Some(x.realm_key.clone()),
                 _ => None,
             })
             .expect("Realm doesn't exist");
@@ -1209,8 +1185,6 @@ impl TestbedEventShareRealm {
             role,
             certificate_index: builder.counters.next_certificate_index(),
             realm_entry_name: "Wksp".parse().unwrap(),
-            realm_encrypted_on,
-            realm_encryption_revision,
             realm_key,
             cache: Arc::default(),
         }
@@ -1240,33 +1214,8 @@ impl TestbedEventShareRealm {
 
         std::iter::once(()).map(move |_| {
             let mut guard = self.cache.lock().expect("Mutex is poisoned");
-            guard.0.populated(populate).to_owned()
+            guard.populated(populate).to_owned()
         })
-    }
-
-    pub fn recipient_message(
-        &self,
-        template: &TestbedTemplate,
-    ) -> TestbedEventShareRealmRecipientMessage {
-        let populate = || {
-            let message = Arc::new(MessageContent::SharingGranted {
-                author: self.author.clone(),
-                timestamp: self.timestamp,
-                name: self.realm_entry_name.clone(),
-                id: self.realm,
-                encryption_revision: self.realm_encryption_revision,
-                encrypted_on: self.realm_encrypted_on,
-                key: self.realm_key.clone(),
-            });
-            let author_signkey = template.device_signing_key(&self.author);
-            let recipient_pubkey = template.user_private_key(&self.user).public_key();
-            let signed = message
-                .dump_sign_and_encrypt_for(author_signkey, &recipient_pubkey)
-                .into();
-            TestbedEventShareRealmRecipientMessage { message, signed }
-        };
-        let mut guard = self.cache.lock().expect("Mutex is poisoned");
-        guard.1.populated(populate).to_owned()
     }
 }
 
@@ -1345,131 +1294,6 @@ impl TestbedEventNewUserInvitation {
 }
 
 /*
- * TestbedEventStartRealmReencryption
- */
-
-#[derive(Clone)]
-pub struct TestbedEventStartRealmReencryptionPerParticipantMessage {
-    pub items: Vec<(UserID, Arc<MessageContent>, Bytes)>,
-}
-
-no_certificate_event!(
-    TestbedEventStartRealmReencryption,
-    [
-        timestamp: DateTime,
-        author: DeviceID,
-        realm: VlobID,
-        entry_name: EntryName,
-        encryption_revision: IndexInt,
-        key: SecretKey,
-    ],
-    cache:
-        Arc<Mutex<TestbedEventCacheEntry<TestbedEventStartRealmReencryptionPerParticipantMessage>>>
-);
-
-impl TestbedEventStartRealmReencryption {
-    pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, realm: VlobID) -> Self {
-        // 1) Consistency checks
-
-        if builder.check_consistency {
-            utils::assert_organization_bootstrapped(&builder.events);
-        }
-
-        let current_encryption_revision =
-            utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
-        let author = utils::non_revoked_realm_owners(&builder.events, realm)
-            .next()
-            .expect("At least one owner must exists")
-            .to_owned();
-
-        // 2) Actual creation
-
-        Self {
-            timestamp: builder.counters.next_timestamp(),
-            author,
-            realm,
-            entry_name: "Wksp".parse().unwrap(),
-            encryption_revision: current_encryption_revision + 1,
-            key: builder.counters.next_secret_key(),
-            cache: Arc::default(),
-        }
-    }
-
-    pub fn per_participant_message(
-        &self,
-        template: &TestbedTemplate,
-    ) -> TestbedEventStartRealmReencryptionPerParticipantMessage {
-        let populate = || {
-            let author_signkey = template.device_signing_key(&self.author);
-            let items = utils::non_revoked_realm_members(&template.events, self.realm)
-                .map(|(recipient, _)| {
-                    let message = Arc::new(MessageContent::SharingReencrypted {
-                        author: self.author.clone(),
-                        timestamp: self.timestamp,
-                        name: self.entry_name.clone(),
-                        id: self.realm,
-                        encryption_revision: self.encryption_revision,
-                        encrypted_on: self.timestamp,
-                        key: self.key.clone(),
-                    });
-
-                    let recipient_pubkey =
-                        template.user_private_key(recipient.user_id()).public_key();
-                    let raw = message
-                        .dump_sign_and_encrypt_for(author_signkey, &recipient_pubkey)
-                        .into();
-
-                    (recipient.user_id().to_owned(), message, raw)
-                })
-                .collect();
-            TestbedEventStartRealmReencryptionPerParticipantMessage { items }
-        };
-        let mut guard = self.cache.lock().expect("Mutex is poisoned");
-        guard.populated(populate).to_owned()
-    }
-}
-
-/*
- * TestbedEventFinishRealmReencryption
- */
-
-no_certificate_event!(
-    TestbedEventFinishRealmReencryption,
-    [
-        timestamp: DateTime,
-        author: DeviceID,
-        realm: VlobID,
-        encryption_revision: IndexInt,
-    ]
-);
-
-impl TestbedEventFinishRealmReencryption {
-    pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, realm: VlobID) -> Self {
-        // 1) Consistency checks
-
-        if builder.check_consistency {
-            utils::assert_organization_bootstrapped(&builder.events);
-        }
-
-        let encryption_revision =
-            utils::assert_realm_exists_and_under_reencryption(&builder.events, &realm);
-        let author = utils::non_revoked_realm_owners(&builder.events, realm)
-            .next()
-            .expect("At least one owner must exists")
-            .to_owned();
-
-        // 2) Actual creation
-
-        Self {
-            timestamp: builder.counters.next_timestamp(),
-            author,
-            realm,
-            encryption_revision,
-        }
-    }
-}
-
-/*
  * TestbedEventCreateOrUpdateUserManifestVlob
  */
 
@@ -1520,7 +1344,7 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
 
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
-            utils::assert_realm_exists_and_not_under_reencryption(&builder.events, id);
+            utils::assert_realm_exists(&builder.events, id);
             utils::assert_realm_member_has_write_access(&builder.events, id, &user);
         }
 
@@ -1634,7 +1458,7 @@ impl TestbedEventCreateOrUpdateWorkspaceManifestVlob {
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
             utils::assert_device_exists_and_not_revoked(&builder.events, &author);
-            utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
+            utils::assert_realm_exists(&builder.events, realm);
             utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
         }
 
@@ -1759,7 +1583,7 @@ impl TestbedEventCreateOrUpdateFolderManifestVlob {
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
             utils::assert_device_exists_and_not_revoked(&builder.events, &author);
-            utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
+            utils::assert_realm_exists(&builder.events, realm);
             utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
         }
 
@@ -1894,7 +1718,7 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
             utils::assert_device_exists_and_not_revoked(&builder.events, &author);
-            utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
+            utils::assert_realm_exists(&builder.events, realm);
             utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
         }
 
@@ -2020,7 +1844,6 @@ no_certificate_event!(
         timestamp: DateTime,
         author: DeviceID,
         realm: VlobID,
-        encryption_revision: IndexInt,
         vlob_id: VlobID,
         version: VersionInt,
         signed: Bytes,
@@ -2063,7 +1886,7 @@ impl TestbedEventCreateBlock {
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
             utils::assert_device_exists_and_not_revoked(&builder.events, &author);
-            utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
+            utils::assert_realm_exists(&builder.events, realm);
             utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
         }
 
@@ -2122,7 +1945,7 @@ impl TestbedEventCreateOpaqueBlock {
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
             utils::assert_device_exists_and_not_revoked(&builder.events, &author);
-            utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
+            utils::assert_realm_exists(&builder.events, realm);
             utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
         }
 

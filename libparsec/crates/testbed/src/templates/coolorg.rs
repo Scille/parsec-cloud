@@ -12,19 +12,27 @@ use crate::TestbedTemplate;
 /// - devices `alice@dev2` and `bob@dev2` whose storages are empty
 /// - 1 workspace `wksp1` shared between alice (owner) and bob (reader)
 /// - Alice & Bob have their user realm created and user manifest v1 synced with `wksp1` in it
-/// - Mallory has not user realm created
+/// - Mallory has no user realm created
 /// - 1 pending invitation from Alice for a new user with email `zack@example.invalid`
 /// - 1 pending invitation for a new device for Alice
 pub(crate) fn generate() -> Arc<TestbedTemplate> {
+    // If you change something here:
+    // - Update this function's docstring
+    // - Update `server/tests/common/client.py::CoolorgRpcClients`s docstring
+
     let mut builder = TestbedTemplate::from_builder("coolorg");
 
     // 1) Create user & devices
 
     builder.bootstrap_organization("alice"); // alice@dev1
-    builder.new_user("bob"); // bob@dev1
+    builder
+        .new_user("bob")
+        .with_initial_profile(UserProfile::Standard); // bob@dev1
     builder.new_device("alice"); // alice@dev2
     builder.new_device("bob"); // bob@dev2
-    builder.new_user("mallory"); // mallory@dev1
+    builder
+        .new_user("mallory")
+        .with_initial_profile(UserProfile::Outsider); // mallory@dev1
 
     // 2) Create user & device invitations
 

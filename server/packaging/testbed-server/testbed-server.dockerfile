@@ -38,9 +38,8 @@ LABEL org.opencontainers.image.description="Run a testbed parsec server to simpl
 USER 1234:1234
 WORKDIR /testbed
 
-COPY --chown=1234:1234 server/tests/scripts/run_testbed_server.py /testbed/.
 COPY --chown=1234:1234 --from=builder /work/venv /testbed/venv
 
 EXPOSE 6777
-ENTRYPOINT ["/testbed/venv/bin/python", "/testbed/run_testbed_server.py", "--host", "0.0.0.0", "--port", "6777"]
+ENTRYPOINT ["parsec", "testbed", "--host", "0.0.0.0", "--port", "6777"]
 CMD []

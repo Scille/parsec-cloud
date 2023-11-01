@@ -13,6 +13,10 @@
                 {
                     "name": "payload",
                     "type": "Bytes"
+                },
+                {
+                    "name": "last",
+                    "type": "Boolean"
                 }
             ]
         },
@@ -27,13 +31,13 @@
                 ]
             },
             {
-                "status": "not_found"
+                "status": "invitation_not_found"
             },
             {
-                "status": "already_deleted"
+                "status": "invitation_deleted"
             },
             {
-                "status": "invalid_state"
+                "status": "enrollment_wrong_state"
             }
         ]
     }

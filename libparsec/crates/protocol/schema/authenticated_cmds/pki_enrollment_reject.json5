@@ -17,31 +17,13 @@
                 "status": "ok"
             },
             {
-                "status": "not_allowed",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "author_not_allowed"
             },
             {
-                "status": "not_found",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "enrollment_not_found"
             },
             {
-                "status": "no_longer_available",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "enrollment_no_longer_available"
             }
         ]
     }

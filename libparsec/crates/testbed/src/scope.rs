@@ -148,16 +148,16 @@ fn ensure_testbed_server_is_started() -> (Option<BackendAddr>, Option<std::proce
     // the currently tested crate. Hence we only make the assumption we are within
     // the project repository and will eventually reach the project root by testing
     // each parent.
-    let (server_dir, script) = {
+    let server_dir = {
         let mut dir = std::env::current_dir().expect("Cannot retrieve current dir");
         loop {
-            let target = dir.join("./server/tests/scripts/run_testbed_server.py");
+            let target = dir.join("./server/pyproject.toml");
             if target.exists() {
-                break (dir.join("server"), target);
+                break dir.join("server");
             }
             dir = match dir.parent() {
                 Some(dir) => dir.to_path_buf(),
-                None => panic!("Cannot retrieve run_testbed_server.py script !"),
+                None => panic!("Cannot retrieve `server` directory !"),
             }
         }
     };
@@ -168,8 +168,8 @@ fn ensure_testbed_server_is_started() -> (Option<BackendAddr>, Option<std::proce
             server_dir.to_str().expect("Script path contains non-utf8"),
             "run",
             "--",
-            "python",
-            script.to_str().expect("Script path contains non-utf8"),
+            "parsec",
+            "testbed",
             // Ask the server to stop itself once our own process is finished,
             // this Rust test harness has not global teardown hook that could
             // allow us to do a `process.kill()`.

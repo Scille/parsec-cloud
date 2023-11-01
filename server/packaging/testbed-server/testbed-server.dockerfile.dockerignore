@@ -11,7 +11,6 @@ target
 # Python test file & cache folder
 
 server/tests
-!server/tests/scripts/run_testbed_server.py
 __pycache__
 .hypothesis
 .mypy_cache

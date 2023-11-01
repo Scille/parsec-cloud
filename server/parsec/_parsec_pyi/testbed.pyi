@@ -11,6 +11,9 @@ from parsec._parsec import (
     HumanHandle,
     InvitationToken,
     PrivateKey,
+    RealmArchivingCertificate,
+    RealmKeyRotationCertificate,
+    RealmNameCertificate,
     RealmRole,
     RealmRoleCertificate,
     RevokedUserCertificate,
@@ -18,17 +21,19 @@ from parsec._parsec import (
     SequesterAuthorityCertificate,
     SequesterPrivateKeyDer,
     SequesterPublicKeyDer,
+    SequesterRevokedServiceCertificate,
     SequesterServiceCertificate,
     SequesterServiceID,
     SequesterSigningKeyDer,
     SequesterVerifyKeyDer,
+    ShamirRecoveryBriefCertificate,
+    ShamirRecoveryShareCertificate,
     SigningKey,
     UserCertificate,
     UserID,
     UserProfile,
     UserUpdateCertificate,
     VlobID,
-    InvitationToken,
 )
 
 def test_get_testbed_template(id: str) -> TestbedTemplateContent | None: ...
@@ -44,6 +49,7 @@ class TestbedTemplateContent:
         | RealmRoleCertificate
         | SequesterAuthorityCertificate
         | SequesterServiceCertificate
+        | SequesterRevokedServiceCertificate
     ]
 
     def compute_crc(self) -> int: ...
@@ -80,6 +86,14 @@ class TestbedEventNewSequesterService:
     label: str
     encryption_private_key: SequesterPrivateKeyDer
     encryption_public_key: SequesterPublicKeyDer
+
+    certificate: SequesterServiceCertificate
+    raw_redacted_certificate: bytes
+    raw_certificate: bytes
+
+class TestbedEventRevokeSequesterService:
+    timestamp: DateTime
+    id: SequesterServiceID
 
     certificate: SequesterServiceCertificate
     raw_redacted_certificate: bytes
@@ -166,31 +180,56 @@ class TestbedEventShareRealm:
     realm: VlobID
     user: UserID
     role: RealmRole | None
-    recipient_message: bytes | None
+    key_index: int | None  # None if role is None
+    recipient_keys_bundle_access: bytes | None  # None if role is None
 
     certificate: RealmRoleCertificate
+    raw_certificate: bytes
+
+class TestbedEventRenameRealm:
+    timestamp: DateTime
+    author: DeviceID
+    realm: VlobID
+
+    certificate: RealmNameCertificate
+    raw_certificate: bytes
+
+class TestbedEventRotateKeyRealm:
+    timestamp: DateTime
+    author: DeviceID
+    realm: VlobID
+    per_participant_keys_bundle_access: dict[UserID, bytes]
+    keys_bundle: bytes
+
+    realm_key_rotation_certificate: RealmKeyRotationCertificate
+    raw_certificate: bytes
+
+class TestbedEventArchiveRealm:
+    timestamp: DateTime
+    author: DeviceID
+    realm: VlobID
+
+    certificate: RealmArchivingCertificate
     raw_redacted_certificate: bytes
     raw_certificate: bytes
 
-class TestbedEventStartRealmReencryption:
+class TestbedEventNewShamirRecovery:
     timestamp: DateTime
     author: DeviceID
-    realm: VlobID
-    encryption_revision: int
-    per_participant_message: list[tuple[UserID, bytes]]
+    threshold: int
+    per_recipient_shares: dict[UserID, int]
 
-class TestbedEventFinishRealmReencryption:
-    timestamp: DateTime
-    author: DeviceID
-    realm: VlobID
-    encryption_revision: int
+    brief_certificate: ShamirRecoveryBriefCertificate
+    raw_brief_certificate: bytes
+    shares_certificates: list[ShamirRecoveryShareCertificate]
+    raw_shares_certificates: list[bytes]
 
 class TestbedEventCreateOrUpdateOpaqueVlob:
     timestamp: DateTime
     author: DeviceID
     realm: VlobID
-    encryption_revision: int
     vlob_id: VlobID
+    key_index: int
     version: int
     encrypted: bytes
     sequestered: dict[SequesterServiceID, bytes] | None
@@ -205,14 +244,13 @@ class TestbedEventCreateOpaqueBlock:
 TestbedEvent = (
     TestbedEventBootstrapOrganization
     | TestbedEventNewSequesterService
+    | TestbedEventRevokeSequesterService
     | TestbedEventNewUser
     | TestbedEventNewDevice
     | TestbedEventUpdateUserProfile
     | TestbedEventRevokeUser
     | TestbedEventNewRealm
     | TestbedEventShareRealm
-    | TestbedEventStartRealmReencryption
-    | TestbedEventFinishRealmReencryption
     | TestbedEventCreateOrUpdateOpaqueVlob
     | TestbedEventCreateOpaqueBlock
 )

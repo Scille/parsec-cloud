@@ -701,7 +701,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate bindings code")
     parser.add_argument(
         "what",
-        choices=TEMPLATE_CHOICES + ["all"],
+        choices=[*TEMPLATE_CHOICES, "all"],
         nargs="+",
     )
     parser.add_argument("--test", action="store_true")

@@ -1,0 +1,71 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "realm_unshare",
+            "fields": [
+                {
+                    // `RealmRoleCertificate` with `role` field set to `None`
+                    "name": "realm_role_certificate",
+                    "type": "Bytes"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "author_not_allowed"
+            },
+            {
+                "status": "realm_not_found"
+            },
+            {
+                "status": "user_not_found"
+            },
+            {
+                "status": "user_already_unshared"
+            },
+            {
+                "status": "invalid_certificate"
+            },
+            {
+                // Returned if the timestamp in the certificate is too far away compared
+                // to server clock.
+                "status": "timestamp_out_of_ballpark",
+                "fields": [
+                    {
+                        "name": "ballpark_client_early_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "ballpark_client_late_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "server_timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "client_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                // Returned if another certificate or vlob in the server has a timestamp
+                // posterior or equal to our current one.
+                "status": "require_greater_timestamp",
+                "fields": [
+                    {
+                        "name": "strictly_greater_than",
+                        "type": "DateTime"
+                    }
+                ]
+            }
+        ]
+    }
+]

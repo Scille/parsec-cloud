@@ -25,19 +25,16 @@
                 "status": "ok"
             },
             {
-                "status": "already_exists"
+                "status": "realm_not_found"
             },
             {
-                "status": "not_found"
+                "status": "block_already_exists"
             },
             {
-                "status": "timeout"
+                "status": "author_not_allowed"
             },
             {
-                "status": "not_allowed"
-            },
-            {
-                "status": "in_maintenance"
+                "status": "store_unavailable"
             }
         ]
     }

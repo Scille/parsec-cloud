@@ -5,7 +5,8 @@ from __future__ import annotations
 class InvitationStatus:
     IDLE: InvitationStatus
     READY: InvitationStatus
-    DELETED: InvitationStatus
+    CANCELLED: InvitationStatus
+    FINISHED: InvitationStatus
     VALUES: tuple[InvitationStatus, ...]
 
     @classmethod

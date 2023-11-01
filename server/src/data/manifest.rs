@@ -8,11 +8,8 @@ use pyo3::{
 };
 use std::{collections::HashMap, num::NonZeroU64};
 
-use crate::{
-    BlockID, DataResult, DateTime, DeviceID, EntryNameResult, HashDigest, RealmRole, SecretKey,
-    SigningKey, VerifyKey, VlobID,
-};
-use libparsec_types::{ChildManifest, IndexInt};
+use crate::{BlockID, DateTime, DeviceID, HashDigest, SecretKey, SigningKey, VerifyKey, VlobID};
+use libparsec_types::ChildManifest;
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
     EntryName,
@@ -25,8 +22,10 @@ crate::binding_utils::gen_py_wrapper_class_for_id!(
 #[pymethods]
 impl EntryName {
     #[new]
-    fn new(name: &str) -> EntryNameResult<Self> {
-        Ok(libparsec_types::EntryName::try_from(name).map(Self)?)
+    fn new(name: &str) -> PyResult<Self> {
+        libparsec_types::EntryName::try_from(name)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
+            .map(Self)
     }
 
     fn __repr__(&self) -> PyResult<String> {
@@ -36,130 +35,6 @@ impl EntryName {
     #[getter]
     fn str(&self) -> PyResult<String> {
         Ok(self.0.to_string())
-    }
-}
-
-crate::binding_utils::gen_py_wrapper_class!(
-    WorkspaceEntry,
-    libparsec_types::WorkspaceEntry,
-    __repr__,
-    __copy__,
-    __deepcopy__,
-    __richcmp__ eq,
-);
-
-#[pymethods]
-impl WorkspaceEntry {
-    #[new]
-    #[pyo3(signature = (id, name, key, encryption_revision, encrypted_on, legacy_role_cache_timestamp, legacy_role_cache_value))]
-    fn new(
-        id: VlobID,
-        name: EntryName,
-        key: SecretKey,
-        encryption_revision: u64,
-        encrypted_on: DateTime,
-        legacy_role_cache_timestamp: DateTime,
-        legacy_role_cache_value: Option<RealmRole>,
-    ) -> PyResult<Self> {
-        Ok(Self(libparsec_types::WorkspaceEntry {
-            id: id.0,
-            name: name.0,
-            key: key.0,
-            encryption_revision,
-            encrypted_on: encrypted_on.0,
-            legacy_role_cache_timestamp: legacy_role_cache_timestamp.0,
-            legacy_role_cache_value: legacy_role_cache_value.map(|x| x.0),
-        }))
-    }
-
-    #[pyo3(signature = (**py_kwargs))]
-    fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        crate::binding_utils::parse_kwargs_optional!(
-            py_kwargs,
-            [id: VlobID, "id"],
-            [name: EntryName, "name"],
-            [key: SecretKey, "key"],
-            [encryption_revision: IndexInt, "encryption_revision"],
-            [encrypted_on: DateTime, "encrypted_on"],
-            [
-                legacy_role_cache_timestamp: DateTime,
-                "legacy_role_cache_timestamp"
-            ],
-            [
-                legacy_role_cache_value: Option<RealmRole>,
-                "legacy_role_cache_value"
-            ],
-        );
-
-        let mut r = self.0.clone();
-
-        if let Some(v) = id {
-            r.id = v.0;
-        }
-        if let Some(v) = name {
-            r.name = v.0;
-        }
-        if let Some(v) = key {
-            r.key = v.0;
-        }
-        if let Some(v) = encryption_revision {
-            r.encryption_revision = v;
-        }
-        if let Some(v) = encrypted_on {
-            r.encrypted_on = v.0;
-        }
-        if let Some(v) = legacy_role_cache_timestamp {
-            r.legacy_role_cache_timestamp = v.0;
-        }
-        if let Some(v) = legacy_role_cache_value {
-            r.legacy_role_cache_value = v.map(|x| x.0);
-        }
-
-        Ok(Self(r))
-    }
-
-    #[classmethod]
-    #[pyo3(name = "new")]
-    fn class_new(_cls: &PyType, name: &EntryName, timestamp: DateTime) -> PyResult<Self> {
-        Ok(Self(libparsec_types::WorkspaceEntry::generate(
-            name.0.to_owned(),
-            timestamp.0,
-        )))
-    }
-
-    #[getter]
-    fn id(&self) -> PyResult<VlobID> {
-        Ok(VlobID(self.0.id))
-    }
-
-    #[getter]
-    fn name(&self) -> PyResult<EntryName> {
-        Ok(EntryName(self.0.name.clone()))
-    }
-
-    #[getter]
-    fn key(&self) -> PyResult<SecretKey> {
-        Ok(SecretKey(self.0.key.clone()))
-    }
-
-    #[getter]
-    fn encryption_revision(&self) -> PyResult<IndexInt> {
-        Ok(self.0.encryption_revision)
-    }
-
-    #[getter]
-    fn encrypted_on(&self) -> PyResult<DateTime> {
-        Ok(DateTime(self.0.encrypted_on))
-    }
-
-    #[getter]
-    fn legacy_role_cache_timestamp(&self) -> PyResult<DateTime> {
-        Ok(DateTime(self.0.legacy_role_cache_timestamp))
-    }
-
-    #[getter]
-    fn legacy_role_cache_value(&self) -> Option<&'static PyObject> {
-        self.0.legacy_role_cache_value.map(RealmRole::convert)
     }
 }
 
@@ -327,8 +202,8 @@ impl FileManifest {
         expected_timestamp: DateTime,
         expected_id: Option<VlobID>,
         expected_version: Option<u32>,
-    ) -> DataResult<Self> {
-        Ok(libparsec_types::FileManifest::decrypt_verify_and_load(
+    ) -> PyResult<Self> {
+        libparsec_types::FileManifest::decrypt_verify_and_load(
             encrypted,
             &key.0,
             &author_verify_key.0,
@@ -337,7 +212,8 @@ impl FileManifest {
             expected_id.map(|id| id.0),
             expected_version,
         )
-        .map(Self)?)
+        .map_err(|e| PyValueError::new_err(e.to_string()))
+        .map(Self)
     }
 
     #[pyo3(signature = (**py_kwargs))]
@@ -520,8 +396,8 @@ impl FolderManifest {
         expected_timestamp: DateTime,
         expected_id: Option<VlobID>,
         expected_version: Option<u32>,
-    ) -> DataResult<Self> {
-        Ok(libparsec_types::FolderManifest::decrypt_verify_and_load(
+    ) -> PyResult<Self> {
+        libparsec_types::FolderManifest::decrypt_verify_and_load(
             encrypted,
             &key.0,
             &author_verify_key.0,
@@ -530,7 +406,8 @@ impl FolderManifest {
             expected_id.map(|id| id.0),
             expected_version,
         )
-        .map(Self)?)
+        .map_err(|e| PyValueError::new_err(e.to_string()))
+        .map(Self)
     }
 
     #[pyo3(signature = (**py_kwargs))]
@@ -692,8 +569,8 @@ impl WorkspaceManifest {
         expected_timestamp: DateTime,
         expected_id: Option<VlobID>,
         expected_version: Option<u32>,
-    ) -> DataResult<Self> {
-        Ok(libparsec_types::WorkspaceManifest::decrypt_verify_and_load(
+    ) -> PyResult<Self> {
+        libparsec_types::WorkspaceManifest::decrypt_verify_and_load(
             encrypted,
             &key.0,
             &author_verify_key.0,
@@ -702,7 +579,8 @@ impl WorkspaceManifest {
             expected_id.map(|id| id.0),
             expected_version,
         )
-        .map(Self)?)
+        .map_err(|e| PyValueError::new_err(e.to_string()))
+        .map(Self)
     }
 
     #[classmethod]
@@ -715,8 +593,8 @@ impl WorkspaceManifest {
         expected_timestamp: DateTime,
         expected_id: Option<VlobID>,
         expected_version: Option<u32>,
-    ) -> DataResult<Self> {
-        Ok(libparsec_types::WorkspaceManifest::verify_and_load(
+    ) -> PyResult<Self> {
+        libparsec_types::WorkspaceManifest::verify_and_load(
             signed,
             &author_verify_key.0,
             &expected_author.0,
@@ -724,7 +602,8 @@ impl WorkspaceManifest {
             expected_id.map(|id| id.0),
             expected_version,
         )
-        .map(Self)?)
+        .map_err(|e| PyValueError::new_err(e.to_string()))
+        .map(Self)
     }
 
     #[pyo3(signature = (**py_kwargs))]
@@ -823,7 +702,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 impl UserManifest {
     #[allow(clippy::too_many_arguments)]
     #[new]
-    #[pyo3(signature = (author, timestamp, id, version, created, updated, last_processed_message, workspaces))]
+    #[pyo3(signature = (author, timestamp, id, version, created, updated))]
     fn new(
         author: DeviceID,
         timestamp: DateTime,
@@ -831,8 +710,6 @@ impl UserManifest {
         version: u32,
         created: DateTime,
         updated: DateTime,
-        last_processed_message: u64,
-        workspaces: Vec<WorkspaceEntry>,
     ) -> PyResult<Self> {
         Ok(Self(libparsec_types::UserManifest {
             author: author.0,
@@ -841,8 +718,7 @@ impl UserManifest {
             version,
             created: created.0,
             updated: updated.0,
-            last_processed_message,
-            workspaces: workspaces.into_iter().map(|w| w.0).collect(),
+            workspaces_legacy_initial_info: vec![],
         }))
     }
 
@@ -877,8 +753,8 @@ impl UserManifest {
         expected_timestamp: DateTime,
         expected_id: Option<VlobID>,
         expected_version: Option<u32>,
-    ) -> DataResult<Self> {
-        Ok(libparsec_types::UserManifest::decrypt_verify_and_load(
+    ) -> PyResult<Self> {
+        libparsec_types::UserManifest::decrypt_verify_and_load(
             encrypted,
             &key.0,
             &author_verify_key.0,
@@ -887,7 +763,8 @@ impl UserManifest {
             expected_id.map(|id| id.0),
             expected_version,
         )
-        .map(Self)?)
+        .map_err(|e| PyValueError::new_err(e.to_string()))
+        .map(Self)
     }
 
     #[pyo3(signature = (**py_kwargs))]
@@ -900,8 +777,6 @@ impl UserManifest {
             [version: u32, "version"],
             [created: DateTime, "created"],
             [updated: DateTime, "updated"],
-            [last_processed_message: u64, "last_processed_message"],
-            [workspaces: Vec<WorkspaceEntry>, "workspaces"],
         );
 
         let mut r = self.0.clone();
@@ -924,22 +799,8 @@ impl UserManifest {
         if let Some(v) = updated {
             r.updated = v.0;
         }
-        if let Some(v) = last_processed_message {
-            r.last_processed_message = v;
-        }
-        if let Some(v) = workspaces {
-            r.workspaces = v.into_iter().map(|w| w.0).collect();
-        }
 
         Ok(Self(r))
-    }
-
-    fn get_workspace_entry(&self, workspace_id: VlobID) -> PyResult<Option<WorkspaceEntry>> {
-        Ok(self
-            .0
-            .get_workspace_entry(workspace_id.0)
-            .cloned()
-            .map(WorkspaceEntry))
     }
 
     #[getter]
@@ -971,23 +832,6 @@ impl UserManifest {
     fn updated(&self) -> PyResult<DateTime> {
         Ok(DateTime(self.0.updated))
     }
-
-    #[getter]
-    fn last_processed_message(&self) -> PyResult<u64> {
-        Ok(self.0.last_processed_message)
-    }
-
-    #[getter]
-    fn workspaces<'p>(&self, py: Python<'p>) -> PyResult<&'p PyTuple> {
-        let elements: Vec<PyObject> = self
-            .0
-            .workspaces
-            .clone()
-            .into_iter()
-            .map(|x| WorkspaceEntry(x).into_py(py))
-            .collect();
-        Ok(PyTuple::new(py, elements))
-    }
 }
 
 #[pyfunction]
@@ -1001,8 +845,8 @@ pub(crate) fn child_manifest_decrypt_verify_and_load(
     expected_timestamp: DateTime,
     expected_id: Option<VlobID>,
     expected_version: Option<u32>,
-) -> DataResult<PyObject> {
-    Ok(ChildManifest::decrypt_verify_and_load(
+) -> PyResult<PyObject> {
+    ChildManifest::decrypt_verify_and_load(
         encrypted,
         &key.0,
         &author_verify_key.0,
@@ -1011,7 +855,8 @@ pub(crate) fn child_manifest_decrypt_verify_and_load(
         expected_id.map(|id| id.0),
         expected_version,
     )
-    .map(|blob| unwrap_child_manifest(py, blob))?)
+    .map_err(|e| PyValueError::new_err(e.to_string()))
+    .map(|blob| unwrap_child_manifest(py, blob))
 }
 
 #[pyfunction]
@@ -1023,8 +868,8 @@ pub(crate) fn child_manifest_verify_and_load(
     expected_timestamp: DateTime,
     expected_id: Option<VlobID>,
     expected_version: Option<u32>,
-) -> DataResult<PyObject> {
-    Ok(ChildManifest::verify_and_load(
+) -> PyResult<PyObject> {
+    ChildManifest::verify_and_load(
         signed,
         &author_verify_key.0,
         &expected_author.0,
@@ -1032,7 +877,8 @@ pub(crate) fn child_manifest_verify_and_load(
         expected_id.map(|id| id.0),
         expected_version,
     )
-    .map(|blob| unwrap_child_manifest(py, blob))?)
+    .map_err(|e| PyValueError::new_err(e.to_string()))
+    .map(|blob| unwrap_child_manifest(py, blob))
 }
 
 fn unwrap_child_manifest(py: Python, manifest: ChildManifest) -> PyObject {

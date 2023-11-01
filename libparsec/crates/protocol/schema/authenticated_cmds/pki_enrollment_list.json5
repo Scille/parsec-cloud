@@ -17,13 +17,7 @@
                 ]
             },
             {
-                "status": "not_allowed",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "author_not_allowed"
             }
         ],
         "nested_types": [

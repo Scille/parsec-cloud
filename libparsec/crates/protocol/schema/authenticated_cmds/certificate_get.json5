@@ -7,9 +7,25 @@
             "cmd": "certificate_get",
             "fields": [
                 {
-                    // Skip the certificates before this index
-                    "name": "offset",
-                    "type": "Index"
+                    // Skip the certificates before (or at) this timestamp
+                    "name": "common_after",
+                    "type": "RequiredOption<DateTime>"
+                },
+                {
+                    // Skip the certificates before (or at) this timestamp
+                    "name": "sequester_after",
+                    "type": "RequiredOption<DateTime>"
+                },
+                {
+                    // Skip the certificates before (or at) this timestamp
+                    "name": "shamir_after",
+                    "type": "RequiredOption<DateTime>"
+                },
+                {
+                    // Skip the certificates before (or at) this timestamp
+                    "name": "realm_after",
+                    // Key is the realm ID
+                    "type": "Map<VlobID, RequiredOption<DateTime>>"
                 }
             ]
         },
@@ -17,11 +33,23 @@
             {
                 "status": "ok",
                 "fields": [
-                    // Certificates are provided in-order (with strictly growing timestamps),
-                    // their index should be calculated by `offset + <certificate's index in this list>`
+                    // Certificates are provided in-order (i.e. with growing timestamps)
                     {
-                        "name": "certificates",
+                        "name": "common_certificates",
                         "type": "List<Bytes>"
+                    },
+                    {
+                        "name": "sequester_certificates",
+                        "type": "List<Bytes>"
+                    },
+                    {
+                        "name": "shamir_certificates",
+                        "type": "List<Bytes>"
+                    },
+                    {
+                        "name": "realm_certificates",
+                        // Key is the realm ID
+                        "type": "Map<VlobID, List<Bytes>>"
                     }
                 ]
             }

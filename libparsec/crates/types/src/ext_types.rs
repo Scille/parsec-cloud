@@ -1,11 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use bytes::Bytes;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_bytes::ByteBuf;
 
 use crate::DateTime;
-use crate::VlobID;
 
 pub(crate) const DATETIME_EXT_ID: i8 = 1;
 pub(crate) const UUID_EXT_ID: i8 = 2;
@@ -227,11 +225,3 @@ macro_rules! impl_from_maybe {
 impl_from_maybe!(bool);
 
 pub(crate) use impl_from_maybe;
-
-#[serde_with::serde_as]
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct ReencryptionBatchEntry {
-    pub vlob_id: VlobID,
-    pub version: u64,
-    pub blob: Bytes,
-}

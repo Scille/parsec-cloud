@@ -244,10 +244,10 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
             cmd="npm run build:ci",
         ),
     ),
-    ("run-testbed-server",): (
+    ("run-testbed-server", "rts"): (
         Cwd(SERVER_DIR),
         Cmd(
-            cmd=f"poetry run python tests/scripts/run_testbed_server.py",
+            cmd="poetry run python -m parsec testbed",
         ),
     ),
     # Flags used in `bindings/web/scripts/build.js`

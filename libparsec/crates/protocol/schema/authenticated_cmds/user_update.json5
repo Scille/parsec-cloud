@@ -17,23 +17,24 @@
                 "status": "ok"
             },
             {
-                "status": "not_allowed"
+                "status": "author_not_allowed"
             },
             {
-                "status": "invalid_certification"
+                "status": "user_not_found"
             },
             {
-                "status": "invalid_data"
+                "status": "user_revoked"
             },
             {
-                // The update won't change the user: the user already has this profile
-                // or is revoked
-                "status": "already_exists"
+                "status": "user_no_changes"
+            },
+            {
+                "status": "invalid_certificate"
             },
             {
                 // Returned if the timestamp in the certificate is too far away compared
                 // to server clock.
-                "status": "bad_timestamp",
+                "status": "timestamp_out_of_ballpark",
                 "fields": [
                     {
                         "name": "ballpark_client_early_offset",
@@ -44,7 +45,7 @@
                         "type": "Float"
                     },
                     {
-                        "name": "backend_timestamp",
+                        "name": "server_timestamp",
                         "type": "DateTime"
                     },
                     {
@@ -54,7 +55,7 @@
                 ]
             },
             {
-                // Returned if another certificate in the server has a creation date
+                // Returned if another certificate or vlob in the server has a timestamp
                 // posterior or equal to our current one.
                 "status": "require_greater_timestamp",
                 "fields": [
