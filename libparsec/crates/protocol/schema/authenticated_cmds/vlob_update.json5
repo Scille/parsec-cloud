@@ -1,7 +1,6 @@
 [
     {
         "major_versions": [
-            3,
             4
         ],
         "req": {
@@ -29,11 +28,9 @@
                 },
                 // Field set to `None` if sequester is disabled for the organization
                 // Key is sequester service ID, value is blob encrypted with the service key
-                // New in API version 2.8/3.2 (Parsec 2.11.0)
                 {
                     "name": "sequester_blob",
-                    "type": "RequiredOption<Map<SequesterServiceID, Bytes>>",
-                    "introduced_in": "3.2"
+                    "type": "RequiredOption<Map<SequesterServiceID, Bytes>>"
                 }
             ]
         },

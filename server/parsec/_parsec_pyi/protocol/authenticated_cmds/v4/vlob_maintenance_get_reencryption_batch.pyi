@@ -1,25 +1,57 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from ..v3.vlob_maintenance_get_reencryption_batch import (
-    Rep,
-    RepBadEncryptionRevision,
-    RepMaintenanceError,
-    RepNotAllowed,
-    RepNotFound,
-    RepNotInMaintenance,
-    RepOk,
-    RepUnknownStatus,
-    Req,
-)
+from __future__ import annotations
 
-__all__ = [
-    "Req",
-    "Rep",
-    "RepUnknownStatus",
-    "RepOk",
-    "RepNotAllowed",
-    "RepNotFound",
-    "RepNotInMaintenance",
-    "RepBadEncryptionRevision",
-    "RepMaintenanceError",
-]
+from parsec._parsec import ReencryptionBatchEntry, VlobID
+
+class Req:
+    def __init__(self, realm_id: VlobID, encryption_revision: int, size: int) -> None: ...
+    def dump(self) -> bytes: ...
+    @property
+    def realm_id(self) -> VlobID: ...
+    @property
+    def encryption_revision(self) -> int: ...
+    @property
+    def size(self) -> int: ...
+
+class Rep:
+    @staticmethod
+    def load(raw: bytes) -> Rep: ...
+    def dump(self) -> bytes: ...
+
+class RepUnknownStatus(Rep):
+    def __init__(self, status: str, reason: str | None) -> None: ...
+    @property
+    def status(self) -> str: ...
+    @property
+    def reason(self) -> str | None: ...
+
+class RepOk(Rep):
+    def __init__(self, batch: list[ReencryptionBatchEntry]) -> None: ...
+    @property
+    def batch(self) -> list[ReencryptionBatchEntry]: ...
+
+class RepNotAllowed(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepNotFound(Rep):
+    def __init__(self, reason: str | None) -> None: ...
+    @property
+    def reason(self) -> str | None: ...
+
+class RepNotInMaintenance(Rep):
+    def __init__(self, reason: str | None) -> None: ...
+    @property
+    def reason(self) -> str | None: ...
+
+class RepBadEncryptionRevision(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepMaintenanceError(Rep):
+    def __init__(self, reason: str | None) -> None: ...
+    @property
+    def reason(self) -> str | None: ...
