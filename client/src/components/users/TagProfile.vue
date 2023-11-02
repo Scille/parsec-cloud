@@ -4,7 +4,7 @@
   <ion-label class="label-profile profile">
     <ion-chip
       class="caption-caption tag"
-      :class="profile"
+      :class="getClassForProfile(profile)"
     >
       {{ translateProfile(profile) }}
     </ion-chip>
@@ -32,6 +32,19 @@ function translateProfile(profile: UserProfile): string {
     return t('UsersPage.profile.outsider');
   }
   return '';
+}
+
+function getClassForProfile(profile: UserProfile): string {
+  switch (profile) {
+    case UserProfile.Admin:
+      return 'admin';
+    case UserProfile.Standard:
+      return 'standard';
+    case UserProfile.Outsider:
+      return 'outsider';
+    default:
+      return '';
+  }
 }
 </script>
 

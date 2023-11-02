@@ -5,6 +5,7 @@
 .tag {
   padding: 0.25rem 0.5rem;
   height: auto;
+  margin: 0;
 }
 
 .role {
@@ -34,7 +35,7 @@
 }
 
 .profile {
-  .administrator {
+  .admin {
     background-color: var(--parsec-color-tags-indigo100);
     color: var(--parsec-color-tags-indigo500);
   }

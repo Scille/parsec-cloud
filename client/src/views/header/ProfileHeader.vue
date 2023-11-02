@@ -94,6 +94,8 @@ async function openPopover(ev: Event): Promise<void> {
       window.open(t('MenuPage.helpLink'), '_blank');
     } else if (value.data.option === ProfilePopoverOption.App) {
       routerNavigateTo('about');
+    } else if (value.data.option === ProfilePopoverOption.MyContactDetails) {
+      routerNavigateTo('myContactDetails');
     }
   });
 }

@@ -14,7 +14,7 @@
   <div class="ms-password-inputs">
     <div class="ms-password-inputs-container">
       <ms-password-input
-        :label="$t('Password.password')"
+        :label="passwordLabel || $t('Password.password')"
         v-model="password"
         name="password"
         @change="onPasswordChange()"
@@ -70,13 +70,24 @@ defineEmits<{
   (e: 'onEnterKeyup', value: string): void;
 }>();
 
+defineProps<{
+  passwordLabel?: string;
+}>();
+
 defineExpose({
   areFieldsCorrect,
   password,
+  clear,
 });
 
 async function areFieldsCorrect(): Promise<boolean> {
   return passwordStrength.value === PasswordStrength.High && password.value === passwordConfirm.value;
+}
+
+function clear(): void {
+  password.value = '';
+  passwordConfirm.value = '';
+  passwordStrength.value = PasswordStrength.None;
 }
 
 function onPasswordChange(): void {

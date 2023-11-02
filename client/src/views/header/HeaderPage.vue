@@ -223,6 +223,8 @@ function getTitleForRoute(): string {
     return t('HeaderPage.titles.organization.information');
   } else if (route === 'about') {
     return t('HeaderPage.titles.about');
+  } else if (route === 'myContactDetails') {
+    return t('HeaderPage.titles.myContactDetails');
   }
 
   return '';
