@@ -14,7 +14,7 @@
 <script lang="ts">
 export interface MsAlertModalConfig {
   title?: string,
-  theme: MsTheme,
+  theme: MsReportTheme,
   message: string,
 }
 </script>
@@ -22,7 +22,7 @@ export interface MsAlertModalConfig {
 <script setup lang="ts">
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { modalController } from '@ionic/vue';
-import { MsTheme, MsModalResult } from '@/components/core/ms-types';
+import { MsReportTheme, MsModalResult } from '@/components/core/ms-types';
 
 defineProps<MsAlertModalConfig>();
 

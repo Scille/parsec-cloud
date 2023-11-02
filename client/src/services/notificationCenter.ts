@@ -5,7 +5,7 @@ import { v4 as uuid4 } from 'uuid';
 import MsAlertModal, { MsAlertModalConfig } from '@/components/core/ms-modal/MsAlertModal.vue';
 import { modalController } from '@ionic/vue';
 import { ComposerTranslation } from 'vue-i18n';
-import { MsModalResult, MsTheme } from '@/components/core/ms-types';
+import { MsModalResult, MsReportTheme } from '@/components/core/ms-types';
 import { ToastManager } from '@/services/toastManager';
 
 // Re-export so everything can be imported from this file
@@ -80,7 +80,7 @@ export class NotificationCenter {
     }
 
     const alertModalConfig: MsAlertModalConfig = {
-      theme: this._getMsTheme(notification.level),
+      theme: this._getMsReportTheme(notification.level),
       message: notification.message,
     };
     if (notification.title) {
@@ -127,7 +127,7 @@ export class NotificationCenter {
     }
 
     this.toastManager.createAndPresent({
-      theme: this._getMsTheme(notification.level),
+      theme: this._getMsReportTheme(notification.level),
       message: notification.message,
       title: notification.title,
       duration: DEFAULT_NOTIFICATION_DURATION,
@@ -138,16 +138,16 @@ export class NotificationCenter {
     });
   }
 
-  private _getMsTheme(notificationLevel: NotificationLevel): MsTheme {
+  private _getMsReportTheme(notificationLevel: NotificationLevel): MsReportTheme {
     switch(notificationLevel) {
       case NotificationLevel.Info:
-        return MsTheme.Info;
+        return MsReportTheme.Info;
       case NotificationLevel.Success:
-        return MsTheme.Success;
+        return MsReportTheme.Success;
       case NotificationLevel.Warning:
-        return MsTheme.Warning;
+        return MsReportTheme.Warning;
       case NotificationLevel.Error:
-        return MsTheme.Error;
+        return MsReportTheme.Error;
     }
   }
 
