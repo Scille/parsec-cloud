@@ -9,6 +9,18 @@
     </ion-item>
     <ion-item
       class="container__item"
+      @click="onOptionClick(ProfilePopoverOption.MyContactDetails)"
+    >
+      <ion-icon
+        :icon="personCircle"
+        slot="start"
+      />
+      <ion-label class="body">
+        {{ $t('HomePage.topbar.myContactDetails') }}
+      </ion-label>
+    </ion-item>
+    <ion-item
+      class="container__item"
       @click="onOptionClick(ProfilePopoverOption.MyDevices)"
     >
       <ion-icon
@@ -71,12 +83,13 @@ export enum ProfilePopoverOption {
   Help = 2,
   LogOut = 3,
   App = 4,
+  MyContactDetails = 5,
 }
 </script>
 
 <script setup lang="ts">
 import { IonList, IonItem, IonIcon, IonLabel, IonText } from '@ionic/vue';
-import { phonePortrait, cog, helpCircle, logOut } from 'ionicons/icons';
+import { phonePortrait, cog, helpCircle, logOut, personCircle } from 'ionicons/icons';
 import { popoverController } from '@ionic/core';
 import { getAppVersion } from '@/common/mocks';
 

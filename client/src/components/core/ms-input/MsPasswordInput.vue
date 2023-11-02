@@ -14,7 +14,6 @@
           <ion-input
             aria-labelledby="passwordLabel"
             :type="passwordVisible ? 'text' : 'password'"
-            v-model="passwordRef"
             @ion-input="onChange($event.target.value)"
             :value="modelValue"
             @keyup.enter="onEnterPress()"
@@ -42,7 +41,7 @@ import { ref } from 'vue';
 import { IonGrid, IonCol, IonRow, IonItem, IonInput, IonIcon, IonText } from '@ionic/vue';
 import { eye, eyeOff } from 'ionicons/icons';
 
-defineProps<{
+const props = defineProps<{
   label: string;
   modelValue?: string;
 }>();
@@ -54,7 +53,7 @@ const emits = defineEmits<{
 }>();
 
 const passwordVisible = ref(false);
-const passwordRef = ref('');
+const passwordRef = ref(props.modelValue || '');
 
 function onChange(value: any): void {
   emits('update:modelValue', value);

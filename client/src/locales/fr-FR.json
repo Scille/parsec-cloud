@@ -33,7 +33,8 @@
             "logout": "Déconnexion",
             "help": "Aide et commentaires",
             "myDevices": "Mes appareils",
-            "logoutConfirm": "Êtes-vous sûr(e) de vouloir vous déconnecter ?",
+            "myContactDetails": "Mes coordonnées",
+            "logoutConfirm": "Êtes-vous sur(e) de vouloir vous déconnecter ?",
             "logoutFailed": "Impossible de se déconnecter."
         },
         "organizationList": {
@@ -192,7 +193,8 @@
             "organization": {
                 "storage": "Stockage",
                 "information": "Informations"
-            }
+            },
+            "myContactDetails": "Mes coordonnées"
         },
         "previous": "Précédent"
     },
@@ -526,6 +528,8 @@
     },
     "Password": {
         "password": "Mot de passe",
+        "currentPassword": "Mot de passe actuel",
+        "newPassword": "Nouveau mot de passe",
         "confirmPassword": "Confirmer le mot de passe",
         "passwordInfo": "Votre mot de passe doit être sécurisé et vous devez le mémoriser. Nous vous conseillons de créer plusieurs appareils si possible et de partager les espaces de travail.",
         "passwordLevelLow": "Faible",
@@ -769,5 +773,17 @@
     },
     "Notification": {
         "nextButton": "Okay !"
+    },
+    "ContactDetailsPage": {
+        "title": "Mettre à jour votre mot de passe",
+        "avatarTitle": "Avatar",
+        "avatarUnavailable": "Non disponible",
+        "changePasswordButton": "Mettre à jour le mot de passe",
+        "errors": {
+            "failedToRetrieveInformation": "Impossible de récupérer les informations.",
+            "wrongPassword": "Mot de passe incorrect !",
+            "cannotChangePassword": "Impossible de changer le mot de passe."
+        },
+        "passwordUpdated": "Votre mot de passe a été mis à jour. Veillez à bien le retenir !"
     }
 }

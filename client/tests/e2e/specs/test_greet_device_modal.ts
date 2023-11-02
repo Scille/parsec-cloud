@@ -7,14 +7,14 @@ describe('Greet a new device', () => {
     cy.visitApp();
     cy.login('Boby', 'P@ssw0rd.');
     cy.get('#profile-button').click();
-    cy.get('.popover-viewport').find('ion-item').eq(1).click();
+    cy.get('.popover-viewport').contains('My devices').click();
   });
 
   afterEach(() => {
     cy.dropTestbed();
   });
 
-  it('Open greet user modal', () => {
+  it('Open greet device modal', () => {
     cy.get('.greet-organization-modal').should('not.exist');
     cy.get('.devices-container').find('ion-button').contains('Add').click();
     cy.get('.greet-organization-modal').should('exist');

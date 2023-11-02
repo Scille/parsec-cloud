@@ -5,7 +5,7 @@ describe('Display client devices', () => {
     cy.visitApp();
     cy.login('Boby', 'P@ssw0rd.');
     cy.get('#profile-button').click();
-    cy.get('.popover-viewport').find('ion-item').eq(1).click();
+    cy.get('.popover-viewport').contains('My devices').click();
   });
 
   afterEach(() => {

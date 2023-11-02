@@ -33,6 +33,7 @@
             "logout": "Log out",
             "help": "Help and feedback",
             "myDevices": "My devices",
+            "myContactDetails": "My contact details",
             "logoutConfirm": "Are you sure you want to log out?",
             "logoutFailed": "Could not log out."
         },
@@ -192,7 +193,8 @@
             "organization": {
                 "storage": "Storage",
                 "information": "Information"
-            }
+            },
+            "myContactDetails": "My contact details"
         },
         "previous": "Go back"
     },
@@ -526,6 +528,8 @@
     },
     "Password": {
         "password": "Password",
+        "currentPassword": "Current password",
+        "newPassword": "New password",
         "confirmPassword": "Confirm password",
         "passwordInfo": "Your password must be secure and you must remember it. We advise you to create several devices if possible and to share workspaces.",
         "passwordLevelLow": "Low",
@@ -769,5 +773,17 @@
     },
     "Notification": {
         "nextButton": "Okay!"
+    },
+    "ContactDetailsPage": {
+        "title": "Change your password",
+        "avatarTitle": "Avatar",
+        "avatarUnavailable": "Unavailable",
+        "changePasswordButton": "Change password",
+        "errors": {
+            "failedToRetrieveInformation": "Could not retrieve the information.",
+            "wrongPassword": "Wrong password!",
+            "cannotChangePassword": "Failed to change the password."
+        },
+        "passwordUpdated": "Your password has been updated. Make sure you remember it!"
     }
 }

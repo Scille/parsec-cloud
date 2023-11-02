@@ -76,6 +76,11 @@ const routes: Array<RouteRecordRaw> = [
             name: 'about',
             component: () => import('@/views/about/AboutPage.vue'),
           },
+          {
+            path: '/:handle(\\d+)/myContactDetails',
+            name: 'myContactDetails',
+            component: () => import('@/views/users/MyContactDetailsPage.vue'),
+          },
         ],
       },
     ],
