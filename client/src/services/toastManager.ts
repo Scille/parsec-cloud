@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { toastController } from '@ionic/vue';
-import { MsTheme } from '@/components/core/ms-types';
+import { MsReportTheme } from '@/components/core/ms-types';
 import {
   informationCircle,
   checkmarkCircle,
@@ -25,7 +25,7 @@ export class ToastManager {
     title?: string,
     icon?: string,
     message: string,
-    theme: MsTheme,
+    theme: MsReportTheme,
     confirmButtonLabel?: string,
     duration?: number,
   }): Promise<any> {
@@ -63,15 +63,15 @@ export class ToastManager {
     await this.toasts.at(0)?.present();
   }
 
-  private _getIcon(theme: MsTheme): string {
+  private _getIcon(theme: MsReportTheme): string {
     switch(theme) {
-      case MsTheme.Info:
+      case MsReportTheme.Info:
         return informationCircle;
-      case MsTheme.Success:
+      case MsReportTheme.Success:
         return checkmarkCircle;
-      case MsTheme.Warning:
+      case MsReportTheme.Warning:
         return warning;
-      case MsTheme.Error:
+      case MsReportTheme.Error:
         return closeCircle;
     }
     return '';

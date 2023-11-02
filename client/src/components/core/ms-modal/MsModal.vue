@@ -45,12 +45,12 @@
             </ion-title>
           </div>
           <template v-if="subtitle">
-            <ms-informative-text
+            <ms-report-text
               v-if="theme"
-              :theme="theme ?? MsTheme.Basic"
+              :theme="theme"
             >
               {{ subtitle }}
-            </ms-informative-text>
+            </ms-report-text>
             <ion-text
               class="ms-alert-modal-header__text body"
               v-else
@@ -106,7 +106,7 @@
 export interface MsModalConfig {
   title?: string,
   titleIcon?: string,
-  theme?: MsTheme,
+  theme?: MsReportTheme,
   subtitle?: string,
   closeButton?: {
     visible: boolean,
@@ -146,8 +146,8 @@ import {
   closeCircle,
 } from 'ionicons/icons';
 import { onMounted, ref, Ref } from 'vue';
-import { MsTheme, MsModalResult } from '@/components/core/ms-types';
-import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
+import { MsReportTheme, MsModalResult } from '@/components/core/ms-types';
+import MsReportText from '@/components/core/ms-text/MsReportText.vue';
 
 const modal: Ref<HTMLDivElement | null> = ref(null);
 const props = defineProps<MsModalConfig>();
@@ -173,13 +173,13 @@ async function confirm(): Promise<boolean> {
 function getTitleIcon(): string {
   if (props.theme) {
     switch(props.theme) {
-      case MsTheme.Info:
+      case MsReportTheme.Info:
         return informationCircle;
-      case MsTheme.Success:
+      case MsReportTheme.Success:
         return checkmarkCircle;
-      case MsTheme.Warning:
+      case MsReportTheme.Warning:
         return warning;
-      case MsTheme.Error:
+      case MsReportTheme.Error:
         return closeCircle;
     }
   }
