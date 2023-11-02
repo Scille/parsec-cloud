@@ -721,7 +721,7 @@
         "successMessage": "Votre nouvel appareil a été créé !",
         "errors": {
             "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que le lien d'invitation est correct et que vous êtes connecté(e) à internet.",
-            "unexpected": "Une erreur imprévue est survenue (raison: {reason}).",
+            "unexpected": "Une erreur imprévue est survenue (raison : {reason}).",
             "saveDeviceFailed": "Impossible de sauvegarder les informations. Veuillez réessayer.",
             "sendDeviceInfoFailed": "Échec de l'envoi des informations à l'hôte. Veuillez redémarrer le processus.",
             "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
