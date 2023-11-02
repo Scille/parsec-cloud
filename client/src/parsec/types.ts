@@ -49,6 +49,12 @@ export type {
   BackendAddr,
   BackendOrganizationFileLinkAddr,
   ParsedBackendAddrInvitationUser,
+  ParsedBackendAddrInvitationDevice,
+  ParsedBackendAddrPkiEnrollment,
+  ParsedBackendAddrOrganizationFileLink,
+  ParsedBackendAddrOrganizationBootstrap,
+  ParsedBackendAddrOrganization,
+  ParsedBackendAddrServer,
   ClientInfo,
   UserGreetInitialInfo,
   UserGreetInProgress1Info,
@@ -95,6 +101,7 @@ export {
   ClientStartWorkspaceErrorTag,
   WorkspaceFsOperationErrorTag,
   EntryStatTag as FileType,
+  ParsedBackendAddrTag,
 } from '@/plugins/libparsec';
 
 import type {

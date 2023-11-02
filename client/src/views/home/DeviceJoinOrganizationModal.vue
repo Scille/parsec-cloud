@@ -33,16 +33,15 @@
     >
       <ion-header class="modal-header">
         <ion-title
-          v-if="titles.get(pageStep)?.title !== ''"
           class="modal-header__title title-h2"
         >
-          {{ titles.get(pageStep)?.title }}
+          {{ getTitleAndSubtitle().title }}
         </ion-title>
         <ion-text
-          v-if="titles.get(pageStep)?.subtitle !== ''"
+          v-if="getTitleAndSubtitle().subtitle"
           class="modal-header__text body"
         >
-          {{ titles.get(pageStep)?.subtitle }}
+          {{ getTitleAndSubtitle().subtitle }}
         </ion-text>
       </ion-header>
       <!-- modal content: create component for each part-->
@@ -173,14 +172,13 @@ import { MsModalResult } from '@/components/core/ms-types';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
 import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
 import { asyncComputed } from '@/common/asyncComputed';
-import { DeviceClaim } from '@/parsec';
+import { DeviceClaim, parseBackendAddr, ParsedBackendAddrInvitationDevice, ParsedBackendAddrTag } from '@/parsec';
 import { Notification, NotificationCenter, NotificationLevel } from '@/services/notificationCenter';
 import { NotificationKey } from '@/common/injectionKeys';
 import { Validity, deviceNameValidator } from '@/common/validators';
 import { askQuestion, Answer } from '@/components/core/ms-modal/MsQuestionModal.vue';
 
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationCenter: NotificationCenter = inject(NotificationKey)!;
+const notificationCenter  = inject(NotificationKey) as NotificationCenter;
 
 enum DeviceJoinOrganizationStep {
   Information = 0,
@@ -195,7 +193,7 @@ const { t } = useI18n();
 const pageStep = ref(DeviceJoinOrganizationStep.Information);
 const deviceName = ref('');
 const passwordPage = ref();
-
+let backendAddr: ParsedBackendAddrInvitationDevice | null = null;
 const claimer = ref(new DeviceClaim());
 
 const props = defineProps<{
@@ -209,44 +207,62 @@ interface Title {
   subtitle?: string,
 }
 
-const titles = new Map<DeviceJoinOrganizationStep, Title>([[
-  DeviceJoinOrganizationStep.Information, {
-    title: t('ClaimDeviceModal.titles.claimDevice'),
-  }], [
-  DeviceJoinOrganizationStep.GetHostSasCode, {
-    title: t('ClaimDeviceModal.titles.getCode'),
-    subtitle: t('ClaimDeviceModal.subtitles.getCode'),
-  }], [
-  DeviceJoinOrganizationStep.ProvideGuestCode, {
-    title: t('ClaimDeviceModal.titles.provideCode'),
-    subtitle: t('ClaimDeviceModal.subtitles.provideCode'),
-  }], [
-  DeviceJoinOrganizationStep.Password, {
-    title: t('ClaimDeviceModal.titles.password'), subtitle: t('ClaimDeviceModal.subtitles.password'),
-  }], [
-  DeviceJoinOrganizationStep.Finish, {
-    title: t('ClaimDeviceModal.titles.done', { org: '' }),
-  }],
-]);
+function getTitleAndSubtitle(): Title {
+  switch (pageStep.value) {
+    case DeviceJoinOrganizationStep.Information: {
+      return {
+        title: t('ClaimDeviceModal.titles.claimDevice'),
+      };
+    }
+    case DeviceJoinOrganizationStep.GetHostSasCode: {
+      return {
+        title: t('ClaimDeviceModal.titles.getCode'),
+        subtitle: t('ClaimDeviceModal.subtitles.getCode'),
+      };
+    }
+    case DeviceJoinOrganizationStep.ProvideGuestCode: {
+      return {
+        title: t('ClaimDeviceModal.titles.provideCode'),
+        subtitle: t('ClaimDeviceModal.subtitles.provideCode'),
+      };
+    }
+    case DeviceJoinOrganizationStep.Password: {
+      return {
+        title: t('ClaimDeviceModal.titles.password'),
+        subtitle: t('ClaimDeviceModal.subtitles.password'),
+      };
+    }
+    case DeviceJoinOrganizationStep.Finish: {
+      return {
+        title: t('ClaimDeviceModal.titles.done', { org: backendAddr?.organizationId || '' }),
+      };
+    }
+  }
+}
 
 async function selectHostSas(selectedCode: string | null): Promise<void> {
-  if (selectedCode && selectedCode === claimer.value.correctSASCode) {
-    console.log('Good choice selected, next step');
+  if (!selectedCode) {
+    await showErrorAndRestart(t('ClaimDeviceModal.errors.noneCodeSelected'));
+    return;
+  }
+  if (selectedCode === claimer.value.correctSASCode) {
     const result = await claimer.value.signifyTrust();
     if (result.ok) {
       nextStep();
     } else {
-      console.log('Signify trust failed', result.error);
+      await showErrorAndRestart(t('ClaimDeviceModal.errors.unexpected'));
     }
   } else {
-    if (!selectedCode) {
-      console.log('None selected, back to beginning');
-    } else {
-      console.log('Invalid selected, back to beginning');
-    }
-    await claimer.value.abort();
-    pageStep.value = DeviceJoinOrganizationStep.Information;
+    await showErrorAndRestart(t('ClaimDeviceModal.errors.invalidCodeSelected'));
   }
+}
+
+async function showErrorAndRestart(message: string): Promise<void> {
+  notificationCenter.showToast(new Notification({
+    message: message,
+    level: NotificationLevel.Error,
+  }));
+  await restartProcess();
 }
 
 function getNextButtonText(): string {
@@ -304,15 +320,19 @@ async function nextStep(): Promise<void> {
       waitingForHost.value = false;
       const result = await claimer.value.finalize(passwordPage.value.password);
       if (!result.ok) {
-        console.log('Failed to finalize', result.error);
+        notificationCenter.showToast(new Notification({
+          message: t('ClaimDeviceModal.errors.saveDeviceFailed'),
+          level: NotificationLevel.Error,
+        }));
+        return;
       }
     } else {
-      console.log('Do claim failed', doClaimResult.error);
+      await showErrorAndRestart(t('ClaimDeviceModal.errors.sendDeviceInfoFailed'));
       return;
     }
   } else if (pageStep.value === DeviceJoinOrganizationStep.Finish) {
     const notification = new Notification({
-      message: t('JoinOrganization.successMessage'),
+      message: t('ClaimDeviceModal.successMessage'),
       level: NotificationLevel.Success,
     });
     notificationCenter.showToast(notification, {trace: true});
@@ -329,24 +349,54 @@ async function nextStep(): Promise<void> {
       waitingForHost.value = false;
       pageStep.value += 1;
     } else {
-      console.log('Wait peer trust failed', result.error);
+      await showErrorAndRestart(t('ClaimDeviceModal.errors.unexpected', {reason: result.error.tag}));
     }
   }
 }
 
-onMounted(async () => {
+async function startProcess(): Promise<void> {
+  pageStep.value = DeviceJoinOrganizationStep.Information;
+  deviceName.value = '';
+  waitingForHost.value = true;
+
   const retrieveResult = await claimer.value.retrieveInfo(props.invitationLink);
 
-  if (retrieveResult.ok) {
-    const waitResult = await claimer.value.initialWaitHost();
-    if (waitResult.ok) {
-      waitingForHost.value = false;
-    } else {
-      console.log('Wait host failed', waitResult.error);
-    }
-  } else {
-    console.log('Failed to retrieve info', retrieveResult.error);
+  if (!retrieveResult.ok) {
+    await notificationCenter.showModal(new Notification({
+      message: t('ClaimDeviceModal.errors.startFailed'),
+      level: NotificationLevel.Error,
+    }));
+    await cancelModal();
+    return;
   }
+
+  const waitResult = await claimer.value.initialWaitHost();
+  if (!waitResult.ok) {
+    await notificationCenter.showModal(new Notification({
+      message: t('ClaimDeviceModal.errors.startFailed'),
+      level: NotificationLevel.Error,
+    }));
+    await cancelModal();
+    return;
+  }
+
+  waitingForHost.value = false;
+}
+
+async function restartProcess(): Promise<void> {
+  if (pageStep.value !== DeviceJoinOrganizationStep.Information) {
+    await claimer.value.abort();
+  }
+  await startProcess();
+}
+
+onMounted(async () => {
+  const addrResult = await parseBackendAddr(props.invitationLink);
+
+  if (addrResult.ok && addrResult.value.tag === ParsedBackendAddrTag.InvitationDevice) {
+    backendAddr = addrResult.value as ParsedBackendAddrInvitationDevice;
+  }
+  await startProcess();
 });
 </script>
 

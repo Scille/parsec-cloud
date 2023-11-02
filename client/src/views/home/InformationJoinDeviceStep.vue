@@ -42,9 +42,6 @@
 
 <script setup lang="ts">
 import {
-  caretForward,
-} from 'ionicons/icons';
-import {
   IonText,
 } from '@ionic/vue';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
