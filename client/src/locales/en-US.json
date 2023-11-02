@@ -717,7 +717,16 @@
         "connected": "Connected",
         "deviceName": "Device name",
         "cancelConfirm": "Are you sure you want to cancel the process?",
-        "cancelConfirmSubtitle": "Information will not be saved, you will have to restart."
+        "cancelConfirmSubtitle": "Information will not be saved, you will have to restart.",
+        "successMessage": "Your new device has been successfully created!",
+        "errors": {
+            "startFailed": "Failed to start the process. Please make sure the link is correct and that you are connected to the internet.",
+            "unexpected": "An unexpected error occured (reason: {reason}).",
+            "saveDeviceFailed": "Failed to save the information, please try again.",
+            "sendDeviceInfoFailed": "Failed to send information to the host, please restart the process.",
+            "invalidCodeSelected": "You didn't select the right code. Please restart the process.",
+            "noneCodeSelected": "If you didn't see the right code, it could be a security concern. Please restart the process."
+        }
     },
     "Changelog": {
         "features": "Features",

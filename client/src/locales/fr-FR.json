@@ -717,7 +717,16 @@
         "connected": "Connecté",
         "deviceName": "Nom de l'appareil",
         "cancelConfirm": "Êtes-vous sûr(e) de vouloir annuler le processus ?",
-        "cancelConfirmSubtitle": "Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut."
+        "cancelConfirmSubtitle": "Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut.",
+        "successMessage": "Votre nouvel appareil a été créé !",
+        "errors": {
+            "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que le lien d'invitation est correct et que vous êtes connecté(e) à internet.",
+            "unexpected": "Une erreur imprévue est survenue (raison: {reason}).",
+            "saveDeviceFailed": "Impossible de sauvegarder les informations. Veuillez réessayer.",
+            "sendDeviceInfoFailed": "Échec de l'envoi des informations à l'hôte. Veuillez redémarrer le processus.",
+            "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
+            "noneCodeSelected": "Si aucun des codes proposés n'était le bon, il peut s'agir d'un soucis de sécurité. Veuillez redémarrer le processus."
+        }
     },
     "Changelog": {
         "features": "Fonctionnalités",
