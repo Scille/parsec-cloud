@@ -61,10 +61,16 @@ pub(crate) fn deserialize_with_armor<'a>(
         .ok_or(CryptoError::Decryption)?;
     let (algorithm, output_and_data) = data.split_at(index + 1);
 
-    if &algorithm[..index] != algo.as_bytes() {
+    let algorithm = &algorithm[..index];
+
+    if algorithm != algo.as_bytes() {
         return Err(CryptoError::Algorithm(
-            String::from_utf8_lossy(&algorithm[..index]).into(),
+            String::from_utf8_lossy(algorithm).into(),
         ));
+    }
+
+    if output_and_data.len() < key_size_bytes {
+        return Err(CryptoError::DataSize);
     }
 
     Ok(output_and_data.split_at(key_size_bytes))

@@ -8,8 +8,8 @@ use hex_literal::hex;
 use rstest::rstest;
 
 use libparsec_crypto::{
-    SequesterKeySize, SequesterPrivateKeyDer, SequesterPublicKeyDer, SequesterSigningKeyDer,
-    SequesterVerifyKeyDer,
+    CryptoError, SequesterKeySize, SequesterPrivateKeyDer, SequesterPublicKeyDer,
+    SequesterSigningKeyDer, SequesterVerifyKeyDer,
 };
 
 /// Generated with `openssl genrsa -out pkey-1024.pem 1024`
@@ -137,7 +137,8 @@ const PRIVATE_KEY_DER_2048: &[u8] = &hex!(
     "697d84ac2d7816d4083369bad1028180516f3699897d1c0c103813dbe3438a8f6a8a8ac0b8"
     "540f2f47f51ca3dc9d6b95d3ee2a86de1b6f51af94823e6be1715126f3b2406d96522396c0"
     "6625cdfcf6d4e82ef0ef111dc68969f008313249b63b0ef2921fe98eda58703765ededa3ed"
-    "357d390607623cb4329cddf9fe88a957cf49b16c7d14ec2a1e4737e027a526222a");
+    "357d390607623cb4329cddf9fe88a957cf49b16c7d14ec2a1e4737e027a526222a"
+);
 
 const PUBLIC_KEY_PEM_2048: &str = r#"-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApw1bGRmu4ruORNnfvibq
@@ -158,7 +159,8 @@ const PUBLIC_KEY_DER_2048: &[u8] = &hex!(
     "73f75643bea039784163bd4be7fecefa6f31ba0c08a5ec7caaf6a8f9a5601da42a18d1c937"
     "e081672b36fc6ccc3bfeb2a5b6e1cba9ebfce4a49ef734d08ed78900f29eaefb7dc89936ea"
     "8f21aed96be375e2b22b52cc8a6c211cf111f4b27db071d89e5571cf76f17765ab056c3e6d"
-    "349387a3ffd2a6538b13085d6001acecd11c8c43a65e4b24f2dd200897310203010001");
+    "349387a3ffd2a6538b13085d6001acecd11c8c43a65e4b24f2dd200897310203010001"
+);
 
 #[test]
 fn only_rsa_is_supported() {
@@ -360,4 +362,19 @@ fn verify_with_different_salt_len() {
             .expect("Cannot verify salt94"),
         data
     );
+}
+
+#[rstest]
+#[case::empty(b"", CryptoError::Decryption)]
+#[case::only_separator(b":", CryptoError::Algorithm("".into()))]
+#[case::no_signature(b"RSASSA-PSS-SHA256:", CryptoError::DataSize)]
+#[case::signature_too_small(b"RSASSA-PSS-SHA256:\0", CryptoError::DataSize)]
+#[case::missing_separator(b"RSASSA-PSS-SHA256", CryptoError::Decryption)]
+#[case::unknown_algorithm(b"ALGORITHM:", CryptoError::Algorithm("ALGORITHM".into()))]
+fn invalid_signature(#[case] signed: &[u8], #[case] err: CryptoError) {
+    let verify_key = SequesterVerifyKeyDer::try_from(PUBLIC_KEY_DER_1024).unwrap();
+
+    let e = verify_key.verify(signed).unwrap_err();
+
+    assert_eq!(e, err);
 }
