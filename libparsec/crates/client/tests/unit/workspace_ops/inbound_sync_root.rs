@@ -203,7 +203,7 @@ async fn non_placeholder(
             p_assert_eq!(req.timestamp, None);
             authenticated_cmds::latest::vlob_read::Rep::Ok {
                 author: "alice@dev2".parse().unwrap(),
-                certificate_index: env.get_last_realm_certificate_index(),
+                certificate_index: env.get_last_certificate_index(),
                 timestamp: wksp1_last_remote_manifest.timestamp,
                 version: wksp1_last_remote_manifest.version,
                 blob: wksp1_last_encrypted,
@@ -369,7 +369,7 @@ async fn placeholder(
             p_assert_eq!(req.timestamp, None);
             authenticated_cmds::latest::vlob_read::Rep::Ok {
                 author: "alice@dev2".parse().unwrap(),
-                certificate_index: env.get_last_realm_certificate_index(),
+                certificate_index: env.get_last_certificate_index(),
                 timestamp: wksp1_last_remote_manifest.timestamp,
                 version: wksp1_last_remote_manifest.version,
                 blob: wksp1_last_encrypted,

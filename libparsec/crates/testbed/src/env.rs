@@ -334,7 +334,7 @@ impl TestbedEnv {
             })
             .unwrap()
     }
-    pub fn get_last_realm_certificate_index(&self) -> IndexInt {
+    pub fn get_last_certificate_index(&self) -> IndexInt {
         self.template
             .certificates_rev()
             .map(|x| x.certificate_index)
