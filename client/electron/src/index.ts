@@ -69,7 +69,6 @@ if (!lock) {
         myCapacitorApp.getMainWindow().webContents.send('open-link', lastArg);
       }
     }
-
   });
 }
 
