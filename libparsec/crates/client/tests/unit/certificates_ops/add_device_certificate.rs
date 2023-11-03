@@ -13,11 +13,10 @@ async fn ok(env: &TestbedEnv) {
     let ops = certificates_ops_factory(env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
+    let certificates = env.get_certificates_signed();
 
     let switch = ops
-        .add_certificates_batch(&store, 0, [alice_signed, alice_dev1_signed].into_iter())
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap();
 
@@ -85,11 +84,10 @@ async fn invalid_timestamp(env: &TestbedEnv) {
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, old_alice_dev2_signed) = env.get_device_certificate("alice@dev2");
+    let certificates = env.get_certificates_signed();
 
     let err = ops
-        .add_certificates_batch(&store, 0, [alice_signed, old_alice_dev2_signed].into_iter())
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap_err();
 
@@ -133,17 +131,10 @@ async fn ok_non_root(env: &TestbedEnv) {
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, bob_signed) = env.get_user_certificate("bob");
-    let (_, bob_dev1_signed) = env.get_device_certificate("bob@dev1");
+    let certificates = env.get_certificates_signed();
 
     let switch = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [alice_signed, alice_dev1_signed, bob_signed, bob_dev1_signed].into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap();
 
@@ -166,29 +157,10 @@ async fn revoked(env: &TestbedEnv) {
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, bob_signed) = env.get_user_certificate("bob");
-    let (_, bob_dev1_signed) = env.get_device_certificate("bob@dev1");
-    let (_, mallory_signed) = env.get_user_certificate("mallory");
-    let (_, bob_revoked_signed) = env.get_revoked_certificate("bob");
-    let (_, mallory_dev2_signed) = env.get_device_certificate("mallory@dev2");
+    let certificates = env.get_certificates_signed();
 
     let err = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [
-                alice_signed,
-                alice_dev1_signed,
-                bob_signed,
-                bob_dev1_signed,
-                mallory_signed,
-                bob_revoked_signed,
-                mallory_dev2_signed,
-            ]
-            .into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap_err();
 
@@ -214,27 +186,10 @@ async fn not_admin(#[case] profile: UserProfile, env: &TestbedEnv) {
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, bob_signed) = env.get_user_certificate("bob");
-    let (_, bob_dev1_signed) = env.get_device_certificate("bob@dev1");
-    let (_, mallory_signed) = env.get_user_certificate("mallory");
-    let (_, mallory_dev2_signed) = env.get_device_certificate("mallory@dev2");
+    let certificates = env.get_certificates_signed();
 
     let err = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [
-                alice_signed,
-                alice_dev1_signed,
-                bob_signed,
-                bob_dev1_signed,
-                mallory_signed,
-                mallory_dev2_signed,
-            ]
-            .into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap_err();
 
@@ -256,16 +211,10 @@ async fn self_author(env: &TestbedEnv) {
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, alice_dev2_signed) = env.get_device_certificate("alice@dev2");
+    let certificates = env.get_certificates_signed();
 
     let switch = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [alice_signed, alice_dev1_signed, alice_dev2_signed].into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap();
 
