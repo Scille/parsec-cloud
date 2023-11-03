@@ -126,6 +126,31 @@ export class ElectronCapacitorApp {
     return false;
   }
 
+  hideMainWindow(): void {
+    if (process.platform === 'win32') {
+      this.MainWindow.hide();
+    } else {
+      this.MainWindow.minimize();
+    }
+  }
+
+  showMainWindow(): void {
+    if (process.platform === 'win32') {
+      this.MainWindow.show();
+    } else {
+      this.MainWindow.restore();
+    }
+    this.MainWindow.focus();
+  }
+
+  isMainWindowVisible(): boolean {
+    if (process.platform === 'win32') {
+      return this.MainWindow.isVisible();
+    } else {
+      return !this.MainWindow.isMinimized();
+    }
+  }
+
   async init(): Promise<void> {
     const icon = nativeImage.createFromPath(
       join(app.getAppPath(), 'assets', process.platform === 'win32' ? 'icon.ico' : 'icon.png')
@@ -166,44 +191,32 @@ export class ElectronCapacitorApp {
     });
 
     this.MainWindow.on('close', (event) => {
-      const tray = this.getTray();
-
-      if (tray) {
-        if (!this.forceClose) {
-          this.MainWindow.hide();
-          event.preventDefault();
-        }
-      } else {
-        if (!this.forceClose) {
-          this.MainWindow.webContents.send('close-request');
-          event.preventDefault();
-        }
+      if (this.forceClose) {
+        return;
       }
+
+      const tray = this.getTray();
+      if (tray) {
+        this.hideMainWindow();
+      } else {
+        this.MainWindow.webContents.send('close-request');
+      }
+      event.preventDefault();
     });
 
     // When the tray icon is enabled, setup the options.
     if (this.CapacitorFileConfig.electron?.trayIconAndMenuEnabled) {
       this.TrayIcon = new Tray(icon);
-      this.TrayIcon.on('double-click', () => {
-        if (this.MainWindow) {
-          if (this.MainWindow.isVisible()) {
-            this.MainWindow.hide();
-          } else {
-            this.MainWindow.show();
-            this.MainWindow.focus();
-          }
+
+      const trayToggleVisibility = () => {
+        if (this.isMainWindowVisible()) {
+          this.MainWindow.minimize();
+        } else {
+          this.showMainWindow();
         }
-      });
-      this.TrayIcon.on('click', () => {
-        if (this.MainWindow) {
-          if (this.MainWindow.isVisible()) {
-            this.MainWindow.hide();
-          } else {
-            this.MainWindow.show();
-            this.MainWindow.focus();
-          }
-        }
-      });
+      };
+
+      this.TrayIcon.on('double-click', trayToggleVisibility);
       this.TrayIcon.setToolTip(app.getName());
       this.TrayIcon.setContextMenu(Menu.buildFromTemplate(this.TrayMenuTemplate));
     }
