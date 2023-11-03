@@ -28,6 +28,7 @@ from parsec._parsec import (
     UserProfile,
     UserUpdateCertificate,
     VlobID,
+    InvitationToken,
 )
 
 def test_get_testbed_template(id: str) -> TestbedTemplateContent | None: ...
