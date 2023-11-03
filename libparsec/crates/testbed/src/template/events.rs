@@ -8,15 +8,11 @@ use libparsec_types::prelude::*;
 use super::crc_hash::CrcHash;
 use super::{utils, TestbedTemplate, TestbedTemplateBuilder};
 
+#[derive(Default)]
 enum TestbedEventCacheEntry<T> {
     Populated(T),
+    #[default]
     Stalled,
-}
-
-impl<T> Default for TestbedEventCacheEntry<T> {
-    fn default() -> Self {
-        Self::Stalled
-    }
 }
 
 impl<T> TestbedEventCacheEntry<T> {
@@ -424,10 +420,12 @@ impl TestbedEventBootstrapOrganization {
     ) -> Self {
         // 1) Consistency checks
 
-        assert!(
-            builder.events.is_empty(),
-            "Organization already bootstrapped !"
-        );
+        if builder.check_consistency {
+            assert!(
+                builder.events.is_empty(),
+                "Organization already bootstrapped !"
+            );
+        }
 
         // 2) Actual creation
 
@@ -606,16 +604,19 @@ impl TestbedEventNewSequesterService {
     pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
-        let is_sequestered = builder
-            .events
-            .iter()
-            .find_map(|e| match e {
-                TestbedEvent::BootstrapOrganization(x) => Some(x.sequester_authority.is_some()),
-                _ => None,
-            })
-            .unwrap_or(false);
-        assert!(is_sequestered, "Not a sequestered organization");
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+
+            let is_sequestered = builder
+                .events
+                .iter()
+                .find_map(|e| match e {
+                    TestbedEvent::BootstrapOrganization(x) => Some(x.sequester_authority.is_some()),
+                    _ => None,
+                })
+                .unwrap_or(false);
+            assert!(is_sequestered, "Not a sequestered organization");
+        }
 
         // 2) Actual creation
 
@@ -873,7 +874,9 @@ impl TestbedEventNewDevice {
     pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, user: UserID) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+        }
 
         let author = match utils::assert_user_exists_and_not_revoked(&builder.events, &user) {
             TestbedEvent::BootstrapOrganization(x) => &x.first_user_device_id,
@@ -881,7 +884,6 @@ impl TestbedEventNewDevice {
             _ => unreachable!(),
         }
         .clone();
-        utils::assert_user_exists_and_not_revoked(&builder.events, &user);
 
         let dev_index = builder.events.iter().fold(2, |c, e| match e {
             TestbedEvent::NewDevice(x) if x.device_id.user_id() == &user => c + 1,
@@ -960,8 +962,10 @@ impl TestbedEventUpdateUserProfile {
     ) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
-        utils::assert_user_exists_and_not_revoked(&builder.events, &user);
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            utils::assert_user_exists_and_not_revoked(&builder.events, &user);
+        }
 
         let author = utils::non_revoked_admins(&builder.events)
             .find(|author| author.user_id() != &user)
@@ -1014,8 +1018,10 @@ impl TestbedEventRevokeUser {
     pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, user: UserID) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
-        utils::assert_user_exists_and_not_revoked(&builder.events, &user);
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            utils::assert_user_exists_and_not_revoked(&builder.events, &user);
+        }
 
         let author = utils::non_revoked_admins(&builder.events)
             .find(|author| author.user_id() != &user)
@@ -1070,7 +1076,10 @@ impl TestbedEventNewRealm {
     pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, first_owner: UserID) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+        }
+
         let author = match utils::assert_user_exists_and_not_revoked(&builder.events, &first_owner)
         {
             TestbedEvent::BootstrapOrganization(x) => &x.first_user_device_id,
@@ -1156,7 +1165,11 @@ impl TestbedEventShareRealm {
         let user = user
             .try_into()
             .unwrap_or_else(|_| panic!("Invalid UserID !"));
-        utils::assert_organization_bootstrapped(&builder.events);
+
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+        }
+
         let author = utils::non_revoked_realm_owners(&builder.events, realm)
             .find(|author| author.user_id() != &user)
             .expect("No author available (realm with a single owner ?)")
@@ -1274,7 +1287,10 @@ impl TestbedEventStartRealmReencryption {
     pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, realm: VlobID) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+        }
+
         let current_encryption_revision =
             utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
         let author = utils::non_revoked_realm_owners(&builder.events, realm)
@@ -1347,7 +1363,10 @@ impl TestbedEventFinishRealmReencryption {
     pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, realm: VlobID) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+        }
+
         let encryption_revision =
             utils::assert_realm_exists_and_under_reencryption(&builder.events, &realm);
         let author = utils::non_revoked_realm_owners(&builder.events, realm)
@@ -1397,9 +1416,6 @@ impl CrcHash for TestbedEventCreateOrUpdateUserManifestVlob {
 
 impl TestbedEventCreateOrUpdateUserManifestVlob {
     pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, user: UserID) -> Self {
-        // 1) Consistency checks
-
-        utils::assert_organization_bootstrapped(&builder.events);
         let (author, id) = builder
             .events
             .iter()
@@ -1415,8 +1431,14 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
                 _ => None,
             })
             .expect("User doesn't exist");
-        utils::assert_realm_exists_and_not_under_reencryption(&builder.events, id);
-        utils::assert_realm_member_has_write_access(&builder.events, id, &user);
+
+        // 1) Consistency checks
+
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            utils::assert_realm_exists_and_not_under_reencryption(&builder.events, id);
+            utils::assert_realm_member_has_write_access(&builder.events, id, &user);
+        }
 
         // 2) Actual creation
 
@@ -1525,10 +1547,12 @@ impl TestbedEventCreateOrUpdateWorkspaceManifestVlob {
     ) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
-        utils::assert_device_exists_and_not_revoked(&builder.events, &author);
-        utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
-        utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            utils::assert_device_exists_and_not_revoked(&builder.events, &author);
+            utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
+            utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
+        }
 
         // 2) Actual creation
 
@@ -1648,10 +1672,12 @@ impl TestbedEventCreateOrUpdateFolderManifestVlob {
 
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
-        utils::assert_device_exists_and_not_revoked(&builder.events, &author);
-        utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
-        utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            utils::assert_device_exists_and_not_revoked(&builder.events, &author);
+            utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
+            utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
+        }
 
         // 2) Actual creation
 
@@ -1781,10 +1807,12 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
 
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
-        utils::assert_device_exists_and_not_revoked(&builder.events, &author);
-        utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
-        utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            utils::assert_device_exists_and_not_revoked(&builder.events, &author);
+            utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
+            utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
+        }
 
         // 2) Actual creation
 
@@ -1948,10 +1976,12 @@ impl TestbedEventCreateBlock {
     ) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
-        utils::assert_device_exists_and_not_revoked(&builder.events, &author);
-        utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
-        utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            utils::assert_device_exists_and_not_revoked(&builder.events, &author);
+            utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
+            utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
+        }
 
         // 2) Actual creation
 
@@ -2005,10 +2035,12 @@ impl TestbedEventCreateOpaqueBlock {
     ) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
-        utils::assert_device_exists_and_not_revoked(&builder.events, &author);
-        utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
-        utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            utils::assert_device_exists_and_not_revoked(&builder.events, &author);
+            utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
+            utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
+        }
 
         // 2) Actual creation
 
@@ -2036,10 +2068,12 @@ impl TestbedEventCertificatesStorageFetchCertificates {
     pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, device: DeviceID) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
-        // We don't care that the user is revoked here given we don't modify
-        // anything in the server
-        utils::assert_device_exists(&builder.events, &device);
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            // We don't care that the user is revoked here given we don't modify
+            // anything in the server
+            utils::assert_device_exists(&builder.events, &device);
+        }
 
         // 2) Actual creation
 
@@ -2120,10 +2154,12 @@ impl TestbedEventUserStorageFetchRealmCheckpoint {
     pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, device: DeviceID) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
-        // We don't care that the user is revoked here given we don't modify
-        // anything in the server
-        utils::assert_device_exists(&builder.events, &device);
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            // We don't care that the user is revoked here given we don't modify
+            // anything in the server
+            utils::assert_device_exists(&builder.events, &device);
+        }
 
         let user_realm_id = builder
             .events
@@ -2186,10 +2222,12 @@ impl TestbedEventUserStorageLocalUpdate {
     pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, device: DeviceID) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
-        // We don't care that the user is revoked here given we don't modify
-        // anything in the server
-        utils::assert_device_exists(&builder.events, &device);
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            // We don't care that the user is revoked here given we don't modify
+            // anything in the server
+            utils::assert_device_exists(&builder.events, &device);
+        }
 
         let timestamp = builder.counters.next_timestamp();
 
@@ -2273,12 +2311,14 @@ impl TestbedEventWorkspaceDataStorageFetchWorkspaceVlob {
     ) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
-        // We don't care that the user is revoked here given we don't modify
-        // anything in the server
-        utils::assert_device_exists(&builder.events, &device);
-        utils::assert_realm_exists(&builder.events, realm);
-        utils::assert_realm_member_has_read_access(&builder.events, realm, device.user_id());
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            // We don't care that the user is revoked here given we don't modify
+            // anything in the server
+            utils::assert_device_exists(&builder.events, &device);
+            utils::assert_realm_exists(&builder.events, realm);
+            utils::assert_realm_member_has_read_access(&builder.events, realm, device.user_id());
+        }
 
         let local_manifest = builder.events.iter().rev().find_map(|e| match e {
             TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(x)
@@ -2328,12 +2368,14 @@ impl TestbedEventWorkspaceDataStorageFetchFolderVlob {
     ) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
-        // We don't care that the user is revoked here given we don't modify
-        // anything in the server
-        utils::assert_device_exists(&builder.events, &device);
-        utils::assert_realm_exists(&builder.events, realm);
-        utils::assert_realm_member_has_read_access(&builder.events, realm, device.user_id());
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            // We don't care that the user is revoked here given we don't modify
+            // anything in the server
+            utils::assert_device_exists(&builder.events, &device);
+            utils::assert_realm_exists(&builder.events, realm);
+            utils::assert_realm_member_has_read_access(&builder.events, realm, device.user_id());
+        }
 
         let local_manifest = builder.events.iter().rev().find_map(|e| match e {
             TestbedEvent::CreateOrUpdateFolderManifestVlob(x)
@@ -2386,12 +2428,14 @@ impl TestbedEventWorkspaceDataStorageFetchFileVlob {
     ) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
-        // We don't care that the user is revoked here given we don't modify
-        // anything in the server
-        utils::assert_device_exists(&builder.events, &device);
-        utils::assert_realm_exists(&builder.events, realm);
-        utils::assert_realm_member_has_read_access(&builder.events, realm, device.user_id());
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            // We don't care that the user is revoked here given we don't modify
+            // anything in the server
+            utils::assert_device_exists(&builder.events, &device);
+            utils::assert_realm_exists(&builder.events, realm);
+            utils::assert_realm_member_has_read_access(&builder.events, realm, device.user_id());
+        }
 
         let local_manifest = builder.events.iter().rev().find_map(|e| match e {
             TestbedEvent::CreateOrUpdateFileManifestVlob(x)
@@ -2443,12 +2487,14 @@ impl TestbedEventWorkspaceDataStorageFetchRealmCheckpoint {
     ) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
-        // We don't care that the user is revoked here given we don't modify
-        // anything in the server
-        utils::assert_device_exists(&builder.events, &device);
-        utils::assert_realm_exists(&builder.events, realm);
-        utils::assert_realm_member_has_read_access(&builder.events, realm, device.user_id());
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            // We don't care that the user is revoked here given we don't modify
+            // anything in the server
+            utils::assert_device_exists(&builder.events, &device);
+            utils::assert_realm_exists(&builder.events, realm);
+            utils::assert_realm_member_has_read_access(&builder.events, realm, device.user_id());
+        }
 
         let mut changed_vlobs = vec![];
         let mut insert_change = |id, version| {
@@ -2515,12 +2561,14 @@ impl TestbedEventWorkspaceCacheStorageFetchBlock {
     ) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
-        // We don't care that the user is revoked here given we don't modify
-        // anything in the server
-        utils::assert_device_exists(&builder.events, &device);
-        utils::assert_realm_exists(&builder.events, realm);
-        utils::assert_realm_member_has_read_access(&builder.events, realm, device.user_id());
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            // We don't care that the user is revoked here given we don't modify
+            // anything in the server
+            utils::assert_device_exists(&builder.events, &device);
+            utils::assert_realm_exists(&builder.events, realm);
+            utils::assert_realm_member_has_read_access(&builder.events, realm, device.user_id());
+        }
 
         let cleartext = builder.events.iter().rev().find_map(|e| match e {
             TestbedEvent::CreateOpaqueBlock(x) if x.realm == realm && x.block_id == block => {
@@ -2565,12 +2613,14 @@ impl TestbedEventWorkspaceDataStorageLocalWorkspaceManifestUpdate {
     ) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
-        // We don't care that the user is revoked here given we don't modify
-        // anything in the server
-        utils::assert_device_exists(&builder.events, &device);
-        utils::assert_realm_exists(&builder.events, realm);
-        // Changes are in local, so no need to check for realm read/write access
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            // We don't care that the user is revoked here given we don't modify
+            // anything in the server
+            utils::assert_device_exists(&builder.events, &device);
+            utils::assert_realm_exists(&builder.events, realm);
+            // Changes are in local, so no need to check for realm read/write access
+        }
 
         let timestamp = builder.counters.next_timestamp();
 
@@ -2643,12 +2693,14 @@ impl TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdate {
     ) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
-        // We don't care that the user is revoked here given we don't modify
-        // anything in the server
-        utils::assert_device_exists(&builder.events, &device);
-        utils::assert_realm_exists(&builder.events, realm);
-        // Changes are in local, so no need to check for realm read/write access
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            // We don't care that the user is revoked here given we don't modify
+            // anything in the server
+            utils::assert_device_exists(&builder.events, &device);
+            utils::assert_realm_exists(&builder.events, realm);
+            // Changes are in local, so no need to check for realm read/write access
+        }
 
         let timestamp = builder.counters.next_timestamp();
 
@@ -2732,12 +2784,14 @@ impl TestbedEventWorkspaceDataStorageLocalFileManifestCreateOrUpdate {
     ) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
-        // We don't care that the user is revoked here given we don't modify
-        // anything in the server
-        utils::assert_device_exists(&builder.events, &device);
-        utils::assert_realm_exists(&builder.events, realm);
-        // Changes are in local, so no need to check for realm read/write access
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            // We don't care that the user is revoked here given we don't modify
+            // anything in the server
+            utils::assert_device_exists(&builder.events, &device);
+            utils::assert_realm_exists(&builder.events, realm);
+            // Changes are in local, so no need to check for realm read/write access
+        }
 
         let timestamp = builder.counters.next_timestamp();
 

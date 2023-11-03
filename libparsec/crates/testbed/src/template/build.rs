@@ -185,6 +185,7 @@ pub struct TestbedTemplateBuilder {
     // Stuff is useful store provide arbitrary things (e.g. IDs) from the template to the test
     pub stuff: Vec<(&'static str, &'static (dyn std::any::Any + Send + Sync))>,
     pub(super) counters: TestbedTemplateBuilderCounters,
+    pub(super) check_consistency: bool,
 }
 
 pub(super) fn get_stuff<T>(
@@ -214,6 +215,7 @@ impl TestbedTemplateBuilder {
             events: vec![],
             stuff: vec![],
             counters: TestbedTemplateBuilderCounters::default(),
+            check_consistency: true,
         }
     }
 
@@ -228,7 +230,15 @@ impl TestbedTemplateBuilder {
             events: template.events.clone(),
             stuff: template.stuff.clone(),
             counters: template.build_counters.clone(),
+            check_consistency: true,
         }
+    }
+
+    pub fn with_check_consistency_disabled<T>(&mut self, cb: impl FnOnce(&mut Self) -> T) -> T {
+        self.check_consistency = false;
+        let ret = cb(self);
+        self.check_consistency = true;
+        ret
     }
 
     pub fn store_stuff(
