@@ -242,13 +242,20 @@ impl TestbedEnv {
     /// Be careful env is going to be duplicated under the hood to apply the customization.
     /// Hence only the last call of `customize` with be taken into account.
     pub fn customize(&self, cb: impl FnOnce(&mut TestbedTemplateBuilder)) -> Arc<TestbedEnv> {
+        self.customize_with_map(cb).0
+    }
+
+    pub fn customize_with_map<T>(
+        &self,
+        cb: impl FnOnce(&mut TestbedTemplateBuilder) -> T,
+    ) -> (Arc<TestbedEnv>, T) {
         let allow_server_side_events = matches!(self.kind, TestbedKind::ClientOnly);
         let mut builder = TestbedTemplateBuilder::new_from_template(
             "custom",
             &self.template,
             allow_server_side_events,
         );
-        cb(&mut builder);
+        let ret = cb(&mut builder);
 
         // Retrieve current testbed env in the global store...
         let mut envs = TESTBED_ENVS.lock().expect("Mutex is poisoned");
@@ -264,7 +271,7 @@ impl TestbedEnv {
         );
         Arc::make_mut(env).template = builder.finalize();
 
-        (*env).clone()
+        ((*env).clone(), ret)
     }
 
     pub fn organization_addr(&self) -> Arc<BackendOrganizationAddr> {
