@@ -140,7 +140,7 @@ pub(super) fn assert_realm_member_has_write_access(
     realm: VlobID,
     user: &UserID,
 ) {
-    let has_read_access = events
+    let has_write_access = events
         .iter()
         .rev()
         .find_map(move |e| match e {
@@ -155,8 +155,8 @@ pub(super) fn assert_realm_member_has_write_access(
         })
         .unwrap_or(false);
 
-    if !has_read_access {
-        panic!("User {} has no read access to realm {}", user, realm);
+    if !has_write_access {
+        panic!("User {} has no write access to realm {}", user, realm);
     }
 }
 
