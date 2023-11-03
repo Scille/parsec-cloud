@@ -17,23 +17,10 @@ async fn ok(env: &TestbedEnv) {
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, bob_signed) = env.get_user_certificate("bob");
-    let (_, bob_user_update_signed) = env.get_last_user_update_certificate("bob");
+    let certificates = env.get_certificates_signed();
 
     let switch = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [
-                alice_signed,
-                alice_dev1_signed,
-                bob_signed,
-                bob_user_update_signed,
-            ]
-            .into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap();
 
@@ -121,15 +108,10 @@ async fn invalid_timestamp(env: &TestbedEnv) {
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, old_bob_user_update_signed) = env.get_last_user_update_certificate("bob");
+    let certificates = env.get_certificates_signed();
 
     let err = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [alice_signed, old_bob_user_update_signed].into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap_err();
 
@@ -139,7 +121,7 @@ async fn invalid_timestamp(env: &TestbedEnv) {
             last_certificate_timestamp,
             ..
         })
-        if last_certificate_timestamp == DateTime::from_ymd_hms_us(2000, 1, 2, 0, 0, 0, 0).unwrap()
+        if last_certificate_timestamp == DateTime::from_ymd_hms_us(2000, 1, 3, 0, 0, 0, 0).unwrap()
     );
 }
 
@@ -176,23 +158,10 @@ async fn same_profile(env: &TestbedEnv) {
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, bob_signed) = env.get_user_certificate("bob");
-    let (_, bob_user_update_signed) = env.get_last_user_update_certificate("bob");
+    let certificates = env.get_certificates_signed();
 
     let err = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [
-                alice_signed,
-                alice_dev1_signed,
-                bob_signed,
-                bob_user_update_signed,
-            ]
-            .into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap_err();
 
@@ -215,30 +184,10 @@ async fn owner_of_realm_not_shared_to_outsider_is_ok(env: &TestbedEnv) {
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, bob_signed) = env.get_user_certificate("bob");
-    let (_, bob_dev1_signed) = env.get_device_certificate("bob@dev1");
-    let (_, bob_realm_role_signed) = env.get_last_realm_role_certificate(
-        "bob",
-        VlobID::from_hex("f0000000-0000-0000-0000-000000000002").unwrap(),
-    );
-    let (_, bob_user_update_signed) = env.get_last_user_update_certificate("bob");
+    let certificates = env.get_certificates_signed();
 
     let switch = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [
-                alice_signed,
-                alice_dev1_signed,
-                bob_signed,
-                bob_dev1_signed,
-                bob_realm_role_signed,
-                bob_user_update_signed,
-            ]
-            .into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap();
 
@@ -258,35 +207,10 @@ async fn owner_of_realm_shared_to_outsider_error(env: &TestbedEnv) {
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, bob_signed) = env.get_user_certificate("bob");
-    let (_, bob_dev1_signed) = env.get_device_certificate("bob@dev1");
-    let (_, bob_realm_role_signed) = env.get_last_realm_role_certificate(
-        "bob",
-        VlobID::from_hex("f0000000-0000-0000-0000-000000000002").unwrap(),
-    );
-    let (_, alice_realm_role_signed) = env.get_last_realm_role_certificate(
-        "alice",
-        VlobID::from_hex("f0000000-0000-0000-0000-000000000002").unwrap(),
-    );
-    let (_, bob_user_update_signed) = env.get_last_user_update_certificate("bob");
+    let certificates = env.get_certificates_signed();
 
     let err = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [
-                alice_signed,
-                alice_dev1_signed,
-                bob_signed,
-                bob_dev1_signed,
-                bob_realm_role_signed,
-                alice_realm_role_signed,
-                bob_user_update_signed,
-            ]
-            .into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap_err();
 
@@ -311,33 +235,10 @@ async fn manager_of_realm_to_outsider_error(env: &TestbedEnv) {
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, bob_signed) = env.get_user_certificate("bob");
-    let (_, alice_realm_role_signed) = env.get_last_realm_role_certificate(
-        "alice",
-        VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap(),
-    );
-    let (_, bob_realm_role_signed) = env.get_last_realm_role_certificate(
-        "bob",
-        VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap(),
-    );
-    let (_, bob_user_update_signed) = env.get_last_user_update_certificate("bob");
+    let certificates = env.get_certificates_signed();
 
     let err = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [
-                alice_signed,
-                alice_dev1_signed,
-                bob_signed,
-                alice_realm_role_signed,
-                bob_realm_role_signed,
-                bob_user_update_signed,
-            ]
-            .into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap_err();
 
@@ -364,33 +265,10 @@ async fn contributor_of_realm_to_outsider_is_ok(#[case] role: RealmRole, env: &T
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, bob_signed) = env.get_user_certificate("bob");
-    let (_, alice_realm_role_signed) = env.get_last_realm_role_certificate(
-        "alice",
-        VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap(),
-    );
-    let (_, bob_realm_role_signed) = env.get_last_realm_role_certificate(
-        "bob",
-        VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap(),
-    );
-    let (_, bob_user_update_signed) = env.get_last_user_update_certificate("bob");
+    let certificates = env.get_certificates_signed();
 
     let switch = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [
-                alice_signed,
-                alice_dev1_signed,
-                bob_signed,
-                alice_realm_role_signed,
-                bob_realm_role_signed,
-                bob_user_update_signed,
-            ]
-            .into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap();
 
@@ -413,27 +291,10 @@ async fn revoked(env: &TestbedEnv) {
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, bob_signed) = env.get_user_certificate("bob");
-    let (_, bob_dev1_signed) = env.get_device_certificate("bob@dev1");
-    let (_, bob_revoked_signed) = env.get_revoked_certificate("bob");
-    let (_, mallory_user_update_signed) = env.get_last_user_update_certificate("mallory");
+    let certificates = env.get_certificates_signed();
 
     let err = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [
-                alice_signed,
-                alice_dev1_signed,
-                bob_signed,
-                bob_dev1_signed,
-                bob_revoked_signed,
-                mallory_user_update_signed,
-            ]
-            .into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap_err();
 
@@ -461,25 +322,10 @@ async fn not_admin(#[case] profile: UserProfile, env: &TestbedEnv) {
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, bob_signed) = env.get_user_certificate("bob");
-    let (_, bob_dev1_signed) = env.get_device_certificate("bob@dev1");
-    let (_, mallory_user_update_signed) = env.get_last_user_update_certificate("mallory");
+    let certificates = env.get_certificates_signed();
 
     let err = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [
-                alice_signed,
-                alice_dev1_signed,
-                bob_signed,
-                bob_dev1_signed,
-                mallory_user_update_signed,
-            ]
-            .into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap_err();
 
@@ -502,25 +348,10 @@ async fn self_author(env: &TestbedEnv) {
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, bob_signed) = env.get_user_certificate("bob");
-    let (_, bob_dev1_signed) = env.get_device_certificate("bob@dev1");
-    let (_, bob_user_update_signed) = env.get_last_user_update_certificate("bob");
+    let certificates = env.get_certificates_signed();
 
     let err = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [
-                alice_signed,
-                alice_dev1_signed,
-                bob_signed,
-                bob_dev1_signed,
-                bob_user_update_signed,
-            ]
-            .into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap_err();
 

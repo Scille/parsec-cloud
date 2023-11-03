@@ -416,6 +416,10 @@ impl TestbedEnv {
             })
             .unwrap()
     }
+
+    pub fn get_certificates_signed(&self) -> impl Iterator<Item = Bytes> + '_ {
+        self.template.certificates().map(|e| e.signed)
+    }
 }
 
 /// `test_new_testbed` should be called when a test starts (and be followed
