@@ -9,26 +9,17 @@ use super::utils::certificates_ops_factory;
 
 #[parsec_test(testbed = "minimal")]
 async fn ok(env: &TestbedEnv) {
-    let vlob_id = VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap();
     let env = env.customize(|builder| {
-        builder
-            .new_user_realm("alice")
-            .customize(|event| event.realm_id = vlob_id);
+        builder.new_user_realm("alice");
     });
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, alice_realm_role_signed) = env.get_last_realm_role_certificate("alice", vlob_id);
+    let certificates = env.get_certificates_signed();
 
     let switch = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [alice_signed, alice_dev1_signed, alice_realm_role_signed].into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap();
 
@@ -37,19 +28,15 @@ async fn ok(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn content_already_exists(env: &TestbedEnv) {
-    let vlob_id = VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap();
-    let env = env.customize(|builder| {
-        builder
-            .new_user_realm("alice")
-            .customize(|event| event.realm_id = vlob_id);
-    });
+    let (env, realm_id) =
+        env.customize_with_map(|builder| builder.new_user_realm("alice").map(|e| e.realm_id));
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
     let (_, alice_signed) = env.get_user_certificate("alice");
     let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, alice_realm_role_signed) = env.get_last_realm_role_certificate("alice", vlob_id);
+    let (_, alice_realm_role_signed) = env.get_last_realm_role_certificate("alice", realm_id);
 
     let err = ops
         .add_certificates_batch(
@@ -76,12 +63,8 @@ async fn content_already_exists(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn index_already_exists(env: &TestbedEnv) {
-    let vlob_id = VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap();
-    let env = env.customize(|builder| {
-        builder
-            .new_user_realm("alice")
-            .customize(|event| event.realm_id = vlob_id);
-    });
+    let (env, vlob_id) =
+        env.customize_with_map(|builder| builder.new_user_realm("alice").map(|e| e.realm_id));
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
 
@@ -106,10 +89,8 @@ async fn index_already_exists(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn invalid_timestamp(env: &TestbedEnv) {
-    let vlob_id = VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap();
     let env = env.customize(|builder| {
         builder.new_user_realm("alice").customize(|event| {
-            event.realm_id = vlob_id;
             event.timestamp = DateTime::from_ymd_hms_us(1999, 1, 1, 0, 0, 0, 0).unwrap()
         });
     });
@@ -117,16 +98,10 @@ async fn invalid_timestamp(env: &TestbedEnv) {
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, old_alice_realm_role_signed) = env.get_last_realm_role_certificate("alice", vlob_id);
+    let certificates = env.get_certificates_signed();
 
     let err = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [alice_signed, alice_dev1_signed, old_alice_realm_role_signed].into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap_err();
 
@@ -142,17 +117,13 @@ async fn invalid_timestamp(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn non_existing_author(env: &TestbedEnv) {
-    let vlob_id = VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap();
-    let env = env.customize(|builder| {
-        builder
-            .new_user_realm("alice")
-            .customize(|event| event.realm_id = vlob_id);
-    });
+    let (env, realm_id) =
+        env.customize_with_map(|builder| builder.new_user_realm("alice").map(|e| e.realm_id));
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_realm_role_signed) = env.get_last_realm_role_certificate("alice", vlob_id);
+    let (_, alice_realm_role_signed) = env.get_last_realm_role_certificate("alice", realm_id);
 
     let err = ops
         .add_certificates_batch(&store, 0, [alice_realm_role_signed].into_iter())
@@ -167,43 +138,24 @@ async fn non_existing_author(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn revoked(env: &TestbedEnv) {
-    let vlob_id = VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap();
     let env = env.customize(|builder| {
         builder
             .new_user("bob")
             .with_initial_profile(UserProfile::Admin);
         builder.revoke_user("bob");
         builder
-            // we step over the checker
+            // TODO: check consistency can't be skipped
             .new_user_realm("alice")
-            .customize(|event| event.realm_id = vlob_id)
             .with_author("bob@dev1".try_into().unwrap());
     });
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, bob_signed) = env.get_user_certificate("bob");
-    let (_, bob_dev1_signed) = env.get_device_certificate("bob@dev1");
-    let (_, bob_revoked_signed) = env.get_revoked_certificate("bob");
-    let (_, bob_realm_role_signed) = env.get_last_realm_role_certificate("bob", vlob_id);
+    let certificates = env.get_certificates_signed();
 
     let err = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [
-                alice_signed,
-                alice_dev1_signed,
-                bob_signed,
-                bob_dev1_signed,
-                bob_revoked_signed,
-                bob_realm_role_signed,
-            ]
-            .into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap_err();
 
@@ -218,36 +170,18 @@ async fn revoked(env: &TestbedEnv) {
 #[case(UserProfile::Standard)]
 #[case(UserProfile::Outsider)]
 async fn not_admin(#[case] profile: UserProfile, env: &TestbedEnv) {
-    let vlob_id = VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap();
     let env = env.customize(|builder| {
         builder.new_user("bob").with_initial_profile(profile);
-        builder
-            .new_user_realm("bob")
-            .customize(|event| event.realm_id = vlob_id);
+        builder.new_user_realm("bob");
     });
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, bob_signed) = env.get_user_certificate("bob");
-    let (_, bob_dev1_signed) = env.get_device_certificate("bob@dev1");
-    let (_, bob_realm_role_signed) = env.get_last_realm_role_certificate("bob", vlob_id);
+    let certificates = env.get_certificates_signed();
 
     let switch = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [
-                alice_signed,
-                alice_dev1_signed,
-                bob_signed,
-                bob_dev1_signed,
-                bob_realm_role_signed,
-            ]
-            .into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap();
 
@@ -256,19 +190,15 @@ async fn not_admin(#[case] profile: UserProfile, env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn authored_by_root(env: &TestbedEnv) {
-    let vlob_id = VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap();
-    let env = env.customize(|builder| {
-        builder
-            .new_user_realm("alice")
-            .customize(|event| event.realm_id = vlob_id);
-    });
+    let (env, realm_id) =
+        env.customize_with_map(|builder| builder.new_user_realm("alice").map(|e| e.realm_id));
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
     let (_, alice_signed) = env.get_user_certificate("alice");
     let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (alice_realm_role_certif, _) = env.get_last_realm_role_certificate("alice", vlob_id);
+    let (alice_realm_role_certif, _) = env.get_last_realm_role_certificate("alice", realm_id);
 
     let mut alice_realm_role_certif_authored_by_root = (*alice_realm_role_certif).clone();
     alice_realm_role_certif_authored_by_root.author = CertificateSignerOwned::Root;
@@ -297,12 +227,9 @@ async fn authored_by_root(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn not_signed_by_self(env: &TestbedEnv) {
-    let vlob_id = VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap();
-    let env = env.customize(|builder| {
+    let (env, realm_id) = env.customize_with_map(|builder| {
         builder.new_user("bob");
-        builder
-            .new_user_realm("bob")
-            .customize(|event| event.realm_id = vlob_id);
+        builder.new_user_realm("bob").map(|e| e.realm_id)
     });
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
@@ -312,7 +239,7 @@ async fn not_signed_by_self(env: &TestbedEnv) {
     let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
     let (_, bob_signed) = env.get_user_certificate("bob");
     let (_, bob_dev1_signed) = env.get_device_certificate("bob@dev1");
-    let (bob_realm_role_certif, _) = env.get_last_realm_role_certificate("bob", vlob_id);
+    let (bob_realm_role_certif, _) = env.get_last_realm_role_certificate("bob", realm_id);
 
     let mut bob_realm_role_certif_authored_by_alice = (*bob_realm_role_certif).clone();
     bob_realm_role_certif_authored_by_alice.author =
@@ -350,19 +277,15 @@ async fn not_signed_by_self(env: &TestbedEnv) {
 #[case(Some(RealmRole::Reader))]
 #[case(None)]
 async fn not_signed_by_owner(#[case] role: Option<RealmRole>, env: &TestbedEnv) {
-    let vlob_id = VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap();
-    let env = env.customize(|builder| {
-        builder
-            .new_user_realm("alice")
-            .customize(|event| event.realm_id = vlob_id);
-    });
+    let (env, realm_id) =
+        env.customize_with_map(|builder| builder.new_user_realm("alice").map(|e| e.realm_id));
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
     let (_, alice_signed) = env.get_user_certificate("alice");
     let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (alice_realm_role_certif, _) = env.get_last_realm_role_certificate("alice", vlob_id);
+    let (alice_realm_role_certif, _) = env.get_last_realm_role_certificate("alice", realm_id);
 
     let mut alice_realm_role_certif = (*alice_realm_role_certif).clone();
     alice_realm_role_certif.role = role;
@@ -388,35 +311,18 @@ async fn not_signed_by_owner(#[case] role: Option<RealmRole>, env: &TestbedEnv) 
 
 #[parsec_test(testbed = "minimal")]
 async fn share_with_no_role(env: &TestbedEnv) {
-    let vlob_id = VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap();
     let env = env.customize(|builder| {
         builder.new_user("bob");
-        builder
-            .new_user_realm("alice")
-            .customize(|event| event.realm_id = vlob_id)
-            .then_share_with("bob", None);
+        builder.new_user_realm("alice").then_share_with("bob", None);
     });
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, alice_realm_role_signed) = env.get_last_realm_role_certificate("alice", vlob_id);
-    let (_, bob_realm_role_signed) = env.get_last_realm_role_certificate("bob", vlob_id);
+    let certificates = env.get_certificates_signed();
 
     let err = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [
-                alice_signed,
-                alice_dev1_signed,
-                alice_realm_role_signed,
-                bob_realm_role_signed,
-            ]
-            .into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap_err();
 
@@ -430,42 +336,22 @@ async fn share_with_no_role(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn same_realm_id(env: &TestbedEnv) {
-    let vlob_id = VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap();
     let env = env.customize(|builder| {
         builder.new_user("bob");
         builder.new_user("mallory");
-        builder
-            .new_user_realm("alice")
-            .customize(|event| event.realm_id = vlob_id);
+        let realm_id = builder.new_user_realm("alice").map(|e| e.realm_id);
         builder
             .new_user_realm("bob")
-            .customize(|event| event.realm_id = vlob_id);
+            .customize(|event| event.realm_id = realm_id);
     });
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, bob_signed) = env.get_user_certificate("bob");
-    let (_, bob_dev1_signed) = env.get_device_certificate("bob@dev1");
-    let (_, alice_realm_role_signed) = env.get_last_realm_role_certificate("alice", vlob_id);
-    let (_, bob_realm_role_signed) = env.get_last_realm_role_certificate("bob", vlob_id);
+    let certificates = env.get_certificates_signed();
 
     let err = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [
-                alice_signed,
-                alice_dev1_signed,
-                bob_signed,
-                bob_dev1_signed,
-                alice_realm_role_signed,
-                bob_realm_role_signed,
-            ]
-            .into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap_err();
 
@@ -481,41 +367,22 @@ async fn same_realm_id(env: &TestbedEnv) {
 #[case(RealmRole::Contributor)]
 #[case(RealmRole::Reader)]
 async fn share_realm_with_outsider(#[case] role: RealmRole, env: &TestbedEnv) {
-    let vlob_id = VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap();
     let env = env.customize(|builder| {
         builder
             .new_user("bob")
             .with_initial_profile(UserProfile::Outsider);
         builder
             .new_user_realm("alice")
-            .customize(|event| event.realm_id = vlob_id)
             .then_share_with("bob", Some(role));
     });
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, bob_signed) = env.get_user_certificate("bob");
-    let (_, bob_dev1_signed) = env.get_device_certificate("bob@dev1");
-    let (_, alice_realm_role_signed) = env.get_last_realm_role_certificate("alice", vlob_id);
-    let (_, bob_realm_role_signed) = env.get_last_realm_role_certificate("bob", vlob_id);
+    let certificates = env.get_certificates_signed();
 
     let switch = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [
-                alice_signed,
-                alice_dev1_signed,
-                bob_signed,
-                bob_dev1_signed,
-                alice_realm_role_signed,
-                bob_realm_role_signed,
-            ]
-            .into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap();
 
@@ -526,41 +393,22 @@ async fn share_realm_with_outsider(#[case] role: RealmRole, env: &TestbedEnv) {
 #[case(RealmRole::Owner)]
 #[case(RealmRole::Manager)]
 async fn share_realm_privileges_with_outsider(#[case] role: RealmRole, env: &TestbedEnv) {
-    let vlob_id = VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap();
     let env = env.customize(|builder| {
         builder
             .new_user("bob")
             .with_initial_profile(UserProfile::Outsider);
         builder
             .new_user_realm("alice")
-            .customize(|event| event.realm_id = vlob_id)
             .then_share_with("bob", Some(role));
     });
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, bob_signed) = env.get_user_certificate("bob");
-    let (_, bob_dev1_signed) = env.get_device_certificate("bob@dev1");
-    let (_, alice_realm_role_signed) = env.get_last_realm_role_certificate("alice", vlob_id);
-    let (_, bob_realm_role_signed) = env.get_last_realm_role_certificate("bob", vlob_id);
+    let certificates = env.get_certificates_signed();
 
     let err = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [
-                alice_signed,
-                alice_dev1_signed,
-                bob_signed,
-                bob_dev1_signed,
-                alice_realm_role_signed,
-                bob_realm_role_signed,
-            ]
-            .into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap_err();
 
@@ -578,42 +426,21 @@ async fn share_realm_privileges_with_outsider(#[case] role: RealmRole, env: &Tes
 #[case(RealmRole::Contributor)]
 #[case(RealmRole::Reader)]
 async fn owner_giving_role(#[case] role: RealmRole, env: &TestbedEnv) {
-    let vlob_id = VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap();
     let env = env.customize(|builder| {
         builder.new_user("bob");
         builder.new_user("mallory");
         builder
             .new_user_realm("alice")
-            .customize(|event| {
-                event.realm_id = vlob_id;
-            })
             .then_share_with("bob", Some(role));
     });
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, bob_signed) = env.get_user_certificate("bob");
-    let (_, bob_dev1_signed) = env.get_device_certificate("bob@dev1");
-    let (_, alice_realm_role_signed) = env.get_last_realm_role_certificate("alice", vlob_id);
-    let (_, bob_realm_role_signed) = env.get_last_realm_role_certificate("bob", vlob_id);
+    let certificates = env.get_certificates_signed();
 
     let switch = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [
-                alice_signed,
-                alice_dev1_signed,
-                bob_signed,
-                bob_dev1_signed,
-                alice_realm_role_signed,
-                bob_realm_role_signed,
-            ]
-            .into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap();
 
@@ -624,49 +451,23 @@ async fn owner_giving_role(#[case] role: RealmRole, env: &TestbedEnv) {
 #[case(RealmRole::Contributor)]
 #[case(RealmRole::Reader)]
 async fn manager_giving_role(#[case] role: RealmRole, env: &TestbedEnv) {
-    let vlob_id = VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap();
     let env = env.customize(|builder| {
         builder.new_user("bob");
         builder.new_user("mallory");
         builder
             .new_user_realm("alice")
-            .customize(|event| event.realm_id = vlob_id);
-        builder.share_realm(vlob_id, "bob", Some(RealmRole::Manager));
-        builder
-            .share_realm(vlob_id, "mallory", Some(role))
+            .then_share_with("bob", Some(RealmRole::Manager))
+            .then_also_share_with("mallory", Some(role))
             .with_author("bob@dev1".try_into().unwrap());
     });
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, bob_signed) = env.get_user_certificate("bob");
-    let (_, bob_dev1_signed) = env.get_device_certificate("bob@dev1");
-    let (_, mallory_signed) = env.get_user_certificate("mallory");
-    let (_, mallory_dev1_signed) = env.get_device_certificate("mallory@dev1");
-    let (_, alice_realm_role_signed) = env.get_last_realm_role_certificate("alice", vlob_id);
-    let (_, bob_realm_role_signed) = env.get_last_realm_role_certificate("bob", vlob_id);
-    let (_, mallory_realm_role_signed) = env.get_last_realm_role_certificate("mallory", vlob_id);
+    let certificates = env.get_certificates_signed();
 
     let switch = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [
-                alice_signed,
-                alice_dev1_signed,
-                bob_signed,
-                bob_dev1_signed,
-                mallory_signed,
-                mallory_dev1_signed,
-                alice_realm_role_signed,
-                bob_realm_role_signed,
-                mallory_realm_role_signed,
-            ]
-            .into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap();
 
@@ -677,49 +478,23 @@ async fn manager_giving_role(#[case] role: RealmRole, env: &TestbedEnv) {
 #[case(RealmRole::Owner)]
 #[case(RealmRole::Manager)]
 async fn manager_trying_to_give_admin_role(#[case] role: RealmRole, env: &TestbedEnv) {
-    let vlob_id = VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap();
     let env = env.customize(|builder| {
         builder.new_user("bob");
         builder.new_user("mallory");
         builder
             .new_user_realm("alice")
-            .customize(|event| event.realm_id = vlob_id);
-        builder.share_realm(vlob_id, "bob", Some(RealmRole::Manager));
-        builder
-            .share_realm(vlob_id, "mallory", Some(role))
+            .then_share_with("bob", Some(RealmRole::Manager))
+            .then_also_share_with("mallory", Some(role))
             .with_author("bob@dev1".try_into().unwrap());
     });
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, bob_signed) = env.get_user_certificate("bob");
-    let (_, bob_dev1_signed) = env.get_device_certificate("bob@dev1");
-    let (_, mallory_signed) = env.get_user_certificate("mallory");
-    let (_, mallory_dev1_signed) = env.get_device_certificate("mallory@dev1");
-    let (_, alice_realm_role_signed) = env.get_last_realm_role_certificate("alice", vlob_id);
-    let (_, bob_realm_role_signed) = env.get_last_realm_role_certificate("bob", vlob_id);
-    let (_, mallory_realm_role_signed) = env.get_last_realm_role_certificate("mallory", vlob_id);
+    let certificates = env.get_certificates_signed();
 
     let err = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [
-                alice_signed,
-                alice_dev1_signed,
-                bob_signed,
-                bob_dev1_signed,
-                mallory_signed,
-                mallory_dev1_signed,
-                alice_realm_role_signed,
-                bob_realm_role_signed,
-                mallory_realm_role_signed,
-            ]
-            .into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap_err();
 
@@ -741,49 +516,23 @@ async fn member_trying_to_give_role(
     #[case] claimer_role: RealmRole,
     env: &TestbedEnv,
 ) {
-    let vlob_id = VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap();
     let env = env.customize(|builder| {
         builder.new_user("bob");
         builder.new_user("mallory");
         builder
             .new_user_realm("alice")
-            .customize(|event| event.realm_id = vlob_id);
-        builder.share_realm(vlob_id, "bob", Some(greeter_role));
-        builder
-            .share_realm(vlob_id, "mallory", Some(claimer_role))
+            .then_share_with("bob", Some(greeter_role))
+            .then_also_share_with("mallory", Some(claimer_role))
             .with_author("bob@dev1".try_into().unwrap());
     });
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, alice_signed) = env.get_user_certificate("alice");
-    let (_, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
-    let (_, bob_signed) = env.get_user_certificate("bob");
-    let (_, bob_dev1_signed) = env.get_device_certificate("bob@dev1");
-    let (_, mallory_signed) = env.get_user_certificate("mallory");
-    let (_, mallory_dev1_signed) = env.get_device_certificate("mallory@dev1");
-    let (_, alice_realm_role_signed) = env.get_last_realm_role_certificate("alice", vlob_id);
-    let (_, bob_realm_role_signed) = env.get_last_realm_role_certificate("bob", vlob_id);
-    let (_, mallory_realm_role_signed) = env.get_last_realm_role_certificate("mallory", vlob_id);
+    let certificates = env.get_certificates_signed();
 
     let err = ops
-        .add_certificates_batch(
-            &store,
-            0,
-            [
-                alice_signed,
-                alice_dev1_signed,
-                bob_signed,
-                bob_dev1_signed,
-                mallory_signed,
-                mallory_dev1_signed,
-                alice_realm_role_signed,
-                bob_realm_role_signed,
-                mallory_realm_role_signed,
-            ]
-            .into_iter(),
-        )
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap_err();
 

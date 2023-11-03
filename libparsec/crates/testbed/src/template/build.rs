@@ -461,6 +461,7 @@ impl TestbedTemplateBuilder {
             .try_into()
             .unwrap_or_else(|_| panic!("Invalid value for param user"));
         let (realm_id, realm_key) =
+            // TODO: there is still a check consistency there
             match super::utils::assert_user_exists_and_not_revoked(&self.events, &user) {
                 TestbedEvent::BootstrapOrganization(x) => (
                     x.first_user_user_realm_id,
@@ -581,7 +582,7 @@ impl<'a> TestbedEventShareRealmBuilder<'a> {
 
     pub fn then_also_share_with(
         self,
-        user: UserID,
+        user: impl TryInto<UserID>,
         role: Option<RealmRole>,
     ) -> TestbedEventShareRealmBuilder<'a> {
         let realm = self.get_event().realm;

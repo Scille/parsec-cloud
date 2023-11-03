@@ -115,17 +115,14 @@ async fn add_revoked_user_certificate(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn add_realm_role_certificate(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
-        builder.new_user_realm("alice");
-    });
+    let (env, realm_id) =
+        env.customize_with_map(|builder| builder.new_user_realm("alice").map(|e| e.realm_id));
     let alice = env.local_device("alice@dev1");
     let store = certificates_store_factory(&env, &alice).await;
 
     let write = store.for_write().await;
-    let (alice_realm_role_certif, alice_realm_role_signed) = env.get_last_realm_role_certificate(
-        "alice",
-        VlobID::from_hex("f0000000-0000-0000-0000-000000000001").unwrap(),
-    );
+    let (alice_realm_role_certif, alice_realm_role_signed) =
+        env.get_last_realm_role_certificate("alice", realm_id);
     let alice_realm_role_certif = AnyArcCertificate::RealmRole(alice_realm_role_certif);
 
     // Check that certificate is absent
