@@ -7,8 +7,8 @@ use pyo3::{
 use std::sync::Arc;
 
 use crate::{
-    BlockID, DateTime, DeviceCertificate, DeviceID, DeviceLabel, HumanHandle, PrivateKey,
-    RealmRole, RealmRoleCertificate, RevokedUserCertificate, SecretKey,
+    BlockID, DateTime, DeviceCertificate, DeviceID, DeviceLabel, HumanHandle, InvitationToken,
+    PrivateKey, RealmRole, RealmRoleCertificate, RevokedUserCertificate, SecretKey,
     SequesterAuthorityCertificate, SequesterPrivateKeyDer, SequesterPublicKeyDer,
     SequesterServiceCertificate, SequesterServiceID, SequesterSigningKeyDer, SequesterVerifyKeyDer,
     SigningKey, UserCertificate, UserID, UserProfile, UserUpdateCertificate, VlobID,
@@ -211,6 +211,37 @@ event_wrapper!(
         Ok(format!(
             "timestamp={:?}, author={:?}, user={:?}",
             x.timestamp.0, x.author.0, x.user.0,
+        ))
+    }
+);
+
+event_wrapper!(
+    TestbedEventNewDeviceInvitation,
+    [
+        greeter_user_id: UserID,
+        created_on: DateTime,
+        token: InvitationToken,
+    ],
+    |_py, x: &TestbedEventNewDeviceInvitation| -> PyResult<String> {
+        Ok(format!(
+            "greeter_user_id={:?}, created_on={:?}, token={:?}",
+            x.greeter_user_id.0, x.created_on.0, x.token.0,
+        ))
+    }
+);
+
+event_wrapper!(
+    TestbedEventNewUserInvitation,
+    [
+        claimer_email: String,
+        greeter_user_id: UserID,
+        created_on: DateTime,
+        token: InvitationToken,
+    ],
+    |_py, x: &TestbedEventNewUserInvitation| -> PyResult<String> {
+        Ok(format!(
+            "claimer_email={:?}, greeter_user_id={:?}, created_on={:?}, token={:?}",
+            x.claimer_email, x.greeter_user_id.0, x.created_on.0, x.token.0,
         ))
     }
 );
@@ -590,6 +621,25 @@ fn event_to_pyobject(
                 raw_certificate,
                 raw_redacted_certificate,
                 certificate,
+            };
+            Some(obj.into_py(py))
+        }
+
+        libparsec_testbed::TestbedEvent::NewDeviceInvitation(x) => {
+            let obj = TestbedEventNewDeviceInvitation {
+                greeter_user_id: x.greeter_user_id.clone().into(),
+                created_on: x.created_on.into(),
+                token: x.token.clone().into(),
+            };
+            Some(obj.into_py(py))
+        }
+
+        libparsec_testbed::TestbedEvent::NewUserInvitation(x) => {
+            let obj = TestbedEventNewUserInvitation {
+                claimer_email: x.claimer_email.clone(),
+                greeter_user_id: x.greeter_user_id.clone().into(),
+                created_on: x.created_on.into(),
+                token: x.token.clone().into(),
             };
             Some(obj.into_py(py))
         }
