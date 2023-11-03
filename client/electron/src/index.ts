@@ -50,6 +50,29 @@ if (electronIsDev) {
   // autoUpdater.checkForUpdatesAndNotify();
 })();
 
+const lock = app.requestSingleInstanceLock();
+
+if (!lock) {
+  app.quit();
+} else {
+  app.on('second-instance', (_event, commandLine, _workingDirectory) => {
+    if (!myCapacitorApp.isMainWindowVisible()) {
+      myCapacitorApp.showMainWindow();
+    } else {
+      myCapacitorApp.getMainWindow().focus();
+    }
+
+    if (commandLine.length > 0) {
+      const lastArg = commandLine.at(-1);
+      // We're only interested in potential Parsec links
+      if (lastArg.startsWith('parsec://')) {
+        myCapacitorApp.getMainWindow().webContents.send('open-link', lastArg);
+      }
+    }
+
+  });
+}
+
 // Handle when all of our windows are close (platforms have their own expectations).
 app.on('window-all-closed', function () {
   // On OS X it is common for applications and their menu bar
