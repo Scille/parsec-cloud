@@ -5,8 +5,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import subprocess
 from pathlib import Path
-from typing import Callable
+from typing import Callable, cast
 
 BASEDIR = Path(__file__).parent.parent
 
@@ -365,25 +367,42 @@ if __name__ == "__main__":
         help="Path to protocol typing dir",
         default=BASEDIR / "server/parsec/_parsec_pyi/protocol",
     )
+    parser.add_argument(
+        "--skip-style",
+        action="store_true",
+        help="Don't run pre-commit on the output",
+    )
     args = parser.parse_args()
+    arg_output = cast(Path, args.output)
+    arg_input = cast(Path, args.input)
+    arg_skip_style = cast(bool, args.skip_style)
+    del args
+
+    print(f"1/3 Cleaning old .pyi in {arg_output}")
+
+    for to_remove in arg_output.glob("**/*.pyi"):
+        to_remove.unlink()
+
+    print(f"2/3 Generating .pyi files")
+
     # {<family>: {<version>: {<cmd>: [<collected items>]}}}
     collected_items: dict[str, dict[str, dict[str, list[str]]]] = {}
-    for family in args.input.iterdir():
-        family_name = family.name
+    for family_path in arg_input.iterdir():
+        family_name = family_path.name
         collected_items[family_name] = {}
-        for cmd in family.glob("*.json5"):
+        for cmd_path in family_path.glob("*.json5"):
             cmd_specs = json.loads(
                 "\n".join(
                     [
                         x
-                        for x in cmd.read_text(encoding="utf8").splitlines()
+                        for x in cmd_path.read_text(encoding="utf8").splitlines()
                         if not x.strip().startswith("//")
                     ]
                 )
             )
             for cmd_spec in cmd_specs:
                 gen_pyi_file_for_cmd_spec(
-                    args.output, family.name, cmd_spec, collected_items[family_name]
+                    arg_output, family_path.name, cmd_spec, collected_items[family_name]
                 )
 
     protocol_code = "from __future__ import annotations\n\n"
@@ -437,7 +456,7 @@ class ActiveUsersLimit:
         + ", ".join(f'"{f}"' for f in collected_items.keys())
         + "]\n"
     )
-    (args.output / "__init__.pyi").write_text(protocol_code, encoding="utf8")
+    (arg_output / "__init__.pyi").write_text(protocol_code, encoding="utf8")
 
     for family, versions in collected_items.items():
         ordered_versions = sorted(versions.keys())
@@ -449,7 +468,7 @@ class ActiveUsersLimit:
         family_code += (
             '\n\n__all__ =["latest", ' + ", ".join(f'"{v}"' for v in ordered_versions) + "]\n"
         )
-        (args.output / family / "__init__.pyi").write_text(family_code, encoding="utf8")
+        (arg_output / family / "__init__.pyi").write_text(family_code, encoding="utf8")
 
         for version, cmds in versions.items():
             version_code = """from __future__ import annotations
@@ -468,6 +487,14 @@ class AnyCmdReq:
             version_code += (
                 '\n\n__all__ =["AnyCmdReq", ' + ", ".join(f'"{c}"' for c in cmds_names) + "]\n"
             )
-            (args.output / family / version / "__init__.pyi").write_text(
+            (arg_output / family / version / "__init__.pyi").write_text(
                 version_code, encoding="utf8"
             )
+
+    if not arg_skip_style:
+        print(f"3/3 Fix style")
+        subprocess.call(
+            ["pre-commit", "run", "--files", *arg_output.glob("**/*.pyi")],
+            env={**os.environ, "SKIP": "mypy"},
+            stdout=subprocess.PIPE,
+        )
