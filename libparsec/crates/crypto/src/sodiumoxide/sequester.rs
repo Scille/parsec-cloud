@@ -397,11 +397,8 @@ impl SequesterVerifyKeyDer {
             .map_err(|_| CryptoError::SignatureVerification)?;
 
         match verifier.verify(signature) {
-            Ok(signature_is_valid) => match signature_is_valid {
-                true => Ok(contents.to_vec()),
-                false => Err(CryptoError::Signature),
-            },
-            Err(_) => Err(CryptoError::SignatureVerification),
+            Ok(true) => Ok(contents.to_vec()),
+            Ok(false) | Err(_) => Err(CryptoError::SignatureVerification),
         }
     }
 }
