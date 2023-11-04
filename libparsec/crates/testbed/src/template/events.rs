@@ -141,6 +141,8 @@ pub enum TestbedEvent {
     ShareRealm(TestbedEventShareRealm),
 
     // 2) Client/server interaction events not producing certificates
+    NewDeviceInvitation(TestbedEventNewDeviceInvitation),
+    NewUserInvitation(TestbedEventNewUserInvitation),
     StartRealmReencryption(TestbedEventStartRealmReencryption),
     FinishRealmReencryption(TestbedEventFinishRealmReencryption),
     CreateOrUpdateUserManifestVlob(TestbedEventCreateOrUpdateUserManifestVlob),
@@ -181,6 +183,8 @@ impl CrcHash for TestbedEvent {
             TestbedEvent::NewDevice(x) => x.crc_hash(hasher),
             TestbedEvent::UpdateUserProfile(x) => x.crc_hash(hasher),
             TestbedEvent::RevokeUser(x) => x.crc_hash(hasher),
+            TestbedEvent::NewDeviceInvitation(x) => x.crc_hash(hasher),
+            TestbedEvent::NewUserInvitation(x) => x.crc_hash(hasher),
             TestbedEvent::NewRealm(x) => x.crc_hash(hasher),
             TestbedEvent::ShareRealm(x) => x.crc_hash(hasher),
             TestbedEvent::StartRealmReencryption(x) => x.crc_hash(hasher),
@@ -312,6 +316,8 @@ impl TestbedEvent {
             | TestbedEvent::NewDevice(_)
             | TestbedEvent::UpdateUserProfile(_)
             | TestbedEvent::RevokeUser(_)
+            | TestbedEvent::NewDeviceInvitation(_)
+            | TestbedEvent::NewUserInvitation(_)
             | TestbedEvent::NewRealm(_)
             | TestbedEvent::ShareRealm(_)
             | TestbedEvent::StartRealmReencryption(_)
@@ -1257,6 +1263,78 @@ impl TestbedEventShareRealm {
         };
         let mut guard = self.cache.lock().expect("Mutex is poisoned");
         guard.1.populated(populate).to_owned()
+    }
+}
+
+/*
+ * TestbedEventNewDeviceInvitation
+ */
+
+no_certificate_event!(
+    TestbedEventNewDeviceInvitation,
+    [
+        greeter_user_id: UserID,
+        created_on: DateTime,
+        token: InvitationToken,
+    ]
+);
+
+impl TestbedEventNewDeviceInvitation {
+    pub(super) fn from_builder(
+        builder: &mut TestbedTemplateBuilder,
+        greeter_user_id: UserID,
+    ) -> Self {
+        // 1) Consistency checks
+
+        utils::assert_organization_bootstrapped(&builder.events);
+        utils::assert_user_exists_and_not_revoked(&builder.events, &greeter_user_id);
+
+        // 2) Actual creation
+
+        let token = builder.counters.next_invitation_token();
+        Self {
+            created_on: builder.counters.next_timestamp(),
+            greeter_user_id,
+            token,
+        }
+    }
+}
+
+/*
+ * TestbedEventNewUserInvitation
+ */
+
+no_certificate_event!(
+    TestbedEventNewUserInvitation,
+    [
+        greeter_user_id: UserID,
+        claimer_email: String,
+        created_on: DateTime,
+        token: InvitationToken,
+    ]
+);
+
+impl TestbedEventNewUserInvitation {
+    pub(super) fn from_builder(
+        builder: &mut TestbedTemplateBuilder,
+        claimer_email: String,
+    ) -> Self {
+        // 1) Consistency checks
+
+        let greeter_user_id = utils::assert_organization_bootstrapped(&builder.events)
+            .first_user_device_id
+            .user_id()
+            .to_owned();
+
+        // 2) Actual creation
+
+        let token = builder.counters.next_invitation_token();
+        Self {
+            created_on: builder.counters.next_timestamp(),
+            greeter_user_id,
+            claimer_email,
+            token,
+        }
     }
 }
 

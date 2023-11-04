@@ -9,6 +9,7 @@ from parsec._parsec import (
     DeviceID,
     DeviceLabel,
     HumanHandle,
+    InvitationToken,
     PrivateKey,
     RealmRole,
     RealmRoleCertificate,
@@ -136,6 +137,17 @@ class TestbedEventRevokeUser:
     certificate: RevokedUserCertificate
     raw_redacted_certificate: bytes
     raw_certificate: bytes
+
+class TestbedEventNewUserInvitation:
+    claimer_email: str
+    greeter_user_id: UserID
+    created_on: DateTime
+    token: InvitationToken
+
+class TestbedEventNewDeviceInvitation:
+    greeter_user_id: UserID
+    created_on: DateTime
+    token: InvitationToken
 
 class TestbedEventNewRealm:
     timestamp: DateTime

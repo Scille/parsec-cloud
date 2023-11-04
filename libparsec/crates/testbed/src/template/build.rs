@@ -105,6 +105,7 @@ const SEQUESTER_SERVICE_IDENTITIES: &[SequesterServiceIdentityType] = &[
 pub(super) struct TestbedTemplateBuilderCounters {
     current_timestamp: DateTime,
     current_certificate_index: IndexInt,
+    current_invitation_token: u128,
     current_entry_id: u128,
     current_256bits_key: [u8; 32],
     current_sequester_service_identity: std::slice::Iter<'static, SequesterServiceIdentityType>,
@@ -115,6 +116,7 @@ impl Default for TestbedTemplateBuilderCounters {
         Self {
             current_timestamp: "2000-01-01T00:00:00Z".parse().unwrap(),
             current_certificate_index: 0,
+            current_invitation_token: 0xE000_0000_0000_0000_0000_0000_0000_0000,
             current_entry_id: 0xF000_0000_0000_0000_0000_0000_0000_0000,
             // All our keys start with 0xAA, then grow up
             current_256bits_key: hex!(
@@ -140,6 +142,10 @@ impl TestbedTemplateBuilderCounters {
     pub fn next_entry_id(&mut self) -> VlobID {
         self.current_entry_id += 1;
         self.current_entry_id.to_be_bytes().into()
+    }
+    pub fn next_invitation_token(&mut self) -> InvitationToken {
+        self.current_invitation_token += 1;
+        self.current_invitation_token.to_be_bytes().into()
     }
     fn next_256bits_key(&mut self) -> &[u8; 32] {
         // 256 keys should be far enough for our needs
@@ -444,6 +450,31 @@ impl_event_builder!(RevokeUser, [user: UserID]);
 
 impl<'a> TestbedEventRevokeUserBuilder<'a> {
     impl_customize_field_meth!(author, DeviceID);
+}
+
+/*
+ * TestbedEventNewDeviceInvitation
+ */
+
+impl_event_builder!(NewDeviceInvitation, [greeter_user_id: UserID]);
+
+impl<'a> TestbedEventNewDeviceInvitationBuilder<'a> {
+    impl_customize_field_meth!(greeter_user_id, UserID);
+    impl_customize_field_meth!(created_on, DateTime);
+    impl_customize_field_meth!(token, InvitationToken);
+}
+
+/*
+ * TestbedEventNewUserInvitation
+ */
+
+impl_event_builder!(NewUserInvitation, [claimer_email: String]);
+
+impl<'a> TestbedEventNewUserInvitationBuilder<'a> {
+    impl_customize_field_meth!(claimer_email, String);
+    impl_customize_field_meth!(greeter_user_id, UserID);
+    impl_customize_field_meth!(created_on, DateTime);
+    impl_customize_field_meth!(token, InvitationToken);
 }
 
 /*

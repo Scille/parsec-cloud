@@ -128,6 +128,8 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
         tm.add_class::<TestbedEventNewDevice>()?;
         tm.add_class::<TestbedEventUpdateUserProfile>()?;
         tm.add_class::<TestbedEventRevokeUser>()?;
+        tm.add_class::<TestbedEventNewUserInvitation>()?;
+        tm.add_class::<TestbedEventNewDeviceInvitation>()?;
         tm.add_class::<TestbedEventNewRealm>()?;
         tm.add_class::<TestbedEventShareRealm>()?;
         tm.add_class::<TestbedEventStartRealmReencryption>()?;

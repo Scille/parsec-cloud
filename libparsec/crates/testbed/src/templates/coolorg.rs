@@ -7,24 +7,31 @@ use libparsec_types::prelude::*;
 use crate::TestbedTemplate;
 
 /// Coolorg contains:
-/// - 3 users: Alice (admin), bob (regular) and mallory (outsider)
+/// - 3 users: `alice` (admin), `bob` (regular) and `mallory` (outsider)
 /// - devices `alice@dev1`, `bob@dev1` and `mallory@dev1` whose storages are up to date
 /// - devices `alice@dev2` and `bob@dev2` whose storages are empty
 /// - 1 workspace `wksp1` shared between alice (owner) and bob (reader)
 /// - Alice & Bob have their user realm created and user manifest v1 synced with `wksp1` in it
 /// - Mallory has not user realm created
+/// - 1 pending invitation from Alice for a new user with email `zack@example.invalid`
+/// - 1 pending invitation for a new device for Alice
 pub(crate) fn generate() -> Arc<TestbedTemplate> {
     let mut builder = TestbedTemplate::from_builder("coolorg");
 
     // 1) Create user & devices
 
-    builder.bootstrap_organization("alice");
+    builder.bootstrap_organization("alice"); // alice@dev1
     builder.new_user("bob"); // bob@dev1
     builder.new_device("alice"); // alice@dev2
     builder.new_device("bob"); // bob@dev2
     builder.new_user("mallory"); // mallory@dev1
 
-    // 2) Create workspace's realm shared between Alice&Bob, and it initial workspace manifest
+    // 2) Create user & device invitations
+
+    builder.new_user_invitation("zack@example.invalid");
+    builder.new_device_invitation("alice");
+
+    // 3) Create workspace's realm shared between Alice&Bob, and it initial workspace manifest
 
     let (wksp1_id, wksp1_key, realm_timestamp) = {
         let event = builder.new_realm("alice");
@@ -40,7 +47,7 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
 
     builder.create_or_update_workspace_manifest_vlob("alice@dev1", wksp1_id);
 
-    // 3) Create users realms & and v1 manifest for Alice and Bob
+    // 4) Create users realms & and v1 manifest for Alice and Bob
 
     let wksp1_entry = WorkspaceEntry::new(
         wksp1_id,
@@ -63,7 +70,7 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
         .then_create_initial_user_manifest_vlob()
         .customize(|e| Arc::make_mut(&mut e.manifest).workspaces.push(wksp1_entry));
 
-    // 3) Initialize client storages for alice@dev1 and bob@dev1
+    // 5) Initialize client storages for alice@dev1 and bob@dev1
 
     builder.certificates_storage_fetch_certificates("alice@dev1");
     builder.user_storage_fetch_user_vlob("alice@dev1");
