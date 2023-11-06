@@ -35,8 +35,11 @@ describe('Check folders page', () => {
 
   it('Create new folder', () => {
     cy.get('#button-new-folder').contains('New folder').click();
+    cy.get('.text-input-modal').find('.ms-modal-footer').find('ion-button').eq(1).as('createButton').contains('Create');
+    cy.get('@createButton').should('have.class', 'button-disabled');
     cy.get('.text-input-modal').find('ion-input').find('input').type('MyFolder');
-    cy.get('.text-input-modal').find('#next-button').click();
+    cy.get('@createButton').should('not.have.class', 'button-disabled');
+    cy.get('@createButton').click();
     cy.get('@consoleLog').should('have.been.calledWith', 'New folder MyFolder created');
   });
 
