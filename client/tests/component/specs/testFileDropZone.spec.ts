@@ -2,7 +2,7 @@
 
 import { mount } from '@vue/test-utils';
 import { vi } from 'vitest';
-import { mockI18n, getDefaultProvideConfig } from 'tests/component/support/mocks';
+import { mockI18n, getDefaultProvideConfig } from '@tests/component/support/mocks';
 import FileDropZone from '@/components/files/FileDropZone.vue';
 
 mockI18n();

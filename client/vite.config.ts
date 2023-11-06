@@ -56,6 +56,11 @@ if (platform === 'web') {
 const config: UserConfigExport = () => ({
   test: {
     globals: true,
+    alias: {
+      '@libparsec_trampoline': path.resolve(__dirname, `./src/plugins/libparsec/trampoline-${platform}.ts`),
+      '@': path.resolve(__dirname, './src'),
+      '@tests': path.resolve(__dirname, './tests'),
+    },
   },
   plugins: plugins,
   build: {

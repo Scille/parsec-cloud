@@ -3,7 +3,7 @@
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import { VueWrapper, mount } from '@vue/test-utils';
 import { IonButton } from '@ionic/vue';
-import { mockI18n } from 'tests/component/support/mocks';
+import { mockI18n } from '@tests/component/support/mocks';
 
 mockI18n();
 

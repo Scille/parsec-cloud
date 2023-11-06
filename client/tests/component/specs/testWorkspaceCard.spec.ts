@@ -2,7 +2,7 @@
 
 import { mount, VueWrapper } from '@vue/test-utils';
 import { DateTime } from 'luxon';
-import { mockI18n, getDefaultProvideConfig } from 'tests/component/support/mocks';
+import { mockI18n, getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { IonAvatar } from '@ionic/vue';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import { WorkspaceRole, WorkspaceInfo, UserProfile } from '@/parsec';
