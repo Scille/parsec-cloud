@@ -20,8 +20,8 @@
         :autofocus="true"
         :placeholder="$props.placeholder"
         :value="modelValue"
-        @ion-input="$emit('update:modelValue', $event.detail.value); $emit('change', $event.detail.value)"
-        @keyup.enter="$emit('onEnterKeyup', $event.detail.value);"
+        @ion-input="$emit('update:modelValue', $event.detail.value || ''); $emit('change', $event.detail.value || '')"
+        @keyup.enter="$emit('onEnterKeyup', $event.target.value);"
         :disabled="$props.disabled"
       />
     </ion-item>

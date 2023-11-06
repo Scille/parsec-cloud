@@ -57,7 +57,7 @@ export enum UserAction {
 }
 </script>
 
-<script setup lang="ts" >
+<script setup lang="ts">
 import { IonContent, IonItem, IonLabel, IonList, popoverController, IonIcon, IonItemGroup } from '@ionic/vue';
 import {
   personRemove,

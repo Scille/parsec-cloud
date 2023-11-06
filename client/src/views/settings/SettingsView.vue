@@ -129,7 +129,7 @@
   </ion-page>
 </template>
 
-<script setup lang = "ts" >
+<script setup lang = "ts">
 import {
   IonPage,
   IonList,
