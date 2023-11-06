@@ -2,7 +2,7 @@
 
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
-import { mockI18n, getDefaultProvideConfig } from 'tests/component/support/mocks';
+import { mockI18n, getDefaultProvideConfig } from '@tests/component/support/mocks';
 import FileListItem from '@/components/files/FileListItem.vue';
 import { EntryStatFile, EntryStatFolder, FileType } from '@/parsec';
 

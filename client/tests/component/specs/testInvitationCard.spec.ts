@@ -3,7 +3,7 @@
 import InvitationCard from '@/components/users/InvitationCard.vue';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
-import { mockI18n, getDefaultProvideConfig } from 'tests/component/support/mocks';
+import { mockI18n, getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { InvitationStatus, UserInvitation } from '@/parsec';
 import { InviteListItemTag } from '@/plugins/libparsec';
 
