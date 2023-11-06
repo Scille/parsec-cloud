@@ -18,10 +18,10 @@ async fn ok(env: &TestbedEnv) {
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let store = ops.store.for_write().await;
-    let (_, authority_signed) = env.get_sequester_authority_certificate();
+    let certificates = env.get_certificates_signed();
 
     let switch = ops
-        .add_certificates_batch(&store, 0, [authority_signed].into_iter())
+        .add_certificates_batch(&store, 0, certificates)
         .await
         .unwrap();
 
