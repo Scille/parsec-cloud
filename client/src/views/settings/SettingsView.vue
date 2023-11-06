@@ -49,44 +49,41 @@
           >
             <ion-list class="settings-list">
               <!-- change lang -->
-              <!-- dropdown needs to be change depending on this issue : https://github.com/Scille/parsec-cloud/issues/4527 -->
-              <ion-item>
-                <ion-select
-                  interface="popover"
-                  :selected-text="$t(`SettingsPage.lang.${$i18n.locale.replace('-', '')}`)"
-                  :label="$t('SettingsPage.language')"
-                  @ion-change="changeLang($event.detail.value)"
-                >
-                  <ion-select-option value="en-US">
-                    {{ $t('SettingsPage.lang.enUS') }}
-                  </ion-select-option>
-                  <ion-select-option value="fr-FR">
-                    {{ $t('SettingsPage.lang.frFR') }}
-                  </ion-select-option>
-                </ion-select>
-              </ion-item>
+              <settings-option
+                :title="$t('SettingsPage.language.label')"
+                :description="$t('SettingsPage.language.description')"
+              >
+                <ms-dropdown
+                  class="dropdown"
+                  :options="languageOptions"
+                  :default-option="$i18n.locale"
+                  @change="changeLang($event.option.key)"
+                />
+              </settings-option>
               <!-- change theme -->
-              <!-- dropdown needs to be change depending on this issue : https://github.com/Scille/parsec-cloud/issues/4527 -->
               <!-- TODO: REMOVE "'light' ? 'light' : " WHEN DARK MODE WILL BE HERE: https://github.com/Scille/parsec-cloud/issues/5427 -->
-              <ion-item>
-                <ion-select
-                  interface="popover"
-                  :value="'light' ? 'light' : config.theme"
-                  :label="$t('SettingsPage.theme.label')"
+              <settings-option
+                :title="$t('SettingsPage.theme.label')"
+                :description="$t('SettingsPage.theme.description')"
+              >
+                <ms-dropdown
+                  class="dropdown"
+                  :options="themeOptions"
+                  :default-option="'light' ? 'light' : config.theme"
+                  @change="changeTheme($event.option.key)"
                   :disabled="true"
-                  @ion-change="changeTheme($event.detail.value)"
-                >
-                  <ion-select-option value="dark">
-                    {{ $t('SettingsPage.theme.dark') }}
-                  </ion-select-option>
-                  <ion-select-option value="light">
-                    {{ $t('SettingsPage.theme.light') }}
-                  </ion-select-option>
-                  <ion-select-option value="system">
-                    {{ $t('SettingsPage.theme.system') }}
-                  </ion-select-option>
-                </ion-select>
-              </ion-item>
+                />
+              </settings-option>
+              <!-- minimize in status bar -->
+              <settings-option
+                v-if="isPlatform('electron')"
+                :title="$t('SettingsPage.minimizeToSystemTray.label')"
+                :description="$t('SettingsPage.minimizeToSystemTray.description')"
+              >
+                <ion-toggle
+                  v-model="config.minimizeToTray"
+                />
+              </settings-option>
             </ion-list>
           </div>
           <!-- advanced -->
@@ -97,30 +94,32 @@
             <ion-list class="settings-list">
               <!-- send error report -->
               <settings-option
-                :title="$t('SettingsPage.enableTelemetry')"
-                :description="$t('SettingsPage.enableTelemetryDescription')"
-                v-model="config.enableTelemetry"
-              />
-              <!-- minimise in status bar -->
-              <settings-option
-                v-if="isPlatform('electron')"
-                :title="$t('SettingsPage.minimizeToSystemTray')"
-                :description="$t('SettingsPage.minimizeToSystemTrayDescription')"
-                v-model="config.minimizeToTray"
-              />
+                :title="$t('SettingsPage.enableTelemetry.label')"
+                :description="$t('SettingsPage.enableTelemetry.description')"
+              >
+                <ion-toggle
+                  v-model="config.enableTelemetry"
+                />
+              </settings-option>
               <!-- display unsync files -->
               <settings-option
-                :title="$t('SettingsPage.unsyncFiles')"
-                :description="$t('SettingsPage.unsyncFilesDescription')"
-                v-model="config.unsyncFiles"
-              />
+                :title="$t('SettingsPage.unsyncFiles.label')"
+                :description="$t('SettingsPage.unsyncFiles.description')"
+              >
+                <ion-toggle
+                  v-model="config.unsyncFiles"
+                />
+              </settings-option>
               <!-- synchro wifi -->
               <settings-option
                 v-if="false"
-                :title="$t('SettingsPage.meteredConnection')"
-                :description="$t('SettingsPage.meteredConnectionDescription')"
-                v-model="config.meteredConnection"
-              />
+                :title="$t('SettingsPage.meteredConnection.label')"
+                :description="$t('SettingsPage.meteredConnection.description')"
+              >
+                <ion-toggle
+                  v-model="config.meteredConnection"
+                />
+              </settings-option>
             </ion-list>
           </div>
         </div>
@@ -134,12 +133,10 @@ import {
   IonPage,
   IonList,
   IonRadioGroup,
-  IonItem,
   IonRadio,
   IonText,
   IonIcon,
-  IonSelect,
-  IonSelectOption,
+  IonToggle,
   isPlatform,
 } from '@ionic/vue';
 
@@ -153,12 +150,32 @@ import { toggleDarkMode } from '@/states/darkMode';
 import { Config, StorageManager } from '@/services/storageManager';
 import { StorageManagerKey } from '@/common/injectionKeys';
 import SettingsOption from '@/components/settings/SettingsOption.vue';
+import MsDropdown from '@/components/core/ms-dropdown/MsDropdown.vue';
+import { MsDropdownOption } from '@/components/core/ms-types';
 
-const { locale } = useI18n();
+const { t, locale } = useI18n();
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const storageManager = inject(StorageManagerKey)! as StorageManager;
 const config = ref<Config>(structuredClone(StorageManager.DEFAULT_CONFIG));
 let justLoaded = false;
+
+const languageOptions: MsDropdownOption[] = [
+  {
+    key:  'en-US', label: t('SettingsPage.language.values.enUS'),
+  }, {
+    key: 'fr-FR', label: t('SettingsPage.language.values.frFR'),
+  },
+];
+
+const themeOptions: MsDropdownOption[] = [
+  {
+    key:  'dark', label: t('SettingsPage.theme.values.dark'),
+  }, {
+    key: 'light', label: t('SettingsPage.theme.values.light'),
+  }, {
+    key: 'system', label: t('SettingsPage.theme.values.system'),
+  },
+];
 
 enum SettingsTabs {
   General = 'General',

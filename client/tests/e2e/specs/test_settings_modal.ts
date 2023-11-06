@@ -19,12 +19,14 @@ describe('Check settings modal', () => {
   it('Check General tab', () => {
     cy.get('ion-radio-group').invoke('attr', 'modelvalue').should('eq', 'General');
     cy.get('ion-radio').first().should('have.class', 'radio-checked');
-    cy.get('ion-select').first().shadow().as('langShadow');
-    cy.get('@langShadow').find('.label-text').contains('Language');
-    cy.get('@langShadow').find('.select-text').contains('English');
-    cy.get('ion-select').eq(1).shadow().as('themeShadow');
-    cy.get('@themeShadow').find('.label-text').contains('Theme');
-    cy.get('@themeShadow').find('.select-text').contains(/Light|Dark|System/g);
+    cy.get('.settings-option').first().as('language');
+    cy.get('@language').find('ion-text.title').contains('Language');
+    cy.get('@language').find('ion-text.description').contains('Choose the application language');
+    cy.get('@language').find('#dropdown-popover-button').contains('English');
+    cy.get('.settings-option').eq(1).as('theme');
+    cy.get('@theme').find('ion-text.title').contains('Theme');
+    cy.get('@theme').find('ion-text.description').contains('Choose the application appearance');
+    cy.get('@theme').find('#dropdown-popover-button').contains(/Light|Dark|System/g);
   });
 
   it('Check Advanced tab', () => {
@@ -32,19 +34,19 @@ describe('Check settings modal', () => {
     cy.get('ion-radio-group').invoke('attr', 'modelvalue').should('eq', 'Advanced');
     cy.get('ion-radio').eq(1).should('have.class', 'radio-checked');
 
-    cy.get('.toggle-settings').first().as('telemetry');
+    cy.get('.settings-option').first().as('telemetry');
     cy.get('@telemetry').find('ion-toggle').should('have.class', 'toggle-checked');
     cy.get('@telemetry').find('ion-toggle').click();
     cy.get('@telemetry').find('ion-toggle').should('not.have.class', 'toggle-checked');
     cy.get('@telemetry').find('ion-toggle').click();
     cy.get('@telemetry').find('ion-toggle').should('have.class', 'toggle-checked');
 
-    cy.get('.toggle-settings').eq(1).as('sync');
-    cy.get('@sync').find('ion-toggle').should('have.class', 'toggle-checked');
-    cy.get('@sync').find('ion-toggle').click();
+    cy.get('.settings-option').eq(1).as('sync');
     cy.get('@sync').find('ion-toggle').should('not.have.class', 'toggle-checked');
     cy.get('@sync').find('ion-toggle').click();
     cy.get('@sync').find('ion-toggle').should('have.class', 'toggle-checked');
+    cy.get('@sync').find('ion-toggle').click();
+    cy.get('@sync').find('ion-toggle').should('not.have.class', 'toggle-checked');
   });
 
   it('Close with X', () => {

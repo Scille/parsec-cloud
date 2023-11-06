@@ -209,31 +209,41 @@
     },
     "SettingsPage": {
         "pageTitle": "Settings",
-        "enableTelemetry": "Enable telemetry",
-        "enableTelemetryDescription": "Automatically send error reports",
-        "minimizeToSystemTray": "Minimize to system tray",
-        "minimizeToSystemTrayDescription": "When the application is closed, Parsec will continue to run in the background",
-        "unsyncFiles": "Show files excluded from synchronization",
-        "unsyncFilesDescription": "Show files excluded from synchronization in the file explorer",
-        "meteredConnection": "Metered connection",
-        "meteredConnectionDescription": "The application will reduce data synchronisation when you are connected to a metered connection",
-        "language": "Language",
-        "lang": {
-            "frFR": "French",
-            "enUS": "English"
+        "general": "General",
+        "advanced": "Advanced",
+        "enableTelemetry": {
+            "label": "Enable telemetry",
+            "description": "Automatically send error reports"
         },
-        "telemetry": "Telemetry",
-        "behavior": "Behavior",
-        "localization": "Localization",
-        "preferences": "Preferences",
+        "minimizeToSystemTray": {
+            "label": "Minimize to system tray",
+            "description": "When the application is closed, Parsec will continue to run in the background"
+        },
+        "unsyncFiles": {
+            "label": "Show files excluded from synchronization",
+            "description": "Show files excluded from synchronization in the file explorer"
+        },
+        "meteredConnection": {
+            "label": "Metered connection",
+            "description": "The application will reduce data synchronization when you are connected to a metered connection"
+        },
+        "language": {
+            "label": "Language",
+            "description": "Choose the application language",
+            "values": {
+                "frFR": "Français",
+                "enUS": "English"
+            }
+        },
         "theme": {
             "label": "Theme",
-            "dark": "Dark",
-            "light": "Light",
-            "system": "System"
-        },
-        "general": "General",
-        "advanced": "Advanced"
+            "description": "Choose the application appearance",
+            "values": {
+                "dark": "Dark",
+                "light": "Light",
+                "system": "System"
+            }
+        }
     },
     "WorkspacesPage": {
         "createWorkspace": "New workspace",
