@@ -711,19 +711,22 @@ impl TestbedEventNewUser {
     pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, user_id: UserID) -> Self {
         // 1) Consistency checks
 
+        if builder.check_consistency {
+            let already_exist = builder.events.iter().any(|e| match e {
+                TestbedEvent::BootstrapOrganization(x)
+                    if x.first_user_device_id.user_id() == &user_id =>
+                {
+                    true
+                }
+                TestbedEvent::NewUser(x) if x.device_id.user_id() == &user_id => true,
+                _ => false,
+            });
+            assert!(!already_exist, "User already exist");
+        }
+
         let author = utils::assert_organization_bootstrapped(&builder.events)
             .first_user_device_id
             .clone();
-        let already_exist = builder.events.iter().any(|e| match e {
-            TestbedEvent::BootstrapOrganization(x)
-                if x.first_user_device_id.user_id() == &user_id =>
-            {
-                true
-            }
-            TestbedEvent::NewUser(x) if x.device_id.user_id() == &user_id => true,
-            _ => false,
-        });
-        assert!(!already_exist, "User already exist");
 
         // 2) Actual creation
 
@@ -1286,8 +1289,10 @@ impl TestbedEventNewDeviceInvitation {
     ) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
-        utils::assert_user_exists_and_not_revoked(&builder.events, &greeter_user_id);
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            utils::assert_user_exists_and_not_revoked(&builder.events, &greeter_user_id);
+        }
 
         // 2) Actual creation
 
@@ -2175,10 +2180,12 @@ impl TestbedEventUserStorageFetchUserVlob {
     pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, device: DeviceID) -> Self {
         // 1) Consistency checks
 
-        utils::assert_organization_bootstrapped(&builder.events);
-        // We don't care that the user is revoked here given we don't modify
-        // anything in the server
-        utils::assert_device_exists(&builder.events, &device);
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            // We don't care that the user is revoked here given we don't modify
+            // anything in the server
+            utils::assert_device_exists(&builder.events, &device);
+        }
 
         let user_realm_id = builder
             .events
