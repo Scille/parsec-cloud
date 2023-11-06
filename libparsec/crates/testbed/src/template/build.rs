@@ -341,7 +341,7 @@ macro_rules! impl_event_builder {
                 /// See [`TestbedEvent`] for more information about the possible events.
                 ///
                 /// You can also disable consistency check with the method
-                /// `with_check_consistency_disabled`.
+                /// [`with_check_consistency_disabled`].
                 pub fn [< $name:snake >](&mut self $( $(, $param: impl TryInto<$param_type>)* )? ) -> [< TestbedEvent $name Builder >]<'_> {
                     $( $( let $param: $param_type = $param.try_into().unwrap_or_else(|_| panic!(concat!("Invalid value for param ", stringify!($param)))); )* )?
                     let event = [< TestbedEvent $name >]::from_builder(self $( $(, $param)* )? );
