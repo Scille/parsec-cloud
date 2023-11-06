@@ -352,6 +352,11 @@ function getCurrentStep(): Ref<any> {
 }
 
 async function cancelModal(): Promise<boolean> {
+  // No need to ask any question if we're at the beginning
+  if (pageStep.value === CreateOrganizationStep.OrgNameStep) {
+    return await modalController.dismiss(null, MsModalResult.Cancel);
+  }
+
   const answer = await askQuestion(
     t('CreateOrganization.cancelConfirm'),
     t('CreateOrganization.cancelConfirmSubtitle'),

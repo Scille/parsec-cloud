@@ -29,3 +29,7 @@ export async function isValidInvitationToken(token: string): Promise<boolean> {
 export async function isValidEntryName(name: string): Promise<boolean> {
   return await libparsec.validateEntryName(name);
 }
+
+export async function isValidOrganizationName(name: string): Promise<boolean> {
+  return await libparsec.validateOrganizationId(name);
+}
