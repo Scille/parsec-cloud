@@ -156,7 +156,8 @@ gettext:
 	$(SPHINXBUILD) -b gettext $(I18NSPHINXOPTS) . $(BUILDDIR)/locale
 	$(RM) \
 		$(BUILDDIR)/locale/history.pot \
-		$(BUILDDIR)/locale/adminguide/hosting/index.pot
+		$(BUILDDIR)/locale/adminguide/hosting/index.pot \
+		$(BUILDDIR)/locale/adminguide/migration/index.pot
 	@echo
 	@echo "Build finished. The message catalogs are in $(BUILDDIR)/locale."
 
