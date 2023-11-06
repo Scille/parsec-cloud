@@ -49,6 +49,7 @@ repos:
             idl,
             jinja,
             markdown,
+            scss,
           ]
 
   - repo: https://github.com/adrienverge/yamllint

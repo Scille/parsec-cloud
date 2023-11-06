@@ -152,6 +152,12 @@ class CppLicenserMixin(Licenser):
         return f"/* {cls.generate_license_text()} */\n"
 
 
+class CssLicenserMixin(Licenser):
+    @classmethod
+    def generate_license_line(cls) -> str:
+        return f"/* {cls.generate_license_text()} */\n"
+
+
 class PythonBuslLicenser(BuslLicenserMixin, PythonLicenserMixin):
     pass
 
@@ -181,6 +187,10 @@ class HtmlBuslLicenser(BuslLicenserMixin, HtmlLicenserMixin):
 
 
 class CppBuslLicenser(BuslLicenserMixin, CppLicenserMixin):
+    pass
+
+
+class CssBuslLicenser(BuslLicenserMixin, CssLicenserMixin):
     pass
 
 
@@ -216,6 +226,7 @@ LICENSERS_MAP = {
     # Js project is a minefield full of node_modules/build/dist/assets etc.
     # so we just cut simple and add copyright only to the important stuff
     re.compile(r"^(client|bindings)/.*\.(ts|js)$"): JavascriptBuslLicenser,
+    re.compile(r"^client/src/.*\.(css|scss)$"): CssBuslLicenser,
     re.compile(r"^bindings/.*\.(ts|js)\.j2$"): JavascriptBuslLicenser,
     re.compile(r"^bindings/.*\.rs\.j2$"): RustBuslLicenser,
     re.compile(r"^client/src/.*\.vue$"): VueBuslLicenser,
@@ -244,6 +255,7 @@ def get_files(paths: Iterable[Path]) -> Iterator[Path]:
                 path.glob("**/*.h"),
                 path.glob("**/*.md"),
                 path.glob("**/*.idl"),
+                path.glob("**/*.scss"),
             )
         elif path.is_file():
             yield path
@@ -299,11 +311,11 @@ if __name__ == "__main__":
             Path("server"),
             Path("bindings"),
             Path("libparsec"),
-            Path("packaging"),
             Path("misc"),
             Path("docs"),
             Path("windows-icon-handler"),
             Path(".github"),
+            Path("client"),
         ],
     )
 
