@@ -209,31 +209,41 @@
     },
     "SettingsPage": {
         "pageTitle": "Paramètres",
-        "enableTelemetry": "Activer la télémétrie",
-        "enableTelemetryDescription": "Envoie automatiquement les rapports d’erreur",
-        "minimizeToSystemTray": "Réduire dans la barre d'état",
-        "minimizeToSystemTrayDescription": "Lorsque l'application est fermée, Parsec continuera à fonctionner en arrière-plan",
-        "unsyncFiles": "Afficher les fichiers exclus de la synchronisation",
-        "unsyncFilesDescription": "Les fichiers exclus de la synchronisation seront visibles",
-        "meteredConnection": "Connexion limitée",
-        "meteredConnectionDescription": "L'application réduira la synchronisation des données lorsque vous êtes connecté à une connexion limitée",
-        "language": "Langue",
-        "lang": {
-            "frFR": "Français",
-            "enUS": "English"
+        "general": "Général",
+        "advanced": "Avancé",
+        "enableTelemetry": {
+            "label": "Activer la télémétrie",
+            "description": "Envoie automatiquement les rapports d’erreur"
         },
-        "telemetry": "Télémétrie",
-        "behavior": "Comportement",
-        "localization": "Localisation",
-        "preferences": "Préférences",
+        "minimizeToSystemTray": {
+            "label": "Réduire dans la barre d'état",
+            "description": "Lorsque l'application est fermée, Parsec continuera à fonctionner en arrière-plan"
+        },
+        "unsyncFiles": {
+            "label": "Afficher les fichiers exclus de la synchronisation",
+            "description": "Les fichiers exclus de la synchronisation seront visibles"
+        },
+        "meteredConnection": {
+            "label": "Connexion limitée",
+            "description": "L'application réduira la synchronisation des données lorsque vous êtes connecté à une connexion limitée"
+        },
+        "language": {
+            "label": "Langue",
+            "description": "Choisir la langue de l'application",
+            "values": {
+                "frFR": "Français",
+                "enUS": "English"
+            }
+        },
         "theme": {
             "label": "Thème",
-            "dark": "Sombre",
-            "light": "Clair",
-            "system": "Système"
-        },
-        "general": "Général",
-        "advanced": "Avancé"
+            "description": "Choisir l'apparence de l'application",
+            "values": {
+                "dark": "Sombre",
+                "light": "Clair",
+                "system": "Système"
+            }
+        }
     },
     "WorkspacesPage": {
         "createWorkspace": "Nouvel espace de travail",

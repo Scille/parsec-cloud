@@ -11,10 +11,6 @@ describe('Setting Option', () => {
       props: {
         title: 'A Title',
         description: 'A description, should be a little bit longer than the title.',
-        modelValue: false,
-        'onUpdate:modelValue': (e: boolean) => {
-          wrapper.setProps({ modelValue: e });
-        },
       },
     });
   });
@@ -22,14 +18,5 @@ describe('Setting Option', () => {
   it('display the setting option', () => {
     expect(wrapper.get('.title').text()).to.equal('A Title');
     expect(wrapper.get('.description').text()).to.equal('A description, should be a little bit longer than the title.');
-    expect((wrapper.vm as any).modelValue).to.be.false;
-  });
-
-  it('switches value on click', async () => {
-    expect((wrapper.vm as any).modelValue).to.be.false;
-    await wrapper.setValue(true);
-    expect((wrapper.vm as any).modelValue).to.be.true;
-    await wrapper.setValue(false);
-    expect((wrapper.vm as any).modelValue).to.be.false;
   });
 });
