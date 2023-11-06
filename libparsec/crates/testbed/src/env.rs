@@ -168,6 +168,11 @@ pub enum TestbedKind {
     ClientOnly, // Server is considered offline for the whole run
 }
 
+/// Most of the time you want to customize your environment for your test,
+/// hence you can use the methods `customize` or `customize_with_map` if you
+/// need to return anything.
+///
+/// See [`TestbedEvent`] for more information about the possible events.
 pub struct TestbedEnv {
     pub kind: TestbedKind,
     /// Fake path used used as the key identifying the testbed env.
