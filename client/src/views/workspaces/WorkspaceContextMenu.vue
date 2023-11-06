@@ -123,7 +123,7 @@ export enum WorkspaceAction {
 }
 </script>
 
-<script setup lang="ts" >
+<script setup lang="ts">
 import { IonContent, IonItem, IonLabel, IonList, popoverController, IonIcon, IonItemGroup } from '@ionic/vue';
 import {
   cloudy,

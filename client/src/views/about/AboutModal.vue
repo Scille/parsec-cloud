@@ -9,7 +9,7 @@
   </ms-modal>
 </template>
 
-<script setup lang="ts" >
+<script setup lang="ts">
 import AboutView from '@/views/about/AboutView.vue';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 </script>

@@ -8,9 +8,8 @@
 
 <script setup lang="ts">
 import { IonApp, IonRouterOutlet } from '@ionic/vue';
-import { inject } from 'vue';
+import { inject, onMounted } from 'vue';
 import { SplashScreen } from '@capacitor/splash-screen';
-import { onMounted } from '@vue/runtime-core';
 import { toggleDarkMode } from '@/states/darkMode';
 import { StorageManagerKey } from '@/common/injectionKeys';
 import { StorageManager } from '@/services/storageManager';
