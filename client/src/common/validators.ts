@@ -7,6 +7,7 @@ import {
   isValidDeviceName,
   isValidWorkspaceName,
   isValidEntryName,
+  isValidOrganizationName,
 } from '@/parsec';
 import { ParsedBackendAddrTag } from '@/plugins/libparsec';
 
@@ -92,7 +93,7 @@ export const organizationValidator: IValidator = async function(value: string) {
   if (value.length === 0) {
     return Validity.Intermediate;
   }
-  return value.match(/^[a-z0-9_-]{1,32}$/i) ? Validity.Valid : Validity.Invalid;
+  return await isValidOrganizationName(value) ? Validity.Valid : Validity.Invalid;
 };
 
 export const claimLinkValidator: IValidator = async function(value: string) {

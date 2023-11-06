@@ -129,6 +129,10 @@ describe('Create a new organization', () => {
     cy.get('#create-organization-button').click();
     cy.get('.popover-viewport').find('ion-item').first().click();
     cy.get('.create-organization-modal').find('.modal-header__title').contains('Create an organization');
+
+    // First page does not have modal
+    cy.get('.org-name').find('ion-input').find('input').type('MyOrg');
+    cy.get('#next-button').click();
     cy.get('.create-organization-modal').find('.closeBtn').should('be.visible');
     cy.get('.create-organization-modal').find('.closeBtn').click();
 
