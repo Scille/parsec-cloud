@@ -7,7 +7,7 @@ use fuser::{
     ReplyEmpty, ReplyEntry, ReplyOpen, ReplyWrite, Request, Session,
 };
 use libc::{EINVAL, ENAMETOOLONG, ENOENT, ENOTEMPTY, EPERM};
-use libparsec_types::{anyhow, FileDescriptor};
+use libparsec_types::{anyhow, EntryName, EntryNameError, EntryNameResult, FileDescriptor};
 use std::{ffi::OsStr, path::Path, time::Duration};
 
 use crate::{
@@ -76,6 +76,14 @@ impl<T: MountpointInterface> Filesystem for FileSystemWrapper<T> {
     /// does not know. It transforms the path name to `inode`.
     /// The `inode` is then used by all other operations and is freed by `forget`.
     fn lookup(&mut self, _req: &Request, parent: u64, name: &OsStr, reply: ReplyEntry) {
+        let name = match os_name_to_entry_name(name) {
+            Ok(name) => name,
+            _ => {
+                reply.error(EINVAL);
+                return;
+            }
+        };
+
         // Safety: Parent should exists (resolved by lookup method)
         let parent_path = unsafe { self.get_path(Inode::from(parent)) };
         let path = parent_path.join(name);
@@ -175,7 +183,7 @@ impl<T: MountpointInterface> Filesystem for FileSystemWrapper<T> {
             if offset >= 2 {
                 offset -= 2;
                 for (i, (name, id)) in entry.children.iter().enumerate().skip(offset as usize) {
-                    let path = path.join(name.as_ref());
+                    let path = path.join(name.clone());
                     let entry = self.interface.entry_info(&path).expect("Should exists");
 
                     if reply.add(
@@ -205,6 +213,14 @@ impl<T: MountpointInterface> Filesystem for FileSystemWrapper<T> {
         flags: i32,
         reply: ReplyCreate,
     ) {
+        let name = match os_name_to_entry_name(name) {
+            Ok(name) => name,
+            _ => {
+                reply.error(EINVAL);
+                return;
+            }
+        };
+
         // Safety: Parent should exists (resolved by lookup method)
         let parent_path = unsafe { self.get_path(Inode::from(parent)) };
         let path = parent_path.join(name);
@@ -310,6 +326,14 @@ impl<T: MountpointInterface> Filesystem for FileSystemWrapper<T> {
     }
 
     fn unlink(&mut self, _req: &Request, parent: u64, name: &OsStr, reply: ReplyEmpty) {
+        let name = match os_name_to_entry_name(name) {
+            Ok(name) => name,
+            _ => {
+                reply.error(EINVAL);
+                return;
+            }
+        };
+
         // Safety: Parent should exists (resolved by lookup method)
         let parent_path = unsafe { self.get_path(Inode::from(parent)) };
         let path = parent_path.join(name);
@@ -330,6 +354,14 @@ impl<T: MountpointInterface> Filesystem for FileSystemWrapper<T> {
         _umask: u32,
         reply: ReplyEntry,
     ) {
+        let name = match os_name_to_entry_name(name) {
+            Ok(name) => name,
+            _ => {
+                reply.error(EINVAL);
+                return;
+            }
+        };
+
         // Safety: Parent should exists (resolved by lookup method)
         let parent_path = unsafe { self.get_path(Inode::from(parent)) };
         let path = parent_path.join(name);
@@ -347,6 +379,14 @@ impl<T: MountpointInterface> Filesystem for FileSystemWrapper<T> {
     }
 
     fn rmdir(&mut self, _req: &Request, parent: u64, name: &OsStr, reply: ReplyEmpty) {
+        let name = match os_name_to_entry_name(name) {
+            Ok(name) => name,
+            _ => {
+                reply.error(EINVAL);
+                return;
+            }
+        };
+
         // Safety: Parent should exists (resolved by lookup method)
         let parent_path = unsafe { self.get_path(Inode::from(parent)) };
         let path = parent_path.join(name);
@@ -369,6 +409,14 @@ impl<T: MountpointInterface> Filesystem for FileSystemWrapper<T> {
         _flags: u32,
         reply: ReplyEmpty,
     ) {
+        let (name, newname) = match (os_name_to_entry_name(name), os_name_to_entry_name(newname)) {
+            (Ok(name), Ok(newname)) => (name, newname),
+            _ => {
+                reply.error(EINVAL);
+                return;
+            }
+        };
+
         // Safety: Parent should exists (resolved by lookup method)
         let parent_path = unsafe { self.get_path(Inode::from(parent)) };
         let source = parent_path.join(name);
@@ -437,4 +485,10 @@ pub(super) fn mount<I: MountpointInterface + Send + 'static>(
         mountpoint,
         phantom: Default::default(),
     })
+}
+
+fn os_name_to_entry_name(name: &OsStr) -> EntryNameResult<EntryName> {
+    name.to_str()
+        .map(|s| s.parse())
+        .ok_or(EntryNameError::InvalidName)?
 }

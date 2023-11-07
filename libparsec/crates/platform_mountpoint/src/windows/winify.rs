@@ -21,8 +21,6 @@ const WIN32_RES_NAMES: [&str; 22] = [
 
 static RE: OnceCell<Regex> = OnceCell::new();
 
-// TODO: remove me once winify is used
-#[allow(dead_code)]
 pub(crate) fn winify_entry_name(name: &EntryName) -> String {
     let mut name = name.to_string();
     let (prefix, suffix) = name.split_once('.').unwrap_or((&name, ""));
@@ -52,8 +50,6 @@ pub(crate) fn winify_entry_name(name: &EntryName) -> String {
     name
 }
 
-// TODO: remove me once winify is used
-#[allow(dead_code)]
 pub(crate) fn unwinify_entry_name(name: &str) -> EntryNameResult<EntryName> {
     // Given / is not allowed, no need to check if path already contains it
     if name.contains('~') {

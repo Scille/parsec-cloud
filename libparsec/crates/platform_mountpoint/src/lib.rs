@@ -17,7 +17,7 @@ pub(crate) use unix as platform;
 #[cfg(target_os = "windows")]
 pub(crate) use windows as platform;
 
-use libparsec_types::{anyhow, EntryName, FileDescriptor, VlobID};
+use libparsec_types::{anyhow, EntryName, FileDescriptor, FsPath, VlobID};
 
 pub use error::{MountpointError, MountpointResult};
 pub use memfs::MemFS;
@@ -89,29 +89,33 @@ impl<T: MountpointInterface> FileSystemWrapper<T> {
 
 pub trait MountpointInterface {
     // Rights check
-    fn check_read_rights(&self, path: &Path) -> MountpointResult<()>;
-    fn check_write_rights(&self, path: &Path) -> MountpointResult<()>;
+    fn check_read_rights(&self, path: &FsPath) -> MountpointResult<()>;
+    fn check_write_rights(&self, path: &FsPath) -> MountpointResult<()>;
 
     // Entry transactions
 
-    fn entry_info(&self, path: &Path) -> MountpointResult<EntryInfo>;
+    fn entry_info(&self, path: &FsPath) -> MountpointResult<EntryInfo>;
     fn entry_rename(
         &self,
-        source: &Path,
-        destination: &Path,
+        source: &FsPath,
+        destination: &FsPath,
         overwrite: bool,
     ) -> MountpointResult<()>;
 
     // Directory transactions
 
-    fn dir_create(&self, path: &Path) -> MountpointResult<()>;
-    fn dir_delete(&self, path: &Path) -> MountpointResult<()>;
+    fn dir_create(&self, path: &FsPath) -> MountpointResult<()>;
+    fn dir_delete(&self, path: &FsPath) -> MountpointResult<()>;
 
     // File transactions
 
-    fn file_create(&self, path: &Path, open: bool) -> MountpointResult<FileDescriptor>;
-    fn file_open(&self, path: &Path, write_mode: bool) -> MountpointResult<Option<FileDescriptor>>;
-    fn file_delete(&self, path: &Path) -> MountpointResult<()>;
+    fn file_create(&self, path: &FsPath, open: bool) -> MountpointResult<FileDescriptor>;
+    fn file_open(
+        &self,
+        path: &FsPath,
+        write_mode: bool,
+    ) -> MountpointResult<Option<FileDescriptor>>;
+    fn file_delete(&self, path: &FsPath) -> MountpointResult<()>;
 
     // File descriptor transactions
 
