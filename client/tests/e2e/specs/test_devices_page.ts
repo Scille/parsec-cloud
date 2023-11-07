@@ -14,10 +14,10 @@ describe('Display client devices', () => {
 
   it('Check initial state', () => {
     cy.get('.title-h2').contains('Devices');
-    cy.get('.devices-container').find('h1').contains('Your devices');
+    cy.get('.devices-container').find('h2').contains('Your devices');
     cy.get('.devices-container').find('ion-button').contains('Add');
     cy.get('.devices-container').find('ion-item').as('devices').should('have.length', 2);
     cy.get('@devices').first().find('ion-text').contains('My First Device');
-    cy.get('@devices').first().find('ion-chip').contains('Current');
+    cy.get('@devices').first().find('ion-text').contains('Current');
   });
 });
