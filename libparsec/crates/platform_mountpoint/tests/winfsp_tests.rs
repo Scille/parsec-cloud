@@ -1,11 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-#[cfg(target_os = "windows")]
+#![cfg(target_os = "windows")]
+
+use libparsec_platform_mountpoint::{FileSystemMounted, MemFS};
+use std::{path::Path, process::Command};
+
 #[test]
 fn winfsp_tests() {
-    use libparsec_platform_mountpoint::{FileSystemMounted, MemFS};
-    use std::{path::Path, process::Command};
-
     let (tx, rx) = std::sync::mpsc::channel();
 
     let handle = std::thread::spawn(move || {

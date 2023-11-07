@@ -2,11 +2,10 @@
 
 use std::{
     collections::HashMap,
-    ffi::OsString,
-    os::unix::prelude::{OsStrExt, OsStringExt},
-    path::{Path, PathBuf},
     sync::{Mutex, RwLock},
 };
+
+use libparsec_types::FsPath;
 
 use crate::{FileSystemWrapper, MountpointInterface};
 
@@ -14,14 +13,20 @@ use crate::{FileSystemWrapper, MountpointInterface};
 /// The index of path is the inode number and the free inodes are stored
 /// `Pasteur` must contain his rage when he sees this code
 struct PathsStore {
-    paths_indexed_by_inode: Vec<PathBuf>,
+    paths_indexed_by_inode: Vec<FsPath>,
     stack_unused_inodes: Vec<usize>,
 }
 
 impl Default for PathsStore {
     fn default() -> Self {
+        let root: FsPath = "/".parse().expect("unreachable");
+
         Self {
-            paths_indexed_by_inode: vec![PathBuf::from(""), PathBuf::from("/")],
+            paths_indexed_by_inode: vec![
+                // Inode 0 is error prone, so we fill it with a dummy value
+                root.clone(),
+                root,
+            ],
             stack_unused_inodes: vec![],
         }
     }
@@ -93,11 +98,11 @@ impl From<Inode> for u64 {
 #[derive(Default)]
 pub(crate) struct InodeManager {
     paths_store: RwLock<PathsStore>,
-    opened: Mutex<HashMap<PathBuf, (Counter, Inode)>>,
+    opened: Mutex<HashMap<FsPath, (Counter, Inode)>>,
 }
 
 impl<T: MountpointInterface> FileSystemWrapper<T> {
-    pub(super) fn insert_path(&self, path: PathBuf) -> Inode {
+    pub(super) fn insert_path(&self, path: FsPath) -> Inode {
         let mut paths_store = self
             .inode_manager
             .paths_store
@@ -152,7 +157,7 @@ impl<T: MountpointInterface> FileSystemWrapper<T> {
     /// Safety:
     /// It will panic if:
     /// - `inode` does not exist
-    pub(super) unsafe fn get_path(&self, inode: Inode) -> PathBuf {
+    pub(super) unsafe fn get_path(&self, inode: Inode) -> FsPath {
         let paths_store = self
             .inode_manager
             .paths_store
@@ -162,47 +167,33 @@ impl<T: MountpointInterface> FileSystemWrapper<T> {
         paths_store.paths_indexed_by_inode[usize::from(inode)].clone()
     }
 
-    pub(super) fn rename_path(&self, source: &Path, destination: &Path) {
+    pub(super) fn rename_path(&self, source: &FsPath, destination: &FsPath) {
         let mut paths_store = self
             .inode_manager
             .paths_store
             .write()
             .expect("Mutex is poisoned");
         let mut opened = self.inode_manager.opened.lock().expect("Mutex is poisoned");
-        let source_bytes = source.as_os_str().as_bytes();
-        let destination_bytes = destination.as_os_str().as_bytes();
 
         for path in paths_store
             .paths_indexed_by_inode
             .iter_mut()
-            .filter(|path| path.as_os_str().as_bytes().starts_with(source_bytes))
+            .filter(|path| path.starts_with(source))
         {
-            let path_bytes = path.as_os_str().as_bytes();
-
-            let mut new_path =
-                Vec::with_capacity(path_bytes.len() - source_bytes.len() + destination_bytes.len());
-
-            new_path.extend(destination_bytes);
-            new_path.extend(&path_bytes[source_bytes.len()..]);
-
-            *path.as_mut_os_string() = OsString::from_vec(new_path);
+            *path = path.replace_parent(source.parts().len(), destination.clone());
         }
 
         *opened = opened
             .drain()
-            .filter(|(path, _)| path.as_os_str().as_bytes().starts_with(source_bytes))
-            .map(|(mut path, v)| {
-                let path_bytes = path.as_os_str().as_bytes();
-
-                let mut new_path = Vec::with_capacity(
-                    path_bytes.len() - source_bytes.len() + destination_bytes.len(),
-                );
-
-                new_path.extend(destination_bytes);
-                new_path.extend(&path_bytes[source_bytes.len()..]);
-                *path.as_mut_os_string() = OsString::from_vec(new_path);
-
-                (path, v)
+            .map(|(path, ino)| {
+                if path.starts_with(source) {
+                    (
+                        path.replace_parent(source.parts().len(), destination.clone()),
+                        ino,
+                    )
+                } else {
+                    (path, ino)
+                }
             })
             .collect();
     }

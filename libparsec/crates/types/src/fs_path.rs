@@ -52,6 +52,10 @@ impl EntryName {
             Ok(())
         }
     }
+
+    pub fn extension(&self) -> Option<&str> {
+        self.0.split_once('.').map(|(_, ext)| ext)
+    }
 }
 
 impl std::convert::AsRef<str> for EntryName {
@@ -181,7 +185,7 @@ impl FsPath {
         &self.parts
     }
 
-    pub fn parent(&self) -> FsPath {
+    pub fn parent(&self) -> Self {
         if self.parts.is_empty() {
             self.clone()
         } else {
@@ -213,6 +217,36 @@ impl FsPath {
             path.push(item.as_ref());
         }
         path
+    }
+
+    pub fn starts_with(&self, path: &Self) -> bool {
+        if path.parts.len() > self.parts.len() {
+            return false;
+        }
+
+        for (self_part, part) in self.parts().iter().zip(path.parts()) {
+            if self_part != part {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    /// Use `dest` for allocation and return it.
+    pub fn replace_parent(&self, offset: usize, mut dest: Self) -> Self {
+        if self.parts.len() > offset {
+            dest.parts.extend_from_slice(&self.parts[offset..]);
+        }
+        dest
+    }
+
+    pub fn extension(&self) -> Option<&str> {
+        self.name().and_then(|name| name.extension())
+    }
+
+    pub fn from_parts(parts: Vec<EntryName>) -> Self {
+        Self { parts }
     }
 }
 

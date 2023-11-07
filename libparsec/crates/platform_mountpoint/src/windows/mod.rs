@@ -6,7 +6,6 @@ mod winify;
 use once_cell::sync::{Lazy, OnceCell};
 use std::{
     ops::Deref,
-    path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
 
@@ -15,7 +14,7 @@ use winfsp_wrs::{
     FileAccessRights, FileAttributes, FileInfo, FileSystem, FileSystemContext, PSecurityDescriptor,
     Params, SecurityDescriptor, U16CStr, U16CString, VolumeInfo, VolumeParams,
     WriteMode as WinWriteMode, NTSTATUS, STATUS_DIRECTORY_NOT_EMPTY, STATUS_NOT_IMPLEMENTED,
-    STATUS_RESOURCEMANAGER_READ_ONLY,
+    STATUS_OBJECT_NAME_INVALID, STATUS_RESOURCEMANAGER_READ_ONLY,
 };
 
 use libparsec_types::prelude::*;
@@ -23,8 +22,7 @@ use libparsec_types::prelude::*;
 use crate::{
     EntryInfo, EntryInfoType, FileSystemMounted, FileSystemWrapper, MountpointInterface, WriteMode,
 };
-// TODO: Remove this when used.
-#[allow(unused_imports)]
+
 pub(crate) use winify::{unwinify_entry_name, winify_entry_name};
 
 /// we currently don't support arbitrary security descriptor and instead use only this one
@@ -51,7 +49,7 @@ const VOLUME_LABEL: &U16CStr = u16cstr!("parsec");
 /// see: https://github.com/winfsp/winfsp/issues/240#issuecomment-518629301
 const SECTOR_SIZE: u16 = 512;
 
-fn is_entry_info_path(path: &Path) -> bool {
+fn is_entry_info_path(path: &FsPath) -> bool {
     path.extension()
         .map(|ext| ext == ENTRY_INFO_EXTENSION)
         .unwrap_or_default()
@@ -116,7 +114,7 @@ pub enum Context {
 }
 
 impl Context {
-    fn path(&self) -> &Path {
+    fn path(&self) -> &FsPath {
         match self {
             Self::File(file) => &file.path,
             Self::Dir(dir) => &dir.path,
@@ -127,19 +125,19 @@ impl Context {
 
 #[derive(Debug, Clone)]
 pub struct File {
-    path: PathBuf,
+    path: FsPath,
     fd: FileDescriptor,
 }
 
 #[derive(Debug, Clone)]
 pub struct Dir {
-    path: PathBuf,
+    path: FsPath,
 }
 
 /// Special Parsec file for icon overlay handler
 #[derive(Debug, Clone)]
 pub struct ParsecEntryInfo {
-    path: PathBuf,
+    path: FsPath,
     encoded: String,
 }
 
@@ -184,7 +182,7 @@ impl<T: MountpointInterface> FileSystemContext for FileSystemWrapper<T> {
         file_name: &U16CStr,
         _find_reparse_point: impl Fn() -> Option<FileAttributes>,
     ) -> Result<(FileAttributes, PSecurityDescriptor, bool), NTSTATUS> {
-        let path = PathBuf::from(file_name.to_os_string());
+        let path = os_path_to_fs_path(file_name)?;
 
         let entry_info = self.interface.entry_info(&path)?;
         Ok((
@@ -201,7 +199,7 @@ impl<T: MountpointInterface> FileSystemContext for FileSystemWrapper<T> {
         granted_access: FileAccessRights,
     ) -> Result<Self::FileContext, NTSTATUS> {
         let write_mode = granted_access.is(FileAccessRights::file_write_data());
-        let path = PathBuf::from(file_name.to_os_string());
+        let path = os_path_to_fs_path(file_name)?;
 
         let fd = self.interface.file_open(&path, write_mode)?;
 
@@ -239,10 +237,10 @@ impl<T: MountpointInterface> FileSystemContext for FileSystemWrapper<T> {
         // NOTE: The "." and ".." directories should ONLY be included
         // if the queried directory is not root
 
-        if fc.path() != Path::new("/") && marker.is_none() {
+        if !fc.path().is_root() && marker.is_none() {
             entries.push((u16cstr!(".").into(), FileInfo::from(&stat)));
-            let parent_path = fc.path().parent().expect("FileContext can't be root");
-            let parent_stat = self.interface.entry_info(parent_path)?;
+            let parent_path = fc.path().parent();
+            let parent_stat = self.interface.entry_info(&parent_path)?;
             entries.push((u16cstr!("..").into(), FileInfo::from(&parent_stat)));
         }
 
@@ -258,19 +256,21 @@ impl<T: MountpointInterface> FileSystemContext for FileSystemWrapper<T> {
                 .skip_while(|name| name.as_ref() != marker.to_string_lossy())
                 .skip(1)
             {
-                let child_path = fc.path().join(child_name.as_ref());
+                let child_path = fc.path().join(child_name.clone());
                 let child_stat = self.interface.entry_info(&child_path)?;
                 entries.push((
-                    U16CString::from_str(child_name).expect("Contains a nul value"),
+                    U16CString::from_str(winify_entry_name(child_name))
+                        .expect("Contains a nul value"),
                     FileInfo::from(&child_stat),
                 ));
             }
         } else {
             for child_name in stat.children.keys() {
-                let child_path = fc.path().join(child_name.as_ref());
+                let child_path = fc.path().join(child_name.clone());
                 let child_stat = self.interface.entry_info(&child_path)?;
                 entries.push((
-                    U16CString::from_str(child_name).expect("Contains a nul value"),
+                    U16CString::from_str(winify_entry_name(child_name))
+                        .expect("Contains a nul value"),
                     FileInfo::from(&child_stat),
                 ));
             }
@@ -305,7 +305,7 @@ impl<T: MountpointInterface> FileSystemContext for FileSystemWrapper<T> {
     ) -> Result<Self::FileContext, NTSTATUS> {
         // `security_descriptor` is not supported yet
         // `reparse_point` is not supported yet
-        let path = PathBuf::from(file_name.to_os_string());
+        let path = os_path_to_fs_path(file_name)?;
 
         Ok(Arc::new(Mutex::new(
             if create_file_info
@@ -441,8 +441,8 @@ impl<T: MountpointInterface> FileSystemContext for FileSystemWrapper<T> {
         new_file_name: &U16CStr,
         replace_if_exists: bool,
     ) -> Result<(), NTSTATUS> {
-        let path = PathBuf::from(file_name.to_os_string());
-        let new_path = PathBuf::from(new_file_name.to_os_string());
+        let path = os_path_to_fs_path(file_name)?;
+        let new_path = os_path_to_fs_path(new_file_name)?;
         self.interface
             .entry_rename(&path, &new_path, replace_if_exists)?;
         Ok(())
@@ -461,10 +461,10 @@ impl<T: MountpointInterface> FileSystemContext for FileSystemWrapper<T> {
         file_name: &U16CStr,
         _delete_file: bool,
     ) -> Result<(), NTSTATUS> {
-        let path = PathBuf::from(file_name.to_os_string());
+        let path = os_path_to_fs_path(file_name)?;
         let stat = self.interface.entry_info(&path)?;
 
-        if path == Path::new("/") {
+        if path.is_root() {
             return Err(STATUS_RESOURCEMANAGER_READ_ONLY);
         } else if !stat.children.is_empty() {
             return Err(STATUS_DIRECTORY_NOT_EMPTY);
@@ -475,7 +475,7 @@ impl<T: MountpointInterface> FileSystemContext for FileSystemWrapper<T> {
 }
 
 pub fn mount<T: MountpointInterface>(
-    mountpoint: &Path,
+    mountpoint: &std::path::Path,
     interface: T,
 ) -> anyhow::Result<FileSystemMounted<T>> {
     let fs_wrapper = FileSystemWrapper::new(interface);
@@ -509,4 +509,19 @@ pub fn mount<T: MountpointInterface>(
     FileSystem::new(params, Some(&mountpoint), fs_wrapper)
         .map(|fs| FileSystemMounted { fs })
         .map_err(|status| anyhow::anyhow!("Failed to init FileSystem {status}"))
+}
+
+fn os_path_to_fs_path(path: &U16CStr) -> Result<FsPath, NTSTATUS> {
+    // Windows name doesn't allow `/` character, so no need to check if path
+    // already contains it.
+    path.to_os_string()
+        .to_str()
+        .ok_or(STATUS_OBJECT_NAME_INVALID)?
+        .replace('\\', "/")
+        .split('/')
+        .filter(|&part| !(part.is_empty() || part == "."))
+        .map(unwinify_entry_name)
+        .collect::<Result<Vec<_>, _>>()
+        .map(FsPath::from_parts)
+        .map_err(|_| STATUS_OBJECT_NAME_INVALID)
 }

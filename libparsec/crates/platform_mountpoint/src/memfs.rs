@@ -6,17 +6,16 @@
 use chrono::Utc;
 use std::{
     collections::HashMap,
-    path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
 
-use libparsec_types::{EntryName, FileDescriptor, VlobID};
+use libparsec_types::{FileDescriptor, FsPath, VlobID};
 
 use crate::{
     EntryInfo, EntryInfoType, MountpointError, MountpointInterface, MountpointResult, WriteMode,
 };
 
-type Entries = Mutex<HashMap<PathBuf, (EntryInfo, Option<Arc<Mutex<Vec<u8>>>>)>>;
+type Entries = Mutex<HashMap<FsPath, (EntryInfo, Option<Arc<Mutex<Vec<u8>>>>)>>;
 
 pub struct MemFS {
     entries: Entries,
@@ -25,7 +24,7 @@ pub struct MemFS {
 }
 
 struct FileData {
-    path: PathBuf,
+    path: FsPath,
     data: Arc<Mutex<Vec<u8>>>,
 }
 
@@ -35,7 +34,7 @@ impl Default for MemFS {
         let now = Utc::now();
 
         entries.insert(
-            PathBuf::from("/"),
+            "/".parse().expect("unreachable"),
             (
                 EntryInfo::new(VlobID::default(), EntryInfoType::Dir, now),
                 None,
@@ -72,15 +71,15 @@ impl MemFS {
 }
 
 impl MountpointInterface for MemFS {
-    fn check_read_rights(&self, _path: &Path) -> MountpointResult<()> {
+    fn check_read_rights(&self, _path: &FsPath) -> MountpointResult<()> {
         Ok(())
     }
 
-    fn check_write_rights(&self, _path: &Path) -> MountpointResult<()> {
+    fn check_write_rights(&self, _path: &FsPath) -> MountpointResult<()> {
         Ok(())
     }
 
-    fn entry_info(&self, path: &Path) -> MountpointResult<EntryInfo> {
+    fn entry_info(&self, path: &FsPath) -> MountpointResult<EntryInfo> {
         self.entries
             .lock()
             .expect("Mutex is poisoned")
@@ -91,19 +90,16 @@ impl MountpointInterface for MemFS {
 
     fn entry_rename(
         &self,
-        source: &Path,
-        destination: &Path,
+        source: &FsPath,
+        destination: &FsPath,
         overwrite: bool,
     ) -> MountpointResult<()> {
         let mut entries = self.entries.lock().expect("Mutex is poisoned");
-        let source_str = source.to_str().ok_or(MountpointError::NotFound)?;
-        let destination_str = destination.to_str().ok_or(MountpointError::InvalidName)?;
-        let root = Path::new("/");
 
         // Source is root
         // Destination is root
         // Cross-directory renaming is not supported
-        if source == root || destination == root || source.parent() != destination.parent() {
+        if source.is_root() || destination.is_root() || source.parent() != destination.parent() {
             return Err(MountpointError::AccessDenied);
         }
 
@@ -118,55 +114,43 @@ impl MountpointInterface for MemFS {
             }
         }
 
-        let iter_entries = entries
-            .keys()
-            .filter_map(|path| match path.to_str() {
-                Some(path) if path.starts_with(source_str) => Some(path.to_string()),
-                _ => None,
+        *entries = entries
+            .drain()
+            .map(|(path, info)| {
+                if path.starts_with(source) {
+                    (
+                        path.replace_parent(source.parts().len(), destination.clone()),
+                        info,
+                    )
+                } else {
+                    (path, info)
+                }
             })
-            .collect::<Vec<String>>();
-
-        for entry_path in iter_entries {
-            let new_entry_path = PathBuf::from(entry_path.replacen(source_str, destination_str, 1));
-
-            let entry = entries
-                .remove(Path::new(&entry_path))
-                .ok_or(MountpointError::NotFound)?;
-            entries.insert(new_entry_path, entry);
-        }
+            .collect();
 
         let (parent, _) = entries
-            .get_mut(source.parent().expect("Can't be root"))
+            .get_mut(&source.parent())
             .ok_or(MountpointError::NotFound)?;
         let id = parent
             .children
-            .remove(&EntryName::try_from(
-                source
-                    .file_name()
-                    .ok_or(MountpointError::InvalidName)?
-                    .to_str()
-                    .ok_or(MountpointError::InvalidName)?,
-            )?)
+            .remove(source.name().ok_or(MountpointError::InvalidName)?)
             .ok_or(MountpointError::NotFound)?;
 
         let (parent, _) = entries
-            .get_mut(destination.parent().expect("Can't be root"))
+            .get_mut(&destination.parent())
             .ok_or(MountpointError::NotFound)?;
         parent.children.insert(
-            EntryName::try_from(
-                destination
-                    .file_name()
-                    .ok_or(MountpointError::InvalidName)?
-                    .to_str()
-                    .ok_or(MountpointError::InvalidName)?,
-            )?,
+            destination
+                .name()
+                .ok_or(MountpointError::InvalidName)?
+                .clone(),
             id,
         );
 
         Ok(())
     }
 
-    fn file_create(&self, path: &Path, _open: bool) -> MountpointResult<FileDescriptor> {
+    fn file_create(&self, path: &FsPath, _open: bool) -> MountpointResult<FileDescriptor> {
         let mut entries = self.entries.lock().expect("Mutex is poisoned");
 
         if entries.contains_key(path) {
@@ -178,24 +162,20 @@ impl MountpointInterface for MemFS {
         let id = VlobID::default();
         let now = Utc::now();
         let fd = self.create_file_descriptor(FileData {
-            path: path.into(),
+            path: path.clone(),
             data: data.clone(),
         });
 
         let (parent, _) = entries
-            .get_mut(path.parent().expect("Can't be root"))
+            .get_mut(&path.parent())
             .ok_or(MountpointError::NotFound)?;
 
-        let file_name = path
-            .file_name()
-            .ok_or(MountpointError::InvalidName)?
-            .to_str()
-            .ok_or(MountpointError::InvalidName)?;
+        let file_name = path.name().ok_or(MountpointError::InvalidName)?;
 
-        parent.children.insert(EntryName::try_from(file_name)?, id);
+        parent.children.insert(file_name.clone(), id);
 
         entries.insert(
-            path.to_path_buf(),
+            path.clone(),
             (
                 EntryInfo::new(VlobID::default(), EntryInfoType::File, now),
                 Some(data),
@@ -207,7 +187,7 @@ impl MountpointInterface for MemFS {
 
     fn file_open(
         &self,
-        path: &Path,
+        path: &FsPath,
         _write_mode: bool,
     ) -> MountpointResult<Option<FileDescriptor>> {
         let entries = self.entries.lock().expect("Mutex is poisoned");
@@ -216,7 +196,7 @@ impl MountpointInterface for MemFS {
 
         if let Some(data) = data {
             Ok(Some(self.create_file_descriptor(FileData {
-                path: path.into(),
+                path: path.clone(),
                 data: data.clone(),
             })))
         } else {
@@ -224,19 +204,16 @@ impl MountpointInterface for MemFS {
         }
     }
 
-    fn file_delete(&self, path: &Path) -> MountpointResult<()> {
+    fn file_delete(&self, path: &FsPath) -> MountpointResult<()> {
         let mut entries = self.entries.lock().expect("Mutex is poisoned");
 
         let (parent, _) = entries
-            .get_mut(path.parent().expect("Can't be root"))
+            .get_mut(&path.parent())
             .ok_or(MountpointError::NotFound)?;
 
-        parent.children.remove(&EntryName::try_from(
-            path.file_name()
-                .ok_or(MountpointError::InvalidName)?
-                .to_str()
-                .ok_or(MountpointError::InvalidName)?,
-        )?);
+        parent
+            .children
+            .remove(path.name().ok_or(MountpointError::InvalidName)?);
 
         entries.remove(path).ok_or(MountpointError::NotFound)?;
 
@@ -344,7 +321,7 @@ impl MountpointInterface for MemFS {
         Ok(transferred_length)
     }
 
-    fn dir_create(&self, path: &Path) -> MountpointResult<()> {
+    fn dir_create(&self, path: &FsPath) -> MountpointResult<()> {
         let mut entries = self.entries.lock().expect("Mutex is poisoned");
 
         if entries.contains_key(path) {
@@ -355,47 +332,42 @@ impl MountpointInterface for MemFS {
         let now = Utc::now();
 
         let (parent, _) = entries
-            .get_mut(path.parent().expect("Can't be root"))
+            .get_mut(&path.parent())
             .ok_or(MountpointError::NotFound)?;
 
-        parent.children.insert(
-            EntryName::try_from(
-                path.file_name()
-                    .ok_or(MountpointError::InvalidName)?
-                    .to_str()
-                    .ok_or(MountpointError::InvalidName)?,
-            )?,
-            id,
-        );
+        parent
+            .children
+            .insert(path.name().ok_or(MountpointError::InvalidName)?.clone(), id);
 
         entries.insert(
-            path.to_path_buf(),
+            path.clone(),
             (EntryInfo::new(id, EntryInfoType::Dir, now), None),
         );
 
         Ok(())
     }
 
-    fn dir_delete(&self, path: &Path) -> MountpointResult<()> {
+    fn dir_delete(&self, path: &FsPath) -> MountpointResult<()> {
         let mut entries = self.entries.lock().expect("Mutex is poisoned");
 
-        if entries.keys().any(|entry| entry.parent() == Some(path)) {
+        if entries.keys().any(|entry| &entry.parent() == path) {
             return Err(MountpointError::DirNotEmpty);
         }
 
         let (parent, _) = entries
-            .get_mut(path.parent().expect("Can't be root"))
+            .get_mut(&path.parent())
             .ok_or(MountpointError::NotFound)?;
 
-        parent.children.remove(&EntryName::try_from(
-            path.file_name()
-                .ok_or(MountpointError::InvalidName)?
-                .to_str()
-                .ok_or(MountpointError::InvalidName)?,
-        )?);
+        parent
+            .children
+            .remove(path.name().ok_or(MountpointError::InvalidName)?);
 
         entries.remove(path).ok_or(MountpointError::NotFound)?;
 
         Ok(())
     }
 }
+
+#[cfg(all(test, target_os = "windows"))]
+#[path = "../tests/unit/winfsp.rs"]
+mod tests;
