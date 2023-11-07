@@ -446,7 +446,7 @@
             "lastLoginSeconds": "one second ago | {seconds} seconds ago",
             "lastLoginMinutes": "one minute ago | {minutes} minutes ago",
             "lastLoginHours": "one hour ago | {hours} hours ago",
-            "lastLoginDays": "one day ago | {days} days ago"
+            "lastLoginDays": "Today | Yesterday | {days} days ago"
         },
         "filesize": {
             "bytes": "B",
@@ -471,6 +471,21 @@
         "addDevice": "Add",
         "noDevices": "No devices.",
         "activeDeviceBadge": "Current",
+        "joinedOn": "Joined on:",
+        "restorePassword": {
+            "title": "Password recovery files",
+            "done": {
+                "subtitle": "You have saved the password recovery files.",
+                "label": "Files already downloaded",
+                "button": "Downloading files again"
+            },
+            "notDone": {
+                "label": "Action required",
+                "subtitle": "Parsec does not store your password.",
+                "subtitle2": "These files allow you to restore your password on a device if you forget it.",
+                "button": "Create recovery files"
+            }
+        },
         "greet": {
             "steps": {
                 "hostCode": "Host code",
